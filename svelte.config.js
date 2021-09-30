@@ -14,6 +14,7 @@ const config = {
     }),
     target: '#svelte',
     vite: {
+      mode: process.env.MODE || 'develop',
       server: {
         fs: {
           strict: false,
