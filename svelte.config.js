@@ -4,17 +4,10 @@ import preprocess from 'svelte-preprocess';
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
   kit: {
-    adapter: adapterNode({
-      esbuild(defaultOptions) {
-        return {
-          ...defaultOptions,
-          external: ['pg-native'],
-        };
-      },
-    }),
+    adapter: adapterNode(),
     target: '#svelte',
     vite: {
-      mode: process.env.MODE || 'develop',
+      mode: process.env.MODE || 'development',
       server: {
         fs: {
           strict: false,
