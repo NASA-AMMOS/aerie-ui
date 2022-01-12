@@ -113,9 +113,9 @@ export type SimulateResponse = {
   results?: {
     activities: {
       [id: string]: {
+        arguments: ArgumentsMap;
         children: string[];
         duration: number;
-        parameters: ArgumentsMap;
         parent: string | null;
         startTimestamp: string;
         type: string;
@@ -1115,7 +1115,7 @@ export async function reqSimulate(
       ).reduce((activitiesMap: ActivitiesMap, id: string) => {
         const activity = results.activities[id];
         activitiesMap[id] = {
-          arguments: activity.parameters,
+          arguments: activity.arguments,
           children: activity.children,
           duration: activity.duration,
           id,
