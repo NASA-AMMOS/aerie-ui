@@ -8,6 +8,7 @@ function initialField<T>(
 ): Field<T> {
   return {
     dirty: false,
+    dirtyAndValid: false,
     errors: [],
     firstError: null,
     initialValue,
@@ -29,19 +30,21 @@ export function field<T>(
   const { set, subscribe, update } = writable<Field<T>>(field);
 
   return {
-    set(newField: Field<T>) {
+    async set(newField: Field<T>) {
       const dirty = newField.initialValue !== newField.value;
-      const errors = validate(newField.validators, newField.value);
+      const errors = await validate(newField.validators, newField.value);
       const firstError = errors.length ? errors[0] : null;
       const invalid = errors.length > 0;
       const pristine = !dirty;
       const touched = true;
-      const touchedAndValid = touched && !invalid;
       const valid = !invalid;
+      const dirtyAndValid = dirty && valid;
+      const touchedAndValid = touched && valid;
 
       return set({
         ...newField,
         dirty,
+        dirtyAndValid,
         errors,
         firstError,
         invalid,

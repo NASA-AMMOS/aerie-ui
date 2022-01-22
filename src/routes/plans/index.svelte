@@ -36,7 +36,7 @@
   import { tooltip } from '../../utilities/tooltip';
   import { onMount } from 'svelte';
   import { compare, removeQueryParam } from '../../utilities/generic';
-  import { required, timestamp } from '../../utilities/validators';
+  import { min, required, timestamp } from '../../utilities/validators';
   import {
     CreatePlan,
     CreatePlanModel,
@@ -55,26 +55,26 @@
   let confirmDeletePlan: ConfirmModal | null = null;
   let createButtonText = 'Create';
   let error: string | null = null;
-  let modelId: number = -1;
   let simulationTemplateId: number | null = null;
 
-  let nameField = field<string>('', [required]);
   let endTimeField = field<string>('', [required, timestamp]);
+  let modelIdField = field<number>(-1, [required, min(1)]);
+  let nameField = field<string>('', [required]);
   let startTimeField = field<string>('', [required, timestamp]);
 
   $: createButtonEnabled =
-    modelId > -1 &&
-    $endTimeField.touchedAndValid &&
-    $nameField.touchedAndValid &&
-    $startTimeField.touchedAndValid;
-  $: simulationTemplates.setVariables({ modelId });
+    $endTimeField.dirtyAndValid &&
+    $modelIdField.dirtyAndValid &&
+    $nameField.dirtyAndValid &&
+    $startTimeField.dirtyAndValid;
+  $: simulationTemplates.setVariables({ modelId: $modelIdField.value });
   $: sortedModels = models.sort((a, b) => compare(a.name, b.name));
   $: sortedPlans = plans.sort((a, b) => compare(a.name, b.name));
 
   onMount(() => {
     const queryModelId = $page.url.searchParams.get('modelId');
     if (queryModelId) {
-      modelId = parseFloat(queryModelId);
+      $modelIdField.value = parseFloat(queryModelId);
       removeQueryParam('modelId');
     }
   });
@@ -85,7 +85,7 @@
 
     const newPlan = await reqCreatePlan(
       $endTimeField.value,
-      modelId,
+      $modelIdField.value,
       $nameField.value,
       $startTimeField.value,
     );
@@ -125,13 +125,13 @@
           <select
             class="st-select w-100"
             name="model"
-            value={modelId}
+            value={$modelIdField.value}
             on:change={({ currentTarget }) => {
               const { value } = currentTarget;
               if (value !== '') {
-                modelId = parseFloat(value);
+                $modelIdField.value = parseFloat(value);
               } else {
-                modelId = -1;
+                $modelIdField.value = -1;
               }
             }}
           >

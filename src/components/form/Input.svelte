@@ -97,10 +97,7 @@
     width: 100%;
   }
 
-  .input > .left {
-    position: absolute;
-  }
-
+  .input > .left,
   .input > .right {
     position: absolute;
   }

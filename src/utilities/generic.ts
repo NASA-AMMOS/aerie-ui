@@ -113,24 +113,3 @@ export function setQueryParam(key: string, value: string): void {
 export function sleep(milliseconds = 250): Promise<void> {
   return new Promise(resolve => setTimeout(() => resolve(), milliseconds));
 }
-
-/**
- * Accepts a parent <div /> that contains one child <slot /> and returns the count
- * of the number of children in the <slot />.
- */
-export function slotChildCount(div: HTMLDivElement | undefined): number {
-  if (div) {
-    const [slotDiv] = Array.from(div.childNodes);
-
-    if (slotDiv) {
-      const childNodes = Array.from(slotDiv.childNodes);
-      const { length } = childNodes.filter(
-        ({ nodeName }) => nodeName !== '#comment' && nodeName !== '#text',
-      );
-
-      return length;
-    }
-  }
-
-  return 0;
-}

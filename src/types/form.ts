@@ -1,7 +1,8 @@
 export type Field<T> = {
   dirty: boolean;
+  dirtyAndValid: boolean;
   errors: string[];
-  firstError: string | null;
+  firstError: string;
   initialValue: T;
   invalid: boolean;
   pristine: boolean;
@@ -12,4 +13,6 @@ export type Field<T> = {
   value: T;
 };
 
-export type ValidatorFn<T> = (value: T) => string | null;
+export type ValidatorFn<T> = (value: T) => Promise<ValidationResult>;
+
+export type ValidationResult = string | null;

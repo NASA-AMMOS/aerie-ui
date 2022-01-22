@@ -1,10 +1,13 @@
-import type { ValidatorFn } from '../types';
+import type { ValidationResult, ValidatorFn } from '../types';
 
-export function validate<T>(validators: ValidatorFn<T>[], value: T): string[] {
+export async function validate<T>(
+  validators: ValidatorFn<T>[],
+  value: T,
+): Promise<string[]> {
   const errors: string[] = [];
 
   for (const validator of validators) {
-    const error = validator(value);
+    const error = await validator(value);
 
     if (error !== null) {
       errors.push(error);
@@ -14,17 +17,28 @@ export function validate<T>(validators: ValidatorFn<T>[], value: T): string[] {
   return errors;
 }
 
-export function required(value: number | string): string | null {
+export function min(min: number): (value: number) => Promise<ValidationResult> {
+  return (value: number): Promise<ValidationResult> => {
+    if (value < min) {
+      return Promise.resolve(`Field cannot be less than ${min}`);
+    } else {
+      return Promise.resolve(null);
+    }
+  };
+}
+
+export function required(value: number | string): Promise<ValidationResult> {
   if (
     (typeof value === 'number' && Number.isNaN(value as number)) ||
     (typeof value === 'string' && value === '')
   ) {
-    return 'Field is required';
+    return Promise.resolve('Field is required');
+  } else {
+    return Promise.resolve(null);
   }
-  return null;
 }
 
-export function timestamp(value: string): string | null {
+export function timestamp(value: string): Promise<ValidationResult> {
   const re =
     /^(\d{4})-((?=\d*[1-9])\d{3})T(\d{2}):(\d{2}):(\d{2})(\.(\d{3}))?$/;
   const match = re.exec(value);
@@ -34,11 +48,11 @@ export function timestamp(value: string): string | null {
     const [, , doy] = match;
     const dayOfYear = parseInt(doy, 10);
     if (dayOfYear > 0 && dayOfYear < 366) {
-      return null;
+      return Promise.resolve(null);
     } else {
-      return 'Day-of-year must be between 0 and 365';
+      return Promise.resolve('Day-of-year must be between 0 and 365');
     }
   } else {
-    return error;
+    return Promise.resolve(error);
   }
 }
