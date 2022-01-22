@@ -9,7 +9,6 @@
     FormParameter,
   } from '../../types';
   import Field from '../form/Field.svelte';
-  import InputText from '../form/InputText.svelte';
   import Label from '../form/Label.svelte';
   import ConfirmModal from '../modals/Confirm.svelte';
   import Decomposition from './Decomposition.svelte';
@@ -17,13 +16,15 @@
   import Panel from '../ui/Panel.svelte';
   import { reqValidateActivityArguments } from '../../utilities/requests';
   import Card from '../ui/Card.svelte';
-  import FieldInputText from '../form/FieldInputText.svelte';
   import { required, timestamp } from '../../utilities/validators';
   import {
     getFormParameters,
     updateFormParameter,
   } from '../../utilities/parameters';
   import { tooltip } from '../../utilities/tooltip';
+  import Input from '../form/Input.svelte';
+  import { field } from '../../stores/form';
+  import Error from '../form/Error.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -45,6 +46,7 @@
   $: hasChildren = children ? children.length > 0 : false;
   $: isChild = parent !== null;
   $: parentId = isChild ? parent : 'None (Root Activity)';
+  $: startTimeField = field<string>(startTime, [required, timestamp]);
 
   function getArguments(formParameter: FormParameter): ArgumentsMap {
     const { name, value } = formParameter;
@@ -84,6 +86,12 @@
   function onDelete() {
     dispatch('delete', id);
   }
+
+  function onUpdateStartTime() {
+    if ($startTimeField.valid) {
+      dispatch('updateStartTime', { id, startTime: $startTimeField.value });
+    }
+  }
 </script>
 
 <Panel hideFooter>
@@ -102,51 +110,71 @@
   <span slot="body">
     <Field>
       <Label for="id">Activity ID</Label>
-      <InputText bind:value={id} disabled name="id">
-        <span slot="suffix">
-          <i class="bi bi-lock-fill" />
-        </span>
-      </InputText>
+      <Input>
+        <input bind:value={id} class="st-input w-100" disabled name="id" />
+        <i class="bi bi-lock-fill" slot="right" />
+      </Input>
     </Field>
 
     <Field>
       <Label for="activity-type">Activity Type</Label>
-      <InputText bind:value={type} disabled name="activity-type">
-        <span slot="suffix">
-          <i class="bi bi-lock-fill" />
-        </span>
-      </InputText>
+      <Input>
+        <input
+          bind:value={type}
+          class="st-input w-100"
+          disabled
+          name="activity-type"
+        />
+        <i class="bi bi-lock-fill" slot="right" />
+      </Input>
     </Field>
 
     <Field>
       <Label for="parent-id">Parent ID</Label>
-      <InputText bind:value={parentId} disabled name="parent-id">
-        <span slot="suffix">
-          <i class="bi bi-lock-fill" />
-        </span>
-      </InputText>
+      <Input>
+        <input
+          bind:value={parentId}
+          class="st-input w-100"
+          disabled
+          name="parent-id"
+        />
+        <i class="bi bi-lock-fill" slot="right" />
+      </Input>
     </Field>
 
     {#if duration !== null}
       <Field>
         <Label for="duration">Duration</Label>
-        <InputText bind:value={duration} disabled name="duration">
-          <span slot="suffix">
-            <i class="bi bi-lock-fill" />
-          </span>
-        </InputText>
+        <Input>
+          <input
+            bind:value={duration}
+            class="st-input w-100"
+            disabled
+            name="duration"
+          />
+          <i class="bi bi-lock-fill" slot="right" />
+        </Input>
       </Field>
     {/if}
 
-    <FieldInputText
-      bind:value={startTime}
-      disabled={isChild}
-      name="start-time"
-      validators={[required, timestamp]}
-      on:change={() => dispatch('updateStartTime', { id, startTime })}
-    >
-      Start Time
-    </FieldInputText>
+    <Field>
+      <Label for="start-time" invalid={$startTimeField.invalid}>
+        Start Time
+      </Label>
+      <input
+        bind:value={$startTimeField.value}
+        autocomplete="off"
+        class="st-input w-100"
+        class:error={$startTimeField.invalid}
+        disabled={isChild}
+        name="start-time"
+        on:change={onUpdateStartTime}
+      />
+      <Error
+        invalid={$startTimeField.invalid}
+        error={$startTimeField.firstError}
+      />
+    </Field>
 
     <Field>
       <details open>
@@ -187,9 +215,5 @@
 <style>
   details {
     cursor: pointer;
-  }
-
-  .icon {
-    font-size: 0.8rem;
   }
 </style>

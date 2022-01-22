@@ -28,7 +28,6 @@
   import { page } from '$app/stores';
   import ConfirmModal from '../../components/modals/Confirm.svelte';
   import Field from '../../components/form/Field.svelte';
-  import FieldInputText from '../../components/form/FieldInputText.svelte';
   import Label from '../../components/form/Label.svelte';
   import AlertError from '../../components/ui/AlertError.svelte';
   import Card from '../../components/ui/Card.svelte';
@@ -47,27 +46,27 @@
     reqGetPlansAndModels,
   } from '../../utilities/requests';
   import { simulationTemplates } from '../../stores/simulation';
+  import { field } from '../../stores/form';
+  import Error from '../../components/form/Error.svelte';
 
   export let models: CreatePlanModel[] = [];
   export let plans: CreatePlan[] = [];
 
   let confirmDeletePlan: ConfirmModal | null = null;
   let createButtonText = 'Create';
-  let endTime = '';
-  let endTimeSubmittable = false;
   let error: string | null = null;
   let modelId: number = -1;
-  let name = '';
-  let nameSubmittable = false;
   let simulationTemplateId: number | null = null;
-  let startTime = '';
-  let startTimeSubmittable = false;
 
-  $: createButtonDisabeld =
-    !endTimeSubmittable ||
-    modelId === -1 ||
-    !nameSubmittable ||
-    !startTimeSubmittable;
+  let nameField = field<string>('', [required]);
+  let endTimeField = field<string>('', [required, timestamp]);
+  let startTimeField = field<string>('', [required, timestamp]);
+
+  $: createButtonEnabled =
+    modelId > -1 &&
+    $endTimeField.touchedAndValid &&
+    $nameField.touchedAndValid &&
+    $startTimeField.touchedAndValid;
   $: simulationTemplates.setVariables({ modelId });
   $: sortedModels = models.sort((a, b) => compare(a.name, b.name));
   $: sortedPlans = plans.sort((a, b) => compare(a.name, b.name));
@@ -84,7 +83,12 @@
     createButtonText = 'Creating...';
     error = null;
 
-    const newPlan = await reqCreatePlan(endTime, modelId, name, startTime);
+    const newPlan = await reqCreatePlan(
+      $endTimeField.value,
+      modelId,
+      $nameField.value,
+      $startTimeField.value,
+    );
     await reqCreateSimulation(newPlan.id, simulationTemplateId);
 
     if (newPlan) {
@@ -140,37 +144,51 @@
           </select>
         </Field>
 
-        <FieldInputText
-          bind:submittable={nameSubmittable}
-          bind:value={name}
-          name="name"
-          required
-          validators={[required]}
-        >
-          Name
-        </FieldInputText>
+        <Field>
+          <Label for="name" invalid={$nameField.invalid}>Name</Label>
+          <input
+            bind:value={$nameField.value}
+            autocomplete="off"
+            class="st-input w-100"
+            class:error={$nameField.invalid}
+            name="name"
+          />
+          <Error invalid={$nameField.invalid} error={$nameField.firstError} />
+        </Field>
 
-        <FieldInputText
-          bind:submittable={startTimeSubmittable}
-          bind:value={startTime}
-          name="start-time"
-          placeholder="YYYY-DDDThh:mm:ss"
-          required
-          validators={[required, timestamp]}
-        >
-          Start Time
-        </FieldInputText>
+        <Field>
+          <Label for="start-time" invalid={$startTimeField.invalid}>
+            Start Time
+          </Label>
+          <input
+            bind:value={$startTimeField.value}
+            autocomplete="off"
+            class="st-input w-100"
+            class:error={$startTimeField.invalid}
+            name="start-time"
+            placeholder="YYYY-DDDThh:mm:ss"
+          />
+          <Error
+            invalid={$startTimeField.invalid}
+            error={$startTimeField.firstError}
+          />
+        </Field>
 
-        <FieldInputText
-          bind:submittable={endTimeSubmittable}
-          bind:value={endTime}
-          name="end-time"
-          placeholder="YYYY-DDDThh:mm:ss"
-          required
-          validators={[required, timestamp]}
-        >
-          End Time
-        </FieldInputText>
+        <Field>
+          <Label for="end-time" invalid={$endTimeField.invalid}>End Time</Label>
+          <input
+            bind:value={$endTimeField.value}
+            autocomplete="off"
+            class="st-input w-100"
+            class:error={$endTimeField.invalid}
+            name="end-time"
+            placeholder="YYYY-DDDThh:mm:ss"
+          />
+          <Error
+            invalid={$endTimeField.invalid}
+            error={$endTimeField.firstError}
+          />
+        </Field>
 
         <Field>
           <Label for="simulation-templates">Simulation Templates</Label>
@@ -203,7 +221,7 @@
         <Field>
           <button
             class="st-button create-button"
-            disabled={createButtonDisabeld}
+            disabled={!createButtonEnabled}
             type="submit"
           >
             {createButtonText}

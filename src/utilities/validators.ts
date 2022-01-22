@@ -1,21 +1,22 @@
-export type ValidationResult = string | null;
+import type { ValidatorFn } from '../types';
 
-export type ValidatorFn<T> = (value: T) => string | null;
+export function validate<T>(validators: ValidatorFn<T>[], value: T): string[] {
+  const errors: string[] = [];
 
-export function validate<T>(
-  validators: ValidatorFn<T>[],
-  value: T,
-): ValidationResult {
   for (const validator of validators) {
     const error = validator(value);
-    if (error !== null) return error;
+
+    if (error !== null) {
+      errors.push(error);
+    }
   }
-  return null;
+
+  return errors;
 }
 
-export function required(value: number | string): ValidationResult {
+export function required(value: number | string): string | null {
   if (
-    (typeof value === 'number' && isNaN(value as number)) ||
+    (typeof value === 'number' && Number.isNaN(value as number)) ||
     (typeof value === 'string' && value === '')
   ) {
     return 'Field is required';
@@ -23,7 +24,7 @@ export function required(value: number | string): ValidationResult {
   return null;
 }
 
-export function timestamp(value: string): ValidationResult {
+export function timestamp(value: string): string | null {
   const re =
     /^(\d{4})-((?=\d*[1-9])\d{3})T(\d{2}):(\d{2}):(\d{2})(\.(\d{3}))?$/;
   const match = re.exec(value);
