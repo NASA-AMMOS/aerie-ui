@@ -1,6 +1,5 @@
 <script lang="ts">
   import Field from '../../form/Field.svelte';
-  import Label from '../../form/Label.svelte';
   import Grid from '../../ui/Grid.svelte';
   import type { Layer, XRangeLayer } from '../../../types';
 
@@ -25,7 +24,7 @@
 {#if lineLayer && lineLayer.chartType === 'x-range'}
   <Grid columns="50% 50%">
     <Field>
-      <Label for="colorScheme">Color Scheme</Label>
+      <label for="colorScheme">Color Scheme</label>
       <select
         class="st-select w-100"
         name="colorScheme"
@@ -41,7 +40,7 @@
     </Field>
 
     <Field>
-      <Label for="opacity">Opacity</Label>
+      <label for="opacity">Opacity</label>
       <input
         class="st-input w-100"
         name="opacity"

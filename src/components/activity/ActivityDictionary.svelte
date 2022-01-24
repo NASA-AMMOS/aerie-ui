@@ -5,7 +5,6 @@
   import type { ActivityType } from '../../types';
   import Field from '../form/Field.svelte';
   import Input from '../form/Input.svelte';
-  import Label from '../form/Label.svelte';
   import ListItem from '../ui/ListItem.svelte';
   import { compare } from '../../utilities/generic';
   import { tooltip } from '../../utilities/tooltip';
@@ -46,7 +45,7 @@
 
 <div class="p-1">
   <Field class="w-100 m-0 p-0 pb-1">
-    <Label for="search">Find an Activity Type</Label>
+    <label for="search">Find an Activity Type</label>
     <Input>
       <i class="bi bi-search" slot="left" />
       <input bind:value={searchText} class="st-input w-100" name="search" />

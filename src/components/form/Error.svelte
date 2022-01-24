@@ -2,34 +2,34 @@
 
 <script lang="ts">
   import { tooltip } from '../../utilities/tooltip';
+  import type { Field } from '../../types/form';
 
-  export let error: string | null = null;
-  export let invalid: boolean = false;
+  export let field: Field<any>;
 </script>
 
-{#if invalid}
+{#if field.invalid}
   <div
-    class="form-error"
+    class="error"
     use:tooltip={{
-      content: error,
+      content: field.firstError,
       maxWidth: 'none',
       placement: 'bottom',
       theme: 'error',
     }}
   >
-    <span>{error}</span>
+    <span>{field.firstError}</span>
   </div>
 {/if}
 
 <style>
-  .form-error {
+  .error {
     cursor: default;
     display: table;
     table-layout: fixed;
     width: 100%;
   }
 
-  .form-error > span {
+  .error > span {
     color: var(--st-red);
     display: table-cell;
     overflow: hidden;

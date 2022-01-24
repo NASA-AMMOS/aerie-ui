@@ -1,11 +1,9 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import Field from '../../form/Field.svelte';
-  import Label from '../../form/Label.svelte';
   import Grid from '../../ui/Grid.svelte';
   import type { Axis, Label as AxisLabel } from '../../../types';
   import { getTarget } from '../../../utilities/generic';
-  import Error from '../../form/Error.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -72,7 +70,7 @@
 
 <Grid columns="33% 33% 33%">
   <Field>
-    <Label for="id" invalid={idError !== null}>Id</Label>
+    <label class:error={idError !== null} for="id"> Id </label>
     <input
       class="st-input w-100"
       class:error={idError !== null}
@@ -81,10 +79,9 @@
       value={axis.id}
       on:input|stopPropagation={updateId}
     />
-    <Error error={idError} invalid={idError !== null} />
   </Field>
   <Field>
-    <Label for="label">Label Text</Label>
+    <label for="label"> Label Text </label>
     <input
       class="st-input w-100"
       name="text"
@@ -94,7 +91,7 @@
     />
   </Field>
   <Field>
-    <Label for="color">Axis Color</Label>
+    <label for="color"> Axis Color </label>
     <input
       class="w-100"
       name="color"
@@ -107,7 +104,7 @@
 
 <Grid columns="33% 33% 33%">
   <Field>
-    <Label for="domainMin">Domain Min</Label>
+    <label for="domainMin"> Domain Min </label>
     <input
       class="st-input w-100"
       name="domainMin"
@@ -117,7 +114,7 @@
     />
   </Field>
   <Field>
-    <Label for="domainMax">Domain Max</Label>
+    <label for="domainMax"> Domain Max </label>
     <input
       class="st-input w-100"
       name="domainMax"
@@ -127,7 +124,7 @@
     />
   </Field>
   <Field>
-    <Label for="tickCount">Tick Count</Label>
+    <label for="tickCount"> Tick Count </label>
     <input
       class="st-input w-100"
       name="tickCount"

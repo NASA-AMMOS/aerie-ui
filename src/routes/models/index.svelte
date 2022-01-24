@@ -25,7 +25,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import Field from '../../components/form/Field.svelte';
-  import Label from '../../components/form/Label.svelte';
   import ConfirmModal from '../../components/modals/Confirm.svelte';
   import AlertError from '../../components/ui/AlertError.svelte';
   import Card from '../../components/ui/Card.svelte';
@@ -88,7 +87,7 @@
         </Field>
 
         <Field>
-          <Label for="name">Name</Label>
+          <label for="name">Name</label>
           <input
             bind:value={name}
             autocomplete="off"
@@ -99,7 +98,7 @@
         </Field>
 
         <Field>
-          <Label for="version">Version</Label>
+          <label for="version">Version</label>
           <input
             bind:value={version}
             autocomplete="off"
@@ -111,7 +110,7 @@
         </Field>
 
         <Field>
-          <Label for="file">Jar File</Label>
+          <label for="file">Jar File</label>
           <input class="w-100" name="file" required type="file" bind:files />
         </Field>
 

@@ -17,7 +17,6 @@
   import { onMount } from 'svelte';
   import type { LoginResponseBody } from '../auth/login';
   import Field from '../../components/form/Field.svelte';
-  import Label from '../../components/form/Label.svelte';
   import AlertError from '../../components/ui/AlertError.svelte';
 
   let error = null;
@@ -70,7 +69,7 @@
     </Field>
 
     <Field>
-      <Label for="username">Username</Label>
+      <label for="username"> Username </label>
       <input
         autocomplete="off"
         bind:this={usernameInput}
@@ -83,7 +82,7 @@
     </Field>
 
     <Field>
-      <Label for="password">Password</Label>
+      <label for="password"> Password </label>
       <input
         autocomplete="off"
         bind:value={password}

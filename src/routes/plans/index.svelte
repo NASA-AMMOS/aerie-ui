@@ -28,7 +28,6 @@
   import { page } from '$app/stores';
   import ConfirmModal from '../../components/modals/Confirm.svelte';
   import Field from '../../components/form/Field.svelte';
-  import Label from '../../components/form/Label.svelte';
   import AlertError from '../../components/ui/AlertError.svelte';
   import Card from '../../components/ui/Card.svelte';
   import Grid from '../../components/ui/Grid.svelte';
@@ -121,7 +120,7 @@
         </Field>
 
         <Field>
-          <Label for="model">Models</Label>
+          <label for="model">Models</label>
           <select
             class="st-select w-100"
             name="model"
@@ -145,7 +144,7 @@
         </Field>
 
         <Field>
-          <Label for="name" invalid={$nameField.invalid}>Name</Label>
+          <label class:error={$nameField.invalid} for="name"> Name </label>
           <input
             bind:value={$nameField.value}
             autocomplete="off"
@@ -153,13 +152,13 @@
             class:error={$nameField.invalid}
             name="name"
           />
-          <Error invalid={$nameField.invalid} error={$nameField.firstError} />
+          <Error field={$nameField} />
         </Field>
 
         <Field>
-          <Label for="start-time" invalid={$startTimeField.invalid}>
+          <label class:error={$startTimeField.invalid} for="start-time">
             Start Time
-          </Label>
+          </label>
           <input
             bind:value={$startTimeField.value}
             autocomplete="off"
@@ -168,14 +167,13 @@
             name="start-time"
             placeholder="YYYY-DDDThh:mm:ss"
           />
-          <Error
-            invalid={$startTimeField.invalid}
-            error={$startTimeField.firstError}
-          />
+          <Error field={$startTimeField} />
         </Field>
 
         <Field>
-          <Label for="end-time" invalid={$endTimeField.invalid}>End Time</Label>
+          <label class:error={$endTimeField.invalid} for="end-time">
+            End Time
+          </label>
           <input
             bind:value={$endTimeField.value}
             autocomplete="off"
@@ -184,14 +182,11 @@
             name="end-time"
             placeholder="YYYY-DDDThh:mm:ss"
           />
-          <Error
-            invalid={$endTimeField.invalid}
-            error={$endTimeField.firstError}
-          />
+          <Error field={$endTimeField} />
         </Field>
 
         <Field>
-          <Label for="simulation-templates">Simulation Templates</Label>
+          <label for="simulation-templates">Simulation Templates</label>
           {#if $simulationTemplates.length}
             <select
               class="st-select w-100"

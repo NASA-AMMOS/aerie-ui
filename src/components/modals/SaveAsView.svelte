@@ -4,7 +4,6 @@
   import { createEventDispatcher, tick } from 'svelte';
   import Modal from './Modal.svelte';
   import Field from '../form/Field.svelte';
-  import Label from '../form/Label.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -43,7 +42,7 @@
   </div>
   <div class="content">
     <Field>
-      <Label for="name">Name</Label>
+      <label for="name">Name</label>
       <input
         bind:this={nameElement}
         bind:value={name}

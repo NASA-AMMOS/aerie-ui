@@ -9,7 +9,6 @@
     FormParameter,
   } from '../../types';
   import Field from '../form/Field.svelte';
-  import Label from '../form/Label.svelte';
   import ConfirmModal from '../modals/Confirm.svelte';
   import Decomposition from './Decomposition.svelte';
   import Parameters from '../parameters/Parameters.svelte';
@@ -109,7 +108,7 @@
 
   <span slot="body">
     <Field>
-      <Label for="id">Activity ID</Label>
+      <label for="id">Activity ID</label>
       <Input>
         <input bind:value={id} class="st-input w-100" disabled name="id" />
         <i class="bi bi-lock-fill" slot="right" />
@@ -117,7 +116,7 @@
     </Field>
 
     <Field>
-      <Label for="activity-type">Activity Type</Label>
+      <label for="activity-type">Activity Type</label>
       <Input>
         <input
           bind:value={type}
@@ -130,7 +129,7 @@
     </Field>
 
     <Field>
-      <Label for="parent-id">Parent ID</Label>
+      <label for="parent-id">Parent ID</label>
       <Input>
         <input
           bind:value={parentId}
@@ -144,7 +143,7 @@
 
     {#if duration !== null}
       <Field>
-        <Label for="duration">Duration</Label>
+        <label for="duration">Duration</label>
         <Input>
           <input
             bind:value={duration}
@@ -158,9 +157,9 @@
     {/if}
 
     <Field>
-      <Label for="start-time" invalid={$startTimeField.invalid}>
+      <label class:error={$startTimeField.invalid} for="start-time">
         Start Time
-      </Label>
+      </label>
       <input
         bind:value={$startTimeField.value}
         autocomplete="off"
@@ -170,10 +169,7 @@
         name="start-time"
         on:change={onUpdateStartTime}
       />
-      <Error
-        invalid={$startTimeField.invalid}
-        error={$startTimeField.firstError}
-      />
+      <Error field={$startTimeField} />
     </Field>
 
     <Field>
