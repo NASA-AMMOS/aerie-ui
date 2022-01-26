@@ -9,7 +9,6 @@
     FormParameter,
   } from '../../types';
   import Field from '../form/Field.svelte';
-  import FieldInput from '../form/FieldInput.svelte';
   import Input from '../form/Input.svelte';
   import ConfirmModal from '../modals/Confirm.svelte';
   import Decomposition from './Decomposition.svelte';
@@ -115,15 +114,15 @@
   </span>
 
   <span slot="body">
-    <Field>
+    <fieldset>
       <label for="id">Activity ID</label>
       <Input>
         <input bind:value={id} class="st-input w-100" disabled name="id" />
         <i class="bi bi-lock-fill" slot="right" />
       </Input>
-    </Field>
+    </fieldset>
 
-    <Field>
+    <fieldset>
       <label for="activity-type">Activity Type</label>
       <Input>
         <input
@@ -134,9 +133,9 @@
         />
         <i class="bi bi-lock-fill" slot="right" />
       </Input>
-    </Field>
+    </fieldset>
 
-    <Field>
+    <fieldset>
       <label for="parent-id">Parent ID</label>
       <Input>
         <input
@@ -147,10 +146,10 @@
         />
         <i class="bi bi-lock-fill" slot="right" />
       </Input>
-    </Field>
+    </fieldset>
 
     {#if duration !== null}
-      <Field>
+      <fieldset>
         <label for="duration">Duration</label>
         <Input>
           <input
@@ -161,10 +160,10 @@
           />
           <i class="bi bi-lock-fill" slot="right" />
         </Input>
-      </Field>
+      </fieldset>
     {/if}
 
-    <FieldInput field={startTimeField} on:valid={onUpdateStartTime}>
+    <Field field={startTimeField} on:valid={onUpdateStartTime}>
       <label for="start-time" slot="label">Start Time</label>
       <input
         autocomplete="off"
@@ -173,9 +172,9 @@
         name="start-time"
       />
       <div slot="error" />
-    </FieldInput>
+    </Field>
 
-    <Field>
+    <fieldset>
       <details open>
         <summary>Parameters</summary>
         <div class="mt-2">
@@ -186,9 +185,9 @@
           />
         </div>
       </details>
-    </Field>
+    </fieldset>
 
-    <Field>
+    <fieldset>
       <details open={hasChildren}>
         <summary>Decomposition</summary>
         <div class="mt-2">
@@ -199,7 +198,7 @@
           {/if}
         </div>
       </details>
-    </Field>
+    </fieldset>
   </span>
 </Panel>
 

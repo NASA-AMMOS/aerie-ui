@@ -27,9 +27,9 @@
   import { goto, prefetch } from '$app/navigation';
   import { page } from '$app/stores';
   import ConfirmModal from '../../components/modals/Confirm.svelte';
-  import Field from '../../components/form/Field.svelte';
   import AlertError from '../../components/ui/AlertError.svelte';
   import Card from '../../components/ui/Card.svelte';
+  import Field from '../../components/form/Field.svelte';
   import Grid from '../../components/ui/Grid.svelte';
   import TopBar from '../../components/ui/TopBar.svelte';
   import { tooltip } from '../../utilities/tooltip';
@@ -46,7 +46,6 @@
   } from '../../utilities/requests';
   import { simulationTemplates } from '../../stores/simulation';
   import { field } from '../../stores/form';
-  import FieldInput from '../../components/form/FieldInput.svelte';
 
   export let models: CreatePlanModel[] = [];
   export let plans: CreatePlan[] = [];
@@ -115,11 +114,13 @@
   <Grid gap="0.2rem" columns="20% auto" padding="0.2rem">
     <Card>
       <form on:submit|preventDefault={createPlan}>
-        <Field visible={error !== null}>
-          <AlertError message={error} />
-        </Field>
+        {#if error !== null}
+          <fieldset>
+            <AlertError message={error} />
+          </fieldset>
+        {/if}
 
-        <FieldInput field={modelIdField}>
+        <Field field={modelIdField}>
           <label for="model" slot="label">Models</label>
           <select class="st-select w-100" data-type="number" name="model">
             <option value="-1" />
@@ -130,15 +131,15 @@
             {/each}
           </select>
           <div slot="error" />
-        </FieldInput>
+        </Field>
 
-        <FieldInput field={nameField}>
+        <Field field={nameField}>
           <label for="name" slot="label">Name</label>
           <input autocomplete="off" class="st-input w-100" name="name" />
           <div slot="error" />
-        </FieldInput>
+        </Field>
 
-        <FieldInput field={startTimeField}>
+        <Field field={startTimeField}>
           <label for="start-time" slot="label">Start Time</label>
           <input
             autocomplete="off"
@@ -147,9 +148,9 @@
             placeholder="YYYY-DDDThh:mm:ss"
           />
           <div slot="error" />
-        </FieldInput>
+        </Field>
 
-        <FieldInput field={endTimeField}>
+        <Field field={endTimeField}>
           <label for="end-time" slot="label">End Time</label>
           <input
             autocomplete="off"
@@ -158,9 +159,9 @@
             placeholder="YYYY-DDDThh:mm:ss"
           />
           <div slot="error" />
-        </FieldInput>
+        </Field>
 
-        <FieldInput field={simTemplateField}>
+        <Field field={simTemplateField}>
           <label for="simulation-templates" slot="label">
             Simulation Templates
           </label>
@@ -171,7 +172,7 @@
             name="simulation-templates"
           >
             {#if !$simulationTemplates.length}
-              <option>Empty</option>
+              <option value="null">Empty</option>
             {:else}
               <option value="null" />
               {#each $simulationTemplates as template}
@@ -181,9 +182,9 @@
               {/each}
             {/if}
           </select>
-        </FieldInput>
+        </Field>
 
-        <Field>
+        <fieldset>
           <button
             class="st-button create-button"
             disabled={!createButtonEnabled}
@@ -191,7 +192,7 @@
           >
             {createButtonText}
           </button>
-        </Field>
+        </fieldset>
       </form>
     </Card>
     <div>

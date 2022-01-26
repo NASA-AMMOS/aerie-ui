@@ -3,7 +3,6 @@
 <script lang="ts">
   import { createEventDispatcher, tick } from 'svelte';
   import Modal from './Modal.svelte';
-  import Field from '../form/Field.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -41,7 +40,7 @@
     </button>
   </div>
   <div class="content">
-    <Field>
+    <fieldset>
       <label for="name">Name</label>
       <input
         bind:this={nameElement}
@@ -53,7 +52,7 @@
         type="text"
         on:keyup={onKeyUp}
       />
-    </Field>
+    </fieldset>
   </div>
 
   <div class="footer">

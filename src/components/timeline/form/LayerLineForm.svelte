@@ -1,5 +1,4 @@
 <script lang="ts">
-  import Field from '../../form/Field.svelte';
   import type { Layer, LineLayer } from '../../../types';
   import Grid from '../../ui/Grid.svelte';
 
@@ -9,7 +8,7 @@
 </script>
 
 {#if lineLayer && lineLayer.chartType === 'line'}
-  <Field>
+  <fieldset>
     <label for="yAxisId">Y-Axis Id</label>
     <input
       class="st-input w-100"
@@ -18,10 +17,10 @@
       value={lineLayer.yAxisId}
       on:input
     />
-  </Field>
+  </fieldset>
 
   <Grid columns="33% 33% 33%">
-    <Field>
+    <fieldset>
       <label for="lineColor">Line Color</label>
       <input
         class="w-100"
@@ -30,8 +29,9 @@
         value={lineLayer.lineColor}
         on:input
       />
-    </Field>
-    <Field>
+    </fieldset>
+
+    <fieldset>
       <label for="lineWidth">Line Width</label>
       <input
         class="st-input w-100"
@@ -40,8 +40,9 @@
         value={lineLayer.lineWidth}
         on:input
       />
-    </Field>
-    <Field>
+    </fieldset>
+
+    <fieldset>
       <label for="pointRadius">Point Radius</label>
       <input
         class="st-input w-100"
@@ -50,6 +51,6 @@
         value={lineLayer.pointRadius}
         on:input
       />
-    </Field>
+    </fieldset>
   </Grid>
 {/if}

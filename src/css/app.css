@@ -31,6 +31,11 @@ body {
   font-weight: 300;
 }
 
+fieldset {
+  border: 0;
+  margin: 0;
+}
+
 label.error {
   color: var(--st-red);
 }

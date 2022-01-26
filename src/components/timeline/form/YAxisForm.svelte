@@ -1,6 +1,5 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import Field from '../../form/Field.svelte';
   import Grid from '../../ui/Grid.svelte';
   import type { Axis, Label as AxisLabel } from '../../../types';
   import { getTarget } from '../../../utilities/generic';
@@ -69,7 +68,7 @@
 </script>
 
 <Grid columns="33% 33% 33%">
-  <Field>
+  <fieldset>
     <label class:error={idError !== null} for="id"> Id </label>
     <input
       class="st-input w-100"
@@ -79,8 +78,9 @@
       value={axis.id}
       on:input|stopPropagation={updateId}
     />
-  </Field>
-  <Field>
+  </fieldset>
+
+  <fieldset>
     <label for="label"> Label Text </label>
     <input
       class="st-input w-100"
@@ -89,8 +89,9 @@
       value={axis.label.text}
       on:input|stopPropagation={updateLabel}
     />
-  </Field>
-  <Field>
+  </fieldset>
+
+  <fieldset>
     <label for="color"> Axis Color </label>
     <input
       class="w-100"
@@ -99,11 +100,11 @@
       value={axis.color}
       on:input|stopPropagation={updateAxis}
     />
-  </Field>
+  </fieldset>
 </Grid>
 
 <Grid columns="33% 33% 33%">
-  <Field>
+  <fieldset>
     <label for="domainMin"> Domain Min </label>
     <input
       class="st-input w-100"
@@ -112,8 +113,9 @@
       value={axis.scaleDomain[0]}
       on:input|stopPropagation={updateScaleDomain}
     />
-  </Field>
-  <Field>
+  </fieldset>
+
+  <fieldset>
     <label for="domainMax"> Domain Max </label>
     <input
       class="st-input w-100"
@@ -122,8 +124,9 @@
       value={axis.scaleDomain[1]}
       on:input|stopPropagation={updateScaleDomain}
     />
-  </Field>
-  <Field>
+  </fieldset>
+
+  <fieldset>
     <label for="tickCount"> Tick Count </label>
     <input
       class="st-input w-100"
@@ -132,5 +135,5 @@
       value={axis.tickCount}
       on:input|stopPropagation={updateAxis}
     />
-  </Field>
+  </fieldset>
 </Grid>

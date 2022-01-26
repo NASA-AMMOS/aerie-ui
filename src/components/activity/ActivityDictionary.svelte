@@ -3,7 +3,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import type { ActivityType } from '../../types';
-  import Field from '../form/Field.svelte';
   import Input from '../form/Input.svelte';
   import ListItem from '../ui/ListItem.svelte';
   import { compare } from '../../utilities/generic';
@@ -44,13 +43,13 @@
 </script>
 
 <div class="p-1">
-  <Field class="w-100 m-0 p-0 pb-1">
+  <fieldset class="w-100 m-0 p-0 pb-1">
     <label for="search">Find an Activity Type</label>
     <Input>
       <i class="bi bi-search" slot="left" />
       <input bind:value={searchText} class="st-input w-100" name="search" />
     </Input>
-  </Field>
+  </fieldset>
 
   {#if sortedActivityTypes.length}
     {#each sortedActivityTypes as activityType}

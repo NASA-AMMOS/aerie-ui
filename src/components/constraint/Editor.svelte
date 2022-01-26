@@ -2,7 +2,6 @@
 
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte';
-  import Field from '../form/Field.svelte';
   import Card from '../ui/Card.svelte';
   import CodeMirrorJsonEditor from '../ui/CodeMirrorJsonEditor.svelte';
   import AlertError from '../ui/AlertError.svelte';
@@ -96,15 +95,15 @@
     <details open>
       <summary class="p-2">Constraint Metadata</summary>
       <Card class="m-2">
-        <Field>
+        <fieldset>
           <label for="type">Type</label>
           <select bind:value={type} class="st-select w-100" name="type">
             <option value="model">Model</option>
             <option value="plan">Plan</option>
           </select>
-        </Field>
+        </fieldset>
 
-        <Field>
+        <fieldset>
           <label for="name">Name</label>
           <input
             bind:value={name}
@@ -113,9 +112,9 @@
             name="name"
             required
           />
-        </Field>
+        </fieldset>
 
-        <Field>
+        <fieldset>
           <label for="description">Description</label>
           <input
             bind:value={description}
@@ -123,9 +122,9 @@
             class="st-input w-100"
             name="description"
           />
-        </Field>
+        </fieldset>
 
-        <Field>
+        <fieldset>
           <label for="summary">Summary</label>
           <input
             bind:value={summary}
@@ -133,7 +132,7 @@
             class="st-input w-100"
             name="summary"
           />
-        </Field>
+        </fieldset>
       </Card>
     </details>
 

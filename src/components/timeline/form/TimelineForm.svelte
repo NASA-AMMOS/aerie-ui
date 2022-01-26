@@ -3,7 +3,6 @@
 <script lang="ts">
   import LayerLineForm from './LayerLineForm.svelte';
   import LayerXRangeForm from './LayerXRangeForm.svelte';
-  import Field from '../../form/Field.svelte';
   import ConfirmModal from '../../modals/Confirm.svelte';
   import Card from '../../ui/Card.svelte';
   import Grid from '../../ui/Grid.svelte';
@@ -79,7 +78,7 @@
       </span>
       {#if $selectedTimeline !== null}
         <Grid columns="50% 50%">
-          <Field>
+          <fieldset>
             <label for="marginLeft">Margin Left</label>
             <input
               class="st-input w-100"
@@ -88,9 +87,9 @@
               value={$selectedTimeline.marginLeft}
               on:input={updateTimelineEvent}
             />
-          </Field>
+          </fieldset>
 
-          <Field>
+          <fieldset>
             <label for="marginRight">Margin Right</label>
             <input
               class="st-input w-100"
@@ -99,9 +98,9 @@
               value={$selectedTimeline.marginRight}
               on:input={updateTimelineEvent}
             />
-          </Field>
+          </fieldset>
 
-          <Field>
+          <fieldset>
             <label for="rows">Rows</label>
             {#if $selectedTimeline.rows.length}
               <select
@@ -119,9 +118,9 @@
             {:else}
               <input class="st-input w-100" disabled value="Empty" />
             {/if}
-          </Field>
+          </fieldset>
 
-          <Field>
+          <fieldset>
             <label for="verticalGuides">Vertical Guides</label>
             {#if $selectedTimeline.verticalGuides.length}
               <select
@@ -138,12 +137,12 @@
             {:else}
               <input class="st-input w-100" disabled value="Empty" />
             {/if}
-          </Field>
+          </fieldset>
         </Grid>
       {:else}
-        <Field>
+        <fieldset>
           <Card class="p-1">No timeline selected</Card>
-        </Field>
+        </fieldset>
       {/if}
     </Details>
 
@@ -162,7 +161,7 @@
       </span>
       {#if $selectedRow !== null}
         <Grid columns="50% 50%">
-          <Field>
+          <fieldset>
             <label for="height">Height</label>
             <input
               class="st-input w-100"
@@ -171,9 +170,9 @@
               value={$selectedRow.height}
               on:input={updateRowEvent}
             />
-          </Field>
+          </fieldset>
 
-          <Field>
+          <fieldset>
             <label for="horizontalGuides">Horizontal Guides</label>
             {#if $selectedRow.horizontalGuides.length}
               <select
@@ -190,9 +189,9 @@
             {:else}
               <input class="st-input w-100" disabled value="Empty" />
             {/if}
-          </Field>
+          </fieldset>
 
-          <Field>
+          <fieldset>
             <label for="yAxes">Y-Axes</label>
             {#if $selectedRow.yAxes.length}
               <select
@@ -210,9 +209,9 @@
             {:else}
               <input class="st-input w-100" disabled value="Empty" />
             {/if}
-          </Field>
+          </fieldset>
 
-          <Field>
+          <fieldset>
             <label for="layers">Layers</label>
             {#if $selectedRow.layers.length}
               <select
@@ -230,12 +229,12 @@
             {:else}
               <input class="st-input w-100" disabled value="Empty" />
             {/if}
-          </Field>
+          </fieldset>
         </Grid>
       {:else}
-        <Field>
+        <fieldset>
           <Card class="p-1">No row selected</Card>
-        </Field>
+        </fieldset>
       {/if}
     </Details>
 
@@ -269,9 +268,9 @@
           on:update={updateYAxisEvent}
         />
       {:else}
-        <Field>
+        <fieldset>
           <Card class="p-1">No y-axis selected</Card>
-        </Field>
+        </fieldset>
       {/if}
     </Details>
 
@@ -290,7 +289,7 @@
         {/if}
       </span>
       {#if $selectedLayer !== null}
-        <Field>
+        <fieldset>
           <label for="chartType">Chart Type</label>
           <select
             class="st-select w-100"
@@ -302,7 +301,7 @@
             <option value="line"> Line </option>
             <option value="x-range"> X-Range </option>
           </select>
-        </Field>
+        </fieldset>
 
         <LayerLineForm layer={$selectedLayer} on:input={updateLayerEvent} />
 
@@ -312,9 +311,9 @@
           on:input={updateLayerEvent}
         />
       {:else}
-        <Field>
+        <fieldset>
           <Card class="p-1">No layer selected</Card>
-        </Field>
+        </fieldset>
       {/if}
     </Details>
   </span>
