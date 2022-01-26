@@ -9,6 +9,8 @@
     FormParameter,
   } from '../../types';
   import Field from '../form/Field.svelte';
+  import FieldInput from '../form/FieldInput.svelte';
+  import Input from '../form/Input.svelte';
   import ConfirmModal from '../modals/Confirm.svelte';
   import Decomposition from './Decomposition.svelte';
   import Parameters from '../parameters/Parameters.svelte';
@@ -21,9 +23,7 @@
     updateFormParameter,
   } from '../../utilities/parameters';
   import { tooltip } from '../../utilities/tooltip';
-  import Input from '../form/Input.svelte';
   import { field } from '../../stores/form';
-  import Error from '../form/Error.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -32,20 +32,28 @@
   export let argumentsMap: ArgumentsMap = {};
   export let children: string[] | null = null;
   export let duration: number | null;
-  export let id: number | undefined;
+  export let id: number;
   export let modelId: number | undefined;
   export let parent: string | null = null;
   export let startTime: string = '';
   export let type: string = '';
 
   let confirmDeleteActivityModal: ConfirmModal | null = null;
+  let currentId: number = id;
+  let startTimeField = field<string>(startTime, [required, timestamp]);
 
   $: activityType = activityTypes.find(({ name }) => name === type);
   $: formParameters = getFormParameters(activityType.parameters, argumentsMap);
   $: hasChildren = children ? children.length > 0 : false;
   $: isChild = parent !== null;
   $: parentId = isChild ? parent : 'None (Root Activity)';
-  $: startTimeField = field<string>(startTime, [required, timestamp]);
+  $: $startTimeField.value = startTime;
+
+  $: if (id !== currentId) {
+    // Keep track if the activity changes so we can update the fields appropriately.
+    currentId = id;
+    startTimeField = field<string>(startTime, [required, timestamp]);
+  }
 
   function getArguments(formParameter: FormParameter): ArgumentsMap {
     const { name, value } = formParameter;
@@ -156,21 +164,16 @@
       </Field>
     {/if}
 
-    <Field>
-      <label class:error={$startTimeField.invalid} for="start-time">
-        Start Time
-      </label>
+    <FieldInput field={startTimeField} on:valid={onUpdateStartTime}>
+      <label for="start-time" slot="label">Start Time</label>
       <input
-        bind:value={$startTimeField.value}
         autocomplete="off"
         class="st-input w-100"
-        class:error={$startTimeField.invalid}
         disabled={isChild}
         name="start-time"
-        on:change={onUpdateStartTime}
       />
-      <Error field={$startTimeField} />
-    </Field>
+      <div slot="error" />
+    </FieldInput>
 
     <Field>
       <details open>

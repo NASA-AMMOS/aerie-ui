@@ -46,7 +46,7 @@
   } from '../../utilities/requests';
   import { simulationTemplates } from '../../stores/simulation';
   import { field } from '../../stores/form';
-  import Error from '../../components/form/Error.svelte';
+  import FieldInput from '../../components/form/FieldInput.svelte';
 
   export let models: CreatePlanModel[] = [];
   export let plans: CreatePlan[] = [];
@@ -54,11 +54,11 @@
   let confirmDeletePlan: ConfirmModal | null = null;
   let createButtonText = 'Create';
   let error: string | null = null;
-  let simulationTemplateId: number | null = null;
 
   let endTimeField = field<string>('', [required, timestamp]);
-  let modelIdField = field<number>(-1, [required, min(1)]);
+  let modelIdField = field<number>(-1, [min(1, 'Field is required')]);
   let nameField = field<string>('', [required]);
+  let simTemplateField = field<number | null>(null);
   let startTimeField = field<string>('', [required, timestamp]);
 
   $: createButtonEnabled =
@@ -88,7 +88,7 @@
       $nameField.value,
       $startTimeField.value,
     );
-    await reqCreateSimulation(newPlan.id, simulationTemplateId);
+    await reqCreateSimulation(newPlan.id, $simTemplateField.value);
 
     if (newPlan) {
       plans = [...plans, newPlan];
@@ -119,99 +119,69 @@
           <AlertError message={error} />
         </Field>
 
-        <Field>
-          <label for="model">Models</label>
-          <select
-            class="st-select w-100"
-            name="model"
-            value={$modelIdField.value}
-            on:change={({ currentTarget }) => {
-              const { value } = currentTarget;
-              if (value !== '') {
-                $modelIdField.value = parseFloat(value);
-              } else {
-                $modelIdField.value = -1;
-              }
-            }}
-          >
-            <option value="" />
+        <FieldInput field={modelIdField}>
+          <label for="model" slot="label">Models</label>
+          <select class="st-select w-100" data-type="number" name="model">
+            <option value="-1" />
             {#each sortedModels as model}
               <option value={model.id}>
                 {model.name}
               </option>
             {/each}
           </select>
-        </Field>
+          <div slot="error" />
+        </FieldInput>
 
-        <Field>
-          <label class:error={$nameField.invalid} for="name"> Name </label>
+        <FieldInput field={nameField}>
+          <label for="name" slot="label">Name</label>
+          <input autocomplete="off" class="st-input w-100" name="name" />
+          <div slot="error" />
+        </FieldInput>
+
+        <FieldInput field={startTimeField}>
+          <label for="start-time" slot="label">Start Time</label>
           <input
-            bind:value={$nameField.value}
             autocomplete="off"
             class="st-input w-100"
-            class:error={$nameField.invalid}
-            name="name"
-          />
-          <Error field={$nameField} />
-        </Field>
-
-        <Field>
-          <label class:error={$startTimeField.invalid} for="start-time">
-            Start Time
-          </label>
-          <input
-            bind:value={$startTimeField.value}
-            autocomplete="off"
-            class="st-input w-100"
-            class:error={$startTimeField.invalid}
             name="start-time"
             placeholder="YYYY-DDDThh:mm:ss"
           />
-          <Error field={$startTimeField} />
-        </Field>
+          <div slot="error" />
+        </FieldInput>
 
-        <Field>
-          <label class:error={$endTimeField.invalid} for="end-time">
-            End Time
-          </label>
+        <FieldInput field={endTimeField}>
+          <label for="end-time" slot="label">End Time</label>
           <input
-            bind:value={$endTimeField.value}
             autocomplete="off"
             class="st-input w-100"
-            class:error={$endTimeField.invalid}
             name="end-time"
             placeholder="YYYY-DDDThh:mm:ss"
           />
-          <Error field={$endTimeField} />
-        </Field>
+          <div slot="error" />
+        </FieldInput>
 
-        <Field>
-          <label for="simulation-templates">Simulation Templates</label>
-          {#if $simulationTemplates.length}
-            <select
-              class="st-select w-100"
-              name="simulation-templates"
-              value={simulationTemplateId}
-              on:change={({ currentTarget }) => {
-                const { value } = currentTarget;
-                if (value !== '') {
-                  simulationTemplateId = parseFloat(value);
-                } else {
-                  simulationTemplateId = null;
-                }
-              }}
-            >
-              <option value="" />
+        <FieldInput field={simTemplateField}>
+          <label for="simulation-templates" slot="label">
+            Simulation Templates
+          </label>
+          <select
+            class="st-select w-100"
+            data-type="number"
+            disabled={!$simulationTemplates.length}
+            name="simulation-templates"
+          >
+            {#if !$simulationTemplates.length}
+              <option>Empty</option>
+            {:else}
+              <option value="null" />
               {#each $simulationTemplates as template}
                 <option value={template.id}>
                   {template.description}
                 </option>
               {/each}
-            </select>
-          {:else}
-            <input class="st-input w-100" disabled value="Empty" />
-          {/if}
-        </Field>
+            {/if}
+          </select>
+        </FieldInput>
 
         <Field>
           <button

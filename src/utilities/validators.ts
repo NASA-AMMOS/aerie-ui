@@ -1,9 +1,7 @@
-import type { ValidationResult, ValidatorFn } from '../types';
+import type { Field, ValidationResult } from '../types';
 
-export async function validate<T>(
-  validators: ValidatorFn<T>[],
-  value: T,
-): Promise<string[]> {
+export async function validateField<T>(field: Field<T>): Promise<string[]> {
+  const { validators, value } = field;
   const errors: string[] = [];
 
   for (const validator of validators) {
@@ -17,11 +15,15 @@ export async function validate<T>(
   return errors;
 }
 
-export function min(min: number): (value: number) => Promise<ValidationResult> {
+export function min(
+  min: number,
+  errorMessage?: string,
+): (value: number) => Promise<ValidationResult> {
   return (value: number): Promise<ValidationResult> =>
     new Promise(resolve => {
       if (value < min) {
-        return resolve(`Field cannot be less than ${min}`);
+        const error = errorMessage ?? `Field cannot be less than ${min}`;
+        return resolve(error);
       } else {
         return resolve(null);
       }

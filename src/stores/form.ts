@@ -1,6 +1,6 @@
+import type { Writable } from 'svelte/store';
 import { writable } from 'svelte/store';
 import type { Field, ValidatorFn } from '../types';
-import { validate } from '../utilities/validators';
 
 function initialField<T>(
   initialValue: T,
@@ -13,9 +13,7 @@ function initialField<T>(
     firstError: null,
     initialValue,
     invalid: false,
-    pristine: true,
-    touched: false,
-    touchedAndValid: false,
+    pending: false,
     valid: true,
     validators: initialValidators,
     value: initialValue,
@@ -25,32 +23,24 @@ function initialField<T>(
 export function field<T>(
   initialValue: T,
   initialValidators: ValidatorFn<T>[] = [],
-) {
+): Writable<Field<T>> {
   const field: Field<T> = initialField(initialValue, initialValidators);
   const { set, subscribe, update } = writable<Field<T>>(field);
 
   return {
-    async set(newField: Field<T>) {
+    set(newField: Field<T>) {
       const dirty = newField.initialValue !== newField.value;
-      const errors = await validate(newField.validators, newField.value);
-      const firstError = errors.length ? errors[0] : null;
-      const invalid = errors.length > 0;
-      const pristine = !dirty;
-      const touched = true;
+      const firstError = newField.errors.length ? newField.errors[0] : null;
+      const invalid = newField.errors.length > 0;
       const valid = !invalid;
       const dirtyAndValid = dirty && valid;
-      const touchedAndValid = touched && valid;
 
       return set({
         ...newField,
         dirty,
         dirtyAndValid,
-        errors,
         firstError,
         invalid,
-        pristine,
-        touched,
-        touchedAndValid,
         valid,
       });
     },

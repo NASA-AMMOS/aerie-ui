@@ -5,9 +5,7 @@ export type Field<T> = {
   firstError: string;
   initialValue: T;
   invalid: boolean;
-  pristine: boolean;
-  touched: boolean;
-  touchedAndValid: boolean;
+  pending: boolean;
   valid: boolean;
   validators: ValidatorFn<T>[];
   value: T;
