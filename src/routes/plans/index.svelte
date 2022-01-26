@@ -73,6 +73,7 @@
     const queryModelId = $page.url.searchParams.get('modelId');
     if (queryModelId) {
       $modelIdField.value = parseFloat(queryModelId);
+      modelIdField.validate();
       removeQueryParam('modelId');
     }
   });

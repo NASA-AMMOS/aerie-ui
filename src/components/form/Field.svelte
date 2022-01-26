@@ -2,17 +2,15 @@
 
 <script lang="ts">
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
-  import type { Writable } from 'svelte/store';
-  import type { Field, ValidationResult } from '../../types';
+  import type { FieldStore } from '../../types';
   import { getTarget } from '../../utilities/generic';
   import { tooltip } from '../../utilities/tooltip';
-  import { validateField } from '../../utilities/validators';
 
   const dispatch = createEventDispatcher();
 
-  export let field: Writable<Field<any>>;
+  export let field: FieldStore<any>;
 
-  let container: HTMLFieldSetElement;
+  let container: HTMLFieldSetElement | null;
   let error: HTMLDivElement | null;
   let input: HTMLInputElement | null;
   let label: HTMLLabelElement | null;
@@ -64,13 +62,13 @@
     label = container.querySelector('label');
     select = container.querySelector('select');
 
-    if (input) {
+    if (input && field) {
       input.addEventListener('blur', onBlur);
       input.addEventListener('input', onInput);
       input.value = $field.value;
     }
 
-    if (select) {
+    if (select && field) {
       select.addEventListener('blur', onBlur);
       select.addEventListener('input', onInput);
       select.value = $field.value;
@@ -89,17 +87,10 @@
     }
   });
 
-  function onBlur(event: FocusEvent) {
+  async function onBlur(event: FocusEvent) {
     const { value } = getTarget(event);
-    $field.value = value;
-    $field.pending = true;
-    validateField($field).then((errors: ValidationResult[]) => {
-      $field.errors = errors;
-      $field.pending = false;
-      if ($field.valid) {
-        dispatch('valid');
-      }
-    });
+    const valid = await field.validate(value);
+    if (valid) dispatch('valid');
   }
 
   function onInput(event: Event) {
