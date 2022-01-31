@@ -148,7 +148,7 @@
       <MonacoEditor
         language="json"
         value={definition}
-        on:onDidChangeModelContent={onTextChanged}
+        on:didChangeModelContent={onTextChanged}
       />
     </details>
   </span>

@@ -629,7 +629,7 @@
         <MonacoEditor
           language="json"
           value={$viewText}
-          on:onDidChangeModelContent={onViewTextChanged}
+          on:didChangeModelContent={onViewTextChanged}
         />
       {/if}
     </div>

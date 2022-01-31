@@ -1,5 +1,5 @@
 import type {
-  editor,
+  editor as Editor,
   Environment,
 } from 'monaco-editor/esm/vs/editor/editor.api';
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
@@ -12,16 +12,11 @@ declare global {
   }
 }
 
-export type Editor = editor.IStandaloneCodeEditor;
-export type ModelContentChangedEvent = editor.IModelContentChangedEvent;
-export type Options = editor.IStandaloneEditorConstructionOptions;
-export type OverrideServices = editor.IEditorOverrideServices;
-
 export async function createMonacoEditor(
   domElement: HTMLElement,
-  options?: Options,
-  override?: OverrideServices,
-): Promise<Editor> {
+  options?: Editor.IStandaloneEditorConstructionOptions,
+  override?: Editor.IEditorOverrideServices,
+): Promise<Editor.IStandaloneCodeEditor> {
   self.MonacoEnvironment = self.MonacoEnvironment ?? {
     getWorker(_moduleId: unknown, label: string): Worker {
       if (label === 'json') {
@@ -34,7 +29,6 @@ export async function createMonacoEditor(
     },
   };
 
-  // TODO: Import only what we need instead of everything.
   const monaco = await import('monaco-editor');
   const editor = monaco.editor.create(domElement, options, override);
 

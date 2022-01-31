@@ -1,13 +1,7 @@
 <svelte:options accessors={true} immutable={true} />
 
 <script lang="ts">
-  import type { editor as monaco } from 'monaco-editor/esm/vs/editor/editor.api';
-  import type {
-    Editor,
-    ModelContentChangedEvent,
-    Options,
-    OverrideServices,
-  } from './monaco';
+  import type { editor as Editor } from 'monaco-editor/esm/vs/editor/editor.api';
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
   import { createMonacoEditor } from './monaco';
 
@@ -15,27 +9,26 @@
 
   export let automaticLayout: boolean = true;
   export let language: string = '';
-  export let lineNumbers: monaco.LineNumbersType = 'on';
-  export let minimap: monaco.IEditorMinimapOptions = { enabled: false };
-  export let options: Options = undefined;
-  export let override: OverrideServices = undefined;
+  export let lineNumbers: Editor.LineNumbersType = 'on';
+  export let minimap: Editor.IEditorMinimapOptions = { enabled: false };
+  export let overrideServices: Editor.IEditorOverrideServices = undefined;
   export let scrollBeyondLastLine: boolean = false;
   export let value: string = '';
 
   let div: HTMLDivElement | null = null;
-  let editor: Editor;
+  let editor: Editor.IStandaloneCodeEditor;
 
   $: if (editor) {
     const currentValue = editor.getValue();
     if (value !== currentValue) {
       const scrollTop = editor.getScrollTop(); // setValue can nuke scroll position.
-      editor.getModel().setValue(value); // TODO: use applyEdits API instead?
+      editor.getModel().setValue(value);
       editor.setScrollPosition({ scrollTop });
     }
   }
 
   onMount(async () => {
-    const individualOptions: Options = {
+    const options: Editor.IStandaloneEditorConstructionOptions = {
       automaticLayout,
       language,
       lineNumbers,
@@ -43,12 +36,12 @@
       scrollBeyondLastLine,
       value,
     };
-    const monacoOptions: Options = options ?? individualOptions;
 
-    editor = await createMonacoEditor(div, monacoOptions, override);
-    editor.onDidChangeModelContent((e: ModelContentChangedEvent) => {
+    editor = await createMonacoEditor(div, options, overrideServices);
+
+    editor.onDidChangeModelContent((e: Editor.IModelContentChangedEvent) => {
       const newValue = editor.getModel().getValue();
-      dispatch('onDidChangeModelContent', { e, value: newValue });
+      dispatch('didChangeModelContent', { e, value: newValue });
     });
   });
 
