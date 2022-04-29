@@ -4,20 +4,7 @@
   import Split from 'split-grid';
   import type { SplitInstance } from 'split-grid';
   import { tick } from 'svelte';
-  import ActivityForm from '../activity/ActivityForm.svelte';
-  import ActivityTable from '../activity/ActivityTable.svelte';
-  import ActivityTypes from '../activity/ActivityTypes.svelte';
-  import ConstraintEditor from '../constraint/ConstraintEditor.svelte';
-  import Constraints from '../constraint/Constraints.svelte';
-  import ConstraintViolations from '../constraint/ConstraintViolations.svelte';
-  import SchedulingEditor from '../scheduling/SchedulingEditor.svelte';
-  import Scheduling from '../scheduling/Scheduling.svelte';
-  import Simulation from '../simulation/Simulation.svelte';
-  import Timeline from '../timeline/Timeline.svelte';
-  import TimelineForm from '../timeline/form/TimelineForm.svelte';
-  import IFrame from '../ui/IFrame.svelte';
-  import ViewEditor from '../view/ViewEditor.svelte';
-  import Views from '../view/Views.svelte';
+  import GridComponent from './GridComponent.svelte';
   import { viewActions } from '../../stores/views';
 
   export let grid: Grid;
@@ -86,35 +73,7 @@
   </div>
 {:else if grid?.type === 'component'}
   <div class="component" data-component-name={grid.componentName}>
-    {#if grid.componentName === 'ActivityForm'}
-      <ActivityForm gridId={grid.id} />
-    {:else if grid.componentName === 'ActivityTable'}
-      <ActivityTable activityTableId={grid?.activityTableId} />
-    {:else if grid.componentName === 'ActivityTypes'}
-      <ActivityTypes gridId={grid.id} />
-    {:else if grid.componentName === 'ConstraintEditor'}
-      <ConstraintEditor gridId={grid.id} />
-    {:else if grid.componentName === 'Constraints'}
-      <Constraints gridId={grid.id} />
-    {:else if grid.componentName === 'ConstraintViolations'}
-      <ConstraintViolations gridId={grid.id} />
-    {:else if grid.componentName === 'IFrame'}
-      <IFrame iFrameId={grid?.iFrameId} />
-    {:else if grid.componentName === 'SchedulingEditor'}
-      <SchedulingEditor gridId={grid.id} />
-    {:else if grid.componentName === 'Scheduling'}
-      <Scheduling gridId={grid.id} />
-    {:else if grid.componentName === 'Simulation'}
-      <Simulation gridId={grid.id} />
-    {:else if grid.componentName === 'Timeline'}
-      <Timeline timelineId={grid?.timelineId} />
-    {:else if grid.componentName === 'TimelineForm'}
-      <TimelineForm gridId={grid.id} />
-    {:else if grid.componentName === 'ViewEditor'}
-      <ViewEditor gridId={grid.id} />
-    {:else if grid.componentName === 'Views'}
-      <Views gridId={grid.id} />
-    {/if}
+    <GridComponent {grid} />
   </div>
 {/if}
 
