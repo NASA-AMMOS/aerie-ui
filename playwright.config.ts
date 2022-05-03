@@ -8,13 +8,13 @@ const config: PlaywrightTestConfig = {
     ['json', { outputFile: 'test-results/json-results.json' }],
     ['junit', { outputFile: 'test-results/junit-results.xml' }],
   ],
-  retries: process.env.CI ? 1 : 0,
+  retries: 0,
   testDir: './tests',
   use: {
     baseURL: 'http://localhost:3000',
     browserName: 'chromium',
-    trace: process.env.CI ? 'on-first-retry' : 'off',
-    video: process.env.CI ? 'on-first-retry' : 'off',
+    trace: process.env.CI ? 'retain-on-failure' : 'off',
+    video: process.env.CI ? 'retain-on-failure' : 'off',
   },
   webServer: {
     command: 'node build',
