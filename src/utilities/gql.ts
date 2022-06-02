@@ -428,6 +428,14 @@ const gql = {
     }
   `,
 
+  RESOURCE_SAMPLES: `#graphql
+    query ResourceSamples($planId: Int!) {
+      resourceSamples(planId: $planId) {
+        resourceSamples
+      }
+    }
+  `,
+
   SCHEDULE: `#graphql
     query Schedule($specificationId: Int!) {
       schedule(specificationId: $specificationId){

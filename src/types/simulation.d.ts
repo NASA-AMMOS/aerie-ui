@@ -28,6 +28,11 @@ type ResourceType = {
   schema: ValueSchema;
 };
 
+type ResourceSamples = {
+  name: string;
+  schema: ValueSchema;
+};
+
 type ResourceValue = {
   x: number;
   y: number | string;
