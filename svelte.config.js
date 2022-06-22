@@ -8,9 +8,9 @@ const config = {
     vite: {
       test: {
         environment: 'jsdom',
-        include: ['./tests/unit/**/*.test.ts'],
-        outputFile: 'unit-test-results/json-results.json',
-        reporters: 'json',
+        include: ['./src/**/*.test.ts'],
+        outputFile: process.env.CI ? 'unit-test-results/json-results.json' : null,
+        reporters: process.env.CI ? 'json' : null,
       },
     },
   },
