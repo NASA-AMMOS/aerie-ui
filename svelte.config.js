@@ -9,8 +9,8 @@ const config = {
       test: {
         environment: 'jsdom',
         include: ['./src/**/*.test.ts'],
-        outputFile: process.env.CI ? 'unit-test-results/json-results.json' : null,
-        reporters: process.env.CI ? 'json' : null,
+        outputFile: 'unit-test-results/json-results.json',
+        reporters: 'json',
       },
     },
   },
