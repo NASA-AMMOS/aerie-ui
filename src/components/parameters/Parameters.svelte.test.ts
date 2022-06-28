@@ -29,9 +29,7 @@ describe('Parameters component', () => {
         value: 'value 1',
       },
     ];
-    const { getAllByRole } = render(Parameters, {
-      formParameters,
-    });
+    const { getAllByRole } = render(Parameters, { formParameters });
 
     expect(getAllByRole('textbox').length).toBe(2);
     expect((getAllByRole('textbox')[0] as HTMLInputElement).value).toEqual('value 1');
