@@ -149,24 +149,12 @@
 
           <Field field={startTimeField} on:blur={updateDurationString} on:keydown={updateDurationString}>
             <label for="start-time" slot="label">Start Time - YYYY-DDDThh:mm:ss</label>
-            <input
-              autocomplete="off"
-              class="st-input w-100"
-              id="start-time"
-              name="start-time"
-              placeholder="YYYY-DDDThh:mm:ss"
-            />
+            <input autocomplete="off" class="st-input w-100" name="start-time" placeholder="YYYY-DDDThh:mm:ss" />
           </Field>
 
           <Field field={endTimeField} on:blur={updateDurationString} on:keydown={updateDurationString}>
             <label for="end-time" slot="label">End Time - YYYY-DDDThh:mm:ss</label>
-            <input
-              autocomplete="off"
-              class="st-input w-100"
-              id="end-time"
-              name="end-time"
-              placeholder="YYYY-DDDThh:mm:ss"
-            />
+            <input autocomplete="off" class="st-input w-100" name="end-time" placeholder="YYYY-DDDThh:mm:ss" />
           </Field>
 
           <fieldset>
