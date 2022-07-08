@@ -2,9 +2,11 @@ import { cleanup, fireEvent, render, waitFor } from '@testing-library/svelte';
 import effects from '../../../src/utilities/effects';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import Plans from './index.svelte';
+import * as subscribable from '../../stores/subscribable';
 
 describe('Plans view', () => {
   beforeAll(() => {
+    vi.spyOn(subscribable, 'gqlSubscribable').mockResolvedValue({} as GqlSubscribable<unknown>);
     vi.spyOn(effects, 'getPlansAndModels').mockResolvedValue({
       models: [],
       plans: [],
