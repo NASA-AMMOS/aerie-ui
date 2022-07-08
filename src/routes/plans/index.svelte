@@ -16,8 +16,9 @@
   import { simulationTemplates } from '../../stores/simulation';
   import effects from '../../utilities/effects';
   import { compare, removeQueryParam } from '../../utilities/generic';
+  import { convertUsToDurationString, getUnixEpochTime } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
-  import { min, required, timestamp } from '../../utilities/validators';
+  import { min, required, timestamp, validateField } from '../../utilities/validators';
 
   export const load: Load = async ({ session }) => {
     if (!session.user) {
@@ -44,6 +45,7 @@
 
   let filterText: string = '';
   let nameInputField: HTMLInputElement;
+  let durationString: string = convertUsToDurationString(0);
 
   let endTimeField = field<string>('', [required, timestamp]);
   let modelIdField = field<number>(-1, [min(1, 'Field is required')]);
@@ -69,6 +71,7 @@
   $: simulationTemplates.setVariables({ modelId: $modelIdField.value });
   $: sortedModels = models.sort((a, b) => compare(a.name, b.name));
   $: sortedPlans = filteredPlans.sort((a, b) => compare(a.name, b.name));
+  $: updateDurationString($startTimeField, $endTimeField);
 
   onMount(() => {
     const queryModelId = $page.url.searchParams.get('modelId');
@@ -101,6 +104,16 @@
 
     if (success) {
       plans = plans.filter(plan => plan.id !== id);
+    }
+  }
+
+  async function updateDurationString(startTime: globalThis.Field<string>, endTime: globalThis.Field<string>) {
+    const startFieldErrors = await validateField(startTime);
+    const endFieldErrors = await validateField(endTime);
+    if (!startFieldErrors.length && !endFieldErrors.length) {
+      durationString = convertUsToDurationString(
+        (getUnixEpochTime(endTime.value) - getUnixEpochTime(startTime.value)) * 1000,
+      );
     }
   }
 </script>
@@ -139,13 +152,30 @@
 
           <Field field={startTimeField}>
             <label for="start-time" slot="label">Start Time - YYYY-DDDThh:mm:ss</label>
-            <input autocomplete="off" class="st-input w-100" name="start-time" />
+            <input
+              autocomplete="off"
+              class="st-input w-100"
+              id="start-time"
+              name="start-time"
+              placeholder="YYYY-DDDThh:mm:ss"
+            />
           </Field>
 
           <Field field={endTimeField}>
             <label for="end-time" slot="label">End Time - YYYY-DDDThh:mm:ss</label>
-            <input autocomplete="off" class="st-input w-100" name="end-time" />
+            <input
+              autocomplete="off"
+              class="st-input w-100"
+              id="end-time"
+              name="end-time"
+              placeholder="YYYY-DDDThh:mm:ss"
+            />
           </Field>
+
+          <fieldset>
+            <label for="plan-duration">Plan Duration</label>
+            <input class="st-input w-100" disabled id="plan-duration" name="duration" value={durationString} />
+          </fieldset>
 
           <Field field={simTemplateField}>
             <label for="simulation-templates" slot="label"> Simulation Templates </label>
