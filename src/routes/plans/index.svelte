@@ -18,7 +18,7 @@
   import { compare, removeQueryParam } from '../../utilities/generic';
   import { convertUsToDurationString, getUnixEpochTime } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
-  import { min, required, timestamp, validateField } from '../../utilities/validators';
+  import { min, required, timestamp } from '../../utilities/validators';
 
   export const load: Load = async ({ session }) => {
     if (!session.user) {
@@ -45,7 +45,7 @@
 
   let filterText: string = '';
   let nameInputField: HTMLInputElement;
-  let durationString: string = convertUsToDurationString(0);
+  let durationString: string = 'None';
 
   let endTimeField = field<string>('', [required, timestamp]);
   let modelIdField = field<number>(-1, [min(1, 'Field is required')]);
@@ -71,7 +71,6 @@
   $: simulationTemplates.setVariables({ modelId: $modelIdField.value });
   $: sortedModels = models.sort((a, b) => compare(a.name, b.name));
   $: sortedPlans = filteredPlans.sort((a, b) => compare(a.name, b.name));
-  $: updateDurationString($startTimeField, $endTimeField);
 
   onMount(() => {
     const queryModelId = $page.url.searchParams.get('modelId');
@@ -107,14 +106,12 @@
     }
   }
 
-  async function updateDurationString(startTime: globalThis.Field<string>, endTime: globalThis.Field<string>) {
-    const startFieldErrors = await validateField(startTime);
-    const endFieldErrors = await validateField(endTime);
-    if (!startFieldErrors.length && !endFieldErrors.length) {
+  function updateDurationString() {
+    if ($startTimeField.valid && $endTimeField.valid) {
       durationString = convertUsToDurationString(
-        (getUnixEpochTime(endTime.value) - getUnixEpochTime(startTime.value)) * 1000,
+        (getUnixEpochTime($endTimeField.value) - getUnixEpochTime($startTimeField.value)) * 1000,
       );
-    }
+    } else durationString = 'None';
   }
 </script>
 
@@ -150,7 +147,7 @@
             <input bind:this={nameInputField} autocomplete="off" class="st-input w-100" name="name" />
           </Field>
 
-          <Field field={startTimeField}>
+          <Field field={startTimeField} on:blur={updateDurationString} on:keydown={updateDurationString}>
             <label for="start-time" slot="label">Start Time - YYYY-DDDThh:mm:ss</label>
             <input
               autocomplete="off"
@@ -161,7 +158,7 @@
             />
           </Field>
 
-          <Field field={endTimeField}>
+          <Field field={endTimeField} on:blur={updateDurationString} on:keydown={updateDurationString}>
             <label for="end-time" slot="label">End Time - YYYY-DDDThh:mm:ss</label>
             <input
               autocomplete="off"

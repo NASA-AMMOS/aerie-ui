@@ -34,7 +34,7 @@ describe('Plans view', () => {
     fireEvent.blur(getByLabelText('End Time', { exact: false }), { target: { value: '2022-100T00:00:00' } });
 
     await waitFor(() => {
-      expect((getByLabelText('Plan Duration') as HTMLInputElement).value).toEqual('0y 0d 0h 0m 0s 0ms 0us');
+      expect((getByLabelText('Plan Duration') as HTMLInputElement).value).toEqual('None');
     });
   });
 });
