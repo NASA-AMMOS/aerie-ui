@@ -19,8 +19,12 @@
       field: columnDef.field,
       headerName: columnDef.name,
       sortable: columnDef.sortable,
+      resizable: true,
+      floatingFilter: true,
+      filter: 'agTextColumnFilter',
     };
   })}
+  rowSelection="single"
   rowData={$activities}
-  on:rowClick={({ detail }) => ($selectedActivityId = detail.id)}
+  on:rowSelected={({ detail }) => ($selectedActivityId = detail.data.id)}
 />

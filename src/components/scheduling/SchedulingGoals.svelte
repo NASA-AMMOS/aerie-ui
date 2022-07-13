@@ -6,13 +6,13 @@
   import { schedulingGoals, schedulingGoalsColumns } from '../../stores/scheduling';
   import effects from '../../utilities/effects';
   import { compare } from '../../utilities/generic';
-  import { tooltip } from '../../utilities/tooltip';
   import Input from '../form/Input.svelte';
   import Chip from '../ui/Chip.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
+  import DataGrid from '../ui/DataGrid.svelte';
+  import DataGridActions from '../ui/DataGridActions.svelte';
   import Panel from '../ui/Panel.svelte';
-  import Table from '../ui/Table.svelte';
   import SchedulingGoalEditor from './SchedulingGoalEditor.svelte';
 
   let filteredGoals: SchedulingGoal[] = [];
@@ -34,7 +34,7 @@
     }
   }
 
-  async function deleteGoal(id: number) {
+  async function deleteGoal({ id }: SchedulingGoal) {
     const success = await effects.deleteSchedulingGoal(id);
 
     if (success) {
@@ -46,9 +46,11 @@
     }
   }
 
-  function toggleGoal(event: CustomEvent<SchedulingGoal>) {
-    const { detail: clickedGoal } = event;
+  function editGoal({ id }: SchedulingGoal) {
+    goto(`${base}/scheduling/goals/edit/${id}`);
+  }
 
+  function toggleGoal(clickedGoal: SchedulingGoal) {
     if (selectedGoal?.id === clickedGoal.id) {
       selectedGoal = null;
     } else {
@@ -75,36 +77,48 @@
 
     <svelte:fragment slot="body">
       {#if sortedGoals.length}
-        <Table
-          let:currentRow
+        <DataGrid
           columnDefs={[
-            { field: 'id', name: 'Goal ID', sortable: true },
-            { field: 'name', name: 'Name', sortable: true },
-            { field: 'model_id', name: 'Model ID', sortable: true },
+            { field: 'id', headerName: 'Goal ID', sortable: true },
+            { field: 'name', headerName: 'Name', sortable: true },
+            { field: 'model_id', headerName: 'Model ID', sortable: true },
+            {
+              field: 'actions',
+              headerName: '',
+              sortable: false,
+              resizable: false,
+              cellRenderer: params => {
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'actions-cell';
+                new DataGridActions({
+                  target: actionsDiv,
+                  props: {
+                    editCallback: params.editGoal,
+                    editTooltip: {
+                      content: 'Edit Goal',
+                      placement: 'bottom',
+                    },
+                    deleteCallback: params.deleteGoal,
+                    deleteTooltip: {
+                      content: 'Delete Goal',
+                      placement: 'bottom',
+                    },
+                    rowData: params.data,
+                  },
+                });
+
+                return actionsDiv;
+              },
+              cellRendererParams: {
+                editGoal,
+                deleteGoal,
+              },
+            },
           ]}
-          rowActions
           rowData={sortedGoals}
-          rowSelectionMode="single"
-          selectedRowId={selectedGoal?.id}
-          on:rowClick={toggleGoal}
-        >
-          <div slot="actions-cell">
-            <button
-              class="st-button icon"
-              on:click|stopPropagation={() => goto(`${base}/scheduling/goals/edit/${currentRow.id}`)}
-              use:tooltip={{ content: 'Edit Goal', placement: 'bottom' }}
-            >
-              <i class="bi bi-pencil" />
-            </button>
-            <button
-              class="st-button icon"
-              on:click|stopPropagation={() => deleteGoal(currentRow.id)}
-              use:tooltip={{ content: 'Delete Goal', placement: 'bottom' }}
-            >
-              <i class="bi bi-trash" />
-            </button>
-          </div>
-        </Table>
+          rowSelection="single"
+          on:rowSelected={({ detail }) => toggleGoal(detail.data)}
+        />
       {:else}
         No Scheduling Goals Found
       {/if}
