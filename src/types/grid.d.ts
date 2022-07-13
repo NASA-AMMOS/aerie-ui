@@ -38,3 +38,5 @@ type GridRows = {
 };
 
 type Grid = GridColumns | GridComponent | GridGutter | GridRows;
+
+type TRowData = any;
