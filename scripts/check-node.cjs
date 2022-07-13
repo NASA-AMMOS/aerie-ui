@@ -8,7 +8,7 @@ const nodeVersion = semver.coerce(process.version);
 
 function main() {
   if (requiredNodeVersions) {
-    const isValid = semver.satisfies(nodeVersion);
+    const isValid = semver.satisfies(nodeVersion, requiredNodeVersions);
     if (!isValid) {
       console.log(
         '\x1b[37m\x1b[45m%s\x1b[0m',
