@@ -14,7 +14,53 @@
   import Panel from '../ui/Panel.svelte';
   import ConstraintEditor from './ConstraintEditor.svelte';
 
+  type CellRendererParams = {
+    editConstraint: (constraint: Constraint) => void;
+    deleteConstraint: (constraint: Constraint) => void;
+  };
+  type ConstraintsCellRendererParams = ICellRendererParams & CellRendererParams;
+
   export let initialPlans: PlanList[] = [];
+
+  const columnDefs: DataGridColumnDef[] = [
+    { field: 'id', headerName: 'ID', sortable: true, suppressAutoSize: true, width: 60 },
+    { field: 'name', headerName: 'Name', sortable: true, resizable: true },
+    { field: 'model_id', headerName: 'Model ID', sortable: true, width: 120 },
+    { field: 'plan_id', headerName: 'Plan ID', sortable: true, width: 110 },
+    {
+      field: 'actions',
+      headerName: '',
+      sortable: false,
+      resizable: false,
+      width: 90,
+      cellRenderer: (params: ConstraintsCellRendererParams) => {
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'actions-cell';
+        new DataGridActions({
+          target: actionsDiv,
+          props: {
+            editCallback: params.editConstraint,
+            editTooltip: {
+              content: 'Edit Constraint',
+              placement: 'bottom',
+            },
+            deleteCallback: params.deleteConstraint,
+            deleteTooltip: {
+              content: 'Delete Constraint',
+              placement: 'bottom',
+            },
+            rowData: params.data,
+          },
+        });
+
+        return actionsDiv;
+      },
+      cellRendererParams: {
+        editConstraint,
+        deleteConstraint,
+      } as CellRendererParams,
+    },
+  ];
 
   let constraintModelId: number | null = null;
   let filterText: string = '';
@@ -94,44 +140,7 @@
     <svelte:fragment slot="body">
       {#if filteredConstraints.length}
         <DataGrid
-          columnDefs={[
-            { field: 'id', headerName: 'ID', sortable: true },
-            { field: 'name', headerName: 'Name', sortable: true },
-            { field: 'model_id', headerName: 'Model ID', sortable: true },
-            { field: 'plan_id', headerName: 'Plan ID', sortable: true },
-            {
-              field: 'actions',
-              headerName: '',
-              sortable: false,
-              resizable: false,
-              cellRenderer: params => {
-                const actionsDiv = document.createElement('div');
-                actionsDiv.className = 'actions-cell';
-                new DataGridActions({
-                  target: actionsDiv,
-                  props: {
-                    editCallback: params.editConstraint,
-                    editTooltip: {
-                      content: 'Edit Constraint',
-                      placement: 'bottom',
-                    },
-                    deleteCallback: params.deleteConstraint,
-                    deleteTooltip: {
-                      content: 'Delete Constraint',
-                      placement: 'bottom',
-                    },
-                    rowData: params.data,
-                  },
-                });
-
-                return actionsDiv;
-              },
-              cellRendererParams: {
-                editConstraint,
-                deleteConstraint,
-              },
-            },
-          ]}
+          {columnDefs}
           rowData={filteredConstraints}
           rowSelection="single"
           on:rowSelected={({ detail }) => toggleConstraint(detail.data)}

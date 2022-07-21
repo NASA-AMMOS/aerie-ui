@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { activities, selectedActivityId } from '../../stores/activities';
+  import { activities, selectedActivityId, selectedActivityIds } from '../../stores/activities';
   import { view } from '../../stores/views';
   import DataGrid from '../ui/DataGrid.svelte';
 
@@ -24,6 +24,7 @@
       filter: 'agTextColumnFilter',
     };
   })}
+  selectedRowIds={$selectedActivityIds}
   rowSelection="single"
   rowData={$activities}
   on:rowSelected={({ detail }) => ($selectedActivityId = detail.data.id)}

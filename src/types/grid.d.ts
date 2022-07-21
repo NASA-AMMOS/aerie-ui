@@ -39,4 +39,8 @@ type GridRows = {
 
 type Grid = GridColumns | GridComponent | GridGutter | GridRows;
 
+type DataGridColumnDef = import('ag-grid-community').ColDef;
 type TRowData = any;
+interface ICellRendererParams {
+  data: TRowData;
+}

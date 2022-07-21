@@ -15,6 +15,51 @@
   import Panel from '../ui/Panel.svelte';
   import SchedulingGoalEditor from './SchedulingGoalEditor.svelte';
 
+  type CellRendererParams = {
+    editGoal: (goal: SchedulingGoal) => void;
+    deleteGoal: (goal: SchedulingGoal) => void;
+  };
+  type SchedulingGoalsCellRendererParams = ICellRendererParams & CellRendererParams;
+
+  const columnDefs: DataGridColumnDef[] = [
+    { field: 'id', headerName: 'Goal ID', sortable: true, suppressAutoSize: true, width: 100 },
+    { field: 'name', headerName: 'Name', sortable: true, resizable: true },
+    { field: 'model_id', headerName: 'Model ID', sortable: true, width: 120 },
+    {
+      field: 'actions',
+      headerName: '',
+      sortable: false,
+      resizable: false,
+      width: 90,
+      cellRenderer: (params: SchedulingGoalsCellRendererParams) => {
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'actions-cell';
+        new DataGridActions({
+          target: actionsDiv,
+          props: {
+            editCallback: params.editGoal,
+            editTooltip: {
+              content: 'Edit Goal',
+              placement: 'bottom',
+            },
+            deleteCallback: params.deleteGoal,
+            deleteTooltip: {
+              content: 'Delete Goal',
+              placement: 'bottom',
+            },
+            rowData: params.data,
+          },
+        });
+
+        return actionsDiv;
+      },
+      cellRendererParams: {
+        editGoal,
+        deleteGoal,
+      },
+    },
+  ];
+
   let filteredGoals: SchedulingGoal[] = [];
   let filterText: string = '';
   let selectedGoal: SchedulingGoal | null = null;
@@ -78,43 +123,7 @@
     <svelte:fragment slot="body">
       {#if sortedGoals.length}
         <DataGrid
-          columnDefs={[
-            { field: 'id', headerName: 'Goal ID', sortable: true },
-            { field: 'name', headerName: 'Name', sortable: true },
-            { field: 'model_id', headerName: 'Model ID', sortable: true },
-            {
-              field: 'actions',
-              headerName: '',
-              sortable: false,
-              resizable: false,
-              cellRenderer: params => {
-                const actionsDiv = document.createElement('div');
-                actionsDiv.className = 'actions-cell';
-                new DataGridActions({
-                  target: actionsDiv,
-                  props: {
-                    editCallback: params.editGoal,
-                    editTooltip: {
-                      content: 'Edit Goal',
-                      placement: 'bottom',
-                    },
-                    deleteCallback: params.deleteGoal,
-                    deleteTooltip: {
-                      content: 'Delete Goal',
-                      placement: 'bottom',
-                    },
-                    rowData: params.data,
-                  },
-                });
-
-                return actionsDiv;
-              },
-              cellRendererParams: {
-                editGoal,
-                deleteGoal,
-              },
-            },
-          ]}
+          {columnDefs}
           rowData={sortedGoals}
           rowSelection="single"
           on:rowSelected={({ detail }) => toggleGoal(detail.data)}
