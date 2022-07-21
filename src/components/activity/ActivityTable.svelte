@@ -17,11 +17,11 @@
     const columnDef = activityTable?.columnDefs[columnKey];
     return {
       field: columnDef.field,
-      headerName: columnDef.name,
-      sortable: columnDef.sortable,
-      resizable: true,
-      floatingFilter: true,
       filter: 'agTextColumnFilter',
+      floatingFilter: true,
+      headerName: columnDef.name,
+      resizable: true,
+      sortable: columnDef.sortable,
     };
   })}
   selectedRowIds={$selectedActivityIds}

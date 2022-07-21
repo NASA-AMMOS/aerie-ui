@@ -16,47 +16,47 @@
   import SchedulingGoalEditor from './SchedulingGoalEditor.svelte';
 
   type CellRendererParams = {
-    editGoal: (goal: SchedulingGoal) => void;
     deleteGoal: (goal: SchedulingGoal) => void;
+    editGoal: (goal: SchedulingGoal) => void;
   };
   type SchedulingGoalsCellRendererParams = ICellRendererParams & CellRendererParams;
 
   const columnDefs: DataGridColumnDef[] = [
     { field: 'id', headerName: 'Goal ID', sortable: true, suppressAutoSize: true, width: 100 },
-    { field: 'name', headerName: 'Name', sortable: true, resizable: true },
+    { field: 'name', headerName: 'Name', resizable: true, sortable: true },
     { field: 'model_id', headerName: 'Model ID', sortable: true, width: 120 },
     {
-      field: 'actions',
-      headerName: '',
-      sortable: false,
-      resizable: false,
-      width: 90,
       cellRenderer: (params: SchedulingGoalsCellRendererParams) => {
         const actionsDiv = document.createElement('div');
         actionsDiv.className = 'actions-cell';
         new DataGridActions({
-          target: actionsDiv,
           props: {
-            editCallback: params.editGoal,
-            editTooltip: {
-              content: 'Edit Goal',
-              placement: 'bottom',
-            },
             deleteCallback: params.deleteGoal,
             deleteTooltip: {
               content: 'Delete Goal',
               placement: 'bottom',
             },
+            editCallback: params.editGoal,
+            editTooltip: {
+              content: 'Edit Goal',
+              placement: 'bottom',
+            },
             rowData: params.data,
           },
+          target: actionsDiv,
         });
 
         return actionsDiv;
       },
       cellRendererParams: {
-        editGoal,
         deleteGoal,
+        editGoal,
       },
+      field: 'actions',
+      headerName: '',
+      resizable: false,
+      sortable: false,
+      width: 90,
     },
   ];
 

@@ -57,16 +57,18 @@
     gridOptions = {
       // each entry here represents one column
       columnDefs,
-      rowData,
-      rowSelection,
-      suppressRowClickSelection,
       getRowId,
-      onRowSelected(event: RowSelectedEvent<TRowData>) {
-        if (event.node.isSelected()) dispatch('rowSelected', event);
-      },
       onRowClicked(event: RowClickedEvent<TRowData>) {
         dispatch('rowClicked', event);
       },
+      onRowSelected(event: RowSelectedEvent<TRowData>) {
+        if (event.node.isSelected()) {
+          dispatch('rowSelected', event);
+        }
+      },
+      rowData,
+      rowSelection,
+      suppressRowClickSelection,
     };
     new Grid(gridDiv, gridOptions);
   });
