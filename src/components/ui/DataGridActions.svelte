@@ -20,8 +20,7 @@
 {#if editCallback}
   <button
     class="st-button icon"
-    on:click={event => {
-      event.stopPropagation();
+    on:click|stopPropagation={() => {
       editCallback(rowData);
     }}
     use:tooltip={editTooltip}
@@ -32,8 +31,7 @@
 {#if deleteCallback}
   <button
     class="st-button icon"
-    on:click={event => {
-      event.stopPropagation();
+    on:click|stopPropagation={() => {
       deleteCallback(rowData);
     }}
     use:tooltip={deleteTooltip}
