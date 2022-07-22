@@ -8,7 +8,7 @@
   export let rowData: TRowData[] = [];
   export let rowSelection: 'single' | 'multiple' | undefined = undefined;
   export let selectedRowIds: number[] = [];
-
+  export let suppressCellFocus: boolean = true;
   export let suppressRowClickSelection: boolean = false;
 
   const dispatch = createEventDispatcher();
@@ -68,6 +68,7 @@
       },
       rowData,
       rowSelection,
+      suppressCellFocus,
       suppressRowClickSelection,
     };
     new Grid(gridDiv, gridOptions);
