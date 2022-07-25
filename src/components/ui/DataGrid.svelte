@@ -75,7 +75,7 @@
   });
 </script>
 
-<div bind:this={gridDiv} class="ag-theme-stellar table" />
+<div bind:this={gridDiv} class={`ag-theme-stellar ${rowSelection !== undefined ? 'ag-selectable-rows ' : ''}table`} />
 
 <style>
   .table {

@@ -435,3 +435,7 @@
 .ag-row.ag-row-hover .actions-cell {
   visibility: visible;
 }
+
+.ag-theme-stellar.ag-selectable-rows .ag-row {
+  cursor: pointer;
+}
