@@ -4,13 +4,16 @@
   import { tooltip } from '../../utilities/tooltip';
 
   export let formParameter: FormParameter;
+
+  let tooltipContent = formParameter?.name;
+  if (formParameter.required) tooltipContent += ' (required)';
 </script>
 
 <div class="form-parameter-name">
   <div
     class="name"
     class:error={formParameter.error !== null}
-    use:tooltip={{ content: formParameter?.name, placement: 'bottom' }}
+    use:tooltip={{ content: tooltipContent, placement: 'bottom' }}
   >
     {formParameter?.name}
     {#if formParameter.required}
