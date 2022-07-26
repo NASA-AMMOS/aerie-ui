@@ -6,7 +6,9 @@
   export let formParameter: FormParameter;
 
   let tooltipContent = formParameter?.name;
-  if (formParameter.required) tooltipContent += ' (required)';
+  if (formParameter.required) {
+    tooltipContent += ' (required)';
+  }
 </script>
 
 <div class="form-parameter-name">
