@@ -28,7 +28,7 @@ type ParametersErrorMap = Record<ParameterName, ParameterError>;
 
 type ParameterName = string;
 
-type RequiredParametersList = string[];
+type RequiredParametersList = ParameterName[];
 
 type ParametersMap = Record<ParameterName, Parameter>;
 
