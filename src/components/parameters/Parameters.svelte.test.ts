@@ -57,15 +57,9 @@ describe('Parameters component', () => {
         value: 'value 1',
       },
     ];
-    // Get the DOM from the render call, this should be our Parameter component
-    const { container } = render(Parameters, { formParameters });
+    const { getByText } = render(Parameters, { formParameters });
 
-    // Get the labels by class - generally avoided pattern in testing-library but this is a
-    // particularly custom component so unavoidable.
-    const labels = container.getElementsByClassName('name');
-
-    expect(labels.length).toBe(2);
-    expect(labels[0].getElementsByClassName('required').length).to.equals(1);
-    expect(labels[1].getElementsByClassName('required').length).to.equals(0);
+    expect(getByText('foo').getElementsByClassName('required').length).to.equals(1);
+    expect(getByText('bar').getElementsByClassName('required').length).to.equals(0);
   });
 });
