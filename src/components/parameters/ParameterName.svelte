@@ -13,6 +13,9 @@
     use:tooltip={{ content: formParameter?.name, placement: 'bottom' }}
   >
     {formParameter?.name}
+    {#if formParameter.required}
+      <span class="required">*</span>
+    {/if}
   </div>
 </div>
 
@@ -32,6 +35,10 @@
   }
 
   .name.error {
+    color: var(--st-red);
+  }
+
+  .required {
     color: var(--st-red);
   }
 </style>
