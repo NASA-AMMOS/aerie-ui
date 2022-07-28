@@ -238,6 +238,7 @@
           </div>
         </details>
       </fieldset>
+
       <fieldset>
         <details open={hasChildren} style:cursor="pointer">
           <summary>Decomposition</summary>
