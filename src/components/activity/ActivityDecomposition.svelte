@@ -1,26 +1,22 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import CaretDownIcon from '@nasa-jpl/stellar/icons/svg/caret_down.svg?component';
+  import CaretRightIcon from '@nasa-jpl/stellar/icons/svg/caret_right.svg?component';
+  import TreeLeafIcon from '@nasa-jpl/stellar/icons/svg/tree_leaf.svg?component';
+  import TreeParentCollapsedIcon from '@nasa-jpl/stellar/icons/svg/tree_parent_collapsed.svg?component';
+  import TreeParentExpandedIcon from '@nasa-jpl/stellar/icons/svg/tree_parent_expanded.svg?component';
   import { activitiesMap } from '../../stores/activities';
 
   export let selected_id: number | null = null;
   export let expanded = true;
   export let id: number = 0;
 
-  let iconClass = '';
-
   $: activity = $activitiesMap[id];
   $: isRoot = !activity.parent_id;
   $: type = activity.type || '';
   $: child_ids = activity.child_ids || null;
   $: hasChildren = child_ids ? child_ids.length > 0 : false;
-  $: if (isRoot) {
-    iconClass = expanded ? 'si-caret_down' : 'si-caret_right';
-  } else if (hasChildren) {
-    iconClass = expanded ? 'si-tree_parent' : 'si-tree_parent'; // TODO make the icon for tree parent expand/collapse
-  } else {
-    iconClass = 'si-tree_leaf';
-  }
 
   function toggle() {
     expanded = !expanded;
@@ -28,7 +24,21 @@
 </script>
 
 <div class="activity-decomposition" on:click={toggle}>
-  <i class={`st-icon si ${iconClass}`} />
+  {#if isRoot}
+    {#if expanded}
+      <CaretDownIcon />
+    {:else}
+      <CaretRightIcon />
+    {/if}
+  {:else if hasChildren}
+    {#if expanded}
+      <TreeParentExpandedIcon />
+    {:else}
+      <TreeParentCollapsedIcon />
+    {/if}
+  {:else}
+    <TreeLeafIcon />
+  {/if}
   <span class={id === selected_id ? 'st-typography-medium' : 'unselected st-typography-body'}>{type}</span>
 </div>
 
