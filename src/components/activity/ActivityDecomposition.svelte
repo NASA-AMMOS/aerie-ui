@@ -94,7 +94,7 @@
   }
 
   .activity-decomposition-selected {
-    background: #c2e0fc;
+    background: #e3effd;
   }
 
   .activity-decomposition-node {
