@@ -31,6 +31,7 @@
   <svelte:fragment slot="header">
     <GridMenu {gridId} title="Scheduling" />
     <StatusBadge status={$schedulingStatus} title="Schedule" on:click={() => effects.schedule()} />
+    <button class="st-button secondary" name="analysis-only" on:click={() => effects.schedule(true)}>Analyze</button>
   </svelte:fragment>
 
   <svelte:fragment slot="body">
