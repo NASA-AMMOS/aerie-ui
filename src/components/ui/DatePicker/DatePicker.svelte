@@ -60,9 +60,10 @@
 
   $: if (isMounted) {
     if (isOpen) {
-      // add click listener for clicks that don't trigger focus events
+      // add `click` listener for clicks that don't trigger focus events
       document.addEventListener('click', attemptCloseDatePicker);
-      // add focusin listener for focus events from tabbing through elements
+      // add `focusin` listener for focus events from tabbing through elements
+      // it has to be `focusin` because `focusin` bubbles up, while `focus` does not
       document.addEventListener('focusin', attemptCloseDatePicker);
       document.addEventListener('keydown', onDocumentKeydown);
     } else {
