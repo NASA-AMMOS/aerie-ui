@@ -15,7 +15,6 @@
   import DatePickerField from '../form/DatePickerField.svelte';
   import GridMenu from '../menus/GridMenu.svelte';
   import Parameters from '../parameters/Parameters.svelte';
-  import DatePicker from '../ui/DatePicker/DatePicker.svelte';
   import Panel from '../ui/Panel.svelte';
   import ActivityDecomposition from './ActivityDecomposition.svelte';
 
@@ -208,8 +207,8 @@
 
       {#if duration !== null}
         <fieldset>
-          <label for="endTime">End Time - YYYY-DDDThh:mm:ss</label>
-          <DatePicker dateString={endTime} name="endTime" />
+          <label for="endTime">End Time</label>
+          <input class="st-input w-100" disabled name="endTime" value={endTime} />
         </fieldset>
       {/if}
 
