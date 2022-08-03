@@ -5,13 +5,9 @@
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
   import { createPopperActions } from 'svelte-popperjs';
   import { getTarget } from '../../../utilities/generic';
-  import { getDoyTime, parseDateTime } from '../../../utilities/time';
+  import { getDoyTime, parseDoyOrYmdTime } from '../../../utilities/time';
   import DatePickerDropdown from './DatePickerDropdown.svelte';
   import Month from './Month.svelte';
-
-  export let dateString: string = '';
-  export let hasError: boolean = false;
-  export let name: string = '';
 
   const currentDate = new Date();
   currentDate.setUTCHours(0);
@@ -20,6 +16,9 @@
   currentDate.setUTCMilliseconds(0);
   const currentYear = currentDate.getUTCFullYear();
 
+  export let dateString: string = '';
+  export let hasError: boolean = false;
+  export let name: string = '';
   export let maxDate: Date = new Date(Date.UTC(currentYear + 20, 11)); // add 20 years;
   export let minDate: Date = new Date(Date.UTC(currentYear - 20, 0)); // subtract 20 years
 
@@ -149,7 +148,7 @@
    * Converts a date string (YYYY-MM-DDTHH:mm:ss) or DOY string (YYYY-DDDDTHH:mm:ss) into a Date object
    */
   function getDateFromString(dateString: string): Date | null {
-    const parsedDate = parseDateTime(dateString);
+    const parsedDate = parseDoyOrYmdTime(dateString);
     if (parsedDate !== null) {
       const { hour, min, ms, sec, year } = parsedDate;
 
@@ -174,7 +173,7 @@
    * Determines if a given string is in the correct date string format (YYYY-MM-DDTHH:mm:ss) or DOY string format (YYYY-DDDDTHH:mm:ss)
    */
   function isValidDateTime(dateString: string): boolean {
-    return parseDateTime(dateString) !== null;
+    return parseDoyOrYmdTime(dateString) !== null;
   }
 
   function onChangeViewMonth(event: Event) {

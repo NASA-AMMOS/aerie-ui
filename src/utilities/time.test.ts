@@ -5,7 +5,7 @@ import {
   getDoy,
   getDoyTime,
   getUnixEpochTime,
-  parseDateTime,
+  parseDoyOrYmdTime,
 } from '../../src/utilities/time';
 
 test('convertDurationStringToUs', () => {
@@ -36,8 +36,8 @@ test('getUnixEpochTime', () => {
   expect(unixEpochTime).toEqual(1577779200000);
 });
 
-test('parseDateTime', () => {
-  expect(parseDateTime('2019-365T08:00:00.1234')).toEqual({
+test('parseDoyOrYmdTime', () => {
+  expect(parseDoyOrYmdTime('2019-365T08:00:00.1234')).toEqual({
     doy: 365,
     hour: 8,
     min: 0,
@@ -47,7 +47,7 @@ test('parseDateTime', () => {
     year: 2019,
   });
 
-  expect(parseDateTime('2019-01-20T08:10:03.9')).toEqual({
+  expect(parseDoyOrYmdTime('2019-01-20T08:10:03.9')).toEqual({
     day: 20,
     hour: 8,
     min: 10,
@@ -58,7 +58,7 @@ test('parseDateTime', () => {
     year: 2019,
   });
 
-  expect(parseDateTime('2022-01-2T00:00:00')).toEqual({
+  expect(parseDoyOrYmdTime('2022-01-2T00:00:00')).toEqual({
     day: 2,
     hour: 0,
     min: 0,
@@ -69,6 +69,6 @@ test('parseDateTime', () => {
     year: 2022,
   });
 
-  expect(parseDateTime('2019-365T08:80:00.1234')).toEqual(null);
-  expect(parseDateTime('2022-20-2T00:00:00')).toEqual(null);
+  expect(parseDoyOrYmdTime('2019-365T08:80:00.1234')).toEqual(null);
+  expect(parseDoyOrYmdTime('2022-20-2T00:00:00')).toEqual(null);
 });

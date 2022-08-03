@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { classNames } from '../../../utilities/generic';
+
   export { className as class };
   export let value: string | number;
   export let options: (DropdownOption | DropdownCustomOption)[] = [];
@@ -37,7 +39,11 @@
   }
 </script>
 
-<div class={`date-picker-dropdown${className ? ` ${className}` : ''}`}>
+<div
+  class={classNames('date-picker-dropdown', {
+    [className]: !!className,
+  })}
+>
   <div class="display-value">
     <span class="value">{displayValue}</span>
     <select class="hidden" data-type="number" {value} tabindex="-1" on:change>
