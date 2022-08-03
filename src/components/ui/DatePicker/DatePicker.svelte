@@ -4,7 +4,6 @@
   import ChevronRight from '@nasa-jpl/stellar/icons/svg/chevron_right.svg?component';
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
   import { createPopperActions } from 'svelte-popperjs';
-
   import { getTarget } from '../../../utilities/generic';
   import { getDoyTime, parseDateTime } from '../../../utilities/time';
   import DatePickerDropdown from './DatePickerDropdown.svelte';
