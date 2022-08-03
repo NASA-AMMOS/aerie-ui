@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
-
   import Week from './Week.svelte';
 
   export let year: number;
@@ -8,8 +6,6 @@
   export let minDate: Date;
   export let month: number;
   export let selectedDate: Date | null = null;
-
-  const dispatch = createEventDispatcher();
 
   let numOfWeeks: number;
 
@@ -21,10 +17,6 @@
     // add to the total number of days in the month and divide by 7 to get the number of weeks to display
     const daysInMonthView = firstOfMonth.getUTCDay() + lastOfMonth.getUTCDate();
     numOfWeeks = Math.ceil(daysInMonthView / 7);
-  }
-
-  function onSelect({ detail }: CustomEvent) {
-    dispatch('select', detail);
   }
 </script>
 
@@ -39,7 +31,7 @@
     <div>Sat</div>
   </div>
   {#each Array(numOfWeeks) as _, i}
-    <Week {maxDate} {minDate} {year} {month} week={i} {selectedDate} on:select={onSelect} />
+    <Week {maxDate} {minDate} {year} {month} week={i} {selectedDate} on:select />
   {/each}
 </div>
 

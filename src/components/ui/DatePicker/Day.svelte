@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { getDoy } from '../../../utilities/time';
+  import { classNames } from '../../../utilities/generic';
 
   import { createEventDispatcher } from 'svelte';
+  import { getDoy } from '../../../utilities/time';
 
   export let date: Date;
   export let maxDate: Date;
@@ -9,11 +10,10 @@
   export let month: number;
   export let selectedDate: Date | null = null;
 
-  let isSelected: boolean = false;
-  let isWithinBounds: boolean = true;
-
   const dispatch = createEventDispatcher();
 
+  let isSelected: boolean = false;
+  let isWithinBounds: boolean = true;
   let isToday: boolean = false;
 
   $: isToday = isSameDay(date, new Date());
@@ -40,9 +40,12 @@
 </script>
 
 <div
-  class={`date-picker-day${isToday ? ' today' : ''}${isSelected ? ' selected' : ''}${
-    isOutsideCurrentMonth ? ' outside' : ''
-  }${!isWithinBounds ? ' disabled' : ''}`}
+  class={classNames('date-picker-day', {
+    disabled: !isWithinBounds,
+    outside: isOutsideCurrentMonth,
+    selected: isSelected,
+    today: isToday,
+  })}
   on:click|stopPropagation={onSelect}
 >
   <div class="doy">{getDoy(date)}</div>

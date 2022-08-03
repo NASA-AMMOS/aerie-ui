@@ -137,6 +137,7 @@
       <svelte:fragment slot="body">
         <form on:submit|preventDefault={createPlan}>
           <AlertError class="m-2" error={$createPlanError} />
+
           <Field field={modelIdField}>
             <label for="model" slot="label">Models</label>
             <select class="st-select w-100" data-type="number" name="model">

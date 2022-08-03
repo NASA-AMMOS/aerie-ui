@@ -10,6 +10,10 @@
   import DatePickerDropdown from './DatePickerDropdown.svelte';
   import Month from './Month.svelte';
 
+  export let dateString: string = '';
+  export let hasError: boolean = false;
+  export let name: string = '';
+
   const currentDate = new Date();
   currentDate.setUTCHours(0);
   currentDate.setUTCMinutes(0);
@@ -17,9 +21,6 @@
   currentDate.setUTCMilliseconds(0);
   const currentYear = currentDate.getUTCFullYear();
 
-  export let dateString: string = '';
-  export let hasError: boolean = false;
-  export let name: string = '';
   export let maxDate: Date = new Date(Date.UTC(currentYear + 20, 11)); // add 20 years;
   export let minDate: Date = new Date(Date.UTC(currentYear - 20, 0)); // subtract 20 years
 
@@ -166,7 +167,7 @@
     viewMonth = viewMonth + 1;
   }
 
-  function isDoy(parsedDate: ParsedDateString | ParsedDoyString): parsedDate is ParsedDoyString {
+  function isDoy(parsedDate: ParsedYmdString | ParsedDoyString): parsedDate is ParsedDoyString {
     return (parsedDate as ParsedDoyString).doy !== undefined;
   }
 
@@ -177,13 +178,13 @@
     return parseDateTime(dateString) !== null;
   }
 
-  function onChangeViewMonth({ detail }: CustomEvent) {
-    const { valueAsNumber } = getTarget(detail);
+  function onChangeViewMonth(event: Event) {
+    const { valueAsNumber } = getTarget(event);
     viewMonth = valueAsNumber;
   }
 
-  function onChangeViewYear({ detail }: CustomEvent) {
-    const { valueAsNumber } = getTarget(detail);
+  function onChangeViewYear(event: Event) {
+    const { valueAsNumber } = getTarget(event);
     viewYear = valueAsNumber;
   }
 
@@ -194,7 +195,11 @@
   }
 
   function onInputKeydown(event: KeyboardEvent) {
-    dispatch('keydown', event);
+    const { key } = event;
+
+    if (key === 'Enter') {
+      autoCompleteDate(event);
+    }
   }
 
   function onSelect({ detail }: CustomEvent) {

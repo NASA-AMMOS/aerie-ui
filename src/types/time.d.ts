@@ -8,7 +8,7 @@ type ParsedDoyString = {
   year: number;
 };
 
-type ParsedDateString = {
+type ParsedYmdString = {
   day: number;
   hour: number;
   min: number;

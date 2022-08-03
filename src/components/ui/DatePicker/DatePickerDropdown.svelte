@@ -1,13 +1,9 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
-
   export { className as class };
-  let className: string = '';
   export let value: string | number;
   export let options: (DropdownOption | DropdownCustomOption)[] = [];
 
-  const dispatch = createEventDispatcher();
-
+  let className: string = '';
   let displayValue: string | number = value;
 
   $: displayValue = getDisplayValue(value, options);
@@ -39,16 +35,12 @@
 
     return option;
   }
-
-  function onChange(event: Event) {
-    dispatch('change', event);
-  }
 </script>
 
 <div class={`date-picker-dropdown${className ? ` ${className}` : ''}`}>
   <div class="display-value">
     <span class="value">{displayValue}</span>
-    <select class="hidden" data-type="number" {value} tabindex="-1" on:change={onChange}>
+    <select class="hidden" data-type="number" {value} tabindex="-1" on:change>
       {#each options as option}
         <option value={getOptionValue(option)}>{getOptionLabel(option)}</option>
       {/each}

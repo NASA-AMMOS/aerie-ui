@@ -36,7 +36,7 @@ test('getUnixEpochTime', () => {
   expect(unixEpochTime).toEqual(1577779200000);
 });
 
-test('parseEarthTime', () => {
+test('parseDateTime', () => {
   expect(parseDateTime('2019-365T08:00:00.1234')).toEqual({
     doy: 365,
     hour: 8,

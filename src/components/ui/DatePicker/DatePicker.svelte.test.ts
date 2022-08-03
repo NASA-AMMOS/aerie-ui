@@ -49,6 +49,18 @@ describe('DatePicker DatePicker Component', () => {
     expect(getByDisplayValue('2022-100T00:00:00')).not.toBeNull();
   });
 
+  it('Should autocomplete the date when partially valid when the user presses the Enter key', async () => {
+    const { getByDisplayValue, getByRole } = render(DatePicker);
+
+    await fireEvent.input(getByRole('textbox'), { target: { value: '2022-100' } });
+
+    expect(getByDisplayValue('2022-100')).not.toBeNull();
+
+    await fireEvent.keyDown(getByRole('textbox'), { key: 'Enter' });
+
+    expect(getByDisplayValue('2022-100T00:00:00')).not.toBeNull();
+  });
+
   it('Should roll the view to the previous year when clicking the previous month button in January', async () => {
     const { getAllByRole, getByRole, getAllByText } = render(DatePicker, {
       dateString: '2021-001T00:00:00',

@@ -16,21 +16,10 @@
     const valid = await field.validateAndSet(value);
     dispatch('change', { valid });
   }
-
-  async function onKeyDown({ detail: event }: CustomEvent) {
-    const { key } = event;
-
-    if (key === 'Enter') {
-      event.preventDefault();
-      const { value } = event;
-      const valid = await field.validateAndSet(value);
-      dispatch('keydown', { valid });
-    }
-  }
 </script>
 
 <fieldset>
   <label class={$field.invalid ? 'error' : ''} for={name}>{label}</label>
-  <DatePicker {name} hasError={$field.invalid} on:change={onChange} on:keydown={onKeyDown} />
+  <DatePicker {name} hasError={$field.invalid} on:change={onChange} />
   <FieldError {field} />
 </fieldset>
