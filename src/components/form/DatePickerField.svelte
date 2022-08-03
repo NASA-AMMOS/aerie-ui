@@ -20,6 +20,6 @@
 
 <fieldset>
   <label class={$field.invalid ? 'error' : ''} for={name}>{label}</label>
-  <DatePicker {name} hasError={$field.invalid} on:change={onChange} />
+  <DatePicker {name} dateString={$field.value} hasError={$field.invalid} on:change={onChange} />
   <FieldError {field} />
 </fieldset>
