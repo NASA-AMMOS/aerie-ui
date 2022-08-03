@@ -1,7 +1,6 @@
 <script lang="ts">
-  import { classNames } from '../../../utilities/generic';
-
   import { createEventDispatcher } from 'svelte';
+  import { classNames } from '../../../utilities/generic';
   import { getDoy } from '../../../utilities/time';
 
   export let date: Date;
