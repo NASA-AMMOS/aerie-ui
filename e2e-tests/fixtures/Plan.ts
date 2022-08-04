@@ -5,6 +5,7 @@ import { Plans } from './Plans.js';
 import { SchedulingGoals } from './SchedulingGoals.js';
 
 export class Plan {
+  analyzeButton: Locator;
   appError: Locator;
   constraintListItemSelector: string;
   constraintNewButton: Locator;
@@ -83,6 +84,12 @@ export class Plan {
     await this.page.goto(`/plans/${this.plans.planId}`, { waitUntil: 'networkidle' });
   }
 
+  async runAnalysis() {
+    await this.analyzeButton.click();
+    await this.page.waitForSelector(this.schedulingStatusSelector('Incomplete'), { state: 'visible', strict: true });
+    await this.page.waitForSelector(this.schedulingStatusSelector('Complete'), { state: 'visible', strict: true });
+  }
+
   async runScheduling() {
     await this.scheduleButton.click();
     await this.page.waitForSelector(this.schedulingStatusSelector('Incomplete'), { state: 'visible', strict: true });
@@ -151,6 +158,7 @@ export class Plan {
     this.panelViews = page.locator('[data-component-name="ViewsPanel"]');
     this.planTitle = page.locator(`.plan-title:has-text("${this.plans.planName}")`);
     this.scheduleButton = page.locator('.status-badge > .title:has-text("Schedule")');
+    this.analyzeButton = page.locator('.st-button:has-text("Analyze")');
     this.schedulingGoalDifferenceBadge = page.locator('.difference-badge');
     this.schedulingGoalEnabledCheckbox = page.locator(
       `.scheduling-goal:has-text("${this.schedulingGoals.goalName}") >> input[type="checkbox"]`,
