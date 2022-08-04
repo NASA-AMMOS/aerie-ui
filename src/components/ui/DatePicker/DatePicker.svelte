@@ -291,11 +291,11 @@
     background: #ffffff;
     border: 1px solid var(--st-gray-20);
     border-radius: 10px;
+    box-shadow: 0px 8px 16px 0px var(--st-gray-20);
     min-width: 150px;
     min-height: 100px;
     z-index: 99999;
     user-select: none;
-    box-shadow: 0px 8px 16px 0px var(--st-gray-20);
   }
 
   .date-picker .date-picker-portal .date-picker-inputs {
