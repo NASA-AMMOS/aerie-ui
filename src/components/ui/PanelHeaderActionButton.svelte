@@ -18,10 +18,7 @@
   <button
     class="st-button icon"
     on:click={() => dispatch('click')}
-    use:tooltip={{
-      content: title,
-      placement: 'bottom',
-    }}
+    use:tooltip={{ content: title, placement: 'bottom' }}
   >
     <i class={icon} />
   </button>
