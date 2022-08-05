@@ -14,7 +14,6 @@
 
 <style>
   .status {
-    font-weight: 500;
     align-items: center;
     color: var(--st-gray-90);
     display: inline-flex;
