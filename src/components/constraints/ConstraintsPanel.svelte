@@ -8,8 +8,9 @@
   import effects from '../../utilities/effects';
   import GridMenu from '../menus/GridMenu.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
+  import HeaderActionButton from '../ui/HeaderActionButton.svelte';
+  import HeaderActions from '../ui/HeaderActions.svelte';
   import Panel from '../ui/Panel.svelte';
-  import StatusBadge from '../ui/StatusBadge.svelte';
   import ConstraintListItem from './ConstraintListItem.svelte';
 
   export let gridId: number;
@@ -31,12 +32,9 @@
 <Panel>
   <svelte:fragment slot="header">
     <GridMenu {gridId} title="Constraints" />
-    <StatusBadge
-      status={$checkConstraintsStatus}
-      title="Check Constraints"
-      titleWidth="135px"
-      on:click={() => effects.checkConstraints()}
-    />
+    <HeaderActions status={$checkConstraintsStatus}>
+      <HeaderActionButton title="Check Constraints" showLabel on:click={() => effects.checkConstraints()} />
+    </HeaderActions>
   </svelte:fragment>
 
   <svelte:fragment slot="body">
