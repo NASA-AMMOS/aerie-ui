@@ -2,7 +2,7 @@
 
 <script lang="ts">
   import { activitiesMap, selectedActivity } from '../../stores/activities';
-  import { filteredSequences } from '../../stores/expansion';
+  import { filteredExpansionSequences } from '../../stores/expansion';
   import { field } from '../../stores/form';
   import { activityTypesMap, plan } from '../../stores/plan';
   import { simulationDatasetId } from '../../stores/simulation';
@@ -12,7 +12,7 @@
   import { getDoyTimeFromDuration, getUnixEpochTime } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import { required, timestamp } from '../../utilities/validators';
-  import Field from '../form/Field.svelte';
+  import DatePickerField from '../form/DatePickerField.svelte';
   import GridMenu from '../menus/GridMenu.svelte';
   import Parameters from '../parameters/Parameters.svelte';
   import Panel from '../ui/Panel.svelte';
@@ -92,7 +92,7 @@
   $: validateArguments(argumentsMap);
 
   $: if (simulated_activity_id !== null && $simulationDatasetId !== null) {
-    effects.getSequenceId(simulated_activity_id, $simulationDatasetId).then(seqId => {
+    effects.getExpansionSequenceId(simulated_activity_id, $simulationDatasetId).then(seqId => {
       seq_id = seqId;
     });
   }
@@ -102,11 +102,11 @@
     $selectedActivity?.attributes?.computedAttributes,
   );
 
-  async function updateSequenceToActivity() {
+  async function updateExpansionSequenceToActivity() {
     if (seq_id === null) {
-      await effects.deleteSequenceToActivity($simulationDatasetId, simulated_activity_id);
+      await effects.deleteExpansionSequenceToActivity($simulationDatasetId, simulated_activity_id);
     } else {
-      await effects.insertSequenceToActivity($simulationDatasetId, simulated_activity_id, seq_id);
+      await effects.insertExpansionSequenceToActivity($simulationDatasetId, simulated_activity_id, seq_id);
     }
   }
 
@@ -197,10 +197,14 @@
         />
       </fieldset>
 
-      <Field field={startTimeField} on:blur={onUpdateStartTime} on:keydown={onUpdateStartTime}>
-        <label for="start-time" slot="label">Start Time - YYYY-DDDThh:mm:ss</label>
-        <input autocomplete="off" class="st-input w-100" disabled={isChild} name="start-time" />
-      </Field>
+      <DatePickerField
+        disabled={isChild}
+        field={startTimeField}
+        label="Start Time - YYYY-DDDThh:mm:ss"
+        name="start-time"
+        on:change={onUpdateStartTime}
+        on:keydown={onUpdateStartTime}
+      />
 
       {#if duration !== null}
         <fieldset>
@@ -268,14 +272,14 @@
               bind:value={seq_id}
               class="st-select w-100"
               name="sequences"
-              disabled={!$filteredSequences.length}
-              on:change={updateSequenceToActivity}
+              disabled={!$filteredExpansionSequences.length}
+              on:change={updateExpansionSequenceToActivity}
             >
-              {#if !$filteredSequences.length}
+              {#if !$filteredExpansionSequences.length}
                 <option value={null}>No Sequences for Simulation Dataset {$simulationDatasetId ?? ''}</option>
               {:else}
                 <option value={null} />
-                {#each $filteredSequences as sequence}
+                {#each $filteredExpansionSequences as sequence}
                   <option value={sequence.seq_id}>
                     {sequence.seq_id}
                   </option>

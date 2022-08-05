@@ -81,7 +81,8 @@ The recommended editor for developing aerie-ui is [VS Code](https://code.visuals
   "[svelte][typescript]": {
     "editor.codeActionsOnSave": ["source.fixAll", "source.organizeImports", "source.sortImports"],
     "editor.defaultFormatter": "esbenp.prettier-vscode"
-  }
+  },
+  "stylelint.validate": ["css", "less", "postcss", "svelte"]
 }
 ```
 
@@ -90,6 +91,7 @@ The recommended editor for developing aerie-ui is [VS Code](https://code.visuals
 1. [Svelte for VS Code](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode)
 1. [Prettier - Code formatter](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
 1. [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
+1. [Stylelint](https://marketplace.visualstudio.com/items?itemName=stylelint.vscode-stylelint)
 1. [EditorConfig for VS Code](https://marketplace.visualstudio.com/items?itemName=EditorConfig.EditorConfig)
 1. [GraphQL](https://marketplace.visualstudio.com/items?itemName=GraphQL.vscode-graphql)
 1. [Path Intellisense](https://marketplace.visualstudio.com/items?itemName=christian-kohler.path-intellisense)
@@ -114,7 +116,7 @@ npm install
 
 ## Start Development Server
 
-Run `npm run dev` for a dev server. Navigate to `http://localhost:3000/`. The app will automatically reload if you change any of the source files.
+Run `npm run dev` for a dev server. Navigate to `http://localhost:3000/`. The app will automatically reload if you change any of the source files. Since we have observed some issues using [monaco-editor](https://microsoft.github.io/monaco-editor/) with the dev server on Firefox, we recommend using Chrome for development.
 
 ## Building For Production
 
