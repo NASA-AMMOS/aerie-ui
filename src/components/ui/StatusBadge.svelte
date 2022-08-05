@@ -8,12 +8,12 @@
   $: color = getColorForStatus(status);
 </script>
 
-<span class="status" style="color: {color}">
+<span class="status-badge" style="color: {color}">
   {status}
 </span>
 
 <style>
-  .status {
+  .status-badge {
     align-items: center;
     color: var(--st-gray-90);
     display: inline-flex;

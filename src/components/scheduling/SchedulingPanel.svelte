@@ -7,9 +7,9 @@
   import effects from '../../utilities/effects';
   import GridMenu from '../menus/GridMenu.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
-  import HeaderActionButton from '../ui/HeaderActionButton.svelte';
-  import HeaderActions from '../ui/HeaderActions.svelte';
   import Panel from '../ui/Panel.svelte';
+  import PanelHeaderActionButton from '../ui/PanelHeaderActionButton.svelte';
+  import PanelHeaderActions from '../ui/PanelHeaderActions.svelte';
   import SchedulingGoal from './SchedulingGoal.svelte';
 
   export let gridId: number;
@@ -31,10 +31,10 @@
 <Panel>
   <svelte:fragment slot="header">
     <GridMenu {gridId} title="Scheduling" />
-    <HeaderActions status={$schedulingStatus}>
-      <HeaderActionButton title="Analyze" icon="bi bi-card-checklist" on:click={() => effects.schedule(true)} />
-      <HeaderActionButton title="Schedule" on:click={() => effects.schedule()} />
-    </HeaderActions>
+    <PanelHeaderActions status={$schedulingStatus}>
+      <PanelHeaderActionButton title="Analyze" icon="bi bi-card-checklist" on:click={() => effects.schedule(true)} />
+      <PanelHeaderActionButton title="Schedule" on:click={() => effects.schedule()} />
+    </PanelHeaderActions>
   </svelte:fragment>
 
   <svelte:fragment slot="body">
