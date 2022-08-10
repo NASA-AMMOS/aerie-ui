@@ -24,8 +24,17 @@
       sortable: columnDef.sortable,
     };
   })}
-  selectedRowIds={$selectedActivityIds}
   rowSelection="single"
   rowData={$activities}
-  on:rowSelected={({ detail }) => ($selectedActivityId = detail.data.id)}
+  selectedRowIds={$selectedActivityIds}
+  on:rowSelected={({
+    detail: {
+      data: { id },
+      isSelected,
+    },
+  }) => {
+    if (isSelected) {
+      $selectedActivityId = id;
+    }
+  }}
 />

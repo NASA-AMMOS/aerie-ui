@@ -1,7 +1,14 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { Grid, type ColDef, type GridOptions, type RowClickedEvent, type RowSelectedEvent } from 'ag-grid-community';
+  import {
+    Grid,
+    type CellMouseOverEvent,
+    type ColDef,
+    type GridOptions,
+    type RowClickedEvent,
+    type RowSelectedEvent,
+  } from 'ag-grid-community';
   import { createEventDispatcher, onMount } from 'svelte';
 
   export let columnDefs: ColDef[];
@@ -58,13 +65,17 @@
       // each entry here represents one column
       columnDefs,
       getRowId,
+      onCellMouseOver(event: CellMouseOverEvent<TRowData>) {
+        dispatch('cellMouseOver', event);
+      },
       onRowClicked(event: RowClickedEvent<TRowData>) {
         dispatch('rowClicked', event);
       },
       onRowSelected(event: RowSelectedEvent<TRowData>) {
-        if (event.node.isSelected()) {
-          dispatch('rowSelected', event);
-        }
+        dispatch('rowSelected', {
+          data: event.data,
+          isSelected: event.node.isSelected(),
+        });
       },
       rowData,
       rowSelection,
