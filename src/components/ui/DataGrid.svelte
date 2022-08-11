@@ -40,7 +40,7 @@
      *  deleting the shared ids from the `selectedRowIdsSet` will yield the new ids that need to be selected
      */
     for (let i = currentSelectedRowIds.length; i >= 0; --i) {
-      const currentId = currentSelectedRowIdsSet[i];
+      const currentId = currentSelectedRowIds[i];
       if (selectedRowIdsSet.has(currentId)) {
         currentSelectedRowIdsSet.delete(currentId);
         selectedRowIdsSet.delete(currentId);

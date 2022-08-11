@@ -85,20 +85,20 @@
     }
   }
 
-  function toggleRule(clickedRule: ExpansionRule) {
+  function toggleRule(clickedRule: ExpansionRule, isSelected: boolean) {
     if (selectedExpansionRule?.id === clickedRule.id) {
       selectedExpansionRule = null;
-    } else {
+    } else if (isSelected) {
       selectedExpansionRule = clickedRule;
     }
   }
 
-  function toggleSet(clickedSet: ExpansionSet) {
+  function toggleSet(clickedSet: ExpansionSet, isSelected: boolean) {
     selectedExpansionRule = null;
 
     if (selectedExpansionSet?.id === clickedSet.id) {
       selectedExpansionSet = null;
-    } else {
+    } else if (isSelected) {
       selectedExpansionSet = clickedSet;
     }
   }
@@ -123,7 +123,7 @@
             {columnDefs}
             rowData={sortedSets}
             rowSelection="single"
-            on:rowSelected={({ detail }) => toggleSet(detail.data)}
+            on:rowSelected={({ detail }) => toggleSet(detail.data, detail.isSelected)}
           />
         {:else}
           No Expansion Sets Found
@@ -156,7 +156,9 @@
             rowData={selectedExpansionSet?.expansion_rules}
             rowSelection="single"
             selectedRowIds={selectedExpansionRuleIds}
-            on:rowSelected={({ detail }) => toggleRule(detail.data)}
+            on:rowSelected={({ detail }) => {
+              toggleRule(detail.data, detail.isSelected);
+            }}
           />
         {:else}
           No Expansion Set Selected
