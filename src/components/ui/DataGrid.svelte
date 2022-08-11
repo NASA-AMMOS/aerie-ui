@@ -3,6 +3,7 @@
 <script lang="ts">
   import {
     Grid,
+    type CellContextMenuEvent,
     type CellMouseOverEvent,
     type ColDef,
     type GridOptions,
@@ -66,6 +67,9 @@
       // each entry here represents one column
       columnDefs,
       getRowId,
+      onCellContextMenu(event: CellContextMenuEvent<TRowData>) {
+        dispatch('cellContextMenu', event);
+      },
       onCellMouseOver(event: CellMouseOverEvent<TRowData>) {
         dispatch('cellMouseOver', event);
       },
