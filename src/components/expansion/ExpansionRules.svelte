@@ -50,12 +50,12 @@
           props: {
             deleteCallback: params.deleteRule,
             deleteTooltip: {
-              content: 'Delete Constraint',
+              content: 'Delete Rule',
               placement: 'bottom',
             },
             editCallback: params.editRule,
             editTooltip: {
-              content: 'Edit Constraint',
+              content: 'Edit Rule',
               placement: 'bottom',
             },
             rowData: params.data,
