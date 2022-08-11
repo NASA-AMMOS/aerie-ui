@@ -443,3 +443,12 @@
 .ag-theme-stellar.ag-selectable-rows .ag-row {
   cursor: pointer;
 }
+
+.ag-theme-stellar .ag-row.ag-row-selected::before,
+.ag-theme-stellar .ag-row.ag-row-selected.ag-row-hover::before {
+  background: var(--ag-row-hover-color);
+}
+
+.ag-theme-stellar.highlightOnSelection .ag-row.ag-row-selected::before {
+  background: var(--ag-selected-row-background-color);
+}

@@ -280,6 +280,7 @@
         {#if sortedPlans.length}
           <DataGrid
             {columnDefs}
+            highlightOnSelection={false}
             rowData={sortedPlans}
             rowSelection="single"
             on:rowSelected={({ detail }) => showPlan(detail.data)}

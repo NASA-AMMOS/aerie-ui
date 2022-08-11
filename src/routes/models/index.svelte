@@ -161,6 +161,7 @@
         {#if $sortedModels.length}
           <DataGrid
             {columnDefs}
+            highlightOnSelection={false}
             rowData={$sortedModels}
             rowSelection="single"
             on:rowSelected={({ detail }) => showModel(detail.data)}
