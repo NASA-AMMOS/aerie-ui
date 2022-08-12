@@ -67,6 +67,12 @@
 
   .display-value .value {
     font-weight: bold;
+    padding: 0.25rem;
+    border-radius: 3px;
+  }
+
+  .display-value:hover .value {
+    background-color: var(--st-gray-15);
   }
 
   .date-picker-dropdown select {
