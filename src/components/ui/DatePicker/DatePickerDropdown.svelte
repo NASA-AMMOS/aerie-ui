@@ -66,7 +66,7 @@
   }
 
   .display-value .value {
-    border-radius: 3px;
+    border-radius: 4px;
     font-weight: bold;
     padding: 0.25rem;
   }
