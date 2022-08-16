@@ -12,7 +12,7 @@
   import { showExpansionSequenceModal } from '../../utilities/modal';
   import GridMenu from '../menus/GridMenu.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
-  import DataGrid from '../ui/DataGrid.svelte';
+  import DataGrid from '../ui/DataGrid/DataGrid.svelte';
   import DataGridActions from '../ui/DataGridActions.svelte';
   import Panel from '../ui/Panel.svelte';
 
