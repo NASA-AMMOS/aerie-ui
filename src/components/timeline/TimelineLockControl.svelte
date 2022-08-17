@@ -48,7 +48,7 @@
 
 <style>
   .st-button {
-    border: 1px solid rgba(0, 0, 0, 0.16);
+    border: 1px solid var(--st-gray-30);
     color: var(--st-gray-70);
   }
 
