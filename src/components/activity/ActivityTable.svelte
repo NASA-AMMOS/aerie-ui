@@ -103,7 +103,7 @@
     }
   }
 
-  function onRowsSelected({ detail: selectedRows }: CustomEvent<DataGridRowsSelection<Activity>>) {
+  function onSelectionChanged({ detail: selectedRows }: CustomEvent<DataGridRowsSelection<Activity>>) {
     selectedActivityIds = selectedRows.map(selectedRow => selectedRow.id);
 
     if (selectedActivityIds.length === 1) {
@@ -135,7 +135,7 @@
   selectedRowIds={selectedActivityIds}
   preventDefaultOnContextMenu
   on:rowSelected={onRowSelected}
-  on:rowsSelected={onRowsSelected}
+  on:selectionChanged={onSelectionChanged}
   on:cellContextMenu={onCellContextMenu}
 />
 <ContextMenu bind:this={contextMenu}>

@@ -3,7 +3,6 @@
 <script lang="ts">
   import {
     Grid,
-    RowNode,
     type CellContextMenuEvent,
     type CellMouseOverEvent,
     type ColDef,
@@ -26,7 +25,6 @@
 
   let gridOptions: GridOptions;
   let gridDiv: HTMLDivElement;
-  let debounceTimer: NodeJS.Timeout | null;
 
   $: gridOptions?.api?.setRowData(rowData);
   $: gridOptions?.api?.sizeColumnsToFit();
@@ -61,21 +59,6 @@
     });
   }
 
-  // throw `rowsSelected` immediately once and ignore any others within a certain cooldown period
-  function debouncedRowsSelected(selectedNodes: RowNode<TRowData>[]) {
-    if (debounceTimer) {
-      clearTimeout(debounceTimer);
-    } else {
-      dispatch(
-        'rowsSelected',
-        selectedNodes.map(rowNode => rowNode.data),
-      );
-    }
-    debounceTimer = setTimeout(() => {
-      debounceTimer = null;
-    }, 10);
-  }
-
   function getRowId(params: { data: TRowData }) {
     return `${params.data.id}`;
   }
@@ -96,10 +79,6 @@
       },
       onRowSelected(event: RowSelectedEvent<TRowData>) {
         const selectedNodes = gridOptions?.api?.getSelectedNodes();
-        // because `onRowSelected` gets thrown for every row selected/unselected,
-        // `debouncedRowsSelected` is debounced to only throw once since it's redundant to broadcast all
-        // the selected rows every time
-        debouncedRowsSelected(selectedNodes);
 
         // only dispatch `rowSelected` for single row selections
         if (selectedNodes.length <= 1) {
@@ -108,6 +87,11 @@
             isSelected: event.node.isSelected(),
           } as DataGridRowSelection<TRowData>);
         }
+      },
+      onSelectionChanged() {
+        const selectedRows = gridOptions?.api?.getSelectedRows();
+
+        dispatch('selectionChanged', selectedRows);
       },
       preventDefaultOnContextMenu,
       rowData,
