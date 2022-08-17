@@ -10,7 +10,7 @@
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
   import DataGrid from '../ui/DataGrid/DataGrid.svelte';
-  import DataGridActions from '../ui/DataGridActions.svelte';
+  import DataGridActions from '../ui/DataGrid/DataGridActions.svelte';
   import Panel from '../ui/Panel.svelte';
   import ConstraintEditor from './ConstraintEditor.svelte';
 

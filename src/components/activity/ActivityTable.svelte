@@ -3,7 +3,7 @@
 <script lang="ts">
   import { activities, selectedActivityId, selectedActivityIds } from '../../stores/activities';
   import { view } from '../../stores/views';
-  import DataGrid from '../ui/DataGrid.svelte';
+  import DataGrid from '../ui/DataGrid/DataGrid.svelte';
 
   export let activityTableId: number;
 

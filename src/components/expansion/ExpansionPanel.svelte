@@ -13,7 +13,7 @@
   import GridMenu from '../menus/GridMenu.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import DataGrid from '../ui/DataGrid/DataGrid.svelte';
-  import DataGridActions from '../ui/DataGridActions.svelte';
+  import DataGridActions from '../ui/DataGrid/DataGridActions.svelte';
   import Panel from '../ui/Panel.svelte';
 
   export let gridId: number;
