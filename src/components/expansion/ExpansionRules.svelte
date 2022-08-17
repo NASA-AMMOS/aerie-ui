@@ -108,11 +108,15 @@
     goto(`${base}/expansion/rules/edit/${id}`);
   }
 
-  function toggleRule(clickedRule: ExpansionRule) {
-    if (selectedExpansionRule?.id === clickedRule.id) {
-      selectedExpansionRule = null;
-    } else {
+  function toggleRule(event: CustomEvent<DataGridRowSelection<ExpansionRule>>) {
+    const {
+      detail: { data: clickedRule, isSelected },
+    } = event;
+
+    if (isSelected) {
       selectedExpansionRule = clickedRule;
+    } else if (selectedExpansionRule?.id === clickedRule.id) {
+      selectedExpansionRule = null;
     }
   }
 </script>
@@ -138,12 +142,7 @@
 
     <svelte:fragment slot="body">
       {#if sortedRules.length}
-        <DataGrid
-          {columnDefs}
-          rowData={sortedRules}
-          rowSelection="single"
-          on:rowSelected={({ detail }) => toggleRule(detail.data)}
-        />
+        <DataGrid {columnDefs} rowData={sortedRules} rowSelection="single" on:rowSelected={toggleRule} />
       {:else}
         No Rules Found
       {/if}

@@ -3,6 +3,7 @@
 <script lang="ts">
   import {
     Grid,
+    RowNode,
     type CellContextMenuEvent,
     type CellMouseOverEvent,
     type ColDef,
@@ -19,11 +20,13 @@
   export let selectedRowIds: number[] = [];
   export let suppressCellFocus: boolean = true;
   export let suppressRowClickSelection: boolean = false;
+  export let preventDefaultOnContextMenu: boolean | undefined = undefined;
 
   const dispatch = createEventDispatcher();
 
   let gridOptions: GridOptions;
   let gridDiv: HTMLDivElement;
+  let debounceTimer: NodeJS.Timeout | null;
 
   $: gridOptions?.api?.setRowData(rowData);
   $: gridOptions?.api?.sizeColumnsToFit();
@@ -58,6 +61,21 @@
     });
   }
 
+  // throw `rowsSelected` immediately once and ignore any others within a certain cooldown period
+  function debouncedRowsSelected(selectedNodes: RowNode<TRowData>[]) {
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    } else {
+      dispatch(
+        'rowsSelected',
+        selectedNodes.map(rowNode => rowNode.data),
+      );
+    }
+    debounceTimer = setTimeout(() => {
+      debounceTimer = null;
+    }, 10);
+  }
+
   function getRowId(params: { data: TRowData }) {
     return `${params.data.id}`;
   }
@@ -77,11 +95,21 @@
         dispatch('rowClicked', event);
       },
       onRowSelected(event: RowSelectedEvent<TRowData>) {
-        dispatch('rowSelected', {
-          data: event.data,
-          isSelected: event.node.isSelected(),
-        });
+        const selectedNodes = gridOptions?.api?.getSelectedNodes();
+        // because `onRowSelected` gets thrown for every row selected/unselected,
+        // `debouncedRowsSelected` is debounced to only throw once since it's redundant to broadcast all
+        // the selected rows every time
+        debouncedRowsSelected(selectedNodes);
+
+        // only dispatch `rowSelected` for single row selections
+        if (selectedNodes.length <= 1) {
+          dispatch('rowSelected', {
+            data: event.data,
+            isSelected: event.node.isSelected(),
+          } as DataGridRowSelection<TRowData>);
+        }
       },
+      preventDefaultOnContextMenu,
       rowData,
       rowSelection,
       suppressCellFocus,

@@ -85,21 +85,29 @@
     }
   }
 
-  function toggleRule(clickedRule: ExpansionRule, isSelected: boolean) {
-    if (selectedExpansionRule?.id === clickedRule.id) {
-      selectedExpansionRule = null;
-    } else if (isSelected) {
+  function toggleRule(event: CustomEvent<DataGridRowSelection<ExpansionRule>>) {
+    const {
+      detail: { data: clickedRule, isSelected },
+    } = event;
+
+    if (isSelected) {
       selectedExpansionRule = clickedRule;
+    } else if (selectedExpansionRule?.id === clickedRule.id) {
+      selectedExpansionRule = null;
     }
   }
 
-  function toggleSet(clickedSet: ExpansionSet, isSelected: boolean) {
+  function toggleSet(event: CustomEvent<DataGridRowSelection<ExpansionSet>>) {
+    const {
+      detail: { data: clickedSet, isSelected },
+    } = event;
+
     selectedExpansionRule = null;
 
-    if (selectedExpansionSet?.id === clickedSet.id) {
-      selectedExpansionSet = null;
-    } else if (isSelected) {
+    if (isSelected) {
       selectedExpansionSet = clickedSet;
+    } else if (selectedExpansionSet?.id === clickedSet.id) {
+      selectedExpansionSet = null;
     }
   }
 </script>
@@ -119,12 +127,7 @@
 
       <svelte:fragment slot="body">
         {#if sortedSets.length}
-          <DataGrid
-            {columnDefs}
-            rowData={sortedSets}
-            rowSelection="single"
-            on:rowSelected={({ detail }) => toggleSet(detail.data, detail.isSelected)}
-          />
+          <DataGrid {columnDefs} rowData={sortedSets} rowSelection="single" on:rowSelected={toggleSet} />
         {:else}
           No Expansion Sets Found
         {/if}
@@ -156,9 +159,7 @@
             rowData={selectedExpansionSet?.expansion_rules}
             rowSelection="single"
             selectedRowIds={selectedExpansionRuleIds}
-            on:rowSelected={({ detail }) => {
-              toggleRule(detail.data, detail.isSelected);
-            }}
+            on:rowSelected={toggleRule}
           />
         {:else}
           No Expansion Set Selected

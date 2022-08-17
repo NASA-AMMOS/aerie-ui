@@ -106,11 +106,15 @@
     goto(`${base}/scheduling/goals/edit/${id}`);
   }
 
-  function toggleGoal(clickedGoal: SchedulingGoal) {
-    if (selectedGoal?.id === clickedGoal.id) {
-      selectedGoal = null;
-    } else {
+  function toggleGoal(event: CustomEvent<DataGridRowSelection<SchedulingGoal>>) {
+    const {
+      detail: { data: clickedGoal, isSelected },
+    } = event;
+
+    if (isSelected) {
       selectedGoal = clickedGoal;
+    } else if (selectedGoal?.id === clickedGoal.id) {
+      selectedGoal = null;
     }
   }
 </script>
@@ -138,12 +142,7 @@
 
     <svelte:fragment slot="body">
       {#if sortedGoals.length}
-        <DataGrid
-          {columnDefs}
-          rowData={sortedGoals}
-          rowSelection="single"
-          on:rowSelected={({ detail }) => toggleGoal(detail.data)}
-        />
+        <DataGrid {columnDefs} rowData={sortedGoals} rowSelection="single" on:rowSelected={toggleGoal} />
       {:else}
         No Scheduling Goals Found
       {/if}

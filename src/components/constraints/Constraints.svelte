@@ -125,11 +125,15 @@
     goto(`${base}/constraints/edit/${id}`);
   }
 
-  function toggleConstraint(clickedConstraint: Constraint) {
-    if (selectedConstraint?.id === clickedConstraint.id) {
-      selectedConstraint = null;
-    } else {
+  function toggleConstraint(event: CustomEvent<DataGridRowSelection<Constraint>>) {
+    const {
+      detail: { data: clickedConstraint, isSelected },
+    } = event;
+
+    if (isSelected) {
       selectedConstraint = clickedConstraint;
+    } else if (selectedConstraint?.id === clickedConstraint.id) {
+      selectedConstraint = null;
     }
   }
 </script>
@@ -159,7 +163,7 @@
           {columnDefs}
           rowData={filteredConstraints}
           rowSelection="single"
-          on:rowSelected={({ detail }) => toggleConstraint(detail.data)}
+          on:rowSelected={event => toggleConstraint(event)}
         />
       {:else}
         No Constraints Found
