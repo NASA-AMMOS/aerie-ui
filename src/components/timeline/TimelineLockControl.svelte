@@ -25,6 +25,8 @@
     }
   };
 
+  $: lockClassName = $timelineLockStatus === TimelineLockStatus.TemporaryUnlock ? 'temporary-unlock' : '';
+
   onMount(() => {
     document.addEventListener('keydown', onKeydown);
     document.addEventListener('keyup', onKeyup);
@@ -36,10 +38,24 @@
   });
 </script>
 
-<button class="st-button icon" on:click={onClick}>
+<button class={`st-button icon ${lockClassName}`} on:click={onClick}>
   {#if $timelineLockStatus !== TimelineLockStatus.Locked}
     <UnlockIcon />
   {:else}
     <LockIcon />
   {/if}
 </button>
+
+<style>
+  .st-button {
+    border: 1px solid rgba(0, 0, 0, 0.16);
+    color: var(--st-gray-70);
+  }
+
+  .temporary-unlock,
+  .temporary-unlock:hover {
+    background-color: var(--st-blue);
+    border-color: transparent;
+    color: #ffffff;
+  }
+</style>
