@@ -51,6 +51,8 @@
 
   let activityTable: ViewActivityTable;
   let contextMenu: ContextMenu;
+  let dataGrid: DataGrid;
+  let isFiltered: boolean = false;
   let previousSelectedActivityId: number | null = null;
   let selectedActivityIds: number[] = [];
 
@@ -88,6 +90,12 @@
     contextMenu.show(detail.event);
   }
 
+  function onFilterChanged(event: CustomEvent) {
+    const { detail: filterModel } = event;
+
+    isFiltered = Object.keys(filterModel).length > 0;
+  }
+
   function onRowSelected(event: CustomEvent<DataGridRowSelection<Activity>>) {
     const {
       detail: {
@@ -112,11 +120,12 @@
   }
 
   function selectAllActivities() {
-    selectedActivityIds = $activities.map(({ id }: Activity) => id);
+    dataGrid.selectAllVisible();
   }
 </script>
 
 <DataGrid
+  bind:this={dataGrid}
   columnDefs={[
     ...Object.keys(activityTable?.columnDefs).map(columnKey => {
       const columnDef = activityTable?.columnDefs[columnKey];
@@ -134,14 +143,15 @@
   rowData={$activities}
   selectedRowIds={selectedActivityIds}
   preventDefaultOnContextMenu
+  on:filterChanged={onFilterChanged}
+  on:cellContextMenu={onCellContextMenu}
   on:rowSelected={onRowSelected}
   on:selectionChanged={onSelectionChanged}
-  on:cellContextMenu={onCellContextMenu}
 />
 <ContextMenu bind:this={contextMenu}>
   <ContextMenuHeader>Bulk Actions</ContextMenuHeader>
-  <ContextMenuItem on:click={selectAllActivities}>Select All Activities</ContextMenuItem>
-  <ContextMenuItem on:click={deleteActivities}
-    >Delete {selectedActivityIds.length} Activit{selectedActivityIds.length > 1 ? 'ies' : 'y'}</ContextMenuItem
-  >
+  <ContextMenuItem on:click={selectAllActivities}>Select All {isFiltered ? 'Visible ' : ''}Activities</ContextMenuItem>
+  <ContextMenuItem on:click={deleteActivities}>
+    Delete {selectedActivityIds.length} Activit{selectedActivityIds.length > 1 ? 'ies' : 'y'}
+  </ContextMenuItem>
 </ContextMenu>
