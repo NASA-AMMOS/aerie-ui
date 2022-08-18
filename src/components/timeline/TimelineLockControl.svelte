@@ -6,22 +6,24 @@
   import { TimelineLockStatus } from '../../utilities/timeline';
 
   let onKeydown = e => {
-    if (e.key === 'Shift' && $timelineLockStatus !== TimelineLockStatus.Unlocked) {
-      timelineLockStatus.set(TimelineLockStatus.TemporaryUnlock);
+    // If user holds shift while not focused on an input then activate the temporary unlock.
+    // If an input is focused, we assume they're holding shift to capitalize instead.
+    if (e.key === 'Shift' && e.target.tagName !== 'INPUT' && $timelineLockStatus !== TimelineLockStatus.Unlocked) {
+      $timelineLockStatus = TimelineLockStatus.TemporaryUnlock;
     }
   };
 
   let onKeyup = e => {
     if (e.key === 'Shift' && $timelineLockStatus === TimelineLockStatus.TemporaryUnlock) {
-      timelineLockStatus.set(TimelineLockStatus.Locked);
+      $timelineLockStatus = TimelineLockStatus.Locked;
     }
   };
 
   let onClick = () => {
     if ($timelineLockStatus === TimelineLockStatus.Locked) {
-      timelineLockStatus.set(TimelineLockStatus.Unlocked);
+      $timelineLockStatus = TimelineLockStatus.Unlocked;
     } else {
-      timelineLockStatus.set(TimelineLockStatus.Locked);
+      $timelineLockStatus = TimelineLockStatus.Locked;
     }
   };
 
