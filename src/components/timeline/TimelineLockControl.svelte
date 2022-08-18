@@ -4,6 +4,7 @@
   import { onMount } from 'svelte';
   import { timelineLockStatus } from '../../stores/views';
   import { TimelineLockStatus } from '../../utilities/timeline';
+  import { tooltip } from '../../utilities/tooltip';
 
   let onKeydown = e => {
     // If user holds shift while not focused on an input then activate the temporary unlock.
@@ -28,6 +29,7 @@
   };
 
   $: lockClassName = $timelineLockStatus === TimelineLockStatus.TemporaryUnlock ? 'temporary-unlock' : '';
+  const lockTooltipContent = 'Click to unlock timeline, or press and hold the Shift key to temporarily unlock';
 
   onMount(() => {
     document.addEventListener('keydown', onKeydown);
@@ -40,13 +42,15 @@
   });
 </script>
 
-<button class={`st-button icon ${lockClassName}`} on:click={onClick}>
-  {#if $timelineLockStatus !== TimelineLockStatus.Locked}
-    <UnlockIcon />
-  {:else}
+{#if $timelineLockStatus === TimelineLockStatus.Locked}
+  <button class="st-button icon" on:click={onClick} use:tooltip={{ content: lockTooltipContent, placement: 'bottom' }}>
     <LockIcon />
-  {/if}
-</button>
+  </button>
+{:else}
+  <button class={`st-button icon ${lockClassName}`} on:click={onClick}>
+    <UnlockIcon />
+  </button>
+{/if}
 
 <style>
   .st-button {
