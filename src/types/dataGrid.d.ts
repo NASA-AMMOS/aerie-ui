@@ -11,4 +11,7 @@ interface ICellRendererParams {
   data: TRowData;
 }
 
-type TRowData = any;
+interface TRowData {
+  id?: number;
+  [key: string]: any;
+}

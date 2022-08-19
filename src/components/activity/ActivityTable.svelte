@@ -5,10 +5,7 @@
 
   import { activities, selectedActivityId } from '../../stores/activities';
   import { view } from '../../stores/views';
-  import ContextMenu from '../context-menu/ContextMenu.svelte';
-  import ContextMenuHeader from '../context-menu/ContextMenuHeader.svelte';
-  import ContextMenuItem from '../context-menu/ContextMenuItem.svelte';
-  import DataGrid from '../ui/DataGrid/DataGrid.svelte';
+  import BulkActionDataGrid from '../ui/DataGrid/BulkActionDataGrid.svelte';
   import DataGridActions from '../ui/DataGrid/DataGridActions.svelte';
 
   export let activityTableId: number;
@@ -50,9 +47,6 @@
   };
 
   let activityTable: ViewActivityTable;
-  let contextMenu: ContextMenu;
-  let dataGrid: DataGrid;
-  let isFiltered: boolean = false;
   let previousSelectedActivityId: number | null = null;
   let selectedActivityIds: number[] = [];
 
@@ -72,60 +66,12 @@
     }
   }
 
-  async function deleteActivities() {
-    const success = await effects.deleteActivities(selectedActivityIds);
-
-    if (success) {
-      selectedActivityIds = [];
-    }
-  }
-
-  function onCellContextMenu(event: CustomEvent) {
-    const { detail } = event;
-    const { data: clickedRow } = detail;
-    if (selectedActivityIds.length <= 1) {
-      $selectedActivityId = clickedRow.id;
-    }
-
-    contextMenu.show(detail.event);
-  }
-
-  function onFilterChanged(event: CustomEvent) {
-    const { detail: filterModel } = event;
-
-    isFiltered = Object.keys(filterModel).length > 0;
-  }
-
-  function onRowSelected(event: CustomEvent<DataGridRowSelection<Activity>>) {
-    const {
-      detail: {
-        data: { id },
-        isSelected,
-      },
-    } = event;
-
-    if (isSelected) {
-      $selectedActivityId = id;
-    } else if ($selectedActivityId === id) {
-      $selectedActivityId = null;
-    }
-  }
-
-  function onSelectionChanged({ detail: selectedRows }: CustomEvent<DataGridRowsSelection<Activity>>) {
-    selectedActivityIds = selectedRows.map(selectedRow => selectedRow.id);
-
-    if (selectedActivityIds.length === 1) {
-      $selectedActivityId = selectedActivityIds[0];
-    }
-  }
-
-  function selectAllActivities() {
-    dataGrid.selectAllVisible();
+  function deleteActivities({ detail: ids }: CustomEvent<number[]>) {
+    effects.deleteActivities(ids);
   }
 </script>
 
-<DataGrid
-  bind:this={dataGrid}
+<BulkActionDataGrid
   columnDefs={[
     ...Object.keys(activityTable?.columnDefs).map(columnKey => {
       const columnDef = activityTable?.columnDefs[columnKey];
@@ -139,19 +85,9 @@
     }),
     activityActionColumnDef,
   ]}
-  rowSelection="multiple"
-  rowData={$activities}
-  selectedRowIds={selectedActivityIds}
-  preventDefaultOnContextMenu
-  on:filterChanged={onFilterChanged}
-  on:cellContextMenu={onCellContextMenu}
-  on:rowSelected={onRowSelected}
-  on:selectionChanged={onSelectionChanged}
+  items={$activities}
+  pluralItemDisplayText="Activities"
+  singleItemDisplayText="Activity"
+  selectedItemId={$selectedActivityId}
+  on:bulkDeleteItems={deleteActivities}
 />
-<ContextMenu bind:this={contextMenu}>
-  <ContextMenuHeader>Bulk Actions</ContextMenuHeader>
-  <ContextMenuItem on:click={selectAllActivities}>Select All {isFiltered ? 'Visible ' : ''}Activities</ContextMenuItem>
-  <ContextMenuItem on:click={deleteActivities}>
-    Delete {selectedActivityIds.length} Activit{selectedActivityIds.length > 1 ? 'ies' : 'y'}
-  </ContextMenuItem>
-</ContextMenu>
