@@ -1,10 +1,9 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import effects from '../../utilities/effects';
-
   import { activities, selectedActivityId } from '../../stores/activities';
   import { view } from '../../stores/views';
+  import effects from '../../utilities/effects';
   import BulkActionDataGrid from '../ui/DataGrid/BulkActionDataGrid.svelte';
   import DataGridActions from '../ui/DataGrid/DataGridActions.svelte';
 

@@ -2,9 +2,7 @@
 
 <script lang="ts">
   import type { ColDef } from 'ag-grid-community';
-
   import { createEventDispatcher } from 'svelte';
-
   import ContextMenu from '../../context-menu/ContextMenu.svelte';
   import ContextMenuHeader from '../../context-menu/ContextMenuHeader.svelte';
   import ContextMenuItem from '../../context-menu/ContextMenuItem.svelte';
@@ -93,9 +91,9 @@
 />
 <ContextMenu bind:this={contextMenu}>
   <ContextMenuHeader>Bulk Actions</ContextMenuHeader>
-  <ContextMenuItem on:click={selectAllItems}
-    >Select All {isFiltered ? 'Visible ' : ''}{pluralItemDisplayText}</ContextMenuItem
-  >
+  <ContextMenuItem on:click={selectAllItems}>
+    Select All {isFiltered ? 'Visible ' : ''}{pluralItemDisplayText}
+  </ContextMenuItem>
   <ContextMenuItem on:click={bulkDeleteItems}>
     Delete {selectedItemIds.length}
     {selectedItemIds.length > 1 ? pluralItemDisplayText : singleItemDisplayText}
