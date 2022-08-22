@@ -6,27 +6,27 @@
   import { TimelineLockStatus } from '../../utilities/timeline';
   import { tooltip } from '../../utilities/tooltip';
 
-  let onKeydown = e => {
+  function onKeydown(e) {
     // If user holds shift while not focused on an input then activate the temporary unlock.
     // If an input is focused, we assume they're holding shift to capitalize instead.
     if (e.key === 'Shift' && e.target.tagName !== 'INPUT' && $timelineLockStatus !== TimelineLockStatus.Unlocked) {
       $timelineLockStatus = TimelineLockStatus.TemporaryUnlock;
     }
-  };
+  }
 
-  let onKeyup = e => {
+  function onKeyup(e) {
     if (e.key === 'Shift' && $timelineLockStatus === TimelineLockStatus.TemporaryUnlock) {
       $timelineLockStatus = TimelineLockStatus.Locked;
     }
-  };
+  }
 
-  let onClick = () => {
+  function onClick() {
     if ($timelineLockStatus === TimelineLockStatus.Locked) {
       $timelineLockStatus = TimelineLockStatus.Unlocked;
     } else {
       $timelineLockStatus = TimelineLockStatus.Locked;
     }
-  };
+  }
 
   $: lockClassName = $timelineLockStatus === TimelineLockStatus.TemporaryUnlock ? 'temporary-unlock' : '';
   const lockTooltipContent = 'Click to unlock timeline, or press and hold the Shift key to temporarily unlock';
