@@ -60,7 +60,7 @@
 
   .temporary-unlock,
   .temporary-unlock:hover {
-    background-color: var(--st-blue);
+    background-color: #2f80ed;
     border-color: transparent;
     color: #ffffff;
   }
