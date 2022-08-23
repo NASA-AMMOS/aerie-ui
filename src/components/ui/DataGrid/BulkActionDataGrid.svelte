@@ -19,14 +19,12 @@
   let contextMenu: ContextMenu;
   let dataGrid: DataGrid;
   let isFiltered: boolean = false;
-  let previousSelectedItemId: number | null = null;
   let selectedItemIds: number[] = [];
 
   $: {
-    if (previousSelectedItemId !== selectedItemId && selectedItemId !== null) {
+    if (!selectedItemIds.includes(selectedItemId)) {
       selectedItemIds = [selectedItemId];
     }
-    previousSelectedItemId = selectedItemId;
   }
 
   function bulkDeleteItems() {
@@ -49,7 +47,7 @@
     isFiltered = Object.keys(filterModel).length > 0;
   }
 
-  function onRowSelected(event: CustomEvent<DataGridRowSelection<TRowData>>) {
+  function onRowClicked(event: CustomEvent<DataGridRowSelection<TRowData>>) {
     const {
       detail: {
         data: { id },
@@ -88,7 +86,7 @@
   preventDefaultOnContextMenu
   on:filterChanged={onFilterChanged}
   on:cellContextMenu={onCellContextMenu}
-  on:rowSelected={onRowSelected}
+  on:rowClicked={onRowClicked}
   on:selectionChanged={onSelectionChanged}
 />
 <ContextMenu bind:this={contextMenu}>
