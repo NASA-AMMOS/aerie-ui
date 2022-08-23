@@ -247,6 +247,16 @@ const gql = {
     }
   `,
 
+  DELETE_VIEWS: `#graphql
+    mutation DeleteViews($ids: [Int!]!) {
+      delete_view(where: { id: { _in: $ids } }) {
+        returning {
+          id
+        }
+      }
+    }
+  `,
+
   EXPAND: `#graphql
     mutation Expand($expansionSetId: Int!, $simulationDatasetId: Int!) {
       expand: expandAllActivities(expansionSetId: $expansionSetId, simulationDatasetId: $simulationDatasetId) {

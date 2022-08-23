@@ -7,7 +7,7 @@
   import effects from '../../utilities/effects';
   import { setQueryParam } from '../../utilities/generic';
   import GridMenu from '../menus/GridMenu.svelte';
-  import DataGrid from '../ui/DataGrid/DataGrid.svelte';
+  import BulkActionDataGrid from '../ui/DataGrid/BulkActionDataGrid.svelte';
   import DataGridActions from '../ui/DataGrid/DataGridActions.svelte';
   import Panel from '../ui/Panel.svelte';
 
@@ -15,6 +15,7 @@
 
   type CellRendererParams = {
     deleteView: (view: View) => void;
+    openView: (view: View) => void;
   };
   type ViewCellRendererParams = ICellRendererParams & CellRendererParams;
 
@@ -44,6 +45,11 @@
               placement: 'bottom',
             },
             rowData: params.data,
+            viewCallback: params.openView,
+            viewTooltip: {
+              content: 'Open View',
+              placement: 'bottom',
+            },
           },
           target: actionsDiv,
         });
@@ -52,6 +58,7 @@
       },
       cellRendererParams: {
         deleteView,
+        openView,
       } as CellRendererParams,
       field: 'actions',
       headerName: '',
@@ -59,7 +66,7 @@
       sortable: false,
       suppressAutoSize: true,
       suppressSizeToFit: true,
-      width: 25,
+      width: 55,
     },
   ];
 
@@ -83,7 +90,11 @@
     }
   }
 
-  async function loadView(viewId: number) {
+  function deleteViews({ detail: ids }: CustomEvent<number[]>) {
+    effects.deleteViews(ids);
+  }
+
+  async function openView({ id: viewId }: View) {
     const query = new URLSearchParams(`?viewId=${viewId}`);
     const newView = await effects.getView($userStore?.id, query);
 
@@ -104,11 +115,12 @@
 
   <svelte:fragment slot="body">
     {#if views.length}
-      <DataGrid
+      <BulkActionDataGrid
         {columnDefs}
-        rowData={views}
-        rowSelection="single"
-        on:rowSelected={({ detail }) => loadView(detail.data.id)}
+        items={views}
+        pluralItemDisplayText="Views"
+        singleItemDisplayText="View"
+        on:bulkDeleteItems={deleteViews}
       />
     {:else}
       No Views Found

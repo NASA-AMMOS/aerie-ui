@@ -11,7 +11,7 @@
   export let columnDefs: ColDef[];
   export let items: TRowData[];
   export let pluralItemDisplayText: string;
-  export let selectedItemId: number;
+  export let selectedItemId: number | null = null;
   export let singleItemDisplayText: string;
 
   const dispatch = createEventDispatcher();
@@ -23,7 +23,7 @@
   let selectedItemIds: number[] = [];
 
   $: {
-    if (previousSelectedItemId !== selectedItemId) {
+    if (previousSelectedItemId !== selectedItemId && selectedItemId !== null) {
       selectedItemIds = [selectedItemId];
     }
     previousSelectedItemId = selectedItemId;
@@ -69,6 +69,8 @@
 
     if (selectedItemIds.length === 1) {
       selectedItemId = selectedItemIds[0];
+    } else if (!selectedItemIds.includes(selectedItemId)) {
+      selectedItemId = null;
     }
   }
 
