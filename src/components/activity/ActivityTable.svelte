@@ -42,7 +42,7 @@
     sortable: false,
     suppressAutoSize: true,
     suppressSizeToFit: true,
-    width: 55,
+    width: 25,
   };
 
   let activityTable: ViewActivityTable;
