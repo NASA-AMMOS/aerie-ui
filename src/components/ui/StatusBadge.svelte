@@ -38,11 +38,11 @@
 <style>
   .status-badge {
     align-items: center;
+    border-radius: 9999px;
     color: #fff;
     display: inline-flex;
     height: 16px;
     justify-content: center;
     width: 16px;
-    border-radius: 9999px;
   }
 </style>
