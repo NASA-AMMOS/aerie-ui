@@ -27,7 +27,7 @@
     }}
     use:tooltip={viewTooltip}
   >
-    <i class="si si-external_link" />
+    <i class="si si-maximize" />
   </button>
 {/if}
 {#if editCallback}

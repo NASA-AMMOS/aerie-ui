@@ -60,6 +60,11 @@
   preventDefaultOnContextMenu
   on:filterChanged={onFilterChanged}
   on:cellContextMenu={onCellContextMenu}
+  on:cellMouseOver
+  on:rowClicked
+  on:rowDoubleClicked
+  on:rowSelected
+  on:selectionChanged
 />
 <ContextMenu bind:this={contextMenu}>
   <ContextMenuHeader>Bulk Actions</ContextMenuHeader>

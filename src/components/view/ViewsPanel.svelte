@@ -113,6 +113,7 @@
         pluralItemDisplayText="Views"
         singleItemDisplayText="View"
         on:bulkDeleteItems={deleteViews}
+        on:rowDoubleClicked={event => openView(event.detail)}
       />
     {:else}
       No Views Found

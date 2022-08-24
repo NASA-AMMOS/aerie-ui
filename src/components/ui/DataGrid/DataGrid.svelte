@@ -10,6 +10,7 @@
     type GridOptions,
     type RowClassParams,
     type RowClickedEvent,
+    type RowDoubleClickedEvent,
     type RowSelectedEvent,
   } from 'ag-grid-community';
   import { createEventDispatcher, onMount } from 'svelte';
@@ -137,6 +138,9 @@
         if (event.node.isSelected()) {
           currentSelectedRowId = getRowId(event.data);
         }
+      },
+      onRowDoubleClicked(event: RowDoubleClickedEvent<TRowData>) {
+        dispatch('rowDoubleClicked', event.data);
       },
       onRowSelected(event: RowSelectedEvent<TRowData>) {
         const selectedNodes = gridOptions?.api?.getSelectedNodes();
