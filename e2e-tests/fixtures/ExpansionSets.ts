@@ -40,7 +40,7 @@ export class ExpansionSets {
   }
 
   async goto() {
-    await this.page.goto('/plans');
+    await this.page.goto('/plans', { waitUntil: 'networkidle' });
     await this.page.goto('/expansion/sets', { waitUntil: 'networkidle' });
     await expect(this.setsNavButton).toHaveClass(/selected/);
   }

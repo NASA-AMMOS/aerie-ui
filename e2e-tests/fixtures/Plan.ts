@@ -79,29 +79,38 @@ export class Plan {
    * Re-run the tests and increase the timeout if you get consistent failures.
    */
   async goto() {
-    await this.page.goto('/plans');
+    await this.page.goto('/plans', { waitUntil: 'networkidle' });
     await this.page.waitForTimeout(1200);
     await this.page.goto(`/plans/${this.plans.planId}`, { waitUntil: 'networkidle' });
   }
 
   async runAnalysis() {
     await this.analyzeButton.click();
+    await this.page.waitForSelector(this.schedulingStatusSelector('Incomplete'), { state: 'attached', strict: true });
     await this.page.waitForSelector(this.schedulingStatusSelector('Incomplete'), { state: 'visible', strict: true });
+    await this.page.waitForSelector(this.schedulingStatusSelector('Complete'), { state: 'attached', strict: true });
     await this.page.waitForSelector(this.schedulingStatusSelector('Complete'), { state: 'visible', strict: true });
   }
 
   async runScheduling() {
     await this.scheduleButton.click();
+    await this.page.waitForSelector(this.schedulingStatusSelector('Incomplete'), { state: 'attached', strict: true });
     await this.page.waitForSelector(this.schedulingStatusSelector('Incomplete'), { state: 'visible', strict: true });
+    await this.page.waitForSelector(this.schedulingStatusSelector('Complete'), { state: 'attached', strict: true });
     await this.page.waitForSelector(this.schedulingStatusSelector('Complete'), { state: 'visible', strict: true });
   }
 
   async showConstraintsLayout() {
     await this.navButtonConstraints.click();
+    await this.panelConstraints.waitFor({ state: 'attached' });
     await this.panelConstraints.waitFor({ state: 'visible' });
+    await this.panelActivityForm.waitFor({ state: 'attached' });
     await this.panelActivityForm.waitFor({ state: 'visible' });
+    await this.panelActivityTable.waitFor({ state: 'attached' });
     await this.panelActivityTable.waitFor({ state: 'visible' });
+    await this.panelConstraintViolations.waitFor({ state: 'attached' });
     await this.panelConstraintViolations.waitFor({ state: 'visible' });
+    await this.panelTimeline.waitFor({ state: 'attached' });
     await this.panelTimeline.waitFor({ state: 'visible' });
     await expect(this.panelConstraints).toBeVisible();
     await expect(this.panelActivityForm).toBeVisible();
@@ -114,15 +123,20 @@ export class Plan {
   async showPanel(name: string) {
     await expect(this.gridMenu).not.toBeVisible();
     await this.gridMenuButton.first().click();
+    await this.gridMenu.waitFor({ state: 'attached' });
     await this.gridMenu.waitFor({ state: 'visible' });
     await this.gridMenuItem(name).click();
   }
 
   async showSchedulingLayout() {
     await this.navButtonScheduling.click();
+    await this.panelScheduling.waitFor({ state: 'attached' });
     await this.panelScheduling.waitFor({ state: 'visible' });
+    await this.panelActivityForm.waitFor({ state: 'attached' });
     await this.panelActivityForm.waitFor({ state: 'visible' });
+    await this.panelActivityTable.waitFor({ state: 'attached' });
     await this.panelActivityTable.waitFor({ state: 'visible' });
+    await this.panelTimeline.waitFor({ state: 'attached' });
     await this.panelTimeline.waitFor({ state: 'visible' });
     await expect(this.panelScheduling).toBeVisible();
     await expect(this.panelActivityForm).toBeVisible();
