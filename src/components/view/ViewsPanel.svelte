@@ -1,9 +1,8 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { user as userStore } from '../../stores/app';
-  import { view, viewLayout } from '../../stores/views';
+  import { view, viewLayout, views } from '../../stores/views';
   import effects from '../../utilities/effects';
   import { setQueryParam } from '../../utilities/generic';
   import GridMenu from '../menus/GridMenu.svelte';
@@ -70,17 +69,10 @@
     },
   ];
 
-  let views: View[] = [];
-
-  onMount(async () => {
-    views = await effects.getViews();
-  });
-
   async function deleteView({ id: viewId }: View) {
     const success = await effects.deleteView(viewId);
 
     if (success) {
-      views = views.filter(v => v.id !== viewId);
       if ($view.id === viewId) {
         const nextView = await effects.getView($userStore?.id, null);
         $view = { ...nextView };
@@ -114,10 +106,10 @@
   </svelte:fragment>
 
   <svelte:fragment slot="body">
-    {#if views.length}
+    {#if $views.length}
       <BulkActionDataGrid
         {columnDefs}
-        items={views}
+        items={$views}
         pluralItemDisplayText="Views"
         singleItemDisplayText="View"
         on:bulkDeleteItems={deleteViews}

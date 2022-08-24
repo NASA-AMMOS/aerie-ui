@@ -619,19 +619,6 @@ const gql = {
     }
   `,
 
-  GET_VIEWS: `#graphql
-    query GetViews {
-      views: view {
-        created_at
-        definition
-        id
-        name
-        owner
-        updated_at
-      }
-    }
-  `,
-
   GET_VIEWS_LATEST: `#graphql
     query GetViewsLatest($owner: String!) {
       views: view(
@@ -881,6 +868,19 @@ const gql = {
         arguments
         description
         id
+      }
+    }
+  `,
+
+  SUB_VIEWS: `#graphql
+    subscription SubViews {
+      views: view {
+        created_at
+        definition
+        id
+        name
+        owner
+        updated_at
       }
     }
   `,

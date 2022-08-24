@@ -1025,17 +1025,6 @@ const effects = {
     }
   },
 
-  async getViews(): Promise<View[]> {
-    try {
-      const data = await reqHasura<View[]>(gql.GET_VIEWS);
-      const { views } = data;
-      return views;
-    } catch (e) {
-      console.log(e);
-      return [];
-    }
-  },
-
   async insertExpansionSequenceToActivity(
     simulation_dataset_id: number,
     simulated_activity_id: number,
