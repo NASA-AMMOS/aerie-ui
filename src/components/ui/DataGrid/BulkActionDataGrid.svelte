@@ -21,10 +21,8 @@
   let isFiltered: boolean = false;
   let selectedItemIds: number[] = [];
 
-  $: {
-    if (!selectedItemIds.includes(selectedItemId)) {
-      selectedItemIds = [selectedItemId];
-    }
+  $: if (!selectedItemIds.includes(selectedItemId) && selectedItemId !== null) {
+    selectedItemIds = [selectedItemId];
   }
 
   function bulkDeleteItems() {
@@ -47,31 +45,6 @@
     isFiltered = Object.keys(filterModel).length > 0;
   }
 
-  function onRowClicked(event: CustomEvent<DataGridRowSelection<TRowData>>) {
-    const {
-      detail: {
-        data: { id },
-        isSelected,
-      },
-    } = event;
-
-    if (isSelected) {
-      selectedItemId = id;
-    } else if (selectedItemId === id) {
-      selectedItemId = null;
-    }
-  }
-
-  function onSelectionChanged({ detail: selectedRows }: CustomEvent<DataGridRowsSelection<TRowData>>) {
-    selectedItemIds = selectedRows.map(selectedRow => selectedRow.id);
-
-    if (selectedItemIds.length === 1) {
-      selectedItemId = selectedItemIds[0];
-    } else if (!selectedItemIds.includes(selectedItemId)) {
-      selectedItemId = null;
-    }
-  }
-
   function selectAllItems() {
     dataGrid.selectAllVisible();
   }
@@ -80,14 +53,13 @@
 <DataGrid
   bind:this={dataGrid}
   {columnDefs}
+  bind:currentSelectedRowId={selectedItemId}
   rowSelection="multiple"
   rowData={items}
-  selectedRowIds={selectedItemIds}
+  bind:selectedRowIds={selectedItemIds}
   preventDefaultOnContextMenu
   on:filterChanged={onFilterChanged}
   on:cellContextMenu={onCellContextMenu}
-  on:rowClicked={onRowClicked}
-  on:selectionChanged={onSelectionChanged}
 />
 <ContextMenu bind:this={contextMenu}>
   <ContextMenuHeader>Bulk Actions</ContextMenuHeader>

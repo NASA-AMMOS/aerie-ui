@@ -20,7 +20,9 @@
   }
 
   export let columnDefs: ColDef[];
+  export let currentSelectedRowId: number | null = null;
   export let highlightOnSelection: boolean = true;
+  export let idKey: keyof TRowData = 'id';
   export let preventDefaultOnContextMenu: boolean | undefined = undefined;
   export let rowData: TRowData[] = [];
   export let rowSelection: 'single' | 'multiple' | undefined = undefined;
@@ -30,7 +32,6 @@
 
   const dispatch = createEventDispatcher();
 
-  let currentSelectedRowId: number | null = null;
   let gridOptions: GridOptions<TRowData>;
   let gridDiv: HTMLDivElement;
   let previousSelectedRowId: number | null = null;
@@ -43,7 +44,7 @@
     // get all currently selected nodes. we cannot use `getSelectedNodes` because that does not include filtered rows
     gridOptions?.api?.forEachNode((rowNode: RowNode<TRowData>) => {
       if (rowNode.isSelected()) {
-        previousSelectedRowIds.push(parseInt(getRowId(rowNode)));
+        previousSelectedRowIds.push(getRowId(rowNode.data));
       }
     });
     const previousSelectedRowIdsSet: Set<number> = new Set(previousSelectedRowIds);
@@ -71,10 +72,12 @@
       const selectedRow = gridOptions?.api?.getRowNode(`${selectedRowId}`);
       selectedRow?.setSelected(true);
     });
+  }
 
-    if (!selectedRowIds.length) {
-      currentSelectedRowId = null;
-    }
+  $: if (!selectedRowIds.length) {
+    currentSelectedRowId = null;
+  } else if (selectedRowIds.length === 1) {
+    currentSelectedRowId = selectedRowIds[0];
   }
 
   $: {
@@ -88,15 +91,15 @@
   }
 
   function getRowClass(params: RowClassParams<TRowData>) {
-    if (currentSelectedRowId === parseInt(getRowId(params))) {
+    if (currentSelectedRowId === getRowId(params.data)) {
       return 'ag-first-row-selected';
     }
 
     return '';
   }
 
-  function getRowId(params: { data: TRowData }) {
-    return `${params.data.id}`;
+  function getRowId(data: TRowData): number {
+    return parseInt(data[idKey]);
   }
 
   onMount(() => {
@@ -104,7 +107,7 @@
       // each entry here represents one column
       columnDefs,
       getRowClass,
-      getRowId,
+      getRowId: (params: { data: TRowData }) => `${getRowId(params.data)}`,
       onCellContextMenu(event: CellContextMenuEvent<TRowData>) {
         dispatch('cellContextMenu', event);
       },
@@ -132,7 +135,7 @@
         } as DataGridRowSelection<TRowData>);
 
         if (event.node.isSelected()) {
-          currentSelectedRowId = parseInt(getRowId(event.node));
+          currentSelectedRowId = getRowId(event.data);
         }
       },
       onRowSelected(event: RowSelectedEvent<TRowData>) {
@@ -148,6 +151,13 @@
       },
       onSelectionChanged() {
         const selectedRows = gridOptions?.api?.getSelectedRows();
+        selectedRowIds = selectedRows.map((selectedRow: TRowData) => getRowId(selectedRow));
+
+        if (selectedRows.length === 1) {
+          currentSelectedRowId = getRowId(selectedRows[0]);
+        } else if (!selectedRowIds.includes(currentSelectedRowId)) {
+          currentSelectedRowId = selectedRowIds[0];
+        }
 
         dispatch('selectionChanged', selectedRows);
       },
