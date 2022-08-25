@@ -23,7 +23,7 @@
   let isFiltered: boolean = false;
   let selectedItemIds: number[] = [];
 
-  $: if (!selectedItemIds.includes(selectedItemId) && selectedItemId !== null) {
+  $: if (!selectedItemIds.includes(selectedItemId) && selectedItemId != null) {
     selectedItemIds = [selectedItemId];
   }
 
@@ -34,7 +34,7 @@
   function onCellContextMenu(event: CustomEvent) {
     const { detail } = event;
     const { data: clickedRow } = detail;
-    if (selectedItemIds.length <= 1) {
+    if (selectedItemIds.length <= 1 && isRowSelectable(detail)) {
       selectedItemId = clickedRow.id;
     }
 
@@ -74,8 +74,10 @@
   <ContextMenuItem on:click={selectAllItems}>
     Select All {isFiltered ? 'Visible ' : ''}{pluralItemDisplayText}
   </ContextMenuItem>
-  <ContextMenuItem on:click={bulkDeleteItems}>
-    Delete {selectedItemIds.length}
-    {selectedItemIds.length > 1 ? pluralItemDisplayText : singleItemDisplayText}
-  </ContextMenuItem>
+  {#if selectedItemIds.length}
+    <ContextMenuItem on:click={bulkDeleteItems}>
+      Delete {selectedItemIds.length}
+      {selectedItemIds.length > 1 ? pluralItemDisplayText : singleItemDisplayText}
+    </ContextMenuItem>
+  {/if}
 </ContextMenu>
