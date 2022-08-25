@@ -486,7 +486,7 @@
         </details>
       </fieldset>
     {:else}
-      <div class="p-2">No Activity Selected</div>
+      <div class="p-2 st-typography-label">No Activity Selected</div>
     {/if}
   </svelte:fragment>
 </Panel>
