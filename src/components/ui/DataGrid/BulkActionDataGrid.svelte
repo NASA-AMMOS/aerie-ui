@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import type { ColDef } from 'ag-grid-community';
+  import type { ColDef, RowNode } from 'ag-grid-community';
   import { createEventDispatcher } from 'svelte';
   import ContextMenu from '../../context-menu/ContextMenu.svelte';
   import ContextMenuHeader from '../../context-menu/ContextMenuHeader.svelte';
@@ -13,6 +13,8 @@
   export let pluralItemDisplayText: string;
   export let selectedItemId: number | null = null;
   export let singleItemDisplayText: string;
+
+  export let isRowSelectable: (node: RowNode<TRowData>) => boolean = undefined;
 
   const dispatch = createEventDispatcher();
 
@@ -54,6 +56,7 @@
   bind:this={dataGrid}
   {columnDefs}
   bind:currentSelectedRowId={selectedItemId}
+  {isRowSelectable}
   rowSelection="multiple"
   rowData={items}
   bind:selectedRowIds={selectedItemIds}
