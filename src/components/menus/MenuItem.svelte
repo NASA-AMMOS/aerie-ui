@@ -16,8 +16,8 @@
   .menu-item {
     align-items: center;
     display: grid;
+    line-height: 24px;
     font-size: 0.8rem;
-    font-weight: 300;
     gap: 0.5rem;
     grid-template-columns: 1rem auto;
     justify-content: flex-start;
