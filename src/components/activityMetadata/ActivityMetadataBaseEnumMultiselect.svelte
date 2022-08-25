@@ -16,7 +16,7 @@
   // Check that the incoming values are a numbers or strings to handle cases of changed metadata schema.
   $: enumValues = allItemsStringsOrNumbers(values) ? values : [];
 
-  function allItemsStringsOrNumbers(l) {
+  function allItemsStringsOrNumbers(l: any[]) {
     return !l.find(x => !(typeof x === 'number' || typeof x === 'string'));
   }
 
