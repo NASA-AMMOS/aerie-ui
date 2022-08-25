@@ -46,6 +46,24 @@ span.error {
   color: var(--st-red);
 }
 
+summary {
+  font-family: var(--st-typography-medium-font-family);
+  color: var(--st-typography-medium-color);
+  font-weight: var(--st-typography-medium-font-weight);
+  font-size: var(--st-typography-medium-font-size);
+  line-height: var(--st-typography-medium-line-height);
+  letter-spacing: var(--st-typography-medium-letter-spacing);
+}
+
+fieldset {
+  font-family: var(--st-typography-body-font-family);
+  color: var(--st-typography-body-color);
+  font-weight: var(--st-typography-body-font-weight);
+  font-size: var(--st-typography-body-font-size);
+  line-height: var(--st-typography-body-line-height);
+  letter-spacing: var(--st-typography-body-letter-spacing);
+}
+
 .toastify {
   color: var(--st-white);
 }
