@@ -44,7 +44,7 @@
     [className]: !!className,
   })}
 >
-  <div class="display-value">
+  <div class="display-value st-typography-header">
     <span class="value">{displayValue}</span>
     <select class="hidden" data-type="number" {value} tabindex="-1" on:change>
       {#each options as option}
@@ -63,6 +63,7 @@
     display: inline-block;
     min-width: 0;
     position: relative;
+    line-height: 25px;
   }
 
   .display-value .value {

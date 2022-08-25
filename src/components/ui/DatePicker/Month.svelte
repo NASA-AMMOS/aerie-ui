@@ -40,6 +40,7 @@
     display: grid;
     margin-bottom: 7px;
     row-gap: 7px;
+    line-height: 18px;
   }
 
   .date-picker-month .week-header {
