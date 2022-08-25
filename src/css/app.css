@@ -45,3 +45,7 @@ label.error,
 span.error {
   color: var(--st-red);
 }
+
+.toastify {
+  color: var(--st-white);
+}
