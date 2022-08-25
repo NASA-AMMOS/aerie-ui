@@ -21,7 +21,7 @@
   type CellRendererParams = {
     deleteExpansionSequence: (sequence: ExpansionSequence) => void;
   };
-  type ExpansionSequenceCellRendererParams = ICellRendererParams<ExpansionSequence> & CellRendererParams;
+  type ExpansionSequenceCellRendererParams = ICellRendererParams & CellRendererParams;
 
   const columnDefs: DataGridColumnDef[] = [
     {
