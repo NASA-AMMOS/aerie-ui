@@ -5,7 +5,7 @@ import { activitiesGrid, constraintsGrid, schedulingGrid, simulationGrid, update
 import { TimelineLockStatus } from '../utilities/timeline';
 import { gqlSubscribable } from './subscribable';
 
-/* Subscriptions */
+/* Subscriptions. */
 
 export const views = gqlSubscribable<View[]>(gql.SUB_VIEWS, {}, []);
 

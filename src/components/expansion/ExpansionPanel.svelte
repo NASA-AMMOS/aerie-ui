@@ -21,7 +21,7 @@
   type CellRendererParams = {
     deleteExpansionSequence: (sequence: ExpansionSequence) => void;
   };
-  type ExpansionSequenceCellRendererParams = ICellRendererParams & CellRendererParams;
+  type ExpansionSequenceCellRendererParams = ICellRendererParams<ExpansionSequence> & CellRendererParams;
 
   const columnDefs: DataGridColumnDef[] = [
     {
@@ -73,7 +73,6 @@
 
   $: createButtonEnabled = seqIdInput !== '';
   $: expandButtonEnabled = selectedExpansionSetId !== null;
-  $: console.log($filteredExpansionSequences);
 
   function deleteExpansionSequence(sequence: ExpansionSequence) {
     effects.deleteExpansionSequence(sequence);
