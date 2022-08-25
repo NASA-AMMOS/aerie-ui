@@ -392,18 +392,19 @@
       <fieldset>
         <details open style:cursor="pointer">
           <summary>Annotations</summary>
-          <div class="mt-2">
-            {#if $activityMetadataDefinitions.length === 0}
+          <div class="mt-2 annotations">
+            {#if $activityMetadataDefinitions.length === 0 || isChild}
               <div class="p-1">No Annotations Found</div>
             {/if}
-            {#each $activityMetadataDefinitions as definition}
-              <ActivityMetadataField
-                on:change={onChangeActivityMetadata}
-                value={getActivityMetadataValue(definition.key)}
-                {definition}
-              />
-              <br />
-            {/each}
+            {#if !isChild}
+              {#each $activityMetadataDefinitions as definition}
+                <ActivityMetadataField
+                  on:change={onChangeActivityMetadata}
+                  value={getActivityMetadataValue(definition.key)}
+                  {definition}
+                />
+              {/each}
+            {/if}
           </div>
         </details>
       </fieldset>
@@ -569,5 +570,11 @@
   .activity-header-title--editing .st-input {
     background-color: var(--st-white);
     font-style: normal;
+  }
+
+  .annotations {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
   }
 </style>
