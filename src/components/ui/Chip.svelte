@@ -1,4 +1,4 @@
-<div class="st-chip">
+<div class="st-chip st-typography-body">
   <slot />
 </div>
 
@@ -13,5 +13,6 @@
     justify-content: center;
     padding: 4px 8px;
     white-space: nowrap;
+    line-height: 24px;
   }
 </style>
