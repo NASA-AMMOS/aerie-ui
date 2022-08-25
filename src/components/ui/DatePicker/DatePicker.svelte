@@ -284,8 +284,8 @@
 
 <style>
   .date-picker {
-    position: inherit;
     cursor: auto;
+    position: inherit;
   }
 
   .date-picker .date-picker-portal {

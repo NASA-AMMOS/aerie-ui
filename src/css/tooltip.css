@@ -12,12 +12,12 @@
 
 .tooltip,
 .tippy-content {
-  font-family: var(--st-typography-body-font-family);
-  font-weight: var(--st-typography-body-font-weight);
-  font-size: var(--st-typography-body-font-size);
-  line-height: var(--st-typography-body-line-height);
-  letter-spacing: var(--st-typography-body-letter-spacing);
   color: var(--st-white);
+  font-family: var(--st-typography-body-font-family);
+  font-size: var(--st-typography-body-font-size);
+  font-weight: var(--st-typography-body-font-weight);
+  letter-spacing: var(--st-typography-body-letter-spacing);
+  line-height: var(--st-typography-body-line-height);
 }
 
 .tippy-box[data-theme~='error'] {

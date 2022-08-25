@@ -61,9 +61,9 @@
 
   .date-picker-dropdown .display-value {
     display: inline-block;
+    line-height: 25px;
     min-width: 0;
     position: relative;
-    line-height: 25px;
   }
 
   .display-value .value {

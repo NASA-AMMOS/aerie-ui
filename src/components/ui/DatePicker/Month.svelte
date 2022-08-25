@@ -38,9 +38,9 @@
 <style>
   .date-picker-month {
     display: grid;
+    line-height: 18px;
     margin-bottom: 7px;
     row-gap: 7px;
-    line-height: 18px;
   }
 
   .date-picker-month .week-header {
