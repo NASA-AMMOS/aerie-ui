@@ -5,5 +5,6 @@
 <style>
   .modal-content {
     padding: 1rem;
+    flex: 1;
   }
 </style>
