@@ -1,5 +1,4 @@
-import { fireEvent } from '@testing-library/dom';
-import { cleanup, render } from '@testing-library/svelte';
+import { cleanup, fireEvent, render } from '@testing-library/svelte';
 import { afterEach, describe, expect, it } from 'vitest';
 import Tags from '../ui/Tags.svelte';
 
