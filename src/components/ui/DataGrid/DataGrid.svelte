@@ -7,6 +7,9 @@
     type CellContextMenuEvent,
     type CellMouseOverEvent,
     type ColDef,
+    type ColumnMovedEvent,
+    type ColumnPinnedEvent,
+    type ColumnResizedEvent,
     type GridOptions,
     type RowClassParams,
     type RowClickedEvent,
@@ -30,6 +33,7 @@
   export let selectedRowIds: number[] = [];
   export let shouldAutoGenerateId: boolean = false;
   export let suppressCellFocus: boolean = true;
+  export let suppressDragLeaveHidesColumns: boolean = true;
   export let suppressRowClickSelection: boolean = false;
 
   export let getRowId: (data: TRowData) => number = (data: TRowData): number => {
@@ -128,6 +132,15 @@
       onCellMouseOver(event: CellMouseOverEvent<TRowData>) {
         dispatch('cellMouseOver', event);
       },
+      onColumnMoved(event: ColumnMovedEvent<TRowData>) {
+        dispatch('columnMoved', event.columnApi.getColumnState());
+      },
+      onColumnPinned(event: ColumnPinnedEvent<TRowData>) {
+        dispatch('columnPinned', event.columnApi.getColumnState());
+      },
+      onColumnResized(event: ColumnResizedEvent<TRowData>) {
+        dispatch('columnResized', event.columnApi.getColumnState());
+      },
       onFilterChanged() {
         const selectedRows: TRowData[] = [];
 
@@ -182,6 +195,7 @@
       rowData,
       rowSelection,
       suppressCellFocus,
+      suppressDragLeaveHidesColumns,
       suppressRowClickSelection,
     };
     new Grid(gridDiv, gridOptions);

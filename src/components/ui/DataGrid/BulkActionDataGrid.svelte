@@ -64,6 +64,9 @@
   on:filterChanged={onFilterChanged}
   on:cellContextMenu={onCellContextMenu}
   on:cellMouseOver
+  on:columnMoved
+  on:columnPinned
+  on:columnResized
   on:rowClicked
   on:rowDoubleClicked
   on:rowSelected
