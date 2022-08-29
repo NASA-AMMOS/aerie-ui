@@ -86,9 +86,11 @@
     dispatch('blur', { valid });
   }
 
-  function onInput(event: InputEvent) {
+  async function onInput(event: InputEvent) {
     const { value } = getTarget(event);
     $field.value = value;
+    const valid = await field.validateAndSet(value);
+    dispatch('input', { valid });
   }
 
   async function onKeyDown(event: KeyboardEvent) {
