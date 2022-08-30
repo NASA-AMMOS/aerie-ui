@@ -1,6 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import ExpandIcon from '@nasa-jpl/stellar/icons/svg/expand.svg?component';
   import PenIcon from '@nasa-jpl/stellar/icons/svg/pen.svg?component';
   import TrashIcon from '@nasa-jpl/stellar/icons/svg/trash.svg?component';
   import type { Placement } from 'tippy.js';
@@ -29,7 +30,7 @@
     }}
     use:tooltip={viewTooltip}
   >
-    <i class="si si-maximize" />
+    <ExpandIcon />
   </button>
 {/if}
 {#if editCallback}
