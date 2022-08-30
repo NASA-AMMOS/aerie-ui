@@ -74,14 +74,6 @@
     }
   });
 
-  async function onBlur(event: FocusEvent) {
-    event.preventDefault();
-
-    const { value } = getTarget(event);
-    const valid = await field.validateAndSet(value);
-    dispatch('blur', { valid });
-  }
-
   function onInput(event: InputEvent) {
     const { value } = getTarget(event);
     $field.value = value;
@@ -92,17 +84,6 @@
     $field.value = value;
     const valid = await field.validateAndSet(value);
     dispatch('change', { valid });
-  }
-
-  async function onKeyDown(event: KeyboardEvent) {
-    const { key } = event;
-
-    if (key === 'Enter') {
-      event.preventDefault();
-      const { value } = getTarget(event);
-      const valid = await field.validateAndSet(value);
-      dispatch('keydown', { valid });
-    }
   }
 </script>
 
