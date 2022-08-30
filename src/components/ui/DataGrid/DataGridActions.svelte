@@ -1,6 +1,8 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import PenIcon from '@nasa-jpl/stellar/icons/svg/pen.svg?component';
+  import TrashIcon from '@nasa-jpl/stellar/icons/svg/trash.svg?component';
   import type { Placement } from 'tippy.js';
   import { tooltip } from '../../../utilities/tooltip';
 
@@ -38,7 +40,7 @@
     }}
     use:tooltip={editTooltip}
   >
-    <i class="bi bi-pencil" />
+    <PenIcon />
   </button>
 {/if}
 {#if deleteCallback}
@@ -49,6 +51,6 @@
     }}
     use:tooltip={deleteTooltip}
   >
-    <i class="bi bi-trash" />
+    <TrashIcon />
   </button>
 {/if}

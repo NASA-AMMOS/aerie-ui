@@ -2,6 +2,7 @@
   import Calendar from '@nasa-jpl/stellar/icons/svg/calendar.svg?component';
   import ChevronLeft from '@nasa-jpl/stellar/icons/svg/chevron_left.svg?component';
   import ChevronRight from '@nasa-jpl/stellar/icons/svg/chevron_right.svg?component';
+  import MagicEraser from '@nasa-jpl/stellar/icons/svg/magic_eraser.svg?component';
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
   import { createPopperActions } from 'svelte-popperjs';
   import { getTarget } from '../../../utilities/generic';
@@ -273,7 +274,9 @@
         </div>
         <div>
           <div class="action button" on:mousedown={clearDate}>
-            <div class="action-icon"><i class="si si-magic_eraser" /></div>
+            <div class="action-icon">
+              <MagicEraser />
+            </div>
             <div class="action-label st-typography-body">Clear</div>
           </div>
         </div>
@@ -348,6 +351,7 @@
     margin-right: 7px;
     text-align: right;
     width: 16px;
+    color: inherit;
   }
 
   .date-picker-actions .action .action-label {
