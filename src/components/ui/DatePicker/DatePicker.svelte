@@ -347,11 +347,11 @@
   }
 
   .date-picker-actions .action .action-icon {
+    color: inherit;
     display: flex;
     margin-right: 7px;
     text-align: right;
     width: 16px;
-    color: inherit;
   }
 
   .date-picker-actions .action .action-label {
