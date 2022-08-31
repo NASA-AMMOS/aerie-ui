@@ -206,7 +206,7 @@
       },
       onSortChanged(event: SortChangedEvent<TRowData>) {
         dispatch('sortChanged', event);
-        onColumnStateChangeDebounced(event);
+        onColumnStateChangeDebounced();
       },
       preventDefaultOnContextMenu,
       rowData,
