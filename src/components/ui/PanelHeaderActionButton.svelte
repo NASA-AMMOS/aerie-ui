@@ -34,8 +34,7 @@
     margin-left: 8px;
     padding: 0 8px;
   }
-
-  .has-label i {
-    margin-right: 4px;
+  .has-label {
+    gap: 4px;
   }
 </style>

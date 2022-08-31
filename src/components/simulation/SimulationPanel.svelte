@@ -1,7 +1,6 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import ChevronDownIcon from '@nasa-jpl/stellar/icons/svg/chevron_down.svg?component';
   import { plan } from '../../stores/plan';
   import {
     modelParametersMap,
@@ -65,9 +64,7 @@
   <svelte:fragment slot="header">
     <GridMenu {gridId} title="Simulation" />
     <PanelHeaderActions status={$simulationStatus}>
-      <PanelHeaderActionButton title="Simulate" showLabel on:click={() => effects.simulate()}>
-        <ChevronDownIcon />
-      </PanelHeaderActionButton>
+      <PanelHeaderActionButton title="Simulate" showLabel on:click={() => effects.simulate()} />
     </PanelHeaderActions>
   </svelte:fragment>
 
