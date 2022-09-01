@@ -307,26 +307,26 @@
           <div class="activity-header-title-placeholder st-typography-medium">{type}</div>
         {/if}
       </div>
-      <div class="activity-directive-definition">
+      <fieldset>
         <details open style:cursor="pointer">
           <summary>Definition</summary>
-          <fieldset>
+          <div>
             <Input layout="inline">
               <label use:tooltip={{ content: 'Activity ID', placement: 'left' }} for="id"> Activity ID </label>
               <input class="st-input w-100" disabled name="id" value={id} />
             </Input>
-          </fieldset>
+          </div>
 
-          <fieldset>
+          <div>
             <Input layout="inline">
               <label use:tooltip={{ content: 'Activity Type', placement: 'left' }} for="activity-type">
                 Activity Type
               </label>
               <input class="st-input w-100" disabled name="activity-type" value={type} />
             </Input>
-          </fieldset>
+          </div>
 
-          <fieldset>
+          <div>
             <Input layout="inline">
               <label use:tooltip={{ content: 'Parent ID', placement: 'left' }} for="parent-id">Parent ID</label>
               <input
@@ -336,16 +336,16 @@
                 value={isChild ? parent_id : 'None (Root Activity)'}
               />
             </Input>
-          </fieldset>
+          </div>
 
-          <fieldset>
+          <div>
             <Input layout="inline">
               <label use:tooltip={{ content: 'Duration', placement: 'left' }} for="duration">Duration</label>
               <input class="st-input w-100" disabled name="duration" value={duration ?? 'None'} />
             </Input>
-          </fieldset>
+          </div>
 
-          <fieldset>
+          <div>
             <Input layout="inline">
               <label use:tooltip={{ content: 'Simulation Status', placement: 'left' }} for="simulationStatus">
                 Simulation Status
@@ -357,7 +357,7 @@
                 value={unfinished ? 'Unfinished' : duration ? 'Finished' : 'None'}
               />
             </Input>
-          </fieldset>
+          </div>
 
           <DatePickerField
             disabled={isChild}
@@ -370,33 +370,33 @@
           />
 
           {#if duration !== null}
-            <fieldset>
+            <div>
               <Input layout="inline">
                 <label use:tooltip={{ content: 'End Time', placement: 'left' }} for="endTime">End Time</label>
                 <input class="st-input w-100" disabled name="endTime" value={endTime} />
               </Input>
-            </fieldset>
+            </div>
           {/if}
 
-          <fieldset>
+          <div>
             <Input layout="inline">
               <label use:tooltip={{ content: 'Creation Time', placement: 'left' }} for="creationTime">
                 Creation Time
               </label>
               <input class="st-input w-100" disabled name="creationTime" value={creationTime ?? 'None'} />
             </Input>
-          </fieldset>
+          </div>
 
-          <fieldset>
+          <div>
             <Input layout="inline">
               <label use:tooltip={{ content: 'Last Modified Time', placement: 'left' }} for="lastModifiedTime">
                 Last Modified Time
               </label>
               <input class="st-input w-100" disabled name="lastModifiedTime" value={lastModifiedTime ?? 'None'} />
             </Input>
-          </fieldset>
+          </div>
 
-          <fieldset>
+          <div>
             <Input layout="inline">
               <label
                 use:tooltip={{ content: 'Source Scheduling Goal ID', placement: 'left' }}
@@ -411,18 +411,18 @@
                 value={sourceSchedulingGoalId ?? 'None'}
               />
             </Input>
-          </fieldset>
+          </div>
 
           {#if duration !== null}
-            <fieldset>
+            <div>
               <Input layout="inline">
                 <label use:tooltip={{ content: 'End Time', placement: 'left' }} for="endTime">End Time</label>
                 <input class="st-input w-100" disabled name="endTime" value={endTime} />
               </Input>
-            </fieldset>
+            </div>
           {/if}
 
-          <fieldset>
+          <div>
             <Input layout="inline">
               <label use:tooltip={{ content: 'Tags', placement: 'left' }} for="activityTags">Tags</label>
               <!--
@@ -440,9 +440,9 @@
                 />
               {/key}
             </Input>
-          </fieldset>
+          </div>
         </details>
-      </div>
+      </fieldset>
 
       <fieldset>
         <details open style:cursor="pointer">
