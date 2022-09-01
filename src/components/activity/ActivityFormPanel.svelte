@@ -257,11 +257,7 @@
     {#if $selectedActivity}
       <div class="activity-header">
         {#if activityName}
-          <div
-            class={classNames('activity-header-title', {
-              'activity-header-title--editing': editingActivityName,
-            })}
-          >
+          <div class={classNames('activity-header-title', { 'activity-header-title--editing': editingActivityName })}>
             {#if !editingActivityName}
               <button class="icon st-button activity-header-title-edit-button" on:click={editActivityName}>
                 <div class="activity-header-title-value st-typography-medium">
@@ -295,20 +291,16 @@
           <summary>Definition</summary>
           <fieldset>
             <Input layout="inline">
-              <label use:tooltip={{ content: 'Activity ID', placement: 'left' }} for="id">Activity ID</label>
+              <label use:tooltip={{ content: 'Activity ID', placement: 'left' }} for="id"> Activity ID </label>
               <input class="st-input w-100" disabled name="id" value={id} />
             </Input>
           </fieldset>
 
           <fieldset>
             <Input layout="inline">
-              <label
-                use:tooltip={{
-                  content: 'Activity Type',
-                  placement: 'left',
-                }}
-                for="activity-type">Activity Type</label
-              >
+              <label use:tooltip={{ content: 'Activity Type', placement: 'left' }} for="activity-type">
+                Activity Type
+              </label>
               <input class="st-input w-100" disabled name="activity-type" value={type} />
             </Input>
           </fieldset>
@@ -334,13 +326,9 @@
 
           <fieldset>
             <Input layout="inline">
-              <label
-                use:tooltip={{
-                  content: 'Simulation Status',
-                  placement: 'left',
-                }}
-                for="simulationStatus">Simulation Status</label
-              >
+              <label use:tooltip={{ content: 'Simulation Status', placement: 'left' }} for="simulationStatus">
+                Simulation Status
+              </label>
               <input
                 class="st-input w-100"
                 disabled
@@ -371,26 +359,18 @@
 
           <fieldset>
             <Input layout="inline">
-              <label
-                use:tooltip={{
-                  content: 'Creation Time',
-                  placement: 'left',
-                }}
-                for="creationTime">Creation Time</label
-              >
+              <label use:tooltip={{ content: 'Creation Time', placement: 'left' }} for="creationTime">
+                Creation Time
+              </label>
               <input class="st-input w-100" disabled name="creationTime" value={creationTime ?? 'None'} />
             </Input>
           </fieldset>
 
           <fieldset>
             <Input layout="inline">
-              <label
-                use:tooltip={{
-                  content: 'Last Modified Time',
-                  placement: 'left',
-                }}
-                for="lastModifiedTime">Last Modified Time</label
-              >
+              <label use:tooltip={{ content: 'Last Modified Time', placement: 'left' }} for="lastModifiedTime">
+                Last Modified Time
+              </label>
               <input class="st-input w-100" disabled name="lastModifiedTime" value={lastModifiedTime ?? 'None'} />
             </Input>
           </fieldset>
@@ -399,8 +379,10 @@
             <Input layout="inline">
               <label
                 use:tooltip={{ content: 'Source Scheduling Goal ID', placement: 'left' }}
-                for="sourceSchedulingGoalId">Source Scheduling Goal ID</label
+                for="sourceSchedulingGoalId"
               >
+                Source Scheduling Goal ID
+              </label>
               <input
                 class="st-input w-100"
                 disabled
@@ -511,13 +493,9 @@
 
           <div class="p-2">
             <Input layout="inline">
-              <label
-                use:tooltip={{
-                  content: 'Simulation Dataset ID',
-                  placement: 'left',
-                }}
-                for="simulationDatasetId">Simulation Dataset ID</label
-              >
+              <label use:tooltip={{ content: 'Simulation Dataset ID', placement: 'left' }} for="simulationDatasetId">
+                Simulation Dataset ID
+              </label>
               <input
                 class="st-input w-100"
                 disabled
