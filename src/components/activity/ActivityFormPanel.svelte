@@ -302,8 +302,12 @@
 
           <fieldset>
             <Input layout="inline">
-              <label use:tooltip={{ content: 'Activity Type', placement: 'left' }} for="activity-type"
-                >Activity Type</label
+              <label
+                use:tooltip={{
+                  content: 'Activity Type',
+                  placement: 'left',
+                }}
+                for="activity-type">Activity Type</label
               >
               <input class="st-input w-100" disabled name="activity-type" value={type} />
             </Input>
@@ -330,8 +334,12 @@
 
           <fieldset>
             <Input layout="inline">
-              <label use:tooltip={{ content: 'Simulation Status', placement: 'left' }} for="simulationStatus"
-                >Simulation Status</label
+              <label
+                use:tooltip={{
+                  content: 'Simulation Status',
+                  placement: 'left',
+                }}
+                for="simulationStatus">Simulation Status</label
               >
               <input
                 class="st-input w-100"
@@ -363,8 +371,12 @@
 
           <fieldset>
             <Input layout="inline">
-              <label use:tooltip={{ content: 'Creation Time', placement: 'left' }} for="creationTime"
-                >Creation Time</label
+              <label
+                use:tooltip={{
+                  content: 'Creation Time',
+                  placement: 'left',
+                }}
+                for="creationTime">Creation Time</label
               >
               <input class="st-input w-100" disabled name="creationTime" value={creationTime ?? 'None'} />
             </Input>
@@ -372,8 +384,12 @@
 
           <fieldset>
             <Input layout="inline">
-              <label use:tooltip={{ content: 'Last Modified Time', placement: 'left' }} for="lastModifiedTime"
-                >Last Modified Time</label
+              <label
+                use:tooltip={{
+                  content: 'Last Modified Time',
+                  placement: 'left',
+                }}
+                for="lastModifiedTime">Last Modified Time</label
               >
               <input class="st-input w-100" disabled name="lastModifiedTime" value={lastModifiedTime ?? 'None'} />
             </Input>
@@ -495,8 +511,12 @@
 
           <div class="p-2">
             <Input layout="inline">
-              <label use:tooltip={{ content: 'Simulation Dataset ID', placement: 'left' }} for="simulationDatasetId"
-                >Simulation Dataset ID</label
+              <label
+                use:tooltip={{
+                  content: 'Simulation Dataset ID',
+                  placement: 'left',
+                }}
+                for="simulationDatasetId">Simulation Dataset ID</label
               >
               <input
                 class="st-input w-100"
