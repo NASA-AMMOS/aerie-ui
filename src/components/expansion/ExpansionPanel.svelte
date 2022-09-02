@@ -26,14 +26,22 @@
   const columnDefs: DataGridColumnDef[] = [
     {
       field: 'simulation_dataset_id',
+      filter: 'number',
       headerName: 'Simulation ID',
       resizable: true,
       sortable: true,
-      width: 100,
     },
-    { field: 'seq_id', headerName: 'Seq ID', resizable: true, sortable: true, suppressSizeToFit: true, width: 70 },
-    { field: 'created_at', headerName: 'Created At', resizable: true, sortable: true },
-    { field: 'updated_at', headerName: 'Updated At', resizable: true, sortable: true },
+    {
+      field: 'seq_id',
+      filter: 'text',
+      headerName: 'Seq ID',
+      resizable: true,
+      sortable: true,
+      suppressSizeToFit: true,
+      width: 85,
+    },
+    { field: 'created_at', filter: 'text', headerName: 'Created At', resizable: true, sortable: true },
+    { field: 'updated_at', filter: 'text', headerName: 'Updated At', resizable: true, sortable: true },
     {
       cellClass: 'action-cell-container',
       cellRenderer: (params: ExpansionSequenceCellRendererParams) => {
