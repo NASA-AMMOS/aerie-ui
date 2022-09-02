@@ -156,7 +156,7 @@
                   <div class="mt-2">
                     {#if $filteredExpansionSequences.length}
                       <DataGrid
-                        idKey="seq_id"
+                        getRowId={rowData => rowData.seq_id}
                         {columnDefs}
                         rowData={$filteredExpansionSequences}
                         rowSelection="single"
