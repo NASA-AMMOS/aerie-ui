@@ -4,9 +4,9 @@
   import { createEventDispatcher } from 'svelte';
   import { convertDurationStringToUs, convertUsToDurationString } from '../../utilities/time';
   import Input from '../form/Input.svelte';
-  import ValueSourceBadge from '../ui/ValueSourceBadge.svelte';
   import ParameterBaseError from './ParameterBaseError.svelte';
   import ParameterName from './ParameterName.svelte';
+  import ValueSourceBadge from './ValueSourceBadge.svelte';
 
   export let disabled: boolean = false;
   export let formParameter: FormParameter;

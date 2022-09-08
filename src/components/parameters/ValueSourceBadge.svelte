@@ -1,26 +1,45 @@
-<div class="dot st-typography-body">
-  <slot />
-</div>
+<svelte:options immutable={true} />
+
+<script lang="ts">
+  import { classNames } from '../../utilities/generic';
+  import { tooltip } from '../../utilities/tooltip';
+
+  export let source: ValueSource;
+
+  $: dotClasses = classNames('value-source-badge-dot st-typography-body', {
+    'value-source-badge-dot--mission': source === 'mission',
+    'value-source-badge-dot--user': source === 'user',
+  });
+  $: tooltipContent = source === 'mission' ? 'Default Mission Value' : source === 'user' ? 'User Override' : '';
+</script>
+
+{#if source !== 'none'}
+  <div class="value-source-badge-dot-root" use:tooltip={{ content: tooltipContent, placement: 'top' }}>
+    <div class={dotClasses} />
+  </div>
+{/if}
 
 <style>
-  .dot {
+  .value-source-badge-dot-root {
     align-items: center;
-    border: 1px solid var(--st-gray-30);
-    border-radius: 4px;
     display: flex;
-    gap: 5px;
-    height: 24px;
+    height: 16px;
     justify-content: center;
-    line-height: 24px;
-    padding: 4px 8px;
-    white-space: nowrap;
+    width: 16px;
   }
 
-  .user {
+  .value-source-badge-dot {
+    background-color: gray;
+    border-radius: 50%;
+    height: 6px;
+    width: 6px;
+  }
+
+  .value-source-badge-dot--user {
     background: orange;
   }
 
-  .mission {
+  .value-source-badge-dot--mission {
     background: blue;
   }
 </style>
