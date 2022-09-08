@@ -42,6 +42,12 @@ export function getFormParameters(
     const value = getArgument(arg, schema, defaultArg);
     const required = requiredParameters.indexOf(name) > -1;
 
+    // DOT:
+    // Value comes from user if arg is not null or undefined (orange dot)
+    // Otherwise, value comes from mission if default arg is not undefined (greem dot)
+    // Otherwise, there is no value and we don't need to show a dot (no dot)
+    // Change output of getArgument to be {value, source}
+
     const formParameter: FormParameter = {
       error: null,
       name,
