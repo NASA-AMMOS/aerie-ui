@@ -34,6 +34,7 @@
         order: index,
         schema: schema.items[key],
         value: value ? value[key] || null : null,
+        valueSource: formParameter.valueSource,
       };
 
       return subFormParameter;

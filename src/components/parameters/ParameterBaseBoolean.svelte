@@ -2,6 +2,8 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import Input from '../form/Input.svelte';
+  import ValueSourceBadge from '../ui/ValueSourceBadge.svelte';
   import ParameterBaseError from './ParameterBaseError.svelte';
   import ParameterName from './ParameterName.svelte';
 
@@ -18,12 +20,15 @@
 
 <div class="parameter-base-boolean" style="grid-template-columns: {columns}">
   <ParameterName {formParameter} />
-  <input
-    bind:checked={formParameter.value}
-    {disabled}
-    type="checkbox"
-    on:change={() => dispatch('change', formParameter)}
-  />
+  <Input>
+    <input
+      bind:checked={formParameter.value}
+      {disabled}
+      type="checkbox"
+      on:change={() => dispatch('change', formParameter)}
+    />
+    <ValueSourceBadge slot="right" source={formParameter.valueSource} />
+  </Input>
 </div>
 
 <ParameterBaseError {columns} {formParameter} />
@@ -31,6 +36,7 @@
 <style>
   input {
     margin: 0;
+    width: max-content;
   }
 
   .parameter-base-boolean {

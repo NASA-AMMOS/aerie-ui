@@ -3,6 +3,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import Input from '../form/Input.svelte';
+  import ValueSourceBadge from '../ui/ValueSourceBadge.svelte';
   import ParameterBaseError from './ParameterBaseError.svelte';
   import ParameterName from './ParameterName.svelte';
 
@@ -28,6 +29,7 @@
       type="number"
       on:change={() => dispatch('change', formParameter)}
     />
+    <ValueSourceBadge slot="right" source={formParameter.valueSource} />
   </Input>
 </div>
 

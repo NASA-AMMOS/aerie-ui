@@ -37,7 +37,8 @@
         name: `[${i}]`,
         order: i,
         schema: schema.items,
-        value: getArgument(value[i], schema.items),
+        value: getArgument(value[i], schema.items).value,
+        valueSource: formParameter.valueSource,
       };
       subFormParameters.push(subFormParameter);
     }
@@ -58,7 +59,7 @@
 
   function valueAdd() {
     const { schema } = formParameter;
-    const newValue = getArgument(null, schema.items);
+    const { value: newValue } = getArgument(null, schema.items);
     const value = [...formParameter.value, newValue];
     dispatch('change', { ...formParameter, value });
   }
