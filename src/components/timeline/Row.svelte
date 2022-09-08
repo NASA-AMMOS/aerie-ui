@@ -10,6 +10,7 @@
   import LayerXRange from './LayerXRange.svelte';
   import RowDragHandleHeight from './RowDragHandleHeight.svelte';
   import RowDragHandleMove from './RowDragHandleMove.svelte';
+  import RowHeader from './RowHeader.svelte';
   import RowHorizontalGuides from './RowHorizontalGuides.svelte';
   import RowVerticalGuides from './RowVerticalGuides.svelte';
   import RowXAxisTicks from './RowXAxisTicks.svelte';
@@ -84,6 +85,9 @@
 
 <div>
   <div class="row" id={`row-${id}`} style="height: {drawHeight}px;">
+    <!-- Row Header. -->
+    <RowHeader />
+
     <!-- Hover Menu. -->
     <div class="row-hover-menu">
       <RowDragHandleMove disabled={rowDragMoveDisabled} on:mouseDownRowMove />
