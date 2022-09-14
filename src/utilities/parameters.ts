@@ -1,11 +1,6 @@
 import { omitBy } from 'lodash-es';
 import { isEmpty } from './generic';
 
-// DOT:
-// Value comes from user if arg is not null or undefined (orange dot)
-// Otherwise, value comes from mission if default arg is not undefined (green dot)
-// Otherwise, there is no value and we don't need to show a dot (no dot)
-
 /**
  * Derive argument given input value, value schema, and optional default value.
  * Returns the derived value and the source of the value which follows this logic:
