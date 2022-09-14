@@ -64,6 +64,16 @@
       activityTableId,
     );
   }
+
+  function onRowSelected(event: CustomEvent<DataGridRowSelection<Activity>>) {
+    const {
+      detail: { data: selectedRow, isSelected },
+    } = event;
+
+    if (isSelected) {
+      $selectedActivityId = selectedRow.id;
+    }
+  }
 </script>
 
 <BulkActionDataGrid
@@ -72,7 +82,8 @@
   items={$activities}
   pluralItemDisplayText="Activities"
   singleItemDisplayText="Activity"
-  bind:selectedItemId={$selectedActivityId}
+  selectedItemId={$selectedActivityId}
   on:bulkDeleteItems={deleteActivityDirectives}
   on:columnStateChange={onColumnStateChange}
+  on:rowSelected={onRowSelected}
 />

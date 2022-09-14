@@ -10,18 +10,26 @@
   import Chip from '../ui/Chip.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
+  import BulkActionDataGrid from '../ui/DataGrid/BulkActionDataGrid.svelte';
   import Panel from '../ui/Panel.svelte';
   import ExpansionLogicEditor from './ExpansionLogicEditor.svelte';
 
   export let mode: 'create' | 'edit' = 'create';
 
+  interface ActivityExpansionRuleRow {
+    activityType: string;
+    expansionRule: ExpansionRule;
+    ruleId: number;
+  }
+
   let activityTypesExpansionRules: ActivityTypeExpansionRules[] = [];
+  let flattendExpansionRules: ActivityExpansionRuleRow[] = [];
   let lastSelectedExpansionRule: ExpansionRule | null = null;
+  let lastSelectedExpansionId: number | null = null;
   let logicEditorActivityType: string | null = null;
   let logicEditorRuleLogic: string = 'No Expansion Rule Selected';
   let logicEditorTitle: string = 'Expansion Rule - Logic Editor (Read-only)';
   let saveButtonEnabled: boolean = false;
-  let selectedExpansionRules: Record<string, number> = {};
   let setExpansionRuleIds: number[] = [];
   let setDictionaryId: number | null = null;
   let setModelId: number | null = null;
@@ -30,13 +38,54 @@
     .getActivityTypesExpansionRules(setModelId)
     .then(activity_types => (activityTypesExpansionRules = activity_types));
 
+  $: flattendExpansionRules = activityTypesExpansionRules.reduce(
+    (totalRules: ActivityExpansionRuleRow[], activityTypeExpansionRule: ActivityTypeExpansionRules) => {
+      return [
+        ...totalRules,
+        ...activityTypeExpansionRule.expansion_rules.map(
+          (expansionRule: ExpansionRule): ActivityExpansionRuleRow => ({
+            activityType: activityTypeExpansionRule.name,
+            expansionRule,
+            ruleId: expansionRule.id,
+          }),
+        ),
+      ];
+    },
+    [],
+  );
+
+  $: {
+    const ruleIndex = flattendExpansionRules.findIndex(
+      activityExpansionRule => activityExpansionRule.ruleId === lastSelectedExpansionId,
+    );
+    lastSelectedExpansionRule = ruleIndex > -1 ? flattendExpansionRules[ruleIndex].expansionRule : null;
+  }
   $: logicEditorActivityType = lastSelectedExpansionRule?.activity_type ?? null;
   $: logicEditorRuleLogic = lastSelectedExpansionRule?.expansion_logic ?? 'No Expansion Rule Selected';
   $: logicEditorTitle = lastSelectedExpansionRule
     ? `Expansion Rule - Logic Editor - ${lastSelectedExpansionRule.activity_type} - Rule ${lastSelectedExpansionRule.id} (Read-only)`
     : 'Expansion Rule - Logic Editor (Read-only)';
-  $: setExpansionRuleIds = Object.values(selectedExpansionRules) ?? [];
   $: saveButtonEnabled = setDictionaryId !== null && setModelId !== null && setExpansionRuleIds.length > 0;
+
+  function onRowSelected(event: CustomEvent<DataGridRowSelection<ActivityExpansionRuleRow>>) {
+    const {
+      detail: { data: selectedRow, isSelected },
+    } = event;
+
+    if (isSelected) {
+      lastSelectedExpansionId = selectedRow.ruleId;
+    }
+  }
+
+  function onSelectionChanged(event: CustomEvent<ActivityExpansionRuleRow[]>) {
+    const { detail: selectedRules } = event;
+
+    setExpansionRuleIds = selectedRules.map(rule => rule.ruleId);
+
+    if (!setExpansionRuleIds.length) {
+      lastSelectedExpansionId = null;
+    }
+  }
 
   async function saveSet() {
     if (mode === 'create') {
@@ -46,20 +95,6 @@
         goto(`${base}/expansion/sets`);
       }
     }
-  }
-
-  function selectExpansionRule(activityTypeName: string, rule: ExpansionRule) {
-    const currentRuleId = selectedExpansionRules[activityTypeName];
-
-    if (currentRuleId === rule.id) {
-      delete selectedExpansionRules[activityTypeName];
-      lastSelectedExpansionRule = null;
-    } else {
-      selectedExpansionRules[activityTypeName] = rule.id;
-      lastSelectedExpansionRule = rule;
-    }
-
-    selectedExpansionRules = { ...selectedExpansionRules };
   }
 </script>
 
@@ -98,7 +133,7 @@
           bind:value={setModelId}
           class="st-select w-100"
           name="modelId"
-          on:change={() => (selectedExpansionRules = {})}
+          on:change={() => (setExpansionRuleIds = [])}
         >
           <option value={null} />
           {#each $models as model}
@@ -109,44 +144,37 @@
         </select>
       </fieldset>
 
-      <fieldset>
+      <fieldset class="expansion-rules-table">
         <label for="expansionRules" class="mb-2" style:display="block">Expansion Rules</label>
 
         {#if !activityTypesExpansionRules.length}
           No Expansion Rules Found
         {:else}
-          <table class="st-table">
-            <thead>
-              <tr>
-                <th>Activity Type</th>
-                <th>Expansion Rule</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {#each activityTypesExpansionRules as activityType}
-                <tr>
-                  {#if activityType.expansion_rules.length}
-                    <td>{activityType.name}</td>
-                    <td>
-                      {#each activityType.expansion_rules as rule}
-                        <div
-                          class="expansion-rule"
-                          on:click|stopPropagation={() => selectExpansionRule(activityType.name, rule)}
-                        >
-                          <input
-                            checked={selectedExpansionRules[activityType.name] === rule.id}
-                            name={activityType.name}
-                            type="checkbox"
-                          />Rule {rule.id}
-                        </div>
-                      {/each}
-                    </td>
-                  {/if}
-                </tr>
-              {/each}
-            </tbody>
-          </table>
+          <BulkActionDataGrid
+            idKey="ruleId"
+            columnDefs={[
+              { field: 'activityType', filter: 'text', headerName: 'Activity Type', resizable: true, sortable: true },
+              {
+                checkboxSelection: true,
+                field: 'ruleId',
+                filter: 'number',
+                headerCheckboxSelection: true,
+                headerCheckboxSelectionFilteredOnly: true,
+                headerName: 'Expansion Rule',
+                resizable: true,
+                sortable: true,
+                valueFormatter: ({ value }) => {
+                  return `Rule ${value}`;
+                },
+              },
+            ]}
+            items={flattendExpansionRules}
+            selectedItemId={lastSelectedExpansionId}
+            showContextMenu={false}
+            suppressRowClickSelection={true}
+            on:rowSelected={onRowSelected}
+            on:selectionChanged={onSelectionChanged}
+          />
         {/if}
       </fieldset>
     </svelte:fragment>
@@ -165,15 +193,15 @@
 </CssGrid>
 
 <style>
-  .expansion-rule {
-    align-items: center;
-    cursor: pointer;
-    display: flex;
-    gap: 5px;
-    user-select: none;
+  .expansion-rules-table {
+    display: contents;
   }
 
-  .expansion-rule > input {
+  .expansion-rules-table :global(.ag-theme-stellar .ag-row.ag-selectable-row) {
+    cursor: auto;
+  }
+
+  .expansion-rules-table :global(.ag-theme-stellar .ag-row.ag-selectable-row input) {
     cursor: pointer;
   }
 </style>

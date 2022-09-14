@@ -174,7 +174,7 @@
           isSelected: event.node.isSelected(),
         } as DataGridRowSelection<TRowData>);
 
-        if (event.node.isSelected()) {
+        if (!suppressRowClickSelection && event.node.isSelected()) {
           currentSelectedRowId = getRowId(event.data);
         }
       },
@@ -185,7 +185,7 @@
         const selectedNodes = gridOptions?.api?.getSelectedNodes();
 
         // only dispatch `rowSelected` for single row selections
-        if (selectedNodes.length <= 1) {
+        if (selectedNodes.length <= 1 || suppressRowClickSelection) {
           dispatch('rowSelected', {
             data: event.data,
             isSelected: event.node.isSelected(),
@@ -199,7 +199,20 @@
         if (selectedRows.length === 1) {
           currentSelectedRowId = getRowId(selectedRows[0]);
         } else if (!selectedRowIds.includes(currentSelectedRowId)) {
-          currentSelectedRowId = selectedRowIds[0];
+          let wasCurrentSelectedRowUpdated: boolean = false;
+          currentSelectedRowId = null;
+
+          gridOptions?.api?.forEachNodeAfterFilterAndSort((rowNode: RowNode<TRowData>) => {
+            if (rowNode.isSelected() && !wasCurrentSelectedRowUpdated) {
+              currentSelectedRowId = getRowId(rowNode.data);
+              wasCurrentSelectedRowUpdated = true;
+
+              dispatch('rowSelected', {
+                data: rowNode.data,
+                isSelected: rowNode.isSelected(),
+              } as DataGridRowSelection<TRowData>);
+            }
+          });
         }
 
         dispatch('selectionChanged', selectedRows);
