@@ -123,7 +123,7 @@
       on:viewTimeRangeChanged={onViewTimeRangeChanged}
     />
   </div>
-  <TimelineCursors {mouseOver} {xScaleView} marginLeft={timeline?.marginLeft}>
+  <TimelineCursors {mouseOver} {xScaleView} {drawWidth} marginLeft={timeline?.marginLeft}>
     <div
       class="rows"
       style="max-height: {rowsMaxHeight}px"

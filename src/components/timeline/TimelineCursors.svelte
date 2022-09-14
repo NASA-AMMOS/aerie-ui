@@ -23,7 +23,7 @@
       if (offsetX >= 0) {
         raf = window.requestAnimationFrame(() => {
           const cursorDiv = getCursor();
-          cursorDiv.style('opacity', 1.0).style('left', `${offsetX + marginLeft - 1}px`);
+          cursorDiv.style('opacity', 1.0).style('transform', `translateX(${offsetX + marginLeft - 1}px)`);
         });
       } else {
         raf = window.requestAnimationFrame(() => {
@@ -60,10 +60,12 @@
   .timeline-cursor {
     background-color: var(--st-gray-50);
     height: 100%;
-    left: 0px;
+    left: 0;
     opacity: 0;
     pointer-events: none;
     position: absolute;
+    top: 0;
+    transform: translateX(0);
     width: 1px;
   }
 </style>
