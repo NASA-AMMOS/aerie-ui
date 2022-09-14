@@ -55,7 +55,7 @@
   let isChild: boolean;
   let model: Model;
   let parametersWithErrorsCount: number = 0;
-  let parameterErrorMap: { [key: string]: string[] } = {};
+  let parameterErrorMap: Record<string, string[]> = {};
   let rootActivityHasChildren: boolean;
   let startTimeField: FieldStore<string>;
 
