@@ -131,6 +131,7 @@
 
   .input > .left,
   .input > .right {
+    cursor: default;
     position: absolute;
   }
 

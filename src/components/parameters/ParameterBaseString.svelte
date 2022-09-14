@@ -3,11 +3,11 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import Input from '../form/Input.svelte';
-  import ParameterBaseError from './ParameterBaseError.svelte';
+  import ParameterBaseRightAdornments from './ParameterBaseRightAdornments.svelte';
   import ParameterName from './ParameterName.svelte';
-  import ValueSourceBadge from './ValueSourceBadge.svelte';
 
   export let disabled: boolean = false;
+  export let hideRightAdornments: boolean = false;
   export let formParameter: FormParameter;
   export let labelColumnWidth: number = 200;
   export let level: number = 0;
@@ -24,16 +24,14 @@
     <input
       bind:value={formParameter.value}
       class="st-input w-100"
-      class:error={formParameter.error !== null}
+      class:error={formParameter.errors !== null}
       {disabled}
       type="text"
       on:change={() => dispatch('change', formParameter)}
     />
-    <ValueSourceBadge slot="right" source={formParameter.valueSource} />
+    <ParameterBaseRightAdornments hidden={hideRightAdornments} slot="right" {formParameter} />
   </Input>
 </div>
-
-<ParameterBaseError {columns} {formParameter} />
 
 <style>
   .parameter-base-string {

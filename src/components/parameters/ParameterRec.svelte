@@ -2,6 +2,7 @@
 
 <script lang="ts">
   export let disabled: boolean = false;
+  export let hideRightAdornments: boolean = false;
   export let expanded: boolean = false;
   export let formParameter: FormParameter;
   export let labelColumnWidth: number = 200;
@@ -27,6 +28,7 @@
   {disabled}
   {expanded}
   {formParameter}
+  {hideRightAdornments}
   {labelColumnWidth}
   {level}
   {levelPadding}

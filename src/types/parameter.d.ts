@@ -5,7 +5,7 @@ type EffectiveArguments = {
 };
 
 type FormParameter<T = ValueSchema> = {
-  error: string | null;
+  errors: string[] | null;
   file?: File;
   index?: number;
   key?: string;

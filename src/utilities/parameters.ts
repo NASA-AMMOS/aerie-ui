@@ -50,7 +50,7 @@ export function getFormParameters(
     // Change output of getArgument to be {value, source}
 
     const formParameter: FormParameter = {
-      error: null,
+      errors: null,
       name,
       order,
       required,
