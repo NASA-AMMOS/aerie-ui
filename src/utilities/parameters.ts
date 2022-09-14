@@ -1,6 +1,22 @@
 import { omitBy } from 'lodash-es';
 import { isEmpty } from './generic';
 
+// DOT:
+// Value comes from user if arg is not null or undefined (orange dot)
+// Otherwise, value comes from mission if default arg is not undefined (green dot)
+// Otherwise, there is no value and we don't need to show a dot (no dot)
+
+/**
+ * Derive argument given input value, value schema, and optional default value.
+ * Returns the derived value and the source of the value which follows this logic:
+ * if the value is not null or undefined: "user"
+ * else if the default value is not undefined: "mission"
+ * otherwise there is no value so there is no value source: "none"
+ * @param value
+ * @param schema
+ * @param defaultValue
+ * @returns { value: any; valueSource: ValueSource }
+ */
 export function getArgument(
   value: Argument,
   schema: ValueSchema,
@@ -42,12 +58,6 @@ export function getFormParameters(
     const defaultArg: Argument | undefined = defaultArgumentsMap[name];
     const { value, valueSource } = getArgument(arg, schema, defaultArg);
     const required = requiredParameters.indexOf(name) > -1;
-
-    // DOT:
-    // Value comes from user if arg is not null or undefined (orange dot)
-    // Otherwise, value comes from mission if default arg is not undefined (green dot)
-    // Otherwise, there is no value and we don't need to show a dot (no dot)
-    // Change output of getArgument to be {value, source}
 
     const formParameter: FormParameter = {
       errors: null,

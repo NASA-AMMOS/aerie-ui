@@ -10,7 +10,7 @@
   export let hideValueSource: boolean = false;
   export let hideError: boolean = false;
 
-  let errors = [];
+  let errors: string[] = [];
 
   $: if (formParameter.errors || additionalErrors) {
     errors = additionalErrors.concat(

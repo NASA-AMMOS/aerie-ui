@@ -7,9 +7,9 @@
   export let layout: 'inline' | 'stacked' | null = 'stacked';
 
   let container: HTMLDivElement;
+  let containerObserver: MutationObserver;
   let input: HTMLInputElement | null;
   let inputObserver: MutationObserver;
-  let containerObserver: MutationObserver;
   let left: HTMLDivElement | null;
   let right: HTMLDivElement | null;
 
@@ -70,6 +70,7 @@
       }
     }
   }
+
   function containerObserverCallback() {
     if (left) {
       padLeftSlot();
