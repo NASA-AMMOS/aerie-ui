@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import GripVerticalIcon from 'bootstrap-icons/icons/grip-vertical.svg?component';
+  import GripHorizontalIcon from 'bootstrap-icons/icons/grip-horizontal.svg?component';
   import { createEventDispatcher } from 'svelte';
 
   export let disabled: boolean = true;
@@ -14,5 +14,11 @@
   style={disabled ? 'cursor: grab' : 'cursor: grabbing'}
   on:mousedown={() => dispatch('mouseDownRowMove')}
 >
-  <GripVerticalIcon />
+  <GripHorizontalIcon />
 </div>
+
+<style>
+  .row-drag-handle-move {
+    display: flex;
+  }
+</style>

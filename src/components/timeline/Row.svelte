@@ -9,7 +9,6 @@
   import LayerLine from './LayerLine.svelte';
   import LayerXRange from './LayerXRange.svelte';
   import RowDragHandleHeight from './RowDragHandleHeight.svelte';
-  import RowDragHandleMove from './RowDragHandleMove.svelte';
   import RowHeader from './RowHeader.svelte';
   import RowHorizontalGuides from './RowHorizontalGuides.svelte';
   import RowVerticalGuides from './RowVerticalGuides.svelte';
@@ -83,15 +82,15 @@
   }
 </script>
 
-<div>
+<div class="row-root">
+  <RowHeader {rowDragMoveDisabled} on:mouseDownRowMove />
   <div class="row" id={`row-${id}`} style="height: {drawHeight}px;">
     <!-- Row Header. -->
-    <RowHeader />
 
     <!-- Hover Menu. -->
-    <div class="row-hover-menu">
+    <!-- <div class="row-hover-menu">
       <RowDragHandleMove disabled={rowDragMoveDisabled} on:mouseDownRowMove />
-    </div>
+    </div> -->
 
     <!-- Overlay for Pointer Events. -->
     <svg
@@ -226,15 +225,7 @@
     z-index: 1;
   }
 
-  .row-hover-menu {
-    color: var(--st-gray-50);
-    display: none;
-    font-size: 1.2rem;
-    position: absolute;
-    z-index: 2;
-  }
-
-  .row:hover > .row-hover-menu {
-    display: block;
+  :global(.row-root:hover .row-header .row-hover-menu) {
+    opacity: 1;
   }
 </style>
