@@ -123,45 +123,44 @@
       on:viewTimeRangeChanged={onViewTimeRangeChanged}
     />
   </div>
-  <TimelineCursors {mouseOver} {xScaleView} {drawWidth} marginLeft={timeline?.marginLeft}>
-    <div
-      class="rows"
-      style="max-height: {rowsMaxHeight}px"
-      on:consider={handleDndConsiderRows}
-      on:finalize={handleDndFinalizeRows}
-      on:mouseenter={() => (timeline.gridId = gridId)}
-      use:dndzone={{
-        dragDisabled: rowDragMoveDisabled,
-        items: rows,
-        type: 'rows',
-      }}
-    >
-      {#each rows as row (row.id)}
-        <TimelineRow
-          autoAdjustHeight={row.autoAdjustHeight}
-          constraintViolations={$constraintViolations}
-          drawHeight={row.height}
-          {drawWidth}
-          horizontalGuides={row.horizontalGuides}
-          id={row.id}
-          layers={row.layers}
-          marginLeft={timeline?.marginLeft}
-          resources={$resources}
-          {rowDragMoveDisabled}
-          verticalGuides={timeline?.verticalGuides}
-          viewTimeRange={$viewTimeRange}
-          {xScaleView}
-          {xTicksView}
-          yAxes={row.yAxes}
-          on:mouseDown={onMouseDown}
-          on:mouseDownRowMove={onMouseDownRowMove}
-          on:mouseOver={e => (mouseOver = e.detail)}
-          on:mouseOverViolations={e => (mouseOverViolations = e.detail)}
-          on:updateRowHeight={onUpdateRowHeight}
-        />
-      {/each}
-    </div>
-  </TimelineCursors>
+  <TimelineCursors {mouseOver} {xScaleView} {drawWidth} marginLeft={timeline?.marginLeft} />
+  <div
+    class="rows"
+    style="max-height: {rowsMaxHeight}px"
+    on:consider={handleDndConsiderRows}
+    on:finalize={handleDndFinalizeRows}
+    on:mouseenter={() => (timeline.gridId = gridId)}
+    use:dndzone={{
+      dragDisabled: rowDragMoveDisabled,
+      items: rows,
+      type: 'rows',
+    }}
+  >
+    {#each rows as row (row.id)}
+      <TimelineRow
+        autoAdjustHeight={row.autoAdjustHeight}
+        constraintViolations={$constraintViolations}
+        drawHeight={row.height}
+        {drawWidth}
+        horizontalGuides={row.horizontalGuides}
+        id={row.id}
+        layers={row.layers}
+        marginLeft={timeline?.marginLeft}
+        resources={$resources}
+        {rowDragMoveDisabled}
+        verticalGuides={timeline?.verticalGuides}
+        viewTimeRange={$viewTimeRange}
+        {xScaleView}
+        {xTicksView}
+        yAxes={row.yAxes}
+        on:mouseDown={onMouseDown}
+        on:mouseDownRowMove={onMouseDownRowMove}
+        on:mouseOver={e => (mouseOver = e.detail)}
+        on:mouseOverViolations={e => (mouseOverViolations = e.detail)}
+        on:updateRowHeight={onUpdateRowHeight}
+      />
+    {/each}
+  </div>
 
   <!-- Timeline Tooltip. -->
   <Tooltip {mouseOver} {mouseOverViolations} />

@@ -52,18 +52,23 @@
   }
 </script>
 
+<div class="timeline-cursor-margin" />
 <div class="timeline-cursor-container">
   <div class="timeline-cursor-header" />
   <div class="timeline-cursor">
     <div class="timeline-cursor-label" />
   </div>
-  <slot />
 </div>
 
 <style>
+  .timeline-cursor-margin {
+    height: 20px;
+    position: relative;
+  }
+
   .timeline-cursor-container {
     height: 100%;
-    position: relative;
+    position: absolute;
     width: 100%;
   }
 
@@ -78,7 +83,7 @@
     opacity: 0;
     pointer-events: none;
     position: absolute;
-    top: 0.5rem;
+    top: -10px;
     transform: translateX(0);
   }
 
