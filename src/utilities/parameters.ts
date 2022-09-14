@@ -7,10 +7,6 @@ import { isEmpty } from './generic';
  * if the value is not null or undefined: "user"
  * else if the default value is not undefined: "mission"
  * otherwise there is no value so there is no value source: "none"
- * @param value
- * @param schema
- * @param defaultValue
- * @returns { value: any; valueSource: ValueSource }
  */
 export function getArgument(
   value: Argument,
