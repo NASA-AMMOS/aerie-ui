@@ -310,23 +310,20 @@
       <fieldset>
         <details open style:cursor="pointer">
           <summary>Definition</summary>
-          <div>
+
+          <div class="activity-form-details-body">
             <Input layout="inline">
               <label use:tooltip={{ content: 'Activity ID', placement: 'left' }} for="id"> Activity ID </label>
               <input class="st-input w-100" disabled name="id" value={id} />
             </Input>
-          </div>
 
-          <div>
             <Input layout="inline">
               <label use:tooltip={{ content: 'Activity Type', placement: 'left' }} for="activity-type">
                 Activity Type
               </label>
               <input class="st-input w-100" disabled name="activity-type" value={type} />
             </Input>
-          </div>
 
-          <div>
             <Input layout="inline">
               <label use:tooltip={{ content: 'Parent ID', placement: 'left' }} for="parent-id">Parent ID</label>
               <input
@@ -336,16 +333,12 @@
                 value={isChild ? parent_id : 'None (Root Activity)'}
               />
             </Input>
-          </div>
 
-          <div>
             <Input layout="inline">
               <label use:tooltip={{ content: 'Duration', placement: 'left' }} for="duration">Duration</label>
               <input class="st-input w-100" disabled name="duration" value={duration ?? 'None'} />
             </Input>
-          </div>
 
-          <div>
             <Input layout="inline">
               <label use:tooltip={{ content: 'Simulation Status', placement: 'left' }} for="simulationStatus">
                 Simulation Status
@@ -357,46 +350,38 @@
                 value={unfinished ? 'Unfinished' : duration ? 'Finished' : 'None'}
               />
             </Input>
-          </div>
 
-          <DatePickerField
-            disabled={isChild}
-            field={startTimeField}
-            label="Start Time - YYYY-DDDThh:mm:ss"
-            layout="inline"
-            name="start-time"
-            on:change={onUpdateStartTime}
-            on:keydown={onUpdateStartTime}
-          />
+            <DatePickerField
+              disabled={isChild}
+              field={startTimeField}
+              label="Start Time - YYYY-DDDThh:mm:ss"
+              layout="inline"
+              name="start-time"
+              on:change={onUpdateStartTime}
+              on:keydown={onUpdateStartTime}
+            />
 
-          {#if duration !== null}
-            <div>
+            {#if duration !== null}
               <Input layout="inline">
                 <label use:tooltip={{ content: 'End Time', placement: 'left' }} for="endTime">End Time</label>
                 <input class="st-input w-100" disabled name="endTime" value={endTime} />
               </Input>
-            </div>
-          {/if}
+            {/if}
 
-          <div>
             <Input layout="inline">
               <label use:tooltip={{ content: 'Creation Time', placement: 'left' }} for="creationTime">
                 Creation Time
               </label>
               <input class="st-input w-100" disabled name="creationTime" value={creationTime ?? 'None'} />
             </Input>
-          </div>
 
-          <div>
             <Input layout="inline">
               <label use:tooltip={{ content: 'Last Modified Time', placement: 'left' }} for="lastModifiedTime">
                 Last Modified Time
               </label>
               <input class="st-input w-100" disabled name="lastModifiedTime" value={lastModifiedTime ?? 'None'} />
             </Input>
-          </div>
 
-          <div>
             <Input layout="inline">
               <label
                 use:tooltip={{ content: 'Source Scheduling Goal ID', placement: 'left' }}
@@ -411,18 +396,14 @@
                 value={sourceSchedulingGoalId ?? 'None'}
               />
             </Input>
-          </div>
 
-          {#if duration !== null}
-            <div>
+            {#if duration !== null}
               <Input layout="inline">
                 <label use:tooltip={{ content: 'End Time', placement: 'left' }} for="endTime">End Time</label>
                 <input class="st-input w-100" disabled name="endTime" value={endTime} />
               </Input>
-            </div>
-          {/if}
+            {/if}
 
-          <div>
             <Input layout="inline">
               <label use:tooltip={{ content: 'Tags', placement: 'left' }} for="activityTags">Tags</label>
               <!--
@@ -447,9 +428,9 @@
       <fieldset>
         <details open style:cursor="pointer">
           <summary>Annotations</summary>
-          <div class="mt-2 annotations">
+          <div class="activity-form-details-body">
             {#if $activityMetadataDefinitions.length === 0 || isChild}
-              <div class="p-1 st-typography-label">No Annotations Found</div>
+              <div class="st-typography-label">No Annotations Found</div>
             {/if}
             {#if !isChild}
               {#each $activityMetadataDefinitions as definition}
@@ -474,7 +455,7 @@
               {/if}
             </span>
           </summary>
-          <div class="mt-2">
+          <div class="activity-form-details-body">
             <Parameters disabled={isChild} {formParameters} on:change={onChangeFormParameters} />
           </div>
         </details>
@@ -646,5 +627,13 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
+  }
+
+  .activity-form-details-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-left: 32px;
+    margin-top: 16px;
   }
 </style>
