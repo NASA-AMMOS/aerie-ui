@@ -89,7 +89,8 @@
 
 <div class="row-root">
   <!-- Row Header. -->
-  <RowHeader title={name} {rowDragMoveDisabled} on:mouseDownRowMove on:toggleRowExpansion />
+  <RowHeader {expanded} rowId={id} title={name} {rowDragMoveDisabled} on:mouseDownRowMove on:toggleRowExpansion />
+
   <div class={rowClasses} id={`row-${id}`} style="height: {drawHeight}px;">
     <!-- Overlay for Pointer Events. -->
     <svg
@@ -191,7 +192,9 @@
   </div>
 
   <!-- Drag Handle for Row Height Resizing. -->
-  <RowDragHandleHeight rowHeight={drawHeight} on:updateRowHeight={onUpdateRowHeightDrag} />
+  {#if !autoAdjustHeight && expanded}
+    <RowDragHandleHeight rowHeight={drawHeight} on:updateRowHeight={onUpdateRowHeightDrag} />
+  {/if}
 </div>
 
 <style>
@@ -224,11 +227,15 @@
     z-index: 1;
   }
 
-  :global(.row-root:hover .row-header .row-hover-menu) {
+  :global(.row-root:hover .row-header .row-drag-handle-container) {
     opacity: 1;
   }
 
   .row.row-collapsed {
     display: none;
+  }
+
+  :global(.right) {
+    z-index: 0;
   }
 </style>

@@ -20,5 +20,8 @@
 <style>
   .row-drag-handle-move {
     display: flex;
+    flex: 1;
+    justify-content: center;
+    width: 100%;
   }
 </style>

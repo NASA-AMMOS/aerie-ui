@@ -87,7 +87,7 @@
 
   function onToggleRowExpansion(event: CustomEvent<{ expanded: boolean; rowId: number }>) {
     const { rowId, expanded } = event.detail;
-    console.log(rowId, expanded, 'expansion');
+    viewUpdateRow('expanded', expanded, timelineId, rowId);
   }
 
   function onUpdateRowHeight(event: CustomEvent<{ newHeight: number; rowId: number }>) {
@@ -145,11 +145,11 @@
         constraintViolations={$constraintViolations}
         drawHeight={row.height}
         {drawWidth}
-        expanded={true}
+        expanded={row.expanded}
         horizontalGuides={row.horizontalGuides}
         id={row.id}
         layers={row.layers}
-        name={'Row name TODO'}
+        name={row.name}
         marginLeft={timeline?.marginLeft}
         resources={$resources}
         {rowDragMoveDisabled}
@@ -175,6 +175,7 @@
 <style>
   .rows {
     min-height: 100px;
+    outline: none !important;
     overflow-x: hidden;
     overflow-y: auto;
   }
