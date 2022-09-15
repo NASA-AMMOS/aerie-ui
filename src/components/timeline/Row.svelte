@@ -4,6 +4,7 @@
   import type { ScaleTime } from 'd3-scale';
   import { pick } from 'lodash-es';
   import { createEventDispatcher } from 'svelte';
+  import { classNames } from '../../utilities/generic';
   import ConstraintViolations from './ConstraintViolations.svelte';
   import LayerActivity from './LayerActivity.svelte';
   import LayerLine from './LayerLine.svelte';
@@ -19,9 +20,11 @@
   export let constraintViolations: ConstraintViolation[] = [];
   export let drawHeight: number = 0;
   export let drawWidth: number = 0;
+  export let expanded: boolean = true;
   export let horizontalGuides: HorizontalGuide[] = [];
   export let id: number;
   export let layers: Layer[] = [];
+  export let name: string = '';
   export let marginLeft: number = 50;
   export let resources: Resource[] = [];
   export let rowDragMoveDisabled = true;
@@ -80,18 +83,14 @@
       dispatch('updateRowHeight', { newHeight, rowId: id });
     }
   }
+
+  $: rowClasses = classNames('row', { 'row-collapsed': !expanded });
 </script>
 
 <div class="row-root">
-  <RowHeader {rowDragMoveDisabled} on:mouseDownRowMove />
-  <div class="row" id={`row-${id}`} style="height: {drawHeight}px;">
-    <!-- Row Header. -->
-
-    <!-- Hover Menu. -->
-    <!-- <div class="row-hover-menu">
-      <RowDragHandleMove disabled={rowDragMoveDisabled} on:mouseDownRowMove />
-    </div> -->
-
+  <!-- Row Header. -->
+  <RowHeader title={name} {rowDragMoveDisabled} on:mouseDownRowMove on:toggleRowExpansion />
+  <div class={rowClasses} id={`row-${id}`} style="height: {drawHeight}px;">
     <!-- Overlay for Pointer Events. -->
     <svg
       bind:this={overlaySvg}
@@ -227,5 +226,9 @@
 
   :global(.row-root:hover .row-header .row-hover-menu) {
     opacity: 1;
+  }
+
+  .row.row-collapsed {
+    display: none;
   }
 </style>
