@@ -29,6 +29,7 @@
   let xAxisDiv: HTMLDivElement;
   let xAxisDrawHeight: number = 90;
   let cursorHeaderHeight: number = 20;
+  let cursorEnabled: boolean = true;
 
   $: timeline = $view?.definition.plan.timelines.find(timeline => timeline.id === timelineId);
   $: rows = timeline?.rows || [];
@@ -124,7 +125,14 @@
       on:viewTimeRangeChanged={onViewTimeRangeChanged}
     />
   </div>
-  <TimelineCursors {mouseOver} {xScaleView} {drawWidth} {cursorHeaderHeight} marginLeft={timeline?.marginLeft} />
+  <TimelineCursors
+    {mouseOver}
+    {xScaleView}
+    {drawWidth}
+    {cursorHeaderHeight}
+    {cursorEnabled}
+    marginLeft={timeline?.marginLeft}
+  />
   <div
     class="rows"
     style="max-height: {rowsMaxHeight}px"
