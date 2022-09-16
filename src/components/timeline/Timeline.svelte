@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { afterUpdate, tick } from 'svelte';
+  import { afterUpdate, onMount, tick } from 'svelte';
   import { dndzone, SOURCES, TRIGGERS } from 'svelte-dnd-action';
   import { selectedActivityId } from '../../stores/activities';
   import { constraintViolations } from '../../stores/constraints';
@@ -46,6 +46,14 @@
     return { date, time, yearDay };
   });
 
+  onMount(() => {
+    document.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  });
+
   afterUpdate(() => {
     setRowsMaxHeight(timelineDiv, xAxisDiv);
   });
@@ -69,6 +77,12 @@
       rowDragMoveDisabled = true;
     }
     viewUpdateTimeline('rows', rows, timelineId);
+  }
+
+  function onKeyDown(event: KeyboardEvent) {
+    if (event.key === 't' && event.ctrlKey) {
+      cursorEnabled = !cursorEnabled;
+    }
   }
 
   function onMouseDown(event: CustomEvent<MouseDown>) {

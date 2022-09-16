@@ -10,33 +10,47 @@
   export let cursorEnabled: boolean = true;
 
   $: onMouseOver(mouseOver);
+  $: onCursorEnableChange(cursorEnabled);
 
   let raf: number = null;
   let cursorDiv: HTMLElement = null;
   let cursorLabelDiv: HTMLElement = null;
+  let offsetX: number = -1;
 
   function onMouseOver(event: MouseOver | undefined) {
     if (event && xScaleView && cursorDiv && cursorLabelDiv) {
-      const { offsetX } = event.e;
+      offsetX = event.e.offsetX;
+      updateCursor();
+    }
+  }
+
+  function onCursorEnableChange(cursorEnabled) {
+    if (cursorEnabled) {
+      updateCursor();
+    } else {
+      hideCursor();
+    }
+  }
+
+  function updateCursor() {
+    if (cursorEnabled && offsetX >= 0 && offsetX <= drawWidth) {
       const unixEpochTime = xScaleView.invert(offsetX).getTime();
       const doyTime = getDoyTime(new Date(unixEpochTime));
 
-      if (cursorEnabled && offsetX >= 0 && offsetX <= drawWidth) {
-        cancelAnimationFrame(raf);
-        raf = window.requestAnimationFrame(() => {
-          cursorLabelDiv.textContent = doyTime;
-          const cursorLabelWidth = cursorLabelDiv.getBoundingClientRect().width;
-          if (offsetX + cursorLabelWidth + 10 > drawWidth) {
-            cursorLabelDiv.style.transform = 'translateX(calc(-100% - 10px))';
-          } else {
-            cursorLabelDiv.style.transform = 'translateX(10px)';
-          }
-          cursorDiv.style.opacity = '1.0';
-          cursorDiv.style.transform = `translateX(${offsetX + marginLeft - 1}px)`;
-        });
-      } else {
-        hideCursor();
-      }
+      cancelAnimationFrame(raf);
+      raf = window.requestAnimationFrame(() => {
+        cursorLabelDiv.textContent = doyTime;
+        const cursorLabelWidth = cursorLabelDiv.getBoundingClientRect().width;
+        if (offsetX + cursorLabelWidth + 10 > drawWidth) {
+          cursorLabelDiv.style.transform = 'translateX(calc(-100% - 10px))';
+        } else {
+          cursorLabelDiv.style.transform = 'translateX(10px)';
+        }
+        cursorDiv.style.opacity = '1.0';
+        cursorDiv.style.transform = `translateX(${offsetX + marginLeft - 1}px)`;
+      });
+    } else {
+      hideCursor();
     }
   }
 
