@@ -7,6 +7,7 @@
   export let xScaleView: ScaleTime<number, number> | null = null;
   export let marginLeft: number = 50;
   export let drawWidth: number = 0;
+  export let cursorHeaderHeight: number = 20;
 
   $: onMouseOver(mouseOver);
 
@@ -52,7 +53,7 @@
   }
 </script>
 
-<div class="timeline-cursor-margin" />
+<div class="timeline-cursor-margin" style="height: {cursorHeaderHeight}px" />
 <div class="timeline-cursor-container">
   <div class="timeline-cursor-header" />
   <div class="timeline-cursor">
@@ -62,7 +63,6 @@
 
 <style>
   .timeline-cursor-margin {
-    height: 20px;
     position: relative;
   }
 

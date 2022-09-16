@@ -28,6 +28,7 @@
   let timelineDiv: HTMLDivElement;
   let xAxisDiv: HTMLDivElement;
   let xAxisDrawHeight: number = 90;
+  let cursorHeaderHeight: number = 20;
 
   $: timeline = $view?.definition.plan.timelines.find(timeline => timeline.id === timelineId);
   $: rows = timeline?.rows || [];
@@ -102,7 +103,7 @@
     if (timelineDiv && xAxisDiv && timelineDiv.parentElement) {
       const { clientHeight: parentHeight } = timelineDiv.parentElement;
       const offsetTop = xAxisDiv.clientHeight;
-      const maxHeight = parentHeight - offsetTop;
+      const maxHeight = parentHeight - offsetTop - cursorHeaderHeight;
       rowsMaxHeight = maxHeight;
     }
   }
@@ -123,7 +124,7 @@
       on:viewTimeRangeChanged={onViewTimeRangeChanged}
     />
   </div>
-  <TimelineCursors {mouseOver} {xScaleView} {drawWidth} marginLeft={timeline?.marginLeft} />
+  <TimelineCursors {mouseOver} {xScaleView} {drawWidth} {cursorHeaderHeight} marginLeft={timeline?.marginLeft} />
   <div
     class="rows"
     style="max-height: {rowsMaxHeight}px"
