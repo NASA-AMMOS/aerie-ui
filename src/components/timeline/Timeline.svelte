@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { afterUpdate, onMount, tick } from 'svelte';
+  import { afterUpdate, tick } from 'svelte';
   import { dndzone, SOURCES, TRIGGERS } from 'svelte-dnd-action';
   import { selectedActivityId } from '../../stores/activities';
   import { constraintViolations } from '../../stores/constraints';
@@ -19,6 +19,8 @@
   export let timelineId: number;
 
   let clientWidth: number = 0;
+  let cursorEnabled: boolean = true;
+  let cursorHeaderHeight: number = 20;
   let mouseOver: MouseOver;
   let mouseOverViolations: MouseOverViolations;
   let rowDragMoveDisabled = true;
@@ -28,8 +30,6 @@
   let timelineDiv: HTMLDivElement;
   let xAxisDiv: HTMLDivElement;
   let xAxisDrawHeight: number = 90;
-  let cursorHeaderHeight: number = 20;
-  let cursorEnabled: boolean = true;
 
   $: timeline = $view?.definition.plan.timelines.find(timeline => timeline.id === timelineId);
   $: rows = timeline?.rows || [];
@@ -44,14 +44,6 @@
     const doyTimestamp = getDoyTime(date, false);
     const [yearDay, time] = doyTimestamp.split('T');
     return { date, time, yearDay };
-  });
-
-  onMount(() => {
-    document.addEventListener('keydown', onKeyDown);
-
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-    };
   });
 
   afterUpdate(() => {
@@ -128,6 +120,8 @@
     }
   }
 </script>
+
+<svelte:window on:keydown={onKeyDown} />
 
 <div bind:this={timelineDiv} bind:clientWidth class="timeline" id={`timeline-${timelineId}`}>
   <div bind:this={xAxisDiv} class="x-axis" style="height: {xAxisDrawHeight}px">

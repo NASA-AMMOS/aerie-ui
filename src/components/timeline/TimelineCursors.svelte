@@ -2,20 +2,20 @@
   import type { ScaleTime } from 'd3-scale';
   import { getDoyTime } from '../../utilities/time';
 
+  export let cursorEnabled: boolean = true;
+  export let cursorHeaderHeight: number = 20;
+  export let drawWidth: number = 0;
+  export let marginLeft: number = 50;
   export let mouseOver: MouseOver;
   export let xScaleView: ScaleTime<number, number> | null = null;
-  export let marginLeft: number = 50;
-  export let drawWidth: number = 0;
-  export let cursorHeaderHeight: number = 20;
-  export let cursorEnabled: boolean = true;
 
-  $: onMouseOver(mouseOver);
   $: onCursorEnableChange(cursorEnabled);
+  $: onMouseOver(mouseOver);
 
-  let raf: number = null;
   let cursorDiv: HTMLElement = null;
   let cursorLabelDiv: HTMLElement = null;
   let offsetX: number = -1;
+  let raf: number = null;
 
   function onMouseOver(event: MouseOver | undefined) {
     if (event && xScaleView && cursorDiv && cursorLabelDiv) {
@@ -24,7 +24,7 @@
     }
   }
 
-  function onCursorEnableChange(cursorEnabled) {
+  function onCursorEnableChange(cursorEnabled: boolean) {
     if (cursorEnabled) {
       updateCursor();
     } else {
