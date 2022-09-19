@@ -6,10 +6,10 @@
   import { createEventDispatcher } from 'svelte';
   import RowDragHandleMove from './RowDragHandleMove.svelte';
 
+  export let expanded: boolean = true;
+  export let rowId: number = 0;
   export let rowDragMoveDisabled: boolean = false;
   export let title: string = '';
-  export let rowId: number = 0;
-  export let expanded: boolean = true;
 
   const dispatch = createEventDispatcher();
 

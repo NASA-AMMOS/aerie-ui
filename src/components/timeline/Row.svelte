@@ -53,6 +53,7 @@
     heightsByLayer,
     layers.map(({ id }) => id),
   );
+  $: rowClasses = classNames('row', { 'row-collapsed': !expanded });
 
   function onMouseDown(event: CustomEvent<MouseDown>) {
     const { detail } = event;
@@ -83,8 +84,6 @@
       dispatch('updateRowHeight', { newHeight, rowId: id });
     }
   }
-
-  $: rowClasses = classNames('row', { 'row-collapsed': !expanded });
 </script>
 
 <div class="row-root">
