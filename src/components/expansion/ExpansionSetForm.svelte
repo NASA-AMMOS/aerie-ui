@@ -59,6 +59,7 @@
 
   function selectExpansionRule(activityTypeName: string, rule: ExpansionRule) {
     const currentRuleId = selectedExpansionRules[activityTypeName];
+
     if (currentRuleId === rule.id) {
       delete selectedExpansionRules[activityTypeName];
       lastSelectedExpansionRule = null;
@@ -68,6 +69,9 @@
     }
 
     selectedExpansionRules = { ...selectedExpansionRules };
+
+    // because selectedExpansionRules isn't bound to the dataGrid,
+    // we have to explicitly redraw the rows so that the checkboxes can update
     dataGrid.redrawRows();
   }
 
