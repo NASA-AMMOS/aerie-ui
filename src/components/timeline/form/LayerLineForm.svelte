@@ -7,10 +7,12 @@
 </script>
 
 {#if lineLayer && lineLayer.chartType === 'line'}
-  <Input>
-    <label for="yAxisId">Y-Axis Id</label>
-    <input class="st-input w-100" name="yAxisId" type="number" value={lineLayer.yAxisId} on:input={viewUpdateLayer} />
-  </Input>
+  <div style="display:block; margin-bottom: 8px">
+    <Input>
+      <label for="yAxisId">Y-Axis Id</label>
+      <input class="st-input w-100" name="yAxisId" type="number" value={lineLayer.yAxisId} on:input={viewUpdateLayer} />
+    </Input>
+  </div>
 
   <CssGrid columns="1fr 1fr 1fr" gap="16px">
     <Input>

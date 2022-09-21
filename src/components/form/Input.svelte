@@ -150,6 +150,6 @@
   }
 
   .input-stacked {
-    display: block;
+    display: inherit;
   }
 </style>

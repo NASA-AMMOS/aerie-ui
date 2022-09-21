@@ -67,7 +67,7 @@
 {#if !$selectedYAxis}
   <div>No y-axis selected</div>
 {:else}
-  <CssGrid columns="1fr 1fr 1fr" gap="16px">
+  <CssGrid columns="1fr 1fr 1fr" gap="16px" padding="0px 0px 8px">
     <Input>
       <label class:error={idError !== null} for="id">Id</label>
       <input

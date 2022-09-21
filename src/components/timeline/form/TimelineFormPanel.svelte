@@ -214,19 +214,21 @@
         {:else}
           <div class="details-body">
             <!-- Layer Chart Type. -->
-            <Input>
-              <label for="chartType">Chart Type</label>
-              <select
-                class="st-select w-100"
-                name="chartType"
-                value={$selectedLayer.chartType}
-                on:change={viewUpdateLayer}
-              >
-                <option value="activity"> Activity </option>
-                <option value="line"> Line </option>
-                <option value="x-range"> X-Range </option>
-              </select>
-            </Input>
+            <div style="display:block; margin-bottom: 8px">
+              <Input>
+                <label for="chartType">Chart Type</label>
+                <select
+                  class="st-select w-100"
+                  name="chartType"
+                  value={$selectedLayer.chartType}
+                  on:change={viewUpdateLayer}
+                >
+                  <option value="activity"> Activity </option>
+                  <option value="line"> Line </option>
+                  <option value="x-range"> X-Range </option>
+                </select>
+              </Input>
+            </div>
 
             <LayerLineForm />
 
