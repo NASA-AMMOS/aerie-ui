@@ -3,6 +3,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
+  import type { ValueGetterParams } from 'ag-grid-community';
   import { expansionSetsColumns, savingExpansionSet } from '../../stores/expansion';
   import { models } from '../../stores/plan';
   import { commandDictionaries } from '../../stores/sequencing';
@@ -10,26 +11,26 @@
   import Chip from '../ui/Chip.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
-  import BulkActionDataGrid from '../ui/DataGrid/BulkActionDataGrid.svelte';
+  import DataGrid from '../ui/DataGrid/DataGrid.svelte';
   import Panel from '../ui/Panel.svelte';
   import ExpansionLogicEditor from './ExpansionLogicEditor.svelte';
+  import ExpansionSetRuleSelection from './ExpansionSetRuleSelection.svelte';
 
   export let mode: 'create' | 'edit' = 'create';
 
-  interface ActivityExpansionRuleRow {
-    activityType: string;
-    expansionRule: ExpansionRule;
-    ruleId: number;
-  }
+  type CellRendererParams = {
+    selectExpansionRule: (name: string, rule: ExpansionRule) => void;
+  };
+  type ExpansionSetRuleSelectionRendererParams = ICellRendererParams<ActivityTypeExpansionRules> & CellRendererParams;
 
   let activityTypesExpansionRules: ActivityTypeExpansionRules[] = [];
-  let flattendExpansionRules: ActivityExpansionRuleRow[] = [];
+  let dataGrid: DataGrid;
   let lastSelectedExpansionRule: ExpansionRule | null = null;
-  let lastSelectedExpansionId: number | null = null;
   let logicEditorActivityType: string | null = null;
   let logicEditorRuleLogic: string = 'No Expansion Rule Selected';
   let logicEditorTitle: string = 'Expansion Rule - Logic Editor (Read-only)';
   let saveButtonEnabled: boolean = false;
+  let selectedExpansionRules: Record<string, number> = {};
   let setExpansionRuleIds: number[] = [];
   let setDictionaryId: number | null = null;
   let setModelId: number | null = null;
@@ -38,54 +39,13 @@
     .getActivityTypesExpansionRules(setModelId)
     .then(activity_types => (activityTypesExpansionRules = activity_types));
 
-  $: flattendExpansionRules = activityTypesExpansionRules.reduce(
-    (totalRules: ActivityExpansionRuleRow[], activityTypeExpansionRule: ActivityTypeExpansionRules) => {
-      return [
-        ...totalRules,
-        ...activityTypeExpansionRule.expansion_rules.map(
-          (expansionRule: ExpansionRule): ActivityExpansionRuleRow => ({
-            activityType: activityTypeExpansionRule.name,
-            expansionRule,
-            ruleId: expansionRule.id,
-          }),
-        ),
-      ];
-    },
-    [],
-  );
-
-  $: {
-    const ruleIndex = flattendExpansionRules.findIndex(
-      activityExpansionRule => activityExpansionRule.ruleId === lastSelectedExpansionId,
-    );
-    lastSelectedExpansionRule = ruleIndex > -1 ? flattendExpansionRules[ruleIndex].expansionRule : null;
-  }
   $: logicEditorActivityType = lastSelectedExpansionRule?.activity_type ?? null;
   $: logicEditorRuleLogic = lastSelectedExpansionRule?.expansion_logic ?? 'No Expansion Rule Selected';
   $: logicEditorTitle = lastSelectedExpansionRule
     ? `Expansion Rule - Logic Editor - ${lastSelectedExpansionRule.activity_type} - Rule ${lastSelectedExpansionRule.id} (Read-only)`
     : 'Expansion Rule - Logic Editor (Read-only)';
+  $: setExpansionRuleIds = Object.values(selectedExpansionRules) ?? [];
   $: saveButtonEnabled = setDictionaryId !== null && setModelId !== null && setExpansionRuleIds.length > 0;
-
-  function onRowSelected(event: CustomEvent<DataGridRowSelection<ActivityExpansionRuleRow>>) {
-    const {
-      detail: { data: selectedRow, isSelected },
-    } = event;
-
-    if (isSelected) {
-      lastSelectedExpansionId = selectedRow.ruleId;
-    }
-  }
-
-  function onSelectionChanged(event: CustomEvent<ActivityExpansionRuleRow[]>) {
-    const { detail: selectedRules } = event;
-
-    setExpansionRuleIds = selectedRules.map(rule => rule.ruleId);
-
-    if (!setExpansionRuleIds.length) {
-      lastSelectedExpansionId = null;
-    }
-  }
 
   async function saveSet() {
     if (mode === 'create') {
@@ -96,6 +56,48 @@
       }
     }
   }
+
+  function selectExpansionRule(activityTypeName: string, rule: ExpansionRule) {
+    const currentRuleId = selectedExpansionRules[activityTypeName];
+    if (currentRuleId === rule.id) {
+      delete selectedExpansionRules[activityTypeName];
+      lastSelectedExpansionRule = null;
+    } else {
+      selectedExpansionRules[activityTypeName] = rule.id;
+      lastSelectedExpansionRule = rule;
+    }
+
+    selectedExpansionRules = { ...selectedExpansionRules };
+    dataGrid.redrawRows();
+  }
+
+  const expansionSetRuleSelectionColumnDef: DataGridColumnDef = {
+    autoHeight: true,
+    cellRenderer: (params: ExpansionSetRuleSelectionRendererParams) => {
+      const selectionDiv = document.createElement('div');
+      new ExpansionSetRuleSelection({
+        props: {
+          activityName: params.data.name,
+          expansionRules: params.data.expansion_rules,
+          selectExpansionRule: params.selectExpansionRule,
+          selectedExpansionRules,
+        },
+        target: selectionDiv,
+      });
+
+      return selectionDiv;
+    },
+    cellRendererParams: {
+      selectExpansionRule,
+    } as CellRendererParams,
+    field: 'expansion_rules',
+    filter: 'text',
+    filterValueGetter: (params: ValueGetterParams<ActivityTypeExpansionRules>) => {
+      return params.data.expansion_rules.map(rule => `Rule ${rule.id}`).join(' ');
+    },
+    headerName: 'Expansion Rule',
+    resizable: true,
+  };
 </script>
 
 <CssGrid bind:columns={$expansionSetsColumns}>
@@ -133,7 +135,7 @@
           bind:value={setModelId}
           class="st-select w-100"
           name="modelId"
-          on:change={() => (setExpansionRuleIds = [])}
+          on:change={() => (selectedExpansionRules = {})}
         >
           <option value={null} />
           {#each $models as model}
@@ -150,30 +152,15 @@
         {#if !activityTypesExpansionRules.length}
           No Expansion Rules Found
         {:else}
-          <BulkActionDataGrid
-            idKey="ruleId"
+          <DataGrid
+            bind:this={dataGrid}
             columnDefs={[
-              { field: 'activityType', filter: 'text', headerName: 'Activity Type', resizable: true, sortable: true },
-              {
-                checkboxSelection: true,
-                field: 'ruleId',
-                filter: 'number',
-                headerCheckboxSelection: true,
-                headerCheckboxSelectionFilteredOnly: true,
-                headerName: 'Expansion Rule',
-                resizable: true,
-                sortable: true,
-                valueFormatter: ({ value }) => {
-                  return `Rule ${value}`;
-                },
-              },
+              { field: 'name', filter: 'text', headerName: 'Activity Type', resizable: true, sortable: true },
+              expansionSetRuleSelectionColumnDef,
             ]}
-            items={flattendExpansionRules}
-            selectedItemId={lastSelectedExpansionId}
-            showContextMenu={false}
+            rowData={activityTypesExpansionRules.filter(activityType => activityType.expansion_rules.length > 0)}
+            shouldAutoGenerateId={true}
             suppressRowClickSelection={true}
-            on:rowSelected={onRowSelected}
-            on:selectionChanged={onSelectionChanged}
           />
         {/if}
       </fieldset>
