@@ -4,7 +4,6 @@
   export let activityName: string;
   export let expansionRules: ExpansionRule[];
   export let selectedExpansionRules: Record<string, number> = {};
-
   export let selectExpansionRule: (name: string, rule: ExpansionRule) => void = undefined;
 </script>
 
