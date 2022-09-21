@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Input from '../../../components/form/Input.svelte';
   import { selectedLayer, viewUpdateLayer } from '../../../stores/views';
   import CssGrid from '../../ui/CssGrid.svelte';
 
@@ -6,18 +7,18 @@
 </script>
 
 {#if lineLayer && lineLayer.chartType === 'line'}
-  <fieldset>
+  <Input>
     <label for="yAxisId">Y-Axis Id</label>
     <input class="st-input w-100" name="yAxisId" type="number" value={lineLayer.yAxisId} on:input={viewUpdateLayer} />
-  </fieldset>
+  </Input>
 
-  <CssGrid columns="33% 33% 33%">
-    <fieldset>
+  <CssGrid columns="1fr 1fr 1fr" gap="16px">
+    <Input>
       <label for="lineColor">Line Color</label>
       <input class="w-100" name="lineColor" type="color" value={lineLayer.lineColor} on:input={viewUpdateLayer} />
-    </fieldset>
+    </Input>
 
-    <fieldset>
+    <Input>
       <label for="lineWidth">Line Width</label>
       <input
         class="st-input w-100"
@@ -26,9 +27,9 @@
         value={lineLayer.lineWidth}
         on:input={viewUpdateLayer}
       />
-    </fieldset>
+    </Input>
 
-    <fieldset>
+    <Input>
       <label for="pointRadius">Point Radius</label>
       <input
         class="st-input w-100"
@@ -37,6 +38,6 @@
         value={lineLayer.pointRadius}
         on:input={viewUpdateLayer}
       />
-    </fieldset>
+    </Input>
   </CssGrid>
 {/if}
