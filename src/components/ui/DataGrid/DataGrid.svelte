@@ -174,14 +174,20 @@
         // re-throw `selectionChanged` with only the visible rows after filtering
         dispatch('selectionChanged', selectedRows);
       },
-      onRowClicked(event: RowClickedEvent<TRowData>) {
+      onRowClicked({ data, node }: RowClickedEvent<TRowData>) {
+        const isSelected = node.isSelected();
         dispatch('rowClicked', {
-          data: event.data,
-          isSelected: event.node.isSelected(),
+          data: data,
+          isSelected,
         } as DataGridRowSelection<TRowData>);
 
-        if (!suppressRowClickSelection && event.node.isSelected()) {
-          currentSelectedRowId = getRowId(event.data);
+        if (!suppressRowClickSelection && isSelected) {
+          currentSelectedRowId = getRowId(data);
+
+          dispatch('rowSelected', {
+            data: data,
+            isSelected,
+          } as DataGridRowSelection<TRowData>);
         }
       },
       onRowDoubleClicked(event: RowDoubleClickedEvent<TRowData>) {
@@ -205,11 +211,11 @@
         if (selectedRows.length === 1) {
           currentSelectedRowId = getRowId(selectedRows[0]);
         } else if (!selectedRowIds.includes(currentSelectedRowId)) {
+          // select the first displayed selected row in the table if the current selected row is deselected
           let wasCurrentSelectedRowUpdated: boolean = false;
           currentSelectedRowId = null;
-
           gridOptions?.api?.forEachNodeAfterFilterAndSort((rowNode: RowNode<TRowData>) => {
-            if (rowNode.isSelected() && !wasCurrentSelectedRowUpdated) {
+            if (!wasCurrentSelectedRowUpdated && rowNode.isSelected()) {
               currentSelectedRowId = getRowId(rowNode.data);
               wasCurrentSelectedRowUpdated = true;
 
