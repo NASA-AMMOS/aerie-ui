@@ -48,32 +48,34 @@ span.error {
 
 summary {
   color: var(--st-typography-bold-color);
+  cursor: pointer;
   font-family: var(--st-typography-bold-font-family);
   font-size: var(--st-typography-bold-font-size);
   font-weight: var(--st-typography-bold-font-weight);
   letter-spacing: var(--st-typography-bold-letter-spacing);
   line-height: var(--st-typography-bold-line-height);
+  padding: 8px 0px;
   user-select: none;
 }
 
 fieldset {
   border: 0;
-  margin: 0;
-  padding: 0.5rem;
   color: var(--st-typography-body-color);
   font-family: var(--st-typography-body-font-family);
   font-size: var(--st-typography-body-font-size);
   font-weight: var(--st-typography-body-font-weight);
   letter-spacing: var(--st-typography-body-letter-spacing);
   line-height: var(--st-typography-body-line-height);
-  padding: 16px 16px 0px;
+  margin: 0;
+  padding: 8px 16px 0px;
 }
 
-.details-content {
+.details-body {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 8px 8px 0px 32px;
+  gap: 4px;
+  margin-left: 32px;
+  margin-top: 4px;
 }
 
 .toastify {
