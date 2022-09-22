@@ -12,6 +12,7 @@
   import { getXScale, MAX_CANVAS_SIZE } from '../../utilities/timeline';
   import TimelineRow from './Row.svelte';
   import TimelineCursors from './TimelineCursors.svelte';
+  import TimelineHistogram from './TimelineHistogram.svelte';
   import Tooltip from './Tooltip.svelte';
   import TimelineXAxis from './XAxis.svelte';
 
@@ -125,6 +126,15 @@
 <svelte:window on:keydown={onKeyDown} />
 
 <div bind:this={timelineDiv} bind:clientWidth class="timeline" id={`timeline-${timelineId}`}>
+  <TimelineHistogram
+    marginLeft={timeline?.marginLeft}
+    constraintViolations={$constraintViolations}
+    viewTimeRange={$viewTimeRange}
+    {xScaleView}
+    {xScaleMax}
+    {drawWidth}
+    on:viewTimeRangeChanged={onViewTimeRangeChanged}
+  />
   <div bind:this={xAxisDiv} class="x-axis" style="height: {xAxisDrawHeight}px">
     <TimelineXAxis
       constraintViolations={$constraintViolations}

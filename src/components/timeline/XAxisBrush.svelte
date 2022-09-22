@@ -41,6 +41,7 @@
     const selection = event.selection as number[];
     const [start, end] = selection.map(scale.invert);
     const newViewTimeRange = { end: end.getTime(), start: start.getTime() };
+    console.log(newViewTimeRange);
     dispatch('viewTimeRangeChanged', newViewTimeRange);
   }
 
