@@ -165,16 +165,19 @@
 
   // Check to see if the activity has a single empty computed value
   // which is the same as having no computed attributes
-  $: if (formParametersComputedAttributes.length > 0) {
-    if (formParametersComputedAttributes.length === 1) {
+  $: if (formParametersComputedAttributes) {
+    if (formParametersComputedAttributes.length > 0) {
       if (
+        formParametersComputedAttributes.length === 1 &&
         formParametersComputedAttributes[0].schema.type === 'struct' &&
         Object.keys(formParametersComputedAttributes[0].schema.items).length === 0
       ) {
         hasComputedAttributes = false;
+      } else {
+        hasComputedAttributes = true;
       }
     } else {
-      hasComputedAttributes = true;
+      hasComputedAttributes = false;
     }
   }
 
