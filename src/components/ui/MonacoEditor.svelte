@@ -1,10 +1,10 @@
 <svelte:options accessors={true} immutable={true} />
 
 <script lang="ts">
+  import tsWorker from '@nasa-jpl/aerie-monaco-editor-customizations/out/esm/vs/language/typescript/ts.worker?worker';
   import type { editor as Editor } from 'monaco-editor/esm/vs/editor/editor.api';
   import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
   import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
-  import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
 
   export { className as class };
