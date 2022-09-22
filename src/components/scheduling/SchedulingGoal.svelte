@@ -133,4 +133,16 @@
     gap: 5px;
     justify-content: flex-end;
   }
+
+  /* Hide number input "spinners" (up and down arrows) in WebKit browsers ... */
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  /* ... and Firefox */
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
 </style>
