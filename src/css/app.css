@@ -47,13 +47,13 @@ span.error {
 }
 
 summary {
-  color: var(--st-typography-bold-color);
+  color: var(--st-typography-medium-color);
   cursor: pointer;
-  font-family: var(--st-typography-bold-font-family);
-  font-size: var(--st-typography-bold-font-size);
-  font-weight: var(--st-typography-bold-font-weight);
-  letter-spacing: var(--st-typography-bold-letter-spacing);
-  line-height: var(--st-typography-bold-line-height);
+  font-family: var(--st-typography-medium-font-family);
+  font-size: var(--st-typography-medium-font-size);
+  font-weight: var(--st-typography-medium-font-weight);
+  letter-spacing: var(--st-typography-medium-letter-spacing);
+  line-height: var(--st-typography-medium-line-height);
   padding: 8px 0px;
   user-select: none;
 }
