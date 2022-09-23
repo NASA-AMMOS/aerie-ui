@@ -166,7 +166,6 @@
     align-items: center;
     cursor: pointer;
     display: flex;
-    /* padding: 4px 0px; */
   }
 
   .series-left {
