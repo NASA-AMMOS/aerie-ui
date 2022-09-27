@@ -5,10 +5,13 @@
   import type { ScaleTime } from 'd3-scale';
   import { createEventDispatcher } from 'svelte';
   import { activityPoints } from '../../stores/activities';
+  import { getDoyTime } from '../../utilities/time';
+  import { tooltip } from '../../utilities/tooltip';
 
   export let constraintViolations: ConstraintViolation[] = [];
   export let drawWidth: number = 0;
   export let marginLeft: number = 50;
+  export let mouseOver: MouseOver;
   export let viewTimeRange: TimeRange | null = null;
   export let xScaleMax: ScaleTime<number, number> | null = null;
   export let xScaleView: ScaleTime<number, number> | null = null;
@@ -23,17 +26,30 @@
   let resizingLeft = false;
   let resizingRight = false;
   let minWidth = 10;
-  let histogramBinCount = 200;
   let activityHistValues = [];
   let activityHistMin = 0;
   let activityHistMax = 0;
   let constraintViolationValues = [];
   let constraintViolationMin = 0;
   let constraintViolationMax = 0;
+  let numBinsMax = 300;
+  let numBinsMin = 50;
+  let cursorVisible = false;
+  let cursorLeft = 0;
+  let cursorTooltip = '';
+  let timelineHovering = false;
+
+  $: if (mouseOver && mouseOver.e.offsetX >= 0 && mouseOver.e.offsetX <= drawWidth) {
+    const unixEpochTime = xScaleView.invert(mouseOver.e.offsetX).getTime();
+    cursorLeft = xScaleMax(unixEpochTime);
+    cursorVisible = true;
+  } else {
+    cursorVisible = false;
+  }
 
   $: windowMax = xScaleMax?.range()[0];
   $: windowMin = xScaleMax?.range()[1];
-  $: binTimeRange = drawWidth / (windowMax - windowMin);
+  $: numBins = Math.max(Math.min(numBinsMax, parseInt((drawWidth / 5).toString())), numBinsMin);
 
   $: if (viewTimeRange) {
     const extent = [new Date(viewTimeRange.start), new Date(viewTimeRange.end)].map(xScaleMax);
@@ -45,7 +61,7 @@
     const startTime = xScaleMax.invert(windowMax).getTime();
     const endTime = xScaleMax.invert(windowMin).getTime();
 
-    const binSize = (endTime - startTime) / histogramBinCount - 1;
+    const binSize = (endTime - startTime) / numBins - 1;
     // console.log('binSize :>> ', binSize, windowMax, windowMin);
     console.log('startTime :>> ', startTime);
     console.log('endTime :>> ', endTime);
@@ -67,9 +83,11 @@
     //   console.log(activityPoint.x, '?');
     // });
 
+    // TODO fix bins
+
     const histGenerator = bin()
       .domain([startTime, endTime]) // Set the domain to cover the entire intervall [0,1]
-      .thresholds([...Array(200)].map((item, i) => startTime + binSize * i)); // number of thresholds; this will create 19+1 bins
+      .thresholds([...Array(numBins)].map((item, i) => startTime + binSize * i)); // number of thresholds; this will create 19+1 bins
     const activityHist = histGenerator($activityPoints.map(ap => ap.x));
     console.log(activityHist);
     activityHistValues = activityHist.map(x => x.length);
@@ -79,12 +97,12 @@
     constraintViolationValues = constraintViolations.map(x => x);
     const constraintViolationsHist = histGenerator(
       constraintViolations.map(c => {
-        console.log(c.windows.map(w => w));
+        // console.log(c.windows.map(w => w));
       }),
     );
     constraintViolationMin = Math.min(...constraintViolationValues);
     constraintViolationMax = Math.max(...constraintViolationValues);
-    console.log(constraintViolationMax, constraintViolationMin);
+    // console.log(constraintViolationMax, constraintViolationMin);
 
     // // console.log(bins);
     // for (let i = 0; i < histogramBinCount; i++) {
@@ -96,7 +114,38 @@
     // });
   }
 
-  function onSelectorMouseDown() {
+  function onTimelineBackgroundMouseDown(e: MouseEvent) {
+    // Center the slider on the time
+    const offsetX = e.offsetX;
+    const unixEpochTime = xScaleMax.invert(offsetX).getTime();
+    const startDate = new Date(viewTimeRange.start).getTime();
+    const endDate = new Date(viewTimeRange.end).getTime();
+    const unixEpochTimeDuration = endDate - startDate;
+    let newStartTime = unixEpochTime - unixEpochTimeDuration / 2;
+    let newEndTime = unixEpochTime + unixEpochTimeDuration / 2;
+
+    // Ensure slider is within bounds
+    const windowStartTime = xScaleMax.invert(windowMax).getTime();
+    const windowEndTime = xScaleMax.invert(windowMin).getTime();
+    if (unixEpochTimeDuration > windowEndTime - windowStartTime) {
+      // Cover case where window could be unexpectedly large
+      newStartTime = windowStartTime;
+      newEndTime = windowEndTime;
+    } else if (newStartTime < windowStartTime) {
+      newStartTime = windowStartTime;
+      newEndTime = newStartTime + unixEpochTimeDuration;
+    } else if (newEndTime > windowEndTime) {
+      newEndTime = windowEndTime;
+      newStartTime = newEndTime - unixEpochTimeDuration;
+    }
+
+    const newViewTimeRange = { end: newEndTime, start: newStartTime };
+    dispatch('viewTimeRangeChanged', newViewTimeRange);
+  }
+
+  function onSelectorMouseDown(e: MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
     moving = true;
     resizingLeft = false;
     resizingRight = false;
@@ -121,49 +170,57 @@
   }
 
   function onMouseMove(e: MouseEvent) {
-    if (moving) {
-      const histRect = histogramContainer.getBoundingClientRect();
-      const sliderRect = timeSelectorContainer.getBoundingClientRect();
+    const histRect = histogramContainer.getBoundingClientRect();
+    const mouseWithinVerticalHistogramBounds = e.x >= histRect.x && e.x <= histRect.right;
+    const mouseWithinHorizontalHistogramBounds = e.y >= histRect.y && e.y <= histRect.bottom;
 
-      if (sliderRect.left + e.movementX < histRect.left) {
-        left = 0;
-      } else if (sliderRect.right + e.movementX > histRect.right) {
-        left = histRect.width - sliderRect.width;
-      } else {
-        left += e.movementX;
-      }
-    } else if (resizingLeft) {
-      const histRect = histogramContainer.getBoundingClientRect();
-      const sliderRect = timeSelectorContainer.getBoundingClientRect();
+    if (mouseWithinVerticalHistogramBounds && mouseWithinHorizontalHistogramBounds) {
+      timelineHovering = true;
+      cursorLeft = e.x - histRect.left;
+      cursorTooltip = getDoyTime(xScaleMax.invert(cursorLeft), false);
+    } else {
+      timelineHovering = false;
+    }
 
-      if (!(sliderRect.left + e.movementX < histRect.left)) {
-        if (sliderRect.width - e.movementX > minWidth) {
-          if (e.movementX < 0) {
-            width = sliderRect.width + Math.abs(e.movementX);
-            left -= Math.abs(e.movementX);
-          } else {
-            width = sliderRect.width - Math.abs(e.movementX);
-            left += Math.abs(e.movementX);
-          }
+    if (mouseWithinVerticalHistogramBounds) {
+      const sliderRect = timeSelectorContainer.getBoundingClientRect();
+      if (moving) {
+        if (sliderRect.left + e.movementX < histRect.left) {
+          left = 0;
+        } else if (sliderRect.right + e.movementX > histRect.right) {
+          left = histRect.width - sliderRect.width;
         } else {
-          width = sliderRect.width;
+          left += e.movementX;
         }
-      }
-    } else if (resizingRight) {
-      const histRect = histogramContainer.getBoundingClientRect();
-      const sliderRect = timeSelectorContainer.getBoundingClientRect();
-
-      if (!(sliderRect.right + e.movementX > histRect.right)) {
-        if (sliderRect.width + e.movementX >= minWidth) {
-          width = sliderRect.width + e.movementX;
-        } else {
-          width = sliderRect.width;
+      } else if (resizingLeft) {
+        if (!(sliderRect.left + e.movementX < histRect.left)) {
+          if (sliderRect.width - e.movementX > minWidth) {
+            if (e.movementX < 0) {
+              width = sliderRect.width + Math.abs(e.movementX);
+              left -= Math.abs(e.movementX);
+            } else {
+              width = sliderRect.width - Math.abs(e.movementX);
+              left += Math.abs(e.movementX);
+            }
+          } else {
+            width = sliderRect.width;
+          }
+        }
+      } else if (resizingRight) {
+        if (!(sliderRect.right + e.movementX > histRect.right)) {
+          if (sliderRect.width + e.movementX >= minWidth) {
+            width = sliderRect.width + e.movementX;
+          } else {
+            width = sliderRect.width;
+          }
         }
       }
     }
   }
 
-  function onMouseUp() {
+  function onMouseUp(e: MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
     if (moving || resizingLeft || resizingRight) {
       const unixEpochTimeMin = xScaleMax.invert(left).getTime();
       const unixEpochTimeMax = xScaleMax.invert(left + width).getTime();
@@ -185,6 +242,20 @@
   class="timeline-histogram"
   style={`margin-left: ${marginLeft}px; width: ${drawWidth}px`}
 >
+  <div on:click={onTimelineBackgroundMouseDown} class="timeline-histogram-background" />
+  <div
+    use:tooltip={{
+      content: cursorTooltip,
+      hideOnClick: false,
+      placement: 'top',
+      showOnInit: true,
+      triggerTarget: histogramContainer,
+    }}
+    class="timeline-histogram-cursor"
+    style={`left: ${cursorLeft}px;`}
+    hidden={!cursorVisible && !timelineHovering}
+  />
+
   <div class="histogram blue">
     {#each activityHistValues as bin}
       <div class="bin" style={`height: ${(bin / activityHistMax) * 100}%;`} />
@@ -196,16 +267,18 @@
     {/each} -->
   </div>
 
-  <div
-    bind:this={timeSelectorContainer}
-    on:mousedown={onSelectorMouseDown}
-    style="left: {left}px; width: {width}px;"
-    class="timeline-selector"
-    class:dragging={moving}
-  >
-    <div class:resizing={resizingLeft} on:mousedown={onHandleMouseDownLeft} class="time-selector-handle left" />
-    <div class:resizing={resizingRight} on:mousedown={onHandleMouseDownRight} class="time-selector-handle right" />
-  </div>
+  {#if drawWidth > 0}
+    <div
+      bind:this={timeSelectorContainer}
+      on:mousedown={onSelectorMouseDown}
+      style="left: {left}px; width: {width}px;"
+      class="timeline-selector"
+      class:dragging={moving}
+    >
+      <div class:resizing={resizingLeft} on:mousedown={onHandleMouseDownLeft} class="time-selector-handle left" />
+      <div class:resizing={resizingRight} on:mousedown={onHandleMouseDownRight} class="time-selector-handle right" />
+    </div>
+  {/if}
 </div>
 
 <svelte:window on:mouseup={onMouseUp} on:mousemove={onMouseMove} />
@@ -217,9 +290,28 @@
     flex-direction: row;
     flex-direction: column;
     gap: 3px;
-    height: 40px;
+    height: 39px;
     justify-content: center;
     position: relative;
+  }
+
+  .timeline-histogram-background {
+    height: 100%;
+    position: absolute;
+    width: 100%;
+    z-index: 0;
+  }
+
+  .timeline-histogram-cursor {
+    background-color: red;
+    cursor: move;
+    height: 100%;
+    left: 0;
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    width: 1px;
+    z-index: 0;
   }
 
   .timeline-selector {
@@ -256,11 +348,11 @@
   }
 
   .time-selector-handle:not(.resizing):hover {
-    background: red;
+    background: #e0e0e0;
   }
 
   .time-selector-handle.resizing {
-    background: green;
+    background: #bdbbbb;
   }
 
   .time-selector-handle.left {

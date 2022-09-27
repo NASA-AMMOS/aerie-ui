@@ -133,6 +133,7 @@
     {xScaleView}
     {xScaleMax}
     {drawWidth}
+    {mouseOver}
     on:viewTimeRangeChanged={onViewTimeRangeChanged}
   />
   <div bind:this={xAxisDiv} class="x-axis" style="height: {xAxisDrawHeight}px">
