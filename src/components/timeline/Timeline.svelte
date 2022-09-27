@@ -130,6 +130,7 @@
     marginLeft={timeline?.marginLeft}
     constraintViolations={$constraintViolations}
     viewTimeRange={$viewTimeRange}
+    {rows}
     {xScaleView}
     {xScaleMax}
     {drawWidth}

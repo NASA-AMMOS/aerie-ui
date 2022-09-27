@@ -1,7 +1,6 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { bin } from 'd3-array';
   import type { ScaleTime } from 'd3-scale';
   import { createEventDispatcher } from 'svelte';
   import { activityPoints } from '../../stores/activities';
@@ -12,6 +11,7 @@
   export let drawWidth: number = 0;
   export let marginLeft: number = 50;
   export let mouseOver: MouseOver;
+  export let rows: Row[] = [];
   export let viewTimeRange: TimeRange | null = null;
   export let xScaleMax: ScaleTime<number, number> | null = null;
   export let xScaleView: ScaleTime<number, number> | null = null;
@@ -26,10 +26,10 @@
   let resizingLeft = false;
   let resizingRight = false;
   let minWidth = 10;
-  let activityHistValues = [];
+  let activityHistValues: number[] = [];
+  let constraintHistValues: number[] = [];
   let activityHistMin = 0;
   let activityHistMax = 0;
-  let constraintViolationValues = [];
   let constraintViolationMin = 0;
   let constraintViolationMax = 0;
   let numBinsMax = 300;
@@ -38,6 +38,48 @@
   let cursorLeft = 0;
   let cursorTooltip = '';
   let timelineHovering = false;
+  let filteredActivityPoints: ActivityPoint[] = [];
+
+  $: numBins = Math.max(Math.min(numBinsMax, parseInt((drawWidth / 5).toString())), numBinsMin);
+
+  // TODO what to do when an activity falls outside of min/max range by dragging? Ex act with a long duration can extend past plan range.
+  // Or is this an issue outside of this histogram?
+
+  // Derive activities to render in activity histogram by
+  // ORing the regexp filters of all found activity rows
+  $: if (rows) {
+    filteredActivityPoints = [];
+    // Collect all activity layers
+    const activityLayers: Layer[] = [];
+    rows.forEach(row => {
+      row.layers.forEach(layer => {
+        if (layer.chartType === 'activity') {
+          activityLayers.push(layer);
+        }
+      });
+    });
+
+    // Create an aggregate RegExp using all the filters
+    let filters = [];
+    activityLayers.forEach(l => {
+      if (l.filter && l.filter.activity?.type) {
+        filters.push(l.filter.activity?.type);
+      } else {
+        // TODO chat about what to do here
+        filters.push('.*');
+      }
+    });
+    const r = new RegExp(`(${filters.join('|')})`);
+
+    // Bin filtered activities
+    for (const point of $activityPoints) {
+      // TODO test this more
+      const includeActivity = r.test(point?.label?.text);
+      if (includeActivity) {
+        filteredActivityPoints.push(point);
+      }
+    }
+  }
 
   $: if (mouseOver && mouseOver.e.offsetX >= 0 && mouseOver.e.offsetX <= drawWidth) {
     const unixEpochTime = xScaleView.invert(mouseOver.e.offsetX).getTime();
@@ -49,7 +91,6 @@
 
   $: windowMax = xScaleMax?.range()[0];
   $: windowMin = xScaleMax?.range()[1];
-  $: numBins = Math.max(Math.min(numBinsMax, parseInt((drawWidth / 5).toString())), numBinsMin);
 
   $: if (viewTimeRange) {
     const extent = [new Date(viewTimeRange.start), new Date(viewTimeRange.end)].map(xScaleMax);
@@ -57,61 +98,58 @@
     width = extent[1] - extent[0];
   }
 
-  $: if (xScaleMax) {
+  $: if (xScaleMax || $activityPoints) {
+    activityHistValues = [];
     const startTime = xScaleMax.invert(windowMax).getTime();
     const endTime = xScaleMax.invert(windowMin).getTime();
 
     const binSize = (endTime - startTime) / numBins - 1;
-    // console.log('binSize :>> ', binSize, windowMax, windowMin);
-    console.log('startTime :>> ', startTime);
-    console.log('endTime :>> ', endTime);
-    console.log('windowMin :>> ', windowMin);
-    console.log('windowMax :>> ', windowMax);
 
-    // Compute bins
-    // activityBins = [];
-    // for (let i = 0; i < histogramBinCount; i++) {
-    //   const binMin = i * binSize;
-    //   const binMax = (i + 1) * binSize;
-    //   console.log(binMin, binMax);
-    // }
+    activityHistValues = Array(numBins).fill(0);
+    filteredActivityPoints.forEach(point => {
+      const start = point.x;
 
-    // let c = 0;
-    // let binIdx = 0;
-    // $activityPoints.forEach(activityPoint => {
-    //   // if (activityPoint.x)
-    //   console.log(activityPoint.x, '?');
-    // });
+      // Figure out which start bin this is in
+      const startBin = Math.floor((start - startTime) / binSize);
+      activityHistValues[startBin]++;
 
-    // TODO fix bins
+      // Figure out which other bins this value is in
+      const x = Math.floor(point.duration / binSize);
+      for (let i = 1; i < x; i++) {
+        activityHistValues[startBin + i]++;
+      }
+    });
 
-    const histGenerator = bin()
-      .domain([startTime, endTime]) // Set the domain to cover the entire intervall [0,1]
-      .thresholds([...Array(numBins)].map((item, i) => startTime + binSize * i)); // number of thresholds; this will create 19+1 bins
-    const activityHist = histGenerator($activityPoints.map(ap => ap.x));
-    console.log(activityHist);
-    activityHistValues = activityHist.map(x => x.length);
+    // const histGenerator = bin()
+    //   .domain([startTime, endTime]) // Set the domain to cover the entire intervall [0,1]
+    //   .thresholds([...Array(numBins)].map((item, i) => startTime + binSize * i)); // number of thresholds; this will create 19+1 bins
+    // const activityHist = histGenerator(filteredActivityPoints.map(ap => ap.x));
+    // console.log('Act hist', activityHist);
+    // activityHistValues = activityHist.map(x => x.length);
     activityHistMin = Math.min(...activityHistValues);
     activityHistMax = Math.max(...activityHistValues);
 
-    constraintViolationValues = constraintViolations.map(x => x);
-    const constraintViolationsHist = histGenerator(
-      constraintViolations.map(c => {
-        // console.log(c.windows.map(w => w));
-      }),
-    );
-    constraintViolationMin = Math.min(...constraintViolationValues);
-    constraintViolationMax = Math.max(...constraintViolationValues);
-    // console.log(constraintViolationMax, constraintViolationMin);
+    constraintHistValues = Array(numBins).fill(0);
+    constraintViolations.forEach(violation => {
+      violation.windows.forEach(w => {
+        console.log(w, 'w');
+        const start = w.start;
+        const duration = w.end - w.start;
 
-    // // console.log(bins);
-    // for (let i = 0; i < histogramBinCount; i++) {
-    //   activityBins.push(Math.floor(Math.random() * (16 - 0 + 1) + 0));
-    // }
+        // Figure out which start bin this is in
+        const startBin = Math.floor((start - startTime) / binSize);
+        constraintHistValues[startBin]++;
 
-    // constraintViolationBins = activityBins.map(x => {
-    //   return Math.random() < 0.5 ? x / 2 : 0;
-    // });
+        // Figure out which other bins this value is in
+        const x = Math.floor(duration / binSize);
+        for (let i = 1; i < x; i++) {
+          constraintHistValues[startBin + i]++;
+        }
+      });
+    });
+
+    constraintViolationMin = Math.min(...constraintHistValues);
+    constraintViolationMax = Math.max(...constraintHistValues);
   }
 
   function onTimelineBackgroundMouseDown(e: MouseEvent) {
@@ -262,9 +300,9 @@
     {/each}
   </div>
   <div class="histogram red">
-    <!-- {#each constraintViolationBins as height}
-      <div class="bin" style={`height: ${height}px;`} />
-    {/each} -->
+    {#each constraintHistValues as bin}
+      <div class="bin" style={`height: ${(bin / constraintViolationMax) * 100}%;`} />
+    {/each}
   </div>
 
   {#if drawWidth > 0}
@@ -296,6 +334,7 @@
   }
 
   .timeline-histogram-background {
+    cursor: pointer;
     height: 100%;
     position: absolute;
     width: 100%;
@@ -303,7 +342,7 @@
   }
 
   .timeline-histogram-cursor {
-    background-color: red;
+    background-color: var(--st-gray-50);
     cursor: move;
     height: 100%;
     left: 0;
