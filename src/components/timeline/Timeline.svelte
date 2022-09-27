@@ -31,7 +31,7 @@
   let timeline: Timeline;
   let timelineDiv: HTMLDivElement;
   let xAxisDiv: HTMLDivElement;
-  let xAxisDrawHeight: number = 90;
+  let xAxisDrawHeight: number = 56;
 
   $: timeline = $view?.definition.plan.timelines.find(timeline => timeline.id === timelineId);
   $: rows = timeline?.rows || [];
