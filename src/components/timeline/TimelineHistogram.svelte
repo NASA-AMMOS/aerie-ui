@@ -221,12 +221,14 @@
 
       if (drawingRange) {
         drawRangeDistance += Math.abs(e.movementX);
-        if (cursorLeft - drawingPivotLeft < 0) {
-          left = cursorLeft;
-          width = Math.abs(cursorLeft - drawingPivotLeft);
-        } else {
-          left = drawingPivotLeft;
-          width = cursorLeft - drawingPivotLeft;
+        if (drawRangeDistance > 1) {
+          if (cursorLeft - drawingPivotLeft < 0) {
+            left = cursorLeft;
+            width = Math.abs(cursorLeft - drawingPivotLeft);
+          } else {
+            left = drawingPivotLeft;
+            width = cursorLeft - drawingPivotLeft;
+          }
         }
       }
     } else {
