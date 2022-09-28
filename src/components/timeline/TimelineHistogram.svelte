@@ -38,6 +38,9 @@
   let cursorLeft = 0;
   let cursorTooltip = '';
   let timelineHovering = false;
+  let drawingRange = false;
+  let drawRangeDistance = 0;
+  let drawingPivotLeft = 0;
   let filteredActivityPoints: ActivityPoint[] = [];
 
   $: numBins = Math.max(Math.min(numBinsMax, parseInt((drawWidth / 5).toString())), numBinsMin);
@@ -110,7 +113,7 @@
       const start = point.x;
 
       // Figure out which start bin this is in
-      const startBin = Math.floor((start - startTime) / binSize);
+      const startBin = Math.floor((start - startTime) / binSize) + 1;
       activityHistValues[startBin]++;
 
       // Figure out which other bins this value is in
@@ -120,24 +123,17 @@
       }
     });
 
-    // const histGenerator = bin()
-    //   .domain([startTime, endTime]) // Set the domain to cover the entire intervall [0,1]
-    //   .thresholds([...Array(numBins)].map((item, i) => startTime + binSize * i)); // number of thresholds; this will create 19+1 bins
-    // const activityHist = histGenerator(filteredActivityPoints.map(ap => ap.x));
-    // console.log('Act hist', activityHist);
-    // activityHistValues = activityHist.map(x => x.length);
     activityHistMin = Math.min(...activityHistValues);
     activityHistMax = Math.max(...activityHistValues);
 
     constraintHistValues = Array(numBins).fill(0);
     constraintViolations.forEach(violation => {
       violation.windows.forEach(w => {
-        console.log(w, 'w');
         const start = w.start;
         const duration = w.end - w.start;
 
         // Figure out which start bin this is in
-        const startBin = Math.floor((start - startTime) / binSize);
+        const startBin = Math.floor((start - startTime) / binSize) + 1;
         constraintHistValues[startBin]++;
 
         // Figure out which other bins this value is in
@@ -153,6 +149,12 @@
   }
 
   function onTimelineBackgroundMouseDown(e: MouseEvent) {
+    drawingRange = true;
+    drawRangeDistance = 0;
+    drawingPivotLeft = e.offsetX;
+  }
+
+  function onTimelineBackgroundClick(e: MouseEvent) {
     // Center the slider on the time
     const offsetX = e.offsetX;
     const unixEpochTime = xScaleMax.invert(offsetX).getTime();
@@ -216,6 +218,17 @@
       timelineHovering = true;
       cursorLeft = e.x - histRect.left;
       cursorTooltip = getDoyTime(xScaleMax.invert(cursorLeft), false);
+
+      if (drawingRange) {
+        drawRangeDistance += Math.abs(e.movementX);
+        if (cursorLeft - drawingPivotLeft < 0) {
+          left = cursorLeft;
+          width = Math.abs(cursorLeft - drawingPivotLeft);
+        } else {
+          left = drawingPivotLeft;
+          width = cursorLeft - drawingPivotLeft;
+        }
+      }
     } else {
       timelineHovering = false;
     }
@@ -259,7 +272,8 @@
   function onMouseUp(e: MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    if (moving || resizingLeft || resizingRight) {
+
+    if (moving || resizingLeft || resizingRight || drawingRange) {
       const unixEpochTimeMin = xScaleMax.invert(left).getTime();
       const unixEpochTimeMax = xScaleMax.invert(left + width).getTime();
       const doyTimeMin = new Date(unixEpochTimeMin);
@@ -272,6 +286,7 @@
     moving = false;
     resizingLeft = false;
     resizingRight = false;
+    drawingRange = false;
   }
 </script>
 
@@ -280,7 +295,11 @@
   class="timeline-histogram"
   style={`margin-left: ${marginLeft}px; width: ${drawWidth}px`}
 >
-  <div on:click={onTimelineBackgroundMouseDown} class="timeline-histogram-background" />
+  <div
+    on:click={onTimelineBackgroundClick}
+    on:mousedown={onTimelineBackgroundMouseDown}
+    class="timeline-histogram-background"
+  />
   <div
     use:tooltip={{
       content: cursorTooltip,
