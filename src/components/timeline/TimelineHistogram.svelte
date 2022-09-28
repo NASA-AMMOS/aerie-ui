@@ -8,6 +8,7 @@
   import { tooltip } from '../../utilities/tooltip';
 
   export let constraintViolations: ConstraintViolation[] = [];
+  export let drawHeight: number = 39;
   export let drawWidth: number = 0;
   export let marginLeft: number = 50;
   export let mouseOver: MouseOver;
@@ -42,6 +43,9 @@
   let drawRangeDistance = 0;
   let drawingPivotLeft = 0;
   let filteredActivityPoints: ActivityPoint[] = [];
+
+  $: histogramHeight = (drawHeight / 5) * 2;
+  $: selectorHandleHeight = (drawHeight / 1.9).toFixed();
 
   $: numBins = Math.max(Math.min(numBinsMax, parseInt((drawWidth / 5).toString())), numBinsMin);
 
@@ -295,7 +299,7 @@
 <div
   bind:this={histogramContainer}
   class="timeline-histogram"
-  style={`margin-left: ${marginLeft}px; width: ${drawWidth}px`}
+  style={`margin-left: ${marginLeft}px; width: ${drawWidth}px; height: ${drawHeight}px;`}
 >
   <div
     on:click={onTimelineBackgroundClick}
@@ -315,13 +319,16 @@
     hidden={!cursorVisible && !timelineHovering}
   />
 
-  <div class="histogram blue" style={`height: ${constraintViolations.length ? 16 : 32}px`}>
+  <div
+    class="histogram blue"
+    style={`height: ${constraintViolations.length ? histogramHeight : histogramHeight * 2}px`}
+  >
     {#each activityHistValues as bin}
       <div class="bin" style={`height: ${(bin / activityHistMax) * 100}%;`} />
     {/each}
   </div>
   {#if constraintViolations.length}
-    <div class="histogram red" style="height: 16px">
+    <div class="histogram red" style={`height: ${histogramHeight}px`}>
       {#each constraintHistValues as bin}
         <div class="bin" style={`height: ${(bin / constraintViolationMax) * 100}%;`} />
       {/each}
@@ -336,8 +343,18 @@
       class="timeline-selector"
       class:dragging={moving}
     >
-      <div class:resizing={resizingLeft} on:mousedown={onHandleMouseDownLeft} class="time-selector-handle left" />
-      <div class:resizing={resizingRight} on:mousedown={onHandleMouseDownRight} class="time-selector-handle right" />
+      <div
+        style="height: {selectorHandleHeight}px;"
+        class:resizing={resizingLeft}
+        on:mousedown={onHandleMouseDownLeft}
+        class="time-selector-handle left"
+      />
+      <div
+        style="height: {selectorHandleHeight}px;"
+        class:resizing={resizingRight}
+        on:mousedown={onHandleMouseDownRight}
+        class="time-selector-handle right"
+      />
     </div>
   {/if}
 </div>
@@ -351,9 +368,7 @@
     flex-direction: row;
     flex-direction: column;
     gap: 3px;
-    height: 39px;
     justify-content: center;
-    margin-top: 12px;
     position: relative;
   }
 
@@ -383,7 +398,7 @@
     border-radius: 4px;
     cursor: move;
     display: flex;
-    height: 39px;
+    height: 100%;
     justify-content: space-between;
     position: absolute;
     top: 0;
@@ -406,7 +421,6 @@
     border-radius: 2px;
     border-radius: 4px;
     cursor: col-resize;
-    height: 21px;
     width: 5px;
   }
 

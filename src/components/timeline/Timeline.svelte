@@ -31,13 +31,15 @@
   let timeline: Timeline;
   let timelineDiv: HTMLDivElement;
   let xAxisDiv: HTMLDivElement;
+  let timelineHistogramDiv: HTMLDivElement;
   let xAxisDrawHeight: number = 56;
+  let timelineHistogramDrawHeight: number = 40;
 
   $: timeline = $view?.definition.plan.timelines.find(timeline => timeline.id === timelineId);
   $: rows = timeline?.rows || [];
   $: timeline.gridId = gridId;
   $: drawWidth = clientWidth > 0 ? clientWidth - timeline?.marginLeft - timeline?.marginRight : 0;
-  $: setRowsMaxHeight(timelineDiv, xAxisDiv);
+  $: setRowsMaxHeight(timelineDiv, xAxisDiv, timelineHistogramDiv);
   $: xDomainMax = [new Date($maxTimeRange.start), new Date($maxTimeRange.end)];
   $: xDomainView = [new Date($viewTimeRange.start), new Date($viewTimeRange.end)];
   $: xScaleMax = getXScale(xDomainMax, drawWidth);
@@ -49,7 +51,7 @@
   });
 
   afterUpdate(() => {
-    setRowsMaxHeight(timelineDiv, xAxisDiv);
+    setRowsMaxHeight(timelineDiv, xAxisDiv, timelineHistogramDiv);
   });
 
   function handleDndConsiderRows(e: CustomEvent<DndEvent>) {
@@ -112,11 +114,15 @@
     $viewTimeRange = event.detail;
   }
 
-  async function setRowsMaxHeight(timelineDiv: HTMLDivElement, xAxisDiv: HTMLDivElement) {
+  async function setRowsMaxHeight(
+    timelineDiv: HTMLDivElement,
+    xAxisDiv: HTMLDivElement,
+    timelineHistogramDiv: HTMLDivElement,
+  ) {
     await tick();
     if (timelineDiv && xAxisDiv && timelineDiv.parentElement) {
       const { clientHeight: parentHeight } = timelineDiv.parentElement;
-      const offsetTop = xAxisDiv.clientHeight;
+      const offsetTop = xAxisDiv.clientHeight + timelineHistogramDiv.clientHeight;
       const maxHeight = parentHeight - offsetTop - cursorHeaderHeight;
       rowsMaxHeight = maxHeight;
     }
@@ -126,17 +132,20 @@
 <svelte:window on:keydown={onKeyDown} />
 
 <div bind:this={timelineDiv} bind:clientWidth class="timeline" id={`timeline-${timelineId}`}>
-  <TimelineHistogram
-    marginLeft={timeline?.marginLeft}
-    constraintViolations={$constraintViolations}
-    viewTimeRange={$viewTimeRange}
-    {rows}
-    {xScaleView}
-    {xScaleMax}
-    {drawWidth}
-    {mouseOver}
-    on:viewTimeRangeChanged={onViewTimeRangeChanged}
-  />
+  <div bind:this={timelineHistogramDiv} style="padding-top: 12px">
+    <TimelineHistogram
+      marginLeft={timeline?.marginLeft}
+      constraintViolations={$constraintViolations}
+      viewTimeRange={$viewTimeRange}
+      drawHeight={timelineHistogramDrawHeight}
+      {rows}
+      {xScaleView}
+      {xScaleMax}
+      {drawWidth}
+      {mouseOver}
+      on:viewTimeRangeChanged={onViewTimeRangeChanged}
+    />
+  </div>
   <div bind:this={xAxisDiv} class="x-axis" style="height: {xAxisDrawHeight}px">
     <TimelineXAxis
       constraintViolations={$constraintViolations}
