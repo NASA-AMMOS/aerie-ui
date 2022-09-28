@@ -294,16 +294,18 @@
     hidden={!cursorVisible && !timelineHovering}
   />
 
-  <div class="histogram blue">
+  <div class="histogram blue" style={`height: ${constraintViolations.length ? 16 : 32}px`}>
     {#each activityHistValues as bin}
       <div class="bin" style={`height: ${(bin / activityHistMax) * 100}%;`} />
     {/each}
   </div>
-  <div class="histogram red">
-    {#each constraintHistValues as bin}
-      <div class="bin" style={`height: ${(bin / constraintViolationMax) * 100}%;`} />
-    {/each}
-  </div>
+  {#if constraintViolations.length}
+    <div class="histogram red" style="height: 16px">
+      {#each constraintHistValues as bin}
+        <div class="bin" style={`height: ${(bin / constraintViolationMax) * 100}%;`} />
+      {/each}
+    </div>
+  {/if}
 
   {#if drawWidth > 0}
     <div
@@ -330,6 +332,7 @@
     gap: 3px;
     height: 39px;
     justify-content: center;
+    margin-top: 12px;
     position: relative;
   }
 
@@ -342,7 +345,7 @@
   }
 
   .timeline-histogram-cursor {
-    background-color: var(--st-gray-50);
+    background-color: var(--st-gray-80);
     cursor: move;
     height: 100%;
     left: 0;
@@ -408,7 +411,6 @@
     display: flex;
     flex-direction: row;
     gap: 1px;
-    height: 16px;
   }
 
   .histogram.red .bin {
