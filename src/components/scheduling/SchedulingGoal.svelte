@@ -21,7 +21,16 @@
   export let specificationId: number;
 
   let contextMenu: ContextMenu;
+  let schedulingGoalInput: HTMLInputElement;
   let expanded = false;
+
+  function focusInput() {
+    if (document.activeElement !== schedulingGoalInput) {
+      schedulingGoalInput.focus();
+    }
+
+    return true;
+  }
 
   function updatePriority(priority: number) {
     effects.updateSchedulingSpecGoal(goal.id, specificationId, { priority });
@@ -61,6 +70,7 @@
     <SchedulingGoalAnalysesBadge analyses={goal.analyses} {enabled} />
     <Input>
       <input
+        bind:this={schedulingGoalInput}
         bind:value={priority}
         class="st-input"
         disabled={!enabled}
@@ -71,10 +81,10 @@
         on:keydown={onKeyDown}
       />
       <div class="priority-buttons">
-        <div class="up-button" on:click={() => updatePriority(priority - 1)}>
+        <div class="up-button" on:click={() => focusInput() && updatePriority(priority - 1)}>
           <CaretUpFillIcon class="up-button-icon" />
         </div>
-        <div class="down-button" on:click={() => updatePriority(priority + 1)}>
+        <div class="down-button" on:click={() => focusInput() && updatePriority(priority + 1)}>
           <CaretDownFillIcon />
         </div>
       </div>
