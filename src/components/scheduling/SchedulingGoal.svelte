@@ -70,9 +70,9 @@
         on:change={() => updatePriority(priority)}
         on:keydown={onKeyDown}
       />
-      <div class="priority-buttons" slot="right">
+      <div class="priority-buttons">
         <div class="up-button" on:click={() => updatePriority(priority - 1)}>
-          <CaretUpFillIcon />
+          <CaretUpFillIcon class="up-button-icon" />
         </div>
         <div class="down-button" on:click={() => updatePriority(priority + 1)}>
           <CaretDownFillIcon />
@@ -168,11 +168,13 @@
   /* ... and Firefox */
   input[type='number'] {
     -moz-appearance: textfield;
+    padding-right: 32px;
   }
 
   .priority-buttons {
     align-items: center;
     display: flex;
+    margin-left: -32px;
   }
 
   .up-button,
@@ -180,11 +182,16 @@
     align-items: center;
     color: var(--st-gray-40);
     display: flex;
-    pointer-events: visibleFill;
+    pointer-events: painted;
   }
 
   .up-button:hover,
   .down-button:hover {
     color: var(--st-gray-60);
+  }
+
+  .down-button {
+    margin-left: -3px;
+    margin-right: 2px;
   }
 </style>
