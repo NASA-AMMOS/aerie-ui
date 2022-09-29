@@ -32,6 +32,10 @@
   }
 
   function onHistogramCursorTime(date: Date | undefined) {
+    if (!cursorEnabled) {
+      return;
+    }
+
     let dateWithinView = true;
     if (!xScaleView) {
       dateWithinView = false;
