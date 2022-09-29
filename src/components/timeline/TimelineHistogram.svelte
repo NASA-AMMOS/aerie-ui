@@ -229,8 +229,11 @@
 
   function onMouseMove(e: MouseEvent) {
     const histRect = histogramContainer.getBoundingClientRect();
-    const mouseWithinVerticalHistogramBounds = e.x >= histRect.x && e.x <= histRect.right;
-    const mouseWithinHorizontalHistogramBounds = e.y >= histRect.y && e.y <= histRect.bottom;
+    const mouseWithinLeftHorizontalHistogramBounds = e.x >= histRect.x;
+    const mouseWithinRightHorizontalHistogramBounds = e.x <= histRect.right;
+    const mouseWithinHorizontalHistogramBounds =
+      mouseWithinLeftHorizontalHistogramBounds && mouseWithinRightHorizontalHistogramBounds;
+    const mouseWithinVerticalHistogramBounds = e.y >= histRect.y && e.y <= histRect.bottom;
 
     // Check if mouse is within histogram position bounds
     if (mouseWithinVerticalHistogramBounds && mouseWithinHorizontalHistogramBounds) {
@@ -266,7 +269,19 @@
       dispatch('cursorTimeChange', null);
     }
 
-    if (mouseWithinVerticalHistogramBounds) {
+    // Determine whether or not left and right resize and movement should be allowed
+    let allowLeft = false;
+    let allowRight = false;
+    if (movingSlider || resizingSliderLeft || resizingSliderRight) {
+      if (mouseWithinRightHorizontalHistogramBounds && e.movementX < 0) {
+        allowLeft = true;
+      }
+      if (mouseWithinLeftHorizontalHistogramBounds && e.movementX > 0) {
+        allowRight = true;
+      }
+    }
+
+    if (allowLeft || allowRight) {
       const sliderRect = timeSelectorContainer.getBoundingClientRect();
       if (movingSlider) {
         if (sliderRect.left + e.movementX < histRect.left) {
