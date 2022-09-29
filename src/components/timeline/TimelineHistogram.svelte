@@ -29,9 +29,7 @@
   let minWidth = 10;
   let activityHistValues: number[] = [];
   let constraintHistValues: number[] = [];
-  let activityHistMin = 0;
   let activityHistMax = 0;
-  let constraintViolationMin = 0;
   let constraintViolationMax = 0;
   let numBinsMax = 300;
   let numBinsMin = 50;
@@ -131,7 +129,6 @@
       }
     });
 
-    activityHistMin = Math.min(...activityHistValues);
     activityHistMax = Math.max(...activityHistValues);
 
     // Compute constraint violations histogram
@@ -162,7 +159,6 @@
       });
     });
 
-    constraintViolationMin = Math.min(...constraintHistValues);
     constraintViolationMax = Math.max(...constraintHistValues);
   }
 

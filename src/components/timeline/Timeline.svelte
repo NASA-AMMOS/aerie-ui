@@ -159,7 +159,6 @@
       marginLeft={timeline?.marginLeft}
       verticalGuides={timeline?.verticalGuides}
       viewTimeRange={$viewTimeRange}
-      {xScaleMax}
       {xScaleView}
       {xTicksView}
       on:viewTimeRangeChanged={onViewTimeRangeChanged}
