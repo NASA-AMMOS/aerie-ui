@@ -5,6 +5,7 @@
   import PlanIcon from '@nasa-jpl/stellar/icons/plan.svg?component';
   import CaretDownFillIcon from 'bootstrap-icons/icons/caret-down-fill.svg?component';
   import CaretRightFillIcon from 'bootstrap-icons/icons/caret-right-fill.svg?component';
+  import CaretUpFillIcon from 'bootstrap-icons/icons/caret-up-fill.svg?component';
   import effects from '../../utilities/effects';
   import { tooltip } from '../../utilities/tooltip';
   import ContextMenu from '../context-menu/ContextMenu.svelte';
@@ -21,6 +22,22 @@
 
   let contextMenu: ContextMenu;
   let expanded = false;
+
+  function updatePriority(priority: number) {
+    effects.updateSchedulingSpecGoal(goal.id, specificationId, { priority });
+  }
+
+  function onKeyDown(e: KeyboardEvent) {
+    if (['ArrowUp', 'ArrowDown'].includes(e.key)) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.key === 'ArrowUp') {
+        updatePriority(priority - 1);
+      } else {
+        updatePriority(priority + 1);
+      }
+    }
+  }
 </script>
 
 <div class="scheduling-goal" on:contextmenu|preventDefault={contextMenu.show}>
@@ -50,11 +67,19 @@
         min="0"
         style:width="65px"
         type="number"
-        on:change={() => effects.updateSchedulingSpecGoal(goal.id, specificationId, { priority })}
+        on:change={() => updatePriority(priority)}
+        on:keydown={onKeyDown}
       />
+      <div class="priority-buttons" slot="right">
+        <div class="up-button" on:click={() => updatePriority(priority - 1)}>
+          <CaretUpFillIcon />
+        </div>
+        <div class="down-button" on:click={() => updatePriority(priority + 1)}>
+          <CaretDownFillIcon />
+        </div>
+      </div>
       <input
         bind:checked={enabled}
-        slot="right"
         style:cursor="pointer"
         type="checkbox"
         on:change={() => effects.updateSchedulingSpecGoal(goal.id, specificationId, { enabled })}
@@ -130,7 +155,6 @@
   .right {
     align-items: center;
     display: flex;
-    gap: 5px;
     justify-content: flex-end;
   }
 
@@ -144,5 +168,23 @@
   /* ... and Firefox */
   input[type='number'] {
     -moz-appearance: textfield;
+  }
+
+  .priority-buttons {
+    align-items: center;
+    display: flex;
+  }
+
+  .up-button,
+  .down-button {
+    align-items: center;
+    color: var(--st-gray-40);
+    display: flex;
+    pointer-events: visibleFill;
+  }
+
+  .up-button:hover,
+  .down-button:hover {
+    color: var(--st-gray-60);
   }
 </style>
