@@ -225,7 +225,7 @@
 
       if (drawingRange) {
         drawRangeDistance += Math.abs(e.movementX);
-        if (drawRangeDistance > 1) {
+        if (isDrawingRangeInProgress()) {
           if (cursorLeft - drawingPivotLeft < 0) {
             left = cursorLeft;
             width = Math.abs(cursorLeft - drawingPivotLeft);
@@ -275,11 +275,15 @@
     }
   }
 
+  function isDrawingRangeInProgress() {
+    return drawRangeDistance > 1;
+  }
+
   function onMouseUp(e: MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
 
-    if (moving || resizingLeft || resizingRight || drawingRange) {
+    if (moving || resizingLeft || resizingRight || (drawingRange && isDrawingRangeInProgress())) {
       const unixEpochTimeMin = xScaleMax.invert(left).getTime();
       const unixEpochTimeMax = xScaleMax.invert(left + width).getTime();
       const doyTimeMin = new Date(unixEpochTimeMin);

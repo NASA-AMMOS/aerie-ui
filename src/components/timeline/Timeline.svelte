@@ -114,6 +114,11 @@
     $viewTimeRange = event.detail;
   }
 
+  function onHistogramViewTimeRangeChanged(event: CustomEvent<TimeRange>) {
+    $viewTimeRange = event.detail;
+    mouseOver = null;
+  }
+
   async function setRowsMaxHeight(
     timelineDiv: HTMLDivElement,
     xAxisDiv: HTMLDivElement,
@@ -143,7 +148,7 @@
       {xScaleMax}
       {drawWidth}
       {mouseOver}
-      on:viewTimeRangeChanged={onViewTimeRangeChanged}
+      on:viewTimeRangeChanged={onHistogramViewTimeRangeChanged}
     />
   </div>
   <div bind:this={xAxisDiv} class="x-axis" style="height: {xAxisDrawHeight}px">

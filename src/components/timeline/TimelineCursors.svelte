@@ -11,6 +11,9 @@
 
   $: onCursorEnableChange(cursorEnabled);
   $: onMouseOver(mouseOver);
+  $: if (xScaleView) {
+    hideCursor();
+  }
 
   let cursorDiv: HTMLElement = null;
   let cursorLabelDiv: HTMLElement = null;
@@ -21,6 +24,8 @@
     if (event && xScaleView && cursorDiv && cursorLabelDiv) {
       offsetX = event.e.offsetX;
       updateCursor();
+    } else {
+      hideCursor();
     }
   }
 
