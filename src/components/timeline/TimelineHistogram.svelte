@@ -23,9 +23,9 @@
   let timeSelectorContainer: HTMLDivElement;
   let left = 0;
   let width = 0;
-  let moving = false;
-  let resizingLeft = false;
-  let resizingRight = false;
+  let movingSlider = false;
+  let resizingSliderLeft = false;
+  let resizingSliderRight = false;
   let minWidth = 10;
   let activityHistValues: number[] = [];
   let constraintHistValues: number[] = [];
@@ -48,9 +48,6 @@
   $: selectorHandleHeight = (drawHeight / 1.9).toFixed();
 
   $: numBins = Math.max(Math.min(numBinsMax, parseInt((drawWidth / 5).toString())), numBinsMin);
-
-  // TODO what to do when an activity falls outside of min/max range by dragging? Ex act with a long duration can extend past plan range.
-  // Or is this an issue outside of this histogram?
 
   // Derive activities to render in activity histogram by
   // ORing the regexp filters of all found activity rows
@@ -105,22 +102,23 @@
     width = extent[1] - extent[0];
   }
 
-  $: if (xScaleMax || $activityPoints) {
+  // Update histograms if xScaleMax, activities, or constraint violation changes
+  $: if (xScaleMax || filteredActivityPoints || constraintViolations) {
     activityHistValues = [];
-    const startTime = xScaleMax.invert(windowMax).getTime();
-    const endTime = xScaleMax.invert(windowMin).getTime();
+    const windowStartTime = xScaleMax.invert(windowMax).getTime();
+    const windowEndTime = xScaleMax.invert(windowMin).getTime();
+    const binSize = (windowEndTime - windowStartTime) / numBins - 1;
 
-    const binSize = (endTime - startTime) / numBins - 1;
-
+    // Compute activity histogram
     activityHistValues = Array(numBins).fill(0);
     filteredActivityPoints.forEach(point => {
       // Filter out points that do not fall within the plan bounds at all
-      if (point.x > endTime || point.x + point.duration < startTime) {
+      if (point.x > windowEndTime || point.x + point.duration < windowStartTime) {
         return;
       }
 
       // Figure out which start bin this is in
-      const startBin = Math.floor((point.x - startTime) / binSize);
+      const startBin = Math.floor((point.x - windowStartTime) / binSize);
       activityHistValues[startBin]++;
 
       // Figure out which other bins this value is in
@@ -136,6 +134,7 @@
     activityHistMin = Math.min(...activityHistValues);
     activityHistMax = Math.max(...activityHistValues);
 
+    // Compute constraint violations histogram
     constraintHistValues = Array(numBins).fill(0);
     constraintViolations.forEach(violation => {
       violation.windows.forEach(w => {
@@ -143,12 +142,12 @@
         const duration = w.end - w.start;
 
         // Filter out points that do not fall within the plan bounds at all
-        if (start > endTime || start + duration < startTime) {
+        if (start > windowEndTime || start + duration < windowStartTime) {
           return;
         }
 
         // Figure out which start bin this is in
-        const startBin = Math.floor((start - startTime) / binSize);
+        const startBin = Math.floor((start - windowStartTime) / binSize);
         constraintHistValues[startBin]++;
 
         // Figure out which other bins this value is in
@@ -180,6 +179,8 @@
     const startDate = new Date(viewTimeRange.start).getTime();
     const endDate = new Date(viewTimeRange.end).getTime();
     const unixEpochTimeDuration = endDate - startDate;
+
+    // Center slider on user's mouse position
     let newStartTime = unixEpochTime - unixEpochTimeDuration / 2;
     let newEndTime = unixEpochTime + unixEpochTimeDuration / 2;
 
@@ -187,13 +188,15 @@
     const windowStartTime = xScaleMax.invert(windowMax).getTime();
     const windowEndTime = xScaleMax.invert(windowMin).getTime();
     if (unixEpochTimeDuration > windowEndTime - windowStartTime) {
-      // Cover case where window could be unexpectedly large
+      // Cover case where duration could be unexpectedly large
       newStartTime = windowStartTime;
       newEndTime = windowEndTime;
     } else if (newStartTime < windowStartTime) {
+      // Case where slider comes before entire window time range
       newStartTime = windowStartTime;
       newEndTime = newStartTime + unixEpochTimeDuration;
     } else if (newEndTime > windowEndTime) {
+      // Case where slider comes after entire window time range
       newEndTime = windowEndTime;
       newStartTime = newEndTime - unixEpochTimeDuration;
     }
@@ -205,27 +208,27 @@
   function onSelectorMouseDown(e: MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    moving = true;
-    resizingLeft = false;
-    resizingRight = false;
+    movingSlider = true;
+    resizingSliderLeft = false;
+    resizingSliderRight = false;
   }
 
   function onHandleMouseDownLeft(e: MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
 
-    resizingLeft = true;
-    resizingRight = false;
-    moving = false;
+    resizingSliderLeft = true;
+    resizingSliderRight = false;
+    movingSlider = false;
   }
 
   function onHandleMouseDownRight(e: MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
 
-    resizingLeft = false;
-    resizingRight = true;
-    moving = false;
+    resizingSliderLeft = false;
+    resizingSliderRight = true;
+    movingSlider = false;
   }
 
   function onMouseMove(e: MouseEvent) {
@@ -233,6 +236,7 @@
     const mouseWithinVerticalHistogramBounds = e.x >= histRect.x && e.x <= histRect.right;
     const mouseWithinHorizontalHistogramBounds = e.y >= histRect.y && e.y <= histRect.bottom;
 
+    // Check if mouse is within histogram position bounds
     if (mouseWithinVerticalHistogramBounds && mouseWithinHorizontalHistogramBounds) {
       timelineHovering = true;
       cursorLeft = e.x - histRect.left;
@@ -240,7 +244,10 @@
 
       if (drawingRange) {
         drawRangeDistance += Math.abs(e.movementX);
+        // Ensure user has drawn at least a pixel to differentiate between
+        // ranges ranges and centering the slider on click
         if (isDrawingRangeInProgress()) {
+          // Determine new slider position, allow user to move left or right of the pivot point
           if (cursorLeft - drawingPivotLeft < 0) {
             left = cursorLeft;
             width = Math.abs(cursorLeft - drawingPivotLeft);
@@ -256,7 +263,7 @@
 
     if (mouseWithinVerticalHistogramBounds) {
       const sliderRect = timeSelectorContainer.getBoundingClientRect();
-      if (moving) {
+      if (movingSlider) {
         if (sliderRect.left + e.movementX < histRect.left) {
           left = 0;
         } else if (sliderRect.right + e.movementX > histRect.right) {
@@ -264,7 +271,7 @@
         } else {
           left += e.movementX;
         }
-      } else if (resizingLeft) {
+      } else if (resizingSliderLeft) {
         if (!(sliderRect.left + e.movementX < histRect.left)) {
           if (sliderRect.width - e.movementX > minWidth) {
             if (e.movementX < 0) {
@@ -278,7 +285,7 @@
             width = sliderRect.width;
           }
         }
-      } else if (resizingRight) {
+      } else if (resizingSliderRight) {
         if (!(sliderRect.right + e.movementX > histRect.right)) {
           if (sliderRect.width + e.movementX >= minWidth) {
             width = sliderRect.width + e.movementX;
@@ -298,7 +305,7 @@
     e.preventDefault();
     e.stopPropagation();
 
-    if (moving || resizingLeft || resizingRight || (drawingRange && isDrawingRangeInProgress())) {
+    if (movingSlider || resizingSliderLeft || resizingSliderRight || (drawingRange && isDrawingRangeInProgress())) {
       const unixEpochTimeMin = xScaleMax.invert(left).getTime();
       const unixEpochTimeMax = xScaleMax.invert(left + width).getTime();
       const doyTimeMin = new Date(unixEpochTimeMin);
@@ -308,9 +315,9 @@
       dispatch('viewTimeRangeChanged', newViewTimeRange);
     }
 
-    moving = false;
-    resizingLeft = false;
-    resizingRight = false;
+    movingSlider = false;
+    resizingSliderLeft = false;
+    resizingSliderRight = false;
     drawingRange = false;
   }
 </script>
@@ -360,17 +367,17 @@
       on:mousedown={onSelectorMouseDown}
       style="left: {left}px; width: {width}px;"
       class="timeline-selector"
-      class:dragging={moving}
+      class:dragging={movingSlider}
     >
       <div
         style="height: {selectorHandleHeight}px;"
-        class:resizing={resizingLeft}
+        class:resizing={resizingSliderLeft}
         on:mousedown={onHandleMouseDownLeft}
         class="time-selector-handle left"
       />
       <div
         style="height: {selectorHandleHeight}px;"
-        class:resizing={resizingRight}
+        class:resizing={resizingSliderRight}
         on:mousedown={onHandleMouseDownRight}
         class="time-selector-handle right"
       />
