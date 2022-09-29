@@ -234,10 +234,18 @@
 
     // Check if mouse is within histogram position bounds
     if (mouseWithinVerticalHistogramBounds && mouseWithinHorizontalHistogramBounds) {
+      // Update hover cursor
       timelineHovering = true;
       cursorLeft = e.x - histRect.left;
-      cursorTooltip = getDoyTime(xScaleMax.invert(cursorLeft), false);
+      const cursorTime = xScaleMax.invert(cursorLeft);
+      cursorTooltip = getDoyTime(cursorTime, false);
 
+      // Only dispatch a cursor change if we're just hovering
+      if (!movingSlider && !drawingRange && !resizingSliderLeft && !resizingSliderRight) {
+        dispatch('cursorTimeChange', cursorTime);
+      }
+
+      // Handle time range drawing
       if (drawingRange) {
         drawRangeDistance += Math.abs(e.movementX);
         // Ensure user has drawn at least a pixel to differentiate between
@@ -255,6 +263,7 @@
       }
     } else {
       timelineHovering = false;
+      dispatch('cursorTimeChange', null);
     }
 
     if (mouseWithinVerticalHistogramBounds) {

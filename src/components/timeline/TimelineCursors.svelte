@@ -7,10 +7,12 @@
   export let drawWidth: number = 0;
   export let marginLeft: number = 50;
   export let mouseOver: MouseOver;
+  export let histogramCursorTime: Date | null = null;
   export let xScaleView: ScaleTime<number, number> | null = null;
 
   $: onCursorEnableChange(cursorEnabled);
   $: onMouseOver(mouseOver);
+  $: onHistogramCursorTime(histogramCursorTime);
   $: if (xScaleView) {
     hideCursor();
   }
@@ -29,6 +31,26 @@
     }
   }
 
+  function onHistogramCursorTime(date: Date | undefined) {
+    let dateWithinView = true;
+    if (!xScaleView) {
+      dateWithinView = false;
+    }
+
+    const viewStart = xScaleView.domain()[0];
+    const viewEnd = xScaleView.domain()[1];
+
+    if (date < viewStart || date > viewEnd) {
+      dateWithinView = false;
+    }
+
+    if (dateWithinView) {
+      updateCursor();
+    } else {
+      hideCursor();
+    }
+  }
+
   function onCursorEnableChange(cursorEnabled: boolean) {
     if (cursorEnabled) {
       updateCursor();
@@ -38,21 +60,31 @@
   }
 
   function updateCursor() {
-    if (cursorEnabled && offsetX >= 0 && offsetX <= drawWidth) {
-      const unixEpochTime = xScaleView.invert(offsetX).getTime();
-      const doyTime = getDoyTime(new Date(unixEpochTime));
+    if ((cursorEnabled && offsetX >= 0 && offsetX <= drawWidth) || histogramCursorTime) {
+      let unixEpochTime = 0;
+      let doyTime = '';
+      let x = 0;
+      if (histogramCursorTime) {
+        unixEpochTime = histogramCursorTime.getTime();
+        doyTime = getDoyTime(new Date(unixEpochTime));
+        x = xScaleView(unixEpochTime);
+      } else {
+        unixEpochTime = xScaleView.invert(offsetX).getTime();
+        doyTime = getDoyTime(new Date(unixEpochTime));
+        x = offsetX;
+      }
 
       cancelAnimationFrame(raf);
       raf = window.requestAnimationFrame(() => {
         cursorLabelDiv.textContent = doyTime;
         const cursorLabelWidth = cursorLabelDiv.getBoundingClientRect().width;
-        if (offsetX + cursorLabelWidth + 10 > drawWidth) {
+        if (x + cursorLabelWidth + 10 > drawWidth) {
           cursorLabelDiv.style.transform = 'translateX(calc(-100% - 10px))';
         } else {
           cursorLabelDiv.style.transform = 'translateX(10px)';
         }
         cursorDiv.style.opacity = '1.0';
-        cursorDiv.style.transform = `translateX(${offsetX + marginLeft - 1}px)`;
+        cursorDiv.style.transform = `translateX(${x + marginLeft - 1}px)`;
       });
     } else {
       hideCursor();

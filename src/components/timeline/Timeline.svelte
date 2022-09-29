@@ -23,6 +23,7 @@
   let cursorEnabled: boolean = true;
   let cursorHeaderHeight: number = 20;
   let mouseOver: MouseOver;
+  let histogramCursorTime: Date | null = null;
   let mouseOverViolations: MouseOverViolations;
   let rowDragMoveDisabled = true;
   let rowsMaxHeight: number = 600;
@@ -119,6 +120,10 @@
     mouseOver = null;
   }
 
+  function onHistogramCursorTimeChanged(event: CustomEvent<Date>) {
+    histogramCursorTime = event.detail;
+  }
+
   async function setRowsMaxHeight(
     timelineDiv: HTMLDivElement,
     xAxisDiv: HTMLDivElement,
@@ -149,6 +154,7 @@
       {drawWidth}
       {mouseOver}
       on:viewTimeRangeChanged={onHistogramViewTimeRangeChanged}
+      on:cursorTimeChange={onHistogramCursorTimeChanged}
     />
   </div>
   <div bind:this={xAxisDiv} class="x-axis" style="height: {xAxisDrawHeight}px">
@@ -166,6 +172,7 @@
   </div>
   <TimelineCursors
     {mouseOver}
+    {histogramCursorTime}
     {xScaleView}
     {drawWidth}
     {cursorHeaderHeight}
