@@ -37,15 +37,25 @@ export function activityToPoint(
         }, [])
     : [];
 
+  let activityLabelText = activity.name;
+
+  if (activity.parent_id !== null) {
+    activityLabelText = activity.type;
+  }
+
+  if (activity.unfinished) {
+    activityLabelText = `${activityLabelText} (Unfinished)`;
+  }
+
   const point: ActivityPoint = {
     children,
     duration: getDurationInMs(activity.duration),
     id: activity.id,
     label: {
       color: activity.unfinished ? '#ff7760' : null,
-      text: activity.unfinished ? `${activity.type} (Unfinished)` : activity.type,
+      text: activityLabelText,
     },
-    name: `${activity.id}`,
+    name: activity.name,
     parent_id: activity.parent_id,
     selected: selectedActivityId === activity.id,
     type: 'activity',

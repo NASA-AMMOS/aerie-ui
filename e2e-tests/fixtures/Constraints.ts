@@ -90,8 +90,8 @@ export class Constraints {
   }
 
   async goto() {
-    await this.page.goto('/plans', { waitUntil: 'networkidle' });
     await this.page.goto('/constraints', { waitUntil: 'networkidle' });
+    await this.page.waitForTimeout(250);
   }
 
   async selectModel() {

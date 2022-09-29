@@ -14,6 +14,7 @@ const gql = {
     mutation CreateActivityDirective($activityDirectiveInsertInput: activity_directive_insert_input!) {
       createActivityDirective: insert_activity_directive_one(object: $activityDirectiveInsertInput) {
         id
+        name
       }
     }
   `,
@@ -535,6 +536,12 @@ const gql = {
     }
   `,
 
+  GET_USER_SEQUENCE_FROM_SEQ_JSON: `#graphql
+    query GetUserSequenceFromSeqJson($seqJson: SequenceSeqJsonInput!) {
+      sequence: getEdslForSeqJson(seqJson: $seqJson)
+    }
+  `,
+
   GET_USER_SEQUENCE_SEQ_JSON: `#graphql
     query GetUserSequenceSeqJson($commandDictionaryId: Int!, $sequenceDefinition: String!) {
       seqJson: getUserSequenceSeqJson(commandDictionaryID: $commandDictionaryId, edslBody: $sequenceDefinition) {
@@ -872,7 +879,7 @@ const gql = {
   SUB_SIMULATION_DATASETS: `#graphql
     subscription SubSimulationDatasets($planId: Int!, $simulationDatasetId: Int!) {
       simulation(where: { plan_id: { _eq: $planId } }, order_by: { id: desc }, limit: 1) {
-        simulation_datasets(where: { dataset_id: { _eq: $simulationDatasetId } }, limit: 1) {
+        simulation_datasets(where: { id: { _eq: $simulationDatasetId } }, limit: 1) {
           dataset {
             profiles {
               name

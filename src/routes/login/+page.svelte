@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { goto } from '$app/navigation';
+  import { goto, invalidateAll } from '$app/navigation';
   import { base } from '$app/paths';
   import { onMount } from 'svelte';
   import AlertError from '../../components/ui/AlertError.svelte';
@@ -35,7 +35,8 @@
 
       if (success) {
         $userStore = user;
-        goto(`${base}/plans`);
+        await invalidateAll();
+        await goto(`${base}/plans`);
       } else {
         console.log(message);
         error = message;
@@ -50,8 +51,8 @@
 </script>
 
 <div class="container">
-  <form on:submit|preventDefault={login} class="p-3">
-    <div class="title">Log in to Aerie</div>
+  <form on:submit|preventDefault={login} class="form">
+    <div class="title st-typography-displayBody">Log in to Aerie</div>
 
     <AlertError class="m-2" {error} />
 
@@ -99,7 +100,13 @@
   .title {
     align-items: center;
     display: flex;
-    font-size: 1rem;
     justify-content: center;
+  }
+
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px 8px;
   }
 </style>

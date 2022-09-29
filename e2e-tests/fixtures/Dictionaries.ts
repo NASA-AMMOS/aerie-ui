@@ -69,8 +69,8 @@ export class Dictionaries {
   }
 
   async goto() {
-    await this.page.goto('/plans', { waitUntil: 'networkidle' });
     await this.page.goto('/dictionaries', { waitUntil: 'networkidle' });
+    await this.page.waitForTimeout(250);
   }
 
   updatePage(page: Page): void {

@@ -22,6 +22,7 @@
   export let mode: 'create' | 'edit' = 'create';
 
   let savedSequenceDefinition: string = mode === 'create' ? '' : initialSequenceDefinition;
+  let seqJsonFiles: FileList;
   let sequenceCreatedAt: string | null = initialSequenceCreatedAt;
   let sequenceDefinition: string = initialSequenceDefinition;
   let sequenceCommandDictionaryId: number | null = initialSequenceCommandDictionaryId;
@@ -42,6 +43,15 @@
       getUserSequenceSeqJson();
     }
   });
+
+  async function getUserSequenceFromSeqJson() {
+    const file: File = seqJsonFiles[0];
+    const text = await file.text();
+    const seqJson = JSON.parse(text);
+    const sequence = await effects.getUserSequenceFromSeqJson(seqJson);
+    sequenceDefinition = sequence;
+    sequenceSeqJson = text;
+  }
 
   async function getUserSequenceSeqJson(): Promise<void> {
     sequenceSeqJson = 'Generating Seq JSON...';
@@ -98,7 +108,7 @@
 <svelte:window on:keydown={onKeydown} />
 
 <CssGrid bind:columns={$userSequencesColumns}>
-  <Panel overflowYBody="hidden">
+  <Panel overflowYBody="hidden" padBody={false}>
     <svelte:fragment slot="header">
       <Chip>{mode === 'create' ? 'New Sequence' : 'Edit Sequence'}</Chip>
 
@@ -152,6 +162,17 @@
           name="sequenceName"
           placeholder="Enter Sequence Name"
           required
+        />
+      </fieldset>
+
+      <fieldset>
+        <label for="seqJsonFile">Create Sequence from Seq JSON (optional)</label>
+        <input
+          bind:files={seqJsonFiles}
+          class="w-100"
+          name="seqJsonFile"
+          type="file"
+          on:change={getUserSequenceFromSeqJson}
         />
       </fieldset>
     </svelte:fragment>

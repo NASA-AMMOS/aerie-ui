@@ -1,31 +1,33 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import { Models } from '../fixtures/Models.js';
 import { Plans } from '../fixtures/Plans.js';
 
+let context: BrowserContext;
 let models: Models;
 let page: Page;
 let plans: Plans;
 
 test.beforeAll(async ({ browser }) => {
-  page = await browser.newPage();
+  context = await browser.newContext();
+  page = await context.newPage();
 
   models = new Models(page);
   plans = new Plans(page, models);
 
   await models.goto();
   await models.createModel();
-  await plans.goto();
 });
 
 test.afterAll(async () => {
   await models.goto();
   await models.deleteModel();
   await page.close();
+  await context.close();
 });
 
 test.describe.serial('Plans', () => {
   test.beforeEach(async () => {
-    await page.reload({ waitUntil: 'networkidle' });
+    await plans.goto();
   });
 
   test('Create plan button should be disabled with no errors', async () => {
@@ -60,16 +62,14 @@ test.describe.serial('Plans', () => {
 
   test('Entering an invalid start time should display an error, and the create button should be disabled', async () => {
     await plans.inputStartTime.fill('2022-');
-    await plans.inputStartTime.evaluate(e => e.dispatchEvent(new Event('change')));
-    await plans.inputStartTime.evaluate(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })));
+    await page.keyboard.press('Tab');
     await expect(plans.inputStartTime).toHaveClass(/error/);
     await expect(plans.createButton).toBeDisabled();
   });
 
   test('Entering an invalid end time should display an error, and the create button should be disabled', async () => {
     await plans.inputEndTime.fill('2022-');
-    await plans.inputEndTime.evaluate(e => e.dispatchEvent(new Event('change')));
-    await plans.inputEndTime.evaluate(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })));
+    await page.keyboard.press('Tab');
     await expect(plans.inputEndTime).toHaveClass(/error/);
     await expect(plans.createButton).toBeDisabled();
   });
@@ -82,8 +82,7 @@ test.describe.serial('Plans', () => {
 
   test('Entering an invalid start time should display "None" in the duration text', async () => {
     await plans.inputStartTime.fill('2022-');
-    await plans.inputStartTime.evaluate(e => e.dispatchEvent(new Event('change')));
-    await plans.inputStartTime.evaluate(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })));
+    await page.keyboard.press('Tab');
     await plans.fillInputEndTime();
     await expect(plans.durationDisplay).toHaveValue('None');
   });
@@ -91,8 +90,7 @@ test.describe.serial('Plans', () => {
   test('Entering an invalid end time should display "None" in the duration text', async () => {
     await plans.fillInputStartTime();
     await plans.inputEndTime.fill('2022-');
-    await plans.inputEndTime.evaluate(e => e.dispatchEvent(new Event('change')));
-    await plans.inputEndTime.evaluate(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })));
+    await page.keyboard.press('Tab');
     await expect(plans.durationDisplay).toHaveValue('None');
   });
 
