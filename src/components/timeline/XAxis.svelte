@@ -11,7 +11,6 @@
   export let marginLeft: number = 50;
   export let verticalGuides: VerticalGuide[] = [];
   export let viewTimeRange: TimeRange | null = null;
-  export let xScaleMax: ScaleTime<number, number> | null = null;
   export let xScaleView: ScaleTime<number, number> | null = null;
   export let xTicksView: XAxisTick[] = [];
 
@@ -20,7 +19,7 @@
   let verticalGuidesOffset = 32;
 </script>
 
-<svg style="height: {drawHeight}px">
+<svg style="height: {drawHeight}px;">
   <g transform="translate({marginLeft}, 0)">
     <g transform="translate(0, {violationsOffset})">
       <ConstraintViolations

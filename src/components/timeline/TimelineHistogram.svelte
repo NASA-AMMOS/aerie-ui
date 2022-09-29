@@ -114,15 +114,21 @@
 
     activityHistValues = Array(numBins).fill(0);
     filteredActivityPoints.forEach(point => {
-      const start = point.x;
+      // Filter out points that do not fall within the plan bounds at all
+      if (point.x > endTime || point.x + point.duration < startTime) {
+        return;
+      }
 
       // Figure out which start bin this is in
-      const startBin = Math.floor((start - startTime) / binSize) + 1;
+      const startBin = Math.floor((point.x - startTime) / binSize);
       activityHistValues[startBin]++;
 
       // Figure out which other bins this value is in
-      const x = Math.floor(point.duration / binSize);
+      const x = Math.floor(point.duration / binSize) + 1;
       for (let i = 1; i < x; i++) {
+        if (startBin + i >= activityHistValues.length) {
+          return;
+        }
         activityHistValues[startBin + i]++;
       }
     });
@@ -136,13 +142,22 @@
         const start = w.start;
         const duration = w.end - w.start;
 
+        // Filter out points that do not fall within the plan bounds at all
+        if (start > endTime || start + duration < startTime) {
+          return;
+        }
+
         // Figure out which start bin this is in
-        const startBin = Math.floor((start - startTime) / binSize) + 1;
+        const startBin = Math.floor((start - startTime) / binSize);
         constraintHistValues[startBin]++;
 
         // Figure out which other bins this value is in
-        const x = Math.floor(duration / binSize);
+        const x = Math.floor(duration / binSize) + 1;
         for (let i = 1; i < x; i++) {
+          if (startBin + i >= constraintHistValues.length) {
+            return;
+          }
+
           constraintHistValues[startBin + i]++;
         }
       });

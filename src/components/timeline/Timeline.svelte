@@ -232,4 +232,8 @@
     overflow-y: hidden;
     width: 100%;
   }
+
+  .x-axis {
+    pointer-events: none;
+  }
 </style>
