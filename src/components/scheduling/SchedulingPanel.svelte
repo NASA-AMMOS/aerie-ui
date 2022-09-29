@@ -16,9 +16,9 @@
 
   export let gridId: number;
 
+  let activeElement: HTMLElement;
   let filterText: string = '';
   let filteredSchedulingSpecGoals: SchedulingSpecGoal[] = [];
-  let activeElement: HTMLElement;
 
   $: filteredSchedulingSpecGoals = $schedulingSpecGoals.filter(spec => {
     const filterTextLowerCase = filterText.toLowerCase();

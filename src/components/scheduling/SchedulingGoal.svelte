@@ -21,8 +21,8 @@
   export let specificationId: number;
 
   let contextMenu: ContextMenu;
-  let schedulingGoalInput: HTMLInputElement;
   let expanded = false;
+  let schedulingGoalInput: HTMLInputElement;
 
   function focusInput() {
     if (document.activeElement !== schedulingGoalInput) {
