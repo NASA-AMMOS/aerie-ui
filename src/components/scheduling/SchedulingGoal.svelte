@@ -20,6 +20,8 @@
   export let priority: number;
   export let specificationId: number;
 
+  $: upButtonClass = priority <= 0 ? 'hidden' : '';
+
   let contextMenu: ContextMenu;
   let expanded = false;
   let schedulingGoalInput: HTMLInputElement;
@@ -41,7 +43,9 @@
       e.preventDefault();
       e.stopPropagation();
       if (e.key === 'ArrowUp') {
-        updatePriority(priority - 1);
+        if (priority > 0) {
+          updatePriority(priority - 1);
+        }
       } else {
         updatePriority(priority + 1);
       }
@@ -81,8 +85,8 @@
         on:keydown={onKeyDown}
       />
       <div class="priority-buttons">
-        <div class="up-button" on:click={() => focusInput() && updatePriority(priority - 1)}>
-          <CaretUpFillIcon class="up-button-icon" />
+        <div class="up-button {upButtonClass}" on:click={() => focusInput() && updatePriority(priority - 1)}>
+          <CaretUpFillIcon />
         </div>
         <div class="down-button" on:click={() => focusInput() && updatePriority(priority + 1)}>
           <CaretDownFillIcon />
@@ -191,6 +195,7 @@
   .down-button {
     align-items: center;
     color: var(--st-gray-40);
+    cursor: pointer;
     display: flex;
     pointer-events: painted;
   }
@@ -203,5 +208,10 @@
   .down-button {
     margin-left: -3px;
     margin-right: 2px;
+  }
+
+  .hidden {
+    opacity: 0;
+    pointer-events: none;
   }
 </style>
