@@ -174,7 +174,8 @@
     on:changeRowSizes={changeRowSizes}
   />
   <Console>
-    <svelte:fragment slot="tab-list">
+    <svelte:fragment slot="console-tabs">
+      <ConsoleTab title="all" icon="test" /> |
       <ConsoleTab title="test1" icon="test" />
       <ConsoleTab title="test2" icon="test" />
     </svelte:fragment>

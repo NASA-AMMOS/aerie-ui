@@ -8,7 +8,7 @@
 </script>
 
 <TabPanel>
-  <summary>{title} ({errors.length})</summary>
+  <div class="console-header">{title} ({errors.length})</div>
   <div class="errors">
     {#each errors as error}
       <details>
@@ -20,3 +20,9 @@
     {/each}
   </div>
 </TabPanel>
+
+<style>
+  .console-header {
+    text-transform: uppercase;
+  }
+</style>

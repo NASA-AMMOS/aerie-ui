@@ -1,38 +1,41 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { createEventDispatcher, getContext } from 'svelte';
+  import { getContext } from 'svelte';
   import { TabContextKey } from './Tabs.svelte';
 
+  export { className as class };
   export let tabId: TabId = {};
 
   const { registerTab, selectTab, selectedTab } = getContext<TabContext>(TabContextKey);
-  const dispatch = createEventDispatcher();
+
+  let className: string = '';
 
   function onSelectTab() {
     selectTab(tabId);
-    dispatch('select-tab', tabId);
   }
 
   registerTab(tabId);
 </script>
 
-<button class:selected={$selectedTab === tabId} on:click={onSelectTab}>
+<button class={className} class:selected={$selectedTab === tabId} on:click={onSelectTab}>
   <slot />
 </button>
 
 <style>
   button {
-    background: none;
+    background-color: var(--tab-background-color, var(--st-primary-inverse-background-color));
     border: none;
-    border-bottom: 2px solid white;
-    border-radius: 0;
-    color: #ccc;
+    color: var(--tab-text-color, var(--st-gray-60));
+    cursor: pointer;
+    height: var(--tab-height, 36px);
+    line-height: 1rem;
     margin: 0;
+    padding: 10px 20px;
   }
 
-  .selected {
-    border-bottom: 2px solid teal;
-    color: #333;
+  button.selected {
+    background-color: var(--tab-selected-background-color, var(--st-gray-20));
+    color: var(--tab-selected-text-color, var(--st-gray-60));
   }
 </style>

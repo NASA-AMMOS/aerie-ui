@@ -9,6 +9,7 @@
 <script lang="ts">
   import { createEventDispatcher, onDestroy, setContext } from 'svelte';
   import { writable } from 'svelte/store';
+  import TabList from './TabList.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -56,5 +57,19 @@
 </script>
 
 <div class="tabs">
-  <slot />
+  <TabList>
+    <slot name="tab-list" />
+  </TabList>
+  <div class="tab-panels">
+    <slot />
+  </div>
 </div>
+
+<style>
+  .tabs {
+    display: grid;
+    grid-template-rows: min-content auto;
+    height: 100%;
+    width: 100%;
+  }
+</style>

@@ -12,5 +12,13 @@
 </script>
 
 {#if $selectedPanel === panelId}
-  <slot />
+  <div class="tab-panel">
+    <slot />
+  </div>
 {/if}
+
+<style>
+  .tab-panel {
+    padding: 1rem;
+  }
+</style>

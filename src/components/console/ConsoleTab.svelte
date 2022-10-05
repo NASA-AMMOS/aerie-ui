@@ -7,6 +7,6 @@
   export let icon: string = '';
 </script>
 
-<Tab on:select-tab>
+<Tab>
   <span>{icon}{title}</span>
 </Tab>

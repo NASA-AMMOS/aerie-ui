@@ -1,11 +1,19 @@
 <svelte:options immutable={true} />
 
-<div class="tab-list">
+<script lang="ts">
+  export { className as class };
+
+  let className: string = '';
+</script>
+
+<div class:tab-list={true} class={className}>
   <slot />
 </div>
 
 <style>
   .tab-list {
-    border-bottom: 1px solid teal;
+    background-color: var(--tab-list-background-color, var(--st-primary-inverse-background-color));
+    display: flex;
+    flex-flow: row;
   }
 </style>
