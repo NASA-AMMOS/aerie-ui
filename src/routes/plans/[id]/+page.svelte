@@ -12,6 +12,9 @@
   import ActivityTypesPanel from '../../../components/activity/ActivityTypesPanel.svelte';
   import Nav from '../../../components/app/Nav.svelte';
   import NavButton from '../../../components/app/NavButton.svelte';
+  import Console from '../../../components/console/Console.svelte';
+  import ConsoleSection from '../../../components/console/ConsoleSection.svelte';
+  import ConsoleTab from '../../../components/console/ConsoleTab.svelte';
   import ConstraintsPanel from '../../../components/constraints/ConstraintsPanel.svelte';
   import ConstraintViolationsPanel from '../../../components/constraints/ConstraintViolationsPanel.svelte';
   import ExpansionPanel from '../../../components/expansion/ExpansionPanel.svelte';
@@ -118,7 +121,7 @@
 
 <svelte:window on:keydown={onKeydown} />
 
-<CssGrid rows="42px calc(100vh - 42px)">
+<CssGrid class="plan-container" rows="42px auto 36px">
   <Nav>
     <span class="plan-title" slot="title">{data.initialPlan.name}</span>
 
@@ -170,4 +173,19 @@
     on:changeColumnSizes={changeColumnSizes}
     on:changeRowSizes={changeRowSizes}
   />
+  <Console>
+    <svelte:fragment slot="tab-list">
+      <ConsoleTab title="test1" icon="test" />
+      <ConsoleTab title="test2" icon="test" />
+    </svelte:fragment>
+
+    <ConsoleSection errors={[]} title="hello" />
+    <ConsoleSection errors={[]} title="hi" />
+  </Console>
 </CssGrid>
+
+<style>
+  :global(.plan-container) {
+    height: 100%;
+  }
+</style>
