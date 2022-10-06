@@ -19,6 +19,6 @@
 
 <style>
   .tab-panel {
-    padding: 1rem;
+    height: 100%;
   }
 </style>

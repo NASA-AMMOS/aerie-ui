@@ -31,11 +31,15 @@
     height: var(--tab-height, 36px);
     line-height: 1rem;
     margin: 0;
-    padding: 10px 20px;
+    padding: 10px 1rem;
+  }
+
+  button:hover {
+    background-color: var(--tab-hover-background-color, var(--st-gray-15));
   }
 
   button.selected {
     background-color: var(--tab-selected-background-color, var(--st-gray-20));
-    color: var(--tab-selected-text-color, var(--st-gray-60));
+    color: var(--tab-selected-text-color, var(--st-gray-100));
   }
 </style>

@@ -20,8 +20,8 @@
   <div class="console-expand-container" class:expanded={isOpen}>
     <Tabs on:select-tab={onSelectTab}>
       <svelte:fragment slot="tab-list">
-        <div class="console-tabs">
-          <div>
+        <div class="console-tabs-container">
+          <div class="console-tabs">
             <slot name="console-tabs" />
           </div>
           <div class="console-toggle" on:click={onToggle}>
@@ -47,8 +47,9 @@
   }
 
   .console-expand-container {
-    background-color: white;
+    background-color: var(--st-gray-15);
     left: 0;
+    overflow: hidden;
     position: absolute;
     top: 0;
     width: 100%;
@@ -59,11 +60,17 @@
     top: -300px;
   }
 
+  .console-tabs-container {
+    align-items: center;
+    display: grid;
+    grid-template-columns: auto min-content;
+    justify-content: space-between;
+    width: 100%;
+  }
+
   .console-tabs {
     align-items: center;
     display: flex;
-    justify-content: space-between;
-    width: 100%;
   }
 
   .console-toggle {

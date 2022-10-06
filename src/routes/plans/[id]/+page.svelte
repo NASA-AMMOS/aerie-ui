@@ -2,7 +2,9 @@
 
 <script lang="ts">
   import ActivityIcon from '@nasa-jpl/stellar/icons/activity.svg?component';
+  import BookIcon from '@nasa-jpl/stellar/icons/book.svg?component';
   import CalendarIcon from '@nasa-jpl/stellar/icons/calendar.svg?component';
+  import PlayIcon from '@nasa-jpl/stellar/icons/play.svg?component';
   import BracesAsteriskIcon from 'bootstrap-icons/icons/braces-asterisk.svg?component';
   import ColumnsIcon from 'bootstrap-icons/icons/columns.svg?component';
   import GearWideConnectedIcon from 'bootstrap-icons/icons/gear-wide-connected.svg?component';
@@ -30,6 +32,7 @@
   import ViewsPanel from '../../../components/view/ViewsPanel.svelte';
   import { resetActivityStores } from '../../../stores/activities';
   import { resetConstraintStores } from '../../../stores/constraints';
+  import { allErrors, schedulingErrors, simulationDatasetErrors } from '../../../stores/errors';
   import {
     maxTimeRange,
     plan,
@@ -175,18 +178,41 @@
   />
   <Console>
     <svelte:fragment slot="console-tabs">
-      <ConsoleTab title="all" icon="test" /> |
-      <ConsoleTab title="test1" icon="test" />
-      <ConsoleTab title="test2" icon="test" />
+      <div class="console-tabs">
+        <div>
+          <ConsoleTab numberOfErrors={$allErrors?.length}>All</ConsoleTab>
+        </div>
+        <div class="separator">|</div>
+        <div class="grouped-error-tabs">
+          <ConsoleTab numberOfErrors={$simulationDatasetErrors?.length}><PlayIcon /></ConsoleTab>
+          <ConsoleTab numberOfErrors={$schedulingErrors?.length}><BookIcon /></ConsoleTab>
+        </div>
+      </div>
     </svelte:fragment>
 
-    <ConsoleSection errors={[]} title="hello" />
-    <ConsoleSection errors={[]} title="hi" />
+    <ConsoleSection errors={$allErrors} title="All Errors" />
+    <ConsoleSection errors={$simulationDatasetErrors} title="Simulation Errors" />
+    <ConsoleSection errors={$schedulingErrors} title="Scheduling Errors" />
   </Console>
 </CssGrid>
 
 <style>
   :global(.plan-container) {
     height: 100%;
+  }
+
+  .console-tabs {
+    align-items: center;
+    column-gap: 1rem;
+    display: grid;
+    grid-template-columns: min-content min-content auto;
+  }
+
+  .grouped-error-tabs {
+    display: flex;
+  }
+
+  .separator {
+    color: var(--st-gray-30);
   }
 </style>

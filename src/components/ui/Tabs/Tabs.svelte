@@ -70,6 +70,12 @@
     display: grid;
     grid-template-rows: min-content auto;
     height: 100%;
+    overflow: inherit;
     width: 100%;
+  }
+
+  .tab-panels {
+    height: 100%;
+    overflow: inherit;
   }
 </style>
