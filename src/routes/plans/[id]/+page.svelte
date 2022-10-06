@@ -2,9 +2,7 @@
 
 <script lang="ts">
   import ActivityIcon from '@nasa-jpl/stellar/icons/activity.svg?component';
-  import BookIcon from '@nasa-jpl/stellar/icons/book.svg?component';
   import CalendarIcon from '@nasa-jpl/stellar/icons/calendar.svg?component';
-  import PlayIcon from '@nasa-jpl/stellar/icons/play.svg?component';
   import BracesAsteriskIcon from 'bootstrap-icons/icons/braces-asterisk.svg?component';
   import ColumnsIcon from 'bootstrap-icons/icons/columns.svg?component';
   import GearWideConnectedIcon from 'bootstrap-icons/icons/gear-wide-connected.svg?component';
@@ -180,12 +178,14 @@
     <svelte:fragment slot="console-tabs">
       <div class="console-tabs">
         <div>
-          <ConsoleTab numberOfErrors={$allErrors?.length}>All</ConsoleTab>
+          <ConsoleTab numberOfErrors={$allErrors?.length} title="All Errors">All</ConsoleTab>
         </div>
         <div class="separator">|</div>
         <div class="grouped-error-tabs">
-          <ConsoleTab numberOfErrors={$simulationDatasetErrors?.length}><PlayIcon /></ConsoleTab>
-          <ConsoleTab numberOfErrors={$schedulingErrors?.length}><BookIcon /></ConsoleTab>
+          <ConsoleTab numberOfErrors={$simulationDatasetErrors?.length} title="Simulation Errors"
+            ><GearWideConnectedIcon /></ConsoleTab
+          >
+          <ConsoleTab numberOfErrors={$schedulingErrors?.length} title="Scheduling Errors"><CalendarIcon /></ConsoleTab>
         </div>
       </div>
     </svelte:fragment>
