@@ -1134,6 +1134,8 @@ const effects = {
       let incomplete = true;
       schedulingStatus.set(Status.Incomplete);
 
+      schedulingErrors.set([]);
+
       do {
         const data = await reqHasura<SchedulingResponse>(gql.SCHEDULE, { specificationId });
         const { schedule } = data;
