@@ -16,7 +16,7 @@
           <div class="reason">
             <div>{error.reason}</div>
           </div>
-          <pre class="trace">{error.trace}</pre>
+          <div class="trace"><pre>{error.trace}</pre></div>
         </div>
       {/each}
     </div>
@@ -25,6 +25,8 @@
 
 <style>
   .console-section {
+    display: grid;
+    grid-template-rows: min-content auto;
     height: 100%;
   }
 
@@ -38,15 +40,11 @@
   }
 
   .errors {
-    display: flex;
-    flex-flow: column;
-    height: 100%;
     overflow-y: auto;
-    row-gap: 12px;
   }
 
   .error {
-    margin: 0 1rem;
+    margin: 0 1rem 12px;
   }
 
   .reason {
@@ -56,7 +54,7 @@
     margin-bottom: 8px;
   }
 
-  pre.trace {
+  .trace pre {
     margin: 0;
     white-space: pre-wrap;
   }
