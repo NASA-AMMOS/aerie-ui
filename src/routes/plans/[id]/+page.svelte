@@ -191,8 +191,8 @@
     </svelte:fragment>
 
     <ConsoleSection errors={$allErrors} title="All Errors" />
-    <ConsoleSection errors={$simulationDatasetErrors} title="Simulation Errors" />
     <ConsoleSection errors={$schedulingErrors} title="Scheduling Errors" />
+    <ConsoleSection errors={$simulationDatasetErrors} title="Simulation Errors" />
   </Console>
 </CssGrid>
 
