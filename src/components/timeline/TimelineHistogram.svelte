@@ -285,7 +285,6 @@
   }
 
   function onWindowMouseMove(e: MouseEvent) {
-    console.log('mm');
     onMouseMove(e.x, e.y);
   }
 </script>
