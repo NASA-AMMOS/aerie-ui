@@ -24,7 +24,6 @@
   let brush: Selection<SVGGElement, unknown, null, undefined>;
   let xBrush;
   let histogramContainer: HTMLDivElement;
-  // let timeSelectorContainer: HTMLDivElement;
   let gTimeSelectorContainer: SVGGElement;
   let left = 0;
   let width = 0;
@@ -32,11 +31,11 @@
   let movingSlider = false;
   let resizingSliderLeft = false;
   let resizingSliderRight = false;
-  // let minWidth = 10;
   let activityHistValues: number[] = [];
-  let constraintHistValues: number[] = [];
+  // let constraintHistValues: number[] = [];
+  let constraintViolationsToRender: { width: number; x: number }[] = [];
   let activityHistMax = 0;
-  let constraintViolationMax = 0;
+  // let constraintViolationMax = 0;
   let numBinsMax = 300;
   let numBinsMin = 50;
   let cursorVisible = false;
@@ -44,8 +43,6 @@
   let cursorTooltip = '';
   let timelineHovering = false;
   let drawingRange = false;
-  // let drawRangeDistance = 0;
-  // let drawingPivotLeft = 0;
   let filteredActivityPoints: ActivityPoint[] = [];
 
   $: if (drawWidth) {
@@ -137,19 +134,6 @@
 
   $: histogramHeight = (drawHeight / 5) * 2;
   $: selectorHandleHeight = drawHeight / 1.9;
-
-  function brushed({ selection }) {
-    if (!selection || selection[1] - selection[0] === 0) {
-      brush.attr('display', 'none');
-    } else {
-      brush.attr('display', 'initial');
-    }
-
-    selectAll('.handle')
-      .attr('height', `${selectorHandleHeight}px`)
-      .attr('y', `${drawHeight / 1.9 / 2}px`);
-  }
-
   $: numBins = Math.max(Math.min(numBinsMax, parseInt((drawWidth / 5).toString())), numBinsMin);
 
   // Derive activities to render in activity histogram by
@@ -237,38 +221,33 @@
     activityHistMax = Math.max(...activityHistValues);
 
     // Compute constraint violations histogram
-    constraintHistValues = Array(numBins).fill(0);
+    constraintViolationsToRender = [];
     constraintViolations.forEach(violation => {
       violation.windows.forEach(w => {
-        const start = w.start;
-        const duration = w.end - w.start;
-
-        // Filter out points that do not fall within the plan bounds at all
-        if (start > windowEndTime || start + duration < windowStartTime) {
-          return;
-        }
-
-        // Figure out which start bin this is in
-        const startBin = Math.floor((start - windowStartTime) / binSize);
-        constraintHistValues[startBin]++;
-
-        // Figure out which other bins this value is in
-        const x = Math.floor(duration / binSize) + 1;
-        for (let i = 1; i < x; i++) {
-          if (startBin + i >= constraintHistValues.length) {
-            return;
-          }
-
-          constraintHistValues[startBin + i]++;
-        }
+        const xStart = xScaleMax(w.start);
+        const xEnd = xScaleMax(w.end);
+        const clampedStart = xStart < 0 ? 0 : xStart;
+        const clampedEnd = xEnd > drawWidth ? drawWidth : xEnd;
+        const width = clampedEnd - clampedStart;
+        const clampedWidth = width <= 0 ? 5 : width;
+        constraintViolationsToRender.push({ width: clampedWidth, x: clampedStart });
       });
     });
-
-    constraintViolationMax = Math.max(...constraintHistValues);
   }
 
-  function onWindowMouseMove(e: MouseEvent) {
-    onMouseMove(e.x, e.y);
+  function brushed({ selection }) {
+    if (!selection || selection[1] - selection[0] === 0) {
+      brush.attr('display', 'none');
+    } else {
+      brush.attr('display', 'initial');
+    }
+
+    select('.selection').attr('rx', '4px');
+
+    selectAll('.handle')
+      .attr('height', `${selectorHandleHeight}px`)
+      .attr('y', `${drawHeight / 1.9 / 2}px`)
+      .attr('rx', '4px');
   }
 
   function onMouseMove(x: number, y: number) {
@@ -295,6 +274,10 @@
       timelineHovering = false;
       dispatch('cursorTimeChange', null);
     }
+  }
+
+  function onWindowMouseMove(e: MouseEvent) {
+    onMouseMove(e.x, e.y);
   }
 </script>
 
@@ -325,38 +308,17 @@
       <div class="bin" style={`height: ${(bin / activityHistMax) * 100}%;`} />
     {/each}
   </div>
-  {#if constraintViolations.length}
-    <div class="histogram red" style={`height: ${histogramHeight}px`}>
-      {#each constraintHistValues as bin}
-        <div class="bin" style={`height: ${(bin / constraintViolationMax) * 100}%;`} />
+  {#if constraintViolationsToRender.length}
+    <div class="constraint-violations" style={`height: ${histogramHeight}px`}>
+      {#each constraintViolationsToRender as violation}
+        <div class="constraint-violation" style={`left: ${violation.x}px; width: ${violation.width}px`} />
       {/each}
     </div>
   {/if}
-
   {#if drawWidth > 0}
     <svg>
       <g bind:this={gTimeSelectorContainer} />
     </svg>
-    <!-- <div
-      bind:this={timeSelectorContainer}
-      on:mousedown={onSelectorMouseDown}
-      style="left: {left}px; width: {width}px;"
-      class="timeline-selector"
-      class:dragging={movingSlider}
-    >
-      <div
-        style="height: {selectorHandleHeight}px;"
-        class:resizing={resizingSliderLeft}
-        on:mousedown={onHandleMouseDownLeft}
-        class="time-selector-handle left"
-      />
-      <div
-        style="height: {selectorHandleHeight}px;"
-        class:resizing={resizingSliderRight}
-        on:mousedown={onHandleMouseDownRight}
-        class="time-selector-handle right"
-      />
-    </div> -->
   {/if}
 </div>
 
@@ -393,64 +355,12 @@
     z-index: 0;
   }
 
-  /* .timeline-selector {
-    align-items: center;
-    border: solid 1px gray;
-    border-radius: 4px;
-    cursor: move;
-    display: flex;
-    height: 100%;
-    justify-content: space-between;
-    position: absolute;
-    top: 0;
-    user-select: none;
-    width: 100px;
-    z-index: 1;
-  }
-
-  .timeline-selector:not(.dragging):hover {
-    background: rgba(0, 0, 0, 0.025);
-  }
-
-  .dragging {
-    background: rgba(0, 0, 0, 0.05);
-  }
-
-  .time-selector-handle {
-    background: white;
-    border: 1px solid black;
-    border-radius: 2px;
-    border-radius: 4px;
-    cursor: col-resize;
-    width: 5px;
-  }
-
-  .time-selector-handle:not(.resizing):hover {
-    background: #e0e0e0;
-  }
-
-  .time-selector-handle.resizing {
-    background: #bdbbbb;
-  }
-
-  .time-selector-handle.left {
-    margin-left: -3px;
-  }
-
-  .time-selector-handle.right {
-    margin-right: -3px;
-  } */
-
   .histogram {
     align-items: flex-end;
     border-bottom: 1px solid var(--st-gray-20);
     display: flex;
     flex-direction: row;
     gap: 1px;
-  }
-
-  .histogram.red .bin {
-    background: rgba(235, 87, 87, 1);
   }
 
   .histogram.blue .bin {
@@ -462,6 +372,17 @@
     transition: height 150ms ease-out;
     width: 2px;
   }
+
+  .constraint-violations {
+    position: relative;
+  }
+
+  .constraint-violation {
+    background: rgba(235, 87, 87, 0.2);
+    height: 100%;
+    position: absolute;
+  }
+
   svg {
     height: 100%;
     overflow: visible;
@@ -472,7 +393,6 @@
 
   svg :global(.selection) {
     fill: none;
-    rx: 4px;
     shape-rendering: auto;
     stroke: black;
     stroke-width: 1px;
@@ -480,7 +400,6 @@
 
   svg :global(.handle) {
     fill: white;
-    rx: 4px;
     stroke: black;
   }
 
