@@ -3,7 +3,7 @@
 <script lang="ts">
   import { brushX, type D3BrushEvent } from 'd3-brush';
   import type { ScaleTime } from 'd3-scale';
-  import { select, selectAll, type Selection } from 'd3-selection';
+  import { select, type Selection } from 'd3-selection';
   import { createEventDispatcher } from 'svelte';
   import { activityPoints } from '../../stores/activities';
   import { getDoyTime } from '../../utilities/time';
@@ -59,10 +59,9 @@
         }
 
         // Force positioning of hover cursor and tooltip
-        const w = select('.handle--w').node() as SVGRectElement;
-        const e = select('.handle--e').node() as SVGRectElement;
+        const handleWest = brush.select('.handle--w').node() as SVGRectElement;
         const handleWidth = 6; // D3's default handle width
-        const handleWestRect = w.getBoundingClientRect();
+        const handleWestRect = handleWest.getBoundingClientRect();
         const handleWestX = handleWestRect.x;
         const handleWestWidth = handleWestRect.width;
         const handleWestEnd = handleWestX + handleWestWidth;
@@ -76,7 +75,8 @@
             onMouseMove(handleWestX + handleWidth / 2, 0, false); // 3px is half of the handle width
           } else {
             // East handle intersection
-            const handleEastRect = e.getBoundingClientRect();
+            const handleEast = brush.select('.handle--e').node() as SVGRectElement;
+            const handleEastRect = handleEast.getBoundingClientRect();
             const handleEastX = handleEastRect.x;
             const handleEastWidth = handleEastRect.width;
             const handleEastEnd = handleEastX + handleEastWidth;
@@ -250,9 +250,10 @@
       brush.attr('display', 'initial');
     }
 
-    select('.selection').attr('rx', '4px');
+    brush.selectAll('.selection').attr('rx', '4px');
 
-    selectAll('.handle')
+    brush
+      .selectAll('.handle')
       .attr('height', `${selectorHandleHeight}px`)
       .attr('y', `${drawHeight / 1.9 / 2}px`)
       .attr('rx', '4px');
@@ -285,6 +286,7 @@
   }
 
   function onWindowMouseMove(e: MouseEvent) {
+    console.log('mm');
     onMouseMove(e.x, e.y);
   }
 </script>
