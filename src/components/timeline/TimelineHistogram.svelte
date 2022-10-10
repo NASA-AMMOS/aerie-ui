@@ -310,14 +310,16 @@
 
   <div
     class="histogram blue"
-    style={`height: ${constraintViolations.length ? histogramHeight : histogramHeight * 2}px`}
+    style={`height: ${
+      constraintViolationsToRender.length ? histogramHeight * 1.5 : histogramHeight * 2
+    }px; border-bottom: ${constraintViolationsToRender.length < 1 ? '1px solid var(--st-gray-20)' : 'none'}`}
   >
     {#each activityHistValues as bin, index (index)}
       <div class="bin" style={`height: ${(bin / activityHistMax) * 100}%;`} />
     {/each}
   </div>
   {#if constraintViolationsToRender.length}
-    <div class="constraint-violations" style={`height: ${histogramHeight}px`}>
+    <div class="constraint-violations" style={`height: ${histogramHeight / 2}px`}>
       {#each constraintViolationsToRender as violation}
         <div class="constraint-violation" style={`left: ${violation.x}px; width: ${violation.width}px`} />
       {/each}
@@ -338,7 +340,7 @@
     display: flex;
     flex-direction: row;
     flex-direction: column;
-    gap: 3px;
+    gap: 2px;
     justify-content: center;
     position: relative;
   }
@@ -365,7 +367,6 @@
 
   .histogram {
     align-items: flex-end;
-    border-bottom: 1px solid var(--st-gray-20);
     display: flex;
     flex-direction: row;
     gap: 1px;
