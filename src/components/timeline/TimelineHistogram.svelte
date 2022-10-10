@@ -1,14 +1,16 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { brushX, type D3BrushEvent } from 'd3-brush';
   import type { ScaleTime } from 'd3-scale';
+  import { select, selectAll, type Selection } from 'd3-selection';
   import { createEventDispatcher } from 'svelte';
   import { activityPoints } from '../../stores/activities';
   import { getDoyTime } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
 
   export let constraintViolations: ConstraintViolation[] = [];
-  export let drawHeight: number = 39;
+  export let drawHeight: number = 40;
   export let drawWidth: number = 0;
   export let marginLeft: number = 50;
   export let mouseOver: MouseOver;
@@ -19,14 +21,17 @@
 
   const dispatch = createEventDispatcher();
 
+  let brush: Selection<SVGGElement, unknown, null, undefined>;
+  let xBrush;
   let histogramContainer: HTMLDivElement;
-  let timeSelectorContainer: HTMLDivElement;
+  // let timeSelectorContainer: HTMLDivElement;
+  let gTimeSelectorContainer: SVGGElement;
   let left = 0;
   let width = 0;
   let movingSlider = false;
   let resizingSliderLeft = false;
   let resizingSliderRight = false;
-  let minWidth = 10;
+  // let minWidth = 10;
   let activityHistValues: number[] = [];
   let constraintHistValues: number[] = [];
   let activityHistMax = 0;
@@ -38,12 +43,89 @@
   let cursorTooltip = '';
   let timelineHovering = false;
   let drawingRange = false;
-  let drawRangeDistance = 0;
-  let drawingPivotLeft = 0;
+  // let drawRangeDistance = 0;
+  // let drawingPivotLeft = 0;
   let filteredActivityPoints: ActivityPoint[] = [];
 
+  $: if (drawWidth) {
+    xBrush = brushX()
+      .extent([
+        [0, 0],
+        [drawWidth, drawHeight],
+      ])
+      .on('start', (event: D3BrushEvent<number[]>) => {
+        brushed(event);
+      })
+      .on('brush', (event: D3BrushEvent<number[]>) => {
+        if (!event.sourceEvent) {
+          return;
+        }
+        onMouseMove(event.sourceEvent);
+        brushed(event);
+      })
+
+      .on('end', (event: D3BrushEvent<number[]>) => {
+        if (!event.sourceEvent) {
+          return;
+        }
+
+        let start;
+        let end;
+        if (!event.selection) {
+          const unixEpochTime = xScaleMax.invert(event.sourceEvent.offsetX).getTime();
+          const startDate = new Date(viewTimeRange.start).getTime();
+          const endDate = new Date(viewTimeRange.end).getTime();
+          const unixEpochTimeDuration = endDate - startDate;
+          // Center slider on user's mouse position
+          start = unixEpochTime - unixEpochTimeDuration / 2;
+          end = unixEpochTime + unixEpochTimeDuration / 2;
+
+          // Ensure slider is within bounds
+          const windowStartTime = xScaleMax.invert(windowMax).getTime();
+          const windowEndTime = xScaleMax.invert(windowMin).getTime();
+          if (unixEpochTimeDuration > windowEndTime - windowStartTime) {
+            // Cover case where duration could be unexpectedly large
+            start = windowStartTime;
+            end = windowEndTime;
+          } else if (start < windowStartTime) {
+            // Case where slider comes before entire window time range
+            start = windowStartTime;
+            end = start + unixEpochTimeDuration;
+          } else if (end > windowEndTime) {
+            // Case where slider comes after entire window time range
+            end = windowEndTime;
+            start = end - unixEpochTimeDuration;
+          }
+        } else {
+          start = xScaleMax.invert(event.selection[0] as number).getTime();
+          end = xScaleMax.invert(event.selection[1] as number).getTime();
+          brushed(event);
+        }
+
+        const newViewTimeRange = { end, start };
+        dispatch('viewTimeRangeChanged', newViewTimeRange);
+      });
+
+    brush = select(gTimeSelectorContainer).call(xBrush);
+    const extent = [new Date(viewTimeRange.start), new Date(viewTimeRange.end)].map(xScaleMax);
+    brush.call(xBrush.move, extent);
+  }
+
   $: histogramHeight = (drawHeight / 5) * 2;
-  $: selectorHandleHeight = (drawHeight / 1.9).toFixed();
+  $: selectorHandleHeight = drawHeight / 1.9;
+
+  function brushed({ selection }) {
+    console.log(selection);
+    if (!selection || selection[1] - selection[0] === 0) {
+      brush.attr('display', 'none');
+    } else {
+      brush.attr('display', 'initial');
+    }
+
+    selectAll('.handle')
+      .attr('height', `${selectorHandleHeight}px`)
+      .attr('y', `${drawHeight / 1.9 / 2}px`);
+  }
 
   $: numBins = Math.max(Math.min(numBinsMax, parseInt((drawWidth / 5).toString())), numBinsMin);
 
@@ -162,70 +244,75 @@
     constraintViolationMax = Math.max(...constraintHistValues);
   }
 
-  function onTimelineBackgroundMouseDown(e: MouseEvent) {
-    drawingRange = true;
-    drawRangeDistance = 0;
-    drawingPivotLeft = e.offsetX;
-  }
+  // function onTimelineBackgroundMouseDown(e: MouseEvent) {
+  //   return;
+  //   drawingRange = true;
+  //   drawRangeDistance = 0;
+  //   drawingPivotLeft = e.offsetX;
+  // }
 
-  function onTimelineBackgroundClick(e: MouseEvent) {
-    // Center the slider on the time
-    const offsetX = e.offsetX;
-    const unixEpochTime = xScaleMax.invert(offsetX).getTime();
-    const startDate = new Date(viewTimeRange.start).getTime();
-    const endDate = new Date(viewTimeRange.end).getTime();
-    const unixEpochTimeDuration = endDate - startDate;
+  // function onTimelineBackgroundClick(e: MouseEvent) {
+  //   return;
+  //   // Center the slider on the time
+  //   const offsetX = e.offsetX;
+  //   const unixEpochTime = xScaleMax.invert(offsetX).getTime();
+  //   const startDate = new Date(viewTimeRange.start).getTime();
+  //   const endDate = new Date(viewTimeRange.end).getTime();
+  //   const unixEpochTimeDuration = endDate - startDate;
 
-    // Center slider on user's mouse position
-    let newStartTime = unixEpochTime - unixEpochTimeDuration / 2;
-    let newEndTime = unixEpochTime + unixEpochTimeDuration / 2;
+  //   // Center slider on user's mouse position
+  //   let newStartTime = unixEpochTime - unixEpochTimeDuration / 2;
+  //   let newEndTime = unixEpochTime + unixEpochTimeDuration / 2;
 
-    // Ensure slider is within bounds
-    const windowStartTime = xScaleMax.invert(windowMax).getTime();
-    const windowEndTime = xScaleMax.invert(windowMin).getTime();
-    if (unixEpochTimeDuration > windowEndTime - windowStartTime) {
-      // Cover case where duration could be unexpectedly large
-      newStartTime = windowStartTime;
-      newEndTime = windowEndTime;
-    } else if (newStartTime < windowStartTime) {
-      // Case where slider comes before entire window time range
-      newStartTime = windowStartTime;
-      newEndTime = newStartTime + unixEpochTimeDuration;
-    } else if (newEndTime > windowEndTime) {
-      // Case where slider comes after entire window time range
-      newEndTime = windowEndTime;
-      newStartTime = newEndTime - unixEpochTimeDuration;
-    }
+  //   // Ensure slider is within bounds
+  //   const windowStartTime = xScaleMax.invert(windowMax).getTime();
+  //   const windowEndTime = xScaleMax.invert(windowMin).getTime();
+  //   if (unixEpochTimeDuration > windowEndTime - windowStartTime) {
+  //     // Cover case where duration could be unexpectedly large
+  //     newStartTime = windowStartTime;
+  //     newEndTime = windowEndTime;
+  //   } else if (newStartTime < windowStartTime) {
+  //     // Case where slider comes before entire window time range
+  //     newStartTime = windowStartTime;
+  //     newEndTime = newStartTime + unixEpochTimeDuration;
+  //   } else if (newEndTime > windowEndTime) {
+  //     // Case where slider comes after entire window time range
+  //     newEndTime = windowEndTime;
+  //     newStartTime = newEndTime - unixEpochTimeDuration;
+  //   }
 
-    const newViewTimeRange = { end: newEndTime, start: newStartTime };
-    dispatch('viewTimeRangeChanged', newViewTimeRange);
-  }
+  //   const newViewTimeRange = { end: newEndTime, start: newStartTime };
+  //   dispatch('viewTimeRangeChanged', newViewTimeRange);
+  // }
 
-  function onSelectorMouseDown(e: MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    movingSlider = true;
-    resizingSliderLeft = false;
-    resizingSliderRight = false;
-  }
+  // function onSelectorMouseDown(e: MouseEvent) {
+  //   return;
+  //   e.preventDefault();
+  //   e.stopPropagation();
+  //   movingSlider = true;
+  //   resizingSliderLeft = false;
+  //   resizingSliderRight = false;
+  // }
 
-  function onHandleMouseDownLeft(e: MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
+  // function onHandleMouseDownLeft(e: MouseEvent) {
+  //   return;
+  //   e.preventDefault();
+  //   e.stopPropagation();
 
-    resizingSliderLeft = true;
-    resizingSliderRight = false;
-    movingSlider = false;
-  }
+  //   resizingSliderLeft = true;
+  //   resizingSliderRight = false;
+  //   movingSlider = false;
+  // }
 
-  function onHandleMouseDownRight(e: MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
+  // function onHandleMouseDownRight(e: MouseEvent) {
+  //   return;
+  //   e.preventDefault();
+  //   e.stopPropagation();
 
-    resizingSliderLeft = false;
-    resizingSliderRight = true;
-    movingSlider = false;
-  }
+  //   resizingSliderLeft = false;
+  //   resizingSliderRight = true;
+  //   movingSlider = false;
+  // }
 
   function onMouseMove(e: MouseEvent) {
     const histRect = histogramContainer.getBoundingClientRect();
@@ -247,99 +334,103 @@
       if (!movingSlider && !drawingRange && !resizingSliderLeft && !resizingSliderRight) {
         dispatch('cursorTimeChange', cursorTime);
       }
-
-      // Handle time range drawing
-      if (drawingRange) {
-        drawRangeDistance += Math.abs(e.movementX);
-        // Ensure user has drawn at least a pixel to differentiate between
-        // ranges ranges and centering the slider on click
-        if (isDrawingRangeInProgress()) {
-          // Determine new slider position, allow user to move left or right of the pivot point
-          if (cursorLeft - drawingPivotLeft < 0) {
-            left = cursorLeft;
-            width = Math.abs(cursorLeft - drawingPivotLeft);
-          } else {
-            left = drawingPivotLeft;
-            width = cursorLeft - drawingPivotLeft;
-          }
-        }
-      }
     } else {
       timelineHovering = false;
       dispatch('cursorTimeChange', null);
     }
 
-    // Determine whether or not left and right resize and movement should be allowed
-    let allowLeft = false;
-    let allowRight = false;
-    if (movingSlider || resizingSliderLeft || resizingSliderRight) {
-      if (mouseWithinRightHorizontalHistogramBounds && e.movementX < 0) {
-        allowLeft = true;
-      }
-      if (mouseWithinLeftHorizontalHistogramBounds && e.movementX > 0) {
-        allowRight = true;
-      }
-    }
+    // Determine whether or not left and right resize, movement, and drawing should be allowed
+    // let allowLeft = false;
+    // let allowRight = false;
+    // if (movingSlider || resizingSliderLeft || resizingSliderRight || drawingRange) {
+    //   if (mouseWithinRightHorizontalHistogramBounds && e.movementX < 0) {
+    //     allowLeft = true;
+    //   }
+    //   if (mouseWithinLeftHorizontalHistogramBounds && e.movementX > 0) {
+    //     allowRight = true;
+    //   }
+    // }
 
-    if (allowLeft || allowRight) {
-      const sliderRect = timeSelectorContainer.getBoundingClientRect();
-      if (movingSlider) {
-        if (sliderRect.left + e.movementX < histRect.left) {
-          left = 0;
-        } else if (sliderRect.right + e.movementX > histRect.right) {
-          left = histRect.width - sliderRect.width;
-        } else {
-          left += e.movementX;
-        }
-      } else if (resizingSliderLeft) {
-        if (!(sliderRect.left + e.movementX < histRect.left)) {
-          if (sliderRect.width - e.movementX > minWidth) {
-            if (e.movementX < 0) {
-              width = sliderRect.width + Math.abs(e.movementX);
-              left -= Math.abs(e.movementX);
-            } else {
-              width = sliderRect.width - Math.abs(e.movementX);
-              left += Math.abs(e.movementX);
-            }
-          } else {
-            width = sliderRect.width;
-          }
-        }
-      } else if (resizingSliderRight) {
-        if (!(sliderRect.right + e.movementX > histRect.right)) {
-          if (sliderRect.width + e.movementX >= minWidth) {
-            width = sliderRect.width + e.movementX;
-          } else {
-            width = sliderRect.width;
-          }
-        }
-      }
-    }
+    // // Handle time range drawing
+    // if (drawingRange && (allowLeft || allowRight)) {
+    //   drawRangeDistance += Math.abs(e.movementX);
+    //   // Ensure user has drawn at least a pixel to differentiate between
+    //   // ranges ranges and centering the slider on click
+    //   if (isDrawingRangeInProgress()) {
+    //     // Determine new slider position, allow user to move left or right of the pivot point
+    //     if (cursorLeft - drawingPivotLeft < 0) {
+    //       left = cursorLeft;
+    //       width = Math.abs(cursorLeft - drawingPivotLeft);
+    //     } else {
+    //       left = drawingPivotLeft;
+    //       width = cursorLeft - drawingPivotLeft;
+    //     }
+    //   }
+    // }
+
+    // // Handle move and handle drag
+    // if (allowLeft || allowRight) {
+    //   const sliderRect = timeSelectorContainer.getBoundingClientRect();
+    //   if (movingSlider) {
+    //     // TODO don't use movement, use actual position since this is changing depending
+    //     // on what you hover over..
+    //     if (sliderRect.left + e.movementX < histRect.left) {
+    //       left = 0;
+    //     } else if (sliderRect.right + e.movementX > histRect.right) {
+    //       left = histRect.width - sliderRect.width;
+    //     } else {
+    //       left += e.movementX;
+    //     }
+    //   } else if (resizingSliderLeft) {
+    //     if (!(sliderRect.left + e.movementX < histRect.left)) {
+    //       if (sliderRect.width - e.movementX > minWidth) {
+    //         if (e.movementX < 0) {
+    //           width = sliderRect.width + Math.abs(e.movementX);
+    //           left -= Math.abs(e.movementX);
+    //         } else {
+    //           width = sliderRect.width - Math.abs(e.movementX);
+    //           left += Math.abs(e.movementX);
+    //         }
+    //       } else {
+    //         width = sliderRect.width;
+    //       }
+    //     }
+    //   } else if (resizingSliderRight) {
+    //     if (!(sliderRect.right + e.movementX > histRect.right)) {
+    //       if (sliderRect.width + e.movementX >= minWidth) {
+    //         width = sliderRect.width + e.movementX;
+    //       } else {
+    //         width = sliderRect.width;
+    //       }
+    //     }
+    //   }
+    // }
   }
 
-  function isDrawingRangeInProgress() {
-    return drawRangeDistance > 1;
-  }
+  // function isDrawingRangeInProgress() {
+  //   return drawRangeDistance > 1;
+  // }
 
-  function onMouseUp(e: MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
+  // function onMouseUp(e: MouseEvent) {
+  //   return;
+  //   e.preventDefault();
+  //   e.stopPropagation();
 
-    if (movingSlider || resizingSliderLeft || resizingSliderRight || (drawingRange && isDrawingRangeInProgress())) {
-      const unixEpochTimeMin = xScaleMax.invert(left).getTime();
-      const unixEpochTimeMax = xScaleMax.invert(left + width).getTime();
-      const doyTimeMin = new Date(unixEpochTimeMin);
-      const doyTimeMax = new Date(unixEpochTimeMax);
+  //   if (movingSlider || resizingSliderLeft || resizingSliderRight || (drawingRange && isDrawingRangeInProgress())) {
+  //     const unixEpochTimeMin = xScaleMax.invert(left).getTime();
+  //     const unixEpochTimeMax = xScaleMax.invert(left + width).getTime();
+  //     const doyTimeMin = new Date(unixEpochTimeMin);
+  //     const doyTimeMax = new Date(unixEpochTimeMax);
 
-      const newViewTimeRange = { end: doyTimeMax.getTime(), start: doyTimeMin.getTime() };
-      dispatch('viewTimeRangeChanged', newViewTimeRange);
-    }
+  //     const newViewTimeRange = { end: doyTimeMax.getTime(), start: doyTimeMin.getTime() };
+  //     dispatch('viewTimeRangeChanged', newViewTimeRange);
+  //   }
 
-    movingSlider = false;
-    resizingSliderLeft = false;
-    resizingSliderRight = false;
-    drawingRange = false;
-  }
+  //   movingSlider = false;
+  //   resizingSliderLeft = false;
+  //   resizingSliderRight = false;
+  //   drawingRange = false;
+  // }
 </script>
 
 <div
@@ -347,11 +438,7 @@
   class="timeline-histogram"
   style={`margin-left: ${marginLeft}px; width: ${drawWidth}px; height: ${drawHeight}px;`}
 >
-  <div
-    on:click={onTimelineBackgroundClick}
-    on:mousedown={onTimelineBackgroundMouseDown}
-    class="timeline-histogram-background"
-  />
+  <div class="timeline-histogram-background" />
   <div
     use:tooltip={{
       content: cursorTooltip,
@@ -369,7 +456,7 @@
     class="histogram blue"
     style={`height: ${constraintViolations.length ? histogramHeight : histogramHeight * 2}px`}
   >
-    {#each activityHistValues as bin}
+    {#each activityHistValues as bin, index (index)}
       <div class="bin" style={`height: ${(bin / activityHistMax) * 100}%;`} />
     {/each}
   </div>
@@ -382,7 +469,10 @@
   {/if}
 
   {#if drawWidth > 0}
-    <div
+    <svg>
+      <g bind:this={gTimeSelectorContainer} />
+    </svg>
+    <!-- <div
       bind:this={timeSelectorContainer}
       on:mousedown={onSelectorMouseDown}
       style="left: {left}px; width: {width}px;"
@@ -401,11 +491,11 @@
         on:mousedown={onHandleMouseDownRight}
         class="time-selector-handle right"
       />
-    </div>
+    </div> -->
   {/if}
 </div>
 
-<svelte:window on:mouseup={onMouseUp} on:mousemove={onMouseMove} />
+<svelte:window on:mousemove={onMouseMove} />
 
 <style>
   .timeline-histogram {
@@ -438,7 +528,7 @@
     z-index: 0;
   }
 
-  .timeline-selector {
+  /* .timeline-selector {
     align-items: center;
     border: solid 1px gray;
     border-radius: 4px;
@@ -484,7 +574,7 @@
 
   .time-selector-handle.right {
     margin-right: -3px;
-  }
+  } */
 
   .histogram {
     align-items: flex-end;
@@ -504,6 +594,33 @@
 
   .bin {
     flex: 1;
+    transition: height 150ms ease-out;
     width: 2px;
+  }
+  svg {
+    height: 100%;
+    overflow: visible;
+    position: absolute;
+    top: 0;
+    width: 100%;
+  }
+
+  svg :global(.selection) {
+    fill: none;
+    rx: 4px;
+    shape-rendering: auto;
+    stroke: black;
+    stroke-width: 1px;
+  }
+
+  svg :global(.handle) {
+    fill: white;
+    rx: 4px;
+    stroke: black;
+  }
+
+  svg :global(.handle:hover),
+  svg :global(.handle:active) {
+    fill: #e0e0e0;
   }
 </style>
