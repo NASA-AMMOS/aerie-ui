@@ -198,7 +198,7 @@
   }
 
   // Update histograms if xScaleMax, activities, or constraint violation changes
-  $: if (xScaleMax || filteredActivityPoints || constraintViolations) {
+  $: if ((xScaleMax || filteredActivityPoints || constraintViolations) && windowMin - windowMax > 0) {
     activityHistValues = [];
     const windowStartTime = xScaleMax.invert(windowMax).getTime();
     const windowEndTime = xScaleMax.invert(windowMin).getTime();
