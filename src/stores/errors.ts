@@ -1,4 +1,5 @@
 import { derived, writable, type Readable, type Writable } from 'svelte/store';
+import { compare } from '../utilities/generic';
 import { simulationDataset } from './simulation';
 
 export function parseErrorReason(error: string) {
@@ -25,16 +26,7 @@ export const schedulingErrors: Writable<SchedulingError[]> = writable([]);
 export const allErrors: Readable<BaseError[]> = derived(
   [simulationDatasetErrors, schedulingErrors],
   ([$simulationDatasetErrors, $schedulingErrors]) =>
-    [
-      ...($simulationDatasetErrors ? $simulationDatasetErrors : []),
-      ...($schedulingErrors ? $schedulingErrors : []),
-    ].sort((errorA: BaseError, errorB: BaseError) => {
-      if (errorA.timestamp < errorB.timestamp) {
-        return 1;
-      }
-      if (errorA.timestamp > errorB.timestamp) {
-        return -1;
-      }
-      return 0;
-    }),
+    [...($simulationDatasetErrors ?? []), ...($schedulingErrors ?? [])].sort((errorA: BaseError, errorB: BaseError) =>
+      compare(errorA.timestamp, errorB.timestamp, false),
+    ),
 );
