@@ -32,10 +32,8 @@
   let resizingSliderLeft = false;
   let resizingSliderRight = false;
   let activityHistValues: number[] = [];
-  // let constraintHistValues: number[] = [];
   let constraintViolationsToRender: { width: number; x: number }[] = [];
   let activityHistMax = 0;
-  // let constraintViolationMax = 0;
   let numBinsMax = 300;
   let numBinsMin = 50;
   let cursorVisible = false;
@@ -60,25 +58,35 @@
           return;
         }
 
-        // TODO clean this up
+        // Force positioning of hover cursor and tooltip
         const w = select('.handle--w').node() as SVGRectElement;
         const e = select('.handle--e').node() as SVGRectElement;
+        const handleWidth = 6; // D3's default handle width
+        const handleWestRect = w.getBoundingClientRect();
+        const handleWestX = handleWestRect.x;
+        const handleWestWidth = handleWestRect.width;
+        const handleWestEnd = handleWestX + handleWestWidth;
         if (event.mode === 'handle') {
+          const sourceX = event.sourceEvent.x;
           // Do some basic hit detection since there is no way to determine through D3 which handle is
           // being dragged
-          const l = w.getBoundingClientRect().x;
-          const end = w.getBoundingClientRect().x + w.getBoundingClientRect().width;
-          if (event.sourceEvent.x >= l && event.sourceEvent.x <= end) {
-            onMouseMove(w.getBoundingClientRect().x + 3, 120);
-          }
 
-          const le = e.getBoundingClientRect().x;
-          const endE = e.getBoundingClientRect().x + e.getBoundingClientRect().width;
-          if (event.sourceEvent.x >= le && event.sourceEvent.x <= endE) {
-            onMouseMove(e.getBoundingClientRect().x + 3, 120);
+          // West handle intersection
+          if (sourceX >= handleWestX && sourceX <= handleWestEnd) {
+            onMouseMove(handleWestX + handleWidth / 2, 0, false); // 3px is half of the handle width
+          } else {
+            // East handle intersection
+            const handleEastRect = e.getBoundingClientRect();
+            const handleEastX = handleEastRect.x;
+            const handleEastWidth = handleEastRect.width;
+            const handleEastEnd = handleEastX + handleEastWidth;
+            if (sourceX >= handleEastX && sourceX <= handleEastEnd) {
+              onMouseMove(handleEastX + handleWidth / 2, 0, false);
+            }
           }
         } else {
-          onMouseMove(w.getBoundingClientRect().x + 3, 120);
+          // When dragging the selection box, snap the tooltip to the start time bound
+          onMouseMove(handleWestX + handleWidth + handleWidth / 2, 0, false);
         }
 
         brushed(event);
@@ -250,13 +258,13 @@
       .attr('rx', '4px');
   }
 
-  function onMouseMove(x: number, y: number) {
+  function onMouseMove(x: number, y: number, checkY: boolean = true) {
     const histRect = histogramContainer.getBoundingClientRect();
     const mouseWithinLeftHorizontalHistogramBounds = x >= histRect.x;
     const mouseWithinRightHorizontalHistogramBounds = x <= histRect.right;
     const mouseWithinHorizontalHistogramBounds =
       mouseWithinLeftHorizontalHistogramBounds && mouseWithinRightHorizontalHistogramBounds;
-    const mouseWithinVerticalHistogramBounds = y >= histRect.y && y <= histRect.bottom;
+    const mouseWithinVerticalHistogramBounds = checkY ? y >= histRect.y && y <= histRect.bottom : true;
 
     // Check if mouse is within histogram position bounds
     if (mouseWithinVerticalHistogramBounds && mouseWithinHorizontalHistogramBounds) {
