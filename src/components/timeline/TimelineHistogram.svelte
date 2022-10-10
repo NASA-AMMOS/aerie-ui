@@ -28,6 +28,7 @@
   let gTimeSelectorContainer: SVGGElement;
   let left = 0;
   let width = 0;
+  let brushing = false;
   let movingSlider = false;
   let resizingSliderLeft = false;
   let resizingSliderRight = false;
@@ -57,14 +58,37 @@
         brushed(event);
       })
       .on('brush', (event: D3BrushEvent<number[]>) => {
-        if (!event.sourceEvent) {
+        brushing = true;
+        if (!event.sourceEvent || !event.selection) {
           return;
         }
-        onMouseMove(event.sourceEvent);
+
+        // TODO clean this up
+        const w = select('.handle--w').node() as SVGRectElement;
+        const e = select('.handle--e').node() as SVGRectElement;
+        if (event.mode === 'handle') {
+          // Do some basic hit detection since there is no way to determine through D3 which handle is
+          // being dragged
+          const l = w.getBoundingClientRect().x;
+          const end = w.getBoundingClientRect().x + w.getBoundingClientRect().width;
+          if (event.sourceEvent.x >= l && event.sourceEvent.x <= end) {
+            onMouseMove(w.getBoundingClientRect().x + 3, 120);
+          }
+
+          const le = e.getBoundingClientRect().x;
+          const endE = e.getBoundingClientRect().x + e.getBoundingClientRect().width;
+          if (event.sourceEvent.x >= le && event.sourceEvent.x <= endE) {
+            onMouseMove(e.getBoundingClientRect().x + 3, 120);
+          }
+        } else {
+          onMouseMove(w.getBoundingClientRect().x + 3, 120);
+        }
+
         brushed(event);
       })
 
       .on('end', (event: D3BrushEvent<number[]>) => {
+        brushing = false;
         if (!event.sourceEvent) {
           return;
         }
@@ -115,7 +139,6 @@
   $: selectorHandleHeight = drawHeight / 1.9;
 
   function brushed({ selection }) {
-    console.log(selection);
     if (!selection || selection[1] - selection[0] === 0) {
       brush.attr('display', 'none');
     } else {
@@ -244,89 +267,23 @@
     constraintViolationMax = Math.max(...constraintHistValues);
   }
 
-  // function onTimelineBackgroundMouseDown(e: MouseEvent) {
-  //   return;
-  //   drawingRange = true;
-  //   drawRangeDistance = 0;
-  //   drawingPivotLeft = e.offsetX;
-  // }
+  function onWindowMouseMove(e: MouseEvent) {
+    onMouseMove(e.x, e.y);
+  }
 
-  // function onTimelineBackgroundClick(e: MouseEvent) {
-  //   return;
-  //   // Center the slider on the time
-  //   const offsetX = e.offsetX;
-  //   const unixEpochTime = xScaleMax.invert(offsetX).getTime();
-  //   const startDate = new Date(viewTimeRange.start).getTime();
-  //   const endDate = new Date(viewTimeRange.end).getTime();
-  //   const unixEpochTimeDuration = endDate - startDate;
-
-  //   // Center slider on user's mouse position
-  //   let newStartTime = unixEpochTime - unixEpochTimeDuration / 2;
-  //   let newEndTime = unixEpochTime + unixEpochTimeDuration / 2;
-
-  //   // Ensure slider is within bounds
-  //   const windowStartTime = xScaleMax.invert(windowMax).getTime();
-  //   const windowEndTime = xScaleMax.invert(windowMin).getTime();
-  //   if (unixEpochTimeDuration > windowEndTime - windowStartTime) {
-  //     // Cover case where duration could be unexpectedly large
-  //     newStartTime = windowStartTime;
-  //     newEndTime = windowEndTime;
-  //   } else if (newStartTime < windowStartTime) {
-  //     // Case where slider comes before entire window time range
-  //     newStartTime = windowStartTime;
-  //     newEndTime = newStartTime + unixEpochTimeDuration;
-  //   } else if (newEndTime > windowEndTime) {
-  //     // Case where slider comes after entire window time range
-  //     newEndTime = windowEndTime;
-  //     newStartTime = newEndTime - unixEpochTimeDuration;
-  //   }
-
-  //   const newViewTimeRange = { end: newEndTime, start: newStartTime };
-  //   dispatch('viewTimeRangeChanged', newViewTimeRange);
-  // }
-
-  // function onSelectorMouseDown(e: MouseEvent) {
-  //   return;
-  //   e.preventDefault();
-  //   e.stopPropagation();
-  //   movingSlider = true;
-  //   resizingSliderLeft = false;
-  //   resizingSliderRight = false;
-  // }
-
-  // function onHandleMouseDownLeft(e: MouseEvent) {
-  //   return;
-  //   e.preventDefault();
-  //   e.stopPropagation();
-
-  //   resizingSliderLeft = true;
-  //   resizingSliderRight = false;
-  //   movingSlider = false;
-  // }
-
-  // function onHandleMouseDownRight(e: MouseEvent) {
-  //   return;
-  //   e.preventDefault();
-  //   e.stopPropagation();
-
-  //   resizingSliderLeft = false;
-  //   resizingSliderRight = true;
-  //   movingSlider = false;
-  // }
-
-  function onMouseMove(e: MouseEvent) {
+  function onMouseMove(x: number, y: number) {
     const histRect = histogramContainer.getBoundingClientRect();
-    const mouseWithinLeftHorizontalHistogramBounds = e.x >= histRect.x;
-    const mouseWithinRightHorizontalHistogramBounds = e.x <= histRect.right;
+    const mouseWithinLeftHorizontalHistogramBounds = x >= histRect.x;
+    const mouseWithinRightHorizontalHistogramBounds = x <= histRect.right;
     const mouseWithinHorizontalHistogramBounds =
       mouseWithinLeftHorizontalHistogramBounds && mouseWithinRightHorizontalHistogramBounds;
-    const mouseWithinVerticalHistogramBounds = e.y >= histRect.y && e.y <= histRect.bottom;
+    const mouseWithinVerticalHistogramBounds = y >= histRect.y && y <= histRect.bottom;
 
     // Check if mouse is within histogram position bounds
     if (mouseWithinVerticalHistogramBounds && mouseWithinHorizontalHistogramBounds) {
       // Update hover cursor
       timelineHovering = true;
-      cursorLeft = e.x - histRect.left;
+      cursorLeft = x - histRect.left;
       const cursorTime = xScaleMax.invert(cursorLeft);
       cursorTooltip = getDoyTime(cursorTime, false);
 
@@ -338,99 +295,7 @@
       timelineHovering = false;
       dispatch('cursorTimeChange', null);
     }
-
-    // Determine whether or not left and right resize, movement, and drawing should be allowed
-    // let allowLeft = false;
-    // let allowRight = false;
-    // if (movingSlider || resizingSliderLeft || resizingSliderRight || drawingRange) {
-    //   if (mouseWithinRightHorizontalHistogramBounds && e.movementX < 0) {
-    //     allowLeft = true;
-    //   }
-    //   if (mouseWithinLeftHorizontalHistogramBounds && e.movementX > 0) {
-    //     allowRight = true;
-    //   }
-    // }
-
-    // // Handle time range drawing
-    // if (drawingRange && (allowLeft || allowRight)) {
-    //   drawRangeDistance += Math.abs(e.movementX);
-    //   // Ensure user has drawn at least a pixel to differentiate between
-    //   // ranges ranges and centering the slider on click
-    //   if (isDrawingRangeInProgress()) {
-    //     // Determine new slider position, allow user to move left or right of the pivot point
-    //     if (cursorLeft - drawingPivotLeft < 0) {
-    //       left = cursorLeft;
-    //       width = Math.abs(cursorLeft - drawingPivotLeft);
-    //     } else {
-    //       left = drawingPivotLeft;
-    //       width = cursorLeft - drawingPivotLeft;
-    //     }
-    //   }
-    // }
-
-    // // Handle move and handle drag
-    // if (allowLeft || allowRight) {
-    //   const sliderRect = timeSelectorContainer.getBoundingClientRect();
-    //   if (movingSlider) {
-    //     // TODO don't use movement, use actual position since this is changing depending
-    //     // on what you hover over..
-    //     if (sliderRect.left + e.movementX < histRect.left) {
-    //       left = 0;
-    //     } else if (sliderRect.right + e.movementX > histRect.right) {
-    //       left = histRect.width - sliderRect.width;
-    //     } else {
-    //       left += e.movementX;
-    //     }
-    //   } else if (resizingSliderLeft) {
-    //     if (!(sliderRect.left + e.movementX < histRect.left)) {
-    //       if (sliderRect.width - e.movementX > minWidth) {
-    //         if (e.movementX < 0) {
-    //           width = sliderRect.width + Math.abs(e.movementX);
-    //           left -= Math.abs(e.movementX);
-    //         } else {
-    //           width = sliderRect.width - Math.abs(e.movementX);
-    //           left += Math.abs(e.movementX);
-    //         }
-    //       } else {
-    //         width = sliderRect.width;
-    //       }
-    //     }
-    //   } else if (resizingSliderRight) {
-    //     if (!(sliderRect.right + e.movementX > histRect.right)) {
-    //       if (sliderRect.width + e.movementX >= minWidth) {
-    //         width = sliderRect.width + e.movementX;
-    //       } else {
-    //         width = sliderRect.width;
-    //       }
-    //     }
-    //   }
-    // }
   }
-
-  // function isDrawingRangeInProgress() {
-  //   return drawRangeDistance > 1;
-  // }
-
-  // function onMouseUp(e: MouseEvent) {
-  //   return;
-  //   e.preventDefault();
-  //   e.stopPropagation();
-
-  //   if (movingSlider || resizingSliderLeft || resizingSliderRight || (drawingRange && isDrawingRangeInProgress())) {
-  //     const unixEpochTimeMin = xScaleMax.invert(left).getTime();
-  //     const unixEpochTimeMax = xScaleMax.invert(left + width).getTime();
-  //     const doyTimeMin = new Date(unixEpochTimeMin);
-  //     const doyTimeMax = new Date(unixEpochTimeMax);
-
-  //     const newViewTimeRange = { end: doyTimeMax.getTime(), start: doyTimeMin.getTime() };
-  //     dispatch('viewTimeRangeChanged', newViewTimeRange);
-  //   }
-
-  //   movingSlider = false;
-  //   resizingSliderLeft = false;
-  //   resizingSliderRight = false;
-  //   drawingRange = false;
-  // }
 </script>
 
 <div
@@ -448,7 +313,7 @@
       triggerTarget: histogramContainer,
     }}
     class="timeline-histogram-cursor"
-    style={`left: ${cursorLeft}px;`}
+    style={`left: ${cursorLeft}px; opacity: ${brushing ? 0 : 1}`}
     hidden={!cursorVisible && !timelineHovering}
   />
 
@@ -495,7 +360,7 @@
   {/if}
 </div>
 
-<svelte:window on:mousemove={onMouseMove} />
+<svelte:window on:mousemove={onWindowMouseMove} />
 
 <style>
   .timeline-histogram {
