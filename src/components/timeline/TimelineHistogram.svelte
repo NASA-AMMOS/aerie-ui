@@ -22,7 +22,6 @@
   const dispatch = createEventDispatcher();
 
   let brush: Selection<SVGGElement, unknown, null, undefined>;
-  let xBrush;
   let histogramContainer: HTMLDivElement;
   let gTimeSelectorContainer: SVGGElement;
   let left = 0;
@@ -44,7 +43,7 @@
   let filteredActivityPoints: ActivityPoint[] = [];
 
   $: if (drawWidth) {
-    xBrush = brushX()
+    const xBrush = brushX()
       .extent([
         [0, 0],
         [drawWidth, drawHeight],
