@@ -3,7 +3,7 @@
   import ArrowRightIcon from '@nasa-jpl/stellar/icons/arrow_right.svg?component';
   import MinusIcon from '@nasa-jpl/stellar/icons/minus.svg?component';
   import PlusIcon from '@nasa-jpl/stellar/icons/plus.svg?component';
-  import ArrowClockwiseIcon from 'bootstrap-icons/icons/arrow-clockwise.svg?component';
+  import RotateCounterClockwiseIcon from '@nasa-jpl/stellar/icons/rotate_counter_clockwise.svg?component';
   import { onMount } from 'svelte';
   import { maxTimeRange, viewTimeRange } from '../../stores/plan';
   import { tooltip } from '../../utilities/tooltip';
@@ -132,7 +132,7 @@
   on:click={onResetViewTimeRange}
   use:tooltip={{ content: `Reset Visible Time Range '0'`, placement: 'bottom' }}
 >
-  <ArrowClockwiseIcon />
+  <RotateCounterClockwiseIcon />
 </button>
 
 <style>
