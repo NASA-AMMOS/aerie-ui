@@ -22,8 +22,8 @@
   let clientWidth: number = 0;
   let cursorEnabled: boolean = true;
   let cursorHeaderHeight: number = 20;
-  let mouseOver: MouseOver;
   let histogramCursorTime: Date | null = null;
+  let mouseOver: MouseOver;
   let mouseOverViolations: MouseOverViolations;
   let rowDragMoveDisabled = true;
   let rowsMaxHeight: number = 600;
@@ -31,10 +31,10 @@
   let tickCount: number = 5;
   let timeline: Timeline;
   let timelineDiv: HTMLDivElement;
-  let xAxisDiv: HTMLDivElement;
   let timelineHistogramDiv: HTMLDivElement;
-  let xAxisDrawHeight: number = 56;
   let timelineHistogramDrawHeight: number = 40;
+  let xAxisDiv: HTMLDivElement;
+  let xAxisDrawHeight: number = 56;
 
   $: timeline = $view?.definition.plan.timelines.find(timeline => timeline.id === timelineId);
   $: rows = timeline?.rows || [];

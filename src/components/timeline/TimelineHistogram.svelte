@@ -21,26 +21,26 @@
 
   const dispatch = createEventDispatcher();
 
-  let brush: Selection<SVGGElement, unknown, null, undefined>;
-  let histogramContainer: HTMLDivElement;
-  let gTimeSelectorContainer: SVGGElement;
-  let left = 0;
-  let width = 0;
-  let brushing = false;
-  let movingSlider = false;
-  let resizingSliderLeft = false;
-  let resizingSliderRight = false;
   let activityHistValues: number[] = [];
-  let constraintViolationsToRender: { width: number; x: number }[] = [];
   let activityHistMax = 0;
-  let numBinsMax = 300;
-  let numBinsMin = 50;
-  let cursorVisible = false;
+  let brush: Selection<SVGGElement, unknown, null, undefined>;
+  let brushing = false;
+  let constraintViolationsToRender: { width: number; x: number }[] = [];
   let cursorLeft = 0;
   let cursorTooltip = '';
-  let timelineHovering = false;
+  let cursorVisible = false;
   let drawingRange = false;
   let filteredActivityPoints: ActivityPoint[] = [];
+  let gTimeSelectorContainer: SVGGElement;
+  let histogramContainer: HTMLDivElement;
+  let left = 0;
+  let movingSlider = false;
+  let numBinsMax = 300;
+  let numBinsMin = 50;
+  let resizingSliderLeft = false;
+  let resizingSliderRight = false;
+  let timelineHovering = false;
+  let width = 0;
 
   $: if (drawWidth) {
     const xBrush = brushX()
