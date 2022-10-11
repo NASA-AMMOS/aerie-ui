@@ -163,16 +163,12 @@
     activityLayers.forEach(l => {
       if (l.filter && l.filter.activity?.type) {
         filters.push(l.filter.activity?.type);
-      } else {
-        // TODO chat about what to do here
-        filters.push('.*');
       }
     });
     const r = new RegExp(`(${filters.join('|')})`);
 
     // Bin filtered activities
     for (const point of $activityPoints) {
-      // TODO test this more
       const includeActivity = r.test(point?.label?.text);
       if (includeActivity) {
         filteredActivityPoints.push(point);
