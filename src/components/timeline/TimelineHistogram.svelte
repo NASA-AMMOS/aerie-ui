@@ -6,11 +6,11 @@
   import { select, type Selection } from 'd3-selection';
   import { createEventDispatcher } from 'svelte';
   import { activityPoints } from '../../stores/activities';
+  import { clamp } from '../../utilities/generic';
   import { getDoyTime } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
 
   export let constraintViolations: ConstraintViolation[] = [];
-  export let cursorEnabled: boolean = true;
   export let drawHeight: number = 40;
   export let drawWidth: number = 0;
   export let marginLeft: number = 50;
@@ -70,8 +70,8 @@
           // Do some basic hit detection since there is no way to determine through D3 which handle is
           // being dragged
 
-          // West handle intersection
-          if (sourceX >= handleWestX && sourceX <= handleWestEnd) {
+          // West handle intersection, pad by 1 for differences between hit detection between D3 and browsers
+          if (sourceX + 1 >= handleWestX && sourceX - 1 <= handleWestEnd) {
             onMouseMove(handleWestX + handleWidth / 2, 0, false); // 3px is half of the handle width
           } else {
             // East handle intersection
@@ -257,8 +257,8 @@
 
   function onMouseMove(x: number, y: number, checkY: boolean = true) {
     const histRect = histogramContainer.getBoundingClientRect();
-    const mouseWithinLeftHorizontalHistogramBounds = x >= histRect.x;
-    const mouseWithinRightHorizontalHistogramBounds = x <= histRect.right;
+    const mouseWithinLeftHorizontalHistogramBounds = x >= histRect.x - 1; // Add a bit of padding due to hit detection differences between D3 and browser
+    const mouseWithinRightHorizontalHistogramBounds = x <= histRect.right + 1; // Add a bit of padding due to hit detection differences between D3 and browser
     const mouseWithinHorizontalHistogramBounds =
       mouseWithinLeftHorizontalHistogramBounds && mouseWithinRightHorizontalHistogramBounds;
     const mouseWithinVerticalHistogramBounds = checkY ? y >= histRect.y && y <= histRect.bottom : true;
@@ -267,7 +267,7 @@
     if (mouseWithinVerticalHistogramBounds && mouseWithinHorizontalHistogramBounds) {
       // Update hover cursor
       timelineHovering = true;
-      cursorLeft = x - histRect.left;
+      cursorLeft = clamp(x - histRect.left, 0, histRect.width); // Ensure cursor is within range
       const cursorTime = xScaleMax.invert(cursorLeft);
       cursorTooltip = getDoyTime(cursorTime, false);
 
@@ -279,6 +279,7 @@
       timelineHovering = false;
       dispatch('cursorTimeChange', null);
     }
+    console.log('cursorLeft :>> ', cursorLeft, x);
   }
 
   function onWindowMouseMove(e: MouseEvent) {
@@ -301,8 +302,7 @@
       triggerTarget: histogramContainer,
     }}
     class="timeline-histogram-cursor"
-    style={`left: ${cursorLeft}px; opacity: ${brushing || (!cursorEnabled && !timelineHovering) ? 0 : 1}`}
-    hidden={!cursorVisible && !timelineHovering}
+    style={`left: ${cursorLeft}px; opacity: ${brushing || !timelineHovering ? 0 : 1}`}
   />
 
   <div
