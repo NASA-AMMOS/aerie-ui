@@ -16,7 +16,7 @@
 
   let axisOffset = 24;
   let violationsOffset = 16;
-  let verticalGuidesOffset = 32;
+  let verticalGuidesOffset = 10;
 </script>
 
 <svg style="height: {drawHeight}px;">
