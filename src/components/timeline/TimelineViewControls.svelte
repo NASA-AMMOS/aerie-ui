@@ -9,6 +9,7 @@
   import { tooltip } from '../../utilities/tooltip';
 
   export let nudgePercent = 0.05;
+  export let minZoomMS = 60000; // Min zoom of one minute
 
   $: maxDuration = $maxTimeRange.end - $maxTimeRange.start;
   $: viewDuration = $viewTimeRange.end - $viewTimeRange.start;
@@ -46,7 +47,7 @@
   function onZoomIn() {
     // Compute current zoom percentage
     const percentZoom = getViewTimeRangePercentZoom();
-    let newDuration = Math.max((percentZoom - 0.05) * maxDuration, 60000); // Min zoom of one minute
+    let newDuration = Math.max((percentZoom - 0.05) * maxDuration, minZoomMS);
 
     const pivotTime = $viewTimeRange.start + viewDuration / 2;
     const newStart = pivotTime - newDuration / 2;
@@ -111,26 +112,43 @@
   }
 </script>
 
-<button class="st-button icon" on:click={onNudgeLeft} use:tooltip={{ content: `Shift Left '['`, placement: 'bottom' }}>
+<button
+  class="st-button icon"
+  on:click={onNudgeLeft}
+  use:tooltip={{ content: `Shift Left '['`, placement: 'bottom' }}
+  disabled={$viewTimeRange.start === $maxTimeRange.start}
+>
   <ArrowLeftIcon />
 </button>
 <button
   class="st-button icon"
   on:click={onNudgeRight}
-  use:tooltip={{ content: `Shift Right '='`, placement: 'bottom' }}
+  use:tooltip={{ content: `Shift Right ']'`, placement: 'bottom' }}
+  disabled={$viewTimeRange.end === $maxTimeRange.end}
 >
   <ArrowRightIcon />
 </button>
-<button class="st-button icon" on:click={onZoomOut} use:tooltip={{ content: `Zoom Out '-'`, placement: 'bottom' }}>
+<button
+  class="st-button icon"
+  on:click={onZoomOut}
+  use:tooltip={{ content: `Zoom Out '-'`, placement: 'bottom' }}
+  disabled={viewDuration === maxDuration}
+>
   <MinusIcon />
 </button>
-<button class="st-button icon" on:click={onZoomIn} use:tooltip={{ content: `Zoom In '='`, placement: 'bottom' }}>
+<button
+  class="st-button icon"
+  on:click={onZoomIn}
+  use:tooltip={{ content: `Zoom In '='`, placement: 'bottom' }}
+  disabled={viewDuration === minZoomMS}
+>
   <PlusIcon />
 </button>
 <button
   class="st-button icon"
   on:click={onResetViewTimeRange}
   use:tooltip={{ content: `Reset Visible Time Range '0'`, placement: 'bottom' }}
+  disabled={viewDuration === maxDuration}
 >
   <RotateCounterClockwiseIcon />
 </button>
