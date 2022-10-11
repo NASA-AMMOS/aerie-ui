@@ -111,7 +111,7 @@
   }
 </script>
 
-<button class="st-button icon" on:click={onNudgeLeft} use:tooltip={{ content: `Shift Left '['`, placement: 'bleft' }}>
+<button class="st-button icon" on:click={onNudgeLeft} use:tooltip={{ content: `Shift Left '['`, placement: 'bottom' }}>
   <ArrowLeftIcon />
 </button>
 <button
