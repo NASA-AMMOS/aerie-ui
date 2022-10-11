@@ -10,6 +10,7 @@
   import { tooltip } from '../../utilities/tooltip';
 
   export let constraintViolations: ConstraintViolation[] = [];
+  export let cursorEnabled: boolean = true;
   export let drawHeight: number = 40;
   export let drawWidth: number = 0;
   export let marginLeft: number = 50;
@@ -304,7 +305,7 @@
       triggerTarget: histogramContainer,
     }}
     class="timeline-histogram-cursor"
-    style={`left: ${cursorLeft}px; opacity: ${brushing ? 0 : 1}`}
+    style={`left: ${cursorLeft}px; opacity: ${brushing || (!cursorEnabled && !timelineHovering) ? 0 : 1}`}
     hidden={!cursorVisible && !timelineHovering}
   />
 

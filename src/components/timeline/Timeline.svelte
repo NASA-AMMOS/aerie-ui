@@ -144,15 +144,16 @@
 <div bind:this={timelineDiv} bind:clientWidth class="timeline" id={`timeline-${timelineId}`}>
   <div bind:this={timelineHistogramDiv} style="padding-top: 12px">
     <TimelineHistogram
-      marginLeft={timeline?.marginLeft}
       constraintViolations={$constraintViolations}
-      viewTimeRange={$viewTimeRange}
+      {cursorEnabled}
       drawHeight={timelineHistogramDrawHeight}
+      {drawWidth}
+      marginLeft={timeline?.marginLeft}
+      {mouseOver}
       {rows}
+      viewTimeRange={$viewTimeRange}
       {xScaleView}
       {xScaleMax}
-      {drawWidth}
-      {mouseOver}
       on:viewTimeRangeChanged={onHistogramViewTimeRangeChanged}
       on:cursorTimeChange={onHistogramCursorTimeChanged}
     />
