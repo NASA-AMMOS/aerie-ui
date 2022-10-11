@@ -73,20 +73,6 @@
     $viewTimeRange = { end: newEnd, start: newStart };
   }
 
-  // function onShiftLeft() {
-  //   // Shift the time window to the left
-  //   const newStart = Math.max($viewTimeRange.start - viewDuration, $maxTimeRange.start);
-  //   const newEnd = Math.min(newStart + viewDuration, $maxTimeRange.end);
-  //   $viewTimeRange = { end: newEnd, start: newStart };
-  // }
-
-  // function onShiftRight() {
-  //   // Shift the time window to the right
-  //   const newEnd = Math.min($viewTimeRange.end + viewDuration, $maxTimeRange.end);
-  //   const newStart = Math.max(newEnd - viewDuration, $maxTimeRange.start);
-  //   $viewTimeRange = { end: newEnd, start: newStart };
-  // }
-
   function onNudgeLeft() {
     // Nudge the time window to the left 5%
     const newStart = Math.max($viewTimeRange.start - viewDuration * nudgePercent, $maxTimeRange.start);
