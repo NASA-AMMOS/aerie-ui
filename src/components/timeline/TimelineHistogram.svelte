@@ -35,14 +35,12 @@
   let filteredActivityPoints: ActivityPoint[] = [];
   let gTimeSelectorContainer: SVGGElement;
   let histogramContainer: HTMLDivElement;
-  let left = 0;
   let movingSlider = false;
   let numBinsMax = 300;
   let numBinsMin = 50;
   let resizingSliderLeft = false;
   let resizingSliderRight = false;
   let timelineHovering = false;
-  let width = 0;
 
   $: if (drawWidth) {
     const xBrush = brushX()
@@ -99,8 +97,8 @@
           return;
         }
 
-        let start;
-        let end;
+        let start: number;
+        let end: number;
         if (!event.selection) {
           const unixEpochTime = xScaleMax.invert(event.sourceEvent.offsetX).getTime();
           const startDate = new Date(viewTimeRange.start).getTime();
@@ -187,12 +185,6 @@
 
   $: windowMax = xScaleMax?.range()[0];
   $: windowMin = xScaleMax?.range()[1];
-
-  $: if (viewTimeRange) {
-    const extent = [new Date(viewTimeRange.start), new Date(viewTimeRange.end)].map(xScaleMax);
-    left = extent[0];
-    width = extent[1] - extent[0];
-  }
 
   // Update histograms if xScaleMax, activities, or constraint violation changes
   $: if ((xScaleMax || filteredActivityPoints || constraintViolations) && windowMin - windowMax > 0) {
