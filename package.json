@@ -73,6 +73,7 @@
     "@testing-library/svelte": "^3.2.2",
     "@types/cookie": "^0.5.1",
     "@types/d3-axis": "^3.0.1",
+    "@types/d3-brush": "^3.0.1",
     "@types/d3-drag": "^3.0.1",
     "@types/d3-quadtree": "^3.0.2",
     "@types/d3-scale": "^4.0.2",
