@@ -4,7 +4,6 @@
   import MinusIcon from '@nasa-jpl/stellar/icons/minus.svg?component';
   import PlusIcon from '@nasa-jpl/stellar/icons/plus.svg?component';
   import RotateCounterClockwiseIcon from '@nasa-jpl/stellar/icons/rotate_counter_clockwise.svg?component';
-  import { onMount } from 'svelte';
   import { maxTimeRange, viewTimeRange } from '../../stores/plan';
   import { tooltip } from '../../utilities/tooltip';
 
@@ -13,14 +12,6 @@
 
   $: maxDuration = $maxTimeRange.end - $maxTimeRange.start;
   $: viewDuration = $viewTimeRange.end - $viewTimeRange.start;
-
-  onMount(() => {
-    document.addEventListener('keydown', onKeydown);
-
-    return () => {
-      document.removeEventListener('keydown', onKeydown);
-    };
-  });
 
   function onKeydown(e: KeyboardEvent & { target: HTMLInputElement }) {
     // If user holds shift while not focused on an input then activate the temporary unlock.
@@ -97,6 +88,8 @@
     $viewTimeRange = $maxTimeRange;
   }
 </script>
+
+<svelte:window on:keydown={onKeydown} />
 
 <button
   class="st-button icon"
