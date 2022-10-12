@@ -13,7 +13,7 @@
   $: maxDuration = $maxTimeRange.end - $maxTimeRange.start;
   $: viewDuration = $viewTimeRange.end - $viewTimeRange.start;
 
-  function onKeydown(e: KeyboardEvent & { target: HTMLInputElement }) {
+  function onKeydown(e: KeyboardEvent & { currentTarget: EventTarget & Window; target: HTMLElement }) {
     // If user holds shift while not focused on an input then activate the temporary unlock.
     // If an input is focused, we assume they're holding shift to capitalize instead.
     if (e.target.tagName !== 'INPUT') {
