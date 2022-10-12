@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import type { ColDef, ColumnState } from 'ag-grid-community';
+  import type { ColDef, ColumnState, ValueFormatterParams, ValueGetterParams } from 'ag-grid-community';
   import { view, viewUpdateActivityTables } from '../../stores/views';
   import GridMenu from '../menus/GridMenu.svelte';
   import Menu from '../menus/Menu.svelte';
@@ -22,11 +22,14 @@
     arguments: {
       field: 'arguments',
       filter: 'text',
+      filterValueGetter: (params: ValueGetterParams<Activity>) => {
+        return JSON.stringify(params.data.arguments);
+      },
       headerName: 'Arguments',
       hide: true,
       resizable: true,
       sortable: false,
-      valueFormatter: (argumentsMap: ArgumentsMap) => {
+      valueFormatter: ({ value: argumentsMap }: ValueFormatterParams<Activity, ArgumentsMap>) => {
         return JSON.stringify(argumentsMap);
       },
     },
@@ -65,10 +68,16 @@
     metadata: {
       field: 'metadata',
       filter: 'text',
+      filterValueGetter: (params: ValueGetterParams<Activity>) => {
+        return JSON.stringify(params.data.metadata);
+      },
       headerName: 'Metadata',
       hide: true,
       resizable: true,
       sortable: false,
+      valueFormatter: ({ value: metadata }: ValueFormatterParams<TRowData, ActivityMetadata>) => {
+        return JSON.stringify(metadata);
+      },
     },
     name: {
       field: 'name',
@@ -111,6 +120,7 @@
       sortable: true,
     },
   };
+
   let activityTable: ViewActivityTable;
   let derivedColumnDefs: ColDef[] = [];
   let columnMenuItems: ColumnMenuItem[] = [];
