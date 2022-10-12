@@ -3,12 +3,13 @@
 <script lang="ts">
   import { afterUpdate, tick } from 'svelte';
   import { dndzone, SOURCES, TRIGGERS } from 'svelte-dnd-action';
+  import { getDoyTime } from '../..//utilities/time';
   import { selectedActivityId } from '../../stores/activities';
   import { constraintViolations } from '../../stores/constraints';
   import { maxTimeRange, viewTimeRange } from '../../stores/plan';
   import { resources } from '../../stores/simulation';
   import { view, viewUpdateRow, viewUpdateTimeline } from '../../stores/views';
-  import { getDoyTime } from '../../utilities/time';
+  import { clamp } from '../../utilities/generic';
   import { getXScale, MAX_CANVAS_SIZE } from '../../utilities/timeline';
   import TimelineRow from './Row.svelte';
   import TimelineCursors from './TimelineCursors.svelte';
@@ -28,28 +29,55 @@
   let rowDragMoveDisabled = true;
   let rowsMaxHeight: number = 600;
   let rows: Row[] = [];
-  let tickCount: number = 5;
+  let tickCount: number = 20;
   let timeline: Timeline;
   let timelineDiv: HTMLDivElement;
   let timelineHistogramDiv: HTMLDivElement;
   let timelineHistogramDrawHeight: number = 40;
   let xAxisDiv: HTMLDivElement;
-  let xAxisDrawHeight: number = 56;
+  let xAxisDrawHeight: number = 48;
+  let xTicksView = [];
 
   $: timeline = $view?.definition.plan.timelines.find(timeline => timeline.id === timelineId);
   $: rows = timeline?.rows || [];
   $: timeline.gridId = gridId;
   $: drawWidth = clientWidth > 0 ? clientWidth - timeline?.marginLeft - timeline?.marginRight : 0;
+
+  $: if (drawWidth) {
+    // let duration = xScaleView.domain()[1].getTime() - xScaleView.domain()[0].getTime();
+    let ticks = Math.round(drawWidth / 120);
+    tickCount = clamp(ticks, 1, 20);
+    console.log(tickCount, 'tc', ticks);
+  }
+
   $: setRowsMaxHeight(timelineDiv, xAxisDiv, timelineHistogramDiv);
   $: xDomainMax = [new Date($maxTimeRange.start), new Date($maxTimeRange.end)];
   $: xDomainView = [new Date($viewTimeRange.start), new Date($viewTimeRange.end)];
   $: xScaleMax = getXScale(xDomainMax, drawWidth);
   $: xScaleView = getXScale(xDomainView, drawWidth);
-  $: xTicksView = xScaleView.ticks(tickCount).map((date: Date) => {
-    const doyTimestamp = getDoyTime(date, false);
-    const [yearDay, time] = doyTimestamp.split('T');
-    return { date, time, yearDay };
-  });
+
+  $: if (tickCount) {
+    const tickDuration = ($viewTimeRange.end - $viewTimeRange.start) / tickCount;
+    xTicksView = [];
+    for (let i = 0; i < tickCount + 1; i++) {
+      const tickTime = i === tickCount ? $viewTimeRange.end : Math.floor($viewTimeRange.start + i * tickDuration);
+      const tickDate = new Date(tickTime);
+      const doyTimestamp = getDoyTime(tickDate, false);
+      const [yearDay, time] = doyTimestamp.split('T');
+      // const date = $viewTimeRange.start + i * ;
+      // xxTicksViewView = Array(tickCount).fill({});
+      xTicksView.push({ date: tickDate, time, yearDay });
+    }
+    console.log(xTicksView);
+  }
+
+  // $: xTicksView = xScaleView.ticks(tickCount).map((date: Date) => {
+  //   const doyTimestamp = getDoyTime(date, false);
+  //   const [yearDay, time] = doyTimestamp.split('T');
+  //   return { date, time, yearDay };
+  // });
+
+  $: console.log(xTicksView);
 
   afterUpdate(() => {
     setRowsMaxHeight(timelineDiv, xAxisDiv, timelineHistogramDiv);
