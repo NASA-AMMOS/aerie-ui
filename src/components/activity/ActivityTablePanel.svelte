@@ -4,10 +4,9 @@
   import type { ColDef, ColumnState, ValueFormatterParams, ValueGetterParams } from 'ag-grid-community';
   import { view, viewUpdateActivityTables } from '../../stores/views';
   import GridMenu from '../menus/GridMenu.svelte';
-  import Menu from '../menus/Menu.svelte';
-  import MenuItem from '../menus/MenuItem.svelte';
   import Panel from '../ui/Panel.svelte';
   import ActivityTable from './ActivityTable.svelte';
+  import ActivityTableMenu from './ActivityTableMenu.svelte';
 
   export let activityTableId: number;
   export let gridId: number;
@@ -124,7 +123,6 @@
   let activityTable: ViewActivityTable;
   let derivedColumnDefs: ColDef[] = [];
   let columnMenuItems: ColumnMenuItem[] = [];
-  let tableMenu: Menu;
 
   $: activityTable = $view?.definition.plan.activityTables.find(table => table.id === activityTableId);
   $: derivedColumnDefs = Object.values(defaultColumnDefinitions).map((defaultColumnDef: ColDef) => {
@@ -139,31 +137,30 @@
 
     return defaultColumnDef;
   });
-  $: columnMenuItems = Object.values(defaultColumnDefinitions).map((defaultColumnDef: ColDef) => {
-    const columnDef = activityTable.columnDefs.find((columnDef: ColDef) => columnDef.field === defaultColumnDef.field);
+  $: columnMenuItems = derivedColumnDefs.map((derivedColumnDef: ColDef) => {
     const columnState = activityTable.columnStates.find(
-      (columnState: ColumnState) => columnState.colId === defaultColumnDef.field,
+      (columnState: ColumnState) => columnState.colId === derivedColumnDef.field,
     );
 
-    if (columnDef || columnState) {
+    if (columnState) {
       return {
-        field: defaultColumnDef.field as keyof Activity,
-        isHidden: columnState?.hide ?? columnDef.hide ?? false,
-        name: defaultColumnDef.headerName,
+        field: derivedColumnDef.field as keyof Activity,
+        isHidden: columnState?.hide ?? derivedColumnDef.hide ?? false,
+        name: derivedColumnDef.headerName,
       };
     }
 
     return {
-      field: defaultColumnDef.field as keyof Activity,
+      field: derivedColumnDef.field as keyof Activity,
       isHidden: true,
-      name: defaultColumnDef.headerName,
+      name: derivedColumnDef.headerName,
     };
   });
 
-  function onColumnToggleChange(column: ColumnMenuItem) {
+  function onColumnToggleChange({ detail: { field, isHidden } }: CustomEvent) {
     const activityColumnStates: ColumnState[] = activityTable?.columnStates ?? [];
     const existingColumnStateIndex: number = activityColumnStates.findIndex(
-      (columnState: ColumnState) => column.field === columnState.colId,
+      (columnState: ColumnState) => field === columnState.colId,
     );
     if (existingColumnStateIndex >= 0) {
       viewUpdateActivityTables(
@@ -172,7 +169,7 @@
             ...activityColumnStates.slice(0, existingColumnStateIndex),
             {
               ...activityColumnStates[existingColumnStateIndex],
-              hide: !column.isHidden,
+              hide: isHidden,
             },
             ...activityColumnStates.slice(existingColumnStateIndex + 1),
           ],
@@ -185,8 +182,8 @@
           columnStates: [
             ...activityColumnStates,
             {
-              colId: column.field,
-              hide: !column.isHidden,
+              colId: field,
+              hide: isHidden,
             },
           ],
         },
@@ -205,19 +202,11 @@
 <Panel padBody={false}>
   <svelte:fragment slot="header">
     <GridMenu {gridId} title="Activity Table" />
-    <div class="activity-table-container">
-      <div class="grid-menu st-typography-medium" on:click|stopPropagation={() => tableMenu.toggle()}>
-        <div class="title">Table Menu</div>
-        <Menu bind:this={tableMenu} hideAfterClick={false}>
-          {#each columnMenuItems as columnMenuItem (columnMenuItem)}
-            <MenuItem on:click={() => onColumnToggleChange(columnMenuItem)}>
-              <input type="checkbox" checked={!columnMenuItem.isHidden} />
-              <div>{columnMenuItem.name}</div>
-            </MenuItem>
-          {/each}
-        </Menu>
-      </div>
-    </div>
+    <ActivityTableMenu
+      on:toggle-column={onColumnToggleChange}
+      columnDefs={derivedColumnDefs}
+      columnStates={activityTable?.columnStates}
+    />
   </svelte:fragment>
 
   <svelte:fragment slot="body">
@@ -228,33 +217,3 @@
     />
   </svelte:fragment>
 </Panel>
-
-<style>
-  .activity-table-container {
-    height: 100%;
-    position: relative;
-  }
-
-  .grid-menu {
-    align-items: center;
-    border: 1px solid var(--st-gray-30);
-    border-radius: 4px;
-    cursor: pointer;
-    display: flex;
-    font-size: 13px;
-    gap: 5px;
-    height: 24px;
-    justify-content: center;
-    padding: 4px 8px;
-    position: relative;
-    user-select: none;
-  }
-
-  .title {
-    overflow: hidden;
-    position: relative;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    z-index: 1;
-  }
-</style>
