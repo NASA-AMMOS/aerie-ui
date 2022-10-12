@@ -197,6 +197,44 @@
 
     viewUpdateActivityTables({ columnStates: updatedColumnStates }, activityTableId);
   }
+
+  function onHideAllColumns() {
+    viewUpdateActivityTables(
+      {
+        columnStates: derivedColumnDefs.map((columnDef: ColDef) => {
+          const activityColumnStates: ColumnState[] = activityTable?.columnStates ?? [];
+          const existingColumnState: ColumnState | undefined = activityColumnStates.find(
+            (columnState: ColumnState) => columnDef.field === columnState.colId,
+          );
+
+          return {
+            ...existingColumnState,
+            hide: true,
+          };
+        }),
+      },
+      activityTableId,
+    );
+  }
+
+  function onShowAllColumns() {
+    viewUpdateActivityTables(
+      {
+        columnStates: derivedColumnDefs.map((columnDef: ColDef) => {
+          const activityColumnStates: ColumnState[] = activityTable?.columnStates ?? [];
+          const existingColumnState: ColumnState | undefined = activityColumnStates.find(
+            (columnState: ColumnState) => columnDef.field === columnState.colId,
+          );
+
+          return {
+            ...existingColumnState,
+            hide: false,
+          };
+        }),
+      },
+      activityTableId,
+    );
+  }
 </script>
 
 <Panel padBody={false}>
@@ -204,6 +242,8 @@
     <GridMenu {gridId} title="Activity Table" />
     <ActivityTableMenu
       on:toggle-column={onColumnToggleChange}
+      on:hide-all-columns={onHideAllColumns}
+      on:show-all-columns={onShowAllColumns}
       columnDefs={derivedColumnDefs}
       columnStates={activityTable?.columnStates}
     />
