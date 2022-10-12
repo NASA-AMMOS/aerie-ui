@@ -54,11 +54,11 @@
   }
 
   function onHideAllColumns() {
-    dispatch('hide-all-columns');
+    dispatch('show-hide-all-columns', { hide: true });
   }
 
   function onShowAllColumns() {
-    dispatch('show-all-columns');
+    dispatch('show-hide-all-columns', { hide: false });
   }
 
   function onSearchFilterChange(event: Event) {
