@@ -11,6 +11,7 @@
     type ColumnPinnedEvent,
     type ColumnResizedEvent,
     type ColumnState,
+    type ColumnVisibleEvent,
     type GridOptions,
     type RedrawRowsParams,
     type RowClassParams,
@@ -56,11 +57,24 @@
   let gridOptions: GridOptions<TRowData>;
   let gridDiv: HTMLDivElement;
   let onColumnStateChangeDebounced = debounce(onColumnStateChange, 500);
+  let previousColumnDefs: ColDef[] | null = null;
+  let previousColumnState: ColumnState[] | null = null;
   let previousSelectedRowId: RowId | null = null;
 
+  $: {
+    if (JSON.stringify(columnDefs) !== JSON.stringify(previousColumnDefs)) {
+      gridOptions?.api?.setColumnDefs(columnDefs);
+    }
+    previousColumnDefs = columnDefs;
+  }
   $: gridOptions?.api?.setRowData(rowData);
   $: gridOptions?.api?.sizeColumnsToFit();
-  $: gridOptions?.columnApi?.applyColumnState({ applyOrder: true, state: columnStates });
+  $: {
+    if (JSON.stringify(columnStates) !== JSON.stringify(previousColumnState)) {
+      gridOptions?.columnApi?.applyColumnState({ applyOrder: true, state: columnStates });
+    }
+    previousColumnState = columnStates;
+  }
 
   $: {
     const previousSelectedRowIds: RowId[] = [];
@@ -158,6 +172,10 @@
       },
       onColumnResized(event: ColumnResizedEvent<TRowData>) {
         dispatch('columnResized', event);
+        onColumnStateChangeDebounced();
+      },
+      onColumnVisible(event: ColumnVisibleEvent<TRowData>) {
+        dispatch('columnVisible', event);
         onColumnStateChangeDebounced();
       },
       onFilterChanged() {
