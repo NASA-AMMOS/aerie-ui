@@ -11,11 +11,11 @@
   export let columnDefs: ColDef[] = [];
   export let columnStates: ColumnState[] = [];
 
-  interface ColumnMenuItem {
+  type ColumnMenuItem = {
     field: keyof Activity;
     isHidden: boolean;
     name: string;
-  }
+  };
 
   const dispatch = createEventDispatcher();
 
@@ -67,6 +67,7 @@
   }
 </script>
 
+<!-- svelte-ignore a11y-click-events-have-key-events -->
 <div class="grid-menu st-typography-medium" on:click|stopPropagation={() => tableMenu.toggle()}>
   <div class="button"><div class="button-title">...</div></div>
   <Menu bind:this={tableMenu} hideAfterClick={false}>

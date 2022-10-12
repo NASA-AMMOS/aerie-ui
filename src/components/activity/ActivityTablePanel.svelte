@@ -11,12 +11,6 @@
   export let activityTableId: number;
   export let gridId: number;
 
-  interface ColumnMenuItem {
-    field: keyof Activity;
-    isHidden: boolean;
-    name: string;
-  }
-
   const defaultColumnDefinitions: Partial<Record<keyof Activity, ColDef<Activity>>> = {
     arguments: {
       field: 'arguments',
@@ -122,7 +116,6 @@
 
   let activityTable: ViewActivityTable;
   let derivedColumnDefs: ColDef[] = [];
-  let columnMenuItems: ColumnMenuItem[] = [];
 
   $: activityTable = $view?.definition.plan.activityTables.find(table => table.id === activityTableId);
   $: derivedColumnDefs = Object.values(defaultColumnDefinitions).map((defaultColumnDef: ColDef) => {
@@ -136,25 +129,6 @@
     }
 
     return defaultColumnDef;
-  });
-  $: columnMenuItems = derivedColumnDefs.map((derivedColumnDef: ColDef) => {
-    const columnState = activityTable.columnStates.find(
-      (columnState: ColumnState) => columnState.colId === derivedColumnDef.field,
-    );
-
-    if (columnState) {
-      return {
-        field: derivedColumnDef.field as keyof Activity,
-        isHidden: columnState?.hide ?? derivedColumnDef.hide ?? false,
-        name: derivedColumnDef.headerName,
-      };
-    }
-
-    return {
-      field: derivedColumnDef.field as keyof Activity,
-      isHidden: true,
-      name: derivedColumnDef.headerName,
-    };
   });
 
   function onColumnToggleChange({ detail: { field, isHidden } }: CustomEvent) {
