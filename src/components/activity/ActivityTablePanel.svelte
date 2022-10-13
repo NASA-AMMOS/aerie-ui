@@ -1,8 +1,11 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import CollapseIcon from '@nasa-jpl/stellar/icons/collapse.svg?component';
+  import ExpandIcon from '@nasa-jpl/stellar/icons/expand.svg?component';
   import type { ColDef, ColumnState, ValueFormatterParams, ValueGetterParams } from 'ag-grid-community';
   import { view, viewUpdateActivityTables } from '../../stores/views';
+  import { tooltip } from '../../utilities/tooltip';
   import GridMenu from '../menus/GridMenu.svelte';
   import type DataGrid from '../ui/DataGrid/DataGrid.svelte';
   import Panel from '../ui/Panel.svelte';
@@ -205,14 +208,26 @@
 <Panel padBody={false}>
   <svelte:fragment slot="header">
     <GridMenu {gridId} title="Activity Table" />
-    <ActivityTableMenu
-      on:toggle-column={onColumnToggleChange}
-      on:show-hide-all-columns={onShowHideAllColumns}
-      on:auto-size-content={onAutoSizeContent}
-      on:auto-size-space={onAutoSizeSpace}
-      columnDefs={derivedColumnDefs}
-      columnStates={activityTable?.columnStates}
-    />
+    <div class="table-menu">
+      <div class="size-actions">
+        <button
+          class="st-button secondary"
+          use:tooltip={{ content: 'Auto Size Columns to Fit Content', placement: 'top' }}
+          on:click={onAutoSizeContent}><CollapseIcon /></button
+        >
+        <button
+          class="st-button secondary"
+          use:tooltip={{ content: 'Auto Size Columns to Fit Space', placement: 'top' }}
+          on:click={onAutoSizeSpace}><ExpandIcon /></button
+        >
+      </div>
+      <ActivityTableMenu
+        on:toggle-column={onColumnToggleChange}
+        on:show-hide-all-columns={onShowHideAllColumns}
+        columnDefs={derivedColumnDefs}
+        columnStates={activityTable?.columnStates}
+      />
+    </div>
   </svelte:fragment>
 
   <svelte:fragment slot="body">
@@ -224,3 +239,10 @@
     />
   </svelte:fragment>
 </Panel>
+
+<style>
+  .table-menu {
+    column-gap: 1rem;
+    display: flex;
+  }
+</style>

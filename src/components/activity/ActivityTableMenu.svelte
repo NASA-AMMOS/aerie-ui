@@ -1,12 +1,9 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import CollapseIcon from '@nasa-jpl/stellar/icons/collapse.svg?component';
-  import ExpandIcon from '@nasa-jpl/stellar/icons/expand.svg?component';
   import SearchIcon from '@nasa-jpl/stellar/icons/search.svg?component';
   import type { ColDef, ColumnState } from 'ag-grid-community';
   import { createEventDispatcher } from 'svelte';
-  import { tooltip } from '../../utilities/tooltip';
   import Input from '../form/Input.svelte';
   import Menu from '../menus/Menu.svelte';
   import MenuItem from '../menus/MenuItem.svelte';
@@ -64,14 +61,6 @@
     dispatch('show-hide-all-columns', { hide: false });
   }
 
-  function autoSizeContent() {
-    dispatch('auto-size-content');
-  }
-
-  function autoSizeSpace() {
-    dispatch('auto-size-space');
-  }
-
   function onSearchFilterChange(event: Event) {
     const input = event.target as HTMLInputElement;
     searchFilter = input.value;
@@ -84,18 +73,6 @@
   <Menu bind:this={tableMenu} hideAfterClick={false}>
     <div class="header">
       <div class="title">COLUMNS</div>
-      <div class="size-actions">
-        <button
-          class="st-button secondary"
-          use:tooltip={{ content: 'Auto Size Columns to Fit Content', placement: 'top' }}
-          on:click={autoSizeContent}><CollapseIcon /></button
-        >
-        <button
-          class="st-button secondary"
-          use:tooltip={{ content: 'Auto Size Columns to Fit Space', placement: 'top' }}
-          on:click={autoSizeSpace}><ExpandIcon /></button
-        >
-      </div>
     </div>
     <div class="search-field">
       <Input>
