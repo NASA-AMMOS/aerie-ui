@@ -67,7 +67,7 @@
     user-select: none;
   }
 
-  .ticks {
+  .ticks :global(g) {
     font-family: Inter, Helvetica, Sans-Serif;
     font-size: 11px;
   }
