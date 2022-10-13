@@ -8,10 +8,12 @@
   import { tooltip } from '../../utilities/tooltip';
 
   export let nudgePercent = 0.05;
-  export let minZoomMS = 60000; // Min zoom of one minute
+  export let minZoomMS = 100; // Min zoom of one minute
 
   $: maxDuration = $maxTimeRange.end - $maxTimeRange.start;
   $: viewDuration = $viewTimeRange.end - $viewTimeRange.start;
+  $: viewTimeRangePercentZoom = ($viewTimeRange.end - $viewTimeRange.start) / ($maxTimeRange.end - $maxTimeRange.start);
+  $: zoomActionPercent = viewTimeRangePercentZoom < 0.1 ? 0.005 : 0.05;
 
   function onKeydown(e: KeyboardEvent & { currentTarget: EventTarget & Window; target: HTMLElement }) {
     // If user holds shift while not focused on an input then activate the temporary unlock.
@@ -31,14 +33,9 @@
     }
   }
 
-  function getViewTimeRangePercentZoom() {
-    return ($viewTimeRange.end - $viewTimeRange.start) / ($maxTimeRange.end - $maxTimeRange.start);
-  }
-
   function onZoomIn() {
     // Compute current zoom percentage
-    const percentZoom = getViewTimeRangePercentZoom();
-    let newDuration = Math.max((percentZoom - 0.05) * maxDuration, minZoomMS);
+    let newDuration = Math.max((viewTimeRangePercentZoom - zoomActionPercent) * maxDuration, minZoomMS);
 
     const pivotTime = $viewTimeRange.start + viewDuration / 2;
     const newStart = pivotTime - newDuration / 2;
@@ -48,8 +45,7 @@
 
   function onZoomOut() {
     // Compute current zoom percentage
-    const percentZoom = getViewTimeRangePercentZoom();
-    let newDuration = (percentZoom + 0.05) * maxDuration;
+    let newDuration = (viewTimeRangePercentZoom + zoomActionPercent) * maxDuration;
 
     // Clamp zoom
     if (viewDuration >= maxDuration) {
