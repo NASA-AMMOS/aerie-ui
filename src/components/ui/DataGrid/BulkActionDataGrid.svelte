@@ -1,30 +1,12 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import type { ColDef, Column, ColumnState, RedrawRowsParams, RowNode } from 'ag-grid-community';
-  import type { ISizeColumnsToFitParams } from 'ag-grid-community/dist/lib/gridApi';
+  import type { ColDef, ColumnState, RowNode } from 'ag-grid-community';
   import { createEventDispatcher } from 'svelte';
   import ContextMenu from '../../context-menu/ContextMenu.svelte';
   import ContextMenuHeader from '../../context-menu/ContextMenuHeader.svelte';
   import ContextMenuItem from '../../context-menu/ContextMenuItem.svelte';
   import DataGrid from '../../ui/DataGrid/DataGrid.svelte';
-
-  export function autoSizeColumns(keys: (string | Column)[], skipHeader?: boolean) {
-    dataGrid?.autoSizeColumns(keys, skipHeader);
-  }
-  export function autoSizeAllColumns(skipHeader?: boolean) {
-    dataGrid?.autoSizeAllColumns(skipHeader);
-  }
-  // expose ag-grid function to select all visible rows
-  export function selectAllVisible() {
-    dataGrid?.selectAllFiltered();
-  }
-  export function redrawRows(params?: RedrawRowsParams<TRowData>) {
-    dataGrid?.redrawRows(params);
-  }
-  export function sizeColumnsToFit(params?: ISizeColumnsToFitParams) {
-    dataGrid?.sizeColumnsToFit(params);
-  }
 
   export let columnDefs: ColDef[];
   export let columnStates: ColumnState[] = [];

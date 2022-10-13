@@ -4,6 +4,7 @@
   import type { ColDef, ColumnState, ValueFormatterParams, ValueGetterParams } from 'ag-grid-community';
   import { view, viewUpdateActivityTables } from '../../stores/views';
   import GridMenu from '../menus/GridMenu.svelte';
+  import type DataGrid from '../ui/DataGrid/DataGrid.svelte';
   import Panel from '../ui/Panel.svelte';
   import ActivityTable from './ActivityTable.svelte';
   import ActivityTableMenu from './ActivityTableMenu.svelte';
@@ -115,7 +116,7 @@
   };
 
   let activityTable: ViewActivityTable;
-  let dataGrid: ActivityTable;
+  let dataGrid: DataGrid;
   let derivedColumnDefs: ColDef[] = [];
 
   $: activityTable = $view?.definition.plan.activityTables.find(table => table.id === activityTableId);
@@ -216,7 +217,7 @@
 
   <svelte:fragment slot="body">
     <ActivityTable
-      bind:this={dataGrid}
+      bind:dataGrid
       columnDefs={derivedColumnDefs ?? []}
       columnStates={activityTable?.columnStates}
       on:columnStateChange={onColumnStateChange}
