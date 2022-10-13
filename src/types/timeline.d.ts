@@ -144,9 +144,9 @@ type VerticalGuideSelection = {
 };
 
 type XAxisTick = {
+  coarseTime: string;
   date: Date;
-  time: string;
-  yearDay: string;
+  fineTime: string;
 };
 
 /**

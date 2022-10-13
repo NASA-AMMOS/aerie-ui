@@ -15,7 +15,7 @@
   } from 'd3-time';
   import { afterUpdate, tick } from 'svelte';
   import { dndzone, SOURCES, TRIGGERS } from 'svelte-dnd-action';
-  import { getDoyTime } from '../..//utilities/time';
+  import { getDoy, getDoyTime } from '../..//utilities/time';
   import { selectedActivityId } from '../../stores/activities';
   import { constraintViolations } from '../../stores/constraints';
   import { maxTimeRange, viewTimeRange } from '../../stores/plan';
@@ -74,7 +74,8 @@
   $: xDomainMax = [new Date($maxTimeRange.start), new Date($maxTimeRange.end)];
   $: xDomainView = [new Date($viewTimeRange.start), new Date($viewTimeRange.end)];
   $: xScaleMax = getXScale(xDomainMax, drawWidth);
-  $: xScaleView = getXScale(xDomainView, drawWidth); /* .nice(); */
+  $: xScaleView = getXScale(xDomainView, drawWidth);
+  $: xScaleViewDuration = $viewTimeRange.end - $viewTimeRange.start;
 
   // Use a custom D3 time day to force equidistant time intervals
   // for days as opposed to D3's non-uniform intervals that can end early
@@ -87,6 +88,8 @@
     (start, end) => (end.getTime() - start.getTime()) / durationDay,
     date => Math.floor(date.getTime() / durationDay),
   );
+
+  // TODO may need custom hour, week, month?
 
   // From https://github.com/d3/d3-time/blob/main/src/ticks.js
   const customD3TickIntervals: [CountableTimeInterval, number, number][] = [
@@ -140,9 +143,23 @@
 
   $: xTicksView = customD3Ticks(xScaleView.domain()[0].getTime(), xScaleView.domain()[1].getTime(), tickCount).map(
     (date: Date) => {
-      const doyTimestamp = getDoyTime(date, false);
-      const [yearDay, time] = doyTimestamp.split('T');
-      return { date, time, yearDay };
+      // Format fine and coarse time based off duration
+      const doyTimestamp = getDoyTime(date, true);
+      const splits = doyTimestamp.split('T');
+      let coarseTime = splits[0];
+      let fineTime = splits[1];
+      if (xScaleViewDuration > durationYear * tickCount) {
+        coarseTime = date.getFullYear().toString();
+        fineTime = '';
+      } else if (xScaleViewDuration > durationMonth) {
+        coarseTime = date.getFullYear().toString();
+        fineTime = getDoy(date).toString();
+      } else if (xScaleViewDuration > durationHour) {
+        fineTime = splits[1].slice(0, 5);
+      } else if (xScaleViewDuration > durationMinute) {
+        fineTime = splits[1].slice(0, 8);
+      }
+      return { coarseTime, date, fineTime };
     },
   );
 

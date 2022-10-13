@@ -1,6 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import type { ScaleTime } from 'd3-scale';
   import ConstraintViolations from './ConstraintViolations.svelte';
   import RowXAxisTicks from './RowXAxisTicks.svelte';
   import XAxisVerticalGuides from './XAxisVerticalGuides.svelte';
@@ -32,10 +33,10 @@
         {#if drawWidth > 0}
           {#each xTicksView as tick, index}
             <g class="tick st-typography-label" transform="translate({xScaleView(tick.date)}, 0)">
-              <text fill="currentColor" dy="0.5em">{tick.yearDay}</text>
+              <text fill="currentColor" dy="0.5em">{tick.coarseTime}</text>
             </g>
             <g class="tick st-typography-body" transform="translate({xScaleView(tick.date)}, 20)">
-              <text fill="currentColor" dy="0.5em">{tick.time}</text>
+              <text fill="currentColor" dy="0.5em">{tick.fineTime}</text>
             </g>
           {/each}
         {/if}
