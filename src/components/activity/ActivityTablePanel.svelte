@@ -115,6 +115,7 @@
   };
 
   let activityTable: ViewActivityTable;
+  let dataGrid: ActivityTable;
   let derivedColumnDefs: ColDef[] = [];
 
   $: activityTable = $view?.definition.plan.activityTables.find(table => table.id === activityTableId);
@@ -130,6 +131,14 @@
 
     return defaultColumnDef;
   });
+
+  function onAutoSizeContent() {
+    dataGrid?.autoSizeAllColumns();
+  }
+
+  function onAutoSizeSpace() {
+    dataGrid?.sizeColumnsToFit();
+  }
 
   function onColumnToggleChange({ detail: { field, isHidden } }: CustomEvent) {
     const activityColumnStates: ColumnState[] = activityTable?.columnStates ?? [];
@@ -198,6 +207,8 @@
     <ActivityTableMenu
       on:toggle-column={onColumnToggleChange}
       on:show-hide-all-columns={onShowHideAllColumns}
+      on:auto-size-content={onAutoSizeContent}
+      on:auto-size-space={onAutoSizeSpace}
       columnDefs={derivedColumnDefs}
       columnStates={activityTable?.columnStates}
     />
@@ -205,6 +216,7 @@
 
   <svelte:fragment slot="body">
     <ActivityTable
+      bind:this={dataGrid}
       columnDefs={derivedColumnDefs ?? []}
       columnStates={activityTable?.columnStates}
       on:columnStateChange={onColumnStateChange}
