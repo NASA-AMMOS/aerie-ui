@@ -147,6 +147,7 @@ type XAxisTick = {
   coarseTime: string;
   date: Date;
   fineTime: string;
+  hideLabel: boolean = false;
 };
 
 /**

@@ -44,7 +44,8 @@
   let timelineHistogramDrawHeight: number = 40;
   let xAxisDiv: HTMLDivElement;
   let xAxisDrawHeight: number = 64;
-  let xTicksView = [];
+  let estimatedLabelWidthPx: number = 74; // width of MS time which is the largest display format
+  let xTicksView: XAxisTick[] = [];
 
   $: timeline = $view?.definition.plan.timelines.find(timeline => timeline.id === timelineId);
   $: rows = timeline?.rows || [];
@@ -53,9 +54,8 @@
 
   // Compute number of ticks based off draw width
   $: if (drawWidth) {
-    const estimatedTickSizePx = 75;
     const padding = 1.5;
-    let ticks = Math.round(drawWidth / (estimatedTickSizePx * padding));
+    let ticks = Math.round(drawWidth / (estimatedLabelWidthPx * padding));
     tickCount = clamp(ticks, 2, 16);
   }
 
@@ -69,6 +69,7 @@
   $: xScaleViewDuration = $viewTimeRange.end - $viewTimeRange.start;
 
   $: if (viewTimeRangeStartDate && viewTimeRangeEndDate && tickCount) {
+    let labelWidth = estimatedLabelWidthPx; // Compute the actual label width
     xTicksView = customD3Ticks(viewTimeRangeStartDate, viewTimeRangeEndDate, tickCount).map((date: Date) => {
       // Format fine and coarse time based off duration
       const doyTimestamp = getDoyTime(date, true);
@@ -78,16 +79,29 @@
       if (xScaleViewDuration > durationYear * tickCount) {
         coarseTime = date.getFullYear().toString();
         fineTime = '';
+        labelWidth = 29;
       } else if (xScaleViewDuration > durationMonth) {
         coarseTime = date.getFullYear().toString();
         fineTime = getDoy(date).toString();
+        labelWidth = 29;
       } else if (xScaleViewDuration > durationHour) {
         fineTime = splits[1].slice(0, 5);
+        labelWidth = 55;
       } else if (xScaleViewDuration > durationMinute) {
         fineTime = splits[1].slice(0, 8);
+        labelWidth = 55;
       }
-      return { coarseTime, date, fineTime };
+      return { coarseTime, date, fineTime, hideLabel: false };
     });
+
+    // Determine whether or not to hide the last tick label
+    // which has the potential to draw past the drawWidth
+    if (xTicksView.length) {
+      const lastTick = xTicksView[xTicksView.length - 1];
+      if (xScaleView(lastTick.date) + labelWidth > drawWidth) {
+        lastTick.hideLabel = true;
+      }
+    }
   }
 
   afterUpdate(() => {
