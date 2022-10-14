@@ -1,37 +1,24 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { bisector, tickStep } from 'd3-array';
-  import {
-    timeHour,
-    timeInterval,
-    timeMillisecond,
-    timeMinute,
-    timeMonth,
-    timeSecond,
-    timeWeek,
-    timeYear,
-    type CountableTimeInterval,
-  } from 'd3-time';
   import { afterUpdate, tick } from 'svelte';
   import { dndzone, SOURCES, TRIGGERS } from 'svelte-dnd-action';
-  import { getDoy, getDoyTime } from '../..//utilities/time';
   import { selectedActivityId } from '../../stores/activities';
   import { constraintViolations } from '../../stores/constraints';
   import { maxTimeRange, viewTimeRange } from '../../stores/plan';
   import { resources } from '../../stores/simulation';
   import { view, viewUpdateRow, viewUpdateTimeline } from '../../stores/views';
   import { clamp } from '../../utilities/generic';
-  import { getXScale, MAX_CANVAS_SIZE } from '../../utilities/timeline';
+  import { getDoy, getDoyTime } from '../../utilities/time';
   import {
-    durationDay,
+    customD3Ticks,
     durationHour,
     durationMinute,
     durationMonth,
-    durationSecond,
-    durationWeek,
     durationYear,
-  } from './duration';
+    getXScale,
+    MAX_CANVAS_SIZE,
+  } from '../../utilities/timeline';
   import TimelineRow from './Row.svelte';
   import TimelineCursors from './TimelineCursors.svelte';
   import TimelineHistogram from './TimelineHistogram.svelte';
@@ -44,14 +31,13 @@
   let clientWidth: number = 0;
   let cursorEnabled: boolean = true;
   let cursorHeaderHeight: number = 0;
-  // let cursorHeaderHeight: number = 20;
   let histogramCursorTime: Date | null = null;
   let mouseOver: MouseOver;
   let mouseOverViolations: MouseOverViolations;
   let rowDragMoveDisabled = true;
   let rowsMaxHeight: number = 600;
   let rows: Row[] = [];
-  let tickCount: number = 20;
+  let tickCount: number = 10;
   let timeline: Timeline;
   let timelineDiv: HTMLDivElement;
   let timelineHistogramDiv: HTMLDivElement;
@@ -65,84 +51,25 @@
   $: timeline.gridId = gridId;
   $: drawWidth = clientWidth > 0 ? clientWidth - timeline?.marginLeft - timeline?.marginRight : 0;
 
+  // Compute number of ticks based off draw width
   $: if (drawWidth) {
-    let ticks = Math.round(drawWidth / 140);
-    tickCount = clamp(ticks, 2, 15);
+    const estimatedTickSizePx = 75;
+    const padding = 1.5;
+    let ticks = Math.round(drawWidth / (estimatedTickSizePx * padding));
+    tickCount = clamp(ticks, 2, 16);
   }
 
   $: setRowsMaxHeight(timelineDiv, xAxisDiv, timelineHistogramDiv);
   $: xDomainMax = [new Date($maxTimeRange.start), new Date($maxTimeRange.end)];
-  $: xDomainView = [new Date($viewTimeRange.start), new Date($viewTimeRange.end)];
+  $: viewTimeRangeStartDate = new Date($viewTimeRange.start);
+  $: viewTimeRangeEndDate = new Date($viewTimeRange.end);
+  $: xDomainView = [viewTimeRangeStartDate, viewTimeRangeEndDate];
   $: xScaleMax = getXScale(xDomainMax, drawWidth);
   $: xScaleView = getXScale(xDomainView, drawWidth);
   $: xScaleViewDuration = $viewTimeRange.end - $viewTimeRange.start;
 
-  // Use a custom D3 time day to force equidistant time intervals
-  // for days as opposed to D3's non-uniform intervals that can end early
-  // on months or years
-  // See https://github.com/d3/d3-scale/issues/245
-  // And https://observablehq.com/d/906f777c9f2f0701
-  const customD3TimeDay = timeInterval(
-    date => date.setHours(0, 0, 0, 0),
-    (date, step) => date.setDate(date.getDate() + step),
-    (start, end) => (end.getTime() - start.getTime()) / durationDay,
-    date => Math.floor(date.getTime() / durationDay),
-  );
-
-  // TODO may need custom hour, week, month?
-
-  // From https://github.com/d3/d3-time/blob/main/src/ticks.js
-  const customD3TickIntervals: [CountableTimeInterval, number, number][] = [
-    [timeSecond, 1, durationSecond],
-    [timeSecond, 5, 5 * durationSecond],
-    [timeSecond, 15, 15 * durationSecond],
-    [timeSecond, 30, 30 * durationSecond],
-    [timeMinute, 1, durationMinute],
-    [timeMinute, 5, 5 * durationMinute],
-    [timeMinute, 15, 15 * durationMinute],
-    [timeMinute, 30, 30 * durationMinute],
-    [timeHour, 1, durationHour],
-    [timeHour, 3, 3 * durationHour],
-    [timeHour, 6, 6 * durationHour],
-    [timeHour, 12, 12 * durationHour],
-    [customD3TimeDay, 1, durationDay],
-    [customD3TimeDay, 2, 2 * durationDay],
-    [timeWeek, 1, durationWeek],
-    [timeMonth, 1, durationMonth],
-    [timeMonth, 3, 3 * durationMonth],
-    [timeYear, 1, durationYear],
-  ];
-
-  // From https://github.com/d3/d3-time/blob/main/src/ticks.js
-  function customD3TickInterval(start: number, stop: number, count: number) {
-    const target: number = Math.abs(stop - start) / count;
-    const i = bisector(([, , step]) => step).right(customD3TickIntervals, target);
-    if (i === customD3TickIntervals.length) {
-      return timeYear.every(tickStep(start / durationYear, stop / durationYear, count));
-    }
-    if (i === 0) {
-      return timeMillisecond.every(Math.max(tickStep(start, stop, count), 1));
-    }
-    const [t, step] =
-      customD3TickIntervals[
-        target / customD3TickIntervals[i - 1][2] < customD3TickIntervals[i][2] / target ? i - 1 : i
-      ];
-    return t.every(step);
-  }
-
-  // From https://github.com/d3/d3-time/blob/main/src/ticks.js
-  function customD3Ticks(start, stop, count) {
-    const reverse = stop < start;
-    if (reverse) {
-      [start, stop] = [stop, start];
-    }
-    const interval = count && typeof count.range === 'function' ? count : customD3TickInterval(start, stop, count);
-    const ticks = interval ? interval.range(start, +stop + 1) : []; // inclusive stop
-    return reverse ? ticks.reverse() : ticks;
-  }
-
-  $: xTicksView = customD3Ticks(xScaleView.domain()[0].getTime(), xScaleView.domain()[1].getTime(), tickCount).map(
-    (date: Date) => {
+  $: if (viewTimeRangeStartDate && viewTimeRangeEndDate && tickCount) {
+    xTicksView = customD3Ticks(viewTimeRangeStartDate, viewTimeRangeEndDate, tickCount).map((date: Date) => {
       // Format fine and coarse time based off duration
       const doyTimestamp = getDoyTime(date, true);
       const splits = doyTimestamp.split('T');
@@ -160,8 +87,8 @@
         fineTime = splits[1].slice(0, 8);
       }
       return { coarseTime, date, fineTime };
-    },
-  );
+    });
+  }
 
   afterUpdate(() => {
     setRowsMaxHeight(timelineDiv, xAxisDiv, timelineHistogramDiv);
