@@ -1,5 +1,6 @@
 <script lang="ts">
   import AppMenu from '../../components/menus/AppMenu.svelte';
+  import MergeStatusBadge from './MergeStatusBadge.svelte';
 </script>
 
 <div class="nav">
@@ -9,6 +10,8 @@
     <div class="title st-typography-medium">
       <slot name="title" />
     </div>
+    <div class="divider">|</div>
+    <MergeStatusBadge incoming />
     <slot name="left" />
   </div>
   <div class="right">
