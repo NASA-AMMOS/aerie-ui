@@ -31,6 +31,7 @@
   let clientWidth: number = 0;
   let cursorEnabled: boolean = true;
   let cursorHeaderHeight: number = 0;
+  let estimatedLabelWidthPx: number = 74; // width of MS time which is the largest display format
   let histogramCursorTime: Date | null = null;
   let mouseOver: MouseOver;
   let mouseOverViolations: MouseOverViolations;
@@ -44,7 +45,6 @@
   let timelineHistogramDrawHeight: number = 40;
   let xAxisDiv: HTMLDivElement;
   let xAxisDrawHeight: number = 64;
-  let estimatedLabelWidthPx: number = 74; // width of MS time which is the largest display format
   let xTicksView: XAxisTick[] = [];
 
   $: timeline = $view?.definition.plan.timelines.find(timeline => timeline.id === timelineId);
