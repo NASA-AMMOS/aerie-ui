@@ -17,21 +17,18 @@
 
   let axisOffset = 12;
   let violationsOffset = 0;
-  let verticalGuidesOffset = 0;
+  let verticalGuidesOffset = drawHeight - axisOffset - 1;
 </script>
 
 <svg style="height: {drawHeight}px;">
   <g transform="translate({marginLeft}, 0)">
-    <g transform="translate(0, {verticalGuidesOffset})">
-      <XAxisVerticalGuides {drawHeight} {drawWidth} {verticalGuides} {viewTimeRange} {xScaleView} />
-    </g>
     <g transform="translate(0, {drawHeight - axisOffset * 2 + 4})">
       <RowXAxisTicks drawHeight={axisOffset * 2} {xScaleView} {xTicksView} />
     </g>
     <g transform="translate(0, {axisOffset})">
       <g fill="none" class="ticks" text-anchor="left">
         {#if drawWidth > 0}
-          {#each xTicksView as tick, index}
+          {#each xTicksView as tick}
             {#if !tick.hideLabel}
               <g class="tick st-typography-label" transform="translate({xScaleView(tick.date)}, 0)">
                 <text fill="currentColor" dy="0.5em">{tick.coarseTime}</text>
@@ -54,6 +51,9 @@
         {viewTimeRange}
         {xScaleView}
       />
+    </g>
+    <g transform="translate(0, {verticalGuidesOffset})">
+      <XAxisVerticalGuides {drawHeight} {drawWidth} {verticalGuides} {viewTimeRange} {xScaleView} />
     </g>
   </g>
 </svg>
