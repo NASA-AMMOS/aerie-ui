@@ -249,7 +249,6 @@
   }
 
   function onMouseMove(x: number, y: number, checkY: boolean = true) {
-    console.log(histogramContainer);
     const histRect = histogramContainer.getBoundingClientRect();
     const mouseWithinLeftHorizontalHistogramBounds = x >= histRect.x - 1; // Add a bit of padding due to hit detection differences between D3 and browser
     const mouseWithinRightHorizontalHistogramBounds = x <= histRect.right + 1; // Add a bit of padding due to hit detection differences between D3 and browser
@@ -262,7 +261,6 @@
       // Update hover cursor
       timelineHovering = true;
       cursorLeft = clamp(x - histRect.left, 0, histRect.width); // Ensure cursor is within range
-      console.log('yet', cursorLeft);
       const cursorTime = xScaleMax.invert(cursorLeft);
       cursorTooltip = getDoyTime(cursorTime, false);
 
