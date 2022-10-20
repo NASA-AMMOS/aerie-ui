@@ -1,5 +1,6 @@
 <script lang="ts">
-  import PlanIcon from '@nasa-jpl/stellar/icons/plan.svg?component';
+  import PlanWithDownArrowIcon from '@nasa-jpl/stellar/icons/plan_with_down_arrow.svg?component';
+  import PlanWithUpArrowIcon from '@nasa-jpl/stellar/icons/plan_with_up_arrow.svg?component';
   import { createEventDispatcher } from 'svelte';
 
   export let incoming: boolean | null = false;
@@ -13,13 +14,13 @@
   class:outgoing
   on:click={() => dispatch('click')}
 >
-  <span class="status-icon" class:active={incoming}>
-    <PlanIcon />
-  </span>
   <span class="status-icon" class:active={outgoing}>
-    <PlanIcon />
+    <PlanWithDownArrowIcon />
   </span>
-  <span>Merge Status</span>
+  <span class="status-icon" class:active={incoming}>
+    <PlanWithUpArrowIcon />
+  </span>
+  <span>Merge status</span>
 </button>
 
 <style>
@@ -30,6 +31,7 @@
     color: var(--st-white);
     display: flex;
     flex-direction: row;
+    font-size: 14px;
     gap: 8px;
     height: 24px;
     justify-content: center;
