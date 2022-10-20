@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { ScaleTime } from 'd3-scale';
-  import { getDoyTime } from '../../utilities/time';
+  import { getDoyTime, getUnixEpochTime } from '../../utilities/time';
+  import TimelineCursor from './TimelineCursor.svelte';
 
   export let cursorEnabled: boolean = true;
   export let cursorHeaderHeight: number = 20;
@@ -9,21 +10,39 @@
   export let mouseOver: MouseOver;
   export let histogramCursorTime: Date | null = null;
   export let xScaleView: ScaleTime<number, number> | null = null;
+  export let verticalGuides: VerticalGuide[] = [];
+  export let timelineId: number;
+
+  console.log('VERTICAL GUIDES?', timelineId, verticalGuides);
 
   $: onCursorEnableChange(cursorEnabled);
   $: onMouseOver(mouseOver);
   $: onHistogramCursorTime(histogramCursorTime);
+  $: onVerticalGuidesChange(verticalGuides, xScaleView);
   $: if (xScaleView) {
     hideCursor();
   }
 
-  let cursorDiv: HTMLElement = null;
-  let cursorLabelDiv: HTMLElement = null;
   let offsetX: number = -1;
-  let raf: number = null;
+  let cursorX: number = null;
+  let computedVerticalGuides: { id: number; label: Label; x: number }[] = [];
+
+  function onVerticalGuidesChange(verticalGuides: VerticalGuide[], xScaleView) {
+    computedVerticalGuides = verticalGuides.map(verticalGuide => {
+      let unixEpochTime = getUnixEpochTime(verticalGuide.timestamp);
+      let x = xScaleView(unixEpochTime) + marginLeft - 0.5;
+      return {
+        id: verticalGuide.id,
+        label: verticalGuide.label,
+        x,
+      };
+    });
+
+    console.log('ON VERTICAL GUIDES CHANGE', computedVerticalGuides);
+  }
 
   function onMouseOver(event: MouseOver | undefined) {
-    if (event && xScaleView && cursorDiv && cursorLabelDiv) {
+    if (event && xScaleView) {
       offsetX = event.e.offsetX;
       updateCursor();
     } else {
@@ -67,52 +86,44 @@
     if ((cursorEnabled && offsetX >= 0 && offsetX <= drawWidth) || histogramCursorTime) {
       let unixEpochTime = 0;
       let doyTime = '';
-      let x = 0;
       if (histogramCursorTime) {
         unixEpochTime = histogramCursorTime.getTime();
         doyTime = getDoyTime(new Date(unixEpochTime));
-        x = xScaleView(unixEpochTime);
+        cursorX = xScaleView(unixEpochTime);
       } else {
         unixEpochTime = xScaleView.invert(offsetX).getTime();
         doyTime = getDoyTime(new Date(unixEpochTime));
-        x = offsetX;
+        cursorX = offsetX;
       }
+      cursorX = cursorX + marginLeft - 1;
 
-      cancelAnimationFrame(raf);
-      raf = window.requestAnimationFrame(() => {
-        cursorLabelDiv.textContent = doyTime;
-        const cursorLabelWidth = cursorLabelDiv.getBoundingClientRect().width;
-        if (x + cursorLabelWidth + 10 > drawWidth) {
-          cursorLabelDiv.style.transform = 'translateX(calc(-100% - 10px))';
-        } else {
-          cursorLabelDiv.style.transform = 'translateX(10px)';
-        }
-        cursorDiv.style.opacity = '1.0';
-        cursorDiv.style.transform = `translateX(${x + marginLeft - 1}px)`;
-      });
+      // cursorLabelDiv.textContent = doyTime;
+      // const cursorLabelWidth = cursorLabelDiv.getBoundingClientRect().width;
+      // if (cursorX + cursorLabelWidth + 10 > drawWidth) {
+      //   cursorLabelDiv.style.transform = 'translateX(calc(-100% - 10px))';
+      // } else {
+      //   cursorLabelDiv.style.transform = 'translateX(10px)';
+      // }
     } else {
       hideCursor();
     }
   }
 
   function hideCursor() {
-    if (!cursorDiv) {
-      return;
-    }
-
-    cancelAnimationFrame(raf);
-    raf = window.requestAnimationFrame(() => {
-      cursorDiv.style.opacity = '0';
-    });
+    // if (!cursorDiv) {
+    //   return;
+    // }
+    // cursorDiv.style.opacity = '0';
   }
 </script>
 
 <div class="timeline-cursor-margin" style="height: {cursorHeaderHeight}px" />
 <div class="timeline-cursor-container">
   <div class="timeline-cursor-header" />
-  <div bind:this={cursorDiv} class="timeline-cursor">
-    <div bind:this={cursorLabelDiv} class="timeline-cursor-label" />
-  </div>
+  <TimelineCursor x={cursorX} />
+  {#each computedVerticalGuides as guide}
+    <TimelineCursor x={guide.x} />
+  {/each}
 </div>
 
 <style>
@@ -130,46 +141,5 @@
   .timeline-cursor-header {
     height: 1rem;
     position: relative;
-  }
-
-  .timeline-cursor {
-    height: calc(100% + 0.5rem);
-    left: 0;
-    opacity: 0;
-    pointer-events: none;
-    position: absolute;
-    top: -10px;
-    transform: translateX(0);
-  }
-
-  .timeline-cursor::before {
-    background-color: var(--st-gray-50);
-    border-radius: 100%;
-    content: '';
-    display: block;
-    height: 9px;
-    left: -4px;
-    position: absolute;
-    top: -0.5rem;
-    width: 9px;
-  }
-
-  .timeline-cursor::after {
-    background-color: var(--st-gray-50);
-    content: '';
-    display: block;
-    height: 100%;
-    left: 0;
-    position: absolute;
-    top: -0.5rem;
-    width: 1px;
-  }
-
-  .timeline-cursor-label {
-    font-size: 10px;
-    left: 0;
-    position: relative;
-    top: -11px;
-    white-space: nowrap;
   }
 </style>

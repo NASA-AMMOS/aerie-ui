@@ -225,13 +225,15 @@
     />
   </div>
   <TimelineCursors
-    {mouseOver}
-    {histogramCursorTime}
-    {xScaleView}
-    {drawWidth}
     {cursorHeaderHeight}
     {cursorEnabled}
+    {drawWidth}
+    {histogramCursorTime}
     marginLeft={timeline?.marginLeft}
+    {mouseOver}
+    {timelineId}
+    verticalGuides={timeline?.verticalGuides}
+    {xScaleView}
   />
   <div
     class="rows"
