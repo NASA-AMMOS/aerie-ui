@@ -1,6 +1,9 @@
 <script lang="ts">
   import AppMenu from '../../components/menus/AppMenu.svelte';
   import MergeStatusBadge from './MergeStatusBadge.svelte';
+
+  const incomingMergeRequestCount = 1;
+  const outgoingMergeRequestCount = 0;
 </script>
 
 <div class="nav">
@@ -11,7 +14,9 @@
       <slot name="title" />
     </div>
     <div class="divider">|</div>
-    <MergeStatusBadge incoming />
+    {#if incomingMergeRequestCount > 0 || outgoingMergeRequestCount > 0}
+      <MergeStatusBadge {incomingMergeRequestCount} {outgoingMergeRequestCount} />
+    {/if}
     <slot name="left" />
   </div>
   <div class="right">

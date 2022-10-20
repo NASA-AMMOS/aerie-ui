@@ -2,22 +2,26 @@
   import PlanWithDownArrowIcon from '@nasa-jpl/stellar/icons/plan_with_down_arrow.svg?component';
   import PlanWithUpArrowIcon from '@nasa-jpl/stellar/icons/plan_with_up_arrow.svg?component';
   import { createEventDispatcher } from 'svelte';
+  import { tooltip } from '../../utilities/tooltip';
 
-  export let incoming: boolean | null = false;
-  export let outgoing: boolean | null = false;
+  export let incomingMergeRequestCount: number = 0;
+  export let outgoingMergeRequestCount: number = 0;
 
   const dispatch = createEventDispatcher();
 </script>
 
 <button
   class="st-button tertiary merge-status-badge st-typography-medium"
-  class:outgoing
   on:click={() => dispatch('click')}
+  use:tooltip={{
+    content: `${incomingMergeRequestCount} incoming, ${outgoingMergeRequestCount} outgoing`,
+    placement: 'top',
+  }}
 >
-  <span class="status-icon" class:active={outgoing}>
+  <span class="status-icon" class:active={incomingMergeRequestCount > 0}>
     <PlanWithDownArrowIcon />
   </span>
-  <span class="status-icon" class:active={incoming}>
+  <span class="status-icon" class:active={outgoingMergeRequestCount > 0}>
     <PlanWithUpArrowIcon />
   </span>
   <span>Merge status</span>
