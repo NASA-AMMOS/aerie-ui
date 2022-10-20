@@ -890,7 +890,7 @@ const gql = {
           dataset {
             profiles {
               name
-              profile_segments(order_by: { start_offset: asc }) {
+              profile_segments(where: { is_gap: { _eq: false } }, order_by: { start_offset: asc }) {
                 dynamics
                 start_offset
               }
