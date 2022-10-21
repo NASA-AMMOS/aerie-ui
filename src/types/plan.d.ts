@@ -8,6 +8,7 @@ type PlanSchema = {
   model: Model;
   model_id: number;
   name: string;
+  parent_id: number | null;
   revision: number;
   scheduling_specifications: Pick<SchedulingSpec, 'id'>[];
   simulations: [{ simulation_datasets: [{ id: number }] }];

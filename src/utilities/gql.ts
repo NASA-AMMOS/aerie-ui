@@ -284,6 +284,14 @@ const gql = {
     }
   `,
 
+  DUPLICATE_PLAN: `#graphql
+    mutation DuplicatePlan($plan_id: Int!, $new_plan_name: String!) {
+      duplicate_plan(args: {plan_id: $plan_id, new_plan_name: $new_plan_name}) {
+        new_plan_id
+      }
+    }
+  `,
+
   EXPAND: `#graphql
     mutation Expand($expansionSetId: Int!, $simulationDatasetId: Int!) {
       expand: expandAllActivities(expansionSetId: $expansionSetId, simulationDatasetId: $simulationDatasetId) {
@@ -438,6 +446,7 @@ const gql = {
         }
         model_id
         name
+        parent_id
         revision
         scheduling_specifications {
           id

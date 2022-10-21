@@ -1,6 +1,7 @@
 import AboutModal from '../components/modals/AboutModal.svelte';
 import ConfirmModal from '../components/modals/ConfirmModal.svelte';
 import CreateViewModal from '../components/modals/CreateViewModal.svelte';
+import DuplicatePlanModal from '../components/modals/DuplicatePlanModal.svelte';
 import ExpansionSequenceModal from '../components/modals/ExpansionSequenceModal.svelte';
 
 /**
@@ -121,6 +122,37 @@ export async function showExpansionSequenceModal(expansionSequence: ExpansionSeq
         target.replaceChildren();
         target.resolve = null;
         resolve({ confirm: true });
+      });
+    }
+  });
+}
+
+/**
+ * Shows a DuplicatePlanBranchModal with the supplied arguments.
+ */
+export async function showDuplicatePlanBranchModal(plan: Plan): Promise<
+  ModalElementValue<{
+    name: string;
+    plan: Plan;
+  }>
+> {
+  return new Promise(resolve => {
+    const target: ModalElement = document.querySelector('#svelte-modal');
+
+    if (target) {
+      const planModal = new DuplicatePlanModal({ props: { plan }, target });
+      target.resolve = resolve;
+
+      planModal.$on('close', () => {
+        target.replaceChildren();
+        target.resolve = null;
+        resolve({ confirm: false });
+      });
+
+      planModal.$on('create', (e: CustomEvent<{ name: string; plan: Plan }>) => {
+        target.replaceChildren();
+        target.resolve = null;
+        resolve({ confirm: true, value: e.detail });
       });
     }
   });

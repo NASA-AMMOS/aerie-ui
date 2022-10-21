@@ -1,3 +1,5 @@
+import { goto } from '$app/navigation';
+import { base } from '$app/paths';
 import { get } from 'svelte/store';
 import { activitiesMap, selectedActivityId } from '../stores/activities';
 import { checkConstraintsStatus, constraintViolationsMap } from '../stores/constraints';
@@ -18,7 +20,7 @@ import { view } from '../stores/views';
 import { getActivityDirectiveUniqueId } from './activities';
 import { convertToQuery, formatHasuraStringArray, parseFloatOrNull, setQueryParam, sleep } from './generic';
 import gql from './gql';
-import { showConfirmModal, showCreateViewModal } from './modal';
+import { showConfirmModal, showCreateViewModal, showDuplicatePlanBranchModal } from './modal';
 import { reqGateway, reqHasura } from './requests';
 import { Status } from './status';
 import { getDoyTime, getDoyTimeFromDuration, getIntervalFromDoyRange } from './time';
@@ -695,6 +697,26 @@ const effects = {
     } catch (e) {
       console.log(e);
       return false;
+    }
+  },
+
+  async duplicatePlan(plan: Plan): Promise<void> {
+    try {
+      const { confirm, value = null } = await showDuplicatePlanBranchModal(plan);
+
+      if (confirm && value) {
+        const { name, plan } = value;
+        const data = await reqHasura(gql.DUPLICATE_PLAN, {
+          new_plan_name: name,
+          plan_id: plan.id,
+        });
+
+        goto(`${base}/plans/${data.duplicate_plan.new_plan_id}`);
+        showSuccessToast('View Created Successfully');
+      }
+    } catch (e) {
+      console.log(e);
+      showFailureToast('View Create Failed');
     }
   },
 
