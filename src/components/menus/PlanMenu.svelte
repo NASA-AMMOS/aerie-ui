@@ -45,7 +45,6 @@
     display: flex;
     flex-flow: row;
     gap: 20px;
-    margin-left: 1rem;
   }
 
   .grid-menu {
