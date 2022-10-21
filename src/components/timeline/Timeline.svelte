@@ -217,7 +217,7 @@
       drawHeight={xAxisDrawHeight}
       {drawWidth}
       marginLeft={timeline?.marginLeft}
-      verticalGuides={timeline?.verticalGuides}
+      verticalGuides={[]}
       viewTimeRange={$viewTimeRange}
       {xScaleView}
       {xTicksView}

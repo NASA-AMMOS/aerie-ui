@@ -13,45 +13,72 @@
   export let verticalGuides: VerticalGuide[] = [];
   export let timelineId: number;
 
-  console.log('VERTICAL GUIDES?', timelineId, verticalGuides);
+  type ComputedVerticalGuide = { id: number; label: Label; maxWidth: number; x: number };
 
   $: onCursorEnableChange(cursorEnabled);
   $: onMouseOver(mouseOver);
   $: onHistogramCursorTime(histogramCursorTime);
-  $: onVerticalGuidesChange(verticalGuides, xScaleView);
-  $: if (xScaleView) {
-    hideCursor();
-  }
+  $: onVerticalGuidesChange(verticalGuides, xScaleView, drawWidth);
 
   let offsetX: number = -1;
-  let cursorX: number = null;
-  let computedVerticalGuides: { id: number; label: Label; x: number }[] = [];
+  let cursorX: number = 0;
+  let cursorMaxWidth: number = 0;
+  let cursorDOY: string = '';
+  let computedVerticalGuides: ComputedVerticalGuide[] = [];
+  let cursorWithinView = true;
 
-  function onVerticalGuidesChange(verticalGuides: VerticalGuide[], xScaleView) {
-    computedVerticalGuides = verticalGuides.map(verticalGuide => {
+  /**
+   * Sort vertical guides in time order descending.
+   */
+  function sortVerticalGuides(verticalGuides: VerticalGuide[]): VerticalGuide[] {
+    return [...verticalGuides].sort((a: VerticalGuide, b: VerticalGuide) => {
+      const aTime = getUnixEpochTime(a.timestamp);
+      const bTime = getUnixEpochTime(b.timestamp);
+      return bTime - aTime;
+    });
+  }
+
+  function onVerticalGuidesChange(verticalGuides: VerticalGuide[], xScaleView, drawWidth) {
+    let sortedVerticalGuides = sortVerticalGuides(verticalGuides);
+    let tempComputedVerticalGuides: ComputedVerticalGuide[] = [];
+
+    sortedVerticalGuides.forEach((verticalGuide, i) => {
       let unixEpochTime = getUnixEpochTime(verticalGuide.timestamp);
-      let x = xScaleView(unixEpochTime) + marginLeft - 0.5;
-      return {
+      let x = xScaleView(unixEpochTime);
+      let maxWidth = 0;
+
+      if (x < 0 || x > drawWidth) {
+        return;
+      }
+
+      // The maxWidth of the last vertical guide is its x position to edge of the drawWidth
+      // otherwise the maxWidth is the difference from x position of the previous vertical guide
+      if (i === 0) {
+        maxWidth = drawWidth - x;
+      } else {
+        maxWidth = tempComputedVerticalGuides[i - 1].x - x;
+      }
+
+      tempComputedVerticalGuides.push({
         id: verticalGuide.id,
         label: verticalGuide.label,
-        x,
-      };
+        maxWidth,
+        x: x + marginLeft - 0.5,
+      });
     });
 
-    console.log('ON VERTICAL GUIDES CHANGE', computedVerticalGuides);
+    computedVerticalGuides = tempComputedVerticalGuides;
   }
 
   function onMouseOver(event: MouseOver | undefined) {
     if (event && xScaleView) {
       offsetX = event.e.offsetX;
       updateCursor();
-    } else {
-      hideCursor();
     }
   }
 
   function onHistogramCursorTime(date: Date | undefined) {
-    if (!cursorEnabled) {
+    if (!cursorEnabled || !date) {
       return;
     }
 
@@ -70,60 +97,46 @@
     if (dateWithinView) {
       updateCursor();
     } else {
-      hideCursor();
+      cursorWithinView = false;
     }
   }
 
   function onCursorEnableChange(cursorEnabled: boolean) {
     if (cursorEnabled) {
       updateCursor();
-    } else {
-      hideCursor();
     }
   }
 
   function updateCursor() {
     if ((cursorEnabled && offsetX >= 0 && offsetX <= drawWidth) || histogramCursorTime) {
       let unixEpochTime = 0;
-      let doyTime = '';
       if (histogramCursorTime) {
         unixEpochTime = histogramCursorTime.getTime();
-        doyTime = getDoyTime(new Date(unixEpochTime));
+        cursorDOY = getDoyTime(new Date(unixEpochTime));
         cursorX = xScaleView(unixEpochTime);
       } else {
         unixEpochTime = xScaleView.invert(offsetX).getTime();
-        doyTime = getDoyTime(new Date(unixEpochTime));
+        cursorDOY = getDoyTime(new Date(unixEpochTime));
         cursorX = offsetX;
       }
-      cursorX = cursorX + marginLeft - 1;
-
-      // cursorLabelDiv.textContent = doyTime;
-      // const cursorLabelWidth = cursorLabelDiv.getBoundingClientRect().width;
-      // if (cursorX + cursorLabelWidth + 10 > drawWidth) {
-      //   cursorLabelDiv.style.transform = 'translateX(calc(-100% - 10px))';
-      // } else {
-      //   cursorLabelDiv.style.transform = 'translateX(10px)';
-      // }
+      cursorMaxWidth = drawWidth - cursorX;
+      cursorX = cursorX + marginLeft - 0.5;
+      cursorWithinView = true;
     } else {
-      hideCursor();
+      cursorWithinView = false;
     }
-  }
-
-  function hideCursor() {
-    // if (!cursorDiv) {
-    //   return;
-    // }
-    // cursorDiv.style.opacity = '0';
   }
 </script>
 
 <div class="timeline-cursor-margin" style="height: {cursorHeaderHeight}px" />
 <div class="timeline-cursor-container">
   <div class="timeline-cursor-header" />
-  <TimelineCursor x={cursorX} />
   {#each computedVerticalGuides as guide}
-    <TimelineCursor x={guide.x} />
+    <TimelineCursor x={guide.x} label={guide.label.text} maxWidth={guide.maxWidth} />
   {/each}
+  {#if cursorEnabled && cursorWithinView}
+    <TimelineCursor x={cursorX} label={cursorDOY} maxWidth={cursorMaxWidth} />
+  {/if}
 </div>
 
 <style>

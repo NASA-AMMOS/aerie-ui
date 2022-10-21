@@ -1,10 +1,11 @@
 <script lang="ts">
   export let x = 0;
+  export let maxWidth = 0;
   export let label = '';
 </script>
 
 <div class="timeline-cursor" style="transform: translateX({x}px)">
-  <div class="timeline-cursor-label">{label}</div>
+  <div class="timeline-cursor-label" style="max-width: {maxWidth}px">{label}</div>
 </div>
 
 <style>
@@ -42,9 +43,15 @@
   }
 
   .timeline-cursor-label {
-    font-size: 10px;
-    left: 0;
+    background-color: var(--st-gray-15);
+    border-radius: 16px;
+    font-size: 12px;
+    left: 10px;
+    line-height: 16px;
+    overflow: hidden;
+    padding: 0 5px;
     position: relative;
+    text-overflow: ellipsis;
     top: -11px;
     white-space: nowrap;
   }
