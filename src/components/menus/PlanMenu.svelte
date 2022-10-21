@@ -11,8 +11,8 @@
 
   let planMenu: Menu;
 
-  async function createBranch() {
-    await effects.duplicatePlan(plan);
+  function createBranch() {
+    effects.duplicatePlan(plan);
   }
 </script>
 
@@ -24,7 +24,7 @@
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <div class="grid-menu st-typography-medium" on:click|stopPropagation={() => planMenu.toggle()}>
     <div class="plan-title">{plan.name}<ChevronDownIcon /></div>
-    <Menu bind:this={planMenu} hideAfterClick={false}>
+    <Menu bind:this={planMenu}>
       <MenuItem on:click={createBranch}>
         <div class="column-name">Create branch</div>
       </MenuItem>

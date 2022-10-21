@@ -2,13 +2,14 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import DatePicker from '../ui/DatePicker/DatePicker.svelte';
   import Modal from './Modal.svelte';
   import ModalContent from './ModalContent.svelte';
   import ModalFooter from './ModalFooter.svelte';
   import ModalHeader from './ModalHeader.svelte';
 
-  export let height: number = 150;
-  export let width: number = 380;
+  export let height: number = 270;
+  export let width: number = 280;
   export let plan: Plan;
 
   const dispatch = createEventDispatcher();
@@ -49,6 +50,14 @@
         required
         type="text"
       />
+    </fieldset>
+    <fieldset>
+      <label for="start">Start date</label>
+      <DatePicker name="start" disabled dateString={plan.start_time_doy} />
+    </fieldset>
+    <fieldset>
+      <label for="end">End date</label>
+      <DatePicker name="end" disabled dateString={plan.end_time_doy} />
     </fieldset>
   </ModalContent>
   <ModalFooter>
