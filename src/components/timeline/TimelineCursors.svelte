@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { ScaleTime } from 'd3-scale';
+  import { viewUpdateTimeline } from '../../stores/views';
   import { getDoyTime, getUnixEpochTime } from '../../utilities/time';
   import TimelineCursor from './TimelineCursor.svelte';
 
@@ -63,11 +64,34 @@
         id: verticalGuide.id,
         label: verticalGuide.label,
         maxWidth,
-        x: x + marginLeft - 0.5,
+        x: x + marginLeft,
       });
     });
 
     computedVerticalGuides = tempComputedVerticalGuides;
+  }
+
+  function removeVerticalGuide(verticalGuideId: number) {
+    const filteredVerticalGuides = verticalGuides.filter(guide => guide.id !== verticalGuideId);
+    viewUpdateTimeline('verticalGuides', filteredVerticalGuides, timelineId);
+  }
+
+  function addVerticalGuide(doyTimestamp: string) {
+    const id = verticalGuides.reduce((prev, curr) => {
+      if (curr.id >= prev) {
+        return curr.id + 1;
+      }
+      return prev;
+    }, 0);
+    const defaultLabel = `Guide ${id}`;
+    const newVerticalGuide: VerticalGuide = {
+      id,
+      label: { text: defaultLabel },
+      timestamp: doyTimestamp,
+    };
+
+    viewUpdateTimeline('verticalGuides', [...verticalGuides, newVerticalGuide], timelineId);
+    cursorWithinView = false; // Hide active cursor that would overlap the created guide until mouse is moved again
   }
 
   function onMouseOver(event: MouseOver | undefined) {
@@ -120,7 +144,7 @@
         cursorX = offsetX;
       }
       cursorMaxWidth = drawWidth - cursorX;
-      cursorX = cursorX + marginLeft - 0.5;
+      cursorX = cursorX + marginLeft;
       cursorWithinView = true;
     } else {
       cursorWithinView = false;
@@ -132,10 +156,20 @@
 <div class="timeline-cursor-container">
   <div class="timeline-cursor-header" />
   {#each computedVerticalGuides as guide}
-    <TimelineCursor x={guide.x} label={guide.label.text} maxWidth={guide.maxWidth} />
+    <TimelineCursor
+      x={guide.x}
+      label={guide.label.text}
+      maxWidth={guide.maxWidth}
+      on:click={() => removeVerticalGuide(guide.id)}
+    />
   {/each}
   {#if cursorEnabled && cursorWithinView}
-    <TimelineCursor x={cursorX} label={cursorDOY} maxWidth={cursorMaxWidth} />
+    <TimelineCursor
+      x={cursorX}
+      label={cursorDOY}
+      maxWidth={cursorMaxWidth}
+      on:click={() => addVerticalGuide(cursorDOY)}
+    />
   {/if}
 </div>
 

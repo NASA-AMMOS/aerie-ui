@@ -1,16 +1,19 @@
 <script lang="ts">
+  import AddMarkerIcon from '../../icons/add-marker.svg?component';
+
   export let x = 0;
   export let maxWidth = 0;
   export let label = '';
 </script>
 
 <div class="timeline-cursor" style="transform: translateX({x}px)">
+  <button class="timeline-cursor-icon" on:click><AddMarkerIcon /></button>
   <div class="timeline-cursor-label" style="max-width: {maxWidth}px">{label}</div>
 </div>
 
 <style>
   .timeline-cursor {
-    height: calc(100% + 0.5rem);
+    height: 100%;
     left: 0;
     opacity: 1;
     pointer-events: none;
@@ -19,26 +22,30 @@
     transform: translateX(0);
   }
 
-  .timeline-cursor::before {
-    background-color: var(--st-gray-50);
-    border-radius: 100%;
-    content: '';
+  .timeline-cursor-icon {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
     display: block;
-    height: 9px;
-    left: -4px;
+    height: 16px;
+    left: 0;
+    left: -7.5px;
+    margin: 0;
+    padding: 0;
+    pointer-events: all;
     position: absolute;
-    top: -0.5rem;
-    width: 9px;
+    top: -8px;
+    width: 15px;
   }
 
-  .timeline-cursor::after {
+  .timeline-cursor::before {
     background-color: var(--st-gray-50);
     content: '';
     display: block;
     height: 100%;
-    left: 0;
+    left: -0.5px;
     position: absolute;
-    top: -0.5rem;
+    top: 0;
     width: 1px;
   }
 
