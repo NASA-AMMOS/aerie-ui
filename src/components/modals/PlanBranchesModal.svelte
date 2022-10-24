@@ -23,7 +23,7 @@
           <Tab disabled>Active</Tab>
           <Tab disabled>Merged</Tab>
           <Tab disabled>Rejected</Tab>
-          <Tab>All {plan.child_plans.length}</Tab>
+          <Tab>All</Tab>
         </svelte:fragment>
         <TabPanel disabled />
         <TabPanel disabled />
