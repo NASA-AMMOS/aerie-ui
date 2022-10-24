@@ -3,6 +3,7 @@ import ConfirmModal from '../components/modals/ConfirmModal.svelte';
 import CreateViewModal from '../components/modals/CreateViewModal.svelte';
 import DuplicatePlanModal from '../components/modals/DuplicatePlanModal.svelte';
 import ExpansionSequenceModal from '../components/modals/ExpansionSequenceModal.svelte';
+import PlanBranchesModal from '../components/modals/PlanBranchesModal.svelte';
 
 /**
  * Listens for clicks on the document body and removes the modal children.
@@ -108,26 +109,6 @@ export async function showCreateViewModal(): Promise<ModalElementValue<{ name: s
 }
 
 /**
- * Shows a SequenceModal with the supplied arguments.
- */
-export async function showExpansionSequenceModal(expansionSequence: ExpansionSequence): Promise<ModalElementValue> {
-  return new Promise(resolve => {
-    const target: ModalElement = document.querySelector('#svelte-modal');
-
-    if (target) {
-      const sequenceModal = new ExpansionSequenceModal({ props: { expansionSequence }, target });
-      target.resolve = resolve;
-
-      sequenceModal.$on('close', () => {
-        target.replaceChildren();
-        target.resolve = null;
-        resolve({ confirm: true });
-      });
-    }
-  });
-}
-
-/**
  * Shows a DuplicatePlanBranchModal with the supplied arguments.
  */
 export async function showDuplicatePlanBranchModal(plan: Plan): Promise<
@@ -153,6 +134,46 @@ export async function showDuplicatePlanBranchModal(plan: Plan): Promise<
         target.replaceChildren();
         target.resolve = null;
         resolve({ confirm: true, value: e.detail });
+      });
+    }
+  });
+}
+
+/**
+ * Shows a SequenceModal with the supplied arguments.
+ */
+export async function showExpansionSequenceModal(expansionSequence: ExpansionSequence): Promise<ModalElementValue> {
+  return new Promise(resolve => {
+    const target: ModalElement = document.querySelector('#svelte-modal');
+
+    if (target) {
+      const sequenceModal = new ExpansionSequenceModal({ props: { expansionSequence }, target });
+      target.resolve = resolve;
+
+      sequenceModal.$on('close', () => {
+        target.replaceChildren();
+        target.resolve = null;
+        resolve({ confirm: true });
+      });
+    }
+  });
+}
+
+/**
+ * Shows an PlanBranchesModal component with the supplied arguments.
+ */
+export async function showPlanBranchesModal(plan: Plan): Promise<ModalElementValue> {
+  return new Promise(resolve => {
+    const target: ModalElement = document.querySelector('#svelte-modal');
+
+    if (target) {
+      const planBranchesModal = new PlanBranchesModal({ props: { plan }, target });
+      target.resolve = resolve;
+
+      planBranchesModal.$on('close', () => {
+        target.replaceChildren();
+        target.resolve = null;
+        resolve({ confirm: true });
       });
     }
   });
