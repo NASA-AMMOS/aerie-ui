@@ -217,7 +217,6 @@
       drawHeight={xAxisDrawHeight}
       {drawWidth}
       marginLeft={timeline?.marginLeft}
-      verticalGuides={timeline?.verticalGuides}
       viewTimeRange={$viewTimeRange}
       {xScaleView}
       {xTicksView}
@@ -260,7 +259,6 @@
         name={row.name}
         marginLeft={timeline?.marginLeft}
         {rowDragMoveDisabled}
-        verticalGuides={timeline?.verticalGuides}
         viewTimeRange={$viewTimeRange}
         {xScaleView}
         {xTicksView}
