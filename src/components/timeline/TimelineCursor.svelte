@@ -43,6 +43,7 @@
   .timeline-cursor-icon {
     background-color: transparent;
     border: none;
+    color: var(--st-gray-60);
     cursor: pointer;
     display: block;
     height: 16px;
@@ -52,7 +53,7 @@
     padding: 0;
     pointer-events: all;
     position: absolute;
-    top: -8px;
+    top: -9px;
     width: 15px;
   }
 
@@ -73,6 +74,7 @@
     box-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.25);
     font-size: 12px;
     left: 10px;
+    letter-spacing: 0.04em;
     line-height: 16px;
     overflow: hidden;
     padding: 0 5px;
