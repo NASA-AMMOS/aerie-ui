@@ -39,7 +39,11 @@
     });
   }
 
-  function onVerticalGuidesChange(verticalGuides: VerticalGuide[], xScaleView, drawWidth) {
+  function onVerticalGuidesChange(
+    verticalGuides: VerticalGuide[],
+    xScaleView: ScaleTime<number, number> | null,
+    drawWidth: number,
+  ) {
     let sortedVerticalGuides = sortVerticalGuides(verticalGuides);
     let tempComputedVerticalGuides: ComputedVerticalGuide[] = [];
 
