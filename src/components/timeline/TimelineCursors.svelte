@@ -169,6 +169,7 @@
       label={cursorDOY}
       maxWidth={cursorMaxWidth}
       on:click={() => addVerticalGuide(cursorDOY)}
+      activeCursor
     />
   {/if}
 </div>

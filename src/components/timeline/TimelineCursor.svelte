@@ -1,13 +1,31 @@
 <script lang="ts">
   import AddMarkerIcon from '../../icons/add-marker.svg?component';
+  import MarkerIcon from '../../icons/marker.svg?component';
+  import RemoveMarkerIcon from '../../icons/remove-marker.svg?component';
 
   export let x = 0;
   export let maxWidth = 0;
   export let label = '';
+  export let activeCursor = false;
+
+  let hovered = false;
 </script>
 
 <div class="timeline-cursor" style="transform: translateX({x}px)">
-  <button class="timeline-cursor-icon" on:click><AddMarkerIcon /></button>
+  <button
+    class="timeline-cursor-icon"
+    on:click
+    on:mouseenter={() => (hovered = true)}
+    on:mouseleave={() => (hovered = false)}
+  >
+    {#if activeCursor}
+      <AddMarkerIcon />
+    {:else if hovered}
+      <RemoveMarkerIcon />
+    {:else}
+      <MarkerIcon />
+    {/if}
+  </button>
   <div class="timeline-cursor-label" style="max-width: {maxWidth}px;">{label}</div>
 </div>
 
