@@ -706,17 +706,14 @@ const effects = {
 
       if (confirm && value) {
         const { name, plan } = value;
-        const data = await reqHasura(gql.DUPLICATE_PLAN, {
-          new_plan_name: name,
-          plan_id: plan.id,
-        });
-
-        goto(`${base}/plans/${data.duplicate_plan.new_plan_id}`);
-        showSuccessToast('View Created Successfully');
+        const data = await reqHasura(gql.DUPLICATE_PLAN, { new_plan_name: name, plan_id: plan.id });
+        const { duplicate_plan } = data;
+        goto(`${base}/plans/${duplicate_plan.new_plan_id}`);
+        showSuccessToast('Plan Duplicated Successfully');
       }
     } catch (e) {
       console.log(e);
-      showFailureToast('View Create Failed');
+      showFailureToast('Plan Duplicate Failed');
     }
   },
 
