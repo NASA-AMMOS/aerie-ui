@@ -54,10 +54,10 @@
 
       // The maxWidth of the last vertical guide is its x position to edge of the drawWidth
       // otherwise the maxWidth is the difference from x position of the previous vertical guide
-      if (i === 0) {
+      if (!tempComputedVerticalGuides[i - 1]) {
         maxWidth = drawWidth - x;
       } else {
-        maxWidth = tempComputedVerticalGuides[i - 1].x - x;
+        maxWidth = tempComputedVerticalGuides[i - 1].x - x - 20 - marginLeft;
       }
 
       tempComputedVerticalGuides.push({

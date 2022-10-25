@@ -8,7 +8,7 @@
 
 <div class="timeline-cursor" style="transform: translateX({x}px)">
   <button class="timeline-cursor-icon" on:click><AddMarkerIcon /></button>
-  <div class="timeline-cursor-label" style="max-width: {maxWidth}px">{label}</div>
+  <div class="timeline-cursor-label" style="max-width: {maxWidth}px;">{label}</div>
 </div>
 
 <style>
@@ -16,7 +16,7 @@
     height: 100%;
     left: 0;
     opacity: 1;
-    pointer-events: none;
+    pointer-events: all;
     position: absolute;
     top: -10px;
     transform: translateX(0);
@@ -52,14 +52,22 @@
   .timeline-cursor-label {
     background-color: var(--st-gray-15);
     border-radius: 16px;
+    box-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.25);
     font-size: 12px;
     left: 10px;
     line-height: 16px;
     overflow: hidden;
     padding: 0 5px;
+    pointer-events: all;
     position: relative;
     text-overflow: ellipsis;
     top: -11px;
     white-space: nowrap;
+    z-index: 0;
+  }
+
+  .timeline-cursor:hover .timeline-cursor-label {
+    max-width: 100vw !important;
+    z-index: 4;
   }
 </style>
