@@ -109,6 +109,6 @@
     height: 24px;
     justify-content: center;
     line-height: 24px;
-    width: 24px;
+    width: 88px;
   }
 </style>
