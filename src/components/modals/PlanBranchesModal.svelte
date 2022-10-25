@@ -10,8 +10,8 @@
   import ModalHeader from './ModalHeader.svelte';
 
   export let height: number = 270;
-  export let width: number = 400;
   export let plan: Plan;
+  export let width: number = 400;
 </script>
 
 <Modal {height} {width}>
@@ -28,13 +28,13 @@
         <TabPanel disabled />
         <TabPanel disabled />
         <TabPanel disabled />
-        <TabPanel
-          ><div class="plan-branched-plans">
+        <TabPanel>
+          <div class="plan-branched-plans">
             {#each plan.child_plans as childPlan}
               <div class="branched-plan"><a href={`${base}/plans/${childPlan.id}`}>{childPlan.name}</a></div>
             {/each}
-          </div></TabPanel
-        >
+          </div>
+        </TabPanel>
       </Tabs>
     </div>
   </ModalContent>
