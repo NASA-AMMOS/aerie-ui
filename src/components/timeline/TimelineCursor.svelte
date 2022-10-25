@@ -1,7 +1,7 @@
 <script lang="ts">
-  import AddMarkerIcon from '../../icons/add-marker.svg?component';
-  import MarkerIcon from '../../icons/marker.svg?component';
-  import RemoveMarkerIcon from '../../icons/remove-marker.svg?component';
+  import MarkerIcon from '@nasa-jpl/stellar/icons/marker.svg?component';
+  import AddMarkerIcon from '@nasa-jpl/stellar/icons/marker_add.svg?component';
+  import RemoveMarkerIcon from '@nasa-jpl/stellar/icons/marker_remove.svg?component';
 
   export let x = 0;
   export let maxWidth = 0;
