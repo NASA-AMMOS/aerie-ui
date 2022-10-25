@@ -20,7 +20,7 @@ import { view } from '../stores/views';
 import { getActivityDirectiveUniqueId } from './activities';
 import { convertToQuery, formatHasuraStringArray, parseFloatOrNull, setQueryParam, sleep } from './generic';
 import gql from './gql';
-import { showConfirmModal, showCreateViewModal, showDuplicatePlanBranchModal } from './modal';
+import { showConfirmModal, showCreatePlanBranchModal, showCreateViewModal } from './modal';
 import { reqGateway, reqHasura } from './requests';
 import { Status } from './status';
 import { getDoyTime, getDoyTimeFromDuration, getIntervalFromDoyRange } from './time';
@@ -303,6 +303,23 @@ const effects = {
       creatingPlan.set(false);
 
       return null;
+    }
+  },
+
+  async createPlanBranch(plan: Plan): Promise<void> {
+    try {
+      const { confirm, value = null } = await showCreatePlanBranchModal(plan);
+
+      if (confirm && value) {
+        const { name, plan } = value;
+        const data = await reqHasura(gql.DUPLICATE_PLAN, { new_plan_name: name, plan_id: plan.id });
+        const { duplicate_plan } = data;
+        goto(`${base}/plans/${duplicate_plan.new_plan_id}`);
+        showSuccessToast('Branch Created Successfully');
+      }
+    } catch (e) {
+      console.log(e);
+      showFailureToast('Branch Creation Failed');
     }
   },
 
@@ -697,23 +714,6 @@ const effects = {
     } catch (e) {
       console.log(e);
       return false;
-    }
-  },
-
-  async duplicatePlan(plan: Plan): Promise<void> {
-    try {
-      const { confirm, value = null } = await showDuplicatePlanBranchModal(plan);
-
-      if (confirm && value) {
-        const { name, plan } = value;
-        const data = await reqHasura(gql.DUPLICATE_PLAN, { new_plan_name: name, plan_id: plan.id });
-        const { duplicate_plan } = data;
-        goto(`${base}/plans/${duplicate_plan.new_plan_id}`);
-        showSuccessToast('Plan Duplicated Successfully');
-      }
-    } catch (e) {
-      console.log(e);
-      showFailureToast('Plan Duplicate Failed');
     }
   },
 

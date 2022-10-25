@@ -286,7 +286,7 @@ const gql = {
 
   DUPLICATE_PLAN: `#graphql
     mutation DuplicatePlan($plan_id: Int!, $new_plan_name: String!) {
-      duplicate_plan(args: {plan_id: $plan_id, new_plan_name: $new_plan_name}) {
+      duplicate_plan(args: { new_plan_name: $new_plan_name, plan_id: $plan_id }) {
         new_plan_id
       }
     }

@@ -37,7 +37,7 @@
 <svelte:window on:keydown={onKeydown} />
 
 <Modal {height} {width}>
-  <ModalHeader on:close>New Branch</ModalHeader>
+  <ModalHeader on:close>Create Branch</ModalHeader>
   <ModalContent>
     <fieldset>
       <label for="name">Name of branch</label>

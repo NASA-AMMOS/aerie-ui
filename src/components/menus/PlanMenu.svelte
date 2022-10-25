@@ -13,8 +13,8 @@
 
   let planMenu: Menu;
 
-  function createBranch() {
-    effects.duplicatePlan(plan);
+  function createPlanBranch() {
+    effects.createPlanBranch(plan);
   }
 
   function showPlanBranches() {
@@ -31,12 +31,12 @@
   <div class="grid-menu st-typography-medium" on:click|stopPropagation={() => planMenu.toggle()}>
     <div class="plan-title">{plan.name}<ChevronDownIcon /></div>
     <Menu bind:this={planMenu}>
-      <MenuItem on:click={createBranch}>
+      <MenuItem on:click={createPlanBranch}>
         <div class="column-name">Create branch</div>
       </MenuItem>
       <MenuItem
         on:click={() => {
-          console.log('merge');
+          console.log('See merge requests');
         }}
       >
         <div class="column-name">See merge requests</div>
