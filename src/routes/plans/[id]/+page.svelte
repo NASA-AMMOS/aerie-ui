@@ -129,7 +129,7 @@
 
 <CssGrid class="plan-container" rows="42px auto 36px">
   <Nav>
-    <div class="plan-title" slot="title">
+    <div slot="title">
       <PlanMenu plan={data.initialPlan} />
     </div>
     <svelte:fragment slot="right">

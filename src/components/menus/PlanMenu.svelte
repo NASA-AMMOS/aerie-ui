@@ -22,13 +22,15 @@
   }
 </script>
 
-<div class="plan-menu">
+<div class="plan-menu-container">
   {#if plan.parent_plan !== null}
-    <div><a href={`${base}/plans/${plan.parent_plan.id}`} class="link">{plan.parent_plan.name}</a></div>
+    <div>
+      <a href={`${base}/plans/${plan.parent_plan.id}`} class="link">{plan.parent_plan.name}</a>
+    </div>
     <BranchIcon />
   {/if}
   <!-- svelte-ignore a11y-click-events-have-key-events -->
-  <div class="grid-menu st-typography-medium" on:click|stopPropagation={() => planMenu.toggle()}>
+  <div class="plan-menu st-typography-medium" on:click|stopPropagation={() => planMenu.toggle()}>
     <div class="plan-title">{plan.name}<ChevronDownIcon /></div>
     <Menu bind:this={planMenu}>
       <MenuItem on:click={createPlanBranch}>
@@ -52,7 +54,7 @@
 </div>
 
 <style>
-  .plan-menu {
+  .plan-menu-container {
     align-items: center;
     display: flex;
     flex-flow: row;
@@ -68,7 +70,7 @@
     color: var(--st-gray-white);
   }
 
-  .grid-menu {
+  .plan-menu {
     --aerie-menu-item-template-columns: min-content;
     align-items: center;
     cursor: pointer;
