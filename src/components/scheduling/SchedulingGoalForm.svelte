@@ -27,7 +27,6 @@
   let goalAuthor: string | null = initialGoalAuthor;
   let goalCreatedDate: string | null = initialGoalCreatedDate;
   let goalDefinition: string = initialGoalDefinition;
-  let savedGoalDefinition: string = mode === 'create' ? '' : initialGoalDefinition;
   let goalDescription: string = initialGoalDescription;
   let goalId: number | null = initialGoalId;
   let goalModelId: number | null = initialGoalModelId;
@@ -36,11 +35,31 @@
   let models: ModelSlim[] = initialModels;
   let saveButtonEnabled: boolean = false;
   let specId: number | null = initialSpecId;
+  let savedGoal: Partial<SchedulingGoal> = {
+    definition: goalDefinition,
+    description: goalDescription,
+    model_id: goalModelId,
+    name: goalName,
+  };
 
   $: saveButtonEnabled = goalDefinition !== '' && goalModelId !== null && goalName !== '';
-  $: goalModified = goalDefinition !== savedGoalDefinition;
+  $: goalModified = diffPartialGoals(savedGoal, {
+    definition: goalDefinition,
+    description: goalDescription,
+    model_id: goalModelId,
+    name: goalName,
+  });
   $: saveButtonText = mode === 'edit' && !goalModified ? 'Saved' : 'Save';
   $: saveButtonClass = goalModified && saveButtonEnabled ? 'primary' : 'secondary';
+
+  function diffPartialGoals(goalA: Partial<SchedulingGoal>, goalB: Partial<SchedulingGoal>) {
+    return (
+      goalA.definition !== goalB.definition ||
+      goalA.description !== goalB.description ||
+      goalA.model_id !== goalB.model_id ||
+      goalA.name !== goalB.name
+    );
+  }
 
   function onDidChangeModelContent(event: CustomEvent<{ value: string }>) {
     const { detail } = event;
@@ -91,7 +110,7 @@
         const updatedGoal = await effects.updateSchedulingGoal(goalId, goal);
         if (updatedGoal) {
           goalModifiedDate = updatedGoal.modified_date;
-          savedGoalDefinition = goalDefinition;
+          savedGoal = { ...goal };
         }
       }
     }
