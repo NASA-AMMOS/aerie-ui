@@ -71,6 +71,9 @@
     ) {
       return true;
     } else if (constraintA.plan_id === null && constraintB.plan_id === null) {
+      // only diff model_id if both plan_ids are null
+      // to replicate the behavior where when saving a constraint, the model_id is ignored
+      // if a plan_id is supplied
       return constraintA.model_id !== constraintB.model_id;
     }
   }
