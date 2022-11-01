@@ -43,7 +43,7 @@
   };
 
   $: saveButtonEnabled = goalDefinition !== '' && goalModelId !== null && goalName !== '';
-  $: goalModified = diffPartialGoals(savedGoal, {
+  $: goalModified = diffGoals(savedGoal, {
     definition: goalDefinition,
     description: goalDescription,
     model_id: goalModelId,
@@ -52,13 +52,10 @@
   $: saveButtonText = mode === 'edit' && !goalModified ? 'Saved' : 'Save';
   $: saveButtonClass = goalModified && saveButtonEnabled ? 'primary' : 'secondary';
 
-  function diffPartialGoals(goalA: Partial<SchedulingGoal>, goalB: Partial<SchedulingGoal>) {
-    return (
-      goalA.definition !== goalB.definition ||
-      goalA.description !== goalB.description ||
-      goalA.model_id !== goalB.model_id ||
-      goalA.name !== goalB.name
-    );
+  function diffGoals(goalA: Partial<SchedulingGoal>, goalB: Partial<SchedulingGoal>) {
+    return Object.entries(goalA).some(([key, value]) => {
+      return goalB[key] !== value;
+    });
   }
 
   function onDidChangeModelContent(event: CustomEvent<{ value: string }>) {
