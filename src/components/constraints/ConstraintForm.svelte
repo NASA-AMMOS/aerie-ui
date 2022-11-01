@@ -23,7 +23,6 @@
   export let mode: 'create' | 'edit' = 'create';
 
   let constraintDefinition: string = initialConstraintDefinition;
-  let savedConstraintDefinition: string = mode === 'create' ? '' : initialConstraintDefinition;
   let constraintDescription: string = initialConstraintDescription;
   let constraintId: number | null = initialConstraintId;
   let constraintName: string = initialConstraintName;
@@ -33,10 +32,25 @@
   let models: ModelSlim[] = initialModels;
   let plans: PlanSlim[] = initialPlans;
   let saveButtonEnabled: boolean = false;
+  let savedConstraint: Partial<Constraint> = {
+    definition: constraintDefinition,
+    description: constraintDescription,
+    model_id: constraintModelId,
+    name: constraintName,
+    plan_id: constraintPlanId,
+    summary: constraintSummary,
+  };
 
   $: saveButtonEnabled =
     constraintDefinition !== '' && constraintName !== '' && (constraintModelId !== null || constraintPlanId !== null);
-  $: constraintModified = constraintDefinition !== savedConstraintDefinition;
+  $: constraintModified = diffConstraints(savedConstraint, {
+    definition: constraintDefinition,
+    description: constraintDescription,
+    model_id: constraintModelId,
+    name: constraintName,
+    plan_id: constraintPlanId,
+    summary: constraintSummary,
+  });
   $: saveButtonText = mode === 'edit' && !constraintModified ? 'Saved' : 'Save';
   $: saveButtonClass = saveButtonEnabled && constraintModified ? 'primary' : 'secondary';
 
@@ -44,6 +58,20 @@
     const plan = initialPlans.find(plan => plan.id === constraintPlanId);
     if (plan) {
       constraintModelId = plan.model_id;
+    }
+  }
+
+  function diffConstraints(constraintA: Partial<Constraint>, constraintB: Partial<Constraint>) {
+    if (
+      constraintA.definition !== constraintB.definition ||
+      constraintA.description !== constraintB.description ||
+      constraintA.name !== constraintB.name ||
+      constraintA.summary !== constraintB.summary ||
+      constraintA.plan_id !== constraintB.plan_id
+    ) {
+      return true;
+    } else if (constraintA.plan_id === null && constraintB.plan_id === null) {
+      return constraintA.model_id !== constraintB.model_id;
     }
   }
 
@@ -87,7 +115,14 @@
           constraintSummary,
         );
 
-        savedConstraintDefinition = constraintDefinition;
+        savedConstraint = {
+          definition: constraintDefinition,
+          description: constraintDescription,
+          model_id: constraintModelId,
+          name: constraintName,
+          plan_id: constraintPlanId,
+          summary: constraintSummary,
+        };
       }
     }
   }
