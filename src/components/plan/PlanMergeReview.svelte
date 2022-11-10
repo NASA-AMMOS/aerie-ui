@@ -3,8 +3,8 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import MergeIcon from '@nasa-jpl/stellar/icons/merge.svg?component';
   import CheckIcon from '@nasa-jpl/stellar/icons/check.svg?component';
+  import MergeIcon from '@nasa-jpl/stellar/icons/merge.svg?component';
   import PlanWithUpArrow from '@nasa-jpl/stellar/icons/plan_with_up_arrow.svg?component';
   import { activityMetadataDefinitions } from '../../stores/activities';
   import { activityTypesMap } from '../../stores/plan';
