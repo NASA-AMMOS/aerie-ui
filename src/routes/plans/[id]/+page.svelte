@@ -6,6 +6,7 @@
   import BracesAsteriskIcon from 'bootstrap-icons/icons/braces-asterisk.svg?component';
   import ColumnsIcon from 'bootstrap-icons/icons/columns.svg?component';
   import GearWideConnectedIcon from 'bootstrap-icons/icons/gear-wide-connected.svg?component';
+  import { closeActiveModal, showPlanLockedModal } from '../../../utilities/modal';
   import { onDestroy, onMount } from 'svelte';
   import ActivityFormPanel from '../../../components/activity/ActivityFormPanel.svelte';
   import ActivityTablePanel from '../../../components/activity/ActivityTablePanel.svelte';
@@ -37,6 +38,7 @@
     maxTimeRange,
     plan,
     planEndTimeMs,
+    planLocked,
     planStartTimeMs,
     resetPlanStores,
     viewTimeRange,
@@ -74,6 +76,8 @@
     ViewsPanel,
   };
 
+  let planHasBeenLocked = false;
+
   $: if (data.initialPlan) {
     $modelParametersMap = data.initialPlan.model.parameters.parameters;
     $plan = data.initialPlan;
@@ -90,6 +94,14 @@
   }
 
   $: $activitiesMap = createActivitiesMap($plan, $activityDirectives, $simulationSpans);
+
+  $: if ($planLocked) {
+    planHasBeenLocked = true;
+    showPlanLockedModal($plan.id);
+  } else if (planHasBeenLocked) {
+    closeActiveModal();
+    planHasBeenLocked = false;
+  }
 
   onMount(() => {
     if ($view) {

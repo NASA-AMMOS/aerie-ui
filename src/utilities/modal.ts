@@ -1,3 +1,4 @@
+import PlanLockedModal from '../components/modals/PlanLockedModal.svelte';
 import AboutModal from '../components/modals/AboutModal.svelte';
 import ConfirmModal from '../components/modals/ConfirmModal.svelte';
 import CreatePlanBranchModal from '../components/modals/CreatePlanBranchModal.svelte';
@@ -12,7 +13,7 @@ import PlanMergeRequestsModal from '../components/modals/PlanMergeRequestsModal.
  */
 export function modalBodyClickListener(): void {
   const target: ModalElement = document.querySelector('#svelte-modal');
-  if (target && target.resolve) {
+  if (target && target.resolve && target.getAttribute('data-dismissable') !== 'false') {
     target.replaceChildren();
     target.resolve({ confirm: false });
     target.resolve = null;
@@ -24,9 +25,21 @@ export function modalBodyClickListener(): void {
  */
 export function modalBodyKeyListener(event: KeyboardEvent): void {
   const target: ModalElement = document.querySelector('#svelte-modal');
-  if (target && target.resolve && event.key == 'Escape') {
+  if (target && target.resolve && event.key == 'Escape' && target.getAttribute('data-dismissable') !== 'false') {
     target.replaceChildren();
     target.resolve({ confirm: false });
+    target.resolve = null;
+  }
+}
+
+/**
+ * Closes the active modal if found and resolve nothing
+ */
+export function closeActiveModal(): void {
+  const target: ModalElement = document.querySelector('#svelte-modal');
+  if (target && target.resolve) {
+    target.removeAttribute('data-dismissable');
+    target.replaceChildren();
     target.resolve = null;
   }
 }
@@ -80,6 +93,32 @@ export async function showConfirmModal(
         target.replaceChildren();
         target.resolve = null;
         resolve({ confirm: true });
+      });
+    }
+  });
+}
+
+/**
+ * Shows a ConfirmModal component with the supplied arguments.
+ */
+export async function showPlanLockedModal(planId: number): Promise<ModalElementValue> {
+  return new Promise(resolve => {
+    const target: ModalElement = document.querySelector('#svelte-modal');
+
+    if (target) {
+      const planLockedModal = new PlanLockedModal({
+        props: { planId },
+        target,
+      });
+      target.resolve = resolve;
+
+      // Do not allow users to dismiss this modal
+      target.setAttribute('data-dismissable', 'false');
+
+      planLockedModal.$on('close', () => {
+        target.replaceChildren();
+        target.resolve = null;
+        target.removeAttribute('data-dismissable');
       });
     }
   });
