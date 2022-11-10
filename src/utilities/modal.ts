@@ -1,4 +1,3 @@
-import PlanLockedModal from '../components/modals/PlanLockedModal.svelte';
 import AboutModal from '../components/modals/AboutModal.svelte';
 import ConfirmModal from '../components/modals/ConfirmModal.svelte';
 import CreatePlanBranchModal from '../components/modals/CreatePlanBranchModal.svelte';
@@ -6,6 +5,7 @@ import CreateViewModal from '../components/modals/CreateViewModal.svelte';
 import ExpansionSequenceModal from '../components/modals/ExpansionSequenceModal.svelte';
 import PlanBranchesModal from '../components/modals/PlanBranchesModal.svelte';
 import PlanBranchRequestModal from '../components/modals/PlanBranchRequestModal.svelte';
+import PlanLockedModal from '../components/modals/PlanLockedModal.svelte';
 import PlanMergeRequestsModal from '../components/modals/PlanMergeRequestsModal.svelte';
 
 /**

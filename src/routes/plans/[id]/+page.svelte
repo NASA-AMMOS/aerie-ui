@@ -6,7 +6,6 @@
   import BracesAsteriskIcon from 'bootstrap-icons/icons/braces-asterisk.svg?component';
   import ColumnsIcon from 'bootstrap-icons/icons/columns.svg?component';
   import GearWideConnectedIcon from 'bootstrap-icons/icons/gear-wide-connected.svg?component';
-  import { closeActiveModal, showPlanLockedModal } from '../../../utilities/modal';
   import { onDestroy, onMount } from 'svelte';
   import ActivityFormPanel from '../../../components/activity/ActivityFormPanel.svelte';
   import ActivityTablePanel from '../../../components/activity/ActivityTablePanel.svelte';
@@ -55,6 +54,7 @@
   import { createActivitiesMap } from '../../../utilities/activities';
   import effects from '../../../utilities/effects';
   import { setQueryParam } from '../../../utilities/generic';
+  import { closeActiveModal, showPlanLockedModal } from '../../../utilities/modal';
   import { getUnixEpochTime } from '../../../utilities/time';
   import type { PageData } from './$types';
 
