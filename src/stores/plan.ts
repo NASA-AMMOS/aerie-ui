@@ -57,7 +57,7 @@ export const planMergeRequestsIncoming = gqlSubscribable<PlanMergeRequest[]>(
       pending: false,
       type: 'incoming',
     }));
-    requests.sort((a, b) => (a.id > b.id ? 1 : 0));
+    requests.sort((a, b) => (a.id > b.id ? -1 : 0)); // Sort by descending time order
     return requests;
   },
 );
@@ -72,7 +72,7 @@ export const planMergeRequestsOutgoing = gqlSubscribable<PlanMergeRequest[]>(
       pending: false,
       type: 'outgoing',
     }));
-    requests.sort((a, b) => (a.id > b.id ? 1 : 0));
+    requests.sort((a, b) => (a.id > b.id ? -1 : 0)); // Sort by descending time order
     return requests;
   },
 );
