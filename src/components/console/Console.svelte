@@ -8,11 +8,11 @@
 
   const consoleHeaderHeight: number = 36;
 
-  let isOpen: boolean = false;
   let consoleHeight: number = 0;
-  let previousConsoleHeight: number = 300;
   let consoleHeightString: string;
   let consolePositionString: string;
+  let isOpen: boolean = false;
+  let previousConsoleHeight: number = 300;
 
   $: {
     consoleHeightString = `${consoleHeight + consoleHeaderHeight}px`;
