@@ -3,6 +3,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
 
+  export let position: 'bottom' | 'top' = 'bottom';
   export let rowHeight: number = 0;
 
   const dispatch = createEventDispatcher();
@@ -15,8 +16,9 @@
     }
 
     const dy = event.clientY - clientY;
-    const newHeight = rowHeight + dy;
-    if (newHeight >= 50) {
+    const newHeight = rowHeight + (position === 'bottom' ? dy : -dy);
+
+    if (Math.abs(newHeight) >= 50) {
       dispatch('updateRowHeight', { newHeight });
     }
     clientY = event.clientY;

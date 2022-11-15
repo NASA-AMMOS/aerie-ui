@@ -3,9 +3,21 @@
 <script lang="ts">
   import ChevronDownIcon from '@nasa-jpl/stellar/icons/chevron_down.svg?component';
   import ChevronUpIcon from '@nasa-jpl/stellar/icons/chevron_up.svg?component';
+  import RowDragHandleHeight from '../timeline/RowDragHandleHeight.svelte';
   import Tabs from '../ui/Tabs/Tabs.svelte';
 
+  const consoleHeaderHeight: number = 36;
+
   let isOpen: boolean = false;
+  let consoleHeight: number = 0;
+  let previousConsoleHeight: number = 300;
+  let consoleHeightString: string;
+  let consolePositionString: string;
+
+  $: {
+    consoleHeightString = `${consoleHeight + consoleHeaderHeight}px`;
+    consolePositionString = `${-consoleHeight}px`;
+  }
 
   function onSelectTab() {
     isOpen = true;
@@ -13,11 +25,32 @@
 
   function onToggle() {
     isOpen = !isOpen;
+
+    if (!isOpen) {
+      previousConsoleHeight = consoleHeight;
+      consoleHeight = 0;
+    } else {
+      consoleHeight = previousConsoleHeight;
+    }
+  }
+
+  function onUpdateRowHeight(event: CustomEvent<{ newHeight: number }>) {
+    consoleHeight = event.detail.newHeight;
   }
 </script>
 
 <div class="console-container">
-  <div class="console-expand-container" class:expanded={isOpen}>
+  <div
+    class="console-expand-container"
+    class:expanded={isOpen}
+    style:height={consoleHeightString}
+    style:top={consolePositionString}
+  >
+    {#if isOpen}
+      <div class="console-drag-handle ">
+        <RowDragHandleHeight position="top" rowHeight={consoleHeight} on:updateRowHeight={onUpdateRowHeight} />
+      </div>
+    {/if}
     <Tabs on:select-tab={onSelectTab}>
       <svelte:fragment slot="tab-list">
         <div class="console-tabs-container">
@@ -57,9 +90,16 @@
     z-index: 1;
   }
 
-  .console-expand-container.expanded {
-    height: 336px;
-    top: -300px;
+  .console-drag-handle {
+    align-items: center;
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=');
+    background-position: 50% 50%;
+    background-repeat: no-repeat;
+    display: flex;
+    height: 3px;
+    justify-content: center;
+    position: absolute;
+    width: 100%;
   }
 
   .console-tabs-container {
