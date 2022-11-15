@@ -3,6 +3,8 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
 
+  export let minHeight: number = 50;
+  export let maxHeight: number = Infinity;
   export let position: 'bottom' | 'top' = 'bottom';
   export let rowHeight: number = 0;
 
@@ -18,7 +20,7 @@
     const dy = event.clientY - clientY;
     const newHeight = rowHeight + (position === 'bottom' ? dy : -dy);
 
-    if (Math.abs(newHeight) >= 50) {
+    if (newHeight >= minHeight && newHeight <= maxHeight) {
       dispatch('updateRowHeight', { newHeight });
     }
     clientY = event.clientY;
@@ -37,7 +39,7 @@
 
 <svelte:window on:mouseup={onMouseUp} />
 
-<div class="row-drag-handle-height" on:mousedown={onMouseDown} />
+<div class="row-drag-handle-height" on:mousedown|preventDefault={onMouseDown} />
 
 <style>
   div {

@@ -48,7 +48,12 @@
   >
     {#if isOpen}
       <div class="console-drag-handle ">
-        <RowDragHandleHeight position="top" rowHeight={consoleHeight} on:updateRowHeight={onUpdateRowHeight} />
+        <RowDragHandleHeight
+          maxHeight={600}
+          position="top"
+          rowHeight={consoleHeight}
+          on:updateRowHeight={onUpdateRowHeight}
+        />
       </div>
     {/if}
     <Tabs on:select-tab={onSelectTab}>
