@@ -20,22 +20,26 @@
   }
 
   function onSelectTab() {
-    isOpen = true;
+    toggleConsole(true);
   }
 
   function onToggle() {
-    isOpen = !isOpen;
-
-    if (!isOpen) {
-      previousConsoleHeight = consoleHeight;
-      consoleHeight = 0;
-    } else {
-      consoleHeight = previousConsoleHeight;
-    }
+    toggleConsole(!isOpen);
   }
 
   function onUpdateRowHeight(event: CustomEvent<{ newHeight: number }>) {
     consoleHeight = event.detail.newHeight;
+  }
+
+  function toggleConsole(updatedOpenState: boolean) {
+    if (!updatedOpenState) {
+      previousConsoleHeight = consoleHeight;
+      consoleHeight = 0;
+    } else if (!isOpen) {
+      consoleHeight = previousConsoleHeight;
+    }
+
+    isOpen = updatedOpenState;
   }
 </script>
 
