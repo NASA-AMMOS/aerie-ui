@@ -47,10 +47,24 @@
 
 <svelte:window on:mouseup={onMouseUp} />
 
-<div class="row-drag-handle-height" on:mousedown|preventDefault={onMouseDown} />
+<div class="console-drag-handle-container">
+  <div class="console-drag-handle-height" on:mousedown|preventDefault={onMouseDown} />
+</div>
 
 <style>
-  div {
+  .console-drag-handle-container {
+    align-items: center;
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=');
+    background-position: 50% 50%;
+    background-repeat: no-repeat;
+    display: flex;
+    height: 3px;
+    justify-content: center;
+    position: absolute;
+    width: 100%;
+  }
+
+  .console-drag-handle-height {
     background-color: var(--st-gray-20);
     cursor: row-resize;
     height: 3px;
@@ -58,7 +72,7 @@
     width: 100%;
   }
 
-  .row-drag-handle-height:hover {
+  .console-drag-handle-height:hover {
     background-color: var(--st-gray-30);
   }
 </style>

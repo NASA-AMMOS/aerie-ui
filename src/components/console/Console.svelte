@@ -52,9 +52,7 @@
     style:top={consolePositionString}
   >
     {#if isOpen}
-      <div class="console-drag-handle ">
-        <ConsoleDragHandle maxHeight="75%" rowHeight={consoleHeight} on:updateRowHeight={onUpdateRowHeight} />
-      </div>
+      <ConsoleDragHandle maxHeight="75%" rowHeight={consoleHeight} on:updateRowHeight={onUpdateRowHeight} />
     {/if}
     <Tabs on:select-tab={onSelectTab}>
       <svelte:fragment slot="tab-list">
@@ -93,18 +91,6 @@
     top: 0;
     width: 100%;
     z-index: 1;
-  }
-
-  .console-drag-handle {
-    align-items: center;
-    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=');
-    background-position: 50% 50%;
-    background-repeat: no-repeat;
-    display: flex;
-    height: 3px;
-    justify-content: center;
-    position: absolute;
-    width: 100%;
   }
 
   .console-tabs-container {
