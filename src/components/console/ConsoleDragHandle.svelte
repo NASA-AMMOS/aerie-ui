@@ -2,12 +2,24 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import { clamp } from '../../utilities/generic';
 
+  export let minHeight: number | string = 50;
+  export let maxHeight: number | string = Infinity;
   export let rowHeight: number = 0;
 
   const dispatch = createEventDispatcher();
 
   let clientY: number | null = null;
+
+  function getPixelHeight(value: string | number): number {
+    if (typeof value === 'string' && /%/.test(value)) {
+      const valuePercentage = parseInt(value.replace('%', '')) / 100;
+      return valuePercentage * document.body.clientHeight;
+    }
+
+    return parseInt(`${value}`);
+  }
 
   function onMouseMove(event: MouseEvent): void {
     if (clientY == null) {
@@ -15,10 +27,10 @@
     }
 
     const dy = event.clientY - clientY;
-    const newHeight = rowHeight + dy;
-    if (newHeight >= 50) {
-      dispatch('updateRowHeight', { newHeight });
-    }
+    const newHeight = rowHeight - dy;
+
+    dispatch('updateRowHeight', { newHeight: clamp(newHeight, getPixelHeight(minHeight), getPixelHeight(maxHeight)) });
+
     clientY = event.clientY;
   }
 
@@ -35,7 +47,7 @@
 
 <svelte:window on:mouseup={onMouseUp} />
 
-<div class="row-drag-handle-height" on:mousedown={onMouseDown} />
+<div class="row-drag-handle-height" on:mousedown|preventDefault={onMouseDown} />
 
 <style>
   div {

@@ -3,8 +3,9 @@
 <script lang="ts">
   import ChevronDownIcon from '@nasa-jpl/stellar/icons/chevron_down.svg?component';
   import ChevronUpIcon from '@nasa-jpl/stellar/icons/chevron_up.svg?component';
-  import RowDragHandleHeight from '../timeline/RowDragHandleHeight.svelte';
+
   import Tabs from '../ui/Tabs/Tabs.svelte';
+  import ConsoleDragHandle from './ConsoleDragHandle.svelte';
 
   const consoleHeaderHeight: number = 36;
 
@@ -52,12 +53,7 @@
   >
     {#if isOpen}
       <div class="console-drag-handle ">
-        <RowDragHandleHeight
-          maxHeight={600}
-          position="top"
-          rowHeight={consoleHeight}
-          on:updateRowHeight={onUpdateRowHeight}
-        />
+        <ConsoleDragHandle maxHeight="75%" rowHeight={consoleHeight} on:updateRowHeight={onUpdateRowHeight} />
       </div>
     {/if}
     <Tabs on:select-tab={onSelectTab}>
