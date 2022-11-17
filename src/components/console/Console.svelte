@@ -3,7 +3,6 @@
 <script lang="ts">
   import ChevronDownIcon from '@nasa-jpl/stellar/icons/chevron_down.svg?component';
   import ChevronUpIcon from '@nasa-jpl/stellar/icons/chevron_up.svg?component';
-
   import Tabs from '../ui/Tabs/Tabs.svelte';
   import ConsoleDragHandle from './ConsoleDragHandle.svelte';
 
