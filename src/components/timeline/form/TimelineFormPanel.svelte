@@ -1,10 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import PenIcon from '@nasa-jpl/stellar/icons/pen.svg?component';
-  import PlusIcon from '@nasa-jpl/stellar/icons/plus.svg?component';
   import { onMount } from 'svelte';
-  import { dndzone } from 'svelte-dnd-action';
   import Input from '../../../components/form/Input.svelte';
   import {
     selectedLayer,
@@ -22,7 +19,6 @@
     viewUpdateTimeline,
   } from '../../../stores/views';
   import { getTarget } from '../../../utilities/generic';
-  import { tooltip } from '../../../utilities/tooltip';
   import GridMenu from '../../menus/GridMenu.svelte';
   import CssGrid from '../../ui/CssGrid.svelte';
   import Panel from '../../ui/Panel.svelte';
@@ -31,10 +27,6 @@
   import YAxisForm from './YAxisForm.svelte';
 
   export let gridId: number;
-
-  let rows: Row[] = [];
-
-  $: rows = $selectedTimeline?.rows || [];
 
   function updateRowEvent(event: Event) {
     event.stopPropagation();
@@ -46,18 +38,6 @@
     event.stopPropagation();
     const { name, value } = getTarget(event);
     viewUpdateTimeline(name, value);
-  }
-
-  function handleDndConsiderRows(e: CustomEvent<DndEvent>) {
-    const { detail } = e;
-    rows = detail.items as Row[];
-    // viewUpdateTimeline('rows', rows, $selectedTimelineId);
-  }
-
-  function handleDndFinalizeRows(e: CustomEvent<DndEvent>) {
-    const { detail } = e;
-    rows = detail.items as Row[];
-    viewUpdateTimeline('rows', rows, $selectedTimelineId);
   }
 
   onMount(() => {
@@ -77,7 +57,7 @@
 
   <svelte:fragment slot="body">
     <!-- Select Timeline. -->
-    <div class="timeline-select-container">
+    <fieldset>
       <select
         class="st-select w-100"
         data-type="number"
@@ -94,78 +74,10 @@
           </option>
         {/each}
       </select>
-    </div>
+    </fieldset>
 
-    <!-- Timeline -->
-    {#if !$selectedTimeline}
-      <fieldset class="editor-section">No timeline selected</fieldset>
-    {:else}
-      <fieldset class="editor-section">
-        <div class="st-typography-medium editor-section-header">Margins</div>
-        <CssGrid columns="1fr 1fr" gap="8px">
-          <Input>
-            <label for="marginLeft">Margin Left</label>
-            <input
-              class="st-input w-100"
-              name="marginLeft"
-              type="number"
-              value={$selectedTimeline.marginLeft}
-              on:input={updateTimelineEvent}
-            />
-          </Input>
-
-          <Input>
-            <label for="marginRight">Margin Right</label>
-            <input
-              class="st-input w-100"
-              name="marginRight"
-              type="number"
-              value={$selectedTimeline.marginRight}
-              on:input={updateTimelineEvent}
-            />
-          </Input>
-        </CssGrid>
-      </fieldset>
-
-      <fieldset class="editor-section">
-        <div class="editor-section-header editor-section-header-with-button">
-          <div class="st-typography-medium">Vertical Guides</div>
-          <button use:tooltip={{ content: 'New Vertical Guide', placement: 'top' }} class="st-button icon">
-            <PlusIcon />
-          </button>
-        </div>
-      </fieldset>
-
-      <fieldset class="editor-section">
-        <div class="editor-section-header editor-section-header-with-button">
-          <div class="st-typography-medium">Rows</div>
-          <button use:tooltip={{ content: 'New Row', placement: 'top' }} class="st-button icon">
-            <PlusIcon />
-          </button>
-        </div>
-        <div
-          class="rows"
-          on:consider={handleDndConsiderRows}
-          on:finalize={handleDndFinalizeRows}
-          use:dndzone={{
-            items: rows,
-            type: 'rows',
-          }}
-        >
-          {#each rows as row (row.id)}
-            <div class="st-typography-body row">
-              {row.name}
-              <button use:tooltip={{ content: 'Edit Row', placement: 'top' }} class="st-button icon">
-                <PenIcon />
-              </button>
-            </div>
-          {/each}
-        </div>
-      </fieldset>
-    {/if}
-
-    <!-- Timeline OLD. -->
-    <fieldset hidden>
+    <!-- Timeline. -->
+    <fieldset>
       <details open>
         <summary>Timeline</summary>
         {#if !$selectedTimeline}
@@ -173,6 +85,7 @@
         {:else}
           <div class="details-body">
             <CssGrid columns="1fr 1fr 1fr" gap="16px">
+              <!-- Timeline Margin Left. -->
               <Input>
                 <label for="marginLeft">Margin Left</label>
                 <input
@@ -184,6 +97,7 @@
                 />
               </Input>
 
+              <!-- Timeline Margin Right. -->
               <Input>
                 <label for="marginRight">Margin Right</label>
                 <input
@@ -195,6 +109,7 @@
                 />
               </Input>
 
+              <!-- Timeline Rows. -->
               <Input>
                 <label for="rows">Rows</label>
                 <select
@@ -221,7 +136,7 @@
     </fieldset>
 
     <!-- Row. -->
-    <fieldset hidden>
+    <fieldset>
       <details open>
         <summary>Row</summary>
         {#if !$selectedRow}
@@ -281,7 +196,7 @@
     </fieldset>
 
     <!-- Y-Axis. -->
-    <fieldset hidden>
+    <fieldset>
       <details open>
         <summary>Y-Axis</summary>
         <div class="details-body">
@@ -291,7 +206,7 @@
     </fieldset>
 
     <!-- Layer. -->
-    <fieldset hidden>
+    <fieldset>
       <details open>
         <summary>Layer</summary>
         {#if !$selectedLayer}
@@ -324,48 +239,3 @@
     </fieldset>
   </svelte:fragment>
 </Panel>
-
-<style>
-  .timeline-select-container {
-    border-bottom: 1px solid var(--st-gray-20);
-    padding: 16px 8px;
-  }
-
-  .editor-section {
-    border-bottom: 1px solid var(--st-gray-20);
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    padding: 16px;
-  }
-
-  .editor-section-header {
-    user-select: none;
-  }
-
-  .editor-section-header .st-button.icon,
-  .row .st-button.icon {
-    color: var(--st-gray-50);
-  }
-
-  .editor-section-header-with-button {
-    align-items: center;
-    display: flex;
-    justify-content: space-between;
-  }
-
-  .rows {
-    min-height: 100px;
-    outline: none !important;
-    overflow-x: hidden;
-    overflow-y: auto;
-  }
-
-  .row {
-    align-items: center;
-    display: flex;
-    height: 40px;
-    justify-content: space-between;
-    padding: 4px 0px;
-  }
-</style>

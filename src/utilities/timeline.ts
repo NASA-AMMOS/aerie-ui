@@ -177,3 +177,21 @@ export function searchQuadtreeRect<T>(
 
   return points;
 }
+
+/*
+  Returns a new vertical guide
+*/
+export function createVerticalGuide(doyTimestamp: string, verticalGuides: VerticalGuide[]): VerticalGuide {
+  const id = verticalGuides.reduce((prev, curr) => {
+    if (curr.id >= prev) {
+      return curr.id + 1;
+    }
+    return prev;
+  }, 0);
+  const defaultLabel = `Guide ${id}`;
+  return {
+    id,
+    label: { text: defaultLabel },
+    timestamp: doyTimestamp,
+  };
+}
