@@ -5,6 +5,6 @@
   import SchedulingGoals from '../../../components/scheduling/SchedulingGoals.svelte';
 </script>
 
-<PageTitle route="Scheduling Goals" />
+<PageTitle title="Scheduling Goals" />
 
 <SchedulingGoals />

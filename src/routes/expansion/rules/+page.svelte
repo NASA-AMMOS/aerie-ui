@@ -5,5 +5,6 @@
   import ExpansionRules from '../../../components/expansion/ExpansionRules.svelte';
 </script>
 
-<PageTitle route="Expansion Rules" />
+<PageTitle title="Expansion Rules" />
+
 <ExpansionRules />

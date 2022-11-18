@@ -8,7 +8,7 @@
   export let data: PageData;
 </script>
 
-<PageTitle route="New Scheduling Goal" />
+<PageTitle title="New Scheduling Goal" />
 
 <SchedulingGoalForm
   initialGoalModelId={data.initialModelId}

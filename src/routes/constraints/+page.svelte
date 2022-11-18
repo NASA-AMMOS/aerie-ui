@@ -8,5 +8,6 @@
   export let data: PageData;
 </script>
 
-<PageTitle route="Constraints" />
+<PageTitle title="Constraints" />
+
 <Constraints initialPlans={data.initialPlans} />

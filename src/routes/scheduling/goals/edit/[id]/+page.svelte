@@ -8,7 +8,7 @@
   export let data: PageData;
 </script>
 
-<PageTitle subRoute={data.initialGoal.name} route="Scheduling Goals" />
+<PageTitle subTitle={data.initialGoal.name} title="Scheduling Goals" />
 
 <SchedulingGoalForm
   initialGoalAuthor={data.initialGoal.author}

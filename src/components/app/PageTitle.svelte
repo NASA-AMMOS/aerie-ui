@@ -1,6 +1,6 @@
 <script lang="ts">
-  export let route: string = '';
-  export let subRoute: string = '';
+  export let title: string = '';
+  export let subTitle: string = '';
 
   $: pageTitle = ((route: string = '', subRoute: string = '') => {
     if (subRoute && route) {
@@ -12,7 +12,7 @@
     }
 
     return '';
-  })(route, subRoute);
+  })(title, subTitle);
 </script>
 
 <svelte:head>

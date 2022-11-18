@@ -5,5 +5,6 @@
   import Sequences from '../../components/sequencing/Sequences.svelte';
 </script>
 
-<PageTitle route="Sequencing" />
+<PageTitle title="Sequencing" />
+
 <Sequences />

@@ -86,7 +86,7 @@
   }
 </script>
 
-<PageTitle route="Command Dictionaries" />
+<PageTitle title="Command Dictionaries" />
 
 <CssGrid rows="var(--nav-header-height) calc(100vh - var(--nav-header-height))">
   <Nav>

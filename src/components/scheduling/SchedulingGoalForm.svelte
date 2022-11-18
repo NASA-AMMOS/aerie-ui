@@ -119,7 +119,7 @@
 
 <svelte:window on:keydown={onKeydown} />
 
-<PageTitle subRoute={pageSubtitle} route={pageTitle} />
+<PageTitle subTitle={pageSubtitle} title={pageTitle} />
 
 <CssGrid bind:columns={$schedulingGoalsColumns}>
   <Panel overflowYBody="hidden" padBody={false}>

@@ -141,7 +141,7 @@
 
 <svelte:window on:keydown={onKeydown} />
 
-<PageTitle subRoute={data.initialPlan.name} route="Plans" />
+<PageTitle subTitle={data.initialPlan.name} title="Plans" />
 
 <CssGrid class="plan-container" rows="var(--nav-header-height) auto 36px">
   <Nav>
