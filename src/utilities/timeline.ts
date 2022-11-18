@@ -199,7 +199,7 @@ export function createVerticalGuide(doyTimestamp: string, verticalGuides: Vertic
 /*
   Returns a new row
 */
-export function createRow(rows: Rows[]): Row {
+export function createRow(rows: Row[]): Row {
   const id = rows.reduce((prev, curr) => {
     if (curr.id >= prev) {
       return curr.id + 1;
