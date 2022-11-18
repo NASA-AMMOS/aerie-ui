@@ -6,4 +6,5 @@
 </script>
 
 <PageTitle route="Scheduling Goals" />
+
 <SchedulingGoals />
