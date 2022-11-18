@@ -120,7 +120,7 @@
 
 <Panel borderLeft padBody={false}>
   <svelte:fragment slot="header">
-    <GridMenu {gridId} title="Timeline Form" />
+    <GridMenu {gridId} title="Timeline Details" />
   </svelte:fragment>
 
   <svelte:fragment slot="body">
