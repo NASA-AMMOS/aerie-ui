@@ -12,8 +12,8 @@
   export let name: string = '';
   export let label: string = '';
   export let layout: 'inline' | 'stacked' | null = 'stacked';
-  export let maxDate: Date;
-  export let minDate: Date;
+  export let maxDate: Date | null = undefined;
+  export let minDate: Date | null = undefined;
 
   const dispatch = createEventDispatcher();
 
