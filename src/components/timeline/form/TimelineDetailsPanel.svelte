@@ -21,7 +21,7 @@
   } from '../../../stores/views';
   import { getTarget } from '../../../utilities/generic';
   import { getDoyTime } from '../../../utilities/time';
-  import { createVerticalGuide } from '../../../utilities/timeline';
+  import { createRow, createVerticalGuide } from '../../../utilities/timeline';
   import { tooltip } from '../../../utilities/tooltip';
   import { required, timestamp } from '../../../utilities/validators';
   import GridMenu from '../../menus/GridMenu.svelte';
@@ -49,6 +49,16 @@
     event.stopPropagation();
     const { name, value } = getTarget(event);
     viewUpdateTimeline(name, value);
+  }
+
+  function addTimelineRow() {
+    if (!$selectedTimeline) {
+      return;
+    }
+
+    const row = createRow($selectedTimeline.rows);
+    rows = [...rows, row];
+    viewUpdateTimeline('rows', rows);
   }
 
   function handleDndConsiderRows(e: CustomEvent<DndEvent>) {
@@ -206,7 +216,11 @@
       <fieldset class="editor-section editor-section-rows">
         <div class="editor-section-header editor-section-header-with-button">
           <div class="st-typography-medium">Rows</div>
-          <button use:tooltip={{ content: 'New Row', placement: 'top' }} class="st-button icon">
+          <button
+            on:click={addTimelineRow}
+            use:tooltip={{ content: 'New Row', placement: 'top' }}
+            class="st-button icon"
+          >
             <PlusIcon />
           </button>
         </div>

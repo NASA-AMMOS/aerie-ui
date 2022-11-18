@@ -195,3 +195,25 @@ export function createVerticalGuide(doyTimestamp: string, verticalGuides: Vertic
     timestamp: doyTimestamp,
   };
 }
+
+/*
+  Returns a new row
+*/
+export function createRow(rows: Rows[]): Row {
+  const id = rows.reduce((prev, curr) => {
+    if (curr.id >= prev) {
+      return curr.id + 1;
+    }
+    return prev;
+  }, 0);
+  return {
+    autoAdjustHeight: true,
+    expanded: true,
+    height: 200,
+    horizontalGuides: [],
+    id,
+    layers: [],
+    name: 'Row',
+    yAxes: [],
+  };
+}
