@@ -25,7 +25,7 @@
   let tableMenu: Menu;
 
   $: columnMenuItems = columnDefs.map((derivedColumnDef: ColDef) => {
-    const columnState = columnStates.find((columnState: ColumnState) => columnState.colId === derivedColumnDef.field);
+    const columnState = columnStates?.find((columnState: ColumnState) => columnState.colId === derivedColumnDef.field);
 
     if (columnState) {
       return {
