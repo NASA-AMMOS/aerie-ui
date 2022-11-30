@@ -190,7 +190,6 @@
           <div>
             {#each verticalGuides as verticalGuide (verticalGuide.id)}
               <div class="vertical-guide">
-                <!-- TODO how do we prevent users from typing in out of bounds date ranges? -->
                 <DatePickerField
                   minDate={new Date($maxTimeRange.start)}
                   maxDate={new Date($maxTimeRange.end)}
