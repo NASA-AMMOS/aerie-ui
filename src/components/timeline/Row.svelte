@@ -1,10 +1,13 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import PenIcon from '@nasa-jpl/stellar/icons/pen.svg?component';
   import type { ScaleTime } from 'd3-scale';
   import { pick } from 'lodash-es';
   import { createEventDispatcher } from 'svelte';
+  import { viewSetSelectedRow } from '../../stores/views';
   import { classNames } from '../../utilities/generic';
+  import { tooltip } from '../../utilities/tooltip';
   import ConstraintViolations from './ConstraintViolations.svelte';
   import LayerActivity from './LayerActivity.svelte';
   import LayerLine from './LayerLine.svelte';
@@ -88,7 +91,19 @@
 
 <div class="row-root">
   <!-- Row Header. -->
-  <RowHeader {expanded} rowId={id} title={name} {rowDragMoveDisabled} on:mouseDownRowMove on:toggleRowExpansion />
+  <RowHeader {expanded} rowId={id} title={name} {rowDragMoveDisabled} on:mouseDownRowMove on:toggleRowExpansion>
+    <div slot="right">
+      <button
+        use:tooltip={{ content: 'Edit Row', placement: 'top' }}
+        class="st-button icon row-edit-button"
+        on:click={() => {
+          viewSetSelectedRow(id);
+        }}
+      >
+        <PenIcon />
+      </button>
+    </div>
+  </RowHeader>
 
   <div class={rowClasses} id={`row-${id}`} style="height: {drawHeight}px;">
     <!-- Overlay for Pointer Events. -->
@@ -237,5 +252,17 @@
 
   :global(.right) {
     z-index: 0;
+  }
+
+  .row-edit-button {
+    display: flex;
+  }
+
+  :global(.row-edit-button.st-button.icon svg) {
+    color: var(--st-gray-50);
+  }
+
+  :global(.row-edit-button.st-button.icon:hover svg) {
+    color: var(--st-gray-70);
   }
 </style>

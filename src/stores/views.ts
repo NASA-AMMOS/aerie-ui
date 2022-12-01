@@ -136,7 +136,7 @@ export function viewSetSelectedTimeline(timelineId: number | null): void {
     const firstRow = currentTimeline.rows[0];
 
     if (firstRow) {
-      viewSetSelectedRow(firstRow.id);
+      // viewSetSelectedRow(firstRow.id);
     }
   }
 }

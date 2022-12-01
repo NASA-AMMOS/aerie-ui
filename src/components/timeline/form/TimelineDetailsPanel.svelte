@@ -1,6 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import ArrowLeftIcon from '@nasa-jpl/stellar/icons/arrow_left.svg?component';
   import PenIcon from '@nasa-jpl/stellar/icons/pen.svg?component';
   import PlusIcon from '@nasa-jpl/stellar/icons/plus.svg?component';
   import TrashIcon from '@nasa-jpl/stellar/icons/trash.svg?component';
@@ -13,10 +14,14 @@
   import { field } from '../../../stores/form';
   import { maxTimeRange, viewTimeRange } from '../../../stores/plan';
   import {
+    selectedRow,
+    selectedRowId,
     selectedTimeline,
     selectedTimelineId,
     view,
+    viewSetSelectedRow,
     viewSetSelectedTimeline,
+    viewUpdateRow,
     viewUpdateTimeline,
   } from '../../../stores/views';
   import { getTarget } from '../../../utilities/generic';
@@ -35,6 +40,7 @@
 
   $: rows = $selectedTimeline?.rows || [];
   $: verticalGuides = $selectedTimeline?.verticalGuides || [];
+  $: horizontalGuides = $selectedRow?.horizontalGuides || [];
 
   $: if (verticalGuides) {
     verticalGuideFieldMap = verticalGuides.reduce((map, guide) => {
@@ -43,6 +49,12 @@
       }
       return map;
     }, {});
+  }
+
+  function updateRowEvent(event: Event) {
+    event.stopPropagation();
+    const { name, value } = getTarget(event);
+    viewUpdateRow(name, value);
   }
 
   function updateTimelineEvent(event: Event) {
@@ -88,7 +100,11 @@
     viewUpdateTimeline('verticalGuides', filteredVerticalGuides, $selectedTimelineId);
   }
 
-  function handleNewGuideClick() {
+  function handleNewHorizontalGuideClick() {
+    return;
+  }
+
+  function handleNewVerticalGuideClick() {
     if (typeof $selectedTimelineId !== 'number' || !$viewTimeRange) {
       return;
     }
@@ -124,36 +140,187 @@
   </svelte:fragment>
 
   <svelte:fragment slot="body">
-    <!-- Select Timeline. -->
-    <div class="timeline-select-container">
-      <select
-        class="st-select w-100"
-        data-type="number"
-        name="timelines"
-        value={$selectedTimelineId}
-        on:change={e => {
-          const { valueAsNumber: id } = getTarget(e);
-          viewSetSelectedTimeline(id);
-        }}
-      >
-        {#each $view.definition.plan.timelines as timeline}
-          <option value={timeline.id}>
-            Timeline {timeline.id}
-          </option>
-        {/each}
-      </select>
-    </div>
+    {#if !$selectedRow}
+      <!-- Select Timeline. -->
+      <div class="timeline-select-container">
+        <select
+          class="st-select w-100"
+          data-type="number"
+          name="timelines"
+          value={$selectedTimelineId}
+          on:change={e => {
+            const { valueAsNumber: id } = getTarget(e);
+            viewSetSelectedTimeline(id);
+          }}
+        >
+          {#each $view.definition.plan.timelines as timeline}
+            <option value={timeline.id}>
+              Timeline {timeline.id}
+            </option>
+          {/each}
+        </select>
+      </div>
 
-    <!-- Timeline -->
-    {#if !$selectedTimeline}
-      <fieldset class="editor-section">No timeline selected</fieldset>
+      <!-- Timeline editing -->
+      {#if !$selectedTimeline}
+        <fieldset class="editor-section">No timeline selected</fieldset>
+      {:else}
+        <fieldset class="editor-section">
+          <div class="st-typography-medium editor-section-header">Margins</div>
+          <CssGrid columns="1fr 1fr" gap="8px">
+            <Input>
+              <label for="marginLeft">Margin Left</label>
+              <input
+                class="st-input w-100"
+                name="marginLeft"
+                type="number"
+                value={$selectedTimeline.marginLeft}
+                on:input={updateTimelineEvent}
+              />
+            </Input>
+
+            <Input>
+              <label for="marginRight">Margin Right</label>
+              <input
+                class="st-input w-100"
+                name="marginRight"
+                type="number"
+                value={$selectedTimeline.marginRight}
+                on:input={updateTimelineEvent}
+              />
+            </Input>
+          </CssGrid>
+        </fieldset>
+
+        <fieldset class="editor-section">
+          <div class="editor-section-header editor-section-header-with-button">
+            <div class="st-typography-medium">Vertical Guides</div>
+            <button
+              on:click={handleNewVerticalGuideClick}
+              use:tooltip={{ content: 'New Vertical Guide', placement: 'top' }}
+              class="st-button icon"
+            >
+              <PlusIcon />
+            </button>
+          </div>
+          {#if verticalGuides.length}
+            <div>
+              {#each verticalGuides as verticalGuide (verticalGuide.id)}
+                <div class="vertical-guide">
+                  <DatePickerField
+                    minDate={new Date($maxTimeRange.start)}
+                    maxDate={new Date($maxTimeRange.end)}
+                    layout="inline"
+                    label={`Guide ${verticalGuide.id}`}
+                    field={verticalGuideFieldMap[verticalGuide.id]}
+                    on:change={() => handleUpdateGuide(verticalGuide)}
+                    on:keydown={() => handleUpdateGuide(verticalGuide)}
+                  />
+                  <button
+                    on:click={() => handleDeleteGuideClick(verticalGuide)}
+                    use:tooltip={{ content: 'Delete Guide', placement: 'top' }}
+                    class="st-button icon"
+                  >
+                    <TrashIcon />
+                  </button>
+                </div>
+              {/each}
+            </div>
+          {/if}
+        </fieldset>
+
+        <fieldset class="editor-section editor-section-rows">
+          <div class="editor-section-header editor-section-header-with-button">
+            <div class="st-typography-medium">Rows</div>
+            <button
+              on:click={addTimelineRow}
+              use:tooltip={{ content: 'New Row', placement: 'top' }}
+              class="st-button icon"
+            >
+              <PlusIcon />
+            </button>
+          </div>
+          <div
+            class="rows"
+            on:consider={handleDndConsiderRows}
+            on:finalize={handleDndFinalizeRows}
+            use:dndzone={{
+              items: rows,
+              transformDraggedElement,
+              type: 'rows',
+            }}
+          >
+            {#each rows as row (row.id)}
+              <div>
+                <div class="st-typography-body row">
+                  <span class="drag-icon">
+                    <GripVerticalIcon />
+                  </span>
+                  {row.name}
+                  <button
+                    use:tooltip={{ content: 'Edit Row', placement: 'top' }}
+                    class="st-button icon"
+                    on:click={() => {
+                      viewSetSelectedRow(row.id);
+                    }}
+                  >
+                    <PenIcon />
+                  </button>
+                </div>
+              </div>
+            {/each}
+          </div>
+        </fieldset>
+      {/if}
     {:else}
+      <!-- Row editing -->
+      <button
+        on:click={() => {
+          viewSetSelectedRow(null);
+        }}
+        class="st-button tertiary section-back-button"
+      >
+        <ArrowLeftIcon />
+        Back to Timeline {$selectedTimelineId}
+      </button>
+      <div class="timeline-select-container">
+        <select
+          class="st-select w-100"
+          data-type="number"
+          name="rows"
+          value={$selectedRowId}
+          on:change={e => {
+            const { valueAsNumber: id } = getTarget(e);
+            viewSetSelectedRow(id);
+          }}
+        >
+          {#each rows as row (row.id)}
+            <option value={row.id}>
+              {row.name}
+            </option>
+          {/each}
+        </select>
+      </div>
       <fieldset class="editor-section">
-        <div class="st-typography-medium editor-section-header">Margins</div>
+        <div class="st-typography-medium editor-section-header">Details</div>
+        <div style="display: grid">
+          <Input>
+            <label for="name">Row Name</label>
+            <input
+              class="st-input w-100"
+              name="name"
+              autocomplete="off"
+              type="string"
+              value={$selectedRow.name}
+              on:input={updateRowEvent}
+            />
+          </Input>
+        </div>
         <CssGrid columns="1fr 1fr" gap="8px">
           <Input>
-            <label for="marginLeft">Margin Left</label>
+            <label for="marginLeft">Row Height</label>
             <input
+              disabled={$selectedRow.autoAdjustHeight}
               class="st-input w-100"
               name="marginLeft"
               type="number"
@@ -161,92 +328,93 @@
               on:input={updateTimelineEvent}
             />
           </Input>
-
-          <Input>
-            <label for="marginRight">Margin Right</label>
-            <input
-              class="st-input w-100"
-              name="marginRight"
-              type="number"
-              value={$selectedTimeline.marginRight}
-              on:input={updateTimelineEvent}
-            />
+          <Input class="row-height-select-wrapper">
+            <select
+              class="st-select w-100"
+              data-type="bool"
+              name="autoAdjustHeight"
+              value={$selectedRow.autoAdjustHeight}
+              on:change={e => {
+                const { value } = getTarget(e);
+                console.log(value, '?');
+                viewUpdateRow('autoAdjustHeight', value === 'true');
+              }}
+            >
+              <option value={false}>Manual</option>
+              <option value={true}>Auto</option>
+            </select>
           </Input>
         </CssGrid>
       </fieldset>
 
       <fieldset class="editor-section">
         <div class="editor-section-header editor-section-header-with-button">
-          <div class="st-typography-medium">Vertical Guides</div>
+          <div class="st-typography-medium">Horizontal Guides</div>
           <button
-            on:click={handleNewGuideClick}
-            use:tooltip={{ content: 'New Vertical Guide', placement: 'top' }}
+            on:click={handleNewHorizontalGuideClick}
+            use:tooltip={{ content: 'New Horizontal Guide', placement: 'top' }}
             class="st-button icon"
           >
             <PlusIcon />
           </button>
         </div>
-        {#if verticalGuides.length}
+        {#if horizontalGuides.length}
           <div>
-            {#each verticalGuides as verticalGuide (verticalGuide.id)}
+            {#each horizontalGuides as horizontalGuide (horizontalGuide.id)}
               <div class="vertical-guide">
-                <DatePickerField
-                  minDate={new Date($maxTimeRange.start)}
-                  maxDate={new Date($maxTimeRange.end)}
-                  layout="inline"
-                  label={`Guide ${verticalGuide.id}`}
-                  field={verticalGuideFieldMap[verticalGuide.id]}
-                  on:change={() => handleUpdateGuide(verticalGuide)}
-                  on:keydown={() => handleUpdateGuide(verticalGuide)}
-                />
-                <button
-                  on:click={() => handleDeleteGuideClick(verticalGuide)}
-                  use:tooltip={{ content: 'Delete Guide', placement: 'top' }}
-                  class="st-button icon"
-                >
-                  <TrashIcon />
-                </button>
+                {horizontalGuide.id}
+                <!-- TODO implement hz guide editing once design is fleshed out -->
               </div>
             {/each}
           </div>
         {/if}
       </fieldset>
-
-      <fieldset class="editor-section editor-section-rows">
+      <fieldset class="editor-section">
         <div class="editor-section-header editor-section-header-with-button">
-          <div class="st-typography-medium">Rows</div>
+          <div class="st-typography-medium">Y Axis Labels</div>
           <button
-            on:click={addTimelineRow}
-            use:tooltip={{ content: 'New Row', placement: 'top' }}
+            on:click={() => {
+              console.log('');
+            }}
+            use:tooltip={{ content: 'New Y Axis Label', placement: 'top' }}
             class="st-button icon"
           >
             <PlusIcon />
           </button>
         </div>
-        <div
-          class="rows"
-          on:consider={handleDndConsiderRows}
-          on:finalize={handleDndFinalizeRows}
-          use:dndzone={{
-            items: rows,
-            transformDraggedElement,
-            type: 'rows',
-          }}
-        >
-          {#each rows as row (row.id)}
-            <div>
-              <div class="st-typography-body row">
-                <span class="drag-icon">
-                  <GripVerticalIcon />
-                </span>
-                {row.name}
-                <button use:tooltip={{ content: 'Edit Row', placement: 'top' }} class="st-button icon">
-                  <PenIcon />
-                </button>
+        {#if $selectedRow.yAxes.length}
+          <div>
+            {#each $selectedRow.yAxes as yAxis (yAxis.id)}
+              <div class="vertical-guide">
+                {yAxis.label.text}
+                <!-- TODO implement yAxis editing once design is fleshed out -->
               </div>
-            </div>
-          {/each}
+            {/each}
+          </div>
+        {/if}
+      </fieldset>
+      <fieldset class="editor-section">
+        <div class="editor-section-header editor-section-header-with-button">
+          <div class="st-typography-medium">Layers</div>
+          <button
+            on:click={() => {
+              console.log('');
+            }}
+            use:tooltip={{ content: 'New Y Axis Label', placement: 'top' }}
+            class="st-button icon"
+          >
+            <PlusIcon />
+          </button>
         </div>
+        {#if $selectedRow.layers.length}
+          <div>
+            {#each $selectedRow.layers as layer (layer.id)}
+              <div class="vertical-guide">
+                Layer {layer.id}
+              </div>
+            {/each}
+          </div>
+        {/if}
       </fieldset>
     {/if}
   </svelte:fragment>
@@ -332,5 +500,17 @@
 
   .vertical-guide :global(.date-picker-field) {
     flex: 1;
+  }
+
+  .section-back-button {
+    border-radius: 0;
+    gap: 8px;
+    height: 32px;
+    justify-content: flex-start;
+  }
+
+  :global(.input.input-stacked.row-height-select-wrapper) {
+    align-items: flex-end;
+    display: flex;
   }
 </style>
