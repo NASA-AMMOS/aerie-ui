@@ -362,8 +362,8 @@
           <div>
             {#each horizontalGuides as horizontalGuide (horizontalGuide.id)}
               <div class="vertical-guide">
-                {horizontalGuide.id}
                 <!-- TODO implement hz guide editing once design is fleshed out -->
+                {horizontalGuide.label.text}
               </div>
             {/each}
           </div>
@@ -386,8 +386,8 @@
           <div>
             {#each $selectedRow.yAxes as yAxis (yAxis.id)}
               <div class="vertical-guide">
-                {yAxis.label.text}
                 <!-- TODO implement yAxis editing once design is fleshed out -->
+                {yAxis.label.text}
               </div>
             {/each}
           </div>
@@ -400,7 +400,7 @@
             on:click={() => {
               console.log('');
             }}
-            use:tooltip={{ content: 'New Y Axis Label', placement: 'top' }}
+            use:tooltip={{ content: 'New Layer', placement: 'top' }}
             class="st-button icon"
           >
             <PlusIcon />
@@ -410,7 +410,7 @@
           <div>
             {#each $selectedRow.layers as layer (layer.id)}
               <div class="vertical-guide">
-                Layer {layer.id}
+                Layer {layer.id}, chart type: {layer.chartType}
               </div>
             {/each}
           </div>
