@@ -60,7 +60,7 @@ export const constraintsGrid: Grid = {
 export const schedulingGrid: Grid = {
   columnSizes: '1fr 3px 3fr 3px 1fr',
   columns: [
-    { componentName: 'SchedulingPanel', id: 1, type: 'component' },
+    { componentName: 'SchedulingGoalsPanel', id: 1, type: 'component' },
     { id: 2, track: 1, type: 'gutter' },
     {
       id: 3,
