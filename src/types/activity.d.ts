@@ -2,6 +2,11 @@ type ActivityId = number;
 type ActivityDirectiveId = number;
 type ActivityUniqueId = string;
 
+type ActivitiesByView = {
+  byLayerId: Record<number, Activity[]>;
+  byTimelineId: Record<number, Activity[]>;
+};
+
 type ActivityType = {
   computed_attributes_value_schema: ValueSchema;
   name: string;
@@ -13,8 +18,6 @@ type ActivityTypeExpansionRules = {
   expansion_rules: ExpansionRule[];
   name: ActivityType['name'];
 };
-
-type ActivityTypesMap = Record<string, ActivityType>;
 
 type Activity = {
   arguments: ArgumentsMap;

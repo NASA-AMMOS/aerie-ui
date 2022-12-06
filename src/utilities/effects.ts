@@ -3,7 +3,7 @@ import { base } from '$app/paths';
 import { get } from 'svelte/store';
 import { activitiesMap, selectedActivityId } from '../stores/activities';
 import { checkConstraintsStatus, constraintViolationsMap } from '../stores/constraints';
-import { parseErrorReason, schedulingErrors } from '../stores/errors';
+import { catchError, parseErrorReason, schedulingErrors } from '../stores/errors';
 import {
   createDictionaryError,
   creatingDictionary,
@@ -42,7 +42,7 @@ const effects = {
       checkConstraintsStatus.set(Status.Complete);
       showSuccessToast('Check Constraints Complete');
     } catch (e) {
-      console.log(e);
+      catchError('Check Constraints Failed', e);
       checkConstraintsStatus.set(Status.Failed);
       showFailureToast('Check Constraints Failed');
     }
@@ -109,7 +109,7 @@ const effects = {
 
       showSuccessToast('Activity Directive Created Successfully');
     } catch (e) {
-      console.log(e);
+      catchError('Activity Directive Create Failed', e);
       showFailureToast('Activity Directive Create Failed');
     }
   },
@@ -129,7 +129,7 @@ const effects = {
       creatingDictionary.set(false);
       commandDictionaries.updateValue((dictionaries: CommandDictionary[]) => [newCommandDictionary, ...dictionaries]);
     } catch (e) {
-      console.log(e);
+      catchError('Command Dictionary Create Failed', e);
       showFailureToast('Command Dictionary Create Failed');
       createDictionaryError.set(e.message);
       creatingDictionary.set(false);
@@ -160,7 +160,7 @@ const effects = {
       showSuccessToast('Constraint Created Successfully');
       return id;
     } catch (e) {
-      console.log(e);
+      catchError('Constraint Creation Failed', e);
       showFailureToast('Constraint Creation Failed');
       return null;
     }
@@ -176,7 +176,7 @@ const effects = {
       savingExpansionRule.set(false);
       return id;
     } catch (e) {
-      console.log(e);
+      catchError('Expansion Rule Create Failed', e);
       showFailureToast('Expansion Rule Create Failed');
       savingExpansionRule.set(false);
       return null;
@@ -195,7 +195,7 @@ const effects = {
       showSuccessToast('Expansion Sequence Created Successfully');
       creatingExpansionSequence.set(false);
     } catch (e) {
-      console.log(e);
+      catchError('Expansion Sequence Create Failed', e);
       showFailureToast('Expansion Sequence Create Failed');
       creatingExpansionSequence.set(false);
     }
@@ -211,7 +211,7 @@ const effects = {
       savingExpansionSet.set(false);
       return id;
     } catch (e) {
-      console.log(e);
+      catchError('Expansion Set Create Failed', e);
       showFailureToast('Expansion Set Create Failed');
       savingExpansionSet.set(false);
       return null;
@@ -241,7 +241,7 @@ const effects = {
       creatingModel.set(false);
       models.updateValue((currentModels: ModelSlim[]) => [...currentModels, model]);
     } catch (e) {
-      console.log(e);
+      catchError('Model Create Failed', e);
       showFailureToast('Model Create Failed');
       createModelError.set(e.message);
       creatingModel.set(false);
@@ -297,7 +297,7 @@ const effects = {
 
       return plan;
     } catch (e) {
-      console.log(e);
+      catchError('Plan Create Failed', e);
       showFailureToast('Plan Create Failed');
       createPlanError.set(e.message);
       creatingPlan.set(false);
@@ -314,11 +314,20 @@ const effects = {
         const { name, plan } = value;
         const data = await reqHasura(gql.DUPLICATE_PLAN, { new_plan_name: name, plan_id: plan.id });
         const { duplicate_plan } = data;
+        const { new_plan_id } = duplicate_plan;
+        await effects.createSchedulingSpec({
+          analysis_only: false,
+          horizon_end: plan.end_time_doy,
+          horizon_start: plan.start_time_doy,
+          plan_id: new_plan_id,
+          plan_revision: 0,
+          simulation_arguments: {},
+        });
         goto(`${base}/plans/${duplicate_plan.new_plan_id}`);
         showSuccessToast('Branch Created Successfully');
       }
     } catch (e) {
-      console.log(e);
+      catchError('Branch Creation Failed', e);
       showFailureToast('Branch Creation Failed');
     }
   },
@@ -338,7 +347,7 @@ const effects = {
         }
       }
     } catch (e) {
-      console.log(e);
+      catchError(e);
     }
   },
 
@@ -358,7 +367,7 @@ const effects = {
       showSuccessToast('Merge Request Created Successfully');
       return merge_request_id;
     } catch (e) {
-      console.log(e);
+      catchError('Merge Request Create Failed', e);
       showFailureToast('Merge Request Create Failed');
       return null;
     }
@@ -386,7 +395,7 @@ const effects = {
       showSuccessToast('Scheduling Goal Created Successfully');
       return newGoal;
     } catch (e) {
-      console.log(e);
+      catchError('Scheduling Goal Create Failed', e);
       showFailureToast('Scheduling Goal Create Failed');
       return null;
     }
@@ -396,7 +405,7 @@ const effects = {
     try {
       await reqHasura(gql.CREATE_SCHEDULING_SPEC, { spec });
     } catch (e) {
-      console.log(e);
+      catchError(e);
     }
   },
 
@@ -404,7 +413,7 @@ const effects = {
     try {
       await reqHasura(gql.CREATE_SCHEDULING_SPEC_GOAL, { spec_goal });
     } catch (e) {
-      console.log(e);
+      catchError(e);
     }
   },
 
@@ -422,7 +431,7 @@ const effects = {
       await reqHasura(gql.CREATE_SIMULATION, { simulation: simulationInsertInput });
       return true;
     } catch (e) {
-      console.log(e);
+      catchError(e);
       return false;
     }
   },
@@ -435,7 +444,7 @@ const effects = {
       showSuccessToast('User Sequence Created Successfully');
       return id;
     } catch (e) {
-      console.log(e);
+      catchError('User Sequence Create Failed', e);
       showFailureToast('User Sequence Create Failed');
       return null;
     }
@@ -456,7 +465,7 @@ const effects = {
         showSuccessToast('View Created Successfully');
       }
     } catch (e) {
-      console.log(e);
+      catchError('View Create Failed', e);
       showFailureToast('View Create Failed');
     }
   },
@@ -480,7 +489,7 @@ const effects = {
         return true;
       }
     } catch (e) {
-      console.log(e);
+      catchError('Activity Directive Delete Failed', e);
       showFailureToast('Activity Directive Delete Failed');
       return false;
     }
@@ -507,7 +516,7 @@ const effects = {
         return true;
       }
     } catch (e) {
-      console.log(e);
+      catchError('Activity Directives Delete Failed', e);
       showFailureToast('Activity Directives Delete Failed');
       return false;
     }
@@ -527,7 +536,7 @@ const effects = {
         commandDictionaries.filterValueById(id);
       }
     } catch (e) {
-      console.log(e);
+      catchError('Command Dictionary Delete Failed', e);
       showFailureToast('Command Dictionary Delete Failed');
     }
   },
@@ -546,7 +555,7 @@ const effects = {
         return true;
       }
     } catch (e) {
-      console.log(e);
+      catchError('Constraint Delete Failed', e);
       showFailureToast('Constraint Delete Failed');
       return false;
     }
@@ -568,7 +577,7 @@ const effects = {
 
       return false;
     } catch (e) {
-      console.log(e);
+      catchError('Expansion Rule Delete Failed', e);
       showFailureToast('Expansion Rule Delete Failed');
       return false;
     }
@@ -588,7 +597,7 @@ const effects = {
         showSuccessToast('Expansion Sequence Deleted Successfully');
       }
     } catch (e) {
-      console.log(e);
+      catchError('Expansion Sequence Delete Failed', e);
       showFailureToast('Expansion Sequence Delete Failed');
     }
   },
@@ -605,7 +614,7 @@ const effects = {
       showSuccessToast('Expansion Sequence Deleted From Activity Successfully');
       return true;
     } catch (e) {
-      console.log(e);
+      catchError('Delete Expansion Sequence From Activity Failed', e);
       showFailureToast('Delete Expansion Sequence From Activity Failed');
       return false;
     }
@@ -627,7 +636,7 @@ const effects = {
 
       return false;
     } catch (e) {
-      console.log(e);
+      catchError('Expansion Set Delete Failed', e);
       showFailureToast('Expansion Set Delete Failed');
       return false;
     }
@@ -638,7 +647,7 @@ const effects = {
       await reqGateway(`/file/${id}`, 'DELETE', null, null, false);
       return true;
     } catch (e) {
-      console.log(e);
+      catchError(e);
       return false;
     }
   },
@@ -659,7 +668,7 @@ const effects = {
         models.filterValueById(id);
       }
     } catch (e) {
-      console.log(e);
+      catchError('Model Delete Failed', e);
       showFailureToast('Model Delete Failed');
     }
   },
@@ -676,7 +685,7 @@ const effects = {
 
       return false;
     } catch (e) {
-      console.log(e);
+      catchError('Plan Delete Failed', e);
       showFailureToast('Plan Delete Failed');
       return false;
     }
@@ -698,7 +707,7 @@ const effects = {
         return false;
       }
     } catch (e) {
-      console.log(e);
+      catchError('Scheduling Goal Delete Failed', e);
       showFailureToast('Scheduling Goal Delete Failed');
       return false;
     }
@@ -720,7 +729,7 @@ const effects = {
 
       return false;
     } catch (e) {
-      console.log(e);
+      catchError('User Sequence Delete Failed', e);
       showFailureToast('User Sequence Delete Failed');
       return false;
     }
@@ -735,7 +744,7 @@ const effects = {
         return true;
       }
     } catch (e) {
-      console.log(e);
+      catchError(e);
       return false;
     }
   },
@@ -753,7 +762,7 @@ const effects = {
         return true;
       }
     } catch (e) {
-      console.log(e);
+      catchError(e);
       return false;
     }
   },
@@ -765,9 +774,21 @@ const effects = {
       showSuccessToast('Plan Expanded Successfully');
       expandingPlan.set(false);
     } catch (e) {
-      console.log(e);
+      catchError('Plan Expansion Failed', e);
       showFailureToast('Plan Expansion Failed');
       expandingPlan.set(false);
+    }
+  },
+
+  async getActivityTypes(modelId: number): Promise<ActivityType[]> {
+    try {
+      const query = convertToQuery(gql.SUB_ACTIVITY_TYPES);
+      const data = await reqHasura<ActivityType[]>(query, { modelId });
+      const { activity_type: activityTypes } = data;
+      return activityTypes;
+    } catch (e) {
+      catchError(e);
+      return [];
     }
   },
 
@@ -778,7 +799,7 @@ const effects = {
         const { activity_types } = data;
         return activity_types;
       } catch (e) {
-        console.log(e);
+        catchError(e);
         return [];
       }
     } else {
@@ -792,7 +813,7 @@ const effects = {
       const { constraint } = data;
       return constraint;
     } catch (e) {
-      console.log(e);
+      catchError(e);
       return null;
     }
   },
@@ -811,7 +832,7 @@ const effects = {
       const { effectiveActivityArguments } = data;
       return effectiveActivityArguments;
     } catch (e) {
-      console.log(e);
+      catchError(e);
       return null;
     }
   },
@@ -825,7 +846,7 @@ const effects = {
       const { effectiveModelArguments } = data;
       return effectiveModelArguments;
     } catch (e) {
-      console.log(e);
+      catchError(e);
       return null;
     }
   },
@@ -836,7 +857,7 @@ const effects = {
       const { expansionRule } = data;
       return expansionRule;
     } catch (e) {
-      console.log(e);
+      catchError(e);
       return null;
     }
   },
@@ -856,7 +877,7 @@ const effects = {
         return null;
       }
     } catch (e) {
-      console.log(e);
+      catchError(e);
       return null;
     }
   },
@@ -878,7 +899,7 @@ const effects = {
         return JSON.stringify(seqJson, null, 2);
       }
     } catch (e) {
-      console.log(e);
+      catchError(e);
       return null;
     }
   },
@@ -889,7 +910,7 @@ const effects = {
       const { models = [] } = data;
       return models;
     } catch (e) {
-      console.log(e);
+      catchError(e);
       return [];
     }
   },
@@ -911,7 +932,7 @@ const effects = {
         return null;
       }
     } catch (e) {
-      console.log(e);
+      catchError(e);
       return null;
     }
   },
@@ -923,7 +944,7 @@ const effects = {
       const { conflictingActivities } = data;
       return conflictingActivities;
     } catch (e) {
-      console.log(e);
+      catchError(e);
       return [];
     }
   },
@@ -936,7 +957,7 @@ const effects = {
       const { nonConflictingActivities } = data;
       return nonConflictingActivities;
     } catch (e) {
-      console.log(e);
+      catchError(e);
       return [];
     }
   },
@@ -949,7 +970,7 @@ const effects = {
       const [merge_request] = merge_requests; // Query uses 'limit: 1' so merge_requests.length === 1.
       return merge_request;
     } catch (e) {
-      console.log(e);
+      catchError(e);
       return null;
     }
   },
@@ -962,7 +983,7 @@ const effects = {
       const { revision } = plan;
       return revision;
     } catch (e) {
-      console.log(e);
+      catchError(e);
       return null;
     }
   },
@@ -986,7 +1007,7 @@ const effects = {
         }),
       };
     } catch (e) {
-      console.log(e);
+      catchError(e);
       return { models: [], plans: [] };
     }
   },
@@ -998,7 +1019,7 @@ const effects = {
         const { goal } = data;
         return goal;
       } catch (e) {
-        console.log(e);
+        catchError(e);
         return null;
       }
     } else {
@@ -1022,11 +1043,11 @@ const effects = {
         if (status === 'success') {
           return typescriptFiles;
         } else {
-          console.log(reason);
+          catchError(reason);
           return [];
         }
       } catch (e) {
-        console.log(e);
+        catchError(e);
         return [];
       }
     } else {
@@ -1046,11 +1067,11 @@ const effects = {
         if (status === 'success') {
           return typescriptFiles;
         } else {
-          console.log(reason);
+          catchError(reason);
           return [];
         }
       } catch (e) {
-        console.log(e);
+        catchError(e);
         return [];
       }
     } else {
@@ -1068,11 +1089,11 @@ const effects = {
         if (status === 'success') {
           return typescriptFiles;
         } else {
-          console.log(reason);
+          catchError(reason);
           return [];
         }
       } catch (e) {
-        console.log(e);
+        catchError(e);
         return [];
       }
     } else {
@@ -1090,11 +1111,11 @@ const effects = {
         if (status === 'success') {
           return typescriptFiles;
         } else {
-          console.log(reason);
+          catchError(reason);
           return [];
         }
       } catch (e) {
-        console.log(e);
+        catchError(e);
         return [];
       }
     } else {
@@ -1108,7 +1129,7 @@ const effects = {
       const { userSequence } = data;
       return userSequence;
     } catch (e) {
-      console.log(e);
+      catchError(e);
       return null;
     }
   },
@@ -1174,7 +1195,7 @@ const effects = {
         return null;
       }
     } catch (e) {
-      console.log(e);
+      catchError(e);
       return null;
     }
   },
@@ -1197,7 +1218,7 @@ const effects = {
         return null;
       }
     } catch (e) {
-      console.log(e);
+      catchError('Add Expansion Sequence To Activity Failed', e);
       showFailureToast('Add Expansion Sequence To Activity Failed');
       return null;
     }
@@ -1214,7 +1235,7 @@ const effects = {
       );
       return data;
     } catch (e) {
-      console.log(e);
+      catchError(e);
       return {
         message: 'An unexpected error occurred',
         ssoToken: null,
@@ -1229,7 +1250,7 @@ const effects = {
       const data = await reqGateway<ReqLogoutResponse>('/auth/logout', 'DELETE', null, ssoToken, false);
       return data;
     } catch (e) {
-      console.log(e);
+      catchError(e);
       return { message: 'An unexpected error occurred', success: false };
     }
   },
@@ -1240,7 +1261,7 @@ const effects = {
       return true;
     } catch (error) {
       showFailureToast('Begin Merge Failed');
-      console.log(error);
+      catchError('Begin Merge Failed', error);
       return false;
     }
   },
@@ -1251,7 +1272,7 @@ const effects = {
       showSuccessToast('Canceled Merge Request');
       return true;
     } catch (error) {
-      console.log(error);
+      catchError('Cancel Merge Request Failed', error);
       showFailureToast('Cancel Merge Request Failed');
       return false;
     }
@@ -1263,7 +1284,7 @@ const effects = {
       showSuccessToast('Approved Merge Request Changes');
       return true;
     } catch (error) {
-      console.log(error);
+      catchError('Approve Merge Request Changes Failed', error);
       showFailureToast('Approve Merge Request Changes Failed');
       return false;
     }
@@ -1275,7 +1296,7 @@ const effects = {
       showSuccessToast('Denied Merge Request Changes');
       return true;
     } catch (error) {
-      console.log(error);
+      catchError('Deny Merge Request Changes Failed', error);
       showFailureToast('Deny Merge Request Changes Failed');
       return false;
     }
@@ -1288,7 +1309,7 @@ const effects = {
       return true;
     } catch (error) {
       showFailureToast('Withdraw Merge Request Failed');
-      console.log(error);
+      catchError('Withdraw Merge Request Failed', error);
       return false;
     }
   },
@@ -1298,7 +1319,7 @@ const effects = {
       await reqHasura(gql.PlAN_MERGE_RESOLVE_ALL_CONFLICTS, { merge_request_id, resolution });
     } catch (e) {
       showFailureToast('Resolve All Merge Request Conflicts Failed');
-      console.log(e);
+      catchError('Resolve All Merge Request Conflicts Failed', e);
     }
   },
 
@@ -1311,7 +1332,7 @@ const effects = {
       await reqHasura(gql.PLAN_MERGE_RESOLVE_CONFLICT, { activity_id, merge_request_id, resolution });
     } catch (e) {
       showFailureToast('Resolve Merge Request Conflict Failed');
-      console.log(e);
+      catchError('Resolve Merge Request Conflict Failed', e);
     }
   },
 
@@ -1348,6 +1369,7 @@ const effects = {
           incomplete = false;
 
           showFailureToast(`Scheduling ${analysis_only ? 'Analysis ' : ''}Failed`);
+          catchError(`Scheduling ${analysis_only ? 'Analysis ' : ''}Failed`);
         } else if (status === 'incomplete') {
           schedulingStatus.set(Status.Incomplete);
         }
@@ -1355,7 +1377,7 @@ const effects = {
         await sleep(500); // Sleep half-second before re-scheduling.
       } while (incomplete);
     } catch (e) {
-      console.log(e);
+      catchError(e);
       schedulingStatus.set(Status.Failed);
     }
   },
@@ -1365,7 +1387,7 @@ const effects = {
       const data = await reqGateway<ReqSessionResponse>('/auth/session', 'GET', null, ssoToken, false);
       return data;
     } catch (e) {
-      console.log(e);
+      catchError(e);
       return { message: 'An unexpected error occurred', success: false };
     }
   },
@@ -1384,7 +1406,7 @@ const effects = {
         return ids;
       });
     } catch (e) {
-      console.log(e);
+      catchError(e);
     }
   },
 
@@ -1416,7 +1438,7 @@ const effects = {
       await reqHasura(gql.UPDATE_ACTIVITY_DIRECTIVE, { activityDirectiveSetInput, id, plan_id });
       showSuccessToast('Activity Directive Updated Successfully');
     } catch (e) {
-      console.log(e);
+      catchError('Activity Directive Update Failed', e);
       showFailureToast('Activity Directive Update Failed');
     }
 
@@ -1451,7 +1473,7 @@ const effects = {
       await reqHasura(gql.UPDATE_CONSTRAINT, { constraint, id });
       showSuccessToast('Constraint Updated Successfully');
     } catch (e) {
-      console.log(e);
+      catchError('Constraint Update Failed', e);
       showFailureToast('Constraint Update Failed');
     }
   },
@@ -1466,7 +1488,7 @@ const effects = {
       savingExpansionRule.set(false);
       return updated_at;
     } catch (e) {
-      console.log(e);
+      catchError('Expansion Rule Update Failed', e);
       showFailureToast('Expansion Rule Update Failed');
       savingExpansionRule.set(false);
       return null;
@@ -1484,7 +1506,7 @@ const effects = {
       showSuccessToast('Scheduling Goal Updated Successfully');
       return updatedGoal;
     } catch (e) {
-      console.log(e);
+      catchError('Scheduling Goal Update Failed', e);
       showFailureToast('Scheduling Goal Update Failed');
       return null;
     }
@@ -1494,7 +1516,7 @@ const effects = {
     try {
       await reqHasura(gql.UPDATE_SCHEDULING_SPEC, { id, spec });
     } catch (e) {
-      console.log(e);
+      catchError(e);
     }
   },
 
@@ -1507,7 +1529,7 @@ const effects = {
       await reqHasura(gql.UPDATE_SCHEDULING_SPEC_GOAL, { goal_id, spec_goal, specification_id });
       showSuccessToast('Scheduling Spec Goal Updated Successfully');
     } catch (e) {
-      console.log(e);
+      catchError('Scheduling Spec Goal Update Failed', e);
       showFailureToast('Scheduling Spec Goal Update Failed');
     }
   },
@@ -1524,7 +1546,7 @@ const effects = {
       await effects.uploadFiles(newFiles);
       showSuccessToast('Simulation Updated Successfully');
     } catch (e) {
-      console.log(e);
+      catchError('Simulation Update Failed', e);
       showFailureToast('Simulation Update Failed');
     }
   },
@@ -1537,7 +1559,7 @@ const effects = {
       showSuccessToast('User Sequence Updated Successfully');
       return updated_at;
     } catch (e) {
-      console.log(e);
+      catchError('User Sequence Update Failed', e);
       showFailureToast('User Sequence Update Failed');
       return null;
     }
@@ -1549,7 +1571,7 @@ const effects = {
       showSuccessToast('View Updated Successfully');
       return true;
     } catch (e) {
-      console.log(e);
+      catchError('View Update Failed', e);
       showFailureToast('View Update Failed');
       return false;
     }
@@ -1563,7 +1585,7 @@ const effects = {
       const { id } = data;
       return id;
     } catch (e) {
-      console.log(e);
+      catchError(e);
       return null;
     }
   },
@@ -1575,7 +1597,7 @@ const effects = {
       }
       return true;
     } catch (e) {
-      console.log(e);
+      catchError(e);
       return false;
     }
   },
@@ -1595,7 +1617,7 @@ const effects = {
       const { validateActivityArguments } = data;
       return validateActivityArguments;
     } catch (e) {
-      console.log(e);
+      catchError(e);
       const { message } = e;
       return { errors: [message], success: false };
     }

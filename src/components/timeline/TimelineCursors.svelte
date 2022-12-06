@@ -1,7 +1,10 @@
 <script lang="ts">
+  type ComputedVerticalGuide = { id: number; label: Label; maxWidth: number; x: number };
+
   import type { ScaleTime } from 'd3-scale';
-  import { viewUpdateTimeline } from '../../stores/views';
+  import { createEventDispatcher } from 'svelte';
   import { getDoyTime, getUnixEpochTime } from '../../utilities/time';
+  import { createVerticalGuide } from '../../utilities/timeline';
   import TimelineCursor from './TimelineCursor.svelte';
 
   export let cursorEnabled: boolean = true;
@@ -12,9 +15,8 @@
   export let histogramCursorTime: Date | null = null;
   export let xScaleView: ScaleTime<number, number> | null = null;
   export let verticalGuides: VerticalGuide[] = [];
-  export let timelineId: number;
 
-  type ComputedVerticalGuide = { id: number; label: Label; maxWidth: number; x: number };
+  const dispatch = createEventDispatcher();
 
   $: onCursorEnableChange(cursorEnabled);
   $: onMouseOver(mouseOver);
@@ -77,24 +79,12 @@
 
   function removeVerticalGuide(verticalGuideId: number) {
     const filteredVerticalGuides = verticalGuides.filter(guide => guide.id !== verticalGuideId);
-    viewUpdateTimeline('verticalGuides', filteredVerticalGuides, timelineId);
+    dispatch('updateVerticalGuides', filteredVerticalGuides);
   }
 
   function addVerticalGuide(doyTimestamp: string) {
-    const id = verticalGuides.reduce((prev, curr) => {
-      if (curr.id >= prev) {
-        return curr.id + 1;
-      }
-      return prev;
-    }, 0);
-    const defaultLabel = `Guide ${id}`;
-    const newVerticalGuide: VerticalGuide = {
-      id,
-      label: { text: defaultLabel },
-      timestamp: doyTimestamp,
-    };
-
-    viewUpdateTimeline('verticalGuides', [...verticalGuides, newVerticalGuide], timelineId);
+    const newVerticalGuide = createVerticalGuide(doyTimestamp, verticalGuides);
+    dispatch('updateVerticalGuides', [...verticalGuides, newVerticalGuide]);
     cursorWithinView = false; // Hide active cursor that would overlap the created guide until mouse is moved again
   }
 

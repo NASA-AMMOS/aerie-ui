@@ -24,6 +24,7 @@
   import PlanMergeRequestsStatusButton from '../../../components/plan/PlanMergeRequestsStatusButton.svelte';
   import SchedulingPanel from '../../../components/scheduling/SchedulingPanel.svelte';
   import SimulationPanel from '../../../components/simulation/SimulationPanel.svelte';
+  import TimelineDetailsPanel from '../../../components/timeline/form/TimelineDetailsPanel.svelte';
   import TimelineFormPanel from '../../../components/timeline/form/TimelineFormPanel.svelte';
   import TimelinePanel from '../../../components/timeline/TimelinePanel.svelte';
   import CssGrid from '../../../components/ui/CssGrid.svelte';
@@ -35,6 +36,7 @@
   import { resetConstraintStores } from '../../../stores/constraints';
   import { allErrors, schedulingErrors, simulationDatasetErrors } from '../../../stores/errors';
   import {
+    activityTypes,
     maxTimeRange,
     plan,
     planEndTimeMs,
@@ -45,7 +47,6 @@
   } from '../../../stores/plan';
   import { resetSchedulingStores, schedulingStatus } from '../../../stores/scheduling';
   import {
-    modelParametersMap,
     resetSimulationStores,
     simulationDatasetId,
     simulationSpans,
@@ -71,6 +72,7 @@
     IFramePanel,
     SchedulingPanel,
     SimulationPanel,
+    TimelineDetailsPanel,
     TimelineFormPanel,
     TimelinePanel,
     ViewEditorPanel,
@@ -80,13 +82,13 @@
   let planHasBeenLocked = false;
 
   $: if (data.initialPlan) {
-    $modelParametersMap = data.initialPlan.model.parameters.parameters;
     $plan = data.initialPlan;
     $planEndTimeMs = getUnixEpochTime(data.initialPlan.end_time_doy);
     $planStartTimeMs = getUnixEpochTime(data.initialPlan.start_time_doy);
     $maxTimeRange = { end: $planEndTimeMs, start: $planStartTimeMs };
     $simulationDatasetId = data.initialPlan.simulations[0]?.simulation_datasets[0]?.id ?? -1;
     $viewTimeRange = $maxTimeRange;
+    activityTypes.updateValue(() => data.initialActivityTypes);
   }
 
   $: if (data.initialView) {
