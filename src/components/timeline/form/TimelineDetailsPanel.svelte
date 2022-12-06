@@ -10,6 +10,7 @@
   import { dndzone } from 'svelte-dnd-action';
   import { get } from 'svelte/store';
   import DatePickerField from '../../../components/form/DatePickerField.svelte';
+  import Field from '../../../components/form/Field.svelte';
   import Input from '../../../components/form/Input.svelte';
   import { field } from '../../../stores/form';
   import { maxTimeRange, viewTimeRange } from '../../../stores/plan';
@@ -26,7 +27,7 @@
   } from '../../../stores/views';
   import { getTarget } from '../../../utilities/generic';
   import { getDoyTime } from '../../../utilities/time';
-  import { createRow, createVerticalGuide } from '../../../utilities/timeline';
+  import { createHorizontalGuide, createRow, createVerticalGuide } from '../../../utilities/timeline';
   import { tooltip } from '../../../utilities/tooltip';
   import { required, timestamp } from '../../../utilities/validators';
   import GridMenu from '../../menus/GridMenu.svelte';
@@ -35,17 +36,47 @@
 
   export let gridId: number;
 
+  type HorizontalGuideFieldsMap = {
+    color: FieldStore<string>;
+    label: FieldStore<string>;
+    y: FieldStore<number>;
+    yAxisId: FieldStore<number>;
+  };
+  type VerticalGuideFieldsMap = {
+    label: FieldStore<string>;
+    timestamp: FieldStore<string>;
+  };
+
   let rows: Row[] = [];
-  let verticalGuideFieldMap: Record<number, FieldStore<string>> = {};
+  let horizontalGuideFieldsMap: Record<number, HorizontalGuideFieldsMap> = {};
+  let verticalGuideFieldsMap: Record<number, VerticalGuideFieldsMap> = {};
 
   $: rows = $selectedTimeline?.rows || [];
   $: verticalGuides = $selectedTimeline?.verticalGuides || [];
   $: horizontalGuides = $selectedRow?.horizontalGuides || [];
+  $: rowHasNonActivityChartLayer = !!$selectedRow?.layers.find(layer => layer.chartType !== 'activity') || false;
 
   $: if (verticalGuides) {
-    verticalGuideFieldMap = verticalGuides.reduce((map, guide) => {
+    verticalGuideFieldsMap = verticalGuides.reduce((map, guide) => {
       if (!map[guide.id]) {
-        map[guide.id] = field<string>(guide.timestamp, [required, timestamp]);
+        map[guide.id] = {
+          label: field<string>(guide.label.text, [required, timestamp]),
+          timestamp: field<string>(guide.timestamp, [required, timestamp]),
+        };
+      }
+      return map;
+    }, {});
+  }
+
+  $: if (horizontalGuides) {
+    horizontalGuideFieldsMap = horizontalGuides.reduce((map, guide) => {
+      if (!map[guide.id]) {
+        map[guide.id] = {
+          color: field<string>(guide.label.color),
+          label: field<string>(guide.label.text),
+          y: field<number>(guide.y, [required]),
+          yAxisId: field<number>(guide.yAxisId, [required]),
+        };
       }
       return map;
     }, {});
@@ -84,24 +115,49 @@
     viewUpdateTimeline('rows', rows, $selectedTimelineId);
   }
 
-  function handleDeleteGuideClick(verticalGuide: VerticalGuide) {
+  function handleDeleteVerticalGuideClick(verticalGuide: VerticalGuide) {
     const filteredVerticalGuides = verticalGuides.filter(guide => guide.id !== verticalGuide.id);
     viewUpdateTimeline('verticalGuides', filteredVerticalGuides, $selectedTimelineId);
   }
 
-  function handleUpdateGuide(verticalGuide: VerticalGuide) {
+  function handleDeleteHorizontalGuideClick(horizontalGuide: HorizontalGuide) {
+    const filteredHorizontalGuides = horizontalGuides.filter(guide => guide.id !== horizontalGuide.id);
+    viewUpdateRow('horizontalGuides', filteredHorizontalGuides);
+  }
+
+  function handleUpdateVerticalGuide(verticalGuide: VerticalGuide) {
     const filteredVerticalGuides = verticalGuides.map(guide => {
       if (guide.id === verticalGuide.id) {
-        const field = verticalGuideFieldMap[guide.id];
-        guide.timestamp = get(field).value;
+        const fields = verticalGuideFieldsMap[guide.id];
+        guide.timestamp = get(fields.timestamp).value;
+        guide.label.text = get(fields.label).value;
       }
       return guide;
     });
     viewUpdateTimeline('verticalGuides', filteredVerticalGuides, $selectedTimelineId);
   }
 
+  function handleUpdateHorizontalGuide(horizontalGuide: HorizontalGuide) {
+    const filteredHorizontalGuides = horizontalGuides.map(guide => {
+      if (guide.id === horizontalGuide.id) {
+        const fields = horizontalGuideFieldsMap[guide.id];
+        guide.label.color = get(fields.color).value;
+        guide.label.text = get(fields.label).value;
+        guide.y = get(fields.y).value;
+        guide.yAxisId = get(fields.yAxisId).value;
+      }
+      return guide;
+    });
+    viewUpdateRow('horizontalGuides', filteredHorizontalGuides);
+  }
+
   function handleNewHorizontalGuideClick() {
-    return;
+    if (!$selectedRow) {
+      return;
+    }
+
+    const newHorizontalGuide = createHorizontalGuide($selectedRow.yAxes, horizontalGuides);
+    viewUpdateRow('horizontalGuides', [...horizontalGuides, newHorizontalGuide]);
   }
 
   function handleNewVerticalGuideClick() {
@@ -115,6 +171,14 @@
 
     const newVerticalGuide = createVerticalGuide(centerDateDoy, verticalGuides);
     viewUpdateTimeline('verticalGuides', [...verticalGuides, newVerticalGuide], $selectedTimelineId);
+  }
+
+  function handleHorizontalGuideColorInputChange(event: Event, horizontalGuide: HorizontalGuide) {
+    console.log('input');
+    const { name, value } = getTarget(event);
+    const color = value as string;
+    // handleUpdateHorizontalGuide(horizontalGuide);
+    // const q = horizontalGuideFieldsMap[horizontalGuide.id].color.set();
   }
 
   // This is the JS way to style the dragged element, notice it is being passed into the dnd-zone
@@ -204,20 +268,30 @@
             </button>
           </div>
           {#if verticalGuides.length}
-            <div>
+            <div class="guides">
               {#each verticalGuides as verticalGuide (verticalGuide.id)}
-                <div class="vertical-guide">
+                <div class="guide">
+                  <Field
+                    field={verticalGuideFieldsMap[verticalGuide.id].label}
+                    on:change={() => handleUpdateVerticalGuide(verticalGuide)}
+                  >
+                    <input
+                      on:keyup={() => handleUpdateVerticalGuide(verticalGuide)}
+                      autocomplete="off"
+                      class="st-input w-100"
+                      name="label"
+                      placeholder="Guide label"
+                    />
+                  </Field>
                   <DatePickerField
                     minDate={new Date($maxTimeRange.start)}
                     maxDate={new Date($maxTimeRange.end)}
-                    layout="inline"
-                    label={`Guide ${verticalGuide.id}`}
-                    field={verticalGuideFieldMap[verticalGuide.id]}
-                    on:change={() => handleUpdateGuide(verticalGuide)}
-                    on:keydown={() => handleUpdateGuide(verticalGuide)}
+                    field={verticalGuideFieldsMap[verticalGuide.id].timestamp}
+                    on:change={() => handleUpdateVerticalGuide(verticalGuide)}
+                    on:keydown={() => handleUpdateVerticalGuide(verticalGuide)}
                   />
                   <button
-                    on:click={() => handleDeleteGuideClick(verticalGuide)}
+                    on:click={() => handleDeleteVerticalGuideClick(verticalGuide)}
                     use:tooltip={{ content: 'Delete Guide', placement: 'top' }}
                     class="st-button icon"
                   >
@@ -322,10 +396,10 @@
             <input
               disabled={$selectedRow.autoAdjustHeight}
               class="st-input w-100"
-              name="marginLeft"
+              name="height"
               type="number"
-              value={$selectedTimeline.marginLeft}
-              on:input={updateTimelineEvent}
+              value={$selectedRow.height}
+              on:input={updateRowEvent}
             />
           </Input>
           <Input class="row-height-select-wrapper">
@@ -336,7 +410,6 @@
               value={$selectedRow.autoAdjustHeight}
               on:change={e => {
                 const { value } = getTarget(e);
-                console.log(value, '?');
                 viewUpdateRow('autoAdjustHeight', value === 'true');
               }}
             >
@@ -347,28 +420,102 @@
         </CssGrid>
       </fieldset>
 
-      <fieldset class="editor-section">
-        <div class="editor-section-header editor-section-header-with-button">
-          <div class="st-typography-medium">Horizontal Guides</div>
-          <button
-            on:click={handleNewHorizontalGuideClick}
-            use:tooltip={{ content: 'New Horizontal Guide', placement: 'top' }}
-            class="st-button icon"
-          >
-            <PlusIcon />
-          </button>
-        </div>
-        {#if horizontalGuides.length}
-          <div>
-            {#each horizontalGuides as horizontalGuide (horizontalGuide.id)}
-              <div class="vertical-guide">
-                <!-- TODO implement hz guide editing once design is fleshed out -->
-                {horizontalGuide.label.text}
-              </div>
-            {/each}
+      {#if rowHasNonActivityChartLayer}
+        <fieldset class="editor-section">
+          <div class="editor-section-header editor-section-header-with-button">
+            <div class="st-typography-medium">Horizontal Guides</div>
+            <button
+              on:click={handleNewHorizontalGuideClick}
+              use:tooltip={{ content: 'New Horizontal Guide', placement: 'top' }}
+              class="st-button icon"
+            >
+              <PlusIcon />
+            </button>
           </div>
-        {/if}
-      </fieldset>
+          {#if horizontalGuides.length}
+            <div class="guides">
+              {#each horizontalGuides as horizontalGuide (horizontalGuide.id)}
+                <div class="guide">
+                  <Field
+                    field={horizontalGuideFieldsMap[horizontalGuide.id].label}
+                    on:change={() => handleUpdateHorizontalGuide(horizontalGuide)}
+                  >
+                    <input
+                      on:keyup={() => handleUpdateHorizontalGuide(horizontalGuide)}
+                      autocomplete="off"
+                      class="st-input w-100"
+                      name="label"
+                      placeholder="Guide label"
+                    />
+                  </Field>
+                  <Field
+                    field={horizontalGuideFieldsMap[horizontalGuide.id].y}
+                    on:change={() => handleUpdateHorizontalGuide(horizontalGuide)}
+                  >
+                    <!-- TODO decimal input isn't working correctly.. -->
+                    <input
+                      autocomplete="off"
+                      class="st-input w-100"
+                      name="y"
+                      placeholder="Guide Y value"
+                      type="number"
+                    />
+                  </Field>
+                  <Field
+                    field={horizontalGuideFieldsMap[horizontalGuide.id].color}
+                    on:change={() => {
+                      handleUpdateHorizontalGuide(horizontalGuide);
+                    }}
+                    on:input={() => {
+                      console.log('AAA');
+                      handleUpdateHorizontalGuide(horizontalGuide);
+                    }}
+                  >
+                    <input
+                      on:input={event => {
+                        // console.log('input');
+                        // const { name, value } = getTarget(event);
+                        // const color = value.toString();
+                        // // handleUpdateHorizontalGuide(horizontalGuide);
+                        // horizontalGuideFieldsMap[horizontalGuide.id].color.set(color);
+                        handleHorizontalGuideColorInputChange(event, horizontalGuide);
+                      }}
+                      type="color"
+                      name="color"
+                    />
+                  </Field>
+
+                  <Field
+                    field={horizontalGuideFieldsMap[horizontalGuide.id].yAxisId}
+                    on:change={() => handleUpdateHorizontalGuide(horizontalGuide)}
+                  >
+                    <!-- <label for="yAxisId" slot="label">Y Axis</label> -->
+                    <select
+                      class="st-select w-100"
+                      data-type="number"
+                      name="yAxisId"
+                      value={get(horizontalGuideFieldsMap[horizontalGuide.id].yAxisId).value}
+                    >
+                      {#each $selectedRow.yAxes as axis}
+                        <option value={axis.id}>
+                          Y Axis {axis.id}
+                        </option>
+                      {/each}
+                    </select>
+                  </Field>
+                  <button
+                    on:click={() => handleDeleteHorizontalGuideClick(horizontalGuide)}
+                    use:tooltip={{ content: 'Delete Guide', placement: 'top' }}
+                    class="st-button icon"
+                  >
+                    <TrashIcon />
+                  </button>
+                </div>
+              {/each}
+            </div>
+          {/if}
+        </fieldset>
+      {/if}
       <fieldset class="editor-section">
         <div class="editor-section-header editor-section-header-with-button">
           <div class="st-typography-medium">Y Axis Labels</div>
@@ -385,7 +532,7 @@
         {#if $selectedRow.yAxes.length}
           <div>
             {#each $selectedRow.yAxes as yAxis (yAxis.id)}
-              <div class="vertical-guide">
+              <div class="guide">
                 <!-- TODO implement yAxis editing once design is fleshed out -->
                 {yAxis.label.text}
               </div>
@@ -409,7 +556,7 @@
         {#if $selectedRow.layers.length}
           <div>
             {#each $selectedRow.layers as layer (layer.id)}
-              <div class="vertical-guide">
+              <div class="guide">
                 Layer {layer.id}, chart type: {layer.chartType}
               </div>
             {/each}
@@ -440,7 +587,7 @@
 
   .editor-section-header .st-button.icon,
   .row .st-button.icon,
-  .vertical-guide .st-button.icon {
+  .guide .st-button.icon {
     color: var(--st-gray-50);
   }
 
@@ -492,13 +639,27 @@
     display: flex;
   }
 
-  .vertical-guide {
+  .guides {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .guide {
     align-items: center;
     display: flex;
     gap: 8px;
   }
 
-  .vertical-guide :global(.date-picker-field) {
+  .guide :global(fieldset) {
+    padding: 0;
+  }
+  .guide :global(fieldset select) {
+    flex-shrink: 0;
+    min-width: max-content;
+  }
+
+  .guide :global(.date-picker-field) {
     flex: 1;
   }
 

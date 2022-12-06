@@ -197,6 +197,38 @@ export function createVerticalGuide(doyTimestamp: string, verticalGuides: Vertic
 }
 
 /*
+  Returns a new horizontal guide
+*/
+export function createHorizontalGuide(yAxes: Axis[], horizontalGuides: HorizontalGuide[]): HorizontalGuide {
+  // TODO make some getNextID fn util
+  const id = horizontalGuides.reduce((prev, curr) => {
+    if (curr.id >= prev) {
+      return curr.id + 1;
+    }
+    return prev;
+  }, 0);
+  const defaultLabel = `Guide ${id}`;
+
+  const firstAxis = yAxes.length > 0 ? yAxes[0] : 0;
+  let yAxisId = 0;
+  let y = 0;
+  if (firstAxis) {
+    yAxisId = firstAxis.id;
+    if (firstAxis.scaleDomain.length === 2) {
+      // Default y value to the middle of the domain
+      y = (firstAxis.scaleDomain[1] - firstAxis.scaleDomain[0]) / 2;
+    }
+  }
+
+  return {
+    id,
+    label: { text: defaultLabel },
+    y,
+    yAxisId,
+  };
+}
+
+/*
   Returns a new row
 */
 export function createRow(rows: Row[]): Row {
