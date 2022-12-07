@@ -111,14 +111,14 @@ export function getTarget(event: Event) {
 }
 
 /**
- * Returns true if the current browser is running on MacOS
+ * Returns true if a value is considered "empty". False otherwise.
  */
 export function isEmpty(value: any): boolean {
   return value === null || value === undefined || value === '' || Number.isNaN(value);
 }
 
 /**
- * Returns true if a value is considered "empty". False otherwise.
+ * Returns true if the current browser is running on MacOS
  */
 export function isMacOs(): boolean {
   return /mac/i.test(window.navigator.platform);

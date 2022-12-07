@@ -65,8 +65,6 @@
     selectedItem = condition;
     selectedGoal = null;
 
-    console.log('goal', selectedGoal);
-
     editorTitle = 'Scheduling Condition - Definition Editor (Read-only)';
   }
 
@@ -74,8 +72,6 @@
     selectedGoal = goal;
     selectedItem = goal;
     selectedCondition = null;
-
-    console.log('condition', selectedCondition);
 
     editorTitle = 'Scheduling Goal - Definition Editor (Read-only)';
   }
