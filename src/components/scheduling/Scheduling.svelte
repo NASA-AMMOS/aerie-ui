@@ -52,12 +52,12 @@
     }
   }
 
-  function deleteConditionContext(event: CustomEvent<number[]>) {
-    deleteCondition({ id: event.detail[0] });
+  function deleteConditionContext(event: CustomEvent<number>) {
+    deleteCondition({ id: event.detail });
   }
 
-  function deleteGoalContext(event: CustomEvent<number[]>) {
-    deleteGoal({ id: event.detail[0] });
+  function deleteGoalContext(event: CustomEvent<number>) {
+    deleteGoal({ id: event.detail });
   }
 
   function selectCondition(condition: SchedulingCondition) {
