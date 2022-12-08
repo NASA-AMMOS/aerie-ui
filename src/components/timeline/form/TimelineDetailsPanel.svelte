@@ -94,6 +94,48 @@
     viewUpdateTimeline(name, value);
   }
 
+  function updateYAxisScaleDomain(event: Event, yAxis: Axis) {
+    const { name, value: v } = getTarget(event);
+    const numberValue = v as number;
+    const value = isNaN(numberValue) ? null : numberValue;
+    let scaleDomain = [...yAxis.scaleDomain];
+
+    if (name === 'domainMin') {
+      scaleDomain[0] = value;
+      scaleDomain[1] = scaleDomain[1] ?? null;
+    } else if (name === 'domainMax') {
+      scaleDomain[0] = scaleDomain[0] ?? null;
+      scaleDomain[1] = value;
+    }
+
+    const [min, max] = scaleDomain;
+    if (min === null && max === null) {
+      scaleDomain = [];
+    }
+
+    const newRowYAxes = $selectedRow.yAxes.map(axis => {
+      if (axis.id === yAxis.id) {
+        axis.scaleDomain = scaleDomain;
+      }
+      return axis;
+    });
+    viewUpdateRow('yAxes', newRowYAxes);
+  }
+
+  function updateYAxisTickCount(event: Event, yAxis: Axis) {
+    const { value: v } = getTarget(event);
+    const numberValue = v as number;
+    const value = isNaN(numberValue) ? null : numberValue;
+
+    const newRowYAxes = $selectedRow.yAxes.map(axis => {
+      if (axis.id === yAxis.id) {
+        axis.tickCount = value;
+      }
+      return axis;
+    });
+    viewUpdateRow('yAxes', newRowYAxes);
+  }
+
   function addTimelineRow() {
     if (!$selectedTimeline) {
       return;
@@ -126,7 +168,7 @@
   }
 
   function handleUpdateVerticalGuide(verticalGuide: VerticalGuide) {
-    const filteredVerticalGuides = verticalGuides.map(guide => {
+    const newVerticalGUides = verticalGuides.map(guide => {
       if (guide.id === verticalGuide.id) {
         const fields = verticalGuideFieldsMap[guide.id];
         guide.timestamp = get(fields.timestamp).value;
@@ -134,7 +176,7 @@
       }
       return guide;
     });
-    viewUpdateTimeline('verticalGuides', filteredVerticalGuides, $selectedTimelineId);
+    viewUpdateTimeline('verticalGuides', newVerticalGUides, $selectedTimelineId);
   }
 
   function handleUpdateHorizontalGuide(horizontalGuide: HorizontalGuide) {
@@ -436,18 +478,20 @@
             <div class="guides">
               {#each horizontalGuides as horizontalGuide (horizontalGuide.id)}
                 <div class="guide">
-                  <Field
-                    field={horizontalGuideFieldsMap[horizontalGuide.id].label}
-                    on:change={() => handleUpdateHorizontalGuide(horizontalGuide)}
-                  >
-                    <input
-                      on:keyup={() => handleUpdateHorizontalGuide(horizontalGuide)}
-                      autocomplete="off"
-                      class="st-input w-100"
-                      name="label"
-                      placeholder="Guide label"
-                    />
-                  </Field>
+                  <div class="w-100">
+                    <Field
+                      field={horizontalGuideFieldsMap[horizontalGuide.id].label}
+                      on:change={() => handleUpdateHorizontalGuide(horizontalGuide)}
+                    >
+                      <input
+                        on:keyup={() => handleUpdateHorizontalGuide(horizontalGuide)}
+                        autocomplete="off"
+                        class="st-input w-100"
+                        name="label"
+                        placeholder="Guide label"
+                      />
+                    </Field>
+                  </div>
                   <Field
                     field={horizontalGuideFieldsMap[horizontalGuide.id].y}
                     on:change={() => handleUpdateHorizontalGuide(horizontalGuide)}
@@ -515,31 +559,65 @@
             </div>
           {/if}
         </fieldset>
-      {/if}
-      <fieldset class="editor-section">
-        <div class="editor-section-header editor-section-header-with-button">
-          <div class="st-typography-medium">Y Axis Labels</div>
-          <button
-            on:click={() => {
-              console.log('');
-            }}
-            use:tooltip={{ content: 'New Y Axis Label', placement: 'top' }}
-            class="st-button icon"
-          >
-            <PlusIcon />
-          </button>
-        </div>
-        {#if $selectedRow.yAxes.length}
-          <div>
+
+        <fieldset class="editor-section">
+          <div class="editor-section-header">
+            <div class="st-typography-medium">Y Axis Labels</div>
+          </div>
+          {#if $selectedRow.yAxes.length}
             {#each $selectedRow.yAxes as yAxis (yAxis.id)}
               <div class="guide">
-                <!-- TODO implement yAxis editing once design is fleshed out -->
-                {yAxis.label.text}
+                <input
+                  class="st-input w-100"
+                  name="label"
+                  type="string"
+                  value={yAxis.label.text}
+                  on:input={event => {
+                    const { value } = getTarget(event);
+                    const newRowYAxes = $selectedRow.yAxes.map(axis => {
+                      if (axis.id === yAxis.id) {
+                        axis.label.text = value.toString();
+                      }
+                      return axis;
+                    });
+                    viewUpdateRow('yAxes', newRowYAxes);
+                  }}
+                />
+                <Input>
+                  <label for="domainMin">Min</label>
+                  <input
+                    class="st-input w-100"
+                    name="domainMin"
+                    type="number"
+                    value={yAxis.scaleDomain[0]}
+                    on:input={event => updateYAxisScaleDomain(event, yAxis)}
+                  />
+                </Input>
+                <Input>
+                  <label for="domainMax">Max</label>
+                  <input
+                    class="st-input w-100"
+                    name="domainMax"
+                    type="number"
+                    value={yAxis.scaleDomain[1]}
+                    on:input={event => updateYAxisScaleDomain(event, yAxis)}
+                  />
+                </Input>
+                <Input>
+                  <label for="tickCount">Ticks</label>
+                  <input
+                    class="st-input w-100"
+                    name="tickCount"
+                    type="number"
+                    value={yAxis.tickCount}
+                    on:input={event => updateYAxisTickCount(event, yAxis)}
+                  />
+                </Input>
               </div>
             {/each}
-          </div>
-        {/if}
-      </fieldset>
+          {/if}
+        </fieldset>
+      {/if}
       <fieldset class="editor-section">
         <div class="editor-section-header editor-section-header-with-button">
           <div class="st-typography-medium">Layers</div>
