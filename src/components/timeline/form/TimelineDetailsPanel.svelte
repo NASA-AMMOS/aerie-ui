@@ -508,7 +508,7 @@
                 <div class="w-100">
                   <input
                     autocomplete="off"
-                    placeholder="Axis label"
+                    placeholder="Label"
                     class="st-input w-100"
                     name="label"
                     type="string"
