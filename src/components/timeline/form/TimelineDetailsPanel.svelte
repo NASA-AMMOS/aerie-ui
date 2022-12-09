@@ -277,6 +277,7 @@
             <Input>
               <label for="marginLeft">Margin Left</label>
               <input
+                min={0}
                 class="st-input w-100"
                 name="marginLeft"
                 type="number"
@@ -288,6 +289,7 @@
             <Input>
               <label for="marginRight">Margin Right</label>
               <input
+                min={0}
                 class="st-input w-100"
                 name="marginRight"
                 type="number"
@@ -488,7 +490,7 @@
                         autocomplete="off"
                         class="st-input w-100"
                         name="label"
-                        placeholder="Guide label"
+                        placeholder="Label"
                       />
                     </Field>
                   </div>
@@ -497,13 +499,7 @@
                     on:change={() => handleUpdateHorizontalGuide(horizontalGuide)}
                   >
                     <!-- TODO decimal input isn't working correctly.. -->
-                    <input
-                      autocomplete="off"
-                      class="st-input w-100"
-                      name="y"
-                      placeholder="Guide Y value"
-                      type="number"
-                    />
+                    <input autocomplete="off" class="st-input w-100" name="y" placeholder="Y value" type="number" />
                   </Field>
                   <Field
                     field={horizontalGuideFieldsMap[horizontalGuide.id].color}
@@ -516,6 +512,7 @@
                     }}
                   >
                     <input
+                      class="editor-color-input"
                       on:input={event => {
                         // console.log('input');
                         // const { name, value } = getTarget(event);
@@ -566,23 +563,27 @@
           </div>
           {#if $selectedRow.yAxes.length}
             {#each $selectedRow.yAxes as yAxis (yAxis.id)}
-              <div class="guide">
-                <input
-                  class="st-input w-100"
-                  name="label"
-                  type="string"
-                  value={yAxis.label.text}
-                  on:input={event => {
-                    const { value } = getTarget(event);
-                    const newRowYAxes = $selectedRow.yAxes.map(axis => {
-                      if (axis.id === yAxis.id) {
-                        axis.label.text = value.toString();
-                      }
-                      return axis;
-                    });
-                    viewUpdateRow('yAxes', newRowYAxes);
-                  }}
-                />
+              <div class="yAxisLabel">
+                <div class="w-100">
+                  <input
+                    autocomplete="off"
+                    placeholder="Axis label"
+                    class="st-input w-100"
+                    name="label"
+                    type="string"
+                    value={yAxis.label.text}
+                    on:input={event => {
+                      const { value } = getTarget(event);
+                      const newRowYAxes = $selectedRow.yAxes.map(axis => {
+                        if (axis.id === yAxis.id) {
+                          axis.label.text = value.toString();
+                        }
+                        return axis;
+                      });
+                      viewUpdateRow('yAxes', newRowYAxes);
+                    }}
+                  />
+                </div>
                 <Input>
                   <label for="domainMin">Min</label>
                   <input
@@ -618,29 +619,6 @@
           {/if}
         </fieldset>
       {/if}
-      <fieldset class="editor-section">
-        <div class="editor-section-header editor-section-header-with-button">
-          <div class="st-typography-medium">Layers</div>
-          <button
-            on:click={() => {
-              console.log('');
-            }}
-            use:tooltip={{ content: 'New Layer', placement: 'top' }}
-            class="st-button icon"
-          >
-            <PlusIcon />
-          </button>
-        </div>
-        {#if $selectedRow.layers.length}
-          <div>
-            {#each $selectedRow.layers as layer (layer.id)}
-              <div class="guide">
-                Layer {layer.id}, chart type: {layer.chartType}
-              </div>
-            {/each}
-          </div>
-        {/if}
-      </fieldset>
     {/if}
   </svelte:fragment>
 </Panel>
@@ -723,13 +701,15 @@
     gap: 16px;
   }
 
-  .guide {
+  .guide,
+  .yAxisLabel {
     align-items: center;
     display: flex;
     gap: 8px;
   }
 
   .guide :global(fieldset) {
+    display: flex;
     padding: 0;
   }
   .guide :global(fieldset select) {
@@ -737,8 +717,22 @@
     min-width: max-content;
   }
 
+  .guide :global(fieldset input[type='number']) {
+    flex-shrink: 0;
+    min-width: 80px;
+  }
+
   .guide :global(.date-picker-field) {
     flex: 1;
+  }
+
+  .yAxisLabel :global(.input-stacked) {
+    min-width: 80px;
+    width: auto;
+  }
+
+  .yAxisLabel :global(.input-stacked input) {
+    min-width: 32px;
   }
 
   .section-back-button {
@@ -751,5 +745,46 @@
   :global(.input.input-stacked.row-height-select-wrapper) {
     align-items: flex-end;
     display: flex;
+  }
+
+  :global(.input.input-stacked.row-height-select-wrapper) {
+    align-items: flex-end;
+    display: flex;
+  }
+  .editor-color-input {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    height: 24px;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    width: 24px;
+  }
+  .editor-color-input:after {
+    border: 1px inset rgb(0 0 0 / 25%);
+    border-radius: 4px;
+    content: ' ';
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+  }
+  .editor-color-input::-webkit-color-swatch {
+    border: none;
+    border-radius: 4px;
+  }
+  .editor-color-input::-moz-color-swatch {
+    border: none;
+    border-radius: 4px;
+  }
+  .editor-color-input::-webkit-color-swatch-wrapper {
+    border: none;
+    border-radius: 4px;
+    padding: 0;
   }
 </style>
