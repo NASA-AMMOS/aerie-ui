@@ -5,7 +5,7 @@
   import type { ScaleTime } from 'd3-scale';
   import { pick } from 'lodash-es';
   import { createEventDispatcher } from 'svelte';
-  import { viewSetSelectedRow } from '../../stores/views';
+  import { selectedRow, viewSetSelectedRow } from '../../stores/views';
   import { classNames } from '../../utilities/generic';
   import { tooltip } from '../../utilities/tooltip';
   import ConstraintViolations from './ConstraintViolations.svelte';
@@ -89,7 +89,7 @@
   }
 </script>
 
-<div class="row-root">
+<div class="row-root" class:active-row={$selectedRow ? $selectedRow.id === id : false}>
   <!-- Row Header. -->
   <RowHeader {expanded} rowId={id} title={name} {rowDragMoveDisabled} on:mouseDownRowMove on:toggleRowExpansion>
     <div slot="right">
@@ -226,6 +226,7 @@
   }
 
   .overlay {
+    outline: none;
     z-index: 2;
   }
 
@@ -264,5 +265,20 @@
 
   :global(.row-edit-button.st-button.icon:hover svg) {
     color: var(--st-gray-70);
+  }
+
+  .row-root {
+    position: relative;
+  }
+
+  .active-row:after {
+    border: 1px solid #2f80ed;
+    content: ' ';
+    height: 100%;
+    left: 0;
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    width: 100%;
   }
 </style>
