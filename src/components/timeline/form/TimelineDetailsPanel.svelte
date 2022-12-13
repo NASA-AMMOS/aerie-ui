@@ -40,13 +40,11 @@
   $: rowHasNonActivityChartLayer = !!$selectedRow?.layers.find(layer => layer.chartType !== 'activity') || false;
 
   function updateRowEvent(event: Event) {
-    event.stopPropagation();
     const { name, value } = getTarget(event);
     viewUpdateRow(name, value);
   }
 
   function updateTimelineEvent(event: Event) {
-    event.stopPropagation();
     const { name, value } = getTarget(event);
     viewUpdateTimeline(name, value);
   }
@@ -241,7 +239,7 @@
                 name="marginLeft"
                 type="number"
                 value={$selectedTimeline.marginLeft}
-                on:input={updateTimelineEvent}
+                on:input|stopPropagation={updateTimelineEvent}
               />
             </Input>
 
@@ -253,7 +251,7 @@
                 name="marginRight"
                 type="number"
                 value={$selectedTimeline.marginRight}
-                on:input={updateTimelineEvent}
+                on:input|stopPropagation={updateTimelineEvent}
               />
             </Input>
           </CssGrid>
@@ -395,7 +393,7 @@
               autocomplete="off"
               type="string"
               value={$selectedRow.name}
-              on:input={updateRowEvent}
+              on:input|stopPropagation={updateRowEvent}
             />
           </Input>
         </div>
@@ -408,7 +406,7 @@
               name="height"
               type="number"
               value={$selectedRow.height}
-              on:input={updateRowEvent}
+              on:input|stopPropagation={updateRowEvent}
             />
           </Input>
           <Input class="row-height-select-wrapper">
