@@ -178,9 +178,9 @@ export function searchQuadtreeRect<T>(
   return points;
 }
 
-/*
-  Returns a new vertical guide
-*/
+/**
+ * Returns a new vertical guide
+ */
 export function createVerticalGuide(doyTimestamp: string, verticalGuides: VerticalGuide[]): VerticalGuide {
   const id = verticalGuides.reduce((prev, curr) => {
     if (curr.id >= prev) {
@@ -196,9 +196,9 @@ export function createVerticalGuide(doyTimestamp: string, verticalGuides: Vertic
   };
 }
 
-/*
-  Returns a new horizontal guide
-*/
+/**
+ * Returns a new horizontal guide
+ */
 export function createHorizontalGuide(yAxes: Axis[], horizontalGuides: HorizontalGuide[]): HorizontalGuide {
   // TODO make some getNextID fn util
   const id = horizontalGuides.reduce((prev, curr) => {
@@ -228,9 +228,9 @@ export function createHorizontalGuide(yAxes: Axis[], horizontalGuides: Horizonta
   };
 }
 
-/*
-  Returns a new row
-*/
+/**
+ * Returns a new row
+ */
 export function createRow(rows: Row[]): Row {
   const id = rows.reduce((prev, curr) => {
     if (curr.id >= prev) {
