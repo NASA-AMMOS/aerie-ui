@@ -481,7 +481,7 @@
                   >
                     {#each $selectedRow.yAxes as axis}
                       <option value={axis.id}>
-                        Y Axis {axis.id}
+                        {axis.label.text}
                       </option>
                     {/each}
                   </select>
@@ -500,7 +500,7 @@
 
         <fieldset class="editor-section">
           <div class="editor-section-header">
-            <div class="st-typography-medium">Y Axis Labels</div>
+            <div class="st-typography-medium">Y Axes</div>
           </div>
           {#if $selectedRow.yAxes.length}
             {#each $selectedRow.yAxes as yAxis (yAxis.id)}
