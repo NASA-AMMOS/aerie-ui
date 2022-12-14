@@ -5,7 +5,7 @@
   import type { ScaleTime } from 'd3-scale';
   import { pick } from 'lodash-es';
   import { createEventDispatcher } from 'svelte';
-  import { selectedRow, viewSetSelectedRow } from '../../stores/views';
+  import { selectedRow, view, viewSetSelectedRow, viewUpdateLayout } from '../../stores/views';
   import { classNames } from '../../utilities/generic';
   import { tooltip } from '../../utilities/tooltip';
   import ConstraintViolations from './ConstraintViolations.svelte';
@@ -87,6 +87,20 @@
       dispatch('updateRowHeight', { newHeight, rowId: id });
     }
   }
+
+  function onEditRow() {
+    // Open the timeline details panel on the right. For now we will assume
+    // the right panel is the last component in the view and that the panel is open.
+    // This will be improved after future layout enhancements.
+    const gridColumns = $view.definition.plan.layout as GridColumns;
+    const components = gridColumns.columns.filter(grid => grid.type === 'component');
+    if (components.length) {
+      viewUpdateLayout(components[components.length - 1].id, { componentName: 'TimelineDetailsPanel' });
+    }
+
+    // Set row to edit
+    viewSetSelectedRow(id);
+  }
 </script>
 
 <div class="row-root" class:active-row={$selectedRow ? $selectedRow.id === id : false}>
@@ -96,9 +110,7 @@
       <button
         use:tooltip={{ content: 'Edit Row', placement: 'top' }}
         class="st-button icon row-edit-button"
-        on:click={() => {
-          viewSetSelectedRow(id);
-        }}
+        on:click={onEditRow}
       >
         <PenIcon />
       </button>
