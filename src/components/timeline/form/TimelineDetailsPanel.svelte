@@ -25,7 +25,13 @@
   } from '../../../stores/views';
   import { getTarget } from '../../../utilities/generic';
   import { getDoyTime } from '../../../utilities/time';
-  import { createHorizontalGuide, createRow, createVerticalGuide } from '../../../utilities/timeline';
+  import {
+    createHorizontalGuide,
+    createRow,
+    createVerticalGuide,
+    createYAxis,
+    getYAxisBounds,
+  } from '../../../utilities/timeline';
   import { tooltip } from '../../../utilities/tooltip';
   import GridMenu from '../../menus/GridMenu.svelte';
   import CssGrid from '../../ui/CssGrid.svelte';
@@ -38,8 +44,9 @@
   $: rows = $selectedTimeline?.rows || [];
   $: verticalGuides = $selectedTimeline?.verticalGuides || [];
   $: horizontalGuides = $selectedRow?.horizontalGuides || [];
+  $: yAxes = $selectedRow?.yAxes || [];
   $: rowHasNonActivityChartLayer = !!$selectedRow?.layers.find(layer => layer.chartType !== 'activity') || false;
-  $: simulationPerfomed = $simulationDataset !== null;
+  $: simulationDataAvailable = $simulationDataset !== null;
 
   function updateRowEvent(event: Event) {
     const { name, value } = getTarget(event);
@@ -70,7 +77,7 @@
       scaleDomain = [];
     }
 
-    const newRowYAxes = $selectedRow.yAxes.map(axis => {
+    const newRowYAxes = yAxes.map(axis => {
       if (axis.id === yAxis.id) {
         axis.scaleDomain = scaleDomain;
       }
@@ -80,34 +87,8 @@
   }
 
   function handleAutoFitYAxisScaleDomain(yAxis: Axis) {
-    // Find all layers that are associated with this y axis
-    const yAxisLayers = $selectedRow.layers.filter(layer => layer.yAxisId === yAxis.id);
-
-    // Find min and max of associated layers
-    let minY = undefined;
-    let maxY = undefined;
-    yAxisLayers.forEach(layer => {
-      $resourcesByViewLayerId[layer.id].forEach(resource => {
-        resource.values.forEach(value => {
-          if (minY === undefined || value.y < minY) {
-            minY = value.y;
-          }
-          if (maxY === undefined || value.y > maxY) {
-            maxY = value.y;
-          }
-        });
-      });
-    });
-
-    let scaleDomain = [...yAxis.scaleDomain];
-    if (minY !== undefined) {
-      scaleDomain[0] = minY;
-    }
-    if (maxY !== undefined) {
-      scaleDomain[1] = maxY;
-    }
-
-    const newRowYAxes = $selectedRow.yAxes.map(axis => {
+    const scaleDomain = getYAxisBounds(yAxis, $selectedRow.layers, $resourcesByViewLayerId);
+    const newRowYAxes = yAxes.map(axis => {
       if (axis.id === yAxis.id) {
         axis.scaleDomain = scaleDomain;
       }
@@ -121,13 +102,24 @@
     const numberValue = v as number;
     const value = isNaN(numberValue) ? null : numberValue;
 
-    const newRowYAxes = $selectedRow.yAxes.map(axis => {
+    const newRowYAxes = yAxes.map(axis => {
       if (axis.id === yAxis.id) {
         axis.tickCount = value;
       }
       return axis;
     });
     viewUpdateRow('yAxes', newRowYAxes);
+  }
+
+  function handleNewYAxisClick() {
+    const yAxis = createYAxis(yAxes);
+    yAxes = [...yAxes, yAxis];
+    viewUpdateRow('yAxes', yAxes);
+  }
+
+  function handleDeleteYAxisClick(yAxis) {
+    const filteredYAxes = yAxes.filter(axis => axis.id !== yAxis.id);
+    viewUpdateRow('yAxes', filteredYAxes);
   }
 
   function addTimelineRow() {
@@ -213,7 +205,7 @@
       return;
     }
 
-    const newHorizontalGuide = createHorizontalGuide($selectedRow.yAxes, horizontalGuides);
+    const newHorizontalGuide = createHorizontalGuide(yAxes, horizontalGuides);
     viewUpdateRow('horizontalGuides', [...horizontalGuides, newHorizontalGuide]);
   }
 
@@ -536,7 +528,7 @@
                     name="yAxisId"
                     value={horizontalGuide.yAxisId}
                   >
-                    {#each $selectedRow.yAxes as axis}
+                    {#each yAxes as axis}
                       <option value={axis.id}>
                         {axis.label.text}
                       </option>
@@ -556,11 +548,18 @@
         </fieldset>
 
         <fieldset class="editor-section">
-          <div class="editor-section-header">
+          <div class="editor-section-header editor-section-header-with-button">
             <div class="st-typography-medium">Y Axes</div>
+            <button
+              on:click={handleNewYAxisClick}
+              use:tooltip={{ content: 'New Y Axis', placement: 'top' }}
+              class="st-button icon"
+            >
+              <PlusIcon />
+            </button>
           </div>
-          {#if $selectedRow.yAxes.length}
-            {#each $selectedRow.yAxes as yAxis (yAxis.id)}
+          {#if yAxes.length}
+            {#each yAxes as yAxis (yAxis.id)}
               <div class="yAxisLabel">
                 <div class="w-100">
                   <input
@@ -572,7 +571,7 @@
                     value={yAxis.label.text}
                     on:input={event => {
                       const { value } = getTarget(event);
-                      const newRowYAxes = $selectedRow.yAxes.map(axis => {
+                      const newRowYAxes = yAxes.map(axis => {
                         if (axis.id === yAxis.id) {
                           axis.label.text = value.toString();
                         }
@@ -582,11 +581,18 @@
                     }}
                   />
                 </div>
-                <div use:tooltip={{ content: 'Y axis auto fit only available after simulation', placement: 'top' }}>
+                <div
+                  use:tooltip={{
+                    content: simulationDataAvailable
+                      ? 'Fit axis bounds to domain of axis resources'
+                      : 'Axis bounds auto fit only available after simulation',
+                    placement: 'top',
+                  }}
+                >
                   <button
-                    disabled={!simulationPerfomed}
+                    disabled={!simulationDataAvailable}
                     class="st-button secondary"
-                    on:click={() => handleAutoFitYAxisScaleDomain(yAxis)}>Auto</button
+                    on:click={() => handleAutoFitYAxisScaleDomain(yAxis)}>Fit</button
                   >
                 </div>
                 <Input>
@@ -619,6 +625,13 @@
                     on:input={event => updateYAxisTickCount(event, yAxis)}
                   />
                 </Input>
+                <button
+                  on:click={() => handleDeleteYAxisClick(yAxis)}
+                  use:tooltip={{ content: 'Delete Y Axis', placement: 'top' }}
+                  class="st-button icon"
+                >
+                  <TrashIcon />
+                </button>
               </div>
             {/each}
           {/if}
@@ -648,7 +661,8 @@
 
   .editor-section-header .st-button.icon,
   .row .st-button.icon,
-  .guide .st-button.icon {
+  .guide .st-button.icon,
+  .yAxisLabel .st-button.icon {
     color: var(--st-gray-50);
   }
 
@@ -721,10 +735,6 @@
   .yAxisLabel :global(.input-stacked) {
     min-width: 80px;
     width: auto;
-  }
-
-  .yAxisLabel :global(input) {
-    min-width: 56px;
   }
 
   .section-back-button {

@@ -249,3 +249,70 @@ export function createRow(rows: Row[]): Row {
     yAxes: [],
   };
 }
+
+/**
+ * Returns a new y axis
+ */
+export function createYAxis(yAxes: Axis[]): Axis {
+  const id = getNextID(yAxes);
+  return {
+    color: '',
+    id,
+    label: { text: 'Label' },
+
+    // TODO is there a sensible default for this since there are
+    // no associated layers for a new y axis?
+    scaleDomain: [0, 1],
+    tickCount: 4,
+  };
+}
+
+/**
+ * Returns the max bounds of the resources associated with an axis
+ */
+export function getYAxisBounds(
+  yAxis: Axis,
+  layers: Layer[],
+  resourcesByViewLayerId: Record<number, Resource[]>,
+): number[] {
+  // Find all layers that are associated with this y axis
+  const yAxisLayers = layers.filter(layer => layer.yAxisId === yAxis.id);
+
+  // Find min and max of associated layers
+  let minY = undefined;
+  let maxY = undefined;
+  yAxisLayers.forEach(layer => {
+    resourcesByViewLayerId[layer.id].forEach(resource => {
+      resource.values.forEach(value => {
+        if (minY === undefined || value.y < minY) {
+          minY = value.y;
+        }
+        if (maxY === undefined || value.y > maxY) {
+          maxY = value.y;
+        }
+      });
+    });
+  });
+
+  const scaleDomain = [...yAxis.scaleDomain];
+  if (minY !== undefined) {
+    scaleDomain[0] = minY;
+  }
+  if (maxY !== undefined) {
+    scaleDomain[1] = maxY;
+  }
+
+  return scaleDomain;
+}
+
+/**
+ * Returns the next available ID given an array of objects with ID keys
+ */
+export function getNextID(objects: { id: number }[]) {
+  return objects.reduce((prev, curr) => {
+    if (curr.id >= prev) {
+      return curr.id + 1;
+    }
+    return prev;
+  }, 0);
+}
