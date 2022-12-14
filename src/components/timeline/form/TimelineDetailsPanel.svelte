@@ -119,7 +119,7 @@
     viewUpdateRow('yAxes', yAxes);
   }
 
-  function handleDeleteYAxisClick(yAxis) {
+  function handleDeleteYAxisClick(yAxis: Axis) {
     const filteredYAxes = yAxes.filter(axis => axis.id !== yAxis.id);
     viewUpdateRow('yAxes', filteredYAxes);
   }
@@ -134,7 +134,7 @@
     viewUpdateTimeline('rows', rows);
   }
 
-  function deleteTimelineRow(row) {
+  function deleteTimelineRow(row: Row) {
     const filteredRows = rows.filter(r => r.id !== row.id);
     viewUpdateTimeline('rows', filteredRows);
   }
