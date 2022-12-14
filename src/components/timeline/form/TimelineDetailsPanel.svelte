@@ -11,6 +11,7 @@
   import Input from '../../../components/form/Input.svelte';
   import DatePicker from '../../../components/ui/DatePicker/DatePicker.svelte';
   import { maxTimeRange, viewTimeRange } from '../../../stores/plan';
+  import { resourcesByViewLayerId, simulationDataset } from '../../../stores/simulation';
   import {
     selectedRow,
     selectedRowId,
@@ -38,6 +39,7 @@
   $: verticalGuides = $selectedTimeline?.verticalGuides || [];
   $: horizontalGuides = $selectedRow?.horizontalGuides || [];
   $: rowHasNonActivityChartLayer = !!$selectedRow?.layers.find(layer => layer.chartType !== 'activity') || false;
+  $: simulationPerfomed = $simulationDataset !== null;
 
   function updateRowEvent(event: Event) {
     const { name, value } = getTarget(event);
@@ -66,6 +68,43 @@
     const [min, max] = scaleDomain;
     if (min === null && max === null) {
       scaleDomain = [];
+    }
+
+    const newRowYAxes = $selectedRow.yAxes.map(axis => {
+      if (axis.id === yAxis.id) {
+        axis.scaleDomain = scaleDomain;
+      }
+      return axis;
+    });
+    viewUpdateRow('yAxes', newRowYAxes);
+  }
+
+  function handleAutoFitYAxisScaleDomain(yAxis: Axis) {
+    // Find all layers that are associated with this y axis
+    const yAxisLayers = $selectedRow.layers.filter(layer => layer.yAxisId === yAxis.id);
+
+    // Find min and max of associated layers
+    let minY = undefined;
+    let maxY = undefined;
+    yAxisLayers.forEach(layer => {
+      $resourcesByViewLayerId[layer.id].forEach(resource => {
+        resource.values.forEach(value => {
+          if (minY === undefined || value.y < minY) {
+            minY = value.y;
+          }
+          if (maxY === undefined || value.y > maxY) {
+            maxY = value.y;
+          }
+        });
+      });
+    });
+
+    let scaleDomain = [...yAxis.scaleDomain];
+    if (minY !== undefined) {
+      scaleDomain[0] = minY;
+    }
+    if (maxY !== undefined) {
+      scaleDomain[1] = maxY;
     }
 
     const newRowYAxes = $selectedRow.yAxes.map(axis => {
@@ -131,6 +170,17 @@
       return guide;
     });
     viewUpdateTimeline('verticalGuides', newVerticalGuides, $selectedTimelineId);
+  }
+
+  function handleUpdateVerticalGuideLabel(event: Event, verticalGuide: VerticalGuide) {
+    const { name, value } = getTarget(event);
+    const newVerticalGuides = verticalGuides.map(guide => {
+      if (guide.id === verticalGuide.id) {
+        guide.label[name] = value;
+      }
+      return guide;
+    });
+    viewUpdateRow('verticalGuides', newVerticalGuides);
   }
 
   function handleUpdateHorizontalGuideLabel(event: Event, horizontalGuide: HorizontalGuide) {
@@ -297,6 +347,15 @@
                     on:change={event => updateVerticalGuideTimestamp(event, verticalGuide)}
                     on:keydown={event => updateVerticalGuideTimestamp(event, verticalGuide)}
                   />
+                  <div class="editor-color-input-container">
+                    <input
+                      value={verticalGuide.label.color || '#969696'}
+                      class="editor-color-input"
+                      on:input={event => handleUpdateVerticalGuideLabel(event, verticalGuide)}
+                      type="color"
+                      name="color"
+                    />
+                  </div>
                   <button
                     on:click={() => handleDeleteVerticalGuideClick(verticalGuide)}
                     use:tooltip={{ content: 'Delete Guide', placement: 'top' }}
@@ -523,6 +582,13 @@
                     }}
                   />
                 </div>
+                <div use:tooltip={{ content: 'Y axis auto fit only available after simulation', placement: 'top' }}>
+                  <button
+                    disabled={!simulationPerfomed}
+                    class="st-button secondary"
+                    on:click={() => handleAutoFitYAxisScaleDomain(yAxis)}>Auto</button
+                  >
+                </div>
                 <Input>
                   <label for="domainMin">Min</label>
                   <input
@@ -647,20 +713,6 @@
     gap: 8px;
   }
 
-  /* .guide :global(fieldset) {
-    display: flex;
-    padding: 0;
-  }
-  .guide :global(fieldset select) {
-    flex-shrink: 0;
-    min-width: max-content;
-  }
-
-  .guide :global(fieldset input[type='number']) {
-    flex-shrink: 0;
-    min-width: 80px;
-  } */
-
   .guide :global(.date-picker) {
     flex: 1;
     min-width: 168px;
@@ -671,8 +723,8 @@
     width: auto;
   }
 
-  .yAxisLabel :global(.input-stacked input) {
-    min-width: 32px;
+  .yAxisLabel :global(input) {
+    min-width: 56px;
   }
 
   .section-back-button {
