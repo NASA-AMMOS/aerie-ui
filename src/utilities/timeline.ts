@@ -182,13 +182,9 @@ export function searchQuadtreeRect<T>(
  * Returns a new vertical guide
  */
 export function createVerticalGuide(doyTimestamp: string, verticalGuides: VerticalGuide[]): VerticalGuide {
-  const id = verticalGuides.reduce((prev, curr) => {
-    if (curr.id >= prev) {
-      return curr.id + 1;
-    }
-    return prev;
-  }, 0);
+  const id = getNextID(verticalGuides);
   const defaultLabel = `Guide ${id}`;
+
   return {
     id,
     label: { color: '#969696', text: defaultLabel },
@@ -200,15 +196,10 @@ export function createVerticalGuide(doyTimestamp: string, verticalGuides: Vertic
  * Returns a new horizontal guide
  */
 export function createHorizontalGuide(yAxes: Axis[], horizontalGuides: HorizontalGuide[]): HorizontalGuide {
-  // TODO make some getNextID fn util
-  const id = horizontalGuides.reduce((prev, curr) => {
-    if (curr.id >= prev) {
-      return curr.id + 1;
-    }
-    return prev;
-  }, 0);
+  const id = getNextID(horizontalGuides);
   const defaultLabel = `Guide ${id}`;
 
+  // Default the y value to the middle of the scale domain
   const firstAxis = yAxes.length > 0 ? yAxes[0] : 0;
   let yAxisId = 0;
   let y = 0;
@@ -232,12 +223,8 @@ export function createHorizontalGuide(yAxes: Axis[], horizontalGuides: Horizonta
  * Returns a new row
  */
 export function createRow(rows: Row[]): Row {
-  const id = rows.reduce((prev, curr) => {
-    if (curr.id >= prev) {
-      return curr.id + 1;
-    }
-    return prev;
-  }, 0);
+  const id = getNextID(rows);
+
   return {
     autoAdjustHeight: true,
     expanded: true,
@@ -255,6 +242,7 @@ export function createRow(rows: Row[]): Row {
  */
 export function createYAxis(yAxes: Axis[]): Axis {
   const id = getNextID(yAxes);
+
   return {
     color: '',
     id,
