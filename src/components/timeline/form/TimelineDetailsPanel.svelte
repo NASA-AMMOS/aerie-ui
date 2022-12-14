@@ -8,6 +8,7 @@
   import GripVerticalIcon from 'bootstrap-icons/icons/grip-vertical.svg?component';
   import { onMount } from 'svelte';
   import { dndzone } from 'svelte-dnd-action';
+  import ColorPicker from '../../../components/form/ColorPicker.svelte';
   import Input from '../../../components/form/Input.svelte';
   import DatePicker from '../../../components/ui/DatePicker/DatePicker.svelte';
   import { maxTimeRange, viewTimeRange } from '../../../stores/plan';
@@ -357,15 +358,11 @@
                     on:change={event => updateVerticalGuideTimestamp(event, verticalGuide)}
                     on:keydown={event => updateVerticalGuideTimestamp(event, verticalGuide)}
                   />
-                  <div class="editor-color-input-container">
-                    <input
-                      value={verticalGuide.label.color || '#969696'}
-                      class="editor-color-input"
-                      on:input={event => handleUpdateVerticalGuideLabel(event, verticalGuide)}
-                      type="color"
-                      name="color"
-                    />
-                  </div>
+                  <ColorPicker
+                    value={verticalGuide.label.color}
+                    on:input={event => handleUpdateVerticalGuideLabel(event, verticalGuide)}
+                    name="color"
+                  />
                   <button
                     on:click={() => handleDeleteVerticalGuideClick(verticalGuide)}
                     use:tooltip={{ content: 'Delete Guide', placement: 'top' }}
@@ -538,16 +535,11 @@
                     placeholder="Y value"
                     type="number"
                   />
-                  <div class="editor-color-input-container">
-                    <input
-                      value={horizontalGuide.label.color}
-                      class="editor-color-input"
-                      on:input={event => handleUpdateHorizontalGuideLabel(event, horizontalGuide)}
-                      type="color"
-                      name="color"
-                    />
-                  </div>
-
+                  <ColorPicker
+                    value={horizontalGuide.label.color}
+                    on:input={event => handleUpdateHorizontalGuideLabel(event, horizontalGuide)}
+                    name="color"
+                  />
                   <select
                     on:input={event => handleUpdateHorizontalGuideNumberValue(event, horizontalGuide)}
                     class="st-select w-100"
@@ -780,7 +772,7 @@
     align-items: flex-end;
     display: flex;
   }
-  .editor-color-input {
+  /* .editor-color-input {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
@@ -793,14 +785,14 @@
     padding: 0;
     position: relative;
     width: 24px;
-  }
+  } */
 
-  .editor-color-input-container {
+  /* .st-color-input {
     display: flex;
     position: relative;
-  }
+  } */
   /* TODO make a standalone color picker component */
-  .editor-color-input-container:after {
+  /* .st-color-input:after {
     border: 1px solid rgb(0 0 0 / 25%);
     border-radius: 4px;
     content: ' ';
@@ -823,5 +815,5 @@
     border: none;
     border-radius: 4px;
     padding: 0;
-  }
+  } */
 </style>

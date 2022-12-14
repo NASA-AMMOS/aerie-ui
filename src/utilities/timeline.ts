@@ -191,7 +191,7 @@ export function createVerticalGuide(doyTimestamp: string, verticalGuides: Vertic
   const defaultLabel = `Guide ${id}`;
   return {
     id,
-    label: { text: defaultLabel },
+    label: { color: '#969696', text: defaultLabel },
     timestamp: doyTimestamp,
   };
 }
@@ -222,7 +222,7 @@ export function createHorizontalGuide(yAxes: Axis[], horizontalGuides: Horizonta
 
   return {
     id,
-    label: { text: defaultLabel },
+    label: { color: '#969696', text: defaultLabel },
     y,
     yAxisId,
   };
