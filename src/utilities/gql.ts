@@ -538,7 +538,7 @@ const gql = {
 
   GET_SCHEDULING_CONDITION: `#graphql
     query GetSchedulingCondition($id: Int!) {
-      goal: scheduling_condition_by_pk(id: $id) {
+      condition: scheduling_condition_by_pk(id: $id) {
         author
         created_date
         definition

@@ -12,7 +12,7 @@
   let selectedCondition: SchedulingCondition | null = null;
   let selectedGoal: SchedulingGoal | null = null;
   let selectedItem: SchedulingCondition | SchedulingGoal | null = null;
-  let editorTitle: string = '';
+  let editorTitle: string = 'Scheduling';
 
   $: if (selectedCondition !== null) {
     const found = $schedulingConditions.findIndex(condition => condition.id === selectedCondition.id);
@@ -111,13 +111,13 @@
       schedulingConditions={$schedulingConditions}
       on:deleteCondition={deleteConditionContext}
       on:rowSelected={toggleCondition}
-    /></CssGrid
-  >
+    />
+  </CssGrid>
 
   <CssGridGutter track={1} type="column" />
 
   <SchedulingEditor
-    scheduleItemDefinition={selectedItem?.definition ?? 'No Scheduling Condition Selected'}
+    scheduleItemDefinition={selectedItem?.definition ?? 'No Scheduling Goal or Condition Selected'}
     scheduleItemModelId={selectedItem?.model_id}
     readOnly={true}
     title={editorTitle}

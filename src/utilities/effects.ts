@@ -1076,8 +1076,8 @@ const effects = {
     if (id !== null && id !== undefined) {
       try {
         const data = await reqHasura<SchedulingCondition>(gql.GET_SCHEDULING_CONDITION, { id });
-        const { goal } = data;
-        return goal;
+        const { condition } = data;
+        return condition;
       } catch (e) {
         catchError(e);
         return null;
