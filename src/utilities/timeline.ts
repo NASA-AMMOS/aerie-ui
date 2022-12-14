@@ -216,7 +216,7 @@ export function createHorizontalGuide(yAxes: Axis[], horizontalGuides: Horizonta
     yAxisId = firstAxis.id;
     if (firstAxis.scaleDomain.length === 2) {
       // Default y value to the middle of the domain
-      y = (firstAxis.scaleDomain[1] - firstAxis.scaleDomain[0]) / 2;
+      y = (firstAxis.scaleDomain[1] + firstAxis.scaleDomain[0]) / 2;
     }
   }
 
