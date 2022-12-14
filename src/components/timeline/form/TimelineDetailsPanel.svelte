@@ -24,6 +24,7 @@
     viewUpdateTimeline,
   } from '../../../stores/views';
   import { getTarget } from '../../../utilities/generic';
+  import { showConfirmModal } from '../../../utilities/modal';
   import { getDoyTime } from '../../../utilities/time';
   import {
     createHorizontalGuide,
@@ -130,6 +131,23 @@
     const row = createRow($selectedTimeline.rows);
     rows = [...rows, row];
     viewUpdateTimeline('rows', rows);
+  }
+
+  function deleteTimelineRow(row) {
+    const filteredRows = rows.filter(r => r.id !== row.id);
+    viewUpdateTimeline('rows', filteredRows);
+  }
+
+  async function handleDeleteRowClick(row: Row) {
+    const { confirm } = await showConfirmModal(
+      'Delete',
+      'Are you sure you want to delete this timeline row?',
+      'Delete Row',
+      true,
+    );
+    if (confirm) {
+      deleteTimelineRow(row);
+    }
   }
 
   function handleDndConsiderRows(e: CustomEvent<DndEvent>) {
@@ -389,15 +407,24 @@
                     <GripVerticalIcon />
                   </span>
                   {row.name}
-                  <button
-                    use:tooltip={{ content: 'Edit Row', placement: 'top' }}
-                    class="st-button icon"
-                    on:click={() => {
-                      viewSetSelectedRow(row.id);
-                    }}
-                  >
-                    <PenIcon />
-                  </button>
+                  <div>
+                    <button
+                      use:tooltip={{ content: 'Edit Row', placement: 'top' }}
+                      class="st-button icon"
+                      on:click={() => {
+                        viewSetSelectedRow(row.id);
+                      }}
+                    >
+                      <PenIcon />
+                    </button>
+                    <button
+                      use:tooltip={{ content: 'Delete Row', placement: 'top' }}
+                      class="st-button icon"
+                      on:click|stopPropagation={() => handleDeleteRowClick(row)}
+                    >
+                      <TrashIcon />
+                    </button>
+                  </div>
                 </div>
               </div>
             {/each}
