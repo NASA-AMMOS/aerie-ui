@@ -243,9 +243,9 @@
 
   // This is the JS way to style the dragged element, notice it is being passed into the dnd-zone
   function transformDraggedElement(draggedEl: Element) {
-    const el = draggedEl.querySelector('.row') as HTMLElement;
+    const el = draggedEl.querySelector('.timeline-row') as HTMLElement;
     el.style.background = 'var(--st-gray-10)';
-    el.classList.add('test');
+    el.classList.add('timeline-row-dragging');
   }
 
   onMount(() => {
@@ -729,7 +729,7 @@
   }
 
   .timeline-row:hover .drag-icon,
-  :global(.test) .drag-icon {
+  :global(.timeline-row-dragging) .drag-icon {
     display: flex;
   }
 
