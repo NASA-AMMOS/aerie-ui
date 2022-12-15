@@ -87,7 +87,7 @@ test.describe.serial('Timeline View Editing', () => {
     await page.locator('.timeline-row').last().locator("button[aria-label='Delete Row']").click();
 
     // Confirm deletion of row in modal
-    await page.getByRole('button', { name: 'Delete' }).click();
+    await page.locator('#svelte-modal').getByRole('button', { name: 'Delete' }).click();
 
     const newRowCount = await page.locator('.timeline-row').count();
     await expect(newRowCount - existingRowCount).toEqual(-1);
