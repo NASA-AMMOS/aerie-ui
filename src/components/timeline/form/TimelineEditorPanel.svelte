@@ -8,9 +8,6 @@
   import GripVerticalIcon from 'bootstrap-icons/icons/grip-vertical.svg?component';
   import { onMount } from 'svelte';
   import { dndzone } from 'svelte-dnd-action';
-  import ColorPicker from '../../../components/form/ColorPicker.svelte';
-  import Input from '../../../components/form/Input.svelte';
-  import DatePicker from '../../../components/ui/DatePicker/DatePicker.svelte';
   import { maxTimeRange, viewTimeRange } from '../../../stores/plan';
   import { resourcesByViewLayerId, simulationDataset } from '../../../stores/simulation';
   import {
@@ -35,8 +32,11 @@
     getYAxisBounds,
   } from '../../../utilities/timeline';
   import { tooltip } from '../../../utilities/tooltip';
+  import ColorPicker from '../../form/ColorPicker.svelte';
+  import Input from '../../form/Input.svelte';
   import GridMenu from '../../menus/GridMenu.svelte';
   import CssGrid from '../../ui/CssGrid.svelte';
+  import DatePicker from '../../ui/DatePicker/DatePicker.svelte';
   import Panel from '../../ui/Panel.svelte';
 
   export let gridId: number;
@@ -260,7 +260,7 @@
 
 <Panel borderLeft padBody={false}>
   <svelte:fragment slot="header">
-    <GridMenu {gridId} title="Timeline Details" />
+    <GridMenu {gridId} title="Timeline Editor" />
   </svelte:fragment>
 
   <svelte:fragment slot="body">
@@ -772,48 +772,4 @@
     align-items: flex-end;
     display: flex;
   }
-  /* .editor-color-input {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    background-color: transparent;
-    border: none;
-    cursor: pointer;
-    flex-shrink: 0;
-    height: 24px;
-    margin: 0;
-    padding: 0;
-    position: relative;
-    width: 24px;
-  } */
-
-  /* .st-color-input {
-    display: flex;
-    position: relative;
-  } */
-  /* TODO make a standalone color picker component */
-  /* .st-color-input:after {
-    border: 1px solid rgb(0 0 0 / 25%);
-    border-radius: 4px;
-    content: ' ';
-    height: 100%;
-    left: 0;
-    pointer-events: none;
-    position: absolute;
-    top: 0;
-    width: 100%;
-  }
-  .editor-color-input::-webkit-color-swatch {
-    border: none;
-    border-radius: 4px;
-  }
-  .editor-color-input::-moz-color-swatch {
-    border: none;
-    border-radius: 4px;
-  }
-  .editor-color-input::-webkit-color-swatch-wrapper {
-    border: none;
-    border-radius: 4px;
-    padding: 0;
-  } */
 </style>

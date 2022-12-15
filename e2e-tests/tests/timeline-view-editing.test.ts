@@ -59,7 +59,7 @@ test.describe.serial('Timeline View Editing', () => {
   });
 
   test('Add a vertical guide', async () => {
-    await plan.showPanel('Timeline Details');
+    await plan.showPanel('Timeline Editor');
     const existingGuideCount = await page.locator('.guide').count();
     await page.getByRole('button', { name: 'New Vertical Guide' }).click();
     const newGuideCount = await page.locator('.guide').count();
