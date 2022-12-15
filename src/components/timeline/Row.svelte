@@ -89,13 +89,13 @@
   }
 
   function onEditRow() {
-    // Open the timeline details panel on the right. For now we will assume
+    // Open the timeline editor panel on the right. For now we will assume
     // the right panel is the last component in the view and that the panel is open.
     // This will be improved after future layout enhancements.
     const gridColumns = $view.definition.plan.layout as GridColumns;
     const components = gridColumns.columns.filter(grid => grid.type === 'component');
     if (components.length) {
-      viewUpdateLayout(components[components.length - 1].id, { componentName: 'TimelineDetailsPanel' });
+      viewUpdateLayout(components[components.length - 1].id, { componentName: 'TimelineEditorsPanel' });
     }
 
     // Set row to edit
