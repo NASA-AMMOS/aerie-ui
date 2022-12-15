@@ -95,7 +95,7 @@
     const gridColumns = $view.definition.plan.layout as GridColumns;
     const components = gridColumns.columns.filter(grid => grid.type === 'component');
     if (components.length) {
-      viewUpdateLayout(components[components.length - 1].id, { componentName: 'TimelineEditorsPanel' });
+      viewUpdateLayout(components[components.length - 1].id, { componentName: 'TimelineEditorPanel' });
     }
 
     // Set row to edit
