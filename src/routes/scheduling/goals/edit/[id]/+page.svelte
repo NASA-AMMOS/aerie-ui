@@ -19,6 +19,7 @@
   initialGoalName={data.initialGoal.name}
   initialGoalModelId={data.initialGoal.model_id}
   initialGoalModifiedDate={data.initialGoal.modified_date}
-  initialModels={data.initialModels}
+  models={data.models}
+  plans={data.plans}
   mode="edit"
 />
