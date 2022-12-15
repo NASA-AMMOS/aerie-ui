@@ -388,7 +388,7 @@
             </button>
           </div>
           <div
-            class="rows"
+            class="timeline-rows"
             on:consider={handleDndConsiderRows}
             on:finalize={handleDndFinalizeRows}
             use:dndzone={{
@@ -399,7 +399,7 @@
           >
             {#each rows as row (row.id)}
               <div>
-                <div class="st-typography-body row">
+                <div class="st-typography-body timeline-row">
                   <span class="drag-icon">
                     <GripVerticalIcon />
                   </span>
@@ -679,7 +679,7 @@
   }
 
   .editor-section-header .st-button.icon,
-  .row .st-button.icon,
+  .timeline-row .st-button.icon,
   .guide .st-button.icon,
   .yAxisLabel .st-button.icon {
     color: var(--st-gray-50);
@@ -699,7 +699,7 @@
     padding: 16px 16px 0;
   }
 
-  .rows {
+  .timeline-rows {
     min-height: 100px;
     outline: none !important;
     overflow-x: hidden;
@@ -707,7 +707,7 @@
     padding-bottom: 16px;
   }
 
-  .row {
+  .timeline-row {
     align-items: center;
     display: flex;
     height: 40px;
@@ -723,12 +723,12 @@
     position: absolute;
   }
 
-  .row:hover,
-  .row:active {
+  .timeline-row:hover,
+  .timeline-row:active {
     background: var(--st-gray-10);
   }
 
-  .row:hover .drag-icon,
+  .timeline-row:hover .drag-icon,
   :global(.test) .drag-icon {
     display: flex;
   }
