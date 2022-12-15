@@ -44,7 +44,11 @@
     name: goalName,
   };
 
-  $: saveButtonEnabled = goalDefinition !== '' && goalModelId !== null && goalName !== '';
+  $: planOptions = plans
+    .filter(plan => plan.model_id === goalModelId)
+    .map(({ id, name, scheduling_specifications }) => ({ id, name, specId: scheduling_specifications[0].id }));
+  $: specId = planOptions.some(plan => plan.specId === specId) ? specId : null; // Null the specId value if the filtered plan list no longer includes the chosen spec
+  $: saveButtonEnabled = goalDefinition !== '' && goalModelId !== null && goalName !== '' && specId !== null;
   $: goalModified = diffGoals(savedGoal, {
     definition: goalDefinition,
     description: goalDescription,
@@ -167,6 +171,18 @@
           {#each models as model}
             <option value={model.id}>
               {model.name} ({model.id})
+            </option>
+          {/each}
+        </select>
+      </fieldset>
+
+      <fieldset>
+        <label for="plan">Plan</label>
+        <select bind:value={specId} class="st-select w-100" name="model">
+          <option value={null} />
+          {#each planOptions as plan}
+            <option value={plan.specId}>
+              {plan.name} ({plan.id})
             </option>
           {/each}
         </select>
