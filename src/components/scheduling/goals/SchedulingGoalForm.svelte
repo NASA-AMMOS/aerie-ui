@@ -22,9 +22,10 @@
   export let initialGoalModelId: number | null = null;
   export let initialGoalModifiedDate: string | null = null;
   export let initialGoalName: string = '';
-  export let initialModels: ModelSlim[] = [];
   export let initialSpecId: number | null = null;
   export let mode: 'create' | 'edit' = 'create';
+  export let plans: PlanSchedulingSpec[] = [];
+  export let models: ModelSlim[] = [];
 
   let goalAuthor: string | null = initialGoalAuthor;
   let goalCreatedDate: string | null = initialGoalCreatedDate;
@@ -34,7 +35,6 @@
   let goalModelId: number | null = initialGoalModelId;
   let goalModifiedDate: string | null = initialGoalModifiedDate;
   let goalName: string = initialGoalName;
-  let models: ModelSlim[] = initialModels;
   let saveButtonEnabled: boolean = false;
   let specId: number | null = initialSpecId;
   let savedGoal: Partial<SchedulingGoal> = {

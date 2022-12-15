@@ -525,6 +525,25 @@ const gql = {
     }
   `,
 
+  GET_PLANS_AND_MODELS_FOR_SCHEDULING: `#graphql
+    query GetPlansAndSchedulingSpecifications {
+      models: mission_model(order_by: { id: desc }) {
+        id
+        jar_id
+        name
+        version
+      }
+      plans: plan(order_by: { id: desc }) {
+        scheduling_specifications {
+          id
+        }
+        model_id
+        name
+        id
+      }
+    }
+  `,
+
   GET_PLAN_MERGE_NON_CONFLICTING_ACTIVITIES: `#graphql
     query GetPlanMergeNonConflictingActivities($merge_request_id: Int!) {
       nonConflictingActivities: get_non_conflicting_activities(args: { merge_request_id: $merge_request_id } ) {

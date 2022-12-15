@@ -1073,6 +1073,24 @@ const effects = {
     }
   },
 
+  async getPlansAndModelsForScheduling(): Promise<{
+    models: ModelSlim[];
+    plans: PlanSchedulingSpec[];
+  }> {
+    try {
+      const data = (await reqHasura(gql.GET_PLANS_AND_MODELS_FOR_SCHEDULING)) as {
+        models: ModelSlim[];
+        plans: PlanSchedulingSpec[];
+      };
+
+      const { models, plans } = data;
+      return { models, plans };
+    } catch (e) {
+      catchError(e);
+      return { models: [], plans: [] };
+    }
+  },
+
   async getSchedulingCondition(id: number | null | undefined): Promise<SchedulingCondition | null> {
     if (id !== null && id !== undefined) {
       try {
