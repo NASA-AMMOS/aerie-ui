@@ -256,6 +256,21 @@ export function createYAxis(yAxes: Axis[]): Axis {
 }
 
 /**
+ * Returns a new layer
+ */
+export function createTimelineLayer(layers: Layer[], yAxes: Axis[]): Layer {
+  const id = getNextID(layers);
+  const yAxisId = yAxes.length > 0 ? yAxes[0].id : 0;
+
+  return {
+    chartType: 'activity',
+    filter: {},
+    id,
+    yAxisId,
+  };
+}
+
+/**
  * Returns the max bounds of the resources associated with an axis
  */
 export function getYAxisBounds(
@@ -270,16 +285,18 @@ export function getYAxisBounds(
   let minY = undefined;
   let maxY = undefined;
   yAxisLayers.forEach(layer => {
-    resourcesByViewLayerId[layer.id].forEach(resource => {
-      resource.values.forEach(value => {
-        if (minY === undefined || value.y < minY) {
-          minY = value.y;
-        }
-        if (maxY === undefined || value.y > maxY) {
-          maxY = value.y;
-        }
+    if (resourcesByViewLayerId[layer.id]) {
+      resourcesByViewLayerId[layer.id].forEach(resource => {
+        resource.values.forEach(value => {
+          if (minY === undefined || value.y < minY) {
+            minY = value.y;
+          }
+          if (maxY === undefined || value.y > maxY) {
+            maxY = value.y;
+          }
+        });
       });
-    });
+    }
   });
 
   const scaleDomain = [...yAxis.scaleDomain];
@@ -296,7 +313,7 @@ export function getYAxisBounds(
 /**
  * Returns the next available ID given an array of objects with ID keys
  */
-export function getNextID(objects: { id: number }[]) {
+export function getNextID(objects: { id: number }[]): number {
   return objects.reduce((prev, curr) => {
     if (curr.id >= prev) {
       return curr.id + 1;
