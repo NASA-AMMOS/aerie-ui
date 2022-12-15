@@ -68,7 +68,7 @@ test.describe.serial('Timeline View Editing', () => {
 
   test('Remove a vertical guide', async () => {
     const existingGuideCount = await page.locator('.guide').count();
-    await page.getByRole('button', { name: 'Delete Guide' }).click();
+    await page.getByRole('button', { name: 'Delete Guide' }).last().click();
     const newGuideCount = await page.locator('.guide').count();
     await expect(newGuideCount - existingGuideCount).toEqual(-1);
   });
