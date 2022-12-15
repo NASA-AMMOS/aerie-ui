@@ -258,7 +258,7 @@
   });
 </script>
 
-<Panel borderLeft padBody={false}>
+<Panel padBody={false}>
   <svelte:fragment slot="header">
     <GridMenu {gridId} title="Timeline Editor" />
   </svelte:fragment>
