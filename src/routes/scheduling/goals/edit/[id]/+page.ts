@@ -17,10 +17,12 @@ export const load: PageLoad = async ({ parent, params }) => {
   if (goalIdParam !== null && goalIdParam !== undefined) {
     const goalId = parseFloatOrNull(goalIdParam);
     const initialGoal = await effects.getSchedulingGoal(goalId);
+    const schedulingSpecGoals = await effects.getSchedulingSpecGoalsForGoal(goalId);
 
     if (initialGoal !== null) {
       return {
         initialGoal,
+        initialSpecId: schedulingSpecGoals[0]?.specification_id,
         models,
         plans,
       };

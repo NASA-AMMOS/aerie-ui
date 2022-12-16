@@ -774,6 +774,17 @@ const effects = {
     }
   },
 
+  async deleteSchedulingSpecGoal(goal_id: number, specification_id: number): Promise<boolean> {
+    try {
+      await reqHasura(gql.DELETE_SCHEDULING_SPEC_GOAL, { goal_id, specification_id });
+      return true;
+    } catch (e) {
+      catchError('Scheduling Goal Spec Delete Failed', e);
+      showFailureToast('Scheduling Goal Delete Failed');
+      return false;
+    }
+  },
+
   async deleteUserSequence(id: number): Promise<boolean> {
     try {
       const { confirm } = await showConfirmModal(
@@ -1112,6 +1123,21 @@ const effects = {
         const data = await reqHasura<SchedulingGoal>(gql.GET_SCHEDULING_GOAL, { id });
         const { goal } = data;
         return goal;
+      } catch (e) {
+        catchError(e);
+        return null;
+      }
+    } else {
+      return null;
+    }
+  },
+
+  async getSchedulingSpecGoalsForGoal(goal_id: number | null): Promise<SchedulingSpecGoal[] | null> {
+    if (goal_id !== null) {
+      try {
+        const data = await reqHasura<SchedulingSpecGoal[]>(gql.GET_SCHEDULING_SPEC_GOALS_FOR_GOAL, { goal_id });
+        const { scheduling_specification_goals } = data;
+        return scheduling_specification_goals;
       } catch (e) {
         catchError(e);
         return null;

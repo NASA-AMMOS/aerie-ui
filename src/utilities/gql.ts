@@ -301,6 +301,15 @@ const gql = {
     }
   `,
 
+  DELETE_SCHEDULING_SPEC_GOAL: `#graphql
+    mutation DeleteSchedulingSpecGoal($goal_id: Int!, $specification_id: Int!) {
+      deleteSchedulingSpecGoal: delete_scheduling_specification_goals_by_pk(goal_id: $goal_id, specification_id: $specification_id) {
+        goal_id,
+        specification_id,
+      }
+    }
+  `,
+
   DELETE_USER_SEQUENCE: `#graphql
     mutation DeleteUserSequence($id: Int!) {
       deleteUserSequence: delete_user_sequence_by_pk(id: $id) {
@@ -588,6 +597,17 @@ const gql = {
         modified_date
         name
         revision
+      }
+    }
+  `,
+
+  GET_SCHEDULING_SPEC_GOALS_FOR_GOAL: `#graphql
+    query GetSchedulingSpecGoalsForGoal($goal_id: Int!) {
+      scheduling_specification_goals(where: { goal_id: { _eq: $goal_id } }) {
+        enabled
+        goal_id
+        priority
+        specification_id
       }
     }
   `,

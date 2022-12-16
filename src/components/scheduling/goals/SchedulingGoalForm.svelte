@@ -37,6 +37,7 @@
   let goalName: string = initialGoalName;
   let saveButtonEnabled: boolean = false;
   let specId: number | null = initialSpecId;
+  let savedSpecId: number | null = initialSpecId;
   let savedGoal: Partial<SchedulingGoal> = {
     definition: goalDefinition,
     description: goalDescription,
@@ -49,12 +50,13 @@
     .map(({ id, name, scheduling_specifications }) => ({ id, name, specId: scheduling_specifications[0].id }));
   $: specId = planOptions.some(plan => plan.specId === specId) ? specId : null; // Null the specId value if the filtered plan list no longer includes the chosen spec
   $: saveButtonEnabled = goalDefinition !== '' && goalModelId !== null && goalName !== '' && specId !== null;
-  $: goalModified = diffGoals(savedGoal, {
-    definition: goalDefinition,
-    description: goalDescription,
-    model_id: goalModelId,
-    name: goalName,
-  });
+  $: goalModified =
+    diffGoals(savedGoal, {
+      definition: goalDefinition,
+      description: goalDescription,
+      model_id: goalModelId,
+      name: goalName,
+    }) || specId !== savedSpecId;
   $: saveButtonText = mode === 'edit' && !goalModified ? 'Saved' : 'Save';
   $: saveButtonClass = goalModified && saveButtonEnabled ? 'primary' : 'secondary';
   $: pageTitle = mode === 'edit' ? 'Scheduling Goals' : 'New Scheduling Goal';
@@ -94,14 +96,12 @@
         if (newGoal !== null) {
           const { id: newGoalId } = newGoal;
 
-          if (specId !== null) {
-            const specGoalInsertInput: SchedulingSpecGoalInsertInput = {
-              enabled: true,
-              goal_id: newGoalId,
-              specification_id: specId,
-            };
-            await effects.createSchedulingSpecGoal(specGoalInsertInput);
-          }
+          const specGoalInsertInput: SchedulingSpecGoalInsertInput = {
+            enabled: true,
+            goal_id: newGoalId,
+            specification_id: specId,
+          };
+          await effects.createSchedulingSpecGoal(specGoalInsertInput);
 
           goto(`${base}/scheduling/goals/edit/${newGoalId}`);
         }
@@ -114,6 +114,16 @@
         };
         const updatedGoal = await effects.updateSchedulingGoal(goalId, goal);
         if (updatedGoal) {
+          if (specId !== savedSpecId) {
+            // If changing plans/specId, first delete existing scheduling_spec_goal record and re-insert a new one
+            // this is to allow the insert triggers to keep priorities in sync.
+            const deletedSchedulingSpecGoal = await effects.deleteSchedulingSpecGoal(goalId, savedSpecId);
+            if (deletedSchedulingSpecGoal) {
+              await effects.createSchedulingSpecGoal({ enabled: true, goal_id: goalId, specification_id: specId });
+              savedSpecId = specId;
+            }
+          }
+
           goalModifiedDate = updatedGoal.modified_date;
           savedGoal = { ...goal };
         }
