@@ -7,6 +7,7 @@
   import { schedulingGoalsColumns } from '../../../stores/scheduling';
   import effects from '../../../utilities/effects';
   import { isMacOs } from '../../../utilities/generic';
+  import { showConfirmModal } from '../../../utilities/modal';
   import PageTitle from '../../app/PageTitle.svelte';
   import Chip from '../../ui/Chip.svelte';
   import CssGrid from '../../ui/CssGrid.svelte';
@@ -106,6 +107,19 @@
           goto(`${base}/scheduling/goals/edit/${newGoalId}`);
         }
       } else if (mode === 'edit') {
+        if (specId !== savedSpecId) {
+          const { confirm } = await showConfirmModal(
+            'Confirm',
+            'Updating the plan will reset the priority of this scheduling goal.',
+            'Updating Plan',
+            true,
+          );
+
+          if (!confirm) {
+            return;
+          }
+        }
+
         const goal: Partial<SchedulingGoal> = {
           definition: goalDefinition,
           description: goalDescription,
@@ -145,7 +159,11 @@
         <button class="st-button secondary ellipsis" on:click={() => goto(`${base}/scheduling/goals`)}>
           {mode === 'create' ? 'Cancel' : 'Close'}
         </button>
-        <button class="st-button {saveButtonClass} ellipsis" disabled={!saveButtonEnabled} on:click={saveGoal}>
+        <button
+          class="st-button {saveButtonClass} ellipsis"
+          disabled={!saveButtonEnabled}
+          on:click|stopPropagation={saveGoal}
+        >
           {saveButtonText}
         </button>
       </div>
