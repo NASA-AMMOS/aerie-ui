@@ -100,7 +100,11 @@
       heightsByLayer[detail.layerId] = detail.newHeight;
       const heights = Object.values(heightsByLayer);
       const newHeight = Math.max(...heights);
-      dispatch('updateRowHeight', { newHeight, rowId: id });
+
+      // Only update row height if a change has occurred to avoid loopback
+      if (newHeight !== drawHeight) {
+        dispatch('updateRowHeight', { newHeight, rowId: id });
+      }
     }
   }
 
