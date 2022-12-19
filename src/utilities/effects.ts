@@ -774,17 +774,6 @@ const effects = {
     }
   },
 
-  async deleteSchedulingSpecCondition(condition_id: number, specification_id: number): Promise<boolean> {
-    try {
-      await reqHasura(gql.DELETE_SCHEDULING_SPEC_CONDITION, { condition_id, specification_id });
-      return true;
-    } catch (e) {
-      catchError('Scheduling Condition Spec Delete Failed', e);
-      showFailureToast('Scheduling Condition Delete Failed');
-      return false;
-    }
-  },
-
   async deleteSchedulingSpecGoal(goal_id: number, specification_id: number): Promise<boolean> {
     try {
       await reqHasura(gql.DELETE_SCHEDULING_SPEC_GOAL, { goal_id, specification_id });
