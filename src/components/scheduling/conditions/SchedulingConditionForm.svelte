@@ -184,7 +184,7 @@
 
       <fieldset>
         <label for="plan">Plan</label>
-        <select bind:value={specId} class="st-select w-100" name="model">
+        <select bind:value={specId} class="st-select w-100" name="plan">
           <option value={null} />
           {#each planOptions as plan}
             <option value={plan.specId}>
