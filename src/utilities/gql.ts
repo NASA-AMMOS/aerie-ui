@@ -601,6 +601,16 @@ const gql = {
     }
   `,
 
+  GET_SCHEDULING_SPEC_CONDITIONS_FOR_CONDITION: `#graphql
+    query GetSchedulingSpecConditionsForCondition($condition_id: Int!) {
+      scheduling_specification_conditions(where: { condition_id: { _eq: $condition_id } }) {
+        enabled
+        condition_id
+        specification_id
+      }
+    }
+  `,
+
   GET_SCHEDULING_SPEC_GOALS_FOR_GOAL: `#graphql
     query GetSchedulingSpecGoalsForGoal($goal_id: Int!) {
       scheduling_specification_goals(where: { goal_id: { _eq: $goal_id } }) {
@@ -1351,6 +1361,22 @@ const gql = {
       updateSchedulingSpecCondition: update_scheduling_specification_conditions_by_pk(
         pk_columns: { condition_id: $condition_id, specification_id: $specification_id },
         _set: $spec_condition
+      ) {
+        condition_id
+        specification_id
+      }
+    }
+  `,
+
+  UPDATE_SCHEDULING_SPEC_CONDITION_ID: `#graphql
+    mutation UpdateSchedulingSpecConditionId(
+      $condition_id: Int!,
+      $specification_id: Int!,
+      $new_specification_id: Int!,
+    ) {
+      updateSchedulingSpecConditionId: update_scheduling_specification_conditions_by_pk(
+        pk_columns: { condition_id: $condition_id, specification_id: $specification_id },
+        _set: { specification_id: $new_specification_id },
       ) {
         condition_id
         specification_id

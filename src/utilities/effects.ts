@@ -774,6 +774,17 @@ const effects = {
     }
   },
 
+  async deleteSchedulingSpecCondition(condition_id: number, specification_id: number): Promise<boolean> {
+    try {
+      await reqHasura(gql.DELETE_SCHEDULING_SPEC_CONDITION, { condition_id, specification_id });
+      return true;
+    } catch (e) {
+      catchError('Scheduling Condition Spec Delete Failed', e);
+      showFailureToast('Scheduling Condition Delete Failed');
+      return false;
+    }
+  },
+
   async deleteSchedulingSpecGoal(goal_id: number, specification_id: number): Promise<boolean> {
     try {
       await reqHasura(gql.DELETE_SCHEDULING_SPEC_GOAL, { goal_id, specification_id });
@@ -1123,6 +1134,25 @@ const effects = {
         const data = await reqHasura<SchedulingGoal>(gql.GET_SCHEDULING_GOAL, { id });
         const { goal } = data;
         return goal;
+      } catch (e) {
+        catchError(e);
+        return null;
+      }
+    } else {
+      return null;
+    }
+  },
+
+  async getSchedulingSpecConditionsForCondition(
+    condition_id: number | null,
+  ): Promise<SchedulingSpecCondition[] | null> {
+    if (condition_id !== null) {
+      try {
+        const data = await reqHasura<SchedulingSpecCondition[]>(gql.GET_SCHEDULING_SPEC_CONDITIONS_FOR_CONDITION, {
+          condition_id,
+        });
+        const { scheduling_specification_conditions } = data;
+        return scheduling_specification_conditions;
       } catch (e) {
         catchError(e);
         return null;
@@ -1657,6 +1687,24 @@ const effects = {
   ): Promise<void> {
     try {
       await reqHasura(gql.UPDATE_SCHEDULING_SPEC_CONDITION, { condition_id, spec_condition, specification_id });
+      showSuccessToast('Scheduling Spec Condition Updated Successfully');
+    } catch (e) {
+      catchError('Scheduling Spec Condition Update Failed', e);
+      showFailureToast('Scheduling Spec Condition Update Failed');
+    }
+  },
+
+  async updateSchedulingSpecConditionId(
+    condition_id: number,
+    specification_id: number,
+    new_specification_id: number,
+  ): Promise<void> {
+    try {
+      await reqHasura(gql.UPDATE_SCHEDULING_SPEC_CONDITION_ID, {
+        condition_id,
+        new_specification_id,
+        specification_id,
+      });
       showSuccessToast('Scheduling Spec Condition Updated Successfully');
     } catch (e) {
       catchError('Scheduling Spec Condition Update Failed', e);
