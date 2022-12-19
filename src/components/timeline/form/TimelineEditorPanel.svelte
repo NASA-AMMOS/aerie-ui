@@ -28,6 +28,9 @@
   import {
     createHorizontalGuide,
     createRow,
+    createTimelineActivityLayer,
+    createTimelineLineLayer,
+    createTimelineXRangeLayer,
     createVerticalGuide,
     createYAxis,
     getYAxisBounds,
@@ -48,6 +51,7 @@
   $: verticalGuides = $selectedTimeline?.verticalGuides || [];
   $: horizontalGuides = $selectedRow?.horizontalGuides || [];
   $: yAxes = $selectedRow?.yAxes || [];
+  $: layers = $selectedRow?.layers || [];
   $: rowHasNonActivityChartLayer = !!$selectedRow?.layers.find(layer => layer.chartType !== 'activity') || false;
   $: simulationDataAvailable = $simulationDataset !== null;
 
@@ -125,6 +129,18 @@
     viewUpdateRow('yAxes', filteredYAxes);
   }
 
+  function handleNewLayerClick() {
+    const layer = createTimelineActivityLayer(layers);
+    layers = [...layers, layer];
+    console.log(layers);
+    viewUpdateRow('layers', layers);
+  }
+
+  function handleDeleteLayerClick(layer: Layer) {
+    const filteredLayers = layers.filter(l => l.id !== layer.id);
+    viewUpdateRow('layers', filteredLayers);
+  }
+
   function addTimelineRow() {
     if (!$selectedTimeline) {
       return;
@@ -161,6 +177,28 @@
     const { detail } = e;
     rows = detail.items as Row[];
     viewUpdateTimeline('rows', rows, $selectedTimelineId);
+  }
+
+  function handleDndConsiderLayers(e: CustomEvent<DndEvent>) {
+    const { detail } = e;
+    layers = detail.items as Layer[];
+  }
+
+  function handleDndFinalizeLayers(e: CustomEvent<DndEvent>) {
+    const { detail } = e;
+    layers = detail.items as Layer[];
+    viewUpdateRow('layers', layers);
+  }
+
+  function handleDndConsiderYAxes(e: CustomEvent<DndEvent>) {
+    const { detail } = e;
+    yAxes = detail.items as Axis[];
+  }
+
+  function handleDndFinalizeYAxes(e: CustomEvent<DndEvent>) {
+    const { detail } = e;
+    yAxes = detail.items as Axis[];
+    viewUpdateRow('yAxes', yAxes);
   }
 
   function handleDeleteVerticalGuideClick(verticalGuide: VerticalGuide) {
@@ -220,6 +258,86 @@
     viewUpdateRow('horizontalGuides', newHorizontalGuides);
   }
 
+  function handleUpdateLayerFilter(event: Event, layer: Layer) {
+    const { value } = getTarget(event);
+    const newLayers = layers.map(l => {
+      if (layer.id === l.id) {
+        if (l.chartType === 'activity') {
+          l.filter.activity = {
+            type: value as string,
+          };
+        } else if (l.chartType === 'line' || l.chartType === 'x-range') {
+          l.filter.resource = {
+            name: value as string,
+          };
+        }
+      }
+      return l;
+    });
+    viewUpdateRow('layers', newLayers);
+  }
+
+  function handleUpdateLayerChartType(event: Event, layer: Layer) {
+    const { value } = getTarget(event);
+
+    // Create a y axis if the row has no axes and a line or x-range is requested
+    let newYAxis: Axis;
+    if ((value === 'line' || value === 'x-range') && yAxes.length === 0) {
+      handleNewYAxisClick();
+      newYAxis = yAxes[0];
+    }
+
+    const newLayers = layers.map(l => {
+      if (layer.id === l.id) {
+        let newLayer: ActivityLayer | LineLayer | XRangeLayer;
+        if (value === 'activity') {
+          newLayer = { ...createTimelineActivityLayer(layers), id: layer.id };
+        } else if (value === 'line' || value === 'x-range') {
+          if (value === 'line') {
+            newLayer = { ...createTimelineLineLayer(layers, yAxes), id: layer.id };
+          } else {
+            newLayer = { ...createTimelineXRangeLayer(layers, yAxes), id: layer.id };
+          }
+
+          // Assign yAxisId to existing value or new axis
+          if (typeof layer.yAxisId === 'number') {
+            newLayer.yAxisId = layer.yAxisId;
+          } else if (yAxes.length > 0) {
+            newLayer.yAxisId = yAxes[0].id;
+          } else {
+            handleNewYAxisClick();
+            newYAxis = yAxes[0];
+            newLayer.yAxisId = yAxes[0].id;
+          }
+        }
+        return newLayer;
+      }
+      return l;
+    });
+
+    viewUpdateRow('layers', newLayers);
+
+    // Auto fix y axis if appropriate
+    if (value === 'line' && yAxes.length) {
+      handleAutoFitYAxisScaleDomain(yAxes[0]);
+    }
+  }
+
+  function handleUpdateLayerColor(event: Event, layer: Layer) {
+    const { value } = getTarget(event);
+    const newLayers = layers.map(l => {
+      if (layer.id === l.id) {
+        if (l.chartType === 'activity') {
+          (l as ActivityLayer).activityColor = value as string;
+        } else if (l.chartType === 'line') {
+          (l as LineLayer).lineColor = value as string;
+        }
+      }
+      return l;
+    });
+    viewUpdateRow('layers', newLayers);
+  }
+
   function handleNewHorizontalGuideClick() {
     if (!$selectedRow) {
       return;
@@ -244,9 +362,30 @@
 
   // This is the JS way to style the dragged element, notice it is being passed into the dnd-zone
   function transformDraggedElement(draggedEl: Element) {
-    const el = draggedEl.querySelector('.timeline-row') as HTMLElement;
+    const el = draggedEl.querySelector('.timeline-element') as HTMLElement;
+    if (!el) {
+      return;
+    }
     el.style.background = 'var(--st-gray-10)';
-    el.classList.add('timeline-row-dragging');
+    el.classList.add('timeline-element-dragging');
+  }
+
+  function getColorForLayer(layer: Layer) {
+    if (layer.chartType === 'activity') {
+      return (layer as ActivityLayer).activityColor;
+    } else if (layer.chartType === 'line') {
+      return (layer as LineLayer).lineColor;
+    }
+    return '';
+  }
+
+  function getFilterForLayer(layer: Layer) {
+    if (layer.chartType === 'activity') {
+      return (layer as ActivityLayer).filter.activity?.type || '';
+    } else if (layer.chartType === 'line' || layer.chartType === 'x-range') {
+      return (layer as LineLayer).filter.resource?.name || '';
+    }
+    return '';
   }
 
   onMount(() => {
@@ -377,7 +516,7 @@
           {/if}
         </fieldset>
 
-        <fieldset class="editor-section editor-section-rows">
+        <fieldset class="editor-section editor-section-draggable">
           <div class="editor-section-header editor-section-header-with-button">
             <div class="st-typography-medium">Rows</div>
             <button
@@ -388,45 +527,49 @@
               <PlusIcon />
             </button>
           </div>
-          <div
-            class="timeline-rows"
-            on:consider={handleDndConsiderRows}
-            on:finalize={handleDndFinalizeRows}
-            use:dndzone={{
-              items: rows,
-              transformDraggedElement,
-              type: 'rows',
-            }}
-          >
-            {#each rows as row (row.id)}
-              <div>
-                <div class="st-typography-body timeline-row">
-                  <span class="drag-icon">
-                    <GripVerticalIcon />
-                  </span>
-                  {row.name}
-                  <div>
-                    <button
-                      use:tooltip={{ content: 'Edit Row', placement: 'top' }}
-                      class="st-button icon"
-                      on:click={() => {
-                        viewSetSelectedRow(row.id);
-                      }}
-                    >
-                      <PenIcon />
-                    </button>
-                    <button
-                      use:tooltip={{ content: 'Delete Row', placement: 'top' }}
-                      class="st-button icon"
-                      on:click|stopPropagation={() => handleDeleteRowClick(row)}
-                    >
-                      <TrashIcon />
-                    </button>
+          {#if rows.length}
+            <div
+              class="timeline-rows"
+              on:consider={handleDndConsiderRows}
+              on:finalize={handleDndFinalizeRows}
+              use:dndzone={{
+                items: rows,
+                transformDraggedElement,
+                type: 'rows',
+              }}
+            >
+              {#each rows as row (row.id)}
+                <div>
+                  <div class="st-typography-body timeline-row timeline-element">
+                    <span class="drag-icon">
+                      <GripVerticalIcon />
+                    </span>
+                    {row.name}
+                    <div>
+                      <button
+                        use:tooltip={{ content: 'Edit Row', placement: 'top' }}
+                        class="st-button icon"
+                        on:click={() => {
+                          viewSetSelectedRow(row.id);
+                        }}
+                      >
+                        <PenIcon />
+                      </button>
+                      <button
+                        use:tooltip={{ content: 'Delete Row', placement: 'top' }}
+                        class="st-button icon"
+                        on:click|stopPropagation={() => handleDeleteRowClick(row)}
+                      >
+                        <TrashIcon />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            {/each}
-          </div>
+              {/each}
+            </div>
+          {:else}
+            <div />
+          {/if}
         </fieldset>
       {/if}
     {:else}
@@ -566,8 +709,10 @@
             </div>
           {/if}
         </fieldset>
-
-        <fieldset class="editor-section">
+      {/if}
+      <!-- TODO perhaps separate out each section into a mini editor? -->
+      {#if yAxes.length > 0 || rowHasNonActivityChartLayer}
+        <fieldset class="editor-section editor-section-draggable">
           <div class="editor-section-header editor-section-header-with-button">
             <div class="st-typography-medium">Y Axes</div>
             <button
@@ -579,84 +724,168 @@
             </button>
           </div>
           {#if yAxes.length}
-            {#each yAxes as yAxis (yAxis.id)}
-              <div class="yAxisLabel">
-                <div class="w-100">
-                  <input
-                    autocomplete="off"
-                    placeholder="Label"
-                    class="st-input w-100"
-                    name="label"
-                    type="string"
-                    value={yAxis.label.text}
-                    on:input={event => {
-                      const { value } = getTarget(event);
-                      const newRowYAxes = yAxes.map(axis => {
-                        if (axis.id === yAxis.id) {
-                          axis.label.text = value.toString();
-                        }
-                        return axis;
-                      });
-                      viewUpdateRow('yAxes', newRowYAxes);
-                    }}
-                  />
+            <div
+              class="timeline-rows"
+              on:consider={handleDndConsiderYAxes}
+              on:finalize={handleDndFinalizeYAxes}
+              use:dndzone={{
+                items: yAxes,
+                transformDraggedElement,
+                type: 'rows',
+              }}
+            >
+              {#each yAxes as yAxis (yAxis.id)}
+                <div>
+                  <div class="timeline-y-axis timeline-element">
+                    <span class="drag-icon">
+                      <GripVerticalIcon />
+                    </span>
+                    <div class="w-100">
+                      <input
+                        autocomplete="off"
+                        placeholder="Label"
+                        class="st-input w-100"
+                        name="label"
+                        type="string"
+                        value={yAxis.label.text}
+                        on:input={event => {
+                          const { value } = getTarget(event);
+                          const newRowYAxes = yAxes.map(axis => {
+                            if (axis.id === yAxis.id) {
+                              axis.label.text = value.toString();
+                            }
+                            return axis;
+                          });
+                          viewUpdateRow('yAxes', newRowYAxes);
+                        }}
+                      />
+                    </div>
+                    <div
+                      use:tooltip={{
+                        content: simulationDataAvailable
+                          ? 'Fit axis bounds to domain of axis resources'
+                          : 'Axis bounds auto fit only available after simulation',
+                        placement: 'top',
+                      }}
+                    >
+                      <button
+                        disabled={!simulationDataAvailable}
+                        class="st-button secondary"
+                        on:click={() => handleAutoFitYAxisScaleDomain(yAxis)}>Fit</button
+                      >
+                    </div>
+                    <Input>
+                      <label for="domainMin">Min</label>
+                      <input
+                        class="st-input w-100"
+                        name="domainMin"
+                        type="number"
+                        value={yAxis.scaleDomain[0]}
+                        on:input={event => updateYAxisScaleDomain(event, yAxis)}
+                      />
+                    </Input>
+                    <Input>
+                      <label for="domainMax">Max</label>
+                      <input
+                        class="st-input w-100"
+                        name="domainMax"
+                        type="number"
+                        value={yAxis.scaleDomain[1]}
+                        on:input={event => updateYAxisScaleDomain(event, yAxis)}
+                      />
+                    </Input>
+                    <Input>
+                      <label for="tickCount">Ticks</label>
+                      <input
+                        class="st-input w-100"
+                        name="tickCount"
+                        type="number"
+                        value={yAxis.tickCount}
+                        on:input={event => updateYAxisTickCount(event, yAxis)}
+                      />
+                    </Input>
+                    <button
+                      on:click={() => handleDeleteYAxisClick(yAxis)}
+                      use:tooltip={{ content: 'Delete Y Axis', placement: 'top' }}
+                      class="st-button icon"
+                    >
+                      <TrashIcon />
+                    </button>
+                  </div>
                 </div>
-                <div
-                  use:tooltip={{
-                    content: simulationDataAvailable
-                      ? 'Fit axis bounds to domain of axis resources'
-                      : 'Axis bounds auto fit only available after simulation',
-                    placement: 'top',
-                  }}
-                >
-                  <button
-                    disabled={!simulationDataAvailable}
-                    class="st-button secondary"
-                    on:click={() => handleAutoFitYAxisScaleDomain(yAxis)}>Fit</button
-                  >
-                </div>
-                <Input>
-                  <label for="domainMin">Min</label>
-                  <input
-                    class="st-input w-100"
-                    name="domainMin"
-                    type="number"
-                    value={yAxis.scaleDomain[0]}
-                    on:input={event => updateYAxisScaleDomain(event, yAxis)}
-                  />
-                </Input>
-                <Input>
-                  <label for="domainMax">Max</label>
-                  <input
-                    class="st-input w-100"
-                    name="domainMax"
-                    type="number"
-                    value={yAxis.scaleDomain[1]}
-                    on:input={event => updateYAxisScaleDomain(event, yAxis)}
-                  />
-                </Input>
-                <Input>
-                  <label for="tickCount">Ticks</label>
-                  <input
-                    class="st-input w-100"
-                    name="tickCount"
-                    type="number"
-                    value={yAxis.tickCount}
-                    on:input={event => updateYAxisTickCount(event, yAxis)}
-                  />
-                </Input>
-                <button
-                  on:click={() => handleDeleteYAxisClick(yAxis)}
-                  use:tooltip={{ content: 'Delete Y Axis', placement: 'top' }}
-                  class="st-button icon"
-                >
-                  <TrashIcon />
-                </button>
-              </div>
-            {/each}
+              {/each}
+            </div>
           {/if}
         </fieldset>
       {/if}
+      <fieldset class="editor-section editor-section-draggable">
+        <div class="editor-section-header editor-section-header-with-button">
+          <div class="st-typography-medium">Layers</div>
+          <button
+            on:click={handleNewLayerClick}
+            use:tooltip={{ content: 'New Layer', placement: 'top' }}
+            class="st-button icon"
+          >
+            <PlusIcon />
+          </button>
+        </div>
+        {#if layers.length}
+          <div
+            class="timeline-layers"
+            on:consider={handleDndConsiderLayers}
+            on:finalize={handleDndFinalizeLayers}
+            use:dndzone={{
+              items: layers,
+              transformDraggedElement,
+              type: 'rows',
+            }}
+          >
+            {#each layers as layer (layer.id)}
+              <div>
+                <div class="timeline-layer timeline-element">
+                  <span class="drag-icon">
+                    <GripVerticalIcon />
+                  </span>
+                  <ColorPicker
+                    value={getColorForLayer(layer)}
+                    on:input={event => handleUpdateLayerColor(event, layer)}
+                    name="color"
+                  />
+                  <input
+                    value={getFilterForLayer(layer)}
+                    on:input={event => {
+                      handleUpdateLayerFilter(event, layer);
+                    }}
+                    autocomplete="off"
+                    class="st-input w-100"
+                    name="filter"
+                    placeholder="Search"
+                  />
+                  <select
+                    class="st-select w-100"
+                    name="chartType"
+                    value={layer.chartType}
+                    on:change={event => handleUpdateLayerChartType(event, layer)}
+                  >
+                    <option value="activity">Activity</option>
+                    <option value="line">Line</option>
+                    <option value="x-range">X-Range</option>
+                  </select>
+                  <button
+                    on:click={() => handleDeleteLayerClick(layer)}
+                    use:tooltip={{ content: 'Delete Layer', placement: 'top' }}
+                    class="st-button icon"
+                  >
+                    <TrashIcon />
+                  </button>
+                </div>
+              </div>
+            {/each}
+          </div>
+        {:else}
+          <div />
+        {/if}
+      </fieldset>
     {/if}
   </svelte:fragment>
 </Panel>
@@ -682,7 +911,8 @@
   .editor-section-header .st-button.icon,
   .timeline-row .st-button.icon,
   .guide .st-button.icon,
-  .yAxisLabel .st-button.icon {
+  .timeline-y-axis .st-button.icon,
+  .timeline-layer .st-button.icon {
     color: var(--st-gray-50);
   }
 
@@ -692,16 +922,17 @@
     justify-content: space-between;
   }
 
-  .editor-section-rows {
+  .editor-section-draggable {
     padding: 0;
   }
 
-  .editor-section-rows .editor-section-header {
+  .editor-section-draggable .editor-section-header {
     padding: 16px 16px 0;
   }
 
-  .timeline-rows {
-    min-height: 100px;
+  .timeline-rows,
+  .timeline-layers {
+    /* min-height: 100px; */
     outline: none !important;
     overflow-x: hidden;
     overflow-y: auto;
@@ -730,8 +961,20 @@
   }
 
   .timeline-row:hover .drag-icon,
-  :global(.timeline-row-dragging) .drag-icon {
+  .timeline-layer:hover .drag-icon,
+  .timeline-y-axis:hover .drag-icon,
+  :global(.timeline-element-dragging) .drag-icon {
     display: flex;
+  }
+
+  .timeline-layers {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .timeline-layer,
+  .timeline-y-axis {
+    padding: 4px 16px;
   }
 
   .guides {
@@ -741,7 +984,8 @@
   }
 
   .guide,
-  .yAxisLabel {
+  .timeline-y-axis,
+  .timeline-layer {
     align-items: center;
     display: flex;
     gap: 8px;
@@ -752,7 +996,7 @@
     min-width: 168px;
   }
 
-  .yAxisLabel :global(.input-stacked) {
+  .timeline-y-axis :global(.input-stacked) {
     min-width: 80px;
     width: auto;
   }

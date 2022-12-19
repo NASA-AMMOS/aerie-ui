@@ -252,22 +252,70 @@ export function createYAxis(yAxes: Axis[]): Axis {
 
     // TODO is there a sensible default for this since there are
     // no associated layers for a new y axis?
-    scaleDomain: [0, 1],
+    scaleDomain: [0, 10],
     tickCount: 4,
   };
 }
 
 /**
- * Returns a new layer
+ * Returns a new activity layer
  */
-export function createTimelineLayer(layers: Layer[], yAxes: Axis[]): Layer {
+export function createTimelineActivityLayer(layers: Layer[]): ActivityLayer {
+  const id = getNextID(layers);
+
+  return {
+    activityColor: '#283593',
+    activityHeight: 20,
+    chartType: 'activity',
+    filter: {
+      activity: {
+        type: '.*',
+      },
+    },
+    id,
+    yAxisId: null,
+  };
+}
+
+/**
+ * Returns a new line layer
+ */
+export function createTimelineLineLayer(layers: Layer[], yAxes: Axis[]): LineLayer {
   const id = getNextID(layers);
   const yAxisId = yAxes.length > 0 ? yAxes[0].id : 0;
 
   return {
-    chartType: 'activity',
-    filter: {},
+    chartType: 'line',
+    filter: {
+      resource: {
+        name: '',
+      },
+    },
     id,
+    lineColor: 'ff0000',
+    lineWidth: 1,
+    pointRadius: 2,
+    yAxisId,
+  };
+}
+
+/**
+ * Returns a new x-range layer
+ */
+export function createTimelineXRangeLayer(layers: Layer[], yAxes: Axis[]): XRangeLayer {
+  const id = getNextID(layers);
+  const yAxisId = yAxes.length > 0 ? yAxes[0].id : 0;
+
+  return {
+    chartType: 'x-range',
+    colorScheme: 'schemeAccent',
+    filter: {
+      resource: {
+        name: '',
+      },
+    },
+    id,
+    opacity: 0.8,
     yAxisId,
   };
 }

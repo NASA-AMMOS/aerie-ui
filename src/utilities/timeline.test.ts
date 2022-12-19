@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest';
 import type { Resource } from '../types/simulation';
 import type { Axis, Layer } from '../types/timeline';
-import { createTimelineLayer, createYAxis, getNextID, getYAxisBounds } from './timeline';
+import { createTimelineActivityLayer, createYAxis, getNextID, getYAxisBounds } from './timeline';
 
 test('getNextID', () => {
   const genIDs = (ids: number[]) => ids.map(id => ({ id }));
@@ -15,8 +15,8 @@ test('getNextID', () => {
 
 test('getYAxisBounds', () => {
   const yAxis: Axis = createYAxis([]);
-  const layer1 = createTimelineLayer([], [yAxis]);
-  const layer2 = createTimelineLayer([layer1], [yAxis]);
+  const layer1 = createTimelineActivityLayer([]);
+  const layer2 = createTimelineActivityLayer([layer1]);
   const layers: Layer[] = [layer1, layer2];
   const resource: Resource = {
     name: 'test',

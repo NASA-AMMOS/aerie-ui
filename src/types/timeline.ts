@@ -50,8 +50,10 @@ export type Label = {
   text: string;
 };
 
+export type ChartType = 'activity' | 'line' | 'x-range';
+
 export interface Layer {
-  chartType: 'activity' | 'line' | 'x-range';
+  chartType: ChartType;
   filter: {
     activity?: ActivityLayerFilter;
     resource?: ResourceLayerFilter;
@@ -89,7 +91,7 @@ export type MouseOver = {
 export interface Point {
   id: number;
   name: string;
-  type: 'activity' | 'line' | 'x-range';
+  type: ChartType;
   x: number;
 }
 
