@@ -4,6 +4,7 @@
   import ArrowLeftIcon from '@nasa-jpl/stellar/icons/arrow_left.svg?component';
   import PenIcon from '@nasa-jpl/stellar/icons/pen.svg?component';
   import PlusIcon from '@nasa-jpl/stellar/icons/plus.svg?component';
+  import SettingsIcon from '@nasa-jpl/stellar/icons/settings.svg?component';
   import TrashIcon from '@nasa-jpl/stellar/icons/trash.svg?component';
   import GripVerticalIcon from 'bootstrap-icons/icons/grip-vertical.svg?component';
   import { onMount } from 'svelte';
@@ -39,6 +40,8 @@
   import ColorPicker from '../../form/ColorPicker.svelte';
   import Input from '../../form/Input.svelte';
   import GridMenu from '../../menus/GridMenu.svelte';
+  import Menu from '../../menus/Menu.svelte';
+  import MenuItem from '../../menus/MenuItem.svelte';
   import CssGrid from '../../ui/CssGrid.svelte';
   import DatePicker from '../../ui/DatePicker/DatePicker.svelte';
   import Panel from '../../ui/Panel.svelte';
@@ -46,6 +49,7 @@
   export let gridId: number;
 
   let rows: Row[] = [];
+  let layerMenu: Menu;
 
   $: rows = $selectedTimeline?.rows || [];
   $: verticalGuides = $selectedTimeline?.verticalGuides || [];
@@ -132,7 +136,6 @@
   function handleNewLayerClick() {
     const layer = createTimelineActivityLayer(layers);
     layers = [...layers, layer];
-    console.log(layers);
     viewUpdateRow('layers', layers);
   }
 
@@ -280,13 +283,6 @@
   function handleUpdateLayerChartType(event: Event, layer: Layer) {
     const { value } = getTarget(event);
 
-    // Create a y axis if the row has no axes and a line or x-range is requested
-    let newYAxis: Axis;
-    if ((value === 'line' || value === 'x-range') && yAxes.length === 0) {
-      handleNewYAxisClick();
-      newYAxis = yAxes[0];
-    }
-
     const newLayers = layers.map(l => {
       if (layer.id === l.id) {
         let newLayer: ActivityLayer | LineLayer | XRangeLayer;
@@ -306,7 +302,6 @@
             newLayer.yAxisId = yAxes[0].id;
           } else {
             handleNewYAxisClick();
-            newYAxis = yAxes[0];
             newLayer.yAxisId = yAxes[0].id;
           }
         }
@@ -431,7 +426,7 @@
       {:else}
         <fieldset class="editor-section">
           <div class="st-typography-medium editor-section-header">Margins</div>
-          <CssGrid columns="1fr 1fr" gap="8px">
+          <CssGrid columns="1fr 1fr" gap="8px" class="editor-section-grid">
             <Input>
               <label for="marginLeft">Margin Left</label>
               <input
@@ -470,48 +465,64 @@
             </button>
           </div>
           {#if verticalGuides.length}
-            <div class="guides">
-              {#each verticalGuides as verticalGuide (verticalGuide.id)}
-                <div class="guide">
-                  <input
-                    value={verticalGuide.label.text}
-                    on:input={event => {
-                      const { value } = getTarget(event);
-                      const newVerticalGuides = verticalGuides.map(guide => {
-                        if (guide.id === verticalGuide.id) {
-                          guide.label.text = value.toString();
-                        }
-                        return guide;
-                      });
-                      viewUpdateTimeline('verticalGuides', newVerticalGuides, $selectedTimelineId);
-                    }}
-                    autocomplete="off"
-                    class="st-input w-100"
-                    name="label"
-                    placeholder="Label"
-                  />
-                  <DatePicker
-                    name="timestamp"
-                    minDate={new Date($maxTimeRange.start)}
-                    maxDate={new Date($maxTimeRange.end)}
-                    dateString={verticalGuide.timestamp}
-                    on:change={event => updateVerticalGuideTimestamp(event, verticalGuide)}
-                    on:keydown={event => updateVerticalGuideTimestamp(event, verticalGuide)}
-                  />
-                  <ColorPicker
-                    value={verticalGuide.label.color}
-                    on:input={event => handleUpdateVerticalGuideLabel(event, verticalGuide)}
-                    name="color"
-                  />
-                  <button
-                    on:click={() => handleDeleteVerticalGuideClick(verticalGuide)}
-                    use:tooltip={{ content: 'Delete Guide', placement: 'top' }}
-                    class="st-button icon"
-                  >
-                    <TrashIcon />
-                  </button>
-                </div>
-              {/each}
+            <div class="editor-section-labeled-grid-container">
+              <CssGrid columns="1fr 168px 24px 24px" gap="8px" class="editor-section-grid">
+                <div>Label</div>
+                <div>Date</div>
+              </CssGrid>
+              <div class="guides timeline-elements">
+                {#each verticalGuides as verticalGuide (verticalGuide.id)}
+                  <div class="guide timeline-element">
+                    <CssGrid columns="1fr 168px 24px 24px" gap="8px" class="editor-section-grid">
+                      <Input layout="stacked" class="editor-input">
+                        <label for="text">Label</label>
+                        <input
+                          value={verticalGuide.label.text}
+                          on:input={event => {
+                            const { value } = getTarget(event);
+                            const newVerticalGuides = verticalGuides.map(guide => {
+                              if (guide.id === verticalGuide.id) {
+                                guide.label.text = value.toString();
+                              }
+                              return guide;
+                            });
+                            viewUpdateTimeline('verticalGuides', newVerticalGuides, $selectedTimelineId);
+                          }}
+                          autocomplete="off"
+                          class="st-input w-100"
+                          name="text"
+                          placeholder="Label"
+                        />
+                      </Input>
+                      <Input layout="stacked" class="editor-input">
+                        <label for="timestamp">Time</label>
+                        <DatePicker
+                          name="timestamp"
+                          minDate={new Date($maxTimeRange.start)}
+                          maxDate={new Date($maxTimeRange.end)}
+                          dateString={verticalGuide.timestamp}
+                          on:change={event => updateVerticalGuideTimestamp(event, verticalGuide)}
+                          on:keydown={event => updateVerticalGuideTimestamp(event, verticalGuide)}
+                        />
+                      </Input>
+                      <div use:tooltip={{ content: 'Guide Color', placement: 'top' }}>
+                        <ColorPicker
+                          value={verticalGuide.label.color}
+                          on:input={event => handleUpdateVerticalGuideLabel(event, verticalGuide)}
+                          name="color"
+                        />
+                      </div>
+                      <button
+                        on:click={() => handleDeleteVerticalGuideClick(verticalGuide)}
+                        use:tooltip={{ content: 'Delete Guide', placement: 'top' }}
+                        class="st-button icon"
+                      >
+                        <TrashIcon />
+                      </button>
+                    </CssGrid>
+                  </div>
+                {/each}
+              </div>
             </div>
           {/if}
         </fieldset>
@@ -529,7 +540,7 @@
           </div>
           {#if rows.length}
             <div
-              class="timeline-rows"
+              class="timeline-rows timeline-elements"
               on:consider={handleDndConsiderRows}
               on:finalize={handleDndFinalizeRows}
               use:dndzone={{
@@ -616,7 +627,7 @@
             />
           </Input>
         </div>
-        <CssGrid columns="1fr 1fr" gap="8px">
+        <CssGrid columns="1fr 1fr" gap="8px" class="editor-section-grid">
           <Input>
             <label for="marginLeft">Row Height</label>
             <input
@@ -628,7 +639,8 @@
               on:input|stopPropagation={updateRowEvent}
             />
           </Input>
-          <Input class="row-height-select-wrapper">
+          <Input>
+            <label for="marginLeft">Resize Mode</label>
             <select
               class="st-select w-100"
               data-type="bool"
@@ -659,53 +671,72 @@
             </button>
           </div>
           {#if horizontalGuides.length}
-            <div class="guides">
-              {#each horizontalGuides as horizontalGuide (horizontalGuide.id)}
-                <div class="guide">
-                  <input
-                    value={horizontalGuide.label.text}
-                    on:input={event => handleUpdateHorizontalGuideLabel(event, horizontalGuide)}
-                    autocomplete="off"
-                    class="st-input w-100"
-                    name="text"
-                    placeholder="Label"
-                  />
-                  <input
-                    value={horizontalGuide.y}
-                    on:input={event => handleUpdateHorizontalGuideNumberValue(event, horizontalGuide)}
-                    autocomplete="off"
-                    class="st-input w-100"
-                    name="y"
-                    placeholder="Y value"
-                    type="number"
-                  />
-                  <ColorPicker
-                    value={horizontalGuide.label.color}
-                    on:input={event => handleUpdateHorizontalGuideLabel(event, horizontalGuide)}
-                    name="color"
-                  />
-                  <select
-                    on:input={event => handleUpdateHorizontalGuideNumberValue(event, horizontalGuide)}
-                    class="st-select w-100"
-                    data-type="number"
-                    name="yAxisId"
-                    value={horizontalGuide.yAxisId}
-                  >
-                    {#each yAxes as axis}
-                      <option value={axis.id}>
-                        {axis.label.text}
-                      </option>
-                    {/each}
-                  </select>
-                  <button
-                    on:click={() => handleDeleteHorizontalGuideClick(horizontalGuide)}
-                    use:tooltip={{ content: 'Delete Guide', placement: 'top' }}
-                    class="st-button icon"
-                  >
-                    <TrashIcon />
-                  </button>
-                </div>
-              {/each}
+            <div class="editor-section-labeled-grid-container">
+              <CssGrid columns="1fr 1fr 1fr 24px 24px" gap="8px" class="editor-section-grid">
+                <div>Label</div>
+                <div>Y Value</div>
+                <div>Y Axis</div>
+              </CssGrid>
+              <div class="guides timeline-elements">
+                {#each horizontalGuides as horizontalGuide (horizontalGuide.id)}
+                  <div class="guide timeline-element">
+                    <CssGrid columns="1fr 1fr 1fr 24px 24px" gap="8px" class="editor-section-grid">
+                      <Input layout="stacked" class="editor-input">
+                        <label for="text">Label</label>
+                        <input
+                          value={horizontalGuide.label.text}
+                          on:input={event => handleUpdateHorizontalGuideLabel(event, horizontalGuide)}
+                          autocomplete="off"
+                          class="st-input w-100"
+                          name="text"
+                        />
+                      </Input>
+                      <Input layout="stacked" class="editor-input">
+                        <label for="y">Y Value</label>
+                        <input
+                          value={horizontalGuide.y}
+                          on:input={event => handleUpdateHorizontalGuideNumberValue(event, horizontalGuide)}
+                          autocomplete="off"
+                          class="st-input w-100"
+                          name="y"
+                          type="number"
+                        />
+                      </Input>
+                      <Input layout="stacked" class="editor-input">
+                        <label for="yAxisId">Y Axis</label>
+                        <select
+                          on:input={event => handleUpdateHorizontalGuideNumberValue(event, horizontalGuide)}
+                          class="st-select w-100"
+                          data-type="number"
+                          name="yAxisId"
+                          value={horizontalGuide.yAxisId}
+                        >
+                          {#each yAxes as axis}
+                            <!-- TODO axis isn't properly selected here, try rearranging y axes -->
+                            <option value={axis.id}>
+                              {axis.label.text}
+                            </option>
+                          {/each}
+                        </select>
+                      </Input>
+                      <div use:tooltip={{ content: 'Guide Color', placement: 'top' }}>
+                        <ColorPicker
+                          value={horizontalGuide.label.color}
+                          on:input={event => handleUpdateHorizontalGuideLabel(event, horizontalGuide)}
+                          name="color"
+                        />
+                      </div>
+                      <button
+                        on:click={() => handleDeleteHorizontalGuideClick(horizontalGuide)}
+                        use:tooltip={{ content: 'Delete Guide', placement: 'top' }}
+                        class="st-button icon"
+                      >
+                        <TrashIcon />
+                      </button>
+                    </CssGrid>
+                  </div>
+                {/each}
+              </div>
             </div>
           {/if}
         </fieldset>
@@ -724,97 +755,115 @@
             </button>
           </div>
           {#if yAxes.length}
-            <div
-              class="timeline-rows"
-              on:consider={handleDndConsiderYAxes}
-              on:finalize={handleDndFinalizeYAxes}
-              use:dndzone={{
-                items: yAxes,
-                transformDraggedElement,
-                type: 'rows',
-              }}
-            >
-              {#each yAxes as yAxis (yAxis.id)}
-                <div>
+            <div class="editor-section-labeled-grid-container">
+              <CssGrid
+                columns="1fr 1fr 1fr 1fr 34px 24px"
+                gap="8px"
+                class="editor-section-grid-labels"
+                padding="0px 16px"
+              >
+                <div>Label</div>
+                <div>Ticks</div>
+                <div>Min</div>
+                <div>Max</div>
+              </CssGrid>
+              <div
+                class="timeline-rows timeline-elements"
+                on:consider={handleDndConsiderYAxes}
+                on:finalize={handleDndFinalizeYAxes}
+                use:dndzone={{
+                  items: yAxes,
+                  transformDraggedElement,
+                  type: 'rows',
+                }}
+              >
+                {#each yAxes as yAxis (yAxis.id)}
                   <div class="timeline-y-axis timeline-element">
-                    <span class="drag-icon">
-                      <GripVerticalIcon />
-                    </span>
-                    <div class="w-100">
-                      <input
-                        autocomplete="off"
-                        placeholder="Label"
-                        class="st-input w-100"
-                        name="label"
-                        type="string"
-                        value={yAxis.label.text}
-                        on:input={event => {
-                          const { value } = getTarget(event);
-                          const newRowYAxes = yAxes.map(axis => {
-                            if (axis.id === yAxis.id) {
-                              axis.label.text = value.toString();
-                            }
-                            return axis;
-                          });
-                          viewUpdateRow('yAxes', newRowYAxes);
+                    <CssGrid columns="1fr 1fr 1fr 1fr 34px 24px" gap="8px" class="editor-section-grid">
+                      <span class="drag-icon">
+                        <GripVerticalIcon />
+                      </span>
+                      <div class="w-100">
+                        <Input layout="stacked" class="editor-input">
+                          <label for="text">Y Axis</label>
+                          <input
+                            autocomplete="off"
+                            class="st-input w-100"
+                            name="text"
+                            type="string"
+                            value={yAxis.label.text}
+                            on:input={event => {
+                              const { value } = getTarget(event);
+                              const newRowYAxes = yAxes.map(axis => {
+                                if (axis.id === yAxis.id) {
+                                  axis.label.text = value.toString();
+                                }
+                                return axis;
+                              });
+                              viewUpdateRow('yAxes', newRowYAxes);
+                            }}
+                          />
+                        </Input>
+                      </div>
+                      <Input layout="stacked" class="editor-input">
+                        <label for="tickCount">Ticks</label>
+                        <input
+                          class="st-input w-100"
+                          name="tickCount"
+                          type="number"
+                          value={yAxis.tickCount}
+                          on:input={event => updateYAxisTickCount(event, yAxis)}
+                        />
+                      </Input>
+                      <Input layout="stacked" class="editor-input">
+                        <label for="domainMin">Min</label>
+                        <input
+                          class="st-input w-100"
+                          name="domainMin"
+                          type="number"
+                          value={yAxis.scaleDomain[0]}
+                          on:input={event => updateYAxisScaleDomain(event, yAxis)}
+                        />
+                      </Input>
+                      <Input layout="stacked" class="editor-input">
+                        <label for="domainMax">Max</label>
+                        <input
+                          class="st-input w-100"
+                          name="domainMax"
+                          type="number"
+                          value={yAxis.scaleDomain[1]}
+                          on:input={event => updateYAxisScaleDomain(event, yAxis)}
+                        />
+                      </Input>
+                      <div
+                        use:tooltip={{
+                          content: simulationDataAvailable
+                            ? 'Fit axis bounds to domain of axis resources'
+                            : 'Axis bounds auto fit only available after simulation',
+                          placement: 'top',
                         }}
-                      />
-                    </div>
-                    <div
-                      use:tooltip={{
-                        content: simulationDataAvailable
-                          ? 'Fit axis bounds to domain of axis resources'
-                          : 'Axis bounds auto fit only available after simulation',
-                        placement: 'top',
-                      }}
-                    >
-                      <button
-                        disabled={!simulationDataAvailable}
-                        class="st-button secondary"
-                        on:click={() => handleAutoFitYAxisScaleDomain(yAxis)}>Fit</button
                       >
-                    </div>
-                    <Input>
-                      <label for="domainMin">Min</label>
-                      <input
-                        class="st-input w-100"
-                        name="domainMin"
-                        type="number"
-                        value={yAxis.scaleDomain[0]}
-                        on:input={event => updateYAxisScaleDomain(event, yAxis)}
-                      />
-                    </Input>
-                    <Input>
-                      <label for="domainMax">Max</label>
-                      <input
-                        class="st-input w-100"
-                        name="domainMax"
-                        type="number"
-                        value={yAxis.scaleDomain[1]}
-                        on:input={event => updateYAxisScaleDomain(event, yAxis)}
-                      />
-                    </Input>
-                    <Input>
-                      <label for="tickCount">Ticks</label>
-                      <input
-                        class="st-input w-100"
-                        name="tickCount"
-                        type="number"
-                        value={yAxis.tickCount}
-                        on:input={event => updateYAxisTickCount(event, yAxis)}
-                      />
-                    </Input>
-                    <button
-                      on:click={() => handleDeleteYAxisClick(yAxis)}
-                      use:tooltip={{ content: 'Delete Y Axis', placement: 'top' }}
-                      class="st-button icon"
-                    >
-                      <TrashIcon />
-                    </button>
+                        <button
+                          style="white-space: nowrap;"
+                          disabled={!simulationDataAvailable}
+                          class="st-button secondary"
+                          on:click={() => handleAutoFitYAxisScaleDomain(yAxis)}>Fit</button
+                        >
+                      </div>
+                      <button
+                        on:click={() => handleDeleteYAxisClick(yAxis)}
+                        use:tooltip={{ content: 'Delete Y Axis', placement: 'top' }}
+                        class="st-button icon"
+                      >
+                        <TrashIcon />
+                      </button>
+                    </CssGrid>
                   </div>
-                </div>
-              {/each}
+                {/each}
+              </div>
             </div>
+          {:else}
+            <div />
           {/if}
         </fieldset>
       {/if}
@@ -830,57 +879,87 @@
           </button>
         </div>
         {#if layers.length}
-          <div
-            class="timeline-layers"
-            on:consider={handleDndConsiderLayers}
-            on:finalize={handleDndFinalizeLayers}
-            use:dndzone={{
-              items: layers,
-              transformDraggedElement,
-              type: 'rows',
-            }}
-          >
-            {#each layers as layer (layer.id)}
-              <div>
+          <div class="editor-section-labeled-grid-container">
+            <CssGrid columns="1fr 0.75fr 24px 24px 24px" gap="8px" class="editor-section-grid" padding="0px 16px">
+              <div>Filter</div>
+              <div>Layer Type</div>
+            </CssGrid>
+            <!-- TODO bug when dragging something into a different draggable area -->
+            <div
+              class="timeline-layers timeline-elements"
+              on:consider={handleDndConsiderLayers}
+              on:finalize={handleDndFinalizeLayers}
+              use:dndzone={{
+                items: layers,
+                transformDraggedElement,
+                type: 'rows',
+              }}
+            >
+              {#each layers as layer (layer.id)}
                 <div class="timeline-layer timeline-element">
-                  <span class="drag-icon">
-                    <GripVerticalIcon />
-                  </span>
-                  <ColorPicker
-                    value={getColorForLayer(layer)}
-                    on:input={event => handleUpdateLayerColor(event, layer)}
-                    name="color"
-                  />
-                  <input
-                    value={getFilterForLayer(layer)}
-                    on:input={event => {
-                      handleUpdateLayerFilter(event, layer);
-                    }}
-                    autocomplete="off"
-                    class="st-input w-100"
-                    name="filter"
-                    placeholder="Search"
-                  />
-                  <select
-                    class="st-select w-100"
-                    name="chartType"
-                    value={layer.chartType}
-                    on:change={event => handleUpdateLayerChartType(event, layer)}
-                  >
-                    <option value="activity">Activity</option>
-                    <option value="line">Line</option>
-                    <option value="x-range">X-Range</option>
-                  </select>
-                  <button
-                    on:click={() => handleDeleteLayerClick(layer)}
-                    use:tooltip={{ content: 'Delete Layer', placement: 'top' }}
-                    class="st-button icon"
-                  >
-                    <TrashIcon />
-                  </button>
+                  <CssGrid columns="1fr 0.75fr 24px 24px 24px" gap="8px" class="editor-section-grid">
+                    <span class="drag-icon">
+                      <GripVerticalIcon />
+                    </span>
+                    <input
+                      value={getFilterForLayer(layer)}
+                      on:input={event => {
+                        handleUpdateLayerFilter(event, layer);
+                      }}
+                      autocomplete="off"
+                      class="st-input w-100"
+                      name="filter"
+                      placeholder="Search"
+                    />
+                    <select
+                      class="st-select w-100"
+                      name="chartType"
+                      value={layer.chartType}
+                      on:change={event => handleUpdateLayerChartType(event, layer)}
+                    >
+                      <option value="activity">Activity</option>
+                      <option value="line">Line</option>
+                      <option value="x-range">X-Range</option>
+                    </select>
+                    <div style="position: relative">
+                      <button
+                        on:click|stopPropagation={() => layerMenu.toggle()}
+                        use:tooltip={{ content: 'Layer Settings', placement: 'top' }}
+                        class="st-button icon"
+                      >
+                        <SettingsIcon />
+                      </button>
+                      <Menu bind:this={layerMenu} hideAfterClick={false}>
+                        <div class="header">
+                          <div class="title">Layer Settings</div>
+                        </div>
+                        <MenuItem
+                          on:click={() => {
+                            console.log('object');
+                          }}
+                        >
+                          <div class="column-name">test</div>
+                        </MenuItem>
+                      </Menu>
+                    </div>
+                    <div use:tooltip={{ content: 'Layer Color', placement: 'top' }}>
+                      <ColorPicker
+                        value={getColorForLayer(layer)}
+                        on:input={event => handleUpdateLayerColor(event, layer)}
+                        name="color"
+                      />
+                    </div>
+                    <button
+                      on:click={() => handleDeleteLayerClick(layer)}
+                      use:tooltip={{ content: 'Delete Layer', placement: 'top' }}
+                      class="st-button icon"
+                    >
+                      <TrashIcon />
+                    </button>
+                  </CssGrid>
                 </div>
-              </div>
-            {/each}
+              {/each}
+            </div>
           </div>
         {:else}
           <div />
@@ -930,13 +1009,34 @@
     padding: 16px 16px 0;
   }
 
-  .timeline-rows,
-  .timeline-layers {
-    /* min-height: 100px; */
+  .editor-section-draggable .timeline-elements {
+    display: grid;
+    gap: 4px;
+  }
+
+  .editor-section-labeled-grid-container {
+    display: grid;
+    gap: 8px;
+  }
+
+  .editor-section-draggable .editor-section-labeled-grid-container {
+    gap: 4px;
+  }
+
+  .editor-section-draggable .timeline-elements {
     outline: none !important;
     overflow-x: hidden;
     overflow-y: auto;
     padding-bottom: 16px;
+  }
+
+  :global(.editor-section-grid) {
+    align-items: center;
+    flex: 1;
+  }
+
+  :global(.editor-section-grid-labels > *) {
+    min-width: 40px;
   }
 
   .timeline-row {
@@ -960,9 +1060,14 @@
     background: var(--st-gray-10);
   }
 
-  .timeline-row:hover .drag-icon,
+  /* .timeline-row:hover .drag-icon,
   .timeline-layer:hover .drag-icon,
   .timeline-y-axis:hover .drag-icon,
+  :global(.timeline-element-dragging) .drag-icon {
+    display: flex;
+  } */
+
+  .editor-section-draggable .timeline-element:hover .drag-icon,
   :global(.timeline-element-dragging) .drag-icon {
     display: flex;
   }
@@ -980,13 +1085,13 @@
   .guides {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
   }
 
   .guide,
   .timeline-y-axis,
   .timeline-layer {
-    align-items: center;
+    align-items: flex-end;
     display: flex;
     gap: 8px;
   }
@@ -996,25 +1101,21 @@
     min-width: 168px;
   }
 
-  .timeline-y-axis :global(.input-stacked) {
-    min-width: 80px;
+  :global(.input.input-stacked.editor-input) {
+    display: grid;
+    min-width: 40px;
     width: auto;
+  }
+
+  :global(.input.input-stacked.editor-input label) {
+    display: none;
   }
 
   .section-back-button {
     border-radius: 0;
+    flex-shrink: 0;
     gap: 8px;
     height: 32px;
     justify-content: flex-start;
-  }
-
-  :global(.input.input-stacked.row-height-select-wrapper) {
-    align-items: flex-end;
-    display: flex;
-  }
-
-  :global(.input.input-stacked.row-height-select-wrapper) {
-    align-items: flex-end;
-    display: flex;
   }
 </style>
