@@ -18,7 +18,7 @@
               "description": "A JavaScript regular expression to filter resource names to display in this layer",
               "type": "string"
             },
-            "resourceNames": {
+            "names": {
               "description": "Array of resource names to display in this layer",
               "items": {
                 "type": "string"
@@ -26,7 +26,7 @@
               "type": "array"
             }
           },
-          "required": ["resourceNames"],
+          "required": ["names"],
           "type": "object"
         }
       },
