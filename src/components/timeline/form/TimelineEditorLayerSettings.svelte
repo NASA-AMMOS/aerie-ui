@@ -5,7 +5,6 @@
   import { createEventDispatcher } from 'svelte';
   import { getTarget } from '../../../utilities/generic';
   import { tooltip } from '../../../utilities/tooltip';
-  import ColorPicker from '../../form/ColorPicker.svelte';
   import Input from '../../form/Input.svelte';
   import Menu from '../../menus/Menu.svelte';
 
@@ -39,7 +38,6 @@
   }
 </script>
 
-<!-- svelte-ignore a11y-click-events-have-key-events -->
 <button
   class="st-button icon timeline-editor-layer-settings"
   use:tooltip={{ content: 'Layer Settings', placement: 'top' }}
@@ -47,8 +45,6 @@
   on:click|stopPropagation={() => layerMenu.toggle()}
 >
   <div class="button-inner"><SettingsIcon /></div>
-  <!-- TODO figure out how to have this button actually toggle the menu -->
-
   <Menu bind:this={layerMenu} hideAfterClick={false} placement="bottom-end">
     <div class="header">
       <div class="title st-typography-small-caps">{layer.chartType} Layer Settings</div>
@@ -65,10 +61,6 @@
             value={layerAsActivity.activityHeight}
             on:input={onInput}
           />
-        </Input>
-        <Input layout="inline">
-          <label for="activityColor">Activity Color</label>
-          <ColorPicker value={layerAsActivity.activityColor} on:input={onInput} name="activityColor" />
         </Input>
       {:else if layer.chartType === 'line'}
         <Input layout="inline">
@@ -108,10 +100,6 @@
             value={layerAsLine.pointRadius}
             on:input={onInput}
           />
-        </Input>
-        <Input layout="inline">
-          <label for="lineColor">Line Color</label>
-          <ColorPicker value={layerAsLine.lineColor} on:input={onInput} name="lineColor" />
         </Input>
       {:else if layer.chartType === 'x-range'}
         <Input layout="inline">

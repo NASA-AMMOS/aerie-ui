@@ -26,6 +26,7 @@ export const load: PageLoad = async ({ parent, params, url }) => {
       return {
         initialActivityTypes,
         initialPlan,
+        initialResourceTypes,
         initialView,
       };
     }

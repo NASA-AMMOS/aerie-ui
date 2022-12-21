@@ -43,6 +43,7 @@
   import CssGrid from '../../ui/CssGrid.svelte';
   import DatePicker from '../../ui/DatePicker/DatePicker.svelte';
   import Panel from '../../ui/Panel.svelte';
+  import TimelineEditorLayerFilter from './TimelineEditorLayerFilter.svelte';
   import TimelineEditorLayerSettings from './TimelineEditorLayerSettings.svelte';
 
   export let gridId: number;
@@ -395,14 +396,14 @@
     }
   }
 
-  function getFilterForLayer(layer: Layer) {
-    if (layer.chartType === 'activity') {
-      return (layer as ActivityLayer).filter.activity?.type || '';
-    } else if (layer.chartType === 'line' || layer.chartType === 'x-range') {
-      return (layer as LineLayer).filter.resource?.name || '';
-    }
-    return '';
-  }
+  // function getFilterForLayer(layer: Layer) {
+  //   if (layer.chartType === 'activity') {
+  //     return (layer as ActivityLayer).filter.activity?.type || '';
+  //   } else if (layer.chartType === 'line' || layer.chartType === 'x-range') {
+  //     return (layer as LineLayer).filter.resource?.name || '';
+  //   }
+  //   return '';
+  // }
 
   onMount(() => {
     if ($selectedTimelineId === null) {
@@ -922,7 +923,8 @@
                     <span class="drag-icon">
                       <GripVerticalIcon />
                     </span>
-                    <input
+                    <TimelineEditorLayerFilter {layer} />
+                    <!-- <input
                       value={getFilterForLayer(layer)}
                       on:input={event => {
                         handleUpdateLayerFilter(event, layer);
@@ -931,7 +933,7 @@
                       class="st-input w-100"
                       name="filter"
                       placeholder="Search"
-                    />
+                    /> -->
                     <select
                       class="st-select w-100"
                       name="chartType"
