@@ -133,6 +133,10 @@
     width: 100%;
   }
 
+  .st-button.scheme-item:hover {
+    background: var(--st-gray-20);
+  }
+
   .scheme-item.active {
     background: #4fa1ff4f !important;
   }
