@@ -14,11 +14,12 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
   import { createPopperActions } from 'svelte-popperjs';
-  import { hideAll as hideAllTooltips } from 'tippy.js';
+  import { hideAll as hideAllTooltips, type Placement } from 'tippy.js';
 
   export let hideAfterClick: boolean = true;
   export let offset: number[] = [0, 1];
   export let shown = false;
+  export let placement: Placement = 'bottom-start';
 
   export function hide(): void {
     shown = false;
@@ -39,7 +40,7 @@
   }
 
   const [popperRef, popperContent] = createPopperActions({
-    placement: 'bottom-start',
+    placement,
     strategy: 'fixed',
   });
   const extraOpts = {
