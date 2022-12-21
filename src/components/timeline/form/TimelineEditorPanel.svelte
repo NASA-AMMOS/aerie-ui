@@ -37,6 +37,7 @@
   } from '../../../utilities/timeline';
   import { tooltip } from '../../../utilities/tooltip';
   import ColorPicker from '../../form/ColorPicker.svelte';
+  import ColorSchemePicker from '../../form/ColorSchemePicker.svelte';
   import Input from '../../form/Input.svelte';
   import GridMenu from '../../menus/GridMenu.svelte';
   import CssGrid from '../../ui/CssGrid.svelte';
@@ -341,6 +342,17 @@
     viewUpdateRow('layers', newLayers);
   }
 
+  function handleUpdateLayerColorScheme(event: CustomEvent, layer: Layer) {
+    const { value } = event.detail;
+    const newLayers = layers.map(l => {
+      if (layer.id === l.id) {
+        (l as XRangeLayer).colorScheme = value;
+      }
+      return l;
+    });
+    viewUpdateRow('layers', newLayers);
+  }
+
   function handleNewHorizontalGuideClick() {
     if (!$selectedRow) {
       return;
@@ -378,8 +390,9 @@
       return (layer as ActivityLayer).activityColor;
     } else if (layer.chartType === 'line') {
       return (layer as LineLayer).lineColor;
+    } else if (layer.chartType === 'x-range') {
+      return (layer as XRangeLayer).colorScheme;
     }
-    return '';
   }
 
   function getFilterForLayer(layer: Layer) {
@@ -936,13 +949,22 @@
                       {yAxes}
                     />
 
-                    <div use:tooltip={{ content: 'Layer Color', placement: 'top' }}>
-                      <ColorPicker
+                    {#if layer.chartType === 'activity' || layer.chartType === 'line'}
+                      <div use:tooltip={{ content: 'Layer Color', placement: 'top' }}>
+                        <ColorPicker
+                          value={getColorForLayer(layer)}
+                          on:input={event => handleUpdateLayerColor(event, layer)}
+                          name="color"
+                        />
+                      </div>
+                    {:else if layer.chartType === 'x-range'}
+                      <ColorSchemePicker
+                        layout="compact"
                         value={getColorForLayer(layer)}
-                        on:input={event => handleUpdateLayerColor(event, layer)}
-                        name="color"
+                        on:input={event => handleUpdateLayerColorScheme(event, layer)}
                       />
-                    </div>
+                    {/if}
+
                     <button
                       on:click={() => handleDeleteLayerClick(layer)}
                       use:tooltip={{ content: 'Delete Layer', placement: 'top' }}
@@ -1028,6 +1050,7 @@
   :global(.editor-section-grid) {
     align-items: center;
     flex: 1;
+    position: relative;
   }
 
   :global(.editor-section-grid-labels > *) {
