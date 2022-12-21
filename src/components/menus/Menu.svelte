@@ -23,7 +23,6 @@
   export let placement: Placement = 'bottom-start';
 
   $: if (isMounted) {
-    console.log(isMounted, shown);
     if (shown) {
       document.addEventListener('keydown', onDocumentKeydown);
     } else {
