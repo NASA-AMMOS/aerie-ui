@@ -4,7 +4,6 @@
   import ArrowLeftIcon from '@nasa-jpl/stellar/icons/arrow_left.svg?component';
   import PenIcon from '@nasa-jpl/stellar/icons/pen.svg?component';
   import PlusIcon from '@nasa-jpl/stellar/icons/plus.svg?component';
-  import SettingsIcon from '@nasa-jpl/stellar/icons/settings.svg?component';
   import TrashIcon from '@nasa-jpl/stellar/icons/trash.svg?component';
   import GripVerticalIcon from 'bootstrap-icons/icons/grip-vertical.svg?component';
   import { onMount } from 'svelte';
@@ -40,16 +39,14 @@
   import ColorPicker from '../../form/ColorPicker.svelte';
   import Input from '../../form/Input.svelte';
   import GridMenu from '../../menus/GridMenu.svelte';
-  import Menu from '../../menus/Menu.svelte';
-  import MenuItem from '../../menus/MenuItem.svelte';
   import CssGrid from '../../ui/CssGrid.svelte';
   import DatePicker from '../../ui/DatePicker/DatePicker.svelte';
   import Panel from '../../ui/Panel.svelte';
+  import TimelineEditorLayerSettings from './TimelineEditorLayerSettings.svelte';
 
   export let gridId: number;
 
   let rows: Row[] = [];
-  let layerMenu: Menu;
 
   $: rows = $selectedTimeline?.rows || [];
   $: verticalGuides = $selectedTimeline?.verticalGuides || [];
@@ -274,6 +271,17 @@
             name: value as string,
           };
         }
+      }
+      return l;
+    });
+    viewUpdateRow('layers', newLayers);
+  }
+
+  function handleUpdateLayerProperty(event: CustomEvent, layer: Layer) {
+    const { name, value } = event.detail;
+    const newLayers = layers.map(l => {
+      if (layer.id === l.id) {
+        layer[name] = value;
       }
       return l;
     });
@@ -921,27 +929,13 @@
                       <option value="line">Line</option>
                       <option value="x-range">X-Range</option>
                     </select>
-                    <div style="position: relative">
-                      <button
-                        on:click|stopPropagation={() => layerMenu.toggle()}
-                        use:tooltip={{ content: 'Layer Settings', placement: 'top' }}
-                        class="st-button icon"
-                      >
-                        <SettingsIcon />
-                      </button>
-                      <Menu bind:this={layerMenu} hideAfterClick={false}>
-                        <div class="header">
-                          <div class="title">Layer Settings</div>
-                        </div>
-                        <MenuItem
-                          on:click={() => {
-                            console.log('object');
-                          }}
-                        >
-                          <div class="column-name">test</div>
-                        </MenuItem>
-                      </Menu>
-                    </div>
+                    <TimelineEditorLayerSettings
+                      {layer}
+                      on:input={event => handleUpdateLayerProperty(event, layer)}
+                      on:delete={() => handleDeleteLayerClick(layer)}
+                      {yAxes}
+                    />
+
                     <div use:tooltip={{ content: 'Layer Color', placement: 'top' }}>
                       <ColorPicker
                         value={getColorForLayer(layer)}
@@ -991,7 +985,8 @@
   .timeline-row .st-button.icon,
   .guide .st-button.icon,
   .timeline-y-axis .st-button.icon,
-  .timeline-layer .st-button.icon {
+  .timeline-layer .st-button.icon,
+  :global(.timeline-editor-layer-settings.st-button.icon) {
     color: var(--st-gray-50);
   }
 
