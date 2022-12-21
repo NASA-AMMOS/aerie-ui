@@ -260,24 +260,24 @@
     viewUpdateRow('horizontalGuides', newHorizontalGuides);
   }
 
-  function handleUpdateLayerFilter(event: Event, layer: Layer) {
-    const { value } = getTarget(event);
-    const newLayers = layers.map(l => {
-      if (layer.id === l.id) {
-        if (l.chartType === 'activity') {
-          l.filter.activity = {
-            type: value as string,
-          };
-        } else if (l.chartType === 'line' || l.chartType === 'x-range') {
-          l.filter.resource = {
-            name: value as string,
-          };
-        }
-      }
-      return l;
-    });
-    viewUpdateRow('layers', newLayers);
-  }
+  // function handleUpdateLayerFilter(event: Event, layer: Layer) {
+  //   const { value } = getTarget(event);
+  //   const newLayers = layers.map(l => {
+  //     if (layer.id === l.id) {
+  //       if (l.chartType === 'activity') {
+  //         l.filter.activity = {
+  //           type: value as string,
+  //         };
+  //       } else if (l.chartType === 'line' || l.chartType === 'x-range') {
+  //         l.filter.resource = {
+  //           name: value as string,
+  //         };
+  //       }
+  //     }
+  //     return l;
+  //   });
+  //   viewUpdateRow('layers', newLayers);
+  // }
 
   function handleUpdateLayerProperty(event: CustomEvent, layer: Layer) {
     const { name, value } = event.detail;
@@ -731,11 +731,9 @@
                           class="st-select w-100"
                           data-type="number"
                           name="yAxisId"
-                          value={horizontalGuide.yAxisId}
                         >
                           {#each yAxes as axis}
-                            <!-- TODO axis isn't properly selected here, try rearranging y axes -->
-                            <option value={axis.id}>
+                            <option value={axis.id} selected={horizontalGuide.yAxisId === axis.id}>
                               {axis.label.text}
                             </option>
                           {/each}
