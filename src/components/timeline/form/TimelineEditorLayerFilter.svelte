@@ -1,48 +1,64 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { activityTypes } from '../../../stores/plan';
-  import { resourceTypes } from '../../../stores/resource';
+  import { createEventDispatcher } from 'svelte';
   import Menu from '../../menus/Menu.svelte';
 
   export let layer: Layer;
+  export let values: string[];
+  export let options: string[];
 
-  type item = { name: string };
+  const dispatch = createEventDispatcher();
 
   let filterMenu: Menu;
   let input: HTMLInputElement;
-  let layerAsActivity: ActivityLayer;
-  let layerAsLine: LineLayer;
-  let layerAsXRange: XRangeLayer;
   let filterString: string = '';
-  let items: item[] = [];
-  let filteredItems: item[] = [];
+  let filteredValues: string[] = [];
   let menuTitle: string = '';
+  let selectedValuesMap = {};
 
   $: if (layer) {
+    selectedValuesMap = listToMap(values);
     if (layer.chartType === 'activity') {
-      layerAsActivity = layer as ActivityLayer;
-      items = $activityTypes;
+      /* TODO pass this in somehow, don't need the whole layer */
       menuTitle = 'Activty Dictionary';
     } else if (layer.chartType === 'line') {
-      layerAsLine = layer as LineLayer;
-      items = $resourceTypes;
       menuTitle = 'Resource Types';
     } else if (layer.chartType === 'x-range') {
-      layerAsXRange = layer as XRangeLayer;
-      items = $resourceTypes;
       menuTitle = 'Resource Types';
     }
   }
 
   $: if (filterString) {
-    filteredItems = items.filter(item => item.name.indexOf(filterString) > -1);
+    filteredValues = options.filter(item => item.indexOf(filterString) > -1);
   } else {
-    filteredItems = items.slice();
+    filteredValues = options.slice();
   }
 
-  function selectFilteredItems() {
-    /* TODO - dispatch some update */
+  function listToMap(list: string[]): Record<string, boolean> {
+    return list.reduce((map, item) => {
+      if (!map[item]) {
+        map[item] = true;
+      }
+      return map;
+    }, {});
+  }
+
+  function selectFilteredValues() {
+    const newValues = [...new Set([values, ...filteredValues])];
+    dispatch('change', { values: newValues });
+  }
+
+  function toggleItem(value: string) {
+    let newVaues = [];
+    console.log(selectedValuesMap);
+    if (selectedValuesMap[value]) {
+      newVaues = values.filter(i => value !== i);
+    } else {
+      newVaues = [...values, value];
+    }
+    console.log('newVaues :>> ', newVaues);
+    dispatch('change', { values: newVaues });
   }
 </script>
 
@@ -68,15 +84,21 @@
       <div class="title st-typography-small-caps">{menuTitle}</div>
     </div>
     <div class="body st-typography-body">
-      {#if filteredItems.length}
-        {#each filteredItems as item}
-          <button class="item st-button tertiary st-typography-body">
-            {item.name}
-          </button>
-        {/each}
+      {#if filteredValues.length}
+        <div class="values">
+          {#each filteredValues as item}
+            <button
+              class="value st-button tertiary st-typography-body"
+              on:click={() => toggleItem(item)}
+              class:active={selectedValuesMap[item]}
+            >
+              {item}
+            </button>
+          {/each}
+        </div>
         {#if filterString}
-          <button class="st-button secondary" on:click={selectFilteredItems}>
-            Select {filteredItems.length}
+          <button class="st-button secondary" on:click={selectFilteredValues}>
+            Select {filteredValues.length}
             {layer.chartType === 'line' ? 'activities' : 'resources'}
           </button>
         {/if}
@@ -114,12 +136,26 @@
     gap: 8px;
     max-height: 376px;
     overflow: auto;
-    padding: 8px;
     text-align: left;
   }
 
-  .item {
+  .values {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .value {
+    border-radius: 0;
     justify-content: left;
+    padding: 16px 8px;
+  }
+
+  .value:hover {
+    background: var(--st-gray-20);
+  }
+
+  .value.active {
+    background: #4fa1ff4f;
   }
 
   .body :global(.input-inline) {

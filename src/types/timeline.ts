@@ -7,7 +7,7 @@ export interface ActivityLayer extends Layer {
 }
 
 export type ActivityLayerFilter = {
-  type: string;
+  type?: string;
   types: string[];
 };
 

@@ -8,7 +8,8 @@
   import GripVerticalIcon from 'bootstrap-icons/icons/grip-vertical.svg?component';
   import { onMount } from 'svelte';
   import { dndzone } from 'svelte-dnd-action';
-  import { maxTimeRange, viewTimeRange } from '../../../stores/plan';
+  import { activityTypes, maxTimeRange, viewTimeRange } from '../../../stores/plan';
+  import { resourceTypes } from '../../../stores/resource';
   import { resourcesByViewLayerId, simulationDataset } from '../../../stores/simulation';
   import {
     selectedRow,
@@ -260,24 +261,21 @@
     viewUpdateRow('horizontalGuides', newHorizontalGuides);
   }
 
-  // function handleUpdateLayerFilter(event: Event, layer: Layer) {
-  //   const { value } = getTarget(event);
-  //   const newLayers = layers.map(l => {
-  //     if (layer.id === l.id) {
-  //       if (l.chartType === 'activity') {
-  //         l.filter.activity = {
-  //           type: value as string,
-  //         };
-  //       } else if (l.chartType === 'line' || l.chartType === 'x-range') {
-  //         l.filter.resource = {
-  //           name: value as string,
-  //         };
-  //       }
-  //     }
-  //     return l;
-  //   });
-  //   viewUpdateRow('layers', newLayers);
-  // }
+  function handleUpdateLayerFilter(event: CustomEvent, layer: Layer) {
+    const { values } = event.detail;
+    const newLayers = layers.map(l => {
+      if (layer.id === l.id) {
+        if (l.chartType === 'activity') {
+          l.filter.activity.types = values;
+        } else if (l.chartType === 'line' || l.chartType === 'x-range') {
+          l.filter.resource.names = values;
+        }
+      }
+      return l;
+    });
+    console.log('newLayers', newLayers);
+    viewUpdateRow('layers', newLayers);
+  }
 
   function handleUpdateLayerProperty(event: CustomEvent, layer: Layer) {
     const { name, value } = event.detail;
@@ -396,14 +394,23 @@
     }
   }
 
-  // function getFilterForLayer(layer: Layer) {
-  //   if (layer.chartType === 'activity') {
-  //     return (layer as ActivityLayer).filter.activity?.type || '';
-  //   } else if (layer.chartType === 'line' || layer.chartType === 'x-range') {
-  //     return (layer as LineLayer).filter.resource?.name || '';
-  //   }
-  //   return '';
-  // }
+  function getFilterValuesForLayer(layer: Layer) {
+    if (layer.chartType === 'activity') {
+      return (layer as ActivityLayer).filter.activity?.types || [];
+    } else if (layer.chartType === 'line' || layer.chartType === 'x-range') {
+      return (layer as LineLayer).filter.resource?.names || [];
+    }
+    return [];
+  }
+
+  function getFilterOptionsForLayer(layer: Layer) {
+    if (layer.chartType === 'activity') {
+      return $activityTypes.map(t => t.name);
+    } else if (layer.chartType === 'line' || layer.chartType === 'x-range') {
+      return $resourceTypes.map(t => t.name);
+    }
+    return [];
+  }
 
   onMount(() => {
     if ($selectedTimelineId === null) {
@@ -921,17 +928,12 @@
                     <span class="drag-icon">
                       <GripVerticalIcon />
                     </span>
-                    <TimelineEditorLayerFilter {layer} />
-                    <!-- <input
-                      value={getFilterForLayer(layer)}
-                      on:input={event => {
-                        handleUpdateLayerFilter(event, layer);
-                      }}
-                      autocomplete="off"
-                      class="st-input w-100"
-                      name="filter"
-                      placeholder="Search"
-                    /> -->
+                    <TimelineEditorLayerFilter
+                      values={getFilterValuesForLayer(layer)}
+                      options={getFilterOptionsForLayer(layer)}
+                      {layer}
+                      on:change={event => handleUpdateLayerFilter(event, layer)}
+                    />
                     <select
                       class="st-select w-100"
                       name="chartType"

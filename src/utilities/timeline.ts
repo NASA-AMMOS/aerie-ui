@@ -269,7 +269,7 @@ export function createTimelineActivityLayer(layers: Layer[]): ActivityLayer {
     chartType: 'activity',
     filter: {
       activity: {
-        type: '.*',
+        types: [],
       },
     },
     id,
@@ -288,7 +288,7 @@ export function createTimelineLineLayer(layers: Layer[], yAxes: Axis[]): LineLay
     chartType: 'line',
     filter: {
       resource: {
-        name: '',
+        names: [],
       },
     },
     id,
