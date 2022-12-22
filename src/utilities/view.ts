@@ -79,7 +79,7 @@ export function generateDefaultView(resourceTypes: ResourceType[] = []): View {
                     activityColor: '#283593',
                     activityHeight: 20,
                     chartType: 'activity',
-                    filter: { activity: { type: '.*' } },
+                    filter: { activity: { type: '.*', types: [] } },
                     id: layerIds++,
                     yAxisId: null,
                   } as ActivityLayer,
