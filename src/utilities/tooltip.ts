@@ -29,13 +29,29 @@ export function tooltip(node: Element, params: any = {}): any {
 
   // Support any of the Tippy props by forwarding all "params":
   // https://atomiks.github.io/tippyjs/v6/all-props/
-  const tip: any = tippy(node, { content, ...params });
+  const tip: any = tippy(node, {
+    content,
+    ...params,
+  });
+
+  // Initially disable tooltip if no content provided or explicitly disabled
+  if (!content || params.disabled) {
+    tip.disable();
+  }
 
   return {
     // Clean up the Tippy instance on unmount.
     destroy: () => tip.destroy(),
 
     // If the props change, let's update the Tippy instance.
-    update: (newParams: any) => tip.setProps({ content, ...newParams }),
+    update: (newParams: any) => {
+      // Enable/disable tooltip based on updating with empty content or disabled param
+      if ((typeof newParams.content !== 'undefined' && !newParams.content) || newParams.disabled) {
+        tip.disable();
+      } else {
+        tip.enable();
+      }
+      tip.setProps({ content, ...newParams });
+    },
   };
 }
