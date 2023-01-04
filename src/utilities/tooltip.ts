@@ -31,27 +31,36 @@ export function tooltip(node: Element, params: any = {}): any {
   // https://atomiks.github.io/tippyjs/v6/all-props/
   const tip: any = tippy(node, {
     content,
+    plugins: [disabled],
     ...params,
   });
-
-  // Initially disable tooltip if no content provided or explicitly disabled
-  if (!content || params.disabled) {
-    tip.disable();
-  }
 
   return {
     // Clean up the Tippy instance on unmount.
     destroy: () => tip.destroy(),
 
     // If the props change, let's update the Tippy instance.
-    update: (newParams: any) => {
-      // Enable/disable tooltip based on updating with empty content or disabled param
-      if ((typeof newParams.content !== 'undefined' && !newParams.content) || newParams.disabled) {
-        tip.disable();
-      } else {
-        tip.enable();
-      }
-      tip.setProps({ content, ...newParams });
-    },
+    update: (newParams: any) => tip.setProps({ content, ...newParams }),
   };
 }
+
+const disabled = {
+  defaultValue: false,
+  fn(instance) {
+    return {
+      onBeforeUpdate(instance, partialProps) {
+        if (partialProps.disabled || !partialProps.content) {
+          instance.disable();
+        } else {
+          instance.enable();
+        }
+      },
+      onCreate() {
+        if (instance.props.disabled || !instance.props.content) {
+          instance.disable();
+        }
+      },
+    };
+  },
+  name: 'disabled',
+};
