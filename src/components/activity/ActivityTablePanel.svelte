@@ -1,8 +1,8 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import CollapseIcon from '@nasa-jpl/stellar/icons/collapse.svg?component';
-  import ExpandIcon from '@nasa-jpl/stellar/icons/expand.svg?component';
+  import TableFillIcon from '@nasa-jpl/stellar/icons/table_fill.svg?component';
+  import TableFitIcon from '@nasa-jpl/stellar/icons/table_fit.svg?component';
   import type { ColDef, ColumnState, ValueFormatterParams, ValueGetterParams } from 'ag-grid-community';
   import { activities, selectedActivityId } from '../../stores/activities';
   import { planId } from '../../stores/plan';
@@ -214,6 +214,8 @@
       activityTableId,
     );
   }
+
+  console.log('wat');
 </script>
 
 <Panel padBody={false}>
@@ -224,12 +226,12 @@
         <button
           class="st-button secondary"
           use:tooltip={{ content: 'Fit Columns to Content', placement: 'top' }}
-          on:click={onAutoSizeContent}><CollapseIcon /></button
+          on:click={onAutoSizeContent}><TableFitIcon /></button
         >
         <button
           class="st-button secondary"
           use:tooltip={{ content: 'Fit Columns to Available Space', placement: 'top' }}
-          on:click={onAutoSizeSpace}><ExpandIcon /></button
+          on:click={onAutoSizeSpace}><TableFillIcon /></button
         >
       </div>
       <ActivityTableMenu
