@@ -214,8 +214,6 @@
       activityTableId,
     );
   }
-
-  console.log('wat');
 </script>
 
 <Panel padBody={false}>
@@ -226,13 +224,17 @@
         <button
           class="st-button secondary"
           use:tooltip={{ content: 'Fit Columns to Content', placement: 'top' }}
-          on:click={onAutoSizeContent}><TableFitIcon /></button
+          on:click={onAutoSizeContent}
         >
+          <TableFitIcon />
+        </button>
         <button
           class="st-button secondary"
           use:tooltip={{ content: 'Fit Columns to Available Space', placement: 'top' }}
-          on:click={onAutoSizeSpace}><TableFillIcon /></button
+          on:click={onAutoSizeSpace}
         >
+          <TableFillIcon />
+        </button>
       </div>
       <ActivityTableMenu
         on:toggle-column={onColumnToggleChange}
