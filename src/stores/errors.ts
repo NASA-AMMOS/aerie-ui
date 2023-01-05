@@ -52,3 +52,12 @@ export function catchError(error: string | Error, details?: string | Error, shou
     console.log(details ?? error);
   }
 }
+
+export function clearSchedulingErrors(): void {
+  schedulingErrors.set([]);
+}
+
+export function clearAllErrors(): void {
+  clearSchedulingErrors();
+  caughtErrors.set([]);
+}
