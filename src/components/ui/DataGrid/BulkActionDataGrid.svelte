@@ -99,7 +99,7 @@
     dataGrid.selectAllVisible();
   }
 
-  onDestroy(() => onBlur);
+  onDestroy(() => onBlur());
 </script>
 
 <DataGrid

@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import type { CellKeyPressEvent, ColDef, ColumnState, RowNode } from 'ag-grid-community';
+  import type { ColDef, ColumnState, RowNode } from 'ag-grid-community';
   import { createEventDispatcher, onDestroy } from 'svelte';
   import type { TRowData } from '../../../types/data-grid';
   import ContextMenu from '../../context-menu/ContextMenu.svelte';
@@ -70,18 +70,15 @@
     document.addEventListener('keydown', onKeyDown);
   }
 
-  function onKeyDown(event: CustomEvent<CellKeyPressEvent<TRowData>>) {
-    const {
-      detail: { event: keyboardEvent },
-    } = event;
-    const { key } = keyboardEvent as KeyboardEvent;
+  function onKeyDown(event: KeyboardEvent) {
+    const { key } = event;
 
     if (key === 'Delete') {
       deleteItem();
     }
   }
 
-  onDestroy(() => onBlur);
+  onDestroy(() => onBlur());
 </script>
 
 <DataGrid
