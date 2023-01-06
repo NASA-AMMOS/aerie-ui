@@ -14,11 +14,11 @@
   export let columnDefs: ColDef[];
   export let columnStates: ColumnState[] = [];
   export let dataGrid: DataGrid = undefined;
-  export let idKey: keyof TRowData = 'id';
   export let hasEdit: boolean = false;
+  export let idKey: keyof TRowData = 'id';
   export let items: TRowData[];
-  export let selectedItemId: number | null = null;
   export let itemDisplayText: string;
+  export let selectedItemId: number | null = null;
 
   export let getRowId: (data: TRowData) => number = (data: TRowData): number => {
     return parseInt(data[idKey]);
@@ -86,15 +86,15 @@
 
 <DataGrid
   bind:this={dataGrid}
+  bind:currentSelectedRowId={selectedItemId}
+  bind:selectedRowIds={selectedItemIds}
   {columnDefs}
   {columnStates}
-  bind:currentSelectedRowId={selectedItemId}
   {getRowId}
   {isRowSelectable}
-  rowSelection="single"
-  rowData={items}
-  bind:selectedRowIds={selectedItemIds}
   preventDefaultOnContextMenu
+  rowData={items}
+  rowSelection="single"
   on:blur={onBlur}
   on:cellContextMenu={onCellContextMenu}
   on:cellMouseOver

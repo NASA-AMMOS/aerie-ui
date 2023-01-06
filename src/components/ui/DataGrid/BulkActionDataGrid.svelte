@@ -21,8 +21,8 @@
   export let selectedItemId: RowId | null = null;
   export let showContextMenu: boolean = true;
   export let singleItemDisplayText: string = '';
-  export let suppressRowClickSelection: boolean = false;
   export let suppressDragLeaveHidesColumns: boolean = true;
+  export let suppressRowClickSelection: boolean = false;
 
   export let getRowId: (data: TRowData) => RowId = (data: TRowData): RowId => parseInt(data[idKey]);
   export let isRowSelectable: (node: RowNode<TRowData>) => boolean = undefined;
@@ -108,18 +108,18 @@
 
 <DataGrid
   bind:this={dataGrid}
+  bind:currentSelectedRowId={selectedItemId}
+  bind:selectedRowIds={selectedItemIds}
   {columnDefs}
   {columnStates}
-  bind:currentSelectedRowId={selectedItemId}
   {getRowId}
   {idKey}
   {isRowSelectable}
-  rowSelection="multiple"
-  rowData={items}
-  bind:selectedRowIds={selectedItemIds}
   preventDefaultOnContextMenu={showContextMenu}
-  {suppressRowClickSelection}
+  rowData={items}
+  rowSelection="multiple"
   {suppressDragLeaveHidesColumns}
+  {suppressRowClickSelection}
   on:blur={onBlur}
   on:cellContextMenu={onCellContextMenu}
   on:cellMouseOver
