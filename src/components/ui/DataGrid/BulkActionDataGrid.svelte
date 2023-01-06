@@ -102,6 +102,7 @@
 
   function selectAllItems() {
     dataGrid.selectAllVisible();
+    dataGrid.focusDataGrid();
   }
 </script>
 

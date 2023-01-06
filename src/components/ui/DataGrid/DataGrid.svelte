@@ -33,6 +33,9 @@
   export function autoSizeAllColumns(skipHeader?: boolean) {
     gridOptions?.columnApi?.autoSizeAllColumns(skipHeader);
   }
+  export function focusDataGrid() {
+    gridDiv.focus();
+  }
   // expose ag-grid function to select all visible rows
   export function selectAllVisible() {
     gridOptions?.api?.selectAllFiltered();
