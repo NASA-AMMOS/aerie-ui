@@ -1,6 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { browser } from '$app/environment';
   import type { ColDef, ColumnState, RowNode } from 'ag-grid-community';
   import { createEventDispatcher, onDestroy } from 'svelte';
   import type { TRowData } from '../../../types/data-grid';
@@ -35,6 +36,8 @@
     selectedItemIds = [];
   }
 
+  onDestroy(() => onBlur());
+
   function editItem() {
     dispatch('editItem', selectedItemIds);
   }
@@ -52,7 +55,9 @@
   }
 
   function onBlur() {
-    document.removeEventListener('keydown', onKeyDown);
+    if (browser) {
+      document.removeEventListener('keydown', onKeyDown);
+    }
   }
 
   function onCellContextMenu(event: CustomEvent) {
@@ -77,8 +82,6 @@
       deleteItem();
     }
   }
-
-  onDestroy(() => onBlur());
 </script>
 
 <DataGrid

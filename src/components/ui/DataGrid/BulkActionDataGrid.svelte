@@ -1,6 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { browser } from '$app/environment';
   import type { ColDef, ColumnState, RowNode } from 'ag-grid-community';
   import { keyBy } from 'lodash-es';
   import { createEventDispatcher, onDestroy } from 'svelte';
@@ -38,6 +39,8 @@
     selectedItemIds = [];
   }
 
+  onDestroy(() => onBlur());
+
   function bulkDeleteItems() {
     const selectedItemIdsMap = keyBy(selectedItemIds);
     const selectedRows: TRowData[] = items.reduce((selectedRows: TRowData[], row: TRowData) => {
@@ -62,7 +65,9 @@
   }
 
   function onBlur() {
-    document.removeEventListener('keydown', onKeyDown);
+    if (browser) {
+      document.removeEventListener('keydown', onKeyDown);
+    }
   }
 
   function onCellContextMenu(event: CustomEvent) {
@@ -98,8 +103,6 @@
   function selectAllItems() {
     dataGrid.selectAllVisible();
   }
-
-  onDestroy(() => onBlur());
 </script>
 
 <DataGrid
