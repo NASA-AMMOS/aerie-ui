@@ -4,6 +4,7 @@
   import RemoveAllIcon from '@nasa-jpl/stellar/icons/remove_all.svg?component';
   import { createEventDispatcher } from 'svelte';
   import type { BaseError } from '../../types/errors';
+  import { tooltip } from '../../utilities/tooltip';
   import TabPanel from '../ui/Tabs/TabPanel.svelte';
 
   export let errors: BaseError[] = [];
@@ -23,7 +24,9 @@
       <div>{title}</div>
       {#if isClearable}
         <!-- svelte-ignore a11y-click-events-have-key-events -->
-        <div class="clear-console" on:click={onClear}><RemoveAllIcon /></div>
+        <div class="clear-console" on:click={onClear} use:tooltip={{ content: `Clear ${title}`, placement: 'left' }}>
+          <RemoveAllIcon />
+        </div>
       {/if}
     </div>
     <div class="errors">
