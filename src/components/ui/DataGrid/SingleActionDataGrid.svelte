@@ -1,8 +1,8 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import type { ColDef, ColumnState, RowNode } from 'ag-grid-community';
-  import { createEventDispatcher } from 'svelte';
+  import type { CellKeyPressEvent, ColDef, ColumnState, RowNode } from 'ag-grid-community';
+  import { createEventDispatcher, onDestroy } from 'svelte';
   import type { TRowData } from '../../../types/data-grid';
   import ContextMenu from '../../context-menu/ContextMenu.svelte';
   import ContextMenuHeader from '../../context-menu/ContextMenuHeader.svelte';
@@ -51,6 +51,10 @@
     dataGrid?.sizeColumnsToFit();
   }
 
+  function onBlur() {
+    document.removeEventListener('keydown', onKeyDown);
+  }
+
   function onCellContextMenu(event: CustomEvent) {
     const { detail } = event;
     const { data: clickedRow } = detail;
@@ -61,6 +65,23 @@
       contextMenu.show(detail.event);
     }
   }
+
+  function onFocus() {
+    document.addEventListener('keydown', onKeyDown);
+  }
+
+  function onKeyDown(event: CustomEvent<CellKeyPressEvent<TRowData>>) {
+    const {
+      detail: { event: keyboardEvent },
+    } = event;
+    const { key } = keyboardEvent as KeyboardEvent;
+
+    if (key === 'Delete') {
+      deleteItem();
+    }
+  }
+
+  onDestroy(() => onBlur);
 </script>
 
 <DataGrid
@@ -74,13 +95,15 @@
   rowData={items}
   bind:selectedRowIds={selectedItemIds}
   preventDefaultOnContextMenu
-  on:filterChanged
+  on:blur={onBlur}
   on:cellContextMenu={onCellContextMenu}
   on:cellMouseOver
   on:columnMoved
   on:columnPinned
   on:columnResized
   on:columnStateChange
+  on:filterChanged
+  on:focus={onFocus}
   on:rowClicked
   on:rowDoubleClicked
   on:rowSelected

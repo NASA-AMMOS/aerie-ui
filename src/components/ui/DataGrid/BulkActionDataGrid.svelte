@@ -3,7 +3,7 @@
 <script lang="ts">
   import type { ColDef, ColumnState, RowNode } from 'ag-grid-community';
   import { keyBy } from 'lodash-es';
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onDestroy } from 'svelte';
   import type { RowId, TRowData } from '../../../types/data-grid';
   import ContextMenu from '../../context-menu/ContextMenu.svelte';
   import ContextMenuHeader from '../../context-menu/ContextMenuHeader.svelte';
@@ -61,6 +61,10 @@
     dataGrid?.sizeColumnsToFit();
   }
 
+  function onBlur() {
+    document.removeEventListener('keydown', onKeyDown);
+  }
+
   function onCellContextMenu(event: CustomEvent) {
     if (showContextMenu) {
       const { detail } = event;
@@ -79,9 +83,23 @@
     isFiltered = Object.keys(filterModel).length > 0;
   }
 
+  function onFocus() {
+    document.addEventListener('keydown', onKeyDown);
+  }
+
+  function onKeyDown(event: KeyboardEvent) {
+    const { key } = event;
+
+    if (key === 'Delete') {
+      bulkDeleteItems();
+    }
+  }
+
   function selectAllItems() {
     dataGrid.selectAllVisible();
   }
+
+  onDestroy(() => onBlur);
 </script>
 
 <DataGrid
@@ -98,13 +116,15 @@
   preventDefaultOnContextMenu={showContextMenu}
   {suppressRowClickSelection}
   {suppressDragLeaveHidesColumns}
-  on:filterChanged={onFilterChanged}
+  on:blur={onBlur}
   on:cellContextMenu={onCellContextMenu}
   on:cellMouseOver
   on:columnMoved
   on:columnPinned
   on:columnResized
   on:columnStateChange
+  on:filterChanged={onFilterChanged}
+  on:focus={onFocus}
   on:rowClicked
   on:rowDoubleClicked
   on:rowSelected

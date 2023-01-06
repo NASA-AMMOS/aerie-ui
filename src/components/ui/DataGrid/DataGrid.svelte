@@ -262,7 +262,7 @@
   });
 </script>
 
-<div bind:this={gridDiv} class="ag-theme-stellar table" class:highlightOnSelection />
+<div bind:this={gridDiv} class="ag-theme-stellar table" class:highlightOnSelection tabindex="-1" on:focus on:blur />
 
 <style>
   .table {
