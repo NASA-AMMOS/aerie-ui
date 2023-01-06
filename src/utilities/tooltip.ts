@@ -1,3 +1,4 @@
+import type { Plugin, Props } from 'tippy.js';
 import tippy from 'tippy.js';
 
 /**
@@ -44,7 +45,7 @@ export function tooltip(node: Element, params: any = {}): any {
   };
 }
 
-const disabled = {
+const disabled: Plugin<Props & { disabled: boolean }> = {
   defaultValue: false,
   fn(instance) {
     return {
