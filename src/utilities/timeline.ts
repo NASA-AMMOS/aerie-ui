@@ -14,7 +14,18 @@ import {
   type TimeInterval,
 } from 'd3-time';
 import type { Resource } from '../types/simulation';
-import type { Axis, HorizontalGuide, Layer, QuadtreePoint, QuadtreeRect, Row, VerticalGuide } from '../types/timeline';
+import type {
+  ActivityLayer,
+  Axis,
+  HorizontalGuide,
+  Layer,
+  LineLayer,
+  QuadtreePoint,
+  QuadtreeRect,
+  Row,
+  VerticalGuide,
+  XRangeLayer,
+} from '../types/timeline';
 
 export enum TimelineLockStatus {
   Locked = 'Locked',
@@ -312,6 +323,7 @@ export function createTimelineXRangeLayer(layers: Layer[], yAxes: Axis[]): XRang
     filter: {
       resource: {
         name: '',
+        names: [],
       },
     },
     id,
