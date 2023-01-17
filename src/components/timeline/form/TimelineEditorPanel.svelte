@@ -29,6 +29,7 @@
     Layer,
     LineLayer,
     Row,
+    Timeline,
     VerticalGuide,
     XRangeLayer,
   } from '../../../types/timeline';
@@ -59,8 +60,10 @@
   export let gridId: number;
 
   let rows: Row[] = [];
+  let timelines: Timeline[] = [];
 
   $: rows = $selectedTimeline?.rows || [];
+  $: timelines = $view.definition.plan.timelines;
   $: verticalGuides = $selectedTimeline?.verticalGuides || [];
   $: horizontalGuides = $selectedRow?.horizontalGuides || [];
   $: yAxes = $selectedRow?.yAxes || [];
@@ -132,7 +135,7 @@
   }
 
   function handleNewYAxisClick() {
-    const yAxis = createYAxis(yAxes);
+    const yAxis = createYAxis(timelines);
     yAxes = [...yAxes, yAxis];
     viewUpdateRow('yAxes', yAxes);
   }
@@ -143,7 +146,7 @@
   }
 
   function handleNewLayerClick() {
-    const layer = createTimelineActivityLayer(layers);
+    const layer = createTimelineActivityLayer(timelines);
     layers = [...layers, layer];
     viewUpdateRow('layers', layers);
   }
@@ -158,7 +161,7 @@
       return;
     }
 
-    const row = createRow($selectedTimeline.rows);
+    const row = createRow(timelines);
     rows = [...rows, row];
     viewUpdateTimeline('rows', rows);
   }
@@ -303,12 +306,12 @@
       if (layer.id === l.id) {
         let newLayer: ActivityLayer | LineLayer | XRangeLayer;
         if (value === 'activity') {
-          newLayer = { ...createTimelineActivityLayer(layers), id: l.id };
+          newLayer = { ...createTimelineActivityLayer(timelines), id: l.id };
         } else if (value === 'line' || value === 'x-range') {
           if (value === 'line') {
-            newLayer = { ...createTimelineLineLayer(layers, yAxes), id: l.id };
+            newLayer = { ...createTimelineLineLayer(timelines, yAxes), id: l.id };
           } else {
-            newLayer = { ...createTimelineXRangeLayer(layers, yAxes), id: l.id };
+            newLayer = { ...createTimelineXRangeLayer(timelines, yAxes), id: l.id };
           }
 
           // Assign yAxisId to existing value or new axis
@@ -365,7 +368,7 @@
       return;
     }
 
-    const newHorizontalGuide = createHorizontalGuide(yAxes, horizontalGuides);
+    const newHorizontalGuide = createHorizontalGuide(timelines, yAxes);
     viewUpdateRow('horizontalGuides', [...horizontalGuides, newHorizontalGuide]);
   }
 
@@ -378,7 +381,7 @@
     const centerTime = $viewTimeRange.start + ($viewTimeRange.end - $viewTimeRange.start) / 2;
     const centerDateDoy = getDoyTime(new Date(centerTime));
 
-    const newVerticalGuide = createVerticalGuide(centerDateDoy, verticalGuides);
+    const newVerticalGuide = createVerticalGuide(timelines, centerDateDoy);
     viewUpdateTimeline('verticalGuides', [...verticalGuides, newVerticalGuide], $selectedTimelineId);
   }
 
@@ -983,6 +986,17 @@
                       <TrashIcon />
                     </button>
                   </CssGrid>
+                  <div class="st-typography-medium filter-items">
+                    {#if getFilterValuesForLayer(layer).length === 0}
+                      All {layer.chartType === 'activity' ? 'activities' : 'resources'}
+                    {:else}
+                      {#each getFilterValuesForLayer(layer) as item}
+                        <div class="filter-item">
+                          {item}
+                        </div>
+                      {/each}
+                    {/if}
+                  </div>
                 </div>
               {/each}
             </div>
@@ -1145,5 +1159,17 @@
     gap: 8px;
     height: 32px;
     justify-content: flex-start;
+  }
+
+  .timeline-layer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .filter-items {
+    display: flex;
+    flex-direction: column;
+  }
+  .filter-item {
   }
 </style>
