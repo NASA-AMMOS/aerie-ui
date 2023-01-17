@@ -932,18 +932,6 @@ const effects = {
     }
   },
 
-  async getResourceTypes(modelId: number): Promise<ResourceType[]> {
-    try {
-      const query = convertToQuery(gql.SUB_RESOURCE_TYPES);
-      const data = await reqHasura<ResourceType[]>(query, { modelId });
-      const { resource_type: resourceTypes } = data;
-      return resourceTypes;
-    } catch (e) {
-      catchError(e);
-      return [];
-    }
-  },
-
   async getActivityTypesExpansionRules(modelId: number | null | undefined): Promise<ActivityTypeExpansionRules[]> {
     if (modelId !== null && modelId !== undefined) {
       try {
