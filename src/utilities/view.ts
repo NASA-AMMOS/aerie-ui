@@ -118,7 +118,7 @@ export function generateDefaultView(resourceTypes: ResourceType[] = []): View {
                         {
                           chartType: 'x-range',
                           colorScheme: 'schemeTableau10',
-                          filter: { resource: { name: `${name}$` } },
+                          filter: { resource: { name: `${name}$`, names: [] } },
                           id: layerIds++,
                           opacity: 0.8,
                           yAxisId: yAxis.id,
@@ -128,7 +128,7 @@ export function generateDefaultView(resourceTypes: ResourceType[] = []): View {
                     ? [
                         {
                           chartType: 'line',
-                          filter: { resource: { name: `${name}$` } },
+                          filter: { resource: { name: `${name}$`, names: [] } },
                           id: layerIds++,
                           lineColor: '#283593',
                           lineWidth: 1,
