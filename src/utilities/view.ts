@@ -79,7 +79,7 @@ export function generateDefaultView(resourceTypes: ResourceType[] = []): View {
                     activityColor: '#283593',
                     activityHeight: 20,
                     chartType: 'activity',
-                    filter: { activity: { type: '.*', types: [] } },
+                    filter: { activity: { types: [] } },
                     id: layerIds++,
                     yAxisId: null,
                   } as ActivityLayer,
@@ -118,7 +118,7 @@ export function generateDefaultView(resourceTypes: ResourceType[] = []): View {
                         {
                           chartType: 'x-range',
                           colorScheme: 'schemeTableau10',
-                          filter: { resource: { name: `${name}$`, names: [] } },
+                          filter: { resource: { names: [] } },
                           id: layerIds++,
                           opacity: 0.8,
                           yAxisId: yAxis.id,
@@ -128,7 +128,7 @@ export function generateDefaultView(resourceTypes: ResourceType[] = []): View {
                     ? [
                         {
                           chartType: 'line',
-                          filter: { resource: { name: `${name}$`, names: [] } },
+                          filter: { resource: { names: [] } },
                           id: layerIds++,
                           lineColor: '#283593',
                           lineWidth: 1,
