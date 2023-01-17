@@ -46,9 +46,7 @@ export const activitiesByView: Readable<ActivitiesByView> = derived([activities,
           if (filter.activity !== undefined) {
             const { activity: activityFilter } = filter;
             const { types } = activityFilter;
-            const includeActivity = types.indexOf(activity.type) > -1;
-            /* TODO – this filtering gets weird if you try to allow any activity through when you have no types defined */
-            /* Also this lookup could maybe be done before this loop? */
+            const includeActivity = types.length < 1 || types.indexOf(activity.type) > -1;
 
             if (includeActivity) {
               if (byLayerId[layer.id] === undefined) {
