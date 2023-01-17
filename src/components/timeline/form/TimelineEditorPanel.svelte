@@ -22,7 +22,16 @@
     viewUpdateRow,
     viewUpdateTimeline,
   } from '../../../stores/views';
-  import type { Axis, HorizontalGuide, Row, VerticalGuide } from '../../../types/timeline';
+  import type {
+    ActivityLayer,
+    Axis,
+    HorizontalGuide,
+    Layer,
+    LineLayer,
+    Row,
+    VerticalGuide,
+    XRangeLayer,
+  } from '../../../types/timeline';
   import { getTarget } from '../../../utilities/generic';
   import { showConfirmModal } from '../../../utilities/modal';
   import { getDoyTime } from '../../../utilities/time';
@@ -273,7 +282,6 @@
       }
       return l;
     });
-    console.log('newLayers', newLayers);
     viewUpdateRow('layers', newLayers);
   }
 
@@ -295,17 +303,17 @@
       if (layer.id === l.id) {
         let newLayer: ActivityLayer | LineLayer | XRangeLayer;
         if (value === 'activity') {
-          newLayer = { ...createTimelineActivityLayer(layers), id: layer.id };
+          newLayer = { ...createTimelineActivityLayer(layers), id: l.id };
         } else if (value === 'line' || value === 'x-range') {
           if (value === 'line') {
-            newLayer = { ...createTimelineLineLayer(layers, yAxes), id: layer.id };
+            newLayer = { ...createTimelineLineLayer(layers, yAxes), id: l.id };
           } else {
-            newLayer = { ...createTimelineXRangeLayer(layers, yAxes), id: layer.id };
+            newLayer = { ...createTimelineXRangeLayer(layers, yAxes), id: l.id };
           }
 
           // Assign yAxisId to existing value or new axis
           if (typeof layer.yAxisId === 'number') {
-            newLayer.yAxisId = layer.yAxisId;
+            newLayer.yAxisId = l.yAxisId;
           } else if (yAxes.length > 0) {
             newLayer.yAxisId = yAxes[0].id;
           } else {

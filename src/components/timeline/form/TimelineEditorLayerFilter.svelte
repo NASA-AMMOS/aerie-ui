@@ -2,6 +2,7 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import type { Layer } from '../../../types/timeline';
   import Menu from '../../menus/Menu.svelte';
 
   export let layer: Layer;
@@ -30,7 +31,8 @@
   }
 
   $: if (filterString) {
-    filteredValues = options.filter(item => item.indexOf(filterString) > -1);
+    const filterStringLower = filterString.toLocaleLowerCase();
+    filteredValues = options.filter(item => item.toLocaleLowerCase().indexOf(filterStringLower) > -1);
   } else {
     filteredValues = options.slice();
   }
@@ -49,15 +51,18 @@
     dispatch('change', { values: newValues });
   }
 
+  function unselectFilteredValues() {
+    const newValues = [];
+    dispatch('change', { values: newValues });
+  }
+
   function toggleItem(value: string) {
     let newVaues = [];
-    console.log(selectedValuesMap);
     if (selectedValuesMap[value]) {
       newVaues = values.filter(i => value !== i);
     } else {
       newVaues = [...values, value];
     }
-    console.log('newVaues :>> ', newVaues);
     dispatch('change', { values: newVaues });
   }
 </script>
@@ -96,14 +101,21 @@
             </button>
           {/each}
         </div>
-        {#if filterString}
-          <button class="st-button secondary" on:click={selectFilteredValues}>
-            Select {filteredValues.length}
-            {layer.chartType === 'line' ? 'activities' : 'resources'}
-          </button>
-        {/if}
+        <div class="list-buttons">
+          {#if filterString}
+            <button class="st-button secondary list-button" on:click={selectFilteredValues}>
+              Select {filteredValues.length}
+              {#if filteredValues.length === 1}
+                {layer.chartType === 'activity' ? 'activity' : 'resource'}
+              {:else}
+                {layer.chartType === 'activity' ? 'activities' : 'resources'}
+              {/if}
+            </button>
+          {/if}
+          <button class="st-button secondary list-button" on:click={unselectFilteredValues}>Unselect all</button>
+        </div>
       {:else}
-        <div>No items matching filter</div>
+        <div class="st-typography-label empty-state">No items matching filter</div>
       {/if}
     </div>
   </Menu>
@@ -154,11 +166,27 @@
     background: var(--st-gray-20);
   }
 
-  .value.active {
+  .value.active,
+  .value.active:hover {
     background: #4fa1ff4f;
   }
 
   .body :global(.input-inline) {
     padding: 0;
+  }
+
+  .list-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .list-button {
+    margin: 0px 8px;
+  }
+
+  .empty-state {
+    margin: 8px;
   }
 </style>
