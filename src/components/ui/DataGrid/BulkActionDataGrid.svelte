@@ -6,6 +6,7 @@
   import { keyBy } from 'lodash-es';
   import { createEventDispatcher, onDestroy } from 'svelte';
   import type { RowId, TRowData } from '../../../types/data-grid';
+  import { isDeleteEvent } from '../../../utilities/keyboardEvents';
   import ContextMenu from '../../context-menu/ContextMenu.svelte';
   import ContextMenuHeader from '../../context-menu/ContextMenuHeader.svelte';
   import ContextMenuItem from '../../context-menu/ContextMenuItem.svelte';
@@ -93,9 +94,7 @@
   }
 
   function onKeyDown(event: KeyboardEvent) {
-    const { key } = event;
-
-    if (key === 'Delete') {
+    if (isDeleteEvent(event)) {
       bulkDeleteItems();
     }
   }

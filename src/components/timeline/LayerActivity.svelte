@@ -12,6 +12,7 @@
   import type { ActivityLayerFilter, ActivityPoint, BoundingBox, QuadtreeRect, TimeRange } from '../../types/timeline';
   import { decomposeActivityDirectiveId, sortActivities } from '../../utilities/activities';
   import effects from '../../utilities/effects';
+  import { isDeleteEvent } from '../../utilities/keyboardEvents';
   import { getDoyTime, getDurationInMs, getUnixEpochTime } from '../../utilities/time';
   import { searchQuadtreeRect, TimelineLockStatus } from '../../utilities/timeline';
 
@@ -214,9 +215,7 @@
   }
 
   function onKeyDown(event: KeyboardEvent): void {
-    const { key } = event;
-
-    if (key === 'Delete' && !!selectedActivityId) {
+    if (isDeleteEvent(event) && !!selectedActivityId) {
       dispatch('delete', selectedActivityId);
     }
   }
