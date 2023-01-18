@@ -262,7 +262,7 @@
       content: cursorTooltip,
       hideOnClick: false,
       placement: 'top',
-      showOnCreate: true,
+      plugins: [],
       triggerTarget: histogramContainer,
     }}
     class="timeline-histogram-cursor"
