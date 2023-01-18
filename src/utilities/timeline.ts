@@ -432,11 +432,13 @@ export function getYAxisBounds(
     if (resourcesByViewLayerId[layer.id]) {
       resourcesByViewLayerId[layer.id].forEach(resource => {
         resource.values.forEach(value => {
-          if (minY === undefined || value.y < minY) {
-            minY = value.y;
-          }
-          if (maxY === undefined || value.y > maxY) {
-            maxY = value.y;
+          if (typeof value.y === 'number') {
+            if (minY === undefined || value.y < minY) {
+              minY = value.y;
+            }
+            if (maxY === undefined || value.y > maxY) {
+              maxY = value.y;
+            }
           }
         });
       });
