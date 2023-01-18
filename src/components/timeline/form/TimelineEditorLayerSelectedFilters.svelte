@@ -9,6 +9,14 @@
   export let chartType: ChartType;
 
   let open = false;
+  let verb = '';
+  $: if (filters) {
+    if (filters.length !== 1) {
+      verb = chartType === 'activity' ? 'activities' : 'resources';
+    } else {
+      verb = chartType === 'activity' ? 'activity' : 'resource';
+    }
+  }
 
   const dispatch = createEventDispatcher();
 </script>
@@ -20,7 +28,7 @@
     </div>
   {:else}
     <details {open}>
-      <summary>{filters.length} Activities</summary>
+      <summary style="text-transform: capitalize">{filters.length} {verb}</summary>
       <div class="filter-items">
         {#each filters as item}
           <Chip label={item} on:click={() => dispatch('remove', { filter: item })} />
