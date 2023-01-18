@@ -17,10 +17,16 @@
   export let gridId: number;
   export let timelineId: number;
 
+  let isDeletingDirective: boolean = false;
+
   $: timeline = $view?.definition.plan.timelines.find(timeline => timeline.id === timelineId);
 
-  function deleteActivityDirective() {
-    effects.deleteActivityDirective($planId, $selectedActivity.id);
+  async function deleteActivityDirective() {
+    if (!isDeletingDirective) {
+      isDeletingDirective = true;
+      await effects.deleteActivityDirective($planId, $selectedActivity.id);
+      isDeletingDirective = false;
+    }
   }
 </script>
 
