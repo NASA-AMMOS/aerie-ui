@@ -274,6 +274,19 @@ export function getNextYAxisID(timelines: Timeline[]): number {
 }
 
 /**
+ * Returns the next row ID based on all layers in all timelines
+ */
+export function getNextTimelineID(timelines: Timeline[]): number {
+  let maxID = -1;
+  timelines.forEach(timeline => {
+    if (timeline.id > maxID) {
+      maxID = timeline.id;
+    }
+  });
+  return maxID + 1;
+}
+
+/**
  * Returns a new vertical guide
  */
 export function createVerticalGuide(timelines: Timeline[], doyTimestamp: string): VerticalGuide {
@@ -347,6 +360,21 @@ export function createYAxis(timelines: Timeline[]): Axis {
     // no associated layers for a new y axis?
     scaleDomain: [0, 10],
     tickCount: 4,
+  };
+}
+
+/**
+ * Returns a new timeline
+ */
+export function createTimeline(timelines: Timeline[]): Timeline {
+  const id = getNextTimelineID(timelines);
+
+  return {
+    id,
+    marginLeft: 0,
+    marginRight: 0,
+    rows: [],
+    verticalGuides: [],
   };
 }
 

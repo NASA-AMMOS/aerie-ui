@@ -14,6 +14,7 @@
     schemeTableau10,
   } from 'd3-scale-chromatic';
   import { createEventDispatcher } from 'svelte';
+  import type { XRangeLayerColorScheme } from '../../types/timeline';
   import { tooltip } from '../../utilities/tooltip';
   import Menu from '../menus/Menu.svelte';
 

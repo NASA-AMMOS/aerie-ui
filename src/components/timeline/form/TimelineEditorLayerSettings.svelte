@@ -3,6 +3,7 @@
 <script lang="ts">
   import SettingsIcon from '@nasa-jpl/stellar/icons/settings.svg?component';
   import { createEventDispatcher } from 'svelte';
+  import type { ActivityLayer, Axis, Layer, LineLayer, XRangeLayer } from '../../../types/timeline';
   import { getTarget } from '../../../utilities/generic';
   import { tooltip } from '../../../utilities/tooltip';
   import Input from '../../form/Input.svelte';

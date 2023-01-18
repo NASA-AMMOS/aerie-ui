@@ -4,7 +4,6 @@
   import { browser } from '$app/environment';
   import { quadtree as d3Quadtree, type Quadtree } from 'd3-quadtree';
   import type { ScaleTime } from 'd3-scale';
-  import { select } from 'd3-selection';
   import { createEventDispatcher, onDestroy, onMount, tick } from 'svelte';
   import { activitiesMap } from '../../stores/activities';
   import { timelineLockStatus } from '../../stores/views';
@@ -32,7 +31,6 @@
   export let mousemove: MouseEvent | undefined;
   export let mouseout: MouseEvent | undefined;
   export let mouseup: MouseEvent | undefined;
-  export let overlaySvg: SVGElement;
   export let selectedActivityId: ActivityUniqueId | null = null;
   export let showChildren: boolean = true;
   export let viewTimeRange: TimeRange = { end: 0, start: 0 };
@@ -60,7 +58,6 @@
 
   $: canvasHeightDpr = drawHeight * dpr;
   $: canvasWidthDpr = drawWidth * dpr;
-  $: overlaySvgSelection = select(overlaySvg);
   $: rowHeight = activityHeight + activityRowPadding;
 
   $: timelineLocked = $timelineLockStatus === TimelineLockStatus.Locked;
