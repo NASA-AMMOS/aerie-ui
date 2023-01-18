@@ -51,6 +51,7 @@
   import ColorSchemePicker from '../../form/ColorSchemePicker.svelte';
   import Input from '../../form/Input.svelte';
   import GridMenu from '../../menus/GridMenu.svelte';
+  import Chip from '../../ui/Chip.svelte';
   import CssGrid from '../../ui/CssGrid.svelte';
   import DatePicker from '../../ui/DatePicker/DatePicker.svelte';
   import Panel from '../../ui/Panel.svelte';
@@ -154,6 +155,11 @@
   function handleDeleteLayerClick(layer: Layer) {
     const filteredLayers = layers.filter(l => l.id !== layer.id);
     viewUpdateRow('layers', filteredLayers);
+  }
+
+  function handleDeleteLayerFilterValue(layer: Layer, value: string) {
+    const newValues = getFilterValuesForLayer(layer).filter(i => value !== i);
+    handleUpdateLayerFilter(newValues, layer);
   }
 
   function addTimelineRow() {
@@ -273,8 +279,7 @@
     viewUpdateRow('horizontalGuides', newHorizontalGuides);
   }
 
-  function handleUpdateLayerFilter(event: CustomEvent, layer: Layer) {
-    const { values } = event.detail;
+  function handleUpdateLayerFilter(values: string[], layer: Layer) {
     const newLayers = layers.map(l => {
       if (layer.id === l.id) {
         if (l.chartType === 'activity') {
@@ -943,7 +948,10 @@
                       values={getFilterValuesForLayer(layer)}
                       options={getFilterOptionsForLayer(layer)}
                       {layer}
-                      on:change={event => handleUpdateLayerFilter(event, layer)}
+                      on:change={event => {
+                        const { values } = event.detail;
+                        handleUpdateLayerFilter(values, layer);
+                      }}
                     />
                     <select
                       class="st-select w-100"
@@ -988,12 +996,12 @@
                   </CssGrid>
                   <div class="st-typography-medium filter-items">
                     {#if getFilterValuesForLayer(layer).length === 0}
-                      All {layer.chartType === 'activity' ? 'activities' : 'resources'}
+                      <div class="filter-items-empty">
+                        All {layer.chartType === 'activity' ? 'activities' : 'resources'}
+                      </div>
                     {:else}
                       {#each getFilterValuesForLayer(layer) as item}
-                        <div class="filter-item">
-                          {item}
-                        </div>
+                        <Chip label={item} on:click={() => handleDeleteLayerFilterValue(layer, item)} />
                       {/each}
                     {/if}
                   </div>
@@ -1170,7 +1178,12 @@
   .filter-items {
     display: flex;
     flex-direction: column;
+    gap: 8px;
   }
-  .filter-item {
+
+  .filter-items-empty {
+    align-items: center;
+    display: flex;
+    height: 24px;
   }
 </style>

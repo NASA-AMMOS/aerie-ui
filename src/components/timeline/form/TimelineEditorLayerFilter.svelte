@@ -47,7 +47,7 @@
   }
 
   function selectFilteredValues() {
-    const newValues = [...new Set([values, ...filteredValues])];
+    const newValues = [...new Set([...values, ...filteredValues])];
     dispatch('change', { values: newValues });
   }
 
@@ -57,13 +57,13 @@
   }
 
   function toggleItem(value: string) {
-    let newVaues = [];
+    let newValues = [];
     if (selectedValuesMap[value]) {
-      newVaues = values.filter(i => value !== i);
+      newValues = values.filter(i => value !== i);
     } else {
-      newVaues = [...values, value];
+      newValues = [...values, value];
     }
-    dispatch('change', { values: newVaues });
+    dispatch('change', { values: newValues });
   }
 </script>
 
