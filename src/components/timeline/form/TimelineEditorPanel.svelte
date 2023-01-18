@@ -51,11 +51,11 @@
   import ColorSchemePicker from '../../form/ColorSchemePicker.svelte';
   import Input from '../../form/Input.svelte';
   import GridMenu from '../../menus/GridMenu.svelte';
-  import Chip from '../../ui/Chip.svelte';
   import CssGrid from '../../ui/CssGrid.svelte';
   import DatePicker from '../../ui/DatePicker/DatePicker.svelte';
   import Panel from '../../ui/Panel.svelte';
   import TimelineEditorLayerFilter from './TimelineEditorLayerFilter.svelte';
+  import TimelineEditorLayerSelectedFilters from './TimelineEditorLayerSelectedFilters.svelte';
   import TimelineEditorLayerSettings from './TimelineEditorLayerSettings.svelte';
 
   export let gridId: number;
@@ -994,17 +994,11 @@
                       <TrashIcon />
                     </button>
                   </CssGrid>
-                  <div class="st-typography-medium filter-items">
-                    {#if getFilterValuesForLayer(layer).length === 0}
-                      <div class="filter-items-empty">
-                        All {layer.chartType === 'activity' ? 'activities' : 'resources'}
-                      </div>
-                    {:else}
-                      {#each getFilterValuesForLayer(layer) as item}
-                        <Chip label={item} on:click={() => handleDeleteLayerFilterValue(layer, item)} />
-                      {/each}
-                    {/if}
-                  </div>
+                  <TimelineEditorLayerSelectedFilters
+                    chartType={layer.chartType}
+                    filters={getFilterValuesForLayer(layer)}
+                    on:remove={event => handleDeleteLayerFilterValue(layer, event.detail.filter)}
+                  />
                 </div>
               {/each}
             </div>
@@ -1144,7 +1138,7 @@
   .timeline-layer {
     align-items: flex-end;
     display: flex;
-    gap: 8px;
+    /* gap: 8px; */
   }
 
   .guide :global(.date-picker) {
@@ -1173,17 +1167,5 @@
   .timeline-layer {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  .filter-items {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .filter-items-empty {
-    align-items: center;
-    display: flex;
-    height: 24px;
   }
 </style>
