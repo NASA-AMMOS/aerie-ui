@@ -911,6 +911,8 @@ const gql = {
   SUB_ACTIVITY_DIRECTIVES: `#graphql
     subscription SubActivityDirectives($planId: Int!) {
       activity_directives: activity_directive(where: { plan_id: { _eq: $planId } }, order_by: { start_offset: asc }) {
+        anchor_id
+        anchored_to_start
         arguments
         created_at
         id
@@ -943,6 +945,16 @@ const gql = {
         name
         parameters
         required_parameters
+      }
+    }
+  `,
+
+  SUB_ANCHOR_VALIDATION_STATUS: `#graphql
+    subscription SubAnchorValidationStatus($planId: Int!) {
+      anchor_validation_status: anchor_validation_status(where: { plan_id: { _eq: $planId } }) {
+        activity_id,
+        plan_id,
+        reason_invalid
       }
     }
   `,

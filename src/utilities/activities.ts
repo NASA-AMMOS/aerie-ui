@@ -12,6 +12,52 @@ import type { Span, SpanId } from '../types/simulation';
 import { compare, isEmpty } from './generic';
 import { getDoyTimeFromDuration, getUnixEpochTime } from './time';
 
+type ActivityStartTimesMap = {
+  [activityUniqueId: ActivityUniqueId]: string;
+};
+type TraversalMap = {
+  [activityUniqueId: ActivityUniqueId]: boolean;
+};
+function determineActivityDirectiveStartTime(
+  directiveUniqueId: ActivityUniqueId,
+  plan: Plan,
+  activitiesMap: ActivitiesMap = {},
+  cachedStartTimes: ActivityStartTimesMap = {},
+  traversalMap: TraversalMap = {},
+): string | never {
+  const { id: planId, start_time: planStartTime } = plan;
+  // if the start time has already been determined in an earlier iteration
+  if (cachedStartTimes[directiveUniqueId]) {
+    return cachedStartTimes[directiveUniqueId];
+  }
+
+  const activityDirective = activitiesMap[directiveUniqueId];
+  if (activityDirective.anchor_id != null) {
+    const uniqueId = getActivityDirectiveUniqueId(planId, activityDirective.anchor_id);
+    if (traversalMap[uniqueId]) {
+      throw Error(`Cycle detected with Activity: ${uniqueId}`);
+    }
+
+    const startTime = getDoyTimeFromDuration(
+      `${new Date(
+        getUnixEpochTime(
+          determineActivityDirectiveStartTime(uniqueId, plan, activitiesMap, cachedStartTimes, {
+            ...traversalMap,
+            [uniqueId]: true,
+          }),
+        ),
+      )}`,
+      activityDirective.start_offset,
+    );
+    cachedStartTimes[uniqueId] = startTime;
+    return startTime;
+  }
+
+  const startTimeFromPlan = getDoyTimeFromDuration(planStartTime, activityDirective.start_offset);
+  cachedStartTimes[directiveUniqueId] = startTimeFromPlan;
+  return startTimeFromPlan;
+}
+
 /**
  * Creates a map of activities from directives and spans.
  */
@@ -57,6 +103,8 @@ export function createActivitiesMap(
     const spanUniqueId = span ? `span_${span.id}` : null;
 
     activitiesMap[activityDirectiveUniqueId] = {
+      anchor_id: activityDirective.anchor_id,
+      anchored_to_start: activityDirective.anchored_to_start,
       arguments: activityDirective.arguments,
       attributes: span?.attributes ?? null,
       childUniqueIds: parentUniqueIdToChildUniqueIds[spanUniqueId] ?? [],
@@ -71,6 +119,7 @@ export function createActivitiesMap(
       plan_id: activityDirective.plan_id,
       simulated_activity_id: span?.id ?? null,
       source_scheduling_goal_id: activityDirective.source_scheduling_goal_id,
+      start_offset: activityDirective.start_offset,
       start_time_doy: getDoyTimeFromDuration(plan_start_time, activityDirective.start_offset),
       tags: activityDirective.tags,
       type: activityDirective.type,
@@ -79,11 +128,23 @@ export function createActivitiesMap(
     };
   }
 
+  // go through each directive again to determine actual `start_time_doy` value
+  for (const activityDirective of activity_directives) {
+    const activityDirectiveUniqueId = getActivityDirectiveUniqueId(activityDirective.plan_id, activityDirective.id);
+
+    activitiesMap[activityDirectiveUniqueId] = {
+      ...activitiesMap[activityDirectiveUniqueId],
+      start_time_doy: determineActivityDirectiveStartTime(activityDirectiveUniqueId, plan, activitiesMap),
+    };
+  }
+
   for (const span of childSpans) {
     const spanParentUniqueId = `span_${span.parent_id}`;
     const spanUniqueId = `span_${span.id}`;
 
     activitiesMap[spanUniqueId] = {
+      anchor_id: null,
+      anchored_to_start: true,
       arguments: span.attributes?.arguments ?? {},
       attributes: span.attributes,
       childUniqueIds: parentUniqueIdToChildUniqueIds[spanUniqueId] ?? [],
@@ -98,6 +159,7 @@ export function createActivitiesMap(
       plan_id,
       simulated_activity_id: span.id,
       source_scheduling_goal_id: null,
+      start_offset: span.start_offset,
       start_time_doy: getDoyTimeFromDuration(plan_start_time, span.start_offset),
       tags: [],
       type: span.type,
@@ -105,7 +167,6 @@ export function createActivitiesMap(
       uniqueId: spanUniqueId,
     };
   }
-
   return activitiesMap;
 }
 
@@ -138,6 +199,8 @@ export function deriveActivityFromMergeActivityDirective(
   plan: Plan,
 ): Activity {
   return {
+    anchor_id: activityDirective.anchor_id,
+    anchored_to_start: activityDirective.anchored_to_start,
     arguments: activityDirective.arguments,
     attributes: null,
     childUniqueIds: [],
@@ -152,6 +215,7 @@ export function deriveActivityFromMergeActivityDirective(
     plan_id: plan.id,
     simulated_activity_id: null,
     source_scheduling_goal_id: activityDirective.source_scheduling_goal_id,
+    start_offset: activityDirective.start_offset,
     start_time_doy: getDoyTimeFromDuration(plan.start_time, activityDirective.start_offset),
     tags: activityDirective.tags,
     type: activityDirective.type,

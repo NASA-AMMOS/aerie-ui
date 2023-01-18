@@ -26,6 +26,8 @@ export type ActivityTypeExpansionRules = {
 };
 
 export type Activity = {
+  anchor_id: number | null;
+  anchored_to_start: boolean;
   arguments: ArgumentsMap;
   attributes: SpanAttributes | null;
   childUniqueIds: ActivityUniqueId[];
@@ -40,6 +42,7 @@ export type Activity = {
   plan_id: number;
   simulated_activity_id: SpanId | null;
   source_scheduling_goal_id: number;
+  start_offset: string;
   start_time_doy: string;
   tags: string[];
   type: string;
@@ -50,6 +53,8 @@ export type Activity = {
 export type ActivitiesMap = Record<ActivityUniqueId, Activity>;
 
 export type ActivityDirective = {
+  anchor_id: number | null;
+  anchored_to_start: boolean;
   arguments: ArgumentsMap;
   created_at: string;
   id: ActivityDirectiveId;
@@ -65,6 +70,8 @@ export type ActivityDirective = {
 };
 
 export type ActivityDirectiveInsertInput = {
+  anchor_id: number | null;
+  anchored_to_start: boolean;
   arguments: ArgumentsMap;
   metadata: ActivityMetadata;
   name: string;
@@ -75,3 +82,9 @@ export type ActivityDirectiveInsertInput = {
 };
 
 export type ActivityDirectiveSetInput = Partial<ActivityDirectiveInsertInput>;
+
+export type AnchorValidationStatus = {
+  activity_id: ActivityId;
+  plan_id: number;
+  reason_invalid: string;
+};
