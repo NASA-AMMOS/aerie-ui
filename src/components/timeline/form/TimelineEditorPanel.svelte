@@ -1090,6 +1090,7 @@
     height: 40px;
     justify-content: space-between;
     padding: 0px 16px;
+    position: relative;
   }
 
   .drag-icon {
