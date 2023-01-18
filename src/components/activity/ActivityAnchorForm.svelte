@@ -4,7 +4,7 @@
   import SearchIcon from '@nasa-jpl/stellar/icons/search.svg?component';
   import { createEventDispatcher } from 'svelte';
   import type { ActivitiesMap, Activity, ActivityId } from '../../types/activity';
-  import { getActivityDirectiveUniqueId } from '../../utilities/activities';
+  import { getActivityDirectiveUniqueId, isDirective } from '../../utilities/activities';
   import { getTarget } from '../../utilities/generic';
   import { convertDurationStringToInterval, convertUsToDurationString, getDurationInMs } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
@@ -28,19 +28,22 @@
   let anchoredActivityError: string | null = null;
   let isRelativeOffset: boolean = false;
   let startOffsetString: string = '';
-  let startOffsetFormatError: string | null = null;
+  let startOffsetError: string | null = null;
 
   $: anchoredActivity = anchorId !== null ? activitiesMap[getActivityDirectiveUniqueId(planId, anchorId)] : null;
   $: anchorInputString = anchoredActivity ? formatActivityAnchorText(anchoredActivity) : '';
   $: anchorableActivityDirectives = Object.values(activitiesMap)
-    .filter(directive => directive.id !== activity.id)
+    .filter(directive => isDirective(directive) && directive.id !== activity.id)
     .map(formatActivityAnchorText);
+
   $: if (startOffset) {
     const offsetString = convertUsToDurationString(getDurationInMs(activity.start_offset) * 1000, true);
     // remove `y` if 0 to keep the string shorter
     startOffsetString = offsetString.replace(/0y\s?/, '');
   }
-
+  $: if (activity.anchor_validations?.reason_invalid) {
+    startOffsetError = activity.anchor_validations.reason_invalid;
+  }
   // only set this when the viewed activity is changed
   $: if (activity.id) {
     isRelativeOffset = !!activity.anchor_id;
@@ -59,7 +62,7 @@
     updateAnchorEdge(true);
     updateStartOffset(convertDurationStringToInterval('0'));
     anchoredActivityError = null;
-    startOffsetFormatError = null;
+    startOffsetError = activity.anchor_validations?.reason_invalid ? activity.anchor_validations.reason_invalid : null;
   }
 
   function updateAnchor(activity: Activity | null) {
@@ -129,12 +132,12 @@
   function onUpdateStartOffset(event: Event) {
     const { value } = getTarget(event);
 
-    startOffsetFormatError = null;
+    startOffsetError = activity.anchor_validations?.reason_invalid ? activity.anchor_validations.reason_invalid : null;
 
     try {
       updateStartOffset(convertDurationStringToInterval(`${value}`));
     } catch (error) {
-      startOffsetFormatError = error.message;
+      startOffsetError = error.message;
     }
   }
 </script>
@@ -214,11 +217,11 @@
         </label>
         <input
           class="st-input w-100"
-          class:error={!!startOffsetFormatError}
+          class:error={!!startOffsetError}
           name="start-offset"
           value={startOffsetString}
           on:change={onUpdateStartOffset}
-          use:tooltip={{ content: startOffsetFormatError, placement: 'top' }}
+          use:tooltip={{ content: startOffsetError, placement: 'top' }}
         />
       </Input>
     </Highlight>

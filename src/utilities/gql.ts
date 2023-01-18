@@ -912,6 +912,11 @@ const gql = {
     subscription SubActivityDirectives($planId: Int!) {
       activity_directives: activity_directive(where: { plan_id: { _eq: $planId } }, order_by: { start_offset: asc }) {
         anchor_id
+        anchor_validations {
+          activity_id
+          plan_id
+          reason_invalid
+        }
         anchored_to_start
         arguments
         created_at

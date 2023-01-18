@@ -27,6 +27,7 @@ export type ActivityTypeExpansionRules = {
 
 export type Activity = {
   anchor_id: number | null;
+  anchor_validations?: AnchorValidationStatus;
   anchored_to_start: boolean;
   arguments: ArgumentsMap;
   attributes: SpanAttributes | null;
@@ -54,6 +55,7 @@ export type ActivitiesMap = Record<ActivityUniqueId, Activity>;
 
 export type ActivityDirective = {
   anchor_id: number | null;
+  anchor_validations?: AnchorValidationStatus;
   anchored_to_start: boolean;
   arguments: ArgumentsMap;
   created_at: string;

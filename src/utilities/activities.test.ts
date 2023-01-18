@@ -1,7 +1,13 @@
 import { describe, expect, test } from 'vitest';
-import type { ActivityDirective } from '../types/activity';
+import type { Activity, ActivityDirective } from '../types/activity';
 import type { Plan } from '../types/plan';
-import { createActivitiesMap, decomposeActivityDirectiveId, getActivityDirectiveUniqueId } from './activities';
+import {
+  createActivitiesMap,
+  decomposeActivityDirectiveId,
+  getActivityDirectiveUniqueId,
+  isDirective,
+  isSpan,
+} from './activities';
 
 describe('getActivityDirectiveUniqueId', () => {
   test('Should create a valid activity directive ID', () => {
@@ -144,5 +150,19 @@ describe('createActivitiesMap', () => {
     expect(testActivitiesMap.directive_12_13.start_time_doy).toEqual('2023-001T08:10:00.000');
     expect(testActivitiesMap.directive_12_14.start_time_doy).toEqual('2023-001T19:00:00.000');
     expect(testActivitiesMap.directive_12_15.start_time_doy).toEqual('2023-001T17:10:00.000');
+  });
+});
+
+describe('isDirective', () => {
+  test('Should correctly determine if an activity is a directive', () => {
+    expect(isDirective({ uniqueId: 'directive_0_1' } as Activity)).toEqual(true);
+    expect(isDirective({ uniqueId: 'span_directive_0_1' } as Activity)).toEqual(false);
+  });
+});
+
+describe('isSpan', () => {
+  test('Should correctly determine if an activity is a span', () => {
+    expect(isSpan({ uniqueId: 'span_0_1' } as Activity)).toEqual(true);
+    expect(isSpan({ uniqueId: 'directive_0_1' } as Activity)).toEqual(false);
   });
 });

@@ -104,6 +104,7 @@ export function createActivitiesMap(
 
     activitiesMap[activityDirectiveUniqueId] = {
       anchor_id: activityDirective.anchor_id,
+      anchor_validations: activityDirective.anchor_validations,
       anchored_to_start: activityDirective.anchored_to_start,
       arguments: activityDirective.arguments,
       attributes: span?.attributes ?? null,
@@ -275,4 +276,12 @@ export function sortActivities(a: Activity, b: Activity): number {
   const aStartTime = getUnixEpochTime(a.start_time_doy);
   const bStartTime = getUnixEpochTime(b.start_time_doy);
   return compare(aStartTime, bStartTime);
+}
+
+export function isDirective(activity: Activity) {
+  return /^directive/.test(activity.uniqueId);
+}
+
+export function isSpan(activity: Activity) {
+  return /^span/.test(activity.uniqueId);
 }
