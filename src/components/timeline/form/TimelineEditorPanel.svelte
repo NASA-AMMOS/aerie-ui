@@ -1075,6 +1075,7 @@
     align-items: center;
     flex: 1;
     position: relative;
+    width: 100%;
   }
 
   :global(.editor-section-grid-labels > *) {
