@@ -155,14 +155,14 @@ describe('createActivitiesMap', () => {
 
 describe('isDirective', () => {
   test('Should correctly determine if an activity is a directive', () => {
-    expect(isDirective({ uniqueId: 'directive_0_1' } as Activity)).toEqual(true);
-    expect(isDirective({ uniqueId: 'span_directive_0_1' } as Activity)).toEqual(false);
+    expect(isDirective({ parent_id: null } as Activity)).toEqual(true);
+    expect(isDirective({ parent_id: 0 } as Activity)).toEqual(false);
   });
 });
 
 describe('isSpan', () => {
   test('Should correctly determine if an activity is a span', () => {
-    expect(isSpan({ uniqueId: 'span_0_1' } as Activity)).toEqual(true);
-    expect(isSpan({ uniqueId: 'directive_0_1' } as Activity)).toEqual(false);
+    expect(isSpan({ parent_id: 1 } as Activity)).toEqual(true);
+    expect(isSpan({ parent_id: null } as Activity)).toEqual(false);
   });
 });

@@ -26,7 +26,7 @@ test('convertDurationStringToInterval', () => {
   );
   expect(convertDurationStringToInterval('1d 5h 23m 0s 300ms')).toEqual('1 day 5 hours 23 minutes 300 milliseconds');
   expect(convertDurationStringToInterval('1d -5h')).toEqual('19 hours');
-  expect(convertDurationStringToInterval('- 5h 23m 0s 300ms')).toEqual('- 5 hours 23 minutes 300 milliseconds');
+  expect(convertDurationStringToInterval('- 5h 23m 0s 300ms')).toEqual('-5 hours -23 minutes -300 milliseconds');
 
   expect(() => convertDurationStringToUs('30f')).toThrowError('Must be of format: 1y 3d 2h 24m 35s 18ms 70us');
 });

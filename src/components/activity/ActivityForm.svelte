@@ -448,18 +448,20 @@
           />
         </Highlight>
 
-        <ActivityAnchorForm
-          {activity}
-          {activitiesMap}
-          {anchorId}
-          {highlightKeysMap}
-          {isAnchoredToStart}
-          planId={plan_id}
-          {startOffset}
-          on:updateAnchor={updateAnchor}
-          on:updateAnchorEdge={updateAnchorEdge}
-          on:updateStartOffset={updateStartOffset}
-        />
+        {#if !isChild}
+          <ActivityAnchorForm
+            {activity}
+            {activitiesMap}
+            {anchorId}
+            {highlightKeysMap}
+            {isAnchoredToStart}
+            planId={plan_id}
+            {startOffset}
+            on:updateAnchor={updateAnchor}
+            on:updateAnchorEdge={updateAnchorEdge}
+            on:updateStartOffset={updateStartOffset}
+          />
+        {/if}
 
         {#if duration !== null}
           <Highlight highlight={highlightKeysMap.end_time}>

@@ -63,8 +63,8 @@ function parseDurationString(durationString: string): ParsedDurationString | nev
   throw Error('Must be of format: 1y 3d 2h 24m 35s 18ms 70us');
 }
 
-function addUnit(value: number, unit: string) {
-  return `${value} ${value !== 1 ? `${unit}s` : unit}`;
+function addUnit(value: number, unit: string, isNegative: boolean) {
+  return `${isNegative ? '-' : ''}${value} ${value !== 1 ? `${unit}s` : unit}`;
 }
 
 /**
@@ -76,17 +76,15 @@ export function convertDurationStringToInterval(durationString: string): string 
 
   const { isNegative, years, days, hours, minutes, seconds, milliseconds, microseconds } = parsedDuration;
 
-  const negativeString = isNegative ? '-' : '';
-  const yearsString = years ? addUnit(years, 'year') : '';
-  const daysString = days ? addUnit(days, 'day') : '';
-  const hoursString = hours ? addUnit(hours, 'hour') : '';
-  const minutesString = minutes ? addUnit(minutes, 'minute') : '';
-  const secondsString = seconds ? addUnit(seconds, 'second') : '';
-  const millisecondsString = milliseconds ? addUnit(milliseconds, 'millisecond') : '';
-  const microsecondsString = microseconds ? addUnit(microseconds, 'microsecond') : '';
+  const yearsString = years ? addUnit(years, 'year', isNegative) : '';
+  const daysString = days ? addUnit(days, 'day', isNegative) : '';
+  const hoursString = hours ? addUnit(hours, 'hour', isNegative) : '';
+  const minutesString = minutes ? addUnit(minutes, 'minute', isNegative) : '';
+  const secondsString = seconds ? addUnit(seconds, 'second', isNegative) : '';
+  const millisecondsString = milliseconds ? addUnit(milliseconds, 'millisecond', isNegative) : '';
+  const microsecondsString = microseconds ? addUnit(microseconds, 'microsecond', isNegative) : '';
 
   const intervalString = [
-    negativeString,
     yearsString,
     daysString,
     hoursString,

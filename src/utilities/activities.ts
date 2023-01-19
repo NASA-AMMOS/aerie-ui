@@ -25,26 +25,36 @@ function determineActivityDirectiveStartTime(
   cachedStartTimes: ActivityStartTimesMap = {},
   traversalMap: TraversalMap = {},
 ): string | never {
-  const { id: planId, start_time: planStartTime } = plan;
+  const { id: planId, start_time: planStartTime, end_time_doy } = plan;
+
   // if the start time has already been determined in an earlier iteration
   if (cachedStartTimes[directiveUniqueId]) {
     return cachedStartTimes[directiveUniqueId];
   }
 
   const activityDirective = activitiesMap[directiveUniqueId];
+  const anchoredToStart = activityDirective.anchored_to_start;
   if (activityDirective.anchor_id != null) {
     const uniqueId = getActivityDirectiveUniqueId(planId, activityDirective.anchor_id);
+    const anchoredActivity = activitiesMap[uniqueId];
+
     if (traversalMap[uniqueId]) {
       throw Error(`Cycle detected with Activity: ${uniqueId}`);
     }
-
     const startTime = getDoyTimeFromDuration(
       `${new Date(
         getUnixEpochTime(
-          determineActivityDirectiveStartTime(uniqueId, plan, activitiesMap, cachedStartTimes, {
-            ...traversalMap,
-            [uniqueId]: true,
-          }),
+          getDoyTimeFromDuration(
+            `${new Date(
+              getUnixEpochTime(
+                determineActivityDirectiveStartTime(uniqueId, plan, activitiesMap, cachedStartTimes, {
+                  ...traversalMap,
+                  [uniqueId]: true,
+                }),
+              ),
+            )}`,
+            anchoredToStart ? '0' : anchoredActivity.duration ?? '0',
+          ),
         ),
       )}`,
       activityDirective.start_offset,
@@ -53,7 +63,10 @@ function determineActivityDirectiveStartTime(
     return startTime;
   }
 
-  const startTimeFromPlan = getDoyTimeFromDuration(planStartTime, activityDirective.start_offset);
+  const startTimeFromPlan = getDoyTimeFromDuration(
+    anchoredToStart ? planStartTime : `${new Date(getUnixEpochTime(end_time_doy))}`,
+    activityDirective.start_offset,
+  );
   cachedStartTimes[directiveUniqueId] = startTimeFromPlan;
   return startTimeFromPlan;
 }
@@ -66,7 +79,7 @@ export function createActivitiesMap(
   activity_directives: ActivityDirective[],
   spans: Span[],
 ): ActivitiesMap {
-  const { id: plan_id, start_time: plan_start_time } = plan;
+  const { id: plan_id, start_time: plan_start_time, end_time_doy } = plan;
   const activitiesMap: ActivitiesMap = {};
   const activityDirectiveUniqueIdToSpan: Record<ActivityUniqueId, Span> = {};
   const childSpans: Span[] = [];
@@ -121,7 +134,10 @@ export function createActivitiesMap(
       simulated_activity_id: span?.id ?? null,
       source_scheduling_goal_id: activityDirective.source_scheduling_goal_id,
       start_offset: activityDirective.start_offset,
-      start_time_doy: getDoyTimeFromDuration(plan_start_time, activityDirective.start_offset),
+      start_time_doy: getDoyTimeFromDuration(
+        activityDirective.anchored_to_start ? plan_start_time : `${new Date(getUnixEpochTime(end_time_doy))}`,
+        activityDirective.start_offset,
+      ),
       tags: activityDirective.tags,
       type: activityDirective.type,
       unfinished: span?.duration === null,
@@ -279,9 +295,9 @@ export function sortActivities(a: Activity, b: Activity): number {
 }
 
 export function isDirective(activity: Activity) {
-  return /^directive/.test(activity.uniqueId);
+  return activity.parent_id === null;
 }
 
 export function isSpan(activity: Activity) {
-  return /^span/.test(activity.uniqueId);
+  return !isDirective(activity);
 }

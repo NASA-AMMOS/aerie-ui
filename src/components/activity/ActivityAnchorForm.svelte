@@ -39,14 +39,15 @@
   $: startOffsetError = validateStartOffset(startOffsetString, activity);
 
   $: if (startOffset) {
-    const offsetString = convertUsToDurationString(getDurationInMs(activity.start_offset) * 1000, true);
+    const offsetString = convertUsToDurationString(getDurationInMs(startOffset) * 1000, true);
     // remove `y` if 0 to keep the string shorter
     startOffsetString = offsetString.replace(/0y\s?/, '');
   }
   // only set this when the viewed activity is changed
   $: if (activity.id !== previousActivityId) {
     previousActivityId = activity.id;
-    isRelativeOffset = !!activity.anchor_id || (!activity.anchor_id && !activity.anchored_to_start);
+    isRelativeOffset =
+      !!activity.anchor_id || (!activity.anchor_id && !activity.anchored_to_start) || !!startOffsetError;
   }
 
   function formatActivityAnchorText(activity: Activity) {
@@ -61,7 +62,6 @@
     updateAnchor(null);
     updateAnchorEdge(true);
     anchoredActivityError = null;
-    startOffsetError = activity.anchor_validations?.reason_invalid ? activity.anchor_validations.reason_invalid : null;
   }
 
   function validateStartOffset(offsetString: string, activity: Activity) {
