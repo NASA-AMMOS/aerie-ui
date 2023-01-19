@@ -26,6 +26,7 @@
   let anchoredActivity: Activity | null = null;
   let anchorInputString: string = '';
   let anchoredActivityError: string | null = null;
+  let previousActivityId: ActivityId;
   let isRelativeOffset: boolean = false;
   let startOffsetString: string = '';
   let startOffsetError: string | null = null;
@@ -35,18 +36,17 @@
   $: anchorableActivityDirectives = Object.values(activitiesMap)
     .filter(directive => isDirective(directive) && directive.id !== activity.id)
     .map(formatActivityAnchorText);
+  $: startOffsetError = validateStartOffset(startOffsetString, activity);
 
   $: if (startOffset) {
     const offsetString = convertUsToDurationString(getDurationInMs(activity.start_offset) * 1000, true);
     // remove `y` if 0 to keep the string shorter
     startOffsetString = offsetString.replace(/0y\s?/, '');
   }
-  $: if (activity.anchor_validations?.reason_invalid) {
-    startOffsetError = activity.anchor_validations.reason_invalid;
-  }
   // only set this when the viewed activity is changed
-  $: if (activity.id) {
-    isRelativeOffset = !!activity.anchor_id;
+  $: if (activity.id !== previousActivityId) {
+    previousActivityId = activity.id;
+    isRelativeOffset = !!activity.anchor_id || (!activity.anchor_id && !activity.anchored_to_start);
   }
 
   function formatActivityAnchorText(activity: Activity) {
@@ -60,9 +60,22 @@
   function resetForm() {
     updateAnchor(null);
     updateAnchorEdge(true);
-    updateStartOffset(convertDurationStringToInterval('0'));
     anchoredActivityError = null;
     startOffsetError = activity.anchor_validations?.reason_invalid ? activity.anchor_validations.reason_invalid : null;
+  }
+
+  function validateStartOffset(offsetString: string, activity: Activity) {
+    let validationError = activity.anchor_validations?.reason_invalid
+      ? activity.anchor_validations.reason_invalid
+      : null;
+
+    try {
+      convertDurationStringToInterval(`${offsetString}`);
+    } catch (error) {
+      validationError = error.message;
+    }
+
+    return validationError;
   }
 
   function updateAnchor(activity: Activity | null) {
@@ -219,7 +232,7 @@
           class="st-input w-100"
           class:error={!!startOffsetError}
           name="start-offset"
-          value={startOffsetString}
+          bind:value={startOffsetString}
           on:change={onUpdateStartOffset}
           use:tooltip={{ content: startOffsetError, placement: 'top' }}
         />
