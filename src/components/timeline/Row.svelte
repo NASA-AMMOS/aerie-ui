@@ -241,7 +241,6 @@
             {mousemove}
             {mouseout}
             {mouseup}
-            {overlaySvg}
             {selectedActivityId}
             {viewTimeRange}
             {xScaleView}
