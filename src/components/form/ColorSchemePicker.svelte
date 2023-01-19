@@ -81,14 +81,12 @@
 </button>
 
 <style>
-  /* TODO repeated code from LayerSettings and at least one other place */
   .header {
     align-items: center;
     border-bottom: 1px solid var(--st-gray-20);
     color: var(--st-gray-40);
     cursor: auto;
-    display: grid;
-    grid-template-columns: auto auto;
+    display: flex;
     justify-content: space-between;
     padding: 8px;
   }

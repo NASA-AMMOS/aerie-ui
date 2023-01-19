@@ -1106,13 +1106,6 @@
     background: var(--st-gray-10);
   }
 
-  /* .timeline-row:hover .drag-icon,
-  .timeline-layer:hover .drag-icon,
-  .timeline-y-axis:hover .drag-icon,
-  :global(.timeline-element-dragging) .drag-icon {
-    display: flex;
-  } */
-
   .editor-section-draggable .timeline-element:hover .drag-icon,
   :global(.timeline-element-dragging) .drag-icon {
     display: flex;
