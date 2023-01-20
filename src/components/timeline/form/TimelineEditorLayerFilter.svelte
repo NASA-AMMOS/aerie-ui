@@ -1,8 +1,10 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import SearchIcon from '@nasa-jpl/stellar/icons/search.svg?component';
   import { createEventDispatcher } from 'svelte';
   import type { Layer } from '../../../types/timeline';
+  import Input from '../../form/Input.svelte';
   import Menu from '../../menus/Menu.svelte';
 
   export let layer: Layer;
@@ -21,7 +23,6 @@
   $: if (layer) {
     selectedValuesMap = listToMap(values);
     if (layer.chartType === 'activity') {
-      /* TODO pass this in somehow, don't need the whole layer */
       menuTitle = 'Activty Dictionary';
     } else if (layer.chartType === 'line') {
       menuTitle = 'Resource Types';
@@ -70,21 +71,24 @@
 <div class="timeline-editor-layer-filter" style="position: relative">
   <!-- TODO work out how to have focus also properly open the menu
   without stomping on click -->
-  <input
-    bind:this={input}
-    bind:value={filterString}
-    on:click|stopPropagation={() => {
-      if (!filterMenu.shown) {
-        filterMenu.show();
-        input.focus();
-      }
-    }}
-    autocomplete="off"
-    class="st-input w-100"
-    name="filter"
-    placeholder="Search"
-  />
-  <Menu hideAfterClick={false} bind:this={filterMenu} placement="bottom-end" on:hide={() => (filterString = '')}>
+  <Input>
+    <input
+      bind:this={input}
+      bind:value={filterString}
+      on:click|stopPropagation={() => {
+        if (!filterMenu.shown) {
+          filterMenu.show();
+          input.focus();
+        }
+      }}
+      autocomplete="off"
+      class="st-input w-100"
+      name="filter"
+      placeholder={layer.chartType === 'activity' ? 'Search activities' : 'Search resources'}
+    />
+    <div class="filter-search-icon" slot="left"><SearchIcon /></div>
+  </Input>
+  <Menu hideAfterClick={false} bind:this={filterMenu} placement="bottom-start" on:hide={() => (filterString = '')}>
     <div class="header">
       <div class="title st-typography-small-caps">{menuTitle}</div>
     </div>
@@ -137,9 +141,14 @@
     color: var(--st-gray-40);
   }
 
-  .timeline-editor-layer-filter input {
-    position: relative;
-    z-index: 1;
+  .timeline-editor-layer-filter {
+    display: flex;
+  }
+
+  .filter-search-icon {
+    align-items: center;
+    color: var(--st-gray-50);
+    display: flex;
   }
 
   .body {
