@@ -145,6 +145,10 @@
     display: flex;
   }
 
+  .timeline-editor-layer-filter :global(.input) {
+    z-index: 1;
+  }
+
   .filter-search-icon {
     align-items: center;
     color: var(--st-gray-50);
