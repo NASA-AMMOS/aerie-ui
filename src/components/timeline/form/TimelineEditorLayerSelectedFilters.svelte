@@ -24,7 +24,7 @@
 <div class="st-typography-medium timeline-editor-layer-selected-filters">
   {#if filters.length === 0}
     <div class="filter-items-empty">
-      All {chartType === 'activity' ? 'activities' : 'resources'}
+      No {chartType === 'activity' ? 'activities' : 'resources'} selected
     </div>
   {:else}
     <details {open}>
