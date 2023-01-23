@@ -21,6 +21,7 @@
 
   const dispatch = createEventDispatcher();
   const anchorTextDelimiter = ' - ';
+  const defaultAnchorString = 'To Plan';
 
   let anchorableActivityDirectives: string[] = [];
   let anchoredActivity: Activity | null = null;
@@ -32,7 +33,7 @@
   let startOffsetError: string | null = null;
 
   $: anchoredActivity = anchorId !== null ? activitiesMap[getActivityDirectiveUniqueId(planId, anchorId)] : null;
-  $: anchorInputString = anchoredActivity ? formatActivityAnchorText(anchoredActivity) : '';
+  $: anchorInputString = anchoredActivity ? formatActivityAnchorText(anchoredActivity) : defaultAnchorString;
   $: anchorableActivityDirectives = Object.values(activitiesMap)
     .filter(directive => isDirective(directive) && directive.id !== activity.id)
     .map(formatActivityAnchorText);
@@ -58,12 +59,6 @@
     return anchorText.split(anchorTextDelimiter)[0];
   }
 
-  function resetForm() {
-    updateAnchor(null);
-    updateAnchorEdge(true);
-    anchoredActivityError = null;
-  }
-
   function validateStartOffset(offsetString: string, activity: Activity) {
     let validationError = activity.anchor_validations?.reason_invalid
       ? activity.anchor_validations.reason_invalid
@@ -82,7 +77,7 @@
     anchoredActivity = activity;
     if (activity === null) {
       dispatch('updateAnchor', null);
-      anchorInputString = '';
+      anchorInputString = defaultAnchorString;
     } else {
       dispatch('updateAnchor', anchoredActivity.id);
       anchorInputString = formatActivityAnchorText(anchoredActivity);
@@ -96,16 +91,6 @@
 
   function updateStartOffset(offset: string) {
     dispatch('updateStartOffset', offset);
-  }
-
-  function onIsRelativeChange(event: Event) {
-    const target = event.target as HTMLInputElement;
-
-    isRelativeOffset = target.checked;
-
-    if (!isRelativeOffset) {
-      resetForm();
-    }
   }
 
   function onUpdateAnchor() {
@@ -155,97 +140,91 @@
   }
 </script>
 
-<Input layout="inline">
-  <label use:tooltip={{ content: 'Is Relative To Another Activity Directive', placement: 'top' }} for="isRelativeOffset"
-    >Relative start time</label
-  >
-  <div>
-    <input
-      class="st-input"
-      name="isRelativeOffset"
-      type="checkbox"
-      checked={isRelativeOffset}
-      on:change={onIsRelativeChange}
-    />
-  </div>
-</Input>
-{#if isRelativeOffset}
-  <div class="anchor-container">
-    <Highlight highlight={highlightKeysMap.anchor_id}>
-      <Input layout="inline">
-        <label use:tooltip={{ content: 'Activity to anchor to', placement: 'top' }} for="anchor_id">Relative to</label>
-        <Input>
-          <div class="search-icon" slot="left"><SearchIcon /></div>
+<fieldset class="anchor-container">
+  <details bind:open={isRelativeOffset}>
+    <summary use:tooltip={{ content: 'Is Relative To Another Activity Directive', placement: 'top' }}>Anchor</summary>
+    <div class="anchor-form">
+      <Highlight highlight={highlightKeysMap.anchor_id}>
+        <Input layout="inline">
+          <label use:tooltip={{ content: 'Activity to anchor to', placement: 'top' }} for="anchor_id">Relative to</label
+          >
+          <Input>
+            <div class="search-icon" slot="left"><SearchIcon /></div>
+            <input
+              autocomplete="off"
+              class="st-input w-100"
+              class:error={!!anchoredActivityError}
+              list="anchors"
+              name="anchor_id"
+              bind:value={anchorInputString}
+              on:change={onUpdateAnchor}
+              use:tooltip={{ content: anchoredActivityError, placement: 'top' }}
+            />
+            <datalist id="anchors">
+              <option value="To Plan" />
+              {#each anchorableActivityDirectives as anchorableActivity}
+                <option value={anchorableActivity} />
+              {/each}
+            </datalist>
+          </Input>
+        </Input>
+      </Highlight>
+      <Highlight highlight={highlightKeysMap.anchored_to_start}>
+        <Input layout="inline">
+          <label
+            use:tooltip={{ content: 'Where to anchor to activity directive', placement: 'top' }}
+            for="isAnchoredToStart"
+          >
+            Anchor
+          </label>
+          <div class="anchor-boundaries">
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <div
+              class:st-button={isAnchoredToStart}
+              class="secondary anchor-boundary"
+              class:selected={isAnchoredToStart}
+              on:click={onAnchorToStart}
+            >
+              Start
+            </div>
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <div
+              class:st-button={!isAnchoredToStart}
+              class="secondary anchor-boundary"
+              class:selected={!isAnchoredToStart}
+              on:click={onAnchorToEnd}
+            >
+              End
+            </div>
+          </div>
+        </Input>
+      </Highlight>
+      <Highlight highlight={highlightKeysMap.start_offset}>
+        <Input layout="inline">
+          <label use:tooltip={{ content: 'The offset duration for the anchor', placement: 'top' }} for="start-offset">
+            Offset
+          </label>
           <input
             class="st-input w-100"
-            class:error={!!anchoredActivityError}
-            list="anchors"
-            name="anchor_id"
-            bind:value={anchorInputString}
-            on:change={onUpdateAnchor}
-            use:tooltip={{ content: anchoredActivityError, placement: 'top' }}
+            class:error={!!startOffsetError}
+            name="start-offset"
+            bind:value={startOffsetString}
+            on:change={onUpdateStartOffset}
+            use:tooltip={{ content: startOffsetError, placement: 'top' }}
           />
-          <datalist id="anchors">
-            {#each anchorableActivityDirectives as anchorableActivity}
-              <option value={anchorableActivity} />
-            {/each}
-          </datalist>
         </Input>
-      </Input>
-    </Highlight>
-    <Highlight highlight={highlightKeysMap.anchored_to_start}>
-      <Input layout="inline">
-        <label
-          use:tooltip={{ content: 'Where to anchor to activity directive', placement: 'top' }}
-          for="isAnchoredToStart"
-        >
-          Anchor
-        </label>
-        <div class="anchor-boundaries">
-          <!-- svelte-ignore a11y-click-events-have-key-events -->
-          <div
-            class:st-button={isAnchoredToStart}
-            class="secondary anchor-boundary"
-            class:selected={isAnchoredToStart}
-            on:click={onAnchorToStart}
-          >
-            Start
-          </div>
-          <!-- svelte-ignore a11y-click-events-have-key-events -->
-          <div
-            class:st-button={!isAnchoredToStart}
-            class="secondary anchor-boundary"
-            class:selected={!isAnchoredToStart}
-            on:click={onAnchorToEnd}
-          >
-            End
-          </div>
-        </div>
-      </Input>
-    </Highlight>
-    <Highlight highlight={highlightKeysMap.start_offset}>
-      <Input layout="inline">
-        <label use:tooltip={{ content: 'The offset duration for the anchor', placement: 'top' }} for="start-offset">
-          Offset
-        </label>
-        <input
-          class="st-input w-100"
-          class:error={!!startOffsetError}
-          name="start-offset"
-          bind:value={startOffsetString}
-          on:change={onUpdateStartOffset}
-          use:tooltip={{ content: startOffsetError, placement: 'top' }}
-        />
-      </Input>
-    </Highlight>
-  </div>
-{/if}
+      </Highlight>
+    </div>
+  </details>
+</fieldset>
 
 <style>
   .anchor-container {
-    border: 1px solid var(--st-gray-15);
-    border-radius: 4px;
-    padding: 0.5rem;
+    padding: 0;
+  }
+
+  .anchor-form {
+    margin-left: 1rem;
   }
 
   .anchor-boundaries {

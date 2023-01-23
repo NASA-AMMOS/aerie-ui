@@ -438,7 +438,7 @@
 
         <Highlight highlight={highlightKeysMap.start_time_doy}>
           <DatePickerField
-            disabled={isChild || !editable}
+            disabled={isChild || !editable || !!activity.anchor_id}
             field={startTimeDoyField}
             label="Start Time - YYYY-DDDThh:mm:ss"
             layout="inline"

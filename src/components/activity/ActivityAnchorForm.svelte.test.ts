@@ -121,7 +121,7 @@ describe('Activity Decomposition component', () => {
   it('Should not render the form if no anchor is initially present', () => {
     const activity: Activity = activitiesMap['directive_12_12'];
 
-    const { queryByRole } = render(ActivityAnchorForm, {
+    const { getAllByRole } = render(ActivityAnchorForm, {
       activitiesMap,
       activity,
       anchorId: activity.anchor_id,
@@ -130,13 +130,13 @@ describe('Activity Decomposition component', () => {
       startOffset: activity.start_offset,
     });
 
-    expect(queryByRole('textbox')).toBeNull();
+    expect(getAllByRole('group').at(1).hasAttribute('open')).toEqual(false);
   });
 
   it('Should render the form when an anchor is initially present', () => {
     const activity: Activity = activitiesMap['directive_12_13'];
 
-    const { getByRole } = render(ActivityAnchorForm, {
+    const { getAllByRole } = render(ActivityAnchorForm, {
       activitiesMap,
       activity,
       anchorId: activity.anchor_id,
@@ -144,7 +144,7 @@ describe('Activity Decomposition component', () => {
       planId: activity.plan_id,
       startOffset: activity.start_offset,
     });
-    expect(getByRole('textbox')).not.toBeNull();
-    expect(getByRole('combobox')).not.toBeNull();
+
+    expect(getAllByRole('group').at(1).hasAttribute('open')).toEqual(true);
   });
 });
