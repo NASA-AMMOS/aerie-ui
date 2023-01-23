@@ -180,7 +180,7 @@
 
   function dragActivity(offsetX: number): void {
     // Only update the x position if the timeline is unlocked
-    if (!timelineLocked && dragPoint) {
+    if (!timelineLocked && dragPoint && $activitiesMap[dragPoint.uniqueId]) {
       const x = offsetX - dragOffsetX;
       dragCurrentX = xScaleView.invert(x).getTime();
       const start_time_doy = getDoyTime(new Date(dragCurrentX));
@@ -193,7 +193,7 @@
 
   function dragActivityEnd(): void {
     if (dragPoint && dragStartX !== null && dragCurrentX !== null) {
-      if (dragStartX !== dragCurrentX) {
+      if (dragStartX !== dragCurrentX && $activitiesMap[dragPoint.uniqueId]) {
         const start_time_doy = getDoyTime(new Date(dragCurrentX));
         const dragActivity = $activitiesMap[dragPoint.uniqueId];
         const { activityId, planId } = decomposeActivityDirectiveId(dragActivity.uniqueId);
