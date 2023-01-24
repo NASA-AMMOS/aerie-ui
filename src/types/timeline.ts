@@ -7,7 +7,6 @@ export interface ActivityLayer extends Layer {
 }
 
 export type ActivityLayerFilter = {
-  type?: string;
   types: string[];
 };
 
@@ -111,7 +110,6 @@ export type QuadtreeRect = {
 };
 
 export type ResourceLayerFilter = {
-  name?: string;
   names: string[];
 };
 
