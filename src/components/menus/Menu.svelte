@@ -30,8 +30,6 @@
     }
   }
 
-  const dispatch = createEventDispatcher();
-
   export function hide(): void {
     if (shown) {
       dispatch('hide');
@@ -52,6 +50,8 @@
       show();
     }
   }
+
+  const dispatch = createEventDispatcher();
 
   const [popperRef, popperContent] = createPopperActions({
     placement,
