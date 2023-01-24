@@ -1132,7 +1132,6 @@
   .timeline-layer {
     align-items: flex-end;
     display: flex;
-    /* gap: 8px; */
   }
 
   .guide :global(.date-picker) {
