@@ -432,7 +432,6 @@ export function createTimelineXRangeLayer(timelines: Timeline[], yAxes: Axis[]):
     colorScheme: 'schemeAccent',
     filter: {
       resource: {
-        name: '',
         names: [],
       },
     },
