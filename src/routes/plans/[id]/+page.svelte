@@ -4,7 +4,6 @@
   import ActivityIcon from '@nasa-jpl/stellar/icons/activity.svg?component';
   import CalendarIcon from '@nasa-jpl/stellar/icons/calendar.svg?component';
   import BracesAsteriskIcon from 'bootstrap-icons/icons/braces-asterisk.svg?component';
-  import ColumnsIcon from 'bootstrap-icons/icons/columns.svg?component';
   import GearWideConnectedIcon from 'bootstrap-icons/icons/gear-wide-connected.svg?component';
   import { onDestroy } from 'svelte';
   import ActivityFormPanel from '../../../components/activity/ActivityFormPanel.svelte';
@@ -62,7 +61,7 @@
     simulationStatus,
     spans,
   } from '../../../stores/simulation';
-  import { view, viewSetLayout, viewUpdateLayout } from '../../../stores/views';
+  import { initializeView, view, viewSetLayout, viewUpdateLayout } from '../../../stores/views';
   import type { GridChangeSizesEvent } from '../../../types/grid';
   import { createActivitiesMap } from '../../../utilities/activities';
   import effects from '../../../utilities/effects';
@@ -101,12 +100,12 @@
     $viewTimeRange = $maxTimeRange;
     activityTypes.updateValue(() => data.initialActivityTypes);
 
-    // Asyncronously fetch resource types
+    // Asynchronously fetch resource types
     effects.getResourceTypes($plan.model_id).then(initialResourceTypes => ($resourceTypes = initialResourceTypes));
   }
 
   $: if (data.initialView) {
-    $view = { ...data.initialView };
+    initializeView({ ...data.initialView });
   }
 
   $: if ($plan) {
@@ -217,10 +216,7 @@
       >
         <GearWideConnectedIcon />
       </NavButton>
-      <NavButton title="View">
-        <ColumnsIcon />
-        <ViewMenu slot="menu" />
-      </NavButton>
+      <ViewMenu />
     </svelte:fragment>
   </Nav>
 

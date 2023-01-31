@@ -2,7 +2,7 @@
 
 <script lang="ts">
   import type { ICellRendererParams } from 'ag-grid-community';
-  import { view, views } from '../../stores/views';
+  import { initializeView, view, views } from '../../stores/views';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { View } from '../../types/view';
   import effects from '../../utilities/effects';
@@ -83,7 +83,7 @@
     if (success) {
       if ($view.id === viewId) {
         const nextView = await effects.getView(null);
-        $view = { ...nextView };
+        initializeView({ ...nextView });
         setQueryParam('viewId', `${nextView.id}`);
       }
     }
@@ -99,7 +99,7 @@
     const newView = await effects.getView(query);
 
     if (view) {
-      $view = { ...newView };
+      initializeView({ ...newView });
       setQueryParam('viewId', `${newView.id}`);
     } else {
       console.log(`No view found for ID: ${viewId}`);

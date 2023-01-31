@@ -16,6 +16,7 @@ export type ViewIFrame = {
 
 export type ViewInsertInput = {
   definition: ViewDefinition;
+  // model_id: number;
   name: string;
   owner: string;
 };

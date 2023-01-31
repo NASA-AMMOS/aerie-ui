@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash-es';
 import { derived, get, writable, type Writable } from 'svelte/store';
 import type { Grid } from '../types/grid';
 import type { View, ViewActivityTable } from '../types/view';
@@ -15,6 +16,8 @@ export const views = gqlSubscribable<View[]>(gql.SUB_VIEWS, {}, []);
 
 export const view: Writable<View | null> = writable(null);
 
+export const originalView: Writable<View | null> = writable(null);
+
 export const selectedLayerId: Writable<number | null> = writable(null);
 
 export const selectedRowId: Writable<number | null> = writable(null);
@@ -26,6 +29,10 @@ export const selectedYAxisId: Writable<number | null> = writable(null);
 export const timelineLockStatus: Writable<TimelineLockStatus> = writable(TimelineLockStatus.Locked);
 
 /* Derived. */
+
+export const viewIsModified = derived([view, originalView], ([$view, $originalView]) => {
+  return !isEqual($view, $originalView);
+});
 
 export const viewDefinitionText = derived(view, $view => ($view ? JSON.stringify($view.definition, null, 2) : ''));
 
@@ -75,6 +82,35 @@ export const selectedLayer = derived([selectedRow, selectedLayerId], ([$selected
 
 /* Helper Functions. */
 
+export function applyViewUpdate(updatedView: Partial<View>) {
+  view.update(currentView => ({
+    ...currentView,
+    ...(updatedView.definition ? { definition: updatedView.definition } : {}),
+    ...(updatedView.name ? { name: updatedView.name } : {}),
+    ...(updatedView.updated_at ? { updated_at: updatedView.updated_at } : {}),
+  }));
+
+  originalView.update(view => ({
+    ...view,
+    ...(updatedView.definition ? { definition: updatedView.definition } : {}),
+    ...(updatedView.name ? { name: updatedView.name } : {}),
+    ...(updatedView.updated_at ? { updated_at: updatedView.updated_at } : {}),
+  }));
+}
+
+export function initializeView(newView: View) {
+  view.set(newView);
+  originalView.set(get(view));
+}
+
+export function resetOriginalView() {
+  originalView.set(get(view));
+}
+
+export function resetView() {
+  view.set(get(originalView));
+}
+
 export function viewSetLayout(title: string) {
   let layout: Grid;
 
@@ -90,7 +126,9 @@ export function viewSetLayout(title: string) {
     layout = activitiesGrid;
   }
 
-  view.update(currentView => ({
+  const currentView = get(view);
+
+  initializeView({
     ...currentView,
     definition: {
       ...currentView.definition,
@@ -99,7 +137,7 @@ export function viewSetLayout(title: string) {
         layout,
       },
     },
-  }));
+  });
 }
 
 export function viewSetSelectedRow(rowId: number | null): void {
