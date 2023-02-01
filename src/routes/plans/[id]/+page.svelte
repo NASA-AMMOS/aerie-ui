@@ -182,8 +182,10 @@
     const { detail } = event;
     const { owner, definition } = detail;
     if (definition) {
-      await effects.createView(owner, definition);
-      resetOriginalView();
+      const success = await effects.createView(owner, definition);
+      if (success) {
+        resetOriginalView();
+      }
     }
   }
 
@@ -191,16 +193,20 @@
     const { detail } = event;
     const { owner, definition } = detail;
     if (definition) {
-      await effects.editView(owner, definition);
-      resetOriginalView();
+      const success = await effects.editView(owner, definition);
+      if (success) {
+        resetOriginalView();
+      }
     }
   }
 
   async function onSaveView(event: CustomEvent<ViewSaveEvent>) {
     const { detail } = event;
     const { definition, id, name } = detail;
-    await effects.updateView(id, { definition, name });
-    resetOriginalView();
+    const success = await effects.updateView(id, { definition, name });
+    if (success) {
+      resetOriginalView();
+    }
   }
 
   function onResetView() {

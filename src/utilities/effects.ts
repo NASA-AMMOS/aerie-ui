@@ -563,7 +563,7 @@ const effects = {
     }
   },
 
-  async createView(owner: string, definition: ViewDefinition): Promise<void> {
+  async createView(owner: string, definition: ViewDefinition): Promise<boolean> {
     try {
       const { confirm, value = null } = await showCreateViewModal();
 
@@ -576,10 +576,12 @@ const effects = {
         view.update(() => newView);
         setQueryParam('viewId', `${newView.id}`);
         showSuccessToast('View Created Successfully');
+        return true;
       }
     } catch (e) {
       catchError('View Create Failed', e);
       showFailureToast('View Create Failed');
+      return false;
     }
   },
 
@@ -913,7 +915,7 @@ const effects = {
     }
   },
 
-  async editView(owner: string, definition: ViewDefinition): Promise<void> {
+  async editView(owner: string, definition: ViewDefinition): Promise<boolean> {
     try {
       const { confirm, value = null } = await showEditViewModal();
       if (confirm && value) {
@@ -925,12 +927,13 @@ const effects = {
         } = data;
 
         applyViewUpdate({ name: updatedName, updated_at });
-
         showSuccessToast('View Edited Successfully');
+        return true;
       }
     } catch (e) {
       catchError('View Edit Failed', e);
       showFailureToast('View Edit Failed');
+      return false;
     }
   },
 
