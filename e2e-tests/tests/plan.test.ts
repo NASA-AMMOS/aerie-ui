@@ -42,7 +42,7 @@ test.afterAll(async () => {
   await context.close();
 });
 
-test.describe.serial('Plan', () => {
+test.describe.serial.only('Plan', () => {
   test('Error page should not be visible, and the plan title should be visible in the top navigation bar', async () => {
     await expect(plan.appError).not.toBeVisible();
     await expect(plan.planTitle).toBeVisible();
@@ -118,6 +118,7 @@ test.describe.serial('Plan', () => {
     await expect(plan.navButtonViewSavedViewsMenuButton).toBeVisible();
     await plan.navButtonViewSavedViewsMenuButton.click();
     await expect(page.locator('.modal .modal-header:has-text("Saved Views")')).toBeVisible();
+    await page.locator('.modal .st-button:has-text("Close")').click();
   });
 
   test(`Clicking on 'Save As' in the view menu should pop up a CreateViewModal`, async () => {
@@ -127,5 +128,6 @@ test.describe.serial('Plan', () => {
     await expect(plan.navButtonViewSaveAsMenuButton).toBeVisible();
     await plan.navButtonViewSaveAsMenuButton.click();
     await expect(page.locator('.modal .modal-header:has-text("Save new view")')).toBeVisible();
+    await page.locator('.modal .st-button:has-text("Cancel")').click();
   });
 });
