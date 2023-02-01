@@ -215,9 +215,7 @@ export class Plan {
     this.navButtonSimulation = page.locator(`.nav-button:has-text("Simulation")`);
     this.navButtonView = page.locator(`.nav-button:has-text("View")`);
     this.navButtonViewMenu = page.locator(`.view-menu > .menu`);
-    this.navButtonViewSaveAsMenuButton = page.locator(
-      `.view-menu > .menu .menu-item:has-text("Save as")`,
-    );
+    this.navButtonViewSaveAsMenuButton = page.locator(`.view-menu > .menu .menu-item:has-text("Save as")`);
     this.navButtonViewSavedViewsMenuButton = page.locator(
       `.view-menu > .menu .menu-item:has-text("Browse saved views")`,
     );
