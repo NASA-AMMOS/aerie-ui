@@ -33,42 +33,46 @@ function determineActivityDirectiveStartTime(
   }
 
   const activityDirective = activitiesMap[directiveUniqueId];
-  const anchoredToStart = activityDirective.anchored_to_start;
-  if (activityDirective.anchor_id != null) {
-    const uniqueId = getActivityDirectiveUniqueId(planId, activityDirective.anchor_id);
-    const anchoredActivity = activitiesMap[uniqueId];
+  if (activityDirective) {
+    const anchoredToStart = activityDirective?.anchored_to_start ?? true;
+    if (activityDirective.anchor_id != null) {
+      const uniqueId = getActivityDirectiveUniqueId(planId, activityDirective.anchor_id);
+      const anchoredActivity = activitiesMap[uniqueId];
 
-    if (traversalMap[uniqueId]) {
-      throw Error(`Cycle detected with Activity: ${uniqueId}`);
-    }
-    const startTime = getDoyTimeFromDuration(
-      `${new Date(
-        getUnixEpochTime(
-          getDoyTimeFromDuration(
-            `${new Date(
-              getUnixEpochTime(
-                determineActivityDirectiveStartTime(uniqueId, plan, activitiesMap, cachedStartTimes, {
-                  ...traversalMap,
-                  [uniqueId]: true,
-                }),
-              ),
-            )}`,
-            anchoredToStart ? '0' : anchoredActivity.duration ?? '0',
+      if (traversalMap[uniqueId]) {
+        throw Error(`Cycle detected with Activity: ${uniqueId}`);
+      }
+      const startTime = getDoyTimeFromDuration(
+        `${new Date(
+          getUnixEpochTime(
+            getDoyTimeFromDuration(
+              `${new Date(
+                getUnixEpochTime(
+                  determineActivityDirectiveStartTime(uniqueId, plan, activitiesMap, cachedStartTimes, {
+                    ...traversalMap,
+                    [uniqueId]: true,
+                  }),
+                ),
+              )}`,
+              anchoredToStart ? '0' : anchoredActivity.duration ?? '0',
+            ),
           ),
-        ),
-      )}`,
+        )}`,
+        activityDirective.start_offset,
+      );
+      cachedStartTimes[uniqueId] = startTime;
+      return startTime;
+    }
+
+    const startTimeFromPlan = getDoyTimeFromDuration(
+      anchoredToStart ? planStartTime : `${new Date(getUnixEpochTime(end_time_doy))}`,
       activityDirective.start_offset,
     );
-    cachedStartTimes[uniqueId] = startTime;
-    return startTime;
+    cachedStartTimes[directiveUniqueId] = startTimeFromPlan;
+    return startTimeFromPlan;
   }
 
-  const startTimeFromPlan = getDoyTimeFromDuration(
-    anchoredToStart ? planStartTime : `${new Date(getUnixEpochTime(end_time_doy))}`,
-    activityDirective.start_offset,
-  );
-  cachedStartTimes[directiveUniqueId] = startTimeFromPlan;
-  return startTimeFromPlan;
+  return planStartTime;
 }
 
 /**

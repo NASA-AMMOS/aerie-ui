@@ -14,6 +14,7 @@
   export let activity: Activity;
   export let activitiesMap: ActivitiesMap = {};
   export let anchorId: ActivityId | null = null;
+  export let disabled: boolean = false;
   export let highlightKeysMap: Record<string, boolean> = {};
   export let isAnchoredToStart: boolean = true;
   export let planId: number;
@@ -120,11 +121,15 @@
   }
 
   function onAnchorToStart() {
-    updateAnchorEdge(true);
+    if (!disabled) {
+      updateAnchorEdge(true);
+    }
   }
 
   function onAnchorToEnd() {
-    updateAnchorEdge(false);
+    if (!disabled) {
+      updateAnchorEdge(false);
+    }
   }
 
   function onUpdateStartOffset(event: Event) {
@@ -157,6 +162,7 @@
               autocomplete="off"
               class="st-input w-100"
               class:error={!!anchoredActivityError}
+              {disabled}
               list="anchors"
               name="anchor_id"
               bind:value={anchorInputString}
@@ -186,6 +192,7 @@
               class:st-button={isAnchoredToStart}
               class="secondary anchor-boundary"
               class:selected={isAnchoredToStart}
+              class:disabled
               on:click={onAnchorToStart}
             >
               Start
@@ -195,6 +202,7 @@
               class:st-button={!isAnchoredToStart}
               class="secondary anchor-boundary"
               class:selected={!isAnchoredToStart}
+              class:disabled
               on:click={onAnchorToEnd}
             >
               End
@@ -210,6 +218,7 @@
           <input
             class="st-input w-100"
             class:error={!!startOffsetError}
+            {disabled}
             name="start-offset"
             bind:value={startOffsetString}
             on:change={onUpdateStartOffset}
@@ -252,6 +261,10 @@
     background-color: var(--st-white);
     color: inherit;
     cursor: default;
+  }
+
+  .anchor-boundaries .anchor-boundary.disabled {
+    cursor: not-allowed;
   }
 
   .search-icon {

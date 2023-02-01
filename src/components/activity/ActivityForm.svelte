@@ -453,6 +453,7 @@
             {activity}
             {activitiesMap}
             {anchorId}
+            disabled={!editable}
             {highlightKeysMap}
             {isAnchoredToStart}
             planId={plan_id}
