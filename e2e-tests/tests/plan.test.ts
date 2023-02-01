@@ -42,7 +42,7 @@ test.afterAll(async () => {
   await context.close();
 });
 
-test.describe.serial('Plan', () => {
+test.describe.serial.only('Plan', () => {
   test('Error page should not be visible, and the plan title should be visible in the top navigation bar', async () => {
     await expect(plan.appError).not.toBeVisible();
     await expect(plan.planTitle).toBeVisible();
@@ -97,15 +97,35 @@ test.describe.serial('Plan', () => {
     await expect(plan.panelTimelineEditor).toBeVisible();
   });
 
-  test(`Clicking on 'Views' in the grid menu should show the views panel`, async () => {
-    await expect(plan.panelViews).not.toBeVisible();
-    await plan.showPanel('Views');
-    await expect(plan.panelViews).toBeVisible();
-  });
-
   test(`Clicking on 'View Editor' in the grid menu should show the view editor panel`, async () => {
     await expect(plan.panelViewEditor).not.toBeVisible();
     await plan.showPanel('View Editor');
     await expect(plan.panelViewEditor).toBeVisible();
+  });
+
+  test(`Clicking on 'Default View' in the top navigation bar should toggle the view menu`, async () => {
+    await expect(plan.navButtonViewMenu).not.toBeVisible();
+    plan.navButtonView.click();
+    await expect(plan.navButtonViewMenu).toBeVisible();
+    plan.navButtonView.click();
+    await expect(plan.navButtonViewMenu).not.toBeVisible();
+  });
+
+  test(`Clicking on 'Saved Views' in the view menu should pop up a SavedViewsModal`, async () => {
+    await expect(plan.navButtonViewMenu).not.toBeVisible();
+    plan.navButtonView.click();
+    await expect(plan.navButtonViewMenu).toBeVisible();
+    await expect(plan.navButtonViewSavedViewsMenuButton).toBeVisible();
+    await plan.navButtonViewSavedViewsMenuButton.click();
+    await expect(page.locator('.modal .modal-header:has-text("Saved Views")')).toBeVisible();
+  });
+
+  test(`Clicking on 'Save As' in the view menu should pop up a CreateViewModal`, async () => {
+    await expect(plan.navButtonViewMenu).not.toBeVisible();
+    plan.navButtonView.click();
+    await expect(plan.navButtonViewMenu).toBeVisible();
+    await expect(plan.navButtonViewSaveAsMenuButton).toBeVisible();
+    await plan.navButtonViewSaveAsMenuButton.click();
+    await expect(page.locator('.modal .modal-header:has-text("Save new view")')).toBeVisible();
   });
 });

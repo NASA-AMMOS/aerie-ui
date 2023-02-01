@@ -3,35 +3,44 @@
 <script lang="ts">
   import ChevronDownIcon from '@nasa-jpl/stellar/icons/chevron_down.svg?component';
   import ViewGridIcon from '@nasa-jpl/stellar/icons/view_grid_filled.svg?component';
+  import { createEventDispatcher } from 'svelte';
   import { user as userStore } from '../../stores/app';
-  import { resetOriginalView, resetView, view, viewIsModified } from '../../stores/views';
-  import effects from '../../utilities/effects';
+  import { view, viewIsModified } from '../../stores/views';
+  import { showSavedViewsModal } from '../../utilities/modal';
   import { Status } from '../../utilities/status';
   import NavButton from '../app/NavButton.svelte';
   import Menu from './Menu.svelte';
   import MenuItem from './MenuItem.svelte';
 
+  const defaultViewName = 'Default View';
+  const dispatch = createEventDispatcher();
+
   let saveViewDisabled: boolean = true;
   let viewMenu: Menu;
 
-  $: saveViewDisabled = $view?.name === '' || $view?.owner !== $userStore?.id;
+  $: saveViewDisabled = $view?.name === '' || $view?.owner !== $userStore?.id || !$viewIsModified;
 
-  function createView() {
+  function saveAsView() {
     if ($view) {
-      effects.createView($userStore?.id, $view.definition);
+      dispatch('create-view', { definition: $view.definition, owner: $userStore?.id });
     }
   }
 
   function editView() {
     if ($view) {
-      effects.editView($userStore?.id, $view.definition);
+      dispatch('edit-view', { definition: $view.definition, owner: $userStore?.id });
     }
   }
 
-  async function saveView() {
+  function saveView() {
     if ($view && $view.owner === $userStore?.id && !saveViewDisabled) {
-      await effects.updateView($view.id, { definition: $view.definition, name: $view.name });
-      resetOriginalView();
+      dispatch('save-view', { definition: $view.definition, id: $view.id, name: $view.name });
+    }
+  }
+
+  function resetView() {
+    if ($view) {
+      dispatch('reset-view');
     }
   }
 </script>
@@ -39,7 +48,7 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <NavButton
   status={$viewIsModified ? Status.Modified : null}
-  title={$view?.name ?? 'Default View'}
+  title={$view?.name ?? defaultViewName}
   on:click={() => viewMenu.toggle()}
 >
   <ViewGridIcon />
@@ -48,12 +57,13 @@
 
     <Menu bind:this={viewMenu} offset={[-120, -5]}>
       <MenuItem disabled={saveViewDisabled} on:click={saveView}>Save</MenuItem>
-      <MenuItem on:click={createView}>Save as</MenuItem>
-      <MenuItem on:click={resetView}>Reset to default</MenuItem>
-      <MenuItem>Browse saved views</MenuItem>
-      <hr />
-      <MenuItem on:click={editView}>Rename view</MenuItem>
-      <MenuItem>Set as default for plan</MenuItem>
+      <MenuItem on:click={saveAsView}>Save as</MenuItem>
+      <MenuItem disabled={!$viewIsModified} on:click={resetView}>Reset to default</MenuItem>
+      <MenuItem on:click={showSavedViewsModal}>Browse saved views</MenuItem>
+      {#if $view?.name && $view.name !== defaultViewName}
+        <hr />
+        <MenuItem on:click={editView}>Rename view</MenuItem>
+      {/if}
     </Menu>
   </div>
 </NavButton>

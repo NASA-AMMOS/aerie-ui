@@ -30,7 +30,6 @@
   import IFramePanel from '../../../components/ui/IFramePanel.svelte';
   import SplitGrid from '../../../components/ui/SplitGrid.svelte';
   import ViewEditorPanel from '../../../components/view/ViewEditorPanel.svelte';
-  import ViewsPanel from '../../../components/view/ViewsPanel.svelte';
   import { activitiesMap, activityDirectives, resetActivityStores } from '../../../stores/activities';
   import { resetConstraintStores } from '../../../stores/constraints';
   import {
@@ -61,8 +60,16 @@
     simulationStatus,
     spans,
   } from '../../../stores/simulation';
-  import { initializeView, view, viewSetLayout, viewUpdateLayout } from '../../../stores/views';
+  import {
+    initializeView,
+    resetOriginalView,
+    resetView,
+    view,
+    viewSetLayout,
+    viewUpdateLayout,
+  } from '../../../stores/views';
   import type { GridChangeSizesEvent } from '../../../types/grid';
+  import type { ViewSaveEvent } from '../../../types/view';
   import { createActivitiesMap } from '../../../utilities/activities';
   import effects from '../../../utilities/effects';
   import { isSaveEvent } from '../../../utilities/keyboardEvents';
@@ -86,7 +93,6 @@
     TimelineEditorPanel,
     TimelinePanel,
     ViewEditorPanel,
-    ViewsPanel,
   };
 
   let planHasBeenLocked = false;
@@ -171,6 +177,34 @@
       effects.simulate();
     }
   }
+
+  async function onCreateView(event: CustomEvent<ViewSaveEvent>) {
+    const { detail } = event;
+    const { owner, definition } = detail;
+    if (definition) {
+      await effects.createView(owner, definition);
+      resetOriginalView();
+    }
+  }
+
+  function onEditView(event: CustomEvent<ViewSaveEvent>) {
+    const { detail } = event;
+    const { owner, definition } = detail;
+    if (definition) {
+      effects.editView(owner, definition);
+    }
+  }
+
+  async function onSaveView(event: CustomEvent<ViewSaveEvent>) {
+    const { detail } = event;
+    const { definition, id, name } = detail;
+    await effects.updateView(id, { definition, name });
+    resetOriginalView();
+  }
+
+  function onResetView() {
+    resetView();
+  }
 </script>
 
 <svelte:window on:keydown={onKeydown} />
@@ -216,7 +250,12 @@
       >
         <GearWideConnectedIcon />
       </NavButton>
-      <ViewMenu />
+      <ViewMenu
+        on:create-view={onCreateView}
+        on:edit-view={onEditView}
+        on:save-view={onSaveView}
+        on:reset-view={onResetView}
+      />
     </svelte:fragment>
   </Nav>
 

@@ -2,7 +2,7 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { models, plan } from '../../stores/plan';
+  import { plan } from '../../stores/plan';
   import Modal from './Modal.svelte';
   import ModalContent from './ModalContent.svelte';
   import ModalFooter from './ModalFooter.svelte';
@@ -22,7 +22,7 @@
 
   function create() {
     if (!createButtonDisabled) {
-      dispatch('create', { modelId: selectedModelId, name: newViewName });
+      dispatch('create', { name: newViewName });
     }
   }
 
@@ -43,16 +43,6 @@
     <fieldset>
       <label for="name">View name</label>
       <input bind:value={newViewName} autocomplete="off" class="st-input w-100" name="name" required type="text" />
-    </fieldset>
-    <fieldset>
-      <label for="model">Mission Model</label>
-      <select class="st-select w-100" data-type="number" name="model" bind:value={selectedModelId}>
-        {#each $models as model}
-          <option value={model.id}>
-            {model.name}
-          </option>
-        {/each}
-      </select>
     </fieldset>
   </ModalContent>
   <ModalFooter>

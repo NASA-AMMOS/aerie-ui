@@ -8,6 +8,8 @@ export type ViewActivityTable = {
   id: number;
 };
 
+export type ViewSaveEvent = Partial<View>;
+
 export type ViewIFrame = {
   id: number;
   src: string;
@@ -16,7 +18,6 @@ export type ViewIFrame = {
 
 export type ViewInsertInput = {
   definition: ViewDefinition;
-  // model_id: number;
   name: string;
   owner: string;
 };

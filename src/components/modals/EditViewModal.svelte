@@ -2,7 +2,7 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { models, plan } from '../../stores/plan';
+  import { plan } from '../../stores/plan';
   import { view } from '../../stores/views';
   import Modal from './Modal.svelte';
   import ModalContent from './ModalContent.svelte';
@@ -24,7 +24,7 @@
 
   function save() {
     if (!saveButtonDisabled) {
-      dispatch('save', { id: $view.id, modelId: selectedModelId, name: viewName });
+      dispatch('save', { id: $view.id, name: viewName });
     }
   }
 
@@ -45,16 +45,6 @@
     <fieldset>
       <label for="name">View name</label>
       <input bind:value={viewName} autocomplete="off" class="st-input w-100" name="name" required type="text" />
-    </fieldset>
-    <fieldset>
-      <label for="model">Mission Model</label>
-      <select class="st-select w-100" data-type="number" name="model" bind:value={selectedModelId}>
-        {#each $models as model}
-          <option value={model.id}>
-            {model.name}
-          </option>
-        {/each}
-      </select>
     </fieldset>
   </ModalContent>
   <ModalFooter>

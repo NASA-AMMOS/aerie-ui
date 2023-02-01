@@ -9,6 +9,7 @@ import PlanBranchesModal from '../components/modals/PlanBranchesModal.svelte';
 import PlanBranchRequestModal from '../components/modals/PlanBranchRequestModal.svelte';
 import PlanLockedModal from '../components/modals/PlanLockedModal.svelte';
 import PlanMergeRequestsModal from '../components/modals/PlanMergeRequestsModal.svelte';
+import SavedViewsModal from '../components/modals/SavedViewsModal.svelte';
 import type { ExpansionSequence } from '../types/expansion';
 import type { ModalElement, ModalElementValue } from '../types/modal';
 import type { Plan, PlanBranchRequestAction, PlanMergeRequestStatus, PlanMergeRequestTypeFilter } from '../types/plan';
@@ -211,7 +212,7 @@ export async function showCreateViewModal(): Promise<ModalElementValue<{ modelId
 }
 
 /**
- * Shows a EditViewModal component.
+ * Shows an EditViewModal component.
  */
 export async function showEditViewModal(): Promise<ModalElementValue<{ id: number; modelId: number; name: string }>> {
   return new Promise(resolve => {
@@ -319,6 +320,26 @@ export async function showPlanMergeRequestsModal(
       target.resolve = resolve;
 
       planMergeRequestsModal.$on('close', () => {
+        target.replaceChildren();
+        target.resolve = null;
+        resolve({ confirm: false });
+      });
+    }
+  });
+}
+
+/**
+ * Shows a SavedViewsModal component.
+ */
+export async function showSavedViewsModal(): Promise<ModalElementValue<{ id: number; modelId: number; name: string }>> {
+  return new Promise(resolve => {
+    const target: ModalElement = document.querySelector('#svelte-modal');
+
+    if (target) {
+      const savedViewsModal = new SavedViewsModal({ props: { height: 400, width: '50%' }, target });
+      target.resolve = resolve;
+
+      savedViewsModal.$on('close', () => {
         target.replaceChildren();
         target.resolve = null;
         resolve({ confirm: false });
