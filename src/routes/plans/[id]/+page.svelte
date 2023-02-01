@@ -187,11 +187,12 @@
     }
   }
 
-  function onEditView(event: CustomEvent<ViewSaveEvent>) {
+  async function onEditView(event: CustomEvent<ViewSaveEvent>) {
     const { detail } = event;
     const { owner, definition } = detail;
     if (definition) {
-      effects.editView(owner, definition);
+      await effects.editView(owner, definition);
+      resetOriginalView();
     }
   }
 
