@@ -1719,7 +1719,16 @@ const effects = {
 
     if (activity.start_time_doy) {
       const planStartTimeDoy = get<Plan>(plan).start_time_doy;
-      activityDirectiveSetInput.start_offset = getIntervalFromDoyRange(planStartTimeDoy, activity.start_time_doy);
+      const directivesMap = get<ActivitiesMap>(activitiesMap);
+      const { anchor_id } = directivesMap[getActivityDirectiveUniqueId(plan_id, id)];
+      if (anchor_id) {
+        activityDirectiveSetInput.start_offset = getIntervalFromDoyRange(
+          directivesMap[getActivityDirectiveUniqueId(plan_id, anchor_id)].start_time_doy,
+          activity.start_time_doy,
+        );
+      } else {
+        activityDirectiveSetInput.start_offset = getIntervalFromDoyRange(planStartTimeDoy, activity.start_time_doy);
+      }
     }
 
     if (activity.start_offset) {
