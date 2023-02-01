@@ -149,7 +149,10 @@
           <label use:tooltip={{ content: 'Activity to anchor to', placement: 'top' }} for="anchor_id">Relative to</label
           >
           <Input>
-            <div class="search-icon" slot="left"><SearchIcon /></div>
+            <div class="search-icon" slot="left">
+              <!-- this conditional is required to trigger the `Input` component to recalculate the internal layout -->
+              {#if isRelativeOffset}<SearchIcon />{/if}
+            </div>
             <input
               autocomplete="off"
               class="st-input w-100"
@@ -249,5 +252,11 @@
     background-color: var(--st-white);
     color: inherit;
     cursor: default;
+  }
+
+  .search-icon {
+    align-items: center;
+    color: var(--st-gray-50);
+    display: flex;
   }
 </style>
