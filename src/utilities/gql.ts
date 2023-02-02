@@ -1134,7 +1134,10 @@ const gql = {
         }
         plan_snapshot_supplying_changes {
           name
+          duration
+          plan_id
           snapshot_id
+          start_time
         }
         requester_username
         reviewer_username

@@ -7,7 +7,7 @@ import type {
   ActivityUniqueId,
 } from '../types/activity';
 import type { ActivityMetadata, ActivityMetadataKey, ActivityMetadataValue } from '../types/activity-metadata';
-import type { Plan, PlanMergeActivityDirective } from '../types/plan';
+import type { PlanMergeActivityDirective, PlanSlimmer } from '../types/plan';
 import type { Span, SpanId } from '../types/simulation';
 import { compare, isEmpty } from './generic';
 import { getDoyTimeFromDuration, getUnixEpochTime } from './time';
@@ -20,7 +20,7 @@ type TraversalMap = {
 };
 function determineActivityDirectiveStartTime(
   directiveUniqueId: ActivityUniqueId,
-  plan: Plan,
+  plan: PlanSlimmer,
   activitiesMap: ActivitiesMap = {},
   cachedStartTimes: ActivityStartTimesMap = {},
   traversalMap: TraversalMap = {},
@@ -79,7 +79,7 @@ function determineActivityDirectiveStartTime(
  * Creates a map of activities from directives and spans.
  */
 export function createActivitiesMap(
-  plan: Plan,
+  plan: PlanSlimmer,
   activity_directives: ActivityDirective[],
   spans: Span[],
 ): ActivitiesMap {
@@ -217,7 +217,7 @@ export function decomposeActivityDirectiveId(id: ActivityUniqueId): {
  */
 export function deriveActivityFromMergeActivityDirective(
   activityDirective: PlanMergeActivityDirective,
-  plan: Plan,
+  plan: PlanSlimmer,
 ): Activity {
   return {
     anchor_id: activityDirective.anchor_id,
