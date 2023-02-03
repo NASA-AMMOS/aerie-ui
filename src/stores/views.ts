@@ -276,7 +276,13 @@ export function viewUpdateLayout(id: number, update: Record<string, any>) {
   }));
 }
 
-export function viewUpdateRow(prop: string, value: any, timelineId?: number, rowId?: number) {
+export function viewUpdateRow(
+  prop: string,
+  value: any,
+  timelineId?: number,
+  rowId?: number,
+  shouldSyncChange?: boolean,
+) {
   timelineId = timelineId ?? get<number | null>(selectedTimelineId);
   rowId = rowId ?? get<number | null>(selectedRowId);
 
@@ -306,6 +312,35 @@ export function viewUpdateRow(prop: string, value: any, timelineId?: number, row
       },
     },
   }));
+
+  if (shouldSyncChange) {
+    originalView.update(currentView => ({
+      ...currentView,
+      definition: {
+        ...currentView.definition,
+        plan: {
+          ...currentView.definition.plan,
+          timelines: currentView.definition.plan.timelines.map(timeline => {
+            if (timeline && timeline.id === timelineId) {
+              return {
+                ...timeline,
+                rows: timeline.rows.map(row => {
+                  if (row.id === rowId) {
+                    return {
+                      ...row,
+                      [prop]: value,
+                    };
+                  }
+                  return row;
+                }),
+              };
+            }
+            return timeline;
+          }),
+        },
+      },
+    }));
+  }
 }
 
 export function viewUpdateTimeline(prop: string, value: any, timelineId?: number) {
