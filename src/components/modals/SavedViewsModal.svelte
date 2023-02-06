@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import type { ICellRendererParams } from 'ag-grid-community';
+  import type { ICellRendererParams, ValueFormatterParams } from 'ag-grid-community';
   import { createEventDispatcher } from 'svelte';
   import { initializeView, view, views } from '../../stores/views';
   import type { DataGridColumnDef } from '../../types/data-grid';
@@ -38,7 +38,19 @@
     },
     { field: 'name', filter: 'text', headerName: 'Name', resizable: true, sortable: true },
     { field: 'owner', filter: 'text', headerName: 'Owner', resizable: true, sortable: true },
-    { field: 'updated_at', filter: 'text', headerName: 'Last Edited', resizable: true, sortable: true },
+    {
+      field: 'updated_at',
+      filter: 'text',
+      headerName: 'Last Edited',
+      resizable: true,
+      sortable: true,
+      valueFormatter: ({ value: updatedAt }: ValueFormatterParams<View, string>) => {
+        const updatedAtDate = new Date(updatedAt);
+        updatedAtDate.setMilliseconds(0);
+
+        return updatedAtDate.toISOString().replace(/.\d+Z$/g, 'Z');
+      },
+    },
     {
       cellClass: 'action-cell-container',
       cellRenderer: (params: ViewCellRendererParams) => {
