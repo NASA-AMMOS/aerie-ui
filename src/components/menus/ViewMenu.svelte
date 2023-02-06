@@ -80,6 +80,13 @@
     position: relative;
   }
 
+  .view-menu hr {
+    background-color: var(--st-gray-30);
+    border: 0;
+    height: 1px;
+    margin: 0 4px;
+  }
+
   .view-menu-icon > :global(svg) {
     display: block;
     height: 16px;
