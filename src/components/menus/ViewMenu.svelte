@@ -51,7 +51,7 @@
   title={$view?.name ?? defaultViewName}
   on:click={() => viewMenu.toggle()}
 >
-  <ViewGridIcon />
+  <div class="view-menu-icon"><ViewGridIcon /></div>
   <div class="view-menu st-typography-body" slot="menu">
     <ChevronDownIcon />
 
@@ -78,5 +78,10 @@
     height: inherit;
     justify-content: center;
     position: relative;
+  }
+
+  .view-menu-icon > :global(svg) {
+    display: block;
+    height: 16px;
   }
 </style>
