@@ -22,25 +22,25 @@
 
   function saveAsView() {
     if ($view) {
-      dispatch('create-view', { definition: $view.definition, owner: $userStore?.id });
+      dispatch('createView', { definition: $view.definition, owner: $userStore?.id });
     }
   }
 
   function editView() {
     if ($view) {
-      dispatch('edit-view', { definition: $view.definition, owner: $userStore?.id });
+      dispatch('editView', { definition: $view.definition, owner: $userStore?.id });
     }
   }
 
   function saveView() {
     if ($view && $view.owner === $userStore?.id && !saveViewDisabled) {
-      dispatch('save-view', { definition: $view.definition, id: $view.id, name: $view.name });
+      dispatch('saveView', { definition: $view.definition, id: $view.id, name: $view.name });
     }
   }
 
   function resetView() {
     if ($view) {
-      dispatch('reset-view');
+      dispatch('resetView');
     }
   }
 </script>

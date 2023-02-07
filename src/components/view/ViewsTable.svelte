@@ -87,16 +87,16 @@
   ];
 
   function deleteView({ id: viewId }: View) {
-    dispatch('delete-view', viewId);
+    dispatch('deleteView', viewId);
   }
 
   function deleteViews({ detail: views }: CustomEvent<View[]>) {
     const viewIds = views.map(({ id }) => id);
-    dispatch('delete-views', viewIds);
+    dispatch('deleteViews', viewIds);
   }
 
   function openView({ id: viewId }: View) {
-    dispatch('open-view', viewId);
+    dispatch('openView', viewId);
   }
 </script>
 

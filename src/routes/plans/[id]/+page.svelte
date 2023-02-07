@@ -258,10 +258,10 @@
         <GearWideConnectedIcon />
       </NavButton>
       <ViewMenu
-        on:create-view={onCreateView}
-        on:edit-view={onEditView}
-        on:save-view={onSaveView}
-        on:reset-view={onResetView}
+        on:createView={onCreateView}
+        on:editView={onEditView}
+        on:saveView={onSaveView}
+        on:resetView={onResetView}
       />
     </svelte:fragment>
   </Nav>
