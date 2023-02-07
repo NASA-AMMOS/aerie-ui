@@ -118,7 +118,7 @@ test.describe.serial('Plan', () => {
     await expect(plan.navButtonViewSavedViewsMenuButton).toBeVisible();
     await plan.navButtonViewSavedViewsMenuButton.click();
     await expect(page.locator('.modal .modal-header:has-text("Saved Views")')).toBeVisible();
-    await page.locator('.modal .st-button:has-text("Close")').click();
+    await page.locator('.modal .st-button .bi-x').click();
   });
 
   test(`Clicking on 'Save As' in the view menu should pop up a CreateViewModal`, async () => {
