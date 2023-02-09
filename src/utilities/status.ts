@@ -4,7 +4,7 @@ export enum Status {
   Incomplete = 'Incomplete',
   Modified = 'Modified',
   Pending = 'Pending',
-  Indeterminate = 'Indeterminate',
+  PartialSuccess = 'PartialSuccess',
 }
 
 export const statusColors: Record<string, string> = {
@@ -29,7 +29,7 @@ export function getColorForStatus(status: Status): string {
     return statusColors.yellow;
   } else if (status === Status.Pending) {
     return statusColors.gray;
-  } else if (status === Status.Indeterminate) {
+  } else if (status === Status.PartialSuccess) {
     return statusColors.orange;
   } else {
     return statusColors.gray;

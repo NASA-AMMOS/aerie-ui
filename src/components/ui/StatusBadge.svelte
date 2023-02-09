@@ -33,7 +33,7 @@
       <EditingIcon />
     {:else if status === Status.Pending}
       <ThreeDotsIcon />
-    {:else if status === Status.Indeterminate}
+    {:else if status === Status.PartialSuccess}
       <MinusIcon />
     {/if}
   </span>
