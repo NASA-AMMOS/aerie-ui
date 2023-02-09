@@ -159,21 +159,23 @@
     schedulingGoalCount = 0;
     satisfiedSchedulingGoalCount = 0;
 
-    // TODO do we skip disabled goals?
+    // Derive the number of satisfied scheduling goals from the last analysis
     $schedulingSpecGoals.forEach(schedulingSpecGoal => {
+      // TODO how should we handle disabled goals? Enabling/disabling goals will trigger
+      // a refresh of this data and we don't know if the last analysis included a goal
+      // since it could have been disabled.
       schedulingGoalCount++;
-      schedulingSpecGoal.goal.analyses.forEach(analysis => {
-        if (analysis.satisfied) {
+      if (schedulingSpecGoal.goal.analyses.length > 0) {
+        const latestAnalysis = schedulingSpecGoal.goal.analyses[0];
+        if (latestAnalysis.satisfied) {
           satisfiedSchedulingGoalCount++;
         }
-      });
+      }
     });
 
     // Derive schedulingAnalysisStatus
-
-    /* TODO review this, kind of complicated and unclear how all of this behaves */
     if ($schedulingStatus === Status.Complete && schedulingGoalCount !== satisfiedSchedulingGoalCount) {
-      schedulingAnalysisStatus = Status.Indeterminate;
+      schedulingAnalysisStatus = Status.PartialSuccess;
     }
   }
 
@@ -307,7 +309,7 @@
         menuTitle="Scheduling Analysis Status"
         buttonText="Analyze Goal Satisfaction"
         status={schedulingAnalysisStatus}
-        statusText={schedulingAnalysisStatus === Status.Indeterminate || schedulingAnalysisStatus === Status.Complete
+        statusText={schedulingAnalysisStatus === Status.PartialSuccess || schedulingAnalysisStatus === Status.Complete
           ? `${satisfiedSchedulingGoalCount} satisfied, ${
               schedulingGoalCount - satisfiedSchedulingGoalCount
             } unsatisfied`
