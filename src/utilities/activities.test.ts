@@ -8,6 +8,7 @@ import {
   isDirective,
   isSpan,
 } from './activities';
+import { getDoyTime } from './time';
 
 describe('getActivityDirectiveUniqueId', () => {
   test('Should create a valid activity directive ID', () => {
@@ -146,10 +147,10 @@ describe('createActivitiesMap', () => {
   test('Should determine the correct `start_time_doy` for directives anchored to other directives', () => {
     const testActivitiesMap = createActivitiesMap(plan, activityDirectives, []);
 
-    expect(testActivitiesMap.directive_12_12.start_time_doy).toEqual('2023-001T08:00:00.000');
-    expect(testActivitiesMap.directive_12_13.start_time_doy).toEqual('2023-001T08:10:00.000');
-    expect(testActivitiesMap.directive_12_14.start_time_doy).toEqual('2023-001T19:00:00.000');
-    expect(testActivitiesMap.directive_12_15.start_time_doy).toEqual('2023-001T17:10:00.000');
+    expect(testActivitiesMap.directive_12_12.start_time_doy).toEqual(getDoyTime(new Date('2023-01-01T00:00:00.000')));
+    expect(testActivitiesMap.directive_12_13.start_time_doy).toEqual(getDoyTime(new Date('2023-01-01T00:10:00.000')));
+    expect(testActivitiesMap.directive_12_14.start_time_doy).toEqual(getDoyTime(new Date('2023-01-01T11:00:00.000')));
+    expect(testActivitiesMap.directive_12_15.start_time_doy).toEqual(getDoyTime(new Date('2023-01-01T09:10:00.000')));
   });
 });
 
