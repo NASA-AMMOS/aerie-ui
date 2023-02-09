@@ -81,6 +81,9 @@
     if (canvas) {
       ctx = canvas.getContext('2d');
       dpr = window.devicePixelRatio;
+
+      // Preload font
+      new FontFace('Inter', 'url(/Inter-Regular.woff2)').load();
     }
   });
 
@@ -431,7 +434,7 @@
 
   function setLabelContext(point: ActivityPoint) {
     const fontSize = point.label?.fontSize || 12;
-    const fontFace = point.label?.fontFace || 'Helvetica Neue';
+    const fontFace = 'Inter';
     ctx.fillStyle = point.label?.color || '#000000';
     ctx.font = `${fontSize}px ${fontFace}`;
     ctx.textAlign = point.label?.align || 'start';
