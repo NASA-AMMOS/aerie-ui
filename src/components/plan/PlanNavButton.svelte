@@ -31,9 +31,15 @@
       {/if}
     </span>
   </div>
-  {title}
+  {#if title}
+    <div class="nav-button-title">
+      {title}
+    </div>
+  {/if}
   <Menu hideAfterClick={false} placement="bottom-start" shown={showMenu} offset={[0, 0]}>
-    <MenuHeader title={menuTitle} showBorder={false} />
+    {#if menuTitle}
+      <MenuHeader title={menuTitle} showBorder={false} />
+    {/if}
     <div class="menu-body">
       {#if status}
         <div class="status-row st-typography-body">
@@ -51,6 +57,7 @@
         </div>
       {/if}
     </div>
+    <slot name="menu" />
   </Menu>
 </div>
 
@@ -61,13 +68,13 @@
     cursor: pointer;
     display: inline-flex;
     font-size: 14px;
-    gap: 12px;
     height: var(--nav-header-height);
     letter-spacing: 0.14px;
     line-height: 14px;
     padding: 16px;
     position: relative;
     user-select: none;
+    white-space: nowrap;
   }
 
   .nav-button:hover {
@@ -76,6 +83,10 @@
 
   .nav-button:hover :global(.nav-button-status .status-badge.Failed) {
     filter: drop-shadow(3px 0px 0px #2c2850);
+  }
+
+  .nav-button-title {
+    margin-left: 12px;
   }
 
   .nav-button-icon-container {

@@ -2,17 +2,15 @@
 
 <script lang="ts">
   import CalendarIcon from '@nasa-jpl/stellar/icons/calendar.svg?component';
+  import PlanIcon from '@nasa-jpl/stellar/icons/plan.svg?component';
+  import PlayIcon from '@nasa-jpl/stellar/icons/play.svg?component';
+  import VerticalCollapseIcon from '@nasa-jpl/stellar/icons/vertical_collapse_with_center_line.svg?component';
   import GearWideConnectedIcon from 'bootstrap-icons/icons/gear-wide-connected.svg?component';
-  import PlanIcon from 'bootstrap-icons/icons/plan.svg?component';
-  import PlayIcon from 'bootstrap-icons/icons/play.svg?component';
-  import VerticalCollapseIcon from 'bootstrap-icons/icons/vertical_collapse.svg?component';
   import { onDestroy } from 'svelte';
-  import PlanNavButton from '../../../../components/plan/PlanNavButton.svelte';
   import ActivityFormPanel from '../../../components/activity/ActivityFormPanel.svelte';
   import ActivityTablePanel from '../../../components/activity/ActivityTablePanel.svelte';
   import ActivityTypesPanel from '../../../components/activity/ActivityTypesPanel.svelte';
   import Nav from '../../../components/app/Nav.svelte';
-  import NavButton from '../../../components/app/NavButton.svelte';
   import PageTitle from '../../../components/app/PageTitle.svelte';
   import Console from '../../../components/console/Console.svelte';
   import ConsoleSection from '../../../components/console/ConsoleSection.svelte';
@@ -23,6 +21,7 @@
   import PlanMenu from '../../../components/menus/PlanMenu.svelte';
   import ViewMenu from '../../../components/menus/ViewMenu.svelte';
   import PlanMergeRequestsStatusButton from '../../../components/plan/PlanMergeRequestsStatusButton.svelte';
+  import PlanNavButton from '../../../components/plan/PlanNavButton.svelte';
   import SchedulingConditionsPanel from '../../../components/scheduling/SchedulingConditionsPanel.svelte';
   import SchedulingGoalsPanel from '../../../components/scheduling/SchedulingGoalsPanel.svelte';
   import SimulationPanel from '../../../components/simulation/SimulationPanel.svelte';
@@ -65,14 +64,7 @@
     simulationStatus,
     spans,
   } from '../../../stores/simulation';
-  import {
-    initializeView,
-    resetOriginalView,
-    resetView,
-    view,
-    viewSetLayout,
-    viewUpdateLayout,
-  } from '../../../stores/views';
+  import { initializeView, resetOriginalView, resetView, view, viewUpdateLayout } from '../../../stores/views';
   import type { GridChangeSizesEvent } from '../../../types/grid';
   import type { ViewSaveEvent } from '../../../types/view';
   import { createActivitiesMap } from '../../../utilities/activities';
@@ -101,7 +93,12 @@
     ViewEditorPanel,
   };
 
+  let compactNavMode = false;
   let planHasBeenLocked = false;
+  let satisfiedSchedulingGoalCount = 0;
+  let schedulingGoalCount = 0;
+  let schedulingAnalysisStatus: Status | null;
+  let windowWidth = 0;
 
   $: if (data.initialPlan) {
     $plan = data.initialPlan;
@@ -149,10 +146,6 @@
     planHasBeenLocked = false;
   }
 
-  let schedulingGoalCount = 0;
-  let satisfiedSchedulingGoalCount = 0;
-  let schedulingAnalysisStatus: Status | null;
-
   $: schedulingAnalysisStatus = $schedulingStatus;
 
   $: if ($schedulingSpecGoals) {
@@ -178,6 +171,8 @@
       schedulingAnalysisStatus = Status.PartialSuccess;
     }
   }
+
+  $: compactNavMode = windowWidth < 1100;
 
   onDestroy(() => {
     resetActivityStores();
@@ -250,7 +245,7 @@
   }
 </script>
 
-<svelte:window on:keydown={onKeydown} />
+<svelte:window on:keydown={onKeydown} bind:innerWidth={windowWidth} />
 
 <PageTitle subTitle={data.initialPlan.name} title="Plans" />
 
@@ -264,7 +259,7 @@
     </svelte:fragment>
     <svelte:fragment slot="right">
       <PlanNavButton
-        title="Expansion"
+        title={!compactNavMode ? 'Expansion' : ''}
         buttonText="Expand Activities"
         menuTitle="Expansion Status"
         disabled={$selectedExpansionSetId === null}
@@ -277,7 +272,7 @@
         </svelte:fragment>
       </PlanNavButton>
       <PlanNavButton
-        title="Simulation"
+        title={!compactNavMode ? 'Simulation' : ''}
         menuTitle="Simulation Status"
         buttonText="Simulate"
         buttonTooltipContent={$simulationStatus === Status.Complete || $simulationStatus === Status.Failed
@@ -293,7 +288,7 @@
         </svelte:fragment>
       </PlanNavButton>
       <PlanNavButton
-        title="Constraints"
+        title={!compactNavMode ? 'Constraints' : ''}
         menuTitle="Constraint Status"
         buttonText="Check Constraints"
         status={$checkConstraintsStatus}
@@ -305,7 +300,7 @@
         </svelte:fragment>
       </PlanNavButton>
       <PlanNavButton
-        title="Scheduling"
+        title={!compactNavMode ? 'Scheduling' : ''}
         menuTitle="Scheduling Analysis Status"
         buttonText="Analyze Goal Satisfaction"
         status={schedulingAnalysisStatus}
@@ -318,14 +313,6 @@
       >
         <CalendarIcon />
       </PlanNavButton>
-      <NavButton
-        selected={$view.definition.plan.layout?.gridName === 'Simulation'}
-        status={$simulationStatus}
-        title="Simulation"
-        on:click={() => viewSetLayout('Simulation')}
-      >
-        <GearWideConnectedIcon />
-      </NavButton>
       <ViewMenu
         on:createView={onCreateView}
         on:editView={onEditView}
