@@ -17,8 +17,8 @@
 
   export let activities: Activity[] = [];
   export let activityColor: string = '';
-  export let activityHeight: number = 20;
-  export let activityRowPadding: number = 20;
+  export let activityHeight: number = 16;
+  export let activityRowPadding: number = 4;
   export let activitySelectedColor: string = '#81D4FA';
   export let activityUnfinishedColor: string = '#ff7760';
   export let blur: FocusEvent | undefined;
@@ -350,9 +350,12 @@
 
   function drawActivity(point: ActivityPoint, x: number, y: number, end: number) {
     const { uniqueId } = point;
-    const activityWidth = Math.max(5.0, end - x);
+    const activityWidth = Math.max(4.0, end - x);
     const rect = new Path2D();
-    rect.rect(x, y, activityWidth, activityHeight);
+    rect.roundRect(x, y, activityWidth, activityHeight, 2);
+
+    const strokeRect = new Path2D();
+    strokeRect.roundRect(x + 0.5, y + 0.5, activityWidth - 1, activityHeight - 1, 1);
 
     quadtree.add({
       height: activityHeight,
@@ -369,17 +372,25 @@
 
     if (selectedActivityId === uniqueId) {
       ctx.fillStyle = activitySelectedColor;
+      ctx.strokeStyle = '#70A0BB';
     } else if (point.unfinished) {
       ctx.fillStyle = activityUnfinishedColor;
+      ctx.strokeStyle = '#C19065';
     } else {
-      ctx.fillStyle = activityColor;
+      ctx.fillStyle = '#FEBD85';
+      ctx.strokeStyle = '#C19065';
+      // ctx.fillStyle = activityColor;
     }
 
+    // ctx.strokeStyle = '#8DA4B3';
+    ctx.lineWidth = 1;
     ctx.fill(rect);
+    ctx.stroke(strokeRect);
+
     const hideLabel = point.label?.hidden || false;
     if (!hideLabel) {
       const { labelText, textMetrics } = setLabelContext(point);
-      ctx.fillText(labelText, x, y, textMetrics.width);
+      ctx.fillText(labelText, x + 5, y + activityHeight / 2, textMetrics.width);
     }
   }
 
@@ -438,7 +449,7 @@
     ctx.fillStyle = point.label?.color || '#000000';
     ctx.font = `${fontSize}px ${fontFace}`;
     ctx.textAlign = point.label?.align || 'start';
-    ctx.textBaseline = point.label?.baseline || 'alphabetic';
+    ctx.textBaseline = point.label?.baseline || 'middle';
     const labelText = point.label?.text || '';
     const textMetrics = ctx.measureText(labelText);
     const textWidth = textMetrics.width;
