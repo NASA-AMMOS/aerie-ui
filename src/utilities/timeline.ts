@@ -386,7 +386,7 @@ export function createTimelineActivityLayer(timelines: Timeline[]): ActivityLaye
 
   return {
     activityColor: '#283593',
-    activityHeight: 20,
+    activityHeight: 16,
     chartType: 'activity',
     filter: {
       activity: {

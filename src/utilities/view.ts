@@ -288,7 +288,7 @@ export function generateDefaultView(activityTypes: ActivityType[] = [], resource
                 layers: [
                   {
                     activityColor: '#283593',
-                    activityHeight: 20,
+                    activityHeight: 16,
                     chartType: 'activity',
                     filter: { activity: { types } },
                     id: layerIds++,
