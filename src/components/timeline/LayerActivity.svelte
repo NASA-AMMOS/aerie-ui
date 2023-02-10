@@ -357,13 +357,6 @@
     const strokeRect = new Path2D();
     strokeRect.roundRect(x + 0.5, y + 0.5, activityWidth - 1, activityHeight - 1, 1);
 
-    quadtree.add({
-      height: activityHeight,
-      id: uniqueId,
-      width: activityWidth,
-      x,
-      y,
-    });
     visiblePointsByUniqueId[uniqueId] = point;
 
     if (activityWidth > maxActivityWidth) {
@@ -388,10 +381,20 @@
     ctx.stroke(strokeRect);
 
     const hideLabel = point.label?.hidden || false;
+    let hitboxWidth = activityWidth;
     if (!hideLabel) {
       const { labelText, textMetrics } = setLabelContext(point);
       ctx.fillText(labelText, x + 5, y + activityHeight / 2, textMetrics.width);
+      hitboxWidth = Math.max(hitboxWidth, textMetrics.width);
     }
+
+    quadtree.add({
+      height: activityHeight,
+      id: uniqueId,
+      width: hitboxWidth,
+      x,
+      y,
+    });
   }
 
   function drawChildren(parent: ActivityPoint, parentY: number): BoundingBox | null {
@@ -446,7 +449,8 @@
   function setLabelContext(point: ActivityPoint) {
     const fontSize = point.label?.fontSize || 12;
     const fontFace = 'Inter';
-    ctx.fillStyle = point.label?.color || '#000000';
+    // ctx.fillStyle = point.label?.color || '#000000';
+    ctx.fillStyle = point.label?.color || '#4A3603';
     ctx.font = `${fontSize}px ${fontFace}`;
     ctx.textAlign = point.label?.align || 'start';
     ctx.textBaseline = point.label?.baseline || 'middle';
