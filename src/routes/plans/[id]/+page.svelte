@@ -54,10 +54,10 @@
   } from '../../../stores/plan';
   import { resourceTypes } from '../../../stores/resource';
   import {
+    latestAnalyses,
     resetSchedulingStores,
     satisfiedSchedulingGoalCount,
     schedulingGoalCount,
-    schedulingSpecGoals,
     schedulingStatus,
   } from '../../../stores/scheduling';
   import {
@@ -150,16 +150,13 @@
     planHasBeenLocked = false;
   }
 
+  $: compactNavMode = windowWidth < 1100;
   $: schedulingAnalysisStatus = $schedulingStatus;
-
-  $: if ($schedulingSpecGoals) {
-    // Derive schedulingAnalysisStatus
-    if ($schedulingStatus === Status.Complete && $schedulingGoalCount !== $satisfiedSchedulingGoalCount) {
+  $: if ($latestAnalyses) {
+    if ($schedulingGoalCount !== $satisfiedSchedulingGoalCount) {
       schedulingAnalysisStatus = Status.PartialSuccess;
     }
   }
-
-  $: compactNavMode = windowWidth < 1100;
 
   onDestroy(() => {
     resetActivityStores();
