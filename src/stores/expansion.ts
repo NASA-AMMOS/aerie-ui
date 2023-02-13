@@ -29,8 +29,6 @@ export const savingExpansionRule: Writable<boolean> = writable(false);
 
 export const savingExpansionSet: Writable<boolean> = writable(false);
 
-// export const expandingPlan: Writable<boolean> = writable(false);
-
 export const planExpansionStatus: Writable<Status | null> = writable(null);
 
 export const selectedExpansionSetId: Writable<number | null> = writable(null);

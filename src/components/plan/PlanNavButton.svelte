@@ -3,7 +3,6 @@
   import type { Status } from '../../utilities/status';
   import { tooltip } from '../../utilities/tooltip';
   import Menu from '../menus/Menu.svelte';
-
   import MenuHeader from '../menus/MenuHeader.svelte';
   import StatusBadge from '../ui/StatusBadge.svelte';
 

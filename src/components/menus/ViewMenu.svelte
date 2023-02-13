@@ -16,7 +16,6 @@
   let saveViewDisabled: boolean = true;
 
   $: saveViewDisabled = $view?.name === '' || $view?.owner !== $userStore?.id || !$viewIsModified;
-  $: console.log('$viewIsModified :>> ', $viewIsModified);
 
   function saveAsView() {
     if ($view) {
