@@ -39,6 +39,25 @@ export const schedulingSpecGoals = gqlSubscribable<SchedulingSpecGoal[]>(
   [],
 );
 
+export const schedulingGoalCount = derived(schedulingSpecGoals, $schedulingSpecGoals => $schedulingSpecGoals.length);
+export const satisfiedSchedulingGoalCount = derived(schedulingSpecGoals, $schedulingSpecGoals => {
+  let count = 0;
+
+  // Derive the number of satisfied scheduling goals from the last analysis
+  $schedulingSpecGoals.forEach(schedulingSpecGoal => {
+    // TODO how should we handle disabled goals? Enabling/disabling goals will trigger
+    // a refresh of this data and we don't know if the last analysis included a goal
+    // since it could have been disabled.
+    if (schedulingSpecGoal.goal.analyses.length > 0) {
+      const latestAnalysis = schedulingSpecGoal.goal.analyses[0];
+      if (latestAnalysis.satisfied) {
+        count++;
+      }
+    }
+  });
+  return count;
+});
+
 /* Helper Functions. */
 
 export function resetSchedulingStores() {

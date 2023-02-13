@@ -53,7 +53,13 @@
     viewTimeRange,
   } from '../../../stores/plan';
   import { resourceTypes } from '../../../stores/resource';
-  import { resetSchedulingStores, schedulingSpecGoals, schedulingStatus } from '../../../stores/scheduling';
+  import {
+    resetSchedulingStores,
+    satisfiedSchedulingGoalCount,
+    schedulingGoalCount,
+    schedulingSpecGoals,
+    schedulingStatus,
+  } from '../../../stores/scheduling';
   import {
     enableSimulation,
     externalResources,
@@ -95,8 +101,6 @@
 
   let compactNavMode = false;
   let planHasBeenLocked = false;
-  let satisfiedSchedulingGoalCount = 0;
-  let schedulingGoalCount = 0;
   let schedulingAnalysisStatus: Status | null;
   let windowWidth = 0;
 
@@ -149,25 +153,8 @@
   $: schedulingAnalysisStatus = $schedulingStatus;
 
   $: if ($schedulingSpecGoals) {
-    schedulingGoalCount = 0;
-    satisfiedSchedulingGoalCount = 0;
-
-    // Derive the number of satisfied scheduling goals from the last analysis
-    $schedulingSpecGoals.forEach(schedulingSpecGoal => {
-      // TODO how should we handle disabled goals? Enabling/disabling goals will trigger
-      // a refresh of this data and we don't know if the last analysis included a goal
-      // since it could have been disabled.
-      schedulingGoalCount++;
-      if (schedulingSpecGoal.goal.analyses.length > 0) {
-        const latestAnalysis = schedulingSpecGoal.goal.analyses[0];
-        if (latestAnalysis.satisfied) {
-          satisfiedSchedulingGoalCount++;
-        }
-      }
-    });
-
     // Derive schedulingAnalysisStatus
-    if ($schedulingStatus === Status.Complete && schedulingGoalCount !== satisfiedSchedulingGoalCount) {
+    if ($schedulingStatus === Status.Complete && $schedulingGoalCount !== $satisfiedSchedulingGoalCount) {
       schedulingAnalysisStatus = Status.PartialSuccess;
     }
   }
@@ -305,8 +292,8 @@
         buttonText="Analyze Goal Satisfaction"
         status={schedulingAnalysisStatus}
         statusText={schedulingAnalysisStatus === Status.PartialSuccess || schedulingAnalysisStatus === Status.Complete
-          ? `${satisfiedSchedulingGoalCount} satisfied, ${
-              schedulingGoalCount - satisfiedSchedulingGoalCount
+          ? `${$satisfiedSchedulingGoalCount} satisfied, ${
+              $schedulingGoalCount - $satisfiedSchedulingGoalCount
             } unsatisfied`
           : ''}
         on:click={() => effects.schedule(true)}
