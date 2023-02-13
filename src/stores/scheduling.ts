@@ -3,6 +3,7 @@ import { plan } from '../stores/plan';
 import type {
   SchedulingCondition,
   SchedulingGoal,
+  SchedulingGoalAnalysis,
   SchedulingSpecCondition,
   SchedulingSpecGoal,
 } from '../types/scheduling';
@@ -39,24 +40,30 @@ export const schedulingSpecGoals = gqlSubscribable<SchedulingSpecGoal[]>(
   [],
 );
 
-export const schedulingGoalCount = derived(schedulingSpecGoals, $schedulingSpecGoals => $schedulingSpecGoals.length);
-export const satisfiedSchedulingGoalCount = derived(schedulingSpecGoals, $schedulingSpecGoals => {
-  let count = 0;
+export const latestAnalyses = derived(schedulingSpecGoals, $schedulingSpecGoals => {
+  const analysisIdToSpecGoalMap: Record<number, SchedulingGoalAnalysis[]> = {};
+  let latestAnalysisId = -1;
 
-  // Derive the number of satisfied scheduling goals from the last analysis
   $schedulingSpecGoals.forEach(schedulingSpecGoal => {
-    // TODO how should we handle disabled goals? Enabling/disabling goals will trigger
-    // a refresh of this data and we don't know if the last analysis included a goal
-    // since it could have been disabled.
-    if (schedulingSpecGoal.goal.analyses.length > 0) {
-      const latestAnalysis = schedulingSpecGoal.goal.analyses[0];
-      if (latestAnalysis.satisfied) {
-        count++;
+    schedulingSpecGoal.goal.analyses.forEach(analysis => {
+      if (!analysisIdToSpecGoalMap[analysis.analysis_id]) {
+        analysisIdToSpecGoalMap[analysis.analysis_id] = [];
       }
-    }
+      analysisIdToSpecGoalMap[analysis.analysis_id].push(analysis);
+      if (analysis.analysis_id > latestAnalysisId) {
+        latestAnalysisId = analysis.analysis_id;
+      }
+    });
   });
-  return count;
+
+  return analysisIdToSpecGoalMap[latestAnalysisId] || [];
 });
+
+export const schedulingGoalCount = derived(latestAnalyses, $latestAnalyses => Object.keys($latestAnalyses).length);
+export const satisfiedSchedulingGoalCount = derived(
+  latestAnalyses,
+  $latestAnalyses => Object.values($latestAnalyses).filter(analysis => analysis.satisfied).length,
+);
 
 /* Helper Functions. */
 
