@@ -54,6 +54,7 @@
   } from '../../../stores/plan';
   import { resourceTypes } from '../../../stores/resource';
   import {
+    enableScheduling,
     latestAnalyses,
     resetSchedulingStores,
     satisfiedSchedulingGoalCount,
@@ -287,6 +288,7 @@
         title={!compactNavMode ? 'Scheduling' : ''}
         menuTitle="Scheduling Analysis Status"
         buttonText="Analyze Goal Satisfaction"
+        disabled={!$enableScheduling}
         status={schedulingAnalysisStatus}
         statusText={schedulingAnalysisStatus === Status.PartialSuccess || schedulingAnalysisStatus === Status.Complete
           ? `${$satisfiedSchedulingGoalCount} satisfied, ${

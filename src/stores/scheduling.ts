@@ -1,4 +1,4 @@
-import { derived, writable, type Writable } from 'svelte/store';
+import { derived, writable, type Readable, type Writable } from 'svelte/store';
 import { plan } from '../stores/plan';
 import type {
   SchedulingCondition,
@@ -64,6 +64,10 @@ export const satisfiedSchedulingGoalCount = derived(
   latestAnalyses,
   $latestAnalyses => Object.values($latestAnalyses).filter(analysis => analysis.satisfied).length,
 );
+
+export const enableScheduling: Readable<boolean> = derived([schedulingSpecGoals], ([$schedulingSpecGoals]) => {
+  return $schedulingSpecGoals.filter(schedulingSpecGoal => schedulingSpecGoal.enabled).length > 0;
+});
 
 /* Helper Functions. */
 
