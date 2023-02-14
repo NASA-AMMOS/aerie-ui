@@ -59,8 +59,15 @@
     simulationStatus,
     spans,
   } from '../../../stores/simulation';
-  import { initializeView, resetOriginalView, resetView, view, viewUpdateGrid } from '../../../stores/views';
-  import type { ViewSaveEvent } from '../../../types/view';
+  import {
+    initializeView,
+    resetOriginalView,
+    resetView,
+    view,
+    viewTogglePanel,
+    viewUpdateGrid,
+  } from '../../../stores/views';
+  import type { ViewSaveEvent, ViewToggleEvent } from '../../../types/view';
   import { createActivitiesMap } from '../../../utilities/activities';
   import effects from '../../../utilities/effects';
   import { isSaveEvent } from '../../../utilities/keyboardEvents';
@@ -184,6 +191,11 @@
     }
   }
 
+  function onToggleView(event: CustomEvent<ViewToggleEvent>) {
+    const { detail } = event;
+    viewTogglePanel(detail);
+  }
+
   function onResetView() {
     resetView();
   }
@@ -278,6 +290,7 @@
         on:createView={onCreateView}
         on:editView={onEditView}
         on:saveView={onSaveView}
+        on:toggleView={onToggleView}
         on:resetView={onResetView}
       />
     </svelte:fragment>

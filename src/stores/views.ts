@@ -1,6 +1,6 @@
 import { isEqual } from 'lodash-es';
 import { derived, get, writable, type Writable } from 'svelte/store';
-import type { View, ViewActivityTable, ViewGrid } from '../types/view';
+import type { View, ViewActivityTable, ViewGrid, ViewToggleEvent } from '../types/view';
 import { getTarget } from '../utilities/generic';
 import gql from '../utilities/gql';
 import { TimelineLockStatus } from '../utilities/timeline';
@@ -142,6 +142,32 @@ export function viewSetSelectedRow(rowId: number | null): void {
 
 export function viewSetSelectedTimeline(timelineId: number | null): void {
   selectedTimelineId.set(timelineId);
+}
+
+export function viewTogglePanel(event: ViewToggleEvent) {
+  const { state, type } = event;
+  switch (type) {
+    case 'left': {
+      viewUpdateGrid({ leftHidden: !state, leftSplit: false });
+      break;
+    }
+    case 'left-split': {
+      viewUpdateGrid({ leftHidden: !state, leftSplit: state });
+      break;
+    }
+    case 'bottom': {
+      viewUpdateGrid({ middleSplit: state });
+      break;
+    }
+    case 'right': {
+      viewUpdateGrid({ rightHidden: !state, rightSplit: false });
+      break;
+    }
+    case 'right-split': {
+      viewUpdateGrid({ rightHidden: !state, rightSplit: state });
+      break;
+    }
+  }
 }
 
 export function viewUpdateActivityTables(update: Partial<ViewActivityTable>, activityTableId: number): void {

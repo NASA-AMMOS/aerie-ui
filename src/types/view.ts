@@ -8,6 +8,11 @@ export type ViewActivityTable = {
 };
 
 export type ViewSaveEvent = Partial<View>;
+export type ViewToggleType = 'left' | 'left-split' | 'bottom' | 'right' | 'right-split';
+export type ViewToggleEvent = {
+  state: boolean;
+  type: ViewToggleType;
+};
 
 export type ViewIFrame = {
   id: number;
