@@ -17,10 +17,14 @@ export class Plan {
   gridMenu: Locator;
   gridMenuButton: Locator;
   gridMenuItem: (name: string) => Locator;
-  navButtonActivities: Locator;
   navButtonConstraints: Locator;
+  navButtonConstraintsMenu: Locator;
+  navButtonExpansion: Locator;
+  navButtonExpansionMenu: Locator;
   navButtonScheduling: Locator;
+  navButtonSchedulingMenu: Locator;
   navButtonSimulation: Locator;
+  navButtonSimulationMenu: Locator;
   navButtonView: Locator;
   navButtonViewMenu: Locator;
   navButtonViewSaveAsMenuButton: Locator;
@@ -101,8 +105,6 @@ export class Plan {
   }
 
   async deleteAllActivities() {
-    await this.navButtonActivities.click();
-    await this.activitiesTable.waitFor({ state: 'attached' });
     await expect(this.confirmModal).not.toBeVisible();
 
     await this.activitiesTableFirstRow.click({ button: 'right' });
@@ -209,10 +211,14 @@ export class Plan {
     this.gridMenuButton = page.locator('.grid-menu');
     this.gridMenuItem = (name: string) =>
       page.locator(`.grid-menu > .menu > .menu-slot > .menu-item:has-text("${name}")`);
-    this.navButtonActivities = page.locator(`.nav-button:has-text("Activities")`);
+    this.navButtonExpansion = page.locator(`.nav-button:has-text("Expansion")`);
+    this.navButtonExpansionMenu = page.locator(`.nav-button:has-text("Expansion") .menu`);
     this.navButtonConstraints = page.locator(`.nav-button:has-text("Constraints")`);
+    this.navButtonConstraintsMenu = page.locator(`.nav-button:has-text("Constraints") .menu`);
     this.navButtonScheduling = page.locator(`.nav-button:has-text("Scheduling")`);
+    this.navButtonSchedulingMenu = page.locator(`.nav-button:has-text("Scheduling") .menu`);
     this.navButtonSimulation = page.locator(`.nav-button:has-text("Simulation")`);
+    this.navButtonSimulationMenu = page.locator(`.nav-button:has-text("Simulation") .menu`);
     this.navButtonView = page.locator('.view-menu');
     this.navButtonViewMenu = page.locator(`.view-menu .menu`);
     this.navButtonViewSaveAsMenuButton = page.locator(`.view-menu .menu .menu-item:has-text("Save as")`);
