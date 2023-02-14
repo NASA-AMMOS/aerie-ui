@@ -1,6 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import ActivityIcon from '@nasa-jpl/stellar/icons/activity.svg?component';
   import CalendarIcon from '@nasa-jpl/stellar/icons/calendar.svg?component';
   import PlanIcon from '@nasa-jpl/stellar/icons/plan.svg?component';
   import PlayIcon from '@nasa-jpl/stellar/icons/play.svg?component';
