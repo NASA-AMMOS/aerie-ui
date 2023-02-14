@@ -35,6 +35,7 @@
   export let showChildren: boolean = true;
   export let viewTimeRange: TimeRange = { end: 0, start: 0 };
   export let xScaleView: ScaleTime<number, number> | null = null;
+  export let xScaleMax: ScaleTime<number, number> | null = null;
 
   const dispatch = createEventDispatcher();
 
@@ -49,6 +50,9 @@
   let quadtree: Quadtree<QuadtreeRect>;
   let visiblePointsByUniqueId: Record<ActivityUniqueId, ActivityPoint> = {};
 
+  // Cache
+  let directiveIcon;
+
   $: onBlur(blur);
   $: onFocus(focus);
   $: onMousedown(mousedown);
@@ -61,6 +65,11 @@
   $: rowHeight = activityHeight + activityRowPadding;
 
   $: timelineLocked = $timelineLockStatus === TimelineLockStatus.Locked;
+
+  $: windowMin = xScaleMax?.range()[1];
+  $: windowMax = xScaleMax?.range()[0];
+  $: windowStartTime = xScaleMax.invert(windowMax).getTime();
+  $: windowEndTime = xScaleMax.invert(windowMin).getTime();
 
   $: if (
     activities &&
@@ -85,6 +94,23 @@
       // Preload font
       new FontFace('Inter', 'url(/Inter-Regular.woff2)').load();
     }
+
+    const svg = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g opacity="0.64">
+    <path d="M12 8L6 11.4641L6 4.5359L12 8Z" fill="#1B1D1E"/>
+    <line x1="3" y1="4" x2="3" y2="12" stroke="black" stroke-width="2"/>
+    </g>
+    </svg>
+    `;
+
+    var svg64 = btoa(svg);
+    var b64Start = 'data:image/svg+xml;base64,';
+    // prepend a "header"
+    var image64 = b64Start + svg64;
+    ctx.fillStyle = 'black';
+    const image = document.createElement('img');
+    image.src = image64;
+    directiveIcon = image;
   });
 
   onDestroy(() => removeKeyDownEvent());
@@ -176,7 +202,7 @@
       const x = offsetX - dragOffsetX;
       dragCurrentX = xScaleView.invert(x).getTime();
       const start_time_doy = getDoyTime(new Date(dragCurrentX));
-      if (dragCurrentX !== dragPoint.x) {
+      if (dragCurrentX !== dragPoint.x && dragCurrentX >= windowStartTime && dragCurrentX <= windowEndTime) {
         $activitiesMap[dragPoint.uniqueId].start_time_doy = start_time_doy;
         draw();
       }
@@ -186,7 +212,15 @@
   function dragActivityEnd(): void {
     if (dragPoint && dragStartX !== null && dragCurrentX !== null) {
       if (dragStartX !== dragCurrentX && $activitiesMap[dragPoint.uniqueId]) {
-        const start_time_doy = getDoyTime(new Date(dragCurrentX));
+        // Constrain start time to plan bounds
+        let start_time = new Date(dragCurrentX);
+        if (dragCurrentX > windowEndTime) {
+          start_time = new Date(windowEndTime);
+        } else if (dragCurrentX < windowStartTime) {
+          start_time = new Date(windowStartTime);
+        }
+        const start_time_doy = getDoyTime(start_time);
+
         const dragActivity = $activitiesMap[dragPoint.uniqueId];
         const { activityId, planId } = decomposeActivityDirectiveId(dragActivity.uniqueId);
         effects.updateActivityDirective(planId, activityId, { start_time_doy });
@@ -384,9 +418,11 @@
     let hitboxWidth = activityWidth;
     if (!hideLabel) {
       const { labelText, textMetrics } = setLabelContext(point);
-      ctx.fillText(labelText, x + 5, y + activityHeight / 2, textMetrics.width);
+      ctx.fillText(labelText, x + 16, y + activityHeight / 2, textMetrics.width);
       hitboxWidth = Math.max(hitboxWidth, textMetrics.width);
     }
+
+    ctx.drawImage(directiveIcon, x + 2, y);
 
     quadtree.add({
       height: activityHeight,

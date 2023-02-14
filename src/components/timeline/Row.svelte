@@ -50,6 +50,7 @@
   export let selectedActivityId: ActivityUniqueId | null = null;
   export let viewTimeRange: TimeRange = { end: 0, start: 0 };
   export let xScaleView: ScaleTime<number, number> | null = null;
+  export let xScaleMax: ScaleTime<number, number> | null = null;
   export let xTicksView: XAxisTick[] = [];
   export let yAxes: Axis[] = [];
 
@@ -237,6 +238,7 @@
             {selectedActivityId}
             {viewTimeRange}
             {xScaleView}
+            {xScaleMax}
             on:delete
             on:mouseDown={onMouseDown}
             on:mouseOver={onMouseOver}

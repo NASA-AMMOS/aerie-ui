@@ -260,6 +260,7 @@
         {viewTimeRange}
         {xScaleView}
         {xTicksView}
+        {xScaleMax}
         yAxes={row.yAxes}
         on:delete
         on:mouseDown={onMouseDown}
