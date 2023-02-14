@@ -152,11 +152,10 @@ export class Plan {
   }
 
   async showConstraintsLayout() {
-    await this.navButtonConstraints.click();
+    await this.showPanel('Constraints');
+    await this.showPanel('Constraint Violations', true);
     await this.panelConstraints.waitFor({ state: 'attached' });
     await this.panelConstraints.waitFor({ state: 'visible' });
-    await this.panelActivityForm.waitFor({ state: 'attached' });
-    await this.panelActivityForm.waitFor({ state: 'visible' });
     await this.panelActivityTable.waitFor({ state: 'attached' });
     await this.panelActivityTable.waitFor({ state: 'visible' });
     await this.panelConstraintViolations.waitFor({ state: 'attached' });
@@ -164,16 +163,18 @@ export class Plan {
     await this.panelTimeline.waitFor({ state: 'attached' });
     await this.panelTimeline.waitFor({ state: 'visible' });
     await expect(this.panelConstraints).toBeVisible();
-    await expect(this.panelActivityForm).toBeVisible();
     await expect(this.panelActivityTable).toBeVisible();
     await expect(this.panelConstraintViolations).toBeVisible();
     await expect(this.panelTimeline).toBeVisible();
-    await expect(this.navButtonConstraints).toHaveClass(/selected/);
   }
 
-  async showPanel(name: string) {
+  async showPanel(name: string, pickLastMenu: boolean = false) {
     await expect(this.gridMenu).not.toBeVisible();
-    await this.gridMenuButton.first().click();
+    if (pickLastMenu) {
+      await this.gridMenuButton.last().click();
+    } else {
+      await this.gridMenuButton.first().click();
+    }
     await this.gridMenu.waitFor({ state: 'attached' });
     await this.gridMenu.waitFor({ state: 'visible' });
     await this.gridMenuItem(name).click();
