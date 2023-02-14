@@ -55,7 +55,9 @@ test.describe.serial('Scheduling', () => {
     await plan.createSchedulingCondition(baseURL);
   });
 
-  test('Disabling a scheduling goal should not include that goal in a scheduling run ', async () => {
+  test('Disabling a scheduling goal should not include that goal in a scheduling run ', async ({ baseURL }) => {
+    // Create a second scheduling goal so that when the first goal is disabled, analysis and scheduling buttons are still enabled
+    await plan.createSchedulingGoal(baseURL);
     await expect(plan.schedulingGoalDifferenceBadge).not.toBeVisible();
     await expect(plan.schedulingGoalEnabledCheckbox).toBeChecked();
     await plan.schedulingGoalEnabledCheckbox.uncheck();

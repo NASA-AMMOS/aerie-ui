@@ -46,6 +46,7 @@ export class Plan {
   schedulingConditionEnabledCheckbox: Locator;
   schedulingConditionListItemSelector: string;
   schedulingConditionNewButton: Locator;
+  schedulingGoal: Locator;
   schedulingGoalDifferenceBadge: Locator;
   schedulingGoalEnabledCheckbox: Locator;
   schedulingGoalExpand: Locator;
@@ -64,7 +65,7 @@ export class Plan {
     this.constraintListItemSelector = `.constraint-list-item:has-text("${constraints.constraintName}")`;
     this.schedulingConditionListItemSelector = `.scheduling-condition:has-text("${schedulingConditions.conditionName}")`;
     this.schedulingGoalListItemSelector = `.scheduling-goal:has-text("${schedulingGoals.goalName}")`;
-    this.schedulingStatusSelector = (status: string) => `.status-badge.${status}`;
+    this.schedulingStatusSelector = (status: string) => `.header-actions > .status-badge.${status}`;
     this.updatePage(page);
   }
 
@@ -181,22 +182,19 @@ export class Plan {
   }
 
   async showSchedulingLayout() {
-    await this.navButtonScheduling.click();
+    await this.showPanel('Scheduling Goals');
+    await this.showPanel('Scheduling Conditions', true);
     await this.panelSchedulingGoals.waitFor({ state: 'attached' });
     await this.panelSchedulingGoals.waitFor({ state: 'visible' });
     await this.panelSchedulingConditions.waitFor({ state: 'attached' });
     await this.panelSchedulingConditions.waitFor({ state: 'visible' });
-    await this.panelActivityForm.waitFor({ state: 'attached' });
-    await this.panelActivityForm.waitFor({ state: 'visible' });
     await this.panelActivityTable.waitFor({ state: 'attached' });
     await this.panelActivityTable.waitFor({ state: 'visible' });
     await this.panelTimeline.waitFor({ state: 'attached' });
     await this.panelTimeline.waitFor({ state: 'visible' });
     await expect(this.panelSchedulingGoals).toBeVisible();
-    await expect(this.panelActivityForm).toBeVisible();
     await expect(this.panelActivityTable).toBeVisible();
     await expect(this.panelTimeline).toBeVisible();
-    await expect(this.navButtonScheduling).toHaveClass(/selected/);
   }
 
   updatePage(page: Page): void {
@@ -238,16 +236,17 @@ export class Plan {
     this.panelTimelineEditor = page.locator('[data-component-name="TimelineEditorPanel"]');
     this.panelViewEditor = page.locator('[data-component-name="ViewEditorPanel"]');
     this.planTitle = page.locator(`.plan-title:has-text("${this.plans.planName}")`);
-    this.scheduleButton = page.locator('.header-actions > button[aria-label="Schedule"]');
-    this.analyzeButton = page.locator('.header-actions > button[aria-label="Analyze"]');
-    this.schedulingGoalDifferenceBadge = page.locator('.difference-badge');
-    this.schedulingGoalEnabledCheckbox = page.locator(
-      `.scheduling-goal:has-text("${this.schedulingGoals.goalName}") >> input[type="checkbox"]`,
-    );
-    this.schedulingConditionEnabledCheckbox = page.locator(
-      `.scheduling-condition:has-text("${this.schedulingConditions.conditionName}") >> input[type="checkbox"]`,
-    );
-    this.schedulingGoalExpand = page.locator('span[aria-label="scheduling-goal-expand"]');
+    this.scheduleButton = page.locator('.header-actions button[aria-label="Schedule"]');
+    this.analyzeButton = page.locator('.header-actions button[aria-label="Analyze"]');
+    this.schedulingGoal = page.locator('.scheduling-goal').first();
+    this.schedulingGoalDifferenceBadge = this.schedulingGoal.locator('.difference-badge');
+    this.schedulingGoalEnabledCheckbox = page
+      .locator(`.scheduling-goal:has-text("${this.schedulingGoals.goalName}") >> input[type="checkbox"]`)
+      .first();
+    this.schedulingConditionEnabledCheckbox = page
+      .locator(`.scheduling-condition:has-text("${this.schedulingConditions.conditionName}") >> input[type="checkbox"]`)
+      .first();
+    this.schedulingGoalExpand = page.locator('span[aria-label="scheduling-goal-expand"]').first();
     this.schedulingGoalNewButton = page.locator(`button[name="new-scheduling-goal"]`);
     this.schedulingConditionNewButton = page.locator(`button[name="new-scheduling-condition"]`);
     this.schedulingSatisfiedActivity = page.locator('li > .satisfied-activity');
