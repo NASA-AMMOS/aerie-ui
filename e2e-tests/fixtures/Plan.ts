@@ -48,9 +48,9 @@ export class Plan {
   schedulingConditionNewButton: Locator;
   schedulingGoal: Locator;
   schedulingGoalDifferenceBadge: Locator;
-  schedulingGoalEnabledCheckbox: Locator;
+  schedulingGoalEnabledCheckboxSelector: (goalName: string) => Locator;
   schedulingGoalExpand: Locator;
-  schedulingGoalListItemSelector: string;
+  schedulingGoalListItemSelector: (goalName: string) => string;
   schedulingGoalNewButton: Locator;
   schedulingSatisfiedActivity: Locator;
   schedulingStatusSelector: (status: string) => string;
@@ -64,7 +64,7 @@ export class Plan {
   ) {
     this.constraintListItemSelector = `.constraint-list-item:has-text("${constraints.constraintName}")`;
     this.schedulingConditionListItemSelector = `.scheduling-condition:has-text("${schedulingConditions.conditionName}")`;
-    this.schedulingGoalListItemSelector = `.scheduling-goal:has-text("${schedulingGoals.goalName}")`;
+    this.schedulingGoalListItemSelector = (goalName: string) => `.scheduling-goal:has-text("${goalName}")`;
     this.schedulingStatusSelector = (status: string) => `.header-actions > .status-badge.${status}`;
     this.updatePage(page);
   }
@@ -92,17 +92,17 @@ export class Plan {
     await this.page.waitForSelector(this.schedulingConditionListItemSelector, { state: 'visible', strict: true });
   }
 
-  async createSchedulingGoal(baseURL: string | undefined) {
+  async createSchedulingGoal(baseURL: string | undefined, goalName: string) {
     const [newSchedulingGoalPage] = await Promise.all([
       this.page.waitForEvent('popup'),
       this.schedulingGoalNewButton.click(),
     ]);
     this.schedulingGoals.updatePage(newSchedulingGoalPage);
     await newSchedulingGoalPage.waitForURL(`${baseURL}/scheduling/goals/new?modelId=*&&specId=*`);
-    await this.schedulingGoals.createSchedulingGoal(baseURL);
+    await this.schedulingGoals.createSchedulingGoal(baseURL, goalName);
     await newSchedulingGoalPage.close();
     this.schedulingGoals.updatePage(this.page);
-    await this.page.waitForSelector(this.schedulingGoalListItemSelector, { state: 'visible', strict: true });
+    await this.page.waitForSelector(this.schedulingGoalListItemSelector(goalName), { state: 'visible', strict: true });
   }
 
   async deleteAllActivities() {
@@ -118,7 +118,6 @@ export class Plan {
     await expect(this.confirmModal).toBeVisible();
     await expect(this.confirmModalDeleteButton).toBeVisible();
     await this.confirmModalDeleteButton.click();
-    await this.page.pause();
     await this.activitiesTableFirstRow.waitFor({ state: 'detached' });
     await this.activitiesTableFirstRow.waitFor({ state: 'hidden' });
     await expect(this.activitiesTableFirstRow).not.toBeVisible();
@@ -240,9 +239,8 @@ export class Plan {
     this.analyzeButton = page.locator('.header-actions button[aria-label="Analyze"]');
     this.schedulingGoal = page.locator('.scheduling-goal').first();
     this.schedulingGoalDifferenceBadge = this.schedulingGoal.locator('.difference-badge');
-    this.schedulingGoalEnabledCheckbox = page
-      .locator(`.scheduling-goal:has-text("${this.schedulingGoals.goalName}") >> input[type="checkbox"]`)
-      .first();
+    this.schedulingGoalEnabledCheckboxSelector = (goalName: string) =>
+      page.locator(`.scheduling-goal:has-text("${goalName}") >> input[type="checkbox"]`).first();
     this.schedulingConditionEnabledCheckbox = page
       .locator(`.scheduling-condition:has-text("${this.schedulingConditions.conditionName}") >> input[type="checkbox"]`)
       .first();
