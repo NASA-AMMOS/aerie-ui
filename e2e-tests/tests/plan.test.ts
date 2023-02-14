@@ -103,17 +103,17 @@ test.describe.serial('Plan', () => {
     await expect(plan.panelViewEditor).toBeVisible();
   });
 
-  test(`Clicking on 'Default View' in the top navigation bar should toggle the view menu`, async () => {
+  test(`Hovering on 'Default View' in the top navigation bar should show the view menu`, async () => {
     await expect(plan.navButtonViewMenu).not.toBeVisible();
-    plan.navButtonView.click();
+    plan.navButtonView.hover();
     await expect(plan.navButtonViewMenu).toBeVisible();
-    plan.navButtonView.click();
+    plan.planTitle.hover();
     await expect(plan.navButtonViewMenu).not.toBeVisible();
   });
 
   test(`Clicking on 'Saved Views' in the view menu should pop up a SavedViewsModal`, async () => {
     await expect(plan.navButtonViewMenu).not.toBeVisible();
-    plan.navButtonView.click();
+    plan.navButtonView.hover();
     await expect(plan.navButtonViewMenu).toBeVisible();
     await expect(plan.navButtonViewSavedViewsMenuButton).toBeVisible();
     await plan.navButtonViewSavedViewsMenuButton.click();

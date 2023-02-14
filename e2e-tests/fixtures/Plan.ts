@@ -213,12 +213,10 @@ export class Plan {
     this.navButtonConstraints = page.locator(`.nav-button:has-text("Constraints")`);
     this.navButtonScheduling = page.locator(`.nav-button:has-text("Scheduling")`);
     this.navButtonSimulation = page.locator(`.nav-button:has-text("Simulation")`);
-    this.navButtonView = page.locator(`.nav-button:has-text("View")`);
-    this.navButtonViewMenu = page.locator(`.view-menu > .menu`);
-    this.navButtonViewSaveAsMenuButton = page.locator(`.view-menu > .menu .menu-item:has-text("Save as")`);
-    this.navButtonViewSavedViewsMenuButton = page.locator(
-      `.view-menu > .menu .menu-item:has-text("Browse saved views")`,
-    );
+    this.navButtonView = page.locator('.view-menu');
+    this.navButtonViewMenu = page.locator(`.view-menu .menu`);
+    this.navButtonViewSaveAsMenuButton = page.locator(`.view-menu .menu .menu-item:has-text("Save as")`);
+    this.navButtonViewSavedViewsMenuButton = page.locator(`.view-menu .menu .menu-item:has-text("Browse saved views")`);
     this.page = page;
     this.panelActivityForm = page.locator('[data-component-name="ActivityFormPanel"]');
     this.panelActivityTable = page.locator('[data-component-name="ActivityTablePanel"]');
