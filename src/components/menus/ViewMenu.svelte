@@ -71,53 +71,55 @@
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
-<PlanNavButton status={$viewIsModified ? Status.Modified : null} title={$view?.name ?? defaultViewName} menuTitle="">
-  <ViewGridIcon />
-  <div class="view-menu st-typography-medium" slot="menu">
-    <div class="toggles">
-      <MenuItem on:click={() => toggleView('left', !leftPanelIsOn)}>
-        <ToggleableIcon isOn={leftPanelIsOn}>
-          <ViewGridLeftPanelFilled />
-          <ViewGridLeftPanelEmpty slot="offIcon" />
-        </ToggleableIcon>
-      </MenuItem>
-      <MenuItem on:click={() => toggleView('left-split', !leftSplitPanelIsOn)}>
-        <ToggleableIcon isOn={leftSplitPanelIsOn}>
-          <ViewGridLeftPanelSplitFilled />
-          <ViewGridLeftPanelSplitEmpty slot="offIcon" />
-        </ToggleableIcon>
-      </MenuItem>
-      <div class="toggle-divider">|</div>
-      <MenuItem on:click={() => toggleView('bottom', !bottomPanelIsOn)}>
-        <ToggleableIcon isOn={bottomPanelIsOn}>
-          <ViewGridBottomPanelFilled />
-          <ViewGridBottomPanelEmpty slot="offIcon" />
-        </ToggleableIcon>
-      </MenuItem>
-      <div class="toggle-divider">|</div>
-      <MenuItem on:click={() => toggleView('right-split', !rightSplitPanelIsOn)}
-        ><ToggleableIcon isOn={rightSplitPanelIsOn}>
-          <ViewGridRightPanelSplitFilled />
-          <ViewGridRightPanelSplitEmpty slot="offIcon" />
-        </ToggleableIcon>
-      </MenuItem>
-      <MenuItem on:click={() => toggleView('right', !rightPanelIsOn)}
-        ><ToggleableIcon isOn={rightPanelIsOn}>
-          <ViewGridRightPanelFilled />
-          <ViewGridRightPanelEmpty slot="offIcon" />
-        </ToggleableIcon>
-      </MenuItem>
+<div class="view-menu st-typography-medium">
+  <PlanNavButton status={$viewIsModified ? Status.Modified : null} title={$view?.name ?? defaultViewName} menuTitle="">
+    <ViewGridIcon />
+    <div class="view-menu st-typography-medium" slot="menu">
+      <div class="toggles">
+        <MenuItem on:click={() => toggleView('left', !leftPanelIsOn)}>
+          <ToggleableIcon isOn={leftPanelIsOn}>
+            <ViewGridLeftPanelFilled />
+            <ViewGridLeftPanelEmpty slot="offIcon" />
+          </ToggleableIcon>
+        </MenuItem>
+        <MenuItem on:click={() => toggleView('left-split', !leftSplitPanelIsOn)}>
+          <ToggleableIcon isOn={leftSplitPanelIsOn}>
+            <ViewGridLeftPanelSplitFilled />
+            <ViewGridLeftPanelSplitEmpty slot="offIcon" />
+          </ToggleableIcon>
+        </MenuItem>
+        <div class="toggle-divider">|</div>
+        <MenuItem on:click={() => toggleView('bottom', !bottomPanelIsOn)}>
+          <ToggleableIcon isOn={bottomPanelIsOn}>
+            <ViewGridBottomPanelFilled />
+            <ViewGridBottomPanelEmpty slot="offIcon" />
+          </ToggleableIcon>
+        </MenuItem>
+        <div class="toggle-divider">|</div>
+        <MenuItem on:click={() => toggleView('right-split', !rightSplitPanelIsOn)}
+          ><ToggleableIcon isOn={rightSplitPanelIsOn}>
+            <ViewGridRightPanelSplitFilled />
+            <ViewGridRightPanelSplitEmpty slot="offIcon" />
+          </ToggleableIcon>
+        </MenuItem>
+        <MenuItem on:click={() => toggleView('right', !rightPanelIsOn)}
+          ><ToggleableIcon isOn={rightPanelIsOn}>
+            <ViewGridRightPanelFilled />
+            <ViewGridRightPanelEmpty slot="offIcon" />
+          </ToggleableIcon>
+        </MenuItem>
+      </div>
+      <MenuItem disabled={saveViewDisabled} on:click={saveView}>Save</MenuItem>
+      <MenuItem on:click={saveAsView}>Save as</MenuItem>
+      <MenuItem disabled={!$viewIsModified} on:click={resetView}>Reset to default</MenuItem>
+      <MenuItem on:click={showSavedViewsModal}>Browse saved views</MenuItem>
+      {#if $view?.name && $view.name !== defaultViewName}
+        <hr />
+        <MenuItem on:click={editView}>Rename view</MenuItem>
+      {/if}
     </div>
-    <MenuItem disabled={saveViewDisabled} on:click={saveView}>Save</MenuItem>
-    <MenuItem on:click={saveAsView}>Save as</MenuItem>
-    <MenuItem disabled={!$viewIsModified} on:click={resetView}>Reset to default</MenuItem>
-    <MenuItem on:click={showSavedViewsModal}>Browse saved views</MenuItem>
-    {#if $view?.name && $view.name !== defaultViewName}
-      <hr />
-      <MenuItem on:click={editView}>Rename view</MenuItem>
-    {/if}
-  </div>
-</PlanNavButton>
+  </PlanNavButton>
+</div>
 
 <style>
   .view-menu {
