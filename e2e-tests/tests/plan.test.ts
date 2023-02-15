@@ -97,12 +97,6 @@ test.describe.serial('Plan', () => {
     await expect(plan.panelTimelineEditor).toBeVisible();
   });
 
-  test(`Clicking on 'View Editor' in the grid menu should show the view editor panel`, async () => {
-    await expect(plan.panelViewEditor).not.toBeVisible();
-    await plan.showPanel('View Editor');
-    await expect(plan.panelViewEditor).toBeVisible();
-  });
-
   test(`Hovering on 'Constraints' in the top navigation bar should show the constraints menu`, async () => {
     await expect(plan.navButtonConstraintsMenu).not.toBeVisible();
     plan.navButtonConstraints.hover();
