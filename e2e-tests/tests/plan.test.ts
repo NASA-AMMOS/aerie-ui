@@ -176,7 +176,7 @@ test.describe.serial('Plan', () => {
     await plan.fillViewInputName();
     await plan.fillViewInputFile(plan.invalidPlanFilePath);
     await expect(page.locator('.modal-content .error')).toBeVisible();
-    page.locator('.modal .st-button:has-text("Upload View")').click();
+    await expect(page.locator('.modal .st-button:has-text("Upload View")')).toBeDisabled();
     await expect(page.locator('.modal')).toBeVisible();
     await page.locator('.modal .st-button:has-text("Cancel")').click();
   });
@@ -190,7 +190,7 @@ test.describe.serial('Plan', () => {
     await plan.fillViewInputName();
     await plan.fillViewInputFile();
     await expect(page.locator('.modal-content .error')).not.toBeVisible();
-    page.locator('.modal .st-button:has-text("Upload View")').click();
+    await page.locator('.modal .st-button:has-text("Upload View")').click();
     await expect(page.locator('.modal')).not.toBeVisible();
   });
 });
