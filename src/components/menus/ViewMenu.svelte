@@ -116,7 +116,7 @@
       <MenuItem disabled={saveViewDisabled} on:click={saveView}>Save</MenuItem>
       <MenuItem on:click={saveAsView}>Save as</MenuItem>
       <MenuItem disabled={!$viewIsModified} on:click={resetView}>Reset to default</MenuItem>
-      <MenuItem on:click={uploadView}>Upload View File</MenuItem>
+      <MenuItem on:click={uploadView}>Upload view file</MenuItem>
       <MenuItem on:click={showSavedViewsModal}>Browse saved views</MenuItem>
       {#if $view?.name && $view.name !== defaultViewName}
         <hr />
