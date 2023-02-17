@@ -59,7 +59,7 @@
     simulationStatus,
     spans,
   } from '../../../stores/simulation';
-  import { initializeView, resetOriginalView, resetView, view } from '../../../stores/views';
+  import { initializeView, resetOriginalView, resetView, view, viewUpdateGrid } from '../../../stores/views';
   import type { ViewSaveEvent } from '../../../types/view';
   import { createActivitiesMap } from '../../../utilities/activities';
   import effects from '../../../utilities/effects';
@@ -187,6 +187,22 @@
   function onResetView() {
     resetView();
   }
+
+  function onChangeColumnSizes(event: CustomEvent<string>) {
+    viewUpdateGrid({ columnSizes: event.detail });
+  }
+
+  function onChangeLeftRowSizes(event: CustomEvent<string>) {
+    viewUpdateGrid({ leftRowSizes: event.detail });
+  }
+
+  function onChangeMiddleRowSizes(event: CustomEvent<string>) {
+    viewUpdateGrid({ middleRowSizes: event.detail });
+  }
+
+  function onChangeRightRowSizes(event: CustomEvent<string>) {
+    viewUpdateGrid({ rightRowSizes: event.detail });
+  }
 </script>
 
 <svelte:window on:keydown={onKeydown} bind:innerWidth={windowWidth} />
@@ -267,7 +283,13 @@
     </svelte:fragment>
   </Nav>
 
-  <PlanGrid {...$view?.definition.plan.grid} />
+  <PlanGrid
+    {...$view?.definition.plan.grid}
+    on:changeColumnSizes={onChangeColumnSizes}
+    on:changeLeftRowSizes={onChangeLeftRowSizes}
+    on:changeMiddleRowSizes={onChangeMiddleRowSizes}
+    on:changeRightRowSizes={onChangeRightRowSizes}
+  />
 
   <Console>
     <svelte:fragment slot="console-tabs">
