@@ -61,6 +61,10 @@
       }
     }
   }
+
+  $: if (columns || rows) {
+    setSplit();
+  }
 </script>
 
 <div

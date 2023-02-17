@@ -4,6 +4,7 @@ import type { View, ViewActivityTable, ViewGrid, ViewToggleEvent } from '../type
 import { getTarget } from '../utilities/generic';
 import gql from '../utilities/gql';
 import { TimelineLockStatus } from '../utilities/timeline';
+import { createColumnSizes, createRowSizes, parseColumnSizes } from '../utilities/view';
 import { gqlSubscribable } from './subscribable';
 
 /* Subscriptions. */
@@ -146,25 +147,58 @@ export function viewSetSelectedTimeline(timelineId: number | null): void {
 
 export function viewTogglePanel(event: ViewToggleEvent) {
   const { state, type } = event;
+  const currentView = get(view);
+  const grid = currentView?.definition?.plan?.grid ?? {
+    columnSizes: '',
+    leftHidden: false,
+    rightHidden: false,
+  };
+
+  const { columnSizes, leftHidden, rightHidden } = grid;
+
+  const { col1, col2, col3 } = parseColumnSizes(columnSizes, leftHidden, rightHidden);
   switch (type) {
     case 'left': {
-      viewUpdateGrid({ leftHidden: !state, leftSplit: false });
+      viewUpdateGrid({
+        columnSizes: createColumnSizes({ col1, col2, col3 }, !state, rightHidden),
+        leftHidden: !state,
+        leftRowSizes: createRowSizes({}, false),
+        leftSplit: false,
+      });
       break;
     }
     case 'left-split': {
-      viewUpdateGrid({ leftHidden: !state, leftSplit: state });
+      viewUpdateGrid({
+        columnSizes: createColumnSizes({ col1, col2, col3 }, !state, rightHidden),
+        leftHidden: !state,
+        leftRowSizes: createRowSizes({}, state),
+        leftSplit: state,
+      });
       break;
     }
     case 'bottom': {
-      viewUpdateGrid({ middleSplit: state });
+      viewUpdateGrid({
+        middleRowSizes: createRowSizes({ row1: '2fr', row2: '1fr' }, state),
+        middleSplit: state,
+      });
       break;
     }
     case 'right': {
-      viewUpdateGrid({ rightHidden: !state, rightSplit: false });
+      viewUpdateGrid({
+        columnSizes: createColumnSizes({ col1, col2, col3 }, leftHidden, !state),
+        rightHidden: !state,
+        rightRowSizes: createRowSizes({}, false),
+        rightSplit: false,
+      });
       break;
     }
     case 'right-split': {
-      viewUpdateGrid({ rightHidden: !state, rightSplit: state });
+      viewUpdateGrid({
+        columnSizes: createColumnSizes({ col1, col2, col3 }, leftHidden, !state),
+        rightHidden: !state,
+        rightRowSizes: createRowSizes({}, state),
+        rightSplit: state,
+      });
       break;
     }
   }

@@ -106,7 +106,7 @@
   {/if}
 
   {#if !rightHidden}
-    <CssGridGutter track={3} type="column" />
+    <CssGridGutter track={leftHidden ? 1 : 3} type="column" />
 
     {#if rightSplit}
       <CssGrid class="plan-grid" rows={rightRowSizes} on:changeRowSizes={onChangeRightRowSizes}>

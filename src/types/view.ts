@@ -42,6 +42,17 @@ export type ViewGridComponent =
 
 export type ViewGridSection = 'LeftBottom' | 'LeftTop' | 'MiddleBottom' | 'RightBottom' | 'RightTop';
 
+export type ViewGridColumns = {
+  col1?: string;
+  col2?: string;
+  col3?: string;
+};
+
+export type ViewGridRows = {
+  row1?: string;
+  row2?: string;
+};
+
 export type ViewGrid = {
   columnSizes: string;
   leftComponentBottom: ViewGridComponent;
