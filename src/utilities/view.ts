@@ -255,7 +255,7 @@ export function generateDefaultView(activityTypes: ActivityType[] = [], resource
           leftComponentBottom: 'SimulationPanel',
           leftComponentTop: 'ActivityTypesPanel',
           leftHidden: false,
-          leftRowSizes: '1fr 0 0',
+          leftRowSizes: '1fr',
           leftSplit: false,
           middleComponentBottom: 'ActivityTablePanel',
           middleRowSizes: '2fr 3px 1fr',
@@ -263,7 +263,7 @@ export function generateDefaultView(activityTypes: ActivityType[] = [], resource
           rightComponentBottom: 'TimelineEditorPanel',
           rightComponentTop: 'ActivityFormPanel',
           rightHidden: false,
-          rightRowSizes: '1fr 0 0',
+          rightRowSizes: '1fr',
           rightSplit: false,
         },
         iFrames: [

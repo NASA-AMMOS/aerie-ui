@@ -16,6 +16,10 @@
   let div: HTMLDivElement;
   let split: SplitInstance;
 
+  $: if (columns || rows) {
+    setSplit();
+  }
+
   onMount(() => {
     if (div) {
       setSplit();
@@ -60,10 +64,6 @@
         split.addRowGutter(rowGutter, trackAsNumber);
       }
     }
-  }
-
-  $: if (columns || rows) {
-    setSplit();
   }
 </script>
 

@@ -96,14 +96,14 @@
           </ToggleableIcon>
         </MenuItem>
         <div class="toggle-divider">|</div>
-        <MenuItem on:click={() => toggleView('right-split', !rightSplitPanelIsOn)}
-          ><ToggleableIcon isOn={rightSplitPanelIsOn}>
+        <MenuItem on:click={() => toggleView('right-split', !rightSplitPanelIsOn)}>
+          <ToggleableIcon isOn={rightSplitPanelIsOn}>
             <ViewGridRightPanelSplitFilled />
             <ViewGridRightPanelSplitEmpty slot="offIcon" />
           </ToggleableIcon>
         </MenuItem>
-        <MenuItem on:click={() => toggleView('right', !rightPanelIsOn)}
-          ><ToggleableIcon isOn={rightPanelIsOn}>
+        <MenuItem on:click={() => toggleView('right', !rightPanelIsOn)}>
+          <ToggleableIcon isOn={rightPanelIsOn}>
             <ViewGridRightPanelFilled />
             <ViewGridRightPanelEmpty slot="offIcon" />
           </ToggleableIcon>
