@@ -32,12 +32,6 @@
   let isFiltered: boolean = false;
   let selectedItemIds: RowId[] = [];
 
-  $: if (!selectedItemIds.includes(selectedItemId) && selectedItemId != null) {
-    selectedItemIds = [selectedItemId];
-  } else if (selectedItemId === null) {
-    selectedItemIds = [];
-  }
-
   onDestroy(() => onBlur());
 
   function bulkDeleteItems() {

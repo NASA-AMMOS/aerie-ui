@@ -29,12 +29,6 @@
 
   let selectedItemIds: number[] = [];
 
-  $: if (!selectedItemIds.includes(selectedItemId) && selectedItemId != null) {
-    selectedItemIds = [selectedItemId];
-  } else if (selectedItemId === null) {
-    selectedItemIds = [];
-  }
-
   onDestroy(() => onBlur());
 
   function editItem() {
