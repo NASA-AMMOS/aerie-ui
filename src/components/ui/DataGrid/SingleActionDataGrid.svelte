@@ -6,11 +6,9 @@
   import { createEventDispatcher, onDestroy } from 'svelte';
   import type { TRowData } from '../../../types/data-grid';
   import { isDeleteEvent } from '../../../utilities/keyboardEvents';
-  import ContextMenu from '../../context-menu/ContextMenu.svelte';
   import ContextMenuHeader from '../../context-menu/ContextMenuHeader.svelte';
   import ContextMenuItem from '../../context-menu/ContextMenuItem.svelte';
   import DataGrid from '../../ui/DataGrid/DataGrid.svelte';
-  import ColumnResizeContextMenu from './column-menu/ColumnResizeContextMenu.svelte';
 
   export let columnDefs: ColDef[];
   export let columnStates: ColumnState[] = [];
@@ -29,14 +27,7 @@
 
   const dispatch = createEventDispatcher();
 
-  let contextMenu: ContextMenu;
   let selectedItemIds: number[] = [];
-
-  $: if (!selectedItemIds.includes(selectedItemId) && selectedItemId != null) {
-    selectedItemIds = [selectedItemId];
-  } else if (selectedItemId === null) {
-    selectedItemIds = [];
-  }
 
   onDestroy(() => onBlur());
 
@@ -48,28 +39,9 @@
     dispatch('deleteItem', selectedItemIds);
   }
 
-  function onAutoSizeContent() {
-    dataGrid?.autoSizeAllColumns();
-  }
-
-  function onAutoSizeSpace() {
-    dataGrid?.sizeColumnsToFit();
-  }
-
   function onBlur() {
     if (browser) {
       document.removeEventListener('keydown', onKeyDown);
-    }
-  }
-
-  function onCellContextMenu(event: CustomEvent) {
-    const { detail } = event;
-    const { data: clickedRow } = detail;
-    if (selectedItemIds.length <= 1 && (!isRowSelectable || isRowSelectable(detail))) {
-      selectedItemId = getRowId(clickedRow);
-    }
-    if (selectedItemId !== null) {
-      contextMenu.show(detail.event);
     }
   }
 
@@ -97,7 +69,6 @@
   rowSelection="single"
   {scrollToSelection}
   on:blur={onBlur}
-  on:cellContextMenu={onCellContextMenu}
   on:cellMouseOver
   on:columnMoved
   on:columnPinned
@@ -109,16 +80,16 @@
   on:rowDoubleClicked
   on:rowSelected
   on:selectionChanged
-/>
-<ContextMenu bind:this={contextMenu}>
-  <ContextMenuHeader>Actions</ContextMenuHeader>
-  {#if hasEdit}
-    <ContextMenuItem on:click={editItem}>
-      Edit {itemDisplayText}
+>
+  <svelte:fragment slot="context-menu">
+    <ContextMenuHeader>Actions</ContextMenuHeader>
+    {#if hasEdit}
+      <ContextMenuItem on:click={editItem}>
+        Edit {itemDisplayText}
+      </ContextMenuItem>
+    {/if}
+    <ContextMenuItem on:click={deleteItem}>
+      Delete {itemDisplayText}
     </ContextMenuItem>
-  {/if}
-  <ContextMenuItem on:click={deleteItem}>
-    Delete {itemDisplayText}
-  </ContextMenuItem>
-  <ColumnResizeContextMenu on:autoSizeContent={onAutoSizeContent} on:autoSizeSpace={onAutoSizeSpace} />
-</ContextMenu>
+  </svelte:fragment>
+</DataGrid>
