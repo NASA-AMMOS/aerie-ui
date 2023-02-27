@@ -133,7 +133,7 @@
     }
   }
 
-  function attempAutoCompleteDate(event: Event) {
+  function attemptAutoCompleteDate(event: Event) {
     const { value } = getTarget(event);
 
     const parsedDate = getDateFromString(`${value}`);
@@ -212,7 +212,7 @@
     if (key === 'Enter') {
       event.preventDefault();
 
-      attempAutoCompleteDate(event);
+      attemptAutoCompleteDate(event);
       closeDatePicker();
     }
   }
@@ -254,7 +254,7 @@
     {name}
     bind:value={dateString}
     use:popperRef
-    on:change={attempAutoCompleteDate}
+    on:change={attemptAutoCompleteDate}
     on:click={openDatePicker}
     on:focus={openDatePicker}
     on:keydown={onInputKeydown}
