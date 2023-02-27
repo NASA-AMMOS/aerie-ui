@@ -1,5 +1,6 @@
 import type { Selection } from 'd3-selection';
 import type { ActivityId, ActivityUniqueId } from './activity';
+import type { SpanId } from './simulation';
 
 export interface ActivityLayer extends Layer {
   activityColor: string;
@@ -16,6 +17,7 @@ export interface ActivityPoint extends Point {
   label: Label;
   parentUniqueId: ActivityUniqueId | null;
   parent_id: ActivityId | null;
+  simulated_activity_id: SpanId | null;
   unfinished: boolean;
   uniqueId: string;
 }
