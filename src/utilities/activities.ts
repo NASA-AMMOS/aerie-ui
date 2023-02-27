@@ -99,3 +99,11 @@ export function sortActivityDirectivesOrSpans(a: ActivityDirective | Span, b: Ac
   }
   return compare(aStartOffsetMs, bStartOffsetMs);
 }
+
+export enum ActivityDeletionAction {
+  ANCHOR_PLAN = 'anchor-plan',
+  ANCHOR_ROOT = 'anchor-root',
+  DELETE_CHAIN = 'delete-chain',
+  NORMAL = 'normal',
+  IGNORE = 'ignore',
+}

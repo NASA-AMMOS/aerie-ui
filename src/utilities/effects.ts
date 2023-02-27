@@ -94,6 +94,7 @@ import {
   showConfirmModal,
   showCreatePlanBranchModal,
   showCreateViewModal,
+  showDeleteActivitiesModal,
   showEditViewModal,
   showPlanBranchRequestModal,
   showUploadViewModal,
@@ -608,46 +609,24 @@ const effects = {
   },
 
   async deleteActivityDirective(plan_id: number, id: ActivityDirectiveId): Promise<boolean> {
-    try {
-      const { confirm } = await showConfirmModal(
-        'Delete',
-        'Are you sure you want to delete this activity directive?',
-        'Delete Activity Directive',
-      );
-
-      if (confirm) {
-        await reqHasura(gql.DELETE_ACTIVITY_DIRECTIVE, { id, plan_id });
-        activityDirectivesMap.update((currentActivityDirectivesMap: ActivityDirectivesMap) => {
-          delete currentActivityDirectivesMap[id];
-          return { ...currentActivityDirectivesMap };
-        });
-        showSuccessToast('Activity Directive Deleted Successfully');
-        return true;
-      }
-    } catch (e) {
-      catchError('Activity Directive Delete Failed', e);
-      showFailureToast('Activity Directive Delete Failed');
-      return false;
-    }
+    return effects.deleteActivityDirectives(plan_id, [id]);
   },
 
   async deleteActivityDirectives(plan_id: number, ids: ActivityDirectiveId[]): Promise<boolean> {
     try {
-      const { confirm } = await showConfirmModal(
-        'Delete',
-        'Are you sure you want to delete the selected activity directives?',
-        'Delete Activities',
-      );
+      const { confirm, value } = await showDeleteActivitiesModal(ids);
+      console.log(confirm, value);
+      // // TODO: see how many to delete
 
-      if (confirm) {
-        await reqHasura(gql.DELETE_ACTIVITY_DIRECTIVES, { ids, plan_id });
-        activityDirectivesMap.update((currentActivityDirectivesMap: ActivityDirectivesMap) => {
-          ids.forEach(id => delete currentActivityDirectivesMap[id]);
-          return { ...currentActivityDirectivesMap };
-        });
-        showSuccessToast('Activity Directives Deleted Successfully');
-        return true;
-      }
+      // if (confirm) {
+      //   await reqHasura(gql.DELETE_ACTIVITY_DIRECTIVES, { ids, plan_id });
+      //   activityDirectivesMap.update((currentActivityDirectivesMap: ActivityDirectivesMap) => {
+      //     ids.forEach(id => delete currentActivityDirectivesMap[id]);
+      //     return { ...currentActivityDirectivesMap };
+      //   });
+      //   showSuccessToast('Activity Directives Deleted Successfully');
+      //   return true;
+      // }
     } catch (e) {
       catchError('Activity Directives Delete Failed', e);
       showFailureToast('Activity Directives Delete Failed');
