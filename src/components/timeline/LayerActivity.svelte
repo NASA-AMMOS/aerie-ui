@@ -12,6 +12,7 @@
   import type { Activity, ActivityUniqueId } from '../../types/activity';
   import type { ActivityLayerFilter, ActivityPoint, BoundingBox, QuadtreeRect, TimeRange } from '../../types/timeline';
   import { decomposeActivityDirectiveId, sortActivities } from '../../utilities/activities';
+  import { hexToRgba, pSBC } from '../../utilities/color';
   import effects from '../../utilities/effects';
   import { isDeleteEvent } from '../../utilities/keyboardEvents';
   import { getDoyTime, getDoyTimeFromDuration, getDurationInMs, getUnixEpochTime } from '../../utilities/time';
@@ -54,6 +55,7 @@
 
   // Debug
   const DRAW_HITBOXES = false;
+  const DENSE_MODE = false;
 
   // Cache
   const assets: {
@@ -136,7 +138,6 @@
     patternCanvas.height = 16;
     patternCanvas.getContext('2d').drawImage(img, 0, 0);
     assets.pattern = patternCanvas;
-    console.log('done loading');
   }
 
   function loadSVG(svgString) {
@@ -189,6 +190,7 @@
     }
 
     const point: ActivityPoint = {
+      anchor_id: activity.anchor_id,
       children,
       duration: getDurationInMs(activity.duration),
       id: activity.id,
@@ -237,8 +239,14 @@
       const x = offsetX - dragOffsetX;
       dragCurrentX = xScaleView.invert(x).getTime();
       const start_time_doy = getDoyTime(new Date(dragCurrentX));
-      if (dragCurrentX !== dragPoint.x && dragCurrentX >= windowStartTime && dragCurrentX <= windowEndTime) {
-        $activitiesMap[dragPoint.uniqueId].start_time_doy = start_time_doy;
+      if (dragCurrentX !== dragPoint.x) {
+        let time = start_time_doy;
+        if (dragCurrentX < windowStartTime) {
+          time = getDoyTime(new Date(windowStartTime));
+        } else if (dragCurrentX > windowEndTime) {
+          time = getDoyTime(new Date(windowEndTime));
+        }
+        $activitiesMap[dragPoint.uniqueId].start_time_doy = time;
         draw();
       }
     }
@@ -419,7 +427,14 @@
           }
 
           // Draw directive
-          drawActivity(point, directiveXCanvas, directiveStartY, directiveXEndCanvas);
+          const maxCanvasRowY = Math.floor(drawHeight / rowHeight) * rowHeight;
+          const constrainedDirectiveY =
+            directiveStartY > drawHeight - rowHeight ? (directiveStartY % maxCanvasRowY) + rowHeight : directiveStartY;
+
+          const finalDirectiveY = DENSE_MODE ? 0 : constrainedDirectiveY;
+
+          drawActivity(point, directiveXCanvas, finalDirectiveY, directiveXEndCanvas);
+
           // Update maxXForY for directive
           if (maxXPerY[directiveStartY] !== undefined) {
             if (maxXPerY[directiveStartY] < directiveXEndCanvas) {
@@ -432,7 +447,12 @@
           let spanStartY = 0;
           if (matchingSpan) {
             spanStartY = directiveStartY + rowHeight;
-            drawActivity(point, spanXCanvas, spanStartY, spanXEndCanvas, {
+            // const constrainedSpanY = spanStartY % drawHeight;
+            const constrainedSpanY =
+              spanStartY > drawHeight - rowHeight ? (spanStartY % maxCanvasRowY) + rowHeight : spanStartY;
+
+            const finalSpanY = DENSE_MODE ? rowHeight : constrainedSpanY;
+            drawActivity(point, spanXCanvas, finalSpanY, spanXEndCanvas, {
               dashedStroke: directiveMoved,
               directive: false,
               drawHashes: directiveMoved,
@@ -482,10 +502,11 @@
       opacity = 1,
       forceHideLabel = false,
     } = config || {};
-    const activityWidth = directive ? 16 : Math.max(4.0, end - x);
 
-    /* OK so plan - get rid of auto scaling, overdraw when the Y exceeds the entire timeline row height, need
-    to figure out the details here, maybe just modulo */
+    let activityWidth = directive ? 16 : Math.max(4.0, end - x);
+    if (DENSE_MODE && directive) {
+      activityWidth = directive ? 4 : Math.max(4.0, end - x);
+    }
 
     visiblePointsByUniqueId[uniqueId] = point;
 
@@ -499,45 +520,63 @@
       ctx.setLineDash([]);
     }
 
+    const finalOpacity = DENSE_MODE ? 0.2 : opacity;
+
     if (directiveMoved) {
       ctx.fillStyle = 'rgba(235, 236, 236, 1)';
       ctx.strokeStyle = 'rgba(0,0,0,0.24)';
     } else if (selectedActivityId === uniqueId) {
       // ctx.fillStyle = activitySelectedColor;
-      ctx.fillStyle = `rgba(169, 234, 255,${opacity})`;
-      ctx.strokeStyle = `rgba(128,178,194, ${opacity})`;
+      ctx.fillStyle = `rgba(169, 234, 255,${finalOpacity})`;
+      ctx.strokeStyle = `rgba(128,178,194, ${finalOpacity})`;
     } else if (point.unfinished) {
       ctx.fillStyle = activityUnfinishedColor;
       ctx.strokeStyle = '#C19065';
     } else {
-      ctx.fillStyle = `rgba(254,189,133,${opacity})`;
-      ctx.strokeStyle = `rgba(193,144,101,${opacity})`;
+      ctx.fillStyle = `rgba(254,189,133,${finalOpacity})`;
+      if (DENSE_MODE) {
+        ctx.strokeStyle = `rgba(0,0,0,${0.3})`;
+      } else {
+        ctx.strokeStyle = `rgba(0,0,0,${finalOpacity * 0.2})`;
+      }
       // ctx.fillStyle = activityColor;
+      ctx.fillStyle = hexToRgba(activityColor, finalOpacity);
     }
 
-    // ctx.strokeStyle = '#8DA4B3';
-    ctx.lineWidth = 1;
-    if (directive) {
+    // ctx.lineWidth = 1;
+    if (directive && !DENSE_MODE) {
       const p1 = new Path2D(
         'M0 0.470589C0 0.21069 0.21069 0 0.470588 0H8C12.4183 0 16 3.58172 16 8V8C16 12.4183 12.4183 16 8 16H0.470589C0.21069 16 0 15.7893 0 15.5294V0.470589Z',
       );
       const p2 = new Path2D('M0.5 15.5V0.5H8C12.1421 0.5 15.5 3.85786 15.5 8C15.5 12.1421 12.1421 15.5 8 15.5H0.5Z');
       ctx.save();
-      ctx.setTransform(2, 0, 0, 2, x * dpr, y * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, x * dpr, y * dpr);
       ctx.fill(p1);
       ctx.stroke(p2);
       ctx.restore();
     } else {
       // Activity rect
-      const rect = new Path2D();
-      rect.roundRect(x, y, activityWidth, activityHeight, 2);
+      if (!DENSE_MODE) {
+        const rect = new Path2D();
+        rect.roundRect(x, y, activityWidth, activityHeight, 2);
 
-      // Activity rect stroke
-      const strokeRect = new Path2D();
-      strokeRect.roundRect(x + 0.5, y + 0.5, activityWidth - 1, activityHeight - 1, 1);
+        // Activity rect stroke
+        const strokeRect = new Path2D();
+        strokeRect.roundRect(x + 0.5, y + 0.5, activityWidth - 1, activityHeight - 1, 1);
 
-      ctx.fill(rect);
-      ctx.stroke(strokeRect);
+        ctx.fill(rect);
+        ctx.stroke(strokeRect);
+      } else {
+        const rect = new Path2D();
+        rect.rect(x, y, activityWidth, activityHeight);
+
+        // Activity rect stroke
+        const strokeRect = new Path2D();
+        strokeRect.rect(x + 0.5, y + 0.5, activityWidth - 1, activityHeight - 1);
+
+        ctx.fill(rect);
+        ctx.stroke(strokeRect);
+      }
     }
 
     // Draw hash marks if requested and if there is room
@@ -576,13 +615,18 @@
     const hideLabel = point.label?.hidden || forceHideLabel || false;
     let labelOffset = directive ? 18 : 5;
     let hitboxWidth = activityWidth;
-    if (!hideLabel) {
-      const { labelText, textMetrics } = setLabelContext(point, opacity !== 1 ? 0.8 : 1); // opacity obviously a hack for now
+    if (!hideLabel && !DENSE_MODE) {
+      const color =
+        selectedActivityId === uniqueId
+          ? // ? `rgba(169, 234, 255,${opacity})`
+            '#a9eaff'
+          : activityColor;
+      const { labelText, textMetrics } = setLabelContext(point, opacity !== 1 ? 0.8 : 1, color); // opacity obviously a hack for now
       ctx.fillText(labelText, x + labelOffset, y + activityHeight / 2, textMetrics.width);
       hitboxWidth = Math.max(hitboxWidth, textMetrics.width + labelOffset);
     }
 
-    if (directive) {
+    if (directive && !DENSE_MODE) {
       ctx.drawImage(assets.directiveIcon, x + 1, y);
     }
 
@@ -650,12 +694,10 @@
     return null;
   }
 
-  function setLabelContext(point: ActivityPoint, opacity = 1) {
+  function setLabelContext(point: ActivityPoint, opacity = 1, color = '#000000') {
     const fontSize = point.label?.fontSize || 12;
     const fontFace = 'Inter';
-    // ctx.fillStyle = point.label?.color || '#000000';
-    // ctx.fillStyle = point.label?.color || '#4A3603';
-    ctx.fillStyle = point.label?.color || `rgba(74,54,3,${opacity})`;
+    ctx.fillStyle = point.label?.color || hexToRgba(pSBC(0.15, '#000000', color, null), opacity);
     ctx.font = `${fontSize}px ${fontFace}`;
     ctx.textAlign = point.label?.align || 'start';
     ctx.textBaseline = point.label?.baseline || 'middle';

@@ -12,6 +12,7 @@ export type ActivityLayerFilter = {
 };
 
 export interface ActivityPoint extends Point {
+  anchor_id: number | null;
   children: ActivityPoint[];
   duration: number;
   label: Label;
