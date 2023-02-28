@@ -106,17 +106,7 @@
                   value={ActivityDeletionAction.ANCHOR_ROOT}
                   on:change={onChange}
                 />
-                Leave activities in place
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  bind:group={activityDirectiveDeletionMap[activityId]}
-                  name={`${activityId}`}
-                  value={ActivityDeletionAction.DELETE_CHAIN}
-                  on:change={onChange}
-                />
-                Delete rest of chain
+                Re-anchor to anchor
               </label>
               <label>
                 <input
@@ -127,6 +117,16 @@
                   on:change={onChange}
                 />
                 Re-anchor to plan start
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  bind:group={activityDirectiveDeletionMap[activityId]}
+                  name={`${activityId}`}
+                  value={ActivityDeletionAction.DELETE_CHAIN}
+                  on:change={onChange}
+                />
+                Delete rest of chain
               </label>
             </div>
           </div>
