@@ -23,7 +23,7 @@
 
   async function onChange() {
     const { errors: validationErrors, definition: validViewDefinition } = await effects.loadViewFromFile(files);
-    console.log(validationErrors, validViewDefinition);
+
     errors = validationErrors ?? [];
     viewDefinition = validViewDefinition;
   }
@@ -32,12 +32,22 @@
     fileInput.value = '';
   }
 
+  function onKeydown(event: KeyboardEvent) {
+    const { key } = event;
+    if (key === 'Enter' && !errors.length && viewDefinition) {
+      event.preventDefault();
+      upload();
+    }
+  }
+
   function upload() {
     if (!errors.length) {
       dispatch('upload', { definition: viewDefinition, name: viewName });
     }
   }
 </script>
+
+<svelte:window on:keydown={onKeydown} />
 
 <Modal {height} {width}>
   <ModalHeader on:close>Upload View JSON</ModalHeader>
@@ -50,7 +60,7 @@
       <label for="file">View JSON File</label>
       <input
         bind:this={fileInput}
-        class="w-100"
+        class="w-100 upload"
         class:error={!!errors.length}
         name="file"
         required
@@ -69,6 +79,10 @@
 </Modal>
 
 <style>
+  .upload {
+    margin-bottom: 8px;
+  }
+
   .error {
     background-color: var(--st-input-error-background-color);
     border: 1px solid var(--st-red);
