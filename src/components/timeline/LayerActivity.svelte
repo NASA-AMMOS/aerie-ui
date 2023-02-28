@@ -59,9 +59,10 @@
 
   // Cache
   const assets: {
+    anchorIcon: HTMLImageElement;
     directiveIcon: HTMLImageElement;
     pattern: HTMLCanvasElement;
-  } = { directiveIcon: null, pattern: null };
+  } = { anchorIcon: null, directiveIcon: null, pattern: null };
 
   $: onBlur(blur);
   $: onFocus(focus);
@@ -111,33 +112,49 @@
       new FontFace('Inter', 'url(/Inter-Regular.woff2)').load();
     }
 
-    const svg = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    const directiveIconSVG = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g opacity="0.64">
     <path d="M12 8L6 11.4641L6 4.5359L12 8Z" fill="#1B1D1E"/>
     <line x1="3" y1="4" x2="3" y2="12" stroke="black" stroke-width="2"/>
     </g>
     </svg>
     `;
-    assets.directiveIcon = loadSVG(svg);
+    assets.directiveIcon = loadSVG(directiveIconSVG);
 
-    const hashes = `<svg width="24" height="16" viewBox="0 0 24 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <g clip-path="url(#clip0_239_151857)">
-      <line x1="0.387617" y1="-0.315836" x2="22.3876" y2="26.6842" stroke="red" stroke-opacity="1"/>
-      <line x1="10.3876" y1="-0.315836" x2="32.3876" y2="26.6842" stroke="red" stroke-opacity="1"/>
+    const anchorIconSVG = `
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <g clip-path="url(#clip0_204_151850)">
+      <path d="M13 10L6 10C4.89543 10 4 9.10457 4 8L4 3" stroke="#545F64" stroke-width="1.5"/>
+      <rect x="8.5" y="8.5" width="7" height="3" rx="0.5" fill="white" stroke="#293137"/>
+      <path d="M4 0L7.4641 5.25L0.535898 5.25L4 0Z" fill="#545F64"/>
       </g>
       <defs>
-      <clipPath id="clip0_239_151857">
-      <rect width="24" height="16" fill="white"/>
+      <clipPath id="clip0_204_151850">
+      <rect width="16" height="16" fill="white"/>
       </clipPath>
       </defs>
-      </svg>`;
+    </svg>
+    `;
+    assets.anchorIcon = loadSVG(anchorIconSVG);
 
-    const img = loadSVG(hashes);
-    const patternCanvas = document.createElement('canvas');
-    patternCanvas.width = 24;
-    patternCanvas.height = 16;
-    patternCanvas.getContext('2d').drawImage(img, 0, 0);
-    assets.pattern = patternCanvas;
+    // const hashes = `<svg width="24" height="16" viewBox="0 0 24 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    //   <g clip-path="url(#clip0_239_151857)">
+    //   <line x1="0.387617" y1="-0.315836" x2="22.3876" y2="26.6842" stroke="red" stroke-opacity="1"/>
+    //   <line x1="10.3876" y1="-0.315836" x2="32.3876" y2="26.6842" stroke="red" stroke-opacity="1"/>
+    //   </g>
+    //   <defs>
+    //   <clipPath id="clip0_239_151857">
+    //   <rect width="24" height="16" fill="white"/>
+    //   </clipPath>
+    //   </defs>
+    //   </svg>`;
+
+    // const img = loadSVG(hashes);
+    // const patternCanvas = document.createElement('canvas');
+    // patternCanvas.width = 24;
+    // patternCanvas.height = 16;
+    // patternCanvas.getContext('2d').drawImage(img, 0, 0);
+    // assets.pattern = patternCanvas;
   }
 
   function loadSVG(svgString) {
@@ -624,6 +641,11 @@
       const { labelText, textMetrics } = setLabelContext(point, opacity !== 1 ? 0.8 : 1, color); // opacity obviously a hack for now
       ctx.fillText(labelText, x + labelOffset, y + activityHeight / 2, textMetrics.width);
       hitboxWidth = Math.max(hitboxWidth, textMetrics.width + labelOffset);
+
+      // Draw anchor icon
+      if (point.anchor_id) {
+        ctx.drawImage(assets.anchorIcon, x + hitboxWidth + 4, y);
+      }
     }
 
     if (directive && !DENSE_MODE) {
