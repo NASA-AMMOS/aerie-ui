@@ -352,6 +352,15 @@ const gql = {
     }
   `,
 
+  DELETE_SUBTREE: `#graphql
+    mutation DeleteSubtree($plan_id: Int!, $activity_id: Int!) {
+      delete_activity_by_pk_delete_subtree(args: { _plan_id: $plan_id, _activity_id: $activity_id }) {
+        change_type
+        affected_row
+      }
+    }
+  `,
+
   DELETE_USER_SEQUENCE: `#graphql
     mutation DeleteUserSequence($id: Int!) {
       deleteUserSequence: delete_user_sequence_by_pk(id: $id) {
@@ -883,6 +892,22 @@ const gql = {
     }
   `,
 
+  PLAN_MERGE_RESOLVE_ALL_CONFLICTS: `#graphql
+    mutation PlanMergeResolveAllConflicts($merge_request_id: Int!, $resolution: resolution_type!) {
+      set_resolution_bulk (
+        args: { _merge_request_id: $merge_request_id, _resolution: $resolution }
+      ) {
+        activity_id
+        change_type_source
+        change_type_target
+        resolution
+        merge_base
+        source
+        target
+      }
+    }
+  `,
+
   PLAN_MERGE_RESOLVE_CONFLICT: `#graphql
     mutation PlanMergeResolveConflict($merge_request_id: Int!, $activity_id: Int!, $resolution: resolution_type!) {
       set_resolution(
@@ -899,18 +924,20 @@ const gql = {
     }
   `,
 
-  PlAN_MERGE_RESOLVE_ALL_CONFLICTS: `#graphql
-    mutation PlanMergeResolveAllConflicts($merge_request_id: Int!, $resolution: resolution_type!) {
-      set_resolution_bulk (
-        args: { _merge_request_id: $merge_request_id, _resolution: $resolution }
-      ) {
-        activity_id
-        change_type_source
-        change_type_target
-        resolution
-        merge_base
-        source
-        target
+  REANCHOR_PLAN_START: `#graphql
+    mutation ReanchorPlanStart($plan_id: Int!, $activity_id: Int!) {
+      delete_activity_by_pk_reanchor_plan_start(args: { _plan_id: $plan_id, _activity_id: $activity_id }) {
+        change_type
+        affected_row
+      }
+    }
+  `,
+
+  REANCHOR_ROOT_ANCHOR: `#graphql
+    mutation ReanchorRootAnchor($plan_id: Int!, $activity_id: Int!) {
+      delete_activity_by_pk_reanchor_to_anchor(args: { _plan_id: $plan_id, _activity_id: $activity_id }) {
+        change_type
+        affected_row
       }
     }
   `,
