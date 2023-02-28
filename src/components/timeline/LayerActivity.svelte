@@ -136,25 +136,6 @@
     </svg>
     `;
     assets.anchorIcon = loadSVG(anchorIconSVG);
-
-    // const hashes = `<svg width="24" height="16" viewBox="0 0 24 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-    //   <g clip-path="url(#clip0_239_151857)">
-    //   <line x1="0.387617" y1="-0.315836" x2="22.3876" y2="26.6842" stroke="red" stroke-opacity="1"/>
-    //   <line x1="10.3876" y1="-0.315836" x2="32.3876" y2="26.6842" stroke="red" stroke-opacity="1"/>
-    //   </g>
-    //   <defs>
-    //   <clipPath id="clip0_239_151857">
-    //   <rect width="24" height="16" fill="white"/>
-    //   </clipPath>
-    //   </defs>
-    //   </svg>`;
-
-    // const img = loadSVG(hashes);
-    // const patternCanvas = document.createElement('canvas');
-    // patternCanvas.width = 24;
-    // patternCanvas.height = 16;
-    // patternCanvas.getContext('2d').drawImage(img, 0, 0);
-    // assets.pattern = patternCanvas;
   }
 
   function loadSVG(svgString) {
@@ -417,14 +398,21 @@
             opacity = directiveMoved ? 0.24 : 1;
           }
 
+          //
+
+          // Packing
           let i = rowHeight;
           let directiveStartY = 0;
           let foundY = false;
           while (!foundY) {
+            // Max directive and span x for a y (row)
             let maxDirectiveXForY = maxXPerY[i];
             let maxSpanXForY = maxXPerY[i + rowHeight];
+            // If something exists at this y
             if (maxDirectiveXForY !== undefined) {
+              // If the directive will fit
               if (directiveXCanvas > maxDirectiveXForY) {
+                // If there is no span or if the span will fit then this Y is valid
                 if (spanXCanvas === undefined || maxSpanXForY === undefined || spanXCanvas > maxSpanXForY) {
                   foundY = true;
                   directiveStartY = i;
@@ -435,6 +423,8 @@
                 i += rowHeight;
               }
             } else {
+              // Otherwise if nothing exists for the next row or if the span starts after the max x for that row
+              // then this Y is valid
               if (maxSpanXForY === undefined || spanXCanvas > maxSpanXForY) {
                 foundY = true;
                 directiveStartY = i;
