@@ -394,7 +394,7 @@
         if (isParentActivity && point.x + point.duration >= viewTimeRange.start && point.x <= viewTimeRange.end) {
           const directiveXCanvas = xScaleView(point.x);
           const { textWidth: directiveTextWidth } = setLabelContext(point);
-          const directiveXEndCanvas = directiveXCanvas + 18 + directiveTextWidth; // 18 is directive icon plus 2px padding
+          const directiveXEndCanvas = directiveXCanvas + 18 + directiveTextWidth; // 16 is directive icon plus 2px padding
 
           const matchingSpan = $spans.find(span => span.id === point.simulated_activity_id);
           let spanX;
@@ -412,6 +412,7 @@
             spanXEnd = spanX + getDurationInMs(matchingSpan.duration);
             spanXEndCanvas = xScaleView(spanXEnd);
             spanXEndCanvasWithText = spanXEndCanvas + directiveTextWidth;
+            // TODO handle anchor case
             directiveMoved = spanX !== point.x;
             opacity = directiveMoved ? 0.24 : 1;
           }
@@ -621,10 +622,7 @@
 
       ctx.save();
       ctx.translate(x, y);
-      // const p = ctx.createPattern(assets.pattern, 'repeat');
-      const p = ctx.createPattern(patternCanvas, 'repeat');
-      ctx.fillStyle = 'Red';
-      ctx.fillStyle = p;
+      ctx.fillStyle = ctx.createPattern(patternCanvas, 'repeat');
       ctx.fillRect(0, 0, activityWidth, activityHeight);
       ctx.restore();
     }
@@ -644,7 +642,10 @@
 
       // Draw anchor icon
       if (point.anchor_id) {
+        ctx.globalAlpha = opacity;
         ctx.drawImage(assets.anchorIcon, x + hitboxWidth + 4, y);
+        ctx.globalAlpha = 1;
+        hitboxWidth += 20;
       }
     }
 
