@@ -28,7 +28,7 @@ export const load: PageLoad = async ({ parent, params, url }) => {
           analysis_only: false,
           horizon_end: end_time_doy,
           horizon_start: start_time_doy,
-          plan_id: Number(id),
+          plan_id: planId,
           plan_revision: revision,
           simulation_arguments: {},
         });
