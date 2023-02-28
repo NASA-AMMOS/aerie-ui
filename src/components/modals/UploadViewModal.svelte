@@ -18,8 +18,11 @@
   let fileInput: HTMLInputElement;
   let errors: string[] = [];
   let files: FileList;
+  let valid: boolean = false;
   let viewDefinition: ViewDefinition | null;
   let viewName: string;
+
+  $: valid = !errors.length && !!viewDefinition && !!viewName;
 
   async function onChange() {
     const { errors: validationErrors, definition: validViewDefinition } = await effects.loadViewFromFile(files);
@@ -34,7 +37,7 @@
 
   function onKeydown(event: KeyboardEvent) {
     const { key } = event;
-    if (key === 'Enter' && !errors.length && viewDefinition) {
+    if (key === 'Enter' && valid) {
       event.preventDefault();
       upload();
     }
@@ -74,7 +77,7 @@
   </ModalContent>
   <ModalFooter>
     <button class="st-button secondary" on:click={() => dispatch('close')}> Cancel </button>
-    <button class="st-button" disabled={!!errors.length || !viewDefinition} on:click={upload}> Upload View </button>
+    <button class="st-button" disabled={!valid} on:click={upload}> Upload View </button>
   </ModalFooter>
 </Modal>
 
