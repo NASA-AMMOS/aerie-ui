@@ -54,7 +54,7 @@
   let visiblePointsByUniqueId: Record<ActivityUniqueId, ActivityPoint> = {};
 
   // Debug
-  const DRAW_HITBOXES = false;
+  const DEBUG_MODE = false;
   const DENSE_MODE = false;
 
   // Cache
@@ -368,10 +368,8 @@
       const maxXPerY: Record<number, number> = {};
 
       const activityPoints: ActivityPoint[] = activitiesToPoints(activities);
-      // const boundingBoxes: BoundingBox[] = [];
       for (const point of activityPoints) {
         const isParentActivity = !point.parent_id;
-
         if (isParentActivity && point.x + point.duration >= viewTimeRange.start && point.x <= viewTimeRange.end) {
           const directiveXCanvas = xScaleView(point.x);
           const { textWidth: directiveTextWidth } = setLabelContext(point);
@@ -383,22 +381,19 @@
           let spanXEnd;
           let opacity = 1;
           let spanXEndCanvas;
-          let spanXEndCanvasWithText;
+          let maxSpanXCanvas;
           let directiveMoved = false;
           if (matchingSpan) {
             const spanStartDOY = getDoyTimeFromDuration($plan.start_time, matchingSpan.start_offset);
-            // const spanEndDOY = getDoyTimeFromDuration($plan.start_time, matchingSpan.duration);
             spanX = getUnixEpochTime(spanStartDOY);
             spanXCanvas = xScaleView(spanX);
             spanXEnd = spanX + getDurationInMs(matchingSpan.duration);
             spanXEndCanvas = xScaleView(spanXEnd);
-            spanXEndCanvasWithText = spanXEndCanvas + directiveTextWidth;
+            maxSpanXCanvas = Math.max(spanXEndCanvas, spanXCanvas + directiveTextWidth + 5); // label offset, TODO don't hardcode
             // TODO handle anchor case
             directiveMoved = spanX !== point.x;
             opacity = directiveMoved ? 0.24 : 1;
           }
-
-          //
 
           // Packing
           let i = rowHeight;
@@ -414,8 +409,31 @@
               if (directiveXCanvas > maxDirectiveXForY) {
                 // If there is no span or if the span will fit then this Y is valid
                 if (spanXCanvas === undefined || maxSpanXForY === undefined || spanXCanvas > maxSpanXForY) {
-                  foundY = true;
-                  directiveStartY = i;
+                  const childrenBounds = drawChildren(point, i + rowHeight, true);
+                  if (!childrenBounds) {
+                    foundY = true;
+                    directiveStartY = i;
+                  } else {
+                    // Check child bounds for each y
+                    let yy = i + rowHeight;
+                    let fits = true;
+                    while (yy <= childrenBounds.maxY) {
+                      // TODO child bounds could provide a maxXForY instead of absolute corner bounds?
+                      const maxXForChildY = maxXPerY[yy];
+                      // If the children bbox is earlier than maxX for that Y we can't fit the bbox
+                      if (maxXForChildY !== undefined && childrenBounds.minX < maxXForChildY) {
+                        fits = false;
+                        break;
+                      }
+                      yy += rowHeight;
+                    }
+                    if (fits) {
+                      foundY = true;
+                      directiveStartY = i;
+                    } else {
+                      i += rowHeight;
+                    }
+                  }
                 } else {
                   i += rowHeight;
                 }
@@ -426,8 +444,31 @@
               // Otherwise if nothing exists for the next row or if the span starts after the max x for that row
               // then this Y is valid
               if (maxSpanXForY === undefined || spanXCanvas > maxSpanXForY) {
-                foundY = true;
-                directiveStartY = i;
+                const childrenBounds = drawChildren(point, i + rowHeight, true);
+                if (!childrenBounds) {
+                  foundY = true;
+                  directiveStartY = i;
+                } else {
+                  // Check child bounds for each y
+                  let yy = i + rowHeight;
+                  let fits = true;
+                  while (yy <= childrenBounds.maxY) {
+                    // TODO child bounds could provide a maxXForY instead of absolute corner bounds?
+                    const maxXForChildY = maxXPerY[yy];
+                    // If the children bbox is earlier than maxX for that Y we can't fit the bbox
+                    if (maxXForChildY !== undefined && childrenBounds.minX < maxXForChildY) {
+                      fits = false;
+                      break;
+                    }
+                    yy += rowHeight;
+                  }
+                  if (fits) {
+                    foundY = true;
+                    directiveStartY = i;
+                  } else {
+                    i += rowHeight;
+                  }
+                }
               } else {
                 i += rowHeight;
               }
@@ -453,6 +494,7 @@
           }
 
           let spanStartY = 0;
+          // Draw span (faking for now)
           if (matchingSpan) {
             spanStartY = directiveStartY + rowHeight;
             // const constrainedSpanY = spanStartY % drawHeight;
@@ -468,16 +510,70 @@
             });
             // Update maxXForY for span
             if (maxXPerY[spanStartY] !== undefined) {
-              if (maxXPerY[spanStartY] < spanXEndCanvasWithText) {
-                maxXPerY[spanStartY] = spanXEndCanvasWithText;
+              if (maxXPerY[spanStartY] < maxSpanXCanvas) {
+                maxXPerY[spanStartY] = maxSpanXCanvas;
               }
             } else {
-              maxXPerY[spanStartY] = spanXEndCanvasWithText;
+              maxXPerY[spanStartY] = maxSpanXCanvas;
             }
           }
 
+          // Draw children
+
+          // TODO get children overdraw working
+          // TODO get the children start Y, could be diff from spanStartY
+          const childBbox = drawChildren(point, spanStartY, true);
+          const childStartY = spanStartY;
+          const childHeight = childBbox ? childBbox.maxY - spanStartY : 0;
+          const constrainedChildrenY =
+            childStartY > drawHeight - childHeight ? (childStartY % maxCanvasRowY) + rowHeight : childStartY;
+          const finalChildrenY = DENSE_MODE ? rowHeight : constrainedChildrenY;
+          drawChildren(point, childStartY, false, {
+            dashedStroke: directiveMoved,
+            directive: false,
+            drawHashes: directiveMoved,
+            opacity,
+          });
+          // TODO update maxXForY for children
+          if (childBbox) {
+            let childStartY = finalChildrenY + rowHeight;
+            while (childStartY <= childBbox.maxY) {
+              // TODO child bounds could provide a maxXForY instead of absolute corner bounds?
+              const maxXForChildY = maxXPerY[childStartY];
+              if (maxXForChildY !== undefined) {
+                if (maxXForChildY < childBbox.maxX) {
+                  maxXPerY[childStartY] = childBbox.maxX;
+                }
+              } else {
+                maxXPerY[childStartY] = childBbox.maxX;
+              }
+              childStartY += rowHeight;
+            }
+            if (DEBUG_MODE) {
+              // Draw child bbox
+              const rect = new Path2D();
+              rect.rect(
+                childBbox.minX,
+                finalChildrenY + rowHeight,
+                childBbox.maxX - childBbox.minX,
+                childBbox.maxY - finalChildrenY,
+              );
+              ctx.strokeStyle = 'green';
+              ctx.stroke(rect);
+            }
+          }
           totalMaxY = Math.max(totalMaxY, directiveStartY, spanStartY);
         }
+      }
+      if (DEBUG_MODE) {
+        Object.keys(maxXPerY).forEach(key => {
+          const x = maxXPerY[key];
+          const rect = new Path2D();
+          rect.rect(x, parseInt(key), 2, rowHeight - 4);
+          ctx.fillStyle = 'red';
+          ctx.fill(rect);
+          ctx.fillText(x, x + 4, parseInt(key) + 8);
+        });
       }
 
       const newHeight = totalMaxY + rowHeight;
@@ -643,7 +739,7 @@
       ctx.drawImage(assets.directiveIcon, x + 1, y);
     }
 
-    if (DRAW_HITBOXES) {
+    if (DEBUG_MODE) {
       // Draw hitbox
       ctx.strokeStyle = 'red';
       ctx.strokeRect(x, y, hitboxWidth, activityHeight);
@@ -658,10 +754,11 @@
     });
   }
 
-  function drawChildren(parent: ActivityPoint, parentY: number): BoundingBox | null {
+  function drawChildren(parent: ActivityPoint, parentY: number, skipDraw: boolean = false, options = {}) {
     if (showChildren && parent?.children?.length) {
       const boundingBoxes: BoundingBox[] = [];
 
+      let minX = Number.MAX_SAFE_INTEGER;
       let maxX = Number.MIN_SAFE_INTEGER;
       let maxY = Number.MIN_SAFE_INTEGER;
       let y = parentY + rowHeight;
@@ -670,7 +767,7 @@
         const x = xScaleView(point.x);
         const end = xScaleView(point.x + point.duration);
         const { textWidth } = setLabelContext(point);
-        const xEnd = end + textWidth;
+        const xEnd = Math.max(end, x + textWidth + 5); // TODO make this cleaner
 
         for (const boundingBox of boundingBoxes) {
           if (x <= boundingBox.maxX) {
@@ -678,8 +775,13 @@
           }
         }
 
-        drawActivity(point, x, y, end, { directive: false });
+        if (!skipDraw) {
+          drawActivity(point, x, y, end, { ...options, directive: false });
+        }
 
+        if (x < minX) {
+          minX = x;
+        }
         if (xEnd > maxX) {
           maxX = xEnd;
         }
@@ -687,9 +789,12 @@
           maxY = y;
         }
 
-        const childrenBoundingBox: BoundingBox = drawChildren(point, y);
+        const childrenBoundingBox: BoundingBox = drawChildren(point, y, skipDraw, options);
 
         if (childrenBoundingBox) {
+          if (childrenBoundingBox.minX < minX) {
+            minX = childrenBoundingBox.minX;
+          }
           if (childrenBoundingBox.maxX > maxX) {
             maxX = childrenBoundingBox.maxX;
           }
@@ -698,10 +803,10 @@
           }
         }
 
-        boundingBoxes.push({ maxX, maxY });
+        boundingBoxes.push({ maxX, maxY, minX });
       }
 
-      return { maxX, maxY };
+      return { maxX, maxY, minX };
     }
 
     return null;
