@@ -18,6 +18,7 @@ export interface ActivityPoint extends Point {
   label: Label;
   parentUniqueId: ActivityUniqueId | null;
   parent_id: ActivityId | null;
+  rootDirectiveID: string;
   simulated_activity_id: SpanId | null;
   unfinished: boolean;
   uniqueId: string;

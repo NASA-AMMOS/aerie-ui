@@ -11,7 +11,7 @@
   import { timelineLockStatus } from '../../stores/views';
   import type { Activity, ActivityUniqueId } from '../../types/activity';
   import type { ActivityLayerFilter, ActivityPoint, BoundingBox, QuadtreeRect, TimeRange } from '../../types/timeline';
-  import { decomposeActivityDirectiveId, sortActivities } from '../../utilities/activities';
+  import { decomposeActivityDirectiveId, getActivityRootParent, sortActivities } from '../../utilities/activities';
   import { hexToRgba, pSBC } from '../../utilities/color';
   import effects from '../../utilities/effects';
   import { isDeleteEvent } from '../../utilities/keyboardEvents';
@@ -152,7 +152,9 @@
    * Recursively converts an Activity to an ActivityPoint.
    * Sorts child activity points in start time ascending order.
    */
-  function activityToPoint(activity: Activity): ActivityPoint {
+  function activityToPoint(activity: Activity, _rootDirectiveID?: string): ActivityPoint {
+    // Track the root directive ID. If this is a directive, take directive ID, otherwise take it from args.
+    const rootDirectiveID = _rootDirectiveID ?? activity.uniqueId;
     const children = activity?.childUniqueIds
       ? [...activity.childUniqueIds]
           .sort((aId: ActivityUniqueId, bId: ActivityUniqueId): number => {
@@ -169,7 +171,7 @@
             const childActivity = $activitiesMap[childUniqueId];
 
             if (childActivity) {
-              const childActivityPoint = activityToPoint(childActivity);
+              const childActivityPoint = activityToPoint(childActivity, rootDirectiveID);
               childActivityPoints.push(childActivityPoint);
             }
 
@@ -199,6 +201,7 @@
       name: activity.name,
       parentUniqueId: activity.parentUniqueId,
       parent_id: activity.parent_id,
+      rootDirectiveID,
       simulated_activity_id: activity.simulated_activity_id,
       type: 'activity',
       unfinished: activity.unfinished,
@@ -214,7 +217,7 @@
    * Sorts activities in start time ascending order.
    */
   function activitiesToPoints(activities: Activity[]): ActivityPoint[] {
-    return [...activities].sort(sortActivities).map(activity => activityToPoint(activity));
+    return [...activities].sort(sortActivities).map(activity => activityToPoint(activity, activity.uniqueId));
   }
 
   /**
@@ -340,6 +343,18 @@
     if (e) {
       dragActivityEnd();
     }
+  }
+
+  function isPointPrimaryHighlight(selectedActivityId: string, activityID: string) {
+    return selectedActivityId === activityID;
+  }
+
+  function isPointSecondaryHighlight(selectedActivityId: string, point: ActivityPoint) {
+    // TODO probably not the most efficient
+    return (
+      getActivityRootParent($activitiesMap, selectedActivityId)?.uniqueId ===
+      getActivityRootParent($activitiesMap, point?.uniqueId).uniqueId
+    );
   }
 
   /**
@@ -562,6 +577,30 @@
               ctx.stroke(rect);
             }
           }
+
+          // // Draw selection bbox if needed
+          // const primaryHighlight = isPointPrimaryHighlight(selectedActivityId, point.uniqueId); // TODO names not great
+          // const secondaryHighlight = isPointSecondaryHighlight(selectedActivityId, point);
+          // if (primaryHighlight || secondaryHighlight) {
+          //   const rect = new Path2D();
+          //   rect.rect(
+          //     directiveXCanvas,
+          //     directiveStartY,
+          //     Math.max(directiveXEndCanvas, spanXEndCanvas, childBbox?.maxX || 0) - directiveXCanvas,
+          //     Math.max(directiveStartY, spanStartY, childBbox?.maxY || 0) - directiveStartY + rowHeight,
+          //   );
+          //   console.log(
+          //     directiveXCanvas,
+          //     directiveStartY,
+          //     Math.max(directiveXEndCanvas, spanXEndCanvas, childBbox?.maxX) - directiveXCanvas,
+          //     Math.max(directiveStartY + rowHeight, spanStartY + rowHeight, childBbox?.maxY) -
+          //       directiveStartY +
+          //       rowHeight,
+          //   );
+          //   ctx.strokeStyle = '#58acc6';
+          //   ctx.stroke(rect);
+          // }
+
           totalMaxY = Math.max(totalMaxY, directiveStartY, spanStartY);
         }
       }
@@ -591,7 +630,6 @@
     config?: {
       dashedStroke?: boolean;
       directive?: boolean;
-      directiveMoved?: boolean;
       drawHashes?: boolean;
       forceHideLabel?: boolean;
       opacity?: number;
@@ -601,7 +639,6 @@
     const {
       dashedStroke = false,
       directive = true,
-      directiveMoved = false,
       drawHashes = false,
       opacity = 1,
       forceHideLabel = false,
@@ -624,15 +661,27 @@
       ctx.setLineDash([]);
     }
 
-    const finalOpacity = DENSE_MODE ? 0.2 : opacity;
+    const primaryHighlight = isPointPrimaryHighlight(selectedActivityId, uniqueId); // TODO names not great
+    const secondaryHighlight = isPointSecondaryHighlight(selectedActivityId, point);
 
-    if (directiveMoved) {
-      ctx.fillStyle = 'rgba(235, 236, 236, 1)';
-      ctx.strokeStyle = 'rgba(0,0,0,0.24)';
-    } else if (selectedActivityId === uniqueId) {
+    // const finalOpacity = DENSE_MODE ? 0.2 : opacity;
+    let finalOpacity = opacity;
+    if (selectedActivityId) {
+      if (primaryHighlight) {
+        finalOpacity = 1;
+      } else {
+        finalOpacity = 0.25;
+      }
+    }
+
+    if (primaryHighlight) {
       // ctx.fillStyle = activitySelectedColor;
-      ctx.fillStyle = `rgba(169, 234, 255,${finalOpacity})`;
-      ctx.strokeStyle = `rgba(128,178,194, ${finalOpacity})`;
+      ctx.fillStyle = `rgba(169, 234, 255,${1})`;
+      ctx.strokeStyle = `rgba(128,178,194, ${1})`;
+    } else if (secondaryHighlight) {
+      // ctx.fillStyle = activitySelectedColor;
+      ctx.fillStyle = `rgba(169, 234, 255,${0.24})`;
+      ctx.strokeStyle = `rgba(128,178,194, ${0.24})`;
     } else if (point.unfinished) {
       ctx.fillStyle = activityUnfinishedColor;
       ctx.strokeStyle = '#C19065';
@@ -717,18 +766,21 @@
     let labelOffset = directive ? 18 : 5;
     let hitboxWidth = activityWidth;
     if (!hideLabel && !DENSE_MODE) {
-      const color =
-        selectedActivityId === uniqueId
-          ? // ? `rgba(169, 234, 255,${opacity})`
-            '#a9eaff'
-          : activityColor;
-      const { labelText, textMetrics } = setLabelContext(point, opacity !== 1 ? 0.8 : 1, color); // opacity obviously a hack for now
+      const color = primaryHighlight || secondaryHighlight ? activitySelectedColor : activityColor;
+
+      // TODO lol clean this logic it's a mess
+      let textOpacity = opacity !== 1 && !primaryHighlight ? 0.75 : 1;
+      if (selectedActivityId && !primaryHighlight) {
+        textOpacity = 0.6;
+      }
+
+      const { labelText, textMetrics } = setLabelContext(point, textOpacity, color); // opacity obviously a hack for now
       ctx.fillText(labelText, x + labelOffset, y + activityHeight / 2, textMetrics.width);
       hitboxWidth = Math.max(hitboxWidth, textMetrics.width + labelOffset);
 
       // Draw anchor icon
       if (point.anchor_id) {
-        ctx.globalAlpha = opacity;
+        ctx.globalAlpha = selectedActivityId && !primaryHighlight ? 0.4 : opacity;
         ctx.drawImage(assets.anchorIcon, x + hitboxWidth + 4, y);
         ctx.globalAlpha = 1;
         hitboxWidth += 20;
@@ -736,7 +788,9 @@
     }
 
     if (directive && !DENSE_MODE) {
+      ctx.globalAlpha = selectedActivityId && !primaryHighlight ? 0.4 : opacity;
       ctx.drawImage(assets.directiveIcon, x + 1, y);
+      ctx.globalAlpha = 1;
     }
 
     if (DEBUG_MODE) {

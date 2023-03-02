@@ -148,6 +148,8 @@
         const activityPoint = point as ActivityPoint;
         dispatch('mouseDown', activityPoint.uniqueId);
       }
+    } else {
+      dispatch('mouseDown', null);
     }
   }
 
