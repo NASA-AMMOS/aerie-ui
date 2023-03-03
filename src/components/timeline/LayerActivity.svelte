@@ -357,6 +357,14 @@
     );
   }
 
+  function getDirectiveSize() {}
+  function getSpansSize() {}
+  function getPointSize(point: ActivityPoint) {}
+  function placePoint(point: ActivityPoint) {}
+  // Idea, packing fn that returns Y, takes maxXPerY and a list of elements with precomputed sizes and positions
+  // try to make this somewhat generic if sensible. Not sure how generic a component like this can be? Would it
+  // have to not care about directives and spans?
+
   /**
    * Draws activity points to the canvas context.
    * @note Points must be sorted in time ascending order before calling this function.
