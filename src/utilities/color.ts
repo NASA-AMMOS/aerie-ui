@@ -81,13 +81,28 @@ pSBC.pSBCr = d => {
   return x;
 };
 
-export function hexToRgba(c, a) {
-  if (/^#([a-f0-9]{3}){1,2}$/.test(c)) {
-    if (c.length == 4) {
-      c = '#' + [c[1], c[1], c[2], c[2], c[3], c[3]].join('');
-    }
-    c = '0x' + c.substring(1);
-    return 'rgba(' + [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(',') + `,${a})`;
+const isValidHex = hex => /^#([A-Fa-f0-9]{3,4}){1,2}$/.test(hex);
+
+const getChunksFromString = (st, chunkSize) => st.match(new RegExp(`.{${chunkSize}}`, 'g'));
+
+const convertHexUnitTo256 = hexStr => parseInt(hexStr.repeat(2 / hexStr.length), 16);
+
+const getAlphafloat = (a, alpha) => {
+  if (typeof a !== 'undefined') {
+    return a / 255;
   }
-  return '';
-}
+  if (typeof alpha != 'number' || alpha < 0 || alpha > 1) {
+    return 1;
+  }
+  return alpha;
+};
+
+export const hexToRgba = (hex, alpha) => {
+  if (!isValidHex(hex)) {
+    return 'rgba(0,0,0,1)';
+  }
+  const chunkSize = Math.floor((hex.length - 1) / 3);
+  const hexArr = getChunksFromString(hex.slice(1), chunkSize);
+  const [r, g, b, a] = hexArr.map(convertHexUnitTo256);
+  return `rgba(${r}, ${g}, ${b}, ${getAlphafloat(a, alpha)})`;
+};

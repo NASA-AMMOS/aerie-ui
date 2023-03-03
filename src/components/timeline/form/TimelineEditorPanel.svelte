@@ -49,6 +49,7 @@
   } from '../../../utilities/timeline';
   import { tooltip } from '../../../utilities/tooltip';
   import ColorPicker from '../../form/ColorPicker.svelte';
+  import ColorPresetsPicker from '../../form/ColorPresetsPicker.svelte';
   import ColorSchemePicker from '../../form/ColorSchemePicker.svelte';
   import Input from '../../form/Input.svelte';
   import GridMenu from '../../menus/GridMenu.svelte';
@@ -343,8 +344,8 @@
     }
   }
 
-  function handleUpdateLayerColor(event: Event, layer: Layer) {
-    const { value } = getTarget(event);
+  function handleUpdateLayerColor(event: CustomEvent, layer: Layer) {
+    const { value } = event.detail;
     const newLayers = layers.map(l => {
       if (layer.id === l.id) {
         if (l.chartType === 'activity') {
@@ -971,14 +972,42 @@
                       {yAxes}
                     />
 
-                    {#if layer.chartType === 'activity' || layer.chartType === 'line'}
-                      <div use:tooltip={{ content: 'Layer Color', placement: 'top' }}>
-                        <ColorPicker
-                          value={getColorForLayer(layer)}
-                          on:input={event => handleUpdateLayerColor(event, layer)}
-                          name="color"
-                        />
-                      </div>
+                    {#if layer.chartType === 'activity'}
+                      <ColorPresetsPicker
+                        presetColors={[
+                          '#ef8b8c',
+                          '#febd85',
+                          '#fcdd8f',
+                          '#b8d89b',
+                          '#9cc8e2',
+                          '#c49fd6',
+                          '#e3d7e9',
+                          '#d1bca7',
+                          '#f1e2ce',
+                          '#bdbdbd',
+                        ]}
+                        tooltipText="Layer Color"
+                        value={getColorForLayer(layer)}
+                        on:input={event => handleUpdateLayerColor(event, layer)}
+                      />
+                    {:else if layer.chartType === 'line'}
+                      <ColorPresetsPicker
+                        presetColors={[
+                          '#e31a1c',
+                          '#ff7f0e',
+                          '#fcbd21',
+                          '#75b53b',
+                          '#3C95C9',
+                          '#8d41b0',
+                          '#CAB2D6',
+                          '#a67c52',
+                          '#E8CAA2',
+                          '#7f7f7f',
+                        ]}
+                        tooltipText="Layer Color"
+                        value={getColorForLayer(layer)}
+                        on:input={event => handleUpdateLayerColor(event, layer)}
+                      />
                     {:else if layer.chartType === 'x-range'}
                       <ColorSchemePicker
                         layout="compact"
