@@ -281,6 +281,7 @@
 
 <style>
   .rows {
+    border-bottom: 1px solid var(--st-gray-15);
     min-height: 100px;
     outline: none !important;
     overflow-x: hidden;
