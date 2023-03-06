@@ -18,7 +18,6 @@
   const dispatch = createEventDispatcher();
 
   function onInput(value: string) {
-    console.log('value', value);
     dispatch('input', { value });
   }
 
