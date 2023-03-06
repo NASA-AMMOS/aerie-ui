@@ -28,6 +28,7 @@
   export let blur: FocusEvent | undefined;
   export let drawHeight: number = 0;
   export let drawWidth: number = 0;
+  export let debugMode: boolean = false;
   export let filter: ActivityLayerFilter | undefined;
   export let id: number;
   export let focus: FocusEvent | undefined;
@@ -54,9 +55,6 @@
   let quadtree: Quadtree<QuadtreeRect>;
   let visiblePointsByUniqueId: Record<ActivityUniqueId, ActivityPoint> = {};
 
-  // Debug
-  const DEBUG_MODE = false;
-
   // Cache
   const assets: {
     anchorIcon: HTMLImageElement;
@@ -76,7 +74,7 @@
   $: rowHeight = activityHeight + activityRowPadding;
   $: directiveIconWidth = 16;
   $: directiveIconMarginRight = 2;
-  $: spanLabelLeftMargin = 5;
+  $: spanLabelLeftMargin = 4;
   $: anchorIconWidth = 16;
   $: anchorIconMarginLeft = 4;
 
@@ -355,7 +353,6 @@
   }
 
   function isPointSecondaryHighlight(selectedActivityId: string, point: ActivityPoint) {
-    // TODO probably not the most efficient
     return (
       getActivityRootParent($activitiesMap, selectedActivityId)?.uniqueId ===
       getActivityRootParent($activitiesMap, point?.uniqueId).uniqueId
@@ -394,10 +391,9 @@
     const xCanvas = xScaleView(x);
     const xEnd = x + getDurationInMs(span.duration);
     let xEndCanvas = xScaleView(xEnd);
-    // TODO should anchor icon show up on only the directive? What about the span and children?
     if (xEndCanvas) {
       return {
-        maxXCanvas: Math.max(xEndCanvas, xCanvas + textWidth + spanLabelLeftMargin), // label offset, TODO don't hardcode,
+        maxXCanvas: Math.max(xEndCanvas, xCanvas + textWidth + spanLabelLeftMargin),
         x,
         xCanvas,
         xEnd,
@@ -427,7 +423,7 @@
     }
 
     // Place the elements where they will fit in packed waterfall
-    let i = rowHeight;
+    let i = rowHeight; // TODO see if there's a padding prop up at the top
     let directiveStartY = 0;
     let foundY = false;
     while (!foundY) {
@@ -479,7 +475,7 @@
 
     // Update maxXForY for span if no entry exists at that Y or if the span end x is greater than the existing entry
     let spanStartY = 0;
-    if (matchingSpan) {
+    if (matchingSpan && spanBounds) {
       spanStartY = directiveStartY + rowHeight;
       if (newMaxXPerY[spanStartY] === undefined || newMaxXPerY[spanStartY] < spanBounds.maxXCanvas) {
         newMaxXPerY[spanStartY] = spanBounds.maxXCanvas;
@@ -553,14 +549,14 @@
             spanStartY,
           } = placeActivityPoint(point, maxXPerY);
 
-          maxXPerY = newMaxXPerY;
+          maxXPerY = newMaxXPerY; // TODO why this
           const directiveMoved = !!spanBounds && spanBounds.x !== directiveBounds.x;
 
           // Draw directive
           const maxCanvasRowY = Math.floor(drawHeight / rowHeight) * rowHeight;
           const constrainedDirectiveY =
             directiveStartY > drawHeight - rowHeight ? (directiveStartY % maxCanvasRowY) + rowHeight : directiveStartY;
-          drawActivity(point, directiveBounds.xCanvas, constrainedDirectiveY, directiveBounds.xEndCanvas);
+          drawActivity(point, directiveBounds.xCanvas, constrainedDirectiveY);
 
           // Draw span (faking for now)
           if (spanBounds) {
@@ -580,7 +576,7 @@
           drawChildren(point, childStartY, false, directiveMoved);
 
           if (childBounds) {
-            if (DEBUG_MODE) {
+            if (debugMode) {
               console.log('constrainedChildrenY :>> ', constrainedChildrenY);
               console.log('childBounds.maxY :>> ', childBounds.maxY);
               console.log('childStartY :>> ', childStartY);
@@ -601,7 +597,7 @@
           totalMaxY = Math.max(totalMaxY, directiveStartY, spanStartY, childBounds?.maxY || 0);
         }
       }
-      if (DEBUG_MODE) {
+      if (debugMode) {
         console.log(maxXPerY);
         Object.keys(maxXPerY).forEach(key => {
           const x = maxXPerY[key];
@@ -620,124 +616,12 @@
     }
   }
 
-  function drawActivity(point: ActivityPoint, x: number, y: number, end: number) {
-    ctx.save();
-    const { uniqueId } = point;
-    visiblePointsByUniqueId[uniqueId] = point;
-
-    const primaryHighlight = isPointPrimaryHighlight(selectedActivityId, uniqueId); // TODO names not great
-    const secondaryHighlight = isPointSecondaryHighlight(selectedActivityId, point);
-
-    // Handle opacity if a point is selected
-    let opacity = 1;
-    if (selectedActivityId) {
-      if (primaryHighlight) {
-        opacity = 1;
-      } else {
-        opacity = 0.24;
-      }
-    }
-
-    // TODO share with drawSpan
-    if (primaryHighlight) {
-      // ctx.fillStyle = activitySelectedColor;
-      ctx.fillStyle = `rgba(169, 234, 255,${1})`;
-      ctx.strokeStyle = `rgba(128,178,194, ${1})`;
-    } else if (secondaryHighlight) {
-      // ctx.fillStyle = activitySelectedColor;
-      ctx.fillStyle = `rgba(169, 234, 255,${0.24})`;
-      ctx.strokeStyle = `rgba(128,178,194, ${0.24})`;
-    } else if (point.unfinished) {
-      ctx.fillStyle = activityUnfinishedColor;
-      ctx.strokeStyle = '#C19065';
-    } else {
-      ctx.fillStyle = `rgba(254,189,133,${opacity})`;
-      ctx.strokeStyle = `rgba(0,0,0,${opacity * 0.2})`;
-      // ctx.fillStyle = activityColor;
-      ctx.fillStyle = hexToRgba(activityColor, opacity);
-    }
-
-    // Draw directive shape TODO split out
-    const p1 = new Path2D(
-      'M0 0.470589C0 0.21069 0.21069 0 0.470588 0H8C12.4183 0 16 3.58172 16 8V8C16 12.4183 12.4183 16 8 16H0.470589C0.21069 16 0 15.7893 0 15.5294V0.470589Z',
-    );
-    const p2 = new Path2D('M0.5 15.5V0.5H8C12.1421 0.5 15.5 3.85786 15.5 8C15.5 12.1421 12.1421 15.5 8 15.5H0.5Z');
-    ctx.save();
-    ctx.setTransform(dpr, 0, 0, dpr, x * dpr, y * dpr);
-    ctx.fill(p1);
-    ctx.stroke(p2);
-    ctx.restore();
-
-    // Draw directive icon
-    ctx.globalAlpha = selectedActivityId && !primaryHighlight ? 0.4 : opacity;
-    ctx.drawImage(assets.directiveIcon, x + 1, y);
-    ctx.globalAlpha = 1;
-
-    const color = primaryHighlight || secondaryHighlight ? activitySelectedColor : activityColor;
-
-    let textOpacity = !primaryHighlight ? 0.75 : 1;
-    if (selectedActivityId && !primaryHighlight) {
-      textOpacity = 0.6;
-    }
-    const { labelText, textMetrics } = setLabelContext(point, textOpacity, color); // opacity obviously a hack for now
-    ctx.fillText(
-      labelText,
-      x + directiveIconWidth + directiveIconMarginRight,
-      y + activityHeight / 2,
-      textMetrics.width,
-    );
-    let hitboxWidth = directiveIconWidth + directiveIconMarginRight + textMetrics.width;
-
-    // Draw anchor icon
-    if (point.anchor_id) {
-      ctx.globalAlpha = selectedActivityId && !primaryHighlight ? 0.4 : opacity;
-      ctx.drawImage(assets.anchorIcon, x + hitboxWidth + 4, y);
-      ctx.globalAlpha = 1;
-      hitboxWidth += anchorIconWidth + anchorIconMarginLeft;
-    }
-
-    if (DEBUG_MODE) {
-      // Draw hitbox
-      ctx.strokeStyle = 'red';
-      ctx.strokeRect(x, y, hitboxWidth, activityHeight);
-    }
-    quadtree.add({
-      height: activityHeight,
-      id: uniqueId,
-      width: hitboxWidth,
-      x,
-      y,
-    });
-
-    if (hitboxWidth > maxActivityWidth) {
-      maxActivityWidth = hitboxWidth;
-    }
-
-    ctx.restore();
-  }
-
-  function drawSpan(point: ActivityPoint, x: number, y: number, end: number, ghosted: boolean) {
-    ctx.save();
-    const { uniqueId } = point;
-    visiblePointsByUniqueId[uniqueId] = point;
-
-    const primaryHighlight = isPointPrimaryHighlight(selectedActivityId, uniqueId);
-    const secondaryHighlight = isPointSecondaryHighlight(selectedActivityId, point);
-
-    // Compute opacity
-    let opacity = 1;
-    if (ghosted) {
-      opacity = 0.24;
-    }
-    // Handle opacity if a point is selected
-    if (selectedActivityId) {
-      if (primaryHighlight) {
-        opacity = 1;
-      } else {
-        opacity = 0.24;
-      }
-    }
-
+  function setActivityRectContext(
+    point: ActivityPoint,
+    primaryHighlight: boolean,
+    secondaryHighlight: boolean,
+    opacity: number,
+  ) {
     // Set fill and stroke styles
     if (primaryHighlight) {
       // ctx.fillStyle = activitySelectedColor;
@@ -756,6 +640,90 @@
       // ctx.fillStyle = activityColor;
       ctx.fillStyle = hexToRgba(activityColor, opacity);
     }
+  }
+
+  function drawActivity(point: ActivityPoint, x: number, y: number) {
+    ctx.save();
+    const { uniqueId } = point;
+    visiblePointsByUniqueId[uniqueId] = point;
+
+    const primaryHighlight = isPointPrimaryHighlight(selectedActivityId, uniqueId); // TODO names not great
+    const secondaryHighlight = isPointSecondaryHighlight(selectedActivityId, point);
+
+    // Handle opacity if a point is selected
+    let opacity = 1;
+    if (selectedActivityId) {
+      if (primaryHighlight) {
+        opacity = 1;
+      } else {
+        opacity = 0.24;
+      }
+    }
+
+    setActivityRectContext(point, primaryHighlight, secondaryHighlight, opacity);
+    drawDirectiveShape(x, y);
+    drawDirectiveIcon(x, y, selectedActivityId && !primaryHighlight ? 0.4 : opacity);
+
+    // Draw label
+    const textMetrics = drawPointLabel(
+      point,
+      x + directiveIconWidth + directiveIconMarginRight,
+      y + activityHeight / 2,
+      primaryHighlight,
+      secondaryHighlight,
+    );
+
+    let hitboxWidth = directiveIconWidth + directiveIconMarginRight + textMetrics.width;
+
+    // Draw anchor icon
+    if (point.anchor_id) {
+      ctx.globalAlpha = selectedActivityId && !primaryHighlight ? 0.4 : opacity;
+      ctx.drawImage(assets.anchorIcon, x + hitboxWidth + 4, y);
+      ctx.globalAlpha = 1;
+      hitboxWidth += anchorIconWidth + anchorIconMarginLeft;
+    }
+
+    quadtree.add({
+      height: activityHeight,
+      id: uniqueId,
+      width: hitboxWidth,
+      x,
+      y,
+    });
+
+    if (hitboxWidth > maxActivityWidth) {
+      maxActivityWidth = hitboxWidth;
+    }
+
+    if (debugMode) {
+      DEBUG_drawHitbox(x, y, hitboxWidth, activityHeight);
+    }
+
+    ctx.restore();
+  }
+
+  function drawSpan(point: ActivityPoint, x: number, y: number, end: number, ghosted: boolean) {
+    ctx.save();
+    const { uniqueId } = point;
+    visiblePointsByUniqueId[uniqueId] = point;
+
+    const primaryHighlight = isPointPrimaryHighlight(selectedActivityId, uniqueId);
+    const secondaryHighlight = isPointSecondaryHighlight(selectedActivityId, point);
+
+    // Handle opacity if a point is selected
+    let opacity = 1;
+    if (selectedActivityId) {
+      if (primaryHighlight) {
+        opacity = 1;
+      } else {
+        opacity = 0.24;
+      }
+    }
+    if (ghosted) {
+      opacity = 0.24;
+    }
+
+    setActivityRectContext(point, primaryHighlight, secondaryHighlight, opacity);
 
     if (ghosted) {
       ctx.setLineDash([2, 2]);
@@ -806,16 +774,17 @@
     }
 
     // TODO deprecate point.label.hidden
-    let hitboxWidth = activityWidth;
-    const color = primaryHighlight || secondaryHighlight ? activitySelectedColor : activityColor;
-    let textOpacity = ghosted && !primaryHighlight ? 0.75 : 1;
-    if (selectedActivityId && !primaryHighlight) {
-      textOpacity = 0.6;
-    }
 
-    const { labelText, textMetrics } = setLabelContext(point, textOpacity, color);
-    ctx.fillText(labelText, x + spanLabelLeftMargin, y + activityHeight / 2, textMetrics.width);
-    hitboxWidth = Math.max(hitboxWidth, textMetrics.width + spanLabelLeftMargin);
+    // Draw label
+    const textMetrics = drawPointLabel(
+      point,
+      x + spanLabelLeftMargin,
+      y + activityHeight / 2,
+      primaryHighlight,
+      secondaryHighlight,
+    );
+
+    const hitboxWidth = Math.max(activityWidth, textMetrics.width + spanLabelLeftMargin);
 
     quadtree.add({
       height: activityHeight,
@@ -825,19 +794,17 @@
       y,
     });
 
-    if (DEBUG_MODE) {
+    if (hitboxWidth > maxActivityWidth) {
+      maxActivityWidth = hitboxWidth;
+    }
+
+    if (debugMode) {
       DEBUG_drawHitbox(x, y, hitboxWidth, activityHeight);
     }
     ctx.restore();
   }
 
-  function DEBUG_drawHitbox(x: number, y: number, width: number, height: number) {
-    ctx.save();
-    ctx.strokeStyle = 'red';
-    ctx.strokeRect(x, y, width, height);
-    ctx.restore();
-  }
-
+  // TODO see if we can compute child bounds only once?
   function drawChildren(parent: ActivityPoint, parentY: number, skipDraw: boolean = false, ghosted: boolean = false) {
     if (showChildren && parent?.children?.length) {
       const boundingBoxes: BoundingBox[] = [];
@@ -851,7 +818,7 @@
         const x = xScaleView(point.x);
         const end = xScaleView(point.x + point.duration);
         const { textWidth } = setLabelContext(point);
-        let xEnd = Math.max(end, x + textWidth + spanLabelLeftMargin); // TODO make this cleaner
+        let xEnd = Math.max(end, x + textWidth + spanLabelLeftMargin);
 
         for (const boundingBox of boundingBoxes) {
           if (x <= boundingBox.maxX) {
@@ -908,6 +875,48 @@
     const textWidth = textMetrics.width;
     const textHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
     return { labelText, textHeight, textMetrics, textWidth };
+  }
+
+  function drawDirectiveShape(x: number, y: number) {
+    const path1 = new Path2D(
+      'M0 0.470589C0 0.21069 0.21069 0 0.470588 0H8C12.4183 0 16 3.58172 16 8V8C16 12.4183 12.4183 16 8 16H0.470589C0.21069 16 0 15.7893 0 15.5294V0.470589Z',
+    );
+    const path2 = new Path2D('M0.5 15.5V0.5H8C12.1421 0.5 15.5 3.85786 15.5 8C15.5 12.1421 12.1421 15.5 8 15.5H0.5Z');
+    ctx.save();
+    ctx.setTransform(dpr, 0, 0, dpr, x * dpr, y * dpr);
+    ctx.fill(path1);
+    ctx.stroke(path2);
+    ctx.restore();
+  }
+
+  function drawDirectiveIcon(x: number, y: number, opacity: number) {
+    ctx.globalAlpha = opacity;
+    ctx.drawImage(assets.directiveIcon, x + 1, y);
+    ctx.globalAlpha = 1;
+  }
+
+  function drawPointLabel(
+    point: ActivityPoint,
+    x: number,
+    y: number,
+    primaryHighlight: boolean,
+    secondaryHighlight: boolean,
+  ) {
+    const color = primaryHighlight || secondaryHighlight ? activitySelectedColor : activityColor;
+    let textOpacity = !primaryHighlight ? 0.75 : 1;
+    if (selectedActivityId && !primaryHighlight) {
+      textOpacity = 0.6;
+    }
+    const { labelText, textMetrics } = setLabelContext(point, textOpacity, color);
+    ctx.fillText(labelText, x, y, textMetrics.width);
+    return textMetrics;
+  }
+
+  function DEBUG_drawHitbox(x: number, y: number, width: number, height: number) {
+    ctx.save();
+    ctx.strokeStyle = 'red';
+    ctx.strokeRect(x, y, width, height);
+    ctx.restore();
   }
 </script>
 
