@@ -132,20 +132,6 @@
       new FontFace('Inter', 'url(/Inter-Regular.woff2)').load();
     }
     assets.directiveIcon = loadSVG(ActivityDirectiveIconSVG);
-    // const anchorIconSVG = `
-    // <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-    //   <g clip-path="url(#clip0_204_151850)">
-    //   <path d="M13 10L6 10C4.89543 10 4 9.10457 4 8L4 3" stroke="#545F64" stroke-width="1.5"/>
-    //   <rect x="8.5" y="8.5" width="7" height="3" rx="0.5" fill="white" stroke="#293137"/>
-    //   <path d="M4 0L7.4641 5.25L0.535898 5.25L4 0Z" fill="#545F64"/>
-    //   </g>
-    //   <defs>
-    //   <clipPath id="clip0_204_151850">
-    //   <rect width="16" height="16" fill="white"/>
-    //   </clipPath>
-    //   </defs>
-    // </svg>
-    // `;
     assets.anchorIcon = loadSVG(ActivityAnchorIconSVG);
   }
   function loadSVG(svgString) {
@@ -723,7 +709,8 @@
         const x = xScaleView(startTime);
         const end = xScaleView(startTime + duration);
         const { textWidth } = setLabelContext(`${span.type}`);
-        const xEnd = end + textWidth;
+        // const xEnd = end + textWidth;
+        const xEnd = Math.max(end, x + textWidth + spanLabelLeftMargin);
 
         for (const boundingBox of boundingBoxes) {
           if (x <= boundingBox.maxX) {
