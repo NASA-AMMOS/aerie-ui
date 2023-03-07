@@ -279,7 +279,6 @@
             {timelineLockStatus}
             {viewTimeRange}
             {xScaleView}
-            {xScaleMax}
             on:deleteActivityDirective
             on:mouseDown={onMouseDown}
             on:mouseOver={onMouseOver}
