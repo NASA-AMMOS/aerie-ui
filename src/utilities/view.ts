@@ -310,8 +310,8 @@ export function generateDefaultView(activityTypes: ActivityType[] = [], resource
                 id: rowIds++,
                 layers: [
                   {
-                    activityColor: '#283593',
-                    activityHeight: 20,
+                    activityColor: '#fcdd8f', // TODO move to constant somewhere? Also used in timeline.ts
+                    activityHeight: 16,
                     chartType: 'activity',
                     filter: { activity: { types } },
                     id: layerIds++,
