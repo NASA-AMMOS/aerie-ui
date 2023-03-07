@@ -23,6 +23,7 @@ export type Axis = {
 export type BoundingBox = {
   maxX: number;
   maxY: number;
+  minX: number;
 };
 
 export type HorizontalGuide = {
