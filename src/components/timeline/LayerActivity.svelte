@@ -82,8 +82,9 @@
   const assets: {
     anchorIcon: HTMLImageElement;
     directiveIcon: HTMLImageElement;
+    hashMarks: HTMLImageElement;
     pattern: HTMLCanvasElement;
-  } = { anchorIcon: null, directiveIcon: null, pattern: null };
+  } = { anchorIcon: null, directiveIcon: null, hashMarks: null, pattern: null };
 
   $: onBlur(blur);
   $: onFocus(focus);
@@ -134,6 +135,7 @@
     }
     assets.directiveIcon = loadSVG(ActivityDirectiveIconSVG);
     assets.anchorIcon = loadSVG(ActivityAnchorIconSVG);
+    assets.hashMarks = loadSVG(SpanHashMarksSVG);
   }
   function loadSVG(svgString) {
     var svg64 = window.btoa(svgString);
@@ -271,13 +273,6 @@
       dragActivityEnd();
     }
   }
-
-  // function isPointSecondaryHighlight(selectedActivityId: string, point: ActivityPoint) {
-  //   return (
-  //     getActivityRootParent($activitiesMap, selectedActivityId)?.uniqueId ===
-  //     getActivityRootParent($activitiesMap, point?.uniqueId).uniqueId
-  //   );
-  // }
 
   function getXForDirective(activityDirective: ActivityDirective) {
     const start_offset = activityDirective.start_offset;
@@ -598,14 +593,10 @@
 
     // Draw hash marks if requested and if there is room
     if (ghosted && activityWidth > 8) {
-      // TODO for some reason caching this before hand is leading to inconsistent loading of these hashes, solve this later
-      // and for now draw every time
-      const img = loadSVG(SpanHashMarksSVG);
       const patternCanvas = document.createElement('canvas');
       patternCanvas.width = 20;
       patternCanvas.height = 16;
-      patternCanvas.getContext('2d').drawImage(img, 0, 0);
-      // assets.pattern = patternCanvas;
+      patternCanvas.getContext('2d').drawImage(assets.hashMarks, 0, 0);
       ctx.save();
       ctx.translate(x, y);
       ctx.fillStyle = ctx.createPattern(patternCanvas, 'repeat');
