@@ -7,10 +7,11 @@
   import { createEventDispatcher, onDestroy, onMount, tick } from 'svelte';
   import ActivityAnchorIconSVG from '../../assets/activity-anchor-icon.svg?raw';
   import ActivityDirectiveIconSVG from '../../assets/activity-directive-icon.svg?raw';
+  import SpanHashMarksSVG from '../../assets/span-hash-marks.svg?raw';
   import type { ActivityDirective, ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
   import type { Span, SpanId, SpansMap, SpanUtilityMaps } from '../../types/simulation';
   import type { ActivityLayerFilter, BoundingBox, QuadtreeRect, TimeRange } from '../../types/timeline';
-  import { sortActivityDirectives } from '../../utilities/activities';
+  import { getSpanRootParent, sortActivityDirectives } from '../../utilities/activities';
   import { hexToRgba, pSBC } from '../../utilities/color';
   import effects from '../../utilities/effects';
   import { isDeleteEvent } from '../../utilities/keyboardEvents';
@@ -32,7 +33,7 @@
   export let activitySelectedColor: string = '#81D4FA';
   export let activityUnfinishedColor: string = '#ff7760';
   export let blur: FocusEvent | undefined;
-  export let debugMode: boolean = true;
+  export let debugMode: boolean = false;
   export let drawHeight: number = 0;
   export let drawWidth: number = 0;
   export let filter: ActivityLayerFilter | undefined;
@@ -271,9 +272,6 @@
     }
   }
 
-  // function isPointPrimaryHighlight(selectedActivityId: string, activityID: string) {
-  //   return selectedActivityId === activityID;
-  // }
   // function isPointSecondaryHighlight(selectedActivityId: string, point: ActivityPoint) {
   //   return (
   //     getActivityRootParent($activitiesMap, selectedActivityId)?.uniqueId ===
@@ -309,26 +307,7 @@
     };
   }
 
-  // function getSpanBounds(span: Span, directive: ActivityPoint): PointBounds {
-  //   const { textWidth } = setLabelContext(directive);
-  //   const startDOY = getDoyTimeFromDuration($plan.start_time, span.start_offset);
-  //   const x = getUnixEpochTime(startDOY);
-  //   const xCanvas = xScaleView(x);
-  //   const xEnd = x + getDurationInMs(span.duration);
-  //   let xEndCanvas = xScaleView(xEnd);
-  //   if (xEndCanvas) {
-  //     return {
-  //       maxXCanvas: Math.max(xEndCanvas, xCanvas + textWidth + spanLabelLeftMargin),
-  //       x,
-  //       xCanvas,
-  //       xEnd,
-  //       xEndCanvas,
-  //     };
-  //   }
-  // }
-
   function getSpanBounds(span: Span): BoundingBox {
-    // const childIds = spanUtilityMaps.spanIdToChildIdsMap[span.id];
     return drawSpans([span], 0, false);
   }
 
@@ -337,7 +316,6 @@
     // Get sizes of the points spawned by this point
     const directiveBounds = getDirectiveBounds(activityDirective); // Directive element
     let spanBounds: BoundingBox = null;
-    // let childBounds: BoundingBox = null;
 
     // Get matching span bounds if a span exists
     const span = getSpanForActivityDirective(activityDirective);
@@ -354,9 +332,6 @@
       const directiveXForYExists = maxDirectiveXForY !== undefined;
       const directiveFits =
         !directiveXForYExists || (directiveXForYExists && directiveBounds.xCanvas > maxDirectiveXForY);
-      // const spanXForYExists = maxSpanXForY !== undefined;
-      // const spanFits = !matchingSpan || !spanXForYExists || (spanXForYExists && spanBounds.xCanvas > maxSpanXForY);
-      // Check span bounds if the directive fits in this Y position
       if (directiveFits) {
         if (!spanBounds) {
           foundY = true;
@@ -473,12 +448,6 @@
           // Update maxXPerY
           maxXPerY = newMaxXPerY;
 
-          console.log('spanBounds :>> ', spanBounds);
-          console.log('directiveStartY :>> ', directiveStartY);
-          console.log('directiveBounds :>> ', directiveBounds);
-          console.log('maxXPerY :>> ', maxXPerY);
-          console.log('');
-
           const span = getSpanForActivityDirective(activityDirective);
           const directiveMoved =
             !!span &&
@@ -513,52 +482,36 @@
       }
 
       if (debugMode) {
-        ctx.save();
-        console.log('maxXPerY >>:', maxXPerY);
-        Object.keys(maxXPerY).forEach(key => {
-          const x = parseFloat(maxXPerY[key]);
-          const rect = new Path2D();
-          rect.rect(x, parseInt(key), 2, rowHeight - 4);
-          ctx.fillStyle = 'red';
-          ctx.fill(rect);
-          ctx.fillText(x.toFixed(2), x + 4, parseInt(key) + 8);
-        });
-
-        for (let i = 0; i < newHeight; i += rowHeight) {
-          ctx.strokeStyle = '#ff00002e';
-          ctx.beginPath();
-          ctx.moveTo(0, i);
-          ctx.lineTo(canvasWidthDpr, i);
-          ctx.stroke();
-          ctx.fillText(i.toString(), 0, i, 20);
-        }
-        ctx.restore();
+        DEBUG_drawDebugInfo(maxXPerY, newHeight);
       }
     }
   }
 
   function drawActivityDirective(activityDirective: ActivityDirective, x: number, y: number) {
-    ctx.save();
     visibleActivityDirectivesById[activityDirective.id] = activityDirective;
 
-    const primaryHighlight = false;
-    const secondaryHighlight = false;
-    // const primaryHighlight = isPointPrimaryHighlight(selectedActivityId, uniqueId); // TODO names not great
-    // const secondaryHighlight = isPointSecondaryHighlight(selectedActivityId, point);
+    const primaryHighlight = activityDirective.id === selectedActivityDirectiveId;
+    const secondaryHighlight =
+      selectedSpanId !== null
+        ? spanUtilityMaps.spanIdToDirectiveIdMap[getSpanRootParent(spansMap, selectedSpanId).id] ===
+          activityDirective.id
+        : false;
+
     // Handle opacity if a point is selected
     let opacity = 1;
-    // if (selectedActivityId) {
-    //   if (primaryHighlight) {
-    //     opacity = 1;
-    //   } else {
-    //     opacity = 0.24;
-    //   }
-    // }
+    if (selectedActivityDirectiveId !== null || selectedSpanId !== null) {
+      if (primaryHighlight) {
+        opacity = 1;
+      } else {
+        opacity = 0.24;
+      }
+    }
 
+    const svgIconOpacity = selectedActivityDirectiveId !== null && !primaryHighlight ? 0.4 : opacity;
+
+    // Draw directive icon
     setActivityRectContext(primaryHighlight, secondaryHighlight, opacity);
-    drawDirectiveShape(x, y);
-    drawDirectiveIcon(x, y, !primaryHighlight ? 0.4 : opacity); // TODO
-    // drawDirectiveIcon(x, y, selectedActivityId && !primaryHighlight ? 0.4 : opacity);
+    drawDirectiveIcon(x, y, svgIconOpacity);
 
     // Draw label
     const textMetrics = drawPointLabel(
@@ -572,12 +525,10 @@
 
     // Draw anchor icon
     if (activityDirective.anchor_id) {
-      // ctx.globalAlpha = selectedActivityId && !primaryHighlight ? 0.4 : opacity;
-      ctx.globalAlpha = !primaryHighlight ? 0.4 : opacity; // TODO
-      ctx.drawImage(assets.anchorIcon, x + hitboxWidth + 4, y);
-      ctx.globalAlpha = 1;
+      drawAnchorIcon(x + hitboxWidth + 4, y, svgIconOpacity);
       hitboxWidth += anchorIconWidth + anchorIconMarginLeft;
     }
+
     quadtreeActivityDirectives.add({
       height: activityHeight,
       id: activityDirective.id,
@@ -585,31 +536,44 @@
       x,
       y,
     });
+
+    // Update maxActivityWidth
     if (hitboxWidth > maxActivityWidth) {
       maxActivityWidth = hitboxWidth;
     }
+
     if (debugMode) {
       DEBUG_drawHitbox(x, y, hitboxWidth, activityHeight);
     }
-    ctx.restore();
   }
 
   function drawSpan(span: Span, x: number, y: number, end: number, ghosted: boolean = false) {
     ctx.save();
     visibleSpansById[span.id] = span;
-    const primaryHighlight = false;
-    const secondaryHighlight = false;
-    // const primaryHighlight = isPointPrimaryHighlight(selectedActivityId, uniqueId);
-    // const secondaryHighlight = isPointSecondaryHighlight(selectedActivityId, point);
+    const primaryHighlight = span.id === selectedSpanId;
+    let secondaryHighlight = false;
+    const rootSpan = getSpanRootParent(spansMap, span.id);
+    if (selectedActivityDirectiveId !== null) {
+      const spanDirectiveId = spanUtilityMaps.spanIdToDirectiveIdMap[rootSpan.id];
+      if (spanDirectiveId === selectedActivityDirectiveId) {
+        secondaryHighlight = true;
+      }
+    }
+    if (selectedSpanId) {
+      const rootSelectedSpan = getSpanRootParent(spansMap, selectedSpanId);
+      if (rootSelectedSpan.id === rootSpan.id) {
+        secondaryHighlight = true;
+      }
+    }
     // Handle opacity if a point is selected
     let opacity = 1;
-    // if (selectedActivityId) {
-    //   if (primaryHighlight) {
-    //     opacity = 1;
-    //   } else {
-    //     opacity = 0.24;
-    //   }
-    // }
+    if (selectedActivityDirectiveId !== null || selectedSpanId !== null) {
+      if (primaryHighlight) {
+        opacity = 1;
+      } else {
+        opacity = 0.24;
+      }
+    }
     if (ghosted) {
       opacity = 0.24;
     }
@@ -636,20 +600,9 @@
     if (ghosted && activityWidth > 8) {
       // TODO for some reason caching this before hand is leading to inconsistent loading of these hashes, solve this later
       // and for now draw every time
-      const hashes = `<svg width="24" height="16" viewBox="0 0 24 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <g clip-path="url(#clip0_239_151857)">
-      <line x1="0.387617" y1="-0.315836" x2="22.3876" y2="26.6842" stroke="rgba(0, 0, 0, 0.1)" stroke-opacity="1"/>
-      <line x1="10.3876" y1="-0.315836" x2="32.3876" y2="26.6842" stroke="rgba(0, 0, 0, 0.1)" stroke-opacity="1"/>
-      </g>
-      <defs>
-      <clipPath id="clip0_239_151857">
-      <rect width="24" height="16" fill="white"/>
-      </clipPath>
-      </defs>
-      </svg>`;
-      const img = loadSVG(hashes);
+      const img = loadSVG(SpanHashMarksSVG);
       const patternCanvas = document.createElement('canvas');
-      patternCanvas.width = 24;
+      patternCanvas.width = 20;
       patternCanvas.height = 16;
       patternCanvas.getContext('2d').drawImage(img, 0, 0);
       // assets.pattern = patternCanvas;
@@ -691,9 +644,6 @@
   }
 
   function drawSpans(spans: Span[], parentY: number, draw = true, ghosted = false): BoundingBox | null {
-    // const childIds = spanUtilityMaps.spanIdToChildIdsMap[span.id];
-    // console.log('childIds :>> ', childIds, span, spanUtilityMaps);
-
     if (spans) {
       const boundingBoxes: BoundingBox[] = [];
 
@@ -703,13 +653,11 @@
       let y = parentY + rowHeight;
 
       for (const span of spans) {
-        // const childSpan = spansMap[spanId];
         const startTime = getUnixEpochTimeFromInterval(planStartTimeYmd, span.start_offset);
         const duration = getIntervalInMs(span.duration);
         const x = xScaleView(startTime);
         const end = xScaleView(startTime + duration);
         const { textWidth } = setLabelContext(`${span.type}`);
-        // const xEnd = end + textWidth;
         const xEnd = Math.max(end, x + textWidth + spanLabelLeftMargin);
 
         for (const boundingBox of boundingBoxes) {
@@ -799,30 +747,43 @@
     }
   }
 
-  function drawDirectiveShape(x: number, y: number) {
+  function drawDirectiveIcon(x: number, y: number, svgOpacity: number) {
+    // Draw the shape
+    ctx.save();
     const path1 = new Path2D(
       'M0 0.470589C0 0.21069 0.21069 0 0.470588 0H8C12.4183 0 16 3.58172 16 8V8C16 12.4183 12.4183 16 8 16H0.470589C0.21069 16 0 15.7893 0 15.5294V0.470589Z',
     );
     const path2 = new Path2D('M0.5 15.5V0.5H8C12.1421 0.5 15.5 3.85786 15.5 8C15.5 12.1421 12.1421 15.5 8 15.5H0.5Z');
-    ctx.save();
     ctx.setTransform(dpr, 0, 0, dpr, x * dpr, y * dpr);
     ctx.fill(path1);
     ctx.stroke(path2);
     ctx.restore();
-  }
-  function drawDirectiveIcon(x: number, y: number, opacity: number) {
-    ctx.globalAlpha = opacity;
+
+    // Draw the icon
+    ctx.globalAlpha = svgOpacity;
     ctx.drawImage(assets.directiveIcon, x + 1, y);
+    ctx.globalAlpha = 1;
+  }
+
+  function drawAnchorIcon(x: number, y: number, svgOpacity: number) {
+    ctx.globalAlpha = svgOpacity;
+    ctx.drawImage(assets.anchorIcon, x, y);
     ctx.globalAlpha = 1;
   }
 
   function drawPointLabel(text: string, x: number, y: number, primaryHighlight: boolean, secondaryHighlight: boolean) {
     const color = primaryHighlight || secondaryHighlight ? activitySelectedColor : activityColor;
-    let textOpacity = !primaryHighlight ? 0.75 : 1;
-    // TODO update
-    // if (selectedActivityId && !primaryHighlight) {
-    //   textOpacity = 0.6;
-    // }
+    let textOpacity = 1;
+    if (selectedActivityDirectiveId !== null || selectedSpanId !== null) {
+      if (!primaryHighlight) {
+        if (secondaryHighlight) {
+          textOpacity = 0.8;
+        } else {
+          textOpacity = 0.6;
+        }
+      }
+    }
+
     const { labelText, textMetrics } = setLabelContext(text, textOpacity, color);
     ctx.fillText(labelText, x, y, textMetrics.width);
     return textMetrics;
@@ -832,6 +793,29 @@
     ctx.save();
     ctx.strokeStyle = 'red';
     ctx.strokeRect(x, y, width, height);
+    ctx.restore();
+  }
+
+  function DEBUG_drawDebugInfo(maxXPerY: Record<number, number>, height: number) {
+    ctx.save();
+    console.log('maxXPerY >>:', maxXPerY);
+    Object.keys(maxXPerY).forEach(key => {
+      const x = parseFloat(maxXPerY[key]);
+      const rect = new Path2D();
+      rect.rect(x, parseInt(key), 2, rowHeight - 4);
+      ctx.fillStyle = 'red';
+      ctx.fill(rect);
+      ctx.fillText(x.toFixed(2), x + 4, parseInt(key) + 8);
+    });
+
+    for (let i = 0; i < height; i += rowHeight) {
+      ctx.strokeStyle = '#ff00002e';
+      ctx.beginPath();
+      ctx.moveTo(0, i);
+      ctx.lineTo(canvasWidthDpr, i);
+      ctx.stroke();
+      ctx.fillText(i.toString(), 0, i, 20);
+    }
     ctx.restore();
   }
 </script>
