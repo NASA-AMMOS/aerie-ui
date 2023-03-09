@@ -12,7 +12,7 @@
   import type { Span, SpanId, SpansMap, SpanUtilityMaps } from '../../types/simulation';
   import type { ActivityLayerFilter, BoundingBox, QuadtreeRect, TimeRange } from '../../types/timeline';
   import { getSpanRootParent, sortActivityDirectives } from '../../utilities/activities';
-  import { hexToRgba, pSBC } from '../../utilities/color';
+  import { hexToRgba, shadeColor } from '../../utilities/color';
   import effects from '../../utilities/effects';
   import { isDeleteEvent } from '../../utilities/keyboardEvents';
   import {
@@ -100,7 +100,7 @@
   $: directiveIconWidth = 16;
   $: directiveIconMarginRight = 2;
   $: rowHeight = activityHeight + activityRowPadding;
-  $: spanLabelLeftMargin = 4;
+  $: spanLabelLeftMargin = 6;
   $: timelineLocked = timelineLockStatus === TimelineLockStatus.Locked;
 
   $: if (
@@ -701,7 +701,7 @@
     const fontSize = 12;
     const fontFace = 'Inter';
     // TODO deprecate point.label.color?
-    ctx.fillStyle = hexToRgba(pSBC(0.15, '#000000', color, null), opacity); // Tint the color 15% darker, TODO could just pass this in from above, might be cleaner?
+    ctx.fillStyle = hexToRgba(shadeColor(color, 2.5), opacity); // Tint the color 15% darker, TODO could just pass this in from above, might be cleaner?
     ctx.font = `${fontSize}px ${fontFace}`;
     ctx.textAlign = 'start';
     ctx.textBaseline = 'middle';
