@@ -385,7 +385,7 @@ export function createTimelineActivityLayer(timelines: Timeline[]): ActivityLaye
   const id = getNextLayerID(timelines);
 
   return {
-    activityColor: '#fcdd8f', // TODO move to constant somewhere?
+    activityColor: '#fcdd8f',
     activityHeight: 16,
     chartType: 'activity',
     filter: {
