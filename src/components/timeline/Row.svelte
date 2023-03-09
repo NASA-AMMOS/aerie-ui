@@ -64,7 +64,6 @@
   export let timelineLockStatus: TimelineLockStatus;
   export let viewTimeRange: TimeRange = { end: 0, start: 0 };
   export let xScaleView: ScaleTime<number, number> | null = null;
-  export let xScaleMax: ScaleTime<number, number> | null = null;
   export let xTicksView: XAxisTick[] = [];
   export let yAxes: Axis[] = [];
 
