@@ -28,10 +28,11 @@
   export let activityDirectives: ActivityDirective[] = [];
   export let activityDirectivesMap: ActivityDirectivesMap = {};
   export let activityColor: string = '';
-  export let activityHeight: number = 16; // TODO grab this from a central place?
+  export let activityHeight: number = 16;
   export let activityRowPadding: number = 4;
-  export let activitySelectedColor: string = '#81D4FA';
-  export let activityUnfinishedColor: string = '#ff7760';
+  export let activitySelectedColor: string = '#a9eaff';
+  export let activityUnfinishedSelectedColor: string = '#ff3b19';
+  export let activityUnfinishedColor: string = '#fc674d';
   export let blur: FocusEvent | undefined;
   export let debugMode: boolean = false;
   export let drawHeight: number = 0;
@@ -306,6 +307,10 @@
     return drawSpans([span], 0, false);
   }
 
+  function getLabelForSpan(span: Span): string {
+    return `${span.type}${span.duration === null ? ' (Unfinished)' : ''}`;
+  }
+
   // Determine starting Y position for point, associated span, and any children
   function placeActivityDirective(activityDirective: ActivityDirective, maxXPerY: Record<number, number>) {
     // Get sizes of the points spawned by this point
@@ -547,6 +552,7 @@
     visibleSpansById[span.id] = span;
     const primaryHighlight = span.id === selectedSpanId;
     let secondaryHighlight = false;
+    const unfinished = span.duration === null;
     const rootSpan = getSpanRootParent(spansMap, span.id);
     if (selectedActivityDirectiveId !== null) {
       const spanDirectiveId = spanUtilityMaps.spanIdToDirectiveIdMap[rootSpan.id];
@@ -572,20 +578,21 @@
     if (ghosted) {
       opacity = 0.24;
     }
-    setActivityRectContext(primaryHighlight, secondaryHighlight, opacity);
 
-    if (ghosted) {
-      ctx.setLineDash([2, 2]);
-    } else {
-      ctx.setLineDash([]);
-    }
+    setActivityRectContext(primaryHighlight, secondaryHighlight, opacity, unfinished);
 
-    // Draw span
+    // Draw span rect
     const activityWidth = Math.max(4.0, end - x);
     const rect = new Path2D();
     rect.roundRect(x, y, activityWidth, activityHeight, 2);
 
-    // Activity rect stroke
+    // Draw span rect stroke
+    if (ghosted) {
+      ctx.setLineDash([3, 3]);
+      ctx.strokeStyle = `rgba(0,0,0,${opacity * 0.6})`;
+    } else {
+      ctx.setLineDash([]);
+    }
     const strokeRect = new Path2D();
     strokeRect.roundRect(x + 0.5, y + 0.5, activityWidth - 1, activityHeight - 1, 1);
     ctx.fill(rect);
@@ -607,11 +614,12 @@
     // TODO deprecate point.label.hidden
     // Draw label
     const textMetrics = drawPointLabel(
-      span.type,
+      getLabelForSpan(span),
       x + spanLabelLeftMargin,
       y + activityHeight / 2,
       primaryHighlight,
       secondaryHighlight,
+      unfinished,
     );
 
     const hitboxWidth = Math.max(activityWidth, textMetrics.width + spanLabelLeftMargin);
@@ -648,7 +656,7 @@
         const duration = getIntervalInMs(span.duration);
         const x = xScaleView(startTime);
         const end = xScaleView(startTime + duration);
-        const { textWidth } = setLabelContext(`${span.type}`);
+        const { textWidth } = setLabelContext(getLabelForSpan(span));
         const xEnd = Math.max(end, x + textWidth + spanLabelLeftMargin);
 
         for (const boundingBox of boundingBoxes) {
@@ -697,11 +705,10 @@
     return null;
   }
 
-  function setLabelContext(labelText: string, opacity = 1, color = '#000000') {
+  function setLabelContext(labelText: string, color = '#000000') {
     const fontSize = 12;
     const fontFace = 'Inter';
-    // TODO deprecate point.label.color?
-    ctx.fillStyle = hexToRgba(shadeColor(color, 2.5), opacity); // Tint the color 15% darker, TODO could just pass this in from above, might be cleaner?
+    ctx.fillStyle = color;
     ctx.font = `${fontSize}px ${fontFace}`;
     ctx.textAlign = 'start';
     ctx.textBaseline = 'middle';
@@ -718,22 +725,14 @@
     unfinished: boolean = false,
   ) {
     // Set fill and stroke styles
-    if (primaryHighlight) {
-      // ctx.fillStyle = activitySelectedColor;
-      ctx.fillStyle = 'rgba(169, 234, 255, 1)';
-      ctx.strokeStyle = 'rgba(128, 178, 194, 1)';
+    ctx.strokeStyle = `rgba(0,0,0,${opacity * 0.2})`;
+    if (unfinished) {
+      ctx.fillStyle = hexToRgba(activityUnfinishedColor, opacity);
+    } else if (primaryHighlight) {
+      ctx.fillStyle = activitySelectedColor;
     } else if (secondaryHighlight) {
-      // ctx.fillStyle = activitySelectedColor;
-      ctx.fillStyle = `rgba(169, 234, 255,${0.24})`;
-      ctx.strokeStyle = `rgba(128,178,194, ${0.24})`;
-    } else if (unfinished) {
-      // TODO what about unfinished state?
-      ctx.fillStyle = activityUnfinishedColor;
-      ctx.strokeStyle = '#C19065';
+      ctx.fillStyle = hexToRgba(activitySelectedColor, 0.24);
     } else {
-      ctx.fillStyle = `rgba(254,189,133,${opacity})`;
-      ctx.strokeStyle = `rgba(0,0,0,${opacity * 0.2})`;
-      // ctx.fillStyle = activityColor;
       ctx.fillStyle = hexToRgba(activityColor, opacity);
     }
   }
@@ -762,8 +761,26 @@
     ctx.globalAlpha = 1;
   }
 
-  function drawPointLabel(text: string, x: number, y: number, primaryHighlight: boolean, secondaryHighlight: boolean) {
-    const color = primaryHighlight || secondaryHighlight ? activitySelectedColor : activityColor;
+  function drawPointLabel(
+    text: string,
+    x: number,
+    y: number,
+    primaryHighlight: boolean,
+    secondaryHighlight: boolean,
+    unfinished: boolean = false,
+  ) {
+    let color = activityColor;
+    if (unfinished) {
+      color = activityUnfinishedColor;
+    }
+    if (primaryHighlight || secondaryHighlight) {
+      if (unfinished) {
+        color = activityUnfinishedSelectedColor;
+      } else {
+        color = activitySelectedColor;
+      }
+    }
+
     let textOpacity = 1;
     if (selectedActivityDirectiveId !== null || selectedSpanId !== null) {
       if (!primaryHighlight) {
@@ -775,7 +792,9 @@
       }
     }
 
-    const { labelText, textMetrics } = setLabelContext(text, textOpacity, color);
+    const darkenFactor = unfinished ? 1.1 : 2.5;
+    color = hexToRgba(shadeColor(color, darkenFactor), textOpacity); // Tint the color to be darker
+    const { labelText, textMetrics } = setLabelContext(text, color);
     ctx.fillText(labelText, x, y, textMetrics.width);
     return textMetrics;
   }
