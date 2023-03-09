@@ -978,16 +978,16 @@
                     {#if layer.chartType === 'activity'}
                       <ColorPresetsPicker
                         presetColors={[
-                          '#ef8b8c',
-                          '#febd85',
+                          '#FFD1D2',
+                          '#FFCB9E',
                           '#fcdd8f',
-                          '#b8d89b',
-                          '#9cc8e2',
-                          '#c49fd6',
-                          '#e3d7e9',
-                          '#d1bca7',
-                          '#f1e2ce',
-                          '#bdbdbd',
+                          '#CAEBAE',
+                          '#C9E4F5',
+                          '#F8CCFF',
+                          '#ECE0F2',
+                          '#E8D3BE',
+                          '#F5E9DA',
+                          '#EBEBEB',
                         ]}
                         tooltipText="Layer Color"
                         value={getColorForLayer(layer)}
