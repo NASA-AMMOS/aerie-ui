@@ -334,9 +334,9 @@ export function createRow(timelines: Timeline[]): Row {
   const id = getNextRowID(timelines);
 
   return {
-    autoAdjustHeight: true,
+    autoAdjustHeight: false,
     expanded: true,
-    height: 200,
+    height: 400,
     horizontalGuides: [],
     id,
     layers: [],

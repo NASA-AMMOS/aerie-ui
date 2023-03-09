@@ -303,9 +303,9 @@ export function generateDefaultView(activityTypes: ActivityType[] = [], resource
             marginRight: 30,
             rows: [
               {
-                autoAdjustHeight: true,
+                autoAdjustHeight: false,
                 expanded: true,
-                height: 100,
+                height: 400,
                 horizontalGuides: [],
                 id: rowIds++,
                 layers: [
