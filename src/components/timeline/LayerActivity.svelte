@@ -83,9 +83,19 @@
   const assets: {
     anchorIcon: HTMLImageElement;
     directiveIcon: HTMLImageElement;
+    directiveIconShape: Path2D;
+    directiveIconShapeStroke: Path2D;
     hashMarks: HTMLImageElement;
     pattern: HTMLCanvasElement;
-  } = { anchorIcon: null, directiveIcon: null, hashMarks: null, pattern: null };
+  } = {
+    anchorIcon: null,
+    directiveIcon: null,
+    directiveIconShape: null,
+    directiveIconShapeStroke: null,
+    hashMarks: null,
+    pattern: null,
+  };
+  const textMetricsCache: Record<string, TextMetrics> = {};
 
   $: onBlur(blur);
   $: onFocus(focus);
@@ -137,6 +147,12 @@
     assets.directiveIcon = loadSVG(ActivityDirectiveIconSVG);
     assets.anchorIcon = loadSVG(ActivityAnchorIconSVG);
     assets.hashMarks = loadSVG(SpanHashMarksSVG);
+    assets.directiveIconShape = new Path2D(
+      'M0 0.470589C0 0.21069 0.21069 0 0.470588 0H8C12.4183 0 16 3.58172 16 8V8C16 12.4183 12.4183 16 8 16H0.470589C0.21069 16 0 15.7893 0 15.5294V0.470589Z',
+    );
+    assets.directiveIconShapeStroke = new Path2D(
+      'M0.5 15.5V0.5H8C12.1421 0.5 15.5 3.85786 15.5 8C15.5 12.1421 12.1421 15.5 8 15.5H0.5Z',
+    );
   }
   function loadSVG(svgString) {
     var svg64 = window.btoa(svgString);
@@ -720,9 +736,10 @@
     ctx.font = `${fontSize}px ${fontFace}`;
     ctx.textAlign = 'start';
     ctx.textBaseline = 'middle';
-    const textMetrics = ctx.measureText(labelText);
+    let textMetrics = textMetricsCache[labelText] ?? ctx.measureText(labelText);
     const textWidth = textMetrics.width;
     const textHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
+    textMetricsCache[labelText] = textMetrics; // Cache to avoid recomputing this measurement
     return { labelText, textHeight, textMetrics, textWidth };
   }
 
@@ -748,13 +765,9 @@
   function drawDirectiveIcon(x: number, y: number, svgOpacity: number) {
     // Draw the shape
     ctx.save();
-    const path1 = new Path2D(
-      'M0 0.470589C0 0.21069 0.21069 0 0.470588 0H8C12.4183 0 16 3.58172 16 8V8C16 12.4183 12.4183 16 8 16H0.470589C0.21069 16 0 15.7893 0 15.5294V0.470589Z',
-    );
-    const path2 = new Path2D('M0.5 15.5V0.5H8C12.1421 0.5 15.5 3.85786 15.5 8C15.5 12.1421 12.1421 15.5 8 15.5H0.5Z');
     ctx.setTransform(dpr, 0, 0, dpr, x * dpr, y * dpr);
-    ctx.fill(path1);
-    ctx.stroke(path2);
+    ctx.fill(assets.directiveIconShape);
+    ctx.stroke(assets.directiveIconShapeStroke);
     ctx.restore();
 
     // Draw the icon
