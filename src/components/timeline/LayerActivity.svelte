@@ -311,7 +311,7 @@
     return `${span.type}${span.duration === null ? ' (Unfinished)' : ''}`;
   }
 
-  // Determine starting Y position for point, associated span, and any children
+  // Determine starting Y position for the activity directive, taking into account any associated spans
   function placeActivityDirective(activityDirective: ActivityDirective, maxXPerY: Record<number, number>) {
     // Get sizes of the points spawned by this point
     const directiveBounds = getDirectiveBounds(activityDirective); // Directive element
@@ -328,7 +328,6 @@
     let foundY = false;
     while (!foundY) {
       let maxDirectiveXForY = maxXPerY[i];
-      // let maxSpanXForY = maxXPerY[i + rowHeight];
       const directiveXForYExists = maxDirectiveXForY !== undefined;
       const directiveFits =
         !directiveXForYExists || (directiveXForYExists && directiveBounds.xCanvas > maxDirectiveXForY);
@@ -372,11 +371,11 @@
     const adjustedSpanBounds = { ...spanBounds };
     adjustedSpanBounds.maxY = directiveStartY + rowHeight + adjustedSpanBounds.maxY;
     let childrenYIterator = 0;
-    let childStartY = 0;
+    let spanStartY = 0;
     if (spanBounds) {
       childrenYIterator = directiveStartY + rowHeight;
-      childStartY = spanBounds.maxY + childrenYIterator;
-      while (childrenYIterator < childStartY) {
+      spanStartY = spanBounds.maxY + childrenYIterator;
+      while (childrenYIterator < spanStartY) {
         // TODO span bounds could provide a maxXForY instead of absolute corner bounds?
         const maxXForSpanY = maxXPerY[childrenYIterator];
         if (maxXForSpanY === undefined || maxXForSpanY < spanBounds.maxX) {
@@ -454,23 +453,32 @@
             getUnixEpochTimeFromInterval(planStartTimeYmd, span.start_offset) !==
               getUnixEpochTimeFromInterval(planStartTimeYmd, activityDirective.start_offset);
 
-          // Draw directive
           const maxCanvasRowY = Math.floor(drawHeight / rowHeight) * rowHeight;
-          const constrainedDirectiveY =
-            directiveStartY > drawHeight - rowHeight ? (directiveStartY % maxCanvasRowY) + rowHeight : directiveStartY;
-          drawActivityDirective(activityDirective, directiveBounds.xCanvas, constrainedDirectiveY);
 
           // Draw spans
-          // TODO get children overdraw working
-          // TODO get the children start Y, could be diff from spanStartY
+          let constrainedSpanY = -1;
           if (span) {
-            const childHeight = spanBounds ? spanBounds.maxY - directiveStartY : 0;
-            const constrainedChildrenY =
-              directiveStartY > drawHeight - childHeight
+            const spanStartY = directiveStartY;
+            // Wrap spans if overflowing draw height
+            constrainedSpanY =
+              spanBounds.maxY > drawHeight ? (spanBounds.maxY % maxCanvasRowY) - rowHeight : spanStartY;
+            drawSpans([span], constrainedSpanY, true, directiveMoved);
+          }
+
+          // Draw directive
+          let constrainedDirectiveY = 0;
+          // If the span exists, use the constrained span Y as the starting point for the directive
+          // so that the directive wraps with the span
+          if (constrainedSpanY > -1) {
+            constrainedDirectiveY = constrainedSpanY;
+          } else {
+            // Wrap directive if overflowing draw height and no span is found
+            constrainedDirectiveY =
+              directiveStartY > drawHeight - rowHeight
                 ? (directiveStartY % maxCanvasRowY) + rowHeight
                 : directiveStartY;
-            drawSpans([span], constrainedChildrenY, true, directiveMoved);
           }
+          drawActivityDirective(activityDirective, directiveBounds.xCanvas, constrainedDirectiveY);
 
           totalMaxY = Math.max(totalMaxY, directiveStartY, directiveStartY, spanBounds?.maxY || 0);
         }
