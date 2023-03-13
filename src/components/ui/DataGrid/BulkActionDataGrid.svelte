@@ -86,7 +86,7 @@
   {getRowId}
   {idKey}
   {isRowSelectable}
-  preventDefaultOnContextMenu={showContextMenu}
+  useCustomContextMenu={showContextMenu}
   rowData={items}
   rowSelection="multiple"
   {scrollToSelection}

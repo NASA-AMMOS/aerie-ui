@@ -26,7 +26,7 @@
   columnDefs={[...(columnDefs ?? [])]}
   {columnStates}
   {getRowId}
-  preventDefaultOnContextMenu
+  useCustomContextMenu
   rowData={spans}
   rowSelection="single"
   scrollToSelection={true}

@@ -55,7 +55,7 @@
   export let currentSelectedRowId: RowId | null = null;
   export let highlightOnSelection: boolean = true;
   export let idKey: keyof TRowData = 'id';
-  export let preventDefaultOnContextMenu: boolean | undefined = undefined;
+  export let useCustomContextMenu: boolean | undefined = undefined;
   export let rowData: TRowData[] = [];
   export let rowSelection: 'single' | 'multiple' | undefined = undefined;
   export let scrollToSelection: boolean = false;
@@ -164,7 +164,7 @@
   }
 
   function onCellContextMenu(event: CellContextMenuEvent<TRowData>) {
-    if (preventDefaultOnContextMenu) {
+    if (useCustomContextMenu) {
       const { data: clickedRow } = event;
       if (
         selectedRowIds.length <= 1 &&
@@ -175,9 +175,7 @@
         selectedRowIds = [currentSelectedRowId];
       }
 
-      if (currentSelectedRowId !== null) {
-        contextMenu.show(event.event as MouseEvent);
-      }
+      contextMenu.show(event.event as MouseEvent);
     }
     dispatch('cellContextMenu', event);
   }
@@ -287,7 +285,7 @@
         dispatch('sortChanged', event);
         onColumnStateChangeDebounced();
       },
-      preventDefaultOnContextMenu,
+      preventDefaultOnContextMenu: useCustomContextMenu,
       rowData,
       rowSelection,
       suppressCellFocus,

@@ -64,7 +64,7 @@
   {columnStates}
   {getRowId}
   {isRowSelectable}
-  preventDefaultOnContextMenu
+  useCustomContextMenu
   rowData={items}
   rowSelection="single"
   {scrollToSelection}
@@ -88,8 +88,10 @@
         Edit {itemDisplayText}
       </ContextMenuItem>
     {/if}
-    <ContextMenuItem on:click={deleteItem}>
-      Delete {itemDisplayText}
-    </ContextMenuItem>
+    {#if selectedItemId !== null}
+      <ContextMenuItem on:click={deleteItem}>
+        Delete {itemDisplayText}
+      </ContextMenuItem>
+    {/if}
   </svelte:fragment>
 </DataGrid>
