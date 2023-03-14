@@ -130,9 +130,6 @@ export function selectActivity(
     if (switchToTable) {
       viewTogglePanel({ state: true, type: 'bottom', update: { middleComponentBottom: 'ActivitySpansTablePanel' } });
     }
-  } else {
-    selectedSpanId.set(null);
-    selectedActivityDirectiveId.set(null);
   }
 }
 

@@ -111,7 +111,7 @@
       selectedRow?.setSelected(false);
     });
 
-    selectedRowIds.forEach(selectedRowId => {
+    selectedRowIdsSet.forEach(selectedRowId => {
       const selectedRow = gridOptions?.api?.getRowNode(`${selectedRowId}`);
       selectedRow?.setSelected(true);
     });

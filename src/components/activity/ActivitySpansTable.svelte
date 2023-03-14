@@ -14,6 +14,12 @@
 
   let selectedItemIds: RowId[] = [];
 
+  $: if (!selectedItemIds.includes(selectedSpanId) && selectedSpanId != null) {
+    selectedItemIds = [selectedSpanId];
+  } else if (selectedSpanId === null) {
+    selectedItemIds = [];
+  }
+
   function getRowId(span: Span): SpanId {
     return span.id;
   }
