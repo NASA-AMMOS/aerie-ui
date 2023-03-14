@@ -1,7 +1,9 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import LockIcon from '@nasa-jpl/stellar/icons/lock.svg?component';
   import TrashIcon from '@nasa-jpl/stellar/icons/trash.svg?component';
+  import UnlockIcon from '@nasa-jpl/stellar/icons/unlock.svg?component';
   import {
     activityDirectivesMap,
     activityMetadataDefinitions,
@@ -10,7 +12,7 @@
     selectedActivityDirective,
   } from '../../stores/activities';
   import { filteredExpansionSequences } from '../../stores/expansion';
-  import { activityTypes, modelId, plan } from '../../stores/plan';
+  import { activityTypes, modelId, plan, setActivityEditingLocked } from '../../stores/plan';
   import { selectedSpan, simulationDatasetId, spansMap, spanUtilityMaps } from '../../stores/simulation';
   import type { SpanId } from '../../types/simulation';
   import type { ViewGridSection } from '../../types/view';
@@ -18,10 +20,12 @@
   import { tooltip } from '../../utilities/tooltip';
   import GridMenu from '../menus/GridMenu.svelte';
   import Panel from '../ui/Panel.svelte';
+  import PanelHeaderActions from '../ui/PanelHeaderActions.svelte';
   import ActivityDirectiveForm from './ActivityDirectiveForm.svelte';
   import ActivitySpanForm from './ActivitySpanForm.svelte';
 
   export let gridSection: ViewGridSection;
+  export let activityEditingLocked: boolean = false;
 
   function onSelectSpan(event: CustomEvent<SpanId>) {
     const { detail: spanId } = event;
@@ -32,16 +36,35 @@
 <Panel padBody={false}>
   <svelte:fragment slot="header">
     <GridMenu {gridSection} title="Selected Activity" />
-    {#if $selectedActivityDirective}
+    <PanelHeaderActions>
       <button
-        class="st-button icon activity-header-delete"
-        on:click|stopPropagation={() =>
-          effects.deleteActivityDirective($selectedActivityDirective.plan_id, $selectedActivityDirective.id)}
-        use:tooltip={{ content: 'Delete Activity', placement: 'top' }}
+        class="st-button icon activity-header-lock"
+        on:click={() => {
+          setActivityEditingLocked(!activityEditingLocked);
+        }}
+        use:tooltip={{
+          content: `${activityEditingLocked ? 'Unlock' : 'Lock'} activity editing`,
+          placement: 'bottom',
+        }}
       >
-        <TrashIcon />
+        {#if activityEditingLocked}
+          <LockIcon />
+        {:else}
+          <UnlockIcon />
+        {/if}
       </button>
-    {/if}
+
+      {#if $selectedActivityDirective}
+        <button
+          class="st-button icon activity-header-delete"
+          on:click|stopPropagation={() =>
+            effects.deleteActivityDirective($selectedActivityDirective.plan_id, $selectedActivityDirective.id)}
+          use:tooltip={{ content: 'Delete Activity', placement: 'top' }}
+        >
+          <TrashIcon />
+        </button>
+      {/if}
+    </PanelHeaderActions>
   </svelte:fragment>
 
   <svelte:fragment slot="body">
@@ -52,6 +75,7 @@
         activityMetadataDefinitions={$activityMetadataDefinitions}
         activityTypes={$activityTypes}
         allActivityDirectiveTags={$allActivityDirectiveTags}
+        editable={!activityEditingLocked}
         modelId={$modelId}
         planStartTimeYmd={$plan.start_time}
       />
@@ -74,7 +98,12 @@
 </Panel>
 
 <style>
-  .activity-header-delete {
+  .activity-header-delete,
+  .activity-header-lock {
     border: 1px solid var(--st-gray-30);
+  }
+
+  .activity-header-delete {
+    margin-left: 0.5rem;
   }
 </style>
