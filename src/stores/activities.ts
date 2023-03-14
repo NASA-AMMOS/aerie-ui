@@ -12,7 +12,7 @@ import gql from '../utilities/gql';
 import { planId } from './plan';
 import { selectedSpanId } from './simulation';
 import { gqlSubscribable } from './subscribable';
-import { view, viewTogglePanel } from './views';
+import { view, viewUpdateGrid } from './views';
 
 /* Subscriptions. */
 
@@ -118,17 +118,13 @@ export function selectActivity(
     selectedSpanId.set(null);
     selectedActivityDirectiveId.set(activityDirectiveId);
     if (switchToTable) {
-      viewTogglePanel({
-        state: true,
-        type: 'bottom',
-        update: { middleComponentBottom: 'ActivityDirectivesTablePanel' },
-      });
+      viewUpdateGrid({ middleComponentBottom: 'ActivityDirectivesTablePanel' });
     }
   } else if (activityDirectiveId === null && spanId !== null) {
     selectedSpanId.set(spanId);
     selectedActivityDirectiveId.set(null);
     if (switchToTable) {
-      viewTogglePanel({ state: true, type: 'bottom', update: { middleComponentBottom: 'ActivitySpansTablePanel' } });
+      viewUpdateGrid({ middleComponentBottom: 'ActivitySpansTablePanel' });
     }
   }
 }
