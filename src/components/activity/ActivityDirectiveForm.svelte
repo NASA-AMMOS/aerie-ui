@@ -8,6 +8,7 @@
     ActivityDirective,
     ActivityDirectiveId,
     ActivityDirectivesMap,
+    ActivityPresetInsertInput,
     ActivityType,
   } from '../../types/activity';
   import type { ActivityMetadataDefinition } from '../../types/activity-metadata';
@@ -28,6 +29,7 @@
   import Highlight from '../ui/Highlight.svelte';
   import Tags from '../ui/Tags.svelte';
   import ActivityAnchorForm from './ActivityAnchorForm.svelte';
+  import ActivityPresetInput from './ActivityPresetInput.svelte';
 
   export let activityDirective: ActivityDirective;
   export let activityDirectivesMap: ActivityDirectivesMap = {};
@@ -42,6 +44,7 @@
   export let showHeader: boolean = true;
 
   let editingActivityName: boolean = false;
+  let hasUserChanges: boolean = false;
   let formParameters: FormParameter[] = [];
   let highlightKeysMap: Record<string, boolean> = {};
   let parametersWithErrorsCount: number = 0;
@@ -64,11 +67,15 @@
           activityType.parameters,
           activityDirective.arguments,
           activityType.required_parameters,
+          activityDirective.applied_preset?.presets_applied?.arguments,
           defaultArgumentsMap,
         );
       });
   }
   $: validateArguments(activityDirective.arguments);
+  $: hasUserChanges = formParameters.reduce((previousHasChanges: boolean, formParameter) => {
+    return previousHasChanges || /user/.test(formParameter.valueSource);
+  }, false);
 
   $: if (parameterErrorMap) {
     formParameters = formParameters.map((formParameter: FormParameter) => {
@@ -85,6 +92,21 @@
     }
   };
 
+  async function applyPresetToActivity(presetId: number | null) {
+    if (presetId === null) {
+      await effects.removePresetFromActivityDirective(
+        activityDirective.plan_id,
+        activityDirective.id,
+        activityDirective.applied_preset.preset_id,
+      );
+    } else {
+      await effects.applyPresetToActivity(presetId, activityDirective.id, activityDirective.plan_id);
+    }
+  }
+
+  function editActivityName() {
+    editingActivityName = true;
+  }
   function updateAnchor({ detail: anchorId }: CustomEvent<ActivityDirectiveId>) {
     const { id, plan_id } = activityDirective;
     effects.updateActivityDirective(plan_id, id, { anchor_id: anchorId });
@@ -100,10 +122,36 @@
     effects.updateActivityDirective(plan_id, id, { start_offset: offset });
   }
 
+  async function onActivityNameKeyup(event: KeyboardEvent) {
+    if (event.key === 'Escape') {
+      if ($activityNameField.dirty) {
+        resetActivityName();
+      }
+      editingActivityName = false;
+    }
+  }
+
+  async function onApplyPresetToActivity(event: CustomEvent<number | null>) {
+    const { detail: presetId } = event;
+    await applyPresetToActivity(presetId);
+  }
+
   function onChangeFormParameters(event: CustomEvent<FormParameter>) {
     const { detail: formParameter } = event;
     const { arguments: argumentsMap, id, plan_id } = activityDirective;
     const newArguments = getArguments(argumentsMap, formParameter);
+    effects.updateActivityDirective(plan_id, id, { arguments: newArguments });
+  }
+
+  function onResetFormParameters(event: CustomEvent<FormParameter>) {
+    const { detail: formParameter } = event;
+    const { arguments: argumentsMap, id, plan_id } = activityDirective;
+    const newArguments = getArguments(argumentsMap, {
+      ...formParameter,
+      value: activityDirective.applied_preset
+        ? activityDirective.applied_preset.presets_applied.arguments[formParameter.name]
+        : null,
+    });
     effects.updateActivityDirective(plan_id, id, { arguments: newArguments });
   }
 
@@ -113,6 +161,37 @@
     const { id, metadata, plan_id } = activityDirective;
     const newActivityMetadata = getActivityMetadata(metadata, key, value);
     effects.updateActivityDirective(plan_id, id, { metadata: newActivityMetadata });
+  }
+
+  async function onSaveNewPreset(event: CustomEvent<ActivityPresetInsertInput>) {
+    const {
+      detail: { name },
+    } = event;
+    const id = await effects.createActivityPreset(activityDirective.arguments, activityDirective.type, name, modelId);
+    if (id !== null) {
+      await applyPresetToActivity(id);
+    }
+  }
+
+  async function onSavePreset(event: CustomEvent<ActivityPresetInsertInput>) {
+    const { detail } = event;
+    const { name } = detail;
+    await effects.updateActivityPreset(activityDirective.applied_preset.preset_id, {
+      arguments: activityDirective.arguments,
+      name,
+    });
+  }
+
+  async function onUpdateActivityName() {
+    if ($activityNameField.dirty) {
+      if ($activityNameField.value) {
+        const { id, plan_id } = activityDirective;
+        effects.updateActivityDirective(plan_id, id, { name: $activityNameField.value });
+      } else {
+        resetActivityName();
+      }
+    }
+    editingActivityName = false;
   }
 
   function onUpdateStartTime() {
@@ -131,36 +210,11 @@
     effects.updateActivityDirective(plan_id, id, { tags });
   }
 
-  function editActivityName() {
-    editingActivityName = true;
-  }
-
   function resetActivityName() {
     const initialValue = $activityNameField.initialValue;
     activityNameField.reset(initialValue);
     const { id, plan_id } = activityDirective;
     effects.updateActivityDirective(plan_id, id, { name: initialValue });
-  }
-
-  async function onUpdateActivityName() {
-    if ($activityNameField.dirty) {
-      if ($activityNameField.value) {
-        const { id, plan_id } = activityDirective;
-        effects.updateActivityDirective(plan_id, id, { name: $activityNameField.value });
-      } else {
-        resetActivityName();
-      }
-    }
-    editingActivityName = false;
-  }
-
-  async function onActivityNameKeyup(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
-      if ($activityNameField.dirty) {
-        resetActivityName();
-      }
-      editingActivityName = false;
-    }
   }
 
   async function validateArguments(newArguments: ArgumentsMap | null): Promise<void> {
@@ -208,8 +262,10 @@
         <button
           use:tooltip={{ content: 'Save', placement: 'top' }}
           class="icon st-button"
-          on:click={onUpdateActivityName}><CheckIcon /></button
+          on:click={onUpdateActivityName}
         >
+          <CheckIcon />
+        </button>
       {/if}
     </div>
   </div>
@@ -337,7 +393,21 @@
         </span>
       </summary>
       <div class="details-body">
-        <Parameters disabled={!editable} {formParameters} {highlightKeysMap} on:change={onChangeFormParameters} />
+        <ActivityPresetInput
+          {modelId}
+          {activityDirective}
+          hasChanges={hasUserChanges}
+          on:applyPreset={onApplyPresetToActivity}
+          on:saveNewPreset={onSaveNewPreset}
+          on:savePreset={onSavePreset}
+        />
+        <Parameters
+          disabled={!editable}
+          {formParameters}
+          {highlightKeysMap}
+          on:change={onChangeFormParameters}
+          on:reset={onResetFormParameters}
+        />
         {#if formParameters.length === 0}
           <div class="st-typography-label">No Parameters Found</div>
         {/if}

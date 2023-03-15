@@ -1,0 +1,259 @@
+<svelte:options immutable={true} />
+
+<script lang="ts">
+  import PlusIcon from '@nasa-jpl/stellar/icons/plus.svg?component';
+  import SaveIcon from '@nasa-jpl/stellar/icons/save.svg?component';
+  import SearchIcon from '@nasa-jpl/stellar/icons/search.svg?component';
+  import SettingsIcon from '@nasa-jpl/stellar/icons/settings.svg?component';
+  import TrashIcon from '@nasa-jpl/stellar/icons/trash.svg?component';
+  import { createEventDispatcher } from 'svelte';
+  import { gqlSubscribable } from '../../stores/subscribable';
+  import type { ActivityDirective, ActivityPreset } from '../../types/activity';
+  import type { GqlSubscribable } from '../../types/subscribable';
+  import { getTarget } from '../../utilities/generic';
+  import gql from '../../utilities/gql';
+  import { tooltip } from '../../utilities/tooltip';
+  import Input from '../form/Input.svelte';
+  import Menu from '../menus/Menu.svelte';
+  import MenuHeader from '../menus/MenuHeader.svelte';
+  import MenuItem from '../menus/MenuItem.svelte';
+  import Highlight from '../ui/Highlight.svelte';
+
+  export let activityDirective: ActivityDirective;
+  export let disabled: boolean = false;
+  export let hasChanges: boolean = false;
+  export let highlightKeysMap: Record<string, boolean> = {};
+  export let labelColumnWidth: number = 200;
+  export let level: number = 0;
+  export let levelPadding: number = 20;
+  export let modelId: number;
+
+  const dispatch = createEventDispatcher();
+
+  let activityPresets: GqlSubscribable<ActivityPreset[]>;
+
+  let clientWidth: number;
+  let displayedActivityPresets: ActivityPreset[];
+  let presetMenu: Menu;
+  let presetName: string = '';
+  let searchFilter: string = '';
+
+  $: activityPresets = gqlSubscribable<ActivityPreset[]>(
+    gql.SUB_ACTIVITY_PRESETS,
+    { activityTypeName: activityDirective.type, modelId },
+    [],
+  );
+  $: labelColumnWidth = clientWidth * 0.65;
+  $: columns = `calc(${labelColumnWidth}px - ${level * levelPadding}px) auto`;
+  $: displayedActivityPresets = $activityPresets.filter((activityPreset: ActivityPreset) => {
+    return new RegExp(searchFilter, 'i').test(activityPreset.name);
+  });
+
+  function onOpenMenu() {
+    if (!disabled) {
+      presetName = activityDirective.applied_preset?.presets_applied.name ?? '';
+      presetMenu.show();
+    }
+  }
+
+  function onSearchPresets(event: Event) {
+    const { value } = getTarget(event);
+
+    searchFilter = `${value}`;
+  }
+
+  function onSaveNewPreset() {
+    if (presetName) {
+      dispatch('saveNewPreset', {
+        name: presetName,
+      });
+    }
+  }
+
+  function onSavePreset() {
+    if (presetName && activityDirective?.applied_preset) {
+      dispatch('savePreset', {
+        name: presetName,
+      });
+    }
+  }
+
+  function onUpdatePresetName(event: Event) {
+    const { value } = getTarget(event);
+    presetName = `${value}`;
+  }
+
+  function setAssociatedActivityPreset(activityPresetId: number | null) {
+    presetMenu.hide();
+    dispatch('applyPreset', activityPresetId);
+  }
+</script>
+
+<Highlight highlight={highlightKeysMap.activity_preset}>
+  <div bind:clientWidth class="activity-preset-input-container" style="grid-template-columns: {columns}">
+    <label class="label" use:tooltip={{ content: 'Choose activity preset', placement: 'top' }} for="activity_preset">
+      Preset
+    </label>
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <div class="preset-input-container">
+      <div class="preset-input st-input w-100" class:disabled on:click|stopPropagation={onOpenMenu}>
+        <span class="preset-value st-input">{activityDirective.applied_preset?.presets_applied.name ?? 'None '}</span>
+        <button
+          use:tooltip={{ content: 'Set Preset', placement: 'top' }}
+          class="icon st-button settings-icon"
+          on:click|stopPropagation={onOpenMenu}
+        >
+          <SettingsIcon />
+        </button>
+      </div>
+      <Menu bind:this={presetMenu} hideAfterClick={false} placement="bottom-start" type="input">
+        <MenuHeader>
+          <div class="preset-header">
+            <input
+              class="st-input w-100"
+              placeholder="Enter preset name"
+              value={presetName}
+              on:input={onUpdatePresetName}
+            />
+            <button
+              use:tooltip={{
+                content: presetName ? 'Save as new preset' : 'Enter a name for the preset',
+                placement: 'top',
+              }}
+              class="icon st-button"
+              class:disabled={!presetName}
+              on:click={onSaveNewPreset}
+            >
+              <PlusIcon />
+            </button>
+            <button
+              use:tooltip={{ content: 'Save changes', placement: 'top' }}
+              class="icon st-button"
+              disabled={!(
+                presetName &&
+                !!activityDirective.applied_preset &&
+                (presetName !== activityDirective.applied_preset?.presets_applied.name || hasChanges)
+              )}
+              on:click={onSavePreset}
+            >
+              <SaveIcon />
+            </button>
+            <button
+              use:tooltip={{ content: 'Delete preset', placement: 'top' }}
+              class="icon st-button"
+              disabled={!activityDirective?.applied_preset}
+            >
+              <TrashIcon />
+            </button>
+          </div>
+        </MenuHeader>
+        <div class="preset-items">
+          <div class="preset-search">
+            <Input>
+              <div class="search-icon" slot="left"><SearchIcon /></div>
+              <input
+                class="st-input w-100"
+                placeholder="Search presets"
+                value={searchFilter}
+                on:input={onSearchPresets}
+              />
+            </Input>
+          </div>
+          <MenuItem selected={!activityDirective.applied_preset} on:click={() => setAssociatedActivityPreset(null)}>
+            None
+          </MenuItem>
+          {#each displayedActivityPresets as activityPreset}
+            <MenuItem
+              selected={activityPreset.id === activityDirective.applied_preset?.preset_id}
+              on:click={() => setAssociatedActivityPreset(activityPreset.id)}
+            >
+              {activityPreset.name}
+            </MenuItem>
+          {/each}
+        </div>
+      </Menu>
+    </div>
+  </div>
+</Highlight>
+
+<style>
+  .activity-preset-input-container {
+    --aerie-menu-item-template-columns: 1fr;
+    align-items: center;
+    display: grid;
+  }
+
+  .preset-input-container {
+    position: relative;
+  }
+
+  .preset-input {
+    color: inherit;
+    column-gap: 6px;
+    display: grid;
+    grid-template-columns: auto 16px;
+    position: relative;
+  }
+
+  .preset-input.st-input {
+    padding-bottom: 0;
+    padding-top: 0;
+  }
+
+  .preset-value.st-input {
+    background: none;
+    border: 0;
+    overflow: hidden;
+    padding-left: 0;
+    padding-right: 0;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .preset-input.st-input.disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .preset-input .st-button.icon {
+    color: var(--st-gray-50);
+    min-width: inherit;
+  }
+
+  .st-button.disabled {
+    cursor: not-allowed;
+    opacity: var(--st-button-disabled-opacity);
+  }
+
+  .settings-icon {
+    align-items: center;
+    cursor: pointer;
+    display: flex;
+  }
+
+  .label {
+    align-items: center;
+    display: flex;
+  }
+
+  .preset-header {
+    column-gap: 6px;
+    display: grid;
+    grid-template-columns: auto repeat(3, 16px);
+  }
+
+  .preset-items {
+    cursor: pointer;
+  }
+
+  .preset-items .preset-search {
+    display: flex;
+    margin: 6px;
+  }
+
+  .preset-items .preset-search .search-icon {
+    align-items: center;
+    color: var(--st-gray-50);
+    display: flex;
+  }
+</style>

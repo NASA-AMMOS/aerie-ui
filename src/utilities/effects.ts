@@ -24,6 +24,10 @@ import type {
   ActivityDirectiveInsertInput,
   ActivityDirectiveSetInput,
   ActivityDirectivesMap,
+  ActivityPreset,
+  ActivityPresetId,
+  ActivityPresetInsertInput,
+  ActivityPresetSetInput,
   ActivityType,
   ActivityTypeExpansionRules,
 } from '../types/activity';
@@ -105,6 +109,24 @@ import { generateDefaultView } from './view';
  * Functions that have side-effects (e.g. HTTP requests, toasts, popovers, store updates, etc.).
  */
 const effects = {
+  async applyPresetToActivity(
+    presetId: ActivityPresetId,
+    activityId: ActivityDirectiveId,
+    planId: number,
+  ): Promise<void> {
+    try {
+      await reqHasura(gql.APPLY_PRESET_TO_ACTIVITY, {
+        activityId,
+        planId,
+        presetId,
+      });
+      showSuccessToast('Preset Successfully Applied to Activity');
+    } catch (e) {
+      catchError('Preset Unable To Be Applied To Activity', e);
+      showFailureToast('Preset Application Failed');
+    }
+  },
+
   async checkConstraints(): Promise<void> {
     try {
       checkConstraintsStatus.set(Status.Incomplete);
@@ -161,6 +183,34 @@ const effects = {
     } catch (e) {
       catchError('Activity Directive Create Failed', e);
       showFailureToast('Activity Directive Create Failed');
+    }
+  },
+
+  async createActivityPreset(
+    argumentsMap: ArgumentsMap,
+    associatedActivityType: string,
+    name: string,
+    modelId: number,
+  ): Promise<number | null> {
+    try {
+      const activityPresetInsertInput: ActivityPresetInsertInput = {
+        arguments: argumentsMap,
+        associated_activity_type: associatedActivityType,
+        model_id: modelId,
+        name,
+      };
+      const {
+        insert_activity_presets_one: { id, name: presetName },
+      } = await reqHasura<ActivityPreset>(gql.CREATE_ACTIVITY_PRESET, {
+        activityPresetInsertInput,
+      });
+
+      showSuccessToast(`Activity Preset ${presetName} Created Successfully`);
+      return id;
+    } catch (e) {
+      catchError('Activity Preset Create Failed', e);
+      showFailureToast('Activity Preset Create Failed');
+      return null;
     }
   },
 
@@ -1637,6 +1687,35 @@ const effects = {
     }
   },
 
+  async removePresetFromActivityDirective(
+    plan_id: number,
+    activity_directive_id: ActivityDirectiveId,
+    preset_id: ActivityPresetId,
+  ): Promise<boolean> {
+    try {
+      const { confirm } = await showConfirmModal(
+        'Remove Preset',
+        'Are you sure you want to remove the current preset? This will revert the parameters back to the default values.',
+        'Remove Preset from Activity Directive',
+      );
+
+      if (confirm) {
+        await reqHasura(gql.DELETE_PRESET_TO_DIRECTIVE, { activity_directive_id, plan_id, preset_id });
+        await reqHasura(gql.UPDATE_ACTIVITY_DIRECTIVE, {
+          activityDirectiveSetInput: { arguments: {} },
+          id: activity_directive_id,
+          plan_id,
+        });
+        showSuccessToast('Removed Activity Preset Successfully');
+        return true;
+      }
+    } catch (e) {
+      catchError('Activity Preset Removal Failed', e);
+      showFailureToast('Activity Preset Removal Failed');
+      return false;
+    }
+  },
+
   async schedule(analysis_only: boolean = false): Promise<void> {
     try {
       const { id: planId } = get(plan);
@@ -1754,6 +1833,37 @@ const effects = {
     } catch (e) {
       catchError('Activity Directive Update Failed', e);
       showFailureToast('Activity Directive Update Failed');
+    }
+  },
+
+  async updateActivityPreset(id: ActivityPresetId, partialActivityPreset: ActivityPresetSetInput): Promise<void> {
+    try {
+      const activityPresetSetInput: ActivityPresetSetInput = {};
+
+      if (partialActivityPreset.arguments) {
+        activityPresetSetInput.arguments = partialActivityPreset.arguments;
+      }
+      if (partialActivityPreset.associated_activity_type) {
+        activityPresetSetInput.associated_activity_type = partialActivityPreset.associated_activity_type;
+      }
+      if (partialActivityPreset.model_id) {
+        activityPresetSetInput.model_id = partialActivityPreset.model_id;
+      }
+      if (partialActivityPreset.name) {
+        activityPresetSetInput.name = partialActivityPreset.name;
+      }
+
+      const {
+        update_activity_presets_by_pk: { name: presetName },
+      } = await reqHasura<ActivityPreset>(gql.UPDATE_ACTIVITY_PRESET, {
+        activityPresetSetInput,
+        id,
+      });
+
+      showSuccessToast(`Activity Preset ${presetName} Updated Successfully`);
+    } catch (e) {
+      catchError('Activity Preset Update Failed', e);
+      showFailureToast('Activity Preset Update Failed');
     }
   },
 
