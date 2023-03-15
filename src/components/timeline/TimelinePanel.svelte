@@ -29,6 +29,16 @@
     effects.deleteActivityDirective($planId, activityDirectiveId);
   }
 
+  function jumpToActivityDirective(event: CustomEvent<ActivityDirectiveId>) {
+    const { detail: activityDirectiveId } = event;
+    selectActivity(activityDirectiveId, null);
+  }
+
+  function jumpToSpan(event: CustomEvent<ActivityDirectiveId>) {
+    const { detail: spanId } = event;
+    selectActivity(null, spanId);
+  }
+
   function onMouseDown(event: CustomEvent<MouseDown>) {
     const { detail } = event;
     const { activityDirectives, spans } = detail;
@@ -89,6 +99,8 @@
       timelineLockStatus={$timelineLockStatus}
       viewTimeRange={$viewTimeRange}
       on:deleteActivityDirective={deleteActivityDirective}
+      on:jumpToActivityDirective={jumpToActivityDirective}
+      on:jumpToSpan={jumpToSpan}
       on:mouseDown={onMouseDown}
       on:toggleRowExpansion={({ detail: { expanded, rowId } }) => {
         viewUpdateRow('expanded', expanded, timelineId, rowId);

@@ -1,14 +1,26 @@
 <svelte:options accessors={true} immutable={true} />
 
 <script lang="ts">
+  import { createEventDispatcher } from 'svelte';
   import { fade } from 'svelte/transition';
 
+  const dispatch = createEventDispatcher();
+
   export let hideAfterClick: boolean = true;
+
+  let xAnchor: number | null = null;
 
   export function hide(): void {
     shown = false;
     x = 0;
     y = 0;
+  }
+
+  export function showDirectly(_x: number, _y: number, _xAnchor: number): void {
+    shown = true;
+    x = _x;
+    y = _y;
+    xAnchor = _xAnchor;
   }
 
   export function show(e: MouseEvent): void {
@@ -18,6 +30,10 @@
     y = e.clientY;
   }
 
+  export function getBoundingClientRect() {
+    return div.getBoundingClientRect();
+  }
+
   let div: HTMLDivElement;
   let shown = false;
   let x: number;
@@ -25,14 +41,21 @@
 
   $: if (div) {
     const rect = div.getBoundingClientRect();
-    x = Math.min(window.innerWidth - rect.width, x);
+    if (x + rect.width > window.innerWidth) {
+      if (xAnchor !== null) {
+        x = xAnchor - rect.width;
+      } else {
+        x = x - rect.width;
+      }
+    }
     if (y > window.innerHeight - rect.height) {
-      y -= rect.height;
+      y = Math.max(y - rect.height, 8);
     }
   }
 
   function onClick() {
     if (hideAfterClick) {
+      dispatch('hide');
       hide();
     }
   }
@@ -60,11 +83,12 @@
     border: 1px solid var(--st-gray-30);
     border-radius: 4px;
     display: block;
-    min-height: 64px;
+    max-height: calc(100vh - 16px);
     min-width: 150px;
     outline: 0;
+    overflow: auto;
     padding: 4px;
-    position: absolute;
+    position: fixed;
     z-index: 100;
   }
 </style>

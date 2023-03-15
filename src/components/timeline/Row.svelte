@@ -70,6 +70,7 @@
   const dispatch = createEventDispatcher();
 
   let blur: FocusEvent;
+  let contextmenu: MouseEvent;
   let dragenter: DragEvent;
   let dragleave: DragEvent;
   let dragover: DragEvent;
@@ -219,6 +220,9 @@
       class="overlay"
       style="transform: translate({marginLeft}px, 0px); width: {drawWidth}px"
       on:blur={e => (blur = e)}
+      on:contextmenu={e => {
+        contextmenu = e;
+      }}
       on:dragenter|preventDefault={e => (dragenter = e)}
       on:dragleave={e => (dragleave = e)}
       on:dragover|preventDefault={e => (dragover = e)}
@@ -260,6 +264,7 @@
             activityDirectives={activityDirectivesByView?.byLayerId[layer.id] ?? []}
             {activityDirectivesMap}
             {blur}
+            {contextmenu}
             {drawHeight}
             {drawWidth}
             filter={layer.filter.activity}
@@ -281,6 +286,7 @@
             on:deleteActivityDirective
             on:mouseDown={onMouseDown}
             on:mouseOver={onMouseOver}
+            on:contextMenu
             on:updateRowHeight={onUpdateRowHeightLayer}
           />
         {/if}

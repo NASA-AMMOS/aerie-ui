@@ -20,6 +20,7 @@
     TimelineLockStatus,
   } from '../../utilities/timeline';
   import TimelineRow from './Row.svelte';
+  import TimelineContextMenu from './TimelineContextMenu.svelte';
   import TimelineCursors from './TimelineCursors.svelte';
   import TimelineHistogram from './TimelineHistogram.svelte';
   import Tooltip from './Tooltip.svelte';
@@ -45,6 +46,9 @@
   const dispatch = createEventDispatcher();
 
   let clientWidth: number = 0;
+  let contextMenu: MouseOver;
+  let contextMenuComponent: TimelineContextMenu;
+  let tooltip: Tooltip;
   let cursorEnabled: boolean = true;
   let cursorHeaderHeight: number = 0;
   let estimatedLabelWidthPx: number = 74; // Width of MS time which is the largest display format
@@ -275,6 +279,10 @@
         on:mouseDown={onMouseDown}
         on:mouseDownRowMove={onMouseDownRowMove}
         on:mouseOver={e => (mouseOver = e.detail)}
+        on:contextMenu={e => {
+          contextMenu = e.detail;
+          tooltip.hide();
+        }}
         on:toggleRowExpansion={onToggleRowExpansion}
         on:updateRowHeight={onUpdateRowHeight}
       />
@@ -282,7 +290,19 @@
   </div>
 
   <!-- Timeline Tooltip. -->
-  <Tooltip {mouseOver} />
+  <Tooltip bind:this={tooltip} {mouseOver} />
+
+  <TimelineContextMenu
+    {activityDirectivesMap}
+    bind:this={contextMenuComponent}
+    {contextMenu}
+    on:deleteActivityDirective
+    on:jumpToActivityDirective
+    on:jumpToSpan
+    on:hide={() => (contextMenu = null)}
+    {spansMap}
+    {spanUtilityMaps}
+  />
 </div>
 
 <style>

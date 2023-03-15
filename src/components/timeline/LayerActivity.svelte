@@ -34,6 +34,7 @@
   export let activityUnfinishedSelectedColor: string = '#ff3b19';
   export let activityUnfinishedColor: string = '#fc674d';
   export let blur: FocusEvent | undefined;
+  export let contextmenu: MouseEvent | undefined;
   export let debugMode: boolean = false;
   export let drawHeight: number = 0;
   export let drawWidth: number = 0;
@@ -91,6 +92,7 @@
   const textMetricsCache: Record<string, TextMetrics> = {};
 
   $: onBlur(blur);
+  $: onContextmenu(contextmenu);
   $: onFocus(focus);
   $: onMousedown(mousedown);
   $: onMousemove(mousemove);
@@ -220,6 +222,45 @@
   function onFocus(e: FocusEvent | undefined) {
     if (e) {
       document.addEventListener('keydown', onKeyDown);
+    }
+  }
+
+  function onContextmenu(e: MouseEvent | undefined): void {
+    const showContextMenu = !!e && (('button' in e && e.button !== 0) || e.ctrlKey);
+
+    // Prevent native context menu from appearing at all
+    if (e) {
+      e.preventDefault();
+    }
+
+    if (showContextMenu && (selectedActivityDirectiveId !== null || selectedSpanId !== null)) {
+      // TODO make utils for these
+      const { offsetX, offsetY } = e;
+      const activityDirectives = searchQuadtreeRect<ActivityDirective>(
+        quadtreeActivityDirectives,
+        offsetX,
+        offsetY,
+        activityHeight,
+        maxActivityWidth,
+        visibleActivityDirectivesById,
+      );
+      const spans = searchQuadtreeRect<Span>(
+        quadtreeSpans,
+        offsetX,
+        offsetY,
+        activityHeight,
+        maxActivityWidth,
+        visibleSpansById,
+      );
+
+      if (activityDirectives.length || spans.length) {
+        dispatch('contextMenu', {
+          e,
+          layerId: id,
+          selectedActivityDirectiveId,
+          selectedSpanId,
+        });
+      }
     }
   }
 
