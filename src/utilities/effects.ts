@@ -113,17 +113,31 @@ const effects = {
     presetId: ActivityPresetId,
     activityId: ActivityDirectiveId,
     planId: number,
+    numOfUserChanges: number,
   ): Promise<void> {
-    try {
-      await reqHasura(gql.APPLY_PRESET_TO_ACTIVITY, {
-        activityId,
-        planId,
-        presetId,
-      });
-      showSuccessToast('Preset Successfully Applied to Activity');
-    } catch (e) {
-      catchError('Preset Unable To Be Applied To Activity', e);
-      showFailureToast('Preset Application Failed');
+    let confirm: boolean = true;
+    if (numOfUserChanges > 0) {
+      ({ confirm } = await showConfirmModal(
+        'Apply Preset',
+        `There ${numOfUserChanges > 1 ? 'are' : 'is'} currently ${numOfUserChanges} manually edited parameter${
+          numOfUserChanges > 1 ? 's' : ''
+        }. This will remove existing edits and apply preset parameters.`,
+        'Apply Preset to Activity Directive',
+      ));
+    }
+
+    if (confirm) {
+      try {
+        await reqHasura(gql.APPLY_PRESET_TO_ACTIVITY, {
+          activityId,
+          planId,
+          presetId,
+        });
+        showSuccessToast('Preset Successfully Applied to Activity');
+      } catch (e) {
+        catchError('Preset Unable To Be Applied To Activity', e);
+        showFailureToast('Preset Application Failed');
+      }
     }
   },
 

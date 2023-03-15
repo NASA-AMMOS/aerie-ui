@@ -44,7 +44,7 @@
   export let showHeader: boolean = true;
 
   let editingActivityName: boolean = false;
-  let hasUserChanges: boolean = false;
+  let numOfUserChanges: number = 0;
   let formParameters: FormParameter[] = [];
   let highlightKeysMap: Record<string, boolean> = {};
   let parametersWithErrorsCount: number = 0;
@@ -73,9 +73,9 @@
       });
   }
   $: validateArguments(activityDirective.arguments);
-  $: hasUserChanges = formParameters.reduce((previousHasChanges: boolean, formParameter) => {
-    return previousHasChanges || /user/.test(formParameter.valueSource);
-  }, false);
+  $: numOfUserChanges = formParameters.reduce((previousHasChanges: number, formParameter) => {
+    return /user/.test(formParameter.valueSource) ? previousHasChanges + 1 : previousHasChanges;
+  }, 0);
 
   $: if (parameterErrorMap) {
     formParameters = formParameters.map((formParameter: FormParameter) => {
@@ -100,7 +100,7 @@
         activityDirective.applied_preset.preset_id,
       );
     } else {
-      await effects.applyPresetToActivity(presetId, activityDirective.id, activityDirective.plan_id);
+      await effects.applyPresetToActivity(presetId, activityDirective.id, activityDirective.plan_id, numOfUserChanges);
     }
   }
 
@@ -396,7 +396,7 @@
         <ActivityPresetInput
           {modelId}
           {activityDirective}
-          hasChanges={hasUserChanges}
+          hasChanges={numOfUserChanges > 0}
           on:applyPreset={onApplyPresetToActivity}
           on:saveNewPreset={onSaveNewPreset}
           on:savePreset={onSavePreset}
