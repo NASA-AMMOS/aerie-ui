@@ -1,7 +1,7 @@
 import { omitBy } from 'lodash-es';
 import type { ActivityDirective } from '../types/activity';
 import type { ActivityMetadata, ActivityMetadataKey, ActivityMetadataValue } from '../types/activity-metadata';
-import type { Span, SpanId, SpansMap } from '../types/simulation';
+import type { Span, SpanId, SpansMap, SpanUtilityMaps } from '../types/simulation';
 import { compare, isEmpty } from './generic';
 import { getIntervalInMs } from './time';
 
@@ -29,6 +29,31 @@ export function getSpanRootParent(spansMap: SpansMap, spanId: SpanId): Span | nu
     return span;
   }
   return getSpanRootParent(spansMap, span.parent_id);
+}
+
+/**
+ * Returns all spans for a directive
+ */
+export function getAllSpansForActivityDirective(
+  activityDirectiveId: number,
+  spansMap: SpansMap,
+  spanUtilityMaps: SpanUtilityMaps,
+): Span[] {
+  const primarySpanId = spanUtilityMaps.directiveIdToSpanIdMap[activityDirectiveId];
+  const childSpanIds = getAllSpanChildrenIds(primarySpanId, spanUtilityMaps);
+  const allSpanIds = [primarySpanId, ...childSpanIds];
+  return allSpanIds.map(spanId => spansMap[spanId]);
+}
+
+/**
+ * Returns children of span
+ */
+export function getAllSpanChildrenIds(spanId: number, spanUtilityMaps: SpanUtilityMaps): number[] {
+  const children = spanUtilityMaps.spanIdToChildIdsMap[spanId];
+  if (children !== undefined && children.length) {
+    return children.concat(...children.map(child => getAllSpanChildrenIds(child, spanUtilityMaps)));
+  }
+  return [];
 }
 
 /**
