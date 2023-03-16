@@ -19,6 +19,7 @@
     type RowClickedEvent,
     type RowDoubleClickedEvent,
     type RowSelectedEvent,
+    type SelectionChangedEvent,
     type SortChangedEvent,
   } from 'ag-grid-community';
   import type { ISizeColumnsToFitParams } from 'ag-grid-community/dist/lib/columns/columnModel';
