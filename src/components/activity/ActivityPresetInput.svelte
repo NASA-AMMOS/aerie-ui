@@ -49,6 +49,13 @@
     return new RegExp(searchFilter, 'i').test(activityPreset.name);
   });
 
+  function onDeletePreset() {
+    if (activityDirective.applied_preset) {
+      dispatch('deletePreset', activityDirective.applied_preset.preset_id);
+      presetMenu.hide();
+    }
+  }
+
   function onOpenMenu() {
     if (!disabled) {
       presetName = activityDirective.applied_preset?.presets_applied.name ?? '';
@@ -142,6 +149,7 @@
               use:tooltip={{ content: 'Delete preset', placement: 'top' }}
               class="icon st-button"
               disabled={!activityDirective?.applied_preset}
+              on:click|stopPropagation={onDeletePreset}
             >
               <TrashIcon />
             </button>

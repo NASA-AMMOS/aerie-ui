@@ -655,6 +655,26 @@ const effects = {
     }
   },
 
+  async deleteActivityPreset(id: ActivityPresetId, modelName: string): Promise<boolean> {
+    try {
+      const { confirm } = await showConfirmModal(
+        'Delete',
+        `This will permanently delete the preset for the mission model: ${modelName}`,
+        'Delete Permanently',
+      );
+
+      if (confirm) {
+        await reqHasura(gql.DELETE_ACTIVITY_PRESET, { id });
+        showSuccessToast('Activity Preset Deleted Successfully');
+        return true;
+      }
+    } catch (e) {
+      catchError('Activity Preset Delete Failed', e);
+      showFailureToast('Activity Preset Delete Failed');
+      return false;
+    }
+  },
+
   async deleteCommandDictionary(id: number): Promise<void> {
     try {
       const { confirm } = await showConfirmModal(
@@ -1707,22 +1727,9 @@ const effects = {
     preset_id: ActivityPresetId,
   ): Promise<boolean> {
     try {
-      const { confirm } = await showConfirmModal(
-        'Remove Preset',
-        'Are you sure you want to remove the current preset? This will revert the parameters back to the default values.',
-        'Remove Preset from Activity Directive',
-      );
-
-      if (confirm) {
-        await reqHasura(gql.DELETE_PRESET_TO_DIRECTIVE, { activity_directive_id, plan_id, preset_id });
-        await reqHasura(gql.UPDATE_ACTIVITY_DIRECTIVE, {
-          activityDirectiveSetInput: { arguments: {} },
-          id: activity_directive_id,
-          plan_id,
-        });
-        showSuccessToast('Removed Activity Preset Successfully');
-        return true;
-      }
+      await reqHasura(gql.DELETE_PRESET_TO_DIRECTIVE, { activity_directive_id, plan_id, preset_id });
+      showSuccessToast('Removed Activity Preset Successfully');
+      return true;
     } catch (e) {
       catchError('Activity Preset Removal Failed', e);
       showFailureToast('Activity Preset Removal Failed');

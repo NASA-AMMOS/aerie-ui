@@ -25,7 +25,7 @@
                           <span>Modified</span>
                           <div class="value-source-tooltip-modified-reset">
                             <span>Reset to ${source === 'user on preset' ? 'Preset' : 'Model'}</span>
-                            <div>${isMacOs() ? '⌥' : 'CTRL'} Click</div>
+                            <div>${isMacOs() ? '⌘' : 'CTRL'} Click</div>
                           </div>
                         </div>`;
       break;

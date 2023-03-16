@@ -4,10 +4,12 @@
   import CheckIcon from '@nasa-jpl/stellar/icons/check.svg?component';
   import PenIcon from '@nasa-jpl/stellar/icons/pen.svg?component';
   import { field } from '../../stores/form';
+  import { plan } from '../../stores/plan';
   import type {
     ActivityDirective,
     ActivityDirectiveId,
     ActivityDirectivesMap,
+    ActivityPresetId,
     ActivityPresetInsertInput,
     ActivityType,
   } from '../../types/activity';
@@ -92,7 +94,7 @@
     }
   };
 
-  async function applyPresetToActivity(presetId: number | null) {
+  async function applyPresetToActivity(presetId: number | null, numOfUserChanges: number) {
     if (presetId === null) {
       await effects.removePresetFromActivityDirective(
         activityDirective.plan_id,
@@ -133,7 +135,7 @@
 
   async function onApplyPresetToActivity(event: CustomEvent<number | null>) {
     const { detail: presetId } = event;
-    await applyPresetToActivity(presetId);
+    await applyPresetToActivity(presetId, numOfUserChanges);
   }
 
   function onChangeFormParameters(event: CustomEvent<FormParameter>) {
@@ -163,13 +165,18 @@
     effects.updateActivityDirective(plan_id, id, { metadata: newActivityMetadata });
   }
 
+  async function onDeletePreset(event: CustomEvent<ActivityPresetId>) {
+    const { detail: id } = event;
+    await effects.deleteActivityPreset(id, $plan.model.name);
+  }
+
   async function onSaveNewPreset(event: CustomEvent<ActivityPresetInsertInput>) {
     const {
       detail: { name },
     } = event;
     const id = await effects.createActivityPreset(activityDirective.arguments, activityDirective.type, name, modelId);
     if (id !== null) {
-      await applyPresetToActivity(id);
+      await applyPresetToActivity(id, 0);
     }
   }
 
@@ -398,6 +405,7 @@
           {activityDirective}
           hasChanges={numOfUserChanges > 0}
           on:applyPreset={onApplyPresetToActivity}
+          on:deletePreset={onDeletePreset}
           on:saveNewPreset={onSaveNewPreset}
           on:savePreset={onSavePreset}
         />

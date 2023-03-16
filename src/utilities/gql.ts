@@ -234,6 +234,14 @@ const gql = {
     }
   `,
 
+  DELETE_ACTIVITY_PRESET: `#graphql
+    mutation DeleteActivityPreset($id: Int!) {
+      deleteActivityPreset: delete_activity_presets_by_pk(id: $id) {
+        id
+      }
+    }
+  `,
+
   DELETE_COMMAND_DICTIONARY: `#graphql
     mutation DeleteCommandDictionary($id: Int!) {
       deleteCommandDictionary: delete_command_dictionary_by_pk(id: $id) {
