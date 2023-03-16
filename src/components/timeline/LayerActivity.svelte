@@ -464,11 +464,6 @@
           maxXPerY = newMaxXPerY;
 
           const span = getSpanForActivityDirective(activityDirective);
-          const directiveMoved =
-            !!span &&
-            getUnixEpochTimeFromInterval(planStartTimeYmd, span.start_offset) !==
-              getUnixEpochTimeFromInterval(planStartTimeYmd, activityDirective.start_offset);
-
           const maxCanvasRowY = Math.floor(drawHeight / rowHeight) * rowHeight;
 
           // Draw spans
@@ -478,7 +473,7 @@
             // Wrap spans if overflowing draw height
             constrainedSpanY =
               spanBounds.maxY > drawHeight ? (spanBounds.maxY % maxCanvasRowY) - rowHeight : spanStartY;
-            drawSpans([span], constrainedSpanY, true, directiveMoved);
+            drawSpans([span], constrainedSpanY, true);
           }
 
           // Draw directive
