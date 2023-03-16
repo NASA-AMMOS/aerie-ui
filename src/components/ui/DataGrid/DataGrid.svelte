@@ -256,7 +256,7 @@
           } as DataGridRowSelection<TRowData>);
         }
       },
-      onSelectionChanged() {
+      onSelectionChanged(event: SelectionChangedEvent) {
         const selectedRows = gridOptions?.api?.getSelectedRows();
         selectedRowIds = selectedRows.map((selectedRow: TRowData) => getRowId(selectedRow));
 
@@ -279,7 +279,9 @@
           });
         }
 
-        dispatch('selectionChanged', selectedRows);
+        if (event.source === 'rowClicked') {
+          dispatch('selectionChanged', selectedRows);
+        }
       },
       onSortChanged(event: SortChangedEvent<TRowData>) {
         dispatch('sortChanged', event);
