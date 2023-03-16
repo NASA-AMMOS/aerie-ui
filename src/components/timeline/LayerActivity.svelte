@@ -68,6 +68,7 @@
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
   let dpr: number = 1;
+  let nativeDirectiveIconWidth: number = 16;
   let dragCurrentX: number | null = null;
   let dragOffsetX: number | null = null;
   let dragPreviousX: number | null = null;
@@ -104,12 +105,13 @@
   $: onMouseout(mouseout);
   $: onMouseup(mouseup);
 
-  $: anchorIconWidth = 16;
-  $: anchorIconMarginLeft = 4;
+  $: scaleFactor = activityHeight / nativeDirectiveIconWidth;
+  $: directiveIconWidth = nativeDirectiveIconWidth * scaleFactor;
+  $: anchorIconWidth = directiveIconWidth * scaleFactor;
+  $: anchorIconMarginLeft = 4 * scaleFactor;
   $: canvasHeightDpr = drawHeight * dpr;
   $: canvasWidthDpr = drawWidth * dpr;
-  $: directiveIconWidth = 16;
-  $: directiveIconMarginRight = 2;
+  $: directiveIconMarginRight = 2 * scaleFactor;
   $: rowHeight = activityHeight + activityRowPadding;
   $: spanLabelLeftMargin = 6;
   $: timelineLocked = timelineLockStatus === TimelineLockStatus.Locked;
@@ -301,7 +303,6 @@
     return spansMap[spanId];
   }
 
-  /* TODO make a text label size cache since it is unaffected by anything we can change aside from font size which we don't expose to user */
   function getDirectiveBounds(activityDirective: ActivityDirective): PointBounds {
     const { textWidth } = setLabelContext(activityDirective.name);
     const x = getXForDirective(activityDirective);
@@ -501,7 +502,7 @@
       }
 
       if (debugMode) {
-        DEBUG_drawDebugInfo(maxXPerY, newHeight);
+        drawDebugInfo(maxXPerY, newHeight);
       }
     }
   }
@@ -562,7 +563,7 @@
     }
 
     if (debugMode) {
-      DEBUG_drawHitbox(x, y, hitboxWidth, activityHeight);
+      drawDebugHitbox(x, y, hitboxWidth, activityHeight);
     }
   }
 
@@ -655,7 +656,7 @@
     }
 
     if (debugMode) {
-      DEBUG_drawHitbox(x, y, hitboxWidth, activityHeight);
+      drawDebugHitbox(x, y, hitboxWidth, activityHeight);
     }
 
     ctx.restore();
@@ -761,13 +762,14 @@
     // Draw the shape
     ctx.save();
     ctx.setTransform(dpr, 0, 0, dpr, x * dpr, y * dpr);
+    ctx.scale(scaleFactor, scaleFactor);
     ctx.fill(assets.directiveIconShape);
     ctx.stroke(assets.directiveIconShapeStroke);
     ctx.restore();
 
     // Draw the icon
     ctx.globalAlpha = svgOpacity;
-    ctx.drawImage(assets.directiveIcon, x + 1, y);
+    ctx.drawImage(assets.directiveIcon, x + 1, y, activityHeight, activityHeight);
     ctx.globalAlpha = 1;
   }
 
@@ -815,14 +817,14 @@
     return textMetrics;
   }
 
-  function DEBUG_drawHitbox(x: number, y: number, width: number, height: number) {
+  function drawDebugHitbox(x: number, y: number, width: number, height: number) {
     ctx.save();
     ctx.strokeStyle = 'red';
     ctx.strokeRect(x, y, width, height);
     ctx.restore();
   }
 
-  function DEBUG_drawDebugInfo(maxXPerY: Record<number, number>, height: number) {
+  function drawDebugInfo(maxXPerY: Record<number, number>, height: number) {
     ctx.save();
     console.log('maxXPerY >>:', maxXPerY);
     Object.keys(maxXPerY).forEach(key => {
