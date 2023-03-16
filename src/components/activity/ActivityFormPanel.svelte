@@ -37,24 +37,24 @@
   <svelte:fragment slot="header">
     <GridMenu {gridSection} title="Selected Activity" />
     <PanelHeaderActions>
-      <button
-        class="st-button icon activity-header-lock"
-        on:click={() => {
-          setActivityEditingLocked(!activityEditingLocked);
-        }}
-        use:tooltip={{
-          content: `${activityEditingLocked ? 'Unlock' : 'Lock'} activity editing`,
-          placement: 'bottom',
-        }}
-      >
-        {#if activityEditingLocked}
-          <LockIcon />
-        {:else}
-          <UnlockIcon />
-        {/if}
-      </button>
-
       {#if $selectedActivityDirective}
+        <button
+          class="st-button icon activity-header-lock"
+          on:click={() => {
+            setActivityEditingLocked(!activityEditingLocked);
+          }}
+          use:tooltip={{
+            content: `${activityEditingLocked ? 'Unlock' : 'Lock'} activity editing`,
+            placement: 'bottom',
+          }}
+        >
+          {#if activityEditingLocked}
+            <LockIcon />
+          {:else}
+            <UnlockIcon />
+          {/if}
+        </button>
+
         <button
           class="st-button icon activity-header-delete"
           on:click|stopPropagation={() =>
