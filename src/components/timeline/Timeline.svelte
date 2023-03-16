@@ -300,8 +300,12 @@
     on:jumpToActivityDirective
     on:jumpToSpan
     on:hide={() => (contextMenu = null)}
+    on:updateVerticalGuides
     {spansMap}
     {spanUtilityMaps}
+    {planStartTimeYmd}
+    verticalGuides={timeline?.verticalGuides}
+    {xScaleView}
   />
 </div>
 

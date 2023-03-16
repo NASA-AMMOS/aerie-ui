@@ -226,41 +226,19 @@
   }
 
   function onContextmenu(e: MouseEvent | undefined): void {
-    const showContextMenu = !!e && (('button' in e && e.button !== 0) || e.ctrlKey);
-
     // Prevent native context menu from appearing at all
     if (e) {
       e.preventDefault();
     }
 
-    if (showContextMenu && (selectedActivityDirectiveId !== null || selectedSpanId !== null)) {
-      // TODO make utils for these
-      const { offsetX, offsetY } = e;
-      const activityDirectives = searchQuadtreeRect<ActivityDirective>(
-        quadtreeActivityDirectives,
-        offsetX,
-        offsetY,
-        activityHeight,
-        maxActivityWidth,
-        visibleActivityDirectivesById,
-      );
-      const spans = searchQuadtreeRect<Span>(
-        quadtreeSpans,
-        offsetX,
-        offsetY,
-        activityHeight,
-        maxActivityWidth,
-        visibleSpansById,
-      );
-
-      if (activityDirectives.length || spans.length) {
-        dispatch('contextMenu', {
-          e,
-          layerId: id,
-          selectedActivityDirectiveId,
-          selectedSpanId,
-        });
-      }
+    const showContextMenu = !!e && (('button' in e && e.button !== 0) || e.ctrlKey);
+    if (showContextMenu) {
+      dispatch('contextMenu', {
+        e,
+        layerId: id,
+        selectedActivityDirectiveId,
+        selectedSpanId,
+      });
     }
   }
 
