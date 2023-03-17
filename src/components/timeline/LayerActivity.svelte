@@ -14,6 +14,7 @@
   import { getSpanRootParent, sortActivityDirectives } from '../../utilities/activities';
   import { hexToRgba, shadeColor } from '../../utilities/color';
   import effects from '../../utilities/effects';
+  import { isRightClick } from '../../utilities/generic';
   import { isDeleteEvent } from '../../utilities/keyboardEvents';
   import {
     getActivityDirectiveStartTimeMs,
@@ -231,7 +232,7 @@
       e.preventDefault();
     }
 
-    const showContextMenu = !!e && (('button' in e && e.button !== 0) || e.ctrlKey);
+    const showContextMenu = !!e && isRightClick(e);
     if (showContextMenu) {
       dispatch('contextMenu', {
         e,
@@ -262,7 +263,9 @@
         visibleSpansById,
       );
       dispatch('mouseDown', { activityDirectives, e, layerId: id, spans });
-      dragActivityDirectiveStart(activityDirectives, offsetX);
+      if (!isRightClick(e)) {
+        dragActivityDirectiveStart(activityDirectives, offsetX);
+      }
     }
   }
 

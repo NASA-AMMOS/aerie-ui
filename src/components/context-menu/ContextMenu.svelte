@@ -10,10 +10,13 @@
 
   let xAnchor: number | null = null;
 
-  export function hide(): void {
+  export function hide(notify = false): void {
     shown = false;
     x = 0;
     y = 0;
+    if (notify) {
+      dispatch('hide');
+    }
   }
 
   export function showDirectly(_x: number, _y: number, _xAnchor: number): void {
@@ -55,13 +58,12 @@
 
   function onClick() {
     if (hideAfterClick) {
-      dispatch('hide');
-      hide();
+      hide(true);
     }
   }
 </script>
 
-<svelte:body on:click={hide} />
+<svelte:body on:click={() => hide(true)} />
 
 {#if shown}
   <!-- svelte-ignore a11y-click-events-have-key-events -->

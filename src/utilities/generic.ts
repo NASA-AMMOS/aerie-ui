@@ -201,3 +201,10 @@ export function setQueryParam(key: string, value: string): void {
 export function sleep(milliseconds = 250): Promise<void> {
   return new Promise(resolve => setTimeout(() => resolve(), milliseconds));
 }
+
+/**
+ * Returns true if the mouse event is a right click
+ */
+export function isRightClick(e: MouseEvent) {
+  return ('button' in e && e.button !== 0) || e.ctrlKey;
+}
