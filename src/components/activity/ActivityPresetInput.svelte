@@ -1,4 +1,4 @@
-<svelte:options immutable={true} />
+<svelte:options immutable={true} accessors={true} />
 
 <script lang="ts">
   import PlusIcon from '@nasa-jpl/stellar/icons/plus.svg?component';
@@ -23,28 +23,22 @@
   export let disabled: boolean = false;
   export let hasChanges: boolean = false;
   export let highlightKeysMap: Record<string, boolean> = {};
-  export let labelColumnWidth: number = 200;
-  export let level: number = 0;
-  export let levelPadding: number = 20;
   export let modelId: number;
+
+  export let activityPresets: GqlSubscribable<ActivityPreset[]> = gqlSubscribable<ActivityPreset[]>(
+    gql.SUB_ACTIVITY_PRESETS,
+    { activityTypeName: activityDirective.type, modelId },
+    [],
+  );
 
   const dispatch = createEventDispatcher();
 
-  let activityPresets: GqlSubscribable<ActivityPreset[]>;
-
-  let clientWidth: number;
   let displayedActivityPresets: ActivityPreset[];
   let presetMenu: Menu;
   let presetName: string = '';
   let searchFilter: string = '';
 
-  $: activityPresets = gqlSubscribable<ActivityPreset[]>(
-    gql.SUB_ACTIVITY_PRESETS,
-    { activityTypeName: activityDirective.type, modelId },
-    [],
-  );
-  $: labelColumnWidth = clientWidth * 0.65;
-  $: columns = `calc(${labelColumnWidth}px - ${level * levelPadding}px) auto`;
+  $: activityPresets.setVariables({ activityTypeName: activityDirective.type, modelId });
   $: displayedActivityPresets = $activityPresets.filter((activityPreset: ActivityPreset) => {
     return new RegExp(searchFilter, 'i').test(activityPreset.name);
   });
@@ -97,13 +91,13 @@
 </script>
 
 <Highlight highlight={highlightKeysMap.activity_preset}>
-  <div bind:clientWidth class="activity-preset-input-container" style="grid-template-columns: {columns}">
-    <label class="label" use:tooltip={{ content: 'Choose activity preset', placement: 'top' }} for="activity_preset">
-      Preset
-    </label>
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <div class="preset-input-container">
-      <div class="preset-input st-input w-100" class:disabled on:click|stopPropagation={onOpenMenu}>
+  <div class="activity-preset-input-container">
+    <div class="preset-input-container st-input w-100">
+      <label class="label" use:tooltip={{ content: 'Choose activity preset', placement: 'top' }} for="activity_preset">
+        Preset
+      </label>
+      <!-- svelte-ignore a11y-click-events-have-key-events -->
+      <div class="preset-input st-input w-100" class:disabled on:click|stopPropagation={onOpenMenu} role="textbox">
         <span class="preset-value st-input">{activityDirective.applied_preset?.presets_applied.name ?? 'None '}</span>
         <button
           use:tooltip={{ content: 'Set Preset', placement: 'top' }}
@@ -113,7 +107,7 @@
           <SettingsIcon />
         </button>
       </div>
-      <Menu bind:this={presetMenu} hideAfterClick={false} placement="bottom-start" type="input">
+      <Menu bind:this={presetMenu} hideAfterClick={false} placement="bottom-end" type="input">
         <MenuHeader>
           <div class="preset-header">
             <input
@@ -168,14 +162,14 @@
             </Input>
           </div>
           <MenuItem selected={!activityDirective.applied_preset} on:click={() => setAssociatedActivityPreset(null)}>
-            None
+            <span class="st-typography-body">None</span>
           </MenuItem>
           {#each displayedActivityPresets as activityPreset}
             <MenuItem
               selected={activityPreset.id === activityDirective.applied_preset?.preset_id}
               on:click={() => setAssociatedActivityPreset(activityPreset.id)}
             >
-              {activityPreset.name}
+              <span class="st-typography-body">{activityPreset.name}</span>
             </MenuItem>
           {/each}
         </div>
@@ -192,7 +186,10 @@
   }
 
   .preset-input-container {
+    display: grid;
+    grid-template-rows: repeat(2, min-content);
     position: relative;
+    row-gap: 4px;
   }
 
   .preset-input {
@@ -204,6 +201,7 @@
   }
 
   .preset-input.st-input {
+    background: var(--st-white);
     padding-bottom: 0;
     padding-top: 0;
   }
@@ -236,11 +234,6 @@
   .settings-icon {
     align-items: center;
     cursor: pointer;
-    display: flex;
-  }
-
-  .label {
-    align-items: center;
     display: flex;
   }
 

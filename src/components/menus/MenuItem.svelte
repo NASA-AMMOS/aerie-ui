@@ -18,7 +18,7 @@
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
-<div class="menu-item" class:disabled class:selected on:click={onClick}>
+<div class="menu-item" class:disabled class:selected role="menuitem" on:click={onClick}>
   <slot />
 </div>
 

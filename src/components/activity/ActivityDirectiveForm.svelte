@@ -400,15 +400,17 @@
         </span>
       </summary>
       <div class="details-body">
-        <ActivityPresetInput
-          {modelId}
-          {activityDirective}
-          hasChanges={numOfUserChanges > 0}
-          on:applyPreset={onApplyPresetToActivity}
-          on:deletePreset={onDeletePreset}
-          on:saveNewPreset={onSaveNewPreset}
-          on:savePreset={onSavePreset}
-        />
+        <div class="activity-preset">
+          <ActivityPresetInput
+            {modelId}
+            {activityDirective}
+            hasChanges={numOfUserChanges > 0}
+            on:applyPreset={onApplyPresetToActivity}
+            on:deletePreset={onDeletePreset}
+            on:saveNewPreset={onSaveNewPreset}
+            on:savePreset={onSavePreset}
+          />
+        </div>
         <Parameters
           disabled={!editable}
           {formParameters}
@@ -531,6 +533,9 @@
     font-style: normal;
   }
 
+  .activity-preset {
+    margin-left: -7px;
+  }
   .annotations {
     display: flex;
     flex-direction: column;

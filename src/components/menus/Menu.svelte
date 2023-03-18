@@ -123,7 +123,13 @@
 
 {#if shown}
   <!-- svelte-ignore a11y-click-events-have-key-events -->
-  <div class="menu" use:popperRef on:click|stopPropagation={onClick} on:mouseenter={() => hideAllTooltips()}>
+  <div
+    class="menu"
+    role="menu"
+    use:popperRef
+    on:click|stopPropagation={onClick}
+    on:mouseenter={() => hideAllTooltips()}
+  >
     <div class="menu-slot st-typography-medium" use:popperContent={extraOpts}>
       <slot />
     </div>

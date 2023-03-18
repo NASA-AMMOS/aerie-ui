@@ -29,7 +29,7 @@ export type ActivityDirective = {
   anchor_id: number | null;
   anchor_validations?: AnchorValidationStatus;
   anchored_to_start: boolean;
-  applied_preset: AppliedPreset | null;
+  applied_preset?: AppliedPreset | null;
   arguments: ArgumentsMap;
   created_at: string;
   id: ActivityDirectiveId;
