@@ -9,8 +9,9 @@
   const dispatch = createEventDispatcher();
 
   function onClick(event: MouseEvent) {
-    event.stopPropagation();
-    if (!disabled) {
+    if (disabled) {
+      event.stopPropagation();
+    } else {
       event.preventDefault();
       dispatch('click');
     }
