@@ -199,4 +199,61 @@ describe('Activity Preset Input component', () => {
 
     expect(getAllByRole('menuitem')).toHaveLength(2);
   });
+
+  it('Save new preset button should be disabled when no name is provided', async () => {
+    const activityDirective: ActivityDirective = {
+      anchor_id: null,
+      anchored_to_start: true,
+      applied_preset: null,
+      arguments: {},
+      created_at: '2023-03-17T17:54:32.776874+00:00',
+      id: 46,
+      last_modified_arguments_at: '2023-03-17T17:54:32.776874+00:00',
+      last_modified_at: '2023-03-17T17:54:32.776874+00:00',
+      metadata: {},
+      name: 'GrowBanana',
+      plan_id: 2,
+      source_scheduling_goal_id: null,
+      start_offset: '00:00:00',
+      tags: [],
+      type: 'GrowBanana',
+    };
+
+    const { getByText, getByRole } = render(ActivityPresetInput, {
+      activityDirective,
+      modelId: 1,
+    });
+
+    await fireEvent.click(getByText('None'));
+    expect(getByRole('button', { name: 'Enter a name for the preset' }).className).toContain('disabled');
+  });
+
+  it('Save new preset button should be clickable ', async () => {
+    const activityDirective: ActivityDirective = {
+      anchor_id: null,
+      anchored_to_start: true,
+      applied_preset: null,
+      arguments: {},
+      created_at: '2023-03-17T17:54:32.776874+00:00',
+      id: 46,
+      last_modified_arguments_at: '2023-03-17T17:54:32.776874+00:00',
+      last_modified_at: '2023-03-17T17:54:32.776874+00:00',
+      metadata: {},
+      name: 'GrowBanana',
+      plan_id: 2,
+      source_scheduling_goal_id: null,
+      start_offset: '00:00:00',
+      tags: [],
+      type: 'GrowBanana',
+    };
+
+    const { getByText, getByRole, getByPlaceholderText } = render(ActivityPresetInput, {
+      activityDirective,
+      modelId: 1,
+    });
+
+    await fireEvent.click(getByText('None'));
+    await fireEvent.input(getByPlaceholderText('Enter preset name'), { target: { value: 'Preset Test 1' } });
+    expect(getByRole('button', { name: 'Enter a name for the preset' }).className).not.toContain('disabled');
+  });
 });

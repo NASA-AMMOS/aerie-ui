@@ -68,6 +68,7 @@
       dispatch('saveNewPreset', {
         name: presetName,
       });
+      presetMenu.hide();
     }
   }
 
@@ -76,6 +77,7 @@
       dispatch('savePreset', {
         name: presetName,
       });
+      presetMenu.hide();
     }
   }
 
@@ -85,8 +87,8 @@
   }
 
   function setAssociatedActivityPreset(activityPresetId: number | null) {
-    presetMenu.hide();
     dispatch('applyPreset', activityPresetId);
+    presetMenu.hide();
   }
 </script>
 
@@ -123,7 +125,7 @@
               }}
               class="icon st-button"
               class:disabled={!presetName}
-              on:click={onSaveNewPreset}
+              on:click|stopPropagation={onSaveNewPreset}
             >
               <PlusIcon />
             </button>
@@ -135,7 +137,7 @@
                 !!activityDirective.applied_preset &&
                 (presetName !== activityDirective.applied_preset?.presets_applied.name || hasChanges)
               )}
-              on:click={onSavePreset}
+              on:click|stopPropagation={onSavePreset}
             >
               <SaveIcon />
             </button>
