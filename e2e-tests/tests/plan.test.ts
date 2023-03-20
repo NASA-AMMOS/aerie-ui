@@ -225,8 +225,6 @@ test.describe.serial('Plan', () => {
   });
 
   test('Delete an activity preset should remove it from the list of presets', async () => {
-    await page.pause();
-
     await page.getByRole('button', { name: 'Set Preset' }).click();
     await page.getByRole('menuitem', { name: 'Preset 1' }).click();
 
