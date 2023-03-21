@@ -305,7 +305,7 @@ export function generateDefaultView(activityTypes: ActivityType[] = [], resource
               {
                 autoAdjustHeight: false,
                 expanded: true,
-                height: 400,
+                height: 200,
                 horizontalGuides: [],
                 id: rowIds++,
                 layers: [
