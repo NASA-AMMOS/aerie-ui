@@ -13,7 +13,7 @@
       event.stopPropagation();
     } else {
       event.preventDefault();
-      dispatch('click');
+      dispatch('click', event);
     }
   }
 </script>

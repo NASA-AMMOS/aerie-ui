@@ -86,7 +86,8 @@
     presetName = `${value}`;
   }
 
-  function setAssociatedActivityPreset(activityPresetId: number | null) {
+  function setAssociatedActivityPreset(activityPresetId: number | null, event: CustomEvent<MouseEvent>) {
+    event.stopPropagation();
     dispatch('applyPreset', activityPresetId);
     presetMenu.hide();
   }
@@ -163,13 +164,18 @@
               />
             </Input>
           </div>
-          <MenuItem selected={!activityDirective.applied_preset} on:click={() => setAssociatedActivityPreset(null)}>
+          <MenuItem
+            selected={!activityDirective.applied_preset}
+            on:click={event => setAssociatedActivityPreset(null, event.detail)}
+          >
             <span class="st-typography-body">None</span>
           </MenuItem>
           {#each displayedActivityPresets as activityPreset}
             <MenuItem
               selected={activityPreset.id === activityDirective.applied_preset?.preset_id}
-              on:click={() => setAssociatedActivityPreset(activityPreset.id)}
+              on:click={event => {
+                setAssociatedActivityPreset(activityPreset.id, event.detail);
+              }}
             >
               <span class="st-typography-body">{activityPreset.name}</span>
             </MenuItem>
