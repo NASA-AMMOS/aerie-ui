@@ -26,6 +26,14 @@ export type BoundingBox = {
   minX: number;
 };
 
+export type PointBounds = {
+  maxXCanvas: number;
+  x: number;
+  xCanvas: number;
+  xEnd: number;
+  xEndCanvas: number;
+};
+
 export type HorizontalGuide = {
   id: number;
   label: Label;
