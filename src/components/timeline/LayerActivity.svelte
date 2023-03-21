@@ -827,7 +827,6 @@
 
   function drawDebugInfo(maxXPerY: Record<number, number>, height: number) {
     ctx.save();
-    console.log('maxXPerY >>:', maxXPerY);
     Object.keys(maxXPerY).forEach(key => {
       const x = parseFloat(maxXPerY[key]);
       const rect = new Path2D();
