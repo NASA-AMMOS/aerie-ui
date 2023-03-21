@@ -2,11 +2,11 @@
 
 <script lang="ts">
   import { browser } from '$app/environment';
+  import ActivityAnchorIconSVG from '@nasa-jpl/stellar/icons/activity_anchor.svg?raw';
+  import ActivityDirectiveIconSVG from '@nasa-jpl/stellar/icons/activity_directive.svg?raw';
   import { quadtree as d3Quadtree, type Quadtree } from 'd3-quadtree';
   import type { ScaleTime } from 'd3-scale';
   import { createEventDispatcher, onDestroy, onMount, tick } from 'svelte';
-  import ActivityAnchorIconSVG from '../../assets/activity-anchor-icon.svg?raw';
-  import ActivityDirectiveIconSVG from '../../assets/activity-directive-icon.svg?raw';
   import SpanHashMarksSVG from '../../assets/span-hash-marks.svg?raw';
   import type { ActivityDirective, ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
   import type { Span, SpanId, SpansMap, SpanUtilityMaps } from '../../types/simulation';
