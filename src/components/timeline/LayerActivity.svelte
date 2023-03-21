@@ -601,8 +601,14 @@
 
     // Draw span rect
     const activityWidth = Math.max(4.0, end - x);
+
+    // Check for roundRect support, Firefox does not yet support this as of 3/21/2023
     const rect = new Path2D();
-    rect.roundRect(x, y, activityWidth, activityHeight, 2);
+    if (rect.roundRect) {
+      rect.roundRect(x, y, activityWidth, activityHeight, 2);
+    } else {
+      rect.rect(x, y, activityWidth, activityHeight);
+    }
 
     // Draw span rect stroke
     if (ghosted) {
@@ -612,7 +618,12 @@
       ctx.setLineDash([]);
     }
     const strokeRect = new Path2D();
-    strokeRect.roundRect(x + 0.5, y + 0.5, activityWidth - 1, activityHeight - 1, 1);
+    // Check for roundRect support, Firefox does not yet support this as of 3/21/2023
+    if (strokeRect.roundRect) {
+      strokeRect.roundRect(x + 0.5, y + 0.5, activityWidth - 1, activityHeight - 1, 1);
+    } else {
+      strokeRect.rect(x + 0.5, y + 0.5, activityWidth - 1, activityHeight - 1);
+    }
     ctx.fill(rect);
     ctx.stroke(strokeRect);
 
