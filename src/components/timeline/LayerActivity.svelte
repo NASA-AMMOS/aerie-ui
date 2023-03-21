@@ -143,8 +143,6 @@
     if (canvas) {
       ctx = canvas.getContext('2d');
       dpr = window.devicePixelRatio;
-      // Preload font
-      new FontFace('Inter', 'url(/Inter-Regular.woff2)').load();
     }
     assets.directiveIcon = loadSVG(ActivityDirectiveIconSVG);
     assets.anchorIcon = loadSVG(ActivityAnchorIconSVG);
