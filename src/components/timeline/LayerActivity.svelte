@@ -288,7 +288,7 @@
     return getUnixEpochTimeFromInterval(planStartTimeYmd, start_offset);
   }
 
-  function getSpanForActivityDirective(activityDirective) {
+  function getSpanForActivityDirective(activityDirective: ActivityDirective) {
     const spanId = spanUtilityMaps.directiveIdToSpanIdMap[activityDirective.id];
     return spansMap[spanId];
   }
