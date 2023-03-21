@@ -6,15 +6,21 @@
   import { tooltip } from '../../utilities/tooltip';
   import Menu from '../menus/Menu.svelte';
   import ColorPicker from './ColorPicker.svelte';
+
   export let value: string = '';
   export let tooltipText: string = 'Color';
   export let presetColors: string[] = ['#ef8b8c', '#febd85'];
+
   let pickerMenu: Menu;
+
   $: colorIsCustom = presetColors.indexOf(value) < 0;
+
   const dispatch = createEventDispatcher();
+
   function onInput(value: string) {
     dispatch('input', { value });
   }
+
   function onColorPickerInput(event: Event) {
     const { value } = getTarget(event);
     onInput(value as string);
