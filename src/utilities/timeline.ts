@@ -336,7 +336,7 @@ export function createRow(timelines: Timeline[]): Row {
   return {
     autoAdjustHeight: false,
     expanded: true,
-    height: 400,
+    height: 200,
     horizontalGuides: [],
     id,
     layers: [],
