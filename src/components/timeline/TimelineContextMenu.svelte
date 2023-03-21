@@ -85,7 +85,7 @@
 
     {#if activityDirective.anchor_id !== null}
       <ContextMenuItem on:click={() => dispatch('jumpToActivityDirective', activityDirective.anchor_id)}>
-        Jump to Anchor Directive
+        Jump to Anchor Directive ({activityDirective.anchor_id})
       </ContextMenuItem>
     {/if}
     <ContextMenuItem
