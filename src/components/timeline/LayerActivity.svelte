@@ -501,10 +501,10 @@
     visibleActivityDirectivesById[activityDirective.id] = activityDirective;
 
     const primaryHighlight = activityDirective.id === selectedActivityDirectiveId;
+    const spanRootParent = getSpanRootParent(spansMap, selectedSpanId);
     const secondaryHighlight =
-      selectedSpanId !== null
-        ? spanUtilityMaps.spanIdToDirectiveIdMap[getSpanRootParent(spansMap, selectedSpanId).id] ===
-          activityDirective.id
+      selectedSpanId !== null && spanRootParent
+        ? spanUtilityMaps.spanIdToDirectiveIdMap[spanRootParent.id] === activityDirective.id
         : false;
 
     // Handle opacity if a point is selected
