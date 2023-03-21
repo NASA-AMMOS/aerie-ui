@@ -308,7 +308,7 @@
     const x = getXForDirective(activityDirective);
     const xCanvas = xScaleView(x);
     let xEndCanvas = xCanvas + textWidth + directiveIconWidth + directiveIconMarginRight;
-    if (activityDirective.anchor_id) {
+    if (activityDirective.anchor_id !== null) {
       xEndCanvas += anchorIconWidth + anchorIconMarginLeft;
     }
     return {
@@ -544,7 +544,7 @@
     let hitboxWidth = directiveIconWidth + directiveIconMarginRight + textMetrics.width;
 
     // Draw anchor icon
-    if (activityDirective.anchor_id) {
+    if (activityDirective.anchor_id !== null) {
       drawAnchorIcon(x + hitboxWidth + 4, y, svgIconOpacity);
       hitboxWidth += anchorIconWidth + anchorIconMarginLeft;
     }
