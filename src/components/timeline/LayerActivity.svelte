@@ -10,7 +10,7 @@
   import SpanHashMarksSVG from '../../assets/span-hash-marks.svg?raw';
   import type { ActivityDirective, ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
   import type { Span, SpanId, SpansMap, SpanUtilityMaps } from '../../types/simulation';
-  import type { ActivityLayerFilter, BoundingBox, QuadtreeRect, TimeRange } from '../../types/timeline';
+  import type { ActivityLayerFilter, BoundingBox, PointBounds, QuadtreeRect, TimeRange } from '../../types/timeline';
   import { getSpanRootParent, sortActivityDirectives } from '../../utilities/activities';
   import { hexToRgba, shadeColor } from '../../utilities/color';
   import effects from '../../utilities/effects';
@@ -56,14 +56,6 @@
   export let xScaleView: ScaleTime<number, number> | null = null;
 
   const dispatch = createEventDispatcher();
-
-  type PointBounds = {
-    maxXCanvas: number;
-    x: number;
-    xCanvas: number;
-    xEnd: number;
-    xEndCanvas: number;
-  };
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
