@@ -299,10 +299,7 @@
     on:deleteActivityDirective
     on:jumpToActivityDirective
     on:jumpToSpan
-    on:hide={() => {
-      console.log('onhide');
-      contextMenu = null;
-    }}
+    on:hide={() => (contextMenu = null)}
     on:updateVerticalGuides
     {spansMap}
     {spanUtilityMaps}
