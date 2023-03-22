@@ -564,7 +564,7 @@
     let secondaryHighlight = false;
     const unfinished = span.duration === null;
     const rootSpan = getSpanRootParent(spansMap, span.id);
-    if (selectedActivityDirectiveId !== null) {
+    if (rootSpan && selectedActivityDirectiveId !== null) {
       const spanDirectiveId = spanUtilityMaps.spanIdToDirectiveIdMap[rootSpan.id];
       if (spanDirectiveId === selectedActivityDirectiveId) {
         secondaryHighlight = true;
@@ -572,7 +572,7 @@
     }
     if (selectedSpanId) {
       const rootSelectedSpan = getSpanRootParent(spansMap, selectedSpanId);
-      if (rootSelectedSpan.id === rootSpan.id) {
+      if (rootSelectedSpan && rootSelectedSpan.id === rootSpan.id) {
         secondaryHighlight = true;
       }
     }
