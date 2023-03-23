@@ -225,7 +225,7 @@ describe('Activity Preset Input component', () => {
     });
 
     await fireEvent.click(getByText('None'));
-    expect(getByRole('button', { name: 'Enter a name for the preset' }).className).toContain('disabled');
+    expect(getByRole('button', { name: 'Enter a unique name for the new preset' }).className).toContain('disabled');
   });
 
   it('Save new preset button should be clickable ', async () => {
@@ -254,6 +254,6 @@ describe('Activity Preset Input component', () => {
 
     await fireEvent.click(getByText('None'));
     await fireEvent.input(getByPlaceholderText('Enter preset name'), { target: { value: 'Preset Test 1' } });
-    expect(getByRole('button', { name: 'Enter a name for the preset' }).className).not.toContain('disabled');
+    expect(getByRole('button', { name: 'Enter a unique name for the new preset' }).className).not.toContain('disabled');
   });
 });

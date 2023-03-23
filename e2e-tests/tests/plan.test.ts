@@ -42,7 +42,7 @@ test.afterAll(async () => {
   await context.close();
 });
 
-test.describe.serial('Plan', () => {
+test.describe.serial.only('Plan', () => {
   test('Error page should not be visible, and the plan title should be visible in the top navigation bar', async () => {
     await expect(plan.appError).not.toBeVisible();
     await expect(plan.planTitle).toBeVisible();
@@ -200,14 +200,14 @@ test.describe.serial('Plan', () => {
     await page.locator('.parameter-base-number input[type="number"]').fill('2');
     await page.locator('.parameter-base-number input[type="number"]').blur();
     await plan.fillActivityPresetName('Preset 1');
-    await page.getByRole('button', { name: 'Enter a name for the preset' }).click();
+    await page.getByRole('button', { name: 'Enter a unique name for the new preset' }).click();
 
     await expect(page.locator('.preset-value')).toHaveText('Preset 1');
 
     await page.locator('.parameter-base-number input[type="number"]').fill('12');
     await page.locator('.parameter-base-number input[type="number"]').blur();
     await plan.fillActivityPresetName('Preset 2');
-    await page.getByRole('button', { name: 'Save as new preset' }).click();
+    await page.getByRole('button', { name: 'Enter a unique name for the new preset' }).click();
 
     await expect(page.locator('.preset-value')).toHaveText('Preset 2');
 

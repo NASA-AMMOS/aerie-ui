@@ -34,6 +34,8 @@
   const dispatch = createEventDispatcher();
 
   let displayedActivityPresets: ActivityPreset[];
+  let isPresetNameChanged: boolean = false;
+  let isPresetNameDuped: boolean = false;
   let presetMenu: Menu;
   let presetName: string = '';
   let searchFilter: string = '';
@@ -42,6 +44,32 @@
   $: displayedActivityPresets = $activityPresets.filter((activityPreset: ActivityPreset) => {
     return new RegExp(searchFilter, 'i').test(activityPreset.name);
   });
+  $: isPresetNameChanged = !!presetName && presetName !== activityDirective.applied_preset?.presets_applied?.name;
+  $: isPresetNameDuped = !isPresetNameChanged
+    ? false
+    : $activityPresets.reduce((previousValue: boolean, activityPreset: ActivityPreset) => {
+        return previousValue || activityPreset.name === presetName;
+      }, false);
+
+  function getSaveNewTooltip(inputText: string) {
+    if (!inputText || !isPresetNameChanged) {
+      return 'Enter a unique name for the new preset';
+    }
+
+    if (isPresetNameDuped) {
+      return 'You must enter a unique preset name';
+    }
+
+    return 'Save as new preset';
+  }
+
+  function getSaveTooltip(inputText: string) {
+    if (isPresetNameDuped && inputText !== activityDirective.applied_preset?.presets_applied?.name) {
+      return 'You must enter a unique preset name';
+    }
+
+    return 'Save changes';
+  }
 
   function onDeletePreset() {
     if (activityDirective.applied_preset) {
@@ -64,7 +92,7 @@
   }
 
   function onSaveNewPreset() {
-    if (presetName) {
+    if (presetName && isPresetNameChanged && !isPresetNameDuped) {
       dispatch('saveNewPreset', {
         name: presetName,
       });
@@ -73,7 +101,7 @@
   }
 
   function onSavePreset() {
-    if (presetName && activityDirective?.applied_preset) {
+    if (presetName && activityDirective?.applied_preset && !isPresetNameDuped) {
       dispatch('savePreset', {
         name: presetName,
       });
@@ -121,23 +149,20 @@
             />
             <button
               use:tooltip={{
-                content: presetName ? 'Save as new preset' : 'Enter a name for the preset',
+                content: getSaveNewTooltip(presetName),
                 placement: 'top',
               }}
               class="icon st-button"
-              class:disabled={!presetName}
+              class:disabled={!presetName || !isPresetNameChanged || isPresetNameDuped}
               on:click|stopPropagation={onSaveNewPreset}
             >
               <PlusIcon />
             </button>
             <button
-              use:tooltip={{ content: 'Save changes', placement: 'top' }}
+              use:tooltip={{ content: getSaveTooltip(presetName), placement: 'top' }}
               class="icon st-button"
-              disabled={!(
-                presetName &&
-                !!activityDirective.applied_preset &&
-                (presetName !== activityDirective.applied_preset?.presets_applied.name || hasChanges)
-              )}
+              class:disabled={isPresetNameDuped}
+              disabled={!(!!activityDirective.applied_preset && (isPresetNameChanged || hasChanges))}
               on:click|stopPropagation={onSavePreset}
             >
               <SaveIcon />
