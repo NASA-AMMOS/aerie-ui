@@ -42,7 +42,7 @@ test.afterAll(async () => {
   await context.close();
 });
 
-test.describe.serial.only('Plan', () => {
+test.describe.serial('Plan', () => {
   test('Error page should not be visible, and the plan title should be visible in the top navigation bar', async () => {
     await expect(plan.appError).not.toBeVisible();
     await expect(plan.planTitle).toBeVisible();
