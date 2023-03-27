@@ -20,6 +20,7 @@
   import { getTarget } from '../../utilities/generic';
   import { getArguments, getFormParameters } from '../../utilities/parameters';
   import { Status } from '../../utilities/status';
+  import { getDoyTime } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import { required, timestamp } from '../../utilities/validators';
   import DatePickerField from '../form/DatePickerField.svelte';
@@ -40,9 +41,15 @@
   let startTimeDoyField: FieldStore<string>;
   let modelParametersMap: ParametersMap = {};
 
-  $: startTimeDoy = $plan.start_time_doy;
+  $: startTimeDoy =
+    $simulation && $simulation.simulation_start_time
+      ? getDoyTime(new Date($simulation.simulation_start_time))
+      : $plan.start_time_doy;
   $: startTimeDoyField = field<string>(startTimeDoy, [required, timestamp]);
-  $: endTimeDoy = $plan.end_time_doy;
+  $: endTimeDoy =
+    $simulation && $simulation.simulation_end_time
+      ? getDoyTime(new Date($simulation.simulation_end_time))
+      : $plan.end_time_doy;
   $: endTimeDoyField = field<string>(endTimeDoy, [required, timestamp]);
 
   $: modelParametersMap = $plan?.model?.parameters?.parameters ?? {};
@@ -83,18 +90,36 @@
     effects.updateSimulation(newSimulation);
   }
 
+  function updateStartTime(doyString: string) {
+    const newSimulation: Simulation = { ...$simulation, simulation_start_time: doyString };
+    effects.updateSimulation(newSimulation);
+  }
+
+  function updateEndTime(doyString: string) {
+    const newSimulation: Simulation = { ...$simulation, simulation_end_time: doyString };
+    effects.updateSimulation(newSimulation);
+  }
+
   function onUpdateStartTime() {
     if ($startTimeDoyField.valid && startTimeDoy !== $startTimeDoyField.value) {
-      const newSimulation: Simulation = { ...$simulation, simulation_start_time: $startTimeDoyField.value };
-      effects.updateSimulation(newSimulation);
+      updateStartTime($startTimeDoyField.value);
     }
   }
 
   function onUpdateEndTime() {
     if ($endTimeDoyField.valid && endTimeDoy !== $endTimeDoyField.value) {
-      const newSimulation: Simulation = { ...$simulation, simulation_end_time: $endTimeDoyField.value };
-      effects.updateSimulation(newSimulation);
+      updateEndTime($endTimeDoyField.value);
     }
+  }
+
+  async function onPlanStartTimeClick() {
+    await startTimeDoyField.validateAndSet($plan.start_time_doy);
+    updateStartTime($startTimeDoyField.value);
+  }
+
+  async function onPlanEndTimeClick() {
+    await endTimeDoyField.validateAndSet($plan.end_time_doy);
+    updateEndTime($endTimeDoyField.value);
   }
 </script>
 
@@ -168,10 +193,7 @@
             on:change={onUpdateStartTime}
             on:keydown={onUpdateStartTime}
           >
-            <DatePickerActionButton
-              on:click={() => startTimeDoyField.validateAndSet($plan.start_time_doy)}
-              text="Plan Start"
-            >
+            <DatePickerActionButton on:click={onPlanStartTimeClick} text="Plan Start">
               <Calendar />
             </DatePickerActionButton>
           </DatePickerField>
@@ -183,7 +205,7 @@
             on:change={onUpdateEndTime}
             on:keydown={onUpdateEndTime}
           >
-            <DatePickerActionButton on:click={() => endTimeDoyField.validateAndSet($plan.end_time_doy)} text="Plan End">
+            <DatePickerActionButton on:click={onPlanEndTimeClick} text="Plan End">
               <Calendar />
             </DatePickerActionButton>
           </DatePickerField>
