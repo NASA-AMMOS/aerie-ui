@@ -1,6 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import Calendar from '@nasa-jpl/stellar/icons/calendar.svg?component';
   import { field } from '../../stores/form';
   import { plan } from '../../stores/plan';
   import {
@@ -25,6 +26,7 @@
   import Input from '../form/Input.svelte';
   import GridMenu from '../menus/GridMenu.svelte';
   import Parameters from '../parameters/Parameters.svelte';
+  import DatePickerActionButton from '../ui/DatePicker/DatePickerActionButton.svelte';
   import Panel from '../ui/Panel.svelte';
   import PanelHeaderActionButton from '../ui/PanelHeaderActionButton.svelte';
   import PanelHeaderActions from '../ui/PanelHeaderActions.svelte';
@@ -165,7 +167,14 @@
             name="start-time"
             on:change={onUpdateStartTime}
             on:keydown={onUpdateStartTime}
-          />
+          >
+            <DatePickerActionButton
+              on:click={() => ($startTimeDoyField.value = $plan.start_time_doy)}
+              text="Plan Start"
+            >
+              <Calendar />
+            </DatePickerActionButton>
+          </DatePickerField>
           <DatePickerField
             field={endTimeDoyField}
             label="End Time"
@@ -173,7 +182,11 @@
             name="end-time"
             on:change={onUpdateEndTime}
             on:keydown={onUpdateEndTime}
-          />
+          >
+            <DatePickerActionButton on:click={() => ($endTimeDoyField.value = $plan.end_time_doy)} text="Plan End">
+              <Calendar />
+            </DatePickerActionButton>
+          </DatePickerField>
         </div>
       </details>
     </fieldset>
