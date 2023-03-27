@@ -120,9 +120,9 @@
         <summary>General</summary>
         <div class="details-body">
           <Input layout="inline">
-            <label use:tooltip={{ content: 'Simulation Dataset ID', placement: 'top' }} for="simulationDatasetId"
-              >Simulation Dataset ID</label
-            >
+            <label use:tooltip={{ content: 'Simulation Dataset ID', placement: 'top' }} for="simulationDatasetId">
+              Simulation Dataset ID
+            </label>
             <select bind:value={$simulationDatasetId} class="st-select w-100" name="simulationDatasetId">
               {#if !$simulationDatasetIds.length}
                 <option value={-1}>No Simulation Datasets</option>
@@ -137,9 +137,9 @@
             </select>
           </Input>
           <Input layout="inline">
-            <label use:tooltip={{ content: 'Template Name', placement: 'top' }} for="simulation-templates"
-              >Template Name</label
-            >
+            <label use:tooltip={{ content: 'Template Name', placement: 'top' }} for="simulation-templates">
+              Template Name
+            </label>
             <select
               class="st-select w-100"
               data-type="number"
