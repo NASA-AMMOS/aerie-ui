@@ -12,7 +12,7 @@
     selectedActivityDirective,
   } from '../../stores/activities';
   import { filteredExpansionSequences } from '../../stores/expansion';
-  import { activityTypes, modelId, plan, setActivityEditingLocked } from '../../stores/plan';
+  import { activityEditingLocked, activityTypes, modelId, plan, setActivityEditingLocked } from '../../stores/plan';
   import { selectedSpan, simulationDatasetId, spansMap, spanUtilityMaps } from '../../stores/simulation';
   import type { SpanId } from '../../types/simulation';
   import type { ViewGridSection } from '../../types/view';
@@ -25,7 +25,6 @@
   import ActivitySpanForm from './ActivitySpanForm.svelte';
 
   export let gridSection: ViewGridSection;
-  export let activityEditingLocked: boolean = false;
 
   function onSelectSpan(event: CustomEvent<SpanId>) {
     const { detail: spanId } = event;
@@ -41,14 +40,14 @@
         <button
           class="st-button icon activity-header-lock"
           on:click={() => {
-            setActivityEditingLocked(!activityEditingLocked);
+            setActivityEditingLocked(!$activityEditingLocked);
           }}
           use:tooltip={{
-            content: `${activityEditingLocked ? 'Unlock' : 'Lock'} activity editing`,
+            content: `${$activityEditingLocked ? 'Unlock' : 'Lock'} activity editing`,
             placement: 'bottom',
           }}
         >
-          {#if activityEditingLocked}
+          {#if $activityEditingLocked}
             <LockIcon />
           {:else}
             <UnlockIcon />
@@ -75,7 +74,7 @@
         activityMetadataDefinitions={$activityMetadataDefinitions}
         activityTypes={$activityTypes}
         allActivityDirectiveTags={$allActivityDirectiveTags}
-        editable={!activityEditingLocked}
+        editable={!$activityEditingLocked}
         modelId={$modelId}
         planStartTimeYmd={$plan.start_time}
       />

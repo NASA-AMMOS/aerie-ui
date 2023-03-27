@@ -32,7 +32,6 @@
   } from '../../../stores/errors';
   import { planExpansionStatus, selectedExpansionSetId } from '../../../stores/expansion';
   import {
-    activityEditingLocked,
     activityTypes,
     maxTimeRange,
     plan,
@@ -309,7 +308,6 @@
   </Nav>
 
   <PlanGrid
-    activityEditingLocked={$activityEditingLocked}
     {...$view?.definition.plan.grid}
     on:changeColumnSizes={onChangeColumnSizes}
     on:changeLeftRowSizes={onChangeLeftRowSizes}
