@@ -40,6 +40,7 @@
     const { detail: activityDirectiveId } = event;
     selectActivity(activityDirectiveId, null);
   }
+
   function jumpToSpan(event: CustomEvent<ActivityDirectiveId>) {
     const { detail: spanId } = event;
     selectActivity(null, spanId);
