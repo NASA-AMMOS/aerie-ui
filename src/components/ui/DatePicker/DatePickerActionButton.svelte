@@ -18,7 +18,6 @@
     flex: 0;
     justify-content: flex-start;
     padding: 4px;
-    width: min-content;
   }
 
   .date-picker-action-button .action-icon {
