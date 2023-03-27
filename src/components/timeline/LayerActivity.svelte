@@ -14,6 +14,7 @@
   import { getSpanRootParent, sortActivityDirectives } from '../../utilities/activities';
   import { hexToRgba, shadeColor } from '../../utilities/color';
   import effects from '../../utilities/effects';
+  import { isRightClick } from '../../utilities/generic';
   import { isDeleteEvent } from '../../utilities/keyboardEvents';
   import {
     getActivityDirectiveStartTimeMs,
@@ -34,6 +35,7 @@
   export let activityUnfinishedSelectedColor: string = '#ff3b19';
   export let activityUnfinishedColor: string = '#fc674d';
   export let blur: FocusEvent | undefined;
+  export let contextmenu: MouseEvent | undefined;
   export let debugMode: boolean = false;
   export let drawHeight: number = 0;
   export let drawWidth: number = 0;
@@ -92,6 +94,7 @@
   const textMetricsCache: Record<string, TextMetrics> = {};
 
   $: onBlur(blur);
+  $: onContextmenu(contextmenu);
   $: onFocus(focus);
   $: onMousedown(mousedown);
   $: onMousemove(mousemove);
@@ -244,7 +247,9 @@
         visibleSpansById,
       );
       dispatch('mouseDown', { activityDirectives, e, layerId: id, spans });
-      dragActivityDirectiveStart(activityDirectives, offsetX);
+      if (!isRightClick(e)) {
+        dragActivityDirectiveStart(activityDirectives, offsetX);
+      }
     }
   }
 
@@ -281,6 +286,22 @@
   function onMouseup(e: MouseEvent | undefined): void {
     if (e) {
       dragActivityEnd();
+    }
+  }
+
+  function onContextmenu(e: MouseEvent | undefined): void {
+    // Prevent native context menu from appearing at all
+    if (e) {
+      e.preventDefault();
+    }
+    const showContextMenu = !!e && isRightClick(e);
+    if (showContextMenu) {
+      dispatch('contextMenu', {
+        e,
+        layerId: id,
+        selectedActivityDirectiveId,
+        selectedSpanId,
+      });
     }
   }
 
