@@ -169,7 +169,7 @@
             on:keydown={onUpdateStartTime}
           >
             <DatePickerActionButton
-              on:click={() => ($startTimeDoyField.value = $plan.start_time_doy)}
+              on:click={() => startTimeDoyField.validateAndSet($plan.start_time_doy)}
               text="Plan Start"
             >
               <Calendar />
@@ -183,7 +183,7 @@
             on:change={onUpdateEndTime}
             on:keydown={onUpdateEndTime}
           >
-            <DatePickerActionButton on:click={() => ($endTimeDoyField.value = $plan.end_time_doy)} text="Plan End">
+            <DatePickerActionButton on:click={() => endTimeDoyField.validateAndSet($plan.end_time_doy)} text="Plan End">
               <Calendar />
             </DatePickerActionButton>
           </DatePickerField>
