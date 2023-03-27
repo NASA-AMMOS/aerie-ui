@@ -3,9 +3,13 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { fade } from 'svelte/transition';
+
   const dispatch = createEventDispatcher();
+
   export let hideAfterClick: boolean = true;
+
   let xAnchor: number | null = null;
+
   export function hide(notify = false): void {
     shown = false;
     x = 0;
@@ -14,25 +18,30 @@
       dispatch('hide');
     }
   }
+
   export function showDirectly(_x: number, _y: number, _xAnchor: number): void {
     shown = true;
     x = _x;
     y = _y;
     xAnchor = _xAnchor;
   }
+
   export function show(e: MouseEvent): void {
     e.preventDefault();
     shown = true;
     x = e.clientX;
     y = e.clientY;
   }
+
   export function getBoundingClientRect() {
     return div.getBoundingClientRect();
   }
+
   let div: HTMLDivElement;
   let shown = false;
   let x: number;
   let y: number;
+
   $: if (div) {
     const rect = div.getBoundingClientRect();
     if (x + rect.width > window.innerWidth) {
@@ -46,6 +55,7 @@
       y = Math.max(y - rect.height, 8);
     }
   }
+
   function onClick() {
     if (hideAfterClick) {
       hide(true);
