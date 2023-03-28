@@ -33,10 +33,6 @@
     y = e.clientY;
   }
 
-  export function getBoundingClientRect() {
-    return div.getBoundingClientRect();
-  }
-
   let div: HTMLDivElement;
   let shown = false;
   let x: number;
