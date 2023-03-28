@@ -70,14 +70,14 @@
 
 <ContextMenu hideAfterClick on:hide bind:this={contextMenuComponent}>
   {#if activityDirective}
-    <ContextMenuItem on:click={() => dispatch('deleteActivityDirective', activityDirective.id)}
-      >Delete Directive
+    <ContextMenuItem on:click={() => dispatch('deleteActivityDirective', activityDirective.id)}>
+      Delete Directive
     </ContextMenuItem>
     {#if activityDirectiveSpans}
       <ContextSubMenuItem text="Jump to Simulated Activities" parentMenu={contextMenuComponent}>
         {#each activityDirectiveSpans as activityDirectiveSpan}
-          <ContextMenuItem on:click={() => dispatch('jumpToSpan', activityDirectiveSpan.id)}
-            >{activityDirectiveSpan.type} ({activityDirectiveSpan.id})
+          <ContextMenuItem on:click={() => dispatch('jumpToSpan', activityDirectiveSpan.id)}>
+            {activityDirectiveSpan.type} ({activityDirectiveSpan.id})
           </ContextMenuItem>
         {/each}
       </ContextSubMenuItem>
