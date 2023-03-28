@@ -9,7 +9,7 @@
   import { createEventDispatcher, onDestroy, onMount, tick } from 'svelte';
   import SpanHashMarksSVG from '../../assets/span-hash-marks.svg?raw';
   import type { ActivityDirective, ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
-  import type { Span, SpanId, SpansMap, SpanUtilityMaps } from '../../types/simulation';
+  import type { SimulationDataset, Span, SpanId, SpansMap, SpanUtilityMaps } from '../../types/simulation';
   import type { ActivityLayerFilter, BoundingBox, PointBounds, QuadtreeRect, TimeRange } from '../../types/timeline';
   import { getSpanRootParent, sortActivityDirectives } from '../../utilities/activities';
   import { hexToRgba, shadeColor } from '../../utilities/color';
@@ -49,7 +49,7 @@
   export let planStartTimeYmd: string;
   export let selectedActivityDirectiveId: ActivityDirectiveId | null = null;
   export let selectedSpanId: SpanId | null = null;
-  export let simulationDataset: simulationDataset | null = null;
+  export let simulationDataset: SimulationDataset | null = null;
   export let spanUtilityMaps: SpanUtilityMaps;
   export let spansMap: SpansMap = {};
   export let timelineLockStatus: TimelineLockStatus;
