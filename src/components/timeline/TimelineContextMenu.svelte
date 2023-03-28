@@ -33,11 +33,11 @@
 
   $: if (contextMenu && contextMenuComponent) {
     const { e, selectedActivityDirectiveId, selectedSpanId } = contextMenu;
-    console.log(e, selectedActivityDirectiveId, selectedSpanId);
     contextMenuComponent.show(e);
     activityDirective = null;
     span = null;
     activityDirectiveSpans = null;
+
     if (typeof selectedActivityDirectiveId === 'number') {
       activityDirective = activityDirectivesMap[selectedActivityDirectiveId];
       activityDirectiveSpans = getAllSpansForActivityDirective(selectedActivityDirectiveId, spansMap, spanUtilityMaps);
