@@ -31,6 +31,35 @@ export function getSpanRootParent(spansMap: SpansMap, spanId: SpanId): Span | nu
   return getSpanRootParent(spansMap, span.parent_id);
 }
 
+export function createSpanUtilityMaps(spans: Span[]): SpanUtilityMaps {
+  const spanUtilityMaps: SpanUtilityMaps = {
+    directiveIdToSpanIdMap: {},
+    spanIdToChildIdsMap: {},
+    spanIdToDirectiveIdMap: {},
+  };
+  return spans.reduce((map, span) => {
+    // Span Child mappings.
+    if (map.spanIdToChildIdsMap[span.id] === undefined) {
+      map.spanIdToChildIdsMap[span.id] = [];
+    }
+    if (span.parent_id !== null) {
+      if (map.spanIdToChildIdsMap[span.parent_id] === undefined) {
+        map.spanIdToChildIdsMap[span.parent_id] = [span.id];
+      } else {
+        map.spanIdToChildIdsMap[span.parent_id].push(span.id);
+      }
+    }
+
+    // Span <-> Directive mappings.
+    const directiveId = span.attributes?.directiveId;
+    if (directiveId !== null && directiveId !== undefined) {
+      map.directiveIdToSpanIdMap[directiveId] = span.id;
+      map.spanIdToDirectiveIdMap[span.id] = directiveId;
+    }
+    return map;
+  }, spanUtilityMaps);
+}
+
 /**
  * Returns all spans for a directive
  */
@@ -46,7 +75,7 @@ export function getAllSpansForActivityDirective(
 }
 
 /**
- * Returns children of span
+ * Returns thd children IDs of a span
  */
 export function getAllSpanChildrenIds(spanId: number, spanUtilityMaps: SpanUtilityMaps): number[] {
   const children = spanUtilityMaps.spanIdToChildIdsMap[spanId];
