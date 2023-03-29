@@ -113,6 +113,10 @@
     position: relative;
   }
 
+  .simulation-range-label :global(svg) {
+    flex-shrink: 0;
+  }
+
   .simulation-range-label.start {
     margin-left: -3px;
   }
