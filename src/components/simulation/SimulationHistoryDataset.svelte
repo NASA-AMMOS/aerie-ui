@@ -47,16 +47,10 @@
   }
 </script>
 
-<div class="simulation-dataset st-typography-label">
+<button class="simulation-dataset st-typography-label" on:click={() => dispatch('click')}>
   <div class="simulation-dataset-top-row">
     <Input class="simulation-dataset-input">
-      <input
-        {checked}
-        type="checkbox"
-        on:change={() => {
-          dispatch('click');
-        }}
-      />
+      <input {checked} type="checkbox" tabIndex={-1} />
     </Input>
 
     <div>
@@ -74,17 +68,23 @@
       <div class="simulation-range-fill" style={`margin-left: ${timeVizRangeLeft}%; width: ${timeVizRangeWidth}%`} />
     </div>
   </div>
-</div>
+</button>
 
 <style>
   .simulation-dataset {
+    background: none;
     border: 1px solid var(--st-gray-15);
     border-radius: 4px;
     color: var(--st-gray-60);
+    cursor: pointer;
     display: flex;
     flex-direction: column;
     gap: 8px;
     padding: 8px;
+  }
+
+  .simulation-dataset:hover {
+    background: var(--st-button-tertiary-hover-background-color);
   }
 
   .simulation-dataset-top-row {
@@ -106,12 +106,14 @@
   .simulation-range-indicator {
     display: flex;
     justify-content: space-between;
+    width: 100%;
   }
 
   .simulation-range-label {
     display: flex;
     gap: 8px;
     position: relative;
+    z-index: 0;
   }
 
   .simulation-range-label :global(svg) {
@@ -121,10 +123,12 @@
 
   .simulation-range-label.start {
     margin-left: -3px;
+    text-align: left;
   }
 
   .simulation-range-label.end {
     margin-right: -3px;
+    text-align: right;
   }
 
   .simulation-range-label.start:before {
