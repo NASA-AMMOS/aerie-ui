@@ -23,7 +23,7 @@
     // Compute time range left and width
     if (simulationDataset.simulation_start_time) {
       const simulationStartTimeMS = new Date(simulationDataset.simulation_start_time).getTime();
-      timeVizRangeLeft = ((simulationStartTimeMS - planStartTimeMs) / planDuration) * 100;
+      timeVizRangeLeft = ((simulationStartTimeMS - planStartTimeMs) / planDuration) * 100 || 0;
 
       if (simulationStartTimeMS === planStartTimeMs) {
         startTimeText = 'Plan Start';
@@ -33,7 +33,7 @@
 
       if (simulationDataset.simulation_end_time) {
         const simulationEndTimeMS = new Date(simulationDataset.simulation_end_time).getTime();
-        timeVizRangeWidth = ((simulationEndTimeMS - simulationStartTimeMS) / planDuration) * 100;
+        timeVizRangeWidth = ((simulationEndTimeMS - simulationStartTimeMS) / planDuration) * 100 || 100;
         endTimeText = simulationDataset.simulation_start_time.split('+')[0];
 
         if (simulationEndTimeMS === planEndTimeMs) {
