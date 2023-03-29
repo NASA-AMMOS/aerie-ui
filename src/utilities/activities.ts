@@ -104,6 +104,5 @@ export enum ActivityDeletionAction {
   ANCHOR_PLAN = 'anchor-plan',
   ANCHOR_ROOT = 'anchor-root',
   DELETE_CHAIN = 'delete-chain',
-  NORMAL = 'normal',
-  IGNORE = 'ignore',
+  NORMAL = 'regular-directive-delete',
 }

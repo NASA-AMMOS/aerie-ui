@@ -223,13 +223,40 @@ const gql = {
   `,
 
   DELETE_ACTIVITY_DIRECTIVES: `#graphql
-    mutation DeleteActivityDirectives($plan_id: Int!, $ids: [Int!]!) {
+    mutation DeleteActivityDirectives($plan_id: Int!, $activity_ids: [Int!]!) {
       deleteActivityDirectives: delete_activity_directive(
-        where: { id: { _in: $ids }, _and: { plan_id: { _eq: $plan_id } } }
+        where: { id: { _in: $activity_ids }, _and: { plan_id: { _eq: $plan_id } } }
       ) {
         returning {
           id
         }
+      }
+    }
+  `,
+
+  DELETE_ACTIVITY_DIRECTIVES_REANCHOR_PLAN_START: `#graphql
+    mutation DeleteActivityDirectivesReanchorPlanStart($plan_id: Int!, $activity_ids: _int4!) {
+      delete_activity_by_pk_reanchor_plan_start_bulk(args: { _plan_id: $plan_id, _activity_ids: $activity_ids }) {
+        change_type
+        affected_row
+      }
+    }
+  `,
+
+  DELETE_ACTIVITY_DIRECTIVES_REANCHOR_TO_ANCHOR: `#graphql
+    mutation DeleteActivityDirectivesReanchorToAnchor($plan_id: Int!, $activity_ids: _int4!) {
+      delete_activity_by_pk_reanchor_to_anchor_bulk(args: { _plan_id: $plan_id, _activity_ids: $activity_ids }) {
+        change_type
+        affected_row
+      }
+    }
+  `,
+
+  DELETE_ACTIVITY_DIRECTIVES_SUBTREE: `#graphql
+    mutation DeleteActivityDirectivesSubtree($plan_id: Int!, $activity_ids: _int4!) {
+      delete_activity_by_pk_delete_subtree_bulk(args: { _plan_id: $plan_id, _activity_ids: $activity_ids }) {
+        change_type
+        affected_row
       }
     }
   `,
@@ -348,15 +375,6 @@ const gql = {
       deleteSchedulingSpecGoal: delete_scheduling_specification_goals_by_pk(goal_id: $goal_id, specification_id: $specification_id) {
         goal_id,
         specification_id,
-      }
-    }
-  `,
-
-  DELETE_SUBTREE: `#graphql
-    mutation DeleteSubtree($plan_id: Int!, $activity_id: Int!) {
-      delete_activity_by_pk_delete_subtree(args: { _plan_id: $plan_id, _activity_id: $activity_id }) {
-        change_type
-        affected_row
       }
     }
   `,
@@ -920,24 +938,6 @@ const gql = {
         merge_base
         source
         target
-      }
-    }
-  `,
-
-  REANCHOR_PLAN_START: `#graphql
-    mutation ReanchorPlanStart($plan_id: Int!, $activity_id: Int!) {
-      delete_activity_by_pk_reanchor_plan_start(args: { _plan_id: $plan_id, _activity_id: $activity_id }) {
-        change_type
-        affected_row
-      }
-    }
-  `,
-
-  REANCHOR_ROOT_ANCHOR: `#graphql
-    mutation ReanchorRootAnchor($plan_id: Int!, $activity_id: Int!) {
-      delete_activity_by_pk_reanchor_to_anchor(args: { _plan_id: $plan_id, _activity_id: $activity_id }) {
-        change_type
-        affected_row
       }
     }
   `,
@@ -1624,5 +1624,9 @@ const gql = {
     }
   `,
 };
+
+export function convertToGQLArray(array: string[] | number[]) {
+  return `{${array.join(',')}}`;
+}
 
 export default gql;

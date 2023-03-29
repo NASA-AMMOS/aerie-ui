@@ -90,7 +90,7 @@ import type {
 import type { View, ViewDefinition, ViewInsertInput } from '../types/view';
 import { ActivityDeletionAction } from './activities';
 import { convertToQuery, formatHasuraStringArray, parseFloatOrNull, setQueryParam, sleep } from './generic';
-import gql from './gql';
+import gql, { convertToGQLArray } from './gql';
 import {
   showConfirmModal,
   showCreatePlanBranchModal,
@@ -638,63 +638,51 @@ const effects = {
             };
           }, {});
 
-        const normalDeletions = sortedActions[ActivityDeletionAction.NORMAL] ?? [];
         const reanchorPlanDeletions = sortedActions[ActivityDeletionAction.ANCHOR_PLAN] ?? [];
         const reanchorRootDeletions = sortedActions[ActivityDeletionAction.ANCHOR_ROOT] ?? [];
         const subtreeDeletions = sortedActions[ActivityDeletionAction.DELETE_CHAIN] ?? [];
-
-        if (normalDeletions.length) {
-          await reqHasura(gql.DELETE_ACTIVITY_DIRECTIVES, {
-            ids: normalDeletions,
-            plan_id,
-          });
-          activityDirectivesMap.update((currentActivityDirectivesMap: ActivityDirectivesMap) => {
-            normalDeletions.forEach(id => delete currentActivityDirectivesMap[id]);
-            return { ...currentActivityDirectivesMap };
-          });
-        }
-
-        if (reanchorPlanDeletions.length) {
-          await Promise.all(
-            reanchorPlanDeletions.map(async activityId => {
-              return reqHasura(gql.REANCHOR_PLAN_START, {
-                activity_id: activityId,
-                plan_id,
-              });
-            }),
-          );
-          activityDirectivesMap.update((currentActivityDirectivesMap: ActivityDirectivesMap) => {
-            reanchorPlanDeletions.forEach(id => delete currentActivityDirectivesMap[id]);
-            return { ...currentActivityDirectivesMap };
-          });
-        }
+        const normalDeletions = sortedActions[ActivityDeletionAction.NORMAL] ?? [];
 
         if (reanchorRootDeletions.length) {
-          await Promise.all(
-            reanchorRootDeletions.map(async activityId => {
-              return reqHasura(gql.REANCHOR_ROOT_ANCHOR, {
-                activity_id: activityId,
-                plan_id,
-              });
-            }),
-          );
+          await reqHasura(gql.DELETE_ACTIVITY_DIRECTIVES_REANCHOR_TO_ANCHOR, {
+            activity_ids: convertToGQLArray(reanchorRootDeletions),
+            plan_id,
+          });
           activityDirectivesMap.update((currentActivityDirectivesMap: ActivityDirectivesMap) => {
             reanchorRootDeletions.forEach(id => delete currentActivityDirectivesMap[id]);
             return { ...currentActivityDirectivesMap };
           });
         }
 
+        if (reanchorPlanDeletions.length) {
+          await reqHasura(gql.DELETE_ACTIVITY_DIRECTIVES_REANCHOR_PLAN_START, {
+            activity_ids: convertToGQLArray(reanchorPlanDeletions),
+            plan_id,
+          });
+          activityDirectivesMap.update((currentActivityDirectivesMap: ActivityDirectivesMap) => {
+            reanchorPlanDeletions.forEach(id => delete currentActivityDirectivesMap[id]);
+            return { ...currentActivityDirectivesMap };
+          });
+        }
+
         if (subtreeDeletions.length) {
-          await Promise.all(
-            subtreeDeletions.map(async activityId => {
-              await reqHasura(gql.DELETE_SUBTREE, {
-                activity_id: activityId,
-                plan_id,
-              });
-            }),
-          );
+          await reqHasura(gql.DELETE_ACTIVITY_DIRECTIVES_SUBTREE, {
+            activity_ids: convertToGQLArray(subtreeDeletions),
+            plan_id,
+          });
           activityDirectivesMap.update((currentActivityDirectivesMap: ActivityDirectivesMap) => {
             subtreeDeletions.forEach(id => delete currentActivityDirectivesMap[id]);
+            return { ...currentActivityDirectivesMap };
+          });
+        }
+
+        if (normalDeletions.length) {
+          await reqHasura(gql.DELETE_ACTIVITY_DIRECTIVES, {
+            activity_ids: normalDeletions,
+            plan_id,
+          });
+          activityDirectivesMap.update((currentActivityDirectivesMap: ActivityDirectivesMap) => {
+            normalDeletions.forEach(id => delete currentActivityDirectivesMap[id]);
             return { ...currentActivityDirectivesMap };
           });
         }
