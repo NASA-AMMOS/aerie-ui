@@ -675,10 +675,7 @@
 
       for (const span of spans) {
         // Use simulation start YMD time if available, otherwise use the plan start YMD
-        let startYmd = planStartTimeYmd;
-        if (simulationDataset && simulationDataset.simulation_start_time) {
-          startYmd = simulationDataset.simulation_start_time;
-        }
+        let startYmd = simulationDataset?.simulation_start_time ?? planStartTimeYmd;
         const startTime = getUnixEpochTimeFromInterval(startYmd, span.start_offset);
         const duration = getIntervalInMs(span.duration);
         const x = xScaleView(startTime);
