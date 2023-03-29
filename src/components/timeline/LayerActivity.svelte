@@ -11,7 +11,7 @@
   import type { ActivityDirective, ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
   import type { SimulationDataset, Span, SpanId, SpansMap, SpanUtilityMaps } from '../../types/simulation';
   import type { ActivityLayerFilter, BoundingBox, PointBounds, QuadtreeRect, TimeRange } from '../../types/timeline';
-  import { getSpanRootParent, sortActivityDirectives } from '../../utilities/activities';
+  import { getSpanRootParent, sortActivityDirectivesOrSpans } from '../../utilities/activities';
   import { hexToRgba, shadeColor } from '../../utilities/color';
   import effects from '../../utilities/effects';
   import { isRightClick } from '../../utilities/generic';
@@ -454,7 +454,7 @@
       let totalMaxY = Number.MIN_SAFE_INTEGER;
       let maxXPerY: Record<number, number> = {};
 
-      const sortedActivityDirectives: ActivityDirective[] = activityDirectives.sort(sortActivityDirectives);
+      const sortedActivityDirectives: ActivityDirective[] = activityDirectives.sort(sortActivityDirectivesOrSpans);
       for (const activityDirective of sortedActivityDirectives) {
         const activityDirectiveX = getActivityDirectiveStartTimeMs(
           activityDirective.id,

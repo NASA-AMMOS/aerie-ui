@@ -8,7 +8,7 @@ import {
   getAllSpanChildrenIds,
   getAllSpansForActivityDirective,
   getSpanRootParent,
-  sortActivityDirectives,
+  sortActivityDirectivesOrSpans,
 } from './activities';
 
 const testSpans: Span[] = [
@@ -96,7 +96,7 @@ describe('getSpanRootParent', () => {
   });
 });
 
-describe('sortActivityDirectives', () => {
+describe('sortActivityDirectivesOrSpans', () => {
   const activityDirectives: ActivityDirective[] = [
     {
       anchor_id: null,
@@ -151,8 +151,54 @@ describe('sortActivityDirectives', () => {
     },
   ];
 
+  const spans: Span[] = [
+    {
+      attributes: {
+        arguments: {},
+        computedAttributes: {},
+        directiveId: 2,
+      },
+      dataset_id: 1,
+      duration: '02:00:00',
+      id: 0,
+      parent_id: null,
+      start_offset: '10:00:00',
+      type: 'Parent',
+    },
+    {
+      attributes: {
+        arguments: {},
+        computedAttributes: {},
+        directiveId: 2,
+      },
+      dataset_id: 1,
+      duration: '02:00:00',
+      id: 1,
+      parent_id: null,
+      start_offset: '09:00:00',
+      type: 'Parent',
+    },
+    {
+      attributes: {
+        arguments: {},
+        computedAttributes: {},
+        directiveId: 2,
+      },
+      dataset_id: 1,
+      duration: '02:00:00',
+      id: 2,
+      parent_id: null,
+      start_offset: '08:00:00',
+      type: 'Parent',
+    },
+  ];
+
   test('Should properly sort directives in time ascending order', () => {
-    expect(activityDirectives.sort(sortActivityDirectives)).toEqual(reverse(activityDirectives));
+    expect(activityDirectives.slice().sort(sortActivityDirectivesOrSpans)).toEqual(reverse(activityDirectives));
+  });
+
+  test('Should properly sort spans in time ascending order', () => {
+    expect(spans.slice().sort(sortActivityDirectivesOrSpans)).toEqual(reverse(spans));
   });
 });
 
