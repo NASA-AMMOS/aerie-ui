@@ -41,9 +41,6 @@
     if (typeof selectedActivityDirectiveId === 'number') {
       activityDirective = activityDirectivesMap[selectedActivityDirectiveId];
       activityDirectiveSpans = getAllSpansForActivityDirective(selectedActivityDirectiveId, spansMap, spanUtilityMaps);
-      activityDirectiveSpans.sort((a, b) => {
-        return getIntervalInMs(a.start_offset) < getIntervalInMs(b.start_offset) ? -1 : 1;
-      });
     } else if (typeof selectedSpanId === 'number') {
       span = spansMap[selectedSpanId];
     }

@@ -71,7 +71,7 @@ export function getAllSpansForActivityDirective(
   const primarySpanId = spanUtilityMaps.directiveIdToSpanIdMap[activityDirectiveId];
   const childSpanIds = getAllSpanChildrenIds(primarySpanId, spanUtilityMaps);
   const allSpanIds = [primarySpanId, ...childSpanIds];
-  return allSpanIds.map(spanId => spansMap[spanId]);
+  return allSpanIds.map(spanId => spansMap[spanId]).sort(sortActivityDirectivesOrSpans);
 }
 
 /**
