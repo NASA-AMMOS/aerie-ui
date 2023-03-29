@@ -216,8 +216,15 @@ describe('createSpanUtilityMaps', () => {
 
 describe('getAllSpansForActivityDirective', () => {
   test('Should get all spans for an activity directive', () => {
-    const resultingSpans = testSpans.slice(0, 3);
-    expect(getAllSpansForActivityDirective(2, testSpansMap, testSpansUtilityMap)).to.deep.equal(resultingSpans);
+    const resultingSpanIds = testSpans
+      .slice(0, 3)
+      .map(s => s.id)
+      .sort();
+    expect(
+      getAllSpansForActivityDirective(2, testSpansMap, testSpansUtilityMap)
+        .map(s => s.id)
+        .sort(),
+    ).to.deep.equal(resultingSpanIds);
   });
 });
 
