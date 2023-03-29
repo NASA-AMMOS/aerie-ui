@@ -1,7 +1,8 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import PinIcon from '@nasa-jpl/stellar/icons/pin.svg?component';
+  import PinPauseIcon from '@nasa-jpl/stellar/icons/pin_pause.svg?component';
+  import PinPlayIcon from '@nasa-jpl/stellar/icons/pin_play.svg?component';
   import { createEventDispatcher } from 'svelte';
   import type { SimulationDataset } from '../../types/simulation';
   import Input from '../form/Input.svelte';
@@ -64,8 +65,8 @@
   </div>
 
   <div class="simulation-range-indicator">
-    <div class="simulation-range-label start"><PinIcon />{startTimeText}</div>
-    <div class="simulation-range-label end">{endTimeText}<PinIcon /></div>
+    <div class="simulation-range-label start"><PinPlayIcon />{startTimeText}</div>
+    <div class="simulation-range-label end">{endTimeText}<PinPauseIcon /></div>
   </div>
 
   <div class="simulation-range-visualiztion">
@@ -115,6 +116,7 @@
 
   .simulation-range-label :global(svg) {
     flex-shrink: 0;
+    z-index: 0;
   }
 
   .simulation-range-label.start {
@@ -125,16 +127,42 @@
     margin-right: -3px;
   }
 
+  .simulation-range-label.start:before {
+    /* White color block for the interior of the start icon's cut out so
+    that the gradient does not appear inside the icon */
+    background: white;
+    content: ' ';
+    height: 5px;
+    left: 6px;
+    position: absolute;
+    top: 4px;
+    width: 5px;
+    z-index: 0;
+  }
+
   .simulation-range-label.start:after {
     background: linear-gradient(90deg, #717171 54.17%, rgba(188, 188, 188, 0) 104.17%);
     content: ' ';
-    height: 12px;
+    height: 13px;
     left: 8px;
     opacity: 0.3;
     position: absolute;
-    top: 2px;
+    top: 1.5px;
     width: 12px;
-    z-index: 1;
+    z-index: -1;
+  }
+
+  .simulation-range-label.end:before {
+    /* White color block for the interior of the end icon's cut out so
+    that the gradient does not appear inside the icon */
+    background: white;
+    content: ' ';
+    height: 6px;
+    position: absolute;
+    right: 6px;
+    top: 3px;
+    width: 5px;
+    z-index: 0;
   }
 
   .simulation-range-label.end:after {
@@ -144,8 +172,9 @@
     opacity: 0.3;
     position: absolute;
     right: 8px;
-    top: 2px;
+    top: 1.5px;
     width: 12px;
+    z-index: -1;
   }
 
   .simulation-range-visualiztion {
