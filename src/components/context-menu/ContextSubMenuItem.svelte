@@ -8,11 +8,12 @@
 
   let contextMenu: ContextMenu;
   let div: HTMLDivElement;
+  let rAFReq;
 
   function show() {
     if (div && contextMenu) {
       contextMenu.showDirectly(0, 0, 0);
-      window.requestAnimationFrame(() => {
+      rAFReq = window.requestAnimationFrame(() => {
         const itemDiv = div.getBoundingClientRect();
         let x = itemDiv.right;
         let y = itemDiv.y;
@@ -23,6 +24,7 @@
 
   function hide() {
     contextMenu.hide();
+    cancelAnimationFrame(rAFReq);
   }
 </script>
 
