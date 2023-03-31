@@ -13,8 +13,6 @@
 
   $: onSimulationDatasetChange(simulationDataset, xScaleView);
 
-  let simStartX: number = 0;
-  let simEndX: number = 0;
   let simRangeWidth: number = 0;
   let simCursorStartX = -1;
   let simCursorEndX = -1;
@@ -27,20 +25,11 @@
   ) {
     let simStartUnixEpochTime = new Date(simulationDataset?.simulation_start_time).getTime();
     let simEndUnixEpochTime = new Date(simulationDataset?.simulation_end_time).getTime();
-    simStartX = xScaleView(simStartUnixEpochTime);
-    simEndX = xScaleView(simEndUnixEpochTime);
+    const simStartX = xScaleView(simStartUnixEpochTime);
+    const simEndX = xScaleView(simEndUnixEpochTime);
 
-    if (simStartX < 0 || simStartX > drawWidth) {
-      simCursorStartX = -1;
-    } else {
-      simCursorStartX = simStartX + marginLeft;
-    }
-    if (simEndX < 0 || simEndX > drawWidth) {
-      simCursorEndX = -1;
-    } else {
-      simCursorEndX = simEndX + marginLeft;
-    }
-
+    simCursorStartX = simStartX < 0 || simStartX > drawWidth ? -1 : simStartX + marginLeft;
+    simCursorEndX = simEndX < 0 || simEndX > drawWidth ? -1 : simEndX + marginLeft;
     simRangeStartX = Math.max(0, simStartX);
     simRangeEndX = Math.min(xScaleView(xScaleView.domain()[1].getTime()), simEndX);
     simRangeWidth = simRangeEndX - simRangeStartX;
