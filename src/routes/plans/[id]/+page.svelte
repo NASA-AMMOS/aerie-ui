@@ -109,15 +109,13 @@
   $: if ($plan && $simulationDataset !== undefined) {
     if ($simulationDataset !== null) {
       const datasetId = $simulationDataset.dataset_id;
-      let startYmd = $plan.start_time;
-      let duration = $plan.duration;
-      if ($simulationDataset?.simulation_start_time) {
-        startYmd = $simulationDataset.simulation_start_time;
-        duration = getIntervalUnixEpochTime(
-          new Date($simulationDataset.simulation_start_time).getTime(),
-          new Date($simulationDataset.simulation_end_time).getTime(),
-        );
-      }
+      const startYmd = $simulationDataset?.simulation_start_time ?? $plan.start_time;
+      const duration = $simulationDataset?.simulation_start_time
+        ? getIntervalUnixEpochTime(
+            new Date($simulationDataset.simulation_start_time).getTime(),
+            new Date($simulationDataset.simulation_end_time).getTime(),
+          )
+        : $plan.duration;
       effects.getResources(datasetId, startYmd, duration).then(newResources => ($resources = newResources));
       effects.getSpans(datasetId).then(newSpans => ($spans = newSpans));
     } else {
