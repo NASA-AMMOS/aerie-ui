@@ -8,13 +8,13 @@ export function sampleProfiles(
   profiles: Profile[] | null,
   startTimeYmd: string | null,
   durationInterval: string | null,
-  offsetMs?: string,
+  offsetInterval?: string,
 ): Resource[] {
   const resources: Resource[] = [];
 
   if (profiles && startTimeYmd && durationInterval) {
-    const offset = getIntervalInMs(offsetMs);
-    const start = new Date(startTimeYmd).getTime() + offset;
+    const offsetMs = getIntervalInMs(offsetInterval);
+    const start = new Date(startTimeYmd).getTime() + offsetMs;
     const duration = getIntervalInMs(durationInterval);
 
     for (const profile of profiles) {
