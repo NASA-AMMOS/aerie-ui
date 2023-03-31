@@ -112,7 +112,7 @@
       let startYmd = $plan.start_time;
       let duration = $plan.duration;
       if ($simulationDataset?.simulation_start_time) {
-        startYmd = $simulationDataset?.simulation_start_time;
+        startYmd = $simulationDataset.simulation_start_time;
         duration = getIntervalUnixEpochTime(
           new Date($simulationDataset.simulation_start_time).getTime(),
           new Date($simulationDataset.simulation_end_time).getTime(),
