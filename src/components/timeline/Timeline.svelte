@@ -23,6 +23,7 @@
   import TimelineContextMenu from './TimelineContextMenu.svelte';
   import TimelineCursors from './TimelineCursors.svelte';
   import TimelineHistogram from './TimelineHistogram.svelte';
+  import TimelineSimulationRange from './TimelineSimulationRange.svelte';
   import Tooltip from './Tooltip.svelte';
   import TimelineXAxis from './XAxis.svelte';
 
@@ -231,6 +232,13 @@
       on:viewTimeRangeChanged
     />
   </div>
+  <TimelineSimulationRange
+    {cursorHeaderHeight}
+    {drawWidth}
+    marginLeft={timeline?.marginLeft}
+    {simulationDataset}
+    {xScaleView}
+  />
   <TimelineCursors
     {cursorHeaderHeight}
     {cursorEnabled}
