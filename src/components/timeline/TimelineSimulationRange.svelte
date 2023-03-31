@@ -58,14 +58,14 @@
       />
     {/if}
     {#if simCursorStartX >= 0}
-      <TimelineSimulationRangeCursor color={''} x={simCursorStartX}>
+      <TimelineSimulationRangeCursor x={simCursorStartX}>
         <div class="play-icon">
           <PinPlayIcon />
         </div>
       </TimelineSimulationRangeCursor>
     {/if}
     {#if simCursorEndX >= 0}
-      <TimelineSimulationRangeCursor color={''} x={simCursorEndX}>
+      <TimelineSimulationRangeCursor x={simCursorEndX}>
         <div class="pause-icon">
           <PinPauseIcon />
         </div>
