@@ -21,35 +21,35 @@ describe('DatePicker DatePicker Component', () => {
   it('Should open the datepicker on input focus', async () => {
     const { getByRole, getByText, queryByText } = render(DatePicker);
 
-    expect(queryByText('April')).toBeNull();
+    expect(queryByText('April', { selector: 'span' })).toBeNull();
 
     await fireEvent.focus(getByRole('textbox'));
 
-    expect(getByText('April')).not.toBeNull();
+    expect(getByText('April', { selector: 'span' })).not.toBeNull();
   });
 
   it('Should open the datepicker on input click', async () => {
     const { getByRole, getByText, queryByText } = render(DatePicker);
 
-    expect(queryByText('April')).toBeNull();
+    expect(queryByText('April', { selector: 'span' })).toBeNull();
 
     await fireEvent.click(getByRole('textbox'));
 
-    expect(getByText('April')).not.toBeNull();
+    expect(getByText('April', { selector: 'span' })).not.toBeNull();
   });
 
   it('Should close the datepicker when the user presses the ESC key', async () => {
     const { getByRole, getByText, queryByText } = render(DatePicker);
 
-    expect(queryByText('April')).toBeNull();
+    expect(queryByText('April', { selector: 'span' })).toBeNull();
 
     await fireEvent.click(getByRole('textbox'));
 
-    expect(getByText('April')).not.toBeNull();
+    expect(getByText('April', { selector: 'span' })).not.toBeNull();
 
     await fireEvent.keyDown(document, { key: 'Escape' });
 
-    expect(queryByText('April')).toBeNull();
+    expect(queryByText('April', { selector: 'span' })).toBeNull();
   });
 
   it('Should close the datepicker when the user confirms their typing changes', async () => {
@@ -59,7 +59,7 @@ describe('DatePicker DatePicker Component', () => {
     await fireEvent.change(getByRole('textbox'), { target: { value: '2022-100' } });
     await fireEvent.keyDown(getByRole('textbox'), { key: 'Enter' });
 
-    expect(queryByText('April')).toBeNull();
+    expect(queryByText('April', { selector: 'span' })).toBeNull();
   });
 
   it('Should close the datepicker when the user confirms their day selection', async () => {
@@ -70,7 +70,7 @@ describe('DatePicker DatePicker Component', () => {
     await fireEvent.focus(getByRole('textbox'));
     await fireEvent.click(getByText('359'));
 
-    expect(queryByText('April')).toBeNull();
+    expect(queryByText('April', { selector: 'span' })).toBeNull();
   });
 
   it('Should autocomplete the date when partially valid', async () => {
