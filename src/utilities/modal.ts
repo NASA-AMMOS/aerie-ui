@@ -216,7 +216,7 @@ export async function showCreateViewModal(): Promise<ModalElementValue<{ modelId
 }
 
 /**
- * Shows an EditViewModal component.
+ * Shows an DeleteActivitiesModal component.
  */
 export async function showDeleteActivitiesModal(
   ids: ActivityDirectiveId[],
@@ -225,19 +225,19 @@ export async function showDeleteActivitiesModal(
     const target: ModalElement = document.querySelector('#svelte-modal');
 
     if (target) {
-      const editViewModal = new DeleteActivitiesModal({
+      const deleteActivitiesModal = new DeleteActivitiesModal({
         props: { activityIds: ids },
         target,
       });
       target.resolve = resolve;
 
-      editViewModal.$on('close', () => {
+      deleteActivitiesModal.$on('close', () => {
         target.replaceChildren();
         target.resolve = null;
         resolve({ confirm: false });
       });
 
-      editViewModal.$on('delete', (e: CustomEvent<ActivityDirectiveDeletionMap>) => {
+      deleteActivitiesModal.$on('delete', (e: CustomEvent<ActivityDirectiveDeletionMap>) => {
         target.replaceChildren();
         target.resolve = null;
         resolve({ confirm: true, value: e.detail });

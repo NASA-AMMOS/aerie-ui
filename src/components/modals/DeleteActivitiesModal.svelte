@@ -91,7 +91,23 @@
   }
 
   function confirmDelete() {
-    dispatch('delete', activityDirectiveDeletionMap);
+    activityDirectivesToDeleteMap;
+    dispatch(
+      'delete',
+      Object.keys(activityDirectiveDeletionMap).reduce(
+        (previousValue: ActivityDirectiveDeletionMap, directiveId: string) => {
+          if (activityDirectivesToDeleteMap[directiveId]) {
+            return {
+              ...previousValue,
+              [directiveId]: activityDirectiveDeletionMap[directiveId],
+            };
+          }
+
+          return previousValue;
+        },
+        {} as ActivityDirectiveDeletionMap,
+      ),
+    );
   }
 
   function onAllChange(event: Event) {
