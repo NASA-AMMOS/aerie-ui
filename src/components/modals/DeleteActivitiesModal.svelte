@@ -170,7 +170,7 @@
                   Leave dependent activities in place and link them to the plan start.
                 </div>
               </div>
-              <div><ReanchorToNearestParentIcon /></div>
+              <div><ReanchorToPlanStartIcon /></div>
             </div>
             <div class="helpChoice">
               <div>
@@ -180,7 +180,7 @@
                   plan start.
                 </div>
               </div>
-              <div><ReanchorToPlanStartIcon /></div>
+              <div><ReanchorToNearestParentIcon /></div>
             </div>
             <div class="helpChoice">
               <div>
@@ -231,8 +231,8 @@
                   value={activityDirectiveDeletionMap[activityId]}
                   on:change={onChange}
                 >
-                  <option value={ActivityDeletionAction.ANCHOR_PLAN}>To Plan Start</option>
                   <option value={ActivityDeletionAction.ANCHOR_ROOT}>To Nearest Parent</option>
+                  <option value={ActivityDeletionAction.ANCHOR_PLAN}>To Plan Start</option>
                   <option value={ActivityDeletionAction.DELETE_CHAIN}>Delete Chain</option>
                 </select>
               </div>
@@ -300,8 +300,7 @@
   }
 
   .anchoredForm {
-    max-height: 300px;
-    overflow-y: auto;
+    max-height: 500px;
   }
 
   .anchorItem {
