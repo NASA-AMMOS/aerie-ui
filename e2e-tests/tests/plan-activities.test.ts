@@ -97,7 +97,7 @@ test.describe.serial('Plan Activities', () => {
       button: 'right',
     });
     await page.getByText('Delete 2 Activity Directives').click();
-    await expect(page.locator('.modal-content .anchorItem')).toHaveCount(1);
+    await expect(page.locator('.modal-content .anchor-item')).toHaveCount(1);
     await page.locator('.modal-content select').nth(1).selectOption('anchor-root');
     await page.getByRole('button', { name: 'Confirm' }).click();
   });
