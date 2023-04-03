@@ -9,12 +9,12 @@
 </script>
 
 <div class="container">
-  <div class="directiveIconContainer">
-    <div class="directiveBackground" style="background-color: {backgroundColor};" />
-    <div class="directiveIcon" style="color: {color};"><ActivityDirectiveIconSVG /></div>
+  <div class="directive-icon-container">
+    <div class="directive-background" style="background-color: {backgroundColor};" />
+    <div class="directive-icon" style="color: {color};"><ActivityDirectiveIconSVG /></div>
   </div>
   {#if label}
-    <span class="iconLabel">{label}</span>
+    <span class="icon-label">{label}</span>
   {/if}
 </div>
 
@@ -25,14 +25,14 @@
     display: inline-flex;
   }
 
-  .directiveIcon {
+  .directive-icon {
     background-color: #fcbd21;
     border: 1px solid rgba(0, 0, 0, 0.24);
     border-radius: 1px 33px 33px 1px;
     display: flex;
   }
 
-  .iconLabel {
+  .icon-label {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
