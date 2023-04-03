@@ -8,16 +8,16 @@
   export let cursorHeaderHeight: number = 20;
   export let drawWidth: number = 0;
   export let marginLeft: number = 50;
-  export let xScaleView: ScaleTime<number, number> | null = null;
   export let simulationDataset: SimulationDataset | null = null;
+  export let xScaleView: ScaleTime<number, number> | null = null;
 
   $: onSimulationDatasetChange(simulationDataset, xScaleView);
 
   let simRangeWidth: number = 0;
-  let simCursorStartX = -1;
-  let simCursorEndX = -1;
-  let simRangeStartX = -1;
-  let simRangeEndX = -1;
+  let simCursorStartX: number = -1;
+  let simCursorEndX: number = -1;
+  let simRangeStartX: number = -1;
+  let simRangeEndX: number = -1;
 
   function onSimulationDatasetChange(
     simulationDataset: SimulationDataset,
