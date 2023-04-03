@@ -22,7 +22,6 @@
   import ModalHeader from './ModalHeader.svelte';
 
   export let width: number = 480;
-
   export let activityIds: ActivityDirectiveId[] = [];
 
   let anchoredActivitiesMap: AnchoredActivityDirectivesMap;
@@ -153,9 +152,9 @@
   <ModalContent>
     <div class="message">
       You have selected {activityIds.length}
-      {activityIds.length > 1 ? 'Activities' : 'Activity'} to delete.
+      {activityIds.length > 1 ? 'activities' : 'activity'} to delete.
       {#if numberOfDependentActivities > 0}
-        {numberOfDependentActivities} of these activities have dependents. Select how you'd like to proceed.
+        {numberOfDependentActivities} of these activities have dependent activities. Select how you'd like to proceed.
       {/if}
     </div>
     {#if numberOfDependentActivities > 0}
@@ -317,18 +316,21 @@
 
   .anchoredForm {
     max-height: 500px;
+    overflow: auto;
   }
 
   .anchorItem {
     border-top: 1px solid var(--st-gray-20);
+    column-gap: 5px;
     display: grid;
     grid-template-columns: auto 150px;
-    padding-top: 0.5rem;
+    overflow-y: hidden;
+    padding: 0.5rem 0;
   }
 
   .anchorIcon {
     padding: 5px;
-    vertical-align: middle;
+    vertical-align: top;
   }
 
   .directiveToDelete {
@@ -362,7 +364,7 @@
   }
 
   .choices {
-    padding: 2px 5px;
+    padding: 2px 0;
   }
 
   .choices select {
