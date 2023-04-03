@@ -1,12 +1,15 @@
 <script lang="ts">
-  export let x = 0;
+  import { tooltip } from '../../utilities/tooltip';
+
+  export let tooltipContent: string = '';
+  export let x: number = 0;
 </script>
 
 <div class="timeline-simulation-range-cursor" style="transform: translateX({x}px)">
   <div class="timeline-simulation-range-cursor-line" />
-  <button class="timeline-simulation-range-cursor-icon" on:click>
+  <div class="timeline-simulation-range-cursor-icon" use:tooltip={{ content: tooltipContent, placement: 'top' }}>
     <slot />
-  </button>
+  </div>
 </div>
 
 <style>
@@ -24,7 +27,6 @@
     background-color: transparent;
     border: none;
     color: var(--st-gray-60);
-    cursor: pointer;
     display: block;
     height: 16px;
     left: 0;

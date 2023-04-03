@@ -47,14 +47,14 @@
       />
     {/if}
     {#if simCursorStartX >= 0}
-      <TimelineSimulationRangeCursor x={simCursorStartX}>
+      <TimelineSimulationRangeCursor tooltipContent="Simulation Start" x={simCursorStartX}>
         <div class="play-icon">
           <PinPlayIcon />
         </div>
       </TimelineSimulationRangeCursor>
     {/if}
     {#if simCursorEndX >= 0}
-      <TimelineSimulationRangeCursor x={simCursorEndX}>
+      <TimelineSimulationRangeCursor tooltipContent="Simulation End" x={simCursorEndX}>
         <div class="pause-icon">
           <PinPauseIcon />
         </div>
