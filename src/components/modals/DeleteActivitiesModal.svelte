@@ -158,16 +158,16 @@
       {/if}
     </div>
     {#if numberOfDependentActivities > 0}
-      <div class="anchorHelp">
+      <div class="anchor-help">
         <!-- svelte-ignore a11y-click-events-have-key-events -->
-        <div class="anchorHelpToggle" on:click={onToggleHelp}>
+        <div class="anchor-help-toggle" on:click={onToggleHelp}>
           {#if isHelpOpen}
             Hide help
           {:else}
             Show help on selection options
           {/if}
         </div>
-        <div class="globalAction">
+        <div class="global-action">
           <div>Apply to all</div>
           <select class="st-select" name="all" value={selectedAllAction} on:change={onAllChange}>
             <option value={'custom'}>Custom</option>
@@ -177,30 +177,30 @@
           </select>
         </div>
         {#if isHelpOpen}
-          <div class="helpChoices">
-            <div class="helpChoice">
+          <div class="help-choices">
+            <div class="help-choice">
               <div>
-                <div class="helpChoiceTitle">Anchor to plan start</div>
-                <div class="helpChoiceDescription">
+                <div class="help-choice-title">Anchor to plan start</div>
+                <div class="help-choice-description">
                   Leave dependent activities in place and link them to the plan start.
                 </div>
               </div>
               <div><ReanchorToPlanStartIcon /></div>
             </div>
-            <div class="helpChoice">
+            <div class="help-choice">
               <div>
-                <div class="helpChoiceTitle">Anchor to nearest parent</div>
-                <div class="helpChoiceDescription">
+                <div class="help-choice-title">Anchor to nearest parent</div>
+                <div class="help-choice-description">
                   Leave dependent activities in place and look for a relevant parent to link to. If none exists, link to
                   plan start.
                 </div>
               </div>
               <div><ReanchorToNearestParentIcon /></div>
             </div>
-            <div class="helpChoice">
+            <div class="help-choice">
               <div>
-                <div class="helpChoiceTitle">Delete all linked activities</div>
-                <div class="helpChoiceDescription">
+                <div class="help-choice-title">Delete all linked activities</div>
+                <div class="help-choice-description">
                   Delete all anchored activity directives. Simulated activities will remain in place until next plan
                   simulation.
                 </div>
@@ -210,18 +210,18 @@
           </div>
         {/if}
       </div>
-      <div class="anchoredForm">
+      <div class="anchored-form">
         {#each activityIds as activityId}
           {#if anchoredActivitiesMap[activityId]?.length}
-            <div class="anchorItem">
+            <div class="anchor-item">
               <div class="directive">
-                <div class="directiveToDelete" class:ignored={!activityDirectivesToDeleteMap[activityId]}>
-                  <div class="directiveName">
+                <div class="directive-to-delete" class:ignored={!activityDirectivesToDeleteMap[activityId]}>
+                  <div class="directive-name">
                     <ActivityDirectiveIcon label={`${activityId} - ${$activityDirectivesMap[activityId]?.name}`} />
                   </div>
-                  <div class="deleteCheckbox">
+                  <div class="delete-checkbox">
                     <label>
-                      <span class="deleteLabel">Delete</span>
+                      <span class="delete-label">Delete</span>
                       <input
                         type="checkbox"
                         checked={activityDirectivesToDeleteMap[activityId]}
@@ -230,10 +230,10 @@
                     </label>
                   </div>
                 </div>
-                <div class="dependentDirectives" class:ignored={!activityDirectivesToDeleteMap[activityId]}>
+                <div class="dependent-directives" class:ignored={!activityDirectivesToDeleteMap[activityId]}>
                   {#each anchoredActivitiesMap[activityId] as activityDirective}
-                    <div class="dependentDirective">
-                      <span class="anchorIcon"><ActivityAnchorIconSVG /></span>
+                    <div class="dependent-directive">
+                      <span class="anchor-icon"><ActivityAnchorIconSVG /></span>
                       <ActivityDirectiveIcon label={`${activityDirective.id} - ${activityDirective.name}`} />
                     </div>
                   {/each}
@@ -268,27 +268,27 @@
     font-weight: 500;
   }
 
-  .anchorHelp {
+  .anchor-help {
     margin: 1rem 0 0;
   }
 
-  .anchorHelpToggle {
+  .anchor-help-toggle {
     color: #2f80ed;
     cursor: pointer;
     margin-bottom: 1rem;
   }
 
-  .anchorHelpToggle:hover {
+  .anchor-help-toggle:hover {
     text-decoration: underline;
   }
 
-  .helpChoices {
+  .help-choices {
     display: grid;
     grid-template-rows: repeat(3, min-content);
     row-gap: 1rem;
   }
 
-  .helpChoice {
+  .help-choice {
     border: 1px solid var(--st-gray-20);
     border-radius: 5px;
     column-gap: 5px;
@@ -297,29 +297,29 @@
     padding: 8px;
   }
 
-  .helpChoiceTitle,
-  .helpChoiceDescription {
+  .help-choice-title,
+  .help-choice-description {
     color: var(--st-gray-60);
     font-weight: 500;
   }
 
-  .helpChoiceDescription {
+  .help-choice-description {
     margin-top: 8px;
     opacity: 0.7;
   }
 
-  .globalAction {
+  .global-action {
     display: grid;
     grid-template-columns: auto 150px;
     margin-bottom: 1rem;
   }
 
-  .anchoredForm {
+  .anchored-form {
     max-height: 500px;
     overflow: auto;
   }
 
-  .anchorItem {
+  .anchor-item {
     border-top: 1px solid var(--st-gray-20);
     column-gap: 5px;
     display: grid;
@@ -328,12 +328,12 @@
     padding: 0.5rem 0;
   }
 
-  .anchorIcon {
+  .anchor-icon {
     padding: 5px;
     vertical-align: top;
   }
 
-  .directiveToDelete {
+  .directive-to-delete {
     align-items: center;
     background-color: #db513914;
     display: grid;
@@ -341,25 +341,25 @@
     padding: 5px;
   }
 
-  .directiveToDelete.ignored {
+  .directive-to-delete.ignored {
     background-color: #f8f8f8;
   }
-  .directiveName {
+  .directive-name {
     align-items: center;
     display: grid;
     grid-template-columns: 200px min-content;
   }
 
-  .dependentDirectives.ignored {
+  .dependent-directives.ignored {
     opacity: 0.5;
   }
 
-  .dependentDirective {
+  .dependent-directive {
     margin-top: 5px;
   }
 
   input[type='checkbox'],
-  .deleteLabel {
+  .delete-label {
     vertical-align: middle;
   }
 
