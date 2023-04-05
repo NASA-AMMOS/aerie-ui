@@ -69,8 +69,6 @@ export function generateDefaultView(activityTypes: ActivityType[] = [], resource
     timeline.rows.push(resourceRow);
   });
 
-  console.log(timeline.rows);
-
   return {
     created_at: now,
     definition: {
