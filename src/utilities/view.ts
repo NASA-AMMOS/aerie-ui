@@ -29,7 +29,7 @@ export function generateDefaultView(activityTypes: ActivityType[] = [], resource
   const activityRow = createRow(timelines, {
     autoAdjustHeight: false,
     expanded: true,
-    height: 400,
+    height: 200,
     layers: [activityLayer],
     name: 'Activities',
   });
@@ -441,7 +441,6 @@ export function createRowSizes({ row1 = '1fr', row2 = '1fr' }: ViewGridRows, col
   return '1fr';
 }
 
-/* TODO better name but validateViewJSON already taken in effects */
 export function validateViewJSONAgainstSchema(json: any) {
   try {
     const ajv = new Ajv();
