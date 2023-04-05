@@ -16,7 +16,7 @@
   import EditableDropdown from '../ui/EditableDropdown.svelte';
   import Highlight from '../ui/Highlight.svelte';
 
-  export let activityDirective: ActivityDirective;
+  export let activityDirective: ActivityDirective | null | undefined;
   export let disabled: boolean = false;
   export let hasChanges: boolean = false;
   export let highlightKeysMap: Record<string, boolean> = {};
@@ -56,7 +56,7 @@
     });
   }
 
-  function setAssociatedActivityPreset(event: CustomEvent<SelectedDropdownOptionValue>) {
+  function onSelectPreset(event: CustomEvent<SelectedDropdownOptionValue>) {
     const { detail: activityPresetId } = event;
     dispatch('applyPreset', activityPresetId);
   }
@@ -65,21 +65,19 @@
 <Highlight highlight={highlightKeysMap.activity_preset}>
   <div class="activity-preset-input-container">
     <div class="preset-input-container st-input w-100">
-      <label class="label" use:tooltip={{ content: 'Choose activity preset', placement: 'top' }} for="activity_preset">
-        Preset
-      </label>
+      <!-- svelte-ignore a11y-label-has-associated-control -->
+      <label class="label" use:tooltip={{ content: 'Choose activity preset', placement: 'top' }}> Preset </label>
       <EditableDropdown
         {disabled}
         canSaveOver={hasChanges}
         {options}
         optionLabel="preset"
         placeholder="None"
-        searchPlaceholder="Search Presets"
         selectedOptionValue={activityDirective.applied_preset?.preset_id}
         on:deleteOption={onDeletePreset}
         on:saveNewOption={onSaveNewPreset}
         on:saveOption={onSavePreset}
-        on:selectOption={setAssociatedActivityPreset}
+        on:selectOption={onSelectPreset}
       />
     </div>
   </div>

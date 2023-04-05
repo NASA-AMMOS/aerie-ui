@@ -30,7 +30,7 @@
                         </div>`;
       break;
     case 'preset':
-      tooltipContent = 'Activity Preset';
+      tooltipContent = 'Preset Value';
       break;
     case 'mission':
     default:

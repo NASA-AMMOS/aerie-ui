@@ -4,6 +4,7 @@
   import PlusIcon from '@nasa-jpl/stellar/icons/plus.svg?component';
   import SaveIcon from '@nasa-jpl/stellar/icons/save.svg?component';
   import TrashIcon from '@nasa-jpl/stellar/icons/trash.svg?component';
+  import { upperFirst } from 'lodash-es';
   import { createEventDispatcher } from 'svelte';
   import type { DropdownOption, DropdownOptions, SelectedDropdownOptionValue } from '../../types/dropdown';
   import { getTarget } from '../../utilities/generic';
@@ -18,8 +19,8 @@
   export let placeholder: string = '';
   export let selectedOptionValue: SelectedDropdownOptionValue | undefined = undefined;
   export let showPlaceholderOption: boolean = true;
-  export let searchPlaceholder: string = 'Search Items';
-  export let settingsIconTooltip: string = 'Set Selection';
+  export let searchPlaceholder: string = `Search ${upperFirst(optionLabel)}s`;
+  export let settingsIconTooltip: string = `Set ${upperFirst(optionLabel)}`;
   export let settingsIconTooltipPlacement: string = 'top';
 
   const dispatch = createEventDispatcher();
