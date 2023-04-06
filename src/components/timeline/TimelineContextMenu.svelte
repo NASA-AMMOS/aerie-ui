@@ -3,9 +3,9 @@
 <script lang="ts">
   import type { ScaleTime } from 'd3-scale';
   import { createEventDispatcher } from 'svelte';
-  import { view } from '../../stores/views';
+  import { view, viewUpdateGrid } from '../../stores/views';
   import type { ActivityDirective, ActivityDirectivesMap } from '../../types/activity';
-  import type { Simulation, SimulationDataset, Span, SpansMap, SpanUtilityMaps } from '../../types/simulation';
+  import type { Simulation, SimulationDataset, Span, SpanUtilityMaps, SpansMap } from '../../types/simulation';
   import type { MouseOver, VerticalGuide } from '../../types/timeline';
   import { getAllSpansForActivityDirective, getSpanRootParent } from '../../utilities/activities';
   import effects from '../../utilities/effects';
@@ -73,16 +73,22 @@
     dispatch('updateVerticalGuides', [...verticalGuides, newVerticalGuide]);
   }
 
+  function switchToSimulation() {
+    viewUpdateGrid({ leftComponentTop: 'SimulationPanel' });
+  }
+
   function updateSimulationStartTime(date: Date) {
     const doyString = getDoyTime(date, false);
     const newSimulation: Simulation = { ...simulation, simulation_start_time: doyString };
     effects.updateSimulation(newSimulation);
+    switchToSimulation();
   }
 
   function updateSimulationEndTime(date: Date) {
     const doyString = getDoyTime(date, false);
     const newSimulation: Simulation = { ...simulation, simulation_end_time: doyString };
     effects.updateSimulation(newSimulation);
+    switchToSimulation();
   }
 
   function getSpanDate(span: Span, includeDuration: boolean = false) {
