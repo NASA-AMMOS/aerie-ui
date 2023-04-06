@@ -23,8 +23,8 @@
     simulationDataset: SimulationDataset,
     xScaleView: ScaleTime<number, number> | null,
   ) {
-    let simStartUnixEpochTime = new Date(simulationDataset?.simulation_start_time).getTime();
-    let simEndUnixEpochTime = new Date(simulationDataset?.simulation_end_time).getTime();
+    const simStartUnixEpochTime = new Date(simulationDataset?.simulation_start_time).getTime();
+    const simEndUnixEpochTime = new Date(simulationDataset?.simulation_end_time).getTime();
     const simStartX = xScaleView(simStartUnixEpochTime);
     const simEndX = xScaleView(simEndUnixEpochTime);
 
