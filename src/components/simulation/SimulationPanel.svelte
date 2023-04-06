@@ -260,7 +260,12 @@
             />
           </div>
           {#if formParameters.length}
-            <Parameters {formParameters} on:change={onChangeFormParameters} on:reset={onResetFormParameters} />
+            <Parameters
+              {formParameters}
+              parameterType="simulation"
+              on:change={onChangeFormParameters}
+              on:reset={onResetFormParameters}
+            />
           {:else}
             <div class="p-1">No simulation arguments found</div>
           {/if}
