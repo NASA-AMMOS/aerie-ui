@@ -233,9 +233,9 @@ export function getActivityDirectiveStartTimeMs(
       const anchoredSpan = spansMap[anchoredSpanId];
 
       const anchoredStartTimeMs = getUnixEpochTimeFromInterval(
-        `${new Date(
+        new Date(
           getUnixEpochTimeFromInterval(
-            `${new Date(
+            new Date(
               getActivityDirectiveStartTimeMs(
                 anchor_id,
                 planStartTimeYmd,
@@ -246,10 +246,10 @@ export function getActivityDirectiveStartTimeMs(
                 cachedStartTimes,
                 { ...traversalMap, [anchor_id]: true },
               ),
-            )}`,
+            ).toISOString(),
             anchored_to_start ? '0' : anchoredSpan?.duration ?? '0',
           ),
-        )}`,
+        ).toISOString(),
         activityDirective.start_offset,
       );
 
