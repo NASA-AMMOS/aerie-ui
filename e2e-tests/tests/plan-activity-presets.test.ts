@@ -32,30 +32,30 @@ test.beforeAll(async ({ browser }) => {
   await plans.createPlan();
   await plan.goto();
 
-  await page.getByRole('button', { name: 'CreateActivity-GrowBanana' }).click();
-  await page.getByRole('gridcell', { name: 'GrowBanana' }).first().click();
+  await plan.panelActivityTypes.getByRole('button', { name: 'CreateActivity-GrowBanana' }).click();
+  await plan.panelActivityDirectivesTable.getByRole('gridcell', { name: 'GrowBanana' }).first().click();
 
-  await page.locator('.parameter-base-number input[type="number"]').fill('2');
-  await page.locator('.parameter-base-number input[type="number"]').blur();
+  await plan.panelActivityForm.locator('.parameter-base-number input[type="number"]').fill('2');
+  await plan.panelActivityForm.locator('.parameter-base-number input[type="number"]').blur();
 
   await plan.fillActivityPresetName('Preset 1');
 
-  await page.getByRole('button', { name: 'Enter a unique name for the new preset' }).click();
-  await page.waitForSelector('.dropdown-header', { state: 'detached' });
+  await plan.panelActivityForm.getByRole('button', { name: 'Enter a unique name for the new preset' }).click();
+  await plan.panelActivityForm.locator('.dropdown-header').waitFor({ state: 'detached' });
 
-  await page.locator('.parameter-base-number input[type="number"]').fill('12');
-  await page.locator('.parameter-base-number input[type="number"]').blur();
+  await plan.panelActivityForm.locator('.parameter-base-number input[type="number"]').fill('12');
+  await plan.panelActivityForm.locator('.parameter-base-number input[type="number"]').blur();
 
   await plan.fillActivityPresetName('Preset 2');
 
-  await page.getByRole('button', { name: 'Enter a unique name for the new preset' }).click();
-  await page.waitForSelector('.dropdown-header', { state: 'detached' });
+  await plan.panelActivityForm.getByRole('button', { name: 'Enter a unique name for the new preset' }).click();
+  await plan.panelActivityForm.locator('.dropdown-header').waitFor({ state: 'detached' });
 
   await page.waitForFunction(() => document.querySelector('.selected-display-value')?.innerHTML === 'Preset 2');
 
   await plan.selectActivityPresetByName('None');
 
-  expect(await page.getByRole('textbox', { name: 'None' })).toBeVisible();
+  expect(await plan.panelActivityForm.getByRole('textbox', { name: 'None' })).toBeVisible();
 });
 
 test.afterAll(async () => {
@@ -67,8 +67,8 @@ test.afterAll(async () => {
   await context.close();
 });
 
-test.describe.serial.only('Plan Activity Presets', () => {
-  test(`Creating and setting a preset to a directive should update the parameter values`, async () => {
+test.describe.serial('Plan Activity Presets', () => {
+  test(`Setting a preset to a directive should update the parameter values`, async () => {
     await plan.selectActivityPresetByName('Preset 1');
 
     expect(await page.getByRole('textbox', { name: 'Preset 1' })).toBeVisible();

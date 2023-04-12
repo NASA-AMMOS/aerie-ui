@@ -115,11 +115,19 @@ export class Plan {
   }
 
   async fillActivityPresetName(presetName: string) {
-    await this.page.getByRole('button', { name: 'Set Preset' }).click();
-    await this.page.waitForSelector('.dropdown-header', { state: 'attached' });
-    await this.page.getByPlaceholder('Enter preset name').click();
-    await this.page.getByPlaceholder('Enter preset name').fill(presetName);
-    await this.page.getByPlaceholder('Enter preset name').blur();
+    await this.panelActivityForm.getByRole('button', { name: 'Set Preset' }).click();
+    await this.panelActivityForm.locator('.dropdown-header').waitFor({ state: 'attached' });
+    await this.panelActivityForm.getByPlaceholder('Enter preset name').click();
+    await this.panelActivityForm.getByPlaceholder('Enter preset name').fill(presetName);
+    await this.panelActivityForm.getByPlaceholder('Enter preset name').blur();
+  }
+
+  async fillSimulationTemplateName(templateName: string) {
+    await this.panelSimulation.getByRole('button', { name: 'Set Template' }).click();
+    await this.panelSimulation.locator('.dropdown-header').waitFor({ state: 'attached' });
+    await this.panelSimulation.getByPlaceholder('Enter template name').click();
+    await this.panelSimulation.getByPlaceholder('Enter template name').fill(templateName);
+    await this.panelSimulation.getByPlaceholder('Enter template name').blur();
   }
 
   async fillViewInputFile(planFilePath: string = this.validPlanFilePath) {
@@ -165,11 +173,11 @@ export class Plan {
   }
 
   async selectActivityPresetByName(presetName: string) {
-    await this.page.getByRole('button', { name: 'Set Preset' }).click();
+    await this.panelActivityForm.getByRole('button', { name: 'Set Preset' }).click();
 
-    await this.page.getByRole('menuitem', { name: presetName }).waitFor({ state: 'attached' });
-    await this.page.getByRole('menuitem', { name: presetName }).click();
-    await this.page.getByRole('menuitem', { name: presetName }).waitFor({ state: 'detached' });
+    await this.panelActivityForm.getByRole('menuitem', { name: presetName }).waitFor({ state: 'attached' });
+    await this.panelActivityForm.getByRole('menuitem', { name: presetName }).click();
+    await this.panelActivityForm.getByRole('menuitem', { name: presetName }).waitFor({ state: 'detached' });
 
     try {
       const applyPresetButton = this.page.getByRole('button', { name: 'Apply Preset' });
@@ -191,7 +199,38 @@ export class Plan {
         document.querySelector('.activity-preset-input-container .selected-display-value')?.innerHTML === presetName,
       presetName,
     );
-    expect(await this.page.getByRole('textbox', { name: presetName })).toBeVisible();
+    expect(await this.panelActivityForm.getByRole('textbox', { name: presetName })).toBeVisible();
+  }
+
+  async selectSimulationTemplateByName(templateName: string) {
+    await this.panelSimulation.getByRole('button', { name: 'Set Template' }).click();
+
+    await this.panelSimulation.getByRole('menuitem', { name: templateName }).waitFor({ state: 'attached' });
+    await this.panelSimulation.getByRole('menuitem', { name: templateName }).click();
+    await this.panelSimulation.getByRole('menuitem', { name: templateName }).waitFor({ state: 'detached' });
+
+    try {
+      const applyTemplateButton = this.page.getByRole('button', { name: 'Apply Simulation Template' });
+
+      // allow time for modal to apply the preset to show up if applicable
+      await applyTemplateButton.waitFor({ state: 'attached', timeout: 1000 });
+      // await new Promise(resolve => setTimeout(resolve, 1000));
+      if (await applyTemplateButton.isVisible()) {
+        await applyTemplateButton.click();
+      }
+    } catch (e) {
+      if (e.name !== 'TimeoutError') {
+        console.error(e);
+      }
+    }
+
+    await this.page.waitForFunction(
+      templateName =>
+        document.querySelector('.simulation-template-input-container .selected-display-value')?.innerHTML ===
+        templateName,
+      templateName,
+    );
+    expect(await this.panelSimulation.getByRole('textbox', { name: templateName })).toBeVisible();
   }
 
   async showConstraintsLayout() {
