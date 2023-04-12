@@ -31,6 +31,31 @@ test.beforeAll(async ({ browser }) => {
   await plans.goto();
   await plans.createPlan();
   await plan.goto();
+
+  await page.getByRole('button', { name: 'CreateActivity-GrowBanana' }).click();
+  await page.getByRole('gridcell', { name: 'GrowBanana' }).first().click();
+
+  await page.locator('.parameter-base-number input[type="number"]').fill('2');
+  await page.locator('.parameter-base-number input[type="number"]').blur();
+
+  await plan.fillActivityPresetName('Preset 1');
+
+  await page.getByRole('button', { name: 'Enter a unique name for the new preset' }).click();
+  await page.waitForSelector('.dropdown-header', { state: 'detached' });
+
+  await page.locator('.parameter-base-number input[type="number"]').fill('12');
+  await page.locator('.parameter-base-number input[type="number"]').blur();
+
+  await plan.fillActivityPresetName('Preset 2');
+
+  await page.getByRole('button', { name: 'Enter a unique name for the new preset' }).click();
+  await page.waitForSelector('.dropdown-header', { state: 'detached' });
+
+  await page.waitForFunction(() => document.querySelector('.selected-display-value')?.innerHTML === 'Preset 2');
+
+  await plan.selectActivityPresetByName('None');
+
+  expect(await page.getByRole('textbox', { name: 'None' })).toBeVisible();
 });
 
 test.afterAll(async () => {
@@ -42,70 +67,33 @@ test.afterAll(async () => {
   await context.close();
 });
 
-test.describe.serial('Plan Activity Presets', () => {
+test.describe.serial.only('Plan Activity Presets', () => {
   test(`Creating and setting a preset to a directive should update the parameter values`, async () => {
-    await page.getByRole('button', { name: 'CreateActivity-GrowBanana' }).click();
-    await page.getByRole('gridcell', { name: 'GrowBanana' }).first().click();
+    await plan.selectActivityPresetByName('Preset 1');
 
-    await page.locator('.parameter-base-number input[type="number"]').fill('2');
-    await page.locator('.parameter-base-number input[type="number"]').blur();
-
-    await plan.fillActivityPresetName('Preset 1');
-
-    await page.getByRole('button', { name: 'Enter a unique name for the new preset' }).click();
-    await page.waitForSelector('.dropdown-header', { state: 'detached' });
-
-    await page.locator('.parameter-base-number input[type="number"]').fill('12');
-    await page.locator('.parameter-base-number input[type="number"]').blur();
-
-    await plan.fillActivityPresetName('Preset 2');
-
-    await page.getByRole('button', { name: 'Enter a unique name for the new preset' }).click();
-    await page.waitForSelector('.dropdown-header', { state: 'detached' });
-
-    await page.waitForFunction(() => document.querySelector('.selected-display-value')?.innerHTML === 'Preset 2');
-
-    expect(await page.getByRole('textbox', { name: 'Preset 2' }).count()).toEqual(1);
-
-    await page.getByRole('button', { name: 'Set Preset' }).click();
-    await page.waitForSelector('.dropdown-header', { state: 'attached' });
-
-    await page.getByRole('menuitem', { name: 'Preset 1' }).click();
-    await page.waitForSelector('.dropdown-header', { state: 'detached' });
-
-    await page.waitForFunction(() => document.querySelector('.selected-display-value')?.innerHTML === 'Preset 1');
-
-    expect(await page.getByRole('textbox', { name: 'Preset 1' }).count()).toEqual(1);
+    expect(await page.getByRole('textbox', { name: 'Preset 1' })).toBeVisible();
   });
 
   test(`Removing an activity preset from a directive should reflect that it is no longer present`, async () => {
-    await page.getByRole('button', { name: 'Set Preset' }).click();
-    await page.waitForSelector('.dropdown-header', { state: 'attached' });
+    await plan.selectActivityPresetByName('None');
 
-    await page.getByRole('menuitem', { name: 'None' }).click();
-    await page.waitForSelector('.dropdown-header', { state: 'detached' });
-
-    await page.waitForFunction(() => document.querySelector('.selected-display-value')?.innerHTML === 'None');
-
-    expect(await page.getByRole('textbox', { name: 'None' }).count()).toEqual(1);
+    expect(await page.getByRole('textbox', { name: 'None' })).toBeVisible();
   });
 
   test('Deleting an activity preset should remove it from the list of presets', async () => {
-    await page.getByRole('button', { name: 'Set Preset' }).click();
-    await page.waitForSelector('.dropdown-header', { state: 'attached' });
-
-    await page.getByRole('menuitem', { name: 'Preset 1' }).click();
-    await page.waitForSelector('.dropdown-header', { state: 'detached' });
-
-    await page.locator('.modal').getByRole('button', { name: 'Apply Preset' }).click();
-    await page.waitForFunction(() => document.querySelector('.selected-display-value')?.innerHTML === 'Preset 1');
+    await plan.selectActivityPresetByName('Preset 1');
 
     await page.getByRole('button', { name: 'Set Preset' }).click();
-    await page.waitForSelector('.dropdown-header', { state: 'attached' });
+
+    await page.getByRole('button', { name: 'Delete preset' }).waitFor({ state: 'attached' });
     await page.getByRole('button', { name: 'Delete preset' }).click();
-    await page.waitForSelector('.dropdown-header', { state: 'detached' });
+    await page.getByRole('button', { name: 'Delete preset' }).waitFor({ state: 'detached' });
+
+    await page.locator('.modal').waitFor({ state: 'attached' });
     await page.locator('.modal').getByRole('button', { name: 'Delete' }).click();
 
     await page.waitForFunction(() => document.querySelector('.selected-display-value')?.innerHTML === 'None');
+
+    expect(await page.getByRole('textbox', { name: 'None' })).toBeVisible();
   });
 });

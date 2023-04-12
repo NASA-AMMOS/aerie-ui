@@ -164,6 +164,36 @@ export class Plan {
     await this.page.waitForSelector(this.schedulingStatusSelector('Complete'), { state: 'visible', strict: true });
   }
 
+  async selectActivityPresetByName(presetName: string) {
+    await this.page.getByRole('button', { name: 'Set Preset' }).click();
+
+    await this.page.getByRole('menuitem', { name: presetName }).waitFor({ state: 'attached' });
+    await this.page.getByRole('menuitem', { name: presetName }).click();
+    await this.page.getByRole('menuitem', { name: presetName }).waitFor({ state: 'detached' });
+
+    try {
+      const applyPresetButton = this.page.getByRole('button', { name: 'Apply Preset' });
+
+      // allow time for modal to apply the preset to show up if applicable
+      await applyPresetButton.waitFor({ state: 'attached', timeout: 1000 });
+      // await new Promise(resolve => setTimeout(resolve, 1000));
+      if (await applyPresetButton.isVisible()) {
+        await applyPresetButton.click();
+      }
+    } catch (e) {
+      if (e.name !== 'TimeoutError') {
+        console.error(e);
+      }
+    }
+
+    await this.page.waitForFunction(
+      presetName =>
+        document.querySelector('.activity-preset-input-container .selected-display-value')?.innerHTML === presetName,
+      presetName,
+    );
+    expect(await this.page.getByRole('textbox', { name: presetName })).toBeVisible();
+  }
+
   async showConstraintsLayout() {
     await this.showPanel('Constraints');
     await this.showPanel('Constraint Violations', true);
