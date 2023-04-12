@@ -37,7 +37,6 @@
     presetMenu.show();
   }
 
-  const SLOTS = $$slots;
   const dispatch = createEventDispatcher();
 
   let displayedOptions: DisplayOptions = [];
@@ -90,6 +89,7 @@
     class:disabled
     on:click|stopPropagation={onOpenMenu}
     role="textbox"
+    aria-label={selectedOption?.display ?? placeholder}
     use:tooltip={{ content: error, placement: 'top' }}
   >
     <span class="selected-display-value" class:error>{selectedOption?.display ?? placeholder}</span>
@@ -102,7 +102,7 @@
     </button>
   </div>
   <Menu bind:this={presetMenu} hideAfterClick={false} placement="bottom-end" type="input">
-    {#if SLOTS['dropdown-header']}
+    {#if $$slots['dropdown-header']}
       <MenuHeader>
         <slot name="dropdown-header" />
       </MenuHeader>

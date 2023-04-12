@@ -116,6 +116,7 @@ export class Plan {
 
   async fillActivityPresetName(presetName: string) {
     await this.page.getByRole('button', { name: 'Set Preset' }).click();
+    await this.page.waitForSelector('.dropdown-header', { state: 'attached' });
     await this.page.getByPlaceholder('Enter preset name').click();
     await this.page.getByPlaceholder('Enter preset name').fill(presetName);
     await this.page.getByPlaceholder('Enter preset name').blur();
