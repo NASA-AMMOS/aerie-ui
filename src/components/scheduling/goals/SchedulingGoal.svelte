@@ -132,7 +132,7 @@
         effects.updateSchedulingSpecGoal(goal.id, specificationId, { simulate_after: simulateGoal });
       }}
     >
-      <input bind:checked={simulateGoal} style:cursor="pointer" type="checkbox" /> Enable Simulation
+      <input bind:checked={simulateGoal} style:cursor="pointer" type="checkbox" /> Simulate After
     </div>
   </ContextMenuItem>
 </ContextMenu>
