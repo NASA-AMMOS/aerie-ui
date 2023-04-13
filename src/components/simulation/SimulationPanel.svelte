@@ -138,13 +138,7 @@
     const {
       detail: { description: templateName },
     } = event;
-    const id = await effects.createSimulationTemplate(
-      $simulation.arguments,
-      templateName,
-      $plan.model.id,
-      $simulation.simulation_start_time,
-      $simulation.simulation_end_time,
-    );
+    const id = await effects.createSimulationTemplate($simulation.arguments, templateName, $plan.model.id);
 
     if (id !== null) {
       await applyTemplateToSimulation(id, 0);
@@ -158,8 +152,6 @@
     effects.updateSimulationTemplate($simulation.template.id, {
       arguments: $simulation.arguments,
       description: templateName,
-      simulation_end_time: $simulation.simulation_end_time,
-      simulation_start_time: $simulation.simulation_start_time,
     });
   }
 

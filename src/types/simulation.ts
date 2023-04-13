@@ -90,8 +90,6 @@ export type SimulationTemplateInsertInput = {
   arguments: ArgumentsMap;
   description: string;
   model_id: number;
-  simulation_end_time: string;
-  simulation_start_time: string;
 };
 
 export type SimulationTemplateSetInput = Partial<SimulationTemplateInsertInput>;

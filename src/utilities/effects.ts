@@ -601,20 +601,12 @@ const effects = {
     }
   },
 
-  async createSimulationTemplate(
-    argumentsMap: ArgumentsMap,
-    name: string,
-    modelId: number,
-    simulationStartTime: string,
-    simulationEndTime: string,
-  ): Promise<number | null> {
+  async createSimulationTemplate(argumentsMap: ArgumentsMap, name: string, modelId: number): Promise<number | null> {
     try {
       const simulationTemplateInsertInput: SimulationTemplateInsertInput = {
         arguments: argumentsMap,
         description: name,
         model_id: modelId,
-        simulation_end_time: simulationEndTime,
-        simulation_start_time: simulationStartTime,
       };
       const {
         insert_simulation_template_one: { id, description: simulationTemplateDescription },
@@ -2165,12 +2157,6 @@ const effects = {
       }
       if (partialSimulationTemplate.model_id) {
         simulationTemplateSetInput.model_id = partialSimulationTemplate.model_id;
-      }
-      if (partialSimulationTemplate.simulation_start_time) {
-        simulationTemplateSetInput.simulation_start_time = partialSimulationTemplate.simulation_start_time;
-      }
-      if (partialSimulationTemplate.simulation_end_time) {
-        simulationTemplateSetInput.simulation_end_time = partialSimulationTemplate.simulation_end_time;
       }
 
       const {
