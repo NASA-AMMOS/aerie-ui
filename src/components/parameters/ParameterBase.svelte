@@ -63,6 +63,7 @@
     {formParameter}
     {parameterType}
     on:change
+    on:reset
   />
 {:else if formParameter.schema.type === 'real'}
   <ParameterBaseNumber
