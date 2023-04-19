@@ -33,16 +33,12 @@
 
   function onSaveNewTemplate(event: CustomEvent<string>) {
     const { detail: templateName } = event;
-    dispatch('saveNewTemplate', {
-      description: templateName,
-    });
+    dispatch('saveNewTemplate', { description: templateName });
   }
 
   function onSaveTemplate(event: CustomEvent<DropdownOption>) {
     const { detail: template } = event;
-    dispatch('saveTemplate', {
-      description: template.display,
-    });
+    dispatch('saveTemplate', { description: template.display });
   }
 
   function onApplyTemplate(event: CustomEvent<SelectedDropdownOptionValue>) {

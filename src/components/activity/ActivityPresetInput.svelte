@@ -6,8 +6,8 @@
   import type { ActivityDirective, ActivityPreset } from '../../types/activity';
   import type {
     DropdownOption,
-    DropdownOptions,
     DropdownOptionValue,
+    DropdownOptions,
     SelectedDropdownOptionValue,
   } from '../../types/dropdown';
   import type { GqlSubscribable } from '../../types/subscribable';
@@ -44,16 +44,12 @@
 
   function onSaveNewPreset(event: CustomEvent<string>) {
     const { detail: presetName } = event;
-    dispatch('saveNewPreset', {
-      name: presetName,
-    });
+    dispatch('saveNewPreset', { name: presetName });
   }
 
   function onSavePreset(event: CustomEvent<DropdownOption>) {
     const { detail: preset } = event;
-    dispatch('savePreset', {
-      name: preset.display,
-    });
+    dispatch('savePreset', { name: preset.display });
   }
 
   function onSelectPreset(event: CustomEvent<SelectedDropdownOptionValue>) {
