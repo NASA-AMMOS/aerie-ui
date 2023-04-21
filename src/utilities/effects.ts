@@ -159,7 +159,7 @@ const effects = {
 
     if (confirm) {
       const template = { ...simulation.template, id: templateId };
-      const newSimulation: Simulation = { ...simulation, template };
+      const newSimulation: Simulation = { ...simulation, arguments: {}, template };
 
       try {
         await effects.updateSimulation(newSimulation);
@@ -609,12 +609,12 @@ const effects = {
         model_id: modelId,
       };
       const {
-        insert_simulation_template_one: { id, description: simulationTemplateDescription },
+        insert_simulation_template_one: { id },
       } = await reqHasura<SimulationTemplate>(gql.CREATE_SIMULATION_TEMPLATE, {
         simulationTemplateInsertInput,
       });
 
-      showSuccessToast(`Simulation Template ${simulationTemplateDescription} Created Successfully`);
+      showSuccessToast(`Simulation Template ${name} Created Successfully`);
       return id;
     } catch (e) {
       catchError('Simulation Template Create Failed', e);
