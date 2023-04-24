@@ -2,6 +2,7 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import { simulationTemplates } from '../../stores/simulation';
   import type {
     DropdownOption,
     DropdownOptions,
@@ -15,13 +16,12 @@
   export let disabled: boolean = false;
   export let hasChanges: boolean = false;
   export let selectedSimulationTemplate: SimulationTemplate | null | undefined;
-  export let simulationTemplates: SimulationTemplate[];
 
   const dispatch = createEventDispatcher();
 
   let options: DropdownOptions = [];
 
-  $: options = simulationTemplates.map((simulationTemplate: SimulationTemplate) => ({
+  $: options = $simulationTemplates.map((simulationTemplate: SimulationTemplate) => ({
     display: simulationTemplate.description,
     value: simulationTemplate.id,
   }));
@@ -43,7 +43,8 @@
 
   function onApplyTemplate(event: CustomEvent<SelectedDropdownOptionValue>) {
     const { detail: simulationTemplateId } = event;
-    dispatch('applyTemplate', simulationTemplateId);
+    const templateToApply = $simulationTemplates.find(template => template.id === simulationTemplateId);
+    dispatch('applyTemplate', templateToApply ?? null);
   }
 </script>
 

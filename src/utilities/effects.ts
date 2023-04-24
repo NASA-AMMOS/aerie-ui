@@ -604,21 +604,26 @@ const effects = {
     }
   },
 
-  async createSimulationTemplate(argumentsMap: ArgumentsMap, name: string, modelId: number): Promise<number | null> {
+  async createSimulationTemplate(
+    argumentsMap: ArgumentsMap,
+    name: string,
+    modelId: number,
+  ): Promise<SimulationTemplate | null> {
     try {
       const simulationTemplateInsertInput: SimulationTemplateInsertInput = {
         arguments: argumentsMap,
         description: name,
         model_id: modelId,
       };
-      const {
-        insert_simulation_template_one: { id },
-      } = await reqHasura<SimulationTemplate>(gql.CREATE_SIMULATION_TEMPLATE, {
-        simulationTemplateInsertInput,
-      });
+      const { insert_simulation_template_one: newTemplate } = await reqHasura<SimulationTemplate>(
+        gql.CREATE_SIMULATION_TEMPLATE,
+        {
+          simulationTemplateInsertInput,
+        },
+      );
 
       showSuccessToast(`Simulation Template ${name} Created Successfully`);
-      return id;
+      return newTemplate;
     } catch (e) {
       catchError('Simulation Template Create Failed', e);
       showFailureToast('Simulation Template Create Failed');

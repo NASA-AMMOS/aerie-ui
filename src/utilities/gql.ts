@@ -196,6 +196,8 @@ const gql = {
   CREATE_SIMULATION_TEMPLATE: `#graphql
     mutation CreateSimulationTemplate($simulationTemplateInsertInput: simulation_template_insert_input!) {
       insert_simulation_template_one(object: $simulationTemplateInsertInput) {
+        arguments
+        description
         id
       }
     }
