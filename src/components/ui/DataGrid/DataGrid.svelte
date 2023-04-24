@@ -102,7 +102,20 @@
   let resizeObserver: ResizeObserver | null = null;
 
   $: {
-    gridOptions?.api?.setRowData(rowData);
+    const seen_set = new Set<number>()
+    gridOptions?.api?.setRowData(
+      // Deduplicate the row data by ID
+      // If this is not done, the ag-grid library can just explode! Duplicate IDs seem to be undefined behavior and
+      // result in the UI being messed up until the next reload, even if the duplicate data itself is later remvoed
+      rowData.filter((val) => {
+        if (!seen_set.has(val.id)) {
+          seen_set.add(val.id)
+          return true
+        } else {
+          return false
+        }
+      })
+    );
 
     const previousSelectedRowIds: RowId[] = [];
     // get all currently selected nodes. we cannot use `getSelectedNodes` because that does not include filtered rows
