@@ -145,7 +145,11 @@ const effects = {
     }
   },
 
-  async applyTemplateToSimulation(templateId: number, simulation: Simulation, numOfUserChanges: number): Promise<void> {
+  async applyTemplateToSimulation(
+    template: SimulationTemplate,
+    simulation: Simulation,
+    numOfUserChanges: number,
+  ): Promise<void> {
     let confirm: boolean = true;
     if (numOfUserChanges > 0) {
       ({ confirm } = await showConfirmModal(
@@ -158,8 +162,7 @@ const effects = {
     }
 
     if (confirm) {
-      const template = { ...simulation.template, id: templateId };
-      const newSimulation: Simulation = { ...simulation, arguments: {}, template };
+      const newSimulation: Simulation = { ...simulation, arguments: template.arguments, template };
 
       try {
         await effects.updateSimulation(newSimulation);

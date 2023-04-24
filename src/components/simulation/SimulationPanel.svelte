@@ -5,7 +5,13 @@
   import PlanRightArrow from '@nasa-jpl/stellar/icons/plan_with_right_arrow.svg?component';
   import { field } from '../../stores/form';
   import { plan, planEndTimeMs, planStartTimeMs } from '../../stores/plan';
-  import { enableSimulation, simulation, simulationDatasetId, simulationStatus } from '../../stores/simulation';
+  import {
+    enableSimulation,
+    simulation,
+    simulationDatasetId,
+    simulationStatus,
+    simulationTemplates,
+  } from '../../stores/simulation';
   import { gqlSubscribable } from '../../stores/subscribable';
   import type { FieldStore } from '../../types/form';
   import type { FormParameter, ParametersMap } from '../../types/parameter';
@@ -120,7 +126,10 @@
         template: null,
       });
     } else {
-      effects.applyTemplateToSimulation(simulationTemplateId, $simulation, numOfUserChanges);
+      const templateToApply = $simulationTemplates.find(template => template.id === simulationTemplateId);
+      if (templateToApply) {
+        effects.applyTemplateToSimulation(templateToApply, $simulation, numOfUserChanges);
+      }
     }
   }
 
@@ -244,7 +253,8 @@
           <div class="simulation-template">
             <SimulationTemplateInput
               hasChanges={numOfUserChanges > 0}
-              simulationTemplate={$simulation?.template}
+              simulationTemplates={$simulationTemplates}
+              selectedSimulationTemplate={$simulation?.template}
               on:applyTemplate={onApplySimulationTemplate}
               on:deleteTemplate={onDeleteSimulationTemplate}
               on:saveNewTemplate={onSaveNewSimulationTemplate}
