@@ -105,7 +105,7 @@
           visiblePointsById[id] = point;
 
           const labelText = point.label.text;
-          ctx.fillStyle = labelText ? colorScale(labelText) : null;
+          ctx.fillStyle = colorScale(labelText);
           const rect = new Path2D();
           rect.rect(xStart, y, xWidth, drawHeight);
           ctx.fill(rect);
@@ -122,29 +122,27 @@
             maxXWidth = xWidth;
           }
 
-          if (labelText) {
-            const { textHeight, textWidth } = setLabelContext(point);
-            if (textWidth < xWidth) {
-              ctx.fillText(labelText, xStart + xWidth / 2 - textWidth / 2, drawHeight / 2 + textHeight / 2, textWidth);
-            } else {
-              const extraLabelPadding = 10;
-              let newLabelText = labelText;
-              let newTextWidth = textWidth;
+          const { textHeight, textWidth } = setLabelContext(point);
+          if (textWidth < xWidth) {
+            ctx.fillText(labelText, xStart + xWidth / 2 - textWidth / 2, drawHeight / 2 + textHeight / 2, textWidth);
+          } else {
+            const extraLabelPadding = 10;
+            let newLabelText = labelText;
+            let newTextWidth = textWidth;
 
-              // Remove characters from label until it is small enough to fit in x-range point.
-              while (newTextWidth > 0 && newTextWidth > xWidth - extraLabelPadding) {
-                newLabelText = newLabelText.slice(0, -1);
-                const textMeasurement = measureText(newLabelText);
-                newTextWidth = textMeasurement.textWidth;
-              }
-
-              ctx.fillText(
-                `${newLabelText}...`,
-                xStart + xWidth / 2 - newTextWidth / 2,
-                drawHeight / 2 + textHeight / 2,
-                newTextWidth,
-              );
+            // Remove characters from label until it is small enough to fit in x-range point.
+            while (newTextWidth > 0 && newTextWidth > xWidth - extraLabelPadding) {
+              newLabelText = newLabelText.slice(0, -1);
+              const textMeasurement = measureText(newLabelText);
+              newTextWidth = textMeasurement.textWidth;
             }
+
+            ctx.fillText(
+              `${newLabelText}...`,
+              xStart + xWidth / 2 - newTextWidth / 2,
+              drawHeight / 2 + textHeight / 2,
+              newTextWidth,
+            );
           }
         }
       }
@@ -209,43 +207,49 @@
       if (schema.type === 'boolean') {
         domain = ['TRUE', 'FALSE'];
         for (let i = 0; i < values.length; ++i) {
-          const { x, y } = values[i];
-          const text = y !== null ? (y ? 'TRUE' : 'FALSE') : null;
-          points.push({
-            id: id++,
-            label: { text },
-            name,
-            type: 'x-range',
-            x,
-          });
+          const { x, y, is_gap } = values[i];
+          if (!is_gap) {
+            const text = y ? 'TRUE' : 'FALSE';
+            points.push({
+              id: id++,
+              label: { text },
+              name,
+              type: 'x-range',
+              x,
+            });
+          }
         }
       } else if (schema.type === 'string') {
         const domainMap: Record<string, string> = {};
         for (let i = 0; i < values.length; ++i) {
-          const { x, y } = values[i];
-          const text = y as string;
-          points.push({
-            id: id++,
-            label: { text },
-            name,
-            type: 'x-range',
-            x,
-          });
-          domainMap[text] = text;
+          const { x, y, is_gap } = values[i];
+          if (!is_gap) {
+            const text = y as string;
+            points.push({
+              id: id++,
+              label: { text },
+              name,
+              type: 'x-range',
+              x,
+            });
+            domainMap[text] = text;
+          }
         }
         domain = Object.values(domainMap);
       } else if (schema.type === 'variant') {
         domain = schema.variants.map(({ label }) => label);
         for (let i = 0; i < values.length; ++i) {
-          const { x, y } = values[i];
-          const text = y as string;
-          points.push({
-            id: id++,
-            label: { text },
-            name,
-            type: 'x-range',
-            x,
-          });
+          const { x, y, is_gap } = values[i];
+          if (!is_gap) {
+            const text = y as string;
+            points.push({
+              id: id++,
+              label: { text },
+              name,
+              type: 'x-range',
+              x,
+            });
+          }
         }
       }
     }
