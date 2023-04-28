@@ -43,7 +43,6 @@
   let points: XRangePoint[] = [];
   let quadtree: Quadtree<QuadtreeRect>;
   let visiblePointsById: Record<number, XRangePoint> = {};
-  let gapPattern: CanvasPattern;
 
   $: canvasHeightDpr = drawHeight * dpr;
   $: canvasWidthDpr = drawWidth * dpr;
@@ -61,38 +60,6 @@
     }
     mounted = true;
   });
-
-  function getGapPattern(context: CanvasRenderingContext2D) {
-    // Render hashed diagonal line pattern (used to represent gaps in data) to offscreen canvas.
-    // Immediately return pattern if it's already been constructed.
-
-    if (gapPattern) {
-      return gapPattern;
-    }
-
-    const patternCanvas = document.createElement('canvas');
-    patternCanvas.width = 10;
-    patternCanvas.height = 10;
-    const patternContext = patternCanvas.getContext('2d');
-
-    patternContext.beginPath();
-    patternContext.strokeStyle = '#00000033';
-
-    // Draw main diagonal line
-    patternContext.moveTo(0, 10);
-    patternContext.lineTo(10, 0);
-
-    // Draw two extra lines across the top left and bottom right corners to fill gaps in pattern
-    patternContext.moveTo(-1, 1);
-    patternContext.lineTo(1, -1);
-
-    patternContext.moveTo(9, 11);
-    patternContext.lineTo(11, 9);
-
-    patternContext.stroke();
-    gapPattern = context.createPattern(patternCanvas, 'repeat');
-    return gapPattern;
-  }
 
   async function draw(): Promise<void> {
     if (ctx) {
@@ -138,7 +105,7 @@
           visiblePointsById[id] = point;
 
           const labelText = point.label.text;
-          ctx.fillStyle = labelText ? colorScale(labelText) : getGapPattern(ctx);
+          ctx.fillStyle = labelText ? colorScale(labelText) : null;
           const rect = new Path2D();
           rect.rect(xStart, y, xWidth, drawHeight);
           ctx.fill(rect);
