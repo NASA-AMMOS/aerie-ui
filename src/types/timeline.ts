@@ -87,6 +87,7 @@ export type MouseOver = {
   activityDirectives?: ActivityDirective[];
   constraintViolations?: ConstraintViolation[];
   e: MouseEvent;
+  gaps?: Point[];
   layerId: number;
   points?: Point[];
   selectedActivityDirectiveId?: number;
