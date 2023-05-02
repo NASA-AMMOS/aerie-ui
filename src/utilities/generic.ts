@@ -82,6 +82,7 @@ export function classNames(baseClass: string, conditionalClasses?: Record<string
 export function filterEmpty<T>(value: T | null | undefined): value is T {
   return value != null;
 }
+
 /**
  * Returns a string formatted in the Hasura string array format of '{1,2,...n}'.
  */
@@ -143,12 +144,12 @@ export function isRightClick(e: MouseEvent) {
  */
 export function keyByBoolean(arr: string[] | undefined): Record<string, boolean> {
   if (arr) {
-    return arr.reduce((map, key) => {
+    return arr.reduce((map: Record<string, boolean>, key) => {
       if (!map[key]) {
         map[key] = true;
       }
       return map;
-    }, {} as Record<string, boolean>);
+    }, {});
   }
   return {};
 }
