@@ -45,7 +45,7 @@
       field: 'derived_start_time',
       filter: 'text',
       headerName: 'Absolute Start Time',
-      hide: false,
+      hide: true,
       resizable: true,
       sortable: true,
       valueGetter: params => {
@@ -59,7 +59,7 @@
       field: 'derived_end_time',
       filter: 'text',
       headerName: 'Absolute End Time',
-      hide: false,
+      hide: true,
       resizable: true,
       sortable: true,
       valueGetter: params => {

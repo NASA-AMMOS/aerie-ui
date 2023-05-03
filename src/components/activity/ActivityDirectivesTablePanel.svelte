@@ -77,7 +77,7 @@
       field: 'derived_start_time',
       filter: 'text',
       headerName: 'Absolute Start Time',
-      hide: false,
+      hide: true,
       resizable: true,
       sortable: true,
       valueGetter: (params: ValueGetterParams<ActivityDirective>) => {
