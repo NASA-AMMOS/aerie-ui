@@ -84,11 +84,14 @@
 
       for (let i = 0; i < points.length; ++i) {
         const point = points[i];
+        if (point.is_gap) {
+          continue;
+        }
 
         // Scan to the next point with a different label than the current point.
         let j = i + 1;
         let nextPoint = points[j];
-        while (nextPoint && nextPoint.label.text === point.label.text) {
+        while (nextPoint && nextPoint.label.text === point.label.text && nextPoint.is_gap === point.is_gap) {
           j = j + 1;
           nextPoint = points[j];
         }
@@ -208,48 +211,45 @@
         domain = ['TRUE', 'FALSE'];
         for (let i = 0; i < values.length; ++i) {
           const { x, y, is_gap } = values[i];
-          if (!is_gap) {
-            const text = y ? 'TRUE' : 'FALSE';
-            points.push({
-              id: id++,
-              label: { text },
-              name,
-              type: 'x-range',
-              x,
-            });
-          }
+          const text = y ? 'TRUE' : 'FALSE';
+          points.push({
+            id: id++,
+            is_gap,
+            label: { text },
+            name,
+            type: 'x-range',
+            x,
+          });
         }
       } else if (schema.type === 'string') {
         const domainMap: Record<string, string> = {};
         for (let i = 0; i < values.length; ++i) {
           const { x, y, is_gap } = values[i];
-          if (!is_gap) {
-            const text = y as string;
-            points.push({
-              id: id++,
-              label: { text },
-              name,
-              type: 'x-range',
-              x,
-            });
-            domainMap[text] = text;
-          }
+          const text = y as string;
+          points.push({
+            id: id++,
+            is_gap,
+            label: { text },
+            name,
+            type: 'x-range',
+            x,
+          });
+          domainMap[text] = text;
         }
         domain = Object.values(domainMap);
       } else if (schema.type === 'variant') {
         domain = schema.variants.map(({ label }) => label);
         for (let i = 0; i < values.length; ++i) {
           const { x, y, is_gap } = values[i];
-          if (!is_gap) {
-            const text = y as string;
-            points.push({
-              id: id++,
-              label: { text },
-              name,
-              type: 'x-range',
-              x,
-            });
-          }
+          const text = y as string;
+          points.push({
+            id: id++,
+            is_gap,
+            label: { text },
+            name,
+            type: 'x-range',
+            x,
+          });
         }
       }
     }

@@ -183,5 +183,6 @@ export interface XRangeLayer extends Layer {
 }
 
 export interface XRangePoint extends Point {
+  is_gap?: boolean;
   label: Label;
 }
