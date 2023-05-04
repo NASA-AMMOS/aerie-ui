@@ -10,7 +10,14 @@
   import SpanHashMarksSVG from '../../assets/span-hash-marks.svg?raw';
   import type { ActivityDirective, ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
   import type { SimulationDataset, Span, SpanId, SpansMap, SpanUtilityMaps } from '../../types/simulation';
-  import type { ActivityLayerFilter, BoundingBox, PointBounds, QuadtreeRect, TimeRange } from '../../types/timeline';
+  import type {
+    ActivityLayerFilter,
+    BoundingBox,
+    PointBounds,
+    QuadtreeRect,
+    SpanTimeBounds,
+    TimeRange,
+  } from '../../types/timeline';
   import { getSpanRootParent, sortActivityDirectivesOrSpans } from '../../utilities/activities';
   import { hexToRgba, shadeColor } from '../../utilities/color';
   import effects from '../../utilities/effects';
@@ -72,6 +79,7 @@
   let maxActivityWidth: number;
   let quadtreeActivityDirectives: Quadtree<QuadtreeRect>;
   let quadtreeSpans: Quadtree<QuadtreeRect>;
+  let spanTimeBoundCache: Record<SpanId, SpanTimeBounds> = {};
   let visibleActivityDirectivesById: Record<ActivityDirectiveId, ActivityDirective> = {};
   let visibleSpansById: Record<SpanId, Span> = {};
 
@@ -316,7 +324,7 @@
     );
   }
 
-  function getSpanForActivityDirective(activityDirective: ActivityDirective) {
+  function getSpanForActivityDirective(activityDirective: ActivityDirective): Span {
     const spanId = spanUtilityMaps.directiveIdToSpanIdMap[activityDirective.id];
     return spansMap[spanId];
   }
@@ -342,8 +350,9 @@
     return drawSpans([span], 0, false);
   }
 
-  function getLabelForSpan(span: Span): string {
-    return `${span.type}${span.duration === null ? ' (Unfinished)' : ''}`;
+  function getLabelForSpan(span: Span, startX: number): string {
+    // Display an arrow to the left of a span label if the span start X is negative
+    return `${startX < 0 ? '← ' : ''}${span.type}${span.duration === null ? ' (Unfinished)' : ''}`;
   }
 
   // Determine starting Y position for the activity directive, taking into account any associated spans
@@ -455,6 +464,7 @@
         ]);
       visibleActivityDirectivesById = {};
       visibleSpansById = {};
+      spanTimeBoundCache = {};
 
       maxActivityWidth = Number.MIN_SAFE_INTEGER;
       let totalMaxY = Number.MIN_SAFE_INTEGER;
@@ -463,8 +473,16 @@
       const sortedActivityDirectives: ActivityDirective[] = activityDirectives.sort(sortActivityDirectivesOrSpans);
       for (const activityDirective of sortedActivityDirectives) {
         const activityDirectiveX = getXForDirective(activityDirective);
+        const directiveInView = activityDirectiveX >= viewTimeRange.start && activityDirectiveX <= viewTimeRange.end;
 
-        if (activityDirectiveX >= viewTimeRange.start && activityDirectiveX <= viewTimeRange.end) {
+        const span = getSpanForActivityDirective(activityDirective);
+        let spanInView = true;
+        if (span) {
+          const { start, end } = getSpanTimeBounds(span);
+          spanInView = start <= viewTimeRange.end && end >= viewTimeRange.start;
+        }
+
+        if (directiveInView || spanInView) {
           const {
             spanBounds,
             directiveStartY,
@@ -475,7 +493,6 @@
           // Update maxXPerY
           maxXPerY = newMaxXPerY;
 
-          const span = getSpanForActivityDirective(activityDirective);
           const maxCanvasRowY = Math.floor(drawHeight / rowHeight) * rowHeight;
 
           // Draw spans
@@ -656,8 +673,8 @@
     // TODO deprecate point.label.hidden
     // Draw label
     const textMetrics = drawPointLabel(
-      getLabelForSpan(span),
-      x + spanLabelLeftMargin,
+      getLabelForSpan(span, x),
+      Math.max(spanLabelLeftMargin, x + spanLabelLeftMargin),
       y + activityHeight / 2,
       primaryHighlight,
       secondaryHighlight,
@@ -684,6 +701,21 @@
     ctx.restore();
   }
 
+  function getSpanTimeBounds(span: Span): SpanTimeBounds {
+    if (span.id in spanTimeBoundCache) {
+      return spanTimeBoundCache[span.id];
+    }
+
+    // Use simulation start YMD time if available, otherwise use the plan start YMD
+    const startYmd = simulationDataset?.simulation_start_time ?? planStartTimeYmd;
+    const start = getUnixEpochTimeFromInterval(startYmd, span.start_offset);
+    const duration = getIntervalInMs(span.duration);
+    const end = start + duration;
+    const timeBounds = { duration, end, start };
+    spanTimeBoundCache[span.id] = timeBounds;
+    return timeBounds;
+  }
+
   function drawSpans(spans: Span[], parentY: number, draw = true, ghosted = false): BoundingBox | null {
     if (spans) {
       const boundingBoxes: BoundingBox[] = [];
@@ -694,14 +726,12 @@
       let y = parentY + rowHeight;
 
       for (const span of spans) {
-        // Use simulation start YMD time if available, otherwise use the plan start YMD
-        const startYmd = simulationDataset?.simulation_start_time ?? planStartTimeYmd;
-        const startTime = getUnixEpochTimeFromInterval(startYmd, span.start_offset);
-        const duration = getIntervalInMs(span.duration);
-        const x = xScaleView(startTime);
-        const end = xScaleView(startTime + duration);
-        const { textWidth } = setLabelContext(getLabelForSpan(span));
-        const xEnd = Math.max(end, x + textWidth + spanLabelLeftMargin);
+        const { start, duration } = getSpanTimeBounds(span);
+        const x = xScaleView(start);
+        const endTimeX = xScaleView(start + duration);
+        const { textWidth } = setLabelContext(getLabelForSpan(span, x));
+        const textXEnd = Math.max(spanLabelLeftMargin, x + spanLabelLeftMargin) + textWidth;
+        const xEnd = Math.max(endTimeX, textXEnd);
 
         for (const boundingBox of boundingBoxes) {
           if (x <= boundingBox.maxX) {
@@ -710,7 +740,7 @@
         }
 
         if (draw) {
-          drawSpan(span, x, y, end, ghosted);
+          drawSpan(span, x, y, endTimeX, ghosted);
         }
 
         if (x < minX) {
