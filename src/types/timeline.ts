@@ -192,3 +192,10 @@ export interface XRangePoint extends Point {
   is_gap?: boolean;
   label: Label;
 }
+
+export type DirectiveVisibilityToggleMap = Record<string, boolean>;
+
+export interface ToggleTimelineDirectiveVisibility {
+  rowId: number;
+  visible: boolean;
+}

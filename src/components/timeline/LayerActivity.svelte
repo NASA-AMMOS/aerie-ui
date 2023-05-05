@@ -41,6 +41,7 @@
   export let activitySelectedColor: string = '#a9eaff';
   export let activityUnfinishedSelectedColor: string = '#ff3b19';
   export let activityUnfinishedColor: string = '#fc674d';
+  export let areDirectivesVisible: boolean = true;
   export let blur: FocusEvent | undefined;
   export let contextmenu: MouseEvent | undefined;
   export let debugMode: boolean = false;
@@ -513,7 +514,9 @@
                 ? (directiveStartY % maxCanvasRowY) + rowHeight
                 : directiveStartY;
           }
-          drawActivityDirective(activityDirective, directiveBounds.xCanvas, constrainedDirectiveY);
+          if (areDirectivesVisible) {
+            drawActivityDirective(activityDirective, directiveBounds.xCanvas, constrainedDirectiveY);
+          }
 
           totalMaxY = Math.max(totalMaxY, directiveStartY, directiveStartY, spanBounds?.maxY || 0);
         }

@@ -40,9 +40,11 @@
   import RowHorizontalGuides from './RowHorizontalGuides.svelte';
   import RowXAxisTicks from './RowXAxisTicks.svelte';
   import RowYAxes from './RowYAxes.svelte';
+  import TimelineViewDirectiveControls from './TimelineViewDirectiveControls.svelte';
 
   export let activityDirectivesByView: ActivityDirectivesByView = { byLayerId: {}, byTimelineId: {} };
   export let activityDirectivesMap: ActivityDirectivesMap = {};
+  export let areDirectivesVisible: boolean = true;
   export let autoAdjustHeight: boolean = false;
   export let constraintViolations: ConstraintViolation[] = [];
   export let drawHeight: number = 0;
@@ -207,7 +209,14 @@
 <div class="row-root" class:active-row={$selectedRow ? $selectedRow.id === id : false}>
   <!-- Row Header. -->
   <RowHeader {expanded} rowId={id} title={name} {rowDragMoveDisabled} on:mouseDownRowMove on:toggleRowExpansion>
-    <div slot="right">
+    <div slot="right" class="row-controls">
+      <TimelineViewDirectiveControls
+        directivesVisible={areDirectivesVisible}
+        offTooltipContent="Show Directives on this Timeline Row"
+        onTooltipContent="Hide Directives on this Timeline Row"
+        useBorder={false}
+        on:toggleDirectiveVisibility
+      />
       <button
         use:tooltip={{ content: 'Edit Row', placement: 'top' }}
         class="st-button icon row-edit-button"
@@ -266,6 +275,7 @@
             {...layer}
             activityDirectives={activityDirectivesByView?.byLayerId[layer.id] ?? []}
             {activityDirectivesMap}
+            {areDirectivesVisible}
             {blur}
             {contextmenu}
             {drawHeight}
@@ -380,6 +390,10 @@
     opacity: 1;
   }
 
+  .row-root .row-controls {
+    display: flex;
+  }
+
   .row.row-collapsed {
     display: none;
   }
@@ -390,6 +404,14 @@
 
   .row-edit-button {
     display: flex;
+  }
+
+  :global(.row-controls .st-button.icon svg) {
+    color: var(--st-gray-60);
+  }
+
+  :global(.row-controls .st-button.icon:hover svg) {
+    color: var(--st-gray-80);
   }
 
   :global(.row-edit-button.st-button.icon svg) {
