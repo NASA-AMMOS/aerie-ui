@@ -363,9 +363,10 @@
     maxXPerY: Record<number, number>,
     directiveBounds: PointBounds,
     initialSpanBounds: BoundingBox,
+    areDirectivesVisible: boolean = true,
   ) {
     // Place the elements where they will fit in packed waterfall
-    let i = rowHeight;
+    let i = areDirectivesVisible ? rowHeight : 0;
     let directiveStartY = 0;
     let foundY = false;
     while (!foundY) {
@@ -468,7 +469,7 @@
       let maxXPerY: Record<number, number> = {};
 
       const sortedActivityDirectives: ActivityDirective[] = activityDirectives.sort(sortActivityDirectivesOrSpans);
-      sortedActivityDirectives.forEach((activityDirective, activityIndex) => {
+      for (const activityDirective of sortedActivityDirectives) {
         const directiveBounds = getDirectiveBounds(activityDirective); // Directive element
         const directiveInView = directiveBounds.xCanvas <= xScaleViewRangeMax && directiveBounds.xEndCanvas >= 0;
 
@@ -485,7 +486,7 @@
             spanBounds,
             directiveStartY,
             maxXPerY: newMaxXPerY,
-          } = placeActivityDirective(maxXPerY, directiveBounds, initialSpanBounds);
+          } = placeActivityDirective(maxXPerY, directiveBounds, initialSpanBounds, areDirectivesVisible);
 
           // Update maxXPerY
           maxXPerY = newMaxXPerY;
@@ -495,7 +496,7 @@
           // Draw spans
           let constrainedSpanY = -1;
           if (span) {
-            const spanStartY = directiveStartY + (areDirectivesVisible ? activityHeight * (activityIndex + 1) : 0);
+            const spanStartY = directiveStartY;
             // Wrap spans if overflowing draw height
             constrainedSpanY =
               spanBounds.maxY > drawHeight ? (spanBounds.maxY % maxCanvasRowY) - rowHeight : spanStartY;
@@ -521,7 +522,7 @@
 
           totalMaxY = Math.max(totalMaxY, directiveStartY, directiveStartY, spanBounds?.maxY || 0);
         }
-      });
+      }
 
       const newHeight = totalMaxY + rowHeight;
       if (newHeight > 0 && drawHeight !== newHeight) {
