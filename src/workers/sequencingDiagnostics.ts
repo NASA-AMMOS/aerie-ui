@@ -6,7 +6,10 @@ enum CustomCodes {
   InvalidRelativeTimeString = -2,
 }
 
-export function generateDiagnostics(fileName: string, languageService: tsc.LanguageService): ResponseDiagnostic[] {
+export function generateSequencingDiagnostics(
+  fileName: string,
+  languageService: tsc.LanguageService,
+): ResponseDiagnostic[] {
   return [
     ...generateRelativeTimeStringDiagnostics(fileName, languageService),
     ...generateAbsoluteTimeStringDiagnostics(fileName, languageService),
