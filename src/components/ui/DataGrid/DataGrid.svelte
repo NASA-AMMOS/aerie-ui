@@ -103,19 +103,21 @@
 
   $: {
     const seen_set = new Set<number>();
-    gridOptions?.api?.setRowData(
-      // Deduplicate the row data by ID
-      // If this is not done, the ag-grid library can just explode! Duplicate IDs seem to be undefined behavior and
-      // result in the UI being messed up until the next reload, even if the duplicate data itself is later remvoed
-      rowData.filter(val => {
-        if (!seen_set.has(val.id)) {
-          seen_set.add(val.id);
-          return true;
-        } else {
-          return false;
-        }
-      }),
-    );
+    rowData.forEach(rowDatum => {
+      if (!seen_set.has(rowDatum[idKey])) {
+        // Non duplicate case
+        seen_set.add(rowDatum[idKey]);
+      } else {
+        // Found duplicate, write error message
+        console.error(
+          `%c Grid Problems? Look Here!
+A DataGrid has had multiple rows keyed over the same ID - ensure no two rows have the same value for the \`${idKey}\` property at the same time, even for a moment.
+This has been seen to result in unintended and often glitchy behavior, which often requires a page reload to resolve.`,
+          'font-weight:bold;',
+        );
+      }
+    });
+    gridOptions?.api?.setRowData(rowData);
 
     const previousSelectedRowIds: RowId[] = [];
     // get all currently selected nodes. we cannot use `getSelectedNodes` because that does not include filtered rows
