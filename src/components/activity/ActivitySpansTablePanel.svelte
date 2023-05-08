@@ -26,7 +26,7 @@
   }
 
   let activitySpansTable: ViewTable | undefined;
-  let dataGrid: DataGrid;
+  let dataGrid: DataGrid<Span>;
   let defaultColumnDefinitions: Partial<Record<SpanColumns, SpanColDef>>;
   let derivedColumnDefs: ColDef[] = [];
 

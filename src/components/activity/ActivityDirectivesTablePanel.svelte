@@ -32,7 +32,7 @@
   }
 
   let activityDirectivesTable: ViewTable | undefined;
-  let dataGrid: DataGrid;
+  let dataGrid: DataGrid<ActivityDirective>;
   let defaultColumnDefinitions: Partial<Record<ActivityDirectiveColumns, ActivityDirectiveColDef>> = {};
   let derivedColumnDefs: ColDef[] = [];
 

@@ -32,16 +32,16 @@
 
     if (columnState) {
       return {
-        field: derivedColumnDef.field as keyof T,
+        field: (derivedColumnDef.field as keyof T) ?? '',
         isHidden: columnState?.hide ?? derivedColumnDef.hide ?? false,
-        name: derivedColumnDef.headerName,
+        name: derivedColumnDef.headerName ?? '',
       };
     }
 
     return {
-      field: derivedColumnDef.field as keyof T,
+      field: (derivedColumnDef.field as keyof T) ?? '',
       isHidden: true,
-      name: derivedColumnDef.headerName,
+      name: derivedColumnDef.headerName ?? '',
     };
   });
 
