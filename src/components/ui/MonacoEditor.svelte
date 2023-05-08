@@ -4,7 +4,6 @@
   import type { editor as Editor } from 'monaco-editor/esm/vs/editor/editor.api';
   import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
   import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
-  import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
   import type { Monaco } from '../../types/monaco';
 
@@ -50,7 +49,9 @@
           return new jsonWorker();
         }
         if (label === 'typescript' || label === 'javascript') {
-          return new tsWorker();
+          // Force the worker to be loaded in the classic style, served directly out of static
+          // https://thethoughtfulkoala.com/posts/2021/07/10/vite-js-classic-web-worker.html
+          return new Worker(new URL('ts.worker.js', location.origin), { type: 'classic' });
         }
         return new editorWorker();
       },
@@ -70,6 +71,9 @@
       value,
     };
     monaco = await import('monaco-editor');
+    monaco.languages.typescript.typescriptDefaults.setWorkerOptions({
+      customWorkerPath: '/customTS.worker.js',
+    });
     editor = monaco.editor.create(div, options, override);
 
     editor.onDidChangeModelContent((e: Editor.IModelContentChangedEvent) => {
