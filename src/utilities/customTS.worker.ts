@@ -1,4 +1,5 @@
-import type { TypeScriptWorker, Diagnostic } from 'monaco/languages/typescript';
+import type { Diagnostic, TypeScriptWorker } from 'monaco/languages/typescript';
+import { generateEdslDiagnostics } from './edslDiagnostics';
 
 // Appease the TSC - this special window object is read by the Custom Worker implementation of Monaco
 declare class TsWorkerOverride implements Partial<TypeScriptWorker> {}
@@ -17,13 +18,13 @@ self.customTSWorkerFactory = tsw => {
     }
     async getCompletionsAtPosition(fileName: string, position: number) {
       const completions = await super.getCompletionsAtPosition(fileName, position);
-      const funny_entry = completions.entries[0];
-      funny_entry.name = 'TEST COMPLETION';
-      completions.entries.unshift(funny_entry);
+
       return completions;
     }
     async getSemanticDiagnostics(fileName: string): Promise<Diagnostic[]> {
       const diagnostics = await super.getSemanticDiagnostics(fileName);
+
+      diagnostics.push(...generateEdslDiagnostics(fileName, this._languageService));
 
       return diagnostics;
     }
