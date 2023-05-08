@@ -1,4 +1,5 @@
 import type { Diagnostic, TypeScriptWorker as InternalTsWorker } from '../types/monaco-internal';
+import { generateSequencingDiagnostics } from './sequencingDiagnostics';
 
 // Appease the TSC - this special window object is read by the Custom Worker implementation of Monaco
 declare class TsWorkerOverride implements Partial<InternalTsWorker> {}
@@ -35,6 +36,9 @@ self.customTSWorkerFactory = tsw => {
 
     async getSemanticDiagnostics(fileName: string): Promise<Diagnostic[]> {
       const diagnostics = await super.getSemanticDiagnostics(fileName);
+
+      diagnostics.push(...generateSequencingDiagnostics(fileName, this._languageService));
+
       return diagnostics;
     }
 
