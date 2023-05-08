@@ -102,6 +102,10 @@
   function onResetViewTimeRange() {
     dispatch('viewTimeRangeChanged', maxTimeRange);
   }
+
+  function onToggleDirectiveVisibility() {
+    dispatch('toggleDirectiveVisibility', !allDirectivesVisible);
+  }
 </script>
 
 <svelte:window on:keydown={onKeydown} />
@@ -146,16 +150,24 @@
 >
   <RotateCounterClockwiseIcon />
 </button>
-<TimelineViewDirectiveControls
-  directivesVisible={allDirectivesVisible}
-  offTooltipContent="Show Directives on all Timeline Rows"
-  onTooltipContent="Hide Directives on all Timeline Rows"
-  on:toggleDirectiveVisibility
-/>
+<button
+  class="st-button icon"
+  on:click={onToggleDirectiveVisibility}
+  use:tooltip={{
+    content: `${allDirectivesVisible ? 'Hide' : 'Show'} Directives on all Timeline Rows`,
+    placement: 'bottom',
+  }}
+>
+  <TimelineViewDirectiveControls directivesVisible={allDirectivesVisible} />
+</button>
 
 <style>
   .st-button {
     border: 1px solid var(--st-gray-30);
     color: var(--st-gray-70);
+  }
+
+  :global(.st-button:hover svg) {
+    color: var(--st-gray-80);
   }
 </style>

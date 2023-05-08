@@ -214,7 +214,6 @@
         directivesVisible={areDirectivesVisible}
         offTooltipContent="Show Directives on this Timeline Row"
         onTooltipContent="Hide Directives on this Timeline Row"
-        useBorder={false}
         on:toggleDirectiveVisibility
       />
       <button
@@ -404,14 +403,6 @@
 
   .row-edit-button {
     display: flex;
-  }
-
-  :global(.row-controls .st-button.icon svg) {
-    color: var(--st-gray-60);
-  }
-
-  :global(.row-controls .st-button.icon:hover svg) {
-    color: var(--st-gray-80);
   }
 
   :global(.row-edit-button.st-button.icon svg) {

@@ -6,7 +6,6 @@
   export let directivesVisible: boolean = true;
   export let onTooltipContent: string = '';
   export let offTooltipContent: string = '';
-  export let useBorder: boolean = true;
 
   const dispatch = createEventDispatcher();
 
@@ -17,11 +16,10 @@
 </script>
 
 <ToggleableIconButton
-  class="toggle-icon-button"
+  class="timeline-view-directive-control"
   isOn={directivesVisible}
   {offTooltipContent}
   {onTooltipContent}
-  {useBorder}
   on:toggle={onToggleDirectiveVisibility}
 >
   <ActivityDirectiveIcon backgroundColor="#ccc" size="12px" />
@@ -49,7 +47,14 @@
     width: 20px;
   }
 
-  :global(.toggle-icon-button svg g) {
+  :global(.timeline-view-directive-control svg g) {
     opacity: 1;
+  }
+
+  :global(.timeline-view-directive-control svg) {
+    color: var(--st-gray-60);
+  }
+  :global(.timeline-view-directive-control:hover svg) {
+    color: var(--st-gray-80);
   }
 </style>
