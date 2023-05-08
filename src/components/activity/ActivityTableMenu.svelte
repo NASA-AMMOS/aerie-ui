@@ -1,11 +1,12 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  type T = $$Generic;
+  type T = $$Generic<TRowData>;
 
   import SearchIcon from '@nasa-jpl/stellar/icons/search.svg?component';
   import type { ColDef, ColumnState } from 'ag-grid-community';
   import { createEventDispatcher } from 'svelte';
+  import type { TRowData } from '../../types/data-grid';
   import Input from '../form/Input.svelte';
   import Menu from '../menus/Menu.svelte';
   import MenuHeader from '../menus/MenuHeader.svelte';

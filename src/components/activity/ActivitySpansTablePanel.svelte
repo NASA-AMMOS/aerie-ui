@@ -166,8 +166,8 @@
     }
   }
 
-  function onColumnStateChange({ detail: columnStates }: CustomEvent<ColumnState[]>) {
-    const updatedColumnStates = columnStates.filter(columnState => columnState.colId !== 'actions');
+  function onColumnStateChange({ detail: columnStates }: CustomEvent<ColumnState[] | undefined>) {
+    const updatedColumnStates = (columnStates ?? []).filter(columnState => columnState.colId !== 'actions');
     viewUpdateActivitySpansTable({ columnStates: updatedColumnStates });
   }
 
