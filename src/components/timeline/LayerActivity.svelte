@@ -127,6 +127,7 @@
     activityDirectives &&
     activityColor &&
     activityHeight &&
+    areDirectivesVisible !== undefined &&
     ctx &&
     drawHeight &&
     drawWidth &&
@@ -467,7 +468,7 @@
       let maxXPerY: Record<number, number> = {};
 
       const sortedActivityDirectives: ActivityDirective[] = activityDirectives.sort(sortActivityDirectivesOrSpans);
-      for (const activityDirective of sortedActivityDirectives) {
+      sortedActivityDirectives.forEach((activityDirective, activityIndex) => {
         const directiveBounds = getDirectiveBounds(activityDirective); // Directive element
         const directiveInView = directiveBounds.xCanvas <= xScaleViewRangeMax && directiveBounds.xEndCanvas >= 0;
 
@@ -494,7 +495,7 @@
           // Draw spans
           let constrainedSpanY = -1;
           if (span) {
-            const spanStartY = directiveStartY;
+            const spanStartY = directiveStartY + (areDirectivesVisible ? activityHeight * (activityIndex + 1) : 0);
             // Wrap spans if overflowing draw height
             constrainedSpanY =
               spanBounds.maxY > drawHeight ? (spanBounds.maxY % maxCanvasRowY) - rowHeight : spanStartY;
@@ -520,7 +521,7 @@
 
           totalMaxY = Math.max(totalMaxY, directiveStartY, directiveStartY, spanBounds?.maxY || 0);
         }
-      }
+      });
 
       const newHeight = totalMaxY + rowHeight;
       if (newHeight > 0 && drawHeight !== newHeight) {
