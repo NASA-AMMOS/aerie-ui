@@ -194,8 +194,3 @@ export interface XRangePoint extends Point {
 }
 
 export type DirectiveVisibilityToggleMap = Record<string, boolean>;
-
-export interface ToggleTimelineDirectiveVisibility {
-  rowId: number;
-  visible: boolean;
-}
