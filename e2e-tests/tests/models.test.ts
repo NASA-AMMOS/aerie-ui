@@ -43,7 +43,27 @@ test.describe.serial('Models', () => {
   test('Create button should be enabled after entering a name, version, and file', async () => {
     await models.fillInputName();
     await models.fillInputVersion();
+    await models.fillInputFile();
     await expect(models.createButton).not.toBeDisabled();
+  });
+
+  test('Create button should be disabled after submitting once', async () => {
+    // Setup the test
+    await expect(models.tableRow).not.toBeVisible();
+    await models.fillInputName();
+    await models.fillInputVersion();
+    await models.fillInputFile();
+    await models.createButton.click();
+    // The create button shouldn't be there
+    await expect(models.createButton).not.toBeVisible();
+    // Instead, the creating button should be present and disabled
+    await expect(models.creatingButton).toBeVisible();
+    await expect(models.creatingButton).toBeDisabled();
+    await expect(models.createButton).toBeVisible();
+
+    await expect(models.inputFile).toBeEmpty();
+    await expect(models.inputVersion).toBeEmpty();
+    await expect(models.inputName).toBeEmpty();
   });
 
   test('Create model', async () => {
