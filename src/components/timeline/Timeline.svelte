@@ -14,7 +14,15 @@
     SpanUtilityMaps,
     SpansMap,
   } from '../../types/simulation';
-  import type { MouseDown, MouseOver, Row, TimeRange, Timeline, XAxisTick } from '../../types/timeline';
+  import type {
+    DirectiveVisibilityToggleMap,
+    MouseDown,
+    MouseOver,
+    Row,
+    TimeRange,
+    Timeline,
+    XAxisTick,
+  } from '../../types/timeline';
   import { clamp } from '../../utilities/generic';
   import { getDoy, getDoyTime } from '../../utilities/time';
   import {
