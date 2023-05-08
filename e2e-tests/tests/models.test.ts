@@ -47,6 +47,14 @@ test.describe.serial('Models', () => {
     await expect(models.createButton).not.toBeDisabled();
   });
 
+  test('Create model', async () => {
+    await models.createModel();
+  });
+
+  test('Delete model', async () => {
+    await models.deleteModel();
+  });
+
   test('Create button should be disabled after submitting once', async () => {
     // Setup the test
     await expect(models.tableRow).not.toBeVisible();
@@ -64,13 +72,5 @@ test.describe.serial('Models', () => {
     await expect(models.inputFile).toBeEmpty();
     await expect(models.inputVersion).toBeEmpty();
     await expect(models.inputName).toBeEmpty();
-  });
-
-  test('Create model', async () => {
-    await models.createModel();
-  });
-
-  test('Delete model', async () => {
-    await models.deleteModel();
   });
 });
