@@ -1,9 +1,15 @@
 <svelte:options accessors={true} immutable={true} />
 
 <script lang="ts">
+  interface $$Events extends ComponentEvents<SvelteComponent> {
+    hideMenu: CustomEvent;
+    openMenu: CustomEvent;
+    selectOption: CustomEvent<SelectedDropdownOptionValue>;
+  }
+
   import SearchIcon from '@nasa-jpl/stellar/icons/search.svg?component';
   import SettingsIcon from '@nasa-jpl/stellar/icons/settings.svg?component';
-  import { createEventDispatcher } from 'svelte';
+  import { SvelteComponent, createEventDispatcher, type ComponentEvents } from 'svelte';
   import type { DropdownOption, DropdownOptions, SelectedDropdownOptionValue } from '../../types/dropdown';
   import { getTarget } from '../../utilities/generic';
   import { tooltip } from '../../utilities/tooltip';
@@ -21,6 +27,7 @@
   export let disabled: boolean = false;
   export let error: string | undefined = undefined;
   export let options: DropdownOptions = [];
+  export let maxListHeight: string = '300px';
   export let placeholder: string = '';
   export let selectedOptionValue: SelectedDropdownOptionValue | undefined = undefined;
   export let showPlaceholderOption: boolean = true;
@@ -29,12 +36,16 @@
   export let settingsIconTooltipPlacement: string = 'top';
 
   export function hideMenu() {
-    dispatch('hideMenu');
-    presetMenu.hide();
+    if (!disabled) {
+      dispatch('hideMenu');
+      presetMenu.hide();
+    }
   }
   export function openMenu() {
-    dispatch('openMenu');
-    presetMenu.show();
+    if (!disabled) {
+      dispatch('openMenu');
+      presetMenu.show();
+    }
   }
 
   const dispatch = createEventDispatcher();
@@ -63,12 +74,10 @@
         });
   }
 
-  function onOpenMenu() {
-    if (!disabled) {
-      openMenu();
-      searchFilter = '';
-    }
+  function onCloseMenu() {
+    searchFilter = '';
   }
+
   function onSearchPresets(event: Event) {
     const { value } = getTarget(event);
 
@@ -87,7 +96,7 @@
     class="selected-display st-input w-100"
     class:error
     class:disabled
-    on:click|stopPropagation={onOpenMenu}
+    on:click|stopPropagation={openMenu}
     role="textbox"
     aria-label={selectedOption?.display ?? placeholder}
     use:tooltip={{ content: error, placement: 'top' }}
@@ -96,18 +105,18 @@
     <button
       use:tooltip={{ content: settingsIconTooltip, placement: settingsIconTooltipPlacement }}
       class="icon st-button settings-icon"
-      on:click|stopPropagation={onOpenMenu}
+      on:click|stopPropagation={openMenu}
     >
       <SettingsIcon />
     </button>
   </div>
-  <Menu bind:this={presetMenu} hideAfterClick={false} placement="bottom-end" type="input">
+  <Menu bind:this={presetMenu} hideAfterClick={false} placement="bottom-end" type="input" on:hide={onCloseMenu}>
     {#if $$slots['dropdown-header']}
       <MenuHeader>
         <slot name="dropdown-header" />
       </MenuHeader>
     {/if}
-    <div class="dropdown-items">
+    <div class="dropdown-items-container">
       <div class="dropdown-search">
         <Input>
           <div class="search-icon" slot="left"><SearchIcon /></div>
@@ -119,17 +128,19 @@
           />
         </Input>
       </div>
-      {#each displayedOptions as displayedOption}
-        <MenuItem
-          selected={(selectedOption?.value ?? null) === displayedOption.value}
-          disabled={(selectedOption?.value ?? null) === displayedOption.value}
-          on:click={event => {
-            onSelectOption(displayedOption, event.detail);
-          }}
-        >
-          <span class="st-typography-body">{displayedOption.display}</span>
-        </MenuItem>
-      {/each}
+      <div class="dropdown-items" style={`max-height:${maxListHeight}`}>
+        {#each displayedOptions as displayedOption}
+          <MenuItem
+            selected={(selectedOption?.value ?? null) === displayedOption.value}
+            disabled={(selectedOption?.value ?? null) === displayedOption.value}
+            on:click={event => {
+              onSelectOption(displayedOption, event.detail);
+            }}
+          >
+            <span class="st-typography-body">{displayedOption.display}</span>
+          </MenuItem>
+        {/each}
+      </div>
     </div>
   </Menu>
 </div>
@@ -139,6 +150,7 @@
     --aerie-menu-item-template-columns: 1fr;
     align-items: center;
     display: grid;
+    position: relative;
   }
 
   .selected-display {
@@ -180,18 +192,22 @@
     height: 1rem;
   }
 
-  .dropdown-items {
+  .dropdown-items-container {
     cursor: pointer;
   }
 
-  .dropdown-items .dropdown-search {
+  .dropdown-items-container .dropdown-search {
     display: flex;
     margin: 6px;
   }
 
-  .dropdown-items .dropdown-search .search-icon {
+  .dropdown-items-container .dropdown-search .search-icon {
     align-items: center;
     color: var(--st-gray-50);
     display: flex;
+  }
+
+  .dropdown-items {
+    overflow-y: auto;
   }
 </style>
