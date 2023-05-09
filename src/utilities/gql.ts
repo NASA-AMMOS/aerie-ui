@@ -575,12 +575,15 @@ const gql = {
   GET_MODELS: `#graphql
     query GetModels {
       models: mission_model {
+        created_at
+        description
         id
-        jar_id,
+        jar_id
         name
         plans {
           id
         }
+        owner
         version
       }
     }
@@ -1218,12 +1221,15 @@ const gql = {
   SUB_MODELS: `#graphql
     subscription SubModels {
       models: mission_model(order_by: { name: asc }) {
+        created_at
+        description
         id
-        jar_id,
+        jar_id
         name
         plans {
           id
         }
+        owner
         version
       }
     }
