@@ -225,8 +225,8 @@
 <div bind:this={timelineDiv} bind:clientWidth class="timeline" id={`timeline-${timeline?.id}`}>
   <div bind:this={timelineHistogramDiv} style="padding-top: 12px">
     <TimelineHistogram
-      activityDirectives={activityDirectivesByView && timeline
-        ? activityDirectivesByView?.byTimelineId[timeline.id]
+      activityDirectives={timeline && activityDirectivesByView?.byTimelineId[timeline.id]
+        ? activityDirectivesByView.byTimelineId[timeline.id]
         : []}
       {constraintViolations}
       {cursorEnabled}
