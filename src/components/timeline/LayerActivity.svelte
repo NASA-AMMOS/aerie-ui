@@ -120,6 +120,7 @@
   $: spanLabelLeftMargin = 6;
   $: timelineLocked = timelineLockStatus === TimelineLockStatus.Locked;
   $: planStartTimeMs = getUnixEpochTime(getDoyTime(new Date(planStartTimeYmd)));
+  $: xScaleViewRangeMax = xScaleView.range()[1];
 
   $: if (
     activityDirectives &&
@@ -350,22 +351,17 @@
     return drawSpans([span], 0, false);
   }
 
-  function getLabelForSpan(span: Span, startX: number): string {
-    // Display an arrow to the left of a span label if the span start X is negative
-    return `${startX < 0 ? '← ' : ''}${span.type}${span.duration === null ? ' (Unfinished)' : ''}`;
+  function getLabelForSpan(span: Span, sticky: boolean = false): string {
+    // Display an arrow to the left of a span label if the span is sticky
+    return `${sticky ? '← ' : ''}${span.type}${span.duration === null ? ' (Unfinished)' : ''}`;
   }
 
   // Determine starting Y position for the activity directive, taking into account any associated spans
-  function placeActivityDirective(activityDirective: ActivityDirective, maxXPerY: Record<number, number>) {
-    // Get sizes of the points spawned by this point
-    const directiveBounds = getDirectiveBounds(activityDirective); // Directive element
-    let spanBounds: BoundingBox = null;
-
-    // Get matching span bounds if a span exists
-    const span = getSpanForActivityDirective(activityDirective);
-    if (span) {
-      spanBounds = getSpanBounds(span);
-    }
+  function placeActivityDirective(
+    maxXPerY: Record<number, number>,
+    directiveBounds: PointBounds,
+    initialSpanBounds: BoundingBox,
+  ) {
     // Place the elements where they will fit in packed waterfall
     let i = rowHeight;
     let directiveStartY = 0;
@@ -376,12 +372,12 @@
       const directiveFits =
         !directiveXForYExists || (directiveXForYExists && directiveBounds.xCanvas > maxDirectiveXForY);
       if (directiveFits) {
-        if (!spanBounds) {
+        if (!initialSpanBounds) {
           foundY = true;
           directiveStartY = i;
         } else {
           // Construct actual span bounds for this Y
-          const adjustedSpanBounds = { ...spanBounds };
+          const adjustedSpanBounds = { ...initialSpanBounds };
           adjustedSpanBounds.maxY += i + rowHeight;
           // Check span bounds for each y
           let spanYCheckIndex = i + rowHeight;
@@ -412,24 +408,23 @@
     }
 
     // Construct actual span bounds for this final Y
-    const adjustedSpanBounds = { ...spanBounds };
+    const adjustedSpanBounds = { ...initialSpanBounds };
     adjustedSpanBounds.maxY = directiveStartY + rowHeight + adjustedSpanBounds.maxY;
     let childrenYIterator = 0;
     let spanStartY = 0;
-    if (spanBounds) {
+    if (initialSpanBounds) {
       childrenYIterator = directiveStartY + rowHeight;
-      spanStartY = spanBounds.maxY + childrenYIterator;
+      spanStartY = initialSpanBounds.maxY + childrenYIterator;
       while (childrenYIterator < spanStartY) {
         // TODO span bounds could provide a maxXForY instead of absolute corner bounds?
         const maxXForSpanY = maxXPerY[childrenYIterator];
-        if (maxXForSpanY === undefined || maxXForSpanY < spanBounds.maxX) {
-          newMaxXPerY[childrenYIterator] = spanBounds.maxX;
+        if (maxXForSpanY === undefined || maxXForSpanY < initialSpanBounds.maxX) {
+          newMaxXPerY[childrenYIterator] = initialSpanBounds.maxX;
         }
         childrenYIterator += rowHeight;
       }
     }
     return {
-      directiveBounds,
       directiveStartY,
       maxXPerY: newMaxXPerY,
       spanBounds: adjustedSpanBounds,
@@ -472,23 +467,23 @@
 
       const sortedActivityDirectives: ActivityDirective[] = activityDirectives.sort(sortActivityDirectivesOrSpans);
       for (const activityDirective of sortedActivityDirectives) {
-        const activityDirectiveX = getXForDirective(activityDirective);
-        const directiveInView = activityDirectiveX >= viewTimeRange.start && activityDirectiveX <= viewTimeRange.end;
+        const directiveBounds = getDirectiveBounds(activityDirective); // Directive element
+        const directiveInView = directiveBounds.xCanvas <= xScaleViewRangeMax && directiveBounds.xEndCanvas >= 0;
 
         const span = getSpanForActivityDirective(activityDirective);
-        let spanInView = true;
+        let spanInView = false;
+        let initialSpanBounds = null;
         if (span) {
-          const { start, end } = getSpanTimeBounds(span);
-          spanInView = start <= viewTimeRange.end && end >= viewTimeRange.start;
+          initialSpanBounds = getSpanBounds(span);
+          spanInView = initialSpanBounds.minX <= xScaleViewRangeMax && initialSpanBounds.maxX >= 0;
         }
 
         if (directiveInView || spanInView) {
           const {
             spanBounds,
             directiveStartY,
-            directiveBounds,
             maxXPerY: newMaxXPerY,
-          } = placeActivityDirective(activityDirective, maxXPerY);
+          } = placeActivityDirective(maxXPerY, directiveBounds, initialSpanBounds);
 
           // Update maxXPerY
           maxXPerY = newMaxXPerY;
@@ -502,7 +497,7 @@
             // Wrap spans if overflowing draw height
             constrainedSpanY =
               spanBounds.maxY > drawHeight ? (spanBounds.maxY % maxCanvasRowY) - rowHeight : spanStartY;
-            drawSpans([span], constrainedSpanY, true);
+            drawSpans([span], constrainedSpanY);
           }
 
           // Draw directive
@@ -595,7 +590,7 @@
     }
   }
 
-  function drawSpan(span: Span, x: number, y: number, end: number, ghosted: boolean = false) {
+  function drawSpan(span: Span, x: number, y: number, end: number, ghosted: boolean = false, sticky = false) {
     ctx.save();
     visibleSpansById[span.id] = span;
     const primaryHighlight = span.id === selectedSpanId;
@@ -673,8 +668,8 @@
     // TODO deprecate point.label.hidden
     // Draw label
     const textMetrics = drawPointLabel(
-      getLabelForSpan(span, x),
-      Math.max(spanLabelLeftMargin, x + spanLabelLeftMargin),
+      getLabelForSpan(span, sticky),
+      sticky ? Math.max(spanLabelLeftMargin, x + spanLabelLeftMargin) : x + spanLabelLeftMargin,
       y + activityHeight / 2,
       primaryHighlight,
       secondaryHighlight,
@@ -729,28 +724,39 @@
         const { start, duration } = getSpanTimeBounds(span);
         const x = xScaleView(start);
         const endTimeX = xScaleView(start + duration);
-        const { textWidth } = setLabelContext(getLabelForSpan(span, x));
+
+        // The label should be sticky if the start of the span is clipped and the span is still in view
+        const sticky = start < viewTimeRange.start && start + duration >= viewTimeRange.start;
+
+        // Consider the span to be in view if the rect and label are in view or if the label should be sticky
+        const rectWithLabelInView = x + spanLabelLeftMargin + setLabelContext(getLabelForSpan(span)).textWidth > 0;
+        const spanInView = rectWithLabelInView || sticky;
+
+        // Get the final text width now that we know if we're in sticky mode
+        const { textWidth } = setLabelContext(getLabelForSpan(span, sticky));
         const textXEnd = Math.max(spanLabelLeftMargin, x + spanLabelLeftMargin) + textWidth;
         const xEnd = Math.max(endTimeX, textXEnd);
 
         for (const boundingBox of boundingBoxes) {
           if (x <= boundingBox.maxX) {
-            y = boundingBox.maxY + rowHeight;
+            y = boundingBox.maxY + (spanInView ? rowHeight : 0);
           }
         }
 
-        if (draw) {
-          drawSpan(span, x, y, endTimeX, ghosted);
-        }
-
-        if (x < minX) {
-          minX = x;
-        }
-        if (xEnd > maxX) {
-          maxX = xEnd;
-        }
-        if (y > maxY) {
-          maxY = y;
+        // Only add to bounds if the span is in view
+        if (spanInView) {
+          if (draw) {
+            drawSpan(span, x, y, endTimeX, ghosted, sticky);
+          }
+          if (x < minX) {
+            minX = x;
+          }
+          if (xEnd > maxX) {
+            maxX = xEnd;
+          }
+          if (y > maxY) {
+            maxY = y;
+          }
         }
 
         const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[span.id].map(id => spansMap[id]);
