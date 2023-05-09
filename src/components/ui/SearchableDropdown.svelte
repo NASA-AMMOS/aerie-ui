@@ -36,10 +36,8 @@
   export let settingsIconTooltipPlacement: string = 'top';
 
   export function hideMenu() {
-    if (!disabled) {
-      dispatch('hideMenu');
-      presetMenu.hide();
-    }
+    dispatch('hideMenu');
+    presetMenu.hide();
   }
   export function openMenu() {
     if (!disabled) {
@@ -73,6 +71,9 @@
           return new RegExp(searchFilter, 'i').test(option.display);
         });
   }
+  $: if (disabled) {
+    hideMenu();
+  }
 
   function onCloseMenu() {
     searchFilter = '';
@@ -85,7 +86,9 @@
   }
   function onSelectOption(option: DisplayOption, event: MouseEvent) {
     event.stopPropagation();
-    dispatch('selectOption', option.value as SelectedDropdownOptionValue);
+    if (!disabled) {
+      dispatch('selectOption', option.value as SelectedDropdownOptionValue);
+    }
     hideMenu();
   }
 </script>
