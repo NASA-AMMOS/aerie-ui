@@ -224,12 +224,7 @@
       <SectionTitle>Constraints</SectionTitle>
 
       <Input>
-        <input
-          bind:value={filterText}
-          class="st-input"
-          placeholder="Filter constraints"
-          style="max-width: 300px; width: 100%;"
-        />
+        <input bind:value={filterText} class="st-input" placeholder="Filter constraints" style="width: 100%;" />
       </Input>
 
       <div class="right">
