@@ -18,6 +18,7 @@
   import ExpansionLogicEditor from './ExpansionLogicEditor.svelte';
 
   export let initialRuleActivityType: string | null = null;
+  export let initialRuleDescription: string | null = null;
   export let initialRuleCreatedAt: string | null = null;
   export let initialRuleDictionaryId: number | null = null;
   export let initialRuleId: number | null = null;
@@ -30,6 +31,7 @@
 
   let ruleActivityType: string | null = initialRuleActivityType;
   let ruleCreatedAt: string | null = initialRuleCreatedAt;
+  let ruleDescription: string | null = initialRuleDescription;
   let ruleDictionaryId: number | null = initialRuleDictionaryId;
   let ruleId: number | null = initialRuleId;
   let ruleLogic: string = initialRuleLogic;
@@ -40,6 +42,7 @@
     activity_type: ruleActivityType,
     authoring_command_dict_id: ruleDictionaryId,
     authoring_mission_model_id: ruleModelId,
+    description: ruleDescription,
     expansion_logic: ruleLogic,
   };
 
@@ -49,6 +52,7 @@
     activity_type: ruleActivityType,
     authoring_command_dict_id: ruleDictionaryId,
     authoring_mission_model_id: ruleModelId,
+    description: ruleDescription,
     expansion_logic: ruleLogic,
   });
   $: saveButtonText = mode === 'edit' && !ruleModified ? 'Saved' : 'Save';
@@ -81,6 +85,7 @@
           activity_type: ruleActivityType,
           authoring_command_dict_id: ruleDictionaryId,
           authoring_mission_model_id: ruleModelId,
+          description: ruleDescription,
           expansion_logic: ruleLogic,
         };
         const newRuleId = await effects.createExpansionRule(newRule, user);
@@ -93,6 +98,7 @@
           activity_type: ruleActivityType,
           authoring_command_dict_id: ruleDictionaryId,
           authoring_mission_model_id: ruleModelId,
+          description: ruleDescription,
           expansion_logic: ruleLogic,
         };
         const updated_at = await effects.updateExpansionRule(ruleId, updatedRule, user);
@@ -182,6 +188,18 @@
             </option>
           {/each}
         </select>
+      </fieldset>
+
+      <fieldset>
+        <label for="description">Description</label>
+        <textarea
+          bind:value={ruleDescription}
+          autocomplete="off"
+          class="st-input w-100"
+          name="description"
+          placeholder="Enter a rule description (optional)"
+          required
+        />
       </fieldset>
     </svelte:fragment>
   </Panel>

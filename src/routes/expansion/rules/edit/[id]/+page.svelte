@@ -9,6 +9,7 @@
 
 <ExpansionRuleForm
   initialRuleActivityType={data.initialRule.activity_type}
+  initialRuleDescription={data.initialRule.description}
   initialRuleCreatedAt={data.initialRule.created_at}
   initialRuleDictionaryId={data.initialRule.authoring_command_dict_id}
   initialRuleId={data.initialRule.id}
