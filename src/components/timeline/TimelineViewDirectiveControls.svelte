@@ -6,6 +6,8 @@
   export let directivesVisible: boolean = true;
   export let onTooltipContent: string = '';
   export let offTooltipContent: string = '';
+  export let tooltipPlacement: string = 'top';
+  export let useBorder: boolean = true;
 
   const dispatch = createEventDispatcher();
 
@@ -15,19 +17,22 @@
   }
 </script>
 
-<ToggleableIconButton
-  class="timeline-view-directive-control"
-  isOn={directivesVisible}
-  {offTooltipContent}
-  {onTooltipContent}
-  on:toggle={onToggleDirectiveVisibility}
->
-  <ActivityDirectiveIcon backgroundColor="#ccc" size="12px" />
-  <div slot="offIcon" class="off-icon">
+<div class="timeline-view-directive-control">
+  <ToggleableIconButton
+    isOn={directivesVisible}
+    {offTooltipContent}
+    {onTooltipContent}
+    {tooltipPlacement}
+    {useBorder}
+    on:toggle={onToggleDirectiveVisibility}
+  >
     <ActivityDirectiveIcon backgroundColor="#ccc" size="12px" />
-    <div class="toggle-slash" />
-  </div>
-</ToggleableIconButton>
+    <div slot="offIcon" class="off-icon">
+      <ActivityDirectiveIcon backgroundColor="#ccc" size="12px" />
+      <div class="toggle-slash" />
+    </div>
+  </ToggleableIconButton>
+</div>
 
 <style>
   .off-icon {
@@ -47,14 +52,14 @@
     width: 20px;
   }
 
-  :global(.timeline-view-directive-control svg g) {
+  .timeline-view-directive-control :global(.st-button svg g) {
     opacity: 1;
   }
 
-  :global(.timeline-view-directive-control svg) {
+  .timeline-view-directive-control :global(.st-button svg) {
     color: var(--st-gray-60);
   }
-  :global(.timeline-view-directive-control:hover svg) {
+  .timeline-view-directive-control:hover :global(.st-button svg) {
     color: var(--st-gray-80);
   }
 </style>

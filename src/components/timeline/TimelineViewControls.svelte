@@ -150,16 +150,13 @@
 >
   <RotateCounterClockwiseIcon />
 </button>
-<button
-  class="st-button icon"
-  on:click={onToggleDirectiveVisibility}
-  use:tooltip={{
-    content: `${allDirectivesVisible ? 'Hide' : 'Show'} Directives on all Timeline Rows`,
-    placement: 'bottom',
-  }}
->
-  <TimelineViewDirectiveControls directivesVisible={allDirectivesVisible} />
-</button>
+<TimelineViewDirectiveControls
+  directivesVisible={allDirectivesVisible}
+  offTooltipContent="Show Directives on all Timeline Rows"
+  onTooltipContent="Hide Directives on all Timeline Rows"
+  tooltipPlacement="bottom"
+  on:toggleDirectiveVisibility={onToggleDirectiveVisibility}
+/>
 
 <style>
   .st-button {
@@ -167,7 +164,7 @@
     color: var(--st-gray-70);
   }
 
-  :global(.st-button:hover svg) {
+  .st-button:hover :global(svg) {
     color: var(--st-gray-80);
   }
 </style>

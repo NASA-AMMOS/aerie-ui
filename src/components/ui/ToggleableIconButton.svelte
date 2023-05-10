@@ -11,6 +11,8 @@
   export let isOn: boolean = true;
   export let onTooltipContent: string = '';
   export let offTooltipContent: string = '';
+  export let tooltipPlacement: string = 'top';
+  export let useBorder: boolean = true;
   export { className as class };
 
   let className: string = '';
@@ -23,11 +25,12 @@
 </script>
 
 <button
-  class={classNames('toggleable-icon-button ', {
+  class={classNames('toggleable-icon-button st-button icon', {
+    'border-button': useBorder,
     [className]: !!className,
   })}
   on:click={onClick}
-  use:tooltip={{ content: isOn ? onTooltipContent : offTooltipContent, placement: 'bottom' }}
+  use:tooltip={{ content: isOn ? onTooltipContent : offTooltipContent, placement: tooltipPlacement }}
 >
   <ToggleableIcon {isOn} on:click={onClick}>
     <slot />
@@ -41,6 +44,9 @@
     background: none;
     border: 0;
     display: inline-flex;
+  }
+  .st-button.border-button {
+    border: 1px solid var(--st-gray-30);
   }
 
   .toggleable-icon-button:hover {
