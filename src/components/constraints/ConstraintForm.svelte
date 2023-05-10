@@ -203,7 +203,7 @@
 
       <fieldset>
         <label for="constraint-description">Description</label>
-        <input
+        <textarea
           bind:value={constraintDescription}
           autocomplete="off"
           class="st-input w-100"
