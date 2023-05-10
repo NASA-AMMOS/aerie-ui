@@ -17,7 +17,7 @@ export const expansionSets = gqlSubscribable<ExpansionSet[]>(gql.SUB_EXPANSION_S
 
 export const creatingExpansionSequence: Writable<boolean> = writable(false);
 
-export const expansionRulesColumns: Writable<string> = writable('1fr 3px 2fr');
+export const expansionRulesColumns: Writable<string> = writable('2.5fr 3px 1.5fr');
 
 export const expansionSetsColumns: Writable<string> = writable('1fr 3px 2fr');
 
