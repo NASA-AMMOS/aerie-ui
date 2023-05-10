@@ -97,6 +97,7 @@
   let gridOptions: GridOptions<RowData>;
   let gridDiv: HTMLDivElement;
   let onColumnStateChangeDebounced = debounce(onColumnStateChange, 500);
+  let onWindowResizedDebounced = debounce(sizeColumnsToFit, 50);
   let previousSelectedRowId: RowId | null = null;
   let resizeObserver: ResizeObserver | null = null;
 
@@ -322,7 +323,7 @@
 
     if (autoSizeColumnsToFit) {
       resizeObserver = new ResizeObserver(() => {
-        sizeColumnsToFit();
+        onWindowResizedDebounced();
       });
       resizeObserver.observe(gridDiv);
     }
