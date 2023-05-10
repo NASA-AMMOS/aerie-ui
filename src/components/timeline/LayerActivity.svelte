@@ -366,7 +366,8 @@
     areDirectivesVisible: boolean = true,
   ) {
     // Place the elements where they will fit in packed waterfall
-    let i = areDirectivesVisible ? rowHeight : 0;
+    const directiveRowHeight = areDirectivesVisible ? rowHeight : 0;
+    let i = directiveRowHeight;
     let directiveStartY = 0;
     let foundY = false;
     while (!foundY) {
@@ -416,7 +417,7 @@
     let childrenYIterator = 0;
     let spanStartY = 0;
     if (initialSpanBounds) {
-      childrenYIterator = directiveStartY + rowHeight;
+      childrenYIterator = directiveStartY + directiveRowHeight;
       spanStartY = initialSpanBounds.maxY + childrenYIterator;
       while (childrenYIterator < spanStartY) {
         // TODO span bounds could provide a maxXForY instead of absolute corner bounds?
