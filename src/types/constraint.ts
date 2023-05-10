@@ -10,6 +10,7 @@ export type Constraint = {
   name: string;
   owner: string;
   plan_id: number | null;
+  updated_at: string;
   updated_by: string;
 };
 

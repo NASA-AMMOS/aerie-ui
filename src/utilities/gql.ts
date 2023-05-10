@@ -463,6 +463,7 @@ const gql = {
         name
         owner
         plan_id
+        updated_at
         updated_by
       }
     }
@@ -1163,6 +1164,7 @@ const gql = {
         name
         owner
         plan_id
+        updated_at
         updated_by
       }
     }
@@ -1179,6 +1181,7 @@ const gql = {
         name
         owner
         plan_id
+        updated_at
         updated_by
       }
     }
