@@ -6,9 +6,12 @@ export type ExpansionRule = {
   authoring_command_dict_id: number;
   authoring_mission_model_id: number;
   created_at: string;
+  description: string;
   expansion_logic: string;
   id: number;
+  owner: string;
   updated_at: string;
+  updated_by: string;
 };
 
 export type ExpansionRuleInsertInput = Omit<ExpansionRule, 'created_at' | 'id' | 'updated_at'>;
