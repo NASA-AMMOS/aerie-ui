@@ -44,7 +44,7 @@
 
   export let activityDirectivesByView: ActivityDirectivesByView = { byLayerId: {}, byTimelineId: {} };
   export let activityDirectivesMap: ActivityDirectivesMap = {};
-  export let areDirectivesVisible: boolean = true;
+  export let showDirectives: boolean = true;
   export let autoAdjustHeight: boolean = false;
   export let constraintViolations: ConstraintViolation[] = [];
   export let drawHeight: number = 0;
@@ -211,9 +211,10 @@
   <RowHeader {expanded} rowId={id} title={name} {rowDragMoveDisabled} on:mouseDownRowMove on:toggleRowExpansion>
     <div slot="right" class="row-controls">
       <TimelineViewDirectiveControls
-        directivesVisible={areDirectivesVisible}
+        directivesVisible={showDirectives}
         offTooltipContent="Show Directives on this Timeline Row"
         onTooltipContent="Hide Directives on this Timeline Row"
+        useBorder={false}
         on:toggleDirectiveVisibility
       />
       <button
@@ -274,7 +275,7 @@
             {...layer}
             activityDirectives={activityDirectivesByView?.byLayerId[layer.id] ?? []}
             {activityDirectivesMap}
-            {areDirectivesVisible}
+            {showDirectives}
             {blur}
             {contextmenu}
             {drawHeight}

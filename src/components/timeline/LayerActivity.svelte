@@ -41,7 +41,7 @@
   export let activitySelectedColor: string = '#a9eaff';
   export let activityUnfinishedSelectedColor: string = '#ff3b19';
   export let activityUnfinishedColor: string = '#fc674d';
-  export let areDirectivesVisible: boolean = true;
+  export let showDirectives: boolean = true;
   export let blur: FocusEvent | undefined;
   export let contextmenu: MouseEvent | undefined;
   export let debugMode: boolean = false;
@@ -127,7 +127,7 @@
     activityDirectives &&
     activityColor &&
     activityHeight &&
-    areDirectivesVisible !== undefined &&
+    showDirectives !== undefined &&
     ctx &&
     drawHeight &&
     drawWidth &&
@@ -363,10 +363,10 @@
     maxXPerY: Record<number, number>,
     directiveBounds: PointBounds,
     initialSpanBounds: BoundingBox,
-    areDirectivesVisible: boolean = true,
+    showDirectives: boolean = true,
   ) {
     // Place the elements where they will fit in packed waterfall
-    const directiveRowHeight = areDirectivesVisible ? rowHeight : 0;
+    const directiveRowHeight = showDirectives ? rowHeight : 0;
     let i = directiveRowHeight;
     let directiveStartY = 0;
     let foundY = false;
@@ -487,7 +487,7 @@
             spanBounds,
             directiveStartY,
             maxXPerY: newMaxXPerY,
-          } = placeActivityDirective(maxXPerY, directiveBounds, initialSpanBounds, areDirectivesVisible);
+          } = placeActivityDirective(maxXPerY, directiveBounds, initialSpanBounds, showDirectives);
 
           // Update maxXPerY
           maxXPerY = newMaxXPerY;
@@ -517,7 +517,7 @@
                 ? (directiveStartY % maxCanvasRowY) + rowHeight
                 : directiveStartY;
           }
-          if (areDirectivesVisible) {
+          if (showDirectives) {
             drawActivityDirective(activityDirective, directiveBounds.xCanvas, constrainedDirectiveY);
           }
 

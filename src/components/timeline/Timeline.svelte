@@ -285,7 +285,7 @@
       <TimelineRow
         {activityDirectivesByView}
         {activityDirectivesMap}
-        areDirectivesVisible={timelineDirectiveVisibilityToggles[row.id]}
+        showDirectives={timelineDirectiveVisibilityToggles[row.id]}
         autoAdjustHeight={row.autoAdjustHeight}
         {constraintViolations}
         drawHeight={row.height}
