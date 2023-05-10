@@ -455,12 +455,15 @@ const gql = {
   GET_CONSTRAINT: `#graphql
     query GetConstraint($id: Int!) {
       constraint: constraint_by_pk(id: $id) {
+        created_at
         definition
         description
         id
         model_id
         name
+        owner
         plan_id
+        updated_by
       }
     }
   `,
@@ -1152,12 +1155,15 @@ const gql = {
           { plan_id: { _eq: $planId } }
         ]
       }, order_by: { name: asc }) {
+        created_at
         definition
         description
         id
         model_id
         name
+        owner
         plan_id
+        updated_by
       }
     }
   `,
@@ -1165,12 +1171,15 @@ const gql = {
   SUB_CONSTRAINTS_ALL: `#graphql
     subscription SubConstraintsAll {
       constraints: constraint(order_by: { name: asc }) {
+        created_at
         definition
         description
         id
         model_id
         name
+        owner
         plan_id
+        updated_by
       }
     }
   `,
