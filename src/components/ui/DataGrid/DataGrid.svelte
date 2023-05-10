@@ -69,6 +69,7 @@
     gridOptions?.api?.sizeColumnsToFit(params);
   }
 
+  export let autoSizeColumnsToFit: boolean = true;
   export let columnDefs: ColDef[];
   export let columnStates: ColumnState[] = [];
   export let columnShiftResize: boolean = false;
@@ -97,6 +98,7 @@
   let gridDiv: HTMLDivElement;
   let onColumnStateChangeDebounced = debounce(onColumnStateChange, 500);
   let previousSelectedRowId: RowId | null = null;
+  let resizeObserver: ResizeObserver | null = null;
 
   $: {
     gridOptions?.api?.setRowData(rowData);
@@ -317,6 +319,13 @@
       suppressRowClickSelection,
     };
     new Grid(gridDiv, gridOptions);
+
+    if (autoSizeColumnsToFit) {
+      resizeObserver = new ResizeObserver(() => {
+        sizeColumnsToFit();
+      });
+      resizeObserver.observe(gridDiv);
+    }
   });
 </script>
 
