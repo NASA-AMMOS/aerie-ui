@@ -46,9 +46,33 @@
       sortable: true,
     },
     { field: 'authoring_mission_model_id', filter: 'number', headerName: 'Model ID', sortable: true },
-    { field: 'created_at', filter: 'text', headerName: 'Created At', resizable: true, sortable: true },
+    {
+      field: 'created_at',
+      filter: 'text',
+      headerName: 'Created At',
+      resizable: true,
+      sortable: true,
+      valueGetter: (params: ValueGetterParams<Constraint>) => {
+        if (params.data?.created_at) {
+          // TODO make this a util? Does vary a bit.
+          return new Date(params.data?.created_at).toISOString().slice(0, 19);
+        }
+      },
+    },
     { field: 'owner', filter: 'text', headerName: 'Owner', resizable: true, sortable: true },
-    { field: 'updated_at', filter: 'text', headerName: 'Updated At', resizable: true, sortable: true },
+    {
+      field: 'updated_at',
+      filter: 'text',
+      headerName: 'Updated At',
+      resizable: true,
+      sortable: true,
+      valueGetter: (params: ValueGetterParams<Constraint>) => {
+        if (params.data?.updated_at) {
+          // TODO make this a util? Does vary a bit.
+          return new Date(params.data?.updated_at).toISOString().slice(0, 19);
+        }
+      },
+    },
     { field: 'updated_by', filter: 'text', headerName: 'Updated By', resizable: true, sortable: true },
     { field: 'description', filter: 'text', headerName: 'Description', resizable: true, sortable: true },
     {
