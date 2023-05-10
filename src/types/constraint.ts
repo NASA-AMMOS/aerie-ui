@@ -1,12 +1,16 @@
 import type { TimeRange } from './timeline';
 
 export type Constraint = {
+  created_at: string;
+  created_by: string;
   definition: string;
   description: string;
   id: number;
   model_id: number | null;
   name: string;
+  owner: string;
   plan_id: number | null;
+  updated_by: string;
 };
 
 export type ConstraintInsertInput = Omit<Constraint, 'id'>;
