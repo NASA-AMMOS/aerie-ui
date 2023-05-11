@@ -2,7 +2,6 @@ import type { TimeRange } from './timeline';
 
 export type Constraint = {
   created_at: string;
-  created_by: string;
   definition: string;
   description: string;
   id: number;
