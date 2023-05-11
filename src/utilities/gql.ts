@@ -1470,6 +1470,8 @@ const gql = {
         id
         plan_revision
         reason
+        requested_at
+        requested_by
         simulation_end_time
         simulation_revision
         simulation_start_time
@@ -1483,6 +1485,8 @@ const gql = {
       simulation(where: { plan_id: { _eq: $planId } }, order_by: { id: desc }) {
         simulation_datasets(order_by: { id: desc }) {
           id
+          requested_at
+          requested_by
           simulation_end_time
           simulation_start_time
         }

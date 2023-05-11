@@ -493,3 +493,21 @@ export function parseDoyOrYmdTime(dateString: string, numDecimals = 6): null | P
 
   return null;
 }
+
+/**
+ * Returns a string indicating how long ago a date was compared to now.
+ * Optionally pass in formatAsDateAfterMS to override the default 1 day cut off in MS
+ * after which the date will be formatted in a more conventional form.
+ * @example timeAgo(new Date()) -> 0s
+ */
+export function timeAgo(date: Date, formatAsDateAfterMS: number = 1000 * 60 * 60 * 23) {
+  const diff = new Date().getTime() - date.getTime();
+  if (diff < 1000) {
+    return 'Now';
+  }
+  // Format as mm-dd-YYYY if over limit
+  if (diff > formatAsDateAfterMS) {
+    return date.toISOString().slice(0, 10);
+  }
+  return `${convertUsToDurationString((new Date().getTime() - date.getTime()) * 1000).split(' ')[0]} ago`;
+}
