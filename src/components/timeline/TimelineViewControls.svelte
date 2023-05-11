@@ -150,13 +150,15 @@
 >
   <RotateCounterClockwiseIcon />
 </button>
-<TimelineViewDirectiveControls
-  directivesVisible={allDirectivesVisible}
-  offTooltipContent="Show Directives on all Timeline Rows"
-  onTooltipContent="Hide Directives on all Timeline Rows"
-  tooltipPlacement="bottom"
-  on:toggleDirectiveVisibility={onToggleDirectiveVisibility}
-/>
+{#if Object.keys(timelineDirectiveVisibilityToggles).length > 0}
+  <TimelineViewDirectiveControls
+    directivesVisible={allDirectivesVisible}
+    offTooltipContent="Show Directives on all Timeline Rows"
+    onTooltipContent="Hide Directives on all Timeline Rows"
+    tooltipPlacement="bottom"
+    on:toggleDirectiveVisibility={onToggleDirectiveVisibility}
+  />
+{/if}
 
 <style>
   .st-button {

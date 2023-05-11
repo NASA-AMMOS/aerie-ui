@@ -44,7 +44,6 @@
 
   export let activityDirectivesByView: ActivityDirectivesByView = { byLayerId: {}, byTimelineId: {} };
   export let activityDirectivesMap: ActivityDirectivesMap = {};
-  export let showDirectives: boolean = true;
   export let autoAdjustHeight: boolean = false;
   export let constraintViolations: ConstraintViolation[] = [];
   export let drawHeight: number = 0;
@@ -62,6 +61,7 @@
   export let rowDragMoveDisabled = true;
   export let selectedActivityDirectiveId: ActivityDirectiveId | null = null;
   export let selectedSpanId: SpanId | null = null;
+  export let showDirectives: boolean = true;
   export let simulationDataset: SimulationDataset | null = null;
   export let spanUtilityMaps: SpanUtilityMaps;
   export let spansMap: SpansMap = {};
@@ -210,13 +210,15 @@
   <!-- Row Header. -->
   <RowHeader {expanded} rowId={id} title={name} {rowDragMoveDisabled} on:mouseDownRowMove on:toggleRowExpansion>
     <div slot="right" class="row-controls">
-      <TimelineViewDirectiveControls
-        directivesVisible={showDirectives}
-        offTooltipContent="Show Directives on this Timeline Row"
-        onTooltipContent="Hide Directives on this Timeline Row"
-        useBorder={false}
-        on:toggleDirectiveVisibility
-      />
+      {#if hasActivityLayer}
+        <TimelineViewDirectiveControls
+          directivesVisible={showDirectives}
+          offTooltipContent="Show Directives on this Timeline Row"
+          onTooltipContent="Hide Directives on this Timeline Row"
+          useBorder={false}
+          on:toggleDirectiveVisibility
+        />
+      {/if}
       <button
         use:tooltip={{ content: 'Edit Row', placement: 'top' }}
         class="st-button icon row-edit-button"

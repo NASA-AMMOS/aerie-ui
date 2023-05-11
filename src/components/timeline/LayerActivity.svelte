@@ -41,7 +41,6 @@
   export let activitySelectedColor: string = '#a9eaff';
   export let activityUnfinishedSelectedColor: string = '#ff3b19';
   export let activityUnfinishedColor: string = '#fc674d';
-  export let showDirectives: boolean = true;
   export let blur: FocusEvent | undefined;
   export let contextmenu: MouseEvent | undefined;
   export let debugMode: boolean = false;
@@ -59,6 +58,7 @@
   export let planStartTimeYmd: string;
   export let selectedActivityDirectiveId: ActivityDirectiveId | null = null;
   export let selectedSpanId: SpanId | null = null;
+  export let showDirectives: boolean = true;
   export let simulationDataset: SimulationDataset | null = null;
   export let spanUtilityMaps: SpanUtilityMaps;
   export let spansMap: SpansMap = {};

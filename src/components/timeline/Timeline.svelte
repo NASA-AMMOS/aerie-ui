@@ -285,7 +285,6 @@
       <TimelineRow
         {activityDirectivesByView}
         {activityDirectivesMap}
-        showDirectives={timelineDirectiveVisibilityToggles[row.id]}
         autoAdjustHeight={row.autoAdjustHeight}
         {constraintViolations}
         drawHeight={row.height}
@@ -303,6 +302,7 @@
         {rowDragMoveDisabled}
         {selectedActivityDirectiveId}
         {selectedSpanId}
+        showDirectives={timelineDirectiveVisibilityToggles[row.id]}
         {simulationDataset}
         {spanUtilityMaps}
         {spansMap}
