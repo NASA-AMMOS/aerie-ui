@@ -3,9 +3,10 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import type { ICellRendererParams } from 'ag-grid-community';
+  import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
   import { expansionRules, expansionRulesColumns } from '../../stores/expansion';
   import type { User } from '../../types/app';
+  import type { Constraint } from '../../types/constraint';
   import type { DataGridColumnDef, DataGridRowSelection, RowId } from '../../types/data-grid';
   import type { ExpansionRule } from '../../types/expansion';
   import effects from '../../utilities/effects';
