@@ -620,6 +620,7 @@ const gql = {
         collaborators {
           collaborator
         }
+        created_at
         duration
         id
         is_locked
@@ -649,6 +650,8 @@ const gql = {
           }
         }
         start_time
+        updated_at
+        updated_by
       }
     }
   `,
@@ -668,6 +671,7 @@ const gql = {
         collaborators {
           collaborator
         }
+        created_at
         duration
         id
         model_id
@@ -675,6 +679,8 @@ const gql = {
         owner
         revision
         start_time
+        updated_at
+        updated_by
       }
     }
   `,
