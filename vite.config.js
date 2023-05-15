@@ -29,7 +29,7 @@ const config = {
       },
     }),
     WorkerBuildPlugin(
-      ['./src/utilities/customTS.worker.ts', './node_modules/monaco-editor/esm/vs/language/typescript/ts.worker.js'],
+      ['./src/workers/customTS.worker.ts', './node_modules/monaco-editor/esm/vs/language/typescript/ts.worker.js'],
       {
         log: true,
       },

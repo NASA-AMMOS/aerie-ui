@@ -76,6 +76,12 @@
     });
     editor = monaco.editor.create(div, options, override);
 
+    const getWorker = await monaco.languages.typescript.getTypeScriptWorker();
+    const tsWorker = await getWorker();
+    console.log({ tsWorker });
+
+    setTimeout(() => tsWorker.setSuggestionName('eeee'), 5000);
+
     editor.onDidChangeModelContent((e: Editor.IModelContentChangedEvent) => {
       const newValue = editor.getModel().getValue();
       dispatch('didChangeModelContent', { e, value: newValue });

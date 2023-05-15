@@ -43,12 +43,14 @@ export const WorkerBuildPlugin = (paths, config) => ({
   }) {
     const root = process.cwd();
     const { log = true, outdir = './static', minify = configMinify !== false } = config;
-    const files = normalizePaths(root, paths);
+    let files = normalizePaths(root, paths);
+    let shouldRebuild = picomatch(files);
 
     // Using an esbuild and a context saves us performance!
     const ctx = await esbuild.context({
       bundle: true,
       entryPoints: files,
+      metafile: true,
       minify,
       outdir,
       sourcemap: true,
@@ -60,12 +62,15 @@ export const WorkerBuildPlugin = (paths, config) => ({
     async function build() {
       const resp = await ctx.rebuild();
 
+      // Automatically update the dependant files based on whatever we find is bundled in!
+      files = normalizePaths(root, Object.keys(resp.metafile.inputs));
+      shouldRebuild = picomatch(files);
+
       resp.outputFiles.forEach(async outputFile => {
         await writeFile(join(outdir, basename(outputFile.path)), outputFile.contents);
       });
     }
 
-    const shouldRebuild = picomatch(files);
     const checkRebuild = async path => {
       if (shouldRebuild(path)) {
         await build();

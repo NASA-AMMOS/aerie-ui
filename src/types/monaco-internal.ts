@@ -352,7 +352,7 @@ export interface LanguageServiceDefaults {
    */
   setInlayHintsOptions(options: InlayHintsOptions): void;
 }
-export interface /*  */ TypeScriptWorker {
+export interface TypeScriptWorker {
   /**
    * Get diagnostic messages for any syntax issues in the given file.
    */

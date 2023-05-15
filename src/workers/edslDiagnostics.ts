@@ -29,7 +29,7 @@ function getDescendents(node: tsc.Node, selector: (node: tsc.Node) => boolean): 
   return selectedNodes;
 }
 
-const DOY_REGEX = /^(\d{4})-(\d{3})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{3}))?$/;
+const DOY_REGEX = /^(\d{4})-(\d{3})(\d{2}):(\d{2}):(\d{2})(?:\.(\d{3}))?$/;
 const HMS_REGEX = /^(\d{2}):(\d{2}):(\d{2})(?:\.(\d{3}))?$/;
 
 function generateRelativeTimeStringDiagnostics(
