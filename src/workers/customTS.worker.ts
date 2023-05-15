@@ -1,8 +1,8 @@
 import type { CompletionInfo } from 'typescript';
-import type { Diagnostic, TypeScriptWorker } from '../types/monaco-internal';
-// import { generateEdslDiagnostics } from './edslDiagnostics';
+import type { Diagnostic, TypeScriptWorker as InternalTsWorker } from '../types/monaco-internal';
+
 // Appease the TSC - this special window object is read by the Custom Worker implementation of Monaco
-declare class TsWorkerOverride implements Partial<TypeScriptWorker> {}
+declare class TsWorkerOverride implements Partial<InternalTsWorker> {}
 
 declare global {
   interface Window {
@@ -10,11 +10,22 @@ declare global {
   }
 }
 
+export interface WorkerOverrideProps {
+  setSuggestionName(name: string): Promise<void>;
+}
+
+// Partial is required here as we only need to provide some subclass methods
+// However, we must implement all of our override methods, as there is no superclass
+//  implementation present!
+export interface WorkerSubclass extends Partial<InternalTsWorker>, WorkerOverrideProps {}
+
 // Implement whatever overrides we want!
 self.customTSWorkerFactory = tsw => {
-  return class extends tsw implements Partial<TypeScriptWorker> {
+  return class extends tsw implements WorkerSubclass {
     private completion_name = 'test';
     constructor(...args: any) {
+      console.log('New worker construction with libs', Object.keys(args[1].extraLibs));
+
       super(...args);
     }
     async getCompletionsAtPosition(fileName: string, position: number) {
@@ -31,10 +42,6 @@ self.customTSWorkerFactory = tsw => {
     }
     async getSemanticDiagnostics(fileName: string): Promise<Diagnostic[]> {
       const diagnostics = await super.getSemanticDiagnostics(fileName);
-
-      const ls = super.getLanguageService;
-
-      const thing = generateEdslDiagnostics(fileName, ls);
 
       return diagnostics;
     }

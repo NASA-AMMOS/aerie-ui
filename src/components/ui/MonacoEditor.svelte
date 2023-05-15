@@ -76,9 +76,9 @@
     });
     editor = monaco.editor.create(div, options, override);
 
+    // Example to generate a TS worker RPC reference
     const getWorker = await monaco.languages.typescript.getTypeScriptWorker();
     const tsWorker = await getWorker();
-    console.log({ tsWorker });
 
     setTimeout(() => tsWorker.setSuggestionName('eeee'), 5000);
 
