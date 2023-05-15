@@ -990,7 +990,7 @@ const gql = {
         anchored_to_start
         applied_preset {
           preset_id
-          presets_applied {
+          preset_applied {
             name
             arguments
           }
@@ -1451,7 +1451,7 @@ const gql = {
         anchored_to_start
         applied_preset {
           preset_id
-          presets_applied {
+          preset_applied {
             name
             arguments
           }
