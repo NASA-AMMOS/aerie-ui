@@ -30,6 +30,33 @@ export function normalizePaths(root, path) {
  * @returns {import('vite').PluginOption}
  */
 export const WorkerBuildPlugin = (paths, config) => ({
+  async buildStart({ context }) {
+    // Ignore if in npm run dev
+    if (context === undefined) {
+      return;
+    }
+    const root = process.cwd();
+    const { outdir = './static' } = config;
+    let files = normalizePaths(root, paths);
+
+    // If npm run build, make an optimized build
+    const ctx = await esbuild.context({
+      bundle: true,
+      entryPoints: files,
+      minify: true,
+      outdir,
+      sourcemap: true,
+      treeShaking: true,
+      write: false,
+    });
+
+    const resp = await ctx.rebuild();
+    resp.outputFiles.forEach(async outputFile => {
+      await writeFile(join(outdir, basename(outputFile.path)), outputFile.contents);
+    });
+
+    await ctx.dispose();
+  },
   // eslint-disable-next-line sort-keys
   config: () => ({ server: { watch: { disableGlobbing: true } } }),
   /** @param {import('vite').ViteDevServer} param0 */
@@ -94,5 +121,5 @@ export const WorkerBuildPlugin = (paths, config) => ({
     // Build once to start!
     await build();
   },
-  name: 'vite-workerb-build-plugin',
+  name: 'vite-worker-build-plugin',
 });

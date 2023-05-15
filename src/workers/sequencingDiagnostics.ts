@@ -1,11 +1,12 @@
 import tsc from 'typescript';
 import type { Diagnostic as ResponseDiagnostic } from '../types/monaco-internal';
+
 enum CustomCodes {
   InvalidAbsoluteTimeString = -1,
   InvalidRelativeTimeString = -2,
 }
 
-export function generateEdslDiagnostics(fileName: string, languageService: tsc.LanguageService): ResponseDiagnostic[] {
+export function generateDiagnostics(fileName: string, languageService: tsc.LanguageService): ResponseDiagnostic[] {
   return [
     ...generateRelativeTimeStringDiagnostics(fileName, languageService),
     ...generateAbsoluteTimeStringDiagnostics(fileName, languageService),
@@ -18,13 +19,13 @@ export function generateEdslDiagnostics(fileName: string, languageService: tsc.L
  * @param selector A selector function run on every recursive child Node
  * @returns A list of nodes matching the selector
  */
-function getDescendents(node: tsc.Node, selector: (node: tsc.Node) => boolean): tsc.Node[] {
+function getDescendants(node: tsc.Node, selector: (node: tsc.Node) => boolean): tsc.Node[] {
   const selectedNodes = [];
   if (selector(node)) {
     selectedNodes.push(node);
   }
   for (const child of node.getChildren()) {
-    selectedNodes.push(...getDescendents(child, selector));
+    selectedNodes.push(...getDescendants(child, selector));
   }
   return selectedNodes;
 }
@@ -55,7 +56,7 @@ function generateRelativeTimeStringDiagnostics(
     return [];
   }
 
-  const relativeTimeNodes = getDescendents(
+  const relativeTimeNodes = getDescendants(
     sourceFileSymbol,
     node =>
       tsc.isIdentifier(node) &&
@@ -120,7 +121,7 @@ function generateAbsoluteTimeStringDiagnostics(
     return [];
   }
 
-  const absoluteTimeNodes = getDescendents(
+  const absoluteTimeNodes = getDescendants(
     sourceFileSymbol,
     node =>
       tsc.isIdentifier(node) &&

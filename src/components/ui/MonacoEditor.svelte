@@ -1,11 +1,12 @@
 <svelte:options accessors={true} immutable={true} />
 
 <script lang="ts">
-  import type { editor as Editor } from 'monaco-editor/esm/vs/editor/editor.api';
+  import type { editor as Editor, IDisposable, Uri, languages } from 'monaco-editor/esm/vs/editor/editor.api';
   import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
   import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
   import type { Monaco } from '../../types/monaco';
+  import { ShouldRetryError, promiseRetry } from '../../utilities/generic';
 
   export { className as class };
   export { styleName as style };
@@ -23,11 +24,17 @@
   export let theme: string | undefined = undefined;
   export let value: string | undefined = undefined;
 
-  const dispatch = createEventDispatcher();
+  type TypeScriptWorker = languages.typescript.TypeScriptWorker;
+
+  const dispatch = createEventDispatcher<{
+    didChangeModelContent: { e: Editor.IModelContentChangedEvent; value: string };
+    fullyLoaded: { model: Editor.ITextModel; worker: TypeScriptWorker };
+  }>();
 
   let className: string = '';
   let div: HTMLDivElement | undefined = undefined;
   let editor: Editor.IStandaloneCodeEditor | undefined = undefined;
+  let editor_load_event: IDisposable | undefined = undefined;
   let styleName: string = '';
 
   $: if (editor) {
@@ -76,21 +83,43 @@
     });
     editor = monaco.editor.create(div, options, override);
 
-    // Example to generate a TS worker RPC reference
-    const getWorker = await monaco.languages.typescript.getTypeScriptWorker();
-    const tsWorker = await getWorker();
-
-    setTimeout(() => tsWorker.setSuggestionName('eeee'), 5000);
-
     editor.onDidChangeModelContent((e: Editor.IModelContentChangedEvent) => {
       const newValue = editor.getModel().getValue();
       dispatch('didChangeModelContent', { e, value: newValue });
     });
+
+    // So.. there is no way to check when the model is initialized apparently!
+    // https://github.com/microsoft/monaco-editor/issues/115
+
+    // If we accidentally call the `getTypeScriptWorker()` function to early, it throws.
+    //  Just use retry with exponential back-off to get it!
+    promiseRetry(
+      async () => {
+        let getWorker: (...uris: Uri[]) => Promise<TypeScriptWorker>;
+        let tsWorker: TypeScriptWorker;
+        // Errors in this block indicate failure to find a loaded worker
+        //  so transform to the specific error type we care about
+        try {
+          getWorker = await monaco.languages.typescript.getTypeScriptWorker();
+          tsWorker = await getWorker();
+        } catch (e) {
+          throw new ShouldRetryError();
+        }
+
+        // Errors in the dispatch won't trigger the retry and will just fail.
+        dispatch('fullyLoaded', { model: editor.getModel(), worker: tsWorker });
+      },
+      5,
+      10,
+    );
   });
 
   onDestroy(() => {
     if (editor) {
       editor.dispose();
+    }
+    if (editor_load_event) {
+      editor_load_event.dispose();
     }
   });
 </script>

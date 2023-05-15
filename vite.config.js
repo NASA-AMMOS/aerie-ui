@@ -1,6 +1,6 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import svg from '@poppanator/sveltekit-svg';
-import { WorkerBuildPlugin } from './workerBuildPlugin';
+import { WorkerBuildPlugin } from './vite.worker-build-plugin';
 
 /** @type {import('vite').UserConfig} */
 const config = {
