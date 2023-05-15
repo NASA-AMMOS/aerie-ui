@@ -30,6 +30,13 @@
       >
         <CardListIcon />
       </NavButton>
+      <NavButton
+        selected={$page.url.pathname.includes('runs')}
+        title="Runs"
+        on:click={() => goto(`${base}/expansion/runs`)}
+      >
+        <CardListIcon />
+      </NavButton>
     </svelte:fragment>
   </Nav>
 
