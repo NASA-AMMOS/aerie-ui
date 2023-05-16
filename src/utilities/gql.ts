@@ -62,7 +62,6 @@ const gql = {
         created_at
         id
         mission
-        updated_at
         version
       }
     }
@@ -1063,7 +1062,6 @@ const gql = {
         created_at
         id
         mission
-        updated_at
         version
       }
     }
