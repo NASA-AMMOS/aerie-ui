@@ -54,7 +54,7 @@
       <Input class="simulation-dataset-input">
         <input {checked} type="checkbox" tabIndex={-1} />
       </Input>
-      Simulation ID: {simulationDataset.id}
+      ID: {simulationDataset.id}
     </div>
     <div class="simulation-dataset-metadata">
       <div class="simulation-dataset-metadata-time-ago">
