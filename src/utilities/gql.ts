@@ -1121,6 +1121,26 @@ const gql = {
     }
   `,
 
+  SUB_EXPANSION_RUNS: `#graphql
+    subscription SubExpansionRuns {
+      expansionRuns: expansion_run(order_by: { id: desc }) {
+        created_at
+        expansion_set {
+          command_dict_id
+          created_at
+          id
+          name
+        }
+        expanded_sequences {
+          edsl_string
+          expanded_sequence
+          seq_id
+        }
+        id
+      }
+    }
+  `,
+
   SUB_EXPANSION_SEQUENCES: `#graphql
     subscription SubExpansionSequences {
       sequence {

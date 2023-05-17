@@ -37,3 +37,18 @@ export type ExpansionSet = {
 };
 
 export type SeqId = Pick<ExpansionSequence, 'seq_id'>;
+
+export type ExpandedSequence = {
+  created_at: string;
+  edsl_string: string;
+  expanded_sequence: string;
+  id: number;
+  seq_id: string;
+};
+
+export type ExpansionRun = {
+  created_at: string;
+  expanded_sequences: ExpandedSequence[];
+  expansion_set: ExpansionSet;
+  id: number;
+};

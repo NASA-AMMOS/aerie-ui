@@ -1,24 +1,15 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import type { ICellRendererParams } from 'ag-grid-community';
-  import { expansionSets, expansionSetsColumns } from '../../stores/expansion';
-  import type { DataGridColumnDef, DataGridRowSelection, RowId } from '../../types/data-grid';
-  import type { ExpansionRule, ExpansionSet } from '../../types/expansion';
-  import effects from '../../utilities/effects';
+  import { expansionRuns, expansionSetsColumns } from '../../stores/expansion';
+  import type { DataGridColumnDef, DataGridRowSelection } from '../../types/data-grid';
+  import type { ExpandedSequence, ExpansionRun } from '../../types/expansion';
+  import SequenceEditor from '../sequencing/SequenceEditor.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
   import DataGrid from '../ui/DataGrid/DataGrid.svelte';
-  import DataGridActions from '../ui/DataGrid/DataGridActions.svelte';
-  import SingleActionDataGrid from '../ui/DataGrid/SingleActionDataGrid.svelte';
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
-  import ExpansionLogicEditor from './ExpansionLogicEditor.svelte';
-
-  type CellRendererParams = {
-    deleteSet: (sequence: ExpansionSet) => void;
-  };
-  type ExpansionSetCellRendererParams = ICellRendererParams<ExpansionSet> & CellRendererParams;
 
   const columnDefs: DataGridColumnDef[] = [
     {
@@ -31,94 +22,46 @@
       suppressSizeToFit: true,
       width: 60,
     },
-    {
-      field: 'command_dict_id',
-      filter: 'number',
-      headerName: 'Command Dictionary ID',
-      resizable: true,
-      sortable: true,
-    },
-    { field: 'mission_model_id', filter: 'number', headerName: 'Model ID', resizable: true, sortable: true },
+    { field: 'expansion_set.name', filter: 'text', headerName: 'Expansion Set', resizable: true, sortable: true },
     { field: 'created_at', filter: 'text', headerName: 'Created At', resizable: true, sortable: true },
-    {
-      cellClass: 'action-cell-container',
-      cellRenderer: (params: ExpansionSetCellRendererParams) => {
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className = 'actions-cell';
-        new DataGridActions({
-          props: {
-            deleteCallback: params.deleteSet,
-            deleteTooltip: {
-              content: 'Delete Expansion Set',
-              placement: 'bottom',
-            },
-            rowData: params.data,
-          },
-          target: actionsDiv,
-        });
-
-        return actionsDiv;
-      },
-      cellRendererParams: {
-        deleteSet,
-      } as CellRendererParams,
-      field: 'actions',
-      headerName: '',
-      resizable: false,
-      sortable: false,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
-      width: 25,
-    },
   ];
 
-  let selectedExpansionRule: ExpansionRule | null = null;
-  let selectedExpansionRuleIds: number[] = [];
-  let selectedExpansionSet: ExpansionSet | null = null;
+  let selectedExpansionRun: ExpansionRun | null = null;
+  let selectedSequence: ExpandedSequence | null = null;
+  let selectedSequenceIds: number[] = [];
 
-  $: selectedExpansionRuleIds = selectedExpansionRule ? [selectedExpansionRule.id] : [];
+  $: selectedSequenceIds = selectedSequence ? [selectedSequence.id] : [];
 
-  async function deleteSet({ id }: Pick<ExpansionSet, 'id'>) {
-    const success = await effects.deleteExpansionSet(id);
-
-    if (success) {
-      expansionSets.filterValueById(id);
-
-      if (id === selectedExpansionSet?.id) {
-        selectedExpansionRule = null;
-        selectedExpansionSet = null;
-      }
-    }
-  }
-
-  function deleteSetContext(event: CustomEvent<RowId[]>) {
-    deleteSet({ id: event.detail[0] as number });
-  }
-
-  function toggleRule(event: CustomEvent<DataGridRowSelection<ExpansionRule>>) {
+  function toggleRun(event: CustomEvent<DataGridRowSelection<ExpansionRun>>) {
     const {
-      detail: { data: clickedRule, isSelected },
+      detail: { data: clickedRun, isSelected },
+    } = event;
+
+    console.trace('TOGGLE RUN');
+
+    selectedSequence = null;
+
+    if (isSelected) {
+      selectedExpansionRun = clickedRun;
+    } else if (selectedExpansionRun?.id === clickedRun.id) {
+      selectedExpansionRun = null;
+    }
+
+    console.log('SELECTED EXPANSION RUN', selectedExpansionRun);
+  }
+
+  function toggleSequence(event: CustomEvent<DataGridRowSelection<ExpandedSequence>>) {
+    const {
+      detail: { data: clickedSequence, isSelected },
     } = event;
 
     if (isSelected) {
-      selectedExpansionRule = clickedRule;
-    } else if (selectedExpansionRule?.id === clickedRule.id) {
-      selectedExpansionRule = null;
+      selectedSequence = clickedSequence;
+    } else if (selectedSequence?.id === clickedSequence.id) {
+      selectedSequence = null;
     }
-  }
 
-  function toggleSet(event: CustomEvent<DataGridRowSelection<ExpansionSet>>) {
-    const {
-      detail: { data: clickedSet, isSelected },
-    } = event;
-
-    selectedExpansionRule = null;
-
-    if (isSelected) {
-      selectedExpansionSet = clickedSet;
-    } else if (selectedExpansionSet?.id === clickedSet.id) {
-      selectedExpansionSet = null;
-    }
+    console.trace('SELECTED SEQUENCE');
   }
 </script>
 
@@ -130,16 +73,10 @@
       </svelte:fragment>
 
       <svelte:fragment slot="body">
-        {#if $expansionSets.length}
-          <SingleActionDataGrid
-            {columnDefs}
-            itemDisplayText="Expansion Set"
-            items={$expansionSets}
-            on:deleteItem={deleteSetContext}
-            on:rowSelected={toggleSet}
-          />
+        {#if $expansionRuns.length}
+          <DataGrid {columnDefs} rowSelection="single" rowData={$expansionRuns} on:rowSelected={toggleRun} />
         {:else}
-          No Expansion Sets Found
+          No Expansion Runs Found
         {/if}
       </svelte:fragment>
     </Panel>
@@ -148,11 +85,11 @@
 
     <Panel>
       <svelte:fragment slot="header">
-        <SectionTitle>Expansion Rules</SectionTitle>
+        <SectionTitle>Expanded Sequences</SectionTitle>
       </svelte:fragment>
 
       <svelte:fragment slot="body">
-        {#if selectedExpansionSet}
+        {#if selectedExpansionRun}
           <DataGrid
             columnDefs={[
               {
@@ -165,15 +102,21 @@
                 suppressSizeToFit: true,
                 width: 60,
               },
-              { field: 'activity_type', filter: 'text', headerName: 'Activity Type', sortable: true },
+              {
+                field: 'seq_id',
+                filter: 'text',
+                headerName: 'Sequence ID',
+                resizable: true,
+                sortable: true,
+              },
             ]}
-            rowData={selectedExpansionSet?.expansion_rules}
+            rowData={selectedExpansionRun?.expanded_sequences}
             rowSelection="single"
-            selectedRowIds={selectedExpansionRuleIds}
-            on:rowSelected={toggleRule}
+            selectedRowIds={selectedSequenceIds}
+            on:rowSelected={toggleSequence}
           />
         {:else}
-          No Expansion Set Selected
+          No Expansion Run Selected
         {/if}
       </svelte:fragment>
     </Panel>
@@ -181,12 +124,13 @@
 
   <CssGridGutter track={1} type="column" />
 
-  <ExpansionLogicEditor
+  <SequenceEditor
+    disableSeqJSONGeneration
+    sequenceDefinition={selectedSequence?.edsl_string ?? 'No Sequence Selected'}
+    sequenceCommandDictionaryId={selectedExpansionRun?.expansion_set?.command_dict_id}
+    sequenceName={selectedSequence?.seq_id}
+    sequenceSeqJson={selectedSequence ? JSON.stringify(selectedSequence.expanded_sequence) : null}
     readOnly={true}
-    ruleActivityType={selectedExpansionRule?.activity_type}
-    ruleDictionaryId={selectedExpansionRule?.authoring_command_dict_id}
-    ruleLogic={selectedExpansionRule?.expansion_logic ?? 'No Expansion Rule Selected'}
-    ruleModelId={selectedExpansionRule?.authoring_mission_model_id}
-    title="Expansion Rule - Logic Editor (Read-only)"
+    title="Sequence - Definition Editor (Read-only)"
   />
 </CssGrid>
