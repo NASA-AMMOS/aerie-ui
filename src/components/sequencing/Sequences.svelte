@@ -3,7 +3,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import type { ICellRendererParams } from 'ag-grid-community';
+  import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
   import { userSequences, userSequencesColumns } from '../../stores/sequencing';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef, DataGridRowSelection, RowId } from '../../types/data-grid';
@@ -45,8 +45,33 @@
       resizable: true,
       sortable: true,
     },
-    { field: 'created_at', filter: 'text', headerName: 'Created At', resizable: true, sortable: true },
-    { field: 'updated_at', filter: 'text', headerName: 'Updated At', resizable: true, sortable: true },
+    {
+      field: 'created_at',
+      filter: 'text',
+      headerName: 'Created At',
+      resizable: true,
+      sortable: true,
+      valueGetter: (params: ValueGetterParams<UserSequence>) => {
+        if (params.data?.created_at) {
+          // TODO make this a util? Does vary a bit.
+          return new Date(params.data?.updated_at).toISOString().slice(0, 19);
+        }
+      },
+    },
+    { field: 'requested_by', filter: 'text', headerName: 'Requested By', resizable: true, sortable: true },
+    {
+      field: 'updated_at',
+      filter: 'text',
+      headerName: 'Updated At',
+      resizable: true,
+      sortable: true,
+      valueGetter: (params: ValueGetterParams<UserSequence>) => {
+        if (params.data?.updated_at) {
+          // TODO make this a util? Does vary a bit.
+          return new Date(params.data?.updated_at).toISOString().slice(0, 19);
+        }
+      },
+    },
     {
       cellClass: 'action-cell-container',
       cellRenderer: (params: SequencesCellRendererParams) => {

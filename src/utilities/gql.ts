@@ -506,9 +506,12 @@ const gql = {
         authoring_command_dict_id
         authoring_mission_model_id
         created_at
+        description
         expansion_logic
         id
+        owner
         updated_at
+        updated_by
       }
     }
   `,
@@ -1220,6 +1223,8 @@ const gql = {
         metadata
         seq_id
         simulation_dataset_id
+        requested_by
+        updated_at
       }
     }
   `,
