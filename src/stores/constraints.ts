@@ -4,7 +4,7 @@ import type {
   Constraint,
   ConstraintViolation,
   ConstraintViolationsMap,
-  ConstraintViolationsResponseMap,
+  ConstraintViolationsResponse,
 } from '../types/constraint';
 import gql from '../utilities/gql';
 import type { Status } from '../utilities/status';
@@ -39,7 +39,7 @@ export const constraintVisibilityMap: Readable<Record<Constraint['id'], boolean>
 
 export const checkConstraintsStatus: Writable<Status | null> = writable(null);
 
-export const constraintViolationsResponseMap: Writable<ConstraintViolationsResponseMap> = writable({});
+export const constraintViolationsResponse: Writable<ConstraintViolationsResponse> = writable([]);
 
 export const constraintsColumns: Writable<string> = writable('1fr 3px 2fr');
 
@@ -52,25 +52,16 @@ export const sanitizeConstraintName = (constraintName: string) => {
 };
 
 export const constraintViolationsMap: Readable<ConstraintViolationsMap> = derived(
-  [constraintViolationsResponseMap, planStartTimeMs, constraints],
-  ([$constraintViolationsResponseMap, $planStartTimeMs, $constraints]) =>
-    Object.entries($constraintViolationsResponseMap).reduce((map, [constraintName, violations]) => {
-      // TODO remove this name translation once the constraint violations are properly stored in the DB
-      const translatedConstraintName = sanitizeConstraintName(constraintName);
-      const matchingConstraint = $constraints.find(constraint => constraint.name === translatedConstraintName);
-
-      if (matchingConstraint) {
-        map[matchingConstraint.id] = violations.map(({ associations, gaps, windows }) => ({
-          associations,
-          constraintId: matchingConstraint.id,
-          constraintName: translatedConstraintName,
-          gaps,
-          windows: windows.map(({ end, start }) => ({
-            end: $planStartTimeMs + end / 1000,
-            start: $planStartTimeMs + start / 1000,
-          })),
-        }));
-      }
+  [constraintViolationsResponse, planStartTimeMs],
+  ([$constraintViolationsResponse, $planStartTimeMs]) =>
+    $constraintViolationsResponse.reduce((map, violation) => {
+      map[violation.constraintId] = {
+        ...violation,
+        windows: violation.windows.map(({ end, start }) => ({
+          end: $planStartTimeMs + end / 1000,
+          start: $planStartTimeMs + start / 1000,
+        })),
+      };
 
       return map;
     }, {}),
@@ -104,5 +95,5 @@ export function setAllConstraintsVisible(visible: boolean) {
 
 export function resetConstraintStores(): void {
   checkConstraintsStatus.set(null);
-  constraintViolationsResponseMap.set({});
+  constraintViolationsResponse.set([]);
 }
