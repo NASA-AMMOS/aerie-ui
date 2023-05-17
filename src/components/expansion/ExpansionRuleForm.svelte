@@ -3,7 +3,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import { expansionRulesColumns, savingExpansionRule } from '../../stores/expansion';
+  import { expansionRulesFormColumns, savingExpansionRule } from '../../stores/expansion';
   import { activityTypes, models } from '../../stores/plan';
   import { commandDictionaries } from '../../stores/sequencing';
   import type { User } from '../../types/app';
@@ -115,7 +115,7 @@
 
 <PageTitle title={pageTitle} />
 
-<CssGrid bind:columns={$expansionRulesColumns}>
+<CssGrid bind:columns={$expansionRulesFormColumns}>
   <Panel overflowYBody="hidden">
     <svelte:fragment slot="header">
       <SectionTitle>{mode === 'create' ? 'New Expansion Rule' : 'Edit Expansion Rule'}</SectionTitle>
