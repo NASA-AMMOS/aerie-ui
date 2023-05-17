@@ -6,7 +6,6 @@
   import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
   import { expansionRules, expansionRulesColumns } from '../../stores/expansion';
   import type { User } from '../../types/app';
-  import type { Constraint } from '../../types/constraint';
   import type { DataGridColumnDef, DataGridRowSelection, RowId } from '../../types/data-grid';
   import type { ExpansionRule } from '../../types/expansion';
   import effects from '../../utilities/effects';
@@ -53,7 +52,7 @@
       headerName: 'Created At',
       resizable: true,
       sortable: true,
-      valueGetter: (params: ValueGetterParams<Constraint>) => {
+      valueGetter: (params: ValueGetterParams<ExpansionRule>) => {
         if (params.data?.created_at) {
           // TODO make this a util? Does vary a bit.
           return new Date(params.data?.created_at).toISOString().slice(0, 19);
@@ -67,7 +66,7 @@
       headerName: 'Updated At',
       resizable: true,
       sortable: true,
-      valueGetter: (params: ValueGetterParams<Constraint>) => {
+      valueGetter: (params: ValueGetterParams<ExpansionRule>) => {
         if (params.data?.updated_at) {
           // TODO make this a util? Does vary a bit.
           return new Date(params.data?.updated_at).toISOString().slice(0, 19);
