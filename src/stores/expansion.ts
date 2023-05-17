@@ -1,5 +1,5 @@
 import { derived, writable, type Readable, type Writable } from 'svelte/store';
-import type { ExpansionRule, ExpansionRun, ExpansionSequence, ExpansionSet } from '../types/expansion';
+import type { ExpansionRule, ExpansionSequence, ExpansionSet } from '../types/expansion';
 import gql from '../utilities/gql';
 import type { Status } from '../utilities/status';
 import { simulationDatasetId } from './simulation';
@@ -13,8 +13,6 @@ export const expansionSequences = gqlSubscribable<ExpansionSequence[]>(gql.SUB_E
 
 export const expansionSets = gqlSubscribable<ExpansionSet[]>(gql.SUB_EXPANSION_SETS, {}, []);
 
-export const expansionRuns = gqlSubscribable<ExpansionRun[]>(gql.SUB_EXPANSION_RUNS, {}, []);
-
 /* Writeable. */
 
 export const creatingExpansionSequence: Writable<boolean> = writable(false);
@@ -22,6 +20,8 @@ export const creatingExpansionSequence: Writable<boolean> = writable(false);
 export const expansionRulesColumns: Writable<string> = writable('1fr 3px 2fr');
 
 export const expansionSetsColumns: Writable<string> = writable('1fr 3px 2fr');
+
+export const expansionRunsColumns: Writable<string> = writable('1fr 3px 2fr');
 
 export const savingExpansionRule: Writable<boolean> = writable(false);
 

@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { expansionRuns, expansionSetsColumns } from '../../stores/expansion';
+  import { expansionRunsColumns } from '../../stores/expansion';
   import type { DataGridColumnDef, DataGridRowSelection } from '../../types/data-grid';
   import type { ExpandedSequence, ExpansionRun } from '../../types/expansion';
   import SequenceEditor from '../sequencing/SequenceEditor.svelte';
@@ -10,6 +10,8 @@
   import DataGrid from '../ui/DataGrid/DataGrid.svelte';
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
+
+  export let expansionRuns: ExpansionRun[] = [];
 
   const columnDefs: DataGridColumnDef[] = [
     {
@@ -59,7 +61,7 @@
   }
 </script>
 
-<CssGrid bind:columns={$expansionSetsColumns}>
+<CssGrid bind:columns={$expansionRunsColumns}>
   <CssGrid rows="1fr 3px 1fr">
     <Panel>
       <svelte:fragment slot="header">
@@ -67,8 +69,8 @@
       </svelte:fragment>
 
       <svelte:fragment slot="body">
-        {#if $expansionRuns.length}
-          <DataGrid {columnDefs} rowSelection="single" rowData={$expansionRuns} on:rowSelected={toggleRun} />
+        {#if expansionRuns.length}
+          <DataGrid {columnDefs} rowSelection="single" rowData={expansionRuns} on:rowSelected={toggleRun} />
         {:else}
           No Expansion Runs Found
         {/if}

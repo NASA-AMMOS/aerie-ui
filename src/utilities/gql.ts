@@ -501,6 +501,27 @@ const gql = {
     }
   `,
 
+  GET_EXPANSION_RUNS: `#graphql
+    query GetExpansionRuns {
+      expansionRuns: expansion_run(order_by: { id: desc }) {
+        created_at
+        expansion_set {
+          command_dict_id
+          created_at
+          id
+          name
+        }
+        expanded_sequences {
+          edsl_string
+          expanded_sequence
+          id
+          seq_id
+        }
+        id
+      }
+    }
+  `,
+
   GET_EXPANSION_SEQUENCE_ID: `#graphql
     query GetExpansionSequenceId($simulation_dataset_id: Int!, $simulated_activity_id: Int!) {
       expansionSequence: sequence_to_simulated_activity_by_pk(
@@ -1117,27 +1138,6 @@ const gql = {
         expansion_logic
         id
         updated_at
-      }
-    }
-  `,
-
-  SUB_EXPANSION_RUNS: `#graphql
-    subscription SubExpansionRuns {
-      expansionRuns: expansion_run(order_by: { id: desc }) {
-        created_at
-        expansion_set {
-          command_dict_id
-          created_at
-          id
-          name
-        }
-        expanded_sequences {
-          edsl_string
-          expanded_sequence
-          id
-          seq_id
-        }
-        id
       }
     }
   `,

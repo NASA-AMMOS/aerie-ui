@@ -2,6 +2,9 @@
 
 <script lang="ts">
   import ExpansionRuns from '../../../components/expansion/ExpansionRuns.svelte';
+  import type { PageData } from './$types';
+
+  export let data: PageData;
 </script>
 
-<ExpansionRuns />
+<ExpansionRuns expansionRuns={data.expansionRuns} />
