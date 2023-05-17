@@ -105,7 +105,7 @@
       sortable: true,
       suppressAutoSize: true,
       suppressSizeToFit: true,
-      width: 80,
+      width: 120,
     },
     {
       cellClass: 'action-cell-container',
