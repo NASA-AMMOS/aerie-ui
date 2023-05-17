@@ -26,9 +26,9 @@
     { field: 'created_at', filter: 'text', headerName: 'Created At', resizable: true, sortable: true },
   ];
 
-  let selectedExpansionRun: ExpansionRun | null = null;
   let selectedSequence: ExpandedSequence | null = null;
   let selectedSequenceIds: number[] = [];
+  let selectedExpansionRun: ExpansionRun | null = null;
 
   $: selectedSequenceIds = selectedSequence ? [selectedSequence.id] : [];
 
@@ -37,8 +37,6 @@
       detail: { data: clickedRun, isSelected },
     } = event;
 
-    console.trace('TOGGLE RUN');
-
     selectedSequence = null;
 
     if (isSelected) {
@@ -46,8 +44,6 @@
     } else if (selectedExpansionRun?.id === clickedRun.id) {
       selectedExpansionRun = null;
     }
-
-    console.log('SELECTED EXPANSION RUN', selectedExpansionRun);
   }
 
   function toggleSequence(event: CustomEvent<DataGridRowSelection<ExpandedSequence>>) {
@@ -60,8 +56,6 @@
     } else if (selectedSequence?.id === clickedSequence.id) {
       selectedSequence = null;
     }
-
-    console.trace('SELECTED SEQUENCE');
   }
 </script>
 

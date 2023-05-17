@@ -1134,6 +1134,7 @@ const gql = {
         expanded_sequences {
           edsl_string
           expanded_sequence
+          id
           seq_id
         }
         id
