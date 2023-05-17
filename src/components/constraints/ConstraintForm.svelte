@@ -3,7 +3,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import { constraintsColumns } from '../../stores/constraints';
+  import { constraintsFormColumns } from '../../stores/constraints';
   import type { User } from '../../types/app';
   import type { Constraint } from '../../types/constraint';
   import type { ModelSlim } from '../../types/model';
@@ -137,7 +137,7 @@
 
 <PageTitle subTitle={pageSubtitle} title={pageTitle} />
 
-<CssGrid bind:columns={$constraintsColumns}>
+<CssGrid bind:columns={$constraintsFormColumns}>
   <Panel overflowYBody="hidden" padBody={false}>
     <svelte:fragment slot="header">
       <SectionTitle>{mode === 'create' ? 'New Constraint' : 'Edit Constraint'}</SectionTitle>
