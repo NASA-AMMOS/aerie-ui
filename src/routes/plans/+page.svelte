@@ -67,7 +67,7 @@
     {
       field: 'end_time_doy',
       filter: 'text',
-      headerName: 'Start Time',
+      headerName: 'End Time',
       resizable: true,
       sortable: true,
       valueGetter: (params: ValueGetterParams<PlanSlim>) => {
