@@ -123,7 +123,7 @@
     sequenceDefinition={selectedSequence?.edsl_string ?? 'No Sequence Selected'}
     sequenceCommandDictionaryId={selectedExpansionRun?.expansion_set?.command_dict_id}
     sequenceName={selectedSequence?.seq_id}
-    sequenceSeqJson={selectedSequence ? JSON.stringify(selectedSequence.expanded_sequence) : null}
+    sequenceSeqJson={selectedSequence ? JSON.stringify(selectedSequence.expanded_sequence, null, 2) : null}
     readOnly={true}
     title="Sequence - Definition Editor (Read-only)"
   />
