@@ -2,7 +2,7 @@ import type { ParametersMap } from './parameter';
 
 export type Model = ModelSchema;
 
-export type ModelInsertInput = Pick<Model, 'jar_id' | 'mission' | 'name' | 'version'>;
+export type ModelInsertInput = Pick<Model, 'description' | 'jar_id' | 'mission' | 'name' | 'version'>;
 
 export type ModelSchema = {
   created_at: string;

@@ -68,6 +68,7 @@
   let name = '';
   let user: User | null = null;
   let version = '';
+  let description = '';
 
   $: createButtonDisabled = !files || name === '' || version === '' || $creatingModel === true;
   $: {
@@ -131,7 +132,7 @@
   }
 
   async function submitForm(e: SubmitEvent) {
-    await effects.createModel(name, version, files, user);
+    await effects.createModel(name, version, description, files, data.user);
     if ($createModelError === null && e.target instanceof HTMLFormElement) {
       e.target.reset();
     }
@@ -183,6 +184,17 @@
                 hasPermission: hasCreatePermission,
                 permissionError: creationPermissionError,
               }}
+            />
+          </fieldset>
+
+          <fieldset>
+            <label for="description">Description</label>
+            <textarea
+              bind:value={description}
+              autocomplete="off"
+              class="st-input w-100"
+              name="description"
+              placeholder="Enter Model Description (optional)"
             />
           </fieldset>
 

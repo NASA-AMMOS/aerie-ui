@@ -108,6 +108,8 @@ const gql = {
     mutation CreateModel($model: mission_model_insert_input!) {
       createModel: insert_mission_model_one(object: $model) {
         id
+        created_at
+        owner
       }
     }
   `,

@@ -435,7 +435,13 @@ const effects = {
     }
   },
 
-  async createModel(name: string, version: string, files: FileList, user: User | null): Promise<void> {
+  async createModel(
+    name: string,
+    version: string,
+    description: string,
+    files: FileList,
+    user: User | null,
+  ): Promise<void> {
     try {
       createModelError.set(null);
 
@@ -450,6 +456,7 @@ const effects = {
 
       if (jar_id !== null) {
         const modelInsertInput: ModelInsertInput = {
+          description,
           jar_id,
           mission: '',
           name,
@@ -457,8 +464,8 @@ const effects = {
         };
         const data = await reqHasura(gql.CREATE_MODEL, { model: modelInsertInput }, user);
         const { createModel } = data;
-        const { id } = createModel;
-        const model: ModelSlim = { id, jar_id, name, plans: [], version };
+        const { id, created_at, owner } = createModel;
+        const model: ModelSlim = { created_at, description, id, jar_id, name, owner, plans: [], version };
 
         showSuccessToast('Model Created Successfully');
         createModelError.set(null);
