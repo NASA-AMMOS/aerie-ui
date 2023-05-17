@@ -58,7 +58,7 @@
       headerName: 'Start Time',
       resizable: true,
       sortable: true,
-      valueGetter: (params: ValueGetterParams<PlanSlim>) => {
+      valueGetter: (params: ValueGetterParams<Plan>) => {
         if (params.data?.start_time_doy) {
           return params.data?.start_time_doy.split('T')[0];
         }
@@ -70,7 +70,7 @@
       headerName: 'End Time',
       resizable: true,
       sortable: true,
-      valueGetter: (params: ValueGetterParams<PlanSlim>) => {
+      valueGetter: (params: ValueGetterParams<Plan>) => {
         if (params.data?.end_time_doy) {
           return params.data?.end_time_doy.split('T')[0];
         }
@@ -82,7 +82,7 @@
       headerName: 'Date Created',
       resizable: true,
       sortable: true,
-      valueGetter: (params: ValueGetterParams<PlanSlim>) => {
+      valueGetter: (params: ValueGetterParams<Plan>) => {
         if (params.data?.created_at) {
           // TODO make this a util? Does vary a bit.
           return new Date(params.data?.created_at).toISOString().slice(0, 19);
@@ -95,7 +95,7 @@
       headerName: 'Updated At',
       resizable: true,
       sortable: true,
-      valueGetter: (params: ValueGetterParams<PlanSlim>) => {
+      valueGetter: (params: ValueGetterParams<Plan>) => {
         if (params.data?.updated_at) {
           return new Date(params.data?.updated_at).toISOString().slice(0, 19);
         }
