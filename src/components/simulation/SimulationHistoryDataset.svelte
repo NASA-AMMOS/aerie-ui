@@ -5,7 +5,7 @@
   import PinPlayIcon from '@nasa-jpl/stellar/icons/pin_play.svg?component';
   import { createEventDispatcher } from 'svelte';
   import type { SimulationDataset } from '../../types/simulation';
-  import { timeAgo } from '../../utilities/time';
+  import { getDoyTime, timeAgo } from '../../utilities/time';
   import Input from '../form/Input.svelte';
 
   export let checked: boolean = false;
@@ -17,9 +17,11 @@
   const planDuration = planEndTimeMs - planStartTimeMs;
 
   let timeVizRangeLeft = 0;
-  let timeVizRangeWidth = 100;
+  let timeVizRangeWidth = 0;
   let startTimeText = '';
   let endTimeText = '';
+
+  $: timeVizRangeWidthStyle = timeVizRangeWidth < 1 ? '4px' : `${timeVizRangeWidth}%`;
 
   $: {
     // Compute time range left and width
@@ -30,18 +32,17 @@
       if (simulationStartTimeMS === planStartTimeMs) {
         startTimeText = 'Plan Start';
       } else {
-        startTimeText = simulationDataset.simulation_start_time.split('+')[0];
+        startTimeText = getDoyTime(new Date(simulationDataset.simulation_start_time)).split('+')[0];
       }
 
       if (simulationDataset.simulation_end_time) {
         const simulationEndTimeMS = new Date(simulationDataset.simulation_end_time).getTime();
-        timeVizRangeWidth = ((simulationEndTimeMS - simulationStartTimeMS) / planDuration) * 100 || 100;
-        endTimeText = simulationDataset.simulation_start_time.split('+')[0];
+        timeVizRangeWidth = ((simulationEndTimeMS - simulationStartTimeMS) / planDuration) * 100 || 0;
 
         if (simulationEndTimeMS === planEndTimeMs) {
           endTimeText = 'Plan End';
         } else {
-          endTimeText = simulationDataset.simulation_end_time.split('+')[0];
+          endTimeText = getDoyTime(new Date(simulationDataset.simulation_end_time)).split('+')[0];
         }
       }
     }
@@ -73,7 +74,10 @@
 
   <div class="simulation-range-visualiztion">
     <div class="simulation-range-background">
-      <div class="simulation-range-fill" style={`margin-left: ${timeVizRangeLeft}%; width: ${timeVizRangeWidth}%`} />
+      <div
+        class="simulation-range-fill"
+        style={`margin-left: ${timeVizRangeLeft}%; width: ${timeVizRangeWidthStyle}`}
+      />
     </div>
   </div>
 </button>
