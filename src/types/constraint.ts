@@ -13,7 +13,7 @@ export type Constraint = {
   updated_by: string;
 };
 
-export type ConstraintInsertInput = Omit<Constraint, 'id'>;
+export type ConstraintInsertInput = Omit<Constraint, 'id' | 'created_at' | 'updated_at' | 'owner' | 'updated_by'>;
 
 export type ConstraintType = 'model' | 'plan';
 
