@@ -413,6 +413,7 @@ const effects = {
     dictionaryId: number,
     modelId: number,
     expansionRuleIds: number[],
+    description: string,
     user: User | null,
   ): Promise<number | null> {
     try {
@@ -421,7 +422,11 @@ const effects = {
       }
 
       savingExpansionSet.set(true);
-      const data = await reqHasura(gql.CREATE_EXPANSION_SET, { dictionaryId, expansionRuleIds, modelId }, user);
+      const data = await reqHasura(
+        gql.CREATE_EXPANSION_SET,
+        { description, dictionaryId, expansionRuleIds, modelId },
+        user,
+      );
       const { createExpansionSet } = data;
       const { id } = createExpansionSet;
       showSuccessToast('Expansion Set Created Successfully');

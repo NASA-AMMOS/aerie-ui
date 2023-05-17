@@ -3,7 +3,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import type { ICellRendererParams } from 'ag-grid-community';
+  import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
   import { expansionSets, expansionSetsColumns } from '../../stores/expansion';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef, DataGridRowSelection, RowId } from '../../types/data-grid';
@@ -44,7 +44,35 @@
       sortable: true,
     },
     { field: 'mission_model_id', filter: 'number', headerName: 'Model ID', resizable: true, sortable: true },
-    { field: 'created_at', filter: 'text', headerName: 'Created At', resizable: true, sortable: true },
+    {
+      field: 'created_at',
+      filter: 'text',
+      headerName: 'Created At',
+      resizable: true,
+      sortable: true,
+      valueGetter: (params: ValueGetterParams<ExpansionSet>) => {
+        if (params.data?.created_at) {
+          // TODO make this a util? Does vary a bit.
+          return new Date(params.data?.created_at).toISOString().slice(0, 19);
+        }
+      },
+    },
+    { field: 'owner', filter: 'text', headerName: 'Owner', resizable: true, sortable: true },
+    {
+      field: 'updated_at',
+      filter: 'text',
+      headerName: 'Updated At',
+      resizable: true,
+      sortable: true,
+      valueGetter: (params: ValueGetterParams<ExpansionSet>) => {
+        if (params.data?.updated_at) {
+          // TODO make this a util? Does vary a bit.
+          return new Date(params.data?.updated_at).toISOString().slice(0, 19);
+        }
+      },
+    },
+    { field: 'updated_by', filter: 'text', headerName: 'Updated By', resizable: true, sortable: true },
+    { field: 'description', filter: 'text', headerName: 'Description', resizable: true, sortable: true },
     {
       cellClass: 'action-cell-container',
       cellRenderer: (params: ExpansionSetCellRendererParams) => {
@@ -98,6 +126,10 @@
 
   function deleteSetContext(event: CustomEvent<RowId[]>) {
     deleteSet({ id: event.detail[0] as number });
+  }
+
+  function editRule({ id }: Pick<ExpansionRule, 'id'>) {
+    goto(`${base}/expansion/rules/edit/${id}`);
   }
 
   function toggleRule(event: CustomEvent<DataGridRowSelection<ExpansionRule>>) {
@@ -178,6 +210,41 @@
                 width: 60,
               },
               { field: 'activity_type', filter: 'text', headerName: 'Activity Type', sortable: true },
+              {
+                cellClass: 'action-cell-container',
+                cellRenderer: params => {
+                  const actionsDiv = document.createElement('div');
+                  actionsDiv.className = 'actions-cell';
+                  new DataGridActions({
+                    props: {
+                      deleteCallback: params.deleteRule,
+                      deleteTooltip: {
+                        content: 'Delete Rule',
+                        placement: 'bottom',
+                      },
+                      editCallback: params.editRule,
+                      editTooltip: {
+                        content: 'Edit Rule',
+                        placement: 'bottom',
+                      },
+                      rowData: params.data,
+                    },
+                    target: actionsDiv,
+                  });
+
+                  return actionsDiv;
+                },
+                cellRendererParams: {
+                  editRule,
+                },
+                field: 'actions',
+                headerName: '',
+                resizable: false,
+                sortable: false,
+                suppressAutoSize: true,
+                suppressSizeToFit: true,
+                width: 55,
+              },
             ]}
             rowData={selectedExpansionSet?.expansion_rules}
             rowSelection="single"

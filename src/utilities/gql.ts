@@ -93,11 +93,12 @@ const gql = {
   `,
 
   CREATE_EXPANSION_SET: `#graphql
-    mutation CreateExpansionSet($dictionaryId: Int!, $modelId: Int!, $expansionRuleIds: [Int!]!) {
+    mutation CreateExpansionSet($dictionaryId: Int!, $modelId: Int!, $expansionRuleIds: [Int!]!, $description: String) {
       createExpansionSet(
         commandDictionaryId: $dictionaryId,
         missionModelId: $modelId,
-        expansionIds: $expansionRuleIds
+        expansionIds: $expansionRuleIds,
+        description: $description
       ) {
         id
       }
@@ -1202,12 +1203,12 @@ const gql = {
         authoring_command_dict_id
         authoring_mission_model_id
         created_at
+        description
         expansion_logic
         id
-        updated_at
         owner
+        updated_at
         updated_by
-        description
       }
     }
   `,
@@ -1228,6 +1229,7 @@ const gql = {
       expansionSets: expansion_set(order_by: { id: desc }) {
         command_dict_id
         created_at
+        description
         expansion_rules {
           activity_type
           authoring_command_dict_id
@@ -1237,6 +1239,9 @@ const gql = {
         }
         id
         mission_model_id
+        owner
+        updated_at
+        updated_by
       }
     }
   `,
