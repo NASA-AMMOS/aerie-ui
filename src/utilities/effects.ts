@@ -30,7 +30,7 @@ import type {
 } from '../types/activity';
 import type { ActivityMetadata } from '../types/activity-metadata';
 import type { JsonWebToken, ReqLoginResponse, ReqLogoutResponse, ReqSessionResponse } from '../types/auth';
-import type { Constraint, ConstraintInsertInput, ConstraintViolationsResponse } from '../types/constraint';
+import type { Constraint, ConstraintInsertInput, ConstraintViolation } from '../types/constraint';
 import type {
   ExpansionRule,
   ExpansionRuleInsertInput,
@@ -176,13 +176,13 @@ const effects = {
     try {
       checkConstraintsStatus.set(Status.Incomplete);
       const { id: planId } = get(plan);
-      const data = await reqHasura<{ violationsMap: ConstraintViolationsResponse }>(gql.CHECK_CONSTRAINTS, {
+      const data = await reqHasura<{ violations: ConstraintViolation[] }>(gql.CHECK_CONSTRAINTS, {
         planId,
       });
       const { checkConstraintsResponse } = data;
-      const { violationsMap } = checkConstraintsResponse;
+      const { violations } = checkConstraintsResponse;
 
-      constraintViolationsResponse.set(violationsMap);
+      constraintViolationsResponse.set(violations);
       checkConstraintsStatus.set(Status.Complete);
       showSuccessToast('Check Constraints Complete');
     } catch (e) {

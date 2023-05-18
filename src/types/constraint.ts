@@ -29,6 +29,4 @@ export type ConstraintViolation = {
 
 export type ConstraintViolationsMap = Record<Constraint['id'], ConstraintViolation[]>;
 
-export type ConstraintViolationsResponse = ConstraintViolation[];
-
 export type ConstraintVisibilityMap = Record<Constraint['id'], boolean>;

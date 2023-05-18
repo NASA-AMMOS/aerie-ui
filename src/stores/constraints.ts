@@ -1,11 +1,6 @@
 import { keyBy } from 'lodash-es';
 import { derived, get, writable, type Readable, type Writable } from 'svelte/store';
-import type {
-  Constraint,
-  ConstraintViolation,
-  ConstraintViolationsMap,
-  ConstraintViolationsResponse,
-} from '../types/constraint';
+import type { Constraint, ConstraintViolation } from '../types/constraint';
 import gql from '../utilities/gql';
 import type { Status } from '../utilities/status';
 import { modelId, planId, planStartTimeMs } from './plan';
@@ -39,37 +34,26 @@ export const constraintVisibilityMap: Readable<Record<Constraint['id'], boolean>
 
 export const checkConstraintsStatus: Writable<Status | null> = writable(null);
 
-export const constraintViolationsResponse: Writable<ConstraintViolationsResponse> = writable([]);
+export const constraintViolationsResponse: Writable<ConstraintViolation[]> = writable([]);
 
 export const constraintsColumns: Writable<string> = writable('1fr 3px 2fr');
 
 /* Derived. */
 
-export const sanitizeConstraintName = (constraintName: string) => {
-  return constraintName.indexOf('plan/') > -1 || constraintName.indexOf('model/') > -1
-    ? constraintName.replace('plan/', '').replace('model/', '')
-    : constraintName;
-};
-
-export const constraintViolationsMap: Readable<ConstraintViolationsMap> = derived(
+export const constraintViolations: Readable<ConstraintViolation[]> = derived(
   [constraintViolationsResponse, planStartTimeMs],
   ([$constraintViolationsResponse, $planStartTimeMs]) =>
-    $constraintViolationsResponse.reduce((map, violation) => {
-      map[violation.constraintId] = {
+    $constraintViolationsResponse.reduce((list, violation) => {
+      list.push({
         ...violation,
         windows: violation.windows.map(({ end, start }) => ({
           end: $planStartTimeMs + end / 1000,
           start: $planStartTimeMs + start / 1000,
         })),
-      };
+      });
 
-      return map;
-    }, {}),
-);
-
-export const constraintViolations: Readable<ConstraintViolation[]> = derived(
-  [constraintViolationsMap],
-  ([$constraintViolationsMap]) => Object.values($constraintViolationsMap).flat(),
+      return list;
+    }, []),
 );
 
 export const visibleConstraintViolations: Readable<ConstraintViolation[]> = derived(
