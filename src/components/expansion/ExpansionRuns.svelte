@@ -24,8 +24,46 @@
       suppressSizeToFit: true,
       width: 60,
     },
+    {
+      field: 'simulation_dataset.simulation.plan.name',
+      filter: 'text',
+      headerName: 'Plan Name',
+      resizable: true,
+      sortable: true,
+    },
     { field: 'expansion_set.name', filter: 'text', headerName: 'Expansion Set', resizable: true, sortable: true },
     { field: 'created_at', filter: 'text', headerName: 'Created At', resizable: true, sortable: true },
+  ];
+
+  const sequenceColumnDefs: DataGridColumnDef[] = [
+    {
+      field: 'id',
+      filter: 'number',
+      headerName: 'ID',
+      resizable: true,
+      sortable: true,
+      suppressAutoSize: true,
+      suppressSizeToFit: true,
+      width: 60,
+    },
+    {
+      field: 'seq_id',
+      filter: 'text',
+      headerName: 'Sequence ID',
+      resizable: true,
+      sortable: true,
+    },
+    // {
+    //   cellRenderer: (params: ICellRendererParams<ExpandedSequence>) => {
+    //   },
+    //   field: 'actions',
+    //   headerName: '',
+    //   resizable: false,
+    //   sortable: false,
+    //   suppressAutoSize: true,
+    //   suppressSizeToFit: true,
+    //   width: 25,
+    // }
   ];
 
   let selectedSequence: ExpandedSequence | null = null;
@@ -87,26 +125,9 @@
       <svelte:fragment slot="body">
         {#if selectedExpansionRun}
           <DataGrid
-            columnDefs={[
-              {
-                field: 'id',
-                filter: 'number',
-                headerName: 'ID',
-                resizable: true,
-                sortable: true,
-                suppressAutoSize: true,
-                suppressSizeToFit: true,
-                width: 60,
-              },
-              {
-                field: 'seq_id',
-                filter: 'text',
-                headerName: 'Sequence ID',
-                resizable: true,
-                sortable: true,
-              },
-            ]}
-            rowData={selectedExpansionRun?.expanded_sequences}
+            columnDefs={sequenceColumnDefs}
+            rowData={console.log('EXPANDED_SEQUENCES?', selectedExpansionRun?.expanded_sequences) ||
+              selectedExpansionRun?.expanded_sequences}
             rowSelection="single"
             selectedRowIds={selectedSequenceIds}
             on:rowSelected={toggleSequence}

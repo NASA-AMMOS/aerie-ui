@@ -516,6 +516,21 @@ const gql = {
           expanded_sequence
           id
           seq_id
+          sequence {
+            activity_instance_joins {
+              simulated_activity {
+                id
+                activity_type_name
+              }
+            }
+          }
+        }
+        simulation_dataset {
+          simulation {
+            plan {
+              name
+            }
+          }
         }
         id
       }

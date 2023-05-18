@@ -44,6 +44,14 @@ export type ExpandedSequence = {
   expanded_sequence: string;
   id: number;
   seq_id: string;
+  sequence: {
+    activity_instance_joins: {
+      simulated_activity: {
+        activity_type_name: string;
+        id: number;
+      };
+    }[];
+  };
 };
 
 export type ExpansionRun = {
@@ -51,4 +59,11 @@ export type ExpansionRun = {
   expanded_sequences: ExpandedSequence[];
   expansion_set: ExpansionSet;
   id: number;
+  simulation_dataset: {
+    simulation: {
+      plan: {
+        name: string;
+      };
+    };
+  };
 };
