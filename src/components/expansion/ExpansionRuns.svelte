@@ -10,6 +10,7 @@
   import DataGrid from '../ui/DataGrid/DataGrid.svelte';
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
+  import ExpandedSequencesDownloadButton from './ExpandedSequencesDownloadButton.svelte';
 
   export let expansionRuns: ExpansionRun[] = [];
 
@@ -120,14 +121,21 @@
     <Panel>
       <svelte:fragment slot="header">
         <SectionTitle>Expanded Sequences</SectionTitle>
+        {#if selectedExpansionRun}
+          <div class="right">
+            <ExpandedSequencesDownloadButton
+              expandedSequences={selectedExpansionRun?.expanded_sequences}
+              filename={`expanded_sequences_${selectedExpansionRun?.created_at.split('.')[0]}`}
+            />
+          </div>
+        {/if}
       </svelte:fragment>
 
       <svelte:fragment slot="body">
         {#if selectedExpansionRun}
           <DataGrid
             columnDefs={sequenceColumnDefs}
-            rowData={console.log('EXPANDED_SEQUENCES?', selectedExpansionRun?.expanded_sequences) ||
-              selectedExpansionRun?.expanded_sequences}
+            rowData={selectedExpansionRun?.expanded_sequences}
             rowSelection="single"
             selectedRowIds={selectedSequenceIds}
             on:rowSelected={toggleSequence}
