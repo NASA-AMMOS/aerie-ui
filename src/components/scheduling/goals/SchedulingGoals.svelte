@@ -3,7 +3,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import type { ICellRendererParams } from 'ag-grid-community';
+  import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
   import { createEventDispatcher } from 'svelte';
   import type { User } from '../../../types/app';
   import type { DataGridColumnDef, RowId } from '../../../types/data-grid';
@@ -36,7 +36,40 @@
       width: 60,
     },
     { field: 'name', filter: 'text', headerName: 'Name', resizable: true, sortable: true },
-    { field: 'model_id', filter: 'number', headerName: 'Model ID', sortable: true, width: 120 },
+    { field: 'model_id', filter: 'number', headerName: 'Model ID', sortable: true, width: 90 },
+    { field: 'author', filter: 'string', headerName: 'Author', sortable: true, width: 100 },
+    { field: 'last_modified_by', filter: 'string', headerName: 'Last Modified By', sortable: true, width: 100 },
+    { field: 'description', filter: 'string', headerName: 'Description', sortable: true, width: 120 },
+    {
+      field: 'created_date',
+      filter: 'string',
+      headerName: 'Created Date',
+      sortable: true,
+      suppressAutoSize: true,
+      suppressSizeToFit: true,
+      valueGetter: (params: ValueGetterParams<SchedulingGoal>) => {
+        if (params.data?.created_date) {
+          // TODO make this a util? Does vary a bit.
+          return new Date(params.data?.created_date).toISOString().slice(0, 19);
+        }
+      },
+      width: 160,
+    },
+    {
+      field: 'modified_date',
+      filter: 'string',
+      headerName: 'Modified Date',
+      sortable: true,
+      suppressAutoSize: true,
+      suppressSizeToFit: true,
+      valueGetter: (params: ValueGetterParams<SchedulingGoal>) => {
+        if (params.data?.modified_date) {
+          // TODO make this a util? Does vary a bit.
+          return new Date(params.data?.modified_date).toISOString().slice(0, 19);
+        }
+      },
+      width: 160,
+    },
     {
       cellClass: 'action-cell-container',
       cellRenderer: (params: SchedulingGoalsCellRendererParams) => {
