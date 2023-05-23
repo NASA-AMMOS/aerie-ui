@@ -548,6 +548,35 @@ const gql = {
     }
   `,
 
+  GET_PERMISSIBLE_MUTATION_QUERIES: `#graphql
+    query GetPermissibleMutationQueries {
+      queries: __schema {
+        mutationType {
+          fields {
+            name
+          }
+        }
+      }
+    }
+  `,
+
+  GET_PERMISSIBLE_QUERIES: `#graphql
+    query GetPermissibleQueries {
+      queries: __schema {
+        queryType {
+          fields {
+            name
+          }
+        }
+        mutationType {
+          fields {
+            name
+          }
+        }
+      }
+    }
+  `,
+
   GET_PLAN: `#graphql
     query GetPlan($id: Int!) {
       plan: plan_by_pk(id: $id) {

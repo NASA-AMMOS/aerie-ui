@@ -32,10 +32,13 @@ export async function reqGateway<T = any>(
 
   if (token !== null) {
     // This overrides the auth header (e.g. if the user is not set yet during SSR).
+
+    // @ts-expect-error Any key should be allowable in Headers
     options.headers['Authorization'] = `Bearer ${token ?? ''}`;
   }
 
   if (excludeContentType === true) {
+    // @ts-expect-error Any key should be allowable in Headers
     delete options.headers['Content-Type'];
   }
 
@@ -54,7 +57,8 @@ export async function reqGateway<T = any>(
 export async function reqHasura<T = any>(
   query: string,
   variables: QueryVariables = {},
-  signal: AbortSignal = undefined,
+  signal?: AbortSignal,
+  token?: string,
 ): Promise<Record<string, T>> {
   const HASURA_URL = browser ? env.PUBLIC_HASURA_CLIENT_URL : env.PUBLIC_HASURA_SERVER_URL;
   const user = get<User | null>(userStore);
@@ -68,6 +72,13 @@ export async function reqHasura<T = any>(
     method: 'POST',
     signal,
   };
+
+  if (token !== undefined) {
+    // This overrides the auth header (e.g. if the user is not set yet during SSR).
+
+    // @ts-expect-error Any key should be allowable in Headers
+    options.headers['Authorization'] = `Bearer ${token ?? ''}`;
+  }
 
   const response: Response = await fetch(HASURA_URL, options);
   const json = await response.json();
