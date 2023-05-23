@@ -42,7 +42,12 @@ import type {
 } from '../types/expansion';
 import type { ModelInsertInput, ModelSlim } from '../types/model';
 import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
-import type { ArgumentsMap, EffectiveArguments, ParameterValidationResponse } from '../types/parameter';
+import type {
+  ArgumentsMap,
+  EffectiveArguments,
+  ParameterValidationError,
+  ParameterValidationResponse,
+} from '../types/parameter';
 import type { PermissibleQueryResponse } from '../types/permissions';
 import type {
   Plan,
@@ -217,7 +222,7 @@ const effects = {
     try {
       checkConstraintsStatus.set(Status.Incomplete);
       const currentPlan = get(plan);
-      if (currentPlan) {
+      if (currentPlan !== null) {
         const { id: planId } = currentPlan;
         const data = await reqHasura<{ violations: ConstraintViolation[] }>(gql.CHECK_CONSTRAINTS, {
           planId,
@@ -252,7 +257,7 @@ const effects = {
       }
 
       const currentPlan = get(plan);
-      if (currentPlan) {
+      if (currentPlan !== null) {
         const start_offset = getIntervalFromDoyRange(currentPlan.start_time_doy, start_time_doy);
         const tagsString = formatHasuraStringArray(tags);
         const activityDirectiveInsertInput: ActivityDirectiveInsertInput = {
@@ -1723,7 +1728,7 @@ const effects = {
     }
   },
 
-  async getExpansionRule(id: number): Promise<ExpansionRule> {
+  async getExpansionRule(id: number): Promise<ExpansionRule | null> {
     try {
       const data = await reqHasura(gql.GET_EXPANSION_RULE, { id });
       const { expansionRule } = data;
@@ -1754,7 +1759,7 @@ const effects = {
     }
   },
 
-  async getExpansionSequenceSeqJson(seqId: string, simulationDatasetId: number): Promise<string> {
+  async getExpansionSequenceSeqJson(seqId: string, simulationDatasetId: number): Promise<string | null> {
     try {
       const data = await reqHasura<GetSeqJsonResponse>(gql.GET_EXPANSION_SEQUENCE_SEQ_JSON, {
         seqId,
@@ -2351,6 +2356,10 @@ const effects = {
 
   async planMergeBegin(merge_request_id: number): Promise<boolean> {
     try {
+      if (!effects.planMergeBeginPermission()) {
+        throwPermissionError('begin a merge');
+      }
+
       await reqHasura(gql.PLAN_MERGE_BEGIN, { merge_request_id });
       return true;
     } catch (error) {
@@ -2360,8 +2369,20 @@ const effects = {
     }
   },
 
+  /**
+   * @description For `planMergeBegin` permission
+   * @returns boolean
+   */
+  planMergeBeginPermission(): boolean {
+    return getPermission(['begin_merge']);
+  },
+
   async planMergeCancel(merge_request_id: number): Promise<boolean> {
     try {
+      if (!effects.planMergeCancelPermission()) {
+        throwPermissionError('cancel this merge request');
+      }
+
       await reqHasura(gql.PLAN_MERGE_CANCEL, { merge_request_id });
       showSuccessToast('Canceled Merge Request');
       return true;
@@ -2372,8 +2393,20 @@ const effects = {
     }
   },
 
+  /**
+   * @description For `planMergeCancel` permission
+   * @returns boolean
+   */
+  planMergeCancelPermission(): boolean {
+    return getPermission(['cancel_merge']);
+  },
+
   async planMergeCommit(merge_request_id: number): Promise<boolean> {
     try {
+      if (!effects.planMergeCommitPermission()) {
+        throwPermissionError('approve this merge request');
+      }
+
       await reqHasura(gql.PLAN_MERGE_COMMIT, { merge_request_id });
       showSuccessToast('Approved Merge Request Changes');
       return true;
@@ -2384,8 +2417,20 @@ const effects = {
     }
   },
 
+  /**
+   * @description For `planMergeCommit` permission
+   * @returns boolean
+   */
+  planMergeCommitPermission(): boolean {
+    return getPermission(['commit_merge']);
+  },
+
   async planMergeDeny(merge_request_id: number): Promise<boolean> {
     try {
+      if (!effects.planMergeDenyPermission()) {
+        throwPermissionError('deny this merge request');
+      }
+
       await reqHasura(gql.PLAN_MERGE_DENY, { merge_request_id });
       showSuccessToast('Denied Merge Request Changes');
       return true;
@@ -2396,8 +2441,20 @@ const effects = {
     }
   },
 
+  /**
+   * @description For `planMergeDeny` permission
+   * @returns boolean
+   */
+  planMergeDenyPermission(): boolean {
+    return getPermission(['deny_merge']);
+  },
+
   async planMergeRequestWithdraw(merge_request_id: number): Promise<boolean> {
     try {
+      if (!effects.planMergeRequestWithdrawPermission()) {
+        throwPermissionError('withdraw this merge request');
+      }
+
       await reqHasura(gql.PLAN_MERGE_REQUEST_WITHDRAW, { merge_request_id });
       showSuccessToast('Withdrew Merge Request');
       return true;
@@ -2408,13 +2465,33 @@ const effects = {
     }
   },
 
+  /**
+   * @description For `planMergeRequestWithdraw` permission
+   * @returns boolean
+   */
+  planMergeRequestWithdrawPermission(): boolean {
+    return getPermission(['withdraw_merge_request']);
+  },
+
   async planMergeResolveAllConflicts(merge_request_id: number, resolution: PlanMergeResolution): Promise<void> {
     try {
+      if (!effects.planMergeResolveAllConflictsPermission()) {
+        throwPermissionError('resolve merge request conflicts');
+      }
+
       await reqHasura(gql.PLAN_MERGE_RESOLVE_ALL_CONFLICTS, { merge_request_id, resolution });
     } catch (e) {
       showFailureToast('Resolve All Merge Request Conflicts Failed');
       catchError('Resolve All Merge Request Conflicts Failed', e as Error);
     }
+  },
+
+  /**
+   * @description For `planMergeResolveAllConflicts` permission
+   * @returns boolean
+   */
+  planMergeResolveAllConflictsPermission(): boolean {
+    return getPermission(['set_resolution_bulk']);
   },
 
   async planMergeResolveConflict(
@@ -2423,11 +2500,23 @@ const effects = {
     resolution: PlanMergeResolution,
   ): Promise<void> {
     try {
+      if (!effects.planMergeResolveConflictPermission()) {
+        throwPermissionError('resolve merge request conflicts');
+      }
+
       await reqHasura(gql.PLAN_MERGE_RESOLVE_CONFLICT, { activity_id, merge_request_id, resolution });
     } catch (e) {
       showFailureToast('Resolve Merge Request Conflict Failed');
       catchError('Resolve Merge Request Conflict Failed', e as Error);
     }
+  },
+
+  /**
+   * @description For `planMergeResolveConflict` permission
+   * @returns boolean
+   */
+  planMergeResolveConflictPermission(): boolean {
+    return getPermission(['set_resolution']);
   },
 
   async removePresetFromActivityDirective(
@@ -2436,6 +2525,10 @@ const effects = {
     preset_id: ActivityPresetId,
   ): Promise<boolean> {
     try {
+      if (!effects.removePresetFromActivityDirectivePermission()) {
+        throwPermissionError('remove the preset from this activity directive');
+      }
+
       await reqHasura(gql.DELETE_PRESET_TO_DIRECTIVE, { activity_directive_id, plan_id, preset_id });
       showSuccessToast('Removed Activity Preset Successfully');
       return true;
@@ -2446,43 +2539,69 @@ const effects = {
     }
   },
 
+  /**
+   * @description For `removePresetFromActivityDirective` permission
+   * @returns boolean
+   */
+  removePresetFromActivityDirectivePermission(): boolean {
+    return getPermission(['delete_preset_to_directive_by_pk']);
+  },
+
   async schedule(analysis_only: boolean = false): Promise<void> {
     try {
-      const { id: planId } = get(plan);
+      if (!effects.schedulePermission()) {
+        throwPermissionError(`run ${analysis_only ? 'scheduling analysis' : 'scheduling'}`);
+      }
+
+      const currentPlan = get(plan);
       const specificationId = get(selectedSpecId);
-
-      const plan_revision = await effects.getPlanRevision(planId);
-      await effects.updateSchedulingSpec(specificationId, { analysis_only, plan_revision });
-
-      let incomplete = true;
-      schedulingStatus.set(Status.Incomplete);
-
-      do {
-        const data = await reqHasura<SchedulingResponse>(gql.SCHEDULE, { specificationId });
-        const { schedule } = data;
-        const { reason, status } = schedule;
-
-        if (status === 'complete') {
-          schedulingStatus.set(Status.Complete);
-          incomplete = false;
-          showSuccessToast(`Scheduling ${analysis_only ? 'Analysis ' : ''}Complete`);
-        } else if (status === 'failed') {
-          schedulingStatus.set(Status.Failed);
-          catchSchedulingError(reason);
-          incomplete = false;
-
-          showFailureToast(`Scheduling ${analysis_only ? 'Analysis ' : ''}Failed`);
-          catchError(`Scheduling ${analysis_only ? 'Analysis ' : ''}Failed`);
-        } else if (status === 'incomplete') {
-          schedulingStatus.set(Status.Incomplete);
+      if (currentPlan !== null && specificationId !== null) {
+        const plan_revision = await effects.getPlanRevision(currentPlan.id);
+        if (plan_revision !== null) {
+          await effects.updateSchedulingSpec(specificationId, { analysis_only, plan_revision });
+        } else {
+          throw Error(`Plan revision for plan ${currentPlan.id} was not found.`);
         }
 
-        await sleep(500); // Sleep half-second before re-scheduling.
-      } while (incomplete);
+        let incomplete = true;
+        schedulingStatus.set(Status.Incomplete);
+        do {
+          const data = await reqHasura<SchedulingResponse>(gql.SCHEDULE, { specificationId });
+          const { schedule } = data;
+          const { reason, status } = schedule;
+
+          if (status === 'complete') {
+            schedulingStatus.set(Status.Complete);
+            incomplete = false;
+            showSuccessToast(`Scheduling ${analysis_only ? 'Analysis ' : ''}Complete`);
+          } else if (status === 'failed') {
+            schedulingStatus.set(Status.Failed);
+            catchSchedulingError(reason);
+            incomplete = false;
+
+            showFailureToast(`Scheduling ${analysis_only ? 'Analysis ' : ''}Failed`);
+            catchError(`Scheduling ${analysis_only ? 'Analysis ' : ''}Failed`);
+          } else if (status === 'incomplete') {
+            schedulingStatus.set(Status.Incomplete);
+          }
+
+          await sleep(500); // Sleep half-second before re-scheduling.
+        } while (incomplete);
+      } else {
+        throw Error('Plan is not defined.');
+      }
     } catch (e) {
       catchError(e as Error);
       schedulingStatus.set(Status.Failed);
     }
+  },
+
+  /**
+   * @description For `schedule` permission
+   * @returns boolean
+   */
+  schedulePermission(): boolean {
+    return effects.updateSchedulingSpecPermission();
   },
 
   async session(token: JsonWebToken): Promise<ReqSessionResponse> {
@@ -2497,20 +2616,36 @@ const effects = {
 
   async simulate(): Promise<void> {
     try {
-      const { id: planId } = get(plan);
-      const data = await reqHasura<SimulateResponse>(gql.SIMULATE, { planId });
-      const { simulate } = data;
-      const { simulationDatasetId: newSimulationDatasetId } = simulate;
-      simulationDatasetId.set(newSimulationDatasetId);
-      simulationDatasetIds.updateValue((ids: number[]) => {
-        if (!ids.includes(newSimulationDatasetId)) {
-          return [newSimulationDatasetId, ...ids];
-        }
-        return ids;
-      });
+      if (!effects.simulatePermission()) {
+        throwPermissionError('simulate this plan');
+      }
+
+      const currentPlan = get(plan);
+      if (currentPlan !== null) {
+        const data = await reqHasura<SimulateResponse>(gql.SIMULATE, { planId: currentPlan.id });
+        const { simulate } = data;
+        const { simulationDatasetId: newSimulationDatasetId } = simulate;
+        simulationDatasetId.set(newSimulationDatasetId);
+        simulationDatasetIds.updateValue((ids: number[]) => {
+          if (!ids.includes(newSimulationDatasetId)) {
+            return [newSimulationDatasetId, ...ids];
+          }
+          return ids;
+        });
+      } else {
+        throw Error('Plan is not defined.');
+      }
     } catch (e) {
       catchError(e as Error);
     }
+  },
+
+  /**
+   * @description For `simulate` permission
+   * @returns boolean
+   */
+  simulatePermission(): boolean {
+    return getPermission(['simulate']);
   },
 
   async updateActivityDirective(
@@ -2518,37 +2653,41 @@ const effects = {
     id: ActivityDirectiveId,
     partialActivityDirective: Partial<ActivityDirective>,
   ): Promise<void> {
-    const activityDirectiveSetInput: ActivityDirectiveSetInput = {};
-
-    if (partialActivityDirective.arguments) {
-      activityDirectiveSetInput.arguments = partialActivityDirective.arguments;
-    }
-
-    if (partialActivityDirective.anchor_id !== undefined) {
-      activityDirectiveSetInput.anchor_id = partialActivityDirective.anchor_id;
-    }
-
-    if (partialActivityDirective.anchored_to_start !== undefined) {
-      activityDirectiveSetInput.anchored_to_start = partialActivityDirective.anchored_to_start;
-    }
-
-    if (partialActivityDirective.start_offset) {
-      activityDirectiveSetInput.start_offset = partialActivityDirective.start_offset;
-    }
-
-    if (partialActivityDirective.tags) {
-      activityDirectiveSetInput.tags = formatHasuraStringArray(partialActivityDirective.tags);
-    }
-
-    if (partialActivityDirective.name) {
-      activityDirectiveSetInput.name = partialActivityDirective.name;
-    }
-
-    if (partialActivityDirective.metadata) {
-      activityDirectiveSetInput.metadata = partialActivityDirective.metadata;
-    }
-
     try {
+      if (!effects.updateActivityDirectivePermission()) {
+        throwPermissionError('update this activity directive');
+      }
+
+      const activityDirectiveSetInput: ActivityDirectiveSetInput = {};
+
+      if (partialActivityDirective.arguments) {
+        activityDirectiveSetInput.arguments = partialActivityDirective.arguments;
+      }
+
+      if (partialActivityDirective.anchor_id !== undefined) {
+        activityDirectiveSetInput.anchor_id = partialActivityDirective.anchor_id;
+      }
+
+      if (partialActivityDirective.anchored_to_start !== undefined) {
+        activityDirectiveSetInput.anchored_to_start = partialActivityDirective.anchored_to_start;
+      }
+
+      if (partialActivityDirective.start_offset) {
+        activityDirectiveSetInput.start_offset = partialActivityDirective.start_offset;
+      }
+
+      if (partialActivityDirective.tags) {
+        activityDirectiveSetInput.tags = formatHasuraStringArray(partialActivityDirective.tags);
+      }
+
+      if (partialActivityDirective.name) {
+        activityDirectiveSetInput.name = partialActivityDirective.name;
+      }
+
+      if (partialActivityDirective.metadata) {
+        activityDirectiveSetInput.metadata = partialActivityDirective.metadata;
+      }
+
       const data = await reqHasura<ActivityDirective>(gql.UPDATE_ACTIVITY_DIRECTIVE, {
         activityDirectiveSetInput,
         id,
@@ -2566,8 +2705,20 @@ const effects = {
     }
   },
 
+  /**
+   * @description For `updateActivityDirective` permission
+   * @returns boolean
+   */
+  updateActivityDirectivePermission(): boolean {
+    return getPermission(['update_activity_directive_by_pk']);
+  },
+
   async updateActivityPreset(id: ActivityPresetId, partialActivityPreset: ActivityPresetSetInput): Promise<void> {
     try {
+      if (!effects.updateActivityPresetPermission()) {
+        throwPermissionError('update this activity preset');
+      }
+
       const activityPresetSetInput: ActivityPresetSetInput = {};
 
       if (partialActivityPreset.arguments) {
@@ -2597,6 +2748,14 @@ const effects = {
     }
   },
 
+  /**
+   * @description For `updateActivityPreset` permission
+   * @returns boolean
+   */
+  updateActivityPresetPermission(): boolean {
+    return getPermission(['update_activity_presets_by_pk']);
+  },
+
   async updateConstraint(
     id: number,
     definition: string,
@@ -2606,6 +2765,10 @@ const effects = {
     plan_id: number,
   ): Promise<void> {
     try {
+      if (!effects.updateConstraintPermission()) {
+        throwPermissionError('update this constraint');
+      }
+
       const constraint: Partial<Constraint> = {
         definition,
         description,
@@ -2621,9 +2784,22 @@ const effects = {
     }
   },
 
+  /**
+   * @description For `updateConstraint` permission
+   * @returns boolean
+   */
+  updateConstraintPermission(): boolean {
+    return getPermission(['update_constraint_by_pk']);
+  },
+
   async updateExpansionRule(id: number, rule: Partial<ExpansionRule>): Promise<string | null> {
     try {
       savingExpansionRule.set(true);
+
+      if (!effects.updateExpansionRulePermission()) {
+        throwPermissionError('update this expansion rule');
+      }
+
       const data = await reqHasura(gql.UPDATE_EXPANSION_RULE, { id, rule });
       const { updateExpansionRule } = data;
       const { updated_at } = updateExpansionRule;
@@ -2638,11 +2814,23 @@ const effects = {
     }
   },
 
+  /**
+   * @description For `updateExpansionRule` permission
+   * @returns boolean
+   */
+  updateExpansionRulePermission(): boolean {
+    return getPermission(['update_expansion_rule_by_pk']);
+  },
+
   async updateSchedulingCondition(
     id: number,
     condition: Partial<SchedulingCondition>,
   ): Promise<Pick<SchedulingCondition, 'id' | 'last_modified_by' | 'modified_date'> | null> {
     try {
+      if (!effects.updateSchedulingConditionPermission()) {
+        throwPermissionError('update this expansion rule');
+      }
+
       const data = await reqHasura(gql.UPDATE_SCHEDULING_CONDITION, { condition, id });
       const { updateSchedulingCondition: updatedCondition } = data;
 
@@ -2655,11 +2843,23 @@ const effects = {
     }
   },
 
+  /**
+   * @description For `updateSchedulingCondition` permission
+   * @returns boolean
+   */
+  updateSchedulingConditionPermission(): boolean {
+    return getPermission(['update_scheduling_condition_by_pk']);
+  },
+
   async updateSchedulingGoal(
     id: number,
     goal: Partial<SchedulingGoal>,
   ): Promise<Pick<SchedulingGoal, 'id' | 'last_modified_by' | 'modified_date'> | null> {
     try {
+      if (!effects.updateSchedulingGoalPermission()) {
+        throwPermissionError('update this scheduling goal');
+      }
+
       const data = await reqHasura(gql.UPDATE_SCHEDULING_GOAL, { goal, id });
       const { updateSchedulingGoal: updatedGoal } = data;
 
@@ -2672,12 +2872,32 @@ const effects = {
     }
   },
 
+  /**
+   * @description For `updateSchedulingGoal` permission
+   * @returns boolean
+   */
+  updateSchedulingGoalPermission(): boolean {
+    return getPermission(['update_scheduling_goal_by_pk']);
+  },
+
   async updateSchedulingSpec(id: number, spec: Partial<SchedulingSpec>): Promise<void> {
     try {
+      if (!effects.updateSchedulingSpecPermission()) {
+        throwPermissionError('update this scheduling spec');
+      }
+
       await reqHasura(gql.UPDATE_SCHEDULING_SPEC, { id, spec });
     } catch (e) {
       catchError(e as Error);
     }
+  },
+
+  /**
+   * @description For `updateSchedulingSpec` permission
+   * @returns boolean
+   */
+  updateSchedulingSpecPermission(): boolean {
+    return getPermission(['update_scheduling_specification_by_pk']);
   },
 
   async updateSchedulingSpecCondition(
@@ -2686,6 +2906,10 @@ const effects = {
     spec_condition: Partial<SchedulingSpecCondition>,
   ): Promise<void> {
     try {
+      if (!effects.updateSchedulingSpecConditionPermission()) {
+        throwPermissionError('update this scheduling spec condition');
+      }
+
       await reqHasura(gql.UPDATE_SCHEDULING_SPEC_CONDITION, { condition_id, spec_condition, specification_id });
       showSuccessToast('Scheduling Spec Condition Updated Successfully');
     } catch (e) {
@@ -2694,12 +2918,24 @@ const effects = {
     }
   },
 
+  /**
+   * @description For `updateSchedulingSpecCondition` permission
+   * @returns boolean
+   */
+  updateSchedulingSpecConditionPermission(): boolean {
+    return getPermission(['update_scheduling_specification_conditions_by_pk']);
+  },
+
   async updateSchedulingSpecConditionId(
     condition_id: number,
     specification_id: number,
     new_specification_id: number,
   ): Promise<void> {
     try {
+      if (!effects.updateSchedulingSpecConditionIdPermission()) {
+        throwPermissionError('update this scheduling spec condition');
+      }
+
       await reqHasura(gql.UPDATE_SCHEDULING_SPEC_CONDITION_ID, {
         condition_id,
         new_specification_id,
@@ -2712,12 +2948,24 @@ const effects = {
     }
   },
 
+  /**
+   * @description For `updateSchedulingSpecConditionId` permission
+   * @returns boolean
+   */
+  updateSchedulingSpecConditionIdPermission(): boolean {
+    return effects.updateSchedulingSpecConditionPermission();
+  },
+
   async updateSchedulingSpecGoal(
     goal_id: number,
     specification_id: number,
     spec_goal: Partial<SchedulingSpecGoal>,
   ): Promise<void> {
     try {
+      if (!effects.updateSchedulingSpecGoalPermission()) {
+        throwPermissionError('update this scheduling spec goal');
+      }
+
       await reqHasura(gql.UPDATE_SCHEDULING_SPEC_GOAL, { goal_id, spec_goal, specification_id });
       showSuccessToast('Scheduling Spec Goal Updated Successfully');
     } catch (e) {
@@ -2726,8 +2974,20 @@ const effects = {
     }
   },
 
+  /**
+   * @description For `updateSchedulingSpecGoal` permission
+   * @returns boolean
+   */
+  updateSchedulingSpecGoalPermission(): boolean {
+    return getPermission(['update_scheduling_specification_goals_by_pk']);
+  },
+
   async updateSimulation(simulationSetInput: Simulation, newFiles: File[] = []): Promise<void> {
     try {
+      if (!effects.updateSimulationPermission()) {
+        throwPermissionError('update this simulation');
+      }
+
       await reqHasura<Pick<Simulation, 'id'>>(gql.UPDATE_SIMULATION, {
         id: simulationSetInput.id,
         simulation: {
@@ -2745,12 +3005,20 @@ const effects = {
     }
   },
 
+  /**
+   * @description For `updateSimulation` permission
+   * @returns boolean
+   */
   updateSimulationPermission(): boolean {
     return getPermission(['update_simulation_by_pk']);
   },
 
   async updateSimulationTemplate(id: number, partialSimulationTemplate: SimulationTemplateSetInput): Promise<void> {
     try {
+      if (!effects.updateSimulationTemplatePermission()) {
+        throwPermissionError('update this simulation template');
+      }
+
       const simulationTemplateSetInput: SimulationTemplateSetInput = {};
 
       if (partialSimulationTemplate.arguments) {
@@ -2777,8 +3045,20 @@ const effects = {
     }
   },
 
+  /**
+   * @description For `updateSimulationTemplate` permission
+   * @returns boolean
+   */
+  updateSimulationTemplatePermission(): boolean {
+    return getPermission(['update_simulation_template_by_pk']);
+  },
+
   async updateUserSequence(id: number, sequence: Partial<UserSequence>): Promise<string | null> {
     try {
+      if (!effects.updateUserSequencePermission()) {
+        throwPermissionError('update this user sequence');
+      }
+
       const data = await reqHasura<Pick<UserSequence, 'id' | 'updated_at'>>(gql.UPDATE_USER_SEQUENCE, { id, sequence });
       const { updateUserSequence } = data;
       const { updated_at } = updateUserSequence;
@@ -2791,8 +3071,20 @@ const effects = {
     }
   },
 
+  /**
+   * @description For `updateUserSequence` permission
+   * @returns boolean
+   */
+  updateUserSequencePermission(): boolean {
+    return getPermission(['update_user_sequence_by_pk']);
+  },
+
   async updateView(id: number, view: Partial<View>): Promise<boolean> {
     try {
+      if (!effects.updateViewPermission()) {
+        throwPermissionError('update this view');
+      }
+
       await reqHasura<Pick<View, 'id'>>(gql.UPDATE_VIEW, { id, view });
       showSuccessToast('View Updated Successfully');
       return true;
@@ -2801,6 +3093,14 @@ const effects = {
       showFailureToast('View Update Failed');
       return false;
     }
+  },
+
+  /**
+   * @description For `updateView` permission
+   * @returns boolean
+   */
+  updateViewPermission(): boolean {
+    return getPermission(['update_view_by_pk']);
   },
 
   async uploadFile(file: File): Promise<number | null> {
@@ -2830,6 +3130,10 @@ const effects = {
 
   async uploadView(owner: string): Promise<boolean> {
     try {
+      if (!effects.uploadViewPermission()) {
+        throwPermissionError('upload a new view');
+      }
+
       const { confirm, value = null } = await showUploadViewModal();
       if (confirm && value) {
         const { name, definition } = value;
@@ -2845,10 +3149,17 @@ const effects = {
     } catch (e) {
       catchError('View Upload Failed', e as Error);
       showFailureToast('View Upload Failed');
-      return false;
     }
 
     return false;
+  },
+
+  /**
+   * @description For `uploadView` permission
+   * @returns boolean
+   */
+  uploadViewPermission(): boolean {
+    return effects.createViewPermission();
   },
 
   async validateActivityArguments(
@@ -2867,8 +3178,8 @@ const effects = {
       return validateActivityArguments;
     } catch (e) {
       catchError(e as Error);
-      const { message } = e;
-      return { errors: [message], success: false };
+      const { message } = e as Error;
+      return { errors: [{ message } as ParameterValidationError], success: false };
     }
   },
 
