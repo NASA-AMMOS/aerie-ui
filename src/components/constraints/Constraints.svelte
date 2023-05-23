@@ -40,7 +40,7 @@
       suppressSizeToFit: true,
       width: 60,
     },
-    { field: 'name', filter: 'text', headerName: 'Name', resizable: true, sortable: true },
+    { field: 'name', filter: 'text', headerName: 'Name', minWidth: 80, resizable: true, sortable: true },
     {
       field: 'model_id',
       filter: 'number',

@@ -3,7 +3,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import type { ICellRendererParams } from 'ag-grid-community';
+  import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
   import { createEventDispatcher } from 'svelte';
   import type { User } from '../../../types/app';
   import type { DataGridColumnDef, RowId } from '../../../types/data-grid';
@@ -47,7 +47,7 @@
       sortable: true,
       suppressAutoSize: true,
       suppressSizeToFit: true,
-      valueGetter: (params: ValueGetterParams<SchedulingGoal>) => {
+      valueGetter: (params: ValueGetterParams<SchedulingCondition>) => {
         if (params.data?.created_date) {
           // TODO make this a util? Does vary a bit.
           return new Date(params.data?.created_date).toISOString().slice(0, 19);
@@ -62,7 +62,7 @@
       sortable: true,
       suppressAutoSize: true,
       suppressSizeToFit: true,
-      valueGetter: (params: ValueGetterParams<SchedulingGoal>) => {
+      valueGetter: (params: ValueGetterParams<SchedulingCondition>) => {
         if (params.data?.modified_date) {
           // TODO make this a util? Does vary a bit.
           return new Date(params.data?.modified_date).toISOString().slice(0, 19);
@@ -148,12 +148,7 @@
     <SectionTitle>Scheduling Conditions</SectionTitle>
 
     <Input>
-      <input
-        bind:value={filterText}
-        class="st-input"
-        placeholder="Filter conditions"
-        style="max-width: 300px; width: 100%;"
-      />
+      <input bind:value={filterText} class="st-input" placeholder="Filter conditions" style="width: 100%;" />
     </Input>
 
     <div class="right">
