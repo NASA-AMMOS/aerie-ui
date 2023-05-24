@@ -18,28 +18,24 @@ export async function reqGateway<T = any>(
   const GATEWAY_URL = browser ? env.PUBLIC_GATEWAY_CLIENT_URL : env.PUBLIC_GATEWAY_SERVER_URL;
   const user = get<User | null>(userStore);
 
-  const options: RequestInit = {
-    headers: {
-      Authorization: `Bearer ${user?.token ?? ''}`,
-      'Content-Type': 'application/json',
-    },
-    method,
+  const headers: HeadersInit = {
+    Authorization: `Bearer ${user?.token ?? ''}`,
+    'Content-Type': 'application/json',
   };
-
-  if (body !== null) {
-    options.body = body;
-  }
 
   if (token !== null) {
     // This overrides the auth header (e.g. if the user is not set yet during SSR).
-
-    // @ts-expect-error Any key should be allowable in Headers
-    options.headers['Authorization'] = `Bearer ${token ?? ''}`;
+    headers['Authorization'] = `Bearer ${token ?? ''}`;
   }
 
   if (excludeContentType === true) {
-    // @ts-expect-error Any key should be allowable in Headers
-    delete options.headers['Content-Type'];
+    delete headers['Content-Type'];
+  }
+
+  const options: RequestInit = { headers, method };
+
+  if (body !== null) {
+    options.body = body;
   }
 
   const response = await fetch(`${GATEWAY_URL}${url}`, options);
@@ -63,22 +59,22 @@ export async function reqHasura<T = any>(
   const HASURA_URL = browser ? env.PUBLIC_HASURA_CLIENT_URL : env.PUBLIC_HASURA_SERVER_URL;
   const user = get<User | null>(userStore);
 
-  const options: RequestInit = {
-    body: JSON.stringify({ query, variables }),
-    headers: {
-      Authorization: `Bearer ${user?.token ?? ''}`,
-      'Content-Type': 'application/json',
-    },
-    method: 'POST',
-    signal,
+  const headers: HeadersInit = {
+    Authorization: `Bearer ${user?.token ?? ''}`,
+    'Content-Type': 'application/json',
   };
 
   if (token !== undefined) {
     // This overrides the auth header (e.g. if the user is not set yet during SSR).
-
-    // @ts-expect-error Any key should be allowable in Headers
-    options.headers['Authorization'] = `Bearer ${token ?? ''}`;
+    headers['Authorization'] = `Bearer ${token ?? ''}`;
   }
+
+  const options: RequestInit = {
+    body: JSON.stringify({ query, variables }),
+    headers,
+    method: 'POST',
+    signal,
+  };
 
   const response: Response = await fetch(HASURA_URL, options);
   const json = await response.json();
