@@ -37,7 +37,14 @@
       suppressSizeToFit: true,
       width: 60,
     },
-    { field: 'activity_type', filter: 'text', headerName: 'Activity Type', resizable: true, sortable: true },
+    {
+      field: 'activity_type',
+      filter: 'text',
+      headerName: 'Activity Type',
+      minWidth: 200,
+      resizable: true,
+      sortable: true,
+    },
     {
       field: 'authoring_command_dict_id',
       filter: 'number',
