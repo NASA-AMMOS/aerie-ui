@@ -2,7 +2,6 @@ import { goto } from '$app/navigation';
 import { base } from '$app/paths';
 import { get } from 'svelte/store';
 import { activityDirectivesMap, selectedActivityDirectiveId } from '../stores/activities';
-import { permissibleQueries as permissibleQueriesStore } from '../stores/app';
 import { checkConstraintsStatus, constraintViolationsResponse } from '../stores/constraints';
 import { catchError, catchSchedulingError } from '../stores/errors';
 import {
@@ -107,22 +106,13 @@ import {
   showPlanBranchRequestModal,
   showUploadViewModal,
 } from './modal';
+import queryPermissions from './queryPermissions';
 import { reqGateway, reqHasura } from './requests';
 import { sampleProfiles } from './resources';
 import { Status } from './status';
 import { getDoyTime, getDoyTimeFromInterval, getIntervalFromDoyRange } from './time';
 import { showFailureToast, showSuccessToast } from './toast';
 import { generateDefaultView, validateViewJSONAgainstSchema } from './view';
-
-function getPermission(queries: string[]): boolean {
-  const permissibleQueries = get(permissibleQueriesStore);
-  if (permissibleQueries) {
-    return queries.reduce((prevValue: boolean, queryName) => {
-      return prevValue && !!permissibleQueries[queryName];
-    }, true);
-  }
-  return false;
-}
 
 function throwPermissionError(attemptedAction: string): never {
   throw Error(`You do not have permission to: ${attemptedAction}.`);
@@ -139,7 +129,7 @@ const effects = {
     numOfUserChanges: number,
   ): Promise<void> {
     try {
-      if (!effects.applyPresetToActivityPermission()) {
+      if (!queryPermissions.APPLY_PRESET_TO_ACTIVITY()) {
         throwPermissionError('apply a preset to an activity directive');
       }
 
@@ -169,21 +159,13 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `applyPresetToActivity` permission
-   * @returns boolean
-   */
-  applyPresetToActivityPermission(): boolean {
-    return getPermission(['apply_preset_to_activity']);
-  },
-
   async applyTemplateToSimulation(
     template: SimulationTemplate,
     simulation: Simulation,
     numOfUserChanges: number,
   ): Promise<void> {
     try {
-      if (!effects.applyTemplateToSimulationPermission()) {
+      if (!queryPermissions.UPDATE_SIMULATION()) {
         throwPermissionError('apply a template to a simulation');
       }
 
@@ -208,14 +190,6 @@ const effects = {
       catchError('Template Unable To Be Applied To Simulation', e as Error);
       showFailureToast('Template Application Failed');
     }
-  },
-
-  /**
-   * @description For `applyTemplateToSimulation` permission
-   * @returns boolean
-   */
-  applyTemplateToSimulationPermission(): boolean {
-    return effects.updateSimulationPermission();
   },
 
   async checkConstraints(): Promise<void> {
@@ -252,7 +226,7 @@ const effects = {
     metadata: ActivityMetadata,
   ): Promise<void> {
     try {
-      if (!effects.createActivityDirectivePermission()) {
+      if (!queryPermissions.CREATE_ACTIVITY_DIRECTIVE()) {
         throwPermissionError('add a directive to the plan');
       }
 
@@ -294,14 +268,6 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `createActivityDirective` permission
-   * @returns boolean
-   */
-  createActivityDirectivePermission(): boolean {
-    return getPermission(['insert_activity_directive_one']);
-  },
-
   async createActivityPreset(
     argumentsMap: ArgumentsMap,
     associatedActivityType: string,
@@ -309,7 +275,7 @@ const effects = {
     modelId: number,
   ): Promise<number | null> {
     try {
-      if (!effects.createActivityPresetPermission()) {
+      if (!queryPermissions.CREATE_ACTIVITY_PRESET()) {
         throwPermissionError('create an activity preset');
       }
 
@@ -334,17 +300,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `createActivityPreset` permission
-   * @returns boolean
-   */
-  createActivityPresetPermission(): boolean {
-    return getPermission(['insert_activity_presets_one']);
-  },
-
   async createCommandDictionary(files: FileList): Promise<CommandDictionary | null> {
     try {
-      if (!effects.createCommandDictionaryPermission()) {
+      if (!queryPermissions.CREATE_COMMAND_DICTIONARY()) {
         throwPermissionError('upload a command dictionary');
       }
 
@@ -359,14 +317,6 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `createCommandDictionary` permission
-   * @returns boolean
-   */
-  createCommandDictionaryPermission(): boolean {
-    return getPermission(['uploadDictionary']);
-  },
-
   async createConstraint(
     definition: string,
     description: string,
@@ -375,7 +325,7 @@ const effects = {
     plan_id: number | null,
   ): Promise<number | null> {
     try {
-      if (!effects.createConstraintPermission()) {
+      if (!queryPermissions.CREATE_CONSTRAINT()) {
         throwPermissionError('create a constraint');
       }
 
@@ -399,17 +349,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `createConstraint` permission
-   * @returns boolean
-   */
-  createConstraintPermission(): boolean {
-    return getPermission(['insert_constraint_one']);
-  },
-
   async createExpansionRule(rule: ExpansionRuleInsertInput): Promise<number | null> {
     try {
-      if (!effects.createExpansionRulePermission()) {
+      if (!queryPermissions.CREATE_EXPANSION_RULE()) {
         throwPermissionError('create an expansion rule');
       }
 
@@ -428,17 +370,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `createExpansionRule` permission
-   * @returns boolean
-   */
-  createExpansionRulePermission(): boolean {
-    return getPermission(['insert_expansion_rule_one']);
-  },
-
   async createExpansionSequence(seqId: string, simulationDatasetId: number): Promise<void> {
     try {
-      if (!effects.createExpansionSequencePermission()) {
+      if (!queryPermissions.CREATE_EXPANSION_SEQUENCE()) {
         throwPermissionError('create an expansion sequence');
       }
 
@@ -458,17 +392,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `createExpansionSequence` permission
-   * @returns boolean
-   */
-  createExpansionSequencePermission(): boolean {
-    return getPermission(['insert_sequence_one']);
-  },
-
   async createExpansionSet(dictionaryId: number, modelId: number, expansionRuleIds: number[]): Promise<number | null> {
     try {
-      if (!effects.createExpansionSetPermission()) {
+      if (!queryPermissions.CREATE_EXPANSION_SET()) {
         throwPermissionError('create an expansion set');
       }
 
@@ -487,19 +413,11 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `createExpansionSet` permission
-   * @returns boolean
-   */
-  createExpansionSetPermission(): boolean {
-    return getPermission(['createExpansionSet']);
-  },
-
   async createModel(name: string, version: string, files: FileList): Promise<void> {
     try {
       createModelError.set(null);
 
-      if (!effects.createModelPermission()) {
+      if (!queryPermissions.CREATE_MODEL()) {
         throwPermissionError('upload a model');
       }
 
@@ -533,14 +451,6 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `createModel` permission
-   * @returns boolean
-   */
-  createModelPermission(): boolean {
-    return getPermission(['insert_mission_model_one']);
-  },
-
   async createPlan(
     end_time_doy: string,
     model_id: number,
@@ -551,7 +461,7 @@ const effects = {
     try {
       createPlanError.set(null);
 
-      if (!effects.createPlanPermission()) {
+      if (!queryPermissions.CREATE_PLAN()) {
         throwPermissionError('create a plan');
       }
 
@@ -611,17 +521,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `createPlan` permission
-   * @returns boolean
-   */
-  createPlanPermission(): boolean {
-    return getPermission(['insert_plan_one']);
-  },
-
   async createPlanBranch(plan: Plan): Promise<void> {
     try {
-      if (!effects.createPlanBranchPermission()) {
+      if (!queryPermissions.DUPLICATE_PLAN()) {
         throwPermissionError('create a branch');
       }
 
@@ -649,17 +551,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `createPlanBranch` permission
-   * @returns boolean
-   */
-  createPlanBranchPermission(): boolean {
-    return getPermission(['duplicate_plan']);
-  },
-
   async createPlanBranchRequest(plan: Plan, action: PlanBranchRequestAction): Promise<void> {
     try {
-      if (!effects.createPlanBranchRequestPermission()) {
+      if (!queryPermissions.CREATE_PLAN_MERGE_REQUEST()) {
         throwPermissionError('create a branch merge request');
       }
 
@@ -676,17 +570,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `createPlanBranchRequest` permission
-   * @returns boolean
-   */
-  createPlanBranchRequestPermission(): boolean {
-    return effects.createPlanMergeRequestPermission();
-  },
-
   async createPlanMergeRequest(source_plan_id: number, target_plan_id: number): Promise<number | null> {
     try {
-      if (!effects.createPlanBranchRequestPermission()) {
+      if (!queryPermissions.CREATE_PLAN_MERGE_REQUEST()) {
         throwPermissionError('create a branch merge request');
       }
 
@@ -705,14 +591,6 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `createPlanMergeRequest` permission
-   * @returns boolean
-   */
-  createPlanMergeRequestPermission(): boolean {
-    return getPermission(['create_merge_request']);
-  },
-
   async createSchedulingCondition(
     definition: string,
     description: string,
@@ -721,7 +599,7 @@ const effects = {
     modelId: number,
   ): Promise<SchedulingCondition | null> {
     try {
-      if (!effects.createSchedulingConditionPermission()) {
+      if (!queryPermissions.CREATE_SCHEDULING_CONDITION()) {
         throwPermissionError('create a scheduling condition');
       }
 
@@ -747,14 +625,6 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `createSchedulingCondition` permission
-   * @returns boolean
-   */
-  createSchedulingConditionPermission(): boolean {
-    return getPermission(['insert_scheduling_condition_one']);
-  },
-
   async createSchedulingGoal(
     definition: string,
     description: string,
@@ -763,7 +633,7 @@ const effects = {
     modelId: number,
   ): Promise<SchedulingGoal | null> {
     try {
-      if (!effects.createSchedulingGoalPermission()) {
+      if (!queryPermissions.CREATE_SCHEDULING_GOAL()) {
         throwPermissionError('create a scheduling goal');
       }
 
@@ -787,17 +657,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `createSchedulingGoal` permission
-   * @returns boolean
-   */
-  createSchedulingGoalPermission(): boolean {
-    return getPermission(['insert_scheduling_goal_one']);
-  },
-
   async createSchedulingSpec(spec: SchedulingSpecInsertInput): Promise<Pick<SchedulingSpec, 'id'> | null> {
     try {
-      if (!effects.createSchedulingSpecPermission()) {
+      if (!queryPermissions.CREATE_SCHEDULING_SPEC()) {
         throwPermissionError('create a scheduling spec');
       }
 
@@ -810,17 +672,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `createSchedulingSpec` permission
-   * @returns boolean
-   */
-  createSchedulingSpecPermission(): boolean {
-    return getPermission(['insert_scheduling_specification_one']);
-  },
-
   async createSchedulingSpecCondition(spec_condition: SchedulingSpecConditionInsertInput): Promise<void> {
     try {
-      if (!effects.createSchedulingSpecConditionPermission()) {
+      if (!queryPermissions.CREATE_SCHEDULING_SPEC_CONDITION()) {
         throwPermissionError('create a scheduling spec condition');
       }
 
@@ -830,17 +684,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `createSchedulingSpecCondition` permission
-   * @returns boolean
-   */
-  createSchedulingSpecConditionPermission(): boolean {
-    return getPermission(['insert_scheduling_specification_conditions_one']);
-  },
-
   async createSchedulingSpecGoal(spec_goal: SchedulingSpecGoalInsertInput): Promise<void> {
     try {
-      if (!effects.createSchedulingSpecGoalPermission()) {
+      if (!queryPermissions.CREATE_SCHEDULING_SPEC_GOAL()) {
         throwPermissionError('create a scheduling spec goal');
       }
 
@@ -850,21 +696,13 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `createSchedulingSpecGoal` permission
-   * @returns boolean
-   */
-  createSchedulingSpecGoalPermission(): boolean {
-    return getPermission(['insert_scheduling_specification_goals_one']);
-  },
-
   async createSimulationTemplate(
     argumentsMap: ArgumentsMap,
     name: string,
     modelId: number,
   ): Promise<SimulationTemplate | null> {
     try {
-      if (!effects.createSimulationTemplatePermission()) {
+      if (!queryPermissions.CREATE_SIMULATION_TEMPLATE()) {
         throwPermissionError('create a simulation template');
       }
 
@@ -889,17 +727,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `createSimulationTemplate` permission
-   * @returns boolean
-   */
-  createSimulationTemplatePermission(): boolean {
-    return getPermission(['insert_simulation_template_one']);
-  },
-
   async createUserSequence(sequence: UserSequenceInsertInput): Promise<number | null> {
     try {
-      if (!effects.createUserSequencePermission()) {
+      if (!queryPermissions.CREATE_USER_SEQUENCE()) {
         throwPermissionError('create a user sequence');
       }
 
@@ -915,17 +745,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `createUserSequence` permission
-   * @returns boolean
-   */
-  createUserSequencePermission(): boolean {
-    return getPermission(['insert_user_sequence_one']);
-  },
-
   async createView(owner: string, definition: ViewDefinition): Promise<boolean> {
     try {
-      if (!effects.createViewPermission()) {
+      if (!queryPermissions.CREATE_VIEW()) {
         throwPermissionError('create a view');
       }
 
@@ -950,17 +772,16 @@ const effects = {
     return false;
   },
 
-  /**
-   * @description For `createView` permission
-   * @returns boolean
-   */
-  createViewPermission(): boolean {
-    return getPermission(['insert_view_one']);
-  },
-
   async deleteActivityDirective(plan_id: number, id: ActivityDirectiveId): Promise<boolean> {
     try {
-      if (!effects.deleteActivityDirectivePermission()) {
+      if (
+        !(
+          queryPermissions.DELETE_ACTIVITY_DIRECTIVES() &&
+          queryPermissions.DELETE_ACTIVITY_DIRECTIVES_REANCHOR_PLAN_START() &&
+          queryPermissions.DELETE_ACTIVITY_DIRECTIVES_REANCHOR_TO_ANCHOR() &&
+          queryPermissions.DELETE_ACTIVITY_DIRECTIVES_SUBTREE()
+        )
+      ) {
         throwPermissionError('delete an activity directive');
       }
 
@@ -972,17 +793,16 @@ const effects = {
     return false;
   },
 
-  /**
-   * @description For `deleteActivityDirective` permission
-   * @returns boolean
-   */
-  deleteActivityDirectivePermission(): boolean {
-    return effects.deleteActivityDirectivesPermission();
-  },
-
   async deleteActivityDirectives(plan_id: number, ids: ActivityDirectiveId[]): Promise<boolean> {
     try {
-      if (!effects.deleteActivityDirectivesPermission()) {
+      if (
+        !(
+          queryPermissions.DELETE_ACTIVITY_DIRECTIVES() &&
+          queryPermissions.DELETE_ACTIVITY_DIRECTIVES_REANCHOR_PLAN_START() &&
+          queryPermissions.DELETE_ACTIVITY_DIRECTIVES_REANCHOR_TO_ANCHOR() &&
+          queryPermissions.DELETE_ACTIVITY_DIRECTIVES_SUBTREE()
+        )
+      ) {
         throwPermissionError('delete activity directives');
       }
 
@@ -1069,22 +889,9 @@ const effects = {
     return false;
   },
 
-  /**
-   * @description For `deleteActivityDirectives` permission
-   * @returns boolean
-   */
-  deleteActivityDirectivesPermission(): boolean {
-    return getPermission([
-      'delete_activity_by_pk_reanchor_to_anchor_bulk',
-      'delete_activity_by_pk_reanchor_plan_start_bulk',
-      'delete_activity_by_pk_delete_subtree_bulk',
-      'delete_activity_directive',
-    ]);
-  },
-
   async deleteActivityPreset(id: ActivityPresetId, modelName: string): Promise<boolean> {
     try {
-      if (!effects.deleteActivityPresetPermission()) {
+      if (!queryPermissions.DELETE_ACTIVITY_PRESET()) {
         throwPermissionError('delete an activity preset');
       }
 
@@ -1107,17 +914,9 @@ const effects = {
     return false;
   },
 
-  /**
-   * @description For `deleteActivityPreset` permission
-   * @returns boolean
-   */
-  deleteActivityPresetPermission(): boolean {
-    return getPermission(['delete_activity_presets_by_pk']);
-  },
-
   async deleteCommandDictionary(id: number): Promise<void> {
     try {
-      if (!effects.deleteCommandDictionaryPermission()) {
+      if (!queryPermissions.DELETE_COMMAND_DICTIONARY()) {
         throwPermissionError('delete this command dictionary');
       }
 
@@ -1138,17 +937,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `deleteCommandDictionary` permission
-   * @returns boolean
-   */
-  deleteCommandDictionaryPermission(): boolean {
-    return getPermission(['delete_command_dictionary_by_pk']);
-  },
-
   async deleteConstraint(id: number): Promise<boolean> {
     try {
-      if (!effects.deleteConstraintPermission()) {
+      if (!queryPermissions.DELETE_CONSTRAINT()) {
         throwPermissionError('delete this constraint');
       }
 
@@ -1171,17 +962,9 @@ const effects = {
     return false;
   },
 
-  /**
-   * @description For `deleteConstraint` permission
-   * @returns boolean
-   */
-  deleteConstraintPermission(): boolean {
-    return getPermission(['delete_constraint_by_pk']);
-  },
-
   async deleteExpansionRule(id: number): Promise<boolean> {
     try {
-      if (!effects.deleteExpansionRulePermission()) {
+      if (!queryPermissions.DELETE_EXPANSION_RULE()) {
         throwPermissionError('delete an expansion rule');
       }
 
@@ -1204,17 +987,9 @@ const effects = {
     return false;
   },
 
-  /**
-   * @description For `deleteExpansionRule` permission
-   * @returns boolean
-   */
-  deleteExpansionRulePermission(): boolean {
-    return getPermission(['delete_expansion_rule_by_pk']);
-  },
-
   async deleteExpansionSequence(sequence: ExpansionSequence): Promise<void> {
     try {
-      if (!effects.deleteExpansionSequencePermission()) {
+      if (!queryPermissions.DELETE_EXPANSION_SEQUENCE()) {
         throwPermissionError('delete an expansion sequence');
       }
 
@@ -1235,20 +1010,12 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `deleteExpansionSequence` permission
-   * @returns boolean
-   */
-  deleteExpansionSequencePermission(): boolean {
-    return getPermission(['delete_sequence_by_pk']);
-  },
-
   async deleteExpansionSequenceToActivity(
     simulation_dataset_id: number,
     simulated_activity_id: number,
   ): Promise<boolean> {
     try {
-      if (!effects.deleteExpansionSequenceToActivityPermission()) {
+      if (!queryPermissions.DELETE_EXPANSION_SEQUENCE_TO_ACTIVITY()) {
         throwPermissionError('delete an expansion sequence from an activity');
       }
 
@@ -1265,17 +1032,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `deleteExpansionSequenceToActivity` permission
-   * @returns boolean
-   */
-  deleteExpansionSequenceToActivityPermission(): boolean {
-    return getPermission(['delete_sequence_to_simulated_activity_by_pk']);
-  },
-
   async deleteExpansionSet(id: number): Promise<boolean> {
     try {
-      if (!effects.deleteExpansionSetPermission()) {
+      if (!queryPermissions.DELETE_EXPANSION_SET()) {
         throwPermissionError('delete an expansion set');
       }
 
@@ -1299,14 +1058,6 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `deleteExpansionSet` permission
-   * @returns boolean
-   */
-  deleteExpansionSetPermission(): boolean {
-    return getPermission(['delete_expansion_set_by_pk']);
-  },
-
   async deleteFile(id: number): Promise<boolean> {
     try {
       await reqGateway(`/file/${id}`, 'DELETE', null, null, false);
@@ -1319,7 +1070,7 @@ const effects = {
 
   async deleteModel(model: ModelSlim): Promise<void> {
     try {
-      if (!effects.deleteModelPermission()) {
+      if (!queryPermissions.DELETE_MODEL()) {
         throwPermissionError('delete this model');
       }
 
@@ -1342,17 +1093,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `deleteModel` permission
-   * @returns boolean
-   */
-  deleteModelPermission(): boolean {
-    return getPermission(['delete_mission_model_by_pk']);
-  },
-
   async deletePlan(id: number): Promise<boolean> {
     try {
-      if (!effects.deletePlanPermission()) {
+      if (!queryPermissions.DELETE_PLAN()) {
         throwPermissionError('delete this plan');
       }
 
@@ -1372,17 +1115,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `deletePlan` permission
-   * @returns boolean
-   */
-  deletePlanPermission(): boolean {
-    return getPermission(['delete_plan_by_pk', 'delete_scheduling_specification', 'delete_simulation']);
-  },
-
   async deleteSchedulingCondition(id: number): Promise<boolean> {
     try {
-      if (!effects.deleteSchedulingConditionPermission()) {
+      if (!queryPermissions.DELETE_SCHEDULING_CONDITION()) {
         throwPermissionError('delete this scheduling condition');
       }
 
@@ -1406,17 +1141,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `deleteSchedulingCondition` permission
-   * @returns boolean
-   */
-  deleteSchedulingConditionPermission(): boolean {
-    return getPermission(['delete_scheduling_condition_by_pk']);
-  },
-
   async deleteSchedulingGoal(id: number): Promise<boolean> {
     try {
-      if (!effects.deleteSchedulingGoalPermission()) {
+      if (!queryPermissions.DELETE_SCHEDULING_GOAL()) {
         throwPermissionError('delete this scheduling goal');
       }
 
@@ -1440,17 +1167,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `deleteSchedulingGoal` permission
-   * @returns boolean
-   */
-  deleteSchedulingGoalPermission(): boolean {
-    return getPermission(['delete_scheduling_goal_by_pk']);
-  },
-
   async deleteSchedulingSpecGoal(goal_id: number, specification_id: number): Promise<boolean> {
     try {
-      if (!effects.deleteSchedulingSpecGoalPermission()) {
+      if (!queryPermissions.DELETE_SCHEDULING_SPEC_GOAL()) {
         throwPermissionError('delete this scheduling goal');
       }
 
@@ -1463,17 +1182,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `deleteSchedulingSpecGoal` permission
-   * @returns boolean
-   */
-  deleteSchedulingSpecGoalPermission(): boolean {
-    return getPermission(['delete_scheduling_specification_goals_by_pk']);
-  },
-
   async deleteSimulationTemplate(id: number, modelName: string): Promise<boolean> {
     try {
-      if (!effects.deleteSimulationTemplatePermission()) {
+      if (!queryPermissions.DELETE_SIMULATION_TEMPLATE()) {
         throwPermissionError('delete this simulation template');
       }
 
@@ -1496,17 +1207,9 @@ const effects = {
     return false;
   },
 
-  /**
-   * @description For `deleteSimulationTemplate` permission
-   * @returns boolean
-   */
-  deleteSimulationTemplatePermission(): boolean {
-    return getPermission(['delete_simulation_template_by_pk']);
-  },
-
   async deleteUserSequence(id: number): Promise<boolean> {
     try {
-      if (!effects.deleteUserSequencePermission()) {
+      if (!queryPermissions.DELETE_USER_SEQUENCE()) {
         throwPermissionError('delete this user sequence');
       }
 
@@ -1530,17 +1233,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `deleteUserSequence` permission
-   * @returns boolean
-   */
-  deleteUserSequencePermission(): boolean {
-    return getPermission(['delete_user_sequence_by_pk']);
-  },
-
   async deleteView(id: number): Promise<boolean> {
     try {
-      if (!effects.deleteViewPermission()) {
+      if (!queryPermissions.DELETE_VIEW()) {
         throwPermissionError('delete this view');
       }
 
@@ -1557,17 +1252,9 @@ const effects = {
     return false;
   },
 
-  /**
-   * @description For `deleteView` permission
-   * @returns boolean
-   */
-  deleteViewPermission(): boolean {
-    return getPermission(['delete_view_by_pk']);
-  },
-
   async deleteViews(ids: number[]): Promise<boolean> {
     try {
-      if (!effects.deleteViewsPermission()) {
+      if (!queryPermissions.DELETE_VIEWS()) {
         throwPermissionError('delete these views');
       }
 
@@ -1588,17 +1275,9 @@ const effects = {
     return false;
   },
 
-  /**
-   * @description For `deleteViews` permission
-   * @returns boolean
-   */
-  deleteViewsPermission(): boolean {
-    return getPermission(['delete_view']);
-  },
-
   async editView(owner: string, definition: ViewDefinition): Promise<boolean> {
     try {
-      if (!effects.editViewPermission()) {
+      if (!queryPermissions.UPDATE_VIEW()) {
         throwPermissionError('edit this view');
       }
 
@@ -1623,19 +1302,11 @@ const effects = {
     return false;
   },
 
-  /**
-   * @description For `editView` permission
-   * @returns boolean
-   */
-  editViewPermission(): boolean {
-    return getPermission(['update_view_by_pk']);
-  },
-
   async expand(expansionSetId: number, simulationDatasetId: number): Promise<void> {
     try {
       planExpansionStatus.set(Status.Incomplete);
 
-      if (!effects.expandPermission()) {
+      if (!queryPermissions.EXPAND()) {
         throwPermissionError('expand this plan');
       }
 
@@ -1647,14 +1318,6 @@ const effects = {
       planExpansionStatus.set(Status.Failed);
       showFailureToast('Plan Expansion Failed');
     }
-  },
-
-  /**
-   * @description For `expand` permission
-   * @returns boolean
-   */
-  expandPermission(): boolean {
-    return getPermission(['expandAllActivities']);
   },
 
   async getActivityTypes(modelId: number): Promise<ActivityType[]> {
@@ -2225,7 +1888,7 @@ const effects = {
     simulation_end_time: string | null = null,
   ): Promise<boolean> {
     try {
-      if (!effects.initialSimulationUpdatePermission()) {
+      if (!queryPermissions.INITIAL_SIMULATION_UPDATE()) {
         throwPermissionError('update a simulation');
       }
 
@@ -2243,21 +1906,13 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `initialSimulationUpdate` permission
-   * @returns boolean
-   */
-  initialSimulationUpdatePermission(): boolean {
-    return getPermission(['update_simulation']);
-  },
-
   async insertExpansionSequenceToActivity(
     simulation_dataset_id: number,
     simulated_activity_id: number,
     seq_id: string,
   ): Promise<string | null> {
     try {
-      if (!effects.insertExpansionSequenceToActivityPermission()) {
+      if (!queryPermissions.INSERT_EXPANSION_SEQUENCE_TO_ACTIVITY()) {
         throwPermissionError('add an expansion sequence to an activity');
       }
 
@@ -2277,14 +1932,6 @@ const effects = {
       showFailureToast('Add Expansion Sequence To Activity Failed');
       return null;
     }
-  },
-
-  /**
-   * @description For `insertExpansionSequenceToActivity` permission
-   * @returns boolean
-   */
-  insertExpansionSequenceToActivityPermission(): boolean {
-    return getPermission(['insert_sequence_to_simulated_activity_one']);
   },
 
   async loadViewFromFile(files: FileList): Promise<{ definition: ViewDefinition | null; errors?: string[] }> {
@@ -2356,7 +2003,7 @@ const effects = {
 
   async planMergeBegin(merge_request_id: number): Promise<boolean> {
     try {
-      if (!effects.planMergeBeginPermission()) {
+      if (!queryPermissions.PLAN_MERGE_BEGIN()) {
         throwPermissionError('begin a merge');
       }
 
@@ -2369,17 +2016,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `planMergeBegin` permission
-   * @returns boolean
-   */
-  planMergeBeginPermission(): boolean {
-    return getPermission(['begin_merge']);
-  },
-
   async planMergeCancel(merge_request_id: number): Promise<boolean> {
     try {
-      if (!effects.planMergeCancelPermission()) {
+      if (!queryPermissions.PLAN_MERGE_CANCEL()) {
         throwPermissionError('cancel this merge request');
       }
 
@@ -2393,17 +2032,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `planMergeCancel` permission
-   * @returns boolean
-   */
-  planMergeCancelPermission(): boolean {
-    return getPermission(['cancel_merge']);
-  },
-
   async planMergeCommit(merge_request_id: number): Promise<boolean> {
     try {
-      if (!effects.planMergeCommitPermission()) {
+      if (!queryPermissions.PLAN_MERGE_COMMIT()) {
         throwPermissionError('approve this merge request');
       }
 
@@ -2417,17 +2048,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `planMergeCommit` permission
-   * @returns boolean
-   */
-  planMergeCommitPermission(): boolean {
-    return getPermission(['commit_merge']);
-  },
-
   async planMergeDeny(merge_request_id: number): Promise<boolean> {
     try {
-      if (!effects.planMergeDenyPermission()) {
+      if (!queryPermissions.PLAN_MERGE_DENY()) {
         throwPermissionError('deny this merge request');
       }
 
@@ -2441,17 +2064,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `planMergeDeny` permission
-   * @returns boolean
-   */
-  planMergeDenyPermission(): boolean {
-    return getPermission(['deny_merge']);
-  },
-
   async planMergeRequestWithdraw(merge_request_id: number): Promise<boolean> {
     try {
-      if (!effects.planMergeRequestWithdrawPermission()) {
+      if (!queryPermissions.PLAN_MERGE_REQUEST_WITHDRAW()) {
         throwPermissionError('withdraw this merge request');
       }
 
@@ -2465,17 +2080,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `planMergeRequestWithdraw` permission
-   * @returns boolean
-   */
-  planMergeRequestWithdrawPermission(): boolean {
-    return getPermission(['withdraw_merge_request']);
-  },
-
   async planMergeResolveAllConflicts(merge_request_id: number, resolution: PlanMergeResolution): Promise<void> {
     try {
-      if (!effects.planMergeResolveAllConflictsPermission()) {
+      if (!queryPermissions.PLAN_MERGE_RESOLVE_ALL_CONFLICTS()) {
         throwPermissionError('resolve merge request conflicts');
       }
 
@@ -2486,21 +2093,13 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `planMergeResolveAllConflicts` permission
-   * @returns boolean
-   */
-  planMergeResolveAllConflictsPermission(): boolean {
-    return getPermission(['set_resolution_bulk']);
-  },
-
   async planMergeResolveConflict(
     merge_request_id: number,
     activity_id: ActivityDirectiveId,
     resolution: PlanMergeResolution,
   ): Promise<void> {
     try {
-      if (!effects.planMergeResolveConflictPermission()) {
+      if (!queryPermissions.PLAN_MERGE_RESOLVE_CONFLICT()) {
         throwPermissionError('resolve merge request conflicts');
       }
 
@@ -2511,21 +2110,13 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `planMergeResolveConflict` permission
-   * @returns boolean
-   */
-  planMergeResolveConflictPermission(): boolean {
-    return getPermission(['set_resolution']);
-  },
-
   async removePresetFromActivityDirective(
     plan_id: number,
     activity_directive_id: ActivityDirectiveId,
     preset_id: ActivityPresetId,
   ): Promise<boolean> {
     try {
-      if (!effects.removePresetFromActivityDirectivePermission()) {
+      if (!queryPermissions.DELETE_PRESET_TO_DIRECTIVE()) {
         throwPermissionError('remove the preset from this activity directive');
       }
 
@@ -2539,17 +2130,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `removePresetFromActivityDirective` permission
-   * @returns boolean
-   */
-  removePresetFromActivityDirectivePermission(): boolean {
-    return getPermission(['delete_preset_to_directive_by_pk']);
-  },
-
   async schedule(analysis_only: boolean = false): Promise<void> {
     try {
-      if (!effects.schedulePermission()) {
+      if (!queryPermissions.UPDATE_SCHEDULING_SPEC()) {
         throwPermissionError(`run ${analysis_only ? 'scheduling analysis' : 'scheduling'}`);
       }
 
@@ -2596,14 +2179,6 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `schedule` permission
-   * @returns boolean
-   */
-  schedulePermission(): boolean {
-    return effects.updateSchedulingSpecPermission();
-  },
-
   async session(token: JsonWebToken): Promise<ReqSessionResponse> {
     try {
       const data = await reqGateway<ReqSessionResponse>('/auth/session', 'GET', null, token, false);
@@ -2616,7 +2191,7 @@ const effects = {
 
   async simulate(): Promise<void> {
     try {
-      if (!effects.simulatePermission()) {
+      if (!queryPermissions.SIMULATE()) {
         throwPermissionError('simulate this plan');
       }
 
@@ -2640,21 +2215,13 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `simulate` permission
-   * @returns boolean
-   */
-  simulatePermission(): boolean {
-    return getPermission(['simulate']);
-  },
-
   async updateActivityDirective(
     plan_id: number,
     id: ActivityDirectiveId,
     partialActivityDirective: Partial<ActivityDirective>,
   ): Promise<void> {
     try {
-      if (!effects.updateActivityDirectivePermission()) {
+      if (!queryPermissions.UPDATE_ACTIVITY_DIRECTIVE()) {
         throwPermissionError('update this activity directive');
       }
 
@@ -2705,17 +2272,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `updateActivityDirective` permission
-   * @returns boolean
-   */
-  updateActivityDirectivePermission(): boolean {
-    return getPermission(['update_activity_directive_by_pk']);
-  },
-
   async updateActivityPreset(id: ActivityPresetId, partialActivityPreset: ActivityPresetSetInput): Promise<void> {
     try {
-      if (!effects.updateActivityPresetPermission()) {
+      if (!queryPermissions.UPDATE_ACTIVITY_PRESET()) {
         throwPermissionError('update this activity preset');
       }
 
@@ -2748,14 +2307,6 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `updateActivityPreset` permission
-   * @returns boolean
-   */
-  updateActivityPresetPermission(): boolean {
-    return getPermission(['update_activity_presets_by_pk']);
-  },
-
   async updateConstraint(
     id: number,
     definition: string,
@@ -2765,7 +2316,7 @@ const effects = {
     plan_id: number,
   ): Promise<void> {
     try {
-      if (!effects.updateConstraintPermission()) {
+      if (!queryPermissions.UPDATE_CONSTRAINT()) {
         throwPermissionError('update this constraint');
       }
 
@@ -2784,19 +2335,11 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `updateConstraint` permission
-   * @returns boolean
-   */
-  updateConstraintPermission(): boolean {
-    return getPermission(['update_constraint_by_pk']);
-  },
-
   async updateExpansionRule(id: number, rule: Partial<ExpansionRule>): Promise<string | null> {
     try {
       savingExpansionRule.set(true);
 
-      if (!effects.updateExpansionRulePermission()) {
+      if (!queryPermissions.UPDATE_EXPANSION_RULE()) {
         throwPermissionError('update this expansion rule');
       }
 
@@ -2814,20 +2357,12 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `updateExpansionRule` permission
-   * @returns boolean
-   */
-  updateExpansionRulePermission(): boolean {
-    return getPermission(['update_expansion_rule_by_pk']);
-  },
-
   async updateSchedulingCondition(
     id: number,
     condition: Partial<SchedulingCondition>,
   ): Promise<Pick<SchedulingCondition, 'id' | 'last_modified_by' | 'modified_date'> | null> {
     try {
-      if (!effects.updateSchedulingConditionPermission()) {
+      if (!queryPermissions.UPDATE_SCHEDULING_CONDITION()) {
         throwPermissionError('update this expansion rule');
       }
 
@@ -2843,20 +2378,12 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `updateSchedulingCondition` permission
-   * @returns boolean
-   */
-  updateSchedulingConditionPermission(): boolean {
-    return getPermission(['update_scheduling_condition_by_pk']);
-  },
-
   async updateSchedulingGoal(
     id: number,
     goal: Partial<SchedulingGoal>,
   ): Promise<Pick<SchedulingGoal, 'id' | 'last_modified_by' | 'modified_date'> | null> {
     try {
-      if (!effects.updateSchedulingGoalPermission()) {
+      if (!queryPermissions.UPDATE_SCHEDULING_GOAL()) {
         throwPermissionError('update this scheduling goal');
       }
 
@@ -2872,17 +2399,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `updateSchedulingGoal` permission
-   * @returns boolean
-   */
-  updateSchedulingGoalPermission(): boolean {
-    return getPermission(['update_scheduling_goal_by_pk']);
-  },
-
   async updateSchedulingSpec(id: number, spec: Partial<SchedulingSpec>): Promise<void> {
     try {
-      if (!effects.updateSchedulingSpecPermission()) {
+      if (!queryPermissions.UPDATE_SCHEDULING_SPEC()) {
         throwPermissionError('update this scheduling spec');
       }
 
@@ -2892,21 +2411,13 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `updateSchedulingSpec` permission
-   * @returns boolean
-   */
-  updateSchedulingSpecPermission(): boolean {
-    return getPermission(['update_scheduling_specification_by_pk']);
-  },
-
   async updateSchedulingSpecCondition(
     condition_id: number,
     specification_id: number,
     spec_condition: Partial<SchedulingSpecCondition>,
   ): Promise<void> {
     try {
-      if (!effects.updateSchedulingSpecConditionPermission()) {
+      if (!queryPermissions.UPDATE_SCHEDULING_SPEC_CONDITION_ID()) {
         throwPermissionError('update this scheduling spec condition');
       }
 
@@ -2918,21 +2429,13 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `updateSchedulingSpecCondition` permission
-   * @returns boolean
-   */
-  updateSchedulingSpecConditionPermission(): boolean {
-    return getPermission(['update_scheduling_specification_conditions_by_pk']);
-  },
-
   async updateSchedulingSpecConditionId(
     condition_id: number,
     specification_id: number,
     new_specification_id: number,
   ): Promise<void> {
     try {
-      if (!effects.updateSchedulingSpecConditionIdPermission()) {
+      if (!queryPermissions.UPDATE_SCHEDULING_SPEC_CONDITION_ID()) {
         throwPermissionError('update this scheduling spec condition');
       }
 
@@ -2948,21 +2451,13 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `updateSchedulingSpecConditionId` permission
-   * @returns boolean
-   */
-  updateSchedulingSpecConditionIdPermission(): boolean {
-    return effects.updateSchedulingSpecConditionPermission();
-  },
-
   async updateSchedulingSpecGoal(
     goal_id: number,
     specification_id: number,
     spec_goal: Partial<SchedulingSpecGoal>,
   ): Promise<void> {
     try {
-      if (!effects.updateSchedulingSpecGoalPermission()) {
+      if (!queryPermissions.UPDATE_SCHEDULING_SPEC_GOAL()) {
         throwPermissionError('update this scheduling spec goal');
       }
 
@@ -2974,17 +2469,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `updateSchedulingSpecGoal` permission
-   * @returns boolean
-   */
-  updateSchedulingSpecGoalPermission(): boolean {
-    return getPermission(['update_scheduling_specification_goals_by_pk']);
-  },
-
   async updateSimulation(simulationSetInput: Simulation, newFiles: File[] = []): Promise<void> {
     try {
-      if (!effects.updateSimulationPermission()) {
+      if (!queryPermissions.UPDATE_SIMULATION()) {
         throwPermissionError('update this simulation');
       }
 
@@ -3005,17 +2492,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `updateSimulation` permission
-   * @returns boolean
-   */
-  updateSimulationPermission(): boolean {
-    return getPermission(['update_simulation_by_pk']);
-  },
-
   async updateSimulationTemplate(id: number, partialSimulationTemplate: SimulationTemplateSetInput): Promise<void> {
     try {
-      if (!effects.updateSimulationTemplatePermission()) {
+      if (!queryPermissions.UPDATE_SIMULATION_TEMPLATE()) {
         throwPermissionError('update this simulation template');
       }
 
@@ -3045,17 +2524,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `updateSimulationTemplate` permission
-   * @returns boolean
-   */
-  updateSimulationTemplatePermission(): boolean {
-    return getPermission(['update_simulation_template_by_pk']);
-  },
-
   async updateUserSequence(id: number, sequence: Partial<UserSequence>): Promise<string | null> {
     try {
-      if (!effects.updateUserSequencePermission()) {
+      if (!queryPermissions.UPDATE_USER_SEQUENCE()) {
         throwPermissionError('update this user sequence');
       }
 
@@ -3071,17 +2542,9 @@ const effects = {
     }
   },
 
-  /**
-   * @description For `updateUserSequence` permission
-   * @returns boolean
-   */
-  updateUserSequencePermission(): boolean {
-    return getPermission(['update_user_sequence_by_pk']);
-  },
-
   async updateView(id: number, view: Partial<View>): Promise<boolean> {
     try {
-      if (!effects.updateViewPermission()) {
+      if (!queryPermissions.UPDATE_VIEW()) {
         throwPermissionError('update this view');
       }
 
@@ -3093,14 +2556,6 @@ const effects = {
       showFailureToast('View Update Failed');
       return false;
     }
-  },
-
-  /**
-   * @description For `updateView` permission
-   * @returns boolean
-   */
-  updateViewPermission(): boolean {
-    return getPermission(['update_view_by_pk']);
   },
 
   async uploadFile(file: File): Promise<number | null> {
@@ -3130,7 +2585,7 @@ const effects = {
 
   async uploadView(owner: string): Promise<boolean> {
     try {
-      if (!effects.uploadViewPermission()) {
+      if (!queryPermissions.CREATE_VIEW()) {
         throwPermissionError('upload a new view');
       }
 
@@ -3152,14 +2607,6 @@ const effects = {
     }
 
     return false;
-  },
-
-  /**
-   * @description For `uploadView` permission
-   * @returns boolean
-   */
-  uploadViewPermission(): boolean {
-    return effects.createViewPermission();
   },
 
   async validateActivityArguments(
