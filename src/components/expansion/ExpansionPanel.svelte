@@ -135,6 +135,7 @@
 
   <svelte:fragment slot="body">
     <div class="expansion-panel-body">
+      <a href="">See all expansion sets</a>
       <fieldset>
         <label for="expansionSet">Expansion Set</label>
         <select
@@ -155,6 +156,8 @@
           {/if}
         </select>
       </fieldset>
+
+      <div>Expansion set metadata: - Owner: aplave</div>
 
       <fieldset>
         <Collapse className="details-container" title="Sequences">

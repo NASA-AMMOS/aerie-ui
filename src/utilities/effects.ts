@@ -335,10 +335,10 @@ const effects = {
 
   async createConstraint(
     definition: string,
-    description: string,
     model_id: number | null,
     name: string,
     plan_id: number | null,
+    description?: string,
     user: User | null,
   ): Promise<number | null> {
     try {
@@ -348,10 +348,10 @@ const effects = {
 
       const constraintInsertInput: ConstraintInsertInput = {
         definition,
-        description,
         model_id: plan_id !== null ? null : model_id,
         name,
         plan_id,
+        ...(description && { description }),
       };
       const data = await reqHasura(gql.CREATE_CONSTRAINT, { constraint: constraintInsertInput }, user);
       const { createConstraint } = data;
@@ -413,7 +413,7 @@ const effects = {
     dictionaryId: number,
     modelId: number,
     expansionRuleIds: number[],
-    description: string,
+    description?: string,
     user: User | null,
   ): Promise<number | null> {
     try {
@@ -424,7 +424,12 @@ const effects = {
       savingExpansionSet.set(true);
       const data = await reqHasura(
         gql.CREATE_EXPANSION_SET,
-        { description, dictionaryId, expansionRuleIds, modelId },
+        {
+          dictionaryId,
+          expansionRuleIds,
+          modelId,
+          ...(description && { description }),
+        },
         user,
       );
       const { createExpansionSet } = data;
@@ -443,9 +448,9 @@ const effects = {
   async createModel(
     name: string,
     version: string,
-    description: string,
     files: FileList,
     user: User | null,
+    description?: string,
   ): Promise<void> {
     try {
       createModelError.set(null);
@@ -470,7 +475,16 @@ const effects = {
         const data = await reqHasura(gql.CREATE_MODEL, { model: modelInsertInput }, user);
         const { createModel } = data;
         const { id, created_at, owner } = createModel;
-        const model: ModelSlim = { created_at, description, id, jar_id, name, owner, plans: [], version };
+        const model: ModelSlim = {
+          created_at,
+          id,
+          jar_id,
+          name,
+          owner,
+          plans: [],
+          version,
+          ...(description && { description }),
+        };
 
         showSuccessToast('Model Created Successfully');
         createModelError.set(null);
@@ -648,10 +662,10 @@ const effects = {
 
   async createSchedulingCondition(
     definition: string,
-    description: string,
     name: string,
     modelId: number,
     user: User | null,
+    description?: string,
   ): Promise<SchedulingCondition | null> {
     try {
       if (!queryPermissions.CREATE_SCHEDULING_CONDITION(user)) {
@@ -661,10 +675,10 @@ const effects = {
       const conditionInsertInput: SchedulingConditionInsertInput = {
         author: user?.id ?? 'unknown',
         definition,
-        description,
         last_modified_by: user?.id ?? 'unknown',
         model_id: modelId,
         name,
+        ...(description && { description }),
       };
       const data = await reqHasura<SchedulingCondition>(
         gql.CREATE_SCHEDULING_CONDITION,
@@ -684,10 +698,10 @@ const effects = {
 
   async createSchedulingGoal(
     definition: string,
-    description: string,
     name: string,
     modelId: number,
     user: User | null,
+    description?: string,
   ): Promise<SchedulingGoal | null> {
     try {
       if (!queryPermissions.CREATE_SCHEDULING_GOAL(user)) {
@@ -697,10 +711,10 @@ const effects = {
       const goalInsertInput: SchedulingGoalInsertInput = {
         author: user?.id ?? 'unknown',
         definition,
-        description,
         last_modified_by: user?.id ?? 'unknown',
         model_id: modelId,
         name,
+        ...(description && { description }),
       };
       const data = await reqHasura<SchedulingGoal>(gql.CREATE_SCHEDULING_GOAL, { goal: goalInsertInput }, user);
       const { createSchedulingGoal: newGoal } = data;
@@ -2490,11 +2504,11 @@ const effects = {
   async updateConstraint(
     id: number,
     definition: string,
-    description: string,
     model_id: number,
     name: string,
     plan_id: number,
     user: User | null,
+    description?: string,
   ): Promise<void> {
     try {
       if (!queryPermissions.UPDATE_CONSTRAINT(user)) {
@@ -2503,10 +2517,10 @@ const effects = {
 
       const constraint: Partial<Constraint> = {
         definition,
-        description,
         model_id: plan_id !== null ? null : model_id,
         name,
         plan_id,
+        ...(description && { description }),
       };
       await reqHasura(gql.UPDATE_CONSTRAINT, { constraint, id }, user);
       showSuccessToast('Constraint Updated Successfully');
@@ -2696,17 +2710,11 @@ const effects = {
         throwPermissionError('update this simulation template');
       }
 
-      const simulationTemplateSetInput: SimulationTemplateSetInput = {};
-
-      if (partialSimulationTemplate.arguments) {
-        simulationTemplateSetInput.arguments = partialSimulationTemplate.arguments;
-      }
-      if (partialSimulationTemplate.description) {
-        simulationTemplateSetInput.description = partialSimulationTemplate.description;
-      }
-      if (partialSimulationTemplate.model_id) {
-        simulationTemplateSetInput.model_id = partialSimulationTemplate.model_id;
-      }
+      const simulationTemplateSetInput: SimulationTemplateSetInput = {
+        ...(partialSimulationTemplate.arguments && { arguments: partialSimulationTemplate.arguments }),
+        ...(partialSimulationTemplate.description && { description: partialSimulationTemplate.description }),
+        ...(partialSimulationTemplate.model_id && { model_id: partialSimulationTemplate.model_id }),
+      };
 
       const {
         update_simulation_template_by_pk: { description: templateDescription },

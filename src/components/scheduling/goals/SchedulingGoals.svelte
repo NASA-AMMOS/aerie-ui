@@ -8,6 +8,7 @@
   import type { User } from '../../../types/app';
   import type { DataGridColumnDef, RowId } from '../../../types/data-grid';
   import type { SchedulingGoal } from '../../../types/scheduling';
+  import { getShortISOForDate } from '../../../utilities/time';
   import Input from '../../form/Input.svelte';
   import DataGridActions from '../../ui/DataGrid/DataGridActions.svelte';
   import SingleActionDataGrid from '../../ui/DataGrid/SingleActionDataGrid.svelte';
@@ -49,8 +50,7 @@
       suppressSizeToFit: true,
       valueGetter: (params: ValueGetterParams<SchedulingGoal>) => {
         if (params.data?.created_date) {
-          // TODO make this a util? Does vary a bit.
-          return new Date(params.data?.created_date).toISOString().slice(0, 19);
+          return getShortISOForDate(new Date(params.data?.created_date));
         }
       },
       width: 160,
@@ -64,8 +64,7 @@
       suppressSizeToFit: true,
       valueGetter: (params: ValueGetterParams<SchedulingGoal>) => {
         if (params.data?.modified_date) {
-          // TODO make this a util? Does vary a bit.
-          return new Date(params.data?.modified_date).toISOString().slice(0, 19);
+          return getShortISOForDate(new Date(params.data?.modified_date));
         }
       },
       width: 160,

@@ -6,7 +6,7 @@ export type ModelInsertInput = Pick<Model, 'description' | 'jar_id' | 'mission' 
 
 export type ModelSchema = {
   created_at: string;
-  description: string;
+  description?: string;
   id: number;
   jar_id: number;
   mission: string;

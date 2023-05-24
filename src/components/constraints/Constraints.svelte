@@ -10,6 +10,7 @@
   import type { DataGridColumnDef, DataGridRowSelection, RowId } from '../../types/data-grid';
   import type { PlanSlim } from '../../types/plan';
   import effects from '../../utilities/effects';
+  import { getShortISOForDate } from '../../utilities/time';
   import Input from '../form/Input.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
@@ -77,8 +78,7 @@
       suppressSizeToFit: true,
       valueGetter: (params: ValueGetterParams<Constraint>) => {
         if (params.data?.created_at) {
-          // TODO make this a util? Does vary a bit.
-          return new Date(params.data?.created_at).toISOString().slice(0, 19);
+          return getShortISOForDate(new Date(params.data?.created_at));
         }
       },
       width: 200,

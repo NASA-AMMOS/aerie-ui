@@ -5,7 +5,7 @@
   import PinPlayIcon from '@nasa-jpl/stellar/icons/pin_play.svg?component';
   import { createEventDispatcher } from 'svelte';
   import type { SimulationDataset } from '../../types/simulation';
-  import { getDoyTime, timeAgo } from '../../utilities/time';
+  import { getDoyTime, getTimeAgo } from '../../utilities/time';
   import Input from '../form/Input.svelte';
 
   export let checked: boolean = false;
@@ -59,7 +59,7 @@
     </div>
     <div class="simulation-dataset-metadata">
       <div class="simulation-dataset-metadata-time-ago">
-        {timeAgo(new Date(simulationDataset.requested_at))}
+        {getTimeAgo(new Date(simulationDataset.requested_at))}
       </div>
       <div class="simulation-dataset-metadata-user">
         @{simulationDataset.requested_by || 'Unknown User'}

@@ -85,8 +85,8 @@
           activity_type: ruleActivityType,
           authoring_command_dict_id: ruleDictionaryId,
           authoring_mission_model_id: ruleModelId,
-          description: ruleDescription,
           expansion_logic: ruleLogic,
+          ...(ruleDescription && { description: ruleDescription }),
         };
         const newRuleId = await effects.createExpansionRule(newRule, user);
 
@@ -98,8 +98,8 @@
           activity_type: ruleActivityType,
           authoring_command_dict_id: ruleDictionaryId,
           authoring_mission_model_id: ruleModelId,
-          description: ruleDescription,
           expansion_logic: ruleLogic,
+          ...(ruleDescription && { description: ruleDescription }),
         };
         const updated_at = await effects.updateExpansionRule(ruleId, updatedRule, user);
         if (updated_at !== null) {

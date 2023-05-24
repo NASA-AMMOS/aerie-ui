@@ -9,6 +9,7 @@
   import type { DataGridColumnDef, DataGridRowSelection, RowId } from '../../types/data-grid';
   import type { ExpansionRule, ExpansionSet } from '../../types/expansion';
   import effects from '../../utilities/effects';
+  import { getShortISOForDate } from '../../utilities/time';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
   import DataGrid from '../ui/DataGrid/DataGrid.svelte';
@@ -52,8 +53,7 @@
       sortable: true,
       valueGetter: (params: ValueGetterParams<ExpansionSet>) => {
         if (params.data?.created_at) {
-          // TODO make this a util? Does vary a bit.
-          return new Date(params.data?.created_at).toISOString().slice(0, 19);
+          return getShortISOForDate(new Date(params.data?.created_at));
         }
       },
     },
@@ -66,8 +66,7 @@
       sortable: true,
       valueGetter: (params: ValueGetterParams<ExpansionSet>) => {
         if (params.data?.updated_at) {
-          // TODO make this a util? Does vary a bit.
-          return new Date(params.data?.updated_at).toISOString().slice(0, 19);
+          return getShortISOForDate(new Date(params.data?.updated_at));
         }
       },
     },

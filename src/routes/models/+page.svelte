@@ -132,7 +132,7 @@
   }
 
   async function submitForm(e: SubmitEvent) {
-    await effects.createModel(name, version, description, files, data.user);
+    await effects.createModel(name, version, files, data.user, description);
     if ($createModelError === null && e.target instanceof HTMLFormElement) {
       e.target.reset();
     }

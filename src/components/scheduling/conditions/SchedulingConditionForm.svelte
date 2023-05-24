@@ -93,10 +93,10 @@
       if (mode === 'create') {
         const newCondition = await effects.createSchedulingCondition(
           conditionDefinition,
-          conditionDescription,
           conditionName,
           conditionModelId,
           user,
+          conditionDescription,
         );
 
         if (newCondition !== null) {

@@ -100,10 +100,10 @@
       if (mode === 'create') {
         const newConstraintId = await effects.createConstraint(
           constraintDefinition,
-          constraintDescription,
           constraintModelId,
           constraintName,
           constraintPlanId,
+          constraintDescription,
           user,
         );
 
@@ -114,11 +114,11 @@
         await effects.updateConstraint(
           constraintId,
           constraintDefinition,
-          constraintDescription,
           constraintModelId,
           constraintName,
           constraintPlanId,
           user,
+          constraintDescription,
         );
 
         savedConstraint = {

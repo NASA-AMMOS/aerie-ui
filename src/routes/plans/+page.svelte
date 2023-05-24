@@ -28,7 +28,7 @@
   import { removeQueryParam } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
-  import { convertUsToDurationString, getUnixEpochTime } from '../../utilities/time';
+  import { convertUsToDurationString, getShortISOForDate, getUnixEpochTime } from '../../utilities/time';
   import { min, required, timestamp } from '../../utilities/validators';
   import type { PageData } from './$types';
 
@@ -84,8 +84,7 @@
       sortable: true,
       valueGetter: (params: ValueGetterParams<Plan>) => {
         if (params.data?.created_at) {
-          // TODO make this a util? Does vary a bit.
-          return new Date(params.data?.created_at).toISOString().slice(0, 19);
+          return getShortISOForDate(new Date(params.data?.created_at));
         }
       },
     },

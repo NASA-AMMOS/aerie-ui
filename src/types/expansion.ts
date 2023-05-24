@@ -14,7 +14,7 @@ export type ExpansionRule = {
   updated_by: string;
 };
 
-export type ExpansionRuleInsertInput = Omit<ExpansionRule, 'created_at' | 'id' | 'updated_at'>;
+export type ExpansionRuleInsertInput = Omit<ExpansionRule, 'created_at' | 'id' | 'updated_at' | 'updated_by' | 'owner'>;
 
 export type ExpansionSequenceToActivityInsertInput = {
   seq_id: string;

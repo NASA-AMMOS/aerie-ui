@@ -498,10 +498,10 @@ export function parseDoyOrYmdTime(dateString: string, numDecimals = 6): null | P
  * Returns a string indicating how long ago a date was compared to the given date.
  * Optionally pass in formatAsDateAfterMS to override the default 1 day cut off in MS
  * after which the date will be formatted in a more conventional form.
- * @example timeAgo(new Date()) -> 0s
- * @example timeAgo(new Date(new Date().getTime() - 1000), new Date(new Date().getTime())) -> 0s
+ * @example getTimeAgo(new Date()) -> 0s
+ * @example getTimeAgo(new Date(new Date().getTime() - 1000), new Date(new Date().getTime())) -> 0s
  */
-export function timeAgo(
+export function getTimeAgo(
   date: Date,
   comparisonDate: Date = new Date(),
   formatAsDateAfterMS: number = 1000 * 60 * 60 * 23,
@@ -516,4 +516,12 @@ export function timeAgo(
     return date.toISOString().slice(0, 10);
   }
   return `${convertUsToDurationString((comparisonDateTime - date.getTime()) * 1000).split(' ')[0]} ago`;
+}
+
+/**
+ * Returns a date formatted in ISO string without seconds, milliseconds, and timezone identifier
+ * @example getShortISOForDate(new Date("2023-05-23T00:30:09.597Z")) -> '2023-05-23T00:30:09'
+ */
+export function getShortISOForDate(date: Date) {
+  return date.toISOString().slice(0, 19);
 }
