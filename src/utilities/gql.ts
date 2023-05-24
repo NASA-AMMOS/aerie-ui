@@ -223,14 +223,6 @@ const gql = {
     }
   `,
 
-  DELETE_ACTIVITY_DIRECTIVE: `#graphql
-    mutation DeleteActivityDirective($plan_id: Int!, $id: Int!) {
-      deleteActivityDirective: delete_activity_directive_by_pk(plan_id: $plan_id, id: $id) {
-        id
-      }
-    }
-  `,
-
   DELETE_ACTIVITY_DIRECTIVES: `#graphql
     mutation DeleteActivityDirectives($plan_id: Int!, $activity_ids: [Int!]!) {
       deleteActivityDirectives: delete_activity_directive(
@@ -544,18 +536,6 @@ const gql = {
         jar_id,
         name
         version
-      }
-    }
-  `,
-
-  GET_PERMISSIBLE_MUTATION_QUERIES: `#graphql
-    query GetPermissibleMutationQueries {
-      queries: __schema {
-        mutationType {
-          fields {
-            name
-          }
-        }
       }
     }
   `,
