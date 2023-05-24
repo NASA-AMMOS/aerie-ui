@@ -193,12 +193,7 @@
       <SectionTitle>Sequences</SectionTitle>
 
       <Input>
-        <input
-          bind:value={filterText}
-          class="st-input"
-          placeholder="Filter sequences"
-          style="max-width: 300px; width: 100%;"
-        />
+        <input bind:value={filterText} class="st-input" placeholder="Filter sequences" style="width: 100%;" />
       </Input>
 
       <div class="right">
