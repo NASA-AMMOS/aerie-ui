@@ -39,10 +39,12 @@ const mockInitialPlan: Plan = {
   id: 1,
   is_locked: true,
   model: {
+    created_at: '2023-02-16T00:00:00',
     id: 1,
     jar_id: 1,
     mission: '',
     name: 'Demo Model',
+    owner: 'spacecaptain',
     parameters: {
       parameters: {},
     },
