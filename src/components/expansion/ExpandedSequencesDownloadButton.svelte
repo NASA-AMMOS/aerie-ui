@@ -24,4 +24,4 @@
   }
 </script>
 
-<button class="st-button secondary ellipsis" on:click={downloadAllSeqJson}> Download All </button>
+<button class="st-button secondary ellipsis" on:click={downloadAllSeqJson}>Download All</button>
