@@ -4,6 +4,7 @@
   import { goto, invalidateAll } from '$app/navigation';
   import { base } from '$app/paths';
   import { onMount } from 'svelte';
+  import { get } from 'svelte/store';
   import AlertError from '../../components/ui/AlertError.svelte';
   import { permissibleQueries as permissibleQueriesStore, user as userStore } from '../../stores/app';
   import type { LoginResponseBody } from '../../types/auth';
@@ -14,7 +15,7 @@
   let username = '';
   let usernameInput: HTMLInputElement | null = null;
 
-  $: if ($permissibleQueriesStore && !Object.keys($permissibleQueriesStore).length) {
+  $: if (get(userStore) !== null && $permissibleQueriesStore && !Object.keys($permissibleQueriesStore).length) {
     error =
       'You are not authorized to access the page that you attempted to view. Please contact __someone__ to request access.';
   }
