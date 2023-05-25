@@ -1,6 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { base } from '$app/paths';
   import type { ICellRendererParams } from 'ag-grid-community';
   import {
     creatingExpansionSequence,
@@ -12,10 +13,11 @@
   import { simulationDatasetId } from '../../stores/simulation';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef, RowId } from '../../types/data-grid';
-  import type { ExpansionSequence } from '../../types/expansion';
+  import type { ExpansionSequence, ExpansionSet } from '../../types/expansion';
   import type { ViewGridSection } from '../../types/view';
   import effects from '../../utilities/effects';
   import { showExpansionSequenceModal } from '../../utilities/modal';
+  import { getShortISOForDate } from '../../utilities/time';
   import Collapse from '../Collapse.svelte';
   import Input from '../form/Input.svelte';
   import GridMenu from '../menus/GridMenu.svelte';
@@ -95,9 +97,11 @@
   let createButtonEnabled: boolean = false;
   let expandButtonEnabled: boolean = false;
   let seqIdInput: string = '';
+  let selectedExpansionSet: ExpansionSet | null;
 
   $: createButtonEnabled = seqIdInput !== '';
   $: expandButtonEnabled = $selectedExpansionSetId !== null;
+  $: selectedExpansionSet = $expansionSets.find(s => s.id === $selectedExpansionSetId);
 
   function deleteExpansionSequence(sequence: ExpansionSequence) {
     effects.deleteExpansionSequence(sequence, user);
@@ -135,9 +139,11 @@
 
   <svelte:fragment slot="body">
     <div class="expansion-panel-body">
-      <a href="">See all expansion sets</a>
       <fieldset>
-        <label for="expansionSet">Expansion Set</label>
+        <label for="expansionSet" class="expansion-set-selector">
+          Expansion Set
+          <a href={`${base}/expansion/rules`} target="_blank" rel="noopener noreferrer">View All Expansion Sets</a>
+        </label>
         <select
           bind:value={$selectedExpansionSetId}
           class="st-select w-100"
@@ -156,8 +162,44 @@
           {/if}
         </select>
       </fieldset>
-
-      <div>Expansion set metadata: - Owner: aplave</div>
+      <fieldset>
+        <Collapse className="details-container" title="Expansion Set Details" defaultExpanded={false}>
+          {#if !selectedExpansionSet}
+            <div class="st-typography-label">No Expansion Set Selected</div>
+          {:else}
+            <div class="expansion-set-details">
+              <div>
+                <span class="st-typography-label">Mission Modal ID:</span>
+                {selectedExpansionSet.mission_model_id}
+              </div>
+              <div>
+                <span class="st-typography-label">Command Dictionary ID:</span>
+                {selectedExpansionSet.command_dict_id}
+              </div>
+              <div>
+                <span class="st-typography-label">Created At:</span>
+                {getShortISOForDate(new Date(selectedExpansionSet.created_at))}
+              </div>
+              <div>
+                <span class="st-typography-label">Owner:</span>
+                {selectedExpansionSet.owner}
+              </div>
+              <div>
+                <span class="st-typography-label">Updated At:</span>
+                {getShortISOForDate(new Date(selectedExpansionSet.updated_at))}
+              </div>
+              <div>
+                <span class="st-typography-label">Updated By:</span>
+                {selectedExpansionSet.updated_by}
+              </div>
+              <div>
+                <span class="st-typography-label">Description:</span>
+                {selectedExpansionSet.description}
+              </div>
+            </div>
+          {/if}
+        </Collapse>
+      </fieldset>
 
       <fieldset>
         <Collapse className="details-container" title="Sequences">
@@ -213,6 +255,27 @@
     display: grid;
     grid-template-rows: min-content auto;
     height: 100%;
+  }
+
+  .expansion-set-selector {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .expansion-set-selector a:visited {
+    color: blue;
+  }
+
+  .expansion-set-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .expansion-set-details span {
+    display: inline-block;
+    width: 160px;
   }
 
   :global(.details-container) {
