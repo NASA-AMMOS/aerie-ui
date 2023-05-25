@@ -70,7 +70,7 @@
         Object.keys(simulatedActivitiesByType).forEach((activityType, i) => {
           const activitySpan = document.createElement('span');
           const activityIds = simulatedActivitiesByType[activityType].map(activityId => {
-            return `<a target="_blank" href="/plans/${selectedExpansionRun.simulation_dataset.simulation.plan.id}?activityId=${activityId}">${activityId}</a>`;
+            return `<a target="_blank" href="/plans/${selectedExpansionRun.simulation_dataset.simulation.plan.id}?simulationDatasetId=${selectedExpansionRun.simulation_dataset.dataset_id}&activityId=${activityId}">${activityId}</a>`;
           });
           const spacer = i ? ', ' : '';
           activitySpan.innerHTML = spacer + `${activityType} (${activityIds.join(', ')})`;
