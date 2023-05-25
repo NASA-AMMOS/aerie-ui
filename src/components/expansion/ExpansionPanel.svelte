@@ -168,33 +168,33 @@
             <div class="st-typography-label">No Expansion Set Selected</div>
           {:else}
             <div class="expansion-set-details">
-              <div>
+              <div class="expansion-set-detail">
                 <span class="st-typography-label">Mission Modal ID:</span>
-                {selectedExpansionSet.mission_model_id}
+                <span>{selectedExpansionSet.mission_model_id}</span>
               </div>
-              <div>
+              <div class="expansion-set-detail">
                 <span class="st-typography-label">Command Dictionary ID:</span>
-                {selectedExpansionSet.command_dict_id}
+                <span>{selectedExpansionSet.command_dict_id}</span>
               </div>
-              <div>
+              <div class="expansion-set-detail">
                 <span class="st-typography-label">Created At:</span>
-                {getShortISOForDate(new Date(selectedExpansionSet.created_at))}
+                <span>{getShortISOForDate(new Date(selectedExpansionSet.created_at))}</span>
               </div>
-              <div>
+              <div class="expansion-set-detail">
                 <span class="st-typography-label">Owner:</span>
-                {selectedExpansionSet.owner}
+                <span>{selectedExpansionSet.owner}</span>
               </div>
-              <div>
+              <div class="expansion-set-detail">
                 <span class="st-typography-label">Updated At:</span>
-                {getShortISOForDate(new Date(selectedExpansionSet.updated_at))}
+                <span>{getShortISOForDate(new Date(selectedExpansionSet.updated_at))}</span>
               </div>
-              <div>
+              <div class="expansion-set-detail">
                 <span class="st-typography-label">Updated By:</span>
-                {selectedExpansionSet.updated_by}
+                <span>{selectedExpansionSet.updated_by}</span>
               </div>
-              <div>
+              <div class="expansion-set-detail">
                 <span class="st-typography-label">Description:</span>
-                {selectedExpansionSet.description}
+                <span>{selectedExpansionSet.description}</span>
               </div>
             </div>
           {/if}
@@ -273,9 +273,18 @@
     gap: 8px;
   }
 
-  .expansion-set-details span {
-    display: inline-block;
-    width: 160px;
+  .expansion-set-detail {
+    display: flex;
+  }
+  .expansion-set-details span:first-child {
+    display: flex;
+    flex: 1;
+    max-width: 200px;
+  }
+
+  .expansion-set-details span:last-child {
+    display: flex;
+    flex: 1;
   }
 
   :global(.details-container) {
