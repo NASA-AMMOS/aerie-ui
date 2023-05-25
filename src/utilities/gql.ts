@@ -526,8 +526,10 @@ const gql = {
           }
         }
         simulation_dataset {
+          dataset_id
           simulation {
             plan {
+              id
               name
             }
           }

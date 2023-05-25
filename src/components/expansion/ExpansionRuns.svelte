@@ -54,17 +54,36 @@
       resizable: true,
       sortable: true,
     },
-    // {
-    //   cellRenderer: (params: ICellRendererParams<ExpandedSequence>) => {
-    //   },
-    //   field: 'actions',
-    //   headerName: '',
-    //   resizable: false,
-    //   sortable: false,
-    //   suppressAutoSize: true,
-    //   suppressSizeToFit: true,
-    //   width: 25,
-    // }
+    {
+      cellRenderer: (params: ICellRendererParams<ExpandedSequence>) => {
+        const simulatedActivitiesByType = {};
+        params.value.reduce((acc, next) => {
+          if (!acc[next.simulated_activity.activity_type_name]) {
+            acc[next.simulated_activity.activity_type_name] = [next.simulated_activity.id];
+          } else {
+            acc[next.simulated_activity.activity_type_name].push(next.simulated_activity.id);
+          }
+          return acc;
+        }, simulatedActivitiesByType);
+
+        const cellContentContainer = document.createElement('div');
+        Object.keys(simulatedActivitiesByType).forEach((activityType, i) => {
+          const activitySpan = document.createElement('span');
+          const activityIds = simulatedActivitiesByType[activityType].map(activityId => {
+            return `<a target="_blank" href="/plans/${selectedExpansionRun.simulation_dataset.simulation.plan.id}?activityId=${activityId}">${activityId}</a>`;
+          });
+          const spacer = i ? ', ' : '';
+          activitySpan.innerHTML = spacer + `${activityType} (${activityIds.join(', ')})`;
+          cellContentContainer.appendChild(activitySpan);
+        });
+
+        return cellContentContainer;
+      },
+      field: 'sequence.activity_instance_joins',
+      headerName: 'Activity Instance(s)',
+      resizable: true,
+      sortable: false,
+    },
   ];
 
   let selectedSequence: ExpandedSequence | null = null;

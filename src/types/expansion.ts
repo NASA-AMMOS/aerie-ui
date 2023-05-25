@@ -60,8 +60,10 @@ export type ExpansionRun = {
   expansion_set: ExpansionSet;
   id: number;
   simulation_dataset: {
+    dataset_id: number;
     simulation: {
       plan: {
+        id: number;
         name: string;
       };
     };
