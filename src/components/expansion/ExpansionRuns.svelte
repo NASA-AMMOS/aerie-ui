@@ -40,16 +40,6 @@
 
   const sequenceColumnDefs: DataGridColumnDef[] = [
     {
-      field: 'id',
-      filter: 'number',
-      headerName: 'ID',
-      resizable: true,
-      sortable: true,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
-      width: 60,
-    },
-    {
       field: 'seq_id',
       filter: 'text',
       headerName: 'Sequence ID',
