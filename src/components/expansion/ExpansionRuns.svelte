@@ -1,6 +1,8 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { base } from '$app/paths';
+  import type { ICellRendererParams } from 'ag-grid-community';
   import { expansionRunsColumns } from '../../stores/expansion';
   import type { DataGridColumnDef, DataGridRowSelection } from '../../types/data-grid';
   import type { ExpandedSequence, ExpansionRun } from '../../types/expansion';
@@ -68,9 +70,15 @@
 
         const cellContentContainer = document.createElement('div');
         Object.keys(simulatedActivitiesByType).forEach((activityType, i) => {
+          const simulationDataset = selectedExpansionRun.simulation_dataset;
+          const planId = simulationDataset.simulation.plan.id;
+          const datasetId = simulationDataset.dataset_id;
+
           const activitySpan = document.createElement('span');
           const activityIds = simulatedActivitiesByType[activityType].map(activityId => {
-            return `<a target="_blank" href="/plans/${selectedExpansionRun.simulation_dataset.simulation.plan.id}?simulationDatasetId=${selectedExpansionRun.simulation_dataset.dataset_id}&activityId=${activityId}">${activityId}</a>`;
+            return `<a
+              target="_blank"
+              href="${base}/plans/${planId}?simulationDatasetId=${datasetId}&activityId=${activityId}">${activityId}</a>`;
           });
           const spacer = i ? ', ' : '';
           activitySpan.innerHTML = spacer + `${activityType} (${activityIds.join(', ')})`;

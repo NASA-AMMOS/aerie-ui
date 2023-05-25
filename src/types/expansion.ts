@@ -1,3 +1,4 @@
+import type { SeqJson } from './sequencing';
 import type { SpanId } from './simulation';
 
 export type ExpansionRule = {
@@ -41,7 +42,7 @@ export type SeqId = Pick<ExpansionSequence, 'seq_id'>;
 export type ExpandedSequence = {
   created_at: string;
   edsl_string: string;
-  expanded_sequence: string;
+  expanded_sequence: SeqJson;
   id: number;
   seq_id: string;
   sequence: {
