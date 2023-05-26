@@ -4,6 +4,7 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import { page } from '$app/stores';
+  import LayersIcon from '@nasa-jpl/stellar/icons/layers.svg?component';
   import CardListIcon from 'bootstrap-icons/icons/card-list.svg?component';
   import CodeSquareIcon from 'bootstrap-icons/icons/code-square.svg?component';
   import Nav from '../../components/app/Nav.svelte';
@@ -28,7 +29,7 @@
         title="Sets"
         on:click={() => goto(`${base}/expansion/sets`)}
       >
-        <CardListIcon />
+        <LayersIcon />
       </NavButton>
       <NavButton
         selected={$page.url.pathname.includes('runs')}
