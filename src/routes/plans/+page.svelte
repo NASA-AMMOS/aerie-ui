@@ -100,7 +100,7 @@
         }
       },
     },
-    { field: 'updated_by', filter: 'text', headerName: 'Created By', resizable: true, sortable: true },
+    { field: 'updated_by', filter: 'text', headerName: 'Updated By', resizable: true, sortable: true },
     { field: 'owner', filter: 'text', headerName: 'Owner', resizable: true, sortable: true },
     {
       cellClass: 'action-cell-container',
