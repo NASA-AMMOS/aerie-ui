@@ -39,6 +39,13 @@ export type ExpansionSet = {
 
 export type SeqId = Pick<ExpansionSequence, 'seq_id'>;
 
+export type ActivityInstanceJoin = {
+  simulated_activity: {
+    activity_type_name: string;
+    id: number;
+  };
+};
+
 export type ExpandedSequence = {
   created_at: string;
   edsl_string: string;
@@ -46,12 +53,7 @@ export type ExpandedSequence = {
   id: number;
   seq_id: string;
   sequence: {
-    activity_instance_joins: {
-      simulated_activity: {
-        activity_type_name: string;
-        id: number;
-      };
-    }[];
+    activity_instance_joins: ActivityInstanceJoin[];
   };
 };
 

@@ -5,7 +5,7 @@
   import type { ICellRendererParams } from 'ag-grid-community';
   import { expansionRunsColumns } from '../../stores/expansion';
   import type { DataGridColumnDef, DataGridRowSelection } from '../../types/data-grid';
-  import type { ExpandedSequence, ExpansionRun } from '../../types/expansion';
+  import type { ActivityInstanceJoin, ExpandedSequence, ExpansionRun } from '../../types/expansion';
   import SequenceEditor from '../sequencing/SequenceEditor.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
@@ -47,9 +47,11 @@
       sortable: true,
     },
     {
+      autoHeight: true,
       cellRenderer: (params: ICellRendererParams<ExpandedSequence>) => {
         const simulatedActivitiesByType = {};
-        params.value.reduce((acc, next) => {
+        const activityInstances: ActivityInstanceJoin[] = params.value;
+        activityInstances.reduce((acc, next) => {
           if (!acc[next.simulated_activity.activity_type_name]) {
             acc[next.simulated_activity.activity_type_name] = [next.simulated_activity.id];
           } else {
@@ -81,6 +83,7 @@
       headerName: 'Activity Instance(s)',
       resizable: true,
       sortable: false,
+      wrapText: true,
     },
   ];
 
