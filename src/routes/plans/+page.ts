@@ -6,7 +6,7 @@ import type { PageLoad } from './$types';
 export const load: PageLoad = async ({ parent }) => {
   const { user, permissibleQueries } = await parent();
 
-  if (!user || (permissibleQueries && !Object.keys(permissibleQueries).length)) {
+  if (!user || (permissibleQueries && !Object.keys(permissibleQueries))) {
     throw redirect(302, `${base}/login`);
   }
 
