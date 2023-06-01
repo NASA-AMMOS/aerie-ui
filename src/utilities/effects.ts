@@ -1409,7 +1409,7 @@ const effects = {
       const { expansionRuns } = data;
       return expansionRuns;
     } catch (e) {
-      catchError(e);
+      catchError(e as Error);
       return [];
     }
   },

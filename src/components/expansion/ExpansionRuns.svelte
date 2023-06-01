@@ -49,7 +49,7 @@
     {
       autoHeight: true,
       cellRenderer: (params: ICellRendererParams<ExpandedSequence>) => {
-        const simulatedActivitiesByType = {};
+        const simulatedActivitiesByType: { [key: string]: number[] } = {};
         const activityInstances: ActivityInstanceJoin[] = params.value;
         activityInstances.reduce((acc, next) => {
           if (!acc[next.simulated_activity.activity_type_name]) {
@@ -62,9 +62,9 @@
 
         const cellContentContainer = document.createElement('div');
         Object.keys(simulatedActivitiesByType).forEach((activityType, i) => {
-          const simulationDataset = selectedExpansionRun.simulation_dataset;
-          const planId = simulationDataset.simulation.plan.id;
-          const datasetId = simulationDataset.dataset_id;
+          const simulationDataset = selectedExpansionRun?.simulation_dataset;
+          const planId = simulationDataset?.simulation.plan.id;
+          const datasetId = simulationDataset?.dataset_id;
 
           const activitySpan = document.createElement('span');
           const activityIds = simulatedActivitiesByType[activityType].map(activityId => {
@@ -174,7 +174,7 @@
     sequenceDefinition={selectedSequence?.edsl_string ?? 'No Sequence Selected'}
     sequenceCommandDictionaryId={selectedExpansionRun?.expansion_set?.command_dict_id}
     sequenceName={selectedSequence?.seq_id}
-    sequenceSeqJson={selectedSequence ? JSON.stringify(selectedSequence.expanded_sequence, null, 2) : null}
+    sequenceSeqJson={selectedSequence ? JSON.stringify(selectedSequence.expanded_sequence, null, 2) : undefined}
     readOnly={true}
     title="Sequence - Definition Editor (Read-only)"
   />
