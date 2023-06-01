@@ -45,7 +45,7 @@
     const {
       detail: { selectedActivityDirectiveId, selectedSpanId },
     } = event;
-    if (typeof selectedActivityDirectiveId === 'number' || typeof selectedSpanId === 'number') {
+    if (selectedActivityDirectiveId !== null || selectedSpanId !== null) {
       viewTogglePanel({ state: true, type: 'right', update: { rightComponentTop: 'ActivityFormPanel' } });
     }
   }
