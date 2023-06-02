@@ -26,6 +26,8 @@
   import type { Plan, PlanSlim } from '../../types/plan';
   import effects from '../../utilities/effects';
   import { removeQueryParam } from '../../utilities/generic';
+  import { permissionHandler } from '../../utilities/permissionHandler';
+  import { featurePermissions } from '../../utilities/permissions';
   import { convertUsToDurationString, getUnixEpochTime } from '../../utilities/time';
   import { min, required, timestamp } from '../../utilities/validators';
   import type { PageData } from './$types';
@@ -83,6 +85,8 @@
       width: 25,
     },
   ];
+  const canCreate = featurePermissions.plan.canCreate();
+  const permissionError: string = 'You do not have permission to create a plan';
 
   let durationString: string = 'None';
   let filterText: string = '';
@@ -204,7 +208,15 @@
 
           <Field field={modelIdField}>
             <label for="model" slot="label">Models</label>
-            <select class="st-select w-100" data-type="number" name="model">
+            <select
+              class="st-select w-100"
+              data-type="number"
+              name="model"
+              use:permissionHandler={{
+                hasPermission: canCreate,
+                permissionError,
+              }}
+            >
               <option value="-1" />
               {#each models as model}
                 <option value={model.id}>
@@ -216,7 +228,16 @@
 
           <Field field={nameField}>
             <label for="name" slot="label">Name</label>
-            <input bind:this={nameInputField} autocomplete="off" class="st-input w-100" name="name" />
+            <input
+              bind:this={nameInputField}
+              autocomplete="off"
+              class="st-input w-100"
+              name="name"
+              use:permissionHandler={{
+                hasPermission: canCreate,
+                permissionError,
+              }}
+            />
           </Field>
 
           <fieldset>
@@ -226,6 +247,15 @@
               name="start-time"
               on:change={onStartTimeChanged}
               on:keydown={updateDurationString}
+              use={[
+                [
+                  permissionHandler,
+                  {
+                    hasPermission: canCreate,
+                    permissionError,
+                  },
+                ],
+              ]}
             />
           </fieldset>
 
@@ -236,6 +266,15 @@
               name="end-time"
               on:change={updateDurationString}
               on:keydown={updateDurationString}
+              use={[
+                [
+                  permissionHandler,
+                  {
+                    hasPermission: canCreate,
+                    permissionError,
+                  },
+                ],
+              ]}
             />
           </fieldset>
 
@@ -251,6 +290,10 @@
               data-type="number"
               disabled={!$simulationTemplates.length}
               name="simulation-templates"
+              use:permissionHandler={{
+                hasPermission: canCreate,
+                permissionError,
+              }}
             >
               {#if !$simulationTemplates.length}
                 <option value="null">Empty</option>

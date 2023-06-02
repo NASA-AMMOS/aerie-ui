@@ -51,6 +51,7 @@ const gql = {
         id
         model_id
         name
+        owner
       }
     }
   `,
@@ -602,6 +603,9 @@ const gql = {
           id
           name
         }
+        collaborators {
+          collaborator
+        }
         duration
         id
         is_locked
@@ -616,6 +620,7 @@ const gql = {
         }
         model_id
         name
+        owner
         parent_plan {
           id
           name
@@ -1077,6 +1082,7 @@ const gql = {
         name
         associated_activity_type
         arguments
+        owner
       }
     }
   `,

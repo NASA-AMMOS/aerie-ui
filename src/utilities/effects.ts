@@ -107,7 +107,7 @@ import {
   showPlanBranchRequestModal,
   showUploadViewModal,
 } from './modal';
-import queryPermissions from './queryPermissions';
+import { queryPermissions } from './permissions';
 import { reqGateway, reqHasura } from './requests';
 import { sampleProfiles } from './resources';
 import { Status } from './status';

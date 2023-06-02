@@ -1,5 +1,7 @@
+export type UserId = string;
+
 export type User = {
-  id: string;
+  id: UserId;
   token: string;
 };
 
