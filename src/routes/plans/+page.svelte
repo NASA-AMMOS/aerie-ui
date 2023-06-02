@@ -85,7 +85,7 @@
       width: 25,
     },
   ];
-  const canCreate = featurePermissions.plan.canCreate();
+  const canCreate: boolean = featurePermissions.plan.canCreate();
   const permissionError: string = 'You do not have permission to create a plan';
 
   let durationString: string = 'None';
