@@ -220,8 +220,6 @@ function validateNumeric(value: string, expectation: FswCommandArgumentNumeric):
 }
 
 function validateEnum(value: string, options: string[] | null): ValidationReturn {
-  console.log({ value, options });
-
   return options !== null && !options.includes(value)
     ? `Unexpected enum argument\n Got "${value}" but expected one of ${JSON.stringify(options)}`
     : false;

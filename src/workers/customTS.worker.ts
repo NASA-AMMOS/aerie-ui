@@ -1,3 +1,7 @@
+/**
+ * Want another example? https://github.com/statelyai/xstate-viz/blob/cd128a15486d9253edaaa360ee6c1b150f293f5c/public/ts-worker.js#L59
+ * (this is basically the only example of this working on the internet!)
+ */
 import type { CommandDictionary } from '@nasa-jpl/aerie-ampcs';
 import type { Diagnostic, TypeScriptWorker as InternalTsWorker } from '../types/monaco-internal';
 import { generateSequencingDiagnostics, generateValidationDiagnostics } from './sequencingDiagnostics';
@@ -28,6 +32,10 @@ export interface _ModelData {
   should_inject: boolean;
 }
 
+/**
+ * The first thing you need to do to add to the worker interface!
+ * All type safety is derrived from this, so don't mess up :P
+ */
 export interface WorkerOverrideProps {
   updateModelConfig(model_data: CreateModelData): Promise<void>;
 }
