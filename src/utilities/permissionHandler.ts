@@ -98,7 +98,7 @@ export const permissionHandler: Action<HTMLElement, PermissionHandlerProps> = (
     },
 
     // If the props change, let's update the Tippy instance.
-    update: (newParams: PermissionHandlerProps) => {
+    update: ({ hasPermission, ...newParams }: PermissionHandlerProps) => {
       handlePermission(hasPermission);
       tip.setProps({ content, hasPermission, ...newParams });
     },
