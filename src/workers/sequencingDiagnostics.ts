@@ -14,7 +14,7 @@
 import type { CommandDictionary, EnumMap, FswCommand } from '@nasa-jpl/aerie-ampcs';
 import tsc, { SyntaxKind } from 'typescript';
 import type { Diagnostic as ResponseDiagnostic } from '../types/monaco-internal';
-import { makeDiagnostic, validateArguments } from './worker_helpers';
+import { getDescendants, getFirstInParent, makeDiagnostic, validateArguments } from './workerHelpers';
 
 export enum CustomCodes {
   InvalidAbsoluteTimeString = -1,
@@ -33,42 +33,6 @@ export function generateSequencingDiagnostics(
     ...generateRelativeTimeStringDiagnostics(fileName, languageService),
     ...generateAbsoluteTimeStringDiagnostics(fileName, languageService),
   ];
-}
-
-/**
- * Creates a list of all descents of the given node matching the selector, recursively
- * @param node The tsc Node we want to use as our root
- * @param selector A selector function run on every recursive child Node
- * @returns A list of nodes matching the selector
- */
-function getDescendants(node: tsc.Node, selector: (node: tsc.Node) => boolean): tsc.Node[] {
-  const selectedNodes = [];
-  if (selector(node)) {
-    selectedNodes.push(node);
-  }
-  for (const child of node.getChildren()) {
-    selectedNodes.push(...getDescendants(child, selector));
-  }
-  return selectedNodes;
-}
-
-/**
- * Find the first parent (closest up the tree) from our node that matches the selector
- *
- * @param node The node to use as the root
- * @param selector A selector function which runs on every parent node
- * @returns The closest parent matching the selector or undefined if no match found
- */
-function getFirstInParent(node: tsc.Node, selector: (node: tsc.Node) => boolean): tsc.Node | undefined {
-  if (selector(node)) {
-    return node;
-  }
-
-  if (node.parent === undefined) {
-    return undefined;
-  } else {
-    return getFirstInParent(node.parent, selector);
-  }
 }
 
 const DOY_REGEX = /^(\d{4})-(\d{3})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{3}))?$/;
@@ -204,53 +168,6 @@ function generateAbsoluteTimeStringDiagnostics(
   return diagnostics;
 }
 
-function parentNodeKinds(node: tsc.Node): [string, string][] {
-  if (node.parent === undefined) {
-    return [];
-  }
-  return [...parentNodeKinds(node.parent), [SyntaxKind[node.kind], node.getText()]];
-}
-
-function childNodeKinds(node: tsc.Node): [string, string][] {
-  const children = node.getChildren();
-
-  return [[SyntaxKind[node.kind], node.getText()], ...children.flatMap(child_node => childNodeKinds(child_node))];
-}
-
-function findNodeWithParentOfKind(node: tsc.Node, kind: SyntaxKind): tsc.Node | undefined {
-  if (node.parent === undefined) {
-    return undefined;
-  }
-
-  if (node.parent.kind === kind) {
-    return node;
-  }
-
-  return findNodeWithParentOfKind(node.parent, kind);
-}
-
-function findNextChildOfKind(
-  node: tsc.Node,
-  kind: SyntaxKind,
-  filter: (this_node: tsc.Node) => boolean,
-): tsc.Node | undefined {
-  const children = node.getChildren();
-
-  if (node.kind === kind) {
-    return node;
-  }
-
-  if (children.length === 0) {
-    return undefined;
-  }
-
-  return children
-    .filter(child => filter(child))
-    .map(child => findNextChildOfKind(child, kind, filter))
-    .reverse()
-    .find(child => child !== undefined);
-}
-
 /**
  * Find a list of all command nodes (at the level of C.COMMAND_NAME)
  *                                                     ^^^^^^^^^^^^
@@ -343,7 +260,7 @@ function processCommandArgument(
  *
  * @param sourceFile The starting point for analysis
  */
-function diagnoseBottomUp(sourceFile: tsc.SourceFile, commandDict: CommandDictionary): ResponseDiagnostic[] {
+function findAndValidateArguments(sourceFile: tsc.SourceFile, commandDict: CommandDictionary): ResponseDiagnostic[] {
   // Finds a node of the format `(.*)\.COMMAND`
   // It should be a PropertyAccessExpression
   const commandNodes = findCommandNodes(sourceFile).filter(node => tsc.isPropertyAccessExpression(node));
@@ -383,20 +300,11 @@ function diagnoseBottomUp(sourceFile: tsc.SourceFile, commandDict: CommandDictio
       });
 
       diagnostics = [...diagnostics, ...this_diagnostics];
-
-      // console.log(
-      //   'Found a command with arguments',
-      //   command_arguments.map(arg => arg.getText()),
-      //   commandDictEntry.arguments,
-      // );
     } else {
-      // The case where the function isn't called and it's just a bare command
-      console.log('Found a bare command', commandName.escapedText);
-      // Validate that we expected this
+      // The case where the function isn't called and it's just a bare command.
+      // TypeScript will catch this case, so we don't need to do anything here
     }
   }
-
-  console.log({ diagnostics });
 
   return diagnostics;
 }
@@ -437,5 +345,5 @@ export function generateValidationDiagnostics(
     return [];
   }
 
-  return diagnoseBottomUp(sourceFileSymbol, commandDict);
+  return findAndValidateArguments(sourceFileSymbol, commandDict);
 }

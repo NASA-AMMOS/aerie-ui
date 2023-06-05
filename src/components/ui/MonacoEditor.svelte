@@ -88,7 +88,7 @@
       dispatch('didChangeModelContent', { e, value: newValue });
     });
 
-    // So.. there is no way to check when the model is initialized apparently!
+    // So.. there is no way to check when the model is initialized apparently! Love that for us.
     // https://github.com/microsoft/monaco-editor/issues/115
 
     // If we accidentally call the `getTypeScriptWorker()` function to early, it throws.
