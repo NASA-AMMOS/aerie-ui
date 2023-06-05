@@ -115,7 +115,11 @@ const gql = {
   CREATE_PLAN: `#graphql
     mutation CreatePlan($plan: plan_insert_input!) {
       createPlan: insert_plan_one(object: $plan) {
+        collaborators {
+          collaborator
+        }
         id
+        owner
         revision
         start_time
       }

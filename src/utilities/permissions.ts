@@ -5,7 +5,7 @@ import type { ActivityDirective, ActivityPreset } from '../types/activity';
 import type { UserId } from '../types/app';
 import type { Model } from '../types/model';
 import type { PermissionCheck } from '../types/permissions';
-import type { PlanSlim } from '../types/plan';
+import type { Plan, PlanSlim } from '../types/plan';
 
 function getPermission(queries: string[]): boolean {
   const permissibleQueries = get(permissibleQueriesStore);
@@ -28,7 +28,7 @@ function isUserOwner(thingWithOwner?: { owner: UserId } | null): boolean {
   return false;
 }
 
-function isPlanOwner(plan?: PlanSlim): boolean {
+function isPlanOwner(plan?: Plan | PlanSlim): boolean {
   const currentPlan = plan ?? get(planStore);
   return isUserOwner(currentPlan);
 }
