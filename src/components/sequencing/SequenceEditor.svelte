@@ -7,6 +7,7 @@
   import type { User } from '../../types/app';
   import type { Monaco, TypeScriptFile } from '../../types/monaco';
   import effects from '../../utilities/effects';
+  import CommandDictJson from '../../workers/command_dict.json?raw';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
   import MonacoEditor from '../ui/MonacoEditor.svelte';
@@ -59,6 +60,11 @@
     const { model, worker } = event.detail;
     const model_id = model.id;
     console.log(`Model ${model_id} loaded!`, worker);
+    worker.updateModelConfig({
+      command_dict_str: CommandDictJson,
+      model_id,
+      should_inject: true,
+    });
   }
 </script>
 

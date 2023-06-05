@@ -1,17 +1,36 @@
+import type { CommandDictionary } from '@nasa-jpl/aerie-ampcs';
 import type { Diagnostic, TypeScriptWorker as InternalTsWorker } from '../types/monaco-internal';
-import { generateSequencingDiagnostics } from './sequencingDiagnostics';
+import { generateSequencingDiagnostics, generateValidationDiagnostics } from './sequencingDiagnostics';
+import { getModelName as getModelId } from './worker_helpers';
 
 // Appease the TSC - this special window object is read by the Custom Worker implementation of Monaco
 declare class TsWorkerOverride implements Partial<InternalTsWorker> {}
 
+type Instantiable = { new (...args: any[]): any };
+
 declare global {
   interface Window {
-    customTSWorkerFactory: (tsw: any) => typeof TsWorkerOverride;
+    customTSWorkerFactory: (tsw: InternalTsWorker & Instantiable) => typeof TsWorkerOverride;
   }
+}
+
+type ModelId = string;
+
+export interface CreateModelData {
+  command_dict_str: string;
+  model_id: ModelId;
+  should_inject: boolean;
+}
+
+export interface _ModelData {
+  command_dict: CommandDictionary;
+  model_id: ModelId;
+  should_inject: boolean;
 }
 
 export interface WorkerOverrideProps {
   setSuggestionName(name: string): Promise<void>;
+  updateModelConfig(model_data: CreateModelData): Promise<void>;
 }
 
 // Partial is required here as we only need to provide some subclass methods
@@ -21,8 +40,10 @@ export interface WorkerSubclass extends Partial<InternalTsWorker>, WorkerOverrid
 // Implement whatever overrides we want!
 self.customTSWorkerFactory = tsw => {
   return class extends tsw implements WorkerSubclass {
+    private model_configurations: Record<ModelId, _ModelData>;
     constructor(...args: any) {
       super(...args);
+      this.model_configurations = {};
     }
 
     /**
@@ -37,7 +58,14 @@ self.customTSWorkerFactory = tsw => {
     async getSemanticDiagnostics(fileName: string): Promise<Diagnostic[]> {
       const diagnostics = await super.getSemanticDiagnostics(fileName);
 
-      diagnostics.push(...generateSequencingDiagnostics(fileName, this._languageService));
+      const model_id = getModelId(fileName);
+
+      const model_config = this.model_configurations?.[model_id];
+
+      if (model_config !== undefined && model_config.should_inject === true) {
+        diagnostics.push(...generateSequencingDiagnostics(fileName, this._languageService));
+        diagnostics.push(...generateValidationDiagnostics(fileName, this._languageService, model_config.command_dict));
+      }
 
       return diagnostics;
     }
@@ -54,6 +82,14 @@ self.customTSWorkerFactory = tsw => {
 
     async setSuggestionName(name: string): Promise<void> {
       this.completion_name = name;
+    }
+
+    async updateModelConfig(model_data: CreateModelData): Promise<void> {
+      this.model_configurations[model_data.model_id] = {
+        command_dict: JSON.parse(model_data.command_dict_str),
+        model_id: model_data.model_id,
+        should_inject: model_data.should_inject,
+      };
     }
   };
 };
