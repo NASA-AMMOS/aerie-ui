@@ -1,7 +1,7 @@
 import type { CommandDictionary } from '@nasa-jpl/aerie-ampcs';
 import type { Diagnostic, TypeScriptWorker as InternalTsWorker } from '../types/monaco-internal';
 import { generateSequencingDiagnostics, generateValidationDiagnostics } from './sequencingDiagnostics';
-import { getModelName as getModelId } from './worker_helpers';
+import { getModelName as getModelId } from './workerHelpers';
 
 // Appease the TSC - this special window object is read by the Custom Worker implementation of Monaco
 declare class TsWorkerOverride implements Partial<InternalTsWorker> {}
@@ -29,7 +29,6 @@ export interface _ModelData {
 }
 
 export interface WorkerOverrideProps {
-  setSuggestionName(name: string): Promise<void>;
   updateModelConfig(model_data: CreateModelData): Promise<void>;
 }
 
@@ -78,10 +77,6 @@ self.customTSWorkerFactory = tsw => {
     async getSyntacticDiagnostics(fileName: string): Promise<Diagnostic[]> {
       const diagnostics = await super.getSyntacticDiagnostics(fileName);
       return diagnostics;
-    }
-
-    async setSuggestionName(name: string): Promise<void> {
-      this.completion_name = name;
     }
 
     async updateModelConfig(model_data: CreateModelData): Promise<void> {

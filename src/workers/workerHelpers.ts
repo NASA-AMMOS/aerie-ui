@@ -28,6 +28,42 @@ export function getSourceFileData(
   return [sourceFile, sourceFileSymbol];
 }
 
+/**
+ * Creates a list of all descents of the given node matching the selector, recursively
+ * @param node The tsc Node we want to use as our root
+ * @param selector A selector function run on every recursive child Node
+ * @returns A list of nodes matching the selector
+ */
+export function getDescendants(node: tsc.Node, selector: (node: tsc.Node) => boolean): tsc.Node[] {
+  const selectedNodes = [];
+  if (selector(node)) {
+    selectedNodes.push(node);
+  }
+  for (const child of node.getChildren()) {
+    selectedNodes.push(...getDescendants(child, selector));
+  }
+  return selectedNodes;
+}
+
+/**
+ * Find the first parent (closest up the tree) from our node that matches the selector
+ *
+ * @param node The node to use as the root
+ * @param selector A selector function which runs on every parent node
+ * @returns The closest parent matching the selector or undefined if no match found
+ */
+export function getFirstInParent(node: tsc.Node, selector: (node: tsc.Node) => boolean): tsc.Node | undefined {
+  if (selector(node)) {
+    return node;
+  }
+
+  if (node.parent === undefined) {
+    return undefined;
+  } else {
+    return getFirstInParent(node.parent, selector);
+  }
+}
+
 // Gets a model name as a string `model\d*`, which matches the syntax of `.getModel()`
 export function getModelName(fileName: string): string {
   const regex = /^inmemory:\/\/model\/(\d*)$/;
@@ -38,6 +74,12 @@ export function getModelName(fileName: string): string {
   return result;
 }
 
+/**
+ * A helpful debugging function to figure out the SyntaxKind of all child nodes of some given node.
+ *
+ * @param node A node to start on
+ * @returns A tuple [SyntaxKind, node_text]
+ */
 export function parentNodeKinds(node: tsc.Node): [string, string][] {
   if (node.parent === undefined) {
     return [];
