@@ -70,6 +70,7 @@
     "toastify-js": "^1.12.0"
   },
   "devDependencies": {
+    "@nasa-jpl/aerie-ampcs": "^1.0.1",
     "@playwright/test": "^1.32.3",
     "@poppanator/sveltekit-svg": "^3.0.0",
     "@testing-library/svelte": "^3.2.2",
