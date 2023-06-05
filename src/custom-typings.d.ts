@@ -1,9 +1,11 @@
 /**
  * Specify overriden types for certain modules.
  *
+ * Used to give correct type completions for the main-thread typescript worker interface.
+ *
  * In this case, we need to add our typescript worker method additions to the `monaco-editor` internal
  * worker type. The following has the effect of applying such a patch, utalizing decleration merging
- * to add our prop overrides to the type `monaco-editor/languages/typescript/TypeScriptWorker` at all uses.
+ * to add our overrides to the type `monaco-editor/languages/typescript/TypeScriptWorker` at all uses.
  */
 
 import type { WorkerOverrideProps } from './workers/customTS.worker';
