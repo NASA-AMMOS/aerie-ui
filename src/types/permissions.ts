@@ -12,3 +12,5 @@ export type PermissibleQueryResponse = {
 export type PermissibleQuery = {
   name: string;
 };
+
+export type PermissionCheck<T = null> = (entry?: T) => boolean;

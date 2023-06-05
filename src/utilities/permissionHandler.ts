@@ -48,6 +48,8 @@ export const permissionHandler: Action<HTMLElement, PermissionHandlerProps> = (
   });
 
   const preventClick = (event: Event) => {
+    event.stopPropagation();
+    event.stopImmediatePropagation();
     event.preventDefault();
   };
 
@@ -63,6 +65,8 @@ export const permissionHandler: Action<HTMLElement, PermissionHandlerProps> = (
       node.setAttribute('readonly', 'readonly');
       node.setAttribute('class', `${classList} disabled`);
       node.addEventListener('mousedown', preventClick);
+      node.addEventListener('mouseup', preventClick);
+      node.addEventListener('click', preventClick);
       node.addEventListener('focus', preventFocus);
     } else {
       if (tabIndex !== null) {
@@ -74,6 +78,8 @@ export const permissionHandler: Action<HTMLElement, PermissionHandlerProps> = (
       node.removeAttribute('readonly');
       node.setAttribute('class', classList);
       node.removeEventListener('mousedown', preventClick);
+      node.removeEventListener('mouseup', preventClick);
+      node.removeEventListener('click', preventClick);
       node.removeEventListener('focus', preventFocus);
     }
   };
@@ -84,6 +90,8 @@ export const permissionHandler: Action<HTMLElement, PermissionHandlerProps> = (
     // Clean up the Tippy instance on unmount.
     destroy: () => {
       node.removeEventListener('mousedown', preventClick);
+      node.removeEventListener('mouseup', preventClick);
+      node.removeEventListener('click', preventClick);
       node.removeEventListener('focus', preventFocus);
 
       tip.destroy();

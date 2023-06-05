@@ -24,3 +24,18 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.st-button.disabled {
+  cursor: not-allowed;
+  opacity: var(--st-button-disabled-opacity);
+}
+
+.st-input.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.st-select.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}

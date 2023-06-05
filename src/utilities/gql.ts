@@ -648,10 +648,14 @@ const gql = {
         version
       }
       plans: plan(order_by: { id: desc }) {
+        collaborators {
+          collaborator
+        }
         duration
         id
         model_id
         name
+        owner
         revision
         start_time
       }
@@ -667,11 +671,15 @@ const gql = {
         version
       }
       plans: plan(order_by: { id: desc }) {
+        collaborators {
+          collaborator
+        }
         scheduling_specifications {
           id
         }
         model_id
         name
+        owner
         id
       }
     }

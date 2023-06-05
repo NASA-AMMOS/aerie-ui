@@ -85,7 +85,7 @@ export type PlanSchema = {
 
 export type PlanSlim = Pick<
   Plan,
-  'end_time_doy' | 'id' | 'model_id' | 'name' | 'revision' | 'start_time' | 'start_time_doy'
+  'collaborators' | 'end_time_doy' | 'id' | 'model_id' | 'name' | 'owner' | 'revision' | 'start_time' | 'start_time_doy'
 >;
 
 export type PlanSlimmer = Pick<PlanSlim, 'id' | 'start_time' | 'end_time_doy'>;

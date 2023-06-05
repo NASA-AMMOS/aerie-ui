@@ -66,6 +66,7 @@
               content: 'Delete Plan',
               placement: 'bottom',
             },
+            hasDeletePermission: featurePermissions.plan.canDelete(params.data),
             rowData: params.data,
           },
           target: actionsDiv,
@@ -332,6 +333,8 @@
         {#if filteredPlans.length}
           <SingleActionDataGrid
             {columnDefs}
+            hasDeletePermission={featurePermissions.plan.canDelete}
+            hasEditPermission={featurePermissions.plan.canUpdate}
             itemDisplayText="Plan"
             items={filteredPlans}
             on:cellMouseOver={({ detail }) => prefetchPlan(detail.data)}

@@ -1,8 +1,11 @@
 import { get } from 'svelte/store';
 import { permissibleQueries as permissibleQueriesStore, user as userStore } from '../stores/app';
 import { plan as planStore } from '../stores/plan';
-import type { ActivityPreset } from '../types/activity';
+import type { ActivityDirective, ActivityPreset } from '../types/activity';
 import type { UserId } from '../types/app';
+import type { Model } from '../types/model';
+import type { PermissionCheck } from '../types/permissions';
+import type { PlanSlim } from '../types/plan';
 
 function getPermission(queries: string[]): boolean {
   const permissibleQueries = get(permissibleQueriesStore);
@@ -25,10 +28,9 @@ function isUserOwner(thingWithOwner?: { owner: UserId } | null): boolean {
   return false;
 }
 
-function isPlanOwner(): boolean {
-  const plan = get(planStore);
-
-  return isUserOwner(plan);
+function isPlanOwner(plan?: PlanSlim): boolean {
+  const currentPlan = plan ?? get(planStore);
+  return isUserOwner(currentPlan);
 }
 
 function isPlanCollaborator(): boolean {
@@ -249,10 +251,10 @@ const queryPermissions = {
 };
 
 interface CRUDPermission<T = null> {
-  canCreate: (entry?: T) => boolean;
-  canDelete: (entry?: T) => boolean;
-  canRead: (entry?: T) => boolean;
-  canUpdate: (entry?: T) => boolean;
+  canCreate: PermissionCheck<T>;
+  canDelete: PermissionCheck<T>;
+  canRead: PermissionCheck<T>;
+  canUpdate: PermissionCheck<T>;
 }
 
 interface AssignableAsset<T = null> extends Omit<CRUDPermission<T>, 'canDelete' | 'canUpdate'> {
@@ -262,10 +264,10 @@ interface AssignableAsset<T = null> extends Omit<CRUDPermission<T>, 'canDelete' 
 }
 
 interface FeaturePermissions {
-  activityDirective: CRUDPermission;
+  activityDirective: CRUDPermission<ActivityDirective>;
   activityPresets: AssignableAsset<ActivityPreset>;
-  model: CRUDPermission;
-  plan: CRUDPermission;
+  model: CRUDPermission<Model>;
+  plan: CRUDPermission<PlanSlim>;
 }
 
 const featurePermissions: FeaturePermissions = {
@@ -290,7 +292,7 @@ const featurePermissions: FeaturePermissions = {
   },
   plan: {
     canCreate: queryPermissions.CREATE_PLAN,
-    canDelete: () => isPlanOwner() && queryPermissions.DELETE_PLAN(),
+    canDelete: (plan?: PlanSlim) => isPlanOwner(plan) && queryPermissions.DELETE_PLAN(),
     canRead: queryPermissions.GET_PLAN,
     canUpdate: () => false, // no feature to update plans exists
   },
