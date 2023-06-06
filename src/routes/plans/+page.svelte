@@ -190,8 +190,6 @@
   }
 </script>
 
-// plans/+page.svelte
-
 <PageTitle title="Plans" />
 
 <CssGrid rows="var(--nav-header-height) calc(100vh - var(--nav-header-height))">
