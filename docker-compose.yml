@@ -1,0 +1,145 @@
+# This compose file is used for end-to-end testing the UI against the Aerie services.
+# It assumes the main Aerie repository has been cloned into this repo as a sub-directory called 'aerie'.
+# See .github/workflows/test.yml for how this file is utilized.
+
+version: '3.7'
+services:
+  aerie_gateway:
+    container_name: aerie_gateway
+    depends_on: ['postgres']
+    environment:
+      AUTH_TYPE: none
+      GQL_API_URL: http://localhost:8080/v1/graphql
+      LOG_FILE: console
+      LOG_LEVEL: debug
+      NODE_TLS_REJECT_UNAUTHORIZED: '0'
+      PORT: 9000
+      POSTGRES_AERIE_MERLIN_DB: aerie_merlin
+      POSTGRES_AERIE_SCHEDULER_DB: aerie_scheduler
+      POSTGRES_HOST: postgres
+      POSTGRES_PASSWORD: '${AERIE_PASSWORD}'
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: '${AERIE_USERNAME}'
+    image: 'ghcr.io/nasa-ammos/aerie-gateway:develop'
+    ports: ['9000:9000']
+    restart: always
+    volumes:
+      - aerie_file_store:/app/files
+  aerie_merlin:
+    container_name: aerie_merlin
+    depends_on: ['postgres']
+    environment:
+      MERLIN_DB: 'aerie_merlin'
+      MERLIN_DB_PASSWORD: '${AERIE_PASSWORD}'
+      MERLIN_DB_PORT: 5432
+      MERLIN_DB_SERVER: postgres
+      MERLIN_DB_USER: '${AERIE_USERNAME}'
+      MERLIN_LOCAL_STORE: /usr/src/app/merlin_file_store
+      MERLIN_PORT: 27183
+      MERLIN_USE_NEW_CONSTRAINT_PIPELINE: 'true'
+      JAVA_OPTS: >
+        -Dorg.slf4j.simpleLogger.defaultLogLevel=DEBUG
+        -Dorg.slf4j.simpleLogger.log.com.zaxxer.hikari=INFO
+        -Dorg.slf4j.simpleLogger.logFile=System.err
+      UNTRUE_PLAN_START: '2000-01-01T11:58:55.816Z'
+    image: 'ghcr.io/nasa-ammos/aerie-merlin:develop'
+    ports: ['27183:27183']
+    restart: always
+    volumes:
+      - aerie_file_store:/usr/src/app/merlin_file_store
+  aerie_merlin_worker:
+    container_name: aerie_merlin_worker
+    depends_on: ['postgres']
+    environment:
+      MERLIN_WORKER_DB: 'aerie_merlin'
+      MERLIN_WORKER_DB_PASSWORD: '${AERIE_PASSWORD}'
+      MERLIN_WORKER_DB_PORT: 5432
+      MERLIN_WORKER_DB_SERVER: postgres
+      MERLIN_WORKER_DB_USER: '${AERIE_USERNAME}'
+      MERLIN_WORKER_LOCAL_STORE: /usr/src/app/merlin_file_store
+      JAVA_OPTS: >
+        -Dorg.slf4j.simpleLogger.defaultLogLevel=DEBUG
+        -Dorg.slf4j.simpleLogger.log.com.zaxxer.hikari=INFO
+        -Dorg.slf4j.simpleLogger.logFile=System.err
+      UNTRUE_PLAN_START: '2000-01-01T11:58:55.816Z'
+    image: 'ghcr.io/nasa-ammos/aerie-merlin-worker:develop'
+    ports: ['27187:8080']
+    restart: always
+    volumes:
+      - aerie_file_store:/usr/src/app/merlin_file_store:ro
+  aerie_scheduler:
+    container_name: aerie_scheduler
+    depends_on: ['aerie_merlin', 'postgres']
+    environment:
+      MERLIN_GRAPHQL_URL: http://hasura:8080/v1/graphql
+      SCHEDULER_DB: 'aerie_scheduler'
+      SCHEDULER_DB_PASSWORD: '${AERIE_PASSWORD}'
+      SCHEDULER_DB_PORT: 5432
+      SCHEDULER_DB_SERVER: postgres
+      SCHEDULER_DB_USER: '${AERIE_USERNAME}'
+      SCHEDULER_PORT: 27185
+      JAVA_OPTS: >
+        -Dorg.slf4j.simpleLogger.defaultLogLevel=DEBUG
+        -Dorg.slf4j.simpleLogger.log.com.zaxxer.hikari=INFO
+        -Dorg.slf4j.simpleLogger.logFile=System.err
+    image: 'ghcr.io/nasa-ammos/aerie-scheduler:develop'
+    ports: ['27185:27185']
+    restart: always
+    volumes:
+      - aerie_file_store:/usr/src/app/merlin_file_store
+  aerie_scheduler_worker:
+    container_name: aerie_scheduler_worker
+    depends_on: ['postgres']
+    environment:
+      MERLIN_GRAPHQL_URL: http://hasura:8080/v1/graphql
+      MERLIN_LOCAL_STORE: /usr/src/app/merlin_file_store
+      SCHEDULER_OUTPUT_MODE: UpdateInputPlanWithNewActivities
+      SCHEDULER_RULES_JAR: /usr/src/app/merlin_file_store/scheduler_rules.jar
+      SCHEDULER_WORKER_DB: 'aerie_scheduler'
+      SCHEDULER_WORKER_DB_PASSWORD: '${AERIE_PASSWORD}'
+      SCHEDULER_WORKER_DB_PORT: 5432
+      SCHEDULER_WORKER_DB_SERVER: postgres
+      SCHEDULER_WORKER_DB_USER: '${AERIE_USERNAME}'
+      JAVA_OPTS: >
+        -Dorg.slf4j.simpleLogger.log.com.zaxxer.hikari=INFO
+        -Dorg.slf4j.simpleLogger.logFile=System.err
+    image: 'ghcr.io/nasa-ammos/aerie-scheduler-worker:develop'
+    ports: ['27189:8080']
+    restart: always
+    volumes:
+      - aerie_file_store:/usr/src/app/merlin_file_store:ro
+
+  hasura:
+    container_name: aerie_hasura
+    depends_on: ['postgres']
+    environment:
+      AERIE_MERLIN_DATABASE_URL: 'postgres://${AERIE_USERNAME}:${AERIE_PASSWORD}@postgres:5432/aerie_merlin'
+      AERIE_SCHEDULER_DATABASE_URL: 'postgres://${AERIE_USERNAME}:${AERIE_PASSWORD}@postgres:5432/aerie_scheduler'
+      AERIE_SEQUENCING_DATABASE_URL: 'postgres://${AERIE_USERNAME}:${AERIE_PASSWORD}@postgres:5432/aerie_sequencing'
+      AERIE_UI_DATABASE_URL: 'postgres://${AERIE_USERNAME}:${AERIE_PASSWORD}@postgres:5432/aerie_ui'
+      HASURA_GRAPHQL_DEV_MODE: 'true'
+      HASURA_GRAPHQL_ENABLE_CONSOLE: 'true'
+      HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
+      HASURA_GRAPHQL_LOG_LEVEL: info
+      HASURA_GRAPHQL_METADATA_DATABASE_URL: 'postgres://${AERIE_USERNAME}:${AERIE_PASSWORD}@postgres:5432/aerie_hasura'
+      HASURA_GRAPHQL_METADATA_DIR: /hasura-metadata
+    image: 'ghcr.io/nasa-ammos/aerie-hasura:develop'
+    ports: ['8080:8080']
+    restart: always
+  postgres:
+    container_name: aerie_postgres
+    environment:
+      AERIE_PASSWORD: '${AERIE_PASSWORD}'
+      AERIE_USERNAME: '${AERIE_USERNAME}'
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: '${POSTGRES_PASSWORD}'
+      POSTGRES_USER: '${POSTGRES_USER}'
+    image: 'ghcr.io/nasa-ammos/aerie-postgres:develop'
+    ports: ['5432:5432']
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  aerie_file_store:
+  postgres_data:

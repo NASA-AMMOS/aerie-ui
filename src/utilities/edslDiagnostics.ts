@@ -1,5 +1,5 @@
-import tsc from 'typescript';
 import type { Diagnostic as ResponseDiagnostic } from 'monaco/languages/typescript';
+import tsc from 'typescript';
 enum CustomCodes {
   InvalidAbsoluteTimeString = -1,
   InvalidRelativeTimeString = -2,
