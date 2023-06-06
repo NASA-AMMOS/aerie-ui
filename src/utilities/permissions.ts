@@ -3,7 +3,7 @@ import { permissibleQueries as permissibleQueriesStore, user as userStore } from
 import { plan as planStore } from '../stores/plan';
 import type { ActivityDirective, ActivityPreset } from '../types/activity';
 import type { UserId } from '../types/app';
-import type { Model } from '../types/model';
+import type { ModelSlim } from '../types/model';
 import type { PermissibleQueriesMap, PermissionCheck } from '../types/permissions';
 import type { Plan, PlanSlim } from '../types/plan';
 
@@ -266,7 +266,7 @@ interface AssignableAsset<T = null> extends Omit<CRUDPermission<T>, 'canDelete' 
 interface FeaturePermissions {
   activityDirective: CRUDPermission<ActivityDirective>;
   activityPresets: AssignableAsset<ActivityPreset>;
-  model: CRUDPermission<Model>;
+  model: CRUDPermission<ModelSlim>;
   plan: CRUDPermission<PlanSlim>;
 }
 

@@ -63,7 +63,7 @@ export const permissionHandler: Action<HTMLElement, PermissionHandlerProps> = (
     if (hasPermission === false) {
       node.setAttribute('tabindex', '-1');
       node.setAttribute('readonly', 'readonly');
-      node.setAttribute('class', `${classList} disabled`);
+      node.setAttribute('class', `${classList} permission-disabled`);
       node.addEventListener('mousedown', preventClick);
       node.addEventListener('mouseup', preventClick);
       node.addEventListener('click', preventClick);

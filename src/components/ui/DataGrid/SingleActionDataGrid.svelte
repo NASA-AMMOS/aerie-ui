@@ -30,8 +30,8 @@
   export let scrollToSelection: boolean = false;
 
   export let getRowId: (data: RowData) => RowId = (data: RowData): RowId => parseInt(data[idKey]);
-  export let hasDeletePermission: PermissionCheck<RowData> | undefined = undefined;
-  export let hasEditPermission: PermissionCheck<RowData> | undefined = undefined;
+  export let hasDeletePermission: PermissionCheck<RowData> | boolean = true;
+  export let hasEditPermission: PermissionCheck<RowData> | boolean = true;
   export let isRowSelectable: ((node: IRowNode<RowData>) => boolean) | undefined = undefined;
 
   const dispatch = createEventDispatcher();
@@ -40,16 +40,22 @@
   let editPermission: boolean = true;
   let selectedItemIds: RowId[] = [];
 
-  $: {
+  $: if (typeof hasDeletePermission === 'function' || typeof hasEditPermission === 'function') {
     const selectedItem = items.find(item => item.id === selectedItemId) ?? null;
     if (selectedItem) {
-      if (hasDeletePermission) {
+      if (typeof hasDeletePermission === 'function') {
         deletePermission = hasDeletePermission(selectedItem);
       }
-      if (hasEditPermission) {
+      if (typeof hasEditPermission === 'function') {
         editPermission = hasEditPermission(selectedItem);
       }
     }
+  }
+  $: if (typeof hasDeletePermission === 'boolean') {
+    deletePermission = hasDeletePermission;
+  }
+  $: if (typeof hasEditPermission === 'boolean') {
+    editPermission = hasEditPermission;
   }
   $: if (selectedItemId != null && !selectedItemIds.includes(selectedItemId)) {
     selectedItemIds = [selectedItemId];

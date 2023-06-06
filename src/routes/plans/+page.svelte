@@ -334,7 +334,6 @@
           <SingleActionDataGrid
             {columnDefs}
             hasDeletePermission={featurePermissions.plan.canDelete}
-            hasEditPermission={featurePermissions.plan.canUpdate}
             itemDisplayText="Plan"
             items={filteredPlans}
             on:cellMouseOver={({ detail }) => prefetchPlan(detail.data)}
