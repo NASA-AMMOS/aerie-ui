@@ -66,7 +66,7 @@
               content: 'Delete Plan',
               placement: 'bottom',
             },
-            hasDeletePermission: featurePermissions.plan.canDelete(params.data),
+            hasDeletePermission: params.data ? featurePermissions.plan.canDelete(params.data) : false,
             rowData: params.data,
           },
           target: actionsDiv,
@@ -189,6 +189,8 @@
     }
   }
 </script>
+
+// plans/+page.svelte
 
 <PageTitle title="Plans" />
 

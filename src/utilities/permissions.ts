@@ -1,11 +1,21 @@
 import { get } from 'svelte/store';
 import { permissibleQueries as permissibleQueriesStore, user as userStore } from '../stores/app';
-import { plan as planStore } from '../stores/plan';
 import type { ActivityDirective, ActivityPreset } from '../types/activity';
 import type { UserId } from '../types/app';
-import type { ModelSlim } from '../types/model';
-import type { PermissibleQueriesMap, PermissionCheck } from '../types/permissions';
-import type { Plan, PlanSlim } from '../types/plan';
+import type { Constraint } from '../types/constraint';
+import type {
+  CreatePermissionCheck,
+  PermissibleQueriesMap,
+  PermissionCheck,
+  PlanAssetCreatePermissionCheck,
+  PlanAssetReadPermissionCheck,
+  PlanAssetUpdatePermissionCheck,
+  PlanWithOwners,
+  ReadPermissionCheck,
+  UpdatePermissionCheck,
+} from '../types/permissions';
+
+const ADMIN_ROLE = 'admin';
 
 function getPermission(queries: string[]): boolean {
   const permissibleQueries = get(permissibleQueriesStore);
@@ -15,6 +25,11 @@ function getPermission(queries: string[]): boolean {
     }, true);
   }
   return false;
+}
+
+function isUserAdmin() {
+  const user = get(userStore);
+  return user?.allowedRoles.includes(ADMIN_ROLE) || user?.defaultRole === ADMIN_ROLE;
 }
 
 function isUserOwner(thingWithOwner?: { owner: UserId } | null): boolean {
@@ -28,13 +43,12 @@ function isUserOwner(thingWithOwner?: { owner: UserId } | null): boolean {
   return false;
 }
 
-function isPlanOwner(plan?: Plan | PlanSlim): boolean {
-  const currentPlan = plan ?? get(planStore);
+function isPlanOwner(plan: PlanWithOwners): boolean {
+  const currentPlan = plan;
   return isUserOwner(currentPlan);
 }
 
-function isPlanCollaborator(): boolean {
-  const plan = get(planStore);
+function isPlanCollaborator(plan: PlanWithOwners): boolean {
   const user = get(userStore);
 
   if (plan && user) {
@@ -209,6 +223,9 @@ const queryPermissions = {
   SUB_ACTIVITY_PRESETS: (): boolean => {
     return getPermission(['activity_presets']);
   },
+  SUB_CONSTRAINTS_ALL: (): boolean => {
+    return getPermission(['constraint']);
+  },
   UPDATE_ACTIVITY_DIRECTIVE: (): boolean => {
     return getPermission(['update_activity_directive_by_pk']);
   },
@@ -250,50 +267,75 @@ const queryPermissions = {
   },
 };
 
-interface CRUDPermission<T = null> {
+interface BaseCRUDPermission<T = null> {
   canCreate: PermissionCheck<T>;
   canDelete: PermissionCheck<T>;
   canRead: PermissionCheck<T>;
   canUpdate: PermissionCheck<T>;
 }
 
-interface AssignableAsset<T = null> extends Omit<CRUDPermission<T>, 'canDelete' | 'canUpdate'> {
-  canAssign: () => boolean;
-  canDelete: (entry: T) => boolean;
-  canUpdate: (entry: T) => boolean;
+interface CRUDPermission<T = null> extends BaseCRUDPermission<T> {
+  canCreate: CreatePermissionCheck;
+  canDelete: UpdatePermissionCheck<T>;
+  canRead: ReadPermissionCheck<T>;
+  canUpdate: UpdatePermissionCheck<T>;
+}
+
+interface PlanAssetCRUDPermission<T = null> {
+  canCreate: PlanAssetCreatePermissionCheck;
+  canDelete: PlanAssetUpdatePermissionCheck<T>;
+  canRead: PlanAssetReadPermissionCheck;
+  canUpdate: PlanAssetUpdatePermissionCheck<T>;
+}
+
+interface AssignablePlanAssetCRUDPermission<T = null> extends PlanAssetCRUDPermission<T> {
+  canAssign: (plan: PlanWithOwners, asset?: T) => boolean;
 }
 
 interface FeaturePermissions {
-  activityDirective: CRUDPermission<ActivityDirective>;
-  activityPresets: AssignableAsset<ActivityPreset>;
-  model: CRUDPermission<ModelSlim>;
-  plan: CRUDPermission<PlanSlim>;
+  activityDirective: PlanAssetCRUDPermission<ActivityDirective>;
+  activityPresets: AssignablePlanAssetCRUDPermission<ActivityPreset>;
+  constraints: PlanAssetCRUDPermission<Constraint>;
+  model: CRUDPermission<void>;
+  plan: CRUDPermission<PlanWithOwners>;
 }
 
 const featurePermissions: FeaturePermissions = {
   activityDirective: {
-    canCreate: () => (isPlanOwner() || isPlanCollaborator()) && queryPermissions.CREATE_ACTIVITY_DIRECTIVE(),
-    canDelete: () => (isPlanOwner() || isPlanCollaborator()) && queryPermissions.DELETE_ACTIVITY_DIRECTIVES(),
+    canCreate: (plan: PlanWithOwners) =>
+      (isPlanOwner(plan) || isPlanCollaborator(plan)) && queryPermissions.CREATE_ACTIVITY_DIRECTIVE(),
+    canDelete: (plan: PlanWithOwners) =>
+      (isPlanOwner(plan) || isPlanCollaborator(plan)) && queryPermissions.DELETE_ACTIVITY_DIRECTIVES(),
     canRead: queryPermissions.GET_PLAN,
-    canUpdate: () => (isPlanOwner() || isPlanCollaborator()) && queryPermissions.UPDATE_ACTIVITY_DIRECTIVE(),
+    canUpdate: (plan: PlanWithOwners) =>
+      (isPlanOwner(plan) || isPlanCollaborator(plan)) && queryPermissions.UPDATE_ACTIVITY_DIRECTIVE(),
   },
   activityPresets: {
-    canAssign: () => (isPlanOwner() || isPlanCollaborator()) && queryPermissions.APPLY_PRESET_TO_ACTIVITY(),
+    canAssign: (plan: PlanWithOwners) =>
+      (isPlanOwner(plan) || isPlanCollaborator(plan)) && queryPermissions.APPLY_PRESET_TO_ACTIVITY(),
     canCreate: queryPermissions.CREATE_ACTIVITY_PRESET,
-    canDelete: (preset: ActivityPreset) => isUserOwner(preset) && queryPermissions.DELETE_ACTIVITY_PRESET(),
+    canDelete: (plan: PlanWithOwners, preset: ActivityPreset) =>
+      isUserOwner(preset) && queryPermissions.DELETE_ACTIVITY_PRESET(),
     canRead: queryPermissions.SUB_ACTIVITY_PRESETS,
-    canUpdate: (preset: ActivityPreset) => isUserOwner(preset) && queryPermissions.UPDATE_ACTIVITY_PRESET(),
+    canUpdate: (plan: PlanWithOwners, preset: ActivityPreset) =>
+      isUserOwner(preset) && queryPermissions.UPDATE_ACTIVITY_PRESET(),
+  },
+  constraints: {
+    canCreate: () => isUserAdmin() || queryPermissions.CREATE_CONSTRAINT(),
+    canDelete: () => isUserAdmin() || queryPermissions.DELETE_CONSTRAINT(),
+    canRead: () => isUserAdmin() || queryPermissions.SUB_CONSTRAINTS_ALL(),
+    canUpdate: () => isUserAdmin() || queryPermissions.UPDATE_CONSTRAINT(),
   },
   model: {
-    canCreate: queryPermissions.CREATE_MODEL,
-    canDelete: queryPermissions.DELETE_MODEL,
-    canRead: queryPermissions.GET_PLANS_AND_MODELS,
+    canCreate: () => isUserAdmin() || queryPermissions.CREATE_MODEL(),
+    canDelete: () => isUserAdmin() || queryPermissions.DELETE_MODEL(),
+    canRead: () => isUserAdmin() || queryPermissions.GET_PLANS_AND_MODELS(),
     canUpdate: () => false, // no feature to update models exists
   },
   plan: {
-    canCreate: queryPermissions.CREATE_PLAN,
-    canDelete: (plan?: PlanSlim) => isPlanOwner(plan) && queryPermissions.DELETE_PLAN(),
-    canRead: queryPermissions.GET_PLAN,
+    canCreate: () => isUserAdmin() || queryPermissions.CREATE_PLAN(),
+    canDelete: (plan: PlanWithOwners) => isUserAdmin() || (isPlanOwner(plan) && queryPermissions.DELETE_PLAN()),
+    canRead: () => isUserAdmin() || queryPermissions.GET_PLAN(),
     canUpdate: () => false, // no feature to update plans exists
   },
 };
