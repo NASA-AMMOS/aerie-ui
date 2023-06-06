@@ -1,3 +1,5 @@
+export type PermissibleQueriesMap = Record<string, true>;
+
 export type PermissibleQueryResponse = {
   // mutationType is for the queries that directly mutate the db
   mutationType: {

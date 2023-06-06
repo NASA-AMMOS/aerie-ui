@@ -48,7 +48,7 @@ import type {
   ParameterValidationError,
   ParameterValidationResponse,
 } from '../types/parameter';
-import type { PermissibleQueryResponse } from '../types/permissions';
+import type { PermissibleQueriesMap, PermissibleQueryResponse } from '../types/permissions';
 import type {
   Plan,
   PlanBranchRequestAction,
@@ -1805,7 +1805,7 @@ const effects = {
     }
   },
 
-  async getUserQueries(userToken?: string): Promise<Record<string, true> | null> {
+  async getUserQueries(userToken?: string): Promise<PermissibleQueriesMap | null> {
     try {
       const data = await reqHasura<PermissibleQueryResponse>(gql.GET_PERMISSIBLE_QUERIES, {}, undefined, userToken);
       const {

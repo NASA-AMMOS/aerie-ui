@@ -59,7 +59,7 @@ export const permissionHandler: Action<HTMLElement, PermissionHandlerProps> = (
     }
   };
 
-  const handlePermission = (hasPermission: boolean | undefined) => {
+  const handlePermission = (hasPermission: boolean = true) => {
     if (hasPermission === false) {
       node.setAttribute('tabindex', '-1');
       node.setAttribute('readonly', 'readonly');

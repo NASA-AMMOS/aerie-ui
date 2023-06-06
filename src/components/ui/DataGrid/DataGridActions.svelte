@@ -22,8 +22,8 @@
   export let editTooltip: Tooltip | undefined = undefined;
   export let deleteTooltip: Tooltip | undefined = undefined;
   export let downloadTooltip: Tooltip | undefined = undefined;
-  export let hasDeletePermission: boolean | undefined = undefined;
-  export let hasEditPermission: boolean | undefined = undefined;
+  export let hasDeletePermission: boolean = true;
+  export let hasEditPermission: boolean = true;
   export let viewTooltip: Tooltip | undefined = undefined;
 
   export let editCallback: ((data: RowData) => void) | undefined = undefined;
@@ -62,7 +62,7 @@
   <button
     class="st-button icon"
     on:click|stopPropagation={() => {
-      if (rowData && hasEditPermission !== false) {
+      if (rowData && hasEditPermission === true) {
         editCallback?.(rowData);
       }
     }}
@@ -79,7 +79,7 @@
   <button
     class="st-button icon"
     on:click|stopPropagation={() => {
-      if (rowData && hasDeletePermission !== false) {
+      if (rowData && hasDeletePermission === true) {
         deleteCallback?.(rowData);
       }
     }}

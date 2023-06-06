@@ -4,7 +4,7 @@ import { plan as planStore } from '../stores/plan';
 import type { ActivityDirective, ActivityPreset } from '../types/activity';
 import type { UserId } from '../types/app';
 import type { Model } from '../types/model';
-import type { PermissionCheck } from '../types/permissions';
+import type { PermissibleQueriesMap, PermissionCheck } from '../types/permissions';
 import type { Plan, PlanSlim } from '../types/plan';
 
 function getPermission(queries: string[]): boolean {
@@ -298,4 +298,8 @@ const featurePermissions: FeaturePermissions = {
   },
 };
 
-export { featurePermissions, queryPermissions };
+function hasNoAuthorization(permissibleQueries?: PermissibleQueriesMap | null) {
+  return permissibleQueries && !Object.keys(permissibleQueries).length;
+}
+
+export { featurePermissions, hasNoAuthorization, queryPermissions };
