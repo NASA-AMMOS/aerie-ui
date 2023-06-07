@@ -9,6 +9,7 @@ import {
   getDoy,
   getDoyTime,
   getDoyTimeComponents,
+  getShortISOForDate,
   getTimeAgo,
   getUnixEpochTime,
   parseDoyOrYmdTime,
@@ -145,5 +146,5 @@ test('getTimeAgo', () => {
 });
 
 test('getShortISOForDate', () => {
-  expect(getTimeAgo(new Date('2023-05-23T00:00:00.000Z'))).toEqual('2023-05-23T00:00');
+  expect(getShortISOForDate(new Date('2023-05-23T00:00:00.000Z'))).toEqual('2023-05-23T00:00:00');
 });
