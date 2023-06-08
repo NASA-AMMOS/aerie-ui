@@ -5,9 +5,8 @@
   import { createEventDispatcher } from 'svelte';
   import { userSequencesRows } from '../../stores/sequencing';
   import type { User } from '../../types/app';
-  import type { Monaco, TypeScriptFile } from '../../types/monaco';
+  import type { Monaco, ParsedDictionary, TypeScriptFile } from '../../types/monaco';
   import effects from '../../utilities/effects';
-  import CommandDictJson from '../../workers/command_dict.json?raw';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
   import MonacoEditor from '../ui/MonacoEditor.svelte';
@@ -26,11 +25,16 @@
   const dispatch = createEventDispatcher();
 
   let commandDictionaryTsFiles: TypeScriptFile[] = [];
+  let commandDictionaryJson: ParsedDictionary = {};
   let monaco: Monaco;
 
   $: effects
     .getTsFilesCommandDictionary(sequenceCommandDictionaryId, user)
     .then(tsFiles => (commandDictionaryTsFiles = tsFiles));
+
+  $: effects
+    .getParsedDictionary(sequenceCommandDictionaryId, user)
+    .then(pasedDictionary => (commandDictionaryJson = pasedDictionary));
 
   $: if (monaco !== undefined) {
     const { languages } = monaco;
@@ -47,6 +51,27 @@
     typescriptDefaults.setExtraLibs(commandDictionaryTsFiles);
   }
 
+  // Update the custom worker to use the select Command Dictionary
+  $: if (monaco !== undefined && commandDictionaryJson !== undefined) {
+    monaco.languages.typescript
+      .getTypeScriptWorker()
+      .then(worker => worker())
+      .then(ts => {
+        monaco.editor.getModels().forEach(model =>
+          ts.updateModelConfig({
+            command_dict_str: JSON.stringify(commandDictionaryJson),
+            //There are two editors available: one for sequence editing and the other for SeqJSON.
+            //In this case, we need to select the first editor, which corresponds to the sequence editor.
+            model_id: model.id,
+            should_inject: true,
+          }),
+        );
+      })
+      .catch(reason => {
+        console.log('Failed to pass the command dictionary to the custom worker.', reason);
+      });
+  }
+
   function downloadSeqJson() {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([sequenceSeqJson], { type: 'application/json' }));
@@ -61,7 +86,7 @@
     const model_id = model.id;
     console.log(`Model ${model_id} loaded!`, worker);
     worker.updateModelConfig({
-      command_dict_str: CommandDictJson,
+      command_dict_str: JSON.stringify(commandDictionaryJson),
       model_id,
       should_inject: true,
     });
