@@ -10,6 +10,7 @@
   import type { PlanSlim } from '../../types/plan';
   import effects from '../../utilities/effects';
   import { isSaveEvent } from '../../utilities/keyboardEvents';
+  import { featurePermissions } from '../../utilities/permissions';
   import PageTitle from '../app/PageTitle.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
@@ -23,7 +24,9 @@
   export let initialConstraintName: string = '';
   export let initialConstraintModelId: number | null = null;
   export let initialConstraintPlanId: number | null = null;
+  export let initialModelMap: Record<number, ModelSlim> = {};
   export let initialModels: ModelSlim[] = [];
+  export let initialPlanMap: Record<number, PlanSlim> = {};
   export let initialPlans: PlanSlim[] = [];
   export let mode: 'create' | 'edit' = 'create';
   export let user: User | null;
@@ -34,6 +37,7 @@
   let constraintName: string = initialConstraintName;
   let constraintModelId: number | null = initialConstraintModelId;
   let constraintPlanId: number | null = initialConstraintPlanId;
+  let hasPermission: boolean = false;
   let models: ModelSlim[] = initialModels;
   let plans: PlanSlim[] = initialPlans;
   let saveButtonEnabled: boolean = false;
@@ -45,8 +49,6 @@
     plan_id: constraintPlanId,
   };
 
-  $: saveButtonEnabled =
-    constraintDefinition !== '' && constraintName !== '' && (constraintModelId !== null || constraintPlanId !== null);
   $: constraintModified = diffConstraints(savedConstraint, {
     definition: constraintDefinition,
     description: constraintDescription,
@@ -54,16 +56,50 @@
     name: constraintName,
     plan_id: constraintPlanId,
   });
-  $: saveButtonText = mode === 'edit' && !constraintModified ? 'Saved' : 'Save';
-  $: saveButtonClass = saveButtonEnabled && constraintModified ? 'primary' : 'secondary';
+  $: {
+    if (initialConstraintPlanId !== null) {
+      hasPermission = hasPlanPermission(initialPlanMap[initialConstraintPlanId], mode);
+    } else if (initialConstraintModelId !== null) {
+      hasPermission = hasModelPermission(initialConstraintModelId, mode);
+    }
+  }
   $: pageTitle = mode === 'edit' ? 'Constraints' : 'New Constraint';
   $: pageSubtitle = mode === 'edit' ? savedConstraint.name : '';
+  $: saveButtonEnabled =
+    constraintDefinition !== '' && constraintName !== '' && (constraintModelId !== null || constraintPlanId !== null);
+  $: saveButtonText = mode === 'edit' && !constraintModified ? 'Saved' : 'Save';
+  $: saveButtonClass = saveButtonEnabled && constraintModified ? 'primary' : 'secondary';
 
   $: if (constraintPlanId !== null) {
     const plan = initialPlans.find(plan => plan.id === constraintPlanId);
     if (plan) {
       constraintModelId = plan.model_id;
     }
+  }
+
+  function hasModelPermission(modelId: number, mode: 'create' | 'edit'): boolean {
+    const model = initialModelMap[modelId];
+    if (model) {
+      return model.plans.reduce((prevPermission: boolean, { id }) => {
+        const plan = initialPlanMap[id];
+        if (plan) {
+          return (
+            prevPermission ||
+            (mode === 'create'
+              ? featurePermissions.constraints.canCreate(plan)
+              : featurePermissions.constraints.canUpdate(plan))
+          );
+        }
+      }, false);
+    }
+
+    return false;
+  }
+
+  function hasPlanPermission(plan: PlanSlim, mode: 'create' | 'edit'): boolean {
+    return mode === 'create'
+      ? featurePermissions.constraints.canCreate(plan)
+      : featurePermissions.constraints.canUpdate(plan);
   }
 
   function diffConstraints(constraintA: Partial<Constraint>, constraintB: Partial<Constraint>) {
@@ -170,7 +206,7 @@
         >
           <option value={null} />
           {#each models as model}
-            <option value={model.id}>
+            <option value={model.id} disabled={!hasModelPermission(model.id, mode)}>
               {model.name} ({model.id})
             </option>
           {/each}
@@ -182,7 +218,7 @@
         <select bind:value={constraintPlanId} class="st-select w-100" name="plan">
           <option value={null} />
           {#each plans as plan}
-            <option value={plan.id}>
+            <option value={plan.id} disabled={!hasPlanPermission(plan, mode)}>
               {plan.name} ({plan.id})
             </option>
           {/each}
@@ -220,6 +256,7 @@
     {constraintDefinition}
     {constraintModelId}
     {constraintPlanId}
+    readOnly={!hasPermission}
     title="{mode === 'create' ? 'New' : 'Edit'} Constraint - Definition Editor"
     {user}
     on:didChangeModelContent={onDidChangeModelContent}

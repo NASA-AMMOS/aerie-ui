@@ -8,8 +8,10 @@
   import type { User } from '../../types/app';
   import type { Constraint } from '../../types/constraint';
   import type { DataGridColumnDef, DataGridRowSelection, RowId } from '../../types/data-grid';
+  import type { ModelSlim } from '../../types/model';
   import type { PlanSlim } from '../../types/plan';
   import effects from '../../utilities/effects';
+  import { featurePermissions } from '../../utilities/permissions';
   import Input from '../form/Input.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
@@ -26,7 +28,13 @@
     editConstraint: (constraint: Constraint) => void;
   };
   type ConstraintsCellRendererParams = ICellRendererParams<Constraint> & CellRendererParams;
+  type ConstraintsEditPermissionsMap = {
+    models: Record<number, boolean>;
+    plans: Record<number, boolean>;
+  };
 
+  export let initialModelMap: Record<number, ModelSlim> = {};
+  export let initialPlanMap: Record<number, PlanSlim> = {};
   export let initialPlans: PlanSlim[] = [];
 
   const columnDefs: DataGridColumnDef[] = [
@@ -94,6 +102,8 @@
               content: 'Edit Constraint',
               placement: 'bottom',
             },
+            hasDeletePermission: params.data ? hasEditPermission(params.data) : false,
+            hasEditPermission: params.data ? hasEditPermission(params.data) : false,
             rowData: params.data,
           },
           target: actionsDiv,
@@ -118,6 +128,10 @@
   let constraintModelId: number | null = null;
   let filterText: string = '';
   let filteredConstraints: Constraint[] = [];
+  let constraintsEditPermissionsMap: ConstraintsEditPermissionsMap = {
+    models: {},
+    plans: {},
+  };
   let selectedConstraint: Constraint | null = null;
 
   $: filteredConstraints = $constraintsAll.filter(constraint => {
@@ -133,6 +147,47 @@
     }
   }
   $: constraintModelId = getConstraintModelId(selectedConstraint);
+  $: constraintsEditPermissionsMap = ($constraintsAll ?? []).reduce(
+    (prevMap: ConstraintsEditPermissionsMap, constraint: Constraint) => {
+      const { model_id, plan_id } = constraint;
+
+      if (plan_id !== null) {
+        const plan = initialPlanMap[plan_id];
+        if (plan) {
+          return {
+            ...prevMap,
+            plans: {
+              ...prevMap.plans,
+              [plan_id]: featurePermissions.constraints.canUpdate(plan, constraint),
+            },
+          };
+        }
+      } else if (model_id !== null) {
+        const model = initialModelMap[model_id];
+        if (model) {
+          return {
+            ...prevMap,
+            models: {
+              ...prevMap.models,
+              [model_id]: model.plans.reduce((prevPermission: boolean, { id }) => {
+                const plan = initialPlanMap[id];
+                if (plan) {
+                  return prevPermission || featurePermissions.constraints.canUpdate(plan, constraint);
+                }
+                return prevPermission;
+              }, false),
+            },
+          };
+        }
+      }
+
+      return prevMap;
+    },
+    {
+      models: {},
+      plans: {},
+    },
+  );
 
   async function deleteConstraint({ id }: Pick<Constraint, 'id'>) {
     const success = await effects.deleteConstraint(id, user);
@@ -175,6 +230,17 @@
     return null;
   }
 
+  function hasEditPermission(constraint: Constraint) {
+    const { model_id, plan_id } = constraint;
+    if (plan_id !== null) {
+      return constraintsEditPermissionsMap.plans[plan_id] ?? false;
+    } else if (model_id !== null) {
+      return constraintsEditPermissionsMap.models[model_id] ?? false;
+    }
+
+    return false;
+  }
+
   function toggleConstraint(event: CustomEvent<DataGridRowSelection<Constraint>>) {
     const {
       detail: { data: clickedConstraint, isSelected },
@@ -207,6 +273,8 @@
         <SingleActionDataGrid
           {columnDefs}
           hasEdit={true}
+          hasDeletePermission={hasEditPermission}
+          {hasEditPermission}
           itemDisplayText="Constraint"
           items={filteredConstraints}
           {user}
