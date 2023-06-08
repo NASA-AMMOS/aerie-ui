@@ -43,7 +43,12 @@ import type {
   SeqId,
 } from '../types/expansion';
 import type { ModelInsertInput, ModelSlim } from '../types/model';
-import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
+import type {
+  DslTypeScriptResponse,
+  ParsedDictionary,
+  ParsedDictionaryResponse,
+  TypeScriptFile,
+} from '../types/monaco';
 import type {
   ArgumentsMap,
   EffectiveArguments,
@@ -51,6 +56,7 @@ import type {
   ParameterValidationResponse,
 } from '../types/parameter';
 import type { PermissibleQueriesMap, PermissibleQueryResponse } from '../types/permissions';
+
 import type {
   Plan,
   PlanBranchRequestAction,
@@ -1620,6 +1626,34 @@ const effects = {
     } catch (e) {
       catchError(e as Error);
       return [];
+    }
+  },
+
+  async getParsedDictionary(
+    commandDictionaryId: number | null | undefined,
+    user: User | null,
+  ): Promise<ParsedDictionary> {
+    if (commandDictionaryId !== null && commandDictionaryId !== undefined) {
+      try {
+        const data = await reqHasura<ParsedDictionaryResponse>(
+          gql.GET_PARSED_COMMAND_DICTIONARY,
+          {
+            commandDictionaryId,
+          },
+          user,
+        );
+        const { command_dictionary } = data;
+        if (!Array.isArray(command_dictionary) || command_dictionary.length === 0) {
+          catchError(`Unable to find command dictionary with id ${commandDictionaryId}`);
+          return {};
+        }
+        return command_dictionary[0].parsed_json;
+      } catch (e) {
+        catchError(e);
+        return {};
+      }
+    } else {
+      return {};
     }
   },
 

@@ -16,3 +16,9 @@ export type TypeScriptFile = {
   content: string;
   filePath: string;
 };
+
+export type ParsedDictionaryResponse = {
+  parsedDictionary: ParsedDictionary[];
+};
+
+export type ParsedDictionary = { [key: string]: any };
