@@ -18,6 +18,8 @@
   import type { DataGridColumnDef, RowId } from '../../types/data-grid';
   import type { ModelSlim } from '../../types/model';
   import effects from '../../utilities/effects';
+  import { permissionHandler } from '../../utilities/permissionHandler';
+  import { featurePermissions } from '../../utilities/permissions';
   import type { PageData } from './$types';
 
   export let data: PageData;
@@ -27,6 +29,9 @@
   };
   type ModelCellRendererParams = ICellRendererParams<ModelSlim> & CellRendererParams;
 
+  const hasCreatePermission = featurePermissions.model.canCreate();
+  const hasDeletePermission = featurePermissions.model.canDelete();
+  const creationPermissionError: string = 'You do not have permission to upload a model';
   const columnDefs: DataGridColumnDef[] = [
     {
       field: 'id',
@@ -52,6 +57,7 @@
               content: 'Delete Model',
               placement: 'bottom',
             },
+            hasDeletePermission,
             rowData: params.data,
           },
           target: actionsDiv,
@@ -126,7 +132,17 @@
 
           <fieldset>
             <label for="name">Name</label>
-            <input bind:value={name} autocomplete="off" class="st-input w-100" name="name" required />
+            <input
+              bind:value={name}
+              autocomplete="off"
+              class="st-input w-100"
+              name="name"
+              required
+              use:permissionHandler={{
+                hasPermission: hasCreatePermission,
+                permissionError: creationPermissionError,
+              }}
+            />
           </fieldset>
 
           <fieldset>
@@ -138,12 +154,26 @@
               name="version"
               placeholder="0.0.0"
               required
+              use:permissionHandler={{
+                hasPermission: hasCreatePermission,
+                permissionError: creationPermissionError,
+              }}
             />
           </fieldset>
 
           <fieldset>
             <label for="file">Jar File</label>
-            <input class="w-100" name="file" required type="file" bind:files />
+            <input
+              class="w-100"
+              name="file"
+              required
+              type="file"
+              bind:files
+              use:permissionHandler={{
+                hasPermission: hasCreatePermission,
+                permissionError: creationPermissionError,
+              }}
+            />
           </fieldset>
 
           <fieldset>
@@ -167,6 +197,7 @@
         {#if $models.length}
           <SingleActionDataGrid
             {columnDefs}
+            {hasDeletePermission}
             itemDisplayText="Model"
             items={$models}
             user={data.user}
