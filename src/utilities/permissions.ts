@@ -1,5 +1,6 @@
+import { invalidateAll } from '$app/navigation';
 import type { ActivityDirective, ActivityPreset } from '../types/activity';
-import type { User, UserId } from '../types/app';
+import type { User, UserId, UserRole } from '../types/app';
 import type { Constraint } from '../types/constraint';
 import type {
   CreatePermissionCheck,
@@ -46,6 +47,12 @@ function isPlanCollaborator(user: User | null, plan: PlanWithOwners): boolean {
     return !!plan.collaborators.find(({ collaborator }) => collaborator === user.id);
   }
   return false;
+}
+
+function changeUserRole(role: UserRole) {
+  // currentUserRoleStore.set(role);
+
+  invalidateAll();
 }
 
 const queryPermissions = {
@@ -333,4 +340,4 @@ function hasNoAuthorization(user: User | null) {
   return !user || (user.permissibleQueries && !Object.keys(user.permissibleQueries).length);
 }
 
-export { featurePermissions, hasNoAuthorization, queryPermissions };
+export { changeUserRole, featurePermissions, hasNoAuthorization, queryPermissions };

@@ -1,5 +1,20 @@
 <script lang="ts">
   import AppMenu from '../../components/menus/AppMenu.svelte';
+  import { currentUserRole, user } from '../../stores/app';
+  import type { UserRole } from '../../types/app';
+  import { getTarget } from '../../utilities/generic';
+  import { changeUserRole } from '../../utilities/permissions';
+
+  let userRoles: UserRole[] = [];
+
+  $: userRoles = $user?.allowedRoles ?? [];
+
+  function changeRole(event: Event) {
+    const { value } = getTarget(event);
+    if (value) {
+      changeUserRole(value as string);
+    }
+  }
 </script>
 
 <div class="nav">
@@ -13,6 +28,11 @@
   </div>
   <div class="right">
     <slot name="right" />
+    <select value={$currentUserRole} class="st-select" on:change={changeRole}>
+      {#each userRoles as userRole}
+        <option value={userRole}>{userRole}</option>
+      {/each}
+    </select>
   </div>
 </div>
 
