@@ -165,7 +165,7 @@
     }
 
     // Create new change listener using current DPR
-    let mqString = `(resolution: ${window.devicePixelRatio}dppx)`;
+    const mqString = `(resolution: ${window.devicePixelRatio}dppx)`;
     const deviceMedia = matchMedia(mqString);
     deviceMedia.addEventListener('change', detectDPRChange);
     removeDPRChangeListener = () => deviceMedia.removeEventListener('change', detectDPRChange);
