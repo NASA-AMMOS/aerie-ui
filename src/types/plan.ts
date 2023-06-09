@@ -90,6 +90,7 @@ export type PlanSlim = Pick<
   Plan,
   | 'created_at'
   | 'collaborators'
+  | 'duration'
   | 'end_time_doy'
   | 'id'
   | 'model_id'

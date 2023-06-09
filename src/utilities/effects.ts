@@ -522,7 +522,7 @@ const effects = {
         name,
         start_time: start_time_doy, // Postgres accepts DOY dates for it's 'timestamptz' type.
       };
-      const data = await reqHasura<Pick<PlanSchema, 'collaborators' | 'id' | 'owner' | 'revision' | 'start_time'>>(
+      const data = await reqHasura<PlanSlim>(
         gql.CREATE_PLAN,
         {
           plan: planInsertInput,
@@ -530,7 +530,8 @@ const effects = {
         user,
       );
       const { createPlan } = data;
-      const { collaborators, id, owner, revision, start_time } = createPlan;
+      const { collaborators, created_at, duration, id, owner, revision, start_time, updated_at, updated_by } =
+        createPlan;
 
       if (!(await effects.initialSimulationUpdate(id, simulation_template_id, start_time_doy, end_time_doy, user))) {
         throw Error('Failed to update simulation.');
@@ -554,6 +555,8 @@ const effects = {
 
       const plan: PlanSlim = {
         collaborators,
+        created_at,
+        duration,
         end_time_doy,
         id,
         model_id,
@@ -562,6 +565,8 @@ const effects = {
         revision,
         start_time,
         start_time_doy,
+        updated_at,
+        updated_by,
       };
 
       showSuccessToast('Plan Created Successfully');
@@ -1687,10 +1692,7 @@ const effects = {
     try {
       const data = (await reqHasura(gql.GET_PLANS_AND_MODELS, {}, user)) as {
         models: ModelSlim[];
-        plans: Pick<
-          Plan,
-          'collaborators' | 'duration' | 'id' | 'model_id' | 'name' | 'owner' | 'revision' | 'start_time'
-        >[];
+        plans: PlanSlim[];
       };
       const { models, plans } = data;
 
