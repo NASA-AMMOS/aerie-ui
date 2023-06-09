@@ -58,7 +58,6 @@
         }
       },
     },
-    { field: 'requested_by', filter: 'text', headerName: 'Requested By', resizable: true, sortable: true },
     {
       field: 'updated_at',
       filter: 'text',

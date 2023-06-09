@@ -30,8 +30,7 @@ export type UserSequence = {
   id: number;
   name: string;
   owner: string;
-  requested_by: string;
   updated_at: string;
 };
 
-export type UserSequenceInsertInput = Omit<UserSequence, 'created_at' | 'id' | 'requested_by' | 'updated_at'>;
+export type UserSequenceInsertInput = Omit<UserSequence, 'created_at' | 'id' | 'updated_at'>;
