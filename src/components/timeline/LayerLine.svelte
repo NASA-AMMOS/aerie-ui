@@ -5,6 +5,7 @@
   import type { ScaleTime } from 'd3-scale';
   import { curveLinear, line as d3Line } from 'd3-shape';
   import { createEventDispatcher, onMount, tick } from 'svelte';
+  import { dpr } from '../../stores/device';
   import type { Resource } from '../../types/simulation';
   import type { Axis, LinePoint, QuadtreePoint, ResourceLayerFilter, TimeRange } from '../../types/timeline';
   import { getYScale, searchQuadtreePoint } from '../../utilities/timeline';
@@ -29,16 +30,18 @@
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
-  let dpr: number = 1;
   let mounted: boolean = false;
   let quadtree: Quadtree<QuadtreePoint>;
   let visiblePointsById: Record<number, LinePoint> = {};
 
-  $: canvasHeightDpr = drawHeight * dpr;
-  $: canvasWidthDpr = drawWidth * dpr;
+  $: canvasHeightDpr = drawHeight * $dpr;
+  $: canvasWidthDpr = drawWidth * $dpr;
   $: if (
+    canvasHeightDpr &&
+    canvasWidthDpr &&
     drawHeight &&
     drawWidth &&
+    dpr &&
     // TODO swap filter out for resources which are recomputed when the view changes (i.e. filter changes)
     filter &&
     lineColor &&
@@ -60,7 +63,6 @@
   onMount(() => {
     if (canvas) {
       ctx = canvas.getContext('2d');
-      dpr = window.devicePixelRatio;
     }
     mounted = true;
   });
@@ -70,7 +72,7 @@
       await tick();
 
       ctx.resetTransform();
-      ctx.scale(dpr, dpr);
+      ctx.scale($dpr, $dpr);
       ctx.clearRect(0, 0, drawWidth, drawHeight);
 
       const [yAxis] = yAxes.filter(axis => yAxisId === axis.id);

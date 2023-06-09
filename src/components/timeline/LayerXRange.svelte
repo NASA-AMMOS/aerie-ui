@@ -16,6 +16,7 @@
     schemeTableau10,
   } from 'd3-scale-chromatic';
   import { createEventDispatcher, onMount, tick } from 'svelte';
+  import { dpr } from '../../stores/device';
   import type { Resource } from '../../types/simulation';
   import type { QuadtreeRect, ResourceLayerFilter, XRangeLayerColorScheme, XRangePoint } from '../../types/timeline';
   import { clamp } from '../../utilities/generic';
@@ -37,16 +38,27 @@
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
   let domain: string[] = [];
-  let dpr: number = 1;
   let maxXWidth: number;
   let mounted: boolean = false;
   let points: XRangePoint[] = [];
   let quadtree: Quadtree<QuadtreeRect>;
   let visiblePointsById: Record<number, XRangePoint> = {};
 
-  $: canvasHeightDpr = drawHeight * dpr;
-  $: canvasWidthDpr = drawWidth * dpr;
-  $: if (drawHeight && drawWidth && colorScheme && filter && mounted && opacity !== undefined && points && xScaleView) {
+  $: canvasHeightDpr = drawHeight * $dpr;
+  $: canvasWidthDpr = drawWidth * $dpr;
+  $: if (
+    canvasHeightDpr &&
+    canvasWidthDpr &&
+    drawHeight &&
+    drawWidth &&
+    dpr &&
+    colorScheme &&
+    filter &&
+    mounted &&
+    opacity !== undefined &&
+    points &&
+    xScaleView
+  ) {
     draw();
   }
   $: onMousemove(mousemove);
@@ -56,7 +68,6 @@
   onMount(() => {
     if (canvas) {
       ctx = canvas.getContext('2d');
-      dpr = window.devicePixelRatio;
     }
     mounted = true;
   });
@@ -66,7 +77,7 @@
       await tick();
 
       ctx.resetTransform();
-      ctx.scale(dpr, dpr);
+      ctx.scale($dpr, $dpr);
       ctx.clearRect(0, 0, drawWidth, drawHeight);
       ctx.globalAlpha = opacity;
 
