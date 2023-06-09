@@ -18,6 +18,7 @@
 
 <style>
   .expansion-rule-selection {
+    align-items: center;
     display: flex;
     gap: 4px;
   }
