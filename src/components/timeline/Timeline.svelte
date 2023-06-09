@@ -1,8 +1,9 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { afterUpdate, createEventDispatcher, tick } from 'svelte';
+  import { afterUpdate, createEventDispatcher, onDestroy, onMount, tick } from 'svelte';
   import { SOURCES, TRIGGERS, dndzone } from 'svelte-dnd-action';
+  import { dpr } from '../../stores/device';
   import type { ActivityDirectiveId, ActivityDirectivesByView, ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { ConstraintViolation } from '../../types/constraint';
@@ -76,6 +77,7 @@
   let estimatedLabelWidthPx: number = 74; // Width of MS time which is the largest display format
   let histogramCursorTime: Date | null = null;
   let mouseOver: MouseOver | null;
+  let removeDPRChangeListener: () => void | null = null;
   let rowDragMoveDisabled = true;
   let rowsMaxHeight: number = 600;
   let rows: Row[] = [];
@@ -145,6 +147,31 @@
   afterUpdate(() => {
     setRowsMaxHeight(timelineDiv, xAxisDiv, timelineHistogramDiv);
   });
+
+  onDestroy(() => {
+    removeDPRChangeListener();
+  });
+
+  onMount(() => {
+    detectDPRChange();
+  });
+
+  function detectDPRChange() {
+    // Adapted from https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio#monitoring_screen_resolution_or_zoom_level_changes
+
+    // Remove old listener if one exists
+    if (removeDPRChangeListener !== null) {
+      removeDPRChangeListener();
+    }
+
+    // Create new change listener using current DPR
+    let mqString = `(resolution: ${window.devicePixelRatio}dppx)`;
+    const deviceMedia = matchMedia(mqString);
+    deviceMedia.addEventListener('change', detectDPRChange);
+    removeDPRChangeListener = () => deviceMedia.removeEventListener('change', detectDPRChange);
+
+    dpr.set(window.devicePixelRatio);
+  }
 
   function handleDndConsiderRows(e: CustomEvent<DndEvent>) {
     const { detail } = e;

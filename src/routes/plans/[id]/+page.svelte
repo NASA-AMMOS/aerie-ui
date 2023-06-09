@@ -23,7 +23,6 @@
   import PlanGrid from '../../../components/ui/PlanGrid.svelte';
   import { activityDirectives, activityDirectivesMap, resetActivityStores } from '../../../stores/activities';
   import { checkConstraintsStatus, constraintViolations, resetConstraintStores } from '../../../stores/constraints';
-  import { dpr } from '../../../stores/device';
   import {
     allErrors,
     anchorValidationErrors,
@@ -86,7 +85,6 @@
   let planHasBeenLocked = false;
   let schedulingAnalysisStatus: Status | null;
   let windowWidth = 0;
-  let removeDPRChangeListener: () => void | null = null;
 
   $: if (data.initialPlan) {
     $plan = data.initialPlan;
@@ -164,7 +162,6 @@
     resetPlanStores();
     resetSchedulingStores();
     resetSimulationStores();
-    removeDPRChangeListener();
   });
 
   function onClearAllErrors() {
@@ -246,23 +243,6 @@
 
   function onChangeRightRowSizes(event: CustomEvent<string>) {
     viewUpdateGrid({ rightRowSizes: event.detail });
-  }
-
-  function detectDPRChange() {
-    // Adapted from https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio#monitoring_screen_resolution_or_zoom_level_changes
-
-    // Remove old listener if one exists
-    if (removeDPRChangeListener !== null) {
-      removeDPRChangeListener();
-    }
-
-    // Create new change listener using current DPR
-    let mqString = `(resolution: ${window.devicePixelRatio}dppx)`;
-    const deviceMedia = matchMedia(mqString);
-    deviceMedia.addEventListener('change', detectDPRChange);
-    removeDPRChangeListener = () => deviceMedia.removeEventListener('change', detectDPRChange);
-
-    dpr.set(window.devicePixelRatio);
   }
 </script>
 
