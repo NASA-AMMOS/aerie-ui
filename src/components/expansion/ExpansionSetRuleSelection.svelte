@@ -19,5 +19,6 @@
 <style>
   .expansion-rule-selection {
     display: flex;
+    gap: 4px;
   }
 </style>
