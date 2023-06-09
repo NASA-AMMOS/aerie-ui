@@ -31,7 +31,7 @@ import type {
 } from '../types/activity';
 import type { ActivityMetadata } from '../types/activity-metadata';
 import type { BaseUser, User } from '../types/app';
-import type { ReqLoginResponse, ReqLogoutResponse, ReqSessionResponse } from '../types/auth';
+import type { ReqLogoutResponse, ReqSessionResponse } from '../types/auth';
 import type { Constraint, ConstraintInsertInput, ConstraintViolation } from '../types/constraint';
 import type {
   ExpansionRule,
@@ -201,7 +201,27 @@ const effects = {
     }
   },
 
-  async checkConstraints(user: User | null): Promise<void> {
+  async changeUserRole(role: UserRole, token: JsonWebToken): Promise<ReqAuthResponse> {
+    try {
+      const data = await reqGateway<ReqAuthResponse>(
+        '/auth/changeRole',
+        'POST',
+        JSON.stringify({ role }),
+        token,
+        false,
+      );
+      return data;
+    } catch (e) {
+      catchError(e as Error);
+      return {
+        message: 'An unexpected error occurred',
+        success: false,
+        token,
+      };
+    }
+  },
+
+  async checkConstraints(): Promise<void> {
     try {
       checkConstraintsStatus.set(Status.Incomplete);
       const currentPlan = get(plan);
@@ -2159,9 +2179,9 @@ const effects = {
     };
   },
 
-  async login(username: string, password: string): Promise<ReqLoginResponse> {
+  async login(username: string, password: string): Promise<ReqAuthResponse> {
     try {
-      const data = await reqGateway<ReqLoginResponse>(
+      const data = await reqGateway<ReqAuthResponse>(
         '/auth/login',
         'POST',
         JSON.stringify({ password, username }),

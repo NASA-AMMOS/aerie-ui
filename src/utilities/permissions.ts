@@ -1,4 +1,5 @@
 import { invalidateAll } from '$app/navigation';
+import { base } from '$app/paths';
 import type { ActivityDirective, ActivityPreset } from '../types/activity';
 import type { User, UserId, UserRole } from '../types/app';
 import type { Constraint } from '../types/constraint';
@@ -49,8 +50,13 @@ function isPlanCollaborator(user: User | null, plan: PlanWithOwners): boolean {
   return false;
 }
 
-function changeUserRole(role: UserRole) {
-  // currentUserRoleStore.set(role);
+async function changeUserRole(role: UserRole) {
+  const options = {
+    body: JSON.stringify({ role }),
+    headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
+  };
+  await fetch(`${base}/auth/changeRole`, options);
 
   invalidateAll();
 }
