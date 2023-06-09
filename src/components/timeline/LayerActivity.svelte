@@ -8,7 +8,6 @@
   import type { ScaleTime } from 'd3-scale';
   import { createEventDispatcher, onDestroy, onMount, tick } from 'svelte';
   import SpanHashMarksSVG from '../../assets/span-hash-marks.svg?raw';
-  import { dpr } from '../../stores/device';
   import type { ActivityDirective, ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { SimulationDataset, Span, SpanId, SpansMap, SpanUtilityMaps } from '../../types/simulation';
@@ -47,6 +46,7 @@
   export let contextmenu: MouseEvent | undefined;
   export let debugMode: boolean = false;
   export let dblclick: MouseEvent | undefined;
+  export let dpr: number = 1;
   export let drawHeight: number = 0;
   export let drawWidth: number = 0;
   export let filter: ActivityLayerFilter | undefined;
@@ -118,8 +118,8 @@
   $: directiveIconWidth = nativeDirectiveIconWidth * scaleFactor;
   $: anchorIconWidth = directiveIconWidth * scaleFactor;
   $: anchorIconMarginLeft = 4 * scaleFactor;
-  $: canvasHeightDpr = drawHeight * $dpr;
-  $: canvasWidthDpr = drawWidth * $dpr;
+  $: canvasHeightDpr = drawHeight * dpr;
+  $: canvasWidthDpr = drawWidth * dpr;
   $: directiveIconMarginRight = 2 * scaleFactor;
   $: rowHeight = activityHeight + activityRowPadding;
   $: spanLabelLeftMargin = 6;
@@ -461,7 +461,7 @@
       await tick();
 
       ctx.resetTransform();
-      ctx.scale($dpr, $dpr);
+      ctx.scale(dpr, dpr);
       ctx.clearRect(0, 0, drawWidth, drawHeight);
 
       quadtreeActivityDirectives = d3Quadtree<QuadtreeRect>()
@@ -844,7 +844,7 @@
   function drawDirectiveIcon(x: number, y: number, svgOpacity: number) {
     // Draw the shape
     ctx.save();
-    ctx.setTransform($dpr, 0, 0, $dpr, x * $dpr, y * $dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, x * dpr, y * dpr);
     ctx.scale(scaleFactor, scaleFactor);
     ctx.fill(assets.directiveIconShape);
     ctx.stroke(assets.directiveIconShapeStroke);

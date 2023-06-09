@@ -3,7 +3,6 @@
 <script lang="ts">
   import { afterUpdate, createEventDispatcher, onDestroy, onMount, tick } from 'svelte';
   import { SOURCES, TRIGGERS, dndzone } from 'svelte-dnd-action';
-  import { dpr } from '../../stores/device';
   import type { ActivityDirectiveId, ActivityDirectivesByView, ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { ConstraintViolation } from '../../types/constraint';
@@ -71,6 +70,7 @@
   let clientWidth: number = 0;
   let contextMenu: MouseOver | null;
   let contextMenuComponent: TimelineContextMenu;
+  let dpr: number = 1;
   let tooltip: Tooltip;
   let cursorEnabled: boolean = true;
   let cursorHeaderHeight: number = 0;
@@ -170,7 +170,7 @@
     deviceMedia.addEventListener('change', detectDPRChange);
     removeDPRChangeListener = () => deviceMedia.removeEventListener('change', detectDPRChange);
 
-    dpr.set(window.devicePixelRatio);
+    dpr = window.devicePixelRatio;
   }
 
   function handleDndConsiderRows(e: CustomEvent<DndEvent>) {
@@ -316,6 +316,7 @@
         {activityDirectivesMap}
         autoAdjustHeight={row.autoAdjustHeight}
         {constraintViolations}
+        {dpr}
         drawHeight={row.height}
         {drawWidth}
         expanded={row.expanded}

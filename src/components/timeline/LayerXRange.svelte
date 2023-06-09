@@ -16,13 +16,13 @@
     schemeTableau10,
   } from 'd3-scale-chromatic';
   import { createEventDispatcher, onMount, tick } from 'svelte';
-  import { dpr } from '../../stores/device';
   import type { Resource } from '../../types/simulation';
   import type { QuadtreeRect, ResourceLayerFilter, XRangeLayerColorScheme, XRangePoint } from '../../types/timeline';
   import { clamp } from '../../utilities/generic';
   import { searchQuadtreeRect } from '../../utilities/timeline';
 
   export let colorScheme: XRangeLayerColorScheme = 'schemeAccent';
+  export let dpr: number = 1;
   export let drawHeight: number = 0;
   export let drawWidth: number = 0;
   export let filter: ResourceLayerFilter | undefined;
@@ -44,8 +44,8 @@
   let quadtree: Quadtree<QuadtreeRect>;
   let visiblePointsById: Record<number, XRangePoint> = {};
 
-  $: canvasHeightDpr = drawHeight * $dpr;
-  $: canvasWidthDpr = drawWidth * $dpr;
+  $: canvasHeightDpr = drawHeight * dpr;
+  $: canvasWidthDpr = drawWidth * dpr;
   $: if (
     canvasHeightDpr &&
     canvasWidthDpr &&
@@ -77,7 +77,7 @@
       await tick();
 
       ctx.resetTransform();
-      ctx.scale($dpr, $dpr);
+      ctx.scale(dpr, dpr);
       ctx.clearRect(0, 0, drawWidth, drawHeight);
       ctx.globalAlpha = opacity;
 
