@@ -51,7 +51,7 @@
   const dispatch = createEventDispatcher();
 
   let displayedOptions: DisplayOptions = [];
-  let presetMenu: Menu;
+  let presetMenu: Menu | undefined;
   let searchFilter: string = '';
   let selectedOption: DropdownOption | undefined;
 
