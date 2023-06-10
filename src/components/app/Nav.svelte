@@ -1,13 +1,14 @@
 <script lang="ts">
   import AppMenu from '../../components/menus/AppMenu.svelte';
-  import { currentUserRole, user } from '../../stores/app';
-  import type { UserRole } from '../../types/app';
+  import type { User, UserRole } from '../../types/app';
   import { getTarget } from '../../utilities/generic';
   import { changeUserRole } from '../../utilities/permissions';
 
+  export let user: User | null;
+
   let userRoles: UserRole[] = [];
 
-  $: userRoles = $user?.allowedRoles ?? [];
+  $: userRoles = user?.allowedRoles ?? [];
 
   function changeRole(event: Event) {
     const { value } = getTarget(event);
@@ -28,7 +29,7 @@
   </div>
   <div class="right">
     <slot name="right" />
-    <select value={$currentUserRole} class="st-select" on:change={changeRole}>
+    <select value={user?.activeRole} class="st-select" on:change={changeRole}>
       {#each userRoles as userRole}
         <option value={userRole}>{userRole}</option>
       {/each}

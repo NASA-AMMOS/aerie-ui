@@ -114,7 +114,8 @@
               content: 'Delete Plan',
               placement: 'bottom',
             },
-            hasDeletePermission: params.data ? featurePermissions.plan.canDelete(data.user, params.data) : false,
+            hasDeletePermission:
+              params.data && data.user ? featurePermissions.plan.canDelete(data.user, params.data) : false,
             rowData: params.data,
           },
           target: actionsDiv,
@@ -134,7 +135,7 @@
       width: 25,
     },
   ];
-  const canCreate: boolean = featurePermissions.plan.canCreate(data.user);
+  const canCreate: boolean = data.user ? featurePermissions.plan.canCreate(data.user) : false;
   const permissionError: string = 'You do not have permission to create a plan';
 
   let durationString: string = 'None';
@@ -242,7 +243,7 @@
 <PageTitle title="Plans" />
 
 <CssGrid rows="var(--nav-header-height) calc(100vh - var(--nav-header-height))">
-  <Nav>
+  <Nav user={data.user}>
     <span slot="title">Plans</span>
   </Nav>
 

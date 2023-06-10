@@ -11,10 +11,9 @@ export const POST: RequestHandler = async event => {
   const { role } = body;
   const { locals } = event;
   const { user } = locals;
-  const { token = '' } = user;
 
   try {
-    const authResponse: ReqAuthResponse = await effects.changeUserRole(role, token);
+    const authResponse: ReqAuthResponse = await effects.changeUserRole(role, user);
     const { message, success, token: newToken } = authResponse;
 
     if (success && newToken) {

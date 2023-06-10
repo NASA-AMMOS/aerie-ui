@@ -30,8 +30,8 @@ import type {
   ActivityTypeExpansionRules,
 } from '../types/activity';
 import type { ActivityMetadata } from '../types/activity-metadata';
-import type { BaseUser, User } from '../types/app';
-import type { ReqLogoutResponse, ReqSessionResponse } from '../types/auth';
+import type { BaseUser, User, UserRole } from '../types/app';
+import type { ReqAuthResponse, ReqLogoutResponse, ReqSessionResponse } from '../types/auth';
 import type { Constraint, ConstraintInsertInput, ConstraintViolation } from '../types/constraint';
 import type {
   ExpansionRule,
@@ -201,27 +201,21 @@ const effects = {
     }
   },
 
-  async changeUserRole(role: UserRole, token: JsonWebToken): Promise<ReqAuthResponse> {
+  async changeUserRole(role: UserRole, user: User | null): Promise<ReqAuthResponse> {
     try {
-      const data = await reqGateway<ReqAuthResponse>(
-        '/auth/changeRole',
-        'POST',
-        JSON.stringify({ role }),
-        token,
-        false,
-      );
+      const data = await reqGateway<ReqAuthResponse>('/auth/changeRole', 'POST', JSON.stringify({ role }), user, false);
       return data;
     } catch (e) {
       catchError(e as Error);
       return {
         message: 'An unexpected error occurred',
         success: false,
-        token,
+        token: null,
       };
     }
   },
 
-  async checkConstraints(): Promise<void> {
+  async checkConstraints(user: User | null): Promise<void> {
     try {
       checkConstraintsStatus.set(Status.Incomplete);
       const currentPlan = get(plan);

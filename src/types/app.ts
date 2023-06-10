@@ -10,6 +10,7 @@ export type BaseUser = {
 export type UserRole = string | 'admin';
 
 export type User = BaseUser & {
+  activeRole: UserRole;
   allowedRoles: UserRole[];
   defaultRole: UserRole;
   permissibleQueries: PermissibleQueriesMap | null;

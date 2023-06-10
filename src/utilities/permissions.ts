@@ -26,7 +26,7 @@ function getPermission(queries: string[], user: User | null): boolean {
 }
 
 function isUserAdmin(user: User | null) {
-  return user?.allowedRoles.includes(ADMIN_ROLE) || user?.defaultRole === ADMIN_ROLE;
+  return user?.activeRole === ADMIN_ROLE;
 }
 
 function isUserOwner(user: User | null, thingWithOwner?: { owner: UserId } | null): boolean {
