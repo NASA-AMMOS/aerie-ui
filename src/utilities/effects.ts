@@ -338,8 +338,8 @@ const effects = {
     model_id: number | null,
     name: string,
     plan_id: number | null,
-    description?: string,
     user: User | null,
+    description?: string,
   ): Promise<number | null> {
     try {
       if (!queryPermissions.CREATE_CONSTRAINT(user)) {
@@ -413,8 +413,8 @@ const effects = {
     dictionaryId: number,
     modelId: number,
     expansionRuleIds: number[],
-    description?: string,
     user: User | null,
+    description?: string,
   ): Promise<number | null> {
     try {
       if (!queryPermissions.CREATE_EXPANSION_SET(user)) {

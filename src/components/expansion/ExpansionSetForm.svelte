@@ -59,8 +59,8 @@
         setDictionaryId,
         setModelId,
         setExpansionRuleIds,
-        setDescription,
         user,
+        setDescription,
       );
 
       if (newSetId !== null) {
