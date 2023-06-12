@@ -142,7 +142,7 @@
       <fieldset>
         <label for="expansionSet" class="expansion-set-selector">
           Expansion Set
-          <a href={`${base}/expansion/rules`} target="_blank" rel="noopener noreferrer">View All Expansion Sets</a>
+          <a href={`${base}/expansion/sets`} target="_blank" rel="noopener noreferrer">View All Expansion Sets</a>
         </label>
         <select
           bind:value={$selectedExpansionSetId}
