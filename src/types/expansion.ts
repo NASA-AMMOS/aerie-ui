@@ -27,7 +27,6 @@ export type ExpansionSequence = {
   metadata: any;
   seq_id: string;
   simulation_dataset_id: number;
-  updated_at: string;
 };
 
 export type ExpansionSequenceInsertInput = Omit<ExpansionSequence, 'created_at' | 'updated_at'>;

@@ -55,7 +55,6 @@
       sortable: true,
     },
     { field: 'created_at', filter: 'text', headerName: 'Created At', resizable: true, sortable: true },
-    { field: 'updated_at', filter: 'text', headerName: 'Updated At', resizable: true, sortable: true },
     {
       cellClass: 'action-cell-container',
       cellRenderer: (params: ExpansionSequenceCellRendererParams) => {
