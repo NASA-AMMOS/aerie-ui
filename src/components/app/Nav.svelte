@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { invalidateAll } from '$app/navigation';
   import AppMenu from '../../components/menus/AppMenu.svelte';
   import type { User, UserRole } from '../../types/app';
   import { getTarget } from '../../utilities/generic';
@@ -10,10 +11,11 @@
 
   $: userRoles = user?.allowedRoles ?? [];
 
-  function changeRole(event: Event) {
+  async function changeRole(event: Event) {
     const { value } = getTarget(event);
     if (value) {
-      changeUserRole(value as string);
+      await changeUserRole(value as string);
+      await invalidateAll();
     }
   }
 </script>

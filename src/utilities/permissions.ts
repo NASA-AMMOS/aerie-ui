@@ -1,7 +1,7 @@
-import { invalidateAll } from '$app/navigation';
 import { base } from '$app/paths';
 import type { ActivityDirective, ActivityPreset } from '../types/activity';
 import type { User, UserId, UserRole } from '../types/app';
+import type { ReqAuthResponse } from '../types/auth';
 import type { Constraint } from '../types/constraint';
 import type {
   CreatePermissionCheck,
@@ -13,6 +13,7 @@ import type {
   ReadPermissionCheck,
   UpdatePermissionCheck,
 } from '../types/permissions';
+import { showFailureToast } from './toast';
 
 export const ADMIN_ROLE = 'admin';
 
@@ -50,15 +51,23 @@ function isPlanCollaborator(user: User | null, plan: PlanWithOwners): boolean {
   return false;
 }
 
-async function changeUserRole(role: UserRole) {
-  const options = {
-    body: JSON.stringify({ role }),
-    headers: { 'Content-Type': 'application/json' },
-    method: 'POST',
-  };
-  await fetch(`${base}/auth/changeRole`, options);
+async function changeUserRole(role: UserRole): Promise<void> {
+  try {
+    const options = {
+      body: JSON.stringify({ role }),
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+    };
+    const response = await fetch(`${base}/auth/changeRole`, options);
+    const changeUserResponse: ReqAuthResponse = await response.json();
+    const { message, success } = changeUserResponse;
 
-  invalidateAll();
+    if (!success) {
+      throw new Error(message);
+    }
+  } catch (e) {
+    showFailureToast((e as Error).message);
+  }
 }
 
 const queryPermissions = {
