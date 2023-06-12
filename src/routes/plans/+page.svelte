@@ -126,9 +126,9 @@
 
   $: plans = data.plans;
   $: models = data.models;
-  $: user = data.user;
-  $: canCreate = user ? featurePermissions.plan.canCreate(user) : false;
   $: {
+    user = data.user;
+    canCreate = user ? featurePermissions.plan.canCreate(user) : false;
     columnDefs = [
       ...baseColumnDefs,
       {
