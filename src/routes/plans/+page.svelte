@@ -96,7 +96,7 @@
       sortable: true,
       valueGetter: (params: ValueGetterParams<Plan>) => {
         if (params.data?.updated_at) {
-          return new Date(params.data?.updated_at).toISOString().slice(0, 19);
+          return getShortISOForDate(new Date(params.data?.updated_at));
         }
       },
     },

@@ -3,13 +3,12 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
+  import type { ICellRendererParams } from 'ag-grid-community';
   import { userSequences, userSequencesColumns } from '../../stores/sequencing';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef, DataGridRowSelection, RowId } from '../../types/data-grid';
   import type { UserSequence } from '../../types/sequencing';
   import effects from '../../utilities/effects';
-  import { getShortISOForDate } from '../../utilities/time';
   import Input from '../form/Input.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
@@ -45,30 +44,6 @@
       headerName: 'Command Dictionary ID',
       resizable: true,
       sortable: true,
-    },
-    {
-      field: 'created_at',
-      filter: 'text',
-      headerName: 'Created At',
-      resizable: true,
-      sortable: true,
-      valueGetter: (params: ValueGetterParams<UserSequence>) => {
-        if (params.data?.created_at) {
-          return getShortISOForDate(new Date(params.data?.created_at));
-        }
-      },
-    },
-    {
-      field: 'updated_at',
-      filter: 'text',
-      headerName: 'Updated At',
-      resizable: true,
-      sortable: true,
-      valueGetter: (params: ValueGetterParams<UserSequence>) => {
-        if (params.data?.updated_at) {
-          return getShortISOForDate(new Date(params.data?.updated_at));
-        }
-      },
     },
     {
       cellClass: 'action-cell-container',

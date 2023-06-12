@@ -171,6 +171,7 @@
         <label for="name">Name</label>
         <input
           bind:value={setName}
+          autocomplete="off"
           class="st-input w-100"
           name="description"
           placeholder="Enter Expansion Set Name (required)"

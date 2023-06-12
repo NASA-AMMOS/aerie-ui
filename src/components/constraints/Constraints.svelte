@@ -3,14 +3,13 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
+  import type { ICellRendererParams } from 'ag-grid-community';
   import { constraintsAll, constraintsColumns } from '../../stores/constraints';
   import type { User } from '../../types/app';
   import type { Constraint } from '../../types/constraint';
   import type { DataGridColumnDef, DataGridRowSelection, RowId } from '../../types/data-grid';
   import type { PlanSlim } from '../../types/plan';
   import effects from '../../utilities/effects';
-  import { getShortISOForDate } from '../../utilities/time';
   import Input from '../form/Input.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
@@ -68,35 +67,6 @@
       suppressAutoSize: true,
       suppressSizeToFit: true,
       width: 80,
-    },
-    {
-      field: 'created_at',
-      filter: 'string',
-      headerName: 'Date Created',
-      sortable: true,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
-      valueGetter: (params: ValueGetterParams<Constraint>) => {
-        if (params.data?.created_at) {
-          return getShortISOForDate(new Date(params.data?.created_at));
-        }
-      },
-      width: 200,
-    },
-    {
-      field: 'updated_at',
-      filter: 'string',
-      headerName: 'Updated At',
-      sortable: true,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
-      valueGetter: (params: ValueGetterParams<Constraint>) => {
-        if (params.data?.updated_at) {
-          // TODO make this a util? Does vary a bit.
-          return new Date(params.data?.updated_at).toISOString().slice(0, 19);
-        }
-      },
-      width: 200,
     },
     {
       field: 'updated_by',

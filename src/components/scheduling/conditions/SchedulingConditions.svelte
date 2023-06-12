@@ -3,12 +3,11 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
+  import type { ICellRendererParams } from 'ag-grid-community';
   import { createEventDispatcher } from 'svelte';
   import type { User } from '../../../types/app';
   import type { DataGridColumnDef, RowId } from '../../../types/data-grid';
   import type { SchedulingCondition } from '../../../types/scheduling';
-  import { getShortISOForDate } from '../../../utilities/time';
   import Input from '../../form/Input.svelte';
   import DataGridActions from '../../ui/DataGrid/DataGridActions.svelte';
   import SingleActionDataGrid from '../../ui/DataGrid/SingleActionDataGrid.svelte';
@@ -41,34 +40,6 @@
     { field: 'author', filter: 'string', headerName: 'Author', sortable: true, width: 100 },
     { field: 'last_modified_by', filter: 'string', headerName: 'Last Modified By', sortable: true, width: 100 },
     { field: 'description', filter: 'string', headerName: 'Description', sortable: true, width: 120 },
-    {
-      field: 'created_date',
-      filter: 'string',
-      headerName: 'Created Date',
-      sortable: true,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
-      valueGetter: (params: ValueGetterParams<SchedulingCondition>) => {
-        if (params.data?.created_date) {
-          return getShortISOForDate(new Date(params.data?.created_date));
-        }
-      },
-      width: 160,
-    },
-    {
-      field: 'modified_date',
-      filter: 'string',
-      headerName: 'Modified Date',
-      sortable: true,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
-      valueGetter: (params: ValueGetterParams<SchedulingCondition>) => {
-        if (params.data?.modified_date) {
-          return getShortISOForDate(new Date(params.data?.modified_date));
-        }
-      },
-      width: 160,
-    },
     {
       cellClass: 'action-cell-container',
       cellRenderer: (params: SchedulingConditionsCellRendererParams) => {
