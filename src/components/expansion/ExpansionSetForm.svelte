@@ -39,6 +39,7 @@
   let setExpansionRuleIds: number[] = [];
   let setDictionaryId: number | null = null;
   let setModelId: number | null = null;
+  let setName: string = '';
   let setDescription: string = '';
 
   $: effects
@@ -51,7 +52,8 @@
     ? `Expansion Rule - Logic Editor - ${lastSelectedExpansionRule.activity_type} - Rule ${lastSelectedExpansionRule.id} (Read-only)`
     : 'Expansion Rule - Logic Editor (Read-only)';
   $: setExpansionRuleIds = Object.values(selectedExpansionRules) ?? [];
-  $: saveButtonEnabled = setDictionaryId !== null && setModelId !== null && setExpansionRuleIds.length > 0;
+  $: saveButtonEnabled =
+    setDictionaryId !== null && setModelId !== null && setName !== '' && setExpansionRuleIds.length > 0;
 
   async function saveSet() {
     if (mode === 'create' && setDictionaryId && setModelId) {
@@ -59,6 +61,7 @@
         setDictionaryId,
         setModelId,
         setExpansionRuleIds,
+        setName,
         user,
         setDescription,
       );
@@ -162,6 +165,16 @@
             </option>
           {/each}
         </select>
+      </fieldset>
+
+      <fieldset>
+        <label for="name">Name</label>
+        <input
+          bind:value={setName}
+          class="st-input w-100"
+          name="description"
+          placeholder="Enter Expansion Set Name (required)"
+        />
       </fieldset>
 
       <fieldset>

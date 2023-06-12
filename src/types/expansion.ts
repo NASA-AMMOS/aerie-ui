@@ -38,6 +38,7 @@ export type ExpansionSet = {
   expansion_rules: ExpansionRule[];
   id: number;
   mission_model_id: number;
+  name: string;
   owner: string;
   updated_at: string;
   updated_by: string;

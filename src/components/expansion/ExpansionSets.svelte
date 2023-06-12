@@ -37,6 +37,7 @@
       suppressSizeToFit: true,
       width: 60,
     },
+    { field: 'name', filter: 'text', headerName: 'Name', resizable: true, sortable: true },
     {
       field: 'command_dict_id',
       filter: 'number',
