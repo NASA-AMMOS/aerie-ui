@@ -3,13 +3,12 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
+  import type { ICellRendererParams } from 'ag-grid-community';
   import { expansionRules, expansionRulesColumns } from '../../stores/expansion';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef, DataGridRowSelection, RowId } from '../../types/data-grid';
   import type { ExpansionRule } from '../../types/expansion';
   import effects from '../../utilities/effects';
-  import { getShortISOForDate } from '../../utilities/time';
   import Input from '../form/Input.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
@@ -39,6 +38,14 @@
       width: 60,
     },
     {
+      field: 'name',
+      filter: 'text',
+      headerName: 'Name',
+      minWidth: 120,
+      resizable: true,
+      sortable: true,
+    },
+    {
       field: 'activity_type',
       filter: 'text',
       headerName: 'Activity Type',
@@ -54,31 +61,7 @@
       sortable: true,
     },
     { field: 'authoring_mission_model_id', filter: 'number', headerName: 'Model ID', sortable: true },
-    {
-      field: 'created_at',
-      filter: 'text',
-      headerName: 'Created At',
-      resizable: true,
-      sortable: true,
-      valueGetter: (params: ValueGetterParams<ExpansionRule>) => {
-        if (params.data?.created_at) {
-          return getShortISOForDate(new Date(params.data?.created_at));
-        }
-      },
-    },
     { field: 'owner', filter: 'text', headerName: 'Owner', resizable: true, sortable: true },
-    {
-      field: 'updated_at',
-      filter: 'text',
-      headerName: 'Updated At',
-      resizable: true,
-      sortable: true,
-      valueGetter: (params: ValueGetterParams<ExpansionRule>) => {
-        if (params.data?.updated_at) {
-          return getShortISOForDate(new Date(params.data?.updated_at));
-        }
-      },
-    },
     { field: 'updated_by', filter: 'text', headerName: 'Updated By', resizable: true, sortable: true },
     { field: 'description', filter: 'text', headerName: 'Description', resizable: true, sortable: true },
     {

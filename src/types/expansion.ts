@@ -9,6 +9,7 @@ export type ExpansionRule = {
   description: string;
   expansion_logic: string;
   id: number;
+  name: string;
   owner: string;
   updated_at: string;
   updated_by: string;

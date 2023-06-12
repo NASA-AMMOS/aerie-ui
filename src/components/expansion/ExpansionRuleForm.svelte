@@ -25,6 +25,7 @@
   export let initialRuleLogic: string =
     'export default function MyExpansion(props: {\n  activityInstance: ActivityType\n}): ExpansionReturn {\n  const { activityInstance } = props;\n  return [];\n}\n';
   export let initialRuleModelId: number | null = null;
+  export let initialRuleName: string | null = null;
   export let initialRuleUpdatedAt: string | null = null;
   export let mode: 'create' | 'edit' = 'create';
   export let user: User | null;
@@ -36,6 +37,7 @@
   let ruleId: number | null = initialRuleId;
   let ruleLogic: string = initialRuleLogic;
   let ruleModelId: number | null = initialRuleModelId;
+  let ruleName: string | null = initialRuleName;
   let ruleUpdatedAt: string | null = initialRuleUpdatedAt;
   let saveButtonEnabled: boolean = false;
   let savedRule: Partial<ExpansionRule> = {
@@ -44,6 +46,7 @@
     authoring_mission_model_id: ruleModelId,
     description: ruleDescription,
     expansion_logic: ruleLogic,
+    name: ruleName,
   };
 
   $: activityTypes.setVariables({ modelId: ruleModelId ?? -1 });
@@ -54,6 +57,7 @@
     authoring_mission_model_id: ruleModelId,
     description: ruleDescription,
     expansion_logic: ruleLogic,
+    name: ruleName,
   });
   $: saveButtonText = mode === 'edit' && !ruleModified ? 'Saved' : 'Save';
   $: saveButtonClass = ruleModified && saveButtonEnabled ? 'primary' : 'secondary';
@@ -86,6 +90,7 @@
           authoring_command_dict_id: ruleDictionaryId,
           authoring_mission_model_id: ruleModelId,
           expansion_logic: ruleLogic,
+          name: ruleName,
           ...(ruleDescription && { description: ruleDescription }),
         };
         const newRuleId = await effects.createExpansionRule(newRule, user);
@@ -99,6 +104,7 @@
           authoring_command_dict_id: ruleDictionaryId,
           authoring_mission_model_id: ruleModelId,
           expansion_logic: ruleLogic,
+          name: ruleName,
           ...(ruleDescription && { description: ruleDescription }),
         };
         const updated_at = await effects.updateExpansionRule(ruleId, updatedRule, user);
@@ -188,6 +194,18 @@
             </option>
           {/each}
         </select>
+      </fieldset>
+
+      <fieldset>
+        <label for="name">Name</label>
+        <input
+          autocomplete="off"
+          bind:value={ruleName}
+          class="st-input w-100"
+          name="name"
+          placeholder="Enter a rule name (required)"
+          required
+        />
       </fieldset>
 
       <fieldset>
