@@ -149,7 +149,9 @@
   });
 
   onDestroy(() => {
-    removeDPRChangeListener();
+    if (removeDPRChangeListener !== null) {
+      removeDPRChangeListener();
+    }
   });
 
   onMount(() => {
@@ -159,7 +161,6 @@
   function detectDPRChange() {
     // Adapted from https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio#monitoring_screen_resolution_or_zoom_level_changes
 
-    // Remove old listener if one exists
     if (removeDPRChangeListener !== null) {
       removeDPRChangeListener();
     }
