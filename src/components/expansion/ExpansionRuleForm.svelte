@@ -26,7 +26,7 @@
   export let initialRuleLogic: string =
     'export default function MyExpansion(props: {\n  activityInstance: ActivityType\n}): ExpansionReturn {\n  const { activityInstance } = props;\n  return [];\n}\n';
   export let initialRuleModelId: number | null = null;
-  export let initialRuleName: string | null = null;
+  export let initialRuleName: string = '';
   export let initialRuleUpdatedAt: string | null = null;
   export let mode: 'create' | 'edit' = 'create';
   export let user: User | null;
@@ -38,7 +38,7 @@
   let ruleId: number | null = initialRuleId;
   let ruleLogic: string = initialRuleLogic;
   let ruleModelId: number | null = initialRuleModelId;
-  let ruleName: string | null = initialRuleName;
+  let ruleName: string = initialRuleName;
   let ruleUpdatedAt: string | null = initialRuleUpdatedAt;
   let saveButtonEnabled: boolean = false;
   let savedRule: Partial<ExpansionRule> = {
@@ -51,7 +51,7 @@
   };
 
   $: activityTypes.setVariables({ modelId: ruleModelId ?? -1 });
-  $: saveButtonEnabled = ruleActivityType !== null && ruleLogic !== '';
+  $: saveButtonEnabled = ruleActivityType !== null && ruleLogic !== '' && ruleName !== '';
   $: ruleModified = diffRule(savedRule, {
     activity_type: ruleActivityType,
     authoring_command_dict_id: ruleDictionaryId,
