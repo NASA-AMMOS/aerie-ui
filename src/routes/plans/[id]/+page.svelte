@@ -21,7 +21,12 @@
   import PlanNavButton from '../../../components/plan/PlanNavButton.svelte';
   import CssGrid from '../../../components/ui/CssGrid.svelte';
   import PlanGrid from '../../../components/ui/PlanGrid.svelte';
-  import { activityDirectives, activityDirectivesMap, resetActivityStores } from '../../../stores/activities';
+  import {
+    activityDirectives,
+    activityDirectivesMap,
+    resetActivityStores,
+    selectActivity,
+  } from '../../../stores/activities';
   import { checkConstraintsStatus, constraintViolations, resetConstraintStores } from '../../../stores/constraints';
   import {
     allErrors,
@@ -120,6 +125,9 @@
   }
 
   $: if ($plan) {
+    // Ensure there is no selected activity if the user came from another plan
+    selectActivity(null, null);
+
     effects
       .getResourcesExternal($plan.id, $plan.start_time, data.user)
       .then(newResources => ($externalResources = newResources));
