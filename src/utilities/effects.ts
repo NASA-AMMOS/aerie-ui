@@ -5,6 +5,7 @@ import { activityDirectivesMap, selectedActivityDirectiveId } from '../stores/ac
 import { checkConstraintsStatus, constraintViolationsResponse } from '../stores/constraints';
 import { catchError, catchSchedulingError } from '../stores/errors';
 import {
+  createExpansionRuleError,
   creatingExpansionSequence,
   planExpansionStatus,
   savingExpansionRule,
@@ -368,6 +369,8 @@ const effects = {
 
   async createExpansionRule(rule: ExpansionRuleInsertInput, user: User | null): Promise<number | null> {
     try {
+      createExpansionRuleError.set(null);
+
       if (!queryPermissions.CREATE_EXPANSION_RULE(user)) {
         throwPermissionError('create an expansion rule');
       }
@@ -383,6 +386,7 @@ const effects = {
       catchError('Expansion Rule Create Failed', e as Error);
       showFailureToast('Expansion Rule Create Failed');
       savingExpansionRule.set(false);
+      createExpansionRuleError.set((e as Error).message);
       return null;
     }
   },
@@ -2535,6 +2539,7 @@ const effects = {
   async updateExpansionRule(id: number, rule: Partial<ExpansionRule>, user: User | null): Promise<string | null> {
     try {
       savingExpansionRule.set(true);
+      createExpansionRuleError.set(null);
 
       if (!queryPermissions.UPDATE_EXPANSION_RULE(user)) {
         throwPermissionError('update this expansion rule');
@@ -2550,6 +2555,7 @@ const effects = {
       catchError('Expansion Rule Update Failed', e as Error);
       showFailureToast('Expansion Rule Update Failed');
       savingExpansionRule.set(false);
+      createExpansionRuleError.set((e as Error).message);
       return null;
     }
   },

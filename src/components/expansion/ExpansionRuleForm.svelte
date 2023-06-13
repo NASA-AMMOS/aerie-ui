@@ -3,7 +3,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import { expansionRulesFormColumns, savingExpansionRule } from '../../stores/expansion';
+  import { createExpansionRuleError, expansionRulesFormColumns, savingExpansionRule } from '../../stores/expansion';
   import { activityTypes, models } from '../../stores/plan';
   import { commandDictionaries } from '../../stores/sequencing';
   import type { User } from '../../types/app';
@@ -11,6 +11,7 @@
   import effects from '../../utilities/effects';
   import { isSaveEvent } from '../../utilities/keyboardEvents';
   import PageTitle from '../app/PageTitle.svelte';
+  import AlertError from '../ui/AlertError.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
   import Panel from '../ui/Panel.svelte';
@@ -137,6 +138,8 @@
     </svelte:fragment>
 
     <svelte:fragment slot="body">
+      <AlertError class="m-2" error={$createExpansionRuleError} />
+
       {#if mode === 'edit'}
         <fieldset>
           <label for="ruleId">Rule ID</label>
