@@ -86,8 +86,8 @@
           return (
             prevPermission ||
             (mode === 'create'
-              ? featurePermissions.constraints.canCreate(plan)
-              : featurePermissions.constraints.canUpdate(plan))
+              ? featurePermissions.constraints.canCreate(user, plan)
+              : featurePermissions.constraints.canUpdate(user, plan))
           );
         }
       }, false);
@@ -98,8 +98,8 @@
 
   function hasPlanPermission(plan: PlanSlim, mode: 'create' | 'edit'): boolean {
     return mode === 'create'
-      ? featurePermissions.constraints.canCreate(plan)
-      : featurePermissions.constraints.canUpdate(plan);
+      ? featurePermissions.constraints.canCreate(user, plan)
+      : featurePermissions.constraints.canUpdate(user, plan);
   }
 
   function diffConstraints(constraintA: Partial<Constraint>, constraintB: Partial<Constraint>) {

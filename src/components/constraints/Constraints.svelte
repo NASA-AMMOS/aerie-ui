@@ -37,7 +37,7 @@
   export let initialPlanMap: Record<number, PlanSlim> = {};
   export let initialPlans: PlanSlim[] = [];
 
-  const columnDefs: DataGridColumnDef[] = [
+  const baseColumnDefs: DataGridColumnDef[] = [
     {
       field: 'id',
       filter: 'number',
@@ -85,46 +85,9 @@
       suppressSizeToFit: true,
       width: 120,
     },
-    {
-      cellClass: 'action-cell-container',
-      cellRenderer: (params: ConstraintsCellRendererParams) => {
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className = 'actions-cell';
-        new DataGridActions({
-          props: {
-            deleteCallback: params.deleteConstraint,
-            deleteTooltip: {
-              content: 'Delete Constraint',
-              placement: 'bottom',
-            },
-            editCallback: params.editConstraint,
-            editTooltip: {
-              content: 'Edit Constraint',
-              placement: 'bottom',
-            },
-            hasDeletePermission: params.data ? hasEditPermission(params.data) : false,
-            hasEditPermission: params.data ? hasEditPermission(params.data) : false,
-            rowData: params.data,
-          },
-          target: actionsDiv,
-        });
-
-        return actionsDiv;
-      },
-      cellRendererParams: {
-        deleteConstraint,
-        editConstraint,
-      } as CellRendererParams,
-      field: 'actions',
-      headerName: '',
-      resizable: false,
-      sortable: false,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
-      width: 55,
-    },
   ];
 
+  let columnDefs = baseColumnDefs;
   let constraintModelId: number | null = null;
   let filterText: string = '';
   let filteredConstraints: Constraint[] = [];
@@ -158,7 +121,7 @@
             ...prevMap,
             plans: {
               ...prevMap.plans,
-              [plan_id]: featurePermissions.constraints.canUpdate(plan, constraint),
+              [plan_id]: featurePermissions.constraints.canUpdate(user, plan, constraint),
             },
           };
         }
@@ -172,7 +135,7 @@
               [model_id]: model.plans.reduce((prevPermission: boolean, { id }) => {
                 const plan = initialPlanMap[id];
                 if (plan) {
-                  return prevPermission || featurePermissions.constraints.canUpdate(plan, constraint);
+                  return prevPermission || featurePermissions.constraints.canUpdate(user, plan, constraint);
                 }
                 return prevPermission;
               }, false),
@@ -188,6 +151,47 @@
       plans: {},
     },
   );
+  $: columnDefs = [
+    ...baseColumnDefs,
+    {
+      cellClass: 'action-cell-container',
+      cellRenderer: (params: ConstraintsCellRendererParams) => {
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'actions-cell';
+        new DataGridActions({
+          props: {
+            deleteCallback: params.deleteConstraint,
+            deleteTooltip: {
+              content: 'Delete Constraint',
+              placement: 'bottom',
+            },
+            editCallback: params.editConstraint,
+            editTooltip: {
+              content: 'Edit Constraint',
+              placement: 'bottom',
+            },
+            hasDeletePermission: params.data ? hasEditPermission(user, params.data) : false,
+            hasEditPermission: params.data ? hasEditPermission(user, params.data) : false,
+            rowData: params.data,
+          },
+          target: actionsDiv,
+        });
+
+        return actionsDiv;
+      },
+      cellRendererParams: {
+        deleteConstraint,
+        editConstraint,
+      } as CellRendererParams,
+      field: 'actions',
+      headerName: '',
+      resizable: false,
+      sortable: false,
+      suppressAutoSize: true,
+      suppressSizeToFit: true,
+      width: 55,
+    },
+  ];
 
   async function deleteConstraint({ id }: Pick<Constraint, 'id'>) {
     const success = await effects.deleteConstraint(id, user);
@@ -230,7 +234,7 @@
     return null;
   }
 
-  function hasEditPermission(constraint: Constraint) {
+  function hasEditPermission(_user: User, constraint: Constraint) {
     const { model_id, plan_id } = constraint;
     if (plan_id !== null) {
       return constraintsEditPermissionsMap.plans[plan_id] ?? false;
