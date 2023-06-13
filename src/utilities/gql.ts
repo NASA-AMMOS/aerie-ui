@@ -513,6 +513,7 @@ const gql = {
         description
         expansion_logic
         id
+        name
         owner
         updated_at
         updated_by
