@@ -22,6 +22,7 @@
   let endTimeText = '';
 
   $: timeVizRangeWidthStyle = timeVizRangeWidth < 1 ? '4px' : `${timeVizRangeWidth}%`;
+
   $: {
     // Compute time range left and width
     if (simulationDataset.simulation_start_time) {
@@ -47,8 +48,8 @@
     }
   }
 
-  function onCheckboxClick(e: MouseEventHandler<HTMLInputElement>) {
-    e.target.checked = checked;
+  function onCheckboxClick(e: Event) {
+    (e.target as HTMLInputElement).checked = checked;
   }
 </script>
 
