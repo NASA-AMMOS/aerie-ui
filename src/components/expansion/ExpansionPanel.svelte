@@ -155,7 +155,7 @@
             <option value={null} />
             {#each $expansionSets as set}
               <option value={set.id}>
-                Expansion Set {set.id}
+                {set.name} ({set.id})
               </option>
             {/each}
           {/if}
@@ -174,6 +174,10 @@
               <div class="expansion-set-detail">
                 <span class="st-typography-label">Command Dictionary ID:</span>
                 <span>{selectedExpansionSet.command_dict_id}</span>
+              </div>
+              <div class="expansion-set-detail">
+                <span class="st-typography-label">Name:</span>
+                <span>{selectedExpansionSet.name}</span>
               </div>
               <div class="expansion-set-detail">
                 <span class="st-typography-label">Created At:</span>
