@@ -22,7 +22,6 @@
   let endTimeText = '';
 
   $: timeVizRangeWidthStyle = timeVizRangeWidth < 1 ? '4px' : `${timeVizRangeWidth}%`;
-
   $: {
     // Compute time range left and width
     if (simulationDataset.simulation_start_time) {
@@ -47,13 +46,17 @@
       }
     }
   }
+
+  function onCheckboxClick(e: MouseEventHandler<HTMLInputElement>) {
+    e.target.checked = checked;
+  }
 </script>
 
 <button class="simulation-dataset st-typography-label" class:active={checked} on:click={() => dispatch('click')}>
   <div class="simulation-dataset-top-row">
     <div class="simulation-dataset-input-container">
       <Input class="simulation-dataset-input">
-        <input {checked} type="checkbox" tabIndex={-1} />
+        <input {checked} type="checkbox" tabIndex={-1} on:click={onCheckboxClick} />
       </Input>
       ID: {simulationDataset.id}
     </div>
@@ -146,6 +149,7 @@
   }
 
   .simulation-dataset-top-row :global(.input.simulation-dataset-input input) {
+    cursor: pointer;
     margin: 0;
     padding: 0;
   }
