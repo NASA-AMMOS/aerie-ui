@@ -129,6 +129,7 @@ export class ExpansionRules {
     this.inputCommandDictionary = page.locator(this.inputCommandDictionarySelector);
     this.inputEditor = page.locator('.panel >> textarea.inputarea');
     this.inputModel = page.locator(this.inputModelSelector);
+    this.inputName = page.locator(this.inputNameSelector);
     this.newButton = page.locator(`button:has-text("New")`);
     this.page = page;
     this.rulesNavButton = page.locator(`.nav-button:has-text("Rules")`);
