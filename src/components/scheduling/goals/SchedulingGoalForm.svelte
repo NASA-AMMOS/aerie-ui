@@ -98,8 +98,8 @@
           goalDefinition,
           goalName,
           goalModelId,
-          goalDescription,
           user,
+          goalDescription,
         );
 
         if (newGoal !== null) {

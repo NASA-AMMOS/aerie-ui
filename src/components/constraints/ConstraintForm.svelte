@@ -103,8 +103,8 @@
           constraintModelId,
           constraintName,
           constraintPlanId,
-          constraintDescription,
           user,
+          constraintDescription,
         );
 
         if (newConstraintId !== null) {
