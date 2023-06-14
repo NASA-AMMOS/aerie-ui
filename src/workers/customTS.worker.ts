@@ -4,7 +4,8 @@
  */
 import type { CommandDictionary } from '@nasa-jpl/aerie-ampcs';
 import type { Diagnostic, TypeScriptWorker as InternalTsWorker } from '../types/monaco-internal';
-import { generateSequencingDiagnostics, generateValidationDiagnostics } from './sequencingDiagnostics';
+import { generateCommandArgumentDiagnostics } from './diagnostics/commandArgumentsDiagnostics';
+import { generateTimeDiagnostics } from './diagnostics/timeDiagnostics';
 import { getModelName as getModelId } from './workerHelpers';
 
 // Appease the TSC - this special window object is read by the Custom Worker implementation of Monaco
@@ -70,8 +71,10 @@ self.customTSWorkerFactory = tsw => {
       const model_config = this.model_configurations?.[model_id];
 
       if (model_config !== undefined && model_config.should_inject === true) {
-        diagnostics.push(...generateSequencingDiagnostics(fileName, this._languageService));
-        diagnostics.push(...generateValidationDiagnostics(fileName, this._languageService, model_config.command_dict));
+        diagnostics.push(...generateTimeDiagnostics(fileName, this._languageService));
+        diagnostics.push(
+          ...generateCommandArgumentDiagnostics(fileName, this._languageService, model_config.command_dict),
+        );
       }
 
       return diagnostics;
