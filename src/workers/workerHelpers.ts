@@ -1,8 +1,17 @@
 import type { EnumMap, FswCommandArgumentMap, FswCommandArgumentNumeric, NumericRange } from '@nasa-jpl/aerie-ampcs';
 import tsc, { SyntaxKind } from 'typescript';
 import type { Diagnostic as ResponseDiagnostic } from '../types/monaco-internal';
-import { CustomCodes } from './sequencingDiagnostics';
+import type { ErrorCode } from './customCodes';
+import { CustomErrorCodes } from './customCodes';
 
+/**
+ * Retrieves the source file data for a given file name using the provided language service.
+ *
+ * @param {string} fileName - The name of the source file.
+ * @param {tsc.LanguageService} languageService - The TypeScript language service.
+ * @returns {[tsc.SourceFile, tsc.SourceFile] | undefined} The source file data as a tuple of two source files,
+ * or `undefined` if the data cannot be obtained.
+ */
 export function getSourceFileData(
   fileName: string,
   languageService: tsc.LanguageService,
@@ -64,12 +73,16 @@ export function getFirstInParent(node: tsc.Node, selector: (node: tsc.Node) => b
   }
 }
 
-// Gets a model name as a string `model\d*`, which matches the syntax of `.getModel()`
+/**
+ * Retrieves the model name from the given file name, which matches the syntax of `.getModel()`
+ *
+ * @param {string} fileName - The name of the file.
+ * @returns {string} The model name extracted from the file name.
+ */
 export function getModelName(fileName: string): string {
   const regex = /^inmemory:\/\/model\/(\d*)$/;
   let result = '$model';
   result += fileName.match(regex)[1];
-  console.log({ result });
 
   return result;
 }
@@ -87,12 +100,25 @@ export function parentNodeKinds(node: tsc.Node): [string, string][] {
   return [...parentNodeKinds(node.parent), [SyntaxKind[node.kind], node.getText()]];
 }
 
+/**
+ * Retrieves the kinds and corresponding texts of the child nodes for the given node.
+ *
+ * @param {tsc.Node} node - The parent node.
+ * @returns {[string, string][]} An array of tuples representing the kinds and texts of the child nodes.
+ */
 export function childNodeKinds(node: tsc.Node): [string, string][] {
   const children = node.getChildren();
 
   return [[SyntaxKind[node.kind], node.getText()], ...children.flatMap(child_node => childNodeKinds(child_node))];
 }
 
+/**
+ * Finds the closest ancestor node of a specific kind for the given node.
+ *
+ * @param {tsc.Node} node - The starting node.
+ * @param {SyntaxKind} kind - The desired kind of the ancestor node.
+ * @returns {tsc.Node | undefined} The closest ancestor node of the specified kind, or `undefined` if not found.
+ */
 export function findNodeWithParentOfKind(node: tsc.Node, kind: SyntaxKind): tsc.Node | undefined {
   if (node.parent === undefined) {
     return undefined;
@@ -105,6 +131,13 @@ export function findNodeWithParentOfKind(node: tsc.Node, kind: SyntaxKind): tsc.
   return findNodeWithParentOfKind(node.parent, kind);
 }
 
+/* Finds the next child node of a specific kind that satisfies the provided filter function.
+ *
+ * @param {tsc.Node} node - The parent node.
+ * @param {SyntaxKind} kind - The desired kind of the child node.
+ * @param {(this_node: tsc.Node) => boolean} filter - The filter function to determine if a child node should be considered.
+ * @returns {tsc.Node | undefined} The next child node of the specified kind that satisfies the filter function, or `undefined` if not found.
+ */
 export function findNextChildOfKind(
   node: tsc.Node,
   kind: SyntaxKind,
@@ -127,47 +160,80 @@ export function findNextChildOfKind(
     .find(child => child !== undefined);
 }
 
+/**
+ * Removes quotation marks from the input string.
+ *
+ * @param {string} input - The string from which to remove quotation marks.
+ * @returns {string} The input string without quotation marks.
+ */
 export function stripQuotes(input: string): string {
   return input.replaceAll(/["']/g, '');
 }
 
+/**
+ * Zips two arrays into an array of tuples, pairing corresponding elements.
+ *
+ * @param {Array<A>} arr1 - The first array.
+ * @param {B[]} arr2 - The second array.
+ * @returns {[A, B][]} An array of tuples, pairing corresponding elements from the two input arrays.
+ */
 export function zip<A, B>(arr1: Array<A>, arr2: B[]): [A, B][] {
   return arr1.map((k, i) => [k, arr2[i]]);
 }
 
-export function makeDiagnostic(
-  message: string,
-  code: CustomCodes,
-  sourceFile: tsc.SourceFile,
-  arg: tsc.Node,
-): ResponseDiagnostic {
+/**
+ * Creates a diagnostic object for a given error code, source file, and node.
+ *
+ * @param {ErrorCode} errorCode - The error code for the diagnostic.
+ * @param {tsc.SourceFile} sourceFile - The source file where the error occurred.
+ * @param {tsc.Node} arg - The node associated with the error.
+ * @returns {ResponseDiagnostic} A diagnostic object representing the error.
+ */
+export function makeDiagnostic(errorCode: ErrorCode, sourceFile: tsc.SourceFile, arg: tsc.Node): ResponseDiagnostic {
   return {
     category: tsc.DiagnosticCategory.Error,
-    code,
+    code: errorCode.id,
     file: { fileName: sourceFile.fileName },
     length: arg.getEnd() - arg.getStart(sourceFile),
-    messageText: message,
+    messageText: errorCode.message,
     start: arg.getStart(sourceFile),
   };
 }
 
-type ValidationReturn = string | false;
+type ValidationReturn = ErrorCode | false;
 
-// Is it a number (not NAN or anything weird)
+/**
+ * Checks if a string represents a valid numeric value (not NAN or anything weird)
+ *
+ * @param {string} str - The string to validate.
+ * @returns {ValidationReturn} Either a custom error code or `false` indicating a valid numeric value.
+ */
 function isNumeric(str: string): ValidationReturn {
   // Both are needed: https://stackoverflow.com/a/175787
-  return isNaN(Number(str)) || isNaN(parseFloat(str))
-    ? `Argument is wrong type\n Got ${str} but expected a number`
-    : false;
+  return isNaN(Number(str)) || isNaN(parseFloat(str)) ? CustomErrorCodes.InvalidNumber(str) : false;
 }
 
+/**
+ * Performs range validation on a numeric value.
+ *
+ * @param {number} value - The value to validate.
+ * @param {NumericRange | null} range - The range to validate against. If null, the validation is ignored.
+ * @returns {ValidationReturn} Either a custom error code or `false` indicating a valid value within the range.
+ */
 function rangeValidation(value: number, range: NumericRange | null): ValidationReturn {
   // If range is null, ignore
   return range !== null && (value > range.max || value < range.min)
-    ? `Argument outside range\n Got ${value} but expected a number in range [${range.min}, ${range.max}]`
+    ? CustomErrorCodes.InvalidRange(value, range.min, range.max)
     : false;
 }
 
+/**
+ * Validates a float value against a numeric range.
+ *
+ * @param {string} value - The float value to validate.
+ * @param {NumericRange | null} range - The range to validate against. If null, the range validation is ignored.
+ * @returns {ValidationReturn} Either a custom error code or `false` indicating a valid float value within the range.
+ */
 function validateFloat(value: string, range: NumericRange | null): ValidationReturn {
   let error_string: ValidationReturn;
 
@@ -181,6 +247,13 @@ function validateFloat(value: string, range: NumericRange | null): ValidationRet
   return false;
 }
 
+/**
+ * Validates an integer value against a numeric range.
+ *
+ * @param {string} value - The integer value to validate.
+ * @param {NumericRange | null} range - The range to validate against. If null, the range validation is ignored.
+ * @returns {ValidationReturn} Either a custom error code or `false` indicating a valid integer value within the range.
+ */
 function validateInteger(value: string, range: NumericRange | null): ValidationReturn {
   // The mod 1 thing asserts an integer
   let error_string: ValidationReturn;
@@ -189,12 +262,19 @@ function validateInteger(value: string, range: NumericRange | null): ValidationR
     return error_string;
   }
   if (Number(value) % 1 != 0) {
-    return 'Argument is not integer';
+    return CustomErrorCodes.InvalidInteger(value);
   }
 
   return false;
 }
 
+/**
+ * Validates an unsigned integer value against a numeric range.
+ *
+ * @param {string} value - The unsigned integer value to validate.
+ * @param {NumericRange | null} range - The range to validate against. If null, the range validation is ignored.
+ * @returns {ValidationReturn} Either a custom error code or `false` indicating a valid unsigned integer value within the range.
+ */
 function validateUnsigned(value: string, range: NumericRange | null): ValidationReturn {
   // The mod 1 thing asserts an integer
   let error_string: ValidationReturn;
@@ -203,11 +283,18 @@ function validateUnsigned(value: string, range: NumericRange | null): Validation
     return error_string;
   }
   if (Number(value) < 0) {
-    return 'Argument is not unsigned';
+    return CustomErrorCodes.InvalidUnsignedInteger(value);
   }
   return false;
 }
 
+/**
+ * Validates a numeric value based on the expectation type.
+ *
+ * @param {string} value - The numeric value to validate.
+ * @param {FswCommandArgumentNumeric} expectation - The expectation object defining the type and range.
+ * @returns {ValidationReturn} Either a custom error code or `false` indicating a valid numeric value based on the expectation type.
+ */
 function validateNumeric(value: string, expectation: FswCommandArgumentNumeric): ValidationReturn {
   switch (expectation.type) {
     case 'float':
@@ -219,12 +306,28 @@ function validateNumeric(value: string, expectation: FswCommandArgumentNumeric):
   }
 }
 
+/**
+ * Validates a value against an enumeration of options.
+ *
+ * @param {string} value - The value to validate.
+ * @param {string[] | null} options - The array of options to validate against. If null, the validation is ignored.
+ * @returns {ValidationReturn} Either a custom error code or `false` indicating a valid value within the enumeration.
+ */
 function validateEnum(value: string, options: string[] | null): ValidationReturn {
   return options !== null && !options.includes(value)
-    ? `Unexpected enum argument\n Got "${value}" but expected one of ${JSON.stringify(options)}`
+    ? CustomErrorCodes.InvalidEnum(value, JSON.stringify(options))
     : false;
 }
 
+/**
+ * Validates discovered arguments against the expected argument map and enum map.
+ *
+ * @param {tsc.PropertyAssignment[]} discoveredArgs - The discovered arguments.
+ * @param {FswCommandArgumentMap} expectedArgMap - The map of expected arguments.
+ * @param {EnumMap} enumMap - The map of enums.
+ * @param {tsc.SourceFile} sourceFile - The source file where the arguments are discovered.
+ * @returns {ResponseDiagnostic[]} An array of response diagnostics representing any validation errors.
+ */
 // NOTE: Does not check bit lenght, only range right now!
 export function validateArguments(
   discoverdArgs: tsc.PropertyAssignment[],
@@ -242,30 +345,33 @@ export function validateArguments(
     }
 
     const arg_val = stripQuotes(argument.initializer.getText());
-    console.log({ arg_val, type: expected_argument.arg_type });
+
+    // ignore specific eDSL local and parameter values
+    if (arg_val.startsWith('locals.') || arg_val.startsWith('parameters.')) {
+      continue;
+    }
 
     let validation_resp: ValidationReturn;
 
     switch (expected_argument.arg_type) {
       case 'integer':
         if ((validation_resp = validateInteger(arg_val, expected_argument.range)) !== false) {
-          diagnostics.push(makeDiagnostic(validation_resp, CustomCodes.InvalidInteger, sourceFile, argument));
+          diagnostics.push(makeDiagnostic(validation_resp, sourceFile, argument));
         }
         break;
       case 'unsigned':
         if ((validation_resp = validateUnsigned(arg_val, expected_argument.range)) !== false) {
-          console.log('Found bad unsigned');
-          diagnostics.push(makeDiagnostic(validation_resp, CustomCodes.InvalidUnsignedInteger, sourceFile, argument));
+          diagnostics.push(makeDiagnostic(validation_resp, sourceFile, argument));
         }
         break;
       case 'float':
         if ((validation_resp = validateFloat(arg_val, expected_argument.range)) !== false) {
-          diagnostics.push(makeDiagnostic(validation_resp, CustomCodes.InvalidFloat, sourceFile, argument));
+          diagnostics.push(makeDiagnostic(validation_resp, sourceFile, argument));
         }
         break;
       case 'numeric':
         if ((validation_resp = validateNumeric(arg_val, expected_argument)) !== false) {
-          diagnostics.push(makeDiagnostic(validation_resp, CustomCodes.InvalidFloat, sourceFile, argument));
+          diagnostics.push(makeDiagnostic(validation_resp, sourceFile, argument));
         }
         break;
       case 'boolean':
@@ -276,7 +382,7 @@ export function validateArguments(
         const enum_options =
           expected_argument.range ?? enumMap[expected_argument.enum_name].values.map(value => value.symbol);
         if ((validation_resp = validateEnum(arg_val, enum_options)) !== false) {
-          diagnostics.push(makeDiagnostic(validation_resp, CustomCodes.InvalidFloat, sourceFile, argument));
+          diagnostics.push(makeDiagnostic(validation_resp, sourceFile, argument));
         }
         break;
       }
