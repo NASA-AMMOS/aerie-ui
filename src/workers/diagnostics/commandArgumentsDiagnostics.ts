@@ -4,7 +4,7 @@
  * This website is really helpful: https://ts-ast-viewer.com/
  *
  * As a rule of thumb, doing `node.forEachChildren(child => {})` gives you a cleaner set of children
- *  - Seems to remove some somewhat extranous nodes (those that unwrap to the same things)
+ *  - Seems to remove some somewhat extraneous nodes (those that unwrap to the same things)
  *  - "Iterates all the child nodes that are properties of the node"
  * On the other hand, ".getChildren() - Returns all the children including the all the tokens (ex. OpenBraceToken, SemiColonToken etc.)"
  *
@@ -19,9 +19,8 @@ import { makeDiagnostic, validateArguments } from '../workerHelpers';
 
 /**
  * Given some argument to a command, process it.
- *
- * Processes a single object, string, number, or similar. Objects can have many properites, each of which is checked independantly.
- * @param argument The `tsc.Expression` that this argument acutally is
+ * Processes a single object, string, number, or similar. Objects can have many properties, each of which is checked independently.
+ * @param argument The `tsc.Expression` that this argument actually is
  * @param commandName The name of this command as a string
  * @param commandNode The command node
  * @returns
@@ -51,14 +50,12 @@ function processCommandArgument(
  * Validate COMMAND_NAME's arguments with the command dictionary.
  *
  * We extracts the commands by starting with the ObjectLiteralExpression and checking if the parent exist
- * in the command dictionary. If a COMMAND_NAME doesn't exist the original Monico editor will already show
+ * in the command dictionary. If a COMMAND_NAME doesn't exist the original Monaco editor will already show
  * the error. This check only cares about commands with arguments.
  *
- * ex.
+ * For example:
  *
  * COMMAND_NAME({arg1 : value1, arg2 : value2, ...}),
- *
- *
  *
  * @param {tsc.SourceFile} sourceFile - The source file to search for arguments.
  * @param {CommandDictionary} commandDict - The command dictionary containing command definitions.
@@ -129,10 +126,8 @@ function findAndValidateArguments(sourceFile: tsc.SourceFile, commandDict: Comma
  *  Command arguments will all be basic types (objects, strings, numbers, etc)
  *    -> NOT IIFEs or function executions
  *
- *
- *
  * @param fileName The internal name of a file, used to get the symbols
- * @param languageService The TS langauge service. comes from the worker
+ * @param languageService The TS language service. comes from the worker
  * @param commandDict The command dict relevant to this file
  * @returns A set of diagnostics
  */

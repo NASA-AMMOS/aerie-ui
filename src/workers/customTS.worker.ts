@@ -35,7 +35,7 @@ export interface _ModelData {
 
 /**
  * The first thing you need to do to add to the worker interface!
- * All type safety is derrived from this, so don't mess up :P
+ * All type safety is derived from this, so don't mess up :P
  */
 export interface WorkerOverrideProps {
   updateModelConfig(model_data: CreateModelData): Promise<void>;

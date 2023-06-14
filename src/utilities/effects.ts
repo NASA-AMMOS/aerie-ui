@@ -56,7 +56,6 @@ import type {
   ParameterValidationResponse,
 } from '../types/parameter';
 import type { PermissibleQueriesMap, PermissibleQueryResponse } from '../types/permissions';
-
 import type {
   Plan,
   PlanBranchRequestAction,
@@ -1637,17 +1636,18 @@ const effects = {
       try {
         const data = await reqHasura<ParsedDictionaryResponse>(
           gql.GET_PARSED_COMMAND_DICTIONARY,
-          {
-            commandDictionaryId,
-          },
+          { commandDictionaryId },
           user,
         );
         const { command_dictionary } = data;
+
         if (!Array.isArray(command_dictionary) || command_dictionary.length === 0) {
           catchError(`Unable to find command dictionary with id ${commandDictionaryId}`);
           return {};
+        } else {
+          const [{ parsed_json }] = command_dictionary;
+          return parsed_json;
         }
-        return command_dictionary[0].parsed_json;
       } catch (e) {
         catchError(e);
         return {};

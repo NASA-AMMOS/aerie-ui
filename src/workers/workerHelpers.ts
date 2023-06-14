@@ -328,7 +328,7 @@ function validateEnum(value: string, options: string[] | null): ValidationReturn
  * @param {tsc.SourceFile} sourceFile - The source file where the arguments are discovered.
  * @returns {ResponseDiagnostic[]} An array of response diagnostics representing any validation errors.
  */
-// NOTE: Does not check bit lenght, only range right now!
+// NOTE: Does not check bit length, only range right now!
 export function validateArguments(
   discoverdArgs: tsc.PropertyAssignment[],
   expectedArgMap: FswCommandArgumentMap,
