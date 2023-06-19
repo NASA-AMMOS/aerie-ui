@@ -10,6 +10,7 @@
   import type { PlanSlim } from '../../types/plan';
   import effects from '../../utilities/effects';
   import { isSaveEvent } from '../../utilities/keyboardEvents';
+  import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import PageTitle from '../app/PageTitle.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
@@ -30,6 +31,8 @@
   export let initialPlans: PlanSlim[] = [];
   export let mode: 'create' | 'edit' = 'create';
   export let user: User | null;
+
+  const permissionError = 'You do not have permission to edit this constraint.';
 
   let constraintDefinition: string = initialConstraintDefinition;
   let constraintDescription: string = initialConstraintDescription;
@@ -203,6 +206,10 @@
           class="st-select w-100"
           disabled={constraintPlanId !== null}
           name="model"
+          use:permissionHandler={{
+            hasPermission,
+            permissionError,
+          }}
         >
           <option value={null} />
           {#each models as model}
@@ -215,7 +222,15 @@
 
       <fieldset>
         <label for="plan">Plan</label>
-        <select bind:value={constraintPlanId} class="st-select w-100" name="plan">
+        <select
+          bind:value={constraintPlanId}
+          class="st-select w-100"
+          name="plan"
+          use:permissionHandler={{
+            hasPermission,
+            permissionError,
+          }}
+        >
           <option value={null} />
           {#each plans as plan}
             <option value={plan.id} disabled={!hasPlanPermission(plan, mode)}>
@@ -234,6 +249,10 @@
           name="constraint-name"
           placeholder="Enter Constraint Name (required)"
           required
+          use:permissionHandler={{
+            hasPermission,
+            permissionError,
+          }}
         />
       </fieldset>
 
@@ -245,6 +264,10 @@
           class="st-input w-100"
           name="constraint-description"
           placeholder="Enter Constraint Description (optional)"
+          use:permissionHandler={{
+            hasPermission,
+            permissionError,
+          }}
         />
       </fieldset>
     </svelte:fragment>
