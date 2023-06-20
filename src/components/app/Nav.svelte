@@ -31,18 +31,13 @@
   </div>
   <div class="right">
     <slot name="right" />
-    <div>
-      <label for="role-selector">Role:</label>
-      {#if userRoles.length > 1}
-        <select id="role-selector" value={user?.activeRole} class="st-select" on:change={changeRole}>
-          {#each userRoles as userRole}
-            <option value={userRole}>{userRole}</option>
-          {/each}
-        </select>
-      {:else}
-        <strong>{user?.activeRole}</strong>
-      {/if}
-    </div>
+    {#if userRoles.length > 1}
+      <select value={user?.activeRole} class="st-select" on:change={changeRole}>
+        {#each userRoles as userRole}
+          <option value={userRole}>{userRole}</option>
+        {/each}
+      </select>
+    {/if}
   </div>
 </div>
 
