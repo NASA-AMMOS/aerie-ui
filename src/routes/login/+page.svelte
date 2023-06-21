@@ -3,10 +3,14 @@
 <script lang="ts">
   import { goto, invalidateAll } from '$app/navigation';
   import { base } from '$app/paths';
+  import { page } from '$app/stores';
   import { onMount } from 'svelte';
   import AlertError from '../../components/ui/AlertError.svelte';
   import { permissibleQueries as permissibleQueriesStore, user as userStore } from '../../stores/app';
   import type { LoginResponseBody } from '../../types/auth';
+  import { removeQueryParam } from '../../utilities/generic';
+
+  const JWT_EXPIRED = 'JWTExpired';
 
   let error: string | null = null;
   let fullError: string | null = null;
@@ -16,9 +20,17 @@
   let usernameInput: HTMLInputElement | null = null;
 
   $: if ($userStore !== null && $permissibleQueriesStore && !Object.keys($permissibleQueriesStore).length) {
-    error = 'You are not authorized';
-    fullError =
-      'You are not authorized to access the page that you attempted to view. Please contact a tool administrator to request access.';
+    const reason = $page.url.searchParams.get('reason');
+    removeQueryParam('reason');
+
+    if (reason && reason.includes(JWT_EXPIRED)) {
+      error = 'Your session has expired';
+      fullError = 'Your session has expired. Please login again';
+    } else {
+      error = 'You are not authorized';
+      fullError =
+        'You are not authorized to access the page that you attempted to view. Please contact a tool administrator to request access.';
+    }
   }
 
   onMount(() => {
