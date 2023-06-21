@@ -60,10 +60,14 @@
     plan_id: constraintPlanId,
   });
   $: {
-    if (initialConstraintPlanId !== null) {
-      hasPermission = hasPlanPermission(initialPlanMap[initialConstraintPlanId], mode);
-    } else if (initialConstraintModelId !== null) {
-      hasPermission = hasModelPermission(initialConstraintModelId, mode);
+    if (constraintPlanId !== null) {
+      hasPermission = hasPlanPermission(initialPlanMap[constraintPlanId], mode, user);
+    } else if (constraintModelId !== null) {
+      hasPermission = hasModelPermission(constraintModelId, mode, user);
+    } else {
+      hasPermission = plans.reduce((prevPermission: boolean, plan) => {
+        return prevPermission || hasPlanPermission(plan, mode, user);
+      }, false);
     }
   }
   $: pageTitle = mode === 'edit' ? 'Constraints' : 'New Constraint';
@@ -80,7 +84,7 @@
     }
   }
 
-  function hasModelPermission(modelId: number, mode: 'create' | 'edit'): boolean {
+  function hasModelPermission(modelId: number, mode: 'create' | 'edit', user): boolean {
     const model = initialModelMap[modelId];
     if (model) {
       return model.plans.reduce((prevPermission: boolean, { id }) => {
@@ -96,10 +100,10 @@
       }, false);
     }
 
-    return false;
+    return true;
   }
 
-  function hasPlanPermission(plan: PlanSlim, mode: 'create' | 'edit'): boolean {
+  function hasPlanPermission(plan: PlanSlim, mode: 'create' | 'edit', user): boolean {
     return mode === 'create'
       ? featurePermissions.constraints.canCreate(user, plan)
       : featurePermissions.constraints.canUpdate(user, plan);
@@ -213,7 +217,7 @@
         >
           <option value={null} />
           {#each models as model}
-            <option value={model.id} disabled={!hasModelPermission(model.id, mode)}>
+            <option value={model.id} disabled={!hasModelPermission(model.id, mode, user)}>
               {model.name} ({model.id})
             </option>
           {/each}
@@ -233,7 +237,7 @@
         >
           <option value={null} />
           {#each plans as plan}
-            <option value={plan.id} disabled={!hasPlanPermission(plan, mode)}>
+            <option value={plan.id} disabled={!hasPlanPermission(plan, mode, user)}>
               {plan.name} ({plan.id})
             </option>
           {/each}

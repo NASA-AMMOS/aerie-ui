@@ -97,6 +97,8 @@
   };
   let selectedConstraint: Constraint | null = null;
 
+  let redrawRows: () => void;
+
   $: filteredConstraints = $constraintsAll.filter(constraint => {
     const filterTextLowerCase = filterText.toLowerCase();
     const includesId = `${constraint.id}`.includes(filterTextLowerCase);
@@ -151,47 +153,51 @@
       plans: {},
     },
   );
-  $: columnDefs = [
-    ...baseColumnDefs,
-    {
-      cellClass: 'action-cell-container',
-      cellRenderer: (params: ConstraintsCellRendererParams) => {
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className = 'actions-cell';
-        new DataGridActions({
-          props: {
-            deleteCallback: params.deleteConstraint,
-            deleteTooltip: {
-              content: 'Delete Constraint',
-              placement: 'bottom',
+  $: {
+    columnDefs = [
+      ...baseColumnDefs,
+      {
+        cellClass: 'action-cell-container',
+        cellRenderer: (params: ConstraintsCellRendererParams) => {
+          const actionsDiv = document.createElement('div');
+          actionsDiv.className = 'actions-cell';
+          new DataGridActions({
+            props: {
+              deleteCallback: params.deleteConstraint,
+              deleteTooltip: {
+                content: 'Delete Constraint',
+                placement: 'bottom',
+              },
+              editCallback: params.editConstraint,
+              editTooltip: {
+                content: 'Edit Constraint',
+                placement: 'bottom',
+              },
+              hasDeletePermission: params.data ? hasEditPermission(user, params.data) : false,
+              hasEditPermission: params.data ? hasEditPermission(user, params.data) : false,
+              rowData: params.data,
             },
-            editCallback: params.editConstraint,
-            editTooltip: {
-              content: 'Edit Constraint',
-              placement: 'bottom',
-            },
-            hasDeletePermission: params.data ? hasEditPermission(user, params.data) : false,
-            hasEditPermission: params.data ? hasEditPermission(user, params.data) : false,
-            rowData: params.data,
-          },
-          target: actionsDiv,
-        });
+            target: actionsDiv,
+          });
 
-        return actionsDiv;
+          return actionsDiv;
+        },
+        cellRendererParams: {
+          deleteConstraint,
+          editConstraint,
+        } as CellRendererParams,
+        field: 'actions',
+        headerName: '',
+        resizable: false,
+        sortable: false,
+        suppressAutoSize: true,
+        suppressSizeToFit: true,
+        width: 55,
       },
-      cellRendererParams: {
-        deleteConstraint,
-        editConstraint,
-      } as CellRendererParams,
-      field: 'actions',
-      headerName: '',
-      resizable: false,
-      sortable: false,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
-      width: 55,
-    },
-  ];
+    ];
+    // Need to force the table to redraw the DataGridAction cells after the user's role is changed
+    redrawRows?.();
+  }
 
   async function deleteConstraint({ id }: Pick<Constraint, 'id'>) {
     const success = await effects.deleteConstraint(id, user);
@@ -275,6 +281,7 @@
     <svelte:fragment slot="body">
       {#if filteredConstraints.length}
         <SingleActionDataGrid
+          bind:redrawRows
           {columnDefs}
           hasEdit={true}
           hasDeletePermission={hasEditPermission}
