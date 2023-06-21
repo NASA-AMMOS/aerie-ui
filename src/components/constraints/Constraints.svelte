@@ -100,8 +100,6 @@
   let hasPermission: boolean = false;
   let selectedConstraint: Constraint | null = null;
 
-  let redrawRows: () => void;
-
   $: filteredConstraints = $constraintsAll.filter(constraint => {
     const filterTextLowerCase = filterText.toLowerCase();
     const includesId = `${constraint.id}`.includes(filterTextLowerCase);
@@ -201,8 +199,6 @@
         width: 55,
       },
     ];
-    // Need to force the table to redraw the DataGridAction cells after the user's role is changed
-    redrawRows?.();
   }
 
   async function deleteConstraint({ id }: Pick<Constraint, 'id'>) {
@@ -300,7 +296,6 @@
     <svelte:fragment slot="body">
       {#if filteredConstraints.length}
         <SingleActionDataGrid
-          bind:redrawRows
           {columnDefs}
           hasEdit={true}
           hasDeletePermission={hasEditPermission}
