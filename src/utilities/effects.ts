@@ -1,5 +1,6 @@
 import { goto } from '$app/navigation';
 import { base } from '$app/paths';
+import type { CommandDictionary as AmpcsCommandDictionary } from '@nasa-jpl/aerie-ampcs';
 import { get } from 'svelte/store';
 import { activityDirectivesMap, selectedActivityDirectiveId } from '../stores/activities';
 import { checkConstraintsStatus, constraintViolationsResponse } from '../stores/constraints';
@@ -43,12 +44,7 @@ import type {
   SeqId,
 } from '../types/expansion';
 import type { ModelInsertInput, ModelSlim } from '../types/model';
-import type {
-  DslTypeScriptResponse,
-  ParsedDictionary,
-  ParsedDictionaryResponse,
-  TypeScriptFile,
-} from '../types/monaco';
+import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
 import type {
   ArgumentsMap,
   EffectiveArguments,
@@ -1628,32 +1624,32 @@ const effects = {
     }
   },
 
-  async getParsedDictionary(
+  async getParsedAmpcsCommandDictionary(
     commandDictionaryId: number | null | undefined,
     user: User | null,
-  ): Promise<ParsedDictionary> {
+  ): Promise<AmpcsCommandDictionary | null> {
     if (commandDictionaryId !== null && commandDictionaryId !== undefined) {
       try {
-        const data = await reqHasura<ParsedDictionaryResponse>(
+        const data = await reqHasura<[{ parsed_json: AmpcsCommandDictionary }]>(
           gql.GET_PARSED_COMMAND_DICTIONARY,
           { commandDictionaryId },
           user,
         );
         const { command_dictionary } = data;
 
-        if (!Array.isArray(command_dictionary) || command_dictionary.length === 0) {
+        if (!Array.isArray(command_dictionary) || !command_dictionary.length) {
           catchError(`Unable to find command dictionary with id ${commandDictionaryId}`);
-          return {};
+          return null;
         } else {
           const [{ parsed_json }] = command_dictionary;
           return parsed_json;
         }
       } catch (e) {
         catchError(e);
-        return {};
+        return null;
       }
     } else {
-      return {};
+      return null;
     }
   },
 

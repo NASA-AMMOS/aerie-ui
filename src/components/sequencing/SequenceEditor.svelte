@@ -1,11 +1,12 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import type { CommandDictionary as AmpcsCommandDictionary } from '@nasa-jpl/aerie-ampcs';
   import type { editor as Editor, languages } from 'monaco-editor/esm/vs/editor/editor.api';
   import { createEventDispatcher } from 'svelte';
   import { userSequencesRows } from '../../stores/sequencing';
   import type { User } from '../../types/app';
-  import type { Monaco, ParsedDictionary, TypeScriptFile } from '../../types/monaco';
+  import type { Monaco, TypeScriptFile } from '../../types/monaco';
   import effects from '../../utilities/effects';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
@@ -24,8 +25,8 @@
 
   const dispatch = createEventDispatcher();
 
+  let commandDictionaryJson: AmpcsCommandDictionary | null = null;
   let commandDictionaryTsFiles: TypeScriptFile[] = [];
-  let commandDictionaryJson: ParsedDictionary = {};
   let monaco: Monaco;
 
   $: effects
@@ -33,7 +34,7 @@
     .then(tsFiles => (commandDictionaryTsFiles = tsFiles));
 
   $: effects
-    .getParsedDictionary(sequenceCommandDictionaryId, user)
+    .getParsedAmpcsCommandDictionary(sequenceCommandDictionaryId, user)
     .then(parsedDictionary => (commandDictionaryJson = parsedDictionary));
 
   $: if (monaco !== undefined) {
@@ -51,7 +52,7 @@
     typescriptDefaults.setExtraLibs(commandDictionaryTsFiles);
   }
 
-  // Update the custom worker to use the select Command Dictionary
+  // Update the custom worker to use the select Command Dictionary.
   $: if (monaco !== undefined && commandDictionaryJson !== undefined) {
     monaco.languages.typescript
       .getTypeScriptWorker()
@@ -59,9 +60,9 @@
       .then(ts => {
         monaco.editor.getModels().forEach(model =>
           ts.updateModelConfig({
-            command_dict_str: JSON.stringify(commandDictionaryJson),
-            //There are two editors available: one for sequence editing and the other for SeqJSON.
-            //In this case, we need to select the first editor, which corresponds to the sequence editor.
+            command_dict_str: JSON.stringify(commandDictionaryJson ?? {}),
+            // There are two editors available: one for sequence editing and the other for SeqJSON.
+            // In this case, we need to select the first editor, which corresponds to the sequence editor.
             model_id: model.id,
             should_inject: true,
           }),
@@ -85,7 +86,7 @@
     const { model, worker } = event.detail;
     const model_id = model.id;
     worker.updateModelConfig({
-      command_dict_str: JSON.stringify(commandDictionaryJson),
+      command_dict_str: JSON.stringify(commandDictionaryJson ?? {}),
       model_id,
       should_inject: true,
     });

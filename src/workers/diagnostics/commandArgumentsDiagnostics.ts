@@ -1,21 +1,21 @@
-/**
- * Random Notes
- *
- * This website is really helpful: https://ts-ast-viewer.com/
- *
- * As a rule of thumb, doing `node.forEachChildren(child => {})` gives you a cleaner set of children
- *  - Seems to remove some somewhat extraneous nodes (those that unwrap to the same things)
- *  - "Iterates all the child nodes that are properties of the node"
- * On the other hand, ".getChildren() - Returns all the children including the all the tokens (ex. OpenBraceToken, SemiColonToken etc.)"
- *
- * This may or may not be what you want!! But it should be useful regardless
- */
-
 import type { CommandDictionary, EnumMap, FswCommand } from '@nasa-jpl/aerie-ampcs';
 import tsc from 'typescript';
 import type { Diagnostic as ResponseDiagnostic } from '../../types/monaco-internal';
 import { CustomErrorCodes } from '../customCodes';
 import { makeDiagnostic, validateArguments } from '../workerHelpers';
+
+/**
+ * Notes for this file.
+ *
+ * This website is really helpful: https://ts-ast-viewer.com/
+ *
+ * As a rule of thumb, doing `node.forEachChildren(child => {})` gives you a cleaner set of children:
+ *  - Seems to remove some somewhat extraneous nodes (those that unwrap to the same things)
+ *  - "Iterates all the child nodes that are properties of the node"
+ *
+ * On the other hand, ".getChildren() - Returns all the children including the all the tokens (ex. OpenBraceToken, SemiColonToken etc.)"
+ * This may or may not be what you want!! But it should be useful regardless.
+ */
 
 /**
  * Given some argument to a command, process it.
@@ -76,7 +76,7 @@ function findAndValidateArguments(sourceFile: tsc.SourceFile, commandDict: Comma
       tsNode: tsc.ObjectLiteralExpression;
     }[] = [];
 
-    function visitNode(node) {
+    function visitNode(node: tsc.Node) {
       const parent = node.parent;
       if (tsc.isCallExpression(parent) && tsc.isObjectLiteralExpression(node)) {
         const expression = parent.expression;
@@ -113,6 +113,7 @@ function findAndValidateArguments(sourceFile: tsc.SourceFile, commandDict: Comma
         sourceFile,
       );
     });
+
     diagnostics = [...diagnostics, ...this_diagnostics];
   }
 
@@ -137,14 +138,18 @@ export function generateCommandArgumentDiagnostics(
   commandDict: CommandDictionary,
 ): ResponseDiagnostic[] {
   const program = languageService.getProgram();
+
   if (program === undefined) {
     return [];
   }
+
   const typechecker = program.getTypeChecker();
   const sourceFile = program.getSourceFile(fileName);
+
   if (sourceFile === undefined) {
     return [];
   }
+
   const sourceFileSymbol = typechecker.getSymbolAtLocation(sourceFile)?.getDeclarations()?.[0] as
     | tsc.SourceFile
     | undefined;

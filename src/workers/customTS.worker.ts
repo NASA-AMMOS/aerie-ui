@@ -21,17 +21,17 @@ declare global {
 
 type ModelId = string;
 
-export interface CreateModelData {
+type CreateModelData = {
   command_dict_str: string;
   model_id: ModelId;
   should_inject: boolean;
-}
+};
 
-export interface _ModelData {
+type ModelData = {
   command_dict: CommandDictionary;
   model_id: ModelId;
   should_inject: boolean;
-}
+};
 
 /**
  * The first thing you need to do to add to the worker interface!
@@ -45,17 +45,21 @@ export interface WorkerOverrideProps {
 // However, we must implement all of our override methods, as there is no superclass implementation present!
 export interface WorkerSubclass extends Partial<InternalTsWorker>, WorkerOverrideProps {}
 
-// Implement whatever overrides we want!
+/**
+ * Main custom TypeScript worker.
+ * Implement here whatever overrides we need.
+ */
 self.customTSWorkerFactory = tsw => {
   return class extends tsw implements WorkerSubclass {
-    private model_configurations: Record<ModelId, _ModelData>;
+    private model_configurations: Record<ModelId, ModelData>;
+
     constructor(...args: any) {
       super(...args);
       this.model_configurations = {};
     }
 
     /**
-     * Note: Be very careful when overriding completions to make sure you
+     * @warning Be very careful when overriding completions to make sure you
      * are not overriding default completions.
      */
     async getCompletionsAtPosition(fileName: string, position: number) {
@@ -65,9 +69,7 @@ self.customTSWorkerFactory = tsw => {
 
     async getSemanticDiagnostics(fileName: string): Promise<Diagnostic[]> {
       const diagnostics = await super.getSemanticDiagnostics(fileName);
-
       const model_id = getModelId(fileName);
-
       const model_config = this.model_configurations?.[model_id];
 
       if (model_config !== undefined && model_config.should_inject === true) {
