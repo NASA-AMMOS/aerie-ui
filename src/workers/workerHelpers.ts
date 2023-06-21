@@ -4,13 +4,14 @@ import type { Diagnostic as ResponseDiagnostic } from '../types/monaco-internal'
 import type { ErrorCode } from './customCodes';
 import { CustomErrorCodes } from './customCodes';
 
+type ValidationReturn = ErrorCode | false;
+
 /**
  * Retrieves the source file data for a given file name using the provided language service.
  *
  * @param {string} fileName - The name of the source file.
  * @param {tsc.LanguageService} languageService - The TypeScript language service.
- * @returns {[tsc.SourceFile, tsc.SourceFile] | undefined} The source file data as a tuple of two source files,
- * or `undefined` if the data cannot be obtained.
+ * @returns {[tsc.SourceFile, tsc.SourceFile] | undefined} The source file data as a tuple of two source files, or `undefined` if the data cannot be obtained.
  */
 export function getSourceFileData(
   fileName: string,
@@ -39,6 +40,7 @@ export function getSourceFileData(
 
 /**
  * Creates a list of all descents of the given node matching the selector, recursively
+ *
  * @param node The tsc Node we want to use as our root
  * @param selector A selector function run on every recursive child Node
  * @returns A list of nodes matching the selector
@@ -131,7 +133,8 @@ export function findNodeWithParentOfKind(node: tsc.Node, kind: SyntaxKind): tsc.
   return findNodeWithParentOfKind(node.parent, kind);
 }
 
-/* Finds the next child node of a specific kind that satisfies the provided filter function.
+/**
+ * Finds the next child node of a specific kind that satisfies the provided filter function.
  *
  * @param {tsc.Node} node - The parent node.
  * @param {SyntaxKind} kind - The desired kind of the child node.
@@ -199,8 +202,6 @@ export function makeDiagnostic(errorCode: ErrorCode, sourceFile: tsc.SourceFile,
     start: arg.getStart(sourceFile),
   };
 }
-
-type ValidationReturn = ErrorCode | false;
 
 /**
  * Checks if a string represents a valid numeric value (not NAN or anything weird)

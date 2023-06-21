@@ -34,7 +34,7 @@
 
   $: effects
     .getParsedDictionary(sequenceCommandDictionaryId, user)
-    .then(pasedDictionary => (commandDictionaryJson = pasedDictionary));
+    .then(parsedDictionary => (commandDictionaryJson = parsedDictionary));
 
   $: if (monaco !== undefined) {
     const { languages } = monaco;
@@ -84,7 +84,6 @@
   ) {
     const { model, worker } = event.detail;
     const model_id = model.id;
-    console.log(`Model ${model_id} loaded!`, worker);
     worker.updateModelConfig({
       command_dict_str: JSON.stringify(commandDictionaryJson),
       model_id,
