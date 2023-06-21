@@ -42,6 +42,7 @@
     maxTimeRange,
     plan,
     planEndTimeMs,
+    planId,
     planLocked,
     planStartTimeMs,
     resetPlanStores,
@@ -125,12 +126,14 @@
   }
 
   $: if ($plan) {
-    // Ensure there is no selected activity if the user came from another plan
-    selectActivity(null, null);
-
     effects
       .getResourcesExternal($plan.id, $plan.start_time, data.user)
       .then(newResources => ($externalResources = newResources));
+  }
+
+  $: if ($planId > -1) {
+    // Ensure there is no selected activity if the user came from another plan
+    selectActivity(null, null);
   }
 
   $: if ($plan && $simulationDataset !== undefined) {
