@@ -346,11 +346,11 @@ const featurePermissions: FeaturePermissions = {
       ((isPlanOwner(user, plan) || isPlanCollaborator(user, plan)) && queryPermissions.CREATE_CONSTRAINT(user)),
     canDelete: (user, plan) =>
       isUserAdmin(user) ||
-      ((isPlanOwner(user, plan) || isPlanCollaborator(user, plan)) && queryPermissions.CREATE_CONSTRAINT(user)),
+      ((isPlanOwner(user, plan) || isPlanCollaborator(user, plan)) && queryPermissions.DELETE_CONSTRAINT(user)),
     canRead: user => isUserAdmin(user) || queryPermissions.SUB_CONSTRAINTS_ALL(user),
     canUpdate: (user, plan) =>
       isUserAdmin(user) ||
-      ((isPlanOwner(user, plan) || isPlanCollaborator(user, plan)) && queryPermissions.CREATE_CONSTRAINT(user)),
+      ((isPlanOwner(user, plan) || isPlanCollaborator(user, plan)) && queryPermissions.UPDATE_CONSTRAINT(user)),
   },
   model: {
     canCreate: user => isUserAdmin(user) || queryPermissions.CREATE_MODEL(user),
