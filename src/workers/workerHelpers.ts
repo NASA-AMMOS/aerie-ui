@@ -77,16 +77,18 @@ export function getFirstInParent(node: tsc.Node, selector: (node: tsc.Node) => b
 
 /**
  * Retrieves the model name from the given file name, which matches the syntax of `.getModel()`
- *
- * @param {string} fileName - The name of the file.
- * @returns {string} The model name extracted from the file name.
+ * @note Only returns a model name for 'inmemory' models.
  */
-export function getModelName(fileName: string): string {
+export function getModelName(fileName: string): string | null {
   const regex = /^inmemory:\/\/model\/(\d*)$/;
-  let result = '$model';
-  result += fileName.match(regex)[1];
+  const found = fileName.match(regex);
 
-  return result;
+  if (found !== null && found.length === 2) {
+    const [, modelId] = found;
+    return `$model${modelId}`;
+  }
+
+  return null;
 }
 
 /**

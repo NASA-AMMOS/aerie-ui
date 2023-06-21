@@ -85,11 +85,13 @@
       const tsWorker = await monaco.languages.typescript.getTypeScriptWorker();
       const worker = await tsWorker();
 
-      worker.updateModelConfig({
-        command_dict_str: JSON.stringify(commandDictionaryJson ?? {}),
-        model_id: sequenceEditorModel.id,
-        should_inject: true,
-      });
+      if (commandDictionaryJson && sequenceEditorModel) {
+        worker.updateModelConfig({
+          command_dict_str: JSON.stringify(commandDictionaryJson ?? {}),
+          model_id: sequenceEditorModel.id,
+          should_inject: true,
+        });
+      }
     } catch (reason) {
       console.log('Failed to pass the command dictionary to the custom worker.', reason);
     }

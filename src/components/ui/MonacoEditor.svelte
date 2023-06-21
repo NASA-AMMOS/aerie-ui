@@ -108,7 +108,7 @@
         }
 
         // Errors in the dispatch won't trigger the retry and will just fail.
-        model = editor.getModel();
+        model = editor.getModel(); // Set here so parents can bind to the model easily.
         dispatch('fullyLoaded', { model, worker: tsWorker });
       },
       5,
