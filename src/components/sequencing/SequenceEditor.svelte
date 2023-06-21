@@ -28,6 +28,7 @@
   let commandDictionaryJson: AmpcsCommandDictionary | null = null;
   let commandDictionaryTsFiles: TypeScriptFile[] = [];
   let monaco: Monaco;
+  let sequenceEditorModel: Editor.ITextModel;
 
   $: effects
     .getTsFilesCommandDictionary(sequenceCommandDictionaryId, user)
@@ -52,25 +53,8 @@
     typescriptDefaults.setExtraLibs(commandDictionaryTsFiles);
   }
 
-  // Update the custom worker to use the select Command Dictionary.
   $: if (monaco !== undefined && commandDictionaryJson !== undefined) {
-    monaco.languages.typescript
-      .getTypeScriptWorker()
-      .then(worker => worker())
-      .then(ts => {
-        monaco.editor.getModels().forEach(model =>
-          ts.updateModelConfig({
-            command_dict_str: JSON.stringify(commandDictionaryJson ?? {}),
-            // There are two editors available: one for sequence editing and the other for SeqJSON.
-            // In this case, we need to select the first editor, which corresponds to the sequence editor.
-            model_id: model.id,
-            should_inject: true,
-          }),
-        );
-      })
-      .catch(reason => {
-        console.log('Failed to pass the command dictionary to the custom worker.', reason);
-      });
+    workerUpdateModel();
   }
 
   function downloadSeqJson() {
@@ -80,16 +64,35 @@
     a.click();
   }
 
-  function fullyLoaded(
+  function workerFullyLoaded(
     event: CustomEvent<{ model: Editor.ITextModel; worker: languages.typescript.TypeScriptWorker }>,
   ) {
     const { model, worker } = event.detail;
     const model_id = model.id;
+
     worker.updateModelConfig({
       command_dict_str: JSON.stringify(commandDictionaryJson ?? {}),
       model_id,
       should_inject: true,
     });
+  }
+
+  /**
+   * Used to update the custom worker to use the selected command dictionary.
+   */
+  async function workerUpdateModel() {
+    try {
+      const tsWorker = await monaco.languages.typescript.getTypeScriptWorker();
+      const worker = await tsWorker();
+
+      worker.updateModelConfig({
+        command_dict_str: JSON.stringify(commandDictionaryJson ?? {}),
+        model_id: sequenceEditorModel.id,
+        should_inject: true,
+      });
+    } catch (reason) {
+      console.log('Failed to pass the command dictionary to the custom worker.', reason);
+    }
   }
 </script>
 
@@ -106,6 +109,7 @@
     <svelte:fragment slot="body">
       <MonacoEditor
         bind:monaco
+        bind:model={sequenceEditorModel}
         automaticLayout={true}
         fixedOverflowWidgets={true}
         language="typescript"
@@ -116,7 +120,7 @@
         tabSize={2}
         value={sequenceDefinition}
         on:didChangeModelContent
-        on:fullyLoaded={fullyLoaded}
+        on:fullyLoaded={workerFullyLoaded}
       />
     </svelte:fragment>
   </Panel>
