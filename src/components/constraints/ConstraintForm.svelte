@@ -189,7 +189,15 @@
         <button class="st-button secondary ellipsis" on:click={() => goto(`${base}/constraints`)}>
           {mode === 'create' ? 'Cancel' : 'Close'}
         </button>
-        <button class="st-button {saveButtonClass} ellipsis" disabled={!saveButtonEnabled} on:click={saveConstraint}>
+        <button
+          class="st-button {saveButtonClass} ellipsis"
+          disabled={!saveButtonEnabled}
+          on:click={saveConstraint}
+          use:permissionHandler={{
+            hasPermission,
+            permissionError,
+          }}
+        >
           {saveButtonText}
         </button>
       </div>

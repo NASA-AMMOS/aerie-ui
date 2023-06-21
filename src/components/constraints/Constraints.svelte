@@ -11,6 +11,7 @@
   import type { ModelSlim } from '../../types/model';
   import type { PlanSlim } from '../../types/plan';
   import effects from '../../utilities/effects';
+  import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import Input from '../form/Input.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
@@ -86,15 +87,17 @@
       width: 120,
     },
   ];
+  const permissionError = 'You do not have permission to create a constraint.';
 
   let columnDefs = baseColumnDefs;
-  let constraintModelId: number | null = null;
-  let filterText: string = '';
-  let filteredConstraints: Constraint[] = [];
   let constraintsEditPermissionsMap: ConstraintsEditPermissionsMap = {
     models: {},
     plans: {},
   };
+  let constraintModelId: number | null = null;
+  let filterText: string = '';
+  let filteredConstraints: Constraint[] = [];
+  let hasPermission: boolean = false;
   let selectedConstraint: Constraint | null = null;
 
   let redrawRows: () => void;
@@ -154,6 +157,9 @@
     },
   );
   $: {
+    hasPermission = initialPlans.reduce((prevPermission: boolean, plan) => {
+      return prevPermission || hasPlanPermission(plan, user);
+    }, false);
     columnDefs = [
       ...baseColumnDefs,
       {
@@ -251,6 +257,10 @@
     return false;
   }
 
+  function hasPlanPermission(plan: PlanSlim, user): boolean {
+    return featurePermissions.constraints.canCreate(user, plan);
+  }
+
   function toggleConstraint(event: CustomEvent<DataGridRowSelection<Constraint>>) {
     const {
       detail: { data: clickedConstraint, isSelected },
@@ -274,7 +284,16 @@
       </Input>
 
       <div class="right">
-        <button class="st-button secondary ellipsis" on:click={() => goto(`${base}/constraints/new`)}> New </button>
+        <button
+          class="st-button secondary ellipsis"
+          on:click={() => goto(`${base}/constraints/new`)}
+          use:permissionHandler={{
+            hasPermission,
+            permissionError,
+          }}
+        >
+          New
+        </button>
       </div>
     </svelte:fragment>
 
