@@ -8,7 +8,7 @@
   import AlertError from '../../components/ui/AlertError.svelte';
   import type { LoginResponseBody } from '../../types/auth';
   import { removeQueryParam } from '../../utilities/generic';
-  import { hasNoAuthorization } from '../../utilities/permissions';
+  import { EXPIRED_JWT, hasNoAuthorization } from '../../utilities/permissions';
   import type { PageData } from './$types';
 
   export let data: PageData;
@@ -21,8 +21,6 @@
   let username = '';
   let usernameInput: HTMLInputElement | null = null;
 
-  const JWT_EXPIRED = 'JWTExpired';
-
   $: if (data.user?.permissibleQueries && hasNoAuthorization(data.user)) {
     error = 'You are not authorized';
     fullError =
@@ -30,7 +28,7 @@
   }
 
   $: if (reason) {
-    if (reason.includes(JWT_EXPIRED)) {
+    if (reason.includes(EXPIRED_JWT)) {
       error = 'Your session has expired.';
       fullError = 'Your session has expired. Please log in again.';
     } else {
