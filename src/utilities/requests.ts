@@ -1,7 +1,11 @@
 import { browser } from '$app/environment';
+import { goto } from '$app/navigation';
+import { base } from '$app/paths';
 import { env } from '$env/dynamic/public';
 import type { BaseUser, User } from '../types/app';
 import type { QueryVariables } from '../types/subscribable';
+
+const INVALID_JWT = 'invalid-jwt';
 
 /**
  * Function to make HTTP requests to the Aerie Gateway.
@@ -88,6 +92,13 @@ export async function reqHasura<T = any>(
       // This is often thrown when a Postgres exception is raised for a Hasura query.
       // @see https://github.com/hasura/graphql-engine/issues/3658
       throw new Error(error?.extensions?.internal?.error?.message ?? error?.message ?? defaultError);
+    } else if (code === INVALID_JWT) {
+      if (browser) {
+        await fetch(`${base}/auth/logout`, { method: 'POST' });
+        await goto(`${base}/login?reason=${encodeURIComponent(error?.message)}`, { invalidateAll: true });
+      }
+
+      throw new Error(error?.message ?? defaultError);
     } else {
       throw new Error(error?.message ?? defaultError);
     }

@@ -3,9 +3,11 @@
 <script lang="ts">
   import { goto, invalidateAll } from '$app/navigation';
   import { base } from '$app/paths';
+  import { page } from '$app/stores';
   import { onMount } from 'svelte';
   import AlertError from '../../components/ui/AlertError.svelte';
   import type { LoginResponseBody } from '../../types/auth';
+  import { removeQueryParam } from '../../utilities/generic';
   import { hasNoAuthorization } from '../../utilities/permissions';
   import type { PageData } from './$types';
 
@@ -15,13 +17,28 @@
   let fullError: string | null = null;
   let loginButtonText = 'Login';
   let password = '';
+  let reason = $page.url.searchParams.get('reason');
   let username = '';
   let usernameInput: HTMLInputElement | null = null;
+
+  const JWT_EXPIRED = 'JWTExpired';
 
   $: if (data.user?.permissibleQueries && hasNoAuthorization(data.user)) {
     error = 'You are not authorized';
     fullError =
       'You are not authorized to access the page that you attempted to view. Please contact a tool administrator to request access.';
+  }
+
+  $: if (reason) {
+    if (reason.includes(JWT_EXPIRED)) {
+      error = 'Your session has expired.';
+      fullError = 'Your session has expired. Please log in again.';
+    } else {
+      error = decodeURIComponent(reason);
+      fullError = null;
+    }
+
+    removeQueryParam('reason');
   }
 
   onMount(() => {
