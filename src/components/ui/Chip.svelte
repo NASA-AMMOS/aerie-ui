@@ -5,6 +5,7 @@
   import { classNames } from '../../utilities/generic';
 
   export let color: string = '#f8f8f8';
+  export let disabled: boolean = false;
   export let label: string = '';
   export let className: string = '';
   export let removable: boolean = true;
@@ -21,7 +22,7 @@
   $: removeStyle = `background:${shadeColor(color, 1.1)};color:${shadeColor(color || '', 5.5)}`;
 </script>
 
-<button style={chipStyle} class={rootClasses} on:click|preventDefault={() => dispatch('click')}>
+<button style={chipStyle} class={rootClasses} on:click|preventDefault={() => dispatch('click')} {disabled}>
   <div class="chip-label">{label}</div>
   {#if removable}
     <div style={removeStyle} class="chip-remove-button">

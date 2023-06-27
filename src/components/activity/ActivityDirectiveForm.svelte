@@ -402,49 +402,17 @@
         </Input>
       </Highlight>
 
-      <!-- <Highlight highlight={highlightKeysMap.tags}>
-        <Input layout="inline">
-          <label use:tooltip={{ content: 'Tags', placement: 'top' }} for="activityDirectiveTags"> Tags </label>
-          {#key activityDirective.id} -->
-      <!-- <Tags
-              autocompleteValues={allActivityDirectiveTags}
-              disabled={!editable}
-              name="activityDirectiveTags"
-              tags={activityDirective.tags.map(({ tag }) => tag.name)}
-              on:change={onUpdateTags}
-            /> -->
-      <!-- <Tags
-              disabled={!editable}
-              autocompleteValues={allActivityDirectiveTags}
-              disabled={!editable}
-              name="activityDirectiveTags"
-              tags={activityDirective.tags.map(({ tag }) => tag.name)}
-              on:change={onUpdateTags}
-              tags={activityDirective.tags}
-            /> -->
-      <!-- <Tags
-              allowUserOptions
-              options={tags}
-              disabled={!editable}
-              selected={activityDirective.tags.map(({ tag }) => tag)}
-              on:change={onTagsChange}
-            /> -->
-      <!-- {/key}
-        </Input>
-      </Highlight> -->
       <Highlight highlight={highlightKeysMap.tags}>
         <Input layout="inline">
           <label use:tooltip={{ content: 'Tags', placement: 'top' }} for="activityDirectiveTags"> Tags </label>
-          {#key activityDirective.id}
-            <TagsInput
-              options={tags}
-              disabled={!editable}
-              selected={activityDirective.tags.map(({ tag }) => tag)}
-              createTagObject={createPlaceholderTagObject}
-              on:add={onTagsInputChange}
-              on:remove={onTagsInputRemove}
-            />
-          {/key}
+          <TagsInput
+            options={tags}
+            disabled={!editable}
+            selected={activityDirective.tags.map(({ tag }) => tag)}
+            createTagObject={createPlaceholderTagObject}
+            on:add={onTagsInputChange}
+            on:remove={onTagsInputRemove}
+          />
         </Input>
       </Highlight>
     </Collapse>

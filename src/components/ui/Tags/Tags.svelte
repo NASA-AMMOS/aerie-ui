@@ -188,11 +188,12 @@
 <div class="tags" use:popperRef bind:this={tagsRef} bind:clientWidth={tagsWidth}>
   <div class="tags-selected-items">
     {#each selectedTags as tag}
-      <TagChip {tag} on:click={() => onTagRemove(tag)} />
+      <TagChip {tag} removable={!disabled} on:click={() => onTagRemove(tag)} {disabled} />
     {/each}
     <input
       {id}
       {name}
+      {disabled}
       {placeholder}
       class="st-input tags-input"
       on:mouseup={openSuggestions}
@@ -201,41 +202,41 @@
       bind:value={searchText}
       bind:this={inputRef}
     />
-    {#if suggestionsVisible}
-      <div class="tags-portal" use:popperContent={extraOpts}>
-        <div class="tags-options">
-          {#if filteredOptions.length}
-            <div class="tags-option tag-header st-typography-label">Suggestions</div>
-            {#each filteredOptions as tag}
-              <div
-                class="tags-option"
-                on:mousedown|stopPropagation
-                on:mouseup|stopPropagation={() => add(tag)}
-                class:active={activeTag?.id === tag.id}
-              >
-                <TagChip {tag} removable={false} />
-              </div>
-            {/each}
-          {/if}
-          {#if !exactMatchFound && searchText}
-            <div
-              on:mousedown|stopPropagation
-              on:mouseup|stopPropagation={() => add(createTagObject(searchText))}
-              class="tags-option"
-            >
-              Add "{searchText}" (enter)
-            </div>
-          {/if}
-          {#if !filteredOptions.length && exactMatchFound && searchText}
-            <div class="tags-option tags-option-message">{searchText} already added</div>
-          {/if}
-          {#if !filteredOptions.length && !exactMatchFound && !searchText}
-            <div class="tags-option tags-option-message">No other tags found</div>
-          {/if}
-        </div>
-      </div>
-    {/if}
   </div>
+  {#if suggestionsVisible}
+    <div class="tags-portal" use:popperContent={extraOpts}>
+      <div class="tags-options">
+        {#if filteredOptions.length}
+          <div class="tags-option tag-header st-typography-label">Suggestions</div>
+          {#each filteredOptions as tag}
+            <div
+              class="tags-option"
+              on:mousedown|stopPropagation
+              on:mouseup|stopPropagation={() => add(tag)}
+              class:active={activeTag?.id === tag.id}
+            >
+              <TagChip {disabled} {tag} removable={false} />
+            </div>
+          {/each}
+        {/if}
+        {#if !exactMatchFound && searchText}
+          <div
+            on:mousedown|stopPropagation
+            on:mouseup|stopPropagation={() => add(createTagObject(searchText))}
+            class="tags-option"
+          >
+            Add "{searchText}" (enter)
+          </div>
+        {/if}
+        {#if !filteredOptions.length && exactMatchFound && searchText}
+          <div class="tags-option tags-option-message">{searchText} already added</div>
+        {/if}
+        {#if !filteredOptions.length && !exactMatchFound && !searchText}
+          <div class="tags-option tags-option-message">No other tags found</div>
+        {/if}
+      </div>
+    </div>
+  {/if}
 </div>
 
 <style>
@@ -302,5 +303,9 @@
 
   .tags-option-message:hover {
     background: inherit;
+  }
+
+  .tags-selected-items :global(.tag:not(.chip-removable)) {
+    cursor: default;
   }
 </style>

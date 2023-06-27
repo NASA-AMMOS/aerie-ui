@@ -4,11 +4,12 @@
   import type { Tag } from '../../../types/tags';
   import Chip from '../Chip.svelte';
 
-  export let tag: Partial<Tag>;
+  export let disabled: boolean = false;
   export let removable: boolean = true;
+  export let tag: Partial<Tag>;
 </script>
 
-<Chip color={tag.color} className="tag st-typography-medium" label={tag.name} {removable} on:click />
+<Chip {disabled} color={tag.color} className="tag st-typography-medium" label={tag.name} {removable} on:click />
 
 <style>
   :global(.tag.st-chip) {
