@@ -48,4 +48,4 @@ export type PlanAssetUpdatePermissionCheck<T = AssetWithOwner> = (
   asset?: T,
 ) => boolean;
 
-export type PlanWithOwners = Pick<Plan, 'owner' | 'collaborators'>;
+export type PlanWithOwners = Pick<Plan, 'id' | 'owner' | 'collaborators'>;
