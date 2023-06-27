@@ -227,9 +227,9 @@
               Add "{searchText}" (enter)
             </div>
           {:else if exactMatchFound && searchText}
-            <div class="tags-option">{searchText} already added</div>
+            <div class="tags-option tags-option-message">{searchText} already added</div>
           {:else}
-            <div class="tags-option">No other tags found</div>
+            <div class="tags-option tags-option-message">No other tags found</div>
           {/if}
         </div>
       </div>
@@ -293,5 +293,13 @@
   .tag-header {
     background: var(--st-gray-10);
     cursor: default;
+  }
+
+  .tags-option-message {
+    cursor: default;
+  }
+
+  .tags-option-message:hover {
+    background: inherit;
   }
 </style>
