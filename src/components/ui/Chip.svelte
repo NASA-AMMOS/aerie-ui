@@ -4,7 +4,7 @@
   import { shadeColor } from '../../utilities/color';
   import { classNames } from '../../utilities/generic';
 
-  export let color: string = '#E6E6FF';
+  export let color: string = '#f8f8f8';
   export let label: string = '';
   export let className: string = '';
   export let removable: boolean = true;

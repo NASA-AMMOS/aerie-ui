@@ -62,3 +62,10 @@ export function shadeColor(color: string, decimal: number): string {
 
   return `#${rr}${gg}${bb}`;
 }
+
+/**
+ * Returns a random pastel color in hex format.
+ */
+export function generateRandomPastelColor(): string {
+  return hslToHex(360 * Math.random(), 25 + 70 * Math.random(), 82 + 10 * Math.random());
+}

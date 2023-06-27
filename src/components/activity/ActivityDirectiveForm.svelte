@@ -232,7 +232,7 @@
     }
   }
 
-  async function onTagsCustomChange({ detail: tag }: CustomEvent<Tag>) {
+  async function onTagsInputChange({ detail: tag }: CustomEvent<Tag>) {
     const newTags = await effects.createTags([{ color: tag.color, name: tag.name }], user);
     if (newTags) {
       const { id: directive_id, plan_id } = activityDirective;
@@ -245,52 +245,9 @@
     }
   }
 
-  async function onTagsCustomRemove({ detail: tag }: CustomEvent<Tag>) {
+  async function onTagsInputRemove({ detail: tag }: CustomEvent<Tag>) {
     await effects.deleteActivityDirectiveTags([tag.id], user);
   }
-
-  // async function onTagsChange(event: CustomEvent<DispatchEvents<ObjectOption>['change']>) {
-  //   const { type, option } = event.detail;
-
-  //   // Parse out stuff from option
-  //   // If it's an existing option we get the full object, if it's the first tag ever we get a string,
-  //   // and if it's a new tag we get an object with {label: ""}
-  //   let name: string = '';
-  //   let id: number = -1;
-  //   if (typeof option === 'string') {
-  //     name = (option as Option).toString();
-  //   } else if (typeof option === 'object') {
-  //     if ('id' in option) {
-  //       id = option.id as number;
-  //     } else {
-  //       name = option.label.toString();
-  //     }
-  //   }
-
-  //   const { id: directive_id, plan_id } = activityDirective;
-  //   const genColor = () => '#' + (0x1000000 + Math.random() * 0xffffff).toString(16).substr(1, 6);
-
-  //   if (type === 'add') {
-  //     const newTags = await effects.createTags([{ color: genColor(), name }], user);
-  //     if (newTags) {
-  //       const activityDirectiveTags: ActivityDirectiveTagsUpdateInput[] = (newTags || []).map(({ id: tag_id }) => ({
-  //         directive_id,
-  //         plan_id,
-  //         tag_id,
-  //       }));
-  //       await effects.createActivityDirectiveTags(activityDirectiveTags, user);
-  //     }
-  //   } else if (type === 'remove') {
-  //     const activityDirectiveTags = [
-  //       {
-  //         directive_id: id,
-  //         plan_id,
-  //         tag_id: id,
-  //       },
-  //     ];
-  //   } else if (type === 'removeAll') {
-  //   }
-  // }
 
   function resetActivityName() {
     const initialValue = $activityNameField.initialValue;
@@ -484,8 +441,8 @@
               disabled={!editable}
               selected={activityDirective.tags.map(({ tag }) => tag)}
               createTagObject={createPlaceholderTagObject}
-              on:add={onTagsCustomChange}
-              on:remove={onTagsCustomRemove}
+              on:add={onTagsInputChange}
+              on:remove={onTagsInputRemove}
             />
           {/key}
         </Input>
