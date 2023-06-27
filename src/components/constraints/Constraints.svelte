@@ -29,7 +29,7 @@
     editConstraint: (constraint: Constraint) => void;
   };
   type ConstraintsCellRendererParams = ICellRendererParams<Constraint> & CellRendererParams;
-  type ConstraintsEditPermissionsMap = {
+  type ConstraintsPermissionsMap = {
     models: Record<number, boolean>;
     plans: Record<number, boolean>;
   };
@@ -90,7 +90,11 @@
   const permissionError = 'You do not have permission to create a constraint.';
 
   let columnDefs = baseColumnDefs;
-  let constraintsEditPermissionsMap: ConstraintsEditPermissionsMap = {
+  let constraintsDeletePermissionsMap: ConstraintsPermissionsMap = {
+    models: {},
+    plans: {},
+  };
+  let constraintsEditPermissionsMap: ConstraintsPermissionsMap = {
     models: {},
     plans: {},
   };
@@ -113,8 +117,49 @@
     }
   }
   $: constraintModelId = getConstraintModelId(selectedConstraint);
+  $: constraintsDeletePermissionsMap = ($constraintsAll ?? []).reduce(
+    (prevMap: ConstraintsPermissionsMap, constraint: Constraint) => {
+      const { model_id, plan_id } = constraint;
+
+      if (plan_id !== null) {
+        const plan = initialPlanMap[plan_id];
+        if (plan) {
+          return {
+            ...prevMap,
+            plans: {
+              ...prevMap.plans,
+              [plan_id]: featurePermissions.constraints.canDelete(user, plan, constraint),
+            },
+          };
+        }
+      } else if (model_id !== null) {
+        const model = initialModelMap[model_id];
+        if (model) {
+          return {
+            ...prevMap,
+            models: {
+              ...prevMap.models,
+              [model_id]: model.plans.reduce((prevPermission: boolean, { id }) => {
+                const plan = initialPlanMap[id];
+                if (plan) {
+                  return prevPermission || featurePermissions.constraints.canDelete(user, plan, constraint);
+                }
+                return prevPermission;
+              }, false),
+            },
+          };
+        }
+      }
+
+      return prevMap;
+    },
+    {
+      models: {},
+      plans: {},
+    },
+  );
   $: constraintsEditPermissionsMap = ($constraintsAll ?? []).reduce(
-    (prevMap: ConstraintsEditPermissionsMap, constraint: Constraint) => {
+    (prevMap: ConstraintsPermissionsMap, constraint: Constraint) => {
       const { model_id, plan_id } = constraint;
 
       if (plan_id !== null) {
@@ -177,7 +222,7 @@
                 content: 'Edit Constraint',
                 placement: 'bottom',
               },
-              hasDeletePermission: params.data ? hasEditPermission(user, params.data) : false,
+              hasDeletePermission: params.data ? hasDeletePermission(user, params.data) : false,
               hasEditPermission: params.data ? hasEditPermission(user, params.data) : false,
               rowData: params.data,
             },
@@ -242,6 +287,17 @@
     return null;
   }
 
+  function hasDeletePermission(_user: User, constraint: Constraint) {
+    const { model_id, plan_id } = constraint;
+    if (plan_id !== null) {
+      return constraintsDeletePermissionsMap.plans[plan_id] ?? false;
+    } else if (model_id !== null) {
+      return constraintsDeletePermissionsMap.models[model_id] ?? false;
+    }
+
+    return false;
+  }
+
   function hasEditPermission(_user: User, constraint: Constraint) {
     const { model_id, plan_id } = constraint;
     if (plan_id !== null) {
@@ -298,7 +354,7 @@
         <SingleActionDataGrid
           {columnDefs}
           hasEdit={true}
-          hasDeletePermission={hasEditPermission}
+          {hasDeletePermission}
           {hasEditPermission}
           itemDisplayText="Constraint"
           items={filteredConstraints}
