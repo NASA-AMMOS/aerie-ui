@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import type { ModifierPhases } from '@popperjs/core';
+  import type { ModifierPhases, State } from '@popperjs/core';
   import { createEventDispatcher } from 'svelte';
   import { createPopperActions } from 'svelte-popperjs';
   import type { Tag } from '../../../types/tags';
@@ -28,8 +28,9 @@
     modifiers: [
       { name: 'offset', options: { offset: [0, 8] } },
       {
+        // This modifier ensures that the width of the popper is the same as the width of the referenced container
         enabled: true,
-        fn: ({ state }) => {
+        fn: ({ state }: { state: State }) => {
           state.styles.popper.width = `${state.rects.reference.width}px`;
         },
         name: 'sameWidth',
@@ -45,28 +46,27 @@
   let filteredOptions: Tag[] = [];
   let searchText: string | null = '';
   let suggestionsVisible = false;
-  let tags: Tag[] = [];
+  let selectedTags: Tag[] = [];
 
-  $: tags = [...selected];
-  $: if (options && searchText !== null && options) {
+  $: selectedTags = [...selected]; // copy of selected prop for internal reference and temporary modification
+  $: if (options && searchText !== null) {
+    // Determine if searchText exactly matches any of the available options
     exactMatchFound = options.findIndex(tag => compareTagNames(tag.name, searchText)) > -1;
+
     filteredOptions = [];
     options.forEach(option => {
       // Filter out already selected options
-      if (findTag(option.name, tags)) {
-        // exactMatchFound = true;
+      if (findTag(option.name, selectedTags)) {
         activeTag = option;
         return;
       }
 
-      // Filter to match searchText, case insensitive
-      let substringMatch = false;
-      if (searchText) {
-        substringMatch = option.name.toLocaleLowerCase().indexOf(searchText.toLocaleLowerCase()) > -1;
-      } else {
-        substringMatch = true;
-      }
-      if (substringMatch) {
+      // Filter to match searchText, case insensitive, true if there's an empty string
+      let matchesSubstring = searchText
+        ? option.name.toLocaleLowerCase().indexOf(searchText.toLocaleLowerCase()) > -1
+        : true;
+
+      if (matchesSubstring) {
         filteredOptions.push(option);
       }
     });
@@ -77,12 +77,25 @@
       filteredOptions.unshift(filteredOptions.splice(optionMatchIndex, 1)[0]);
     }
 
-    // Limit filtered options
+    // Limit filtered options for display purposes
     filteredOptions = filteredOptions.slice(0, suggestionsLimit);
   }
 
   $: if (typeof activeIndex === 'number' && filteredOptions) {
     activeTag = activeIndex > -1 ? filteredOptions.at(activeIndex) : null;
+  }
+
+  function add(tag: Tag) {
+    selectedTags = selectedTags.concat(tag);
+    searchText = '';
+    dispatch('add', tag);
+    updatePopperPosition();
+    closeSuggestions();
+  }
+
+  function removeTag(tag: Tag) {
+    dispatch('remove', tag);
+    updatePopperPosition();
   }
 
   function openSuggestions() {
@@ -106,14 +119,6 @@
     return tags.find(t => compareTagNames(t.name, name));
   }
 
-  function add(tag: Tag) {
-    tags = tags.concat(tag);
-    searchText = '';
-    dispatch('add', tag);
-    updatePopperPosition();
-    closeSuggestions();
-  }
-
   function onKeydown(event: KeyboardEvent) {
     const { key } = event;
 
@@ -122,25 +127,32 @@
       closeSuggestions();
     } else if (key === 'Enter' && (searchText || activeTag)) {
       // prevent add if searchText matches tag name that is already selected
-      if (searchText && !activeTag && findTag(searchText, tags)) {
+      if (searchText && !activeTag && findTag(searchText, selectedTags)) {
         return;
       }
 
       // Use active tag or create a placeholder tag if needed
       add(activeTag || findTag(searchText, filteredOptions) || createTagObject(searchText));
-    } else if (key === 'Backspace' && searchText === '' && tags.length) {
-      const lastTag = tags.at(-1);
-      tags = tags.slice(0, -1);
+    } else if (key === 'Backspace' && searchText === '' && selectedTags.length) {
+      const lastTag = selectedTags.at(-1);
+      selectedTags = selectedTags.slice(0, -1);
       removeTag(lastTag);
       return;
     } else if ([`ArrowDown`, `ArrowUp`].includes(event.key)) {
+      event.preventDefault();
+
+      // No navigation possible if there are no options
+      if (filteredOptions.length === 0) {
+        return;
+      }
+
       // if no option is active yet, but there are matching options, make first one active
       if (activeIndex === -1 && filteredOptions.length > 0) {
         activeIndex = 0;
         openSuggestions();
         return;
       }
-      event.preventDefault();
+
       // if none of the above special cases apply, we make next/prev option
       // active with wrap around at both ends
       const increment = event.key === `ArrowUp` ? -1 : 1;
@@ -156,17 +168,8 @@
 
   function onTagRemove(tag: Tag) {
     // Find the tag by name since it may not have an ID yet
-    tags = tags.filter(t => t.name !== tag.name);
+    selectedTags = selectedTags.filter(t => t.name !== tag.name);
     removeTag(tag);
-  }
-
-  function removeTag(tag: Tag) {
-    dispatch('remove', tag);
-    updatePopperPosition();
-  }
-
-  function updatePopperPosition() {
-    getInstance()?.update();
   }
 
   function onClickOutside(event: MouseEvent | TouchEvent) {
@@ -174,13 +177,17 @@
       closeSuggestions();
     }
   }
+
+  function updatePopperPosition() {
+    getInstance()?.update();
+  }
 </script>
 
 <svelte:window on:click={onClickOutside} on:touchstart={onClickOutside} />
 
 <div class="tags" use:popperRef bind:this={tagsRef} bind:clientWidth={tagsWidth}>
   <div class="tags-selected-items">
-    {#each tags as tag}
+    {#each selectedTags as tag}
       <TagChip {tag} on:click={() => onTagRemove(tag)} />
     {/each}
     <input
@@ -209,16 +216,8 @@
                 <TagChip {tag} removable={false} />
               </div>
             {/each}
-            {#if !exactMatchFound && searchText}
-              <div
-                on:mousedown|stopPropagation
-                on:mouseup|stopPropagation={() => add(createTagObject(searchText))}
-                class="tags-option"
-              >
-                Add "{searchText}" (enter)
-              </div>
-            {/if}
-          {:else if !exactMatchFound && searchText}
+          {/if}
+          {#if !exactMatchFound && searchText}
             <div
               on:mousedown|stopPropagation
               on:mouseup|stopPropagation={() => add(createTagObject(searchText))}
@@ -226,9 +225,11 @@
             >
               Add "{searchText}" (enter)
             </div>
-          {:else if exactMatchFound && searchText}
+          {/if}
+          {#if !filteredOptions.length && exactMatchFound && searchText}
             <div class="tags-option tags-option-message">{searchText} already added</div>
-          {:else}
+          {/if}
+          {#if !filteredOptions.length && !exactMatchFound && !searchText}
             <div class="tags-option tags-option-message">No other tags found</div>
           {/if}
         </div>

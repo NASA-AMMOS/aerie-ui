@@ -33,7 +33,7 @@
   import Input from '../form/Input.svelte';
   import Parameters from '../parameters/Parameters.svelte';
   import Highlight from '../ui/Highlight.svelte';
-  import TagsCustom from '../ui/Tags/Tags.svelte';
+  import TagsInput from '../ui/Tags/Tags.svelte';
   import ActivityAnchorForm from './ActivityAnchorForm.svelte';
   import ActivityPresetInput from './ActivityPresetInput.svelte';
 
@@ -479,7 +479,7 @@
         <Input layout="inline">
           <label use:tooltip={{ content: 'Tags', placement: 'top' }} for="activityDirectiveTags"> Tags </label>
           {#key activityDirective.id}
-            <TagsCustom
+            <TagsInput
               options={tags}
               disabled={!editable}
               selected={activityDirective.tags.map(({ tag }) => tag)}
