@@ -17,6 +17,9 @@
   import { showFailureToast, showSuccessToast } from '../../utilities/toast';
   import type { PageData } from './$types';
 
+  import { permissionHandler } from '../../utilities/permissionHandler';
+  import { featurePermissions } from '../../utilities/permissions';
+
   export let data: PageData;
 
   type CellRendererParams = {
@@ -58,6 +61,7 @@
               content: 'Delete Command Dictionary',
               placement: 'bottom',
             },
+            hasDeletePermission,
             rowData: params.data,
           },
           target: actionsDiv,
@@ -78,11 +82,15 @@
     },
   ];
 
+  const createPermissionError = 'You do not have permission to create Command Dictionaries';
+
   let createButtonDisabled: boolean = false;
   let createDictionaryError: string | null = null;
   let creatingDictionary: boolean = false;
   let files: FileList;
 
+  $: hasCreatePermission = featurePermissions.commandDictionary.canCreate(data.user);
+  $: hasDeletePermission = featurePermissions.commandDictionary.canDelete(data.user);
   $: createButtonDisabled = !files;
 
   async function createCommandDictionary(files: FileList) {
@@ -141,11 +149,29 @@
 
           <fieldset>
             <label for="file">AMPCS Command Dictionary XML File</label>
-            <input class="w-100 st-typography-body" name="file" required type="file" bind:files />
+            <input
+              class="w-100 st-typography-body"
+              name="file"
+              required
+              type="file"
+              bind:files
+              use:permissionHandler={{
+                hasPermission: hasCreatePermission,
+                permissionError: createPermissionError,
+              }}
+            />
           </fieldset>
 
           <fieldset>
-            <button class="st-button w-100" disabled={createButtonDisabled} type="submit">
+            <button
+              class="st-button w-100"
+              disabled={createButtonDisabled}
+              type="submit"
+              use:permissionHandler={{
+                hasPermission: hasCreatePermission,
+                permissionError: createPermissionError,
+              }}
+            >
               {creatingDictionary ? 'Creating...' : 'Create'}
             </button>
           </fieldset>
@@ -162,6 +188,7 @@
         {#if $commandDictionaries.length}
           <SingleActionDataGrid
             {columnDefs}
+            {hasDeletePermission}
             itemDisplayText="Command Dictionary"
             items={$commandDictionaries}
             user={data.user}
