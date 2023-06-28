@@ -13,7 +13,6 @@
   export let placeholder: string = 'Enter a tag...';
   export let inputRef: HTMLInputElement | null = null;
   export let tagsRef: HTMLDivElement | null = null;
-  export let tagsWidth: number = 100;
   export let disabled: boolean = false;
   export let selected: Tag[] = [];
   export let suggestionsLimit: number = 8;
@@ -47,6 +46,7 @@
   let searchText: string | null = '';
   let suggestionsVisible = false;
   let selectedTags: Tag[] = [];
+  let tagsWidth: number = 100;
 
   $: selectedTags = [...selected]; // copy of selected prop for internal reference and temporary modification
   $: if (options && searchText !== null) {
