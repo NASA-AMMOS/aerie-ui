@@ -188,7 +188,7 @@
 <div class="tags" use:popperRef bind:this={tagsRef} bind:clientWidth={tagsWidth}>
   <div class="tags-selected-items">
     {#each selectedTags as tag}
-      <TagChip {tag} removable={!disabled} on:click={() => onTagRemove(tag)} {disabled} />
+      <TagChip {tag} removable={!disabled} on:click={() => onTagRemove(tag)} {disabled} role="option" />
     {/each}
     <input
       {id}
@@ -205,18 +205,20 @@
   </div>
   {#if suggestionsVisible}
     <div class="tags-portal" use:popperContent={extraOpts}>
-      <div class="tags-options">
+      <ul class="tags-options" role="listbox">
         {#if filteredOptions.length}
           <div class="tags-option tag-header st-typography-label">Suggestions</div>
           {#each filteredOptions as tag}
-            <div
+            <li
+              role="option"
               class="tags-option"
               on:mousedown|stopPropagation
               on:mouseup|stopPropagation={() => add(tag)}
+              aria-selected={activeTag?.id === tag.id}
               class:active={activeTag?.id === tag.id}
             >
               <TagChip {disabled} {tag} removable={false} />
-            </div>
+            </li>
           {/each}
         {/if}
         {#if !exactMatchFound && searchText}
@@ -234,7 +236,7 @@
         {#if !filteredOptions.length && !exactMatchFound && !searchText}
           <div class="tags-option tags-option-message">No other tags found</div>
         {/if}
-      </div>
+      </ul>
     </div>
   {/if}
 </div>
@@ -278,6 +280,11 @@
     overflow: hidden;
     user-select: none;
     z-index: 99999;
+  }
+
+  .tags-options {
+    margin: 0;
+    padding: 0;
   }
 
   .tags-option {

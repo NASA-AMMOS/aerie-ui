@@ -9,6 +9,7 @@
   export let label: string = '';
   export let className: string = '';
   export let removable: boolean = true;
+  export let role: string = 'button';
 
   const dispatch = createEventDispatcher();
 
@@ -22,7 +23,7 @@
   $: removeStyle = `background:${shadeColor(color, 1.1)};color:${shadeColor(color || '', 5.5)}`;
 </script>
 
-<button style={chipStyle} class={rootClasses} on:click|preventDefault={() => dispatch('click')} {disabled}>
+<button style={chipStyle} class={rootClasses} on:click|preventDefault={() => dispatch('click')} {disabled} {role}>
   <div class="chip-label">{label}</div>
   {#if removable}
     <div style={removeStyle} class="chip-remove-button">

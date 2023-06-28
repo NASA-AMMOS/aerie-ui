@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render } from '@testing-library/svelte';
 import { afterEach, describe, expect, it } from 'vitest';
+import type { Tag } from '../../../types/tags';
 import Tags from './Tags.svelte';
 
 describe('Tags component', () => {
@@ -8,32 +9,35 @@ describe('Tags component', () => {
   });
 
   it('Should render the Tags component', async () => {
-    const tags = ['Red', 'Green', 'Blue'];
-    const { getByRole, queryByText, getAllByText, getByText, getByPlaceholderText } = render(Tags, {
+    const makeTag = (name: string): Tag => ({ color: '#FFFFFF', created_at: '', id: -1, name, owner: '' });
+    const selected: Tag[] = ['Orange', 'Yellow'].map(makeTag);
+    const options: Tag[] = ['Red', 'Green', 'Blue'].map(makeTag);
+    const { getByRole, queryByText, getByText, getAllByRole, debug, queryByRole } = render(Tags, {
+      createTagObject: makeTag,
       name: 'Test Name',
-      placeholder: 'Enter stage left',
-      tags: [...tags],
+      options,
+      selected,
     });
-
-    // Input placeholder should match placeholder prop
-    expect(getByPlaceholderText('Enter stage left')).to.exist;
 
     // Input name should match name prop
     expect((getByRole('textbox') as HTMLInputElement).name).to.equal('Test Name');
 
     // Input name should match name prop
-    tags.forEach(tag => {
-      expect(getByText(tag)).to.exist;
+    selected.forEach(tag => {
+      expect(getByText(tag.name)).to.exist;
     });
 
-    // Input name should match name prop
-    tags.forEach(tag => {
-      expect(tag).to.exist;
-    });
+    // Test opening autosuggest
+    await fireEvent.focus(getByRole('textbox'));
+    expect(getByRole('listbox')).to.exist;
+
+    // Test closing autosuggest
+    await fireEvent.keyDown(getByRole('textbox'), { key: 'Escape' });
+    expect(queryByRole('listbox')).to.not.exist;
 
     // Test tag removal
-    expect(getAllByText('×').length).to.equal(tags.length);
-    await fireEvent.click(getAllByText('×')[0]);
-    expect(queryByText(tags[0])).to.be.null;
+    expect(getAllByRole('option').length).to.equal(selected.length);
+    await fireEvent.click(getAllByRole('option')[0]);
+    expect(queryByText(selected[0].name)).to.be.null;
   });
 });
