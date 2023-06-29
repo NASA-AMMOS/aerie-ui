@@ -119,17 +119,12 @@
   async function saveRule() {
     if (saveButtonEnabled) {
       if (mode === 'create') {
-        if (
-          ruleActivityType !== null &&
-          ruleDictionaryId !== null &&
-          ruleModelId !== null &&
-          ruleDescription !== null
-        ) {
+        if (ruleActivityType !== null && ruleDictionaryId !== null && ruleModelId !== null) {
           const newRule: ExpansionRuleInsertInput = {
             activity_type: ruleActivityType,
             authoring_command_dict_id: ruleDictionaryId,
             authoring_mission_model_id: ruleModelId,
-            description: ruleDescription,
+            description: ruleDescription ?? '',
             expansion_logic: ruleLogic,
             name: ruleName,
           };
