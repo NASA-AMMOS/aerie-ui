@@ -59,7 +59,7 @@
   $: {
     hasPermission =
       mode === 'edit' ? featurePermissions.expansionSets.canUpdate() : featurePermissions.expansionSets.canCreate(user);
-    permissionError = `You do not have permission to ${mode === 'edit' ? 'create an' : 'edit this'} expansion set.`;
+    permissionError = `You do not have permission to ${mode === 'edit' ? 'edit this' : 'create an'} expansion set.`;
   }
 
   async function saveSet() {

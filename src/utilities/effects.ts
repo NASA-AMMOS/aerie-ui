@@ -373,7 +373,7 @@ const effects = {
     name: string,
     plan_id: number | null,
     user: User | null,
-    description?: string,
+    description: string,
   ): Promise<number | null> {
     try {
       if (!queryPermissions.CREATE_CONSTRAINT(user)) {

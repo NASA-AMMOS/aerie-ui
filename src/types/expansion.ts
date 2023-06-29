@@ -6,7 +6,7 @@ export type ExpansionRule = {
   authoring_command_dict_id: number;
   authoring_mission_model_id: number;
   created_at: string;
-  description?: string;
+  description: string;
   expansion_logic: string;
   id: number;
   name: string;

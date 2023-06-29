@@ -2,7 +2,6 @@ import { base } from '$app/paths';
 import type { ActivityDirective, ActivityPreset } from '../types/activity';
 import type { User, UserId, UserRole } from '../types/app';
 import type { ReqAuthResponse } from '../types/auth';
-import type { ExpansionSet } from '../types/expansion';
 import type {
   AssetWithOwner,
   CreatePermissionCheck,
@@ -332,7 +331,7 @@ interface FeaturePermissions {
   activityPresets: AssignablePlanAssetCRUDPermission<ActivityPreset>;
   constraints: PlanAssetCRUDPermission<AssetWithOwner>;
   expansionRules: CRUDPermission<AssetWithOwner>;
-  expansionSets: ExpansionSetsCRUDPermission<ExpansionSet>;
+  expansionSets: ExpansionSetsCRUDPermission<AssetWithOwner>;
   model: CRUDPermission<void>;
   plan: CRUDPermission<PlanWithOwners>;
 }

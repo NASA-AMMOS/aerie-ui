@@ -51,8 +51,9 @@
   let ruleName: string = initialRuleName;
   let ruleOwner: string | null = initialRuleOwner;
   let ruleUpdatedAt: string | null = initialRuleUpdatedAt;
+  let saveButtonClass: 'primary' | 'secondary' = 'primary';
   let saveButtonEnabled: boolean = false;
-  let saveButtonText: string = '';
+  let saveButtonText: string = 'Save';
   let savedRule: Partial<ExpansionRule> = {
     ...(ruleActivityType !== null ? { activity_type: ruleActivityType } : {}),
     ...(ruleDictionaryId !== null ? { authoring_command_dict_id: ruleDictionaryId } : {}),
@@ -118,14 +119,19 @@
   async function saveRule() {
     if (saveButtonEnabled) {
       if (mode === 'create') {
-        if (ruleActivityType !== null && ruleDictionaryId !== null && ruleModelId !== null) {
+        if (
+          ruleActivityType !== null &&
+          ruleDictionaryId !== null &&
+          ruleModelId !== null &&
+          ruleDescription !== null
+        ) {
           const newRule: ExpansionRuleInsertInput = {
             activity_type: ruleActivityType,
             authoring_command_dict_id: ruleDictionaryId,
             authoring_mission_model_id: ruleModelId,
+            description: ruleDescription,
             expansion_logic: ruleLogic,
             name: ruleName,
-            ...(ruleDescription !== null ? { description: ruleDescription } : {}),
           };
           const newRuleId = await effects.createExpansionRule(newRule, user);
 
