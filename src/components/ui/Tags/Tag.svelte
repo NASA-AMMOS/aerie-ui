@@ -6,11 +6,19 @@
 
   export let disabled: boolean = false;
   export let removable: boolean = true;
-  export let role: string = '';
+  export let ariaRole: string = '';
   export let tag: Partial<Tag>;
 </script>
 
-<Chip {role} {disabled} color={tag.color} className="tag st-typography-medium" label={tag.name} {removable} on:click />
+<Chip
+  {ariaRole}
+  {disabled}
+  color={tag.color}
+  className="tag st-typography-medium"
+  label={tag.name}
+  {removable}
+  on:click
+/>
 
 <style>
   :global(.tag.st-chip) {
