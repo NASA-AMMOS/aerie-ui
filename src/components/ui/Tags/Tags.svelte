@@ -188,7 +188,7 @@
 <div class="tags" class:disabled use:popperRef bind:this={tagsRef} bind:clientWidth={tagsWidth}>
   <div class="tags-selected-items">
     {#each selectedTags as tag}
-      <TagChip {tag} removable={!disabled} on:click={() => onTagRemove(tag)} {disabled} role="option" />
+      <TagChip {tag} removable={!disabled} on:click={() => onTagRemove(tag)} {disabled} ariaRole="option" />
     {/each}
     {#if !disabled}
       <input
