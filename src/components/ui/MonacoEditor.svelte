@@ -5,6 +5,7 @@
   import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
   import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
+  import tsc from 'typescript';
   import type { Monaco } from '../../types/monaco';
   import { ShouldRetryError, promiseRetry } from '../../utilities/generic';
 
@@ -81,6 +82,42 @@
     monaco.languages.typescript.typescriptDefaults.setWorkerOptions({
       customWorkerPath: '/customTS.worker.js',
     });
+
+    monaco.languages.registerCompletionItemProvider('typescript', {
+      provideCompletionItems: (model, position): languages.ProviderResult<languages.CompletionList> => {
+        const fileName = model.uri.toString();
+        const offset = model.getOffsetAt(position);
+
+        var word = model.getWordUntilPosition(position);
+        var range = {
+          insert: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+          replace: new monaco.Range(
+            position.lineNumber,
+            position.column - word.word.length,
+            position.lineNumber,
+            position.column,
+          ),
+        };
+
+        return getSuggestions(fileName, offset).then(completion => {
+          {
+            return {
+              suggestions: completion.entries.map(entry => {
+                return {
+                  insertText: entry.insertText ? entry.insertText : entry.name,
+                  insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                  kind: monaco.languages.CompletionItemKind.Function,
+                  label: entry.name ? entry.name : '',
+                  range,
+                };
+              }),
+            };
+          }
+        });
+      },
+      triggerCharacters: ['.'],
+    });
+
     editor = monaco.editor.create(div, options, override);
 
     editor.onDidChangeModelContent((e: Editor.IModelContentChangedEvent) => {
@@ -124,6 +161,12 @@
       editor_load_event.dispose();
     }
   });
+
+  async function getSuggestions(fileName: string, position: number): Promise<tsc.CompletionInfo> {
+    const getWorker = await monaco.languages.typescript.getTypeScriptWorker();
+    const wok = await getWorker();
+    return wok.zTest(fileName, position);
+  }
 </script>
 
 {#if !editor}

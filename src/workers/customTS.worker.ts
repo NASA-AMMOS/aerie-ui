@@ -3,11 +3,12 @@
  * (this is basically the only example of this working on the internet!)
  */
 import type { CommandDictionary } from '@nasa-jpl/aerie-ampcs';
+import tsc from 'typescript';
 import type { Diagnostic, TypeScriptWorker as InternalTsWorker } from '../types/monaco-internal';
+import { generateAutoCompletion } from './diagnostics/autoCompleteDiagnostic';
 import { generateCommandArgumentDiagnostics } from './diagnostics/commandArgumentsDiagnostics';
 import { generateTimeDiagnostics } from './diagnostics/timeDiagnostics';
 import { getModelName as getModelId } from './workerHelpers';
-
 // Appease the TSC - this special window object is read by the Custom Worker implementation of Monaco
 declare class TsWorkerOverride implements Partial<InternalTsWorker> {}
 
@@ -39,6 +40,7 @@ type ModelData = {
  */
 export interface WorkerOverrideProps {
   updateModelConfig(model_data: CreateModelData): Promise<void>;
+  zTest(fileName: string, position: number): Promise<any | undefined>;
 }
 
 // Partial is required here as we only need to provide some subclass methods
@@ -63,8 +65,8 @@ self.customTSWorkerFactory = tsw => {
      * are not overriding default completions.
      */
     async getCompletionsAtPosition(fileName: string, position: number) {
-      const completions = await super.getCompletionsAtPosition(fileName, position);
-      return completions;
+      const completions: tsc.CompletionInfo = await super.getCompletionsAtPosition(fileName, position);
+      completions.entries = [];
     }
 
     async getSemanticDiagnostics(fileName: string): Promise<Diagnostic[]> {
@@ -98,6 +100,19 @@ self.customTSWorkerFactory = tsw => {
         model_id: model_data.model_id,
         should_inject: model_data.should_inject,
       };
+    }
+
+    async zTest(fileName: string, position: number): Promise<any | undefined> {
+      const completions: tsc.CompletionInfo = await super.getCompletionsAtPosition(fileName, position);
+
+      const model_id = getModelId(fileName);
+      const model_config = this.model_configurations?.[model_id];
+      if (model_config !== undefined && model_config.should_inject === true) {
+        // completions.entries = [];
+
+        completions.entries = generateAutoCompletion(completions.entries, super.getExtraLibs()['command-types.ts']);
+      }
+      return completions;
     }
   };
 };
