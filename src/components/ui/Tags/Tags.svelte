@@ -228,6 +228,8 @@
             on:mousedown|stopPropagation
             on:mouseup|stopPropagation={() => add(createTagObject(searchText))}
             class="tags-option"
+            role="button"
+            tabindex={0}
           >
             Add "{searchText}" (enter)
           </div>
@@ -274,8 +276,9 @@
     border: none;
     flex: 1;
     height: 20px;
-    min-width: 80px;
+    min-width: 82px;
     outline: none;
+    width: 100%;
   }
 
   .tags-portal {

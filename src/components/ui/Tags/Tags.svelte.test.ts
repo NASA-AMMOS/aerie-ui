@@ -12,7 +12,7 @@ describe('Tags component', () => {
     const makeTag = (name: string): Tag => ({ color: '#FFFFFF', created_at: '', id: -1, name, owner: '' });
     const selected: Tag[] = ['Orange', 'Yellow'].map(makeTag);
     const options: Tag[] = ['Red', 'Green', 'Blue'].map(makeTag);
-    const { getByRole, queryByText, getByText, getAllByRole, debug, queryByRole } = render(Tags, {
+    const { getByRole, queryByText, getByText, getAllByRole, queryByRole } = render(Tags, {
       createTagObject: makeTag,
       name: 'Test Name',
       options,
