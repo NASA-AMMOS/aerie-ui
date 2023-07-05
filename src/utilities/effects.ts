@@ -97,7 +97,7 @@ import type {
   SimulationTemplateSetInput,
   Span,
 } from '../types/simulation';
-import type { ActivityDirectiveTagsUpdateInput, Tag, TagsInsertInput } from '../types/tags';
+import type { ActivityDirectiveTagsInsertInput, Tag, TagsInsertInput } from '../types/tags';
 import type { View, ViewDefinition, ViewInsertInput } from '../types/view';
 import { ActivityDeletionAction } from './activities';
 import { convertToQuery, parseFloatOrNull, setQueryParam, sleep } from './generic';
@@ -300,7 +300,7 @@ const effects = {
   },
 
   async createActivityDirectiveTags(
-    tags: ActivityDirectiveTagsUpdateInput[],
+    tags: ActivityDirectiveTagsInsertInput[],
     user: User | null,
   ): Promise<number | null> {
     try {

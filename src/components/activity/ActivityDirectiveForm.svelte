@@ -17,7 +17,7 @@
   import type { User } from '../../types/app';
   import type { FieldStore } from '../../types/form';
   import type { ArgumentsMap, FormParameter } from '../../types/parameter';
-  import type { ActivityDirectiveTagsUpdateInput, Tag } from '../../types/tags';
+  import type { ActivityDirectiveTagsInsertInput, Tag } from '../../types/tags';
   import { getActivityMetadata } from '../../utilities/activities';
   import { generateRandomPastelColor } from '../../utilities/color';
   import effects from '../../utilities/effects';
@@ -236,7 +236,7 @@
     const newTags = await effects.createTags([{ color: tag.color, name: tag.name }], user);
     if (newTags) {
       const { id: directive_id, plan_id } = activityDirective;
-      const activityDirectiveTags: ActivityDirectiveTagsUpdateInput[] = (newTags || []).map(({ id: tag_id }) => ({
+      const activityDirectiveTags: ActivityDirectiveTagsInsertInput[] = (newTags || []).map(({ id: tag_id }) => ({
         directive_id,
         plan_id,
         tag_id,

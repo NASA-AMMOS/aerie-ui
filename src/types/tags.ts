@@ -1,4 +1,4 @@
-export type ActivityDirectiveTagsUpdateInput = {
+export type ActivityDirectiveTagsInsertInput = {
   directive_id: number;
   plan_id: number;
   tag_id: number;

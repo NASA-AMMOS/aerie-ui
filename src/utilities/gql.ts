@@ -309,7 +309,6 @@ const gql = {
     }
   `,
 
-  /* TODO how do i delete this relationship */
   DELETE_ACTIVITY_DIRECTIVE_TAGS: `#graphql
     mutation DeleteActivityDirectivesTags($ids: [Int!]!) {
         delete_activity_directive_tags(where: { tag_id: { _in: $ids } }) {
