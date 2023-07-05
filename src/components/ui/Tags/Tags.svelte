@@ -185,23 +185,25 @@
 
 <svelte:window on:click={onClickOutside} on:touchstart={onClickOutside} />
 
-<div class="tags" use:popperRef bind:this={tagsRef} bind:clientWidth={tagsWidth}>
+<div class="tags" class:disabled use:popperRef bind:this={tagsRef} bind:clientWidth={tagsWidth}>
   <div class="tags-selected-items">
     {#each selectedTags as tag}
       <TagChip {tag} removable={!disabled} on:click={() => onTagRemove(tag)} {disabled} role="option" />
     {/each}
-    <input
-      {id}
-      {name}
-      {disabled}
-      {placeholder}
-      class="st-input tags-input"
-      on:mouseup={openSuggestions}
-      on:focus={openSuggestions}
-      on:keydown={onKeydown}
-      bind:value={searchText}
-      bind:this={inputRef}
-    />
+    {#if !disabled}
+      <input
+        {id}
+        {name}
+        {disabled}
+        {placeholder}
+        class="st-input tags-input"
+        on:mouseup={openSuggestions}
+        on:focus={openSuggestions}
+        on:keydown={onKeydown}
+        bind:value={searchText}
+        bind:this={inputRef}
+      />
+    {/if}
   </div>
   {#if suggestionsVisible}
     <div class="tags-portal" use:popperContent={extraOpts}>
@@ -251,6 +253,11 @@
     gap: 8px;
     max-height: 40vh;
     padding: 2px;
+  }
+
+  .tags.disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
   }
 
   .tags-selected-items {
@@ -310,9 +317,5 @@
 
   .tags-option-message:hover {
     background: inherit;
-  }
-
-  .tags-selected-items :global(.tag:not(.chip-removable)) {
-    cursor: default;
   }
 </style>

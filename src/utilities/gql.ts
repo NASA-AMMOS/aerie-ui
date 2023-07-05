@@ -774,7 +774,9 @@ const gql = {
         activity_id,
         change_type,
         source,
-        target
+        source_tags,
+        target,
+        target_tags
       }
     }
   `,
@@ -1343,7 +1345,9 @@ const gql = {
         merge_base,
         resolution
         source,
+        source_tags,
         target,
+        target_tags,
       }
     }
   `,

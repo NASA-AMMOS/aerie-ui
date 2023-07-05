@@ -52,6 +52,10 @@
     width: min-content;
   }
 
+  .st-chip:disabled {
+    cursor: not-allowed;
+  }
+
   .st-chip.chip-removable:hover {
     background-color: var(--st-gray-20);
   }
