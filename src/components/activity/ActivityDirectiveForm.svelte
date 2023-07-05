@@ -19,7 +19,7 @@
   import type { ArgumentsMap, FormParameter } from '../../types/parameter';
   import type { ActivityDirectiveTagsUpdateInput, Tag } from '../../types/tags';
   import { getActivityMetadata } from '../../utilities/activities';
-  import { hslToHex } from '../../utilities/color';
+  import { generateRandomPastelColor } from '../../utilities/color';
   import effects from '../../utilities/effects';
   import { classNames, keyByBoolean } from '../../utilities/generic';
   import { getArguments, getFormParameters } from '../../utilities/parameters';
@@ -257,10 +257,7 @@
   }
 
   function createPlaceholderTagObject(name: string): Tag {
-    function getColor() {
-      return hslToHex(360 * Math.random(), 25 + 70 * Math.random(), 82 + 10 * Math.random());
-    }
-    return { color: getColor(), created_at: '', id: -1, name, owner: '' };
+    return { color: generateRandomPastelColor(), created_at: '', id: -1, name, owner: '' };
   }
 
   async function validateArguments(newArguments: ArgumentsMap | null): Promise<void> {
