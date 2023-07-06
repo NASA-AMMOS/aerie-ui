@@ -22,6 +22,8 @@
   import effects from '../../utilities/effects';
   import { classNames, keyByBoolean } from '../../utilities/generic';
   import { getArguments, getFormParameters } from '../../utilities/parameters';
+  import { permissionHandler } from '../../utilities/permissionHandler';
+  import { featurePermissions } from '../../utilities/permissions';
   import { getDoyTime, getDoyTimeFromInterval, getIntervalFromDoyRange } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import { required, timestamp } from '../../utilities/validators';
@@ -49,7 +51,10 @@
   export let showHeader: boolean = true;
   export let user: User | null;
 
+  const updatePermissionError = 'You do not have permission to update this activity';
+
   let editingActivityName: boolean = false;
+  let hasUpdatePermission: boolean = false;
   let numOfUserChanges: number = 0;
   let formParameters: FormParameter[] = [];
   let highlightKeysMap: Record<string, boolean> = {};
@@ -58,6 +63,9 @@
   let startTimeDoy: string;
   let startTimeDoyField: FieldStore<string>;
 
+  $: if (user !== null && $plan !== null) {
+    hasUpdatePermission = featurePermissions.activityDirective.canUpdate(user, $plan, activityDirective);
+  }
   $: highlightKeysMap = keyByBoolean(highlightKeys);
   $: activityType =
     (activityTypes ?? []).find(({ name: activityTypeName }) => activityDirective?.type === activityTypeName) ?? null;
@@ -353,6 +361,15 @@
           label="Start Time - YYYY-DDDThh:mm:ss"
           layout="inline"
           name="start-time"
+          use={[
+            [
+              permissionHandler,
+              {
+                hasPermission: hasUpdatePermission,
+                permissionError: updatePermissionError,
+              },
+            ],
+          ]}
           on:change={onUpdateStartTime}
           on:keydown={onUpdateStartTime}
         />
@@ -361,6 +378,7 @@
       <ActivityAnchorForm
         {activityDirective}
         {activityDirectivesMap}
+        {hasUpdatePermission}
         anchorId={activityDirective.anchor_id}
         disabled={!editable}
         {highlightKeysMap}
@@ -441,6 +459,15 @@
         {highlightKeysMap}
         on:change={onChangeFormParameters}
         on:reset={onResetFormParameters}
+        use={[
+          [
+            permissionHandler,
+            {
+              hasPermission: hasUpdatePermission,
+              permissionError: updatePermissionError,
+            },
+          ],
+        ]}
       />
       {#if formParameters.length === 0}
         <div class="st-typography-label">No Parameters Found</div>
