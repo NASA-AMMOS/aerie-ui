@@ -63,6 +63,7 @@ const mockInitialPlan: Plan = {
   start_time_doy: '2023-047T00:00:00',
   updated_at: '2023-02-16T00:00:00',
   updated_by: 'redshirt',
+  tags: [],
 };
 
 const user: User = {
