@@ -68,14 +68,17 @@
   $: if (activityType && activityDirective.arguments) {
     effects
       .getEffectiveActivityArguments(modelId, activityType.name, activityDirective.arguments, user)
-      .then(({ arguments: defaultArgumentsMap }) => {
-        formParameters = getFormParameters(
-          activityType.parameters,
-          activityDirective.arguments,
-          activityType.required_parameters,
-          activityDirective.applied_preset?.preset_applied?.arguments,
-          defaultArgumentsMap,
-        );
+      .then(effectiveArguments => {
+        if (effectiveArguments && activityType) {
+          const { arguments: defaultArgumentsMap } = effectiveArguments;
+          formParameters = getFormParameters(
+            activityType.parameters,
+            activityDirective.arguments,
+            activityType.required_parameters,
+            activityDirective.applied_preset?.preset_applied?.arguments,
+            defaultArgumentsMap,
+          );
+        }
       });
   }
   $: validateArguments(activityDirective.arguments);
@@ -99,14 +102,14 @@
   };
 
   async function applyPresetToActivity(presetId: number | null, numOfUserChanges: number) {
-    if (presetId === null) {
+    if (presetId === null && activityDirective.applied_preset) {
       await effects.removePresetFromActivityDirective(
         activityDirective.plan_id,
         activityDirective.id,
         activityDirective.applied_preset.preset_id,
         user,
       );
-    } else {
+    } else if (presetId !== null) {
       await effects.applyPresetToActivity(
         presetId,
         activityDirective.id,
@@ -178,7 +181,9 @@
 
   async function onDeletePreset(event: CustomEvent<ActivityPresetId>) {
     const { detail: id } = event;
-    await effects.deleteActivityPreset(id, $plan.model.name, user);
+    if ($plan) {
+      await effects.deleteActivityPreset(id, $plan.model.name, user);
+    }
   }
 
   async function onSaveNewPreset(event: CustomEvent<ActivityPresetInsertInput>) {
@@ -200,14 +205,16 @@
   async function onSavePreset(event: CustomEvent<ActivityPresetInsertInput>) {
     const { detail } = event;
     const { name } = detail;
-    await effects.updateActivityPreset(
-      activityDirective.applied_preset.preset_id,
-      {
-        arguments: activityDirective.arguments,
-        name,
-      },
-      user,
-    );
+    if (activityDirective.applied_preset) {
+      await effects.updateActivityPreset(
+        activityDirective.applied_preset.preset_id,
+        {
+          arguments: activityDirective.arguments,
+          name,
+        },
+        user,
+      );
+    }
   }
 
   async function onUpdateActivityName() {
@@ -260,8 +267,8 @@
       const { type } = activityDirective;
       const { errors, success } = await effects.validateActivityArguments(type, modelId, newArguments, user);
 
-      if (!success) {
-        parameterErrorMap = errors.reduce((map, error) => {
+      if (!success && errors) {
+        parameterErrorMap = errors.reduce((map: Record<string, string[]>, error) => {
           error.subjects?.forEach(subject => {
             if (!map[subject]) {
               map[subject] = [];
@@ -421,6 +428,7 @@
           disabled={!editable}
           hasChanges={numOfUserChanges > 0}
           {user}
+          plan={$plan}
           on:applyPreset={onApplyPresetToActivity}
           on:deletePreset={onDeletePreset}
           on:saveNewPreset={onSaveNewPreset}

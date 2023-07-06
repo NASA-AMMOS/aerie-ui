@@ -13,6 +13,7 @@
   import { SvelteComponent, createEventDispatcher, type ComponentEvents } from 'svelte';
   import type { DropdownOption, DropdownOptions, SelectedDropdownOptionValue } from '../../types/dropdown';
   import { getTarget } from '../../utilities/generic';
+  import { permissionHandler } from '../../utilities/permissionHandler';
   import { tooltip } from '../../utilities/tooltip';
   import Input from '../form/Input.svelte';
   import Menu from '../menus/Menu.svelte';
@@ -139,6 +140,15 @@
           <MenuItem
             selected={(selectedOption?.value ?? null) === displayedOption.value}
             disabled={(selectedOption?.value ?? null) === displayedOption.value}
+            use={[
+              [
+                permissionHandler,
+                {
+                  hasPermission: displayedOption.hasSelectPermission ?? true,
+                  permissionError: 'You do not have permission to select this',
+                },
+              ],
+            ]}
             on:click={event => {
               onSelectOption(displayedOption, event.detail);
             }}

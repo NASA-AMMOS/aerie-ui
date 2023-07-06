@@ -58,8 +58,11 @@
 
         <button
           class="st-button icon activity-header-delete"
-          on:click|stopPropagation={() =>
-            effects.deleteActivityDirective($selectedActivityDirective.plan_id, $selectedActivityDirective.id, user)}
+          on:click|stopPropagation={() => {
+            if ($selectedActivityDirective !== null) {
+              effects.deleteActivityDirective($selectedActivityDirective.plan_id, $selectedActivityDirective.id, user);
+            }
+          }}
           use:tooltip={{ content: 'Delete Activity', placement: 'top' }}
         >
           <TrashIcon />
@@ -69,7 +72,7 @@
   </svelte:fragment>
 
   <svelte:fragment slot="body">
-    {#if $selectedActivityDirective}
+    {#if $selectedActivityDirective && $plan !== null}
       <ActivityDirectiveForm
         activityDirectivesMap={$activityDirectivesMap}
         activityDirective={$selectedActivityDirective}
@@ -81,7 +84,7 @@
         planStartTimeYmd={$plan.start_time}
         {user}
       />
-    {:else if $selectedSpan}
+    {:else if $selectedSpan && $plan !== null}
       <ActivitySpanForm
         activityTypes={$activityTypes}
         filteredExpansionSequences={$filteredExpansionSequences}
