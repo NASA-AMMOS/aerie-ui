@@ -356,20 +356,27 @@ interface FeaturePermissions {
 const featurePermissions: FeaturePermissions = {
   activityDirective: {
     canCreate: (user, plan) =>
-      (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)) && queryPermissions.CREATE_ACTIVITY_DIRECTIVE(user),
+      isUserAdmin(user) ||
+      ((isPlanOwner(user, plan) || isPlanCollaborator(user, plan)) && queryPermissions.CREATE_ACTIVITY_DIRECTIVE(user)),
     canDelete: (user, plan) =>
-      (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)) && queryPermissions.DELETE_ACTIVITY_DIRECTIVES(user),
-    canRead: user => queryPermissions.GET_PLAN(user),
+      isUserAdmin(user) ||
+      ((isPlanOwner(user, plan) || isPlanCollaborator(user, plan)) &&
+        queryPermissions.DELETE_ACTIVITY_DIRECTIVES(user)),
+    canRead: user => isUserAdmin(user) || queryPermissions.GET_PLAN(user),
     canUpdate: (user, plan) =>
-      (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)) && queryPermissions.UPDATE_ACTIVITY_DIRECTIVE(user),
+      isUserAdmin(user) ||
+      ((isPlanOwner(user, plan) || isPlanCollaborator(user, plan)) && queryPermissions.UPDATE_ACTIVITY_DIRECTIVE(user)),
   },
   activityPresets: {
     canAssign: (user, plan) =>
-      (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)) && queryPermissions.APPLY_PRESET_TO_ACTIVITY(user),
-    canCreate: user => queryPermissions.CREATE_ACTIVITY_PRESET(user),
-    canDelete: (user, preset) => isUserOwner(user, preset) && queryPermissions.DELETE_ACTIVITY_PRESET(user),
-    canRead: user => queryPermissions.SUB_ACTIVITY_PRESETS(user),
-    canUpdate: (user, preset) => isUserOwner(user, preset) && queryPermissions.UPDATE_ACTIVITY_PRESET(user),
+      isUserAdmin(user) ||
+      ((isPlanOwner(user, plan) || isPlanCollaborator(user, plan)) && queryPermissions.APPLY_PRESET_TO_ACTIVITY(user)),
+    canCreate: user => isUserAdmin(user) || queryPermissions.CREATE_ACTIVITY_PRESET(user),
+    canDelete: (user, preset) =>
+      isUserAdmin(user) || (isUserOwner(user, preset) && queryPermissions.DELETE_ACTIVITY_PRESET(user)),
+    canRead: user => isUserAdmin(user) || queryPermissions.SUB_ACTIVITY_PRESETS(user),
+    canUpdate: (user, preset) =>
+      isUserAdmin(user) || (isUserOwner(user, preset) && queryPermissions.UPDATE_ACTIVITY_PRESET(user)),
   },
   commandDictionary: {
     canCreate: user => isUserAdmin(user) || queryPermissions.CREATE_COMMAND_DICTIONARY(user),
