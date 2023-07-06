@@ -107,6 +107,7 @@
     },
     { field: 'updated_by', filter: 'text', headerName: 'Updated By', resizable: true, sortable: true },
     {
+      autoHeight: true,
       cellRenderer: tagsCellRenderer,
       field: 'tags',
       filter: 'text',
@@ -114,7 +115,6 @@
       resizable: true,
       sortable: false,
       width: 220,
-      autoHeight: true,
       wrapText: true,
     },
   ];
