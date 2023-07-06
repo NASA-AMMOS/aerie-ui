@@ -363,4 +363,10 @@ This has been seen to result in unintended and often glitchy behavior, which oft
     height: 100%;
     width: 100%;
   }
+  :global(.tags-cell) {
+    align-items: center;
+    display: flex;
+    gap: 2px;
+    height: inherit;
+  }
 </style>

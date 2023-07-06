@@ -15,10 +15,10 @@
   import AlertError from '../../components/ui/AlertError.svelte';
   import CssGrid from '../../components/ui/CssGrid.svelte';
   import DataGridActions from '../../components/ui/DataGrid/DataGridActions.svelte';
+  import { tagsCellRenderer } from '../../components/ui/DataGrid/DataGridTagsCellRenderer';
   import SingleActionDataGrid from '../../components/ui/DataGrid/SingleActionDataGrid.svelte';
   import Panel from '../../components/ui/Panel.svelte';
   import SectionTitle from '../../components/ui/SectionTitle.svelte';
-  import Tag from '../../components/ui/Tags/Tag.svelte';
   import { field } from '../../stores/form';
   import { createPlanError, creatingPlan } from '../../stores/plan';
   import { simulationTemplates } from '../../stores/simulation';
@@ -107,22 +107,7 @@
     },
     { field: 'updated_by', filter: 'text', headerName: 'Updated By', resizable: true, sortable: true },
     {
-      cellRenderer: (params: PlanCellRendererParams) => {
-        if (params.data) {
-          const tagsDiv = document.createElement('div');
-          tagsDiv.className = 'tags-cell';
-          params.data.tags.map(({ tag }) => {
-            new Tag({
-              props: {
-                removable: false,
-                tag,
-              },
-              target: tagsDiv,
-            });
-          });
-          return tagsDiv;
-        }
-      },
+      cellRenderer: tagsCellRenderer,
       field: 'tags',
       filter: 'text',
       headerName: 'Tags',
@@ -434,12 +419,3 @@
     </Panel>
   </CssGrid>
 </CssGrid>
-
-<style>
-  :global(.tags-cell) {
-    align-items: center;
-    display: flex;
-    gap: 2px;
-    height: inherit;
-  }
-</style>
