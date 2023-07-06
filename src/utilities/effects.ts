@@ -703,6 +703,24 @@ const effects = {
     }
   },
 
+  async createPlanTags(tags: PlanTagsInsertInput[], user: User | null): Promise<number | null> {
+    try {
+      if (!queryPermissions.CREATE_PLAN_TAGS(user)) {
+        throwPermissionError('create plan tags');
+      }
+
+      const data = await reqHasura<{ affected_rows: number }>(gql.CREATE_PLAN_TAGS, { tags }, user);
+      const { insert_plan_tags } = data;
+      const { affected_rows } = insert_plan_tags;
+      showSuccessToast('Plan Updated Successfully');
+      return affected_rows;
+    } catch (e) {
+      catchError('Create Plan Tags Failed', e as Error);
+      showFailureToast('Create Plan Tags Failed');
+      return null;
+    }
+  },
+
   async createSchedulingCondition(
     definition: string,
     name: string,
@@ -735,24 +753,6 @@ const effects = {
     } catch (e) {
       catchError('Scheduling Condition Create Failed', e as Error);
       showFailureToast('Scheduling Condition Create Failed');
-      return null;
-    }
-  },
-
-  async createPlanTags(tags: PlanTagsInsertInput[], user: User | null): Promise<number | null> {
-    try {
-      if (!queryPermissions.CREATE_PLAN_TAGS(user)) {
-        throwPermissionError('create plan tags');
-      }
-
-      const data = await reqHasura<{ affected_rows: number }>(gql.CREATE_PLAN_TAGS, { tags }, user);
-      const { insert_plan_tags } = data;
-      const { affected_rows } = insert_plan_tags;
-      showSuccessToast('Plan Updated Successfully');
-      return affected_rows;
-    } catch (e) {
-      catchError('Create Plan Tags Failed', e as Error);
-      showFailureToast('Create Plan Tags Failed');
       return null;
     }
   },
