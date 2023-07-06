@@ -3,7 +3,7 @@ import type { Tag } from '../../../types/tags';
 import TagChip from '../Tags/Tag.svelte';
 
 export function tagsCellRenderer(params?: ICellRendererParams<{ tags: { tag: Tag }[] }>) {
-  if (params.data) {
+  if (params.data && params.data.tags) {
     const tagsDiv = document.createElement('div');
     tagsDiv.className = 'tags-cell';
     params.data.tags.map(({ tag }) => {

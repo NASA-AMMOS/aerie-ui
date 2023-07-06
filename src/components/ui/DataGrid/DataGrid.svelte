@@ -364,9 +364,13 @@ This has been seen to result in unintended and often glitchy behavior, which oft
     width: 100%;
   }
   :global(.tags-cell) {
-    align-items: center;
-    display: flex;
-    gap: 2px;
-    height: inherit;
+    display: inline-block;
+    line-height: 24px;
+    padding: 3px 0px;
+  }
+
+  :global(.tags-cell .tag.st-chip) {
+    display: inline !important;
+    margin-right: 2px;
   }
 </style>
