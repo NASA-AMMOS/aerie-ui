@@ -97,6 +97,15 @@
         <input class="st-input w-100" disabled name="revision" value={plan.revision} />
       </Input>
       <Input layout="inline">
+        <label use:tooltip={{ content: 'Collaborators', placement: 'top' }} for="collaborators">Collaborators</label>
+        <input
+          class="st-input w-100"
+          disabled
+          name="collaborators"
+          value={plan.collaborators.map(c => c.collaborator).join(', ')}
+        />
+      </Input>
+      <Input layout="inline">
         <label use:tooltip={{ content: 'Tags', placement: 'top' }} for="tags">Tags</label>
         <TagsInput
           use={[
