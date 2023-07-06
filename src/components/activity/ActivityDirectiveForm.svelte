@@ -19,7 +19,6 @@
   import type { ArgumentsMap, FormParameter } from '../../types/parameter';
   import type { ActivityDirectiveTagsInsertInput, Tag } from '../../types/tags';
   import { getActivityMetadata } from '../../utilities/activities';
-  import { generateRandomPastelColor } from '../../utilities/color';
   import effects from '../../utilities/effects';
   import { classNames, keyByBoolean } from '../../utilities/generic';
   import { getArguments, getFormParameters } from '../../utilities/parameters';
@@ -254,10 +253,6 @@
     activityNameField.reset(initialValue);
     const { id, plan_id } = activityDirective;
     effects.updateActivityDirective(plan_id, id, { name: initialValue }, user);
-  }
-
-  function createPlaceholderTagObject(name: string): Tag {
-    return { color: generateRandomPastelColor(), created_at: '', id: -1, name, owner: '' };
   }
 
   async function validateArguments(newArguments: ArgumentsMap | null): Promise<void> {
