@@ -5,18 +5,23 @@
   import { createEventDispatcher } from 'svelte';
   import { createPopperActions } from 'svelte-popperjs';
   import type { Tag } from '../../../types/tags';
+  import { generateRandomPastelColor } from '../../../utilities/color';
+  import { useActions, type ActionArray } from '../../../utilities/useActions';
   import TagChip from './Tag.svelte';
 
-  export let createTagObject: (name: string) => Tag;
+  export let createTagObject: (name: string) => Tag = (name: string) => {
+    return { color: generateRandomPastelColor(), created_at: '', id: -1, name, owner: '' };
+  };
+  export let disabled: boolean = false;
   export let id: string = '';
+  export let inputRef: HTMLInputElement | null = null;
   export let name: string = '';
   export let placeholder: string = 'Enter a tag...';
-  export let inputRef: HTMLInputElement | null = null;
-  export let tagsRef: HTMLDivElement | null = null;
-  export let disabled: boolean = false;
   export let selected: Tag[] = [];
   export let suggestionsLimit: number = 8;
+  export let tagsRef: HTMLDivElement | null = null;
   export let options: Tag[] = [];
+  export let use: ActionArray = [];
 
   const dispatch = createEventDispatcher();
   const [popperRef, popperContent, getInstance] = createPopperActions({
@@ -190,18 +195,19 @@
     {#each selectedTags as tag}
       <TagChip {tag} removable={!disabled} on:click={() => onTagRemove(tag)} {disabled} ariaRole="option" />
     {/each}
-    {#if !disabled}
+    {#if !disabled || (disabled && !selectedTags.length)}
       <input
         {id}
         {name}
         {disabled}
-        {placeholder}
+        placeholder={disabled ? '' : placeholder}
         class="st-input tags-input"
         on:mouseup={openSuggestions}
         on:focus={openSuggestions}
         on:keydown={onKeydown}
         bind:value={searchText}
         bind:this={inputRef}
+        use:useActions={use}
       />
     {/if}
   </div>

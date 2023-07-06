@@ -406,7 +406,6 @@
             options={tags}
             disabled={!editable}
             selected={activityDirective.tags.map(({ tag }) => tag)}
-            createTagObject={createPlaceholderTagObject}
             on:add={onTagsInputChange}
             on:remove={onTagsInputRemove}
           />

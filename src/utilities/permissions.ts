@@ -109,6 +109,9 @@ const queryPermissions = {
   CREATE_PLAN_MERGE_REQUEST: (user: User | null): boolean => {
     return getPermission(['create_merge_request'], user);
   },
+  CREATE_PLAN_TAGS: (user: User | null): boolean => {
+    return getPermission(['insert_plan_tags'], user);
+  },
   CREATE_SCHEDULING_CONDITION: (user: User | null): boolean => {
     return getPermission(['insert_scheduling_condition_one'], user);
   },
@@ -177,6 +180,9 @@ const queryPermissions = {
   },
   DELETE_PLAN: (user: User | null): boolean => {
     return getPermission(['delete_plan_by_pk', 'delete_scheduling_specification'], user);
+  },
+  DELETE_PLAN_TAGS: (user: User | null): boolean => {
+    return getPermission(['delete_plan_tags'], user);
   },
   DELETE_PRESET_TO_DIRECTIVE: (user: User | null): boolean => {
     return getPermission(['delete_preset_to_directive_by_pk'], user);
@@ -405,7 +411,7 @@ const featurePermissions: FeaturePermissions = {
     canCreate: user => isUserAdmin(user) || queryPermissions.CREATE_PLAN(user),
     canDelete: (user, plan) => isUserAdmin(user) || (isPlanOwner(user, plan) && queryPermissions.DELETE_PLAN(user)),
     canRead: user => isUserAdmin(user) || queryPermissions.GET_PLAN(user),
-    canUpdate: () => false, // no feature to update plans exists
+    canUpdate: (user, plan) => isUserAdmin(user) || (isPlanOwner(user, plan) && queryPermissions.DELETE_PLAN(user)),
   },
   sequences: {
     canCreate: user => isUserAdmin(user) || queryPermissions.CREATE_USER_SEQUENCE(user),
