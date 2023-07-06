@@ -764,6 +764,13 @@ const gql = {
         start_time
         updated_at
         updated_by
+        tags {
+          tag {
+            color
+          	id
+            name
+          }
+        }
       }
     }
   `,

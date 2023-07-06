@@ -18,6 +18,7 @@
   import SingleActionDataGrid from '../../components/ui/DataGrid/SingleActionDataGrid.svelte';
   import Panel from '../../components/ui/Panel.svelte';
   import SectionTitle from '../../components/ui/SectionTitle.svelte';
+  import Tag from '../../components/ui/Tags/Tag.svelte';
   import { field } from '../../stores/form';
   import { createPlanError, creatingPlan } from '../../stores/plan';
   import { simulationTemplates } from '../../stores/simulation';
@@ -52,13 +53,14 @@
       width: 60,
     },
     { field: 'name', filter: 'text', headerName: 'Name', resizable: true, sortable: true },
-    { field: 'model_id', filter: 'number', headerName: 'Model ID', sortable: true, suppressAutoSize: true, width: 120 },
+    { field: 'model_id', filter: 'number', headerName: 'Model ID', sortable: true, suppressAutoSize: true, width: 130 },
     {
       field: 'start_time_doy',
       filter: 'text',
       headerName: 'Start Time',
       resizable: true,
       sortable: true,
+      width: 150,
       valueGetter: (params: ValueGetterParams<Plan>) => {
         if (params.data?.start_time_doy) {
           return params.data?.start_time_doy.split('T')[0];
@@ -71,6 +73,7 @@
       headerName: 'End Time',
       resizable: true,
       sortable: true,
+      width: 140,
       valueGetter: (params: ValueGetterParams<Plan>) => {
         if (params.data?.end_time_doy) {
           return params.data?.end_time_doy.split('T')[0];
@@ -83,6 +86,7 @@
       headerName: 'Date Created',
       resizable: true,
       sortable: true,
+      width: 200,
       valueGetter: (params: ValueGetterParams<Plan>) => {
         if (params.data?.created_at) {
           return getShortISOForDate(new Date(params.data?.created_at));
@@ -102,6 +106,30 @@
       },
     },
     { field: 'updated_by', filter: 'text', headerName: 'Updated By', resizable: true, sortable: true },
+    {
+      field: 'tags',
+      filter: 'text',
+      headerName: 'Tags',
+      resizable: true,
+      sortable: false,
+      width: 220,
+      cellRenderer: (params: PlanCellRendererParams) => {
+        if (params.data) {
+          const tagsDiv = document.createElement('div');
+          tagsDiv.className = 'tags-cell';
+          params.data.tags.map(({ tag }) => {
+            new Tag({
+              props: {
+                tag,
+                removable: false,
+              },
+              target: tagsDiv,
+            });
+          });
+          return tagsDiv;
+        }
+      },
+    },
   ];
   const permissionError: string = 'You do not have permission to create a plan';
 
@@ -406,3 +434,12 @@
     </Panel>
   </CssGrid>
 </CssGrid>
+
+<style>
+  :global(.tags-cell) {
+    align-items: center;
+    display: flex;
+    gap: 2px;
+    height: inherit;
+  }
+</style>
