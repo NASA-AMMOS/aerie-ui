@@ -61,9 +61,9 @@ const mockInitialPlan: Plan = {
   simulations: [{ simulation_datasets: [{ id: 1 }] }],
   start_time: '2023-02-16T00:00:00',
   start_time_doy: '2023-047T00:00:00',
+  tags: [],
   updated_at: '2023-02-16T00:00:00',
   updated_by: 'redshirt',
-  tags: [],
 };
 
 const user: User = {

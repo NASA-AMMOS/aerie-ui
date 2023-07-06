@@ -1807,17 +1807,6 @@ const effects = {
     }
   },
 
-  async getPlanTags(planId: number, user: User | null): Promise<Tag[]> {
-    try {
-      const data = await reqHasura(convertToQuery(gql.SUB_PLAN_TAGS), { planId }, user);
-      const { tags } = data;
-      return tags;
-    } catch (e) {
-      catchError(e as Error);
-      return [];
-    }
-  },
-
   async getPlanRevision(planId: number, user: User | null): Promise<number | null> {
     try {
       const query = convertToQuery(gql.SUB_PLAN_REVISION);
@@ -1828,6 +1817,17 @@ const effects = {
     } catch (e) {
       catchError(e as Error);
       return null;
+    }
+  },
+
+  async getPlanTags(planId: number, user: User | null): Promise<Tag[]> {
+    try {
+      const data = await reqHasura(convertToQuery(gql.SUB_PLAN_TAGS), { planId }, user);
+      const { tags } = data;
+      return tags;
+    } catch (e) {
+      catchError(e as Error);
+      return [];
     }
   },
 
