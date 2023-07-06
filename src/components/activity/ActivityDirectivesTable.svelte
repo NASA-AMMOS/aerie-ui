@@ -41,7 +41,7 @@
           props: {
             deleteCallback: params.deleteActivityDirective,
             deleteTooltip: {
-              content: 'delete this Activity Directive',
+              content: 'Delete Activity Directive',
               placement: 'bottom',
             },
             hasDeletePermission,
