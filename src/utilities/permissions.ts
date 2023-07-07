@@ -280,6 +280,9 @@ const queryPermissions = {
   UPDATE_EXPANSION_RULE: (user: User | null): boolean => {
     return getPermission(['update_expansion_rule_by_pk'], user);
   },
+  UPDATE_PLAN: (user: User | null): boolean => {
+    return getPermission(['update_plan_by_pk'], user);
+  },
   UPDATE_SCHEDULING_CONDITION: (user: User | null): boolean => {
     return getPermission(['update_scheduling_condition_by_pk'], user);
   },
@@ -411,7 +414,7 @@ const featurePermissions: FeaturePermissions = {
     canCreate: user => isUserAdmin(user) || queryPermissions.CREATE_PLAN(user),
     canDelete: (user, plan) => isUserAdmin(user) || (isPlanOwner(user, plan) && queryPermissions.DELETE_PLAN(user)),
     canRead: user => isUserAdmin(user) || queryPermissions.GET_PLAN(user),
-    canUpdate: (user, plan) => isUserAdmin(user) || (isPlanOwner(user, plan) && queryPermissions.DELETE_PLAN(user)),
+    canUpdate: (user, plan) => isUserAdmin(user) || (isPlanOwner(user, plan) && queryPermissions.UPDATE_PLAN(user)),
   },
   sequences: {
     canCreate: user => isUserAdmin(user) || queryPermissions.CREATE_USER_SEQUENCE(user),
