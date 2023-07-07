@@ -90,16 +90,16 @@
     activeTag = activeIndex > -1 ? filteredOptions.at(activeIndex) || null : null;
   }
 
-  function add(tag: Tag) {
+  function addTag(tag: Tag, changeType: string = 'select') {
     selectedTags = selectedTags.concat(tag);
     searchText = '';
-    dispatch('add', tag);
+    dispatch('change', { tag, type: changeType });
     updatePopperPosition();
     closeSuggestions();
   }
 
   function removeTag(tag: Tag) {
-    dispatch('remove', tag);
+    dispatch('change', { tag, type: 'remove' });
     updatePopperPosition();
   }
 
@@ -127,6 +127,11 @@
   function onKeydown(event: KeyboardEvent) {
     const { key } = event;
 
+    // Prevent submission of any parent forms on enter
+    if (key === 'Enter') {
+      event.preventDefault();
+    }
+
     // on escape or tab out of input close options dropdown and reset input value
     if (event.key === `Escape` || event.key === `Tab`) {
       closeSuggestions();
@@ -137,7 +142,9 @@
       }
 
       // Use active tag or create a placeholder tag if needed
-      add(activeTag || findTag(searchText || '', filteredOptions) || createTagObject(searchText || ''));
+      const existingTag = activeTag || findTag(searchText || '', filteredOptions);
+      const changeEvent = existingTag ? 'select' : 'create';
+      addTag(existingTag || createTagObject(searchText || ''), changeEvent);
     } else if (key === 'Backspace' && searchText === '' && selectedTags.length) {
       const lastTag = selectedTags.at(-1);
       selectedTags = selectedTags.slice(0, -1);
@@ -174,6 +181,7 @@
   }
 
   function onTagRemove(tag: Tag) {
+    console.log('wat', tag);
     // Find the tag by name since it may not have an ID yet
     selectedTags = selectedTags.filter(t => t.name !== tag.name);
     removeTag(tag);
@@ -206,7 +214,7 @@
         class="st-input tags-input"
         on:mouseup={openSuggestions}
         on:focus={openSuggestions}
-        on:keydown={onKeydown}
+        on:keydown|stopPropagation={onKeydown}
         bind:value={searchText}
         bind:this={inputRef}
         use:useActions={use}
@@ -223,7 +231,7 @@
               role="option"
               class="tags-option"
               on:mousedown|stopPropagation
-              on:mouseup|stopPropagation={() => add(tag)}
+              on:mouseup|stopPropagation={() => addTag(tag, 'select')}
               aria-selected={activeTag?.id === tag.id}
               class:active={activeTag?.id === tag.id}
             >
@@ -234,7 +242,7 @@
         {#if !exactMatchFound && searchText}
           <div
             on:mousedown|stopPropagation
-            on:mouseup|stopPropagation={() => add(createTagObject(searchText || ''))}
+            on:mouseup|stopPropagation={() => addTag(createTagObject(searchText || ''), 'create')}
             class="tags-option"
             role="button"
             tabindex={0}
