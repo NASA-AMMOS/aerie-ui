@@ -204,12 +204,12 @@
         {disabled}
         placeholder={disabled ? '' : placeholder}
         class="st-input tags-input"
+        use:useActions={use}
         on:mouseup={openSuggestions}
         on:focus={openSuggestions}
         on:keydown={onKeydown}
         bind:value={searchText}
         bind:this={inputRef}
-        use:useActions={use}
       />
     {/if}
   </div>

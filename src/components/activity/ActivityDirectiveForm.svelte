@@ -426,6 +426,15 @@
             options={tags}
             disabled={!editable}
             selected={activityDirective.tags.map(({ tag }) => tag)}
+            use={[
+              [
+                permissionHandler,
+                {
+                  hasPermission: hasUpdatePermission,
+                  permissionError: updatePermissionError,
+                },
+              ],
+            ]}
             on:add={onTagsInputChange}
             on:remove={onTagsInputRemove}
           />
