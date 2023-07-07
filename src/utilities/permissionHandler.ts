@@ -18,18 +18,10 @@ export const permissionHandler: Action<HTMLElement, PermissionHandlerProps> = (
   // the permissionError content passed in first, then the
   // HTML title attribute then the aria-label
   // in that order.
-  const label = node.getAttribute('aria-label');
+  const existingError = node.getAttribute('aria-errormessage');
   const tabIndex = node.getAttribute('tabindex');
   const classList = node.className;
-  const content = permissionError || label;
   const { hasPermission } = params;
-
-  // Let's make sure the "aria-label" attribute
-  // is set so our element is accessible:
-  // https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/ARIA_Techniques/Using_the_aria-label_attribute
-  if (!label && content !== null && typeof content === 'string') {
-    node.setAttribute('aria-label', content);
-  }
 
   // Clear out the HTML title attribute since
   // we don't want the default behavior of it
@@ -43,7 +35,7 @@ export const permissionHandler: Action<HTMLElement, PermissionHandlerProps> = (
   // https://atomiks.github.io/tippyjs/v6/all-props/
   const tip: any = tippy(node, {
     ...params,
-    ...(content !== null ? { content } : {}),
+    ...(permissionError !== null ? { content: permissionError } : {}),
     plugins: [permission],
   });
 
@@ -59,11 +51,17 @@ export const permissionHandler: Action<HTMLElement, PermissionHandlerProps> = (
     }
   };
 
-  const handlePermission = (hasPermission: boolean = true) => {
+  const handlePermission = (hasPermission: boolean = true, permissionError?: string) => {
     if (hasPermission === false) {
       node.setAttribute('tabindex', '-1');
       node.setAttribute('readonly', 'readonly');
       node.setAttribute('class', `${classList} permission-disabled`);
+      // Let's make sure the "aria-errormessage" attribute
+      // is set so our element is accessible:
+      // https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Attributes/aria-errormessage
+      if (permissionError) {
+        node.setAttribute('aria-errormessage', permissionError);
+      }
       node.addEventListener('mousedown', preventClick);
       node.addEventListener('mouseup', preventClick);
       node.addEventListener('click', preventClick);
@@ -75,6 +73,11 @@ export const permissionHandler: Action<HTMLElement, PermissionHandlerProps> = (
         node.removeAttribute('tabindex');
       }
 
+      if (existingError) {
+        node.setAttribute('aria-errormessage', existingError);
+      } else {
+        node.removeAttribute('aria-errormessage');
+      }
       node.removeAttribute('readonly');
       node.setAttribute('class', classList);
       node.removeEventListener('mousedown', preventClick);
@@ -84,7 +87,7 @@ export const permissionHandler: Action<HTMLElement, PermissionHandlerProps> = (
     }
   };
 
-  handlePermission(hasPermission);
+  handlePermission(hasPermission, permissionError);
 
   return {
     // Clean up the Tippy instance on unmount.
@@ -98,9 +101,9 @@ export const permissionHandler: Action<HTMLElement, PermissionHandlerProps> = (
     },
 
     // If the props change, let's update the Tippy instance.
-    update: ({ hasPermission, ...newParams }: PermissionHandlerProps) => {
-      handlePermission(hasPermission);
-      tip.setProps({ content, hasPermission, ...newParams });
+    update: ({ hasPermission, permissionError, ...newParams }: PermissionHandlerProps) => {
+      handlePermission(hasPermission, permissionError);
+      tip.setProps({ content: permissionError, hasPermission, ...newParams });
     },
   };
 };
@@ -110,14 +113,14 @@ const permission: Plugin<PermissionHandlerProps & { hasPermission?: boolean }> =
   fn(instance) {
     return {
       onBeforeUpdate(instance, partialProps) {
-        if (partialProps.hasPermission) {
+        if (partialProps.hasPermission !== false) {
           instance.disable();
         } else {
           instance.enable();
         }
       },
       onCreate() {
-        if (instance.props.hasPermission) {
+        if (instance.props.hasPermission !== false) {
           instance.disable();
         }
       },
