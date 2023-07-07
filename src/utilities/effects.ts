@@ -954,8 +954,11 @@ const effects = {
         throwPermissionError('delete activity directive tags');
       }
 
-      await reqHasura<{ affected_rows: number }>(gql.DELETE_ACTIVITY_DIRECTIVE_TAGS, { ids }, user);
+      const data = await reqHasura<{ affected_rows: number }>(gql.DELETE_ACTIVITY_DIRECTIVE_TAGS, { ids }, user);
+      const { delete_activity_directive_tags } = data;
+      const { affected_rows } = delete_activity_directive_tags;
       showSuccessToast('Activity Directive Updated Successfully');
+      return affected_rows;
     } catch (e) {
       catchError('Create Activity Directive Tags Failed', e as Error);
       showFailureToast('Create Activity Directive Tags Failed');
@@ -1312,8 +1315,11 @@ const effects = {
         throwPermissionError('delete plan tags');
       }
 
-      await reqHasura<{ affected_rows: number }>(gql.DELETE_PLAN_TAGS, { ids }, user);
+      const data = await reqHasura<{ affected_rows: number }>(gql.DELETE_PLAN_TAGS, { ids }, user);
+      const { delete_plan_tags } = data;
+      const { affected_rows } = delete_plan_tags;
       showSuccessToast('Plan Updated Successfully');
+      return affected_rows;
     } catch (e) {
       catchError('Create Plan Tags Failed', e as Error);
       showFailureToast('Create Plan Tags Failed');

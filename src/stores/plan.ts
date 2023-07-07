@@ -40,7 +40,7 @@ export const planId: Readable<number> = derived(plan, $plan => ($plan ? $plan.id
 export const activityTypes = gqlSubscribable<ActivityType[]>(gql.SUB_ACTIVITY_TYPES, { modelId }, [], null);
 
 export const planTags = gqlSubscribable<Tag[]>(gql.SUB_PLAN_TAGS, { planId }, [], null, ({ tags }) =>
-  tags.map(tag => tag.tag),
+  tags.map((tag: { tag: Tag }) => tag.tag),
 );
 
 export const models = gqlSubscribable<ModelSlim[]>(gql.SUB_MODELS, {}, [], null);

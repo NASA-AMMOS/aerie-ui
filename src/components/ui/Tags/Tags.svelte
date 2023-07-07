@@ -56,7 +56,7 @@
   $: selectedTags = [...selected]; // copy of selected prop for internal reference and temporary modification
   $: if (options && searchText !== null) {
     // Determine if searchText exactly matches any of the available options
-    exactMatchFound = options.findIndex(tag => compareTagNames(tag.name, searchText)) > -1;
+    exactMatchFound = options.findIndex(tag => compareTagNames(tag.name, searchText || '')) > -1;
 
     filteredOptions = [];
     options.forEach(option => {
@@ -77,7 +77,7 @@
     });
 
     // If searchText matches one of the filtered options, bring this option to the top
-    const optionMatchIndex = filteredOptions.findIndex(tag => compareTagNames(tag.name, searchText));
+    const optionMatchIndex = filteredOptions.findIndex(tag => compareTagNames(tag.name, searchText || ''));
     if (optionMatchIndex > -1) {
       filteredOptions.unshift(filteredOptions.splice(optionMatchIndex, 1)[0]);
     }
@@ -87,7 +87,7 @@
   }
 
   $: if (typeof activeIndex === 'number' && filteredOptions) {
-    activeTag = activeIndex > -1 ? filteredOptions.at(activeIndex) : null;
+    activeTag = activeIndex > -1 ? filteredOptions.at(activeIndex) || null : null;
   }
 
   function add(tag: Tag) {
@@ -137,11 +137,13 @@
       }
 
       // Use active tag or create a placeholder tag if needed
-      add(activeTag || findTag(searchText, filteredOptions) || createTagObject(searchText));
+      add(activeTag || findTag(searchText || '', filteredOptions) || createTagObject(searchText || ''));
     } else if (key === 'Backspace' && searchText === '' && selectedTags.length) {
       const lastTag = selectedTags.at(-1);
       selectedTags = selectedTags.slice(0, -1);
-      removeTag(lastTag);
+      if (lastTag) {
+        removeTag(lastTag);
+      }
       return;
     } else if ([`ArrowDown`, `ArrowUp`].includes(event.key)) {
       event.preventDefault();
@@ -232,7 +234,7 @@
         {#if !exactMatchFound && searchText}
           <div
             on:mousedown|stopPropagation
-            on:mouseup|stopPropagation={() => add(createTagObject(searchText))}
+            on:mouseup|stopPropagation={() => add(createTagObject(searchText || ''))}
             class="tags-option"
             role="button"
             tabindex={0}
