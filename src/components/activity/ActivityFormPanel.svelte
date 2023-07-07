@@ -18,6 +18,8 @@
   import type { SpanId } from '../../types/simulation';
   import type { ViewGridSection } from '../../types/view';
   import effects from '../../utilities/effects';
+  import { permissionHandler } from '../../utilities/permissionHandler';
+  import { featurePermissions } from '../../utilities/permissions';
   import { tooltip } from '../../utilities/tooltip';
   import GridMenu from '../menus/GridMenu.svelte';
   import Panel from '../ui/Panel.svelte';
@@ -27,6 +29,14 @@
 
   export let gridSection: ViewGridSection;
   export let user: User | null;
+
+  const deletePermissionError = 'You do not have permission to delete this activity';
+
+  let hasDeletePermission: boolean = false;
+
+  $: if (user !== null && $plan !== null && $selectedActivityDirective !== null) {
+    hasDeletePermission = featurePermissions.activityDirective.canDelete(user, $plan, $selectedActivityDirective);
+  }
 
   function onSelectSpan(event: CustomEvent<SpanId>) {
     const { detail: spanId } = event;
@@ -58,12 +68,16 @@
 
         <button
           class="st-button icon activity-header-delete"
+          use:permissionHandler={{
+            hasPermission: hasDeletePermission,
+            permissionError: deletePermissionError,
+          }}
           on:click|stopPropagation={() => {
-            if ($selectedActivityDirective !== null) {
+            if ($selectedActivityDirective !== null && hasDeletePermission) {
               effects.deleteActivityDirective($selectedActivityDirective.plan_id, $selectedActivityDirective.id, user);
             }
           }}
-          use:tooltip={{ content: 'Delete Activity', placement: 'top' }}
+          use:tooltip={{ content: 'Delete Activity', disabled: !hasDeletePermission, placement: 'top' }}
         >
           <TrashIcon />
         </button>
