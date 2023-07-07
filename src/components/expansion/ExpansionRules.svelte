@@ -14,6 +14,7 @@
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
   import DataGridActions from '../ui/DataGrid/DataGridActions.svelte';
+  import { tagsCellRenderer } from '../ui/DataGrid/DataGridTagsCellRenderer';
   import SingleActionDataGrid from '../ui/DataGrid/SingleActionDataGrid.svelte';
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
@@ -111,6 +112,17 @@
       suppressAutoSize: true,
       suppressSizeToFit: true,
       width: 55,
+    },
+    {
+      autoHeight: true,
+      cellRenderer: tagsCellRenderer,
+      field: 'tags',
+      filter: 'text',
+      headerName: 'Tags',
+      resizable: true,
+      sortable: false,
+      width: 220,
+      wrapText: true,
     },
   ];
   $: filteredRules = $expansionRules.filter(rule => {
