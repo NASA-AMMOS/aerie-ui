@@ -5,7 +5,6 @@
   import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
   import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
-  import tsc from 'typescript';
   import type { Monaco } from '../../types/monaco';
   import { ShouldRetryError, promiseRetry } from '../../utilities/generic';
 
@@ -89,33 +88,40 @@
         const offset = model.getOffsetAt(position);
 
         var word = model.getWordUntilPosition(position);
-        var range = {
-          insert: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
-          replace: new monaco.Range(
-            position.lineNumber,
-            position.column - word.word.length,
-            position.lineNumber,
-            position.column,
-          ),
-        };
+        // var range = {
+        //   insert: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+        //   replace: new monaco.Range(
+        //     position.lineNumber,
+        //     position.column - word.word.length,
+        //     position.lineNumber,
+        //     position.column,
+        //   ),
+        // };
 
         return getSuggestions(fileName, offset).then(completion => {
           {
             return {
-              suggestions: completion.entries.map(entry => {
-                return {
-                  insertText: entry.insertText ? entry.insertText : entry.name,
-                  insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-                  kind: monaco.languages.CompletionItemKind.Function,
-                  label: entry.name ? entry.name : '',
-                  range,
-                };
-              }),
+              isIncomplete: true,
+              suggestions: JSON.parse(
+                JSON.stringify(
+                  completion.entries.map(entry => {
+                    return {
+                      detail: entry.des,
+                      documentation: 'test Documetate',
+                      insertText: entry.insertText ? entry.insertText : entry.name,
+                      insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                      kind: entry.kind,
+                      label: entry.name ? entry.name : '',
+                      range: entry.range,
+                    };
+                  }),
+                ),
+              ),
             };
           }
         });
       },
-      triggerCharacters: ['.'],
+      triggerCharacters: ['.', ' '],
     });
 
     editor = monaco.editor.create(div, options, override);
