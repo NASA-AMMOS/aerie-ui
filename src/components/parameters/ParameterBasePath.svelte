@@ -50,6 +50,7 @@
         slot="right"
         {formParameter}
         {parameterType}
+        {use}
         on:reset={() => dispatch('reset', formParameter)}
       />
     </Input>

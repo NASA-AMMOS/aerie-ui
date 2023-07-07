@@ -44,6 +44,7 @@
       hidden={hideRightAdornments}
       {formParameter}
       {parameterType}
+      {use}
       on:reset={() => dispatch('reset', formParameter)}
     />
   </div>

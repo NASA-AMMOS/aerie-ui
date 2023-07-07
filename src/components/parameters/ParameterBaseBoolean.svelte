@@ -38,6 +38,7 @@
       {formParameter}
       {parameterType}
       on:reset={() => dispatch('reset', formParameter)}
+      {use}
     />
   </Input>
 </div>

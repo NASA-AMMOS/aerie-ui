@@ -55,6 +55,7 @@
       additionalErrors={durationStringFormatError ? [durationStringFormatError] : []}
       {hideValueSource}
       {parameterType}
+      {use}
       on:reset={() => dispatch('reset', formParameter)}
     />
   </Input>
