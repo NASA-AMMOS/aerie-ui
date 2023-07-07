@@ -62,10 +62,10 @@ export const permissionHandler: Action<HTMLElement, PermissionHandlerProps> = (
       if (permissionError) {
         node.setAttribute('aria-errormessage', permissionError);
       }
-      node.addEventListener('mousedown', preventClick);
-      node.addEventListener('mouseup', preventClick);
-      node.addEventListener('click', preventClick);
-      node.addEventListener('focus', preventFocus);
+      node.addEventListener('mousedown', preventClick, true);
+      node.addEventListener('mouseup', preventClick, true);
+      node.addEventListener('click', preventClick, true);
+      node.addEventListener('focus', preventFocus, true);
     } else {
       if (tabIndex !== null) {
         node.setAttribute('tabindex', tabIndex);
@@ -80,10 +80,10 @@ export const permissionHandler: Action<HTMLElement, PermissionHandlerProps> = (
       }
       node.removeAttribute('readonly');
       node.setAttribute('class', classList);
-      node.removeEventListener('mousedown', preventClick);
-      node.removeEventListener('mouseup', preventClick);
-      node.removeEventListener('click', preventClick);
-      node.removeEventListener('focus', preventFocus);
+      node.removeEventListener('mousedown', preventClick, true);
+      node.removeEventListener('mouseup', preventClick, true);
+      node.removeEventListener('click', preventClick, true);
+      node.removeEventListener('focus', preventFocus, true);
     }
   };
 
@@ -92,10 +92,10 @@ export const permissionHandler: Action<HTMLElement, PermissionHandlerProps> = (
   return {
     // Clean up the Tippy instance on unmount.
     destroy: () => {
-      node.removeEventListener('mousedown', preventClick);
-      node.removeEventListener('mouseup', preventClick);
-      node.removeEventListener('click', preventClick);
-      node.removeEventListener('focus', preventFocus);
+      node.removeEventListener('mousedown', preventClick, true);
+      node.removeEventListener('mouseup', preventClick, true);
+      node.removeEventListener('click', preventClick, true);
+      node.removeEventListener('focus', preventFocus, true);
 
       tip.destroy();
     },
