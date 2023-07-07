@@ -23,7 +23,7 @@
   on:dragend={e => dispatch('dragend', e)}
   on:dragstart={e => dispatch('dragstart', e)}
   use:permissionHandler={{
-    hasPermission,
+    hasPermission: hasPermission ?? true,
     permissionError,
   }}
 >
