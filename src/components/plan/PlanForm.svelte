@@ -13,7 +13,7 @@
   import Input from '../form/Input.svelte';
   import TagsInput from '../ui/Tags/Tags.svelte';
 
-  export let plan: Plan;
+  export let plan: Plan | null;
   export let planTags: Tag[];
   export let tags: Tag[] = [];
   export let user: User | null;
@@ -33,7 +33,7 @@
     const newTags = await effects.createTags([{ color: tag.color, name: tag.name }], user);
     if (newTags) {
       const newPlanTags: PlanTagsInsertInput[] = (newTags || []).map(({ id: tag_id }) => ({
-        plan_id: plan.id,
+        plan_id: plan?.id || -1,
         tag_id,
       }));
       await effects.createPlanTags(newPlanTags, user);
@@ -46,86 +46,98 @@
 </script>
 
 <div class="plan-form">
-  <fieldset>
-    <Collapse title="Details">
-      <Input layout="inline">
-        <label use:tooltip={{ content: 'Name', placement: 'top' }} for="name">Plan Name</label>
-        <input class="st-input w-100" disabled name="name" value={plan.name} />
-      </Input>
-      <Input layout="inline">
-        <label use:tooltip={{ content: 'ID', placement: 'top' }} for="id">Plan ID</label>
-        <input class="st-input w-100" disabled name="id" value={plan.id} />
-      </Input>
-      <Input layout="inline">
-        <label use:tooltip={{ content: 'Model Name', placement: 'top' }} for="modelName">Model Name</label>
-        <input class="st-input w-100" disabled name="modelName" value={plan.model.name} />
-      </Input>
-      <Input layout="inline">
-        <label use:tooltip={{ content: 'Model ID', placement: 'top' }} for="modelId">Model ID</label>
-        <input class="st-input w-100" disabled name="modelId" value={plan.model_id} />
-      </Input>
-      <Input layout="inline">
-        <label use:tooltip={{ content: 'Model Version', placement: 'top' }} for="modelVersion">Model Version</label>
-        <input class="st-input w-100" disabled name="modelVersion" value={plan.model.version} />
-      </Input>
-      <Input layout="inline">
-        <label use:tooltip={{ content: 'Start Time', placement: 'top' }} for="startTime">Start Time</label>
-        <input class="st-input w-100" disabled name="startTime" value={plan.start_time_doy} />
-      </Input>
-      <Input layout="inline">
-        <label use:tooltip={{ content: 'End Time', placement: 'top' }} for="endTime">End Time</label>
-        <input class="st-input w-100" disabled name="endTime" value={plan.end_time_doy} />
-      </Input>
-      <Input layout="inline">
-        <label use:tooltip={{ content: 'Owner', placement: 'top' }} for="owner">Owner</label>
-        <input class="st-input w-100" disabled name="owner" value={plan.owner} />
-      </Input>
-      <Input layout="inline">
-        <label use:tooltip={{ content: 'Date Created', placement: 'top' }} for="createdAt">Date Created</label>
-        <input class="st-input w-100" disabled name="createdAt" value={getShortISOForDate(new Date(plan.created_at))} />
-      </Input>
-      <Input layout="inline">
-        <label use:tooltip={{ content: 'Updated At', placement: 'top' }} for="updatedAt">Updated At</label>
-        <input class="st-input w-100" disabled name="updatedAt" value={getShortISOForDate(new Date(plan.updated_at))} />
-      </Input>
-      <Input layout="inline">
-        <label use:tooltip={{ content: 'Updated By', placement: 'top' }} for="updatedBy">Updated By</label>
-        <input class="st-input w-100" disabled name="updatedBy" value={plan.updated_by} />
-      </Input>
-      <Input layout="inline">
-        <label use:tooltip={{ content: 'Revision', placement: 'top' }} for="revision">Revision</label>
-        <input class="st-input w-100" disabled name="revision" value={plan.revision} />
-      </Input>
-      <Input layout="inline">
-        <label use:tooltip={{ content: 'Collaborators', placement: 'top' }} for="collaborators">Collaborators</label>
-        <input
-          class="st-input w-100"
-          disabled
-          name="collaborators"
-          value={plan.collaborators.map(c => c.collaborator).join(', ')}
-        />
-      </Input>
-      <Input layout="inline">
-        <label use:tooltip={{ content: 'Tags', placement: 'top' }} for="tags">Tags</label>
-        <TagsInput
-          use={[
-            [
-              permissionHandler,
-              {
-                hasPermission,
-                permissionError,
-              },
-            ],
-          ]}
-          options={tags}
-          disabled={!hasPermission}
-          selected={planTags}
-          on:add={onTagsInputChange}
-          on:remove={onTagsInputRemove}
-        />
-      </Input>
-    </Collapse>
-  </fieldset>
+  {#if plan}
+    <fieldset>
+      <Collapse title="Details">
+        <Input layout="inline">
+          <label use:tooltip={{ content: 'Name', placement: 'top' }} for="name">Plan Name</label>
+          <input class="st-input w-100" disabled name="name" value={plan.name} />
+        </Input>
+        <Input layout="inline">
+          <label use:tooltip={{ content: 'ID', placement: 'top' }} for="id">Plan ID</label>
+          <input class="st-input w-100" disabled name="id" value={plan.id} />
+        </Input>
+        <Input layout="inline">
+          <label use:tooltip={{ content: 'Model Name', placement: 'top' }} for="modelName">Model Name</label>
+          <input class="st-input w-100" disabled name="modelName" value={plan.model.name} />
+        </Input>
+        <Input layout="inline">
+          <label use:tooltip={{ content: 'Model ID', placement: 'top' }} for="modelId">Model ID</label>
+          <input class="st-input w-100" disabled name="modelId" value={plan.model_id} />
+        </Input>
+        <Input layout="inline">
+          <label use:tooltip={{ content: 'Model Version', placement: 'top' }} for="modelVersion">Model Version</label>
+          <input class="st-input w-100" disabled name="modelVersion" value={plan.model.version} />
+        </Input>
+        <Input layout="inline">
+          <label use:tooltip={{ content: 'Start Time', placement: 'top' }} for="startTime">Start Time</label>
+          <input class="st-input w-100" disabled name="startTime" value={plan.start_time_doy} />
+        </Input>
+        <Input layout="inline">
+          <label use:tooltip={{ content: 'End Time', placement: 'top' }} for="endTime">End Time</label>
+          <input class="st-input w-100" disabled name="endTime" value={plan.end_time_doy} />
+        </Input>
+        <Input layout="inline">
+          <label use:tooltip={{ content: 'Owner', placement: 'top' }} for="owner">Owner</label>
+          <input class="st-input w-100" disabled name="owner" value={plan.owner} />
+        </Input>
+        <Input layout="inline">
+          <label use:tooltip={{ content: 'Date Created', placement: 'top' }} for="createdAt">Date Created</label>
+          <input
+            class="st-input w-100"
+            disabled
+            name="createdAt"
+            value={getShortISOForDate(new Date(plan.created_at))}
+          />
+        </Input>
+        <Input layout="inline">
+          <label use:tooltip={{ content: 'Updated At', placement: 'top' }} for="updatedAt">Updated At</label>
+          <input
+            class="st-input w-100"
+            disabled
+            name="updatedAt"
+            value={getShortISOForDate(new Date(plan.updated_at))}
+          />
+        </Input>
+        <Input layout="inline">
+          <label use:tooltip={{ content: 'Updated By', placement: 'top' }} for="updatedBy">Updated By</label>
+          <input class="st-input w-100" disabled name="updatedBy" value={plan.updated_by} />
+        </Input>
+        <Input layout="inline">
+          <label use:tooltip={{ content: 'Revision', placement: 'top' }} for="revision">Revision</label>
+          <input class="st-input w-100" disabled name="revision" value={plan.revision} />
+        </Input>
+        <Input layout="inline">
+          <label use:tooltip={{ content: 'Collaborators', placement: 'top' }} for="collaborators">Collaborators</label>
+          <input
+            class="st-input w-100"
+            disabled
+            name="collaborators"
+            value={plan.collaborators.map(c => c.collaborator).join(', ')}
+          />
+        </Input>
+        <Input layout="inline">
+          <label use:tooltip={{ content: 'Tags', placement: 'top' }} for="tags">Tags</label>
+          <TagsInput
+            use={[
+              [
+                permissionHandler,
+                {
+                  hasPermission,
+                  permissionError,
+                },
+              ],
+            ]}
+            options={tags}
+            disabled={!hasPermission}
+            selected={planTags}
+            on:add={onTagsInputChange}
+            on:remove={onTagsInputRemove}
+          />
+        </Input>
+      </Collapse>
+    </fieldset>
+  {/if}
 </div>
 
 <style>
