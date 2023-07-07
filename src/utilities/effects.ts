@@ -97,7 +97,13 @@ import type {
   SimulationTemplateSetInput,
   Span,
 } from '../types/simulation';
-import type { ActivityDirectiveTagsInsertInput, PlanTagsInsertInput, Tag, TagsInsertInput } from '../types/tags';
+import type {
+  ActivityDirectiveTagsInsertInput,
+  ConstraintTagsInsertInput,
+  PlanTagsInsertInput,
+  Tag,
+  TagsInsertInput,
+} from '../types/tags';
 import type { View, ViewDefinition, ViewInsertInput, ViewUpdateInput } from '../types/view';
 import { ActivityDeletionAction } from './activities';
 import { convertToQuery, parseFloatOrNull, setQueryParam, sleep } from './generic';
@@ -401,6 +407,23 @@ const effects = {
     }
   },
 
+  async createConstraintTags(tags: ConstraintTagsInsertInput[], user: User | null): Promise<number | null> {
+    try {
+      if (!queryPermissions.CREATE_CONSTRAINT_TAGS(user)) {
+        throwPermissionError('create constraint tags');
+      }
+
+      const data = await reqHasura<{ affected_rows: number }>(gql.CREATE_CONSTRAINT_TAGS, { tags }, user);
+      const { insert_constraint_tags } = data;
+      const { affected_rows } = insert_constraint_tags;
+      return affected_rows;
+    } catch (e) {
+      catchError('Create Constraint Tags Failed', e as Error);
+      showFailureToast('Create Constraint Tags Failed');
+      return null;
+    }
+  },
+
   async createExpansionRule(rule: ExpansionRuleInsertInput, user: User | null): Promise<number | null> {
     try {
       createExpansionRuleError.set(null);
@@ -603,6 +626,7 @@ const effects = {
         revision,
         start_time,
         start_time_doy,
+        tags: [],
         updated_at,
         updated_by,
       };
@@ -703,7 +727,7 @@ const effects = {
     }
   },
 
-  async createPlanTags(tags: PlanTagsInsertInput[], user: User | null): Promise<number | null> {
+  async createPlanTags(tags: PlanTagsInsertInput[], user: User | null, notify: boolean = true): Promise<number | null> {
     try {
       if (!queryPermissions.CREATE_PLAN_TAGS(user)) {
         throwPermissionError('create plan tags');
@@ -712,7 +736,9 @@ const effects = {
       const data = await reqHasura<{ affected_rows: number }>(gql.CREATE_PLAN_TAGS, { tags }, user);
       const { insert_plan_tags } = data;
       const { affected_rows } = insert_plan_tags;
-      showSuccessToast('Plan Updated Successfully');
+      if (notify) {
+        showSuccessToast('Plan Updated Successfully');
+      }
       return affected_rows;
     } catch (e) {
       catchError('Create Plan Tags Failed', e as Error);
@@ -960,8 +986,8 @@ const effects = {
       showSuccessToast('Activity Directive Updated Successfully');
       return affected_rows;
     } catch (e) {
-      catchError('Create Activity Directive Tags Failed', e as Error);
-      showFailureToast('Create Activity Directive Tags Failed');
+      catchError('Delete Activity Directive Tags Failed', e as Error);
+      showFailureToast('Delete Activity Directive Tags Failed');
       return null;
     }
   },
@@ -1151,6 +1177,20 @@ const effects = {
     return false;
   },
 
+  async deleteConstraintTags(ids: Tag['id'][], user: User | null): Promise<number | null> {
+    try {
+      if (!queryPermissions.DELETE_CONSTRAINT_TAGS(user)) {
+        throwPermissionError('delete constraint tags');
+      }
+
+      await reqHasura<{ affected_rows: number }>(gql.DELETE_CONSTRAINT_TAGS, { ids }, user);
+    } catch (e) {
+      catchError('Delete Constraint Tags Failed', e as Error);
+      showFailureToast('Delete Constraint Tags Failed');
+      return null;
+    }
+  },
+
   async deleteExpansionRule(id: number, user: User | null): Promise<boolean> {
     try {
       if (!queryPermissions.DELETE_EXPANSION_RULE(user)) {
@@ -1321,8 +1361,8 @@ const effects = {
       showSuccessToast('Plan Updated Successfully');
       return affected_rows;
     } catch (e) {
-      catchError('Create Plan Tags Failed', e as Error);
-      showFailureToast('Create Plan Tags Failed');
+      catchError('Delete Plan Tags Failed', e as Error);
+      showFailureToast('Delete Plan Tags Failed');
       return null;
     }
   },

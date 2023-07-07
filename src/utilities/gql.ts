@@ -93,6 +93,17 @@ const gql = {
     }
   `,
 
+  CREATE_CONSTRAINT_TAGS: `#graphql
+    mutation CreateConstraintTags($tags: [constraint_tags_insert_input!]!) {
+      insert_constraint_tags(objects: $tags, on_conflict: {
+        constraint: constraint_tags_pkey,
+        update_columns: []
+      }) {
+        affected_rows
+      }
+    }
+`,
+
   CREATE_EXPANSION_RULE: `#graphql
     mutation CreateExpansionRule($rule: expansion_rule_insert_input!) {
       createExpansionRule: insert_expansion_rule_one(object: $rule) {
@@ -352,6 +363,14 @@ const gql = {
     }
   `,
 
+  DELETE_CONSTRAINT_TAGS: `#graphql
+    mutation DeleteConstraintTags($ids: [Int!]!) {
+        delete_constraint_tags(where: { tag_id: { _in: $ids } }) {
+          affected_rows
+      }
+    }
+`,
+
   DELETE_EXPANSION_RULE: `#graphql
     mutation DeleteExpansionRule($id: Int!) {
       deleteExpansionRule: delete_expansion_rule_by_pk(id: $id) {
@@ -529,6 +548,13 @@ const gql = {
         plan_id
         updated_at
         updated_by
+        tags {
+          tag {
+            color
+          	id
+            name
+          }
+        }
       }
     }
   `,
@@ -1270,6 +1296,13 @@ const gql = {
         plan_id
         updated_at
         updated_by
+        tags {
+          tag {
+            color
+          	id
+            name
+          }
+        }
       }
     }
   `,
@@ -1287,6 +1320,13 @@ const gql = {
         plan_id
         updated_at
         updated_by
+        tags {
+          tag {
+            color
+          	id
+            name
+          }
+        }
       }
     }
   `,
@@ -1305,6 +1345,13 @@ const gql = {
         owner
         updated_at
         updated_by
+        tags {
+          tag {
+            color
+          	id
+            name
+          }
+        }
       }
     }
   `,
@@ -1643,7 +1690,7 @@ const gql = {
 
   SUB_TAGS: `#graphql
     subscription SubTags {
-      tags(order_by: { id: desc })  {
+      tags(order_by: { name: desc })  {
         color
         created_at
         id

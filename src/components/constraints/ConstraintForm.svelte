@@ -8,6 +8,7 @@
   import type { Constraint } from '../../types/constraint';
   import type { ModelSlim } from '../../types/model';
   import type { PlanSlim } from '../../types/plan';
+  import type { ConstraintTagsInsertInput, Tag, TagsChangeEvent } from '../../types/tags';
   import effects from '../../utilities/effects';
   import { isSaveEvent } from '../../utilities/keyboardEvents';
   import { permissionHandler } from '../../utilities/permissionHandler';
@@ -17,6 +18,7 @@
   import CssGridGutter from '../ui/CssGridGutter.svelte';
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
+  import TagsInput from '../ui/Tags/Tags.svelte';
   import ConstraintEditor from './ConstraintEditor.svelte';
 
   export let initialConstraintDefinition: string = 'export default (): Constraint => {\n\n}\n';
@@ -25,10 +27,12 @@
   export let initialConstraintName: string = '';
   export let initialConstraintModelId: number | null = null;
   export let initialConstraintPlanId: number | null = null;
+  export let initialConstraintTags: Tag[] = [];
   export let initialModelMap: Record<number, ModelSlim> = {};
   export let initialModels: ModelSlim[] = [];
   export let initialPlanMap: Record<number, PlanSlim> = {};
   export let initialPlans: PlanSlim[] = [];
+  export let initialTags: Tag[] = [];
   export let mode: 'create' | 'edit' = 'create';
   export let user: User | null;
 
@@ -40,6 +44,7 @@
   let constraintName: string = initialConstraintName;
   let constraintModelId: number | null = initialConstraintModelId;
   let constraintPlanId: number | null = initialConstraintPlanId;
+  let constraintTags: Tag[] = initialConstraintTags;
   let hasPermission: boolean = false;
   let models: ModelSlim[] = initialModels;
   let plans: PlanSlim[] = initialPlans;
@@ -50,6 +55,7 @@
     model_id: constraintModelId,
     name: constraintName,
     plan_id: constraintPlanId,
+    tags: constraintTags.map(tag => ({ tag })),
   };
 
   $: constraintModified = diffConstraints(savedConstraint, {
@@ -58,6 +64,7 @@
     model_id: constraintModelId,
     name: constraintName,
     plan_id: constraintPlanId,
+    tags: constraintTags.map(tag => ({ tag })),
   });
   $: {
     if (constraintPlanId !== null) {
@@ -118,7 +125,16 @@
       constraintA.definition !== constraintB.definition ||
       constraintA.description !== constraintB.description ||
       constraintA.name !== constraintB.name ||
-      constraintA.plan_id !== constraintB.plan_id
+      constraintA.plan_id !== constraintB.plan_id ||
+      // TODO make this better
+      (constraintA.tags || [])
+        .map(tag => tag.tag.id)
+        .sort()
+        .join() !==
+        (constraintB.tags || [])
+          .map(tag => tag.tag.id)
+          .sort()
+          .join('')
     ) {
       return true;
     } else if (constraintA.plan_id === null && constraintB.plan_id === null) {
@@ -142,9 +158,25 @@
     }
   }
 
+  async function onTagsInputChange(event: TagsChangeEvent) {
+    const {
+      detail: { tag, type },
+    } = event;
+    if (type === 'remove') {
+      constraintTags = constraintTags.filter(t => t.name !== tag.name);
+    } else if (type === 'create' || type === 'select') {
+      let tagsToAdd: Tag[] = [tag];
+      if (type === 'create') {
+        tagsToAdd = (await effects.createTags([{ color: tag.color, name: tag.name }], user)) || [];
+      }
+      constraintTags = constraintTags.concat(tagsToAdd);
+    }
+  }
+
   async function saveConstraint() {
     if (saveButtonEnabled) {
       if (mode === 'create') {
+        console.log('creating');
         const newConstraintId = await effects.createConstraint(
           constraintDefinition,
           constraintModelId,
@@ -155,6 +187,12 @@
         );
 
         if (newConstraintId !== null) {
+          // Associate new tags with constraint
+          const newConstraintTags: ConstraintTagsInsertInput[] = (constraintTags || []).map(({ id: tag_id }) => ({
+            constraint_id: newConstraintId,
+            tag_id,
+          }));
+          await effects.createConstraintTags(newConstraintTags, user);
           goto(`${base}/constraints/edit/${newConstraintId}`);
         }
       } else if (mode === 'edit' && constraintId !== null) {
@@ -168,12 +206,27 @@
           constraintDescription,
         );
 
+        // Associate new tags with constraint
+        const newConstraintTags: ConstraintTagsInsertInput[] = (constraintTags || []).map(({ id: tag_id }) => ({
+          constraint_id: constraintId as number,
+          tag_id,
+        }));
+        await effects.createConstraintTags(newConstraintTags, user);
+
+        // Disassociate old tags from constraint
+        const unusedTags = initialConstraintTags
+          .filter(tag => !constraintTags.find(t => tag.id === t.id))
+          .map(tag => tag.id);
+        console.log('unusedTags :>> ', unusedTags);
+        await effects.deleteConstraintTags(unusedTags, user);
+
         savedConstraint = {
           definition: constraintDefinition,
           description: constraintDescription,
           model_id: constraintModelId,
           name: constraintName,
           plan_id: constraintPlanId,
+          tags: constraintTags.map(tag => ({ tag })),
         };
       }
     }
@@ -284,6 +337,25 @@
             hasPermission,
             permissionError,
           }}
+        />
+      </fieldset>
+
+      <fieldset>
+        <label for="tags">Tags</label>
+        <TagsInput
+          use={[
+            [
+              permissionHandler,
+              {
+                hasPermission,
+                permissionError,
+              },
+            ],
+          ]}
+          options={initialTags}
+          disabled={!hasPermission}
+          selected={constraintTags}
+          on:change={onTagsInputChange}
         />
       </fieldset>
     </svelte:fragment>
