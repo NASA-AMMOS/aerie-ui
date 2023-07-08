@@ -9,6 +9,11 @@ export type ConstraintTagsInsertInput = {
   tag_id: number;
 };
 
+export type ExpansionRuleTagsInsertInput = {
+  rule_id: number;
+  tag_id: number;
+};
+
 export type PlanTagsInsertInput = {
   plan_id: number;
   tag_id: number;
@@ -21,6 +26,8 @@ export type Tag = {
   name: string;
   owner: string;
 };
+
+export type TagsMap = Record<Tag['id'], Tag>;
 
 export type TagsInsertInput = Pick<Tag, 'color' | 'name'>;
 

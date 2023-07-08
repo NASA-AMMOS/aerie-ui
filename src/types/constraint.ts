@@ -10,9 +10,9 @@ export type Constraint = {
   name: string;
   owner: string;
   plan_id: number | null;
+  tags: { tag: Tag }[];
   updated_at: string;
   updated_by: string;
-  tags: { tag: Tag }[];
 };
 
 export type ConstraintInsertInput = Omit<

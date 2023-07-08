@@ -181,7 +181,6 @@
   }
 
   function onTagRemove(tag: Tag) {
-    console.log('wat', tag);
     // Find the tag by name since it may not have an ID yet
     selectedTags = selectedTags.filter(t => t.name !== tag.name);
     removeTag(tag);

@@ -7,8 +7,10 @@
   import { createExpansionRuleError, expansionRulesFormColumns, savingExpansionRule } from '../../stores/expansion';
   import { activityTypes, models } from '../../stores/plan';
   import { commandDictionaries } from '../../stores/sequencing';
+  import { tags } from '../../stores/tags';
   import type { User, UserId } from '../../types/app';
   import type { ExpansionRule, ExpansionRuleInsertInput } from '../../types/expansion';
+  import type { ExpansionRuleTagsInsertInput, Tag, TagsChangeEvent } from '../../types/tags';
   import effects from '../../utilities/effects';
   import { isSaveEvent } from '../../utilities/keyboardEvents';
   import { permissionHandler } from '../../utilities/permissionHandler';
@@ -19,6 +21,7 @@
   import CssGridGutter from '../ui/CssGridGutter.svelte';
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
+  import TagsInput from '../ui/Tags/Tags.svelte';
   import ExpansionLogicEditor from './ExpansionLogicEditor.svelte';
 
   export let initialRuleActivityType: string | null = null;
@@ -31,6 +34,7 @@
   export let initialRuleModelId: number | null = null;
   export let initialRuleName: string = '';
   export let initialRuleOwner: string | null = null;
+  export let initialRuleTags: Tag[] = [];
   export let initialRuleUpdatedAt: string | null = null;
   export let mode: 'create' | 'edit' = 'create';
   export let user: User | null;
@@ -50,6 +54,7 @@
   let ruleModelId: number | null = initialRuleModelId;
   let ruleName: string = initialRuleName;
   let ruleOwner: string | null = initialRuleOwner;
+  let ruleTags: Tag[] | null = initialRuleTags;
   let ruleUpdatedAt: string | null = initialRuleUpdatedAt;
   let saveButtonClass: 'primary' | 'secondary' = 'primary';
   let saveButtonEnabled: boolean = false;
@@ -61,6 +66,7 @@
     ...(ruleDescription !== null ? { description: ruleDescription } : {}),
     expansion_logic: ruleLogic,
     name: ruleName,
+    tags: ruleTags.map(tag => ({ tag })),
   };
 
   $: activityTypes.setVariables({ modelId: ruleModelId ?? -1 });
@@ -72,6 +78,7 @@
     ...(ruleDescription !== null ? { description: ruleDescription } : {}),
     expansion_logic: ruleLogic,
     name: ruleName,
+    tags: (ruleTags || []).map(tag => ({ tag })),
   });
   $: saveButtonClass = ruleModified && saveButtonEnabled ? 'primary' : 'secondary';
   $: saveButtonEnabled = ruleActivityType !== null && ruleLogic !== '' && ruleName !== '';
@@ -88,7 +95,20 @@
 
   function diffRule(ruleA: Partial<ExpansionRule>, ruleB: Partial<ExpansionRule>) {
     return Object.entries(ruleA).some(([key, value]) => {
-      return ruleB[key as keyof ExpansionRule] !== value;
+      if (key === 'tags') {
+        return (
+          (ruleA.tags || [])
+            .map(({ tag }) => tag.id)
+            .sort()
+            .join() !==
+          (ruleB.tags || [])
+            .map(({ tag }) => tag.id)
+            .sort()
+            .join()
+        );
+      } else {
+        return ruleB[key as keyof ExpansionRule] !== value;
+      }
     });
   }
 
@@ -116,6 +136,21 @@
     }
   }
 
+  async function onTagsInputChange(event: TagsChangeEvent) {
+    const {
+      detail: { tag, type },
+    } = event;
+    if (type === 'remove') {
+      ruleTags = (ruleTags || []).filter(t => t.name !== tag.name);
+    } else if (type === 'create' || type === 'select') {
+      let tagsToAdd: Tag[] = [tag];
+      if (type === 'create') {
+        tagsToAdd = (await effects.createTags([{ color: tag.color, name: tag.name }], user)) || [];
+      }
+      ruleTags = (ruleTags || []).concat(tagsToAdd);
+    }
+  }
+
   async function saveRule() {
     if (saveButtonEnabled) {
       if (mode === 'create') {
@@ -131,6 +166,12 @@
           const newRuleId = await effects.createExpansionRule(newRule, user);
 
           if (newRuleId !== null) {
+            // Associate new tags with expansion rule
+            const newExpansionRuleTags: ExpansionRuleTagsInsertInput[] = (ruleTags || []).map(({ id: tag_id }) => ({
+              rule_id: newRuleId,
+              tag_id,
+            }));
+            await effects.createExpansionRuleTags(newExpansionRuleTags, user);
             goto(`${base}/expansion/rules/edit/${newRuleId}`);
           }
         }
@@ -148,8 +189,21 @@
           };
           const updated_at = await effects.updateExpansionRule(ruleId, updatedRule, user);
           if (updated_at !== null) {
+            // Associate new tags with expansion rule
+            const newExpansionRuleTags: ExpansionRuleTagsInsertInput[] = (ruleTags || []).map(({ id: tag_id }) => ({
+              rule_id: ruleId as number,
+              tag_id,
+            }));
+            await effects.createExpansionRuleTags(newExpansionRuleTags, user);
+
+            // Disassociate old tags from constraint
+            const unusedTags = initialRuleTags
+              .filter(tag => !(ruleTags || []).find(t => tag.id === t.id))
+              .map(tag => tag.id);
+            await effects.deleteExpansionRuleTags(unusedTags, user);
+
             ruleUpdatedAt = updated_at;
-            savedRule = updatedRule;
+            savedRule = { ...updatedRule, tags: (ruleTags || []).map(tag => ({ tag })) };
           }
         }
       }
@@ -162,7 +216,7 @@
 <PageTitle title={pageTitle} />
 
 <CssGrid bind:columns={$expansionRulesFormColumns}>
-  <Panel overflowYBody="hidden">
+  <Panel overflowYBody="hidden" padBody={false}>
     <svelte:fragment slot="header">
       <SectionTitle>{mode === 'create' ? 'New Expansion Rule' : 'Edit Expansion Rule'}</SectionTitle>
 
@@ -295,6 +349,25 @@
             hasPermission,
             permissionError,
           }}
+        />
+      </fieldset>
+
+      <fieldset>
+        <label for="tags">Tags</label>
+        <TagsInput
+          use={[
+            [
+              permissionHandler,
+              {
+                hasPermission,
+                permissionError,
+              },
+            ],
+          ]}
+          options={$tags}
+          disabled={!hasPermission}
+          selected={ruleTags}
+          on:change={onTagsInputChange}
         />
       </fieldset>
     </svelte:fragment>

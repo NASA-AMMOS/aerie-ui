@@ -112,6 +112,17 @@ const gql = {
     }
   `,
 
+  CREATE_EXPANSION_RULE_TAGS: `#graphql
+    mutation CreateExpansionRuleTags($tags: [expansion_rule_tags_insert_input!]!) {
+      insert_expansion_rule_tags(objects: $tags, on_conflict: {
+        constraint: expansion_rule_tags_pkey,
+        update_columns: []
+      }) {
+        affected_rows
+      }
+    }
+  `,
+
   CREATE_EXPANSION_SEQUENCE: `#graphql
     mutation CreateExpansionSequence($sequence: sequence_insert_input!) {
       createExpansionSequence: insert_sequence_one(object: $sequence) {
@@ -379,6 +390,14 @@ const gql = {
     }
   `,
 
+  DELETE_EXPANSION_RULE_TAGS: `#graphql
+    mutation DeleteExpansionRuleTags($ids: [Int!]!) {
+        delete_expansion_rule_tags(where: { tag_id: { _in: $ids } }) {
+          affected_rows
+      }
+    }
+  `,
+
   DELETE_EXPANSION_SEQUENCE: `#graphql
     mutation DeleteExpansionSequence($seqId: String!, $simulationDatasetId: Int!) {
       deleteExpansionSequence: delete_sequence_by_pk(seq_id: $seqId, simulation_dataset_id: $simulationDatasetId) {
@@ -600,6 +619,13 @@ const gql = {
         owner
         updated_at
         updated_by
+        tags {
+          tag {
+            color
+          	id
+            name
+          }
+        }
       }
     }
   `,
@@ -1346,12 +1372,17 @@ const gql = {
         updated_at
         updated_by
         tags {
-          tag {
-            color
-          	id
-            name
-          }
+          tag_id
         }
+      }
+    }
+  `,
+
+  SUB_EXPANSION_RULE_TAGS: `#graphql
+    subscription SubExpansionRuleTags {
+      expansionRuleTags: expansion_rule_tags(order_by: { rule_id: desc }) {
+        rule_id
+        tag_id
       }
     }
   `,
