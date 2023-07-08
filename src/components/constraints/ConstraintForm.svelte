@@ -126,15 +126,15 @@
       constraintA.description !== constraintB.description ||
       constraintA.name !== constraintB.name ||
       constraintA.plan_id !== constraintB.plan_id ||
-      // TODO make this better
+      // TODO make this better?
       (constraintA.tags || [])
-        .map(tag => tag.tag.id)
+        .map(({ tag }) => tag.id)
         .sort()
         .join() !==
         (constraintB.tags || [])
-          .map(tag => tag.tag.id)
+          .map(({ tag }) => tag.id)
           .sort()
-          .join('')
+          .join()
     ) {
       return true;
     } else if (constraintA.plan_id === null && constraintB.plan_id === null) {
@@ -217,7 +217,6 @@
         const unusedTags = initialConstraintTags
           .filter(tag => !constraintTags.find(t => tag.id === t.id))
           .map(tag => tag.id);
-        console.log('unusedTags :>> ', unusedTags);
         await effects.deleteConstraintTags(unusedTags, user);
 
         savedConstraint = {
