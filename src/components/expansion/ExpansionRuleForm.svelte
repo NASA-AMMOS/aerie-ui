@@ -366,7 +366,7 @@
           ]}
           options={$tags}
           disabled={!hasPermission}
-          selected={ruleTags}
+          selected={ruleTags || []}
           on:change={onTagsInputChange}
         />
       </fieldset>
