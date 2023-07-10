@@ -88,6 +88,7 @@
       width: 120,
     },
     {
+      autoHeight: true,
       cellRenderer: tagsCellRenderer,
       field: 'tags',
       filter: 'text',
@@ -95,7 +96,6 @@
       resizable: true,
       sortable: false,
       width: 220,
-      autoHeight: true,
       wrapText: true,
     },
   ];
