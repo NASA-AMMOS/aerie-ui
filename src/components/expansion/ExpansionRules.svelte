@@ -145,7 +145,7 @@
             matchingTags.push({ tag: matchingTag });
           }
         });
-        let ruleWithTags: ExpansionRule = { ...rule, tags: matchingTags };
+        const ruleWithTags: ExpansionRule = { ...rule, tags: matchingTags };
         return ruleWithTags;
       });
   }
