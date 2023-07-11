@@ -133,7 +133,7 @@
               ],
             ]}
             options={tags}
-            disabled={!hasPermission}
+            editable={hasPermission}
             selected={planTags}
             on:change={onTagsInputChange}
           />

@@ -352,7 +352,7 @@
             ],
           ]}
           options={initialTags}
-          disabled={!hasPermission}
+          editable={!hasPermission}
           selected={constraintTags}
           on:change={onTagsInputChange}
         />
