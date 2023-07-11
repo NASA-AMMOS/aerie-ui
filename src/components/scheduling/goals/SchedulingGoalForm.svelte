@@ -13,6 +13,8 @@
   import effects from '../../../utilities/effects';
   import { isSaveEvent } from '../../../utilities/keyboardEvents';
   import { showConfirmModal } from '../../../utilities/modal';
+  import { permissionHandler } from '../../../utilities/permissionHandler';
+  import { featurePermissions } from '../../../utilities/permissions';
   import { diffTags } from '../../../utilities/tags';
   import PageTitle from '../../app/PageTitle.svelte';
   import CssGrid from '../../ui/CssGrid.svelte';
@@ -36,6 +38,8 @@
   export let plans: PlanSchedulingSpec[] = [];
   export let models: ModelSlim[] = [];
   export let user: User | null;
+
+  const permissionError = 'You do not have permission to edit this scheduling goal.';
 
   let goalAuthor: string | null = initialGoalAuthor;
   let goalCreatedDate: string | null = initialGoalCreatedDate;
@@ -75,10 +79,30 @@
       tags: goalTags.map(tag => ({ tag })),
       ...(goalModelId !== null ? { model_id: goalModelId } : {}),
     }) || specId !== savedSpecId;
+  $: hasPermission = specId
+    ? hasPlanPermission(planOptions.find(plan => plan.specId === specId)?.id, mode, user)
+    : hasModelPermission(goalModelId, mode, user);
   $: saveButtonText = mode === 'edit' && !goalModified ? 'Saved' : 'Save';
   $: saveButtonClass = goalModified && saveButtonEnabled ? 'primary' : 'secondary';
   $: pageTitle = mode === 'edit' ? 'Scheduling Goals' : 'New Scheduling Goal';
   $: pageSubtitle = mode === 'edit' ? savedGoal.name : '';
+
+  function hasModelPermission(modelId: number, mode: 'create' | 'edit', user: User): boolean {
+    const plansFromModel = plans.filter(plan => plan.model_id === modelId);
+    return plansFromModel.some(plan => {
+      return (
+        (mode === 'create' && featurePermissions.schedulingGoals.canCreate(user, plan)) ||
+        featurePermissions.schedulingGoals.canUpdate(user, plan)
+      );
+    });
+  }
+
+  function hasPlanPermission(planId: number, mode: 'create' | 'edit', user: User): boolean {
+    const plan = plans.find(plan => plan.id === planId);
+    return mode === 'create'
+      ? featurePermissions.schedulingGoals.canCreate(user, plan)
+      : featurePermissions.schedulingGoals.canUpdate(user, plan);
+  }
 
   function diffGoals(goalA: Partial<SchedulingGoal>, goalB: Partial<SchedulingGoal>) {
     return Object.entries(goalA).some(([key, value]) => {
@@ -226,6 +250,10 @@
           class="st-button {saveButtonClass} ellipsis"
           disabled={!saveButtonEnabled}
           on:click|stopPropagation={saveGoal}
+          use:permissionHandler={{
+            hasPermission,
+            permissionError,
+          }}
         >
           {saveButtonText}
         </button>
@@ -260,7 +288,7 @@
         <select bind:value={goalModelId} class="st-select w-100" name="model">
           <option value={null} />
           {#each models as model}
-            <option value={model.id}>
+            <option value={model.id} disabled={!hasModelPermission(model.id, mode, user)}>
               {model.name} ({model.id})
             </option>
           {/each}
@@ -272,7 +300,7 @@
         <select bind:value={specId} class="st-select w-100" name="plan">
           <option value={null} />
           {#each planOptions as plan}
-            <option value={plan.specId} disabled={plan.specId === null}>
+            <option value={plan.specId} disabled={plan.specId === null || !hasPlanPermission(plan.id, mode, user)}>
               {plan.name} ({plan.id}) {#if plan.specId === null} (Missing Scheduling Specification) {/if}
             </option>
           {/each}
