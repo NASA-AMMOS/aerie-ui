@@ -54,7 +54,6 @@
   let selectedTags: Tag[] = [];
   let tagsWidth: number = 100;
 
-  $: console.log('editable :>> ', editable);
   $: selectedTags = [...selected]; // copy of selected prop for internal reference and temporary modification
   $: if (options && searchText !== null) {
     // Determine if searchText exactly matches any of the available options
