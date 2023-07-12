@@ -15,6 +15,7 @@
   import { isSaveEvent } from '../../utilities/keyboardEvents';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions, isUserAdmin } from '../../utilities/permissions';
+  import { diffTags } from '../../utilities/tags';
   import PageTitle from '../app/PageTitle.svelte';
   import AlertError from '../ui/AlertError.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
@@ -96,15 +97,9 @@
   function diffRule(ruleA: Partial<ExpansionRule>, ruleB: Partial<ExpansionRule>) {
     return Object.entries(ruleA).some(([key, value]) => {
       if (key === 'tags') {
-        return (
-          (ruleA.tags || [])
-            .map(({ tag }) => tag.id)
-            .sort()
-            .join() !==
-          (ruleB.tags || [])
-            .map(({ tag }) => tag.id)
-            .sort()
-            .join()
+        return diffTags(
+          (ruleA.tags || []).map(({ tag }) => tag),
+          (ruleB.tags || []).map(({ tag }) => tag),
         );
       } else {
         return ruleB[key as keyof ExpansionRule] !== value;
@@ -365,7 +360,7 @@
             ],
           ]}
           options={$tags}
-          editable={!hasPermission}
+          editable={hasPermission}
           selected={ruleTags || []}
           on:change={onTagsInputChange}
         />

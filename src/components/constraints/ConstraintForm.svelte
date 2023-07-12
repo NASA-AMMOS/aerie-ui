@@ -13,6 +13,7 @@
   import { isSaveEvent } from '../../utilities/keyboardEvents';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
+  import { diffTags } from '../../utilities/tags';
   import PageTitle from '../app/PageTitle.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
@@ -126,15 +127,10 @@
       constraintA.description !== constraintB.description ||
       constraintA.name !== constraintB.name ||
       constraintA.plan_id !== constraintB.plan_id ||
-      // TODO make this better?
-      (constraintA.tags || [])
-        .map(({ tag }) => tag.id)
-        .sort()
-        .join() !==
-        (constraintB.tags || [])
-          .map(({ tag }) => tag.id)
-          .sort()
-          .join()
+      diffTags(
+        (constraintA.tags || []).map(({ tag }) => tag),
+        (constraintB.tags || []).map(({ tag }) => tag),
+      )
     ) {
       return true;
     } else if (constraintA.plan_id === null && constraintB.plan_id === null) {
@@ -352,7 +348,7 @@
             ],
           ]}
           options={initialTags}
-          editable={!hasPermission}
+          editable={hasPermission}
           selected={constraintTags}
           on:change={onTagsInputChange}
         />
