@@ -172,7 +172,6 @@
   async function saveConstraint() {
     if (saveButtonEnabled) {
       if (mode === 'create') {
-        console.log('creating');
         const newConstraintId = await effects.createConstraint(
           constraintDefinition,
           constraintModelId,
