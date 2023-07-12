@@ -7,7 +7,7 @@
   import { expansionSets, expansionSetsColumns } from '../../stores/expansion';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef, DataGridRowSelection, RowId } from '../../types/data-grid';
-  import type { ExpansionRuleSimpleTags, ExpansionSet } from '../../types/expansion';
+  import type { ExpansionRuleSlim, ExpansionSet } from '../../types/expansion';
   import effects from '../../utilities/effects';
   import { featurePermissions } from '../../utilities/permissions';
   import CssGrid from '../ui/CssGrid.svelte';
@@ -25,8 +25,8 @@
     deleteSet: (sequence: ExpansionSet) => void;
   };
   type ExpansionSetCellRendererParams = ICellRendererParams<ExpansionSet> & CellRendererParams;
-  type ExpansionRuleCellRendererParams = ICellRendererParams<ExpansionRuleSimpleTags> & {
-    editRule: (expansionRule: ExpansionRuleSimpleTags) => void;
+  type ExpansionRuleCellRendererParams = ICellRendererParams<ExpansionRuleSlim> & {
+    editRule: (expansionRule: ExpansionRuleSlim) => void;
   };
 
   const baseExpansionSetColumnDefs: DataGridColumnDef[] = [
@@ -69,8 +69,8 @@
 
   let expansionSetColumnDefs = baseExpansionSetColumnDefs;
   let expansionRuleColumnDefs = baseExpansionRuleColumnDefs;
-  let redrawRows: ((params?: RedrawRowsParams<ExpansionRuleSimpleTags> | undefined) => void) | undefined = undefined;
-  let selectedExpansionRule: ExpansionRuleSimpleTags | null = null;
+  let redrawRows: ((params?: RedrawRowsParams<ExpansionRuleSlim> | undefined) => void) | undefined = undefined;
+  let selectedExpansionRule: ExpansionRuleSlim | null = null;
   let selectedExpansionRuleIds: number[] = [];
   let selectedExpansionSet: ExpansionSet | null = null;
 
@@ -164,7 +164,7 @@
     deleteSet({ id: event.detail[0] as number });
   }
 
-  function editRule({ id }: Pick<ExpansionRuleSimpleTags, 'id'>) {
+  function editRule({ id }: Pick<ExpansionRuleSlim, 'id'>) {
     goto(`${base}/expansion/rules/edit/${id}`);
   }
 
@@ -172,11 +172,11 @@
     return featurePermissions.expansionSets.canDelete(user, expansionSet);
   }
 
-  function hasEditExpansionRulePermission(user: User | null, expansionRule: ExpansionRuleSimpleTags) {
+  function hasEditExpansionRulePermission(user: User | null, expansionRule: ExpansionRuleSlim) {
     return featurePermissions.expansionRules.canUpdate(user, expansionRule);
   }
 
-  function toggleRule(event: CustomEvent<DataGridRowSelection<ExpansionRuleSimpleTags>>) {
+  function toggleRule(event: CustomEvent<DataGridRowSelection<ExpansionRuleSlim>>) {
     const {
       detail: { data: clickedRule, isSelected },
     } = event;

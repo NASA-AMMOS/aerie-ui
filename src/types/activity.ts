@@ -1,7 +1,7 @@
 import type { ActivityDeletionAction } from '../utilities/activities';
 import type { ActivityMetadata } from './activity-metadata';
 import type { UserId } from './app';
-import type { ExpansionRuleSimpleTags } from './expansion';
+import type { ExpansionRuleSlim } from './expansion';
 import type { ArgumentsMap, ParametersMap } from './parameter';
 import type { ValueSchema } from './schema';
 import type { Tag } from './tags';
@@ -19,7 +19,7 @@ export type ActivityType = {
 };
 
 export type ActivityTypeExpansionRules = {
-  expansion_rules: ExpansionRuleSimpleTags[];
+  expansion_rules: ExpansionRuleSlim[];
   name: ActivityType['name'];
 };
 

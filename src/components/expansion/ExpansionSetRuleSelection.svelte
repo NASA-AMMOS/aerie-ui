@@ -1,12 +1,12 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import type { ExpansionRuleSimpleTags } from '../../types/expansion';
+  import type { ExpansionRuleSlim } from '../../types/expansion';
 
   export let activityName: string;
-  export let expansionRules: ExpansionRuleSimpleTags[];
+  export let expansionRules: ExpansionRuleSlim[];
   export let selectedExpansionRules: Record<string, number> = {};
-  export let selectExpansionRule: (name: string, rule: ExpansionRuleSimpleTags) => void = undefined;
+  export let selectExpansionRule: (name: string, rule: ExpansionRuleSlim) => void = undefined;
 </script>
 
 {#each expansionRules as rule}
