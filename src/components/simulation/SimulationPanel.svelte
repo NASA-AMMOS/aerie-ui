@@ -45,6 +45,7 @@
   let endTimeDoy: string;
   let endTimeDoyField: FieldStore<string>;
   let formParameters: FormParameter[] = [];
+  let hasRunPermission: boolean = false;
   let hasUpdatePermission: boolean = false;
   let numOfUserChanges: number = 0;
   let startTimeDoy: string;
@@ -53,6 +54,7 @@
   let simulationDatasets: GqlSubscribable<SimulationDataset[]>;
 
   $: if (user !== null && $plan !== null) {
+    hasRunPermission = featurePermissions.simulation.canRun(user, $plan);
     hasUpdatePermission = featurePermissions.simulation.canUpdate(user, $plan);
   }
   $: if ($plan) {
@@ -253,6 +255,15 @@
           : ''}
         title="Simulate"
         showLabel
+        use={[
+          [
+            permissionHandler,
+            {
+              hasPermission: hasRunPermission,
+              permissionError: 'You do not have permission to run a simulation',
+            },
+          ],
+        ]}
         on:click={() => effects.simulate(user)}
       />
     </PanelHeaderActions>
