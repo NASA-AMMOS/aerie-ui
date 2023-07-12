@@ -89,6 +89,7 @@
       optionLabel="template"
       placeholder="None"
       selectedOptionValue={selectedSimulationTemplate?.id}
+      showPlaceholderOption={hasAssignPermission}
       on:deleteOption={onDeleteTemplate}
       on:saveNewOption={onSaveNewTemplate}
       on:saveOption={onSaveTemplate}
