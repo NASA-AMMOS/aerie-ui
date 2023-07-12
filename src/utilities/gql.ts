@@ -40,7 +40,7 @@ const gql = {
         tags {
           tag {
             color
-          	id
+            id
             name
           }
         }
@@ -570,7 +570,7 @@ const gql = {
         tags {
           tag {
             color
-          	id
+            id
             name
           }
         }
@@ -622,7 +622,7 @@ const gql = {
         tags {
           tag {
             color
-          	id
+            id
             name
           }
         }
@@ -783,7 +783,7 @@ const gql = {
         tags {
           tag {
             color
-          	id
+            id
             name
           }
         }
@@ -819,7 +819,7 @@ const gql = {
         tags {
           tag {
             color
-          	id
+            id
             name
           }
         }
@@ -1237,7 +1237,7 @@ const gql = {
         tags {
           tag {
             color
-          	id
+            id
             name
           }
         }
@@ -1325,7 +1325,7 @@ const gql = {
         tags {
           tag {
             color
-          	id
+            id
             name
           }
         }
@@ -1349,7 +1349,7 @@ const gql = {
         tags {
           tag {
             color
-          	id
+            id
             name
           }
         }
@@ -1544,7 +1544,7 @@ const gql = {
         tags {
           tag {
             color
-          	id
+            id
             name
           }
         }
@@ -1785,7 +1785,7 @@ const gql = {
         tags {
           tag {
             color
-          	id
+            id
             name
           }
         }
