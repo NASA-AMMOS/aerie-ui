@@ -9,6 +9,7 @@
   import type { User } from '../../../types/app';
   import type { DataGridColumnDef, RowId } from '../../../types/data-grid';
   import type { SchedulingGoal, SchedulingGoalSlim } from '../../../types/scheduling';
+  import type { Tag } from '../../../types/tags';
   import Input from '../../form/Input.svelte';
   import DataGridActions from '../../ui/DataGrid/DataGridActions.svelte';
   import { tagsCellRenderer } from '../../ui/DataGrid/DataGridTagsCellRenderer';
