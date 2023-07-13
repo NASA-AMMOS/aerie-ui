@@ -2,9 +2,11 @@
   import LockIcon from '@nasa-jpl/stellar/icons/lock.svg?component';
   import UnlockIcon from '@nasa-jpl/stellar/icons/unlock.svg?component';
   import { createEventDispatcher, onMount } from 'svelte';
+  import { permissionHandler } from '../../utilities/permissionHandler';
   import { TimelineLockStatus } from '../../utilities/timeline';
   import { tooltip } from '../../utilities/tooltip';
 
+  export let hasUpdatePermission: boolean = false;
   export let timelineLockStatus: TimelineLockStatus = TimelineLockStatus.Locked;
 
   const dispatch = createEventDispatcher();
@@ -23,10 +25,14 @@
     };
   });
 
-  function onKeydown(e: KeyboardEvent & { target: HTMLInputElement }) {
+  function onKeydown(e: KeyboardEvent) {
     // If user holds shift while not focused on an input then activate the temporary unlock.
     // If an input is focused, we assume they're holding shift to capitalize instead.
-    if (e.key === 'Shift' && e.target.tagName !== 'INPUT' && timelineLockStatus !== TimelineLockStatus.Unlocked) {
+    if (
+      e.key === 'Shift' &&
+      (e.target as HTMLElement).tagName !== 'INPUT' &&
+      timelineLockStatus !== TimelineLockStatus.Unlocked
+    ) {
       dispatch('temporaryUnlock', TimelineLockStatus.TemporaryUnlock);
     }
   }
@@ -49,7 +55,11 @@
 <button
   class={`st-button icon ${lockClassName}`}
   on:click={onClick}
-  use:tooltip={{ content: lockTooltipContent, disabled: tooltipDisabled, placement: 'bottom' }}
+  use:tooltip={{ content: lockTooltipContent, disabled: tooltipDisabled || !hasUpdatePermission, placement: 'bottom' }}
+  use:permissionHandler={{
+    hasPermission: hasUpdatePermission,
+    permissionError: 'You do not have permission to update this timeline',
+  }}
 >
   {#if timelineLockStatus === TimelineLockStatus.Locked}
     <LockIcon />
