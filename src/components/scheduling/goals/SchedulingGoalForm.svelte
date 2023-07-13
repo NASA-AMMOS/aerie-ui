@@ -111,13 +111,13 @@
       detail: { tag, type },
     } = event;
     if (type === 'remove') {
-      goalTags = (goalTags || []).filter(t => t.name !== tag.name);
+      goalTags = goalTags.filter(t => t.name !== tag.name);
     } else if (type === 'create' || type === 'select') {
       let tagsToAdd: Tag[] = [tag];
       if (type === 'create') {
         tagsToAdd = (await effects.createTags([{ color: tag.color, name: tag.name }], user)) || [];
       }
-      goalTags = (goalTags || []).concat(tagsToAdd);
+      goalTags = goalTags.concat(tagsToAdd);
     }
   }
 
@@ -144,7 +144,7 @@
           await effects.createSchedulingSpecGoal(specGoalInsertInput, user);
 
           // Associate new tags with expansion rule
-          const newSchedulingGoalRuleTags: SchedulingGoalTagsInsertInput[] = (goalTags || []).map(({ id: tag_id }) => ({
+          const newSchedulingGoalRuleTags: SchedulingGoalTagsInsertInput[] = goalTags.map(({ id: tag_id }) => ({
             goal_id: newGoalId,
             tag_id,
           }));
@@ -191,20 +191,18 @@
           }
 
           // Associate new tags with expansion rule
-          const newSchedulingGoalTags: SchedulingGoalTagsInsertInput[] = (goalTags || []).map(({ id: tag_id }) => ({
+          const newSchedulingGoalTags: SchedulingGoalTagsInsertInput[] = goalTags.map(({ id: tag_id }) => ({
             goal_id: goalId as number,
             tag_id,
           }));
           await effects.createSchedulingGoalTags(newSchedulingGoalTags, user);
 
           // Disassociate old tags from constraint
-          const unusedTags = initialGoalTags
-            .filter(tag => !(goalTags || []).find(t => tag.id === t.id))
-            .map(tag => tag.id);
+          const unusedTags = initialGoalTags.filter(tag => !goalTags.find(t => tag.id === t.id)).map(tag => tag.id);
           await effects.deleteSchedulingGoalTags(unusedTags, user);
 
           goalModifiedDate = updatedGoal.modified_date;
-          savedGoal = { ...goal, tags: (goalTags || []).map(tag => ({ tag })) };
+          savedGoal = { ...goal, tags: goalTags.map(tag => ({ tag })) };
         }
       }
     }
@@ -306,7 +304,7 @@
 
       <fieldset>
         <label for="tags">Tags</label>
-        <TagsInput options={$tags} editable selected={goalTags || []} on:change={onTagsInputChange} />
+        <TagsInput options={$tags} editable selected={goalTags} on:change={onTagsInputChange} />
       </fieldset>
     </svelte:fragment>
   </Panel>
