@@ -140,20 +140,17 @@
             goal_id: newGoalId,
             specification_id: specId,
           };
-          const newSpecId = await effects.createSchedulingSpecGoal(specGoalInsertInput, user);
-          console.log('newSpecId :>> ', newSpecId);
 
-          if (newSpecId !== null) {
-            // Associate new tags with expansion rule
-            const newSchedulingGoalRuleTags: SchedulingGoalTagsInsertInput[] = (goalTags || []).map(
-              ({ id: tag_id }) => ({
-                goal_id: newGoalId,
-                tag_id,
-              }),
-            );
-            await effects.createSchedulingGoalTags(newSchedulingGoalRuleTags, user);
-            goto(`${base}/scheduling/goals/edit/${newGoalId}`);
-          }
+          await effects.createSchedulingSpecGoal(specGoalInsertInput, user);
+
+          // Associate new tags with expansion rule
+          const newSchedulingGoalRuleTags: SchedulingGoalTagsInsertInput[] = (goalTags || []).map(({ id: tag_id }) => ({
+            goal_id: newGoalId,
+            tag_id,
+          }));
+          await effects.createSchedulingGoalTags(newSchedulingGoalRuleTags, user);
+
+          goto(`${base}/scheduling/goals/edit/${newGoalId}`);
         }
       } else if (mode === 'edit') {
         if (goalId === null) {
