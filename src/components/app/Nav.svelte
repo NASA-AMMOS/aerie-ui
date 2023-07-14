@@ -3,7 +3,7 @@
   import AppMenu from '../../components/menus/AppMenu.svelte';
   import type { User, UserRole } from '../../types/app';
   import { getTarget } from '../../utilities/generic';
-  import { changeUserRole } from '../../utilities/permissions';
+  import { changeUserRole, isAdminRole } from '../../utilities/permissions';
 
   export let user: User | null;
 
@@ -17,6 +17,13 @@
       await changeUserRole(value as string);
       await invalidateAll();
     }
+  }
+
+  function getRoleDisplayValue(userRole: UserRole) {
+    if (isAdminRole(userRole)) {
+      return 'admin';
+    }
+    return userRole;
   }
 </script>
 
@@ -34,7 +41,7 @@
     {#if userRoles.length > 1}
       <select value={user?.activeRole} class="st-select" on:change={changeRole}>
         {#each userRoles as userRole}
-          <option value={userRole}>{userRole}</option>
+          <option value={userRole}>{getRoleDisplayValue(userRole)}</option>
         {/each}
       </select>
     {/if}
