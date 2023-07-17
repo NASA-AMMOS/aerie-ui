@@ -344,6 +344,7 @@
     scheduleItemModelId={goalModelId}
     title="{mode === 'create' ? 'New' : 'Edit'} Scheduling Goal - Definition Editor"
     {user}
+    readOnly={!hasPermission}
     on:didChangeModelContent={onDidChangeModelContent}
   />
 </CssGrid>
