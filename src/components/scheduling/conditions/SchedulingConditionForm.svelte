@@ -10,6 +10,8 @@
   import type { SchedulingCondition, SchedulingSpecConditionInsertInput } from '../../../types/scheduling';
   import effects from '../../../utilities/effects';
   import { isSaveEvent } from '../../../utilities/keyboardEvents';
+  import { permissionHandler } from '../../../utilities/permissionHandler';
+  import { featurePermissions } from '../../../utilities/permissions';
   import CssGrid from '../../ui/CssGrid.svelte';
   import CssGridGutter from '../../ui/CssGridGutter.svelte';
   import Panel from '../../ui/Panel.svelte';
@@ -29,6 +31,8 @@
   export let models: ModelSlim[] = [];
   export let plans: PlanSchedulingSpec[] = [];
   export let user: User | null;
+
+  const permissionError = 'You do not have permission to edit this scheduling condition.';
 
   let conditionAuthor: string | null = initialConditionAuthor;
   let conditionCreatedDate: string | null = initialConditionCreatedDate;
@@ -57,6 +61,9 @@
     }));
   $: specId = planOptions.some(plan => plan.specId === specId) ? specId : null; // Null the specId value if the filtered plan list no longer includes the chosen spec
 
+  $: hasPermission = specId
+    ? hasPlanPermission(planOptions.find(plan => plan.specId === specId)?.id, mode, user)
+    : hasModelPermission(conditionModelId, mode, user);
   $: saveButtonEnabled =
     conditionDefinition !== '' && conditionModelId !== null && conditionName !== '' && specId !== null;
   $: conditionModified =
@@ -68,6 +75,22 @@
     }) || specId !== savedSpecId;
   $: saveButtonText = mode === 'edit' && !conditionModified ? 'Saved' : 'Save';
   $: saveButtonClass = conditionModified && saveButtonEnabled ? 'primary' : 'secondary';
+
+  function hasModelPermission(modelId: number, mode: 'create' | 'edit', user: User): boolean {
+    const plansFromModel = plans.filter(plan => plan.model_id === modelId);
+    return plansFromModel.some(plan => {
+      return (
+        (mode === 'create' && featurePermissions.schedulingConditions.canCreate(user, plan)) ||
+        featurePermissions.schedulingConditions.canUpdate(user, plan)
+      );
+    });
+  }
+  function hasPlanPermission(planId: number, mode: 'create' | 'edit', user: User): boolean {
+    const plan = plans.find(plan => plan.id === planId);
+    return mode === 'create'
+      ? featurePermissions.schedulingConditions.canCreate(user, plan)
+      : featurePermissions.schedulingConditions.canUpdate(user, plan);
+  }
 
   function diffConditions(conditionA: Partial<SchedulingCondition>, conditionB: Partial<SchedulingCondition>) {
     return Object.entries(conditionA).some(([key, value]) => {
@@ -148,6 +171,10 @@
           class="st-button {saveButtonClass} ellipsis"
           disabled={!saveButtonEnabled}
           on:click|stopPropagation={saveCondition}
+          use:permissionHandler={{
+            hasPermission,
+            permissionError,
+          }}
         >
           {saveButtonText}
         </button>
@@ -182,7 +209,7 @@
         <select bind:value={conditionModelId} class="st-select w-100" name="model">
           <option value={null} />
           {#each models as model}
-            <option value={model.id}>
+            <option value={model.id} disabled={!hasModelPermission(model.id, mode, user)}>
               {model.name} ({model.id})
             </option>
           {/each}
@@ -194,7 +221,7 @@
         <select bind:value={specId} class="st-select w-100" name="plan">
           <option value={null} />
           {#each planOptions as plan}
-            <option value={plan.specId} disabled={!plan.specId}>
+            <option value={plan.specId} disabled={plan.specId === null || !hasPlanPermission(plan.id, mode, user)}>
               {plan.name} ({plan.id}) {#if plan.specId === null} (Missing Scheduling Specification) {/if}
             </option>
           {/each}
@@ -233,6 +260,7 @@
     scheduleItemModelId={conditionModelId}
     title="{mode === 'create' ? 'New' : 'Edit'} Scheduling Condition - Definition Editor"
     {user}
+    readOnly={!hasPermission}
     on:didChangeModelContent={onDidChangeModelContent}
   />
 </CssGrid>
