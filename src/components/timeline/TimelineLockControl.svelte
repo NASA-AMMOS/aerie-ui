@@ -15,6 +15,10 @@
   $: tooltipDisabled = timelineLockStatus !== TimelineLockStatus.Locked;
   $: lockClassName = timelineLockStatus === TimelineLockStatus.TemporaryUnlock ? 'temporary-unlock' : '';
 
+  $: if (!hasUpdatePermission) {
+    dispatch('lock', TimelineLockStatus.Locked);
+  }
+
   onMount(() => {
     document.addEventListener('keydown', onKeydown);
     document.addEventListener('keyup', onKeyup);
