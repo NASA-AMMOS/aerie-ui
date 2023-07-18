@@ -386,7 +386,7 @@
   function placeActivityDirective(
     maxXPerY: Record<number, number>,
     directiveBounds: PointBounds,
-    initialSpanBounds: BoundingBox,
+    initialSpanBounds: BoundingBox | null,
     showDirectives: boolean = true,
   ) {
     // Place the elements where they will fit in packed waterfall
@@ -508,7 +508,7 @@
           }
         }
 
-        if (initialSpanBounds && (directiveInView || spanInView)) {
+        if (directiveInView || spanInView) {
           const {
             spanBounds,
             directiveStartY,
