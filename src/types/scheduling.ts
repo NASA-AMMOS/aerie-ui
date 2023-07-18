@@ -14,6 +14,9 @@ export type SchedulingGoal = {
   modified_date: string;
   name: string;
   revision: number;
+  scheduling_specification_goal: {
+    specification_id: number;
+  };
   tags: { tag: Tag }[];
 };
 
@@ -30,6 +33,9 @@ export type SchedulingCondition = {
   modified_date: string;
   name: string;
   revision: number;
+  scheduling_specification_conditions: {
+    specification_id: number;
+  }[];
 };
 
 export type SchedulingGoalAnalysis = {
