@@ -31,7 +31,8 @@
     if (
       e.key === 'Shift' &&
       (e.target as HTMLElement).tagName !== 'INPUT' &&
-      timelineLockStatus !== TimelineLockStatus.Unlocked
+      timelineLockStatus !== TimelineLockStatus.Unlocked &&
+      hasUpdatePermission
     ) {
       dispatch('temporaryUnlock', TimelineLockStatus.TemporaryUnlock);
     }
