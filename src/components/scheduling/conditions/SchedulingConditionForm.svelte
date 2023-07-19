@@ -63,7 +63,9 @@
 
   $: hasPermission = specId
     ? hasPlanPermission(planOptions.find(plan => plan.specId === specId)?.id, mode, user)
-    : hasModelPermission(conditionModelId, mode, user);
+    : conditionModelId
+    ? hasModelPermission(conditionModelId, mode, user)
+    : hasAnyPlanPermission(mode, user);
   $: saveButtonEnabled =
     conditionDefinition !== '' && conditionModelId !== null && conditionName !== '' && specId !== null;
   $: conditionModified =
@@ -85,7 +87,20 @@
       );
     });
   }
+
+  function hasAnyPlanPermission(mode: 'create' | 'edit', user: User): boolean {
+    return plans.some(plan => {
+      return mode === 'create'
+        ? featurePermissions.schedulingConditions.canCreate(user, plan)
+        : featurePermissions.schedulingConditions.canUpdate(user, plan);
+    });
+  }
+
   function hasPlanPermission(planId: number, mode: 'create' | 'edit', user: User): boolean {
+    if (!planId) {
+      return true;
+    }
+
     const plan = plans.find(plan => plan.id === planId);
     return mode === 'create'
       ? featurePermissions.schedulingConditions.canCreate(user, plan)
@@ -206,7 +221,15 @@
 
       <fieldset>
         <label for="model">Model</label>
-        <select bind:value={conditionModelId} class="st-select w-100" name="model">
+        <select
+          bind:value={conditionModelId}
+          class="st-select w-100"
+          name="model"
+          use:permissionHandler={{
+            hasPermission: hasAnyPlanPermission(mode, user),
+            permissionError,
+          }}
+        >
           <option value={null} />
           {#each models as model}
             <option value={model.id} disabled={!hasModelPermission(model.id, mode, user)}>
@@ -218,7 +241,15 @@
 
       <fieldset>
         <label for="plan">Plan</label>
-        <select bind:value={specId} class="st-select w-100" name="plan">
+        <select
+          bind:value={specId}
+          class="st-select w-100"
+          name="plan"
+          use:permissionHandler={{
+            hasPermission: hasAnyPlanPermission(mode, user),
+            permissionError,
+          }}
+        >
           <option value={null} />
           {#each planOptions as plan}
             <option value={plan.specId} disabled={plan.specId === null || !hasPlanPermission(plan.id, mode, user)}>
@@ -237,6 +268,10 @@
           name="condition-name"
           placeholder="Enter Condition Name (required)"
           required
+          use:permissionHandler={{
+            hasPermission,
+            permissionError,
+          }}
         />
       </fieldset>
 
@@ -248,6 +283,10 @@
           class="st-input w-100"
           name="condition-description"
           placeholder="Enter Condition Description (optional)"
+          use:permissionHandler={{
+            hasPermission,
+            permissionError,
+          }}
         />
       </fieldset>
     </svelte:fragment>

@@ -81,7 +81,9 @@
     }) || specId !== savedSpecId;
   $: hasPermission = specId
     ? hasPlanPermission(planOptions.find(plan => plan.specId === specId)?.id, mode, user)
-    : hasModelPermission(goalModelId, mode, user);
+    : goalModelId
+    ? hasModelPermission(goalModelId, mode, user)
+    : hasAnyPlanPermission(mode, user);
   $: saveButtonText = mode === 'edit' && !goalModified ? 'Saved' : 'Save';
   $: saveButtonClass = goalModified && saveButtonEnabled ? 'primary' : 'secondary';
   $: pageTitle = mode === 'edit' ? 'Scheduling Goals' : 'New Scheduling Goal';
@@ -94,6 +96,14 @@
         (mode === 'create' && featurePermissions.schedulingGoals.canCreate(user, plan)) ||
         featurePermissions.schedulingGoals.canUpdate(user, plan)
       );
+    });
+  }
+
+  function hasAnyPlanPermission(mode: 'create' | 'edit', user: User): boolean {
+    return plans.some(plan => {
+      return mode === 'create'
+        ? featurePermissions.schedulingGoals.canCreate(user, plan)
+        : featurePermissions.schedulingGoals.canUpdate(user, plan);
     });
   }
 
@@ -285,7 +295,15 @@
 
       <fieldset>
         <label for="model">Model</label>
-        <select bind:value={goalModelId} class="st-select w-100" name="model">
+        <select
+          bind:value={goalModelId}
+          class="st-select w-100"
+          name="model"
+          use:permissionHandler={{
+            hasPermission: hasAnyPlanPermission(mode, user),
+            permissionError,
+          }}
+        >
           <option value={null} />
           {#each models as model}
             <option value={model.id} disabled={!hasModelPermission(model.id, mode, user)}>
@@ -297,7 +315,15 @@
 
       <fieldset>
         <label for="plan">Plan</label>
-        <select bind:value={specId} class="st-select w-100" name="plan">
+        <select
+          bind:value={specId}
+          class="st-select w-100"
+          name="plan"
+          use:permissionHandler={{
+            hasPermission: hasAnyPlanPermission(mode, user),
+            permissionError,
+          }}
+        >
           <option value={null} />
           {#each planOptions as plan}
             <option value={plan.specId} disabled={plan.specId === null || !hasPlanPermission(plan.id, mode, user)}>
@@ -316,6 +342,10 @@
           name="goal-name"
           placeholder="Enter Goal Name (required)"
           required
+          use:permissionHandler={{
+            hasPermission,
+            permissionError,
+          }}
         />
       </fieldset>
 
@@ -327,12 +357,30 @@
           class="st-input w-100"
           name="goal-description"
           placeholder="Enter Goal Description (optional)"
+          use:permissionHandler={{
+            hasPermission,
+            permissionError,
+          }}
         />
       </fieldset>
 
       <fieldset>
         <label for="tags">Tags</label>
-        <TagsInput options={$tags} editable selected={goalTags} on:change={onTagsInputChange} />
+        <TagsInput
+          options={$tags}
+          editable
+          selected={goalTags}
+          on:change={onTagsInputChange}
+          use={[
+            [
+              permissionHandler,
+              {
+                hasPermission,
+                permissionError,
+              },
+            ],
+          ]}
+        />
       </fieldset>
     </svelte:fragment>
   </Panel>

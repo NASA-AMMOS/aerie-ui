@@ -11,6 +11,7 @@
   import type { PlanSchedulingSpec } from '../../../types/plan';
   import type { SchedulingGoal, SchedulingGoalSlim } from '../../../types/scheduling';
   import type { Tag } from '../../../types/tags';
+  import { permissionHandler } from '../../../utilities/permissionHandler';
   import { featurePermissions } from '../../../utilities/permissions';
   import Input from '../../form/Input.svelte';
   import DataGridActions from '../../ui/DataGrid/DataGridActions.svelte';
@@ -162,6 +163,10 @@
     const plan = plans.find(plan => plan.scheduling_specifications[0]?.id === specification_id);
     return featurePermissions.schedulingGoals.canUpdate(user, plan);
   }
+
+  function hasCreatePermission(user: User): boolean {
+    return plans.some(plan => featurePermissions.schedulingGoals.canCreate(user, plan));
+  }
 </script>
 
 <Panel>
@@ -173,7 +178,16 @@
     </Input>
 
     <div class="right">
-      <button class="st-button secondary ellipsis" on:click={() => goto(`${base}/scheduling/goals/new`)}> New </button>
+      <button
+        class="st-button secondary ellipsis"
+        on:click={() => goto(`${base}/scheduling/goals/new`)}
+        use:permissionHandler={{
+          hasPermission: hasCreatePermission(user),
+          permissionError: 'You do not have permission to create Scheduling Goals',
+        }}
+      >
+        New
+      </button>
     </div>
   </svelte:fragment>
 
