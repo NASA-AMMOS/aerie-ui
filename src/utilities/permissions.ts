@@ -2,6 +2,8 @@ import { base } from '$app/paths';
 import type { ActivityDirective, ActivityPreset } from '../types/activity';
 import type { User, UserId, UserRole } from '../types/app';
 import type { ReqAuthResponse } from '../types/auth';
+import type { Constraint } from '../types/constraint';
+import type { ExpansionSequence, ExpansionSet } from '../types/expansion';
 import type {
   AssetWithOwner,
   CreatePermissionCheck,
@@ -13,7 +15,8 @@ import type {
   ReadPermissionCheck,
   UpdatePermissionCheck,
 } from '../types/permissions';
-import type { SimulationTemplate } from '../types/simulation';
+import type { UserSequence } from '../types/sequencing';
+import type { Simulation, SimulationTemplate } from '../types/simulation';
 import { showFailureToast } from './toast';
 
 export const ADMIN_ROLE = 'aerie_admin';
@@ -47,7 +50,7 @@ export function isUserOwner(user: User | null, thingWithOwner?: { owner: UserId 
   return false;
 }
 
-export function isPlanOwner(user: User | null, plan: AssetWithOwner): boolean {
+export function isPlanOwner(user: User | null, plan: AssetWithOwner<PlanWithOwners>): boolean {
   return isUserOwner(user, plan);
 }
 
@@ -399,17 +402,17 @@ interface FeaturePermissions {
   activityDirective: PlanAssetCRUDPermission<ActivityDirective>;
   activityPresets: AssignablePlanAssetCRUDPermission<ActivityPreset>;
   commandDictionary: CRUDPermission<void>;
-  constraints: ConstraintCRUDPermission<AssetWithOwner>;
+  constraints: ConstraintCRUDPermission<AssetWithOwner<Constraint>>;
   expansionRules: CRUDPermission<AssetWithOwner>;
-  expansionSequences: ExpansionSequenceCRUDPermission<AssetWithOwner>;
-  expansionSets: ExpansionSetsCRUDPermission<AssetWithOwner>;
+  expansionSequences: ExpansionSequenceCRUDPermission<AssetWithOwner<ExpansionSequence>>;
+  expansionSets: ExpansionSetsCRUDPermission<AssetWithOwner<ExpansionSet>>;
   model: CRUDPermission<void>;
   plan: CRUDPermission<PlanWithOwners>;
-  planBranch: PlanBranchCRUDPermission<AssetWithOwner>;
+  planBranch: PlanBranchCRUDPermission<AssetWithOwner<PlanWithOwners>>;
   schedulingConditions: PlanAssetCRUDPermission<AssetWithOwner>;
   schedulingGoals: SchedulingCRUDPermission<AssetWithOwner>;
-  sequences: CRUDPermission<AssetWithOwner>;
-  simulation: SimulationCRUDPermission<AssetWithOwner>;
+  sequences: CRUDPermission<AssetWithOwner<UserSequence>>;
+  simulation: SimulationCRUDPermission<AssetWithOwner<Simulation>>;
   simulationTemplates: AssignablePlanAssetCRUDPermission<SimulationTemplate>;
 }
 
