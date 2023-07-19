@@ -47,7 +47,7 @@ export function isUserOwner(user: User | null, thingWithOwner?: { owner: UserId 
   return false;
 }
 
-export function isPlanOwner(user: User | null, plan: PlanWithOwners): boolean {
+export function isPlanOwner(user: User | null, plan: AssetWithOwner): boolean {
   return isUserOwner(user, plan);
 }
 
@@ -355,6 +355,13 @@ interface CRUDPermission<T = null> extends BaseCRUDPermission<T> {
   canUpdate: UpdatePermissionCheck<T>;
 }
 
+interface PlanBranchCRUDPermission<T = null> {
+  canCreateBranch: CreatePermissionCheck;
+  canCreateRequest: UpdatePermissionCheck<T>;
+  canDeleteRequest: UpdatePermissionCheck<T>;
+  canReviewRequest: UpdatePermissionCheck<T>;
+}
+
 interface PlanAssetCRUDPermission<T = null> {
   canCreate: PlanAssetCreatePermissionCheck;
   canDelete: PlanAssetUpdatePermissionCheck<T>;
@@ -398,6 +405,7 @@ interface FeaturePermissions {
   expansionSets: ExpansionSetsCRUDPermission<AssetWithOwner>;
   model: CRUDPermission<void>;
   plan: CRUDPermission<PlanWithOwners>;
+  planBranch: PlanBranchCRUDPermission<AssetWithOwner>;
   schedulingConditions: PlanAssetCRUDPermission<AssetWithOwner>;
   schedulingGoals: SchedulingCRUDPermission<AssetWithOwner>;
   sequences: CRUDPermission<AssetWithOwner>;
@@ -486,6 +494,22 @@ const featurePermissions: FeaturePermissions = {
     canDelete: (user, plan) => isUserAdmin(user) || (isPlanOwner(user, plan) && queryPermissions.DELETE_PLAN(user)),
     canRead: user => isUserAdmin(user) || queryPermissions.GET_PLAN(user),
     canUpdate: (user, plan) => isUserAdmin(user) || (isPlanOwner(user, plan) && queryPermissions.UPDATE_PLAN(user)),
+  },
+  planBranch: {
+    canCreateBranch: user => isUserAdmin(user) || queryPermissions.DUPLICATE_PLAN(user),
+    canCreateRequest: (user, sourcePlan) =>
+      isUserAdmin(user) || (isPlanOwner(user, sourcePlan) && queryPermissions.CREATE_PLAN_MERGE_REQUEST(user)),
+    canDeleteRequest: (user, sourcePlan) =>
+      isUserAdmin(user) || (isPlanOwner(user, sourcePlan) && queryPermissions.PLAN_MERGE_REQUEST_WITHDRAW(user)),
+    canReviewRequest: (user, targetPlan) =>
+      isUserAdmin(user) ||
+      (isPlanOwner(user, targetPlan) &&
+        queryPermissions.PLAN_MERGE_BEGIN(user) &&
+        queryPermissions.PLAN_MERGE_CANCEL(user) &&
+        queryPermissions.PLAN_MERGE_COMMIT(user) &&
+        queryPermissions.PLAN_MERGE_DENY(user) &&
+        queryPermissions.PLAN_MERGE_RESOLVE_CONFLICT(user) &&
+        queryPermissions.PLAN_MERGE_RESOLVE_ALL_CONFLICTS(user)),
   },
   schedulingConditions: {
     canCreate: (user, plan) =>

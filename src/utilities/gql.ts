@@ -1492,6 +1492,7 @@ const gql = {
         plan_receiving_changes {
           id
           name
+          owner
         }
         plan_snapshot_supplying_changes {
           name
@@ -1511,6 +1512,7 @@ const gql = {
         plan_receiving_changes {
           id
           name
+          owner
         }
         plan_snapshot_supplying_changes {
           name
@@ -1529,6 +1531,7 @@ const gql = {
         plan_receiving_changes {
           id
           name
+          owner
         }
         plan_snapshot_supplying_changes {
           name

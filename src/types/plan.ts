@@ -56,6 +56,7 @@ export type PlanMergeRequestSchema = {
   plan_receiving_changes: {
     id: number;
     name: string;
+    owner: UserId;
   };
   plan_snapshot_supplying_changes: {
     duration: string;
