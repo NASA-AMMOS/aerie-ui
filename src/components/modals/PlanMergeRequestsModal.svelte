@@ -105,7 +105,10 @@
 
   function hasPermission(planMergeRequest: PlanMergeRequest) {
     if (planMergeRequest.type === 'outgoing') {
-      return featurePermissions.planBranch.canDeleteRequest(user, { owner: planMergeRequest.requester_username });
+      return featurePermissions.planBranch.canDeleteRequest(
+        user,
+        planMergeRequest.plan_snapshot_supplying_changes.plan,
+      );
     }
     return featurePermissions.planBranch.canReviewRequest(user, planMergeRequest.plan_receiving_changes);
   }

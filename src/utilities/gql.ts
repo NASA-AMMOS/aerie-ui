@@ -1497,6 +1497,9 @@ const gql = {
         plan_snapshot_supplying_changes {
           name
           snapshot_id
+          plan {
+            owner
+          }
         }
         requester_username
         reviewer_username
@@ -1517,6 +1520,9 @@ const gql = {
         plan_snapshot_supplying_changes {
           name
           snapshot_id
+          plan {
+            owner
+          }
         }
         requester_username
         status
@@ -1536,6 +1542,9 @@ const gql = {
         plan_snapshot_supplying_changes {
           name
           duration
+          plan {
+            owner
+          }
           plan_id
           snapshot_id
           start_time
