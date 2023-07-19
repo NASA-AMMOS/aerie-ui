@@ -11,7 +11,7 @@
   import effects from '../../../utilities/effects';
   import { isSaveEvent } from '../../../utilities/keyboardEvents';
   import { permissionHandler } from '../../../utilities/permissionHandler';
-  import { featurePermissions } from '../../../utilities/permissions';
+  import { featurePermissions, isUserAdmin } from '../../../utilities/permissions';
   import CssGrid from '../../ui/CssGrid.svelte';
   import CssGridGutter from '../../ui/CssGridGutter.svelte';
   import Panel from '../../ui/Panel.svelte';
@@ -42,6 +42,7 @@
   let conditionModelId: number | null = initialConditionModelId;
   let conditionModifiedDate: string | null = initialConditionModifiedDate;
   let conditionName: string = initialConditionName;
+  let hasAuthoringPermission: boolean = false;
   let saveButtonEnabled: boolean = false;
   let specId: number | null = initialSpecId;
   let savedSpecId: number | null = initialSpecId;
@@ -61,6 +62,7 @@
     }));
   $: specId = planOptions.some(plan => plan.specId === specId) ? specId : null; // Null the specId value if the filtered plan list no longer includes the chosen spec
 
+  $: hasAuthoringPermission = mode === 'edit' ? isUserAdmin(user) : true;
   $: hasPermission = specId
     ? hasPlanPermission(planOptions.find(plan => plan.specId === specId)?.id, mode, user)
     : conditionModelId
@@ -153,7 +155,7 @@
         const condition: Partial<SchedulingCondition> = {
           definition: conditionDefinition,
           description: conditionDescription,
-          model_id: conditionModelId,
+          ...(hasAuthoringPermission && conditionModelId !== null ? { model_id: conditionModelId } : {}),
           name: conditionName,
         };
         const updatedCondition = await effects.updateSchedulingCondition(conditionId, condition, user);
@@ -226,7 +228,7 @@
           class="st-select w-100"
           name="model"
           use:permissionHandler={{
-            hasPermission: hasAnyPlanPermission(mode, user),
+            hasPermission: hasAnyPlanPermission(mode, user) && hasAuthoringPermission,
             permissionError,
           }}
         >

@@ -14,7 +14,7 @@
   import { isSaveEvent } from '../../../utilities/keyboardEvents';
   import { showConfirmModal } from '../../../utilities/modal';
   import { permissionHandler } from '../../../utilities/permissionHandler';
-  import { featurePermissions } from '../../../utilities/permissions';
+  import { featurePermissions, isUserAdmin } from '../../../utilities/permissions';
   import { diffTags } from '../../../utilities/tags';
   import PageTitle from '../../app/PageTitle.svelte';
   import CssGrid from '../../ui/CssGrid.svelte';
@@ -50,6 +50,7 @@
   let goalModifiedDate: string | null = initialGoalModifiedDate;
   let goalName: string = initialGoalName;
   let goalTags: Tag[] = initialGoalTags;
+  let hasAuthoringPermission: boolean = false;
   let saveButtonEnabled: boolean = false;
   let specId: number | null = initialSpecId;
   let savedSpecId: number | null = initialSpecId;
@@ -84,6 +85,7 @@
     : goalModelId
     ? hasModelPermission(goalModelId, mode, user)
     : hasAnyPlanPermission(mode, user);
+  $: hasAuthoringPermission = mode === 'edit' ? isUserAdmin(user) : true;
   $: saveButtonText = mode === 'edit' && !goalModified ? 'Saved' : 'Save';
   $: saveButtonClass = goalModified && saveButtonEnabled ? 'primary' : 'secondary';
   $: pageTitle = mode === 'edit' ? 'Scheduling Goals' : 'New Scheduling Goal';
@@ -206,7 +208,7 @@
         const goal: Partial<SchedulingGoal> = {
           definition: goalDefinition,
           description: goalDescription,
-          model_id: goalModelId,
+          ...(hasAuthoringPermission && goalModelId !== null ? { model_id: goalModelId } : {}),
           name: goalName,
         };
         const updatedGoal = await effects.updateSchedulingGoal(goalId, goal, user);
@@ -224,7 +226,7 @@
             }
           }
 
-          // Associate new tags with expansion rule
+          // Associate new tags with scheduling goal
           const newSchedulingGoalTags: SchedulingGoalTagsInsertInput[] = goalTags.map(({ id: tag_id }) => ({
             goal_id: goalId as number,
             tag_id,
@@ -300,7 +302,7 @@
           class="st-select w-100"
           name="model"
           use:permissionHandler={{
-            hasPermission: hasAnyPlanPermission(mode, user),
+            hasPermission: hasAnyPlanPermission(mode, user) && hasAuthoringPermission,
             permissionError,
           }}
         >
