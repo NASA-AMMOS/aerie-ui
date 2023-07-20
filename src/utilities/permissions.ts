@@ -15,6 +15,7 @@ import type {
   ReadPermissionCheck,
   UpdatePermissionCheck,
 } from '../types/permissions';
+import type { SchedulingCondition, SchedulingGoal } from '../types/scheduling';
 import type { UserSequence } from '../types/sequencing';
 import type { Simulation, SimulationTemplate } from '../types/simulation';
 import { showFailureToast } from './toast';
@@ -409,8 +410,8 @@ interface FeaturePermissions {
   model: CRUDPermission<void>;
   plan: CRUDPermission<PlanWithOwners>;
   planBranch: PlanBranchCRUDPermission<AssetWithOwner<PlanWithOwners>>;
-  schedulingConditions: PlanAssetCRUDPermission<AssetWithOwner>;
-  schedulingGoals: SchedulingCRUDPermission<AssetWithOwner>;
+  schedulingConditions: PlanAssetCRUDPermission<AssetWithOwner<SchedulingCondition>>;
+  schedulingGoals: SchedulingCRUDPermission<AssetWithOwner<SchedulingGoal>>;
   sequences: CRUDPermission<AssetWithOwner<UserSequence>>;
   simulation: SimulationCRUDPermission<AssetWithOwner<Simulation>>;
   simulationTemplates: AssignablePlanAssetCRUDPermission<SimulationTemplate>;
