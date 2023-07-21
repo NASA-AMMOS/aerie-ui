@@ -93,7 +93,7 @@
   let hasCreateViewPermission: boolean = false;
   let hasUpdateViewPermission: boolean = false;
   let hasExpandPermission: boolean = false;
-  let hasSchedulePermission: boolean = false;
+  let hasScheduleAnalysisPermission: boolean = false;
   let hasSimulatePermission: boolean = false;
   let hasCheckConstraintsPermission: boolean = false;
   let planHasBeenLocked = false;
@@ -105,7 +105,7 @@
   $: if ($plan) {
     hasCheckConstraintsPermission = featurePermissions.constraints.canCheck(data.user, $plan);
     hasExpandPermission = featurePermissions.expansionSequences.canExpand(data.user, $plan);
-    hasSchedulePermission = featurePermissions.schedulingGoals.canRun(data.user, $plan);
+    hasScheduleAnalysisPermission = featurePermissions.schedulingGoals.canAnalyze(data.user);
     hasSimulatePermission = featurePermissions.simulation.canRun(data.user, $plan);
   }
   $: if (data.initialPlan) {
@@ -344,7 +344,7 @@
         menuTitle="Scheduling Analysis Status"
         buttonText="Analyze Goal Satisfaction"
         disabled={!$enableScheduling}
-        hasPermission={hasSchedulePermission}
+        hasPermission={hasScheduleAnalysisPermission}
         permissionError="You do not have permission to run a scheduling analysis"
         status={schedulingAnalysisStatus}
         statusText={schedulingAnalysisStatus === Status.PartialSuccess || schedulingAnalysisStatus === Status.Complete
