@@ -421,7 +421,7 @@
                 ],
               ]}
               options={$tags}
-              editable={!canCreate}
+              editable={canCreate}
               selected={planTags}
               on:change={onTagsInputChange}
             />
