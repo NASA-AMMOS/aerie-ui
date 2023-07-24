@@ -376,6 +376,7 @@
         <label for="tags">Tags</label>
         <TagsInput
           options={$tags}
+          selected={goalTags}
           on:change={onTagsInputChange}
           use={[
             [
