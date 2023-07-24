@@ -420,7 +420,6 @@
                   },
                 ],
               ]}
-              disabled={!canCreate}
               options={$tags}
               selected={planTags}
               on:change={onTagsInputChange}
