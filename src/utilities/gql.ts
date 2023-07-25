@@ -1756,6 +1756,9 @@ const gql = {
         simulation_revision
         simulation_start_time
         status
+        extent {
+          extent
+        }
       }
     }
   `,
@@ -1769,6 +1772,10 @@ const gql = {
           requested_by
           simulation_end_time
           simulation_start_time
+          status
+          extent {
+            extent
+          }
         }
       }
     }

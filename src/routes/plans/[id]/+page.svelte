@@ -324,6 +324,9 @@
         <PlayIcon />
         <svelte:fragment slot="metadata">
           <div>Simulation Dataset ID: {$simulationDatasetId}</div>
+          <div>
+            Simulation Extent: {$simulationStatus === Status.Incomplete ? $simulationDataset?.extent : 'Finished'}
+          </div>
         </svelte:fragment>
       </PlanNavButton>
       <PlanNavButton

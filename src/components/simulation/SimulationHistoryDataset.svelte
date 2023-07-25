@@ -4,9 +4,14 @@
   import PinPauseIcon from '@nasa-jpl/stellar/icons/pin_pause.svg?component';
   import PinPlayIcon from '@nasa-jpl/stellar/icons/pin_play.svg?component';
   import { createEventDispatcher } from 'svelte';
+  import { cubicOut } from 'svelte/easing';
+  import { tweened } from 'svelte/motion';
+  import { slide } from 'svelte/transition';
   import type { SimulationDataset } from '../../types/simulation';
-  import { getDoyTime, getTimeAgo } from '../../utilities/time';
+  import { Status } from '../../utilities/status';
+  import { getDoyTime, getTimeAgo, getUnixEpochTimeFromInterval } from '../../utilities/time';
   import Input from '../form/Input.svelte';
+  import StatusBadge from '../ui/StatusBadge.svelte';
 
   export let checked: boolean = false;
   export let simulationDataset: SimulationDataset;
@@ -16,18 +21,26 @@
   const dispatch = createEventDispatcher();
   const planDuration = planEndTimeMs - planStartTimeMs;
 
-  let timeVizRangeLeft = 0;
-  let timeVizRangeWidth = 0;
+  let simulationBoundsVizRangeLeft = 0;
+  let simulationBoundsVizRangeWidth = 0;
+  let simulationExtentVizRangeWidth = 0;
   let startTimeText = '';
   let endTimeText = '';
 
-  $: timeVizRangeWidthStyle = timeVizRangeWidth < 1 ? '4px' : `${timeVizRangeWidth}%`;
+  const progress = tweened(0, { easing: cubicOut });
+
+  $: simulationBoundsVizRangeWidthStyle =
+    simulationBoundsVizRangeWidth < 1 ? '4px' : `${simulationBoundsVizRangeWidth}%`;
+  $: simulationExtentVizRangeWidthStyle =
+    simulationExtentVizRangeWidth < 1
+      ? '4px'
+      : `${(simulationExtentVizRangeWidth / simulationBoundsVizRangeWidth) * 100}%`;
 
   $: {
     // Compute time range left and width
     if (simulationDataset.simulation_start_time) {
       const simulationStartTimeMS = new Date(simulationDataset.simulation_start_time).getTime();
-      timeVizRangeLeft = ((simulationStartTimeMS - planStartTimeMs) / planDuration) * 100 || 0;
+      simulationBoundsVizRangeLeft = ((simulationStartTimeMS - planStartTimeMs) / planDuration) * 100 || 0;
 
       if (simulationStartTimeMS === planStartTimeMs) {
         startTimeText = 'Plan Start';
@@ -37,8 +50,21 @@
 
       if (simulationDataset.simulation_end_time) {
         const simulationEndTimeMS = new Date(simulationDataset.simulation_end_time).getTime();
-        timeVizRangeWidth = ((simulationEndTimeMS - simulationStartTimeMS) / planDuration) * 100 || 0;
+        simulationBoundsVizRangeWidth = ((simulationEndTimeMS - simulationStartTimeMS) / planDuration) * 100 || 0;
 
+        let simulationExtentMS = 0;
+        if (
+          (simulationDataset.status === 'incomplete' || simulationDataset.status === 'failed') &&
+          simulationDataset.extent
+        ) {
+          simulationExtentMS =
+            getUnixEpochTimeFromInterval(simulationDataset.simulation_start_time, simulationDataset.extent) -
+            simulationStartTimeMS;
+        } else if (simulationDataset.status === 'success') {
+          simulationExtentMS = simulationEndTimeMS - simulationStartTimeMS;
+        }
+        progress.set((simulationExtentMS / planDuration) * 100 || 0, { duration: 400 });
+        simulationExtentVizRangeWidth = $progress;
         if (simulationEndTimeMS === planEndTimeMs) {
           endTimeText = 'Plan End';
         } else {
@@ -51,9 +77,26 @@
   function onCheckboxClick(e: Event) {
     (e.target as HTMLInputElement).checked = checked;
   }
+
+  function toSimulationStatus(status: 'success' | 'failed' | 'incomplete' | 'pending') {
+    if (status === 'success') {
+      return Status.Complete;
+    } else if (status === 'failed') {
+      return Status.Failed;
+    } else if (status === 'incomplete') {
+      return Status.Incomplete;
+    } else if (status === 'pending') {
+      return Status.Pending;
+    }
+  }
 </script>
 
-<button class="simulation-dataset st-typography-label" class:active={checked} on:click={() => dispatch('click')}>
+<button
+  transition:slide|global
+  class="simulation-dataset st-typography-label"
+  class:active={checked}
+  on:click={() => dispatch('click')}
+>
   <div class="simulation-dataset-top-row">
     <div class="simulation-dataset-input-container">
       <Input class="simulation-dataset-input">
@@ -62,6 +105,7 @@
       ID: {simulationDataset.id}
     </div>
     <div class="simulation-dataset-metadata">
+      <StatusBadge status={toSimulationStatus(simulationDataset.status)} />
       <div class="simulation-dataset-metadata-time-ago">
         {getTimeAgo(new Date(simulationDataset.requested_at))}
       </div>
@@ -76,12 +120,14 @@
     <div class="simulation-range-label end">{endTimeText}<PinPauseIcon /></div>
   </div>
 
-  <div class="simulation-range-visualiztion">
+  <div class="simulation-range-visualization">
     <div class="simulation-range-background">
       <div
-        class="simulation-range-fill"
-        style={`margin-left: ${timeVizRangeLeft}%; width: ${timeVizRangeWidthStyle}`}
-      />
+        class="simulation-range-bounds"
+        style={`margin-left: ${simulationBoundsVizRangeLeft}%; width: ${simulationBoundsVizRangeWidthStyle}`}
+      >
+        <div class="simulation-extent-fill" style={`margin-left: 0%; width: ${simulationExtentVizRangeWidthStyle}`} />
+      </div>
     </div>
   </div>
 </button>
@@ -243,7 +289,7 @@
     opacity: 0.3;
   }
 
-  .simulation-range-visualiztion {
+  .simulation-range-visualization {
     width: 100%;
   }
 
@@ -256,7 +302,17 @@
     padding: 1px;
   }
 
-  .simulation-range-fill {
+  .simulation-range-bounds {
+    align-items: center;
+    border-left: solid var(--st-gray-90);
+    border-radius: 4px;
+    border-right: solid var(--st-gray-90);
+    display: flex;
+    height: 4px;
+    padding: 1px;
+  }
+
+  .simulation-extent-fill {
     background: var(--st-gray-90);
     border-radius: 2px;
     height: 2px;

@@ -105,7 +105,13 @@
       { planId: $plan.id },
       null,
       user,
-      v => v[0]?.simulation_datasets,
+      v =>
+        v[0]?.simulation_datasets.map(
+          ({ extent, ...etc }: SimulationDataset & { extent: { extent: string } | null }) => ({
+            ...etc,
+            extent: extent?.extent,
+          }),
+        ),
     );
   }
 
@@ -359,7 +365,7 @@
           {#if !$simulationDatasets || !$simulationDatasets.length}
             <div>No Simulation Datasets</div>
           {:else}
-            {#each $simulationDatasets as simDataset}
+            {#each $simulationDatasets as simDataset (simDataset.id)}
               <SimulationHistoryDataset
                 simulationDataset={simDataset}
                 planEndTimeMs={$planEndTimeMs}
