@@ -929,7 +929,7 @@ const effects = {
     }
   },
 
-  async createTags(tags: TagsInsertInput[], user: User | null): Promise<Tag[] | null> {
+  async createTags(tags: TagsInsertInput[], user: User | null, notify: boolean = true): Promise<Tag[] | null> {
     try {
       if (!queryPermissions.CREATE_TAGS(user)) {
         throwPermissionError('create tags');
@@ -938,6 +938,9 @@ const effects = {
       const data = await reqHasura<{ affected_rows: number; returning: Tag[] }>(gql.CREATE_TAGS, { tags }, user);
       const { insert_tags } = data;
       const { returning } = insert_tags;
+      if (notify) {
+        showSuccessToast('Plan Updated Successfully');
+      }
       return returning;
     } catch (e) {
       catchError('Create Tags Failed', e as Error);
@@ -2232,6 +2235,18 @@ const effects = {
       const data = await reqHasura<Span[]>(gql.GET_SPANS, { datasetId }, user);
       const { span: spans } = data;
       return spans;
+    } catch (e) {
+      catchError(e as Error);
+      return [];
+    }
+  },
+
+  async getTags(user: User | null): Promise<Tag[]> {
+    try {
+      const query = convertToQuery(gql.SUB_TAGS);
+      const data = await reqHasura<Tag[]>(query, {}, user);
+      const { tags } = data;
+      return tags;
     } catch (e) {
       catchError(e as Error);
       return [];
