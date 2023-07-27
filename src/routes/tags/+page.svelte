@@ -1,9 +1,10 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import PlanIcon from '@nasa-jpl/stellar/icons/plan.svg?component';
   import RefreshIcon from '@nasa-jpl/stellar/icons/refresh.svg?component';
+  import TagsIcon from '@nasa-jpl/stellar/icons/tag.svg?component';
   import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
+  import { onMount } from 'svelte';
   import Nav from '../../components/app/Nav.svelte';
   import PageTitle from '../../components/app/PageTitle.svelte';
   import ColorPresetsPicker from '../../components/form/ColorPresetsPicker.svelte';
@@ -17,7 +18,7 @@
   import SectionTitle from '../../components/ui/SectionTitle.svelte';
   import TagChip from '../../components/ui/Tags/Tag.svelte';
   import { field } from '../../stores/form';
-  import { tags as tagsStore } from '../../stores/tags';
+  import { createTagError, tags as tagsStore } from '../../stores/tags';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef, RowId } from '../../types/data-grid';
   import type { Tag } from '../../types/tags';
@@ -26,7 +27,7 @@
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import { getShortISOForDate } from '../../utilities/time';
-  import { hex, required, unique } from '../../utilities/validators';
+  import { hex, required } from '../../utilities/validators';
   import type { PageData } from './$types';
 
   export let data: PageData;
@@ -70,6 +71,7 @@
       field: 'name',
       headerName: 'Name',
       resizable: true,
+      sort: 'asc',
       sortable: true,
       suppressAutoSize: true,
       suppressSizeToFit: true,
@@ -102,11 +104,11 @@
   let selectedTag: Tag | null = null;
   let creatingTag: boolean = false;
   let defaultColor = generateRandomPastelColor();
-  let createTagError: string | null = null;
 
   $: tags = $tagsStore || data.initialTags; // TODO no way to tell if tags store is still loading since an [] is a valid value so can't make use of initialTags.
-  $: nameField = field<string>('', [required, unique(tags.map(tag => tag.name))]);
-  $: colorField = field<string>(defaultColor, [required, hex]);
+  // $: nameField = field<string>('', [required, unique(tags.map(tag => tag.name))]);
+  $: nameField = field<string>('', [required]);
+  $: colorField = field<string>('', [required, hex]);
   $: {
     user = data.user;
     canCreate = user ? featurePermissions.tags.canCreate(user) : false;
@@ -145,12 +147,19 @@
       },
     ];
   }
-  $: createButtonEnabled = $nameField.dirtyAndValid && $colorField.dirtyAndValid;
+  $: createButtonEnabled = $nameField.dirtyAndValid && $colorField.valid;
   $: filteredTags = tags.filter(tag => {
     const filterTextLowerCase = filterText.toLowerCase();
     const includesId = `${tag.id}`.includes(filterTextLowerCase);
     const includesName = tag.name.toLocaleLowerCase().includes(filterTextLowerCase);
     return includesId || includesName;
+  });
+
+  onMount(() => {
+    colorField.validateAndSet(defaultColor);
+    if (nameInputField) {
+      nameInputField.focus();
+    }
   });
 
   async function createTag() {
@@ -159,40 +168,29 @@
       color: $colorField.value,
       name: $nameField.value,
     };
-    const newTags = (await effects.createTags([tag], user)) || [];
+    const newTags = (await effects.createTag(tag, user)) || [];
+    nameField.reset('');
+    colorField.validateAndSet(generateRandomPastelColor());
     if (newTags.length) {
-      tags.push(newTags[0]);
-      nameField.reset('');
-      colorField.validateAndSet(generateRandomPastelColor());
+      tags = tags.concat(newTags[0]);
     }
     creatingTag = false;
   }
 
-  async function deleteTag({ id }: Pick<Tag, 'id'>): Promise<void> {
+  async function deleteTag(tag: Tag): Promise<void> {
+    const success = await effects.deleteTag(tag, user);
+    if (success) {
+      tags = tags.filter(t => t.id !== tag.id);
+    }
     // TODO delete the plan tag and remove any expansion rule and scheduling goal tags manually
-    // const success = await effects.deleteTag(id, user);
-    // if (success) {
-    //   plans = plans.filter(plan => plan.id !== id);
-    // }
   }
 
-  // async function onTagsInputChange(event: TagsChangeEvent) {
-  //   const {
-  //     detail: { tag, type },
-  //   } = event;
-  //   if (type === 'remove') {
-  //     planTags = planTags.filter(t => t.name !== tag.name);
-  //   } else if (type === 'create' || type === 'select') {
-  //     let tagsToAdd: Tag[] = [tag];
-  //     if (type === 'create') {
-  //       tagsToAdd = (await effects.createTags([{ color: tag.color, name: tag.name }], user)) || [];
-  //     }
-  //     planTags = planTags.concat(tagsToAdd);
-  //   }
-  // }
-
   function deleteTagContext(event: CustomEvent<RowId[]>) {
-    deleteTag({ id: event.detail[0] as number });
+    const id = event.detail[0] as number;
+    const tag = tags.find(t => t.id === id);
+    if (tag) {
+      deleteTag(tag);
+    }
   }
 
   function showTag(tag: Tag) {
@@ -200,11 +198,11 @@
   }
 </script>
 
-<PageTitle title="Plans" />
+<PageTitle title="Tags" />
 
 <CssGrid rows="var(--nav-header-height) calc(100vh - var(--nav-header-height))">
   <Nav {user}>
-    <span slot="title">Plans</span>
+    <span slot="title">Tags</span>
   </Nav>
 
   <CssGrid columns="20% auto">
@@ -215,7 +213,7 @@
 
       <svelte:fragment slot="body">
         <form on:submit|preventDefault={() => createTag()}>
-          <AlertError class="m-2" error={createTagError} />
+          <AlertError class="m-2" error={$createTagError} />
 
           <Field field={nameField}>
             <label for="name" slot="label">Name</label>
@@ -318,7 +316,7 @@
     <Panel>
       <svelte:fragment slot="header">
         <SectionTitle>
-          <PlanIcon />
+          <TagsIcon />
           Tags
         </SectionTitle>
         <Input>

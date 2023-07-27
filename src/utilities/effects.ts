@@ -16,6 +16,7 @@ import { createModelError, createPlanError, creatingModel, creatingPlan, models,
 import { schedulingStatus, selectedSpecId } from '../stores/scheduling';
 import { commandDictionaries } from '../stores/sequencing';
 import { selectedSpanId, simulationDatasetId, simulationDatasetIds } from '../stores/simulation';
+import { createTagError } from '../stores/tags';
 import { applyViewUpdate, view } from '../stores/views';
 import type {
   ActivityDirective,
@@ -929,6 +930,29 @@ const effects = {
     }
   },
 
+  async createTag(tag: TagsInsertInput, user: User | null, notify: boolean = true): Promise<Tag[] | null> {
+    try {
+      createTagError.set(null);
+      if (!queryPermissions.CREATE_TAGS(user)) {
+        throwPermissionError('create tags');
+      }
+
+      const data = await reqHasura<{ affected_row: number; tag: Tag[] }>(gql.CREATE_TAG, { tag }, user);
+      const { insert_tags_one } = data;
+      const { tag: insertedTag } = insert_tags_one;
+      if (notify) {
+        showSuccessToast('Tag Created Successfully');
+      }
+      createTagError.set(null);
+      return insertedTag;
+    } catch (e) {
+      createTagError.set((e as Error).message);
+      catchError('Create Tags Failed', e as Error);
+      showFailureToast('Create Tags Failed');
+      return null;
+    }
+  },
+
   async createTags(tags: TagsInsertInput[], user: User | null, notify: boolean = true): Promise<Tag[] | null> {
     try {
       if (!queryPermissions.CREATE_TAGS(user)) {
@@ -939,7 +963,7 @@ const effects = {
       const { insert_tags } = data;
       const { returning } = insert_tags;
       if (notify) {
-        showSuccessToast('Plan Updated Successfully');
+        showSuccessToast('Tags Created Successfully');
       }
       return returning;
     } catch (e) {
@@ -1613,6 +1637,31 @@ const effects = {
     }
 
     return false;
+  },
+
+  async deleteTag(tag: Tag, user: User | null): Promise<boolean> {
+    try {
+      if (!queryPermissions.DELETE_TAGS(user)) {
+        throwPermissionError('delete tags');
+      }
+
+      const { confirm } = await showConfirmModal(
+        'Delete',
+        `Are you sure you want to delete the tag "${tag.name}"?`,
+        'Delete Tag',
+      );
+
+      if (confirm) {
+        await reqHasura<{ id: number }>(gql.DELETE_TAG, { id: tag.id }, user);
+        showSuccessToast('Tag Deleted Successfully');
+      }
+
+      return true;
+    } catch (e) {
+      catchError('Delete Tag Failed', e as Error);
+      showFailureToast('Delete Tag Failed');
+      return false;
+    }
   },
 
   async deleteUserSequence(id: number, user: User | null): Promise<boolean> {
