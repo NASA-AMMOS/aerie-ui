@@ -352,7 +352,7 @@ const queryPermissions = {
     return getPermission(['update_simulation_template_by_pk'], user);
   },
   UPDATE_TAG: (user: User | null): boolean => {
-    return getPermission(['update_tag_by_pk'], user);
+    return getPermission(['update_tags_by_pk'], user);
   },
   UPDATE_USER_SEQUENCE: (user: User | null): boolean => {
     return getPermission(['update_user_sequence_by_pk'], user);

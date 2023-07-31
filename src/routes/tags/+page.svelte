@@ -1,6 +1,8 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import PenIcon from '@nasa-jpl/stellar/icons/pen.svg?component';
+  import PlusIcon from '@nasa-jpl/stellar/icons/plus.svg?component';
   import RefreshIcon from '@nasa-jpl/stellar/icons/refresh.svg?component';
   import TagsIcon from '@nasa-jpl/stellar/icons/tag.svg?component';
   import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
@@ -37,9 +39,6 @@
     deleteTag: (tag: Tag) => void;
   };
   type TagsCellRendererParams = ICellRendererParams<Tag> & CellRendererParams;
-  type TagsPermissionsMap = {
-    tags: Record<number, boolean>;
-  };
 
   const baseColumnDefs: DataGridColumnDef[] = [
     {
@@ -52,7 +51,6 @@
       suppressSizeToFit: true,
       width: 60,
     },
-    // { field: 'name', filter: 'text', headerName: 'Name', minWidth: 80, resizable: true, sortable: true },
     {
       cellClass: 'action-cell-container',
       cellRenderer: (params: TagsCellRendererParams) => {
@@ -76,6 +74,10 @@
       sortable: true,
       suppressAutoSize: true,
       suppressSizeToFit: true,
+      valueGetter: (params: ValueGetterParams<Tag>) => {
+        // Use valueGetter to ensure that the cell re-renders on both name and color updates
+        return `${params.data?.name}_${params.data?.color}`;
+      },
       width: 300,
       wrapText: true,
     },
@@ -97,13 +99,16 @@
 
   let canCreate: boolean = false;
   let columnDefs: DataGridColumnDef[] = baseColumnDefs;
+  let dataGrid: SingleActionDataGrid<Tag> | undefined = undefined;
   let filterText: string = '';
   let tags: Tag[];
   let nameInputField: HTMLInputElement;
   let colorInputField: HTMLInputElement;
   let user: User | null = null;
   let selectedTag: Tag | null = null;
+  let selectedTagModified: boolean = false;
   let creatingTag: boolean = false;
+  let updatingTag: boolean = false;
   let defaultColor = generateRandomPastelColor();
 
   $: tags = $tagsStore || data.initialTags; // TODO no way to tell if tags store is still loading since an [] is a valid value so can't make use of initialTags.
@@ -147,7 +152,13 @@
       },
     ];
   }
-  $: createButtonEnabled = $nameField.dirtyAndValid && $colorField.valid;
+  $: submitButtonEnabled = $nameField.dirtyAndValid && $colorField.valid;
+  $: selectedTagModified = selectedTag
+    ? diffTags(selectedTag, {
+        color: $colorField.value,
+        name: $nameField.value,
+      })
+    : false;
   $: filteredTags = tags.filter(tag => {
     const filterTextLowerCase = filterText.toLowerCase();
     const includesId = `${tag.id}`.includes(filterTextLowerCase);
@@ -162,19 +173,49 @@
     }
   });
 
+  function diffTags(tagA: Partial<Tag>, tagB: Partial<Tag>) {
+    return tagA.name !== tagB.name || tagA.color !== tagB.color;
+  }
+
+  async function resetTagFields() {
+    nameField.reset('');
+    await colorField.validateAndSet(generateRandomPastelColor());
+  }
+
   async function createTag() {
     creatingTag = true;
     const tag = {
       color: $colorField.value,
       name: $nameField.value,
     };
-    const newTags = (await effects.createTag(tag, user)) || [];
-    nameField.reset('');
-    colorField.validateAndSet(generateRandomPastelColor());
-    if (newTags.length) {
-      tags = tags.concat(newTags[0]);
+    const newTag = await effects.createTag(tag, user);
+    resetTagFields();
+    if (newTag) {
+      tags = tags.concat(newTag);
     }
     creatingTag = false;
+  }
+
+  async function updateTag() {
+    if (!selectedTag) {
+      return;
+    }
+    updatingTag = true;
+    const tag = {
+      color: $colorField.value,
+      name: $nameField.value,
+    };
+    const updatedTag = await effects.updateTag(selectedTag.id, tag, user);
+    if (updatedTag) {
+      tags = tags.map(t => {
+        if (t.id === updatedTag.id) {
+          return updatedTag;
+        }
+        return t;
+      });
+      exitEditing();
+    }
+    updatingTag = false;
   }
 
   async function onNameFieldKeyup(event: KeyboardEvent) {
@@ -215,8 +256,27 @@
     }
   }
 
+  function exitEditing() {
+    resetTagFields();
+    $createTagError = null;
+    selectedTag = null;
+    if (dataGrid) {
+      dataGrid.selectedItemId = null;
+    }
+  }
+
+  function onFormSubmit() {
+    if (selectedTag) {
+      updateTag();
+    } else {
+      createTag();
+    }
+  }
+
   function showTag(tag: Tag) {
     selectedTag = tag;
+    nameField.validateAndSet(tag.name);
+    colorField.validateAndSet(tag.color);
   }
 </script>
 
@@ -230,11 +290,17 @@
   <CssGrid columns="20% auto">
     <Panel borderRight padBody={false}>
       <svelte:fragment slot="header">
-        <SectionTitle>New Tag</SectionTitle>
+        <SectionTitle>
+          {#if selectedTag}
+            <PenIcon /> Edit Tag
+          {:else}
+            <PlusIcon /> New Tag
+          {/if}
+        </SectionTitle>
       </svelte:fragment>
 
       <svelte:fragment slot="body">
-        <form on:submit|preventDefault={() => createTag()}>
+        <form on:submit|preventDefault={onFormSubmit}>
           <AlertError class="m-2" error={$createTagError} />
 
           <Field field={nameField}>
@@ -321,17 +387,36 @@
           </fieldset>
 
           <fieldset>
-            <button
-              class="st-button w-100"
-              disabled={!createButtonEnabled || creatingTag}
-              type="submit"
-              use:permissionHandler={{
-                hasPermission: canCreate,
-                permissionError,
-              }}
-            >
-              {creatingTag ? 'Creating...' : 'Create'}
-            </button>
+            {#if !selectedTag}
+              <button
+                class="st-button w-100"
+                disabled={!submitButtonEnabled || creatingTag}
+                type="submit"
+                use:permissionHandler={{
+                  hasPermission: canCreate,
+                  permissionError,
+                }}
+              >
+                {creatingTag ? 'Creating...' : 'Create'}
+              </button>
+            {:else}
+              <div class="tags-save-buttons">
+                <button on:click={exitEditing} disabled={updatingTag} class="st-button secondary w-100" type="button">
+                  Cancel
+                </button>
+                <button
+                  class="st-button w-100"
+                  disabled={!submitButtonEnabled || !selectedTagModified || updatingTag}
+                  type="submit"
+                  use:permissionHandler={{
+                    hasPermission: canCreate,
+                    permissionError,
+                  }}
+                >
+                  {updatingTag ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            {/if}
           </fieldset>
         </form>
       </svelte:fragment>
@@ -351,6 +436,7 @@
       <svelte:fragment slot="body">
         {#if filteredTags.length}
           <SingleActionDataGrid
+            bind:this={dataGrid}
             {columnDefs}
             hasDeletePermission={featurePermissions.tags.canDelete}
             itemDisplayText="Tag"
@@ -390,5 +476,10 @@
   .tags-creator {
     display: flex;
     justify-content: space-between;
+  }
+
+  .tags-save-buttons {
+    display: flex;
+    gap: 4px;
   }
 </style>

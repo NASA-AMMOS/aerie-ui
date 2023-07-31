@@ -106,6 +106,7 @@ import type {
   SchedulingGoalTagsInsertInput,
   Tag,
   TagsInsertInput,
+  TagsSetInput,
 } from '../types/tags';
 import type { View, ViewDefinition, ViewInsertInput, ViewUpdateInput } from '../types/view';
 import { ActivityDeletionAction } from './activities';
@@ -930,14 +931,14 @@ const effects = {
     }
   },
 
-  async createTag(tag: TagsInsertInput, user: User | null, notify: boolean = true): Promise<Tag[] | null> {
+  async createTag(tag: TagsInsertInput, user: User | null, notify: boolean = true): Promise<Tag | null> {
     try {
       createTagError.set(null);
       if (!queryPermissions.CREATE_TAGS(user)) {
         throwPermissionError('create tags');
       }
 
-      const data = await reqHasura<{ affected_row: number; tag: Tag[] }>(gql.CREATE_TAG, { tag }, user);
+      const data = await reqHasura<{ affected_row: number; tag: Tag }>(gql.CREATE_TAG, { tag }, user);
       const { insert_tags_one } = data;
       const { tag: insertedTag } = insert_tags_one;
       if (notify) {
@@ -3174,6 +3175,32 @@ const effects = {
     } catch (e) {
       catchError('Simulation Template Update Failed', e as Error);
       showFailureToast('Simulation Template Update Failed');
+    }
+  },
+
+  async updateTag(
+    id: number,
+    tagSetInput: TagsSetInput,
+    user: User | null,
+    notify: boolean = true,
+  ): Promise<Tag | null> {
+    try {
+      createTagError.set(null);
+      if (!queryPermissions.UPDATE_TAG(user)) {
+        throwPermissionError('update tag');
+      }
+      const data = await reqHasura<Tag>(gql.UPDATE_TAG, { id, tagSetInput }, user);
+      const { update_tags_by_pk: updatedTag } = data;
+      if (notify) {
+        showSuccessToast('Tag Updated Successfully');
+      }
+      createTagError.set(null);
+      return updatedTag;
+    } catch (e) {
+      createTagError.set((e as Error).message);
+      catchError('Update Tags Failed', e as Error);
+      showFailureToast('Update Tags Failed');
+      return null;
     }
   },
 

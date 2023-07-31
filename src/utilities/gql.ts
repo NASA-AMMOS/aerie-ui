@@ -1996,6 +1996,18 @@ const gql = {
     }
   `,
 
+  UPDATE_TAG: `#graphql
+    mutation UpdateTag($id: Int!, $tagSetInput: tags_set_input!) {
+      update_tags_by_pk(pk_columns: {id: $id}, _set: $tagSetInput) {
+        color
+        created_at
+        id
+        name
+        owner
+      }
+    }
+  `,
+
   UPDATE_USER_SEQUENCE: `#graphql
     mutation UpdateUserSequence($id: Int!, $sequence: user_sequence_set_input!) {
       updateUserSequence: update_user_sequence_by_pk(
