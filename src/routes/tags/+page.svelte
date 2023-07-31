@@ -163,7 +163,8 @@
     const filterTextLowerCase = filterText.toLowerCase();
     const includesId = `${tag.id}`.includes(filterTextLowerCase);
     const includesName = tag.name.toLocaleLowerCase().includes(filterTextLowerCase);
-    return includesId || includesName;
+    const includesOwner = tag.owner.toLocaleLowerCase().includes(filterTextLowerCase);
+    return includesId || includesName || includesOwner;
   });
 
   onMount(() => {
