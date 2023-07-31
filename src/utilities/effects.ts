@@ -1086,7 +1086,7 @@ const effects = {
             user,
           );
 
-          if (response.delete_activity_by_pk_reanchor_to_anchor_bulk) {
+          if (response.delete_activity_by_pk_reanchor_to_anchor_bulk != null) {
             const deletedActivityIds = response.delete_activity_by_pk_reanchor_to_anchor_bulk
               .filter(({ change_type }) => {
                 return change_type === 'deleted';
@@ -1125,7 +1125,7 @@ const effects = {
             user,
           );
 
-          if (response.delete_activity_by_pk_reanchor_plan_start_bulk) {
+          if (response.delete_activity_by_pk_reanchor_plan_start_bulk != null) {
             const deletedActivityIds = response.delete_activity_by_pk_reanchor_plan_start_bulk
               .filter(({ change_type }) => {
                 return change_type === 'deleted';
