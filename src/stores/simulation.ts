@@ -13,6 +13,7 @@ import type {
 } from '../types/simulation';
 import { createSpanUtilityMaps } from '../utilities/activities';
 import gql from '../utilities/gql';
+import { getSimulationProgress } from '../utilities/simulation';
 import { Status } from '../utilities/status';
 import { modelId, planId, planRevision } from './plan';
 import { gqlSubscribable } from './subscribable';
@@ -148,6 +149,14 @@ export const simulationStatus: Readable<Status | null> = derived(
     return null;
   },
   null,
+);
+
+export const simulationProgress: Readable<number> = derived(
+  [simulationDataset, simulationStatus],
+  ([$simulationDataset]) => {
+    return getSimulationProgress($simulationDataset);
+  },
+  0,
 );
 
 export const enableSimulation: Readable<boolean> = derived(simulationStatus, $simulationStatus => {

@@ -66,6 +66,7 @@
     selectedSpanId,
     simulationDataset,
     simulationDatasetId,
+    simulationProgress,
     simulationStatus,
     spans,
   } from '../../../stores/simulation';
@@ -318,6 +319,8 @@
         hasPermission={hasSimulatePermission}
         permissionError="You do not have permission to run a simulation"
         status={$simulationStatus}
+        progress={$simulationProgress}
+        determinateProgress={$simulationStatus === Status.Incomplete}
         disabled={!$enableSimulation}
         on:click={() => effects.simulate(data.user)}
       >

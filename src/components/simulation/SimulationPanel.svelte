@@ -253,7 +253,7 @@
 <Panel padBody={false}>
   <svelte:fragment slot="header">
     <GridMenu {gridSection} title="Simulation" />
-    <PanelHeaderActions status={$simulationStatus}>
+    <PanelHeaderActions>
       <PanelHeaderActionButton
         disabled={!$enableSimulation}
         tooltipContent={$simulationStatus === Status.Complete || $simulationStatus === Status.Failed

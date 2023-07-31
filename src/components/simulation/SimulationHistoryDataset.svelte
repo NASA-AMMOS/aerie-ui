@@ -1,13 +1,9 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import PinPauseIcon from '@nasa-jpl/stellar/icons/pin_pause.svg?component';
-  import PinPlayIcon from '@nasa-jpl/stellar/icons/pin_play.svg?component';
   import { createEventDispatcher } from 'svelte';
-  import { cubicOut } from 'svelte/easing';
-  import { tweened } from 'svelte/motion';
-  import { slide } from 'svelte/transition';
   import type { SimulationDataset } from '../../types/simulation';
+  import { getSimulationProgress } from '../../utilities/simulation';
   import { Status } from '../../utilities/status';
   import { getDoyTime, getTimeAgo, getUnixEpochTimeFromInterval } from '../../utilities/time';
   import Input from '../form/Input.svelte';
@@ -26,8 +22,7 @@
   let simulationExtentVizRangeWidth = 0;
   let startTimeText = '';
   let endTimeText = '';
-
-  const progress = tweened(0, { easing: cubicOut });
+  let progress = 0;
 
   $: simulationBoundsVizRangeWidthStyle =
     simulationBoundsVizRangeWidth < 1 ? '4px' : `${simulationBoundsVizRangeWidth}%`;
@@ -63,8 +58,8 @@
         } else if (simulationDataset.status === 'success') {
           simulationExtentMS = simulationEndTimeMS - simulationStartTimeMS;
         }
-        progress.set((simulationExtentMS / planDuration) * 100 || 0, { duration: 400 });
-        simulationExtentVizRangeWidth = $progress;
+        progress = getSimulationProgress(simulationDataset);
+        simulationExtentVizRangeWidth = (simulationExtentMS / planDuration) * 100 || 0;
         if (simulationEndTimeMS === planEndTimeMs) {
           endTimeText = 'Plan End';
         } else {
@@ -91,12 +86,7 @@
   }
 </script>
 
-<button
-  transition:slide|global
-  class="simulation-dataset st-typography-label"
-  class:active={checked}
-  on:click={() => dispatch('click')}
->
+<button class="simulation-dataset st-typography-label" class:active={checked} on:click={() => dispatch('click')}>
   <div class="simulation-dataset-top-row">
     <div class="simulation-dataset-input-container">
       <Input class="simulation-dataset-input">
@@ -105,7 +95,6 @@
       ID: {simulationDataset.id}
     </div>
     <div class="simulation-dataset-metadata">
-      <StatusBadge status={toSimulationStatus(simulationDataset.status)} />
       <div class="simulation-dataset-metadata-time-ago">
         {getTimeAgo(new Date(simulationDataset.requested_at))}
       </div>
@@ -116,8 +105,8 @@
   </div>
 
   <div class="simulation-range-indicator">
-    <div class="simulation-range-label start"><PinPlayIcon />{startTimeText}</div>
-    <div class="simulation-range-label end">{endTimeText}<PinPauseIcon /></div>
+    <div class="simulation-range-label">{startTimeText}</div>
+    <div class="simulation-range-label">{endTimeText}</div>
   </div>
 
   <div class="simulation-range-visualization">
@@ -129,6 +118,7 @@
         <div class="simulation-extent-fill" style={`margin-left: 0%; width: ${simulationExtentVizRangeWidthStyle}`} />
       </div>
     </div>
+    <StatusBadge status={toSimulationStatus(simulationDataset.status)} {progress} determinateProgress />
   </div>
 </button>
 
@@ -290,31 +280,34 @@
   }
 
   .simulation-range-visualization {
+    align-items: center;
+    display: flex;
+    gap: 4px;
     width: 100%;
   }
 
   .simulation-range-background {
     align-items: center;
     background: var(--st-gray-20);
-    border-radius: 4px;
+    border-radius: 8px;
     display: flex;
-    height: 4px;
-    padding: 1px;
+    flex: 1;
+    height: 8px;
+    /* padding: 2px; */
   }
 
   .simulation-range-bounds {
     align-items: center;
-    border-left: solid var(--st-gray-90);
-    border-radius: 4px;
-    border-right: solid var(--st-gray-90);
+    background: var(--st-gray-40);
+    border-radius: 8px;
     display: flex;
-    height: 4px;
-    padding: 1px;
+    height: 8px;
   }
 
   .simulation-extent-fill {
     background: var(--st-gray-90);
-    border-radius: 2px;
-    height: 2px;
+    border-radius: 8px;
+    height: 8px;
+    transition: width 250ms;
   }
 </style>
