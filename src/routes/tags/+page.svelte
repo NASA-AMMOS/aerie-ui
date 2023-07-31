@@ -24,6 +24,7 @@
   import type { Tag } from '../../types/tags';
   import { generateRandomPastelColor } from '../../utilities/color';
   import effects from '../../utilities/effects';
+  import { showConfirmModal } from '../../utilities/modal';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import { getShortISOForDate } from '../../utilities/time';
@@ -106,7 +107,6 @@
   let defaultColor = generateRandomPastelColor();
 
   $: tags = $tagsStore || data.initialTags; // TODO no way to tell if tags store is still loading since an [] is a valid value so can't make use of initialTags.
-  // $: nameField = field<string>('', [required, unique(tags.map(tag => tag.name))]);
   $: nameField = field<string>('', [required]);
   $: colorField = field<string>('', [required, hex]);
   $: {
@@ -124,7 +124,7 @@
               deleteCallback: params.deleteTag,
               deleteTooltip: {
                 content: 'Delete Tag',
-                placement: 'bottom',
+                placement: 'top',
               },
               hasDeletePermission: params.data && user ? featurePermissions.tags.canDelete(user, params.data) : false,
               rowData: params.data,
@@ -177,12 +177,34 @@
     creatingTag = false;
   }
 
-  async function deleteTag(tag: Tag): Promise<void> {
-    const success = await effects.deleteTag(tag, user);
-    if (success) {
-      tags = tags.filter(t => t.id !== tag.id);
+  async function onNameFieldKeyup(event: KeyboardEvent) {
+    if (event.key !== 'Enter') {
+      nameField.validateAndSet($nameField.value);
     }
-    // TODO delete the plan tag and remove any expansion rule and scheduling goal tags manually
+  }
+
+  async function onColorFieldKeyup(event: KeyboardEvent) {
+    if (event.key !== 'Enter') {
+      colorField.validateAndSet($colorField.value);
+    }
+  }
+
+  async function deleteTag(tag: Tag): Promise<void> {
+    const { confirm } = await showConfirmModal(
+      'Delete',
+      `Are you sure you want to delete the tag "${tag.name}"? All occurences of this tag will be removed from Plans, Activity Directives, Constraints, Scheduling Goals, and Expansion Rules.`,
+      'Delete Tag',
+    );
+    if (confirm) {
+      // TODO how should we handle partial success?
+      const constraintTagDeletionSuccess = await effects.deleteConstraintTags([tag.id], user);
+      const expansionRuleTagDeletionSuccess = await effects.deleteExpansionRuleTags([tag.id], user);
+      const tagDeletionSuccess = await effects.deleteTag(tag, user);
+
+      if (constraintTagDeletionSuccess && expansionRuleTagDeletionSuccess && tagDeletionSuccess) {
+        tags = tags.filter(t => t.id !== tag.id);
+      }
+    }
   }
 
   function deleteTagContext(event: CustomEvent<RowId[]>) {
@@ -218,6 +240,7 @@
           <Field field={nameField}>
             <label for="name" slot="label">Name</label>
             <input
+              on:keyup={onNameFieldKeyup}
               bind:this={nameInputField}
               autocomplete="off"
               class="st-input w-100"
@@ -233,6 +256,7 @@
             <label for="color" slot="label">Color</label>
             <div class="tags-color-picker">
               <input
+                on:keyup={onColorFieldKeyup}
                 bind:this={colorInputField}
                 autocomplete="off"
                 class="st-input w-100"
@@ -299,7 +323,7 @@
           <fieldset>
             <button
               class="st-button w-100"
-              disabled={!createButtonEnabled}
+              disabled={!createButtonEnabled || creatingTag}
               type="submit"
               use:permissionHandler={{
                 hasPermission: canCreate,

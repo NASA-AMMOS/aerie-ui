@@ -605,7 +605,7 @@ const featurePermissions: FeaturePermissions = {
   },
   tags: {
     canCreate: user => isUserAdmin(user) || queryPermissions.CREATE_TAGS(user),
-    canDelete: user => isUserAdmin(user) || (isUserOwner(user) && queryPermissions.DELETE_TAGS(user)),
+    canDelete: (user, tag) => isUserAdmin(user) || (isUserOwner(user, tag) && queryPermissions.DELETE_TAGS(user)),
     canRead: user => isUserAdmin(user) || queryPermissions.SUB_TAGS(user),
     canUpdate: (user, tag) => isUserAdmin(user) || (isUserOwner(user, tag) && queryPermissions.UPDATE_TAG(user)),
   },

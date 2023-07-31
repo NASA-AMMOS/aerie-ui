@@ -1645,17 +1645,8 @@ const effects = {
         throwPermissionError('delete tags');
       }
 
-      const { confirm } = await showConfirmModal(
-        'Delete',
-        `Are you sure you want to delete the tag "${tag.name}"?`,
-        'Delete Tag',
-      );
-
-      if (confirm) {
-        await reqHasura<{ id: number }>(gql.DELETE_TAG, { id: tag.id }, user);
-        showSuccessToast('Tag Deleted Successfully');
-      }
-
+      await reqHasura<{ id: number }>(gql.DELETE_TAG, { id: tag.id }, user);
+      showSuccessToast('Tag Deleted Successfully');
       return true;
     } catch (e) {
       catchError('Delete Tag Failed', e as Error);
