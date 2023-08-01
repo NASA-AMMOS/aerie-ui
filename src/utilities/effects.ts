@@ -45,7 +45,7 @@ import type {
   ExpansionSet,
   SeqId,
 } from '../types/expansion';
-import type { ModelInsertInput, ModelSlim } from '../types/model';
+import type { Model, ModelInsertInput, ModelSlim } from '../types/model';
 import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
 import type {
   ArgumentsMap,
@@ -164,7 +164,7 @@ const effects = {
       }
 
       if (confirm) {
-        await reqHasura(
+        const data = await reqHasura(
           gql.APPLY_PRESET_TO_ACTIVITY,
           {
             activityId,
@@ -173,7 +173,11 @@ const effects = {
           },
           user,
         );
-        showSuccessToast('Preset Successfully Applied to Activity');
+        if (data.apply_preset_to_activity != null) {
+          showSuccessToast('Preset Successfully Applied to Activity');
+        } else {
+          throw Error(`Unable to apply preset with id "${presetId}" to directive with id "${activityId}"`);
+        }
       }
     } catch (e) {
       catchError('Preset Unable To Be Applied To Activity', e as Error);
@@ -243,11 +247,15 @@ const effects = {
           user,
         );
         const { checkConstraintsResponse } = data;
-        const { violations } = checkConstraintsResponse;
+        if (checkConstraintsResponse != null) {
+          const { violations } = checkConstraintsResponse;
 
-        constraintViolationsResponse.set(violations);
-        checkConstraintsStatus.set(Status.Complete);
-        showSuccessToast('Check Constraints Complete');
+          constraintViolationsResponse.set(violations);
+          checkConstraintsStatus.set(Status.Complete);
+          showSuccessToast('Check Constraints Complete');
+        } else {
+          throw Error(`Unable to check constraints for plan with id ${currentPlan.id}`);
+        }
       } else {
         throw Error('Plan is not defined.');
       }
@@ -292,16 +300,20 @@ const effects = {
           user,
         );
         const { insert_activity_directive_one: newActivityDirective } = data;
-        const { id } = newActivityDirective;
+        if (newActivityDirective != null) {
+          const { id } = newActivityDirective;
 
-        activityDirectivesMap.update((currentActivityDirectivesMap: ActivityDirectivesMap) => ({
-          ...currentActivityDirectivesMap,
-          [id]: newActivityDirective,
-        }));
-        selectedActivityDirectiveId.set(id);
-        selectedSpanId.set(null);
+          activityDirectivesMap.update((currentActivityDirectivesMap: ActivityDirectivesMap) => ({
+            ...currentActivityDirectivesMap,
+            [id]: newActivityDirective,
+          }));
+          selectedActivityDirectiveId.set(id);
+          selectedSpanId.set(null);
 
-        showSuccessToast('Activity Directive Created Successfully');
+          showSuccessToast('Activity Directive Created Successfully');
+        } else {
+          throw Error(`Unable to create activity directive "${name}" on plan with id ${currentPlan.id}`);
+        }
       } else {
         throw Error('Plan is not defined.');
       }
@@ -322,9 +334,18 @@ const effects = {
 
       const data = await reqHasura<{ affected_rows: number }>(gql.CREATE_ACTIVITY_DIRECTIVE_TAGS, { tags }, user);
       const { insert_activity_directive_tags } = data;
-      const { affected_rows } = insert_activity_directive_tags;
-      showSuccessToast('Activity Directive Updated Successfully');
-      return affected_rows;
+      if (insert_activity_directive_tags != null) {
+        const { affected_rows } = insert_activity_directive_tags;
+
+        if (affected_rows !== tags.length) {
+          throw Error('Some activity directive tags were not successfully created');
+        }
+
+        showSuccessToast('Activity Directive Updated Successfully');
+        return affected_rows;
+      } else {
+        throw Error('Unable to create activity directive tags');
+      }
     } catch (e) {
       catchError('Create Activity Directive Tags Failed', e as Error);
       showFailureToast('Create Activity Directive Tags Failed');
@@ -350,12 +371,17 @@ const effects = {
         model_id: modelId,
         name,
       };
-      const {
-        insert_activity_presets_one: { id, name: presetName },
-      } = await reqHasura<ActivityPreset>(gql.CREATE_ACTIVITY_PRESET, { activityPresetInsertInput }, user);
+      const data = await reqHasura<ActivityPreset>(gql.CREATE_ACTIVITY_PRESET, { activityPresetInsertInput }, user);
 
-      showSuccessToast(`Activity Preset ${presetName} Created Successfully`);
-      return id;
+      if (data.insert_activity_presets_one != null) {
+        const {
+          insert_activity_presets_one: { id, name: presetName },
+        } = data;
+        showSuccessToast(`Activity Preset ${presetName} Created Successfully`);
+        return id;
+      } else {
+        throw Error(`Unable to create activity preset "${name}"`);
+      }
     } catch (e) {
       catchError('Activity Preset Create Failed', e as Error);
       showFailureToast('Activity Preset Create Failed');
@@ -373,7 +399,11 @@ const effects = {
       const dictionary = await file.text();
       const data = await reqHasura<CommandDictionary>(gql.CREATE_COMMAND_DICTIONARY, { dictionary }, user);
       const { createCommandDictionary: newCommandDictionary } = data;
-      return newCommandDictionary;
+      if (newCommandDictionary != null) {
+        return newCommandDictionary;
+      } else {
+        throw Error('Unable to upload command dictionary');
+      }
     } catch (e) {
       catchError('Command Dictionary Upload Failed', e as Error);
       return null;
@@ -402,10 +432,14 @@ const effects = {
       };
       const data = await reqHasura(gql.CREATE_CONSTRAINT, { constraint: constraintInsertInput }, user);
       const { createConstraint } = data;
-      const { id } = createConstraint;
+      if (createConstraint != null) {
+        const { id } = createConstraint;
 
-      showSuccessToast('Constraint Created Successfully');
-      return id;
+        showSuccessToast('Constraint Created Successfully');
+        return id;
+      } else {
+        throw Error(`Unable to create constraint "${name}"`);
+      }
     } catch (e) {
       catchError('Constraint Creation Failed', e as Error);
       showFailureToast('Constraint Creation Failed');
@@ -421,8 +455,16 @@ const effects = {
 
       const data = await reqHasura<{ affected_rows: number }>(gql.CREATE_CONSTRAINT_TAGS, { tags }, user);
       const { insert_constraint_tags } = data;
-      const { affected_rows } = insert_constraint_tags;
-      return affected_rows;
+      if (insert_constraint_tags != null) {
+        const { affected_rows } = insert_constraint_tags;
+
+        if (affected_rows !== tags.length) {
+          throw Error('Some constraint tags were not successfully created');
+        }
+        return affected_rows;
+      } else {
+        throw Error('Unable to create constraint tags');
+      }
     } catch (e) {
       catchError('Create Constraint Tags Failed', e as Error);
       showFailureToast('Create Constraint Tags Failed');
@@ -439,12 +481,16 @@ const effects = {
       }
 
       savingExpansionRule.set(true);
-      const data = await reqHasura(gql.CREATE_EXPANSION_RULE, { rule }, user);
+      const data = await reqHasura<ExpansionRule>(gql.CREATE_EXPANSION_RULE, { rule }, user);
       const { createExpansionRule } = data;
-      const { id } = createExpansionRule;
-      showSuccessToast('Expansion Rule Created Successfully');
-      savingExpansionRule.set(false);
-      return id;
+      if (createExpansionRule != null) {
+        const { id } = createExpansionRule;
+        showSuccessToast('Expansion Rule Created Successfully');
+        savingExpansionRule.set(false);
+        return id;
+      } else {
+        throw Error(`Unable to create expansion rule "${rule.name}"`);
+      }
     } catch (e) {
       catchError('Expansion Rule Create Failed', e as Error);
       showFailureToast('Expansion Rule Create Failed');
@@ -462,8 +508,17 @@ const effects = {
 
       const data = await reqHasura<{ affected_rows: number }>(gql.CREATE_EXPANSION_RULE_TAGS, { tags }, user);
       const { insert_expansion_rule_tags } = data;
-      const { affected_rows } = insert_expansion_rule_tags;
-      return affected_rows;
+      if (insert_expansion_rule_tags != null) {
+        const { affected_rows } = insert_expansion_rule_tags;
+
+        if (affected_rows !== tags.length) {
+          throw Error('Some expansion rule tags were not successfully created');
+        }
+
+        return affected_rows;
+      } else {
+        throw Error(`Unable to create expansion rule tags`);
+      }
     } catch (e) {
       catchError('Create Expansion Rule Tags Failed', e as Error);
       showFailureToast('Create Expansion Rule Tags Failed');
@@ -483,9 +538,13 @@ const effects = {
         seq_id: seqId,
         simulation_dataset_id: simulationDatasetId,
       };
-      await reqHasura<SeqId>(gql.CREATE_EXPANSION_SEQUENCE, { sequence }, user);
-      showSuccessToast('Expansion Sequence Created Successfully');
-      creatingExpansionSequence.set(false);
+      const data = await reqHasura<SeqId>(gql.CREATE_EXPANSION_SEQUENCE, { sequence }, user);
+      if (data.createExpansionSequence != null) {
+        showSuccessToast('Expansion Sequence Created Successfully');
+        creatingExpansionSequence.set(false);
+      } else {
+        throw Error(`Unable to create expansion sequence with id "${seqId}"`);
+      }
     } catch (e) {
       catchError('Expansion Sequence Create Failed', e as Error);
       showFailureToast('Expansion Sequence Create Failed');
@@ -507,7 +566,7 @@ const effects = {
       }
 
       savingExpansionSet.set(true);
-      const data = await reqHasura(
+      const data = await reqHasura<ExpansionSet>(
         gql.CREATE_EXPANSION_SET,
         {
           dictionaryId,
@@ -519,10 +578,14 @@ const effects = {
         user,
       );
       const { createExpansionSet } = data;
-      const { id } = createExpansionSet;
-      showSuccessToast('Expansion Set Created Successfully');
-      savingExpansionSet.set(false);
-      return id;
+      if (createExpansionSet != null) {
+        const { id } = createExpansionSet;
+        showSuccessToast('Expansion Set Created Successfully');
+        savingExpansionSet.set(false);
+        return id;
+      } else {
+        throw Error('Unable to create expansion set');
+      }
     } catch (e) {
       catchError('Expansion Set Create Failed', e as Error);
       showFailureToast('Expansion Set Create Failed');
@@ -558,24 +621,28 @@ const effects = {
           name,
           version,
         };
-        const data = await reqHasura(gql.CREATE_MODEL, { model: modelInsertInput }, user);
+        const data = await reqHasura<Model>(gql.CREATE_MODEL, { model: modelInsertInput }, user);
         const { createModel } = data;
-        const { id, created_at, owner } = createModel;
-        const model: ModelSlim = {
-          created_at,
-          id,
-          jar_id,
-          name,
-          owner,
-          plans: [],
-          version,
-          ...(description && { description }),
-        };
+        if (createModel != null) {
+          const { id, created_at, owner } = createModel;
+          const model: ModelSlim = {
+            created_at,
+            id,
+            jar_id,
+            name,
+            owner,
+            plans: [],
+            version,
+            ...(description && { description }),
+          };
 
-        showSuccessToast('Model Created Successfully');
-        createModelError.set(null);
-        creatingModel.set(false);
-        models.updateValue((currentModels: ModelSlim[]) => [...currentModels, model]);
+          showSuccessToast('Model Created Successfully');
+          createModelError.set(null);
+          creatingModel.set(false);
+          models.updateValue((currentModels: ModelSlim[]) => [...currentModels, model]);
+        } else {
+          throw Error(`Unable to create model "${name}"`);
+        }
       }
     } catch (e) {
       catchError('Model Create Failed', e as Error);
@@ -616,51 +683,55 @@ const effects = {
         user,
       );
       const { createPlan } = data;
-      const { collaborators, created_at, duration, id, owner, revision, start_time, updated_at, updated_by } =
-        createPlan;
+      if (createPlan != null) {
+        const { collaborators, created_at, duration, id, owner, revision, start_time, updated_at, updated_by } =
+          createPlan;
 
-      if (!(await effects.initialSimulationUpdate(id, simulation_template_id, start_time_doy, end_time_doy, user))) {
-        throw Error('Failed to update simulation.');
+        if (!(await effects.initialSimulationUpdate(id, simulation_template_id, start_time_doy, end_time_doy, user))) {
+          throw Error('Failed to update simulation.');
+        }
+
+        if (
+          !(await effects.createSchedulingSpec(
+            {
+              analysis_only: false,
+              horizon_end: end_time_doy,
+              horizon_start: start_time_doy,
+              plan_id: id,
+              plan_revision: revision,
+              simulation_arguments: {},
+            },
+            user,
+          ))
+        ) {
+          throw Error('Failed to create scheduling spec.');
+        }
+
+        const plan: PlanSlim = {
+          collaborators,
+          created_at,
+          duration,
+          end_time_doy,
+          id,
+          model_id,
+          name,
+          owner,
+          revision,
+          start_time,
+          start_time_doy,
+          tags: [],
+          updated_at,
+          updated_by,
+        };
+
+        showSuccessToast('Plan Created Successfully');
+        createPlanError.set(null);
+        creatingPlan.set(false);
+
+        return plan;
+      } else {
+        throw Error(`Unable to create plan "${name}"`);
       }
-
-      if (
-        !(await effects.createSchedulingSpec(
-          {
-            analysis_only: false,
-            horizon_end: end_time_doy,
-            horizon_start: start_time_doy,
-            plan_id: id,
-            plan_revision: revision,
-            simulation_arguments: {},
-          },
-          user,
-        ))
-      ) {
-        throw Error('Failed to create scheduling spec.');
-      }
-
-      const plan: PlanSlim = {
-        collaborators,
-        created_at,
-        duration,
-        end_time_doy,
-        id,
-        model_id,
-        name,
-        owner,
-        revision,
-        start_time,
-        start_time_doy,
-        tags: [],
-        updated_at,
-        updated_by,
-      };
-
-      showSuccessToast('Plan Created Successfully');
-      createPlanError.set(null);
-      creatingPlan.set(false);
-
-      return plan;
     } catch (e) {
       catchError('Plan Create Failed', e as Error);
       showFailureToast('Plan Create Failed');
@@ -683,20 +754,24 @@ const effects = {
         const { name, plan } = value;
         const data = await reqHasura(gql.DUPLICATE_PLAN, { new_plan_name: name, plan_id: plan.id }, user);
         const { duplicate_plan } = data;
-        const { new_plan_id } = duplicate_plan;
-        await effects.createSchedulingSpec(
-          {
-            analysis_only: false,
-            horizon_end: plan.end_time_doy,
-            horizon_start: plan.start_time_doy,
-            plan_id: new_plan_id,
-            plan_revision: 0,
-            simulation_arguments: {},
-          },
-          user,
-        );
-        goto(`${base}/plans/${duplicate_plan.new_plan_id}`);
-        showSuccessToast('Branch Created Successfully');
+        if (duplicate_plan != null) {
+          const { new_plan_id } = duplicate_plan;
+          await effects.createSchedulingSpec(
+            {
+              analysis_only: false,
+              horizon_end: plan.end_time_doy,
+              horizon_start: plan.start_time_doy,
+              plan_id: new_plan_id,
+              plan_revision: 0,
+              simulation_arguments: {},
+            },
+            user,
+          );
+          goto(`${base}/plans/${duplicate_plan.new_plan_id}`);
+          showSuccessToast('Branch Created Successfully');
+        } else {
+          throw Error('');
+        }
       }
     } catch (e) {
       catchError('Branch Creation Failed', e as Error);
@@ -742,9 +817,13 @@ const effects = {
         user,
       );
       const { create_merge_request } = data;
-      const { merge_request_id } = create_merge_request;
-      showSuccessToast('Merge Request Created Successfully');
-      return merge_request_id;
+      if (create_merge_request != null) {
+        const { merge_request_id } = create_merge_request;
+        showSuccessToast('Merge Request Created Successfully');
+        return merge_request_id;
+      } else {
+        throw Error('Unable to create a branch merge request');
+      }
     } catch (e) {
       catchError('Merge Request Create Failed', e as Error);
       showFailureToast('Merge Request Create Failed');
@@ -760,11 +839,19 @@ const effects = {
 
       const data = await reqHasura<{ affected_rows: number }>(gql.CREATE_PLAN_TAGS, { tags }, user);
       const { insert_plan_tags } = data;
-      const { affected_rows } = insert_plan_tags;
-      if (notify) {
-        showSuccessToast('Plan Updated Successfully');
+      if (insert_plan_tags != null) {
+        const { affected_rows } = insert_plan_tags;
+
+        if (affected_rows !== tags.length) {
+          throw Error('Some plan tags were not successfully created');
+        }
+        if (notify) {
+          showSuccessToast('Plan Updated Successfully');
+        }
+        return affected_rows;
+      } else {
+        throw Error('Unable to create plan tags');
       }
-      return affected_rows;
     } catch (e) {
       catchError('Create Plan Tags Failed', e as Error);
       showFailureToast('Create Plan Tags Failed');
@@ -797,8 +884,12 @@ const effects = {
       );
       const { createSchedulingCondition: newCondition } = data;
 
-      showSuccessToast('Scheduling Condition Created Successfully');
-      return newCondition;
+      if (newCondition != null) {
+        showSuccessToast('Scheduling Condition Created Successfully');
+        return newCondition;
+      } else {
+        throw Error(`Unable to create scheduling condition "${name}"`);
+      }
     } catch (e) {
       catchError('Scheduling Condition Create Failed', e as Error);
       showFailureToast('Scheduling Condition Create Failed');
@@ -827,8 +918,12 @@ const effects = {
       const data = await reqHasura<SchedulingGoal>(gql.CREATE_SCHEDULING_GOAL, { goal: goalInsertInput }, user);
       const { createSchedulingGoal: newGoal } = data;
 
-      showSuccessToast('Scheduling Goal Created Successfully');
-      return newGoal;
+      if (newGoal != null) {
+        showSuccessToast('Scheduling Goal Created Successfully');
+        return newGoal;
+      } else {
+        throw Error(`Unable to create scheduling goal "${name}"`);
+      }
     } catch (e) {
       catchError('Scheduling Goal Create Failed', e as Error);
       showFailureToast('Scheduling Goal Create Failed');
@@ -844,8 +939,16 @@ const effects = {
 
       const data = await reqHasura<{ affected_rows: number }>(gql.CREATE_SCHEDULING_GOAL_TAGS, { tags }, user);
       const { insert_scheduling_goal_tags } = data;
-      const { affected_rows } = insert_scheduling_goal_tags;
-      return affected_rows;
+      if (insert_scheduling_goal_tags != null) {
+        const { affected_rows } = insert_scheduling_goal_tags;
+
+        if (affected_rows !== tags.length) {
+          throw Error('Some scheduling goal tags were not successfully created');
+        }
+        return affected_rows;
+      } else {
+        throw Error('Unable to create scheduling goal tags');
+      }
     } catch (e) {
       catchError('Create Scheduling Goal Tags Failed', e as Error);
       showFailureToast('Create Scheduling Goal Tags Failed');
@@ -880,7 +983,14 @@ const effects = {
         throwPermissionError('create a scheduling spec condition');
       }
 
-      await reqHasura(gql.CREATE_SCHEDULING_SPEC_CONDITION, { spec_condition }, user);
+      const data = await reqHasura<SchedulingSpecCondition>(
+        gql.CREATE_SCHEDULING_SPEC_CONDITION,
+        { spec_condition },
+        user,
+      );
+      if (data.createSchedulingSpecCondition == null) {
+        throw Error('Unable to create a scheduling spec condition');
+      }
     } catch (e) {
       catchError(e as Error);
     }
@@ -892,10 +1002,14 @@ const effects = {
         throwPermissionError('create a scheduling spec goal');
       }
 
-      const data = await reqHasura(gql.CREATE_SCHEDULING_SPEC_GOAL, { spec_goal }, user);
+      const data = await reqHasura<SchedulingSpecGoal>(gql.CREATE_SCHEDULING_SPEC_GOAL, { spec_goal }, user);
       const { createSchedulingGoal } = data;
-      const { specification_id } = createSchedulingGoal;
-      return specification_id;
+      if (createSchedulingGoal != null) {
+        const { specification_id } = createSchedulingGoal;
+        return specification_id;
+      } else {
+        throw Error('Unable to create a scheduling spec goal');
+      }
     } catch (e) {
       catchError(e as Error);
       return null;
@@ -924,8 +1038,12 @@ const effects = {
         user,
       );
 
-      showSuccessToast(`Simulation Template ${name} Created Successfully`);
-      return newTemplate;
+      if (newTemplate != null) {
+        showSuccessToast(`Simulation Template ${name} Created Successfully`);
+        return newTemplate;
+      } else {
+        throw Error(`Unable to create simulation template "${name}"`);
+      }
     } catch (e) {
       catchError('Simulation Template Create Failed', e as Error);
       showFailureToast('Simulation Template Create Failed');
@@ -964,11 +1082,23 @@ const effects = {
 
       const data = await reqHasura<{ affected_rows: number; returning: Tag[] }>(gql.CREATE_TAGS, { tags }, user);
       const { insert_tags } = data;
-      const { returning } = insert_tags;
-      if (notify) {
-        showSuccessToast('Tags Created Successfully');
+      if (insert_tags != null) {
+        const { returning } = insert_tags;
+
+        const createdTags = returning.map(({ name }) => name);
+
+        // If there are tags that did not get created
+        const leftoverTagNames = tags.filter(({ name }) => !createdTags.includes(name)).map(({ name }) => name);
+        if (leftoverTagNames.length > 0) {
+          throw new Error(`Some tags were not successfully created: ${leftoverTagNames.join(', ')}`);
+        }
+        if (notify) {
+          showSuccessToast('Tags Created Successfully');
+        }
+        return returning;
+      } else {
+        throw Error('Unable to create tags');
       }
-      return returning;
     } catch (e) {
       catchError('Create Tags Failed', e as Error);
       showFailureToast('Create Tags Failed');
@@ -984,9 +1114,13 @@ const effects = {
 
       const data = await reqHasura<Pick<UserSequence, 'id'>>(gql.CREATE_USER_SEQUENCE, { sequence }, user);
       const { createUserSequence } = data;
-      const { id } = createUserSequence;
-      showSuccessToast('User Sequence Created Successfully');
-      return id;
+      if (createUserSequence != null) {
+        const { id } = createUserSequence;
+        showSuccessToast('User Sequence Created Successfully');
+        return id;
+      } else {
+        throw Error(`Unable to create user sequence "${sequence.name}"`);
+      }
     } catch (e) {
       catchError('User Sequence Create Failed', e as Error);
       showFailureToast('User Sequence Create Failed');
@@ -1008,10 +1142,14 @@ const effects = {
         const data = await reqHasura<View>(gql.CREATE_VIEW, { view: viewInsertInput }, user);
         const { newView } = data;
 
-        view.update(() => newView);
-        setQueryParam('viewId', `${newView.id}`);
-        showSuccessToast('View Created Successfully');
-        return true;
+        if (newView != null) {
+          view.update(() => newView);
+          setQueryParam('viewId', `${newView.id}`);
+          showSuccessToast('View Created Successfully');
+          return true;
+        } else {
+          throw Error(`Unable to create view "${viewInsertInput.name}"`);
+        }
       }
     } catch (e) {
       catchError('View Create Failed', e as Error);
@@ -1050,9 +1188,18 @@ const effects = {
 
       const data = await reqHasura<{ affected_rows: number }>(gql.DELETE_ACTIVITY_DIRECTIVE_TAGS, { ids }, user);
       const { delete_activity_directive_tags } = data;
-      const { affected_rows } = delete_activity_directive_tags;
-      showSuccessToast('Activity Directive Updated Successfully');
-      return affected_rows;
+      if (delete_activity_directive_tags != null) {
+        const { affected_rows } = delete_activity_directive_tags;
+
+        if (affected_rows !== ids.length) {
+          throw Error('Some activity directive tags were not successfully deleted');
+        }
+
+        showSuccessToast('Activity Directive Updated Successfully');
+        return affected_rows;
+      } else {
+        throw Error('Unable to delete activity directive tags');
+      }
     } catch (e) {
       catchError('Delete Activity Directive Tags Failed', e as Error);
       showFailureToast('Delete Activity Directive Tags Failed');
@@ -1265,9 +1412,13 @@ const effects = {
       );
 
       if (confirm) {
-        await reqHasura(gql.DELETE_ACTIVITY_PRESET, { id }, user);
-        showSuccessToast('Activity Preset Deleted Successfully');
-        return true;
+        const data = await reqHasura<{ id: number }>(gql.DELETE_ACTIVITY_PRESET, { id }, user);
+        if (data.deleteActivityPreset != null) {
+          showSuccessToast('Activity Preset Deleted Successfully');
+          return true;
+        } else {
+          throw Error(`Unable to delete activity preset with id "${id}"`);
+        }
       }
     } catch (e) {
       catchError('Activity Preset Delete Failed', e as Error);
@@ -1290,9 +1441,13 @@ const effects = {
       );
 
       if (confirm) {
-        await reqHasura(gql.DELETE_COMMAND_DICTIONARY, { id }, user);
-        showSuccessToast('Command Dictionary Deleted Successfully');
-        commandDictionaries.filterValueById(id);
+        const data = await reqHasura<{ id: number }>(gql.DELETE_COMMAND_DICTIONARY, { id }, user);
+        if (data.deleteCommandDictionary != null) {
+          showSuccessToast('Command Dictionary Deleted Successfully');
+          commandDictionaries.filterValueById(id);
+        } else {
+          throw Error(`Unable to delete command dictionary with id "${id}"`);
+        }
       }
     } catch (e) {
       catchError('Command Dictionary Delete Failed', e as Error);
@@ -1313,9 +1468,13 @@ const effects = {
       );
 
       if (confirm) {
-        await reqHasura(gql.DELETE_CONSTRAINT, { id: constraint.id }, user);
-        showSuccessToast('Constraint Deleted Successfully');
-        return true;
+        const data = await reqHasura<{ id: number }>(gql.DELETE_CONSTRAINT, { id: constraint.id }, user);
+        if (data.deleteConstraint != null) {
+          showSuccessToast('Constraint Deleted Successfully');
+          return true;
+        } else {
+          throw Error(`Unable to delete constraint "${constraint.name}"`);
+        }
       }
     } catch (e) {
       catchError('Constraint Delete Failed', e as Error);
@@ -1331,8 +1490,15 @@ const effects = {
         throwPermissionError('delete constraint tags');
       }
 
-      await reqHasura<{ affected_rows: number }>(gql.DELETE_CONSTRAINT_TAGS, { ids }, user);
-      return true;
+      const data = await reqHasura<{ affected_rows: number }>(gql.DELETE_CONSTRAINT_TAGS, { ids }, user);
+      if (data.delete_constraint_tags != null) {
+        if (data.delete_constraint_tags.affected_rows !== ids.length) {
+          throw Error('Some constraint tags were not successfully deleted');
+        }
+        return true;
+      } else {
+        throw Error('Unable to delete constraint tags');
+      }
     } catch (e) {
       catchError('Delete Constraint Tags Failed', e as Error);
       showFailureToast('Delete Constraint Tags Failed');
@@ -1353,9 +1519,14 @@ const effects = {
       );
 
       if (confirm) {
-        await reqHasura(gql.DELETE_EXPANSION_RULE, { id: rule.id }, user);
-        showSuccessToast('Expansion Rule Deleted Successfully');
-        return true;
+        const data = await reqHasura(gql.DELETE_EXPANSION_RULE, { id: rule.id }, user);
+
+        if (data.deleteExpansionRule != null) {
+          showSuccessToast('Expansion Rule Deleted Successfully');
+          return true;
+        } else {
+          throw Error(`Unable to delete expansion rule "${rule.name}"`);
+        }
       }
     } catch (e) {
       catchError('Expansion Rule Delete Failed', e as Error);
@@ -1373,8 +1544,15 @@ const effects = {
 
       const data = await reqHasura<{ affected_rows: number }>(gql.DELETE_EXPANSION_RULE_TAGS, { ids }, user);
       const { delete_expansion_rule_tags } = data;
-      const { affected_rows } = delete_expansion_rule_tags;
-      return affected_rows;
+      if (delete_expansion_rule_tags != null) {
+        const { affected_rows } = delete_expansion_rule_tags;
+        if (affected_rows !== ids.length) {
+          throw Error('Some expansion rule tags were not successfully deleted');
+        }
+        return affected_rows;
+      } else {
+        throw Error('Unable to delete expansion rule tags');
+      }
     } catch (e) {
       catchError('Delete Expansion Rule Tags Failed', e as Error);
       showFailureToast('Delete Expansion Rule Tags Failed');
@@ -1396,8 +1574,12 @@ const effects = {
 
       if (confirm) {
         const { seq_id: seqId, simulation_dataset_id: simulationDatasetId } = sequence;
-        await reqHasura(gql.DELETE_EXPANSION_SEQUENCE, { seqId, simulationDatasetId }, user);
-        showSuccessToast('Expansion Sequence Deleted Successfully');
+        const data = await reqHasura<SeqId>(gql.DELETE_EXPANSION_SEQUENCE, { seqId, simulationDatasetId }, user);
+        if (data.deleteExpansionSequence != null) {
+          showSuccessToast('Expansion Sequence Deleted Successfully');
+        } else {
+          throw Error(`Unable to delete expansion sequence with id "${seqId}"`);
+        }
       }
     } catch (e) {
       catchError('Expansion Sequence Delete Failed', e as Error);
@@ -1415,7 +1597,7 @@ const effects = {
         throwPermissionError('delete an expansion sequence from an activity');
       }
 
-      await reqHasura<SeqId>(
+      const data = await reqHasura<SeqId>(
         gql.DELETE_EXPANSION_SEQUENCE_TO_ACTIVITY,
         {
           simulated_activity_id,
@@ -1423,8 +1605,14 @@ const effects = {
         },
         user,
       );
-      showSuccessToast('Expansion Sequence Deleted From Activity Successfully');
-      return true;
+      if (data.expansionSequence != null) {
+        showSuccessToast('Expansion Sequence Deleted From Activity Successfully');
+        return true;
+      } else {
+        throw Error(
+          `Unable to remove the associated expansion sequence from the dataset ${simulation_dataset_id} and the activity ${simulated_activity_id}`,
+        );
+      }
     } catch (e) {
       catchError('Delete Expansion Sequence From Activity Failed', e as Error);
       showFailureToast('Delete Expansion Sequence From Activity Failed');
@@ -1445,9 +1633,13 @@ const effects = {
       );
 
       if (confirm) {
-        await reqHasura(gql.DELETE_EXPANSION_SET, { id: set.name }, user);
-        showSuccessToast('Expansion Set Deleted Successfully');
-        return true;
+        const data = await reqHasura<{ id: number }>(gql.DELETE_EXPANSION_SET, { id: set.name }, user);
+        if (data.deleteExpansionSet != null) {
+          showSuccessToast('Expansion Set Deleted Successfully');
+          return true;
+        } else {
+          throw Error(`Unable to delete expansion set "${set.name}"`);
+        }
       }
 
       return false;
@@ -1483,9 +1675,13 @@ const effects = {
       if (confirm) {
         const { id, jar_id } = model;
         await effects.deleteFile(jar_id, user);
-        await reqHasura(gql.DELETE_MODEL, { id }, user);
-        showSuccessToast('Model Deleted Successfully');
-        models.filterValueById(id);
+        const data = await reqHasura<{ id: number }>(gql.DELETE_MODEL, { id }, user);
+        if (data.deleteModel != null) {
+          showSuccessToast('Model Deleted Successfully');
+          models.filterValueById(id);
+        } else {
+          throw Error(`Unable to delete model "${model.name}"`);
+        }
       }
     } catch (e) {
       catchError('Model Delete Failed', e as Error);
@@ -1506,9 +1702,13 @@ const effects = {
       );
 
       if (confirm) {
-        await reqHasura(gql.DELETE_PLAN, { id: plan.id }, user);
-        showSuccessToast('Plan Deleted Successfully');
-        return true;
+        const data = await reqHasura(gql.DELETE_PLAN, { id: plan.id }, user);
+        if (data.deletePlan != null) {
+          showSuccessToast('Plan Deleted Successfully');
+          return true;
+        } else {
+          throw Error(`Unable to delete the plan with "${plan.name}"`);
+        }
       }
 
       return false;
@@ -1527,9 +1727,16 @@ const effects = {
 
       const data = await reqHasura<{ affected_rows: number }>(gql.DELETE_PLAN_TAGS, { ids }, user);
       const { delete_plan_tags } = data;
-      const { affected_rows } = delete_plan_tags;
-      showSuccessToast('Plan Updated Successfully');
-      return affected_rows;
+      if (delete_plan_tags != null) {
+        const { affected_rows } = delete_plan_tags;
+        if (affected_rows !== ids.length) {
+          throw Error('Some plan tags were not successfully deleted');
+        }
+        showSuccessToast('Plan Updated Successfully');
+        return affected_rows;
+      } else {
+        throw Error('Unable to delete plan tags');
+      }
     } catch (e) {
       catchError('Delete Plan Tags Failed', e as Error);
       showFailureToast('Delete Plan Tags Failed');
@@ -1550,9 +1757,13 @@ const effects = {
       );
 
       if (confirm) {
-        await reqHasura(gql.DELETE_SCHEDULING_CONDITION, { id: condition.id }, user);
-        showSuccessToast('Scheduling Condition Deleted Successfully');
-        return true;
+        const data = await reqHasura<{ id: number }>(gql.DELETE_SCHEDULING_CONDITION, { id: condition.id }, user);
+        if (data.deleteSchedulingCondition) {
+          showSuccessToast('Scheduling Condition Deleted Successfully');
+          return true;
+        } else {
+          throw Error(`Unable to delete scheduling condition "${condition.name}"`);
+        }
       } else {
         return false;
       }
@@ -2905,12 +3116,16 @@ const effects = {
         },
         user,
       );
-      const { update_activity_directive_by_pk: updatedDirective } = data;
-      activityDirectivesMap.update((currentActivityDirectivesMap: ActivityDirectivesMap) => ({
-        ...currentActivityDirectivesMap,
-        [id]: updatedDirective,
-      }));
-      showSuccessToast('Activity Directive Updated Successfully');
+      if (data.update_activity_directive_by_pk) {
+        const { update_activity_directive_by_pk: updatedDirective } = data;
+        activityDirectivesMap.update((currentActivityDirectivesMap: ActivityDirectivesMap) => ({
+          ...currentActivityDirectivesMap,
+          [id]: updatedDirective,
+        }));
+        showSuccessToast('Activity Directive Updated Successfully');
+      } else {
+        throw Error(`Unable to update directive "${id}"`);
+      }
     } catch (e) {
       catchError('Activity Directive Update Failed', e as Error);
       showFailureToast('Activity Directive Update Failed');
@@ -3133,7 +3348,7 @@ const effects = {
         throwPermissionError('update this simulation');
       }
 
-      await reqHasura<Pick<Simulation, 'id'>>(
+      const response = await reqHasura<Pick<Simulation, 'id'>>(
         gql.UPDATE_SIMULATION,
         {
           id: simulationSetInput.id,
@@ -3146,8 +3361,12 @@ const effects = {
         },
         user,
       );
-      await effects.uploadFiles(newFiles, user);
-      showSuccessToast('Simulation Updated Successfully');
+      if (response.updateSimulation !== null) {
+        await effects.uploadFiles(newFiles, user);
+        showSuccessToast('Simulation Updated Successfully');
+      } else {
+        throw Error(`Unable to update simulation with id "${simulationSetInput.id}"`);
+      }
     } catch (e) {
       catchError('Simulation Update Failed', e as Error);
       showFailureToast('Simulation Update Failed');
