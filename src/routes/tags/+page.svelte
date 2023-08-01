@@ -234,7 +234,7 @@
   async function deleteTag(tag: Tag): Promise<void> {
     const { confirm } = await showConfirmModal(
       'Delete',
-      `Are you sure you want to delete the tag "${tag.name}"? All occurences of this tag will be removed from Plans, Activity Directives, Constraints, Scheduling Goals, and Expansion Rules.`,
+      `Are you sure you want to delete "${tag.name}"? All occurences of this tag will be removed from Plans, Activity Directives, Constraints, Scheduling Goals, and Expansion Rules.`,
       'Delete Tag',
     );
     if (confirm) {
