@@ -1388,7 +1388,7 @@ const effects = {
 
       const { confirm } = await showConfirmModal(
         'Delete',
-        'Are you sure you want to delete this expansion sequence?',
+        `Are you sure you want to delete expansion sequence with sequence ID: "${sequence.seq_id}"?`,
         'Delete Expansion Sequence',
       );
 
