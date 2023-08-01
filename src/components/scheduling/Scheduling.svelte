@@ -35,13 +35,13 @@
     }
   }
 
-  async function deleteCondition({ id }: Pick<SchedulingCondition, 'id'>) {
-    const success = await effects.deleteSchedulingCondition(id, user);
+  async function deleteCondition(condition: SchedulingCondition) {
+    const success = await effects.deleteSchedulingCondition(condition, user);
 
     if (success) {
-      schedulingConditions.filterValueById(id);
+      schedulingConditions.filterValueById(condition.id);
 
-      if (id === selectedCondition?.id) {
+      if (condition.id === selectedCondition?.id) {
         selectedCondition = null;
       }
     }
@@ -60,7 +60,11 @@
   }
 
   function deleteConditionContext(event: CustomEvent<number>) {
-    deleteCondition({ id: event.detail });
+    const id = event.detail;
+    const condition = $schedulingConditions.find(s => s.id === id);
+    if (condition) {
+      deleteCondition(condition);
+    }
   }
 
   function deleteGoalContext(event: CustomEvent<number>) {

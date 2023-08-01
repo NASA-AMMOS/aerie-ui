@@ -1536,7 +1536,7 @@ const effects = {
     }
   },
 
-  async deleteSchedulingCondition(id: number, user: User | null): Promise<boolean> {
+  async deleteSchedulingCondition(condition: SchedulingCondition, user: User | null): Promise<boolean> {
     try {
       if (!queryPermissions.DELETE_SCHEDULING_CONDITION(user)) {
         throwPermissionError('delete this scheduling condition');
@@ -1544,12 +1544,12 @@ const effects = {
 
       const { confirm } = await showConfirmModal(
         'Delete',
-        'Are you sure you want to delete this scheduling condition?',
+        `Are you sure you want to delete "${condition.name}"?`,
         'Delete Scheduling Condition',
       );
 
       if (confirm) {
-        await reqHasura(gql.DELETE_SCHEDULING_CONDITION, { id }, user);
+        await reqHasura(gql.DELETE_SCHEDULING_CONDITION, { id: condition.id }, user);
         showSuccessToast('Scheduling Condition Deleted Successfully');
         return true;
       } else {
