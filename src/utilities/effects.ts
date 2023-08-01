@@ -1475,7 +1475,7 @@ const effects = {
 
       const { confirm } = await showConfirmModal(
         'Delete',
-        'Are you sure you want to delete this model?',
+        `Are you sure you want to delete "${model.name}" version ${model.version}?`,
         'Delete Model',
       );
 
