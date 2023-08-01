@@ -1491,16 +1491,20 @@ const effects = {
     }
   },
 
-  async deletePlan(id: number, user: User | null): Promise<boolean> {
+  async deletePlan(plan: Plan, user: User | null): Promise<boolean> {
     try {
       if (!queryPermissions.DELETE_PLAN(user)) {
         throwPermissionError('delete this plan');
       }
 
-      const { confirm } = await showConfirmModal('Delete', 'Are you sure you want to delete this plan?', 'Delete Plan');
+      const { confirm } = await showConfirmModal(
+        'Delete',
+        `Are you sure you want to delete "${plan.name}"?`,
+        'Delete Plan',
+      );
 
       if (confirm) {
-        await reqHasura(gql.DELETE_PLAN, { id }, user);
+        await reqHasura(gql.DELETE_PLAN, { id: plan.id }, user);
         showSuccessToast('Plan Deleted Successfully');
         return true;
       }
