@@ -1338,7 +1338,7 @@ const effects = {
     }
   },
 
-  async deleteExpansionRule(id: number, user: User | null): Promise<boolean> {
+  async deleteExpansionRule(rule: ExpansionRule, user: User | null): Promise<boolean> {
     try {
       if (!queryPermissions.DELETE_EXPANSION_RULE(user)) {
         throwPermissionError('delete an expansion rule');
@@ -1346,12 +1346,12 @@ const effects = {
 
       const { confirm } = await showConfirmModal(
         'Delete',
-        'Are you sure you want to delete this expansion rule?',
+        `Are you sure you want to delete "${rule.name}"?`,
         'Delete Expansion Rule',
       );
 
       if (confirm) {
-        await reqHasura(gql.DELETE_EXPANSION_RULE, { id }, user);
+        await reqHasura(gql.DELETE_EXPANSION_RULE, { id: rule.id }, user);
         showSuccessToast('Expansion Rule Deleted Successfully');
         return true;
       }
