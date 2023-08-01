@@ -42,6 +42,7 @@ import type {
   ExpansionSequence,
   ExpansionSequenceInsertInput,
   ExpansionSequenceToActivityInsertInput,
+  ExpansionSet,
   SeqId,
 } from '../types/expansion';
 import type { ModelInsertInput, ModelSlim } from '../types/model';
@@ -1430,7 +1431,7 @@ const effects = {
     }
   },
 
-  async deleteExpansionSet(id: number, user: User | null): Promise<boolean> {
+  async deleteExpansionSet(set: ExpansionSet, user: User | null): Promise<boolean> {
     try {
       if (!queryPermissions.DELETE_EXPANSION_SET(user)) {
         throwPermissionError('delete an expansion set');
@@ -1438,12 +1439,12 @@ const effects = {
 
       const { confirm } = await showConfirmModal(
         'Delete',
-        'Are you sure you want to delete this expansion set?',
+        `Are you sure you want to delete "${set.name}"?`,
         'Delete Expansion Set',
       );
 
       if (confirm) {
-        await reqHasura(gql.DELETE_EXPANSION_SET, { id }, user);
+        await reqHasura(gql.DELETE_EXPANSION_SET, { id: set.name }, user);
         showSuccessToast('Expansion Set Deleted Successfully');
         return true;
       }
