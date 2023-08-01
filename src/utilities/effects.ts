@@ -1562,7 +1562,7 @@ const effects = {
     }
   },
 
-  async deleteSchedulingGoal(id: number, user: User | null): Promise<boolean> {
+  async deleteSchedulingGoal(goal: SchedulingGoal, user: User | null): Promise<boolean> {
     try {
       if (!queryPermissions.DELETE_SCHEDULING_GOAL(user)) {
         throwPermissionError('delete this scheduling goal');
@@ -1570,12 +1570,12 @@ const effects = {
 
       const { confirm } = await showConfirmModal(
         'Delete',
-        'Are you sure you want to delete this scheduling goal?',
+        `Are you sure you want to delete ${goal.name}?`,
         'Delete Scheduling Goal',
       );
 
       if (confirm) {
-        await reqHasura(gql.DELETE_SCHEDULING_GOAL, { id }, user);
+        await reqHasura(gql.DELETE_SCHEDULING_GOAL, { id: goal.id }, user);
         showSuccessToast('Scheduling Goal Deleted Successfully');
         return true;
       } else {

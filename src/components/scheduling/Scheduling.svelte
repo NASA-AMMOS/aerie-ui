@@ -47,13 +47,13 @@
     }
   }
 
-  async function deleteGoal({ id }: Pick<SchedulingGoal, 'id'>) {
-    const success = await effects.deleteSchedulingGoal(id, user);
+  async function deleteGoal(goal: SchedulingGoal) {
+    const success = await effects.deleteSchedulingGoal(goal, user);
 
     if (success) {
-      schedulingGoals.filterValueById(id);
+      schedulingGoals.filterValueById(goal.id);
 
-      if (id === selectedGoal?.id) {
+      if (goal.id === selectedGoal?.id) {
         selectedGoal = null;
       }
     }
@@ -68,7 +68,13 @@
   }
 
   function deleteGoalContext(event: CustomEvent<number>) {
-    deleteGoal({ id: event.detail });
+    const id = event.detail;
+    const goal = $schedulingGoals.find(s => s.id === id);
+    if (goal) {
+      // Goal deletion does not make use of tags so we will exclude them to avoid
+      // having to expand the goal tags to make this a proper SchedulingGoal
+      deleteGoal({ ...goal, tags: [] });
+    }
   }
 
   function selectCondition(condition: SchedulingCondition) {
