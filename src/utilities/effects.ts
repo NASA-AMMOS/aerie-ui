@@ -71,6 +71,7 @@ import type {
   SchedulingConditionInsertInput,
   SchedulingGoal,
   SchedulingGoalInsertInput,
+  SchedulingGoalSlim,
   SchedulingResponse,
   SchedulingSpec,
   SchedulingSpecCondition,
@@ -1562,7 +1563,7 @@ const effects = {
     }
   },
 
-  async deleteSchedulingGoal(goal: SchedulingGoal, user: User | null): Promise<boolean> {
+  async deleteSchedulingGoal(goal: SchedulingGoalSlim, user: User | null): Promise<boolean> {
     try {
       if (!queryPermissions.DELETE_SCHEDULING_GOAL(user)) {
         throwPermissionError('delete this scheduling goal');
