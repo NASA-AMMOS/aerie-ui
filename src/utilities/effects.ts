@@ -1570,7 +1570,7 @@ const effects = {
 
       const { confirm } = await showConfirmModal(
         'Delete',
-        `Are you sure you want to delete ${goal.name}?`,
+        `Are you sure you want to delete "${goal.name}"?`,
         'Delete Scheduling Goal',
       );
 
@@ -1661,7 +1661,7 @@ const effects = {
     }
   },
 
-  async deleteUserSequence(id: number, user: User | null): Promise<boolean> {
+  async deleteUserSequence(sequence: UserSequence, user: User | null): Promise<boolean> {
     try {
       if (!queryPermissions.DELETE_USER_SEQUENCE(user)) {
         throwPermissionError('delete this user sequence');
@@ -1669,12 +1669,12 @@ const effects = {
 
       const { confirm } = await showConfirmModal(
         'Delete',
-        'Are you sure you want to delete this user sequence?',
+        `Are you sure you want to delete "${sequence.name}"?`,
         'Delete User Sequence',
       );
 
       if (confirm) {
-        await reqHasura(gql.DELETE_USER_SEQUENCE, { id }, user);
+        await reqHasura(gql.DELETE_USER_SEQUENCE, { id: sequence.id }, user);
         showSuccessToast('User Sequence Deleted Successfully');
         return true;
       }
