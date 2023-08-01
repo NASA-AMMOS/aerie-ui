@@ -230,7 +230,7 @@
     }
   }
 
-  async function deletePlan(plan: Plan): Promise<void> {
+  async function deletePlan(plan: PlanSlim): Promise<void> {
     const success = await effects.deletePlan(plan, user);
 
     if (success) {

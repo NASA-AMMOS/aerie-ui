@@ -1298,7 +1298,7 @@ const effects = {
     }
   },
 
-  async deleteConstraint(id: number, user: User | null): Promise<boolean> {
+  async deleteConstraint(constraint: Constraint, user: User | null): Promise<boolean> {
     try {
       if (!queryPermissions.DELETE_CONSTRAINT(user)) {
         throwPermissionError('delete this constraint');
@@ -1306,12 +1306,12 @@ const effects = {
 
       const { confirm } = await showConfirmModal(
         'Delete',
-        'Are you sure you want to delete this constraint?',
+        `Are you sure you want to delete "${constraint.name}"?`,
         'Delete Constraint',
       );
 
       if (confirm) {
-        await reqHasura(gql.DELETE_CONSTRAINT, { id }, user);
+        await reqHasura(gql.DELETE_CONSTRAINT, { id: constraint.id }, user);
         showSuccessToast('Constraint Deleted Successfully');
         return true;
       }
@@ -1491,7 +1491,7 @@ const effects = {
     }
   },
 
-  async deletePlan(plan: Plan, user: User | null): Promise<boolean> {
+  async deletePlan(plan: PlanSlim, user: User | null): Promise<boolean> {
     try {
       if (!queryPermissions.DELETE_PLAN(user)) {
         throwPermissionError('delete this plan');
