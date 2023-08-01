@@ -1687,16 +1687,20 @@ const effects = {
     }
   },
 
-  async deleteView(id: number, user: User | null): Promise<boolean> {
+  async deleteView(view: View, user: User | null): Promise<boolean> {
     try {
       if (!queryPermissions.DELETE_VIEW(user)) {
         throwPermissionError('delete this view');
       }
 
-      const { confirm } = await showConfirmModal('Delete', 'Are you sure you want to delete this view?', 'Delete View');
+      const { confirm } = await showConfirmModal(
+        'Delete',
+        `Are you sure you want to delete "${view.name}"?`,
+        'Delete View',
+      );
 
       if (confirm) {
-        await reqHasura(gql.DELETE_VIEW, { id }, user);
+        await reqHasura(gql.DELETE_VIEW, { id: view.id }, user);
         return true;
       }
     } catch (e) {
