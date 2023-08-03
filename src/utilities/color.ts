@@ -70,6 +70,14 @@ export function generateRandomPastelColor(): string {
   return hslToHex(360 * Math.random(), 25 + 70 * Math.random(), 82 + 10 * Math.random());
 }
 
+/**
+ * Returns dark if the bgColor hex has an acceptable WCAG 2.0 contrast ratio
+ * and otherwise returns light.
+ *
+ * From https://stackoverflow.com/a/41491220
+ * See https://www.w3.org/WAI/WCAG21/Techniques/general/G18.html for further explanation
+ * of the formula and magic numbers.
+ */
 export function pickTextColorBasedOnBgColor(bgColor: string): 'dark' | 'light' {
   const color = bgColor.charAt(0) === '#' ? bgColor.substring(1, 7) : bgColor;
   const r = parseInt(color.substring(0, 2), 16); // hexToR
