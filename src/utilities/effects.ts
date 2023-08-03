@@ -1285,7 +1285,7 @@ const effects = {
 
       const { confirm } = await showConfirmModal(
         'Delete',
-        `Are you sure you want to delete the dictionary with ID: ${id}?`,
+        `Are you sure you want to delete the dictionary with ID: "${id}"?`,
         'Delete Command Dictionary',
       );
 
