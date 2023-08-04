@@ -246,6 +246,7 @@
       if (constraintTagDeletionSuccess && expansionRuleTagDeletionSuccess && tagDeletionSuccess) {
         tags = tags.filter(t => t.id !== tag.id);
       }
+      exitEditing(false);
     }
   }
 
@@ -257,11 +258,11 @@
     }
   }
 
-  function exitEditing() {
+  function exitEditing(deselect: boolean = true) {
     resetTagFields();
     $createTagError = null;
     selectedTag = null;
-    if (dataGrid) {
+    if (deselect && dataGrid) {
       dataGrid.selectedItemId = null;
     }
   }
@@ -402,7 +403,12 @@
               </button>
             {:else}
               <div class="tags-save-buttons">
-                <button on:click={exitEditing} disabled={updatingTag} class="st-button secondary w-100" type="button">
+                <button
+                  on:click={() => exitEditing()}
+                  disabled={updatingTag}
+                  class="st-button secondary w-100"
+                  type="button"
+                >
                   Cancel
                 </button>
                 <button
