@@ -163,7 +163,7 @@
     const filterTextLowerCase = filterText.toLowerCase();
     const includesId = `${tag.id}`.includes(filterTextLowerCase);
     const includesName = tag.name.toLocaleLowerCase().includes(filterTextLowerCase);
-    const includesOwner = (tag.owner || '').toLocaleLowerCase().includes(filterTextLowerCase);
+    const includesOwner = (tag.owner ?? '').toLocaleLowerCase().includes(filterTextLowerCase);
     return includesId || includesName || includesOwner;
   });
 
@@ -281,7 +281,7 @@
   function showTag(tag: Tag) {
     selectedTag = tag;
     nameField.validateAndSet(tag.name);
-    colorField.validateAndSet(tag.color || '');
+    colorField.validateAndSet(tag.color ?? '');
   }
 </script>
 
