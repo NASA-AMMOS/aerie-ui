@@ -25,11 +25,11 @@ export type PlanTagsInsertInput = {
 };
 
 export type Tag = {
-  color: string;
+  color: string | null;
   created_at: string;
   id: number;
   name: string;
-  owner: string;
+  owner: string | null;
 };
 
 export type TagsMap = Record<Tag['id'], Tag>;
