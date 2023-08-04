@@ -246,7 +246,10 @@
       if (constraintTagDeletionSuccess && expansionRuleTagDeletionSuccess && tagDeletionSuccess) {
         tags = tags.filter(t => t.id !== tag.id);
       }
-      exitEditing(false);
+      // Stop editing if the selected tag is the one being deleted
+      if (selectedTag?.id === tag.id) {
+        exitEditing(false);
+      }
     }
   }
 
