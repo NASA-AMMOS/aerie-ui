@@ -1060,12 +1060,16 @@ const effects = {
 
       const data = await reqHasura<{ affected_row: number; tag: Tag }>(gql.CREATE_TAG, { tag }, user);
       const { insert_tags_one } = data;
-      const { tag: insertedTag } = insert_tags_one;
-      if (notify) {
-        showSuccessToast('Tag Created Successfully');
+      if (insert_tags_one != null) {
+        const { tag: insertedTag } = insert_tags_one;
+        if (notify) {
+          showSuccessToast('Tag Created Successfully');
+        }
+        createTagError.set(null);
+        return insertedTag;
+      } else {
+        throw Error(`Unable to create tag "${tag.name}"`);
       }
-      createTagError.set(null);
-      return insertedTag;
     } catch (e) {
       createTagError.set((e as Error).message);
       catchError('Create Tags Failed', e as Error);
