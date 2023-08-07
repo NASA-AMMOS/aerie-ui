@@ -176,7 +176,7 @@ const effects = {
         if (data.apply_preset_to_activity != null) {
           showSuccessToast('Preset Successfully Applied to Activity');
         } else {
-          throw Error(`Unable to apply preset with id "${presetId}" to directive with id "${activityId}"`);
+          throw Error(`Unable to apply preset with ID: "${presetId}" to directive with ID: "${activityId}"`);
         }
       }
     } catch (e) {
@@ -254,7 +254,7 @@ const effects = {
           checkConstraintsStatus.set(Status.Complete);
           showSuccessToast('Check Constraints Complete');
         } else {
-          throw Error(`Unable to check constraints for plan with id ${currentPlan.id}`);
+          throw Error(`Unable to check constraints for plan with ID: "${currentPlan.id}"`);
         }
       } else {
         throw Error('Plan is not defined.');
@@ -312,7 +312,7 @@ const effects = {
 
           showSuccessToast('Activity Directive Created Successfully');
         } else {
-          throw Error(`Unable to create activity directive "${name}" on plan with id ${currentPlan.id}`);
+          throw Error(`Unable to create activity directive "${name}" on plan with ID ${currentPlan.id}`);
         }
       } else {
         throw Error('Plan is not defined.');
@@ -543,7 +543,7 @@ const effects = {
         showSuccessToast('Expansion Sequence Created Successfully');
         creatingExpansionSequence.set(false);
       } else {
-        throw Error(`Unable to create expansion sequence with id "${seqId}"`);
+        throw Error(`Unable to create expansion sequence with ID: "${seqId}"`);
       }
     } catch (e) {
       catchError('Expansion Sequence Create Failed', e as Error);
@@ -1417,7 +1417,7 @@ const effects = {
           showSuccessToast('Activity Preset Deleted Successfully');
           return true;
         } else {
-          throw Error(`Unable to delete activity preset with id "${id}"`);
+          throw Error(`Unable to delete activity preset with ID: "${id}"`);
         }
       }
     } catch (e) {
@@ -1446,7 +1446,7 @@ const effects = {
           showSuccessToast('Command Dictionary Deleted Successfully');
           commandDictionaries.filterValueById(id);
         } else {
-          throw Error(`Unable to delete command dictionary with id "${id}"`);
+          throw Error(`Unable to delete command dictionary with ID: "${id}"`);
         }
       }
     } catch (e) {
@@ -1578,7 +1578,7 @@ const effects = {
         if (data.deleteExpansionSequence != null) {
           showSuccessToast('Expansion Sequence Deleted Successfully');
         } else {
-          throw Error(`Unable to delete expansion sequence with id "${seqId}"`);
+          throw Error(`Unable to delete expansion sequence with ID: "${seqId}"`);
         }
       }
     } catch (e) {
@@ -1758,7 +1758,7 @@ const effects = {
 
       if (confirm) {
         const data = await reqHasura<{ id: number }>(gql.DELETE_SCHEDULING_CONDITION, { id: condition.id }, user);
-        if (data.deleteSchedulingCondition) {
+        if (data.deleteSchedulingCondition != null) {
           showSuccessToast('Scheduling Condition Deleted Successfully');
           return true;
         } else {
@@ -1787,9 +1787,14 @@ const effects = {
       );
 
       if (confirm) {
-        await reqHasura(gql.DELETE_SCHEDULING_GOAL, { id: goal.id }, user);
-        showSuccessToast('Scheduling Goal Deleted Successfully');
-        return true;
+        const data = await reqHasura<{ id: number }>(gql.DELETE_SCHEDULING_GOAL, { id: goal.id }, user);
+
+        if (data.deleteSchedulingGoal) {
+          showSuccessToast('Scheduling Goal Deleted Successfully');
+          return true;
+        } else {
+          throw Error(`Unable to delete scheduling goal "${goal.name}"`);
+        }
       } else {
         return false;
       }
@@ -1808,8 +1813,15 @@ const effects = {
 
       const data = await reqHasura<{ affected_rows: number }>(gql.DELETE_SCHEDULING_GOAL_TAGS, { ids }, user);
       const { delete_scheduling_goal_tags } = data;
-      const { affected_rows } = delete_scheduling_goal_tags;
-      return affected_rows;
+      if (delete_scheduling_goal_tags != null) {
+        const { affected_rows } = delete_scheduling_goal_tags;
+        if (affected_rows !== ids.length) {
+          throw Error('Some scheduling goal tags were not successfully created');
+        }
+        return affected_rows;
+      } else {
+        throw Error('Unable to delete scheduling goal tags');
+      }
     } catch (e) {
       catchError('Delete Scheduling Goal Tags Failed', e as Error);
       showFailureToast('Delete Scheduling Goal Tags Failed');
@@ -1823,10 +1835,18 @@ const effects = {
         throwPermissionError('delete this scheduling goal');
       }
 
-      await reqHasura(gql.DELETE_SCHEDULING_SPEC_GOAL, { goal_id, specification_id }, user);
-      return true;
+      const data = await reqHasura<{ goal_id: number; specification_id: number }>(
+        gql.DELETE_SCHEDULING_SPEC_GOAL,
+        { goal_id, specification_id },
+        user,
+      );
+      if (data.deleteSchedulingSpecGoal != null) {
+        return true;
+      } else {
+        throw Error(`Unable to delete scheduling goal with ID: "${goal_id}"`);
+      }
     } catch (e) {
-      catchError('Scheduling Goal Spec Delete Failed', e as Error);
+      catchError('Scheduling Goal Delete Failed', e as Error);
       showFailureToast('Scheduling Goal Delete Failed');
       return false;
     }
@@ -1845,9 +1865,13 @@ const effects = {
       );
 
       if (confirm) {
-        await reqHasura(gql.DELETE_SIMULATION_TEMPLATE, { id }, user);
-        showSuccessToast('Simulation Template Deleted Successfully');
-        return true;
+        const data = await reqHasura<{ id: number }>(gql.DELETE_SIMULATION_TEMPLATE, { id }, user);
+        if (data.deleteSimulationTemplate != null) {
+          showSuccessToast('Simulation Template Deleted Successfully');
+          return true;
+        } else {
+          throw Error(`Unable to delete simulation template with ID: "${id}"`);
+        }
       }
     } catch (e) {
       catchError('Simulation Template Delete Failed', e as Error);
@@ -1886,9 +1910,13 @@ const effects = {
       );
 
       if (confirm) {
-        await reqHasura(gql.DELETE_USER_SEQUENCE, { id: sequence.id }, user);
-        showSuccessToast('User Sequence Deleted Successfully');
-        return true;
+        const data = await reqHasura<{ id: number }>(gql.DELETE_USER_SEQUENCE, { id: sequence.id }, user);
+        if (data.deleteUserSequence != null) {
+          showSuccessToast('User Sequence Deleted Successfully');
+          return true;
+        } else {
+          throw Error(`Unable to delete user sequence "${sequence.name}"`);
+        }
       }
 
       return false;
@@ -1912,8 +1940,12 @@ const effects = {
       );
 
       if (confirm) {
-        await reqHasura(gql.DELETE_VIEW, { id: view.id }, user);
-        return true;
+        const data = await reqHasura<{ id: number }>(gql.DELETE_VIEW, { id: view.id }, user);
+        if (data.deletedView != null) {
+          return true;
+        } else {
+          throw Error(`Unable to delete view "${view.name}"`);
+        }
       }
     } catch (e) {
       catchError(e as Error);
@@ -1935,8 +1967,17 @@ const effects = {
       );
 
       if (confirm) {
-        await reqHasura(gql.DELETE_VIEWS, { ids }, user);
-        return true;
+        const data = await reqHasura<{ returning: { id: number }[] }>(gql.DELETE_VIEWS, { ids }, user);
+        if (data.delete_view != null) {
+          const deletedViewIds = data.delete_view.returning.map(({ id }) => id);
+          const leftoverViewIds = ids.filter(id => !deletedViewIds.includes(id));
+          if (leftoverViewIds.length > 0) {
+            throw new Error(`Some views were not successfully deleted: ${leftoverViewIds.join(', ')}`);
+          }
+          return true;
+        } else {
+          throw Error('Unable to delete views');
+        }
       }
     } catch (e) {
       catchError(e as Error);
@@ -1956,13 +1997,16 @@ const effects = {
         const { id, name } = value;
         const viewUpdateInput: ViewUpdateInput = { definition, name };
         const data = await reqHasura<View>(gql.UPDATE_VIEW, { id, view: viewUpdateInput }, user);
-        const {
-          updatedView: { name: updatedName, updated_at },
-        } = data;
+        const { updatedView } = data;
 
-        applyViewUpdate({ name: updatedName, updated_at });
-        showSuccessToast('View Edited Successfully');
-        return true;
+        if (updatedView != null) {
+          const { name: updatedName, updated_at } = updatedView;
+          applyViewUpdate({ name: updatedName, updated_at });
+          showSuccessToast('View Edited Successfully');
+          return true;
+        } else {
+          throw Error(`Unable to edit view "${name}"`);
+        }
       }
     } catch (e) {
       catchError('View Edit Failed', e as Error);
@@ -1980,9 +2024,13 @@ const effects = {
         throwPermissionError('expand this plan');
       }
 
-      await reqHasura(gql.EXPAND, { expansionSetId, simulationDatasetId }, user);
-      planExpansionStatus.set(Status.Complete);
-      showSuccessToast('Plan Expanded Successfully');
+      const data = await reqHasura<{ id: number }>(gql.EXPAND, { expansionSetId, simulationDatasetId }, user);
+      if (data.expand != null) {
+        planExpansionStatus.set(Status.Complete);
+        showSuccessToast('Plan Expanded Successfully');
+      } else {
+        throw Error('Unable to expand plan');
+      }
     } catch (e) {
       catchError('Plan Expansion Failed', e as Error);
       planExpansionStatus.set(Status.Failed);
@@ -1995,7 +2043,11 @@ const effects = {
       const query = convertToQuery(gql.SUB_ACTIVITY_TYPES);
       const data = await reqHasura<ActivityType[]>(query, { modelId }, user);
       const { activity_type: activityTypes } = data;
-      return activityTypes;
+      if (activityTypes != null) {
+        return activityTypes;
+      } else {
+        throw Error('Unable to retrieve activity types');
+      }
     } catch (e) {
       catchError(e as Error);
       return [];
@@ -2014,7 +2066,11 @@ const effects = {
           user,
         );
         const { activity_types } = data;
-        return activity_types;
+        if (activity_types != null) {
+          return activity_types;
+        } else {
+          throw Error('Unable to retrieve activity types');
+        }
       } catch (e) {
         catchError(e as Error);
         return [];
@@ -2157,14 +2213,18 @@ const effects = {
         user,
       );
       const { getSequenceSeqJson } = data;
-      const { errors, seqJson, status } = getSequenceSeqJson;
+      if (getSequenceSeqJson != null) {
+        const { errors, seqJson, status } = getSequenceSeqJson;
 
-      if (status === 'FAILURE') {
-        const [firstError] = errors;
-        const { message } = firstError;
-        return message;
+        if (status === 'FAILURE') {
+          const [firstError] = errors;
+          const { message } = firstError;
+          return message;
+        } else {
+          return JSON.stringify(seqJson, null, 2);
+        }
       } else {
-        return JSON.stringify(seqJson, null, 2);
+        throw Error(`Unable to get expansion sequence seq json for seq ID "${seqId}"`);
       }
     } catch (e) {
       catchError(e as Error);
@@ -2176,7 +2236,11 @@ const effects = {
     try {
       const data = await reqHasura<ModelSlim[]>(gql.GET_MODELS, {}, user);
       const { models = [] } = data;
-      return models;
+      if (models != null) {
+        return models;
+      } else {
+        throw Error('Unable to retrieve models');
+      }
     } catch (e) {
       catchError(e as Error);
       return [];
@@ -2242,7 +2306,11 @@ const effects = {
       const query = convertToQuery(gql.SUB_PLAN_MERGE_CONFLICTING_ACTIVITIES);
       const data = await reqHasura<PlanMergeConflictingActivity[]>(query, { merge_request_id }, user);
       const { conflictingActivities } = data;
-      return conflictingActivities;
+      if (conflictingActivities != null) {
+        return conflictingActivities;
+      } else {
+        throw Error('Unable to retrieve conflicting activities');
+      }
     } catch (e) {
       catchError(e as Error);
       return [];
@@ -2262,7 +2330,11 @@ const effects = {
         user,
       );
       const { nonConflictingActivities } = data;
-      return nonConflictingActivities;
+      if (nonConflictingActivities != null) {
+        return nonConflictingActivities;
+      } else {
+        throw Error('Unable to retrieve non-conflicting activities');
+      }
     } catch (e) {
       catchError(e as Error);
       return [];
@@ -2274,8 +2346,12 @@ const effects = {
       const query = convertToQuery(gql.SUB_PLAN_MERGE_REQUEST_IN_PROGRESS);
       const data = await reqHasura<PlanMergeRequestSchema[]>(query, { planId }, user);
       const { merge_requests } = data;
-      const [merge_request] = merge_requests; // Query uses 'limit: 1' so merge_requests.length === 1.
-      return merge_request;
+      if (merge_requests != null) {
+        const [merge_request] = merge_requests; // Query uses 'limit: 1' so merge_requests.length === 1.
+        return merge_request;
+      } else {
+        throw Error('Unable to get merge requests in progress');
+      }
     } catch (e) {
       catchError(e as Error);
       return null;
@@ -2287,8 +2363,12 @@ const effects = {
       const query = convertToQuery(gql.SUB_PLAN_REVISION);
       const data = await reqHasura<Pick<Plan, 'revision'>>(query, { planId }, user);
       const { plan } = data;
-      const { revision } = plan;
-      return revision;
+      if (plan != null) {
+        const { revision } = plan;
+        return revision;
+      } else {
+        throw Error('Unable to retrieve plan revision');
+      }
     } catch (e) {
       catchError(e as Error);
       return null;
@@ -2383,7 +2463,11 @@ const effects = {
     try {
       const data = await reqHasura<ResourceType[]>(gql.GET_RESOURCE_TYPES, { limit, model_id }, user);
       const { resource_types } = data;
-      return resource_types;
+      if (resource_types != null) {
+        return resource_types;
+      } else {
+        throw Error('Unable to retrieve resource types');
+      }
     } catch (e) {
       catchError(e as Error);
       return [];
@@ -2405,18 +2489,21 @@ const effects = {
     try {
       const data = await reqHasura<PlanDataset[]>(gql.GET_PROFILES_EXTERNAL, { planId }, user);
       const { plan_dataset: plan_datasets } = data;
-      let resources: Resource[] = [];
+      if (plan_datasets != null) {
+        let resources: Resource[] = [];
+        for (const dataset of plan_datasets) {
+          const {
+            dataset: { profiles },
+            offset_from_plan_start,
+          } = dataset;
+          const sampledResources: Resource[] = sampleProfiles(profiles, startTimeYmd, offset_from_plan_start);
+          resources = [...resources, ...sampledResources];
+        }
 
-      for (const dataset of plan_datasets) {
-        const {
-          dataset: { profiles },
-          offset_from_plan_start,
-        } = dataset;
-        const sampledResources: Resource[] = sampleProfiles(profiles, startTimeYmd, offset_from_plan_start);
-        resources = [...resources, ...sampledResources];
+        return resources;
+      } else {
+        throw Error('Unable to get external resources');
       }
-
-      return resources;
     } catch (e) {
       catchError(e as Error);
       return [];
@@ -2496,7 +2583,11 @@ const effects = {
     try {
       const data = await reqHasura<Span[]>(gql.GET_SPANS, { datasetId }, user);
       const { span: spans } = data;
-      return spans;
+      if (spans != null) {
+        return spans;
+      } else {
+        throw Error('Unable to get spans');
+      }
     } catch (e) {
       catchError(e as Error);
       return [];
@@ -2508,7 +2599,11 @@ const effects = {
       const query = convertToQuery(gql.SUB_TAGS);
       const data = await reqHasura<Tag[]>(query, {}, user);
       const { tags } = data;
-      return tags;
+      if (tags != null) {
+        return tags;
+      } else {
+        throw Error('Unable to get tags');
+      }
     } catch (e) {
       catchError(e as Error);
       return [];
@@ -2531,13 +2626,17 @@ const effects = {
           user,
         );
         const { dslTypeScriptResponse } = data;
-        const { reason, status, typescriptFiles } = dslTypeScriptResponse;
+        if (dslTypeScriptResponse != null) {
+          const { reason, status, typescriptFiles } = dslTypeScriptResponse;
 
-        if (status === 'success') {
-          return typescriptFiles;
+          if (status === 'success') {
+            return typescriptFiles;
+          } else {
+            catchError(reason);
+            return [];
+          }
         } else {
-          catchError(reason);
-          return [];
+          throw Error(`Unable to get TypeScript activity type "${activityTypeName}"`);
         }
       } catch (e) {
         catchError(e as Error);
@@ -2560,13 +2659,17 @@ const effects = {
           user,
         );
         const { dslTypeScriptResponse } = data;
-        const { reason, status, typescriptFiles } = dslTypeScriptResponse;
+        if (dslTypeScriptResponse != null) {
+          const { reason, status, typescriptFiles } = dslTypeScriptResponse;
 
-        if (status === 'success') {
-          return typescriptFiles;
+          if (status === 'success') {
+            return typescriptFiles;
+          } else {
+            catchError(reason);
+            return [];
+          }
         } else {
-          catchError(reason);
-          return [];
+          throw Error(`Unable to get TypeScript command dictionary with ID: "${commandDictionaryId}"`);
         }
       } catch (e) {
         catchError(e as Error);
@@ -2586,13 +2689,17 @@ const effects = {
           user,
         );
         const { dslTypeScriptResponse } = data;
-        const { reason, status, typescriptFiles } = dslTypeScriptResponse;
+        if (dslTypeScriptResponse != null) {
+          const { reason, status, typescriptFiles } = dslTypeScriptResponse;
 
-        if (status === 'success') {
-          return typescriptFiles;
+          if (status === 'success') {
+            return typescriptFiles;
+          } else {
+            catchError(reason);
+            return [];
+          }
         } else {
-          catchError(reason);
-          return [];
+          throw Error('Unable to retrieve TypeScript constraint files');
         }
       } catch (e) {
         catchError(e as Error);
@@ -2608,13 +2715,17 @@ const effects = {
       try {
         const data = await reqHasura<DslTypeScriptResponse>(gql.GET_TYPESCRIPT_SCHEDULING, { model_id }, user);
         const { dslTypeScriptResponse } = data;
-        const { reason, status, typescriptFiles } = dslTypeScriptResponse;
+        if (dslTypeScriptResponse != null) {
+          const { reason, status, typescriptFiles } = dslTypeScriptResponse;
 
-        if (status === 'success') {
-          return typescriptFiles;
+          if (status === 'success') {
+            return typescriptFiles;
+          } else {
+            catchError(reason);
+            return [];
+          }
         } else {
-          catchError(reason);
-          return [];
+          throw Error('Unable to retrieve TypeScript scheduling files');
         }
       } catch (e) {
         catchError(e as Error);
@@ -2631,7 +2742,7 @@ const effects = {
       if (data != null) {
         const { queries } = data;
 
-        if (queries !== null) {
+        if (queries != null) {
           const mutationQueries = queries.mutationType?.fields ?? [];
           const viewQueries = queries.queryType?.fields ?? [];
 
@@ -2641,6 +2752,8 @@ const effects = {
               [permissibleQuery.name]: true,
             };
           }, {});
+        } else {
+          throw Error('Unable to retrieve user permissions');
         }
       }
 
@@ -2666,7 +2779,11 @@ const effects = {
     try {
       const data = await reqHasura<string>(gql.GET_USER_SEQUENCE_FROM_SEQ_JSON, { seqJson }, user);
       const { sequence } = data;
-      return sequence;
+      if (sequence != null) {
+        return sequence;
+      } else {
+        throw Error('Unable to retrieve user sequence');
+      }
     } catch (e) {
       return (e as Error).message;
     }
@@ -2686,14 +2803,18 @@ const effects = {
         signal,
       );
       const { getUserSequenceSeqJson } = data;
-      const { errors, seqJson, status } = getUserSequenceSeqJson;
+      if (getUserSequenceSeqJson != null) {
+        const { errors, seqJson, status } = getUserSequenceSeqJson;
 
-      if (status === 'FAILURE') {
-        const [firstError] = errors;
-        const { message } = firstError;
-        return message;
+        if (status === 'FAILURE') {
+          const [firstError] = errors;
+          const { message } = firstError;
+          return message;
+        } else {
+          return JSON.stringify(seqJson, null, 2);
+        }
       } else {
-        return JSON.stringify(seqJson, null, 2);
+        throw Error('Unable to retrieve user sequence JSON');
       }
     } catch (e) {
       return (e as Error).message;
@@ -2746,8 +2867,16 @@ const effects = {
         simulation_start_time,
         simulation_template_id,
       };
-      await reqHasura(gql.INITIAL_SIMULATION_UPDATE, { plan_id: plan_id, simulation: simulationInput }, user);
-      return true;
+      const data = await reqHasura<{ returning: { id: number }[] }>(
+        gql.INITIAL_SIMULATION_UPDATE,
+        { plan_id: plan_id, simulation: simulationInput },
+        user,
+      );
+      if (data.update_simulation != null) {
+        return true;
+      } else {
+        throw Error('Unable to update simulation');
+      }
     } catch (e) {
       catchError(e as Error);
       return false;
@@ -2769,7 +2898,7 @@ const effects = {
       const data = await reqHasura<{ seq_id: string }>(gql.INSERT_EXPANSION_SEQUENCE_TO_ACTIVITY, { input }, user);
       const { sequence } = data;
 
-      if (sequence) {
+      if (sequence != null) {
         showSuccessToast('Expansion Sequence Added To Activity Successfully');
         const { seq_id } = sequence;
         return seq_id;
@@ -2856,8 +2985,12 @@ const effects = {
         throwPermissionError('begin a merge');
       }
 
-      await reqHasura(gql.PLAN_MERGE_BEGIN, { merge_request_id }, user);
-      return true;
+      const data = await reqHasura<{ merge_request_id: number }>(gql.PLAN_MERGE_BEGIN, { merge_request_id }, user);
+      if (data.begin_merge != null) {
+        return true;
+      } else {
+        throw Error('Unable to begin plan merge');
+      }
     } catch (error) {
       showFailureToast('Begin Merge Failed');
       catchError('Begin Merge Failed', error as Error);
@@ -2871,9 +3004,13 @@ const effects = {
         throwPermissionError('cancel this merge request');
       }
 
-      await reqHasura(gql.PLAN_MERGE_CANCEL, { merge_request_id }, user);
-      showSuccessToast('Canceled Merge Request');
-      return true;
+      const data = await reqHasura<{ merge_request_id: number }>(gql.PLAN_MERGE_CANCEL, { merge_request_id }, user);
+      if (data.cancel_merge != null) {
+        showSuccessToast('Canceled Merge Request');
+        return true;
+      } else {
+        throw Error('Unable to cancel merge request');
+      }
     } catch (error) {
       catchError('Cancel Merge Request Failed', error as Error);
       showFailureToast('Cancel Merge Request Failed');
@@ -2887,9 +3024,13 @@ const effects = {
         throwPermissionError('approve this merge request');
       }
 
-      await reqHasura(gql.PLAN_MERGE_COMMIT, { merge_request_id }, user);
-      showSuccessToast('Approved Merge Request Changes');
-      return true;
+      const data = await reqHasura<{ merge_request_id: number }>(gql.PLAN_MERGE_COMMIT, { merge_request_id }, user);
+      if (data.commit_merge != null) {
+        showSuccessToast('Approved Merge Request Changes');
+        return true;
+      } else {
+        throw Error('Unable to approve merge request');
+      }
     } catch (error) {
       catchError('Approve Merge Request Changes Failed', error as Error);
       showFailureToast('Approve Merge Request Changes Failed');
@@ -2903,9 +3044,13 @@ const effects = {
         throwPermissionError('deny this merge request');
       }
 
-      await reqHasura(gql.PLAN_MERGE_DENY, { merge_request_id }, user);
-      showSuccessToast('Denied Merge Request Changes');
-      return true;
+      const data = await reqHasura<{ merge_request_id: number }>(gql.PLAN_MERGE_DENY, { merge_request_id }, user);
+      if (data.deny_merge != null) {
+        showSuccessToast('Denied Merge Request Changes');
+        return true;
+      } else {
+        throw Error('Unable to deny merge request');
+      }
     } catch (error) {
       catchError('Deny Merge Request Changes Failed', error as Error);
       showFailureToast('Deny Merge Request Changes Failed');
@@ -2919,9 +3064,17 @@ const effects = {
         throwPermissionError('withdraw this merge request');
       }
 
-      await reqHasura(gql.PLAN_MERGE_REQUEST_WITHDRAW, { merge_request_id }, user);
-      showSuccessToast('Withdrew Merge Request');
-      return true;
+      const data = await reqHasura<{ merge_request_id: number }>(
+        gql.PLAN_MERGE_REQUEST_WITHDRAW,
+        { merge_request_id },
+        user,
+      );
+      if (data.withdraw_merge_request != null) {
+        showSuccessToast('Withdrew Merge Request');
+        return true;
+      } else {
+        throw Error('Unable to withdraw merge request');
+      }
     } catch (error) {
       showFailureToast('Withdraw Merge Request Failed');
       catchError('Withdraw Merge Request Failed', error as Error);
@@ -2939,7 +3092,10 @@ const effects = {
         throwPermissionError('resolve merge request conflicts');
       }
 
-      await reqHasura(gql.PLAN_MERGE_RESOLVE_ALL_CONFLICTS, { merge_request_id, resolution }, user);
+      const data = await reqHasura(gql.PLAN_MERGE_RESOLVE_ALL_CONFLICTS, { merge_request_id, resolution }, user);
+      if (data.set_resolution_bulk == null) {
+        throw Error('Unable to resolve all merge request conflicts');
+      }
     } catch (e) {
       showFailureToast('Resolve All Merge Request Conflicts Failed');
       catchError('Resolve All Merge Request Conflicts Failed', e as Error);
@@ -2957,7 +3113,14 @@ const effects = {
         throwPermissionError('resolve merge request conflicts');
       }
 
-      await reqHasura(gql.PLAN_MERGE_RESOLVE_CONFLICT, { activity_id, merge_request_id, resolution }, user);
+      const data = await reqHasura(
+        gql.PLAN_MERGE_RESOLVE_CONFLICT,
+        { activity_id, merge_request_id, resolution },
+        user,
+      );
+      if (data.set_resolution == null) {
+        throw Error('Unable to resolve merge request conflict');
+      }
     } catch (e) {
       showFailureToast('Resolve Merge Request Conflict Failed');
       catchError('Resolve Merge Request Conflict Failed', e as Error);
@@ -2975,9 +3138,19 @@ const effects = {
         throwPermissionError('remove the preset from this activity directive');
       }
 
-      await reqHasura(gql.DELETE_PRESET_TO_DIRECTIVE, { activity_directive_id, plan_id, preset_id }, user);
-      showSuccessToast('Removed Activity Preset Successfully');
-      return true;
+      const data = await reqHasura<{ preset_id: number }>(
+        gql.DELETE_PRESET_TO_DIRECTIVE,
+        { activity_directive_id, plan_id, preset_id },
+        user,
+      );
+      if (data.delete_preset_to_directive_by_pk != null) {
+        showSuccessToast('Removed Activity Preset Successfully');
+        return true;
+      } else {
+        throw Error(
+          `Unable to remove activity preset with ID: "${preset_id}" from directive with ID: "${activity_directive_id}"`,
+        );
+      }
     } catch (e) {
       catchError('Activity Preset Removal Failed', e as Error);
       showFailureToast('Activity Preset Removal Failed');
@@ -3006,24 +3179,28 @@ const effects = {
         do {
           const data = await reqHasura<SchedulingResponse>(gql.SCHEDULE, { specificationId }, user);
           const { schedule } = data;
-          const { reason, status } = schedule;
+          if (schedule != null) {
+            const { reason, status } = schedule;
 
-          if (status === 'complete') {
-            schedulingStatus.set(Status.Complete);
-            incomplete = false;
-            showSuccessToast(`Scheduling ${analysis_only ? 'Analysis ' : ''}Complete`);
-          } else if (status === 'failed') {
-            schedulingStatus.set(Status.Failed);
-            catchSchedulingError(reason);
-            incomplete = false;
+            if (status === 'complete') {
+              schedulingStatus.set(Status.Complete);
+              incomplete = false;
+              showSuccessToast(`Scheduling ${analysis_only ? 'Analysis ' : ''}Complete`);
+            } else if (status === 'failed') {
+              schedulingStatus.set(Status.Failed);
+              catchSchedulingError(reason);
+              incomplete = false;
 
-            showFailureToast(`Scheduling ${analysis_only ? 'Analysis ' : ''}Failed`);
-            catchError(`Scheduling ${analysis_only ? 'Analysis ' : ''}Failed`);
-          } else if (status === 'incomplete') {
-            schedulingStatus.set(Status.Incomplete);
+              showFailureToast(`Scheduling ${analysis_only ? 'Analysis ' : ''}Failed`);
+              catchError(`Scheduling ${analysis_only ? 'Analysis ' : ''}Failed`);
+            } else if (status === 'incomplete') {
+              schedulingStatus.set(Status.Incomplete);
+            }
+
+            await sleep(500); // Sleep half-second before re-scheduling.
+          } else {
+            throw Error('Unable to schedule');
           }
-
-          await sleep(500); // Sleep half-second before re-scheduling.
         } while (incomplete);
       } else {
         throw Error('Plan is not defined.');
@@ -3054,14 +3231,18 @@ const effects = {
       if (currentPlan !== null) {
         const data = await reqHasura<SimulateResponse>(gql.SIMULATE, { planId: currentPlan.id }, user);
         const { simulate } = data;
-        const { simulationDatasetId: newSimulationDatasetId } = simulate;
-        simulationDatasetId.set(newSimulationDatasetId);
-        simulationDatasetIds.updateValue((ids: number[]) => {
-          if (!ids.includes(newSimulationDatasetId)) {
-            return [newSimulationDatasetId, ...ids];
-          }
-          return ids;
-        });
+        if (simulate != null) {
+          const { simulationDatasetId: newSimulationDatasetId } = simulate;
+          simulationDatasetId.set(newSimulationDatasetId);
+          simulationDatasetIds.updateValue((ids: number[]) => {
+            if (!ids.includes(newSimulationDatasetId)) {
+              return [newSimulationDatasetId, ...ids];
+            }
+            return ids;
+          });
+        } else {
+          throw Error('Unable to simulate this plan');
+        }
       } else {
         throw Error('Plan is not defined.');
       }
@@ -3124,7 +3305,7 @@ const effects = {
         }));
         showSuccessToast('Activity Directive Updated Successfully');
       } else {
-        throw Error(`Unable to update directive "${id}"`);
+        throw Error(`Unable to update directive with ID: "${id}"`);
       }
     } catch (e) {
       catchError('Activity Directive Update Failed', e as Error);
@@ -3157,11 +3338,18 @@ const effects = {
         activityPresetSetInput.name = partialActivityPreset.name;
       }
 
-      const {
-        update_activity_presets_by_pk: { name: presetName },
-      } = await reqHasura<ActivityPreset>(gql.UPDATE_ACTIVITY_PRESET, { activityPresetSetInput, id }, user);
+      const { update_activity_presets_by_pk } = await reqHasura<ActivityPreset>(
+        gql.UPDATE_ACTIVITY_PRESET,
+        { activityPresetSetInput, id },
+        user,
+      );
 
-      showSuccessToast(`Activity Preset ${presetName} Updated Successfully`);
+      if (update_activity_presets_by_pk != null) {
+        const { name: presetName } = update_activity_presets_by_pk;
+        showSuccessToast(`Activity Preset ${presetName} Updated Successfully`);
+      } else {
+        throw Error(`Unable to update activity preset with ID: "${id}"`);
+      }
     } catch (e) {
       catchError('Activity Preset Update Failed', e as Error);
       showFailureToast('Activity Preset Update Failed');
@@ -3189,8 +3377,12 @@ const effects = {
         plan_id,
         ...(description && { description }),
       };
-      await reqHasura(gql.UPDATE_CONSTRAINT, { constraint, id }, user);
-      showSuccessToast('Constraint Updated Successfully');
+      const data = await reqHasura(gql.UPDATE_CONSTRAINT, { constraint, id }, user);
+      if (data.update_activity_directive_by_pk != null) {
+        showSuccessToast('Constraint Updated Successfully');
+      } else {
+        throw Error(`Unable to update constraint with ID: "${id}"`);
+      }
     } catch (e) {
       catchError('Constraint Update Failed', e as Error);
       showFailureToast('Constraint Update Failed');
@@ -3208,10 +3400,14 @@ const effects = {
 
       const data = await reqHasura(gql.UPDATE_EXPANSION_RULE, { id, rule }, user);
       const { updateExpansionRule } = data;
-      const { updated_at } = updateExpansionRule;
-      showSuccessToast('Expansion Rule Updated Successfully');
-      savingExpansionRule.set(false);
-      return updated_at;
+      if (updateExpansionRule != null) {
+        const { updated_at } = updateExpansionRule;
+        showSuccessToast('Expansion Rule Updated Successfully');
+        savingExpansionRule.set(false);
+        return updated_at;
+      } else {
+        throw Error(`Unable to update expansion rule with ID: "${id}"`);
+      }
     } catch (e) {
       catchError('Expansion Rule Update Failed', e as Error);
       showFailureToast('Expansion Rule Update Failed');
@@ -3228,14 +3424,18 @@ const effects = {
   ): Promise<Pick<SchedulingCondition, 'id' | 'last_modified_by' | 'modified_date'> | null> {
     try {
       if (!queryPermissions.UPDATE_SCHEDULING_CONDITION(user)) {
-        throwPermissionError('update this expansion rule');
+        throwPermissionError('update this scheduling condition');
       }
 
       const data = await reqHasura(gql.UPDATE_SCHEDULING_CONDITION, { condition, id }, user);
       const { updateSchedulingCondition: updatedCondition } = data;
 
-      showSuccessToast('Scheduling Condition Updated Successfully');
-      return updatedCondition;
+      if (updatedCondition != null) {
+        showSuccessToast('Scheduling Condition Updated Successfully');
+        return updatedCondition;
+      } else {
+        throw Error(`Unable to update scheduling condition with ID: "${id}"`);
+      }
     } catch (e) {
       catchError('Scheduling Condition Update Failed', e as Error);
       showFailureToast('Scheduling Condition Update Failed');
@@ -3256,8 +3456,12 @@ const effects = {
       const data = await reqHasura(gql.UPDATE_SCHEDULING_GOAL, { goal, id }, user);
       const { updateSchedulingGoal: updatedGoal } = data;
 
-      showSuccessToast('Scheduling Goal Updated Successfully');
-      return updatedGoal;
+      if (updatedGoal != null) {
+        showSuccessToast('Scheduling Goal Updated Successfully');
+        return updatedGoal;
+      } else {
+        throw Error(`Unable to update scheduling goal with ID: "${id}"`);
+      }
     } catch (e) {
       catchError('Scheduling Goal Update Failed', e as Error);
       showFailureToast('Scheduling Goal Update Failed');
@@ -3271,7 +3475,10 @@ const effects = {
         throwPermissionError('update this scheduling spec');
       }
 
-      await reqHasura(gql.UPDATE_SCHEDULING_SPEC, { id, spec }, user);
+      const data = await reqHasura(gql.UPDATE_SCHEDULING_SPEC, { id, spec }, user);
+      if (data.updateSchedulingSpec == null) {
+        throw Error(`Unable to update scheduling spec with ID: "${id}"`);
+      }
     } catch (e) {
       catchError(e as Error);
     }
@@ -3288,8 +3495,16 @@ const effects = {
         throwPermissionError('update this scheduling spec condition');
       }
 
-      await reqHasura(gql.UPDATE_SCHEDULING_SPEC_CONDITION, { condition_id, spec_condition, specification_id }, user);
-      showSuccessToast('Scheduling Spec Condition Updated Successfully');
+      const data = await reqHasura(
+        gql.UPDATE_SCHEDULING_SPEC_CONDITION,
+        { condition_id, spec_condition, specification_id },
+        user,
+      );
+      if (data.updateSchedulingSpecCondition != null) {
+        showSuccessToast('Scheduling Spec Condition Updated Successfully');
+      } else {
+        throw Error(`Unable to update scheduling spec condition with ID: "${condition_id}"`);
+      }
     } catch (e) {
       catchError('Scheduling Spec Condition Update Failed', e as Error);
       showFailureToast('Scheduling Spec Condition Update Failed');
@@ -3307,7 +3522,7 @@ const effects = {
         throwPermissionError('update this scheduling spec condition');
       }
 
-      await reqHasura(
+      const data = await reqHasura(
         gql.UPDATE_SCHEDULING_SPEC_CONDITION_ID,
         {
           condition_id,
@@ -3316,7 +3531,11 @@ const effects = {
         },
         user,
       );
-      showSuccessToast('Scheduling Spec Condition Updated Successfully');
+      if (data.updateSchedulingSpecConditionId != null) {
+        showSuccessToast('Scheduling Spec Condition Updated Successfully');
+      } else {
+        throw Error(`Unable to update scheduling spec condition with ID: "${condition_id}"`);
+      }
     } catch (e) {
       catchError('Scheduling Spec Condition Update Failed', e as Error);
       showFailureToast('Scheduling Spec Condition Update Failed');
@@ -3334,8 +3553,12 @@ const effects = {
         throwPermissionError('update this scheduling spec goal');
       }
 
-      await reqHasura(gql.UPDATE_SCHEDULING_SPEC_GOAL, { goal_id, spec_goal, specification_id }, user);
-      showSuccessToast('Scheduling Spec Goal Updated Successfully');
+      const data = await reqHasura(gql.UPDATE_SCHEDULING_SPEC_GOAL, { goal_id, spec_goal, specification_id }, user);
+      if (data.updateSchedulingSpecGoal != null) {
+        showSuccessToast('Scheduling Spec Goal Updated Successfully');
+      } else {
+        throw Error(`Unable to update scheduling spec goal with ID: "${goal_id}"`);
+      }
     } catch (e) {
       catchError('Scheduling Spec Goal Update Failed', e as Error);
       showFailureToast('Scheduling Spec Goal Update Failed');
@@ -3348,7 +3571,7 @@ const effects = {
         throwPermissionError('update this simulation');
       }
 
-      const response = await reqHasura<Pick<Simulation, 'id'>>(
+      const data = await reqHasura<Pick<Simulation, 'id'>>(
         gql.UPDATE_SIMULATION,
         {
           id: simulationSetInput.id,
@@ -3361,11 +3584,11 @@ const effects = {
         },
         user,
       );
-      if (response.updateSimulation !== null) {
+      if (data.updateSimulation !== null) {
         await effects.uploadFiles(newFiles, user);
         showSuccessToast('Simulation Updated Successfully');
       } else {
-        throw Error(`Unable to update simulation with id "${simulationSetInput.id}"`);
+        throw Error(`Unable to update simulation with ID: "${simulationSetInput.id}"`);
       }
     } catch (e) {
       catchError('Simulation Update Failed', e as Error);
@@ -3389,9 +3612,7 @@ const effects = {
         ...(partialSimulationTemplate.model_id && { model_id: partialSimulationTemplate.model_id }),
       };
 
-      const {
-        update_simulation_template_by_pk: { description: templateDescription },
-      } = await reqHasura<SimulationTemplate>(
+      const { update_simulation_template_by_pk } = await reqHasura<SimulationTemplate>(
         gql.UPDATE_SIMULATION_TEMPLATE,
         {
           id,
@@ -3400,7 +3621,12 @@ const effects = {
         user,
       );
 
-      showSuccessToast(`Simulation Template ${templateDescription} Updated Successfully`);
+      if (update_simulation_template_by_pk != null) {
+        const { description: templateDescription } = update_simulation_template_by_pk;
+        showSuccessToast(`Simulation Template ${templateDescription} Updated Successfully`);
+      } else {
+        throw Error(`Unable to update simulation template with ID: "${id}"`);
+      }
     } catch (e) {
       catchError('Simulation Template Update Failed', e as Error);
       showFailureToast('Simulation Template Update Failed');
@@ -3445,9 +3671,13 @@ const effects = {
         user,
       );
       const { updateUserSequence } = data;
-      const { updated_at } = updateUserSequence;
-      showSuccessToast('User Sequence Updated Successfully');
-      return updated_at;
+      if (updateUserSequence != null) {
+        const { updated_at } = updateUserSequence;
+        showSuccessToast('User Sequence Updated Successfully');
+        return updated_at;
+      } else {
+        throw Error(`Unable to update user sequence with ID: "${id}"`);
+      }
     } catch (e) {
       catchError('User Sequence Update Failed', e as Error);
       showFailureToast('User Sequence Update Failed');
@@ -3461,9 +3691,13 @@ const effects = {
         throwPermissionError('update this view');
       }
 
-      await reqHasura<Pick<View, 'id'>>(gql.UPDATE_VIEW, { id, view }, user);
-      showSuccessToast('View Updated Successfully');
-      return true;
+      const data = await reqHasura<Pick<View, 'id'>>(gql.UPDATE_VIEW, { id, view }, user);
+      if (data.updatedView) {
+        showSuccessToast('View Updated Successfully');
+        return true;
+      } else {
+        throw Error(`Unable to update view with ID: "${id}"`);
+      }
     } catch (e) {
       catchError('View Update Failed', e as Error);
       showFailureToast('View Update Failed');
@@ -3510,9 +3744,13 @@ const effects = {
         const data = await reqHasura<View>(gql.CREATE_VIEW, { view: viewInsertInput }, user);
         const { newView } = data;
 
-        view.update(() => newView);
-        setQueryParam('viewId', `${newView.id}`);
-        return true;
+        if (newView != null) {
+          view.update(() => newView);
+          setQueryParam('viewId', `${newView.id}`);
+          return true;
+        } else {
+          throw Error('Unable to upload view');
+        }
       }
     } catch (e) {
       catchError('View Upload Failed', e as Error);
@@ -3540,7 +3778,11 @@ const effects = {
       );
 
       const { validateActivityArguments } = data;
-      return validateActivityArguments;
+      if (validateActivityArguments != null) {
+        return validateActivityArguments;
+      } else {
+        throw Error('Unable to validate activity arguments');
+      }
     } catch (e) {
       catchError(e as Error);
       const { message } = e as Error;
