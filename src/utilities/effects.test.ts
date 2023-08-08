@@ -116,7 +116,7 @@ const user: User = {
     view: true,
     withdraw_merge_request: true,
   },
-  token: 'token',
+  token: '',
 };
 
 describe('Handle modal and requests in effects', () => {
