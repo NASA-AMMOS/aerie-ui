@@ -7,6 +7,7 @@
   import Input from '../form/Input.svelte';
   import ParameterBaseRightAdornments from './ParameterBaseRightAdornments.svelte';
   import ParameterName from './ParameterName.svelte';
+  import ParameterUnits from './ParameterUnits.svelte';
 
   export let disabled: boolean = false;
   export let formParameter: FormParameter;
@@ -15,6 +16,7 @@
   export let level: number = 0;
   export let levelPadding: number = 20;
   export let parameterType: ParameterType = 'activity';
+  export let units: string | undefined = undefined;
   export let use: ActionArray = [];
 
   const dispatch = createEventDispatcher();
@@ -32,16 +34,19 @@
       on:change={() => dispatch('change', formParameter)}
       use:useActions={use}
     />
-    <ParameterBaseRightAdornments
-      {disabled}
-      hidden={hideRightAdornments}
-      slot="right"
-      {formParameter}
-      {parameterType}
-      on:reset={() => dispatch('reset', formParameter)}
-      {use}
-    />
+    <div class="parameter-right" slot="right">
+      <ParameterUnits {units} />
+      <ParameterBaseRightAdornments
+        {disabled}
+        hidden={hideRightAdornments}
+        {formParameter}
+        {parameterType}
+        on:reset={() => dispatch('reset', formParameter)}
+        {use}
+      />
+    </div>
   </Input>
+  <div />
 </div>
 
 <style>
@@ -54,5 +59,9 @@
     align-items: center;
     display: grid;
     padding: 4px 0px;
+  }
+
+  .parameter-right {
+    display: inline-flex;
   }
 </style>
