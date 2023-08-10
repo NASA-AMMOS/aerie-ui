@@ -1,0 +1,25 @@
+<svelte:options immutable={true} />
+
+<script lang="ts">
+  export let units: string | undefined = undefined;
+</script>
+
+{#if units}
+  <span class="parameter-units">{units}</span>
+{/if}
+
+<style>
+  .parameter-units {
+    color: var(--st-gray-80, #293137);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.1px;
+    line-height: 1rem;
+    max-width: 3rem;
+    min-width: 1rem;
+    opacity: 50%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+</style>
