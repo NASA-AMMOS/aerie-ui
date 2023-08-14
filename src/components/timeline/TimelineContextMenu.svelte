@@ -224,7 +224,6 @@
     </ContextMenuItem>
     <ContextMenuSeparator />
     <ContextMenuItem
-      on:click={() => xScaleView && contextMenu && updateSimulationStartTime(xScaleView.invert(contextMenu.e.offsetX))}
       use={[
         [
           permissionHandler,
@@ -234,11 +233,11 @@
           },
         ],
       ]}
+      on:click={() => xScaleView && contextMenu && updateSimulationStartTime(xScaleView.invert(contextMenu.e.offsetX))}
     >
       Set Simulation Start
     </ContextMenuItem>
     <ContextMenuItem
-      on:click={() => xScaleView && contextMenu && updateSimulationEndTime(xScaleView.invert(contextMenu.e.offsetX))}
       use={[
         [
           permissionHandler,
@@ -248,6 +247,7 @@
           },
         ],
       ]}
+      on:click={() => xScaleView && contextMenu && updateSimulationEndTime(xScaleView.invert(contextMenu.e.offsetX))}
     >
       Set Simulation End
     </ContextMenuItem>
