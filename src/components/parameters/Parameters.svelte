@@ -1,11 +1,13 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { createEventDispatcher } from 'svelte';
   import type { FormParameter, ParameterType } from '../../types/parameter';
   import { compare } from '../../utilities/generic';
   import type { ActionArray } from '../../utilities/useActions';
   import Highlight from '../ui/Highlight.svelte';
   import ParameterBase from './ParameterBase.svelte';
+  import ParameterInfo from './ParameterInfo.svelte';
   import ParameterRec from './ParameterRec.svelte';
 
   export let disabled: boolean = false;
@@ -17,6 +19,8 @@
   export let parameterType: ParameterType = 'activity';
   export let use: ActionArray = [];
 
+  const dispatch = createEventDispatcher();
+
   let clientWidth: number;
   let level: number = 0;
 
@@ -24,51 +28,74 @@
   $: sortedFormParameters = formParameters.sort((a, b) => compare(a.order, b.order));
 </script>
 
-{#each sortedFormParameters as formParameter (formParameter.name)}
-  <Highlight highlight={highlightKeysMap[formParameter.name]}>
-    <div bind:clientWidth class="parameter">
-      {#if formParameter.schema.type === 'series' || formParameter.schema.type === 'struct'}
-        <ParameterRec
-          {disabled}
-          {expanded}
-          {formParameter}
-          {hideRightAdornments}
-          {labelColumnWidth}
-          {level}
-          {levelPadding}
-          {parameterType}
-          on:change
-          on:reset
-          {use}
-        />
-      {:else}
-        <ParameterBase
-          {disabled}
-          {formParameter}
-          {hideRightAdornments}
-          {labelColumnWidth}
-          {level}
-          {levelPadding}
-          {parameterType}
-          on:change
-          on:reset
-          {use}
-        />
-      {/if}
-    </div>
-  </Highlight>
-{/each}
+<div class="parameters-container">
+  {#each sortedFormParameters as formParameter (formParameter.name)}
+    <Highlight highlight={highlightKeysMap[formParameter.name]}>
+      <div bind:clientWidth class="parameter">
+        {#if formParameter.schema.type === 'series' || formParameter.schema.type === 'struct'}
+          <ParameterRec
+            {disabled}
+            {expanded}
+            {formParameter}
+            {hideRightAdornments}
+            {labelColumnWidth}
+            {level}
+            {levelPadding}
+            {parameterType}
+            on:change
+            on:reset
+            {use}
+          />
+        {:else}
+          <ParameterBase
+            {disabled}
+            {formParameter}
+            {hideRightAdornments}
+            {labelColumnWidth}
+            {level}
+            {levelPadding}
+            {parameterType}
+            on:change
+            on:reset
+            {use}
+          />
+        {/if}
+        <div class="parameter-info">
+          <ParameterInfo source={formParameter.valueSource} on:reset={() => dispatch('reset', formParameter)} />
+        </div>
+      </div>
+    </Highlight>
+  {/each}
+</div>
 
 <style>
   .parameter {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: 4px 0px;
+    align-items: center;
+    column-gap: 4px;
+    display: grid;
+    grid-template-columns: auto 16px;
   }
 
   .parameter :global(.st-input.error) {
     background-color: inherit;
     color: inherit;
+  }
+
+  .parameters-container :global(> div.highlight) {
+    box-sizing: border-box;
+    padding: 4px 0;
+  }
+
+  .parameters-container :global(> div.highlight:hover) {
+    border-bottom: 1px solid var(--st-gray-20, #ebecec);
+    border-top: 1px solid var(--st-gray-20, #ebecec);
+    padding: 3px 0;
+  }
+
+  .parameter-info {
+    visibility: hidden;
+  }
+  .parameters-container :global(> div.highlight:hover .parameter-info) {
+    visibility: visible;
   }
 </style>
