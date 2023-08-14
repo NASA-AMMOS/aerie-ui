@@ -27,7 +27,7 @@
     resetActivityStores,
     selectActivity,
   } from '../../../stores/activities';
-  import { checkConstraintsStatus, constraintViolations, resetConstraintStores } from '../../../stores/constraints';
+  import { checkConstraintsStatus, constraintResults, resetConstraintStores } from '../../../stores/constraints';
   import {
     allErrors,
     anchorValidationErrors,
@@ -337,7 +337,8 @@
       >
         <VerticalCollapseIcon />
         <svelte:fragment slot="metadata">
-          <div>Constraint violations: {$constraintViolations.length}</div>
+          <!-- TODO: is there a better way to compute the count of violations, pre-compute them in the store? -->
+          <div>Constraint violations: {$constraintResults.filter(result => result.violations.length).length}</div>
         </svelte:fragment>
       </PlanNavButton>
       <PlanNavButton

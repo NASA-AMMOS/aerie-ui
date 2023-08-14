@@ -3,7 +3,7 @@
 <script lang="ts">
   import { select } from 'd3-selection';
   import type { ActivityDirective } from '../../types/activity';
-  import type { ConstraintViolation } from '../../types/constraint';
+  import type { ConstraintResult } from '../../types/constraint';
   import type { Span } from '../../types/simulation';
   import type { LinePoint, MouseOver, Point, XRangePoint } from '../../types/timeline';
   import { getDoyTime } from '../../utilities/time';
@@ -11,7 +11,7 @@
   export let mouseOver: MouseOver | null;
 
   let activityDirectives: ActivityDirective[] = [];
-  let constraintViolations: ConstraintViolation[] = [];
+  let constraintViolations: ConstraintResult[] = [];
   let points: Point[] = [];
   let gaps: Point[] = [];
   let spans: Span[] = [];
@@ -114,7 +114,7 @@
       tooltipText = `${tooltipText}<hr>`;
     }
 
-    constraintViolations.forEach((constraintViolation: ConstraintViolation, i: number) => {
+    constraintViolations.forEach((constraintViolation: ConstraintResult, i: number) => {
       const text = textForConstraintViolation(constraintViolation);
       tooltipText = `${tooltipText} ${text}`;
 
@@ -178,7 +178,7 @@
     `;
   }
 
-  function textForConstraintViolation(constraintViolation: ConstraintViolation): string {
+  function textForConstraintViolation(constraintViolation: ConstraintResult): string {
     const { constraintName } = constraintViolation;
     return `
       <div>

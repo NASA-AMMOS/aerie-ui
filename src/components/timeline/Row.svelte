@@ -14,7 +14,7 @@
     ActivityDirectivesMap,
   } from '../../types/activity';
   import type { User } from '../../types/app';
-  import type { ConstraintViolation } from '../../types/constraint';
+  import type { ConstraintResult } from '../../types/constraint';
   import type { Resource, SimulationDataset, Span, SpanId, SpanUtilityMaps, SpansMap } from '../../types/simulation';
   import type {
     Axis,
@@ -46,7 +46,7 @@
   export let activityDirectivesByView: ActivityDirectivesByView = { byLayerId: {}, byTimelineId: {} };
   export let activityDirectivesMap: ActivityDirectivesMap = {};
   export let autoAdjustHeight: boolean = false;
-  export let constraintViolations: ConstraintViolation[] = [];
+  export let constraintResults: ConstraintResult[] = [];
   export let dpr: number = 0;
   export let drawHeight: number = 0;
   export let drawWidth: number = 0;
@@ -93,7 +93,7 @@
   let mouseDownActivityDirectivesByLayer: Record<number, ActivityDirective[]> = {};
   let mouseDownSpansByLayer: Record<number, Span[]> = {};
   let mouseOverActivityDirectivesByLayer: Record<number, ActivityDirective[]> = {};
-  let mouseOverConstraintViolations: ConstraintViolation[] = []; // For this row.
+  let mouseOverConstraintViolations: ConstraintResult[] = []; // For this row.
   let mouseOverPointsByLayer: Record<number, Point[]> = {};
   let mouseOverSpansByLayer: Record<number, Span[]> = {};
   let mouseOverGapsByLayer: Record<number, Point[]> = {};
@@ -267,7 +267,7 @@
         {#if drawWidth > 0}
           <RowXAxisTicks {drawHeight} {xScaleView} {xTicksView} />
           <ConstraintViolations
-            {constraintViolations}
+            {constraintResults}
             {drawHeight}
             {drawWidth}
             {mousemove}
