@@ -17,6 +17,7 @@
   export let level: number = 0;
   export let levelPadding: number = 20;
   export let parameterType: ParameterType = 'activity';
+  export let units: string | undefined = undefined;
   export let use: ActionArray = [];
 </script>
 
@@ -29,6 +30,7 @@
     {levelPadding}
     {formParameter}
     {parameterType}
+    {units}
     {use}
     on:change
     on:reset
@@ -55,6 +57,7 @@
     {levelPadding}
     {formParameter}
     {parameterType}
+    {units}
     {use}
     on:change
     on:reset
@@ -80,6 +83,7 @@
     {levelPadding}
     {formParameter}
     {parameterType}
+    {units}
     {use}
     on:change
     on:reset
@@ -93,6 +97,7 @@
     {levelPadding}
     {formParameter}
     {parameterType}
+    {units}
     {use}
     on:change
     on:reset
