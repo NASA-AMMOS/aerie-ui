@@ -10,6 +10,7 @@
   import VisibleShowIcon from '@nasa-jpl/stellar/icons/visible_show.svg?component';
   import {
     checkConstraintsStatus,
+    constraintResultMap,
     constraintResults,
     constraintVisibilityMap,
     constraints,
@@ -49,8 +50,7 @@
   let startTimeDoyField: FieldStore<string>;
   let showFilters: boolean = false;
   let showConstraintsWithNoViolations: boolean = true;
-  let constraintResultMap: Record<Constraint['name'], ConstraintResult> = {}; // TODO ideally wouldn't not have to compute this here, store version maps name -> ConstraintViolation[], can you really have a list of these things? Model vs plan?
-  let filteredConstraintResultMap: Record<Constraint['name'], ConstraintResult> = {};
+  let filteredConstraintResultMap: Record<Constraint['id'], ConstraintResult> = {};
 
   $: startTimeDoy = $plan?.start_time_doy || '';
   $: startTimeDoyField = field<string>(startTimeDoy, [required, timestamp]);
@@ -60,14 +60,10 @@
   $: endTimeMs = getUnixEpochTime(endTimeDoy);
 
   $: if ($constraints && $constraintResults && startTimeMs && endTimeMs) {
-    constraintResultMap = {};
     filteredConstraintResultMap = {};
     $constraints.forEach(constraint => {
-      // TODO could have multiple ConstraintViolation's for a single constraint?
-      const constraintResult = getResultsForConstraint(constraint, $constraintResults);
+      const constraintResult = $constraintResultMap[constraint.id];
       if (constraintResult) {
-        constraintResultMap[constraint.id] = constraintResult;
-
         // Filter violations/windows by time bounds
         const filteredViolations = constraintResult.violations.map(violation => ({
           ...violation,
@@ -102,13 +98,10 @@
 
       const constraintResult = filteredConstraintResultMap[constraint.id];
       // Always show constraints with no violations
-      if (!constraintResult || !constraintResult.violations || !constraintResult.violations.length) {
+      if (!constraintResult?.violations?.length) {
         return showConstraintsWithNoViolations;
       }
 
-      if (constraintResult.violations.length < 1) {
-        return showConstraintsWithNoViolations;
-      }
       return true;
     });
   }
@@ -117,13 +110,6 @@
     return constraintResults.reduce((count, constraintResult) => {
       return count + constraintResult.violations.length;
     }, 0);
-  }
-
-  function getResultsForConstraint(
-    constraint: Constraint,
-    constraintResults: ConstraintResult[],
-  ): ConstraintResult | undefined {
-    return constraintResults.find(c => c.constraintId === constraint.id);
   }
 
   function onUpdateStartTime() {
@@ -289,7 +275,7 @@
             hasEditPermission={$plan ? featurePermissions.constraints.canUpdate(user, $plan) : false}
             visible={$constraintVisibilityMap[constraint.id]}
             constraintResult={filteredConstraintResultMap[constraint.id]}
-            totalViolationCount={constraintResultMap[constraint.id]?.violations?.length}
+            totalViolationCount={$constraintResultMap[constraint.id]?.violations?.length || 0}
             {user}
             on:toggleVisibility={toggleVisibility}
           />

@@ -66,6 +66,11 @@ export const visibleConstraintResults: Readable<ConstraintResult[]> = derived(
     $constraintResults.filter(constraintResult => $constraintVisibilityMap[constraintResult.constraintId]),
 );
 
+export const constraintResultMap: Readable<Record<Constraint['id'], ConstraintResult>> = derived(
+  [constraintResults],
+  ([$constraintResults]) => keyBy($constraintResults, 'constraintId'),
+);
+
 /* Helper Functions. */
 
 export function setConstraintVisibility(constraintId: Constraint['id'], visible: boolean) {
