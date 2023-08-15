@@ -82,7 +82,7 @@
   function onMousemove(e: MouseEvent | undefined): void {
     if (e) {
       const { offsetX } = e;
-      const violations = [];
+      const constraintResultsWithViolations: ConstraintResult[] = [];
 
       for (const constraintResult of constraintResults || []) {
         for (const constraintViolation of constraintResult.violations || []) {
@@ -98,18 +98,18 @@
           }
 
           if (count > 0) {
-            violations.push(constraintResult);
+            constraintResultsWithViolations.push(constraintResult);
           }
         }
       }
 
-      dispatch('mouseOver', { constraintViolations: violations, e });
+      dispatch('mouseOver', { constraintResults: constraintResultsWithViolations, e });
     }
   }
 
   function onMouseout(e: MouseEvent | undefined): void {
     if (e) {
-      dispatch('mouseOver', { constraintViolations: [], e });
+      dispatch('mouseOver', { constraintResults: [], e });
     }
   }
 </script>

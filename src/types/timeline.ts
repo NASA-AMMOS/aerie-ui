@@ -91,7 +91,7 @@ export type MouseDown = {
 
 export type MouseOver = {
   activityDirectives?: ActivityDirective[];
-  constraintViolations?: ConstraintResult[];
+  constraintResults?: ConstraintResult[];
   e: MouseEvent;
   gaps?: Point[];
   layerId: number;
