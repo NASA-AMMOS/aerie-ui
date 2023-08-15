@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { getArgument, getValueSchemaDefaultValue } from './parameters';
+import { getArgument, getValueSchemaDefaultValue, isRecParameter } from './parameters';
 
 describe('getArgument', () => {
   test('Should return the preset value', () => {
@@ -92,51 +92,100 @@ describe('getArgument', () => {
       valueSource: 'none',
     });
   });
-});
 
-describe('getValueSchemaDefaultValue', () => {
-  test('boolean', () => {
-    const defaultBooleanValue = getValueSchemaDefaultValue({ type: 'boolean' });
-    expect(defaultBooleanValue).toEqual(false);
+  describe('getValueSchemaDefaultValue', () => {
+    test('boolean', () => {
+      const defaultBooleanValue = getValueSchemaDefaultValue({ type: 'boolean' });
+      expect(defaultBooleanValue).toEqual(false);
+    });
+
+    test('duration', () => {
+      const defaultDurationValue = getValueSchemaDefaultValue({ type: 'duration' });
+      expect(defaultDurationValue).toEqual(0);
+    });
+
+    test('int', () => {
+      const defaultIntValue = getValueSchemaDefaultValue({ type: 'int' });
+      expect(defaultIntValue).toEqual(0);
+    });
+
+    test('path', () => {
+      const defaultPathValue = getValueSchemaDefaultValue({ type: 'path' });
+      expect(defaultPathValue).toEqual('');
+    });
+
+    test('real', () => {
+      const defaultRealValue = getValueSchemaDefaultValue({ type: 'real' });
+      expect(defaultRealValue).toEqual(0);
+    });
+
+    test('series', () => {
+      const defaultSeriesValue = getValueSchemaDefaultValue({ items: { type: 'int' }, type: 'series' });
+      expect(defaultSeriesValue).toEqual([0]);
+    });
+
+    test('struct', () => {
+      const defaultStructValue = getValueSchemaDefaultValue({ items: { foo: { type: 'string' } }, type: 'struct' });
+      expect(defaultStructValue).toEqual({ foo: '' });
+    });
+
+    test('string', () => {
+      const defaultStringValue = getValueSchemaDefaultValue({ type: 'string' });
+      expect(defaultStringValue).toEqual('');
+    });
+
+    test('variant', () => {
+      const defaultVariantValue = getValueSchemaDefaultValue({ type: 'variant', variants: [{ key: 'A', label: 'A' }] });
+      expect(defaultVariantValue).toEqual('A');
+    });
   });
 
-  test('duration', () => {
-    const defaultDurationValue = getValueSchemaDefaultValue({ type: 'duration' });
-    expect(defaultDurationValue).toEqual(0);
-  });
+  test('Should return whether or not a form parameter is a recursive parameter or not', () => {
+    expect(
+      isRecParameter({
+        errors: [],
+        name: 'test',
+        order: 0,
+        schema: {
+          items: {
+            type: 'string',
+          },
+          type: 'series',
+        },
+        value: 'foo',
+        valueSource: 'mission',
+      }),
+    ).toEqual(true);
 
-  test('int', () => {
-    const defaultIntValue = getValueSchemaDefaultValue({ type: 'int' });
-    expect(defaultIntValue).toEqual(0);
-  });
+    expect(
+      isRecParameter({
+        errors: [],
+        name: 'test',
+        order: 0,
+        schema: {
+          items: {
+            foo: {
+              type: 'string',
+            },
+          },
+          type: 'struct',
+        },
+        value: 'foo',
+        valueSource: 'mission',
+      }),
+    ).toEqual(true);
 
-  test('path', () => {
-    const defaultPathValue = getValueSchemaDefaultValue({ type: 'path' });
-    expect(defaultPathValue).toEqual('');
-  });
-
-  test('real', () => {
-    const defaultRealValue = getValueSchemaDefaultValue({ type: 'real' });
-    expect(defaultRealValue).toEqual(0);
-  });
-
-  test('series', () => {
-    const defaultSeriesValue = getValueSchemaDefaultValue({ items: { type: 'int' }, type: 'series' });
-    expect(defaultSeriesValue).toEqual([0]);
-  });
-
-  test('struct', () => {
-    const defaultStructValue = getValueSchemaDefaultValue({ items: { foo: { type: 'string' } }, type: 'struct' });
-    expect(defaultStructValue).toEqual({ foo: '' });
-  });
-
-  test('string', () => {
-    const defaultStringValue = getValueSchemaDefaultValue({ type: 'string' });
-    expect(defaultStringValue).toEqual('');
-  });
-
-  test('variant', () => {
-    const defaultVariantValue = getValueSchemaDefaultValue({ type: 'variant', variants: [{ key: 'A', label: 'A' }] });
-    expect(defaultVariantValue).toEqual('A');
+    expect(
+      isRecParameter({
+        errors: [],
+        name: 'test',
+        order: 0,
+        schema: {
+          type: 'string',
+        },
+        value: 'foo',
+        valueSource: 'mission',
+      }),
+    ).toEqual(false);
   });
 });

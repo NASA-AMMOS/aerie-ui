@@ -2,8 +2,9 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import type { FormParameter, ParameterType } from '../../types/parameter';
+  import type { FormParameter, ParameterType, RecFormParameter } from '../../types/parameter';
   import type { ValueSchemaStruct } from '../../types/schema';
+  import { castAsRecParameter, castAsSimpleParameter, isRecParameter } from '../../utilities/parameters';
   import type { ActionArray } from '../../utilities/useActions';
   import Collapse from '../Collapse.svelte';
   import ParameterBase from './ParameterBase.svelte';
@@ -13,7 +14,7 @@
 
   export let disabled: boolean = false;
   export let expanded: boolean = false;
-  export let formParameter: FormParameter<ValueSchemaStruct>;
+  export let formParameter: RecFormParameter<ValueSchemaStruct>;
   export let hideRightAdornments: boolean = false;
   export let labelColumnWidth: number = 200;
   export let level: number = 0;
@@ -37,6 +38,7 @@
         name: key,
         order: index,
         schema: schema.items[key],
+        units: isRecParameter(formParameter) ? formParameter.units?.[key] : formParameter.units,
         value: value !== null ? value[key] : null,
         valueSource: formParameter.valueSource,
       };
@@ -79,11 +81,11 @@
     <ul style="padding-inline-start: {levelPadding}px">
       {#each subFormParameters as subFormParameter (subFormParameter.name)}
         <li>
-          {#if subFormParameter.schema.type === 'series' || subFormParameter.schema.type === 'struct'}
+          {#if isRecParameter(subFormParameter)}
             <ParameterRec
               {disabled}
               {hideRightAdornments}
-              formParameter={subFormParameter}
+              formParameter={castAsRecParameter(subFormParameter)}
               {labelColumnWidth}
               level={++level}
               {levelPadding}
@@ -96,7 +98,7 @@
             <ParameterBase
               {disabled}
               {hideRightAdornments}
-              formParameter={subFormParameter}
+              formParameter={castAsSimpleParameter(subFormParameter)}
               {labelColumnWidth}
               level={++level}
               {levelPadding}

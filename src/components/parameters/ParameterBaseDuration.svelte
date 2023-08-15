@@ -2,7 +2,7 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import type { FormParameter, ParameterType } from '../../types/parameter';
+  import type { ParameterType, SimpleFormParameter } from '../../types/parameter';
   import { convertDurationStringToUs, convertUsToDurationString } from '../../utilities/time';
   import { useActions, type ActionArray } from '../../utilities/useActions';
   import Input from '../form/Input.svelte';
@@ -10,7 +10,7 @@
   import ParameterName from './ParameterName.svelte';
 
   export let disabled: boolean = false;
-  export let formParameter: FormParameter;
+  export let formParameter: SimpleFormParameter;
   export let hideValueSource: boolean = false;
   export let labelColumnWidth: number = 200;
   export let level: number = 0;

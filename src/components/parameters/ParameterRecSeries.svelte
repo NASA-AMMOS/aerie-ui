@@ -6,7 +6,12 @@
   import { createEventDispatcher } from 'svelte';
   import type { FormParameter, ParameterType } from '../../types/parameter';
   import type { ValueSchemaSeries } from '../../types/schema';
-  import { getArgument, getValueSchemaDefaultValue } from '../../utilities/parameters';
+  import {
+    castAsRecParameter,
+    castAsSimpleParameter,
+    getArgument,
+    getValueSchemaDefaultValue,
+  } from '../../utilities/parameters';
   import { tooltip } from '../../utilities/tooltip';
   import type { ActionArray } from '../../utilities/useActions';
   import Collapse from '../Collapse.svelte';
@@ -42,6 +47,7 @@
         name: `[${i}]`,
         order: i,
         schema: schema.items,
+        units: formParameter.units,
         value: getArgument(value[i], schema.items).value,
         valueSource: formParameter.valueSource,
       };
@@ -120,7 +126,7 @@
                 {disabled}
                 hideRightAdornments
                 expanded
-                formParameter={subFormParameter}
+                formParameter={castAsRecParameter(subFormParameter)}
                 {labelColumnWidth}
                 level={++level}
                 {levelPadding}
@@ -132,7 +138,7 @@
             {:else}
               <ParameterBase
                 {disabled}
-                formParameter={subFormParameter}
+                formParameter={castAsSimpleParameter(subFormParameter)}
                 hideRightAdornments
                 {labelColumnWidth}
                 level={++level}
