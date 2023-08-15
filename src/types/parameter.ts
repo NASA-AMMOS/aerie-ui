@@ -15,6 +15,7 @@ export type FormParameter<T = ValueSchema> = {
   order: number;
   required?: boolean;
   schema: T;
+  units?: string;
   value: Argument;
   valueSource: ValueSource;
 };

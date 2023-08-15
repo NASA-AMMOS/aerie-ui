@@ -102,6 +102,7 @@
         };
         formParameters = getFormParameters(
           modelParametersMap,
+          {},
           $simulation.arguments,
           [],
           $simulation?.template?.arguments,

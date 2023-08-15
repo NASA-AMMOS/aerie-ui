@@ -1,4 +1,5 @@
 import { isEqual, omitBy } from 'lodash-es';
+import type { UnitsMap } from '../types/activity';
 import type {
   Argument,
   ArgumentsMap,
@@ -59,6 +60,7 @@ export function getArguments(argumentsMap: ArgumentsMap, formParameter: FormPara
 
 export function getFormParameters(
   parametersMap: ParametersMap,
+  unitsMap: UnitsMap,
   argumentsMap: ArgumentsMap,
   requiredParameters: RequiredParametersList,
   presetArgumentsMap: ArgumentsMap = {},
@@ -67,6 +69,7 @@ export function getFormParameters(
   const formParameters = Object.entries(parametersMap).map(([name, { order, schema }]) => {
     const arg: Argument = argumentsMap[name];
     const preset: Argument = presetArgumentsMap[name];
+    const units: string = unitsMap[name];
     const defaultArg: Argument | undefined = defaultArgumentsMap[name];
     const { value, valueSource } = getArgument(arg, schema, preset, defaultArg);
     const required = requiredParameters.indexOf(name) > -1;
@@ -77,6 +80,7 @@ export function getFormParameters(
       order,
       required,
       schema,
+      units,
       value,
       valueSource,
     };
