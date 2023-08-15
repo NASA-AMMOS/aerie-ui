@@ -76,7 +76,9 @@
 
 {#if source !== 'none'}
   <div
-    class="value-source-badge-dot-root"
+    class={classNames('value-source-badge-dot-root', {
+      'value-source-badge-compact': isCompact,
+    })}
     role="none"
     use:tooltip={{ allowHTML: true, content: tooltipContent, disabled: !isCompact, placement: 'top' }}
     use:useActions={use}
@@ -98,8 +100,10 @@
     display: flex;
     gap: 4px;
     height: 16px;
-    justify-content: center;
     min-width: 16px;
+  }
+  .value-source-badge-dot-root.value-source-badge-compact {
+    justify-content: center;
   }
 
   .value-source-badge-dot {

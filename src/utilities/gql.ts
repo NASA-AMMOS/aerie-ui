@@ -1462,7 +1462,9 @@ const gql = {
     subscription SubActivityTypes($modelId: Int!) {
       activity_type(where: { model_id: { _eq: $modelId } }, order_by: { name: asc }) {
         computed_attributes_value_schema
+        computed_attribute_units
         name
+        parameter_units
         parameters
         required_parameters
       }

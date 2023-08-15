@@ -1,7 +1,6 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
   import type { FormParameter, ParameterType } from '../../types/parameter';
   import { compare } from '../../utilities/generic';
   import type { ActionArray } from '../../utilities/useActions';
@@ -18,8 +17,6 @@
   export let levelPadding: number = 20;
   export let parameterType: ParameterType = 'activity';
   export let use: ActionArray = [];
-
-  const dispatch = createEventDispatcher();
 
   let clientWidth: number;
   let level: number = 0;
@@ -61,7 +58,7 @@
           />
         {/if}
         <div class="parameter-info">
-          <ParameterInfo source={formParameter.valueSource} on:reset={() => dispatch('reset', formParameter)} />
+          <ParameterInfo {formParameter} on:reset />
         </div>
       </div>
     </Highlight>

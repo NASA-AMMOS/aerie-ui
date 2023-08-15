@@ -11,9 +11,13 @@ export type ActivityDirectivesByView = {
   byTimelineId: Record<number, ActivityDirective[]>;
 };
 
+export type UnitsMap = Record<string, string>;
+
 export type ActivityType = {
+  computed_attribute_units: UnitsMap;
   computed_attributes_value_schema: ValueSchema;
   name: string;
+  parameter_units: UnitsMap;
   parameters: ParametersMap;
   required_parameters: string[];
 };

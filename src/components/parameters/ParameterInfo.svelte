@@ -2,17 +2,26 @@
 
 <script lang="ts">
   import InfoIcon from '@nasa-jpl/stellar/icons/info.svg?component';
-  import type { ValueSource } from '../../types/parameter';
+  import { createEventDispatcher } from 'svelte';
+  import type { FormParameter, ValueSource } from '../../types/parameter';
   import ContextMenu from '../context-menu/ContextMenu.svelte';
   import ValueSourceBadge from './ValueSourceBadge.svelte';
 
-  export let source: ValueSource;
-  export let units: string | undefined = undefined;
+  export let formParameter: FormParameter;
+
+  const dispatch = createEventDispatcher();
 
   let contextMenu: ContextMenu;
   let isIconHovered: boolean = false;
   let isTooltipHovered: boolean = false;
   let leaveTimeout: NodeJS.Timeout | null = null;
+  let source: ValueSource;
+  let units: string | undefined = undefined;
+
+  $: if (formParameter) {
+    source = formParameter.valueSource;
+    units = formParameter.units;
+  }
 
   function leaveCallback() {
     if (leaveTimeout != null) {
@@ -40,6 +49,10 @@
       contextMenu.show(e);
     }
     hoverCallback();
+  }
+
+  function onReset() {
+    dispatch('reset', formParameter);
   }
 
   function onTooltipOver() {
@@ -71,7 +84,7 @@
           {/if}
           {#if source !== 'none'}
             <div class="parameter-info-label">Source</div>
-            <div class="parameter-info-value"><ValueSourceBadge isCompact={false} {source} on:reset /></div>
+            <div class="parameter-info-value"><ValueSourceBadge isCompact={false} {source} on:reset={onReset} /></div>
           {/if}
         </div>
       </div>

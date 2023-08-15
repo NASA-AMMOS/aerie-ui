@@ -16,7 +16,6 @@
   export let level: number = 0;
   export let levelPadding: number = 20;
   export let parameterType: ParameterType = 'activity';
-  export let units: string | undefined = undefined;
   export let use: ActionArray = [];
 
   const dispatch = createEventDispatcher();
@@ -37,7 +36,7 @@
       on:change={() => dispatch('change', formParameter)}
     />
     <div class="parameter-right" slot="right">
-      <ParameterUnits {units} />
+      <ParameterUnits units={formParameter.units} />
       <ParameterBaseRightAdornments
         {disabled}
         hidden={hideRightAdornments}
