@@ -3,11 +3,11 @@
 <script lang="ts">
   import InfoIcon from '@nasa-jpl/stellar/icons/info.svg?component';
   import { createEventDispatcher } from 'svelte';
-  import type { FormParameter, ValueSource } from '../../types/parameter';
+  import type { SimpleFormParameter, ValueSource } from '../../types/parameter';
   import ContextMenu from '../context-menu/ContextMenu.svelte';
   import ValueSourceBadge from './ValueSourceBadge.svelte';
 
-  export let formParameter: FormParameter;
+  export let formParameter: SimpleFormParameter;
 
   const dispatch = createEventDispatcher();
 
