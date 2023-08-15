@@ -24,7 +24,6 @@
   export let level: number = 0;
   export let levelPadding: number = 20;
   export let parameterType: ParameterType = 'activity';
-  export let units: string | undefined = undefined;
   export let use: ActionArray = [];
 
   const dispatch = createEventDispatcher();
@@ -126,7 +125,6 @@
                 level={++level}
                 {levelPadding}
                 {parameterType}
-                {units}
                 {use}
                 on:change={onChange}
                 on:reset={onResetSeries}
@@ -140,7 +138,6 @@
                 level={++level}
                 {levelPadding}
                 {parameterType}
-                {units}
                 {use}
                 on:change={onChange}
                 on:reset={onResetSeries}
