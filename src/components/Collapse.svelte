@@ -124,7 +124,7 @@
   }
 
   .content {
-    display: flex;
+    display: none;
     flex-direction: column;
     gap: 4px;
     height: 0;
@@ -138,9 +138,7 @@
   }
 
   .expanded {
-    height: auto;
-    visibility: visible;
-    width: auto;
+    display: flex;
   }
 
   .left {
