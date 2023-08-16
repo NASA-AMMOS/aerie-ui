@@ -87,7 +87,7 @@
     <div class={dotClasses} />
     {#if !isCompact}
       <span>{status}</span>
-      {#if showButton}
+      {#if showButton && !disabled}
         <button type="button" class="value-source-reset-button st-button icon" on:click={reset}>Reset</button>
       {/if}
     {/if}
