@@ -92,55 +92,57 @@ describe('getArgument', () => {
       valueSource: 'none',
     });
   });
+});
 
-  describe('getValueSchemaDefaultValue', () => {
-    test('boolean', () => {
-      const defaultBooleanValue = getValueSchemaDefaultValue({ type: 'boolean' });
-      expect(defaultBooleanValue).toEqual(false);
-    });
-
-    test('duration', () => {
-      const defaultDurationValue = getValueSchemaDefaultValue({ type: 'duration' });
-      expect(defaultDurationValue).toEqual(0);
-    });
-
-    test('int', () => {
-      const defaultIntValue = getValueSchemaDefaultValue({ type: 'int' });
-      expect(defaultIntValue).toEqual(0);
-    });
-
-    test('path', () => {
-      const defaultPathValue = getValueSchemaDefaultValue({ type: 'path' });
-      expect(defaultPathValue).toEqual('');
-    });
-
-    test('real', () => {
-      const defaultRealValue = getValueSchemaDefaultValue({ type: 'real' });
-      expect(defaultRealValue).toEqual(0);
-    });
-
-    test('series', () => {
-      const defaultSeriesValue = getValueSchemaDefaultValue({ items: { type: 'int' }, type: 'series' });
-      expect(defaultSeriesValue).toEqual([0]);
-    });
-
-    test('struct', () => {
-      const defaultStructValue = getValueSchemaDefaultValue({ items: { foo: { type: 'string' } }, type: 'struct' });
-      expect(defaultStructValue).toEqual({ foo: '' });
-    });
-
-    test('string', () => {
-      const defaultStringValue = getValueSchemaDefaultValue({ type: 'string' });
-      expect(defaultStringValue).toEqual('');
-    });
-
-    test('variant', () => {
-      const defaultVariantValue = getValueSchemaDefaultValue({ type: 'variant', variants: [{ key: 'A', label: 'A' }] });
-      expect(defaultVariantValue).toEqual('A');
-    });
+describe('getValueSchemaDefaultValue', () => {
+  test('boolean', () => {
+    const defaultBooleanValue = getValueSchemaDefaultValue({ type: 'boolean' });
+    expect(defaultBooleanValue).toEqual(false);
   });
 
-  test('Should return whether or not a form parameter is a recursive parameter or not', () => {
+  test('duration', () => {
+    const defaultDurationValue = getValueSchemaDefaultValue({ type: 'duration' });
+    expect(defaultDurationValue).toEqual(0);
+  });
+
+  test('int', () => {
+    const defaultIntValue = getValueSchemaDefaultValue({ type: 'int' });
+    expect(defaultIntValue).toEqual(0);
+  });
+
+  test('path', () => {
+    const defaultPathValue = getValueSchemaDefaultValue({ type: 'path' });
+    expect(defaultPathValue).toEqual('');
+  });
+
+  test('real', () => {
+    const defaultRealValue = getValueSchemaDefaultValue({ type: 'real' });
+    expect(defaultRealValue).toEqual(0);
+  });
+
+  test('series', () => {
+    const defaultSeriesValue = getValueSchemaDefaultValue({ items: { type: 'int' }, type: 'series' });
+    expect(defaultSeriesValue).toEqual([0]);
+  });
+
+  test('struct', () => {
+    const defaultStructValue = getValueSchemaDefaultValue({ items: { foo: { type: 'string' } }, type: 'struct' });
+    expect(defaultStructValue).toEqual({ foo: '' });
+  });
+
+  test('string', () => {
+    const defaultStringValue = getValueSchemaDefaultValue({ type: 'string' });
+    expect(defaultStringValue).toEqual('');
+  });
+
+  test('variant', () => {
+    const defaultVariantValue = getValueSchemaDefaultValue({ type: 'variant', variants: [{ key: 'A', label: 'A' }] });
+    expect(defaultVariantValue).toEqual('A');
+  });
+});
+
+describe('isRecParameter', () => {
+  test('Should return true for a form parameter that is a recursive parameter', () => {
     expect(
       isRecParameter({
         errors: [],
@@ -182,6 +184,34 @@ describe('getArgument', () => {
         order: 0,
         schema: {
           type: 'string',
+        },
+        value: 'foo',
+        valueSource: 'mission',
+      }),
+    ).toEqual(false);
+  });
+
+  test('Should return false for a form parameter that is not a recursive parameter', () => {
+    expect(
+      isRecParameter({
+        errors: [],
+        name: 'test',
+        order: 0,
+        schema: {
+          type: 'string',
+        },
+        value: 'foo',
+        valueSource: 'mission',
+      }),
+    ).toEqual(false);
+
+    expect(
+      isRecParameter({
+        errors: [],
+        name: 'test',
+        order: 0,
+        schema: {
+          type: 'boolean',
         },
         value: 'foo',
         valueSource: 'mission',
