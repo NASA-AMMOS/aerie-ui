@@ -2,14 +2,14 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import type { ParameterType, SimpleFormParameter } from '../../types/parameter';
+  import type { FormParameter, ParameterType } from '../../types/parameter';
   import { useActions, type ActionArray } from '../../utilities/useActions';
   import Input from '../form/Input.svelte';
   import ParameterBaseRightAdornments from './ParameterBaseRightAdornments.svelte';
   import ParameterName from './ParameterName.svelte';
 
   export let disabled: boolean = false;
-  export let formParameter: SimpleFormParameter;
+  export let formParameter: FormParameter;
   export let hideRightAdornments: boolean = false;
   export let labelColumnWidth: number = 200;
   export let level: number = 0;

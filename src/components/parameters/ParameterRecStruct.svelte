@@ -2,9 +2,9 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import type { FormParameter, ParameterType, RecFormParameter } from '../../types/parameter';
+  import type { FormParameter, ParameterType } from '../../types/parameter';
   import type { ValueSchemaStruct } from '../../types/schema';
-  import { castAsRecParameter, castAsSimpleParameter, isRecParameter } from '../../utilities/parameters';
+  import { isRecParameter } from '../../utilities/parameters';
   import type { ActionArray } from '../../utilities/useActions';
   import Collapse from '../Collapse.svelte';
   import ParameterBase from './ParameterBase.svelte';
@@ -14,7 +14,7 @@
 
   export let disabled: boolean = false;
   export let expanded: boolean = false;
-  export let formParameter: RecFormParameter<ValueSchemaStruct>;
+  export let formParameter: FormParameter<ValueSchemaStruct>;
   export let hideRightAdornments: boolean = false;
   export let labelColumnWidth: number = 200;
   export let level: number = 0;
@@ -38,7 +38,7 @@
         name: key,
         order: index,
         schema: schema.items[key],
-        units: isRecParameter(formParameter) ? formParameter.units?.[key] : formParameter.units,
+        units: formParameter.units,
         value: value !== null ? value[key] : null,
         valueSource: formParameter.valueSource,
       };
@@ -85,7 +85,7 @@
             <ParameterRec
               {disabled}
               {hideRightAdornments}
-              formParameter={castAsRecParameter(subFormParameter)}
+              formParameter={subFormParameter}
               {labelColumnWidth}
               level={++level}
               {levelPadding}
@@ -98,7 +98,7 @@
             <ParameterBase
               {disabled}
               {hideRightAdornments}
-              formParameter={castAsSimpleParameter(subFormParameter)}
+              formParameter={subFormParameter}
               {labelColumnWidth}
               level={++level}
               {levelPadding}

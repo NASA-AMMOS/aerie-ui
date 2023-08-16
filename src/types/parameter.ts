@@ -1,4 +1,3 @@
-import type { UnitsMap } from './activity';
 import type { ValueSchema } from './schema';
 
 export type EffectiveArguments = {
@@ -16,17 +15,9 @@ export type FormParameter<T = ValueSchema> = {
   order: number;
   required?: boolean;
   schema: T;
-  units?: string | UnitsMap;
+  units?: string;
   value: Argument;
   valueSource: ValueSource;
-};
-
-export type SimpleFormParameter<T = ValueSchema> = FormParameter<T> & {
-  units?: string;
-};
-
-export type RecFormParameter<T = ValueSchema> = FormParameter<T> & {
-  units?: UnitsMap;
 };
 
 export type Argument = any;
