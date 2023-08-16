@@ -337,7 +337,6 @@
       >
         <VerticalCollapseIcon />
         <svelte:fragment slot="metadata">
-          <!-- TODO: is there a better way to compute the count of violations, pre-compute them in the store? -->
           <div>Constraint violations: {$constraintResults.filter(result => result.violations.length).length}</div>
         </svelte:fragment>
       </PlanNavButton>
