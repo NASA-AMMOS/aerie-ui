@@ -124,7 +124,7 @@
   }
 
   .content {
-    display: none;
+    display: flex;
     flex-direction: column;
     gap: 4px;
     height: 0;
@@ -135,10 +135,15 @@
 
   .content.pad-content {
     margin-left: 32px;
+    overflow: hidden;
+    visibility: hidden;
+    width: 0;
   }
 
   .expanded {
-    display: flex;
+    height: auto;
+    visibility: visible;
+    width: auto;
   }
 
   .left {
