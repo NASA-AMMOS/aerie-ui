@@ -5,9 +5,7 @@ import type {
   ArgumentsMap,
   FormParameter,
   ParametersMap,
-  RecFormParameter,
   RequiredParametersList,
-  SimpleFormParameter,
   ValueSource,
 } from '../types/parameter';
 import type { ValueSchema } from '../types/schema';
@@ -95,24 +93,8 @@ export function getFormParameters(
 /**
  * Returns a boolean for whether or not the provided parameter is recursive
  */
-export function isRecParameter(parameter: FormParameter): parameter is RecFormParameter {
+export function isRecParameter(parameter: FormParameter) {
   return parameter.schema.type === 'series' || parameter.schema.type === 'struct';
-}
-
-/**
- * This function serves no purpose other than to be used within Svelte templates
- * to satisfy TS by only type casting to the required `RecFormParameter` type
- */
-export function castAsRecParameter(parameter: FormParameter): RecFormParameter {
-  return parameter as RecFormParameter;
-}
-
-/**
- * This function serves no purpose other than to be used within Svelte templates
- * to satisfy TS by only type casting to the required `SimpleFormParameter` type
- */
-export function castAsSimpleParameter(parameter: FormParameter): SimpleFormParameter {
-  return parameter as SimpleFormParameter;
 }
 
 /**
