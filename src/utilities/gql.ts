@@ -1062,8 +1062,8 @@ const gql = {
   GET_RESOURCE_TYPES: `#graphql
     query GetResourceTypes($model_id: Int!, $limit: Int) {
       resource_types: resource_type(where: { model_id: { _eq: $model_id } }, order_by: { name: asc }, limit: $limit) {
+        definition
         name
-        schema
       }
     }
   `,
@@ -1461,11 +1461,9 @@ const gql = {
   SUB_ACTIVITY_TYPES: `#graphql
     subscription SubActivityTypes($modelId: Int!) {
       activity_type(where: { model_id: { _eq: $modelId } }, order_by: { name: asc }) {
-        computed_attributes_value_schema
-        computed_attribute_units
+        computed_attribute_definitions
         name
-        parameter_units
-        parameters
+        parameter_definitions
         required_parameters
       }
     }

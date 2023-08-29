@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import type { ActivityType, UnitsMap } from '../../types/activity';
+  import type { ActivityType } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { ExpansionSequence } from '../../types/expansion';
   import type { ArgumentsMap, FormParameter, ParametersMap } from '../../types/parameter';
@@ -38,10 +38,8 @@
   let rootSpanHasChildren: boolean;
   let seqId: string | null;
   let startTimeDoy: string;
-  let unitsMap: UnitsMap = {};
 
   $: activityType = (activityTypes ?? []).find(({ name: activityTypeName }) => span.type === activityTypeName) ?? null;
-  $: unitsMap = activityType?.computed_attribute_units ?? {};
   $: rootSpan = getSpanRootParent(spansMap, span.id);
   $: rootSpanHasChildren = (rootSpan && spanUtilityMaps.spanIdToChildIdsMap[rootSpan.id]?.length > 0) ?? false;
   $: startTimeDoy = getDoyTimeFromInterval(planStartTimeYmd, span.start_offset);
@@ -59,8 +57,7 @@
       .then(activityArguments => {
         if (activityArguments !== null && activityType !== null) {
           formParameters = getFormParameters(
-            activityType.parameters,
-            activityType.parameter_units,
+            activityType.parameter_definitions,
             span.attributes.arguments,
             activityType.required_parameters,
             {},
@@ -86,7 +83,7 @@
   }
 
   $: setFormParametersComputedAttributes(
-    activityType?.computed_attributes_value_schema,
+    activityType?.computed_attribute_definitions,
     span?.attributes?.computedAttributes,
   );
 
@@ -127,12 +124,10 @@
     if (schema) {
       const parametersMap: ParametersMap = { Value: { order: 0, schema } };
       const argumentsMap: ArgumentsMap = computedAttributes ? { Value: computedAttributes } : { Value: {} };
-      formParametersComputedAttributes = getFormParameters(parametersMap, unitsMap, argumentsMap, []).map(
-        formParameter => ({
-          ...formParameter,
-          valueSource: 'none',
-        }),
-      );
+      formParametersComputedAttributes = getFormParameters(parametersMap, argumentsMap, []).map(formParameter => ({
+        ...formParameter,
+        valueSource: 'none',
+      }));
     }
   }
 </script>

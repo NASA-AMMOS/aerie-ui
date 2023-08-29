@@ -13,7 +13,7 @@ export type ModelSchema = {
   mission: string;
   name: string;
   owner: UserId;
-  parameters: { parameters: ParametersMap };
+  parameters: { parameter_definitions: ParametersMap };
   plans: { id: number }[];
   version: string;
 };

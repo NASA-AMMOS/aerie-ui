@@ -61,7 +61,7 @@ const mockInitialPlan: Plan = {
     name: 'Demo Model',
     owner: 'spacecaptain',
     parameters: {
-      parameters: {},
+      parameter_definitions: {},
     },
     plans: [{ id: 1 }],
     version: '1.0.0',
