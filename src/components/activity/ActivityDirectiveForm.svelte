@@ -98,8 +98,7 @@
         if (effectiveArguments && activityType) {
           const { arguments: defaultArgumentsMap } = effectiveArguments;
           formParameters = getFormParameters(
-            activityType.parameters,
-            activityType.parameter_units,
+            activityType.parameter_definitions,
             revision ? revision.arguments : activityDirective.arguments,
             activityType.required_parameters,
             revision ? undefined : activityDirective.applied_preset?.preset_applied?.arguments,

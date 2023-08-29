@@ -14,11 +14,9 @@ export type ActivityDirectivesByView = {
 export type UnitsMap = Record<string, string>;
 
 export type ActivityType = {
-  computed_attribute_units: UnitsMap;
-  computed_attributes_value_schema: ValueSchema;
+  computed_attribute_definitions: ValueSchema;
   name: string;
-  parameter_units: UnitsMap;
-  parameters: ParametersMap;
+  parameter_definitions: ParametersMap;
   required_parameters: string[];
 };
 

@@ -24,7 +24,7 @@ export type Argument = any;
 
 export type ArgumentsMap = Record<ParameterName, Argument>;
 
-export type Parameter = { order: number; schema: ValueSchema };
+export type Parameter = { order: number; schema: ValueSchema; units?: string };
 
 export type ParameterError = { message: string; schema: ValueSchema };
 

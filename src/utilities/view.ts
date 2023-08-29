@@ -37,7 +37,10 @@ export function generateDefaultView(activityTypes: ActivityType[] = [], resource
 
   // Generate a row for every resource
   resourceTypes.map(resourceType => {
-    const { name, schema } = resourceType;
+    const {
+      name,
+      definition: { schema },
+    } = resourceType;
     const { type: schemaType } = schema;
     const isDiscreteSchema = schemaType === 'boolean' || schemaType === 'string' || schemaType === 'variant';
     const isNumericSchema =

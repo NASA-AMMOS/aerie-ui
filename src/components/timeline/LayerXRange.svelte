@@ -227,7 +227,7 @@
     let id = 0;
 
     for (const resource of resources) {
-      const { name, schema, values } = resource;
+      const { name, schema: schema, values } = resource;
 
       if (schema.type === 'boolean') {
         domain = ['TRUE', 'FALSE'];
