@@ -46,7 +46,6 @@ export const simulationDataset = gqlSubscribable<SimulationDataset | null>(
   { simulationDatasetId },
   null,
   null,
-  ({ extent, ...etc }) => ({ ...etc, extent: extent?.extent ?? null }),
 );
 
 export const simulationDatasetIds = gqlSubscribable<number[]>(
@@ -60,6 +59,13 @@ export const simulationDatasetIds = gqlSubscribable<number[]>(
     }
     return [];
   },
+);
+
+export const simulationDatasetsAll = gqlSubscribable<SimulationDataset[]>(
+  gql.SUB_SIMULATION_DATASETS_ALL,
+  null,
+  [],
+  null,
 );
 
 export const simulationTemplates = gqlSubscribable<SimulationTemplate[]>(

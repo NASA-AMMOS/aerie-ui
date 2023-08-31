@@ -5,7 +5,13 @@
   import PlanRightArrow from '@nasa-jpl/stellar/icons/plan_with_right_arrow.svg?component';
   import { field } from '../../stores/form';
   import { plan, planEndTimeMs, planStartTimeMs } from '../../stores/plan';
-  import { enableSimulation, simulation, simulationDatasetId, simulationStatus } from '../../stores/simulation';
+  import {
+    enableSimulation,
+    simulation,
+    simulationDatasetId,
+    simulationDatasetsAll,
+    simulationStatus,
+  } from '../../stores/simulation';
   import { gqlSubscribable } from '../../stores/subscribable';
   import type { User } from '../../types/app';
   import type { FieldStore } from '../../types/form';
@@ -19,6 +25,7 @@
   import type { GqlSubscribable } from '../../types/subscribable';
   import type { ViewGridSection } from '../../types/view';
   import effects from '../../utilities/effects';
+  import { compare } from '../../utilities/generic';
   import gql from '../../utilities/gql';
   import { getArguments, getFormParameters } from '../../utilities/parameters';
   import { permissionHandler } from '../../utilities/permissionHandler';
@@ -105,15 +112,12 @@
       { planId: $plan.id },
       null,
       user,
-      v =>
-        v[0]?.simulation_datasets.map(
-          ({ extent, ...etc }: SimulationDataset & { extent: { extent: string } | null }) => ({
-            ...etc,
-            extent: extent?.extent,
-          }),
-        ),
+      v => v[0]?.simulation_datasets,
     );
   }
+
+  // $: console.log('simulationDatasets :>> ', $simulationDatasets);
+  // $: console.log('simulationDatasetsAll :>> ', $simulationDatasetsAll);
 
   async function onChangeFormParameters(event: CustomEvent<FormParameter>) {
     if ($simulation !== null) {
@@ -248,6 +252,22 @@
       updateEndTime($endTimeDoyField.value);
     }
   }
+
+  function getSimQueuePosition(simDataset: SimulationDataset, simulationDatasets: SimulationDataset[]): number {
+    // If simDataset is pending, returns the position the simDataset appears in the set of queued simulation datasets
+    // Otherwise returns -1
+    if (simDataset.status !== 'pending' || simDataset.canceled) {
+      return -1;
+    }
+    const pendingSimDatasets = simulationDatasets
+      .filter(d => d.status === 'pending' && !d.canceled)
+      .sort((a, b) => compare(a.id, b.id));
+    return pendingSimDatasets.findIndex(d => d.id === simDataset.id) + 1;
+  }
+
+  function onCancelSimulation(event: CustomEvent) {
+    effects.cancelPendingSimulation(event.detail.id, user);
+  }
 </script>
 
 <Panel padBody={false}>
@@ -367,6 +387,7 @@
           {:else}
             {#each $simulationDatasets as simDataset (simDataset.id)}
               <SimulationHistoryDataset
+                queuePosition={getSimQueuePosition(simDataset, $simulationDatasetsAll)}
                 simulationDataset={simDataset}
                 planEndTimeMs={$planEndTimeMs}
                 planStartTimeMs={$planStartTimeMs}
@@ -374,6 +395,7 @@
                 on:click={() => {
                   simulationDatasetId.set(simDataset.id);
                 }}
+                on:cancel={onCancelSimulation}
               />
             {/each}
           {/if}

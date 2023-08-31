@@ -13,10 +13,10 @@ export function getSimulationProgress(simulationDataset: SimulationDataset | nul
   let simulationExtentMS = 0;
   if (
     (simulationDataset.status === 'incomplete' || simulationDataset.status === 'failed') &&
-    simulationDataset.extent
+    simulationDataset.extent?.extent
   ) {
     simulationExtentMS =
-      getUnixEpochTimeFromInterval(simulationDataset.simulation_start_time, simulationDataset.extent) -
+      getUnixEpochTimeFromInterval(simulationDataset.simulation_start_time, simulationDataset.extent?.extent) -
       simulationStartTimeMS;
   } else if (simulationDataset.status === 'success') {
     simulationExtentMS = simulationEndTimeMS - simulationStartTimeMS;

@@ -219,6 +219,43 @@ const effects = {
     }
   },
 
+  async cancelPendingSimulation(simulationDatasetId: number, user: User | null): Promise<void> {
+    try {
+      if (!queryPermissions.UPDATE_SIMULATION_DATASET(user)) {
+        throwPermissionError('update a simulation dataset');
+      }
+      const { confirm } = await showConfirmModal(
+        'Cancel Simulation',
+        `This will cancel the queued simulation with ID: ${simulationDatasetId}. Once canceled, the simulation cannot be restarted.`,
+        'Cancel Simulation',
+        true,
+        'Keep Simulating',
+      );
+
+      if (confirm) {
+        await reqHasura<SeqId>(gql.CANCEL_PENDING_SIMULATION, { id: simulationDatasetId }, user);
+        showSuccessToast('Simulation Successfully Canceled');
+      }
+    } catch (e) {
+      catchError('Simulation Unable To Be Canceled', e as Error);
+      showFailureToast('Simulation Cancel Failed');
+    }
+  },
+
+  async changeUserRole(role: UserRole, user: User | null): Promise<ReqAuthResponse> {
+    try {
+      const data = await reqGateway<ReqAuthResponse>('/auth/changeRole', 'POST', JSON.stringify({ role }), user, false);
+      return data;
+    } catch (e) {
+      catchError(e as Error);
+      return {
+        message: 'An unexpected error occurred',
+        success: false,
+        token: null,
+      };
+    }
+  },
+
   async checkConstraints(user: User | null): Promise<void> {
     try {
       checkConstraintsStatus.set(Status.Incomplete);
