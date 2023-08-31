@@ -1,11 +1,13 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { tooltip } from '../../utilities/tooltip';
+
   export let unit: string | undefined = undefined;
 </script>
 
 {#if unit}
-  <span class="parameter-units">{unit}</span>
+  <span class="parameter-units" use:tooltip={{ content: unit }}>{unit}</span>
 {/if}
 
 <style>
