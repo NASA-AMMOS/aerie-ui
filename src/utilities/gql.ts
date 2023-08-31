@@ -620,6 +620,25 @@ const gql = {
     }
   `,
 
+  GET_ACTIVITY_DIRECTIVE_CHANGELOG: `#graphql
+    query GetActivityTypesExpansionRules($activityId: Int!, $planId: Int!) {
+      activityDirectiveRevisions: activity_directive_changelog(
+        where: { plan_id: { _eq: $planId }, _and: { activity_directive_id: { _eq: $activityId }}},
+        order_by: { revision: desc }
+      ) {
+        revision
+        changed_by
+        changed_at
+        anchor_id
+        anchored_to_start
+        arguments
+        metadata
+        name
+        start_offset
+      }
+    }
+  `,
+
   GET_ACTIVITY_TYPES_EXPANSION_RULES: `#graphql
     query GetActivityTypesExpansionRules($modelId: Int!) {
       activity_types: activity_type(where: { model_id: { _eq: $modelId } }) {

@@ -23,6 +23,7 @@ import type {
   ActivityDirective,
   ActivityDirectiveId,
   ActivityDirectiveInsertInput,
+  ActivityDirectiveRevision,
   ActivityDirectiveSetInput,
   ActivityDirectivesMap,
   ActivityPreset,
@@ -2225,6 +2226,29 @@ const effects = {
       catchError('Plan Expansion Failed', e as Error);
       planExpansionStatus.set(Status.Failed);
       showFailureToast('Plan Expansion Failed');
+    }
+  },
+
+  async getActivityDirectiveChangelog(
+    planId: number,
+    activityId: number,
+    user: User | null,
+  ): Promise<ActivityDirectiveRevision[]> {
+    try {
+      const data = await reqHasura<ActivityDirectiveRevision[]>(
+        gql.GET_ACTIVITY_DIRECTIVE_CHANGELOG,
+        { activityId, planId },
+        user,
+      );
+      const { activityDirectiveRevisions } = data;
+      if (activityDirectiveRevisions != null) {
+        return activityDirectiveRevisions;
+      } else {
+        throw Error('Unable to retrieve activity directive changelog');
+      }
+    } catch (e) {
+      catchError(e as Error);
+      return [];
     }
   },
 

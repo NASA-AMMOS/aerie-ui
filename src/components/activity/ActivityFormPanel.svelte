@@ -32,6 +32,7 @@
   import GridMenu from '../menus/GridMenu.svelte';
   import Panel from '../ui/Panel.svelte';
   import PanelHeaderActions from '../ui/PanelHeaderActions.svelte';
+  import ActivityDirectiveChangelog from './ActivityDirectiveChangelog.svelte';
   import ActivityDirectiveForm from './ActivityDirectiveForm.svelte';
   import ActivitySpanForm from './ActivitySpanForm.svelte';
 
@@ -39,6 +40,7 @@
   export let user: User | null;
 
   let hasDeletePermission: boolean = false;
+  let viewingActivityDirectiveChangelog: boolean = false;
 
   $: deletePermissionError = $planReadOnly
     ? PlanStatusMessages.READ_ONLY
@@ -91,12 +93,24 @@
         >
           <TrashIcon />
         </button>
+
+        <button
+          class="st-button icon activity-header-delete"
+          on:click|stopPropagation={() => {
+            viewingActivityDirectiveChangelog = !viewingActivityDirectiveChangelog;
+          }}
+          use:tooltip={{ content: 'View Activity Changelog', placement: 'top' }}
+        >
+          <TrashIcon />
+        </button>
       {/if}
     </PanelHeaderActions>
   </svelte:fragment>
 
   <svelte:fragment slot="body">
-    {#if $selectedActivityDirective && $plan !== null}
+    {#if $selectedActivityDirective && $plan !== null && viewingActivityDirectiveChangelog}
+      <ActivityDirectiveChangelog activityDirective={$selectedActivityDirective} {user} />
+    {:else if $selectedActivityDirective && $plan !== null}
       <ActivityDirectiveForm
         activityDirectivesMap={$activityDirectivesMap}
         activityDirective={$selectedActivityDirective}
