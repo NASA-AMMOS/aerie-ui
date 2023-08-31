@@ -142,6 +142,9 @@ export const simulationStatus: Readable<Status | null> = derived(
       } else if (status === 'incomplete') {
         return Status.Incomplete;
       } else if (status === 'pending') {
+        if ($simulationDataset.canceled) {
+          return Status.Canceled;
+        }
         return Status.Pending;
       }
     }

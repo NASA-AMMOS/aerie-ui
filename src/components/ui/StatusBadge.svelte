@@ -1,5 +1,6 @@
 <script lang="ts">
   import CheckIcon from '@nasa-jpl/stellar/icons/check.svg?component';
+  import CloseIcon from '@nasa-jpl/stellar/icons/close.svg?component';
   import EditingIcon from '@nasa-jpl/stellar/icons/editing.svg?component';
   import MinusIcon from '@nasa-jpl/stellar/icons/minus.svg?component';
   import SpinnerIcon from '@nasa-jpl/stellar/icons/spinner.svg?component';
@@ -30,6 +31,8 @@
       <CheckIcon />
     {:else if status === Status.Failed}
       <WarningIcon style="color: {color}" />
+    {:else if status === Status.Canceled}
+      <CloseIcon />
     {:else if status === Status.Incomplete}
       {#if determinateProgress}
         <ProgressRadial {progress} />
