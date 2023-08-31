@@ -15,7 +15,7 @@ export type FormParameter<T = ValueSchema> = {
   order: number;
   required?: boolean;
   schema: T;
-  units?: string;
+  unit?: string;
   value: Argument;
   valueSource: ValueSource;
 };
@@ -24,7 +24,7 @@ export type Argument = any;
 
 export type ArgumentsMap = Record<ParameterName, Argument>;
 
-export type Parameter = { order: number; schema: ValueSchema; units?: string };
+export type Parameter = { order: number; schema: ValueSchema; unit?: string };
 
 export type ParameterError = { message: string; schema: ValueSchema };
 

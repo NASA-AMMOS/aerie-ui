@@ -42,7 +42,7 @@
         name: `[${i}]`,
         order: i,
         schema: schema.items,
-        units: formParameter.units,
+        unit: formParameter.unit,
         value: getArgument(value[i], schema.items).value,
         valueSource: formParameter.valueSource,
       };

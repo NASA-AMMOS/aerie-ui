@@ -876,7 +876,7 @@ const gql = {
           name
           owner
           parameters {
-            parameters
+            parameter_definitions
           }
           version
         }
