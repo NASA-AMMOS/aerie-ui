@@ -36,7 +36,7 @@
       on:change={() => dispatch('change', formParameter)}
     />
     <div class="parameter-right" slot="right">
-      <ParameterUnits units={formParameter.units} />
+      <ParameterUnits unit={formParameter.unit} />
       <ParameterBaseRightAdornments
         {disabled}
         hidden={hideRightAdornments}

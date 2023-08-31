@@ -1,11 +1,11 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  export let units: string | undefined = undefined;
+  export let unit: string | undefined = undefined;
 </script>
 
-{#if units}
-  <span class="parameter-units">{units}</span>
+{#if unit}
+  <span class="parameter-units">{unit}</span>
 {/if}
 
 <style>

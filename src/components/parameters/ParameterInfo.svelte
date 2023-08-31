@@ -16,11 +16,11 @@
   let isTooltipHovered: boolean = false;
   let leaveTimeout: NodeJS.Timeout | null = null;
   let source: ValueSource;
-  let units: string | undefined = undefined;
+  let unit: string | undefined = undefined;
 
   $: if (formParameter) {
     source = formParameter.valueSource;
-    units = formParameter.units;
+    unit = formParameter.unit;
   }
 
   function leaveCallback() {
@@ -71,16 +71,16 @@
   }
 </script>
 
-{#if units || source !== 'none'}
+{#if unit || source !== 'none'}
   <div class="parameter-info-container" role="contentinfo" on:mouseenter={onIconOver} on:mouseleave={onIconOut}>
     <div><InfoIcon /></div>
     <ContextMenu hideAfterClick={false} bind:this={contextMenu}>
       <!-- svelte-ignore a11y-no-static-element-interactions -->
       <div class="parameter-info-tooltip" on:mouseenter={onTooltipOver} on:mouseleave={onTooltipOut}>
         <div class="parameter-info-values">
-          {#if units}
+          {#if unit}
             <div class="parameter-info-label">Units</div>
-            <div class="parameter-info-value">{units}</div>
+            <div class="parameter-info-value">{unit}</div>
           {/if}
           {#if source !== 'none'}
             <div class="parameter-info-label">Source</div>
@@ -102,6 +102,7 @@
   .parameter-info-values {
     display: grid;
     grid-template-columns: 1fr 1fr;
+    row-gap: 12px;
   }
 
   .parameter-info-label {

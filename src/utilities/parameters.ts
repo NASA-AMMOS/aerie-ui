@@ -64,7 +64,7 @@ export function getFormParameters(
   presetArgumentsMap: ArgumentsMap = {},
   defaultArgumentsMap: ArgumentsMap = {},
 ): FormParameter[] {
-  const formParameters = Object.entries(parametersMap).map(([name, { order, schema, units }]) => {
+  const formParameters = Object.entries(parametersMap).map(([name, { order, schema, unit }]) => {
     const arg: Argument = argumentsMap[name];
     const preset: Argument = presetArgumentsMap[name];
     const defaultArg: Argument | undefined = defaultArgumentsMap[name];
@@ -76,7 +76,7 @@ export function getFormParameters(
       order,
       required,
       schema,
-      units,
+      unit,
       value,
       valueSource,
     };
