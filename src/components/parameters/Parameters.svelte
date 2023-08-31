@@ -67,7 +67,6 @@
 
 <style>
   .parameter {
-    align-items: center;
     column-gap: 4px;
     display: grid;
     grid-template-columns: auto 16px;
@@ -90,6 +89,7 @@
   }
 
   .parameter-info {
+    padding-top: 0.2rem;
     visibility: hidden;
   }
   .parameters-container :global(> div.highlight:hover .parameter-info) {

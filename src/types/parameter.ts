@@ -16,6 +16,7 @@ export type FormParameter<T = ValueSchema> = {
   required?: boolean;
   schema: T;
   unit?: string;
+  units?: Record<ParameterName, string>;
   value: Argument;
   valueSource: ValueSource;
 };
@@ -25,6 +26,7 @@ export type Argument = any;
 export type ArgumentsMap = Record<ParameterName, Argument>;
 
 export type Parameter = { order: number; schema: ValueSchema; unit?: string };
+export type ComputedParameter = { order: number; schema: ValueSchema; units?: Record<ParameterName, string> };
 
 export type ParameterError = { message: string; schema: ValueSchema };
 
@@ -35,6 +37,7 @@ export type ParameterName = string;
 export type RequiredParametersList = ParameterName[];
 
 export type ParametersMap = Record<ParameterName, Parameter>;
+export type ComputedParametersMap = Record<ParameterName, ComputedParameter>;
 
 export type ParameterValidationError = {
   message: string;

@@ -13,8 +13,13 @@ export type ActivityDirectivesByView = {
 
 export type UnitsMap = Record<string, string>;
 
+export type ActivityComputedAttributeDefinitions = {
+  schema: ValueSchema;
+  units?: Record<string, string>;
+};
+
 export type ActivityType = {
-  computed_attribute_definitions: ValueSchema;
+  computed_attribute_definitions: ActivityComputedAttributeDefinitions;
   name: string;
   parameter_definitions: ParametersMap;
   required_parameters: string[];
