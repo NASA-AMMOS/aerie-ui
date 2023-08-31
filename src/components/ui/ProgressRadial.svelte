@@ -24,7 +24,7 @@
 
 <style>
   .radial-progress {
-    background-color: var(--st-gray-30);
+    background-color: var(--st-utility-blue);
     border-radius: 50%;
     height: 16px;
     width: 16px;
