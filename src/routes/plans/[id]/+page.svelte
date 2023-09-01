@@ -95,6 +95,7 @@
   } from '../../../utilities/simulation';
   import { Status, statusColors } from '../../../utilities/status';
   import { getUnixEpochTime } from '../../../utilities/time';
+  import { tooltip } from '../../../utilities/tooltip';
   import type { PageData } from './$types';
 
   export let data: PageData;
@@ -352,6 +353,7 @@
                 {getSimulationProgress($simulationDataset).toFixed()}%
                 {#if simulationExtent && $simulationDataset}
                   <div
+                    use:tooltip={{ content: 'Simulation Time', placement: 'top' }}
                     style={`color: ${
                       selectedSimulationStatus === Status.Failed ? statusColors.red : 'var(--st-gray-50)'
                     }`}
