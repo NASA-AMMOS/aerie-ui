@@ -46,7 +46,8 @@
   function onIconOver(e: MouseEvent) {
     isIconHovered = true;
     if (!contextMenu.isShown()) {
-      contextMenu.show(e);
+      const bounds = (e.target as HTMLElement).getBoundingClientRect();
+      contextMenu.showDirectly(bounds.x + bounds.width, bounds.y, bounds.x);
     }
     hoverCallback();
   }
