@@ -91,6 +91,7 @@
     getSimulationProgress,
     getSimulationProgressColor,
     getSimulationStatus,
+    getSimulationTimestamp,
   } from '../../../utilities/simulation';
   import { Status, statusColors } from '../../../utilities/status';
   import { getUnixEpochTime } from '../../../utilities/time';
@@ -349,19 +350,19 @@
                 <div style={`color: var(--st-gray-50)}`}>Position 2</div>
               {:else}
                 {getSimulationProgress($simulationDataset).toFixed()}%
-                {#if simulationExtent}
+                {#if simulationExtent && $simulationDataset}
                   <div
                     style={`color: ${
                       selectedSimulationStatus === Status.Failed ? statusColors.red : 'var(--st-gray-50)'
                     }`}
                   >
-                    {simulationExtent}
+                    {getSimulationTimestamp($simulationDataset)}
                   </div>
                 {/if}
               {/if}
             </div>
           </div>
-          <div style="width: 200px;">
+          <div style="width: 240px;">
             <ProgressLinear
               color={getSimulationProgressColor($simulationDataset?.status || null)}
               progress={getSimulationProgress($simulationDataset)}

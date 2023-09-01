@@ -12,6 +12,7 @@
     getSimulationProgress,
     getSimulationProgressColor,
     getSimulationStatus,
+    getSimulationTimestamp,
   } from '../../utilities/simulation';
   import { Status } from '../../utilities/status';
   import { getDoyTime, getTimeAgo, getUnixEpochTimeFromInterval } from '../../utilities/time';
@@ -177,7 +178,9 @@
     </div>
     <div>
       {#if extent}
-        <span class="simulation-dataset-extent">{extent}</span>,
+        <span use:tooltip={{ content: 'Simulation Time', placement: 'top' }} class="simulation-dataset-extent">
+          {getSimulationTimestamp(simulationDataset)}
+        </span>,
       {/if}
       {progress.toFixed()}%
     </div>

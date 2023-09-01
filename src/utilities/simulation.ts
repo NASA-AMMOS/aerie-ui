@@ -1,6 +1,6 @@
 import type { SimulationDataset } from '../types/simulation';
 import { Status, statusColors } from './status';
-import { getUnixEpochTimeFromInterval } from './time';
+import { getDoyTime, getUnixEpochTimeFromInterval } from './time';
 
 /**
  * Returns the string version of an object of unknown type or returns null if this operation fails.
@@ -37,6 +37,24 @@ export function getSimulationExtent(simulationDataset: SimulationDataset): strin
   } else {
     return simulationDataset.extent?.extent ?? null;
   }
+}
+
+/**
+ * Returns the timestamp representing the simulation extent
+ */
+export function getSimulationTimestamp(simulationDataset: SimulationDataset): string {
+  const extent = getSimulationExtent(simulationDataset);
+  const status = getSimulationStatus(simulationDataset);
+  if (!extent || !status || !simulationDataset.simulation_start_time || !simulationDataset.simulation_end_time) {
+    return 'Unknown Time';
+  }
+  let simulationExtentMS = 0;
+  if (status === Status.Incomplete || status === Status.Failed) {
+    simulationExtentMS = getUnixEpochTimeFromInterval(simulationDataset.simulation_start_time, extent);
+  } else if (status === Status.Complete) {
+    simulationExtentMS = new Date(simulationDataset.simulation_end_time).getTime();
+  }
+  return getDoyTime(new Date(simulationExtentMS), false);
 }
 
 /**
