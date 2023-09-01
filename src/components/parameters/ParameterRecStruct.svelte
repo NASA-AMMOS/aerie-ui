@@ -11,6 +11,7 @@
   import ParameterBaseRightAdornments from './ParameterBaseRightAdornments.svelte';
   import ParameterName from './ParameterName.svelte';
   import ParameterRec from './ParameterRec.svelte';
+  import ParameterUnits from './ParameterUnits.svelte';
 
   export let disabled: boolean = false;
   export let expanded: boolean = false;
@@ -69,6 +70,7 @@
       <ParameterName {formParameter} />
     </div>
     <div class="right" slot="right">
+      <ParameterUnits unit={formParameter.unit} />
       <ParameterBaseRightAdornments
         {disabled}
         hidden={hideRightAdornments}
@@ -148,6 +150,7 @@
   }
 
   .right {
+    display: inline-flex;
     margin-right: 5px;
   }
 </style>
