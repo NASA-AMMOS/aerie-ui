@@ -5,8 +5,8 @@
   import { createEventDispatcher } from 'svelte';
   import type { SimulationDataset } from '../../types/simulation';
   import { hexToRgba } from '../../utilities/color';
-  import { getNumberWithOrdinal } from '../../utilities/generic';
   import {
+    formatSimulationQueuePosition,
     getHumanReadableSimulationStatus,
     getSimulationExtent,
     getSimulationProgress,
@@ -119,11 +119,7 @@
           class={`simulation-dataset-status-chip simulation-dataset-status-chip--${status?.toLowerCase()} st-typography-label`}
         >
           {#if status === Status.Pending}
-            {#if queuePosition === 1}
-              Next in Queue
-            {:else}
-              {getNumberWithOrdinal(queuePosition)} in Queue
-            {/if}
+            {formatSimulationQueuePosition(queuePosition)}
           {:else}
             {getHumanReadableSimulationStatus(status)}
           {/if}

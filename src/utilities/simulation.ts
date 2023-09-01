@@ -1,4 +1,5 @@
 import type { SimulationDataset } from '../types/simulation';
+import { compare, getNumberWithOrdinal } from './generic';
 import { Status, statusColors } from './status';
 import { getDoyTime, getUnixEpochTimeFromInterval } from './time';
 
@@ -118,4 +119,32 @@ export function getSimulationProgressColor(status: SimulationDataset['status'] |
   } else {
     return '#FF0000';
   }
+}
+
+/**
+ * Returns simulation position within simulation queue
+ */
+export function getSimulationQueuePosition(
+  simDataset: SimulationDataset,
+  simulationDatasets: SimulationDataset[],
+): number {
+  // If simDataset is pending, returns the position the simDataset appears in the set of queued simulation datasets
+  // Otherwise returns -1
+  if (simDataset.status !== 'pending' || simDataset.canceled) {
+    return -1;
+  }
+  const pendingSimDatasets = simulationDatasets
+    .filter(d => d.status === 'pending' && !d.canceled)
+    .sort((a, b) => compare(a.id, b.id));
+  return pendingSimDatasets.findIndex(d => d.id === simDataset.id) + 1;
+}
+
+/**
+ * Format simulation queue position as human readable string
+ */
+export function formatSimulationQueuePosition(position: number): string {
+  if (position === 1) {
+    return 'Next in Queue';
+  }
+  return `${getNumberWithOrdinal(position)} in Queue`;
 }

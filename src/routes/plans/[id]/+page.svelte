@@ -67,6 +67,7 @@
     selectedSpanId,
     simulationDataset,
     simulationDatasetId,
+    simulationDatasetsAll,
     simulationProgress,
     simulationStatus,
     spans,
@@ -86,10 +87,12 @@
   import { closeActiveModal, showPlanLockedModal } from '../../../utilities/modal';
   import { featurePermissions } from '../../../utilities/permissions';
   import {
+    formatSimulationQueuePosition,
     getHumanReadableSimulationStatus,
     getSimulationExtent,
     getSimulationProgress,
     getSimulationProgressColor,
+    getSimulationQueuePosition,
     getSimulationStatus,
     getSimulationTimestamp,
   } from '../../../utilities/simulation';
@@ -347,8 +350,12 @@
           <div class="st-typography-body">
             <div class="simulation-header">
               {getHumanReadableSimulationStatus(getSimulationStatus($simulationDataset))}:
-              {#if selectedSimulationStatus === Status.Pending}
-                <div style={`color: var(--st-gray-50)}`}>Position 2</div>
+              {#if selectedSimulationStatus === Status.Pending && $simulationDataset}
+                <div style="color: var(--st-gray-50)">
+                  {formatSimulationQueuePosition(
+                    getSimulationQueuePosition($simulationDataset, $simulationDatasetsAll),
+                  )}
+                </div>
               {:else}
                 {getSimulationProgress($simulationDataset).toFixed()}%
                 {#if simulationExtent && $simulationDataset}

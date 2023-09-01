@@ -25,11 +25,11 @@
   import type { GqlSubscribable } from '../../types/subscribable';
   import type { ViewGridSection } from '../../types/view';
   import effects from '../../utilities/effects';
-  import { compare } from '../../utilities/generic';
   import gql from '../../utilities/gql';
   import { getArguments, getFormParameters } from '../../utilities/parameters';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
+  import { getSimulationQueuePosition } from '../../utilities/simulation';
   import { Status } from '../../utilities/status';
   import { getDoyTime } from '../../utilities/time';
   import { required, timestamp } from '../../utilities/validators';
@@ -253,18 +253,6 @@
     }
   }
 
-  function getSimQueuePosition(simDataset: SimulationDataset, simulationDatasets: SimulationDataset[]): number {
-    // If simDataset is pending, returns the position the simDataset appears in the set of queued simulation datasets
-    // Otherwise returns -1
-    if (simDataset.status !== 'pending' || simDataset.canceled) {
-      return -1;
-    }
-    const pendingSimDatasets = simulationDatasets
-      .filter(d => d.status === 'pending' && !d.canceled)
-      .sort((a, b) => compare(a.id, b.id));
-    return pendingSimDatasets.findIndex(d => d.id === simDataset.id) + 1;
-  }
-
   function onCancelSimulation(event: CustomEvent) {
     effects.cancelPendingSimulation(event.detail.id, user);
   }
@@ -387,7 +375,7 @@
           {:else}
             {#each $simulationDatasets as simDataset (simDataset.id)}
               <SimulationHistoryDataset
-                queuePosition={getSimQueuePosition(simDataset, $simulationDatasetsAll)}
+                queuePosition={getSimulationQueuePosition(simDataset, $simulationDatasetsAll)}
                 simulationDataset={simDataset}
                 planEndTimeMs={$planEndTimeMs}
                 planStartTimeMs={$planStartTimeMs}
