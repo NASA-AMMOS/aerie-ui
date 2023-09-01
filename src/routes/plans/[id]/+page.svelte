@@ -21,6 +21,7 @@
   import PlanNavButton from '../../../components/plan/PlanNavButton.svelte';
   import CssGrid from '../../../components/ui/CssGrid.svelte';
   import PlanGrid from '../../../components/ui/PlanGrid.svelte';
+  import ProgressLinear from '../../../components/ui/ProgressLinear.svelte';
   import {
     activityDirectives,
     activityDirectivesMap,
@@ -84,7 +85,14 @@
   import { isSaveEvent } from '../../../utilities/keyboardEvents';
   import { closeActiveModal, showPlanLockedModal } from '../../../utilities/modal';
   import { featurePermissions } from '../../../utilities/permissions';
-  import { Status } from '../../../utilities/status';
+  import {
+    getHumanReadableSimulationStatus,
+    getSimulationExtent,
+    getSimulationProgress,
+    getSimulationProgressColor,
+    getSimulationStatus,
+  } from '../../../utilities/simulation';
+  import { Status, statusColors } from '../../../utilities/status';
   import { getUnixEpochTime } from '../../../utilities/time';
   import type { PageData } from './$types';
 
@@ -99,6 +107,8 @@
   let hasCheckConstraintsPermission: boolean = false;
   let planHasBeenLocked = false;
   let schedulingAnalysisStatus: Status | null;
+  let simulationExtent: string | null;
+  let selectedSimulationStatus: string | null;
   let windowWidth = 0;
 
   $: hasCreateViewPermission = featurePermissions.view.canCreate(data.user);
@@ -182,6 +192,11 @@
     if ($schedulingGoalCount !== $satisfiedSchedulingGoalCount) {
       schedulingAnalysisStatus = Status.PartialSuccess;
     }
+  }
+
+  $: if ($simulationDataset) {
+    simulationExtent = getSimulationExtent($simulationDataset);
+    selectedSimulationStatus = getSimulationStatus($simulationDataset);
   }
 
   onDestroy(() => {
@@ -322,14 +337,43 @@
         progress={$simulationProgress}
         determinateProgress={$simulationStatus === Status.Incomplete}
         disabled={!$enableSimulation}
+        showStatusInMenu={false}
         on:click={() => effects.simulate(data.user)}
       >
         <PlayIcon />
         <svelte:fragment slot="metadata">
-          <div>Simulation Dataset ID: {$simulationDatasetId}</div>
-          <div>
-            Simulation Extent: {$simulationStatus === Status.Incomplete ? $simulationDataset?.extent : 'Finished'}
+          <div class="st-typography-body">
+            <div class="simulation-header">
+              {getHumanReadableSimulationStatus(getSimulationStatus($simulationDataset))}:
+              {#if selectedSimulationStatus === Status.Pending}
+                <div style={`color: var(--st-gray-50)}`}>Position 2</div>
+              {:else}
+                {getSimulationProgress($simulationDataset).toFixed()}%
+                {#if simulationExtent}
+                  <div
+                    style={`color: ${
+                      selectedSimulationStatus === Status.Failed ? statusColors.red : 'var(--st-gray-50)'
+                    }`}
+                  >
+                    {simulationExtent}
+                  </div>
+                {/if}
+              {/if}
+            </div>
           </div>
+          <div style="width: 200px;">
+            <ProgressLinear
+              color={getSimulationProgressColor($simulationDataset?.status || null)}
+              progress={getSimulationProgress($simulationDataset)}
+            />
+          </div>
+          <div>Simulation Dataset ID: {$simulationDatasetId}</div>
+          {#if selectedSimulationStatus === Status.Pending}
+            <button
+              on:click={() => effects.cancelPendingSimulation($simulationDatasetId, data.user)}
+              class="st-button cancel-button">Cancel</button
+            >
+          {/if}
         </svelte:fragment>
       </PlanNavButton>
       <PlanNavButton
@@ -430,5 +474,20 @@
 
   .separator {
     color: var(--st-gray-30);
+  }
+
+  .simulation-header {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .cancel-button {
+    background: rgba(219, 81, 57, 0.04);
+    border: 1px solid var(--st-utility-red);
+    color: var(--st-utility-red);
+  }
+
+  .cancel-button:hover {
+    background: rgba(219, 81, 57, 0.08);
   }
 </style>

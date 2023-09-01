@@ -16,6 +16,7 @@
   export let permissionError: string | undefined = undefined;
   export let status: Status | null = null;
   export let statusText: string = '';
+  export let showStatusInMenu: boolean = true;
   export let progress: number = 0;
   export let title: string;
 
@@ -46,7 +47,7 @@
       <MenuHeader title={menuTitle} showBorder={false} />
     {/if}
     <div class="menu-body">
-      {#if status}
+      {#if status && showStatusInMenu}
         <div class="status-row st-typography-body">
           <StatusBadge {status} {progress} showTooltip={false} />
           {statusText || status}
@@ -89,7 +90,6 @@
     line-height: 14px;
     padding: 16px;
     position: relative;
-    user-select: none;
     white-space: nowrap;
   }
 
@@ -153,6 +153,6 @@
     color: var(--st-gray-50);
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
   }
 </style>

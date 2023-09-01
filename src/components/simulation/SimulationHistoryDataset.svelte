@@ -6,8 +6,14 @@
   import type { SimulationDataset } from '../../types/simulation';
   import { hexToRgba } from '../../utilities/color';
   import { getNumberWithOrdinal } from '../../utilities/generic';
-  import { getSimulationProgress } from '../../utilities/simulation';
-  import { Status, statusColors } from '../../utilities/status';
+  import {
+    getHumanReadableSimulationStatus,
+    getSimulationExtent,
+    getSimulationProgress,
+    getSimulationProgressColor,
+    getSimulationStatus,
+  } from '../../utilities/simulation';
+  import { Status } from '../../utilities/status';
   import { getDoyTime, getTimeAgo, getUnixEpochTimeFromInterval } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import Input from '../form/Input.svelte';
@@ -28,7 +34,8 @@
   let startTimeText = '';
   let endTimeText = '';
   let progress = 0;
-  let status: Status = Status.Pending;
+  let extent: string | null = '';
+  let status: Status | null = null;
 
   $: simulationBoundsVizRangeWidthStyle =
     simulationBoundsVizRangeWidth < 1 ? '4px' : `${simulationBoundsVizRangeWidth}%`;
@@ -38,7 +45,8 @@
       : `${(simulationExtentVizRangeWidth / simulationBoundsVizRangeWidth) * 100}%`;
 
   $: {
-    status = toSimulationStatus(simulationDataset);
+    status = getSimulationStatus(simulationDataset);
+    extent = getSimulationExtent(simulationDataset);
 
     // Compute time range left and width
     if (simulationDataset.simulation_start_time) {
@@ -56,10 +64,9 @@
         simulationBoundsVizRangeWidth = ((simulationEndTimeMS - simulationStartTimeMS) / planDuration) * 100 || 0;
 
         let simulationExtentMS = 0;
-        if ((status === Status.Incomplete || status === Status.Failed) && simulationDataset.extent?.extent) {
+        if ((status === Status.Incomplete || status === Status.Failed) && extent) {
           simulationExtentMS =
-            getUnixEpochTimeFromInterval(simulationDataset.simulation_start_time, simulationDataset.extent?.extent) -
-            simulationStartTimeMS;
+            getUnixEpochTimeFromInterval(simulationDataset.simulation_start_time, extent) - simulationStartTimeMS;
         } else if (status === Status.Complete) {
           simulationExtentMS = simulationEndTimeMS - simulationStartTimeMS;
         }
@@ -76,51 +83,6 @@
 
   function onCheckboxClick(e: Event) {
     (e.target as HTMLInputElement).checked = checked;
-  }
-
-  function toSimulationStatus(simulationDataset: SimulationDataset) {
-    if (simulationDataset.status === 'success') {
-      return Status.Complete;
-    } else if (simulationDataset.status === 'failed') {
-      return Status.Failed;
-    } else if (simulationDataset.status === 'incomplete') {
-      return Status.Incomplete;
-    } else if (simulationDataset.status === 'pending') {
-      if (simulationDataset.canceled) {
-        return Status.Canceled;
-      }
-      return Status.Pending;
-    }
-    return Status.Pending;
-  }
-
-  function toHumanReadableStatus(status: Status): string {
-    if (status === Status.Complete) {
-      return Status.Complete;
-    } else if (status === Status.Failed) {
-      return Status.Failed;
-    } else if (status === Status.Incomplete) {
-      return 'In Progress';
-    } else if (status === Status.Pending) {
-      return 'Queued';
-    } else if (status === Status.Canceled) {
-      return 'Canceled';
-    }
-    return 'Unknown';
-  }
-
-  function getSimulationProgressColor(status: SimulationDataset['status']): string {
-    if (status === 'success') {
-      return '#969696';
-    } else if (status === 'failed') {
-      return statusColors.red;
-    } else if (status === 'incomplete') {
-      return '#2f80ed'; // var(--st-utility-blue);
-    } else if (status === 'pending') {
-      return '#545f64';
-    } else {
-      return '#FF0000';
-    }
   }
 
   function formatRequestedAtTime(dateString: string): string {
@@ -150,10 +112,10 @@
     </div>
     <div class="simulation-dataset-status-container">
       {#if status === Status.Complete || status === Status.Failed}
-        <StatusBadge status={toSimulationStatus(simulationDataset)} {progress} determinateProgress />
+        <StatusBadge status={getSimulationStatus(simulationDataset)} {progress} determinateProgress />
       {:else}
         <div
-          class={`simulation-dataset-status-chip simulation-dataset-status-chip--${status.toLowerCase()} st-typography-label`}
+          class={`simulation-dataset-status-chip simulation-dataset-status-chip--${status?.toLowerCase()} st-typography-label`}
         >
           {#if status === Status.Pending}
             {#if queuePosition === 1}
@@ -162,7 +124,7 @@
               {getNumberWithOrdinal(queuePosition)} in Queue
             {/if}
           {:else}
-            {toHumanReadableStatus(status)}
+            {getHumanReadableSimulationStatus(status)}
           {/if}
         </div>
         {#if status === Status.Pending}
@@ -214,6 +176,9 @@
       </div>
     </div>
     <div>
+      {#if extent}
+        <span class="simulation-dataset-extent">{extent}</span>,
+      {/if}
       {progress.toFixed()}%
     </div>
   </div>
@@ -309,71 +274,6 @@
     color: var(--st-gray-60);
   }
 
-  /* .simulation-range-label.start {
-    margin-left: -3px;
-    text-align: left;
-  }
-
-  .simulation-range-label.end {
-    margin-right: -3px;
-    text-align: right;
-  } */
-
-  /* .simulation-range-label.start:before { */
-  /* White color block for the interior of the start icon's cut out so
-    that the gradient does not appear inside the icon */
-  /* background: white;
-    content: ' ';
-    height: 5px;
-    left: 6px;
-    position: absolute;
-    top: 4px;
-    width: 5px;
-    z-index: 0;
-  } */
-  /*
-  .simulation-range-label.start:after {
-    background: linear-gradient(90deg, #717171 54.17%, rgba(188, 188, 188, 0) 104.17%);
-    content: ' ';
-    height: 16px;
-    left: 8px;
-    opacity: 0.15;
-    position: absolute;
-    top: 0;
-    width: 12px;
-    z-index: -1;
-  } */
-
-  /* .simulation-range-label.end:before { */
-  /* White color block for the interior of the end icon's cut out so
-    that the gradient does not appear inside the icon */
-  /* background: white;
-    content: ' ';
-    height: 6px;
-    position: absolute;
-    right: 6px;
-    top: 3px;
-    width: 5px;
-    z-index: 0;
-  } */
-  /*
-  .simulation-range-label.end:after {
-    background: linear-gradient(270deg, #717171 45.83%, rgba(188, 188, 188, 0) 95.83%);
-    content: ' ';
-    height: 16px;
-    opacity: 0.15;
-    position: absolute;
-    right: 8px;
-    top: 0px;
-    width: 12px;
-    z-index: -1;
-  }
-
-  .simulation-dataset.active .simulation-range-label.start:after,
-  .simulation-dataset.active .simulation-range-label.end:after {
-    opacity: 0.3;
-  } */
-
   .simulation-range-visualization {
     align-items: center;
     display: flex;
@@ -388,7 +288,6 @@
     display: flex;
     flex: 1;
     height: 4px;
-    /* padding: 2px; */
   }
 
   .simulation-range-bounds {
@@ -436,5 +335,9 @@
 
   .simulation-dataset-status-cancel:hover {
     background: var(--st-gray-30);
+  }
+
+  .simulation-dataset-extent {
+    color: var(--st-gray-50);
   }
 </style>
