@@ -58,28 +58,30 @@
     { field: 'name', filter: 'text', headerName: 'Name', resizable: true, sortable: true },
     { field: 'model_id', filter: 'number', headerName: 'Model ID', sortable: true, suppressAutoSize: true, width: 130 },
     {
-      field: 'model_id',
+      field: 'model_name',
       filter: 'text',
       headerName: 'Model Name',
+      resizable: true,
       sortable: true,
       valueGetter: (params: ValueGetterParams<Plan>) => {
         if (params.data?.model_id !== undefined) {
           return data.models.find(model => model.id === params.data?.model_id)?.name;
         }
       },
-      width: 130,
+      width: 150,
     },
     {
-      field: 'model_id',
+      field: 'model_version',
       filter: 'text',
       headerName: 'Model Version',
+      resizable: true,
       sortable: true,
       valueGetter: (params: ValueGetterParams<Plan>) => {
         if (params.data?.model_id !== undefined) {
           return data.models.find(model => model.id === params.data?.model_id)?.version;
         }
       },
-      width: 130,
+      width: 150,
     },
     {
       field: 'start_time_doy',
