@@ -1,4 +1,5 @@
 import { browser } from '$app/environment';
+import type { SearchParameters } from '../enums/searchParameters';
 
 /**
  * Returns the string version of an object of unknown type or returns null if this operation fails.
@@ -160,7 +161,7 @@ export function parseFloatOrNull(value: string | null): number | null {
   return null;
 }
 
-export function getSearchParameterNumber(key: string, searchParams?: URLSearchParams): number | null {
+export function getSearchParameterNumber(key: SearchParameters, searchParams?: URLSearchParams): number | null {
   let urlSearchParams: URLSearchParams | undefined = searchParams;
 
   if (!searchParams && window) {
@@ -190,7 +191,7 @@ export function convertToQuery(gql: string): string {
 /**
  * Removes a query param from the current URL.
  */
-export function removeQueryParam(key: string): void {
+export function removeQueryParam(key: SearchParameters): void {
   if (!browser) {
     return;
   }
@@ -219,7 +220,7 @@ export function removeQueryParam(key: string): void {
  * Changes the current URL to include a query parameter given by [key]=[value].
  * @note Only runs in the browser (not server-side).
  */
-export function setQueryParam(key: string, value: string): void {
+export function setQueryParam(key: SearchParameters, value: string): void {
   const { history, location } = window;
   const { hash, host, pathname, protocol, search } = location;
 

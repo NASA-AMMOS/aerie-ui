@@ -2,6 +2,7 @@ import { goto } from '$app/navigation';
 import { base } from '$app/paths';
 import type { CommandDictionary as AmpcsCommandDictionary } from '@nasa-jpl/aerie-ampcs';
 import { get } from 'svelte/store';
+import { SearchParameters } from '../enums/searchParameters';
 import { activityDirectives, activityDirectivesMap, selectedActivityDirectiveId } from '../stores/activities';
 import { checkConstraintsStatus, constraintResultsResponse } from '../stores/constraints';
 import { catchError, catchSchedulingError } from '../stores/errors';
@@ -1188,7 +1189,7 @@ const effects = {
 
         if (newView != null) {
           view.update(() => newView);
-          setQueryParam('viewId', `${newView.id}`);
+          setQueryParam(SearchParameters.VIEW_ID, `${newView.id}`);
           showSuccessToast('View Created Successfully');
           return true;
         } else {
@@ -2931,7 +2932,7 @@ const effects = {
   ): Promise<View | null> {
     try {
       if (query !== null) {
-        const viewIdAsNumber = getSearchParameterNumber('viewId', query);
+        const viewIdAsNumber = getSearchParameterNumber(SearchParameters.VIEW_ID, query);
 
         if (viewIdAsNumber !== null) {
           const data = await reqHasura<View>(gql.GET_VIEW, { id: viewIdAsNumber }, user);
@@ -3861,7 +3862,7 @@ const effects = {
 
         if (newView != null) {
           view.update(() => newView);
-          setQueryParam('viewId', `${newView.id}`);
+          setQueryParam(SearchParameters.VIEW_ID, `${newView.id}`);
           return true;
         } else {
           throw Error('Unable to upload view');

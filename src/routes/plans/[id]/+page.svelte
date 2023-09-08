@@ -22,6 +22,7 @@
   import CssGrid from '../../../components/ui/CssGrid.svelte';
   import PlanGrid from '../../../components/ui/PlanGrid.svelte';
   import ProgressLinear from '../../../components/ui/ProgressLinear.svelte';
+  import { SearchParameters } from '../../../enums/searchParameters';
   import {
     activityDirectives,
     activityDirectivesMap,
@@ -134,18 +135,18 @@
     $planStartTimeMs = getUnixEpochTime(data.initialPlan.start_time_doy);
     $maxTimeRange = { end: $planEndTimeMs, start: $planStartTimeMs };
 
-    const querySimulationDatasetId = $page.url.searchParams.get('simulationDatasetId');
+    const querySimulationDatasetId = $page.url.searchParams.get(SearchParameters.SIMULATION_DATASET_ID);
     if (querySimulationDatasetId) {
       $simulationDatasetId = parseInt(querySimulationDatasetId);
-      removeQueryParam('simulationDatasetId');
+      removeQueryParam(SearchParameters.SIMULATION_DATASET_ID);
     } else {
       $simulationDatasetId = data.initialPlan.simulations[0]?.simulation_datasets[0]?.id ?? -1;
     }
 
-    const queryActivityId = $page.url.searchParams.get('activityId');
+    const queryActivityId = $page.url.searchParams.get(SearchParameters.ACTIVITY_ID);
     if (queryActivityId) {
       $selectedSpanId = parseInt(queryActivityId);
-      removeQueryParam('activityId');
+      removeQueryParam(SearchParameters.ACTIVITY_ID);
     }
 
     $viewTimeRange = $maxTimeRange;
