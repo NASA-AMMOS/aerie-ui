@@ -50,6 +50,7 @@
     resetPlanStores,
     viewTimeRange,
   } from '../../../stores/plan';
+  import { planSnapshot, planSnapshotId } from '../../../stores/planSnapshots';
   import {
     enableScheduling,
     latestAnalyses,
@@ -81,6 +82,7 @@
     viewTogglePanel,
     viewUpdateGrid,
   } from '../../../stores/views';
+  import type { ActivityDirective } from '../../../types/activity';
   import type { ViewSaveEvent, ViewToggleEvent } from '../../../types/view';
   import effects from '../../../utilities/effects';
   import { removeQueryParam } from '../../../utilities/generic';
@@ -112,6 +114,7 @@
   let hasSimulatePermission: boolean = false;
   let hasCheckConstraintsPermission: boolean = false;
   let planHasBeenLocked = false;
+  let planSnapshotActivityDirectives: ActivityDirective[] = [];
   let schedulingAnalysisStatus: Status | null;
   let simulationExtent: string | null;
   let selectedSimulationStatus: string | null;
@@ -154,6 +157,16 @@
       .getResourceTypes($plan.model_id, data.user)
       .then(initialResourceTypes => ($resourceTypes = initialResourceTypes));
   }
+  $: if (data.initialPlanSnapshotId !== null) {
+    $planSnapshotId = data.initialPlanSnapshotId;
+  }
+  $: if ($planSnapshot !== null) {
+    effects.getPlanSnapshotActivityDirectives($planSnapshot, data.user).then(directives => {
+      if (directives !== null) {
+        planSnapshotActivityDirectives = directives;
+      }
+    });
+  }
 
   $: if (data.initialView) {
     initializeView({ ...data.initialView });
@@ -182,7 +195,12 @@
     }
   }
 
-  $: $activityDirectivesMap = keyBy($activityDirectives, 'id');
+  $: {
+    $activityDirectivesMap =
+      $planSnapshotId !== null && planSnapshotActivityDirectives.length > 0
+        ? keyBy(planSnapshotActivityDirectives, 'id')
+        : keyBy($activityDirectives, 'id');
+  }
 
   $: if ($plan && $planLocked) {
     planHasBeenLocked = true;

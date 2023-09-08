@@ -160,6 +160,25 @@ export function parseFloatOrNull(value: string | null): number | null {
   return null;
 }
 
+export function getSearchParameterNumber(key: string, searchParams?: URLSearchParams): number | null {
+  let urlSearchParams: URLSearchParams | undefined = searchParams;
+
+  if (!searchParams && window) {
+    const { location } = window;
+    const { search } = location;
+
+    urlSearchParams = new URLSearchParams(search);
+  }
+
+  if (urlSearchParams) {
+    const numberSearchParam = urlSearchParams.get(key);
+
+    return parseFloatOrNull(numberSearchParam);
+  }
+
+  return null;
+}
+
 /**
  * Converts a string with the substring 'subscription' into 'query'.
  * Use to quickly convert a GraphQL subscription into a query.
