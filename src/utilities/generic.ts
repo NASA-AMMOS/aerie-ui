@@ -165,10 +165,7 @@ export function getSearchParameterNumber(key: SearchParameters, searchParams?: U
   let urlSearchParams: URLSearchParams | undefined = searchParams;
 
   if (!searchParams && window) {
-    const { location } = window;
-    const { search } = location;
-
-    urlSearchParams = new URLSearchParams(search);
+    urlSearchParams = new URLSearchParams(window.location.search);
   }
 
   if (urlSearchParams) {
