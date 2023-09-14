@@ -1815,6 +1815,30 @@ const gql = {
     }
   `,
 
+  SUB_SIMULATION_DATASET_LATEST: `#graphql
+    subscription SubSimulationDatasetLatest($planId: Int!) {
+      simulation(where: { plan_id: { _eq: $planId } }, order_by: { id: desc }, limit: 1) {
+        simulation_datasets(order_by: { id: desc }, limit: 1) {
+          dataset_id
+          canceled
+          id
+          plan_revision
+          reason
+          requested_at
+          requested_by
+          simulation_end_time
+          simulation_revision
+          simulation_start_time
+          status
+          extent {
+            extent
+          }
+          reason
+        }
+      }
+    }
+  `,
+
   SUB_SIMULATION_TEMPLATES: `#graphql
     subscription SubSimTemplates($modelId: Int!) {
       templates: simulation_template(where: { model_id: { _eq: $modelId } }) {
