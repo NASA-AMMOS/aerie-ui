@@ -242,20 +242,6 @@ const effects = {
     }
   },
 
-  async changeUserRole(role: UserRole, user: User | null): Promise<ReqAuthResponse> {
-    try {
-      const data = await reqGateway<ReqAuthResponse>('/auth/changeRole', 'POST', JSON.stringify({ role }), user, false);
-      return data;
-    } catch (e) {
-      catchError(e as Error);
-      return {
-        message: 'An unexpected error occurred',
-        success: false,
-        token: null,
-      };
-    }
-  },
-
   async checkConstraints(user: User | null): Promise<void> {
     try {
       checkConstraintsStatus.set(Status.Incomplete);
