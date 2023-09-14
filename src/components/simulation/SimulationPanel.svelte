@@ -116,9 +116,6 @@
     );
   }
 
-  // $: console.log('simulationDatasets :>> ', $simulationDatasets);
-  // $: console.log('simulationDatasetsAll :>> ', $simulationDatasetsAll);
-
   async function onChangeFormParameters(event: CustomEvent<FormParameter>) {
     if ($simulation !== null) {
       const { detail: formParameter } = event;
