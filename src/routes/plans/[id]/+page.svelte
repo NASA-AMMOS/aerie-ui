@@ -67,6 +67,7 @@
     selectedSpanId,
     simulationDataset,
     simulationDatasetId,
+    simulationDatasetLatest,
     simulationDatasetsAll,
     simulationProgress,
     simulationStatus,
@@ -199,9 +200,9 @@
     }
   }
 
-  $: if ($simulationDataset) {
-    simulationExtent = getSimulationExtent($simulationDataset);
-    selectedSimulationStatus = getSimulationStatus($simulationDataset);
+  $: if ($simulationDatasetLatest) {
+    simulationExtent = getSimulationExtent($simulationDatasetLatest);
+    selectedSimulationStatus = getSimulationStatus($simulationDatasetLatest);
   }
 
   onDestroy(() => {
@@ -320,7 +321,7 @@
         status={$planExpansionStatus}
         on:click={() => {
           if ($selectedExpansionSetId != null) {
-            effects.expand($selectedExpansionSetId, $simulationDatasetId, data.user);
+            effects.expand($selectedExpansionSetId, $simulationDatasetLatest?.id || -1, data.user);
           }
         }}
       >
@@ -349,23 +350,23 @@
         <svelte:fragment slot="metadata">
           <div class="st-typography-body">
             <div class="simulation-header">
-              {getHumanReadableSimulationStatus(getSimulationStatus($simulationDataset))}:
-              {#if selectedSimulationStatus === Status.Pending && $simulationDataset}
+              {getHumanReadableSimulationStatus(getSimulationStatus($simulationDatasetLatest))}:
+              {#if selectedSimulationStatus === Status.Pending && $simulationDatasetLatest}
                 <div style="color: var(--st-gray-50)">
                   {formatSimulationQueuePosition(
-                    getSimulationQueuePosition($simulationDataset, $simulationDatasetsAll),
+                    getSimulationQueuePosition($simulationDatasetLatest, $simulationDatasetsAll),
                   )}
                 </div>
               {:else}
-                {getSimulationProgress($simulationDataset).toFixed()}%
-                {#if simulationExtent && $simulationDataset}
+                {getSimulationProgress($simulationDatasetLatest).toFixed()}%
+                {#if simulationExtent && $simulationDatasetLatest}
                   <div
                     use:tooltip={{ content: 'Simulation Time', placement: 'top' }}
                     style={`color: ${
                       selectedSimulationStatus === Status.Failed ? statusColors.red : 'var(--st-gray-50)'
                     }`}
                   >
-                    {getSimulationTimestamp($simulationDataset)}
+                    {getSimulationTimestamp($simulationDatasetLatest)}
                   </div>
                 {/if}
               {/if}
@@ -373,11 +374,11 @@
           </div>
           <div style="width: 240px;">
             <ProgressLinear
-              color={getSimulationProgressColor($simulationDataset?.status || null)}
-              progress={getSimulationProgress($simulationDataset)}
+              color={getSimulationProgressColor($simulationDatasetLatest?.status || null)}
+              progress={getSimulationProgress($simulationDatasetLatest)}
             />
           </div>
-          <div>Simulation Dataset ID: {$simulationDatasetId}</div>
+          <div>Simulation Dataset ID: {$simulationDatasetLatest?.id}</div>
           {#if selectedSimulationStatus === Status.Pending}
             <button
               on:click={() => effects.cancelPendingSimulation($simulationDatasetId, data.user)}

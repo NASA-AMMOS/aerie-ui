@@ -48,6 +48,19 @@ export const simulationDataset = gqlSubscribable<SimulationDataset | null>(
   null,
 );
 
+export const simulationDatasetLatest = gqlSubscribable<SimulationDataset | null>(
+  gql.SUB_SIMULATION_DATASET_LATEST,
+  { planId },
+  null,
+  null,
+  (simulations: { simulation_datasets: SimulationDataset[] }[]): SimulationDataset | null => {
+    if (simulations.length && simulations[0].simulation_datasets.length) {
+      return simulations[0].simulation_datasets[0];
+    }
+    return null;
+  },
+);
+
 export const simulationDatasetIds = gqlSubscribable<number[]>(
   gql.SUB_SIMULATION_DATASET_IDS,
   { planId },
@@ -129,7 +142,7 @@ export const resourcesByViewLayerId: Readable<Record<number, Resource[]>> = deri
 );
 
 export const simulationStatus: Readable<Status | null> = derived(
-  [planRevision, simulationDataset, simulation],
+  [planRevision, simulationDatasetLatest, simulation],
   ([$planRevision, $simulationDataset, $simulation]) => {
     if ($simulationDataset && $simulation) {
       const { status } = $simulationDataset;
@@ -161,7 +174,7 @@ export const simulationStatus: Readable<Status | null> = derived(
 );
 
 export const simulationProgress: Readable<number> = derived(
-  [simulationDataset, simulationStatus],
+  [simulationDatasetLatest, simulationStatus],
   ([$simulationDataset]) => {
     return getSimulationProgress($simulationDataset);
   },
