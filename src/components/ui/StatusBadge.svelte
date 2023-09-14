@@ -3,14 +3,12 @@
   import CloseIcon from '@nasa-jpl/stellar/icons/close.svg?component';
   import EditingIcon from '@nasa-jpl/stellar/icons/editing.svg?component';
   import MinusIcon from '@nasa-jpl/stellar/icons/minus.svg?component';
-  import SpinnerIcon from '@nasa-jpl/stellar/icons/spinner.svg?component';
   import ThreeDotsIcon from '@nasa-jpl/stellar/icons/three_dot_horizontal.svg?component';
   import WarningIcon from '@nasa-jpl/stellar/icons/warning.svg?component';
   import { getColorForStatus, Status, statusColors } from '../../utilities/status';
   import { tooltip } from '../../utilities/tooltip';
   import ProgressRadial from './ProgressRadial.svelte';
 
-  export let determinateProgress: boolean = false;
   export let status: Status | null = null;
   export let showTooltip: boolean = true;
   export let progress: number = 0;
@@ -34,11 +32,7 @@
     {:else if status === Status.Canceled}
       <CloseIcon />
     {:else if status === Status.Incomplete}
-      {#if determinateProgress}
-        <ProgressRadial {progress} />
-      {:else}
-        <SpinnerIcon />
-      {/if}
+      <ProgressRadial {progress} />
     {:else if status === Status.Modified}
       <EditingIcon />
     {:else if status === Status.Pending}

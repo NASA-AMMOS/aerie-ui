@@ -113,7 +113,7 @@
     </div>
     <div class="simulation-dataset-status-container">
       {#if status === Status.Complete || status === Status.Failed}
-        <StatusBadge status={getSimulationStatus(simulationDataset)} {progress} determinateProgress />
+        <StatusBadge status={getSimulationStatus(simulationDataset)} {progress} />
       {:else}
         <div
           class={`simulation-dataset-status-chip simulation-dataset-status-chip--${status?.toLowerCase()} st-typography-label`}

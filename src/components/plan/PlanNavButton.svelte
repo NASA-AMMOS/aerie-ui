@@ -10,7 +10,6 @@
   export let buttonText: string = '';
   export let buttonTooltipContent: string = '';
   export let disabled: boolean = false;
-  export let determinateProgress: boolean = false;
   export let hasPermission: boolean = true;
   export let menuTitle: string = '';
   export let permissionError: string | undefined = undefined;
@@ -33,7 +32,7 @@
     <slot />
     <span class="nav-button-status">
       {#if status}
-        <StatusBadge {determinateProgress} {progress} {status} showTooltip={false} />
+        <StatusBadge {progress} {status} showTooltip={false} />
       {/if}
     </span>
   </div>
