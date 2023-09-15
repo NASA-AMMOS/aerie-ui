@@ -14,7 +14,7 @@
 
   const dispatch = createEventDispatcher();
 
-  let snapshotName: string = '';
+  let snapshotName: string = `${plan.name} - Snapshot`;
   let createButtonDisabled: boolean = true;
 
   $: createButtonDisabled = snapshotName === '';
@@ -37,8 +37,9 @@
 <svelte:window on:keydown={onKeydown} />
 
 <Modal {height} {width}>
-  <ModalHeader on:close>Create Snapshot</ModalHeader>
+  <ModalHeader on:close>Take Snapshot</ModalHeader>
   <ModalContent style=" display: flex; flex-direction: column; gap: 8px; padding:8px 0 0 ;">
+    <div class="description">Snapshot will capture activity directives and references to relevant simulations.</div>
     <fieldset>
       <label for="name">Name of snapshot</label>
       <input
@@ -57,3 +58,9 @@
     <button class="st-button" disabled={createButtonDisabled} on:click={create}> Create Snapshot </button>
   </ModalFooter>
 </Modal>
+
+<style>
+  .description {
+    padding: 0px 16px 0;
+  }
+</style>
