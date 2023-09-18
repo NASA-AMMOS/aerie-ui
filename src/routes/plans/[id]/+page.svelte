@@ -86,7 +86,7 @@
   import type { ActivityDirective } from '../../../types/activity';
   import type { ViewSaveEvent, ViewToggleEvent } from '../../../types/view';
   import effects from '../../../utilities/effects';
-  import { removeQueryParam } from '../../../utilities/generic';
+  import { getSearchParameterNumber, removeQueryParam, setQueryParam } from '../../../utilities/generic';
   import { isSaveEvent } from '../../../utilities/keyboardEvents';
   import { closeActiveModal, showPlanLockedModal } from '../../../utilities/modal';
   import { featurePermissions } from '../../../utilities/permissions';
@@ -138,7 +138,6 @@
     const querySimulationDatasetId = $page.url.searchParams.get(SearchParameters.SIMULATION_DATASET_ID);
     if (querySimulationDatasetId) {
       $simulationDatasetId = parseInt(querySimulationDatasetId);
-      removeQueryParam(SearchParameters.SIMULATION_DATASET_ID);
     } else {
       $simulationDatasetId = data.initialPlan.simulations[0]?.simulation_datasets[0]?.id ?? -1;
     }
@@ -167,6 +166,18 @@
         planSnapshotActivityDirectives = directives;
       }
     });
+
+    const currentPlanSnapshotSimulation = data.initialPlan.simulations[0]?.simulation_datasets.find(simulation => {
+      return simulation.id === getSearchParameterNumber(SearchParameters.SIMULATION_DATASET_ID);
+    });
+    const latestPlanSnapshotSimulation = data.initialPlan.simulations[0]?.simulation_datasets.find(simulation => {
+      return simulation.plan_revision === $planSnapshot?.revision;
+    });
+
+    if (!currentPlanSnapshotSimulation && latestPlanSnapshotSimulation) {
+      $simulationDatasetId = latestPlanSnapshotSimulation.id;
+      setQueryParam(SearchParameters.SIMULATION_DATASET_ID, `${$simulationDatasetId}`);
+    }
   }
 
   $: if (data.initialView) {
