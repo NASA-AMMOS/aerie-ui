@@ -3,8 +3,10 @@
 <script lang="ts">
   import PlanLeftArrow from '@nasa-jpl/stellar/icons/plan_with_left_arrow.svg?component';
   import PlanRightArrow from '@nasa-jpl/stellar/icons/plan_with_right_arrow.svg?component';
+  import { SearchParameters } from '../../enums/searchParameters';
   import { field } from '../../stores/form';
   import { plan, planEndTimeMs, planStartTimeMs } from '../../stores/plan';
+  import { planSnapshot } from '../../stores/planSnapshots';
   import {
     enableSimulation,
     simulation,
@@ -16,9 +18,15 @@
   import type { User } from '../../types/app';
   import type { FieldStore } from '../../types/form';
   import type { FormParameter, ParametersMap } from '../../types/parameter';
-  import type { Simulation, SimulationTemplate, SimulationTemplateInsertInput } from '../../types/simulation';
+  import type {
+    Simulation,
+    SimulationDataset,
+    SimulationTemplate,
+    SimulationTemplateInsertInput,
+  } from '../../types/simulation';
   import type { ViewGridSection } from '../../types/view';
   import effects from '../../utilities/effects';
+  import { setQueryParam } from '../../utilities/generic';
   import { getArguments, getFormParameters } from '../../utilities/parameters';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
@@ -51,6 +59,7 @@
   let startTimeDoy: string;
   let startTimeDoyField: FieldStore<string>;
   let modelParametersMap: ParametersMap = {};
+  let filteredSimulationDatasets: SimulationDataset[] = [];
 
   $: if (user !== null && $plan !== null) {
     hasRunPermission = featurePermissions.simulation.canRun(user, $plan);
@@ -96,6 +105,18 @@
         );
       }
     });
+  }
+
+  $: if ($simulationDatasetsPlan?.length) {
+    if ($planSnapshot) {
+      filteredSimulationDatasets = $simulationDatasetsPlan.filter(
+        simulationDataset => simulationDataset.plan_revision === $planSnapshot?.revision,
+      );
+    } else {
+      filteredSimulationDatasets = $simulationDatasetsPlan;
+    }
+  } else {
+    filteredSimulationDatasets = [];
   }
 
   async function onChangeFormParameters(event: CustomEvent<FormParameter>) {
@@ -349,10 +370,10 @@
     <fieldset>
       <Collapse title="Simulation History" padContent={false}>
         <div class="simulation-history">
-          {#if !$simulationDatasetsPlan || !$simulationDatasetsPlan.length}
+          {#if !filteredSimulationDatasets || !filteredSimulationDatasets.length}
             <div>No Simulation Datasets</div>
           {:else}
-            {#each $simulationDatasetsPlan as simDataset (simDataset.id)}
+            {#each filteredSimulationDatasets as simDataset (simDataset.id)}
               <SimulationHistoryDataset
                 queuePosition={getSimulationQueuePosition(simDataset, $simulationDatasetsAll)}
                 simulationDataset={simDataset}
@@ -361,6 +382,7 @@
                 selected={simDataset.id === $simulationDatasetId}
                 on:click={() => {
                   simulationDatasetId.set(simDataset.id);
+                  setQueryParam(SearchParameters.SIMULATION_DATASET_ID, `${$simulationDatasetId}`);
                 }}
                 on:cancel={onCancelSimulation}
               />
