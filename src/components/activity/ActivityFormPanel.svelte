@@ -109,7 +109,12 @@
 
   <svelte:fragment slot="body">
     {#if $selectedActivityDirective && $plan !== null && viewingActivityDirectiveChangelog}
-      <ActivityDirectiveChangelog activityDirective={$selectedActivityDirective} {user} />
+      <ActivityDirectiveChangelog
+        activityDirective={$selectedActivityDirective}
+        activityTypes={$activityTypes}
+        modelId={$modelId}
+        {user}
+      />
     {:else if $selectedActivityDirective && $plan !== null}
       <ActivityDirectiveForm
         activityDirectivesMap={$activityDirectivesMap}

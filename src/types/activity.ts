@@ -63,13 +63,17 @@ export type ActivityDirectiveInsertInput = {
 
 export type ActivityDirectiveSetInput = Partial<ActivityDirectiveInsertInput>;
 
-export type ActivityDirectiveRevision =
-  | Partial<ActivityDirective>
-  | {
-      changed_at: string;
-      changed_by: string;
-      revision: number;
-    };
+export type ActivityDirectiveRevision = {
+  anchor_id: number | null;
+  anchored_to_start: boolean;
+  arguments: ArgumentsMap;
+  changed_at: string;
+  changed_by: string;
+  metadata: ActivityMetadata;
+  name: string;
+  revision: number;
+  start_offset: string;
+};
 
 export type AppliedPreset = {
   activity_id: ActivityDirectiveId;

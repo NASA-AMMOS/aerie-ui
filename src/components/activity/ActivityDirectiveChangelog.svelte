@@ -2,64 +2,116 @@
 
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { ActivityDirective, ActivityDirectiveRevision } from '../../types/activity';
+  import type { ActivityDirective, ActivityDirectiveRevision, ActivityType } from '../../types/activity';
   import type { User } from '../../types/app';
+  import type { ArgumentsMap } from '../../types/parameter';
   import effects from '../../utilities/effects';
 
   export let activityDirective: ActivityDirective;
+  export let activityTypes: ActivityType[] = [];
+  export let modelId: number;
   export let user: User | null;
 
   let activityRevisions: ActivityDirectiveRevision[];
   $: activityRevisions = [];
-  $: activityRevisionChangeMap = {};
+  let activityRevisionChangeMap = [];
+  $: activityRevisionChangeMap = [];
+  $: activityType =
+    (activityTypes ?? []).find(({ name: activityTypeName }) => activityDirective?.type === activityTypeName) ?? null;
+  let defaultArguments: ArgumentsMap | undefined;
+  $: defaultArguments = {};
+  let effectiveRevisionArguments: ArgumentsMap[];
+  $: effectiveRevisionArguments = [];
 
   function formatDate(dateString: string) {
-    return new Date(dateString).toLocaleString().replace(',', '').replace(' PM', 'pm').replace(' AM', 'am');
+    return new Date(dateString).toLocaleString(undefined, {
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      month: 'numeric',
+      year: '2-digit',
+    });
   }
 
-  function diffRevisions(next: ActivityDirectiveRevision, prev: ActivityDirectiveRevision) {
-    console.log('DIFFING REVISIONS', next, prev);
-    if (!next || !prev) {
-      return [];
-    }
-
-    let differences = [];
-    Object.keys(next.arguments).forEach(argument => {
-      if (next.arguments[argument] !== prev.arguments[argument]) {
-        differences.push({ key: argument, next: next.arguments[argument], prev: prev.arguments[argument] });
+  function diffRevisions(current: ActivityDirectiveRevision, previous: ActivityDirectiveRevision) {
+    const differences: { [name: string]: { currentValue: any; previousValue: any } } = {};
+    Object.keys(current.arguments).forEach(argument => {
+      if (current.arguments[argument] !== previous.arguments[argument]) {
+        differences[argument] = {
+          currentValue: current.arguments[argument],
+          previousValue: previous.arguments[argument],
+        };
       }
     });
 
-    return differences;
+    const changedProperties = Object.keys(differences);
+    const firstChange = differences[changedProperties[0]];
+
+    if (changedProperties.length > 1) {
+      return { currentValue: `${changedProperties.length} Changes`, name: '', previousValue: '' };
+    }
+
+    return {
+      currentValue: firstChange.currentValue,
+      name: changedProperties[0],
+      previousValue: firstChange.previousValue,
+    };
   }
 
   onMount(async () => {
     const { id: activityId, plan_id: planId } = activityDirective;
     activityRevisions = await effects.getActivityDirectiveChangelog(planId, activityId, user);
+    const effectiveArguments = await effects.getEffectiveActivityArguments(modelId, activityType.name, {}, user);
+    defaultArguments = effectiveArguments?.arguments;
 
-    for (let i = 0; i < activityRevisions.length - 1; i++) {
-      activityRevisionChangeMap[activityRevisions[i].revision] = diffRevisions(
-        activityRevisions[i],
-        activityRevisions[i + 1],
+    // Get effective arguments for all revisions
+    const effectiveArgumentsRequests = activityRevisions.map(revision =>
+      effects.getEffectiveActivityArguments(modelId, activityType.name, revision.arguments, user),
+    );
+    const effectiveArgumentsResponses = await Promise.all(effectiveArgumentsRequests);
+    effectiveRevisionArguments = effectiveArgumentsResponses.map(effectiveArguments => effectiveArguments?.arguments);
+
+    // Build a summary of changes by comparing two revisions and their effective arguments
+    activityRevisionChangeMap = activityRevisions.map((activityRevision, i) => {
+      const previousRevision = activityRevisions[i + 1];
+
+      if (!previousRevision) {
+        return { currentValue: '', name: 'Last Known Revision', previousValue: '' };
+      }
+
+      return diffRevisions(
+        { ...activityRevision, arguments: effectiveRevisionArguments[i] },
+        { ...previousRevision, arguments: effectiveRevisionArguments[i + 1] },
       );
-    }
-
-    console.log('RETURNED REVISIONS', activityRevisions);
-    console.log('CHANGE MAPPING', activityRevisionChangeMap);
+    });
   });
 </script>
 
 <div class="activity-revisions">
-  {#each activityRevisions as revision}
-    <div class="activity-revision">
-      <div class="date st-typography-medium">{formatDate(revision.changed_at)}</div>
-      <div class="change-summary st-typography-body">Change Summary</div>
-      <div class="changed-by st-typography-label">{revision.changed_by}</div>
-      <div class="new-value st-typography-body">New Value</div>
-      <div class="actions"><button class="st-button">Restore</button></div>
-      <div class="previous-value st-typography-body">Previous Value</div>
-    </div>
-  {/each}
+  {#if activityRevisionChangeMap.length}
+    {#each activityRevisions as revision, i}
+      <div class="activity-revision">
+        <div class="date st-typography-medium">{formatDate(revision.changed_at)}</div>
+        <div class="change-summary st-typography-body">
+          {activityRevisionChangeMap[i].name}
+        </div>
+        <div class="changed-by st-typography-label">{revision.changed_by}</div>
+        <div class="new-value st-typography-body">
+          {activityRevisionChangeMap[i].currentValue}
+        </div>
+        <div class="actions">
+          {#if i == 0}
+            <span>Current Revision</span>
+          {:else}
+            <button class="st-button">Restore</button>
+          {/if}
+        </div>
+        <div class="previous-value st-typography-body">
+          {activityRevisionChangeMap[i].previousValue}
+        </div>
+      </div>
+    {/each}
+  {/if}
 </div>
 
 <style>
@@ -89,15 +141,18 @@
     text-align: right;
   }
 
-  .actions button {
+  .actions > * {
     display: none;
     height: 16px;
     line-height: 16px;
     margin: 0;
+  }
+
+  .actions button {
     padding: 0 8px;
   }
 
-  .activity-revision:hover .actions button {
+  .activity-revision:hover .actions > * {
     display: inline-flex;
   }
 
