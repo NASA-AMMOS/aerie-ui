@@ -54,6 +54,10 @@
     const { detail: spanId } = event;
     selectActivity(null, spanId);
   }
+
+  function onToggleViewChangelog() {
+    viewingActivityDirectiveChangelog = !viewingActivityDirectiveChangelog;
+  }
 </script>
 
 <Panel padBody={false}>
@@ -93,16 +97,6 @@
         >
           <TrashIcon />
         </button>
-
-        <button
-          class="st-button icon activity-header-delete"
-          on:click|stopPropagation={() => {
-            viewingActivityDirectiveChangelog = !viewingActivityDirectiveChangelog;
-          }}
-          use:tooltip={{ content: 'View Activity Changelog', placement: 'top' }}
-        >
-          <TrashIcon />
-        </button>
       {/if}
     </PanelHeaderActions>
   </svelte:fragment>
@@ -114,6 +108,7 @@
         activityDirectivesMap={$activityDirectivesMap}
         activityTypes={$activityTypes}
         modelId={$modelId}
+        on:closeChangelog={onToggleViewChangelog}
         {user}
       />
     {:else if $selectedActivityDirective && $plan !== null}
@@ -126,6 +121,7 @@
         editable={!$activityEditingLocked}
         modelId={$modelId}
         planStartTimeYmd={$plan.start_time}
+        on:viewChangelog={onToggleViewChangelog}
         {user}
       />
     {:else if $selectedSpan && $plan !== null}

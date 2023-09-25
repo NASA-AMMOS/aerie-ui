@@ -1,7 +1,8 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import TrashIcon from '@nasa-jpl/stellar/icons/trash.svg?component';
+  import { createEventDispatcher, onMount } from 'svelte';
   import type {
     ActivityDirective,
     ActivityDirectiveRevision,
@@ -12,6 +13,9 @@
   import type { ArgumentsMap } from '../../types/parameter';
   import effects from '../../utilities/effects';
   import { convertUsToDurationString } from '../../utilities/time';
+  import { tooltip } from '../../utilities/tooltip';
+
+  const dispatch = createEventDispatcher();
 
   export let activityDirective: ActivityDirective;
   export let activityDirectivesMap: ActivityDirectivesMap = {};
@@ -144,6 +148,23 @@
   });
 </script>
 
+<div class="activity-header">
+  <div class="activity-header-title">
+    <div class="activity-header-title-value st-typography-medium">
+      {activityType?.name}
+    </div>
+  </div>
+  <div>
+    <button
+      class="st-button icon activity-header-changelog"
+      on:click|stopPropagation={() => dispatch('closeChangelog')}
+      use:tooltip={{ content: 'Close Activity Changelog', placement: 'top' }}
+    >
+      <TrashIcon />
+    </button>
+  </div>
+</div>
+
 <div class="activity-revisions">
   {#if activityRevisionChangeMap.length}
     {#each activityRevisions as revision, i}
@@ -172,6 +193,24 @@
 </div>
 
 <style>
+  .activity-header {
+    align-items: center;
+    background: var(--st-gray-10);
+    border-bottom: 1px solid var(--st-gray-15);
+    display: flex;
+    flex-shrink: 0;
+    font-style: italic;
+    padding: 4px 8px;
+    padding-left: 8px;
+  }
+
+  .activity-header-title {
+    align-items: flex-start;
+    display: flex;
+    padding-left: 8px;
+    width: 100%;
+  }
+
   .activity-revision {
     align-content: center;
     border: 1px solid transparent;
@@ -190,6 +229,12 @@
   .activity-revision:hover {
     background-color: #f8f8f8;
     border-color: #ebecec;
+  }
+
+  .activity-header-changelog {
+    background-color: #007bff10;
+    border: 1px solid #007bff82;
+    color: #007bff;
   }
 
   .new-value,
