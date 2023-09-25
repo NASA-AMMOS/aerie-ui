@@ -11,6 +11,7 @@
   import type { User } from '../../types/app';
   import type { ArgumentsMap } from '../../types/parameter';
   import effects from '../../utilities/effects';
+  import { convertUsToDurationString } from '../../utilities/time';
 
   export let activityDirective: ActivityDirective;
   export let activityDirectivesMap: ActivityDirectivesMap = {};
@@ -24,8 +25,6 @@
   $: activityRevisionChangeMap = [];
   $: activityType =
     (activityTypes ?? []).find(({ name: activityTypeName }) => activityDirective?.type === activityTypeName) ?? null;
-  let defaultArguments: ArgumentsMap | undefined;
-  $: defaultArguments = {};
   let effectiveRevisionArguments: (ArgumentsMap | undefined)[];
   $: effectiveRevisionArguments = [];
 
@@ -39,6 +38,20 @@
         year: '2-digit',
       })
       .replace(',', '');
+  }
+
+  function formatParameterValue(parameterName: string, parameterValue: any) {
+    if (!activityType?.parameters || !activityType.parameters[parameterName]) {
+      return parameterValue;
+    }
+
+    const parameterType = activityType.parameters[parameterName].schema.type;
+    switch (parameterType) {
+      case 'duration':
+        return convertUsToDurationString(parameterValue);
+      default:
+        return parameterValue;
+    }
   }
 
   function diffRevisions(current: ActivityDirectiveRevision, previous: ActivityDirectiveRevision) {
@@ -91,6 +104,8 @@
     if (changedProperties.length > 1) {
       return { currentValue: `${changedProperties.length} Changes`, name: 'Multiple Changes', previousValue: '' };
     } else if (changedProperties.length === 0) {
+      // Catch edge-case scenarios where there a no differences between revisions
+      // e.g. an API update that didn't actually change anything, or creating a preset from the current parameter values
       return { currentValue: '', name: 'No Changes', previousValue: '' };
     }
 
@@ -104,8 +119,6 @@
   onMount(async () => {
     const { id: activityId, plan_id: planId } = activityDirective;
     activityRevisions = await effects.getActivityDirectiveChangelog(planId, activityId, user);
-    const effectiveArguments = await effects.getEffectiveActivityArguments(modelId, activityType?.name || '', {}, user);
-    defaultArguments = effectiveArguments?.arguments;
 
     // Get effective arguments for all revisions
     const effectiveArgumentsRequests = activityRevisions.map(revision =>
@@ -118,6 +131,7 @@
     activityRevisionChangeMap = activityRevisions.map((activityRevision, i) => {
       const previousRevision = activityRevisions[i + 1];
 
+      // At some point there will be no previous revision to compute a difference from
       if (!previousRevision) {
         return { currentValue: '', name: 'Last Known Revision', previousValue: '' };
       }
@@ -140,7 +154,7 @@
         </div>
         <div class="changed-by st-typography-label">{revision.changed_by}</div>
         <div class="new-value st-typography-body">
-          {activityRevisionChangeMap[i].currentValue || ' '}
+          {formatParameterValue(activityRevisionChangeMap[i].name, activityRevisionChangeMap[i].currentValue)}
         </div>
         <div class="actions">
           {#if i == 0}
@@ -150,7 +164,7 @@
           {/if}
         </div>
         <div class="previous-value st-typography-body">
-          {activityRevisionChangeMap[i].previousValue}
+          {formatParameterValue(activityRevisionChangeMap[i].name, activityRevisionChangeMap[i].previousValue)}
         </div>
       </div>
     {/each}
@@ -166,7 +180,7 @@
     display: grid;
     font-size: 12px;
     font-weight: 400;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr max-content;
     line-height: 16px;
     margin: 8px 8px 0px 8px;
     padding: 4px;
@@ -182,6 +196,7 @@
   .previous-value,
   .change-summary {
     height: 1rem;
+    overflow: hidden;
     text-align: right;
     text-overflow: ellipsis;
     white-space: nowrap;

@@ -128,6 +128,7 @@
   function editActivityName() {
     editingActivityName = true;
   }
+
   function updateAnchor({ detail: anchorId }: CustomEvent<ActivityDirectiveId>) {
     const { id } = activityDirective;
     if ($plan) {
