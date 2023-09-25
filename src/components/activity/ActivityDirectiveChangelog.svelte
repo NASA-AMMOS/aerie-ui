@@ -2,12 +2,18 @@
 
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { ActivityDirective, ActivityDirectiveRevision, ActivityType } from '../../types/activity';
+  import type {
+    ActivityDirective,
+    ActivityDirectiveRevision,
+    ActivityDirectivesMap,
+    ActivityType,
+  } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { ArgumentsMap } from '../../types/parameter';
   import effects from '../../utilities/effects';
 
   export let activityDirective: ActivityDirective;
+  export let activityDirectivesMap: ActivityDirectivesMap = {};
   export let activityTypes: ActivityType[] = [];
   export let modelId: number;
   export let user: User | null;
@@ -24,17 +30,20 @@
   $: effectiveRevisionArguments = [];
 
   function formatDate(dateString: string) {
-    return new Date(dateString).toLocaleString(undefined, {
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      month: 'numeric',
-      year: '2-digit',
-    });
+    return new Date(dateString)
+      .toLocaleString(undefined, {
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        month: 'numeric',
+        year: '2-digit',
+      })
+      .replace(',', '');
   }
 
   function diffRevisions(current: ActivityDirectiveRevision, previous: ActivityDirectiveRevision) {
     const differences: { [name: string]: { currentValue: any; previousValue: any } } = {};
+
     Object.keys(current.arguments).forEach(argument => {
       if (current.arguments[argument] !== previous.arguments[argument]) {
         differences[argument] = {
@@ -44,8 +53,37 @@
       }
     });
 
+    if (current.start_offset !== previous.start_offset) {
+      differences['Start Time'] = {
+        currentValue: current.start_offset,
+        previousValue: previous.start_offset,
+      };
+    }
+
+    if (current.anchored_to_start !== previous.anchored_to_start) {
+      differences['Anchor'] = {
+        currentValue: current.anchored_to_start ? 'Start' : 'End',
+        previousValue: previous.anchored_to_start ? 'Start' : 'End',
+      };
+    }
+
+    if (current.anchor_id !== previous.anchor_id) {
+      const currentAnchorDirective = current.anchor_id
+        ? activityDirectivesMap[current.anchor_id].name
+        : 'Unknown Directive';
+      const previousAnchorDirective = previous.anchor_id
+        ? activityDirectivesMap[previous.anchor_id]
+        : 'Unknown Directive';
+      differences['Anchored To'] = {
+        currentValue: current.anchor_id ? `${current.anchor_id} - ${currentAnchorDirective}` : 'Plan',
+        previousValue: previous.anchor_id ? `${previous.anchor_id} - ${previousAnchorDirective}` : 'Plan',
+      };
+    }
+
     const changedProperties = Object.keys(differences);
-    const firstChange = differences[changedProperties[0]];
+    const firstChange = changedProperties.length
+      ? differences[changedProperties[0]]
+      : { currentValue: '', name: '', previousValue: '' };
 
     if (changedProperties.length > 1) {
       return { currentValue: `${changedProperties.length} Changes`, name: '', previousValue: '' };

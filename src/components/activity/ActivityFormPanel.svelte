@@ -111,6 +111,7 @@
     {#if $selectedActivityDirective && $plan !== null && viewingActivityDirectiveChangelog}
       <ActivityDirectiveChangelog
         activityDirective={$selectedActivityDirective}
+        activityDirectivesMap={$activityDirectivesMap}
         activityTypes={$activityTypes}
         modelId={$modelId}
         {user}
