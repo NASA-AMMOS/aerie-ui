@@ -447,8 +447,11 @@ const queryPermissions = {
   DELETE_PLAN_TAGS: (user: User | null): boolean => {
     return getPermission(['delete_plan_tags'], user);
   },
-  DELETE_PRESET_TO_DIRECTIVE: (user: User | null): boolean => {
-    return getPermission(['delete_preset_to_directive_by_pk'], user);
+  DELETE_PRESET_TO_DIRECTIVE: (user: User | null, plan: PlanWithOwners): boolean => {
+    return (
+      getPermission(['delete_preset_to_directive_by_pk'], user) &&
+      (isPlanOwner(user, plan) || isPlanCollaborator(user, plan))
+    );
   },
   DELETE_SCHEDULING_CONDITION: (user: User | null, plan: PlanWithOwners): boolean => {
     return (
@@ -749,6 +752,7 @@ interface PlanActivityPresetsCRUDPermission
   extends Omit<PlanAssetCRUDPermission<ActivityPreset>, 'canDelete' | 'canUpdate'> {
   canAssign: RolePlanPermissionCheckWithAsset<ActivityPreset>;
   canDelete: (user: User | null, plan: PlanWithOwners, asset: ActivityPreset) => boolean;
+  canUnassign: (user: User | null, plan: PlanWithOwners) => boolean;
   canUpdate: (user: User | null, plan: PlanWithOwners, asset: ActivityPreset) => boolean;
 }
 
@@ -819,6 +823,7 @@ const featurePermissions: FeaturePermissions = {
     canCreate: user => isUserAdmin(user) || queryPermissions.CREATE_ACTIVITY_PRESET(user),
     canDelete: (user, _plan, preset) => isUserAdmin(user) || queryPermissions.DELETE_ACTIVITY_PRESET(user, preset),
     canRead: user => isUserAdmin(user) || queryPermissions.SUB_ACTIVITY_PRESETS(user),
+    canUnassign: (user, plan) => isUserAdmin(user) || queryPermissions.DELETE_PRESET_TO_DIRECTIVE(user, plan),
     canUpdate: (user, _plan, preset) => isUserAdmin(user) || queryPermissions.UPDATE_ACTIVITY_PRESET(user, preset),
   },
   commandDictionary: {

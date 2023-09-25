@@ -3377,19 +3377,19 @@ const effects = {
   },
 
   async removePresetFromActivityDirective(
-    plan_id: number,
+    plan: Plan,
     activity_directive_id: ActivityDirectiveId,
     preset_id: ActivityPresetId,
     user: User | null,
   ): Promise<boolean> {
     try {
-      if (!queryPermissions.DELETE_PRESET_TO_DIRECTIVE(user)) {
+      if (!queryPermissions.DELETE_PRESET_TO_DIRECTIVE(user, plan)) {
         throwPermissionError('remove the preset from this activity directive');
       }
 
       const data = await reqHasura<{ preset_id: number }>(
         gql.DELETE_PRESET_TO_DIRECTIVE,
-        { activity_directive_id, plan_id, preset_id },
+        { activity_directive_id, plan_id: plan.id, preset_id },
         user,
       );
       if (data.delete_preset_to_directive_by_pk != null) {

@@ -57,6 +57,7 @@
       value: activityPreset.id,
     }));
 
+    hasAssignPermission = featurePermissions.activityPresets.canUnassign(user, plan) && !$planReadOnly;
     hasCreatePermission = featurePermissions.activityPresets.canCreate(user, plan) && !$planReadOnly;
 
     const selectedPreset = $activityPresets.find(

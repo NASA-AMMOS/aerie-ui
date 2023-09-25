@@ -113,9 +113,9 @@
   };
 
   async function applyPresetToActivity(activityPreset: ActivityPreset | null, numOfUserChanges: number) {
-    if (activityPreset === null && activityDirective.applied_preset) {
+    if (activityPreset === null && activityDirective.applied_preset && $plan) {
       await effects.removePresetFromActivityDirective(
-        activityDirective.plan_id,
+        $plan,
         activityDirective.id,
         activityDirective.applied_preset.preset_id,
         user,
