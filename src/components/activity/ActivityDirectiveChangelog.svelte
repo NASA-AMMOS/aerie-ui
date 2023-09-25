@@ -54,7 +54,7 @@
       }
     });
 
-    // Manually check remaining fields that could have change and need extra formatting
+    // Manually check remaining fields that could have changed and require extra formatting
 
     if (current.start_offset !== previous.start_offset) {
       differences['Start Time'] = {
@@ -86,15 +86,17 @@
     const changedProperties = Object.keys(differences);
     const firstChange = changedProperties.length
       ? differences[changedProperties[0]]
-      : { currentValue: '', name: '', previousValue: '' };
+      : { currentValue: '', previousValue: '' };
 
     if (changedProperties.length > 1) {
-      return { currentValue: `${changedProperties.length} Changes`, name: '', previousValue: '' };
+      return { currentValue: `${changedProperties.length} Changes`, name: 'Multiple Changes', previousValue: '' };
+    } else if (changedProperties.length === 0) {
+      return { currentValue: '', name: 'No Changes', previousValue: '' };
     }
 
     return {
       currentValue: firstChange.currentValue,
-      name: changedProperties[0],
+      name: changedProperties[0] || '',
       previousValue: firstChange.previousValue,
     };
   }
