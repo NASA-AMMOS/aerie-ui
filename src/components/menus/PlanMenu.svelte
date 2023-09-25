@@ -26,9 +26,20 @@
   let hasCreateSnapshotPermission: boolean = false;
   let planMenu: Menu;
 
-  $: hasCreateMergeRequestPermission = featurePermissions.planBranch.canCreateRequest(user, plan) && !$planReadOnly;
-  $: hasCreatPlanBranchPermission = featurePermissions.planBranch.canCreateBranch(user) && !$planReadOnly;
-  $: hasCreateSnapshotPermission = featurePermissions.planSnapshot.canCreate(user, plan) && !$planReadOnly;
+  $: hasCreateMergeRequestPermission = plan.parent_plan
+    ? featurePermissions.planBranch.canCreateRequest(
+        user,
+        plan,
+        {
+          ...plan.parent_plan,
+          model_id: plan.model_id,
+        },
+        plan.model,
+      ) && !$planReadOnly
+    : false;
+  $: hasCreatPlanBranchPermission =
+    featurePermissions.planBranch.canCreateBranch(user, plan, plan.model) && !$planReadOnly;
+  $: hasCreateSnapshotPermission = featurePermissions.planSnapshot.canCreate(user, plan, plan.model) && !$planReadOnly;
 
   function createMergePlanBranchRequest() {
     effects.createPlanBranchRequest(plan, 'merge', user);
