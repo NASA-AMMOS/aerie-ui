@@ -20,13 +20,13 @@
 
   let activityRevisions: ActivityDirectiveRevision[];
   $: activityRevisions = [];
-  let activityRevisionChangeMap = [];
+  let activityRevisionChangeMap: { currentValue: string; name: string; previousValue: string }[] = [];
   $: activityRevisionChangeMap = [];
   $: activityType =
     (activityTypes ?? []).find(({ name: activityTypeName }) => activityDirective?.type === activityTypeName) ?? null;
   let defaultArguments: ArgumentsMap | undefined;
   $: defaultArguments = {};
-  let effectiveRevisionArguments: ArgumentsMap[];
+  let effectiveRevisionArguments: (ArgumentsMap | undefined)[];
   $: effectiveRevisionArguments = [];
 
   function formatDate(dateString: string) {
@@ -44,6 +44,7 @@
   function diffRevisions(current: ActivityDirectiveRevision, previous: ActivityDirectiveRevision) {
     const differences: { [name: string]: { currentValue: any; previousValue: any } } = {};
 
+    // Build list of all arguments that differ
     Object.keys(current.arguments).forEach(argument => {
       if (current.arguments[argument] !== previous.arguments[argument]) {
         differences[argument] = {
@@ -52,6 +53,8 @@
         };
       }
     });
+
+    // Manually check remaining fields that could have change and need extra formatting
 
     if (current.start_offset !== previous.start_offset) {
       differences['Start Time'] = {
@@ -99,12 +102,12 @@
   onMount(async () => {
     const { id: activityId, plan_id: planId } = activityDirective;
     activityRevisions = await effects.getActivityDirectiveChangelog(planId, activityId, user);
-    const effectiveArguments = await effects.getEffectiveActivityArguments(modelId, activityType.name, {}, user);
+    const effectiveArguments = await effects.getEffectiveActivityArguments(modelId, activityType?.name || '', {}, user);
     defaultArguments = effectiveArguments?.arguments;
 
     // Get effective arguments for all revisions
     const effectiveArgumentsRequests = activityRevisions.map(revision =>
-      effects.getEffectiveActivityArguments(modelId, activityType.name, revision.arguments, user),
+      effects.getEffectiveActivityArguments(modelId, activityType?.name || '', revision.arguments, user),
     );
     const effectiveArgumentsResponses = await Promise.all(effectiveArgumentsRequests);
     effectiveRevisionArguments = effectiveArgumentsResponses.map(effectiveArguments => effectiveArguments?.arguments);
@@ -118,8 +121,8 @@
       }
 
       return diffRevisions(
-        { ...activityRevision, arguments: effectiveRevisionArguments[i] },
-        { ...previousRevision, arguments: effectiveRevisionArguments[i + 1] },
+        { ...activityRevision, arguments: { ...effectiveRevisionArguments[i] } },
+        { ...previousRevision, arguments: { ...effectiveRevisionArguments[i + 1] } },
       );
     });
   });
@@ -135,7 +138,7 @@
         </div>
         <div class="changed-by st-typography-label">{revision.changed_by}</div>
         <div class="new-value st-typography-body">
-          {activityRevisionChangeMap[i].currentValue}
+          {activityRevisionChangeMap[i].currentValue || ' '}
         </div>
         <div class="actions">
           {#if i == 0}
@@ -176,7 +179,10 @@
   .new-value,
   .previous-value,
   .change-summary {
+    height: 1rem;
     text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .actions > * {
