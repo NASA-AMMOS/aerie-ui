@@ -216,7 +216,7 @@ const queryPermissions = {
     return getPermission(['delete_plan_by_pk', 'delete_scheduling_specification'], user);
   },
   DELETE_PLAN_SNAPSHOT: (user: User | null): boolean => {
-    return getPermission(['delete_plan_snapshot'], user);
+    return getPermission(['delete_plan_snapshot_by_pk'], user);
   },
   DELETE_PLAN_TAGS: (user: User | null): boolean => {
     return getPermission(['delete_plan_tags'], user);
