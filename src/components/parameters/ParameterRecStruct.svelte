@@ -39,7 +39,6 @@
         name: key,
         order: index,
         schema: schema.items[key],
-        unit: formParameter.units?.[key],
         value: value !== null ? value[key] : null,
         valueSource: formParameter.valueSource,
       };
@@ -70,7 +69,7 @@
       <ParameterName {formParameter} />
     </div>
     <div class="right" slot="right">
-      <ParameterUnits unit={formParameter.unit} />
+      <ParameterUnits unit={formParameter.schema?.metadata?.unit} />
       <ParameterBaseRightAdornments
         {disabled}
         hidden={hideRightAdornments}

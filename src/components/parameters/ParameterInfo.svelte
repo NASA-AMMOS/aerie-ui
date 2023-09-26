@@ -20,7 +20,7 @@
 
   $: if (formParameter) {
     source = formParameter.valueSource;
-    unit = formParameter.unit;
+    unit = formParameter.schema?.metadata?.unit;
   }
 
   function leaveCallback() {

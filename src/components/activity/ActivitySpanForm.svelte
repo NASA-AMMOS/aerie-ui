@@ -1,14 +1,15 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import type { ActivityComputedAttributeDefinitions, ActivityType } from '../../types/activity';
+  import type { ActivityType } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { ExpansionSequence } from '../../types/expansion';
-  import type { ArgumentsMap, ComputedParametersMap, FormParameter } from '../../types/parameter';
+  import type { ArgumentsMap, FormParameter, ParametersMap } from '../../types/parameter';
+  import type { ValueSchema } from '../../types/schema';
   import type { Span, SpanUtilityMaps, SpansMap } from '../../types/simulation';
   import { getSpanRootParent } from '../../utilities/activities';
   import effects from '../../utilities/effects';
-  import { getFormComputedAttributes, getFormParameters } from '../../utilities/parameters';
+  import { getFormParameters } from '../../utilities/parameters';
   import { getDoyTimeFromInterval, getUnixEpochTime } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import Collapse from '../Collapse.svelte';
@@ -56,7 +57,7 @@
       .then(activityArguments => {
         if (activityArguments !== null && activityType !== null) {
           formParameters = getFormParameters(
-            activityType.parameter_definitions,
+            activityType.parameters,
             span.attributes.arguments,
             activityType.required_parameters,
             {},
@@ -82,7 +83,7 @@
   }
 
   $: setFormParametersComputedAttributes(
-    activityType?.computed_attribute_definitions,
+    activityType?.computed_attributes_value_schema,
     span?.attributes?.computedAttributes,
   );
 
@@ -117,20 +118,16 @@
    * so we can render computed attributes as form parameters.
    */
   function setFormParametersComputedAttributes(
-    computedAttributeDefinitions: ActivityComputedAttributeDefinitions | undefined,
+    schema: ValueSchema | undefined,
     computedAttributes: ArgumentsMap | undefined,
   ) {
-    if (computedAttributeDefinitions) {
-      const parametersMap: ComputedParametersMap = {
-        Value: { order: 0, schema: computedAttributeDefinitions.schema, units: computedAttributeDefinitions.units },
-      };
+    if (schema) {
+      const parametersMap: ParametersMap = { Value: { order: 0, schema } };
       const argumentsMap: ArgumentsMap = computedAttributes ? { Value: computedAttributes } : { Value: {} };
-      formParametersComputedAttributes = getFormComputedAttributes(parametersMap, argumentsMap, []).map(
-        formParameter => ({
-          ...formParameter,
-          valueSource: 'none',
-        }),
-      );
+      formParametersComputedAttributes = getFormParameters(parametersMap, argumentsMap, []).map(formParameter => ({
+        ...formParameter,
+        valueSource: 'none',
+      }));
     }
   }
 </script>

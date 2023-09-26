@@ -432,10 +432,6 @@
       return $activityTypes.map(t => t.name);
     } else if (layer.chartType === 'line' || layer.chartType === 'x-range') {
       return $resourceTypes
-        .map(t => ({
-          name: t.name,
-          schema: t.definition.schema,
-        }))
         .concat($externalResources)
         .map(t => t.name)
         .sort();

@@ -87,7 +87,7 @@
     return /user/.test(formParameter.valueSource) ? previousHasChanges + 1 : previousHasChanges;
   }, 0);
 
-  $: modelParametersMap = $plan?.model?.parameters?.parameter_definitions ?? {};
+  $: modelParametersMap = $plan?.model?.parameters?.parameters ?? {};
   $: if ($simulation && $plan) {
     effects.getEffectiveModelArguments($plan.model.id, $simulation.arguments, user).then(response => {
       if ($simulation !== null && response !== null) {

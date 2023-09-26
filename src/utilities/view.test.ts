@@ -6,9 +6,9 @@ describe('generateDefaultView', () => {
     const view = generateDefaultView(
       [],
       [
-        { definition: { schema: { type: 'boolean' } }, name: 'resource1' },
-        { definition: { schema: { type: 'int' } }, name: 'resource2' },
-        { definition: { schema: { items: { type: 'boolean' }, type: 'series' } }, name: 'resource2' },
+        { name: 'resource1', schema: { type: 'boolean' } },
+        { name: 'resource2', schema: { type: 'int' } },
+        { name: 'resource2', schema: { items: { type: 'boolean' }, type: 'series' } },
       ],
     );
     const { valid, errors } = validateViewJSONAgainstSchema(view.definition);

@@ -34,7 +34,7 @@
       use:useActions={use}
     />
     <div class="parameter-right" slot="right">
-      <ParameterUnits unit={formParameter.unit} />
+      <ParameterUnits unit={formParameter.schema?.metadata?.unit} />
       <ParameterBaseRightAdornments
         {disabled}
         hidden={hideRightAdornments}

@@ -2,11 +2,10 @@ import { isEqual, omitBy } from 'lodash-es';
 import type {
   Argument,
   ArgumentsMap,
-  ComputedParametersMap,
   FormParameter,
   ParametersMap,
   RequiredParametersList,
-  ValueSource,
+  ValueSource
 } from '../types/parameter';
 import type { ValueSchema } from '../types/schema';
 import { isEmpty } from './generic';
@@ -65,48 +64,19 @@ export function getFormParameters(
   presetArgumentsMap: ArgumentsMap = {},
   defaultArgumentsMap: ArgumentsMap = {},
 ): FormParameter[] {
-  const formParameters = Object.entries(parametersMap).map(([name, { order, schema, unit }]) => {
+  const formParameters = Object.entries(parametersMap).map(([name, { order, schema }]) => {
     const arg: Argument = argumentsMap[name];
     const preset: Argument = presetArgumentsMap[name];
     const defaultArg: Argument | undefined = defaultArgumentsMap[name];
     const { value, valueSource } = getArgument(arg, schema, preset, defaultArg);
     const required = requiredParameters.indexOf(name) > -1;
+
     const formParameter: FormParameter = {
       errors: null,
       name,
       order,
       required,
       schema,
-      unit,
-      value,
-      valueSource,
-    };
-
-    return formParameter;
-  });
-  return formParameters;
-}
-
-export function getFormComputedAttributes(
-  parametersMap: ComputedParametersMap,
-  argumentsMap: ArgumentsMap,
-  requiredParameters: RequiredParametersList,
-  presetArgumentsMap: ArgumentsMap = {},
-  defaultArgumentsMap: ArgumentsMap = {},
-): FormParameter[] {
-  const formParameters = Object.entries(parametersMap).map(([name, { order, schema, units }]) => {
-    const arg: Argument = argumentsMap[name];
-    const preset: Argument = presetArgumentsMap[name];
-    const defaultArg: Argument | undefined = defaultArgumentsMap[name];
-    const { value, valueSource } = getArgument(arg, schema, preset, defaultArg);
-    const required = requiredParameters.indexOf(name) > -1;
-    const formParameter: FormParameter = {
-      errors: null,
-      name,
-      order,
-      required,
-      schema,
-      units,
       value,
       valueSource,
     };

@@ -39,11 +39,8 @@ export type Resource = {
 };
 
 export type ResourceType = {
-  definition: {
-    schema: ValueSchema;
-    unit?: string;
-  };
   name: string;
+  schema: ValueSchema;
 };
 
 export type ResourceValue = {
