@@ -6,6 +6,7 @@
   import type { PlanSnapshot } from '../../types/plan-snapshot';
   import { getSimulationProgress, getSimulationStatus } from '../../utilities/simulation';
   import Menu from '../menus/Menu.svelte';
+  import MenuDivider from '../menus/MenuDivider.svelte';
   import MenuItem from '../menus/MenuItem.svelte';
   import Card from '../ui/Card.svelte';
   import StatusBadge from '../ui/StatusBadge.svelte';
@@ -39,6 +40,8 @@
           <Menu bind:this={menu}>
             <MenuItem on:click={() => dispatch('click')}>Preview</MenuItem>
             <MenuItem on:click={() => dispatch('restore')}>Restore</MenuItem>
+            <MenuDivider />
+            <MenuItem disabled on:click={() => dispatch('delete')}>Delete</MenuItem>
           </Menu>
         </button>
       </div>
@@ -51,7 +54,6 @@
     --aerie-menu-item-template-columns: auto;
     --aerie-menu-item-line-height: 1rem;
     --aerie-menu-item-font-size: 12px;
-    /* --aerie-menu-item-padding: 4px; */
     align-items: center;
     display: flex;
     gap: 8px;

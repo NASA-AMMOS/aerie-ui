@@ -14,6 +14,7 @@
   import { featurePermissions } from '../../utilities/permissions';
   import Menu from '../menus/Menu.svelte';
   import MenuItem from '../menus/MenuItem.svelte';
+  import MenuDivider from './MenuDivider.svelte';
 
   export let plan: Plan;
   export let user: User | null;
@@ -66,7 +67,7 @@
         <div class="column-name">View merge requests</div>
       </MenuItem>
       {#if plan.parent_plan !== null}
-        <hr class="menu-divider" />
+        <MenuDivider />
         <MenuItem
           on:click={createMergePlanBranchRequest}
           use={[
@@ -85,7 +86,7 @@
           <div class="column-name">Open parent plan</div>
         </MenuItem>
       {/if}
-      <hr class="menu-divider" />
+      <MenuDivider />
       <MenuItem on:click={createPlanSnapshot}>
         <div class="column-name">Take Snapshot</div>
       </MenuItem>
