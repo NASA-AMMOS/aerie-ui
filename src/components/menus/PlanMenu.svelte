@@ -103,11 +103,6 @@
 </div>
 
 <style>
-  hr.menu-divider {
-    opacity: 0.3;
-    width: 90%;
-  }
-
   .plan-menu-container {
     align-items: center;
     display: flex;
