@@ -150,6 +150,7 @@
               activePlanSnapshotId={$planSnapshotId}
               {planSnapshot}
               on:click={() => setQueryParam(SearchParameters.SNAPSHOT_ID, `${planSnapshot.snapshot_id}`)}
+              on:restore={() => effects.restorePlanSnapshot(planSnapshot, user)}
             />
           {/each}
         </CardList>
