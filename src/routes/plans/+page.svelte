@@ -289,12 +289,6 @@
     }
   }
 
-  function prefetchPlan(plan?: Pick<Plan, 'id'>) {
-    if (plan !== undefined) {
-      // preloadData(`${base}/plans/${plan.id}`);
-    }
-  }
-
   function showPlan(plan: Pick<Plan, 'id'>) {
     goto(`${base}/plans/${plan.id}`);
   }
@@ -495,7 +489,6 @@
             itemDisplayText="Plan"
             items={filteredPlans}
             {user}
-            on:cellMouseOver={({ detail }) => prefetchPlan(detail.data)}
             on:deleteItem={deletePlanContext}
             on:rowClicked={({ detail }) => showPlan(detail.data)}
           />
