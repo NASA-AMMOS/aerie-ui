@@ -496,7 +496,7 @@ const gql = {
 
   DELETE_PLAN_SNAPSHOT: `#graphql
     mutation DeletePlanSnapshot($snapshot_id: Int!) {
-      deletePlanSnapshot: delete_plan_snapshot(snapshot_id: $snapshot_id) {
+      deletePlanSnapshot: delete_plan_snapshot_by_pk(snapshot_id: $snapshot_id) {
         snapshot_id
       }
     }
