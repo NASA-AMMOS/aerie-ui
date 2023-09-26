@@ -845,8 +845,9 @@ const gql = {
           id
         }
         simulations(order_by: { id: desc }, limit: 1) {
-          simulation_datasets(order_by: { id: desc }, limit: 1) {
+          simulation_datasets(order_by: { id: desc }) {
             id
+            plan_revision
           }
         }
         start_time
@@ -1665,11 +1666,12 @@ const gql = {
 
   SUB_PLAN_SNAPSHOTS: `#graphql
     subscription SubPlanSnapshot($planId: Int!) {
-      plan_snapshots: plan_snapshot(where: { plan_id: { _eq: $planId } }, order_by: { taken_at: asc }) {
+      plan_snapshots: plan_snapshot(where: { plan_id: { _eq: $planId } }, order_by: { taken_at: desc }) {
         snapshot_id
         plan_id
         revision
         snapshot_name
+        description
         taken_by
         taken_at
       }
@@ -1844,6 +1846,7 @@ const gql = {
         simulation_datasets(order_by: { id: desc }) {
           canceled
           id
+          plan_revision
           requested_at
           requested_by
           simulation_end_time
@@ -2018,6 +2021,16 @@ const gql = {
         pk_columns: { id: $id }, _set: $rule
       ) {
         updated_at
+      }
+    }
+  `,
+
+  UPDATE_PLAN_SNAPSHOT: `#graphql
+    mutation UpdatePlanSnapshot($snapshot_id: Int!, $planSnapshot: plan_snapshot_set_input!) {
+      updatePlanSnapshot: update_plan_snapshot_by_pk(
+        pk_columns: { snapshot_id: $snapshot_id }, _set: $planSnapshot
+      ) {
+        snapshot_id
       }
     }
   `,

@@ -233,7 +233,7 @@ export async function showCreatePlanBranchModal(plan: Plan): Promise<ModalElemen
  */
 export async function showCreatePlanSnapshotModal(
   plan: Plan,
-): Promise<ModalElementValue<{ name: string; plan: Plan }>> {
+): Promise<ModalElementValue<{ description: string; name: string; plan: Plan }>> {
   return new Promise(resolve => {
     if (browser) {
       const target: ModalElement | null = document.querySelector('#svelte-modal');
@@ -249,7 +249,7 @@ export async function showCreatePlanSnapshotModal(
           createPlanSnapshotModal.$destroy();
         });
 
-        createPlanSnapshotModal.$on('create', (e: CustomEvent<{ name: string; plan: Plan }>) => {
+        createPlanSnapshotModal.$on('create', (e: CustomEvent<{ description: string; name: string; plan: Plan }>) => {
           target.replaceChildren();
           target.resolve = null;
           resolve({ confirm: true, value: e.detail });

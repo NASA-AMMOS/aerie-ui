@@ -1,16 +1,23 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { SearchParameters } from '../../enums/searchParameters';
+  import { planSnapshotId, planSnapshotsWithSimulations } from '../../stores/planSnapshots';
   import type { User } from '../../types/app';
   import type { Plan } from '../../types/plan';
   import type { PlanTagsInsertInput, Tag, TagsChangeEvent } from '../../types/tags';
   import effects from '../../utilities/effects';
+  import { setQueryParam } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
+  import { getSimulationProgress, getSimulationStatus } from '../../utilities/simulation';
   import { getShortISOForDate } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import Collapse from '../Collapse.svelte';
   import Input from '../form/Input.svelte';
+  import Card from '../ui/Card.svelte';
+  import CardList from '../ui/CardList.svelte';
+  import StatusBadge from '../ui/StatusBadge.svelte';
   import TagsInput from '../ui/Tags/TagsInput.svelte';
 
   export let plan: Plan | null;
@@ -27,6 +34,7 @@
     } else {
       hasPermission = false;
     }
+    console.log('$planSnapshotsWithSimulations :>> ', $planSnapshotsWithSimulations);
   }
 
   async function onTagsInputChange(event: TagsChangeEvent) {
@@ -137,6 +145,28 @@
             on:change={onTagsInputChange}
           />
         </Input>
+      </Collapse>
+      <Collapse title="Snapshots" padContent={false}>
+        <CardList>
+          {#each $planSnapshotsWithSimulations as planSnapshot (planSnapshot.snapshot_id)}
+            <Card
+              title={planSnapshot.snapshot_name}
+              date={planSnapshot.taken_at}
+              user={planSnapshot.taken_by || ''}
+              selected={planSnapshot.snapshot_id === $planSnapshotId}
+              body={planSnapshot.description}
+              on:click={() => setQueryParam(SearchParameters.SNAPSHOT_ID, `${planSnapshot.snapshot_id}`)}
+            >
+              <div slot="right">
+                <StatusBadge
+                  prefix="Latest Relevant Simulation: "
+                  status={getSimulationStatus(planSnapshot.simulation)}
+                  progress={getSimulationProgress(planSnapshot.simulation)}
+                />
+              </div>
+            </Card>
+          {/each}
+        </CardList>
       </Collapse>
     </fieldset>
   {/if}
