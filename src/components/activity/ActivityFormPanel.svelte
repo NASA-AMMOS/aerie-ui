@@ -50,6 +50,11 @@
       featurePermissions.activityDirective.canDelete(user, $plan, $selectedActivityDirective) && !$planReadOnly;
   }
 
+  // Hacky(?) way to auto close the changelog whenever the selected activity changes
+  $: if ($selectedActivityDirective !== null) {
+    viewingActivityDirectiveChangelog = false;
+  }
+
   function onSelectSpan(event: CustomEvent<SpanId>) {
     const { detail: spanId } = event;
     selectActivity(null, spanId);
