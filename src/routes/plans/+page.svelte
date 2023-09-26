@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { goto, preloadData } from '$app/navigation';
+  import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import { page } from '$app/stores';
   import PlanIcon from '@nasa-jpl/stellar/icons/plan.svg?component';
@@ -291,7 +291,7 @@
 
   function prefetchPlan(plan?: Pick<Plan, 'id'>) {
     if (plan !== undefined) {
-      preloadData(`${base}/plans/${plan.id}`);
+      // preloadData(`${base}/plans/${plan.id}`);
     }
   }
 

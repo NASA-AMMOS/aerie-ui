@@ -350,6 +350,9 @@ const queryPermissions = {
   UPDATE_PLAN: (user: User | null): boolean => {
     return getPermission(['update_plan_by_pk'], user);
   },
+  UPDATE_PLAN_SNAPSHOT: (user: User | null): boolean => {
+    return getPermission(['update_plan_snapshot_by_pk'], user);
+  },
   UPDATE_SCHEDULING_CONDITION: (user: User | null): boolean => {
     return getPermission(['update_scheduling_condition_by_pk'], user);
   },

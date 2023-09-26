@@ -853,14 +853,19 @@ const effects = {
       const { confirm, value = null } = await showCreatePlanSnapshotModal(plan);
 
       if (confirm && value) {
-        const { name, plan } = value;
+        const { description, name, plan } = value;
         const data = await reqHasura<{ snapshot_id: number }>(
           gql.CREATE_PLAN_SNAPSHOT,
-          { plan_id: plan.id, snapshot_name: name },
+          { plan_id: plan.id, /* snapshot_description: description, */ snapshot_name: name },
           user,
         );
         const { createSnapshot } = data;
         if (createSnapshot != null) {
+          const { snapshot_id } = createSnapshot;
+          // TODO this will soon be part of create plan snapshot
+          const updates = { description };
+          await reqHasura(gql.UPDATE_PLAN_SNAPSHOT, { planSnapshot: updates, snapshot_id }, user);
+
           showSuccessToast('Snapshot Created Successfully');
         } else {
           throw Error('');
@@ -3530,6 +3535,28 @@ const effects = {
       savingExpansionRule.set(false);
       createExpansionRuleError.set((e as Error).message);
       return null;
+    }
+  },
+
+  async updatePlanSnapshot(id: number, snapshot: Partial<PlanSnapshot>, user: User | null): Promise<void> {
+    try {
+      if (!queryPermissions.UPDATE_PLAN_SNAPSHOT(user)) {
+        throwPermissionError('update this plan snapshot');
+      }
+
+      const data = await reqHasura(gql.UPDATE_PLAN_SNAPSHOT, { id, snapshot }, user);
+      const { updatePlanSnapshot: updatedPlanSnapshotId } = data;
+
+      if (updatedPlanSnapshotId != null) {
+        showSuccessToast('Plan Snapshot Updated Successfully');
+        return;
+      } else {
+        throw Error(`Unable to update plan snapshot with ID: "${id}"`);
+      }
+    } catch (e) {
+      catchError('Plan Snapshot Update Failed', e as Error);
+      showFailureToast('Plan Snapshot Update Failed');
+      return;
     }
   },
 

@@ -15,13 +15,14 @@
   const dispatch = createEventDispatcher();
 
   let snapshotName: string = `${plan.name} - Snapshot`;
+  let snapshotDescription: string = '';
   let createButtonDisabled: boolean = true;
 
   $: createButtonDisabled = snapshotName === '';
 
   function create() {
     if (!createButtonDisabled) {
-      dispatch('create', { name: snapshotName, plan });
+      dispatch('create', { description: snapshotDescription, name: snapshotName, plan });
     }
   }
 
@@ -38,18 +39,27 @@
 
 <Modal {height} {width}>
   <ModalHeader on:close>Take Snapshot</ModalHeader>
-  <ModalContent style=" display: flex; flex-direction: column; gap: 8px; padding:8px 0 0 ;">
+  <ModalContent style=" display: flex; flex-direction: column; gap: 8px; padding:8px 0 16px;">
     <div class="description">Snapshot will capture activity directives and references to relevant simulations.</div>
     <fieldset>
-      <label for="name">Name of snapshot</label>
+      <label for="name">Name of Snapshot</label>
       <input
         bind:value={snapshotName}
-        placeholder="Name of snapshot"
+        placeholder="Name of Snapshot"
         autocomplete="off"
         class="st-input w-100"
         name="name"
         required
         type="text"
+      />
+    </fieldset>
+    <fieldset>
+      <label for="description">Description</label>
+      <textarea
+        bind:value={snapshotDescription}
+        placeholder="Notes about this snapshot"
+        class="st-input w-100"
+        name="description"
       />
     </fieldset>
   </ModalContent>
