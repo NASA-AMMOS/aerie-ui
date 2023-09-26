@@ -62,22 +62,6 @@ export const simulationDatasetLatest = gqlSubscribable<SimulationDataset | null>
   },
 );
 
-export const simulationDatasetIds = gqlSubscribable<number[]>(
-  gql.SUB_SIMULATION_DATASET_IDS,
-  { planId },
-  [],
-  null,
-  (simulations: { simulation_dataset_ids: { id: number }[] }[]): number[] => {
-    if (simulations.length) {
-      return simulations[0].simulation_dataset_ids.map(({ id }) => id);
-    }
-    return [];
-  },
-);
-
-/* TODO overlaps with sim dataset ids? Though may be harder to untangle given different uses and data flow/updating situations
-  Could just merge this with simulationDatasetsAll and have that pull all the metadata? Is it that much different in terms of query perf?
-*/
 export const simulationDatasetsPlan = gqlSubscribable<SimulationDataset[]>(
   gql.SUB_SIMULATION_DATASETS,
   { planId },

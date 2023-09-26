@@ -26,9 +26,6 @@ export const planSnapshot: Readable<PlanSnapshot | null> = derived(
   },
 );
 
-/* TODO could also grab the corresponding sim on the fly with some utility function
-  like getSimulationForSnapshot(planSnapshot, simulations)?
-*/
 export const planSnapshotsWithSimulations: Readable<PlanSnapshot[]> = derived(
   [planSnapshots, simulationDatasetsPlan],
   ([$planSnapshots, $simulationDatasetsPlan]) => {

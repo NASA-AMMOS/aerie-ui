@@ -16,7 +16,7 @@ import {
 import { createModelError, createPlanError, creatingModel, creatingPlan, models, plan } from '../stores/plan';
 import { schedulingStatus, selectedSpecId } from '../stores/scheduling';
 import { commandDictionaries } from '../stores/sequencing';
-import { selectedSpanId, simulationDatasetId, simulationDatasetIds } from '../stores/simulation';
+import { selectedSpanId, simulationDatasetId } from '../stores/simulation';
 import { createTagError } from '../stores/tags';
 import { applyViewUpdate, view } from '../stores/views';
 import type {
@@ -3359,12 +3359,6 @@ const effects = {
         if (simulate != null) {
           const { simulationDatasetId: newSimulationDatasetId } = simulate;
           simulationDatasetId.set(newSimulationDatasetId);
-          simulationDatasetIds.updateValue((ids: number[]) => {
-            if (!ids.includes(newSimulationDatasetId)) {
-              return [newSimulationDatasetId, ...ids];
-            }
-            return ids;
-          });
         } else {
           throw Error('Unable to simulate this plan');
         }
