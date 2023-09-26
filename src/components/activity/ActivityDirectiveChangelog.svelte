@@ -120,6 +120,15 @@
     };
   }
 
+  async function restoreRevision(revisionId: number) {
+    const { id: activityId, plan_id: planId } = activityDirective;
+    const restored = await effects.restoreActivityFromChangelog(activityId, planId, revisionId, user);
+
+    if (restored) {
+      dispatch('closeChangelog');
+    }
+  }
+
   onMount(async () => {
     const { id: activityId, plan_id: planId } = activityDirective;
     activityRevisions = await effects.getActivityDirectiveChangelog(planId, activityId, user);
@@ -181,7 +190,7 @@
           {#if i == 0}
             <span>Current Revision</span>
           {:else}
-            <button class="st-button">Restore</button>
+            <button class="st-button" on:click={() => restoreRevision(revision.revision)}>Restore</button>
           {/if}
         </div>
         <div class="previous-value st-typography-body">

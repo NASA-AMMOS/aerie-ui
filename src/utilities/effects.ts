@@ -3448,6 +3448,32 @@ const effects = {
     }
   },
 
+  async restoreActivityFromChangelog(
+    activityId: number,
+    planId: number,
+    revision: number,
+    user: User | null,
+  ): Promise<boolean> {
+    try {
+      const data = await reqHasura(
+        gql.RESTORE_ACTIVITY_FROM_CHANGELOG,
+        { activity_id: activityId, plan_id: planId, revision },
+        user,
+      );
+
+      if (data.restoreActivityFromChangelog != null) {
+        showSuccessToast('Restored Activity from Changelog');
+        return true;
+      } else {
+        throw Error(`Unable to restore activity revision ${revision} from changelog`);
+      }
+    } catch (e) {
+      catchError('Restoring Activity From Changelog Failed', e as Error);
+      showFailureToast('Restoring Activity from Changelog Failed');
+      return false;
+    }
+  },
+
   async restorePlanSnapshot(snapshot: PlanSnapshot, plan: Plan, user: User | null): Promise<boolean> {
     try {
       if (!queryPermissions.RESTORE_PLAN_SNAPSHOT(user, plan, plan.model)) {

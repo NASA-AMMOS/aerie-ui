@@ -1339,6 +1339,14 @@ const gql = {
     }
   `,
 
+  RESTORE_ACTIVITY_FROM_CHANGELOG: `#graphql
+    mutation RestoreActivityFromChangelog($activity_id: Int!, $plan_id: Int!, $revision: Int!) {
+      restoreActivityFromChangelog(args: { _plan_id: $plan_id, _activity_directive_id: $activity_id, _revision: $revision }) {
+        id
+      }
+    }
+  `,
+
   RESTORE_PLAN_SNAPSHOT: `#graphql
     mutation RestorePlanSnapshot($plan_id: Int!, $snapshot_id: Int!) {
       restore_from_snapshot(args: { _plan_id: $plan_id, _snapshot_id: $snapshot_id }) {
