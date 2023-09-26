@@ -1841,7 +1841,7 @@ const gql = {
   `,
 
   SUB_SIMULATION_DATASETS: `#graphql
-    subscription SubSimulationDatasetIds($planId: Int!) {
+    subscription SubSimulationDatasets($planId: Int!) {
       simulation(where: { plan_id: { _eq: $planId } }, order_by: { id: desc }) {
         simulation_datasets(order_by: { id: desc }) {
           canceled
@@ -1867,16 +1867,6 @@ const gql = {
         canceled
         id
         status
-      }
-    }
-  `,
-
-  SUB_SIMULATION_DATASET_IDS: `#graphql
-    subscription SubSimulationDatasetIds($planId: Int!) {
-      simulation(where: { plan_id: { _eq: $planId } }, order_by: { id: desc }, limit: 1) {
-        simulation_dataset_ids: simulation_datasets(order_by: { id: desc }) {
-          id
-        }
       }
     }
   `,
