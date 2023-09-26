@@ -2,8 +2,8 @@
 
 <script lang="ts">
   import CheckIcon from '@nasa-jpl/stellar/icons/check.svg?component';
+  import HistoryIcon from '@nasa-jpl/stellar/icons/history.svg?component';
   import PenIcon from '@nasa-jpl/stellar/icons/pen.svg?component';
-  import TrashIcon from '@nasa-jpl/stellar/icons/trash.svg?component';
   import { createEventDispatcher } from 'svelte';
   import { PlanStatusMessages } from '../../enums/planStatusMessages';
   import { field } from '../../stores/form';
@@ -351,7 +351,7 @@
         on:click|stopPropagation={() => dispatch('viewChangelog')}
         use:tooltip={{ content: 'View Activity Changelog', placement: 'top' }}
       >
-        <TrashIcon />
+        <HistoryIcon />
       </button>
     </div>
   </div>
@@ -619,6 +619,12 @@
   .activity-header-title--editing .st-input {
     background-color: var(--st-white);
     font-style: normal;
+  }
+
+  .activity-header-changelog {
+    border: 1px solid transparent;
+    display: flex;
+    width: 24px;
   }
 
   .activity-header-changelog:hover {

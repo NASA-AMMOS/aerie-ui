@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import TrashIcon from '@nasa-jpl/stellar/icons/trash.svg?component';
+  import HistoryIcon from '@nasa-jpl/stellar/icons/history.svg?component';
   import { createEventDispatcher, onMount } from 'svelte';
   import type {
     ActivityDirective,
@@ -169,7 +169,7 @@
       on:click|stopPropagation={() => dispatch('closeChangelog')}
       use:tooltip={{ content: 'Close Activity Changelog', placement: 'top' }}
     >
-      <TrashIcon />
+      <HistoryIcon />
     </button>
   </div>
 </div>
@@ -216,6 +216,7 @@
   .activity-header-title {
     align-items: flex-start;
     display: flex;
+    justify-items: center;
     padding-left: 8px;
     width: 100%;
   }
@@ -244,6 +245,8 @@
     background-color: #007bff10;
     border: 1px solid #007bff82;
     color: #007bff;
+    display: flex;
+    width: 24px;
   }
 
   .new-value,
