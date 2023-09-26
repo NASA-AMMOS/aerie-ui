@@ -1297,7 +1297,7 @@ const gql = {
   RESTORE_PLAN_SNAPSHOT: `#graphql
     mutation RestorePlanSnapshot($plan_id: Int!, $snapshot_id: Int!) {
       restore_from_snapshot(args: { _plan_id: $plan_id, _snapshot_id: $snapshot_id }) {
-        plan_id
+        snapshot_id
       }
     }
   `,

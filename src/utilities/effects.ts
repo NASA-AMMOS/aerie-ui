@@ -3264,8 +3264,12 @@ const effects = {
       const { confirm } = await showRestorePlanSnapshotModal(snapshot, get(activityDirectives).length);
 
       if (confirm) {
-        const data = await reqHasura(gql.DELETE_PLAN_SNAPSHOT, { snapshot_id: snapshot.snapshot_id }, user);
-        if (data.deletePlanSnapshot != null) {
+        const data = await reqHasura(
+          gql.RESTORE_PLAN_SNAPSHOT,
+          { plan_id: snapshot.plan_id, snapshot_id: snapshot.snapshot_id },
+          user,
+        );
+        if (data.restore_from_snapshot != null) {
           showSuccessToast('Plan Snapshot Restored Successfully');
 
           goto(`${base}/plans/${snapshot.plan_id}`);
