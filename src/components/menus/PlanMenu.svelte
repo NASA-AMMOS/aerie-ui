@@ -5,6 +5,7 @@
   import { base } from '$app/paths';
   import BranchIcon from '@nasa-jpl/stellar/icons/branch.svg?component';
   import ChevronDownIcon from '@nasa-jpl/stellar/icons/chevron_down.svg?component';
+  import { viewTogglePanel } from '../../stores/views';
   import type { User } from '../../types/app';
   import type { Plan } from '../../types/plan';
   import effects from '../../utilities/effects';
@@ -35,7 +36,7 @@
   }
 
   function viewSnapshotHistory() {
-    // TODO: open snapshot panel
+    viewTogglePanel({ state: true, type: 'right', update: { rightComponentTop: 'PlanMetadataPanel' } });
   }
 
   function showPlanBranches() {
