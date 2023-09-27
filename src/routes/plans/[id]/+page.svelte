@@ -149,7 +149,30 @@
       removeQueryParam(SearchParameters.ACTIVITY_ID);
     }
 
-    $viewTimeRange = $maxTimeRange;
+    let start = NaN;
+    const startTimeStr = $page.url.searchParams.get(SearchParameters.START_TIME);
+    if (startTimeStr) {
+      start = new Date(startTimeStr).getTime();
+      removeQueryParam(SearchParameters.START_TIME);
+    }
+
+    let end = NaN;
+    const endTimeStr = $page.url.searchParams.get(SearchParameters.END_TIME);
+    if (endTimeStr) {
+      end = new Date(endTimeStr).getTime();
+      removeQueryParam(SearchParameters.END_TIME);
+    }
+
+    if (isNaN(start) && isNaN(end)) {
+      $viewTimeRange = $maxTimeRange;
+    } else if (!isNaN(start) && !isNaN(end)) {
+      viewTimeRange.set({ end, start });
+    } else if (!isNaN(start)) {
+      viewTimeRange.set({ ...$maxTimeRange, start });
+    } else if (!isNaN(end)) {
+      viewTimeRange.set({ ...$maxTimeRange, end });
+    }
+
     activityTypes.updateValue(() => data.initialActivityTypes);
     planTags.updateValue(() => data.initialPlanTags);
 
