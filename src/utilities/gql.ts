@@ -209,6 +209,17 @@ const gql = {
     }
   `,
 
+  CREATE_PLAN_SNAPSHOT_TAGS: `#graphql
+    mutation CreatePlanSnapshotTags($tags: [plan_snapshot_tags_insert_input!]!) {
+      insert_plan_snapshot_tags(objects: $tags, on_conflict: {
+        constraint: plan_snapshot_tags_pkey,
+        update_columns: []
+      }) {
+        affected_rows
+      }
+    }
+  `,
+
   CREATE_PLAN_TAGS: `#graphql
     mutation CreatePlanTags($tags: [plan_tags_insert_input!]!) {
       insert_plan_tags(objects: $tags, on_conflict: {

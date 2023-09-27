@@ -107,6 +107,7 @@ import type {
   ActivityDirectiveTagsInsertInput,
   ConstraintTagsInsertInput,
   ExpansionRuleTagsInsertInput,
+  PlanSnapshotTagsInsertInput,
   PlanTagsInsertInput,
   SchedulingGoalTagsInsertInput,
   Tag,
@@ -850,10 +851,10 @@ const effects = {
         throwPermissionError('create a snapshot');
       }
 
-      const { confirm, value = null } = await showCreatePlanSnapshotModal(plan);
+      const { confirm, value = null } = await showCreatePlanSnapshotModal(plan, user);
 
       if (confirm && value) {
-        const { description, name, plan } = value;
+        const { description, name, plan, tags } = value;
         const data = await reqHasura<{ snapshot_id: number }>(
           gql.CREATE_PLAN_SNAPSHOT,
           { plan_id: plan.id, /* snapshot_description: description, */ snapshot_name: name },
@@ -866,6 +867,13 @@ const effects = {
           const updates = { description };
           await reqHasura(gql.UPDATE_PLAN_SNAPSHOT, { planSnapshot: updates, snapshot_id }, user);
 
+          // Associate tags with the snapshot
+          const newPlanSnapshotTags: PlanSnapshotTagsInsertInput[] = tags.map(({ id: tag_id }) => ({
+            snapshot_id,
+            tag_id,
+          }));
+          await effects.createPlanSnapshotTags(newPlanSnapshotTags, user, false);
+
           showSuccessToast('Snapshot Created Successfully');
         } else {
           throw Error('');
@@ -874,6 +882,38 @@ const effects = {
     } catch (e) {
       catchError('Snapshot Creation Failed', e as Error);
       showFailureToast('Snapshot Creation Failed');
+    }
+  },
+
+  async createPlanSnapshotTags(
+    tags: PlanSnapshotTagsInsertInput[],
+    user: User | null,
+    notify: boolean = true,
+  ): Promise<number | null> {
+    try {
+      if (!queryPermissions.CREATE_PLAN_SNAPSHOT_TAGS(user)) {
+        throwPermissionError('create plan tags');
+      }
+
+      const data = await reqHasura<{ affected_rows: number }>(gql.CREATE_PLAN_SNAPSHOT_TAGS, { tags }, user);
+      const { insert_plan_snapshot_tags } = data;
+      if (insert_plan_snapshot_tags != null) {
+        const { affected_rows } = insert_plan_snapshot_tags;
+
+        if (affected_rows !== tags.length) {
+          throw Error('Some plan snapshot tags were not successfully created');
+        }
+        if (notify) {
+          showSuccessToast('Plan Snapshot Updated Successfully');
+        }
+        return affected_rows;
+      } else {
+        throw Error('Unable to create plan snapshot tags');
+      }
+    } catch (e) {
+      catchError('Create Plan Snapshot Tags Failed', e as Error);
+      showFailureToast('Create Plan Snapshot Tags Failed');
+      return null;
     }
   },
 

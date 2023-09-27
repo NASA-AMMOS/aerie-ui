@@ -134,6 +134,9 @@ const queryPermissions = {
   CREATE_PLAN_SNAPSHOT: (user: User | null): boolean => {
     return getPermission(['create_snapshot'], user);
   },
+  CREATE_PLAN_SNAPSHOT_TAGS: (user: User | null): boolean => {
+    return getPermission(['insert_plan_snapshot_tags'], user);
+  },
   CREATE_PLAN_TAGS: (user: User | null): boolean => {
     return getPermission(['insert_plan_tags'], user);
   },
