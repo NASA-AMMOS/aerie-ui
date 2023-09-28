@@ -2,6 +2,7 @@
 
 <script lang="ts">
   import CheckIcon from '@nasa-jpl/stellar/icons/check.svg?component';
+  import CloseIcon from '@nasa-jpl/stellar/icons/close.svg?component';
   import HistoryIcon from '@nasa-jpl/stellar/icons/history.svg?component';
   import PenIcon from '@nasa-jpl/stellar/icons/pen.svg?component';
   import { createEventDispatcher } from 'svelte';
@@ -319,6 +320,15 @@
       }
     }
   }
+
+  async function restoreRevision(revisionId: number) {
+    const { id: activityId, plan_id: planId } = activityDirective;
+    const restored = await effects.restoreActivityFromChangelog(activityId, planId, revisionId, user);
+
+    if (restored) {
+      dispatch('closeRevisionPreview');
+    }
+  }
 </script>
 
 {#if showHeader}
@@ -354,17 +364,33 @@
         </button>
       {/if}
     </div>
-    {#if !revision}
-      <div>
-        <button
-          class="st-button icon activity-header-changelog"
-          on:click|stopPropagation={() => dispatch('viewChangelog')}
-          use:tooltip={{ content: 'View Activity Changelog', placement: 'top' }}
-        >
-          <HistoryIcon />
-        </button>
-      </div>
-    {/if}
+    <div>
+      <button
+        class="st-button icon activity-header-changelog"
+        on:click|stopPropagation={() => dispatch('viewChangelog')}
+        use:tooltip={{ content: 'View Activity Changelog', placement: 'top' }}
+      >
+        <HistoryIcon />
+      </button>
+    </div>
+  </div>
+{/if}
+
+{#if revision}
+  <div class="revision-preview-header">
+    <div>
+      <button class="st-button primary" on:click|stopPropagation={() => revision && restoreRevision(revision.revision)}>
+        Restore
+      </button>
+      <span class="st-typography-medium">{highlightKeys.length} Change{highlightKeys.length === 1 ? '' : 's'}</span>
+    </div>
+    <button
+      use:tooltip={{ content: 'Close Revision Preview', placement: 'top' }}
+      class="icon st-button"
+      on:click|stopPropagation={() => dispatch('closeRevisionPreview')}
+    >
+      <CloseIcon />
+    </button>
   </div>
 {/if}
 
@@ -640,6 +666,28 @@
 
   .activity-header-changelog:hover {
     color: #007bff;
+  }
+
+  .revision-preview-header {
+    align-items: center;
+    background-color: #e6e6ff;
+    border-bottom: 1px solid #c4c6ff;
+    border-top: 1px solid #c4c6ff;
+    display: flex;
+    flex-shrink: 0;
+    justify-content: space-between;
+    padding: 4px 8px;
+    padding-left: 8px;
+  }
+
+  .revision-preview-header span {
+    font-style: italic;
+    margin-left: 4px;
+  }
+
+  .revision-preview .icon {
+    align-content: flex-end;
+    display: flex;
   }
 
   .annotations {

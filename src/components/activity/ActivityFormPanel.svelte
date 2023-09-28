@@ -101,6 +101,12 @@
     previewRevision = revision;
     viewingActivityDirectiveChangelog = false;
   }
+
+  function onCloseRevisionPreview() {
+    highlightKeys = [];
+    previewRevision = undefined;
+    viewingActivityDirectiveChangelog = false;
+  }
 </script>
 
 <Panel padBody={false}>
@@ -165,8 +171,9 @@
         editable={!$activityEditingLocked && !previewRevision}
         modelId={$modelId}
         planStartTimeYmd={$plan.start_time}
-        on:viewChangelog={onToggleViewChangelog}
         revision={previewRevision}
+        on:viewChangelog={onToggleViewChangelog}
+        on:closeRevisionPreview={onCloseRevisionPreview}
         {highlightKeys}
         {user}
       />
