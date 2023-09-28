@@ -52,6 +52,13 @@
       await effects.createPlanTags(newPlanTags, user, false);
     }
   }
+
+  function onCreatePlanSnapshot(event: MouseEvent) {
+    event.stopPropagation();
+    if (plan) {
+      effects.createPlanSnapshot(plan, user);
+    }
+  }
 </script>
 
 <div class="plan-form">
@@ -143,18 +150,23 @@
           />
         </Input>
       </Collapse>
+    </fieldset>
+    <fieldset>
       <Collapse title="Snapshots" padContent={false}>
-        <CardList>
-          {#each $planSnapshotsWithSimulations as planSnapshot (planSnapshot.snapshot_id)}
-            <PlanSnapshot
-              activePlanSnapshotId={$planSnapshotId}
-              {planSnapshot}
-              on:click={() => setQueryParam(SearchParameters.SNAPSHOT_ID, `${planSnapshot.snapshot_id}`)}
-              on:restore={() => effects.restorePlanSnapshot(planSnapshot, user)}
-              on:delete={() => effects.deletePlanSnapshot(planSnapshot, user)}
-            />
-          {/each}
-        </CardList>
+        <button class="st-button secondary" slot="right" on:click={onCreatePlanSnapshot}>Take Snapshot</button>
+        <div style="margin-top: 8px">
+          <CardList>
+            {#each $planSnapshotsWithSimulations as planSnapshot (planSnapshot.snapshot_id)}
+              <PlanSnapshot
+                activePlanSnapshotId={$planSnapshotId}
+                {planSnapshot}
+                on:click={() => setQueryParam(SearchParameters.SNAPSHOT_ID, `${planSnapshot.snapshot_id}`)}
+                on:restore={() => effects.restorePlanSnapshot(planSnapshot, user)}
+                on:delete={() => effects.deletePlanSnapshot(planSnapshot, user)}
+              />
+            {/each}
+          </CardList>
+        </div>
       </Collapse>
     </fieldset>
   {/if}
