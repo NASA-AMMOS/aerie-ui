@@ -1685,6 +1685,13 @@ const gql = {
         description
         taken_by
         taken_at
+        tags {
+          tag {
+            color
+            id
+            name
+          }
+        }
       }
     }
   `,
