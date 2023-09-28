@@ -379,7 +379,14 @@
 {#if revision}
   <div class="revision-preview-header">
     <div>
-      <button class="st-button primary" on:click|stopPropagation={() => revision && restoreRevision(revision.revision)}>
+      <button
+        class="st-button primary"
+        use:permissionHandler={{
+          hasPermission: hasUpdatePermission,
+          permissionError: updatePermissionError,
+        }}
+        on:click|stopPropagation={() => revision && restoreRevision(revision.revision)}
+      >
         Restore
       </button>
       <span class="st-typography-medium">{highlightKeys.length} Change{highlightKeys.length === 1 ? '' : 's'}</span>

@@ -625,6 +625,9 @@ const queryPermissions = {
       (getPermission(queries, user) && getRolePlanBranchPermission(queries, user, sourcePlan, targetPlan, model))
     );
   },
+  RESTORE_ACTIVITY_FROM_CHANGELOG: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission(['restoreActivityFromChangelog'], user);
+  },
   RESTORE_PLAN_SNAPSHOT: (user: User | null, plan: PlanWithOwners, model: ModelWithOwner): boolean => {
     const queries = ['restore_from_snapshot'];
     return isUserAdmin(user) || (getPermission(queries, user) && getRolePlanPermission(queries, user, plan, model));

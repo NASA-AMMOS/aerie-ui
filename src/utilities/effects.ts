@@ -3455,6 +3455,10 @@ const effects = {
     user: User | null,
   ): Promise<boolean> {
     try {
+      if (!queryPermissions.RESTORE_ACTIVITY_FROM_CHANGELOG(user)) {
+        throwPermissionError('restore activity from changelog');
+      }
+
       const data = await reqHasura(
         gql.RESTORE_ACTIVITY_FROM_CHANGELOG,
         { activity_id: activityId, plan_id: planId, revision },

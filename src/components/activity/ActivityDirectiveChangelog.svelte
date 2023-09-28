@@ -3,6 +3,7 @@
 <script lang="ts">
   import HistoryIcon from '@nasa-jpl/stellar/icons/history.svg?component';
   import { createEventDispatcher, onMount } from 'svelte';
+  import { plan } from '../../stores/plan';
   import type {
     ActivityDirective,
     ActivityDirectiveRevision,
@@ -12,10 +13,13 @@
   import type { User } from '../../types/app';
   import type { ArgumentsMap } from '../../types/parameter';
   import effects from '../../utilities/effects';
+  import { permissionHandler } from '../../utilities/permissionHandler';
+  import { featurePermissions } from '../../utilities/permissions';
   import { convertUsToDurationString } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
 
   const dispatch = createEventDispatcher();
+  const updatePermissionError = 'You do not have permission to update this activity';
 
   export let activityDirective: ActivityDirective;
   export let activityDirectivesMap: ActivityDirectivesMap = {};
@@ -23,12 +27,20 @@
   export let modelId: number;
   export let user: User | null;
 
+  let hasUpdatePermission: boolean = false;
+  $: if (user !== null && $plan !== null) {
+    hasUpdatePermission = featurePermissions.activityDirective.canUpdate(user, $plan, activityDirective);
+  }
+
   let activityRevisions: ActivityDirectiveRevision[];
   $: activityRevisions = [];
+
   let activityRevisionChangeMap: { currentValue: string; name: string; previousValue: string }[] = [];
   $: activityRevisionChangeMap = [];
+
   $: activityType =
     (activityTypes ?? []).find(({ name: activityTypeName }) => activityDirective?.type === activityTypeName) ?? null;
+
   let effectiveRevisionArguments: (ArgumentsMap | undefined)[];
   $: effectiveRevisionArguments = [];
 
@@ -206,7 +218,14 @@
           {#if i == 0}
             <span>Current Revision</span>
           {:else}
-            <button class="st-button" on:click={() => restoreRevision(revision.revision)}>Restore</button>
+            <button
+              class="st-button"
+              use:permissionHandler={{
+                hasPermission: hasUpdatePermission,
+                permissionError: updatePermissionError,
+              }}
+              on:click={() => restoreRevision(revision.revision)}>Restore</button
+            >
             <button class="st-button secondary" on:click={() => dispatch('previewRevision', revision)}>Preview</button>
           {/if}
         </div>
