@@ -66,6 +66,8 @@
   }
 
   function onToggleViewChangelog() {
+    highlightKeys = [];
+    previewRevision = undefined;
     viewingActivityDirectiveChangelog = !viewingActivityDirectiveChangelog;
   }
 

@@ -140,12 +140,21 @@
     const { id: activityId, plan_id: planId } = activityDirective;
     activityRevisions = await effects.getActivityDirectiveChangelog(planId, activityId, user);
 
-    // Get effective arguments for all revisions
-    const effectiveArgumentsRequests = activityRevisions.map(revision =>
-      effects.getEffectiveActivityArguments(modelId, activityType?.name || '', revision.arguments, user),
+    // Get default set of effective arguments
+    const effectiveDefaultArguments = await effects.getEffectiveActivityArguments(
+      modelId,
+      activityType?.name || '',
+      {},
+      user,
     );
-    const effectiveArgumentsResponses = await Promise.all(effectiveArgumentsRequests);
-    effectiveRevisionArguments = effectiveArgumentsResponses.map(effectiveArguments => effectiveArguments?.arguments);
+
+    // Get effective arguments for all revisions by coalescing defaults with args supplied in revision
+    effectiveRevisionArguments = activityRevisions.map(revision => {
+      return {
+        ...effectiveDefaultArguments?.arguments,
+        ...revision.arguments,
+      };
+    });
 
     // Build a summary of changes by comparing two revisions and their effective arguments
     activityRevisionChangeMap = activityRevisions.map((activityRevision, i) => {
