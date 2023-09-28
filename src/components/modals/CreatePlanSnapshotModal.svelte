@@ -2,6 +2,7 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import { planSnapshots } from '../../stores/planSnapshots';
   import { tags } from '../../stores/tags';
   import type { User } from '../../types/app';
   import type { Plan } from '../../types/plan';
@@ -21,7 +22,7 @@
   const dispatch = createEventDispatcher();
 
   let createButtonDisabled: boolean = true;
-  let snapshotName: string = `${plan.name} - Snapshot`;
+  let snapshotName: string = `${plan.name} – Snapshot ${$planSnapshots.length + 1}`;
   let snapshotDescription: string = '';
   let snapshotTags: Tag[] = [];
 
@@ -66,7 +67,9 @@
     <div class="description">Snapshot will capture activity directives and references to relevant simulations.</div>
     <fieldset>
       <label for="name">Name of Snapshot</label>
+      <!-- svelte-ignore a11y-autofocus -->
       <input
+        autofocus
         bind:value={snapshotName}
         placeholder="Name of Snapshot"
         autocomplete="off"
