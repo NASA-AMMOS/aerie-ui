@@ -160,7 +160,7 @@
               <PlanSnapshot
                 activePlanSnapshotId={$planSnapshotId}
                 {planSnapshot}
-                on:click={() => setQueryParam(SearchParameters.SNAPSHOT_ID, `${planSnapshot.snapshot_id}`)}
+                on:click={() => setQueryParam(SearchParameters.SNAPSHOT_ID, `${planSnapshot.snapshot_id}`, 'PUSH')}
                 on:restore={() => effects.restorePlanSnapshot(planSnapshot, user)}
                 on:delete={() => effects.deletePlanSnapshot(planSnapshot, user)}
               />
