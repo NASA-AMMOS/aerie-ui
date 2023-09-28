@@ -377,6 +377,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+    margin-top: 8px;
   }
 
   .simulation-template {
