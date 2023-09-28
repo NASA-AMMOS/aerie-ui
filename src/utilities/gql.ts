@@ -1399,6 +1399,7 @@ const gql = {
         id
         last_modified_arguments_at
         last_modified_at
+        last_modified_by
         metadata
         name
         plan_id

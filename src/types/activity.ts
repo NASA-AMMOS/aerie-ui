@@ -41,6 +41,7 @@ export type ActivityDirective = {
   id: ActivityDirectiveId;
   last_modified_arguments_at: string;
   last_modified_at: string;
+  last_modified_by: string;
   metadata: ActivityMetadata;
   name: string;
   plan_id: number;

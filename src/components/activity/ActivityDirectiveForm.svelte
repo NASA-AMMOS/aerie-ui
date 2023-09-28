@@ -462,7 +462,7 @@
 
       <Highlight highlight={highlightKeysMap.created_at}>
         <Input layout="inline">
-          <label use:tooltip={{ content: 'Creation Time', placement: 'top' }} for="creationTime"> Creation Time </label>
+          <label use:tooltip={{ content: 'Creation Time', placement: 'top' }} for="creationTime">Creation Time</label>
           <input class="st-input w-100" disabled name="creationTime" value={activityDirective.created_at} />
         </Input>
       </Highlight>
@@ -473,6 +473,15 @@
             Last Modified Time
           </label>
           <input class="st-input w-100" disabled name="lastModifiedTime" value={activityDirective.last_modified_at} />
+        </Input>
+      </Highlight>
+
+      <Highlight highlight={highlightKeysMap.last_modified_by}>
+        <Input layout="inline">
+          <label use:tooltip={{ content: 'Last Modified By', placement: 'top' }} for="modifiedBy">
+            Last Modified By
+          </label>
+          <input class="st-input w-100" disabled name="modifiedBy" value={activityDirective.last_modified_by} />
         </Input>
       </Highlight>
 
