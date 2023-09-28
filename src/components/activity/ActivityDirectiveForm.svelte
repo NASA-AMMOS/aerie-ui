@@ -55,7 +55,7 @@
   export let showActivityName: boolean = false;
   export let showHeader: boolean = true;
   export let user: User | null;
-  export let revision: ActivityDirectiveRevision | undefined;
+  export let revision: ActivityDirectiveRevision | undefined = undefined;
 
   const dispatch = createEventDispatcher();
 
