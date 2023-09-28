@@ -22,6 +22,7 @@
   } from '../../stores/plan';
   import { selectedSpan, simulationDatasetId, spanUtilityMaps, spansMap } from '../../stores/simulation';
   import { tags } from '../../stores/tags';
+  import type { ActivityDirective, ActivityDirectiveRevision } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { SpanId } from '../../types/simulation';
   import type { ViewGridSection } from '../../types/view';
@@ -41,6 +42,8 @@
 
   let hasDeletePermission: boolean = false;
   let viewingActivityDirectiveChangelog: boolean = false;
+  let highlightKeys: string[] = [];
+  let previewRevision: ActivityDirectiveRevision | undefined;
 
   $: deletePermissionError = $planReadOnly
     ? PlanStatusMessages.READ_ONLY
@@ -50,9 +53,11 @@
       featurePermissions.activityDirective.canDelete(user, $plan, $selectedActivityDirective) && !$planReadOnly;
   }
 
-  // Hacky(?) way to auto close the changelog whenever the selected activity changes
+  // Auto close the changelog and clear revision preview state whenever the selected activity changes
   $: if ($selectedActivityDirective !== null) {
     viewingActivityDirectiveChangelog = false;
+    highlightKeys = [];
+    previewRevision = undefined;
   }
 
   function onSelectSpan(event: CustomEvent<SpanId>) {
@@ -62,6 +67,39 @@
 
   function onToggleViewChangelog() {
     viewingActivityDirectiveChangelog = !viewingActivityDirectiveChangelog;
+  }
+
+  function onPreviewRevision(event: CustomEvent<ActivityDirectiveRevision>) {
+    if (!$selectedActivityDirective) {
+      return;
+    }
+
+    const revision: ActivityDirectiveRevision = event.detail;
+    const activityType = $activityTypes.find(type => type.name == $selectedActivityDirective?.type);
+    const changedKeys: string[] = [];
+
+    const potentialChanges: Array<keyof ActivityDirective & keyof ActivityDirectiveRevision> = [
+      'anchor_id',
+      'anchored_to_start',
+      'start_offset',
+    ];
+    potentialChanges.forEach(key => {
+      if ($selectedActivityDirective && $selectedActivityDirective[key] !== revision[key]) {
+        changedKeys.push(key);
+      }
+    });
+
+    if (activityType) {
+      Object.keys(activityType.parameters).forEach(key => {
+        if ($selectedActivityDirective?.arguments[key] !== revision.arguments[key]) {
+          changedKeys.push(key);
+        }
+      });
+    }
+
+    highlightKeys = changedKeys;
+    previewRevision = revision;
+    viewingActivityDirectiveChangelog = false;
   }
 </script>
 
@@ -114,6 +152,7 @@
         activityTypes={$activityTypes}
         modelId={$modelId}
         on:closeChangelog={onToggleViewChangelog}
+        on:previewRevision={onPreviewRevision}
         {user}
       />
     {:else if $selectedActivityDirective && $plan !== null}
@@ -123,10 +162,12 @@
         activityMetadataDefinitions={$activityMetadataDefinitions}
         activityTypes={$activityTypes}
         tags={$tags}
-        editable={!$activityEditingLocked}
+        editable={!$activityEditingLocked && !previewRevision}
         modelId={$modelId}
         planStartTimeYmd={$plan.start_time}
         on:viewChangelog={onToggleViewChangelog}
+        revision={previewRevision}
+        {highlightKeys}
         {user}
       />
     {:else if $selectedSpan && $plan !== null}

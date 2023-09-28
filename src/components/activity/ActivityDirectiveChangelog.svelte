@@ -92,11 +92,18 @@
         ? activityDirectivesMap[current.anchor_id].name
         : 'Unknown Directive';
       const previousAnchorDirective = previous.anchor_id
-        ? activityDirectivesMap[previous.anchor_id]
+        ? activityDirectivesMap[previous.anchor_id].name
         : 'Unknown Directive';
       differences['Anchored To'] = {
         currentValue: current.anchor_id ? `${current.anchor_id} - ${currentAnchorDirective}` : 'Plan',
         previousValue: previous.anchor_id ? `${previous.anchor_id} - ${previousAnchorDirective}` : 'Plan',
+      };
+    }
+
+    if (current.name !== previous.name) {
+      differences['Name'] = {
+        currentValue: current.name,
+        previousValue: previous.name,
       };
     }
 
@@ -191,6 +198,7 @@
             <span>Current Revision</span>
           {:else}
             <button class="st-button" on:click={() => restoreRevision(revision.revision)}>Restore</button>
+            <button class="st-button secondary" on:click={() => dispatch('previewRevision', revision)}>Preview</button>
           {/if}
         </div>
         <div class="previous-value st-typography-body">
@@ -267,7 +275,11 @@
   }
 
   .actions button {
-    padding: 0 8px;
+    padding: 0 4px;
+  }
+
+  .actions .secondary {
+    border: 1px solid #bec0c2;
   }
 
   .activity-revision:hover .actions > * {

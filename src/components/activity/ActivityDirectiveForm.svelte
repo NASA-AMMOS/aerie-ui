@@ -11,6 +11,7 @@
   import type {
     ActivityDirective,
     ActivityDirectiveId,
+    ActivityDirectiveRevision,
     ActivityDirectivesMap,
     ActivityPreset,
     ActivityPresetInsertInput,
@@ -53,6 +54,7 @@
   export let showActivityName: boolean = false;
   export let showHeader: boolean = true;
   export let user: User | null;
+  export let revision: ActivityDirectiveRevision | undefined;
 
   const dispatch = createEventDispatcher();
 
@@ -76,7 +78,10 @@
   $: highlightKeysMap = keyByBoolean(highlightKeys);
   $: activityType =
     (activityTypes ?? []).find(({ name: activityTypeName }) => activityDirective?.type === activityTypeName) ?? null;
-  $: startTimeDoy = getDoyTimeFromInterval(planStartTimeYmd, activityDirective.start_offset);
+  $: startTimeDoy = getDoyTimeFromInterval(
+    planStartTimeYmd,
+    revision ? revision.start_offset : activityDirective.start_offset,
+  );
   $: startTimeDoyField = field<string>(startTimeDoy, [required, timestamp]);
   $: activityNameField = field<string>(activityDirective.name);
 
@@ -88,9 +93,9 @@
           const { arguments: defaultArgumentsMap } = effectiveArguments;
           formParameters = getFormParameters(
             activityType.parameters,
-            activityDirective.arguments,
+            revision ? revision.arguments : activityDirective.arguments,
             activityType.required_parameters,
-            activityDirective.applied_preset?.preset_applied?.arguments,
+            revision ? undefined : activityDirective.applied_preset?.preset_applied?.arguments,
             defaultArgumentsMap,
           );
         }
@@ -319,7 +324,11 @@
 {#if showHeader}
   <div class="activity-header">
     <div class={classNames('activity-header-title', { 'activity-header-title--editing': editingActivityName })}>
-      {#if !editingActivityName}
+      {#if !editable}
+        <div class="activity-header-title-value st-typography-medium">
+          {revision ? revision.name : $activityNameField.value}
+        </div>
+      {:else if !editingActivityName}
         <button class="icon st-button activity-header-title-edit-button" on:click={editActivityName}>
           <div class="activity-header-title-value st-typography-medium">
             {$activityNameField.value}
@@ -345,15 +354,17 @@
         </button>
       {/if}
     </div>
-    <div>
-      <button
-        class="st-button icon activity-header-changelog"
-        on:click|stopPropagation={() => dispatch('viewChangelog')}
-        use:tooltip={{ content: 'View Activity Changelog', placement: 'top' }}
-      >
-        <HistoryIcon />
-      </button>
-    </div>
+    {#if !revision}
+      <div>
+        <button
+          class="st-button icon activity-header-changelog"
+          on:click|stopPropagation={() => dispatch('viewChangelog')}
+          use:tooltip={{ content: 'View Activity Changelog', placement: 'top' }}
+        >
+          <HistoryIcon />
+        </button>
+      </div>
+    {/if}
   </div>
 {/if}
 
@@ -412,12 +423,12 @@
         {activityDirective}
         {activityDirectivesMap}
         {hasUpdatePermission}
-        anchorId={activityDirective.anchor_id}
+        anchorId={revision ? revision.anchor_id : activityDirective.anchor_id}
         disabled={!editable}
         {highlightKeysMap}
         planReadOnly={$planReadOnly}
-        isAnchoredToStart={activityDirective.anchored_to_start}
-        startOffset={activityDirective.start_offset}
+        isAnchoredToStart={revision ? revision.anchored_to_start : activityDirective.anchored_to_start}
+        startOffset={revision ? revision.start_offset : activityDirective.start_offset}
         on:updateAnchor={updateAnchor}
         on:updateAnchorEdge={updateAnchorEdge}
         on:updateStartOffset={updateStartOffset}
