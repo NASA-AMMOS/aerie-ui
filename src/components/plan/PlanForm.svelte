@@ -165,6 +165,9 @@
                 on:delete={() => effects.deletePlanSnapshot(planSnapshot, user)}
               />
             {/each}
+            {#if $planSnapshotsWithSimulations.length < 1}
+              <div class="st-typography-label">No Plan Snapshots Found</div>
+            {/if}
           </CardList>
         </div>
       </Collapse>
