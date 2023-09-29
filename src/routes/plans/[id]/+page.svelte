@@ -66,7 +66,6 @@
     resetSimulationStores,
     resourceTypes,
     resources,
-    selectedSpanId,
     simulationDataset,
     simulationDatasetId,
     simulationDatasetLatest,
@@ -86,7 +85,7 @@
   import type { ActivityDirective } from '../../../types/activity';
   import type { ViewSaveEvent, ViewToggleEvent } from '../../../types/view';
   import effects from '../../../utilities/effects';
-  import { removeQueryParam } from '../../../utilities/generic';
+  import { getSearchParameterNumber, removeQueryParam } from '../../../utilities/generic';
   import { isSaveEvent } from '../../../utilities/keyboardEvents';
   import { closeActiveModal, showPlanLockedModal } from '../../../utilities/modal';
   import { featurePermissions } from '../../../utilities/permissions';
@@ -143,10 +142,12 @@
       $simulationDatasetId = data.initialPlan.simulations[0]?.simulation_datasets[0]?.id ?? -1;
     }
 
-    const queryActivityId = $page.url.searchParams.get(SearchParameters.ACTIVITY_ID);
-    if (queryActivityId) {
-      $selectedSpanId = parseInt(queryActivityId);
+    const queryActivityId = getSearchParameterNumber(SearchParameters.ACTIVITY_ID, $page.url.searchParams);
+    const querySpanId = getSearchParameterNumber(SearchParameters.SPAN_ID, $page.url.searchParams);
+    if (queryActivityId !== null || querySpanId !== null) {
+      setTimeout(() => selectActivity(queryActivityId, querySpanId));
       removeQueryParam(SearchParameters.ACTIVITY_ID);
+      removeQueryParam(SearchParameters.SPAN_ID);
     }
 
     let start = NaN;
@@ -163,15 +164,10 @@
       removeQueryParam(SearchParameters.END_TIME);
     }
 
-    if (isNaN(start) && isNaN(end)) {
-      $viewTimeRange = $maxTimeRange;
-    } else if (!isNaN(start) && !isNaN(end)) {
-      viewTimeRange.set({ end, start });
-    } else if (!isNaN(start)) {
-      viewTimeRange.set({ ...$maxTimeRange, start });
-    } else if (!isNaN(end)) {
-      viewTimeRange.set({ ...$maxTimeRange, end });
-    }
+    viewTimeRange.set({
+      end: !isNaN(end) ? end : $maxTimeRange.end,
+      start: !isNaN(start) ? start : $maxTimeRange.start,
+    });
 
     activityTypes.updateValue(() => data.initialActivityTypes);
     planTags.updateValue(() => data.initialPlanTags);

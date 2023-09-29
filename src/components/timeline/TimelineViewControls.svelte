@@ -8,9 +8,10 @@
   import { createEventDispatcher } from 'svelte';
   import { SearchParameters } from '../../enums/searchParameters';
   import { selectedActivityDirective } from '../../stores/activities';
-  import { simulationDatasetId } from '../../stores/simulation';
+  import { selectedSpan, simulationDatasetId } from '../../stores/simulation';
   import { viewIsModified } from '../../stores/views';
   import type { DirectiveVisibilityToggleMap, TimeRange } from '../../types/timeline';
+  import { showFailureToast, showSuccessToast } from '../../utilities/toast';
   import { tooltip } from '../../utilities/tooltip';
   import TimelineViewDirectiveControls from './TimelineViewDirectiveControls.svelte';
 
@@ -112,18 +113,26 @@
     dispatch('toggleDirectiveVisibility', !allDirectivesVisible);
   }
 
-  function onCopyViewportURL() {
+  async function onCopyViewportURL() {
     const targetUrl = new URL(window.location.href);
     targetUrl.searchParams.set(SearchParameters.START_TIME, new Date(viewTimeRange.start).toISOString());
     targetUrl.searchParams.set(SearchParameters.END_TIME, new Date(viewTimeRange.end).toISOString());
     if ($selectedActivityDirective) {
       targetUrl.searchParams.set(SearchParameters.ACTIVITY_ID, $selectedActivityDirective.id.toFixed());
     }
+    if ($selectedSpan) {
+      targetUrl.searchParams.set(SearchParameters.SPAN_ID, $selectedSpan.id.toFixed());
+    }
     if ($simulationDatasetId) {
       targetUrl.searchParams.set(SearchParameters.SIMULATION_DATASET_ID, $simulationDatasetId.toFixed());
     }
 
-    navigator.clipboard.writeText(targetUrl.href);
+    try {
+      await navigator.clipboard.writeText(targetUrl.href);
+      showSuccessToast('URL of plan and view copied to clipboard');
+    } catch {
+      showFailureToast('Error copying URL to clipboard');
+    }
   }
 </script>
 
