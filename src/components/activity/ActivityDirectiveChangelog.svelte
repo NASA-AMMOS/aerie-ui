@@ -70,12 +70,52 @@
     }
   }
 
+  function diffArrays(itemName: string, current: any[], previous: any[], itemSchema: any) {
+    let differences: { [name: string]: { currentValue: any; previousValue: any } } = {};
+
+    for (let i = 0; i < current.length; i++) {
+      if (itemSchema.type === 'series') {
+        differences = {
+          ...differences,
+          ...diffArrays(`${itemName} > [${i}]`, current[i], previous[i], itemSchema.items),
+        };
+      } else if (typeof current[i].key !== 'undefined' && typeof current[i].value !== 'undefined') {
+        if (current[i].key !== previous[i].key) {
+          differences[`${itemName} > [${i}] > key`] = {
+            currentValue: current[i].key,
+            previousValue: previous[i].key,
+          };
+        }
+        if (current[i].value !== previous[i].value) {
+          differences[`${itemName} > [${i}] > value`] = {
+            currentValue: current[i].value,
+            previousValue: previous[i].value,
+          };
+        }
+      } else if (current[i] !== previous[i]) {
+        differences[`${itemName} > [${i}]`] = {
+          currentValue: current[i],
+          previousValue: previous[i],
+        };
+      }
+    }
+
+    return differences;
+  }
+
   function diffRevisions(current: ActivityDirectiveRevision, previous: ActivityDirectiveRevision) {
-    const differences: { [name: string]: { currentValue: any; previousValue: any } } = {};
+    let differences: { [name: string]: { currentValue: any; previousValue: any } } = {};
 
     // Build list of all arguments that differ
     Object.keys(current.arguments).forEach(argument => {
-      if (current.arguments[argument] !== previous.arguments[argument]) {
+      const schema = activityType?.parameters[argument].schema;
+
+      if (schema?.type === 'series') {
+        differences = {
+          ...differences,
+          ...diffArrays(argument, current.arguments[argument], previous.arguments[argument], schema.items),
+        };
+      } else if (current.arguments[argument] !== previous.arguments[argument]) {
         differences[argument] = {
           currentValue: current.arguments[argument],
           previousValue: previous.arguments[argument],
@@ -174,7 +214,7 @@
 
       // At some point there will be no previous revision to compute a difference from
       if (!previousRevision) {
-        return { currentValue: '', name: 'Last Known Revision', previousValue: '' };
+        return { currentValue: '', name: 'Earliest Known Revision', previousValue: '' };
       }
 
       return diffRevisions(
