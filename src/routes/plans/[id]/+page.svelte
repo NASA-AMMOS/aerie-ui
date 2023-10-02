@@ -86,6 +86,7 @@
     viewUpdateGrid,
   } from '../../../stores/views';
   import type { ActivityDirective } from '../../../types/activity';
+  import type { PlanSnapshot } from '../../../types/plan-snapshot';
   import type { ViewSaveEvent, ViewToggleEvent } from '../../../types/view';
   import effects from '../../../utilities/effects';
   import { getSearchParameterNumber, removeQueryParam, setQueryParam } from '../../../utilities/generic';
@@ -110,6 +111,7 @@
   export let data: PageData;
 
   let compactNavMode = false;
+  let consoleHeightString = '36px';
   let hasCreateViewPermission: boolean = false;
   let hasUpdateViewPermission: boolean = false;
   let hasExpandPermission: boolean = false;
@@ -351,7 +353,12 @@
 
 <PageTitle subTitle={data.initialPlan.name} title="Plans" />
 
-<CssGrid class="plan-container" rows="var(--nav-header-height) auto 36px">
+<CssGrid
+  class="plan-container"
+  rows={$planSnapshot
+    ? `var(--nav-header-height) min-content auto ${consoleHeightString}`
+    : `var(--nav-header-height) auto ${consoleHeightString}`}
+>
   <Nav user={data.user}>
     <div slot="title">
       <PlanMenu plan={data.initialPlan} user={data.user} />
@@ -496,7 +503,7 @@
     on:changeRightRowSizes={onChangeRightRowSizes}
   />
 
-  <Console>
+  <Console on:resize={onConsoleResize}>
     <svelte:fragment slot="console-tabs">
       <div class="console-tabs">
         <div>
