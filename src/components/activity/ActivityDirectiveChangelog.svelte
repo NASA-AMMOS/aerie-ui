@@ -45,15 +45,13 @@
   $: effectiveRevisionArguments = [];
 
   function formatDate(dateString: string) {
-    return new Date(dateString)
-      .toLocaleString(undefined, {
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-        month: 'numeric',
-        year: '2-digit',
-      })
-      .replace(',', '');
+    return new Date(dateString).toLocaleString(undefined, {
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      month: 'numeric',
+      year: '2-digit',
+    });
   }
 
   function formatParameterValue(parameterName: string, parameterValue: any) {
@@ -250,7 +248,7 @@
         <div class="change-summary st-typography-body">
           {activityRevisionChangeMap[i].name}
         </div>
-        <div class="changed-by st-typography-label">{revision.changed_by}</div>
+        <div class="changed-by st-typography-label">@{revision.changed_by}</div>
         <div class="new-value st-typography-body">
           {formatParameterValue(activityRevisionChangeMap[i].name, activityRevisionChangeMap[i].currentValue)}
         </div>
@@ -310,6 +308,10 @@
     margin: 8px 8px 0px 8px;
     padding: 4px;
     row-gap: 4px;
+  }
+
+  .activity-revision:last-child {
+    margin-bottom: 8px;
   }
 
   .activity-revision:hover {
