@@ -102,7 +102,7 @@
         }
       });
   }
-  $: validateArguments(activityDirective.arguments);
+  $: validateArguments(revision ? revision.arguments : activityDirective.arguments);
   $: numOfUserChanges = formParameters.reduce((previousHasChanges: number, formParameter) => {
     return /user/.test(formParameter.valueSource) ? previousHasChanges + 1 : previousHasChanges;
   }, 0);
