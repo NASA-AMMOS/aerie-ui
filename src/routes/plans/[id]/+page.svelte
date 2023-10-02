@@ -19,12 +19,14 @@
   import ViewMenu from '../../../components/menus/ViewMenu.svelte';
   import PlanMergeRequestsStatusButton from '../../../components/plan/PlanMergeRequestsStatusButton.svelte';
   import PlanNavButton from '../../../components/plan/PlanNavButton.svelte';
+  import PlanSnapshotBar from '../../../components/plan/PlanSnapshotBar.svelte';
   import CssGrid from '../../../components/ui/CssGrid.svelte';
   import PlanGrid from '../../../components/ui/PlanGrid.svelte';
   import ProgressLinear from '../../../components/ui/ProgressLinear.svelte';
   import { SearchParameters } from '../../../enums/searchParameters';
   import {
     activityDirectives,
+    activityDirectivesList,
     activityDirectivesMap,
     resetActivityStores,
     selectActivity,
@@ -253,6 +255,18 @@
     clearSchedulingErrors();
   }
 
+  function onCloseSnapshotPreview() {
+    $planSnapshotId = null;
+    $simulationDatasetId = -1;
+    removeQueryParam(SearchParameters.SNAPSHOT_ID);
+    removeQueryParam(SearchParameters.SIMULATION_DATASET_ID, 'PUSH');
+  }
+
+  function onConsoleResize(event: CustomEvent<string>) {
+    const { detail } = event;
+    consoleHeightString = detail;
+  }
+
   function onKeydown(event: KeyboardEvent): void {
     if (isSaveEvent(event)) {
       event.preventDefault();
@@ -280,6 +294,11 @@
         resetOriginalView();
       }
     }
+  }
+
+  function onRestoreSnapshot(event: CustomEvent<PlanSnapshot>) {
+    const { detail: planSnapshot } = event;
+    effects.restorePlanSnapshot(planSnapshot, data.user);
   }
 
   async function onSaveView(event: CustomEvent<ViewSaveEvent>) {
@@ -460,7 +479,14 @@
       />
     </svelte:fragment>
   </Nav>
-
+  {#if $planSnapshot}
+    <PlanSnapshotBar
+      numOfDirectives={$activityDirectivesList.length}
+      snapshot={$planSnapshot}
+      on:close={onCloseSnapshotPreview}
+      on:restore={onRestoreSnapshot}
+    />
+  {/if}
   <PlanGrid
     {...$view?.definition.plan.grid}
     user={data.user}
