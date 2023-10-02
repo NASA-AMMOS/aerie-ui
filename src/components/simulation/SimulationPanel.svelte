@@ -39,6 +39,7 @@
   import GridMenu from '../menus/GridMenu.svelte';
   import Parameters from '../parameters/Parameters.svelte';
   import DatePickerActionButton from '../ui/DatePicker/DatePickerActionButton.svelte';
+  import FilterToggleButton from '../ui/FilterToggleButton.svelte';
   import Panel from '../ui/Panel.svelte';
   import PanelHeaderActionButton from '../ui/PanelHeaderActionButton.svelte';
   import PanelHeaderActions from '../ui/PanelHeaderActions.svelte';
@@ -55,6 +56,7 @@
   let formParameters: FormParameter[] = [];
   let hasRunPermission: boolean = false;
   let hasUpdatePermission: boolean = false;
+  let isFilteredBySnapshot: boolean = false;
   let numOfUserChanges: number = 0;
   let startTimeDoy: string;
   let startTimeDoyField: FieldStore<string>;
@@ -105,6 +107,16 @@
         );
       }
     });
+  }
+
+  $: isFilteredBySnapshot = $planSnapshot !== null;
+
+  $: if (isFilteredBySnapshot) {
+    filteredSimulationDatasets = $simulationDatasetsPlan.filter(
+      simulationDataset => simulationDataset.plan_revision === $planSnapshot?.revision,
+    );
+  } else {
+    filteredSimulationDatasets = $simulationDatasetsPlan;
   }
 
   $: if ($simulationDatasetsPlan?.length) {
@@ -211,6 +223,10 @@
         user,
       );
     }
+  }
+
+  function onToggleFilter() {
+    isFilteredBySnapshot = !isFilteredBySnapshot;
   }
 
   function updateStartTime(doyString: string) {
@@ -369,6 +385,17 @@
 
     <fieldset>
       <Collapse title="Simulation History" padContent={false}>
+        <svelte:fragment slot="right">
+          {#if $planSnapshot}
+            <FilterToggleButton
+              label="Simulation"
+              offTooltipContent="Filter simulations by selected snapshot"
+              onTooltipContent="Remove filter"
+              isOn={isFilteredBySnapshot}
+              on:toggle={onToggleFilter}
+            />
+          {/if}
+        </svelte:fragment>
         <div class="simulation-history">
           {#if !filteredSimulationDatasets || !filteredSimulationDatasets.length}
             <div>No Simulation Datasets</div>
