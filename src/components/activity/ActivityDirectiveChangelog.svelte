@@ -15,7 +15,7 @@
   import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
-  import { convertUsToDurationString } from '../../utilities/time';
+  import { convertUsToDurationString, getDoyTimeFromInterval } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
 
   const dispatch = createEventDispatcher();
@@ -25,6 +25,7 @@
   export let activityDirectivesMap: ActivityDirectivesMap = {};
   export let activityTypes: ActivityType[] = [];
   export let modelId: number;
+  export let planStartTimeYmd: string;
   export let user: User | null;
 
   let hasUpdatePermission: boolean = false;
@@ -124,9 +125,12 @@
     // Manually check remaining fields that could have changed and require extra formatting
 
     if (current.start_offset !== previous.start_offset) {
+      const currentStartTimeDoy = getDoyTimeFromInterval(planStartTimeYmd, current.start_offset);
+      const previousStartTimeDoy = getDoyTimeFromInterval(planStartTimeYmd, previous.start_offset);
+
       differences['Start Time'] = {
-        currentValue: current.start_offset,
-        previousValue: previous.start_offset,
+        currentValue: currentStartTimeDoy,
+        previousValue: previousStartTimeDoy,
       };
     }
 
