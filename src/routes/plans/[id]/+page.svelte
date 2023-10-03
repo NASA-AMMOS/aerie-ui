@@ -249,6 +249,11 @@
     closeActiveModal();
   });
 
+  function clearSnapshot() {
+    $planSnapshotId = null;
+    $simulationDatasetId = data.initialPlan.simulations[0]?.simulation_datasets[0]?.id ?? -1;
+  }
+
   function onClearAllErrors() {
     clearAllErrors();
   }
@@ -258,8 +263,7 @@
   }
 
   function onCloseSnapshotPreview() {
-    $planSnapshotId = null;
-    $simulationDatasetId = data.initialPlan.simulations[0]?.simulation_datasets[0]?.id ?? -1;
+    clearSnapshot();
     removeQueryParam(SearchParameters.SNAPSHOT_ID);
     removeQueryParam(SearchParameters.SIMULATION_DATASET_ID, 'PUSH');
   }
@@ -298,9 +302,11 @@
     }
   }
 
-  function onRestoreSnapshot(event: CustomEvent<PlanSnapshot>) {
+  async function onRestoreSnapshot(event: CustomEvent<PlanSnapshot>) {
     const { detail: planSnapshot } = event;
-    effects.restorePlanSnapshot(planSnapshot, data.user);
+    await effects.restorePlanSnapshot(planSnapshot, data.user);
+
+    clearSnapshot();
   }
 
   async function onSaveView(event: CustomEvent<ViewSaveEvent>) {
