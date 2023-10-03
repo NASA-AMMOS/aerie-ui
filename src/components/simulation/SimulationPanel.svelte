@@ -113,22 +113,10 @@
 
   $: if (isFilteredBySnapshot) {
     filteredSimulationDatasets = $simulationDatasetsPlan.filter(
-      simulationDataset => simulationDataset.plan_revision === $planSnapshot?.revision,
+      simulationDataset => $planSnapshot === null || simulationDataset.plan_revision === $planSnapshot?.revision,
     );
   } else {
     filteredSimulationDatasets = $simulationDatasetsPlan;
-  }
-
-  $: if ($simulationDatasetsPlan?.length) {
-    if ($planSnapshot) {
-      filteredSimulationDatasets = $simulationDatasetsPlan.filter(
-        simulationDataset => simulationDataset.plan_revision === $planSnapshot?.revision,
-      );
-    } else {
-      filteredSimulationDatasets = $simulationDatasetsPlan;
-    }
-  } else {
-    filteredSimulationDatasets = [];
   }
 
   async function onChangeFormParameters(event: CustomEvent<FormParameter>) {
