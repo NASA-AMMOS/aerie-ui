@@ -142,7 +142,7 @@
     const querySimulationDatasetId = $page.url.searchParams.get(SearchParameters.SIMULATION_DATASET_ID);
     if (querySimulationDatasetId) {
       $simulationDatasetId = parseInt(querySimulationDatasetId);
-    } else {
+    } else if (data.initialPlanSnapshotId === null) {
       $simulationDatasetId = data.initialPlan.simulations[0]?.simulation_datasets[0]?.id ?? -1;
     }
 
@@ -200,7 +200,7 @@
   }
 
   $: if ($plan && $simulationDataset !== undefined) {
-    if ($simulationDataset !== null) {
+    if ($simulationDataset !== null && $simulationDatasetId !== -1) {
       const datasetId = $simulationDataset.dataset_id;
       const startTimeYmd = $simulationDataset?.simulation_start_time ?? $plan.start_time;
       effects.getResources(datasetId, startTimeYmd, data.user).then(newResources => ($resources = newResources));
