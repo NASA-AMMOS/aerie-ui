@@ -171,14 +171,14 @@
       }
     });
 
-    const currentPlanSnapshotSimulation = data.initialPlan.simulations[0]?.simulation_datasets.find(simulation => {
+    const currentPlanSimulation = data.initialPlan.simulations[0]?.simulation_datasets.find(simulation => {
       return simulation.id === getSearchParameterNumber(SearchParameters.SIMULATION_DATASET_ID);
     });
     const latestPlanSnapshotSimulation = data.initialPlan.simulations[0]?.simulation_datasets.find(simulation => {
       return simulation.plan_revision === $planSnapshot?.revision;
     });
 
-    if (!currentPlanSnapshotSimulation && latestPlanSnapshotSimulation) {
+    if (!currentPlanSimulation && latestPlanSnapshotSimulation) {
       $simulationDatasetId = latestPlanSnapshotSimulation.id;
       setQueryParam(SearchParameters.SIMULATION_DATASET_ID, `${$simulationDatasetId}`);
     }
@@ -259,7 +259,7 @@
 
   function onCloseSnapshotPreview() {
     $planSnapshotId = null;
-    $simulationDatasetId = -1;
+    $simulationDatasetId = data.initialPlan.simulations[0]?.simulation_datasets[0]?.id ?? -1;
     removeQueryParam(SearchParameters.SNAPSHOT_ID);
     removeQueryParam(SearchParameters.SIMULATION_DATASET_ID, 'PUSH');
   }
