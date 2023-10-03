@@ -25,13 +25,12 @@
   export let hasGoalEditPermission: boolean = false;
   export let hasSpecEditPermission: boolean = false;
   export let hasDeletePermission: boolean = false;
+  export let permissionError: string = '';
 
   $: upButtonHidden = priority <= 0;
   $: simulateGoal = simulateAfter; // Copied to local var to reflect changed values immediately in the UI
 
   let schedulingGoalInput: HTMLInputElement;
-
-  const permissionError = 'You do not have permission to edit scheduling goals for this plan.';
 
   function focusInput() {
     if (document.activeElement !== schedulingGoalInput) {
