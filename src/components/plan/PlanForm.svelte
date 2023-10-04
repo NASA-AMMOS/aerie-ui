@@ -195,6 +195,8 @@
                   if (planSnapshot.simulation?.id != null) {
                     setQueryParam(SearchParameters.SIMULATION_DATASET_ID, `${planSnapshot.simulation?.id}`, 'PUSH');
                     $simulationDatasetId = planSnapshot.simulation?.id;
+
+                    viewTogglePanel({ state: true, type: 'left', update: { leftComponentTop: 'SimulationPanel' } });
                   } else {
                     removeQueryParam(SearchParameters.SIMULATION_DATASET_ID);
                     $simulationDatasetId = -1;
