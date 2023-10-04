@@ -27,6 +27,7 @@
     } else if (description?.length < DESCRIPTION_MAX_LENGTH) {
       return description;
     }
+
     return '';
   }
 
