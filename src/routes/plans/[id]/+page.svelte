@@ -251,7 +251,7 @@
 
   function clearSnapshot() {
     $planSnapshotId = null;
-    $simulationDatasetId = data.initialPlan.simulations[0]?.simulation_datasets[0]?.id ?? -1;
+    $simulationDatasetId = $simulationDatasetLatest?.id ?? -1;
   }
 
   function onClearAllErrors() {
