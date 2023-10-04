@@ -4,6 +4,7 @@
   import { SearchParameters } from '../../enums/searchParameters';
   import { planSnapshotId, planSnapshotsWithSimulations } from '../../stores/planSnapshots';
   import { simulationDataset, simulationDatasetId } from '../../stores/simulation';
+  import { viewTogglePanel } from '../../stores/views';
   import type { User } from '../../types/app';
   import type { Plan } from '../../types/plan';
   import type { PlanSnapshot as PlanSnapshotType } from '../../types/plan-snapshot';
