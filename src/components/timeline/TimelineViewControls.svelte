@@ -192,7 +192,9 @@
   class="st-button icon"
   on:click={onCopyViewportURL}
   use:tooltip={{
-    content: `Copy URL of current viewport to clipboard.${$viewIsModified ? ' View has unsaved changes.' : ''}`,
+    content: `Copy URL including plan, visible time window, selection, and simulation dataset to clipboard.${
+      $viewIsModified ? ' View has unsaved changes.' : ''
+    }`,
     placement: 'bottom',
   }}
 >
