@@ -348,6 +348,7 @@
       simulationDatasetId: $simulationDatasetId,
       url: event.detail.url,
     };
+
     effects.callExtension(event.detail, payload, data.user);
   }
 
