@@ -29,7 +29,6 @@
   export let tags: Tag[] = [];
   export let user: User | null;
 
-  let hasPermission: boolean = false;
   let filteredPlanSnapshots: PlanSnapshotType[] = [];
   let isFilteredBySimulation: boolean = false;
   let hasPlanUpdatePermission: boolean = false;
