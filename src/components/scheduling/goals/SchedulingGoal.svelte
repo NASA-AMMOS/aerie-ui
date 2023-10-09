@@ -101,7 +101,10 @@
             </div>
           {/if}
           <input
-            use:tooltip={{ content: enabled ? 'Disable Scheduling Goal' : 'Enable Scheduling Goal', placement: 'top' }}
+            use:tooltip={{
+              content: hasSpecEditPermission ? (enabled ? 'Disable Scheduling Goal' : 'Enable Scheduling Goal') : '',
+              placement: 'top',
+            }}
             bind:checked={enabled}
             style:cursor="pointer"
             type="checkbox"
