@@ -45,6 +45,7 @@
   import PanelHeaderActions from '../ui/PanelHeaderActions.svelte';
   import SimulationHistoryDataset from './SimulationHistoryDataset.svelte';
   import SimulationTemplateInput from './SimulationTemplateInput.svelte';
+  import { viewTogglePanel } from '../../stores/views';
 
   export let gridSection: ViewGridSection;
   export let user: User | null;
@@ -398,6 +399,7 @@
                 on:click={() => {
                   simulationDatasetId.set(simDataset.id);
                   setQueryParam(SearchParameters.SIMULATION_DATASET_ID, `${$simulationDatasetId}`);
+                  viewTogglePanel({ state: true, type: 'right', update: { rightComponentTop: 'PlanMetadataPanel' } });
                 }}
                 on:cancel={onCancelSimulation}
               />
