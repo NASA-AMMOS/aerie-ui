@@ -11,7 +11,7 @@ import { gqlSubscribable } from './subscribable';
 
 export const activityEditingLocked: Writable<boolean> = writable(false);
 
-export const planReadOnly: Writable<boolean> = writable(true);
+export const planReadOnly: Writable<boolean> = writable(false);
 
 export const creatingModel: Writable<boolean> = writable(false);
 
