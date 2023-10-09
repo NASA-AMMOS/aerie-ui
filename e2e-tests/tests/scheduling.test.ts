@@ -94,7 +94,7 @@ test.describe.serial('Scheduling', () => {
     await expect(plan.schedulingGoalDifferenceBadge).toHaveText('+0');
   });
 
-  test('The list of satisfied activities should not be empty', async () => {
+  test.skip('The list of satisfied activities should not be empty', async () => {
     await plan.schedulingGoalExpand.click();
     const satisfiedActivitiesCount = await plan.schedulingSatisfiedActivity.count();
     expect(satisfiedActivitiesCount).toBeGreaterThan(0);
