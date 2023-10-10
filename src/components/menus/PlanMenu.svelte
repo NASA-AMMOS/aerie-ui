@@ -22,7 +22,7 @@
   export let user: User | null;
 
   let hasCreateMergeRequestPermission: boolean = false;
-  let hasCreatPlanBranchPermission: boolean = false;
+  let hasCreatePlanBranchPermission: boolean = false;
   let hasCreateSnapshotPermission: boolean = false;
   let planMenu: Menu;
 
@@ -37,7 +37,7 @@
         plan.model,
       ) && !$planReadOnly
     : false;
-  $: hasCreatPlanBranchPermission =
+  $: hasCreatePlanBranchPermission =
     featurePermissions.planBranch.canCreateBranch(user, plan, plan.model) && !$planReadOnly;
   $: hasCreateSnapshotPermission = featurePermissions.planSnapshot.canCreate(user, plan, plan.model) && !$planReadOnly;
 
@@ -82,10 +82,10 @@
           [
             permissionHandler,
             {
-              hasPermission: hasCreateMergeRequestPermission,
+              hasPermission: hasCreatePlanBranchPermission,
               permissionError: $planReadOnly
                 ? PlanStatusMessages.READ_ONLY
-                : 'You do not have permission to create a merge request',
+                : 'You do not have permission to create a plan branch',
             },
           ],
         ]}
@@ -104,10 +104,10 @@
             [
               permissionHandler,
               {
-                hasPermission: hasCreatPlanBranchPermission,
+                hasPermission: hasCreateMergeRequestPermission,
                 permissionError: $planReadOnly
                   ? PlanStatusMessages.READ_ONLY
-                  : 'You do not have permission to create a plan branch',
+                  : 'You do not have permission to create a merge request',
               },
             ],
           ]}
