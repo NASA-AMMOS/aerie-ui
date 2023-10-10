@@ -487,7 +487,7 @@ export function getYAxisBounds(
   yAxis: Axis,
   layers: Layer[],
   resourcesByViewLayerId: Record<number, Resource[]>,
-  viewTimeRange: TimeRange | null,
+  viewTimeRange?: TimeRange,
 ): number[] {
   // Find all layers that are associated with this y axis
   const yAxisLayers = layers.filter(layer => layer.yAxisId === yAxis.id);
