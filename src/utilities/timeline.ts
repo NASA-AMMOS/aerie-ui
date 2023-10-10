@@ -23,6 +23,7 @@ import type {
   QuadtreePoint,
   QuadtreeRect,
   Row,
+  TimeRange,
   Timeline,
   VerticalGuide,
   XRangeLayer,
@@ -333,10 +334,14 @@ export function createHorizontalGuide(
   let y = 0;
   if (firstAxis) {
     yAxisId = firstAxis.id;
-    if (firstAxis.scaleDomain.length === 2) {
-      if (firstAxis.scaleDomain[0] !== null && firstAxis.scaleDomain[1] !== null) {
-        // Default y value to the middle of the domain
-        y = (firstAxis.scaleDomain[1] + firstAxis.scaleDomain[0]) / 2;
+    if (!firstAxis.scaleDomain) {
+      y = 0;
+    } else {
+      if (firstAxis.scaleDomain.length === 2) {
+        if (firstAxis.scaleDomain[0] !== null && firstAxis.scaleDomain[1] !== null) {
+          // Default y value to the middle of the domain
+          y = (firstAxis.scaleDomain[1] + firstAxis.scaleDomain[0]) / 2;
+        }
       }
     }
   }
@@ -377,12 +382,9 @@ export function createYAxis(timelines: Timeline[], args: Partial<Axis> = {}): Ax
 
   return {
     color: '#000000',
+    domainFitMode: 'fitPlan',
     id,
     label: { text: 'Label' },
-
-    // TODO is there a sensible default for this since there are
-    // no associated layers for a new y axis?
-    scaleDomain: [0, 10],
     tickCount: 4,
     ...args,
   };
@@ -485,6 +487,7 @@ export function getYAxisBounds(
   yAxis: Axis,
   layers: Layer[],
   resourcesByViewLayerId: Record<number, Resource[]>,
+  viewTimeRange: TimeRange | null,
 ): number[] {
   // Find all layers that are associated with this y axis
   const yAxisLayers = layers.filter(layer => layer.yAxisId === yAxis.id);
@@ -497,11 +500,17 @@ export function getYAxisBounds(
       resourcesByViewLayerId[layer.id].forEach(resource => {
         resource.values.forEach(value => {
           if (typeof value.y === 'number') {
-            if (minY === undefined || value.y < minY) {
-              minY = value.y;
-            }
-            if (maxY === undefined || value.y > maxY) {
-              maxY = value.y;
+            if (
+              !viewTimeRange ||
+              yAxis.domainFitMode !== 'fitTimeWindow' ||
+              (value.x >= viewTimeRange.start && value.x <= viewTimeRange.end)
+            ) {
+              if (minY === undefined || value.y < minY) {
+                minY = value.y;
+              }
+              if (maxY === undefined || value.y > maxY) {
+                maxY = value.y;
+              }
             }
           }
         });
@@ -509,7 +518,7 @@ export function getYAxisBounds(
     }
   });
 
-  const scaleDomain = [...yAxis.scaleDomain];
+  const scaleDomain = [...(yAxis.scaleDomain || [])];
   if (minY !== undefined) {
     scaleDomain[0] = minY;
   }
@@ -518,4 +527,22 @@ export function getYAxisBounds(
   }
 
   return scaleDomain as number[];
+}
+
+/**
+ * Populates y-axes with scaleDomain
+ */
+export function getYAxesWithScaleDomains(
+  yAxes: Axis[],
+  layers: Layer[],
+  resourcesByViewLayerId: Record<number, Resource[]> = {},
+  viewTimeRange: TimeRange,
+): Axis[] {
+  return yAxes.map(yAxis => {
+    if (yAxis.domainFitMode !== 'manual') {
+      const scaleDomain = getYAxisBounds(yAxis, layers, resourcesByViewLayerId, viewTimeRange);
+      return { ...yAxis, scaleDomain };
+    }
+    return yAxis;
+  });
 }
