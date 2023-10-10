@@ -881,33 +881,51 @@ const effects = {
 
       if (confirm && value) {
         const { description, name, plan, tags } = value;
-        const data = await reqHasura<{ snapshot_id: number }>(
-          gql.CREATE_PLAN_SNAPSHOT,
-          { plan_id: plan.id, /* snapshot_description: description, */ snapshot_name: name },
-          user,
-        );
-        const { createSnapshot } = data;
-        if (createSnapshot != null) {
-          const { snapshot_id } = createSnapshot;
-          // TODO this will soon be part of create plan snapshot
-          const updates = { description };
-          await reqHasura(gql.UPDATE_PLAN_SNAPSHOT, { planSnapshot: updates, snapshot_id }, user);
-
-          // Associate tags with the snapshot
-          const newPlanSnapshotTags: PlanSnapshotTagsInsertInput[] = tags.map(({ id: tag_id }) => ({
-            snapshot_id,
-            tag_id,
-          }));
-          await effects.createPlanSnapshotTags(newPlanSnapshotTags, user, false);
-
-          showSuccessToast('Snapshot Created Successfully');
-        } else {
-          throw Error('');
-        }
+        await effects.createPlanSnapshotHelper(plan.id, name, description, tags, user);
+        showSuccessToast('Snapshot Created Successfully');
       }
     } catch (e) {
       catchError('Snapshot Creation Failed', e as Error);
       showFailureToast('Snapshot Creation Failed');
+    }
+  },
+
+  /**
+   * This function will eventually go away once the backend is able to create a snapshot
+   * with a description and tags in one go
+   *
+   * @param planId
+   * @param name
+   * @param description
+   * @param tags
+   * @param user
+   */
+  async createPlanSnapshotHelper(
+    planId: number,
+    name: string,
+    description: string,
+    tags: Tag[],
+    user: User | null,
+  ): Promise<void> {
+    const data = await reqHasura<{ snapshot_id: number }>(
+      gql.CREATE_PLAN_SNAPSHOT,
+      { plan_id: planId, /* snapshot_description: description, */ snapshot_name: name },
+      user,
+    );
+    const { createSnapshot } = data;
+    if (createSnapshot != null) {
+      const { snapshot_id } = createSnapshot;
+      // TODO this will soon be part of create plan snapshot
+      const updates = { description };
+      await reqHasura(gql.UPDATE_PLAN_SNAPSHOT, { planSnapshot: updates, snapshot_id }, user);
+
+      // Associate tags with the snapshot
+      const newPlanSnapshotTags: PlanSnapshotTagsInsertInput[] =
+        tags?.map(({ id: tag_id }) => ({
+          snapshot_id,
+          tag_id,
+        })) ?? [];
+      await effects.createPlanSnapshotTags(newPlanSnapshotTags, user, false);
     }
   },
 
@@ -3418,26 +3436,8 @@ const effects = {
       if (confirm) {
         if (value && value.shouldCreateSnapshot) {
           const { description, name, snapshot, tags } = value;
-          const data = await reqHasura<{ snapshot_id: number }>(
-            gql.CREATE_PLAN_SNAPSHOT,
-            { plan_id: snapshot.plan_id, /* snapshot_description: description, */ snapshot_name: name },
-            user,
-          );
-          const { createSnapshot } = data;
-          if (createSnapshot != null) {
-            const { snapshot_id } = createSnapshot;
-            // TODO this will soon be part of create plan snapshot
-            const updates = { description };
-            await reqHasura(gql.UPDATE_PLAN_SNAPSHOT, { planSnapshot: updates, snapshot_id }, user);
 
-            // Associate tags with the snapshot
-            const newPlanSnapshotTags: PlanSnapshotTagsInsertInput[] =
-              tags?.map(({ id: tag_id }) => ({
-                snapshot_id,
-                tag_id,
-              })) ?? [];
-            await effects.createPlanSnapshotTags(newPlanSnapshotTags, user, false);
-          }
+          await effects.createPlanSnapshotHelper(snapshot.plan_id, name, description, tags, user);
         }
 
         const data = await reqHasura(

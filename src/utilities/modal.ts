@@ -512,11 +512,11 @@ export async function showRestorePlanSnapshotModal(
   user: User | null,
 ): Promise<
   ModalElementValue<{
-    description?: string;
-    name?: string;
+    description: string;
+    name: string;
     shouldCreateSnapshot: boolean;
     snapshot: PlanSnapshot;
-    tags?: Tag[];
+    tags: Tag[];
   }>
 > {
   return new Promise(resolve => {
@@ -541,11 +541,11 @@ export async function showRestorePlanSnapshotModal(
           'restore',
           (
             e: CustomEvent<{
-              description?: string;
-              name?: string;
+              description: string;
+              name: string;
               shouldCreateSnapshot: boolean;
               snapshot: PlanSnapshot;
-              tags?: Tag[];
+              tags: Tag[];
             }>,
           ) => {
             target.replaceChildren();
