@@ -388,6 +388,7 @@
         anchorId={activityDirective.anchor_id}
         disabled={!editable}
         {highlightKeysMap}
+        planReadOnly={$planReadOnly}
         isAnchoredToStart={activityDirective.anchored_to_start}
         startOffset={activityDirective.start_offset}
         on:updateAnchor={updateAnchor}
