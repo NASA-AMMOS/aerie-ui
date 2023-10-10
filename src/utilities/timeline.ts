@@ -382,7 +382,7 @@ export function createYAxis(timelines: Timeline[], args: Partial<Axis> = {}): Ax
 
   return {
     color: '#000000',
-    domainFitMode: 'fitPlan',
+    domainFitMode: 'fitTimeWindow',
     id,
     label: { text: 'Label' },
     tickCount: 4,
