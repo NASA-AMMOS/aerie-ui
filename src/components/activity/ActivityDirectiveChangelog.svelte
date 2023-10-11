@@ -307,7 +307,7 @@
     display: grid;
     font-size: 12px;
     font-weight: 400;
-    grid-template-columns: 1fr max-content;
+    grid-template-columns: 10.5em 1fr;
     line-height: 16px;
     margin: 8px 8px 0px 8px;
     padding: 4px;
