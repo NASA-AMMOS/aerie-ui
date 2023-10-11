@@ -891,8 +891,7 @@ const effects = {
   },
 
   /**
-   * This function will eventually go away once the backend is able to create a snapshot
-   * with a description and tags in one go
+   * This helper function is for handling the creation of a snapshot and associating tags in one go
    *
    * @param planId
    * @param name
