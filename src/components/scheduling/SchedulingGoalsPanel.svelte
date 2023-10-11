@@ -4,7 +4,8 @@
   import { base } from '$app/paths';
   import ChecklistIcon from '@nasa-jpl/stellar/icons/checklist.svg?component';
   import { afterUpdate, beforeUpdate } from 'svelte';
-  import { plan } from '../../stores/plan';
+  import { PlanStatusMessages } from '../../enums/planStatusMessages';
+  import { plan, planReadOnly } from '../../stores/plan';
   import { enableScheduling, schedulingSpecGoals, schedulingStatus, selectedSpecId } from '../../stores/scheduling';
   import type { User } from '../../types/app';
   import type { SchedulingSpecGoal } from '../../types/scheduling';
@@ -25,6 +26,7 @@
   let activeElement: HTMLElement;
   let filterText: string = '';
   let filteredSchedulingSpecGoals: SchedulingSpecGoal[] = [];
+  let hasAnalyzePermission: boolean = false;
   let hasCreatePermission: boolean = false;
   let hasDeletePermission: boolean = false;
   let hasGoalEditPermission: boolean = false;
@@ -37,13 +39,13 @@
     return includesName;
   });
 
-  $: hasAnalyzePermission = featurePermissions.schedulingGoals.canAnalyze(user);
   $: if ($plan) {
-    hasCreatePermission = featurePermissions.schedulingGoals.canCreate(user, $plan);
-    hasDeletePermission = featurePermissions.schedulingGoals.canDelete(user, $plan);
-    hasGoalEditPermission = featurePermissions.schedulingGoals.canUpdate(user, $plan);
-    hasSpecEditPermission = featurePermissions.schedulingGoals.canUpdateSpecification(user, $plan);
-    hasRunPermission = featurePermissions.schedulingGoals.canRun(user, $plan);
+    hasAnalyzePermission = featurePermissions.schedulingGoals.canAnalyze(user, $plan, $plan.model) && !$planReadOnly;
+    hasCreatePermission = featurePermissions.schedulingGoals.canCreate(user, $plan) && !$planReadOnly;
+    hasDeletePermission = featurePermissions.schedulingGoals.canDelete(user, $plan) && !$planReadOnly;
+    hasGoalEditPermission = featurePermissions.schedulingGoals.canUpdate(user, $plan) && !$planReadOnly;
+    hasSpecEditPermission = featurePermissions.schedulingGoals.canUpdateSpecification(user, $plan) && !$planReadOnly;
+    hasRunPermission = featurePermissions.schedulingGoals.canRun(user, $plan, $plan.model) && !$planReadOnly;
   }
 
   // Manually keep focus as scheduling goal elements are re-ordered.
@@ -66,14 +68,16 @@
     <PanelHeaderActions status={$schedulingStatus}>
       <PanelHeaderActionButton
         title="Analyze"
-        on:click={() => effects.schedule(true, user)}
+        on:click={() => effects.schedule(true, $plan, user)}
         disabled={!$enableScheduling}
         use={[
           [
             permissionHandler,
             {
               hasPermission: hasAnalyzePermission,
-              permissionError: 'You do not have permission to run a scheduling analysis',
+              permissionError: $planReadOnly
+                ? PlanStatusMessages.READ_ONLY
+                : 'You do not have permission to run a scheduling analysis',
             },
           ],
         ]}
@@ -82,14 +86,16 @@
       </PanelHeaderActionButton>
       <PanelHeaderActionButton
         title="Schedule"
-        on:click={() => effects.schedule(false, user)}
+        on:click={() => effects.schedule(false, $plan, user)}
         disabled={!$enableScheduling}
         use={[
           [
             permissionHandler,
             {
               hasPermission: hasRunPermission,
-              permissionError: 'You do not have permission to run scheduling',
+              permissionError: $planReadOnly
+                ? PlanStatusMessages.READ_ONLY
+                : 'You do not have permission to run scheduling',
             },
           ],
         ]}
@@ -108,7 +114,9 @@
         class="st-button secondary"
         use:permissionHandler={{
           hasPermission: hasCreatePermission,
-          permissionError: 'You do not have permission to create scheduling goals for this plan.',
+          permissionError: $planReadOnly
+            ? PlanStatusMessages.READ_ONLY
+            : 'You do not have permission to create scheduling goals for this plan.',
         }}
         on:click={() =>
           window.open(`${base}/scheduling/goals/new?modelId=${$plan?.model.id}&&specId=${$selectedSpecId}`, '_blank')}
@@ -128,9 +136,13 @@
             {hasSpecEditPermission}
             goal={specGoal.goal}
             priority={specGoal.priority}
+            plan={$plan}
             simulateAfter={specGoal.simulate_after}
             specificationId={specGoal.specification_id}
             {user}
+            permissionError={$planReadOnly
+              ? PlanStatusMessages.READ_ONLY
+              : 'You do not have permission to edit scheduling goals for this plan.'}
           />
         {/each}
       {/if}

@@ -3,6 +3,7 @@
 <script lang="ts">
   import { base } from '$app/paths';
   import type { User } from '../../../types/app';
+  import type { Plan } from '../../../types/plan';
   import type { SchedulingCondition } from '../../../types/scheduling';
   import effects from '../../../utilities/effects';
   import { permissionHandler } from '../../../utilities/permissionHandler';
@@ -11,14 +12,14 @@
   import ContextMenuItem from '../../context-menu/ContextMenuItem.svelte';
   import Input from '../../form/Input.svelte';
 
-  export let enabled: boolean;
   export let condition: SchedulingCondition;
+  export let enabled: boolean;
   export let hasDeletePermission: boolean = false;
   export let hasEditPermission: boolean = false;
+  export let plan: Plan | null;
+  export let permissionError: string = '';
   export let specificationId: number;
   export let user: User | null;
-
-  const permissionError = 'You do not have permission to edit scheduling conditions for this plan.';
 </script>
 
 <div class="scheduling-condition" class:disabled={!enabled}>
@@ -57,7 +58,7 @@
       </ContextMenuItem>
       <ContextMenuHeader>Modify</ContextMenuHeader>
       <ContextMenuItem
-        on:click={() => effects.deleteSchedulingCondition(condition, user)}
+        on:click={() => plan && effects.deleteSchedulingCondition(condition, plan, user)}
         use={[
           [
             permissionHandler,

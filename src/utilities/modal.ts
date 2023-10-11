@@ -19,7 +19,13 @@ import type { ActivityDirectiveDeletionMap, ActivityDirectiveId } from '../types
 import type { User } from '../types/app';
 import type { ExpansionSequence } from '../types/expansion';
 import type { ModalElement, ModalElementValue } from '../types/modal';
-import type { Plan, PlanBranchRequestAction, PlanMergeRequestStatus, PlanMergeRequestTypeFilter } from '../types/plan';
+import type {
+  Plan,
+  PlanBranchRequestAction,
+  PlanForMerging,
+  PlanMergeRequestStatus,
+  PlanMergeRequestTypeFilter,
+} from '../types/plan';
 import type { PlanSnapshot } from '../types/plan-snapshot';
 import type { Tag } from '../types/tags';
 import type { ViewDefinition } from '../types/view';
@@ -402,7 +408,12 @@ export async function showExpansionSequenceModal(
 export async function showPlanBranchRequestModal(
   plan: Plan,
   action: PlanBranchRequestAction,
-): Promise<ModalElementValue<{ source_plan_id: number; target_plan_id: number }>> {
+): Promise<
+  ModalElementValue<{
+    source_plan: PlanForMerging;
+    target_plan: PlanForMerging;
+  }>
+> {
   return new Promise(resolve => {
     if (browser) {
       const target: ModalElement | null = document.querySelector('#svelte-modal');
@@ -418,12 +429,20 @@ export async function showPlanBranchRequestModal(
           planModal.$destroy();
         });
 
-        planModal.$on('create', (e: CustomEvent<{ source_plan_id: number; target_plan_id: number }>) => {
-          target.replaceChildren();
-          target.resolve = null;
-          resolve({ confirm: true, value: e.detail });
-          planModal.$destroy();
-        });
+        planModal.$on(
+          'create',
+          (
+            e: CustomEvent<{
+              source_plan: PlanForMerging;
+              target_plan: PlanForMerging;
+            }>,
+          ) => {
+            target.replaceChildren();
+            target.resolve = null;
+            resolve({ confirm: true, value: e.detail });
+            planModal.$destroy();
+          },
+        );
       }
     } else {
       resolve({ confirm: false });
@@ -490,14 +509,23 @@ export async function showPlanMergeRequestsModal(
 export async function showRestorePlanSnapshotModal(
   snapshot: PlanSnapshot,
   numOfActivities: number,
-): Promise<ModalElementValue<{ name?: string; plan: Plan; snapshot: PlanSnapshot }>> {
+  user: User | null,
+): Promise<
+  ModalElementValue<{
+    description: string;
+    name: string;
+    shouldCreateSnapshot: boolean;
+    snapshot: PlanSnapshot;
+    tags: Tag[];
+  }>
+> {
   return new Promise(resolve => {
     if (browser) {
       const target: ModalElement | null = document.querySelector('#svelte-modal');
 
       if (target) {
         const restorePlanSnapshotModal = new RestorePlanSnapshotModal({
-          props: { numOfActivities, snapshot },
+          props: { numOfActivities, snapshot, user },
           target,
         });
         target.resolve = resolve;
@@ -511,7 +539,15 @@ export async function showRestorePlanSnapshotModal(
 
         restorePlanSnapshotModal.$on(
           'restore',
-          (e: CustomEvent<{ name?: string; plan: Plan; snapshot: PlanSnapshot }>) => {
+          (
+            e: CustomEvent<{
+              description: string;
+              name: string;
+              shouldCreateSnapshot: boolean;
+              snapshot: PlanSnapshot;
+              tags: Tag[];
+            }>,
+          ) => {
             target.replaceChildren();
             target.resolve = null;
             resolve({ confirm: true, value: e.detail });

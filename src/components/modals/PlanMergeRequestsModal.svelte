@@ -4,7 +4,8 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import { createEventDispatcher } from 'svelte';
-  import { planMergeRequestsIncoming, planMergeRequestsOutgoing } from '../../stores/plan';
+  import { PlanStatusMessages } from '../../enums/planStatusMessages';
+  import { planMergeRequestsIncoming, planMergeRequestsOutgoing, planReadOnly } from '../../stores/plan';
   import type { User } from '../../types/app';
   import type { PlanMergeRequest, PlanMergeRequestStatus, PlanMergeRequestTypeFilter } from '../../types/plan';
   import effects from '../../utilities/effects';
@@ -77,13 +78,23 @@
     if (planMergeRequest.type === 'incoming') {
       planMergeRequest.pending = true;
       filteredPlanMergeRequests = [...filteredPlanMergeRequests];
-      const success = await effects.planMergeBegin(planMergeRequest.id, user);
+      const success = await effects.planMergeBegin(
+        planMergeRequest.id,
+        planMergeRequest.plan_snapshot_supplying_changes.plan,
+        planMergeRequest.plan_receiving_changes,
+        user,
+      );
       if (success) {
         dispatch('close');
         goto(`${base}/plans/${planMergeRequest.plan_receiving_changes.id}/merge`);
       }
     } else if (planMergeRequest.type === 'outgoing') {
-      await effects.planMergeRequestWithdraw(planMergeRequest.id, user);
+      await effects.planMergeRequestWithdraw(
+        planMergeRequest.id,
+        planMergeRequest.plan_snapshot_supplying_changes.plan,
+        planMergeRequest.plan_receiving_changes,
+        user,
+      );
     }
 
     planMergeRequest.pending = false;
@@ -108,9 +119,16 @@
       return featurePermissions.planBranch.canDeleteRequest(
         user,
         planMergeRequest.plan_snapshot_supplying_changes.plan,
+        planMergeRequest.plan_receiving_changes,
+        planMergeRequest.plan_snapshot_supplying_changes.plan.model,
       );
     }
-    return featurePermissions.planBranch.canReviewRequest(user, planMergeRequest.plan_receiving_changes);
+    return featurePermissions.planBranch.canReviewRequest(
+      user,
+      planMergeRequest.plan_snapshot_supplying_changes.plan,
+      planMergeRequest.plan_receiving_changes,
+      planMergeRequest.plan_snapshot_supplying_changes.plan.model,
+    );
   }
 </script>
 
@@ -189,10 +207,12 @@
                     on:click={() => onReviewOrWithdraw(planMergeRequest)}
                     class="st-button secondary"
                     use:permissionHandler={{
-                      hasPermission: hasPermission(planMergeRequest),
-                      permissionError: `You do not have permission to ${
-                        planMergeRequest.type === 'outgoing' ? 'withdraw' : 'review'
-                      } this request`,
+                      hasPermission: hasPermission(planMergeRequest) && !$planReadOnly,
+                      permissionError: $planReadOnly
+                        ? PlanStatusMessages.READ_ONLY
+                        : `You do not have permission to ${
+                            planMergeRequest.type === 'outgoing' ? 'withdraw' : 'review'
+                          } this request`,
                     }}
                   >
                     {#if planMergeRequest.pending}

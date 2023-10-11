@@ -8,7 +8,7 @@
     selectedActivityDirectiveId,
   } from '../../stores/activities';
   import { visibleConstraintResults } from '../../stores/constraints';
-  import { maxTimeRange, plan, planId, viewTimeRange } from '../../stores/plan';
+  import { maxTimeRange, plan, planReadOnly, viewTimeRange } from '../../stores/plan';
   import {
     resourcesByViewLayerId,
     selectedSpanId,
@@ -38,8 +38,8 @@
   let timelineDirectiveVisibilityToggles: DirectiveVisibilityToggleMap = {};
 
   $: if (user !== null && $plan !== null) {
-    hasUpdateDirectivePermission = featurePermissions.activityDirective.canUpdate(user, $plan);
-    hasUpdateSimulationPermission = featurePermissions.simulation.canUpdate(user, $plan);
+    hasUpdateDirectivePermission = featurePermissions.activityDirective.canUpdate(user, $plan) && !$planReadOnly;
+    hasUpdateSimulationPermission = featurePermissions.simulation.canUpdate(user, $plan) && !$planReadOnly;
   }
   $: timeline = $view?.definition.plan.timelines.find(timeline => timeline.id === timelineId);
   $: timelineDirectiveVisibilityToggles = timeline
@@ -48,7 +48,9 @@
 
   function deleteActivityDirective(event: CustomEvent<ActivityDirectiveId>) {
     const { detail: activityDirectiveId } = event;
-    effects.deleteActivityDirective($planId, activityDirectiveId, user);
+    if ($plan) {
+      effects.deleteActivityDirective(activityDirectiveId, $plan, user);
+    }
   }
 
   function openSelectedActivityPanel(event: CustomEvent) {
@@ -134,6 +136,7 @@
         />
         <TimelineLockControl
           hasUpdatePermission={hasUpdateDirectivePermission}
+          planReadOnly={$planReadOnly}
           timelineLockStatus={$timelineLockStatus}
           on:lock={({ detail: lock }) => {
             $timelineLockStatus = lock;
@@ -158,7 +161,7 @@
       {hasUpdateSimulationPermission}
       maxTimeRange={$maxTimeRange}
       planEndTimeDoy={$plan?.end_time_doy ?? ''}
-      planId={$planId}
+      plan={$plan}
       planStartTimeYmd={$plan?.start_time ?? ''}
       {timeline}
       {timelineDirectiveVisibilityToggles}

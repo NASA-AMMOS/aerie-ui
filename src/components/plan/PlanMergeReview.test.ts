@@ -3,6 +3,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest
 import { activityMetadataDefinitions } from '../../stores/activities';
 import { activityTypes } from '../../stores/plan';
 import type { User } from '../../types/app';
+import type { Model } from '../../types/model';
 import type {
   Plan,
   PlanMergeConflictingActivity,
@@ -17,13 +18,23 @@ vi.mock('$env/dynamic/public', () => import.meta.env); // https://github.com/sve
 const mockMergeRequest: PlanMergeRequestSchema = {
   id: 1,
   plan_receiving_changes: {
+    collaborators: [],
     id: 1,
+    model: {
+      owner: 'unknown',
+    } as Model,
+    model_id: 1,
     name: 'Demo Plan',
     owner: 'unknown',
   },
   plan_snapshot_supplying_changes: {
     plan: {
+      collaborators: [],
       id: 2,
+      model: {
+        owner: 'unknown',
+      } as Model,
+      model_id: 1,
       name: 'Branch 1',
       owner: 'unknown',
     },
@@ -61,7 +72,7 @@ const mockInitialPlan: Plan = {
   parent_plan: null,
   revision: 3,
   scheduling_specifications: [{ id: 1 }],
-  simulations: [{ simulation_datasets: [{ id: 1 }] }],
+  simulations: [{ simulation_datasets: [{ id: 1, plan_revision: 3 }] }],
   start_time: '2023-02-16T00:00:00',
   start_time_doy: '2023-047T00:00:00',
   tags: [],
@@ -75,6 +86,7 @@ const user: User = {
   defaultRole: ADMIN_ROLE,
   id: 'foo',
   permissibleQueries: {},
+  rolePermissions: {},
   token: '',
 };
 

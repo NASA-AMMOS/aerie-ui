@@ -3,9 +3,12 @@
 <script lang="ts">
   import type { ScaleTime } from 'd3-scale';
   import { createEventDispatcher } from 'svelte';
+  import { PlanStatusMessages } from '../../enums/planStatusMessages';
+  import { planReadOnly } from '../../stores/plan';
   import { view, viewUpdateGrid } from '../../stores/views';
   import type { ActivityDirective, ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
+  import type { Plan } from '../../types/plan';
   import type { Simulation, SimulationDataset, Span, SpanUtilityMaps, SpansMap } from '../../types/simulation';
   import type { MouseOver, VerticalGuide } from '../../types/timeline';
   import { getAllSpansForActivityDirective, getSpanRootParent } from '../../utilities/activities';
@@ -25,6 +28,7 @@
   export let simulationDataset: SimulationDataset | null = null;
   export let spansMap: SpansMap;
   export let spanUtilityMaps: SpanUtilityMaps;
+  export let plan: Plan | null = null;
   export let planStartTimeYmd: string;
   export let contextMenu: MouseOver | null;
   export let verticalGuides: VerticalGuide[];
@@ -85,19 +89,19 @@
   }
 
   function updateSimulationStartTime(date: Date | null) {
-    if (simulation !== null && date !== null) {
+    if (simulation !== null && date !== null && plan !== null) {
       const doyString = getDoyTime(date, false);
       const newSimulation: Simulation = { ...simulation, simulation_start_time: doyString };
-      effects.updateSimulation(newSimulation, user);
+      effects.updateSimulation(plan, newSimulation, user);
       switchToSimulation();
     }
   }
 
   function updateSimulationEndTime(date: Date | null) {
-    if (simulation !== null && date !== null) {
+    if (simulation !== null && date !== null && plan !== null) {
       const doyString = getDoyTime(date, false);
       const newSimulation: Simulation = { ...simulation, simulation_end_time: doyString };
-      effects.updateSimulation(newSimulation, user);
+      effects.updateSimulation(plan, newSimulation, user);
       switchToSimulation();
     }
   }
@@ -148,8 +152,10 @@
         [
           permissionHandler,
           {
-            hasPermission: hasUpdateSimulationPermission,
-            permissionError: 'You do not have permission to update this simulation',
+            hasPermission: hasUpdateSimulationPermission && !$planReadOnly,
+            permissionError: $planReadOnly
+              ? PlanStatusMessages.READ_ONLY
+              : 'You do not have permission to update this simulation',
           },
         ],
       ]}
@@ -162,8 +168,10 @@
         [
           permissionHandler,
           {
-            hasPermission: hasUpdateSimulationPermission,
-            permissionError: 'You do not have permission to update this simulation',
+            hasPermission: hasUpdateSimulationPermission && !$planReadOnly,
+            permissionError: $planReadOnly
+              ? PlanStatusMessages.READ_ONLY
+              : 'You do not have permission to update this simulation',
           },
         ],
       ]}
@@ -181,8 +189,10 @@
         [
           permissionHandler,
           {
-            hasPermission: hasUpdateDirectivePermission,
-            permissionError: 'You do not have permission to delete this activity',
+            hasPermission: hasUpdateDirectivePermission && !$planReadOnly,
+            permissionError: $planReadOnly
+              ? PlanStatusMessages.READ_ONLY
+              : 'You do not have permission to delete this activity',
           },
         ],
       ]}
@@ -229,8 +239,10 @@
         [
           permissionHandler,
           {
-            hasPermission: hasUpdateSimulationPermission,
-            permissionError: 'You do not have permission to update the simulation',
+            hasPermission: hasUpdateSimulationPermission && !$planReadOnly,
+            permissionError: $planReadOnly
+              ? PlanStatusMessages.READ_ONLY
+              : 'You do not have permission to update the simulation',
           },
         ],
       ]}
@@ -243,8 +255,10 @@
         [
           permissionHandler,
           {
-            hasPermission: hasUpdateSimulationPermission,
-            permissionError: 'You do not have permission to update the simulation',
+            hasPermission: hasUpdateSimulationPermission && !$planReadOnly,
+            permissionError: $planReadOnly
+              ? PlanStatusMessages.READ_ONLY
+              : 'You do not have permission to update the simulation',
           },
         ],
       ]}

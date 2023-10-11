@@ -19,12 +19,15 @@
   import ViewMenu from '../../../components/menus/ViewMenu.svelte';
   import PlanMergeRequestsStatusButton from '../../../components/plan/PlanMergeRequestsStatusButton.svelte';
   import PlanNavButton from '../../../components/plan/PlanNavButton.svelte';
+  import PlanSnapshotBar from '../../../components/plan/PlanSnapshotBar.svelte';
   import CssGrid from '../../../components/ui/CssGrid.svelte';
   import PlanGrid from '../../../components/ui/PlanGrid.svelte';
   import ProgressLinear from '../../../components/ui/ProgressLinear.svelte';
+  import { PlanStatusMessages } from '../../../enums/planStatusMessages';
   import { SearchParameters } from '../../../enums/searchParameters';
   import {
     activityDirectives,
+    activityDirectivesList,
     activityDirectivesMap,
     resetActivityStores,
     selectActivity,
@@ -46,6 +49,7 @@
     planEndTimeMs,
     planId,
     planLocked,
+    planReadOnly,
     planStartTimeMs,
     planTags,
     resetPlanStores,
@@ -83,9 +87,10 @@
     viewUpdateGrid,
   } from '../../../stores/views';
   import type { ActivityDirective } from '../../../types/activity';
-  import type { ViewSaveEvent, ViewToggleEvent } from '../../../types/view';
+  import type { PlanSnapshot } from '../../../types/plan-snapshot';
+  import type { View, ViewSaveEvent, ViewToggleEvent } from '../../../types/view';
   import effects from '../../../utilities/effects';
-  import { getSearchParameterNumber, removeQueryParam } from '../../../utilities/generic';
+  import { getSearchParameterNumber, removeQueryParam, setQueryParam } from '../../../utilities/generic';
   import { isSaveEvent } from '../../../utilities/keyboardEvents';
   import { closeActiveModal, showPlanLockedModal } from '../../../utilities/modal';
   import { featurePermissions } from '../../../utilities/permissions';
@@ -107,6 +112,7 @@
   export let data: PageData;
 
   let compactNavMode = false;
+  let consoleHeightString = '36px';
   let hasCreateViewPermission: boolean = false;
   let hasUpdateViewPermission: boolean = false;
   let hasExpandPermission: boolean = false;
@@ -123,10 +129,13 @@
   $: hasCreateViewPermission = featurePermissions.view.canCreate(data.user);
   $: hasUpdateViewPermission = $view !== null ? featurePermissions.view.canUpdate(data.user, $view) : false;
   $: if ($plan) {
-    hasCheckConstraintsPermission = featurePermissions.constraints.canCheck(data.user, $plan);
-    hasExpandPermission = featurePermissions.expansionSequences.canExpand(data.user, $plan);
-    hasScheduleAnalysisPermission = featurePermissions.schedulingGoals.canAnalyze(data.user);
-    hasSimulatePermission = featurePermissions.simulation.canRun(data.user, $plan);
+    hasCheckConstraintsPermission =
+      featurePermissions.constraints.canCheck(data.user, $plan, $plan.model) && !$planReadOnly;
+    hasExpandPermission =
+      featurePermissions.expansionSequences.canExpand(data.user, $plan, $plan.model) && !$planReadOnly;
+    hasScheduleAnalysisPermission =
+      featurePermissions.schedulingGoals.canAnalyze(data.user, $plan, $plan.model) && !$planReadOnly;
+    hasSimulatePermission = featurePermissions.simulation.canRun(data.user, $plan, $plan.model) && !$planReadOnly;
   }
   $: if (data.initialPlan) {
     $plan = data.initialPlan;
@@ -137,8 +146,7 @@
     const querySimulationDatasetId = $page.url.searchParams.get(SearchParameters.SIMULATION_DATASET_ID);
     if (querySimulationDatasetId) {
       $simulationDatasetId = parseInt(querySimulationDatasetId);
-      removeQueryParam(SearchParameters.SIMULATION_DATASET_ID);
-    } else {
+    } else if (data.initialPlanSnapshotId === null) {
       $simulationDatasetId = data.initialPlan.simulations[0]?.simulation_datasets[0]?.id ?? -1;
     }
 
@@ -179,6 +187,7 @@
   }
   $: if (data.initialPlanSnapshotId !== null) {
     $planSnapshotId = data.initialPlanSnapshotId;
+    $planReadOnly = true;
   }
   $: if ($planSnapshot !== null) {
     effects.getPlanSnapshotActivityDirectives($planSnapshot, data.user).then(directives => {
@@ -186,6 +195,18 @@
         planSnapshotActivityDirectives = directives;
       }
     });
+
+    const currentPlanSimulation = data.initialPlan.simulations[0]?.simulation_datasets.find(simulation => {
+      return simulation.id === getSearchParameterNumber(SearchParameters.SIMULATION_DATASET_ID);
+    });
+    const latestPlanSnapshotSimulation = data.initialPlan.simulations[0]?.simulation_datasets.find(simulation => {
+      return simulation.plan_revision === $planSnapshot?.revision;
+    });
+
+    if (!currentPlanSimulation && latestPlanSnapshotSimulation) {
+      $simulationDatasetId = latestPlanSnapshotSimulation.id;
+      setQueryParam(SearchParameters.SIMULATION_DATASET_ID, `${$simulationDatasetId}`);
+    }
   }
 
   $: if (data.initialView) {
@@ -204,7 +225,7 @@
   }
 
   $: if ($plan && $simulationDataset !== undefined) {
-    if ($simulationDataset !== null) {
+    if ($simulationDataset !== null && $simulationDatasetId !== -1) {
       const datasetId = $simulationDataset.dataset_id;
       const startTimeYmd = $simulationDataset?.simulation_start_time ?? $plan.start_time;
       effects.getResources(datasetId, startTimeYmd, data.user).then(newResources => ($resources = newResources));
@@ -253,6 +274,12 @@
     closeActiveModal();
   });
 
+  function clearSnapshot() {
+    $planSnapshotId = null;
+    $planReadOnly = false;
+    $simulationDatasetId = $simulationDatasetLatest?.id ?? -1;
+  }
+
   function onClearAllErrors() {
     clearAllErrors();
   }
@@ -261,10 +288,21 @@
     clearSchedulingErrors();
   }
 
+  function onCloseSnapshotPreview() {
+    clearSnapshot();
+    removeQueryParam(SearchParameters.SNAPSHOT_ID);
+    removeQueryParam(SearchParameters.SIMULATION_DATASET_ID, 'PUSH');
+  }
+
+  function onConsoleResize(event: CustomEvent<string>) {
+    const { detail } = event;
+    consoleHeightString = detail;
+  }
+
   function onKeydown(event: KeyboardEvent): void {
     if (isSaveEvent(event)) {
       event.preventDefault();
-      effects.simulate(data.user);
+      effects.simulate($plan, data.user);
     }
   }
 
@@ -279,22 +317,32 @@
     }
   }
 
-  async function onEditView(event: CustomEvent<ViewSaveEvent>) {
-    const { detail } = event;
-    const { definition } = detail;
-    if (definition && hasUpdateViewPermission) {
-      const success = await effects.editView(definition, data.user);
+  async function onEditView(event: CustomEvent<View>) {
+    const { detail: view } = event;
+    if (view && hasUpdateViewPermission) {
+      const success = await effects.editView(view, data.user);
       if (success) {
         resetOriginalView();
       }
     }
   }
 
+  async function onRestoreSnapshot(event: CustomEvent<PlanSnapshot>) {
+    const { detail: planSnapshot } = event;
+    if ($plan) {
+      const success = await effects.restorePlanSnapshot(planSnapshot, $plan, data.user);
+
+      if (success) {
+        clearSnapshot();
+      }
+    }
+  }
+
   async function onSaveView(event: CustomEvent<ViewSaveEvent>) {
     const { detail } = event;
-    const { definition, id, name } = detail;
+    const { definition, id, name, owner } = detail;
     if (id != null && hasUpdateViewPermission) {
-      const success = await effects.updateView(id, { definition, name }, data.user);
+      const success = await effects.updateView(id, { definition, name, owner }, data.user);
       if (success) {
         resetOriginalView();
       }
@@ -340,7 +388,12 @@
 
 <PageTitle subTitle={data.initialPlan.name} title="Plans" />
 
-<CssGrid class="plan-container" rows="var(--nav-header-height) auto 36px">
+<CssGrid
+  class="plan-container"
+  rows={$planSnapshot
+    ? `var(--nav-header-height) min-content auto ${consoleHeightString}`
+    : `var(--nav-header-height) auto ${consoleHeightString}`}
+>
   <Nav user={data.user}>
     <div slot="title">
       <PlanMenu plan={data.initialPlan} user={data.user} />
@@ -353,13 +406,15 @@
         title={!compactNavMode ? 'Expansion' : ''}
         buttonText="Expand Activities"
         hasPermission={hasExpandPermission}
-        permissionError="You do not have permission to expand activities"
+        permissionError={$planReadOnly
+          ? PlanStatusMessages.READ_ONLY
+          : 'You do not have permission to expand activities'}
         menuTitle="Expansion Status"
         disabled={$selectedExpansionSetId === null}
         status={$planExpansionStatus}
         on:click={() => {
-          if ($selectedExpansionSetId != null) {
-            effects.expand($selectedExpansionSetId, $simulationDatasetLatest?.id || -1, data.user);
+          if ($selectedExpansionSetId != null && $plan) {
+            effects.expand($selectedExpansionSetId, $simulationDatasetLatest?.id || -1, $plan, $plan.model, data.user);
           }
         }}
       >
@@ -376,12 +431,14 @@
           ? 'Simulation up-to-date'
           : ''}
         hasPermission={hasSimulatePermission}
-        permissionError="You do not have permission to run a simulation"
+        permissionError={$planReadOnly
+          ? PlanStatusMessages.READ_ONLY
+          : 'You do not have permission to run a simulation'}
         status={$simulationStatus}
         progress={$simulationProgress}
         disabled={!$enableSimulation}
         showStatusInMenu={false}
-        on:click={() => effects.simulate(data.user)}
+        on:click={() => effects.simulate($plan, data.user)}
       >
         <PlayIcon />
         <svelte:fragment slot="metadata">
@@ -429,9 +486,11 @@
         menuTitle="Constraint Status"
         buttonText="Check Constraints"
         hasPermission={hasCheckConstraintsPermission}
-        permissionError="You do not have permission to run a constraint check"
+        permissionError={$planReadOnly
+          ? PlanStatusMessages.READ_ONLY
+          : 'You do not have permission to run a constraint check'}
         status={$checkConstraintsStatus}
-        on:click={() => effects.checkConstraints(data.user)}
+        on:click={() => $plan && effects.checkConstraints($plan, data.user)}
       >
         <VerticalCollapseIcon />
         <svelte:fragment slot="metadata">
@@ -444,14 +503,16 @@
         buttonText="Analyze Goal Satisfaction"
         disabled={!$enableScheduling}
         hasPermission={hasScheduleAnalysisPermission}
-        permissionError="You do not have permission to run a scheduling analysis"
+        permissionError={$planReadOnly
+          ? PlanStatusMessages.READ_ONLY
+          : 'You do not have permission to run a scheduling analysis'}
         status={schedulingAnalysisStatus}
         statusText={schedulingAnalysisStatus === Status.PartialSuccess || schedulingAnalysisStatus === Status.Complete
           ? `${$satisfiedSchedulingGoalCount} satisfied, ${
               $schedulingGoalCount - $satisfiedSchedulingGoalCount
             } unsatisfied`
           : ''}
-        on:click={() => effects.schedule(true, data.user)}
+        on:click={() => effects.schedule(true, $plan, data.user)}
       >
         <CalendarIcon />
       </PlanNavButton>
@@ -468,7 +529,14 @@
       />
     </svelte:fragment>
   </Nav>
-
+  {#if $planSnapshot}
+    <PlanSnapshotBar
+      numOfDirectives={$activityDirectivesList.length}
+      snapshot={$planSnapshot}
+      on:close={onCloseSnapshotPreview}
+      on:restore={onRestoreSnapshot}
+    />
+  {/if}
   <PlanGrid
     {...$view?.definition.plan.grid}
     user={data.user}
@@ -478,7 +546,7 @@
     on:changeRightRowSizes={onChangeRightRowSizes}
   />
 
-  <Console>
+  <Console on:resize={onConsoleResize}>
     <svelte:fragment slot="console-tabs">
       <div class="console-tabs">
         <div>
