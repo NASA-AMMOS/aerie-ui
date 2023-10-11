@@ -230,7 +230,7 @@
 <div class="activity-header">
   <div class="activity-header-title">
     <div class="activity-header-title-value st-typography-medium">
-      {activityType?.name}
+      {activityDirective.name}
     </div>
   </div>
   <div>

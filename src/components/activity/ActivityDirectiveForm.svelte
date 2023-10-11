@@ -88,7 +88,12 @@
 
   $: if (activityType && activityDirective.arguments) {
     effects
-      .getEffectiveActivityArguments(modelId, activityType.name, activityDirective.arguments, user)
+      .getEffectiveActivityArguments(
+        modelId,
+        activityType.name,
+        revision ? revision.arguments : activityDirective.arguments,
+        user,
+      )
       .then(effectiveArguments => {
         if (effectiveArguments && activityType) {
           const { arguments: defaultArgumentsMap } = effectiveArguments;
