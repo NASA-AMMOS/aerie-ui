@@ -13,7 +13,7 @@ import {
   type CountableTimeInterval,
   type TimeInterval,
 } from 'd3-time';
-import type { Resource } from '../types/simulation';
+import type { Resource, ResourceValue } from '../types/simulation';
 import type {
   ActivityLayer,
   Axis,
@@ -498,22 +498,65 @@ export function getYAxisBounds(
   yAxisLayers.forEach(layer => {
     if (resourcesByViewLayerId[layer.id]) {
       resourcesByViewLayerId[layer.id].forEach(resource => {
+        let leftValue: ResourceValue | undefined;
+        let rightValue: ResourceValue | undefined;
         resource.values.forEach(value => {
-          if (typeof value.y === 'number') {
-            if (
-              !viewTimeRange ||
-              yAxis.domainFitMode !== 'fitTimeWindow' ||
-              (value.x >= viewTimeRange.start && value.x <= viewTimeRange.end)
-            ) {
-              if (minY === undefined || value.y < minY) {
-                minY = value.y;
-              }
-              if (maxY === undefined || value.y > maxY) {
-                maxY = value.y;
+          const isNumber = typeof value.y === 'number';
+          // Identify the first value to the left of the viewTimeRange
+          if (viewTimeRange && value.x < viewTimeRange.start) {
+            if (value.is_gap) {
+              leftValue = undefined;
+            } else {
+              if (isNumber) {
+                if (!leftValue) {
+                  leftValue = value;
+                } else if (value.x >= leftValue.x) {
+                  leftValue = value;
+                }
               }
             }
           }
+          // Identify the first value to the right of the viewTimeRange
+          if (viewTimeRange && value.x > viewTimeRange.start) {
+            if (value.is_gap) {
+              rightValue = undefined;
+            } else {
+              if (isNumber) {
+                if (!rightValue) {
+                  rightValue = value;
+                } else if (value.x < rightValue.x) {
+                  rightValue = value;
+                }
+              }
+            }
+          }
+          // Consider a value for min and max if it is a number and it falls within the time range or
+          // no time range is supplied or the domain fit mode is not fitTimeWindow
+          if (
+            typeof value.y === 'number' &&
+            (!viewTimeRange ||
+              yAxis.domainFitMode !== 'fitTimeWindow' ||
+              (value.x >= viewTimeRange.start && value.x <= viewTimeRange.end))
+          ) {
+            if (minY === undefined || value.y < minY) {
+              minY = value.y;
+            }
+            if (maxY === undefined || value.y > maxY) {
+              maxY = value.y;
+            }
+          }
         });
+        // If viewTimeRange is supplied and the minY and maxY are still undefined,
+        // look for the first numerical value to the left and to the right of the time window
+        if (
+          viewTimeRange &&
+          (minY === undefined || maxY === undefined) &&
+          leftValue !== undefined &&
+          rightValue !== undefined
+        ) {
+          minY = Math.min(leftValue.y as number, rightValue.y as number);
+          maxY = Math.max(leftValue.y as number, rightValue.y as number);
+        }
       });
     }
   });
