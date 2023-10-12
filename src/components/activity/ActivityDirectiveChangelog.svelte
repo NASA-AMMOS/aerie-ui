@@ -69,37 +69,26 @@
     }
   }
 
-  function diffArrays(itemName: string, current: any[], previous: any[], itemSchema: any) {
-    let differences: { [name: string]: { currentValue: any; previousValue: any } } = {};
+  function diffObjects(
+    label: string,
+    current: any,
+    previous: any,
+    accumulator: { [name: string]: { currentValue: any; previousValue: any } },
+  ) {
+    Object.keys(current).forEach(key => {
+      if (typeof current[key] === 'object') {
+        return diffObjects(`${label} > ${key}`, current[key], previous[key], accumulator);
+      }
 
-    for (let i = 0; i < current.length; i++) {
-      if (itemSchema.type === 'series') {
-        differences = {
-          ...differences,
-          ...diffArrays(`${itemName} > [${i}]`, current[i], previous[i], itemSchema.items),
-        };
-      } else if (typeof current[i].key !== 'undefined' && typeof current[i].value !== 'undefined') {
-        if (current[i].key !== previous[i].key) {
-          differences[`${itemName} > [${i}] > key`] = {
-            currentValue: current[i].key,
-            previousValue: previous[i].key,
-          };
-        }
-        if (current[i].value !== previous[i].value) {
-          differences[`${itemName} > [${i}] > value`] = {
-            currentValue: current[i].value,
-            previousValue: previous[i].value,
-          };
-        }
-      } else if (current[i] !== previous[i]) {
-        differences[`${itemName} > [${i}]`] = {
-          currentValue: current[i],
-          previousValue: previous[i],
+      if (current[key] !== previous[key]) {
+        accumulator[`${label} > ${key}`] = {
+          currentValue: current[key],
+          previousValue: previous[key],
         };
       }
-    }
+    });
 
-    return differences;
+    return accumulator;
   }
 
   function diffRevisions(current: ActivityDirectiveRevision, previous: ActivityDirectiveRevision) {
@@ -107,13 +96,8 @@
 
     // Build list of all arguments that differ
     Object.keys(current.arguments).forEach(argument => {
-      const schema = activityType?.parameters[argument].schema;
-
-      if (schema?.type === 'series') {
-        differences = {
-          ...differences,
-          ...diffArrays(argument, current.arguments[argument], previous.arguments[argument], schema.items),
-        };
+      if (typeof current.arguments[argument] === 'object') {
+        diffObjects(argument, current.arguments[argument], previous.arguments[argument], differences);
       } else if (current.arguments[argument] !== previous.arguments[argument]) {
         differences[argument] = {
           currentValue: current.arguments[argument],
