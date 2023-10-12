@@ -233,11 +233,20 @@
     {#each activityRevisions as revision, i}
       <div class="activity-revision">
         <div class="date st-typography-medium">{formatDate(revision.changed_at)}</div>
-        <div class="change-summary st-typography-body">
+        <div
+          class="change-summary st-typography-body"
+          use:tooltip={{ content: activityRevisionChangeMap[i].name, placement: 'top' }}
+        >
           {activityRevisionChangeMap[i].name}
         </div>
         <div class="changed-by st-typography-label">@{revision.changed_by}</div>
-        <div class="new-value st-typography-body">
+        <div
+          class="new-value st-typography-body"
+          use:tooltip={{
+            content: formatParameterValue(activityRevisionChangeMap[i].name, activityRevisionChangeMap[i].currentValue),
+            placement: 'top',
+          }}
+        >
           {formatParameterValue(activityRevisionChangeMap[i].name, activityRevisionChangeMap[i].currentValue)}
         </div>
         <div class="actions">
@@ -255,7 +264,16 @@
             <button class="st-button secondary" on:click={() => dispatch('previewRevision', revision)}>Preview</button>
           {/if}
         </div>
-        <div class="previous-value st-typography-body">
+        <div
+          class="previous-value st-typography-body"
+          use:tooltip={{
+            content: formatParameterValue(
+              activityRevisionChangeMap[i].name,
+              activityRevisionChangeMap[i].previousValue,
+            ),
+            placement: 'top',
+          }}
+        >
           {formatParameterValue(activityRevisionChangeMap[i].name, activityRevisionChangeMap[i].previousValue)}
         </div>
       </div>
