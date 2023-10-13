@@ -14,6 +14,7 @@
     ticks = [];
     yAxes.forEach(axis => {
       if (
+        axis.renderTickLines &&
         axis.scaleDomain &&
         axis.scaleDomain.length === 2 &&
         typeof axis.scaleDomain[0] === 'number' &&
