@@ -327,8 +327,12 @@
   }
 
   async function restoreRevision(revisionId: number) {
-    const { id: activityId, plan_id: planId } = activityDirective;
-    const restored = await effects.restoreActivityFromChangelog(activityId, planId, revisionId, user);
+    if (!$plan) {
+      return;
+    }
+
+    const { id: activityId } = activityDirective;
+    const restored = await effects.restoreActivityFromChangelog(activityId, $plan, revisionId, user);
 
     if (restored) {
       dispatch('closeRevisionPreview');
