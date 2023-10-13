@@ -10,6 +10,7 @@
     activityMetadataDefinitions,
     selectActivity,
     selectedActivityDirective,
+    selectedActivityDirectiveId,
   } from '../../stores/activities';
   import { filteredExpansionSequences } from '../../stores/expansion';
   import {
@@ -54,7 +55,7 @@
   }
 
   // Auto close the changelog and clear revision preview state whenever the selected activity changes
-  $: if ($selectedActivityDirective !== null) {
+  $: if ($selectedActivityDirectiveId !== null) {
     viewingActivityDirectiveChangelog = false;
     highlightKeys = [];
     previewRevision = undefined;
