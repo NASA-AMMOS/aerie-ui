@@ -42,6 +42,7 @@
   import RowHorizontalGuides from './RowHorizontalGuides.svelte';
   import RowXAxisTicks from './RowXAxisTicks.svelte';
   import RowYAxes from './RowYAxes.svelte';
+  import RowYAxisTicks from './RowYAxisTicks.svelte';
   import TimelineViewDirectiveControls from './TimelineViewDirectiveControls.svelte';
   import { allResources } from '../../stores/simulation';
 
@@ -274,6 +275,7 @@
       <g transform="translate({marginLeft}, 0)">
         {#if drawWidth > 0}
           <RowXAxisTicks {drawHeight} {xScaleView} {xTicksView} />
+          <RowYAxisTicks {drawHeight} {drawWidth} {yAxes} />
           <ConstraintViolations
             {constraintResults}
             {drawHeight}
