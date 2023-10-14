@@ -286,7 +286,7 @@
   <svelte:fragment slot="header">
     <GridMenu {gridSection} title="Activity Directives Table" />
     <div class="table-menu">
-      <input type="search" bind:value={filterExpression} />
+      <input type="search" bind:value={filterExpression} placeholder="Filter Activity Directives" class="st-input" />
       <div class="size-actions">
         <button
           class="st-button secondary"
