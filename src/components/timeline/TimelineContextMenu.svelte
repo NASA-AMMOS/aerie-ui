@@ -4,13 +4,14 @@
   import type { ScaleTime } from 'd3-scale';
   import { createEventDispatcher } from 'svelte';
   import { PlanStatusMessages } from '../../enums/planStatusMessages';
+  import { TIME_MS } from '../../enums/time';
   import { planReadOnly } from '../../stores/plan';
   import { view, viewUpdateGrid } from '../../stores/views';
   import type { ActivityDirective, ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { Plan } from '../../types/plan';
   import type { Simulation, SimulationDataset, Span, SpanUtilityMaps, SpansMap } from '../../types/simulation';
-  import type { MouseOver, VerticalGuide } from '../../types/timeline';
+  import type { MouseOver, TimeRange, VerticalGuide } from '../../types/timeline';
   import { getAllSpansForActivityDirective, getSpanRootParent } from '../../utilities/activities';
   import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';
@@ -110,6 +111,16 @@
     const duration = includeDuration ? getIntervalInMs(span.duration) : 0;
     return new Date(getUnixEpochTimeFromInterval(startYmd, span.start_offset) + duration);
   }
+
+  function onZoom(duration: number) {
+    if (xScaleView && contextMenu) {
+      const time = xScaleView.invert(contextMenu.e.offsetX);
+      const newViewTimeRange: TimeRange = { end: time.getTime() + duration + duration, start: time.getTime() };
+      dispatch('viewTimeRangeChanged', newViewTimeRange);
+    }
+  }
+
+  function onZoomHome() {}
 </script>
 
 <ContextMenu hideAfterClick on:hide bind:this={contextMenuComponent}>
@@ -267,4 +278,21 @@
       Set Simulation End
     </ContextMenuItem>
   {/if}
+  <ContextMenuSeparator />
+  <ContextSubMenuItem text="Zoom" parentMenu={contextMenuComponent}>
+    <ContextMenuItem on:click={() => onZoomHome()}>Home</ContextMenuItem>
+    <ContextMenuItem on:click={() => onZoom(TIME_MS.MILLISECOND)}>Millisecond</ContextMenuItem>
+    <ContextMenuItem on:click={() => onZoom(TIME_MS.SECOND)}>Second</ContextMenuItem>
+    <ContextMenuItem on:click={() => onZoom(TIME_MS.MINUTE)}>Minute</ContextMenuItem>
+    <ContextMenuItem on:click={() => onZoom(TIME_MS.HOUR)}>Hour</ContextMenuItem>
+    <ContextMenuItem on:click={() => onZoom(TIME_MS.HOUR * 2)}>2 Hours</ContextMenuItem>
+    <ContextMenuItem on:click={() => onZoom(TIME_MS.HOUR * 6)}>6 Hours</ContextMenuItem>
+    <ContextMenuItem on:click={() => onZoom(TIME_MS.HOUR * 8)}>8 Hours</ContextMenuItem>
+    <ContextMenuItem on:click={() => onZoom(TIME_MS.HOUR * 12)}>12 Hours</ContextMenuItem>
+    <ContextMenuItem on:click={() => onZoom(TIME_MS.DAY)}>Day</ContextMenuItem>
+    <ContextMenuItem on:click={() => onZoom(TIME_MS.DAY * 3)}>3 Days</ContextMenuItem>
+    <ContextMenuItem on:click={() => onZoom(TIME_MS.DAY * 7)}>Week</ContextMenuItem>
+    <ContextMenuItem on:click={() => onZoom(TIME_MS.MONTH)}>Month</ContextMenuItem>
+    <ContextMenuItem on:click={() => onZoom(TIME_MS.YEAR)}>Year</ContextMenuItem>
+  </ContextSubMenuItem>
 </ContextMenu>
