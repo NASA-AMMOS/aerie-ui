@@ -257,22 +257,10 @@
   <LinkIcon />
 </button>
 
-<button
-  class="st-button icon"
-  disabled={!$selectedActivityDirective && !$selectedSpan}
-  on:click={scrollToSelection}
-  use:tooltip={{
-    content: `Scroll timeline to ${$selectedActivityDirective?.name ?? $selectedSpan?.type ?? 'selection'}`,
-    placement: 'bottom',
-  }}
->
-  <FollowIcon />
-</button>
-
 <ToggleableIconButton
   isOn={followSelection}
-  offTooltipContent="Toggle on follow selection"
-  onTooltipContent="Toggle off follow selection"
+  offTooltipContent="Enable auto scroll"
+  onTooltipContent="Disable auto scroll"
   tooltipPlacement="bottom"
   useBorder={true}
   on:toggle={onToggleFollowSelection}
