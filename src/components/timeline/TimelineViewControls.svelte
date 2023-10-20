@@ -1,16 +1,25 @@
 <script lang="ts">
   import ArrowLeftIcon from '@nasa-jpl/stellar/icons/arrow_left.svg?component';
   import ArrowRightIcon from '@nasa-jpl/stellar/icons/arrow_right.svg?component';
+  import FollowIcon from '@nasa-jpl/stellar/icons/crosshairs_loose.svg?component';
   import LinkIcon from '@nasa-jpl/stellar/icons/link.svg?component';
   import MinusIcon from '@nasa-jpl/stellar/icons/minus.svg?component';
   import PlusIcon from '@nasa-jpl/stellar/icons/plus.svg?component';
   import RotateCounterClockwiseIcon from '@nasa-jpl/stellar/icons/rotate_counter_clockwise.svg?component';
   import { createEventDispatcher } from 'svelte';
   import { SearchParameters } from '../../enums/searchParameters';
-  import { selectedActivityDirective } from '../../stores/activities';
-  import { selectedSpan, simulationDatasetId } from '../../stores/simulation';
+  import { activityDirectivesMap, selectedActivityDirective } from '../../stores/activities';
+  import { plan } from '../../stores/plan';
+  import {
+    selectedSpan,
+    simulationDataset,
+    simulationDatasetId,
+    spanUtilityMaps,
+    spansMap,
+  } from '../../stores/simulation';
   import { viewIsModified } from '../../stores/views';
   import type { DirectiveVisibilityToggleMap, TimeRange } from '../../types/timeline';
+  import { getActivityDirectiveStartTimeMs, getDoyTimeFromInterval, getUnixEpochTime } from '../../utilities/time';
   import { showFailureToast, showSuccessToast } from '../../utilities/toast';
   import { tooltip } from '../../utilities/tooltip';
   import TimelineViewDirectiveControls from './TimelineViewDirectiveControls.svelte';
@@ -132,6 +141,33 @@
       showFailureToast('Error copying URL to clipboard');
     }
   }
+
+  function onScrollToSelection() {
+    let time: number = NaN;
+    if ($selectedActivityDirective && $plan) {
+      time = getActivityDirectiveStartTimeMs(
+        $selectedActivityDirective.id,
+        $plan.start_time,
+        $plan.end_time_doy,
+        $activityDirectivesMap,
+        $spansMap,
+        $spanUtilityMaps,
+      );
+    } else if ($selectedSpan && $simulationDataset?.simulation_start_time) {
+      time = getUnixEpochTime(
+        getDoyTimeFromInterval($simulationDataset?.simulation_start_time, $selectedSpan.start_offset),
+      );
+    }
+
+    if (!isNaN(time) && (time < viewTimeRange.start || time > viewTimeRange.end)) {
+      const start = Math.max(maxTimeRange.start, time - viewDuration / 2);
+      const end = Math.min(maxTimeRange.end, time + viewDuration / 2);
+      dispatch('viewTimeRangeChanged', {
+        end,
+        start,
+      });
+    }
+  }
 </script>
 
 <svelte:window on:keydown={onKeydown} />
@@ -196,6 +232,18 @@
   }}
 >
   <LinkIcon />
+</button>
+
+<button
+  class="st-button icon"
+  disabled={!$selectedActivityDirective && !$selectedSpan}
+  on:click={onScrollToSelection}
+  use:tooltip={{
+    content: `Scroll timeline to ${!$selectedActivityDirective?.name ?? $selectedSpan?.type ?? 'selection'}`,
+    placement: 'bottom',
+  }}
+>
+  <FollowIcon />
 </button>
 
 <style>
