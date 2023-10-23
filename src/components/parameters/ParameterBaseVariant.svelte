@@ -42,7 +42,7 @@
       {/each}
     </select>
     <div class="parameter-right">
-      <ParameterUnits unit={formParameter.schema?.metadata?.unit} />
+      <ParameterUnits unit={formParameter.schema?.metadata?.unit.value} />
       <ParameterBaseRightAdornments
         {disabled}
         hidden={hideRightAdornments}
