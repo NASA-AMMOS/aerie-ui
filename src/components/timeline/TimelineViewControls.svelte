@@ -16,7 +16,7 @@
   import TimelineViewDirectiveControls from './TimelineViewDirectiveControls.svelte';
 
   export let maxTimeRange: TimeRange = { end: 0, start: 0 };
-  export let minZoomMS = 100; // Min zoom of one minute
+  export let minZoomMS = 10;
   export let nudgePercent = 0.05;
   export let timelineDirectiveVisibilityToggles: DirectiveVisibilityToggleMap;
   export let viewTimeRange: TimeRange = { end: 0, start: 0 };
