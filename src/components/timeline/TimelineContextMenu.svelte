@@ -120,7 +120,9 @@
     }
   }
 
-  function onZoomHome() {}
+  function onZoomHome() {
+    dispatch('viewTimeRangeReset');
+  }
 </script>
 
 <ContextMenu hideAfterClick on:hide bind:this={contextMenuComponent}>
