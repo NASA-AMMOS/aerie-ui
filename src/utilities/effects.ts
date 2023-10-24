@@ -23,6 +23,7 @@ import type {
   ActivityDirective,
   ActivityDirectiveId,
   ActivityDirectiveInsertInput,
+  ActivityDirectiveRevision,
   ActivityDirectiveSetInput,
   ActivityDirectivesMap,
   ActivityPreset,
@@ -48,6 +49,7 @@ import type {
   ExpansionSet,
   SeqId,
 } from '../types/expansion';
+import type { Extension, ExtensionPayload } from '../types/extension';
 import type { Model, ModelInsertInput, ModelSchema, ModelSlim } from '../types/model';
 import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
 import type {
@@ -137,7 +139,7 @@ import {
   showUploadViewModal,
 } from './modal';
 import { queryPermissions } from './permissions';
-import { reqGateway, reqHasura } from './requests';
+import { reqExtension, reqGateway, reqHasura } from './requests';
 import { sampleProfiles } from './resources';
 import { Status } from './status';
 import { getDoyTime, getDoyTimeFromInterval, getIntervalFromDoyRange } from './time';
@@ -230,6 +232,28 @@ const effects = {
     } catch (e) {
       catchError('Template Unable To Be Applied To Simulation', e as Error);
       showFailureToast('Template Application Failed');
+    }
+  },
+
+  async callExtension(
+    extension: Extension,
+    payload: ExtensionPayload & Record<'url', string>,
+    user: User | null,
+  ): Promise<void> {
+    try {
+      const response = await reqExtension(`${base}/extensions`, payload, user);
+
+      if (response.success) {
+        showSuccessToast(response.message);
+        window.open(response.url, '_blank');
+      } else {
+        throw new Error(response.message);
+      }
+    } catch (error: any) {
+      const failureMessage = `Extension: ${extension.label} was not executed successfully`;
+
+      catchError(failureMessage, error as Error);
+      showFailureToast(failureMessage);
     }
   },
 
@@ -2228,6 +2252,29 @@ const effects = {
     }
   },
 
+  async getActivityDirectiveChangelog(
+    planId: number,
+    activityId: number,
+    user: User | null,
+  ): Promise<ActivityDirectiveRevision[]> {
+    try {
+      const data = await reqHasura<ActivityDirectiveRevision[]>(
+        gql.GET_ACTIVITY_DIRECTIVE_CHANGELOG,
+        { activityId, planId },
+        user,
+      );
+      const { activityDirectiveRevisions } = data;
+      if (activityDirectiveRevisions != null) {
+        return activityDirectiveRevisions;
+      } else {
+        throw Error('Unable to retrieve activity directive changelog');
+      }
+    } catch (e) {
+      catchError(e as Error);
+      return [];
+    }
+  },
+
   async getActivityTypes(modelId: number, user: User | null): Promise<ActivityType[]> {
     try {
       const query = convertToQuery(gql.SUB_ACTIVITY_TYPES);
@@ -2419,6 +2466,21 @@ const effects = {
     } catch (e) {
       catchError(e as Error);
       return null;
+    }
+  },
+
+  async getExtensions(user: User | null): Promise<Extension[]> {
+    try {
+      const data = await reqHasura<Extension[]>(gql.GET_EXTENSIONS, {}, user);
+      const { extensions = [] } = data;
+      if (extensions != null) {
+        return extensions;
+      } else {
+        throw Error('Unable to retrieve extensions');
+      }
+    } catch (e) {
+      catchError(e as Error);
+      return [];
     }
   },
 
@@ -3420,6 +3482,36 @@ const effects = {
     } catch (e) {
       catchError('Activity Preset Removal Failed', e as Error);
       showFailureToast('Activity Preset Removal Failed');
+      return false;
+    }
+  },
+
+  async restoreActivityFromChangelog(
+    activityId: number,
+    plan: Plan,
+    revision: number,
+    user: User | null,
+  ): Promise<boolean> {
+    try {
+      if (!queryPermissions.RESTORE_ACTIVITY_FROM_CHANGELOG(user, plan)) {
+        throwPermissionError('restore activity from changelog');
+      }
+
+      const data = await reqHasura(
+        gql.RESTORE_ACTIVITY_FROM_CHANGELOG,
+        { activity_id: activityId, plan_id: plan.id, revision },
+        user,
+      );
+
+      if (data.restoreActivityFromChangelog != null) {
+        showSuccessToast('Restored Activity from Changelog');
+        return true;
+      } else {
+        throw Error(`Unable to restore activity revision ${revision} from changelog`);
+      }
+    } catch (e) {
+      catchError('Restoring Activity From Changelog Failed', e as Error);
+      showFailureToast('Restoring Activity from Changelog Failed');
       return false;
     }
   },

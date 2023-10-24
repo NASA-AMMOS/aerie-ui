@@ -620,6 +620,25 @@ const gql = {
     }
   `,
 
+  GET_ACTIVITY_DIRECTIVE_CHANGELOG: `#graphql
+    query GetActivityTypesExpansionRules($activityId: Int!, $planId: Int!) {
+      activityDirectiveRevisions: activity_directive_changelog(
+        where: { plan_id: { _eq: $planId }, _and: { activity_directive_id: { _eq: $activityId }}},
+        order_by: { revision: desc }
+      ) {
+        revision
+        changed_by
+        changed_at
+        anchor_id
+        anchored_to_start
+        arguments
+        metadata
+        name
+        start_offset
+      }
+    }
+  `,
+
   GET_ACTIVITY_TYPES_EXPANSION_RULES: `#graphql
     query GetActivityTypesExpansionRules($modelId: Int!) {
       activity_types: activity_type(where: { model_id: { _eq: $modelId } }) {
@@ -775,6 +794,22 @@ const gql = {
         }
         seqJson
         status
+      }
+    }
+  `,
+
+  GET_EXTENSIONS: `#graphql
+    query GetExtensions {
+      extensions {
+        description
+        extension_roles {
+          extension_id
+          role
+        }
+        id
+        label
+        updated_at
+        url
       }
     }
   `,
@@ -1320,6 +1355,14 @@ const gql = {
     }
   `,
 
+  RESTORE_ACTIVITY_FROM_CHANGELOG: `#graphql
+    mutation RestoreActivityFromChangelog($activity_id: Int!, $plan_id: Int!, $revision: Int!) {
+      restoreActivityFromChangelog(args: { _plan_id: $plan_id, _activity_directive_id: $activity_id, _revision: $revision }) {
+        id
+      }
+    }
+  `,
+
   RESTORE_PLAN_SNAPSHOT: `#graphql
     mutation RestorePlanSnapshot($plan_id: Int!, $snapshot_id: Int!) {
       restore_from_snapshot(args: { _plan_id: $plan_id, _snapshot_id: $snapshot_id }) {
@@ -1372,6 +1415,7 @@ const gql = {
         id
         last_modified_arguments_at
         last_modified_at
+        last_modified_by
         metadata
         name
         plan_id
