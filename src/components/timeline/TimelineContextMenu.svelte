@@ -115,7 +115,7 @@
 
   function onZoom(duration: number) {
     if (xScaleView && contextMenu) {
-      const time = xScaleView.invert(contextMenu.e.offsetX);
+      const time = activityDirectiveStartDate ? activityDirectiveStartDate : xScaleView.invert(contextMenu.e.offsetX);
       const newViewTimeRange: TimeRange = {
         end: Math.min(time.getTime() + duration / 2, maxTimeRange.end),
         start: Math.max(time.getTime() - duration / 2, maxTimeRange.start),
@@ -285,7 +285,10 @@
     </ContextMenuItem>
   {/if}
   <ContextMenuSeparator />
-  <ContextSubMenuItem text="Zoom" parentMenu={contextMenuComponent}>
+  <ContextSubMenuItem
+    text={`Zoom${activityDirective ? ' around Selected Directive' : ''}`}
+    parentMenu={contextMenuComponent}
+  >
     <ContextMenuItem on:click={() => onZoomHome()}>Home</ContextMenuItem>
     <ContextMenuItem on:click={() => onZoom(TIME_MS.MILLISECOND)}>Millisecond</ContextMenuItem>
     <ContextMenuItem on:click={() => onZoom(TIME_MS.SECOND)}>Second</ContextMenuItem>

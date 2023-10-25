@@ -16,7 +16,6 @@
   import TimelineViewDirectiveControls from './TimelineViewDirectiveControls.svelte';
 
   export let maxTimeRange: TimeRange = { end: 0, start: 0 };
-  export let minZoomMS = 10;
   export let nudgePercent = 0.05;
   export let timelineDirectiveVisibilityToggles: DirectiveVisibilityToggleMap;
   export let viewTimeRange: TimeRange = { end: 0, start: 0 };
@@ -161,12 +160,7 @@
 >
   <MinusIcon />
 </button>
-<button
-  class="st-button icon"
-  on:click={onZoomIn}
-  use:tooltip={{ content: `Zoom In '='`, placement: 'bottom' }}
-  disabled={viewDuration === minZoomMS}
->
+<button class="st-button icon" on:click={onZoomIn} use:tooltip={{ content: `Zoom In '='`, placement: 'bottom' }}>
   <PlusIcon />
 </button>
 <button
