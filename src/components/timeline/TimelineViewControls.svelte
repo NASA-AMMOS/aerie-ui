@@ -27,11 +27,7 @@
 
   $: maxDuration = maxTimeRange.end - maxTimeRange.start;
   $: viewDuration = viewTimeRange.end - viewTimeRange.start;
-  $: viewTimeRangePercentZoom = (viewTimeRange.end - viewTimeRange.start) / (maxTimeRange.end - maxTimeRange.start);
 
-  // TODO implement a more sophisticated zooming step that based off time instead of percentage for the high zoom
-  // cases or even the whole range
-  $: zoomActionPercent = viewTimeRangePercentZoom < 0.1 ? 0.005 : 0.05;
   $: {
     const rowVisibilities = Object.values(timelineDirectiveVisibilityToggles);
     const allSame = rowVisibilities.every(val => val === rowVisibilities[0]);
