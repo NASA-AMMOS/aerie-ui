@@ -289,14 +289,16 @@
     text={`Zoom${activityDirective ? ' around Selected Directive' : ''}`}
     parentMenu={contextMenuComponent}
   >
-    <ContextMenuItem on:click={() => onZoomHome()}>Home</ContextMenuItem>
+    <ContextMenuItem on:click={() => onZoomHome()}>Reset Zoom</ContextMenuItem>
+    <ContextMenuSeparator />
     <ContextMenuItem on:click={() => onZoom(TIME_MS.MILLISECOND)}>Millisecond</ContextMenuItem>
+    <ContextMenuItem on:click={() => onZoom(TIME_MS.MILLISECOND * 10)}>10 Milliseconds</ContextMenuItem>
+    <ContextMenuItem on:click={() => onZoom(TIME_MS.MILLISECOND * 50)}>50 Milliseconds</ContextMenuItem>
     <ContextMenuItem on:click={() => onZoom(TIME_MS.SECOND)}>Second</ContextMenuItem>
+    <ContextMenuItem on:click={() => onZoom(TIME_MS.SECOND * 30)}>30 Seconds</ContextMenuItem>
     <ContextMenuItem on:click={() => onZoom(TIME_MS.MINUTE)}>Minute</ContextMenuItem>
+    <ContextMenuItem on:click={() => onZoom(TIME_MS.MINUTE * 30)}>30 Minutes</ContextMenuItem>
     <ContextMenuItem on:click={() => onZoom(TIME_MS.HOUR)}>Hour</ContextMenuItem>
-    <ContextMenuItem on:click={() => onZoom(TIME_MS.HOUR * 2)}>2 Hours</ContextMenuItem>
-    <ContextMenuItem on:click={() => onZoom(TIME_MS.HOUR * 6)}>6 Hours</ContextMenuItem>
-    <ContextMenuItem on:click={() => onZoom(TIME_MS.HOUR * 8)}>8 Hours</ContextMenuItem>
     <ContextMenuItem on:click={() => onZoom(TIME_MS.HOUR * 12)}>12 Hours</ContextMenuItem>
     <ContextMenuItem on:click={() => onZoom(TIME_MS.DAY)}>Day</ContextMenuItem>
     <ContextMenuItem on:click={() => onZoom(TIME_MS.DAY * 3)}>3 Days</ContextMenuItem>

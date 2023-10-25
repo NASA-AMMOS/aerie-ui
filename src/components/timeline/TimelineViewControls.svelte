@@ -67,7 +67,7 @@
   function onZoomOut() {
     // Compute current zoom percentage
     const duration = viewTimeRange.end - viewTimeRange.start;
-    let newDuration = duration * 1.33;
+    let newDuration = duration * (1 / 0.66);
 
     // Clamp zoom
     if (viewDuration >= maxDuration) {
