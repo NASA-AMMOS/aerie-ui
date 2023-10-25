@@ -373,6 +373,7 @@
     {contextMenu}
     {hasUpdateDirectivePermission}
     {hasUpdateSimulationPermission}
+    {maxTimeRange}
     on:deleteActivityDirective
     on:jumpToActivityDirective
     on:jumpToSpan

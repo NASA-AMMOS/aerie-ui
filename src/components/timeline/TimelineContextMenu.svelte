@@ -25,6 +25,7 @@
   export let activityDirectivesMap: ActivityDirectivesMap;
   export let hasUpdateDirectivePermission: boolean = false;
   export let hasUpdateSimulationPermission: boolean = false;
+  export let maxTimeRange: TimeRange = { end: 0, start: 0 };
   export let simulation: Simulation | null;
   export let simulationDataset: SimulationDataset | null = null;
   export let spansMap: SpansMap;
@@ -115,7 +116,10 @@
   function onZoom(duration: number) {
     if (xScaleView && contextMenu) {
       const time = xScaleView.invert(contextMenu.e.offsetX);
-      const newViewTimeRange: TimeRange = { end: time.getTime() + duration + duration, start: time.getTime() };
+      const newViewTimeRange: TimeRange = {
+        end: Math.min(time.getTime() + duration / 2, maxTimeRange.end),
+        start: Math.max(time.getTime() - duration / 2, maxTimeRange.start),
+      };
       dispatch('viewTimeRangeChanged', newViewTimeRange);
     }
   }
