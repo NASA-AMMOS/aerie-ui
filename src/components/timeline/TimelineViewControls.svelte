@@ -60,9 +60,6 @@
 
   function onZoomIn() {
     // Compute current zoom percentage
-    // const newDuration = Math.max((viewTimeRangePercentZoom - zoomActionPercent) * maxDuration, minZoomMS);
-    // console.log(viewTimeRangePercentZoom, zoomActionPercent, minZoomMS, maxDuration);
-
     const duration = viewTimeRange.end - viewTimeRange.start;
     const newDuration = duration * 0.66;
     const pivotTime = viewTimeRange.start + viewDuration / 2;
@@ -74,7 +71,6 @@
 
   function onZoomOut() {
     // Compute current zoom percentage
-    // let newDuration = (viewTimeRangePercentZoom + zoomActionPercent) * maxDuration;
     const duration = viewTimeRange.end - viewTimeRange.start;
     let newDuration = duration * 1.33;
 
