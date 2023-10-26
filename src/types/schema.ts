@@ -1,6 +1,10 @@
 type ValueSchemaMetadata = {
-  metadata?: Record<string, any>
-}
+  metadata?: {
+    unit?: {
+      value: string;
+    };
+  } & Record<string, any>;
+};
 
 export type ValueSchemaBoolean = {
   type: 'boolean';
