@@ -69,7 +69,7 @@
       <ParameterName {formParameter} />
     </div>
     <div class="right" slot="right">
-      <ParameterUnits unit={formParameter.schema?.metadata?.unit.value} />
+      <ParameterUnits unit={formParameter.schema?.metadata?.unit?.value} />
       <ParameterBaseRightAdornments
         {disabled}
         hidden={hideRightAdornments}

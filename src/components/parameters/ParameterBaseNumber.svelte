@@ -36,7 +36,7 @@
       on:change={() => dispatch('change', formParameter)}
     />
     <div class="parameter-right" slot="right">
-      <ParameterUnits unit={formParameter.schema?.metadata?.unit.value} />
+      <ParameterUnits unit={formParameter.schema?.metadata?.unit?.value} />
       <ParameterBaseRightAdornments
         {disabled}
         hidden={hideRightAdornments}
@@ -56,6 +56,8 @@
   }
 
   .parameter-right {
+    column-gap: 5px;
     display: inline-flex;
+    width: 100%;
   }
 </style>

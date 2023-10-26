@@ -100,7 +100,7 @@
     display: flex;
     gap: 4px;
     height: 16px;
-    min-width: 16px;
+    min-width: auto;
   }
   .value-source-badge-dot-root.value-source-badge-compact {
     justify-content: center;

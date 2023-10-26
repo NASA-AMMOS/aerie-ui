@@ -18,7 +18,6 @@
     letter-spacing: 1.1px;
     line-height: 1rem;
     max-width: 3rem;
-    min-width: 1rem;
     opacity: 50%;
     overflow: hidden;
     text-overflow: ellipsis;

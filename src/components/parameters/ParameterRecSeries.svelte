@@ -19,7 +19,7 @@
 
   export let disabled: boolean = false;
   export let expanded: boolean = false;
-  export let formParameter: FormParameter<ValueSchemaSeries & { metadata?: any }>;
+  export let formParameter: FormParameter<ValueSchemaSeries>;
   export let hideRightAdornments: boolean = false;
   export let labelColumnWidth: number = 200;
   export let level: number = 0;
@@ -31,7 +31,7 @@
 
   $: subFormParameters = getSubFormParameters(formParameter);
 
-  function getSubFormParameters(formParameter: FormParameter<ValueSchemaSeries & { metadata?: any }>): FormParameter[] {
+  function getSubFormParameters(formParameter: FormParameter<ValueSchemaSeries>): FormParameter[] {
     const subFormParameters = [];
     const { schema } = formParameter;
     const value = formParameter.value ?? [];
@@ -86,7 +86,7 @@
     </div>
     <div class="series-right" slot="right">
       <CssGrid gap="3px" columns="auto auto auto auto" class="parameter-rec-series-css-grid">
-        <ParameterUnits unit={formParameter.schema?.metadata?.unit.value} />
+        <ParameterUnits unit={formParameter.schema?.metadata?.unit?.value} />
         <button
           class="st-button icon"
           disabled={subFormParameters?.length === 0 || disabled}
