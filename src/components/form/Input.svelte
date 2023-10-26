@@ -55,8 +55,10 @@
     const padRight = 3;
     if (left !== null) {
       left.style.left = `${padLeft}px`;
+
+      left.style.width = `min(40%, ${left.clientWidth}px)`;
       if (input !== null) {
-        input.style.paddingLeft = `${padLeft + left.clientWidth + padRight}px`;
+        input.style.paddingLeft = `min(40%, ${padLeft + left.clientWidth + padRight}px)`;
       }
       setChildrenStyles([left]);
     }
@@ -67,8 +69,10 @@
     const padRight = 5;
     if (right !== null) {
       right.style.right = `${padRight}px`;
+
+      right.style.width = `min(40%, ${right.clientWidth}px)`;
       if (input !== null) {
-        input.style.paddingRight = `${padLeft + right.clientWidth + padRight}px`;
+        input.style.paddingRight = `min(40%, ${padLeft + right.clientWidth + padRight}px)`;
       }
       setChildrenStyles([right]);
     }
