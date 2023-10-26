@@ -135,9 +135,6 @@
 
   .content.pad-content {
     margin-left: 32px;
-    overflow: hidden;
-    visibility: hidden;
-    width: 0;
   }
 
   .expanded {
