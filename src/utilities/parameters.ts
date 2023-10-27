@@ -5,7 +5,7 @@ import type {
   FormParameter,
   ParametersMap,
   RequiredParametersList,
-  ValueSource
+  ValueSource,
 } from '../types/parameter';
 import type { ValueSchema } from '../types/schema';
 import { isEmpty } from './generic';
