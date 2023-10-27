@@ -410,12 +410,24 @@ const effects = {
         throwPermissionError('create an activity preset');
       }
 
+      const effectiveArgs = await this.getEffectiveActivityArguments(
+        modelId,
+        associatedActivityType,
+        argumentsMap,
+        user,
+      );
+
+      if (!effectiveArgs?.arguments) {
+        throw Error('Unable to get arguments for preset');
+      }
+
       const activityPresetInsertInput: ActivityPresetInsertInput = {
-        arguments: argumentsMap,
+        arguments: effectiveArgs.arguments,
         associated_activity_type: associatedActivityType,
         model_id: modelId,
         name,
       };
+
       const data = await reqHasura<ActivityPreset>(gql.CREATE_ACTIVITY_PRESET, { activityPresetInsertInput }, user);
 
       if (data.insert_activity_presets_one != null) {
@@ -3714,10 +3726,33 @@ const effects = {
       if (!queryPermissions.UPDATE_ACTIVITY_PRESET(user, updatedActivityPreset)) {
         throwPermissionError('update this activity preset');
       }
+      if (
+        updatedActivityPreset.model_id === undefined ||
+        updatedActivityPreset.associated_activity_type === undefined ||
+        updatedActivityPreset.arguments === undefined
+      ) {
+        throw Error('Unable to get arguments for preset');
+      }
+      const effectiveArgs = await this.getEffectiveActivityArguments(
+        updatedActivityPreset.model_id,
+        updatedActivityPreset.associated_activity_type,
+        updatedActivityPreset.arguments,
+        user,
+      );
+      if (!effectiveArgs?.arguments) {
+        throw Error('Unable to get arguments for preset');
+      }
 
       const { update_activity_presets_by_pk } = await reqHasura<ActivityPreset>(
         gql.UPDATE_ACTIVITY_PRESET,
-        { ...updatedActivityPreset, id },
+        {
+          activityPresetSetInput: {
+            ...updatedActivityPreset,
+            arguments: effectiveArgs.arguments,
+            id: undefined,
+          },
+          id,
+        },
         user,
       );
 

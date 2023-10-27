@@ -244,6 +244,7 @@
         {
           ...activityDirective.applied_preset.preset_applied,
           arguments: activityDirective.arguments,
+          model_id: modelId,
           name,
         },
         user,
