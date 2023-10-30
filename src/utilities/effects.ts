@@ -3715,15 +3715,11 @@ const effects = {
       if (!queryPermissions.UPDATE_ACTIVITY_PRESET(user, updatedActivityPreset)) {
         throwPermissionError('update this activity preset');
       }
-
+      const { id: _id, ...restOfPresetPayload } = updatedActivityPreset;
       const { update_activity_presets_by_pk } = await reqHasura<ActivityPreset>(
         gql.UPDATE_ACTIVITY_PRESET,
         {
-          activityPresetSetInput: {
-            ...updatedActivityPreset,
-            id: undefined,
-          },
-          id,
+          activityPresetSetInput: restOfPresetPayload,
         },
         user,
       );
