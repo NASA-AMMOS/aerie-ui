@@ -16,7 +16,7 @@ import {
 import { createModelError, createPlanError, creatingModel, creatingPlan, models } from '../stores/plan';
 import { schedulingStatus, selectedSpecId } from '../stores/scheduling';
 import { commandDictionaries } from '../stores/sequencing';
-import { selectedSpanId, simulationDatasetId } from '../stores/simulation';
+import { fetchingResources, selectedSpanId, simulationDatasetId } from '../stores/simulation';
 import { createTagError } from '../stores/tags';
 import { applyViewUpdate, view } from '../stores/views';
 import type {
@@ -2781,11 +2781,15 @@ const effects = {
 
   async getResources(datasetId: number, startTimeYmd: string, user: User | null): Promise<Resource[]> {
     try {
+      fetchingResources.set(true);
       const data = await reqHasura<Profile[]>(gql.GET_PROFILES, { datasetId }, user);
       const { profile: profiles } = data;
-      return sampleProfiles(profiles, startTimeYmd);
+      const sampledProfiles = sampleProfiles(profiles, startTimeYmd);
+      fetchingResources.set(false);
+      return sampledProfiles;
     } catch (e) {
       catchError(e as Error);
+      fetchingResources.set(false);
       return [];
     }
   },
@@ -3192,7 +3196,6 @@ const effects = {
           }
         }
       }
-
       return generateDefaultView(activityTypes, resourceTypes);
     } catch (e) {
       catchError(e as Error);

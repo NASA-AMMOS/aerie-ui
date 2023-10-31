@@ -25,6 +25,7 @@ export type Axis = {
 };
 
 export type BoundingBox = {
+  maxTimeX: number;
   maxX: number;
   maxY: number;
   minX: number;
@@ -166,9 +167,9 @@ export type VerticalGuideSelection = {
 };
 
 export type XAxisTick = {
-  coarseTime: string;
   date: Date;
-  fineTime: string;
+  formattedDateUTC: string;
+  formattedDateLocal: string;
   hideLabel: boolean;
 };
 
@@ -198,3 +199,5 @@ export interface XRangePoint extends Point {
 }
 
 export type DirectiveVisibilityToggleMap = Record<string, boolean>;
+
+export type SpanVisibilityToggleMap = Record<string, boolean>;

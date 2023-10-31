@@ -1,4 +1,4 @@
-import { bisector, tickStep } from 'd3-array';
+import { bisector, range, tickStep } from 'd3-array';
 import type { Quadtree, QuadtreeInternalNode, QuadtreeLeaf } from 'd3-quadtree';
 import { scaleLinear, scaleTime, type ScaleLinear, type ScaleTime } from 'd3-scale';
 import {
@@ -381,7 +381,7 @@ export function createYAxis(timelines: Timeline[], args: Partial<Axis> = {}): Ax
   const id = getNextYAxisID(timelines);
 
   return {
-    color: '#000000',
+    color: '#1b1d1e',
     domainFitMode: 'fitTimeWindow',
     id,
     label: { text: 'Label' },
@@ -589,4 +589,19 @@ export function getYAxesWithScaleDomains(
     }
     return yAxis;
   });
+}
+
+export function getYAxisTicks(scaleDomain: number[], tickCount: number) {
+  let ticks: number[] = [];
+  const [min, max] = scaleDomain;
+
+  const tickStep = (max - min) / ((tickCount > 0 ? tickCount : 1) - 1);
+  if (tickStep === Infinity || isNaN(tickStep)) {
+    ticks = [min];
+  } else if (tickStep === 0) {
+    ticks = [min];
+  } else {
+    ticks = range(min, max + tickStep, tickStep);
+  }
+  return ticks;
 }

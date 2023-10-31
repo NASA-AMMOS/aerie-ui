@@ -290,7 +290,7 @@
 <div
   bind:this={histogramContainer}
   class="timeline-histogram"
-  style={`margin-left: ${marginLeft}px; width: ${drawWidth}px; height: ${drawHeight}px;`}
+  style={`width: ${drawWidth}px; height: ${drawHeight}px;`}
 >
   <div class="timeline-histogram-background" />
   <div

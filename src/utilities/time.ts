@@ -525,3 +525,29 @@ export function getTimeAgo(
 export function getShortISOForDate(date: Date) {
   return date.toISOString().slice(0, 19);
 }
+
+/**
+ * Returns a DOY without milliseconds
+ * @example getShortDOY("2023-276T00:00:00.000") -> '2023-276T00:00:00'
+ */
+export function getShortDOY(doy: string) {
+  return doy.slice(0, 17);
+}
+
+export function getShortTimeZoneName() {
+  return new Intl.DateTimeFormat('en-US', { timeZoneName: 'short' }).format(new Date());
+}
+
+export function getTimeZoneName() {
+  // set up formatter
+  const formatter = new Intl.DateTimeFormat(undefined, {
+    timeZoneName: 'short',
+  });
+  // run formatter on current date
+  return (
+    formatter
+      .formatToParts(Date.now())
+      // extract the actual value from the formatter, only reliable way i can find to do this
+      .find(formatted => formatted.type === 'timeZoneName')['value']
+  );
+}

@@ -860,6 +860,7 @@
                           class="st-input w-100"
                           name="tickCount"
                           type="number"
+                          min="1"
                           value={yAxis.tickCount}
                           on:input={event => updateYAxisTickCount(event, yAxis)}
                         />

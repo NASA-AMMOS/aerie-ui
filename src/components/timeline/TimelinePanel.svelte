@@ -21,7 +21,13 @@
   import { timelineLockStatus, view, viewTogglePanel, viewUpdateRow, viewUpdateTimeline } from '../../stores/views';
   import type { ActivityDirectiveId } from '../../types/activity';
   import type { User } from '../../types/app';
-  import type { DirectiveVisibilityToggleMap, MouseDown, Row, Timeline as TimelineType } from '../../types/timeline';
+  import type {
+    DirectiveVisibilityToggleMap,
+    MouseDown,
+    Row,
+    SpanVisibilityToggleMap,
+    Timeline as TimelineType,
+  } from '../../types/timeline';
   import effects from '../../utilities/effects';
   import { featurePermissions } from '../../utilities/permissions';
   import Panel from '../ui/Panel.svelte';
@@ -37,6 +43,7 @@
   let timelineId: number = 0;
   let timeline: TimelineType | undefined;
   let timelineDirectiveVisibilityToggles: DirectiveVisibilityToggleMap = {};
+  let timelineSpanVisibilityToggles: SpanVisibilityToggleMap = {};
 
   $: if (user !== null && $plan !== null) {
     hasUpdateDirectivePermission = featurePermissions.activityDirective.canUpdate(user, $plan) && !$planReadOnly;
@@ -48,6 +55,10 @@
 
   $: timelineDirectiveVisibilityToggles = timeline
     ? generateDirectiveVisibilityToggles(timeline, timelineDirectiveVisibilityToggles)
+    : {};
+
+  $: timelineSpanVisibilityToggles = timeline
+    ? generateSpanVisibilityToggles(timeline, timelineSpanVisibilityToggles)
     : {};
 
   function deleteActivityDirective(event: CustomEvent<ActivityDirectiveId>) {
@@ -78,6 +89,24 @@
         return {
           ...prevToggles,
           ...toggleDirectiveVisibility(id, visible ?? currentVisibilityMap[id] ?? true),
+        };
+      }
+      return prevToggles;
+    }, {});
+  }
+
+  function generateSpanVisibilityToggles(
+    timeline: TimelineType,
+    currentVisibilityMap: SpanVisibilityToggleMap,
+    visible?: boolean,
+  ): SpanVisibilityToggleMap {
+    return (timeline?.rows ?? []).reduce((prevToggles: SpanVisibilityToggleMap, row: Row) => {
+      const { id, layers } = row;
+      const containsActivityLayer: boolean = layers.find(layer => layer.chartType === 'activity') !== undefined;
+      if (containsActivityLayer) {
+        return {
+          ...prevToggles,
+          ...toggleSpanVisibility(id, visible ?? currentVisibilityMap[id] ?? true),
         };
       }
       return prevToggles;
@@ -120,6 +149,23 @@
   }
 
   function toggleDirectiveVisibility(rowId: number, visible: boolean) {
+    return { [rowId]: visible };
+  }
+
+  // function onToggleAllSpanVisibility(visible: boolean) {
+  //   timelineSpanVisibilityToggles = timeline
+  //     ? generateSpanVisibilityToggles(timeline, timelineSpanVisibilityToggles, visible)
+  //     : {};
+  // }
+
+  function onToggleSpanVisibility(rowId: number, visible: boolean) {
+    timelineSpanVisibilityToggles = {
+      ...timelineSpanVisibilityToggles,
+      ...toggleSpanVisibility(rowId, visible),
+    };
+  }
+
+  function toggleSpanVisibility(rowId: number, visible: boolean) {
     return { [rowId]: visible };
   }
 </script>
@@ -169,6 +215,7 @@
       planStartTimeYmd={$plan?.start_time ?? ''}
       {timeline}
       {timelineDirectiveVisibilityToggles}
+      {timelineSpanVisibilityToggles}
       resourcesByViewLayerId={$resourcesByViewLayerId}
       selectedActivityDirectiveId={$selectedActivityDirectiveId}
       selectedSpanId={$selectedSpanId}
@@ -186,6 +233,7 @@
       on:jumpToSpan={jumpToSpan}
       on:mouseDown={onMouseDown}
       on:toggleDirectiveVisibility={({ detail: { rowId, visible } }) => onToggleDirectiveVisibility(rowId, visible)}
+      on:toggleSpanVisibility={({ detail: { rowId, visible } }) => onToggleSpanVisibility(rowId, visible)}
       on:toggleRowExpansion={({ detail: { expanded, rowId } }) => {
         viewUpdateRow('expanded', expanded, timelineId, rowId);
       }}
