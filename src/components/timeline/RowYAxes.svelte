@@ -4,11 +4,13 @@
   import { axisLeft as d3AxisLeft } from 'd3-axis';
   import { select } from 'd3-selection';
   import { createEventDispatcher, tick } from 'svelte';
-  import type { Axis } from '../../types/timeline';
+  import type { Axis, Layer, LineLayer } from '../../types/timeline';
   import { getYAxisTicks, getYScale } from '../../utilities/timeline';
 
   export let drawHeight: number = 0;
   export let drawWidth: number = 0;
+  export let resourcesByViewLayerId: Record<number, Resource[]> = {}; /* TODO give this a type */
+  export let layers: Layer[] = [];
   export let yAxes: Axis[] = [];
 
   /* TODO add color to axis numbers */
@@ -18,7 +20,7 @@
 
   let g: SVGGElement;
 
-  $: if (drawHeight && g && yAxes) {
+  $: if (drawHeight && g && yAxes && resourcesByViewLayerId && layers) {
     draw();
   }
 
@@ -66,7 +68,17 @@
 
       for (let i = 0; i < yAxes.length; ++i) {
         const axis = yAxes[i];
-        const color = axis.color;
+
+        // Get color for axis by examining associated layers. If more than one layer is associated,
+        // use the default axis color, otherwise use the color from the layer.
+        // TODO we don't expose y-axis color and this refactor would elimate need to store it in view.
+        // That is unless we want to allow user override of this behavior?
+        let color = axis.color;
+        const yAxisLayers = layers.filter(layer => layer.yAxisId === axis.id && layer.chartType === 'line');
+        if (yAxisLayers.length === 1) {
+          color = (yAxisLayers[0] as LineLayer).lineColor;
+        }
+
         // const labelColor = axis.label?.color || 'black';
         // const labelFontFace = axis.label?.fontFace || 'sans-serif';
         // const labelFontSize = axis.label?.fontSize || 12;
@@ -84,7 +96,6 @@
           const domain = axis.scaleDomain;
           const scale = getYScale(domain, drawHeight);
           const tickValues = getYAxisTicks(axis.scaleDomain as number[], tickCount);
-          console.log(domain, '', tickValues);
           const axisLeft = d3AxisLeft(scale)
             .tickSizeInner(0)
             .tickSizeOuter(0)

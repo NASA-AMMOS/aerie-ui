@@ -14,7 +14,7 @@
   export let expanded: boolean = true;
   export let height: number = 0;
   export let layers: Layer[];
-  export let resourcesByViewLayerId: Record<number, Resource[]> = {};
+  export let resourcesByViewLayerId: Record<number, Resource[]> = {}; /* TODO give this a type */
   export let rowDragMoveDisabled: boolean = false;
   export let rowId: number = 0;
   export let showDirectives: boolean = true;
@@ -122,11 +122,14 @@
   {#if expanded && yAxes.length}
     <div class="row-header-right-column" style:width={`${yAxesWidth}px`}>
       <div class="row-header-y-axes">
-        <!-- <svg>
-          <g transform="translate({80}, 0)"> -->
-        <RowYAxes drawWidth={yAxesWidth} drawHeight={height} {yAxes} on:updateYAxesWidth={onUpdateYAxesWidth} />
-        <!-- </g> -->
-        <!-- </svg> -->
+        <RowYAxes
+          drawWidth={yAxesWidth}
+          drawHeight={height}
+          {yAxes}
+          on:updateYAxesWidth={onUpdateYAxesWidth}
+          {layers}
+          {resourcesByViewLayerId}
+        />
       </div>
     </div>
   {/if}
@@ -135,7 +138,6 @@
 <style>
   .row-header {
     background-color: var(--st-gray-10);
-    /* border-right: 1px solid var(--st-gray-15); */
     display: flex;
     flex-shrink: 0;
     position: relative;
@@ -258,8 +260,7 @@
     position: absolute;
   }
 
-  .row-header-y-axes,
-  .row-header-y-axes svg {
+  .row-header-y-axes {
     height: inherit;
     width: inherit;
   }
