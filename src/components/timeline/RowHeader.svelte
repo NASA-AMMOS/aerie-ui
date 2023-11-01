@@ -179,7 +179,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     user-select: none;
-    white-space: normal;
+    white-space: nowrap;
   }
 
   .row-header:not(.expanded) .row-header-title {

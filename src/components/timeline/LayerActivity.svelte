@@ -328,8 +328,11 @@
         spans = activityDirectives
           .map(directive => {
             const rootSpan = getSpanForActivityDirective(directive);
-            const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[rootSpan.id].map(id => spansMap[id]);
-            return [rootSpan].concat(spanChildren);
+            if (rootSpan) {
+              const spanChildren = (spanUtilityMaps.spanIdToChildIdsMap[rootSpan.id] || []).map(id => spansMap[id]);
+              return [rootSpan].concat(spanChildren);
+            }
+            return [];
           })
           .flat();
       }

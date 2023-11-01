@@ -84,10 +84,11 @@
           const domain = axis.scaleDomain;
           const scale = getYScale(domain, drawHeight);
           const tickValues = getYAxisTicks(axis.scaleDomain as number[], tickCount);
+          console.log(domain, '', tickValues);
           const axisLeft = d3AxisLeft(scale)
             .tickSizeInner(0)
             .tickSizeOuter(0)
-            .ticks(tickValues.length - 1)
+            .ticks(tickValues.length)
             .tickPadding(2)
             .tickValues(tickValues);
 
