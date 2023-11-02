@@ -11,9 +11,18 @@
   import type { User } from '../../types/app';
   import type { Plan } from '../../types/plan';
   import type { Simulation, SimulationDataset, Span, SpanUtilityMaps, SpansMap } from '../../types/simulation';
-  import type { MouseOver, TimeRange, VerticalGuide } from '../../types/timeline';
+  import type {
+    DirectiveVisibilityToggleMap,
+    MouseOver,
+    MouseOverOrigin,
+    Row,
+    SpanVisibilityToggleMap,
+    TimeRange,
+    VerticalGuide,
+  } from '../../types/timeline';
   import { getAllSpansForActivityDirective, getSpanRootParent } from '../../utilities/activities';
   import effects from '../../utilities/effects';
+  import { getTarget } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { getDoyTime, getIntervalInMs, getUnixEpochTimeFromInterval } from '../../utilities/time';
   import { createVerticalGuide } from '../../utilities/timeline';
@@ -23,16 +32,18 @@
   import ContextSubMenuItem from '../context-menu/ContextSubMenuItem.svelte';
 
   export let activityDirectivesMap: ActivityDirectivesMap;
+  export let contextMenu: MouseOver | null;
   export let hasUpdateDirectivePermission: boolean = false;
   export let hasUpdateSimulationPermission: boolean = false;
   export let maxTimeRange: TimeRange = { end: 0, start: 0 };
+  export let plan: Plan | null = null;
+  export let planStartTimeYmd: string;
   export let simulation: Simulation | null;
   export let simulationDataset: SimulationDataset | null = null;
   export let spansMap: SpansMap;
   export let spanUtilityMaps: SpanUtilityMaps;
-  export let plan: Plan | null = null;
-  export let planStartTimeYmd: string;
-  export let contextMenu: MouseOver | null;
+  export let timelineDirectiveVisibilityToggles: DirectiveVisibilityToggleMap;
+  export let timelineSpanVisibilityToggles: SpanVisibilityToggleMap;
   export let verticalGuides: VerticalGuide[];
   export let xScaleView: ScaleTime<number, number> | null = null;
   export let user: User | null;
@@ -43,16 +54,31 @@
   let activityDirectiveSpans: Span[] | null = [];
   let activityDirectiveStartDate: Date | null = null;
   let span: Span | null;
+  let hasActivityLayer: boolean = false;
+  let mouseOverOrigin: MouseOverOrigin | undefined = undefined;
+  let row: Row | undefined = undefined;
+  let showDirectives: boolean = false;
+  let showSpans: boolean = false;
 
   // TODO imports here could be better, should we handle the vertical guide creation in Timeline?
   $: timelines = $view?.definition.plan.timelines ?? [];
 
   $: if (contextMenu && contextMenuComponent) {
-    const { e, selectedActivityDirectiveId, selectedSpanId } = contextMenu;
+    const { e, selectedActivityDirectiveId, selectedSpanId, origin, row: selectedRow } = contextMenu;
+    row = selectedRow;
+    mouseOverOrigin = origin;
     contextMenuComponent.show(e);
     activityDirective = null;
     span = null;
     activityDirectiveSpans = null;
+    hasActivityLayer = false;
+    showDirectives = false;
+    showSpans = false;
+
+    if (row) {
+      showDirectives = timelineDirectiveVisibilityToggles[row.id];
+      showSpans = timelineSpanVisibilityToggles[row.id];
+    }
 
     if (selectedActivityDirectiveId != null) {
       activityDirective = activityDirectivesMap[selectedActivityDirectiveId];
@@ -60,10 +86,17 @@
     } else if (selectedSpanId != null) {
       span = spansMap[selectedSpanId];
     }
+
+    if (origin === 'row-header' && row) {
+      hasActivityLayer = !!row.layers.find(layer => layer.chartType === 'activity');
+    }
   } else {
     activityDirective = null;
     span = null;
     activityDirectiveSpans = null;
+    hasActivityLayer = false;
+    showDirectives = false;
+    showSpans = false;
   }
 
   $: startYmd = simulationDataset?.simulation_start_time ?? planStartTimeYmd;
@@ -140,10 +173,80 @@
   function onZoomHome() {
     dispatch('viewTimeRangeReset');
   }
+
+  function onEditRow() {
+    dispatch('editRow', row);
+  }
+
+  function onDeleteRow() {
+    dispatch('deleteRow', row);
+  }
+
+  function onMoveRowUp() {
+    dispatch('moveRow', { direction: 'up', row });
+  }
+
+  function onMoveRowDown() {
+    dispatch('moveRow', { direction: 'down', row });
+  }
+
+  function onDuplicateRow() {
+    dispatch('duplicateRow', 0);
+  }
+
+  function onShowDirectivesAndActivitiesChange(event: Event) {
+    const { value } = getTarget(event);
+    const newShowDirectives = value !== 'show-spans';
+    const newShowSpans = value !== 'show-directives';
+    dispatch('toggleDirectiveVisibility', { row, show: newShowDirectives });
+    dispatch('toggleSpanVisibility', { row, show: newShowSpans });
+  }
 </script>
 
 <ContextMenu hideAfterClick on:hide bind:this={contextMenuComponent}>
-  {#if activityDirective}
+  {#if mouseOverOrigin === 'row-header'}
+    <ContextMenuItem on:click={onEditRow}>Edit Row</ContextMenuItem>
+    <ContextMenuItem on:click={onMoveRowUp}>Move Up</ContextMenuItem>
+    <ContextMenuItem on:click={onMoveRowDown}>Move Down</ContextMenuItem>
+    <ContextMenuItem on:click={onDuplicateRow}>Duplicate Row</ContextMenuItem>
+    <ContextMenuItem on:click={onDeleteRow}>Delete Row</ContextMenuItem>
+
+    {#if hasActivityLayer}
+      <ContextMenuSeparator />
+      <div role="radiogroup" class="st-radio-group">
+        <label for="show-directives" class="st-radio-option st-typography-body">
+          <input
+            id="show-directives"
+            type="radio"
+            value="show-directives"
+            checked={showDirectives && !showSpans}
+            on:change={onShowDirectivesAndActivitiesChange}
+          />
+          Show activity directives
+        </label>
+        <label for="show-spans" class="st-radio-option st-typography-body">
+          <input
+            id="show-spans"
+            type="radio"
+            value="show-spans"
+            checked={!showDirectives && showSpans}
+            on:change={onShowDirectivesAndActivitiesChange}
+          />
+          Show simulated activities
+        </label>
+        <label for="show-both" class="st-radio-option st-typography-body">
+          <input
+            id="show-both"
+            type="radio"
+            value="show-both"
+            checked={showDirectives && showSpans}
+            on:change={onShowDirectivesAndActivitiesChange}
+          />
+          Show both
+        </label>
+      </div>
+    {/if}
+  {:else if activityDirective}
     {#if activityDirectiveSpans && activityDirectiveSpans.length}
       <ContextSubMenuItem text="Jump to Simulated Activities" parentMenu={contextMenuComponent}>
         {#each activityDirectiveSpans as activityDirectiveSpan}
@@ -341,3 +444,22 @@
     </ContextSubMenuItem>
   {/if}
 </ContextMenu>
+
+<style>
+  /* TODO move this to stellar at some point or at least aerie stellar overrides */
+  .st-radio-group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .st-radio-option {
+    align-items: center;
+    display: flex;
+    justify-content: flex-start;
+    padding: 4px 8px 4px 4px;
+  }
+
+  .st-radio-option input {
+    margin: 4px;
+  }
+</style>

@@ -223,8 +223,6 @@
       width={marginLeft - 2}
       height={computedDrawHeight}
       {expanded}
-      {showDirectives}
-      {showSpans}
       rowId={id}
       title={name}
       {rowDragMoveDisabled}
@@ -236,26 +234,12 @@
       on:toggleRowExpansion
       on:toggleDirectiveVisibility
       on:toggleSpanVisibility
-    >
-      <!-- <div slot="right" class="row-controls">
-        {#if hasActivityLayer}
-          <TimelineViewDirectiveControls
-            directivesVisible={showDirectives}
-            offTooltipContent="Show Directives on this Timeline Row"
-            onTooltipContent="Hide Directives on this Timeline Row"
-            useBorder={false}
-            on:toggleDirectiveVisibility
-          />
-        {/if}
-        <button
-          use:tooltip={{ content: 'Edit Row', placement: 'top' }}
-          class="st-button icon row-edit-button"
-          on:click={onEditRow}
-        >
-          <PenIcon />
-        </button>
-      </div> -->
-    </RowHeader>
+      on:editRow
+      on:deleteRow
+      on:moveRow
+      on:duplicateRow
+      on:contextMenu
+    />
 
     <div class={rowClasses} id={`row-${id}`} style="height: {computedDrawHeight}px;">
       <!-- Overlay for Pointer Events. -->
@@ -284,7 +268,7 @@
           {#if drawWidth > 0}
             <RowXAxisTicks drawHeight={computedDrawHeight} {xScaleView} {xTicksView} />
             {#if expanded}
-              <RowYAxisTicks drawHeight={computedDrawHeight} {drawWidth} yAxes={yAxesWithScaleDomains} />
+              <RowYAxisTicks drawHeight={computedDrawHeight} {drawWidth} yAxes={yAxesWithScaleDomains} {layers} />
             {/if}
             <ConstraintViolations
               {constraintResults}
@@ -445,10 +429,6 @@
 
   .row-root .row-controls {
     display: flex;
-  }
-
-  .row.row-collapsed {
-    /* display: none; */
   }
 
   :global(.right) {

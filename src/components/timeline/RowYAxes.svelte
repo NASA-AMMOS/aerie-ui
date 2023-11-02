@@ -79,6 +79,7 @@
           color = (yAxisLayers[0] as LineLayer).lineColor;
         }
 
+        // TODO deprecate these view properties?
         // const labelColor = axis.label?.color || 'black';
         // const labelFontFace = axis.label?.fontFace || 'sans-serif';
         // const labelFontSize = axis.label?.fontSize || 12;
@@ -126,6 +127,8 @@
 
         const axisGElement: SVGGElement | null = axisG.node();
         if (axisGElement !== null) {
+          // TODO might be able to save minor perf by getting bounding rect of entire
+          // container instead of each individual axis?
           totalWidth += axisGElement.getBoundingClientRect().width;
         }
       }

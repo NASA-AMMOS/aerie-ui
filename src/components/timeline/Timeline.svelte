@@ -269,6 +269,31 @@
     histogramCursorTime = null;
   }
 
+  function onMoveRow(event: CustomEvent<{ direction: 'up' | 'down'; row: Row }>) {
+    const {
+      detail: { direction, row },
+    } = event;
+    const newRows = [...rows];
+    const rowIndex = rows.findIndex(r => r.id === row.id);
+    if (rowIndex < 0) {
+      return;
+    }
+    if (direction === 'up') {
+      if (rowIndex > 0) {
+        const oldRow = newRows[rowIndex - 1];
+        newRows[rowIndex - 1] = row;
+        newRows[rowIndex] = oldRow;
+      }
+    } else if (direction === 'down') {
+      if (rowIndex < rows.length - 1) {
+        const oldRow = newRows[rowIndex + 1];
+        newRows[rowIndex + 1] = row;
+        newRows[rowIndex] = oldRow;
+      }
+    }
+    dispatch('updateRows', newRows);
+  }
+
   async function setRowsMaxHeight(
     timelineDiv: HTMLDivElement,
     xAxisDiv: HTMLDivElement,
@@ -291,7 +316,6 @@
     <TimelineTimeDisplay
       planEndTimeDoy={plan?.end_time_doy}
       planStartTimeDoy={plan?.start_time_doy}
-      {viewTimeRange}
       width={timeline?.marginLeft}
       on:viewTimeRangeChanged={onHistogramViewTimeRangeChanged}
     />
@@ -391,7 +415,7 @@
             {xTicksView}
             yAxes={row.yAxes}
             on:contextMenu={e => {
-              contextMenu = e.detail;
+              contextMenu = { ...e.detail, row };
               tooltip.hide();
             }}
             on:dblClick
@@ -401,8 +425,6 @@
             on:mouseUpRowMove={onMouseUpRowMove}
             on:mouseOver={e => (mouseOver = e.detail)}
             on:toggleRowExpansion={onToggleRowExpansion}
-            on:toggleDirectiveVisibility={e => onToggleDirectiveVisibility(row.id, e.detail)}
-            on:toggleSpanVisibility={e => onToggleSpanVisibility(row.id, e.detail)}
             on:updateRowHeight={onUpdateRowHeight}
           />
         </div>
@@ -434,10 +456,18 @@
     {spansMap}
     {spanUtilityMaps}
     {plan}
+    {timelineDirectiveVisibilityToggles}
+    {timelineSpanVisibilityToggles}
     {planStartTimeYmd}
     verticalGuides={timeline?.verticalGuides ?? []}
     {xScaleView}
     {user}
+    on:toggleDirectiveVisibility
+    on:toggleSpanVisibility
+    on:editRow
+    on:deleteRow
+    on:moveRow={onMoveRow}
+    on:duplicateRow
   />
 </div>
 

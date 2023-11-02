@@ -100,11 +100,15 @@ export type MouseOver = {
   e: MouseEvent;
   gaps?: Point[];
   layerId: number;
+  origin?: MouseOverOrigin;
   points?: Point[];
+  row?: Row;
   selectedActivityDirectiveId?: number;
   selectedSpanId?: number;
   spans?: Span[];
 };
+
+export type MouseOverOrigin = 'row-header' | 'layer-line' | 'layer-activity' | 'layer-x-range';
 
 export interface Point {
   id: number;

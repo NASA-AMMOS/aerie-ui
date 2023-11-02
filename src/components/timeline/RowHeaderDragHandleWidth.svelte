@@ -16,7 +16,7 @@
 
     const dx = event.clientX - clientX;
     const newWidth = rowHeaderWidth + dx;
-    dispatch('updateRowHeaderWidth', { newWidth: newWidth >= 120 ? newWidth : 120 });
+    dispatch('updateRowHeaderWidth', { newWidth: newWidth >= 152 ? newWidth : 152 });
 
     clientX = event.clientX;
     event.stopPropagation();

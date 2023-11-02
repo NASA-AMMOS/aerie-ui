@@ -18,7 +18,7 @@ import { schedulingStatus, selectedSpecId } from '../stores/scheduling';
 import { commandDictionaries } from '../stores/sequencing';
 import { fetchingResources, selectedSpanId, simulationDatasetId } from '../stores/simulation';
 import { createTagError } from '../stores/tags';
-import { applyViewUpdate, view } from '../stores/views';
+import { applyViewUpdate, view, viewUpdateTimeline } from '../stores/views';
 import type {
   ActivityDirective,
   ActivityDirectiveId,
@@ -123,6 +123,7 @@ import type {
   TagsInsertInput,
   TagsSetInput,
 } from '../types/tags';
+import type { Row } from '../types/timeline';
 import type { View, ViewDefinition, ViewInsertInput, ViewUpdateInput } from '../types/view';
 import { ActivityDeletionAction } from './activities';
 import { convertToQuery, getSearchParameterNumber, setQueryParam, sleep } from './generic';
@@ -2117,6 +2118,19 @@ const effects = {
       catchError('Delete Tag Failed', e as Error);
       showFailureToast('Delete Tag Failed');
       return false;
+    }
+  },
+
+  async deleteTimelineRow(row: Row, rows: Row[], timelineId: number | null) {
+    const { confirm } = await showConfirmModal(
+      'Delete',
+      `Are you sure you want to delete timeline row: ${row.name}?`,
+      'Delete Row',
+      true,
+    );
+    if (confirm) {
+      const filteredRows = rows.filter(r => r.id !== row.id);
+      viewUpdateTimeline('rows', filteredRows, timelineId);
     }
   },
 

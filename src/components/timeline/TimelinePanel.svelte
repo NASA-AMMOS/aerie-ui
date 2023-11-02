@@ -18,7 +18,14 @@
     spans,
     spansMap,
   } from '../../stores/simulation';
-  import { timelineLockStatus, view, viewTogglePanel, viewUpdateRow, viewUpdateTimeline } from '../../stores/views';
+  import {
+    timelineLockStatus,
+    view,
+    viewSetSelectedRow,
+    viewTogglePanel,
+    viewUpdateRow,
+    viewUpdateTimeline,
+  } from '../../stores/views';
   import type { ActivityDirectiveId } from '../../types/activity';
   import type { User } from '../../types/app';
   import type {
@@ -141,10 +148,13 @@
       : {};
   }
 
-  function onToggleDirectiveVisibility(rowId: number, visible: boolean) {
+  function onToggleDirectiveVisibility(event: CustomEvent<{ row: Row; show: boolean }>) {
+    const {
+      detail: { row, show },
+    } = event;
     timelineDirectiveVisibilityToggles = {
       ...timelineDirectiveVisibilityToggles,
-      ...toggleDirectiveVisibility(rowId, visible),
+      ...toggleDirectiveVisibility(row.id, show),
     };
   }
 
@@ -158,15 +168,33 @@
   //     : {};
   // }
 
-  function onToggleSpanVisibility(rowId: number, visible: boolean) {
+  function onToggleSpanVisibility(event: CustomEvent<{ row: Row; show: boolean }>) {
+    const {
+      detail: { row, show },
+    } = event;
     timelineSpanVisibilityToggles = {
       ...timelineSpanVisibilityToggles,
-      ...toggleSpanVisibility(rowId, visible),
+      ...toggleSpanVisibility(row.id, show),
     };
   }
 
   function toggleSpanVisibility(rowId: number, visible: boolean) {
     return { [rowId]: visible };
+  }
+
+  function onEditRow(event: CustomEvent<Row>) {
+    const { detail: row } = event;
+
+    // Open the timeline editor panel on the right.
+    viewTogglePanel({ state: true, type: 'right', update: { rightComponentTop: 'TimelineEditorPanel' } });
+
+    // Set row to edit.
+    viewSetSelectedRow(row.id);
+  }
+
+  function onDeleteRow(event: CustomEvent<Row>) {
+    const { detail: row } = event;
+    effects.deleteTimelineRow(row, timeline?.rows ?? [], timelineId);
   }
 </script>
 
@@ -232,8 +260,8 @@
       on:jumpToActivityDirective={jumpToActivityDirective}
       on:jumpToSpan={jumpToSpan}
       on:mouseDown={onMouseDown}
-      on:toggleDirectiveVisibility={({ detail: { rowId, visible } }) => onToggleDirectiveVisibility(rowId, visible)}
-      on:toggleSpanVisibility={({ detail: { rowId, visible } }) => onToggleSpanVisibility(rowId, visible)}
+      on:toggleDirectiveVisibility={onToggleDirectiveVisibility}
+      on:toggleSpanVisibility={onToggleSpanVisibility}
       on:toggleRowExpansion={({ detail: { expanded, rowId } }) => {
         viewUpdateRow('expanded', expanded, timelineId, rowId);
       }}
@@ -249,6 +277,8 @@
       on:viewTimeRangeChanged={({ detail: newViewTimeRange }) => {
         $viewTimeRange = newViewTimeRange;
       }}
+      on:editRow={onEditRow}
+      on:deleteRow={onDeleteRow}
     />
   </svelte:fragment>
 </Panel>

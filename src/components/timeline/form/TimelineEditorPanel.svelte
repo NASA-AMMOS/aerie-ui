@@ -38,8 +38,8 @@
     XRangeLayer,
   } from '../../../types/timeline';
   import type { ViewGridSection } from '../../../types/view';
+  import effects from '../../../utilities/effects';
   import { getTarget } from '../../../utilities/generic';
-  import { showConfirmModal } from '../../../utilities/modal';
   import { getDoyTime } from '../../../utilities/time';
   import {
     createHorizontalGuide,
@@ -140,23 +140,6 @@
     const row = createRow(timelines);
     rows = [...rows, row];
     viewUpdateTimeline('rows', rows);
-  }
-
-  function deleteTimelineRow(row: Row) {
-    const filteredRows = rows.filter(r => r.id !== row.id);
-    viewUpdateTimeline('rows', filteredRows);
-  }
-
-  async function handleDeleteRowClick(row: Row) {
-    const { confirm } = await showConfirmModal(
-      'Delete',
-      'Are you sure you want to delete this timeline row?',
-      'Delete Row',
-      true,
-    );
-    if (confirm) {
-      deleteTimelineRow(row);
-    }
   }
 
   function handleDndConsiderRows(e: CustomEvent<DndEvent>) {
@@ -627,7 +610,9 @@
                       <button
                         use:tooltip={{ content: 'Delete Row', placement: 'top' }}
                         class="st-button icon"
-                        on:click|stopPropagation={() => handleDeleteRowClick(row)}
+                        on:click|stopPropagation={() => {
+                          effects.deleteTimelineRow(row, rows, $selectedTimelineId);
+                        }}
                       >
                         <TrashIcon />
                       </button>

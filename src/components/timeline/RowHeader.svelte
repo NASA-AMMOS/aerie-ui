@@ -17,16 +17,12 @@
   export let resourcesByViewLayerId: Record<number, Resource[]> = {}; /* TODO give this a type */
   export let rowDragMoveDisabled: boolean = false;
   export let rowId: number = 0;
-  export let showDirectives: boolean = true;
-  export let showSpans: boolean = true;
   export let title: string = '';
   export let width: number = 0;
   export let yAxes: Axis[];
 
   let labels: { color: string; label: string; units: string; yAxisId: number }[] = [];
   let yAxesWidth = 0;
-
-  $: hasActivityLayer = !!layers.find(layer => layer.chartType === 'activity');
 
   const dispatch = createEventDispatcher();
 
@@ -77,12 +73,13 @@
       </div>
       <div class="row-menu-container">
         <RowHeaderMenu
-          showVisibilityOptions={hasActivityLayer}
-          {rowId}
-          {showDirectives}
-          {showSpans}
           on:toggleDirectiveVisibility
           on:toggleSpanVisibility
+          on:editRow
+          on:deleteRow
+          on:moveRow
+          on:duplicateRow
+          on:contextMenu
         />
       </div>
     {/if}
@@ -140,6 +137,7 @@
     background-color: var(--st-gray-10);
     display: flex;
     flex-shrink: 0;
+    gap: 4px;
     position: relative;
     z-index: 4;
   }
@@ -272,7 +270,9 @@
   }
 
   .row-header-y-axis-labels div {
+    direction: rtl;
     overflow: hidden;
+    text-align: left;
     text-overflow: ellipsis;
     white-space: nowrap;
   }

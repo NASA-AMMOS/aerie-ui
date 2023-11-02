@@ -367,6 +367,7 @@
         dispatch('contextMenu', {
           e,
           layerId: id,
+          origin: 'layer-activity',
           selectedActivityDirectiveId,
           selectedSpanId,
         });
