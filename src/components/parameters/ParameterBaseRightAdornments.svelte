@@ -35,6 +35,7 @@
 
 <style>
   .parameter-base-right-adornment:not([hidden]) {
+    column-gap: 1px;
     display: flex;
   }
 </style>

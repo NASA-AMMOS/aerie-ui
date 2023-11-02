@@ -63,7 +63,8 @@
 
   .parameter-base-variant-content {
     align-items: center;
-    display: flex;
+    display: grid;
+    grid-template-columns: auto min-content;
     margin-right: 5px;
   }
 

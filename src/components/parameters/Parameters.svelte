@@ -83,9 +83,7 @@
   }
 
   .parameters-container :global(> div.highlight:hover) {
-    border-bottom: 1px solid var(--st-gray-20, #ebecec);
-    border-top: 1px solid var(--st-gray-20, #ebecec);
-    padding: 3px 0;
+    box-shadow: 0px 0px 0px 1px var(--st-gray-20);
   }
 
   .parameter-info {
