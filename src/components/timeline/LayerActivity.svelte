@@ -362,7 +362,9 @@
     }
     const showContextMenu = !!e && isRightClick(e);
     if (showContextMenu) {
-      // delay the context menu a little bit to allow any selection events to occur first
+      // TODO if we don't move this to the end of the call stack we risk not having selectedActivityDirectiveId or selectedSpanId
+      // properly selected since the right click has to trigger selected entity store update first..
+      // Could potentially do a quadtree search based off right click position instead of relying on these stores?
       setTimeout(() => {
         dispatch('contextMenu', {
           e,
@@ -371,7 +373,7 @@
           selectedActivityDirectiveId,
           selectedSpanId,
         });
-      }, 1);
+      }, 0);
     }
   }
 

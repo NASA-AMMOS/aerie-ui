@@ -59,7 +59,14 @@
   }
 </script>
 
-<div class="row-header" style:width={`${width}px`} style:height={expanded ? `${height}px` : '24px'} class:expanded>
+<div
+  class="row-header"
+  style:width={`${width}px`}
+  style:height={expanded ? `${height}px` : '24px'}
+  class:expanded
+  role="banner"
+  on:contextmenu={e => dispatch('contextMenu', { e, origin: 'row-header' })}
+>
   <div class="row-header-left-column">
     {#if expanded}
       <div
