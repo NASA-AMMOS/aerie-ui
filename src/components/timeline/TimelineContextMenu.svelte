@@ -191,7 +191,7 @@
   }
 
   function onDuplicateRow() {
-    dispatch('duplicateRow', 0);
+    dispatch('duplicateRow', row);
   }
 
   function onShowDirectivesAndActivitiesChange(event: Event) {

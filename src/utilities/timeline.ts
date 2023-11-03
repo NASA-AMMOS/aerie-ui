@@ -591,6 +591,7 @@ export function getYAxesWithScaleDomains(
   });
 }
 
+/* TODO docs */
 export function getYAxisTicks(scaleDomain: number[], tickCount: number) {
   let ticks: number[] = [];
   const [min, max] = scaleDomain;
@@ -604,4 +605,46 @@ export function getYAxisTicks(scaleDomain: number[], tickCount: number) {
     ticks = range(min, max + tickStep, tickStep);
   }
   return ticks;
+}
+
+/* TODO docs and tests */
+/* TODO this would all be so much easier if we just gave things UUIDs instead of incrementing numerical ids..  */
+export function duplicateRow(row: Row, timelines: Timeline[], timelineId: number): Row | null {
+  const timelinesClone = structuredClone(timelines);
+  const timeline = timelinesClone.find(t => t.id === timelineId);
+  if (!timeline) {
+    return null;
+  }
+
+  const rowClone = structuredClone(row);
+  const { id, layers, yAxes, horizontalGuides, ...rowArgs } = rowClone;
+  const newRow = createRow(timelines, rowArgs);
+  timeline.rows.push(newRow);
+
+  yAxes.forEach(axis => {
+    const { id, ...axisArgs } = axis;
+    newRow.yAxes.push(createYAxis(timelinesClone, axisArgs));
+  });
+
+  layers.forEach(layer => {
+    if (layer.chartType === 'activity') {
+      const { id, ...layerArgs } = layer;
+      newRow.layers.push(createTimelineActivityLayer(timelinesClone, layerArgs));
+    } else if (layer.chartType === 'line') {
+      const { id, yAxisId, ...layerArgs } = layer;
+      newRow.layers.push(createTimelineLineLayer(timelinesClone, newRow.yAxes, layerArgs));
+    } else if (layer.chartType === 'x-range') {
+      const { id, yAxisId, ...layerArgs } = layer;
+      newRow.layers.push(createTimelineXRangeLayer(timelinesClone, newRow.yAxes, layerArgs));
+    } else {
+      console.warn('Unable to clone row layer with chart type:', layer.chartType);
+    }
+  });
+
+  horizontalGuides.forEach(guide => {
+    const { id, yAxisId, ...guideArgs } = guide;
+    newRow.horizontalGuides.push(createHorizontalGuide(timelinesClone, newRow.yAxes, guideArgs));
+  });
+
+  return newRow;
 }

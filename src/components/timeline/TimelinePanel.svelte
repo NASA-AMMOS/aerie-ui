@@ -37,6 +37,7 @@
   } from '../../types/timeline';
   import effects from '../../utilities/effects';
   import { featurePermissions } from '../../utilities/permissions';
+  import { duplicateRow } from '../../utilities/timeline';
   import Panel from '../ui/Panel.svelte';
   import PanelHeaderActions from '../ui/PanelHeaderActions.svelte';
   import Timeline from './Timeline.svelte';
@@ -56,7 +57,9 @@
     hasUpdateDirectivePermission = featurePermissions.activityDirective.canUpdate(user, $plan) && !$planReadOnly;
     hasUpdateSimulationPermission = featurePermissions.simulation.canUpdate(user, $plan) && !$planReadOnly;
   }
-  $: timeline = $view?.definition.plan.timelines.find(timeline => {
+
+  $: timelines = $view?.definition.plan.timelines || [];
+  $: timeline = timelines.find(timeline => {
     return timeline.id === timelineId;
   });
 
@@ -196,6 +199,22 @@
     const { detail: row } = event;
     effects.deleteTimelineRow(row, timeline?.rows ?? [], timelineId);
   }
+
+  function onDuplicateRow(event: CustomEvent<Row>) {
+    const { detail: row } = event;
+    if (timeline) {
+      const newRow = duplicateRow(row, timelines, timeline.id);
+      if (newRow) {
+        // Add row after the existing row
+        const newRows = timeline?.rows ?? [];
+        const rowIndex = newRows.findIndex(r => r.id === row.id);
+        if (rowIndex > -1) {
+          newRows.splice(rowIndex, 0, newRow);
+          viewUpdateTimeline('rows', newRows, timelineId);
+        }
+      }
+    }
+  }
 </script>
 
 <Panel padBody={false}>
@@ -279,6 +298,7 @@
       }}
       on:editRow={onEditRow}
       on:deleteRow={onDeleteRow}
+      on:duplicateRow={onDuplicateRow}
     />
   </svelte:fragment>
 </Panel>
