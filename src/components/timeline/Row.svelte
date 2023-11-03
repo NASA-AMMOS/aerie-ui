@@ -280,6 +280,12 @@
               {xScaleView}
               on:mouseOver={onMouseOver}
             />
+            <RowHorizontalGuides
+              drawHeight={computedDrawHeight}
+              {drawWidth}
+              {horizontalGuides}
+              yAxes={yAxesWithScaleDomains}
+            />
           {/if}
         </g>
       </svg>
@@ -377,12 +383,6 @@
           {/if}
         {/each}
       </div>
-      <RowHorizontalGuides
-        drawHeight={computedDrawHeight}
-        {drawWidth}
-        {horizontalGuides}
-        yAxes={yAxesWithScaleDomains}
-      />
     </div>
   </div>
 
