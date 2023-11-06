@@ -33,7 +33,8 @@
     MAX_CANVAS_SIZE,
     TimelineLockStatus,
     customD3Ticks,
-    durationDay,
+    durationMonth,
+    durationWeek,
     durationYear,
     getXScale,
   } from '../../utilities/timeline';
@@ -80,7 +81,7 @@
   let tooltip: Tooltip;
   let cursorEnabled: boolean = true;
   let cursorHeaderHeight: number = 0;
-  let estimatedLabelWidthPx: number = 120; // Width of MS time which is the largest display format
+  let estimatedLabelWidthPx: number = 130; // Width of MS time which is the largest display format
   let histogramCursorTime: Date | null = null;
   let mouseOver: MouseOver | null;
   let removeDPRChangeListener: (() => void) | null = null;
@@ -102,7 +103,7 @@
   $: if (drawWidth) {
     const padding = 1.5;
     let ticks = Math.round(drawWidth / (estimatedLabelWidthPx * padding));
-    tickCount = clamp(ticks, 3, 16);
+    tickCount = clamp(ticks, 2, 16);
   }
 
   $: setRowsMaxHeight(timelineDiv, xAxisDiv, timelineHistogramDiv);
@@ -118,37 +119,23 @@
     let labelWidth = estimatedLabelWidthPx; // Compute the actual label width
     xTicksView = customD3Ticks(viewTimeRangeStartDate, viewTimeRangeEndDate, tickCount).map((date: Date) => {
       // Format fine and coarse time based off duration
-      // TODO format based on level
       const doyTimestamp = getDoyTime(date, true);
       let formattedDateUTC = doyTimestamp;
       let formattedDateLocal = date.toISOString();
-      // const splits = doyTimestamp.split('T');
-      // let coarseTime = splits[0];
-      // let fineTime = splits[1];
+      formattedDateLocal = formattedDateLocal.slice(0, formattedDateLocal.length - 1);
       if (xScaleViewDuration > durationYear * tickCount) {
-        // coarseTime = date.getFullYear().toString();
-        // fineTime = '';
         formattedDateUTC = doyTimestamp.slice(0, 4);
         formattedDateLocal = formattedDateLocal.slice(0, 4);
         labelWidth = 28;
-      } else if (xScaleViewDuration > durationDay) {
+      } else if (xScaleViewDuration > durationMonth * tickCount) {
         formattedDateUTC = doyTimestamp.slice(0, 8);
         formattedDateLocal = formattedDateLocal.slice(0, 7);
         labelWidth = 50;
-      } /* else if (xScaleViewDuration > durationWeek) {
+      } else if (xScaleViewDuration > durationWeek) {
         formattedDateUTC = doyTimestamp.slice(0, 8);
-        labelWidth = 55;
-      } else if (xScaleViewDuration > durationDay) {
-        formattedDateUTC = doyTimestamp.slice(0, 8);
-        labelWidth = 55;
-      }  */ /* else if (xScaleViewDuration > durationHour) {
-        formattedDateUTC = doyTimestamp;
-        labelWidth = 55;
-      } else if (xScaleViewDuration > durationMinute) {
-        formattedDateUTC = doyTimestamp;
-        labelWidth = 55;
-      } */
-      /* TODO complete this refactor */
+        formattedDateLocal = formattedDateLocal.slice(0, 10);
+        labelWidth = 58;
+      }
       return { date, formattedDateLocal, formattedDateUTC, hideLabel: false };
     });
 
