@@ -468,7 +468,7 @@
   }
 
   .active-row .row-content:after {
-    box-shadow: 0 0 0px 1px var(--st-utility-blue);
+    box-shadow: 0 0 0px 1px inset var(--st-utility-blue);
     content: ' ';
     height: 100%;
     left: 0;
@@ -476,5 +476,13 @@
     position: absolute;
     top: 0;
     width: 100%;
+    z-index: 9;
+  }
+
+  .active-row .row-content {
+    background: rgba(47, 128, 237, 0.06);
+  }
+  .active-row :global(.row-header) {
+    background: rgba(47, 128, 237, 0.06);
   }
 </style>
