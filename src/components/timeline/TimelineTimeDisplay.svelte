@@ -22,6 +22,7 @@
     flex-direction: column;
     gap: 2px;
     justify-content: center;
+    padding: 4px 8px 4px;
   }
 
   .timeline-time-display--date {

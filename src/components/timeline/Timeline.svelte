@@ -149,7 +149,7 @@
         labelWidth = 55;
       } */
       /* TODO complete this refactor */
-      return { date, formattedDateUTC, formattedDateLocal, hideLabel: false };
+      return { date, formattedDateLocal, formattedDateUTC, hideLabel: false };
     });
 
     // Determine whether or not to hide the last tick label
@@ -238,14 +238,6 @@
     dispatch('toggleRowExpansion', { expanded, rowId });
   }
 
-  function onToggleDirectiveVisibility(rowId: number, visible: boolean) {
-    dispatch('toggleDirectiveVisibility', { rowId, visible });
-  }
-
-  function onToggleSpanVisibility(rowId: number, visible: boolean) {
-    dispatch('toggleSpanVisibility', { rowId, visible });
-  }
-
   function onUpdateRowHeight(event: CustomEvent<{ newHeight: number; rowId: number; wasAutoAdjusted?: boolean }>) {
     const { newHeight, rowId, wasAutoAdjusted } = event.detail;
     if (newHeight < MAX_CANVAS_SIZE) {
@@ -312,32 +304,33 @@
 <svelte:window on:keydown={onKeyDown} />
 
 <div bind:this={timelineDiv} bind:clientWidth class="timeline" id={`timeline-${timeline?.id}`}>
-  <div bind:this={timelineHistogramDiv} class="timeline-histogram-row">
+  <div bind:this={timelineHistogramDiv} class="timeline-time-row">
     <TimelineTimeDisplay
       planEndTimeDoy={plan?.end_time_doy}
       planStartTimeDoy={plan?.start_time_doy}
       width={timeline?.marginLeft}
       on:viewTimeRangeChanged={onHistogramViewTimeRangeChanged}
     />
-    <TimelineHistogram
-      activityDirectives={timeline && activityDirectivesByView?.byTimelineId[timeline.id]
-        ? activityDirectivesByView.byTimelineId[timeline.id]
-        : []}
-      {constraintResults}
-      {cursorEnabled}
-      drawHeight={timelineHistogramDrawHeight}
-      {drawWidth}
-      marginLeft={timeline?.marginLeft}
-      {mouseOver}
-      {planStartTimeYmd}
-      {simulationDataset}
-      {spans}
-      {viewTimeRange}
-      {xScaleView}
-      {xScaleMax}
-      on:cursorTimeChange={onHistogramCursorTimeChanged}
-      on:viewTimeRangeChanged={onHistogramViewTimeRangeChanged}
-    />
+    <div class="timeline-histogram-container">
+      <TimelineHistogram
+        activityDirectives={timeline && activityDirectivesByView?.byTimelineId[timeline.id]
+          ? activityDirectivesByView.byTimelineId[timeline.id]
+          : []}
+        {constraintResults}
+        {cursorEnabled}
+        drawHeight={timelineHistogramDrawHeight}
+        {drawWidth}
+        {mouseOver}
+        {planStartTimeYmd}
+        {simulationDataset}
+        {spans}
+        {viewTimeRange}
+        {xScaleView}
+        {xScaleMax}
+        on:cursorTimeChange={onHistogramCursorTimeChanged}
+        on:viewTimeRangeChanged={onHistogramViewTimeRangeChanged}
+      />
+    </div>
   </div>
   <div class="timeline-padded-content">
     <RowHeaderDragHandleWidth rowHeaderWidth={timeline?.marginLeft} on:updateRowHeaderWidth={onUpdateRowHeaderWidth} />
@@ -492,11 +485,14 @@
     pointer-events: none;
   }
 
-  .timeline-histogram-row {
+  .timeline-time-row {
     background: white;
     border-bottom: 1px solid var(--st-gray-20);
     display: flex;
-    padding: 4px 8px 4px;
+  }
+
+  .timeline-histogram-container {
+    padding: 4px 8px 4px 0px;
   }
 
   .timeline-padded-content {

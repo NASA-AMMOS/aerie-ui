@@ -18,7 +18,6 @@
   export let cursorEnabled: boolean = true;
   export let drawHeight: number = 40;
   export let drawWidth: number = 0;
-  export let marginLeft: number = 50;
   export let mouseOver: MouseOver | null;
   export let planStartTimeYmd: string;
   export let simulationDataset: SimulationDataset | null = null;
