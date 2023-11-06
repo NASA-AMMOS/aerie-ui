@@ -21,7 +21,7 @@
   let clientWidth: number;
   let level: number = 0;
 
-  $: labelColumnWidth = clientWidth * 0.65;
+  $: labelColumnWidth = clientWidth * 0.4;
   $: sortedFormParameters = formParameters.sort((a, b) => compare(a.order, b.order));
 </script>
 
@@ -70,6 +70,10 @@
     column-gap: 4px;
     display: grid;
     grid-template-columns: auto 16px;
+  }
+
+  .parameter :global(.st-input) {
+    text-overflow: ellipsis;
   }
 
   .parameter :global(.st-input.error) {
