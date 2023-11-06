@@ -65,7 +65,7 @@
     align-items: center;
     display: grid;
     grid-template-columns: auto min-content;
-    margin-right: 5px;
+    margin-right: 6px;
   }
 
   .parameter-right {

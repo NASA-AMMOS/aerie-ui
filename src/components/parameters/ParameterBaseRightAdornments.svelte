@@ -25,11 +25,11 @@
 </script>
 
 <div class="parameter-base-right-adornment" {hidden}>
-  {#if !hideValueSource}
-    <ValueSourceBadge {disabled} source={formParameter.valueSource} {parameterType} {use} on:reset />
-  {/if}
   {#if errors.length > 0 && !hideError}
     <InputErrorBadge {errors} />
+  {/if}
+  {#if !hideValueSource}
+    <ValueSourceBadge {disabled} source={formParameter.valueSource} {parameterType} {use} on:reset />
   {/if}
 </div>
 

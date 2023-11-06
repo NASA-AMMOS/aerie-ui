@@ -8,7 +8,7 @@
   export { className as class };
 
   const padLeft = 5;
-  const padRight = 3;
+  const padRight = 6;
 
   let className: string = '';
   let container: HTMLDivElement;

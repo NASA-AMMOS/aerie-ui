@@ -180,7 +180,7 @@
 
   :global(.parameter-rec-series-css-grid) {
     align-items: center;
-    margin-right: 2px;
+    margin-right: 3px;
   }
 
   .parameter-rec-series :global(.form-parameter-name .name) {

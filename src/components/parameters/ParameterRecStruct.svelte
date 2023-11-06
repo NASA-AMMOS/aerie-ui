@@ -150,6 +150,6 @@
 
   .right {
     display: inline-flex;
-    margin-right: 5px;
+    margin-right: 6px;
   }
 </style>
