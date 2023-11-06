@@ -34,7 +34,7 @@
       } else {
         contextMenu.hide();
       }
-    }, 300);
+    }, 100);
   }
 
   function hoverCallback() {
@@ -94,6 +94,11 @@
 {/if}
 
 <style>
+  .parameter-info-container {
+    color: var(--st-button-icon-color, #293137);
+    margin-top: 1px;
+  }
+
   .parameter-info-tooltip {
     display: block;
     min-width: 300px;

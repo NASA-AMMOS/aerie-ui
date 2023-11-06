@@ -88,6 +88,7 @@
 
   .parameter-info {
     padding-top: 0.2rem;
+    transition: visibility 0.1s;
     visibility: hidden;
   }
   .parameters-container :global(> div.highlight:hover .parameter-info) {
