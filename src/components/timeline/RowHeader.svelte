@@ -116,8 +116,13 @@
         <div class="row-header-y-axis-labels">
           {#each labels as label}
             <div class="st-typography-label small-text" style:color={label.color}>
+              <!-- See https://stackoverflow.com/a/27961022 for explanation of &lrm; "left to right mark" -->
               &lrm;{label.label}
-              {label.unit ? `(${label.unit})` : ''}
+              {#if label.unit}
+                ({label.unit})
+              {:else}
+                &lrm;&nbsp;
+              {/if}
             </div>
           {/each}
         </div>
