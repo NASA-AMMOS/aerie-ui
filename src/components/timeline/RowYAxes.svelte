@@ -24,37 +24,6 @@
     draw();
   }
 
-  // function fitTextToWidth(
-  //   textSelection: Selection<SVGTextElement, unknown, null, undefined>,
-  //   text: string,
-  //   width: number,
-  // ) {
-  //   textSelection.text(text);
-  //   let textLength = textSelection?.node()?.getComputedTextLength() ?? 0;
-
-  //   // If text is longer than total allowed width,
-  //   // split the string in half and reduce the character length of each half by the ratio
-  //   // of how much longer the string is than the width.
-  //   // Iterate this process until "[start]...[end]" fits within the width.
-  //   // (One pass is not necessarily good enough, due to variance in character widths,
-  //   // but this should take at most 2 or 3 iterations)
-  //   if (textLength > width) {
-  //     let start = text.substring(0, text.length * 0.5);
-  //     let end = text.substring(text.length * 0.5);
-  //     let i = 0;
-  //     let reduction: number;
-
-  //     while (textLength > width && i < MAX_ITERATIONS) {
-  //       i++;
-  //       reduction = 1 - width / textLength;
-  //       start = start.substring(0, start.length * (1 - reduction));
-  //       end = end.substring(Math.ceil(end.length * reduction));
-  //       textSelection.text(start + '...' + end);
-  //       textLength = textSelection?.node()?.getComputedTextLength() ?? 0;
-  //     }
-  //   }
-  // }
-
   async function draw() {
     if (g) {
       await tick();
