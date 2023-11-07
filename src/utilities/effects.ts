@@ -2681,7 +2681,7 @@ const effects = {
     try {
       const data = await reqHasura(convertToQuery(gql.SUB_PLAN_TAGS), { planId }, user);
       const { tags } = data;
-      return tags;
+      return tags || [];
     } catch (e) {
       catchError(e as Error);
       return [];
