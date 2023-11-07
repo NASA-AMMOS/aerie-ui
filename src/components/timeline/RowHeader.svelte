@@ -21,7 +21,7 @@
   export let width: number = 0;
   export let yAxes: Axis[];
 
-  let labels: { color: string; label: string; units: string; yAxisId: number }[] = [];
+  let labels: { color: string; label: string; unit: string; yAxisId: number }[] = [];
   let yAxesWidth = 0;
 
   const dispatch = createEventDispatcher();
@@ -45,10 +45,11 @@
         const resourceLabels = resources
           .map(resource => {
             const color = (layer as LineLayer).lineColor;
+            const unit = resource.schema.metadata?.unit?.value || '';
             return {
               color,
               label: resource.name,
-              units: '',
+              unit,
               yAxisId: yAxis.id,
             };
           })
@@ -115,8 +116,8 @@
         <div class="row-header-y-axis-labels">
           {#each labels as label}
             <div class="st-typography-label small-text" style:color={label.color}>
-              {label.label}
-              {label.units ? `(${label.units})` : ''}
+              &lrm;{label.label}
+              {label.unit ? `(${label.unit})` : ''}
             </div>
           {/each}
         </div>
