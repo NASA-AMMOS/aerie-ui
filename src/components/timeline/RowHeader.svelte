@@ -16,6 +16,7 @@
   export let layers: Layer[];
   export let resourcesByViewLayerId: Record<number, Resource[]> = {}; /* TODO give this a type */
   export let rowDragMoveDisabled: boolean = false;
+  export let rowHeaderDragHandleWidthPx: number = 2;
   export let rowId: number = 0;
   export let title: string = '';
   export let width: number = 0;
@@ -62,7 +63,8 @@
 
 <div
   class="row-header"
-  style:width={`${width}px`}
+  style:width={`${width - rowHeaderDragHandleWidthPx}px`}
+  style:margin-right={`${rowHeaderDragHandleWidthPx}px`}
   style:height={expanded ? `${height}px` : '24px'}
   class:expanded
   role="banner"

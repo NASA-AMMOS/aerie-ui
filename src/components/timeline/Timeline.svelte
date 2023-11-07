@@ -88,6 +88,7 @@
   let rowDragMoveDisabled = true;
   let rowsMaxHeight: number = 600;
   let rows: Row[] = [];
+  let rowHeaderDragHandleWidthPx: number = 2;
   let tickCount: number = 10;
   let timelineDiv: HTMLDivElement;
   let timelineHistogramDiv: HTMLDivElement;
@@ -320,13 +321,17 @@
     </div>
   </div>
   <div class="timeline-padded-content">
-    <RowHeaderDragHandleWidth rowHeaderWidth={timeline?.marginLeft} on:updateRowHeaderWidth={onUpdateRowHeaderWidth} />
+    <RowHeaderDragHandleWidth
+      rowHeaderWidth={timeline?.marginLeft}
+      on:updateRowHeaderWidth={onUpdateRowHeaderWidth}
+      width={rowHeaderDragHandleWidthPx}
+    />
     <div bind:this={xAxisDiv} class="x-axis" style="height: {xAxisDrawHeight}px">
       <TimelineXAxis
         {constraintResults}
         drawHeight={xAxisDrawHeight}
         {drawWidth}
-        marginLeft={timeline?.marginLeft ? timeline?.marginLeft - 2 : 0}
+        marginLeft={timeline?.marginLeft ?? 0}
         {viewTimeRange}
         {xScaleView}
         {xTicksView}
@@ -381,6 +386,7 @@
             {planStartTimeYmd}
             {resourcesByViewLayerId}
             {rowDragMoveDisabled}
+            {rowHeaderDragHandleWidthPx}
             {selectedActivityDirectiveId}
             {selectedSpanId}
             showDirectives={timelineDirectiveVisibilityToggles[row.id]}

@@ -61,6 +61,7 @@
   export let planStartTimeYmd: string;
   export let resourcesByViewLayerId: Record<number, Resource[]> = {};
   export let rowDragMoveDisabled = true;
+  export let rowHeaderDragHandleWidthPx: number = 2;
   export let selectedActivityDirectiveId: ActivityDirectiveId | null = null;
   export let selectedSpanId: SpanId | null = null;
   export let showDirectives: boolean = true;
@@ -220,7 +221,7 @@
   <div class="row-content">
     <!-- Row Header. -->
     <RowHeader
-      width={marginLeft - 2}
+      width={marginLeft}
       height={computedDrawHeight}
       {expanded}
       rowId={id}
@@ -229,6 +230,7 @@
       {layers}
       {resourcesByViewLayerId}
       yAxes={yAxesWithScaleDomains}
+      {rowHeaderDragHandleWidthPx}
       on:mouseDownRowMove
       on:mouseUpRowMove
       on:toggleRowExpansion
@@ -241,7 +243,7 @@
       on:contextMenu
     />
 
-    <div class={rowClasses} id={`row-${id}`} style="height: {computedDrawHeight}px;">
+    <div class={rowClasses} id={`row-${id}`} style={`height: ${computedDrawHeight}px;`}>
       <!-- Overlay for Pointer Events. -->
       <svg
         bind:this={overlaySvg}

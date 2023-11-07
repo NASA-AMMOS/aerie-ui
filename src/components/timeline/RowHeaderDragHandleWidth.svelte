@@ -4,6 +4,7 @@
   import { createEventDispatcher } from 'svelte';
 
   export let rowHeaderWidth: number = 0;
+  export let width: number = 2;
 
   const dispatch = createEventDispatcher();
 
@@ -38,7 +39,7 @@
 
 <div class="row-header-drag-handle-height">
   <div
-    style={`transform: translateX(${rowHeaderWidth || 0}px)`}
+    style={`transform: translateX(${rowHeaderWidth || 0}px); left: -${width}px; width: ${width}px`}
     class="row-header-drag-handle-height--handle"
     role="none"
     on:mousedown|capture={onMouseDown}
@@ -57,10 +58,8 @@
     background-color: var(--st-gray-20);
     cursor: col-resize;
     height: 100%;
-    left: -2px;
     pointer-events: auto;
     position: absolute;
-    width: 2px;
     z-index: 4;
   }
 
