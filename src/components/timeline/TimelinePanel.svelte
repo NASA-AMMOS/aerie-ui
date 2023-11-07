@@ -209,8 +209,8 @@
         const newRows = timeline?.rows ?? [];
         const rowIndex = newRows.findIndex(r => r.id === row.id);
         if (rowIndex > -1) {
-          newRows.splice(rowIndex, 0, newRow);
-          viewUpdateTimeline('rows', newRows, timelineId);
+          newRows.splice(rowIndex + 1, 0, newRow);
+          viewUpdateTimeline('rows', [...newRows], timelineId);
         }
       }
     }
