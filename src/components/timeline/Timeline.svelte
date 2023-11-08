@@ -287,6 +287,17 @@
       rowsMaxHeight = maxHeight;
     }
   }
+
+  function onContextMenu(e: CustomEvent, row: Row) {
+    // Allow right clicking on interactive tippy tooltips on the canvas
+    // in order to copy text within the tooltips
+    const a = e.detail.e.target as HTMLElement;
+    if (a && a.classList.value && a.classList.value.indexOf('tippy') > -1) {
+      return;
+    }
+    contextMenu = { ...e.detail, row };
+    tooltip.hide();
+  }
 </script>
 
 <svelte:window on:keydown={onKeyDown} />
@@ -400,10 +411,7 @@
             {xScaleView}
             {xTicksView}
             yAxes={row.yAxes}
-            on:contextMenu={e => {
-              contextMenu = { ...e.detail, row };
-              tooltip.hide();
-            }}
+            on:contextMenu={e => onContextMenu(e, row)}
             on:dblClick
             on:deleteActivityDirective
             on:mouseDown={onMouseDown}

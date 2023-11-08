@@ -8,6 +8,7 @@
   import { createEventDispatcher } from 'svelte';
   import type { Resource } from '../../types/simulation';
   import type { Axis, Layer, LineLayer } from '../../types/timeline';
+  import { tooltip } from '../../utilities/tooltip';
   import RowHeaderMenu from './RowHeaderMenu.svelte';
   import RowYAxes from './RowYAxes.svelte';
 
@@ -22,7 +23,7 @@
   export let width: number = 0;
   export let yAxes: Axis[];
 
-  let labels: { color: string; label: string; unit: string; yAxisId: number }[] = [];
+  let resourceLabels: { color: string; label: string; resource: Resource; unit: string; yAxisId: number }[] = [];
   let yAxesWidth = 0;
 
   const dispatch = createEventDispatcher();
@@ -37,25 +38,28 @@
   }
 
   $: {
-    labels = [];
+    resourceLabels = [];
     yAxes.map(yAxis => {
-      const yAxisLayers = layers.filter(layer => layer.yAxisId === yAxis.id && layer.chartType === 'line');
+      const yAxisResourceLayers = layers.filter(
+        layer => layer.yAxisId === yAxis.id && (layer.chartType === 'line' || layer.chartType === 'x-range'),
+      );
       // For each layer get the resources and color
-      yAxisLayers.forEach(layer => {
+      yAxisResourceLayers.forEach(layer => {
         const resources = resourcesByViewLayerId[layer.id] || [];
-        const resourceLabels = resources
+        const newResourceLabels = resources
           .map(resource => {
-            const color = (layer as LineLayer).lineColor;
+            const color = (layer as LineLayer).lineColor || 'var(--st-gray-80)';
             const unit = resource.schema.metadata?.unit?.value || '';
             return {
               color,
-              label: resource.name,
+              label: layer.name || resource.name,
+              resource,
               unit,
               yAxisId: yAxis.id,
             };
           })
           .flat();
-        labels = labels.concat(resourceLabels);
+        resourceLabels = resourceLabels.concat(newResourceLabels);
       });
     });
   }
@@ -114,10 +118,14 @@
         </div>
       </button>
 
-      {#if labels.length > 0}
+      {#if resourceLabels.length > 0}
         <div class="row-header-y-axis-labels">
-          {#each labels as label}
-            <div class="st-typography-label small-text" style:color={label.color}>
+          {#each resourceLabels as label}
+            <div
+              class="st-typography-label small-text"
+              style:color={label.color}
+              use:tooltip={{ content: label.resource.name, interactive: true, placement: 'right' }}
+            >
               <!-- See https://stackoverflow.com/a/27961022 for explanation of &lrm; "left to right mark" -->
               &lrm;{label.label}
               {#if label.unit}
@@ -266,6 +274,7 @@
     align-self: baseline;
     overflow: hidden;
     padding: 4px 0px;
+    width: 100%;
   }
 
   .row-header-y-axes {
@@ -286,6 +295,7 @@
 
   .row-header-y-axis-labels div {
     direction: rtl;
+    max-width: max-content;
     overflow: hidden;
     text-align: left;
     text-overflow: ellipsis;

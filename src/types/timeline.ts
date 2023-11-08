@@ -71,6 +71,7 @@ export interface Layer {
     resource?: ResourceLayerFilter;
   };
   id: number;
+  name: string;
   yAxisId: number | null;
 }
 

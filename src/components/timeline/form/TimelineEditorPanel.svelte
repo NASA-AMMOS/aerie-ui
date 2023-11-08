@@ -798,7 +798,7 @@
           {#if yAxes.length}
             <div class="editor-section-labeled-grid-container">
               <CssGrid columns="1fr 56px 24px 24px" gap="8px" class="editor-section-grid-labels" padding="0px 16px">
-                <div>Label</div>
+                <div>Name</div>
                 <div>Ticks</div>
               </CssGrid>
               <div

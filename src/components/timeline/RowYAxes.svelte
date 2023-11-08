@@ -4,6 +4,7 @@
   import { axisLeft as d3AxisLeft } from 'd3-axis';
   import { select } from 'd3-selection';
   import { createEventDispatcher, tick } from 'svelte';
+  import type { Resource } from '../../types/simulation';
   import type { Axis, Layer, LineLayer } from '../../types/timeline';
   import { getYAxisTicks, getYScale } from '../../utilities/timeline';
 
@@ -13,10 +14,7 @@
   export let layers: Layer[] = [];
   export let yAxes: Axis[] = [];
 
-  /* TODO add color to axis numbers */
-
   const dispatch = createEventDispatcher();
-  // const MAX_ITERATIONS = 5;
 
   let g: SVGGElement;
 
