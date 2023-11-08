@@ -11,6 +11,7 @@
   const dispatch = createEventDispatcher();
 
   let clientY: number | null = null;
+  let oldHeight: number = rowHeight;
 
   function getPixelHeight(value: string | number): number {
     if (typeof value === 'string' && /%/.test(value)) {
@@ -27,15 +28,14 @@
     }
 
     const dy = event.clientY - clientY;
-    const newHeight = rowHeight - dy;
+    const newHeight = oldHeight - dy;
 
     dispatch('updateRowHeight', { newHeight: clamp(newHeight, getPixelHeight(minHeight), getPixelHeight(maxHeight)) });
-
-    clientY = event.clientY;
   }
 
   function onMouseDown(event: MouseEvent): void {
     clientY = event.clientY;
+    oldHeight = rowHeight;
     document.addEventListener('mousemove', onMouseMove, false);
   }
 
@@ -74,5 +74,11 @@
 
   .console-drag-handle-height:hover {
     background-color: var(--st-gray-30);
+  }
+
+  .console-drag-handle-height:hover,
+  .console-drag-handle-height:active {
+    background-color: var(--st-gray-30);
+    z-index: 4;
   }
 </style>

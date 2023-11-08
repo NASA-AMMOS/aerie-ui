@@ -9,6 +9,7 @@
   const dispatch = createEventDispatcher();
 
   let clientY: number | null = null;
+  let oldHeight: number = rowHeight;
 
   function onMouseMove(event: MouseEvent): void {
     if (clientY == null) {
@@ -16,15 +17,15 @@
     }
 
     const dy = event.clientY - clientY;
-    const newHeight = rowHeight + dy;
+    const newHeight = oldHeight + dy;
     if (newHeight >= ViewConstants.MIN_ROW_HEIGHT) {
       dispatch('updateRowHeight', { newHeight });
     }
-    clientY = event.clientY;
   }
 
   function onMouseDown(event: MouseEvent): void {
     clientY = event.clientY;
+    oldHeight = rowHeight;
     document.addEventListener('mousemove', onMouseMove, false);
   }
 
