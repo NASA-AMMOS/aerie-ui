@@ -2,6 +2,7 @@
 
 <script lang="ts">
   import ArrowLeftIcon from '@nasa-jpl/stellar/icons/arrow_left.svg?component';
+  import DuplicateIcon from '@nasa-jpl/stellar/icons/duplicate.svg?component';
   import PenIcon from '@nasa-jpl/stellar/icons/pen.svg?component';
   import PlusIcon from '@nasa-jpl/stellar/icons/plus.svg?component';
   import TrashIcon from '@nasa-jpl/stellar/icons/trash.svg?component';
@@ -606,6 +607,17 @@
                         }}
                       >
                         <PenIcon />
+                      </button>
+                      <button
+                        use:tooltip={{ content: 'Duplicate Row', placement: 'top' }}
+                        class="st-button icon"
+                        on:click={() => {
+                          if ($selectedTimeline) {
+                            effects.duplicateTimelineRow(row, $selectedTimeline, timelines);
+                          }
+                        }}
+                      >
+                        <DuplicateIcon />
                       </button>
                       <button
                         use:tooltip={{ content: 'Delete Row', placement: 'top' }}

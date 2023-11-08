@@ -615,8 +615,8 @@ export function duplicateRow(row: Row, timelines: Timeline[], timelineId: number
   }
 
   const rowClone = structuredClone(row);
-  const { id, layers, yAxes, horizontalGuides, ...rowArgs } = rowClone;
-  const newRow = createRow(timelines, rowArgs);
+  const { id, name, layers, yAxes, horizontalGuides, ...rowArgs } = rowClone;
+  const newRow = createRow(timelines, { ...rowArgs, name: `${name} (copy)` });
   timeline.rows.push(newRow);
 
   yAxes.forEach(axis => {

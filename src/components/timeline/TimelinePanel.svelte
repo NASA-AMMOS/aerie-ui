@@ -37,7 +37,6 @@
   } from '../../types/timeline';
   import effects from '../../utilities/effects';
   import { featurePermissions } from '../../utilities/permissions';
-  import { duplicateRow } from '../../utilities/timeline';
   import Panel from '../ui/Panel.svelte';
   import PanelHeaderActions from '../ui/PanelHeaderActions.svelte';
   import Timeline from './Timeline.svelte';
@@ -203,16 +202,7 @@
   function onDuplicateRow(event: CustomEvent<Row>) {
     const { detail: row } = event;
     if (timeline) {
-      const newRow = duplicateRow(row, timelines, timeline.id);
-      if (newRow) {
-        // Add row after the existing row
-        const newRows = timeline?.rows ?? [];
-        const rowIndex = newRows.findIndex(r => r.id === row.id);
-        if (rowIndex > -1) {
-          newRows.splice(rowIndex + 1, 0, newRow);
-          viewUpdateTimeline('rows', [...newRows], timelineId);
-        }
-      }
+      effects.duplicateTimelineRow(row, timeline, timelines);
     }
   }
 </script>

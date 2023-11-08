@@ -123,7 +123,7 @@ import type {
   TagsInsertInput,
   TagsSetInput,
 } from '../types/tags';
-import type { Row } from '../types/timeline';
+import type { Row, Timeline } from '../types/timeline';
 import type { View, ViewDefinition, ViewInsertInput, ViewUpdateInput } from '../types/view';
 import { ActivityDeletionAction } from './activities';
 import { convertToQuery, getSearchParameterNumber, setQueryParam, sleep } from './generic';
@@ -144,6 +144,7 @@ import { reqExtension, reqGateway, reqHasura } from './requests';
 import { sampleProfiles } from './resources';
 import { Status } from './status';
 import { getDoyTime, getDoyTimeFromInterval, getIntervalFromDoyRange } from './time';
+import { duplicateRow } from './timeline';
 import { showFailureToast, showSuccessToast } from './toast';
 import { generateDefaultView, validateViewJSONAgainstSchema } from './view';
 
@@ -2228,6 +2229,19 @@ const effects = {
     }
 
     return false;
+  },
+
+  async duplicateTimelineRow(row: Row, timeline: Timeline, timelines: Timeline[]) {
+    const newRow = duplicateRow(row, timelines, timeline.id);
+    if (newRow) {
+      // Add row after the existing row
+      const newRows = timeline.rows ?? [];
+      const rowIndex = newRows.findIndex(r => r.id === row.id);
+      if (rowIndex > -1) {
+        newRows.splice(rowIndex + 1, 0, newRow);
+        viewUpdateTimeline('rows', [...newRows], timeline.id);
+      }
+    }
   },
 
   async editView(view: View, user: User | null): Promise<boolean> {
