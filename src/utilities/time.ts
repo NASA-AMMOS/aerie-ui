@@ -536,11 +536,11 @@ export function getTimeZoneName() {
     timeZoneName: 'short',
   });
   // run formatter on current date
-  /* TODO fix TS issue */
-  return (
-    formatter
-      .formatToParts(Date.now())
-      // extract the actual value from the formatter, only reliable way i can find to do this
-      .find(formatted => formatted.type === 'timeZoneName')['value']
-  );
+  const parts = formatter?.formatToParts(Date.now());
+  // extract the actual value from the formatter
+  const timeZoneName = parts.find(formatted => formatted.type === 'timeZoneName');
+  if (timeZoneName) {
+    return timeZoneName.value;
+  }
+  return 'UNK';
 }
