@@ -1,9 +1,10 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { axisLeft as d3AxisLeft } from 'd3-axis';
   import type { Axis, Layer, LineLayer } from '../../types/timeline';
   import { hexToRgba } from '../../utilities/color';
-  import { getYAxisTicks, getYScale } from '../../utilities/timeline';
+  import { getYScale } from '../../utilities/timeline';
 
   export let drawHeight: number = 0;
   export let drawWidth: number = 0;
@@ -26,8 +27,10 @@
         typeof scaleDomain[1] === 'number'
       ) {
         const scale = getYScale(scaleDomain as number[], drawHeight);
+        const axisLeft = d3AxisLeft(scale).ticks(tickCount);
+        const tickValues = (axisLeft.scale() as any).ticks(tickCount) as number[];
+        const scaledTickValues = tickValues.map(tick => scale(tick));
 
-        // TODO this sort of layer / axis / color association is done in many places - could we have this in a store or higher up?
         let color = 'rgba(210, 210, 210, 1)';
         if (yAxes.length > 1) {
           const yAxisLayers = layers.filter(layer => layer.yAxisId === axis.id && layer.chartType === 'line');
@@ -37,7 +40,7 @@
         }
         ticks.push({
           color,
-          values: getYAxisTicks(scaleDomain as number[], tickCount).map(t => scale(t)),
+          values: scaledTickValues,
         });
       }
     });

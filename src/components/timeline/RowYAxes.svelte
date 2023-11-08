@@ -6,7 +6,7 @@
   import { createEventDispatcher, tick } from 'svelte';
   import type { Resource } from '../../types/simulation';
   import type { Axis, Layer, LineLayer } from '../../types/timeline';
-  import { getYAxisTicks, getYScale } from '../../utilities/timeline';
+  import { getYScale } from '../../utilities/timeline';
 
   export let drawHeight: number = 0;
   export let drawWidth: number = 0;
@@ -63,13 +63,7 @@
         ) {
           const domain = axis.scaleDomain;
           const scale = getYScale(domain, drawHeight);
-          const tickValues = getYAxisTicks(axis.scaleDomain as number[], tickCount);
-          const axisLeft = d3AxisLeft(scale)
-            .tickSizeInner(0)
-            .tickSizeOuter(0)
-            .ticks(tickValues.length)
-            .tickPadding(2)
-            .tickValues(tickValues);
+          const axisLeft = d3AxisLeft(scale).tickSizeInner(0).tickSizeOuter(0).ticks(tickCount).tickPadding(2);
 
           const axisMargin = 2;
           const startPosition = -(totalWidth + axisMargin * i);

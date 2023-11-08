@@ -1,4 +1,4 @@
-import { bisector, range, tickStep } from 'd3-array';
+import { bisector, tickStep } from 'd3-array';
 import type { Quadtree, QuadtreeInternalNode, QuadtreeLeaf } from 'd3-quadtree';
 import { scaleLinear, scaleTime, type ScaleLinear, type ScaleTime } from 'd3-scale';
 import {
@@ -603,22 +603,6 @@ export function getYAxesWithScaleDomains(
     }
     return yAxis;
   });
-}
-
-/* TODO docs */
-export function getYAxisTicks(scaleDomain: number[], tickCount: number) {
-  let ticks: number[] = [];
-  const [min, max] = scaleDomain;
-
-  const tickStep = (max - min) / ((tickCount > 0 ? tickCount : 1) - 1);
-  if (tickStep === Infinity || isNaN(tickStep)) {
-    ticks = [min];
-  } else if (tickStep === 0) {
-    ticks = [min];
-  } else {
-    ticks = range(min, max + tickStep, tickStep);
-  }
-  return ticks;
 }
 
 /* TODO docs and tests */
