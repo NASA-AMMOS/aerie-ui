@@ -2,6 +2,7 @@
 
 <script lang="ts">
   import { axisLeft as d3AxisLeft } from 'd3-axis';
+  import { format as d3Format } from 'd3-format';
   import { select } from 'd3-selection';
   import { createEventDispatcher, tick } from 'svelte';
   import type { Resource } from '../../types/simulation';
@@ -63,7 +64,21 @@
         ) {
           const domain = axis.scaleDomain;
           const scale = getYScale(domain, drawHeight);
-          const axisLeft = d3AxisLeft(scale).tickSizeInner(0).tickSizeOuter(0).ticks(tickCount).tickPadding(2);
+          const axisLeft = d3AxisLeft(scale)
+            .tickSizeInner(0)
+            .tickSizeOuter(0)
+            .ticks(tickCount)
+            .tickFormat(n => {
+              // Format -1 to 1 as normal numbers instead of <number>m (milli) which d3
+              // does out of the box to align with various standards but which can be
+              // commonly confused for M (million).
+              const number = n as number;
+              if (number > -1 && number < 1) {
+                return d3Format('.2r')(n);
+              }
+              return d3Format('~s')(n);
+            })
+            .tickPadding(2);
 
           const axisMargin = 2;
           const startPosition = -(totalWidth + axisMargin * i);
