@@ -299,7 +299,9 @@
   {/if}
   <ContextMenuSeparator />
   {#if span}
-    <ContextSubMenuItem text="Center around Simulated Activity" parentMenu={contextMenuComponent}>
+    <ContextSubMenuItem text="Zoom around Simulated Activity" parentMenu={contextMenuComponent}>
+      <ContextMenuItem on:click={() => onZoomHome()}>Reset Zoom</ContextMenuItem>
+      <ContextMenuSeparator />
       <ContextMenuItem on:click={() => onFocus(TIME_MS.MILLISECOND)}>1 Millisecond Padding</ContextMenuItem>
       <ContextMenuItem on:click={() => onFocus(TIME_MS.MILLISECOND * 10)}>10 Millisecond Padding</ContextMenuItem>
       <ContextMenuItem on:click={() => onFocus(TIME_MS.MILLISECOND * 50)}>50 Millisecond Padding</ContextMenuItem>
