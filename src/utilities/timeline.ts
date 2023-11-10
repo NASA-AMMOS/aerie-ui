@@ -605,8 +605,10 @@ export function getYAxesWithScaleDomains(
   });
 }
 
-/* TODO docs and tests */
-/* TODO this would all be so much easier if we just gave things UUIDs instead of incrementing numerical ids..  */
+/* TODO this would all be much easier if we just gave things UUIDs instead of incrementing numerical ids.  */
+/**
+ * Duplicates the given row and internal axes, layers, and horizontal guides.
+ */
 export function duplicateRow(row: Row, timelines: Timeline[], timelineId: number): Row | null {
   const timelinesClone = structuredClone(timelines);
   const timeline = timelinesClone.find(t => t.id === timelineId);
