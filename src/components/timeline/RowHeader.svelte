@@ -254,11 +254,7 @@
     pointer-events: auto;
   }
 
-  .row-header :global(.st-button) {
-    z-index: 1;
-  }
-
-  .row-header :global(.st-button):hover {
+  .row-header .row-header-title-button:hover {
     background: initial;
   }
 

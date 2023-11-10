@@ -465,10 +465,6 @@
     position: relative;
   }
 
-  .active-row {
-    z-index: 1;
-  }
-
   .active-row .row-content:after {
     box-shadow: 0 0 0px 1px inset var(--st-utility-blue);
     content: ' ';
