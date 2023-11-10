@@ -375,7 +375,7 @@ export function createRow(timelines: Timeline[], args: Partial<Row> = {}): Row {
   return {
     autoAdjustHeight: false,
     expanded: true,
-    height: 200,
+    height: 160,
     horizontalGuides: [],
     id,
     layers: [],

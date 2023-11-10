@@ -86,15 +86,7 @@
         <GripVerticalIcon />
       </div>
       <div class="row-menu-container">
-        <RowHeaderMenu
-          on:toggleDirectiveVisibility
-          on:toggleSpanVisibility
-          on:editRow
-          on:deleteRow
-          on:moveRow
-          on:duplicateRow
-          on:contextMenu
-        />
+        <RowHeaderMenu on:contextMenu />
       </div>
     {/if}
 

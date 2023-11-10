@@ -144,7 +144,7 @@ import { reqExtension, reqGateway, reqHasura } from './requests';
 import { sampleProfiles } from './resources';
 import { Status } from './status';
 import { getDoyTime, getDoyTimeFromInterval, getIntervalFromDoyRange } from './time';
-import { duplicateRow } from './timeline';
+import { createRow, duplicateRow } from './timeline';
 import { showFailureToast, showSuccessToast } from './toast';
 import { generateDefaultView, validateViewJSONAgainstSchema } from './view';
 
@@ -2231,7 +2231,7 @@ const effects = {
     return false;
   },
 
-  async duplicateTimelineRow(row: Row, timeline: Timeline, timelines: Timeline[]) {
+  duplicateTimelineRow(row: Row, timeline: Timeline, timelines: Timeline[]): Row | null {
     const newRow = duplicateRow(row, timelines, timeline.id);
     if (newRow) {
       // Add row after the existing row
@@ -2240,8 +2240,10 @@ const effects = {
       if (rowIndex > -1) {
         newRows.splice(rowIndex + 1, 0, newRow);
         viewUpdateTimeline('rows', [...newRows], timeline.id);
+        return newRow;
       }
     }
+    return null;
   },
 
   async editView(view: View, user: User | null): Promise<boolean> {
@@ -3292,6 +3294,19 @@ const effects = {
       showFailureToast('Add Expansion Sequence To Activity Failed');
       return null;
     }
+  },
+
+  insertTimelineRow(row: Row, timeline: Timeline, timelines: Timeline[]): Row | null {
+    const newRow = createRow(timelines);
+    // Add row after the existing row
+    const newRows = timeline.rows ?? [];
+    const rowIndex = newRows.findIndex(r => r.id === row.id);
+    if (rowIndex > -1) {
+      newRows.splice(rowIndex + 1, 0, newRow);
+      viewUpdateTimeline('rows', [...newRows], timeline.id);
+      return newRow;
+    }
+    return null;
   },
 
   async loadViewFromFile(files: FileList): Promise<{ definition: ViewDefinition | null; errors?: string[] }> {

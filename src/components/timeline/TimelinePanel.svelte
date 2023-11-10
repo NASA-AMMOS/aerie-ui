@@ -184,14 +184,17 @@
     return { [rowId]: visible };
   }
 
-  function onEditRow(event: CustomEvent<Row>) {
-    const { detail: row } = event;
-
+  function editRow(row: Row) {
     // Open the timeline editor panel on the right.
     viewTogglePanel({ state: true, type: 'right', update: { rightComponentTop: 'TimelineEditorPanel' } });
 
     // Set row to edit.
     viewSetSelectedRow(row.id);
+  }
+
+  function onEditRow(event: CustomEvent<Row>) {
+    const { detail: row } = event;
+    editRow(row);
   }
 
   function onDeleteRow(event: CustomEvent<Row>) {
@@ -202,7 +205,20 @@
   function onDuplicateRow(event: CustomEvent<Row>) {
     const { detail: row } = event;
     if (timeline) {
-      effects.duplicateTimelineRow(row, timeline, timelines);
+      const newRow = effects.duplicateTimelineRow(row, timeline, timelines);
+      if (newRow) {
+        editRow(newRow);
+      }
+    }
+  }
+
+  function onInsertRow(event: CustomEvent<Row>) {
+    const { detail: row } = event;
+    if (timeline) {
+      const newRow = effects.insertTimelineRow(row, timeline, timelines);
+      if (newRow) {
+        editRow(newRow);
+      }
     }
   }
 </script>
@@ -289,6 +305,7 @@
       on:editRow={onEditRow}
       on:deleteRow={onDeleteRow}
       on:duplicateRow={onDuplicateRow}
+      on:insertRow={onInsertRow}
     />
   </svelte:fragment>
 </Panel>

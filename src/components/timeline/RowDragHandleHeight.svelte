@@ -42,14 +42,13 @@
   div {
     background-color: var(--st-gray-20);
     cursor: row-resize;
-    height: 3px;
+    height: 2px;
     width: 100%;
   }
 
   .row-drag-handle-height:hover,
   .row-drag-handle-height:active {
     background-color: var(--st-gray-30);
-    /* transform: scaleY(2.2); */
     z-index: 4;
   }
 </style>

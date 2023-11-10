@@ -234,12 +234,6 @@
       on:mouseDownRowMove
       on:mouseUpRowMove
       on:toggleRowExpansion
-      on:toggleDirectiveVisibility
-      on:toggleSpanVisibility
-      on:editRow
-      on:deleteRow
-      on:moveRow
-      on:duplicateRow
       on:contextMenu
     />
 

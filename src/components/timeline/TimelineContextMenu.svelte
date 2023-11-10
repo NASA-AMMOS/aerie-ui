@@ -187,6 +187,10 @@
     dispatch('moveRow', { direction: 'down', row });
   }
 
+  function onInsertRow() {
+    dispatch('insertRow', row);
+  }
+
   function onDuplicateRow() {
     dispatch('duplicateRow', row);
   }
@@ -406,6 +410,7 @@
   <ContextMenuItem on:click={onEditRow}>Edit Row</ContextMenuItem>
   <ContextMenuItem on:click={onMoveRowUp}>Move Row Up</ContextMenuItem>
   <ContextMenuItem on:click={onMoveRowDown}>Move Row Down</ContextMenuItem>
+  <ContextMenuItem on:click={onInsertRow}>Insert Row</ContextMenuItem>
   <ContextMenuItem on:click={onDuplicateRow}>Duplicate Row</ContextMenuItem>
   <ContextMenuItem on:click={onDeleteRow}>Delete Row</ContextMenuItem>
   {#if hasActivityLayer}

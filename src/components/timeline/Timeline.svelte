@@ -462,6 +462,7 @@
     on:deleteRow
     on:moveRow={onMoveRow}
     on:duplicateRow
+    on:insertRow
   />
 </div>
 
