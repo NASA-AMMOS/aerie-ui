@@ -376,8 +376,8 @@
         <ContextMenuItem on:click={() => onFocus(TIME_MS.DAY * 7)}>1 Week Padding</ContextMenuItem>
         <ContextMenuItem on:click={() => onFocus(TIME_MS.MONTH)}>1 Month Padding</ContextMenuItem>
         <ContextMenuItem on:click={() => onFocus(TIME_MS.YEAR)}>1 Year Padding</ContextMenuItem>
-        <ContextMenuSeparator />
       </ContextSubMenuItem>
+      <ContextMenuSeparator />
     {:else}
       <ContextSubMenuItem
         text={`Zoom${activityDirective ? ' around Activity Directive' : ''}`}

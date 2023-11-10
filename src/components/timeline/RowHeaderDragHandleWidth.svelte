@@ -2,6 +2,7 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import { ViewConstants } from '../../enums/view';
 
   export let rowHeaderWidth: number = 0;
   export let width: number = 2;
@@ -17,7 +18,9 @@
 
     const dx = event.clientX - clientX;
     const newWidth = rowHeaderWidth + dx;
-    dispatch('updateRowHeaderWidth', { newWidth: newWidth >= 152 ? newWidth : 152 });
+    dispatch('updateRowHeaderWidth', {
+      newWidth: newWidth >= ViewConstants.MIN_MARGIN_LEFT ? newWidth : ViewConstants.MIN_MARGIN_LEFT,
+    });
 
     clientX = event.clientX;
     event.stopPropagation();

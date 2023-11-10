@@ -9,6 +9,7 @@
   import GripVerticalIcon from 'bootstrap-icons/icons/grip-vertical.svg?component';
   import { onMount } from 'svelte';
   import { dndzone } from 'svelte-dnd-action';
+  import { ViewConstants } from '../../../enums/view';
   import { activityTypes, maxTimeRange, viewTimeRange } from '../../../stores/plan';
   import {
     externalResources,
@@ -87,9 +88,28 @@
     viewUpdateRow(name, value);
   }
 
+  function updateRowMinHeight(event: Event) {
+    const { name, value } = getTarget(event);
+    if (typeof value === 'number' && !isNaN(value)) {
+      if (value >= ViewConstants.MIN_ROW_HEIGHT) {
+        viewUpdateRow(name, value);
+      }
+    }
+  }
+
   function updateTimelineEvent(event: Event) {
     const { name, value } = getTarget(event);
     viewUpdateTimeline(name, value);
+  }
+
+  function updateTimelineMarginLeft(event: Event) {
+    const { name, value } = getTarget(event);
+    if (typeof value === 'number' && !isNaN(value)) {
+      if (value >= ViewConstants.MIN_MARGIN_LEFT) {
+        viewUpdateRow(name, value);
+        viewUpdateTimeline(name, value);
+      }
+    }
   }
 
   function updateYAxisTickCount(event: Event, yAxis: Axis) {
@@ -467,18 +487,19 @@
         <fieldset class="editor-section">
           <div class="st-typography-medium editor-section-header">Margins</div>
           <CssGrid columns="1fr 1fr" gap="8px" class="editor-section-grid">
-            <Input>
-              <label for="marginLeft">Margin Left</label>
-              <input
-                min={0}
-                class="st-input w-100"
-                name="marginLeft"
-                type="number"
-                value={$selectedTimeline.marginLeft}
-                on:input|stopPropagation={updateTimelineEvent}
-              />
-            </Input>
-
+            <form on:submit={event => event.preventDefault()}>
+              <Input>
+                <label for="marginLeft">Margin Left</label>
+                <input
+                  min={ViewConstants.MIN_MARGIN_LEFT}
+                  class="st-input w-100"
+                  name="marginLeft"
+                  type="number"
+                  value={$selectedTimeline.marginLeft}
+                  on:input|stopPropagation={updateTimelineMarginLeft}
+                />
+              </Input>
+            </form>
             <Input>
               <label for="marginRight">Margin Right</label>
               <input
@@ -683,17 +704,20 @@
           </Input>
         </div>
         <CssGrid columns="1fr 1fr" gap="8px" class="editor-section-grid">
-          <Input>
-            <label for="marginLeft">Row Height</label>
-            <input
-              disabled={$selectedRow.autoAdjustHeight}
-              class="st-input w-100"
-              name="height"
-              type="number"
-              value={$selectedRow.height}
-              on:input|stopPropagation={updateRowEvent}
-            />
-          </Input>
+          <form on:submit={event => event.preventDefault()}>
+            <Input>
+              <label for="marginLeft">Row Height</label>
+              <input
+                min={ViewConstants.MIN_ROW_HEIGHT}
+                disabled={$selectedRow.autoAdjustHeight}
+                class="st-input w-100"
+                name="height"
+                type="number"
+                value={$selectedRow.height}
+                on:input|stopPropagation={updateRowMinHeight}
+              />
+            </Input>
+          </form>
           <Input>
             <label for="marginLeft">Resize Mode</label>
             <select
@@ -1080,6 +1104,10 @@
     overflow-x: hidden;
     overflow-y: auto;
     padding-bottom: 16px;
+  }
+
+  :global(.editor-section-grid form) {
+    display: grid;
   }
 
   :global(.editor-section-grid) {
