@@ -9,12 +9,15 @@
   const dispatch = createEventDispatcher();
 
   let dragElement: HTMLElement;
+  let previousHeight: number = 0;
 
   function onMouseMove(event: MouseEvent): void {
     const dy = event.clientY - dragElement.getBoundingClientRect().y;
-    const newHeight = rowHeight + dy;
-    if (newHeight >= ViewConstants.MIN_ROW_HEIGHT) {
+    const newHeight = Math.max(rowHeight + dy, ViewConstants.MIN_ROW_HEIGHT);
+
+    if (newHeight !== previousHeight) {
       dispatch('updateRowHeight', { newHeight });
+      previousHeight = newHeight;
     }
   }
 
