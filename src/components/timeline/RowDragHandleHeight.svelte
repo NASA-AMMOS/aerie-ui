@@ -4,33 +4,28 @@
   import { createEventDispatcher } from 'svelte';
   import { ViewConstants } from '../../enums/view';
 
-  export let rowHeight: number = 0;
-
   const dispatch = createEventDispatcher();
 
-  let clientY: number | null = null;
-  let oldHeight: number = rowHeight;
+  let parentElement: HTMLElement | null = null;
 
   function onMouseMove(event: MouseEvent): void {
-    if (clientY == null) {
-      return;
-    }
+    const parentY = parentElement?.getBoundingClientRect().y;
 
-    const dy = event.clientY - clientY;
-    const newHeight = oldHeight + dy;
-    if (newHeight >= ViewConstants.MIN_ROW_HEIGHT) {
-      dispatch('updateRowHeight', { newHeight });
+    if (parentY !== undefined) {
+      const newHeight = event.clientY - parentY;
+      if (newHeight >= ViewConstants.MIN_ROW_HEIGHT) {
+        dispatch('updateRowHeight', { newHeight });
+      }
     }
   }
 
   function onMouseDown(event: MouseEvent): void {
-    clientY = event.clientY;
-    oldHeight = rowHeight;
+    parentElement = (event.target as HTMLElement).parentElement ?? null;
     document.addEventListener('mousemove', onMouseMove, false);
   }
 
   function onMouseUp(): void {
-    clientY = null;
+    parentElement = null;
     document.removeEventListener('mousemove', onMouseMove, false);
   }
 </script>

@@ -389,7 +389,7 @@
 
   <!-- Drag Handle for Row Height Resizing. -->
   {#if !autoAdjustHeight && expanded}
-    <RowDragHandleHeight rowHeight={drawHeight} on:updateRowHeight={onUpdateRowHeightDrag} />
+    <RowDragHandleHeight on:updateRowHeight={onUpdateRowHeightDrag} />
   {/if}
 </div>
 
