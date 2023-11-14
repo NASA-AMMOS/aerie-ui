@@ -38,15 +38,11 @@
   let cursorLeft = 0;
   let cursorTooltip = '';
   let cursorVisible = false;
-  let drawingRange = false;
   let gTimeSelectorContainer: SVGGElement;
   let svgSelectorContainer: SVGElement;
   let histogramContainer: Element;
-  let movingSlider = false;
   let numBinsMax = 300;
   let numBinsMin = 50;
-  let resizingSliderLeft = false;
-  let resizingSliderRight = false;
   let timelineHovering = false;
   let windowMin: number | undefined;
   let windowMax: number | undefined;
