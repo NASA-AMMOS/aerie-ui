@@ -4,35 +4,31 @@
   import { createEventDispatcher } from 'svelte';
   import { ViewConstants } from '../../enums/view';
 
+  export let rowHeight: number = 0;
+
   const dispatch = createEventDispatcher();
 
-  let parentElement: HTMLElement | null = null;
+  let dragElement: HTMLElement;
 
   function onMouseMove(event: MouseEvent): void {
-    const parentY = parentElement?.getBoundingClientRect().y;
-
-    if (parentY !== undefined) {
-      const newHeight = event.clientY - parentY;
-      if (newHeight >= ViewConstants.MIN_ROW_HEIGHT) {
-        dispatch('updateRowHeight', { newHeight });
-      }
+    const newHeight = rowHeight + (event.clientY - dragElement.getBoundingClientRect().y);
+    if (newHeight >= ViewConstants.MIN_ROW_HEIGHT) {
+      dispatch('updateRowHeight', { newHeight });
     }
   }
 
-  function onMouseDown(event: MouseEvent): void {
-    parentElement = (event.target as HTMLElement).parentElement ?? null;
+  function onMouseDown(): void {
     document.addEventListener('mousemove', onMouseMove, false);
   }
 
   function onMouseUp(): void {
-    parentElement = null;
     document.removeEventListener('mousemove', onMouseMove, false);
   }
 </script>
 
 <svelte:window on:mouseup={onMouseUp} />
 
-<div class="row-drag-handle-height" role="none" on:mousedown|capture={onMouseDown} />
+<div bind:this={dragElement} class="row-drag-handle-height" role="none" on:mousedown|capture={onMouseDown} />
 
 <style>
   div {
