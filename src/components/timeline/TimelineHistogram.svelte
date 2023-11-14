@@ -4,6 +4,7 @@
   import { brushX, type BrushSelection, type D3BrushEvent } from 'd3-brush';
   import type { ScaleTime } from 'd3-scale';
   import { select, type Selection } from 'd3-selection';
+  import { zoom as d3Zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior, type ZoomTransform } from 'd3-zoom';
   import { createEventDispatcher } from 'svelte';
   import type { ActivityDirective } from '../../types/activity';
   import type { ConstraintResult } from '../../types/constraint';
@@ -22,6 +23,7 @@
   export let planStartTimeYmd: string;
   export let simulationDataset: SimulationDataset | null = null;
   export let spans: Span[] = [];
+  export let timelineZoomTransform: ZoomTransform | null;
   export let viewTimeRange: TimeRange = { end: 0, start: 0 };
   export let xScaleMax: ScaleTime<number, number> | null = null;
   export let xScaleView: ScaleTime<number, number> | null = null;
@@ -38,7 +40,8 @@
   let cursorVisible = false;
   let drawingRange = false;
   let gTimeSelectorContainer: SVGGElement;
-  let histogramContainer: HTMLDivElement;
+  let svgSelectorContainer: SVGElement;
+  let histogramContainer: Element;
   let movingSlider = false;
   let numBinsMax = 300;
   let numBinsMin = 50;
@@ -47,6 +50,7 @@
   let timelineHovering = false;
   let windowMin: number | undefined;
   let windowMax: number | undefined;
+  let zoom: ZoomBehavior<SVGElement, unknown>;
 
   $: if (drawWidth && xScaleMax) {
     const xBrush = brushX()
@@ -203,6 +207,37 @@
     });
   }
 
+  $: if (histogramContainer && drawWidth) {
+    const svgSelection = select(svgSelectorContainer) as Selection<SVGElement, unknown, null, undefined>;
+    zoom = d3Zoom<SVGElement, unknown>()
+      .on('zoom', zoomed)
+      .scaleExtent([1, Infinity])
+      .translateExtent([
+        [0, 0],
+        [drawWidth, drawHeight],
+      ])
+      .wheelDelta((e: WheelEvent) => {
+        // Override default d3 wheelDelta function to remove ctrl key for modifying zoom amount
+        // https://d3js.org/d3-zoom#zoom_wheelDelta
+        return -e.deltaY * (e.deltaMode === 1 ? 0.05 : e.deltaMode ? 1 : 0.002);
+      });
+    svgSelection.call(zoom.transform, timelineZoomTransform || zoomIdentity);
+    svgSelection
+      .call(zoom)
+      .on('mousedown.zoom', null)
+      .on('touchstart.zoom', null)
+      .on('touchmove.zoom', null)
+      .on('touchend.zoom', null);
+  }
+
+  function zoomed(e: D3ZoomEvent<HTMLCanvasElement, any>) {
+    // Prevent dispatch when zoom did not originate from this row (i.e. propagated from zoomTransform)
+    if (e.transform && timelineZoomTransform && e.transform.toString() === timelineZoomTransform.toString()) {
+      return;
+    }
+    dispatch('zoom', e);
+  }
+
   function onBrushExtentChange(event: D3BrushEvent<number[]>) {
     if (xScaleMax) {
       let start: number;
@@ -278,7 +313,7 @@
       cursorTooltip = getDoyTime(cursorTime, false);
 
       // Only dispatch a cursor change if we're just hovering
-      if (!movingSlider && !drawingRange && !resizingSliderLeft && !resizingSliderRight) {
+      if (!brushing) {
         dispatch('cursorTimeChange', cursorTime);
       }
     } else {
@@ -330,7 +365,7 @@
     </div>
   {/if}
   {#if drawWidth > 0}
-    <svg>
+    <svg bind:this={svgSelectorContainer}>
       <g bind:this={gTimeSelectorContainer} />
     </svg>
   {/if}

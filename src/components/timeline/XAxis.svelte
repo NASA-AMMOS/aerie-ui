@@ -2,6 +2,9 @@
 
 <script lang="ts">
   import type { ScaleTime } from 'd3-scale';
+  import { select, type Selection } from 'd3-selection';
+  import { zoom as d3Zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior, type ZoomTransform } from 'd3-zoom';
+  import { createEventDispatcher } from 'svelte';
   import type { ConstraintResult } from '../../types/constraint';
   import type { TimeRange, XAxisTick } from '../../types/timeline';
   import { getTimeZoneName } from '../../utilities/time';
@@ -12,14 +15,54 @@
   export let drawHeight: number = 70;
   export let drawWidth: number = 0;
   export let marginLeft: number = 50;
+  export let timelineZoomTransform: ZoomTransform | null;
   export let viewTimeRange: TimeRange = { end: 0, start: 0 };
   export let xScaleView: ScaleTime<number, number> | null = null;
   export let xTicksView: XAxisTick[] = [];
 
+  const dispatch = createEventDispatcher();
   const userTimeZone = getTimeZoneName();
 
   let axisOffset = 12;
   let violationsOffset = 0;
+  let svg: SVGElement;
+  let zoom: ZoomBehavior<SVGElement, unknown>;
+
+  $: svgSelection = select(svg) as Selection<SVGElement, unknown, any, any>;
+
+  /* TODO could this be a custom svelte use action? */
+  $: if (svgSelection && drawWidth) {
+    zoom = d3Zoom<SVGElement, unknown>()
+      .on('zoom', zoomed)
+      .scaleExtent([1, Infinity])
+      .translateExtent([
+        [0, 0],
+        [drawWidth, drawHeight],
+      ])
+      .filter((e: WheelEvent) => {
+        return e.metaKey || e.button === 1;
+      })
+      .wheelDelta((e: WheelEvent) => {
+        // Override default d3 wheelDelta function to remove ctrl key for modifying zoom amount
+        // https://d3js.org/d3-zoom#zoom_wheelDelta
+        return -e.deltaY * (e.deltaMode === 1 ? 0.05 : e.deltaMode ? 1 : 0.002);
+      });
+    svgSelection.call(zoom.transform, timelineZoomTransform || zoomIdentity);
+    svgSelection.call(zoom);
+  }
+
+  $: if (timelineZoomTransform && svgSelection) {
+    // Set transform if it has changed (from other rows or elsewhere), causes zoomed event to fire
+    svgSelection.call(zoom.transform, timelineZoomTransform);
+  }
+
+  function zoomed(e: D3ZoomEvent<HTMLCanvasElement, any>) {
+    // Prevent dispatch when zoom did not originate from this row (i.e. propagated from zoomTransform)
+    if (e.transform && timelineZoomTransform && e.transform.toString() === timelineZoomTransform.toString()) {
+      return;
+    }
+    dispatch('zoom', e);
+  }
 </script>
 
 <div style="height: {drawHeight}px;" class="x-axis-content">
@@ -29,7 +72,7 @@
       {userTimeZone}
     </div>
   </div>
-  <svg style="height: {drawHeight}px; width: 100%">
+  <svg style="height: {drawHeight}px; width: {drawWidth}px;" bind:this={svg}>
     <g>
       <g transform="translate(0, {drawHeight - axisOffset * 2 + 4})">
         <RowXAxisTicks drawHeight={axisOffset * 2} {xScaleView} {xTicksView} />
