@@ -24,9 +24,9 @@
 
 <div style="height: {drawHeight}px;" class="x-axis-content">
   <div class="x-axis-time-formats" style={`width:${marginLeft}px`}>
-    <div class="x-axis-time-format st-typography-medium">UTC</div>
+    <div class="x-axis-time-format st-typography-medium">SCET (UTC)</div>
     <div class="x-axis-time-format x-axis-time-format-secondary st-typography-medium">
-      {userTimeZone}
+      SCET ({userTimeZone})
     </div>
   </div>
   <svg style="height: {drawHeight}px; width: 100%">
