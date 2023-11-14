@@ -11,7 +11,8 @@
   let dragElement: HTMLElement;
 
   function onMouseMove(event: MouseEvent): void {
-    const newHeight = rowHeight + (event.clientY - dragElement.getBoundingClientRect().y);
+    const dy = event.clientY - dragElement.getBoundingClientRect().y;
+    const newHeight = rowHeight + dy;
     if (newHeight >= ViewConstants.MIN_ROW_HEIGHT) {
       dispatch('updateRowHeight', { newHeight });
     }
