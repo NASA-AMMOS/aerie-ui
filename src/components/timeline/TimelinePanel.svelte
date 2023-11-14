@@ -49,6 +49,7 @@
   let hasUpdateSimulationPermission: boolean = false;
   let timelineId: number = 0;
   let timeline: TimelineType | undefined;
+  let timelineRef: Timeline;
   let timelineDirectiveVisibilityToggles: DirectiveVisibilityToggleMap = {};
   let timelineSpanVisibilityToggles: SpanVisibilityToggleMap = {};
 
@@ -234,7 +235,10 @@
           viewTimeRange={$viewTimeRange}
           on:toggleDirectiveVisibility={({ detail }) => onToggleAllDirectiveVisibility(detail)}
           on:viewTimeRangeChanged={({ detail: newViewTimeRange }) => {
-            $viewTimeRange = newViewTimeRange;
+            // TODO unsure of cleaner way to accomplish this without pulling xScaleMax and the
+            // zoom transform sync into TimelinePanel which feels out of scope for this component which
+            // is primarily supposed to manage store interactions?
+            timelineRef?.viewTimeRangeChanged(newViewTimeRange);
           }}
         />
         <TimelineLockControl
@@ -257,6 +261,7 @@
 
   <svelte:fragment slot="body">
     <Timeline
+      bind:this={timelineRef}
       activityDirectivesByView={$activityDirectivesByView}
       activityDirectivesMap={$activityDirectivesMap}
       constraintResults={$visibleConstraintResults}

@@ -55,7 +55,7 @@
         [drawWidth, drawHeight],
       ])
       .on('start', (event: D3BrushEvent<number[]>) => {
-        brushed(event);
+        brushed(event.selection as [number, number]);
       })
       .on('brush', (event: D3BrushEvent<number[]>) => {
         brushing = true;
@@ -94,7 +94,8 @@
           onMouseMove(handleWestX + handleWidth / 2, 0, false);
         }
 
-        brushed(event);
+        onBrushExtentChange(event);
+        brushed(event.selection as [number, number]);
       })
 
       .on('end', (event: D3BrushEvent<number[]>) => {
@@ -102,50 +103,13 @@
         if (!event.sourceEvent) {
           return;
         }
-
-        if (xScaleMax) {
-          let start: number;
-          let end: number;
-          if (!event.selection && windowMin !== undefined && windowMax !== undefined) {
-            const unixEpochTime = xScaleMax.invert(event.sourceEvent.offsetX).getTime();
-            const startDate = new Date(viewTimeRange.start).getTime();
-            const endDate = new Date(viewTimeRange.end).getTime();
-            const unixEpochTimeDuration = endDate - startDate;
-            // Center slider on user's mouse position
-            start = unixEpochTime - unixEpochTimeDuration / 2;
-            end = unixEpochTime + unixEpochTimeDuration / 2;
-
-            // Ensure slider is within bounds
-            const windowStartTime = xScaleMax.invert(windowMax).getTime();
-            const windowEndTime = xScaleMax.invert(windowMin).getTime();
-            if (unixEpochTimeDuration > windowEndTime - windowStartTime) {
-              // Cover case where duration could be unexpectedly large
-              start = windowStartTime;
-              end = windowEndTime;
-            } else if (start < windowStartTime) {
-              // Case where slider comes before entire window time range
-              start = windowStartTime;
-              end = start + unixEpochTimeDuration;
-            } else if (end > windowEndTime) {
-              // Case where slider comes after entire window time range
-              end = windowEndTime;
-              start = end - unixEpochTimeDuration;
-            }
-
-            dispatch('viewTimeRangeChanged', { end, start });
-          } else if (event.selection) {
-            start = xScaleMax.invert(event.selection[0] as number).getTime();
-            end = xScaleMax.invert(event.selection[1] as number).getTime();
-            brushed(event);
-
-            dispatch('viewTimeRangeChanged', { end, start });
-          }
-        }
+        onBrushExtentChange(event);
       });
 
     brush = select(gTimeSelectorContainer).call(xBrush);
     const extent = [new Date(viewTimeRange.start), new Date(viewTimeRange.end)].map(xScaleMax);
     brush.call(xBrush.move, extent as BrushSelection);
+    brushed(extent as [number, number]);
   }
 
   $: histogramHeight = (drawHeight / 5) * 2;
@@ -239,8 +203,50 @@
     });
   }
 
-  function brushed({ selection }: D3BrushEvent<number[]>) {
-    if (!selection || (selection[1] as number) - (selection[0] as number) === 0) {
+  function onBrushExtentChange(event: D3BrushEvent<number[]>) {
+    if (xScaleMax) {
+      let start: number;
+      let end: number;
+      if (!event.selection && windowMin !== undefined && windowMax !== undefined) {
+        const unixEpochTime = xScaleMax.invert(event.sourceEvent.offsetX).getTime();
+        const startDate = new Date(viewTimeRange.start).getTime();
+        const endDate = new Date(viewTimeRange.end).getTime();
+        const unixEpochTimeDuration = endDate - startDate;
+        // Center slider on user's mouse position
+        start = unixEpochTime - unixEpochTimeDuration / 2;
+        end = unixEpochTime + unixEpochTimeDuration / 2;
+
+        // Ensure slider is within bounds
+        const windowStartTime = xScaleMax.invert(windowMax).getTime();
+        const windowEndTime = xScaleMax.invert(windowMin).getTime();
+        if (unixEpochTimeDuration > windowEndTime - windowStartTime) {
+          // Cover case where duration could be unexpectedly large
+          start = windowStartTime;
+          end = windowEndTime;
+        } else if (start < windowStartTime) {
+          // Case where slider comes before entire window time range
+          start = windowStartTime;
+          end = start + unixEpochTimeDuration;
+        } else if (end > windowEndTime) {
+          // Case where slider comes after entire window time range
+          end = windowEndTime;
+          start = end - unixEpochTimeDuration;
+        }
+
+        dispatch('viewTimeRangeChanged', { end, start });
+      } else if (event.selection) {
+        start = xScaleMax.invert(event.selection[0] as number).getTime();
+        end = xScaleMax.invert(event.selection[1] as number).getTime();
+
+        brushed(event.selection as [number, number]);
+
+        dispatch('viewTimeRangeChanged', { end, start });
+      }
+    }
+  }
+
+  function brushed(extent: [number, number] | null) {
+    if (!extent || extent[1] - extent[0] === 0) {
       brush.attr('display', 'none');
     } else {
       brush.attr('display', 'initial');

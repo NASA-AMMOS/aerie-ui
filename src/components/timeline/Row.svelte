@@ -2,7 +2,8 @@
 
 <script lang="ts">
   import type { ScaleTime } from 'd3-scale';
-  import { select } from 'd3-selection';
+  import { select, type Selection } from 'd3-selection';
+  import { zoom as d3Zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior, type ZoomTransform } from 'd3-zoom';
   import { pick } from 'lodash-es';
   import { createEventDispatcher } from 'svelte';
   import { allResources } from '../../stores/simulation';
@@ -16,7 +17,7 @@
   import type { User } from '../../types/app';
   import type { ConstraintResult } from '../../types/constraint';
   import type { Plan } from '../../types/plan';
-  import type { Resource, SimulationDataset, Span, SpanId, SpanUtilityMaps, SpansMap } from '../../types/simulation';
+  import type { Resource, SimulationDataset, Span, SpanId, SpansMap, SpanUtilityMaps } from '../../types/simulation';
   import type {
     Axis,
     HorizontalGuide,
@@ -75,6 +76,7 @@
   export let xTicksView: XAxisTick[] = [];
   export let yAxes: Axis[] = [];
   export let user: User | null;
+  export let timelineZoomTransform: ZoomTransform | null;
 
   const dispatch = createEventDispatcher();
 
@@ -100,6 +102,7 @@
   let mouseOverGapsByLayer: Record<number, Point[]> = {};
   let overlaySvg: SVGElement;
   let yAxesWithScaleDomains: Axis[];
+  let zoom: ZoomBehavior<SVGElement, unknown>;
 
   $: onDragenter(dragenter);
   $: onDragleave(dragleave);
@@ -111,13 +114,46 @@
     heightsByLayer,
     layers.map(({ id }) => id),
   );
-  $: overlaySvgSelection = select(overlaySvg);
+  $: overlaySvgSelection = select(overlaySvg) as Selection<SVGElement, unknown, any, any>;
   $: rowClasses = classNames('row', { 'row-collapsed': !expanded });
   $: hasActivityLayer = !!layers.find(layer => layer.chartType === 'activity');
 
   // Compute scale domains for axes since it is optionally defined in the view
   $: if ($allResources && yAxes) {
     yAxesWithScaleDomains = getYAxesWithScaleDomains(yAxes, layers, resourcesByViewLayerId, viewTimeRange);
+  }
+
+  $: if (overlaySvgSelection && drawWidth) {
+    zoom = d3Zoom<SVGElement, unknown>()
+      .on('zoom', zoomed)
+      .scaleExtent([1, Infinity])
+      .translateExtent([
+        [0, 0],
+        [drawWidth, drawHeight],
+      ])
+      .filter((e: WheelEvent) => {
+        return e.metaKey || e.button === 1;
+      })
+      .wheelDelta((e: WheelEvent) => {
+        // Override default d3 wheelDelta function to remove ctrl key for modifying zoom amount
+        // https://d3js.org/d3-zoom#zoom_wheelDelta
+        return -e.deltaY * (e.deltaMode === 1 ? 0.05 : e.deltaMode ? 1 : 0.002);
+      });
+    overlaySvgSelection.call(zoom.transform, timelineZoomTransform || zoomIdentity);
+    overlaySvgSelection.call(zoom);
+  }
+
+  $: if (timelineZoomTransform && overlaySvgSelection) {
+    // Set transform if it has changed (from other rows or elsewhere), causes zoomed event to fire
+    overlaySvgSelection.call(zoom.transform, timelineZoomTransform);
+  }
+
+  function zoomed(e: D3ZoomEvent<HTMLCanvasElement, any>) {
+    // Prevent dispatch when zoom did not originate from this row (i.e. propagated from zoomTransform)
+    if (e.transform && timelineZoomTransform && e.transform.toString() === timelineZoomTransform.toString()) {
+      return;
+    }
+    dispatch('zoom', e);
   }
 
   function onDragenter(e: DragEvent | undefined): void {

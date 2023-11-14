@@ -1,8 +1,10 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { zoomIdentity, type ZoomTransform } from 'd3-zoom';
+  import { throttle } from 'lodash-es';
   import { afterUpdate, createEventDispatcher, onDestroy, onMount, tick } from 'svelte';
-  import { SOURCES, TRIGGERS, dndzone } from 'svelte-dnd-action';
+  import { dndzone, SOURCES, TRIGGERS } from 'svelte-dnd-action';
   import { viewUpdateTimeline } from '../../stores/views';
   import type { ActivityDirectiveId, ActivityDirectivesByView, ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
@@ -14,8 +16,8 @@
     SimulationDataset,
     Span,
     SpanId,
-    SpanUtilityMaps,
     SpansMap,
+    SpanUtilityMaps,
   } from '../../types/simulation';
   import type {
     DirectiveVisibilityToggleMap,
@@ -23,20 +25,20 @@
     MouseOver,
     Row,
     SpanVisibilityToggleMap,
-    TimeRange,
     Timeline,
+    TimeRange,
     XAxisTick,
   } from '../../types/timeline';
   import { clamp } from '../../utilities/generic';
   import { getDoyTime } from '../../utilities/time';
   import {
-    MAX_CANVAS_SIZE,
-    TimelineLockStatus,
     customD3Ticks,
     durationMonth,
     durationWeek,
     durationYear,
     getXScale,
+    MAX_CANVAS_SIZE,
+    TimelineLockStatus,
   } from '../../utilities/timeline';
   import TimelineRow from './Row.svelte';
   import RowHeaderDragHandleWidth from './RowHeaderDragHandleWidth.svelte';
@@ -74,6 +76,7 @@
 
   const dispatch = createEventDispatcher();
 
+  let timelineZoomTransform: ZoomTransform | null = null;
   let clientWidth: number = 0;
   let contextMenu: MouseOver | null;
   let contextMenuComponent: TimelineContextMenu;
@@ -96,6 +99,16 @@
   let xAxisDiv: HTMLDivElement;
   let xAxisDrawHeight: number = 64;
   let xTicksView: XAxisTick[] = [];
+
+  let throttledZoom = throttle(onZoom, 16, {
+    leading: true,
+    trailing: true,
+  });
+
+  let throttledHistogramViewTimeRangeChanged = throttle(onHistogramViewTimeRangeChanged, 16, {
+    leading: true,
+    trailing: true,
+  });
 
   $: rows = timeline?.rows || [];
   $: drawWidth = clientWidth > 0 ? clientWidth - (timeline?.marginLeft ?? 0) - (timeline?.marginRight ?? 0) : 0;
@@ -200,6 +213,14 @@
     dispatch('updateRows', rows);
   }
 
+  function handleScroll(event: WheelEvent) {
+    // Prevent default scroll behavior when meta key is pressed
+    // as to not interfere with certain zoom scenarios
+    if (event.metaKey) {
+      event.preventDefault();
+    }
+  }
+
   function onKeyDown(event: KeyboardEvent) {
     if (event.key === 't' && event.ctrlKey) {
       cursorEnabled = !cursorEnabled;
@@ -232,8 +253,26 @@
     }
   }
 
-  function onHistogramViewTimeRangeChanged(event: CustomEvent<TimeRange>) {
-    dispatch('viewTimeRangeChanged', event.detail);
+  export function viewTimeRangeChanged(viewTimeRange: TimeRange, zoomTransform?: ZoomTransform) {
+    dispatch('viewTimeRangeChanged', viewTimeRange);
+    // Assign zoom transform if provided to syncronize all d3 zoom handlers
+    if (zoomTransform) {
+      timelineZoomTransform = zoomTransform;
+    } else {
+      // Otherwise compute the zoom transform based on the view extent
+      const extent = [viewTimeRange.start, viewTimeRange.end];
+      const transform = zoomIdentity
+        // width of full domain relative to the view domain
+        .scale(Math.max(1, drawWidth / (xScaleMax(extent[1]) - xScaleMax(extent[0]))))
+        // Shift the transform to account for starting value
+        .translate(-xScaleMax(extent[0]), 0);
+      timelineZoomTransform = transform;
+    }
+  }
+
+  async function onHistogramViewTimeRangeChanged(event: CustomEvent<TimeRange>) {
+    await tick();
+    viewTimeRangeChanged(event.detail);
     mouseOver = null;
   }
 
@@ -297,6 +336,13 @@
     contextMenu = { ...e.detail, row };
     tooltip.hide();
   }
+
+  async function onZoom(e: CustomEvent) {
+    await tick();
+    const newScale = e.detail.transform.rescaleX(xScaleMax).domain();
+    let [start, end] = newScale;
+    viewTimeRangeChanged({ end: end.getTime(), start: start.getTime() }, e.detail.transform);
+  }
 </script>
 
 <svelte:window on:keydown={onKeyDown} />
@@ -307,7 +353,6 @@
       planEndTimeDoy={plan?.end_time_doy}
       planStartTimeDoy={plan?.start_time_doy}
       width={timeline?.marginLeft}
-      on:viewTimeRangeChanged={onHistogramViewTimeRangeChanged}
     />
     <div class="timeline-histogram-container">
       <TimelineHistogram
@@ -326,7 +371,7 @@
         {xScaleView}
         {xScaleMax}
         on:cursorTimeChange={onHistogramCursorTimeChanged}
-        on:viewTimeRangeChanged={onHistogramViewTimeRangeChanged}
+        on:viewTimeRangeChanged={throttledHistogramViewTimeRangeChanged}
       />
     </div>
   </div>
@@ -345,7 +390,6 @@
         {viewTimeRange}
         {xScaleView}
         {xTicksView}
-        on:viewTimeRangeChanged
       />
     </div>
     <TimelineSimulationRange
@@ -372,6 +416,7 @@
       style="max-height: {rowsMaxHeight}px"
       on:consider={handleDndConsiderRows}
       on:finalize={handleDndFinalizeRows}
+      on:wheel={handleScroll}
       use:dndzone={{ dragDisabled: rowDragMoveDisabled, items: rows, type: 'rows' }}
     >
       {#each rows as row (row.id)}
@@ -410,6 +455,7 @@
             {xScaleView}
             {xTicksView}
             yAxes={row.yAxes}
+            {timelineZoomTransform}
             on:contextMenu={e => onContextMenu(e, row)}
             on:dblClick
             on:deleteActivityDirective
@@ -419,6 +465,7 @@
             on:mouseOver={e => (mouseOver = e.detail)}
             on:toggleRowExpansion={onToggleRowExpansion}
             on:updateRowHeight={onUpdateRowHeight}
+            on:zoom={throttledZoom}
           />
         </div>
       {/each}
@@ -441,9 +488,8 @@
     on:jumpToSpan
     on:hide={() => (contextMenu = null)}
     on:updateVerticalGuides
-    on:viewTimeRangeChanged
-    on:viewTimeRangeReset={() => dispatch('viewTimeRangeChanged', maxTimeRange)}
-    on:viewTimeRangeChanged={onHistogramViewTimeRangeChanged}
+    on:viewTimeRangeReset={() => viewTimeRangeChanged(maxTimeRange)}
+    on:viewTimeRangeChanged={event => viewTimeRangeChanged(event.detail)}
     {simulation}
     {simulationDataset}
     {spansMap}
