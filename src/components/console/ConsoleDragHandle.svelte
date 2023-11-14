@@ -10,8 +10,8 @@
 
   const dispatch = createEventDispatcher();
 
-  let clientY: number | null = null;
-  let oldHeight: number = rowHeight;
+  let dragElement: HTMLElement;
+  let previousHeight: number = 0;
 
   function getPixelHeight(value: string | number): number {
     if (typeof value === 'string' && /%/.test(value)) {
@@ -23,24 +23,20 @@
   }
 
   function onMouseMove(event: MouseEvent): void {
-    if (clientY == null) {
-      return;
+    const dy = event.clientY - dragElement.getBoundingClientRect().y;
+    const newHeight = clamp(rowHeight - dy, getPixelHeight(minHeight), getPixelHeight(maxHeight));
+
+    if (newHeight !== previousHeight) {
+      dispatch('updateRowHeight', { newHeight });
+      previousHeight = newHeight;
     }
-
-    const dy = event.clientY - clientY;
-    const newHeight = oldHeight - dy;
-
-    dispatch('updateRowHeight', { newHeight: clamp(newHeight, getPixelHeight(minHeight), getPixelHeight(maxHeight)) });
   }
 
-  function onMouseDown(event: MouseEvent): void {
-    clientY = event.clientY;
-    oldHeight = rowHeight;
+  function onMouseDown(): void {
     document.addEventListener('mousemove', onMouseMove, false);
   }
 
   function onMouseUp(): void {
-    clientY = null;
     document.removeEventListener('mousemove', onMouseMove, false);
   }
 </script>
@@ -48,7 +44,12 @@
 <svelte:window on:mouseup={onMouseUp} />
 
 <div class="console-drag-handle-container">
-  <div class="console-drag-handle-height" role="none" on:mousedown|preventDefault={onMouseDown} />
+  <div
+    bind:this={dragElement}
+    class="console-drag-handle-height"
+    role="none"
+    on:mousedown|preventDefault={onMouseDown}
+  />
 </div>
 
 <style>
