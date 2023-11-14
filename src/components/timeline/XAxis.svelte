@@ -7,6 +7,7 @@
   import { createEventDispatcher } from 'svelte';
   import type { ConstraintResult } from '../../types/constraint';
   import type { TimeRange, XAxisTick } from '../../types/timeline';
+  import { isMetaOrCtrlPressed } from '../../utilities/keyboardEvents';
   import { getTimeZoneName } from '../../utilities/time';
   import ConstraintViolations from './ConstraintViolations.svelte';
   import RowXAxisTicks from './RowXAxisTicks.svelte';
@@ -40,7 +41,7 @@
         [drawWidth, drawHeight],
       ])
       .filter((e: WheelEvent) => {
-        return e.metaKey || e.button === 1;
+        return isMetaOrCtrlPressed(e) || e.button === 1;
       })
       .wheelDelta((e: WheelEvent) => {
         // Override default d3 wheelDelta function to remove ctrl key for modifying zoom amount
