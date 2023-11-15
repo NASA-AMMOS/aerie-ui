@@ -2333,8 +2333,11 @@ const effects = {
     user: User | null,
   ): Promise<ActivityDirectiveValidationStatus[]> {
     try {
-      const query = convertToQuery(gql.SUB_ACTIVITY_DIRECTIVE_VALIDATIONS);
-      const data = await reqHasura<ActivityDirectiveValidationStatus[]>(query, { planId }, user);
+      const data = await reqHasura<ActivityDirectiveValidationStatus[]>(
+        gql.SUB_ACTIVITY_DIRECTIVE_VALIDATIONS,
+        { planId },
+        user,
+      );
 
       const { activity_directive_validations: activityDirectiveValidations } = data;
 
