@@ -12,12 +12,24 @@
 
   let consoleHeight: number = 0;
   let consoleHeightString: string;
+  let currentSelectedConsoleIndex: number | null = null;
   let isOpen: boolean = false;
   let previousConsoleHeight: number = 300;
 
   $: {
     consoleHeightString = `${consoleHeight + consoleHeaderHeight}px`;
     dispatch('resize', consoleHeightString);
+  }
+
+  function onSelectTab(event: CustomEvent<{ index: number }>) {
+    const { index } = event.detail;
+    if (currentSelectedConsoleIndex === index) {
+      onToggle();
+    } else {
+      toggleConsole(true);
+    }
+
+    currentSelectedConsoleIndex = index;
   }
 
   function onToggle() {
@@ -45,7 +57,7 @@
     {#if isOpen}
       <ConsoleDragHandle maxHeight="75%" rowHeight={consoleHeight} on:updateRowHeight={onUpdateRowHeight} />
     {/if}
-    <Tabs on:select-tab={onToggle}>
+    <Tabs on:select-tab={onSelectTab}>
       <svelte:fragment slot="tab-list">
         <div class="console-tabs-container">
           <div class="console-tabs">
