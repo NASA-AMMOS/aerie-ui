@@ -58,7 +58,7 @@ export function showFailureToast(text: string): void {
       x: 0,
       y: 30,
     },
-    position: 'left',
+    position: 'right',
     text,
   });
   showToast(toast);
@@ -76,7 +76,7 @@ export function showSuccessToast(text: string): void {
       x: 0,
       y: 30,
     },
-    position: 'left',
+    position: 'right',
     text,
   });
   showToast(toast);
