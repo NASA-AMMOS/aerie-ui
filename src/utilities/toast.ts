@@ -54,6 +54,10 @@ export function showFailureToast(text: string): void {
     close: false,
     duration: 3000,
     gravity: 'bottom',
+    offset: {
+      x: 0,
+      y: 30,
+    },
     position: 'left',
     text,
   });
@@ -68,6 +72,10 @@ export function showSuccessToast(text: string): void {
     close: false,
     duration: 3000,
     gravity: 'bottom',
+    offset: {
+      x: 0,
+      y: 30,
+    },
     position: 'left',
     text,
   });
