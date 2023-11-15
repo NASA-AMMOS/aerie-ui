@@ -35,3 +35,26 @@ export interface SimulationDatasetError extends BaseError {
     utcTimeDoy?: string;
   };
 }
+
+export interface ActivityDirectiveInstantiationError {
+  extraneousArguments: string[];
+  missingArguments: string[];
+  unconstructableArguments: {
+    failure: string;
+    name: string;
+  }[];
+}
+
+export interface ActivityDirectiveUnknownTypeError {
+  noSuchActivityError: {
+    activity_type: string;
+    message: string;
+  };
+}
+
+export interface ActivityDirectiveValidationNoticesError {
+  validationNotices: {
+    message: string;
+    subjects: string[];
+  };
+}

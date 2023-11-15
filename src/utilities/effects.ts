@@ -25,6 +25,7 @@ import type {
   ActivityDirectiveInsertInput,
   ActivityDirectiveRevision,
   ActivityDirectiveSetInput,
+  ActivityDirectiveValidationStatus,
   ActivityDirectivesMap,
   ActivityPreset,
   ActivityPresetId,
@@ -2320,6 +2321,27 @@ const effects = {
         return activityDirectiveRevisions;
       } else {
         throw Error('Unable to retrieve activity directive changelog');
+      }
+    } catch (e) {
+      catchError(e as Error);
+      return [];
+    }
+  },
+
+  async getActivityDirectiveValidations(
+    planId: number,
+    user: User | null,
+  ): Promise<ActivityDirectiveValidationStatus[]> {
+    try {
+      const query = convertToQuery(gql.SUB_ACTIVITY_DIRECTIVE_VALIDATIONS);
+      const data = await reqHasura<ActivityDirectiveValidationStatus[]>(query, { planId }, user);
+
+      const { activity_directive_validations: activityDirectiveValidations } = data;
+
+      if (activityDirectiveValidations != null) {
+        return activityDirectiveValidations;
+      } else {
+        throw Error('Unable to retrieve activity directive validations');
       }
     } catch (e) {
       catchError(e as Error);
