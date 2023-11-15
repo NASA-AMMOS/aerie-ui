@@ -24,7 +24,7 @@
   import { hexToRgba, shadeColor } from '../../utilities/color';
   import effects from '../../utilities/effects';
   import { isRightClick } from '../../utilities/generic';
-  import { isDeleteEvent } from '../../utilities/keyboardEvents';
+  import { isDeleteEvent, isMetaOrCtrlPressed } from '../../utilities/keyboardEvents';
   import {
     getActivityDirectiveStartTimeMs,
     getDoyTime,
@@ -259,7 +259,8 @@
   }
 
   function onMousedown(e: MouseEvent | undefined): void {
-    if (e) {
+    // Do not process events if meta/ctrl is pressed to avoid interaction conflicts with zoom/pan
+    if (e && !isMetaOrCtrlPressed(e)) {
       const { offsetX, offsetY } = e;
       const activityDirectives = searchQuadtreeRect<ActivityDirective>(
         quadtreeActivityDirectives,
