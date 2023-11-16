@@ -263,55 +263,67 @@
         <button class="count all" class:selected={selectedCategory === 'all'} value="all" on:click={onSelectCategory}>
           All ({counts.all})
         </button>
-        <button class="count" class:selected={selectedCategory === 'extra'} value="extra" on:click={onSelectCategory}>
-          <WarningExtraIcon class="red-icon" />{counts.extra} extra parameter{counts.extra === 1 ? '' : 's'}
-        </button>
-        <button
-          class="count"
-          class:selected={selectedCategory === 'missing'}
-          value="missing"
-          on:click={onSelectCategory}
-        >
-          <WarningMissingIcon class="red-icon" />{counts.missing} missing parameter{counts.missing === 1 ? '' : 's'}
-        </button>
-        <button
-          class="count"
-          class:selected={selectedCategory === 'wrongType'}
-          value="wrongType"
-          on:click={onSelectCategory}
-        >
-          <WarningUnknownIcon class="red-icon" />{counts.wrongType} wrong parameter type{counts.wrongType === 1
-            ? ''
-            : 's'}
-        </button>
-        <button
-          class="count"
-          class:selected={selectedCategory === 'invalidParameter'}
-          value="invalidParameter"
-          on:click={onSelectCategory}
-        >
-          <WarningIcon class="orange-icon" />{counts.invalidParameter} invalid parameter{counts.invalidParameter === 1
-            ? ''
-            : 's'}
-        </button>
-        <button
-          class="count"
-          class:selected={selectedCategory === 'invalidAnchor'}
-          value="invalidAnchor"
-          on:click={onSelectCategory}
-        >
-          <WarningIcon class="orange-icon" />{counts.invalidAnchor} invalid anchor{counts.invalidAnchor === 1
-            ? ''
-            : 's'}
-        </button>
-        <button
-          class="count"
-          class:selected={selectedCategory === 'outOfBounds'}
-          value="outOfBounds"
-          on:click={onSelectCategory}
-        >
-          <OutsideBoundsIcon />{counts.outOfBounds} outside plan bounds
-        </button>
+        {#if counts.extra}
+          <button class="count" class:selected={selectedCategory === 'extra'} value="extra" on:click={onSelectCategory}>
+            <WarningExtraIcon class="red-icon" />{counts.extra} extra parameter{counts.extra === 1 ? '' : 's'}
+          </button>
+        {/if}
+        {#if counts.missing}
+          <button
+            class="count"
+            class:selected={selectedCategory === 'missing'}
+            value="missing"
+            on:click={onSelectCategory}
+          >
+            <WarningMissingIcon class="red-icon" />{counts.missing} missing parameter{counts.missing === 1 ? '' : 's'}
+          </button>
+        {/if}
+        {#if counts.wrongType}
+          <button
+            class="count"
+            class:selected={selectedCategory === 'wrongType'}
+            value="wrongType"
+            on:click={onSelectCategory}
+          >
+            <WarningUnknownIcon class="red-icon" />{counts.wrongType} wrong parameter type{counts.wrongType === 1
+              ? ''
+              : 's'}
+          </button>
+        {/if}
+        {#if counts.invalidParameter}
+          <button
+            class="count"
+            class:selected={selectedCategory === 'invalidParameter'}
+            value="invalidParameter"
+            on:click={onSelectCategory}
+          >
+            <WarningIcon class="orange-icon" />{counts.invalidParameter} invalid parameter{counts.invalidParameter === 1
+              ? ''
+              : 's'}
+          </button>
+        {/if}
+        {#if counts.invalidAnchor}
+          <button
+            class="count"
+            class:selected={selectedCategory === 'invalidAnchor'}
+            value="invalidAnchor"
+            on:click={onSelectCategory}
+          >
+            <WarningIcon class="orange-icon" />{counts.invalidAnchor} invalid anchor{counts.invalidAnchor === 1
+              ? ''
+              : 's'}
+          </button>
+        {/if}
+        {#if counts.outOfBounds}
+          <button
+            class="count"
+            class:selected={selectedCategory === 'outOfBounds'}
+            value="outOfBounds"
+            on:click={onSelectCategory}
+          >
+            <OutsideBoundsIcon />{counts.outOfBounds} outside plan bounds
+          </button>
+        {/if}
       </div>
       <div class="errors-table">
         <DataGrid
