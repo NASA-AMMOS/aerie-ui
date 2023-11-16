@@ -2,17 +2,17 @@
 
 <script lang="ts">
   import WarningIcon from '@nasa-jpl/stellar/icons/warning.svg?component';
+  import WarningExtraIcon from '@nasa-jpl/stellar/icons/warning_extra.svg?component';
   import WarningMissingIcon from '@nasa-jpl/stellar/icons/warning_missing.svg?component';
   import WarningUnknownIcon from '@nasa-jpl/stellar/icons/warning_unknown.svg?component';
   import type { ICellRendererParams, IRowNode } from 'ag-grid-community';
   import OutsideBoundsIcon from '../../../assets/out-of-bounds.svg?component';
-  import type { User } from '../../../types/app';
   import type { DataGridColumnDef } from '../../../types/data-grid';
   import type { ActivityValidationErrors } from '../../../types/errors';
   import { isInstantiationError, isUnknownTypeError, isValidationNoticesError } from '../../../utilities/errors';
   import DataGrid from '../../ui/DataGrid/DataGrid.svelte';
   import TabPanel from '../../ui/Tabs/TabPanel.svelte';
-  import ActivityIssues from './ActivityIssues.svelte';
+  import ActivityIssueCell from './ActivityIssuesCell.svelte';
 
   interface ActivityErrorCounts {
     all: number;
@@ -43,7 +43,6 @@
 
   export let activityValidationErrors: ActivityValidationErrors[] = [];
   export let title: string;
-  export let user: User | null = null;
 
   function doesExternalFilterPass({ data }: IRowNode<ActivityError>) {
     if (data) {
@@ -105,6 +104,8 @@
       headerName: '# fields',
       resizable: true,
       sortable: true,
+      suppressAutoSize: true,
+      suppressSizeToFit: true,
       valueFormatter: ({ data }) => {
         return `${data?.location.length ? data.location.length : ''}`;
       },
@@ -122,10 +123,11 @@
       width: 80,
     },
     {
+      autoHeight: true,
       cellRenderer: (params: ActivityIssueCellRendererParams) => {
         const issuesDiv = document.createElement('div');
         issuesDiv.className = 'issues-cell';
-        new ActivityIssues({
+        new ActivityIssueCell({
           props: {
             counts: params.value,
           },
@@ -262,7 +264,7 @@
           All ({counts.all})
         </button>
         <button class="count" class:selected={selectedCategory === 'extra'} value="extra" on:click={onSelectCategory}>
-          {counts.extra} extra parameter{counts.extra === 1 ? '' : 's'}
+          <WarningExtraIcon class="red-icon" />{counts.extra} extra parameter{counts.extra === 1 ? '' : 's'}
         </button>
         <button
           class="count"
@@ -270,7 +272,7 @@
           value="missing"
           on:click={onSelectCategory}
         >
-          <WarningMissingIcon />{counts.missing} missing parameter{counts.missing === 1 ? '' : 's'}
+          <WarningMissingIcon class="red-icon" />{counts.missing} missing parameter{counts.missing === 1 ? '' : 's'}
         </button>
         <button
           class="count"
@@ -278,7 +280,9 @@
           value="wrongType"
           on:click={onSelectCategory}
         >
-          <WarningUnknownIcon />{counts.wrongType} wrong parameter type{counts.wrongType === 1 ? '' : 's'}
+          <WarningUnknownIcon class="red-icon" />{counts.wrongType} wrong parameter type{counts.wrongType === 1
+            ? ''
+            : 's'}
         </button>
         <button
           class="count"
@@ -286,7 +290,9 @@
           value="invalidParameter"
           on:click={onSelectCategory}
         >
-          <WarningIcon />{counts.invalidParameter} invalid parameter{counts.invalidParameter === 1 ? '' : 's'}
+          <WarningIcon class="orange-icon" />{counts.invalidParameter} invalid parameter{counts.invalidParameter === 1
+            ? ''
+            : 's'}
         </button>
         <button
           class="count"
@@ -294,7 +300,9 @@
           value="invalidAnchor"
           on:click={onSelectCategory}
         >
-          <WarningIcon />{counts.invalidAnchor} invalid anchor{counts.invalidAnchor === 1 ? '' : 's'}
+          <WarningIcon class="orange-icon" />{counts.invalidAnchor} invalid anchor{counts.invalidAnchor === 1
+            ? ''
+            : 's'}
         </button>
         <button
           class="count"
@@ -310,6 +318,7 @@
           bind:this={dataGrid}
           {columnDefs}
           rowData={tableErrors}
+          rowSelection="single"
           {doesExternalFilterPass}
           {isExternalFilterPresent}
           on:rowSelected={event => console.log('selected!', event)}
@@ -352,11 +361,13 @@
     background: none;
     border: 0;
     color: var(--st-gray-60, #545f64);
+    column-gap: 2px;
     cursor: pointer;
-    display: block;
+    display: flex;
     font-weight: 500;
     padding: 0.3rem 1rem;
     text-align: left;
+    vertical-align: middle;
     width: 100%;
   }
 

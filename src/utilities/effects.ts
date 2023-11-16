@@ -25,7 +25,6 @@ import type {
   ActivityDirectiveInsertInput,
   ActivityDirectiveRevision,
   ActivityDirectiveSetInput,
-  ActivityDirectiveValidationStatus,
   ActivityDirectivesMap,
   ActivityPreset,
   ActivityPresetId,
@@ -39,6 +38,7 @@ import type { ActivityMetadata } from '../types/activity-metadata';
 import type { BaseUser, User, UserId } from '../types/app';
 import type { ReqAuthResponse, ReqSessionResponse } from '../types/auth';
 import type { Constraint, ConstraintInsertInput, ConstraintResponse, ConstraintResult } from '../types/constraint';
+import type { ActivityDirectiveValidationFailureStatus } from '../types/errors';
 import type {
   ExpansionRule,
   ExpansionRuleInsertInput,
@@ -2331,9 +2331,9 @@ const effects = {
   async getActivityDirectiveValidations(
     planId: number,
     user: User | null,
-  ): Promise<ActivityDirectiveValidationStatus[]> {
+  ): Promise<ActivityDirectiveValidationFailureStatus[]> {
     try {
-      const data = await reqHasura<ActivityDirectiveValidationStatus[]>(
+      const data = await reqHasura<ActivityDirectiveValidationFailureStatus[]>(
         gql.SUB_ACTIVITY_DIRECTIVE_VALIDATION_ERRORS,
         { planId },
         user,

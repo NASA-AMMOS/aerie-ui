@@ -1,0 +1,7 @@
+.red-icon {
+  color: var(--st-error-red, #db5139);
+}
+
+.orange-icon {
+  color: #ef4444;
+}
