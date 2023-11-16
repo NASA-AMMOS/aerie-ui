@@ -248,9 +248,6 @@
           on:lock={({ detail: lock }) => {
             $timelineLockStatus = lock;
           }}
-          on:temporaryUnlock={({ detail: temporaryUnlock }) => {
-            $timelineLockStatus = temporaryUnlock;
-          }}
           on:unlock={({ detail: unlock }) => {
             $timelineLockStatus = unlock;
           }}
