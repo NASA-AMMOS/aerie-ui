@@ -2334,7 +2334,7 @@ const effects = {
   ): Promise<ActivityDirectiveValidationStatus[]> {
     try {
       const data = await reqHasura<ActivityDirectiveValidationStatus[]>(
-        gql.SUB_ACTIVITY_DIRECTIVE_VALIDATIONS,
+        gql.SUB_ACTIVITY_DIRECTIVE_VALIDATION_ERRORS,
         { planId },
         user,
       );

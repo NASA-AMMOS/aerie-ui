@@ -1,12 +1,6 @@
 import type { ActivityDeletionAction } from '../utilities/activities';
-import type { ErrorTypes } from '../utilities/errors';
 import type { ActivityMetadata } from './activity-metadata';
 import type { PartialWith, UserId } from './app';
-import type {
-  ActivityDirectiveInstantiationError,
-  ActivityDirectiveUnknownTypeError,
-  ActivityDirectiveValidationNoticesError,
-} from './errors';
 import type { ExpansionRuleSlim } from './expansion';
 import type { ArgumentsMap, ParametersMap } from './parameter';
 import type { ValueSchema } from './schema';
@@ -114,42 +108,3 @@ export type AnchorValidationStatus = {
 export type PlanSnapshotActivity = Omit<ActivityDirective, 'anchor_validations' | 'applied_preset' | 'plan_id'> & {
   snapshot_id: number;
 };
-
-export interface ActivityDirectiveValidationStatus {
-  directive_id: number;
-  plan_id: number;
-  status: string;
-  validations:
-    | ActivityDirectiveValidationSuccess
-    | ActivityDirectiveInstantiationFailure
-    | ActivityDirectiveUnknownTypeFailure
-    | ActivityDirectiveValidationNoticesFailure;
-}
-
-interface BaseActivityDirectiveValidation {
-  success: boolean;
-}
-
-export interface ActivityDirectiveValidationSuccess extends BaseActivityDirectiveValidation {
-  success: true;
-}
-
-interface ActivityDirectiveValidationFailure extends BaseActivityDirectiveValidation {
-  success: false;
-  type: ErrorTypes;
-}
-
-export interface ActivityDirectiveInstantiationFailure extends ActivityDirectiveValidationFailure {
-  errors: ActivityDirectiveInstantiationError;
-  type: ErrorTypes.INSTANTIATION_ERRORS;
-}
-
-export interface ActivityDirectiveUnknownTypeFailure extends ActivityDirectiveValidationFailure {
-  errors: ActivityDirectiveUnknownTypeError;
-  type: ErrorTypes.NO_SUCH_ACTIVITY_TYPE;
-}
-
-export interface ActivityDirectiveValidationNoticesFailure extends ActivityDirectiveValidationFailure {
-  errors: ActivityDirectiveValidationNoticesError;
-  type: ErrorTypes.VALIDATION_NOTICES;
-}

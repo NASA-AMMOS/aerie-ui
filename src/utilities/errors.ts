@@ -1,3 +1,11 @@
+import type {
+  ActivityDirectiveInstantiationFailure,
+  ActivityDirectiveUnknownTypeFailure,
+  ActivityDirectiveValidationFailures,
+  ActivityDirectiveValidationNoticesFailure,
+  AnchorValidationError,
+} from '../types/errors';
+
 export enum ErrorTypes {
   ANCHOR_VALIDATION_ERROR = 'ANCHOR_VALIDATION_ERROR',
   CAUGHT_ERROR = 'CAUGHT_ERROR',
@@ -17,4 +25,22 @@ export enum ErrorTypes {
   UNEXPECTED_SCHEDULER_EXCEPTION = 'UNEXPECTED_SCHEDULER_EXCEPTION',
   UNEXPECTED_SIMULATION_EXCEPTION = 'UNEXPECTED_SIMULATION_EXCEPTION',
   VALIDATION_NOTICES = 'VALIDATION_NOTICES',
+}
+
+export function isInstantiationError(
+  validation: ActivityDirectiveValidationFailures | AnchorValidationError,
+): validation is ActivityDirectiveInstantiationFailure {
+  return (validation as ActivityDirectiveInstantiationFailure).type === ErrorTypes.INSTANTIATION_ERRORS;
+}
+
+export function isUnknownTypeError(
+  validation: ActivityDirectiveValidationFailures | AnchorValidationError,
+): validation is ActivityDirectiveUnknownTypeFailure {
+  return (validation as ActivityDirectiveUnknownTypeFailure).type === ErrorTypes.NO_SUCH_ACTIVITY_TYPE;
+}
+
+export function isValidationNoticesError(
+  validation: ActivityDirectiveValidationFailures | AnchorValidationError,
+): validation is ActivityDirectiveValidationNoticesFailure {
+  return (validation as ActivityDirectiveValidationNoticesFailure).type === ErrorTypes.VALIDATION_NOTICES;
 }

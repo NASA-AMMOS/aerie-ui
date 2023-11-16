@@ -64,7 +64,6 @@
       selectedTab.set(tabId);
       selectedPanel.set(panels[i]);
 
-      console.log(tabId, i);
       dispatch('select-tab', {
         id: tabId,
         index: i,

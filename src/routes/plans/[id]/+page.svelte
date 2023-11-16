@@ -2,6 +2,7 @@
 
 <script lang="ts">
   import { page } from '$app/stores';
+  import ActivitiesIcon from '@nasa-jpl/stellar/icons/activities.svg?component';
   import ActivityIcon from '@nasa-jpl/stellar/icons/activity.svg?component';
   import CalendarIcon from '@nasa-jpl/stellar/icons/calendar.svg?component';
   import PlanIcon from '@nasa-jpl/stellar/icons/plan.svg?component';
@@ -13,8 +14,9 @@
   import Nav from '../../../components/app/Nav.svelte';
   import PageTitle from '../../../components/app/PageTitle.svelte';
   import Console from '../../../components/console/Console.svelte';
-  import ConsoleSection from '../../../components/console/ConsoleSection.svelte';
   import ConsoleTab from '../../../components/console/ConsoleTab.svelte';
+  import ConsoleActivityErrors from '../../../components/console/views/ActivityErrors.svelte';
+  import ConsoleGenericErrors from '../../../components/console/views/GenericErrors.svelte';
   import ExtensionMenu from '../../../components/menus/ExtensionMenu.svelte';
   import PlanMenu from '../../../components/menus/PlanMenu.svelte';
   import ViewMenu from '../../../components/menus/ViewMenu.svelte';
@@ -35,6 +37,7 @@
   } from '../../../stores/activities';
   import { checkConstraintsStatus, constraintResults, resetConstraintStores } from '../../../stores/constraints';
   import {
+    activityValidationErrors,
     allErrors,
     anchorValidationErrors,
     clearAllErrors,
@@ -92,6 +95,7 @@
   import type { PlanSnapshot } from '../../../types/plan-snapshot';
   import type { View, ViewSaveEvent, ViewToggleEvent } from '../../../types/view';
   import effects from '../../../utilities/effects';
+  import { isInstantiationError } from '../../../utilities/errors';
   import { getSearchParameterNumber, removeQueryParam, setQueryParam } from '../../../utilities/generic';
   import { isSaveEvent } from '../../../utilities/keyboardEvents';
   import { closeActiveModal, showPlanLockedModal } from '../../../utilities/modal';
@@ -113,6 +117,7 @@
 
   export let data: PageData;
 
+  let totalActivityValidationErrors: number = 0;
   let compactNavMode = false;
   let consoleHeightString = '36px';
   let hasCreateViewPermission: boolean = false;
@@ -139,6 +144,19 @@
       featurePermissions.schedulingGoals.canAnalyze(data.user, $plan, $plan.model) && !$planReadOnly;
     hasSimulatePermission = featurePermissions.simulation.canRun(data.user, $plan, $plan.model) && !$planReadOnly;
   }
+  $: totalActivityValidationErrors = $activityValidationErrors.reduce((previousTotal, validationError) => {
+    let totalErrors = 0;
+    validationError.errors.forEach(error => {
+      if (isInstantiationError(error)) {
+        totalErrors += error.errors.extraneousArguments.length;
+        totalErrors += error.errors.missingArguments.length;
+        totalErrors += error.errors.unconstructableArguments.length;
+      } else {
+        totalErrors += 1;
+      }
+    });
+    return totalErrors + previousTotal;
+  }, 0);
   $: if (data.initialPlan) {
     $plan = data.initialPlan;
     $planEndTimeMs = getUnixEpochTime(data.initialPlan.end_time_doy);
@@ -578,14 +596,22 @@
           <ConsoleTab numberOfErrors={$simulationDatasetErrors?.length} title="Simulation Errors">
             <GearWideConnectedIcon />
           </ConsoleTab>
+          <ConsoleTab numberOfErrors={totalActivityValidationErrors} title="Activity Validation Errors">
+            <ActivitiesIcon />
+          </ConsoleTab>
         </div>
       </div>
     </svelte:fragment>
 
-    <ConsoleSection errors={$allErrors} title="All Errors" on:clearMessages={onClearAllErrors} />
-    <ConsoleSection errors={$anchorValidationErrors} title="Anchor Validation Errors" />
-    <ConsoleSection errors={$schedulingErrors} title="Scheduling Errors" on:clearMessages={onClearSchedulingErrors} />
-    <ConsoleSection errors={$simulationDatasetErrors} isClearable={false} title="Simulation Errors" />
+    <ConsoleGenericErrors errors={$allErrors} title="All Errors" on:clearMessages={onClearAllErrors} />
+    <ConsoleGenericErrors errors={$anchorValidationErrors} title="Anchor Validation Errors" />
+    <ConsoleGenericErrors
+      errors={$schedulingErrors}
+      title="Scheduling Errors"
+      on:clearMessages={onClearSchedulingErrors}
+    />
+    <ConsoleGenericErrors errors={$simulationDatasetErrors} isClearable={false} title="Simulation Errors" />
+    <ConsoleActivityErrors activityValidationErrors={$activityValidationErrors} title="Activity Validation Errors" />
   </Console>
 </CssGrid>
 

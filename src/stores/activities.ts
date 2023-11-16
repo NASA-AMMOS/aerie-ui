@@ -2,7 +2,6 @@ import { derived, writable, type Readable, type Writable } from 'svelte/store';
 import type {
   ActivityDirective,
   ActivityDirectiveId,
-  ActivityDirectiveValidationStatus,
   ActivityDirectivesByView,
   ActivityDirectivesMap,
   AnchorValidationStatus,
@@ -19,12 +18,6 @@ import { view, viewUpdateGrid } from './views';
 
 export const activityDirectives = gqlSubscribable<ActivityDirective[]>(
   gql.SUB_ACTIVITY_DIRECTIVES,
-  { planId },
-  [],
-  null,
-);
-export const activityDirectiveValidationStatuses = gqlSubscribable<ActivityDirectiveValidationStatus[]>(
-  gql.SUB_ACTIVITY_DIRECTIVE_VALIDATIONS,
   { planId },
   [],
   null,

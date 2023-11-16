@@ -13,7 +13,14 @@ export interface CaughtError extends BaseError {
 }
 
 export interface AnchorValidationError extends BaseError {
+  activityId: number;
   type: ErrorTypes.ANCHOR_VALIDATION_ERROR;
+}
+
+export interface ActivityValidationErrors {
+  activityId: number;
+  errors: (ActivityDirectiveValidationFailures | AnchorValidationError)[];
+  type: string;
 }
 
 export interface SchedulingError extends BaseError {
@@ -56,5 +63,41 @@ export interface ActivityDirectiveValidationNoticesError {
   validationNotices: {
     message: string;
     subjects: string[];
-  };
+  }[];
+}
+
+export interface ActivityDirectiveValidationFailureStatus {
+  directive_id: number;
+  plan_id: number;
+  status: string;
+  validations: ActivityDirectiveValidationFailures;
+}
+
+export type ActivityDirectiveValidationFailures =
+  | ActivityDirectiveInstantiationFailure
+  | ActivityDirectiveUnknownTypeFailure
+  | ActivityDirectiveValidationNoticesFailure;
+
+interface BaseActivityDirectiveValidation {
+  success: boolean;
+}
+
+interface ActivityDirectiveValidationFailure extends BaseActivityDirectiveValidation {
+  success: false;
+  type: ErrorTypes;
+}
+
+export interface ActivityDirectiveInstantiationFailure extends ActivityDirectiveValidationFailure {
+  errors: ActivityDirectiveInstantiationError;
+  type: ErrorTypes.INSTANTIATION_ERRORS;
+}
+
+export interface ActivityDirectiveUnknownTypeFailure extends ActivityDirectiveValidationFailure {
+  errors: ActivityDirectiveUnknownTypeError;
+  type: ErrorTypes.NO_SUCH_ACTIVITY_TYPE;
+}
+
+export interface ActivityDirectiveValidationNoticesFailure extends ActivityDirectiveValidationFailure {
+  errors: ActivityDirectiveValidationNoticesError;
+  type: ErrorTypes.VALIDATION_NOTICES;
 }
