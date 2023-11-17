@@ -5,6 +5,10 @@
   import type { TabContext, TabId } from '../../../types/tabs';
   import { TabContextKey } from './Tabs.svelte';
 
+  export function openTab() {
+    selectTab(tabId);
+  }
+
   export { className as class };
   export let disabled: boolean = false;
   export let tabId: TabId = {};

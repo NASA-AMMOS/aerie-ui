@@ -4,11 +4,17 @@
   import { tooltip } from '../../utilities/tooltip';
   import Tab from '../ui/Tabs/Tab.svelte';
 
+  export function openTab() {
+    tab.openTab();
+  }
+
   export let numberOfErrors: number = 0;
   export let title: string;
+
+  let tab: Tab;
 </script>
 
-<Tab>
+<Tab bind:this={tab}>
   <div class="error-tab" class:has-error={numberOfErrors > 0} use:tooltip={{ content: title, placement: 'top' }}>
     <slot /><span class="error-number-display">{numberOfErrors}</span>
   </div>

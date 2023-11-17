@@ -1,3 +1,4 @@
+import { keyBy } from 'lodash-es';
 import { derived, writable, type Readable, type Writable } from 'svelte/store';
 import type {
   ActivityDirectiveValidationFailureStatus,
@@ -11,7 +12,7 @@ import type {
 import { ErrorTypes } from '../utilities/errors';
 import { compare } from '../utilities/generic';
 import gql from '../utilities/gql';
-import { activityDirectivesMap, anchorValidationStatuses } from './activities';
+import { activityDirectives, anchorValidationStatuses } from './activities';
 import { planId } from './plan';
 import { simulationDataset } from './simulation';
 import { gqlSubscribable } from './subscribable';
@@ -50,36 +51,37 @@ export const anchorValidationErrors: Readable<AnchorValidationError[]> = derived
 );
 
 export const activityValidationErrors: Readable<ActivityValidationErrors[]> = derived(
-  [activityDirectiveValidationFailures, anchorValidationErrors, activityDirectivesMap],
-  ([$activityDirectiveValidationFailures, $anchorValidationErrors, $activityDirectivesMap]) => {
-    const tableErrorsMap: Record<string, ActivityValidationErrors> = {};
+  [activityDirectiveValidationFailures, anchorValidationErrors, activityDirectives],
+  ([$activityDirectiveValidationFailures, $anchorValidationErrors, $activityDirectives]) => {
+    const activityDirectivesMap = keyBy($activityDirectives, 'id');
+    const activityValidationsErrorMap: Record<string, ActivityValidationErrors> = {};
 
     $activityDirectiveValidationFailures.forEach(({ validations, directive_id: directiveId }) => {
-      if (tableErrorsMap[directiveId] === undefined) {
-        tableErrorsMap[directiveId] = {
+      if (activityValidationsErrorMap[directiveId] === undefined) {
+        activityValidationsErrorMap[directiveId] = {
           activityId: directiveId,
           errors: [validations],
-          type: $activityDirectivesMap[directiveId]?.type,
+          type: activityDirectivesMap[directiveId]?.type,
         };
       } else {
-        tableErrorsMap[directiveId].errors.push(validations);
+        activityValidationsErrorMap[directiveId].errors.push(validations);
       }
     });
 
     $anchorValidationErrors.forEach(anchorValidationError => {
       const { activityId } = anchorValidationError;
-      if (tableErrorsMap[activityId] === undefined) {
-        tableErrorsMap[activityId] = {
+      if (activityValidationsErrorMap[activityId] === undefined) {
+        activityValidationsErrorMap[activityId] = {
           activityId: activityId,
           errors: [anchorValidationError],
-          type: $activityDirectivesMap[activityId]?.type,
+          type: activityDirectivesMap[activityId]?.type,
         };
       } else {
-        tableErrorsMap[activityId].errors.push(anchorValidationError);
+        activityValidationsErrorMap[activityId].errors.push(anchorValidationError);
       }
     });
 
-    return Object.values(tableErrorsMap);
+    return Object.values(activityValidationsErrorMap);
   },
 );
 

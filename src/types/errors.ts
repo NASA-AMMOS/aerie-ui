@@ -101,3 +101,22 @@ export interface ActivityDirectiveValidationNoticesFailure extends ActivityDirec
   errors: ActivityDirectiveValidationNoticesError;
   type: ErrorTypes.VALIDATION_NOTICES;
 }
+
+export interface ActivityErrorCounts {
+  all?: number;
+  extra: number;
+  invalidAnchor: number;
+  invalidParameter: number;
+  missing: number;
+  outOfBounds: number;
+  wrongType: number;
+}
+
+export type ActivityErrorCategories = keyof ActivityErrorCounts;
+
+export interface ActivityErrorRollup {
+  errorCounts: ActivityErrorCounts;
+  id: number;
+  location: string[];
+  type: string;
+}

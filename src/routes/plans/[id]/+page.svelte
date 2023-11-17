@@ -16,6 +16,7 @@
   import Console from '../../../components/console/Console.svelte';
   import ConsoleTab from '../../../components/console/ConsoleTab.svelte';
   import ConsoleActivityErrors from '../../../components/console/views/ActivityErrors.svelte';
+  import ActivityErrorsRollup from '../../../components/console/views/ActivityErrorsRollup.svelte';
   import ConsoleGenericErrors from '../../../components/console/views/GenericErrors.svelte';
   import ExtensionMenu from '../../../components/menus/ExtensionMenu.svelte';
   import PlanMenu from '../../../components/menus/PlanMenu.svelte';
@@ -91,11 +92,12 @@
     viewUpdateGrid,
   } from '../../../stores/views';
   import type { ActivityDirective } from '../../../types/activity';
+  import type { ActivityErrorCounts, ActivityErrorRollup } from '../../../types/errors';
   import type { Extension } from '../../../types/extension';
   import type { PlanSnapshot } from '../../../types/plan-snapshot';
   import type { View, ViewSaveEvent, ViewToggleEvent } from '../../../types/view';
   import effects from '../../../utilities/effects';
-  import { isInstantiationError } from '../../../utilities/errors';
+  import { generateActivityValidationErrorRollups } from '../../../utilities/errors';
   import { getSearchParameterNumber, removeQueryParam, setQueryParam } from '../../../utilities/generic';
   import { isSaveEvent } from '../../../utilities/keyboardEvents';
   import { closeActiveModal, showPlanLockedModal } from '../../../utilities/modal';
@@ -117,8 +119,19 @@
 
   export let data: PageData;
 
-  let totalActivityValidationErrors: number = 0;
+  let activityErrorRollups: ActivityErrorRollup[] = [];
+  let activityErrorCounts: ActivityErrorCounts = {
+    all: 0,
+    extra: 0,
+    invalidAnchor: 0,
+    invalidParameter: 0,
+    missing: 0,
+    outOfBounds: 0,
+    wrongType: 0,
+  };
+  let activityErrorsTab: ConsoleTab;
   let compactNavMode = false;
+  let errorConsole: Console;
   let consoleHeightString = '36px';
   let hasCreateViewPermission: boolean = false;
   let hasUpdateViewPermission: boolean = false;
@@ -133,6 +146,38 @@
   let selectedSimulationStatus: string | null;
   let windowWidth = 0;
 
+  $: activityErrorRollups = generateActivityValidationErrorRollups($activityValidationErrors);
+  $: activityErrorCounts = activityErrorRollups.reduce(
+    (prevCounts, activityErrorRollup) => {
+      let extra = prevCounts.extra + activityErrorRollup.errorCounts.extra;
+      let invalidAnchor = prevCounts.invalidAnchor + activityErrorRollup.errorCounts.invalidAnchor;
+      let invalidParameter = prevCounts.invalidParameter + activityErrorRollup.errorCounts.invalidParameter;
+      let missing = prevCounts.missing + activityErrorRollup.errorCounts.missing;
+      let outOfBounds = prevCounts.outOfBounds + activityErrorRollup.errorCounts.outOfBounds;
+      let wrongType = prevCounts.wrongType + activityErrorRollup.errorCounts.wrongType;
+
+      let all = extra + invalidAnchor + invalidParameter + missing + outOfBounds + wrongType;
+
+      return {
+        all,
+        extra,
+        invalidAnchor,
+        invalidParameter,
+        missing,
+        outOfBounds,
+        wrongType,
+      };
+    },
+    {
+      all: 0,
+      extra: 0,
+      invalidAnchor: 0,
+      invalidParameter: 0,
+      missing: 0,
+      outOfBounds: 0,
+      wrongType: 0,
+    },
+  );
   $: hasCreateViewPermission = featurePermissions.view.canCreate(data.user);
   $: hasUpdateViewPermission = $view !== null ? featurePermissions.view.canUpdate(data.user, $view) : false;
   $: if ($plan) {
@@ -144,19 +189,6 @@
       featurePermissions.schedulingGoals.canAnalyze(data.user, $plan, $plan.model) && !$planReadOnly;
     hasSimulatePermission = featurePermissions.simulation.canRun(data.user, $plan, $plan.model) && !$planReadOnly;
   }
-  $: totalActivityValidationErrors = $activityValidationErrors.reduce((previousTotal, validationError) => {
-    let totalErrors = 0;
-    validationError.errors.forEach(error => {
-      if (isInstantiationError(error)) {
-        totalErrors += error.errors.extraneousArguments.length;
-        totalErrors += error.errors.missingArguments.length;
-        totalErrors += error.errors.unconstructableArguments.length;
-      } else {
-        totalErrors += 1;
-      }
-    });
-    return totalErrors + previousTotal;
-  }, 0);
   $: if (data.initialPlan) {
     $plan = data.initialPlan;
     $planEndTimeMs = getUnixEpochTime(data.initialPlan.end_time_doy);
@@ -436,6 +468,29 @@
     </svelte:fragment>
     <svelte:fragment slot="right">
       <PlanNavButton
+        title={!compactNavMode ? 'Activities' : ''}
+        buttonText="Activities"
+        menuTitle="Activity Status"
+        showStatusInMenu={false}
+        status={activityErrorCounts.all && activityErrorCounts.all > 0 ? Status.Failed : Status.Complete}
+        on:click={() => {
+          errorConsole.openConsole();
+          activityErrorsTab.openTab();
+        }}
+      >
+        <ActivitiesIcon />
+        <svelte:fragment slot="metadata">
+          <div class="activity-status-nav">
+            <ActivityErrorsRollup
+              counts={activityErrorCounts}
+              selectable={false}
+              showTotalCount={false}
+              compactMode={false}
+            />
+          </div>
+        </svelte:fragment>
+      </PlanNavButton>
+      <PlanNavButton
         title={!compactNavMode ? 'Expansion' : ''}
         buttonText="Expand Activities"
         hasPermission={hasExpandPermission}
@@ -585,7 +640,7 @@
     on:changeRightRowSizes={onChangeRightRowSizes}
   />
 
-  <Console on:resize={onConsoleResize}>
+  <Console bind:this={errorConsole} on:resize={onConsoleResize}>
     <svelte:fragment slot="console-tabs">
       <div class="console-tabs">
         <div>
@@ -600,7 +655,11 @@
           <ConsoleTab numberOfErrors={$simulationDatasetErrors?.length} title="Simulation Errors">
             <GearWideConnectedIcon />
           </ConsoleTab>
-          <ConsoleTab numberOfErrors={totalActivityValidationErrors} title="Activity Validation Errors">
+          <ConsoleTab
+            bind:this={activityErrorsTab}
+            numberOfErrors={activityErrorCounts.all}
+            title="Activity Validation Errors"
+          >
             <ActivitiesIcon />
           </ConsoleTab>
         </div>
@@ -616,7 +675,8 @@
     />
     <ConsoleGenericErrors errors={$simulationDatasetErrors} isClearable={false} title="Simulation Errors" />
     <ConsoleActivityErrors
-      activityValidationErrors={$activityValidationErrors}
+      activityValidationErrorTotalRollup={activityErrorCounts}
+      activityValidationErrorRollups={activityErrorRollups}
       title="Activity Validation Errors"
       on:selectionChanged={onActivityValidationSelected}
     />
@@ -626,6 +686,10 @@
 <style>
   :global(.plan-container) {
     height: 100%;
+  }
+
+  .activity-status-nav {
+    width: 200px;
   }
 
   .console-tabs {

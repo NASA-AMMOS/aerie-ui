@@ -7,6 +7,10 @@
   import Tabs from '../ui/Tabs/Tabs.svelte';
   import ConsoleDragHandle from './ConsoleDragHandle.svelte';
 
+  export function openConsole() {
+    toggleConsole(true);
+  }
+
   const consoleHeaderHeight: number = 36;
   const dispatch = createEventDispatcher();
 

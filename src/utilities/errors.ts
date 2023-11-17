@@ -3,6 +3,8 @@ import type {
   ActivityDirectiveUnknownTypeFailure,
   ActivityDirectiveValidationFailures,
   ActivityDirectiveValidationNoticesFailure,
+  ActivityErrorRollup,
+  ActivityValidationErrors,
   AnchorValidationError,
 } from '../types/errors';
 
@@ -43,4 +45,68 @@ export function isValidationNoticesError(
   validation: ActivityDirectiveValidationFailures | AnchorValidationError,
 ): validation is ActivityDirectiveValidationNoticesFailure {
   return (validation as ActivityDirectiveValidationNoticesFailure).type === ErrorTypes.VALIDATION_NOTICES;
+}
+
+export function generateActivityValidationErrorRollups(
+  activityValidationErrors: ActivityValidationErrors[],
+): ActivityErrorRollup[] {
+  return activityValidationErrors.map(({ activityId, errors, type }) => {
+    let extra = 0;
+    let invalidAnchor = 0;
+    let invalidParameter = 0;
+    let missing = 0;
+    let outOfBounds = 0;
+    let wrongType = 0;
+
+    const location: string[] = [];
+
+    errors.forEach(error => {
+      if (isInstantiationError(error)) {
+        const extraCount = error.errors.extraneousArguments.length;
+        const missingCount = error.errors.missingArguments.length;
+        const invalidParameterCount = error.errors.unconstructableArguments.length;
+
+        extra += extraCount;
+        missing += missingCount;
+        invalidParameter += invalidParameterCount;
+
+        location.push(...error.errors.extraneousArguments);
+        location.push(...error.errors.missingArguments);
+        error.errors.unconstructableArguments.forEach(({ name }) => {
+          location.push(name);
+        });
+      } else if (isUnknownTypeError(error)) {
+        wrongType += 1;
+      } else if (isValidationNoticesError(error)) {
+        const invalidParameterCount = error.errors.validationNotices.length;
+
+        invalidParameter += invalidParameterCount;
+
+        error.errors.validationNotices.forEach(({ subjects }) => {
+          location.push(...subjects);
+        });
+      } else {
+        const { message } = error;
+        if (/end-time\sanchor/i.test(message)) {
+          invalidAnchor += 1;
+        } else if (/plan\sstart/i.test(message)) {
+          outOfBounds += 1;
+        }
+      }
+    });
+
+    return {
+      errorCounts: {
+        extra,
+        invalidAnchor,
+        invalidParameter,
+        missing,
+        outOfBounds,
+        wrongType,
+      },
+      id: activityId,
+      location,
+      type,
+    };
+  });
 }
