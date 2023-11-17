@@ -119,6 +119,14 @@
 
   export let data: PageData;
 
+  enum ConsoleTabs {
+    ALL = 'all',
+    ANCHOR = 'anchor',
+    SCHEDULING = 'scheduling',
+    SIMULATION = 'simulation',
+    ACTIVITY = 'activity',
+  }
+
   let activityErrorRollups: ActivityErrorRollup[] = [];
   let activityErrorCounts: ActivityErrorCounts = {
     all: 0,
@@ -129,7 +137,6 @@
     outOfBounds: 0,
     wrongType: 0,
   };
-  let activityErrorsTab: ConsoleTab;
   let compactNavMode = false;
   let errorConsole: Console;
   let consoleHeightString = '36px';
@@ -474,8 +481,7 @@
         showStatusInMenu={false}
         status={activityErrorCounts.all && activityErrorCounts.all > 0 ? Status.Failed : Status.Complete}
         on:click={() => {
-          errorConsole.openConsole();
-          activityErrorsTab.openTab();
+          errorConsole.openConsole(ConsoleTabs.ACTIVITY);
         }}
       >
         <ActivitiesIcon />
@@ -644,19 +650,31 @@
     <svelte:fragment slot="console-tabs">
       <div class="console-tabs">
         <div>
-          <ConsoleTab numberOfErrors={$allErrors?.length} title="All Errors">All</ConsoleTab>
+          <ConsoleTab tabId={ConsoleTabs.ALL} numberOfErrors={$allErrors?.length} title="All Errors">All</ConsoleTab>
         </div>
         <div class="separator">|</div>
         <div class="grouped-error-tabs">
-          <ConsoleTab numberOfErrors={$anchorValidationErrors?.length} title="Anchor Validation Errors">
+          <ConsoleTab
+            tabId={ConsoleTabs.ANCHOR}
+            numberOfErrors={$anchorValidationErrors?.length}
+            title="Anchor Validation Errors"
+          >
             <ActivityIcon />
           </ConsoleTab>
-          <ConsoleTab numberOfErrors={$schedulingErrors?.length} title="Scheduling Errors"><CalendarIcon /></ConsoleTab>
-          <ConsoleTab numberOfErrors={$simulationDatasetErrors?.length} title="Simulation Errors">
+          <ConsoleTab
+            tabId={ConsoleTabs.SCHEDULING}
+            numberOfErrors={$schedulingErrors?.length}
+            title="Scheduling Errors"><CalendarIcon /></ConsoleTab
+          >
+          <ConsoleTab
+            tabId={ConsoleTabs.SIMULATION}
+            numberOfErrors={$simulationDatasetErrors?.length}
+            title="Simulation Errors"
+          >
             <GearWideConnectedIcon />
           </ConsoleTab>
           <ConsoleTab
-            bind:this={activityErrorsTab}
+            tabId={ConsoleTabs.ACTIVITY}
             numberOfErrors={activityErrorCounts.all}
             title="Activity Validation Errors"
           >

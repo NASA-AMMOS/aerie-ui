@@ -6,6 +6,7 @@
   import type { BaseError } from '../../../types/errors';
   import { tooltip } from '../../../utilities/tooltip';
   import TabPanel from '../../ui/Tabs/TabPanel.svelte';
+  import { ConsoleContextKey } from '../Console.svelte';
 
   export let errors: BaseError[] = [];
   export let title: string;
@@ -18,7 +19,7 @@
   }
 </script>
 
-<TabPanel>
+<TabPanel tabContextKey={ConsoleContextKey}>
   <div class="generic-errors-container">
     <div class="console-header">
       <div>{title}</div>

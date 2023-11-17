@@ -6,6 +6,7 @@
   import type { ActivityErrorCategories, ActivityErrorCounts, ActivityErrorRollup } from '../../../types/errors';
   import DataGrid from '../../ui/DataGrid/DataGrid.svelte';
   import TabPanel from '../../ui/Tabs/TabPanel.svelte';
+  import { ConsoleContextKey } from '../Console.svelte';
   import ActivityErrorsRollup from './ActivityErrorsRollup.svelte';
 
   type ActivityErrorsRollupRendererParams = ICellRendererParams<ActivityErrorRollup>;
@@ -117,7 +118,7 @@
   let selectedCategory: ActivityErrorCategories = 'all';
 </script>
 
-<TabPanel>
+<TabPanel tabContextKey={ConsoleContextKey}>
   <div class="activity-errors-container">
     <div class="console-header">
       <div>{title}</div>

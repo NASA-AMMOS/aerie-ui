@@ -3,17 +3,18 @@
 <script context="module">
   // Tabs implementation taken from: https://svelte.dev/repl/8e68120858e5322272dc9136c4bb79cc?version=3.7.0
 
-  export const TabContextKey = 'tabs';
+  export const DefaultTabContextKey = 'tabs';
 </script>
 
 <script lang="ts">
-  import { createEventDispatcher, onDestroy, setContext } from 'svelte';
+  import { createEventDispatcher, getContext, onDestroy, setContext } from 'svelte';
   import { writable } from 'svelte/store';
   import type { PanelId, TabContext, TabId } from '../../../types/tabs';
   import { classNames } from '../../../utilities/generic';
   import TabList from './TabList.svelte';
 
   export { className as class };
+  export let tabContextKey: string = DefaultTabContextKey;
   export let tabListClassName: string | undefined = undefined;
 
   let className: string = '';
@@ -37,7 +38,7 @@
     selectedTab.update(current => (current === tabId ? tabs[i] || tabs[tabs.length - 1] : current));
   }
 
-  setContext<TabContext>(TabContextKey, {
+  setContext<TabContext>(tabContextKey, {
     registerPanel: (panelId: PanelId) => {
       panels.push(panelId);
       selectedPanel.update(current => current || panelId);
@@ -74,6 +75,12 @@
     unregisterPanel,
     unregisterTab,
   });
+
+  const { selectTab: contextSelectTab } = getContext<TabContext>(tabContextKey);
+
+  export function selectTab(tabId: TabId) {
+    contextSelectTab(tabId);
+  }
 </script>
 
 <div class={classNames('tabs', { [className]: !!className })}>
