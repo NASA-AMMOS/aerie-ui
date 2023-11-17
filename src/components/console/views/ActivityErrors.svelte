@@ -10,6 +10,7 @@
   import type { DataGridColumnDef } from '../../../types/data-grid';
   import type { ActivityValidationErrors } from '../../../types/errors';
   import { isInstantiationError, isUnknownTypeError, isValidationNoticesError } from '../../../utilities/errors';
+  import { pluralize } from '../../../utilities/text';
   import DataGrid from '../../ui/DataGrid/DataGrid.svelte';
   import TabPanel from '../../ui/Tabs/TabPanel.svelte';
   import ActivityIssueCell from './ActivityIssuesCell.svelte';
@@ -265,7 +266,7 @@
         </button>
         {#if counts.extra}
           <button class="count" class:selected={selectedCategory === 'extra'} value="extra" on:click={onSelectCategory}>
-            <WarningExtraIcon class="red-icon" />{counts.extra} extra parameter{counts.extra === 1 ? '' : 's'}
+            <WarningExtraIcon class="red-icon" />{counts.extra} extra parameter{pluralize(counts.extra)}
           </button>
         {/if}
         {#if counts.missing}
@@ -275,7 +276,7 @@
             value="missing"
             on:click={onSelectCategory}
           >
-            <WarningMissingIcon class="red-icon" />{counts.missing} missing parameter{counts.missing === 1 ? '' : 's'}
+            <WarningMissingIcon class="red-icon" />{counts.missing} missing parameter{pluralize(counts.missing)}
           </button>
         {/if}
         {#if counts.wrongType}
@@ -285,9 +286,7 @@
             value="wrongType"
             on:click={onSelectCategory}
           >
-            <WarningUnknownIcon class="red-icon" />{counts.wrongType} wrong parameter type{counts.wrongType === 1
-              ? ''
-              : 's'}
+            <WarningUnknownIcon class="red-icon" />{counts.wrongType} wrong parameter type{pluralize(counts.wrongType)}
           </button>
         {/if}
         {#if counts.invalidParameter}
@@ -297,9 +296,9 @@
             value="invalidParameter"
             on:click={onSelectCategory}
           >
-            <WarningIcon class="orange-icon" />{counts.invalidParameter} invalid parameter{counts.invalidParameter === 1
-              ? ''
-              : 's'}
+            <WarningIcon class="orange-icon" />{counts.invalidParameter} invalid parameter{pluralize(
+              counts.invalidParameter,
+            )}
           </button>
         {/if}
         {#if counts.invalidAnchor}
@@ -309,9 +308,7 @@
             value="invalidAnchor"
             on:click={onSelectCategory}
           >
-            <WarningIcon class="orange-icon" />{counts.invalidAnchor} invalid anchor{counts.invalidAnchor === 1
-              ? ''
-              : 's'}
+            <WarningIcon class="orange-icon" />{counts.invalidAnchor} invalid anchor{pluralize(counts.invalidAnchor)}
           </button>
         {/if}
         {#if counts.outOfBounds}

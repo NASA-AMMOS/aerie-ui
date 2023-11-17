@@ -6,6 +6,7 @@
   import WarningMissingIcon from '@nasa-jpl/stellar/icons/warning_missing.svg?component';
   import WarningUnknownIcon from '@nasa-jpl/stellar/icons/warning_unknown.svg?component';
   import OutsideBoundsIcon from '../../../assets/out-of-bounds.svg?component';
+  import { pluralize } from '../../../utilities/text';
   interface ActivityErrorCellCounts {
     all: number;
     extra: number;
@@ -47,7 +48,7 @@
   {#if counts?.invalidAnchor}
     <div class="count">
       <WarningIcon class="orange-icon" />
-      <div>{counts.invalidAnchor} invalid anchor{counts.invalidAnchor === 1 ? '' : 's'}</div>
+      <div>{counts.invalidAnchor} invalid anchor{pluralize(counts.invalidAnchor)}</div>
     </div>
   {/if}
   {#if counts?.outOfBounds}

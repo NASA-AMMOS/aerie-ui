@@ -29,6 +29,7 @@
   import { getArguments, getFormParameters } from '../../utilities/parameters';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
+  import { pluralize } from '../../utilities/text';
   import { getDoyTime, getDoyTimeFromInterval, getIntervalFromDoyRange } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import { required, timestamp } from '../../utilities/validators';
@@ -409,7 +410,7 @@
       >
         Restore
       </button>
-      <span class="st-typography-medium">{highlightKeys.length} Change{highlightKeys.length === 1 ? '' : 's'}</span>
+      <span class="st-typography-medium">{highlightKeys.length} Change{pluralize(highlightKeys.length)}</span>
     </div>
     <button
       use:tooltip={{ content: 'Close Revision Preview', placement: 'top' }}

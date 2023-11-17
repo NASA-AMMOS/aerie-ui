@@ -144,6 +144,7 @@ import { queryPermissions } from './permissions';
 import { reqExtension, reqGateway, reqHasura } from './requests';
 import { sampleProfiles } from './resources';
 import { Status } from './status';
+import { pluralize } from './text';
 import { getDoyTime, getDoyTimeFromInterval, getIntervalFromDoyRange } from './time';
 import { createRow, duplicateRow } from './timeline';
 import { showFailureToast, showSuccessToast } from './toast';
@@ -174,9 +175,11 @@ const effects = {
       if (numOfUserChanges > 0) {
         ({ confirm } = await showConfirmModal(
           'Apply Preset',
-          `There ${numOfUserChanges > 1 ? 'are' : 'is'} currently ${numOfUserChanges} manually edited parameter${
-            numOfUserChanges > 1 ? 's' : ''
-          }. This will remove existing edits and apply preset parameters.`,
+          `There ${
+            numOfUserChanges > 1 ? 'are' : 'is'
+          } currently ${numOfUserChanges} manually edited parameter${pluralize(
+            numOfUserChanges,
+          )}. This will remove existing edits and apply preset parameters.`,
           'Apply Preset to Activity Directive',
         ));
       }
@@ -219,9 +222,11 @@ const effects = {
       if (numOfUserChanges > 0) {
         ({ confirm } = await showConfirmModal(
           'Apply Simulation Template',
-          `There ${numOfUserChanges > 1 ? 'are' : 'is'} currently ${numOfUserChanges} manually edited parameter${
-            numOfUserChanges > 1 ? 's' : ''
-          }. This will remove existing edits and apply template parameters.`,
+          `There ${
+            numOfUserChanges > 1 ? 'are' : 'is'
+          } currently ${numOfUserChanges} manually edited parameter${pluralize(
+            numOfUserChanges,
+          )}. This will remove existing edits and apply template parameters.`,
           'Apply Template to Simulation',
         ));
       }
