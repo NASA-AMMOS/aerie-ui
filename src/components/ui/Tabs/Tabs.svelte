@@ -7,7 +7,7 @@
 </script>
 
 <script lang="ts">
-  import { createEventDispatcher, getContext, onDestroy, setContext } from 'svelte';
+  import { createEventDispatcher, onDestroy, setContext } from 'svelte';
   import { writable } from 'svelte/store';
   import type { PanelId, TabContext, TabId } from '../../../types/tabs';
   import { classNames } from '../../../utilities/generic';
@@ -38,7 +38,7 @@
     selectedTab.update(current => (current === tabId ? tabs[i] || tabs[tabs.length - 1] : current));
   }
 
-  setContext<TabContext>(tabContextKey, {
+  const tabContext = setContext<TabContext>(tabContextKey, {
     registerPanel: (panelId: PanelId) => {
       panels.push(panelId);
       selectedPanel.update(current => current || panelId);
@@ -76,10 +76,8 @@
     unregisterTab,
   });
 
-  const { selectTab: contextSelectTab } = getContext<TabContext>(tabContextKey);
-
   export function selectTab(tabId: TabId) {
-    contextSelectTab(tabId);
+    tabContext.selectTab(tabId);
   }
 </script>
 

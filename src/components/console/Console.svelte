@@ -15,8 +15,8 @@
   import ConsoleDragHandle from './ConsoleDragHandle.svelte';
 
   export function openConsole(tabId: TabId) {
-    toggleConsole(true);
     tabs.selectTab(tabId);
+    toggleConsole(true);
   }
 
   const consoleHeaderHeight: number = 36;
