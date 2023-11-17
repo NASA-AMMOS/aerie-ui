@@ -28,7 +28,6 @@
   import { SearchParameters } from '../../../enums/searchParameters';
   import {
     activityDirectives,
-    activityDirectivesList,
     activityDirectivesMap,
     resetActivityStores,
     selectActivity,
@@ -551,7 +550,7 @@
   </Nav>
   {#if $planSnapshot}
     <PlanSnapshotBar
-      numOfDirectives={$activityDirectivesList.length}
+      numOfDirectives={planSnapshotActivityDirectives.length}
       snapshot={$planSnapshot}
       on:close={onCloseSnapshotPreview}
       on:restore={onRestoreSnapshot}
