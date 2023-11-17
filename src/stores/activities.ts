@@ -115,6 +115,7 @@ export function selectActivity(
   activityDirectiveId: ActivityDirectiveId | null,
   spanId: SpanId | null,
   switchToTable = true,
+  switchToPanel = false,
 ): void {
   if (activityDirectiveId !== null && spanId === null) {
     selectedSpanId.set(null);
@@ -122,11 +123,17 @@ export function selectActivity(
     if (switchToTable) {
       viewUpdateGrid({ middleComponentBottom: 'ActivityDirectivesTablePanel' });
     }
+    if (switchToPanel) {
+      viewUpdateGrid({ rightComponentTop: 'ActivityFormPanel' });
+    }
   } else if (activityDirectiveId === null && spanId !== null) {
     selectedSpanId.set(spanId);
     selectedActivityDirectiveId.set(null);
     if (switchToTable) {
       viewUpdateGrid({ middleComponentBottom: 'ActivitySpansTablePanel' });
+    }
+    if (switchToPanel) {
+      viewUpdateGrid({ rightComponentTop: 'ActivityFormPanel' });
     }
   } else {
     selectedSpanId.set(null);

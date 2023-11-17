@@ -330,7 +330,7 @@
           rowSelection="single"
           {doesExternalFilterPass}
           {isExternalFilterPresent}
-          on:rowSelected={event => console.log('selected!', event)}
+          on:selectionChanged
         />
       </div>
     </div>

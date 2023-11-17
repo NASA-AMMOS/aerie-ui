@@ -324,6 +324,10 @@
     }
   }
 
+  function onActivityValidationSelected(event: CustomEvent) {
+    selectActivity(event.detail?.[0]?.id, null, true, true);
+  }
+
   async function onCreateView(event: CustomEvent<ViewSaveEvent>) {
     const { detail } = event;
     const { definition } = detail;
@@ -611,7 +615,11 @@
       on:clearMessages={onClearSchedulingErrors}
     />
     <ConsoleGenericErrors errors={$simulationDatasetErrors} isClearable={false} title="Simulation Errors" />
-    <ConsoleActivityErrors activityValidationErrors={$activityValidationErrors} title="Activity Validation Errors" />
+    <ConsoleActivityErrors
+      activityValidationErrors={$activityValidationErrors}
+      title="Activity Validation Errors"
+      on:selectionChanged={onActivityValidationSelected}
+    />
   </Console>
 </CssGrid>
 
