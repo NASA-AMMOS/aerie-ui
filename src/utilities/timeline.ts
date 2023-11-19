@@ -35,6 +35,11 @@ export enum TimelineLockStatus {
   Unlocked = 'Unlocked',
 }
 
+export enum TimelineInteractionMode {
+  Interact = 'Interact',
+  Navigate = 'Navigate',
+}
+
 // From https://github.com/d3/d3-time/blob/main/src/duration.js
 export const durationSecond: number = 1000;
 export const durationMinute: number = durationSecond * 60;

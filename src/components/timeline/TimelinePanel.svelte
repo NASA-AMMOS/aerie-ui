@@ -19,6 +19,7 @@
     spansMap,
   } from '../../stores/simulation';
   import {
+    timelineInteractionMode,
     timelineLockStatus,
     view,
     viewSetSelectedRow,
@@ -40,6 +41,7 @@
   import Panel from '../ui/Panel.svelte';
   import PanelHeaderActions from '../ui/PanelHeaderActions.svelte';
   import Timeline from './Timeline.svelte';
+  import TimelineInteractionModeControl from './TimelineInteractionModeControl.svelte';
   import TimelineLockControl from './TimelineLockControl.svelte';
   import TimelineViewControls from './TimelineViewControls.svelte';
 
@@ -229,6 +231,12 @@
     <div />
     <PanelHeaderActions>
       <div class="header-actions">
+        <TimelineInteractionModeControl
+          timelineInteractionMode={$timelineInteractionMode}
+          on:change={({ detail: mode }) => {
+            $timelineInteractionMode = mode;
+          }}
+        />
         <TimelineViewControls
           maxTimeRange={$maxTimeRange}
           {timelineDirectiveVisibilityToggles}
@@ -269,6 +277,7 @@
       plan={$plan}
       planStartTimeYmd={$plan?.start_time ?? ''}
       {timeline}
+      timelineInteractionMode={$timelineInteractionMode}
       {timelineDirectiveVisibilityToggles}
       {timelineSpanVisibilityToggles}
       resourcesByViewLayerId={$resourcesByViewLayerId}

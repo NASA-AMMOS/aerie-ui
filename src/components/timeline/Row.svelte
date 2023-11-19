@@ -30,9 +30,8 @@
   } from '../../types/timeline';
   import effects from '../../utilities/effects';
   import { classNames } from '../../utilities/generic';
-  import { isMetaOrCtrlPressed } from '../../utilities/keyboardEvents';
   import { getDoyTime } from '../../utilities/time';
-  import { getYAxesWithScaleDomains, type TimelineLockStatus } from '../../utilities/timeline';
+  import { getYAxesWithScaleDomains, TimelineInteractionMode, type TimelineLockStatus } from '../../utilities/timeline';
   import ConstraintViolations from './ConstraintViolations.svelte';
   import LayerActivity from './LayerActivity.svelte';
   import LayerGaps from './LayerGaps.svelte';
@@ -71,13 +70,14 @@
   export let simulationDataset: SimulationDataset | null = null;
   export let spanUtilityMaps: SpanUtilityMaps;
   export let spansMap: SpansMap = {};
+  export let timelineInteractionMode: TimelineInteractionMode;
   export let timelineLockStatus: TimelineLockStatus;
+  export let timelineZoomTransform: ZoomTransform | null;
   export let viewTimeRange: TimeRange = { end: 0, start: 0 };
   export let xScaleView: ScaleTime<number, number> | null = null;
   export let xTicksView: XAxisTick[] = [];
   export let yAxes: Axis[] = [];
   export let user: User | null;
-  export let timelineZoomTransform: ZoomTransform | null;
 
   const dispatch = createEventDispatcher();
 
@@ -133,7 +133,7 @@
         [drawWidth, drawHeight],
       ])
       .filter((e: WheelEvent) => {
-        return isMetaOrCtrlPressed(e) || e.button === 1;
+        return timelineInteractionMode === TimelineInteractionMode.Navigate || e.button === 1;
       })
       .wheelDelta((e: WheelEvent) => {
         // Override default d3 wheelDelta function to remove ctrl key for modifying zoom amount
@@ -279,7 +279,13 @@
       on:contextMenu
     />
 
-    <div class={rowClasses} id={`row-${id}`} style={`height: ${computedDrawHeight}px;`}>
+    <div
+      class={rowClasses}
+      id={`row-${id}`}
+      style={`cursor: ${
+        timelineInteractionMode === TimelineInteractionMode.Navigate ? 'move' : ''
+      }; height: ${computedDrawHeight}px;`}
+    >
       <!-- Overlay for Pointer Events. -->
       <svg
         bind:this={overlaySvg}
@@ -359,6 +365,7 @@
               {simulationDataset}
               {spanUtilityMaps}
               {spansMap}
+              {timelineInteractionMode}
               {timelineLockStatus}
               {user}
               {viewTimeRange}

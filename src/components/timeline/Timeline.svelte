@@ -34,6 +34,7 @@
   import { getDoyTime } from '../../utilities/time';
   import {
     MAX_CANVAS_SIZE,
+    TimelineInteractionMode,
     TimelineLockStatus,
     customD3Ticks,
     durationMonth,
@@ -70,6 +71,7 @@
   export let spans: Span[] = [];
   export let timeline: Timeline | null = null;
   export let timelineDirectiveVisibilityToggles: DirectiveVisibilityToggleMap = {};
+  export let timelineInteractionMode: TimelineInteractionMode;
   export let timelineSpanVisibilityToggles: SpanVisibilityToggleMap = {};
   export let timelineLockStatus: TimelineLockStatus;
   export let viewTimeRange: TimeRange = { end: 0, start: 0 };
@@ -362,6 +364,16 @@
       histogramCursorTime = null;
     }
     viewTimeRangeChanged({ end: end.getTime(), start: start.getTime() }, e.detail.transform);
+
+    // Hide context menu and tooltip
+    contextMenu = null;
+    if (contextMenuComponent.isShown()) {
+      contextMenuComponent.hide();
+    }
+    mouseOver = null;
+    if (tooltip.isShown()) {
+      tooltip.hide();
+    }
   }
 </script>
 
@@ -412,6 +424,7 @@
         {viewTimeRange}
         {xScaleView}
         {xTicksView}
+        {timelineInteractionMode}
         {timelineZoomTransform}
         on:zoom={throttledZoom}
       />
@@ -473,6 +486,7 @@
             {simulationDataset}
             {spanUtilityMaps}
             {spansMap}
+            {timelineInteractionMode}
             {timelineLockStatus}
             {user}
             {viewTimeRange}

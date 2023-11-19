@@ -7,8 +7,8 @@
   import { createEventDispatcher } from 'svelte';
   import type { ConstraintResult } from '../../types/constraint';
   import type { TimeRange, XAxisTick } from '../../types/timeline';
-  import { isMetaOrCtrlPressed } from '../../utilities/keyboardEvents';
   import { getTimeZoneName } from '../../utilities/time';
+  import { TimelineInteractionMode } from '../../utilities/timeline';
   import ConstraintViolations from './ConstraintViolations.svelte';
   import RowXAxisTicks from './RowXAxisTicks.svelte';
 
@@ -16,6 +16,7 @@
   export let drawHeight: number = 70;
   export let drawWidth: number = 0;
   export let marginLeft: number = 50;
+  export let timelineInteractionMode: TimelineInteractionMode;
   export let timelineZoomTransform: ZoomTransform | null;
   export let viewTimeRange: TimeRange = { end: 0, start: 0 };
   export let xScaleView: ScaleTime<number, number> | null = null;
@@ -41,7 +42,7 @@
         [drawWidth, drawHeight],
       ])
       .filter((e: WheelEvent) => {
-        return isMetaOrCtrlPressed(e) || e.button === 1;
+        return timelineInteractionMode === TimelineInteractionMode.Navigate || e.button === 1;
       })
       .wheelDelta((e: WheelEvent) => {
         // Override default d3 wheelDelta function to remove ctrl key for modifying zoom amount
@@ -66,7 +67,10 @@
   }
 </script>
 
-<div style="height: {drawHeight}px;" class="x-axis-content">
+<div
+  style="cursor: {timelineInteractionMode === TimelineInteractionMode.Navigate ? 'move' : ''}; height: {drawHeight}px;"
+  class="x-axis-content"
+>
   <div class="x-axis-time-formats" style={`width:${marginLeft}px`}>
     <div class="x-axis-time-format st-typography-medium">UTC</div>
     <div class="x-axis-time-format x-axis-time-format-secondary st-typography-medium">
