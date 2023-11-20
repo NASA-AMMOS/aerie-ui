@@ -1457,11 +1457,10 @@ const gql = {
     }
   `,
 
-  SUB_ACTIVITY_DIRECTIVE_VALIDATION_ERRORS: `#graphql
+  SUB_ACTIVITY_DIRECTIVE_VALIDATIONS: `#graphql
     subscription SubActivityDirectiveValidationErrors($planId: Int!) {
       activity_directive_validations(where: {
-        plan_id: {_eq: $planId},
-        validations: {_contains: {success: false}}
+        plan_id: {_eq: $planId}
       }) {
         directive_id
         plan_id

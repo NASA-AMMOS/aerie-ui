@@ -16,8 +16,8 @@
   import Console from '../../../components/console/Console.svelte';
   import ConsoleTab from '../../../components/console/ConsoleTab.svelte';
   import ConsoleActivityErrors from '../../../components/console/views/ActivityErrors.svelte';
-  import ActivityErrorsRollup from '../../../components/console/views/ActivityErrorsRollup.svelte';
   import ConsoleGenericErrors from '../../../components/console/views/GenericErrors.svelte';
+  import ActivityStatusMenu from '../../../components/menus/ActivityStatusMenu.svelte';
   import ExtensionMenu from '../../../components/menus/ExtensionMenu.svelte';
   import PlanMenu from '../../../components/menus/PlanMenu.svelte';
   import ViewMenu from '../../../components/menus/ViewMenu.svelte';
@@ -30,6 +30,7 @@
   import { PlanStatusMessages } from '../../../enums/planStatusMessages';
   import { SearchParameters } from '../../../enums/searchParameters';
   import {
+    activityDirectiveValidationStatuses,
     activityDirectives,
     activityDirectivesMap,
     resetActivityStores,
@@ -474,28 +475,14 @@
       <PlanMergeRequestsStatusButton user={data.user} />
     </svelte:fragment>
     <svelte:fragment slot="right">
-      <PlanNavButton
-        title={!compactNavMode ? 'Activities' : ''}
-        buttonText="Activities"
-        menuTitle="Activity Status"
-        showStatusInMenu={false}
-        status={activityErrorCounts.all && activityErrorCounts.all > 0 ? Status.Failed : Status.Complete}
-        on:click={() => {
+      <ActivityStatusMenu
+        {activityErrorCounts}
+        {compactNavMode}
+        activityDirectiveValidationStatuses={$activityDirectiveValidationStatuses}
+        on:viewActivityValidations={() => {
           errorConsole.openConsole(ConsoleTabs.ACTIVITY);
         }}
-      >
-        <ActivitiesIcon />
-        <svelte:fragment slot="metadata">
-          <div class="activity-status-nav">
-            <ActivityErrorsRollup
-              counts={activityErrorCounts}
-              selectable={false}
-              showTotalCount={false}
-              compactMode={false}
-            />
-          </div>
-        </svelte:fragment>
-      </PlanNavButton>
+      />
       <PlanNavButton
         title={!compactNavMode ? 'Expansion' : ''}
         buttonText="Expand Activities"
@@ -704,10 +691,6 @@
 <style>
   :global(.plan-container) {
     height: 100%;
-  }
-
-  .activity-status-nav {
-    width: 200px;
   }
 
   .console-tabs {

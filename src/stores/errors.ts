@@ -11,26 +11,24 @@ import type {
 } from '../types/errors';
 import { ErrorTypes } from '../utilities/errors';
 import { compare } from '../utilities/generic';
-import gql from '../utilities/gql';
-import { activityDirectives, anchorValidationStatuses } from './activities';
-import { planId } from './plan';
+import { activityDirectiveValidationStatuses, activityDirectives, anchorValidationStatuses } from './activities';
 import { simulationDataset } from './simulation';
-import { gqlSubscribable } from './subscribable';
 
 export function parseErrorReason(error: string) {
   return error.replace(/\s*at\s(gov|com)/, ' : ').replace(/gov\S*:\s*(?<reason>[^:]+)\s*:(.|\s|\n|\t|\r)*/, '$1');
 }
 
-/* Subscriptions. */
-
-export const activityDirectiveValidationFailures = gqlSubscribable<ActivityDirectiveValidationFailureStatus[]>(
-  gql.SUB_ACTIVITY_DIRECTIVE_VALIDATION_ERRORS,
-  { planId },
-  [],
-  null,
-);
-
 /* Derived. */
+
+export const activityDirectiveValidationFailures: Readable<ActivityDirectiveValidationFailureStatus[]> = derived(
+  [activityDirectiveValidationStatuses],
+  ([$activityDirectiveValidationStatuses]) => {
+    return $activityDirectiveValidationStatuses.filter(
+      ({ validations }) => !validations.success,
+    ) as ActivityDirectiveValidationFailureStatus[];
+  },
+  [],
+);
 
 export const anchorValidationErrors: Readable<AnchorValidationError[]> = derived(
   [anchorValidationStatuses],
