@@ -229,8 +229,15 @@
   .counts.selectable .count {
     cursor: pointer;
     min-height: 32px;
-    padding: 0.3rem 1rem;
     width: 100%;
+  }
+
+  .counts.full .count {
+    padding: 0.3rem 0;
+  }
+
+  .counts.selectable.full .count {
+    padding: 0.3rem 1rem;
   }
 
   .count.selected {
