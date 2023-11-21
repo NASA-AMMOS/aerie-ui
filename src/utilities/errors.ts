@@ -78,11 +78,8 @@ export function generateActivityValidationErrorRollups(
       } else if (isUnknownTypeError(error)) {
         wrongType += 1;
       } else if (isValidationNoticesError(error)) {
-        const invalidParameterCount = error.errors.validationNotices.length;
-
-        invalidParameter += invalidParameterCount;
-
         error.errors.validationNotices.forEach(({ subjects }) => {
+          invalidParameter += subjects.length;
           location.push(...subjects);
         });
       } else {

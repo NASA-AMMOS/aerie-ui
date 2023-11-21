@@ -39,7 +39,7 @@
   } from '../../../stores/activities';
   import { checkConstraintsStatus, constraintResults, resetConstraintStores } from '../../../stores/constraints';
   import {
-    activityValidationErrors,
+    activityErrorRollups,
     allErrors,
     anchorValidationErrors,
     clearAllErrors,
@@ -93,12 +93,11 @@
     viewUpdateGrid,
   } from '../../../stores/views';
   import type { ActivityDirective } from '../../../types/activity';
-  import type { ActivityErrorCounts, ActivityErrorRollup } from '../../../types/errors';
+  import type { ActivityErrorCounts } from '../../../types/errors';
   import type { Extension } from '../../../types/extension';
   import type { PlanSnapshot } from '../../../types/plan-snapshot';
   import type { View, ViewSaveEvent, ViewToggleEvent } from '../../../types/view';
   import effects from '../../../utilities/effects';
-  import { generateActivityValidationErrorRollups } from '../../../utilities/errors';
   import { getSearchParameterNumber, removeQueryParam, setQueryParam } from '../../../utilities/generic';
   import { isSaveEvent } from '../../../utilities/keyboardEvents';
   import { closeActiveModal, showPlanLockedModal } from '../../../utilities/modal';
@@ -128,7 +127,6 @@
     ACTIVITY = 'activity',
   }
 
-  let activityErrorRollups: ActivityErrorRollup[] = [];
   let activityErrorCounts: ActivityErrorCounts = {
     all: 0,
     extra: 0,
@@ -154,8 +152,7 @@
   let selectedSimulationStatus: string | null;
   let windowWidth = 0;
 
-  $: activityErrorRollups = generateActivityValidationErrorRollups($activityValidationErrors);
-  $: activityErrorCounts = activityErrorRollups.reduce(
+  $: activityErrorCounts = $activityErrorRollups.reduce(
     (prevCounts, activityErrorRollup) => {
       let extra = prevCounts.extra + activityErrorRollup.errorCounts.extra;
       let invalidAnchor = prevCounts.invalidAnchor + activityErrorRollup.errorCounts.invalidAnchor;
@@ -681,7 +678,7 @@
     <ConsoleGenericErrors errors={$simulationDatasetErrors} isClearable={false} title="Simulation Errors" />
     <ConsoleActivityErrors
       activityValidationErrorTotalRollup={activityErrorCounts}
-      activityValidationErrorRollups={activityErrorRollups}
+      activityValidationErrorRollups={$activityErrorRollups}
       title="Activity Validation Errors"
       on:selectionChanged={onActivityValidationSelected}
     />

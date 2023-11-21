@@ -6,8 +6,8 @@
   import type { ActivityDirectiveValidationStatus } from '../../types/activity';
   import type { ActivityErrorCounts } from '../../types/errors';
   import { Status } from '../../utilities/status';
-  import ActivityErrorsRollup from '../console/views/ActivityErrorsRollup.svelte';
   import PlanNavButton from '../plan/PlanNavButton.svelte';
+  import ActivityErrorsRollup from '../ui/ActivityErrorsRollup.svelte';
 
   export let activityErrorCounts: ActivityErrorCounts;
   export let activityDirectiveValidationStatuses: ActivityDirectiveValidationStatus[] = [];
@@ -61,12 +61,7 @@
         {invalidActivityCount} activit{totalActivityCount !== 1 ? 'ies' : 'y'} have problems
       </div>
       <div class="activity-status-nav">
-        <ActivityErrorsRollup
-          counts={activityErrorCounts}
-          selectable={false}
-          showTotalCount={false}
-          compactMode={false}
-        />
+        <ActivityErrorsRollup counts={activityErrorCounts} selectable={false} showTotalCount={false} />
       </div>
       <button on:click={onClickViewConsole} class="st-button secondary view-button">View in console</button>
     </div>

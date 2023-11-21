@@ -92,6 +92,7 @@
   export let isExternalFilterPresent: ((params: IsExternalFilterPresentParams<RowData, any>) => boolean) | undefined =
     undefined;
   export let rowData: RowData[] = [];
+  export let rowHeight: number | undefined = undefined;
   export let rowSelection: 'single' | 'multiple' | undefined = undefined;
   export let scrollToSelection: boolean = false;
   export let selectedRowIds: RowId[] = [];
@@ -361,6 +362,7 @@ This has been seen to result in unintended and often glitchy behavior, which oft
       },
       preventDefaultOnContextMenu: useCustomContextMenu,
       rowData,
+      rowHeight,
       rowSelection,
       suppressCellFocus,
       suppressDragLeaveHidesColumns,

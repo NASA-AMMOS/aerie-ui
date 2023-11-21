@@ -2,6 +2,7 @@ import { keyBy } from 'lodash-es';
 import { derived, writable, type Readable, type Writable } from 'svelte/store';
 import type {
   ActivityDirectiveValidationFailureStatus,
+  ActivityErrorRollup,
   ActivityValidationErrors,
   AnchorValidationError,
   BaseError,
@@ -9,7 +10,7 @@ import type {
   SchedulingError,
   SimulationDatasetError,
 } from '../types/errors';
-import { ErrorTypes } from '../utilities/errors';
+import { ErrorTypes, generateActivityValidationErrorRollups } from '../utilities/errors';
 import { compare } from '../utilities/generic';
 import { activityDirectiveValidationStatuses, activityDirectives, anchorValidationStatuses } from './activities';
 import { simulationDataset } from './simulation';
@@ -81,6 +82,11 @@ export const activityValidationErrors: Readable<ActivityValidationErrors[]> = de
 
     return Object.values(activityValidationsErrorMap);
   },
+);
+
+export const activityErrorRollups: Readable<ActivityErrorRollup[]> = derived(
+  [activityValidationErrors],
+  ([$activityValidationErrors]) => generateActivityValidationErrorRollups($activityValidationErrors),
 );
 
 export const simulationDatasetErrors: Readable<SimulationDatasetError[]> = derived(

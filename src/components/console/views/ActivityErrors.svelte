@@ -4,10 +4,10 @@
   import type { ICellRendererParams, IRowNode } from 'ag-grid-community';
   import type { DataGridColumnDef } from '../../../types/data-grid';
   import type { ActivityErrorCategories, ActivityErrorCounts, ActivityErrorRollup } from '../../../types/errors';
+  import ActivityErrorsRollup from '../../ui/ActivityErrorsRollup.svelte';
   import DataGrid from '../../ui/DataGrid/DataGrid.svelte';
   import TabPanel from '../../ui/Tabs/TabPanel.svelte';
   import { ConsoleContextKey } from '../Console.svelte';
-  import ActivityErrorsRollup from './ActivityErrorsRollup.svelte';
 
   type ActivityErrorsRollupRendererParams = ICellRendererParams<ActivityErrorRollup>;
 
@@ -39,13 +39,12 @@
     return selectedCategory !== 'all';
   }
 
-  function onSelectCategory(event: CustomEvent<ActivityErrorCategories>) {
+  function onSelectCategory(event: CustomEvent<{ event: MouseEvent; selectedCategory: ActivityErrorCategories }>) {
     const { detail: value } = event;
     if (value) {
-      selectedCategory = value;
+      ({ selectedCategory } = value);
+      dataGrid.onFilterChanged();
     }
-
-    dataGrid.onFilterChanged();
   }
 
   const columnDefs: DataGridColumnDef<ActivityErrorRollup>[] = [
@@ -98,8 +97,8 @@
         issuesDiv.className = 'issues-cell';
         new ActivityErrorsRollup({
           props: {
-            compactMode: true,
             counts: params.value,
+            mode: 'compact',
           },
           target: issuesDiv,
         });
@@ -129,7 +128,6 @@
           counts={activityValidationErrorTotalRollup}
           selectable
           showTotalCount
-          compactMode={false}
           on:selectCategory={onSelectCategory}
         />
       </div>
@@ -138,6 +136,7 @@
           bind:this={dataGrid}
           {columnDefs}
           rowData={activityValidationErrorRollups}
+          rowHeight={34}
           rowSelection="single"
           {doesExternalFilterPass}
           {isExternalFilterPresent}
