@@ -20,27 +20,69 @@
   import { pluralize } from '../../utilities/text';
   import { tooltip } from '../../utilities/tooltip';
 
+  type Mode = 'full' | 'compact' | 'minimal' | 'iconsOnly';
+
   export let counts: ActivityErrorCounts | undefined = undefined;
   export let hasPermission: boolean = true;
-  export let mode: 'full' | 'compact' | 'minimal' = 'full';
+  export let mode: Mode = 'full';
   export let permissionError: string | undefined = undefined;
   export let selectable: boolean = false;
   export let showTotalCount: boolean = false;
 
-  let resetTooltipContent = '';
   const dispatch = createEventDispatcher();
+
+  function generateCountText(mode: Mode, count: number, category: string, itemName?: string) {
+    switch (mode) {
+      case 'full':
+        return `${count} ${category}${itemName ? ` ${itemName}${pluralize(count)}` : ''}`;
+      case 'compact':
+        return `${count} ${category}`;
+      case 'minimal':
+        return `${count}`;
+      case 'iconsOnly':
+      default:
+        return '';
+    }
+  }
+
+  function generateTooltipHTMLString(
+    mode: Mode,
+    count: number,
+    category: string,
+    itemName: string,
+    isResettable: boolean = false,
+  ) {
+    if (mode === 'minimal' || mode === 'iconsOnly') {
+      if (mode === 'minimal' && isResettable) {
+        return `<div class="activity-error-rollup-error">
+            <div class="activity-error-rollup-error-reset">
+                <span>Reset ${count} ${category}${
+          itemName ? ` ${itemName}${pluralize(count)}` : ''
+        } to mission model</span>
+                <div>${isMacOs() ? '⌘' : 'CTRL'} Click</div>
+              </div>
+          </div>`;
+      } else {
+        return `<div class="activity-error-rollup-error">${generateCountText('full', count, category, itemName)}</div>`;
+      }
+    }
+
+    return '';
+  }
 
   function onSelectCategory(event: MouseEvent) {
     const { currentTarget } = event;
     if (currentTarget) {
       const { value } = currentTarget as HTMLButtonElement;
 
-      selectedCategory = value as ActivityErrorCategories;
+      if (selectable) {
+        selectedCategory = value as ActivityErrorCategories;
+      }
 
       if (mode === 'minimal' && isMetaOrCtrlPressed(event)) {
-        dispatch('resetCategory', selectedCategory);
+        dispatch('resetCategory', value);
       } else {
-        dispatch('selectCategory', selectedCategory);
+        dispatch('selectCategory', value);
       }
     }
   }
@@ -66,25 +108,18 @@
     wrongType: 0,
   };
   $: selectedCategory = selectable ? 'all' : null;
-  $: resetTooltipContent = `<div class="activity-error-rollup-error">
-      <div class="activity-error-rollup-error-reset">
-          <span>Reset ${errorCounts.invalidParameter} parameter${pluralize(
-    errorCounts.invalidParameter,
-  )} to mission model</span>
-          <div>${isMacOs() ? '⌘' : 'CTRL'} Click</div>
-        </div>
-    </div>`;
 </script>
 
-<div class="counts" class:selectable class:minimal={mode === 'minimal'}>
+<div
+  class="counts"
+  class:selectable
+  class:full={mode === 'full'}
+  class:compact={mode === 'compact'}
+  class:minimal={mode === 'minimal'}
+  class:icons-only={mode === 'iconsOnly'}
+>
   {#if showTotalCount}
-    <button
-      class="count all"
-      class:selected={selectedCategory === 'all'}
-      class:disabled={mode === 'minimal'}
-      value="all"
-      on:click={onSelectCategory}
-    >
+    <button class="count all" class:selected={selectedCategory === 'all'} value="all" on:click={onSelectCategory}>
       All ({errorCounts.all})
     </button>
   {/if}
@@ -92,90 +127,90 @@
     <button
       class="count"
       class:selected={selectedCategory === 'extra'}
-      class:disabled={mode === 'minimal'}
       value="extra"
       on:click={onSelectCategory}
+      use:tooltip={{
+        allowHTML: true,
+        content: generateTooltipHTMLString(mode, errorCounts.extra, 'extra', 'parameter'),
+      }}
     >
-      <WarningExtraIcon class="red-icon" />{errorCounts.extra}{`${
-        mode === 'minimal' ? '' : ` extra${mode === 'compact' ? '' : ` parameter${pluralize(errorCounts.extra)}`}}`
-      }`}
+      <WarningExtraIcon class="red-icon" />{generateCountText(mode, errorCounts.extra, 'extra', 'parameter')}
     </button>
   {/if}
   {#if errorCounts.missing}
     <button
       class="count"
       class:selected={selectedCategory === 'missing'}
-      class:disabled={mode === 'minimal'}
       value="missing"
       on:click={onSelectCategory}
+      use:tooltip={{
+        allowHTML: true,
+        content: generateTooltipHTMLString(mode, errorCounts.missing, 'missing', 'parameter'),
+      }}
     >
-      <WarningMissingIcon class="red-icon" />{errorCounts.missing}{`${
-        mode === 'minimal' ? '' : ` missing${mode === 'compact' ? '' : ` parameter${pluralize(errorCounts.missing)}`}`
-      }`}
+      <WarningMissingIcon class="red-icon" />{generateCountText(mode, errorCounts.missing, 'missing', 'parameter')}
     </button>
   {/if}
   {#if errorCounts.wrongType}
     <button
       class="count"
       class:selected={selectedCategory === 'wrongType'}
-      class:disabled={mode === 'minimal'}
       value="wrongType"
       on:click={onSelectCategory}
+      use:tooltip={{
+        allowHTML: true,
+        content: generateTooltipHTMLString(mode, errorCounts.wrongType, 'wrongType', 'parameter'),
+      }}
     >
-      <WarningUnknownIcon class="red-icon" />{errorCounts.wrongType}{`${
-        mode === 'minimal'
-          ? ''
-          : ` wrong${mode === 'compact' ? '' : ' parameter'} type{pluralize(
-        errorCounts.wrongType,
-      )}`
-      }`}
+      <WarningUnknownIcon class="red-icon" />{generateCountText(mode, errorCounts.wrongType, 'wrong', 'type')}
     </button>
   {/if}
   {#if errorCounts.invalidParameter}
     <button
       class="count"
       class:selected={selectedCategory === 'invalidParameter'}
+      class:resettable={mode === 'minimal'}
       value="invalidParameter"
       on:click={onSelectCategory}
       use:tooltip={{
         allowHTML: true,
-        content: resetTooltipContent,
-        disabled: mode !== 'minimal' || !hasPermission,
+        content: generateTooltipHTMLString(mode, errorCounts.invalidParameter, 'invalid', 'parameter', true),
+        disabled: !hasPermission,
       }}
       use:permissionHandler={{
         hasPermission,
         permissionError,
       }}
     >
-      <WarningIcon class="orange-icon" />{errorCounts.invalidParameter}{`${
-        mode === 'minimal'
-          ? ''
-          : ` invalid ${mode === 'compact' ? '' : ` parameter${pluralize(errorCounts.invalidParameter)}`}`
-      }`}
+      <WarningIcon class="orange-icon" />{generateCountText(mode, errorCounts.invalidParameter, 'invalid', 'parameter')}
     </button>
   {/if}
   {#if errorCounts.invalidAnchor}
     <button
       class="count"
       class:selected={selectedCategory === 'invalidAnchor'}
-      class:disabled={mode === 'minimal'}
       value="invalidAnchor"
       on:click={onSelectCategory}
+      use:tooltip={{
+        allowHTML: true,
+        content: generateTooltipHTMLString(mode, errorCounts.invalidAnchor, 'invalid', 'anchor'),
+      }}
     >
-      <WarningIcon class="orange-icon" />{errorCounts.invalidAnchor}{`${
-        mode === 'minimal' ? '' : ` invalid anchor${pluralize(errorCounts.invalidAnchor)}`
-      }`}
+      <WarningIcon class="orange-icon" />{generateCountText(mode, errorCounts.invalidAnchor, 'invalid', 'anchor')}
     </button>
   {/if}
   {#if errorCounts.outOfBounds}
     <button
       class="count"
       class:selected={selectedCategory === 'outOfBounds'}
-      class:disabled={mode === 'minimal'}
       value="outOfBounds"
       on:click={onSelectCategory}
+      use:tooltip={{
+        allowHTML: true,
+        content: generateTooltipHTMLString(mode, errorCounts.outOfBounds, 'outside plan bounds', ''),
+      }}
     >
-      <OutsideBoundsIcon />{errorCounts.outOfBounds}{`${mode === 'minimal' ? '' : ' outside plan bounds'}`}
+      <OutsideBoundsIcon />{generateCountText(mode, errorCounts.outOfBounds, 'outside plan bounds')}
     </button>
   {/if}
 </div>
@@ -187,8 +222,35 @@
     flex-flow: wrap;
   }
 
-  .counts.selectable.minimal {
+  .counts .count.resettable {
+    border-radius: 9px;
+  }
+
+  .counts.selectable .count {
+    cursor: pointer;
+    min-height: 32px;
+    padding: 0.3rem 1rem;
+    width: 100%;
+  }
+
+  .count.selected {
+    background-color: var(--st-gray-15, #f1f2f3);
+    color: var(--st-gray-80);
+  }
+
+  .counts.minimal,
+  .counts.icons-only {
     column-gap: 0;
+    flex-wrap: nowrap;
+  }
+
+  .counts.minimal .count {
+    padding: 0.5px 5px;
+  }
+
+  .counts.selectable .count:hover,
+  .counts.minimal .count.resettable:hover {
+    background-color: var(--st-gray-20, #ebecec);
   }
 
   .count {
@@ -201,48 +263,12 @@
     display: grid;
     font-weight: 500;
     grid-template-columns: min-content max-content;
-    min-height: 32px;
     padding: 0;
     text-align: left;
   }
 
-  .count.disabled {
-    pointer-events: none;
-  }
-
   .count.all {
     grid-template-columns: max-content;
-  }
-
-  .counts.selectable .count {
-    cursor: pointer;
-    min-height: initial;
-    padding: 0.3rem 1rem;
-    width: 100%;
-  }
-
-  .counts.selectable.minimal .count {
-    border-radius: 9px;
-    padding: 0.5px 5px;
-  }
-
-  .counts.selectable .count.selected {
-    background-color: var(--st-gray-15, #f1f2f3);
-    color: var(--st-gray-80);
-  }
-
-  .counts.minimal {
-    flex-wrap: nowrap;
-  }
-
-  .counts.selectable.minimal .count.selected {
-    background-color: initial;
-    color: initial;
-  }
-
-  .counts.selectable .count:hover,
-  .counts.selectable.minimal .count:hover {
-    background-color: var(--st-gray-20, #ebecec);
   }
 
   :global(.activity-error-rollup-error) {

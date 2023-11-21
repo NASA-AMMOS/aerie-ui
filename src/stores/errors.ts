@@ -1,5 +1,6 @@
 import { keyBy } from 'lodash-es';
 import { derived, writable, type Readable, type Writable } from 'svelte/store';
+import type { ActivityDirectiveId } from '../types/activity';
 import type {
   ActivityDirectiveValidationFailureStatus,
   ActivityErrorRollup,
@@ -87,6 +88,11 @@ export const activityValidationErrors: Readable<ActivityValidationErrors[]> = de
 export const activityErrorRollups: Readable<ActivityErrorRollup[]> = derived(
   [activityValidationErrors],
   ([$activityValidationErrors]) => generateActivityValidationErrorRollups($activityValidationErrors),
+);
+
+export const activityErrorRollupsMap: Readable<Record<ActivityDirectiveId, ActivityErrorRollup>> = derived(
+  [activityErrorRollups],
+  ([$activityErrorRollups]) => keyBy($activityErrorRollups, 'id'),
 );
 
 export const simulationDatasetErrors: Readable<SimulationDatasetError[]> = derived(

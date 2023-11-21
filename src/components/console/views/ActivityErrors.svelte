@@ -100,6 +100,7 @@
           props: {
             counts: params.value,
             mode: 'compact',
+            selectable: false,
           },
           target: issuesDiv,
         });

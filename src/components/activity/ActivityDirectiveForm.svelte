@@ -7,7 +7,7 @@
   import PenIcon from '@nasa-jpl/stellar/icons/pen.svg?component';
   import { createEventDispatcher } from 'svelte';
   import { PlanStatusMessages } from '../../enums/planStatusMessages';
-  import { activityErrorRollups } from '../../stores/errors';
+  import { activityErrorRollupsMap } from '../../stores/errors';
   import { field } from '../../stores/form';
   import { plan, planReadOnly } from '../../stores/plan';
   import type {
@@ -116,9 +116,7 @@
   $: numOfUserChanges = formParameters.reduce((previousHasChanges: number, formParameter) => {
     return /user/.test(formParameter.valueSource) ? previousHasChanges + 1 : previousHasChanges;
   }, 0);
-  $: activityErrorRollup = $activityErrorRollups?.find(rollup => {
-    return rollup.id === activityDirective.id;
-  });
+  $: activityErrorRollup = $activityErrorRollupsMap[activityDirective.id];
 
   $: if (parameterErrorMap) {
     formParameters = formParameters.map((formParameter: FormParameter) => {
@@ -413,7 +411,7 @@
             hasPermission={hasUpdatePermission}
             mode="minimal"
             permissionError={updatePermissionError}
-            selectable
+            selectable={false}
             on:resetCategory={onResetAllFormParameters}
           />
         </div>
