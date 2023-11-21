@@ -26,6 +26,7 @@
   }
 
   let activitySpansTable: ViewTable | undefined;
+  let didSetStateOnce: boolean = false;
   let dataGrid: DataGrid<Span>;
   let defaultColumnDefinitions: Partial<Record<SpanColumns, SpanColDef>>;
   let derivedColumnDefs: ColDef[] = [];
@@ -168,8 +169,18 @@
   }
 
   function onColumnStateChange({ detail: columnStates }: CustomEvent<ColumnState[] | undefined>) {
-    const updatedColumnStates = (columnStates ?? []).filter(columnState => columnState.colId !== 'actions');
-    viewUpdateActivitySpansTable({ columnStates: updatedColumnStates });
+    // ignore the first state change as it is triggered when the table is first loaded
+    if (didSetStateOnce) {
+      const updatedColumnStates = (columnStates ?? []).filter(columnState => columnState.colId !== 'actions');
+      viewUpdateActivitySpansTable({ columnStates: updatedColumnStates });
+    }
+    didSetStateOnce = true;
+  }
+
+  function onGridSizeChanged() {
+    if (!activitySpansTable?.columnStates.length) {
+      onAutoSizeSpace();
+    }
   }
 
   function onSelectionChanged() {
@@ -240,8 +251,9 @@
       {filterExpression}
       spans={$spans}
       on:columnStateChange={onColumnStateChange}
-      on:selectionChanged={onSelectionChanged}
+      on:gridSizeChanged={onGridSizeChanged}
       on:rowDoubleClicked={onRowDoubleClicked}
+      on:selectionChanged={onSelectionChanged}
     />
   </svelte:fragment>
 </Panel>

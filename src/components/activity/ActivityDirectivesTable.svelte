@@ -110,7 +110,9 @@
   {user}
   {filterExpression}
   on:bulkDeleteItems={deleteActivityDirectives}
-  on:columnStateChange
+  on:columnResized={event => console.log('resized!', event)}
+  on:columnStateChange={event => console.log('state!', event)}
+  on:gridSizeChanged
   on:selectionChanged
   on:rowDoubleClicked
 />

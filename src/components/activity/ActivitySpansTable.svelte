@@ -41,6 +41,7 @@
   scrollToSelection={true}
   suppressDragLeaveHidesColumns={false}
   on:columnStateChange
-  on:selectionChanged
+  on:gridSizeChanged
   on:rowDoubleClicked
+  on:selectionChanged
 />

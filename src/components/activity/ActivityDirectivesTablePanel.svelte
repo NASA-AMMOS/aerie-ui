@@ -35,6 +35,7 @@
   }
 
   let activityDirectivesTable: ViewTable | undefined;
+  let didSetStateOnce: boolean = false;
   let dataGrid: DataGrid<ActivityDirective>;
   let defaultColumnDefinitions: Partial<Record<ActivityDirectiveColumns, ActivityDirectiveColDef>> = {};
   let derivedColumnDefs: ColDef[] = [];
@@ -171,7 +172,7 @@
       field: 'start_offset',
       filter: 'text',
       headerName: 'Start Offset',
-      hide: true,
+      hide: false,
       resizable: true,
       sortable: true,
     },
@@ -182,6 +183,7 @@
       filter: 'text',
       filterValueGetter: tagsFilterValueGetter,
       headerName: 'Tags',
+      hide: true,
       resizable: true,
       sortable: false,
       width: 220,
@@ -219,6 +221,12 @@
     dataGrid?.sizeColumnsToFit();
   }
 
+  function onGridSizeChanged() {
+    if (!activityDirectivesTable?.columnStates.length) {
+      onAutoSizeSpace();
+    }
+  }
+
   function onColumnToggleChange({ detail: { field, isHidden } }: CustomEvent) {
     const activityColumnStates: ColumnState[] = activityDirectivesTable?.columnStates ?? [];
     const existingColumnStateIndex: number = activityColumnStates.findIndex(
@@ -249,8 +257,12 @@
   }
 
   function onColumnStateChange({ detail: columnStates }: CustomEvent<ColumnState[] | undefined>) {
-    const updatedColumnStates = (columnStates ?? []).filter(columnState => columnState.colId !== 'actions');
-    viewUpdateActivityDirectivesTable({ columnStates: updatedColumnStates });
+    // ignore the first state change as it is triggered when the table is first loaded
+    if (didSetStateOnce) {
+      const updatedColumnStates = (columnStates ?? []).filter(columnState => columnState.colId !== 'actions');
+      viewUpdateActivityDirectivesTable({ columnStates: updatedColumnStates });
+    }
+    didSetStateOnce = true;
   }
 
   function onSelectionChanged() {
@@ -324,8 +336,9 @@
       planReadOnly={$planReadOnly}
       {user}
       on:columnStateChange={onColumnStateChange}
-      on:selectionChanged={onSelectionChanged}
+      on:gridSizeChanged={onGridSizeChanged}
       on:rowDoubleClicked={onRowDoubleClicked}
+      on:selectionChanged={onSelectionChanged}
     />
   </svelte:fragment>
 </Panel>
