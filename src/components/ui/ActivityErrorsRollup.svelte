@@ -1,14 +1,21 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  // eslint-disable-next-line
+  interface $$Events extends ComponentEvents<SvelteComponent> {
+    resetCategory: CustomEvent<ActivityErrorCategories>;
+    selectCategory: CustomEvent<ActivityErrorCategories>;
+  }
+
   import WarningIcon from '@nasa-jpl/stellar/icons/warning.svg?component';
   import WarningExtraIcon from '@nasa-jpl/stellar/icons/warning_extra.svg?component';
   import WarningMissingIcon from '@nasa-jpl/stellar/icons/warning_missing.svg?component';
   import WarningUnknownIcon from '@nasa-jpl/stellar/icons/warning_unknown.svg?component';
-  import { createEventDispatcher } from 'svelte';
+  import { SvelteComponent, createEventDispatcher, type ComponentEvents } from 'svelte';
   import OutsideBoundsIcon from '../../assets/out-of-bounds.svg?component';
   import type { ActivityErrorCategories, ActivityErrorCounts } from '../../types/errors';
   import { isMacOs } from '../../utilities/generic';
+  import { isMetaOrCtrlPressed } from '../../utilities/keyboardEvents';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { pluralize } from '../../utilities/text';
   import { tooltip } from '../../utilities/tooltip';
@@ -30,7 +37,11 @@
 
       selectedCategory = value as ActivityErrorCategories;
 
-      dispatch('selectCategory', { event, selectedCategory });
+      if (mode === 'minimal' && isMetaOrCtrlPressed(event)) {
+        dispatch('resetCategory', selectedCategory);
+      } else {
+        dispatch('selectCategory', selectedCategory);
+      }
     }
   }
 

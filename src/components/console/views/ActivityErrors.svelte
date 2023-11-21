@@ -39,12 +39,13 @@
     return selectedCategory !== 'all';
   }
 
-  function onSelectCategory(event: CustomEvent<{ event: MouseEvent; selectedCategory: ActivityErrorCategories }>) {
+  function onSelectCategory(event: CustomEvent<ActivityErrorCategories>) {
     const { detail: value } = event;
-    if (value) {
-      ({ selectedCategory } = value);
-      dataGrid.onFilterChanged();
+    if (value != null) {
+      selectedCategory = value;
     }
+
+    dataGrid.onFilterChanged();
   }
 
   const columnDefs: DataGridColumnDef<ActivityErrorRollup>[] = [

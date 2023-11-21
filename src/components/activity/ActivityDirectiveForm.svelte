@@ -28,7 +28,6 @@
   import { getActivityMetadata } from '../../utilities/activities';
   import effects from '../../utilities/effects';
   import { classNames, keyByBoolean } from '../../utilities/generic';
-  import { isMetaOrCtrlPressed } from '../../utilities/keyboardEvents';
   import { getArguments, getFormParameters } from '../../utilities/parameters';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
@@ -207,12 +206,10 @@
     }
   }
 
-  function onResetAllFormParameters(
-    event: CustomEvent<{ event: MouseEvent; selectedCategory: ActivityErrorCategories }>,
-  ) {
-    const { detail: value } = event;
-    if (value && isMetaOrCtrlPressed(value.event)) {
-      const { selectedCategory } = value;
+  function onResetAllFormParameters(event: CustomEvent<ActivityErrorCategories>) {
+    const { detail: selectedCategory } = event;
+
+    if (selectedCategory != null) {
       switch (selectedCategory) {
         case 'invalidParameter':
           if ($plan) {
@@ -417,7 +414,7 @@
             mode="minimal"
             permissionError={updatePermissionError}
             selectable
-            on:selectCategory={onResetAllFormParameters}
+            on:resetCategory={onResetAllFormParameters}
           />
         </div>
         <button
