@@ -35,14 +35,13 @@
 
 .tooltip--with-shortcut {
   align-items: center;
-  /* color: var(--st-gray-10); */
   display: flex;
   gap: 24px;
   justify-content: center;
 }
 
 .tooltip-shortcut-container {
-  color: var(--st-gray-20);
+  color: var(--st-gray-30);
   display: flex;
   gap: 4px;
 }
