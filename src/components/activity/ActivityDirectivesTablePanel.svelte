@@ -3,7 +3,8 @@
 <script lang="ts">
   import TableFillIcon from '@nasa-jpl/stellar/icons/table_fill.svg?component';
   import TableFitIcon from '@nasa-jpl/stellar/icons/table_fit.svg?component';
-  import type { ColDef, ColumnState, ValueGetterParams } from 'ag-grid-community';
+  import type { ColDef, ColumnResizedEvent, ColumnState, ValueGetterParams } from 'ag-grid-community';
+  import { debounce } from 'lodash-es';
   import {
     activityDirectivesList,
     activityDirectivesMap,
@@ -15,7 +16,7 @@
   import { view, viewTogglePanel, viewUpdateActivityDirectivesTable } from '../../stores/views';
   import type { ActivityDirective } from '../../types/activity';
   import type { User } from '../../types/app';
-  import type { ViewGridSection, ViewTable } from '../../types/view';
+  import type { AutoSizeColumns, ViewGridSection, ViewTable } from '../../types/view';
   import { filterEmpty } from '../../utilities/generic';
   import { getActivityDirectiveStartTimeMs, getDoyTime, getUnixEpochTimeFromInterval } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
@@ -35,13 +36,16 @@
   }
 
   let activityDirectivesTable: ViewTable | undefined;
-  let didSetStateOnce: boolean = false;
+  let autoSizeColumns: AutoSizeColumns | undefined;
   let dataGrid: DataGrid<ActivityDirective>;
   let defaultColumnDefinitions: Partial<Record<ActivityDirectiveColumns, ActivityDirectiveColDef>> = {};
   let derivedColumnDefs: ColDef[] = [];
   let filterExpression: string = '';
+  let onGridSizeChangedDebounced = debounce(onGridSizeChanged, 100);
+  let viewUpdateActivityDirectivesTableDebounced = debounce(viewUpdateActivityDirectivesTable, 100);
 
   $: activityDirectivesTable = $view?.definition.plan.activityDirectivesTable;
+  $: autoSizeColumns = activityDirectivesTable?.autoSizeColumns;
   $: defaultColumnDefinitions = {
     anchor_id: {
       field: 'anchor_id',
@@ -213,17 +217,19 @@
     return defaultColumnDef;
   });
 
-  function onAutoSizeContent() {
+  function autoSizeContent() {
     dataGrid?.autoSizeAllColumns();
   }
 
-  function onAutoSizeSpace() {
+  function autoSizeSpace() {
     dataGrid?.sizeColumnsToFit();
   }
 
   function onGridSizeChanged() {
-    if (!activityDirectivesTable?.columnStates.length) {
-      onAutoSizeSpace();
+    if (activityDirectivesTable?.autoSizeColumns === 'fill') {
+      autoSizeSpace();
+    } else if (activityDirectivesTable?.autoSizeColumns === 'fit') {
+      autoSizeContent();
     }
   }
 
@@ -256,13 +262,34 @@
     }
   }
 
-  function onColumnStateChange({ detail: columnStates }: CustomEvent<ColumnState[] | undefined>) {
-    // ignore the first state change as it is triggered when the table is first loaded
-    if (didSetStateOnce) {
-      const updatedColumnStates = (columnStates ?? []).filter(columnState => columnState.colId !== 'actions');
+  function onColumnMoved() {
+    const columnStates = dataGrid?.getColumnState();
+    const updatedColumnStates = (columnStates ?? []).filter(columnState => columnState.colId !== 'actions');
+    viewUpdateActivityDirectivesTable({ columnStates: updatedColumnStates });
+  }
+
+  function onColumnPinned() {
+    const columnStates = dataGrid?.getColumnState();
+    const updatedColumnStates = (columnStates ?? []).filter(columnState => columnState.colId !== 'actions');
+    viewUpdateActivityDirectivesTable({ columnStates: updatedColumnStates });
+  }
+
+  function onColumnResized({ detail }: CustomEvent<ColumnResizedEvent>) {
+    const { source } = detail;
+
+    const columnStates = dataGrid?.getColumnState();
+    const updatedColumnStates = (columnStates ?? []).filter(columnState => columnState.colId !== 'actions');
+    if (source === 'uiColumnResized') {
+      viewUpdateActivityDirectivesTableDebounced({ autoSizeColumns: 'off', columnStates: updatedColumnStates });
+    } else {
       viewUpdateActivityDirectivesTable({ columnStates: updatedColumnStates });
     }
-    didSetStateOnce = true;
+  }
+
+  function onColumnVisible() {
+    const columnStates = dataGrid?.getColumnState();
+    const updatedColumnStates = (columnStates ?? []).filter(columnState => columnState.colId !== 'actions');
+    viewUpdateActivityDirectivesTable({ columnStates: updatedColumnStates });
   }
 
   function onSelectionChanged() {
@@ -292,6 +319,24 @@
         .filter(filterEmpty),
     });
   }
+
+  function toggleAutoSizeContent() {
+    if (autoSizeColumns !== 'fit') {
+      viewUpdateActivityDirectivesTable({ autoSizeColumns: 'fit' });
+      autoSizeContent();
+    } else {
+      viewUpdateActivityDirectivesTable({ autoSizeColumns: 'off' });
+    }
+  }
+
+  function toggleAutoSizeSpace() {
+    if (autoSizeColumns !== 'fill') {
+      viewUpdateActivityDirectivesTable({ autoSizeColumns: 'fill' });
+      autoSizeSpace();
+    } else {
+      viewUpdateActivityDirectivesTable({ autoSizeColumns: 'off' });
+    }
+  }
 </script>
 
 <Panel padBody={false}>
@@ -302,15 +347,17 @@
       <div class="size-actions">
         <button
           class="st-button secondary"
-          use:tooltip={{ content: 'Fit Columns to Content', placement: 'top' }}
-          on:click={onAutoSizeContent}
+          class:selected={autoSizeColumns === 'fit'}
+          use:tooltip={{ content: 'Toggle Auto Fit Columns to Content', placement: 'top' }}
+          on:click={toggleAutoSizeContent}
         >
           <TableFitIcon />
         </button>
         <button
           class="st-button secondary"
-          use:tooltip={{ content: 'Fit Columns to Available Space', placement: 'top' }}
-          on:click={onAutoSizeSpace}
+          class:selected={autoSizeColumns === 'fill'}
+          use:tooltip={{ content: 'Toggle Auto Fit Columns to Available Space', placement: 'top' }}
+          on:click={toggleAutoSizeSpace}
         >
           <TableFillIcon />
         </button>
@@ -335,8 +382,11 @@
       plan={$plan}
       planReadOnly={$planReadOnly}
       {user}
-      on:columnStateChange={onColumnStateChange}
-      on:gridSizeChanged={onGridSizeChanged}
+      on:columnMoved={onColumnMoved}
+      on:columnPinned={onColumnPinned}
+      on:columnResized={onColumnResized}
+      on:columnVisible={onColumnVisible}
+      on:gridSizeChanged={onGridSizeChangedDebounced}
       on:rowDoubleClicked={onRowDoubleClicked}
       on:selectionChanged={onSelectionChanged}
     />
@@ -347,5 +397,9 @@
   .table-menu {
     column-gap: 1rem;
     display: flex;
+  }
+
+  .st-button.secondary.selected {
+    background: var(--st-gray-20);
   }
 </style>

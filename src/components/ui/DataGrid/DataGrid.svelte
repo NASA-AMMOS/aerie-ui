@@ -60,6 +60,9 @@
   export function focusDataGrid() {
     gridDiv.focus();
   }
+  export function getColumnState() {
+    return gridOptions?.columnApi?.getColumnState();
+  }
   // expose ag-grid function to select all visible rows
   export function selectAllVisible() {
     gridOptions?.api?.selectAllFiltered();

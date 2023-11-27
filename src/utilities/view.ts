@@ -74,6 +74,7 @@ export function generateDefaultView(activityTypes: ActivityType[] = [], resource
     definition: {
       plan: {
         activityDirectivesTable: {
+          autoSizeColumns: 'fill',
           columnDefs: [
             {
               aggFunc: null,
@@ -122,7 +123,6 @@ export function generateDefaultView(activityTypes: ActivityType[] = [], resource
             {
               field: 'name',
               filter: 'text',
-              flex: 1,
               headerName: 'Name',
               resizable: true,
               sortable: true,
@@ -247,6 +247,7 @@ export function generateDefaultView(activityTypes: ActivityType[] = [], resource
           columnStates: [],
         },
         activitySpansTable: {
+          autoSizeColumns: 'fill',
           columnDefs: [
             {
               field: 'id',
