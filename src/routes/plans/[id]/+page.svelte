@@ -240,9 +240,7 @@
 
   $: {
     $activityDirectivesMap =
-      $planSnapshotId !== null && planSnapshotActivityDirectives.length > 0
-        ? keyBy(planSnapshotActivityDirectives, 'id')
-        : keyBy($activityDirectives, 'id');
+      $planSnapshotId !== null ? keyBy(planSnapshotActivityDirectives, 'id') : keyBy($activityDirectives, 'id');
   }
 
   $: if ($plan && $planLocked) {
