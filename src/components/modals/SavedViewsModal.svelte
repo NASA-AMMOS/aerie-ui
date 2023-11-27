@@ -5,7 +5,7 @@
   import { SearchParameters } from '../../enums/searchParameters';
   import { initializeView, view, views } from '../../stores/views';
   import type { User } from '../../types/app';
-  import type { View } from '../../types/view';
+  import type { ViewSlim } from '../../types/view';
   import effects from '../../utilities/effects';
   import { setQueryParam } from '../../utilities/generic';
   import Tab from '../ui/Tabs/Tab.svelte';
@@ -22,12 +22,12 @@
 
   const dispatch = createEventDispatcher();
 
-  let userViews: View[] = [];
+  let userViews: ViewSlim[] = [];
 
-  $: userViews = $views.filter((view: View) => view.owner === user?.id);
+  $: userViews = $views.filter((view: ViewSlim) => view.owner === user?.id);
 
   async function deleteView({ detail: viewId }: CustomEvent<number>) {
-    const matchingView = userViews.find(v => v.id === viewId);
+    const matchingView = $views.find(v => v.id === viewId);
     if (matchingView) {
       const success = await effects.deleteView(matchingView, user);
 
@@ -40,7 +40,7 @@
   }
 
   async function deleteViews({ detail: viewIds }: CustomEvent<number[]>) {
-    const matchingViews = userViews.filter(v => viewIds.some(viewId => viewId === v.id));
+    const matchingViews = $views.filter(v => viewIds.some(viewId => viewId === v.id));
     const success = await effects.deleteViews(matchingViews, user);
 
     if (success) {

@@ -63,7 +63,7 @@
   }
 
   function onKeyDown(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
+    if (shown && event.key === 'Escape') {
       hide(true);
       event.stopPropagation();
     }
