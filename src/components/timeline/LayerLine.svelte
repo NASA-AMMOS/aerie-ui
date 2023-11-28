@@ -83,7 +83,7 @@
 
       const [yAxis] = yAxes.filter(axis => yAxisId === axis.id);
       const domain = yAxis?.scaleDomain || [];
-      yScale = getYScale(domain, drawHeight);
+      const yScale = getYScale(domain, drawHeight) as ScaleLinear<number, number>;
 
       ctx.lineWidth = lineWidth;
       ctx.strokeStyle = lineColor;

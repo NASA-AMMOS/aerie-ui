@@ -2,7 +2,7 @@
 
 <script lang="ts">
   import { quadtree as d3Quadtree, type Quadtree } from 'd3-quadtree';
-  import { scaleOrdinal, type ScaleTime } from 'd3-scale';
+  import { scaleOrdinal, scalePoint, type ScaleTime } from 'd3-scale';
   import {
     schemeAccent,
     schemeCategory10,
@@ -15,11 +15,21 @@
     schemeSet3,
     schemeTableau10,
   } from 'd3-scale-chromatic';
+  import { curveLinear, line as d3Line } from 'd3-shape';
   import { createEventDispatcher, onMount, tick } from 'svelte';
   import type { Resource } from '../../types/simulation';
-  import type { QuadtreeRect, ResourceLayerFilter, XRangeLayerColorScheme, XRangePoint } from '../../types/timeline';
-  import { clamp } from '../../utilities/generic';
-  import { searchQuadtreeRect } from '../../utilities/timeline';
+  import type {
+    Axis,
+    LinePoint,
+    QuadtreePoint,
+    QuadtreeRect,
+    ResourceLayerFilter,
+    TimeRange,
+    XRangeLayerColorScheme,
+    XRangePoint,
+  } from '../../types/timeline';
+  import { clamp, filterEmpty } from '../../utilities/generic';
+  import { CANVAS_PADDING_Y, searchQuadtreePoint, searchQuadtreeRect } from '../../utilities/timeline';
 
   export let contextmenu: MouseEvent | undefined;
   export let colorScheme: XRangeLayerColorScheme = 'schemeAccent';
@@ -32,7 +42,11 @@
   export let mouseout: MouseEvent | undefined;
   export let opacity: number = 0.8;
   export let resources: Resource[] = [];
+  export let viewTimeRange: TimeRange = { end: 0, start: 0 };
   export let xScaleView: ScaleTime<number, number> | null = null;
+  export let showStateLineChart: boolean = false;
+  export const yAxes: Axis[] = [];
+  export const yAxisId: number | null = null;
 
   const dispatch = createEventDispatcher();
   const textMeasurementCache: Record<string, { textHeight: number; textWidth: number }> = {};
@@ -43,11 +57,16 @@
   let maxXWidth: number;
   let mounted: boolean = false;
   let points: XRangePoint[] = [];
+  let pointRadius: number = 2;
   let quadtree: Quadtree<QuadtreeRect>;
+  let quadtreePoints: Quadtree<QuadtreePoint>;
+  let scaleDomain: Set<string> = new Set();
   let visiblePointsById: Record<number, XRangePoint> = {};
+  let visibleLinePointsById: Record<number, LinePoint> = {};
 
   $: canvasHeightDpr = drawHeight * dpr;
   $: canvasWidthDpr = drawWidth * dpr;
+  // If the user wants to see the stateLineChart, split this layer in half horizontally.
   $: if (
     canvasHeightDpr &&
     canvasWidthDpr &&
@@ -66,6 +85,7 @@
   $: onContextMenu(contextmenu);
   $: onMousemove(mousemove);
   $: onMouseout(mouseout);
+  $: linePoints = resourcesToLinePoints(resources);
   $: points = resourcesToXRangePoints(resources);
 
   onMount(() => {
@@ -76,7 +96,7 @@
   });
 
   async function draw(): Promise<void> {
-    if (ctx && xScaleView) {
+    if (ctx !== null && xScaleView) {
       await tick();
 
       ctx.resetTransform();
@@ -84,74 +104,103 @@
       ctx.clearRect(0, 0, drawWidth, drawHeight);
       ctx.globalAlpha = opacity;
 
-      quadtree = d3Quadtree<QuadtreeRect>()
-        .x(p => p.x)
-        .y(p => p.y)
-        .extent([
-          [0, 0],
-          [drawWidth, drawHeight],
-        ]);
-      visiblePointsById = {};
+      if (showStateLineChart) {
+        const fill = '';
+        ctx.fillStyle = fill;
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = fill;
 
-      maxXWidth = Number.MIN_SAFE_INTEGER;
-      const colorScale = getColorScale();
+        const domain = Array.from(scaleDomain);
+        const yScale = scalePoint()
+          .domain(domain.filter(filterEmpty))
+          .range([drawHeight - CANVAS_PADDING_Y, CANVAS_PADDING_Y]);
+        quadtreePoints = d3Quadtree<QuadtreePoint>()
+          .x(p => p.x)
+          .y(p => p.y)
+          .extent([
+            [0, 0],
+            [drawWidth, drawHeight],
+          ]);
+        visibleLinePointsById = {};
 
-      for (let i = 0; i < points.length; ++i) {
-        const point = points[i];
-        if (point.is_gap) {
-          continue;
+        const line = d3Line<LinePoint>()
+          .x(d => (xScaleView as ScaleTime<number, number, never>)(d.x))
+          .y(d => yScale(d.y.toString()) as number)
+          .defined(d => d.y !== null) // Skip any gaps in resource data instead of interpolating
+          .curve(curveLinear);
+        ctx.beginPath();
+        line.context(ctx)(linePoints);
+        ctx.stroke();
+        ctx.closePath();
+
+        for (const point of linePoints) {
+          const { id, radius } = point;
+
+          if (point.x >= viewTimeRange.start && point.x <= viewTimeRange.end) {
+            const x = (xScaleView as ScaleTime<number, number, never>)(point.x);
+            const y = yScale(point.y.toString()) as number;
+            quadtreePoints.add({ id, x, y });
+            visibleLinePointsById[id] = point;
+
+            const circle = new Path2D();
+            circle.arc(x, y, radius, 0, 2 * Math.PI);
+            ctx.fill(circle);
+          }
         }
+      } else {
+        quadtree = d3Quadtree<QuadtreeRect>()
+          .x(p => p.x)
+          .y(p => p.y)
+          .extent([
+            [0, 0],
+            [drawWidth, drawHeight],
+          ]);
+        visiblePointsById = {};
 
-        // Scan to the next point with a different label than the current point.
-        let j = i + 1;
-        let nextPoint = points[j];
-        while (nextPoint && nextPoint.label.text === point.label.text && nextPoint.is_gap === point.is_gap) {
-          j = j + 1;
-          nextPoint = points[j];
-        }
-        i = j - 1; // Minus since the loop auto increments i at the end of the block.
+        maxXWidth = Number.MIN_SAFE_INTEGER;
+        const colorScale = getColorScale();
 
-        const xStart = clamp(xScaleView(point.x), 0, drawWidth);
-        const xEnd = clamp(xScaleView(nextPoint ? nextPoint.x : points[i].x), 0, drawWidth);
-
-        const xWidth = xEnd - xStart;
-        const y = 0;
-
-        if (xWidth > 0) {
-          const { id } = point;
-          visiblePointsById[id] = point;
-
-          const labelText = point.label.text;
-          ctx.fillStyle = colorScale(labelText);
-          const rect = new Path2D();
-          rect.rect(xStart, y, xWidth, drawHeight);
-          ctx.fill(rect);
-
-          quadtree.add({
-            height: drawHeight,
-            id,
-            width: xWidth,
-            x: xStart,
-            y,
-          });
-
-          if (xWidth > maxXWidth) {
-            maxXWidth = xWidth;
+        for (let i = 0; i < points.length; ++i) {
+          const point = points[i];
+          if (point.is_gap) {
+            continue;
           }
 
-          const { textHeight, textWidth } = setLabelContext(point);
-          if (textWidth < xWidth) {
-            ctx.fillText(labelText, xStart + xWidth / 2 - textWidth / 2, drawHeight / 2 + textHeight / 2, textWidth);
-          } else {
-            const extraLabelPadding = 8;
-            let newLabelText = labelText;
-            let newTextWidth = textWidth;
+          // Scan to the next point with a different label than the current point.
+          let j = i + 1;
+          let nextPoint = points[j];
+          while (nextPoint && nextPoint.label.text === point.label.text && nextPoint.is_gap === point.is_gap) {
+            j = j + 1;
+            nextPoint = points[j];
+          }
+          i = j - 1; // Minus since the loop auto increments i at the end of the block.
 
-            // Remove characters from label until it is small enough to fit in x-range point.
-            while (newTextWidth > 0 && newTextWidth > xWidth - extraLabelPadding) {
-              newLabelText = newLabelText.slice(0, -1);
-              const textMeasurement = measureText(newLabelText);
-              newTextWidth = textMeasurement.textWidth;
+          const xStart = clamp(xScaleView(point.x), 0, drawWidth);
+          const xEnd = clamp(xScaleView(nextPoint ? nextPoint.x : points[i].x), 0, drawWidth);
+
+          const xWidth = xEnd - xStart;
+          const y = 0;
+
+          if (xWidth > 0) {
+            const { id } = point;
+            visiblePointsById[id] = point;
+
+            const labelText = point.label.text;
+            ctx.fillStyle = colorScale(labelText);
+            const rect = new Path2D();
+            rect.rect(xStart, y, xWidth, drawHeight);
+            ctx.fill(rect);
+
+            quadtree.add({
+              height: drawHeight,
+              id,
+              width: xWidth,
+              x: xStart,
+              y,
+            });
+
+            if (xWidth > maxXWidth) {
+              maxXWidth = xWidth;
             }
 
             // Only draw if text will be visible
@@ -221,7 +270,16 @@
   function onMousemove(e: MouseEvent | undefined): void {
     if (e) {
       const { offsetX: x, offsetY: y } = e;
-      const points = searchQuadtreeRect<XRangePoint>(quadtree, x, y, drawHeight, maxXWidth, visiblePointsById);
+      let points: LinePoint[] | XRangePoint[];
+
+      // Only check if the user is hovering the line chart if it's showing.
+      if (showStateLineChart) {
+        points = searchQuadtreePoint<LinePoint>(quadtreePoints, x, y, pointRadius, visibleLinePointsById);
+      } else {
+        points = searchQuadtreeRect<XRangePoint>(quadtree, x, y, drawHeight, maxXWidth, visiblePointsById);
+      }
+
+      // The user will only hover one part of the layer at a time so only dispatch the set of points they're hovering.
       dispatch('mouseOver', { e, layerId: id, points });
     }
   }
@@ -230,6 +288,31 @@
     if (e) {
       dispatch('mouseOver', { e, layerId: id, points: [] });
     }
+  }
+
+  function resourcesToLinePoints(resources: Resource[]): LinePoint[] {
+    const points: LinePoint[] = [];
+
+    for (const resource of resources) {
+      const { name, values } = resource;
+
+      for (let i = 0; i < values.length; ++i) {
+        const value = values[i];
+        const { x } = value;
+        const y = value.y as number;
+        scaleDomain.add(value.y as string);
+        points.push({
+          id: id++,
+          name,
+          radius: pointRadius,
+          type: 'line',
+          x,
+          y,
+        });
+      }
+    }
+
+    return points;
   }
 
   function resourcesToXRangePoints(resources: Resource[]): XRangePoint[] {

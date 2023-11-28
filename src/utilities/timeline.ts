@@ -1,6 +1,6 @@
 import { bisector, tickStep } from 'd3-array';
 import type { Quadtree, QuadtreeInternalNode, QuadtreeLeaf } from 'd3-quadtree';
-import { scaleLinear, scaleTime, type ScaleLinear, type ScaleTime } from 'd3-scale';
+import { scaleLinear, scalePoint, scaleTime, type ScaleLinear, type ScalePoint, type ScaleTime } from 'd3-scale';
 import {
   timeHour,
   timeInterval,
@@ -137,6 +137,12 @@ export function getXScale(domain: Date[], width: number): ScaleTime<number, numb
   return scaleTime()
     .domain(domain)
     .range([CANVAS_PADDING_X, width - CANVAS_PADDING_X]);
+}
+
+export function getOrdinalYScale(domain: (string | null)[], height: number): ScalePoint<string> {
+  return scalePoint()
+    .domain(domain as string[])
+    .range([height - CANVAS_PADDING_Y, CANVAS_PADDING_Y]);
 }
 
 export function getYScale(domain: (number | null)[], height: number): ScaleLinear<number, number> {
@@ -355,7 +361,11 @@ export function createHorizontalGuide(
       if (firstAxis.scaleDomain.length === 2) {
         if (firstAxis.scaleDomain[0] !== null && firstAxis.scaleDomain[1] !== null) {
           // Default y value to the middle of the domain
-          y = (firstAxis.scaleDomain[1] + firstAxis.scaleDomain[0]) / 2;
+          if (typeof firstAxis.scaleDomain[0] === 'number' && typeof firstAxis.scaleDomain[1] === 'number') {
+            y = (firstAxis.scaleDomain[1] + firstAxis.scaleDomain[0]) / 2;
+          } else {
+            // TODO: Figure out how to place a horizontal guide on a categorical axis
+          }
         }
       }
     }
@@ -494,6 +504,7 @@ export function createTimelineXRangeLayer(
     id,
     name: '',
     opacity: 0.8,
+    showStateLineChart: false,
     yAxisId,
     ...args,
   };
@@ -589,6 +600,25 @@ export function getYAxisBounds(
   }
 
   return scaleDomain as number[];
+}
+
+/**
+ * Checks if the domain is categorical (list of strings).
+ * @param values
+ * @returns True if the domain is categorical.
+ */
+export function isDomainCategorical(values: (number | string | null)[]): boolean {
+  if (values === null || values.length === 0) {
+    return false;
+  }
+
+  for (const value of values) {
+    if (typeof value === 'number') {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 /**

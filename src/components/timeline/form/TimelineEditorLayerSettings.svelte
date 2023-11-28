@@ -159,6 +159,17 @@
             on:input={onInput}
           />
         </Input>
+        <Input layout="inline">
+          <label for="showStateLineChart">Show State Changes</label>
+          <input
+            style:width="max-content"
+            checked={layerAsXRange.showStateLineChart}
+            id="showStateLineChart"
+            name="showStateLineChart"
+            on:change={onInput}
+            type="checkbox"
+          />
+        </Input>
       {/if}
       <Input layout="inline">
         <label for="id">Layer ID</label>
