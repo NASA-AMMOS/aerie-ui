@@ -80,7 +80,7 @@
   }
 </script>
 
-<div class="view-menu st-typography-medium">
+<div class="view-menu-button st-typography-medium">
   <PlanNavButton status={$viewIsModified ? Status.Modified : null} title={$view?.name ?? defaultViewName} menuTitle="">
     <ViewGridIcon />
     <div class="view-menu st-typography-medium" slot="menu">
