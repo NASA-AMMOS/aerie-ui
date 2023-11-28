@@ -603,25 +603,6 @@ export function getYAxisBounds(
 }
 
 /**
- * Checks if the domain is categorical (list of strings).
- * @param values
- * @returns True if the domain is categorical.
- */
-export function isDomainCategorical(values: (number | string | null)[]): boolean {
-  if (values === null || values.length === 0) {
-    return false;
-  }
-
-  for (const value of values) {
-    if (typeof value === 'number') {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-/**
  * Populates y-axes with scaleDomain
  */
 export function getYAxesWithScaleDomains(
