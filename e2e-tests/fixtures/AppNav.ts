@@ -15,13 +15,15 @@ export class AppNav {
   appMenuItemModels: Locator;
   appMenuItemPlans: Locator;
   appMenuItemScheduling: Locator;
+  pageLoadedLocator: Locator;
 
   constructor(public page: Page) {
     this.updatePage(page);
   }
 
   async goto() {
-    await this.page.goto('/plans', { waitUntil: 'networkidle' });
+    await this.page.goto('/plans');
+    await this.pageLoadedLocator.waitFor({ state: 'visible' });
     await this.page.waitForTimeout(250);
   }
 
@@ -45,5 +47,6 @@ export class AppNav {
     this.appMenuItemPlans = page.locator(`.app-menu > .menu > .menu-slot > .menu-item:has-text("Plans")`);
     this.appMenuItemScheduling = page.locator(`.app-menu > .menu > .menu-slot > .menu-item:has-text("Scheduling")`);
     this.page = page;
+    this.pageLoadedLocator = page.locator(`.ag-root`);
   }
 }
