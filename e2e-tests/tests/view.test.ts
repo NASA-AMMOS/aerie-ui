@@ -34,7 +34,6 @@ test.beforeAll(async ({ browser }) => {
   await plans.goto();
   await plans.createPlan();
   await plan.goto();
-  await plan.setRoleIfNeeded();
 });
 
 test.afterAll(async () => {

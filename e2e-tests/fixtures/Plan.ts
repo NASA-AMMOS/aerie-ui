@@ -240,12 +240,6 @@ export class Plan {
     expect(await this.panelSimulation.getByRole('textbox', { name: templateName })).toBeVisible();
   }
 
-  async setRoleIfNeeded(role: string = 'aerie_admin') {
-    if (this.roleSelector) {
-      this.roleSelector.selectOption(role);
-    }
-  }
-
   async showConstraintsLayout() {
     await this.showPanel('Constraints');
     await this.panelConstraints.waitFor({ state: 'attached' });
