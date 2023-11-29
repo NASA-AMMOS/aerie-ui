@@ -405,6 +405,9 @@
                               "opacity": {
                                 "type": "number"
                               },
+                              "showStateLineChart": {
+                                "type": "boolean"
+                              },
                               "yAxisId": {
                                 "$ref": "#/definitions/yAxisId"
                               }
