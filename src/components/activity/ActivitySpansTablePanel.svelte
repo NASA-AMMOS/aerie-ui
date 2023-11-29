@@ -170,6 +170,14 @@
         ],
       });
     }
+
+    setTimeout(() => {
+      if (autoSizeColumns === 'fit') {
+        autoSizeContent();
+      } else if (autoSizeColumns === 'fill') {
+        autoSizeSpace();
+      }
+    }, 0);
   }
 
   function onColumnMoved() {
