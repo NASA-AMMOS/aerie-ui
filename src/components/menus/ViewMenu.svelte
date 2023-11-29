@@ -226,8 +226,8 @@
     margin: 0 4px;
   }
 
-  .view-menu :global(.header),
-  .view-menu :global(.nav-button .menu-body) {
+  .view-menu-button :global(.header),
+  .view-menu-button :global(.nav-button .menu-body) {
     display: none;
   }
 </style>
