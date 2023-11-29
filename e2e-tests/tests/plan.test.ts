@@ -130,6 +130,8 @@ test.describe.serial('Plan', () => {
   });
 
   test(`Changing to a new plan should clear the selected activity`, async () => {
+    await plan.showPanel('Activity Types');
+
     // Create an activity which will be auto selected
     await plan.panelActivityTypes.getByRole('button', { name: 'CreateActivity-GrowBanana' }).click();
 
