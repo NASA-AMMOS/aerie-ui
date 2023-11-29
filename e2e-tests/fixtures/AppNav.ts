@@ -15,7 +15,8 @@ export class AppNav {
   appMenuItemModels: Locator;
   appMenuItemPlans: Locator;
   appMenuItemScheduling: Locator;
-  pageLoadedLocator: Locator;
+  pageLoadedLocatorNoData: Locator;
+  pageLoadedLocatorWithData: Locator;
 
   constructor(public page: Page) {
     this.updatePage(page);
@@ -23,7 +24,10 @@ export class AppNav {
 
   async goto() {
     await this.page.goto('/plans');
-    await this.pageLoadedLocator.waitFor({ state: 'visible' });
+    await Promise.race([
+      this.pageLoadedLocatorWithData.waitFor({ state: 'visible' }),
+      this.pageLoadedLocatorNoData.waitFor({ state: 'visible' }),
+    ]);
     await this.page.waitForTimeout(250);
   }
 
@@ -47,6 +51,7 @@ export class AppNav {
     this.appMenuItemPlans = page.locator(`.app-menu > .menu > .menu-slot > .menu-item:has-text("Plans")`);
     this.appMenuItemScheduling = page.locator(`.app-menu > .menu > .menu-slot > .menu-item:has-text("Scheduling")`);
     this.page = page;
-    this.pageLoadedLocator = page.locator(`.ag-root`);
+    this.pageLoadedLocatorWithData = page.locator(`.ag-root`);
+    this.pageLoadedLocatorNoData = page.locator(`.body:has-text("No Plans Found")`);
   }
 }
