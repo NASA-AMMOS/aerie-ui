@@ -65,7 +65,7 @@
         simulationBoundsVizRangeWidth = ((simulationEndTimeMS - simulationStartTimeMS) / planDuration) * 100 || 0;
 
         let simulationExtentMS = 0;
-        if ((status === Status.Incomplete || status === Status.Failed) && extent) {
+        if ((status === Status.Incomplete || status === Status.Failed || status === Status.Canceled) && extent) {
           simulationExtentMS =
             getUnixEpochTimeFromInterval(simulationDataset.simulation_start_time, extent) - simulationStartTimeMS;
         } else if (status === Status.Complete) {
@@ -110,7 +110,7 @@
             {getHumanReadableSimulationStatus(status)}
           {/if}
         </div>
-        {#if status === Status.Pending}
+        {#if status === Status.Pending || status === Status.Incomplete}
           <button
             use:tooltip={{ content: 'Cancel Simulation', placement: 'top' }}
             class="st-button icon simulation-dataset-status-cancel"

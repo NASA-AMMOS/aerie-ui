@@ -33,7 +33,7 @@ export function getSimulationProgress(simulationDataset: SimulationDataset | nul
  */
 export function getSimulationExtent(simulationDataset: SimulationDataset): string | null {
   // Look for the extent in the reason if the sim failed, otherwise grab it from the extent object
-  if (simulationDataset.status === 'failed') {
+  if (simulationDataset.status === 'failed' || simulationDataset.canceled) {
     return simulationDataset.reason?.data.elapsedTime ?? null;
   } else {
     return simulationDataset.extent?.extent ?? null;
@@ -50,7 +50,7 @@ export function getSimulationTimestamp(simulationDataset: SimulationDataset): st
     return 'Unknown Time';
   }
   let simulationExtentMS = 0;
-  if (status === Status.Incomplete || status === Status.Failed) {
+  if (status === Status.Incomplete || status === Status.Failed || status === Status.Canceled) {
     simulationExtentMS = getUnixEpochTimeFromInterval(simulationDataset.simulation_start_time, extent);
   } else if (status === Status.Complete) {
     simulationExtentMS = new Date(simulationDataset.simulation_end_time).getTime();
@@ -86,16 +86,15 @@ export function getSimulationStatus(simulationDataset: SimulationDatasetSlim | n
   if (!simulationDataset) {
     return null;
   }
-  if (simulationDataset.status === 'success') {
+  if (simulationDataset.canceled) {
+    return Status.Canceled;
+  } else if (simulationDataset.status === 'success') {
     return Status.Complete;
   } else if (simulationDataset.status === 'failed') {
     return Status.Failed;
   } else if (simulationDataset.status === 'incomplete') {
     return Status.Incomplete;
   } else if (simulationDataset.status === 'pending') {
-    if (simulationDataset.canceled) {
-      return Status.Canceled;
-    }
     return Status.Pending;
   }
   return null;

@@ -289,7 +289,7 @@ const effects = {
       );
 
       if (confirm) {
-        await reqHasura<SeqId>(gql.CANCEL_PENDING_SIMULATION, { id: simulationDatasetId }, user);
+        await reqHasura<SeqId>(gql.CANCEL_SIMULATION, { id: simulationDatasetId }, user);
         showSuccessToast('Simulation Successfully Canceled');
       }
     } catch (e) {

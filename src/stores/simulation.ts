@@ -161,16 +161,15 @@ export const simulationStatus: Readable<Status | null> = derived(
         return Status.Modified;
       }
 
-      if (status === 'success') {
+      if ($simulationDataset.canceled) {
+        return Status.Canceled;
+      } else if (status === 'success') {
         return Status.Complete;
       } else if (status === 'failed') {
         return Status.Failed;
       } else if (status === 'incomplete') {
         return Status.Incomplete;
       } else if (status === 'pending') {
-        if ($simulationDataset.canceled) {
-          return Status.Canceled;
-        }
         return Status.Pending;
       }
     }

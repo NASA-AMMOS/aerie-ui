@@ -599,7 +599,7 @@
             />
           </div>
           <div>Simulation Dataset ID: {$simulationDatasetLatest?.id}</div>
-          {#if selectedSimulationStatus === Status.Pending}
+          {#if selectedSimulationStatus === Status.Pending || selectedSimulationStatus === Status.Incomplete}
             <button
               on:click={() => effects.cancelPendingSimulation($simulationDatasetId, data.user)}
               class="st-button cancel-button">Cancel</button
