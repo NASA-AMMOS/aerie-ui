@@ -76,7 +76,7 @@
   });
 
   async function draw(): Promise<void> {
-    if (ctx !== null && xScaleView) {
+    if (ctx && xScaleView) {
       await tick();
 
       ctx.resetTransform();
@@ -230,9 +230,8 @@
   function onMousemove(e: MouseEvent | undefined): void {
     if (e) {
       const { offsetX: x, offsetY: y } = e;
-      let points = searchQuadtreeRect<XRangePoint>(quadtree, x, y, drawHeight, maxXWidth, visiblePointsById);
+      const points = searchQuadtreeRect<XRangePoint>(quadtree, x, y, drawHeight, maxXWidth, visiblePointsById);
 
-      // The user will only hover one part of the layer at a time so only dispatch the set of points they're hovering.
       dispatch('mouseOver', { e, layerId: id, points });
     }
   }
