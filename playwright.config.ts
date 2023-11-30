@@ -50,7 +50,6 @@ const config: PlaywrightTestConfig = {
     command: 'npm run preview',
     port: 3000,
   },
-  workers: 2,
 };
 
 export default config;
