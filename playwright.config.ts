@@ -8,7 +8,6 @@ const __dirname = path.dirname(__filename);
 export const STORAGE_STATE = path.join(__dirname, 'e2e-test-results/.auth/user.json');
 
 const config: PlaywrightTestConfig = {
-  workers: 2,
   forbidOnly: !!process.env.CI,
   projects: [
     {
@@ -51,6 +50,7 @@ const config: PlaywrightTestConfig = {
     command: 'npm run preview',
     port: 3000,
   },
+  workers: 2,
 };
 
 export default config;
