@@ -147,7 +147,6 @@
     formParameters = formParameters.map((formParameter: FormParameter) => {
       let errors = parameterErrorMap[formParameter.name];
       if (missing[formParameter.name]) {
-        console.log('missing :>> ', missing);
         if (!errors) {
           errors = [];
         }
