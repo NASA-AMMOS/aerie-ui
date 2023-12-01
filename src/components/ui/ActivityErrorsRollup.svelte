@@ -127,11 +127,17 @@
     <button
       class="count"
       class:selected={selectedCategory === 'extra'}
+      class:resettable={mode === 'minimal'}
       value="extra"
       on:click={onSelectCategory}
       use:tooltip={{
         allowHTML: true,
-        content: generateTooltipHTMLString(mode, errorCounts.extra, 'extra', 'parameter'),
+        content: generateTooltipHTMLString(mode, errorCounts.extra, 'extra', 'parameter', true),
+        disabled: !hasPermission,
+      }}
+      use:permissionHandler={{
+        hasPermission,
+        permissionError,
       }}
     >
       <WarningExtraIcon class="red-icon" />{generateCountText(mode, errorCounts.extra, 'extra', 'parameter')}

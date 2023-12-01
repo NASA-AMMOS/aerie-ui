@@ -5,9 +5,10 @@
   import CloseIcon from '@nasa-jpl/stellar/icons/close.svg?component';
   import HistoryIcon from '@nasa-jpl/stellar/icons/history.svg?component';
   import PenIcon from '@nasa-jpl/stellar/icons/pen.svg?component';
+  import { keyBy } from 'lodash-es';
   import { createEventDispatcher } from 'svelte';
   import { PlanStatusMessages } from '../../enums/planStatusMessages';
-  import { activityErrorRollupsMap } from '../../stores/errors';
+  import { activityErrorRollupsMap, activityValidationErrors } from '../../stores/errors';
   import { field } from '../../stores/form';
   import { plan, planReadOnly } from '../../stores/plan';
   import type {
@@ -21,12 +22,17 @@
   } from '../../types/activity';
   import type { ActivityMetadataDefinition } from '../../types/activity-metadata';
   import type { User } from '../../types/app';
-  import type { ActivityErrorCategories, ActivityErrorRollup } from '../../types/errors';
+  import type {
+    ActivityDirectiveInstantiationFailure,
+    ActivityErrorCategories,
+    ActivityErrorRollup,
+  } from '../../types/errors';
   import type { FieldStore } from '../../types/form';
   import type { Argument, ArgumentsMap, FormParameter, ParameterName } from '../../types/parameter';
   import type { ActivityDirectiveTagsInsertInput, Tag, TagsChangeEvent } from '../../types/tags';
   import { getActivityMetadata } from '../../utilities/activities';
   import effects from '../../utilities/effects';
+  import { isInstantiationError } from '../../utilities/errors';
   import { classNames, keyByBoolean } from '../../utilities/generic';
   import { getArguments, getFormParameters } from '../../utilities/parameters';
   import { permissionHandler } from '../../utilities/permissionHandler';
@@ -40,6 +46,7 @@
   import DatePickerField from '../form/DatePickerField.svelte';
   import Field from '../form/Field.svelte';
   import Input from '../form/Input.svelte';
+  import ExtraParameters from '../parameters/ExtraParameters.svelte';
   import Parameters from '../parameters/Parameters.svelte';
   import ActivityErrorsRollup from '../ui/ActivityErrorsRollup.svelte';
   import Highlight from '../ui/Highlight.svelte';
@@ -63,16 +70,17 @@
 
   const dispatch = createEventDispatcher();
 
+  let activityErrorRollup: ActivityErrorRollup | undefined;
   let editingActivityName: boolean = false;
-  let hasUpdatePermission: boolean = false;
-  let numOfUserChanges: number = 0;
+  let extraArguments: string[] = [];
   let formParameters: FormParameter[] = [];
+  let hasUpdatePermission: boolean = false;
   let highlightKeysMap: Record<string, boolean> = {};
-  let parametersWithErrorsCount: number = 0;
+  let numOfUserChanges: number = 0;
   let parameterErrorMap: Record<string, string[]> = {};
+  let parametersWithErrorsCount: number = 0;
   let startTimeDoy: string;
   let startTimeDoyField: FieldStore<string>;
-  let activityErrorRollup: ActivityErrorRollup | undefined;
 
   $: if (user !== null && $plan !== null) {
     hasUpdatePermission =
@@ -117,15 +125,39 @@
     return /user/.test(formParameter.valueSource) ? previousHasChanges + 1 : previousHasChanges;
   }, 0);
   $: activityErrorRollup = $activityErrorRollupsMap[activityDirective.id];
+  $: if (parameterErrorMap || $activityValidationErrors.length) {
+    let missing: Record<string, true> = {};
+    const activityValidationErrorsMap = keyBy($activityValidationErrors, 'activityId');
+    const activityValidationError = activityValidationErrorsMap[activityDirective.id];
+    if (activityValidationError) {
+      const instantiationFailure: ActivityDirectiveInstantiationFailure | undefined =
+        activityValidationError.errors.find(isInstantiationError) as ActivityDirectiveInstantiationFailure | undefined;
+      if (instantiationFailure) {
+        const { extraneousArguments, missingArguments } = instantiationFailure.errors;
+        extraArguments = extraneousArguments;
+        missing = missingArguments.reduce((prevArguments, missingArgument) => {
+          return {
+            ...prevArguments,
+            [missingArgument]: true,
+          };
+        }, {});
+      }
+    }
 
-  $: if (parameterErrorMap) {
     formParameters = formParameters.map((formParameter: FormParameter) => {
-      const errors = parameterErrorMap[formParameter.name];
+      let errors = parameterErrorMap[formParameter.name];
+      if (missing[formParameter.name]) {
+        console.log('missing :>> ', missing);
+        if (!errors) {
+          errors = [];
+        }
+        errors.push('Parameter not explicitly set');
+      }
       return { ...formParameter, errors: errors || null };
     });
+
     parametersWithErrorsCount = Object.keys(parameterErrorMap).length;
   }
-
   $: getActivityMetadataValue = (key: string) => {
     const metadata = activityDirective.metadata;
     if (metadata) {
@@ -206,13 +238,32 @@
 
   function onResetAllFormParameters(event: CustomEvent<ActivityErrorCategories>) {
     const { detail: selectedCategory } = event;
+    const { id, arguments: activityArguments } = activityDirective;
 
     if (selectedCategory != null) {
       switch (selectedCategory) {
         case 'invalidParameter':
           if ($plan) {
-            effects.updateActivityDirective($plan, activityDirective.id, { arguments: {} }, user);
+            effects.updateActivityDirective($plan, id, { arguments: {} }, user);
           }
+          break;
+        case 'extra':
+          if ($plan) {
+            const cleanedArguments: ArgumentsMap = Object.keys(activityArguments).reduce(
+              (prevArguments, argumentName) => {
+                if (!extraArguments.includes(argumentName)) {
+                  return {
+                    ...prevArguments,
+                    [argumentName]: activityArguments[argumentName],
+                  };
+                }
+                return prevArguments;
+              },
+              {},
+            );
+            effects.updateActivityDirective($plan, id, { arguments: cleanedArguments }, user);
+          }
+          break;
       }
     }
   }
@@ -621,6 +672,10 @@
         {/if}
       </Collapse>
     </fieldset>
+
+    {#if extraArguments.length}
+      <ExtraParameters {extraArguments} argumentsMap={activityDirective.arguments} />
+    {/if}
 
     <fieldset>
       <Collapse title="Annotations">
