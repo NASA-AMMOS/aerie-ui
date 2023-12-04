@@ -235,7 +235,7 @@
     }
   }
 
-  function onResetAllFormParameters(event: CustomEvent<ActivityErrorCategories>) {
+  function onAutoFixFormParameters(event: CustomEvent<ActivityErrorCategories>) {
     const { detail: selectedCategory } = event;
     const { id, arguments: activityArguments } = activityDirective;
 
@@ -462,7 +462,7 @@
             mode="minimal"
             permissionError={updatePermissionError}
             selectable={false}
-            on:resetCategory={onResetAllFormParameters}
+            on:resetCategory={onAutoFixFormParameters}
           />
         </div>
         <button
@@ -673,7 +673,13 @@
     </fieldset>
 
     {#if extraArguments.length}
-      <ExtraParameters {extraArguments} argumentsMap={activityDirective.arguments} />
+      <ExtraParameters
+        {extraArguments}
+        argumentsMap={activityDirective.arguments}
+        hasPermission={hasUpdatePermission}
+        permissionError={updatePermissionError}
+        on:reset={onAutoFixFormParameters}
+      />
     {/if}
 
     <fieldset>
