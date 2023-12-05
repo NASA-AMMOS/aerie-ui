@@ -66,7 +66,6 @@ export function tooltip(node: Element, params: any = {}): any {
     destroy: () => tip.destroy(),
 
     // If the props change, let's update the Tippy instance.
-    // TODO this does not take any of the constructor functionality into account
     update: (newParams: any) => {
       const processedParams = processParams(node, newParams);
       tip.setProps({ ...processedParams });
