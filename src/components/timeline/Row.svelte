@@ -421,7 +421,7 @@
             />
           {/if}
           {#if isXRangeLayer(layer)}
-            {#if layer.showStateLineChart === true}
+            {#if layer.showAsLinePlot === true}
               <LayerLine
                 {...layer}
                 {contextmenu}

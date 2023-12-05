@@ -405,7 +405,7 @@
                               "opacity": {
                                 "type": "number"
                               },
-                              "showStateLineChart": {
+                              "showAsLinePlot": {
                                 "type": "boolean"
                               },
                               "yAxisId": {

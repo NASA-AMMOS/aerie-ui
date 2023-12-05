@@ -49,7 +49,7 @@
            * The correct way to do this would be generating a Y axes when the user toggles the line chart,
            * but for now we're just setting the Y axes dynamically based on the data.
            */
-          if (layer.showStateLineChart && resources && resources.length > 0) {
+          if (layer.showAsLinePlot && resources && resources.length > 0) {
             let domain: string[] = [];
 
             // Get all the unique ordinal values of the chart.

@@ -160,12 +160,12 @@
           />
         </Input>
         <Input layout="inline">
-          <label for="showStateLineChart">Show State Changes</label>
+          <label for="showAsLinePlot">Show As Line Plot</label>
           <input
             style:width="max-content"
-            checked={layerAsXRange.showStateLineChart}
-            id="showStateLineChart"
-            name="showStateLineChart"
+            checked={layerAsXRange.showAsLinePlot}
+            id="showAsLinePlot"
+            name="showAsLinePlot"
             on:change={onInput}
             type="checkbox"
           />
