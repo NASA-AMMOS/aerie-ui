@@ -75,7 +75,7 @@
       sortable: true,
       suppressAutoSize: true,
       suppressSizeToFit: true,
-      valueFormatter: ({ data }) => {
+      valueGetter: ({ data }) => {
         return `${data?.location.length ? data.location.length : ''}`;
       },
       width: 95,
@@ -110,7 +110,7 @@
       field: 'errorCounts',
       headerName: 'Issue',
       resizable: true,
-      sortable: true,
+      sortable: false,
       width: 80,
     },
   ];
