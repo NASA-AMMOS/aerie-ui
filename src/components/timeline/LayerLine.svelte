@@ -122,7 +122,7 @@
         const y = yScale(point.y);
         quadtree.add({ id: point.id, x, y });
         visiblePointsById[point.id] = point;
-        ctx.drawImage(offscreenPoint, x - pointRadius, y - pointRadius);
+        ctx.drawImage(offscreenPoint, x - pointRadius, y - pointRadius, pointRadius * 2, pointRadius * 2);
       }
     }
   }
@@ -193,13 +193,18 @@
   }
 
   function generateOffscreenPoint(lineColor: string, radius: number): OffscreenCanvas | null {
-    const tempCanvas = new OffscreenCanvas(radius * 2, radius * 2);
+    if (!radius) {
+      return null;
+    }
+
+    const tempCanvas = new OffscreenCanvas(radius * 2 * dpr, radius * 2 * dpr);
     const tempCtx = tempCanvas.getContext('2d');
 
     if (!tempCtx) {
       return null;
     }
 
+    tempCtx.resetTransform();
     tempCtx.scale(dpr, dpr);
     tempCtx.fillStyle = lineColor;
 
