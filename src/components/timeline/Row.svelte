@@ -52,6 +52,9 @@
   export let activityDirectivesMap: ActivityDirectivesMap = {};
   export let autoAdjustHeight: boolean = false;
   export let constraintResults: ConstraintResultWithName[] = [];
+  export let decimate: boolean = false;
+  export let interpolateHoverValue: boolean = false;
+  export let limitTooltipToLine: boolean = false;
   export let dpr: number = 0;
   export let drawHeight: number = 0;
   export let drawWidth: number = 0;
@@ -405,6 +408,9 @@
           {#if layer.chartType === 'line'}
             <LayerLine
               {...layer}
+              {decimate}
+              {interpolateHoverValue}
+              {limitTooltipToLine}
               {contextmenu}
               {dpr}
               drawHeight={computedDrawHeight}

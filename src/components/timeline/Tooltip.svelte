@@ -9,6 +9,7 @@
   import { getDoyTime } from '../../utilities/time';
 
   export let mouseOver: MouseOver | null;
+  export let interpolateHoverValue: boolean = false;
 
   let activityDirectives: ActivityDirective[] = [];
   let constraintResults: ConstraintResultWithName[] = [];
@@ -199,13 +200,12 @@
     const { id, x, y } = point;
     return `
       <div>
-        Id: ${id}
-        <br>
+        ${!interpolateHoverValue ? `Id: ${id}<br>` : ''}
         Resource Name: ${point.name}
         <br>
         Time: ${getDoyTime(new Date(x))}
         <br>
-        Value: ${y}
+        Value: ${y} ${interpolateHoverValue ? '(interpolated)' : ''}
       </div>
     `;
   }

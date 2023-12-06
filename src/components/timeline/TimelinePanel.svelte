@@ -54,6 +54,9 @@
   let timelineRef: Timeline;
   let timelineDirectiveVisibilityToggles: DirectiveVisibilityToggleMap = {};
   let timelineSpanVisibilityToggles: SpanVisibilityToggleMap = {};
+  let decimate = false;
+  let interpolateHoverValue = false;
+  let limitTooltipToLine = false;
 
   $: if (user !== null && $plan !== null) {
     hasUpdateDirectivePermission = featurePermissions.activityDirective.canUpdate(user, $plan) && !$planReadOnly;
@@ -241,7 +244,19 @@
           maxTimeRange={$maxTimeRange}
           {timelineDirectiveVisibilityToggles}
           viewTimeRange={$viewTimeRange}
+          {decimate}
+          {interpolateHoverValue}
+          {limitTooltipToLine}
           on:toggleDirectiveVisibility={({ detail }) => onToggleAllDirectiveVisibility(detail)}
+          on:toggleDecimation={({ detail }) => {
+            decimate = detail;
+          }}
+          on:toggleInterpolateHoverValue={({ detail }) => {
+            interpolateHoverValue = detail;
+          }}
+          on:toggleLimitTooltipToLine={({ detail }) => {
+            limitTooltipToLine = detail;
+          }}
           on:viewTimeRangeChanged={({ detail: newViewTimeRange }) => {
             // TODO unsure of cleaner way to accomplish this without pulling xScaleMax and the
             // zoom transform sync into TimelinePanel which feels out of scope for this component which
@@ -267,6 +282,9 @@
   <svelte:fragment slot="body">
     <Timeline
       bind:this={timelineRef}
+      {decimate}
+      {interpolateHoverValue}
+      {limitTooltipToLine}
       activityDirectivesByView={$activityDirectivesByView}
       activityDirectivesMap={$activityDirectivesMap}
       constraintResults={$visibleConstraintResults}

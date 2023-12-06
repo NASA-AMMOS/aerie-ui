@@ -1,14 +1,14 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { quadtree as d3Quadtree, type Quadtree } from 'd3-quadtree';
+  import { type Quadtree } from 'd3-quadtree';
   import { scalePoint, type ScaleLinear, type ScalePoint, type ScaleTime } from 'd3-scale';
   import { curveLinear, line as d3Line } from 'd3-shape';
   import { createEventDispatcher, onMount, tick } from 'svelte';
   import type { Resource } from '../../types/simulation';
   import type { Axis, LinePoint, QuadtreePoint, ResourceLayerFilter, TimeRange } from '../../types/timeline';
   import { filterEmpty } from '../../utilities/generic';
-  import { CANVAS_PADDING_Y, getYScale, searchQuadtreePoint } from '../../utilities/timeline';
+  import { CANVAS_PADDING_Y, getYScale } from '../../utilities/timeline';
 
   export let contextmenu: MouseEvent | undefined;
   export let dpr: number = 1;
@@ -17,6 +17,9 @@
   // TODO make an issue to remove these unneeded filters from LayerLine, LayerRange, etc
   export let filter: ResourceLayerFilter | undefined;
   export let id: number;
+  export let decimate: boolean = false;
+  export let interpolateHoverValue: boolean = false;
+  export let limitTooltipToLine: boolean = false;
   export let lineColor: string = '';
   export let lineWidth: number = 1;
   export let mousemove: MouseEvent | undefined;
@@ -33,7 +36,9 @@
   const WORK_TIME_THRESHOLD = 32; // ms to allow for processing time, beyond which remaining work will be split to a new frame
 
   let canvas: HTMLCanvasElement;
+  let interactionCanvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D | null;
+  let interactionCtx: CanvasRenderingContext2D | null;
   let mounted: boolean = false;
   let quadtree: Quadtree<QuadtreePoint>;
   let scaleDomain: Set<string> = new Set();
@@ -48,6 +53,9 @@
   $: canvasHeightDpr = drawHeight * dpr;
   $: canvasWidthDpr = drawWidth * dpr;
   $: if (
+    decimate !== undefined &&
+    interpolateHoverValue !== undefined &&
+    limitTooltipToLine !== undefined &&
     canvasHeightDpr &&
     canvasWidthDpr &&
     drawHeight &&
@@ -78,8 +86,24 @@
     if (canvas) {
       ctx = canvas.getContext('2d');
     }
+    if (interactionCanvas) {
+      interactionCtx = interactionCanvas.getContext('2d');
+    }
     mounted = true;
   });
+
+  function computeYScale(yAxes: Axis[]): ScaleLinear<number, number> {
+    const [yAxis] = yAxes.filter(axis => yAxisId === axis.id);
+    const domain = yAxis?.scaleDomain || [];
+    return getYScale(domain, drawHeight);
+  }
+
+  function processPoint(point: LinePoint, yScale: ScaleLinear<number, number>) {
+    const { id, radius } = point;
+    const x = (xScaleView as ScaleTime<number, number, never>)(point.x);
+    const y = yScale(point.y);
+    return { id, radius, x, y };
+  }
 
   async function draw(): Promise<void> {
     if (ctx && xScaleView) {
@@ -90,15 +114,7 @@
       ctx.scale(dpr, dpr);
       ctx.clearRect(0, 0, drawWidth, drawHeight);
 
-      const [yAxis] = yAxes.filter(axis => yAxisId === axis.id);
-
-      quadtree = d3Quadtree<QuadtreePoint>()
-        .x(p => p.x)
-        .y(p => p.y)
-        .extent([
-          [0, 0],
-          [drawWidth, drawHeight],
-        ]);
+      yScale = computeYScale(yAxes);
 
       ctx.lineWidth = lineWidth;
       ctx.strokeStyle = lineColor;
@@ -116,9 +132,6 @@
           .defined(d => d.y !== null) // Skip any gaps in resource data instead of interpolating
           .curve(curveLinear);
       } else {
-        const domain = yAxis?.scaleDomain || [];
-        yScale = getYScale(domain, drawHeight) as ScaleLinear<number, number, never>;
-
         line = d3Line<LinePoint>()
           .x(d => (xScaleView as ScaleTime<number, number, never>)(d.x))
           .y(d => yScale(d.y) as number)
@@ -126,25 +139,76 @@
           .curve(curveLinear);
       }
 
+      let finalPoints = [];
+      const pointsInView = [];
+      let leftPoint;
+      let rightPoint;
+      let prevPoint;
+      points.forEach(point => {
+        if (point.x >= viewTimeRange.start && !leftPoint && prevPoint) {
+          leftPoint = processPoint(prevPoint, yScale);
+        }
+
+        if (point.x > viewTimeRange.end && !rightPoint && prevPoint) {
+          rightPoint = processPoint(point, yScale);
+        }
+
+        if (point.x >= viewTimeRange.start && point.x <= viewTimeRange.end) {
+          pointsInView.push(processPoint(point, yScale));
+        }
+        prevPoint = point;
+      });
+
+      finalPoints = pointsInView;
+
+      if (pointsInView.length > 0 && decimate) {
+        finalPoints = minMaxDecimation(pointsInView, 0, pointsInView.length, drawWidth);
+        // TODO make this cleaner perhaps or dive deeper?
+        // TODO confirm that this does not happen for first point? Seems to not.
+        // Push the last point in view again since decimation does not result in properly sorted points within a time bin
+        finalPoints.push(pointsInView.at(-1));
+      }
+
+      // Add left and right points after decimation to not throw off min-max bins
+      if (leftPoint) {
+        finalPoints.unshift(leftPoint);
+      }
+
+      if (rightPoint) {
+        finalPoints.push({ ...rightPoint });
+      }
+
+      // Allow for some wiggle room since we may have added up to 3 extra points
+      // TODO could also just do this when finalPoints < drawWidth but might be less performant?
+      if (Math.abs(finalPoints.length - pointsInView.length) < 4) {
+        drawPointsRequest = window.requestAnimationFrame(() => drawPoints(finalPoints));
+        // finalPoints.forEach(point => {
+        //   const { id, radius, x, y } = point;
+        //   // quadtree.add({ id, x, y });
+        //   visiblePointsById[id] = point;
+
+        //   const fill = lineColor;
+        //   ctx.fillStyle = fill;
+        //   ctx.lineWidth = lineWidth;
+        //   const circle = new Path2D();
+        //   circle.arc(x, y, point.radius, 0, 2 * Math.PI);
+        //   ctx.fill(circle);
+        // });
+      }
+
+      const line = d3Line<LinePoint>()
+        .x(d => d.x)
+        .y(d => d.y)
+        .defined(d => d.y !== null) // Skip any gaps in resource data instead of interpolating
+        .curve(curveLinear);
       ctx.beginPath();
-      line.context(ctx)(points);
+      line.context(ctx)(finalPoints);
       ctx.stroke();
       ctx.closePath();
-
-      drawPointsRequest = window.requestAnimationFrame(() => drawPoints());
     }
   }
 
-  function drawPoints() {
-    quadtree = d3Quadtree<QuadtreePoint>()
-      .x(p => p.x)
-      .y(p => p.y)
-      .extent([
-        [0, 0],
-        [drawWidth, drawHeight],
-      ]);
-    visiblePointsById = {};
-
+  function drawPoints(points: LinePoint[]) {
     if (!ctx || !offscreenPoint) {
       return;
     }
@@ -160,8 +224,8 @@
           y = yScale(point.y) as number;
         }
 
-        quadtree.add({ id: point.id, x, y });
-        visiblePointsById[point.id] = point;
+        // quadtree.add({ id: point.id, x, y });
+        // visiblePointsById[point.id] = point;
         ctx.drawImage(offscreenPoint, x - pointRadius, y - pointRadius, pointRadius * 2, pointRadius * 2);
       }
     }
@@ -173,17 +237,126 @@
     }
   }
 
-  function onMousemove(e: MouseEvent | undefined): void {
+  async function onMousemove(e: MouseEvent | undefined): void {
     if (e) {
       const { offsetX: x, offsetY: y } = e;
-      const points = searchQuadtreePoint<LinePoint>(quadtree, x, y, pointRadius, visiblePointsById);
-      dispatch('mouseOver', { e, layerId: id, points });
+      // const points = searchQuadtreePoint<LinePoint>(quadtree, x, y, pointRadius, visiblePointsById);
+      // dispatch('mouseOver', { e, layerId: id, points });
+
+      if (xScaleView) {
+        const xView = xScaleView.invert(x);
+        const xDate = xView.getTime();
+        let leftPoint: LinePoint | null = null;
+        let rightPoint: LinePoint | null = null;
+        points.forEach(point => {
+          if (point.x <= xDate) {
+            if (!leftPoint) {
+              leftPoint = point;
+            } else {
+              if (Math.abs(point.x - xDate) <= Math.abs(leftPoint.x - xDate)) {
+                leftPoint = point;
+              }
+            }
+          } else {
+            if (!rightPoint) {
+              rightPoint = point;
+            } else {
+              if (Math.abs(point.x - xDate) < Math.abs(rightPoint.x - xDate)) {
+                rightPoint = point;
+              }
+            }
+          }
+        });
+
+        let mouseOverPoints = [];
+        if (leftPoint) {
+          mouseOverPoints.push(leftPoint);
+        }
+        if (rightPoint) {
+          mouseOverPoints.push(rightPoint);
+        }
+        // if (leftPoint && rightPoint && leftPoint.y === rightPoint.y) {
+        // mouseOverPoints = [leftPoint];
+        // }
+
+        const yScale = computeYScale(yAxes);
+        if (interactionCtx) {
+          interactionCtx.resetTransform();
+          interactionCtx.scale(dpr, dpr);
+          interactionCtx.clearRect(0, 0, drawWidth, drawHeight);
+        }
+
+        let drawPoint: LinePoint | null = null;
+        if (mouseOverPoints.length > 0) {
+          if (mouseOverPoints.length === 1) {
+            drawPoint = mouseOverPoints[0];
+          } else if (mouseOverPoints.length === 2) {
+            // Interpolate
+            const leftX = mouseOverPoints[0].x;
+            const rightX = mouseOverPoints[1].x;
+            const leftY = mouseOverPoints[0].y;
+            const rightY = mouseOverPoints[1].y;
+            const percent = (xDate - leftX) / (rightX - leftX);
+            if (interpolateHoverValue) {
+              const interpY = (1 - percent) * leftY + percent * rightY;
+              drawPoint = {
+                ...mouseOverPoints[0],
+                x: xDate,
+                y: interpY,
+              };
+            } else {
+              // Snap to nearest
+              if (percent < 0.5) {
+                drawPoint = mouseOverPoints[0];
+              } else {
+                drawPoint = mouseOverPoints[1];
+              }
+            }
+          }
+        }
+
+        if (drawPoint) {
+          const distance = Math.abs(yScale(drawPoint.y) - y);
+          let DELTA_PX = 10;
+          // DELTA_PX = Infinity;
+          if (distance < DELTA_PX || limitTooltipToLine === false) {
+            mouseOverPoints = [drawPoint];
+            const { x, y } = processPoint(drawPoint, yScale);
+            if (interactionCtx) {
+              const fill = lineColor;
+              const circle2 = new Path2D();
+              circle2.arc(x, y, 5, 0, 2 * Math.PI);
+              interactionCtx.globalAlpha = 0.8;
+              interactionCtx.fillStyle = 'white';
+              interactionCtx.fill(circle2);
+              interactionCtx.globalAlpha = 1;
+
+              // interactionCtx.strokeStyle = 'fill';
+              // interactionCtx.beginPath();
+              // interactionCtx.moveTo(0, y);
+              // interactionCtx.lineTo(canvasWidthDpr, y);
+              // interactionCtx.stroke();
+
+              const circle = new Path2D();
+              interactionCtx.fillStyle = fill;
+              interactionCtx.lineWidth = lineWidth;
+              interactionCtx.strokeStyle = fill;
+              circle.arc(x, y, 4, 0, 2 * Math.PI);
+              interactionCtx.fill(circle);
+            }
+            dispatch('mouseOver', { e, layerId: id, points: mouseOverPoints });
+          }
+        }
+      }
     }
   }
 
   function onMouseout(e: MouseEvent | undefined): void {
     if (e) {
       dispatch('mouseOver', { e, layerId: id, points: [] });
+      if (interactionCtx) {
+        interactionCtx.clearRect(0, 0, drawWidth, drawHeight);
+      }
     }
   }
 
@@ -333,6 +506,13 @@
   style="height: {drawHeight}px; width: {drawWidth}px;"
   width={canvasWidthDpr}
   on:contextmenu={onContextMenu}
+/>
+<canvas
+  bind:this={interactionCanvas}
+  height={canvasHeightDpr}
+  id={`layer-line-interaction-${id}`}
+  style="height: {drawHeight}px; pointer-events: none; width: {drawWidth}px;"
+  width={canvasWidthDpr}
 />
 
 <style>

@@ -32,6 +32,9 @@
 
   export let maxTimeRange: TimeRange = { end: 0, start: 0 };
   export let nudgePercent = 0.05;
+  export let decimate = false;
+  export let interpolateHoverValue = false;
+  export let limitTooltipToLine = false;
   export let timelineDirectiveVisibilityToggles: DirectiveVisibilityToggleMap;
   export let viewTimeRange: TimeRange = { end: 0, start: 0 };
 
@@ -130,6 +133,18 @@
     dispatch('toggleDirectiveVisibility', !allDirectivesVisible);
   }
 
+  function onToggleDecimation() {
+    dispatch('toggleDecimation', !decimate);
+  }
+
+  function onToggleInterpolate() {
+    dispatch('toggleInterpolateHoverValue', !interpolateHoverValue);
+  }
+
+  function onLimitTooltipToLine() {
+    dispatch('toggleLimitTooltipToLine', !limitTooltipToLine);
+  }
+
   async function onCopyViewportURL() {
     const targetUrl = new URL(window.location.href);
     targetUrl.searchParams.set(SearchParameters.START_TIME, new Date(viewTimeRange.start).toISOString());
@@ -200,7 +215,30 @@
 </script>
 
 <svelte:window on:keydown={onKeydown} />
-
+<button
+  style:background={decimate ? 'lightgreen' : ''}
+  class="st-button secondary"
+  on:click={onToggleDecimation}
+  use:tooltip={{ content: `Toggle decimation`, placement: 'bottom' }}
+>
+  Decimate
+</button>
+<button
+  style:background={interpolateHoverValue ? 'lightgreen' : ''}
+  class="st-button secondary"
+  on:click={onToggleInterpolate}
+  use:tooltip={{ content: `Toggle cursor value interpolation`, placement: 'bottom' }}
+>
+  Interpolate cursor value
+</button>
+<button
+  style:background={limitTooltipToLine ? 'lightgreen' : ''}
+  class="st-button secondary"
+  on:click={onLimitTooltipToLine}
+  use:tooltip={{ content: `Toggle cursor line intersection`, placement: 'bottom' }}
+>
+  Limit tooltip to line
+</button>
 <button
   class="st-button icon"
   on:click={onNudgeLeft}
