@@ -46,7 +46,7 @@
   import DatePickerField from '../form/DatePickerField.svelte';
   import Field from '../form/Field.svelte';
   import Input from '../form/Input.svelte';
-  import ExtraParameters from '../parameters/ExtraParameters.svelte';
+  import ExtraneousParameters from '../parameters/ExtraneousParameters.svelte';
   import Parameters from '../parameters/Parameters.svelte';
   import ActivityErrorsRollup from '../ui/ActivityErrorsRollup.svelte';
   import Highlight from '../ui/Highlight.svelte';
@@ -129,6 +129,9 @@
     let missing: Record<string, true> = {};
     const activityValidationErrorsMap = keyBy($activityValidationErrors, 'activityId');
     const activityValidationError = activityValidationErrorsMap[activityDirective.id];
+
+    extraArguments = [];
+
     if (activityValidationError) {
       const instantiationFailure: ActivityDirectiveInstantiationFailure | undefined =
         activityValidationError.errors.find(isInstantiationError) as ActivityDirectiveInstantiationFailure | undefined;
@@ -673,7 +676,7 @@
     </fieldset>
 
     {#if extraArguments.length}
-      <ExtraParameters
+      <ExtraneousParameters
         {extraArguments}
         argumentsMap={activityDirective.arguments}
         hasPermission={hasUpdatePermission}

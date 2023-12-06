@@ -41,8 +41,8 @@
 
 <div class="extra-parameters-container">
   <fieldset>
-    <span class="extra-parameters-header"
-      >Extra Parameters
+    <span class="extra-parameters-header">
+      Extraneous Parameters
       <button
         class="reset-button"
         value="extra"
@@ -51,9 +51,7 @@
           allowHTML: true,
           content: `<div class="activity-error-rollup-error">
             <div class="activity-error-rollup-error-reset">
-                <span>Reset ${extraArguments.length} extra parameter${pluralize(
-            extraArguments.length,
-          )} to mission model</span>
+                <span>Remove ${extraArguments.length} extraneous parameter${pluralize(extraArguments.length)}</span>
                 <div>${isMacOs() ? '⌘' : 'CTRL'} Click</div>
               </div>
           </div>`,

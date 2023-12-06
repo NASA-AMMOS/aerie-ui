@@ -45,6 +45,15 @@
     }
   }
 
+  function getResetActionName(category: string) {
+    switch (category) {
+      case 'extraneous':
+        return 'Remove';
+      default:
+        return 'Reset';
+    }
+  }
+
   function generateTooltipHTMLString(
     mode: Mode,
     count: number,
@@ -56,9 +65,9 @@
       if (mode === 'minimal' && isResettable) {
         return `<div class="activity-error-rollup-error">
             <div class="activity-error-rollup-error-reset">
-                <span>Reset ${count} ${category}${
+                <span>${getResetActionName(category)} ${count} ${category}${
           itemName ? ` ${itemName}${pluralize(count)}` : ''
-        } to mission model</span>
+        }${category !== 'extraneous' ? ' to mission model' : ''}</span>
                 <div>${isMacOs() ? '⌘' : 'CTRL'} Click</div>
               </div>
           </div>`;
@@ -132,7 +141,7 @@
       on:click={onSelectCategory}
       use:tooltip={{
         allowHTML: true,
-        content: generateTooltipHTMLString(mode, errorCounts.extra, 'extra', 'parameter', true),
+        content: generateTooltipHTMLString(mode, errorCounts.extra, 'extraneous', 'parameter', true),
         disabled: !hasPermission,
       }}
       use:permissionHandler={{
@@ -140,7 +149,7 @@
         permissionError,
       }}
     >
-      <WarningExtraIcon class="red-icon" />{generateCountText(mode, errorCounts.extra, 'extra', 'parameter')}
+      <WarningExtraIcon class="red-icon" />{generateCountText(mode, errorCounts.extra, 'extraneous', 'parameter')}
     </button>
   {/if}
   {#if errorCounts.missing}
