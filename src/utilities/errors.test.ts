@@ -99,12 +99,16 @@ describe('Errors Util', () => {
           errors: [
             {
               errors: {
-                extraneousArguments: ['foo', 'bar'],
+                extraneousArguments: ['foo', 'bar', 'bur'],
                 missingArguments: ['baz'],
                 unconstructableArguments: [
                   {
                     failure: '',
                     name: 'buzz',
+                  },
+                  {
+                    failure: '',
+                    name: 'foo',
                   },
                 ],
               },
@@ -126,7 +130,7 @@ describe('Errors Util', () => {
                 validationNotices: [
                   {
                     message: '',
-                    subjects: ['fuu', 'bur'],
+                    subjects: ['foo', 'fuu', 'bur'],
                   },
                 ],
               },
@@ -140,15 +144,15 @@ describe('Errors Util', () => {
     ).toEqual([
       {
         errorCounts: {
-          extra: 2,
+          extra: 3,
           invalidAnchor: 0,
-          invalidParameter: 3,
+          invalidParameter: 4,
           missing: 1,
           outOfBounds: 0,
           wrongType: 1,
         },
         id: 1,
-        location: ['foo', 'bar', 'baz', 'buzz', 'fuu', 'bur'],
+        location: ['foo', 'bar', 'bur', 'baz', 'buzz', 'fuu'],
         type: 'banana',
       },
     ]);

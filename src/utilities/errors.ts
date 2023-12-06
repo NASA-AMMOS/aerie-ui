@@ -51,55 +51,49 @@ export function generateActivityValidationErrorRollups(
   activityValidationErrors: ActivityValidationErrors[],
 ): ActivityErrorRollup[] {
   return activityValidationErrors.map(({ activityId, errors, type }) => {
-    let extra = 0;
-    let invalidAnchor = 0;
-    let invalidParameter = 0;
-    let missing = 0;
-    let outOfBounds = 0;
-    let wrongType = 0;
-
-    const location: string[] = [];
+    let extraLocations: string[] = [];
+    let invalidAnchorLocations: string[] = [];
+    let invalidParameterLocations: string[] = [];
+    let missingLocations: string[] = [];
+    let outOfBoundsLocations: string[] = [];
+    let wrongTypeLocations: string[] = [];
 
     errors.forEach(error => {
       if (isInstantiationError(error)) {
-        const extraCount = error.errors.extraneousArguments.length;
-        const missingCount = error.errors.missingArguments.length;
-        const invalidParameterCount = error.errors.unconstructableArguments.length;
-
-        extra += extraCount;
-        missing += missingCount;
-        invalidParameter += invalidParameterCount;
-
-        location.push(...error.errors.extraneousArguments);
-        location.push(...error.errors.missingArguments);
-        error.errors.unconstructableArguments.forEach(({ name }) => {
-          location.push(name);
-        });
+        invalidParameterLocations = [
+          ...new Set([...invalidParameterLocations, ...error.errors.unconstructableArguments.map(({ name }) => name)]),
+        ];
+        extraLocations = [...new Set([...extraLocations, ...error.errors.extraneousArguments])];
+        missingLocations = [...new Set([...missingLocations, ...error.errors.missingArguments])];
       } else if (isUnknownTypeError(error)) {
-        wrongType += 1;
+        wrongTypeLocations = [...new Set([...wrongTypeLocations, error.errors.noSuchActivityError.activity_type])];
       } else if (isValidationNoticesError(error)) {
-        error.errors.validationNotices.forEach(({ subjects }) => {
-          invalidParameter += subjects.length;
-          location.push(...subjects);
-        });
+        invalidParameterLocations = [
+          ...new Set([
+            ...invalidParameterLocations,
+            ...([] as string[]).concat(...error.errors.validationNotices.map(({ subjects }) => subjects)),
+          ]),
+        ];
       } else {
         const { message } = error;
         if (/end-time\sanchor/i.test(message)) {
-          invalidAnchor += 1;
+          invalidAnchorLocations = [...new Set([...invalidAnchorLocations, message])];
         } else if (/plan\sstart/i.test(message)) {
-          outOfBounds += 1;
+          outOfBoundsLocations = [...new Set([...invalidAnchorLocations, message])];
         }
       }
     });
 
+    const location = [...new Set([...extraLocations, ...missingLocations, ...invalidParameterLocations])];
+    console.log('invalidParameterLocations :>> ', invalidParameterLocations);
     return {
       errorCounts: {
-        extra,
-        invalidAnchor,
-        invalidParameter,
-        missing,
-        outOfBounds,
-        wrongType,
+        extra: extraLocations.length,
+        invalidAnchor: invalidAnchorLocations.length,
+        invalidParameter: invalidParameterLocations.length,
+        missing: missingLocations.length,
+        outOfBounds: outOfBoundsLocations.length,
+        wrongType: wrongTypeLocations.length,
       },
       id: activityId,
       location,

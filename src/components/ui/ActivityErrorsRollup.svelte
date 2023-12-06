@@ -168,7 +168,7 @@
         content: generateTooltipHTMLString(mode, errorCounts.wrongType, 'wrongType', 'parameter'),
       }}
     >
-      <WarningUnknownIcon class="red-icon" />{generateCountText(mode, errorCounts.wrongType, 'wrong', 'type')}
+      <WarningUnknownIcon class="red-icon" />{generateCountText(mode, errorCounts.wrongType, 'wrong type', 'type')}
     </button>
   {/if}
   {#if errorCounts.invalidParameter}
