@@ -28,6 +28,8 @@
           return data.errorCounts.wrongType > 0;
         case 'invalidAnchor':
           return data.errorCounts.invalidAnchor > 0;
+        case 'pending':
+          return data.errorCounts.pending > 0;
         case 'outOfBounds':
           return data.errorCounts.outOfBounds > 0;
       }

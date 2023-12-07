@@ -134,6 +134,7 @@
     invalidParameter: 0,
     missing: 0,
     outOfBounds: 0,
+    pending: 0,
     wrongType: 0,
   };
   let compactNavMode = false;
@@ -159,6 +160,7 @@
       let invalidParameter = prevCounts.invalidParameter + activityErrorRollup.errorCounts.invalidParameter;
       let missing = prevCounts.missing + activityErrorRollup.errorCounts.missing;
       let outOfBounds = prevCounts.outOfBounds + activityErrorRollup.errorCounts.outOfBounds;
+      let pending = prevCounts.pending + activityErrorRollup.errorCounts.pending;
       let wrongType = prevCounts.wrongType + activityErrorRollup.errorCounts.wrongType;
 
       let all = extra + invalidAnchor + invalidParameter + missing + outOfBounds + wrongType;
@@ -170,6 +172,7 @@
         invalidParameter,
         missing,
         outOfBounds,
+        pending,
         wrongType,
       };
     },
@@ -180,6 +183,7 @@
       invalidParameter: 0,
       missing: 0,
       outOfBounds: 0,
+      pending: 0,
       wrongType: 0,
     },
   );

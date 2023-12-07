@@ -17,9 +17,12 @@ export interface AnchorValidationError extends BaseError {
   type: ErrorTypes.ANCHOR_VALIDATION_ERROR;
 }
 
+export type ActivityValidationStatus = 'complete' | 'pending';
+
 export interface ActivityValidationErrors {
   activityId: number;
   errors: (ActivityDirectiveValidationFailures | AnchorValidationError)[];
+  status: ActivityValidationStatus;
   type: string;
 }
 
@@ -69,7 +72,7 @@ export interface ActivityDirectiveValidationNoticesError {
 export interface ActivityDirectiveValidationFailureStatus {
   directive_id: number;
   plan_id: number;
-  status: string;
+  status: ActivityValidationStatus;
   validations: ActivityDirectiveValidationFailures;
 }
 
@@ -109,6 +112,7 @@ export interface ActivityErrorCounts {
   invalidParameter: number;
   missing: number;
   outOfBounds: number;
+  pending: number;
   wrongType: number;
 }
 

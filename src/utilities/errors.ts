@@ -50,7 +50,7 @@ export function isValidationNoticesError(
 export function generateActivityValidationErrorRollups(
   activityValidationErrors: ActivityValidationErrors[],
 ): ActivityErrorRollup[] {
-  return activityValidationErrors.map(({ activityId, errors, type }) => {
+  return activityValidationErrors.map(({ activityId, errors, status, type }) => {
     let extraLocations: string[] = [];
     let invalidAnchorLocations: string[] = [];
     let invalidParameterLocations: string[] = [];
@@ -58,34 +58,39 @@ export function generateActivityValidationErrorRollups(
     let outOfBoundsLocations: string[] = [];
     let wrongTypeLocations: string[] = [];
 
-    errors.forEach(error => {
-      if (isInstantiationError(error)) {
-        invalidParameterLocations = [
-          ...new Set([...invalidParameterLocations, ...error.errors.unconstructableArguments.map(({ name }) => name)]),
-        ];
-        extraLocations = [...new Set([...extraLocations, ...error.errors.extraneousArguments])];
-        missingLocations = [...new Set([...missingLocations, ...error.errors.missingArguments])];
-      } else if (isUnknownTypeError(error)) {
-        wrongTypeLocations = [...new Set([...wrongTypeLocations, error.errors.noSuchActivityError.activity_type])];
-      } else if (isValidationNoticesError(error)) {
-        invalidParameterLocations = [
-          ...new Set([
-            ...invalidParameterLocations,
-            ...([] as string[]).concat(...error.errors.validationNotices.map(({ subjects }) => subjects)),
-          ]),
-        ];
-      } else {
-        const { message } = error;
-        if (/end-time\sanchor/i.test(message)) {
-          invalidAnchorLocations = [...new Set([...invalidAnchorLocations, message])];
-        } else if (/plan\sstart/i.test(message)) {
-          outOfBoundsLocations = [...new Set([...invalidAnchorLocations, message])];
+    if (status === 'complete') {
+      errors.forEach(error => {
+        if (isInstantiationError(error)) {
+          invalidParameterLocations = [
+            ...new Set([
+              ...invalidParameterLocations,
+              ...error.errors.unconstructableArguments.map(({ name }) => name),
+            ]),
+          ];
+          extraLocations = [...new Set([...extraLocations, ...error.errors.extraneousArguments])];
+          missingLocations = [...new Set([...missingLocations, ...error.errors.missingArguments])];
+        } else if (isUnknownTypeError(error)) {
+          wrongTypeLocations = [...new Set([...wrongTypeLocations, error.errors.noSuchActivityError.activity_type])];
+        } else if (isValidationNoticesError(error)) {
+          invalidParameterLocations = [
+            ...new Set([
+              ...invalidParameterLocations,
+              ...([] as string[]).concat(...error.errors.validationNotices.map(({ subjects }) => subjects)),
+            ]),
+          ];
+        } else {
+          const { message } = error;
+          if (/end-time\sanchor/i.test(message)) {
+            invalidAnchorLocations = [...new Set([...invalidAnchorLocations, message])];
+          } else if (/plan\sstart/i.test(message)) {
+            outOfBoundsLocations = [...new Set([...invalidAnchorLocations, message])];
+          }
         }
-      }
-    });
+      });
+    }
 
     const location = [...new Set([...extraLocations, ...missingLocations, ...invalidParameterLocations])];
-    console.log('invalidParameterLocations :>> ', invalidParameterLocations);
+
     return {
       errorCounts: {
         extra: extraLocations.length,
@@ -93,6 +98,7 @@ export function generateActivityValidationErrorRollups(
         invalidParameter: invalidParameterLocations.length,
         missing: missingLocations.length,
         outOfBounds: outOfBoundsLocations.length,
+        pending: status === 'pending' ? 1 : 0,
         wrongType: wrongTypeLocations.length,
       },
       id: activityId,

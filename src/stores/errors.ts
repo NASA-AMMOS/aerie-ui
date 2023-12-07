@@ -56,11 +56,12 @@ export const activityValidationErrors: Readable<ActivityValidationErrors[]> = de
     const activityDirectivesMap = keyBy($activityDirectives, 'id');
     const activityValidationsErrorMap: Record<string, ActivityValidationErrors> = {};
 
-    $activityDirectiveValidationFailures.forEach(({ validations, directive_id: directiveId }) => {
+    $activityDirectiveValidationFailures.forEach(({ validations, directive_id: directiveId, status }) => {
       if (activityValidationsErrorMap[directiveId] === undefined) {
         activityValidationsErrorMap[directiveId] = {
           activityId: directiveId,
           errors: [validations],
+          status,
           type: activityDirectivesMap[directiveId]?.type,
         };
       } else {
@@ -74,6 +75,7 @@ export const activityValidationErrors: Readable<ActivityValidationErrors[]> = de
         activityValidationsErrorMap[activityId] = {
           activityId: activityId,
           errors: [anchorValidationError],
+          status: 'complete',
           type: activityDirectivesMap[activityId]?.type,
         };
       } else {

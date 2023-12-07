@@ -49,13 +49,9 @@
         on:click={onReset}
         use:tooltip={{
           allowHTML: true,
-          content: `<div class="activity-error-rollup-error">
-            <div class="activity-error-rollup-error-reset">
-                <span>Remove ${extraArguments.length} extraneous parameter${pluralize(extraArguments.length)}</span>
-                <div>${isMacOs() ? '⌘' : 'CTRL'} Click</div>
-              </div>
-          </div>`,
+          content: `Remove ${extraArguments.length} extraneous parameter${pluralize(extraArguments.length)}`,
           disabled: !hasPermission,
+          shortcut: `${isMacOs() ? '⌘' : 'CTRL'} Click`,
         }}
         use:permissionHandler={{
           hasPermission,

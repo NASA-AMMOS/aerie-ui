@@ -7,6 +7,7 @@
     selectCategory: CustomEvent<ActivityErrorCategories>;
   }
 
+  import IncompleteIcon from '@nasa-jpl/stellar/icons/incomplete.svg?component';
   import WarningIcon from '@nasa-jpl/stellar/icons/warning.svg?component';
   import WarningExtraIcon from '@nasa-jpl/stellar/icons/warning_extra.svg?component';
   import WarningMissingIcon from '@nasa-jpl/stellar/icons/warning_missing.svg?component';
@@ -54,7 +55,7 @@
     }
   }
 
-  function generateTooltipHTMLString(
+  function generateTooltip(
     mode: Mode,
     count: number,
     category: string,
@@ -63,20 +64,23 @@
   ) {
     if (mode === 'minimal' || mode === 'iconsOnly') {
       if (mode === 'minimal' && isResettable) {
-        return `<div class="activity-error-rollup-error">
-            <div class="activity-error-rollup-error-reset">
-                <span>${getResetActionName(category)} ${count} ${category}${
-          itemName ? ` ${itemName}${pluralize(count)}` : ''
-        }${category !== 'extraneous' ? ' to mission model' : ''}</span>
-                <div>${isMacOs() ? '⌘' : 'CTRL'} Click</div>
-              </div>
-          </div>`;
+        return {
+          content: `${getResetActionName(category)} ${count} ${category}${
+            itemName ? ` ${itemName}${pluralize(count)}` : ''
+          }${category !== 'extraneous' ? ' to mission model' : ''}`,
+          shortcut: `${isMacOs() ? '⌘' : 'CTRL'} Click}`,
+        };
       } else {
-        return `<div class="activity-error-rollup-error">${generateCountText('full', count, category, itemName)}</div>`;
+        return {
+          content: generateCountText('full', count, category, itemName),
+          shortcut: '',
+        };
       }
     }
-
-    return '';
+    return {
+      content: '',
+      shortcut: '',
+    };
   }
 
   function onSelectCategory(event: MouseEvent) {
@@ -103,6 +107,7 @@
     invalidParameter: 0,
     missing: 0,
     outOfBounds: 0,
+    pending: 0,
     wrongType: 0,
   };
   let selectedCategory: ActivityErrorCategories | null = null;
@@ -114,6 +119,7 @@
     invalidParameter: 0,
     missing: 0,
     outOfBounds: 0,
+    pending: 0,
     wrongType: 0,
   };
   $: selectedCategory = selectable ? 'all' : null;
@@ -141,7 +147,7 @@
       on:click={onSelectCategory}
       use:tooltip={{
         allowHTML: true,
-        content: generateTooltipHTMLString(mode, errorCounts.extra, 'extraneous', 'parameter', true),
+        ...generateTooltip(mode, errorCounts.extra, 'extraneous', 'parameter', true),
         disabled: !hasPermission,
       }}
       use:permissionHandler={{
@@ -160,7 +166,7 @@
       on:click={onSelectCategory}
       use:tooltip={{
         allowHTML: true,
-        content: generateTooltipHTMLString(mode, errorCounts.missing, 'missing', 'parameter'),
+        ...generateTooltip(mode, errorCounts.missing, 'missing', 'parameter'),
       }}
     >
       <WarningMissingIcon class="red-icon" />{generateCountText(mode, errorCounts.missing, 'missing', 'parameter')}
@@ -174,10 +180,15 @@
       on:click={onSelectCategory}
       use:tooltip={{
         allowHTML: true,
-        content: generateTooltipHTMLString(mode, errorCounts.wrongType, 'wrongType', 'parameter'),
+        ...generateTooltip(mode, errorCounts.wrongType, 'invalid activity type', ''),
       }}
     >
-      <WarningUnknownIcon class="red-icon" />{generateCountText(mode, errorCounts.wrongType, 'wrong type', 'type')}
+      <WarningUnknownIcon class="red-icon" />{generateCountText(
+        mode,
+        errorCounts.wrongType,
+        'invalid activity type',
+        '',
+      )}
     </button>
   {/if}
   {#if errorCounts.invalidParameter}
@@ -189,7 +200,7 @@
       on:click={onSelectCategory}
       use:tooltip={{
         allowHTML: true,
-        content: generateTooltipHTMLString(mode, errorCounts.invalidParameter, 'invalid', 'parameter', true),
+        ...generateTooltip(mode, errorCounts.invalidParameter, 'invalid', 'parameter', true),
         disabled: !hasPermission,
       }}
       use:permissionHandler={{
@@ -208,10 +219,24 @@
       on:click={onSelectCategory}
       use:tooltip={{
         allowHTML: true,
-        content: generateTooltipHTMLString(mode, errorCounts.invalidAnchor, 'invalid', 'anchor'),
+        ...generateTooltip(mode, errorCounts.invalidAnchor, 'invalid', 'anchor'),
       }}
     >
       <WarningIcon class="orange-icon" />{generateCountText(mode, errorCounts.invalidAnchor, 'invalid', 'anchor')}
+    </button>
+  {/if}
+  {#if errorCounts.pending}
+    <button
+      class="count"
+      class:selected={selectedCategory === 'pending'}
+      value="pending"
+      on:click={onSelectCategory}
+      use:tooltip={{
+        allowHTML: true,
+        ...generateTooltip(mode, errorCounts.pending, 'not checked', ''),
+      }}
+    >
+      <IncompleteIcon />{generateCountText(mode, errorCounts.pending, 'not checked')}
     </button>
   {/if}
   {#if errorCounts.outOfBounds}
@@ -222,7 +247,7 @@
       on:click={onSelectCategory}
       use:tooltip={{
         allowHTML: true,
-        content: generateTooltipHTMLString(mode, errorCounts.outOfBounds, 'outside plan bounds', ''),
+        ...generateTooltip(mode, errorCounts.outOfBounds, 'outside plan bounds', ''),
       }}
     >
       <OutsideBoundsIcon />{generateCountText(mode, errorCounts.outOfBounds, 'outside plan bounds')}

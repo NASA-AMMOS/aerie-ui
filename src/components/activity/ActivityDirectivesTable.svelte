@@ -103,7 +103,7 @@
       sortable: false,
       suppressMovable: true,
       suppressSizeToFit: true,
-      width: 50,
+      width: 70,
     };
     completeColumnDefs = [activityErrorColumnDef, ...(columnDefs ?? []), activityActionColumnDef];
   }

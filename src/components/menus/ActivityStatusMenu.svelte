@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import ActivitiesIcon from '@nasa-jpl/stellar/icons/activities.svg?component';
+  import ActivitiesIcon from '@nasa-jpl/stellar/icons/waterfall.svg?component';
   import { createEventDispatcher } from 'svelte';
   import type { ActivityDirectiveValidationStatus } from '../../types/activity';
   import type { ActivityErrorCounts } from '../../types/errors';
