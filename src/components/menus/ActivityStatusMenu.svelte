@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import ActivitiesIcon from '@nasa-jpl/stellar/icons/waterfall.svg?component';
+  import WaterfallIcon from '@nasa-jpl/stellar/icons/waterfall.svg?component';
   import { createEventDispatcher } from 'svelte';
   import type { ActivityDirectiveValidationStatus } from '../../types/activity';
   import type { ActivityErrorCounts } from '../../types/errors';
@@ -51,7 +51,7 @@
   statusBadgeText={`${invalidActivityCount}`}
   status={activityErrorCounts.all && activityErrorCounts.all > 0 ? Status.Failed : Status.Complete}
 >
-  <ActivitiesIcon />
+  <WaterfallIcon />
   <svelte:fragment slot="metadata">
     <div class="activity-status-nav-container">
       <div class="total-count">

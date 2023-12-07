@@ -2,12 +2,12 @@
 
 <script lang="ts">
   import { page } from '$app/stores';
-  import ActivitiesIcon from '@nasa-jpl/stellar/icons/activities.svg?component';
   import ActivityIcon from '@nasa-jpl/stellar/icons/activity.svg?component';
   import CalendarIcon from '@nasa-jpl/stellar/icons/calendar.svg?component';
   import PlanIcon from '@nasa-jpl/stellar/icons/plan.svg?component';
   import PlayIcon from '@nasa-jpl/stellar/icons/play.svg?component';
   import VerticalCollapseIcon from '@nasa-jpl/stellar/icons/vertical_collapse_with_center_line.svg?component';
+  import WaterfallIcon from '@nasa-jpl/stellar/icons/waterfall.svg?component';
   import GearWideConnectedIcon from 'bootstrap-icons/icons/gear-wide-connected.svg?component';
   import { keyBy } from 'lodash-es';
   import { onDestroy } from 'svelte';
@@ -666,7 +666,7 @@
             numberOfErrors={activityErrorCounts.all}
             title="Activity Validation Errors"
           >
-            <ActivitiesIcon />
+            <WaterfallIcon />
           </ConsoleTab>
         </div>
       </div>
