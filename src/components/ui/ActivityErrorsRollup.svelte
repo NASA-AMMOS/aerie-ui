@@ -155,7 +155,7 @@
         permissionError,
       }}
     >
-      <WarningExtraIcon class="red-icon" />{generateCountText(mode, errorCounts.extra, 'extraneous', 'parameter')}
+      <WarningExtraIcon class="dark-red-icon" />{generateCountText(mode, errorCounts.extra, 'extraneous', 'parameter')}
     </button>
   {/if}
   {#if errorCounts.missing}
@@ -169,7 +169,7 @@
         ...generateTooltip(mode, errorCounts.missing, 'missing', 'parameter'),
       }}
     >
-      <WarningMissingIcon class="red-icon" />{generateCountText(mode, errorCounts.missing, 'missing', 'parameter')}
+      <WarningMissingIcon class="dark-red-icon" />{generateCountText(mode, errorCounts.missing, 'missing', 'parameter')}
     </button>
   {/if}
   {#if errorCounts.wrongType}
@@ -183,12 +183,8 @@
         ...generateTooltip(mode, errorCounts.wrongType, 'invalid activity type', ''),
       }}
     >
-      <WarningUnknownIcon class="red-icon" />{generateCountText(
-        mode,
-        errorCounts.wrongType,
-        'invalid activity type',
-        '',
-      )}
+      <WarningUnknownIcon class="dark-red-icon" />
+      {generateCountText(mode, errorCounts.wrongType, 'invalid activity type', '')}
     </button>
   {/if}
   {#if errorCounts.invalidParameter}
@@ -208,7 +204,8 @@
         permissionError,
       }}
     >
-      <WarningIcon class="orange-icon" />{generateCountText(mode, errorCounts.invalidParameter, 'invalid', 'parameter')}
+      <WarningIcon class="red-icon" />
+      {generateCountText(mode, errorCounts.invalidParameter, 'invalid', 'parameter')}
     </button>
   {/if}
   {#if errorCounts.invalidAnchor}
@@ -222,7 +219,7 @@
         ...generateTooltip(mode, errorCounts.invalidAnchor, 'invalid', 'anchor'),
       }}
     >
-      <WarningIcon class="orange-icon" />{generateCountText(mode, errorCounts.invalidAnchor, 'invalid', 'anchor')}
+      <WarningIcon class="dark-red-icon" />{generateCountText(mode, errorCounts.invalidAnchor, 'invalid', 'anchor')}
     </button>
   {/if}
   {#if errorCounts.pending}

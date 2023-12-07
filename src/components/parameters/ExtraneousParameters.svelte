@@ -58,7 +58,7 @@
           permissionError,
         }}
       >
-        <WarningExtraIcon class="red-icon" />
+        <WarningExtraIcon class="dark-red-icon" />
       </button></span
     >
     <div class="extra-parameters-content">
