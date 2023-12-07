@@ -40,7 +40,6 @@
   function onKeydown(e: KeyboardEvent) {
     // If user holds meta/control while not focused on an input then activate navigation mode
     const keyActive = isMacOs() ? e.key === 'Meta' : e.key === 'Control';
-    console.log('onKeydown', e, keyActive);
     if (isMetaOrCtrlPressed(e)) {
       // If the meta key is the one pressed enter navigation mode
       if (keyActive && (e.target as HTMLElement).tagName !== 'INPUT') {
