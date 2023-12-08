@@ -2203,8 +2203,8 @@ const effects = {
   async deleteViews(views: ViewSlim[], user: User | null): Promise<boolean> {
     try {
       const hasPermission = views.reduce((previousValue, view) => {
-        return previousValue || queryPermissions.DELETE_VIEWS(user, view);
-      }, false);
+        return previousValue && queryPermissions.DELETE_VIEWS(user, view);
+      }, true);
       if (!hasPermission) {
         throwPermissionError('delete one or all of these views');
       }
