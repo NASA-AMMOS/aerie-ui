@@ -1,14 +1,13 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { type Quadtree } from 'd3-quadtree';
   import { scalePoint, type ScaleLinear, type ScalePoint, type ScaleTime } from 'd3-scale';
   import { curveLinear, line as d3Line } from 'd3-shape';
   import { createEventDispatcher, onMount, tick } from 'svelte';
   import type { Resource } from '../../types/simulation';
-  import type { Axis, LinePoint, QuadtreePoint, ResourceLayerFilter, TimeRange } from '../../types/timeline';
+  import type { Axis, LinePoint, ResourceLayerFilter, TimeRange } from '../../types/timeline';
   import { filterEmpty } from '../../utilities/generic';
-  import { CANVAS_PADDING_Y, getYScale } from '../../utilities/timeline';
+  import { CANVAS_PADDING_Y, getYScale, minMaxDecimation } from '../../utilities/timeline';
 
   export let contextmenu: MouseEvent | undefined;
   export let dpr: number = 1;
@@ -40,9 +39,7 @@
   let ctx: CanvasRenderingContext2D | null;
   let interactionCtx: CanvasRenderingContext2D | null;
   let mounted: boolean = false;
-  let quadtree: Quadtree<QuadtreePoint>;
   let scaleDomain: Set<string> = new Set();
-  let visiblePointsById: Record<number, LinePoint> = {};
   let drawPointsRequest: number;
   let stateLinePlotYScale: ScalePoint<string>;
   let yScale: ScaleLinear<number, number, never>;
@@ -139,8 +136,9 @@
           .curve(curveLinear);
       }
 
-      let finalPoints = [];
-      const pointsInView = [];
+      // TODO clean up finalPoints vs pointsInView?
+      let finalPoints: LinePoint[] = [];
+      const pointsInView: LinePoint = [];
       let leftPoint;
       let rightPoint;
       let prevPoint;
@@ -225,11 +223,9 @@
     }
   }
 
-  async function onMousemove(e: MouseEvent | undefined): void {
+  function onMousemove(e: MouseEvent | undefined): void {
     if (e) {
       const { offsetX: x, offsetY: y } = e;
-      // const points = searchQuadtreePoint<LinePoint>(quadtree, x, y, pointRadius, visiblePointsById);
-      // dispatch('mouseOver', { e, layerId: id, points });
 
       if (xScaleView) {
         const xView = xScaleView.invert(x);
@@ -256,16 +252,14 @@
           }
         });
 
-        let mouseOverPoints = [];
+        // TODO type the processed points?
+        let mouseOverPoints: LinePoint[] = [];
         if (leftPoint) {
           mouseOverPoints.push(leftPoint);
         }
         if (rightPoint) {
           mouseOverPoints.push(rightPoint);
         }
-        // if (leftPoint && rightPoint && leftPoint.y === rightPoint.y) {
-        // mouseOverPoints = [leftPoint];
-        // }
 
         const yScale = computeYScale(yAxes);
         if (interactionCtx) {
