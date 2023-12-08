@@ -233,7 +233,7 @@
         ...generateTooltip(mode, errorCounts.pending, 'not checked', ''),
       }}
     >
-      <IncompleteIcon />{generateCountText(mode, errorCounts.pending, 'not checked')}
+      <IncompleteIcon class="yellow-icon" />{generateCountText(mode, errorCounts.pending, 'not checked')}
     </button>
   {/if}
   {#if errorCounts.outOfBounds}
