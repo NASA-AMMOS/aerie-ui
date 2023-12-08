@@ -49,7 +49,7 @@
   menuTitle="Activity Status"
   showStatusInMenu={false}
   statusBadgeText={`${invalidActivityCount}`}
-  status={activityErrorCounts.all && activityErrorCounts.all > 0 ? Status.Failed : Status.Complete}
+  status={invalidActivityCount > 0 ? Status.Failed : Status.Complete}
 >
   <WaterfallIcon />
   <svelte:fragment slot="metadata">
@@ -57,9 +57,14 @@
       <div class="total-count">
         {totalActivitiesCheckedCount}/{totalActivityCount} activit{totalActivityCount !== 1 ? 'ies' : 'y'} checked
       </div>
-      <div class="invalid-count">
-        {invalidActivityCount} activit{totalActivityCount !== 1 ? 'ies' : 'y'} have problems
-      </div>
+      {#if invalidActivityCount === 0}
+        <div class="no-errors">No problems detected</div>
+      {:else}
+        <div class="invalid-count">
+          {invalidActivityCount} activit{invalidActivityCount !== 1 ? 'ies' : 'y'}
+          {invalidActivityCount !== 1 ? 'have' : 'has'} problems
+        </div>
+      {/if}
       <div class="activity-status-nav">
         <ActivityErrorsRollup counts={activityErrorCounts} selectable={false} showTotalCount={false} />
       </div>
@@ -77,6 +82,10 @@
 
   .total-count {
     color: var(--st-primary-text-color, #000);
+  }
+
+  .no-errors {
+    color: var(--st-success-green);
   }
 
   .invalid-count {
