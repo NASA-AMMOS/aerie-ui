@@ -182,18 +182,6 @@
       // TODO could also just do this when finalPoints < drawWidth but might be less performant?
       if (Math.abs(finalPoints.length - pointsInView.length) < 4) {
         drawPointsRequest = window.requestAnimationFrame(() => drawPoints(finalPoints));
-        // finalPoints.forEach(point => {
-        //   const { id, radius, x, y } = point;
-        //   // quadtree.add({ id, x, y });
-        //   visiblePointsById[id] = point;
-
-        //   const fill = lineColor;
-        //   ctx.fillStyle = fill;
-        //   ctx.lineWidth = lineWidth;
-        //   const circle = new Path2D();
-        //   circle.arc(x, y, point.radius, 0, 2 * Math.PI);
-        //   ctx.fill(circle);
-        // });
       }
 
       const line = d3Line<LinePoint>()
