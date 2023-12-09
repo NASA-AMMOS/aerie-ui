@@ -54,10 +54,13 @@ import type { Extension, ExtensionPayload } from '../types/extension';
 import type { Model, ModelInsertInput, ModelSchema, ModelSlim } from '../types/model';
 import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
 import type {
+  Argument,
   ArgumentsMap,
   EffectiveArguments,
+  Parameter,
   ParameterValidationError,
   ParameterValidationResponse,
+  ParametersMap,
 } from '../types/parameter';
 import type {
   PermissibleQueriesMap,
@@ -93,6 +96,7 @@ import type {
   SchedulingSpecGoalInsertInput,
   SchedulingSpecInsertInput,
 } from '../types/scheduling';
+import type { ValueSchema } from '../types/schema';
 import type {
   CommandDictionary,
   GetSeqJsonResponse,
@@ -4107,10 +4111,30 @@ const effects = {
     simulationSetInput: Simulation,
     user: User | null,
     newFiles: File[] = [],
+    modelParameters: ParametersMap | null = null,
   ): Promise<void> {
     try {
       if (!queryPermissions.UPDATE_SIMULATION(user, plan)) {
         throwPermissionError('update this simulation');
+      }
+
+      const ids = await effects.uploadFiles(newFiles, user);
+      const original_filename_to_id: Record<string, number> = {};
+      for (var i = 0; i < ids.length; i++) {
+        const id = ids[i];
+        if (id === null) continue;
+        original_filename_to_id[newFiles[i].name] = id;
+      }
+
+      const filenames: Record<string, string> = {};
+      for (const newFile of newFiles) {
+        const id = original_filename_to_id[newFile.name];
+        const response = (await reqHasura<[{ name: string }]>(gql.GET_UPLOADED_FILENAME, { id }, user))[
+          'uploaded_file'
+        ];
+        if (response == null) continue;
+        console.log({ name: newFile.name, id, response });
+        filenames[newFile.name] = `/usr/src/app/merlin_file_store/${response[0]['name']}`;
       }
 
       const data = await reqHasura<Pick<Simulation, 'id'>>(
@@ -4118,7 +4142,7 @@ const effects = {
         {
           id: simulationSetInput.id,
           simulation: {
-            arguments: simulationSetInput.arguments,
+            arguments: replacePaths(modelParameters, simulationSetInput.arguments, filenames),
             simulation_end_time: simulationSetInput?.simulation_end_time ?? null,
             simulation_start_time: simulationSetInput?.simulation_start_time ?? null,
             simulation_template_id: simulationSetInput?.template?.id ?? null,
@@ -4127,7 +4151,6 @@ const effects = {
         user,
       );
       if (data.updateSimulation !== null) {
-        await effects.uploadFiles(newFiles, user);
         showSuccessToast('Simulation Updated Successfully');
       } else {
         throw Error(`Unable to update simulation with ID: "${simulationSetInput.id}"`);
@@ -4266,15 +4289,16 @@ const effects = {
     }
   },
 
-  async uploadFiles(files: File[], user: User | null): Promise<boolean> {
+  async uploadFiles(files: File[], user: User | null): Promise<(number | null)[]> {
     try {
+      const ids = [];
       for (const file of files) {
-        await effects.uploadFile(file, user);
+        ids.push(await effects.uploadFile(file, user));
       }
-      return true;
+      return ids;
     } catch (e) {
       catchError(e as Error);
-      return false;
+      return [];
     }
   },
 
@@ -4358,5 +4382,36 @@ const effects = {
     }
   },
 };
+
+function replacePaths(modelParameters: ParametersMap | null, simArgs: ArgumentsMap, filenames: any): ArgumentsMap {
+  if (modelParameters === null) return simArgs;
+  const result: ArgumentsMap = {};
+  for (const parameterName in modelParameters) {
+    const parameter: Parameter = modelParameters[parameterName];
+    const arg: Argument = simArgs[parameterName];
+    if (arg === undefined) continue;
+    result[parameterName] = replacePathsHelper(parameter.schema, arg, filenames);
+  }
+  return result;
+}
+
+function replacePathsHelper(schema: ValueSchema, arg: Argument, filenames: any) {
+  switch (schema.type) {
+    case 'path':
+      return filenames[arg] || arg;
+    case 'struct':
+      return (function () {
+        const res: Argument = {};
+        for (const key in schema.items) {
+          res[key] = replacePathsHelper(schema.items[key], arg[key], filenames);
+        }
+        return res;
+      })();
+    case 'series':
+      return arg.map((x: Argument) => replacePathsHelper(schema, x, filenames));
+    default:
+      return arg;
+  }
+}
 
 export default effects;
