@@ -54,7 +54,7 @@
   let timelineRef: Timeline;
   let timelineDirectiveVisibilityToggles: DirectiveVisibilityToggleMap = {};
   let timelineSpanVisibilityToggles: SpanVisibilityToggleMap = {};
-  let decimate = false;
+  let decimate = true;
   let interpolateHoverValue = false;
   let limitTooltipToLine = false;
 
