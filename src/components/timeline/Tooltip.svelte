@@ -197,10 +197,9 @@
   }
 
   function textForLinePoint(point: LinePoint): string {
-    const { id, x, y } = point;
+    const { x, y } = point;
     return `
       <div>
-        ${!interpolateHoverValue ? `Id: ${id}<br>` : ''}
         Resource Name: ${point.name}
         <br>
         Time: ${getDoyTime(new Date(x))}
@@ -228,11 +227,9 @@
   }
 
   function textForXRangePoint(point: XRangePoint): string {
-    const { id, x } = point;
+    const { x } = point;
     return `
       <div>
-        Id: ${id}
-        <br>
         Resource Name: ${point.name}
         <br>
         Start: ${getDoyTime(new Date(x))}
