@@ -7,7 +7,6 @@
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { View, ViewSlim } from '../../types/view';
   import { featurePermissions } from '../../utilities/permissions';
-  import { downloadView as downloadViewUtil } from '../../utilities/view';
   import BulkActionDataGrid from '../ui/DataGrid/BulkActionDataGrid.svelte';
   import DataGridActions from '../ui/DataGrid/DataGridActions.svelte';
 
@@ -91,7 +90,7 @@
       },
       cellRendererParams: {
         deleteView,
-        downloadView: downloadViewUtil,
+        downloadView,
         openView,
       } as CellRendererParams,
       field: 'actions',
@@ -106,6 +105,10 @@
 
   function deleteView({ id: viewId }: ViewSlim) {
     dispatch('deleteView', viewId);
+  }
+
+  function downloadView({ id: viewId }: ViewSlim) {
+    dispatch('downloadView', viewId);
   }
 
   function deleteViews({ detail: views }: CustomEvent<ViewSlim[]>) {
