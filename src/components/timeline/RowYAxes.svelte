@@ -125,17 +125,17 @@
               axisG.call(axisLeft);
               axisG.call(g => g.select('.domain').remove());
             }
-
-            // Draw separator
-            axisG
-              .append('line')
-              .attr('x1', 2)
-              .attr('y1', 0)
-              .attr('x2', 2)
-              .attr('y2', drawHeight)
-              .style('stroke', '#EBECEC')
-              .style('stroke-width', 2);
           }
+
+          // Draw separator
+          axisG
+            .append('line')
+            .attr('x1', 2)
+            .attr('y1', 0)
+            .attr('x2', 2)
+            .attr('y2', drawHeight)
+            .style('stroke', '#EBECEC')
+            .style('stroke-width', 2);
         }
 
         const axisGElement: SVGGElement | null = axisG.node();
@@ -146,10 +146,8 @@
         }
       }
 
-      totalWidth += marginWidth;
-      if (totalWidth > 0 && drawWidth !== totalWidth) {
-        dispatch('updateYAxesWidth', totalWidth);
-      }
+      // Dispatch the width so the RowHeader can recalculate the label width.
+      dispatch('updateYAxesWidth', totalWidth + marginWidth);
     }
   }
 </script>
