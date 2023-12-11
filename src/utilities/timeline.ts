@@ -28,7 +28,7 @@ import type {
   VerticalGuide,
   XRangeLayer,
 } from '../types/timeline';
-import { filterEmpty } from './generic';
+import { filterEmpty, isNullOrUndefined } from './generic';
 
 export enum TimelineLockStatus {
   Locked = 'Locked',
@@ -671,18 +671,23 @@ export function duplicateRow(row: Row, timelines: Timeline[], timelineId: number
 }
 
 /**
- * Returns true if `value` is neither null nor undefined, else returns false.
- * @param value - The value to test.
- * @since 2.7.0
+ * Performs min/max decimation on the array of numerical data. This method preserves peaks in the signal
+ * and requires up to 4 points for each pixel. Taken from ChartJS min/max implementation.
+ * @see https://github.com/chartjs/Chart.js/blob/master/src/plugins/plugin.decimation.js
+ * @see https://digital.ni.com/public.nsf/allkb/F694FFEEA0ACF282862576020075F784
+ * @todo may not work with logarithmic decimation, see https://www.chartjs.org/docs/latest/configuration/decimation.html
  */
-export function isNullOrUndef(value: unknown): value is null | undefined {
-  return value === null || typeof value === 'undefined';
-}
-
-export function minMaxDecimation(data, start, count, availableWidth) {
+export function minMaxDecimation(
+  data: { x: number; y: number }[],
+  start: number,
+  count: number,
+  availableWidth: number,
+) {
   let avgX = 0;
   let countX = 0;
-  let i, point, x, y, prevX, minIndex, maxIndex, startIndex, minY, maxY;
+  let i, point, x, y, prevX, minIndex, maxIndex, startIndex;
+  let minY = Number.MAX_SAFE_INTEGER;
+  let maxY = Number.MIN_SAFE_INTEGER;
   const decimated = [];
   const endIndex = start + count - 1;
 
@@ -711,7 +716,7 @@ export function minMaxDecimation(data, start, count, availableWidth) {
       // Push up to 4 points, 3 for the last interval and the first point for this interval
       const lastIndex = i - 1;
 
-      if (!isNullOrUndef(minIndex) && !isNullOrUndef(maxIndex)) {
+      if (!isNullOrUndefined(minIndex) && !isNullOrUndefined(maxIndex)) {
         // The interval is defined by 4 points: start, min, max, end.
         // The starting point is already considered at this point, so we need to determine which
         // of the other points to add. We need to sort these points to ensure the decimated data
