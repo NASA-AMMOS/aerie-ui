@@ -6,7 +6,7 @@
   import { zoom as d3Zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior, type ZoomTransform } from 'd3-zoom';
   import { pick } from 'lodash-es';
   import { createEventDispatcher } from 'svelte';
-  import { allResources, fetchingResources } from '../../stores/simulation';
+  import { allResources, fetchingResources, fetchingResourcesExternal } from '../../stores/simulation';
   import { selectedRow } from '../../stores/views';
   import type {
     ActivityDirective,
@@ -335,7 +335,7 @@
         </g>
       </svg>
       <!-- Loading indicator -->
-      {#if hasResourceLayer && $fetchingResources}
+      {#if hasResourceLayer && ($fetchingResources || $fetchingResourcesExternal)}
         <div class="loading st-typography-label">Loading</div>
       {/if}
       <!-- Layers of Canvas Visualizations. -->
@@ -534,6 +534,7 @@
 
   .loading {
     align-items: center;
+    animation: 1s delayVisibility;
     color: var(--st-gray-50);
     display: flex;
     font-size: 10px;
@@ -543,5 +544,17 @@
     position: absolute;
     width: 100%;
     z-index: 3;
+  }
+
+  @keyframes delayVisibility {
+    0% {
+      visibility: hidden;
+    }
+    99% {
+      visibility: hidden;
+    }
+    100% {
+      visibility: visible;
+    }
   }
 </style>
