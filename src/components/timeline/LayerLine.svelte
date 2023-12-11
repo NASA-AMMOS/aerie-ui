@@ -96,10 +96,10 @@
   }
 
   function processPoint(point: LinePoint, yScale: ScaleLinear<number, number>) {
-    const { id, radius } = point;
+    const { id, radius, name, type } = point;
     const x = (xScaleView as ScaleTime<number, number, never>)(point.x);
     const y = yScale(point.y);
-    return { id, radius, x, y };
+    return { id, name, radius, type, x, y };
   }
 
   async function draw(): Promise<void> {
@@ -138,10 +138,10 @@
 
       // TODO clean up finalPoints vs pointsInView?
       let finalPoints: LinePoint[] = [];
-      const pointsInView: LinePoint = [];
-      let leftPoint;
-      let rightPoint;
-      let prevPoint;
+      const pointsInView: LinePoint[] = [];
+      let leftPoint: LinePoint | null = null;
+      let rightPoint: LinePoint | null = null;
+      let prevPoint: LinePoint | null = null;
       points.forEach(point => {
         if (point.x >= viewTimeRange.start && !leftPoint && prevPoint) {
           leftPoint = processPoint(prevPoint, yScale);
@@ -164,7 +164,10 @@
         // TODO make this cleaner perhaps or dive deeper?
         // TODO confirm that this does not happen for first point? Seems to not.
         // Push the last point in view again since decimation does not result in properly sorted points within a time bin
-        finalPoints.push(pointsInView.at(-1));
+        const lastPoint = pointsInView.at(-1);
+        if (lastPoint) {
+          finalPoints.push(lastPoint);
+        }
       }
 
       // Add left and right points after decimation to not throw off min-max bins
@@ -173,7 +176,7 @@
       }
 
       if (rightPoint) {
-        finalPoints.push({ ...rightPoint });
+        finalPoints.push(rightPoint);
       }
 
       // Allow for some wiggle room since we may have added up to 3 extra points
@@ -303,15 +306,22 @@
           // DELTA_PX = Infinity;
           if (distance < DELTA_PX || limitTooltipToLine === false) {
             mouseOverPoints = [drawPoint];
-            const { x, y } = processPoint(drawPoint, yScale);
+            const { x, y, radius } = processPoint(drawPoint, yScale);
             if (interactionCtx) {
               const fill = lineColor;
+              const scalar = radius || 1;
+
+              const circle3 = new Path2D();
+              circle3.arc(x, y, scalar + 3, 0, 2 * Math.PI);
+              // interactionCtx.globalAlpha = 0.8;
+              interactionCtx.fillStyle = fill;
+              interactionCtx.fill(circle3);
+              // interactionCtx.globalAlpha = 1;
+
               const circle2 = new Path2D();
-              circle2.arc(x, y, 5, 0, 2 * Math.PI);
-              interactionCtx.globalAlpha = 0.8;
+              circle2.arc(x, y, scalar + 2, 0, 2 * Math.PI);
               interactionCtx.fillStyle = 'white';
               interactionCtx.fill(circle2);
-              interactionCtx.globalAlpha = 1;
 
               // interactionCtx.strokeStyle = 'fill';
               // interactionCtx.beginPath();
@@ -322,9 +332,26 @@
               const circle = new Path2D();
               interactionCtx.fillStyle = fill;
               interactionCtx.lineWidth = lineWidth;
-              interactionCtx.strokeStyle = fill;
-              circle.arc(x, y, 4, 0, 2 * Math.PI);
+              circle.arc(x, y, scalar + 1, 0, 2 * Math.PI);
               interactionCtx.fill(circle);
+
+              const path = new Path2D();
+              interactionCtx.fillStyle = 'red';
+
+              const maxY = scalar + 3;
+              if (drawHeight > 32) {
+                const arrowSize = 8;
+                let arrowHeadY = y - maxY - 1;
+                let arrowTailY = arrowHeadY - arrowSize;
+                if (arrowTailY < 0) {
+                  arrowHeadY = y + maxY + 1;
+                  arrowTailY = arrowHeadY + arrowSize;
+                }
+                path.moveTo(x, arrowHeadY);
+                path.lineTo(x + arrowSize / 2, arrowTailY);
+                path.lineTo(x - arrowSize / 2, arrowTailY);
+                interactionCtx.fill(path);
+              }
             }
             dispatch('mouseOver', { e, layerId: id, points: mouseOverPoints });
           }
