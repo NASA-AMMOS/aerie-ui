@@ -4120,9 +4120,11 @@ const effects = {
 
       const ids = await effects.uploadFiles(newFiles, user);
       const original_filename_to_id: Record<string, number> = {};
-      for (var i = 0; i < ids.length; i++) {
+      for (let i = 0; i < ids.length; i++) {
         const id = ids[i];
-        if (id === null) continue;
+        if (id === null) {
+          continue;
+        }
         original_filename_to_id[newFiles[i].name] = id;
       }
 
@@ -4132,8 +4134,9 @@ const effects = {
         const response = (await reqHasura<[{ name: string }]>(gql.GET_UPLOADED_FILENAME, { id }, user))[
           'uploaded_file'
         ];
-        if (response == null) continue;
-        console.log({ name: newFile.name, id, response });
+        if (response == null) {
+          continue;
+        }
         filenames[newFile.name] = `/usr/src/app/merlin_file_store/${response[0]['name']}`;
       }
 
@@ -4384,12 +4387,16 @@ const effects = {
 };
 
 function replacePaths(modelParameters: ParametersMap | null, simArgs: ArgumentsMap, filenames: any): ArgumentsMap {
-  if (modelParameters === null) return simArgs;
+  if (modelParameters === null) {
+    return simArgs;
+  }
   const result: ArgumentsMap = {};
   for (const parameterName in modelParameters) {
     const parameter: Parameter = modelParameters[parameterName];
     const arg: Argument = simArgs[parameterName];
-    if (arg === undefined) continue;
+    if (arg === undefined) {
+      continue;
+    }
     result[parameterName] = replacePathsHelper(parameter.schema, arg, filenames);
   }
   return result;
