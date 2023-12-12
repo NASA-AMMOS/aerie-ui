@@ -5,10 +5,10 @@ import type { User } from '../types/app';
 import { hasNoAuthorization } from './permissions';
 
 export function shouldRedirectToLogin(user: User | null) {
-  return (!user || hasNoAuthorization(user));
+  return !user || hasNoAuthorization(user);
 }
 
-export async function logout(reason?: string) {
+export async function logout() {
   if (browser) {
     await fetch(`${base}/auth/logout`, { method: 'POST' });
     await goto(`${base}/`);

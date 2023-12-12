@@ -1,6 +1,6 @@
 import { env } from '$env/dynamic/public';
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { isLoginEnabled, shouldRedirectToLogin } from './login';
+import { shouldRedirectToLogin } from './login';
 import { ADMIN_ROLE } from './permissions';
 
 vi.mock('$env/dynamic/public', () => ({
@@ -12,19 +12,6 @@ vi.mock('$env/dynamic/public', () => ({
 describe('login util functions', () => {
   afterEach(() => {
     vi.resetAllMocks();
-  });
-
-  describe('isLoginEnabled', () => {
-    test('Should return whether or not the login page is enabled', () => {
-      vi.mocked(env).PUBLIC_LOGIN_PAGE = '';
-      expect(isLoginEnabled()).toEqual(true);
-
-      vi.mocked(env).PUBLIC_LOGIN_PAGE = 'enabled';
-      expect(isLoginEnabled()).toEqual(true);
-
-      vi.mocked(env).PUBLIC_LOGIN_PAGE = 'disabled';
-      expect(isLoginEnabled()).toEqual(false);
-    });
   });
 
   describe('shouldRedirectToLogin', () => {
