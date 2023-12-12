@@ -3,30 +3,12 @@ import { parse, type CookieSerializeOptions } from 'cookie';
 import jwtDecode from 'jwt-decode';
 import type { BaseUser, ParsedUserToken, User } from './types/app';
 import effects from './utilities/effects';
-import { isLoginEnabled } from './utilities/login';
-import { ADMIN_ROLE } from './utilities/permissions';
-import type { ReqAuthResponse, ReqSessionResponse } from './types/auth';
+import type { ReqValidateSSOResponse } from './types/auth';
 import { reqGatewayForwardCookies } from './utilities/requests';
 import { base } from '$app/paths';
 
 export const handle: Handle = async ({ event, resolve }) => {
   try {
-    if (!isLoginEnabled()) {
-      const permissibleQueries = await effects.getUserQueries(null);
-      const rolePermissions = await effects.getRolePermissions(null);
-      event.locals.user = {
-        activeRole: ADMIN_ROLE,
-        allowedRoles: [ADMIN_ROLE],
-        defaultRole: ADMIN_ROLE,
-        id: 'unknown',
-        permissibleQueries,
-        rolePermissions,
-        token: '',
-      };
-
-      return await resolve(event);
-    }
-
     const cookieHeader = event.request.headers.get('cookie') ?? '';
     const cookies = parse(cookieHeader);
     const { activeRole: activeRoleCookie = null, user: userCookie = null } = cookies;
@@ -43,56 +25,53 @@ export const handle: Handle = async ({ event, resolve }) => {
     console.log(`trying SSO, since JWT was invalid`);
 
     // pass all cookies to the gateway, who can determine if we have any valid SSO tokens
-    const validationData = await reqGatewayForwardCookies<ReqSessionResponse>('/auth/validateSSO', cookieHeader);
+    const validationData = await reqGatewayForwardCookies<ReqValidateSSOResponse>('/auth/validateSSO', cookieHeader);
 
     if (!validationData.success) {
       console.log('Invalid SSO token, redirecting to login UI page');
       // if we're already on the login page, don't redirect
       // otherwise we get stuck in a redirect loop
-      return event.url.pathname.startsWith('/login')
+      return event.url.pathname.startsWith('/login') || event.url.pathname.startsWith('/auth')
         ? await resolve(event)
         : new Response(null, {
             headers: {
-              // message field from gateway response will contain our login UI URL
-              location: `${validationData.message}`,
+              // redirectURL field from gateway response will contain our login UI URL
+              location: `${validationData.redirectURL}`,
             },
             status: 307,
           });
     }
 
-    // otherwise, if we have a valid token, login with token to generate new JWT
-    const loginData = await reqGatewayForwardCookies<ReqAuthResponse>('/auth/loginSSO', cookieHeader);
+    // otherwise, we had a valid SSO token, so compute roles from JWT
+    const user: BaseUser = {
+      id: validationData.userId ?? '',
+      token: validationData.token ?? '',
+    };
 
-    if (loginData.success) {
-      const user: BaseUser = {
-        id: loginData.message,
-        token: loginData.token ?? '',
+    const roles = await computeRolesFromJWT(user, activeRoleCookie);
+
+    if (roles) {
+      console.log(`successfully SSO'd for user ${user.id}`);
+
+      event.locals.user = roles;
+
+      // create and set cookies
+      const userStr = JSON.stringify(user);
+      const userCookie = Buffer.from(userStr).toString('base64');
+      const cookieOpts: CookieSerializeOptions = {
+        httpOnly: false,
+        path: `${base}/`,
+        sameSite: 'none',
       };
+      event.cookies.set('user', userCookie, cookieOpts);
+      event.cookies.set('activeRole', roles.defaultRole, cookieOpts);
 
-      const roles = await computeRolesFromJWT(user, activeRoleCookie);
-
-      if (roles) {
-        console.log(`successfully SSO'd for user ${user.id}`);
-
-        event.locals.user = roles;
-
-        // create and set cookies
-        const userStr = JSON.stringify(user);
-        const userCookie = Buffer.from(userStr).toString('base64');
-        const cookieOpts: CookieSerializeOptions = {
-          httpOnly: false,
-          path: `${base}/`,
-          sameSite: 'none',
-        };
-        event.cookies.set('user', userCookie, cookieOpts);
-        event.cookies.set('activeRole', roles.defaultRole, cookieOpts);
-
-        return await resolve(event);
-      }
+      return await resolve(event);
     }
 
     // otherwise, we can't auth
     console.log('unable to auth with JWT or SSO token');
+    console.log(validationData.message);
     event.locals.user = null;
   } catch (e) {
     console.log(e);

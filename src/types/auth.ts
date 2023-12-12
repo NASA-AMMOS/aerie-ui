@@ -33,3 +33,11 @@ export type ReqSessionResponse = {
   message: string;
   success: boolean;
 };
+
+export type ReqValidateSSOResponse = {
+  message: string;
+  success: boolean;
+  token?: string;
+  userId?: string;
+  redirectURL?: string;
+};
