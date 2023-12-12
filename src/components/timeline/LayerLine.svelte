@@ -103,9 +103,13 @@
   }
 
   async function draw(): Promise<void> {
-    if (ctx && xScaleView) {
+    if (ctx && xScaleView && interactionCtx) {
       window.cancelAnimationFrame(drawPointsRequest);
       await tick();
+
+      // Clear interaction canvas on every draw since the data
+      // or time range may have changed
+      interactionCtx.clearRect(0, 0, drawWidth, drawHeight);
 
       ctx.resetTransform();
       ctx.scale(dpr, dpr);
@@ -235,6 +239,8 @@
         const xDate = xView.getTime();
         let leftPoint: LinePoint | null = null;
         let rightPoint: LinePoint | null = null;
+        // TODO search more efficiently?
+        // TODO deal with multiple values per X to improve hovering behavior on spikes
         points.forEach(point => {
           if (point.x <= xDate) {
             if (!leftPoint) {
