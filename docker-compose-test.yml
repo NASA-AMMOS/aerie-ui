@@ -8,7 +8,8 @@ services:
     container_name: aerie_gateway
     depends_on: ['postgres']
     environment:
-      AUTH_TYPE: none
+      AUTH_TYPE: default
+      AUTH_UI_URL: 'http://localhost/login'
       GQL_API_URL: http://localhost:8080/v1/graphql
       HASURA_GRAPHQL_JWT_SECRET: '${HASURA_GRAPHQL_JWT_SECRET}'
       LOG_FILE: console
