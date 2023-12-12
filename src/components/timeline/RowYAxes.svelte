@@ -146,8 +146,9 @@
         }
       }
 
+      totalWidth += marginWidth;
       // Dispatch the width so the RowHeader can recalculate the label width.
-      dispatch('updateYAxesWidth', totalWidth + marginWidth);
+      dispatch('updateYAxesWidth', totalWidth);
     }
   }
 </script>

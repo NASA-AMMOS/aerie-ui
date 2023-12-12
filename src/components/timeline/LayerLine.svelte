@@ -2,7 +2,7 @@
 
 <script lang="ts">
   import { quadtree as d3Quadtree, type Quadtree } from 'd3-quadtree';
-  import { scalePoint, type ScaleLinear, type ScaleTime } from 'd3-scale';
+  import { scalePoint, type ScaleLinear, type ScalePoint, type ScaleTime } from 'd3-scale';
   import { curveLinear, line as d3Line } from 'd3-shape';
   import { createEventDispatcher, onMount, tick } from 'svelte';
   import type { Resource } from '../../types/simulation';
@@ -37,8 +37,9 @@
   let quadtree: Quadtree<QuadtreePoint>;
   let scaleDomain: Set<string> = new Set();
   let visiblePointsById: Record<number, LinePoint> = {};
-  let yScale: ScaleLinear<number, number, never>;
   let drawPointsRequest: number;
+  let stateLinePlotYScale: ScalePoint<string>;
+  let yScale: ScaleLinear<number, number, never>;
 
   $: canvasHeightDpr = drawHeight * dpr;
   $: canvasWidthDpr = drawWidth * dpr;
@@ -101,22 +102,22 @@
 
       if (showAsLinePlot) {
         const domain = Array.from(scaleDomain);
-        const yScale = scalePoint()
+        stateLinePlotYScale = scalePoint()
           .domain(domain.filter(filterEmpty))
-          .range([drawHeight - CANVAS_PADDING_Y, CANVAS_PADDING_Y]);
+          .range([drawHeight - CANVAS_PADDING_Y, CANVAS_PADDING_Y]) as ScalePoint<string>;
 
         line = d3Line<LinePoint>()
           .x(d => (xScaleView as ScaleTime<number, number, never>)(d.x))
-          .y(d => yScale(d.y.toString()) as number)
+          .y(d => stateLinePlotYScale(d.y.toString()) as number)
           .defined(d => d.y !== null) // Skip any gaps in resource data instead of interpolating
           .curve(curveLinear);
       } else {
         const domain = yAxis?.scaleDomain || [];
-        const yScale = getYScale(domain, drawHeight) as ScaleLinear<number, number>;
+        yScale = getYScale(domain, drawHeight) as ScaleLinear<number, number, never>;
 
         line = d3Line<LinePoint>()
           .x(d => (xScaleView as ScaleTime<number, number, never>)(d.x))
-          .y(d => yScale(d.y))
+          .y(d => yScale(d.y) as number)
           .defined(d => d.y !== null) // Skip any gaps in resource data instead of interpolating
           .curve(curveLinear);
       }
@@ -147,7 +148,14 @@
     for (const point of points) {
       if (point.x >= viewTimeRange.start && point.x <= viewTimeRange.end) {
         const x = (xScaleView as ScaleTime<number, number, never>)(point.x);
-        const y = yScale(point.y);
+        let y: number;
+
+        if (showAsLinePlot) {
+          y = stateLinePlotYScale(point.y.toString()) as number;
+        } else {
+          y = yScale(point.y) as number;
+        }
+
         quadtree.add({ id: point.id, x, y });
         visiblePointsById[point.id] = point;
         ctx.drawImage(offscreenPoint, x - pointRadius, y - pointRadius, pointRadius * 2, pointRadius * 2);
