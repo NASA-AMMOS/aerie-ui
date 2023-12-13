@@ -317,12 +317,12 @@ describe('Handle modal and requests in effects', () => {
       const modelParameters: ParametersMap = {
         parameter0: { order: 0, schema: { type: 'int' } },
         parameter1: { order: 1, schema: { type: 'path' } },
-        parameter2: { order: 2, schema: { type: 'struct', items: { x: { type: 'boolean' }, y: { type: 'path' } } } },
+        parameter2: { order: 2, schema: { items: { x: { type: 'boolean' }, y: { type: 'path' } }, type: 'struct' } },
         parameter3: {
           order: 3,
-          schema: { type: 'series', items: { type: 'variant', variants: [{ key: 'A', label: 'A' }] } },
+          schema: { items: { type: 'variant', variants: [{ key: 'A', label: 'A' }] }, type: 'series' },
         },
-        parameter4: { order: 4, schema: { type: 'series', items: { type: 'path' } } },
+        parameter4: { order: 4, schema: { items: { type: 'path' }, type: 'series' } },
       };
       const simArgs: ArgumentsMap = {
         parameter0: 1,
