@@ -1,5 +1,6 @@
 import { goto } from '$app/navigation';
 import { base } from '$app/paths';
+import { env } from '$env/dynamic/public';
 import type { CommandDictionary as AmpcsCommandDictionary } from '@nasa-jpl/aerie-ampcs';
 import { get } from 'svelte/store';
 import { SearchParameters } from '../enums/searchParameters';
@@ -4137,7 +4138,7 @@ const effects = {
         if (response == null) {
           continue;
         }
-        filenames[newFile.name] = `/usr/src/app/merlin_file_store/${response[0]['name']}`;
+        filenames[newFile.name] = `${env.PUBLIC_AERIE_FILE_STORE_PREFIX}${response[0]['name']}`;
       }
 
       const data = await reqHasura<Pick<Simulation, 'id'>>(
