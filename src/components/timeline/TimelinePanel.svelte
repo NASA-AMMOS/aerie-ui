@@ -57,6 +57,7 @@
   let decimate = true;
   let interpolateHoverValue = false;
   let limitTooltipToLine = false;
+  let hideTimelineTooltip = false;
 
   $: if (user !== null && $plan !== null) {
     hasUpdateDirectivePermission = featurePermissions.activityDirective.canUpdate(user, $plan) && !$planReadOnly;
@@ -247,6 +248,7 @@
           {decimate}
           {interpolateHoverValue}
           {limitTooltipToLine}
+          {hideTimelineTooltip}
           on:toggleDirectiveVisibility={({ detail }) => onToggleAllDirectiveVisibility(detail)}
           on:toggleDecimation={({ detail }) => {
             decimate = detail;
@@ -256,6 +258,10 @@
           }}
           on:toggleLimitTooltipToLine={({ detail }) => {
             limitTooltipToLine = detail;
+          }}
+          on:toggleTimelineTooltip={({ detail }) => {
+            // TODO could be a more generic setting of an option
+            hideTimelineTooltip = detail;
           }}
           on:viewTimeRangeChanged={({ detail: newViewTimeRange }) => {
             // TODO unsure of cleaner way to accomplish this without pulling xScaleMax and the
@@ -285,6 +291,7 @@
       {decimate}
       {interpolateHoverValue}
       {limitTooltipToLine}
+      {hideTimelineTooltip}
       activityDirectivesByView={$activityDirectivesByView}
       activityDirectivesMap={$activityDirectivesMap}
       constraintResults={$visibleConstraintResults}

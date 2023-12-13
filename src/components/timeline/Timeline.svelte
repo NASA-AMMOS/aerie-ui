@@ -79,6 +79,7 @@
 
   export let decimate: boolean = false;
   export let interpolateHoverValue: boolean = false;
+  export let hideTimelineTooltip: boolean = false;
   export let limitTooltipToLine: boolean = false;
 
   const dispatch = createEventDispatcher();
@@ -518,7 +519,13 @@
   </div>
 
   <!-- Timeline Tooltip. -->
-  <Tooltip bind:this={tooltip} {mouseOver} {interpolateHoverValue} {resourcesByViewLayerId} />
+  <Tooltip
+    bind:this={tooltip}
+    {mouseOver}
+    {interpolateHoverValue}
+    {resourcesByViewLayerId}
+    hidden={hideTimelineTooltip}
+  />
 
   <!-- Timeline Context Menu. -->
   <TimelineContextMenu

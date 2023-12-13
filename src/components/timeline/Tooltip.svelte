@@ -13,6 +13,7 @@
   export let mouseOver: MouseOver | null;
   export let interpolateHoverValue: boolean = false;
   export let resourcesByViewLayerId: Record<number, Resource[]> = {};
+  export let hidden: boolean = false;
 
   let activityDirectives: ActivityDirective[] = [];
   let constraintResults: ConstraintResultWithName[] = [];
@@ -27,7 +28,7 @@
   }
 
   function onMouseOver(event: MouseOver | undefined) {
-    if (event) {
+    if (event && !hidden) {
       activityDirectives = event?.activityDirectivesByLayer
         ? Object.values(event.activityDirectivesByLayer).flat()
         : [];
@@ -238,14 +239,14 @@
     const layer = row ? row.layers.find(l => l.id === layerId) : null;
     let color = '#FFFFFF';
     let unit = '';
-    let name = '';
+    let name = point.name;
     if (layer && layer.chartType === 'line') {
       const resources = resourcesByViewLayerId[layerId] || [];
       if (resources.length > 0) {
         // Only consider a single resource since multiple resources on a single layer is
         // supported in config but not valid
         unit = resources[0].schema.metadata?.unit?.value || '';
-        name = layer.name ?? point.name;
+        name = layer.name ? layer.name : point.name;
       }
       color = (layer as LineLayer).lineColor;
     }
@@ -311,7 +312,7 @@
       if (resources.length > 0) {
         // Only consider a single resource since multiple resources on a single layer is
         // supported in config but not valid
-        name = layer.name ?? point.name;
+        name = layer.name ? layer.name : point.name;
       }
       color = (layer as LineLayer).lineColor;
     }

@@ -33,6 +33,7 @@
   export let maxTimeRange: TimeRange = { end: 0, start: 0 };
   export let nudgePercent = 0.05;
   export let decimate = false;
+  export let hideTimelineTooltip = false;
   export let interpolateHoverValue = false;
   export let limitTooltipToLine = false;
   export let timelineDirectiveVisibilityToggles: DirectiveVisibilityToggleMap;
@@ -137,6 +138,10 @@
     dispatch('toggleDecimation', !decimate);
   }
 
+  function onToggleTimelineTooltip() {
+    dispatch('toggleTimelineTooltip', !hideTimelineTooltip);
+  }
+
   function onToggleInterpolate() {
     dispatch('toggleInterpolateHoverValue', !interpolateHoverValue);
   }
@@ -238,6 +243,14 @@
   use:tooltip={{ content: `Toggle cursor line intersection`, placement: 'bottom' }}
 >
   Limit tooltip to line
+</button>
+<button
+  style:background={hideTimelineTooltip ? 'lightgreen' : ''}
+  class="st-button secondary"
+  on:click={onToggleTimelineTooltip}
+  use:tooltip={{ content: `Toggle timeline tooltip`, placement: 'bottom' }}
+>
+  Hide tooltip
 </button>
 <button
   class="st-button icon"
