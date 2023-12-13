@@ -4123,10 +4123,9 @@ const effects = {
       const original_filename_to_id: Record<string, number> = {};
       for (let i = 0; i < ids.length; i++) {
         const id = ids[i];
-        if (id === null) {
-          continue;
+        if (id !== null) {
+          original_filename_to_id[newFiles[i].name] = id;
         }
-        original_filename_to_id[newFiles[i].name] = id;
       }
 
       const filenames: Record<string, string> = {};
@@ -4135,10 +4134,9 @@ const effects = {
         const response = (await reqHasura<[{ name: string }]>(gql.GET_UPLOADED_FILENAME, { id }, user))[
           'uploaded_file'
         ];
-        if (response == null) {
-          continue;
+        if (response !== null) {
+          filenames[newFile.name] = `${env.PUBLIC_AERIE_FILE_STORE_PREFIX}${response[0]['name']}`;
         }
-        filenames[newFile.name] = `${env.PUBLIC_AERIE_FILE_STORE_PREFIX}${response[0]['name']}`;
       }
 
       const data = await reqHasura<Pick<Simulation, 'id'>>(
@@ -4399,10 +4397,9 @@ export function replacePaths(
   for (const parameterName in modelParameters) {
     const parameter: Parameter = modelParameters[parameterName];
     const arg: Argument = simArgs[parameterName];
-    if (arg === undefined) {
-      continue;
+    if (arg !== undefined) {
+      result[parameterName] = replacePathsHelper(parameter.schema, arg, filenames);
     }
-    result[parameterName] = replacePathsHelper(parameter.schema, arg, filenames);
   }
   return result;
 }
