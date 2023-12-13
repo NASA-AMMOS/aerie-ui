@@ -4386,7 +4386,11 @@ const effects = {
   },
 };
 
-function replacePaths(modelParameters: ParametersMap | null, simArgs: ArgumentsMap, filenames: any): ArgumentsMap {
+function replacePaths(
+  modelParameters: ParametersMap | null,
+  simArgs: ArgumentsMap,
+  filenames: Record<string, string>,
+): ArgumentsMap {
   if (modelParameters === null) {
     return simArgs;
   }
@@ -4402,7 +4406,7 @@ function replacePaths(modelParameters: ParametersMap | null, simArgs: ArgumentsM
   return result;
 }
 
-function replacePathsHelper(schema: ValueSchema, arg: Argument, filenames: any) {
+function replacePathsHelper(schema: ValueSchema, arg: Argument, filenames: Record<string, string>) {
   switch (schema.type) {
     case 'path':
       return filenames[arg] || arg;
