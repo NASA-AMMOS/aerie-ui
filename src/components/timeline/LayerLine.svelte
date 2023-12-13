@@ -96,10 +96,10 @@
   }
 
   function processPoint(point: LinePoint, yScale: ScaleLinear<number, number>) {
-    const { id, radius, name, type } = point;
+    const { id, name, type } = point;
     const x = (xScaleView as ScaleTime<number, number, never>)(point.x);
     const y = yScale(point.y);
-    return { id, name, radius, type, x, y };
+    return { id, name, type, x, y };
   }
 
   async function draw(): Promise<void> {
@@ -141,6 +141,9 @@
       }
 
       // TODO clean up finalPoints vs pointsInView?
+      // TODO take gaps into account here and also after doing decimation, might need to
+      // identify gaps in view (accounting for left and right points) and then
+      // manually insert points into the final set to represent these gaps (i.e. y = null)
       let finalPoints: LinePoint[] = [];
       const pointsInView: LinePoint[] = [];
       let leftPoint: LinePoint | null = null;
@@ -375,6 +378,7 @@
     }
   }
 
+  /* TODO this is getting called too often */
   function processResourcesToLinePoints(resources: Resource[]) {
     if (typeof window === 'undefined') {
       return;

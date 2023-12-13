@@ -30,29 +30,6 @@ export function sampleProfiles(
 
         const { dynamics, is_gap } = segment;
 
-        // if (type === 'discrete') {
-        //   values.push({
-        //     is_gap,
-        //     x: start + segmentOffset,
-        //     y: Math.random() * 1000,
-        //   });
-        //   values.push({
-        //     is_gap,
-        //     x: start + nextSegmentOffset,
-        //     y: Math.random() * 1000,
-        //   });
-        // } else if (type === 'real') {
-        //   values.push({
-        //     is_gap,
-        //     x: start + segmentOffset,
-        //     y: Math.random() * 1000,
-        //   });
-        //   // values.push({
-        //   //   is_gap,
-        //   //   x: start + nextSegmentOffset,
-        //   //   y: dynamics.initial + dynamics.rate * ((nextSegmentOffset - segmentOffset) / 1000),
-        //   // });
-
         if (type === 'discrete') {
           values.push({
             is_gap,

@@ -677,12 +677,12 @@ export function duplicateRow(row: Row, timelines: Timeline[], timelineId: number
  * @see https://digital.ni.com/public.nsf/allkb/F694FFEEA0ACF282862576020075F784
  * @todo may not work with logarithmic decimation, see https://www.chartjs.org/docs/latest/configuration/decimation.html
  */
-export function minMaxDecimation(
+export function minMaxDecimation<T>(
   data: { x: number; y: number }[],
   start: number,
   count: number,
   availableWidth: number,
-) {
+): T[] {
   let avgX = 0;
   let countX = 0;
   let i, point, x, y, prevX, minIndex, maxIndex, startIndex;

@@ -507,7 +507,7 @@
             on:mouseDown={onMouseDown}
             on:mouseDownRowMove={onMouseDownRowMove}
             on:mouseUpRowMove={onMouseUpRowMove}
-            on:mouseOver={e => (mouseOver = e.detail)}
+            on:mouseOver={e => (mouseOver = { ...e.detail, row })}
             on:toggleRowExpansion={onToggleRowExpansion}
             on:updateRowHeight={onUpdateRowHeight}
             on:zoom={throttledZoom}
@@ -518,7 +518,7 @@
   </div>
 
   <!-- Timeline Tooltip. -->
-  <Tooltip bind:this={tooltip} {mouseOver} {interpolateHoverValue} />
+  <Tooltip bind:this={tooltip} {mouseOver} {interpolateHoverValue} {resourcesByViewLayerId} />
 
   <!-- Timeline Context Menu. -->
   <TimelineContextMenu

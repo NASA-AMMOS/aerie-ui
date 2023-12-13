@@ -94,18 +94,21 @@ export type MouseDown = {
   timelineId: number;
 };
 
-export type MouseOver = {
+export type MouseOverEvent = Omit<
+  MouseOver,
+  'activityDirectivesByLayer' | 'gapsByLayer' | 'pointsByLayer' | 'spansByLayer'
+> & {
   activityDirectives?: ActivityDirective[];
   constraintResults?: ConstraintResultWithName[];
   e: MouseEvent;
-  gaps?: Point[];
-  layerId: number;
-  origin?: MouseOverOrigin;
-  points?: Point[];
+  gapsByLayer?: Record<number, Point[]>;
+  layerId: number; //TODO not relevant since we sometimes have multiple layers per click
+  origin?: MouseOverOrigin; //TODO perhaps remove this
+  pointsByLayer?: Record<number, Point[]>;
   row?: Row;
   selectedActivityDirectiveId?: number;
   selectedSpanId?: number;
-  spans?: Span[];
+  spansByLayer?: Record<number, Span[]>;
 };
 
 export type MouseOverOrigin = 'row-header' | 'layer-line' | 'layer-activity' | 'layer-x-range';

@@ -23,7 +23,7 @@
     HorizontalGuide,
     Layer,
     MouseDown,
-    MouseOver,
+    MouseOverEvent,
     Point,
     TimeRange,
     XAxisTick,
@@ -224,7 +224,7 @@
     dispatch('mouseDown', { ...detail, activityDirectives, rowId: id, spans });
   }
 
-  function onMouseOver(event: CustomEvent<MouseOver>) {
+  function onMouseOver(event: CustomEvent<MouseOverEvent>) {
     const { detail } = event;
     const { layerId } = detail;
 
@@ -234,13 +234,14 @@
     mouseOverSpansByLayer[layerId] = detail?.spans ?? [];
     mouseOverGapsByLayer[layerId] = detail?.gaps ?? mouseOverGapsByLayer[layerId] ?? [];
 
-    const activityDirectives = Object.values(mouseOverActivityDirectivesByLayer).flat();
-    const constraintResults = mouseOverConstraintResults;
-    const points = Object.values(mouseOverPointsByLayer).flat();
-    const spans = Object.values(mouseOverSpansByLayer).flat();
-    const gaps = Object.values(mouseOverGapsByLayer).flat();
-
-    dispatch('mouseOver', { ...detail, activityDirectives, constraintResults, gaps, points, spans });
+    dispatch('mouseOver', {
+      ...detail,
+      activityDirectivesByLayer: mouseOverActivityDirectivesByLayer,
+      constraintResults: mouseOverConstraintResults,
+      gapsByLayer: mouseOverGapsByLayer,
+      pointsByLayer: mouseOverPointsByLayer,
+      spansByLayer: mouseOverSpansByLayer,
+    });
   }
 
   function onUpdateRowHeightDrag(event: CustomEvent<{ newHeight: number }>) {
