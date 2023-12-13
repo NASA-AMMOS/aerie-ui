@@ -140,15 +140,12 @@
           .curve(curveLinear);
       }
 
-      // TODO clean up finalPoints vs pointsInView?
-      // TODO take gaps into account here and also after doing decimation, might need to
-      // identify gaps in view (accounting for left and right points) and then
-      // manually insert points into the final set to represent these gaps (i.e. y = null)
       let finalPoints: LinePoint[] = [];
       const pointsInView: LinePoint[] = [];
       let leftPoint: LinePoint | null = null;
       let rightPoint: LinePoint | null = null;
       let prevPoint: LinePoint | null = null;
+      const gapPoints: LinePoint[] = [];
       points.forEach(point => {
         if (point.x >= viewTimeRange.start && !leftPoint && prevPoint) {
           leftPoint = processPoint(prevPoint, yScale);
@@ -159,7 +156,12 @@
         }
 
         if (point.x >= viewTimeRange.start && point.x <= viewTimeRange.end) {
-          pointsInView.push(processPoint(point, yScale));
+          // Ignore gaps
+          if (point.y === null) {
+            gapPoints.push(processPoint(point, yScale));
+          } else {
+            pointsInView.push(processPoint(point, yScale));
+          }
         }
         prevPoint = point;
       });
@@ -177,7 +179,22 @@
         }
       }
 
-      // Add left and right points after decimation to not throw off min-max bins
+      // Add back in gap points
+      gapPoints.forEach(point => {
+        // Find first point that comes after the specified point
+        const gapRightPointIndex = finalPoints.findIndex(p => {
+          return p.x > point.x || (p.x === point.x && p.id > point.id);
+        });
+        if (gapRightPointIndex > -1) {
+          finalPoints.splice(gapRightPointIndex, 0, point);
+        } else {
+          // TODO
+          // console.log(gapRightPointIndex, 'grp', finalPoints, point);
+        }
+      });
+
+      // Add left and right points after decimation to not throw off
+      // the min-max binning of decimation (since the points could be far away offscreen)
       if (leftPoint) {
         finalPoints.unshift(leftPoint);
       }
@@ -187,15 +204,27 @@
       }
 
       // Allow for some wiggle room since we may have added up to 3 extra points
+      // Also account for gap points that have not been included in pointsInView
       // TODO could also just do this when finalPoints < drawWidth but might be less performant?
-      if (Math.abs(finalPoints.length - pointsInView.length) < 4) {
+      if (gapPoints.length > 0) {
+        // console.log('id :>> ', id);
+        // // console.log('finalPoints.length :>> ', finalPoints.length);
+        // console.log('points :>> ', points);
+        // console.log('finalPoints :>> ', finalPoints);
+        // // console.log('pointsInView.length :>> ', pointsInView.length);
+        // // console.log('gapPoints.length :>> ', gapPoints.length);
+        // console.log('gapPoints :>> ', gapPoints);
+        // console.log('rightPoint :>> ', rightPoint);
+        // console.log('leftPoint :>> ', leftPoint);
+      }
+      if (!decimate || Math.abs(finalPoints.length - gapPoints.length - pointsInView.length) < 4) {
         drawPointsRequest = window.requestAnimationFrame(() => drawPoints(finalPoints));
       }
 
       const line = d3Line<LinePoint>()
-        .x(d => d.x)
-        .y(d => d.y)
         .defined(d => d.y !== null) // Skip any gaps in resource data instead of interpolating
+        .x(d => d.x)
+        .y(d => d.y as number)
         .curve(curveLinear);
       ctx.beginPath();
       line.context(ctx)(finalPoints);
@@ -220,8 +249,7 @@
           y = yScale(point.y) as number;
         }
 
-        // quadtree.add({ id: point.id, x, y });
-        // visiblePointsById[point.id] = point;
+      if (y !== null) {
         ctx.drawImage(offscreenPoint, x - pointRadius, y - pointRadius, pointRadius * 2, pointRadius * 2);
       }
     }
@@ -291,6 +319,12 @@
             const leftY = mouseOverPoints[0].y;
             const rightY = mouseOverPoints[1].y;
             const percent = (xDate - leftX) / (rightX - leftX);
+
+            // Do not interpolate if one of the neighboring values is a gap
+            if (leftY === null || rightY === null) {
+              return;
+            }
+
             if (interpolateHoverValue) {
               const interpY = (1 - percent) * leftY + percent * rightY;
               drawPoint = {
@@ -310,6 +344,9 @@
         }
 
         if (drawPoint) {
+          if (drawPoint.y === null) {
+            return;
+          }
           const distance = Math.abs(yScale(drawPoint.y) - y);
           let DELTA_PX = 10;
           // DELTA_PX = Infinity;

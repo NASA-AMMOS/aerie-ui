@@ -82,7 +82,7 @@ export interface LineLayer extends Layer {
 }
 
 export interface LinePoint extends Point {
-  y: number;
+  y: number | null;
 }
 
 export type MouseDown = {
