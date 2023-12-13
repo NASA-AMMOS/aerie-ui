@@ -261,6 +261,24 @@
     }
   }
 
+  function getClosestPointForXY(
+    x: number,
+    y: number,
+    points: LinePoint[],
+    yScale: ScaleLinear<number, number, never>,
+  ): LinePoint | null {
+    const pointsAtX = points.filter(p => p.y !== null && p.x === x);
+    const closest = pointsAtX.reduce((closestPoint, nextPoint) => {
+      if (!closestPoint) {
+        return nextPoint;
+      }
+      const distanceA = Math.abs(yScale(closestPoint.y) - y);
+      const distanceB = Math.abs(yScale(nextPoint.y) - y);
+      return distanceA < distanceB ? closestPoint : nextPoint;
+    }, null);
+    return closest;
+  }
+
   function onMousemove(e: MouseEvent | undefined): void {
     if (e) {
       const { offsetX: x, offsetY: y } = e;
@@ -272,6 +290,9 @@
         let rightPoint: LinePoint | null = null;
         // TODO search more efficiently?
         // TODO deal with multiple values per X to improve hovering behavior on spikes
+
+        const yScale = computeYScale(yAxes);
+
         points.forEach(point => {
           if (point.x <= xDate) {
             if (!leftPoint) {
@@ -292,16 +313,27 @@
           }
         });
 
-        // TODO type the processed points?
         let mouseOverPoints: LinePoint[] = [];
+        // TODO clean this up
         if (leftPoint) {
+          if (!interpolateHoverValue) {
+            const closestPoint = getClosestPointForXY((leftPoint as LinePoint).x, y, points, yScale);
+            if (closestPoint) {
+              leftPoint = closestPoint;
+            }
+          }
           mouseOverPoints.push(leftPoint);
         }
         if (rightPoint) {
+          if (!interpolateHoverValue) {
+            const closestPoint = getClosestPointForXY((leftPoint as LinePoint).x, y, points, yScale);
+            if (closestPoint) {
+              rightPoint = closestPoint;
+            }
+          }
           mouseOverPoints.push(rightPoint);
         }
 
-        const yScale = computeYScale(yAxes);
         if (interactionCtx) {
           interactionCtx.resetTransform();
           interactionCtx.scale(dpr, dpr);
@@ -359,21 +391,13 @@
 
               const circle3 = new Path2D();
               circle3.arc(x, y, scalar + 3, 0, 2 * Math.PI);
-              // interactionCtx.globalAlpha = 0.8;
               interactionCtx.fillStyle = fill;
               interactionCtx.fill(circle3);
-              // interactionCtx.globalAlpha = 1;
 
               const circle2 = new Path2D();
               circle2.arc(x, y, scalar + 2, 0, 2 * Math.PI);
               interactionCtx.fillStyle = 'white';
               interactionCtx.fill(circle2);
-
-              // interactionCtx.strokeStyle = 'fill';
-              // interactionCtx.beginPath();
-              // interactionCtx.moveTo(0, y);
-              // interactionCtx.lineTo(canvasWidthDpr, y);
-              // interactionCtx.stroke();
 
               const circle = new Path2D();
               interactionCtx.fillStyle = fill;

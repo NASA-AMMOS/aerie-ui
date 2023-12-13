@@ -538,6 +538,7 @@ export function getYAxisBounds(
           const isNumber = typeof value.y === 'number';
           // Identify the first value to the left of the viewTimeRange
           if (viewTimeRange && value.x < viewTimeRange.start) {
+            // TODO shouldn't we continue on to next value if this is a gap?
             if (value.is_gap) {
               leftValue = undefined;
             } else {
