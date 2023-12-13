@@ -4128,14 +4128,16 @@ const effects = {
         }
       }
 
-      const filenames: Record<string, string> = {};
+      // The aerie gateway mangles the names of uploaded files to ensure uniqueness.
+      // Here, we use the ids of the files we just uploaded to look up the generated filenames
+      const generatedFilenames: Record<string, string> = {};
       for (const newFile of newFiles) {
         const id = original_filename_to_id[newFile.name];
         const response = (await reqHasura<[{ name: string }]>(gql.GET_UPLOADED_FILENAME, { id }, user))[
           'uploaded_file'
         ];
         if (response !== null) {
-          filenames[newFile.name] = `${env.PUBLIC_AERIE_FILE_STORE_PREFIX}${response[0]['name']}`;
+          generatedFilenames[newFile.name] = `${env.PUBLIC_AERIE_FILE_STORE_PREFIX}${response[0]['name']}`;
         }
       }
 
@@ -4144,7 +4146,7 @@ const effects = {
         {
           id: simulationSetInput.id,
           simulation: {
-            arguments: replacePaths(modelParameters, simulationSetInput.arguments, filenames),
+            arguments: replacePaths(modelParameters, simulationSetInput.arguments, generatedFilenames),
             simulation_end_time: simulationSetInput?.simulation_end_time ?? null,
             simulation_start_time: simulationSetInput?.simulation_start_time ?? null,
             simulation_template_id: simulationSetInput?.template?.id ?? null,
@@ -4385,10 +4387,18 @@ const effects = {
   },
 };
 
+/**
+ * Traverses the given simulation arguments and does a "find and replace", replacing any paths that match the keys of `pathsToReplace` with the corresponding values.
+ *
+ * @param modelParameters The type definitions of the mission model parameters. Used to determine which parameters have type 'path'.
+ * @param simArgs The full simulation arguments, which are assumed to conform to the above type definition.
+ * @param pathsToReplace A map from old paths to new paths. Any occurrences of old paths in simArgs will be replaced with new paths.
+ * @returns
+ */
 export function replacePaths(
   modelParameters: ParametersMap | null,
   simArgs: ArgumentsMap,
-  filenames: Record<string, string>,
+  pathsToReplace: Record<string, string>,
 ): ArgumentsMap {
   if (modelParameters === null) {
     return simArgs;
@@ -4398,26 +4408,30 @@ export function replacePaths(
     const parameter: Parameter = modelParameters[parameterName];
     const arg: Argument = simArgs[parameterName];
     if (arg !== undefined) {
-      result[parameterName] = replacePathsHelper(parameter.schema, arg, filenames);
+      result[parameterName] = replacePathsHelper(parameter.schema, arg, pathsToReplace);
     }
   }
   return result;
 }
 
-function replacePathsHelper(schema: ValueSchema, arg: Argument, filenames: Record<string, string>) {
+function replacePathsHelper(schema: ValueSchema, arg: Argument, pathsToReplace: Record<string, string>) {
   switch (schema.type) {
     case 'path':
-      return filenames[arg] || arg;
+      if (arg in pathsToReplace) {
+        return pathsToReplace[arg];
+      } else {
+        return arg;
+      }
     case 'struct':
       return (function () {
         const res: Argument = {};
         for (const key in schema.items) {
-          res[key] = replacePathsHelper(schema.items[key], arg[key], filenames);
+          res[key] = replacePathsHelper(schema.items[key], arg[key], pathsToReplace);
         }
         return res;
       })();
     case 'series':
-      return arg.map((x: Argument) => replacePathsHelper(schema.items, x, filenames));
+      return arg.map((x: Argument) => replacePathsHelper(schema.items, x, pathsToReplace));
     default:
       return arg;
   }
