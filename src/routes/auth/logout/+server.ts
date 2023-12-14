@@ -7,7 +7,7 @@ export const POST: RequestHandler = async event => {
   const invalidated = await reqGatewayForwardCookies<boolean>(
     '/auth/logoutSSO',
     event.request.headers.get('cookie') ?? '',
-    event.url.origin,
+    base
   );
   return json(
     { message: 'Logout successful', success: invalidated },
