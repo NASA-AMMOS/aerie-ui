@@ -24,8 +24,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 
     console.log(`trying SSO, since JWT was invalid`);
 
+    // trim any __data.json?x-sveltekit queries to just base url
+    const trimmedURL = event.request.url.substring(0, event.request.url.lastIndexOf("/"));
+
     // pass all cookies to the gateway, who can determine if we have any valid SSO tokens
-    const validationData = await reqGatewayForwardCookies<ReqValidateSSOResponse>('/auth/validateSSO', cookieHeader);
+    const validationData = await reqGatewayForwardCookies<ReqValidateSSOResponse>('/auth/validateSSO', cookieHeader, trimmedURL);
 
     if (!validationData.success) {
       console.log('Invalid SSO token, redirecting to login UI page');
