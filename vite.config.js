@@ -42,6 +42,9 @@ const config = ({ mode }) => {
         },
       ),
     ],
+    server: {
+      host: viteEnvVars.VITE_HOST ?? 'localhost',
+    },
     test: {
       alias: [{ find: /^svelte$/, replacement: 'svelte/internal' }], // https://github.com/vitest-dev/vitest/issues/2834
       environment: 'jsdom',
