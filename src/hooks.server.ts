@@ -32,7 +32,7 @@ export const handle: Handle = async ({ event, resolve }) => {
     const validationData = await reqGatewayForwardCookies<ReqValidateSSOResponse>(
       '/auth/validateSSO',
       cookieHeader,
-      event.request.url
+      event.request.url,
     );
 
     if (!validationData.success) {

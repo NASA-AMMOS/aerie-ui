@@ -91,7 +91,7 @@ export async function reqGatewayForwardCookies<T = any>(path: string, cookies: s
   const opts = {
     headers: {
       cookie: cookies,
-      referrer: referrer ?? "",
+      referrer: referrer ?? '',
     },
   };
 
