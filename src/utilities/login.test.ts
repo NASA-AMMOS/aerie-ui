@@ -2,12 +2,6 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { shouldRedirectToLogin } from './login';
 import { ADMIN_ROLE } from './permissions';
 
-vi.mock('$env/dynamic/public', () => ({
-  env: {
-    PUBLIC_LOGIN_PAGE: '',
-  },
-}));
-
 describe('login util functions', () => {
   afterEach(() => {
     vi.resetAllMocks();
