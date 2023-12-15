@@ -1,11 +1,11 @@
 <script lang="ts">
   import ArrowLeftIcon from '@nasa-jpl/stellar/icons/arrow_left.svg?component';
   import ArrowRightIcon from '@nasa-jpl/stellar/icons/arrow_right.svg?component';
-  import FollowIcon from '@nasa-jpl/stellar/icons/crosshairs_loose.svg?component';
   import LinkIcon from '@nasa-jpl/stellar/icons/link.svg?component';
   import MinusIcon from '@nasa-jpl/stellar/icons/minus.svg?component';
   import PlusIcon from '@nasa-jpl/stellar/icons/plus.svg?component';
   import RotateCounterClockwiseIcon from '@nasa-jpl/stellar/icons/rotate_counter_clockwise.svg?component';
+  import FollowIcon from '@nasa-jpl/stellar/icons/switch.svg?component';
   import { createEventDispatcher } from 'svelte';
   import { SearchParameters } from '../../enums/searchParameters';
   import { activityDirectivesMap, selectedActivityDirective } from '../../stores/activities';
@@ -19,7 +19,12 @@
   } from '../../stores/simulation';
   import { viewIsModified } from '../../stores/views';
   import type { DirectiveVisibilityToggleMap, TimeRange } from '../../types/timeline';
-  import { getActivityDirectiveStartTimeMs, getDoyTimeFromInterval, getUnixEpochTime } from '../../utilities/time';
+  import {
+    getActivityDirectiveStartTimeMs,
+    getDoyTimeFromInterval,
+    getIntervalInMs,
+    getUnixEpochTime,
+  } from '../../utilities/time';
   import { showFailureToast, showSuccessToast } from '../../utilities/toast';
   import { tooltip } from '../../utilities/tooltip';
   import ToggleableIconButton from '../ui/ToggleableIconButton.svelte';
@@ -183,8 +188,9 @@
   function scrollToSelection() {
     const time = getSelectionTime();
     if (!isNaN(time) && (time < viewTimeRange.start || time > viewTimeRange.end)) {
-      const start = Math.max(maxTimeRange.start, time - viewDuration / 2);
-      const end = Math.min(maxTimeRange.end, time + viewDuration / 2);
+      const midSpan = time + getIntervalInMs($selectedSpan?.duration) / 2;
+      const start = Math.max(maxTimeRange.start, midSpan - viewDuration / 2);
+      const end = Math.min(maxTimeRange.end, midSpan + viewDuration / 2);
       dispatch('viewTimeRangeChanged', {
         end,
         start,
@@ -259,8 +265,8 @@
 
 <ToggleableIconButton
   isOn={followSelection}
-  offTooltipContent="Enable auto scroll"
-  onTooltipContent="Disable auto scroll"
+  offTooltipContent="Enable auto scroll to offscreen selections"
+  onTooltipContent="Disable auto scroll to offscreen selections"
   tooltipPlacement="bottom"
   useBorder={true}
   on:toggle={onToggleFollowSelection}
