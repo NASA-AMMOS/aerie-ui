@@ -40,12 +40,12 @@
        * but for now we're just setting the Y axes dynamically based on the data.
        */
       const xRangeLayers = layers.filter(layer => layer.chartType === 'x-range');
-      const xRangeAxisG = gSelection.append('g').attr('class', axisClass);
-      xRangeAxisG.selectAll('*').remove();
       let i = 0;
 
       for (const layer of xRangeLayers) {
         const resources = resourcesByViewLayerId[layer.id];
+        const xRangeAxisG = gSelection.append('g').attr('class', axisClass);
+        xRangeAxisG.selectAll('*').remove();
 
         if ((layer as XRangeLayer).showAsLinePlot && resources && resources.length > 0) {
           let domain: string[] = [];
