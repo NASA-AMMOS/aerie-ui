@@ -18,7 +18,6 @@
   const dispatch = createEventDispatcher();
 
   let g: SVGGElement;
-  let xRangeAxisDrawn: boolean;
 
   $: if (drawHeight && g && yAxes && resourcesByViewLayerId && layers) {
     draw();
@@ -34,25 +33,21 @@
       let marginWidth = 0;
       const axisClass = 'y-axis';
       gSelection.selectAll(`.${axisClass}`).remove();
-      // TODO: Use this flag to only draw the xRange axis once, can be removed when the TODO below is resolved.
-      xRangeAxisDrawn = false;
 
       for (let i = 0; i < yAxes.length; ++i) {
         const axis = yAxes[i];
         const xRangeLayers = layers.filter(layer => layer.yAxisId === axis.id && layer.chartType === 'x-range');
+        const xRangeAxisG = gSelection.append('g').attr('class', axisClass);
+        xRangeAxisG.selectAll('*').remove();
 
-        if (xRangeLayers.length === 1 && !xRangeAxisDrawn) {
-          const layer = xRangeLayers[0] as XRangeLayer;
+        for (const layer of xRangeLayers) {
           const resources = resourcesByViewLayerId[layer.id];
-          const xRangeAxisG = gSelection.append('g').attr('class', axisClass);
-          xRangeAxisG.selectAll('*').remove();
-
           /**
            * TODO: This is a temporary solution to showing state mode changes as a line chart.
            * The correct way to do this would be generating a Y axes when the user toggles the line chart,
            * but for now we're just setting the Y axes dynamically based on the data.
            */
-          if (layer.showAsLinePlot && resources && resources.length > 0) {
+          if ((layer as XRangeLayer).showAsLinePlot && resources && resources.length > 0) {
             let domain: string[] = [];
 
             // Get all the unique ordinal values of the chart.
@@ -78,7 +73,6 @@
             xRangeAxisG.call(g => g.select('.domain').remove());
 
             totalWidth += getBoundingClientRectWidth(xRangeAxisG.node());
-            xRangeAxisDrawn = true;
           }
         }
 
