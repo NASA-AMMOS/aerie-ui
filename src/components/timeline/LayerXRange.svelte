@@ -143,7 +143,7 @@
           if (textWidth < xWidth) {
             ctx.fillText(labelText, xStart + xWidth / 2 - textWidth / 2, drawHeight / 2 + textHeight / 2, textWidth);
           } else {
-            const extraLabelPadding = 10;
+            const extraLabelPadding = 8;
             let newLabelText = labelText;
             let newTextWidth = textWidth;
 
@@ -154,7 +154,6 @@
               newTextWidth = textMeasurement.textWidth;
             }
 
-<<<<<<< HEAD
             // Only draw if text will be visible
             if (newTextWidth > 0) {
               ctx.fillText(
@@ -164,14 +163,6 @@
                 newTextWidth,
               );
             }
-=======
-            ctx.fillText(
-              `${newLabelText}...`,
-              xStart + xWidth / 2 - newTextWidth / 2,
-              drawHeight / 2 + textHeight / 2,
-              newTextWidth,
-            );
->>>>>>> ebee5695 (Moved state mode changes out of LayerXRange and into LayerLine)
           }
         }
       }
