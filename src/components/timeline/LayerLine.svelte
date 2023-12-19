@@ -313,10 +313,11 @@
           }
         });
 
+        // Try out arrows on interpolate so that arrows are on left and right points
         let mouseOverPoints: LinePoint[] = [];
         // TODO clean this up
         if (leftPoint) {
-          if (!interpolateHoverValue) {
+          if (!interpolateHoverValue && leftPoint.y !== null) {
             const closestPoint = getClosestPointForXY((leftPoint as LinePoint).x, y, points, yScale);
             if (closestPoint) {
               leftPoint = closestPoint;
@@ -325,8 +326,8 @@
           mouseOverPoints.push(leftPoint);
         }
         if (rightPoint) {
-          if (!interpolateHoverValue) {
-            const closestPoint = getClosestPointForXY((leftPoint as LinePoint).x, y, points, yScale);
+          if (!interpolateHoverValue && rightPoint.y !== null) {
+            const closestPoint = getClosestPointForXY((rightPoint as LinePoint).x, y, points, yScale);
             if (closestPoint) {
               rightPoint = closestPoint;
             }
