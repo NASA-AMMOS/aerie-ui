@@ -410,30 +410,50 @@
             circle.arc(x, y, scalar + 1, 0, 2 * Math.PI);
             interactionCtx.fill(circle);
 
-            // Draw the triangle
-            const path = new Path2D();
-            interactionCtx.fillStyle = 'red';
-
             const maxY = scalar + 3;
-            // Do not show triangle if draw height is too small (i.e. collapsed)
-            if (drawHeight > 32) {
-              const arrowSize = 8;
-              let arrowHeadY = y - maxY - 1;
-              let arrowTailY = arrowHeadY - arrowSize;
-              // Draw arrow downwards if going offscreen
-              if (arrowTailY < 0) {
-                arrowHeadY = y + maxY + 1;
-                arrowTailY = arrowHeadY + arrowSize;
+
+            // Draw triangles for left and right values used in interpolation
+            if (interpolateHoverValue) {
+              if (leftPoint && leftPoint.y !== null) {
+                const processedLeftPoint = processPoint(leftPoint, yScale);
+                if (processedLeftPoint.y !== null) {
+                  drawTriangle(processedLeftPoint.x, processedLeftPoint.y, maxY, interactionCtx, '#ffacac');
+                }
               }
-              path.moveTo(x, arrowHeadY);
-              path.lineTo(x + arrowSize / 2, arrowTailY);
-              path.lineTo(x - arrowSize / 2, arrowTailY);
-              interactionCtx.fill(path);
+              if (rightPoint && rightPoint.y !== null) {
+                const processedRightPoint = processPoint(rightPoint, yScale);
+                if (processedRightPoint.y !== null) {
+                  drawTriangle(processedRightPoint.x, processedRightPoint.y, maxY, interactionCtx, '#ffacac');
+                }
+              }
             }
+            // Draw the main triangle
+            drawTriangle(x, y, maxY, interactionCtx);
           }
           dispatch('mouseOver', { e, layerId: id, points: mouseOverPoints });
         }
       }
+    }
+  }
+
+  function drawTriangle(x: number, y: number, height: number, context: CanvasRenderingContext2D, fill: string = 'red') {
+    const path = new Path2D();
+    context.fillStyle = fill;
+
+    // Do not show triangle if draw height is too small (i.e. collapsed)
+    if (drawHeight > 32) {
+      const arrowSize = 8;
+      let arrowHeadY = y - height - 1;
+      let arrowTailY = arrowHeadY - arrowSize;
+      // Draw arrow downwards if going offscreen
+      if (arrowTailY < 0) {
+        arrowHeadY = y + height + 1;
+        arrowTailY = arrowHeadY + arrowSize;
+      }
+      path.moveTo(x, arrowHeadY);
+      path.lineTo(x + arrowSize / 2, arrowTailY);
+      path.lineTo(x - arrowSize / 2, arrowTailY);
+      context.fill(path);
     }
   }
 
