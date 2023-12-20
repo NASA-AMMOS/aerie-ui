@@ -1,13 +1,12 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { scalePoint, type ScaleLinear, type ScalePoint, type ScaleTime } from 'd3-scale';
+  import type { ScaleLinear, ScalePoint, ScaleTime } from 'd3-scale';
   import { curveLinear, line as d3Line } from 'd3-shape';
   import { createEventDispatcher, onMount, tick } from 'svelte';
   import type { Resource } from '../../types/simulation';
   import type { Axis, LinePoint, ResourceLayerFilter, TimeRange } from '../../types/timeline';
-  import { filterEmpty } from '../../utilities/generic';
-  import { CANVAS_PADDING_Y, getYScale, minMaxDecimation } from '../../utilities/timeline';
+  import { getYScale, minMaxDecimation } from '../../utilities/timeline';
 
   export let contextmenu: MouseEvent | undefined;
   export let dpr: number = 1;
@@ -121,11 +120,11 @@
       ctx.strokeStyle = lineColor;
       let line;
 
-      if (showAsLinePlot) {
-        const domain = Array.from(scaleDomain);
-        stateLinePlotYScale = scalePoint()
-          .domain(domain.filter(filterEmpty))
-          .range([drawHeight - CANVAS_PADDING_Y, CANVAS_PADDING_Y]) as ScalePoint<string>;
+      // if (showAsLinePlot) {
+      //   const domain = Array.from(scaleDomain);
+      //   stateLinePlotYScale = scalePoint()
+      //     .domain(domain.filter(filterEmpty))
+      //     .range([drawHeight - CANVAS_PADDING_Y, CANVAS_PADDING_Y]) as ScalePoint<string>;
 
         line = d3Line<LinePoint>()
           .x(d => (xScaleView as ScaleTime<number, number, never>)(d.x))
@@ -140,6 +139,9 @@
           .curve(curveLinear);
       }
 
+      // Collect points and gaps within view
+      // Additionally track the two points (if they exist) bounding the
+      // time range so they can be drawn to connect the bounding lines
       let finalPoints: LinePoint[] = [];
       const pointsInView: LinePoint[] = [];
       let leftPoint: LinePoint | null = null;
@@ -168,10 +170,14 @@
 
       finalPoints = pointsInView;
 
+      // Perform decimation if requested
       if (pointsInView.length > 0 && decimate) {
-        finalPoints = minMaxDecimation(pointsInView, 0, pointsInView.length, drawWidth);
-        // TODO make this cleaner perhaps or dive deeper?
-        // TODO confirm that this does not happen for first point? Seems to not.
+        finalPoints = minMaxDecimation<LinePoint>(
+          pointsInView as { x: number; y: number }[], // At this point we have filtered out all gaps
+          0,
+          pointsInView.length,
+          drawWidth,
+        );
         // Push the last point in view again since decimation does not result in properly sorted points within a time bin
         const lastPoint = pointsInView.at(-1);
         if (lastPoint) {
@@ -179,22 +185,23 @@
         }
       }
 
-      // Add back in gap points
+      // Add back in gap points since they were not included in the decimation
+      // TODO this can result in visual degradation of the signal when there are a significant number of gaps
       gapPoints.forEach(point => {
         // Find first point that comes after the specified point
         const gapRightPointIndex = finalPoints.findIndex(p => {
           return p.x > point.x || (p.x === point.x && p.id > point.id);
         });
+        // If a position was found for the gap, insert it into the list
         if (gapRightPointIndex > -1) {
           finalPoints.splice(gapRightPointIndex, 0, point);
         } else {
-          // TODO
-          // console.log(gapRightPointIndex, 'grp', finalPoints, point);
+          // TODO should this case be considered?
         }
       });
 
-      // Add left and right points after decimation to not throw off
-      // the min-max binning of decimation (since the points could be far away offscreen)
+      // Add left and right points that are outside of the view only after decimation as to not throw off
+      // the min-max binning of decimation since the l/r points could be far away offscreen
       if (leftPoint) {
         finalPoints.unshift(leftPoint);
       }
@@ -203,24 +210,16 @@
         finalPoints.push(rightPoint);
       }
 
-      // Allow for some wiggle room since we may have added up to 3 extra points
+      // Allow for some wiggle room since we may have added up to 3 extra points – left, right, and last point
       // Also account for gap points that have not been included in pointsInView
       // TODO could also just do this when finalPoints < drawWidth but might be less performant?
-      if (gapPoints.length > 0) {
-        // console.log('id :>> ', id);
-        // // console.log('finalPoints.length :>> ', finalPoints.length);
-        // console.log('points :>> ', points);
-        // console.log('finalPoints :>> ', finalPoints);
-        // // console.log('pointsInView.length :>> ', pointsInView.length);
-        // // console.log('gapPoints.length :>> ', gapPoints.length);
-        // console.log('gapPoints :>> ', gapPoints);
-        // console.log('rightPoint :>> ', rightPoint);
-        // console.log('leftPoint :>> ', leftPoint);
-      }
       if (!decimate || Math.abs(finalPoints.length - gapPoints.length - pointsInView.length) < 4) {
         drawPointsRequest = window.requestAnimationFrame(() => drawPoints(finalPoints));
       }
 
+      // Draw the line
+      ctx.lineWidth = lineWidth;
+      ctx.strokeStyle = lineColor;
       const line = d3Line<LinePoint>()
         .defined(d => d.y !== null) // Skip any gaps in resource data instead of interpolating
         .x(d => d.x)
@@ -249,8 +248,9 @@
           y = yScale(point.y) as number;
         }
 
-      if (y !== null) {
-        ctx.drawImage(offscreenPoint, x - pointRadius, y - pointRadius, pointRadius * 2, pointRadius * 2);
+        if (y !== null) {
+          ctx.drawImage(offscreenPoint, x - pointRadius, y - pointRadius, pointRadius * 2, pointRadius * 2);
+        }
       }
     }
   }
@@ -267,13 +267,14 @@
     points: LinePoint[],
     yScale: ScaleLinear<number, number, never>,
   ): LinePoint | null {
+    /* TODO this could potentially include some pixel buffer around x? */
     const pointsAtX = points.filter(p => p.y !== null && p.x === x);
-    const closest = pointsAtX.reduce((closestPoint, nextPoint) => {
-      if (!closestPoint) {
+    const closest = pointsAtX.reduce((closestPoint: LinePoint | null, nextPoint) => {
+      if (closestPoint === null) {
         return nextPoint;
       }
-      const distanceA = Math.abs(yScale(closestPoint.y) - y);
-      const distanceB = Math.abs(yScale(nextPoint.y) - y);
+      const distanceA = Math.abs(yScale((closestPoint as LinePoint).y as number) - y);
+      const distanceB = Math.abs(yScale((nextPoint as LinePoint).y as number) - y);
       return distanceA < distanceB ? closestPoint : nextPoint;
     }, null);
     return closest;
@@ -281,151 +282,156 @@
 
   function onMousemove(e: MouseEvent | undefined): void {
     if (e) {
+      if (!xScaleView || !interactionCtx) {
+        return;
+      }
+
+      interactionCtx.resetTransform();
+      interactionCtx.scale(dpr, dpr);
+      interactionCtx.clearRect(0, 0, drawWidth, drawHeight);
+
       const { offsetX: x, offsetY: y } = e;
+      const xView = xScaleView.invert(x);
+      const xDate = xView.getTime();
+      let leftPoint: LinePoint | null = null;
+      let rightPoint: LinePoint | null = null;
+      const yScale = computeYScale(yAxes);
 
-      if (xScaleView) {
-        const xView = xScaleView.invert(x);
-        const xDate = xView.getTime();
-        let leftPoint: LinePoint | null = null;
-        let rightPoint: LinePoint | null = null;
-        // TODO search more efficiently?
-        // TODO deal with multiple values per X to improve hovering behavior on spikes
-
-        const yScale = computeYScale(yAxes);
-
-        points.forEach(point => {
-          if (point.x <= xDate) {
-            if (!leftPoint) {
-              leftPoint = point;
-            } else {
-              if (Math.abs(point.x - xDate) <= Math.abs(leftPoint.x - xDate)) {
-                leftPoint = point;
-              }
-            }
+      // Find the points that neighbor mouse x
+      points.forEach(point => {
+        if (point.x <= xDate) {
+          if (!leftPoint) {
+            leftPoint = point;
           } else {
-            if (!rightPoint) {
+            if (Math.abs(point.x - xDate) <= Math.abs(leftPoint.x - xDate)) {
+              leftPoint = point;
+            }
+          }
+        } else {
+          if (!rightPoint) {
+            rightPoint = point;
+          } else {
+            if (Math.abs(point.x - xDate) < Math.abs(rightPoint.x - xDate)) {
               rightPoint = point;
-            } else {
-              if (Math.abs(point.x - xDate) < Math.abs(rightPoint.x - xDate)) {
-                rightPoint = point;
-              }
-            }
-          }
-        });
-
-        // Try out arrows on interpolate so that arrows are on left and right points
-        let mouseOverPoints: LinePoint[] = [];
-        // TODO clean this up
-        if (leftPoint) {
-          if (!interpolateHoverValue && leftPoint.y !== null) {
-            const closestPoint = getClosestPointForXY((leftPoint as LinePoint).x, y, points, yScale);
-            if (closestPoint) {
-              leftPoint = closestPoint;
-            }
-          }
-          mouseOverPoints.push(leftPoint);
-        }
-        if (rightPoint) {
-          if (!interpolateHoverValue && rightPoint.y !== null) {
-            const closestPoint = getClosestPointForXY((rightPoint as LinePoint).x, y, points, yScale);
-            if (closestPoint) {
-              rightPoint = closestPoint;
-            }
-          }
-          mouseOverPoints.push(rightPoint);
-        }
-
-        if (interactionCtx) {
-          interactionCtx.resetTransform();
-          interactionCtx.scale(dpr, dpr);
-          interactionCtx.clearRect(0, 0, drawWidth, drawHeight);
-        }
-
-        let drawPoint: LinePoint | null = null;
-        if (mouseOverPoints.length > 0) {
-          if (mouseOverPoints.length === 1) {
-            drawPoint = mouseOverPoints[0];
-          } else if (mouseOverPoints.length === 2) {
-            // Interpolate
-            const leftX = mouseOverPoints[0].x;
-            const rightX = mouseOverPoints[1].x;
-            const leftY = mouseOverPoints[0].y;
-            const rightY = mouseOverPoints[1].y;
-            const percent = (xDate - leftX) / (rightX - leftX);
-
-            // Do not interpolate if one of the neighboring values is a gap
-            if (leftY === null || rightY === null) {
-              return;
-            }
-
-            if (interpolateHoverValue) {
-              const interpY = (1 - percent) * leftY + percent * rightY;
-              drawPoint = {
-                ...mouseOverPoints[0],
-                x: xDate,
-                y: interpY,
-              };
-            } else {
-              // Snap to nearest
-              if (percent < 0.5) {
-                drawPoint = mouseOverPoints[0];
-              } else {
-                drawPoint = mouseOverPoints[1];
-              }
             }
           }
         }
+      });
 
-        if (drawPoint) {
-          if (drawPoint.y === null) {
+      let mouseOverPoints: LinePoint[] = [];
+      // If a neighboring point to the left exists
+      if (leftPoint !== null) {
+        // Find the point with the minimum distance to the mouse xy.
+        // Unnecessary when interpolating since we will compute a value based on mouse x later.
+        if (!interpolateHoverValue && (leftPoint as LinePoint).y !== null) {
+          const closestPoint = getClosestPointForXY((leftPoint as LinePoint).x, y, points, yScale);
+          if (closestPoint) {
+            leftPoint = closestPoint;
+          }
+        }
+        // Push leftPoint to the mouseOverPoint list
+        mouseOverPoints.push(leftPoint);
+      }
+
+      if (rightPoint !== null) {
+        if (!interpolateHoverValue && (rightPoint as LinePoint).y !== null) {
+          const closestPoint = getClosestPointForXY((rightPoint as LinePoint).x, y, points, yScale);
+          if (closestPoint) {
+            rightPoint = closestPoint;
+          }
+        }
+        mouseOverPoints.push(rightPoint);
+      }
+
+      // Compute the final point to draw
+      let drawPoint: LinePoint | null = null;
+      if (mouseOverPoints.length > 0) {
+        // If only a single point exists (such as the edge of the data), use that point
+        if (mouseOverPoints.length === 1) {
+          drawPoint = mouseOverPoints[0];
+        } else if (mouseOverPoints.length === 2) {
+          const leftX = mouseOverPoints[0].x;
+          const rightX = mouseOverPoints[1].x;
+          const leftY = mouseOverPoints[0].y;
+          const rightY = mouseOverPoints[1].y;
+          const percent = (xDate - leftX) / (rightX - leftX);
+
+          // Bail if one of the neighboring values is a gap
+          if (leftY === null || rightY === null) {
             return;
           }
-          const distance = Math.abs(yScale(drawPoint.y) - y);
-          let DELTA_PX = 10;
-          // DELTA_PX = Infinity;
-          if (distance < DELTA_PX || limitTooltipToLine === false) {
-            mouseOverPoints = [drawPoint];
-            const { x, y, radius } = processPoint(drawPoint, yScale);
-            if (interactionCtx) {
-              const fill = lineColor;
-              const scalar = radius || 1;
 
-              const circle3 = new Path2D();
-              circle3.arc(x, y, scalar + 3, 0, 2 * Math.PI);
-              interactionCtx.fillStyle = fill;
-              interactionCtx.fill(circle3);
-
-              const circle2 = new Path2D();
-              circle2.arc(x, y, scalar + 2, 0, 2 * Math.PI);
-              interactionCtx.fillStyle = 'white';
-              interactionCtx.fill(circle2);
-
-              const circle = new Path2D();
-              interactionCtx.fillStyle = fill;
-              interactionCtx.lineWidth = lineWidth;
-              circle.arc(x, y, scalar + 1, 0, 2 * Math.PI);
-              interactionCtx.fill(circle);
-
-              const path = new Path2D();
-              interactionCtx.fillStyle = 'red';
-
-              const maxY = scalar + 3;
-              if (drawHeight > 32) {
-                const arrowSize = 8;
-                let arrowHeadY = y - maxY - 1;
-                let arrowTailY = arrowHeadY - arrowSize;
-                if (arrowTailY < 0) {
-                  arrowHeadY = y + maxY + 1;
-                  arrowTailY = arrowHeadY + arrowSize;
-                }
-                path.moveTo(x, arrowHeadY);
-                path.lineTo(x + arrowSize / 2, arrowTailY);
-                path.lineTo(x - arrowSize / 2, arrowTailY);
-                interactionCtx.fill(path);
-              }
+          if (interpolateHoverValue) {
+            const interpY = (1 - percent) * leftY + percent * rightY;
+            drawPoint = {
+              ...mouseOverPoints[0],
+              x: xDate,
+              y: interpY,
+            };
+          } else {
+            // Snap to nearest point
+            if (percent < 0.5) {
+              drawPoint = mouseOverPoints[0];
+            } else {
+              drawPoint = mouseOverPoints[1];
             }
-            dispatch('mouseOver', { e, layerId: id, points: mouseOverPoints });
           }
+        }
+      }
+
+      if (drawPoint) {
+        if (drawPoint.y === null) {
+          return;
+        }
+        // Distance of mouse y to draw point
+        const distance = Math.abs(yScale(drawPoint.y) - y);
+        let DELTA_PX = 10;
+        if (distance < DELTA_PX || limitTooltipToLine === false) {
+          mouseOverPoints = [drawPoint];
+          const { x, y, radius } = processPoint(drawPoint, yScale);
+          if (y !== null) {
+            const fill = lineColor;
+            const scalar = radius || 1;
+
+            // Draw the point using 3 circles
+            const circle3 = new Path2D();
+            circle3.arc(x, y, scalar + 3, 0, 2 * Math.PI);
+            interactionCtx.fillStyle = fill;
+            interactionCtx.fill(circle3);
+
+            const circle2 = new Path2D();
+            circle2.arc(x, y, scalar + 2, 0, 2 * Math.PI);
+            interactionCtx.fillStyle = 'white';
+            interactionCtx.fill(circle2);
+
+            const circle = new Path2D();
+            interactionCtx.fillStyle = fill;
+            interactionCtx.lineWidth = lineWidth;
+            circle.arc(x, y, scalar + 1, 0, 2 * Math.PI);
+            interactionCtx.fill(circle);
+
+            // Draw the triangle
+            const path = new Path2D();
+            interactionCtx.fillStyle = 'red';
+
+            const maxY = scalar + 3;
+            // Do not show triangle if draw height is too small (i.e. collapsed)
+            if (drawHeight > 32) {
+              const arrowSize = 8;
+              let arrowHeadY = y - maxY - 1;
+              let arrowTailY = arrowHeadY - arrowSize;
+              // Draw arrow downwards if going offscreen
+              if (arrowTailY < 0) {
+                arrowHeadY = y + maxY + 1;
+                arrowTailY = arrowHeadY + arrowSize;
+              }
+              path.moveTo(x, arrowHeadY);
+              path.lineTo(x + arrowSize / 2, arrowTailY);
+              path.lineTo(x - arrowSize / 2, arrowTailY);
+              interactionCtx.fill(path);
+            }
+          }
+          dispatch('mouseOver', { e, layerId: id, points: mouseOverPoints });
         }
       }
     }

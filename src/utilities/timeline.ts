@@ -755,5 +755,5 @@ export function minMaxDecimation<T>(
     }
   }
 
-  return decimated;
+  return decimated as T[];
 }
