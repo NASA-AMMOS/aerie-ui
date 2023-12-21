@@ -160,6 +160,7 @@
       let rightPoint: LinePoint | null = null;
       let prevPoint: LinePoint | null = null;
       const gapPoints: LinePoint[] = [];
+      const deferProcessingPoints = !ordinalScale && decimate;
       points.forEach(point => {
         if (point.x >= viewTimeRange.start && !leftPoint && prevPoint) {
           leftPoint = processPoint(prevPoint, yScale);
@@ -174,7 +175,15 @@
           if (point.y === null) {
             gapPoints.push(processPoint(point, yScale));
           } else {
-            pointsInView.push(processPoint(point, yScale));
+            // If not using ordinal scale and we're decimating we can defer processing the points until after
+            // decimation has occurred to limit the number of expensive yScale calls to the actual decimated point set
+            if (deferProcessingPoints) {
+              pointsInView.push(point);
+            } else {
+              // For ordinal scale we have to process the point in order to have a numerical y value for the
+              // decimation to operate on.
+              pointsInView.push(processPoint(point, yScale));
+            }
           }
         }
         prevPoint = point;
@@ -195,6 +204,11 @@
         if (lastPoint) {
           finalPoints.push(lastPoint);
         }
+      }
+
+      // If we deferred processing of points
+      if (deferProcessingPoints) {
+        finalPoints = finalPoints.map(p => processPoint(p, yScale));
       }
 
       // Add back in gap points since they were not included in the decimation
