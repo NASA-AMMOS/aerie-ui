@@ -1,12 +1,13 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import type { ScaleLinear, ScalePoint, ScaleTime } from 'd3-scale';
+  import { scalePoint, type ScaleLinear, type ScalePoint, type ScaleTime } from 'd3-scale';
   import { curveLinear, line as d3Line } from 'd3-shape';
   import { createEventDispatcher, onMount, tick } from 'svelte';
   import type { Resource } from '../../types/simulation';
   import type { Axis, LinePoint, ResourceLayerFilter, TimeRange } from '../../types/timeline';
-  import { getYScale, minMaxDecimation } from '../../utilities/timeline';
+  import { filterEmpty } from '../../utilities/generic';
+  import { CANVAS_PADDING_Y, getYScale, minMaxDecimation } from '../../utilities/timeline';
 
   export let contextmenu: MouseEvent | undefined;
   export let dpr: number = 1;
@@ -24,7 +25,7 @@
   export let mouseout: MouseEvent | undefined;
   export let pointRadius: number = 2;
   export let resources: Resource[] = [];
-  export let showAsLinePlot: boolean = false;
+  export let ordinalScale: boolean = false;
   export let viewTimeRange: TimeRange = { end: 0, start: 0 };
   export let xScaleView: ScaleTime<number, number> | null = null;
   export let yAxes: Axis[] = [];
@@ -38,7 +39,7 @@
   let ctx: CanvasRenderingContext2D | null;
   let interactionCtx: CanvasRenderingContext2D | null;
   let mounted: boolean = false;
-  let scaleDomain: Set<string> = new Set();
+  let ordinalScaleDomain: Set<string> = new Set();
   let drawPointsRequest: number;
   let stateLinePlotYScale: ScalePoint<string>;
   let yScale: ScaleLinear<number, number, never>;
@@ -63,7 +64,7 @@
     typeof lineWidth === 'number' &&
     typeof pointRadius === 'number' &&
     mounted &&
-    showAsLinePlot !== undefined &&
+    ordinalScale !== undefined &&
     points &&
     viewTimeRange &&
     xScaleView &&
@@ -88,16 +89,24 @@
     mounted = true;
   });
 
-  function computeYScale(yAxes: Axis[]): ScaleLinear<number, number> {
+  function computeYScale(yAxes: Axis[]): ScaleLinear<number, number> | ScalePoint<string> {
     const [yAxis] = yAxes.filter(axis => yAxisId === axis.id);
-    const domain = yAxis?.scaleDomain || [];
-    return getYScale(domain, drawHeight);
+    if (ordinalScale) {
+      const domain = Array.from(ordinalScaleDomain);
+      return scalePoint()
+        .domain(domain.filter(filterEmpty))
+        .range([drawHeight - CANVAS_PADDING_Y, CANVAS_PADDING_Y]) as ScalePoint<string>;
+    }
+    return getYScale(yAxis?.scaleDomain || [], drawHeight);
   }
 
-  function processPoint(point: LinePoint, yScale: ScaleLinear<number, number>) {
+  function processPoint(point: LinePoint, yScale: ScaleLinear<number, number> | ScalePoint<string>): LinePoint {
     const { id, name, type } = point;
     const x = (xScaleView as ScaleTime<number, number, never>)(point.x);
-    const y = yScale(point.y);
+    let y = null;
+    if (point.y !== null) {
+      y = getScaledYValue(point.y, yScale) ?? null;
+    }
     return { id, name, type, x, y };
   }
 
@@ -114,7 +123,7 @@
       ctx.scale(dpr, dpr);
       ctx.clearRect(0, 0, drawWidth, drawHeight);
 
-      yScale = computeYScale(yAxes);
+      const yScale = computeYScale(yAxes);
 
       ctx.lineWidth = lineWidth;
       ctx.strokeStyle = lineColor;
@@ -138,11 +147,11 @@
           .defined(d => d.y !== null) // Skip any gaps in resource data instead of interpolating
           .curve(curveLinear);
       }
+      let finalPoints: LinePoint[] = [];
 
       // Collect points and gaps within view
       // Additionally track the two points (if they exist) bounding the
       // time range so they can be drawn to connect the bounding lines
-      let finalPoints: LinePoint[] = [];
       const pointsInView: LinePoint[] = [];
       let leftPoint: LinePoint | null = null;
       let rightPoint: LinePoint | null = null;
@@ -210,21 +219,21 @@
         finalPoints.push(rightPoint);
       }
 
-      // Allow for some wiggle room since we may have added up to 3 extra points – left, right, and last point
+      // Account for up to 3 extra points added to finalPoints: left, right, and last point
       // Also account for gap points that have not been included in pointsInView
       // TODO could also just do this when finalPoints < drawWidth but might be less performant?
       if (!decimate || Math.abs(finalPoints.length - gapPoints.length - pointsInView.length) < 4) {
         drawPointsRequest = window.requestAnimationFrame(() => drawPoints(finalPoints));
       }
 
-      // Draw the line
-      ctx.lineWidth = lineWidth;
-      ctx.strokeStyle = lineColor;
-      const line = d3Line<LinePoint>()
+      line = d3Line<LinePoint>()
         .defined(d => d.y !== null) // Skip any gaps in resource data instead of interpolating
         .x(d => d.x)
         .y(d => d.y as number)
         .curve(curveLinear);
+
+      ctx.lineWidth = lineWidth;
+      ctx.strokeStyle = lineColor;
       ctx.beginPath();
       line.context(ctx)(finalPoints);
       ctx.stroke();
@@ -251,6 +260,9 @@
         if (y !== null) {
           ctx.drawImage(offscreenPoint, x - pointRadius, y - pointRadius, pointRadius * 2, pointRadius * 2);
         }
+      const { x, y } = point;
+      if (y !== null) {
+        ctx.drawImage(offscreenPoint, x - pointRadius, (y as number) - pointRadius, pointRadius * 2, pointRadius * 2);
       }
     }
   }
@@ -265,7 +277,7 @@
     x: number,
     y: number,
     points: LinePoint[],
-    yScale: ScaleLinear<number, number, never>,
+    yScale: ScaleLinear<number, number> | ScalePoint<string>,
   ): LinePoint | null {
     /* TODO this could potentially include some pixel buffer around x? */
     const pointsAtX = points.filter(p => p.y !== null && p.x === x);
@@ -273,11 +285,27 @@
       if (closestPoint === null) {
         return nextPoint;
       }
-      const distanceA = Math.abs(yScale((closestPoint as LinePoint).y as number) - y);
-      const distanceB = Math.abs(yScale((nextPoint as LinePoint).y as number) - y);
+
+      const aY = getScaledYValue((closestPoint as LinePoint).y, yScale) ?? 0;
+      const bY = getScaledYValue((nextPoint as LinePoint).y, yScale) ?? 0;
+      const distanceA = Math.abs(aY - y);
+      const distanceB = Math.abs(bY - y);
       return distanceA < distanceB ? closestPoint : nextPoint;
     }, null);
     return closest;
+  }
+
+  function getScaledYValue(
+    y: number | string | null,
+    yScale: ScaleLinear<number, number> | ScalePoint<string>,
+  ): number | undefined {
+    if (y === null) {
+      return undefined;
+    }
+    if (ordinalScale) {
+      return (yScale as ScalePoint<string>)(y as string);
+    }
+    return (yScale as ScaleLinear<number, number>)(y as number);
   }
 
   function onMousemove(e: MouseEvent | undefined): void {
@@ -362,12 +390,22 @@
           }
 
           if (interpolateHoverValue) {
-            const interpY = (1 - percent) * leftY + percent * rightY;
-            drawPoint = {
-              ...mouseOverPoints[0],
-              x: xDate,
-              y: interpY,
-            };
+            if (ordinalScale) {
+              // If ordinal take the first value since both neigboring values will always be indentical
+              drawPoint = {
+                ...mouseOverPoints[0],
+                x: xDate,
+                y: mouseOverPoints[0].y,
+              };
+            } else {
+              // Otherwise interpolate between the left and right Y values
+              const interpY = (1 - percent) * (leftY as number) + percent * (rightY as number);
+              drawPoint = {
+                ...mouseOverPoints[0],
+                x: xDate,
+                y: interpY,
+              };
+            }
           } else {
             // Snap to nearest point
             if (percent < 0.5) {
@@ -380,16 +418,16 @@
       }
 
       if (drawPoint) {
-        if (drawPoint.y === null) {
+        if (drawPoint.y === null || drawPoint.y === undefined) {
           return;
         }
-        // Distance of mouse y to draw point
-        const distance = Math.abs(yScale(drawPoint.y) - y);
+        const scaledDrawY = getScaledYValue(drawPoint.y, yScale) ?? 0;
+        const distance = Math.abs(scaledDrawY - y); // Distance of mouse y to draw point
         let DELTA_PX = 10;
         if (distance < DELTA_PX || limitTooltipToLine === false) {
           mouseOverPoints = [drawPoint];
           const { x, y, radius } = processPoint(drawPoint, yScale);
-          if (y !== null) {
+          if (y !== null && typeof y === 'number') {
             const fill = lineColor;
             const scalar = radius || 1;
 
@@ -417,13 +455,13 @@
               if (leftPoint && leftPoint.y !== null) {
                 const processedLeftPoint = processPoint(leftPoint, yScale);
                 if (processedLeftPoint.y !== null) {
-                  drawTriangle(processedLeftPoint.x, processedLeftPoint.y, maxY, interactionCtx, '#ffacac');
+                  drawTriangle(processedLeftPoint.x, processedLeftPoint.y as number, maxY, interactionCtx, '#ffacac');
                 }
               }
               if (rightPoint && rightPoint.y !== null) {
                 const processedRightPoint = processPoint(rightPoint, yScale);
                 if (processedRightPoint.y !== null) {
-                  drawTriangle(processedRightPoint.x, processedRightPoint.y, maxY, interactionCtx, '#ffacac');
+                  drawTriangle(processedRightPoint.x, processedRightPoint.y as number, maxY, interactionCtx, '#ffacac');
                 }
               }
             }
@@ -549,6 +587,8 @@
           const y = value.y as number;
           scaleDomain.add(value.y as string);
           tempPoints.push({
+          ordinalScaleDomain.add(value.y as string);
+          points.push({
             id: id++,
             name,
             type: 'line',

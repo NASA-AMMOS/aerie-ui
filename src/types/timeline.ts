@@ -82,7 +82,10 @@ export interface LineLayer extends Layer {
 }
 
 export interface LinePoint extends Point {
-  y: number | null;
+  y:
+    | number
+    | string
+    | null /* TODO this type leaves much to be desired – could make an OrdinalLinePoint and a NumericLinePoint? */;
 }
 
 export type MouseDown = {

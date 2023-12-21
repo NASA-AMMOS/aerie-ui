@@ -406,9 +406,10 @@
               on:mouseOver={onMouseOver}
             />
           {/if}
-          {#if layer.chartType === 'line'}
+          {#if layer.chartType === 'line' || (isXRangeLayer(layer) && layer.showAsLinePlot)}
             <LayerLine
               {...layer}
+              ordinalScale={isXRangeLayer(layer) && layer.showAsLinePlot}
               {decimate}
               {interpolateHoverValue}
               {limitTooltipToLine}
@@ -427,40 +428,21 @@
               on:contextMenu
             />
           {/if}
-          {#if isXRangeLayer(layer)}
-            {#if layer.showAsLinePlot === true}
-              <LayerLine
-                {...layer}
-                {contextmenu}
-                {dpr}
-                drawHeight={computedDrawHeight}
-                {drawWidth}
-                filter={layer.filter.resource}
-                {mousemove}
-                {mouseout}
-                resources={resourcesByViewLayerId[layer.id] ?? []}
-                {viewTimeRange}
-                {xScaleView}
-                yAxes={yAxesWithScaleDomains}
-                on:mouseOver={onMouseOver}
-                on:contextMenu
-              />
-            {:else}
-              <LayerXRange
-                {...layer}
-                {contextmenu}
-                {dpr}
-                drawHeight={computedDrawHeight}
-                {drawWidth}
-                filter={layer.filter.resource}
-                {mousemove}
-                {mouseout}
-                resources={resourcesByViewLayerId[layer.id] ?? []}
-                {xScaleView}
-                on:mouseOver={onMouseOver}
-                on:contextMenu
-              />
-            {/if}
+          {#if isXRangeLayer(layer) && !layer.showAsLinePlot}
+            <LayerXRange
+              {...layer}
+              {contextmenu}
+              {dpr}
+              drawHeight={computedDrawHeight}
+              {drawWidth}
+              filter={layer.filter.resource}
+              {mousemove}
+              {mouseout}
+              resources={resourcesByViewLayerId[layer.id] ?? []}
+              {xScaleView}
+              on:mouseOver={onMouseOver}
+              on:contextMenu
+            />
           {/if}
         {/each}
       </div>
