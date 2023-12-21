@@ -35,8 +35,9 @@
   const WORK_TIME_THRESHOLD = 32; // ms to allow for processing time, beyond which remaining work will be split to a new frame
 
   let canvas: HTMLCanvasElement;
-  let interactionCanvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D | null;
+  let drawPointsRequest: number;
+  let interactionCanvas: HTMLCanvasElement;
   let interactionCtx: CanvasRenderingContext2D | null;
   let mounted: boolean = false;
   let ordinalScaleDomain: Set<string> = new Set();
@@ -46,6 +47,7 @@
   let points: LinePoint[];
   let tempPoints: LinePoint[];
   let processingRequest: number;
+  let scaledYCache: Record<number | string, number | undefined>;
 
   $: canvasHeightDpr = drawHeight * dpr;
   $: canvasWidthDpr = drawWidth * dpr;
@@ -113,6 +115,7 @@
   async function draw(): Promise<void> {
     if (ctx && xScaleView && interactionCtx) {
       window.cancelAnimationFrame(drawPointsRequest);
+      scaledYCache = {};
       await tick();
 
       // Clear interaction canvas on every draw since the data
@@ -302,10 +305,20 @@
     if (y === null) {
       return undefined;
     }
-    if (ordinalScale) {
-      return (yScale as ScalePoint<string>)(y as string);
+
+    if (y in scaledYCache) {
+      return scaledYCache[y];
     }
-    return (yScale as ScaleLinear<number, number>)(y as number);
+
+    let scaledY;
+
+    if (ordinalScale) {
+      scaledY = (yScale as ScalePoint<string>)(y as string);
+    } else {
+      scaledY = (yScale as ScaleLinear<number, number>)(y as number);
+    }
+    scaledYCache[y] = scaledY;
+    return scaledY;
   }
 
   function onMousemove(e: MouseEvent | undefined): void {
@@ -326,7 +339,8 @@
       const yScale = computeYScale(yAxes);
 
       // Find the points that neighbor mouse x
-      points.forEach(point => {
+      for (let i = 0; i < points.length; i++) {
+        const point = points[i];
         if (point.x <= xDate) {
           if (!leftPoint) {
             leftPoint = point;
@@ -338,13 +352,10 @@
         } else {
           if (!rightPoint) {
             rightPoint = point;
-          } else {
-            if (Math.abs(point.x - xDate) < Math.abs(rightPoint.x - xDate)) {
-              rightPoint = point;
-            }
+            break; // Exit loop since points are sorted in time so this will be the closest point on the right
           }
         }
-      });
+      }
 
       let mouseOverPoints: LinePoint[] = [];
       // If a neighboring point to the left exists
