@@ -258,7 +258,7 @@
         const domainMap: Record<string, string> = {};
         for (let i = 0; i < values.length; ++i) {
           const { x, y, is_gap } = values[i];
-          const text = y as string;
+          const text = y === null && !is_gap ? 'null' : (y as string);
           points.push({
             id: id++,
             is_gap,
@@ -274,7 +274,7 @@
         domain = schema.variants.map(({ label }) => label);
         for (let i = 0; i < values.length; ++i) {
           const { x, y, is_gap } = values[i];
-          const text = y as string;
+          const text = y === null && !is_gap ? 'null' : (y as string);
           points.push({
             id: id++,
             is_gap,
