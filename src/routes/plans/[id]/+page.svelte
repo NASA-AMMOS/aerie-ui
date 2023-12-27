@@ -508,7 +508,7 @@
     </svelte:fragment>
     <svelte:fragment slot="right">
       <ActivityStatusMenu
-      activityDirectiveValidationStatuses={$activityDirectiveValidationStatuses}
+        activityDirectiveValidationStatuses={$activityDirectiveValidationStatuses}
         {activityErrorCounts}
         {compactNavMode}
         {invalidActivityCount}
