@@ -71,7 +71,7 @@
   $: onContextMenu(contextmenu);
   $: onMousemove(mousemove);
   $: onMouseout(mouseout);
-  $: resources && processResourcesToLinePoints(resources);
+  $: processResourcesToLinePoints(resources);
   $: offscreenPoint = ctx && generateOffscreenPoint(lineColor, pointRadius);
 
   onMount(() => {
