@@ -261,6 +261,8 @@
     effects
       .getResourceTypes($plan.model_id, data.user)
       .then(initialResourceTypes => ($resourceTypes = initialResourceTypes));
+
+    // TODO fetch external resource types
   }
   $: if (data.initialPlanSnapshotId !== null) {
     $planSnapshotId = data.initialPlanSnapshotId;

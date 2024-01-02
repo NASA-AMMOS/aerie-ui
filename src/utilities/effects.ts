@@ -2928,6 +2928,7 @@ const effects = {
       const clauses: { simulation_dataset_id: { _is_null: boolean } | { _eq: number } }[] = [
         { simulation_dataset_id: { _is_null: true } },
       ];
+
       if (simulationDatasetId !== null) {
         clauses.push({ simulation_dataset_id: { _eq: simulationDatasetId } });
       }
