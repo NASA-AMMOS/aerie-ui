@@ -259,6 +259,8 @@
     effects
       .getResourceTypes($plan.model_id, data.user)
       .then(initialResourceTypes => ($resourceTypes = initialResourceTypes));
+
+    // TODO fetch external resource types
   }
   $: if (data.initialPlanSnapshotId !== null) {
     $planSnapshotId = data.initialPlanSnapshotId;
@@ -294,7 +296,7 @@
     effects
       .getResourcesExternal(
         $plan.id,
-        $simulationDatasetId ?? null,
+        $simulationDatasetId > -1 ? $simulationDatasetId : null,
         $plan.start_time,
         data.user,
         resourcesExternalAbortController.signal,

@@ -2885,16 +2885,18 @@ const effects = {
   ): Promise<Resource[]> {
     try {
       fetchingResourcesExternal.set(true);
+
+      // TODO type better or refactor
+      const clauses: any = [{ simulation_dataset_id: { _is_null: true } }];
+      if (simulationDatasetId !== null) {
+        clauses.push({ simulation_dataset_id: { _eq: simulationDatasetId } });
+      }
+
       const data = await reqHasura<PlanDataset[]>(
         gql.GET_PROFILES_EXTERNAL,
         {
           planId,
-          simulationDatasetFilter:
-            simulationDatasetId === null
-              ? {
-                  _is_null: true,
-                }
-              : { _eq: simulationDatasetId },
+          simulationDatasetFilter: clauses,
         },
         user,
         signal,
