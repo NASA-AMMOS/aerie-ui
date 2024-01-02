@@ -2613,6 +2613,7 @@ const effects = {
       const error = e as Error;
       if (error.name !== 'AbortError') {
         catchError(error);
+        fetchingResourcesExternal.set(false);
       }
       return [];
     }
