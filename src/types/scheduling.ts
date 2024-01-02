@@ -40,6 +40,7 @@ export type SchedulingCondition = {
 
 export type SchedulingGoalAnalysis = {
   analysis_id: number;
+  request: { specification_id: number };
   satisfied: boolean;
   satisfying_activities: { activity_id: number }[];
 };
