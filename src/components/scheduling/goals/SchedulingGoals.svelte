@@ -151,6 +151,14 @@
   }
 
   function hasDeletePermission(goal: SchedulingGoal) {
+    // If there is no spec id attached to the goal, the goal is not associated with a plan
+    // and should not be editable/deletable
+    if (
+      !goal.scheduling_specification_goal ||
+      typeof goal.scheduling_specification_goal.specification_id !== 'number'
+    ) {
+      return false;
+    }
     const {
       scheduling_specification_goal: { specification_id },
     } = goal;
@@ -162,6 +170,14 @@
   }
 
   function hasEditPermission(goal: SchedulingGoal) {
+    // If there is no spec id attached to the goal, the goal is not associated with a plan
+    // and should not be editable/deletable
+    if (
+      !goal.scheduling_specification_goal ||
+      typeof goal.scheduling_specification_goal.specification_id !== 'number'
+    ) {
+      return false;
+    }
     const {
       scheduling_specification_goal: { specification_id },
     } = goal;
