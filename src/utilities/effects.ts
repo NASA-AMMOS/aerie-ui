@@ -1197,9 +1197,9 @@ const effects = {
       }
 
       const data = await reqHasura<SchedulingSpecGoal>(gql.CREATE_SCHEDULING_SPEC_GOAL, { spec_goal }, user);
-      const { createSchedulingGoal } = data;
-      if (createSchedulingGoal != null) {
-        const { specification_id } = createSchedulingGoal;
+      const { createSchedulingSpecGoal } = data;
+      if (createSchedulingSpecGoal != null) {
+        const { specification_id } = createSchedulingSpecGoal;
         return specification_id;
       } else {
         throw Error('Unable to create a scheduling spec goal');
