@@ -1074,6 +1074,18 @@ const gql = {
     }
   `,
 
+  GET_PROFILES_EXTERNAL_NAMES: `#graphql
+    query GetProfilesExternalNames($planId: Int!) {
+      plan_dataset(where: { plan_id: { _eq: $planId }}) {
+        dataset {
+          profiles {
+            name
+          }
+        }
+      }
+    }
+  `,
+
   GET_RESOURCE_TYPES: `#graphql
     query GetResourceTypes($model_id: Int!, $limit: Int) {
       resource_types: resource_type(where: { model_id: { _eq: $model_id } }, order_by: { name: asc }, limit: $limit) {
