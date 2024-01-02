@@ -6,6 +6,7 @@ import effects from './utilities/effects';
 import type { ReqValidateSSOResponse } from './types/auth';
 import { reqGatewayForwardCookies } from './utilities/requests';
 import { base } from '$app/paths';
+import { env } from '$env/dynamic/public';
 
 export const handle: Handle = async ({ event, resolve }) => {
   try {
@@ -13,9 +14,24 @@ export const handle: Handle = async ({ event, resolve }) => {
       return await resolve(event);
     }
 
+    if (env.PUBLIC_AUTH_TYPE === 'SSO') {
+      return await handleSSOAuth({ event, resolve });
+    } else {
+      return await handleJWTAuth({ event, resolve });
+    }
+
+  } catch (e) {
+    console.log(e);
+    event.locals.user = null;
+  }
+
+  return await resolve(event);
+};
+
+const handleJWTAuth: Handle = async ({ event, resolve }) => {
     const cookieHeader = event.request.headers.get('cookie') ?? '';
     const cookies = parse(cookieHeader);
-    const { activeRole: activeRoleCookie = null, user: userCookie = null } = cookies;
+    const { activeRole: activeRoleCookie = null, user: userCookie } = cookies;
 
     // try to get role with current JWT
     if (userCookie) {
@@ -26,7 +42,22 @@ export const handle: Handle = async ({ event, resolve }) => {
       }
     }
 
-    console.log(`trying SSO, since JWT was invalid`);
+    // if we're already on the login page, don't redirect
+    // otherwise we get stuck in a redirect loop
+    return event.url.pathname.startsWith('/login') || event.url.pathname.startsWith('/auth')
+      ? await resolve(event)
+      : new Response(null, {
+          headers: {
+            location: `${base}/login`,
+          },
+          status: 307,
+        });
+}
+
+const handleSSOAuth: Handle = async ({ event, resolve }) => {
+    const cookieHeader = event.request.headers.get('cookie') ?? '';
+    const cookies = parse(cookieHeader);
+    const { activeRole: activeRoleCookie = null } = cookies;
 
     // pass all cookies to the gateway, who can determine if we have any valid SSO tokens
     const validationData = await reqGatewayForwardCookies<ReqValidateSSOResponse>(
@@ -36,21 +67,17 @@ export const handle: Handle = async ({ event, resolve }) => {
     );
 
     if (!validationData.success) {
-      console.log('Invalid SSO token, redirecting to login UI page');
-      // if we're already on the login page, don't redirect
-      // otherwise we get stuck in a redirect loop
-      return event.url.pathname.startsWith('/login') || event.url.pathname.startsWith('/auth')
-        ? await resolve(event)
-        : new Response(null, {
-            headers: {
-              // redirectURL field from gateway response will contain our login UI URL
-              location: `${validationData.redirectURL}`,
-            },
-            status: 307,
-          });
+      console.log('Invalid SSO token, redirecting to SSO login UI page');
+      return new Response(null, {
+        headers: {
+          // redirectURL field from gateway response will contain our login UI URL
+          location: `${validationData.redirectURL}`,
+        },
+        status: 307,
+      });
     }
 
-    // otherwise, we had a valid SSO token, so compute roles from JWT
+    // otherwise, we had a valid SSO token, so compute roles from returned JWT
     const user: BaseUser = {
       id: validationData.userId ?? '',
       token: validationData.token ?? '',
@@ -74,20 +101,12 @@ export const handle: Handle = async ({ event, resolve }) => {
       event.cookies.set('user', userCookie, cookieOpts);
       event.cookies.set('activeRole', roles.defaultRole, cookieOpts);
 
-      return await resolve(event);
+    } else {
+      event.locals.user = null;
     }
 
-    // otherwise, we can't auth
-    console.log('unable to auth with JWT or SSO token');
-    console.log(validationData.message);
-    event.locals.user = null;
-  } catch (e) {
-    console.log(e);
-    event.locals.user = null;
-  }
-
-  return await resolve(event);
-};
+    return await resolve(event);
+}
 
 async function computeRolesFromCookies(
   userCookie: string | null,
