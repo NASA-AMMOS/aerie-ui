@@ -20,6 +20,7 @@ import { commandDictionaries } from '../stores/sequencing';
 import {
   fetchingResources,
   fetchingResourcesExternal,
+  fetchingResourcesExternalNames,
   selectedSpanId,
   simulationDatasetId,
 } from '../stores/simulation';
@@ -2614,7 +2615,7 @@ const effects = {
       const error = e as Error;
       if (error.name !== 'AbortError') {
         catchError(error);
-        fetchingResourcesExternal.set(false);
+        fetchingResourcesExternalNames.set(false);
       }
       return [];
     }
@@ -2926,8 +2927,10 @@ const effects = {
     try {
       fetchingResourcesExternal.set(true);
 
-      // TODO type better or refactor
-      const clauses: any = [{ simulation_dataset_id: { _is_null: true } }];
+      // Always fetch external resources that aren't tied to a simulation, optionally get the resources tied to one if we have a dataset ID.
+      const clauses: { simulation_dataset_id: { _is_null: boolean } | { _eq: number } }[] = [
+        { simulation_dataset_id: { _is_null: true } },
+      ];
       if (simulationDatasetId !== null) {
         clauses.push({ simulation_dataset_id: { _eq: simulationDatasetId } });
       }

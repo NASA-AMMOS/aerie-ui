@@ -34,6 +34,8 @@ export const fetchingResources: Writable<boolean> = writable(false);
 
 export const fetchingResourcesExternal: Writable<boolean> = writable(false);
 
+export const fetchingResourcesExternalNames: Writable<boolean> = writable(false);
+
 export const resourceTypes: Writable<ResourceType[]> = writable([]);
 
 export const spans: Writable<Span[]> = writable([]);
