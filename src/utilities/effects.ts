@@ -2606,7 +2606,7 @@ const effects = {
           }
         }
 
-        return resourceNames;
+        return [...new Set(resourceNames)];
       } else {
         throw Error('Unable to get external resource names');
       }
