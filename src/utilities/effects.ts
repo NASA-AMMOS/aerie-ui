@@ -20,6 +20,7 @@ import { commandDictionaries } from '../stores/sequencing';
 import {
   fetchingResources,
   fetchingResourcesExternal,
+  fetchingResourcesExternalNames,
   selectedSpanId,
   simulationDatasetId,
 } from '../stores/simulation';
@@ -2613,7 +2614,7 @@ const effects = {
       const error = e as Error;
       if (error.name !== 'AbortError') {
         catchError(error);
-        fetchingResourcesExternal.set(false);
+        fetchingResourcesExternalNames.set(false);
       }
       return [];
     }
@@ -2929,7 +2930,6 @@ const effects = {
       const clauses: { simulation_dataset_id: { _is_null: boolean } | { _eq: number } }[] = [
         { simulation_dataset_id: { _is_null: true } },
       ];
-
       if (simulationDatasetId !== null) {
         clauses.push({ simulation_dataset_id: { _eq: simulationDatasetId } });
       }
