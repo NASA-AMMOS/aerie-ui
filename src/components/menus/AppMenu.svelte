@@ -99,8 +99,7 @@
       }}
     >
       <span>
-        Logged in as
-        <span class="st-typography-medium">{user?.id || 'Unknown'}</span>
+        Logged in as <span class="st-typography-medium">{user?.id || 'Unknown'}</span>
       </span>
     </button>
   </Menu>
