@@ -3,15 +3,19 @@
 <script lang="ts">
   import CaretDownIcon from '@nasa-jpl/stellar/icons/caret_down.svg?component';
   import CaretRightIcon from '@nasa-jpl/stellar/icons/caret_right.svg?component';
+  import { createEventDispatcher } from 'svelte';
   import { classNames } from '../utilities/generic';
   import { tooltip } from '../utilities/tooltip';
   import ContextMenu from './context-menu/ContextMenu.svelte';
+
+  const dispatch = createEventDispatcher();
 
   export let className: string = '';
   export let collapsible: boolean = true;
   export let defaultExpanded: boolean = true;
   export let error: boolean = false;
   export let padContent: boolean = true;
+  export let preserveContent: boolean = true;
   export let title: string = '';
   export let titleClassName: string = '';
   export let tooltipContent: string = '';
@@ -36,6 +40,7 @@
     on:click={() => {
       if (collapsible) {
         expanded = !expanded;
+        dispatch('toggle', expanded);
       }
     }}
   >
@@ -58,9 +63,11 @@
       <slot name="right" />
     </div>
   </button>
-  <div class="content" class:pad-content={padContent} class:expanded aria-hidden={collapsible ? !expanded : false}>
-    <slot />
-  </div>
+  {#if expanded || preserveContent}
+    <div class="content" class:pad-content={padContent} class:expanded aria-hidden={collapsible ? !expanded : false}>
+      <slot />
+    </div>
+  {/if}
 </div>
 
 {#if $$slots.contextMenuContent}

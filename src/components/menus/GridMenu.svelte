@@ -58,6 +58,10 @@
       <BookIcon />
       Activity Types
     </MenuItem>
+    <MenuItem on:click={() => onClickMenuItem('ResourceTypesPanel')}>
+      <BookIcon />
+      Resource Types
+    </MenuItem>
     <MenuItem on:click={() => onClickMenuItem('ConstraintsPanel')}>
       <VerticalCollapseIcon />
       Constraints

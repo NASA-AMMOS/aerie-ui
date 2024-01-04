@@ -8,6 +8,7 @@
   import ActivityFormPanel from '../activity/ActivityFormPanel.svelte';
   import ActivitySpansTablePanel from '../activity/ActivitySpansTablePanel.svelte';
   import ActivityTypesPanel from '../activity/ActivityTypesPanel.svelte';
+  import ResourceTypesPanel from '../activity/ResourceTypesPanel.svelte';
   import ConstraintsPanel from '../constraints/ConstraintsPanel.svelte';
   import ExpansionPanel from '../expansion/ExpansionPanel.svelte';
   import PlanMetadataPanel from '../plan/PlanMetadataPanel.svelte';
@@ -47,6 +48,7 @@
     ExpansionPanel,
     IFramePanel,
     PlanMetadataPanel,
+    ResourceTypesPanel,
     SchedulingConditionsPanel,
     SchedulingGoalsPanel,
     SimulationPanel,

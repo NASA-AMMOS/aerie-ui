@@ -39,6 +39,7 @@ export type ViewGridComponent =
   | 'ExpansionPanel'
   | 'IFramePanel'
   | 'PlanMetadataPanel'
+  | 'ResourceTypesPanel'
   | 'SchedulingConditionsPanel'
   | 'SchedulingGoalsPanel'
   | 'SimulationPanel'
