@@ -20,7 +20,6 @@ import { commandDictionaries } from '../stores/sequencing';
 import {
   fetchingResources,
   fetchingResourcesExternal,
-  fetchingResourcesExternalNames,
   selectedSpanId,
   simulationDatasetId,
 } from '../stores/simulation';
@@ -2614,7 +2613,6 @@ const effects = {
       const error = e as Error;
       if (error.name !== 'AbortError') {
         catchError(error);
-        fetchingResourcesExternalNames.set(false);
       }
       return [];
     }
