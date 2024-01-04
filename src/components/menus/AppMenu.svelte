@@ -98,7 +98,10 @@
         evt.stopPropagation();
       }}
     >
-      Logged in as&nbsp;<span class="st-typography-medium">{user?.id || 'Unknown'}</span>
+      <span>
+        Logged in as
+        <span class="st-typography-medium">{user?.id || 'Unknown'}</span>
+      </span>
     </button>
   </Menu>
 </div>
