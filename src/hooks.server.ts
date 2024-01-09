@@ -14,7 +14,7 @@ export const handle: Handle = async ({ event, resolve }) => {
       return await resolve(event);
     }
 
-    if (env.PUBLIC_AUTH_TYPE === 'SSO') {
+    if (env.PUBLIC_AUTH_SSO_ENABLED === 'true') {
       return await handleSSOAuth({ event, resolve });
     } else {
       return await handleJWTAuth({ event, resolve });

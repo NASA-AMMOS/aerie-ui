@@ -6,7 +6,7 @@ import { env } from '$env/dynamic/public';
 
 export const POST: RequestHandler = async event => {
   const invalidated =
-    env.PUBLIC_AUTH_TYPE === 'SSO'
+    env.PUBLIC_AUTH_SSO_ENABLED === 'true'
       ? await reqGatewayForwardCookies<boolean>('/auth/logoutSSO', event.request.headers.get('cookie') ?? '', base)
       : true;
 
