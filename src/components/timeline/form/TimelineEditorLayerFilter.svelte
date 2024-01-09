@@ -3,6 +3,8 @@
 <script lang="ts">
   import SearchIcon from '@nasa-jpl/stellar/icons/search.svg?component';
   import { createEventDispatcher } from 'svelte';
+  import { activityTypes } from '../../../stores/plan';
+  import { externalResourceNames, resourceTypes } from '../../../stores/simulation';
   import type { Layer } from '../../../types/timeline';
   import Input from '../../form/Input.svelte';
   import Menu from '../../menus/Menu.svelte';
@@ -10,7 +12,6 @@
 
   export let layer: Layer;
   export let values: string[];
-  export let options: string[];
 
   const dispatch = createEventDispatcher();
 
@@ -20,6 +21,7 @@
   let filteredValues: string[] = [];
   let menuTitle: string = '';
   let selectedValuesMap: Record<string, boolean> = {};
+  let options: string[] = [];
 
   $: if (layer) {
     selectedValuesMap = listToMap(values);
@@ -37,6 +39,19 @@
     filteredValues = options.filter(item => item.toLocaleLowerCase().indexOf(filterStringLower) > -1);
   } else {
     filteredValues = options.slice();
+  }
+
+  $: if ($activityTypes || $externalResourceNames) {
+    if (layer.chartType === 'activity') {
+      options = $activityTypes.map(t => t.name);
+    } else if (layer.chartType === 'line' || layer.chartType === 'x-range') {
+      options = $resourceTypes
+        .map(t => t.name)
+        .concat($externalResourceNames)
+        .sort();
+    } else {
+      options = [];
+    }
   }
 
   function listToMap(list: string[]): Record<string, boolean> {
