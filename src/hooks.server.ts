@@ -127,10 +127,10 @@ async function computeRolesFromJWT(baseUser: BaseUser, activeRole: string | null
 
   const allowedRoles = decodedToken['https://hasura.io/jwt/claims']['x-hasura-allowed-roles'];
   const defaultRole = decodedToken['https://hasura.io/jwt/claims']['x-hasura-default-role'];
-  activeRole ??= defaultRole;
+
   const user: User = {
     ...baseUser,
-    activeRole,
+    activeRole: activeRole ?? defaultRole,
     allowedRoles,
     defaultRole,
     permissibleQueries: null,
