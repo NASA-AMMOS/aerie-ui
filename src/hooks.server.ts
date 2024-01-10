@@ -112,9 +112,13 @@ async function computeRolesFromCookies(
 ): Promise<User | null> {
   const userBuffer = Buffer.from(userCookie ?? '', 'base64');
   const userStr = userBuffer.toString('utf-8');
-  const baseUser: BaseUser = JSON.parse(userStr);
 
-  return computeRolesFromJWT(baseUser, activeRoleCookie);
+  try {
+    const baseUser: BaseUser = JSON.parse(userStr);
+    return computeRolesFromJWT(baseUser, activeRoleCookie);
+  } catch {
+    return null;
+  }
 }
 
 async function computeRolesFromJWT(baseUser: BaseUser, activeRole: string | null): Promise<User | null> {
