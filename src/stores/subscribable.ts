@@ -41,7 +41,7 @@ export function gqlSubscribable<T>(
             console.log(error);
 
             if ('reason' in error && error.reason.includes(EXPIRED_JWT)) {
-              await logout();
+              await logout(EXPIRED_JWT);
             } else {
               subscribers.forEach(({ next }) => {
                 if (initialValue !== null) {
