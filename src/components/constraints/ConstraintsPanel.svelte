@@ -70,11 +70,12 @@
           errors: constraintResponse.errors,
           results: constraintResponse.results && {
             ...constraintResponse.results,
-            violations: constraintResponse.results.violations?.map(violation => ({
-              ...violation,
-              // Filter violations/windows by time bounds
-              windows: violation.windows.filter(window => window.end >= startTimeMs && window.start <= endTimeMs),
-            })),
+            violations:
+              constraintResponse.results.violations?.map(violation => ({
+                ...violation,
+                // Filter violations/windows by time bounds
+                windows: violation.windows.filter(window => window.end >= startTimeMs && window.start <= endTimeMs),
+              })) ?? null,
           },
           success: constraintResponse.success,
           type: constraintResponse.type,

@@ -598,7 +598,7 @@
         <svelte:fragment slot="metadata">
           <div>
             Constraints violated: {Object.values($constraintResponseMap).filter(
-              response => response.results.violations.length,
+              response => response.results.violations?.length,
             ).length}
           </div>
         </svelte:fragment>
