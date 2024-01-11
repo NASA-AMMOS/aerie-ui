@@ -34,6 +34,8 @@ export type ConstraintResult = {
   violations: ConstraintViolation[];
 };
 
+export type ConstraintResultWithName = ConstraintResult & { constraintName: string };
+
 export type ConstraintResponse = {
   constraintId: Constraint['id'];
   constraintName: Constraint['name'];
