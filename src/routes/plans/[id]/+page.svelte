@@ -154,7 +154,7 @@
   let planSnapshotActivityDirectives: ActivityDirective[] = [];
   let schedulingAnalysisStatus: Status | null;
   let simulationExtent: string | null;
-  let selectedSimulationStatus: string | null;
+  let selectedSimulationStatus: Status | null;
   let windowWidth = 0;
   let simulationDataAbortController: AbortController;
   let resourcesExternalAbortController: AbortController;
@@ -601,7 +601,7 @@
           <div>Simulation Dataset ID: {$simulationDatasetLatest?.id}</div>
           {#if selectedSimulationStatus === Status.Pending || selectedSimulationStatus === Status.Incomplete}
             <button
-              on:click={() => effects.cancelPendingSimulation($simulationDatasetId, data.user)}
+              on:click={() => effects.cancelSimulation($simulationDatasetId, data.user)}
               class="st-button cancel-button">Cancel</button
             >
           {/if}

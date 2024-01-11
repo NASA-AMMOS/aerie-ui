@@ -86,12 +86,12 @@ export function getSimulationStatus(simulationDataset: SimulationDatasetSlim | n
   if (!simulationDataset) {
     return null;
   }
-  if (simulationDataset.canceled) {
-    return Status.Canceled;
-  } else if (simulationDataset.status === 'success') {
+  if (simulationDataset.status === 'success') {
     return Status.Complete;
   } else if (simulationDataset.status === 'failed') {
     return Status.Failed;
+  } else if (simulationDataset.canceled) {
+    return Status.Canceled;
   } else if (simulationDataset.status === 'incomplete') {
     return Status.Incomplete;
   } else if (simulationDataset.status === 'pending') {
