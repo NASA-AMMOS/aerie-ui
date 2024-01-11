@@ -37,7 +37,7 @@
     selectActivity,
     selectedActivityDirectiveId,
   } from '../../../stores/activities';
-  import { checkConstraintsStatus, constraintResults, resetConstraintStores } from '../../../stores/constraints';
+  import { checkConstraintsStatus, constraintResponseMap, resetConstraintStores } from '../../../stores/constraints';
   import {
     activityErrorRollups,
     allErrors,
@@ -596,7 +596,11 @@
       >
         <VerticalCollapseIcon />
         <svelte:fragment slot="metadata">
-          <div>Constraint violations: {$constraintResults.filter(result => result.violations.length).length}</div>
+          <div>
+            Constraint violations: {Object.values($constraintResponseMap).filter(
+              response => response.results.violations.length,
+            ).length}
+          </div>
         </svelte:fragment>
       </PlanNavButton>
       <PlanNavButton
