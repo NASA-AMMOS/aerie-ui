@@ -49,7 +49,7 @@ export const constraintResponseMap: Readable<Record<Constraint['id'], Constraint
         ...response,
         results: {
           ...response.results,
-          violations: response.results.violations.map(violation => ({
+          violations: response.results.violations?.map(violation => ({
             ...violation,
             windows: violation.windows.map(({ end, start }) => ({
               end: $planStartTimeMs + end / 1000,
