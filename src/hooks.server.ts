@@ -77,6 +77,7 @@ const handleSSOAuth: Handle = async ({ event, resolve }) => {
   }
 
   // otherwise, we had a valid SSO token, so compute roles from returned JWT
+  // note, this sets a new JWT cookie each time
   const user: BaseUser = {
     id: validationData.userId ?? '',
     token: validationData.token ?? '',
@@ -98,7 +99,10 @@ const handleSSOAuth: Handle = async ({ event, resolve }) => {
       sameSite: 'none',
     };
     event.cookies.set('user', userCookie, cookieOpts);
-    event.cookies.set('activeRole', roles.defaultRole, cookieOpts);
+    // don't overwrite existing activeRole
+    if (!activeRoleCookie) {
+      event.cookies.set('activeRole', roles.defaultRole, cookieOpts);
+    }
   } else {
     event.locals.user = null;
   }
