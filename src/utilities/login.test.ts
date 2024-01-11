@@ -2,6 +2,8 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { shouldRedirectToLogin } from './login';
 import { ADMIN_ROLE } from './permissions';
 
+vi.mock('$env/dynamic/public', () => import.meta.env); // https://github.com/sveltejs/kit/issues/8180
+
 describe('login util functions', () => {
   afterEach(() => {
     vi.resetAllMocks();
