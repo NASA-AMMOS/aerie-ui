@@ -31,7 +31,7 @@ export type ConstraintViolation = {
 export type ConstraintResult = {
   gaps: TimeRange[];
   resourceIds: string[];
-  violations: ConstraintViolation[];
+  violations: ConstraintViolation[] | null;
 };
 
 export type ConstraintResultWithName = ConstraintResult & { constraintName: string };
