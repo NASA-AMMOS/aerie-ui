@@ -617,7 +617,7 @@
         <VerticalCollapseIcon />
         <svelte:fragment slot="metadata">
           <div>
-            Constraint violations: {Object.values($constraintResponseMap).filter(
+            Constraints violated: {Object.values($constraintResponseMap).filter(
               response => response.results.violations.length,
             ).length}
           </div>
