@@ -100,6 +100,6 @@ test.describe.serial('Plan Activities', () => {
 
     const errorBadge = await page.locator('.input-error-badge-root');
 
-    expect(errorBadge).toBeAttached();
+    expect(errorBadge).not.toBeAttached();
   });
 });
