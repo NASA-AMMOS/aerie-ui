@@ -18,7 +18,7 @@
   } from '../../stores/simulation';
   import { viewTogglePanel } from '../../stores/views';
   import type { User } from '../../types/app';
-  import type { FieldStore } from '../../types/form';
+  import type { FieldStore, ValidationResult } from '../../types/form';
   import type { FormParameter, ParametersMap } from '../../types/parameter';
   import type {
     Simulation,
@@ -65,6 +65,20 @@
   let modelParametersMap: ParametersMap = {};
   let filteredSimulationDatasets: SimulationDataset[] = [];
 
+  $: validateStartTime = function (startTime: string): Promise<ValidationResult> {
+    if (startTime >= endTimeDoy) {
+      return Promise.resolve('Simulation start must be before end');
+    }
+    return Promise.resolve(null);
+  };
+
+  $: validateEndTime = function (endTime: string): Promise<ValidationResult> {
+    if (endTime <= startTimeDoy) {
+      return Promise.resolve('Simulation end must be after start');
+    }
+    return Promise.resolve(null);
+  };
+
   $: if (user !== null && $plan !== null) {
     hasRunPermission = featurePermissions.simulation.canRun(user, $plan, $plan.model) && !$planReadOnly;
     hasUpdatePermission = featurePermissions.simulation.canUpdate(user, $plan) && !$planReadOnly;
@@ -75,14 +89,14 @@
         ? getDoyTime(new Date($simulation.simulation_start_time))
         : $plan.start_time_doy;
   }
-  $: startTimeDoyField = field<string>(startTimeDoy, [required, timestamp]);
+  $: startTimeDoyField = field<string>(startTimeDoy, [required, timestamp, validateStartTime]);
   $: if ($plan) {
     endTimeDoy =
       $simulation && $simulation.simulation_end_time
         ? getDoyTime(new Date($simulation.simulation_end_time))
         : $plan.end_time_doy;
   }
-  $: endTimeDoyField = field<string>(endTimeDoy, [required, timestamp]);
+  $: endTimeDoyField = field<string>(endTimeDoy, [required, timestamp, validateEndTime]);
   $: numOfUserChanges = formParameters.reduce((previousHasChanges: number, formParameter) => {
     return /user/.test(formParameter.valueSource) ? previousHasChanges + 1 : previousHasChanges;
   }, 0);
