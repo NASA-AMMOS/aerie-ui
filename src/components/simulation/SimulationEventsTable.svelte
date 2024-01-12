@@ -3,15 +3,14 @@
 <script lang="ts">
   import type { ColDef, ColumnState } from 'ag-grid-community';
   import type { RowId } from '../../types/data-grid';
-  import type { MySimulationEvent } from '../../types/simulation';
+  import type { SimulationEvent } from '../../types/simulation';
   import DataGrid from '../ui/DataGrid/DataGrid.svelte';
 
   export let columnDefs: ColDef[];
   export let columnStates: ColumnState[] = [];
-  export let dataGrid: DataGrid<MySimulationEvent> | undefined = undefined;
+  export let dataGrid: DataGrid<SimulationEvent> | undefined = undefined;
   export let selectedSimulationEventId: number | null = null;
-  export let spans: Span[] = [];
-  export let simulationEvents: MySimulationEvent[] = [];
+  export let simulationEvents: SimulationEvent[] = [];
   export let filterExpression: string = '';
 
   let selectedItemIds: RowId[] = [];
@@ -22,7 +21,7 @@
     selectedItemIds = [];
   }
 
-  function getRowId(simulationEvent: MySimulationEvent): number {
+  function getRowId(simulationEvent: SimulationEvent): number {
     return simulationEvent.id;
   }
 </script>
@@ -33,6 +32,7 @@
   bind:selectedRowIds={selectedItemIds}
   autoSizeColumnsToFit={false}
   columnDefs={[...(columnDefs ?? [])]}
+  {columnStates}
   {filterExpression}
   {getRowId}
   useCustomContextMenu

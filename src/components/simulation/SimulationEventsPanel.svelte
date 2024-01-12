@@ -5,9 +5,9 @@
   import TableFitIcon from '@nasa-jpl/stellar/icons/table_fit.svg?component';
   import type { ColDef, ColumnResizedEvent, ColumnState } from 'ag-grid-community';
   import { debounce } from 'lodash-es';
-  import { simulationDataset, simulationEvents, spans } from '../../stores/simulation';
+  import { simulationDataset, simulationEvents } from '../../stores/simulation';
   import { view, viewUpdateSimulationEventsTable } from '../../stores/views';
-  import type { MySimulationEvent } from '../../types/simulation';
+  import type { SimulationEvent } from '../../types/simulation';
   import type { AutoSizeColumns, ViewGridSection, ViewTable } from '../../types/view';
   import { filterEmpty } from '../../utilities/generic';
   import { getDoyTimeFromInterval } from '../../utilities/time';
@@ -20,14 +20,14 @@
 
   export let gridSection: ViewGridSection;
 
-  type SimulationEventColumns = keyof MySimulationEvent | 'derived_start_time';
-  interface SimulationEventColDef extends ColDef<MySimulationEvent> {
+  type SimulationEventColumns = keyof SimulationEvent | 'derived_start_time';
+  interface SimulationEventColDef extends ColDef<SimulationEvent> {
     field: SimulationEventColumns;
   }
 
   let simulationEventsTable: ViewTable | undefined;
   let autoSizeColumns: AutoSizeColumns | undefined;
-  let dataGrid: DataGrid<MySimulationEvent>;
+  let dataGrid: DataGrid<SimulationEvent>;
   let defaultColumnDefinitions: Partial<Record<SimulationEventColumns, SimulationEventColDef>>;
   let derivedColumnDefs: ColDef[] = [];
   let filterExpression: string = '';
@@ -283,14 +283,7 @@
       columnDefs={derivedColumnDefs ?? []}
       columnStates={simulationEventsTable?.columnStates}
       {filterExpression}
-      spans={$spans}
-      simulationEvents={$simulationEvents.map(simulationEvent => ({
-        id: simulationEvent.id,
-        topic: simulationEvent.topic,
-        start_offset: simulationEvent.real_time,
-        dense_time: simulationEvent.transaction_index + '.0' + simulationEvent.causal_time,
-        value: JSON.stringify(simulationEvent.value),
-      }))}
+      simulationEvents={$simulationEvents}
       on:columnMoved={onColumnMoved}
       on:columnPinned={onColumnPinned}
       on:columnResized={onColumnResized}

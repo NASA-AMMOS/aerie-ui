@@ -725,16 +725,17 @@ const gql = {
   GET_EVENTS: `#graphql
     query GetEvents($datasetId: Int!) {
       topic(where: { dataset_id: { _eq: $datasetId }}) {
-          name
-          events {
-            dataset_id
-            causal_time
-            real_time
-            topic_index
-            transaction_index
-            value
-          }
-        }  
+        name
+        value_schema
+        topic_index
+      }
+      event(where: { dataset_id: { _eq: $datasetId }}) {
+        causal_time
+        real_time
+        topic_index
+        transaction_index
+        value
+      }
     }
   `,
 

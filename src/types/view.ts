@@ -79,9 +79,9 @@ export type ViewDefinition = {
   plan: {
     activityDirectivesTable: ViewTable;
     activitySpansTable: ViewTable;
-    simulationEventsTable: ViewTable;
     grid: ViewGrid;
     iFrames: ViewIFrame[];
+    simulationEventsTable: ViewTable;
     timelines: Timeline[];
   };
 };
