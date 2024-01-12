@@ -123,6 +123,7 @@ import type {
   SimulationTemplateInsertInput,
   SimulationTemplateSetInput,
   Span,
+  Topic,
 } from '../types/simulation';
 import type {
   ActivityDirectiveTagsInsertInput,
@@ -2467,6 +2468,22 @@ const effects = {
     } catch (e) {
       catchError(e as Error);
       return null;
+    }
+  },
+
+  async getEvents(datasetId: number, user: User | null, signal: AbortSignal | undefined = undefined): Promise<Topic[]> {
+    try {
+      console.log('Fetching events for datasetId: ' + datasetId);
+      const data = await reqHasura<Topic[]>(gql.GET_EVENTS, { datasetId }, user, signal);
+      const { topic: topics } = data;
+      if (topics != null) {
+        return topics;
+      } else {
+        throw Error('Unable to get events');
+      }
+    } catch (e) {
+      catchError(e as Error);
+      return [];
     }
   },
 

@@ -82,6 +82,7 @@
     simulationDatasetId,
     simulationDatasetLatest,
     simulationDatasetsAll,
+    simulationEvents,
     simulationProgress,
     simulationStatus,
     spans,
@@ -98,6 +99,7 @@
   import type { ActivityErrorCounts } from '../../../types/errors';
   import type { Extension } from '../../../types/extension';
   import type { PlanSnapshot } from '../../../types/plan-snapshot';
+  import type { SimulationEvent } from '../../../types/simulation';
   import type { View, ViewSaveEvent, ViewToggleEvent } from '../../../types/view';
   import effects from '../../../utilities/effects';
   import { getSearchParameterNumber, removeQueryParam, setQueryParam } from '../../../utilities/generic';
@@ -329,6 +331,21 @@
       .getResources(datasetId, startTimeYmd, data.user, simulationDataAbortController.signal)
       .then(newResources => ($resources = newResources));
     effects.getSpans(datasetId, data.user, simulationDataAbortController.signal).then(newSpans => ($spans = newSpans));
+    effects.getEvents(datasetId, data.user, simulationDataAbortController.signal).then(newEvents => {
+      console.log({ newEvents });
+      const flattenedEvents: SimulationEvent[] = [];
+      for (const topic of newEvents) {
+        for (const event of topic.events) {
+          flattenedEvents.push({
+            ...event,
+            topic: topic.name,
+            id: flattenedEvents.length,
+            dataset_id: datasetId,
+          });
+        }
+      }
+      $simulationEvents = flattenedEvents;
+    });
   } else {
     simulationDataAbortController?.abort();
     fetchingResources.set(false);

@@ -722,6 +722,22 @@ const gql = {
     }
   `,
 
+  GET_EVENTS: `#graphql
+    query GetEvents($datasetId: Int!) {
+      topic(where: { dataset_id: { _eq: $datasetId }}) {
+          name
+          events {
+            dataset_id
+            causal_time
+            real_time
+            topic_index
+            transaction_index
+            value
+          }
+        }  
+    }
+  `,
+
   GET_EXPANSION_RULE: `#graphql
     query GetExpansionRule($id: Int!) {
       expansionRule: expansion_rule_by_pk(id: $id) {

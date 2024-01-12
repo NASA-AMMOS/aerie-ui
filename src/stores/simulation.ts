@@ -6,6 +6,7 @@ import type {
   Simulation,
   SimulationDataset,
   SimulationDatasetSlim,
+  SimulationEvent,
   SimulationTemplate,
   Span,
   SpanId,
@@ -37,6 +38,8 @@ export const fetchingResourcesExternal: Writable<boolean> = writable(false);
 export const resourceTypes: Writable<ResourceType[]> = writable([]);
 
 export const spans: Writable<Span[]> = writable([]);
+
+export const simulationEvents: Writable<SimulationEvent[]> = writable([]);
 
 /* Subscriptions. */
 
@@ -91,6 +94,8 @@ export const simulationTemplates = gqlSubscribable<SimulationTemplate[]>(
 );
 
 export const selectedSpanId: Writable<SpanId | null> = writable(null);
+
+export const selectedSimulationEventId: Writable<number | null> = writable(null);
 
 /* Derived. */
 
