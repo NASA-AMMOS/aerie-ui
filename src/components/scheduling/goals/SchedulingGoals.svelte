@@ -150,42 +150,24 @@
     editGoal({ id: event.detail[0] as number });
   }
 
-  function hasDeletePermission(goal: SchedulingGoal) {
+  function getPlanForGoal(goal: SchedulingGoal): PlanSchedulingSpec | null {
     // If there is no spec id attached to the goal, the goal is not associated with a plan
-    // and should not be editable/deletable
-    if (
-      !goal.scheduling_specification_goal ||
-      typeof goal.scheduling_specification_goal.specification_id !== 'number'
-    ) {
-      return false;
+    let plan = null;
+    if (goal.scheduling_specification_goal) {
+      const {
+        scheduling_specification_goal: { specification_id },
+      } = goal;
+      plan = plans?.find(plan => plan.scheduling_specifications[0]?.id === specification_id) ?? null;
     }
-    const {
-      scheduling_specification_goal: { specification_id },
-    } = goal;
-    const plan = plans?.find(plan => plan.scheduling_specifications[0]?.id === specification_id);
-    if (plan) {
-      return featurePermissions.schedulingGoals.canDelete(user, plan);
-    }
-    return false;
+    return plan;
+  }
+
+  function hasDeletePermission(goal: SchedulingGoal) {
+    return featurePermissions.schedulingGoals.canDelete(user, getPlanForGoal(goal), goal);
   }
 
   function hasEditPermission(goal: SchedulingGoal) {
-    // If there is no spec id attached to the goal, the goal is not associated with a plan
-    // and should not be editable/deletable
-    if (
-      !goal.scheduling_specification_goal ||
-      typeof goal.scheduling_specification_goal.specification_id !== 'number'
-    ) {
-      return false;
-    }
-    const {
-      scheduling_specification_goal: { specification_id },
-    } = goal;
-    const plan = plans?.find(plan => plan.scheduling_specifications[0]?.id === specification_id);
-    if (plan) {
-      return featurePermissions.schedulingGoals.canUpdate(user, plan);
-    }
-    return false;
+    return featurePermissions.schedulingGoals.canUpdate(user, getPlanForGoal(goal), goal);
   }
 
   function hasCreatePermission(user: User): boolean {

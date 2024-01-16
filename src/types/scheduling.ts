@@ -16,7 +16,7 @@ export type SchedulingGoal = {
   revision: number;
   scheduling_specification_goal: {
     specification_id: number;
-  };
+  } | null;
   tags: { tag: Tag }[];
 };
 

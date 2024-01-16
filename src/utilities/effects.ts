@@ -1974,11 +1974,11 @@ const effects = {
 
   async deleteSchedulingCondition(
     condition: SchedulingCondition,
-    plan: PlanSchedulingSpec,
+    plan: PlanSchedulingSpec | null,
     user: User | null,
   ): Promise<boolean> {
     try {
-      if (!queryPermissions.DELETE_SCHEDULING_CONDITION(user, plan)) {
+      if (!queryPermissions.DELETE_SCHEDULING_CONDITION(user, plan, condition)) {
         throwPermissionError('delete this scheduling condition');
       }
 
@@ -2006,7 +2006,11 @@ const effects = {
     }
   },
 
-  async deleteSchedulingGoal(goal: SchedulingGoalSlim, plan: PlanSchedulingSpec, user: User | null): Promise<boolean> {
+  async deleteSchedulingGoal(
+    goal: SchedulingGoalSlim,
+    plan: PlanSchedulingSpec | null,
+    user: User | null,
+  ): Promise<boolean> {
     try {
       if (!queryPermissions.DELETE_SCHEDULING_GOAL(user, plan)) {
         throwPermissionError('delete this scheduling goal');

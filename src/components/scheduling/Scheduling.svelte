@@ -55,18 +55,17 @@
 
   async function deleteGoal(goal: SchedulingGoalSlim) {
     const { scheduling_specification_goal } = goal;
-    const specification_id = scheduling_specification_goal.specification_id;
-    const plan = plans?.find(plan => plan.scheduling_specifications[0]?.id === specification_id);
+    let plan = null;
+    if (scheduling_specification_goal) {
+      const specification_id = scheduling_specification_goal.specification_id;
+      plan = plans?.find(plan => plan.scheduling_specifications[0]?.id === specification_id) ?? null;
+    }
+    const success = await effects.deleteSchedulingGoal(goal, plan, user);
+    if (success) {
+      schedulingGoalsAll.filterValueById(goal.id);
 
-    if (plan) {
-      const success = await effects.deleteSchedulingGoal(goal, plan, user);
-
-      if (success) {
-        schedulingGoalsAll.filterValueById(goal.id);
-
-        if (goal.id === selectedGoal?.id) {
-          selectedGoal = null;
-        }
+      if (goal.id === selectedGoal?.id) {
+        selectedGoal = null;
       }
     }
   }
