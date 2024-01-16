@@ -97,11 +97,8 @@ export type MouseDown = {
   timelineId: number;
 };
 
-export type MouseOverEvent = Omit<
-  MouseOver,
-  'activityDirectivesByLayer' | 'gapsByLayer' | 'pointsByLayer' | 'spansByLayer'
-> & {
-  activityDirectives?: ActivityDirective[];
+export type MouseOver = {
+  activityDirectivesByLayer?: Record<number, ActivityDirective[]>;
   constraintResults?: ConstraintResultWithName[];
   e: MouseEvent;
   gapsByLayer?: Record<number, Point[]>;
@@ -112,6 +109,16 @@ export type MouseOverEvent = Omit<
   selectedActivityDirectiveId?: number;
   selectedSpanId?: number;
   spansByLayer?: Record<number, Span[]>;
+};
+
+export type MouseOverEvent = Omit<
+  MouseOver,
+  'activityDirectivesByLayer' | 'gapsByLayer' | 'pointsByLayer' | 'spansByLayer'
+> & {
+  activityDirectives?: ActivityDirective[];
+  gaps?: Point[];
+  points?: Point[];
+  spans?: Span[];
 };
 
 export type MouseOverOrigin = 'row-header' | 'layer-line' | 'layer-activity' | 'layer-x-range';

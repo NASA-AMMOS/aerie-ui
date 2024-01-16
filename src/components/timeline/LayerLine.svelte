@@ -41,9 +41,6 @@
   let interactionCtx: CanvasRenderingContext2D | null;
   let mounted: boolean = false;
   let ordinalScaleDomain: Set<string> = new Set();
-  let drawPointsRequest: number;
-  let stateLinePlotYScale: ScalePoint<string>;
-  let yScale: ScaleLinear<number, number, never>;
   let points: LinePoint[];
   let tempPoints: LinePoint[];
   let processingRequest: number;
@@ -131,27 +128,7 @@
       ctx.lineWidth = lineWidth;
       ctx.strokeStyle = lineColor;
       let line;
-
-      // if (showAsLinePlot) {
-      //   const domain = Array.from(scaleDomain);
-      //   stateLinePlotYScale = scalePoint()
-      //     .domain(domain.filter(filterEmpty))
-      //     .range([drawHeight - CANVAS_PADDING_Y, CANVAS_PADDING_Y]) as ScalePoint<string>;
-
-        line = d3Line<LinePoint>()
-          .x(d => (xScaleView as ScaleTime<number, number, never>)(d.x))
-          .y(d => stateLinePlotYScale(d.y?.toString()) as number)
-          .defined(d => d.y !== null) // Skip any gaps in resource data instead of interpolating
-          .curve(curveLinear);
-      } else {
-        line = d3Line<LinePoint>()
-          .x(d => (xScaleView as ScaleTime<number, number, never>)(d.x))
-          .y(d => yScale(d.y) as number)
-          .defined(d => d.y !== null) // Skip any gaps in resource data instead of interpolating
-          .curve(curveLinear);
-      }
       let finalPoints: LinePoint[] = [];
-
       // Collect points and gaps within view
       // Additionally track the two points (if they exist) bounding the
       // time range so they can be drawn to connect the bounding lines
@@ -165,11 +142,9 @@
         if (point.x >= viewTimeRange.start && !leftPoint && prevPoint) {
           leftPoint = processPoint(prevPoint, yScale);
         }
-
         if (point.x > viewTimeRange.end && !rightPoint && prevPoint) {
           rightPoint = processPoint(point, yScale);
         }
-
         if (point.x >= viewTimeRange.start && point.x <= viewTimeRange.end) {
           // Ignore gaps
           if (point.y === null) {
@@ -188,9 +163,7 @@
         }
         prevPoint = point;
       });
-
       finalPoints = pointsInView;
-
       // Perform decimation if requested
       if (pointsInView.length > 0 && decimate) {
         finalPoints = minMaxDecimation<LinePoint>(
@@ -205,12 +178,10 @@
           finalPoints.push(lastPoint);
         }
       }
-
       // If we deferred processing of points
       if (deferProcessingPoints) {
         finalPoints = finalPoints.map(p => processPoint(p, yScale));
       }
-
       // Add back in gap points since they were not included in the decimation
       // TODO this can result in visual degradation of the signal when there are a significant number of gaps
       gapPoints.forEach(point => {
@@ -225,17 +196,14 @@
           // TODO should this case be considered?
         }
       });
-
       // Add left and right points that are outside of the view only after decimation as to not throw off
       // the min-max binning of decimation since the l/r points could be far away offscreen
       if (leftPoint) {
         finalPoints.unshift(leftPoint);
       }
-
       if (rightPoint) {
         finalPoints.push(rightPoint);
       }
-
       // Account for up to 3 extra points added to finalPoints: left, right, and last point
       // Also account for gap points that have not been included in pointsInView
       // TODO could also just do this when finalPoints < drawWidth but might be less performant?
@@ -243,12 +211,12 @@
         drawPointsRequest = window.requestAnimationFrame(() => drawPoints(finalPoints));
       }
 
+      // Draw the line
       line = d3Line<LinePoint>()
         .defined(d => d.y !== null) // Skip any gaps in resource data instead of interpolating
         .x(d => d.x)
         .y(d => d.y as number)
         .curve(curveLinear);
-
       ctx.lineWidth = lineWidth;
       ctx.strokeStyle = lineColor;
       ctx.beginPath();
@@ -264,19 +232,6 @@
     }
 
     for (const point of points) {
-      if (point.x >= viewTimeRange.start && point.x <= viewTimeRange.end) {
-        const x = (xScaleView as ScaleTime<number, number, never>)(point.x);
-        let y: number;
-
-        if (showAsLinePlot) {
-          y = stateLinePlotYScale(point.y?.toString()) as number;
-        } else {
-          y = yScale(point.y) as number;
-        }
-
-        if (y !== null) {
-          ctx.drawImage(offscreenPoint, x - pointRadius, y - pointRadius, pointRadius * 2, pointRadius * 2);
-        }
       const { x, y } = point;
       if (y !== null) {
         ctx.drawImage(offscreenPoint, x - pointRadius, (y as number) - pointRadius, pointRadius * 2, pointRadius * 2);
@@ -451,10 +406,10 @@
         let DELTA_PX = 10;
         if (distance < DELTA_PX || limitTooltipToLine === false) {
           mouseOverPoints = [drawPoint];
-          const { x, y, radius } = processPoint(drawPoint, yScale);
+          const { x, y } = processPoint(drawPoint, yScale);
           if (y !== null && typeof y === 'number') {
             const fill = lineColor;
-            const scalar = radius || 1;
+            const scalar = pointRadius || 1;
 
             // Draw the point using 3 circles
             const circle3 = new Path2D();
@@ -610,10 +565,8 @@
           const value = values[i];
           const { x } = value;
           const y = value.y as number;
-          scaleDomain.add(value.y as string);
-          tempPoints.push({
           ordinalScaleDomain.add(value.y as string);
-          points.push({
+          tempPoints.push({
             id: id++,
             name,
             type: 'line',
