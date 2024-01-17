@@ -119,7 +119,7 @@
     });
   }
   $: if ($startTimeDoyField.invalid || $endTimeDoyField.invalid) {
-    buttonTooltip = 'Simulation start and end times are not correct';
+    buttonTooltip = 'Simulation start and end times are not valid';
   } else if ($simulationStatus === Status.Complete || $simulationStatus === Status.Failed) {
     buttonTooltip = 'Simulation up-to-date';
   } else {
