@@ -52,7 +52,7 @@ export const schedulingGoals = derived(
   [selectedSpecId, schedulingGoalsAll],
   ([$selectedSpecId, $schedulingGoalsAll]) => {
     return $schedulingGoalsAll
-      .filter(goal => goal.scheduling_specification_goal.specification_id === $selectedSpecId)
+      .filter(goal => goal.scheduling_specification_goal?.specification_id === $selectedSpecId)
       .map(goal => {
         return {
           ...goal,
