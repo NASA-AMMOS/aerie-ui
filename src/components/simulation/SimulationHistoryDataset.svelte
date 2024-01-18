@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import CloseIcon from '@nasa-jpl/stellar/icons/close.svg?component';
+  import CancelIcon from '@nasa-jpl/stellar/icons/prohibited.svg?component';
   import { createEventDispatcher } from 'svelte';
   import type { SimulationDataset } from '../../types/simulation';
   import { hexToRgba } from '../../utilities/color';
@@ -117,7 +117,7 @@
             type="button"
             on:click={onCancelSimulation}
           >
-            <CloseIcon />
+            <CancelIcon />
           </button>
         {/if}
       {/if}
@@ -296,13 +296,13 @@
   }
 
   .simulation-dataset-status-cancel {
-    background: var(--st-gray-15);
     border-radius: 16px;
-    color: var(--st-gray-70);
+    color: var(--st-gray-60);
   }
 
   .simulation-dataset-status-cancel:hover {
     background: var(--st-gray-30);
+    color: var(--st-gray-80);
   }
 
   .simulation-dataset-extent {
