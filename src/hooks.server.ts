@@ -10,7 +10,11 @@ import { env } from '$env/dynamic/public';
 
 export const handle: Handle = async ({ event, resolve }) => {
   try {
-    if (event.isDataRequest) {
+    // sveltekit makes a request for json data from layout.server.ts as its first request for a page.
+    // we want to ignore that here, and instead run our hook logic for the actual SSR request
+    // this is mainly so that if we need to redirect, we have a human-readable URL (e.g. /plans/1)
+    // instead of some internal sveltekit URL (/plans/__data.json?x-sveltekit-invalidate=10)
+    if (event.request.url.includes('__data.json')) {
       return await resolve(event);
     }
 
@@ -39,11 +43,13 @@ const handleJWTAuth: Handle = async ({ event, resolve }) => {
       event.locals.user = user;
       return await resolve(event);
     }
+  } else {
+    event.locals.user = null;
   }
 
   // if we're already on the login page, don't redirect
   // otherwise we get stuck in a redirect loop
-  return event.url.pathname.startsWith('/login') || event.url.pathname.startsWith('/auth')
+  return event.url.pathname.includes('/login') || event.url.pathname.includes('/auth')
     ? await resolve(event)
     : new Response(null, {
         headers: {
