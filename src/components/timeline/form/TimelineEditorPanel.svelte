@@ -10,8 +10,13 @@
   import { onMount } from 'svelte';
   import { dndzone } from 'svelte-dnd-action';
   import { ViewConstants } from '../../../enums/view';
-  import { maxTimeRange, viewTimeRange } from '../../../stores/plan';
-  import { resourcesByViewLayerId, simulationDataset } from '../../../stores/simulation';
+  import { activityTypes, maxTimeRange, viewTimeRange } from '../../../stores/plan';
+  import {
+    externalResourceNames,
+    resourceTypes,
+    resourcesByViewLayerId,
+    simulationDataset,
+  } from '../../../stores/simulation';
   import {
     selectedRow,
     selectedRowId,
@@ -23,6 +28,7 @@
     viewUpdateRow,
     viewUpdateTimeline,
   } from '../../../stores/views';
+  import type { ActivityType } from '../../../types/activity';
   import type {
     ActivityLayer,
     Axis,
@@ -423,6 +429,19 @@
       const resourceNames = resourceLayer.filter?.resource?.names ?? [];
       return [...resourceNames];
     }
+    return [];
+  }
+
+  function getFilterOptionsForLayer(layer: Layer, activityTypes: ActivityType[], externalResourceNames: string[]) {
+    if (layer.chartType === 'activity') {
+      return activityTypes.map(t => t.name);
+    } else if (layer.chartType === 'line' || layer.chartType === 'x-range') {
+      return $resourceTypes
+        .map(t => t.name)
+        .concat(externalResourceNames)
+        .sort();
+    }
+
     return [];
   }
 
@@ -928,6 +947,7 @@
                     </span>
                     <TimelineEditorLayerFilter
                       values={getFilterValuesForLayer(layer)}
+                      options={getFilterOptionsForLayer(layer, $activityTypes, $externalResourceNames)}
                       {layer}
                       on:change={event => {
                         const { values } = event.detail;
