@@ -85,9 +85,9 @@ export function convertDoyToYmd(doyString: string, includeMsecs = true): string 
         padStart(`${date.getUTCDate()}`, 2, '0'),
       ].join('-')}T${parsedDoy.time}`;
       if (includeMsecs) {
-        return ymdString + 'Z';
+        return `${ymdString}Z`;
       }
-      return ymdString.replace(/(\.\d+)/, '') + 'Z';
+      return `${ymdString.replace(/(\.\d+)/, '')}Z`;
     } else {
       // doyString is already in ymd format
       return doyString;
