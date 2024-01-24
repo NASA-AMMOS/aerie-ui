@@ -10,7 +10,7 @@
   import { createEventDispatcher } from 'svelte';
   import { Status } from '../../enums/status';
   import type { User } from '../../types/app';
-  import type { Constraint, ConstraintResponse } from '../../types/constraint';
+  import type { ConstraintMetadata, ConstraintResponse } from '../../types/constraint';
   import type { Plan } from '../../types/plan';
   import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';
@@ -22,7 +22,7 @@
   import StatusBadge from '../ui/StatusBadge.svelte';
   import ConstraintViolationButton from './ConstraintViolationButton.svelte';
 
-  export let constraint: Constraint;
+  export let constraint: ConstraintMetadata;
   export let constraintResponse: ConstraintResponse;
   export let hasDeletePermission: boolean = false;
   export let hasEditPermission: boolean = false;

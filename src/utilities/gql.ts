@@ -30,7 +30,7 @@ const gql = {
         success
         constraintId
         constraintName
-        type
+        constraintRevision
         results {
           resourceIds
           gaps {
@@ -122,13 +122,60 @@ const gql = {
 
   CREATE_CONSTRAINT: `#graphql
     mutation CreateConstraint($constraint: constraint_insert_input!) {
-      createConstraint: insert_constraint_one(object: $constraint) {
+      constraint: insert_constraint_metadata_one(object: $constraint) {
         id
+        name
+        description
+        owner
+        public
+        tags
+        versions {
+          revision
+          definition
+          tags
+        }
       }
     }
   `,
 
-  CREATE_CONSTRAINT_TAGS: `#graphql
+  CREATE_CONSTRAINT_DEFINITION: `#graphql
+    mutation insertConstraintDefinition($constraintDefinition: constraint_definition_insert_input!) {
+      constraintDefinition: insert_constraint_definition_one(object: $constraintDefinition) {
+        constraint_id
+        definition
+        revision
+      }
+    }
+  `,
+
+  CREATE_CONSTRAINT_DEFINITION_TAGS: `#graphql
+    mutation CreateConstraintTags($tags: [constraint_tags_definition_insert_input!]!) {
+      insert_constraint_definition_tags(objects: $tags, on_conflict: {
+        constraint: constraint_definition_tags_pkey,
+        update_columns: []
+      }) {
+        affected_rows
+      }
+    }
+  `,
+
+  CREATE_CONSTRAINT_METADATA: `#graphql
+    mutation insertConstraint($constraint: constraint_metadata_insert_input!) {
+      constraint: insert_constraint_metadata_one(object: $constraint) {
+        id
+        name
+        description
+        owner
+        public
+        versions {
+          revision
+          definition
+        }
+      }
+    }
+  `,
+
+  CREATE_CONSTRAINT_METADATA_TAGS: `#graphql
     mutation CreateConstraintTags($tags: [constraint_tags_insert_input!]!) {
       insert_constraint_tags(objects: $tags, on_conflict: {
         constraint: constraint_tags_pkey,
@@ -448,13 +495,21 @@ const gql = {
     }
   `,
 
-  DELETE_CONSTRAINT_TAGS: `#graphql
-    mutation DeleteConstraintTags($ids: [Int!]!) {
+  DELETE_CONSTRAINT_DEFINITION_TAGS: `#graphql
+    mutation DeleteConstraintDefinitionTags($ids: [Int!]!) {
+        delete_constraint_definition_tags(where: { tag_id: { _in: $ids } }) {
+          affected_rows
+      }
+    }
+  `,
+
+  DELETE_CONSTRAINT_METADATA_TAGS: `#graphql
+    mutation DeleteConstraintMetadataTags($ids: [Int!]!) {
         delete_constraint_tags(where: { tag_id: { _in: $ids } }) {
           affected_rows
       }
     }
-`,
+  `,
 
   DELETE_EXPANSION_RULE: `#graphql
     mutation DeleteExpansionRule($id: Int!) {
@@ -1569,23 +1624,20 @@ const gql = {
   `,
 
   SUB_CONSTRAINTS: `#graphql
-    subscription SubConstraints($modelId: Int!, $planId: Int!) {
-      constraints: constraint(where: {
-        _or: [
-          { model_id: { _eq: $modelId } },
-          { plan_id: { _eq: $planId } }
-        ]
-      }, order_by: { name: asc }) {
+    subscription SubConstraints {
+      constraints: constraint_metadata(order_by: { name: asc }) {
         created_at
-        definition
         description
         id
-        model_id
         name
+        models_using {
+          id
+        }
         owner
-        plan_id
-        updated_at
-        updated_by
+        plans_using {
+          id
+        }
+        public
         tags {
           tag {
             color
@@ -1593,29 +1645,11 @@ const gql = {
             name
           }
         }
-      }
-    }
-  `,
-
-  SUB_CONSTRAINTS_ALL: `#graphql
-    subscription SubConstraintsAll {
-      constraints: constraint(order_by: { name: asc }) {
-        created_at
-        definition
-        description
-        id
-        model_id
-        name
-        owner
-        plan_id
         updated_at
         updated_by
-        tags {
-          tag {
-            color
-            id
-            name
-          }
+        versions {
+          definition
+          revision
         }
       }
     }
@@ -2234,10 +2268,10 @@ const gql = {
     }
   `,
 
-  UPDATE_CONSTRAINT: `#graphql
-    mutation UpdateConstraint($id: Int!, $constraint: constraint_set_input!) {
-      updateConstraint: update_constraint_by_pk(
-        pk_columns: { id: $id }, _set: $constraint
+  UPDATE_CONSTRAINT_METADATA: `#graphql
+    mutation UpdateConstraintMetadata($id: Int!, $constraintMetadata: constraint_metadata_set_input!) {
+      updateConstraintMetadata: update_constraint_metadata_by_pk(
+        pk_columns: { id: $id }, _set: $constraintMetadata
       ) {
         id
       }

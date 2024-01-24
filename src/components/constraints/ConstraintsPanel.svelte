@@ -23,7 +23,7 @@
   import { plan, planReadOnly, viewTimeRange } from '../../stores/plan';
   import { simulationStatus } from '../../stores/simulation';
   import type { User } from '../../types/app';
-  import type { Constraint, ConstraintResponse } from '../../types/constraint';
+  import type { ConstraintDefinition, ConstraintMetadata, ConstraintResponse } from '../../types/constraint';
   import type { FieldStore } from '../../types/form';
   import type { ViewGridSection } from '../../types/view';
   import effects from '../../utilities/effects';
@@ -46,14 +46,14 @@
 
   let showAll: boolean = true;
   let filterText: string = '';
-  let filteredConstraints: Constraint[] = [];
+  let filteredConstraints: ConstraintMetadata[] = [];
   let endTimeDoy: string;
   let endTimeDoyField: FieldStore<string>;
   let startTimeDoy: string;
   let startTimeDoyField: FieldStore<string>;
   let showFilters: boolean = false;
   let showConstraintsWithNoViolations: boolean = true;
-  let constraintToConstraintResponseMap: Record<Constraint['id'], ConstraintResponse> = {};
+  let constraintToConstraintResponseMap: Record<ConstraintDefinition['constraint_id'], ConstraintResponse> = {};
 
   $: startTimeDoy = $plan?.start_time_doy || '';
   $: startTimeDoyField = field<string>(startTimeDoy, [required, timestamp]);
@@ -64,10 +64,10 @@
 
   $: if ($constraints && $constraintResponseMap && startTimeMs && endTimeMs) {
     constraintToConstraintResponseMap = {};
-    $constraints.forEach(constraint => {
-      const constraintResponse = $constraintResponseMap[constraint.id];
+    $constraints.forEach(constraintMetadata => {
+      const constraintResponse = $constraintResponseMap[constraintMetadata.id];
       if (constraintResponse) {
-        constraintToConstraintResponseMap[constraint.id] = {
+        constraintToConstraintResponseMap[constraintMetadata.id] = {
           constraintId: constraintResponse.constraintId,
           constraintName: constraintResponse.constraintName,
           errors: constraintResponse.errors,
@@ -101,8 +101,8 @@
   $: filteredViolationCount = getViolationCount(Object.values(filteredConstraintResponses));
 
   function filterConstraints(
-    constraints: Constraint[],
-    constraintToConstraintResponseMap: Record<Constraint['id'], ConstraintResponse>,
+    constraints: ConstraintMetadata[],
+    constraintToConstraintResponseMap: Record<ConstraintMetadata['id'], ConstraintResponse>,
     filterText: string,
     showConstraintsWithNoViolations: boolean,
   ) {
@@ -217,7 +217,7 @@
           name="new-constraint"
           class="st-button secondary"
           use:permissionHandler={{
-            hasPermission: $plan ? featurePermissions.constraints.canCreate(user, $plan) && !$planReadOnly : false,
+            hasPermission: $plan ? featurePermissions.constraints.canCreate(user) && !$planReadOnly : false,
             permissionError: $planReadOnly
               ? PlanStatusMessages.READ_ONLY
               : 'You do not have permission to create constraints',

@@ -240,7 +240,7 @@
     );
     if (confirm) {
       // TODO how should we handle partial success?
-      const constraintTagDeletionSuccess = await effects.deleteConstraintTags([tag.id], user);
+      const constraintTagDeletionSuccess = await effects.deleteConstraintMetadataTags([tag.id], user);
       const expansionRuleTagDeletionSuccess = await effects.deleteExpansionRuleTags([tag.id], user);
       const tagDeletionSuccess = await effects.deleteTag(tag, user);
 

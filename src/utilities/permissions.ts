@@ -2,7 +2,7 @@ import { base } from '$app/paths';
 import type { ActivityDirective, ActivityPreset } from '../types/activity';
 import type { User, UserRole } from '../types/app';
 import type { ReqAuthResponse } from '../types/auth';
-import type { Constraint } from '../types/constraint';
+import type { ConstraintMetadata } from '../types/constraint';
 import type { ExpansionRule, ExpansionSequence, ExpansionSet } from '../types/expansion';
 import type { Model } from '../types/model';
 import type {
@@ -311,13 +311,16 @@ const queryPermissions = {
   CREATE_COMMAND_DICTIONARY: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['uploadDictionary'], user);
   },
-  CREATE_CONSTRAINT: (user: User | null, plan: PlanWithOwners): boolean => {
-    return (
-      isUserAdmin(user) ||
-      (getPermission(['insert_constraint_one'], user) && (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
-    );
+  CREATE_CONSTRAINT: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission(['insert_constraint_metadata_one'], user);
   },
-  CREATE_CONSTRAINT_TAGS: (user: User | null): boolean => {
+  CREATE_CONSTRAINT_DEFINITION: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission(['insert_constraint_definition_one'], user);
+  },
+  CREATE_CONSTRAINT_DEFINITION_TAGS: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission(['insert_constraint_definition_tags'], user);
+  },
+  CREATE_CONSTRAINT_METADATA_TAGS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['insert_constraint_tags'], user);
   },
   CREATE_EXPANSION_RULE: (user: User | null): boolean => {
@@ -435,11 +438,14 @@ const queryPermissions = {
   DELETE_COMMAND_DICTIONARY: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['delete_command_dictionary_by_pk'], user);
   },
-  DELETE_CONSTRAINT: (user: User | null, plan: PlanWithOwners): boolean => {
+  DELETE_CONSTRAINT: (user: User | null, constraintMetadata: AssetWithOwner<ConstraintMetadata>): boolean => {
     return (
       isUserAdmin(user) ||
-      (getPermission(['delete_constraint_by_pk'], user) && (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
+      (getPermission(['delete_constraint_metadata_by_pk'], user) && isUserOwner(user, constraintMetadata))
     );
+  },
+  DELETE_CONSTRAINT_DEFINITION_TAGS: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission(['delete_constraint_definition_tags'], user);
   },
   DELETE_CONSTRAINT_TAGS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['delete_constraint_tags'], user);
@@ -709,10 +715,10 @@ const queryPermissions = {
   UPDATE_ACTIVITY_PRESET: (user: User | null, preset: AssetWithOwner<ActivityPreset>): boolean => {
     return isUserAdmin(user) || (getPermission(['update_activity_presets_by_pk'], user) && isUserOwner(user, preset));
   },
-  UPDATE_CONSTRAINT: (user: User | null, plan: PlanWithOwners): boolean => {
+  UPDATE_CONSTRAINT_METADATA: (user: User | null, constraintMetadata: AssetWithOwner<ConstraintMetadata>): boolean => {
     return (
       isUserAdmin(user) ||
-      (getPermission(['update_constraint_by_pk'], user) && (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
+      (getPermission(['update_constraint_metadata_by_pk'], user) && isUserOwner(user, constraintMetadata))
     );
   },
   UPDATE_EXPANSION_RULE: (user: User | null, expansionRule: AssetWithOwner<ExpansionRule>): boolean => {
@@ -868,7 +874,7 @@ interface PlanSnapshotCRUDPermission extends Omit<PlanAssetCRUDPermission<PlanSn
   canRestore: RolePlanPermissionCheck;
 }
 
-interface ConstraintCRUDPermission<T = null> extends PlanAssetCRUDPermission<T> {
+interface ConstraintCRUDPermission<T = null> extends CRUDPermission<T> {
   canCheck: RolePlanPermissionCheck;
 }
 
@@ -897,7 +903,7 @@ interface FeaturePermissions {
   activityDirective: PlanAssetCRUDPermission<ActivityDirective>;
   activityPresets: PlanActivityPresetsCRUDPermission;
   commandDictionary: CRUDPermission<void>;
-  constraints: ConstraintCRUDPermission<AssetWithOwner<Constraint>>;
+  constraints: ConstraintCRUDPermission<AssetWithOwner<ConstraintMetadata>>;
   expansionRules: CRUDPermission<AssetWithOwner>;
   expansionSequences: ExpansionSequenceCRUDPermission<AssetWithOwner<ExpansionSequence>>;
   expansionSets: ExpansionSetsCRUDPermission<AssetWithOwner<ExpansionSet>>;
@@ -937,10 +943,10 @@ const featurePermissions: FeaturePermissions = {
   },
   constraints: {
     canCheck: (user, plan, model) => queryPermissions.CHECK_CONSTRAINTS(user, plan, model),
-    canCreate: (user, plan) => queryPermissions.CREATE_CONSTRAINT(user, plan),
-    canDelete: (user, plan) => queryPermissions.DELETE_CONSTRAINT(user, plan),
+    canCreate: user => queryPermissions.CREATE_CONSTRAINT(user),
+    canDelete: (user, constraintMetadata) => queryPermissions.DELETE_CONSTRAINT(user, constraintMetadata),
     canRead: user => queryPermissions.SUB_CONSTRAINTS_ALL(user),
-    canUpdate: (user, plan) => queryPermissions.UPDATE_CONSTRAINT(user, plan),
+    canUpdate: (user, constraintMetadata) => queryPermissions.UPDATE_CONSTRAINT_METADATA(user, constraintMetadata),
   },
   expansionRules: {
     canCreate: user => queryPermissions.CREATE_EXPANSION_RULE(user),

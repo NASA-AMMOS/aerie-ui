@@ -4,15 +4,17 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import { constraintsFormColumns } from '../../stores/constraints';
-  import type { User } from '../../types/app';
-  import type { Constraint } from '../../types/constraint';
-  import type { ModelSlim } from '../../types/model';
-  import type { PlanSlim } from '../../types/plan';
-  import type { ConstraintTagsInsertInput, Tag, TagsChangeEvent } from '../../types/tags';
+  import type { User, UserId } from '../../types/app';
+  import type { ConstraintDefinition, ConstraintMetadata } from '../../types/constraint';
+  import type {
+    ConstraintDefinitionTagsInsertInput,
+    ConstraintMetadataTagsInsertInput,
+    Tag,
+    TagsChangeEvent,
+  } from '../../types/tags';
   import effects from '../../utilities/effects';
   import { isSaveEvent } from '../../utilities/keyboardEvents';
   import { permissionHandler } from '../../utilities/permissionHandler';
-  import { featurePermissions } from '../../utilities/permissions';
   import { diffTags } from '../../utilities/tags';
   import PageTitle from '../app/PageTitle.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
@@ -26,13 +28,10 @@
   export let initialConstraintDescription: string = '';
   export let initialConstraintId: number | null = null;
   export let initialConstraintName: string = '';
-  export let initialConstraintModelId: number | null = null;
-  export let initialConstraintPlanId: number | null = null;
-  export let initialConstraintTags: Tag[] = [];
-  export let initialModelMap: Record<number, ModelSlim> = {};
-  export let initialModels: ModelSlim[] = [];
-  export let initialPlanMap: Record<number, PlanSlim> = {};
-  export let initialPlans: PlanSlim[] = [];
+  export let initialConstraintPublic: boolean = true;
+  export let initialConstraintDefinitionTags: Tag[] = [];
+  export let initialConstraintMetadataTags: Tag[] = [];
+  export let initialConstraintOwner: UserId = '';
   export let initialTags: Tag[] = [];
   export let mode: 'create' | 'edit' = 'create';
   export let user: User | null;
@@ -43,102 +42,73 @@
   let constraintDescription: string = initialConstraintDescription;
   let constraintId: number | null = initialConstraintId;
   let constraintName: string = initialConstraintName;
-  let constraintModelId: number | null = initialConstraintModelId;
-  let constraintPlanId: number | null = initialConstraintPlanId;
-  let constraintTags: Tag[] = initialConstraintTags;
+  let constraintPublic: boolean = initialConstraintPublic;
+  let constraintDefinitionTags: Tag[] = initialConstraintDefinitionTags;
+  let constraintMetadataTags: Tag[] = initialConstraintMetadataTags;
+  let constraintOwner: UserId = initialConstraintOwner;
+  let constraintRevision: number | null = null;
   let hasPermission: boolean = false;
-  let models: ModelSlim[] = initialModels;
-  let plans: PlanSlim[] = initialPlans;
+  let isMetadataModified: boolean = false;
+  let isDefinitionModified: boolean = false;
   let saveButtonEnabled: boolean = false;
-  let savedConstraint: Partial<Constraint> = {
-    definition: constraintDefinition,
+  let savedConstraintMetadata: Partial<ConstraintMetadata> = {
     description: constraintDescription,
-    model_id: constraintModelId,
     name: constraintName,
-    plan_id: constraintPlanId,
-    tags: constraintTags.map(tag => ({ tag })),
+    tags: constraintMetadataTags.map(tag => ({ tag })),
+  };
+  let savedConstraintDefinition: Partial<ConstraintDefinition> = {
+    definition: constraintDefinition,
+    tags: constraintDefinitionTags.map(tag => ({ tag })),
   };
 
-  $: constraintModified = diffConstraints(savedConstraint, {
-    definition: constraintDefinition,
+  $: isMetadataModified = diffConstraintMetadata(savedConstraintMetadata, {
     description: constraintDescription,
-    model_id: constraintModelId,
     name: constraintName,
-    plan_id: constraintPlanId,
-    tags: constraintTags.map(tag => ({ tag })),
+    tags: constraintMetadataTags.map(tag => ({ tag })),
   });
-  $: {
-    if (constraintPlanId !== null) {
-      hasPermission = hasPlanPermission(initialPlanMap[constraintPlanId], mode, user);
-    } else if (constraintModelId !== null) {
-      hasPermission = hasModelPermission(constraintModelId, mode, user);
-    } else {
-      hasPermission = plans.reduce((prevPermission: boolean, plan) => {
-        return prevPermission || hasPlanPermission(plan, mode, user);
-      }, false);
-    }
-  }
+  $: isDefinitionModified = diffConstraintDefinition(savedConstraintDefinition, {
+    definition: constraintDefinition,
+    tags: constraintMetadataTags.map(tag => ({ tag })),
+  });
   $: pageTitle = mode === 'edit' ? 'Constraints' : 'New Constraint';
-  $: pageSubtitle = mode === 'edit' ? savedConstraint.name : '';
-  $: saveButtonEnabled =
-    constraintDefinition !== '' && constraintName !== '' && (constraintModelId !== null || constraintPlanId !== null);
-  $: saveButtonText = mode === 'edit' && !constraintModified ? 'Saved' : 'Save';
-  $: saveButtonClass = saveButtonEnabled && constraintModified ? 'primary' : 'secondary';
+  $: pageSubtitle = mode === 'edit' ? savedConstraintMetadata.name : '';
+  $: saveButtonEnabled = constraintDefinition !== '' && constraintName !== '';
+  $: saveButtonText = mode === 'edit' && !isMetadataModified && !isDefinitionModified ? 'Saved' : 'Save';
+  $: saveButtonClass = saveButtonEnabled && isMetadataModified && isDefinitionModified ? 'primary' : 'secondary';
 
-  $: if (constraintPlanId !== null) {
-    const plan = initialPlans.find(plan => plan.id === constraintPlanId);
-    if (plan) {
-      constraintModelId = plan.model_id;
-    }
-  }
-
-  function hasModelPermission(modelId: number, mode: 'create' | 'edit', user: User | null): boolean {
-    const model = initialModelMap[modelId];
-    if (user && model) {
-      return model.plans.reduce((prevPermission: boolean, { id }: { id: number }) => {
-        const plan = initialPlanMap[id];
-        if (plan) {
-          return (
-            prevPermission ||
-            (mode === 'create'
-              ? featurePermissions.constraints.canCreate(user, plan)
-              : featurePermissions.constraints.canUpdate(user, plan))
-          );
-        }
-        return prevPermission;
-      }, false);
-    }
-
-    return true;
-  }
-
-  function hasPlanPermission(plan: PlanSlim, mode: 'create' | 'edit', user: User | null): boolean {
-    if (user) {
-      return mode === 'create'
-        ? featurePermissions.constraints.canCreate(user, plan)
-        : featurePermissions.constraints.canUpdate(user, plan);
-    }
-    return false;
-  }
-
-  function diffConstraints(constraintA: Partial<Constraint>, constraintB: Partial<Constraint>) {
+  function diffConstraintMetadata(
+    constraintMetadataA: Partial<ConstraintMetadata>,
+    constraintMetadataB: Partial<ConstraintMetadata>,
+  ) {
     if (
-      constraintA.definition !== constraintB.definition ||
-      constraintA.description !== constraintB.description ||
-      constraintA.name !== constraintB.name ||
-      constraintA.plan_id !== constraintB.plan_id ||
+      constraintMetadataA.description !== constraintMetadataB.description ||
+      constraintMetadataA.name !== constraintMetadataB.name ||
       diffTags(
-        (constraintA.tags || []).map(({ tag }) => tag),
-        (constraintB.tags || []).map(({ tag }) => tag),
+        (constraintMetadataA.tags || []).map(({ tag }) => tag),
+        (constraintMetadataB.tags || []).map(({ tag }) => tag),
       )
     ) {
       return true;
-    } else if (constraintA.plan_id === null && constraintB.plan_id === null) {
-      // only diff model_id if both plan_ids are null
-      // to replicate the behavior where when saving a constraint, the model_id is ignored
-      // if a plan_id is supplied
-      return constraintA.model_id !== constraintB.model_id;
     }
+
+    return false;
+  }
+
+  function diffConstraintDefinition(
+    constraintDefinitionA: Partial<ConstraintDefinition>,
+    constraintDefinitionB: Partial<ConstraintDefinition>,
+  ) {
+    if (
+      constraintDefinitionA.definition !== constraintDefinitionB.definition ||
+      diffTags(
+        (constraintDefinitionA.tags || []).map(({ tag }) => tag),
+        (constraintDefinitionB.tags || []).map(({ tag }) => tag),
+      )
+    ) {
+      return true;
+    }
+
+    return false;
   }
 
   function onDidChangeModelContent(event: CustomEvent<{ value: string }>) {
@@ -159,72 +129,108 @@
       detail: { tag, type },
     } = event;
     if (type === 'remove') {
-      constraintTags = constraintTags.filter(t => t.name !== tag.name);
+      constraintMetadataTags = constraintMetadataTags.filter(t => t.name !== tag.name);
     } else if (type === 'create' || type === 'select') {
       let tagsToAdd: Tag[] = [tag];
       if (type === 'create') {
         tagsToAdd = (await effects.createTags([{ color: tag.color, name: tag.name }], user)) || [];
       }
-      constraintTags = constraintTags.concat(tagsToAdd);
+      constraintMetadataTags = constraintMetadataTags.concat(tagsToAdd);
     }
   }
 
-  async function saveConstraint() {
+  async function createConstraint() {
     if (saveButtonEnabled) {
-      if (mode === 'create') {
-        const newConstraintId = await effects.createConstraint(
-          constraintDefinition,
-          constraintModelId ? initialModelMap[constraintModelId] : null,
-          constraintName,
-          constraintPlanId ? initialPlanMap[constraintPlanId] : null,
-          user,
-          constraintDescription,
-          initialPlans,
-        );
+      const newConstraintId = await effects.createConstraint(
+        constraintName,
+        constraintPublic,
+        constraintMetadataTags.map(({ id }) => ({ tag_id: id })),
+        constraintDefinition,
+        constraintDefinitionTags.map(({ id }) => ({ tag_id: id })),
+        user,
+        constraintDescription,
+      );
 
-        if (newConstraintId !== null) {
-          // Associate new tags with constraint
-          const newConstraintTags: ConstraintTagsInsertInput[] = (constraintTags || []).map(({ id: tag_id }) => ({
-            constraint_id: newConstraintId,
-            tag_id,
-          }));
-          await effects.createConstraintTags(newConstraintTags, user);
-          goto(`${base}/constraints/edit/${newConstraintId}`);
-        }
-      } else if (mode === 'edit' && constraintId !== null) {
-        await effects.updateConstraint(
-          constraintId,
-          constraintDefinition,
-          constraintModelId ? initialModelMap[constraintModelId] : null,
-          constraintName,
-          constraintPlanId ? initialPlanMap[constraintPlanId] : null,
-          user,
-          initialPlans,
-          constraintDescription,
-        );
-
-        // Associate new tags with constraint
-        const newConstraintTags: ConstraintTagsInsertInput[] = (constraintTags || []).map(({ id: tag_id }) => ({
-          constraint_id: constraintId as number,
-          tag_id,
-        }));
-        await effects.createConstraintTags(newConstraintTags, user);
-
-        // Disassociate old tags from constraint
-        const unusedTags = initialConstraintTags
-          .filter(tag => !constraintTags.find(t => tag.id === t.id))
-          .map(tag => tag.id);
-        await effects.deleteConstraintTags(unusedTags, user);
-
-        savedConstraint = {
-          definition: constraintDefinition,
-          description: constraintDescription,
-          model_id: constraintModelId,
-          name: constraintName,
-          plan_id: constraintPlanId,
-          tags: constraintTags.map(tag => ({ tag })),
-        };
+      if (newConstraintId !== null) {
+        goto(`${base}/constraints/edit/${newConstraintId}`);
       }
+    }
+  }
+
+  async function createNewConstraintDefinition() {
+    if (saveButtonEnabled && constraintId !== null) {
+      const definition = await effects.createConstraintDefinition(
+        constraintId,
+        constraintDefinition,
+        constraintDefinitionTags.map(({ id }) => ({ tag_id: id })),
+        user,
+      );
+
+      if (definition !== null) {
+        console.log('definition :>> ', definition);
+      }
+    }
+  }
+
+  async function createConstraintMetadataTags(constraintId: number, constraintTags: Tag[]) {
+    // Associate new tags with constraint definition version
+    const newConstraintTags: ConstraintMetadataTagsInsertInput[] = (constraintTags || []).map(({ id: tag_id }) => ({
+      constraint_id: constraintId,
+      tag_id,
+    }));
+    await effects.createConstraintMetadataTags(newConstraintTags, user);
+  }
+
+  async function saveConstraint() {
+    await saveConstraintMetadata();
+    await saveConstraintDefinitionRevisionTags();
+  }
+
+  async function saveConstraintMetadata() {
+    if (constraintId !== null) {
+      await effects.updateConstraintMetadata(
+        constraintId,
+        {
+          description: constraintDescription,
+          name: constraintName,
+          owner: constraintOwner,
+        },
+        user,
+      );
+
+      await createConstraintMetadataTags(constraintId, constraintMetadataTags);
+
+      // Disassociate old tags from constraint
+      const unusedTags = initialConstraintMetadataTags
+        .filter(tag => !constraintMetadataTags.find(t => tag.id === t.id))
+        .map(tag => tag.id);
+      await effects.deleteConstraintMetadataTags(unusedTags, user);
+
+      savedConstraintMetadata = {
+        description: constraintDescription,
+        name: constraintName,
+        tags: constraintMetadataTags.map(tag => ({ tag })),
+      };
+    }
+  }
+
+  async function saveConstraintDefinitionRevisionTags() {
+    if (constraintId !== null && constraintRevision !== null) {
+      // Associate new tags with constraint definition version
+      const newConstraintTags: ConstraintDefinitionTagsInsertInput[] = (constraintDefinitionTags || []).map(
+        ({ id: tag_id }) => ({
+          constraint_id: constraintId as number,
+          revision: constraintRevision as number,
+          tag_id,
+        }),
+      );
+      await effects.createConstraintDefinitionTags(newConstraintTags, user);
+
+      // Disassociate old tags from constraint
+      const unusedTags = initialConstraintDefinitionTags
+        .filter(tag => !constraintDefinitionTags.find(t => tag.id === t.id))
+        .map(tag => tag.id);
+      await effects.deleteConstraintDefinitionTags(unusedTags, user);
     }
   }
 </script>
@@ -350,7 +356,7 @@
             ],
           ]}
           options={initialTags}
-          selected={constraintTags}
+          selected={constraintMetadataTags}
           on:change={onTagsInputChange}
         />
       </fieldset>
@@ -361,8 +367,6 @@
 
   <ConstraintEditor
     {constraintDefinition}
-    {constraintModelId}
-    {constraintPlanId}
     readOnly={!hasPermission}
     title="{mode === 'create' ? 'New' : 'Edit'} Constraint - Definition Editor"
     {user}

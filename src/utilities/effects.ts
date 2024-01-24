@@ -40,7 +40,15 @@ import type {
 import type { ActivityMetadata } from '../types/activity-metadata';
 import type { BaseUser, User, UserId } from '../types/app';
 import type { ReqAuthResponse, ReqSessionResponse } from '../types/auth';
-import type { Constraint, ConstraintInsertInput, ConstraintResponse, ConstraintResult } from '../types/constraint';
+import type {
+  ConstraintDefinition,
+  ConstraintDefinitionInsertInput,
+  ConstraintInsertInput,
+  ConstraintMetadata,
+  ConstraintMetadataSetInput,
+  ConstraintResponse,
+  ConstraintResult,
+} from '../types/constraint';
 import type {
   ExpansionRule,
   ExpansionRuleInsertInput,
@@ -121,6 +129,8 @@ import type {
 } from '../types/simulation';
 import type {
   ActivityDirectiveTagsInsertInput,
+  ConstraintDefinitionTagsInsertInput,
+  ConstraintMetadataTagsInsertInput,
   ConstraintTagsInsertInput,
   ExpansionRuleTagsInsertInput,
   PlanSnapshotTagsInsertInput,
@@ -501,39 +511,40 @@ const effects = {
   },
 
   async createConstraint(
-    definition: string,
-    model: ModelSlim | null,
     name: string,
-    plan: PlanSlim | null,
+    isPublic: boolean,
+    metadataTags: ConstraintTagsInsertInput[],
+    definition: string,
+    definitionTags: ConstraintTagsInsertInput[],
     user: User | null,
-    description: string,
-    plans: PlanSlim[],
+    description?: string,
   ): Promise<number | null> {
     try {
-      let hasPermission = false;
-      if (model) {
-        hasPermission = model.plans.reduce((previousValue, { id }) => {
-          const plan = plans.find(({ id: planId }) => planId === id);
-          if (plan) {
-            return previousValue || queryPermissions.CREATE_CONSTRAINT(user, plan);
-          }
-          return previousValue;
-        }, true);
-      } else if (plan) {
-        hasPermission = queryPermissions.CREATE_CONSTRAINT(user, plan);
-      }
-      if (!hasPermission) {
+      if (!queryPermissions.CREATE_CONSTRAINT(user)) {
         throwPermissionError('create a constraint');
       }
 
       const constraintInsertInput: ConstraintInsertInput = {
-        definition,
-        description,
-        model_id: plan !== null ? null : model?.id ?? null,
+        ...(description ? { description } : {}),
         name,
-        plan_id: plan?.id ?? null,
+        public: isPublic,
+        tags: {
+          data: metadataTags,
+        },
+        versions: {
+          data: [
+            {
+              definition,
+              tags: definitionTags,
+            },
+          ],
+        },
       };
-      const data = await reqHasura(gql.CREATE_CONSTRAINT, { constraint: constraintInsertInput }, user);
+      const data = await reqHasura<ConstraintMetadata>(
+        gql.CREATE_CONSTRAINT,
+        { constraint: constraintInsertInput },
+        user,
+      );
       const { createConstraint } = data;
       if (createConstraint != null) {
         const { id } = createConstraint;
@@ -550,13 +561,81 @@ const effects = {
     }
   },
 
-  async createConstraintTags(tags: ConstraintTagsInsertInput[], user: User | null): Promise<number | null> {
+  async createConstraintDefinition(
+    constraintId: number,
+    definition: string,
+    definitionTags: ConstraintTagsInsertInput[],
+    user: User | null,
+  ): Promise<Pick<ConstraintDefinition, 'constraint_id' | 'definition' | 'revision'> | null> {
     try {
-      if (!queryPermissions.CREATE_CONSTRAINT_TAGS(user)) {
+      if (!queryPermissions.CREATE_CONSTRAINT_DEFINITION(user)) {
+        throwPermissionError('create a constraint');
+      }
+
+      const constraintDefinitionInsertInput: ConstraintDefinitionInsertInput = {
+        constraint_id: constraintId,
+        definition,
+        tags: {
+          data: definitionTags,
+        },
+      };
+      const data = await reqHasura<ConstraintDefinition>(
+        gql.CREATE_CONSTRAINT_DEFINITION,
+        { constraintDefinition: constraintDefinitionInsertInput },
+        user,
+      );
+      const { constraintDefinition } = data;
+      if (constraintDefinition != null) {
+        showSuccessToast('Constraint Definition Created Successfully');
+        return constraintDefinition;
+      } else {
+        throw Error(`Unable to create constraint definition for constraint "${constraintId}"`);
+      }
+    } catch (e) {
+      catchError('Constraint Creation Failed', e as Error);
+      showFailureToast('Constraint Creation Failed');
+      return null;
+    }
+  },
+
+  async createConstraintDefinitionTags(
+    tags: ConstraintDefinitionTagsInsertInput[],
+    user: User | null,
+  ): Promise<number | null> {
+    try {
+      if (!queryPermissions.CREATE_CONSTRAINT_METADATA_TAGS(user)) {
         throwPermissionError('create constraint tags');
       }
 
-      const data = await reqHasura<{ affected_rows: number }>(gql.CREATE_CONSTRAINT_TAGS, { tags }, user);
+      const data = await reqHasura<{ affected_rows: number }>(gql.CREATE_CONSTRAINT_DEFINITION_TAGS, { tags }, user);
+      const { insert_constraint_tags } = data;
+      if (insert_constraint_tags != null) {
+        const { affected_rows } = insert_constraint_tags;
+
+        if (affected_rows !== tags.length) {
+          throw Error('Some constraint tags were not successfully created');
+        }
+        return affected_rows;
+      } else {
+        throw Error('Unable to create constraint tags');
+      }
+    } catch (e) {
+      catchError('Create Constraint Tags Failed', e as Error);
+      showFailureToast('Create Constraint Tags Failed');
+      return null;
+    }
+  },
+
+  async createConstraintMetadataTags(
+    tags: ConstraintMetadataTagsInsertInput[],
+    user: User | null,
+  ): Promise<number | null> {
+    try {
+      if (!queryPermissions.CREATE_CONSTRAINT_METADATA_TAGS(user)) {
+        throwPermissionError('create constraint tags');
+      }
+
+      const data = await reqHasura<{ affected_rows: number }>(gql.CREATE_CONSTRAINT_METADATA_TAGS, { tags }, user);
       const { insert_constraint_tags } = data;
       if (insert_constraint_tags != null) {
         const { affected_rows } = insert_constraint_tags;
@@ -1657,7 +1736,7 @@ const effects = {
     }
   },
 
-  async deleteConstraint(constraint: Constraint, plan: PlanSlim, user: User | null): Promise<boolean> {
+  async deleteConstraint(constraint: ConstraintMetadata, plan: PlanSlim, user: User | null): Promise<boolean> {
     try {
       if (!queryPermissions.DELETE_CONSTRAINT(user, plan)) {
         throwPermissionError('delete this constraint');
@@ -1686,13 +1765,35 @@ const effects = {
     return false;
   },
 
-  async deleteConstraintTags(ids: Tag['id'][], user: User | null): Promise<boolean> {
+  async deleteConstraintDefinitionTags(ids: Tag['id'][], user: User | null): Promise<boolean> {
+    try {
+      if (!queryPermissions.DELETE_CONSTRAINT_DEFINITION_TAGS(user)) {
+        throwPermissionError('delete constraint tags');
+      }
+
+      const data = await reqHasura<{ affected_rows: number }>(gql.DELETE_CONSTRAINT_DEFINITION_TAGS, { ids }, user);
+      if (data.delete_constraint_definition_tags != null) {
+        if (data.delete_constraint_definition_tags.affected_rows !== ids.length) {
+          throw Error('Some constraint definition tags were not successfully deleted');
+        }
+        return true;
+      } else {
+        throw Error('Unable to delete constraint definition tags');
+      }
+    } catch (e) {
+      catchError('Delete Constraint Definition Tags Failed', e as Error);
+      showFailureToast('Delete Constraint Definition Tags Failed');
+      return false;
+    }
+  },
+
+  async deleteConstraintMetadataTags(ids: Tag['id'][], user: User | null): Promise<boolean> {
     try {
       if (!queryPermissions.DELETE_CONSTRAINT_TAGS(user)) {
         throwPermissionError('delete constraint tags');
       }
 
-      const data = await reqHasura<{ affected_rows: number }>(gql.DELETE_CONSTRAINT_TAGS, { ids }, user);
+      const data = await reqHasura<{ affected_rows: number }>(gql.DELETE_CONSTRAINT_METADATA_TAGS, { ids }, user);
       if (data.delete_constraint_tags != null) {
         if (data.delete_constraint_tags.affected_rows !== ids.length) {
           throw Error('Some constraint tags were not successfully deleted');
@@ -2420,9 +2521,9 @@ const effects = {
     }
   },
 
-  async getConstraint(id: number, user: User | null): Promise<Constraint | null> {
+  async getConstraint(id: number, user: User | null): Promise<ConstraintDefinition | null> {
     try {
-      const data = await reqHasura<Constraint>(gql.GET_CONSTRAINT, { id }, user);
+      const data = await reqHasura<ConstraintDefinition>(gql.GET_CONSTRAINT, { id }, user);
       const { constraint } = data;
       return constraint;
     } catch (e) {
@@ -3897,49 +3998,25 @@ const effects = {
     }
   },
 
-  async updateConstraint(
+  async updateConstraintMetadata(
     id: number,
-    definition: string,
-    model: ModelSlim | null,
-    name: string,
-    plan: PlanSlim | null,
+    constraintMetadata: ConstraintMetadataSetInput,
     user: User | null,
-    plans: PlanSlim[],
-    description?: string,
   ): Promise<void> {
     try {
-      let hasPermission = false;
-      if (model) {
-        hasPermission = model.plans.reduce((previousValue, { id }) => {
-          const plan = plans.find(({ id: planId }) => planId === id);
-          if (plan) {
-            return previousValue || queryPermissions.UPDATE_CONSTRAINT(user, plan);
-          }
-          return previousValue;
-        }, true);
-      } else if (plan) {
-        hasPermission = queryPermissions.UPDATE_CONSTRAINT(user, plan);
-      }
-      if (!hasPermission) {
+      if (!queryPermissions.UPDATE_CONSTRAINT_METADATA(user, constraintMetadata)) {
         throwPermissionError('update this constraint');
       }
 
-      const constraint: Partial<Constraint> = {
-        definition,
-        model_id: plan !== null ? null : model?.id,
-        name,
-        plan_id: plan?.id ?? null,
-        ...(description && { description }),
-      };
-      const data = await reqHasura(gql.UPDATE_CONSTRAINT, { constraint, id }, user);
+      const data = await reqHasura(gql.UPDATE_CONSTRAINT_METADATA, { constraintMetadata, id }, user);
       if (data.updateConstraint != null) {
-        showSuccessToast('Constraint Updated Successfully');
+        showSuccessToast('Constraint Metadata Updated Successfully');
       } else {
-        throw Error(`Unable to update constraint with ID: "${id}"`);
+        throw Error(`Unable to update constraint metadata with ID: "${id}"`);
       }
     } catch (e) {
-      catchError('Constraint Update Failed', e as Error);
-      showFailureToast('Constraint Update Failed');
+      catchError('Constraint Metadata Update Failed', e as Error);
+      showFailureToast('Constraint Metadata Update Failed');
     }
   },
 

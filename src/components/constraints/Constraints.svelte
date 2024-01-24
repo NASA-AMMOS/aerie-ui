@@ -4,11 +4,10 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import type { ICellRendererParams } from 'ag-grid-community';
-  import { constraintsAll, constraintsColumns } from '../../stores/constraints';
+  import { constraints, constraintsColumns } from '../../stores/constraints';
   import type { User } from '../../types/app';
-  import type { Constraint } from '../../types/constraint';
+  import type { ConstraintMetadata } from '../../types/constraint';
   import type { DataGridColumnDef, DataGridRowSelection, RowId } from '../../types/data-grid';
-  import type { ModelSlim } from '../../types/model';
   import type { PlanSlim } from '../../types/plan';
   import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';
@@ -26,21 +25,13 @@
   export let user: User | null;
 
   type CellRendererParams = {
-    deleteConstraint: (constraint: Constraint) => void;
-    editConstraint: (constraint: Constraint) => void;
+    deleteConstraint: (constraint: ConstraintMetadata) => void;
+    editConstraint: (constraint: ConstraintMetadata) => void;
   };
-  type ConstraintsCellRendererParams = ICellRendererParams<Constraint> & CellRendererParams;
-  type ConstraintsPermissionsMap = {
-    models: Record<number, boolean>;
-    plans: Record<number, boolean>;
-  };
+  type ConstraintsCellRendererParams = ICellRendererParams<ConstraintMetadata> & CellRendererParams;
   type ConstraintsPlanMap = Record<number, PlanSlim>;
 
-  export let initialModelMap: Record<number, ModelSlim> = {};
-  export let initialPlanMap: Record<number, PlanSlim> = {};
-  export let initialPlans: PlanSlim[] = [];
-
-  const baseColumnDefs: DataGridColumnDef[] = [
+  const baseColumnDefs: DataGridColumnDef<ConstraintMetadata>[] = [
     {
       field: 'id',
       filter: 'number',
@@ -52,24 +43,6 @@
       width: 60,
     },
     { field: 'name', filter: 'text', headerName: 'Name', minWidth: 80, resizable: true, sortable: true },
-    {
-      field: 'model_id',
-      filter: 'number',
-      headerName: 'Model ID',
-      sortable: true,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
-      width: 95,
-    },
-    {
-      field: 'plan_id',
-      filter: 'number',
-      headerName: 'Plan ID',
-      sortable: true,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
-      width: 80,
-    },
     {
       field: 'owner',
       filter: 'string',
@@ -104,148 +77,27 @@
   const permissionError = 'You do not have permission to create a constraint.';
 
   let columnDefs = baseColumnDefs;
-  let constraintsDeletePermissionsMap: ConstraintsPermissionsMap = {
-    models: {},
-    plans: {},
-  };
-  let constraintsEditPermissionsMap: ConstraintsPermissionsMap = {
-    models: {},
-    plans: {},
-  };
+
   let constraintsPlanMap: ConstraintsPlanMap = {};
   let constraintModelId: number | null = null;
   let filterText: string = '';
-  let filteredConstraints: Constraint[] = [];
+  let filteredConstraints: ConstraintMetadata[] = [];
   let hasPermission: boolean = false;
-  let selectedConstraint: Constraint | null = null;
+  let selectedConstraint: ConstraintMetadata | null = null;
 
-  $: filteredConstraints = $constraintsAll.filter(constraint => {
+  $: filteredConstraints = $constraints.filter(constraint => {
     const filterTextLowerCase = filterText.toLowerCase();
     const includesId = `${constraint.id}`.includes(filterTextLowerCase);
     const includesName = constraint.name.toLocaleLowerCase().includes(filterTextLowerCase);
     return includesId || includesName;
   });
   $: if (selectedConstraint !== null) {
-    const found = $constraintsAll.findIndex(constraint => constraint.id === selectedConstraint?.id);
+    const found = $constraints.findIndex(constraint => constraint.id === selectedConstraint?.id);
     if (found === -1) {
       selectedConstraint = null;
     }
   }
-  $: constraintModelId = getConstraintModelId(selectedConstraint);
-  $: constraintsDeletePermissionsMap = ($constraintsAll ?? []).reduce(
-    (prevMap: ConstraintsPermissionsMap, constraint: Constraint) => {
-      const { model_id, plan_id } = constraint;
-
-      if (plan_id !== null) {
-        const plan = initialPlanMap[plan_id];
-        if (plan) {
-          return {
-            ...prevMap,
-            plans: {
-              ...prevMap.plans,
-              [plan_id]: featurePermissions.constraints.canDelete(user, plan, constraint),
-            },
-          };
-        }
-      } else if (model_id !== null) {
-        const model = initialModelMap[model_id];
-        if (model) {
-          return {
-            ...prevMap,
-            models: {
-              ...prevMap.models,
-              [model_id]: model.plans.reduce((prevPermission: boolean, { id }) => {
-                const plan = initialPlanMap[id];
-                if (plan) {
-                  return prevPermission || featurePermissions.constraints.canDelete(user, plan, constraint);
-                }
-                return prevPermission;
-              }, false),
-            },
-          };
-        }
-      }
-
-      return prevMap;
-    },
-    {
-      models: {},
-      plans: {},
-    },
-  );
-  $: constraintsEditPermissionsMap = ($constraintsAll ?? []).reduce(
-    (prevMap: ConstraintsPermissionsMap, constraint: Constraint) => {
-      const { model_id, plan_id } = constraint;
-
-      if (plan_id !== null) {
-        const plan = initialPlanMap[plan_id];
-        if (plan) {
-          return {
-            ...prevMap,
-            plans: {
-              ...prevMap.plans,
-              [plan_id]: featurePermissions.constraints.canUpdate(user, plan, constraint),
-            },
-          };
-        }
-      } else if (model_id !== null) {
-        const model = initialModelMap[model_id];
-        if (model) {
-          return {
-            ...prevMap,
-            models: {
-              ...prevMap.models,
-              [model_id]: model.plans.reduce((prevPermission: boolean, { id }) => {
-                const plan = initialPlanMap[id];
-                if (plan) {
-                  return prevPermission || featurePermissions.constraints.canUpdate(user, plan, constraint);
-                }
-                return prevPermission;
-              }, false),
-            },
-          };
-        }
-      }
-
-      return prevMap;
-    },
-    {
-      models: {},
-      plans: {},
-    },
-  );
-  $: constraintsPlanMap = ($constraintsAll ?? []).reduce((prevMap: ConstraintsPlanMap, constraint: Constraint) => {
-    const { model_id, plan_id, id } = constraint;
-
-    if (plan_id !== null) {
-      const plan = initialPlanMap[plan_id];
-      return {
-        ...prevMap,
-        [id]: plan,
-      };
-    } else if (model_id !== null) {
-      const model = initialModelMap[model_id];
-      if (model) {
-        const modelPlan = model.plans.find(({ id }) => {
-          const plan = initialPlanMap[id];
-          return featurePermissions.constraints.canDelete(user, plan, constraint);
-        });
-
-        if (modelPlan) {
-          return {
-            ...prevMap,
-            [id]: initialPlanMap[modelPlan.id],
-          };
-        }
-      }
-    }
-
-    return prevMap;
-  }, {});
   $: {
-    hasPermission = initialPlans.reduce((prevPermission: boolean, plan) => {
-      return prevPermission || hasPlanPermission(plan, user);
-    }, false);
     columnDefs = [
       ...baseColumnDefs,
       {
@@ -289,7 +141,7 @@
     ];
   }
 
-  async function deleteConstraint(constraint: Constraint) {
+  async function deleteConstraint(constraint: ConstraintMetadata) {
     const constraintPlan = constraintsPlanMap[constraint.id];
     const success = await effects.deleteConstraint(constraint, constraintPlan, user);
 
@@ -304,13 +156,13 @@
 
   function deleteConstraintContext(event: CustomEvent<RowId[]>) {
     const id = event.detail[0] as number;
-    const constraint = $constraintsAll.find(c => c.id === id);
+    const constraint = $constraints.find(c => c.id === id);
     if (constraint) {
       deleteConstraint(constraint);
     }
   }
 
-  function editConstraint({ id }: Pick<Constraint, 'id'>) {
+  function editConstraint({ id }: Pick<ConstraintMetadata, 'id'>) {
     goto(`${base}/constraints/edit/${id}`);
   }
 
@@ -318,50 +170,15 @@
     editConstraint({ id: event.detail[0] as number });
   }
 
-  function getConstraintModelId(selectedConstraint: Constraint | null): number | null {
-    if (selectedConstraint !== null) {
-      const { model_id, plan_id } = selectedConstraint;
-
-      if (plan_id !== null) {
-        const plan = initialPlans.find(plan => plan.id === plan_id);
-        if (plan) {
-          return plan.model_id;
-        }
-      } else if (model_id !== null) {
-        return model_id;
-      }
-    }
-
-    return null;
+  function hasDeletePermission(user: User | null, constraint: ConstraintMetadata) {
+    return featurePermissions.constraints.canDelete(user, constraint);
   }
 
-  function hasDeletePermission(_user: User | null, constraint: Constraint) {
-    const { model_id, plan_id } = constraint;
-    if (plan_id !== null) {
-      return constraintsDeletePermissionsMap.plans[plan_id] ?? false;
-    } else if (model_id !== null) {
-      return constraintsDeletePermissionsMap.models[model_id] ?? false;
-    }
-
-    return false;
+  function hasEditPermission(_user: User | null, constraint: ConstraintMetadata) {
+    return featurePermissions.constraints.canUpdate(user, constraint);
   }
 
-  function hasEditPermission(_user: User | null, constraint: Constraint) {
-    const { model_id, plan_id } = constraint;
-    if (plan_id !== null) {
-      return constraintsEditPermissionsMap.plans[plan_id] ?? false;
-    } else if (model_id !== null) {
-      return constraintsEditPermissionsMap.models[model_id] ?? false;
-    }
-
-    return false;
-  }
-
-  function hasPlanPermission(plan: PlanSlim, user: User | null): boolean {
-    return featurePermissions.constraints.canCreate(user, plan);
-  }
-
-  function toggleConstraint(event: CustomEvent<DataGridRowSelection<Constraint>>) {
+  function toggleConstraint(event: CustomEvent<DataGridRowSelection<ConstraintMetadata>>) {
     const {
       detail: { data: clickedConstraint, isSelected },
     } = event;
@@ -420,7 +237,9 @@
   <CssGridGutter track={1} type="column" />
 
   <ConstraintEditor
-    constraintDefinition={selectedConstraint?.definition ?? 'No Constraint Selected'}
+    constraintDefinition={selectedConstraint
+      ? selectedConstraint.versions[selectedConstraint.versions.length - 1].definition
+      : 'No Constraint Selected'}
     {constraintModelId}
     readOnly={true}
     title="Constraint - Definition Editor (Read-only)"
