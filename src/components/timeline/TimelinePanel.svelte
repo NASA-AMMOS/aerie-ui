@@ -41,8 +41,6 @@
   import Panel from '../ui/Panel.svelte';
   import PanelHeaderActions from '../ui/PanelHeaderActions.svelte';
   import Timeline from './Timeline.svelte';
-  import TimelineInteractionModeControl from './TimelineInteractionModeControl.svelte';
-  import TimelineLockControl from './TimelineLockControl.svelte';
   import TimelineViewControls from './TimelineViewControls.svelte';
 
   export let user: User | null;
@@ -232,20 +230,15 @@
 
 <Panel padBody={false}>
   <svelte:fragment slot="header">
-    <div />
+    <div class="st-typography-medium timeline-title">Timeline</div>
     <PanelHeaderActions>
-      <div class="header-actions">
-        <TimelineInteractionModeControl
-          timelineInteractionMode={$timelineInteractionMode}
-          on:change={({ detail: mode }) => {
-            $timelineInteractionMode = mode;
-          }}
-        />
+      <div class="header-actions timeline-icon-tray">
         <TimelineViewControls
           maxTimeRange={$maxTimeRange}
           {timelineDirectiveVisibilityToggles}
           viewTimeRange={$viewTimeRange}
           {decimate}
+          {hasUpdateDirectivePermission}
           {interpolateHoverValue}
           {limitTooltipToLine}
           {hideTimelineTooltip}
@@ -268,17 +261,6 @@
             // zoom transform sync into TimelinePanel which feels out of scope for this component which
             // is primarily supposed to manage store interactions?
             timelineRef?.viewTimeRangeChanged(newViewTimeRange);
-          }}
-        />
-        <TimelineLockControl
-          hasUpdatePermission={hasUpdateDirectivePermission}
-          planReadOnly={$planReadOnly}
-          timelineLockStatus={$timelineLockStatus}
-          on:lock={({ detail: lock }) => {
-            $timelineLockStatus = lock;
-          }}
-          on:unlock={({ detail: unlock }) => {
-            $timelineLockStatus = unlock;
           }}
         />
       </div>
@@ -347,10 +329,32 @@
 </Panel>
 
 <style>
+  .timeline-title {
+    padding: 0px 4px;
+    user-select: none;
+  }
   .header-actions {
     align-items: center;
     display: flex;
-    gap: 10px;
+    gap: 4px;
     justify-content: center;
+  }
+
+  :global(.timeline-icon-tray .st-button.icon.toggle-button:not(.active)) {
+    color: rgba(41, 49, 55, 0.3);
+  }
+
+  :global(.timeline-icon-tray .st-button.icon.toggle-button:not(.active) .directive-icon) {
+    opacity: 0.3 !important;
+  }
+
+  :global(.timeline-icon-tray-divider) {
+    align-items: center;
+    background: black;
+    display: flex;
+    height: 16px;
+    margin: 0px 4px;
+    opacity: 0.1;
+    width: 1px;
   }
 </style>
