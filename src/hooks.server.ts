@@ -10,14 +10,6 @@ import { env } from '$env/dynamic/public';
 
 export const handle: Handle = async ({ event, resolve }) => {
   try {
-    // sveltekit makes a request for json data from layout.server.ts as its first request for a page.
-    // we want to ignore that here, and instead run our hook logic for the actual SSR request
-    // this is mainly so that if we need to redirect, we have a human-readable URL (e.g. /plans/1)
-    // instead of some internal sveltekit URL (/plans/__data.json?x-sveltekit-invalidate=10)
-    if (event.request.url.includes('__data.json')) {
-      return await resolve(event);
-    }
-
     if (env.PUBLIC_AUTH_SSO_ENABLED === 'true') {
       return await handleSSOAuth({ event, resolve });
     } else {
@@ -68,7 +60,7 @@ const handleSSOAuth: Handle = async ({ event, resolve }) => {
   const validationData = await reqGatewayForwardCookies<ReqValidateSSOResponse>(
     '/auth/validateSSO',
     cookieHeader,
-    event.request.url,
+    event.url.toString(),
   );
 
   if (!validationData.success) {
