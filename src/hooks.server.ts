@@ -86,8 +86,6 @@ const handleSSOAuth: Handle = async ({ event, resolve }) => {
   if (roles) {
     console.log(`successfully SSO'd for user ${user.id}`);
 
-    event.locals.user = roles;
-
     // create and set cookies
     const userStr = JSON.stringify(user);
     const userCookie = Buffer.from(userStr).toString('base64');
@@ -96,14 +94,19 @@ const handleSSOAuth: Handle = async ({ event, resolve }) => {
       path: `${base}/`,
       sameSite: 'none',
     };
-    event.cookies.set('user', userCookie, cookieOpts);
+
+    // if logout just cleared user cookie, don't re-set it
+    if (!event.url.pathname.includes('/auth/logout')) {
+      event.cookies.set('user', userCookie, cookieOpts);
+    }
+
     // don't overwrite existing activeRole
-    if (!activeRoleCookie) {
+    if (!activeRoleCookie || activeRoleCookie === 'deleted') {
       event.cookies.set('activeRole', roles.defaultRole, cookieOpts);
     }
-  } else {
-    event.locals.user = null;
   }
+
+  event.locals.user = roles;
 
   return await resolve(event);
 };
