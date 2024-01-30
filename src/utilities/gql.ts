@@ -1257,8 +1257,8 @@ const gql = {
   `,
 
   GET_TYPESCRIPT_CONSTRAINTS: `#graphql
-    query GetTypeScriptConstraints($model_id: ID!, $plan_id: Int) {
-      dslTypeScriptResponse: constraintsDslTypescript(missionModelId: $model_id, planId: $plan_id) {
+    query GetTypeScriptConstraints($model_id: ID!) {
+      dslTypeScriptResponse: constraintsDslTypescript(missionModelId: $model_id) {
         reason
         status
         typescriptFiles {

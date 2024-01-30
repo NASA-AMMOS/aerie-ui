@@ -80,7 +80,6 @@
   let columnDefs = baseColumnDefs;
 
   let constraintsPlanMap: ConstraintsPlanMap = {};
-  let constraintModelId: number | null = null;
   let filterText: string = '';
   let filteredConstraints: ConstraintMetadata[] = [];
   let hasPermission: boolean = false;
@@ -247,7 +246,6 @@
     constraintDefinition={selectedConstraint
       ? selectedConstraint.versions[selectedConstraint.versions.length - 1].definition
       : 'No Constraint Selected'}
-    {constraintModelId}
     readOnly={true}
     title="Constraint - Definition Editor (Read-only)"
     {user}

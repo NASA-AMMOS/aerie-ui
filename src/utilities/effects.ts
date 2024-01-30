@@ -3224,14 +3224,10 @@ const effects = {
     }
   },
 
-  async getTsFilesConstraints(model_id: number, plan_id: number | null, user: User | null): Promise<TypeScriptFile[]> {
+  async getTsFilesConstraints(model_id: number, user: User | null): Promise<TypeScriptFile[]> {
     if (model_id !== null && model_id !== undefined) {
       try {
-        const data = await reqHasura<DslTypeScriptResponse>(
-          gql.GET_TYPESCRIPT_CONSTRAINTS,
-          { model_id, plan_id },
-          user,
-        );
+        const data = await reqHasura<DslTypeScriptResponse>(gql.GET_TYPESCRIPT_CONSTRAINTS, { model_id }, user);
         const { dslTypeScriptResponse } = data;
         if (dslTypeScriptResponse != null) {
           const { reason, status, typescriptFiles } = dslTypeScriptResponse;
