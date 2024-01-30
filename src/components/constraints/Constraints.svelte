@@ -4,6 +4,7 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import type { ICellRendererParams } from 'ag-grid-community';
+  import { SearchParameters } from '../../enums/searchParameters';
   import { constraints, constraintsColumns } from '../../stores/constraints';
   import type { User } from '../../types/app';
   import type { ConstraintMetadata } from '../../types/constraint';
@@ -91,6 +92,7 @@
     const includesName = constraint.name.toLocaleLowerCase().includes(filterTextLowerCase);
     return includesId || includesName;
   });
+  $: hasPermission = featurePermissions.constraints.canRead(user);
   $: if (selectedConstraint !== null) {
     const found = $constraints.findIndex(constraint => constraint.id === selectedConstraint?.id);
     if (found === -1) {
@@ -163,7 +165,12 @@
   }
 
   function editConstraint({ id }: Pick<ConstraintMetadata, 'id'>) {
-    goto(`${base}/constraints/edit/${id}`);
+    const constraint = $constraints.find(c => c.id === id);
+    goto(
+      `${base}/constraints/edit/${id}?${SearchParameters.REVISION}=${
+        constraint?.versions[constraint?.versions.length - 1].revision
+      }`,
+    );
   }
 
   function editConstraintContext(event: CustomEvent<RowId[]>) {

@@ -3,7 +3,12 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import { constraintsFormColumns } from '../../stores/constraints';
+  import {
+    constraintDefinition,
+    constraintId,
+    constraintRevision,
+    constraintsFormColumns,
+  } from '../../stores/constraints';
   import type { User, UserId } from '../../types/app';
   import type { ConstraintDefinition, ConstraintMetadata } from '../../types/constraint';
   import type {
@@ -15,6 +20,7 @@
   import effects from '../../utilities/effects';
   import { isSaveEvent } from '../../utilities/keyboardEvents';
   import { permissionHandler } from '../../utilities/permissionHandler';
+  import { featurePermissions } from '../../utilities/permissions';
   import { diffTags } from '../../utilities/tags';
   import PageTitle from '../app/PageTitle.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
@@ -24,57 +30,84 @@
   import TagsInput from '../ui/Tags/TagsInput.svelte';
   import ConstraintEditor from './ConstraintEditor.svelte';
 
-  export let initialConstraintDefinition: string = 'export default (): Constraint => {\n\n}\n';
+  // export let initialConstraintDefinitionCode: string = 'export default (): Constraint => {\n\n}\n';
   export let initialConstraintDescription: string = '';
   export let initialConstraintId: number | null = null;
   export let initialConstraintName: string = '';
   export let initialConstraintPublic: boolean = true;
   export let initialConstraintDefinitionTags: Tag[] = [];
   export let initialConstraintMetadataTags: Tag[] = [];
-  export let initialConstraintOwner: UserId = '';
+  export let initialConstraintOwner: UserId = null;
+  export let initialConstraintRevision: number = 0;
   export let initialTags: Tag[] = [];
   export let mode: 'create' | 'edit' = 'create';
   export let user: User | null;
 
   const permissionError = `You do not have permission to ${mode === 'edit' ? 'edit this' : 'create a'} constraint.`;
 
-  let constraintDefinition: string = initialConstraintDefinition;
-  let constraintDescription: string = initialConstraintDescription;
-  let constraintId: number | null = initialConstraintId;
-  let constraintName: string = initialConstraintName;
-  let constraintPublic: boolean = initialConstraintPublic;
+  let selectedConstraintRevision: number | null = initialConstraintRevision;
+
+  let constraintDefinitionCode: string = 'export default (): Constraint => {\n\n}\n';
   let constraintDefinitionTags: Tag[] = initialConstraintDefinitionTags;
+  let constraintDescription: string = initialConstraintDescription;
+  let constraintMetadataId: number | null = initialConstraintId;
   let constraintMetadataTags: Tag[] = initialConstraintMetadataTags;
-  let constraintOwner: UserId = initialConstraintOwner;
-  let constraintRevision: number | null = null;
+  let constraintName: string = initialConstraintName;
+  let constraintOwner: UserId = initialConstraintOwner ?? user?.id ?? null;
+  let constraintPublic: boolean = initialConstraintPublic;
   let hasPermission: boolean = false;
-  let isMetadataModified: boolean = false;
   let isDefinitionModified: boolean = false;
+  let isDefinitionTagsModified: boolean = false;
+  let isMetadataModified: boolean = false;
   let saveButtonEnabled: boolean = false;
+  let saveButtonText: string = 'Save';
   let savedConstraintMetadata: Partial<ConstraintMetadata> = {
     description: constraintDescription,
     name: constraintName,
     tags: constraintMetadataTags.map(tag => ({ tag })),
   };
   let savedConstraintDefinition: Partial<ConstraintDefinition> = {
-    definition: constraintDefinition,
+    definition: constraintDefinitionCode,
     tags: constraintDefinitionTags.map(tag => ({ tag })),
   };
 
+  $: if (initialConstraintId !== null) {
+    $constraintId = initialConstraintId;
+    constraintMetadataId = initialConstraintId;
+  }
+  $: if (selectedConstraintRevision !== null) {
+    $constraintRevision = selectedConstraintRevision;
+  }
+  $: if ($constraintDefinition != null) {
+    constraintDefinitionCode = $constraintDefinition.definition;
+    constraintDefinitionTags = $constraintDefinition.tags.map(({ tag }) => tag);
+  }
+  $: hasPermission = featurePermissions.constraints.canCreate(user);
   $: isMetadataModified = diffConstraintMetadata(savedConstraintMetadata, {
     description: constraintDescription,
     name: constraintName,
     tags: constraintMetadataTags.map(tag => ({ tag })),
   });
   $: isDefinitionModified = diffConstraintDefinition(savedConstraintDefinition, {
-    definition: constraintDefinition,
-    tags: constraintMetadataTags.map(tag => ({ tag })),
+    definition: constraintDefinitionCode,
   });
+  $: isDefinitionTagsModified = diffTags(
+    (savedConstraintDefinition.tags || []).map(({ tag }) => tag),
+    constraintDefinitionTags,
+  );
+
   $: pageTitle = mode === 'edit' ? 'Constraints' : 'New Constraint';
   $: pageSubtitle = mode === 'edit' ? savedConstraintMetadata.name : '';
-  $: saveButtonEnabled = constraintDefinition !== '' && constraintName !== '';
-  $: saveButtonText = mode === 'edit' && !isMetadataModified && !isDefinitionModified ? 'Saved' : 'Save';
   $: saveButtonClass = saveButtonEnabled && isMetadataModified && isDefinitionModified ? 'primary' : 'secondary';
+  $: saveButtonEnabled = constraintDefinitionCode !== '' && constraintName !== '';
+  $: if (isMetadataModified || isDefinitionModified) {
+    // saveButtonText = mode === 'edit' && !isMetadataModified && !isDefinitionModified ? 'Saved' : 'Save';
+    if ((isMetadataModified || isDefinitionTagsModified) && !isDefinitionModified) {
+      saveButtonText = 'Update';
+    } else if (isDefinitionModified) {
+      saveButtonText = 'Save as new version';
+    }
+  }
 
   function diffConstraintMetadata(
     constraintMetadataA: Partial<ConstraintMetadata>,
@@ -98,23 +131,13 @@
     constraintDefinitionA: Partial<ConstraintDefinition>,
     constraintDefinitionB: Partial<ConstraintDefinition>,
   ) {
-    if (
-      constraintDefinitionA.definition !== constraintDefinitionB.definition ||
-      diffTags(
-        (constraintDefinitionA.tags || []).map(({ tag }) => tag),
-        (constraintDefinitionB.tags || []).map(({ tag }) => tag),
-      )
-    ) {
-      return true;
-    }
-
-    return false;
+    return constraintDefinitionA.definition !== constraintDefinitionB.definition;
   }
 
   function onDidChangeModelContent(event: CustomEvent<{ value: string }>) {
     const { detail } = event;
     const { value } = detail;
-    constraintDefinition = value;
+    constraintDefinitionCode = value;
   }
 
   function onKeydown(event: KeyboardEvent): void {
@@ -145,7 +168,7 @@
         constraintName,
         constraintPublic,
         constraintMetadataTags.map(({ id }) => ({ tag_id: id })),
-        constraintDefinition,
+        constraintDefinitionCode,
         constraintDefinitionTags.map(({ id }) => ({ tag_id: id })),
         user,
         constraintDescription,
@@ -158,10 +181,10 @@
   }
 
   async function createNewConstraintDefinition() {
-    if (saveButtonEnabled && constraintId !== null) {
+    if (saveButtonEnabled && constraintMetadataId !== null) {
       const definition = await effects.createConstraintDefinition(
-        constraintId,
-        constraintDefinition,
+        constraintMetadataId,
+        constraintDefinitionCode,
         constraintDefinitionTags.map(({ id }) => ({ tag_id: id })),
         user,
       );
@@ -182,14 +205,24 @@
   }
 
   async function saveConstraint() {
-    await saveConstraintMetadata();
-    await saveConstraintDefinitionRevisionTags();
+    if (constraintId) {
+      if (isMetadataModified) {
+        await saveConstraintMetadata();
+      }
+      if (isDefinitionTagsModified && !isDefinitionModified) {
+        await saveConstraintDefinitionRevisionTags();
+      } else if (isDefinitionModified) {
+        await createNewConstraintDefinition();
+      }
+    } else {
+      await createConstraint();
+    }
   }
 
   async function saveConstraintMetadata() {
     if (constraintId !== null) {
       await effects.updateConstraintMetadata(
-        constraintId,
+        $constraintId,
         {
           description: constraintDescription,
           name: constraintName,
@@ -198,12 +231,15 @@
         user,
       );
 
-      await createConstraintMetadataTags(constraintId, constraintMetadataTags);
+      const newTags = constraintMetadataTags.filter(tag => !initialConstraintMetadataTags.find(t => tag.id === t.id));
+
+      await createConstraintMetadataTags($constraintId, newTags);
 
       // Disassociate old tags from constraint
       const unusedTags = initialConstraintMetadataTags
         .filter(tag => !constraintMetadataTags.find(t => tag.id === t.id))
         .map(tag => tag.id);
+
       await effects.deleteConstraintMetadataTags(unusedTags, user);
 
       savedConstraintMetadata = {
@@ -215,12 +251,12 @@
   }
 
   async function saveConstraintDefinitionRevisionTags() {
-    if (constraintId !== null && constraintRevision !== null) {
+    if ($constraintId !== null && selectedConstraintRevision !== null) {
       // Associate new tags with constraint definition version
       const newConstraintTags: ConstraintDefinitionTagsInsertInput[] = (constraintDefinitionTags || []).map(
         ({ id: tag_id }) => ({
-          constraint_id: constraintId as number,
-          revision: constraintRevision as number,
+          constraint_id: $constraintId as number,
+          revision: selectedConstraintRevision as number,
           tag_id,
         }),
       );
@@ -266,7 +302,7 @@
       {#if mode === 'edit'}
         <fieldset>
           <label for="constraintId">Constraint ID</label>
-          <input class="st-input w-100" disabled name="constraintId" value={constraintId} />
+          <input class="st-input w-100" disabled name="constraintId" value={$constraintId} />
         </fieldset>
       {/if}
 
@@ -366,7 +402,7 @@
   <CssGridGutter track={1} type="column" />
 
   <ConstraintEditor
-    {constraintDefinition}
+    constraintDefinition={constraintDefinitionCode}
     readOnly={!hasPermission}
     title="{mode === 'create' ? 'New' : 'Edit'} Constraint - Definition Editor"
     {user}

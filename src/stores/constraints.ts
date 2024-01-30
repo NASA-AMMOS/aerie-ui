@@ -10,6 +10,16 @@ import { gqlSubscribable } from './subscribable';
 
 export const constraints = gqlSubscribable<ConstraintMetadata[]>(gql.SUB_CONSTRAINTS, {}, [], null);
 
+export const constraintId: Writable<number> = writable(-1);
+export const constraintRevision: Writable<number> = writable(0);
+
+export const constraintDefinition = gqlSubscribable<ConstraintDefinition | null>(
+  gql.SUB_CONSTRAINT_DEFINITION,
+  { id: constraintId, revision: constraintRevision },
+  null,
+  null,
+);
+
 export const constraintsMap: Readable<Record<string, ConstraintMetadata>> = derived([constraints], ([$constraints]) =>
   keyBy($constraints, 'id'),
 );

@@ -8,12 +8,4 @@
   export let data: PageData;
 </script>
 
-<ConstraintForm
-  initialModelMap={data.initialModelMap}
-  initialModels={data.initialModels}
-  initialPlanMap={data.initialPlanMap}
-  initialPlans={data.initialPlans}
-  initialTags={$tags}
-  mode="create"
-  user={data.user}
-/>
+<ConstraintForm initialTags={$tags} mode="create" user={data.user} />

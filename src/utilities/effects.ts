@@ -535,7 +535,9 @@ const effects = {
           data: [
             {
               definition,
-              tags: definitionTags,
+              tags: {
+                data: definitionTags,
+              },
             },
           ],
         },
@@ -2521,9 +2523,9 @@ const effects = {
     }
   },
 
-  async getConstraint(id: number, user: User | null): Promise<ConstraintDefinition | null> {
+  async getConstraint(id: number, user: User | null): Promise<ConstraintMetadata | null> {
     try {
-      const data = await reqHasura<ConstraintDefinition>(gql.GET_CONSTRAINT, { id }, user);
+      const data = await reqHasura<ConstraintMetadata>(convertToQuery(gql.SUB_CONSTRAINT), { id }, user);
       const { constraint } = data;
       return constraint;
     } catch (e) {

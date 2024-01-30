@@ -52,6 +52,12 @@ export type ConstraintPlanSpec = {
   // plan: Plan;
 };
 
+export type ConstraintDefinitionInsertInput = Pick<ConstraintDefinition, 'constraint_id' | 'definition'> & {
+  tags: {
+    data: ConstraintTagsInsertInput[];
+  };
+};
+
 export type ConstraintInsertInput = Omit<
   ConstraintMetadataSlim,
   'id' | 'created_at' | 'updated_at' | 'owner' | 'updated_by' | 'tags'
@@ -60,16 +66,7 @@ export type ConstraintInsertInput = Omit<
     data: ConstraintTagsInsertInput[];
   };
   versions: {
-    data: {
-      definition: string;
-      tags: ConstraintTagsInsertInput[];
-    }[];
-  };
-};
-
-export type ConstraintDefinitionInsertInput = Pick<ConstraintDefinition, 'constraint_id' | 'definition'> & {
-  tags: {
-    data: ConstraintTagsInsertInput[];
+    data: Omit<ConstraintDefinitionInsertInput, 'constraint_id'>[];
   };
 };
 

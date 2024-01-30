@@ -121,18 +121,22 @@ const gql = {
   `,
 
   CREATE_CONSTRAINT: `#graphql
-    mutation CreateConstraint($constraint: constraint_insert_input!) {
+    mutation CreateConstraint($constraint: constraint_metadata_insert_input!) {
       constraint: insert_constraint_metadata_one(object: $constraint) {
         id
         name
         description
         owner
         public
-        tags
+        tags {
+          tag_id
+        }
         versions {
           revision
           definition
-          tags
+          tags {
+            tag_id
+          }
         }
       }
     }
@@ -155,22 +159,6 @@ const gql = {
         update_columns: []
       }) {
         affected_rows
-      }
-    }
-  `,
-
-  CREATE_CONSTRAINT_METADATA: `#graphql
-    mutation insertConstraint($constraint: constraint_metadata_insert_input!) {
-      constraint: insert_constraint_metadata_one(object: $constraint) {
-        id
-        name
-        description
-        owner
-        public
-        versions {
-          revision
-          definition
-        }
       }
     }
   `,
@@ -722,30 +710,6 @@ const gql = {
           updated_at
         }
         name
-      }
-    }
-  `,
-
-  GET_CONSTRAINT: `#graphql
-    query GetConstraint($id: Int!) {
-      constraint: constraint_by_pk(id: $id) {
-        created_at
-        definition
-        description
-        id
-        model_id
-        name
-        owner
-        plan_id
-        updated_at
-        updated_by
-        tags {
-          tag {
-            color
-            id
-            name
-          }
-        }
       }
     }
   `,
@@ -1623,6 +1587,44 @@ const gql = {
     }
   `,
 
+  SUB_CONSTRAINT: `#graphql
+    subscription SubConstraint($id: Int!) {
+      constraint: constraint_metadata_by_pk(id: $id) {
+        created_at
+        description
+        id
+        name
+        models_using {
+          model_id
+        }
+        owner
+        plans_using {
+          plan_id
+        }
+        public
+        tags {
+          tag {
+            color
+            id
+            name
+          }
+        }
+        updated_at
+        updated_by
+        versions {
+          revision
+          tags {
+            tag {
+              color
+              id
+              name
+            }
+          }
+        }
+      }
+    }
+  `,
+
   SUB_CONSTRAINTS: `#graphql
     subscription SubConstraints {
       constraints: constraint_metadata(order_by: { name: asc }) {
@@ -1631,11 +1633,11 @@ const gql = {
         id
         name
         models_using {
-          id
+          model_id
         }
         owner
         plans_using {
-          id
+          plan_id
         }
         public
         tags {
@@ -1650,6 +1652,22 @@ const gql = {
         versions {
           definition
           revision
+        }
+      }
+    }
+  `,
+
+  SUB_CONSTRAINT_DEFINITION: `#graphql
+    subscription SubConstraintDefinition($id: Int!, $revision: Int!) {
+      constraintDefinition: constraint_definition_by_pk(constraint_id: $id, revision: $revision) {
+        definition
+        revision
+        tags {
+          tag {
+            color
+            id
+            name
+          }
         }
       }
     }

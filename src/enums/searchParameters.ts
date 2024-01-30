@@ -9,4 +9,5 @@ export enum SearchParameters {
   VIEW_ID = 'viewId',
   START_TIME = 'startTime',
   END_TIME = 'endTime',
+  REVISION = 'revision',
 }
