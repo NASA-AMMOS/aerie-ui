@@ -602,7 +602,8 @@
           {#if selectedSimulationStatus === Status.Pending || selectedSimulationStatus === Status.Incomplete}
             <button
               on:click={() => effects.cancelSimulation($simulationDatasetId, data.user)}
-              class="st-button cancel-button">Cancel</button
+              class="st-button cancel-button"
+              disabled={$planReadOnly}>Cancel</button
             >
           {/if}
         </svelte:fragment>

@@ -3,6 +3,7 @@
 <script lang="ts">
   import CancelIcon from '@nasa-jpl/stellar/icons/prohibited.svg?component';
   import { createEventDispatcher } from 'svelte';
+  import { planReadOnly } from '../../stores/plan';
   import type { SimulationDataset } from '../../types/simulation';
   import { hexToRgba } from '../../utilities/color';
   import {
@@ -115,6 +116,7 @@
             use:tooltip={{ content: 'Cancel Simulation', placement: 'top' }}
             class="st-button icon simulation-dataset-status-cancel"
             type="button"
+            disabled={$planReadOnly}
             on:click={onCancelSimulation}
           >
             <CancelIcon />
@@ -300,7 +302,11 @@
     color: var(--st-gray-60);
   }
 
-  .simulation-dataset-status-cancel:hover {
+  .simulation-dataset-status-cancel:hover:disabled {
+    cursor: not-allowed;
+  }
+
+  .simulation-dataset-status-cancel:hover:enabled {
     background: var(--st-gray-30);
     color: var(--st-gray-80);
   }
