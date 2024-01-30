@@ -229,11 +229,10 @@
     }
   }
 
-  /* TODO */
-  function openDoc(evt, url) {
-    evt.preventDefault();
-    evt.stopPropagation();
-    window.open('https://nasa-ammos.github.io/aerie-docs/', '_newtab');
+  function openDoc(event: MouseEvent, url: string) {
+    event.preventDefault();
+    event.stopPropagation();
+    window.open(url, '_newtab');
   }
 
   async function copyViewToClipboard() {
@@ -409,7 +408,12 @@
         <Input layout="inline" class="timeline-view-control-menu--input">
           <label class="st-typography-label" for="decimate">
             <DecimateIcon />Decimate data (lossless)
-            <button class="st-button secondary docs-button" on:click|capture={evt => openDoc(evt, 'decimation')}>
+            <button
+              class="st-button secondary docs-button"
+              on:click|capture={event => {
+                openDoc(event, 'http://localhost:3001/aerie-docs/planning/timeline-controls/#line-layer-decimation');
+              }}
+            >
               Docs <ArrowUpRightIcon />
             </button>
           </label>
@@ -418,7 +422,15 @@
         <Input layout="inline" class="timeline-view-control-menu--input">
           <label class="st-typography-label" for="interpolate">
             <InterpolateIcon />Show interpolated values
-            <button class="st-button secondary docs-button" on:click|capture={evt => openDoc(evt, 'interpolation')}>
+            <button
+              class="st-button secondary docs-button"
+              on:click|capture={event => {
+                openDoc(
+                  event,
+                  'http://localhost:3001/aerie-docs/planning/timeline-controls/#cursor-value-interpolation',
+                );
+              }}
+            >
               Docs <ArrowUpRightIcon />
             </button>
           </label>
