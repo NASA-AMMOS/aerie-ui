@@ -5,11 +5,13 @@
   import MinusIcon from '@nasa-jpl/stellar/icons/minus.svg?component';
   import ThreeDotsIcon from '@nasa-jpl/stellar/icons/three_dot_horizontal.svg?component';
   import WarningIcon from '@nasa-jpl/stellar/icons/warning.svg?component';
+  import HourglassIcon from 'bootstrap-icons/icons/hourglass-top.svg?component';
   import { getColorForStatus, Status, statusColors } from '../../utilities/status';
   import { tooltip } from '../../utilities/tooltip';
   import ProgressRadial from './ProgressRadial.svelte';
 
   export let badgeText: string | undefined = undefined;
+  export let indeterminate: boolean = false;
   export let status: Status | null = null;
   export let showTooltip: boolean = true;
   export let prefix: string = '';
@@ -35,7 +37,13 @@
       {:else if status === Status.Canceled}
         <CloseIcon />
       {:else if status === Status.Incomplete}
-        <ProgressRadial {progress} />
+        {#if indeterminate}
+          <span class="status-badge--incomplete-indeterminate">
+            <HourglassIcon />
+          </span>
+        {:else}
+          <ProgressRadial {progress} />
+        {/if}
       {:else if status === Status.Modified}
         <EditingIcon />
       {:else if status === Status.Pending}
@@ -81,5 +89,11 @@
     border-radius: 8px;
     font-size: 12px;
     padding: 0.5px 5px;
+  }
+
+  .status-badge--incomplete-indeterminate :global(svg.st-icon) {
+    display: flex;
+    height: 11px;
+    width: 11px;
   }
 </style>
