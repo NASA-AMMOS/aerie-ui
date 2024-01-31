@@ -2873,6 +2873,7 @@ const effects = {
       const error = e as Error;
       if (error.name !== 'AbortError') {
         catchError(error);
+        showFailureToast('Failed to fetch profiles');
         fetchingResources.set(false);
       }
       return [];
@@ -2926,6 +2927,7 @@ const effects = {
       const error = e as Error;
       if (error.name !== 'AbortError') {
         catchError(error);
+        showFailureToast('Failed to fetch external profiles');
         fetchingResourcesExternal.set(false);
       }
       return [];
