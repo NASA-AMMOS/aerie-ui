@@ -336,9 +336,7 @@ const effects = {
             checkConstraintsStatus.set(Status.Failed);
           } else if (successfulConstraintResults.length !== data.constraintResponses.length) {
             showFailureToast('Constraints Partially Checked');
-            checkConstraintsStatus.set(
-              successfulConstraintResults.length !== 0 ? Status.PartialSuccess : Status.Failed,
-            );
+            checkConstraintsStatus.set(successfulConstraintResults.length !== 0 ? Status.Failed : Status.Failed);
           } else {
             showSuccessToast('All Constraints Checked');
             checkConstraintsStatus.set(Status.Complete);
