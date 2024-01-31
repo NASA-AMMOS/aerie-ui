@@ -76,6 +76,7 @@
     externalResourceNames,
     externalResources,
     fetchingResources,
+    fetchingResourcesExternal,
     resetSimulationStores,
     resourceTypes,
     resources,
@@ -336,6 +337,7 @@
   } else {
     simulationDataAbortController?.abort();
     fetchingResources.set(false);
+    fetchingResourcesExternal.set(false);
     $resources = [];
     $spans = [];
   }
