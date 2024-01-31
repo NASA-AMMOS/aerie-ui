@@ -1,3 +1,4 @@
+import { browser } from '$app/environment';
 import Toastify from 'toastify-js';
 
 interface Toast {
@@ -16,6 +17,11 @@ function findToast(toastText: string, checkIsClosed: boolean = false) {
 }
 
 function hideToast(toast: Toast) {
+  // Only hide toast if in browser context
+  if (!browser) {
+    return;
+  }
+
   toast.options.close = true;
   toast.hideToast();
 }
@@ -35,6 +41,10 @@ function toastCallback(this: Element) {
 }
 
 function showToast(toast: Toast) {
+  // Only show toast if in browser context
+  if (!browser) {
+    return;
+  }
   const toastText = toast.options.text;
   const existingToastIndex = toastText !== undefined ? findToast(toastText, true) : -1;
 
