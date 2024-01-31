@@ -1,4 +1,3 @@
-import { browser } from '$app/environment';
 import Toastify from 'toastify-js';
 
 interface Toast {
@@ -18,7 +17,7 @@ function findToast(toastText: string, checkIsClosed: boolean = false) {
 
 function hideToast(toast: Toast) {
   // Only hide toast if in browser context
-  if (!browser) {
+  if (typeof document === 'undefined') {
     return;
   }
 
@@ -42,7 +41,7 @@ function toastCallback(this: Element) {
 
 function showToast(toast: Toast) {
   // Only show toast if in browser context
-  if (!browser) {
+  if (typeof document === 'undefined') {
     return;
   }
   const toastText = toast.options.text;
