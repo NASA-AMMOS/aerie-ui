@@ -2,8 +2,9 @@ import { keyBy } from 'lodash-es';
 import { derived, get, writable, type Readable, type Writable } from 'svelte/store';
 import type { Constraint, ConstraintResponse, ConstraintResultWithName } from '../types/constraint';
 import gql from '../utilities/gql';
-import type { Status } from '../utilities/status';
+import { Status } from '../utilities/status';
 import { modelId, planId, planStartTimeMs } from './plan';
+import { simulationStatus } from './simulation';
 import { gqlSubscribable } from './subscribable';
 
 /* Subscriptions. */
@@ -33,6 +34,7 @@ export const constraintVisibilityMap: Readable<Record<Constraint['id'], boolean>
 );
 
 export const checkConstraintsStatus: Writable<Status | null> = writable(null);
+export const constraintsViolationStatus: Writable<Status | null> = writable(null);
 
 export const rawConstraintResponses: Writable<ConstraintResponse[]> = writable([]);
 
@@ -61,6 +63,38 @@ export const constraintResponseMap: Readable<Record<Constraint['id'], Constraint
       })),
       'constraintId',
     ),
+);
+
+export const uncheckedConstraintCount: Readable<number> = derived(
+  [constraints, constraintResponseMap],
+  ([$constraints, $constraintResponseMap]) => {
+    return $constraints.reduce((count, prev) => {
+      if (!(prev.id in $constraintResponseMap)) {
+        count++;
+      }
+      return count;
+    }, 0);
+  },
+);
+
+export const constraintsStatus: Readable<Status | null> = derived(
+  [checkConstraintsStatus, constraintsViolationStatus, uncheckedConstraintCount, simulationStatus],
+  ([$checkConstraintsStatus, $constraintsViolationStatus, $uncheckedConstraintCount, $simulationStatus]) => {
+    if (!$checkConstraintsStatus) {
+      return null;
+    }
+    if ($simulationStatus !== Status.Complete) {
+      return Status.Modified;
+    }
+    if ($checkConstraintsStatus !== Status.Complete) {
+      return $checkConstraintsStatus;
+    }
+    if ($uncheckedConstraintCount > 0) {
+      return Status.Modified;
+    }
+
+    return $constraintsViolationStatus;
+  },
 );
 
 export const visibleConstraintResults: Readable<ConstraintResultWithName[]> = derived(
