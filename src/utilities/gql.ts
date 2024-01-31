@@ -153,7 +153,7 @@ const gql = {
   `,
 
   CREATE_CONSTRAINT_DEFINITION_TAGS: `#graphql
-    mutation CreateConstraintTags($tags: [constraint_tags_definition_insert_input!]!) {
+    mutation CreateConstraintTags($tags: [constraint_definition_tags_insert_input!]!) {
       insert_constraint_definition_tags(objects: $tags, on_conflict: {
         constraint: constraint_definition_tags_pkey,
         update_columns: []

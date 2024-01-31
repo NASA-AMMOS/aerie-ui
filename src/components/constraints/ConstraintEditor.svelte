@@ -30,6 +30,8 @@
 
   $: if (constraintModelId !== null) {
     effects.getTsFilesConstraints(constraintModelId, user).then(tsFiles => (constraintsTsFiles = tsFiles));
+  } else {
+    constraintsTsFiles = [];
   }
 
   $: if (monaco !== undefined && constraintsTsFiles !== undefined) {
@@ -56,6 +58,7 @@
       <SearchableDropdown
         selectedOptionValue={constraintModelId}
         placeholder="No Model"
+        name="models"
         options={modelOptions}
         on:selectOption={onSelectReferenceModel}
       />

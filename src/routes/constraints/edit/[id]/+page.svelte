@@ -29,6 +29,7 @@
   initialConstraintMetadataTags={data.initialConstraint.tags.map(({ tag }) => tag)}
   initialConstraintOwner={data.initialConstraint.owner}
   initialConstraintRevision={revision}
+  initialConstraintRevisions={data.initialConstraint.versions.map(({ revision }) => revision)}
   initialTags={$tags}
   mode="edit"
   user={data.user}

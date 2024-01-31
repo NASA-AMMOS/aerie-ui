@@ -17,7 +17,7 @@ export type ConstraintMetadataTagsInsertInput = {
 
 export type ConstraintDefinitionTagsInsertInput = {
   constraint_id: number;
-  revision: number;
+  constraint_revision: number;
   tag_id: number;
 };
 

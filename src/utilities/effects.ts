@@ -588,7 +588,6 @@ const effects = {
       );
       const { constraintDefinition } = data;
       if (constraintDefinition != null) {
-        showSuccessToast('Constraint Definition Created Successfully');
         return constraintDefinition;
       } else {
         throw Error(`Unable to create constraint definition for constraint "${constraintId}"`);
@@ -605,25 +604,25 @@ const effects = {
     user: User | null,
   ): Promise<number | null> {
     try {
-      if (!queryPermissions.CREATE_CONSTRAINT_METADATA_TAGS(user)) {
-        throwPermissionError('create constraint tags');
+      if (!queryPermissions.CREATE_CONSTRAINT_DEFINITION_TAGS(user)) {
+        throwPermissionError('create constraint definition tags');
       }
 
       const data = await reqHasura<{ affected_rows: number }>(gql.CREATE_CONSTRAINT_DEFINITION_TAGS, { tags }, user);
-      const { insert_constraint_tags } = data;
-      if (insert_constraint_tags != null) {
-        const { affected_rows } = insert_constraint_tags;
+      const { insert_constraint_definition_tags } = data;
+      if (insert_constraint_definition_tags != null) {
+        const { affected_rows } = insert_constraint_definition_tags;
 
         if (affected_rows !== tags.length) {
-          throw Error('Some constraint tags were not successfully created');
+          throw Error('Some constraint definition tags were not successfully created');
         }
         return affected_rows;
       } else {
-        throw Error('Unable to create constraint tags');
+        throw Error('Unable to create constraint definition tags');
       }
     } catch (e) {
-      catchError('Create Constraint Tags Failed', e as Error);
-      showFailureToast('Create Constraint Tags Failed');
+      catchError('Create Constraint Definition Tags Failed', e as Error);
+      showFailureToast('Create Constraint Definition Tags Failed');
       return null;
     }
   },
@@ -4007,9 +4006,7 @@ const effects = {
       }
 
       const data = await reqHasura(gql.UPDATE_CONSTRAINT_METADATA, { constraintMetadata, id }, user);
-      if (data.updateConstraint != null) {
-        showSuccessToast('Constraint Metadata Updated Successfully');
-      } else {
+      if (data.updateConstraintMetadata == null) {
         throw Error(`Unable to update constraint metadata with ID: "${id}"`);
       }
     } catch (e) {

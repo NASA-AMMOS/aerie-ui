@@ -1,8 +1,12 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { browser } from '$app/environment';
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
+  import HideIcon from '@nasa-jpl/stellar/icons/visible_hide.svg?component';
+  import ShowIcon from '@nasa-jpl/stellar/icons/visible_show.svg?component';
+  import { SearchParameters } from '../../enums/searchParameters';
   import {
     constraintDefinition,
     constraintId,
@@ -11,24 +15,25 @@
   } from '../../stores/constraints';
   import type { User, UserId } from '../../types/app';
   import type { ConstraintDefinition, ConstraintMetadata } from '../../types/constraint';
-  import type {
-    ConstraintDefinitionTagsInsertInput,
-    ConstraintMetadataTagsInsertInput,
-    Tag,
-    TagsChangeEvent,
-  } from '../../types/tags';
+  import type { ConstraintMetadataTagsInsertInput, Tag, TagsChangeEvent } from '../../types/tags';
   import effects from '../../utilities/effects';
-  import { isSaveEvent } from '../../utilities/keyboardEvents';
+  import { setQueryParam } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import { diffTags } from '../../utilities/tags';
+  import { showSuccessToast } from '../../utilities/toast';
   import PageTitle from '../app/PageTitle.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
   import Panel from '../ui/Panel.svelte';
+  import RadioButton from '../ui/RadioButtons/RadioButton.svelte';
+  import RadioButtons from '../ui/RadioButtons/RadioButtons.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
   import TagsInput from '../ui/Tags/TagsInput.svelte';
   import ConstraintEditor from './ConstraintEditor.svelte';
+
+  type SavedConstraintMetadata = Pick<ConstraintMetadata, 'description' | 'name' | 'owner' | 'public' | 'tags'>;
+  type SavedConstraintDefinition = Pick<ConstraintDefinition, 'definition' | 'tags'>;
 
   // export let initialConstraintDefinitionCode: string = 'export default (): Constraint => {\n\n}\n';
   export let initialConstraintDescription: string = '';
@@ -39,6 +44,7 @@
   export let initialConstraintMetadataTags: Tag[] = [];
   export let initialConstraintOwner: UserId = null;
   export let initialConstraintRevision: number = 0;
+  export let initialConstraintRevisions: number[] = [];
   export let initialTags: Tag[] = [];
   export let mode: 'create' | 'edit' = 'create';
   export let user: User | null;
@@ -55,18 +61,21 @@
   let constraintName: string = initialConstraintName;
   let constraintOwner: UserId = initialConstraintOwner ?? user?.id ?? null;
   let constraintPublic: boolean = initialConstraintPublic;
+  let constraintRevisions: number[] = initialConstraintRevisions;
   let hasPermission: boolean = false;
   let isDefinitionModified: boolean = false;
-  let isDefinitionTagsModified: boolean = false;
+  let isDefinitionDataModified: boolean = false;
   let isMetadataModified: boolean = false;
   let saveButtonEnabled: boolean = false;
   let saveButtonText: string = 'Save';
-  let savedConstraintMetadata: Partial<ConstraintMetadata> = {
+  let savedConstraintMetadata: SavedConstraintMetadata = {
     description: constraintDescription,
     name: constraintName,
+    owner: constraintOwner,
+    public: constraintPublic,
     tags: constraintMetadataTags.map(tag => ({ tag })),
   };
-  let savedConstraintDefinition: Partial<ConstraintDefinition> = {
+  let savedConstraintDefinition: SavedConstraintDefinition = {
     definition: constraintDefinitionCode,
     tags: constraintDefinitionTags.map(tag => ({ tag })),
   };
@@ -77,32 +86,41 @@
   }
   $: if (selectedConstraintRevision !== null) {
     $constraintRevision = selectedConstraintRevision;
+    if (browser) {
+      setQueryParam(SearchParameters.REVISION, `${selectedConstraintRevision}`);
+    }
   }
   $: if ($constraintDefinition != null) {
     constraintDefinitionCode = $constraintDefinition.definition;
     constraintDefinitionTags = $constraintDefinition.tags.map(({ tag }) => tag);
+    savedConstraintDefinition = $constraintDefinition;
   }
   $: hasPermission = featurePermissions.constraints.canCreate(user);
   $: isMetadataModified = diffConstraintMetadata(savedConstraintMetadata, {
     description: constraintDescription,
     name: constraintName,
+    owner: constraintOwner,
+    public: constraintPublic,
     tags: constraintMetadataTags.map(tag => ({ tag })),
   });
   $: isDefinitionModified = diffConstraintDefinition(savedConstraintDefinition, {
     definition: constraintDefinitionCode,
   });
-  $: isDefinitionTagsModified = diffTags(
+  $: isDefinitionDataModified = diffTags(
     (savedConstraintDefinition.tags || []).map(({ tag }) => tag),
     constraintDefinitionTags,
   );
 
   $: pageTitle = mode === 'edit' ? 'Constraints' : 'New Constraint';
   $: pageSubtitle = mode === 'edit' ? savedConstraintMetadata.name : '';
-  $: saveButtonClass = saveButtonEnabled && isMetadataModified && isDefinitionModified ? 'primary' : 'secondary';
-  $: saveButtonEnabled = constraintDefinitionCode !== '' && constraintName !== '';
+  $: saveButtonEnabled =
+    constraintDefinitionCode !== '' &&
+    constraintName !== '' &&
+    (isMetadataModified || isDefinitionDataModified || isDefinitionModified);
+  $: saveButtonClass = saveButtonEnabled ? 'primary' : 'secondary';
   $: if (isMetadataModified || isDefinitionModified) {
     // saveButtonText = mode === 'edit' && !isMetadataModified && !isDefinitionModified ? 'Saved' : 'Save';
-    if ((isMetadataModified || isDefinitionTagsModified) && !isDefinitionModified) {
+    if ((isMetadataModified || isDefinitionDataModified) && !isDefinitionModified) {
       saveButtonText = 'Update';
     } else if (isDefinitionModified) {
       saveButtonText = 'Save as new version';
@@ -110,12 +128,14 @@
   }
 
   function diffConstraintMetadata(
-    constraintMetadataA: Partial<ConstraintMetadata>,
-    constraintMetadataB: Partial<ConstraintMetadata>,
+    constraintMetadataA: SavedConstraintMetadata,
+    constraintMetadataB: SavedConstraintMetadata,
   ) {
     if (
       constraintMetadataA.description !== constraintMetadataB.description ||
       constraintMetadataA.name !== constraintMetadataB.name ||
+      constraintMetadataA.public !== constraintMetadataB.public ||
+      constraintMetadataA.owner !== constraintMetadataB.owner ||
       diffTags(
         (constraintMetadataA.tags || []).map(({ tag }) => tag),
         (constraintMetadataB.tags || []).map(({ tag }) => tag),
@@ -128,8 +148,8 @@
   }
 
   function diffConstraintDefinition(
-    constraintDefinitionA: Partial<ConstraintDefinition>,
-    constraintDefinitionB: Partial<ConstraintDefinition>,
+    constraintDefinitionA: Pick<SavedConstraintDefinition, 'definition'>,
+    constraintDefinitionB: Pick<SavedConstraintDefinition, 'definition'>,
   ) {
     return constraintDefinitionA.definition !== constraintDefinitionB.definition;
   }
@@ -140,14 +160,22 @@
     constraintDefinitionCode = value;
   }
 
-  function onKeydown(event: KeyboardEvent): void {
-    if (isSaveEvent(event)) {
-      event.preventDefault();
-      saveConstraint();
+  async function onDefinitionTagsInputChange(event: TagsChangeEvent) {
+    const {
+      detail: { tag, type },
+    } = event;
+    if (type === 'remove') {
+      constraintDefinitionTags = constraintDefinitionTags.filter(t => t.name !== tag.name);
+    } else if (type === 'create' || type === 'select') {
+      let tagsToAdd: Tag[] = [tag];
+      if (type === 'create') {
+        tagsToAdd = (await effects.createTags([{ color: tag.color, name: tag.name }], user)) || [];
+      }
+      constraintDefinitionTags = constraintDefinitionTags.concat(tagsToAdd);
     }
   }
 
-  async function onTagsInputChange(event: TagsChangeEvent) {
+  async function onMetadataTagsInputChange(event: TagsChangeEvent) {
     const {
       detail: { tag, type },
     } = event;
@@ -160,6 +188,14 @@
       }
       constraintMetadataTags = constraintMetadataTags.concat(tagsToAdd);
     }
+  }
+
+  function onSetPublic(event: CustomEvent<{ id: 'public' | 'private' }>) {
+    const {
+      detail: { id },
+    } = event;
+
+    constraintPublic = id === 'public';
   }
 
   async function createConstraint() {
@@ -190,7 +226,7 @@
       );
 
       if (definition !== null) {
-        console.log('definition :>> ', definition);
+        selectedConstraintRevision = definition.revision;
       }
     }
   }
@@ -208,14 +244,18 @@
     if (constraintId) {
       if (isMetadataModified) {
         await saveConstraintMetadata();
+        showSuccessToast('Constraint Updated Successfully');
       }
-      if (isDefinitionTagsModified && !isDefinitionModified) {
+      if (isDefinitionDataModified && !isDefinitionModified) {
         await saveConstraintDefinitionRevisionTags();
+        showSuccessToast('Constraint Updated Successfully');
       } else if (isDefinitionModified) {
         await createNewConstraintDefinition();
+        showSuccessToast('New Constraint Revision Created Successfully');
       }
     } else {
       await createConstraint();
+      showSuccessToast('New Constraint Created Successfully');
     }
   }
 
@@ -227,24 +267,29 @@
           description: constraintDescription,
           name: constraintName,
           owner: constraintOwner,
+          public: constraintPublic,
         },
         user,
       );
 
-      const newTags = constraintMetadataTags.filter(tag => !initialConstraintMetadataTags.find(t => tag.id === t.id));
+      const newMetadataTags = constraintMetadataTags.filter(
+        tag => !savedConstraintMetadata.tags.find(({ tag: t }) => tag.id === t.id),
+      );
 
-      await createConstraintMetadataTags($constraintId, newTags);
+      await createConstraintMetadataTags($constraintId, newMetadataTags);
 
       // Disassociate old tags from constraint
-      const unusedTags = initialConstraintMetadataTags
-        .filter(tag => !constraintMetadataTags.find(t => tag.id === t.id))
-        .map(tag => tag.id);
+      const unusedTags = savedConstraintMetadata.tags
+        .filter(({ tag }) => !constraintMetadataTags.find(t => tag.id === t.id))
+        .map(({ tag }) => tag.id);
 
       await effects.deleteConstraintMetadataTags(unusedTags, user);
 
       savedConstraintMetadata = {
         description: constraintDescription,
         name: constraintName,
+        owner: constraintOwner,
+        public: constraintPublic,
         tags: constraintMetadataTags.map(tag => ({ tag })),
       };
     }
@@ -253,14 +298,14 @@
   async function saveConstraintDefinitionRevisionTags() {
     if ($constraintId !== null && selectedConstraintRevision !== null) {
       // Associate new tags with constraint definition version
-      const newConstraintTags: ConstraintDefinitionTagsInsertInput[] = (constraintDefinitionTags || []).map(
-        ({ id: tag_id }) => ({
+      const newDefinitionTags = constraintDefinitionTags
+        .filter(tag => !savedConstraintDefinition.tags.find(({ tag: t }) => tag.id === t.id))
+        .map(({ id: tag_id }) => ({
           constraint_id: $constraintId as number,
-          revision: selectedConstraintRevision as number,
+          constraint_revision: selectedConstraintRevision as number,
           tag_id,
-        }),
-      );
-      await effects.createConstraintDefinitionTags(newConstraintTags, user);
+        }));
+      await effects.createConstraintDefinitionTags(newDefinitionTags, user);
 
       // Disassociate old tags from constraint
       const unusedTags = initialConstraintDefinitionTags
@@ -270,8 +315,6 @@
     }
   }
 </script>
-
-<svelte:window on:keydown={onKeydown} />
 
 <PageTitle subTitle={pageSubtitle} title={pageTitle} />
 
@@ -299,13 +342,6 @@
     </svelte:fragment>
 
     <svelte:fragment slot="body">
-      {#if mode === 'edit'}
-        <fieldset>
-          <label for="constraintId">Constraint ID</label>
-          <input class="st-input w-100" disabled name="constraintId" value={$constraintId} />
-        </fieldset>
-      {/if}
-
       <fieldset>
         <label for="model">Model</label>
         <select
@@ -380,8 +416,9 @@
       </fieldset>
 
       <fieldset>
-        <label for="tags">Tags</label>
+        <label for="metadataTags">Tags</label>
         <TagsInput
+          name="metadataTags"
           use={[
             [
               permissionHandler,
@@ -393,7 +430,68 @@
           ]}
           options={initialTags}
           selected={constraintMetadataTags}
-          on:change={onTagsInputChange}
+          on:change={onMetadataTagsInputChange}
+        />
+      </fieldset>
+
+      {#if mode === 'edit'}
+        <fieldset>
+          <label for="constraintId">Constraint ID</label>
+          <input class="st-input w-100" disabled name="constraintId" value={$constraintId} />
+        </fieldset>
+      {/if}
+      <fieldset>
+        <label for="constraintOwner">Owner</label>
+        <input bind:value={constraintOwner} class="st-input w-100" name="constraintOwner" />
+      </fieldset>
+
+      <fieldset>
+        <label for="public">Visibility</label>
+        <RadioButtons selectedButtonId={constraintPublic ? 'public' : 'private'} on:select-radio-button={onSetPublic}>
+          <RadioButton id="private"><div class="public-button"><HideIcon /><span>Private</span></div></RadioButton>
+          <RadioButton id="public"><div class="public-button"><ShowIcon /><span>Public</span></div></RadioButton>
+        </RadioButtons>
+      </fieldset>
+
+      <div class="definition-divider" />
+
+      {#if mode === 'edit'}
+        <fieldset>
+          <label for="versions">Version</label>
+          {#if !isDefinitionModified}
+            <select bind:value={selectedConstraintRevision} class="st-select w-100" name="versions">
+              {#each constraintRevisions as revision}
+                <option value={revision}>
+                  {revision}
+                </option>
+              {/each}
+            </select>
+          {:else}
+            <select disabled class="st-select w-100" name="versions">
+              <option value={constraintRevisions[constraintRevisions.length - 1] + 1}>
+                {constraintRevisions[constraintRevisions.length - 1] + 1} (Next version)
+              </option>
+            </select>
+          {/if}
+        </fieldset>
+      {/if}
+
+      <fieldset>
+        <label for="definitionTags">Version Tags</label>
+        <TagsInput
+          name="definitionTags"
+          use={[
+            [
+              permissionHandler,
+              {
+                hasPermission,
+                permissionError,
+              },
+            ],
+          ]}
+          options={initialTags}
+          selected={constraintDefinitionTags}
+          on:change={onDefinitionTagsInputChange}
         />
       </fieldset>
     </svelte:fragment>
@@ -409,3 +507,17 @@
     on:didChangeModelContent={onDidChangeModelContent}
   />
 </CssGrid>
+
+<style>
+  .public-button {
+    column-gap: 0.3rem;
+    display: grid;
+    grid-template-columns: min-content min-content;
+  }
+
+  .definition-divider {
+    border-top: 1px solid var(--st-gray-20);
+    display: grid;
+    margin: 2rem 1rem;
+  }
+</style>
