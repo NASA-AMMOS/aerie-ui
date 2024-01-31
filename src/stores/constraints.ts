@@ -4,7 +4,6 @@ import type { Constraint, ConstraintResponse, ConstraintResultWithName } from '.
 import gql from '../utilities/gql';
 import { Status } from '../utilities/status';
 import { modelId, planId, planStartTimeMs } from './plan';
-import { simulationStatus } from './simulation';
 import { gqlSubscribable } from './subscribable';
 
 /* Subscriptions. */
@@ -78,13 +77,10 @@ export const uncheckedConstraintCount: Readable<number> = derived(
 );
 
 export const constraintsStatus: Readable<Status | null> = derived(
-  [checkConstraintsStatus, constraintsViolationStatus, uncheckedConstraintCount, simulationStatus],
-  ([$checkConstraintsStatus, $constraintsViolationStatus, $uncheckedConstraintCount, $simulationStatus]) => {
+  [checkConstraintsStatus, constraintsViolationStatus, uncheckedConstraintCount],
+  ([$checkConstraintsStatus, $constraintsViolationStatus, $uncheckedConstraintCount]) => {
     if (!$checkConstraintsStatus) {
       return null;
-    }
-    if ($simulationStatus !== Status.Complete) {
-      return Status.Modified;
     }
     if ($checkConstraintsStatus !== Status.Complete) {
       return $checkConstraintsStatus;

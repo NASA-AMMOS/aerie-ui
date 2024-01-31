@@ -198,7 +198,7 @@
   }
 
   .unchecked {
+    display: flex;
     flex-shrink: 0;
-    width: 20px;
   }
 </style>
