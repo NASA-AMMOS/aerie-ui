@@ -3,11 +3,12 @@
   import StatusBadge from './StatusBadge.svelte';
 
   export let status: Status | null = null;
+  export let indeterminate: bool = false;
 </script>
 
 <span class="header-actions">
   {#if status}
-    <StatusBadge {status} />
+    <StatusBadge {status} {indeterminate} />
   {/if}
   <slot />
 </span>
