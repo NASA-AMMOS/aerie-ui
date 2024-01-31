@@ -27,6 +27,7 @@
   import CssGrid from '../../../components/ui/CssGrid.svelte';
   import PlanGrid from '../../../components/ui/PlanGrid.svelte';
   import ProgressLinear from '../../../components/ui/ProgressLinear.svelte';
+  import StatusBadge from '../../../components/ui/StatusBadge.svelte';
   import { PlanStatusMessages } from '../../../enums/planStatusMessages';
   import { SearchParameters } from '../../../enums/searchParameters';
   import {
@@ -37,7 +38,14 @@
     selectActivity,
     selectedActivityDirectiveId,
   } from '../../../stores/activities';
-  import { checkConstraintsStatus, constraintResponseMap, resetConstraintStores } from '../../../stores/constraints';
+  import {
+    checkConstraintsStatus,
+    constraintResponseMap,
+    constraintsStatus,
+    constraintsViolationStatus,
+    resetConstraintStores,
+    uncheckedConstraintCount,
+  } from '../../../stores/constraints';
   import {
     activityErrorRollups,
     allErrors,
@@ -107,7 +115,7 @@
   import { featurePermissions } from '../../../utilities/permissions';
   import {
     formatSimulationQueuePosition,
-    getHumanReadableSimulationStatus,
+    getHumanReadableStatus,
     getSimulationExtent,
     getSimulationProgress,
     getSimulationProgressColor,
@@ -116,6 +124,7 @@
     getSimulationTimestamp,
   } from '../../../utilities/simulation';
   import { Status, statusColors } from '../../../utilities/status';
+  import { pluralize } from '../../../utilities/text';
   import { getUnixEpochTime } from '../../../utilities/time';
   import { tooltip } from '../../../utilities/tooltip';
   import type { PageData } from './$types';
@@ -366,6 +375,14 @@
     selectedSimulationStatus = getSimulationStatus($simulationDatasetLatest);
   }
 
+  $: numConstraintsViolated = Object.values($constraintResponseMap).filter(
+    response => response.results.violations?.length,
+  ).length;
+
+  $: numConstraintsWithErrors = Object.values($constraintResponseMap).filter(
+    response => response.errors?.length,
+  ).length;
+
   onDestroy(() => {
     resetActivityStores();
     resetConstraintStores();
@@ -570,7 +587,7 @@
         <svelte:fragment slot="metadata">
           <div class="st-typography-body">
             <div class="simulation-header">
-              {getHumanReadableSimulationStatus(getSimulationStatus($simulationDatasetLatest))}:
+              {getHumanReadableStatus(getSimulationStatus($simulationDatasetLatest))}:
               {#if selectedSimulationStatus === Status.Pending && $simulationDatasetLatest}
                 <div style="color: var(--st-gray-50)">
                   {formatSimulationQueuePosition(
@@ -613,18 +630,66 @@
         menuTitle="Constraint Status"
         buttonText="Check Constraints"
         hasPermission={hasCheckConstraintsPermission}
+        disabled={$simulationStatus !== Status.Complete}
+        statusBadgeText={$checkConstraintsStatus === Status.Complete &&
+        numConstraintsViolated > 0 &&
+        $uncheckedConstraintCount < 1
+          ? `${numConstraintsViolated}`
+          : undefined}
+        buttonTooltipContent={$simulationStatus !== Status.Complete ? 'Completed simulation required' : ''}
         permissionError={$planReadOnly
           ? PlanStatusMessages.READ_ONLY
           : 'You do not have permission to run a constraint check'}
-        status={$checkConstraintsStatus}
+        status={$constraintsStatus}
+        showStatusInMenu={false}
         on:click={() => $plan && effects.checkConstraints($plan, data.user)}
+        indeterminate
       >
         <VerticalCollapseIcon />
         <svelte:fragment slot="metadata">
-          <div>
-            Constraints violated: {Object.values($constraintResponseMap).filter(
-              response => response.results.violations?.length,
-            ).length}
+          <div class="st-typography-body constraints-status">
+            {#if $checkConstraintsStatus}
+              <div class="constraints-status-item">
+                <StatusBadge status={$checkConstraintsStatus} indeterminate showTooltip={false} />
+                Check constraints: {getHumanReadableStatus($checkConstraintsStatus)}
+              </div>
+              {#if $checkConstraintsStatus === Status.Complete || $checkConstraintsStatus === Status.PartialSuccess}
+                <div class="constraints-status-item">
+                  <StatusBadge status={$constraintsViolationStatus} showTooltip={false} />
+                  {#if numConstraintsViolated > 0}
+                    <div style:color="var(--st-error-red)">
+                      {numConstraintsViolated} constraint{pluralize(numConstraintsViolated)}
+                      {numConstraintsViolated !== 1 ? 'have' : 'has'} violations
+                    </div>
+                  {:else}
+                    No constraint violations
+                  {/if}
+                </div>
+                {#if $simulationStatus !== Status.Complete}
+                  <div class="constraints-status-item">
+                    <StatusBadge status={Status.Modified} showTooltip={false} />
+                    Simulation out-of-date
+                  </div>
+                {/if}
+                {#if numConstraintsWithErrors > 0}
+                  <div class="constraints-status-item">
+                    <StatusBadge status={Status.Failed} showTooltip={false} />
+                    <div style:color="var(--st-error-red)">
+                      {numConstraintsWithErrors} constraint{pluralize(numConstraintsWithErrors)}
+                      {numConstraintsWithErrors !== 1 ? 'have' : 'has'} compile errors
+                    </div>
+                  </div>
+                {/if}
+                {#if $uncheckedConstraintCount > 0}
+                  <div class="constraints-status-item">
+                    <StatusBadge status={Status.Modified} showTooltip={false} />
+                    {$uncheckedConstraintCount} unchecked constraint{pluralize($uncheckedConstraintCount)}
+                  </div>
+                {/if}
+              {/if}
+            {:else}
+              <div>Constraints not checked</div>
+            {/if}
           </div>
         </svelte:fragment>
       </PlanNavButton>
@@ -644,6 +709,7 @@
             } unsatisfied`
           : ''}
         on:click={() => effects.schedule(true, $plan, data.user)}
+        indeterminate
       >
         <CalendarIcon />
       </PlanNavButton>
@@ -771,5 +837,17 @@
 
   .cancel-button:hover {
     background: rgba(219, 81, 57, 0.08);
+  }
+
+  .constraints-status {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .constraints-status-item {
+    align-items: center;
+    display: flex;
+    gap: 8px;
   }
 </style>
