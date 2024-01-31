@@ -8,7 +8,7 @@
   import { hexToRgba } from '../../utilities/color';
   import {
     formatSimulationQueuePosition,
-    getHumanReadableSimulationStatus,
+    getHumanReadableStatus,
     getSimulationExtent,
     getSimulationProgress,
     getSimulationProgressColor,
@@ -108,7 +108,7 @@
           {#if status === Status.Pending}
             {formatSimulationQueuePosition(queuePosition)}
           {:else}
-            {getHumanReadableSimulationStatus(status)}
+            {getHumanReadableStatus(status)}
           {/if}
         </div>
         {#if status === Status.Pending || status === Status.Incomplete}
