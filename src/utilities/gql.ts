@@ -484,16 +484,24 @@ const gql = {
   `,
 
   DELETE_CONSTRAINT_DEFINITION_TAGS: `#graphql
-    mutation DeleteConstraintDefinitionTags($ids: [Int!]!) {
-        delete_constraint_definition_tags(where: { tag_id: { _in: $ids } }) {
-          affected_rows
+    mutation DeleteConstraintDefinitionTags($ids: [Int!]!, $constraintId: Int!, $constraintRevision: Int!) {
+      delete_constraint_definition_tags(
+        where: {
+          tag_id: { _in: $ids },
+          _and: {
+            constraint_id: { _eq: $constraintId },
+            constraint_revision: { _eq: $constraintRevision }
+          }
+        }
+      ) {
+        affected_rows
       }
     }
   `,
 
   DELETE_CONSTRAINT_METADATA_TAGS: `#graphql
     mutation DeleteConstraintMetadataTags($ids: [Int!]!) {
-        delete_constraint_tags(where: { tag_id: { _in: $ids } }) {
+      delete_constraint_tags(where: { tag_id: { _in: $ids } }) {
           affected_rows
       }
     }
@@ -1612,6 +1620,7 @@ const gql = {
         updated_at
         updated_by
         versions {
+          definition
           revision
           tags {
             tag {

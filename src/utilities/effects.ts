@@ -547,9 +547,9 @@ const effects = {
         { constraint: constraintInsertInput },
         user,
       );
-      const { createConstraint } = data;
-      if (createConstraint != null) {
-        const { id } = createConstraint;
+      const { constraint } = data;
+      if (constraint != null) {
+        const { id } = constraint;
 
         showSuccessToast('Constraint Created Successfully');
         return id;
@@ -613,9 +613,6 @@ const effects = {
       if (insert_constraint_definition_tags != null) {
         const { affected_rows } = insert_constraint_definition_tags;
 
-        if (affected_rows !== tags.length) {
-          throw Error('Some constraint definition tags were not successfully created');
-        }
         return affected_rows;
       } else {
         throw Error('Unable to create constraint definition tags');
@@ -641,9 +638,6 @@ const effects = {
       if (insert_constraint_tags != null) {
         const { affected_rows } = insert_constraint_tags;
 
-        if (affected_rows !== tags.length) {
-          throw Error('Some constraint tags were not successfully created');
-        }
         return affected_rows;
       } else {
         throw Error('Unable to create constraint tags');
@@ -1766,13 +1760,22 @@ const effects = {
     return false;
   },
 
-  async deleteConstraintDefinitionTags(ids: Tag['id'][], user: User | null): Promise<boolean> {
+  async deleteConstraintDefinitionTags(
+    ids: Tag['id'][],
+    constraintId: number,
+    constraintRevision: number,
+    user: User | null,
+  ): Promise<boolean> {
     try {
       if (!queryPermissions.DELETE_CONSTRAINT_DEFINITION_TAGS(user)) {
         throwPermissionError('delete constraint tags');
       }
 
-      const data = await reqHasura<{ affected_rows: number }>(gql.DELETE_CONSTRAINT_DEFINITION_TAGS, { ids }, user);
+      const data = await reqHasura<{ affected_rows: number }>(
+        gql.DELETE_CONSTRAINT_DEFINITION_TAGS,
+        { constraintId, constraintRevision, ids },
+        user,
+      );
       if (data.delete_constraint_definition_tags != null) {
         if (data.delete_constraint_definition_tags.affected_rows !== ids.length) {
           throw Error('Some constraint definition tags were not successfully deleted');

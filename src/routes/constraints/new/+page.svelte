@@ -8,4 +8,4 @@
   export let data: PageData;
 </script>
 
-<ConstraintForm initialTags={$tags} mode="create" user={data.user} />
+<ConstraintForm tags={$tags} mode="create" user={data.user} />

@@ -14,7 +14,6 @@ export const load: PageLoad = async ({ parent, params }) => {
 
     if (constraintId !== null) {
       const initialConstraint = await effects.getConstraint(constraintId, user);
-
       if (initialConstraint !== null) {
         return {
           initialConstraint,

@@ -53,16 +53,18 @@
 <Panel overflowYBody="hidden">
   <svelte:fragment slot="header">
     <SectionTitle>{title}</SectionTitle>
-    <div class="model-select">
-      <label for="models">Reference Model:</label>
-      <SearchableDropdown
-        selectedOptionValue={constraintModelId}
-        placeholder="No Model"
-        name="models"
-        options={modelOptions}
-        on:selectOption={onSelectReferenceModel}
-      />
-    </div>
+    {#if !readOnly}
+      <div class="model-select">
+        <label for="models">Reference Model:</label>
+        <SearchableDropdown
+          selectedOptionValue={constraintModelId}
+          placeholder="No Model"
+          name="models"
+          options={modelOptions}
+          on:selectOption={onSelectReferenceModel}
+        />
+      </div>
+    {/if}
   </svelte:fragment>
 
   <svelte:fragment slot="body">
