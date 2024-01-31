@@ -631,10 +631,9 @@
         buttonText="Check Constraints"
         hasPermission={hasCheckConstraintsPermission}
         disabled={$simulationStatus !== Status.Complete}
-        statusBadgeText={$checkConstraintsStatus === Status.Complete &&
-        numConstraintsViolated > 0 &&
-        $uncheckedConstraintCount < 1
-          ? `${numConstraintsViolated}`
+        statusBadgeText={($checkConstraintsStatus === Status.Complete || $checkConstraintsStatus === Status.Failed) &&
+        numConstraintsViolated + numConstraintsWithErrors + $uncheckedConstraintCount > 0
+          ? `${numConstraintsViolated + numConstraintsWithErrors + $uncheckedConstraintCount}`
           : undefined}
         buttonTooltipContent={$simulationStatus !== Status.Complete ? 'Completed simulation required' : ''}
         permissionError={$planReadOnly
@@ -653,7 +652,7 @@
                 <StatusBadge status={$checkConstraintsStatus} indeterminate showTooltip={false} />
                 Check constraints: {getHumanReadableStatus($checkConstraintsStatus)}
               </div>
-              {#if $checkConstraintsStatus === Status.Complete || $checkConstraintsStatus === Status.PartialSuccess}
+              {#if $checkConstraintsStatus === Status.Complete || $checkConstraintsStatus === Status.Failed}
                 <div class="constraints-status-item">
                   <StatusBadge status={$constraintsViolationStatus} showTooltip={false} />
                   {#if numConstraintsViolated > 0}

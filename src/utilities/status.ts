@@ -3,6 +3,7 @@ export enum Status {
   Complete = 'Complete',
   Failed = 'Failed',
   Incomplete = 'Incomplete',
+  Unchecked = 'Unchecked',
   Modified = 'Modified',
   Pending = 'Pending',
   PartialSuccess = 'Partial Success',
@@ -27,6 +28,8 @@ export function getColorForStatus(status: Status | null): string {
     return statusColors.red;
   } else if (status === Status.Incomplete) {
     return statusColors.blue;
+  } else if (status === Status.Unchecked) {
+    return statusColors.yellow;
   } else if (status === Status.Modified) {
     return statusColors.yellow;
   } else if (status === Status.Pending) {

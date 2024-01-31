@@ -2,6 +2,7 @@
   import CheckIcon from '@nasa-jpl/stellar/icons/check.svg?component';
   import CloseIcon from '@nasa-jpl/stellar/icons/close.svg?component';
   import EditingIcon from '@nasa-jpl/stellar/icons/editing.svg?component';
+  import IncompleteIcon from '@nasa-jpl/stellar/icons/incomplete.svg?component';
   import MinusIcon from '@nasa-jpl/stellar/icons/minus.svg?component';
   import ThreeDotsIcon from '@nasa-jpl/stellar/icons/three_dot_horizontal.svg?component';
   import WarningIcon from '@nasa-jpl/stellar/icons/warning.svg?component';
@@ -20,13 +21,14 @@
   let color: string = statusColors.gray;
 
   $: color = getColorForStatus(status);
+  $: fgColor = status === Status.Modified || status === Status.Unchecked ? '#110d3e' : 'unset';
 </script>
 
 {#if status !== null}
   <span
     aria-label={status}
     class="status-badge {status.toLowerCase()}"
-    style="background: {status === Status.Failed ? 'transparent' : color}"
+    style="background: {status === Status.Failed || status === Status.Unchecked ? 'transparent' : color}"
     use:tooltip={{ content: showTooltip ? `${prefix}${status}` : '', placement: 'top' }}
   >
     {#if badgeText === undefined}
@@ -45,14 +47,16 @@
           <ProgressRadial {progress} />
         {/if}
       {:else if status === Status.Modified}
-        <EditingIcon />
+        <EditingIcon style="color: {fgColor};" />
+      {:else if status === Status.Unchecked}
+        <IncompleteIcon style="color: {color}" />
       {:else if status === Status.Pending}
         <ThreeDotsIcon />
       {:else if status === Status.PartialSuccess}
         <MinusIcon />
       {/if}
     {:else}
-      <div class="status-badge-text" style="background-color: {color}">
+      <div class="status-badge-text" style="background-color: {color}; color: {fgColor};">
         {badgeText}
       </div>
     {/if}

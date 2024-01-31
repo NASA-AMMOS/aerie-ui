@@ -13,7 +13,7 @@
   import type { Plan } from '../../types/plan';
   import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';
-  import { Status, statusColors } from '../../utilities/status';
+  import { Status } from '../../utilities/status';
   import { pluralize } from '../../utilities/text';
   import { tooltip } from '../../utilities/tooltip';
   import Collapse from '../Collapse.svelte';
@@ -61,12 +61,8 @@
             <CheckmarkIcon />
           </div>
         {:else}
-          <span
-            use:tooltip={{ content: 'Not yet checked', placement: 'top' }}
-            style:color={statusColors.yellow}
-            class="unchecked"
-          >
-            <StatusBadge status={Status.Modified} showTooltip={false} />
+          <span class="unchecked">
+            <StatusBadge status={Status.Unchecked} />
           </span>
         {/if}
         <button
@@ -200,5 +196,7 @@
   .unchecked {
     display: flex;
     flex-shrink: 0;
+    justify-content: center;
+    width: 20px;
   }
 </style>

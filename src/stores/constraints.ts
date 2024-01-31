@@ -86,7 +86,7 @@ export const constraintsStatus: Readable<Status | null> = derived(
       return $checkConstraintsStatus;
     }
     if ($uncheckedConstraintCount > 0) {
-      return Status.Modified;
+      return Status.Unchecked;
     }
 
     return $constraintsViolationStatus;
