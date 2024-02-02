@@ -203,7 +203,7 @@
         <br>
         Resource Name: ${point.name}
         <br>
-        Time: ${getDoyTime(new Date(x))}
+        Time: ${getDoyTime(new Date(x))} UTC
         <br>
         Value: ${y}
       </div>
@@ -235,7 +235,7 @@
         <br>
         Resource Name: ${point.name}
         <br>
-        Start: ${getDoyTime(new Date(x))}
+        Start: ${getDoyTime(new Date(x))} UTC
         <br>
         Value: ${point.label.text}
       </div>
