@@ -172,7 +172,28 @@ const gql = {
         affected_rows
       }
     }
-`,
+  `,
+
+  CREATE_CONSTRAINT_MODEL_SPECIFICATION: `#graphql
+    mutation CreateConstraintModelSpecification($constraintModelSpecification: constraint_model_specification_insert_input!) {
+      constraintModelSpecification: insert_constraint_model_specification_one(object: $constraintModelSpecification) {
+        constraint_id
+        constraint_revision
+        model_id
+      }
+    }
+  `,
+
+  CREATE_CONSTRAINT_PLAN_SPECIFICATION: `#graphql
+    mutation CreateConstraintPlanSpecification($constraintPlanSpecification: constraint_specification_insert_input!) {
+      constraintPlanSpecification: insert_constraint_specification_one(object: $constraintPlanSpecification) {
+        constraint_id
+        constraint_revision
+        enabled
+        plan_id
+      }
+    }
+  `,
 
   CREATE_EXPANSION_RULE: `#graphql
     mutation CreateExpansionRule($rule: expansion_rule_insert_input!) {
@@ -503,6 +524,38 @@ const gql = {
     mutation DeleteConstraintMetadataTags($ids: [Int!]!) {
       delete_constraint_tags(where: { tag_id: { _in: $ids } }) {
           affected_rows
+      }
+    }
+  `,
+
+  DELETE_CONSTRAINT_MODEL_SPECIFICATION: `#graphql
+    mutation DeleteConstraintModelSpecification($constraintId: Int!, $constraintRevision: Int!, $modelId: Int!) {
+      delete_constraint_model_specification(
+        where: {
+          model_id: { _eq: $modelId },
+          _and: {
+            constraint_id: { _eq: $constraintId },
+            constraint_revision: { _eq: $constraintRevision }
+          }
+        }
+      ) {
+        affected_rows
+      }
+    }
+  `,
+
+  DELETE_CONSTRAINT_PLAN_SPECIFICATION: `#graphql
+    mutation DeleteConstraintPlanSpecification($constraintId: Int!, $constraintRevision: Int!, $planId: Int!) {
+      delete_constraint_specification(
+        where: {
+          plan_id: { _eq: $planId },
+          _and: {
+            constraint_id: { _eq: $constraintId },
+            constraint_revision: { _eq: $constraintRevision }
+          }
+        }
+      ) {
+        affected_rows
       }
     }
   `,
@@ -1682,6 +1735,23 @@ const gql = {
     }
   `,
 
+  SUB_CONSTRAINT_PLAN_SPECIFICATIONS: `#graphql
+    subscription SubConstraintPlanSpecifications($planId: Int!) {
+      constraintPlanSpecs: constraint_specification(where: {plan_id: {_eq: $planId}}) {
+        constraint_id
+        constraint_revision
+        enabled
+        constraint_metadata {
+          public
+          versions {
+            revision
+          }
+        }
+        plan_id
+      }
+    }
+  `,
+
   SUB_EXPANSION_RULES: `#graphql
     subscription SubExpansionRules {
       expansionRules: expansion_rule(order_by: { id: desc }) {
@@ -2305,6 +2375,22 @@ const gql = {
     }
   `,
 
+  UPDATE_CONSTRAINT_PLAN_SPECIFICATIONS: `#graphql
+    mutation UpdateConstraintPlanSpecifications($constraintPlanSpecifications: [constraint_specification_insert_input!]!) {
+      updateConstraintPlanSpecifications: insert_constraint_specification(
+        objects: $constraintPlanSpecifications,
+        on_conflict: {
+          constraint: constraint_specification_pkey,
+          update_columns: [constraint_revision, enabled]
+        },
+      ) {
+        returning {
+          constraint_revision
+          enabled
+        }
+      }
+    }
+  `,
   UPDATE_EXPANSION_RULE: `#graphql
     mutation UpdateExpansionRule($id: Int!, $rule: expansion_rule_set_input!) {
       updateExpansionRule: update_expansion_rule_by_pk(
@@ -2480,7 +2566,7 @@ const gql = {
       }
     }
   `,
-};
+} as const;
 
 export function convertToGQLArray(array: string[] | number[]) {
   return `{${array.join(',')}}`;

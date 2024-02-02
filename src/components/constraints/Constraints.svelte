@@ -9,7 +9,6 @@
   import type { User } from '../../types/app';
   import type { ConstraintMetadata } from '../../types/constraint';
   import type { DataGridColumnDef, DataGridRowSelection, RowId } from '../../types/data-grid';
-  import type { PlanSlim } from '../../types/plan';
   import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
@@ -30,7 +29,6 @@
     editConstraint: (constraint: ConstraintMetadata) => void;
   };
   type ConstraintsCellRendererParams = ICellRendererParams<ConstraintMetadata> & CellRendererParams;
-  type ConstraintsPlanMap = Record<number, PlanSlim>;
 
   const baseColumnDefs: DataGridColumnDef<ConstraintMetadata>[] = [
     {
@@ -79,7 +77,6 @@
 
   let columnDefs = baseColumnDefs;
 
-  let constraintsPlanMap: ConstraintsPlanMap = {};
   let filterText: string = '';
   let filteredConstraints: ConstraintMetadata[] = [];
   let hasPermission: boolean = false;
@@ -131,7 +128,6 @@
           deleteConstraint,
           editConstraint,
         } as CellRendererParams,
-        field: 'actions',
         headerName: '',
         resizable: false,
         sortable: false,
@@ -143,8 +139,7 @@
   }
 
   async function deleteConstraint(constraint: ConstraintMetadata) {
-    const constraintPlan = constraintsPlanMap[constraint.id];
-    const success = await effects.deleteConstraint(constraint, constraintPlan, user);
+    const success = await effects.deleteConstraint(constraint, user);
 
     if (success) {
       filteredConstraints = filteredConstraints.filter(c => constraint.id !== c.id);

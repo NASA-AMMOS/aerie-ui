@@ -35,22 +35,24 @@ export type ConstraintMetadataSlim = Omit<ConstraintMetadata, 'models_using' | '
 
 export type ConstraintModelSpec = {
   constraint_id: number;
+  constraint_metadata: ConstraintMetadata | null;
   constraint_revision: number;
   model_id: number;
   // constraint_definition: ConstraintDefinition;
-  // constraint_metadata: ConstraintMetadata;
   // model: Model;
 };
 
 export type ConstraintPlanSpec = {
   constraint_id: number;
+  constraint_metadata: Pick<ConstraintMetadata, 'public' | 'versions'> | null;
   constraint_revision: number;
   enabled: boolean;
   plan_id: number;
   // constraint_definition: ConstraintDefinition;
-  // constraint_metadata: ConstraintMetadata;
   // plan: Plan;
 };
+
+export type ConstraintPlanSpecInsertInput = Omit<ConstraintPlanSpec, 'constraint_metadata'>;
 
 export type ConstraintDefinitionInsertInput = Pick<ConstraintDefinition, 'constraint_id' | 'definition'> & {
   tags: {

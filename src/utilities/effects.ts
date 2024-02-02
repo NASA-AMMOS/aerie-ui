@@ -46,6 +46,7 @@ import type {
   ConstraintInsertInput,
   ConstraintMetadata,
   ConstraintMetadataSetInput,
+  ConstraintPlanSpecInsertInput,
   ConstraintResponse,
   ConstraintResult,
 } from '../types/constraint';
@@ -146,6 +147,7 @@ import { ActivityDeletionAction } from './activities';
 import { convertToQuery, getSearchParameterNumber, setQueryParam, sleep } from './generic';
 import gql, { convertToGQLArray } from './gql';
 import {
+  showAddPlanConstraintModal,
   showConfirmModal,
   showCreatePlanBranchModal,
   showCreatePlanSnapshotModal,
@@ -173,6 +175,19 @@ function throwPermissionError(attemptedAction: string): never {
  * Functions that have side-effects (e.g. HTTP requests, toasts, popovers, store updates, etc.).
  */
 const effects = {
+  async addPlanConstraints(user: User | null): Promise<void> {
+    try {
+      // if (!queryPermissions.CREATE_CONSTRAINT_PLAN_SPECIFICATION(user)) {
+      //   throwPermissionError('apply constraints to this plan');
+      // }
+
+      await showAddPlanConstraintModal(user);
+    } catch (e) {
+      catchError('Constraint Unable To Be Applied To Plan', e as Error);
+      showFailureToast('Constrainta Application Failed');
+    }
+  },
+
   async applyPresetToActivity(
     preset: ActivityPreset,
     activityId: ActivityDirectiveId,
@@ -282,7 +297,7 @@ const effects = {
 
   async cancelSimulation(simulationDatasetId: number, user: User | null): Promise<void> {
     try {
-      if (!queryPermissions.UPDATE_SIMULATION_DATASET(user)) {
+      if (!queryPermissions.CANCEL_PENDING_SIMULATION(user)) {
         throwPermissionError('update a simulation dataset');
       }
       const { confirm } = await showConfirmModal(
@@ -1731,9 +1746,9 @@ const effects = {
     }
   },
 
-  async deleteConstraint(constraint: ConstraintMetadata, plan: PlanSlim, user: User | null): Promise<boolean> {
+  async deleteConstraint(constraint: ConstraintMetadata, user: User | null): Promise<boolean> {
     try {
-      if (!queryPermissions.DELETE_CONSTRAINT(user, plan)) {
+      if (!queryPermissions.DELETE_CONSTRAINT(user, constraint)) {
         throwPermissionError('delete this constraint');
       }
 
@@ -1793,7 +1808,7 @@ const effects = {
 
   async deleteConstraintMetadataTags(ids: Tag['id'][], user: User | null): Promise<boolean> {
     try {
-      if (!queryPermissions.DELETE_CONSTRAINT_TAGS(user)) {
+      if (!queryPermissions.DELETE_CONSTRAINT_METADATA_TAGS(user)) {
         throwPermissionError('delete constraint tags');
       }
 
@@ -2236,11 +2251,10 @@ const effects = {
 
   async deleteTag(tag: Tag, user: User | null): Promise<boolean> {
     try {
-      if (!queryPermissions.DELETE_TAGS(user, tag)) {
+      if (!queryPermissions.DELETE_TAG(user, tag)) {
         throwPermissionError('delete tags');
       }
 
-      await reqHasura<{ id: number }>(gql.DELETE_TAG, { id: tag.id }, user);
       showSuccessToast('Tag Deleted Successfully');
       return true;
     } catch (e) {
@@ -4015,6 +4029,29 @@ const effects = {
     } catch (e) {
       catchError('Constraint Metadata Update Failed', e as Error);
       showFailureToast('Constraint Metadata Update Failed');
+    }
+  },
+
+  async updateConstraintPlanSpecifications(constraintPlanSpecs: ConstraintPlanSpecInsertInput[], user: User | null) {
+    try {
+      if (!queryPermissions.UPDATE_CONSTRAINT_PLAN_SPECIFICATIONS(user)) {
+        throwPermissionError('update this constraint plan specification');
+      }
+
+      const { updateConstraintPlanSpecifications } = await reqHasura(
+        gql.UPDATE_CONSTRAINT_PLAN_SPECIFICATIONS,
+        { constraintPlanSpecifications: constraintPlanSpecs },
+        user,
+      );
+
+      if (updateConstraintPlanSpecifications !== null) {
+        showSuccessToast(`Constraints Applied Successfully`);
+      } else {
+        throw Error('Unable to update the constraints for the plan');
+      }
+    } catch (e) {
+      catchError('Constraint Plan Specification Update Failed', e as Error);
+      showFailureToast('Constraint Plan Specification Update Failed');
     }
   },
 

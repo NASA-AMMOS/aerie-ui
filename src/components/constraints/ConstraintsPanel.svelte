@@ -1,7 +1,6 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { base } from '$app/paths';
   import ChecklistIcon from '@nasa-jpl/stellar/icons/checklist.svg?component';
   import FilterIcon from '@nasa-jpl/stellar/icons/filter.svg?component';
   import PlanLeftArrow from '@nasa-jpl/stellar/icons/plan_with_left_arrow.svg?component';
@@ -129,6 +128,10 @@
     }, 0);
   }
 
+  function onAddConstraint() {
+    effects.addPlanConstraints(user);
+  }
+
   function onUpdateStartTime() {
     if ($startTimeDoyField.valid && startTimeDoy !== $startTimeDoyField.value) {
       startTimeDoy = $startTimeDoyField.value;
@@ -188,7 +191,7 @@
             permissionHandler,
             {
               hasPermission: $plan
-                ? featurePermissions.constraints.canCheck(user, $plan, $plan.model) && !$planReadOnly
+                ? featurePermissions.constraintPlanSpec.canCheck(user, $plan, $plan.model) && !$planReadOnly
                 : false,
               permissionError: $planReadOnly
                 ? PlanStatusMessages.READ_ONLY
@@ -222,9 +225,9 @@
               ? PlanStatusMessages.READ_ONLY
               : 'You do not have permission to create constraints',
           }}
-          on:click={() => window.open(`${base}/constraints/new`, '_blank')}
+          on:click|stopPropagation={onAddConstraint}
         >
-          New
+          Add Constraint
         </button>
       </svelte:fragment>
       <!-- TODO move to a menu? -->
@@ -353,5 +356,9 @@
 
   .checkbox-container input {
     margin: 0;
+  }
+
+  .st-button {
+    white-space: nowrap;
   }
 </style>

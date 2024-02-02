@@ -131,7 +131,7 @@
       </ContextMenuItem>
       <ContextMenuHeader>Modify</ContextMenuHeader>
       <ContextMenuItem
-        on:click={() => plan && effects.deleteConstraint(constraint, plan, user)}
+        on:click={() => plan && effects.deleteConstraint(constraint, user)}
         use={[
           [
             permissionHandler,

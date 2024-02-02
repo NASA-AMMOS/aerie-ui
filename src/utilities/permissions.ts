@@ -292,6 +292,9 @@ const queryPermissions = {
       isUserAdmin(user) || (getPermission(queries, user) && getRolePlanPermission(queries, user, plan, model, preset))
     );
   },
+  CANCEL_PENDING_SIMULATION: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission(['update_simulation_dataset_by_pk'], user);
+  },
   CHECK_CONSTRAINTS: (user: User | null, plan: PlanWithOwners, model: ModelWithOwner): boolean => {
     const queries = ['constraintViolations'];
     return isUserAdmin(user) || (getPermission(queries, user) && getRolePlanPermission(queries, user, plan, model));
@@ -322,6 +325,21 @@ const queryPermissions = {
   },
   CREATE_CONSTRAINT_METADATA_TAGS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['insert_constraint_tags'], user);
+  },
+  CREATE_CONSTRAINT_MODEL_SPECIFICATION: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission(['insert_constraint_model_specification_one'], user);
+  },
+  CREATE_CONSTRAINT_PLAN_SPECIFICATION: (
+    user: User | null,
+    constraint: ConstraintMetadata,
+    plan: PlanWithOwners,
+  ): boolean => {
+    return (
+      isUserAdmin(user) ||
+      (getPermission(['insert_constraint_specification_one'], user) &&
+        (constraint.public || isUserOwner(user, constraint)) &&
+        (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
+    );
   },
   CREATE_EXPANSION_RULE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['insert_expansion_rule_one'], user);
@@ -393,6 +411,9 @@ const queryPermissions = {
   CREATE_SIMULATION_TEMPLATE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['insert_simulation_template_one'], user);
   },
+  CREATE_TAG: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission(['insert_tags_one'], user);
+  },
   CREATE_TAGS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['insert_tags'], user);
   },
@@ -447,8 +468,14 @@ const queryPermissions = {
   DELETE_CONSTRAINT_DEFINITION_TAGS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['delete_constraint_definition_tags'], user);
   },
-  DELETE_CONSTRAINT_TAGS: (user: User | null): boolean => {
+  DELETE_CONSTRAINT_METADATA_TAGS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['delete_constraint_tags'], user);
+  },
+  DELETE_CONSTRAINT_MODEL_SPECIFICATION: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission(['delete_constraint_model_specification'], user);
+  },
+  DELETE_CONSTRAINT_PLAN_SPECIFICATION: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission(['delete_constraint_specification'], user);
   },
   DELETE_EXPANSION_RULE: (user: User | null, expansionRule: AssetWithOwner<ExpansionRule>): boolean => {
     return (
@@ -528,7 +555,7 @@ const queryPermissions = {
       isUserAdmin(user) || (getPermission(['delete_simulation_template_by_pk'], user) && isUserOwner(user, template))
     );
   },
-  DELETE_TAGS: (user: User | null, tag: Tag): boolean => {
+  DELETE_TAG: (user: User | null, tag: Tag): boolean => {
     return isUserAdmin(user) || (getPermission(['delete_tags_by_pk'], user) && isUserOwner(user, tag));
   },
   DELETE_USER_SEQUENCE: (user: User | null, sequence: AssetWithOwner<UserSequence>): boolean => {
@@ -560,8 +587,8 @@ const queryPermissions = {
   GET_PLANS_AND_MODELS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['mission_model'], user);
   },
-  GET_PLAN_SNAPSHOT: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission(['plan_snapshot_by_pk'], user);
+  GET_PLAN_SNAPSHOT_ACTIVITY_DIRECTIVES: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission(['plan_snapshot_activities'], user);
   },
   INITIAL_SIMULATION_UPDATE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['update_simulation'], user);
@@ -675,8 +702,8 @@ const queryPermissions = {
   SUB_ACTIVITY_PRESETS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['activity_presets'], user);
   },
-  SUB_CONSTRAINTS_ALL: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission(['constraint'], user);
+  SUB_CONSTRAINTS: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission(['constraint_metadata'], user);
   },
   SUB_EXPANSION_RULES: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['expansion_rule'], user);
@@ -686,9 +713,6 @@ const queryPermissions = {
   },
   SUB_PLAN_SNAPSHOTS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['plan_snapshot'], user);
-  },
-  SUB_PLAN_SNAPSHOT_ACTIVITY_DIRECTIVES: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission(['plan_snapshot_activities'], user);
   },
   SUB_SIMULATION: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['simulation'], user);
@@ -721,13 +745,13 @@ const queryPermissions = {
       (getPermission(['update_constraint_metadata_by_pk'], user) && isUserOwner(user, constraintMetadata))
     );
   },
+  UPDATE_CONSTRAINT_PLAN_SPECIFICATIONS: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission(['update_constraint_specification_by_pk'], user);
+  },
   UPDATE_EXPANSION_RULE: (user: User | null, expansionRule: AssetWithOwner<ExpansionRule>): boolean => {
     return (
       isUserAdmin(user) || (getPermission(['update_expansion_rule_by_pk'], user) && isUserOwner(user, expansionRule))
     );
-  },
-  UPDATE_PLAN: (user: User | null, plan: PlanWithOwners): boolean => {
-    return isUserAdmin(user) || (getPermission(['update_plan_by_pk'], user) && isPlanOwner(user, plan));
   },
   UPDATE_PLAN_SNAPSHOT: (user: User | null): boolean => {
     return getPermission(['update_plan_snapshot_by_pk'], user);
@@ -765,6 +789,9 @@ const queryPermissions = {
         (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
     );
   },
+  UPDATE_SCHEDULING_SPEC_CONDITION: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission(['update_scheduling_specification_conditions_by_pk'], user);
+  },
   UPDATE_SCHEDULING_SPEC_CONDITION_ID: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['update_scheduling_specification_conditions_by_pk'], user);
   },
@@ -780,9 +807,6 @@ const queryPermissions = {
       isUserAdmin(user) ||
       (getPermission(['update_simulation_by_pk'], user) && (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
     );
-  },
-  UPDATE_SIMULATION_DATASET: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission(['update_simulation_dataset_by_pk'], user);
   },
   UPDATE_SIMULATION_TEMPLATE: (user: User | null, plan: PlanWithOwners): boolean => {
     return isUserAdmin(user) || (getPermission(['update_simulation_template_by_pk'], user) && isUserOwner(user, plan));
@@ -874,8 +898,12 @@ interface PlanSnapshotCRUDPermission extends Omit<PlanAssetCRUDPermission<PlanSn
   canRestore: RolePlanPermissionCheck;
 }
 
-interface ConstraintCRUDPermission<T = null> extends CRUDPermission<T> {
+interface ConstraintPlanSpecCRUDPermission {
   canCheck: RolePlanPermissionCheck;
+  canCreate: (user: User | null, constraint: ConstraintMetadata, plan: PlanWithOwners) => boolean;
+  canDelete: (user: User | null, constraint: ConstraintMetadata, plan: PlanWithOwners) => boolean;
+  canRead: (user: User | null) => boolean;
+  canUpdate: (user: User | null, constraint: ConstraintMetadata, plan: PlanWithOwners) => boolean;
 }
 
 interface ExpansionSetsCRUDPermission<T = null> extends Omit<CRUDPermission<T>, 'canCreate'> {
@@ -903,7 +931,8 @@ interface FeaturePermissions {
   activityDirective: PlanAssetCRUDPermission<ActivityDirective>;
   activityPresets: PlanActivityPresetsCRUDPermission;
   commandDictionary: CRUDPermission<void>;
-  constraints: ConstraintCRUDPermission<AssetWithOwner<ConstraintMetadata>>;
+  constraintPlanSpec: ConstraintPlanSpecCRUDPermission;
+  constraints: CRUDPermission<AssetWithOwner<ConstraintMetadata>>;
   expansionRules: CRUDPermission<AssetWithOwner>;
   expansionSequences: ExpansionSequenceCRUDPermission<AssetWithOwner<ExpansionSequence>>;
   expansionSets: ExpansionSetsCRUDPermission<AssetWithOwner<ExpansionSet>>;
@@ -941,11 +970,18 @@ const featurePermissions: FeaturePermissions = {
     canRead: () => false, // Not implemented
     canUpdate: () => false, // Not implemented
   },
-  constraints: {
+  constraintPlanSpec: {
     canCheck: (user, plan, model) => queryPermissions.CHECK_CONSTRAINTS(user, plan, model),
+    canCreate: (user, constraint, plan) =>
+      queryPermissions.CREATE_CONSTRAINT_PLAN_SPECIFICATION(user, constraint, plan),
+    canDelete: (user, constraintMetadata) => queryPermissions.DELETE_CONSTRAINT(user, constraintMetadata),
+    canRead: user => queryPermissions.SUB_CONSTRAINTS(user),
+    canUpdate: (user, constraintMetadata) => queryPermissions.UPDATE_CONSTRAINT_METADATA(user, constraintMetadata),
+  },
+  constraints: {
     canCreate: user => queryPermissions.CREATE_CONSTRAINT(user),
     canDelete: (user, constraintMetadata) => queryPermissions.DELETE_CONSTRAINT(user, constraintMetadata),
-    canRead: user => queryPermissions.SUB_CONSTRAINTS_ALL(user),
+    canRead: user => queryPermissions.SUB_CONSTRAINTS(user),
     canUpdate: (user, constraintMetadata) => queryPermissions.UPDATE_CONSTRAINT_METADATA(user, constraintMetadata),
   },
   expansionRules: {
@@ -977,7 +1013,7 @@ const featurePermissions: FeaturePermissions = {
     canCreate: user => queryPermissions.CREATE_PLAN(user),
     canDelete: (user, plan) => queryPermissions.DELETE_PLAN(user, plan),
     canRead: user => queryPermissions.GET_PLAN(user),
-    canUpdate: (user, plan) => queryPermissions.UPDATE_PLAN(user, plan),
+    canUpdate: () => false, // no feature to update plan exists
   },
   planBranch: {
     canCreateBranch: (user, plan, model) => queryPermissions.DUPLICATE_PLAN(user, plan, model),
@@ -996,7 +1032,8 @@ const featurePermissions: FeaturePermissions = {
   planSnapshot: {
     canCreate: (user, plan, model) => queryPermissions.CREATE_PLAN_SNAPSHOT(user, plan, model),
     canDelete: user => queryPermissions.DELETE_PLAN_SNAPSHOT(user),
-    canRead: user => queryPermissions.GET_PLAN_SNAPSHOT(user) && queryPermissions.SUB_PLAN_SNAPSHOTS(user),
+    canRead: user =>
+      queryPermissions.GET_PLAN_SNAPSHOT_ACTIVITY_DIRECTIVES(user) && queryPermissions.SUB_PLAN_SNAPSHOTS(user),
     canRestore: (user, plan, model) => queryPermissions.RESTORE_PLAN_SNAPSHOT(user, plan, model),
     canUpdate: () => false, // no feature to update snapshots exists,
   },
@@ -1039,7 +1076,7 @@ const featurePermissions: FeaturePermissions = {
   },
   tags: {
     canCreate: user => queryPermissions.CREATE_TAGS(user),
-    canDelete: (user, tag) => queryPermissions.DELETE_TAGS(user, tag),
+    canDelete: (user, tag) => queryPermissions.DELETE_TAG(user, tag),
     canRead: user => queryPermissions.SUB_TAGS(user),
     canUpdate: (user, tag) => queryPermissions.UPDATE_TAG(user, tag),
   },

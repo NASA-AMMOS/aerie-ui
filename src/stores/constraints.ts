@@ -6,12 +6,31 @@ import gql from '../utilities/gql';
 import { planStartTimeMs } from './plan';
 import { gqlSubscribable } from './subscribable';
 
+/* Writeable. */
+
+export const constraintMetadataId: Writable<number> = writable(-1);
+
+export const constraintsViolationStatus: Writable<Status | null> = writable(null);
+
+export const constraintVisibilityMapWritable: Writable<Record<ConstraintMetadata['id'], boolean>> = writable({});
+
+export const checkConstraintsStatus: Writable<Status | null> = writable(null);
+
+export const rawConstraintResponses: Writable<ConstraintResponse[]> = writable([]);
+
+export const constraintsColumns: Writable<string> = writable('2fr 3px 1fr');
+export const constraintsFormColumns: Writable<string> = writable('1fr 3px 2fr');
+
 /* Subscriptions. */
 
 export const constraints = gqlSubscribable<ConstraintMetadata[]>(gql.SUB_CONSTRAINTS, {}, [], null);
 
-export const constraintMetadataId: Writable<number> = writable(-1);
-// export const constraintRevision: Writable<number> = writable(0);
+export const constraintPlanSpecs = gqlSubscribable<ConstraintPlanSpec[]>(
+  gql.SUB_CONSTRAINT_PLAN_SPECIFICATIONS,
+  { planId },
+  [],
+  null,
+);
 
 export const constraintMetadata = gqlSubscribable<ConstraintMetadata | null>(
   gql.SUB_CONSTRAINT,
@@ -20,18 +39,16 @@ export const constraintMetadata = gqlSubscribable<ConstraintMetadata | null>(
   null,
 );
 
-// export const constraintDefinition = gqlSubscribable<ConstraintDefinition | null>(
-//   gql.SUB_CONSTRAINT_DEFINITION,
-//   { id: constraintId, revision: constraintRevision },
-//   null,
-//   null,
-// );
+/* Derived. */
 
 export const constraintsMap: Readable<Record<string, ConstraintMetadata>> = derived([constraints], ([$constraints]) =>
   keyBy($constraints, 'id'),
 );
 
-export const constraintVisibilityMapWritable: Writable<Record<ConstraintMetadata['id'], boolean>> = writable({});
+export const constraintPlanSpecMap: Readable<Record<string, ConstraintPlanSpec>> = derived(
+  [constraintPlanSpecs],
+  ([$constraintPlanSpecs]) => keyBy($constraintPlanSpecs, 'constraint_id'),
+);
 
 export const constraintVisibilityMap: Readable<Record<ConstraintMetadata['id'], boolean>> = derived(
   [constraintsMap, constraintVisibilityMapWritable],
@@ -46,16 +63,6 @@ export const constraintVisibilityMap: Readable<Record<ConstraintMetadata['id'], 
     }, {});
   },
 );
-
-export const checkConstraintsStatus: Writable<Status | null> = writable(null);
-export const constraintsViolationStatus: Writable<Status | null> = writable(null);
-
-export const rawConstraintResponses: Writable<ConstraintResponse[]> = writable([]);
-
-export const constraintsColumns: Writable<string> = writable('2fr 3px 1fr');
-export const constraintsFormColumns: Writable<string> = writable('1fr 3px 2fr');
-
-/* Derived. */
 
 export const constraintResponseMap: Readable<Record<ConstraintDefinition['constraint_id'], ConstraintResponse>> =
   derived([rawConstraintResponses, planStartTimeMs], ([$constraintResponses, $planStartTimeMs]) =>
