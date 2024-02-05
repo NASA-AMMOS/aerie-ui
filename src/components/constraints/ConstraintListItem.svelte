@@ -7,8 +7,10 @@
   import VisibleShowIcon from '@nasa-jpl/stellar/icons/visible_show.svg?component';
   import WarningIcon from '@nasa-jpl/stellar/icons/warning.svg?component';
   import { createEventDispatcher } from 'svelte';
+  import { PlanStatusMessages } from '../../enums/planStatusMessages';
   import { Status } from '../../enums/status';
-  import type { ConstraintMetadata, ConstraintResponse } from '../../types/constraint';
+  import type { ConstraintMetadata, ConstraintPlanSpec, ConstraintResponse } from '../../types/constraint';
+  import { getTarget } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { pluralize } from '../../utilities/text';
   import { tooltip } from '../../utilities/tooltip';

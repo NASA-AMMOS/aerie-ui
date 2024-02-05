@@ -346,48 +346,6 @@
 
     <svelte:fragment slot="body">
       <fieldset>
-        <label for="model">Model</label>
-        <select
-          bind:value={constraintModelId}
-          class="st-select w-100"
-          disabled={constraintPlanId !== null}
-          name="model"
-          use:permissionHandler={{
-            hasPermission,
-            permissionError,
-          }}
-        >
-          <option value={null} />
-          {#each models as model}
-            <option value={model.id} disabled={!hasModelPermission(model.id, mode, user)}>
-              {model.name}
-              (Version: {model.version})
-            </option>
-          {/each}
-        </select>
-      </fieldset>
-
-      <fieldset>
-        <label for="plan">Plan</label>
-        <select
-          bind:value={constraintPlanId}
-          class="st-select w-100"
-          name="plan"
-          use:permissionHandler={{
-            hasPermission,
-            permissionError,
-          }}
-        >
-          <option value={null} />
-          {#each plans as plan}
-            <option value={plan.id} disabled={!hasPlanPermission(plan, mode, user)}>
-              {plan.name} ({plan.id})
-            </option>
-          {/each}
-        </select>
-      </fieldset>
-
-      <fieldset>
         <label for="constraint-name">Name</label>
         <input
           bind:value={constraintName}
