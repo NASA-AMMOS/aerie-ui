@@ -4,6 +4,7 @@ import { env } from '$env/dynamic/public';
 import type { CommandDictionary as AmpcsCommandDictionary } from '@nasa-jpl/aerie-ampcs';
 import { get } from 'svelte/store';
 import { SearchParameters } from '../enums/searchParameters';
+import { Status } from '../enums/status';
 import { activityDirectives, activityDirectivesMap, selectedActivityDirectiveId } from '../stores/activities';
 import { checkConstraintsStatus, constraintsViolationStatus, rawConstraintResponses } from '../stores/constraints';
 import { catchError, catchSchedulingError } from '../stores/errors';
@@ -153,7 +154,6 @@ import {
 import { queryPermissions } from './permissions';
 import { reqExtension, reqGateway, reqHasura } from './requests';
 import { sampleProfiles } from './resources';
-import { Status } from './status';
 import { pluralize } from './text';
 import { getDoyTime, getDoyTimeFromInterval, getIntervalFromDoyRange } from './time';
 import { createRow, duplicateRow } from './timeline';

@@ -7,7 +7,8 @@
   import ThreeDotsIcon from '@nasa-jpl/stellar/icons/three_dot_horizontal.svg?component';
   import WarningIcon from '@nasa-jpl/stellar/icons/warning.svg?component';
   import HourglassIcon from 'bootstrap-icons/icons/hourglass-top.svg?component';
-  import { getColorForStatus, Status, statusColors } from '../../utilities/status';
+  import { Status } from '../../enums/status';
+  import { getColorForStatus, statusColors } from '../../utilities/status';
   import { tooltip } from '../../utilities/tooltip';
   import ProgressRadial from './ProgressRadial.svelte';
 

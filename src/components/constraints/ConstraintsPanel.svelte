@@ -9,6 +9,7 @@
   import VisibleHideIcon from '@nasa-jpl/stellar/icons/visible_hide.svg?component';
   import VisibleShowIcon from '@nasa-jpl/stellar/icons/visible_show.svg?component';
   import { PlanStatusMessages } from '../../enums/planStatusMessages';
+  import { Status } from '../../enums/status';
   import {
     checkConstraintsStatus,
     constraintResponseMap,
@@ -28,7 +29,6 @@
   import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
-  import { Status } from '../../utilities/status';
   import { getDoyTime, getUnixEpochTime } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import { required, timestamp } from '../../utilities/validators';

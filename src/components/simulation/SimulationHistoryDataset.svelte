@@ -3,6 +3,7 @@
 <script lang="ts">
   import CancelIcon from '@nasa-jpl/stellar/icons/prohibited.svg?component';
   import { createEventDispatcher } from 'svelte';
+  import { Status } from '../../enums/status';
   import { planReadOnly } from '../../stores/plan';
   import type { SimulationDataset } from '../../types/simulation';
   import { hexToRgba } from '../../utilities/color';
@@ -15,7 +16,6 @@
     getSimulationStatus,
     getSimulationTimestamp,
   } from '../../utilities/simulation';
-  import { Status } from '../../utilities/status';
   import { getDoyTime, getUnixEpochTimeFromInterval } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import Card from '../ui/Card.svelte';

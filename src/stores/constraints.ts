@@ -1,8 +1,8 @@
 import { keyBy } from 'lodash-es';
 import { derived, get, writable, type Readable, type Writable } from 'svelte/store';
+import { Status } from '../enums/status';
 import type { Constraint, ConstraintResponse, ConstraintResultWithName } from '../types/constraint';
 import gql from '../utilities/gql';
-import { Status } from '../utilities/status';
 import { modelId, planId, planStartTimeMs } from './plan';
 import { gqlSubscribable } from './subscribable';
 

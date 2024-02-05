@@ -1,6 +1,7 @@
+import { Status } from '../enums/status';
 import type { SimulationDataset, SimulationDatasetSlim } from '../types/simulation';
 import { compare, getNumberWithOrdinal } from './generic';
-import { Status, statusColors } from './status';
+import { statusColors } from './status';
 import { getDoyTime, getUnixEpochTimeFromInterval } from './time';
 
 /**

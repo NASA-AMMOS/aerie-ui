@@ -30,6 +30,7 @@
   import StatusBadge from '../../../components/ui/StatusBadge.svelte';
   import { PlanStatusMessages } from '../../../enums/planStatusMessages';
   import { SearchParameters } from '../../../enums/searchParameters';
+  import { Status } from '../../../enums/status';
   import {
     activityDirectiveValidationStatuses,
     activityDirectives,
@@ -123,7 +124,7 @@
     getSimulationStatus,
     getSimulationTimestamp,
   } from '../../../utilities/simulation';
-  import { Status, statusColors } from '../../../utilities/status';
+  import { statusColors } from '../../../utilities/status';
   import { pluralize } from '../../../utilities/text';
   import { getUnixEpochTime } from '../../../utilities/time';
   import { tooltip } from '../../../utilities/tooltip';

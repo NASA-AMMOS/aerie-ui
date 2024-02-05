@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Status } from '../../utilities/status';
+  import type { Status } from '../../enums/status';
   import StatusBadge from './StatusBadge.svelte';
 
   export let status: Status | null = null;

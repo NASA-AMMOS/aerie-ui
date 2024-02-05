@@ -1,13 +1,4 @@
-export enum Status {
-  Canceled = 'Canceled',
-  Complete = 'Complete',
-  Failed = 'Failed',
-  Incomplete = 'Incomplete',
-  Unchecked = 'Unchecked',
-  Modified = 'Modified',
-  Pending = 'Pending',
-  PartialSuccess = 'Partial Success',
-}
+import { Status } from '../enums/status';
 
 export const statusColors: Record<string, string> = {
   blue: '#2f80ed',
