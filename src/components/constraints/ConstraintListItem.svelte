@@ -47,7 +47,7 @@
     const { value: revision } = getTarget(event);
     dispatch('updateConstraintPlanSpec', {
       ...constraintPlanSpec,
-      constraint_revision: revision,
+      constraint_revision: revision === '' ? null : revision,
     });
   }
 </script>

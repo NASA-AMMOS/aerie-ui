@@ -172,7 +172,7 @@
     goto(
       `${base}/constraints/edit/${id}?${SearchParameters.REVISION}=${
         constraint?.versions[constraint?.versions.length - 1].revision
-      }`,
+      }&${SearchParameters.PLAN_ID}=${$planId}`,
     );
   }
 
@@ -264,7 +264,7 @@
             hasPermission,
             permissionError,
           }}
-          on:click={() => goto(`${base}/constraints/new?${SearchParameters.PLAN_ID}=${planId}`)}
+          on:click={() => goto(`${base}/constraints/new?${SearchParameters.PLAN_ID}=${$planId}`)}
         >
           New
         </button>
