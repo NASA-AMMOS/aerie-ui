@@ -1,6 +1,5 @@
 import { browser } from '$app/environment';
 import AboutModal from '../components/modals/AboutModal.svelte';
-import AddPlanConstraintModal from '../components/modals/AddPlanConstraintModal.svelte';
 import ConfirmModal from '../components/modals/ConfirmModal.svelte';
 import CreatePlanBranchModal from '../components/modals/CreatePlanBranchModal.svelte';
 import CreatePlanSnapshotModal from '../components/modals/CreatePlanSnapshotModal.svelte';
@@ -8,9 +7,10 @@ import CreateViewModal from '../components/modals/CreateViewModal.svelte';
 import DeleteActivitiesModal from '../components/modals/DeleteActivitiesModal.svelte';
 import EditViewModal from '../components/modals/EditViewModal.svelte';
 import ExpansionSequenceModal from '../components/modals/ExpansionSequenceModal.svelte';
+import ManagePlanConstraintsModal from '../components/modals/ManagePlanConstraintsModal.svelte';
 import MergeReviewEndedModal from '../components/modals/MergeReviewEndedModal.svelte';
-import PlanBranchesModal from '../components/modals/PlanBranchesModal.svelte';
 import PlanBranchRequestModal from '../components/modals/PlanBranchRequestModal.svelte';
+import PlanBranchesModal from '../components/modals/PlanBranchesModal.svelte';
 import PlanLockedModal from '../components/modals/PlanLockedModal.svelte';
 import PlanMergeRequestsModal from '../components/modals/PlanMergeRequestsModal.svelte';
 import RestorePlanSnapshotModal from '../components/modals/RestorePlanSnapshotModal.svelte';
@@ -140,33 +140,36 @@ export async function showConfirmModal(
 }
 
 /**
- * Shows an AddPlanConstraintModal component with the supplied arguments.
+ * Shows an ManagePlanConstraintsModal component with the supplied arguments.
  */
-export async function showAddPlanConstraintModal(user: User | null): Promise<ModalElementValue> {
+export async function showManagePlanConstraintsModal(user: User | null): Promise<ModalElementValue> {
   return new Promise(resolve => {
     if (browser) {
       const target: ModalElement | null = document.querySelector('#svelte-modal');
 
       if (target) {
-        const addPlanConstraintModal = new AddPlanConstraintModal({
+        const managePlanConstraintsModal = new ManagePlanConstraintsModal({
           props: { user },
           target,
         });
         target.resolve = resolve;
 
-        addPlanConstraintModal.$on('close', () => {
+        managePlanConstraintsModal.$on('close', () => {
           target.replaceChildren();
           target.resolve = null;
           target.removeAttribute('data-dismissible');
-          addPlanConstraintModal.$destroy();
+          managePlanConstraintsModal.$destroy();
         });
 
-        addPlanConstraintModal.$on('add', (e: CustomEvent<{ constraindId: number; constraintRevision: number }[]>) => {
-          target.replaceChildren();
-          target.resolve = null;
-          resolve({ confirm: true, value: e.detail });
-          addPlanConstraintModal.$destroy();
-        });
+        managePlanConstraintsModal.$on(
+          'add',
+          (e: CustomEvent<{ constraindId: number; constraintRevision: number }[]>) => {
+            target.replaceChildren();
+            target.resolve = null;
+            resolve({ confirm: true, value: e.detail });
+            managePlanConstraintsModal.$destroy();
+          },
+        );
       }
     } else {
       resolve({ confirm: false });

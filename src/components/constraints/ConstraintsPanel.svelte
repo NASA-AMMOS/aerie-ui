@@ -10,10 +10,12 @@
   import { PlanStatusMessages } from '../../enums/planStatusMessages';
   import { Status } from '../../enums/status';
   import {
+    allowedConstraintPlanSpecMap,
+    allowedConstraintSpecs,
     checkConstraintsStatus,
     constraintResponseMap,
     constraintVisibilityMap,
-    constraints,
+    constraintsMap,
     constraintsStatus,
     setAllConstraintsVisible,
     setConstraintVisibility,
@@ -22,7 +24,12 @@
   import { plan, planReadOnly, viewTimeRange } from '../../stores/plan';
   import { simulationStatus } from '../../stores/simulation';
   import type { User } from '../../types/app';
-  import type { ConstraintDefinition, ConstraintMetadata, ConstraintResponse } from '../../types/constraint';
+  import type {
+    ConstraintDefinition,
+    ConstraintMetadata,
+    ConstraintPlanSpec,
+    ConstraintResponse,
+  } from '../../types/constraint';
   import type { FieldStore } from '../../types/form';
   import type { ViewGridSection } from '../../types/view';
   import effects from '../../utilities/effects';
@@ -45,7 +52,7 @@
 
   let showAll: boolean = true;
   let filterText: string = '';
-  let filteredConstraints: ConstraintMetadata[] = [];
+  let filteredConstraints: ConstraintPlanSpec[] = [];
   let endTimeDoy: string;
   let endTimeDoyField: FieldStore<string>;
   let startTimeDoy: string;
@@ -60,13 +67,12 @@
   $: endTimeDoyField = field<string>(endTimeDoy, [required, timestamp]);
   $: startTimeMs = getUnixEpochTime(startTimeDoy);
   $: endTimeMs = getUnixEpochTime(endTimeDoy);
-
-  $: if ($constraints && $constraintResponseMap && startTimeMs && endTimeMs) {
+  $: if ($allowedConstraintSpecs && $constraintResponseMap && startTimeMs && endTimeMs) {
     constraintToConstraintResponseMap = {};
-    $constraints.forEach(constraintMetadata => {
-      const constraintResponse = $constraintResponseMap[constraintMetadata.id];
+    $allowedConstraintSpecs.forEach(constraintPlanSpec => {
+      const constraintResponse = $constraintResponseMap[constraintPlanSpec.constraint_id];
       if (constraintResponse) {
-        constraintToConstraintResponseMap[constraintMetadata.id] = {
+        constraintToConstraintResponseMap[constraintPlanSpec.constraint_id] = {
           constraintId: constraintResponse.constraintId,
           constraintName: constraintResponse.constraintName,
           errors: constraintResponse.errors,
@@ -85,34 +91,35 @@
       }
     });
   }
-
   $: filteredConstraints = filterConstraints(
-    $constraints,
+    $allowedConstraintSpecs,
     constraintToConstraintResponseMap,
     filterText,
     showConstraintsWithNoViolations,
   );
   $: filteredConstraintResponses = Object.values(constraintToConstraintResponseMap).filter(r =>
-    filteredConstraints.find(c => c.id === r.constraintId),
+    filteredConstraints.find(c => c.constraint_id === r.constraintId),
   );
 
   $: totalViolationCount = getViolationCount(Object.values($constraintResponseMap));
   $: filteredViolationCount = getViolationCount(Object.values(filteredConstraintResponses));
 
   function filterConstraints(
-    constraints: ConstraintMetadata[],
+    planSpecs: ConstraintPlanSpec[],
     constraintToConstraintResponseMap: Record<ConstraintMetadata['id'], ConstraintResponse>,
     filterText: string,
     showConstraintsWithNoViolations: boolean,
   ) {
-    return constraints.filter(constraint => {
+    return planSpecs.filter(constraintPlanSpec => {
       const filterTextLowerCase = filterText.toLowerCase();
-      const includesName = constraint.name.toLocaleLowerCase().includes(filterTextLowerCase);
+      const includesName = constraintPlanSpec.constraint_metadata?.name
+        .toLocaleLowerCase()
+        .includes(filterTextLowerCase);
       if (!includesName) {
         return false;
       }
 
-      const constraintResponse = constraintToConstraintResponseMap[constraint.id];
+      const constraintResponse = constraintToConstraintResponseMap[constraintPlanSpec.constraint_id];
       // Always show constraints with no violations
       if (!constraintResponse?.results.violations?.length) {
         return showConstraintsWithNoViolations;
@@ -128,8 +135,8 @@
     }, 0);
   }
 
-  function onAddConstraint() {
-    effects.addPlanConstraints(user);
+  function onManageConstraints() {
+    effects.managePlanConstraints(user);
   }
 
   function onUpdateStartTime() {
@@ -159,6 +166,16 @@
   async function onPlanEndTimeClick() {
     await endTimeDoyField.validateAndSet($plan?.end_time_doy);
     onUpdateEndTime();
+  }
+
+  async function onUpdateConstraint(event: CustomEvent<ConstraintPlanSpec>) {
+    if ($plan) {
+      const {
+        detail: { constraint_metadata, ...constraintPlanSpec },
+      } = event;
+
+      await effects.updateConstraintPlanSpecifications($plan, [constraintPlanSpec], user);
+    }
   }
 
   function resetFilters() {
@@ -225,9 +242,9 @@
               ? PlanStatusMessages.READ_ONLY
               : 'You do not have permission to create constraints',
           }}
-          on:click|stopPropagation={onAddConstraint}
+          on:click|stopPropagation={onManageConstraints}
         >
-          Add Constraint
+          Manage Constraints
         </button>
       </svelte:fragment>
       <!-- TODO move to a menu? -->
@@ -277,7 +294,7 @@
           <div class="filter-label">
             {#if $checkConstraintsStatus}
               <FilterIcon />
-              {filteredConstraints.length} of {$constraints.length} constraints, {filteredViolationCount} of
+              {filteredConstraints.length} of {$allowedConstraintSpecs.length} constraints, {filteredViolationCount} of
               {totalViolationCount} violations
             {:else}
               Constraints not checked
@@ -297,17 +314,18 @@
         </div>
 
         {#each filteredConstraints as constraint}
-          <ConstraintListItem
-            {constraint}
-            constraintResponse={constraintToConstraintResponseMap[constraint.id]}
-            hasDeletePermission={$plan ? featurePermissions.constraints.canDelete(user, $plan) : false}
-            hasEditPermission={$plan ? featurePermissions.constraints.canUpdate(user, $plan) : false}
-            plan={$plan}
-            totalViolationCount={$constraintResponseMap[constraint.id]?.results.violations?.length || 0}
-            {user}
-            visible={$constraintVisibilityMap[constraint.id]}
-            on:toggleVisibility={toggleVisibility}
-          />
+          {#if $constraintsMap[constraint.constraint_id]}
+            <ConstraintListItem
+              constraint={$constraintsMap[constraint.constraint_id]}
+              constraintPlanSpec={$allowedConstraintPlanSpecMap[constraint.constraint_id]}
+              constraintResponse={constraintToConstraintResponseMap[constraint.constraint_id]}
+              hasEditPermission={$plan ? featurePermissions.constraints.canUpdate(user, $plan) : false}
+              totalViolationCount={$constraintResponseMap[constraint.constraint_id]?.results.violations?.length || 0}
+              visible={$constraintVisibilityMap[constraint.constraint_id]}
+              on:updateConstraintPlanSpec={onUpdateConstraint}
+              on:toggleVisibility={toggleVisibility}
+            />
+          {/if}
         {/each}
       {/if}
     </div>

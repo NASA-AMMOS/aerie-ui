@@ -474,8 +474,12 @@ const queryPermissions = {
   DELETE_CONSTRAINT_MODEL_SPECIFICATION: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['delete_constraint_model_specification'], user);
   },
-  DELETE_CONSTRAINT_PLAN_SPECIFICATION: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission(['delete_constraint_specification'], user);
+  DELETE_CONSTRAINT_PLAN_SPECIFICATIONS: (user: User | null, plan: PlanWithOwners): boolean => {
+    return (
+      isUserAdmin(user) ||
+      (getPermission(['delete_constraint_specification'], user) &&
+        (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
+    );
   },
   DELETE_EXPANSION_RULE: (user: User | null, expansionRule: AssetWithOwner<ExpansionRule>): boolean => {
     return (
@@ -745,8 +749,12 @@ const queryPermissions = {
       (getPermission(['update_constraint_metadata_by_pk'], user) && isUserOwner(user, constraintMetadata))
     );
   },
-  UPDATE_CONSTRAINT_PLAN_SPECIFICATIONS: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission(['update_constraint_specification_by_pk'], user);
+  UPDATE_CONSTRAINT_PLAN_SPECIFICATIONS: (user: User | null, plan: PlanWithOwners): boolean => {
+    return (
+      isUserAdmin(user) ||
+      (getPermission(['update_constraint_specification_by_pk'], user) &&
+        (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
+    );
   },
   UPDATE_EXPANSION_RULE: (user: User | null, expansionRule: AssetWithOwner<ExpansionRule>): boolean => {
     return (
@@ -900,10 +908,10 @@ interface PlanSnapshotCRUDPermission extends Omit<PlanAssetCRUDPermission<PlanSn
 
 interface ConstraintPlanSpecCRUDPermission {
   canCheck: RolePlanPermissionCheck;
-  canCreate: (user: User | null, constraint: ConstraintMetadata, plan: PlanWithOwners) => boolean;
-  canDelete: (user: User | null, constraint: ConstraintMetadata, plan: PlanWithOwners) => boolean;
+  canCreate: (user: User | null, plan: PlanWithOwners) => boolean;
+  canDelete: (user: User | null, plan: PlanWithOwners) => boolean;
   canRead: (user: User | null) => boolean;
-  canUpdate: (user: User | null, constraint: ConstraintMetadata, plan: PlanWithOwners) => boolean;
+  canUpdate: (user: User | null, plan: PlanWithOwners) => boolean;
 }
 
 interface ExpansionSetsCRUDPermission<T = null> extends Omit<CRUDPermission<T>, 'canCreate'> {
@@ -972,11 +980,10 @@ const featurePermissions: FeaturePermissions = {
   },
   constraintPlanSpec: {
     canCheck: (user, plan, model) => queryPermissions.CHECK_CONSTRAINTS(user, plan, model),
-    canCreate: (user, constraint, plan) =>
-      queryPermissions.CREATE_CONSTRAINT_PLAN_SPECIFICATION(user, constraint, plan),
-    canDelete: (user, constraintMetadata) => queryPermissions.DELETE_CONSTRAINT(user, constraintMetadata),
+    canCreate: (user, plan) => queryPermissions.UPDATE_CONSTRAINT_PLAN_SPECIFICATIONS(user, plan),
+    canDelete: (user, plan) => queryPermissions.DELETE_CONSTRAINT_PLAN_SPECIFICATIONS(user, plan),
     canRead: user => queryPermissions.SUB_CONSTRAINTS(user),
-    canUpdate: (user, constraintMetadata) => queryPermissions.UPDATE_CONSTRAINT_METADATA(user, constraintMetadata),
+    canUpdate: (user, plan) => queryPermissions.UPDATE_CONSTRAINT_PLAN_SPECIFICATIONS(user, plan),
   },
   constraints: {
     canCreate: user => queryPermissions.CREATE_CONSTRAINT(user),

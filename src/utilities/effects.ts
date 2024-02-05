@@ -147,13 +147,13 @@ import { ActivityDeletionAction } from './activities';
 import { convertToQuery, getSearchParameterNumber, setQueryParam, sleep } from './generic';
 import gql, { convertToGQLArray } from './gql';
 import {
-  showAddPlanConstraintModal,
   showConfirmModal,
   showCreatePlanBranchModal,
   showCreatePlanSnapshotModal,
   showCreateViewModal,
   showDeleteActivitiesModal,
   showEditViewModal,
+  showManagePlanConstraintsModal,
   showPlanBranchRequestModal,
   showRestorePlanSnapshotModal,
   showUploadViewModal,
@@ -175,19 +175,6 @@ function throwPermissionError(attemptedAction: string): never {
  * Functions that have side-effects (e.g. HTTP requests, toasts, popovers, store updates, etc.).
  */
 const effects = {
-  async addPlanConstraints(user: User | null): Promise<void> {
-    try {
-      // if (!queryPermissions.CREATE_CONSTRAINT_PLAN_SPECIFICATION(user)) {
-      //   throwPermissionError('apply constraints to this plan');
-      // }
-
-      await showAddPlanConstraintModal(user);
-    } catch (e) {
-      catchError('Constraint Unable To Be Applied To Plan', e as Error);
-      showFailureToast('Constrainta Application Failed');
-    }
-  },
-
   async applyPresetToActivity(
     preset: ActivityPreset,
     activityId: ActivityDirectiveId,
@@ -1824,6 +1811,32 @@ const effects = {
     } catch (e) {
       catchError('Delete Constraint Tags Failed', e as Error);
       showFailureToast('Delete Constraint Tags Failed');
+      return false;
+    }
+  },
+
+  async deleteConstraintPlanSpecifications(plan: Plan, constraintIds: number[], user: User | null): Promise<boolean> {
+    try {
+      if (!queryPermissions.DELETE_CONSTRAINT_PLAN_SPECIFICATIONS(user, plan)) {
+        throwPermissionError('delete constraint plan specifications');
+      }
+
+      const data = await reqHasura<{ affected_rows: number }>(
+        gql.DELETE_CONSTRAINT_PLAN_SPECIFICATIONS,
+        { constraintIds, planId: plan.id },
+        user,
+      );
+      if (data.delete_constraint_specification != null) {
+        if (data.delete_constraint_specification.affected_rows !== constraintIds.length) {
+          throw Error('Some constraint plan specifications were not successfully deleted');
+        }
+        return true;
+      } else {
+        throw Error('Unable to delete constraint plan specifications');
+      }
+    } catch (e) {
+      catchError('Delete Constraint Plan Specifications Failed', e as Error);
+      showFailureToast('Delete Constraint Plan Specifications Failed');
       return false;
     }
   },
@@ -3536,6 +3549,19 @@ const effects = {
     }
   },
 
+  async managePlanConstraints(user: User | null): Promise<void> {
+    try {
+      // if (!queryPermissions.CREATE_CONSTRAINT_PLAN_SPECIFICATION(user)) {
+      //   throwPermissionError('apply constraints to this plan');
+      // }
+
+      await showManagePlanConstraintsModal(user);
+    } catch (e) {
+      catchError('Constraint Unable To Be Applied To Plan', e as Error);
+      showFailureToast('Constrainta Application Failed');
+    }
+  },
+
   async planMergeBegin(
     merge_request_id: number,
     sourcePlan: PlanForMerging,
@@ -4032,9 +4058,13 @@ const effects = {
     }
   },
 
-  async updateConstraintPlanSpecifications(constraintPlanSpecs: ConstraintPlanSpecInsertInput[], user: User | null) {
+  async updateConstraintPlanSpecifications(
+    plan: Plan,
+    constraintPlanSpecs: ConstraintPlanSpecInsertInput[],
+    user: User | null,
+  ) {
     try {
-      if (!queryPermissions.UPDATE_CONSTRAINT_PLAN_SPECIFICATIONS(user)) {
+      if (!queryPermissions.UPDATE_CONSTRAINT_PLAN_SPECIFICATIONS(user, plan)) {
         throwPermissionError('update this constraint plan specification');
       }
 

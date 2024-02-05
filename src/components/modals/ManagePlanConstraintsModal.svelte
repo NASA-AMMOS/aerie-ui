@@ -6,8 +6,8 @@
   import type { CellEditingStoppedEvent, ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
   import { createEventDispatcher } from 'svelte';
   import { SearchParameters } from '../../enums/searchParameters';
-  import { constraintPlanSpecs, constraints, constraintsMap } from '../../stores/constraints';
-  import { planId } from '../../stores/plan';
+  import { allowedConstraintSpecs, constraints } from '../../stores/constraints';
+  import { plan, planId } from '../../stores/plan';
   import type { User } from '../../types/app';
   import type { ConstraintMetadata, ConstraintPlanSpec, ConstraintPlanSpecInsertInput } from '../../types/constraint';
   import type { DataGridColumnDef, RowId } from '../../types/data-grid';
@@ -15,6 +15,7 @@
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import Input from '../form/Input.svelte';
+  import type DataGrid from '../ui/DataGrid/DataGrid.svelte';
   import DataGridActions from '../ui/DataGrid/DataGridActions.svelte';
   import { tagsCellRenderer, tagsFilterValueGetter } from '../ui/DataGrid/DataGridTags';
   import SingleActionDataGrid from '../ui/DataGrid/SingleActionDataGrid.svelte';
@@ -90,6 +91,7 @@
 
   let columnDefs = baseColumnDefs;
 
+  let dataGrid: DataGrid<ConstraintMetadata> | undefined = undefined;
   let filterText: string = '';
   let filteredConstraints: ConstraintMetadata[] = [];
   let hasPermission: boolean = false;
@@ -101,7 +103,7 @@
     const includesName = constraint.name.toLocaleLowerCase().includes(filterTextLowerCase);
     return includesId || includesName;
   });
-  $: selectedConstraints = $constraintPlanSpecs.reduce(
+  $: selectedConstraints = $allowedConstraintSpecs.reduce(
     (prevBooleanMap: Record<string, boolean>, constraintPlanSpec: ConstraintPlanSpec) => {
       return {
         ...prevBooleanMap,
@@ -161,6 +163,9 @@
       },
     ];
   }
+  $: if (selectedConstraints) {
+    dataGrid?.redrawRows();
+  }
 
   function editConstraint({ id }: Pick<ConstraintMetadata, 'id'>) {
     const constraint = $constraints.find(c => c.id === id);
@@ -192,38 +197,60 @@
     }
   }
 
-  async function onAddConstraints(selectedConstraints: Record<number, boolean>) {
-    const constraintSpecsToAdd: ConstraintPlanSpecInsertInput[] = Object.keys(selectedConstraints).reduce(
-      (prevConstraintSpecs: ConstraintPlanSpecInsertInput[], selectedConstraintId) => {
-        const constraintId = parseInt(selectedConstraintId);
-        const isSelected = selectedConstraints[constraintId];
+  async function onUpdateConstraints(selectedConstraints: Record<number, boolean>) {
+    if ($plan) {
+      const constraintPlanSpecUpdates: {
+        constraintPlanSpecIdsToDelete: number[];
+        constraintPlanSpecsToAdd: ConstraintPlanSpecInsertInput[];
+      } = Object.keys(selectedConstraints).reduce(
+        (
+          prevConstraintPlanSpecUpdates: {
+            constraintPlanSpecIdsToDelete: number[];
+            constraintPlanSpecsToAdd: ConstraintPlanSpecInsertInput[];
+          },
+          selectedConstraintId: string,
+        ) => {
+          const constraintId = parseInt(selectedConstraintId);
+          const isSelected = selectedConstraints[constraintId];
 
-        if (isSelected) {
-          return [
-            ...prevConstraintSpecs,
-            {
-              constraint_id: constraintId,
-              constraint_revision:
-                $constraintsMap[selectedConstraintId].versions[
-                  $constraintsMap[selectedConstraintId].versions.length - 1
-                ].revision,
-              enabled: true,
-              plan_id: $planId,
-            } as ConstraintPlanSpecInsertInput,
-          ];
-        }
-        return prevConstraintSpecs;
-      },
-      [],
-    );
+          if (isSelected) {
+            return {
+              ...prevConstraintPlanSpecUpdates,
+              constraintPlanSpecsToAdd: [
+                ...prevConstraintPlanSpecUpdates.constraintPlanSpecsToAdd,
+                {
+                  constraint_id: constraintId,
+                  constraint_revision: null,
+                  enabled: true,
+                  plan_id: $planId,
+                } as ConstraintPlanSpecInsertInput,
+              ],
+            };
+          } else {
+            return {
+              ...prevConstraintPlanSpecUpdates,
+              constraintPlanSpecIdsToDelete: [
+                ...prevConstraintPlanSpecUpdates.constraintPlanSpecIdsToDelete,
+                constraintId,
+              ],
+            };
+          }
+        },
+        {
+          constraintPlanSpecIdsToDelete: [],
+          constraintPlanSpecsToAdd: [],
+        },
+      );
 
-    await effects.updateConstraintPlanSpecifications(constraintSpecsToAdd, user);
-    dispatch('close');
+      effects.updateConstraintPlanSpecifications($plan, constraintPlanSpecUpdates.constraintPlanSpecsToAdd, user);
+      effects.deleteConstraintPlanSpecifications($plan, constraintPlanSpecUpdates.constraintPlanSpecIdsToDelete, user);
+      dispatch('close');
+    }
   }
 </script>
 
 <Modal height={500} width={600}>
-  <ModalHeader on:close>Add Constraints</ModalHeader>
+  <ModalHeader on:close>Manage Constraints</ModalHeader>
   <ModalContent style="padding:0">
     <div class="constraints-modal-container">
       <div class="constraints-modal-filter-container">
@@ -246,6 +273,7 @@
       <div class="constraints-modal-table-container">
         {#if filteredConstraints.length}
           <SingleActionDataGrid
+            bind:dataGrid
             {columnDefs}
             hasEdit={true}
             {hasEditPermission}
@@ -263,7 +291,7 @@
   </ModalContent>
   <ModalFooter>
     <button class="st-button secondary" on:click={() => dispatch('close')}> Cancel </button>
-    <button class="st-button" on:click={() => onAddConstraints(selectedConstraints)}> Add </button>
+    <button class="st-button" on:click={() => onUpdateConstraints(selectedConstraints)}> Update </button>
   </ModalFooter>
 </Modal>
 

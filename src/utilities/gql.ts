@@ -184,17 +184,6 @@ const gql = {
     }
   `,
 
-  CREATE_CONSTRAINT_PLAN_SPECIFICATION: `#graphql
-    mutation CreateConstraintPlanSpecification($constraintPlanSpecification: constraint_specification_insert_input!) {
-      constraintPlanSpecification: insert_constraint_specification_one(object: $constraintPlanSpecification) {
-        constraint_id
-        constraint_revision
-        enabled
-        plan_id
-      }
-    }
-  `,
-
   CREATE_EXPANSION_RULE: `#graphql
     mutation CreateExpansionRule($rule: expansion_rule_insert_input!) {
       createExpansionRule: insert_expansion_rule_one(object: $rule) {
@@ -528,14 +517,13 @@ const gql = {
     }
   `,
 
-  DELETE_CONSTRAINT_MODEL_SPECIFICATION: `#graphql
-    mutation DeleteConstraintModelSpecification($constraintId: Int!, $constraintRevision: Int!, $modelId: Int!) {
+  DELETE_CONSTRAINT_MODEL_SPECIFICATIONS: `#graphql
+    mutation DeleteConstraintModelSpecification($constraintIds: [Int!]!, $modelId: Int!) {
       delete_constraint_model_specification(
         where: {
-          model_id: { _eq: $modelId },
+          constraint_id: { _in: $constraintIds },
           _and: {
-            constraint_id: { _eq: $constraintId },
-            constraint_revision: { _eq: $constraintRevision }
+            model_id: { _eq: $modelId },
           }
         }
       ) {
@@ -544,14 +532,13 @@ const gql = {
     }
   `,
 
-  DELETE_CONSTRAINT_PLAN_SPECIFICATION: `#graphql
-    mutation DeleteConstraintPlanSpecification($constraintId: Int!, $constraintRevision: Int!, $planId: Int!) {
+  DELETE_CONSTRAINT_PLAN_SPECIFICATIONS: `#graphql
+    mutation DeleteConstraintPlanSpecification($constraintIds: [Int!]!, $planId: Int!) {
       delete_constraint_specification(
         where: {
-          plan_id: { _eq: $planId },
+          constraint_id: { _in: $constraintIds },
           _and: {
-            constraint_id: { _eq: $constraintId },
-            constraint_revision: { _eq: $constraintRevision }
+            plan_id: { _eq: $planId },
           }
         }
       ) {
@@ -1742,6 +1729,7 @@ const gql = {
         constraint_revision
         enabled
         constraint_metadata {
+          name
           public
           versions {
             revision

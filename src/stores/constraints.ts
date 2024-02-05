@@ -40,24 +40,29 @@ export const constraintMetadata = gqlSubscribable<ConstraintMetadata | null>(
 );
 
 /* Derived. */
-
 export const constraintsMap: Readable<Record<string, ConstraintMetadata>> = derived([constraints], ([$constraints]) =>
   keyBy($constraints, 'id'),
 );
 
-export const constraintPlanSpecMap: Readable<Record<string, ConstraintPlanSpec>> = derived(
+export const allowedConstraintSpecs: Readable<ConstraintPlanSpec[]> = derived(
   [constraintPlanSpecs],
-  ([$constraintPlanSpecs]) => keyBy($constraintPlanSpecs, 'constraint_id'),
+  ([$constraintPlanSpecs]) =>
+    $constraintPlanSpecs.filter(({ constraint_metadata: constraintMetadata }) => constraintMetadata !== null),
+);
+
+export const allowedConstraintPlanSpecMap: Readable<Record<string, ConstraintPlanSpec>> = derived(
+  [allowedConstraintSpecs],
+  ([$allowedConstraintSpecs]) => keyBy($allowedConstraintSpecs, 'constraint_id'),
 );
 
 export const constraintVisibilityMap: Readable<Record<ConstraintMetadata['id'], boolean>> = derived(
-  [constraintsMap, constraintVisibilityMapWritable],
-  ([$constraintsMap, $constraintVisibilityMapWritable]) => {
-    return Object.values($constraintsMap).reduce((map: Record<number, boolean>, constraint) => {
-      if (constraint.id in $constraintVisibilityMapWritable) {
-        map[constraint.id] = $constraintVisibilityMapWritable[constraint.id];
+  [allowedConstraintPlanSpecMap, constraintVisibilityMapWritable],
+  ([$allowedConstraintPlanSpecMap, $constraintVisibilityMapWritable]) => {
+    return Object.values($allowedConstraintPlanSpecMap).reduce((map: Record<number, boolean>, constraint) => {
+      if (constraint.constraint_id in $constraintVisibilityMapWritable) {
+        map[constraint.constraint_id] = $constraintVisibilityMapWritable[constraint.constraint_id];
       } else {
-        map[constraint.id] = true;
+        map[constraint.constraint_id] = true;
       }
       return map;
     }, {});
@@ -86,10 +91,10 @@ export const constraintResponseMap: Readable<Record<ConstraintDefinition['constr
   );
 
 export const uncheckedConstraintCount: Readable<number> = derived(
-  [constraints, constraintResponseMap],
-  ([$constraints, $constraintResponseMap]) => {
-    return $constraints.reduce((count, prev) => {
-      if (!(prev.id in $constraintResponseMap)) {
+  [allowedConstraintSpecs, constraintResponseMap],
+  ([$allowedConstraintSpecs, $constraintResponseMap]) => {
+    return $allowedConstraintSpecs.reduce((count, prev) => {
+      if (!(prev.constraint_id in $constraintResponseMap)) {
         count++;
       }
       return count;
