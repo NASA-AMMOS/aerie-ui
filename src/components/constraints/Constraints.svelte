@@ -3,7 +3,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import type { ICellRendererParams } from 'ag-grid-community';
+  import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
   import { SearchParameters } from '../../enums/searchParameters';
   import { constraints, constraintsColumns } from '../../stores/constraints';
   import type { User } from '../../types/app';
@@ -59,6 +59,18 @@
       suppressAutoSize: true,
       suppressSizeToFit: true,
       width: 120,
+    },
+    {
+      field: 'versions',
+      filter: 'string',
+      headerName: 'Latest',
+      sortable: true,
+      suppressAutoSize: true,
+      suppressSizeToFit: true,
+      valueGetter: (params: ValueGetterParams<ConstraintMetadata>) => {
+        return params?.data?.versions[params?.data?.versions.length - 1].revision;
+      },
+      width: 80,
     },
     {
       autoHeight: true,

@@ -1,24 +1,23 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import type { CellEditingStoppedEvent, ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
   import { createEventDispatcher } from 'svelte';
+  import { PlanStatusMessages } from '../../enums/planStatusMessages';
   import { SearchParameters } from '../../enums/searchParameters';
   import { allowedConstraintSpecs, constraints } from '../../stores/constraints';
-  import { plan, planId } from '../../stores/plan';
+  import { plan, planId, planReadOnly } from '../../stores/plan';
   import type { User } from '../../types/app';
   import type { ConstraintMetadata, ConstraintPlanSpec, ConstraintPlanSpecInsertInput } from '../../types/constraint';
-  import type { DataGridColumnDef, RowId } from '../../types/data-grid';
+  import type { DataGridColumnDef } from '../../types/data-grid';
   import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import Input from '../form/Input.svelte';
-  import type DataGrid from '../ui/DataGrid/DataGrid.svelte';
+  import DataGrid from '../ui/DataGrid/DataGrid.svelte';
   import DataGridActions from '../ui/DataGrid/DataGridActions.svelte';
   import { tagsCellRenderer, tagsFilterValueGetter } from '../ui/DataGrid/DataGridTags';
-  import SingleActionDataGrid from '../ui/DataGrid/SingleActionDataGrid.svelte';
   import Modal from './Modal.svelte';
   import ModalContent from './ModalContent.svelte';
   import ModalFooter from './ModalFooter.svelte';
@@ -27,7 +26,7 @@
   export let user: User | null;
 
   type CellRendererParams = {
-    editConstraint: (constraint: ConstraintMetadata) => void;
+    viewConstraint: (constraint: ConstraintMetadata) => void;
   };
   type ConstraintsCellRendererParams = ICellRendererParams<ConstraintMetadata> & CellRendererParams;
 
@@ -94,7 +93,8 @@
   let dataGrid: DataGrid<ConstraintMetadata> | undefined = undefined;
   let filterText: string = '';
   let filteredConstraints: ConstraintMetadata[] = [];
-  let hasPermission: boolean = false;
+  let hasCreatePermission: boolean = false;
+  let hasEditSpecPermission: boolean = false;
   let selectedConstraints: Record<string, boolean> = {};
 
   $: filteredConstraints = $constraints.filter(constraint => {
@@ -112,7 +112,8 @@
     },
     {},
   );
-  $: hasPermission = featurePermissions.constraints.canRead(user);
+  $: hasCreatePermission = featurePermissions.constraints.canCreate(user);
+  $: hasEditSpecPermission = $plan ? featurePermissions.constraintPlanSpec.canUpdate(user, $plan) : false;
   $: {
     columnDefs = [
       ...baseColumnDefs,
@@ -123,13 +124,12 @@
           actionsDiv.className = 'actions-cell';
           new DataGridActions({
             props: {
-              editCallback: params.editConstraint,
-              editTooltip: {
-                content: 'Edit Constraint',
+              rowData: params.data,
+              viewCallback: params.viewConstraint,
+              viewTooltip: {
+                content: 'View Constraint',
                 placement: 'bottom',
               },
-              hasEditPermission: params.data ? hasEditPermission(user, params.data) : false,
-              rowData: params.data,
             },
             target: actionsDiv,
           });
@@ -137,7 +137,7 @@
           return actionsDiv;
         },
         cellRendererParams: {
-          editConstraint,
+          viewConstraint,
         } as CellRendererParams,
         headerName: '',
         resizable: false,
@@ -148,7 +148,7 @@
       },
       {
         cellDataType: 'boolean',
-        editable: true,
+        editable: hasEditSpecPermission,
         headerName: '',
         suppressAutoSize: true,
         suppressSizeToFit: true,
@@ -167,21 +167,13 @@
     dataGrid?.redrawRows();
   }
 
-  function editConstraint({ id }: Pick<ConstraintMetadata, 'id'>) {
+  function viewConstraint({ id }: Pick<ConstraintMetadata, 'id'>) {
     const constraint = $constraints.find(c => c.id === id);
-    goto(
-      `${base}/constraints/edit/${id}?${SearchParameters.REVISION}=${
+    window.open(
+      `${base}/constraints/edit/${constraint?.id}?${SearchParameters.REVISION}=${
         constraint?.versions[constraint?.versions.length - 1].revision
-      }&${SearchParameters.PLAN_ID}=${$planId}`,
+      }&${SearchParameters.MODEL_ID}=${$plan?.model.id}`,
     );
-  }
-
-  function editConstraintContext(event: CustomEvent<RowId[]>) {
-    editConstraint({ id: event.detail[0] as number });
-  }
-
-  function hasEditPermission(_user: User | null, constraint: ConstraintMetadata) {
-    return featurePermissions.constraints.canUpdate(user, constraint);
   }
 
   function onToggleConstraint(event: CustomEvent<CellEditingStoppedEvent<ConstraintMetadata, boolean>>) {
@@ -242,8 +234,12 @@
         },
       );
 
-      effects.updateConstraintPlanSpecifications($plan, constraintPlanSpecUpdates.constraintPlanSpecsToAdd, user);
-      effects.deleteConstraintPlanSpecifications($plan, constraintPlanSpecUpdates.constraintPlanSpecIdsToDelete, user);
+      await effects.updateConstraintPlanSpecifications(
+        $plan,
+        constraintPlanSpecUpdates.constraintPlanSpecsToAdd,
+        constraintPlanSpecUpdates.constraintPlanSpecIdsToDelete,
+        user,
+      );
       dispatch('close');
     }
   }
@@ -261,10 +257,10 @@
         <button
           class="st-button secondary ellipsis"
           use:permissionHandler={{
-            hasPermission,
+            hasPermission: hasCreatePermission,
             permissionError,
           }}
-          on:click={() => goto(`${base}/constraints/new?${SearchParameters.PLAN_ID}=${$planId}`)}
+          on:click={() => window.open(`${base}/constraints/new?${SearchParameters.MODEL_ID}=${$plan?.model_id}`)}
         >
           New
         </button>
@@ -272,16 +268,11 @@
       <hr />
       <div class="constraints-modal-table-container">
         {#if filteredConstraints.length}
-          <SingleActionDataGrid
-            bind:dataGrid
+          <DataGrid
+            bind:this={dataGrid}
             {columnDefs}
-            hasEdit={true}
-            {hasEditPermission}
-            itemDisplayText="Constraint"
-            items={filteredConstraints}
-            {user}
+            rowData={filteredConstraints}
             on:cellEditingStopped={onToggleConstraint}
-            on:editItem={editConstraintContext}
           />
         {:else}
           <div class="p1 st-typography-label">No Constraints Found</div>
@@ -291,7 +282,18 @@
   </ModalContent>
   <ModalFooter>
     <button class="st-button secondary" on:click={() => dispatch('close')}> Cancel </button>
-    <button class="st-button" on:click={() => onUpdateConstraints(selectedConstraints)}> Update </button>
+    <button
+      class="st-button"
+      on:click={() => onUpdateConstraints(selectedConstraints)}
+      use:permissionHandler={{
+        hasPermission: hasEditSpecPermission && !$planReadOnly,
+        permissionError: $planReadOnly
+          ? PlanStatusMessages.READ_ONLY
+          : 'You do not have permission to update the constraints on this plan.',
+      }}
+    >
+      Update
+    </button>
   </ModalFooter>
 </Modal>
 

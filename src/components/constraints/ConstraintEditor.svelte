@@ -1,6 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { createEventDispatcher } from 'svelte';
   import { models } from '../../stores/plan';
   import type { User } from '../../types/app';
   import type { DropdownOptions, SelectedDropdownOptionValue } from '../../types/dropdown';
@@ -12,11 +13,12 @@
   import SectionTitle from '../ui/SectionTitle.svelte';
 
   export let constraintDefinition: string = '';
+  export let referenceModelId: number | null = null;
   export let readOnly: boolean = false;
   export let title: string = 'Constraint - Definition Editor';
   export let user: User | null;
 
-  let constraintModelId: number | null = null;
+  const dispatch = createEventDispatcher();
 
   let constraintsTsFiles: TypeScriptFile[];
   let modelOptions: DropdownOptions = [];
@@ -28,8 +30,8 @@
     value: id,
   }));
 
-  $: if (constraintModelId !== null) {
-    effects.getTsFilesConstraints(constraintModelId, user).then(tsFiles => (constraintsTsFiles = tsFiles));
+  $: if (referenceModelId !== null) {
+    effects.getTsFilesConstraints(referenceModelId, user).then(tsFiles => (constraintsTsFiles = tsFiles));
   } else {
     constraintsTsFiles = [];
   }
@@ -46,25 +48,25 @@
 
   function onSelectReferenceModel(event: CustomEvent<SelectedDropdownOptionValue>) {
     const { detail: modelId } = event;
-    constraintModelId = modelId as number | null;
+    dispatch('selectReferenceModel', modelId);
   }
 </script>
 
 <Panel overflowYBody="hidden">
   <svelte:fragment slot="header">
     <SectionTitle>{title}</SectionTitle>
-    {#if !readOnly}
-      <div class="model-select">
+    <div class="dropdown-select">
+      {#if !readOnly}
         <label for="models">Reference Model:</label>
         <SearchableDropdown
-          selectedOptionValue={constraintModelId}
+          selectedOptionValue={referenceModelId}
           placeholder="No Model"
           name="models"
           options={modelOptions}
           on:selectOption={onSelectReferenceModel}
         />
-      </div>
-    {/if}
+      {/if}
+    </div>
   </svelte:fragment>
 
   <svelte:fragment slot="body">
@@ -85,14 +87,14 @@
 </Panel>
 
 <style>
-  .model-select {
+  .dropdown-select {
     align-items: center;
     column-gap: 0.5rem;
     display: grid;
     grid-template-columns: min-content auto;
   }
 
-  .model-select label {
+  .dropdown-select label {
     white-space: nowrap;
   }
 </style>

@@ -38,6 +38,7 @@
   export let initialConstraintMetadataTags: Tag[] = [];
   export let initialConstraintOwner: UserId = null;
   export let initialConstraintRevision: number | null = null;
+  export let initialReferenceModelId: number | null = null;
   export let constraintRevisions: number[] = [];
   export let tags: Tag[] = [];
   export let mode: 'create' | 'edit' = 'create';
@@ -59,6 +60,7 @@
   let isDefinitionModified: boolean = false;
   let isDefinitionDataModified: boolean = false;
   let isMetadataModified: boolean = false;
+  let referenceModelId: number | null = initialReferenceModelId;
   let saveButtonEnabled: boolean = false;
   let saveButtonText: string = 'Save';
   let savedConstraintMetadata: SavedConstraintMetadata = {
@@ -106,6 +108,7 @@
 
   $: pageTitle = mode === 'edit' ? 'Constraints' : 'New Constraint';
   $: pageSubtitle = mode === 'edit' ? savedConstraintMetadata.name : '';
+  $: referenceModelId = initialReferenceModelId;
   $: saveButtonEnabled =
     constraintDefinitionCode !== '' &&
     constraintName !== '' &&
@@ -245,6 +248,12 @@
       tag_id,
     }));
     await effects.createConstraintMetadataTags(newConstraintTags, user);
+  }
+
+  function onSelectReferenceModel(event: CustomEvent<number | null>) {
+    const { detail } = event;
+    referenceModelId = detail;
+    dispatch('selectReferenceModel', detail);
   }
 
   async function saveConstraint() {
@@ -467,10 +476,12 @@
 
   <ConstraintEditor
     constraintDefinition={constraintDefinitionCode}
+    {referenceModelId}
     readOnly={!hasPermission}
     title="{mode === 'create' ? 'New' : 'Edit'} Constraint - Definition Editor"
     {user}
     on:didChangeModelContent={onDidChangeModelContent}
+    on:selectReferenceModel={onSelectReferenceModel}
   />
 </CssGrid>
 

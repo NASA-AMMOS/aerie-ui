@@ -46,6 +46,7 @@ import type {
   ConstraintInsertInput,
   ConstraintMetadata,
   ConstraintMetadataSetInput,
+  ConstraintPlanSpec,
   ConstraintPlanSpecInsertInput,
   ConstraintResponse,
   ConstraintResult,
@@ -1735,7 +1736,7 @@ const effects = {
 
   async deleteConstraint(constraint: ConstraintMetadata, user: User | null): Promise<boolean> {
     try {
-      if (!queryPermissions.DELETE_CONSTRAINT(user, constraint)) {
+      if (!queryPermissions.DELETE_CONSTRAINT_METADATA(user, constraint)) {
         throwPermissionError('delete this constraint');
       }
 
@@ -1746,8 +1747,8 @@ const effects = {
       );
 
       if (confirm) {
-        const data = await reqHasura<{ id: number }>(gql.DELETE_CONSTRAINT, { id: constraint.id }, user);
-        if (data.deleteConstraint != null) {
+        const data = await reqHasura<{ id: number }>(gql.DELETE_CONSTRAINT_METADATA, { id: constraint.id }, user);
+        if (data.deleteConstraintMetadata != null) {
           showSuccessToast('Constraint Deleted Successfully');
           return true;
         } else {
@@ -4058,9 +4059,38 @@ const effects = {
     }
   },
 
+  async updateConstraintPlanSpecification(
+    plan: Plan,
+    constraintPlanSpecification: Omit<ConstraintPlanSpec, 'constraint_metadata'>,
+    user: User | null,
+  ) {
+    try {
+      if (!queryPermissions.UPDATE_CONSTRAINT_PLAN_SPECIFICATIONS(user, plan)) {
+        throwPermissionError('update this constraint plan specification');
+      }
+      const { enabled, constraint_id: constraintId, constraint_revision: revision } = constraintPlanSpecification;
+
+      const { updateConstraintPlanSpecification } = await reqHasura(
+        gql.UPDATE_CONSTRAINT_PLAN_SPECIFICATION,
+        { enabled, id: constraintId, planId: plan.id, revision },
+        user,
+      );
+
+      if (updateConstraintPlanSpecification !== null) {
+        showSuccessToast(`Constraints Updated Successfully`);
+      } else {
+        throw Error('Unable to update the constraints for the plan');
+      }
+    } catch (e) {
+      catchError('Constraint Plan Specification Update Failed', e as Error);
+      showFailureToast('Constraint Plan Specification Update Failed');
+    }
+  },
+
   async updateConstraintPlanSpecifications(
     plan: Plan,
-    constraintPlanSpecs: ConstraintPlanSpecInsertInput[],
+    constraintSpecsToUpdate: ConstraintPlanSpecInsertInput[],
+    constraintSpecIdsToDelete: number[],
     user: User | null,
   ) {
     try {
@@ -4068,14 +4098,14 @@ const effects = {
         throwPermissionError('update this constraint plan specification');
       }
 
-      const { updateConstraintPlanSpecifications } = await reqHasura(
+      const { deleteConstraintPlanSpecifications, updateConstraintPlanSpecifications } = await reqHasura(
         gql.UPDATE_CONSTRAINT_PLAN_SPECIFICATIONS,
-        { constraintPlanSpecifications: constraintPlanSpecs },
+        { constraintSpecIdsToDelete, constraintSpecsToUpdate, planId: plan.id },
         user,
       );
 
-      if (updateConstraintPlanSpecifications !== null) {
-        showSuccessToast(`Constraints Applied Successfully`);
+      if (updateConstraintPlanSpecifications !== null || deleteConstraintPlanSpecifications !== null) {
+        showSuccessToast(`Constraints Updated Successfully`);
       } else {
         throw Error('Unable to update the constraints for the plan');
       }

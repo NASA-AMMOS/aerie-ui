@@ -1,6 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { base } from '$app/paths';
   import CheckmarkIcon from '@nasa-jpl/stellar/icons/check.svg?component';
   import FilterIcon from '@nasa-jpl/stellar/icons/filter.svg?component';
   import VisibleHideIcon from '@nasa-jpl/stellar/icons/visible_hide.svg?component';
@@ -8,6 +9,7 @@
   import WarningIcon from '@nasa-jpl/stellar/icons/warning.svg?component';
   import { createEventDispatcher } from 'svelte';
   import { PlanStatusMessages } from '../../enums/planStatusMessages';
+  import { SearchParameters } from '../../enums/searchParameters';
   import { Status } from '../../enums/status';
   import type { ConstraintMetadata, ConstraintPlanSpec, ConstraintResponse } from '../../types/constraint';
   import { getTarget } from '../../utilities/generic';
@@ -15,12 +17,15 @@
   import { pluralize } from '../../utilities/text';
   import { tooltip } from '../../utilities/tooltip';
   import Collapse from '../Collapse.svelte';
+  import ContextMenuItem from '../context-menu/ContextMenuItem.svelte';
   import StatusBadge from '../ui/StatusBadge.svelte';
   import ConstraintViolationButton from './ConstraintViolationButton.svelte';
 
   export let constraint: ConstraintMetadata;
   export let constraintPlanSpec: ConstraintPlanSpec;
   export let constraintResponse: ConstraintResponse;
+  export let modelId: number | undefined;
+  export let hasReadPermission: boolean = false;
   export let hasEditPermission: boolean = false;
   export let readOnly: boolean = false;
   export let totalViolationCount: number = 0;
@@ -47,7 +52,7 @@
     const { value: revision } = getTarget(event);
     dispatch('updateConstraintPlanSpec', {
       ...constraintPlanSpec,
-      constraint_revision: revision === '' ? null : revision,
+      constraint_revision: revision === '' ? null : parseInt(`${revision}`),
     });
   }
 </script>
@@ -56,7 +61,18 @@
   <Collapse title={constraint.name} tooltipContent={constraint.name} defaultExpanded={false}>
     <svelte:fragment slot="left">
       <div class="left-content">
-        <input type="checkbox" checked={constraintPlanSpec.enabled} on:change={onEnable} on:click|stopPropagation />
+        <input
+          type="checkbox"
+          checked={constraintPlanSpec.enabled}
+          on:change={onEnable}
+          on:click|stopPropagation
+          use:permissionHandler={{
+            hasPermission: hasEditPermission,
+            permissionError: readOnly
+              ? PlanStatusMessages.READ_ONLY
+              : 'You do not have permission to edit plan constraints',
+          }}
+        />
       </div>
     </svelte:fragment>
     <svelte:fragment slot="right">
@@ -97,6 +113,7 @@
           {/if}
         </button>
         <select
+          class="st-select"
           value={constraintPlanSpec.constraint_revision}
           on:change={onUpdateRevision}
           on:click|stopPropagation
@@ -113,6 +130,31 @@
           {/each}
         </select>
       </div>
+    </svelte:fragment>
+
+    <svelte:fragment slot="contextMenuContent">
+      <ContextMenuItem
+        on:click={() =>
+          window.open(
+            `${base}/constraints/edit/${constraint.id}${
+              constraintPlanSpec.constraint_revision !== null
+                ? `?${SearchParameters.REVISION}=${constraintPlanSpec.constraint_revision}&${SearchParameters.MODEL_ID}=${modelId}`
+                : ''
+            }`,
+            '_blank',
+          )}
+        use={[
+          [
+            permissionHandler,
+            {
+              hasPermission: hasReadPermission,
+              permissionError: 'You do not have permission to edit this constraint',
+            },
+          ],
+        ]}
+      >
+        View Constraint
+      </ContextMenuItem>
     </svelte:fragment>
 
     <Collapse title="Description" defaultExpanded={false}>

@@ -174,7 +174,7 @@
         detail: { constraint_metadata, ...constraintPlanSpec },
       } = event;
 
-      await effects.updateConstraintPlanSpecifications($plan, [constraintPlanSpec], user);
+      await effects.updateConstraintPlanSpecification($plan, constraintPlanSpec, user);
     }
   }
 
@@ -240,7 +240,7 @@
             hasPermission: $plan ? featurePermissions.constraints.canCreate(user) && !$planReadOnly : false,
             permissionError: $planReadOnly
               ? PlanStatusMessages.READ_ONLY
-              : 'You do not have permission to create constraints',
+              : 'You do not have permission to update constraints',
           }}
           on:click|stopPropagation={onManageConstraints}
         >
@@ -319,7 +319,9 @@
               constraint={$constraintsMap[constraint.constraint_id]}
               constraintPlanSpec={$allowedConstraintPlanSpecMap[constraint.constraint_id]}
               constraintResponse={constraintToConstraintResponseMap[constraint.constraint_id]}
-              hasEditPermission={$plan ? featurePermissions.constraints.canUpdate(user, $plan) : false}
+              hasReadPermission={featurePermissions.constraints.canRead(user)}
+              hasEditPermission={$plan ? featurePermissions.constraintPlanSpec.canUpdate(user, $plan) : false}
+              modelId={$plan?.model.id}
               totalViolationCount={$constraintResponseMap[constraint.constraint_id]?.results.violations?.length || 0}
               visible={$constraintVisibilityMap[constraint.constraint_id]}
               on:updateConstraintPlanSpec={onUpdateConstraint}

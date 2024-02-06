@@ -459,14 +459,14 @@ const queryPermissions = {
   DELETE_COMMAND_DICTIONARY: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['delete_command_dictionary_by_pk'], user);
   },
-  DELETE_CONSTRAINT: (user: User | null, constraintMetadata: AssetWithOwner<ConstraintMetadata>): boolean => {
+  DELETE_CONSTRAINT_DEFINITION_TAGS: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission(['delete_constraint_definition_tags'], user);
+  },
+  DELETE_CONSTRAINT_METADATA: (user: User | null, constraintMetadata: AssetWithOwner<ConstraintMetadata>): boolean => {
     return (
       isUserAdmin(user) ||
       (getPermission(['delete_constraint_metadata_by_pk'], user) && isUserOwner(user, constraintMetadata))
     );
-  },
-  DELETE_CONSTRAINT_DEFINITION_TAGS: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission(['delete_constraint_definition_tags'], user);
   },
   DELETE_CONSTRAINT_METADATA_TAGS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['delete_constraint_tags'], user);
@@ -746,13 +746,14 @@ const queryPermissions = {
   UPDATE_CONSTRAINT_METADATA: (user: User | null, constraintMetadata: AssetWithOwner<ConstraintMetadata>): boolean => {
     return (
       isUserAdmin(user) ||
-      (getPermission(['update_constraint_metadata_by_pk'], user) && isUserOwner(user, constraintMetadata))
+      (getPermission(['update_constraint_metadata_by_pk'], user) &&
+        (constraintMetadata?.public || isUserOwner(user, constraintMetadata)))
     );
   },
   UPDATE_CONSTRAINT_PLAN_SPECIFICATIONS: (user: User | null, plan: PlanWithOwners): boolean => {
     return (
       isUserAdmin(user) ||
-      (getPermission(['update_constraint_specification_by_pk'], user) &&
+      (getPermission(['insert_constraint_specification', 'delete_constraint_specification'], user) &&
         (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
     );
   },
@@ -987,7 +988,7 @@ const featurePermissions: FeaturePermissions = {
   },
   constraints: {
     canCreate: user => queryPermissions.CREATE_CONSTRAINT(user),
-    canDelete: (user, constraintMetadata) => queryPermissions.DELETE_CONSTRAINT(user, constraintMetadata),
+    canDelete: (user, constraintMetadata) => queryPermissions.DELETE_CONSTRAINT_METADATA(user, constraintMetadata),
     canRead: user => queryPermissions.SUB_CONSTRAINTS(user),
     canUpdate: (user, constraintMetadata) => queryPermissions.UPDATE_CONSTRAINT_METADATA(user, constraintMetadata),
   },

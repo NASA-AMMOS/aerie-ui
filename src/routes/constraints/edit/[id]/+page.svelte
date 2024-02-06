@@ -3,6 +3,7 @@
 <script lang="ts">
   import { browser } from '$app/environment';
   import { page } from '$app/stores';
+  import { onMount } from 'svelte';
   import ConstraintForm from '../../../../components/constraints/ConstraintForm.svelte';
   import { SearchParameters } from '../../../../enums/searchParameters';
   import { constraintMetadata, constraintMetadataId } from '../../../../stores/constraints';
@@ -22,7 +23,7 @@
       ConstraintDefinition,
       'definition' | 'revision' | 'tags'
     >;
-  let constraintDefinitionCode = constraintDefinition.definition;
+  let constraintDefinitionCode = constraintDefinition?.definition;
   let constraintDescription = data.initialConstraint.description;
   let constraintId = data.initialConstraint.id;
   let constraintName = data.initialConstraint.name;
@@ -31,6 +32,7 @@
   let constraintMetadataTags = data.initialConstraint.tags.map(({ tag }) => tag);
   let constraintOwner = data.initialConstraint.owner;
   let constraintRevisions = data.initialConstraint.versions.map(({ revision }) => revision);
+  let referenceModelId: number | null = null;
 
   $: $constraintMetadataId = data.initialConstraint.id;
   $: if ($constraintMetadata != null && $constraintMetadata.id === $constraintMetadataId) {
@@ -38,9 +40,9 @@
       ConstraintDefinition,
       'definition' | 'revision' | 'tags'
     >;
-    if (constraintDefinition) {
-      constraintDefinitionCode = constraintDefinition.definition;
-      constraintDefinitionTags = constraintDefinition.tags.map(({ tag }) => tag);
+    if (constraintDefinition != null) {
+      constraintDefinitionCode = constraintDefinition?.definition;
+      constraintDefinitionTags = constraintDefinition?.tags.map(({ tag }) => tag);
     }
 
     constraintDescription = $constraintMetadata.description;
@@ -59,6 +61,20 @@
       setQueryParam(SearchParameters.REVISION, `${constraintRevision}`);
     }
   }
+
+  function onModelSelect(event: CustomEvent<number>) {
+    const { detail: modelId } = event;
+    if (browser) {
+      setQueryParam(SearchParameters.MODEL_ID, modelId != null ? `${modelId}` : null);
+    }
+  }
+
+  onMount(() => {
+    if (browser) {
+      const modelId = getSearchParameterNumber(SearchParameters.MODEL_ID) ?? null;
+      referenceModelId = modelId;
+    }
+  });
 </script>
 
 <ConstraintForm
@@ -71,9 +87,11 @@
   initialConstraintMetadataTags={constraintMetadataTags}
   initialConstraintOwner={constraintOwner}
   initialConstraintRevision={constraintRevision}
+  initialReferenceModelId={referenceModelId}
   {constraintRevisions}
   tags={$tags}
   mode="edit"
   user={data.user}
   on:selectRevision={onRevisionSelect}
+  on:selectReferenceModel={onModelSelect}
 />

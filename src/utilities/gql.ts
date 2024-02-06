@@ -485,14 +485,6 @@ const gql = {
     }
   `,
 
-  DELETE_CONSTRAINT: `#graphql
-    mutation DeleteConstraint($id: Int!) {
-      deleteConstraint: delete_constraint_by_pk(id: $id) {
-        id
-      }
-    }
-  `,
-
   DELETE_CONSTRAINT_DEFINITION_TAGS: `#graphql
     mutation DeleteConstraintDefinitionTags($ids: [Int!]!, $constraintId: Int!, $constraintRevision: Int!) {
       delete_constraint_definition_tags(
@@ -505,6 +497,14 @@ const gql = {
         }
       ) {
         affected_rows
+      }
+    }
+  `,
+
+  DELETE_CONSTRAINT_METADATA: `#graphql
+    mutation DeleteConstraint($id: Int!) {
+      deleteConstraintMetadata: delete_constraint_metadata_by_pk(id: $id) {
+        id
       }
     }
   `,
@@ -1724,7 +1724,10 @@ const gql = {
 
   SUB_CONSTRAINT_PLAN_SPECIFICATIONS: `#graphql
     subscription SubConstraintPlanSpecifications($planId: Int!) {
-      constraintPlanSpecs: constraint_specification(where: {plan_id: {_eq: $planId}}) {
+      constraintPlanSpecs: constraint_specification(
+        where: {plan_id: {_eq: $planId}},
+        order_by: { constraint_id: desc }
+      ) {
         constraint_id
         constraint_revision
         enabled
@@ -2363,10 +2366,25 @@ const gql = {
     }
   `,
 
+  UPDATE_CONSTRAINT_PLAN_SPECIFICATION: `#graphql
+    mutation UpdateConstraintPlanSpecification($id: Int!, $revision: Int!, $enabled: Boolean!, $planId: Int!) {
+      updateConstraintPlanSpecification: update_constraint_specification_by_pk(
+        pk_columns: { constraint_id: $id, plan_id: $planId },
+        _set: {
+          constraint_revision: $revision,
+          enabled: $enabled
+        }
+      ) {
+        constraint_revision
+        enabled
+      }
+    }
+  `,
+
   UPDATE_CONSTRAINT_PLAN_SPECIFICATIONS: `#graphql
-    mutation UpdateConstraintPlanSpecifications($constraintPlanSpecifications: [constraint_specification_insert_input!]!) {
+    mutation UpdateConstraintPlanSpecifications($constraintSpecsToUpdate: [constraint_specification_insert_input!]!, $constraintSpecIdsToDelete: [Int!]! = [], $planId: Int!) {
       updateConstraintPlanSpecifications: insert_constraint_specification(
-        objects: $constraintPlanSpecifications,
+        objects: $constraintSpecsToUpdate,
         on_conflict: {
           constraint: constraint_specification_pkey,
           update_columns: [constraint_revision, enabled]
@@ -2377,8 +2395,19 @@ const gql = {
           enabled
         }
       }
+      deleteConstraintPlanSpecifications: delete_constraint_specification(
+        where: {
+          constraint_id: { _in: $constraintSpecIdsToDelete },
+          _and: {
+            plan_id: { _eq: $planId },
+          }
+        }
+      ) {
+        affected_rows
+      }
     }
   `,
+
   UPDATE_EXPANSION_RULE: `#graphql
     mutation UpdateExpansionRule($id: Int!, $rule: expansion_rule_set_input!) {
       updateExpansionRule: update_expansion_rule_by_pk(
