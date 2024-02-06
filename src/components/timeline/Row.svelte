@@ -6,7 +6,14 @@
   import { zoom as d3Zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior, type ZoomTransform } from 'd3-zoom';
   import { pick } from 'lodash-es';
   import { createEventDispatcher } from 'svelte';
-  import { allResources, fetchingResources, fetchingResourcesExternal } from '../../stores/simulation';
+  import { catchError } from '../../stores/errors';
+  import {
+    externalResourceNames,
+    externalResources,
+    fetchingResourcesExternal,
+    resourceTypes,
+    yAxesWithScaleDomainsCache,
+  } from '../../stores/simulation';
   import { selectedRow } from '../../stores/views';
   import type {
     ActivityDirective,
@@ -17,7 +24,15 @@
   import type { User } from '../../types/app';
   import type { ConstraintResultWithName } from '../../types/constraint';
   import type { Plan } from '../../types/plan';
-  import type { Resource, SimulationDataset, Span, SpanId, SpansMap, SpanUtilityMaps } from '../../types/simulation';
+  import type {
+    Resource,
+    ResourceRequest,
+    SimulationDataset,
+    Span,
+    SpanId,
+    SpansMap,
+    SpanUtilityMaps,
+  } from '../../types/simulation';
   import type {
     Axis,
     HorizontalGuide,
@@ -30,9 +45,11 @@
   } from '../../types/timeline';
   import effects from '../../utilities/effects';
   import { classNames } from '../../utilities/generic';
+  import { sampleProfiles } from '../../utilities/resources';
+  import { pluralize } from '../../utilities/text';
   import { getDoyTime } from '../../utilities/time';
   import {
-    getYAxesWithScaleDomains,
+    getYAxesWithScaleDomains2,
     isXRangeLayer,
     TimelineInteractionMode,
     type TimelineLockStatus,
@@ -113,6 +130,116 @@
   let yAxesWithScaleDomains: Axis[];
   let zoom: ZoomBehavior<SVGElement, unknown>;
 
+  let resourceRequestMap: Record<string, ResourceRequest> = {};
+  let loadedResources: Resource[];
+  let loadingErrors: string[];
+  let anyResourcesLoading: boolean = true;
+
+  $: if (plan && simulationDataset !== null && layers && $externalResources) {
+    const simulationDatasetId = simulationDataset.id;
+    const resourceNamesSet = new Set<string>();
+    layers.map(l => {
+      if (l.chartType === 'line' || l.chartType === 'x-range') {
+        l.filter.resource?.names.forEach(name => resourceNamesSet.add(name));
+      }
+    });
+    const resourceNames = Array.from(resourceNamesSet);
+
+    // Cancel and delete unused or stale requests
+    Object.entries(resourceRequestMap).forEach(([key, value]) => {
+      if (resourceNames.indexOf(key) < 0 || value.simulationDatasetId !== simulationDatasetId) {
+        value.controller?.abort();
+        delete resourceRequestMap[key];
+      }
+    });
+
+    const startTimeYmd = simulationDataset?.simulation_start_time ?? plan.start_time;
+    resourceNames.forEach(async name => {
+      const isExternal = !$resourceTypes.find(t => t.name === name);
+      if (isExternal) {
+        if ($externalResourceNames.indexOf(name) > -1) {
+          // Check if resource is external
+          const resource = $externalResources.find(resource => resource.name === name) || null;
+          let error = !resource && !$fetchingResourcesExternal ? 'External Profile not Found' : '';
+
+          resourceRequestMap = {
+            ...resourceRequestMap,
+            [name]: {
+              ...resourceRequestMap[name],
+              error,
+              loading: $fetchingResourcesExternal,
+              resource,
+              simulationDatasetId,
+            },
+          };
+          return;
+        } else {
+          resourceRequestMap = {
+            ...resourceRequestMap,
+            [name]: {
+              ...resourceRequestMap[name],
+              error: !$fetchingResourcesExternal ? 'BAD' : '',
+              loading: $fetchingResourcesExternal,
+              resource: null,
+              simulationDatasetId,
+            },
+          };
+          return;
+        }
+      }
+
+      // Skip matching resources requests that have already been added for this simulation
+      if (
+        resourceRequestMap[name] &&
+        simulationDatasetId === resourceRequestMap[name].simulationDatasetId &&
+        (resourceRequestMap[name].loading || resourceRequestMap[name].error || resourceRequestMap[name].resource)
+      ) {
+        return;
+      }
+
+      const controller = new AbortController();
+      resourceRequestMap = {
+        ...resourceRequestMap,
+        [name]: {
+          ...resourceRequestMap[name],
+          controller,
+          error: '',
+          loading: true,
+          resource: null,
+          simulationDatasetId,
+        },
+      };
+
+      let resource = null;
+      let error = '';
+      try {
+        const response = await effects.getResource(simulationDatasetId, name, user, controller.signal);
+        const { profile } = response;
+        if (profile && profile.length === 1) {
+          resource = sampleProfiles([profile[0]], startTimeYmd)[0];
+        } else {
+          throw new Error('Profile not Found');
+        }
+      } catch (e) {
+        const err = e as Error;
+        if (err.name !== 'AbortError') {
+          catchError(`Profile Download Failed for for ${name}`, e as Error);
+          error = err.message;
+        }
+      } finally {
+        resourceRequestMap = {
+          ...resourceRequestMap,
+          [name]: {
+            ...resourceRequestMap[name],
+            error,
+            loading: false,
+            resource,
+          },
+        };
+      }
+    });
+  }
+
   $: onDragenter(dragenter);
   $: onDragleave(dragleave);
   $: onDragover(dragover);
@@ -128,9 +255,31 @@
   $: hasActivityLayer = !!layers.find(layer => layer.chartType === 'activity');
   $: hasResourceLayer = !!layers.find(layer => layer.chartType === 'line' || layer.chartType === 'x-range');
 
+  // TODO external resources - do we need to subscribe here or is it fine to just fetch once?
+
+  $: if (resourceRequestMap) {
+    const newLoadedResources: Resource[] = [];
+    const newLoadingErrors: string[] = [];
+    const anyExternalResources: boolean = false;
+    Object.values(resourceRequestMap).forEach(resourceRequest => {
+      if (resourceRequest.resource) {
+        newLoadedResources.push(resourceRequest.resource);
+      }
+      if (resourceRequest.error) {
+        newLoadingErrors.push(resourceRequest.error);
+      }
+    });
+    loadedResources = newLoadedResources;
+    loadingErrors = newLoadingErrors;
+
+    anyResourcesLoading = loadedResources.length + loadingErrors.length !== Object.keys(resourceRequestMap).length;
+  }
+
   // Compute scale domains for axes since it is optionally defined in the view
-  $: if ($allResources && yAxes) {
-    yAxesWithScaleDomains = getYAxesWithScaleDomains(yAxes, layers, resourcesByViewLayerId, viewTimeRange);
+  $: if (loadedResources && yAxes) {
+    yAxesWithScaleDomains = getYAxesWithScaleDomains2(yAxes, layers, loadedResources, viewTimeRange);
+    // In this case we can directly mutate the cache since we don't need to react to it.
+    $yAxesWithScaleDomainsCache[id] = yAxesWithScaleDomains;
   }
 
   $: if (overlaySvgSelection && drawWidth) {
@@ -262,6 +411,20 @@
       }
     }
   }
+
+  function getResourcesForLayer(layer: Layer, resourceRequestMap: Record<string, ResourceRequest> = {}) {
+    if (!layer.filter.resource) {
+      return [];
+    }
+    const resources: Resource[] = [];
+    layer.filter.resource.names.forEach(name => {
+      const resourceRequest = resourceRequestMap[name];
+      if (resourceRequest && !resourceRequest.loading && !resourceRequest.error && resourceRequest.resource) {
+        resources.push(resourceRequest.resource);
+      }
+    });
+    return resources;
+  }
 </script>
 
 <div
@@ -280,7 +443,7 @@
       title={name}
       {rowDragMoveDisabled}
       {layers}
-      {resourcesByViewLayerId}
+      resources={loadedResources}
       yAxes={yAxesWithScaleDomains}
       {rowHeaderDragHandleWidthPx}
       on:mouseDownRowMove
@@ -344,8 +507,14 @@
         </g>
       </svg>
       <!-- Loading indicator -->
-      {#if hasResourceLayer && ($fetchingResources || $fetchingResourcesExternal)}
-        <div class="loading st-typography-label">Loading</div>
+      {#if hasResourceLayer && anyResourcesLoading}
+        <div class="layer-message loading st-typography-label">Loading</div>
+      {/if}
+      <!-- Loading indicator -->
+      {#if hasResourceLayer && loadingErrors.length}
+        <div class="layer-message error st-typography-label">
+          Failed to load profiles for {loadingErrors.length} layer{pluralize(loadingErrors.length)}
+        </div>
       {/if}
       <!-- Layers of Canvas Visualizations. -->
       <div class="layers" style="width: {drawWidth}px">
@@ -420,7 +589,7 @@
               filter={layer.filter.resource}
               {mousemove}
               {mouseout}
-              resources={resourcesByViewLayerId[layer.id] ?? []}
+              resources={getResourcesForLayer(layer, resourceRequestMap)}
               {viewTimeRange}
               {xScaleView}
               yAxes={yAxesWithScaleDomains}
@@ -438,7 +607,7 @@
               filter={layer.filter.resource}
               {mousemove}
               {mouseout}
-              resources={resourcesByViewLayerId[layer.id] ?? []}
+              resources={getResourcesForLayer(layer, resourceRequestMap)}
               {xScaleView}
               on:mouseOver={onMouseOver}
               on:contextMenu
@@ -545,10 +714,8 @@
     background: rgba(47, 128, 237, 0.06);
   }
 
-  .loading {
+  .layer-message {
     align-items: center;
-    animation: 1s delayVisibility;
-    color: var(--st-gray-50);
     display: flex;
     font-size: 10px;
     height: 100%;
@@ -557,6 +724,15 @@
     position: absolute;
     width: 100%;
     z-index: 3;
+  }
+
+  .loading {
+    animation: 0s delayVisibility;
+    color: var(--st-gray-50);
+  }
+
+  .error {
+    color: var(--st-red);
   }
 
   @keyframes delayVisibility {

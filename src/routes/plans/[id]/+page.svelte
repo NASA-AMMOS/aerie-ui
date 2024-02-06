@@ -322,7 +322,9 @@
         data.user,
         resourcesExternalAbortController.signal,
       )
-      .then(newResources => ($externalResources = newResources));
+      .then(newResources => {
+        $externalResources = newResources;
+      });
   }
 
   $: if ($planId > -1) {
@@ -332,12 +334,8 @@
 
   $: if ($plan && $simulationDataset !== null && getSimulationStatus($simulationDataset) === Status.Complete) {
     const datasetId = $simulationDataset.dataset_id;
-    const startTimeYmd = $simulationDataset?.simulation_start_time ?? $plan.start_time;
     simulationDataAbortController?.abort();
     simulationDataAbortController = new AbortController();
-    effects
-      .getResources(datasetId, startTimeYmd, data.user, simulationDataAbortController.signal)
-      .then(newResources => ($resources = newResources));
     effects.getSpans(datasetId, data.user, simulationDataAbortController.signal).then(newSpans => ($spans = newSpans));
   } else {
     simulationDataAbortController?.abort();
@@ -519,7 +517,6 @@
 <svelte:window on:keydown={onKeydown} bind:innerWidth={windowWidth} />
 
 <PageTitle subTitle={data.initialPlan.name} title="Plans" />
-
 <CssGrid
   class="plan-container"
   rows={$planSnapshot

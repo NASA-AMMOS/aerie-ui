@@ -3,12 +3,10 @@
 <script lang="ts">
   import SettingsIcon from '@nasa-jpl/stellar/icons/settings.svg?component';
   import { createEventDispatcher } from 'svelte';
-  import { viewTimeRange } from '../../../stores/plan';
-  import { resourcesByViewLayerId } from '../../../stores/simulation';
+  import { yAxesWithScaleDomainsCache } from '../../../stores/simulation';
   import { selectedRow, selectedTimeline, viewUpdateRow } from '../../../stores/views';
   import type { Axis, AxisDomainFitMode } from '../../../types/timeline';
   import { getTarget } from '../../../utilities/generic';
-  import { getYAxisBounds } from '../../../utilities/timeline';
   import { tooltip } from '../../../utilities/tooltip';
   import Input from '../../form/Input.svelte';
   import Menu from '../../menus/Menu.svelte';
@@ -29,12 +27,11 @@
   function getManualFitScaleDomain() {
     let scaleDomain: number[] = [];
     if ($selectedRow && $selectedTimeline) {
-      scaleDomain = getYAxisBounds(
-        { ...yAxis, domainFitMode: 'fitTimeWindow' },
-        $selectedRow.layers,
-        $resourcesByViewLayerId,
-        $viewTimeRange,
-      );
+      const rowAxes = $yAxesWithScaleDomainsCache[$selectedRow.id];
+      const axis = rowAxes.find(axis => axis.id === yAxis.id);
+      if (axis) {
+        scaleDomain = axis.scaleDomain;
+      }
     }
     return scaleDomain;
   }

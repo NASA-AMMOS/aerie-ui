@@ -1031,6 +1031,25 @@ const gql = {
     }
   `,
 
+  GET_PROFILE: `#graphql
+    query GetProfile($datasetId: Int!, $name: String!) {
+      profile(where: { _and: { dataset_id: { _eq: $datasetId }, name: { _eq: $name } } }, limit: 1) {
+        dataset_id
+        duration
+        id
+        name
+        profile_segments(where: { dataset_id: { _eq: $datasetId } }, order_by: { start_offset: asc }) {
+          dataset_id
+          dynamics
+          is_gap
+          profile_id
+          start_offset
+        }
+        type
+      }
+    }
+  `,
+
   GET_PROFILES: `#graphql
     query GetProfiles($datasetId: Int!) {
       profile(where: { dataset_id: { _eq: $datasetId } }) {
@@ -1046,6 +1065,30 @@ const gql = {
           start_offset
         }
         type
+      }
+    }
+  `,
+
+  GET_PROFILE_EXTERNAL: `#graphql
+    query GetProfileExternal($planId: Int!, $simulationDatasetFilter: [plan_dataset_bool_exp!]) {
+      plan_dataset(where: { plan_id: { _eq: $planId }, _or: $simulationDatasetFilter, _and: { name: { _eq: $name } } }, limit: 1) {
+        dataset {
+          profiles {
+            dataset_id
+            duration
+            id
+            name
+            profile_segments(order_by: { start_offset: asc }) {
+              dataset_id
+              dynamics
+              is_gap
+              profile_id
+              start_offset
+            }
+            type
+          }
+        }
+        offset_from_plan_start
       }
     }
   `,

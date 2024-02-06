@@ -2850,6 +2850,15 @@ const effects = {
     }
   },
 
+  getResource(
+    datasetId: number,
+    name: string,
+    user: User | null,
+    signal: AbortSignal | undefined = undefined,
+  ): Promise<Record<string, Profile[] | null>> {
+    return reqHasura<Profile[]>(gql.GET_PROFILE, { datasetId, name }, user, signal);
+  },
+
   async getResourceTypes(model_id: number, user: User | null, limit: number | null = null): Promise<ResourceType[]> {
     try {
       const data = await reqHasura<ResourceType[]>(gql.GET_RESOURCE_TYPES, { limit, model_id }, user);

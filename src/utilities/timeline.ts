@@ -520,7 +520,7 @@ export function createTimelineXRangeLayer(
 export function getYAxisBounds(
   yAxis: Axis,
   layers: Layer[],
-  resourcesByViewLayerId: Record<number, Resource[]>,
+  resources: Resource[],
   viewTimeRange?: TimeRange,
 ): number[] {
   // Find all layers that are associated with this y axis
@@ -530,8 +530,11 @@ export function getYAxisBounds(
   let minY: number | undefined = undefined;
   let maxY: number | undefined = undefined;
   yAxisLayers.forEach(layer => {
-    if (resourcesByViewLayerId[layer.id]) {
-      resourcesByViewLayerId[layer.id].forEach(resource => {
+    const layerResources = resources.filter(
+      resource => (layer.filter.resource?.names || []).indexOf(resource.name) > -1,
+    );
+    if (layerResources) {
+      layerResources.forEach(resource => {
         let leftValue: ResourceValue | undefined;
         let rightValue: ResourceValue | undefined;
         resource.values.forEach(value => {
@@ -615,12 +618,12 @@ export function getYAxisBounds(
 export function getYAxesWithScaleDomains(
   yAxes: Axis[],
   layers: Layer[],
-  resourcesByViewLayerId: Record<number, Resource[]> = {},
+  resources: Resource[],
   viewTimeRange: TimeRange,
 ): Axis[] {
   return yAxes.map(yAxis => {
     if (yAxis.domainFitMode !== 'manual') {
-      const scaleDomain = getYAxisBounds(yAxis, layers, resourcesByViewLayerId, viewTimeRange);
+      const scaleDomain = getYAxisBounds(yAxis, layers, resources, viewTimeRange);
       return { ...yAxis, scaleDomain };
     }
     return yAxis;

@@ -11,12 +11,7 @@
   import { dndzone } from 'svelte-dnd-action';
   import { ViewConstants } from '../../../enums/view';
   import { activityTypes, maxTimeRange, viewTimeRange } from '../../../stores/plan';
-  import {
-    externalResourceNames,
-    resourceTypes,
-    resourcesByViewLayerId,
-    simulationDataset,
-  } from '../../../stores/simulation';
+  import { externalResourceNames, resourceTypes, resourcesByViewLayerId } from '../../../stores/simulation';
   import {
     selectedRow,
     selectedRowId,
@@ -82,7 +77,6 @@
   $: yAxes = $selectedRow?.yAxes || [];
   $: layers = $selectedRow?.layers || [];
   $: rowHasNonActivityChartLayer = !!$selectedRow?.layers.find(layer => layer.chartType !== 'activity') || false;
-  $: simulationDataAvailable = $simulationDataset !== null;
 
   function updateRowEvent(event: Event) {
     const { name, value } = getTarget(event);
@@ -887,12 +881,7 @@
                           on:input={event => updateYAxisTickCount(event, yAxis)}
                         />
                       </Input>
-                      <TimelineEditorYAxisSettings
-                        {yAxis}
-                        {yAxes}
-                        {simulationDataAvailable}
-                        on:delete={() => handleDeleteYAxisClick(yAxis)}
-                      />
+                      <TimelineEditorYAxisSettings {yAxis} {yAxes} on:delete={() => handleDeleteYAxisClick(yAxis)} />
                       <button
                         on:click={() => handleDeleteYAxisClick(yAxis)}
                         use:tooltip={{ content: 'Delete Y Axis', placement: 'top' }}
