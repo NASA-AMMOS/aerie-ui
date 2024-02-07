@@ -152,28 +152,6 @@ const gql = {
     }
   `,
 
-  CREATE_CONSTRAINT_DEFINITION_TAGS: `#graphql
-    mutation CreateConstraintTags($tags: [constraint_definition_tags_insert_input!]!) {
-      insert_constraint_definition_tags(objects: $tags, on_conflict: {
-        constraint: constraint_definition_tags_pkey,
-        update_columns: []
-      }) {
-        affected_rows
-      }
-    }
-  `,
-
-  CREATE_CONSTRAINT_METADATA_TAGS: `#graphql
-    mutation CreateConstraintTags($tags: [constraint_tags_insert_input!]!) {
-      insert_constraint_tags(objects: $tags, on_conflict: {
-        constraint: constraint_tags_pkey,
-        update_columns: []
-      }) {
-        affected_rows
-      }
-    }
-  `,
-
   CREATE_CONSTRAINT_MODEL_SPECIFICATION: `#graphql
     mutation CreateConstraintModelSpecification($constraintModelSpecification: constraint_model_specification_insert_input!) {
       constraintModelSpecification: insert_constraint_model_specification_one(object: $constraintModelSpecification) {
@@ -481,22 +459,6 @@ const gql = {
     mutation DeleteCommandDictionary($id: Int!) {
       deleteCommandDictionary: delete_command_dictionary_by_pk(id: $id) {
         id
-      }
-    }
-  `,
-
-  DELETE_CONSTRAINT_DEFINITION_TAGS: `#graphql
-    mutation DeleteConstraintDefinitionTags($ids: [Int!]!, $constraintId: Int!, $constraintRevision: Int!) {
-      delete_constraint_definition_tags(
-        where: {
-          tag_id: { _in: $ids },
-          _and: {
-            constraint_id: { _eq: $constraintId },
-            constraint_revision: { _eq: $constraintRevision }
-          }
-        }
-      ) {
-        affected_rows
       }
     }
   `,
@@ -2358,12 +2320,43 @@ const gql = {
     }
   `,
 
+  UPDATE_CONSTRAINT_DEFINITION_TAGS: `#graphql
+    mutation UpdateConstraintTags($constraintId: Int!, $constraintRevision: Int!, $tags: [constraint_definition_tags_insert_input!]!, $tagIdsToDelete: [Int!]!) {
+      insertConstraintDefinitionTags: insert_constraint_definition_tags(objects: $tags, on_conflict: {
+        constraint: constraint_definition_tags_pkey,
+        update_columns: []
+      }) {
+        affected_rows
+      }
+      deleteConstraintDefinitionTags: delete_constraint_definition_tags(
+        where: {
+          tag_id: { _in: $tagIdsToDelete },
+          _and: {
+            constraint_id: { _eq: $constraintId },
+            constraint_revision: { _eq: $constraintRevision }
+          }
+        }
+      ) {
+        affected_rows
+      }
+    }
+  `,
+
   UPDATE_CONSTRAINT_METADATA: `#graphql
-    mutation UpdateConstraintMetadata($id: Int!, $constraintMetadata: constraint_metadata_set_input!) {
+    mutation UpdateConstraintMetadata($id: Int!, $constraintMetadata: constraint_metadata_set_input!, $tags: [constraint_tags_insert_input!]!, $tagIdsToDelete: [Int!]!) {
       updateConstraintMetadata: update_constraint_metadata_by_pk(
         pk_columns: { id: $id }, _set: $constraintMetadata
       ) {
         id
+      }
+      insertConstraintTags: insert_constraint_tags(objects: $tags, on_conflict: {
+        constraint: constraint_tags_pkey,
+        update_columns: []
+      }) {
+        affected_rows
+      }
+      deleteConstraintTags: delete_constraint_tags(where: { tag_id: { _in: $tagIdsToDelete } }) {
+          affected_rows
       }
     }
   `,

@@ -591,6 +591,7 @@ const effects = {
       );
       const { constraintDefinition } = data;
       if (constraintDefinition != null) {
+        showSuccessToast('New Constraint Revision Created Successfully');
         return constraintDefinition;
       } else {
         throw Error(`Unable to create constraint definition for constraint "${constraintId}"`);
@@ -598,56 +599,6 @@ const effects = {
     } catch (e) {
       catchError('Constraint Creation Failed', e as Error);
       showFailureToast('Constraint Creation Failed');
-      return null;
-    }
-  },
-
-  async createConstraintDefinitionTags(
-    tags: ConstraintDefinitionTagsInsertInput[],
-    user: User | null,
-  ): Promise<number | null> {
-    try {
-      if (!queryPermissions.CREATE_CONSTRAINT_DEFINITION_TAGS(user)) {
-        throwPermissionError('create constraint definition tags');
-      }
-
-      const data = await reqHasura<{ affected_rows: number }>(gql.CREATE_CONSTRAINT_DEFINITION_TAGS, { tags }, user);
-      const { insert_constraint_definition_tags } = data;
-      if (insert_constraint_definition_tags != null) {
-        const { affected_rows } = insert_constraint_definition_tags;
-
-        return affected_rows;
-      } else {
-        throw Error('Unable to create constraint definition tags');
-      }
-    } catch (e) {
-      catchError('Create Constraint Definition Tags Failed', e as Error);
-      showFailureToast('Create Constraint Definition Tags Failed');
-      return null;
-    }
-  },
-
-  async createConstraintMetadataTags(
-    tags: ConstraintMetadataTagsInsertInput[],
-    user: User | null,
-  ): Promise<number | null> {
-    try {
-      if (!queryPermissions.CREATE_CONSTRAINT_METADATA_TAGS(user)) {
-        throwPermissionError('create constraint tags');
-      }
-
-      const data = await reqHasura<{ affected_rows: number }>(gql.CREATE_CONSTRAINT_METADATA_TAGS, { tags }, user);
-      const { insert_constraint_tags } = data;
-      if (insert_constraint_tags != null) {
-        const { affected_rows } = insert_constraint_tags;
-
-        return affected_rows;
-      } else {
-        throw Error('Unable to create constraint tags');
-      }
-    } catch (e) {
-      catchError('Create Constraint Tags Failed', e as Error);
-      showFailureToast('Create Constraint Tags Failed');
       return null;
     }
   },
@@ -1761,37 +1712,6 @@ const effects = {
     }
 
     return false;
-  },
-
-  async deleteConstraintDefinitionTags(
-    ids: Tag['id'][],
-    constraintId: number,
-    constraintRevision: number,
-    user: User | null,
-  ): Promise<boolean> {
-    try {
-      if (!queryPermissions.DELETE_CONSTRAINT_DEFINITION_TAGS(user)) {
-        throwPermissionError('delete constraint tags');
-      }
-
-      const data = await reqHasura<{ affected_rows: number }>(
-        gql.DELETE_CONSTRAINT_DEFINITION_TAGS,
-        { constraintId, constraintRevision, ids },
-        user,
-      );
-      if (data.delete_constraint_definition_tags != null) {
-        if (data.delete_constraint_definition_tags.affected_rows !== ids.length) {
-          throw Error('Some constraint definition tags were not successfully deleted');
-        }
-        return true;
-      } else {
-        throw Error('Unable to delete constraint definition tags');
-      }
-    } catch (e) {
-      catchError('Delete Constraint Definition Tags Failed', e as Error);
-      showFailureToast('Delete Constraint Definition Tags Failed');
-      return false;
-    }
   },
 
   async deleteConstraintMetadataTags(ids: Tag['id'][], user: User | null): Promise<boolean> {
@@ -4039,9 +3959,45 @@ const effects = {
     }
   },
 
+  async updateConstraintDefinitionTags(
+    constraintId: number,
+    constraintRevision: number,
+    tags: ConstraintDefinitionTagsInsertInput[],
+    tagIdsToDelete: number[],
+    user: User | null,
+  ): Promise<number | null> {
+    try {
+      if (!queryPermissions.UPDATE_CONSTRAINT_DEFINITION_TAGS(user)) {
+        throwPermissionError('create constraint definition tags');
+      }
+
+      const data = await reqHasura<{ affected_rows: number }>(
+        gql.UPDATE_CONSTRAINT_DEFINITION_TAGS,
+        { constraintId, constraintRevision, tagIdsToDelete, tags },
+        user,
+      );
+      const { deleteConstraintDefinitionTags, insertConstraintDefinitionTags } = data;
+      if (insertConstraintDefinitionTags != null && deleteConstraintDefinitionTags != null) {
+        const { affected_rows } = insertConstraintDefinitionTags;
+
+        showSuccessToast('Constraint Updated Successfully');
+
+        return affected_rows;
+      } else {
+        throw Error('Unable to create constraint definition tags');
+      }
+    } catch (e) {
+      catchError('Create Constraint Definition Tags Failed', e as Error);
+      showFailureToast('Create Constraint Definition Tags Failed');
+      return null;
+    }
+  },
+
   async updateConstraintMetadata(
     id: number,
     constraintMetadata: ConstraintMetadataSetInput,
+    tags: ConstraintMetadataTagsInsertInput[],
+    tagIdsToDelete: number[],
     user: User | null,
   ): Promise<void> {
     try {
@@ -4049,10 +4005,20 @@ const effects = {
         throwPermissionError('update this constraint');
       }
 
-      const data = await reqHasura(gql.UPDATE_CONSTRAINT_METADATA, { constraintMetadata, id }, user);
-      if (data.updateConstraintMetadata == null) {
+      const data = await reqHasura(
+        gql.UPDATE_CONSTRAINT_METADATA,
+        { constraintMetadata, id, tagIdsToDelete, tags },
+        user,
+      );
+      if (
+        data.updateConstraintMetadata == null ||
+        data.insertConstraintTags == null ||
+        data.deleteConstraintTags == null
+      ) {
         throw Error(`Unable to update constraint metadata with ID: "${id}"`);
       }
+
+      showSuccessToast('Constraint Updated Successfully');
     } catch (e) {
       catchError('Constraint Metadata Update Failed', e as Error);
       showFailureToast('Constraint Metadata Update Failed');

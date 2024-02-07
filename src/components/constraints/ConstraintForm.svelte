@@ -9,13 +9,17 @@
   import { constraints, constraintsFormColumns } from '../../stores/constraints';
   import type { User, UserId } from '../../types/app';
   import type { ConstraintDefinition, ConstraintMetadata } from '../../types/constraint';
-  import type { ConstraintMetadataTagsInsertInput, Tag, TagsChangeEvent } from '../../types/tags';
+  import type {
+    ConstraintDefinitionTagsInsertInput,
+    ConstraintMetadataTagsInsertInput,
+    Tag,
+    TagsChangeEvent,
+  } from '../../types/tags';
   import effects from '../../utilities/effects';
   import { getTarget } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import { diffTags } from '../../utilities/tags';
-  import { showSuccessToast } from '../../utilities/toast';
   import PageTitle from '../app/PageTitle.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
@@ -266,15 +270,6 @@
     }
   }
 
-  async function createConstraintMetadataTags(constraintId: number, constraintTags: Tag[]) {
-    // Associate new tags with constraint definition version
-    const newConstraintTags: ConstraintMetadataTagsInsertInput[] = (constraintTags || []).map(({ id: tag_id }) => ({
-      constraint_id: constraintId,
-      tag_id,
-    }));
-    await effects.createConstraintMetadataTags(newConstraintTags, user);
-  }
-
   function onSelectReferenceModel(event: CustomEvent<number | null>) {
     const { detail } = event;
     referenceModelId = detail;
@@ -285,23 +280,30 @@
     if (constraintMetadataId) {
       if (isMetadataModified) {
         await saveConstraintMetadata();
-        showSuccessToast('Constraint Updated Successfully');
       }
       if (isDefinitionDataModified && !isDefinitionModified) {
         await saveConstraintDefinitionRevisionTags();
-        showSuccessToast('Constraint Updated Successfully');
       } else if (isDefinitionModified) {
         await createNewConstraintDefinition();
-        showSuccessToast('New Constraint Revision Created Successfully');
       }
     } else {
       await createConstraint();
-      showSuccessToast('New Constraint Created Successfully');
     }
   }
 
   async function saveConstraintMetadata() {
     if (constraintMetadataId !== null) {
+      const tagsToUpdate: ConstraintMetadataTagsInsertInput[] = (constraintMetadataTags || []).map(
+        ({ id: tag_id }) => ({
+          constraint_id: constraintMetadataId as number,
+          tag_id,
+        }),
+      );
+      // Disassociate old tags from constraint
+      const tagIdsToDelete = savedConstraintMetadata.tags
+        .filter(({ tag }) => !constraintMetadataTags.find(t => tag.id === t.id))
+        .map(({ tag }) => tag.id);
+
       await effects.updateConstraintMetadata(
         constraintMetadataId,
         {
@@ -310,17 +312,10 @@
           owner: constraintOwner,
           public: constraintPublic,
         },
+        tagsToUpdate,
+        tagIdsToDelete,
         user,
       );
-
-      await createConstraintMetadataTags(constraintMetadataId, constraintMetadataTags);
-
-      // Disassociate old tags from constraint
-      const unusedTags = savedConstraintMetadata.tags
-        .filter(({ tag }) => !constraintMetadataTags.find(t => tag.id === t.id))
-        .map(({ tag }) => tag.id);
-
-      await effects.deleteConstraintMetadataTags(unusedTags, user);
 
       savedConstraintMetadata = {
         description: constraintDescription,
@@ -335,20 +330,23 @@
   async function saveConstraintDefinitionRevisionTags() {
     if (constraintMetadataId !== null && initialConstraintRevision !== null) {
       // Associate new tags with constraint definition version
-      await effects.createConstraintDefinitionTags(
-        constraintDefinitionTags.map(({ id: tag_id }) => ({
-          constraint_id: constraintMetadataId as number,
-          constraint_revision: initialConstraintRevision as number,
-          tag_id,
-        })),
-        user,
-      );
+      const tagsToUpdate: ConstraintDefinitionTagsInsertInput[] = constraintDefinitionTags.map(({ id: tag_id }) => ({
+        constraint_id: constraintMetadataId as number,
+        constraint_revision: initialConstraintRevision as number,
+        tag_id,
+      }));
 
       // Disassociate old tags from constraint
-      const unusedTags = initialConstraintDefinitionTags
+      const tagIdsToDelete = initialConstraintDefinitionTags
         .filter(tag => !constraintDefinitionTags.find(t => tag.id === t.id))
         .map(tag => tag.id);
-      await effects.deleteConstraintDefinitionTags(unusedTags, constraintMetadataId, initialConstraintRevision, user);
+      await effects.updateConstraintDefinitionTags(
+        constraintMetadataId,
+        initialConstraintRevision,
+        tagsToUpdate,
+        tagIdsToDelete,
+        user,
+      );
     }
   }
 </script>

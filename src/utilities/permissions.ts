@@ -320,12 +320,6 @@ const queryPermissions = {
   CREATE_CONSTRAINT_DEFINITION: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['insert_constraint_definition_one'], user);
   },
-  CREATE_CONSTRAINT_DEFINITION_TAGS: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission(['insert_constraint_definition_tags'], user);
-  },
-  CREATE_CONSTRAINT_METADATA_TAGS: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission(['insert_constraint_tags'], user);
-  },
   CREATE_CONSTRAINT_MODEL_SPECIFICATION: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['insert_constraint_model_specification_one'], user);
   },
@@ -458,9 +452,6 @@ const queryPermissions = {
   },
   DELETE_COMMAND_DICTIONARY: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['delete_command_dictionary_by_pk'], user);
-  },
-  DELETE_CONSTRAINT_DEFINITION_TAGS: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission(['delete_constraint_definition_tags'], user);
   },
   DELETE_CONSTRAINT_METADATA: (user: User | null, constraintMetadata: AssetWithOwner<ConstraintMetadata>): boolean => {
     return (
@@ -743,10 +734,16 @@ const queryPermissions = {
   UPDATE_ACTIVITY_PRESET: (user: User | null, preset: AssetWithOwner<ActivityPreset>): boolean => {
     return isUserAdmin(user) || (getPermission(['update_activity_presets_by_pk'], user) && isUserOwner(user, preset));
   },
+  UPDATE_CONSTRAINT_DEFINITION_TAGS: (user: User | null): boolean => {
+    return (
+      isUserAdmin(user) ||
+      getPermission(['insert_constraint_definition_tags', 'delete_constraint_definition_tags'], user)
+    );
+  },
   UPDATE_CONSTRAINT_METADATA: (user: User | null, constraintMetadata: AssetWithOwner<ConstraintMetadata>): boolean => {
     return (
       isUserAdmin(user) ||
-      (getPermission(['update_constraint_metadata_by_pk'], user) &&
+      (getPermission(['update_constraint_metadata_by_pk', 'insert_constraint_tags', 'delete_constraint_tags'], user) &&
         (constraintMetadata?.public || isUserOwner(user, constraintMetadata)))
     );
   },
