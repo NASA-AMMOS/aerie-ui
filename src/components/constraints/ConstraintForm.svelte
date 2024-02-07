@@ -133,7 +133,7 @@
     constraintName !== '' &&
     (isMetadataModified || isDefinitionDataModified || isDefinitionModified);
   $: saveButtonClass = saveButtonEnabled ? 'primary' : 'secondary';
-  $: if (isMetadataModified || isDefinitionModified) {
+  $: if (mode === 'edit' && (isMetadataModified || isDefinitionModified)) {
     saveButtonText = 'Saved';
     if ((isMetadataModified || isDefinitionDataModified) && !isDefinitionModified) {
       saveButtonText = 'Save';
