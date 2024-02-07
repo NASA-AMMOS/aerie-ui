@@ -11,7 +11,7 @@
   import { dndzone } from 'svelte-dnd-action';
   import { ViewConstants } from '../../../enums/view';
   import { activityTypes, maxTimeRange, viewTimeRange } from '../../../stores/plan';
-  import { externalResourceNames, resourceTypes, resourcesByViewLayerId } from '../../../stores/simulation';
+  import { externalResourceNames, resourceTypes, yAxesWithScaleDomainsCache } from '../../../stores/simulation';
   import {
     selectedRow,
     selectedRowId,
@@ -47,7 +47,6 @@
     createTimelineXRangeLayer,
     createVerticalGuide,
     createYAxis,
-    getYAxesWithScaleDomains,
   } from '../../../utilities/timeline';
   import { tooltip } from '../../../utilities/tooltip';
   import ColorPicker from '../../form/ColorPicker.svelte';
@@ -375,7 +374,7 @@
     if (!$selectedRow) {
       return;
     }
-    const yAxesWithScaleDomains = getYAxesWithScaleDomains(yAxes, layers, $resourcesByViewLayerId, $viewTimeRange);
+    const yAxesWithScaleDomains = $yAxesWithScaleDomainsCache[$selectedRow.id];
     const newHorizontalGuide = createHorizontalGuide(timelines, yAxesWithScaleDomains);
     viewUpdateRow('horizontalGuides', [...horizontalGuides, newHorizontalGuide]);
   }

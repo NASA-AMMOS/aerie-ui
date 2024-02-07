@@ -30,7 +30,7 @@
       const rowAxes = $yAxesWithScaleDomainsCache[$selectedRow.id];
       const axis = rowAxes.find(axis => axis.id === yAxis.id);
       if (axis) {
-        scaleDomain = axis.scaleDomain;
+        scaleDomain = axis.scaleDomain as number[];
       }
     }
     return scaleDomain;

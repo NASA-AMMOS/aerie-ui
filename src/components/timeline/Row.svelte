@@ -11,7 +11,6 @@
     externalResourceNames,
     externalResources,
     fetchingResourcesExternal,
-    resourceTypes,
     yAxesWithScaleDomainsCache,
   } from '../../stores/simulation';
   import { selectedRow } from '../../stores/views';
@@ -49,7 +48,7 @@
   import { pluralize } from '../../utilities/text';
   import { getDoyTime } from '../../utilities/time';
   import {
-    getYAxesWithScaleDomains2,
+    getYAxesWithScaleDomains,
     isXRangeLayer,
     TimelineInteractionMode,
     type TimelineLockStatus,
@@ -150,16 +149,20 @@
       if (resourceNames.indexOf(key) < 0 || value.simulationDatasetId !== simulationDatasetId) {
         value.controller?.abort();
         delete resourceRequestMap[key];
+        resourceRequestMap = { ...resourceRequestMap };
       }
     });
 
     const startTimeYmd = simulationDataset?.simulation_start_time ?? plan.start_time;
     resourceNames.forEach(async name => {
-      const isExternal = !$resourceTypes.find(t => t.name === name);
+      const isExternal = !!$externalResourceNames.find(t => t === name);
       if (isExternal) {
         if ($externalResourceNames.indexOf(name) > -1) {
           // Check if resource is external
-          const resource = $externalResources.find(resource => resource.name === name) || null;
+          let resource = null;
+          if (!$fetchingResourcesExternal) {
+            resource = $externalResources.find(resource => resource.name === name) || null;
+          }
           let error = !resource && !$fetchingResourcesExternal ? 'External Profile not Found' : '';
 
           resourceRequestMap = {
@@ -255,12 +258,9 @@
   $: hasActivityLayer = !!layers.find(layer => layer.chartType === 'activity');
   $: hasResourceLayer = !!layers.find(layer => layer.chartType === 'line' || layer.chartType === 'x-range');
 
-  // TODO external resources - do we need to subscribe here or is it fine to just fetch once?
-
   $: if (resourceRequestMap) {
     const newLoadedResources: Resource[] = [];
     const newLoadingErrors: string[] = [];
-    const anyExternalResources: boolean = false;
     Object.values(resourceRequestMap).forEach(resourceRequest => {
       if (resourceRequest.resource) {
         newLoadedResources.push(resourceRequest.resource);
@@ -277,7 +277,7 @@
 
   // Compute scale domains for axes since it is optionally defined in the view
   $: if (loadedResources && yAxes) {
-    yAxesWithScaleDomains = getYAxesWithScaleDomains2(yAxes, layers, loadedResources, viewTimeRange);
+    yAxesWithScaleDomains = getYAxesWithScaleDomains(yAxes, layers, loadedResources, viewTimeRange);
     // In this case we can directly mutate the cache since we don't need to react to it.
     $yAxesWithScaleDomainsCache[id] = yAxesWithScaleDomains;
   }
@@ -727,7 +727,7 @@
   }
 
   .loading {
-    animation: 0s delayVisibility;
+    animation: 1s delayVisibility;
     color: var(--st-gray-50);
   }
 
