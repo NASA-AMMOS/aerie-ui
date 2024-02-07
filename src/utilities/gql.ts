@@ -1660,6 +1660,7 @@ const gql = {
         updated_at
         updated_by
         versions {
+          author
           definition
           revision
           tags {
@@ -1699,6 +1700,7 @@ const gql = {
         updated_at
         updated_by
         versions {
+          author
           definition
           revision
         }

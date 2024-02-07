@@ -6,7 +6,7 @@
   import HideIcon from '@nasa-jpl/stellar/icons/visible_hide.svg?component';
   import ShowIcon from '@nasa-jpl/stellar/icons/visible_show.svg?component';
   import { createEventDispatcher } from 'svelte';
-  import { constraintsFormColumns } from '../../stores/constraints';
+  import { constraints, constraintsFormColumns } from '../../stores/constraints';
   import type { User, UserId } from '../../types/app';
   import type { ConstraintDefinition, ConstraintMetadata } from '../../types/constraint';
   import type { ConstraintMetadataTagsInsertInput, Tag, TagsChangeEvent } from '../../types/tags';
@@ -29,6 +29,7 @@
   type SavedConstraintMetadata = Pick<ConstraintMetadata, 'description' | 'name' | 'owner' | 'public' | 'tags'>;
   type SavedConstraintDefinition = Pick<ConstraintDefinition, 'definition' | 'tags'>;
 
+  export let initialConstraintDefinitionAuthor: UserId | undefined = undefined;
   export let initialConstraintDefinitionCode: string = 'export default (): Constraint => {\n\n}\n';
   export let initialConstraintDescription: string = '';
   export let initialConstraintId: number | null = null;
@@ -48,14 +49,18 @@
 
   const permissionError = `You do not have permission to ${mode === 'edit' ? 'edit this' : 'create a'} constraint.`;
 
+  let constraintDefintionAuthor: UserId | null = initialConstraintDefinitionAuthor ?? user?.id ?? null;
   let constraintDefinitionCode: string = initialConstraintDefinitionCode;
   let constraintDefinitionTags: Tag[] = initialConstraintDefinitionTags;
   let constraintDescription: string = initialConstraintDescription;
   let constraintMetadataId: number | null = initialConstraintId;
   let constraintMetadataTags: Tag[] = initialConstraintMetadataTags;
   let constraintName: string = initialConstraintName;
+  let constraintNameError: string = '';
   let constraintOwner: UserId = initialConstraintOwner ?? user?.id ?? null;
   let constraintPublic: boolean = initialConstraintPublic;
+  let hasCreateDefinitionCodePermission: boolean = false;
+  let hasUpdateDefinitionPermission: boolean = false;
   let hasPermission: boolean = false;
   let isDefinitionModified: boolean = false;
   let isDefinitionDataModified: boolean = false;
@@ -75,22 +80,31 @@
     tags: constraintDefinitionTags.map(tag => ({ tag })),
   };
 
-  $: savedConstraintMetadata = {
-    description: initialConstraintDescription,
-    name: initialConstraintName,
-    owner: initialConstraintOwner,
-    public: initialConstraintPublic,
-    tags: initialConstraintMetadataTags.map(tag => ({ tag })),
-  };
+  $: {
+    savedConstraintMetadata = {
+      description: initialConstraintDescription,
+      name: initialConstraintName,
+      owner: initialConstraintOwner,
+      public: initialConstraintPublic,
+      tags: initialConstraintMetadataTags.map(tag => ({ tag })),
+    };
+    constraintOwner = initialConstraintOwner ?? user?.id ?? null;
+  }
   $: {
     savedConstraintDefinition = {
       definition: initialConstraintDefinitionCode,
       tags: initialConstraintDefinitionTags.map(tag => ({ tag })),
     };
+    constraintDefintionAuthor = initialConstraintDefinitionAuthor ?? user?.id ?? null;
     constraintDefinitionCode = initialConstraintDefinitionCode;
   }
 
-  $: hasPermission = featurePermissions.constraints.canCreate(user);
+  $: hasCreateDefinitionCodePermission = featurePermissions.constraints.canCreate(user);
+  $: hasUpdateDefinitionPermission = user?.id === constraintDefintionAuthor || user?.id === constraintOwner;
+  $: hasPermission =
+    mode === 'create'
+      ? featurePermissions.constraints.canCreate(user)
+      : featurePermissions.constraints.canUpdate(user, { owner: constraintOwner });
   $: isMetadataModified = diffConstraintMetadata(savedConstraintMetadata, {
     description: constraintDescription,
     name: constraintName,
@@ -110,21 +124,32 @@
   $: pageSubtitle = mode === 'edit' ? savedConstraintMetadata.name : '';
   $: referenceModelId = initialReferenceModelId;
   $: saveButtonEnabled =
+    constraintNameError === '' &&
     constraintDefinitionCode !== '' &&
     constraintName !== '' &&
     (isMetadataModified || isDefinitionDataModified || isDefinitionModified);
   $: saveButtonClass = saveButtonEnabled ? 'primary' : 'secondary';
   $: if (isMetadataModified || isDefinitionModified) {
-    if (mode === 'create') {
+    saveButtonText = 'Saved';
+    if ((isMetadataModified || isDefinitionDataModified) && !isDefinitionModified) {
       saveButtonText = 'Save';
-    } else {
-      saveButtonText = 'Saved';
-      if ((isMetadataModified || isDefinitionDataModified) && !isDefinitionModified) {
-        saveButtonText = 'Save';
-      } else if (isDefinitionModified) {
-        saveButtonText = 'Save as new version';
-      }
+    } else if (isDefinitionModified) {
+      saveButtonText = 'Save as new version';
     }
+  } else {
+    saveButtonText = 'Save';
+  }
+  $: if (constraintPublic && constraintName) {
+    const existingMetadata = $constraints.find(
+      ({ name, public: publicConstraint }) => name === constraintName && publicConstraint,
+    );
+    if (existingMetadata !== undefined && existingMetadata.id !== constraintMetadataId) {
+      constraintNameError = 'Constraint name must be unique when public';
+    } else {
+      constraintNameError = '';
+    }
+  } else {
+    constraintNameError = '';
   }
 
   function diffConstraintMetadata(
@@ -359,6 +384,7 @@
         <input
           bind:value={constraintName}
           autocomplete="off"
+          class:constraint-form-error={!!constraintNameError}
           class="st-input w-100"
           name="constraint-name"
           placeholder="Enter Constraint Name (required)"
@@ -368,6 +394,7 @@
             permissionError,
           }}
         />
+        <div class="constraint-form-error-message">{constraintNameError}</div>
       </fieldset>
 
       <fieldset>
@@ -412,14 +439,44 @@
       {/if}
       <fieldset>
         <label for="constraintOwner">Owner</label>
-        <input bind:value={constraintOwner} class="st-input w-100" name="constraintOwner" />
+        <input
+          bind:value={constraintOwner}
+          class="st-input w-100"
+          name="constraintOwner"
+          use:permissionHandler={{
+            hasPermission,
+            permissionError,
+          }}
+        />
       </fieldset>
 
       <fieldset>
         <label for="public">Visibility</label>
         <RadioButtons selectedButtonId={constraintPublic ? 'public' : 'private'} on:select-radio-button={onSetPublic}>
-          <RadioButton id="private"><div class="public-button"><HideIcon /><span>Private</span></div></RadioButton>
-          <RadioButton id="public"><div class="public-button"><ShowIcon /><span>Public</span></div></RadioButton>
+          <RadioButton
+            id="private"
+            use={[
+              [
+                permissionHandler,
+                {
+                  hasPermission,
+                  permissionError,
+                },
+              ],
+            ]}><div class="public-button"><HideIcon /><span>Private</span></div></RadioButton
+          >
+          <RadioButton
+            id="public"
+            use={[
+              [
+                permissionHandler,
+                {
+                  hasPermission,
+                  permissionError,
+                },
+              ],
+            ]}><div class="public-button"><ShowIcon /><span>Public</span></div></RadioButton
+          >
         </RadioButtons>
       </fieldset>
 
@@ -459,7 +516,7 @@
             [
               permissionHandler,
               {
-                hasPermission,
+                hasPermission: hasUpdateDefinitionPermission,
                 permissionError,
               },
             ],
@@ -477,7 +534,7 @@
   <ConstraintEditor
     constraintDefinition={constraintDefinitionCode}
     {referenceModelId}
-    readOnly={!hasPermission}
+    readOnly={!hasCreateDefinitionCodePermission}
     title="{mode === 'create' ? 'New' : 'Edit'} Constraint - Definition Editor"
     {user}
     on:didChangeModelContent={onDidChangeModelContent}
@@ -496,5 +553,15 @@
     border-top: 1px solid var(--st-gray-20);
     display: grid;
     margin: 2rem 1rem;
+  }
+
+  .constraint-form-error {
+    border-color: var(--st-error-red);
+    color: var(--st-error-red);
+  }
+
+  .constraint-form-error-message {
+    color: var(--st-error-red);
+    margin: 0.25rem;
   }
 </style>

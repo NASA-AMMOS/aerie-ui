@@ -8,7 +8,7 @@
   import { SearchParameters } from '../../../../enums/searchParameters';
   import { constraintMetadata, constraintMetadataId } from '../../../../stores/constraints';
   import { tags } from '../../../../stores/tags';
-  import type { ConstraintDefinition } from '../../../../types/constraint';
+  import type { ConstraintDefinition, ConstraintMetadataVersionDefinition } from '../../../../types/constraint';
   import { getSearchParameterNumber, setQueryParam } from '../../../../utilities/generic';
   import type { PageData } from './$types';
 
@@ -18,12 +18,12 @@
     getSearchParameterNumber(SearchParameters.REVISION, $page.url.searchParams) ??
     data.initialConstraint.versions[data.initialConstraint.versions.length - 1].revision;
 
-  let constraintDefinition: Pick<ConstraintDefinition, 'definition' | 'revision' | 'tags'> =
-    data.initialConstraint.versions.find(({ revision }) => revision === constraintRevision) as Pick<
-      ConstraintDefinition,
-      'definition' | 'revision' | 'tags'
-    >;
+  let constraintDefinition: Pick<ConstraintDefinition, 'author' | 'definition' | 'revision' | 'tags'> =
+    data.initialConstraint.versions.find(
+      ({ revision }) => revision === constraintRevision,
+    ) as ConstraintMetadataVersionDefinition;
   let constraintDefinitionCode = constraintDefinition?.definition;
+  let constraintDefinitionAuthor = constraintDefinition?.author;
   let constraintDescription = data.initialConstraint.description;
   let constraintId = data.initialConstraint.id;
   let constraintName = data.initialConstraint.name;
@@ -36,11 +36,11 @@
 
   $: $constraintMetadataId = data.initialConstraint.id;
   $: if ($constraintMetadata != null && $constraintMetadata.id === $constraintMetadataId) {
-    constraintDefinition = $constraintMetadata.versions.find(({ revision }) => revision === constraintRevision) as Pick<
-      ConstraintDefinition,
-      'definition' | 'revision' | 'tags'
-    >;
+    constraintDefinition = $constraintMetadata.versions.find(
+      ({ revision }) => revision === constraintRevision,
+    ) as ConstraintMetadataVersionDefinition;
     if (constraintDefinition != null) {
+      constraintDefinitionAuthor = constraintDefinition?.author;
       constraintDefinitionCode = constraintDefinition?.definition;
       constraintDefinitionTags = constraintDefinition?.tags.map(({ tag }) => tag);
     }
@@ -78,6 +78,7 @@
 </script>
 
 <ConstraintForm
+  initialConstraintDefinitionAuthor={constraintDefinitionAuthor}
   initialConstraintDefinitionCode={constraintDefinitionCode}
   initialConstraintDescription={constraintDescription}
   initialConstraintId={constraintId}

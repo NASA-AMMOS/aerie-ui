@@ -3,12 +3,14 @@
 <script lang="ts">
   import { getContext } from 'svelte';
   import type { RadioButtonContext, RadioButtonId } from '../../../types/radio-buttons';
+  import { useActions, type ActionArray } from '../../../utilities/useActions';
   import { DefaultRadioButtonContextKey } from './RadioButtons.svelte';
 
   export { className as class };
   export let disabled: boolean = false;
   export let id: RadioButtonId = {};
   export let radioButtonContextKey: string = DefaultRadioButtonContextKey;
+  export let use: ActionArray = [];
 
   const { registerRadioButton, selectRadioButton, selectedRadioButton, unregisterRadioButton } =
     getContext<RadioButtonContext>(radioButtonContextKey);
@@ -32,6 +34,7 @@
   class:st-button={true}
   class:selected={$selectedRadioButton === id}
   on:click={onSelectRadioButton}
+  use:useActions={use}
   {disabled}
 >
   <slot />

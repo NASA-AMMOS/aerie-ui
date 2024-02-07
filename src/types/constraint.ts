@@ -16,6 +16,11 @@ export type ConstraintDefinition = {
   tags: { tag: Tag }[];
 };
 
+export type ConstraintMetadataVersionDefinition = Pick<
+  ConstraintDefinition,
+  'author' | 'definition' | 'revision' | 'tags'
+>;
+
 export type ConstraintMetadata = {
   created_at: string;
   description?: string;
@@ -28,7 +33,7 @@ export type ConstraintMetadata = {
   tags: { tag: Tag }[];
   updated_at: string;
   updated_by: UserId;
-  versions: Pick<ConstraintDefinition, 'definition' | 'revision' | 'tags'>[];
+  versions: ConstraintMetadataVersionDefinition[];
 };
 
 export type ConstraintMetadataSlim = Omit<ConstraintMetadata, 'models_using' | 'plans_using' | 'versions'>;

@@ -13,6 +13,7 @@
     allowedConstraintPlanSpecMap,
     allowedConstraintSpecs,
     checkConstraintsStatus,
+    constraintPlanSpecs,
     constraintResponseMap,
     constraintVisibilityMap,
     constraintsMap,
@@ -55,6 +56,7 @@
   let filteredConstraints: ConstraintPlanSpec[] = [];
   let endTimeDoy: string;
   let endTimeDoyField: FieldStore<string>;
+  let numOfPrivateConstraints: number = 0;
   let startTimeDoy: string;
   let startTimeDoyField: FieldStore<string>;
   let showFilters: boolean = false;
@@ -100,6 +102,7 @@
   $: filteredConstraintResponses = Object.values(constraintToConstraintResponseMap).filter(r =>
     filteredConstraints.find(c => c.constraint_id === r.constraintId),
   );
+  $: numOfPrivateConstraints = $constraintPlanSpecs.length - $allowedConstraintSpecs.length;
 
   $: totalViolationCount = getViolationCount(Object.values($constraintResponseMap));
   $: filteredViolationCount = getViolationCount(Object.values(filteredConstraintResponses));
@@ -300,6 +303,12 @@
               Constraints not checked
             {/if}
           </div>
+          <div class="private-label">
+            {#if numOfPrivateConstraints > 0}
+              {numOfPrivateConstraints} constraint{numOfPrivateConstraints !== 1 ? 's' : ''}
+              {numOfPrivateConstraints > 1 ? 'are' : 'is'} private and not shown
+            {/if}
+          </div>
           <button
             use:tooltip={{ content: showAll ? 'Hide All Constraints' : 'Show All Constraints', placement: 'top' }}
             class="st-button icon"
@@ -365,6 +374,10 @@
 
   .filter-label :global(svg) {
     flex-shrink: 0;
+  }
+
+  .private-label {
+    color: #e6b300;
   }
 
   .checkbox-container {

@@ -184,7 +184,11 @@
   }
 
   function hasDeletePermission(user: User | null, constraint: ConstraintMetadata) {
-    return featurePermissions.constraints.canDelete(user, constraint);
+    return (
+      featurePermissions.constraints.canDelete(user, constraint) &&
+      constraint.models_using.length === 0 &&
+      constraint.plans_using.length === 0
+    );
   }
 
   function hasEditPermission(_user: User | null, constraint: ConstraintMetadata) {
