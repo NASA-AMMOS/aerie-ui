@@ -45,6 +45,8 @@
   import effects from '../../utilities/effects';
   import { classNames } from '../../utilities/generic';
   import { sampleProfiles } from '../../utilities/resources';
+  import { getSimulationStatus } from '../../utilities/simulation';
+  import { Status } from '../../utilities/status';
   import { pluralize } from '../../utilities/text';
   import { getDoyTime } from '../../utilities/time';
   import {
@@ -152,92 +154,95 @@
       }
     });
 
-    const startTimeYmd = simulationDataset?.simulation_start_time ?? plan.start_time;
-    resourceNames.forEach(async name => {
-      const isExternal = !!$externalResourceNames.find(t => t === name);
-      if (isExternal) {
-        if ($externalResourceNames.indexOf(name) > -1) {
-          // Check if resource is external
-          let resource = null;
-          if (!$fetchingResourcesExternal) {
-            resource = $externalResources.find(resource => resource.name === name) || null;
-          }
-          let error = !resource && !$fetchingResourcesExternal ? 'External Profile not Found' : '';
+    // Only update if simulation is complete
+    if (getSimulationStatus(simulationDataset) === Status.Complete) {
+      const startTimeYmd = simulationDataset?.simulation_start_time ?? plan.start_time;
+      resourceNames.forEach(async name => {
+        const isExternal = !!$externalResourceNames.find(t => t === name);
+        if (isExternal) {
+          if ($externalResourceNames.indexOf(name) > -1) {
+            // Check if resource is external
+            let resource = null;
+            if (!$fetchingResourcesExternal) {
+              resource = $externalResources.find(resource => resource.name === name) || null;
+            }
+            let error = !resource && !$fetchingResourcesExternal ? 'External Profile not Found' : '';
 
-          resourceRequestMap = {
-            ...resourceRequestMap,
-            [name]: {
-              ...resourceRequestMap[name],
-              error,
-              loading: $fetchingResourcesExternal,
-              resource,
-              simulationDatasetId,
-            },
-          };
+            resourceRequestMap = {
+              ...resourceRequestMap,
+              [name]: {
+                ...resourceRequestMap[name],
+                error,
+                loading: $fetchingResourcesExternal,
+                resource,
+                simulationDatasetId,
+              },
+            };
+          } else {
+            resourceRequestMap = {
+              ...resourceRequestMap,
+              [name]: {
+                ...resourceRequestMap[name],
+                error: !$fetchingResourcesExternal ? 'BAD' : '',
+                loading: $fetchingResourcesExternal,
+                resource: null,
+                simulationDatasetId,
+              },
+            };
+          }
         } else {
+          // Skip matching resources requests that have already been added for this simulation
+          if (
+            resourceRequestMap[name] &&
+            simulationDatasetId === resourceRequestMap[name].simulationDatasetId &&
+            (resourceRequestMap[name].loading || resourceRequestMap[name].error || resourceRequestMap[name].resource)
+          ) {
+            return;
+          }
+
+          const controller = new AbortController();
           resourceRequestMap = {
             ...resourceRequestMap,
             [name]: {
               ...resourceRequestMap[name],
-              error: !$fetchingResourcesExternal ? 'BAD' : '',
-              loading: $fetchingResourcesExternal,
+              controller,
+              error: '',
+              loading: true,
               resource: null,
               simulationDatasetId,
             },
           };
-        }
-      } else {
-        // Skip matching resources requests that have already been added for this simulation
-        if (
-          resourceRequestMap[name] &&
-          simulationDatasetId === resourceRequestMap[name].simulationDatasetId &&
-          (resourceRequestMap[name].loading || resourceRequestMap[name].error || resourceRequestMap[name].resource)
-        ) {
-          return;
-        }
 
-        const controller = new AbortController();
-        resourceRequestMap = {
-          ...resourceRequestMap,
-          [name]: {
-            ...resourceRequestMap[name],
-            controller,
-            error: '',
-            loading: true,
-            resource: null,
-            simulationDatasetId,
-          },
-        };
-
-        let resource = null;
-        let error = '';
-        try {
-          const response = await effects.getResource(simulationDatasetId, name, user, controller.signal);
-          const { profile } = response;
-          if (profile && profile.length === 1) {
-            resource = sampleProfiles([profile[0]], startTimeYmd)[0];
-          } else {
-            throw new Error('Profile not Found');
+          let resource = null;
+          let error = '';
+          try {
+            const response = await effects.getResource(simulationDatasetId, name, user, controller.signal);
+            const { profile } = response;
+            if (profile && profile.length === 1) {
+              resource = sampleProfiles([profile[0]], startTimeYmd)[0];
+            } else {
+              throw new Error('Profile not Found');
+            }
+          } catch (e) {
+            const err = e as Error;
+            if (err.name !== 'AbortError') {
+              catchError(`Profile Download Failed for for ${name}`, e as Error);
+              error = err.message;
+            }
+          } finally {
+            resourceRequestMap = {
+              ...resourceRequestMap,
+              [name]: {
+                ...resourceRequestMap[name],
+                error,
+                loading: false,
+                resource,
+              },
+            };
           }
-        } catch (e) {
-          const err = e as Error;
-          if (err.name !== 'AbortError') {
-            catchError(`Profile Download Failed for for ${name}`, e as Error);
-            error = err.message;
-          }
-        } finally {
-          resourceRequestMap = {
-            ...resourceRequestMap,
-            [name]: {
-              ...resourceRequestMap[name],
-              error,
-              loading: false,
-              resource,
-            },
-          };
         }
-      }
-    });
+      });
+    }
   }
 
   $: onDragenter(dragenter);
