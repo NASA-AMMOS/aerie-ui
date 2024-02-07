@@ -291,7 +291,15 @@
 
     <div class="pt-2">
       {#if !filteredConstraints.length}
-        <div class="pt-1 st-typography-label">No constraints found</div>
+        <div class="pt-1 st-typography-label filter-label-row">
+          <div class="filter-label">No constraints found</div>
+          <div class="private-label">
+            {#if numOfPrivateConstraints > 0}
+              {numOfPrivateConstraints} constraint{numOfPrivateConstraints !== 1 ? 's' : ''}
+              {numOfPrivateConstraints > 1 ? 'are' : 'is'} private and not shown
+            {/if}
+          </div>
+        </div>
       {:else}
         <div class="pt-1 st-typography-label filter-label-row">
           <div class="filter-label">
