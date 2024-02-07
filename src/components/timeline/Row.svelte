@@ -84,7 +84,6 @@
   export let planEndTimeDoy: string;
   export let plan: Plan | null = null;
   export let planStartTimeYmd: string;
-  export let resourcesByViewLayerId: Record<number, Resource[]> = {};
   export let rowDragMoveDisabled = true;
   export let rowHeaderDragHandleWidthPx: number = 2;
   export let selectedActivityDirectiveId: ActivityDirectiveId | null = null;
@@ -175,7 +174,6 @@
               simulationDatasetId,
             },
           };
-          return;
         } else {
           resourceRequestMap = {
             ...resourceRequestMap,
@@ -187,58 +185,57 @@
               simulationDatasetId,
             },
           };
+        }
+      } else {
+        // Skip matching resources requests that have already been added for this simulation
+        if (
+          resourceRequestMap[name] &&
+          simulationDatasetId === resourceRequestMap[name].simulationDatasetId &&
+          (resourceRequestMap[name].loading || resourceRequestMap[name].error || resourceRequestMap[name].resource)
+        ) {
           return;
         }
-      }
 
-      // Skip matching resources requests that have already been added for this simulation
-      if (
-        resourceRequestMap[name] &&
-        simulationDatasetId === resourceRequestMap[name].simulationDatasetId &&
-        (resourceRequestMap[name].loading || resourceRequestMap[name].error || resourceRequestMap[name].resource)
-      ) {
-        return;
-      }
-
-      const controller = new AbortController();
-      resourceRequestMap = {
-        ...resourceRequestMap,
-        [name]: {
-          ...resourceRequestMap[name],
-          controller,
-          error: '',
-          loading: true,
-          resource: null,
-          simulationDatasetId,
-        },
-      };
-
-      let resource = null;
-      let error = '';
-      try {
-        const response = await effects.getResource(simulationDatasetId, name, user, controller.signal);
-        const { profile } = response;
-        if (profile && profile.length === 1) {
-          resource = sampleProfiles([profile[0]], startTimeYmd)[0];
-        } else {
-          throw new Error('Profile not Found');
-        }
-      } catch (e) {
-        const err = e as Error;
-        if (err.name !== 'AbortError') {
-          catchError(`Profile Download Failed for for ${name}`, e as Error);
-          error = err.message;
-        }
-      } finally {
+        const controller = new AbortController();
         resourceRequestMap = {
           ...resourceRequestMap,
           [name]: {
             ...resourceRequestMap[name],
-            error,
-            loading: false,
-            resource,
+            controller,
+            error: '',
+            loading: true,
+            resource: null,
+            simulationDatasetId,
           },
         };
+
+        let resource = null;
+        let error = '';
+        try {
+          const response = await effects.getResource(simulationDatasetId, name, user, controller.signal);
+          const { profile } = response;
+          if (profile && profile.length === 1) {
+            resource = sampleProfiles([profile[0]], startTimeYmd)[0];
+          } else {
+            throw new Error('Profile not Found');
+          }
+        } catch (e) {
+          const err = e as Error;
+          if (err.name !== 'AbortError') {
+            catchError(`Profile Download Failed for for ${name}`, e as Error);
+            error = err.message;
+          }
+        } finally {
+          resourceRequestMap = {
+            ...resourceRequestMap,
+            [name]: {
+              ...resourceRequestMap[name],
+              error,
+              loading: false,
+              resource,
+            },
+          };
+        }
       }
     });
   }
@@ -570,7 +567,7 @@
               filter={layer.filter.resource}
               {mousemove}
               {mouseout}
-              resources={resourcesByViewLayerId[layer.id] ?? []}
+              resources={getResourcesForLayer(layer, resourceRequestMap)}
               {xScaleView}
               on:mouseOver={onMouseOver}
             />

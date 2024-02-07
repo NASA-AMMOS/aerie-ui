@@ -19,7 +19,6 @@ import gql from '../utilities/gql';
 import { getSimulationProgress } from '../utilities/simulation';
 import { modelId, planId, planRevision } from './plan';
 import { gqlSubscribable } from './subscribable';
-import { view } from './views';
 
 /* Writeable. */
 
@@ -102,109 +101,6 @@ export const spansMap: Readable<SpansMap> = derived(spans, $spans => keyBy($span
 export const spanUtilityMaps: Readable<SpanUtilityMaps> = derived(spans, $spans => {
   return createSpanUtilityMaps($spans);
 });
-
-export const allResources: Readable<Resource[]> = derived(
-  [externalResources, resources],
-  ([$externalResources, $resources]) => [...$externalResources, ...$resources],
-);
-
-export const resourcesByViewLayerId: Readable<Record<number, Resource[]>> = derived(
-  [externalResources, resources, view],
-  ([$externalResources, $resources, $view]) => {
-    if ($view) {
-      const resources: Resource[] = [...$externalResources, ...$resources];
-      const { definition } = $view;
-      const { plan } = definition;
-      const { timelines } = plan;
-      const resourcesByViewLayerId: Record<number, Resource[]> = {};
-
-      for (const resource of resources) {
-        for (const timeline of timelines) {
-          const { rows } = timeline;
-
-          for (const row of rows) {
-            const { layers } = row;
-
-            for (const layer of layers) {
-              const { filter } = layer;
-
-              if (filter.resource !== undefined) {
-                const { resource: resourceFilter } = filter;
-                const { names } = resourceFilter;
-                const includeResource = names.indexOf(resource.name) > -1;
-
-                if (includeResource) {
-                  if (resourcesByViewLayerId[layer.id] === undefined) {
-                    resourcesByViewLayerId[layer.id] = [resource];
-                  } else {
-                    resourcesByViewLayerId[layer.id].push(resource);
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-      return resourcesByViewLayerId;
-    }
-    return {};
-  },
-);
-
-// export const allResourceNamesMap: Readable<Record<string, Resource>> = derived([allResources], ([$allResources]) => {
-//   return keyBy($allResources, 'name');
-// });
-
-// export const resourcesNamesInView: Readable<string[]> = derived(
-//   [view, allResourceNamesMap],
-//   ([$view, $allResourceNamesMap]) => {
-//     if (!$view) {
-//       return [];
-//     }
-//     const set = new Set<string>();
-//     $view.definition.plan.timelines.forEach(timeline =>
-//       timeline.rows.forEach(row =>
-//         row.layers.forEach(layer => {
-//           const { filter } = layer;
-
-//           if (filter.resource !== undefined) {
-//             const { resource: resourceFilter } = filter;
-//             const { names } = resourceFilter;
-//             names.forEach(name => {
-//               if ($allResourceNamesMap[name]) {
-//                 set.add(name);
-//               }
-//             });
-//           }
-//         }),
-//       ),
-//     );
-//     return Array.from(set);
-//   },
-// );
-
-// export const resourcesNamesInViewString: Readable<string> = derived(
-//   [resourcesNamesInView],
-//   ([$resourcesNamesInView]) => {
-//     return $resourcesNamesInView.sort().join('');
-//   },
-// );
-
-// export const resourceFetchersByNameMap: Readable<Record<string, ResourceRequest>> = derived(
-//   [resourcesNamesInView, resourceRequestMap],
-//   ([$resourcesNamesInView, $resourceRequestMap]) => {
-//     $resourcesNamesInView.forEach(name => {
-//       if (!$resourceRequestMap[name]) {
-//         const req = reqHasura<SimulateResponse>(gql.GET_PROFILE, { planId: plan.id, name }, user)
-//         $resourceRequestMap[name] = {
-//           error: '',
-//           loading: true,
-//           resource: null,
-//         };
-//       }
-//     });
-//   },
-// );
 
 export const simulationStatus: Readable<Status | null> = derived(
   [planRevision, simulationDatasetLatest, simulation],

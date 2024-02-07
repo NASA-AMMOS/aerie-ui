@@ -10,7 +10,6 @@
   import { visibleConstraintResults } from '../../stores/constraints';
   import { maxTimeRange, plan, planReadOnly, viewTimeRange } from '../../stores/plan';
   import {
-    resourcesByViewLayerId,
     selectedSpanId,
     simulation,
     simulationDataset,
@@ -287,7 +286,6 @@
       timelineInteractionMode={$timelineInteractionMode}
       {timelineDirectiveVisibilityToggles}
       {timelineSpanVisibilityToggles}
-      resourcesByViewLayerId={$resourcesByViewLayerId}
       selectedActivityDirectiveId={$selectedActivityDirectiveId}
       selectedSpanId={$selectedSpanId}
       simulation={$simulation}
