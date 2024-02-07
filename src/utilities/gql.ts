@@ -1069,30 +1069,6 @@ const gql = {
     }
   `,
 
-  GET_PROFILE_EXTERNAL: `#graphql
-    query GetProfileExternal($planId: Int!, $simulationDatasetFilter: [plan_dataset_bool_exp!]) {
-      plan_dataset(where: { plan_id: { _eq: $planId }, _or: $simulationDatasetFilter, _and: { name: { _eq: $name } } }, limit: 1) {
-        dataset {
-          profiles {
-            dataset_id
-            duration
-            id
-            name
-            profile_segments(order_by: { start_offset: asc }) {
-              dataset_id
-              dynamics
-              is_gap
-              profile_id
-              start_offset
-            }
-            type
-          }
-        }
-        offset_from_plan_start
-      }
-    }
-  `,
-
   GET_PROFILES_EXTERNAL: `#graphql
     query GetProfilesExternal($planId: Int!, $simulationDatasetFilter: [plan_dataset_bool_exp!]) {
       plan_dataset(where: { plan_id: { _eq: $planId }, _or: $simulationDatasetFilter }) {
