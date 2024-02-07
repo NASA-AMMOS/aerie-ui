@@ -135,6 +135,8 @@
   let loadingErrors: string[];
   let anyResourcesLoading: boolean = true;
 
+  // TODO deleting external dataset seems to also delete the associated sim?
+
   $: if (plan && simulationDataset !== null && layers && $externalResources) {
     const simulationDatasetId = simulationDataset.id;
     const resourceNamesSet = new Set<string>();
@@ -158,38 +160,26 @@
     if (getSimulationStatus(simulationDataset) === Status.Complete) {
       const startTimeYmd = simulationDataset?.simulation_start_time ?? plan.start_time;
       resourceNames.forEach(async name => {
+        // Check if resource is external
         const isExternal = !!$externalResourceNames.find(t => t === name);
         if (isExternal) {
-          if ($externalResourceNames.indexOf(name) > -1) {
-            // Check if resource is external
-            let resource = null;
-            if (!$fetchingResourcesExternal) {
-              resource = $externalResources.find(resource => resource.name === name) || null;
-            }
-            let error = !resource && !$fetchingResourcesExternal ? 'External Profile not Found' : '';
-
-            resourceRequestMap = {
-              ...resourceRequestMap,
-              [name]: {
-                ...resourceRequestMap[name],
-                error,
-                loading: $fetchingResourcesExternal,
-                resource,
-                simulationDatasetId,
-              },
-            };
-          } else {
-            resourceRequestMap = {
-              ...resourceRequestMap,
-              [name]: {
-                ...resourceRequestMap[name],
-                error: !$fetchingResourcesExternal ? 'BAD' : '',
-                loading: $fetchingResourcesExternal,
-                resource: null,
-                simulationDatasetId,
-              },
-            };
+          // Handle external datasets separately as they are globally loaded and subscribed to
+          let resource = null;
+          if (!$fetchingResourcesExternal) {
+            resource = $externalResources.find(resource => resource.name === name) || null;
           }
+          let error = !resource && !$fetchingResourcesExternal ? 'External Profile not Found' : '';
+
+          resourceRequestMap = {
+            ...resourceRequestMap,
+            [name]: {
+              ...resourceRequestMap[name],
+              error,
+              loading: $fetchingResourcesExternal,
+              resource,
+              simulationDatasetId,
+            },
+          };
         } else {
           // Skip matching resources requests that have already been added for this simulation
           if (
