@@ -256,6 +256,7 @@
         </Input>
         <button
           class="st-button secondary ellipsis"
+          name="new-constraint"
           use:permissionHandler={{
             hasPermission: hasCreatePermission,
             permissionError,

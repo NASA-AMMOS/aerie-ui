@@ -237,7 +237,7 @@
           <FilterIcon />
         </button>
         <button
-          name="new-constraint"
+          name="manage-constraints"
           class="st-button secondary"
           use:permissionHandler={{
             hasPermission: $plan ? featurePermissions.constraints.canCreate(user) && !$planReadOnly : false,
