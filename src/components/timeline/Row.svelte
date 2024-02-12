@@ -6,6 +6,7 @@
   import { zoom as d3Zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior, type ZoomTransform } from 'd3-zoom';
   import { pick } from 'lodash-es';
   import { createEventDispatcher } from 'svelte';
+  import { Status } from '../../enums/status';
   import { catchError } from '../../stores/errors';
   import {
     externalResourceNames,
@@ -46,7 +47,6 @@
   import { classNames } from '../../utilities/generic';
   import { sampleProfiles } from '../../utilities/resources';
   import { getSimulationStatus } from '../../utilities/simulation';
-  import { Status } from '../../utilities/status';
   import { pluralize } from '../../utilities/text';
   import { getDoyTime } from '../../utilities/time';
   import {
@@ -138,7 +138,7 @@
   // TODO deleting external dataset seems to also delete the associated sim?
 
   $: if (plan && simulationDataset !== null && layers && $externalResources) {
-    const simulationDatasetId = simulationDataset.id;
+    const simulationDatasetId = simulationDataset.dataset_id;
     const resourceNamesSet = new Set<string>();
     layers.map(l => {
       if (l.chartType === 'line' || l.chartType === 'x-range') {
