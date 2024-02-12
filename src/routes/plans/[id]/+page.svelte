@@ -296,13 +296,8 @@
     selectActivity(null, null);
   }
 
-  $: if (
-    $plan &&
-    $simulationDatasetId !== -1 &&
-    $simulationDataset?.id === $simulationDatasetId &&
-    getSimulationStatus($simulationDataset) === Status.Complete
-  ) {
-    const datasetId = $simulationDataset.id;
+  $: if ($plan && $simulationDataset !== null && getSimulationStatus($simulationDataset) === Status.Complete) {
+    const datasetId = $simulationDataset.dataset_id;
     const startTimeYmd = $simulationDataset?.simulation_start_time ?? $plan.start_time;
     simulationDataAbortController?.abort();
     simulationDataAbortController = new AbortController();
