@@ -302,7 +302,7 @@
     $simulationDataset?.id === $simulationDatasetId &&
     getSimulationStatus($simulationDataset) === Status.Complete
   ) {
-    const datasetId = $simulationDatasetId;
+    const datasetId = $simulationDataset.id;
     const startTimeYmd = $simulationDataset?.simulation_start_time ?? $plan.start_time;
     simulationDataAbortController?.abort();
     simulationDataAbortController = new AbortController();
