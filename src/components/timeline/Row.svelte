@@ -23,8 +23,8 @@
     HorizontalGuide,
     Layer,
     MouseDown,
-    MouseOverEvent,
     Point,
+    RowMouseOverEvent,
     TimeRange,
     XAxisTick,
   } from '../../types/timeline';
@@ -224,7 +224,7 @@
     dispatch('mouseDown', { ...detail, activityDirectives, rowId: id, spans });
   }
 
-  function onMouseOver(event: CustomEvent<MouseOverEvent>) {
+  function onMouseOver(event: CustomEvent<RowMouseOverEvent>) {
     const { detail } = event;
     const { layerId } = detail;
 

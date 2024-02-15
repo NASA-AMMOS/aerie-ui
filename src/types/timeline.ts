@@ -111,7 +111,7 @@ export type MouseOver = {
   spansByLayer?: Record<number, Span[]>;
 };
 
-export type MouseOverEvent = Omit<
+export type RowMouseOverEvent = Omit<
   MouseOver,
   'activityDirectivesByLayer' | 'gapsByLayer' | 'pointsByLayer' | 'spansByLayer'
 > & {
