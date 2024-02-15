@@ -6,6 +6,7 @@
   import HideIcon from '@nasa-jpl/stellar/icons/visible_hide.svg?component';
   import ShowIcon from '@nasa-jpl/stellar/icons/visible_show.svg?component';
   import { createEventDispatcher } from 'svelte';
+  import { SearchParameters } from '../../enums/searchParameters';
   import { constraints, constraintsFormColumns } from '../../stores/constraints';
   import type { User, UserId } from '../../types/app';
   import type { ConstraintDefinition, ConstraintMetadata } from '../../types/constraint';
@@ -250,7 +251,11 @@
       );
 
       if (newConstraintId !== null) {
-        goto(`${base}/constraints/edit/${newConstraintId}`);
+        goto(
+          `${base}/constraints/edit/${newConstraintId}${
+            referenceModelId !== null ? `?${SearchParameters.MODEL_ID}=${referenceModelId}` : ''
+          }`,
+        );
       }
     }
   }
