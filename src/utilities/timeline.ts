@@ -28,7 +28,7 @@ import type {
   VerticalGuide,
   XRangeLayer,
 } from '../types/timeline';
-import { filterEmpty, isNullOrUndefined } from './generic';
+import { filterEmpty } from './generic';
 
 export enum TimelineLockStatus {
   Locked = 'Locked',
@@ -717,7 +717,8 @@ export function minMaxDecimation<T>(
       // Push up to 4 points, 3 for the last interval and the first point for this interval
       const lastIndex = i - 1;
 
-      if (!isNullOrUndefined(minIndex) && !isNullOrUndefined(maxIndex)) {
+      // Ensure min and max indices are not equal to null or undefined
+      if (minIndex != null && maxIndex != null) {
         // The interval is defined by 4 points: start, min, max, end.
         // The starting point is already considered at this point, so we need to determine which
         // of the other points to add. We need to sort these points to ensure the decimated data

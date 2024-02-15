@@ -133,13 +133,6 @@ export function isEmpty(value: any): boolean {
 }
 
 /**
- * Returns true if `value` is neither null nor undefined, else returns false.
- */
-export function isNullOrUndefined(value: unknown): value is null | undefined {
-  return value === null || typeof value === 'undefined';
-}
-
-/**
  * Returns true if the current browser is running on MacOS
  */
 export function isMacOs(): boolean {
