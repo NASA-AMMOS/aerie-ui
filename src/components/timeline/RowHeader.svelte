@@ -8,6 +8,7 @@
   import { createEventDispatcher } from 'svelte';
   import type { Resource } from '../../types/simulation';
   import type { Axis, Layer, LineLayer } from '../../types/timeline';
+  import { filterResourcesByLayer } from '../../utilities/timeline';
   import { tooltip } from '../../utilities/tooltip';
   import RowHeaderMenu from './RowHeaderMenu.svelte';
   import RowYAxes from './RowYAxes.svelte';
@@ -45,9 +46,7 @@
       );
       // For each layer get the resources and color
       yAxisResourceLayers.forEach(layer => {
-        const layerResources = resources.filter(
-          resource => (layer.filter.resource?.names || []).indexOf(resource.name) > -1,
-        );
+        const layerResources = filterResourcesByLayer(layer, resources) as Resource[];
         const newResourceLabels = layerResources
           .map(resource => {
             const color = (layer as LineLayer).lineColor || 'var(--st-gray-80)';

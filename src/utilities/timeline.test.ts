@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import type { Resource } from '../types/simulation';
+import type { Resource, ResourceType } from '../types/simulation';
 import type { Timeline } from '../types/timeline';
 import {
   createHorizontalGuide,
@@ -11,6 +11,7 @@ import {
   createVerticalGuide,
   createYAxis,
   duplicateRow,
+  filterResourcesByLayer,
   getYAxisBounds,
 } from './timeline';
 
@@ -203,4 +204,31 @@ test('duplicateRow', () => {
       }
     }
   }
+});
+
+test('filterResourcesByLayer', () => {
+  const resourceA: ResourceType = {
+    name: 'resourceA',
+    schema: {
+      items: { initial: { type: 'real' }, rate: { type: 'real' } },
+      type: 'struct',
+    },
+  };
+  const resourceB: ResourceType = {
+    name: 'resourceB',
+    schema: {
+      items: { initial: { type: 'real' }, rate: { type: 'real' } },
+      type: 'struct',
+    },
+  };
+  const layer = createTimelineLineLayer([], []);
+  expect(filterResourcesByLayer(layer, [resourceA, resourceB])).to.deep.equal([]);
+
+  const layer2 = createTimelineLineLayer([], []);
+  layer2.filter.resource = { names: [] };
+  expect(filterResourcesByLayer(layer2, [])).to.deep.equal([]);
+
+  const layer3 = createTimelineLineLayer([], []);
+  layer3.filter.resource = { names: ['resourceA'] };
+  expect(filterResourcesByLayer(layer3, [resourceA, resourceB])).to.deep.equal([resourceA]);
 });

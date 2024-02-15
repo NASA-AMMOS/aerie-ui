@@ -7,7 +7,7 @@
   import { createEventDispatcher, tick } from 'svelte';
   import type { Resource } from '../../types/simulation';
   import type { Axis, Layer, LineLayer, XRangeLayer } from '../../types/timeline';
-  import { getOrdinalYScale, getYScale } from '../../utilities/timeline';
+  import { filterResourcesByLayer, getOrdinalYScale, getYScale } from '../../utilities/timeline';
 
   export let drawHeight: number = 0;
   export let drawWidth: number = 0;
@@ -44,9 +44,7 @@
 
       for (const layer of xRangeLayers) {
         // TODO make a util for filtering resources by a layer
-        const layerResources = resources.filter(
-          resource => (layer.filter.resource?.names || []).indexOf(resource.name) > -1,
-        );
+        const layerResources = filterResourcesByLayer(layer, resources) as Resource[];
         const xRangeAxisG = gSelection.append('g').attr('class', axisClass);
         xRangeAxisG.selectAll('*').remove();
 

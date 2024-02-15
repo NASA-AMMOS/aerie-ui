@@ -11,7 +11,15 @@
   import type { User } from '../../types/app';
   import type { ConstraintResultWithName } from '../../types/constraint';
   import type { Plan } from '../../types/plan';
-  import type { Simulation, SimulationDataset, Span, SpanId, SpanUtilityMaps, SpansMap } from '../../types/simulation';
+  import type {
+    ResourceType,
+    Simulation,
+    SimulationDataset,
+    Span,
+    SpanId,
+    SpanUtilityMaps,
+    SpansMap,
+  } from '../../types/simulation';
   import type {
     DirectiveVisibilityToggleMap,
     MouseDown,
@@ -53,6 +61,7 @@
   export let planEndTimeDoy: string;
   export let plan: Plan | null = null;
   export let planStartTimeYmd: string;
+  export let resourceTypes: ResourceType[] = [];
   export let selectedActivityDirectiveId: ActivityDirectiveId | null = null;
   export let selectedSpanId: SpanId | null = null;
   export let simulation: Simulation | null = null;
@@ -509,13 +518,7 @@
   </div>
 
   <!-- Timeline Tooltip. -->
-  <Tooltip
-    bind:this={tooltip}
-    {mouseOver}
-    {interpolateHoverValue}
-    {resourcesByViewLayerId}
-    hidden={!showTimelineTooltip}
-  />
+  <Tooltip bind:this={tooltip} {mouseOver} {interpolateHoverValue} hidden={!showTimelineTooltip} {resourceTypes} />
 
   <!-- Timeline Context Menu. -->
   <TimelineContextMenu

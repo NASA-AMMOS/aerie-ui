@@ -10,6 +10,7 @@
   import { visibleConstraintResults } from '../../stores/constraints';
   import { maxTimeRange, plan, planReadOnly, viewTimeRange } from '../../stores/plan';
   import {
+    resourceTypes,
     selectedSpanId,
     simulation,
     simulationDataset,
@@ -282,6 +283,7 @@
       planEndTimeDoy={$plan?.end_time_doy ?? ''}
       plan={$plan}
       planStartTimeYmd={$plan?.start_time ?? ''}
+      resourceTypes={$resourceTypes}
       {timeline}
       timelineInteractionMode={$timelineInteractionMode}
       {timelineDirectiveVisibilityToggles}
