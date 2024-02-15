@@ -5,7 +5,7 @@
   import AutoScrollIcon from '@nasa-jpl/stellar/icons/auto_scroll.svg?component';
   import ChevronDownIcon from '@nasa-jpl/stellar/icons/chevron_down.svg?component';
   import DecimateIcon from '@nasa-jpl/stellar/icons/decimate.svg?component';
-  import HideTooltipIcon from '@nasa-jpl/stellar/icons/hide_tooltip.svg?component';
+  import ShowTooltipIcon from '@nasa-jpl/stellar/icons/hide_tooltip.svg?component';
   import HorizontalDragIcon from '@nasa-jpl/stellar/icons/horizontal_drag.svg?component';
   import InterpolateIcon from '@nasa-jpl/stellar/icons/interpolate.svg?component';
   import LinkIcon from '@nasa-jpl/stellar/icons/link.svg?component';
@@ -46,7 +46,7 @@
   export let nudgePercent = 0.05;
   export let decimate = false;
   export let hasUpdateDirectivePermission = false;
-  export let hideTimelineTooltip = false;
+  export let showTimelineTooltip = true;
   export let interpolateHoverValue = false;
   export let limitTooltipToLine = false;
   export let timelineDirectiveVisibilityToggles: DirectiveVisibilityToggleMap;
@@ -172,7 +172,7 @@
   }
 
   function onToggleTimelineTooltip() {
-    dispatch('toggleTimelineTooltip', !hideTimelineTooltip);
+    dispatch('toggleTimelineTooltip', !showTimelineTooltip);
   }
 
   function onToggleInterpolate() {
@@ -261,7 +261,7 @@
   class:active={followSelection}
   on:click={onToggleFollowSelection}
   use:tooltip={{
-    content: `${followSelection ? 'Enable' : 'Disable'} auto scroll to offscreen selections`,
+    content: `${followSelection ? 'Disable' : 'Enable'} auto scroll to offscreen selections`,
     placement: 'bottom',
   }}
 >
@@ -271,7 +271,7 @@
   class="st-button icon toggle-button"
   class:active={decimate}
   on:click={onToggleDecimation}
-  use:tooltip={{ content: `Toggle decimation`, placement: 'bottom' }}
+  use:tooltip={{ content: `${decimate ? 'Disable' : 'Enable'} decimation`, placement: 'bottom' }}
 >
   <DecimateIcon />
 </button>
@@ -279,7 +279,10 @@
   class="st-button icon toggle-button"
   class:active={interpolateHoverValue}
   on:click={onToggleInterpolate}
-  use:tooltip={{ content: `Toggle cursor value interpolation`, placement: 'bottom' }}
+  use:tooltip={{
+    content: `${interpolateHoverValue ? 'Disable' : 'Enable'} cursor value interpolation`,
+    placement: 'bottom',
+  }}
 >
   <InterpolateIcon />
 </button>
@@ -289,7 +292,7 @@
     class:active={allDirectivesVisible}
     on:click={onToggleDirectiveVisibility}
     use:tooltip={{
-      content: `${allDirectivesVisible ? 'Show' : 'Hide'} directives on all timeline rows`,
+      content: `${allDirectivesVisible ? 'Hide' : 'Show'} directives on all timeline rows`,
       placement: 'bottom',
     }}
   >
@@ -300,18 +303,21 @@
   class="st-button icon toggle-button"
   class:active={limitTooltipToLine}
   on:click={onLimitTooltipToLine}
-  use:tooltip={{ content: `Toggle cursor line intersection`, placement: 'bottom' }}
+  use:tooltip={{
+    content: `${limitTooltipToLine ? 'Disable' : 'Enable'} cursor line intersection`,
+    placement: 'bottom',
+  }}
 >
   <TooltipLineIcon />
 </button>
 <div class="timeline-icon-tray-divider" />
 <button
   class="st-button icon toggle-button"
-  class:active={hideTimelineTooltip}
+  class:active={showTimelineTooltip}
   on:click={onToggleTimelineTooltip}
-  use:tooltip={{ content: `Toggle timeline tooltip`, placement: 'bottom' }}
+  use:tooltip={{ content: `${showTimelineTooltip ? 'Hide' : 'Show'} timeline tooltip`, placement: 'bottom' }}
 >
-  <HideTooltipIcon />
+  <ShowTooltipIcon />
 </button>
 <TimelineInteractionModeControl
   timelineInteractionMode={$timelineInteractionMode}
@@ -411,7 +417,10 @@
             <button
               class="st-button secondary docs-button"
               on:click|capture={event => {
-                openDoc(event, 'http://localhost:3001/aerie-docs/planning/timeline-controls/#line-layer-decimation');
+                openDoc(
+                  event,
+                  'https://nasa-ammos.github.io/aerie-docs/planning/timeline-controls/#line-layer-decimation',
+                );
               }}
             >
               Docs <ArrowUpRightIcon />
@@ -427,7 +436,7 @@
               on:click|capture={event => {
                 openDoc(
                   event,
-                  'http://localhost:3001/aerie-docs/planning/timeline-controls/#cursor-value-interpolation',
+                  'https://nasa-ammos.github.io/aerie-docs/planning/timeline-controls/#cursor-value-interpolation',
                 );
               }}
             >
@@ -446,17 +455,23 @@
           <label class="st-typography-label" for="lockTimeline">
             <HorizontalDragIcon />Drag and drop to move activities
           </label>
-          <input checked id="lockTimeline" name="lockTimeline" on:change={toggleTimelineLock} type="checkbox" />
+          <input
+            checked={$timelineLockStatus === TimelineLockStatus.Unlocked}
+            id="lockTimeline"
+            name="lockTimeline"
+            on:change={toggleTimelineLock}
+            type="checkbox"
+          />
         </Input>
       </div>
       <div class="timeline-view-controls-menu--group">
         <div class="st-typography-medium">Tooltips</div>
         <Input layout="inline" class="timeline-view-control-menu--input">
           <label class="st-typography-label" for="toggleTooltipVisibility">
-            <HideTooltipIcon />Show tooltip
+            <ShowTooltipIcon />Show tooltip
           </label>
           <input
-            checked={hideTimelineTooltip}
+            checked={showTimelineTooltip}
             id="toggleTooltipVisibility"
             name="toggleTooltipVisibility"
             on:change={onToggleTimelineTooltip}
