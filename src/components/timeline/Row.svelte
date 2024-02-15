@@ -135,8 +135,6 @@
   let loadingErrors: string[];
   let anyResourcesLoading: boolean = true;
 
-  // TODO deleting external dataset seems to also delete the associated sim?
-
   $: if (plan && simulationDataset !== null && layers && $externalResources) {
     const simulationDatasetId = simulationDataset.dataset_id;
     const resourceNamesSet = new Set<string>();
@@ -147,9 +145,14 @@
     });
     const resourceNames = Array.from(resourceNamesSet);
 
-    // Cancel and delete unused or stale requests
+    // Cancel and delete unused and stale requests as well as any external resources that
+    // are not in the list of current external resources
     Object.entries(resourceRequestMap).forEach(([key, value]) => {
-      if (resourceNames.indexOf(key) < 0 || value.simulationDatasetId !== simulationDatasetId) {
+      if (
+        resourceNames.indexOf(key) < 0 ||
+        value.simulationDatasetId !== simulationDatasetId ||
+        (value.type === 'external' && !$externalResourceNames.find(name => value.resource?.name === name))
+      ) {
         value.controller?.abort();
         delete resourceRequestMap[key];
         resourceRequestMap = { ...resourceRequestMap };
@@ -178,6 +181,7 @@
               loading: $fetchingResourcesExternal,
               resource,
               simulationDatasetId,
+              type: 'external',
             },
           };
         } else {
@@ -200,6 +204,7 @@
               loading: true,
               resource: null,
               simulationDatasetId,
+              type: 'internal',
             },
           };
 
