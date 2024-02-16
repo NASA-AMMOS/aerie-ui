@@ -1,7 +1,7 @@
 {
   "name": "aerie-ui",
   "description": "The client application for Aerie.",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "type": "module",
   "private": true,
   "license": "MIT",
@@ -38,7 +38,7 @@
   "dependencies": {
     "@fontsource/jetbrains-mono": "^5.0.3",
     "@nasa-jpl/aerie-ampcs": "^1.0.1",
-    "@nasa-jpl/stellar": "^1.1.16",
+    "@nasa-jpl/stellar": "^1.1.18",
     "@sveltejs/adapter-node": "1.2.4",
     "@sveltejs/kit": "1.20.5",
     "ag-grid-community": "29.3.3",
@@ -93,6 +93,7 @@
     "@types/toastify-js": "^1.11.1",
     "@typescript-eslint/eslint-plugin": "^5.60.1",
     "@typescript-eslint/parser": "^5.60.1",
+    "@vitejs/plugin-basic-ssl": "^1.0.2",
     "@vitest/ui": "^0.32.2",
     "cloc": "^2.11.0",
     "d3-format": "^3.1.0",
