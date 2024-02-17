@@ -579,7 +579,9 @@
 
         <Highlight highlight={highlightKeysMap.created_at}>
           <Input layout="inline">
-            <label use:tooltip={{ content: 'Creation Time (UTC)', placement: 'top' }} for="creationTime">Creation Time (UTC)</label>
+            <label use:tooltip={{ content: 'Creation Time (UTC)', placement: 'top' }} for="creationTime">
+              Creation Time (UTC)
+            </label>
             <input class="st-input w-100" disabled name="creationTime" value={activityDirective.created_at} />
           </Input>
         </Highlight>
