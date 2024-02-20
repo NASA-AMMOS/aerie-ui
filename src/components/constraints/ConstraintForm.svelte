@@ -67,7 +67,6 @@
   let hasCreateDefinitionCodePermission: boolean = false;
   let hasUpdateDefinitionPermission: boolean = false;
   let hasWriteMetadataPermission: boolean = false;
-  let hasPermission: boolean = false;
   let isDefinitionModified: boolean = false;
   let isDefinitionDataModified: boolean = false;
   let isMetadataModified: boolean = false;
@@ -121,15 +120,12 @@
     constraintDefinitionTags,
   );
   $: hasCreateDefinitionCodePermission = featurePermissions.constraints.canCreate(user);
-  $: hasUpdateDefinitionPermission = user?.id === constraintDefintionAuthor || user?.id === constraintOwner;
+  $: hasUpdateDefinitionPermission =
+    user?.id === constraintDefintionAuthor || user?.id === constraintOwner || isDefinitionModified;
   $: hasWriteMetadataPermission =
     mode === 'create'
       ? featurePermissions.constraints.canCreate(user)
       : featurePermissions.constraints.canUpdate(user, { owner: constraintOwner });
-  $: hasPermission =
-    mode === 'create'
-      ? featurePermissions.constraints.canCreate(user)
-      : hasUpdateDefinitionPermission || featurePermissions.constraints.canUpdate(user, { owner: constraintOwner });
 
   $: pageTitle = mode === 'edit' ? 'Constraints' : 'New Constraint';
   $: pageSubtitle = mode === 'edit' ? savedConstraintMetadata.name : '';
@@ -139,6 +135,7 @@
     constraintDefinitionCode !== '' &&
     constraintName !== '' &&
     (isMetadataModified || isDefinitionDataModified || isDefinitionModified);
+  $: console.log('saveButtonEnabled :>> ', saveButtonEnabled);
   $: saveButtonClass = saveButtonEnabled ? 'primary' : 'secondary';
   $: if (mode === 'edit' && (isMetadataModified || isDefinitionModified)) {
     saveButtonText = 'Saved';
@@ -392,7 +389,7 @@
           class="st-button {saveButtonClass} ellipsis"
           disabled={!saveButtonEnabled}
           use:permissionHandler={{
-            hasPermission,
+            hasPermission: saveButtonEnabled,
             permissionError,
           }}
           on:click={saveConstraint}
