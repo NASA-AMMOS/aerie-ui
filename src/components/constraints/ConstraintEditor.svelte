@@ -24,8 +24,8 @@
   let modelOptions: DropdownOptions = [];
   let monaco: Monaco;
 
-  $: modelOptions = $models.map(({ id, name }) => ({
-    display: name,
+  $: modelOptions = $models.map(({ id, name, version }) => ({
+    display: `${name} (Version: ${version})`,
     hasSelectPermission: true,
     value: id,
   }));

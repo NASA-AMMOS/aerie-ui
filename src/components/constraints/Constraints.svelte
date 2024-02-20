@@ -128,6 +128,10 @@
                 placement: 'bottom',
               },
               hasDeletePermission: params.data ? hasDeletePermission(user, params.data) : false,
+              hasDeletePermissionError:
+                params.data && !hasDeletePermission(user, params.data) && isConstraintInUse(params.data)
+                  ? 'Cannot delete constraint that is being used'
+                  : '',
               hasEditPermission: params.data ? hasEditPermission(user, params.data) : false,
               rowData: params.data,
             },
@@ -183,12 +187,12 @@
     editConstraint({ id: event.detail[0] as number });
   }
 
+  function isConstraintInUse(constraint: ConstraintMetadata) {
+    return constraint.models_using.length > 0 || constraint.plans_using.length > 0;
+  }
+
   function hasDeletePermission(user: User | null, constraint: ConstraintMetadata) {
-    return (
-      featurePermissions.constraints.canDelete(user, constraint) &&
-      constraint.models_using.length === 0 &&
-      constraint.plans_using.length === 0
-    );
+    return featurePermissions.constraints.canDelete(user, constraint) && !isConstraintInUse(constraint);
   }
 
   function hasEditPermission(_user: User | null, constraint: ConstraintMetadata) {

@@ -66,6 +66,7 @@
   let constraintPublic: boolean = initialConstraintPublic;
   let hasCreateDefinitionCodePermission: boolean = false;
   let hasUpdateDefinitionPermission: boolean = false;
+  let hasWriteMetadataPermission: boolean = false;
   let hasPermission: boolean = false;
   let isDefinitionModified: boolean = false;
   let isDefinitionDataModified: boolean = false;
@@ -102,14 +103,9 @@
     };
     constraintDefintionAuthor = initialConstraintDefinitionAuthor ?? user?.id ?? null;
     constraintDefinitionCode = initialConstraintDefinitionCode;
+    constraintDefinitionTags = initialConstraintDefinitionTags;
   }
 
-  $: hasCreateDefinitionCodePermission = featurePermissions.constraints.canCreate(user);
-  $: hasUpdateDefinitionPermission = user?.id === constraintDefintionAuthor || user?.id === constraintOwner;
-  $: hasPermission =
-    mode === 'create'
-      ? featurePermissions.constraints.canCreate(user)
-      : featurePermissions.constraints.canUpdate(user, { owner: constraintOwner });
   $: isMetadataModified = diffConstraintMetadata(savedConstraintMetadata, {
     description: constraintDescription,
     name: constraintName,
@@ -124,6 +120,16 @@
     (savedConstraintDefinition.tags || []).map(({ tag }) => tag),
     constraintDefinitionTags,
   );
+  $: hasCreateDefinitionCodePermission = featurePermissions.constraints.canCreate(user);
+  $: hasUpdateDefinitionPermission = user?.id === constraintDefintionAuthor || user?.id === constraintOwner;
+  $: hasWriteMetadataPermission =
+    mode === 'create'
+      ? featurePermissions.constraints.canCreate(user)
+      : featurePermissions.constraints.canUpdate(user, { owner: constraintOwner });
+  $: hasPermission =
+    mode === 'create'
+      ? featurePermissions.constraints.canCreate(user)
+      : hasUpdateDefinitionPermission || featurePermissions.constraints.canUpdate(user, { owner: constraintOwner });
 
   $: pageTitle = mode === 'edit' ? 'Constraints' : 'New Constraint';
   $: pageSubtitle = mode === 'edit' ? savedConstraintMetadata.name : '';
@@ -354,6 +360,18 @@
       );
     }
   }
+
+  function revertConstraint() {
+    constraintDefintionAuthor = initialConstraintDefinitionAuthor ?? user?.id ?? null;
+    constraintDefinitionCode = initialConstraintDefinitionCode;
+    constraintDefinitionTags = initialConstraintDefinitionTags;
+    constraintDescription = initialConstraintDescription;
+    constraintMetadataId = initialConstraintId;
+    constraintMetadataTags = initialConstraintMetadataTags;
+    constraintName = initialConstraintName;
+    constraintOwner = initialConstraintOwner ?? user?.id ?? null;
+    constraintPublic = initialConstraintPublic;
+  }
 </script>
 
 <PageTitle subTitle={pageSubtitle} title={pageTitle} />
@@ -367,6 +385,9 @@
         <button class="st-button secondary ellipsis" on:click={() => goto(`${base}/constraints`)}>
           {mode === 'create' ? 'Cancel' : 'Close'}
         </button>
+        {#if mode === 'edit' && saveButtonEnabled}
+          <button class="st-button secondary ellipsis" on:click={revertConstraint}> Revert </button>
+        {/if}
         <button
           class="st-button {saveButtonClass} ellipsis"
           disabled={!saveButtonEnabled}
@@ -393,7 +414,7 @@
           placeholder="Enter Constraint Name (required)"
           required
           use:permissionHandler={{
-            hasPermission,
+            hasPermission: hasWriteMetadataPermission,
             permissionError,
           }}
         />
@@ -409,7 +430,7 @@
           name="constraint-description"
           placeholder="Enter Constraint Description (optional)"
           use:permissionHandler={{
-            hasPermission,
+            hasPermission: hasWriteMetadataPermission,
             permissionError,
           }}
         />
@@ -423,7 +444,7 @@
             [
               permissionHandler,
               {
-                hasPermission,
+                hasPermission: hasWriteMetadataPermission,
                 permissionError,
               },
             ],
@@ -447,7 +468,7 @@
           class="st-input w-100"
           name="constraintOwner"
           use:permissionHandler={{
-            hasPermission,
+            hasPermission: hasWriteMetadataPermission,
             permissionError,
           }}
         />
@@ -462,7 +483,7 @@
               [
                 permissionHandler,
                 {
-                  hasPermission,
+                  hasPermission: hasWriteMetadataPermission,
                   permissionError,
                 },
               ],
@@ -474,7 +495,7 @@
               [
                 permissionHandler,
                 {
-                  hasPermission,
+                  hasPermission: hasWriteMetadataPermission,
                   permissionError,
                 },
               ],
