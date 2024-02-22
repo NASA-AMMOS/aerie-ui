@@ -43,7 +43,6 @@
       let i = 0;
 
       for (const layer of xRangeLayers) {
-        // TODO make a util for filtering resources by a layer
         const layerResources = filterResourcesByLayer(layer, resources) as Resource[];
         const xRangeAxisG = gSelection.append('g').attr('class', axisClass);
         xRangeAxisG.selectAll('*').remove();
