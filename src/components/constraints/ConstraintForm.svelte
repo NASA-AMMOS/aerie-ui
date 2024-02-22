@@ -135,7 +135,6 @@
     constraintDefinitionCode !== '' &&
     constraintName !== '' &&
     (isMetadataModified || isDefinitionDataModified || isDefinitionModified);
-  $: console.log('saveButtonEnabled :>> ', saveButtonEnabled);
   $: saveButtonClass = saveButtonEnabled ? 'primary' : 'secondary';
   $: if (mode === 'edit' && (isMetadataModified || isDefinitionModified)) {
     saveButtonText = 'Saved';
@@ -528,6 +527,20 @@
           {/if}
         </fieldset>
       {/if}
+
+      <fieldset>
+        <label for="constraintDefinitionAuthor">Author</label>
+        <input
+          disabled
+          value={constraintDefintionAuthor}
+          class="st-input w-100"
+          name="constraintDefinitionAuthor"
+          use:permissionHandler={{
+            hasPermission: hasWriteMetadataPermission,
+            permissionError,
+          }}
+        />
+      </fieldset>
 
       <fieldset>
         <label for="definitionTags">Version Tags</label>

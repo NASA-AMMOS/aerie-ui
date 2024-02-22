@@ -3472,10 +3472,6 @@ const effects = {
 
   async managePlanConstraints(user: User | null): Promise<void> {
     try {
-      // if (!queryPermissions.CREATE_CONSTRAINT_PLAN_SPECIFICATION(user)) {
-      //   throwPermissionError('apply constraints to this plan');
-      // }
-
       await showManagePlanConstraintsModal(user);
     } catch (e) {
       catchError('Constraint Unable To Be Applied To Plan', e as Error);
