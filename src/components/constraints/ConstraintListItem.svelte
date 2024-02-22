@@ -72,6 +72,11 @@
               ? PlanStatusMessages.READ_ONLY
               : 'You do not have permission to edit plan constraints',
           }}
+          use:tooltip={{
+            content: `${constraintPlanSpec.enabled ? 'Disable constraint' : 'Enable constraint'} on plan`,
+            disabled: !hasEditPermission,
+            placement: 'top',
+          }}
         />
       </div>
     </svelte:fragment>
