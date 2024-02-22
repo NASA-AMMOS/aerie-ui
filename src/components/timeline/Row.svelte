@@ -151,6 +151,8 @@
       if (
         resourceNames.indexOf(key) < 0 ||
         value.simulationDatasetId !== simulationDatasetId ||
+        // TODO should we grab the store here or should we pass it down? Not seeing the value in making parent components
+        // re-render but maybe it's fine?
         (value.type === 'external' && !$externalResourceNames.find(name => value.resource?.name === name))
       ) {
         value.controller?.abort();
@@ -255,6 +257,7 @@
   $: hasActivityLayer = !!layers.find(layer => layer.chartType === 'activity');
   $: hasResourceLayer = !!layers.find(layer => layer.chartType === 'line' || layer.chartType === 'x-range');
 
+  // Track resource loading status for this Row
   $: if (resourceRequestMap) {
     const newLoadedResources: Resource[] = [];
     const newLoadingErrors: string[] = [];
@@ -269,6 +272,8 @@
     loadedResources = newLoadedResources;
     loadingErrors = newLoadingErrors;
 
+    // Consider row to be loading if the number of completed resource requests (loaded or error state)
+    // is not equal to the total number of resource requests
     anyResourcesLoading = loadedResources.length + loadingErrors.length !== Object.keys(resourceRequestMap).length;
   }
 
@@ -409,6 +414,7 @@
     }
   }
 
+  // Retrieve resources from resourceRequestMap by a layer's resource filter
   function getResourcesForLayer(layer: Layer, resourceRequestMap: Record<string, ResourceRequest> = {}) {
     if (!layer.filter.resource) {
       return [];
