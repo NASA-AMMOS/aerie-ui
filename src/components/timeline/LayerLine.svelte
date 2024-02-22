@@ -170,8 +170,7 @@
           pointsInView as { x: number; y: number }[], // At this point we have filtered out all gaps
           0,
           pointsInView.length,
-          // drawWidth,
-          5000,
+          drawWidth,
         );
         // Push the last point in view again since decimation does not result in properly sorted points within a time bin
         const lastPoint = pointsInView.at(-1);
