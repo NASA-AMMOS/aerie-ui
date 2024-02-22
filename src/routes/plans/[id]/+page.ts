@@ -1,8 +1,11 @@
 import { base } from '$app/paths';
 import { redirect } from '@sveltejs/kit';
 import { SearchParameters } from '../../../enums/searchParameters';
+import { planReadOnly } from '../../../stores/plan';
+import type { PlanMergeRequestSchema } from '../../../types/plan';
 import effects from '../../../utilities/effects';
 import { getSearchParameterNumber } from '../../../utilities/generic';
+import { featurePermissions } from '../../../utilities/permissions';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ parent, params, url }) => {
@@ -10,13 +13,39 @@ export const load: PageLoad = async ({ parent, params, url }) => {
 
   const { id } = params;
   const planId = parseFloat(id);
+  const planReadonly = false;
 
   if (!Number.isNaN(planId)) {
     let initialPlan = await effects.getPlan(planId, user);
 
     if (initialPlan) {
+      // If the plan is in merge review, check if the current user can review the merge.
       if (initialPlan.is_locked) {
-        throw redirect(302, `${base}/plans/${id}/merge`);
+        const initialMergeRequest: PlanMergeRequestSchema | null = await effects.getPlanMergeRequestInProgress(
+          planId,
+          user,
+        );
+
+        if (initialMergeRequest) {
+          const {
+            plan_snapshot_supplying_changes: { plan: sourcePlan },
+            plan_receiving_changes: targetPlan,
+          } = initialMergeRequest;
+
+          const hasReviewPermission = featurePermissions.planBranch.canReviewRequest(
+            user,
+            sourcePlan,
+            targetPlan,
+            initialPlan.model,
+          );
+
+          // If the user can review the merge, take them to the merge review screen.
+          if (hasReviewPermission) {
+            throw redirect(302, `${base}/plans/${id}/merge`);
+          }
+
+          planReadOnly.set(true);
+        }
       }
 
       // if plan doesn't have a scheduling spec, create one at this point

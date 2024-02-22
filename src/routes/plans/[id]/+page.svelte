@@ -64,7 +64,6 @@
     planDatasets,
     planEndTimeMs,
     planId,
-    planLocked,
     planReadOnly,
     planStartTimeMs,
     planTags,
@@ -111,7 +110,7 @@
   import effects from '../../../utilities/effects';
   import { getSearchParameterNumber, removeQueryParam, setQueryParam } from '../../../utilities/generic';
   import { isSaveEvent } from '../../../utilities/keyboardEvents';
-  import { closeActiveModal, showPlanLockedModal } from '../../../utilities/modal';
+  import { closeActiveModal } from '../../../utilities/modal';
   import { featurePermissions } from '../../../utilities/permissions';
   import {
     formatSimulationQueuePosition,
@@ -159,7 +158,6 @@
   let hasSimulatePermission: boolean = false;
   let hasCheckConstraintsPermission: boolean = false;
   let invalidActivityCount: number = 0;
-  let planHasBeenLocked = false;
   let planSnapshotActivityDirectives: ActivityDirective[] = [];
   let simulationExtent: string | null;
   let selectedSimulationStatus: Status | null;
@@ -354,14 +352,6 @@
   $: {
     $activityDirectivesMap =
       $planSnapshotId !== null ? keyBy(planSnapshotActivityDirectives, 'id') : keyBy($activityDirectives, 'id');
-  }
-
-  $: if ($plan && $planLocked) {
-    planHasBeenLocked = true;
-    showPlanLockedModal($plan.id);
-  } else if (planHasBeenLocked) {
-    closeActiveModal();
-    planHasBeenLocked = false;
   }
 
   $: compactNavMode = windowWidth < 1100;
