@@ -14,7 +14,6 @@
 
   export let yAxis: Axis;
   export let yAxes: Axis[];
-  export let simulationDataAvailable: boolean = false;
 
   let axisMenu: Menu;
 
@@ -169,15 +168,11 @@
         </Input>
         <div
           use:tooltip={{
-            content: simulationDataAvailable
-              ? 'Fit axis bounds to domain of in-view axis resources'
-              : 'Axis bounds fit only available after simulation',
+            content: 'Fit axis bounds to domain of in-view axis resources',
             placement: 'top',
           }}
         >
-          <button class="st-button secondary w-100" disabled={!simulationDataAvailable} on:click={onFitAxis}
-            >Fit Axis Bounds</button
-          >
+          <button class="st-button secondary w-100" on:click={onFitAxis}>Fit Axis Bounds</button>
         </div>
       {/if}
       <button class="st-button secondary w-100" style="position: relative" on:click={onDeleteAxis}>Delete Axis</button>

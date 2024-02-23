@@ -223,7 +223,7 @@
           } catch (e) {
             const err = e as Error;
             if (err.name !== 'AbortError') {
-              catchError(`Profile Download Failed for for ${name}`, e as Error);
+              catchError(`Profile Download Failed for ${name}`, e as Error);
               error = err.message;
             }
           } finally {
