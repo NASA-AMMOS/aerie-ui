@@ -249,7 +249,7 @@
   }
 </script>
 
-<Modal height={500} width={600}>
+<Modal height={500} width={750}>
   <ModalHeader on:close>Manage Constraints</ModalHeader>
   <ModalContent style="padding:0">
     <div class="constraints-modal-container">
@@ -312,7 +312,7 @@
 
   .constraints-modal-container hr {
     border: none;
-    border-top: 1px solid var(--st-gray-30);
+    border-top: 1px solid #e0e0e0;
     margin: 0 1rem;
     width: auto;
   }
