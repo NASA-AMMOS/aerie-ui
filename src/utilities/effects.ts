@@ -3444,7 +3444,7 @@ const effects = {
       await showManagePlanConstraintsModal(user);
     } catch (e) {
       catchError('Constraint Unable To Be Applied To Plan', e as Error);
-      showFailureToast('Constrainta Application Failed');
+      showFailureToast('Constraint Application Failed');
     }
   },
 
