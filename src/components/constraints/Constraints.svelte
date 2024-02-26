@@ -63,14 +63,14 @@
     {
       field: 'versions',
       filter: 'string',
-      headerName: 'Latest',
+      headerName: 'Latest Version',
       sortable: true,
       suppressAutoSize: true,
       suppressSizeToFit: true,
       valueGetter: (params: ValueGetterParams<ConstraintMetadata>) => {
         return params?.data?.versions[params?.data?.versions.length - 1].revision;
       },
-      width: 80,
+      width: 125,
     },
     {
       autoHeight: true,
