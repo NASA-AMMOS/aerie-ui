@@ -6,7 +6,7 @@
   import { createEventDispatcher } from 'svelte';
   import { PlanStatusMessages } from '../../enums/planStatusMessages';
   import { SearchParameters } from '../../enums/searchParameters';
-  import { allowedConstraintSpecs, constraints } from '../../stores/constraints';
+  import { allowedConstraintPlanSpecMap, allowedConstraintSpecs, constraints } from '../../stores/constraints';
   import { plan, planId, planReadOnly } from '../../stores/plan';
   import type { User } from '../../types/app';
   import type { ConstraintMetadata, ConstraintPlanSpec, ConstraintPlanSpecInsertInput } from '../../types/constraint';
@@ -204,20 +204,24 @@
         ) => {
           const constraintId = parseInt(selectedConstraintId);
           const isSelected = selectedConstraints[constraintId];
+          const constraintPlanSpec = $allowedConstraintPlanSpecMap[constraintId];
 
           if (isSelected) {
-            return {
-              ...prevConstraintPlanSpecUpdates,
-              constraintPlanSpecsToAdd: [
-                ...prevConstraintPlanSpecUpdates.constraintPlanSpecsToAdd,
-                {
-                  constraint_id: constraintId,
-                  constraint_revision: null,
-                  enabled: true,
-                  plan_id: $planId,
-                } as ConstraintPlanSpecInsertInput,
-              ],
-            };
+            if (!constraintPlanSpec || constraintPlanSpec.constraint_metadata?.owner === user?.id) {
+              return {
+                ...prevConstraintPlanSpecUpdates,
+                constraintPlanSpecsToAdd: [
+                  ...prevConstraintPlanSpecUpdates.constraintPlanSpecsToAdd,
+                  {
+                    constraint_id: constraintId,
+                    constraint_revision: null,
+                    enabled: true,
+                    plan_id: $planId,
+                  } as ConstraintPlanSpecInsertInput,
+                ],
+              };
+            }
+            return prevConstraintPlanSpecUpdates;
           } else {
             return {
               ...prevConstraintPlanSpecUpdates,
