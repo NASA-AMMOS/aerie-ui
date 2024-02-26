@@ -132,6 +132,7 @@
   $: referenceModelId = initialReferenceModelId;
   $: saveButtonEnabled =
     constraintNameError === '' &&
+    constraintOwner !== '' &&
     constraintDefinitionCode !== '' &&
     constraintName !== '' &&
     (isMetadataModified || isDefinitionDataModified || isDefinitionModified);
@@ -418,6 +419,20 @@
       </fieldset>
 
       <fieldset>
+        <label for="constraintOwner">Owner</label>
+        <input
+          bind:value={constraintOwner}
+          class="st-input w-100"
+          name="constraintOwner"
+          placeholder="Enter Constraint Owner Username (required)"
+          use:permissionHandler={{
+            hasPermission: hasWriteMetadataPermission,
+            permissionError,
+          }}
+        />
+      </fieldset>
+
+      <fieldset>
         <label for="constraint-description">Description</label>
         <textarea
           bind:value={constraintDescription}
@@ -457,18 +472,6 @@
           <input class="st-input w-100" disabled name="constraintId" value={constraintMetadataId} />
         </fieldset>
       {/if}
-      <fieldset>
-        <label for="constraintOwner">Owner</label>
-        <input
-          bind:value={constraintOwner}
-          class="st-input w-100"
-          name="constraintOwner"
-          use:permissionHandler={{
-            hasPermission: hasWriteMetadataPermission,
-            permissionError,
-          }}
-        />
-      </fieldset>
 
       <fieldset>
         <label for="public">Visibility</label>
