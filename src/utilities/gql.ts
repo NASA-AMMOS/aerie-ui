@@ -1697,6 +1697,7 @@ const gql = {
         enabled
         constraint_metadata {
           name
+          owner
           public
           versions {
             revision
