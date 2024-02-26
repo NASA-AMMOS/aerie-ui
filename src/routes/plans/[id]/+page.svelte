@@ -65,6 +65,7 @@
     planEndTimeMs,
     planId,
     planReadOnly,
+    planReadOnlySnapshot,
     planStartTimeMs,
     planTags,
     resetPlanStores,
@@ -272,7 +273,7 @@
   }
   $: if (data.initialPlanSnapshotId !== null) {
     $planSnapshotId = data.initialPlanSnapshotId;
-    $planReadOnly = true;
+    $planReadOnlySnapshot = true;
   }
   $: if ($planSnapshot !== null) {
     effects.getPlanSnapshotActivityDirectives($planSnapshot, data.user).then(directives => {
@@ -398,7 +399,7 @@
 
   function clearSnapshot() {
     $planSnapshotId = null;
-    $planReadOnly = false;
+    $planReadOnlySnapshot = false;
     $simulationDatasetId = $simulationDatasetLatest?.id ?? -1;
   }
 

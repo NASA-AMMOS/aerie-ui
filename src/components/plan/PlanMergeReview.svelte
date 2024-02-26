@@ -8,7 +8,7 @@
   import PlanWithUpArrow from '@nasa-jpl/stellar/icons/plan_with_up_arrow.svg?component';
   import { keyBy } from 'lodash-es';
   import { activityMetadataDefinitions } from '../../stores/activities';
-  import { activityTypes } from '../../stores/plan';
+  import { activityTypes, planReadOnlyMergeRequest } from '../../stores/plan';
   import { gqlSubscribable } from '../../stores/subscribable';
   import type { ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
@@ -301,6 +301,7 @@
         user,
       );
       if (success) {
+        $planReadOnlyMergeRequest = false;
         userInitiatedMergeRequestResolution = true;
         goto(`${base}/plans/${initialPlan.id}`);
       }
