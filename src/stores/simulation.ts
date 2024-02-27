@@ -32,6 +32,8 @@ export const fetchingResourcesExternal: Writable<boolean> = writable(true);
 
 export const resourceTypes: Writable<ResourceType[]> = writable([]);
 
+export const resourceTypesLoading: Writable<boolean> = writable(true);
+
 export const spans: Writable<Span[]> = writable([]);
 
 export const yAxesWithScaleDomainsCache: Writable<Record<number, Axis[]>> = writable({});

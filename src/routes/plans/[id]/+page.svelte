@@ -84,11 +84,10 @@
     enableSimulation,
     externalResourceNames,
     externalResources,
-    fetchingResources,
     fetchingResourcesExternal,
     resetSimulationStores,
     resourceTypes,
-    resources,
+    resourceTypesLoading,
     simulationDataset,
     simulationDatasetId,
     simulationDatasetLatest,
@@ -269,9 +268,10 @@
     planTags.updateValue(() => data.initialPlanTags);
 
     // Asynchronously fetch resource types
-    effects
-      .getResourceTypes($plan.model_id, data.user)
-      .then(initialResourceTypes => ($resourceTypes = initialResourceTypes));
+    effects.getResourceTypes($plan.model_id, data.user).then(initialResourceTypes => {
+      $resourceTypes = initialResourceTypes;
+      $resourceTypesLoading = false;
+    });
   }
   $: if (data.initialPlanSnapshotId !== null) {
     $planSnapshotId = data.initialPlanSnapshotId;

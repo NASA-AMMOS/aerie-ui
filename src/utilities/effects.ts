@@ -18,12 +18,7 @@ import {
 import { createModelError, createPlanError, creatingModel, creatingPlan, models } from '../stores/plan';
 import { schedulingStatus, selectedSpecId } from '../stores/scheduling';
 import { commandDictionaries } from '../stores/sequencing';
-import {
-  fetchingResources,
-  fetchingResourcesExternal,
-  selectedSpanId,
-  simulationDatasetId,
-} from '../stores/simulation';
+import { fetchingResourcesExternal, selectedSpanId, simulationDatasetId } from '../stores/simulation';
 import { createTagError } from '../stores/tags';
 import { applyViewUpdate, view, viewUpdateTimeline } from '../stores/views';
 import type {
@@ -2870,30 +2865,6 @@ const effects = {
       }
     } catch (e) {
       catchError(e as Error);
-      return [];
-    }
-  },
-
-  async getResources(
-    datasetId: number,
-    startTimeYmd: string,
-    user: User | null,
-    signal: AbortSignal | undefined = undefined,
-  ): Promise<Resource[]> {
-    try {
-      fetchingResources.set(true);
-      const data = await reqHasura<Profile[]>(gql.GET_PROFILES, { datasetId }, user, signal);
-      const { profile: profiles } = data;
-      const sampledProfiles = sampleProfiles(profiles, startTimeYmd);
-      fetchingResources.set(false);
-      return sampledProfiles;
-    } catch (e) {
-      const error = e as Error;
-      if (error.name !== 'AbortError') {
-        catchError(error);
-        showFailureToast('Failed to fetch profiles');
-        fetchingResources.set(false);
-      }
       return [];
     }
   },

@@ -12,6 +12,8 @@
     externalResourceNames,
     externalResources,
     fetchingResourcesExternal,
+    resourceTypes,
+    resourceTypesLoading,
     yAxesWithScaleDomainsCache,
   } from '../../stores/simulation';
   import { selectedRow } from '../../stores/views';
@@ -135,7 +137,7 @@
   let loadingErrors: string[];
   let anyResourcesLoading: boolean = true;
 
-  $: if (plan && simulationDataset !== null && layers && $externalResources) {
+  $: if (plan && simulationDataset !== null && layers && $externalResources && !$resourceTypesLoading) {
     const simulationDatasetId = simulationDataset.dataset_id;
     const resourceNamesSet = new Set<string>();
     layers.map(l => {
@@ -169,7 +171,7 @@
       const startTimeYmd = simulationDataset?.simulation_start_time ?? plan.start_time;
       resourceNames.forEach(async name => {
         // Check if resource is external
-        const isExternal = !!$externalResourceNames.find(t => t === name);
+        const isExternal = !$resourceTypes.find(t => t.name === name);
         if (isExternal) {
           // Handle external datasets separately as they are globally loaded and subscribed to
           let resource = null;
