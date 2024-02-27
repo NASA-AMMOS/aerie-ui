@@ -17,6 +17,7 @@
     spanUtilityMaps,
     spans,
     spansMap,
+    yAxesWithScaleDomainsCache,
   } from '../../stores/simulation';
   import {
     timelineInteractionMode,
@@ -30,6 +31,7 @@
   import type { ActivityDirectiveId } from '../../types/activity';
   import type { User } from '../../types/app';
   import type {
+    Axis,
     DirectiveVisibilityToggleMap,
     MouseDown,
     Row,
@@ -226,6 +228,13 @@
       }
     }
   }
+
+  function onUpdateYAxes(event: CustomEvent<{ axes: Axis[]; id: number }>) {
+    const {
+      detail: { axes, id },
+    } = event;
+    $yAxesWithScaleDomainsCache = { ...$yAxesWithScaleDomainsCache, [id]: axes };
+  }
 </script>
 
 <Panel padBody={false}>
@@ -324,6 +333,7 @@
       on:deleteRow={onDeleteRow}
       on:duplicateRow={onDuplicateRow}
       on:insertRow={onInsertRow}
+      on:updateYAxes={onUpdateYAxes}
     />
   </svelte:fragment>
 </Panel>

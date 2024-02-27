@@ -510,6 +510,7 @@
             on:mouseOver={e => (mouseOver = { ...e.detail, row })}
             on:toggleRowExpansion={onToggleRowExpansion}
             on:updateRowHeight={onUpdateRowHeight}
+            on:updateYAxes
             on:zoom={throttledZoom}
           />
         </div>

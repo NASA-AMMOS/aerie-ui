@@ -35,23 +35,6 @@
     return scaleDomain;
   }
 
-  function onFitAxis() {
-    const newRowYAxes = yAxes.map(axis => {
-      if (axis.id === yAxis.id) {
-        const newAxis: Axis = { ...axis };
-        let scaleDomain: number[] = [];
-
-        // Get bounds for initial values if possible using current time window
-        if ($selectedRow && $selectedTimeline) {
-          scaleDomain = getManualFitScaleDomain();
-        }
-        return { ...newAxis, scaleDomain };
-      }
-      return axis;
-    });
-    viewUpdateRow('yAxes', newRowYAxes);
-  }
-
   function updateYAxisAutofit(event: Event) {
     const { value: v } = getTarget(event);
     const newRowYAxes = yAxes.map(axis => {
@@ -166,14 +149,6 @@
             on:input={event => updateYAxisScaleDomain(event, yAxis)}
           />
         </Input>
-        <div
-          use:tooltip={{
-            content: 'Fit axis bounds to domain of in-view axis resources',
-            placement: 'top',
-          }}
-        >
-          <button class="st-button secondary w-100" on:click={onFitAxis}>Fit Axis Bounds</button>
-        </div>
       {/if}
       <button class="st-button secondary w-100" style="position: relative" on:click={onDeleteAxis}>Delete Axis</button>
     </div>

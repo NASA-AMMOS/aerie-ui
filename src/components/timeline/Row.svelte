@@ -14,7 +14,6 @@
     fetchingResourcesExternal,
     resourceTypes,
     resourceTypesLoading,
-    yAxesWithScaleDomainsCache,
   } from '../../stores/simulation';
   import { selectedRow } from '../../stores/views';
   import type {
@@ -217,6 +216,7 @@
 
           let resource = null;
           let error = '';
+          let aborted = false;
           try {
             const response = await effects.getResource(simulationDatasetId, name, user, controller.signal);
             const { profile } = response;
@@ -227,20 +227,24 @@
             }
           } catch (e) {
             const err = e as Error;
-            if (err.name !== 'AbortError') {
+            if (err.name === 'AbortError') {
+              aborted = true;
+            } else {
               catchError(`Profile Download Failed for ${name}`, e as Error);
               error = err.message;
             }
           } finally {
-            resourceRequestMap = {
-              ...resourceRequestMap,
-              [name]: {
-                ...resourceRequestMap[name],
-                error,
-                loading: false,
-                resource,
-              },
-            };
+            if (!aborted) {
+              resourceRequestMap = {
+                ...resourceRequestMap,
+                [name]: {
+                  ...resourceRequestMap[name],
+                  error,
+                  loading: false,
+                  resource,
+                },
+              };
+            }
           }
         }
       });
@@ -285,8 +289,7 @@
   // Compute scale domains for axes since it is optionally defined in the view
   $: if (loadedResources && yAxes) {
     yAxesWithScaleDomains = getYAxesWithScaleDomains(yAxes, layers, loadedResources, viewTimeRange);
-    // In this case we can directly mutate the cache since we don't need to react to it.
-    $yAxesWithScaleDomainsCache[id] = yAxesWithScaleDomains;
+    dispatch('updateYAxes', { axes: yAxesWithScaleDomains, id });
   }
 
   $: if (overlaySvgSelection && drawWidth) {

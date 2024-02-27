@@ -620,8 +620,11 @@ export function getYAxesWithScaleDomains(
   viewTimeRange: TimeRange,
 ): Axis[] {
   return yAxes.map(yAxis => {
-    const scaleDomain = getYAxisBounds(yAxis, layers, resources, viewTimeRange);
-    return { ...yAxis, scaleDomain };
+    if (yAxis.domainFitMode !== 'manual') {
+      const scaleDomain = getYAxisBounds(yAxis, layers, resources, viewTimeRange);
+      return { ...yAxis, scaleDomain };
+    }
+    return yAxis;
   });
 }
 
