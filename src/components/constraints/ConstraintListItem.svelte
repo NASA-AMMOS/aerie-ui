@@ -33,10 +33,11 @@
 
   const dispatch = createEventDispatcher();
 
-  let revisions: number[] = constraint.versions
+  let revisions: number[] = [];
+
+  $: revisions = constraint.versions
     .map(({ revision }) => revision)
     .sort((revisionA, revisionB) => revisionB - revisionA);
-
   $: violationCount = constraintResponse?.results?.violations?.length;
   $: success = constraintResponse?.success;
 
