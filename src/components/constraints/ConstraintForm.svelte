@@ -125,7 +125,7 @@
   $: hasWriteMetadataPermission =
     mode === 'create'
       ? featurePermissions.constraints.canCreate(user)
-      : featurePermissions.constraints.canUpdate(user, { owner: constraintOwner });
+      : featurePermissions.constraints.canUpdate(user, { owner: initialConstraintOwner });
 
   $: pageTitle = mode === 'edit' ? 'Constraints' : 'New Constraint';
   $: pageSubtitle = mode === 'edit' ? savedConstraintMetadata.name : '';
@@ -312,7 +312,7 @@
         .filter(({ tag }) => !constraintMetadataTags.find(t => tag.id === t.id))
         .map(({ tag }) => tag.id);
 
-      await effects.updateConstraintMetadata(
+      const updated = await effects.updateConstraintMetadata(
         constraintMetadataId,
         {
           description: constraintDescription,
@@ -322,16 +322,19 @@
         },
         tagsToUpdate,
         tagIdsToDelete,
+        initialConstraintOwner,
         user,
       );
 
-      savedConstraintMetadata = {
-        description: constraintDescription,
-        name: constraintName,
-        owner: constraintOwner,
-        public: constraintPublic,
-        tags: constraintMetadataTags.map(tag => ({ tag })),
-      };
+      if (updated) {
+        savedConstraintMetadata = {
+          description: constraintDescription,
+          name: constraintName,
+          owner: constraintOwner,
+          public: constraintPublic,
+          tags: constraintMetadataTags.map(tag => ({ tag })),
+        };
+      }
     }
   }
 

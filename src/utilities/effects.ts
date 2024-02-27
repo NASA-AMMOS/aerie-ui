@@ -3963,10 +3963,11 @@ const effects = {
     constraintMetadata: ConstraintMetadataSetInput,
     tags: ConstraintMetadataTagsInsertInput[],
     tagIdsToDelete: number[],
+    currentConstraintOwner: UserId,
     user: User | null,
-  ): Promise<void> {
+  ): Promise<boolean> {
     try {
-      if (!queryPermissions.UPDATE_CONSTRAINT_METADATA(user, constraintMetadata)) {
+      if (!queryPermissions.UPDATE_CONSTRAINT_METADATA(user, { owner: currentConstraintOwner })) {
         throwPermissionError('update this constraint');
       }
 
@@ -3984,9 +3985,11 @@ const effects = {
       }
 
       showSuccessToast('Constraint Updated Successfully');
+      return true;
     } catch (e) {
       catchError('Constraint Metadata Update Failed', e as Error);
       showFailureToast('Constraint Metadata Update Failed');
+      return false;
     }
   },
 
