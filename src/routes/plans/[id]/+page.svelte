@@ -339,9 +339,7 @@
     effects.getSpans(datasetId, data.user, simulationDataAbortController.signal).then(newSpans => ($spans = newSpans));
   } else {
     simulationDataAbortController?.abort();
-    fetchingResources.set(false);
     fetchingResourcesExternal.set(false);
-    $resources = [];
     $spans = [];
   }
 

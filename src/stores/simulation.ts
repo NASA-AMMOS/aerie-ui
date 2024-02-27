@@ -28,10 +28,6 @@ export const externalResources: Writable<Resource[]> = writable([]);
 
 export const externalResourceNames: Writable<string[]> = writable([]);
 
-export const resources: Writable<Resource[]> = writable([]);
-
-export const fetchingResources: Writable<boolean> = writable(false);
-
 export const fetchingResourcesExternal: Writable<boolean> = writable(true);
 
 export const resourceTypes: Writable<ResourceType[]> = writable([]);
@@ -158,7 +154,6 @@ export const selectedSpan = derived([spansMap, selectedSpanId], ([$spansMap, $se
 export function resetSimulationStores() {
   externalResources.set([]);
   externalResourceNames.set([]);
-  fetchingResources.set(false);
   fetchingResourcesExternal.set(false);
   selectedSpanId.update(() => null);
   simulation.updateValue(() => null);
@@ -169,6 +164,5 @@ export function resetSimulationStores() {
   simulationDatasetsPlan.updateValue(() => []);
   simulationDatasetsAll.updateValue(() => []);
   spans.set([]);
-  resources.set([]);
   resourceTypes.set([]);
 }
