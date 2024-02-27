@@ -162,7 +162,10 @@
     });
 
     // Only update if simulation is complete
-    if (getSimulationStatus(simulationDataset) === Status.Complete) {
+    if (
+      getSimulationStatus(simulationDataset) === Status.Complete ||
+      getSimulationStatus(simulationDataset) === Status.Canceled
+    ) {
       const startTimeYmd = simulationDataset?.simulation_start_time ?? plan.start_time;
       resourceNames.forEach(async name => {
         // Check if resource is external
