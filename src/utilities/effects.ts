@@ -18,7 +18,7 @@ import {
 import { createModelError, createPlanError, creatingModel, creatingPlan, models } from '../stores/plan';
 import { schedulingStatus, selectedSpecId } from '../stores/scheduling';
 import { commandDictionaries } from '../stores/sequencing';
-import { fetchingResourcesExternal, selectedSpanId, simulationDatasetId } from '../stores/simulation';
+import { selectedSpanId, simulationDatasetId } from '../stores/simulation';
 import { createTagError } from '../stores/tags';
 import { applyViewUpdate, view, viewUpdateTimeline } from '../stores/views';
 import type {
@@ -2875,10 +2875,8 @@ const effects = {
     startTimeYmd: string,
     user: User | null,
     signal: AbortSignal | undefined = undefined,
-  ): Promise<Resource[]> {
+  ): Promise<{ aborted: boolean; resources: Resource[] }> {
     try {
-      fetchingResourcesExternal.set(true);
-
       // Always fetch external resources that aren't tied to a simulation, optionally get the resources tied to one if we have a dataset ID.
       const clauses: { simulation_dataset_id: { _is_null: boolean } | { _eq: number } }[] = [
         { simulation_dataset_id: { _is_null: true } },
@@ -2907,19 +2905,19 @@ const effects = {
           const sampledResources: Resource[] = sampleProfiles(profiles, startTimeYmd, offset_from_plan_start);
           resources = [...resources, ...sampledResources];
         }
-        fetchingResourcesExternal.set(false);
-        return resources;
+        return { aborted: false, resources };
       } else {
         throw Error('Unable to get external resources');
       }
     } catch (e) {
+      let aborted = false;
       const error = e as Error;
       if (error.name !== 'AbortError') {
         catchError(error);
         showFailureToast('Failed to fetch external profiles');
-        fetchingResourcesExternal.set(false);
+        aborted = true;
       }
-      return [];
+      return { aborted, resources: [] };
     }
   },
 

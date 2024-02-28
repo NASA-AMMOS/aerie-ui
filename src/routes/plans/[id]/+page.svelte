@@ -314,6 +314,8 @@
 
     resourcesExternalAbortController?.abort();
     resourcesExternalAbortController = new AbortController();
+    $fetchingResourcesExternal = true;
+    $externalResources = [];
     effects
       .getResourcesExternal(
         $plan.id,
@@ -322,8 +324,11 @@
         data.user,
         resourcesExternalAbortController.signal,
       )
-      .then(newResources => {
-        $externalResources = newResources;
+      .then(({ aborted, resources }) => {
+        if (!aborted) {
+          $externalResources = resources;
+          $fetchingResourcesExternal = false;
+        }
       });
   }
 
@@ -344,7 +349,6 @@
     effects.getSpans(datasetId, data.user, simulationDataAbortController.signal).then(newSpans => ($spans = newSpans));
   } else {
     simulationDataAbortController?.abort();
-    fetchingResourcesExternal.set(false);
     $spans = [];
   }
 
