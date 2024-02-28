@@ -9,7 +9,6 @@
   import { Status } from '../../enums/status';
   import { catchError } from '../../stores/errors';
   import {
-    externalResourceNames,
     externalResources,
     fetchingResourcesExternal,
     resourceTypes,
@@ -154,7 +153,7 @@
         value.simulationDatasetId !== simulationDatasetId ||
         // TODO should we grab the store here or should we pass it down? Not seeing the value in making parent components
         // re-render but maybe it's fine?
-        (value.type === 'external' && !$externalResourceNames.find(name => value.resource?.name === name))
+        (value.type === 'external' && !$resourceTypes.find(type => type.name === name))
       ) {
         value.controller?.abort();
         delete resourceRequestMap[key];

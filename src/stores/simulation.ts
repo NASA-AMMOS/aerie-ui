@@ -28,7 +28,7 @@ export const externalResources: Writable<Resource[]> = writable([]);
 
 export const externalResourceNames: Writable<string[]> = writable([]);
 
-export const fetchingResourcesExternal: Writable<boolean> = writable(true);
+export const fetchingResourcesExternal: Writable<boolean> = writable(false);
 
 export const resourceTypes: Writable<ResourceType[]> = writable([]);
 

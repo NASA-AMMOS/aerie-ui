@@ -332,7 +332,12 @@
     selectActivity(null, null);
   }
 
-  $: if ($plan && $simulationDataset !== null && getSimulationStatus($simulationDataset) === Status.Complete) {
+  $: if (
+    $plan &&
+    $simulationDataset !== null &&
+    (getSimulationStatus($simulationDataset) === Status.Complete ||
+      getSimulationStatus($simulationDataset) === Status.Complete)
+  ) {
     const datasetId = $simulationDataset.dataset_id;
     simulationDataAbortController?.abort();
     simulationDataAbortController = new AbortController();
