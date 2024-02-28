@@ -151,8 +151,6 @@
       if (
         resourceNames.indexOf(key) < 0 ||
         value.simulationDatasetId !== simulationDatasetId ||
-        // TODO should we grab the store here or should we pass it down? Not seeing the value in making parent components
-        // re-render but maybe it's fine?
         (value.type === 'external' && !$resourceTypes.find(type => type.name === name))
       ) {
         value.controller?.abort();
