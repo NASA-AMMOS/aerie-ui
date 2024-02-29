@@ -12,7 +12,7 @@
   import { getTarget } from '../../utilities/generic';
   import { featurePermissions } from '../../utilities/permissions';
   import PageTitle from '../app/PageTitle.svelte';
-  import MetadataForm from '../ui/Metadata/MetadataForm.svelte';
+  import AssociationForm from '../ui/Association/AssociationForm.svelte';
 
   export let initialConstraintDefinitionAuthor: UserId | undefined = undefined;
   export let initialConstraintDefinitionCode: string = 'export default (): Constraint => {\n\n}\n';
@@ -193,7 +193,7 @@
 
 <PageTitle subTitle={pageSubtitle} title={pageTitle} />
 
-<MetadataForm
+<AssociationForm
   allMetadata={$constraints}
   displayName="Constraint"
   {hasCreateDefinitionCodePermission}

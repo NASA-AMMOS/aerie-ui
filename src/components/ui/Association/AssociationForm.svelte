@@ -50,13 +50,13 @@
   import { permissionHandler } from '../../../utilities/permissionHandler';
   import { diffTags } from '../../../utilities/tags';
   import PageTitle from '../../app/PageTitle.svelte';
-  import CssGrid from '../../ui/CssGrid.svelte';
-  import CssGridGutter from '../../ui/CssGridGutter.svelte';
-  import Panel from '../../ui/Panel.svelte';
-  import RadioButton from '../../ui/RadioButtons/RadioButton.svelte';
-  import RadioButtons from '../../ui/RadioButtons/RadioButtons.svelte';
-  import SectionTitle from '../../ui/SectionTitle.svelte';
-  import TagsInput from '../../ui/Tags/TagsInput.svelte';
+  import CssGrid from '../CssGrid.svelte';
+  import CssGridGutter from '../CssGridGutter.svelte';
+  import Panel from '../Panel.svelte';
+  import RadioButton from '../RadioButtons/RadioButton.svelte';
+  import RadioButtons from '../RadioButtons/RadioButtons.svelte';
+  import SectionTitle from '../SectionTitle.svelte';
+  import TagsInput from '../Tags/TagsInput.svelte';
   import DefinitionEditor from './DefinitionEditor.svelte';
 
   type SavedMetadata = Pick<FormMetadata, 'description' | 'name' | 'owner' | 'public' | 'tags'>;

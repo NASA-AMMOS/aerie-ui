@@ -14,7 +14,7 @@
   } from '../../../types/tags';
   import effects from '../../../utilities/effects';
   import { featurePermissions } from '../../../utilities/permissions';
-  import MetadataForm from '../../ui/Metadata/MetadataForm.svelte';
+  import AssociationForm from '../../ui/Association/AssociationForm.svelte';
 
   export let initialConditionDefinitionAuthor: UserId | undefined = undefined;
   export let initialConditionDefinitionCode: string = 'export default (): GlobalSchedulingCondition => {\n\n}\n';
@@ -192,7 +192,7 @@
   }
 </script>
 
-<MetadataForm
+<AssociationForm
   allMetadata={$schedulingConditions}
   displayName="Scheduling Condition"
   {hasCreateDefinitionCodePermission}

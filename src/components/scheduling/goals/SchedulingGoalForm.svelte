@@ -14,7 +14,7 @@
   } from '../../../types/tags';
   import effects from '../../../utilities/effects';
   import { featurePermissions } from '../../../utilities/permissions';
-  import MetadataForm from '../../ui/Metadata/MetadataForm.svelte';
+  import AssociationForm from '../../ui/Association/AssociationForm.svelte';
 
   export let initialGoalDefinitionAuthor: UserId | undefined = undefined;
   export let initialGoalDefinitionCode: string = 'export default (): GlobalSchedulingGoal => {\n\n}\n';
@@ -188,7 +188,7 @@
   }
 </script>
 
-<MetadataForm
+<AssociationForm
   allMetadata={$schedulingGoals}
   displayName="Scheduling Goal"
   {hasCreateDefinitionCodePermission}
