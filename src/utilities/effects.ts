@@ -2199,6 +2199,34 @@ const effects = {
     }
   },
 
+  async deleteSchedulingConditionTags(ids: Tag['id'][], user: User | null): Promise<number | null> {
+    try {
+      if (!queryPermissions.DELETE_SCHEDULING_CONDITION_METADATA_TAGS(user)) {
+        throwPermissionError('delete scheduling condition tags');
+      }
+
+      const data = await reqHasura<{ affected_rows: number }>(
+        gql.DELETE_SCHEDULING_CONDITION_METADATA_TAGS,
+        { ids },
+        user,
+      );
+      const { delete_scheduling_condition_tags } = data;
+      if (delete_scheduling_condition_tags != null) {
+        const { affected_rows } = delete_scheduling_condition_tags;
+        if (affected_rows !== ids.length) {
+          throw Error('Some scheduling condition tags were not successfully created');
+        }
+        return affected_rows;
+      } else {
+        throw Error('Unable to delete scheduling condition tags');
+      }
+    } catch (e) {
+      catchError('Delete Scheduling Condition Tags Failed', e as Error);
+      showFailureToast('Delete Scheduling Condition Tags Failed');
+      return null;
+    }
+  },
+
   async deleteSchedulingGoal(goal: SchedulingGoalMetadata, user: User | null): Promise<boolean> {
     try {
       if (!queryPermissions.DELETE_SCHEDULING_GOAL_METADATA(user, goal)) {
@@ -2232,11 +2260,11 @@ const effects = {
 
   async deleteSchedulingGoalTags(ids: Tag['id'][], user: User | null): Promise<number | null> {
     try {
-      if (!queryPermissions.DELETE_SCHEDULING_GOAL_TAGS(user)) {
+      if (!queryPermissions.DELETE_SCHEDULING_GOAL_METADATA_TAGS(user)) {
         throwPermissionError('delete scheduling goal tags');
       }
 
-      const data = await reqHasura<{ affected_rows: number }>(gql.DELETE_SCHEDULING_GOAL_TAGS, { ids }, user);
+      const data = await reqHasura<{ affected_rows: number }>(gql.DELETE_SCHEDULING_GOAL_METADATA_TAGS, { ids }, user);
       const { delete_scheduling_goal_tags } = data;
       if (delete_scheduling_goal_tags != null) {
         const { affected_rows } = delete_scheduling_goal_tags;
@@ -4334,19 +4362,20 @@ const effects = {
 
   async updateSchedulingGoalMetadata(
     id: number,
-    conditionMetadata: SchedulingGoalMetadataSetInput,
+    goalMetadata: SchedulingGoalMetadataSetInput,
     tags: SchedulingGoalMetadataTagsInsertInput[],
     tagIdsToDelete: number[],
+    currentGoalOwner: UserId,
     user: User | null,
   ): Promise<void> {
     try {
-      if (!queryPermissions.UPDATE_CONSTRAINT_METADATA(user, conditionMetadata)) {
-        throwPermissionError('update this scheduling condition');
+      if (!queryPermissions.UPDATE_SCHEDULING_GOAL_METADATA(user, { owner: currentGoalOwner })) {
+        throwPermissionError('update this scheduling goal');
       }
 
       const data = await reqHasura(
         gql.UPDATE_SCHEDULING_GOAL_METADATA,
-        { conditionMetadata, id, tagIdsToDelete, tags },
+        { goalMetadata, id, tagIdsToDelete, tags },
         user,
       );
       if (
@@ -4354,7 +4383,7 @@ const effects = {
         data.insertSchedulingGoalTags == null ||
         data.deleteSchedulingGoalTags == null
       ) {
-        throw Error(`Unable to update scheduling condition metadata with ID: "${id}"`);
+        throw Error(`Unable to update scheduling goal metadata with ID: "${id}"`);
       }
 
       showSuccessToast('Scheduling Goal Updated Successfully');

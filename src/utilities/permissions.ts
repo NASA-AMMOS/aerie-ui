@@ -745,22 +745,47 @@ const queryPermissions = {
   UPDATE_PLAN_SNAPSHOT: (user: User | null): boolean => {
     return getPermission(['update_plan_snapshot_by_pk'], user);
   },
+  UPDATE_SCHEDULING_CONDITION_DEFINITION_TAGS: (user: User | null): boolean => {
+    return (
+      isUserAdmin(user) ||
+      getPermission(
+        ['insert_scheduling_condition_definition_tags', 'delete_scheduling_condition_definition_tags'],
+        user,
+      )
+    );
+  },
   UPDATE_SCHEDULING_CONDITION_METADATA: (
     user: User | null,
     condition?: AssetWithOwner<SchedulingConditionMetadata>,
   ): boolean => {
     return (
       isUserAdmin(user) ||
-      (getPermission(['update_scheduling_condition_by_pk'], user) &&
+      (getPermission(
+        [
+          'update_scheduling_condition_metadata_by_pk',
+          'insert_scheduling_condition_tags',
+          'delete_scheduling_condition_tags',
+        ],
+        user,
+      ) &&
         // If there is a plan, ensure user is the plan owner or is a collaborator
         // Otherwise if no plan, user may update if they are condition author since associated plan may have been deleted
         (condition?.public || isUserOwner(user, condition)))
     );
   },
+  UPDATE_SCHEDULING_GOAL_DEFINITION_TAGS: (user: User | null): boolean => {
+    return (
+      isUserAdmin(user) ||
+      getPermission(['insert_scheduling_goal_definition_tags', 'delete_scheduling_goal_definition_tags'], user)
+    );
+  },
   UPDATE_SCHEDULING_GOAL_METADATA: (user: User | null, goal?: AssetWithOwner<SchedulingGoalMetadata>): boolean => {
     return (
       isUserAdmin(user) ||
-      (getPermission(['update_scheduling_goal_by_pk'], user) &&
+      (getPermission(
+        ['update_scheduling_goal_metadata_by_pk', 'insert_scheduling_goal_tags', 'delete_scheduling_goal_tags'],
+        user,
+      ) &&
         // If there is a plan, ensure user is the plan owner or is a collaborator
         // Otherwise if no plan, user may update if they are goal author since associated plan may have been deleted
         (goal?.public || isUserOwner(user, goal)))

@@ -1,10 +1,8 @@
-import type { PartialWith, UserId } from './app';
+import type { PartialWith } from './app';
 import type { SchedulingError } from './errors';
 import type { BaseDefinition, BaseMetadata } from './metadata';
-import type { Model } from './model';
 import type { ArgumentsMap } from './parameter';
-import type { Plan } from './plan';
-import type { SchedulingTagsInsertInput, Tag } from './tags';
+import type { SchedulingTagsInsertInput } from './tags';
 
 export type SchedulingConditionDefinition = BaseDefinition & {
   condition_id: number;
@@ -17,38 +15,22 @@ export type SchedulingConditionMetadataVersionDefinition = Pick<
   'author' | 'definition' | 'revision' | 'tags'
 >;
 
-export type SchedulingGoalDefinition = {
-  author: UserId;
-  created_at: string;
-  definition: string;
+export type SchedulingGoalDefinition = BaseDefinition & {
   goal_id: number;
-  metadata: SchedulingGoalMetadata;
-  // models_using: Model[];
-  // plans_using: Plan[];
-  revision: number;
-  tags: { tag: Tag }[];
 };
 
-export type SchedulingGoalMetadata = {
-  created_at: string;
-  description?: string;
-  id: number;
-  models_using: Pick<Model, 'id'>[];
-  name: string;
-  owner: UserId;
-  plans_using: Pick<Plan, 'id'>[];
-  public: boolean;
-  tags: { tag: Tag }[];
-  updated_at: string;
-  updated_by: UserId;
-  versions: SchedulingGoalDefinition[];
-};
+export type SchedulingGoalMetadata = BaseMetadata<SchedulingGoalDefinition>;
 
 export type SchedulingConditionMetadataSlim = Omit<
   SchedulingConditionMetadata,
   'models_using' | 'plans_using' | 'versions'
 >;
 export type SchedulingGoalMetadataSlim = Omit<SchedulingGoalMetadata, 'models_using' | 'plans_using' | 'versions'>;
+
+export type SchedulingGoalMetadataVersionDefinition = Pick<
+  SchedulingGoalDefinition,
+  'author' | 'definition' | 'revision' | 'tags'
+>;
 
 export type SchedulingConditionDefinitionInsertInput = Pick<
   SchedulingConditionDefinition,
