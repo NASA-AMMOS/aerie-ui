@@ -6,7 +6,7 @@
   import CaretUpFillIcon from 'bootstrap-icons/icons/caret-up-fill.svg?component';
   import type { User } from '../../../types/app';
   import type { Plan } from '../../../types/plan';
-  import type { SchedulingGoalSlim } from '../../../types/scheduling';
+  import type { SchedulingGoalMetadata } from '../../../types/scheduling';
   import effects from '../../../utilities/effects';
   import { permissionHandler } from '../../../utilities/permissionHandler';
   import { tooltip } from '../../../utilities/tooltip';
@@ -18,7 +18,7 @@
   import SchedulingGoalAnalysesBadge from './SchedulingGoalAnalysesBadge.svelte';
 
   export let enabled: boolean;
-  export let goal: SchedulingGoalSlim;
+  export let goal: SchedulingGoalMetadata;
   export let plan: Plan | null;
   export let priority: number;
   export let specificationId: number;

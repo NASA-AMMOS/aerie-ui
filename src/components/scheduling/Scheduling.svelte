@@ -4,8 +4,7 @@
   import { schedulingColumns, schedulingConditionsAll, schedulingGoalsAll } from '../../stores/scheduling';
   import type { User } from '../../types/app';
   import type { DataGridRowSelection } from '../../types/data-grid';
-  import type { PlanSchedulingSpec } from '../../types/plan';
-  import type { SchedulingCondition, SchedulingGoal, SchedulingGoalSlim } from '../../types/scheduling';
+  import type { SchedulingConditionMetadata, SchedulingGoalMetadata } from '../../types/scheduling';
   import effects from '../../utilities/effects';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
@@ -13,12 +12,11 @@
   import SchedulingConditions from './conditions/SchedulingConditions.svelte';
   import SchedulingGoals from './goals/SchedulingGoals.svelte';
 
-  export let plans: PlanSchedulingSpec[] | null;
   export let user: User | null;
 
-  let selectedCondition: SchedulingCondition | null = null;
-  let selectedGoal: SchedulingGoal | null = null;
-  let selectedItem: SchedulingCondition | SchedulingGoal | null = null;
+  let selectedCondition: SchedulingConditionMetadata | null = null;
+  let selectedGoal: SchedulingGoalMetadata | null = null;
+  let selectedItem: SchedulingConditionMetadata | SchedulingGoalMetadata | null = null;
   let editorTitle: string = 'Scheduling';
 
   $: if (selectedCondition !== null) {
@@ -35,32 +33,20 @@
     }
   }
 
-  async function deleteCondition(condition: SchedulingCondition) {
-    const { scheduling_specification_conditions } = condition;
-    const specification_id = scheduling_specification_conditions[0].specification_id;
-    const plan = plans?.find(plan => plan.scheduling_specification?.id === specification_id);
+  async function deleteCondition(condition: SchedulingConditionMetadata) {
+    const success = await effects.deleteSchedulingCondition(condition, user);
 
-    if (plan) {
-      const success = await effects.deleteSchedulingCondition(condition, plan, user);
+    if (success) {
+      schedulingConditionsAll.filterValueById(condition.id);
 
-      if (success) {
-        schedulingConditionsAll.filterValueById(condition.id);
-
-        if (condition.id === selectedCondition?.id) {
-          selectedCondition = null;
-        }
+      if (condition.id === selectedCondition?.id) {
+        selectedCondition = null;
       }
     }
   }
 
-  async function deleteGoal(goal: SchedulingGoalSlim) {
-    const { scheduling_specification_goal } = goal;
-    let plan = null;
-    if (scheduling_specification_goal) {
-      const specification_id = scheduling_specification_goal.specification_id;
-      plan = plans?.find(plan => plan.scheduling_specification?.id === specification_id) ?? null;
-    }
-    const success = await effects.deleteSchedulingGoal(goal, plan, user);
+  async function deleteGoal(goal: SchedulingGoalMetadata) {
+    const success = await effects.deleteSchedulingGoal(goal, user);
     if (success) {
       schedulingGoalsAll.filterValueById(goal.id);
 
@@ -86,7 +72,7 @@
     }
   }
 
-  function selectCondition(condition: SchedulingCondition) {
+  function selectCondition(condition: SchedulingConditionMetadata) {
     selectedCondition = condition;
     selectedItem = condition;
     selectedGoal = null;
@@ -94,7 +80,7 @@
     editorTitle = 'Scheduling Condition - Definition Editor (Read-only)';
   }
 
-  function selectGoal(goal: SchedulingGoal) {
+  function selectGoal(goal: SchedulingGoalMetadata) {
     selectedGoal = goal;
     selectedItem = goal;
     selectedCondition = null;
@@ -102,7 +88,7 @@
     editorTitle = 'Scheduling Goal - Definition Editor (Read-only)';
   }
 
-  function toggleCondition(event: CustomEvent<DataGridRowSelection<SchedulingCondition>>) {
+  function toggleCondition(event: CustomEvent<DataGridRowSelection<SchedulingConditionMetadata>>) {
     const {
       detail: { data: clickedCondition, isSelected },
     } = event;
@@ -112,7 +98,7 @@
     }
   }
 
-  function toggleGoal(event: CustomEvent<DataGridRowSelection<SchedulingGoal>>) {
+  function toggleGoal(event: CustomEvent<DataGridRowSelection<SchedulingGoalMetadata>>) {
     const {
       detail: { data: clickedGoal, isSelected },
     } = event;
@@ -126,7 +112,6 @@
 <CssGrid bind:columns={$schedulingColumns}>
   <CssGrid rows="1fr 3px 1fr">
     <SchedulingGoals
-      {plans}
       {selectedGoal}
       schedulingGoals={$schedulingGoalsAll}
       {user}
@@ -135,7 +120,6 @@
     />
     <CssGridGutter track={1} type="row" />
     <SchedulingConditions
-      {plans}
       {selectedCondition}
       schedulingConditions={$schedulingConditionsAll}
       {user}
@@ -147,8 +131,9 @@
   <CssGridGutter track={1} type="column" />
 
   <SchedulingEditor
-    scheduleItemDefinition={selectedItem?.definition ?? 'No Scheduling Goal or Condition Selected'}
-    scheduleItemModelId={selectedItem?.model_id}
+    scheduleItemDefinition={selectedItem
+      ? selectedItem?.versions[selectedItem.versions.length - 1].definition
+      : 'No Scheduling Goal or Condition Selected'}
     readOnly={true}
     title={editorTitle}
     {user}

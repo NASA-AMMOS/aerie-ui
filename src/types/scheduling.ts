@@ -1,42 +1,96 @@
+import type { PartialWith, UserId } from './app';
 import type { SchedulingError } from './errors';
+import type { BaseDefinition, BaseMetadata } from './metadata';
+import type { Model } from './model';
 import type { ArgumentsMap } from './parameter';
-import type { Tag } from './tags';
+import type { Plan } from './plan';
+import type { SchedulingTagsInsertInput, Tag } from './tags';
 
-export type SchedulingGoal = {
-  analyses: SchedulingGoalAnalysis[];
-  author: string | null;
-  created_date: string;
+export type SchedulingConditionDefinition = BaseDefinition & {
+  condition_id: number;
+};
+
+export type SchedulingConditionMetadata = BaseMetadata<SchedulingConditionDefinition>;
+
+export type SchedulingConditionMetadataVersionDefinition = Pick<
+  SchedulingConditionDefinition,
+  'author' | 'definition' | 'revision' | 'tags'
+>;
+
+export type SchedulingGoalDefinition = {
+  author: UserId;
+  created_at: string;
   definition: string;
-  description?: string;
-  id: number;
-  last_modified_by: string | null;
-  model_id: number;
-  modified_date: string;
-  name: string;
+  goal_id: number;
+  metadata: SchedulingGoalMetadata;
+  // models_using: Model[];
+  // plans_using: Plan[];
   revision: number;
-  scheduling_specification_goal: {
-    specification_id: number;
-  } | null;
   tags: { tag: Tag }[];
 };
 
-export type SchedulingGoalSlim = Omit<SchedulingGoal, 'tags'> & { tags: { tag_id: number }[] };
-
-export type SchedulingCondition = {
-  author: string | null;
-  created_date: string;
-  definition: string;
+export type SchedulingGoalMetadata = {
+  created_at: string;
   description?: string;
   id: number;
-  last_modified_by: string | null;
-  model_id: number;
-  modified_date: string;
+  models_using: Pick<Model, 'id'>[];
   name: string;
-  revision: number;
-  scheduling_specification_conditions: {
-    specification_id: number;
-  }[];
+  owner: UserId;
+  plans_using: Pick<Plan, 'id'>[];
+  public: boolean;
+  tags: { tag: Tag }[];
+  updated_at: string;
+  updated_by: UserId;
+  versions: SchedulingGoalDefinition[];
 };
+
+export type SchedulingConditionMetadataSlim = Omit<
+  SchedulingConditionMetadata,
+  'models_using' | 'plans_using' | 'versions'
+>;
+export type SchedulingGoalMetadataSlim = Omit<SchedulingGoalMetadata, 'models_using' | 'plans_using' | 'versions'>;
+
+export type SchedulingConditionDefinitionInsertInput = Pick<
+  SchedulingConditionDefinition,
+  'condition_id' | 'definition'
+> & {
+  tags: {
+    data: SchedulingTagsInsertInput[];
+  };
+};
+
+export type SchedulingGoalDefinitionInsertInput = Pick<SchedulingGoalDefinition, 'goal_id' | 'definition'> & {
+  tags: {
+    data: SchedulingTagsInsertInput[];
+  };
+};
+
+export type SchedulingConditionInsertInput = Omit<
+  SchedulingConditionMetadataSlim,
+  'id' | 'created_at' | 'updated_at' | 'owner' | 'updated_by' | 'tags'
+> & {
+  tags: {
+    data: SchedulingTagsInsertInput[];
+  };
+  versions: {
+    data: Omit<SchedulingConditionDefinitionInsertInput, 'condition_id'>[];
+  };
+};
+
+export type SchedulingGoalInsertInput = Omit<
+  SchedulingGoalMetadataSlim,
+  'id' | 'created_at' | 'updated_at' | 'owner' | 'updated_by' | 'tags'
+> & {
+  tags: {
+    data: SchedulingTagsInsertInput[];
+  };
+  versions: {
+    data: Omit<SchedulingGoalDefinitionInsertInput, 'goal_id'>[];
+  };
+};
+
+export type SchedulingConditionMetadataSetInput = PartialWith<SchedulingConditionMetadata, 'owner'>;
+export type SchedulingGoalMetadataSetInput = PartialWith<SchedulingGoalMetadata, 'owner'>;
 
 export type SchedulingGoalAnalysis = {
   analysis_id: number;
@@ -44,30 +98,6 @@ export type SchedulingGoalAnalysis = {
   satisfied: boolean;
   satisfying_activities: { activity_id: number }[];
 };
-
-export type SchedulingConditionInsertInput = Omit<
-  SchedulingCondition,
-  | 'author'
-  | 'created_date'
-  | 'id'
-  | 'last_modified_by'
-  | 'modified_date'
-  | 'revision'
-  | 'scheduling_specification_conditions'
->;
-
-export type SchedulingGoalInsertInput = Omit<
-  SchedulingGoal,
-  | 'analyses'
-  | 'author'
-  | 'created_date'
-  | 'id'
-  | 'last_modified_by'
-  | 'modified_date'
-  | 'revision'
-  | 'scheduling_specification_goal'
-  | 'tags'
->;
 
 export type SchedulingResponse = {
   analysisId: number | null;
@@ -88,7 +118,7 @@ export type SchedulingSpec = {
 export type SchedulingSpecInsertInput = Omit<SchedulingSpec, 'id' | 'revision'>;
 
 export type SchedulingSpecCondition = {
-  condition: SchedulingCondition;
+  condition: SchedulingConditionMetadata;
   enabled: boolean;
   specification: SchedulingSpec;
   specification_id: number;
@@ -96,7 +126,7 @@ export type SchedulingSpecCondition = {
 
 export type SchedulingSpecGoal = {
   enabled: boolean;
-  goal: SchedulingGoalSlim;
+  goal: SchedulingGoalMetadataSlim;
   priority: number;
   simulate_after: boolean;
   specification_id: number;

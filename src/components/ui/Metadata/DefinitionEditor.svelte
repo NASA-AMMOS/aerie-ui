@@ -2,41 +2,48 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import type { User } from '../../types/app';
-  import type { DropdownOptions, SelectedDropdownOptionValue } from '../../types/dropdown';
-  import type { Monaco, TypeScriptFile } from '../../types/monaco';
-  import effects from '../../utilities/effects';
-  import MonacoEditor from '../ui/MonacoEditor.svelte';
-  import Panel from '../ui/Panel.svelte';
-  import SearchableDropdown from '../ui/SearchableDropdown.svelte';
-  import SectionTitle from '../ui/SectionTitle.svelte';
+  import { models } from '../../../stores/plan';
+  import type { User } from '../../../types/app';
+  import type { DropdownOptions, SelectedDropdownOptionValue } from '../../../types/dropdown';
+  import type { Monaco, TypeScriptFile } from '../../../types/monaco';
+  import effects from '../../../utilities/effects';
+  import MonacoEditor from '../../ui/MonacoEditor.svelte';
+  import Panel from '../../ui/Panel.svelte';
+  import SearchableDropdown from '../../ui/SearchableDropdown.svelte';
+  import SectionTitle from '../../ui/SectionTitle.svelte';
 
-  export let scheduleItemDefinition: string = '';
+  export let definition: string = '';
   export let referenceModelId: number | null = null;
   export let readOnly: boolean = false;
-  export let title: string = 'Scheduling Item - Definition Editor';
+  export let title: string = 'Constraint - Definition Editor';
   export let user: User | null;
 
   const dispatch = createEventDispatcher();
 
+  let constraintsTsFiles: TypeScriptFile[];
   let modelOptions: DropdownOptions = [];
   let monaco: Monaco;
-  let schedulingTsFiles: TypeScriptFile[];
+
+  $: modelOptions = $models.map(({ id, name, version }) => ({
+    display: `${name} (Version: ${version})`,
+    hasSelectPermission: true,
+    value: id,
+  }));
 
   $: if (referenceModelId !== null) {
-    effects.getTsFilesScheduling(referenceModelId, user).then(tsFiles => (schedulingTsFiles = tsFiles));
+    effects.getTsFilesConstraints(referenceModelId, user).then(tsFiles => (constraintsTsFiles = tsFiles));
   } else {
-    schedulingTsFiles = [];
+    constraintsTsFiles = [];
   }
 
-  $: if (monaco !== undefined && schedulingTsFiles !== undefined) {
+  $: if (monaco !== undefined && constraintsTsFiles !== undefined) {
     const { languages } = monaco;
     const { typescript } = languages;
     const { typescriptDefaults } = typescript;
     const options = typescriptDefaults.getCompilerOptions();
 
     typescriptDefaults.setCompilerOptions({ ...options, lib: ['esnext'], strictNullChecks: true });
-    typescriptDefaults.setExtraLibs(schedulingTsFiles);
+    typescriptDefaults.setExtraLibs(constraintsTsFiles);
   }
 
   function onSelectReferenceModel(event: CustomEvent<SelectedDropdownOptionValue>) {
@@ -73,7 +80,7 @@
       {readOnly}
       scrollBeyondLastLine={false}
       tabSize={2}
-      value={scheduleItemDefinition}
+      value={definition}
       on:didChangeModelContent
     />
   </svelte:fragment>

@@ -89,17 +89,21 @@ import type {
   PlanMergeNonConflictingActivity,
   PlanMergeRequestSchema,
   PlanMergeResolution,
-  PlanSchedulingSpec,
   PlanSchema,
   PlanSlim,
 } from '../types/plan';
 import type { PlanSnapshot } from '../types/plan-snapshot';
 import type {
-  SchedulingCondition,
+  SchedulingConditionDefinition,
+  SchedulingConditionDefinitionInsertInput,
   SchedulingConditionInsertInput,
-  SchedulingGoal,
+  SchedulingConditionMetadata,
+  SchedulingConditionMetadataSetInput,
+  SchedulingGoalDefinition,
+  SchedulingGoalDefinitionInsertInput,
   SchedulingGoalInsertInput,
-  SchedulingGoalSlim,
+  SchedulingGoalMetadata,
+  SchedulingGoalMetadataSetInput,
   SchedulingRequest,
   SchedulingResponse,
   SchedulingSpec,
@@ -138,7 +142,11 @@ import type {
   ExpansionRuleTagsInsertInput,
   PlanSnapshotTagsInsertInput,
   PlanTagsInsertInput,
-  SchedulingGoalTagsInsertInput,
+  SchedulingConditionDefinitionTagsInsertInput,
+  SchedulingConditionMetadataTagsInsertInput,
+  SchedulingGoalDefinitionTagsInsertInput,
+  SchedulingGoalMetadataTagsInsertInput,
+  SchedulingTagsInsertInput,
   Tag,
   TagsInsertInput,
   TagsSetInput,
@@ -1108,103 +1116,206 @@ const effects = {
   },
 
   async createSchedulingCondition(
-    definition: string,
     name: string,
-    modelId: number,
-    plan: Pick<PlanSchedulingSpec, 'id' | 'name' | 'owner' | 'model_id' | 'collaborators'>,
+    isPublic: boolean,
+    metadataTags: SchedulingTagsInsertInput[],
+    definition: string,
+    definitionTags: SchedulingTagsInsertInput[],
     user: User | null,
     description?: string,
-  ): Promise<SchedulingCondition | null> {
+  ): Promise<number | null> {
     try {
-      if (!queryPermissions.CREATE_SCHEDULING_CONDITION(user, plan)) {
+      if (!queryPermissions.CREATE_SCHEDULING_CONDITION(user)) {
         throwPermissionError('create a scheduling condition');
       }
 
       const conditionInsertInput: SchedulingConditionInsertInput = {
-        definition,
-        model_id: modelId,
+        ...(description ? { description } : {}),
         name,
-        ...(description && { description }),
+        public: isPublic,
+        tags: {
+          data: metadataTags,
+        },
+        versions: {
+          data: [
+            {
+              definition,
+              tags: {
+                data: definitionTags,
+              },
+            },
+          ],
+        },
       };
-      const data = await reqHasura<SchedulingCondition>(
+      const data = await reqHasura<SchedulingConditionMetadata>(
         gql.CREATE_SCHEDULING_CONDITION,
         { condition: conditionInsertInput },
         user,
       );
-      const { createSchedulingCondition: newCondition } = data;
+      const { createSchedulingCondition } = data;
+      if (createSchedulingCondition != null) {
+        const { id } = createSchedulingCondition;
 
-      if (newCondition != null) {
         showSuccessToast('Scheduling Condition Created Successfully');
-        return newCondition;
+        return id;
       } else {
         throw Error(`Unable to create scheduling condition "${name}"`);
       }
     } catch (e) {
-      catchError('Scheduling Condition Create Failed', e as Error);
-      showFailureToast('Scheduling Condition Create Failed');
+      catchError('Scheduling Condition Creation Failed', e as Error);
+      showFailureToast('Scheduling Condition Creation Failed');
+      return null;
+    }
+  },
+
+  async createSchedulingConditionDefinition(
+    conditionId: number,
+    definition: string,
+    definitionTags: SchedulingTagsInsertInput[],
+    user: User | null,
+  ): Promise<Pick<SchedulingConditionDefinition, 'condition_id' | 'definition' | 'revision'> | null> {
+    try {
+      if (!queryPermissions.CREATE_SCHEDULING_CONDITION_DEFINITION(user)) {
+        throwPermissionError('create a scheduling condition definition');
+      }
+
+      const conditionDefinitionInsertInput: SchedulingConditionDefinitionInsertInput = {
+        condition_id: conditionId,
+        definition,
+        tags: {
+          data: definitionTags,
+        },
+      };
+      const data = await reqHasura<SchedulingConditionDefinition>(
+        gql.CREATE_SCHEDULING_CONDITION_DEFINITION,
+        { conditionDefinition: conditionDefinitionInsertInput },
+        user,
+      );
+      const { conditionDefinition } = data;
+      if (conditionDefinition != null) {
+        showSuccessToast('New Scheduling Condition Revision Created Successfully');
+        return conditionDefinition;
+      } else {
+        throw Error(`Unable to create condition definition for scheduling condition "${conditionId}"`);
+      }
+    } catch (e) {
+      catchError('Scheduling Condition Creation Failed', e as Error);
+      showFailureToast('Scheduling Condition Creation Failed');
       return null;
     }
   },
 
   async createSchedulingGoal(
-    definition: string,
     name: string,
-    modelId: number,
-    plan: Pick<PlanSchedulingSpec, 'id' | 'name' | 'owner' | 'model_id' | 'collaborators'>,
+    isPublic: boolean,
+    metadataTags: SchedulingTagsInsertInput[],
+    definition: string,
+    definitionTags: SchedulingTagsInsertInput[],
     user: User | null,
     description?: string,
-  ): Promise<SchedulingGoal | null> {
+  ): Promise<number | null> {
     try {
-      if (!queryPermissions.CREATE_SCHEDULING_GOAL(user, plan)) {
-        throwPermissionError('create a scheduling goal');
+      if (!queryPermissions.CREATE_SCHEDULING_CONDITION(user)) {
+        throwPermissionError('create a scheduling condition');
       }
 
       const goalInsertInput: SchedulingGoalInsertInput = {
-        definition,
-        model_id: modelId,
+        ...(description ? { description } : {}),
         name,
-        ...(description && { description }),
+        public: isPublic,
+        tags: {
+          data: metadataTags,
+        },
+        versions: {
+          data: [
+            {
+              definition,
+              tags: {
+                data: definitionTags,
+              },
+            },
+          ],
+        },
       };
-      const data = await reqHasura<SchedulingGoal>(gql.CREATE_SCHEDULING_GOAL, { goal: goalInsertInput }, user);
-      const { createSchedulingGoal: newGoal } = data;
 
-      if (newGoal != null) {
+      const data = await reqHasura<SchedulingGoalMetadata>(gql.CREATE_SCHEDULING_GOAL, { goal: goalInsertInput }, user);
+      const { createSchedulingGoal } = data;
+      if (createSchedulingGoal != null) {
+        const { id } = createSchedulingGoal;
+
         showSuccessToast('Scheduling Goal Created Successfully');
-        return newGoal;
+        return id;
       } else {
         throw Error(`Unable to create scheduling goal "${name}"`);
       }
     } catch (e) {
-      catchError('Scheduling Goal Create Failed', e as Error);
-      showFailureToast('Scheduling Goal Create Failed');
+      catchError('Scheduling Goal Creation Failed', e as Error);
+      showFailureToast('Scheduling Goal Creation Failed');
       return null;
     }
   },
 
-  async createSchedulingGoalTags(tags: SchedulingGoalTagsInsertInput[], user: User | null): Promise<number | null> {
+  async createSchedulingGoalDefinition(
+    goalId: number,
+    definition: string,
+    definitionTags: SchedulingTagsInsertInput[],
+    user: User | null,
+  ): Promise<Pick<SchedulingGoalDefinition, 'goal_id' | 'definition' | 'revision'> | null> {
     try {
-      if (!queryPermissions.CREATE_SCHEDULING_GOAL_TAGS(user)) {
-        throwPermissionError('create scheduling goal tags');
+      if (!queryPermissions.CREATE_SCHEDULING_GOAL_DEFINITION(user)) {
+        throwPermissionError('create a scheduling goal definition');
       }
 
-      const data = await reqHasura<{ affected_rows: number }>(gql.CREATE_SCHEDULING_GOAL_TAGS, { tags }, user);
-      const { insert_scheduling_goal_tags } = data;
-      if (insert_scheduling_goal_tags != null) {
-        const { affected_rows } = insert_scheduling_goal_tags;
-
-        if (affected_rows !== tags.length) {
-          throw Error('Some scheduling goal tags were not successfully created');
-        }
-        return affected_rows;
+      const goalDefinitionInsertInput: SchedulingGoalDefinitionInsertInput = {
+        definition,
+        goal_id: goalId,
+        tags: {
+          data: definitionTags,
+        },
+      };
+      const data = await reqHasura<SchedulingGoalDefinition>(
+        gql.CREATE_SCHEDULING_GOAL_DEFINITION,
+        { goalDefinition: goalDefinitionInsertInput },
+        user,
+      );
+      const { goalDefinition } = data;
+      if (goalDefinition != null) {
+        showSuccessToast('New Scheduling Goal Revision Created Successfully');
+        return goalDefinition;
       } else {
-        throw Error('Unable to create scheduling goal tags');
+        throw Error(`Unable to create goal definition for scheduling goal "${goalId}"`);
       }
     } catch (e) {
-      catchError('Create Scheduling Goal Tags Failed', e as Error);
-      showFailureToast('Create Scheduling Goal Tags Failed');
+      catchError('Scheduling Goal Creation Failed', e as Error);
+      showFailureToast('Scheduling Goal Creation Failed');
       return null;
     }
   },
+
+  // async createSchedulingGoalTags(tags: SchedulingGoalTagsInsertInput[], user: User | null): Promise<number | null> {
+  //   try {
+  //     if (!queryPermissions.CREATE_SCHEDULING_GOAL_TAGS(user)) {
+  //       throwPermissionError('create scheduling goal tags');
+  //     }
+
+  //     const data = await reqHasura<{ affected_rows: number }>(gql.CREATE_SCHEDULING_GOAL_TAGS, { tags }, user);
+  //     const { insert_scheduling_goal_tags } = data;
+  //     if (insert_scheduling_goal_tags != null) {
+  //       const { affected_rows } = insert_scheduling_goal_tags;
+
+  //       if (affected_rows !== tags.length) {
+  //         throw Error('Some scheduling goal tags were not successfully created');
+  //       }
+  //       return affected_rows;
+  //     } else {
+  //       throw Error('Unable to create scheduling goal tags');
+  //     }
+  //   } catch (e) {
+  //     catchError('Create Scheduling Goal Tags Failed', e as Error);
+  //     showFailureToast('Create Scheduling Goal Tags Failed');
+  //     return null;
+  //   }
+  // },
 
   async createSchedulingSpec(
     spec: SchedulingSpecInsertInput,
@@ -2054,13 +2165,9 @@ const effects = {
     }
   },
 
-  async deleteSchedulingCondition(
-    condition: SchedulingCondition,
-    plan: PlanSchedulingSpec | null,
-    user: User | null,
-  ): Promise<boolean> {
+  async deleteSchedulingCondition(condition: SchedulingConditionMetadata, user: User | null): Promise<boolean> {
     try {
-      if (!queryPermissions.DELETE_SCHEDULING_CONDITION(user, plan, condition)) {
+      if (!queryPermissions.DELETE_SCHEDULING_CONDITION_METADATA(user, condition)) {
         throwPermissionError('delete this scheduling condition');
       }
 
@@ -2071,8 +2178,12 @@ const effects = {
       );
 
       if (confirm) {
-        const data = await reqHasura<{ id: number }>(gql.DELETE_SCHEDULING_CONDITION, { id: condition.id }, user);
-        if (data.deleteSchedulingCondition != null) {
+        const data = await reqHasura<{ id: number }>(
+          gql.DELETE_SCHEDULING_CONDITION_METADATA,
+          { id: condition.id },
+          user,
+        );
+        if (data.deleteSchedulingConditionMetadata != null) {
           showSuccessToast('Scheduling Condition Deleted Successfully');
           return true;
         } else {
@@ -2088,13 +2199,9 @@ const effects = {
     }
   },
 
-  async deleteSchedulingGoal(
-    goal: SchedulingGoalSlim,
-    plan: PlanSchedulingSpec | null,
-    user: User | null,
-  ): Promise<boolean> {
+  async deleteSchedulingGoal(goal: SchedulingGoalMetadata, user: User | null): Promise<boolean> {
     try {
-      if (!queryPermissions.DELETE_SCHEDULING_GOAL(user, plan)) {
+      if (!queryPermissions.DELETE_SCHEDULING_GOAL_METADATA(user, goal)) {
         throwPermissionError('delete this scheduling goal');
       }
 
@@ -2105,9 +2212,9 @@ const effects = {
       );
 
       if (confirm) {
-        const data = await reqHasura<{ id: number }>(gql.DELETE_SCHEDULING_GOAL, { id: goal.id }, user);
+        const data = await reqHasura<{ id: number }>(gql.DELETE_SCHEDULING_GOAL_METADATA, { id: goal.id }, user);
 
-        if (data.deleteSchedulingGoal) {
+        if (data.deleteSchedulingGoalMetadata) {
           showSuccessToast('Scheduling Goal Deleted Successfully');
           return true;
         } else {
@@ -2873,24 +2980,6 @@ const effects = {
     }
   },
 
-  async getPlansAndModelsForScheduling(user: User | null): Promise<{
-    models: ModelSlim[];
-    plans: PlanSchedulingSpec[];
-  }> {
-    try {
-      const data = (await reqHasura(gql.GET_PLANS_AND_MODELS_FOR_SCHEDULING, {}, user)) as {
-        models: ModelSlim[];
-        plans: PlanSchedulingSpec[];
-      };
-
-      const { models, plans } = data;
-      return { models, plans };
-    } catch (e) {
-      catchError(e as Error);
-      return { models: [], plans: [] };
-    }
-  },
-
   getResource(
     datasetId: number,
     name: string,
@@ -2997,10 +3086,13 @@ const effects = {
     }
   },
 
-  async getSchedulingCondition(id: number | null | undefined, user: User | null): Promise<SchedulingCondition | null> {
+  async getSchedulingCondition(
+    id: number | null | undefined,
+    user: User | null,
+  ): Promise<SchedulingConditionMetadata | null> {
     if (id !== null && id !== undefined) {
       try {
-        const data = await reqHasura<SchedulingCondition>(gql.GET_SCHEDULING_CONDITION, { id }, user);
+        const data = await reqHasura<SchedulingConditionMetadata>(gql.GET_SCHEDULING_CONDITION, { id }, user);
         const { condition } = data;
         return condition;
       } catch (e) {
@@ -3012,10 +3104,10 @@ const effects = {
     }
   },
 
-  async getSchedulingGoal(id: number | null | undefined, user: User | null): Promise<SchedulingGoal | null> {
+  async getSchedulingGoal(id: number | null | undefined, user: User | null): Promise<SchedulingGoalMetadata | null> {
     if (id !== null && id !== undefined) {
       try {
-        const data = await reqHasura<SchedulingGoal>(gql.GET_SCHEDULING_GOAL, { id }, user);
+        const data = await reqHasura<SchedulingGoalMetadata>(gql.GET_SCHEDULING_GOAL, { id }, user);
         const { goal } = data;
         return goal;
       } catch (e) {
@@ -4137,59 +4229,194 @@ const effects = {
     }
   },
 
-  async updateSchedulingCondition(
-    id: number,
-    condition: Partial<SchedulingCondition>,
-    plan: PlanSchedulingSpec,
+  async updateSchedulingConditionDefinitionTags(
+    conditionId: number,
+    conditionRevision: number,
+    tags: SchedulingConditionDefinitionTagsInsertInput[],
+    tagIdsToDelete: number[],
     user: User | null,
-  ): Promise<Pick<SchedulingCondition, 'id' | 'last_modified_by' | 'modified_date'> | null> {
+  ): Promise<number | null> {
     try {
-      if (!queryPermissions.UPDATE_SCHEDULING_CONDITION(user, plan)) {
+      if (!queryPermissions.UPDATE_SCHEDULING_CONDITION_DEFINITION_TAGS(user)) {
+        throwPermissionError('create scheduling condition definition tags');
+      }
+
+      const data = await reqHasura<{ affected_rows: number }>(
+        gql.UPDATE_SCHEDULING_CONDITION_DEFINITION_TAGS,
+        { conditionId, conditionRevision, tagIdsToDelete, tags },
+        user,
+      );
+      const { deleteSchedulingConditionDefinitionTags, insertSchedulingConditionDefinitionTags } = data;
+      if (insertSchedulingConditionDefinitionTags != null && deleteSchedulingConditionDefinitionTags != null) {
+        const { affected_rows } = insertSchedulingConditionDefinitionTags;
+
+        showSuccessToast('Scheduling Condition Updated Successfully');
+
+        return affected_rows;
+      } else {
+        throw Error('Unable to create scheduling condition definition tags');
+      }
+    } catch (e) {
+      catchError('Create Scheduling Condition Definition Tags Failed', e as Error);
+      showFailureToast('Create Scheduling Condition Definition Tags Failed');
+      return null;
+    }
+  },
+
+  async updateSchedulingConditionMetadata(
+    id: number,
+    conditionMetadata: SchedulingConditionMetadataSetInput,
+    tags: SchedulingConditionMetadataTagsInsertInput[],
+    tagIdsToDelete: number[],
+    currentConditionOwner: UserId,
+    user: User | null,
+  ): Promise<boolean> {
+    try {
+      if (!queryPermissions.UPDATE_SCHEDULING_CONDITION_METADATA(user, { owner: currentConditionOwner })) {
         throwPermissionError('update this scheduling condition');
       }
 
-      const data = await reqHasura(gql.UPDATE_SCHEDULING_CONDITION, { condition, id }, user);
-      const { updateSchedulingCondition: updatedCondition } = data;
-
-      if (updatedCondition != null) {
-        showSuccessToast('Scheduling Condition Updated Successfully');
-        return updatedCondition;
-      } else {
-        throw Error(`Unable to update scheduling condition with ID: "${id}"`);
+      const data = await reqHasura(
+        gql.UPDATE_SCHEDULING_CONDITION_METADATA,
+        { conditionMetadata, id, tagIdsToDelete, tags },
+        user,
+      );
+      if (
+        data.updateSchedulingConditionMetadata == null ||
+        data.insertSchedulingConditionTags == null ||
+        data.deleteSchedulingConditionTags == null
+      ) {
+        throw Error(`Unable to update scheduling condition metadata with ID: "${id}"`);
       }
+
+      showSuccessToast('Scheduling Condition Updated Successfully');
+      return true;
     } catch (e) {
-      catchError('Scheduling Condition Update Failed', e as Error);
-      showFailureToast('Scheduling Condition Update Failed');
-      return null;
+      catchError('Scheduling Condition Metadata Update Failed', e as Error);
+      showFailureToast('Scheduling Condition Metadata Update Failed');
+      return false;
     }
   },
 
-  async updateSchedulingGoal(
-    id: number,
-    goal: Partial<SchedulingGoal>,
-    plan: Pick<PlanSchedulingSpec, 'id' | 'name' | 'owner' | 'model_id' | 'collaborators'>,
+  async updateSchedulingGoalDefinitionTags(
+    conditionId: number,
+    conditionRevision: number,
+    tags: SchedulingGoalDefinitionTagsInsertInput[],
+    tagIdsToDelete: number[],
     user: User | null,
-  ): Promise<Pick<SchedulingGoal, 'id' | 'last_modified_by' | 'modified_date'> | null> {
+  ): Promise<number | null> {
     try {
-      if (!queryPermissions.UPDATE_SCHEDULING_GOAL(user, plan)) {
-        throwPermissionError('update this scheduling goal');
+      if (!queryPermissions.UPDATE_SCHEDULING_GOAL_DEFINITION_TAGS(user)) {
+        throwPermissionError('create scheduling condition definition tags');
       }
 
-      const data = await reqHasura(gql.UPDATE_SCHEDULING_GOAL, { goal, id }, user);
-      const { updateSchedulingGoal: updatedGoal } = data;
+      const data = await reqHasura<{ affected_rows: number }>(
+        gql.UPDATE_SCHEDULING_GOAL_DEFINITION_TAGS,
+        { conditionId, conditionRevision, tagIdsToDelete, tags },
+        user,
+      );
+      const { deleteSchedulingGoalDefinitionTags, insertSchedulingGoalDefinitionTags } = data;
+      if (insertSchedulingGoalDefinitionTags != null && deleteSchedulingGoalDefinitionTags != null) {
+        const { affected_rows } = insertSchedulingGoalDefinitionTags;
 
-      if (updatedGoal != null) {
         showSuccessToast('Scheduling Goal Updated Successfully');
-        return updatedGoal;
+
+        return affected_rows;
       } else {
-        throw Error(`Unable to update scheduling goal with ID: "${id}"`);
+        throw Error('Unable to create scheduling condition definition tags');
       }
     } catch (e) {
-      catchError('Scheduling Goal Update Failed', e as Error);
-      showFailureToast('Scheduling Goal Update Failed');
+      catchError('Create Scheduling Goal Definition Tags Failed', e as Error);
+      showFailureToast('Create Scheduling Goal Definition Tags Failed');
       return null;
     }
   },
+
+  async updateSchedulingGoalMetadata(
+    id: number,
+    conditionMetadata: SchedulingGoalMetadataSetInput,
+    tags: SchedulingGoalMetadataTagsInsertInput[],
+    tagIdsToDelete: number[],
+    user: User | null,
+  ): Promise<void> {
+    try {
+      if (!queryPermissions.UPDATE_CONSTRAINT_METADATA(user, conditionMetadata)) {
+        throwPermissionError('update this scheduling condition');
+      }
+
+      const data = await reqHasura(
+        gql.UPDATE_SCHEDULING_GOAL_METADATA,
+        { conditionMetadata, id, tagIdsToDelete, tags },
+        user,
+      );
+      if (
+        data.updateSchedulingGoalMetadata == null ||
+        data.insertSchedulingGoalTags == null ||
+        data.deleteSchedulingGoalTags == null
+      ) {
+        throw Error(`Unable to update scheduling condition metadata with ID: "${id}"`);
+      }
+
+      showSuccessToast('Scheduling Goal Updated Successfully');
+    } catch (e) {
+      catchError('Scheduling Goal Metadata Update Failed', e as Error);
+      showFailureToast('Scheduling Goal Metadata Update Failed');
+    }
+  },
+
+  // async updateSchedulingCondition(
+  //   id: number,
+  //   condition: Partial<SchedulingConditionMetadata>,
+  //   plan: PlanSchedulingSpec,
+  //   user: User | null,
+  // ): Promise<Pick<SchedulingConditionMetadata, 'id' | 'last_modified_by' | 'modified_date'> | null> {
+  //   try {
+  //     if (!queryPermissions.UPDATE_SCHEDULING_CONDITION(user, plan)) {
+  //       throwPermissionError('update this scheduling condition');
+  //     }
+
+  //     const data = await reqHasura(gql.UPDATE_SCHEDULING_CONDITION, { condition, id }, user);
+  //     const { updateSchedulingCondition: updatedCondition } = data;
+
+  //     if (updatedCondition != null) {
+  //       showSuccessToast('Scheduling Condition Updated Successfully');
+  //       return updatedCondition;
+  //     } else {
+  //       throw Error(`Unable to update scheduling condition with ID: "${id}"`);
+  //     }
+  //   } catch (e) {
+  //     catchError('Scheduling Condition Update Failed', e as Error);
+  //     showFailureToast('Scheduling Condition Update Failed');
+  //     return null;
+  //   }
+  // },
+
+  // async updateSchedulingGoal(
+  //   id: number,
+  //   goal: Partial<SchedulingGoalMetadata>,
+  //   plan: Pick<PlanSchedulingSpec, 'id' | 'name' | 'owner' | 'model_id' | 'collaborators'>,
+  //   user: User | null,
+  // ): Promise<Pick<SchedulingGoalMetadata, 'id' | 'last_modified_by' | 'modified_date'> | null> {
+  //   try {
+  //     if (!queryPermissions.UPDATE_SCHEDULING_GOAL(user, plan)) {
+  //       throwPermissionError('update this scheduling goal');
+  //     }
+
+  //     const data = await reqHasura(gql.UPDATE_SCHEDULING_GOAL, { goal, id }, user);
+  //     const { updateSchedulingGoal: updatedGoal } = data;
+
+  //     if (updatedGoal != null) {
+  //       showSuccessToast('Scheduling Goal Updated Successfully');
+  //       return updatedGoal;
+  //     } else {
+  //       throw Error(`Unable to update scheduling goal with ID: "${id}"`);
+  //     }
+  //   } catch (e) {
+  //     catchError('Scheduling Goal Update Failed', e as Error);
+  //     showFailureToast('Scheduling Goal Update Failed');
+  //     return null;
+  //   }
+  // },
 
   async updateSchedulingSpec(id: number, spec: Partial<SchedulingSpec>, plan: Plan, user: User | null): Promise<void> {
     try {

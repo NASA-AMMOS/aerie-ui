@@ -4,7 +4,7 @@
   import { base } from '$app/paths';
   import type { User } from '../../../types/app';
   import type { Plan } from '../../../types/plan';
-  import type { SchedulingCondition } from '../../../types/scheduling';
+  import type { SchedulingConditionMetadata } from '../../../types/scheduling';
   import effects from '../../../utilities/effects';
   import { permissionHandler } from '../../../utilities/permissionHandler';
   import Collapse from '../../Collapse.svelte';
@@ -12,7 +12,7 @@
   import ContextMenuItem from '../../context-menu/ContextMenuItem.svelte';
   import Input from '../../form/Input.svelte';
 
-  export let condition: SchedulingCondition;
+  export let condition: SchedulingConditionMetadata;
   export let enabled: boolean;
   export let hasDeletePermission: boolean = false;
   export let hasEditPermission: boolean = false;

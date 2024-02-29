@@ -2,9 +2,9 @@ import { derived, writable, type Readable, type Writable } from 'svelte/store';
 import { Status } from '../enums/status';
 import { plan, planId, planRevision } from '../stores/plan';
 import type {
-  SchedulingCondition,
+  SchedulingConditionMetadata,
   SchedulingGoalAnalysis,
-  SchedulingGoalSlim,
+  SchedulingGoalMetadata,
   SchedulingRequest,
   SchedulingSpec,
   SchedulingSpecCondition,
@@ -15,6 +15,9 @@ import { simulationDatasetsPlan } from './simulation';
 import { gqlSubscribable } from './subscribable';
 
 /* Writeable. */
+
+export const schedulingConditionMetadataId: Writable<number> = writable(-1);
+export const schedulingGoalMetadataId: Writable<number> = writable(-1);
 
 export const schedulingColumns: Writable<string> = writable('2fr 3px 1fr');
 export const schedulingFormColumns: Writable<string> = writable('1fr 3px 2fr');
@@ -47,28 +50,44 @@ export const schedulingRequests = gqlSubscribable<SchedulingRequest[]>(
   null,
 );
 
-export const schedulingConditionsAll = gqlSubscribable<SchedulingCondition[]>(
+export const schedulingConditionsAll = gqlSubscribable<SchedulingConditionMetadata[]>(
   gql.SUB_SCHEDULING_CONDITIONS,
   {},
   [],
   null,
 );
 
-export const schedulingConditions = derived(
-  [selectedSpecId, schedulingConditionsAll],
-  ([$selectedSpecId, $schedulingConditionsAll]) => {
-    return $schedulingConditionsAll.map(schedulingSpecCondition => {
-      return {
-        ...schedulingSpecCondition,
-        scheduling_specification_conditions: schedulingSpecCondition.scheduling_specification_conditions.filter(
-          condition => condition.specification_id === $selectedSpecId,
-        ),
-      };
-    });
-  },
+export const schedulingGoalsAll = gqlSubscribable<SchedulingGoalMetadata[]>(gql.SUB_SCHEDULING_GOALS, {}, [], null);
+
+export const schedulingConditionMetadata = gqlSubscribable<SchedulingConditionMetadata | null>(
+  gql.SUB_SCHEDULING_CONDITION,
+  { id: schedulingConditionMetadataId },
+  null,
+  null,
 );
 
-export const schedulingGoalsAll = gqlSubscribable<SchedulingGoalSlim[]>(gql.SUB_SCHEDULING_GOALS, {}, [], null);
+export const schedulingGoalMetadata = gqlSubscribable<SchedulingGoalMetadata | null>(
+  gql.SUB_SCHEDULING_GOAL,
+  { id: schedulingGoalMetadataId },
+  null,
+  null,
+);
+
+export const schedulingSpecConditionsAll = gqlSubscribable<SchedulingSpecCondition[]>(
+  gql.SUB_SCHEDULING_SPEC_CONDITIONS,
+  { specification_id: selectedSpecId },
+  [],
+  null,
+);
+
+export const schedulingSpecGoalsAll = gqlSubscribable<SchedulingSpecGoal[]>(
+  gql.SUB_SCHEDULING_SPEC_GOALS,
+  { specification_id: selectedSpecId },
+  [],
+  null,
+);
+
+/* Derived. */
 
 export const schedulingGoals = derived(
   [selectedSpecId, schedulingGoalsAll],
@@ -84,11 +103,18 @@ export const schedulingGoals = derived(
   },
 );
 
-export const schedulingSpecConditionsAll = gqlSubscribable<SchedulingSpecCondition[]>(
-  gql.SUB_SCHEDULING_SPEC_CONDITIONS,
-  { specification_id: selectedSpecId },
-  [],
-  null,
+export const schedulingConditions = derived(
+  [selectedSpecId, schedulingConditionsAll],
+  ([$selectedSpecId, $schedulingConditionsAll]) => {
+    return $schedulingConditionsAll.map(schedulingSpecCondition => {
+      return {
+        ...schedulingSpecCondition,
+        scheduling_specification_conditions: schedulingSpecCondition.scheduling_specification_conditions.filter(
+          condition => condition.specification_id === $selectedSpecId,
+        ),
+      };
+    });
+  },
 );
 
 export const schedulingSpecConditions = derived(
@@ -109,13 +135,6 @@ export const schedulingSpecConditions = derived(
         };
       });
   },
-);
-
-export const schedulingSpecGoalsAll = gqlSubscribable<SchedulingSpecGoal[]>(
-  gql.SUB_SCHEDULING_SPEC_GOALS,
-  { specification_id: selectedSpecId },
-  [],
-  null,
 );
 
 export const schedulingSpecGoals = derived(

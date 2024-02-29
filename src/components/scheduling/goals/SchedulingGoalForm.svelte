@@ -8,7 +8,7 @@
   import type { User } from '../../../types/app';
   import type { ModelSlim } from '../../../types/model';
   import type { PlanSchedulingSpec } from '../../../types/plan';
-  import type { SchedulingGoal, SchedulingSpecGoalInsertInput } from '../../../types/scheduling';
+  import type { SchedulingGoalMetadata, SchedulingSpecGoalInsertInput } from '../../../types/scheduling';
   import type { SchedulingGoalTagsInsertInput, Tag, TagsChangeEvent } from '../../../types/tags';
   import effects from '../../../utilities/effects';
   import { isSaveEvent } from '../../../utilities/keyboardEvents';
@@ -55,7 +55,7 @@
   let saveButtonEnabled: boolean = false;
   let specId: number | null = initialSpecId;
   let savedSpecId: number | null = initialSpecId;
-  let savedGoal: Partial<SchedulingGoal> = {
+  let savedGoal: Partial<SchedulingGoalMetadata> = {
     definition: goalDefinition,
     description: goalDescription,
     name: goalName,
@@ -121,7 +121,7 @@
     return false;
   }
 
-  function diffGoals(goalA: Partial<SchedulingGoal>, goalB: Partial<SchedulingGoal>) {
+  function diffGoals(goalA: Partial<SchedulingGoalMetadata>, goalB: Partial<SchedulingGoalMetadata>) {
     return Object.entries(goalA).some(([key, value]) => {
       if (key === 'tags') {
         return diffTags(
@@ -129,7 +129,7 @@
           (goalB.tags || []).map(({ tag }) => tag),
         );
       } else {
-        return goalB[key as keyof SchedulingGoal] !== value;
+        return goalB[key as keyof SchedulingGoalMetadata] !== value;
       }
     });
   }
@@ -211,7 +211,7 @@
           }
         }
 
-        const goal: Partial<SchedulingGoal> = {
+        const goal: Partial<SchedulingGoalMetadata> = {
           definition: goalDefinition,
           description: goalDescription,
           ...(hasAuthoringPermission && goalModelId !== null ? { model_id: goalModelId } : {}),
