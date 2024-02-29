@@ -5,7 +5,7 @@
   import { base } from '$app/paths';
   import { createEventDispatcher } from 'svelte';
   import { SearchParameters } from '../../../enums/searchParameters';
-  import { schedulingGoalsAll } from '../../../stores/scheduling';
+  import { schedulingGoals } from '../../../stores/scheduling';
   import type { User, UserId } from '../../../types/app';
   import type {
     SchedulingGoalDefinitionTagsInsertInput,
@@ -90,7 +90,7 @@
 
     if (newGoalId !== null) {
       goto(
-        `${base}/goals/edit/${newGoalId}${
+        `${base}/scheduling/goals/edit/${newGoalId}${
           referenceModelId !== null ? `?${SearchParameters.MODEL_ID}=${referenceModelId}` : ''
         }`,
       );
@@ -189,7 +189,7 @@
 </script>
 
 <MetadataForm
-  allMetadata={$schedulingGoalsAll}
+  allMetadata={$schedulingGoals}
   displayName="Scheduling Goal"
   {hasCreateDefinitionCodePermission}
   {hasWriteMetadataPermission}

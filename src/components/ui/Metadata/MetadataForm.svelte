@@ -128,9 +128,7 @@
   );
   $: isDefinitionModified = diffDefinition({ definition: initialDefinitionCode }, { definition: definitionCode });
   $: isDefinitionDataModified = diffTags(initialDefinitionTags || [], definitionTags);
-  $: hasUpdateDefinitionPermission =
-    user?.id === initialDefinitionAuthor || user?.id === initialOwner || isDefinitionModified;
-
+  $: hasUpdateDefinitionPermission = user?.id === defintionAuthor || user?.id === initialOwner || isDefinitionModified;
   $: pageTitle = mode === 'edit' ? 's' : 'New ';
   $: pageSubtitle = mode === 'edit' ? initialName : '';
   $: referenceModelId = initialReferenceModelId;

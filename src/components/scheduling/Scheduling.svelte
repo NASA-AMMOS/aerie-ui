@@ -1,7 +1,13 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { schedulingColumns, schedulingConditionsAll, schedulingGoalsAll } from '../../stores/scheduling';
+  import {
+    schedulingColumns,
+    schedulingConditionResponses,
+    schedulingConditions,
+    schedulingGoalResponses,
+    schedulingGoals,
+  } from '../../stores/scheduling';
   import type { User } from '../../types/app';
   import type { DataGridRowSelection } from '../../types/data-grid';
   import type { SchedulingConditionMetadata, SchedulingGoalMetadata } from '../../types/scheduling';
@@ -20,14 +26,14 @@
   let editorTitle: string = 'Scheduling';
 
   $: if (selectedCondition !== null) {
-    const found = $schedulingConditionsAll.findIndex(condition => condition.id === selectedCondition?.id);
+    const found = $schedulingConditions.findIndex(condition => condition.id === selectedCondition?.id);
     if (found === -1) {
       selectedCondition = null;
     }
   }
 
   $: if (selectedGoal !== null) {
-    const found = $schedulingGoalsAll.findIndex(goal => goal.id === selectedGoal?.id);
+    const found = $schedulingGoals.findIndex(goal => goal.id === selectedGoal?.id);
     if (found === -1) {
       selectedGoal = null;
     }
@@ -37,7 +43,7 @@
     const success = await effects.deleteSchedulingCondition(condition, user);
 
     if (success) {
-      schedulingConditionsAll.filterValueById(condition.id);
+      schedulingConditionResponses.filterValueById(condition.id);
 
       if (condition.id === selectedCondition?.id) {
         selectedCondition = null;
@@ -48,7 +54,7 @@
   async function deleteGoal(goal: SchedulingGoalMetadata) {
     const success = await effects.deleteSchedulingGoal(goal, user);
     if (success) {
-      schedulingGoalsAll.filterValueById(goal.id);
+      schedulingGoalResponses.filterValueById(goal.id);
 
       if (goal.id === selectedGoal?.id) {
         selectedGoal = null;
@@ -58,7 +64,7 @@
 
   function deleteConditionContext(event: CustomEvent<number>) {
     const id = event.detail;
-    const condition = $schedulingConditionsAll.find(s => s.id === id);
+    const condition = $schedulingConditions.find(s => s.id === id);
     if (condition) {
       deleteCondition(condition);
     }
@@ -66,7 +72,7 @@
 
   function deleteGoalContext(event: CustomEvent<number>) {
     const id = event.detail;
-    const goal = $schedulingGoalsAll.find(s => s.id === id);
+    const goal = $schedulingGoals.find(s => s.id === id);
     if (goal) {
       deleteGoal(goal);
     }
@@ -113,7 +119,7 @@
   <CssGrid rows="1fr 3px 1fr">
     <SchedulingGoals
       {selectedGoal}
-      schedulingGoals={$schedulingGoalsAll}
+      schedulingGoals={$schedulingGoals}
       {user}
       on:deleteGoal={deleteGoalContext}
       on:rowSelected={toggleGoal}
@@ -121,7 +127,7 @@
     <CssGridGutter track={1} type="row" />
     <SchedulingConditions
       {selectedCondition}
-      schedulingConditions={$schedulingConditionsAll}
+      schedulingConditions={$schedulingConditions}
       {user}
       on:deleteCondition={deleteConditionContext}
       on:rowSelected={toggleCondition}

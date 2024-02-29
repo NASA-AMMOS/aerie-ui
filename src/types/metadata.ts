@@ -8,8 +8,8 @@ export type BaseDefinition = {
   created_at: string;
   definition: string;
   metadata: BaseMetadata<BaseDefinition>;
-  models_using?: Model[];
-  plans_using?: Plan[];
+  models_using: Pick<Model, 'id'>[];
+  plans_using: Pick<Plan, 'id'>[];
   revision: number;
   tags: { tag: Tag }[];
 };

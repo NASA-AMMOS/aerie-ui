@@ -8,7 +8,25 @@ export type SchedulingConditionDefinition = BaseDefinition & {
   condition_id: number;
 };
 
+type SchedulingDefinitionResponse<D> = Omit<D, 'tags'> & {
+  tags: { tag_id: number }[];
+};
+
+export type SchedulingMetadataResponse<M, D> = Omit<M, 'plans_using' | 'tags' | 'versions'> & {
+  plans_using?: {
+    specification: {
+      plan_id: number;
+    };
+  }[];
+  tags: { tag_id: number }[];
+  versions: SchedulingDefinitionResponse<D>[];
+};
+
 export type SchedulingConditionMetadata = BaseMetadata<SchedulingConditionDefinition>;
+export type SchedulingConditionMetadataResponse = SchedulingMetadataResponse<
+  SchedulingConditionMetadata,
+  SchedulingConditionDefinition
+>;
 
 export type SchedulingConditionMetadataVersionDefinition = Pick<
   SchedulingConditionDefinition,
@@ -20,6 +38,10 @@ export type SchedulingGoalDefinition = BaseDefinition & {
 };
 
 export type SchedulingGoalMetadata = BaseMetadata<SchedulingGoalDefinition>;
+export type SchedulingGoalMetadataResponse = SchedulingMetadataResponse<
+  SchedulingGoalMetadata,
+  SchedulingGoalDefinition
+>;
 
 export type SchedulingConditionMetadataSlim = Omit<
   SchedulingConditionMetadata,

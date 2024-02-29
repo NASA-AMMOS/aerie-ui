@@ -1266,50 +1266,6 @@ const gql = {
     }
   `,
 
-  GET_SCHEDULING_CONDITION: `#graphql
-    query GetSchedulingCondition($id: Int!) {
-      condition: scheduling_condition_by_pk(id: $id) {
-        author
-        created_date
-        definition
-        description
-        id
-        last_modified_by
-        model_id
-        modified_date
-        name
-        revision
-      }
-    }
-  `,
-
-  GET_SCHEDULING_GOAL: `#graphql
-    query GetSchedulingGoal($id: Int!) {
-      goal: scheduling_goal_by_pk(id: $id) {
-        analyses(limit: 0) {
-          analysis_id
-        }
-        author
-        created_date
-        definition
-        description
-        id
-        last_modified_by
-        model_id
-        modified_date
-        name
-        revision
-        tags {
-          tag {
-            color
-            id
-            name
-          }
-        }
-      }
-    }
-  `,
-
   GET_SCHEDULING_SPEC_CONDITIONS_FOR_CONDITION: `#graphql
     query GetSchedulingSpecConditionsForCondition($condition_id: Int!) {
       scheduling_specification_conditions(where: { condition_id: { _eq: $condition_id } }) {
@@ -2131,15 +2087,13 @@ const gql = {
         }
         owner
         plans_using {
-          plan_id
+          specification {
+            plan_id
+          }
         }
         public
         tags {
-          tag {
-            color
-            id
-            name
-          }
+          tag_id
         }
         updated_at
         updated_by
@@ -2148,11 +2102,7 @@ const gql = {
           definition
           revision
           tags {
-            tag {
-              color
-              id
-              name
-            }
+            tag_id
           }
         }
       }
@@ -2171,15 +2121,13 @@ const gql = {
         }
         owner
         plans_using {
-          plan_id
+          specification {
+            plan_id
+          }
         }
         public
         tags {
-          tag {
-            color
-            id
-            name
-          }
+          tag_id
         }
         updated_at
         updated_by
@@ -2187,6 +2135,9 @@ const gql = {
           author
           definition
           revision
+          tags {
+            tag_id
+          }
         }
       }
     }
@@ -2241,15 +2192,13 @@ const gql = {
         }
         owner
         plans_using {
-          plan_id
+          specification {
+            plan_id
+          }
         }
         public
         tags {
-          tag {
-            color
-            id
-            name
-          }
+          tag_id
         }
         updated_at
         updated_by
@@ -2258,11 +2207,7 @@ const gql = {
           definition
           revision
           tags {
-            tag {
-              color
-              id
-              name
-            }
+            tag_id
           }
         }
       }
@@ -2270,31 +2215,33 @@ const gql = {
   `,
   SUB_SCHEDULING_GOALS: `#graphql
     subscription SubSchedulingGoals {
-      goals: scheduling_goal(order_by: { id: desc }) {
-        analyses(limit: 0) {
-          analysis_id
-          request {
-            specification_id
-          }
-        }
-        author
-        created_date
-        definition
+      goals: scheduling_goal_metadata(order_by: { name: asc }) {
+        created_at
         description
         id
-        last_modified_by
-        model_id
-        modified_date
         name
-        scheduling_specification_goal {
-          specification_id
+        models_using {
+          model_id
+        }
+        owner
+        plans_using {
           specification {
             plan_id
           }
         }
-        revision
+        public
         tags {
           tag_id
+        }
+        updated_at
+        updated_by
+        versions {
+          author
+          definition
+          revision
+          tags {
+            tag_id
+          }
         }
       }
     }
@@ -2697,7 +2644,7 @@ const gql = {
   UPDATE_SCHEDULING_CONDITION_DEFINITION_TAGS: `#graphql
     mutation UpdateSchedulingConditionTags($conditionId: Int!, $conditionRevision: Int!, $tags: [scheduling_condition_definition_tags_insert_input!]!, $tagIdsToDelete: [Int!]!) {
       insertSchedulingConditionDefinitionTags: insert_scheduling_condition_definition_tags(objects: $tags, on_conflict: {
-        scheduling_condition: scheduling_condition_definition_tags_pkey,
+        constraint: scheduling_condition_definition_tags_pkey,
         update_columns: []
       }) {
         affected_rows
@@ -2724,7 +2671,7 @@ const gql = {
         id
       }
       insertSchedulingConditionTags: insert_scheduling_condition_tags(objects: $tags, on_conflict: {
-        scheduling_condition: scheduling_condition_tags_pkey,
+        constraint: scheduling_condition_tags_pkey,
         update_columns: []
       }) {
         affected_rows
@@ -2780,7 +2727,7 @@ const gql = {
   UPDATE_SCHEDULING_GOAL_DEFINITION_TAGS: `#graphql
     mutation UpdateSchedulingGoalTags($goalId: Int!, $goalRevision: Int!, $tags: [scheduling_goal_definition_tags_insert_input!]!, $tagIdsToDelete: [Int!]!) {
       insertSchedulingGoalDefinitionTags: insert_scheduling_goal_definition_tags(objects: $tags, on_conflict: {
-        scheduling_goal: scheduling_goal_definition_tags_pkey,
+        constraint: scheduling_goal_definition_tags_pkey,
         update_columns: []
       }) {
         affected_rows
@@ -2807,7 +2754,7 @@ const gql = {
         id
       }
       insertSchedulingGoalTags: insert_scheduling_goal_tags(objects: $tags, on_conflict: {
-        scheduling_goal: scheduling_goal_tags_pkey,
+        constraint: scheduling_goal_tags_pkey,
         update_columns: []
       }) {
         affected_rows

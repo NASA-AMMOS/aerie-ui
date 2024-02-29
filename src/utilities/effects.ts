@@ -98,11 +98,13 @@ import type {
   SchedulingConditionDefinitionInsertInput,
   SchedulingConditionInsertInput,
   SchedulingConditionMetadata,
+  SchedulingConditionMetadataResponse,
   SchedulingConditionMetadataSetInput,
   SchedulingGoalDefinition,
   SchedulingGoalDefinitionInsertInput,
   SchedulingGoalInsertInput,
   SchedulingGoalMetadata,
+  SchedulingGoalMetadataResponse,
   SchedulingGoalMetadataSetInput,
   SchedulingRequest,
   SchedulingResponse,
@@ -171,6 +173,7 @@ import {
 import { queryPermissions } from './permissions';
 import { reqExtension, reqGateway, reqHasura } from './requests';
 import { sampleProfiles } from './resources';
+import { convertResponseToMetadata } from './scheduling';
 import { pluralize } from './text';
 import { getDoyTime, getDoyTimeFromInterval, getIntervalFromDoyRange } from './time';
 import { createRow, duplicateRow } from './timeline';
@@ -3114,35 +3117,42 @@ const effects = {
     }
   },
 
-  async getSchedulingCondition(
-    id: number | null | undefined,
-    user: User | null,
-  ): Promise<SchedulingConditionMetadata | null> {
-    if (id !== null && id !== undefined) {
-      try {
-        const data = await reqHasura<SchedulingConditionMetadata>(gql.GET_SCHEDULING_CONDITION, { id }, user);
-        const { condition } = data;
-        return condition;
-      } catch (e) {
-        catchError(e as Error);
-        return null;
+  async getSchedulingCondition(id: number, user: User | null): Promise<SchedulingConditionMetadata | null> {
+    try {
+      const data = await reqHasura<SchedulingConditionMetadataResponse>(
+        convertToQuery(gql.SUB_SCHEDULING_CONDITION),
+        { id },
+        user,
+      );
+      const tags = await effects.getTags(user);
+      const { condition } = data;
+
+      if (condition) {
+        return convertResponseToMetadata(condition, tags);
       }
-    } else {
+      return condition;
+    } catch (e) {
+      catchError(e as Error);
       return null;
     }
   },
 
-  async getSchedulingGoal(id: number | null | undefined, user: User | null): Promise<SchedulingGoalMetadata | null> {
-    if (id !== null && id !== undefined) {
-      try {
-        const data = await reqHasura<SchedulingGoalMetadata>(gql.GET_SCHEDULING_GOAL, { id }, user);
-        const { goal } = data;
-        return goal;
-      } catch (e) {
-        catchError(e as Error);
-        return null;
+  async getSchedulingGoal(id: number, user: User | null): Promise<SchedulingGoalMetadata | null> {
+    try {
+      const data = await reqHasura<SchedulingGoalMetadataResponse>(
+        convertToQuery(gql.SUB_SCHEDULING_GOAL),
+        { id },
+        user,
+      );
+      const tags = await effects.getTags(user);
+      const { goal } = data;
+
+      if (goal) {
+        return convertResponseToMetadata(goal, tags);
       }
-    } else {
+      return goal;
+    } catch (e) {
+      catchError(e as Error);
       return null;
     }
   },
@@ -4327,8 +4337,8 @@ const effects = {
   },
 
   async updateSchedulingGoalDefinitionTags(
-    conditionId: number,
-    conditionRevision: number,
+    goalId: number,
+    goalRevision: number,
     tags: SchedulingGoalDefinitionTagsInsertInput[],
     tagIdsToDelete: number[],
     user: User | null,
@@ -4340,7 +4350,7 @@ const effects = {
 
       const data = await reqHasura<{ affected_rows: number }>(
         gql.UPDATE_SCHEDULING_GOAL_DEFINITION_TAGS,
-        { conditionId, conditionRevision, tagIdsToDelete, tags },
+        { goalId, goalRevision, tagIdsToDelete, tags },
         user,
       );
       const { deleteSchedulingGoalDefinitionTags, insertSchedulingGoalDefinitionTags } = data;

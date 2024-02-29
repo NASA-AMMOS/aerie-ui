@@ -5,7 +5,7 @@
   import { base } from '$app/paths';
   import { createEventDispatcher } from 'svelte';
   import { SearchParameters } from '../../../enums/searchParameters';
-  import { schedulingConditionsAll } from '../../../stores/scheduling';
+  import { schedulingConditions } from '../../../stores/scheduling';
   import type { User, UserId } from '../../../types/app';
   import type {
     SchedulingConditionDefinitionTagsInsertInput,
@@ -90,7 +90,7 @@
 
     if (newConditionId !== null) {
       goto(
-        `${base}/conditions/edit/${newConditionId}${
+        `${base}/scheduling/conditions/edit/${newConditionId}${
           referenceModelId !== null ? `?${SearchParameters.MODEL_ID}=${referenceModelId}` : ''
         }`,
       );
@@ -193,7 +193,7 @@
 </script>
 
 <MetadataForm
-  allMetadata={$schedulingConditionsAll}
+  allMetadata={$schedulingConditions}
   displayName="Scheduling Condition"
   {hasCreateDefinitionCodePermission}
   {hasWriteMetadataPermission}

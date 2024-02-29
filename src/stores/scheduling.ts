@@ -2,17 +2,23 @@ import { derived, writable, type Readable, type Writable } from 'svelte/store';
 import { Status } from '../enums/status';
 import { plan, planId, planRevision } from '../stores/plan';
 import type {
+  SchedulingConditionDefinition,
   SchedulingConditionMetadata,
+  SchedulingConditionMetadataResponse,
   SchedulingGoalAnalysis,
+  SchedulingGoalDefinition,
   SchedulingGoalMetadata,
+  SchedulingGoalMetadataResponse,
   SchedulingRequest,
   SchedulingSpec,
   SchedulingSpecCondition,
   SchedulingSpecGoal,
 } from '../types/scheduling';
 import gql from '../utilities/gql';
+import { convertResponseToMetadata } from '../utilities/scheduling';
 import { simulationDatasetsPlan } from './simulation';
 import { gqlSubscribable } from './subscribable';
+import { tags } from './tags';
 
 /* Writeable. */
 
@@ -50,23 +56,28 @@ export const schedulingRequests = gqlSubscribable<SchedulingRequest[]>(
   null,
 );
 
-export const schedulingConditionsAll = gqlSubscribable<SchedulingConditionMetadata[]>(
+export const schedulingConditionResponses = gqlSubscribable<SchedulingConditionMetadataResponse[]>(
   gql.SUB_SCHEDULING_CONDITIONS,
   {},
   [],
   null,
 );
 
-export const schedulingGoalsAll = gqlSubscribable<SchedulingGoalMetadata[]>(gql.SUB_SCHEDULING_GOALS, {}, [], null);
+export const schedulingGoalResponses = gqlSubscribable<SchedulingGoalMetadataResponse[]>(
+  gql.SUB_SCHEDULING_GOALS,
+  {},
+  [],
+  null,
+);
 
-export const schedulingConditionMetadata = gqlSubscribable<SchedulingConditionMetadata | null>(
+export const schedulingConditionResponse = gqlSubscribable<SchedulingConditionMetadataResponse | null>(
   gql.SUB_SCHEDULING_CONDITION,
   { id: schedulingConditionMetadataId },
   null,
   null,
 );
 
-export const schedulingGoalMetadata = gqlSubscribable<SchedulingGoalMetadata | null>(
+export const schedulingGoalResponse = gqlSubscribable<SchedulingGoalMetadataResponse | null>(
   gql.SUB_SCHEDULING_GOAL,
   { id: schedulingGoalMetadataId },
   null,
@@ -88,9 +99,46 @@ export const schedulingSpecGoalsAll = gqlSubscribable<SchedulingSpecGoal[]>(
 );
 
 /* Derived. */
+export const schedulingConditions = derived(
+  [schedulingConditionResponses, tags],
+  ([$schedulingConditionResponses, $tags]) => {
+    return $schedulingConditionResponses.map(schedulingConditionResponse =>
+      convertResponseToMetadata<SchedulingConditionMetadata, SchedulingConditionDefinition>(
+        schedulingConditionResponse,
+        $tags,
+      ),
+    );
+  },
+);
 
-export const schedulingGoals = derived(
-  [selectedSpecId, schedulingGoalsAll],
+export const schedulingGoals = derived([schedulingGoalResponses, tags], ([$schedulingGoalResponses, $tags]) => {
+  return $schedulingGoalResponses.map(schedulingGoalResponse =>
+    convertResponseToMetadata<SchedulingGoalMetadata, SchedulingGoalDefinition>(schedulingGoalResponse, $tags),
+  );
+});
+
+export const schedulingConditionMetadata = derived(
+  [schedulingConditionResponse, tags],
+  ([$schedulingConditionResponse, $tags]) => {
+    if ($schedulingConditionResponse) {
+      return convertResponseToMetadata<SchedulingConditionMetadata, SchedulingConditionDefinition>(
+        $schedulingConditionResponse,
+        $tags,
+      );
+    }
+    return null;
+  },
+);
+
+export const schedulingGoalMetadata = derived([schedulingGoalResponse, tags], ([$schedulingGoalResponse, $tags]) => {
+  if ($schedulingGoalResponse) {
+    return convertResponseToMetadata<SchedulingGoalMetadata, SchedulingGoalDefinition>($schedulingGoalResponse, $tags);
+  }
+  return null;
+});
+
+export const schedulingGoalsSpecification = derived(
+  [selectedSpecId, schedulingGoalResponses],
   ([$selectedSpecId, $schedulingGoalsAll]) => {
     return $schedulingGoalsAll
       .filter(goal => goal.scheduling_specification_goal?.specification_id === $selectedSpecId)
@@ -103,8 +151,8 @@ export const schedulingGoals = derived(
   },
 );
 
-export const schedulingConditions = derived(
-  [selectedSpecId, schedulingConditionsAll],
+export const schedulingConditionsSpecification = derived(
+  [selectedSpecId, schedulingConditionResponses],
   ([$selectedSpecId, $schedulingConditionsAll]) => {
     return $schedulingConditionsAll.map(schedulingSpecCondition => {
       return {
