@@ -14,6 +14,16 @@ const gql = {
     }
   `,
 
+  CANCEL_SCHEDULING_REQUEST: `#graphql
+    mutation CancelSchedulingRequest($id: Int!) {
+      update_scheduling_request(where: { analysis_id: { _eq: $id } }, _set: {
+        canceled: true
+      }) {
+        affected_rows
+      }
+    }
+  `,
+
   CANCEL_SIMULATION: `#graphql
     mutation CancelSim($id: Int!) {
       update_simulation_dataset_by_pk(pk_columns: {id: $id}, _set: {

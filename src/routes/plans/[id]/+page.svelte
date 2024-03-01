@@ -727,6 +727,13 @@
               Scheduling analysis not run
             {/if}
           </div>
+          {#if $schedulingAnalysisStatus === Status.Pending || $schedulingAnalysisStatus === Status.Incomplete}
+            <button
+              on:click={() => effects.cancelSchedulingRequest($latestSchedulingRequest.analysis_id, data.user)}
+              class="st-button cancel-button"
+              disabled={$planReadOnly}>Cancel</button
+            >
+          {/if}
         </svelte:fragment>
       </PlanNavButton>
       <ExtensionMenu

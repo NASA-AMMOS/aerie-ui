@@ -284,10 +284,33 @@ const effects = {
     }
   },
 
+  async cancelSchedulingRequest(analysisId: number, user: User | null): Promise<void> {
+    try {
+      if (!queryPermissions.CANCEL_PENDING_SCHEDULING_REQUEST(user)) {
+        throwPermissionError('cancel a scheduling request dataset');
+      }
+      const { confirm } = await showConfirmModal(
+        'Cancel Scheduling Request',
+        `This will cancel the scheduling request with Analysis ID: ${analysisId}.`,
+        'Cancel Scheduling Request',
+        true,
+        'Keep Scheduling',
+      );
+
+      if (confirm) {
+        await reqHasura<SeqId>(gql.CANCEL_SCHEDULING_REQUEST, { id: analysisId }, user);
+        showSuccessToast('Scheduling Request Successfully Canceled');
+      }
+    } catch (e) {
+      catchError('Scheduling Request Unable To Be Canceled', e as Error);
+      showFailureToast('Scheduling Request Cancel Failed');
+    }
+  },
+
   async cancelSimulation(simulationDatasetId: number, user: User | null): Promise<void> {
     try {
       if (!queryPermissions.CANCEL_PENDING_SIMULATION(user)) {
-        throwPermissionError('update a simulation dataset');
+        throwPermissionError('cancel a simulation');
       }
       const { confirm } = await showConfirmModal(
         'Cancel Simulation',
@@ -3753,7 +3776,9 @@ const effects = {
             const unsubscribe = schedulingRequests.subscribe(async (requests: SchedulingRequest[]) => {
               const matchingRequest = requests.find(request => request.analysis_id === analysisId);
               if (matchingRequest) {
-                if (matchingRequest.status === 'success') {
+                if (matchingRequest.canceled) {
+                  unsubscribe();
+                } else if (matchingRequest.status === 'success') {
                   // If a new simulation was run during scheduling, the response will include a datasetId
                   // which will need to be cross referenced with a simulation_dataset.id so we
                   // can load that new simulation.

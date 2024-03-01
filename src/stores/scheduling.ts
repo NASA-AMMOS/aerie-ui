@@ -203,12 +203,12 @@ export const schedulingAnalysisStatus = derived(
     // No status if there are no requests
     if (!$latestSchedulingRequest) {
       return null;
+    } else if ($latestSchedulingRequest.canceled) {
+      return Status.Canceled;
     } else if ($latestSchedulingRequest.status === 'incomplete') {
       return Status.Incomplete;
     } else if ($latestSchedulingRequest.status === 'pending' && !$latestSchedulingRequest.canceled) {
       return Status.Pending;
-    } else if ($latestSchedulingRequest.canceled) {
-      return Status.Canceled;
     } else {
       let matchingSimDataset;
       if (typeof $latestSchedulingRequest.dataset_id === 'number') {
