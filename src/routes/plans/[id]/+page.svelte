@@ -77,7 +77,7 @@
     latestSchedulingRequest,
     satisfiedSchedulingGoalCount,
     schedulingAnalysisStatus,
-    schedulingGoalCount
+    schedulingGoalCount,
   } from '../../../stores/scheduling';
   import {
     enableSimulation,

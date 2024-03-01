@@ -164,23 +164,14 @@ export class Plan {
 
   async runAnalysis() {
     await this.analyzeButton.click();
-    await this.page.waitForSelector(this.schedulingStatusSelector('Incomplete'), { state: 'attached', strict: true });
-    await this.page.waitForSelector(this.schedulingStatusSelector('Incomplete'), { state: 'visible', strict: true });
-    await this.page.waitForSelector(this.schedulingStatusSelector('Complete'), { state: 'attached', strict: true });
-    await this.page.waitForSelector(this.schedulingStatusSelector('Complete'), { state: 'visible', strict: true });
+    await this.waitForSchedulingStatus('Incomplete');
+    await this.waitForSchedulingStatus('Complete');
   }
 
-  async runScheduling(expectFailure = false) {
+  async runScheduling(expectedFinalState = 'Complete') {
     await this.scheduleButton.click();
-    await this.page.waitForSelector(this.schedulingStatusSelector('Incomplete'), { state: 'attached', strict: true });
-    await this.page.waitForSelector(this.schedulingStatusSelector('Incomplete'), { state: 'visible', strict: true });
-    if (expectFailure) {
-      await this.page.waitForSelector(this.schedulingStatusSelector('Failed'), { state: 'attached', strict: true });
-      await this.page.waitForSelector(this.schedulingStatusSelector('Failed'), { state: 'visible', strict: true });
-    } else {
-      await this.page.waitForSelector(this.schedulingStatusSelector('Complete'), { state: 'attached', strict: true });
-      await this.page.waitForSelector(this.schedulingStatusSelector('Complete'), { state: 'visible', strict: true });
-    }
+    await this.waitForSchedulingStatus('Incomplete');
+    await this.waitForSchedulingStatus(expectedFinalState);
   }
 
   async selectActivityAnchorByIndex(index: number) {
@@ -347,5 +338,10 @@ export class Plan {
     this.schedulingGoalNewButton = page.locator(`button[name="new-scheduling-goal"]`);
     this.schedulingConditionNewButton = page.locator(`button[name="new-scheduling-condition"]`);
     this.schedulingSatisfiedActivity = page.locator('.scheduling-goal-analysis-activities-list > .satisfied-activity');
+  }
+
+  async waitForSchedulingStatus(status: string) {
+    await this.page.waitForSelector(this.schedulingStatusSelector(status), { state: 'attached', strict: true });
+    await this.page.waitForSelector(this.schedulingStatusSelector(status), { state: 'visible', strict: true });
   }
 }
