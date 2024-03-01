@@ -6,7 +6,6 @@ import type {
   SchedulingGoalAnalysis,
   SchedulingGoalSlim,
   SchedulingRequest,
-  SchedulingRequestSlim,
   SchedulingSpec,
   SchedulingSpecCondition,
   SchedulingSpecGoal,
@@ -45,13 +44,6 @@ export const schedulingSpec = gqlSubscribable<SchedulingSpec | null>(
 export const schedulingRequests = gqlSubscribable<SchedulingRequest[]>(
   gql.SUB_SCHEDULING_REQUESTS,
   { specId: selectedSpecId },
-  [],
-  null,
-);
-
-export const schedulingRequestsAll = gqlSubscribable<SchedulingRequestSlim[]>(
-  gql.SUB_SCHEDULING_REQUESTS_ALL,
-  null,
   [],
   null,
 );

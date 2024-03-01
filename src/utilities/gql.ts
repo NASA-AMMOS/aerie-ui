@@ -2084,16 +2084,6 @@ const gql = {
     }
   `,
 
-  SUB_SCHEDULING_REQUESTS_ALL: `#graphql
-    subscription SubSchedulingRequestsAll {
-      scheduling_request(order_by: { analysis_id: desc }) {
-        canceled
-        specification_id
-        status
-      }
-    }
-  `,
-
   SUB_SCHEDULING_SPEC: `#graphql
     subscription SubSchedulingSpec($planId: Int!) {
       scheduling_specification(where: { plan_id: { _eq: $planId } }, limit: 1) {
