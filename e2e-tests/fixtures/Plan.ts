@@ -170,12 +170,17 @@ export class Plan {
     await this.page.waitForSelector(this.schedulingStatusSelector('Complete'), { state: 'visible', strict: true });
   }
 
-  async runScheduling() {
+  async runScheduling(expectFailure = false) {
     await this.scheduleButton.click();
     await this.page.waitForSelector(this.schedulingStatusSelector('Incomplete'), { state: 'attached', strict: true });
     await this.page.waitForSelector(this.schedulingStatusSelector('Incomplete'), { state: 'visible', strict: true });
-    await this.page.waitForSelector(this.schedulingStatusSelector('Complete'), { state: 'attached', strict: true });
-    await this.page.waitForSelector(this.schedulingStatusSelector('Complete'), { state: 'visible', strict: true });
+    if (expectFailure) {
+      await this.page.waitForSelector(this.schedulingStatusSelector('Failed'), { state: 'attached', strict: true });
+      await this.page.waitForSelector(this.schedulingStatusSelector('Failed'), { state: 'visible', strict: true });
+    } else {
+      await this.page.waitForSelector(this.schedulingStatusSelector('Complete'), { state: 'attached', strict: true });
+      await this.page.waitForSelector(this.schedulingStatusSelector('Complete'), { state: 'visible', strict: true });
+    }
   }
 
   async selectActivityAnchorByIndex(index: number) {

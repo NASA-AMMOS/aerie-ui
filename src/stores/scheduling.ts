@@ -20,7 +20,6 @@ export const schedulingColumns: Writable<string> = writable('2fr 3px 1fr');
 export const schedulingFormColumns: Writable<string> = writable('1fr 3px 2fr');
 export const schedulingConditionsFormColumns: Writable<string> = writable('1fr 3px 2fr');
 export const schedulingGoalsColumns: Writable<string> = writable('1fr 3px 2fr');
-export const schedulingStatus: Writable<Status | null> = writable(null);
 
 /* Derived. */
 
@@ -243,9 +242,3 @@ export const schedulingAnalysisStatus = derived(
 export const enableScheduling: Readable<boolean> = derived([schedulingSpecGoals], ([$schedulingSpecGoals]) => {
   return $schedulingSpecGoals.filter(schedulingSpecGoal => schedulingSpecGoal.enabled).length > 0;
 });
-
-/* Helper Functions. */
-
-export function resetSchedulingStores() {
-  schedulingStatus.set(null);
-}

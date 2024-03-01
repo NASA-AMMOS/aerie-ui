@@ -75,10 +75,9 @@
   import {
     enableScheduling,
     latestSchedulingRequest,
-    resetSchedulingStores,
     satisfiedSchedulingGoalCount,
     schedulingAnalysisStatus,
-    schedulingGoalCount,
+    schedulingGoalCount
   } from '../../../stores/scheduling';
   import {
     enableSimulation,
@@ -403,7 +402,6 @@
     resetConstraintStores();
     resetExpansionStores();
     resetPlanStores();
-    resetSchedulingStores();
     resetSimulationStores();
     closeActiveModal();
   });

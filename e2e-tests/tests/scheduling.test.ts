@@ -65,14 +65,14 @@ test.describe.serial('Scheduling', () => {
     await expect(plan.schedulingGoalEnabledCheckboxSelector(goalName1)).toBeChecked();
     await plan.schedulingGoalEnabledCheckboxSelector(goalName1).uncheck();
     await expect(plan.schedulingGoalEnabledCheckboxSelector(goalName1)).not.toBeChecked();
-    await plan.runScheduling();
+    await plan.runScheduling(true);
     await expect(plan.schedulingGoalDifferenceBadge).not.toBeVisible();
     await plan.schedulingGoalEnabledCheckboxSelector(goalName1).check();
     await expect(plan.schedulingGoalEnabledCheckboxSelector(goalName1)).toBeChecked();
   });
 
   test('The condition should prevent showing +10 in the goals badge', async () => {
-    await plan.runScheduling();
+    await plan.runScheduling(true);
     await expect(plan.schedulingGoalDifferenceBadge).toHaveText('+0');
   });
 
