@@ -114,7 +114,6 @@ test.describe.serial('Scheduling', () => {
     await plan.panelActivityTypes.getByRole('button', { name: 'CreateActivity-GrowBanana' }).click();
     await plan.showPanel('Scheduling Goals');
     await plan.waitForSchedulingStatus('Modified');
-    await plan.runAnalysis();
   });
 
   test('Delete scheduling goal', async () => {
