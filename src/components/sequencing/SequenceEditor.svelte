@@ -29,6 +29,7 @@
   let commandDictionaryJson: AmpcsCommandDictionary | null = null;
   let commandDictionaryTsFiles: TypeScriptFile[] = [];
   let monaco: Monaco;
+  let editor: any;
   let sequenceEditorModel: Editor.ITextModel;
 
   $: effects
@@ -44,6 +45,7 @@
     const { typescript } = languages;
     const { typescriptDefaults } = typescript;
     const options = typescriptDefaults.getCompilerOptions();
+    editor = monaco.editor.create(document.createElement('div'));
     typescriptDefaults.setCompilerOptions({ ...options, lib: ['esnext'], strictNullChecks: true });
   }
 
@@ -83,16 +85,25 @@
    */
   async function workerUpdateModel() {
     try {
-      const tsWorker = await monaco.languages.typescript.getTypeScriptWorker();
-      const worker = await tsWorker();
+      /**
+       * We don't have a way to check if the editor is initialized or not so it was throwing a "typescript not registered"
+       * error here. This is a hacky workaround to see if the editor is ready and we can load the typescript worker.
+       * :woozy:
+       *
+       * https://github.com/microsoft/monaco-editor/issues/115
+       */
+      editor.onDidScrollChange(async () => {
+        const tsWorker = await monaco.languages.typescript.getTypeScriptWorker();
+        const worker = await tsWorker();
 
-      if (commandDictionaryJson && sequenceEditorModel) {
-        worker.updateModelConfig({
-          command_dict_str: JSON.stringify(commandDictionaryJson ?? {}),
-          model_id: sequenceEditorModel.id,
-          should_inject: true,
-        });
-      }
+        if (commandDictionaryJson && sequenceEditorModel) {
+          worker.updateModelConfig({
+            command_dict_str: JSON.stringify(commandDictionaryJson ?? {}),
+            model_id: sequenceEditorModel.id,
+            should_inject: true,
+          });
+        }
+      });
     } catch (reason) {
       console.log('Failed to pass the command dictionary to the custom worker.', reason);
     }
