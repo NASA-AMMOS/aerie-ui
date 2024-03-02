@@ -316,18 +316,6 @@ const queryPermissions = {
   CREATE_CONSTRAINT_MODEL_SPECIFICATION: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['insert_constraint_model_specification_one'], user);
   },
-  CREATE_CONSTRAINT_PLAN_SPECIFICATION: (
-    user: User | null,
-    constraint: ConstraintMetadata,
-    plan: PlanWithOwners,
-  ): boolean => {
-    return (
-      isUserAdmin(user) ||
-      (getPermission(['insert_constraint_specification_one'], user) &&
-        (constraint.public || isUserOwner(user, constraint)) &&
-        (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
-    );
-  },
   CREATE_EXPANSION_RULE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['insert_expansion_rule_one'], user);
   },
@@ -372,20 +360,23 @@ const queryPermissions = {
   CREATE_SCHEDULING_CONDITION: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['insert_scheduling_condition_one'], user);
   },
+  CREATE_SCHEDULING_CONDITION_DEFINITION: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission(['insert_scheduling_condition_definition_one'], user);
+  },
+  CREATE_SCHEDULING_CONDITION_PLAN_SPECIFICATION: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission(['insert_scheduling_specification_conditions_one'], user);
+  },
   CREATE_SCHEDULING_GOAL: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['insert_scheduling_goal_one'], user);
   },
-  CREATE_SCHEDULING_GOAL_TAGS: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission(['insert_scheduling_goal_tags'], user);
+  CREATE_SCHEDULING_GOAL_DEFINITION: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission(['insert_scheduling_goal_definition_one'], user);
+  },
+  CREATE_SCHEDULING_GOAL_PLAN_SPECIFICATION: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission(['insert_scheduling_specification_goals_one'], user);
   },
   CREATE_SCHEDULING_SPEC: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['insert_scheduling_specification_one'], user);
-  },
-  CREATE_SCHEDULING_SPEC_CONDITION: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission(['insert_scheduling_specification_conditions_one'], user);
-  },
-  CREATE_SCHEDULING_SPEC_GOAL: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission(['insert_scheduling_specification_goals_one'], user);
   },
   CREATE_SIMULATION_TEMPLATE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['insert_simulation_template_one'], user);
@@ -689,6 +680,15 @@ const queryPermissions = {
   SUB_PLAN_SNAPSHOTS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['plan_snapshot'], user);
   },
+  SUB_SCHEDULING_CONDITIONS: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission(['scheduling_condition_metadata'], user);
+  },
+  SUB_SCHEDULING_GOALS: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission(['scheduling_goal_metadata'], user);
+  },
+  SUB_SCHEDULING_PLAN_SPECIFICATION: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission(['scheduling_specification'], user);
+  },
   SUB_SIMULATION: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['simulation'], user);
   },
@@ -773,6 +773,16 @@ const queryPermissions = {
         (condition?.public || isUserOwner(user, condition)))
     );
   },
+  UPDATE_SCHEDULING_CONDITION_PLAN_SPECIFICATIONS: (user: User | null, plan: PlanWithOwners): boolean => {
+    return (
+      isUserAdmin(user) ||
+      (getPermission(
+        ['insert_scheduling_specification_condition', 'delete_scheduling_specification_condition'],
+        user,
+      ) &&
+        (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
+    );
+  },
   UPDATE_SCHEDULING_GOAL_DEFINITION_TAGS: (user: User | null): boolean => {
     return (
       isUserAdmin(user) ||
@@ -791,15 +801,12 @@ const queryPermissions = {
         (goal?.public || isUserOwner(user, goal)))
     );
   },
-  UPDATE_SCHEDULING_SPEC: (user: User | null, plan: PlanWithOwners): boolean => {
+  UPDATE_SCHEDULING_PLAN_SPECIFICATIONS: (user: User | null, plan: PlanWithOwners): boolean => {
     return (
       isUserAdmin(user) ||
       (getPermission(['update_scheduling_specification_by_pk'], user) &&
         (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
     );
-  },
-  UPDATE_SCHEDULING_SPEC_CONDITION: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission(['update_scheduling_specification_conditions_by_pk'], user);
   },
   UPDATE_SCHEDULING_SPEC_CONDITION_ID: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['update_scheduling_specification_conditions_by_pk'], user);
@@ -953,9 +960,9 @@ interface FeaturePermissions {
   planBranch: PlanBranchCRUDPermission;
   planSnapshot: PlanSnapshotCRUDPermission;
   schedulingConditions: CRUDPermission<AssetWithOwner<SchedulingConditionMetadata>>;
-  schedulingConditionsSpec: PlanSpecificationCRUDPermission<AssetWithOwner<SchedulingConditionMetadata>>;
+  schedulingConditionsPlanSpec: PlanSpecificationCRUDPermission<AssetWithOwner<SchedulingConditionMetadata>>;
   schedulingGoals: CRUDPermission<AssetWithOwner<SchedulingGoalMetadata>>;
-  schedulingGoalsSpec: SchedulingCRUDPermission<AssetWithOwner<SchedulingGoalMetadata>>;
+  schedulingGoalsPlanSpec: SchedulingCRUDPermission<AssetWithOwner<SchedulingGoalMetadata>>;
   sequences: CRUDPermission<AssetWithOwner<UserSequence>>;
   simulation: RunnableCRUDPermission<AssetWithOwner<Simulation>>;
   simulationTemplates: PlanSimulationTemplateCRUDPermission;
@@ -1053,29 +1060,31 @@ const featurePermissions: FeaturePermissions = {
   schedulingConditions: {
     canCreate: user => queryPermissions.CREATE_SCHEDULING_CONDITION(user),
     canDelete: (user, condition) => queryPermissions.DELETE_SCHEDULING_CONDITION_METADATA(user, condition),
-    canRead: () => false,
+    canRead: user => queryPermissions.SUB_SCHEDULING_CONDITIONS(user),
     canUpdate: (user, condition) => queryPermissions.UPDATE_SCHEDULING_CONDITION_METADATA(user, condition),
   },
-  schedulingConditionsSpec: {
-    canCreate: user => queryPermissions.CREATE_SCHEDULING_CONDITION(user),
-    canDelete: (user, condition) => queryPermissions.DELETE_SCHEDULING_CONDITION_METADATA(user, condition),
+  schedulingConditionsPlanSpec: {
+    canCreate: user => queryPermissions.CREATE_SCHEDULING_CONDITION_PLAN_SPECIFICATION(user),
+    canDelete: (user, condition) => queryPermissions.DELETE_SCHEDULING_CONDITION_PLAN_SPECIFICATION(user, condition),
     canRead: () => false,
-    canUpdate: (user, condition) => queryPermissions.UPDATE_SCHEDULING_CONDITION_METADATA(user, condition),
+    canUpdate: (user, condition) => queryPermissions.UPDATE_SCHEDULING_CONDITION_PLAN_SPECIFICATIONS(user, condition),
   },
   schedulingGoals: {
     canCreate: user => queryPermissions.CREATE_SCHEDULING_GOAL(user),
     canDelete: (user, goal) => queryPermissions.DELETE_SCHEDULING_GOAL_METADATA(user, goal),
-    canRead: () => false,
+    canRead: user => queryPermissions.SUB_SCHEDULING_GOALS(user),
     canUpdate: (user, goal) => queryPermissions.UPDATE_SCHEDULING_GOAL_METADATA(user, goal),
   },
-  schedulingGoalsSpec: {
+  schedulingGoalsPlanSpec: {
     canAnalyze: (user, plan, model) =>
-      queryPermissions.UPDATE_SCHEDULING_SPEC(user, plan) && queryPermissions.SCHEDULE(user, plan, model),
+      queryPermissions.UPDATE_SCHEDULING_PLAN_SPECIFICATIONS(user, plan) &&
+      queryPermissions.SCHEDULE(user, plan, model),
     canCreate: user => queryPermissions.CREATE_SCHEDULING_GOAL(user),
     canDelete: (user, goal) => queryPermissions.DELETE_SCHEDULING_GOAL_METADATA(user, goal),
     canRead: () => false,
     canRun: (user, plan, model) =>
-      queryPermissions.UPDATE_SCHEDULING_SPEC(user, plan) && queryPermissions.SCHEDULE(user, plan, model),
+      queryPermissions.UPDATE_SCHEDULING_PLAN_SPECIFICATIONS(user, plan) &&
+      queryPermissions.SCHEDULE(user, plan, model),
     canUpdate: (user, goal) => queryPermissions.UPDATE_SCHEDULING_GOAL_METADATA(user, goal),
     canUpdateSpecification: (user, plan) => queryPermissions.UPDATE_SCHEDULING_SPEC_GOAL(user, plan),
   },

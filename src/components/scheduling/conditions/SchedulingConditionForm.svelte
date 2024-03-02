@@ -40,7 +40,6 @@
 
   let hasCreateDefinitionCodePermission: boolean = false;
   let hasWriteMetadataPermission: boolean = false;
-  let referenceModelId: number | null = initialReferenceModelId;
 
   $: hasCreateDefinitionCodePermission = featurePermissions.schedulingConditions.canCreate(user);
   $: hasWriteMetadataPermission =
@@ -91,7 +90,7 @@
     if (newConditionId !== null) {
       goto(
         `${base}/scheduling/conditions/edit/${newConditionId}${
-          referenceModelId !== null ? `?${SearchParameters.MODEL_ID}=${referenceModelId}` : ''
+          initialReferenceModelId !== null ? `?${SearchParameters.MODEL_ID}=${initialReferenceModelId}` : ''
         }`,
       );
     }

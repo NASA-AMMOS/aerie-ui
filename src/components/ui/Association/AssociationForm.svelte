@@ -150,7 +150,9 @@
     saveButtonText = 'Save';
   }
   $: if (isPublic && name) {
-    const existingMetadata = allMetadata.find(({ name, public: isPublic }) => name === name && isPublic);
+    const existingMetadata = allMetadata.find(
+      ({ name: metadataName, public: isPublic }) => name === metadataName && isPublic,
+    );
     if (existingMetadata != null && existingMetadata.id !== metadataId) {
       nameError = 'Name must be unique when public';
     } else {

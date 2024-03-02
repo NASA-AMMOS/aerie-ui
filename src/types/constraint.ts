@@ -27,7 +27,9 @@ export type ConstraintModelSpec = {
 
 export type ConstraintPlanSpec = {
   constraint_id: number;
-  constraint_metadata: Pick<ConstraintMetadata, 'name' | 'owner' | 'public' | 'versions'> | null;
+  constraint_metadata:
+    | (Pick<ConstraintMetadata, 'name' | 'owner' | 'public'> & { versions: Pick<ConstraintDefinition, 'revision'>[] })
+    | null;
   constraint_revision: number | null;
   enabled: boolean;
   plan_id: number;

@@ -9,11 +9,11 @@
   import {
     enableScheduling,
     schedulingAnalysisStatus,
-    schedulingSpecGoals,
+    schedulingGoalSpecifications,
     selectedSpecId,
   } from '../../stores/scheduling';
   import type { User } from '../../types/app';
-  import type { SchedulingSpecGoal } from '../../types/scheduling';
+  import type { SchedulingGoalPlanSpecification } from '../../types/scheduling';
   import type { ViewGridSection } from '../../types/view';
   import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';
@@ -30,7 +30,7 @@
 
   let activeElement: HTMLElement;
   let filterText: string = '';
-  let filteredSchedulingSpecGoals: SchedulingSpecGoal[] = [];
+  let filteredSchedulingSpecGoals: SchedulingGoalPlanSpecification[] = [];
   let hasAnalyzePermission: boolean = false;
   let hasCreatePermission: boolean = false;
   let hasDeletePermission: boolean = false;
@@ -38,9 +38,9 @@
   let hasSpecEditPermission: boolean = false;
   let hasRunPermission: boolean = false;
 
-  $: filteredSchedulingSpecGoals = $schedulingSpecGoals.filter(spec => {
+  $: filteredSchedulingSpecGoals = $schedulingGoalSpecifications.filter(spec => {
     const filterTextLowerCase = filterText.toLowerCase();
-    const includesName = spec.goal.name.toLocaleLowerCase().includes(filterTextLowerCase);
+    const includesName = spec.goal_metadata.name.toLocaleLowerCase().includes(filterTextLowerCase);
     return includesName;
   });
 

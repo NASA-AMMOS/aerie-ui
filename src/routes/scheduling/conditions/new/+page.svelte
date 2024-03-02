@@ -14,6 +14,11 @@
 
   let referenceModelId: number | null = null;
 
+  function onModelSelect(event: CustomEvent<number | null>) {
+    const { detail: modelId } = event;
+    referenceModelId = modelId;
+  }
+
   onMount(() => {
     if (browser) {
       const modelId = getSearchParameterNumber(SearchParameters.MODEL_ID) ?? null;
@@ -24,4 +29,10 @@
 
 <PageTitle title="New Scheduling Condition" />
 
-<SchedulingConditionForm initialReferenceModelId={referenceModelId} tags={$tags} mode="create" user={data.user} />
+<SchedulingConditionForm
+  initialReferenceModelId={referenceModelId}
+  tags={$tags}
+  mode="create"
+  user={data.user}
+  on:selectReferenceModel={onModelSelect}
+/>

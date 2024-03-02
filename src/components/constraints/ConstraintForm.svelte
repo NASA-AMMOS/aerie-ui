@@ -38,7 +38,6 @@
   let hasWriteMetadataPermission: boolean = false;
   let pageTitle = mode === 'edit' ? 'Constraints' : 'New Constraint';
   let pageSubtitle = mode === 'edit' ? initialConstraintName : '';
-  let referenceModelId: number | null = initialReferenceModelId;
 
   $: hasCreateDefinitionCodePermission = featurePermissions.constraints.canCreate(user);
   $: hasWriteMetadataPermission =
@@ -90,7 +89,7 @@
     if (newConstraintId !== null) {
       goto(
         `${base}/constraints/edit/${newConstraintId}${
-          referenceModelId !== null ? `?${SearchParameters.MODEL_ID}=${referenceModelId}` : ''
+          initialReferenceModelId !== null ? `?${SearchParameters.MODEL_ID}=${initialReferenceModelId}` : ''
         }`,
       );
     }
