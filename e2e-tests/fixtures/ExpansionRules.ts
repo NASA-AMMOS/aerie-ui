@@ -75,7 +75,6 @@ export class ExpansionRules {
   }
 
   async fillInputEditor() {
-    console.log('filling editor', this.inputEditor, this.ruleLogic);
     await fillEditorText(this.inputEditor, this.ruleLogic);
   }
 
