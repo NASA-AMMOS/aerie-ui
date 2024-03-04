@@ -117,14 +117,17 @@ export class Plan {
   }
 
   async deleteAllActivities() {
-    await this.panelActivityDirectivesTable.getByRole('gridcell').first().click({ button: 'right' });
-    await this.page.locator('.context-menu > .context-menu-item:has-text("Select All Activity Directives")').click();
-    await this.panelActivityDirectivesTable.getByRole('gridcell').first().click({ button: 'right' });
-    await this.page.getByText(/Delete \d+ Activit(y|ies) Directives?/).click();
+    const gridCells = await this.panelActivityDirectivesTable.getByRole('gridcell');
+    if ((await gridCells.count()) > 0) {
+      await this.panelActivityDirectivesTable.getByRole('gridcell').first().click({ button: 'right' });
+      await this.page.locator('.context-menu > .context-menu-item:has-text("Select All Activity Directives")').click();
+      await this.panelActivityDirectivesTable.getByRole('gridcell').first().click({ button: 'right' });
+      await this.page.getByText(/Delete \d+ Activit(y|ies) Directives?/).click();
 
-    const applyPresetButton = this.page.getByRole('button', { name: 'Confirm' });
-    await applyPresetButton.waitFor({ state: 'attached', timeout: 1000 });
-    await applyPresetButton.click();
+      const confirmDeletionButton = this.page.getByRole('button', { name: 'Confirm' });
+      await confirmDeletionButton.waitFor({ state: 'attached', timeout: 1000 });
+      await confirmDeletionButton.click();
+    }
   }
 
   async fillActivityPresetName(presetName: string) {
