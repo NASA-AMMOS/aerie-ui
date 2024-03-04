@@ -15,7 +15,7 @@ import {
   savingExpansionRule,
   savingExpansionSet,
 } from '../stores/expansion';
-import { createModelError, createPlanError, creatingModel, creatingPlan, models } from '../stores/plan';
+import { createModelError, createPlanError, creatingModel, creatingPlan, models, planId } from '../stores/plan';
 import { schedulingRequests, selectedSpecId } from '../stores/scheduling';
 import { commandDictionaries } from '../stores/sequencing';
 import { selectedSpanId, simulationDataset, simulationDatasetId } from '../stores/simulation';
@@ -3772,7 +3772,10 @@ const effects = {
             const { reason, analysisId } = schedule;
             if (reason) {
               catchSchedulingError(reason);
+              showFailureToast(`Scheduling ${analysis_only ? 'Analysis ' : ''}Failed`);
+              return;
             }
+
             const unsubscribe = schedulingRequests.subscribe(async (requests: SchedulingRequest[]) => {
               const matchingRequest = requests.find(request => request.analysis_id === analysisId);
               if (matchingRequest) {
@@ -3786,7 +3789,7 @@ const effects = {
                   if (
                     typeof matchingRequest.dataset_id === 'number' &&
                     currentSimulationDataset !== null &&
-                    matchingRequest.dataset_id !== currentSimulationDataset.id
+                    matchingRequest.dataset_id !== currentSimulationDataset.dataset_id
                   ) {
                     const simDatasetIdData = await reqHasura<{ id: number }>(
                       gql.GET_SIMULATION_DATASET_ID,
@@ -3804,10 +3807,16 @@ const effects = {
                 } else if (matchingRequest.status === 'failed') {
                   if (matchingRequest.reason) {
                     catchSchedulingError(matchingRequest.reason);
-                    showFailureToast(`Scheduling ${analysis_only ? 'Analysis ' : ''}Failed`);
                   }
+                  showFailureToast(`Scheduling ${analysis_only ? 'Analysis ' : ''}Failed`);
                   unsubscribe();
                 }
+              }
+            });
+            const planIdUnsubscribe = planId.subscribe(currentPlanId => {
+              if (currentPlanId < 0 || currentPlanId !== plan.id) {
+                unsubscribe();
+                planIdUnsubscribe();
               }
             });
           } else {
