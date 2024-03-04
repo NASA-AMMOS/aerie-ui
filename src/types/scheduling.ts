@@ -125,5 +125,3 @@ export type SchedulingRequest = {
   specification_revision: number;
   status: 'success' | 'failed' | 'incomplete' | 'pending';
 };
-
-export type SchedulingRequestSlim = Pick<SchedulingRequest, 'canceled' | 'specification_id' | 'status'>;
