@@ -41,10 +41,20 @@
 
   async function onUpdateCondition(event: CustomEvent<SchedulingConditionPlanSpecification>) {
     const {
-      detail: { condition_metadata, condition_id, specification_id, ...conditionPlanSpec },
+      detail: { condition_metadata, specification_id, ...conditionPlanSpec },
     } = event;
 
-    await effects.updateSchedulingConditionPlanSpecification(condition_id, specification_id, conditionPlanSpec, user);
+    if ($plan) {
+      await effects.updateSchedulingConditionPlanSpecification(
+        $plan,
+        specification_id,
+        {
+          ...conditionPlanSpec,
+          specification_id,
+        },
+        user,
+      );
+    }
   }
 
   // Manually keep focus as scheduling condition elements are re-ordered.
@@ -92,14 +102,14 @@
         <div class="pt-1 st-typography-label">No scheduling conditions found</div>
         <div class="private-label">
           {#if numOfPrivateConditions > 0}
-            {numOfPrivateConditions} constraint{numOfPrivateConditions !== 1 ? 's' : ''}
+            {numOfPrivateConditions} scheduling condition{numOfPrivateConditions !== 1 ? 's' : ''}
             {numOfPrivateConditions > 1 ? 'are' : 'is'} private and not shown
           {/if}
         </div>
       {:else}
         <div class="private-label">
           {#if numOfPrivateConditions > 0}
-            {numOfPrivateConditions} constraint{numOfPrivateConditions !== 1 ? 's' : ''}
+            {numOfPrivateConditions} scheduling condition{numOfPrivateConditions !== 1 ? 's' : ''}
             {numOfPrivateConditions > 1 ? 'are' : 'is'} private and not shown
           {/if}
         </div>
@@ -108,12 +118,7 @@
             <SchedulingCondition
               condition={$schedulingConditionsMap[specCondition.condition_id]}
               conditionPlanSpec={specCondition}
-              hasEditPermission={$plan
-                ? featurePermissions.schedulingConditionsPlanSpec.canUpdate(
-                    user,
-                    $schedulingConditionsMap[specCondition.condition_id],
-                  )
-                : false}
+              hasEditPermission={$plan ? featurePermissions.schedulingConditionsPlanSpec.canUpdate(user, $plan) : false}
               modelId={$plan?.model.id}
               permissionError={$planReadOnly
                 ? PlanStatusMessages.READ_ONLY

@@ -501,6 +501,9 @@ const queryPermissions = {
   DELETE_SCHEDULING_CONDITION_METADATA_TAGS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['delete_scheduling_condition_metadata_tags'], user);
   },
+  DELETE_SCHEDULING_CONDITION_PLAN_SPECIFICATION: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission(['delete_scheduling_specification_conditions'], user);
+  },
   DELETE_SCHEDULING_GOAL_METADATA: (
     user: User | null,
     goalMetadata: AssetWithOwner<SchedulingGoalMetadata>,
@@ -513,8 +516,8 @@ const queryPermissions = {
   DELETE_SCHEDULING_GOAL_METADATA_TAGS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['delete_scheduling_goal_metadata_tags'], user);
   },
-  DELETE_SCHEDULING_SPEC_GOAL: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission(['delete_scheduling_specification_goals_by_pk'], user);
+  DELETE_SCHEDULING_GOAL_PLAN_SPECIFICATION: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission(['delete_scheduling_specification_goal'], user);
   },
   DELETE_SIMULATION_TEMPLATE: (user: User | null, template: SimulationTemplate): boolean => {
     return (
@@ -801,6 +804,13 @@ const queryPermissions = {
         (goal?.public || isUserOwner(user, goal)))
     );
   },
+  UPDATE_SCHEDULING_GOAL_PLAN_SPECIFICATIONS: (user: User | null, plan: PlanWithOwners): boolean => {
+    return (
+      isUserAdmin(user) ||
+      (getPermission(['insert_scheduling_specification_goal', 'delete_scheduling_specification_goal'], user) &&
+        (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
+    );
+  },
   UPDATE_SCHEDULING_PLAN_SPECIFICATIONS: (user: User | null, plan: PlanWithOwners): boolean => {
     return (
       isUserAdmin(user) ||
@@ -895,7 +905,7 @@ interface PlanSpecificationCRUDPermission<T = null> {
   canCreate: PlanAssetCreatePermissionCheck;
   canDelete: (user: User | null, asset: T) => boolean;
   canRead: ReadPermissionCheck<T>;
-  canUpdate: (user: User | null, asset: T) => boolean;
+  canUpdate: (user: User | null, plan: PlanWithOwners) => boolean;
 }
 
 interface PlanActivityPresetsCRUDPermission
@@ -1065,9 +1075,9 @@ const featurePermissions: FeaturePermissions = {
   },
   schedulingConditionsPlanSpec: {
     canCreate: user => queryPermissions.CREATE_SCHEDULING_CONDITION_PLAN_SPECIFICATION(user),
-    canDelete: (user, condition) => queryPermissions.DELETE_SCHEDULING_CONDITION_PLAN_SPECIFICATION(user, condition),
+    canDelete: user => queryPermissions.DELETE_SCHEDULING_CONDITION_PLAN_SPECIFICATION(user),
     canRead: () => false,
-    canUpdate: (user, condition) => queryPermissions.UPDATE_SCHEDULING_CONDITION_PLAN_SPECIFICATIONS(user, condition),
+    canUpdate: (user, plan) => queryPermissions.UPDATE_SCHEDULING_CONDITION_PLAN_SPECIFICATIONS(user, plan),
   },
   schedulingGoals: {
     canCreate: user => queryPermissions.CREATE_SCHEDULING_GOAL(user),

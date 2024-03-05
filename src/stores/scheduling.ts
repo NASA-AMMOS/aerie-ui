@@ -1,7 +1,7 @@
 import { keyBy } from 'lodash-es';
 import { derived, writable, type Readable, type Writable } from 'svelte/store';
 import { Status } from '../enums/status';
-import { plan, planId, planRevision } from '../stores/plan';
+import { plan, planRevision } from '../stores/plan';
 import type {
   SchedulingConditionDefinition,
   SchedulingConditionMetadata,
@@ -36,19 +36,6 @@ export const schedulingGoalsColumns: Writable<string> = writable('1fr 3px 2fr');
 export const selectedSpecId = derived(plan, $plan => $plan?.scheduling_specification?.id ?? null);
 
 /* Subscriptions. */
-
-export const schedulingSpec = gqlSubscribable<SchedulingPlanSpecification | null>(
-  gql.SUB_SCHEDULING_SPEC,
-  { planId },
-  null,
-  null,
-  (specs: SchedulingPlanSpecification[]) => {
-    if (specs && specs.length > 0) {
-      return specs[0];
-    }
-    return null;
-  },
-);
 
 export const schedulingRequests = gqlSubscribable<SchedulingRequest[]>(
   gql.SUB_SCHEDULING_REQUESTS,
@@ -172,7 +159,14 @@ export const latestSchedulingGoalAnalyses = derived(
     let latestAnalysisId = -1;
 
     $schedulingGoalSpecifications.forEach(schedulingSpecGoal => {
-      schedulingSpecGoal.goal_definition?.analyses?.forEach(analysis => {
+      let analyses: SchedulingGoalAnalysis[] = [];
+      if (schedulingSpecGoal.goal_definition != null) {
+        analyses = schedulingSpecGoal.goal_definition.analyses ?? [];
+      } else {
+        analyses = schedulingSpecGoal.goal_metadata?.versions[0].analyses ?? [];
+      }
+
+      analyses.forEach(analysis => {
         if (analysis.request.specification_id !== $selectedSpecId) {
           return;
         }
@@ -185,6 +179,7 @@ export const latestSchedulingGoalAnalyses = derived(
         }
       });
     });
+
     return analysisIdToSpecGoalMap[latestAnalysisId] || [];
   },
 );
@@ -207,7 +202,7 @@ export const schedulingAnalysisStatus = derived(
   [
     latestSchedulingRequest,
     latestSchedulingGoalAnalyses,
-    schedulingSpec,
+    schedulingPlanSpecification,
     planRevision,
     schedulingGoalCount,
     schedulingGoals,
@@ -217,7 +212,7 @@ export const schedulingAnalysisStatus = derived(
   ([
     $latestSchedulingRequest,
     $latestSchedulingGoalAnalyses,
-    $schedulingSpec,
+    $schedulingPlanSpecification,
     $planRevision,
     $schedulingGoalCount,
     $schedulingGoals,
@@ -249,12 +244,14 @@ export const schedulingAnalysisStatus = derived(
       if (matchingSimDataset) {
         schedulingPlanRevOutdated = !!matchingSimDataset && matchingSimDataset.plan_revision !== $planRevision;
       } else {
-        schedulingPlanRevOutdated = !!$schedulingSpec && $schedulingSpec?.plan_revision !== $planRevision;
+        schedulingPlanRevOutdated =
+          !!$schedulingPlanSpecification && $schedulingPlanSpecification?.plan_revision !== $planRevision;
       }
 
       if (
         schedulingPlanRevOutdated ||
-        ($schedulingSpec && $schedulingSpec.revision !== $latestSchedulingRequest.specification_revision)
+        ($schedulingPlanSpecification &&
+          $schedulingPlanSpecification.revision !== $latestSchedulingRequest.specification_revision)
       ) {
         return Status.Modified;
       } else if ($latestSchedulingRequest.status === 'failed') {

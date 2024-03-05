@@ -96,6 +96,7 @@ export type SchedulingGoalInsertInput = Omit<
 };
 
 export type SchedulingConditionPlanSpecInsertInput = Omit<SchedulingConditionPlanSpecification, 'condition_metadata'>;
+export type SchedulingGoalPlanSpecInsertInput = Omit<SchedulingGoalPlanSpecification, 'goal_metadata'>;
 
 export type SchedulingConditionMetadataSetInput = PartialWith<SchedulingConditionMetadata, 'owner'>;
 export type SchedulingGoalMetadataSetInput = PartialWith<SchedulingGoalMetadata, 'owner'>;
@@ -145,28 +146,16 @@ export type SchedulingConditionPlanSpecification = {
 
 export type SchedulingGoalPlanSpecification = {
   enabled: boolean;
-  goal_definition?: Pick<SchedulingGoalDefinition, 'analyses'>;
+  goal_definition?: Pick<SchedulingGoalDefinition, 'analyses'> | null;
   goal_id: number;
   goal_metadata:
     | (Pick<SchedulingGoalMetadata, 'name' | 'owner' | 'public'> & {
-        versions: Pick<SchedulingGoalDefinition, 'revision'>;
+        versions: Pick<SchedulingGoalDefinition, 'revision' | 'analyses'>[];
       })
     | null;
   goal_revision: number | null;
   priority: number;
   simulate_after: boolean;
-  specification_id: number;
-};
-
-export type SchedulingSpecConditionInsertInput = {
-  condition_id: number;
-  enabled: boolean;
-  specification_id: number;
-};
-
-export type SchedulingSpecGoalInsertInput = {
-  enabled: boolean;
-  goal_id: number;
   specification_id: number;
 };
 
