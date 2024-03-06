@@ -1020,7 +1020,7 @@ const gql = {
         collaborators {
           collaborator
         }
-        scheduling_specifications {
+        scheduling_specification {
           id
         }
         model_id
