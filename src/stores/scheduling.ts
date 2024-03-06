@@ -26,7 +26,7 @@ import { tags } from './tags';
 export const schedulingConditionMetadataId: Writable<number> = writable(-1);
 export const schedulingGoalMetadataId: Writable<number> = writable(-1);
 
-export const schedulingColumns: Writable<string> = writable('2fr 3px 1fr');
+export const schedulingColumns: Writable<string> = writable('1fr 3px 2fr');
 export const schedulingFormColumns: Writable<string> = writable('1fr 3px 2fr');
 export const schedulingConditionsFormColumns: Writable<string> = writable('1fr 3px 2fr');
 export const schedulingGoalsColumns: Writable<string> = writable('1fr 3px 2fr');
