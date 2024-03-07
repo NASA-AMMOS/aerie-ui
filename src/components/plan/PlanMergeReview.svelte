@@ -418,7 +418,16 @@
 
 <div class="flex">
   <Nav {user}>
-    <span class="" slot="title">Merge Review</span>
+    <span class="" slot="title"
+      >Merge Review:
+      <a href={`${base}/plans/${initialMergeRequest?.plan_receiving_changes.id}`} class="link">
+        {initialMergeRequest?.plan_receiving_changes.name}
+      </a>
+      from
+      <a href={`${base}/plans/${initialMergeRequest?.plan_snapshot_supplying_changes.plan.id}`} class="link">
+        {initialMergeRequest?.plan_snapshot_supplying_changes.plan.name}
+      </a>
+    </span>
   </Nav>
   <div class="merge-review-content">
     <CssGrid columns="0.5fr 3px 1fr 3px 1fr 3px 1fr" class="merge-review-content-grid">
@@ -985,5 +994,16 @@
     gap: 8px;
     justify-content: flex-end;
     padding: 8px;
+  }
+
+  .link {
+    color: var(--st-white);
+    font-size: 14px;
+    opacity: 0.7;
+    text-decoration: none;
+  }
+
+  .link:hover {
+    opacity: 1;
   }
 </style>

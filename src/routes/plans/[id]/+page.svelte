@@ -1,6 +1,8 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { goto } from '$app/navigation';
+  import { base } from '$app/paths';
   import { page } from '$app/stores';
   import ActivityIcon from '@nasa-jpl/stellar/icons/activity.svg?component';
   import CalendarIcon from '@nasa-jpl/stellar/icons/calendar.svg?component';
@@ -65,6 +67,7 @@
     planEndTimeMs,
     planId,
     planReadOnly,
+    planReadOnlyMergeRequest,
     planReadOnlySnapshot,
     planStartTimeMs,
     planTags,
@@ -532,8 +535,14 @@
     : `var(--nav-header-height) auto ${consoleHeightString}`}
 >
   <Nav user={data.user}>
-    <div slot="title">
+    <div class="title" slot="title">
       <PlanMenu plan={data.initialPlan} user={data.user} />
+
+      {#if $planReadOnlyMergeRequest}
+        <button on:click={() => goto(`${base}/plans/${data.initialPlan.id}/merge`)} class="st-button secondary">
+          Open Merge Request
+        </button>
+      {/if}
     </div>
     <svelte:fragment slot="left">
       <PlanMergeRequestsStatusButton user={data.user} />
@@ -861,5 +870,10 @@
     align-items: center;
     display: flex;
     gap: 8px;
+  }
+
+  .title {
+    display: flex;
+    gap: 10px;
   }
 </style>
