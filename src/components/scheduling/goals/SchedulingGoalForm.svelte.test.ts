@@ -10,7 +10,7 @@ describe('Scheduling Goal Form component', () => {
     cleanup();
   });
 
-  it('Should not assume all plans have a scheduling spec', () => {
+  it('Should no longer require plans for a shared scheduling spec', () => {
     const { container } = render(SchedulingGoalForm, {
       user: {
         activeRole: ADMIN_ROLE,
