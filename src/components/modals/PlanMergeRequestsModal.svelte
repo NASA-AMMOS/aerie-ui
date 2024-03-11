@@ -205,7 +205,7 @@
                   on:click={() => goto(`${base}/plans/${planMergeRequest.plan_receiving_changes.id}/merge`)}
                   class="st-button secondary"
                 >
-                  Open Merge Request
+                  View Merge Request
                 </button>
 
                 {#if planMergeRequest.status === 'pending'}

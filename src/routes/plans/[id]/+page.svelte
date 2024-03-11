@@ -540,7 +540,7 @@
 
       {#if $planReadOnlyMergeRequest}
         <button on:click={() => goto(`${base}/plans/${data.initialPlan.id}/merge`)} class="st-button secondary">
-          Open Merge Request
+          View Merge Request
         </button>
       {/if}
     </div>
