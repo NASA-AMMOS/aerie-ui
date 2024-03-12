@@ -120,8 +120,6 @@
   }
   $: if ($startTimeDoyField.invalid || $endTimeDoyField.invalid) {
     buttonTooltip = 'Simulation start and end times are not valid';
-  } else if ($simulationStatus === Status.Complete || $simulationStatus === Status.Failed) {
-    buttonTooltip = 'Simulation up-to-date';
   } else {
     buttonTooltip = '';
   }
@@ -135,6 +133,12 @@
   } else {
     filteredSimulationDatasets = $simulationDatasetsPlan;
   }
+
+  $: enableRerunSimulation =
+    !$enableSimulation &&
+    ($simulationStatus === Status.Complete ||
+      $simulationStatus === Status.Canceled ||
+      $simulationStatus === Status.Failed);
 
   async function onChangeFormParameters(event: CustomEvent<FormParameter>) {
     if ($simulation !== null && $plan !== null) {
@@ -293,9 +297,11 @@
     <GridMenu {gridSection} title="Simulation" />
     <PanelHeaderActions>
       <PanelHeaderActionButton
-        disabled={!$enableSimulation || $startTimeDoyField.invalid || $endTimeDoyField.invalid}
+        disabled={(!$enableSimulation && !enableRerunSimulation) ||
+          $startTimeDoyField.invalid ||
+          $endTimeDoyField.invalid}
         tooltipContent={buttonTooltip}
-        title="Simulate"
+        title={enableRerunSimulation ? 'Re-Run Simulation' : 'Simulate'}
         showLabel
         use={[
           [
@@ -308,7 +314,7 @@
             },
           ],
         ]}
-        on:click={() => effects.simulate($plan, user)}
+        on:click={() => effects.simulate($plan, enableRerunSimulation, user)}
       />
     </PanelHeaderActions>
   </svelte:fragment>

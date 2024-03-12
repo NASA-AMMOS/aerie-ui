@@ -601,7 +601,7 @@
         progress={$simulationProgress}
         disabled={!$enableSimulation}
         showStatusInMenu={false}
-        on:click={() => effects.simulate($plan, data.user)}
+        on:click={() => effects.simulate($plan, false, data.user)}
       >
         <PlayIcon />
         <svelte:fragment slot="metadata">
