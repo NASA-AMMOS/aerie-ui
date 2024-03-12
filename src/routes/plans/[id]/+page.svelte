@@ -428,7 +428,7 @@
   function onKeydown(event: KeyboardEvent): void {
     if (isSaveEvent(event)) {
       event.preventDefault();
-      effects.simulate($plan, data.user);
+      effects.simulate($plan, false, data.user);
     }
   }
 
