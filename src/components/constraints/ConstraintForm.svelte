@@ -9,7 +9,6 @@
   import type { User, UserId } from '../../types/app';
   import type { ConstraintDefinitionTagsInsertInput, ConstraintMetadataTagsInsertInput, Tag } from '../../types/tags';
   import effects from '../../utilities/effects';
-  import { getTarget } from '../../utilities/generic';
   import { featurePermissions } from '../../utilities/permissions';
   import PageTitle from '../app/PageTitle.svelte';
   import AssociationForm from '../ui/Association/AssociationForm.svelte';
@@ -51,10 +50,10 @@
     dispatch('selectRevision', parseInt(`${revision}`));
   }
 
-  function onRevisionSelection(event: Event) {
-    const { value } = getTarget(event);
+  function onRevisionSelection(event: CustomEvent<number>) {
+    const { detail } = event;
 
-    selectRevision(`${value}`);
+    selectRevision(`${detail}`);
   }
 
   function onClose() {
