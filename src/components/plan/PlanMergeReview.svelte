@@ -317,6 +317,7 @@
         user,
       );
       if (success) {
+        $planReadOnlyMergeRequest = false;
         userInitiatedMergeRequestResolution = true;
         goto(`${base}/plans/${initialPlan.id}`);
       }
@@ -332,6 +333,7 @@
         user,
       );
       if (success) {
+        $planReadOnlyMergeRequest = false;
         userInitiatedMergeRequestResolution = true;
         goto(`${base}/plans/${initialPlan.id}`);
       }
@@ -732,7 +734,7 @@
       }}
       on:click={onCancel}
     >
-      Cancel
+      Cancel Review
     </button>
     <button
       class="st-button red"
