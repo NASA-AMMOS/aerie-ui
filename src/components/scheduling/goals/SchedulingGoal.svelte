@@ -75,7 +75,7 @@
     const { value: revision } = getTarget(event);
     dispatch('updateGoalPlanSpec', {
       ...goalPlanSpec,
-      condition_revision: revision === '' ? null : parseInt(`${revision}`),
+      goal_revision: revision === '' ? null : parseInt(`${revision}`),
     });
   }
 
