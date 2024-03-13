@@ -538,8 +538,16 @@
     <div class="title" slot="title">
       <PlanMenu plan={data.initialPlan} user={data.user} />
 
-      {#if $planReadOnlyMergeRequest}
-        <button on:click={() => goto(`${base}/plans/${data.initialPlan.id}/merge`)} class="st-button secondary">
+      {#if $planReadOnlyMergeRequest || data.initialPlan.parent_plan?.is_locked}
+        <button
+          on:click={() =>
+            goto(
+              `${base}/plans/${
+                data.initialPlan.parent_plan?.id ? data.initialPlan.parent_plan?.id : data.initialPlan.id
+              }/merge`,
+            )}
+          class="st-button secondary"
+        >
           View Merge Request
         </button>
       {/if}
