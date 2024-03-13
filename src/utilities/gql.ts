@@ -2160,7 +2160,7 @@ const gql = {
   SUB_SCHEDULING_GOALS: `#graphql
     subscription SubSchedulingGoals {
       goals: scheduling_goal_metadata(order_by: { name: asc }) {
-        analyses {
+        analyses(order_by: { analysis_id: desc }) {
           analysis_id
           goal_id
           goal_revision
@@ -2231,7 +2231,7 @@ const gql = {
         goals {
           enabled
           goal_definition {
-            analyses {
+            analyses(order_by: { analysis_id: desc }) {
               analysis_id
               goal_id
               goal_revision
@@ -2250,7 +2250,7 @@ const gql = {
             owner
             public
             versions(order_by: {revision: desc}, limit: 1) {
-              analyses {
+              analyses(order_by: { analysis_id: desc }) {
                 analysis_id
                 goal_id
                 goal_revision
