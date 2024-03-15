@@ -7,6 +7,7 @@
   import { SearchParameters } from '../../enums/searchParameters';
   import { constraints } from '../../stores/constraints';
   import type { User, UserId } from '../../types/app';
+  import type { TypeScriptFile } from '../../types/monaco';
   import type { ConstraintDefinitionTagsInsertInput, ConstraintMetadataTagsInsertInput, Tag } from '../../types/tags';
   import effects from '../../utilities/effects';
   import { featurePermissions } from '../../utilities/permissions';
@@ -37,6 +38,7 @@
   let hasWriteMetadataPermission: boolean = false;
   let pageTitle = mode === 'edit' ? 'Constraints' : 'New Constraint';
   let pageSubtitle = mode === 'edit' ? initialConstraintName : '';
+  let constraintsTsFiles: TypeScriptFile[] = [];
 
   $: hasCreateDefinitionCodePermission = featurePermissions.constraints.canCreate(user);
   $: hasWriteMetadataPermission =
@@ -54,6 +56,16 @@
     const { detail } = event;
 
     selectRevision(`${detail}`);
+  }
+
+  function onSelectReferenceModel(event: CustomEvent<number | null>) {
+    const { detail: modelId } = event;
+    if (modelId !== null) {
+      effects.getTsFilesConstraints(modelId, user).then(tsFiles => (constraintsTsFiles = tsFiles));
+    } else {
+      constraintsTsFiles = [];
+    }
+    dispatch('selectReferenceModel', modelId);
   }
 
   function onClose() {
@@ -210,6 +222,7 @@
   {permissionError}
   revisions={constraintRevisions}
   {tags}
+  tsFiles={constraintsTsFiles}
   {mode}
   {user}
   on:close={onClose}
@@ -218,5 +231,5 @@
   on:updateDefinitionTags={onSaveConstraintDefinitionRevisionTags}
   on:updateMetadata={onSaveConstraintMetadata}
   on:selectRevision={onRevisionSelection}
-  on:selectReferenceModel
+  on:selectReferenceModel={onSelectReferenceModel}
 />

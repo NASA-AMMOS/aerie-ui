@@ -13,6 +13,7 @@
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import Input from '../form/Input.svelte';
+  import DefinitionEditor from '../ui/Association/DefinitionEditor.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
   import DataGridActions from '../ui/DataGrid/DataGridActions.svelte';
@@ -20,7 +21,6 @@
   import SingleActionDataGrid from '../ui/DataGrid/SingleActionDataGrid.svelte';
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
-  import ConstraintEditor from './ConstraintEditor.svelte';
 
   export let user: User | null;
 
@@ -255,12 +255,11 @@
 
   <CssGridGutter track={1} type="column" />
 
-  <ConstraintEditor
-    constraintDefinition={selectedConstraint
+  <DefinitionEditor
+    definition={selectedConstraint
       ? selectedConstraint.versions[selectedConstraint.versions.length - 1].definition
       : 'No Constraint Selected'}
     readOnly={true}
     title="Constraint - Definition Editor (Read-only)"
-    {user}
   />
 </CssGrid>

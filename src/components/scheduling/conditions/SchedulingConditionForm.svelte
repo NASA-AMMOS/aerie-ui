@@ -7,6 +7,7 @@
   import { SearchParameters } from '../../../enums/searchParameters';
   import { schedulingConditions } from '../../../stores/scheduling';
   import type { User, UserId } from '../../../types/app';
+  import type { TypeScriptFile } from '../../../types/monaco';
   import type {
     SchedulingConditionDefinitionTagsInsertInput,
     SchedulingConditionMetadataTagsInsertInput,
@@ -41,6 +42,7 @@
   let hasCreateDefinitionCodePermission: boolean = false;
   let hasWriteMetadataPermission: boolean = false;
 
+  let conditionsTsFiles: TypeScriptFile[] = [];
   $: hasCreateDefinitionCodePermission = featurePermissions.schedulingConditions.canCreate(user);
   $: hasWriteMetadataPermission =
     mode === 'create'
@@ -55,6 +57,16 @@
     const { detail } = event;
 
     selectRevision(`${detail}`);
+  }
+
+  function onSelectReferenceModel(event: CustomEvent<number | null>) {
+    const { detail: modelId } = event;
+    if (modelId !== null) {
+      effects.getTsFilesScheduling(modelId, user).then(tsFiles => (conditionsTsFiles = tsFiles));
+    } else {
+      conditionsTsFiles = [];
+    }
+    dispatch('selectReferenceModel', modelId);
   }
 
   function onClose() {
@@ -210,6 +222,7 @@
   {permissionError}
   revisions={conditionRevisions}
   {tags}
+  tsFiles={conditionsTsFiles}
   {mode}
   {user}
   on:close={onClose}
@@ -218,5 +231,5 @@
   on:updateDefinitionTags={onSaveConditionDefinitionRevisionTags}
   on:updateMetadata={onSaveConditionMetadata}
   on:selectRevision={onRevisionSelection}
-  on:selectReferenceModel
+  on:selectReferenceModel={onSelectReferenceModel}
 />

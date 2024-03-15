@@ -3,24 +3,21 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { models } from '../../../stores/plan';
-  import type { User } from '../../../types/app';
   import type { DropdownOptions, SelectedDropdownOptionValue } from '../../../types/dropdown';
   import type { Monaco, TypeScriptFile } from '../../../types/monaco';
-  import effects from '../../../utilities/effects';
   import MonacoEditor from '../../ui/MonacoEditor.svelte';
   import Panel from '../../ui/Panel.svelte';
   import SearchableDropdown from '../../ui/SearchableDropdown.svelte';
   import SectionTitle from '../../ui/SectionTitle.svelte';
 
+  export let tsFiles: TypeScriptFile[] = [];
   export let definition: string = '';
   export let referenceModelId: number | null = null;
   export let readOnly: boolean = false;
   export let title: string = 'Constraint - Definition Editor';
-  export let user: User | null;
 
   const dispatch = createEventDispatcher();
 
-  let constraintsTsFiles: TypeScriptFile[];
   let modelOptions: DropdownOptions = [];
   let monaco: Monaco;
 
@@ -30,20 +27,14 @@
     value: id,
   }));
 
-  $: if (referenceModelId !== null) {
-    effects.getTsFilesConstraints(referenceModelId, user).then(tsFiles => (constraintsTsFiles = tsFiles));
-  } else {
-    constraintsTsFiles = [];
-  }
-
-  $: if (monaco !== undefined && constraintsTsFiles !== undefined) {
+  $: if (monaco !== undefined && tsFiles !== undefined) {
     const { languages } = monaco;
     const { typescript } = languages;
     const { typescriptDefaults } = typescript;
     const options = typescriptDefaults.getCompilerOptions();
 
     typescriptDefaults.setCompilerOptions({ ...options, lib: ['esnext'], strictNullChecks: true });
-    typescriptDefaults.setExtraLibs(constraintsTsFiles);
+    typescriptDefaults.setExtraLibs(tsFiles);
   }
 
   function onSelectReferenceModel(event: CustomEvent<SelectedDropdownOptionValue>) {

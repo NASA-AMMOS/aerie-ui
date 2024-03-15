@@ -12,9 +12,9 @@
   import type { DataGridRowSelection } from '../../types/data-grid';
   import type { SchedulingConditionMetadata, SchedulingGoalMetadata } from '../../types/scheduling';
   import effects from '../../utilities/effects';
+  import DefinitionEditor from '../ui/Association/DefinitionEditor.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
-  import SchedulingEditor from './SchedulingEditor.svelte';
   import SchedulingConditions from './conditions/SchedulingConditions.svelte';
   import SchedulingGoals from './goals/SchedulingGoals.svelte';
 
@@ -136,12 +136,11 @@
 
   <CssGridGutter track={1} type="column" />
 
-  <SchedulingEditor
-    scheduleItemDefinition={selectedItem
+  <DefinitionEditor
+    definition={selectedItem
       ? selectedItem?.versions[selectedItem.versions.length - 1].definition
       : 'No Scheduling Goal or Condition Selected'}
     readOnly={true}
     title={editorTitle}
-    {user}
   />
 </CssGrid>

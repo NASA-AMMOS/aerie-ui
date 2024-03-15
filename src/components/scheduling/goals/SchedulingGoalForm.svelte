@@ -7,6 +7,7 @@
   import { SearchParameters } from '../../../enums/searchParameters';
   import { schedulingGoals } from '../../../stores/scheduling';
   import type { User, UserId } from '../../../types/app';
+  import type { TypeScriptFile } from '../../../types/monaco';
   import type {
     SchedulingGoalDefinitionTagsInsertInput,
     SchedulingGoalMetadataTagsInsertInput,
@@ -38,6 +39,7 @@
     mode === 'edit' ? 'edit this' : 'create a'
   } scheduling goal.`;
 
+  let goalsTsFiles: TypeScriptFile[] = [];
   let hasCreateDefinitionCodePermission: boolean = false;
   let hasWriteMetadataPermission: boolean = false;
 
@@ -55,6 +57,16 @@
     const { detail } = event;
 
     selectRevision(`${detail}`);
+  }
+
+  function onSelectReferenceModel(event: CustomEvent<number | null>) {
+    const { detail: modelId } = event;
+    if (modelId !== null) {
+      effects.getTsFilesScheduling(modelId, user).then(tsFiles => (goalsTsFiles = tsFiles));
+    } else {
+      goalsTsFiles = [];
+    }
+    dispatch('selectReferenceModel', modelId);
   }
 
   function onClose() {
@@ -206,6 +218,7 @@
   {permissionError}
   revisions={goalRevisions}
   {tags}
+  tsFiles={goalsTsFiles}
   {mode}
   {user}
   on:close={onClose}
@@ -214,5 +227,5 @@
   on:updateDefinitionTags={onSaveGoalDefinitionRevisionTags}
   on:updateMetadata={onSaveGoalMetadata}
   on:selectRevision={onRevisionSelection}
-  on:selectReferenceModel
+  on:selectReferenceModel={onSelectReferenceModel}
 />

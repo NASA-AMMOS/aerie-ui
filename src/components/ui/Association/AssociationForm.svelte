@@ -44,6 +44,7 @@
   import { SvelteComponent, createEventDispatcher, type ComponentEvents } from 'svelte';
   import type { User, UserId } from '../../../types/app';
   import type { BaseDefinition, BaseMetadata } from '../../../types/metadata';
+  import type { TypeScriptFile } from '../../../types/monaco';
   import type { Tag, TagsChangeEvent } from '../../../types/tags';
   import effects from '../../../utilities/effects';
   import { getTarget } from '../../../utilities/generic';
@@ -81,6 +82,7 @@
   export let permissionError: string = '';
   export let revisions: number[] = [];
   export let tags: Tag[] = [];
+  export let tsFiles: TypeScriptFile[] = [];
   export let mode: 'create' | 'edit' = 'create';
   export let user: User | null;
 
@@ -532,8 +534,8 @@
     definition={definitionCode}
     {referenceModelId}
     readOnly={!hasCreateDefinitionCodePermission}
+    {tsFiles}
     title={`${mode === 'create' ? 'New' : 'Edit'} ${displayName} - Definition Editor`}
-    {user}
     on:didChangeModelContent={onDidChangeModelContent}
     on:selectReferenceModel={onSelectReferenceModel}
   />
