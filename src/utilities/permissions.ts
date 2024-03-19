@@ -358,7 +358,7 @@ const queryPermissions = {
     return isUserAdmin(user) || getPermission(['insert_plan_tags'], user);
   },
   CREATE_SCHEDULING_CONDITION: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission(['insert_scheduling_condition_one'], user);
+    return isUserAdmin(user) || getPermission(['insert_scheduling_condition_metadata_one'], user);
   },
   CREATE_SCHEDULING_CONDITION_DEFINITION: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['insert_scheduling_condition_definition_one'], user);
@@ -367,7 +367,7 @@ const queryPermissions = {
     return isUserAdmin(user) || getPermission(['insert_scheduling_specification_conditions_one'], user);
   },
   CREATE_SCHEDULING_GOAL: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission(['insert_scheduling_goal_one'], user);
+    return isUserAdmin(user) || getPermission(['insert_scheduling_goal_metadata_one'], user);
   },
   CREATE_SCHEDULING_GOAL_DEFINITION: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission(['insert_scheduling_goal_definition_one'], user);
