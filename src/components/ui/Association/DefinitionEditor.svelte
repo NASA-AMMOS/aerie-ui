@@ -1,6 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import type { editor as Editor, languages } from 'monaco-editor/esm/vs/editor/editor.api';
   import { createEventDispatcher } from 'svelte';
   import { models } from '../../../stores/plan';
   import type { DropdownOptions, SelectedDropdownOptionValue } from '../../../types/dropdown';
@@ -20,6 +21,7 @@
 
   let modelOptions: DropdownOptions = [];
   let monaco: Monaco;
+  let worker: languages.typescript.TypeScriptWorker | null = null;
 
   $: modelOptions = $models.map(({ id, name, version }) => ({
     display: `${name} (Version: ${version})`,
@@ -27,14 +29,31 @@
     value: id,
   }));
 
-  $: if (monaco !== undefined && tsFiles !== undefined) {
+  $: if (monaco !== undefined) {
     const { languages } = monaco;
     const { typescript } = languages;
     const { typescriptDefaults } = typescript;
     const options = typescriptDefaults.getCompilerOptions();
 
     typescriptDefaults.setCompilerOptions({ ...options, lib: ['esnext'], strictNullChecks: true });
+  }
+
+  $: if (monaco !== undefined && tsFiles !== undefined && worker != null) {
+    const { languages } = monaco;
+    const { typescript } = languages;
+    const { typescriptDefaults } = typescript;
     typescriptDefaults.setExtraLibs(tsFiles);
+  }
+
+  function workerFullyLoaded(
+    event: CustomEvent<{
+      editor: Editor.IStandaloneCodeEditor;
+      model: Editor.ITextModel;
+      worker: languages.typescript.TypeScriptWorker;
+    }>,
+  ) {
+    const { worker: eventWorker } = event.detail;
+    worker = eventWorker;
   }
 
   function onSelectReferenceModel(event: CustomEvent<SelectedDropdownOptionValue>) {
@@ -73,6 +92,7 @@
       tabSize={2}
       value={definition}
       on:didChangeModelContent
+      on:fullyLoaded={workerFullyLoaded}
     />
   </svelte:fragment>
 </Panel>

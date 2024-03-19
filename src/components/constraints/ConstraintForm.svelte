@@ -47,6 +47,15 @@
       : featurePermissions.constraints.canUpdate(user, { owner: initialConstraintOwner });
   $: pageTitle = mode === 'edit' ? 'Constraints' : 'New Constraint';
   $: pageSubtitle = mode === 'edit' ? initialConstraintName : '';
+  $: selectReferenceModel(initialReferenceModelId);
+
+  function selectReferenceModel(modelId: number | null) {
+    if (modelId !== null) {
+      effects.getTsFilesScheduling(modelId, user).then(tsFiles => (constraintsTsFiles = tsFiles));
+    } else {
+      constraintsTsFiles = [];
+    }
+  }
 
   function selectRevision(revision: number | string) {
     dispatch('selectRevision', parseInt(`${revision}`));
@@ -60,11 +69,7 @@
 
   function onSelectReferenceModel(event: CustomEvent<number | null>) {
     const { detail: modelId } = event;
-    if (modelId !== null) {
-      effects.getTsFilesConstraints(modelId, user).then(tsFiles => (constraintsTsFiles = tsFiles));
-    } else {
-      constraintsTsFiles = [];
-    }
+    selectReferenceModel(modelId);
     dispatch('selectReferenceModel', modelId);
   }
 

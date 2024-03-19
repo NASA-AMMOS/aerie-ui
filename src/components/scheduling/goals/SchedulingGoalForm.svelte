@@ -48,6 +48,15 @@
     mode === 'create'
       ? featurePermissions.schedulingGoals.canCreate(user)
       : featurePermissions.schedulingGoals.canUpdate(user, { owner: initialGoalOwner });
+  $: selectReferenceModel(initialReferenceModelId);
+
+  function selectReferenceModel(modelId: number | null) {
+    if (modelId !== null) {
+      effects.getTsFilesScheduling(modelId, user).then(tsFiles => (goalsTsFiles = tsFiles));
+    } else {
+      goalsTsFiles = [];
+    }
+  }
 
   function selectRevision(revision: number | string) {
     dispatch('selectRevision', parseInt(`${revision}`));
@@ -61,11 +70,7 @@
 
   function onSelectReferenceModel(event: CustomEvent<number | null>) {
     const { detail: modelId } = event;
-    if (modelId !== null) {
-      effects.getTsFilesScheduling(modelId, user).then(tsFiles => (goalsTsFiles = tsFiles));
-    } else {
-      goalsTsFiles = [];
-    }
+    selectReferenceModel(modelId);
     dispatch('selectReferenceModel', modelId);
   }
 
