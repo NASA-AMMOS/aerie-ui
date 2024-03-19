@@ -33,6 +33,7 @@
     "test:e2e:codegen": "playwright codegen http://localhost:3000",
     "test:e2e:debug": "PWDEBUG=1 playwright test",
     "test:unit": "vitest run",
+    "test:unit:coverage": "vitest run --coverage",
     "version": "node ./scripts/version.js"
   },
   "dependencies": {
@@ -95,6 +96,7 @@
     "@typescript-eslint/eslint-plugin": "^5.60.1",
     "@typescript-eslint/parser": "^5.60.1",
     "@vitejs/plugin-basic-ssl": "^1.1.0",
+    "@vitest/coverage-v8": "^1.4.0",
     "@vitest/ui": "^1.4.0",
     "cloc": "^2.11.0",
     "d3-format": "^3.1.0",
