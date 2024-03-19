@@ -776,11 +776,18 @@ const queryPermissions = {
         (condition?.public || isUserOwner(user, condition)))
     );
   },
+  UPDATE_SCHEDULING_CONDITION_PLAN_SPECIFICATION: (user: User | null, plan: PlanWithOwners): boolean => {
+    return (
+      isUserAdmin(user) ||
+      (getPermission(['update_scheduling_specification_conditions_by_pk'], user) &&
+        (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
+    );
+  },
   UPDATE_SCHEDULING_CONDITION_PLAN_SPECIFICATIONS: (user: User | null, plan: PlanWithOwners): boolean => {
     return (
       isUserAdmin(user) ||
       (getPermission(
-        ['insert_scheduling_specification_condition', 'delete_scheduling_specification_condition'],
+        ['insert_scheduling_specification_conditions', 'delete_scheduling_specification_conditions'],
         user,
       ) &&
         (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
@@ -804,10 +811,17 @@ const queryPermissions = {
         (goal?.public || isUserOwner(user, goal)))
     );
   },
+  UPDATE_SCHEDULING_GOAL_PLAN_SPECIFICATION: (user: User | null, plan: PlanWithOwners): boolean => {
+    return (
+      isUserAdmin(user) ||
+      (getPermission(['update_scheduling_specification_goals_by_pk'], user) &&
+        (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
+    );
+  },
   UPDATE_SCHEDULING_GOAL_PLAN_SPECIFICATIONS: (user: User | null, plan: PlanWithOwners): boolean => {
     return (
       isUserAdmin(user) ||
-      (getPermission(['insert_scheduling_specification_goal', 'delete_scheduling_specification_goal'], user) &&
+      (getPermission(['insert_scheduling_specification_goals', 'delete_scheduling_specification_goals'], user) &&
         (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
     );
   },

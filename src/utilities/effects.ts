@@ -4484,7 +4484,7 @@ const effects = {
     user: User | null,
   ) {
     try {
-      if (!queryPermissions.UPDATE_SCHEDULING_GOAL_PLAN_SPECIFICATIONS(user, plan)) {
+      if (!queryPermissions.UPDATE_SCHEDULING_GOAL_PLAN_SPECIFICATION(user, plan)) {
         throwPermissionError('update this scheduling goal plan specification');
       }
       const {
