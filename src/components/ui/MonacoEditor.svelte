@@ -148,6 +148,7 @@
             // Manually trigger a change in the editor to evaluate the source on load
             // Will highlight errors on load without the user having to input something in the editor
             editor.trigger('', 'type', { text: ' ' });
+            editor.trigger('', 'deleteLeft', {});
           }
         },
         5,
