@@ -193,7 +193,7 @@
     return featurePermissions.constraints.canDelete(user, constraint) && !isConstraintInUse(constraint);
   }
 
-  function hasEditPermission(_user: User | null, constraint: ConstraintMetadata) {
+  function hasEditPermission(user: User | null, constraint: ConstraintMetadata) {
     return featurePermissions.constraints.canUpdate(user, constraint);
   }
 
