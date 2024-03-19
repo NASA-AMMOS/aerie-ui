@@ -109,13 +109,13 @@
   let prevMetadataTags: Tag[] = initialMetadataTags;
   let prevDefinitionTags: Tag[] = initialDefinitionTags;
 
-  $: if (!diffTags(prevMetadataTags, metadataTags)) {
+  $: if (diffTags(prevMetadataTags, initialMetadataTags)) {
     metadataTags = initialMetadataTags;
     prevMetadataTags = initialMetadataTags;
   }
   $: defintionAuthor = initialDefinitionAuthor ?? user?.id ?? null;
   $: definitionCode = initialDefinitionCode;
-  $: if (!diffTags(prevDefinitionTags, definitionTags)) {
+  $: if (diffTags(prevDefinitionTags, initialDefinitionTags)) {
     definitionTags = initialDefinitionTags;
     prevDefinitionTags = initialDefinitionTags;
   }
