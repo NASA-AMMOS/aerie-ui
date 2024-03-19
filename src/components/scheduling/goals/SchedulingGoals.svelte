@@ -86,7 +86,7 @@
     },
   ];
 
-  const permissionError = 'You do not have permission to create a constraint.';
+  const permissionError = 'You do not have permission to create a scheduling goal.';
 
   let columnDefs: DataGridColumnDef[] = baseColumnDefs;
 
