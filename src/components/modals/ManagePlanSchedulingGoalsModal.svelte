@@ -17,7 +17,7 @@
   } from '../../types/scheduling';
   import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';
-  import { featurePermissions } from '../../utilities/permissions';
+  import { featurePermissions, isAdminRole } from '../../utilities/permissions';
   import Input from '../form/Input.svelte';
   import DataGrid from '../ui/DataGrid/DataGrid.svelte';
   import DataGridActions from '../ui/DataGrid/DataGridActions.svelte';
@@ -101,12 +101,20 @@
   let hasEditSpecPermission: boolean = false;
   let selectedGoals: Record<string, boolean> = {};
 
-  $: filteredGoals = $schedulingGoals.filter(goal => {
-    const filterTextLowerCase = filterText.toLowerCase();
-    const includesId = `${goal.id}`.includes(filterTextLowerCase);
-    const includesName = goal.name.toLocaleLowerCase().includes(filterTextLowerCase);
-    return includesId || includesName;
-  });
+  $: filteredGoals = $schedulingGoals
+    // TODO: remove this after db merge as it becomes redundant
+    .filter(({ owner, public: isPublic }) => {
+      if (!isPublic && !isAdminRole(user?.activeRole)) {
+        return owner === user?.id;
+      }
+      return true;
+    })
+    .filter(goal => {
+      const filterTextLowerCase = filterText.toLowerCase();
+      const includesId = `${goal.id}`.includes(filterTextLowerCase);
+      const includesName = goal.name.toLocaleLowerCase().includes(filterTextLowerCase);
+      return includesId || includesName;
+    });
   $: selectedGoals = $allowedSchedulingGoalSpecs.reduce(
     (prevBooleanMap: Record<string, boolean>, schedulingGoalPlanSpec: SchedulingGoalPlanSpecification) => {
       return {

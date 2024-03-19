@@ -12,6 +12,7 @@
   import type { DataGridRowSelection } from '../../types/data-grid';
   import type { SchedulingConditionMetadata, SchedulingGoalMetadata } from '../../types/scheduling';
   import effects from '../../utilities/effects';
+  import { isAdminRole } from '../../utilities/permissions';
   import DefinitionEditor from '../ui/Association/DefinitionEditor.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
@@ -20,20 +21,37 @@
 
   export let user: User | null;
 
+  let editorTitle: string = 'Scheduling';
+
+  let allowedSchedulingConditions: SchedulingConditionMetadata[] = [];
+  let allowedSchedulingGoals: SchedulingGoalMetadata[] = [];
   let selectedCondition: SchedulingConditionMetadata | null = null;
   let selectedGoal: SchedulingGoalMetadata | null = null;
   let selectedItem: SchedulingConditionMetadata | SchedulingGoalMetadata | null = null;
-  let editorTitle: string = 'Scheduling';
 
+  // TODO: remove this after db merge as it becomes redundant
+  $: allowedSchedulingConditions = $schedulingConditions.filter(({ owner, public: isPublic }) => {
+    if (!isPublic && !isAdminRole(user?.activeRole)) {
+      return owner === user?.id;
+    }
+    return true;
+  });
+  // TODO: remove this after db merge as it becomes redundant
+  $: allowedSchedulingGoals = $schedulingGoals.filter(({ owner, public: isPublic }) => {
+    if (!isPublic && !isAdminRole(user?.activeRole)) {
+      return owner === user?.id;
+    }
+    return true;
+  });
   $: if (selectedCondition !== null) {
-    const found = $schedulingConditions.findIndex(condition => condition.id === selectedCondition?.id);
+    const found = allowedSchedulingConditions.findIndex(condition => condition.id === selectedCondition?.id);
     if (found === -1) {
       selectedCondition = null;
     }
   }
 
   $: if (selectedGoal !== null) {
-    const found = $schedulingGoals.findIndex(goal => goal.id === selectedGoal?.id);
+    const found = allowedSchedulingGoals.findIndex(goal => goal.id === selectedGoal?.id);
     if (found === -1) {
       selectedGoal = null;
     }
@@ -64,7 +82,7 @@
 
   function deleteConditionContext(event: CustomEvent<number>) {
     const id = event.detail;
-    const condition = $schedulingConditions.find(s => s.id === id);
+    const condition = allowedSchedulingConditions.find(s => s.id === id);
     if (condition) {
       deleteCondition(condition);
     }
@@ -72,7 +90,7 @@
 
   function deleteGoalContext(event: CustomEvent<number>) {
     const id = event.detail;
-    const goal = $schedulingGoals.find(s => s.id === id);
+    const goal = allowedSchedulingGoals.find(s => s.id === id);
     if (goal) {
       deleteGoal(goal);
     }
@@ -119,7 +137,7 @@
   <CssGrid rows="1fr 3px 1fr">
     <SchedulingGoals
       {selectedGoal}
-      schedulingGoals={$schedulingGoals}
+      schedulingGoals={allowedSchedulingGoals}
       {user}
       on:deleteGoal={deleteGoalContext}
       on:rowSelected={toggleGoal}
@@ -127,7 +145,7 @@
     <CssGridGutter track={1} type="row" />
     <SchedulingConditions
       {selectedCondition}
-      schedulingConditions={$schedulingConditions}
+      schedulingConditions={allowedSchedulingConditions}
       {user}
       on:deleteCondition={deleteConditionContext}
       on:rowSelected={toggleCondition}

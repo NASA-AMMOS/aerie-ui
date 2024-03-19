@@ -17,7 +17,7 @@
   import type { ViewGridSection } from '../../types/view';
   import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';
-  import { featurePermissions } from '../../utilities/permissions';
+  import { featurePermissions, isAdminRole } from '../../utilities/permissions';
   import CollapsibleListControls from '../CollapsibleListControls.svelte';
   import GridMenu from '../menus/GridMenu.svelte';
   import Panel from '../ui/Panel.svelte';
@@ -35,8 +35,20 @@
   let hasSpecEditPermission: boolean = false;
   let hasRunPermission: boolean = false;
   let numOfPrivateGoals: number = 0;
+  let visibleSchedulingGoalSpecs: SchedulingGoalPlanSpecification[] = [];
 
-  $: filteredSchedulingGoalSpecs = $schedulingGoalSpecifications
+  // TODO: remove this after db merge as it becomes redundant
+  $: visibleSchedulingGoalSpecs = $allowedSchedulingGoalSpecs.filter(({ goal_metadata: goalMetadata }) => {
+    if (goalMetadata) {
+      const { public: isPublic, owner } = goalMetadata;
+      if (!isPublic && !isAdminRole(user?.activeRole)) {
+        return owner === user?.id;
+      }
+      return true;
+    }
+    return false;
+  });
+  $: filteredSchedulingGoalSpecs = visibleSchedulingGoalSpecs
     .filter(spec => {
       const filterTextLowerCase = filterText.toLowerCase();
       const includesName = spec.goal_metadata?.name.toLocaleLowerCase().includes(filterTextLowerCase);
@@ -51,7 +63,7 @@
       }
       return 0;
     });
-  $: numOfPrivateGoals = $schedulingGoalSpecifications.length - $allowedSchedulingGoalSpecs.length;
+  $: numOfPrivateGoals = $schedulingGoalSpecifications.length - visibleSchedulingGoalSpecs.length;
   $: if ($plan) {
     hasAnalyzePermission =
       featurePermissions.schedulingGoalsPlanSpec.canAnalyze(user, $plan, $plan.model) && !$planReadOnly;

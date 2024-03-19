@@ -14,7 +14,7 @@
   import type { ViewGridSection } from '../../types/view';
   import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';
-  import { featurePermissions } from '../../utilities/permissions';
+  import { featurePermissions, isAdminRole } from '../../utilities/permissions';
   import CollapsibleListControls from '../CollapsibleListControls.svelte';
   import GridMenu from '../menus/GridMenu.svelte';
   import Panel from '../ui/Panel.svelte';
@@ -27,13 +27,27 @@
   let conditionsFilterText: string = '';
   let filteredSchedulingConditionSpecs: SchedulingConditionPlanSpecification[] = [];
   let numOfPrivateConditions: number = 0;
+  let visibleSchedulingConditionSpecs: SchedulingConditionPlanSpecification[] = [];
 
-  $: filteredSchedulingConditionSpecs = $allowedSchedulingConditionSpecs.filter(spec => {
+  // TODO: remove this after db merge as it becomes redundant
+  $: visibleSchedulingConditionSpecs = $allowedSchedulingConditionSpecs.filter(
+    ({ condition_metadata: conditionMetadata }) => {
+      if (conditionMetadata) {
+        const { public: isPublic, owner } = conditionMetadata;
+        if (!isPublic && !isAdminRole(user?.activeRole)) {
+          return owner === user?.id;
+        }
+        return true;
+      }
+      return false;
+    },
+  );
+  $: filteredSchedulingConditionSpecs = visibleSchedulingConditionSpecs.filter(spec => {
     const filterTextLowerCase = conditionsFilterText.toLowerCase();
     const includesName = spec.condition_metadata?.name.toLocaleLowerCase().includes(filterTextLowerCase);
     return includesName;
   });
-  $: numOfPrivateConditions = $schedulingConditionSpecifications.length - $allowedSchedulingConditionSpecs.length;
+  $: numOfPrivateConditions = $schedulingConditionSpecifications.length - visibleSchedulingConditionSpecs.length;
 
   function onManageConditions() {
     effects.managePlanSchedulingConditions(user);
