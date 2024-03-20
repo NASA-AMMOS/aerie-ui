@@ -273,7 +273,7 @@
         </Input>
         <button
           class="st-button secondary ellipsis"
-          name="new-condition"
+          name="new-scheduling-condition"
           use:permissionHandler={{
             hasPermission: hasCreatePermission,
             permissionError,

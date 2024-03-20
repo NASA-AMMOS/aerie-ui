@@ -269,7 +269,7 @@
         </Input>
         <button
           class="st-button secondary ellipsis"
-          name="new-goal"
+          name="new-scheduling-goal"
           use:permissionHandler={{
             hasPermission: hasCreatePermission,
             permissionError,
