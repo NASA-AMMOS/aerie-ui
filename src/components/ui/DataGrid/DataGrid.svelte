@@ -25,7 +25,6 @@
   }
 
   import {
-    GridApi,
     createGrid,
     type CellContextMenuEvent,
     type CellEditingStartedEvent,
@@ -39,10 +38,13 @@
     type ColumnResizedEvent,
     type ColumnState,
     type ColumnVisibleEvent,
+    type GridApi,
     type GridOptions,
     type GridSizeChangedEvent,
     type IRowNode,
+    type ISizeColumnsToFitParams,
     type IsExternalFilterPresentParams,
+    type RedrawRowsParams,
     type RowClassParams,
     type RowClickedEvent,
     type RowDoubleClickedEvent,
@@ -50,8 +52,6 @@
     type SelectionChangedEvent,
     type SortChangedEvent,
   } from 'ag-grid-community';
-  import type { ISizeColumnsToFitParams } from 'ag-grid-community/dist/lib/columns/columnModel';
-  import type { RedrawRowsParams } from 'ag-grid-community/dist/lib/rendering/rowRenderer';
   import { debounce } from 'lodash-es';
   import { SvelteComponent, createEventDispatcher, onDestroy, onMount, type ComponentEvents } from 'svelte';
   import type { DataGridRowSelection, RowId, TRowData } from '../../../types/data-grid';

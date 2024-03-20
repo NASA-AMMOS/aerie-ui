@@ -89,7 +89,7 @@
       automaticLayout,
       fixedOverflowWidgets,
       language,
-      lightbulb: { enabled: true },
+      // lightbulb: { enabled: true },
       lineNumbers,
       minimap,
       model,
