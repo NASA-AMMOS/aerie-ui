@@ -61,7 +61,6 @@ const config = ({ mode }) => {
         junit: 'unit-test-results/junit-results.xml',
       },
       reporters: ['verbose', 'json', 'junit', 'html'],
-      watch: false,
     },
   });
 };
