@@ -136,5 +136,5 @@
   singleItemDisplayText="View"
   {user}
   on:bulkDeleteItems={deleteViews}
-  on:rowDoubleClicked={event => openView(event.detail)}
+  on:rowDoubleClicked={event => openView(event.detail.data)}
 />
