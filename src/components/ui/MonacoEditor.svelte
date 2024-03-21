@@ -55,7 +55,7 @@
   let div: HTMLDivElement;
   let editor: Editor.IStandaloneCodeEditor | undefined = undefined;
   let codeActionProvider: IDisposable | undefined = undefined;
-  let editor_load_event: IDisposable | undefined = undefined;
+  let editor_load_event: IDisposable | undefined = undefined; // TODO this does not appear to be used
   let styleName: string = '';
 
   $: if (editor) {
@@ -167,7 +167,7 @@
       codeActionProvider.dispose();
     }
     if (editor_load_event) {
-      editor_load_event.dispose();
+      (editor_load_event as IDisposable).dispose();
     }
   });
 </script>
