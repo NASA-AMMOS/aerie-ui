@@ -1117,7 +1117,7 @@ const featurePermissions: FeaturePermissions = {
     canCreate: user => queryPermissions.CREATE_PLAN(user),
     canDelete: (user, plan) => queryPermissions.DELETE_PLAN(user, plan),
     canRead: user => queryPermissions.GET_PLAN(user),
-    canUpdate: (user, plan) => queryPermissions.UPDATE_PLAN(user, plan),
+    canUpdate: (user, plan) => queryPermissions.CREATE_PLAN_TAGS(user, plan),
   },
   planBranch: {
     canCreateBranch: (user, plan, model) => queryPermissions.DUPLICATE_PLAN(user, plan, model),
@@ -1149,7 +1149,7 @@ const featurePermissions: FeaturePermissions = {
   },
   schedulingConditionsPlanSpec: {
     canCreate: user => queryPermissions.CREATE_SCHEDULING_CONDITION_PLAN_SPECIFICATION(user),
-    canDelete: user => queryPermissions.DELETE_SCHEDULING_CONDITION_PLAN_SPECIFICATION(user),
+    canDelete: user => queryPermissions.DELETE_SCHEDULING_CONDITION_PLAN_SPECIFICATIONS(user),
     canRead: () => false,
     canUpdate: (user, plan) => queryPermissions.UPDATE_SCHEDULING_CONDITION_PLAN_SPECIFICATIONS(user, plan),
   },
@@ -1161,16 +1161,14 @@ const featurePermissions: FeaturePermissions = {
   },
   schedulingGoalsPlanSpec: {
     canAnalyze: (user, plan, model) =>
-      queryPermissions.UPDATE_SCHEDULING_PLAN_SPECIFICATIONS(user, plan) &&
-      queryPermissions.SCHEDULE(user, plan, model),
+      queryPermissions.UPDATE_SCHEDULING_SPECIFICATION(user, plan) && queryPermissions.SCHEDULE(user, plan, model),
     canCreate: user => queryPermissions.CREATE_SCHEDULING_GOAL(user),
     canDelete: (user, goal) => queryPermissions.DELETE_SCHEDULING_GOAL_METADATA(user, goal),
     canRead: () => false,
     canRun: (user, plan, model) =>
-      queryPermissions.UPDATE_SCHEDULING_PLAN_SPECIFICATIONS(user, plan) &&
-      queryPermissions.SCHEDULE(user, plan, model),
+      queryPermissions.UPDATE_SCHEDULING_SPECIFICATION(user, plan) && queryPermissions.SCHEDULE(user, plan, model),
     canUpdate: (user, goal) => queryPermissions.UPDATE_SCHEDULING_GOAL_METADATA(user, goal),
-    canUpdateSpecification: (user, plan) => queryPermissions.UPDATE_SCHEDULING_SPEC_GOAL(user, plan),
+    canUpdateSpecification: (user, plan) => queryPermissions.UPDATE_SCHEDULING_GOAL_PLAN_SPECIFICATION(user, plan),
   },
   sequences: {
     canCreate: user => queryPermissions.CREATE_USER_SEQUENCE(user),
