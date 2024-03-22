@@ -27,7 +27,10 @@
   };
   type SchedulingConditionsCellRendererParams = ICellRendererParams<SchedulingConditionMetadata> & CellRendererParams;
 
-  const dispatch = createEventDispatcher();
+  const dispatch = createEventDispatcher<{
+    deleteCondition: number;
+    rowSelected: DataGridRowSelection<SchedulingConditionMetadata>;
+  }>();
 
   const baseColumnDefs: DataGridColumnDef<SchedulingConditionMetadata>[] = [
     {
@@ -172,10 +175,6 @@
   function hasEditPermission(condition: SchedulingConditionMetadata) {
     return featurePermissions.schedulingConditions.canUpdate(user, condition);
   }
-
-  function rowSelected(event: CustomEvent<DataGridRowSelection<SchedulingConditionMetadata>>) {
-    dispatch('rowSelected', event.detail);
-  }
 </script>
 
 <Panel>
@@ -211,7 +210,7 @@
         {user}
         on:deleteItem={deleteConditionContext}
         on:editItem={editConditionContext}
-        on:rowSelected={rowSelected}
+        on:rowSelected
       />
     {:else}
       No Scheduling Conditions Found
