@@ -78,6 +78,7 @@ import type {
 import type {
   PermissibleQueriesMap,
   PermissibleQueryResponse,
+  PlanWithOwners,
   RolePermissionResponse,
   RolePermissionsMap,
 } from '../types/permissions';
@@ -1093,9 +1094,14 @@ const effects = {
     }
   },
 
-  async createPlanTags(tags: PlanTagsInsertInput[], user: User | null, notify: boolean = true): Promise<number | null> {
+  async createPlanTags(
+    tags: PlanTagsInsertInput[],
+    plan: PlanWithOwners,
+    user: User | null,
+    notify: boolean = true,
+  ): Promise<number | null> {
     try {
-      if (!queryPermissions.CREATE_PLAN_TAGS(user)) {
+      if (!queryPermissions.CREATE_PLAN_TAGS(user, plan)) {
         throwPermissionError('create plan tags');
       }
 

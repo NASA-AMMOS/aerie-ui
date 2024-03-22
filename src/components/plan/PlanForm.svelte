@@ -56,7 +56,7 @@
     } = event;
     if (type === 'remove') {
       await effects.deletePlanTags([tag.id], user);
-    } else if (type === 'create' || type === 'select') {
+    } else if (plan && (type === 'create' || type === 'select')) {
       let tagsToAdd: Tag[] = [tag];
       if (type === 'create') {
         tagsToAdd = (await effects.createTags([{ color: tag.color, name: tag.name }], user)) || [];
@@ -65,7 +65,7 @@
         plan_id: plan?.id || -1,
         tag_id,
       }));
-      await effects.createPlanTags(newPlanTags, user, false);
+      await effects.createPlanTags(newPlanTags, plan, user, false);
     }
   }
 
