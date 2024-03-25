@@ -175,6 +175,10 @@
   function hasEditPermission(condition: SchedulingConditionMetadata) {
     return featurePermissions.schedulingConditions.canUpdate(user, condition);
   }
+
+  function rowSelected(event: CustomEvent<DataGridRowSelection<SchedulingConditionMetadata>>) {
+    dispatch('rowSelected', event.detail);
+  }
 </script>
 
 <Panel>
@@ -210,7 +214,7 @@
         {user}
         on:deleteItem={deleteConditionContext}
         on:editItem={editConditionContext}
-        on:rowSelected
+        on:rowSelected={rowSelected}
       />
     {:else}
       No Scheduling Conditions Found
