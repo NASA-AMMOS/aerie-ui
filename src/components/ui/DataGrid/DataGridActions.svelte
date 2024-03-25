@@ -1,16 +1,13 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { PlanStatusMessages } from '../../../enums/planStatusMessages';
-
-  import { permissionHandler } from '../../../utilities/permissionHandler';
-
   import DownloadIcon from '@nasa-jpl/stellar/icons/download.svg?component';
   import ExpandIcon from '@nasa-jpl/stellar/icons/expand.svg?component';
-  import PenIcon from '@nasa-jpl/stellar/icons/pen.svg?component';
-  import TrashIcon from '@nasa-jpl/stellar/icons/trash.svg?component';
+  import { Pencil1, Trash } from 'svelte-radix';
   import type { Placement } from 'tippy.js';
+  import { PlanStatusMessages } from '../../../enums/planStatusMessages';
   import type { TRowData } from '../../../types/data-grid';
+  import { permissionHandler } from '../../../utilities/permissionHandler';
   import { tooltip } from '../../../utilities/tooltip';
 
   type RowData = $$Generic<TRowData>;
@@ -79,7 +76,8 @@
         : hasEditPermissionError || `You do not have permission to ${editTooltip?.content ?? 'edit'}.`,
     }}
   >
-    <PenIcon />
+  <!-- TODO for some reason not inheriting the iconCtx -->
+    <Pencil1 size={15} />
   </button>
 {/if}
 {#if deleteCallback}
@@ -98,6 +96,6 @@
         : hasDeletePermissionError || `You do not have permission to ${deleteTooltip?.content ?? 'delete'}.`,
     }}
   >
-    <TrashIcon />
+    <Trash size={15} />
   </button>
 {/if}

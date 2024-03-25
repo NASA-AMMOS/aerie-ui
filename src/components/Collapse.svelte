@@ -1,8 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import CaretDownIcon from '@nasa-jpl/stellar/icons/caret_down.svg?component';
-  import CaretRightIcon from '@nasa-jpl/stellar/icons/caret_right.svg?component';
+  import { ChevronDown, ChevronRight } from 'svelte-radix';
   import { classNames } from '../utilities/generic';
   import { tooltip } from '../utilities/tooltip';
   import ContextMenu from './context-menu/ContextMenu.svelte';
@@ -42,9 +41,9 @@
     {#if collapsible}
       <div class="collapse-icon">
         {#if expanded}
-          <CaretDownIcon />
+          <ChevronDown />
         {:else}
-          <CaretRightIcon />
+          <ChevronRight />
         {/if}
       </div>
     {/if}
@@ -113,7 +112,7 @@
 
   .collapse-icon :global(svg) {
     color: var(--st-typography-medium-color);
-    margin-left: -4px;
+    margin-left: -3px;
     margin-top: -4px;
   }
 

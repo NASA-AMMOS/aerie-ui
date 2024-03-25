@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import PlusIcon from 'bootstrap-icons/icons/plus.svg?component';
+  import { Plus } from "svelte-radix";
   import { PlanStatusMessages } from '../../enums/planStatusMessages';
   import { activityTypes, plan, planReadOnly } from '../../stores/plan';
   import type { ActivityType } from '../../types/activity';
@@ -81,7 +81,7 @@
               disabled={!hasPermission}
               use:tooltip={{ content: 'Create Activity', placement: 'left' }}
             >
-              <PlusIcon />
+              <Plus />
             </button>
           </span>
         </ListItem>

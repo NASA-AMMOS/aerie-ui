@@ -1,5 +1,4 @@
 <script lang="ts">
-  import CheckIcon from '@nasa-jpl/stellar/icons/check.svg?component';
   import CloseIcon from '@nasa-jpl/stellar/icons/close.svg?component';
   import EditingIcon from '@nasa-jpl/stellar/icons/editing.svg?component';
   import IncompleteIcon from '@nasa-jpl/stellar/icons/incomplete.svg?component';
@@ -7,6 +6,7 @@
   import ThreeDotsIcon from '@nasa-jpl/stellar/icons/three_dot_horizontal.svg?component';
   import WarningIcon from '@nasa-jpl/stellar/icons/warning.svg?component';
   import HourglassIcon from 'bootstrap-icons/icons/hourglass-top.svg?component';
+  import { Check } from 'svelte-radix';
   import { Status } from '../../enums/status';
   import { getColorForStatus, statusColors } from '../../utilities/status';
   import { tooltip } from '../../utilities/tooltip';
@@ -34,7 +34,7 @@
   >
     {#if badgeText === undefined}
       {#if status === Status.Complete}
-        <CheckIcon />
+        <Check />
       {:else if status === Status.Failed}
         <WarningIcon style="color: {color}" />
       {:else if status === Status.Canceled}

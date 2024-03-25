@@ -3,7 +3,7 @@
 <script lang="ts">
   import PlanLeftArrow from '@nasa-jpl/stellar/icons/plan_with_left_arrow.svg?component';
   import PlanRightArrow from '@nasa-jpl/stellar/icons/plan_with_right_arrow.svg?component';
-  import RefreshIcon from '@nasa-jpl/stellar/icons/refresh.svg?component';
+  import { Reload } from 'svelte-radix';
   import { PlanStatusMessages } from '../../enums/planStatusMessages';
   import { SearchParameters } from '../../enums/searchParameters';
   import { Status } from '../../enums/status';
@@ -320,7 +320,7 @@
               },
             ],
           ]}
-          on:click={() => effects.simulate($plan, enableReSimulation, user)}><RefreshIcon /></PanelHeaderActionButton
+          on:click={() => effects.simulate($plan, enableReSimulation, user)}><Reload /></PanelHeaderActionButton
         >
       {/if}
       <PanelHeaderActionButton

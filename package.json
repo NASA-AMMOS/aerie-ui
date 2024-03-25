@@ -113,6 +113,7 @@
     "stylelint-config-html": "^1.1.0",
     "stylelint-order": "^6.0.3",
     "svelte-check": "^3.4.4",
+    "svelte-radix": "^1.1.0",
     "tslib": "^2.6.0",
     "typescript": "5.0.4",
     "unique-names-generator": "^4.7.1",

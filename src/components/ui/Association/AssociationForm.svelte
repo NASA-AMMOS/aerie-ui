@@ -1,6 +1,8 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { EyeClosed, EyeOpen } from 'svelte-radix';
+
   type FormDefinition = $$Generic<BaseDefinition>;
   type FormMetadata = $$Generic<BaseMetadata<FormDefinition>>;
 
@@ -39,8 +41,6 @@
     }>;
   }
 
-  import HideIcon from '@nasa-jpl/stellar/icons/visible_hide.svg?component';
-  import ShowIcon from '@nasa-jpl/stellar/icons/visible_show.svg?component';
   import { SvelteComponent, createEventDispatcher, type ComponentEvents } from 'svelte';
   import type { User, UserId } from '../../../types/app';
   import type { BaseDefinition, BaseMetadata } from '../../../types/metadata';
@@ -461,7 +461,7 @@
                   permissionError,
                 },
               ],
-            ]}><div class="public-button"><HideIcon /><span>Private</span></div></RadioButton
+            ]}><div class="public-button"><EyeClosed /><span>Private</span></div></RadioButton
           >
           <RadioButton
             id="public"
@@ -473,7 +473,7 @@
                   permissionError,
                 },
               ],
-            ]}><div class="public-button"><ShowIcon /><span>Public</span></div></RadioButton
+            ]}><div class="public-button"><EyeOpen /><span>Public</span></div></RadioButton
           >
         </RadioButtons>
       </fieldset>

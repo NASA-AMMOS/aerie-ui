@@ -2,7 +2,6 @@
 
 <script lang="ts">
   import CaretDownIcon from '@nasa-jpl/stellar/icons/caret_down.svg?component';
-
   import CaretRightIcon from '@nasa-jpl/stellar/icons/caret_right.svg?component';
   import GripVerticalIcon from 'bootstrap-icons/icons/grip-vertical.svg?component';
   import { createEventDispatcher } from 'svelte';

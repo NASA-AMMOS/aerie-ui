@@ -1,20 +1,14 @@
 <script lang="ts">
-  import ArrowLeftIcon from '@nasa-jpl/stellar/icons/arrow_left.svg?component';
-  import ArrowRightIcon from '@nasa-jpl/stellar/icons/arrow_right.svg?component';
   import ArrowUpRightIcon from '@nasa-jpl/stellar/icons/arrow_up_right.svg?component';
   import AutoScrollIcon from '@nasa-jpl/stellar/icons/auto_scroll.svg?component';
-  import ChevronDownIcon from '@nasa-jpl/stellar/icons/chevron_down.svg?component';
   import DecimateIcon from '@nasa-jpl/stellar/icons/decimate.svg?component';
   import ShowTooltipIcon from '@nasa-jpl/stellar/icons/hide_tooltip.svg?component';
   import HorizontalDragIcon from '@nasa-jpl/stellar/icons/horizontal_drag.svg?component';
   import InterpolateIcon from '@nasa-jpl/stellar/icons/interpolate.svg?component';
-  import LinkIcon from '@nasa-jpl/stellar/icons/link.svg?component';
-  import MinusIcon from '@nasa-jpl/stellar/icons/minus.svg?component';
-  import PlusIcon from '@nasa-jpl/stellar/icons/plus.svg?component';
-  import RotateCounterClockwiseIcon from '@nasa-jpl/stellar/icons/rotate_counter_clockwise.svg?component';
   import TooltipLineIcon from '@nasa-jpl/stellar/icons/tooltip_line.svg?component';
   import ClipboardIcon from 'bootstrap-icons/icons/clipboard.svg?component';
   import { createEventDispatcher } from 'svelte';
+  import { ArrowLeft, ArrowRight, ChevronDown, ColumnSpacing, Link2, Minus, Plus, Reload } from 'svelte-radix';
   import { SearchParameters } from '../../enums/searchParameters';
   import { activityDirectivesMap, selectedActivityDirective } from '../../stores/activities';
   import { plan, planReadOnly } from '../../stores/plan';
@@ -265,7 +259,7 @@
     placement: 'bottom',
   }}
 >
-  <AutoScrollIcon />
+  <ColumnSpacing />
 </button>
 <button
   class="st-button icon toggle-button"
@@ -331,35 +325,35 @@
   on:click={onNudgeLeft}
   use:tooltip={{ content: 'Shift Left', placement: 'bottom', shortcut: '[' }}
 >
-  <ArrowLeftIcon />
+  <ArrowLeft />
 </button>
 <button
   class="st-button icon"
   on:click={onNudgeRight}
   use:tooltip={{ content: 'Shift Right', placement: 'bottom', shortcut: ']' }}
 >
-  <ArrowRightIcon />
+  <ArrowRight />
 </button>
 <button
   class="st-button icon"
   on:click={onZoomOut}
   use:tooltip={{ content: 'Zoom Out', placement: 'bottom', shortcut: '-' }}
 >
-  <MinusIcon />
+  <Minus />
 </button>
 <button
   class="st-button icon"
   on:click={onZoomIn}
   use:tooltip={{ content: 'Zoom In', placement: 'bottom', shortcut: '=' }}
 >
-  <PlusIcon />
+  <Plus />
 </button>
 <button
   class="st-button icon"
   on:click={onResetViewTimeRange}
   use:tooltip={{ content: 'Reset Visible Time Range', placement: 'bottom', shortcut: '0' }}
 >
-  <RotateCounterClockwiseIcon />
+  <Reload />
 </button>
 <div class="timeline-icon-tray-divider" />
 <button
@@ -372,7 +366,7 @@
     placement: 'bottom',
   }}
 >
-  <LinkIcon />
+  <Link2 />
 </button>
 <TimelineLockControl
   hasUpdatePermission={hasUpdateDirectivePermission}
@@ -393,7 +387,7 @@
     style="position: relative"
     on:click|stopPropagation={() => pickerMenu.toggle()}
   >
-    <div class="button-inner"><ChevronDownIcon /></div>
+    <div class="button-inner"><ChevronDown /></div>
   </button>
   <Menu bind:this={pickerMenu} hideAfterClick={false} placement="bottom-end">
     <div class="timeline-view-controls-menu">

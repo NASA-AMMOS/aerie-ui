@@ -1,12 +1,10 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import PenIcon from '@nasa-jpl/stellar/icons/pen.svg?component';
-  import PlusIcon from '@nasa-jpl/stellar/icons/plus.svg?component';
-  import RefreshIcon from '@nasa-jpl/stellar/icons/refresh.svg?component';
   import TagsIcon from '@nasa-jpl/stellar/icons/tag.svg?component';
   import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
   import { onMount } from 'svelte';
+  import { Pencil2, Plus, Reload } from 'svelte-radix';
   import Nav from '../../components/app/Nav.svelte';
   import PageTitle from '../../components/app/PageTitle.svelte';
   import ColorPresetsPicker from '../../components/form/ColorPresetsPicker.svelte';
@@ -298,9 +296,9 @@
       <svelte:fragment slot="header">
         <SectionTitle>
           {#if selectedTag}
-            <PenIcon /> Edit Tag
+            <Pencil2 /> Edit Tag
           {:else}
-            <PlusIcon /> New Tag
+            <Plus /> New Tag
           {/if}
         </SectionTitle>
       </svelte:fragment>
@@ -371,7 +369,7 @@
                 }}
                 on:click={() => colorField.validateAndSet(generateRandomPastelColor())}
               >
-                <RefreshIcon />
+                <Reload />
               </button>
             </div>
           </Field>

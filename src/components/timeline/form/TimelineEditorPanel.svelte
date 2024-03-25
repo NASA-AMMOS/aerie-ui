@@ -3,12 +3,12 @@
 <script lang="ts">
   import ArrowLeftIcon from '@nasa-jpl/stellar/icons/arrow_left.svg?component';
   import DuplicateIcon from '@nasa-jpl/stellar/icons/duplicate.svg?component';
-  import PenIcon from '@nasa-jpl/stellar/icons/pen.svg?component';
   import PlusIcon from '@nasa-jpl/stellar/icons/plus.svg?component';
   import TrashIcon from '@nasa-jpl/stellar/icons/trash.svg?component';
   import GripVerticalIcon from 'bootstrap-icons/icons/grip-vertical.svg?component';
   import { onMount } from 'svelte';
   import { dndzone } from 'svelte-dnd-action';
+  import { Pencil2 } from 'svelte-radix';
   import { ViewConstants } from '../../../enums/view';
   import { activityTypes, maxTimeRange, viewTimeRange } from '../../../stores/plan';
   import { externalResourceNames, resourceTypes, yAxesWithScaleDomainsCache } from '../../../stores/simulation';
@@ -621,7 +621,7 @@
                           viewSetSelectedRow(row.id);
                         }}
                       >
-                        <PenIcon />
+                        <Pencil2 />
                       </button>
                       <button
                         use:tooltip={{ content: 'Duplicate Row', placement: 'top' }}

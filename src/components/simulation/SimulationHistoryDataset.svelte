@@ -1,8 +1,8 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import CancelIcon from '@nasa-jpl/stellar/icons/prohibited.svg?component';
   import { createEventDispatcher } from 'svelte';
+  import { CircleBackslash } from 'svelte-radix';
   import { Status } from '../../enums/status';
   import { planReadOnly } from '../../stores/plan';
   import type { SimulationDataset } from '../../types/simulation';
@@ -119,7 +119,7 @@
             disabled={$planReadOnly}
             on:click={onCancelSimulation}
           >
-            <CancelIcon />
+            <CircleBackslash />
           </button>
         {/if}
       {/if}

@@ -1,13 +1,12 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import CaretDownIcon from '@nasa-jpl/stellar/icons/caret_down.svg?component';
-  import CaretRightIcon from '@nasa-jpl/stellar/icons/caret_right.svg?component';
   import TreeLeafIcon from '@nasa-jpl/stellar/icons/tree_leaf.svg?component';
   import TreeParentCollapsedIcon from '@nasa-jpl/stellar/icons/tree_parent_collapsed.svg?component';
   import TreeParentExpandedIcon from '@nasa-jpl/stellar/icons/tree_parent_expanded.svg?component';
   import { createEventDispatcher } from 'svelte';
-  import type { Span, SpanId, SpansMap, SpanUtilityMaps } from '../../types/simulation';
+  import { ChevronDown, ChevronRight } from 'svelte-radix';
+  import type { Span, SpanId, SpanUtilityMaps, SpansMap } from '../../types/simulation';
 
   export let expanded = true;
   export let rootSpanId: SpanId | null = null;
@@ -45,9 +44,9 @@
     <button class={buttonClass} on:click={toggle}>
       {#if isRoot}
         {#if expanded}
-          <CaretDownIcon />
+          <ChevronDown />
         {:else}
-          <CaretRightIcon />
+          <ChevronRight />
         {/if}
       {:else if hasChildren}
         {#if expanded}

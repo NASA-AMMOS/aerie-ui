@@ -1,12 +1,11 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import CheckIcon from '@nasa-jpl/stellar/icons/check.svg?component';
   import CloseIcon from '@nasa-jpl/stellar/icons/close.svg?component';
   import HistoryIcon from '@nasa-jpl/stellar/icons/history.svg?component';
-  import PenIcon from '@nasa-jpl/stellar/icons/pen.svg?component';
   import { keyBy } from 'lodash-es';
   import { createEventDispatcher } from 'svelte';
+  import { Check, Pencil1 } from 'svelte-radix';
   import { PlanStatusMessages } from '../../enums/planStatusMessages';
   import { activityErrorRollupsMap, activityValidationErrors } from '../../stores/errors';
   import { field } from '../../stores/form';
@@ -443,7 +442,7 @@
             <div class="activity-header-title-value st-typography-medium">
               {$activityNameField.value}
             </div>
-            <PenIcon />
+            <Pencil1 />
           </button>
         {:else}
           <Field field={activityNameField} on:change={onUpdateActivityName}>
@@ -460,7 +459,7 @@
             class="icon st-button"
             on:click={onUpdateActivityName}
           >
-            <CheckIcon />
+            <Check />
           </button>
         {/if}
       </div>
@@ -796,7 +795,7 @@
     background-color: var(--st-white);
   }
 
-  .activity-header-title:not(.activity-header-title--editing) .st-button :global(.st-icon) {
+  .activity-header-title:not(.activity-header-title--editing) .st-button :global(svg) {
     display: none;
     flex-shrink: 0;
   }
@@ -813,7 +812,7 @@
     background: var(--st-white);
   }
 
-  .activity-header-title:not(.activity-header-title--editing):hover .st-button :global(.st-icon) {
+  .activity-header-title:not(.activity-header-title--editing):hover .st-button :global(svg) {
     display: inherit;
   }
 

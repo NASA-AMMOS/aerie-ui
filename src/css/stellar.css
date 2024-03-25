@@ -26,3 +26,8 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Override for now while we switch to thinner radix icons */
+.st-button.icon {
+  color: black;
+}

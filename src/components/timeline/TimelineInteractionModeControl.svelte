@@ -1,7 +1,6 @@
 <script lang="ts">
-  import CursorDefaultIcon from '@nasa-jpl/stellar/icons/cursor_default.svg?component';
-  import MoveIcon from '@nasa-jpl/stellar/icons/move.svg?component';
   import { createEventDispatcher, onMount } from 'svelte';
+  import { CursorArrow, Move } from 'svelte-radix';
   import { addPageFocusListener, isMacOs } from '../../utilities/generic';
   import { isMetaOrCtrlPressed } from '../../utilities/keyboardEvents';
   import { TimelineInteractionMode } from '../../utilities/timeline';
@@ -78,9 +77,9 @@
   }}
 >
   {#if timelineInteractionMode === TimelineInteractionMode.Interact}
-    <CursorDefaultIcon />
+    <CursorArrow />
   {:else}
-    <MoveIcon />
+    <Move />
   {/if}
 </button>
 

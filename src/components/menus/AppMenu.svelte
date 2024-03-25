@@ -9,7 +9,6 @@
   import GraphQLIcon from '@nasa-jpl/stellar/icons/graphql.svg?component';
   import PlanIcon from '@nasa-jpl/stellar/icons/plan.svg?component';
   import TagIcon from '@nasa-jpl/stellar/icons/tag.svg?component';
-  import BarChartIcon from 'bootstrap-icons/icons/bar-chart.svg?component';
   import BoxArrowRightIcon from 'bootstrap-icons/icons/box-arrow-right.svg?component';
   import BracesAsteriskIcon from 'bootstrap-icons/icons/braces-asterisk.svg?component';
   import CodeSquareIcon from 'bootstrap-icons/icons/code-square.svg?component';
@@ -18,6 +17,7 @@
   import JournalCodeIcon from 'bootstrap-icons/icons/journal-code.svg?component';
   import JournalTextIcon from 'bootstrap-icons/icons/journal-text.svg?component';
   import JournalsIcon from 'bootstrap-icons/icons/journals.svg?component';
+  import { BarChart } from 'svelte-radix';
   import AerieWordmarkDark from '../../assets/aerie-wordmark-dark.svg?component';
   import type { User } from '../../types/app';
   import { logout } from '../../utilities/login';
@@ -41,7 +41,7 @@
       Plans
     </MenuItem>
     <MenuItem on:click={() => goto(`${base}/models`)} on:pointerenter={() => preloadData(`${base}/models`)}>
-      <BarChartIcon />
+      <BarChart />
       Models
     </MenuItem>
     <MenuItem on:click={() => goto(`${base}/constraints`)} on:pointerenter={() => preloadData(`${base}/constraints`)}>

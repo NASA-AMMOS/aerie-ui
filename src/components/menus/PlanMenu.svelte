@@ -4,7 +4,7 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import BranchIcon from '@nasa-jpl/stellar/icons/branch.svg?component';
-  import ChevronDownIcon from '@nasa-jpl/stellar/icons/chevron_down.svg?component';
+  import { ChevronDown } from 'svelte-radix';
   import { PlanStatusMessages } from '../../enums/planStatusMessages';
   import { planReadOnly } from '../../stores/plan';
   import { viewTogglePanel } from '../../stores/views';
@@ -75,7 +75,7 @@
   {/if}
 
   <div class="plan-menu st-typography-medium" role="none" on:click|stopPropagation={() => planMenu.toggle()}>
-    <div class="plan-title">{plan.name}<ChevronDownIcon /></div>
+    <div class="plan-title">{plan.name}<ChevronDown /></div>
     <Menu bind:this={planMenu}>
       <MenuItem
         use={[

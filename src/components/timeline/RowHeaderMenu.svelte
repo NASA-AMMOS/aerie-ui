@@ -1,8 +1,8 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import ThreeDotsIcon from '@nasa-jpl/stellar/icons/three_dot_horizontal.svg?component';
   import { createEventDispatcher } from 'svelte';
+  import { DotsHorizontal } from 'svelte-radix';
   import { tooltip } from '../../utilities/tooltip';
 
   const dispatch = createEventDispatcher();
@@ -23,7 +23,7 @@
     use:tooltip={{ content: 'Row Settings', placement: 'top' }}
     on:click|stopPropagation={onClick}
   >
-    <div class="button-inner"><ThreeDotsIcon /></div>
+    <div class="button-inner"><DotsHorizontal /></div>
   </button>
 </div>
 

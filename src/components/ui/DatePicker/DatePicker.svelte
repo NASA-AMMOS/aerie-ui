@@ -1,10 +1,7 @@
 <script lang="ts">
-  import Calendar from '@nasa-jpl/stellar/icons/calendar.svg?component';
-  import ChevronLeft from '@nasa-jpl/stellar/icons/chevron_left.svg?component';
-  import ChevronRight from '@nasa-jpl/stellar/icons/chevron_right.svg?component';
-  import MagicEraser from '@nasa-jpl/stellar/icons/magic_eraser.svg?component';
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
   import { createPopperActions } from 'svelte-popperjs';
+  import { Calendar, ChevronLeft, ChevronRight, MagicWand } from 'svelte-radix';
   import type { DropdownCustomOption } from '../../../types/datepicker';
   import type { ParsedDoyString, ParsedYmdString } from '../../../types/time';
   import { getTarget } from '../../../utilities/generic';
@@ -294,7 +291,7 @@
         </DatePickerActionButton>
         <slot />
         <DatePickerActionButton on:click={clearDate} text="Clear">
-          <MagicEraser />
+          <MagicWand />
         </DatePickerActionButton>
       </div>
     </div>
