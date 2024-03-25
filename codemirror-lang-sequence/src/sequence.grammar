@@ -1,0 +1,102 @@
+@top Sequence { expression+ }
+
+@skip { space | LineComment }
+
+expression[@isGroup=Expression] {
+  Id |
+  Metadata |
+  Local |
+  Param |
+  Global |
+  Command
+}
+
+Id { @specialize<identifier, "id"> "(" String ")" }
+
+Metadata { @specialize<identifier, "metadata"> "(" Object ")" }
+
+TimeTagAbsolute { @specialize<identifier, "abs"> "(" TimeAbsolute ")" }
+
+TimeTagComplete { @specialize<identifier, "cpl"> }
+
+TimeTagEpoch { TimeEpoch }
+
+TimeTagRelative { TimeRelative }
+
+VarTypeFloat { @specialize<identifier, "FLOAT"> }
+
+VarTypeInt { @specialize<identifier, "INT"> }
+
+VarTypeString { @specialize<identifier, "STRING"> }
+
+VarTypeUint { @specialize<identifier, "UINT"> }
+
+VarTypeEnum { @specialize<identifier, "ENUM"> }
+
+VarType { VarTypeFloat | VarTypeInt | VarTypeString | VarTypeUint | VarTypeEnum }
+
+VarName { identifier }
+
+Param { @specialize<identifier, "param"> "(" VarType "," VarName ")" }
+
+Local { @specialize<identifier, "local"> "(" VarType "," VarName ")" }
+
+Global { @specialize<identifier, "global"> "(" VarType "," VarName ")" }
+
+arg { Boolean | Enum | Number | String }
+
+RepeatArg { "[" commaSep<arg> "]" }
+
+RepeatArgs { "[" commaSep<RepeatArg> "]" }
+
+Args { "(" commaSep<arg | RepeatArgs> ")" }
+
+Stem { identifier }
+
+Command { timeTag? Stem Args? }
+
+Object { "{" commaSep<Property> "}" }
+
+Property {  String ":" String }
+
+timeTag { TimeTagAbsolute | TimeTagComplete | TimeTagEpoch | TimeTagRelative }
+
+commaSep<content> { content ("," content?)* }
+
+@tokens {
+  identifier { @asciiLetter (@asciiLetter| @digit | "_" | "-")* }
+
+  timeHhmmss { @digit@digit":"@digit@digit":"@digit@digit("."@digit@digit@digit)? }
+
+  TimeAbsolute { @digit@digit@digit@digit"-"@digit@digit@digit"T"timeHhmmss }
+
+  TimeRelative { 'R'$[1-9] @digit* }
+
+  TimeEpoch { 'E'$[+\-]timeHhmmss}
+
+
+  String { '"' (!["\\] | "\\" _)* '"' }
+
+  hex { @digit | $[A-F] }
+
+  Number {
+    ("+" | "-")? (@digit ("_" | @digit)* ("." ("_" | @digit)*)? | "." @digit ("_" | @digit)*)
+    (("e" | "E") ("+" | "-")? ("_" | @digit)+)? |
+    @digit ("_" | @digit)* "n" |
+    "0x" (hex | "_")+ "n"?
+  }
+
+  Boolean { "true" | "false" }
+
+  Enum { identifier }
+
+  @precedence {  Boolean, Enum }
+
+  @precedence { TimeRelative, TimeEpoch, identifier}
+
+  LineComment { "#" ![\n]* }
+
+  space { $[ \t\n\r]+ }
+}
+
+@detectDelim
