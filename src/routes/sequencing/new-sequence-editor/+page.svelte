@@ -11,13 +11,20 @@
   import { seq } from 'codemirror-lang-sequence';
   import { debounce } from 'lodash-es';
   import { onMount } from 'svelte';
-  import { parseCommandDictionaryFromFile } from '../../../utilities/new-sequence-editor/command-dictionary';
+  import type { PageData } from '../$types';
+  import { commandDictionaries } from '../../../stores/sequencing';
+  import effects from '../../../utilities/effects';
   import { parseSeqJsonFromFile, seqJsonToSequence } from '../../../utilities/new-sequence-editor/from-seq-json';
   import { seqJsonLinter } from '../../../utilities/new-sequence-editor/seq-json-linter';
   import { sequenceCompletion } from '../../../utilities/new-sequence-editor/sequence-completion';
   import { sequenceLinter } from '../../../utilities/new-sequence-editor/sequence-linter';
   import { sequenceTooltip } from '../../../utilities/new-sequence-editor/sequence-tooltip';
   import { seqJsonDefault, sequenceToSeqJson } from '../../../utilities/new-sequence-editor/to-seq-json';
+  import { permissionHandler } from '../../../utilities/permissionHandler';
+  import { featurePermissions } from '../../../utilities/permissions';
+
+  export let data: PageData;
+  export let initialSequenceCommandDictionaryId: number | null = null;
 
   let clientHeightGridRightBottom: number;
   let clientHeightGridRightTop: number;
@@ -30,6 +37,30 @@
   let editorSeqJsonView: EditorView;
   let editorSequenceDiv: HTMLDivElement;
   let editorSequenceView: EditorView;
+  let hasPermission: boolean = false;
+  let permissionError = 'You do not have permission to create a sequence.';
+  let sequenceCommandDictionaryId: number | null = initialSequenceCommandDictionaryId;
+
+  $: {
+    hasPermission = featurePermissions.sequences.canCreate(data.user);
+  }
+
+  $: {
+    const commandDictionary = $commandDictionaries.find(cd => cd.id === sequenceCommandDictionaryId);
+
+    if (commandDictionary) {
+      effects.getParsedAmpcsCommandDictionary(commandDictionary.id, data.user).then(parsedDictionary => {
+        // Reconfigure sequence editor.
+        const newSeqLanguage = seq(sequenceCompletion(parsedDictionary));
+        editorSequenceView.dispatch({ effects: compartmentSeqLanguage.reconfigure(newSeqLanguage) });
+        editorSequenceView.dispatch({ effects: compartmentSeqLinter.reconfigure(sequenceLinter(parsedDictionary)) });
+        editorSequenceView.dispatch({ effects: compartmentSeqTooltip.reconfigure(sequenceTooltip(parsedDictionary)) });
+
+        // Reconfigure seq JSON editor.
+        editorSeqJsonView.dispatch({ effects: compartmentSeqJsonLinter.reconfigure(seqJsonLinter(parsedDictionary)) });
+      });
+    }
+  }
 
   onMount(() => {
     compartmentSeqJsonLinter = new Compartment();
@@ -67,19 +98,6 @@
     });
   });
 
-  async function onCommandDictionaryInput(e: Event & { currentTarget: EventTarget & HTMLInputElement }) {
-    commandDictionary = await parseCommandDictionaryFromFile(e.currentTarget.files);
-
-    // Reconfigure sequence editor.
-    const newSeqLanguage = seq(sequenceCompletion(commandDictionary));
-    editorSequenceView.dispatch({ effects: compartmentSeqLanguage.reconfigure(newSeqLanguage) });
-    editorSequenceView.dispatch({ effects: compartmentSeqLinter.reconfigure(sequenceLinter(commandDictionary)) });
-    editorSequenceView.dispatch({ effects: compartmentSeqTooltip.reconfigure(sequenceTooltip(commandDictionary)) });
-
-    // Reconfigure seq JSON editor.
-    editorSeqJsonView.dispatch({ effects: compartmentSeqJsonLinter.reconfigure(seqJsonLinter(commandDictionary)) });
-  }
-
   async function onSeqJsonInput(e: Event & { currentTarget: EventTarget & HTMLInputElement }) {
     const seqJson = await parseSeqJsonFromFile(e.currentTarget.files);
     const sequence = seqJsonToSequence(seqJson);
@@ -96,17 +114,27 @@
 
 <div class="grid">
   <div class="grid-left">
-    <div class="p-2">
-      <label for="commandDictionaryFileList"> AMPCS Command Dictionary XML File </label>
-      <input
-        on:change={onCommandDictionaryInput}
-        class="st-typography-body w-100"
-        id="commandDictionaryFileList"
-        name="commandDictionaryFileList"
-        required
-        type="file"
-      />
-    </div>
+    <fieldset>
+      <label for="commandDictionary">Command Dictionary (required)</label>
+      <select
+        bind:value={sequenceCommandDictionaryId}
+        class="st-select w-100"
+        name="commandDictionary"
+        use:permissionHandler={{
+          hasPermission,
+          permissionError,
+        }}
+      >
+        <option value={null} />
+        {#each $commandDictionaries as commandDictionary}
+          <option value={commandDictionary.id}>
+            {commandDictionary.mission} -
+            {commandDictionary.version}
+          </option>
+        {/each}
+      </select>
+    </fieldset>
+
     <div class="p-2">
       <label for="seqJsonInput"> Import from Seq JSON </label>
       <input
