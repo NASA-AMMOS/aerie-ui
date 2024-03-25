@@ -1,6 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { browser } from '$app/environment';
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import { page } from '$app/stores';
@@ -12,7 +13,7 @@
   import WaterfallIcon from '@nasa-jpl/stellar/icons/waterfall.svg?component';
   import GearWideConnectedIcon from 'bootstrap-icons/icons/gear-wide-connected.svg?component';
   import { keyBy } from 'lodash-es';
-  import { onDestroy, onMount } from 'svelte';
+  import { onDestroy } from 'svelte';
   import Nav from '../../../components/app/Nav.svelte';
   import PageTitle from '../../../components/app/PageTitle.svelte';
   import Console from '../../../components/console/Console.svelte';
@@ -225,7 +226,7 @@
       featurePermissions.schedulingGoalsPlanSpec.canAnalyze(data.user, $plan, $plan.model) && !$planReadOnly;
     hasSimulatePermission = featurePermissions.simulation.canRun(data.user, $plan, $plan.model) && !$planReadOnly;
   }
-  if (data.initialPlan) {
+  $: if (data.initialPlan) {
     $plan = data.initialPlan;
     $planEndTimeMs = getUnixEpochTime(data.initialPlan.end_time_doy);
     $planStartTimeMs = getUnixEpochTime(data.initialPlan.start_time_doy);
@@ -385,15 +386,13 @@
     response => response.errors?.length,
   ).length;
 
-  onMount(() => {
-    if ($plan) {
-      // Asynchronously fetch resource types
-      effects.getResourceTypes($plan.model_id, data.user).then(initialResourceTypes => {
-        $resourceTypes = initialResourceTypes;
-        $resourceTypesLoading = false;
-      });
-    }
-  });
+  $: if ($plan && browser) {
+    // Asynchronously fetch resource types
+    effects.getResourceTypes($plan.model_id, data.user).then(initialResourceTypes => {
+      $resourceTypes = initialResourceTypes;
+      $resourceTypesLoading = false;
+    });
+  }
 
   onDestroy(() => {
     resetActivityStores();
