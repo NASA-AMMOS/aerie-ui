@@ -113,11 +113,9 @@
 
   onMount(() => {
     models.updateValue(() => data.initialModels);
-    console.log('$createModelError :>> ', $createModelError);
   });
 
   onDestroy(() => {
-    console.log('ondestroy');
     resetModelStores();
   });
 
