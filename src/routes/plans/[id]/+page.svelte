@@ -12,7 +12,7 @@
   import WaterfallIcon from '@nasa-jpl/stellar/icons/waterfall.svg?component';
   import GearWideConnectedIcon from 'bootstrap-icons/icons/gear-wide-connected.svg?component';
   import { keyBy } from 'lodash-es';
-  import { onDestroy } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import Nav from '../../../components/app/Nav.svelte';
   import PageTitle from '../../../components/app/PageTitle.svelte';
   import Console from '../../../components/console/Console.svelte';
@@ -225,7 +225,7 @@
       featurePermissions.schedulingGoalsPlanSpec.canAnalyze(data.user, $plan, $plan.model) && !$planReadOnly;
     hasSimulatePermission = featurePermissions.simulation.canRun(data.user, $plan, $plan.model) && !$planReadOnly;
   }
-  $: if (data.initialPlan) {
+  if (data.initialPlan) {
     $plan = data.initialPlan;
     $planEndTimeMs = getUnixEpochTime(data.initialPlan.end_time_doy);
     $planStartTimeMs = getUnixEpochTime(data.initialPlan.start_time_doy);
@@ -267,12 +267,6 @@
 
     activityTypes.updateValue(() => data.initialActivityTypes);
     planTags.updateValue(() => data.initialPlanTags);
-
-    // Asynchronously fetch resource types
-    effects.getResourceTypes($plan.model_id, data.user).then(initialResourceTypes => {
-      $resourceTypes = initialResourceTypes;
-      $resourceTypesLoading = false;
-    });
   }
   $: if (data.initialPlanSnapshotId !== null) {
     $planSnapshotId = data.initialPlanSnapshotId;
@@ -390,6 +384,16 @@
   $: numConstraintsWithErrors = Object.values($constraintResponseMap).filter(
     response => response.errors?.length,
   ).length;
+
+  onMount(() => {
+    if ($plan) {
+      // Asynchronously fetch resource types
+      effects.getResourceTypes($plan.model_id, data.user).then(initialResourceTypes => {
+        $resourceTypes = initialResourceTypes;
+        $resourceTypesLoading = false;
+      });
+    }
+  });
 
   onDestroy(() => {
     resetActivityStores();
