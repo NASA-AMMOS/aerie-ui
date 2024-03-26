@@ -55,7 +55,7 @@
       sortable: true,
       suppressAutoSize: true,
       suppressSizeToFit: true,
-      width: 60,
+      width: 75,
     },
     { field: 'name', filter: 'text', headerName: 'Name', resizable: true, sortable: true },
     {
