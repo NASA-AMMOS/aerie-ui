@@ -51,6 +51,7 @@
       filter: 'number',
       headerName: 'ID',
       resizable: true,
+      sort: 'desc',
       sortable: true,
       suppressAutoSize: true,
       suppressSizeToFit: true,
