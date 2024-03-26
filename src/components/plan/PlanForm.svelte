@@ -31,9 +31,13 @@
 
   let filteredPlanSnapshots: PlanSnapshotType[] = [];
   let isFilteredBySimulation: boolean = false;
+  let hasCreateSnapshotPermission: boolean = false;
   let hasPlanUpdatePermission: boolean = false;
 
   $: permissionError = $planReadOnly ? PlanStatusMessages.READ_ONLY : 'You do not have permission to edit this plan.';
+  $: if (plan) {
+    hasCreateSnapshotPermission = featurePermissions.planSnapshot.canCreate(user, plan, plan.model) && !$planReadOnly;
+  }
   $: {
     if (plan && user) {
       hasPlanUpdatePermission = featurePermissions.plan.canUpdate(user, plan) && !$planReadOnly;
@@ -187,8 +191,10 @@
           <button
             class="st-button secondary"
             use:permissionHandler={{
-              hasPermission: !$planReadOnly,
-              permissionError: PlanStatusMessages.READ_ONLY,
+              hasPermission: hasCreateSnapshotPermission,
+              permissionError: $planReadOnly
+                ? PlanStatusMessages.READ_ONLY
+                : 'You do not have permission to create a plan snapshot',
             }}
             on:click={onCreatePlanSnapshot}>Take Snapshot</button
           >
