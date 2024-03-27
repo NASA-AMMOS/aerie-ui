@@ -36,7 +36,9 @@
 
   function delayedShow() {
     // Clear any existing hide timeout to prevent hiding if we're showing again
-    if (hideTimeout !== undefined) clearTimeout(hideTimeout);
+    if (hideTimeout !== undefined) {
+      clearTimeout(hideTimeout);
+    }
 
     // If no other nav button is currently hovered, apply the delay
     if (!$isNavHovered) {
@@ -52,7 +54,9 @@
   }
 
   function delayedHide() {
-    if (showTimeout !== undefined) clearTimeout(showTimeout);
+    if (showTimeout !== undefined) {
+      clearTimeout(showTimeout);
+    }
 
     hideTimeout = window.setTimeout(() => {
       // Check if the mouse is not over any nav button
