@@ -30,7 +30,7 @@ export function derivedDeeply<S extends Stores, T>(
           return prevValue;
         }
 
-        return nextValue as T;
+        return nextValue;
       });
     },
     initialValue,
