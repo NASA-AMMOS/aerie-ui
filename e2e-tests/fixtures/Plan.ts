@@ -35,6 +35,7 @@ export class Plan {
   panelPlanMetadata: Locator;
   panelSchedulingConditions: Locator;
   panelSchedulingGoals: Locator;
+  panelSimulatedActivitiesTable: Locator;
   panelSimulation: Locator;
   panelTimeline: Locator;
   panelTimelineEditor: Locator;
@@ -345,10 +346,10 @@ export class Plan {
       .nth(0);
     this.constraintManageButton = page.locator(`button[name="manage-constraints"]`);
     this.constraintNewButton = page.locator(`button[name="new-constraint"]`);
-    this.gridMenu = page.locator('.grid-menu > .menu > .menu-slot');
-    this.gridMenuButton = page.locator('.grid-menu');
+    this.gridMenu = page.locator('.header > .grid-menu > .menu > .menu-slot');
+    this.gridMenuButton = page.locator('.header > .grid-menu');
     this.gridMenuItem = (name: string) =>
-      page.locator(`.grid-menu > .menu > .menu-slot > .menu-item:has-text("${name}")`);
+      page.locator(`.header > .grid-menu > .menu > .menu-slot > .menu-item:has-text("${name}")`);
     this.navButtonExpansion = page.locator(`.nav-button:has-text("Expansion")`);
     this.navButtonExpansionMenu = page.locator(`.nav-button:has-text("Expansion") .menu`);
     this.navButtonConstraints = page.locator(`.nav-button:has-text("Constraints")`);
@@ -367,6 +368,7 @@ export class Plan {
     this.panelPlanMetadata = page.locator('[data-component-name="PlanMetadataPanel"]');
     this.panelSchedulingConditions = page.locator('[data-component-name="SchedulingConditionsPanel"]');
     this.panelSchedulingGoals = page.locator('[data-component-name="SchedulingGoalsPanel"]');
+    this.panelSimulatedActivitiesTable = page.locator('[data-component-name="ActivitySpansTablePanel"]');
     this.panelSimulation = page.locator('[data-component-name="SimulationPanel"]');
     this.panelTimeline = page.locator('[data-component-name="TimelinePanel"]');
     this.panelTimelineEditor = page.locator('[data-component-name="TimelineEditorPanel"]');

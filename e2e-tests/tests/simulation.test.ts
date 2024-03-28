@@ -75,7 +75,6 @@ test.describe.serial('Simulation', async () => {
   });
 
   test(`Re-simulating should re-run simulation`, async () => {
-    await page.pause();
     const simHistoryLength = await plan.getSimulationHistoryListLength();
     await plan.reRunSimulation();
     await page.waitForTimeout(1000); // wait for sim dataset to appear
@@ -83,9 +82,16 @@ test.describe.serial('Simulation', async () => {
     await expect(newSimHistoryLength).toEqual(simHistoryLength + 1);
   });
 
-  test(`Plans with activities should simulate`, async () => {
-    await plan.addActivity();
+  test(`Plans with activities should simulate and result in simulated activities`, async () => {
+    await plan.showPanel('Simulated Activities Table', true);
+    await expect(plan.panelSimulatedActivitiesTable.getByRole('gridcell', { name: 'GrowBanana' })).not.toBeVisible();
+    await plan.showPanel('Simulation', true);
+    await plan.addActivity('GrowBanana');
     await plan.runSimulation();
+    await page.waitForTimeout(1000); // wait for sim results
+    await plan.showPanel('Simulated Activities Table', true);
+    await expect(plan.panelSimulatedActivitiesTable.getByRole('gridcell', { name: 'GrowBanana' })).toBeVisible();
+    await plan.showPanel('Simulation', true);
   });
 
   test(`Plans with an invalid activity should fail simulation`, async () => {
