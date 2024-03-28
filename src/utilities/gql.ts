@@ -363,6 +363,15 @@ const gql = {
     }
   `,
 
+  CREATE_CUSTOM_ADAPTATION: `#graphql
+    mutation CreateCustomAdaptation($adaptation: sequence_adaptation_insert_input!) {
+      createSequenceAdaptation: insert_sequence_adaptation_one(object: $adaptation) {
+        adaptation
+        created_at
+      }
+    }
+  `,
+
   CREATE_EXPANSION_RULE: `#graphql
     mutation CreateExpansionRule($rule: expansion_rule_insert_input!) {
       createExpansionRule: ${Queries.INSERT_EXPANSION_RULE}(object: $rule) {
@@ -1421,6 +1430,14 @@ const gql = {
         goal_id
         priority
         specification_id
+      }
+    }
+  `,
+
+  GET_SEQUENCE_ADAPTATION: `#graphql
+    query GetSequenceAdaptation {
+      sequence_adaptation(order_by: {created_at: desc}) {
+        adaptation
       }
     }
   `,
