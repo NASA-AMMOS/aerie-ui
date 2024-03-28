@@ -62,6 +62,20 @@
       }
     }, 500); // Hide delay in milliseconds
   }
+
+  function instantShow() {
+    // Clear any existing hide timeout to prevent hiding if we're showing again
+    if (hideTimeout !== undefined) {
+      clearTimeout(hideTimeout);
+    }
+
+    if (showTimeout !== undefined) {
+      clearTimeout(showTimeout);
+    }
+
+    isNavHovered = true;
+    menu.show();
+  }
 </script>
 
 <div
@@ -69,7 +83,7 @@
   role="none"
   on:mouseenter={delayedShow}
   on:mouseleave={delayedHide}
-  on:click|stopPropagation={() => menu.show()}
+  on:click|stopPropagation={instantShow}
 >
   <div class="nav-button-icon-container">
     <slot />
