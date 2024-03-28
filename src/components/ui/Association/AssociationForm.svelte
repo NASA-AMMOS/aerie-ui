@@ -72,6 +72,7 @@
   export let formColumns: string = '1fr 3px 2fr';
   export let hasCreateDefinitionCodePermission: boolean = false;
   export let hasWriteMetadataPermission: boolean = false;
+  export let hasWriteDefinitionTagsPermission: boolean = false;
   export let initialDefinitionAuthor: UserId | undefined = undefined;
   export let initialDefinitionCode: string = 'export default ():  => {\n\n}\n';
   export let initialDescription: string = '';
@@ -133,7 +134,7 @@
   );
   $: isDefinitionModified = diffDefinition({ definition: initialDefinitionCode }, { definition: definitionCode });
   $: isDefinitionDataModified = diffTags(initialDefinitionTags || [], definitionTags);
-  $: hasUpdateDefinitionPermission = user?.id === defintionAuthor || user?.id === initialOwner || isDefinitionModified;
+  $: hasUpdateDefinitionPermission = hasWriteDefinitionTagsPermission || isDefinitionModified;
   $: pageTitle = mode === 'edit' ? 's' : 'New ';
   $: pageSubtitle = mode === 'edit' ? initialName : '';
   $: referenceModelId = initialReferenceModelId;
