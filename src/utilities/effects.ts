@@ -127,6 +127,7 @@ import type {
   CommandDictionary,
   GetSeqJsonResponse,
   SeqJson,
+  SequenceAdaptation,
   UserSequence,
   UserSequenceInsertInput,
 } from '../types/sequencing';
@@ -648,6 +649,31 @@ const effects = {
       showFailureToast('Constraint Creation Failed');
       return null;
     }
+  },
+
+  async createCustomAdaptation(files: FileList | null, user: User | null): Promise<SequenceAdaptation | null> {
+    try {
+      // TODO: Fix these permissions
+      if (!queryPermissions.CREATE_COMMAND_DICTIONARY(user)) {
+        throwPermissionError('upload a custom adaptation');
+      }
+
+      if (files) {
+        const file: File = files[0];
+        const adaptation = { adaptation: await file.text() };
+        const data = await reqHasura<SequenceAdaptation>(gql.CREATE_CUSTOM_ADAPTATION, { adaptation }, user);
+        const { createSequenceAdaptation: newSequenceAdaptation } = data;
+        if (newSequenceAdaptation != null) {
+          return newSequenceAdaptation;
+        } else {
+          throw Error('Unable to upload sequence adaptation');
+        }
+      }
+    } catch (e) {
+      catchError('Sequence Adaptation Upload Failed', e as Error);
+    }
+
+    return null;
   },
 
   async createExpansionRule(rule: ExpansionRuleInsertInput, user: User | null): Promise<number | null> {
@@ -3178,6 +3204,25 @@ const effects = {
     } else {
       return null;
     }
+  },
+
+  async getSequenceAdaptation(user: User | null): Promise<SequenceAdaptation | null> {
+    try {
+      const data = await reqHasura<[sequence_adaptation: SequenceAdaptation]>(
+        gql.GET_SEQUENCE_ADAPTATION,
+        undefined,
+        user,
+      );
+      const { sequence_adaptation } = data;
+
+      if (sequence_adaptation && sequence_adaptation.length > 0) {
+        return sequence_adaptation[0];
+      }
+    } catch (e) {
+      catchError(e as Error);
+    }
+
+    return null;
   },
 
   async getSpans(datasetId: number, user: User | null, signal: AbortSignal | undefined = undefined): Promise<Span[]> {

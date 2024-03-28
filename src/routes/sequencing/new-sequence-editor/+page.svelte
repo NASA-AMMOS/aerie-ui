@@ -7,12 +7,12 @@
   import { Compartment } from '@codemirror/state';
   import type { ViewUpdate } from '@codemirror/view';
   import type { CommandDictionary } from '@nasa-jpl/aerie-ampcs';
-  import { basicSetup, EditorView } from 'codemirror';
+  import { EditorView, basicSetup } from 'codemirror';
   import { seq } from 'codemirror-lang-sequence';
   import { debounce } from 'lodash-es';
   import { onMount } from 'svelte';
-  import type { PageData } from '../$types';
   import { commandDictionaries } from '../../../stores/sequencing';
+  import type { SequenceAdaptation } from '../../../types/sequencing';
   import effects from '../../../utilities/effects';
   import { parseSeqJsonFromFile, seqJsonToSequence } from '../../../utilities/new-sequence-editor/from-seq-json';
   import { seqJsonLinter } from '../../../utilities/new-sequence-editor/seq-json-linter';
@@ -22,6 +22,8 @@
   import { seqJsonDefault, sequenceToSeqJson } from '../../../utilities/new-sequence-editor/to-seq-json';
   import { permissionHandler } from '../../../utilities/permissionHandler';
   import { featurePermissions } from '../../../utilities/permissions';
+  import { showSuccessToast } from '../../../utilities/toast';
+  import type { PageData } from './$types';
 
   export let data: PageData;
   export let initialSequenceCommandDictionaryId: number | null = null;
@@ -37,12 +39,17 @@
   let editorSeqJsonView: EditorView;
   let editorSequenceDiv: HTMLDivElement;
   let editorSequenceView: EditorView;
-  let hasPermission: boolean = false;
+  let hasSequencePermission: boolean = false;
+  let hasAdaptationCreatePermission: boolean = false;
   let permissionError = 'You do not have permission to create a sequence.';
   let sequenceCommandDictionaryId: number | null = initialSequenceCommandDictionaryId;
 
+  const createPermissionError = 'You do not have permission to create Custom Adaptations';
+
   $: {
-    hasPermission = featurePermissions.sequences.canCreate(data.user);
+    hasSequencePermission = featurePermissions.sequences.canCreate(data.user);
+    // TODO: Fix these permissions
+    hasAdaptationCreatePermission = featurePermissions.commandDictionary.canCreate(data.user);
   }
 
   $: {
@@ -67,6 +74,8 @@
     compartmentSeqLanguage = new Compartment();
     compartmentSeqLinter = new Compartment();
     compartmentSeqTooltip = new Compartment();
+
+    loadAdaptation(data.adaptation);
 
     editorSequenceView = new EditorView({
       doc: '',
@@ -101,14 +110,26 @@
   async function onSeqJsonInput(e: Event & { currentTarget: EventTarget & HTMLInputElement }) {
     const seqJson = await parseSeqJsonFromFile(e.currentTarget.files);
     const sequence = seqJsonToSequence(seqJson);
-    editorSequenceView.dispatch({ changes: { from: 0, to: editorSequenceView.state.doc.length, insert: sequence } });
+    editorSequenceView.dispatch({ changes: { from: 0, insert: sequence, to: editorSequenceView.state.doc.length } });
+  }
+
+  async function onSeqAdaptationInput(e: Event & { currentTarget: EventTarget & HTMLInputElement }) {
+    loadAdaptation(await effects.createCustomAdaptation(e.currentTarget.files, data.user));
+
+    showSuccessToast('Custom Adaptation Uploaded Successfully');
   }
 
   function sequenceUpdateListener(viewUpdate: ViewUpdate) {
     const tree = syntaxTree(viewUpdate.state);
     const seqJson = sequenceToSeqJson(tree, viewUpdate.state.doc.toString(), commandDictionary);
     const seqJsonStr = JSON.stringify(seqJson, null, 2);
-    editorSeqJsonView.dispatch({ changes: { from: 0, to: editorSeqJsonView.state.doc.length, insert: seqJsonStr } });
+    editorSeqJsonView.dispatch({ changes: { from: 0, insert: seqJsonStr, to: editorSeqJsonView.state.doc.length } });
+  }
+
+  function loadAdaptation(sequenceAdaptation: SequenceAdaptation | null): void {
+    if (sequenceAdaptation) {
+      Function(sequenceAdaptation.adaptation)();
+    }
   }
 </script>
 
@@ -121,7 +142,7 @@
         class="st-select w-100"
         name="commandDictionary"
         use:permissionHandler={{
-          hasPermission,
+          hasPermission: hasSequencePermission,
           permissionError,
         }}
       >
@@ -134,6 +155,22 @@
         {/each}
       </select>
     </fieldset>
+
+    <div class="p-2">
+      <label for="seqJsonInput"> Upload a custom adaptation </label>
+      <input
+        on:change={onSeqAdaptationInput}
+        class="st-typography-body w-100"
+        id="seqAdaptationInput"
+        name="seqAdaptationInput"
+        required
+        type="file"
+        use:permissionHandler={{
+          hasPermission: hasAdaptationCreatePermission,
+          permissionError: createPermissionError,
+        }}
+      />
+    </div>
 
     <div class="p-2">
       <label for="seqJsonInput"> Import from Seq JSON </label>
