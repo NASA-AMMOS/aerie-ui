@@ -84,10 +84,15 @@
   .parameters-container :global(> div.highlight) {
     box-sizing: border-box;
     padding: 4px 0;
+    border: 1px solid transparent;
+    margin-top: -1px;
+    margin-bottom: -1px;
   }
 
   .parameters-container :global(> div.highlight:hover) {
-    box-shadow: 0px 0px 0px 1px var(--st-gray-20);
+    /* box-shadow: 0px 0px 0px 1px var(--st-gray-20); */
+    border-top: 1px solid var(--st-gray-20);
+    border-bottom: 1px solid var(--st-gray-20);
   }
 
   .parameter-info {
