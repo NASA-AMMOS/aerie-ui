@@ -64,7 +64,13 @@
   }
 </script>
 
-<div class="nav-button st-typography-medium" role="none" on:mouseenter={delayedShow} on:mouseleave={delayedHide}>
+<div
+  class="nav-button st-typography-medium"
+  role="none"
+  on:mouseenter={delayedShow}
+  on:mouseleave={delayedHide}
+  on:click|stopPropagation={() => menu.show()}
+>
   <div class="nav-button-icon-container">
     <slot />
     <span class="nav-button-status">
