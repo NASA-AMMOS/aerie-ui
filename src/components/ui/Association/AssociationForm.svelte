@@ -353,7 +353,7 @@
         <button class="st-button secondary ellipsis" on:click={onClose}>
           {mode === 'create' ? 'Cancel' : 'Close'}
         </button>
-        {#if mode === 'edit' && saveButtonEnabled}
+        {#if mode === 'edit' && (isMetadataModified || isDefinitionModified || isDefinitionTagsModified)}
           <button class="st-button secondary ellipsis" on:click={revert}> Revert </button>
         {/if}
         <button
