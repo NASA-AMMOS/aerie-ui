@@ -1,7 +1,8 @@
-<script context="module">
-  import { writable } from 'svelte/store';
+<script context="module" lang="ts">
+  let isNavHovered: boolean = false;
 
-  export const isNavHovered = writable(false);
+  let showTimeout: number | undefined;
+  let hideTimeout: number | undefined;
 </script>
 
 <script lang="ts">
@@ -30,10 +31,6 @@
 
   let menu: Menu;
 
-  // Add delay functions to handle the navbar button hover
-  let showTimeout: number | undefined;
-  let hideTimeout: number | undefined;
-
   function delayedShow() {
     // Clear any existing hide timeout to prevent hiding if we're showing again
     if (hideTimeout !== undefined) {
@@ -41,11 +38,10 @@
     }
 
     // If no other nav button is currently hovered, apply the delay
-    if (!$isNavHovered) {
+    if (!isNavHovered) {
       showTimeout = window.setTimeout(() => {
-        console.log('delayedShow');
+        isNavHovered = true;
         menu.show();
-        isNavHovered.set(true);
       }, 500); // Show delay in milliseconds
     } else {
       // If another nav button is already hovered, show the menu immediately
@@ -60,9 +56,9 @@
 
     hideTimeout = window.setTimeout(() => {
       // Check if the mouse is not over any nav button
-      if (!document.querySelector('.nav-button:hover')) {
+      if (isNavHovered) {
         menu.hide();
-        isNavHovered.set(false);
+        isNavHovered = false;
       }
     }, 500); // Hide delay in milliseconds
   }
