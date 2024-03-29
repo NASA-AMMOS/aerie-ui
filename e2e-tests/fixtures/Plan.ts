@@ -10,14 +10,18 @@ import { SchedulingGoals } from './SchedulingGoals.js';
 export class Plan {
   activitiesTable: Locator;
   activitiesTableFirstRow: Locator;
+  activityCheckingStatusSelector: (status: string) => string;
   analyzeButton: Locator;
   appError: Locator;
+  consoleContainer: Locator;
   constraintListItemSelector: string;
   constraintManageButton: Locator;
   constraintNewButton: Locator;
   gridMenu: Locator;
   gridMenuButton: Locator;
   gridMenuItem: (name: string) => Locator;
+  navButtonActivityChecking: Locator;
+  navButtonActivityCheckingMenu: Locator;
   navButtonConstraints: Locator;
   navButtonConstraintsMenu: Locator;
   navButtonExpansion: Locator;
@@ -74,6 +78,8 @@ export class Plan {
       `div[data-component-name="SchedulingGoalsPanel"] .header-actions > .status-badge.${status.toLowerCase()}`;
     this.simulationStatusSelector = (status: string) =>
       `.nav-button:has-text("Simulation") .status-badge[aria-label=${status}]`;
+    this.activityCheckingStatusSelector = (status: string) =>
+      `.nav-button:has-text("Activities") .status-badge[aria-label=${status}]`;
     this.updatePage(page);
   }
 
@@ -346,10 +352,13 @@ export class Plan {
       .nth(0);
     this.constraintManageButton = page.locator(`button[name="manage-constraints"]`);
     this.constraintNewButton = page.locator(`button[name="new-constraint"]`);
+    this.consoleContainer = page.locator(`.console-container`);
     this.gridMenu = page.locator('.header > .grid-menu > .menu > .menu-slot');
     this.gridMenuButton = page.locator('.header > .grid-menu');
     this.gridMenuItem = (name: string) =>
       page.locator(`.header > .grid-menu > .menu > .menu-slot > .menu-item:has-text("${name}")`);
+    this.navButtonActivityChecking = page.locator(`.nav-button:has-text("Activities")`);
+    this.navButtonActivityCheckingMenu = page.locator(`.nav-button:has-text("Activities") .menu`);
     this.navButtonExpansion = page.locator(`.nav-button:has-text("Expansion")`);
     this.navButtonExpansionMenu = page.locator(`.nav-button:has-text("Expansion") .menu`);
     this.navButtonConstraints = page.locator(`.nav-button:has-text("Constraints")`);
@@ -392,6 +401,11 @@ export class Plan {
     this.schedulingGoalNewButton = page.locator(`button[name="new-scheduling-goal"]`);
     this.schedulingConditionNewButton = page.locator(`button[name="new-scheduling-condition"]`);
     this.schedulingSatisfiedActivity = page.locator('.scheduling-goal-analysis-activities-list > .satisfied-activity');
+  }
+
+  async waitForActivityCheckingStatus(status: Status) {
+    await this.page.waitForSelector(this.activityCheckingStatusSelector(status), { state: 'attached', strict: true });
+    await this.page.waitForSelector(this.activityCheckingStatusSelector(status), { state: 'visible', strict: true });
   }
 
   async waitForSchedulingStatus(status: Status) {
