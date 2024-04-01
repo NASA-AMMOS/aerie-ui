@@ -83,14 +83,21 @@
       }
     },
     {
-      "label": "Reset Aerie DB",
+      "label": "Dump Aerie DB",
       "type": "shell",
-      "command": "cd ../aerie && docker compose down -v && docker compose up -d",
-      "detail": "Task to dump and restart the Aerie DB.",
+      "command": "cd ../aerie && docker compose down -v",
+      "detail": "Task to dump the Aerie DB.",
       "problemMatcher": [],
       "presentation": {
         "group": "groupB"
       }
+    },
+    {
+      "label": "Reset Aerie DB",
+      "type": "shell",
+      "dependsOn": ["Dump Aerie DB", "Aerie Containers"],
+      "dependsOrder": "sequence",
+      "detail": "Task to dump and restart the Aerie DB."
     },
     {
       "label": "Development",
