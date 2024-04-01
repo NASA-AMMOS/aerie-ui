@@ -99,7 +99,6 @@
       "detail": "Task to start up local development.",
       "problemMatcher": []
     },
-
     {
       "label": "UI Build",
       "type": "shell",
