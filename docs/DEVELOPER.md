@@ -49,7 +49,7 @@ Before you can run aerie-ui you must install and configure the following product
 
 - [Aerie](https://github.com/NASA-AMMOS/aerie) which contains the main backend services. You can use the following commands to download, build, and run Aerie:
 
-  (NOTE: For compatibility with VSCode tasks, ensure that both Aerie UI and Aerie repos share the same parent directory and requires NVM installed)
+  (NOTE: For compatibility with VSCode tasks, ensure that both Aerie UI and Aerie repos share the same parent directory and that NVM is installed for node version management)
 
   ```sh
   git clone https://github.com/NASA-AMMOS/aerie.git
