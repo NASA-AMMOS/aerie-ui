@@ -34,7 +34,7 @@
     <div class="as-plan-tags">
       <TagChip {disabled} tag={{ ...tag, name: tagPlanPrimaryUser }} removable={false} />
       {#if filteredCollaborators.length > 0}
-        <div use:tooltip={{ content: collaboratorTooltipContent, placement: 'right', zIndex: 99999, maxWidth: 320 }}>
+        <div use:tooltip={{ content: collaboratorTooltipContent, maxWidth: 320, placement: 'right', zIndex: 99999 }}>
           <TagChip {disabled} tag={{ ...tag, name: `+${filteredCollaborators.length}` }} removable={false} />
         </div>
       {/if}
