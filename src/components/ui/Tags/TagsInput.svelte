@@ -25,7 +25,9 @@
   export let creatable: boolean = true;
   export let compareTags = (tagA: Tag, tagB: Tag) => tagA.id === tagB.id;
   export let disabled: boolean = false;
+  export let getTagName = (tag: Tag) => tag.name;
   export let id: string = '';
+  export let ignoreCase: boolean = true;
   export let inputRef: HTMLInputElement | null = null;
   export let minWidth: number = 82;
   export let name: string = '';
@@ -75,20 +77,27 @@
   $: selectedTags = [...selected]; // copy of selected prop for internal reference and temporary modification
   $: if (options && searchText !== null) {
     // Determine if searchText exactly matches any of the available options
-    exactMatchFound = options.findIndex(tag => compareTagNames(tag.name, searchText || '')) > -1;
+    exactMatchFound = options.findIndex(tag => compareTagNames(getTagName(tag), searchText || '', ignoreCase)) > -1;
 
     filteredOptions = [];
     options.forEach(option => {
       // Filter out already selected options
-      if (findTag(option.name, selectedTags)) {
+      if (findTag(getTagName(option), selectedTags, ignoreCase)) {
         activeTag = option;
         return;
       }
 
       // Filter to match searchText, case insensitive, true if there's an empty string
-      let matchesSubstring = searchText
-        ? option.name.toLocaleLowerCase().indexOf(searchText.toLocaleLowerCase()) > -1
-        : true;
+      let matchesSubstring = false;
+      if (!searchText) {
+        matchesSubstring = true;
+      } else {
+        if (ignoreCase) {
+          matchesSubstring = getTagName(option).indexOf(searchText) > -1;
+        } else {
+          matchesSubstring = getTagName(option).toLocaleLowerCase().indexOf(searchText.toLocaleLowerCase()) > -1;
+        }
+      }
 
       if (matchesSubstring) {
         filteredOptions.push(option);
@@ -96,7 +105,7 @@
     });
 
     // If searchText matches one of the filtered options, bring this option to the top
-    const optionMatchIndex = filteredOptions.findIndex(tag => compareTagNames(tag.name, searchText || ''));
+    const optionMatchIndex = filteredOptions.findIndex(tag => compareTagNames(tag.name, searchText || '', ignoreCase));
     if (optionMatchIndex > -1) {
       filteredOptions.unshift(filteredOptions.splice(optionMatchIndex, 1)[0]);
     }
@@ -127,12 +136,15 @@
     searchText = '';
   }
 
-  function compareTagNames(name1: Tag['name'], name2: Tag['name']) {
-    return name1.toLocaleLowerCase() === name2.toLocaleLowerCase();
+  function compareTagNames(name1: Tag['name'], name2: Tag['name'], ignoreCase: boolean) {
+    if (ignoreCase) {
+      return name1.toLocaleLowerCase() === name2.toLocaleLowerCase();
+    }
+    return name1 === name2;
   }
 
-  function findTag(name: string, tags: Tag[]) {
-    return tags.find(t => compareTagNames(t.name, name));
+  function findTag(name: string, tags: Tag[], ignoreCase: boolean) {
+    return tags.find(t => compareTagNames(getTagName(t), name, ignoreCase));
   }
 
   function onKeydown(event: KeyboardEvent) {
@@ -148,12 +160,12 @@
       closeSuggestions();
     } else if (key === 'Enter' && (searchText || activeTag)) {
       // prevent add if searchText matches tag name that is already selected
-      if (searchText && !activeTag && findTag(searchText, selectedTags)) {
+      if (searchText && !activeTag && findTag(searchText, selectedTags, ignoreCase)) {
         return;
       }
 
       // Use active tag or create a placeholder tag if needed
-      const existingTag = activeTag || findTag(searchText || '', filteredOptions);
+      const existingTag = activeTag || findTag(searchText || '', filteredOptions, ignoreCase);
       const changeEvent = existingTag ? 'select' : 'create';
       if (existingTag) {
         addTag(existingTag, changeEvent);
@@ -197,7 +209,7 @@
 
   function onTagRemove(tag: Tag) {
     // Find the tag by name since it may not have an ID yet
-    selectedTags = selectedTags.filter(t => t.name !== tag.name);
+    selectedTags = selectedTags.filter(t => getTagName(t) !== getTagName(tag));
     removeTag(tag);
   }
 
@@ -275,7 +287,7 @@
             >
               Add "{searchText}" (enter)
             </div>
-          {:else}
+          {:else if !filteredOptions.length}
             <div class="tags-input-option tags-input-option-message">No matching {tagDisplayName} found</div>
           {/if}
         {/if}

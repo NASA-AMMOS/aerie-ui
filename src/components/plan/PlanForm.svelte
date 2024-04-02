@@ -36,6 +36,7 @@
   let isFilteredBySimulation: boolean = false;
   let hasCreateSnapshotPermission: boolean = false;
   let hasPlanUpdatePermission: boolean = false;
+  let hasPlanCollaboratorsUpdatePermission: boolean = false;
 
   $: permissionError = $planReadOnly ? PlanStatusMessages.READ_ONLY : 'You do not have permission to edit this plan.';
   $: if (plan) {
@@ -44,8 +45,11 @@
   $: {
     if (plan && user) {
       hasPlanUpdatePermission = featurePermissions.plan.canUpdate(user, plan) && !$planReadOnly;
+      hasPlanCollaboratorsUpdatePermission =
+        featurePermissions.planCollaborators.canCreate(user, plan) && !$planReadOnly;
     } else {
       hasPlanUpdatePermission = false;
+      hasPlanCollaboratorsUpdatePermission = false;
     }
   }
 
@@ -153,13 +157,22 @@
         </Input>
         <Input layout="inline">
           <label use:tooltip={{ content: 'Collaborators', placement: 'top' }} for="collaborators">Collaborators</label>
-          <!-- <input
-            class="st-input w-100"
-            disabled
-            name="collaborators"
-            value={plan.collaborators.map(c => c.collaborator).join(', ')}
-          /> -->
-          <PlanCollaboratorInput collaborators={plan.collaborators} {users} plans={userWriteablePlans} {plan} {user} />
+          <PlanCollaboratorInput
+            collaborators={plan.collaborators}
+            {users}
+            plans={userWriteablePlans}
+            {plan}
+            {user}
+            use={[
+              [
+                permissionHandler,
+                {
+                  hasPermission: hasPlanCollaboratorsUpdatePermission,
+                  permissionError,
+                },
+              ],
+            ]}
+          />
         </Input>
         <Input layout="inline">
           <label use:tooltip={{ content: 'Tags', placement: 'top' }} for="tags">Tags</label>

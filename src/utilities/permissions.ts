@@ -828,8 +828,8 @@ const queryPermissions = {
       isUserAdmin(user) || (getPermission([Queries.UPDATE_EXPANSION_RULE], user) && isUserOwner(user, expansionRule))
     );
   },
-  UPDATE_PLAN: (user: User | null): boolean => {
-    return getPermission([Queries.UPDATE_PLAN], user);
+  UPDATE_PLAN: (user: User | null, plan: PlanWithOwners): boolean => {
+    return isUserAdmin(user) || (getPermission([Queries.UPDATE_PLAN], user) && isUserOwner(user, plan));
   },
   UPDATE_PLAN_SNAPSHOT: (user: User | null): boolean => {
     return getPermission([Queries.UPDATE_PLAN_SNAPSHOT], user);
@@ -1010,6 +1010,11 @@ interface PlanBranchCRUDPermission {
   canReviewRequest: RolePlanBranchPermissionCheck;
 }
 
+interface PlanCollaboratorsCRUDPermission {
+  canCreate: PlanAssetCreatePermissionCheck;
+  canDelete: PlanAssetCreatePermissionCheck;
+}
+
 interface PlanAssetCRUDPermission<T = null> {
   canCreate: PlanAssetCreatePermissionCheck;
   canDelete: PlanAssetUpdatePermissionCheck<T>;
@@ -1081,6 +1086,7 @@ interface FeaturePermissions {
   model: CRUDPermission<void>;
   plan: CRUDPermission<PlanWithOwners>;
   planBranch: PlanBranchCRUDPermission;
+  planCollaborators: PlanCollaboratorsCRUDPermission;
   planSnapshot: PlanSnapshotCRUDPermission;
   schedulingConditions: AssociationCRUDPermission<SchedulingConditionMetadata, SchedulingConditionDefinition>;
   schedulingConditionsPlanSpec: PlanSpecificationCRUDPermission<AssetWithOwner<SchedulingConditionMetadata>>;
@@ -1155,7 +1161,7 @@ const featurePermissions: FeaturePermissions = {
     canCreate: user => queryPermissions.CREATE_PLAN(user),
     canDelete: (user, plan) => queryPermissions.DELETE_PLAN(user, plan),
     canRead: user => queryPermissions.GET_PLAN(user),
-    canUpdate: (user, plan) => queryPermissions.CREATE_PLAN_TAGS(user, plan),
+    canUpdate: (user, plan) => queryPermissions.UPDATE_PLAN(user, plan),
   },
   planBranch: {
     canCreateBranch: (user, plan, model) => queryPermissions.DUPLICATE_PLAN(user, plan, model),
@@ -1170,6 +1176,10 @@ const featurePermissions: FeaturePermissions = {
       queryPermissions.PLAN_MERGE_DENY(user, sourcePlan, targetPlan, model) &&
       queryPermissions.PLAN_MERGE_RESOLVE_CONFLICT(user, sourcePlan, targetPlan, model) &&
       queryPermissions.PLAN_MERGE_RESOLVE_ALL_CONFLICTS(user, sourcePlan, targetPlan, model),
+  },
+  planCollaborators: {
+    canCreate: (user, plan) => queryPermissions.CREATE_PLAN_COLLABORATORS(user, plan),
+    canDelete: (user, plan) => queryPermissions.DELETE_PLAN_COLLABORATOR(user, plan),
   },
   planSnapshot: {
     canCreate: (user, plan, model) => queryPermissions.CREATE_PLAN_SNAPSHOT(user, plan, model),

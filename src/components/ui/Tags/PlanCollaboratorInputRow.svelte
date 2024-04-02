@@ -13,9 +13,7 @@
   let tagPlanPrimaryUser = '';
   let filteredCollaborators: PlanCollaborator[] = [];
   $: if (tag && tag.plan && collaborators) {
-    console.log('testing', tag.plan?.owner, collaborators);
     if (collaborators.find(collaborator => collaborator.collaborator === tag.plan?.owner)) {
-      console.log('tag.plan.owner ALREADY :>> ', tag.plan.owner, tag.plan.name, collaborators);
       if (tag.plan.collaborators.length > 0) {
         tagPlanPrimaryUser = tag.plan.collaborators[0].collaborator || 'Unk';
         filteredCollaborators = tag.plan.collaborators.slice(1);

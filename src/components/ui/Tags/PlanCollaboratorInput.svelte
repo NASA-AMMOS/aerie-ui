@@ -1,19 +1,11 @@
-<!--
-Refactor tab input to be used as collaborator selection
-User can search plans and usernames.
-Ideally we'll surface all the recent plans the user accessed as top suggestions. If we don't have access to recents, could consider suggesting based on last modified plans the user has access to?
-List shows plan name on the left, and usernames on the right. The first username should be the plan owner.
-Searching filters plans and usernames. After a search is entered, show username matches on top. (Might need to re-evaluate this one based on some testing. If people do share based on a plan most, this could get in the way.
-Adding a list of usernames from a plan adds that list, but there's no link back to the plan.
- -->
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  // import { createEventDispatcher } from 'svelte';
   import type { User, UserId } from '../../../types/app';
   import type { Plan, PlanCollaborator, PlanSlimmer } from '../../../types/plan';
   import type { PlanCollaboratorTag, Tag /* TagChangeType */, TagsChangeEvent } from '../../../types/tags';
   import effects from '../../../utilities/effects';
+  import type { ActionArray } from '../../../utilities/useActions';
   import PlanCollaboratorInputRow from './PlanCollaboratorInputRow.svelte';
   import TagsInput from './TagsInput.svelte';
 
@@ -22,6 +14,7 @@ Adding a list of usernames from a plan adds that list, but there's no link back 
   export let plans: PlanSlimmer[] = [];
   export let plan: Plan;
   export let user: User | null;
+  export let use: ActionArray = [];
 
   let inputRef: TagsInput | null;
 
@@ -62,15 +55,29 @@ Adding a list of usernames from a plan adds that list, but there's no link back 
       );
       return !ownerIsCollaborator || anyTagCollaboratorsNotCollaborators;
     });
-    // TODO sort options
-    options = newOptions;
+
+    options = newOptions.sort((optionA, optionB) => {
+      if (optionA.plan && !optionB.plan) {
+        return -1;
+      }
+      if (!optionA.plan && optionB.plan) {
+        return 1;
+      }
+      if (optionA.plan && optionB.plan) {
+        return optionA.plan.updated_at > optionB.plan.updated_at ? -1 : 1;
+      }
+      return optionA.name < optionB.name ? -1 : 0;
+    });
   }
+
   $: selected = collaborators.map(collaborator => userToTag(collaborator.collaborator));
 
+  function getTagName(tag: PlanCollaboratorTag): string {
+    return tag.plan ? tag.plan.name : tag.name;
+  }
+
   function compareTags(tagA: PlanCollaboratorTag, tagB: PlanCollaboratorTag): boolean {
-    const nameA = tagA.plan ? tagA.plan.name : tagA.name;
-    const nameB = tagB.plan ? tagB.plan.name : tagB.name;
-    return nameA === nameB;
+    return getTagName(tagA) === getTagName(tagB);
   }
 
   function addTag(tag: PlanCollaboratorTag) {
@@ -138,15 +145,18 @@ Adding a list of usernames from a plan adds that list, but there's no link back 
 <TagsInput
   bind:this={inputRef}
   {addTag}
+  ignoreCase={false}
   placeholder="Search collaborators or plans"
   creatable={false}
   tagDisplayName="collaborator"
-  {options}
   {compareTags}
+  {getTagName}
+  {options}
   {selected}
   minWidth={168}
   on:change={onTagsInputChange}
   let:prop={tag}
+  {use}
 >
   <PlanCollaboratorInputRow {tag} {collaborators} />
 </TagsInput>
