@@ -1,4 +1,4 @@
-<svelte:options immutable={true} />
+<svelte:options immutable={true} accessors={true} />
 
 <script lang="ts">
   import type { ModifierPhases, State } from '@popperjs/core';
@@ -9,15 +9,29 @@
   import { useActions, type ActionArray } from '../../../utilities/useActions';
   import TagChip from './Tag.svelte';
 
+  export let addTag: (tag: Tag, changeType: TagChangeType) => void = (
+    tag: Tag,
+    changeType: TagChangeType = 'select',
+  ) => {
+    selectedTags = selectedTags.concat(tag);
+    searchText = '';
+    dispatch('change', { tag, type: changeType });
+    updatePopperPosition();
+    closeSuggestions();
+  };
   export let createTagObject: (name: string) => Tag = (name: string) => {
     return { color: generateRandomPastelColor(), created_at: '', id: -1, name, owner: '' };
   };
+  export let creatable: boolean = true;
+  export let compareTags = (tagA: Tag, tagB: Tag) => tagA.id === tagB.id;
   export let disabled: boolean = false;
   export let id: string = '';
   export let inputRef: HTMLInputElement | null = null;
+  export let minWidth: number = 82;
   export let name: string = '';
   export let placeholder: string = 'Enter a tag...';
   export let selected: Tag[] = [];
+  export let tagDisplayName: string = 'tag';
   export let suggestionsLimit: number = 8;
   export let tagsRef: HTMLDivElement | null = null;
   export let options: Tag[] = [];
@@ -95,14 +109,6 @@
     activeTag = activeIndex > -1 ? filteredOptions.at(activeIndex) || null : null;
   }
 
-  function addTag(tag: Tag, changeType: TagChangeType = 'select') {
-    selectedTags = selectedTags.concat(tag);
-    searchText = '';
-    dispatch('change', { tag, type: changeType });
-    updatePopperPosition();
-    closeSuggestions();
-  }
-
   function removeTag(tag: Tag) {
     dispatch('change', { tag, type: 'remove' });
     updatePopperPosition();
@@ -115,7 +121,7 @@
     suggestionsVisible = true;
   }
 
-  function closeSuggestions() {
+  export function closeSuggestions() {
     suggestionsVisible = false;
     activeIndex = -1;
     searchText = '';
@@ -149,7 +155,11 @@
       // Use active tag or create a placeholder tag if needed
       const existingTag = activeTag || findTag(searchText || '', filteredOptions);
       const changeEvent = existingTag ? 'select' : 'create';
-      addTag(existingTag || createTagObject(searchText || ''), changeEvent);
+      if (existingTag) {
+        addTag(existingTag, changeEvent);
+      } else if (creatable) {
+        addTag(createTagObject(searchText || ''), changeEvent);
+      }
     } else if (key === 'Backspace' && searchText === '' && selectedTags.length) {
       const lastTag = selectedTags.at(-1);
       selectedTags = selectedTags.slice(0, -1);
@@ -197,7 +207,7 @@
     }
   }
 
-  function updatePopperPosition() {
+  export function updatePopperPosition() {
     getInstance()?.update();
   }
 </script>
@@ -223,6 +233,7 @@
         {disabled}
         placeholder={disabled ? '' : placeholder}
         class="st-input"
+        style:min-width={`${minWidth}px`}
         on:mouseup={openSuggestions}
         on:focus={openSuggestions}
         on:keydown|stopPropagation={onKeydown}
@@ -242,29 +253,37 @@
               class="tags-input-option"
               on:mousedown|stopPropagation
               on:mouseup|stopPropagation={() => addTag(tag, 'select')}
-              aria-selected={activeTag?.id === tag.id}
-              class:active={activeTag?.id === tag.id}
+              aria-selected={activeTag ? compareTags(activeTag, tag) : false}
+              class:active={activeTag ? compareTags(activeTag, tag) : false}
             >
-              <TagChip {disabled} {tag} removable={false} />
+              {#if $$slots.default}
+                <slot prop={tag} />
+              {:else}
+                <TagChip {disabled} {tag} removable={false} />
+              {/if}
             </li>
           {/each}
         {/if}
         {#if !exactMatchFound && searchText}
-          <div
-            on:mousedown|stopPropagation
-            on:mouseup|stopPropagation={() => addTag(createTagObject(searchText || ''), 'create')}
-            class="tags-input-option"
-            role="button"
-            tabindex={0}
-          >
-            Add "{searchText}" (enter)
-          </div>
+          {#if creatable}
+            <div
+              on:mousedown|stopPropagation
+              on:mouseup|stopPropagation={() => addTag(createTagObject(searchText || ''), 'create')}
+              class="tags-input-option"
+              role="button"
+              tabindex={0}
+            >
+              Add "{searchText}" (enter)
+            </div>
+          {:else}
+            <div class="tags-input-option tags-input-option-message">No matching {tagDisplayName} found</div>
+          {/if}
         {/if}
         {#if !filteredOptions.length && exactMatchFound && searchText}
           <div class="tags-input-option tags-input-option-message">{searchText} already added</div>
         {/if}
         {#if !filteredOptions.length && !exactMatchFound && !searchText}
-          <div class="tags-input-option tags-input-option-message">No other tags found</div>
+          <div class="tags-input-option tags-input-option-message">No other {tagDisplayName}s found</div>
         {/if}
       </ul>
     </div>
@@ -309,9 +328,12 @@
     border: none;
     flex: 1;
     height: 20px;
-    min-width: 82px;
     outline: none;
     width: 100%;
+  }
+
+  .tags-input input[placeholder] {
+    text-overflow: ellipsis;
   }
 
   .tags-input-portal {

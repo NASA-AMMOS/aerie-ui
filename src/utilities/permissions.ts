@@ -350,6 +350,13 @@ const queryPermissions = {
   CREATE_PLAN: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_PLAN], user);
   },
+  CREATE_PLAN_COLLABORATORS: (user: User | null, plan: PlanWithOwners): boolean => {
+    return (
+      isUserAdmin(user) ||
+      (getPermission([Queries.INSERT_PLAN_COLLABORATORS], user) &&
+        (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
+    );
+  },
   CREATE_PLAN_MERGE_REQUEST: (
     user: User | null,
     sourcePlan: PlanWithOwners,
@@ -486,6 +493,13 @@ const queryPermissions = {
     return (
       isUserAdmin(user) ||
       (getPermission([Queries.DELETE_PLAN, Queries.DELETE_SCHEDULING_SPECIFICATION], user) && isPlanOwner(user, plan))
+    );
+  },
+  DELETE_PLAN_COLLABORATOR: (user: User | null, plan: PlanWithOwners): boolean => {
+    return (
+      isUserAdmin(user) ||
+      (getPermission([Queries.DELETE_PLAN_COLLABORATOR], user) &&
+        (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
     );
   },
   DELETE_PLAN_SNAPSHOT: (user: User | null): boolean => {
@@ -813,6 +827,9 @@ const queryPermissions = {
     return (
       isUserAdmin(user) || (getPermission([Queries.UPDATE_EXPANSION_RULE], user) && isUserOwner(user, expansionRule))
     );
+  },
+  UPDATE_PLAN: (user: User | null): boolean => {
+    return getPermission([Queries.UPDATE_PLAN], user);
   },
   UPDATE_PLAN_SNAPSHOT: (user: User | null): boolean => {
     return getPermission([Queries.UPDATE_PLAN_SNAPSHOT], user);

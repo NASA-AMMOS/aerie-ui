@@ -11,6 +11,7 @@ export type PlanBranchRequestAction = 'merge' | 'pull';
 
 export type PlanCollaborator = {
   collaborator: UserId;
+  plan_id: number;
 };
 
 export type PlanInsertInput = Pick<PlanSchema, 'duration' | 'model_id' | 'name' | 'start_time'>;
@@ -92,6 +93,11 @@ export type PlanSchema = {
   updated_by: UserId;
 };
 
+export type PlanMetadata = Pick<
+  PlanSchema,
+  'id' | 'updated_at' | 'updated_by' | 'name' | 'owner' | 'created_at' | 'collaborators' | 'model'
+>;
+
 export type PlanSlim = Pick<
   Plan,
   | 'created_at'
@@ -110,7 +116,7 @@ export type PlanSlim = Pick<
   | 'updated_by'
 >;
 
-export type PlanSlimmer = Pick<PlanSlim, 'id' | 'start_time' | 'end_time_doy'>;
+export type PlanSlimmer = Pick<PlanSlim, 'id' | 'name' | 'owner' | 'collaborators' | 'updated_at' | 'updated_by'>;
 
 export type PlanSchedulingSpec = Pick<
   Plan,

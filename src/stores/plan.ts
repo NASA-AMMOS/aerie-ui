@@ -1,6 +1,6 @@
 import { derived, writable, type Readable, type Writable } from 'svelte/store';
 import type { ActivityType } from '../types/activity';
-import type { Plan, PlanMergeRequest, PlanMergeRequestSchema } from '../types/plan';
+import { type Plan, type PlanMergeRequest, type PlanMergeRequestSchema, type PlanMetadata } from '../types/plan';
 import type { PlanDataset } from '../types/simulation';
 import type { Tag } from '../types/tags';
 import type { TimeRange } from '../types/timeline';
@@ -25,7 +25,7 @@ export const createPlanError: Writable<string | null> = writable(null);
 
 export const creatingPlan: Writable<boolean> = writable(false);
 
-export const plan: Writable<Plan | null> = writable(null);
+export const initialPlan: Writable<Plan | null> = writable(null);
 
 export const planEndTimeMs: Writable<number> = writable(0);
 
@@ -35,11 +35,24 @@ export const maxTimeRange: Writable<TimeRange> = writable({ end: 0, start: 0 });
 
 export const viewTimeRange: Writable<TimeRange> = writable({ end: 0, start: 0 });
 
+/* Subscriptions. TODO ordering */
+export const planId: Readable<number> = derived(initialPlan, $plan => ($plan ? $plan.id : -1));
+
+export const planMetadata = gqlSubscribable<PlanMetadata | null>(gql.SUB_PLAN_METADATA, { planId }, null, null);
+
 /* Derived. */
 
-export const modelId: Readable<number> = derived(plan, $plan => ($plan ? $plan.model.id : -1));
+export const plan: Readable<Plan | null> = derived([initialPlan, planMetadata], ([$initialPlan, $planMetadata]) => {
+  if (!$initialPlan) {
+    return null;
+  }
+  return {
+    ...$initialPlan,
+    ...($planMetadata || {}),
+  };
+});
 
-export const planId: Readable<number> = derived(plan, $plan => ($plan ? $plan.id : -1));
+export const modelId: Readable<number> = derived(plan, $plan => ($plan ? $plan.model.id : -1));
 
 /* Subscriptions. */
 
@@ -91,7 +104,7 @@ export function resetPlanStores() {
   activityEditingLocked.set(false);
   createPlanError.set(null);
   creatingPlan.set(false);
-  plan.set(null);
+  initialPlan.set(null);
   planEndTimeMs.set(0);
   planStartTimeMs.set(0);
   maxTimeRange.set({ end: 0, start: 0 });
