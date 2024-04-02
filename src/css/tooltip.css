@@ -96,7 +96,7 @@
 }
 
 .tippy-box {
-  max-width: none !important;
+  /* max-width: none !important; */
 }
 
 .tippy-box[data-theme~='error'] {
