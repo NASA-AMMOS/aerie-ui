@@ -3,13 +3,13 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import type { User, UserId } from '../../../types/app';
-  import type { Plan, PlanCollaborator, PlanSlimmer } from '../../../types/plan';
-  import type { PlanCollaboratorTag, Tag /* TagChangeType */, TagsChangeEvent } from '../../../types/tags';
+  import type { Plan, PlanCollaborator, PlanCollaboratorSlim, PlanSlimmer } from '../../../types/plan';
+  import type { PlanCollaboratorTag, Tag, TagsChangeEvent } from '../../../types/tags';
   import type { ActionArray } from '../../../utilities/useActions';
   import PlanCollaboratorInputRow from './PlanCollaboratorInputRow.svelte';
   import TagsInput from './TagsInput.svelte';
 
-  export let collaborators: PlanCollaborator[] = [];
+  export let collaborators: PlanCollaboratorSlim[] = [];
   export let users: UserId[] = [];
   export let plans: PlanSlimmer[] = [];
   export let plan: Plan;

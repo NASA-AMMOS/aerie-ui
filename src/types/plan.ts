@@ -9,10 +9,9 @@ export type Plan = PlanSchema & { end_time_doy: string; start_time_doy: string }
 
 export type PlanBranchRequestAction = 'merge' | 'pull';
 
-export type PlanCollaborator = {
-  collaborator: UserId;
-  plan_id: number;
-};
+export type PlanCollaborator = { collaborator: UserId; plan_id: number };
+
+export type PlanCollaboratorSlim = Pick<PlanCollaborator, 'collaborator'>;
 
 export type PlanInsertInput = Pick<PlanSchema, 'duration' | 'model_id' | 'name' | 'start_time'>;
 
@@ -73,7 +72,7 @@ export type PlanMergeResolution = 'none' | 'source' | 'target';
 
 export type PlanSchema = {
   child_plans: Pick<PlanSchema, 'id' | 'name'>[];
-  collaborators: PlanCollaborator[];
+  collaborators: PlanCollaboratorSlim[];
   constraint_specification: ConstraintPlanSpec[];
   created_at: string;
   duration: string;

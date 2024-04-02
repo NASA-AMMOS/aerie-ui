@@ -4215,28 +4215,6 @@ const effects = {
     }
   },
 
-  async updatePlan(id: number, plan: Partial<Plan>, user: User | null): Promise<void> {
-    try {
-      if (!queryPermissions.UPDATE_PLAN(user)) {
-        throwPermissionError('update this plan');
-      }
-
-      const data = await reqHasura(gql.UPDATE_PLAN, { plan, planId: id }, user);
-      const { updatePlan: updatedPlanId } = data;
-
-      if (updatedPlanId != null) {
-        showSuccessToast('Plan Updated Successfully');
-        return;
-      } else {
-        throw Error(`Unable to update plan with ID: "${id}"`);
-      }
-    } catch (e) {
-      catchError('Plan Update Failed', e as Error);
-      showFailureToast('Plan Update Failed');
-      return;
-    }
-  },
-
   async updatePlanSnapshot(id: number, snapshot: Partial<PlanSnapshot>, user: User | null): Promise<void> {
     try {
       if (!queryPermissions.UPDATE_PLAN_SNAPSHOT(user)) {

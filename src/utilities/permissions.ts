@@ -742,6 +742,7 @@ const queryPermissions = {
     return isUserAdmin(user) || getPermission([Queries.EXPANSION_SETS], user);
   },
   SUB_MODELS: () => true,
+  SUB_PLANS_USER_WRITABLE: () => true,
   SUB_PLAN_DATASET: () => true,
   SUB_PLAN_LOCKED: () => true,
   SUB_PLAN_MERGE_CONFLICTING_ACTIVITIES: () => true,
@@ -749,6 +750,7 @@ const queryPermissions = {
   SUB_PLAN_MERGE_REQUESTS_OUTGOING: () => true,
   SUB_PLAN_MERGE_REQUEST_IN_PROGRESS: () => true,
   SUB_PLAN_MERGE_REQUEST_STATUS: () => true,
+  SUB_PLAN_METADATA: () => true,
   SUB_PLAN_REVISION: () => true,
   SUB_PLAN_SNAPSHOTS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.PLAN_SNAPSHOTS], user);
@@ -779,6 +781,7 @@ const queryPermissions = {
   SUB_TAGS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.TAGS], user);
   },
+  SUB_USERS: () => true,
   SUB_USER_SEQUENCES: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.USER_SEQUENCES], user);
   },
@@ -827,9 +830,6 @@ const queryPermissions = {
     return (
       isUserAdmin(user) || (getPermission([Queries.UPDATE_EXPANSION_RULE], user) && isUserOwner(user, expansionRule))
     );
-  },
-  UPDATE_PLAN: (user: User | null, plan: PlanWithOwners): boolean => {
-    return isUserAdmin(user) || (getPermission([Queries.UPDATE_PLAN], user) && isUserOwner(user, plan));
   },
   UPDATE_PLAN_SNAPSHOT: (user: User | null): boolean => {
     return getPermission([Queries.UPDATE_PLAN_SNAPSHOT], user);
@@ -1161,7 +1161,7 @@ const featurePermissions: FeaturePermissions = {
     canCreate: user => queryPermissions.CREATE_PLAN(user),
     canDelete: (user, plan) => queryPermissions.DELETE_PLAN(user, plan),
     canRead: user => queryPermissions.GET_PLAN(user),
-    canUpdate: (user, plan) => queryPermissions.UPDATE_PLAN(user, plan),
+    canUpdate: (user, plan) => queryPermissions.CREATE_PLAN_TAGS(user, plan),
   },
   planBranch: {
     canCreateBranch: (user, plan, model) => queryPermissions.DUPLICATE_PLAN(user, plan, model),

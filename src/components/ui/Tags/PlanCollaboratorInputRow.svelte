@@ -1,17 +1,17 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import type { PlanCollaborator } from '../../../types/plan';
+  import type { PlanCollaboratorSlim } from '../../../types/plan';
   import type { PlanCollaboratorTag } from '../../../types/tags';
   import { tooltip } from '../../../utilities/tooltip';
   import TagChip from './Tag.svelte';
 
   export let tag: PlanCollaboratorTag;
   export let disabled: boolean = false;
-  export let collaborators: PlanCollaborator[];
+  export let collaborators: PlanCollaboratorSlim[];
 
   let tagPlanPrimaryUser = '';
-  let filteredCollaborators: PlanCollaborator[] = [];
+  let filteredCollaborators: PlanCollaboratorSlim[] = [];
   $: if (tag && tag.plan && collaborators) {
     if (collaborators.find(collaborator => collaborator.collaborator === tag.plan?.owner)) {
       if (tag.plan.collaborators.length > 0) {

@@ -151,7 +151,6 @@ export enum Queries {
   UPDATE_CONSTRAINT_METADATA = 'update_constraint_metadata_by_pk',
   UPDATE_CONSTRAINT_SPECIFICATION = 'update_constraint_specification_by_pk',
   UPDATE_EXPANSION_RULE = 'update_expansion_rule_by_pk',
-  UPDATE_PLAN = 'update_plan_by_pk',
   UPDATE_PLAN_SNAPSHOT = 'update_plan_snapshot_by_pk',
   UPDATE_SCHEDULING_CONDITION_METADATA = 'update_scheduling_condition_metadata_by_pk',
   UPDATE_SCHEDULING_GOAL_METADATA = 'update_scheduling_goal_metadata_by_pk',
@@ -2153,7 +2152,6 @@ const gql = {
         created_at
         collaborators {
           collaborator
-          plan_id
         }
       }
     }
@@ -2729,16 +2727,6 @@ const gql = {
         pk_columns: { id: $id }, _set: $rule
       ) {
         updated_at
-      }
-    }
-  `,
-
-  UPDATE_PLAN: `#graphql
-    mutation UpdatePlan($planId: Int!, $plan: plan_set_input!) {
-      updatePlan: ${Queries.UPDATE_PLAN}(
-        pk_columns: { id: $planId }, _set: $plan
-      ) {
-        id
       }
     }
   `,

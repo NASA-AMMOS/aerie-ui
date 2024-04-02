@@ -220,13 +220,14 @@
   $: hasUpdateViewPermission = $view !== null ? featurePermissions.view.canUpdate(data.user, $view) : false;
   $: if ($initialPlan) {
     hasCheckConstraintsPermission =
-      featurePermissions.constraintPlanSpec.canCheck(data.user, $plan, $initialPlan.model) && !$planReadOnly;
+      featurePermissions.constraintPlanSpec.canCheck(data.user, $initialPlan, $initialPlan.model) && !$planReadOnly;
     hasExpandPermission =
-      featurePermissions.expansionSequences.canExpand(data.user, $plan, $initialPlan.model) && !$planReadOnly;
+      featurePermissions.expansionSequences.canExpand(data.user, $initialPlan, $initialPlan.model) && !$planReadOnly;
     hasScheduleAnalysisPermission =
-      featurePermissions.schedulingGoalsPlanSpec.canAnalyze(data.user, $plan, $initialPlan.model) && !$planReadOnly;
+      featurePermissions.schedulingGoalsPlanSpec.canAnalyze(data.user, $initialPlan, $initialPlan.model) &&
+      !$planReadOnly;
     hasSimulatePermission =
-      featurePermissions.simulation.canRun(data.user, $plan, $initialPlan.model) && !$planReadOnly;
+      featurePermissions.simulation.canRun(data.user, $initialPlan, $initialPlan.model) && !$planReadOnly;
   }
   $: if (data.initialPlan) {
     $initialPlan = data.initialPlan;
