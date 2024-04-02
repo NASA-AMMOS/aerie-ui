@@ -1855,9 +1855,6 @@ const effects = {
 
       const data = await reqHasura<{ affected_rows: number }>(gql.DELETE_CONSTRAINT_METADATA_TAGS, { ids }, user);
       if (data.delete_constraint_tags != null) {
-        if (data.delete_constraint_tags.affected_rows !== ids.length) {
-          throw Error('Some constraint tags were not successfully deleted');
-        }
         return true;
       } else {
         throw Error('Unable to delete constraint tags');
@@ -1935,9 +1932,6 @@ const effects = {
       const { delete_expansion_rule_tags } = data;
       if (delete_expansion_rule_tags != null) {
         const { affected_rows } = delete_expansion_rule_tags;
-        if (affected_rows !== ids.length) {
-          throw Error('Some expansion rule tags were not successfully deleted');
-        }
         return affected_rows;
       } else {
         throw Error('Unable to delete expansion rule tags');
@@ -2323,6 +2317,7 @@ const effects = {
         throwPermissionError('delete tags');
       }
 
+      await reqHasura<{ id: number }>(gql.DELETE_TAG, { id: tag.id }, user);
       showSuccessToast('Tag Deleted Successfully');
       return true;
     } catch (e) {
