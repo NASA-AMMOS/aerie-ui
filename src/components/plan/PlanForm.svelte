@@ -8,7 +8,7 @@
   import { simulationDataset, simulationDatasetId } from '../../stores/simulation';
   import { viewTogglePanel } from '../../stores/views';
   import type { User, UserId } from '../../types/app';
-  import type { Plan, PlanSlimmer } from '../../types/plan';
+  import type { Plan, PlanCollaborator, PlanSlimmer } from '../../types/plan';
   import type { PlanSnapshot as PlanSnapshotType } from '../../types/plan-snapshot';
   import type { PlanTagsInsertInput, Tag, TagsChangeEvent } from '../../types/tags';
   import effects from '../../utilities/effects';
@@ -77,6 +77,18 @@
         tag_id,
       }));
       await effects.createPlanTags(newPlanTags, plan, user, true);
+    }
+  }
+
+  function onPlanCollaboratorsCreate(event: CustomEvent<PlanCollaborator[]>) {
+    if (plan) {
+      effects.createPlanCollaborators(plan, event.detail, user);
+    }
+  }
+
+  function onPlanCollaboratorCreate(event: CustomEvent<string>) {
+    if (plan) {
+      effects.deletePlanCollaborator(plan, event.detail, user);
     }
   }
 
@@ -163,6 +175,8 @@
             plans={userWriteablePlans}
             {plan}
             {user}
+            on:create={onPlanCollaboratorsCreate}
+            on:delete={onPlanCollaboratorCreate}
             use={[
               [
                 permissionHandler,

@@ -1,10 +1,10 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { createEventDispatcher } from 'svelte';
   import type { User, UserId } from '../../../types/app';
   import type { Plan, PlanCollaborator, PlanSlimmer } from '../../../types/plan';
   import type { PlanCollaboratorTag, Tag /* TagChangeType */, TagsChangeEvent } from '../../../types/tags';
-  import effects from '../../../utilities/effects';
   import type { ActionArray } from '../../../utilities/useActions';
   import PlanCollaboratorInputRow from './PlanCollaboratorInputRow.svelte';
   import TagsInput from './TagsInput.svelte';
@@ -15,6 +15,11 @@
   export let plan: Plan;
   export let user: User | null;
   export let use: ActionArray = [];
+
+  const dispatch = createEventDispatcher<{
+    create: PlanCollaborator[];
+    delete: string;
+  }>();
 
   let inputRef: TagsInput | null;
 
@@ -103,7 +108,7 @@
       }
     }
     if (user) {
-      effects.createPlanCollaborators(plan, newCollaborators, user);
+      dispatch('create', newCollaborators);
       allowableCollaborators = allowableCollaborators.filter(
         collaborator => !newCollaborators.find(c => c.collaborator === collaborator),
       );
@@ -137,7 +142,7 @@
       detail: { tag, type },
     } = event;
     if (type === 'remove') {
-      await effects.deletePlanCollaborator(plan, tag.name, user);
+      dispatch('delete', tag.name);
     }
   }
 </script>
