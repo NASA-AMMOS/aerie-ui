@@ -5,7 +5,7 @@
       "label": "Aerie UI",
       "type": "shell",
       "command": "nvm use && npm run dev",
-      "detail": "Task to run just the UI for development.",
+      "detail": "Task to run the Aerie UI in development mode.",
       "problemMatcher": [
         {
           "background": {
@@ -73,7 +73,7 @@
       }
     },
     {
-      "label": "Aerie Containers",
+      "label": "Aerie Backend",
       "type": "shell",
       "command": "cd ../aerie && docker compose up --build aerie_gateway aerie_merlin aerie_scheduler aerie_merlin_worker_1 aerie_merlin_worker_2 aerie_scheduler_worker_1 aerie_scheduler_worker_2 aerie_sequencing hasura postgres",
       "detail": "Task to start up Aerie containers.",
@@ -83,10 +83,10 @@
       }
     },
     {
-      "label": "Dump Aerie DB",
+      "label": "Clear Aerie DB",
       "type": "shell",
       "command": "cd ../aerie && docker compose down -v",
-      "detail": "Task to dump the Aerie DB.",
+      "detail": "Task to clear the Aerie DB.",
       "problemMatcher": [],
       "presentation": {
         "group": "groupB"
@@ -95,19 +95,19 @@
     {
       "label": "Reset Aerie DB",
       "type": "shell",
-      "dependsOn": ["Dump Aerie DB", "Aerie Containers"],
+      "dependsOn": ["Clear Aerie DB", "Aerie Backend"],
       "dependsOrder": "sequence",
-      "detail": "Task to dump and restart the Aerie DB."
+      "detail": "Task to clear and restart the Aerie DB."
     },
     {
-      "label": "Development",
-      "dependsOn": ["Aerie Containers", "Aerie UI", "Svelte Check", "Unit Tests"],
+      "label": "Run Development",
+      "dependsOn": ["Aerie Backend", "Aerie UI", "Svelte Check", "Unit Tests"],
       "dependsOrder": "parallel",
       "detail": "Task to start up local development.",
       "problemMatcher": []
     },
     {
-      "label": "UI Build",
+      "label": "Build UI",
       "type": "shell",
       "command": "nvm use && npm run build",
       "detail": "Task to do a production build of the UI"
@@ -127,7 +127,7 @@
     {
       "label": "e2e Tests",
       "type": "shell",
-      "dependsOn": ["UI Build"],
+      "dependsOn": ["Build UI"],
       "command": "nvm use && npm run test:e2e",
       "detail": "Task to run e2e tests"
     },
