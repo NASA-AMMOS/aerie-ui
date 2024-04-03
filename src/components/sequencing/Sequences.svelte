@@ -18,7 +18,7 @@
   import SingleActionDataGrid from '../ui/DataGrid/SingleActionDataGrid.svelte';
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
-  import NewSequenceEditor from './SequenceEditor.svelte';
+  import SequenceEditor from './SequenceEditor.svelte';
 
   export let user: User | null;
 
@@ -203,7 +203,7 @@
 
   <CssGridGutter track={1} type="column" />
 
-  <NewSequenceEditor
+  <SequenceEditor
     sequenceCommandDictionaryId={selectedSequence?.authoring_command_dict_id}
     sequenceDefinition={selectedSequence?.definition ?? ''}
     sequenceName={selectedSequence?.name}

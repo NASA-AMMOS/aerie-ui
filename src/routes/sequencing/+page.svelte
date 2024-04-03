@@ -2,7 +2,7 @@
 
 <script lang="ts">
   import PageTitle from '../../components/app/PageTitle.svelte';
-  import NewSequences from '../../components/sequencing/Sequences.svelte';
+  import Sequences from '../../components/sequencing/Sequences.svelte';
   import type { PageData } from './$types';
 
   export let data: PageData;
@@ -10,4 +10,4 @@
 
 <PageTitle title="Sequencing" />
 
-<NewSequences user={data.user} />
+<Sequences user={data.user} />

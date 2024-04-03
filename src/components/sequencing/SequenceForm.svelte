@@ -17,7 +17,7 @@
   import CssGridGutter from '../ui/CssGridGutter.svelte';
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
-  import NewSequenceEditor from './SequenceEditor.svelte';
+  import SequenceEditor from './SequenceEditor.svelte';
 
   export let adaptation: SequenceAdaptation | null;
   export let initialSequenceCommandDictionaryId: number | null = null;
@@ -276,9 +276,9 @@
 
   <CssGridGutter track={1} type="column" />
 
-  <NewSequenceEditor
+  <SequenceEditor
     {sequenceCommandDictionaryId}
-    {sequenceDefinition}
+    sequenceDefinition={initialSequenceDefinition}
     {sequenceName}
     {sequenceSeqJson}
     title="{mode === 'create' ? 'New' : 'Edit'} Sequence - Definition Editor"
