@@ -16,7 +16,7 @@ test.afterAll(async () => {
   await context.close();
 });
 
-test.describe.serial.only('Tags', () => {
+test.describe.serial('Tags', () => {
   test('Create tag button should be disabled with no errors', async () => {
     await expect(tags.inputName).toBeVisible();
     await expect(tags.alertError).not.toBeVisible();
