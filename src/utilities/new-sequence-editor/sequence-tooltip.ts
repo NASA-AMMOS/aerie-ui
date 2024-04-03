@@ -94,17 +94,18 @@ export function sequenceTooltip(commandDictionary: CommandDictionary | null = nu
             const arg = fswCommand.arguments[i];
 
             // TODO. Type check arg for type found in AST so we do not show tooltips incorrectly.
-
-            return {
-              above: true,
-              create() {
-                const dom = document.createElement('div');
-                new ArgumentTooltip({ props: { arg, commandDictionary }, target: dom });
-                return { dom };
-              },
-              end: to,
-              pos: from,
-            };
+            if (arg) {
+              return {
+                above: true,
+                create() {
+                  const dom = document.createElement('div');
+                  new ArgumentTooltip({ props: { arg, commandDictionary }, target: dom });
+                  return { dom };
+                },
+                end: to,
+                pos: from,
+              };
+            }
           }
 
           argNode = argNode?.nextSibling ?? null;
