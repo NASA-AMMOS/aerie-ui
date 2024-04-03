@@ -39,7 +39,8 @@
   },
   "dependencies": {
     "@fontsource/jetbrains-mono": "^5.0.19",
-    "@nasa-jpl/aerie-ampcs": "^1.0.1",
+    "@nasa-jpl/aerie-ampcs": "^1.0.2",
+    "@nasa-jpl/seq-json-schema": "^1.0.20",
     "@nasa-jpl/stellar": "^1.1.18",
     "@sveltejs/adapter-node": "5.0.1",
     "@sveltejs/kit": "^2.5.4",
