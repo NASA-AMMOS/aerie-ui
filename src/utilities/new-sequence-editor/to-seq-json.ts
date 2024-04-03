@@ -1,20 +1,27 @@
-import type { SyntaxNode, Tree, TreeCursor } from '@lezer/common';
-import type { CommandDictionary } from '@nasa-jpl/aerie-ampcs';
+import type { SyntaxNode, Tree } from '@lezer/common';
+import type { CommandDictionary, FswCommandArgument, FswCommandArgumentRepeat } from '@nasa-jpl/aerie-ampcs';
 import type {
   Args,
   BooleanArgument,
   Command,
-  GroundBlock,
+  HardwareCommand,
   HexArgument,
+  ImmediateCommand,
+  Metadata,
   Model,
   NumberArgument,
   RepeatArgument,
   SeqJson,
   StringArgument,
+  SymbolArgument,
   Time,
   VariableDeclaration,
 } from '@nasa-jpl/seq-json-schema/types';
 import { logInfo } from './logger';
+import { TOKEN_REPEAT_ARG } from './sequencer-grammar-constants';
+import { EPOCH_SIMPLE, EPOCH_TIME, RELATIVE_SIMPLE, RELATIVE_TIME, testTime } from './time-utils';
+
+let variableList: string[] = [];
 
 /**
  * Returns a minimal valid Seq JSON object.
@@ -28,157 +35,132 @@ export function seqJsonDefault(): SeqJson {
  * Walks the sequence parse tree and converts it to a valid Seq JSON object.
  */
 export function sequenceToSeqJson(node: Tree, text: string, commandDictionary: CommandDictionary | null): SeqJson {
-  let cursor: TreeCursor = node.cursor();
-  let seqJson: SeqJson = seqJsonDefault();
+  const baseNode = node.topNode;
+  const seqJson: SeqJson = seqJsonDefault();
+  variableList = [];
 
-  const globals: VariableDeclaration[] = [];
-  const locals: VariableDeclaration[] = [];
-  const parameters: VariableDeclaration[] = [];
-  const varSymbolTable: Record<string, Record<string, VariableDeclaration>> = { globals: {}, locals: {}, params: {} };
-
-  // Build symbol table of params, locals, and globals.
-  while (cursor.next()) {
-    if (cursor.node.name === 'Global' || cursor.node.name === 'Local' || cursor.node.name === 'Param') {
-      const varNameNode = cursor.node.getChild('VarName');
-      const varTypeNode = cursor.node.getChild('VarType')?.firstChild; // Specific type is the first child of VarType.
-
-      if (varTypeNode && varNameNode) {
-        const name = text.slice(varNameNode.from, varNameNode.to);
-        const type = text.slice(varTypeNode.from, varTypeNode.to) as VariableDeclaration['type'];
-        const varDeclaration: VariableDeclaration = { name, type };
-
-        if (cursor.node.name === 'Global') {
-          varSymbolTable.globals[name] = varDeclaration;
-          globals.push(varDeclaration);
-        } else if (cursor.node.name === 'Local') {
-          varSymbolTable.locals[name] = varDeclaration;
-          locals.push(varDeclaration);
-        } else if (cursor.node.name === 'Param') {
-          varSymbolTable.params[name] = varDeclaration;
-          parameters.push(varDeclaration);
-        }
-      }
-    }
-  }
-
-  if (locals.length) {
-    seqJson = { ...seqJson, locals: locals as SeqJson['locals'] };
-  }
-
-  if (parameters.length) {
-    seqJson = { ...seqJson, parameters: parameters as SeqJson['parameters'] };
-  }
-
-  // Reset cursor and re-scan now that we have the symbol table to use in sequence.
-  cursor = node.cursor();
-
-  // Note: This skips the top-level Sequence node (change to do-while if you need to access it).
-  while (cursor.next()) {
-    if (cursor.node.name === 'Id') {
-      const id = parseId(cursor.node, text);
-      seqJson.id = id;
-    } else if (cursor.node.name === 'Command') {
-      const command = parseCommand(cursor.node, text, commandDictionary);
-      if (!seqJson.steps) {
-        seqJson.steps = [];
-      }
-      seqJson.steps.push(command);
-    }
-  }
-
+  seqJson.id = parseId(baseNode, text);
+  seqJson.metadata = { ...parseLGO(baseNode), ...parseMetatdata(baseNode, text) } ?? {};
+  seqJson.locals = parseVariables(baseNode, text, 'LocalDeclaration') ?? undefined;
+  seqJson.parameters = parseVariables(baseNode, text, 'ParameterDeclaration') ?? undefined;
+  seqJson.steps =
+    baseNode
+      .getChild('Commands')
+      ?.getChildren('Command')
+      .map(command => parseCommand(command, text, commandDictionary)) ?? undefined;
+  seqJson.immediate_commands =
+    baseNode
+      .getChild('ImmediateCommands')
+      ?.getChildren('Command')
+      .map(command => parseImmediateCommand(command, text, commandDictionary)) ?? undefined;
+  seqJson.hardware_commands =
+    baseNode
+      .getChild('HardwareCommands')
+      ?.getChildren('Command')
+      .map(command => parseHardwareCommand(command, text)) ?? undefined;
   return seqJson;
+}
+
+function parseLGO(node: SyntaxNode): Metadata | undefined {
+  const lgoNode = node.getChild('Commands')?.getChild('LoadAndGoDirective');
+  if (!lgoNode) {
+    return undefined;
+  }
+
+  return {
+    lgo: 'true',
+  };
 }
 
 export function parseArg(
   node: SyntaxNode,
   text: string,
-  commandDictionary: CommandDictionary | null,
-  stem: string,
-  index = -1,
-): BooleanArgument | HexArgument | NumberArgument | StringArgument | undefined {
+  dictionaryArg: FswCommandArgument | null,
+): BooleanArgument | HexArgument | NumberArgument | StringArgument | SymbolArgument | undefined {
   const nodeValue = text.slice(node.from, node.to);
-  const fswCommand = commandDictionary?.fswCommandMap[stem] ?? null;
-  const fswCommandArg = fswCommand?.arguments[index] ?? null;
 
   if (node.name === 'Boolean') {
-    const value = JSON.parse(nodeValue);
+    const value = nodeValue === 'TRUE' ? true : false;
     const booleanArg: BooleanArgument = { type: 'boolean', value };
-    if (fswCommandArg) {
-      booleanArg.name = fswCommandArg.name;
+    if (dictionaryArg) {
+      booleanArg.name = dictionaryArg.name;
     }
     return booleanArg;
   } else if (node.name === 'Enum') {
     const value = nodeValue;
     const enumArg: StringArgument = { type: 'string', value };
-    if (fswCommandArg) {
-      enumArg.name = fswCommandArg.name;
+    if (dictionaryArg) {
+      enumArg.name = dictionaryArg.name;
     }
     return enumArg;
   } else if (node.name === 'Number') {
     if (nodeValue.slice(0, 2) === '0x') {
       const hexArg: HexArgument = { type: 'hex', value: nodeValue };
-      if (fswCommandArg) {
-        hexArg.name = fswCommandArg.name;
+      if (dictionaryArg) {
+        hexArg.name = dictionaryArg.name;
       }
       return hexArg;
     } else {
       const value = parseFloat(nodeValue);
       const numberArg: NumberArgument = { type: 'number', value };
-      if (fswCommandArg) {
-        numberArg.name = fswCommandArg.name;
+      if (dictionaryArg) {
+        numberArg.name = dictionaryArg.name;
       }
       return numberArg;
     }
   } else if (node.name === 'String') {
     const value = JSON.parse(nodeValue);
-    const stringArg: StringArgument = { type: 'string', value };
-    if (fswCommandArg) {
-      stringArg.name = fswCommandArg.name;
+    let arg: StringArgument | SymbolArgument;
+    if (variableList.includes(value)) {
+      arg = { type: 'symbol', value };
+    } else {
+      arg = { type: 'string', value };
     }
-    return stringArg;
+
+    if (dictionaryArg) {
+      arg.name = dictionaryArg.name;
+    }
+    return arg;
   }
 }
 
 export function parseRepeatArgs(
   repeatArgsNode: SyntaxNode,
   text: string,
-  commandDictionary: CommandDictionary | null,
-  stem: string,
-  index: number,
+  dictRepeatArgument: FswCommandArgumentRepeat | null,
 ) {
   const repeatArg: RepeatArgument = { type: 'repeat', value: [] };
-  const fswCommand = commandDictionary?.fswCommandMap[stem] ?? null;
-  const fswCommandArg = fswCommand?.arguments[index] ?? null;
-  let repeatArgNode = repeatArgsNode.firstChild;
+  let repeatArgNode: SyntaxNode | null = repeatArgsNode;
 
   if (repeatArgNode) {
+    let i = 0;
     do {
-      if (repeatArgNode.name === 'RepeatArg') {
-        const args: RepeatArgument['value'][0] = [];
-        let argNode = repeatArgNode.firstChild;
+      const args: RepeatArgument['value'][0] = [];
+      let argNode = repeatArgNode.firstChild;
+      const repeatArgs = dictRepeatArgument?.repeat?.arguments ?? null;
 
-        if (argNode) {
-          do {
-            const arg = parseArg(argNode, text, commandDictionary, stem);
-            if (arg) {
-              args.push(arg);
-            } else {
-              logInfo(`Could not parse arg for node with name ${argNode.name}`);
-            }
+      if (argNode) {
+        do {
+          const arg = parseArg(argNode, text, repeatArgs ? repeatArgs[i] : null);
+          if (arg) {
+            args.push(arg);
+          } else {
+            logInfo(`Could not parse arg for node with name ${argNode.name}`);
+          }
 
-            argNode = argNode?.nextSibling;
-          } while (argNode);
-        }
-
-        repeatArg.value.push(args);
+          argNode = argNode?.nextSibling;
+          i = (i + 1) % (repeatArgs?.length ?? 0);
+        } while (argNode);
       }
+
+      repeatArg.value.push(args);
 
       repeatArgNode = repeatArgNode?.nextSibling;
     } while (repeatArgNode);
   }
 
-  if (fswCommandArg) {
-    repeatArg.name = fswCommandArg.name;
+  if (dictRepeatArgument) {
+    repeatArg.name = dictRepeatArgument.name;
   }
 
   return repeatArg;
@@ -192,19 +174,21 @@ export function parseArgs(
 ): Args {
   const args: Args = [];
   let argNode = argsNode.firstChild;
+  const dictArguments = commandDictionary?.fswCommandMap[stem]?.arguments ?? [];
   let i = 0;
 
   if (argNode) {
     do {
-      if (argNode.name === 'RepeatArgs') {
-        const arg = parseRepeatArgs(argNode, text, commandDictionary, stem, i);
+      const dictArg = dictArguments[i] ?? null;
+      if (argNode.name === TOKEN_REPEAT_ARG) {
+        const arg = parseRepeatArgs(argNode, text, (dictArg as FswCommandArgumentRepeat) ?? null);
         if (arg) {
           args.push(arg);
         } else {
           logInfo(`Could not parse repeat arg for node with name ${argNode.name}`);
         }
       } else {
-        const arg = parseArg(argNode, text, commandDictionary, stem, i);
+        const arg = parseArg(argNode, text, dictArg);
         if (arg) {
           args.push(arg);
         } else {
@@ -220,88 +204,187 @@ export function parseArgs(
 }
 
 /**
- * Returns a string value between parenthesis.
- * For example if you pass text as 'abs(2020-001T00:00:00)', this
- * function will return '2020-001T00:00:00'.
- * Returns 'UNKNOWN' if a value is not found in-between parenthesis.
+ *
+ * @param commandNode
+ * @param text
+ * @returns
  */
-export function parseTimeTag(text: string): string {
-  return text.split('(').pop()?.slice(0, -1) ?? 'UNKNOWN';
-}
 
 /**
  * Parses a time tag node and returns a Seq JSON time.
  * Defaults to an unknown absolute time if a command does not have a valid time tag.
  */
 export function parseTime(commandNode: SyntaxNode, text: string): Time {
-  const timeTagAbsoluteNode = commandNode.getChild('TimeTagAbsolute');
-  const timeTagCompleteNode = commandNode.getChild('TimeTagComplete');
-  const timeTagEpochNode = commandNode.getChild('TimeTagEpoch');
-  const timeTagRelativeNode = commandNode.getChild('TimeTagRelative');
+  const timeTagNode = commandNode.getChild('TimeTag');
+  let tag = 'UNKNOWN';
 
-  if (timeTagAbsoluteNode) {
-    const timeTagAbsoluteText = text.slice(timeTagAbsoluteNode.from, timeTagAbsoluteNode.to);
-    const tag = parseTimeTag(timeTagAbsoluteText);
+  if (timeTagNode == null) {
     return { tag, type: 'ABSOLUTE' };
   }
+
+  const timeTagAbsoluteNode = timeTagNode.getChild('TimeAbsolute');
+  const timeTagCompleteNode = timeTagNode.getChild('TimeComplete');
+  const timeTagEpochNode = timeTagNode.getChild('TimeEpoch');
+  const timeTagRelativeNode = timeTagNode.getChild('TimeRelative');
 
   if (timeTagCompleteNode) {
     return { type: 'COMMAND_COMPLETE' };
   }
 
-  if (timeTagEpochNode) {
-    const timeTagEpochText = text.slice(timeTagEpochNode.from, timeTagEpochNode.to);
-    const tag = timeTagEpochText.slice(1);
-    return { tag, type: 'EPOCH_RELATIVE' };
+  if (!timeTagAbsoluteNode && !timeTagEpochNode && !timeTagRelativeNode) {
+    return { tag, type: 'ABSOLUTE' };
   }
 
-  if (timeTagRelativeNode) {
-    const timeTagRelativeText = text.slice(timeTagRelativeNode.from, timeTagRelativeNode.to);
-    const tag = timeTagRelativeText.length > 0 ? secondsToHMS(Number(timeTagRelativeText.slice(1))) : '00:00:00';
-    return { tag, type: 'COMMAND_RELATIVE' };
-  }
+  if (timeTagAbsoluteNode) {
+    const tag = text.slice(timeTagAbsoluteNode.from + 1, timeTagAbsoluteNode.to).trim();
+    return { tag, type: 'ABSOLUTE' };
+  } else if (timeTagEpochNode) {
+    const timeTagEpochText = text.slice(timeTagEpochNode.from + 1, timeTagEpochNode.to).trim();
 
-  return { tag: 'UNKNOWN', type: 'ABSOLUTE' };
+    // a regex to determine if this string [+/-]####T##:##:##.###
+    let match = testTime(timeTagEpochText, EPOCH_TIME);
+    if (match) {
+      const [, sign, doy, hh, mm, ss, ms] = match;
+      tag = `${sign === '-' ? '-' : ''}${doy !== undefined ? doy : ''}${hh ? hh : '00'}:${mm ? mm : '00'}:${
+        ss ? ss : '00'
+      }${ms ? ms : ''}`;
+      return { tag, type: 'EPOCH_RELATIVE' };
+    }
+
+    // a regex to determine if this string [+/-]###.###
+    match = testTime(timeTagEpochText, EPOCH_SIMPLE);
+    if (match) {
+      const [, sign, second, ms] = match;
+      tag = `${sign === '-' ? '-' : ''}${second ? secondsToHMS(Number(second)) : ''}${ms ? ms : ''}`;
+      return { tag, type: 'EPOCH_RELATIVE' };
+    }
+  } else if (timeTagRelativeNode) {
+    const timeTagRelativeText = text.slice(timeTagRelativeNode.from + 1, timeTagRelativeNode.to).trim();
+
+    // a regex to determine if this string ####T##:##:##.###
+    let match = testTime(timeTagRelativeText, RELATIVE_TIME);
+    if (match) {
+      RELATIVE_TIME.lastIndex = 0;
+      const [, doy, hh, mm, ss, ms] = match;
+      tag = `${doy !== undefined ? doy : ''}${doy !== undefined ? doy : ''}${hh ? hh : '00'}:${mm ? mm : '00'}:${
+        ss ? ss : '00'
+      }${ms ? ms : ''}`;
+      return { tag, type: 'COMMAND_RELATIVE' };
+    }
+    match = testTime(timeTagRelativeText, RELATIVE_SIMPLE);
+    if (match) {
+      RELATIVE_SIMPLE.lastIndex = 0;
+      const [, second, ms] = match;
+      tag = `${second ? secondsToHMS(Number(second)) : ''}${ms ? ms : ''}`;
+      return { tag, type: 'COMMAND_RELATIVE' };
+    }
+  }
+  return { tag, type: 'ABSOLUTE' };
 }
 
 function secondsToHMS(seconds: number): string {
+  if (typeof seconds !== 'number' || isNaN(seconds)) {
+    throw new Error(`Expected a valid number for seconds, got ${seconds}`);
+  }
+
   const hours: number = Math.floor(seconds / 3600);
   const minutes: number = Math.floor((seconds % 3600) / 60);
   const remainingSeconds: number = seconds % 60;
-  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds
-    .toString()
-    .padStart(2, '0')}`;
+
+  const hoursString = hours.toString().padStart(2, '0');
+  const minutesString = minutes.toString().padStart(2, '0');
+  const remainingSecondsString = remainingSeconds.toString().padStart(2, '0');
+
+  return `${hoursString}:${minutesString}:${remainingSecondsString}`;
+}
+
+function parseVariables(
+  node: SyntaxNode,
+  text: string,
+  type: 'LocalDeclaration' | 'ParameterDeclaration' = 'LocalDeclaration',
+): [VariableDeclaration, ...VariableDeclaration[]] | undefined {
+  const variableContainer = node.getChild(type);
+  if (!variableContainer) {
+    return undefined;
+  }
+  const variables = variableContainer.getChildren('Enum');
+  if (!variables || variables.length === 0) {
+    return undefined;
+  }
+
+  const variableDeclaration: VariableDeclaration[] = [];
+  variables.map((variable: SyntaxNode) => {
+    const variableText = text.slice(variable.from, variable.to);
+    variableList.push(variableText);
+
+    //parse the text [a-z]D*("UINT"|"INT"|"FLOAT"|"ENUM"|"STR")L07
+    const match = /([a-zA-Z]*)([0-9]{2})(INT|UINT|FLT|ENUM|STR)/g.exec(variableText);
+    if (match) {
+      const [, , , kind] = match;
+
+      let type = 'UNKNOWN';
+      switch (kind) {
+        case 'STR':
+          type = 'STRING';
+          break;
+        case 'FLT':
+          type = 'FLOAT';
+          break;
+        default:
+          type = kind;
+          break;
+      }
+
+      variableDeclaration.push({
+        name: variableText,
+        type: type as VariableDeclaration['type'],
+      });
+    } else {
+      variableDeclaration.push({
+        name: variableText,
+        type: 'UNKNOWN' as VariableDeclaration['type'],
+      });
+    }
+  });
+  return [variableDeclaration[0], ...variableDeclaration.slice(1)] as [VariableDeclaration, ...VariableDeclaration[]];
 }
 
 function parseModel(node: SyntaxNode, text: string): Model[] | undefined {
-  const modelNodes = node.getChildren('Model');
-  if (modelNodes.length === 0) {
+  const modelContainer = node.getChild('Models');
+  if (!modelContainer) {
     return undefined;
-  } else {
-    const models: Model[] = [];
-    modelNodes.map((modelNode: SyntaxNode) => {
-      const variableNode = modelNode.getChild('Variable');
-      const valueNode = modelNode.getChild('Value');
-      const offsetNode = modelNode.getChild('Offset');
-
-      models.push({
-        variable: variableNode ? (removeQuotes(text.slice(variableNode.from, variableNode.to)) as string) : 'UNKNOWN',
-        value: valueNode ? removeQuotes(text.slice(valueNode.from, valueNode.to)) : 0,
-        offset: offsetNode ? (removeQuotes(text.slice(offsetNode.from, offsetNode.to)) as string) : 'UNKNOWN',
-      });
-    });
-
-    return models;
   }
+
+  const modelNodes = modelContainer.getChildren('Model');
+  if (!modelNodes || modelNodes.length === 0) {
+    return undefined;
+  }
+
+  const models: Model[] = [];
+  for (const modelNode of modelNodes) {
+    const variableNode = modelNode.getChild('Variable');
+    const valueNode = modelNode.getChild('Value');
+    const offsetNode = modelNode.getChild('Offset');
+
+    const variable = variableNode
+      ? (removeQuotes(text.slice(variableNode.from, variableNode.to)) as string)
+      : 'UNKNOWN';
+    const value = valueNode ? removeQuotes(text.slice(valueNode.from, valueNode.to)) : 0;
+    const offset = offsetNode ? (removeQuotes(text.slice(offsetNode.from, offsetNode.to)) as string) : 'UNKNOWN';
+
+    models.push({ offset, value, variable});
+  }
+
+  return models;
 }
 
 function parseDescription(node: SyntaxNode, text: string): string | undefined {
-  const descriptionNode = node.getChild('Description')?.getChild('String');
-  if (descriptionNode) {
-    const description = text.slice(descriptionNode.from, descriptionNode.to);
-    return removeQuotes(description) as string;
+  const descriptionNode = node.getChild('LineComment');
+  if (!descriptionNode) {
+    return undefined;
   }
-  return undefined;
+  const description = text.slice(descriptionNode.from + 1, descriptionNode.to).trim();
+  return removeQuotes(description) as string;
 }
 
 function removeQuotes(text: string | number | boolean): string | number | boolean {
@@ -309,27 +392,6 @@ function removeQuotes(text: string | number | boolean): string | number | boolea
     return text.replace(/^"|"$/g, '');
   }
   return text;
-}
-
-export function parseGroundBlock(commandNode: SyntaxNode, text: string): GroundBlock {
-  const time = parseTime(commandNode, text);
-  const description = parseDescription(commandNode, text);
-  const models = parseModel(commandNode, text);
-  console.log(commandNode.toString());
-  const nameNode = commandNode.getChild('Name');
-  const name = nameNode ? (removeQuotes(text.slice(nameNode.from, nameNode.to)) as string) : 'UNKNOWN';
-
-  const argsNode = commandNode.getChild('Args');
-  const args = argsNode ? parseArgs(argsNode, text, null, '') : null;
-
-  return {
-    type: 'ground_block',
-    name,
-    time,
-    ...(description ? { description } : {}),
-    ...(models ? { models } : {}),
-    ...(args ? { args } : {}),
-  };
 }
 
 export function parseCommand(
@@ -345,16 +407,96 @@ export function parseCommand(
   const argsNode = commandNode.getChild('Args');
   const args = argsNode ? parseArgs(argsNode, text, commandDictionary, stem) : [];
 
+  const description = parseDescription(commandNode, text);
+  const metadata: Metadata | undefined = parseMetatdata(commandNode, text);
+  const models: Model[] | undefined = parseModel(commandNode, text);
+
   return {
     args,
     stem,
     time,
     type: 'command',
+    ...(description ? { description } : {}),
+    ...(models ? { models } : {}),
+    ...(metadata ? { metadata } : {}),
   };
 }
 
-export function parseId(idNode: SyntaxNode, text: string): string {
+export function parseImmediateCommand(
+  commandNode: SyntaxNode,
+  text: string,
+  commandDictionary: CommandDictionary | null,
+): ImmediateCommand {
+  const stemNode = commandNode.getChild('Stem');
+  const stem = stemNode ? text.slice(stemNode.from, stemNode.to) : 'UNKNOWN';
+
+  const argsNode = commandNode.getChild('Args');
+  const args = argsNode ? parseArgs(argsNode, text, commandDictionary, stem) : [];
+
+  const description = parseDescription(commandNode, text);
+  const metadata: Metadata | undefined = parseMetatdata(commandNode, text);
+
+  return {
+    args,
+    stem,
+    ...(description ? { description } : {}),
+    ...(metadata ? { metadata } : {}),
+  };
+}
+
+export function parseHardwareCommand(commandNode: SyntaxNode, text: string): HardwareCommand {
+  const stemNode = commandNode.getChild('Stem');
+  const stem = stemNode ? text.slice(stemNode.from, stemNode.to) : 'UNKNOWN';
+  const description = parseDescription(commandNode, text);
+  const metadata: Metadata | undefined = parseMetatdata(commandNode, text);
+
+  return {
+    stem,
+    ...(description ? { description } : {}),
+    ...(metadata ? { metadata } : {}),
+  };
+}
+
+export function parseId(node: SyntaxNode, text: string): string {
+  const idNode = node.getChild('IdDeclaration');
+  if (!idNode) {
+    return '';
+  }
+
   const stringNode = idNode.getChild('String');
-  const id = stringNode ? JSON.parse(text.slice(stringNode.from, stringNode.to)) : '';
+  if (!stringNode) {
+    return '';
+  }
+
+  const id = JSON.parse(text.slice(stringNode.from, stringNode.to));
   return id;
+}
+
+export function parseMetatdata(node: SyntaxNode, text: string): Metadata | undefined {
+  const metadataNode = node.getChild('Metadata');
+  if (!metadataNode) {
+    return undefined;
+  }
+
+  const metadataEntry = metadataNode.getChildren('MetaEntry');
+  if (!metadataEntry || metadataEntry.length === 0) {
+    return undefined;
+  }
+
+  const obj: Metadata = {};
+  metadataEntry.forEach(entry => {
+    const keyNode = entry.getChild('Key');
+    const valueNode = entry.getChild('Value');
+
+    if (!keyNode || !valueNode) {
+      return; // Skip this entry if either the key or value is missing
+    }
+
+    const keyText = text.slice(keyNode.from, keyNode.to);
+    const valueText = text.slice(valueNode.from, valueNode.to);
+
+    obj[keyText] = valueText;
+  });
+
+  return obj;
 }
