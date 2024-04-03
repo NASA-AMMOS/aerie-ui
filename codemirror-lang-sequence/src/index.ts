@@ -12,43 +12,39 @@ import { parser } from './sequence.grammar';
 import { customFoldInside } from './utilities/custom-folder';
 
 export const SeqLanguage = LRLanguage.define({
-  parser: parser.configure({
-    props: [
-      indentNodeProp.add({
-        Application: delimitedIndent({ closing: ')', align: false }),
-      }),
-      foldNodeProp.add({
-        Application: foldInside,
-      }),
-      styleTags({
-        Boolean: t.bool,
-        Identifier: t.variableName,
-        Local: t.keyword,
-        LineComment: t.lineComment,
-        Enum: t.labelName,
-        Global: t.keyword,
-        Number: t.number,
-        Param: t.keyword,
-        String: t.string,
-        TimeTagAbsolute: t.keyword,
-        TimeTagComplete: t.keyword,
-        TimeTagEpoch: t.keyword,
-        TimeTagRelative: t.keyword,
-        TimeAbsolute: t.keyword,
-        TimeRelative: t.keyword,
-        VarName: t.variableName,
-        VarTypeFloat: t.typeName,
-        VarTypeInt: t.typeName,
-        VarTypeString: t.typeName,
-        VarTypeUint: t.typeName,
-        VarTypeEnum: t.typeName,
-        '( )': t.paren,
-      }),
-    ],
-  }),
   languageData: {
     commentTokens: { line: '#' },
   },
+  parser: parser.configure({
+    props: [
+      indentNodeProp.add({
+        Application: delimitedIndent({ align: false, closing: ')' }),
+      }),
+      foldNodeProp.add({
+        Application: foldInside,
+        Command: customFoldInside,
+      }),
+      styleTags({
+        Boolean: t.bool,
+        Global: t.namespace,
+        HardwareCommands: t.namespace,
+        IdDeclaration: t.namespace,
+        ImmediateCommands: t.namespace,
+        LineComment: t.comment,
+        LoadAndGoDirective: t.namespace,
+        LocalDeclaration: t.namespace,
+        MetaEntry: t.namespace,
+        Model: t.namespace,
+        ParameterDeclaration: t.namespace,
+        Stem: t.keyword,
+        String: t.string,
+        TimeAbsolute: t.className,
+        TimeComplete: t.className,
+        TimeEpoch: t.className,
+        TimeRelative: t.className,
+      }),
+    ],
+  }),
 });
 
 export function seq(autocomplete?: (context: CompletionContext) => CompletionResult | null) {

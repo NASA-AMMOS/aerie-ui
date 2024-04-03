@@ -1,79 +1,123 @@
-@top Sequence { expression+ }
-
-@skip { space | LineComment }
-
-expression[@isGroup=Expression] {
-  Id |
-  Metadata |
-  Local |
-  Param |
-  Global |
-  Command
+@top Sequence {
+  (newLine | whiteSpace)?
+  commentLine* ~maybeComments
+  IdDeclaration?
+  commentLine* ~maybeComments
+  ParameterDeclaration?
+  commentLine* ~maybeComments
+  LocalDeclaration?
+  commentLine* ~maybeComments
+  Metadata?
+  Commands?
+  ImmediateCommands?
+  HardwareCommands?
 }
 
-Id { @specialize<identifier, "id"> "(" String ")" }
+// Potential Improvements
+// flexibility - allow indentation of directives
+// maintainability - use @specialize on directives
+// extensibility - add generic Directive { "@"identifier }
 
-Metadata { @specialize<identifier, "metadata"> "(" Object ")" }
+@precedence {
+  stemStart @cut
+}
 
-TimeTagAbsolute { @specialize<identifier, "abs"> "(" TimeAbsolute ")" }
+IdDeclaration {
+  idDirective whiteSpace String newLine
+}
 
-TimeTagComplete { @specialize<identifier, "cpl"> }
+ParameterDeclaration {
+  parameterDirective (whiteSpace Enum)+ newLine
+}
 
-TimeTagEpoch { TimeEpoch }
+LocalDeclaration {
+  localsDirective (whiteSpace Enum)+ newLine
+}
 
-TimeTagRelative { TimeRelative }
+commandBlock {
+  (Command | commentLine ~maybeComments)+
+}
 
-VarTypeFloat { @specialize<identifier, "FLOAT"> }
+commentLine {
+  LineComment newLine
+}
 
-VarTypeInt { @specialize<identifier, "INT"> }
+Commands {
+  (LoadAndGoDirective newLine)?
+  commandBlock
+}
 
-VarTypeString { @specialize<identifier, "STRING"> }
+ImmediateCommands {
+  immediateDirective newLine
+  commandBlock
+}
 
-VarTypeUint { @specialize<identifier, "UINT"> }
+HardwareCommands {
+  hardwareDirective newLine
+  commandBlock
+}
 
-VarTypeEnum { @specialize<identifier, "ENUM"> }
+TimeTag { TimeAbsolute | TimeEpoch | TimeRelative  | TimeComplete }
 
-VarType { VarTypeFloat | VarTypeInt | VarTypeString | VarTypeUint | VarTypeEnum }
+Args {
+  (whiteSpace (arg | RepeatArg))* whiteSpace?
+}
 
-VarName { identifier }
+RepeatArg {
+  "[" (whiteSpace? arg)* whiteSpace? "]"
+}
 
-Param { @specialize<identifier, "param"> "(" VarType "," VarName ")" }
+arg[@isGroup=Arguments] { Number | String | Enum }
 
-Local { @specialize<identifier, "local"> "(" VarType "," VarName ")" }
+Command {
+  TimeTag?
+  Stem
+  Args
+  LineComment?
+  newLine
+  Metadata?
+  Models?
+}
 
-Global { @specialize<identifier, "global"> "(" VarType "," VarName ")" }
+Metadata {
+  MetaEntry {
+    metadataDirective
+    whiteSpace Key { String }
+    whiteSpace Value { String }
+    newLine
+  }+
+}
 
-arg { Boolean | Enum | Number | String }
+Models {
+  Model {
+    modelDirective
+    whiteSpace Variable { String }
+    whiteSpace Value { String | Number | Boolean }
+    whiteSpace Offset { String }
+    newLine
+  }+
+}
 
-RepeatArg { "[" commaSep<arg> "]" }
+Enum { identifier }
 
-RepeatArgs { "[" commaSep<RepeatArg> "]" }
-
-Args { "(" commaSep<arg | RepeatArgs> ")" }
-
-Stem { identifier }
-
-Command { timeTag? Stem Args? }
-
-Object { "{" commaSep<Property> "}" }
-
-Property {  String ":" String }
-
-timeTag { TimeTagAbsolute | TimeTagComplete | TimeTagEpoch | TimeTagRelative }
-
-commaSep<content> { content ("," content?)* }
+Stem { !stemStart identifier }
 
 @tokens {
   identifier { @asciiLetter (@asciiLetter| @digit | "_" | "-")* }
 
-  timeHhmmss { @digit@digit":"@digit@digit":"@digit@digit("."@digit@digit@digit)? }
+  timeHhmmss { @digit@digit":"@digit@digit":"@digit@digit("."@digit+)? }
 
-  TimeAbsolute { @digit@digit@digit@digit"-"@digit@digit@digit"T"timeHhmmss }
+  timeDOY { @digit@digit@digit"T"timeHhmmss }
 
-  TimeRelative { 'R'$[1-9] @digit* }
+  timeSecond { $[1-9] @digit* ("."@digit+)? }
 
-  TimeEpoch { 'E'$[+\-]timeHhmmss}
+  TimeAbsolute { 'A'@digit@digit@digit@digit"-"@digit@digit@digit"T"timeHhmmss whiteSpace }
 
+  TimeRelative { 'R'(timeSecond | timeDOY | timeHhmmss) whiteSpace}
+
+  TimeEpoch { 'E'$[+\-]?(timeSecond | timeDOY | timeHhmmss) whiteSpace}
+
+  TimeComplete { 'C' whiteSpace }
 
   String { '"' (!["\\] | "\\" _)* '"' }
 
@@ -86,17 +130,40 @@ commaSep<content> { content ("," content?)* }
     "0x" (hex | "_")+ "n"?
   }
 
-  Boolean { "true" | "false" }
+  TRUE { "TRUE" }
+  FALSE { "FALSE" }
+  Boolean { TRUE | FALSE }
 
-  Enum { identifier }
+  LineComment { "#"![\n\r]* }
 
-  @precedence {  Boolean, Enum }
+  newLine { ($[ \t]* "\n")+ $[ \t]* |  (whiteSpace? @eof) }
 
-  @precedence { TimeRelative, TimeEpoch, identifier}
+  whiteSpace { $[ \t]+ }
 
-  LineComment { "#" ![\n]* }
+  idDirective { "@ID" }
+  LoadAndGoDirective { "@LOAD_AND_GO"}
+  immediateDirective { "@IMMEDIATE" }
+  hardwareDirective { "@HARDWARE" }
+  localsDirective { "@LOCALS" }
+  parameterDirective { "@INPUT_PARAMS" }
+  metadataDirective { "@METADATA" }
+  modelDirective { "@MODEL" }
 
-  space { $[ \t\n\r]+ }
+  @precedence {
+    newLine, whiteSpace
+  }
+
+  @precedence{ TimeAbsolute, TimeRelative, TimeEpoch, TimeComplete, identifier }
+
+  @precedence {
+    idDirective,
+    metadataDirective,
+    modelDirective,
+    immediateDirective,
+    hardwareDirective,
+    localsDirective,
+    parameterDirective,
+    LoadAndGoDirective,
+    identifier
+  }
 }
-
-@detectDelim
