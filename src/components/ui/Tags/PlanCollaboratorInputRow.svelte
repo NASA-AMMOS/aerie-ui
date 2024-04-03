@@ -1,6 +1,8 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import PersonIcon from '@nasa-jpl/stellar/icons/person.svg?component';
+  import type { UserId } from '../../../types/app';
   import type { PlanCollaboratorSlim } from '../../../types/plan';
   import type { PlanCollaboratorTag } from '../../../types/tags';
   import { tooltip } from '../../../utilities/tooltip';
@@ -10,20 +12,11 @@
   export let disabled: boolean = false;
   export let collaborators: PlanCollaboratorSlim[];
 
-  let tagPlanPrimaryUser = '';
-  let filteredCollaborators: PlanCollaboratorSlim[] = [];
+  let planUsers: UserId[] = [];
   $: if (tag && tag.plan && collaborators) {
-    if (collaborators.find(collaborator => collaborator.collaborator === tag.plan?.owner)) {
-      if (tag.plan.collaborators.length > 0) {
-        tagPlanPrimaryUser = tag.plan.collaborators[0].collaborator || 'Unk';
-        filteredCollaborators = tag.plan.collaborators.slice(1);
-      }
-    } else {
-      tagPlanPrimaryUser = tag.plan.owner || 'Unk';
-      filteredCollaborators = [...tag.plan.collaborators];
-    }
+    planUsers = Array.from(new Set(tag.plan.collaborators.map(c => c.collaborator).concat(tag.plan.owner)));
   }
-  $: collaboratorTooltipContent = filteredCollaborators.map(c => c.collaborator).join(', ');
+  $: collaboratorTooltipContent = planUsers.join(', ');
 </script>
 
 {#if tag.plan}
@@ -32,16 +25,23 @@
       {tag.plan.name}
     </div>
     <div class="as-plan-tags">
-      <TagChip {disabled} tag={{ ...tag, name: tagPlanPrimaryUser }} removable={false} />
-      {#if filteredCollaborators.length > 0}
+      {#if planUsers.length > 0}
         <div use:tooltip={{ content: collaboratorTooltipContent, maxWidth: 320, placement: 'right', zIndex: 99999 }}>
-          <TagChip {disabled} tag={{ ...tag, name: `+${filteredCollaborators.length}` }} removable={false} />
+          <TagChip {disabled} tag={{ ...tag, name: `${planUsers.length}` }} removable={false}>
+            <div class="tag-chip-icon">
+              <PersonIcon />
+            </div>
+          </TagChip>
         </div>
       {/if}
     </div>
   </div>
 {:else}
-  <TagChip {disabled} {tag} removable={false} />
+  <TagChip {disabled} {tag} removable={false}>
+    <div class="tag-chip-icon">
+      <PersonIcon />
+    </div>
+  </TagChip>
 {/if}
 
 <style>
@@ -62,5 +62,19 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .tag-chip-icon {
+    align-items: center;
+    display: flex;
+    height: inherit;
+    justify-content: center;
+    margin-right: 4px;
+    width: inherit;
+  }
+
+  .tag-chip-icon > :global(svg) {
+    height: 12px;
+    width: 12px;
   }
 </style>
