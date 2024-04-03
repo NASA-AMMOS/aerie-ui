@@ -29,8 +29,8 @@
   export let planTags: Tag[];
   export let tags: Tag[] = [];
   export let user: User | null;
-  export let users: UserId[] = [];
-  export let userWriteablePlans: PlanSlimmer[] = [];
+  export let users: UserId[] | null = null;
+  export let userWriteablePlans: PlanSlimmer[] | null = null;
 
   let filteredPlanSnapshots: PlanSnapshotType[] = [];
   let isFilteredBySimulation: boolean = false;
@@ -169,24 +169,28 @@
         </Input>
         <Input layout="inline">
           <label use:tooltip={{ content: 'Collaborators', placement: 'top' }} for="collaborators">Collaborators</label>
-          <PlanCollaboratorInput
-            collaborators={plan.collaborators}
-            {users}
-            plans={userWriteablePlans}
-            {plan}
-            {user}
-            on:create={onPlanCollaboratorsCreate}
-            on:delete={onPlanCollaboratorCreate}
-            use={[
-              [
-                permissionHandler,
-                {
-                  hasPermission: hasPlanCollaboratorsUpdatePermission,
-                  permissionError,
-                },
-              ],
-            ]}
-          />
+          {#if users === null || userWriteablePlans === null}
+            <input class="st-input w-100" disabled name="collaborators" value="Loading..." />
+          {:else}
+            <PlanCollaboratorInput
+              collaborators={plan.collaborators}
+              {users}
+              plans={userWriteablePlans}
+              {plan}
+              {user}
+              on:create={onPlanCollaboratorsCreate}
+              on:delete={onPlanCollaboratorCreate}
+              use={[
+                [
+                  permissionHandler,
+                  {
+                    hasPermission: hasPlanCollaboratorsUpdatePermission,
+                    permissionError,
+                  },
+                ],
+              ]}
+            />
+          {/if}
         </Input>
         <Input layout="inline">
           <label use:tooltip={{ content: 'Tags', placement: 'top' }} for="tags">Tags</label>
