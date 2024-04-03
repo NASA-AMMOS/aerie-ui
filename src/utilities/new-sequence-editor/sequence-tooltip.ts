@@ -3,8 +3,8 @@ import type { Extension } from '@codemirror/state';
 import { hoverTooltip, type EditorView, type Tooltip } from '@codemirror/view';
 import type { SyntaxNode } from '@lezer/common';
 import type { CommandDictionary, FswCommand, HwCommand } from '@nasa-jpl/aerie-ampcs';
-import ArgumentTooltip from '../../components/new-sequence-editor/ArgumentTooltip.svelte';
-import CommandTooltip from '../../components/new-sequence-editor/CommandTooltip.svelte';
+import ArgumentTooltip from '../../components/sequencing/ArgumentTooltip.svelte';
+import CommandTooltip from '../../components/sequencing/CommandTooltip.svelte';
 
 /**
  * Searches up through a node's ancestors to find a node by the given name.

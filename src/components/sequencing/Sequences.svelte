@@ -18,7 +18,7 @@
   import SingleActionDataGrid from '../ui/DataGrid/SingleActionDataGrid.svelte';
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
-  import SequenceEditor from './SequenceEditor.svelte';
+  import NewSequenceEditor from './SequenceEditor.svelte';
 
   export let user: User | null;
 
@@ -49,12 +49,11 @@
     },
   ];
 
-  let abortController: AbortController;
   let columnDefs = baseColumnDefs;
   let filterText: string = '';
   let filteredSequences: UserSequence[] = [];
   let selectedSequence: UserSequence | null = null;
-  let selectedSequenceSeqJson: string = 'No Sequence Selected';
+  let selectedSequenceSeqJson: string = '';
 
   $: filteredSequences = $userSequences.filter(sequence => {
     const filterTextLowerCase = filterText.toLowerCase();
@@ -62,12 +61,14 @@
     const includesName = sequence.name.toLocaleLowerCase().includes(filterTextLowerCase);
     return includesId || includesName;
   });
+
   $: if (selectedSequence !== null) {
     const found = $userSequences.findIndex(sequence => sequence.id === selectedSequence?.id);
     if (found === -1) {
       selectedSequence = null;
     }
   }
+
   $: columnDefs = [
     ...baseColumnDefs,
     {
@@ -118,7 +119,7 @@
 
       if (sequence.id === selectedSequence?.id) {
         selectedSequence = null;
-        selectedSequenceSeqJson = 'No Sequence Selected';
+        selectedSequenceSeqJson = '';
       }
     }
   }
@@ -139,29 +140,6 @@
     editSequence({ id: event.detail[0] as number });
   }
 
-  async function getUserSequenceSeqJson(): Promise<void> {
-    if (selectedSequence !== null) {
-      abortController?.abort();
-      abortController = new AbortController();
-      selectedSequenceSeqJson = 'Generating Seq JSON...';
-
-      const responseMessage = await effects.getUserSequenceSeqJson(
-        selectedSequence.authoring_command_dict_id,
-        selectedSequence.definition,
-        user,
-        abortController.signal,
-      );
-
-      if (selectedSequence === null) {
-        selectedSequenceSeqJson = 'No Sequence Selected';
-      } else if (responseMessage === 'The user aborted a request.') {
-        selectedSequenceSeqJson = 'Generating Seq JSON...';
-      } else {
-        selectedSequenceSeqJson = responseMessage;
-      }
-    }
-  }
-
   function hasDeletePermission(user: User | null, sequence: UserSequence) {
     return featurePermissions.sequences.canDelete(user, sequence);
   }
@@ -176,7 +154,6 @@
 
     if (isSelected) {
       selectedSequence = clickedSequence;
-      await getUserSequenceSeqJson();
     }
   }
 </script>
@@ -226,14 +203,12 @@
 
   <CssGridGutter track={1} type="column" />
 
-  <SequenceEditor
-    sequenceDefinition={selectedSequence?.definition ?? 'No Sequence Selected'}
+  <NewSequenceEditor
     sequenceCommandDictionaryId={selectedSequence?.authoring_command_dict_id}
+    sequenceDefinition={selectedSequence?.definition ?? ''}
     sequenceName={selectedSequence?.name}
     sequenceSeqJson={selectedSequenceSeqJson}
-    readOnly={true}
     title="Sequence - Definition Editor (Read-only)"
     {user}
-    on:generate={getUserSequenceSeqJson}
   />
 </CssGrid>

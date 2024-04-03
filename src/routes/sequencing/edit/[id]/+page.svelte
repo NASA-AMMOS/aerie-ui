@@ -8,6 +8,7 @@
 </script>
 
 <SequenceForm
+  adaptation={data.adaptation}
   initialSequenceCommandDictionaryId={data.initialSequence.authoring_command_dict_id}
   initialSequenceCreatedAt={data.initialSequence.created_at}
   initialSequenceDefinition={data.initialSequence.definition}
