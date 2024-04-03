@@ -68,38 +68,38 @@ describe('from-seq-json.ts', () => {
               ],
             },
           ],
+          stem: 'FSW_CMD_0',
           time: {
             tag: '2024-001T00:00:00',
             type: 'ABSOLUTE',
           },
           type: 'command',
-          stem: 'FSW_CMD_0',
         },
         {
           args: [{ type: 'number', value: 22 }],
+          stem: 'FSW_CMD_1',
           time: {
             tag: '00:01:00',
             type: 'COMMAND_RELATIVE',
           },
           type: 'command',
-          stem: 'FSW_CMD_1',
         },
         {
           args: [{ type: 'string', value: 'Fab' }],
+          stem: 'FSW_CMD_2',
           time: {
             tag: '15:00:00',
             type: 'EPOCH_RELATIVE',
           },
           type: 'command',
-          stem: 'FSW_CMD_2',
         },
         {
           args: [],
+          stem: 'FSW_CMD_3',
           time: {
             type: 'COMMAND_COMPLETE',
           },
           type: 'command',
-          stem: 'FSW_CMD_3',
         },
       ],
     };
