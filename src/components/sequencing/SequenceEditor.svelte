@@ -1,89 +1,133 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import type { CommandDictionary as AmpcsCommandDictionary } from '@nasa-jpl/aerie-ampcs';
-  import type { editor as Editor, languages } from 'monaco-editor/esm/vs/editor/editor.api';
-  import { createEventDispatcher } from 'svelte';
-  import { userSequencesRows } from '../../stores/sequencing';
+  import { json } from '@codemirror/lang-json';
+  import { syntaxTree } from '@codemirror/language';
+  import { lintGutter } from '@codemirror/lint';
+  import { Compartment, EditorState } from '@codemirror/state';
+  import type { ViewUpdate } from '@codemirror/view';
+  import type { CommandDictionary } from '@nasa-jpl/aerie-ampcs';
+  import { EditorView, basicSetup } from 'codemirror';
+  import { seq } from 'codemirror-lang-sequence';
+  import { debounce } from 'lodash-es';
+  import { createEventDispatcher, onMount } from 'svelte';
+  import { commandDictionaries, userSequencesRows } from '../../stores/sequencing';
   import type { User } from '../../types/app';
-  import type { Monaco, TypeScriptFile } from '../../types/monaco';
   import effects from '../../utilities/effects';
-  import { sequenceProvideCodeActions } from '../../utilities/monacoHelper';
+  import { seqJsonLinter } from '../../utilities/new-sequence-editor/seq-json-linter';
+  import { sequenceCompletion } from '../../utilities/new-sequence-editor/sequence-completion';
+  import { sequenceLinter } from '../../utilities/new-sequence-editor/sequence-linter';
+  import { sequenceTooltip } from '../../utilities/new-sequence-editor/sequence-tooltip';
+  import { sequenceToSeqJson } from '../../utilities/new-sequence-editor/to-seq-json';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
-  import MonacoEditor from '../ui/MonacoEditor.svelte';
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
 
-  export let disableSeqJSONGeneration: boolean = false;
   export let readOnly: boolean = false;
   export let sequenceCommandDictionaryId: number | null = null;
-  export let sequenceDefinition: string = '';
   export let sequenceName: string = '';
+  export let sequenceDefinition: string = '';
   export let sequenceSeqJson: string = '';
   export let title: string = 'Sequence - Definition Editor';
   export let user: User | null;
 
   const dispatch = createEventDispatcher<{
     generate: void;
+    sequence: string;
   }>();
 
-  let commandDictionaryJson: AmpcsCommandDictionary | null = null;
-  let commandDictionaryTsFiles: TypeScriptFile[] = [];
-  let monaco: Monaco;
-  let worker: languages.typescript.TypeScriptWorker | null = null;
-  let sequenceEditorModel: Editor.ITextModel;
+  let clientHeightGridRightBottom: number;
+  let clientHeightGridRightTop: number;
+  let compartmentSeqJsonLinter: Compartment;
+  let compartmentSeqLanguage: Compartment;
+  let compartmentSeqLinter: Compartment;
+  let compartmentSeqTooltip: Compartment;
+  let commandDictionary: CommandDictionary | null;
+  let editorSeqJsonDiv: HTMLDivElement;
+  let editorSeqJsonView: EditorView;
+  let editorSequenceDiv: HTMLDivElement;
+  let editorSequenceView: EditorView;
 
-  $: effects
-    .getTsFilesCommandDictionary(sequenceCommandDictionaryId, user)
-    .then(tsFiles => (commandDictionaryTsFiles = tsFiles));
-
-  $: effects
-    .getParsedAmpcsCommandDictionary(sequenceCommandDictionaryId, user)
-    .then(parsedDictionary => (commandDictionaryJson = parsedDictionary));
-
-  $: if (monaco !== undefined) {
-    const { languages } = monaco;
-    const { typescript } = languages;
-    const { typescriptDefaults } = typescript;
-    const options = typescriptDefaults.getCompilerOptions();
-    typescriptDefaults.setCompilerOptions({ ...options, lib: ['esnext'], strictNullChecks: true });
+  $: {
+    if (editorSequenceView) {
+      editorSequenceView.dispatch({
+        changes: { from: 0, insert: sequenceDefinition, to: editorSequenceView.state.doc.length },
+      });
+    }
   }
 
-  $: if (monaco !== undefined && commandDictionaryTsFiles !== undefined) {
-    const { languages } = monaco;
-    const { typescript } = languages;
-    const { typescriptDefaults } = typescript;
-    typescriptDefaults.setExtraLibs(commandDictionaryTsFiles);
+  $: {
+    const commandDictionary = $commandDictionaries.find(cd => cd.id === sequenceCommandDictionaryId);
+
+    if (commandDictionary) {
+      effects.getParsedAmpcsCommandDictionary(commandDictionary.id, user).then(parsedDictionary => {
+        // Reconfigure sequence editor.
+        const newSeqLanguage = seq(sequenceCompletion(parsedDictionary));
+        editorSequenceView.dispatch({ effects: compartmentSeqLanguage.reconfigure(newSeqLanguage) });
+        editorSequenceView.dispatch({ effects: compartmentSeqLinter.reconfigure(sequenceLinter(parsedDictionary)) });
+        editorSequenceView.dispatch({ effects: compartmentSeqTooltip.reconfigure(sequenceTooltip(parsedDictionary)) });
+
+        // Reconfigure seq JSON editor.
+        editorSeqJsonView.dispatch({ effects: compartmentSeqJsonLinter.reconfigure(seqJsonLinter(parsedDictionary)) });
+      });
+    }
   }
 
-  /**
-   * Used to update the custom worker to use the selected command dictionary.
-   */
-  $: if (worker != null && sequenceEditorModel) {
-    worker.updateModelConfig({
-      command_dict_str: JSON.stringify(commandDictionaryJson ?? {}),
-      model_id: sequenceEditorModel.id,
-      should_inject: true,
+  onMount(() => {
+    compartmentSeqJsonLinter = new Compartment();
+    compartmentSeqLanguage = new Compartment();
+    compartmentSeqLinter = new Compartment();
+    compartmentSeqTooltip = new Compartment();
+
+    editorSequenceView = new EditorView({
+      doc: sequenceDefinition,
+      extensions: [
+        basicSetup,
+        EditorView.lineWrapping,
+        EditorView.theme({ '.cm-gutter': { 'min-height': `${clientHeightGridRightTop}px` } }),
+        lintGutter(),
+        compartmentSeqLanguage.of(seq(sequenceCompletion())),
+        compartmentSeqLinter.of(sequenceLinter()),
+        compartmentSeqTooltip.of(sequenceTooltip()),
+        EditorView.updateListener.of(debounce(sequenceUpdateListener, 250)),
+        EditorState.readOnly.of(readOnly),
+      ],
+      parent: editorSequenceDiv,
     });
+
+    editorSeqJsonView = new EditorView({
+      doc: sequenceSeqJson,
+      extensions: [
+        basicSetup,
+        EditorView.lineWrapping,
+        EditorView.theme({ '.cm-gutter': { 'min-height': `${clientHeightGridRightBottom}px` } }),
+        EditorView.editable.of(false),
+        lintGutter(),
+        json(),
+        compartmentSeqJsonLinter.of(seqJsonLinter()),
+        EditorState.readOnly.of(readOnly),
+      ],
+      parent: editorSeqJsonDiv,
+    });
+  });
+
+  function sequenceUpdateListener(viewUpdate: ViewUpdate) {
+    const sequence = viewUpdate.state.doc.toString();
+
+    const tree = syntaxTree(viewUpdate.state);
+    const seqJson = sequenceToSeqJson(tree, sequence, commandDictionary);
+    const seqJsonStr = JSON.stringify(seqJson, null, 2);
+    editorSeqJsonView.dispatch({ changes: { from: 0, insert: seqJsonStr, to: editorSeqJsonView.state.doc.length } });
+
+    dispatch('sequence', sequence);
   }
 
   function downloadSeqJson() {
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([sequenceSeqJson], { type: 'application/json' }));
+    a.href = URL.createObjectURL(new Blob([sequenceDefinition], { type: 'application/json' }));
     a.download = sequenceName;
     a.click();
-  }
-
-  function workerFullyLoaded(
-    event: CustomEvent<{
-      editor: Editor.IStandaloneCodeEditor;
-      model: Editor.ITextModel;
-      worker: languages.typescript.TypeScriptWorker;
-    }>,
-  ) {
-    const { worker: eventWorker } = event.detail;
-    worker = eventWorker;
   }
 </script>
 
@@ -98,22 +142,9 @@
     </svelte:fragment>
 
     <svelte:fragment slot="body">
-      <MonacoEditor
-        bind:monaco
-        bind:model={sequenceEditorModel}
-        automaticLayout={true}
-        actionProvider={sequenceProvideCodeActions}
-        fixedOverflowWidgets={true}
-        language="typescript"
-        lineNumbers="on"
-        minimap={{ enabled: false }}
-        {readOnly}
-        scrollBeyondLastLine={false}
-        tabSize={2}
-        value={sequenceDefinition}
-        on:didChangeModelContent
-        on:fullyLoaded={workerFullyLoaded}
-      />
+      <div bind:clientHeight={clientHeightGridRightTop}>
+        <div bind:this={editorSequenceDiv} />
+      </div>
     </svelte:fragment>
   </Panel>
 
@@ -124,24 +155,14 @@
       <SectionTitle>Seq JSON (Read-only)</SectionTitle>
 
       <div class="right">
-        {#if !disableSeqJSONGeneration}
-          <button class="st-button secondary ellipsis" on:click={() => dispatch('generate')}>Generate</button>
-        {/if}
         <button class="st-button secondary ellipsis" on:click={downloadSeqJson}>Download</button>
       </div>
     </svelte:fragment>
+
     <svelte:fragment slot="body">
-      <MonacoEditor
-        automaticLayout={true}
-        fixedOverflowWidgets={true}
-        language="json"
-        lineNumbers="on"
-        minimap={{ enabled: false }}
-        readOnly={true}
-        scrollBeyondLastLine={true}
-        tabSize={2}
-        value={sequenceSeqJson}
-      />
+      <div bind:clientHeight={clientHeightGridRightBottom}>
+        <div bind:this={editorSeqJsonDiv} />
+      </div>
     </svelte:fragment>
   </Panel>
 </CssGrid>

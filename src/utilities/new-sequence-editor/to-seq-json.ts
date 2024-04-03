@@ -4,15 +4,15 @@ import type {
   Args,
   BooleanArgument,
   Command,
+  GroundBlock,
   HexArgument,
+  Model,
   NumberArgument,
   RepeatArgument,
   SeqJson,
   StringArgument,
   Time,
   VariableDeclaration,
-  Model,
-  GroundBlock,
 } from '@nasa-jpl/seq-json-schema/types';
 import { logInfo } from './logger';
 
@@ -79,7 +79,9 @@ export function sequenceToSeqJson(node: Tree, text: string, commandDictionary: C
       seqJson.id = id;
     } else if (cursor.node.name === 'Command') {
       const command = parseCommand(cursor.node, text, commandDictionary);
-      if (!seqJson.steps) seqJson.steps = [];
+      if (!seqJson.steps) {
+        seqJson.steps = [];
+      }
       seqJson.steps.push(command);
     }
   }
