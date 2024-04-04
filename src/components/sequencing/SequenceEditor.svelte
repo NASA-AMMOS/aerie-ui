@@ -58,10 +58,11 @@
   }
 
   $: {
-    const commandDictionary = $commandDictionaries.find(cd => cd.id === sequenceCommandDictionaryId);
+    const unparsedCommandDictionary = $commandDictionaries.find(cd => cd.id === sequenceCommandDictionaryId);
 
-    if (commandDictionary) {
-      effects.getParsedAmpcsCommandDictionary(commandDictionary.id, user).then(parsedDictionary => {
+    if (unparsedCommandDictionary) {
+      effects.getParsedAmpcsCommandDictionary(unparsedCommandDictionary.id, user).then(parsedDictionary => {
+        commandDictionary = parsedDictionary;
         // Reconfigure sequence editor.
         const newSeqLanguage = seq(sequenceCompletion(parsedDictionary));
         editorSequenceView.dispatch({ effects: compartmentSeqLanguage.reconfigure(newSeqLanguage) });
