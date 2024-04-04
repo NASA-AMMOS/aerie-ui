@@ -256,7 +256,7 @@
           }}
         />
       </fieldset>
-
+<!--
       <fieldset>
         <label for="seqJsonFile">Create Sequence from Seq JSON (optional)</label>
         <input
@@ -270,7 +270,7 @@
             permissionError,
           }}
         />
-      </fieldset>
+      </fieldset> -->
     </svelte:fragment>
   </Panel>
 
