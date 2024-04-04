@@ -45,6 +45,7 @@ export class Plan {
   panelTimelineEditor: Locator;
   planCollaboratorInput: Locator;
   planCollaboratorInputContainer: Locator;
+  planCollaboratorLoadingInput: Locator;
   planTitle: Locator;
   reSimulateButton: Locator;
   roleSelector: Locator;
@@ -92,13 +93,11 @@ export class Plan {
 
   async addPlanCollaborator(name: string, isUsername = true) {
     await this.showPanel('Plan Metadata');
-    await this.page.waitForTimeout(5000);
+    await this.waitForPlanCollaboratorLoad();
     await this.planCollaboratorInput.fill(name);
-    await this.page.waitForTimeout(500);
     await this.planCollaboratorInput.evaluate(e => e.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' })));
     // If the name is a username then check for the existence of the username in selected items
     // Otherwise it is a plan option and will add an unspecified amount of users
-    await this.page.waitForTimeout(500);
     if (isUsername) {
       await expect(
         this.planCollaboratorInputContainer.locator('.tags-input-selected-items').getByRole('option', { name }),
@@ -205,9 +204,9 @@ export class Plan {
    * If your tests fail then the timeout might be too short.
    * Re-run the tests and increase the timeout if you get consistent failures.
    */
-  async goto() {
+  async goto(planId = this.plans.planId) {
     await this.page.waitForTimeout(1200);
-    await this.page.goto(`/plans/${this.plans.planId}`, { waitUntil: 'networkidle' });
+    await this.page.goto(`/plans/${planId}`, { waitUntil: 'networkidle' });
     await this.page.waitForTimeout(250);
   }
 
@@ -225,6 +224,7 @@ export class Plan {
 
   async removePlanCollaborator(name: string) {
     await this.showPanel('Plan Metadata');
+    await this.waitForPlanCollaboratorLoad();
     await this.planCollaboratorInputContainer
       .locator('.tags-input-selected-items')
       .getByRole('option', { name })
@@ -413,6 +413,7 @@ export class Plan {
     this.planTitle = page.locator(`.plan-title:has-text("${this.planName}")`);
     this.planCollaboratorInputContainer = this.panelPlanMetadata.locator('.input:has-text("Collaborators")');
     this.planCollaboratorInput = this.planCollaboratorInputContainer.getByPlaceholder('Search collaborators or plans');
+    this.planCollaboratorLoadingInput = this.planCollaboratorInputContainer.getByPlaceholder('Loading...');
     this.roleSelector = page.locator(`.nav select`);
     this.reSimulateButton = page.locator('.header-actions button:has-text("Re-Run")');
     this.scheduleButton = page.locator('.header-actions button[aria-label="Schedule"]');
@@ -437,6 +438,10 @@ export class Plan {
   async waitForActivityCheckingStatus(status: Status) {
     await this.page.waitForSelector(this.activityCheckingStatusSelector(status), { state: 'attached', strict: true });
     await this.page.waitForSelector(this.activityCheckingStatusSelector(status), { state: 'visible', strict: true });
+  }
+
+  async waitForPlanCollaboratorLoad() {
+    await expect(this.planCollaboratorLoadingInput).not.toBeVisible({ timeout: 10000 });
   }
 
   async waitForSchedulingStatus(status: Status) {

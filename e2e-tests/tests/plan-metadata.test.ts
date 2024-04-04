@@ -43,9 +43,9 @@ test.beforeAll(async ({ browser, baseURL }) => {
   await userA.logout(baseURL);
   await userA.login(baseURL);
   await plans.goto();
-  await plans.createPlan(planA.planName);
+  const planAId = await plans.createPlan(planA.planName);
   await plans.createPlan(planB.planName);
-  await planA.goto();
+  await planA.goto(planAId);
 });
 
 test.afterAll(async ({ baseURL }) => {
@@ -105,14 +105,24 @@ test.describe.serial('Plan Metadata', () => {
   test(`Sets of collaborators can be added from other plans`, async ({ baseURL }) => {
     await userB.logout(baseURL);
     await userA.login(baseURL);
-    await planB.goto();
+    await plans.goto();
+    const planBId = await plans.getPlanId(planB.planName);
+    await planB.goto(planBId);
     await planB.showPanel('Plan Metadata');
+    await planA.removePlanCollaborator(userA.username);
+    await planA.removePlanCollaborator(userB.username);
+    // Wait for plan to be an option in the input (via socket update which can take at least half a second)
+    await page.waitForTimeout(1000);
     await planB.addPlanCollaborator(planA.planName, false);
-    await planB.planCollaboratorInputContainer
-      .locator('.tags-input-selected-items')
-      .getByRole('option', { name: userA.username });
-    await planB.planCollaboratorInputContainer
-      .locator('.tags-input-selected-items')
-      .getByRole('option', { name: userB.username });
+    await expect(
+      planB.planCollaboratorInputContainer
+        .locator('.tags-input-selected-items')
+        .getByRole('option', { name: userA.username }),
+    ).toBeDefined();
+    await expect(
+      planB.planCollaboratorInputContainer
+        .locator('.tags-input-selected-items')
+        .getByRole('option', { name: userB.username }),
+    ).toBeDefined();
   });
 });

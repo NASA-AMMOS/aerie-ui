@@ -40,12 +40,9 @@ export class Plans {
     await this.createButton.click();
     await this.tableRow(planName).waitFor({ state: 'attached' });
     await this.tableRow(planName).waitFor({ state: 'visible' });
-    await expect(this.tableRow(planName)).toBeVisible();
-    await expect(this.tableRowPlanId(planName)).toBeVisible();
-    const el = await this.tableRowPlanId(planName).elementHandle();
-    if (el) {
-      this.planId = (await el.textContent()) as string;
-    }
+    const planId = await this.getPlanId(planName);
+    this.planId = planId;
+    return planId;
   }
 
   createPlanName() {
@@ -92,6 +89,16 @@ export class Plans {
     await this.inputStartTime.fill(this.startTime);
     await this.inputStartTime.evaluate(e => e.dispatchEvent(new Event('change')));
     await this.inputStartTime.evaluate(e => e.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' })));
+  }
+
+  async getPlanId(planName = this.planName) {
+    await expect(this.tableRow(planName)).toBeVisible();
+    await expect(this.tableRowPlanId(planName)).toBeVisible();
+    const el = await this.tableRowPlanId(planName).elementHandle();
+    if (el) {
+      return (await el.textContent()) as string;
+    }
+    return '';
   }
 
   async goto() {
