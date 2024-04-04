@@ -131,8 +131,8 @@
   }
 </script>
 
-<CssGrid bind:rows={$userSequencesRows}>
-  <Panel overflowYBody="hidden">
+<CssGrid bind:rows={$userSequencesRows} minHeight={'0'}>
+  <Panel>
     <svelte:fragment slot="header">
       <SectionTitle>{title}</SectionTitle>
 
@@ -142,9 +142,7 @@
     </svelte:fragment>
 
     <svelte:fragment slot="body">
-      <div bind:clientHeight={clientHeightGridRightTop}>
-        <div bind:this={editorSequenceDiv} />
-      </div>
+      <div bind:this={editorSequenceDiv} />
     </svelte:fragment>
   </Panel>
 
@@ -160,9 +158,7 @@
     </svelte:fragment>
 
     <svelte:fragment slot="body">
-      <div bind:clientHeight={clientHeightGridRightBottom}>
-        <div bind:this={editorSeqJsonDiv} />
-      </div>
+      <div bind:this={editorSeqJsonDiv} />
     </svelte:fragment>
   </Panel>
 </CssGrid>
