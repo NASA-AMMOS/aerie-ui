@@ -12,23 +12,19 @@
   $: value = unquoteUnescape(initVal);
 
   $: {
-    if (initHadQuotes) {
-      // normal case
-      setInEditor(quoteEscape(value));
-    } else {
-      // can happen with unmatched quotes
-      setInEditor(value);
+    if (value !== unquoteUnescape(initVal)) {
+      // normal case is string tokens contain quotes
+      if (initHadQuotes) {
+        setInEditor(quoteEscape(value));
+      } else {
+        setInEditor(value);
+      }
     }
   }
 </script>
 
 <div>
-  <input
-    class="st-input"
-    spellcheck="false"
-    bind:value
-    title={argDef.description}
-  />
+  <input class="st-input" spellcheck="false" bind:value title={argDef.description} />
 </div>
 
 <style>

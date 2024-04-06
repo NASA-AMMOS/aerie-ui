@@ -21,6 +21,8 @@
   export let commandDictionary: CommandDictionary;
   export let node: SyntaxNode | null;
 
+  const ID_COMMAND_DETAIL_PANE = 'ID_COMMAND_DETAIL_PANE';
+
   $: commandNode = getAncestorNode(node, TOKEN_COMMAND);
   $: commandDef = getCommandDef(commandDictionary, editorSequenceView.state, commandNode);
   $: argInfoArray = getArgumentInfo(commandNode?.getChild('Args') ?? null, commandDef?.arguments);
@@ -110,16 +112,28 @@
   }
 
   function setInEditor(token: SyntaxNode, val: string) {
-    if (editorSequenceView) {
+    // checking that we are not in the code mirror editor
+    // this breaks cycle of form edits triggering document updates and vice versa
+    if (editorSequenceView && hasAncestorWithId(document.activeElement, ID_COMMAND_DETAIL_PANE)) {
       const currentVal = editorSequenceView.state.sliceDoc(token.node.from, token.node.to);
       if (currentVal !== val) {
-        const transaction = editorSequenceView.state.update({
-          changes: { from: token.node.from, insert: val, to: token.node.to },
-          userEvent: 'formView',
-        });
-        editorSequenceView.dispatch(transaction);
+        editorSequenceView.dispatch(
+          editorSequenceView.state.update({
+            changes: { from: token.node.from, insert: val, to: token.node.to },
+            userEvent: 'formView',
+          }),
+        );
       }
     }
+  }
+
+  function hasAncestorWithId(element: Element | null, id: string) {
+    if (element === null) {
+      return false;
+    } else if (element.id === id) {
+      return true;
+    }
+    return hasAncestorWithId(element.parentElement, id);
   }
 
   function addDefaultArgs(commandNode: SyntaxNode, argDefs: FswCommandArgument[]) {
@@ -158,16 +172,13 @@
   // provide a more restrictive editor to keep argument valid. Otherwise fall back on a string editor.
 
   // TODO
-  // display repeat args
-  // button to add repeat set
-  // add descriptive text
   // better handling of unclosed strings
 
   // {'integer_arg', 'float_arg', 'unsigned_arg', 'enum_arg', 'var_string_arg', 'repeat_arg'}
   // {'unsigned_arg', 'enum_arg', 'var_string_arg', 'float_arg'}
 </script>
 
-<div class="select-command-detail">
+<div class="select-command-detail" id={ID_COMMAND_DETAIL_PANE}>
   {#if !!commandNode}
     <div>Selected Command</div>
     {#if !!commandDef}
@@ -178,7 +189,7 @@
       <hr />
       <div class="select-command-argument-detail">
         {#each editorArgInfoArray as argInfo}
-          <ArgEditor {argInfo} {commandDictionary} setInEditor={debounce(setInEditor, 250)} {addDefaultArgs} />
+          <ArgEditor {argInfo} {commandDictionary} setInEditor={debounce(setInEditor, 2500)} {addDefaultArgs} />
         {/each}
         {#if missingArgDefArray.length}
           <AddMissingArgsButton
