@@ -40,7 +40,7 @@ export function sequenceToSeqJson(node: Tree, text: string, commandDictionary: C
   variableList = [];
 
   seqJson.id = parseId(baseNode, text);
-  seqJson.metadata = { ...parseLGO(baseNode), ...parseMetadata(baseNode, text) } ?? {};
+  seqJson.metadata = { ...parseLGO(baseNode), ...parseMetadata(baseNode, text) };
   seqJson.locals = parseVariables(baseNode, text, 'LocalDeclaration') ?? undefined;
   seqJson.parameters = parseVariables(baseNode, text, 'ParameterDeclaration') ?? undefined;
   seqJson.steps =

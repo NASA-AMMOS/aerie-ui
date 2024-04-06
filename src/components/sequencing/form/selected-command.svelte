@@ -28,7 +28,7 @@
   $: argInfoArray = getArgumentInfo(commandNode?.getChild('Args') ?? null, commandDef?.arguments);
   $: editorArgInfoArray = argInfoArray.filter(argInfo => !!argInfo.node);
   $: missingArgDefArray = getMissingArgDefs(argInfoArray);
-  $: timeTagNode = getTimeTagInfo(node);
+  $: timeTagNode = getTimeTagInfo(commandNode);
 
   function getTimeTagInfo(commandNode: SyntaxNode | null) {
     const node = commandNode?.getChild('TimeTag');
@@ -145,13 +145,10 @@
       if (stemNode) {
         insertPosition = argsNode?.to ?? stemNode.to;
         if (insertPosition !== undefined) {
-          const stemAndMaybeArgs = editorSequenceView.state.sliceDoc(stemNode.from, insertPosition);
-          const numEndingSpaces = stemAndMaybeArgs.length - stemAndMaybeArgs.trimEnd().length;
           let transaction = editorSequenceView.state.update({
             changes: {
-              from: insertPosition - numEndingSpaces,
+              from: insertPosition,
               insert: str,
-              to: insertPosition,
             },
           });
           editorSequenceView.dispatch(transaction);
@@ -160,7 +157,7 @@
         insertPosition = commandNode.to - 1;
         if (insertPosition !== undefined) {
           let transaction = editorSequenceView.state.update({
-            changes: { from: insertPosition, insert: str, to: insertPosition },
+            changes: { from: insertPosition, insert: str },
           });
           editorSequenceView.dispatch(transaction);
         }
