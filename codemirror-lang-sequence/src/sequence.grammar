@@ -12,9 +12,8 @@
 }
 
 // Potential Improvements
-// flexibility - allow indentation of directives
 // maintainability - use @specialize on directives
-// extensibility - add generic Directive { "@"identifier }
+// expressiveness - add activate, load and ground syntax
 
 @precedence {
   stemStart @cut
@@ -152,9 +151,7 @@ Stem { !stemStart identifier }
   modelDirective { "@MODEL" }
   genericDirective { "@"identifier }
 
-  @precedence {
-    newLine, whiteSpace
-  }
+  @precedence { newLine, whiteSpace }
 
   @precedence{ TimeAbsolute, TimeRelative, TimeEpoch, TimeComplete, identifier }
 
