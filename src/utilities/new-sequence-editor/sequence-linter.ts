@@ -3,6 +3,8 @@ import { linter, type Diagnostic } from '@codemirror/lint';
 import type { Extension } from '@codemirror/state';
 import type { SyntaxNode } from '@lezer/common';
 import type { CommandDictionary, EnumMap, FswCommand, FswCommandArgument, HwCommand } from '@nasa-jpl/aerie-ampcs';
+import { addDefaultArgs } from '../../components/sequencing/form/utils';
+
 import { TOKEN_REPEAT_ARG } from './sequencer-grammar-constants';
 import {
   ABSOLUTE_TIME,
@@ -89,17 +91,17 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
     ) {
       if (lgo) {
         diagnostics.push({
-            from,
-            message: `Directive 'LOAD_AND_GO' cannot be used with 'Immediate Commands' or 'Hardware Commands'.`,
-            severity: 'error',
-            to,
+          from,
+          message: `Directive 'LOAD_AND_GO' cannot be used with 'Immediate Commands' or 'Hardware Commands'.`,
+          severity: 'error',
+          to,
         });
       }
       diagnostics.push({
-          from,
-          message: 'Cannot mix different command types in one Sequence.',
-          severity: 'error',
-          to,
+        from,
+        message: 'Cannot mix different command types in one Sequence.',
+        severity: 'error',
+        to,
       });
     }
     return diagnostics;
@@ -436,11 +438,11 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
 
     const stemText = text.slice(stem.from, stem.to);
 
-    const dictionaryCommand : FswCommand | HwCommand | null = fswCommandMap[stemText]
+    const dictionaryCommand: FswCommand | HwCommand | null = fswCommandMap[stemText]
       ? fswCommandMap[stemText]
       : hwCommandMap[stemText]
-      ? hwCommandMap[stemText]
-      : null;
+        ? hwCommandMap[stemText]
+        : null;
 
     if (!dictionaryCommand) {
       return {
@@ -511,12 +513,39 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
         return diagnostics;
       }
 
-      if (argNode.length !== dictArgs.length) {
+      if (argNode.length > dictArgs.length) {
+        const extraArgs = argNode.slice(dictArgs.length);
+        const { from, to } = getFromAndTo(extraArgs);
+        diagnostics.push({
+          actions: [
+            {
+              apply(view, from, to) {
+                view.dispatch({ changes: { from, to } });
+              },
+              name: `Remove ${extraArgs.length} extra argument${extraArgs.length > 1 ? 's' : ''}`,
+            },
+          ],
+          from,
+          message: `Extra arguments, definition has ${dictArgs.length}, but ${argNode.length} are present`,
+          severity: 'error',
+          to,
+        });
+        return diagnostics;
+      } else if (argNode.length < dictArgs.length) {
         const { from, to } = getFromAndTo(argNode);
         diagnostics.push({
-          actions: [],
+          actions: [
+            {
+              apply(view, _from, _to) {
+                if (commandDictionary) {
+                  addDefaultArgs(commandDictionary, view, command, dictArgs.slice(argNode.length));
+                }
+              },
+              name: 'Add default missing arguments',
+            },
+          ],
           from,
-          message: `Should only have ${dictArgs.length} arguments`,
+          message: `Missing arguments, definition has ${argNode.length}, but ${dictArgs.length} are present`,
           severity: 'error',
           to,
         });

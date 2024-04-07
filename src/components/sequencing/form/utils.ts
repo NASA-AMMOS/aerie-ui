@@ -1,5 +1,6 @@
-
+import type { SyntaxNode } from '@lezer/common';
 import type {
+  CommandDictionary,
   FswCommandArgument,
   FswCommandArgumentEnum,
   FswCommandArgumentFixedString,
@@ -10,7 +11,9 @@ import type {
   FswCommandArgumentUnsigned,
   FswCommandArgumentVarString,
 } from '@nasa-jpl/aerie-ampcs';
-import type { SyntaxNode } from '@lezer/common';
+import type { EditorView } from 'codemirror';
+import { fswCommandArgDefault } from '../../../utilities/new-sequence-editor/command-dictionary';
+import { TOKEN_REPEAT_ARG } from '../../../utilities/new-sequence-editor/sequencer-grammar-constants';
 
 export function isFswCommandArgumentEnum(arg: FswCommandArgument): arg is FswCommandArgumentEnum {
   return arg.arg_type === 'enum';
@@ -66,12 +69,41 @@ export type NumberArg =
   | FswCommandArgumentUnsigned;
 
 export type ArgTextDef = {
-  node?: SyntaxNode;
-  text?: string;
   argDef?: FswCommandArgument;
   children?: ArgTextDef[];
+  node?: SyntaxNode;
   parentArgDef?: FswCommandArgumentRepeat;
+  text?: string;
 };
+
+export function addDefaultArgs(
+  commandDictionary: CommandDictionary,
+  view: EditorView,
+  commandNode: SyntaxNode,
+  argDefs: FswCommandArgument[],
+) {
+  let insertPosition: undefined | number = undefined;
+  const str = ' ' + argDefs.map(argDef => fswCommandArgDefault(argDef, commandDictionary.enumMap)).join(' ');
+  const argsNode = commandNode.getChild('Args');
+  const stemNode = commandNode.getChild('Stem');
+  if (stemNode) {
+    insertPosition = argsNode?.to ?? stemNode.to;
+    if (insertPosition !== undefined) {
+      const transaction = view.state.update({
+        changes: { from: insertPosition, insert: str },
+      });
+      view.dispatch(transaction);
+    }
+  } else if (commandNode.name === TOKEN_REPEAT_ARG) {
+    insertPosition = commandNode.to - 1;
+    if (insertPosition !== undefined) {
+      const transaction = view.state.update({
+        changes: { from: insertPosition, insert: str },
+      });
+      view.dispatch(transaction);
+    }
+  }
+}
 
 export function getMissingArgDefs(argInfoArray: ArgTextDef[]) {
   return argInfoArray
