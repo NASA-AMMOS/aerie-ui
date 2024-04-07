@@ -3,6 +3,7 @@ import { linter, type Diagnostic } from '@codemirror/lint';
 import type { Extension } from '@codemirror/state';
 import type { SyntaxNode } from '@lezer/common';
 import type { CommandDictionary, EnumMap, FswCommand, FswCommandArgument, HwCommand } from '@nasa-jpl/aerie-ampcs';
+import { closest } from 'fastest-levenshtein';
 import { addDefaultArgs } from '../../components/sequencing/form/utils';
 
 import { TOKEN_REPEAT_ARG } from './sequencer-grammar-constants';
@@ -18,6 +19,17 @@ import {
 import { getChildrenNode, getDeepestNode, getFromAndTo } from './tree-utils';
 
 const ERROR = '⚠';
+
+const KNOWN_DIRECTIVES = [
+  'LOAD_AND_GO',
+  'ID',
+  'IMMEDIATE',
+  'HARDWARE',
+  'LOCALS',
+  'INPUT_PARAMS',
+  'MODEL',
+  'METADATA',
+].map(name => `@${name}`);
 
 export function getAllEnumSymbols(enumMap: EnumMap, enumName: string) {
   const enumSymbols = enumMap[enumName].values.map(({ symbol }) => symbol);
@@ -39,6 +51,8 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
 
     // Validate command type mixing
     diagnostics.push(...validateCommandTypeMixing(treeNode));
+
+    diagnostics.push(...validateCustomDirectives(treeNode, view.state.doc.toString()));
 
     diagnostics.push(
       ...commandLinter(treeNode.getChild('Commands')?.getChildren('Command') || [], view.state.doc.toString()),
@@ -104,6 +118,30 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
         to,
       });
     }
+    return diagnostics;
+  }
+
+  function validateCustomDirectives(node: SyntaxNode, text: string): Diagnostic[] {
+    const diagnostics: Diagnostic[] = [];
+    node.getChildren('GenericDirective').forEach(directiveNode => {
+      const { from, to } = getFromAndTo([directiveNode]);
+      const custom = text.slice(from, to).trim();
+      const guess = closest(custom, KNOWN_DIRECTIVES);
+      diagnostics.push({
+        actions: [
+          {
+            apply(view, from, to) {
+              view.dispatch({ changes: { from, insert: guess + '\n', to } });
+            },
+            name: `Change to ${guess}`,
+          },
+        ],
+        from,
+        message: `Unknown Directive ${custom}, did you mean ${guess}`,
+        severity: 'error',
+        to,
+      });
+    });
     return diagnostics;
   }
 
@@ -434,7 +472,7 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
     if (commandDictionary === null) {
       return null;
     }
-    const { fswCommandMap, hwCommandMap } = commandDictionary;
+    const { fswCommandMap, fswCommands, hwCommandMap, hwCommands } = commandDictionary;
 
     const stemText = text.slice(stem.from, stem.to);
 
@@ -445,10 +483,14 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
         : null;
 
     if (!dictionaryCommand) {
+      const guess = closest(stemText.toUpperCase(), [
+        ...fswCommands.map(cmd => cmd.stem),
+        ...hwCommands.map(cmd => cmd.stem),
+      ]);
       return {
         actions: [],
         from: stem.from,
-        message: 'Command not found',
+        message: `Command '${stemText}' not found, '${guess}' is closest match in dictionary`,
         severity: 'error',
         to: stem.to,
       };
@@ -633,9 +675,18 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
               commandDictionary?.enumMap,
               dictArg.enum_name,
             );
-            if (!symbols.includes(argText.replace(/^"|"$/g, ''))) {
+            const unquotedArgText = argText.replace(/^"|"$/g, '');
+            if (!symbols.includes(unquotedArgText)) {
+              const guess = closest(unquotedArgText.toUpperCase(), symbols);
               diagnostics.push({
-                actions: [],
+                actions: [
+                  {
+                    apply(view, from, to) {
+                      view.dispatch({ changes: { from, insert: `"${guess}"`, to } });
+                    },
+                    name: `Change to ${guess}`,
+                  },
+                ],
                 from: argNode.from,
                 message: `Enum should be "${availableSymbols}"`,
                 severity: 'error',
@@ -649,7 +700,7 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
               actions: [],
               from: argNode.from,
               message: `Enum should be a "string"`,
-              severity: 'warning',
+              severity: 'error',
               to: argNode.to,
             });
           }

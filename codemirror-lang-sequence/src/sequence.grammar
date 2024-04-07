@@ -1,11 +1,9 @@
 @top Sequence {
   (newLine | whiteSpace)?
-  commentLine* ~maybeComments
-  IdDeclaration?
-  commentLine* ~maybeComments
-  ParameterDeclaration?
-  commentLine* ~maybeComments
-  LocalDeclaration?
+  (
+    commentLine* ~maybeComments
+    (IdDeclaration | ParameterDeclaration | LocalDeclaration | GenericDirective)
+  )*
   commentLine* ~maybeComments
   Metadata?
   Commands?
@@ -20,6 +18,10 @@
 
 @precedence {
   stemStart @cut
+}
+
+GenericDirective {
+  genericDirective (whiteSpace String)* newLine
 }
 
 IdDeclaration {
@@ -148,6 +150,7 @@ Stem { !stemStart identifier }
   parameterDirective { "@INPUT_PARAMS" }
   metadataDirective { "@METADATA" }
   modelDirective { "@MODEL" }
+  genericDirective { "@"identifier }
 
   @precedence {
     newLine, whiteSpace
@@ -164,6 +167,7 @@ Stem { !stemStart identifier }
     localsDirective,
     parameterDirective,
     LoadAndGoDirective,
+    genericDirective,
     identifier
   }
 }
