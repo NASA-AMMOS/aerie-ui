@@ -6,16 +6,11 @@
   import type { CommandDictionary, FswCommandArgument, FswCommandArgumentRepeat } from '@nasa-jpl/aerie-ampcs';
   import type { EditorView } from 'codemirror';
   import { debounce } from 'lodash-es';
-  import { fswCommandArgDefault } from '../../../utilities/new-sequence-editor/command-dictionary';
-  import {
-    TOKEN_COMMAND,
-    TOKEN_ERROR,
-    TOKEN_REPEAT_ARG,
-  } from '../../../utilities/new-sequence-editor/sequencer-grammar-constants';
+  import { TOKEN_COMMAND, TOKEN_ERROR } from '../../../utilities/new-sequence-editor/sequencer-grammar-constants';
   import { getAncestorNode } from '../../../utilities/new-sequence-editor/tree-utils';
   import AddMissingArgsButton from './add-missing-args-button.svelte';
   import ArgEditor from './arg-editor.svelte';
-  import { getMissingArgDefs, isFswCommandArgumentRepeat, type ArgTextDef } from './utils';
+  import { addDefaultArgs, getMissingArgDefs, isFswCommandArgumentRepeat, type ArgTextDef } from './utils';
 
   export let editorSequenceView: EditorView;
   export let commandDictionary: CommandDictionary;
@@ -136,35 +131,6 @@
     return hasAncestorWithId(element.parentElement, id);
   }
 
-  function addDefaultArgs(commandNode: SyntaxNode, argDefs: FswCommandArgument[]) {
-    let insertPosition: undefined | number = undefined;
-    if (editorSequenceView) {
-      const str = ' ' + argDefs.map(argDef => fswCommandArgDefault(argDef, commandDictionary.enumMap)).join(' ');
-      const argsNode = commandNode.getChild('Args');
-      const stemNode = commandNode.getChild('Stem');
-      if (stemNode) {
-        insertPosition = argsNode?.to ?? stemNode.to;
-        if (insertPosition !== undefined) {
-          let transaction = editorSequenceView.state.update({
-            changes: {
-              from: insertPosition,
-              insert: str,
-            },
-          });
-          editorSequenceView.dispatch(transaction);
-        }
-      } else if (commandNode.name === TOKEN_REPEAT_ARG) {
-        insertPosition = commandNode.to - 1;
-        if (insertPosition !== undefined) {
-          let transaction = editorSequenceView.state.update({
-            changes: { from: insertPosition, insert: str },
-          });
-          editorSequenceView.dispatch(transaction);
-        }
-      }
-    }
-  }
-
   // When the type in the argument value is compatible with the argument definition,
   // provide a more restrictive editor to keep argument valid. Otherwise fall back on a string editor.
 
@@ -186,13 +152,19 @@
       <hr />
       <div class="select-command-argument-detail">
         {#each editorArgInfoArray as argInfo}
-          <ArgEditor {argInfo} {commandDictionary} setInEditor={debounce(setInEditor, 2500)} {addDefaultArgs} />
+          <ArgEditor
+            {argInfo}
+            {commandDictionary}
+            setInEditor={debounce(setInEditor, 2500)}
+            addDefaultArgs={(commandNode, missingArgDefArray) =>
+              addDefaultArgs(commandDictionary, editorSequenceView, commandNode, missingArgDefArray)}
+          />
         {/each}
         {#if missingArgDefArray.length}
           <AddMissingArgsButton
             setInEditor={() => {
               if (commandNode) {
-                addDefaultArgs(commandNode, missingArgDefArray);
+                addDefaultArgs(commandDictionary, editorSequenceView, commandNode, missingArgDefArray);
               }
             }}
           />
