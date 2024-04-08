@@ -45,3 +45,11 @@ export function getFromAndTo(nodes: (SyntaxNode | null)[]): { from: number; to: 
     { from: Number.MAX_VALUE, to: Number.MIN_VALUE },
   );
 }
+
+export function getAncestorNode(node: SyntaxNode | null, name: string) {
+  let commandNode: SyntaxNode | null = node;
+  while (commandNode && commandNode.name !== name) {
+    commandNode = commandNode.parent;
+  }
+  return commandNode;
+}

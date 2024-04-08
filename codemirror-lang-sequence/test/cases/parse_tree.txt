@@ -23,6 +23,22 @@ Sequence(
   )
 )
 
+# Generic directive
+
+@WRONG_LOAD_AND_GO
+
+C CMD_1
+
+==>
+
+Sequence(
+  GenericDirective,
+  Commands(
+    Command(TimeTag(TimeComplete),Stem,Args)
+  )
+)
+
+
 # Command with two string args
 
 FSW_CMD "hello" "world"
