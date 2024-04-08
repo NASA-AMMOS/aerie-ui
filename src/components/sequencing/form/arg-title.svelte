@@ -6,7 +6,7 @@
   export let argDef: FswCommandArgument;
 
   function getArgTitle(argDef: FswCommandArgument) {
-    if ("units" in argDef) {
+    if ('units' in argDef) {
       return `${argDef.name} - (${argDef.units})`;
     }
     return argDef.name;

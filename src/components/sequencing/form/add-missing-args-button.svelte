@@ -5,7 +5,5 @@
 </script>
 
 <div>
-  <button on:click={setInEditor}>
-    Add Missing Arguments
-  </button>
+  <button on:click={setInEditor}> Add Missing Arguments </button>
 </div>

@@ -3,14 +3,13 @@ import { syntaxTree } from '@codemirror/language';
 import type { CommandDictionary } from '@nasa-jpl/aerie-ampcs';
 import { fswCommandArgDefault } from './command-dictionary';
 
-
 type CursorInfo = {
   isAtLineComment: boolean;
   isAtSymbolBefore: boolean;
   isBeforeHDWCommands: boolean;
   isBeforeImmedOrHDWCommands: boolean;
   isTimeTagBefore: boolean;
-  position : number;
+  position: number;
 };
 
 /**
@@ -35,66 +34,70 @@ export function sequenceCompletion(commandDictionary: CommandDictionary | null =
         return null;
       }
 
-
       const timeTagCompletions: Completion[] = [];
       const enumerationCompletions: Completion[] = [];
       const fswCommandsCompletions: Completion[] = [];
       const hwCommandsCompletions: Completion[] = [];
       const directivesCompletions: Completion[] = [];
 
-
-      const cursor : CursorInfo = {
+      const cursor: CursorInfo = {
         isAtLineComment: nodeCurrent.name === 'LineComment' || nodeBefore.name === 'LineComment',
         isAtSymbolBefore: isAtTyped(context.state.doc.toString(), word),
         isBeforeHDWCommands: context.pos < (baseNode.getChild('HardwareCommands')?.from ?? Infinity),
-        isBeforeImmedOrHDWCommands: context.pos < (baseNode.getChild('ImmediateCommands')?.from ?? baseNode.getChild('HardwareCommands')?.from ?? Infinity),
+        isBeforeImmedOrHDWCommands:
+          context.pos <
+          (baseNode.getChild('ImmediateCommands')?.from ?? baseNode.getChild('HardwareCommands')?.from ?? Infinity),
         isTimeTagBefore: nodeBefore.parent?.getChild('TimeTag') ? true : false,
-        position : context.pos,
+        position: context.pos,
       };
 
-      if(cursor.isBeforeImmedOrHDWCommands){
-        directivesCompletions.push({
-          apply: `${cursor.isAtSymbolBefore ? '' : '@'}ID ""`,
-          info: 'Sequence ID',
-          label: '@ID',
-          section: 'Directives',
-          type: 'keyword',
-        },{
-          apply: `${cursor.isAtSymbolBefore ? '' : '@'}LOAD_AND_GO`,
-          info: 'Set Sequence as a Load and Go Sequence',
-          label: '@LOAD_AND_GO',
-          section: 'Directives',
-          type: 'keyword',
-        },{
-          apply: `${cursor.isAtSymbolBefore ? '' : '@'}INPUT_PARAMS VALUE`,
-          info: 'List of Input Parameters',
-          label: '@INPUT_PARAMS',
-          section: 'Directives',
-          type: 'keyword',
-        },
-        {
-          apply: `${cursor.isAtSymbolBefore ? '' : '@'}LOCALS VALUE`,
-          info: 'List of Local Variables',
-          label: '@LOCALS',
-          section: 'Directives',
-          type: 'keyword',
-        },{
-          apply: `${cursor.isAtSymbolBefore ? '' : '@'}HARDWARE`,
-          info: 'A HARDWARE Directive',
-          label: '@HARDWARE',
-          section: 'Directives',
-          type: 'keyword',
-        },
-        {
-          apply: `${cursor.isAtSymbolBefore ? '' : '@'}IMMEDIATE`,
-          info: 'A IMMEDIATE Directive',
-          label: '@IMMEDIATE',
-          section: 'Directives',
-          type: 'keyword',
-        });
+      if (cursor.isBeforeImmedOrHDWCommands) {
+        directivesCompletions.push(
+          {
+            apply: `${cursor.isAtSymbolBefore ? '' : '@'}ID ""`,
+            info: 'Sequence ID',
+            label: '@ID',
+            section: 'Directives',
+            type: 'keyword',
+          },
+          {
+            apply: `${cursor.isAtSymbolBefore ? '' : '@'}LOAD_AND_GO`,
+            info: 'Set Sequence as a Load and Go Sequence',
+            label: '@LOAD_AND_GO',
+            section: 'Directives',
+            type: 'keyword',
+          },
+          {
+            apply: `${cursor.isAtSymbolBefore ? '' : '@'}INPUT_PARAMS VALUE`,
+            info: 'List of Input Parameters',
+            label: '@INPUT_PARAMS',
+            section: 'Directives',
+            type: 'keyword',
+          },
+          {
+            apply: `${cursor.isAtSymbolBefore ? '' : '@'}LOCALS VALUE`,
+            info: 'List of Local Variables',
+            label: '@LOCALS',
+            section: 'Directives',
+            type: 'keyword',
+          },
+          {
+            apply: `${cursor.isAtSymbolBefore ? '' : '@'}HARDWARE`,
+            info: 'A HARDWARE Directive',
+            label: '@HARDWARE',
+            section: 'Directives',
+            type: 'keyword',
+          },
+          {
+            apply: `${cursor.isAtSymbolBefore ? '' : '@'}IMMEDIATE`,
+            info: 'A IMMEDIATE Directive',
+            label: '@IMMEDIATE',
+            section: 'Directives',
+            type: 'keyword',
+          },
+        );
 
-
-        if (!cursor.isTimeTagBefore){
+        if (!cursor.isTimeTagBefore) {
           timeTagCompletions.push(
             {
               apply: 'A0000-000T00:00:00 ',
@@ -126,7 +129,6 @@ export function sequenceCompletion(commandDictionary: CommandDictionary | null =
             },
           );
         }
-
       }
 
       // Directives.
@@ -147,22 +149,14 @@ export function sequenceCompletion(commandDictionary: CommandDictionary | null =
         },
       );
 
-
-    // If TimeTag has not been entered by the user wait for 2 characters before showing the command completions list
-    // If TimeTag has been entered show the completion list when 1 character has been entered
-     if ( word.text.length > (cursor.isTimeTagBefore ||
-      cursor.isBeforeImmedOrHDWCommands === false ? 0 : 1)){
-          fswCommandsCompletions.push(
-            ...generateCommandCompletions(commandDictionary, cursor),
-          );
+      // If TimeTag has not been entered by the user wait for 2 characters before showing the command completions list
+      // If TimeTag has been entered show the completion list when 1 character has been entered
+      if (word.text.length > (cursor.isTimeTagBefore || cursor.isBeforeImmedOrHDWCommands === false ? 0 : 1)) {
+        fswCommandsCompletions.push(...generateCommandCompletions(commandDictionary, cursor));
       }
 
-
       // TODO: Move to a function like generateCommandCompletions
-      hwCommandsCompletions.push(
-        ...generateHardwareCompletions(commandDictionary, cursor),
-      );
-
+      hwCommandsCompletions.push(...generateHardwareCompletions(commandDictionary, cursor));
 
       //
       // Enumerations.
@@ -178,7 +172,6 @@ export function sequenceCompletion(commandDictionary: CommandDictionary | null =
       //     });
       //   }
       // }
-
 
       return {
         from: word.from,
@@ -196,14 +189,13 @@ export function sequenceCompletion(commandDictionary: CommandDictionary | null =
   };
 }
 
-function generateCommandCompletions(commandDictionary : CommandDictionary | null, cursor : CursorInfo) : Completion[]{
-
-  if(commandDictionary === null) {
+function generateCommandCompletions(commandDictionary: CommandDictionary | null, cursor: CursorInfo): Completion[] {
+  if (commandDictionary === null) {
     return [];
   }
 
   // if cursor is at the LineComment/Description don't show the command completions list
-  if(cursor.isAtLineComment || !cursor.isBeforeHDWCommands){
+  if (cursor.isAtLineComment || !cursor.isBeforeHDWCommands) {
     return [];
   }
 
@@ -229,17 +221,16 @@ function generateCommandCompletions(commandDictionary : CommandDictionary | null
       type: 'function',
     });
   }
-  return fswCommandsCompletions
+  return fswCommandsCompletions;
 }
 
-function generateHardwareCompletions(commandDictionary : CommandDictionary | null, cursor : CursorInfo) : Completion[]{
-
-  if(commandDictionary === null) {
+function generateHardwareCompletions(commandDictionary: CommandDictionary | null, cursor: CursorInfo): Completion[] {
+  if (commandDictionary === null) {
     return [];
   }
 
   // if cursor is at the LineComment/Description or before HDWCommands don't show the completions list
-  if(cursor.isAtLineComment || cursor.isBeforeHDWCommands){
+  if (cursor.isAtLineComment || cursor.isBeforeHDWCommands) {
     return [];
   }
 
@@ -258,8 +249,7 @@ function generateHardwareCompletions(commandDictionary : CommandDictionary | nul
   return hwCommandsCompletions;
 }
 
-
-function isAtTyped(docString: string, word: { from: number;  text: string, to: number; }): boolean {
+function isAtTyped(docString: string, word: { from: number; text: string; to: number }): boolean {
   if (!word || word.from === undefined || word.text === undefined) {
     return false;
   }

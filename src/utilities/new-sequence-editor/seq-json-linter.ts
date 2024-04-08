@@ -71,7 +71,9 @@ export function seqJsonLinter(commandDictionary: CommandDictionary | null = null
         }
       }
     } catch (e) {
-      if (!(e instanceof SyntaxError)){ throw e};
+      if (!(e instanceof SyntaxError)) {
+        throw e;
+      }
       const pos = getErrorPosition(e, view.state.doc);
 
       diagnostics.push({
