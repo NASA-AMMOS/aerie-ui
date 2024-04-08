@@ -120,7 +120,7 @@
     const sequence = viewUpdate.state.doc.toString();
 
     const tree = syntaxTree(viewUpdate.state);
-    const seqJson = sequenceToSeqJson(tree, sequence, commandDictionary);
+    const seqJson = sequenceToSeqJson(tree, sequence, commandDictionary, sequenceName);
     const seqJsonStr = JSON.stringify(seqJson, null, 2);
     editorSeqJsonView.dispatch({ changes: { from: 0, insert: seqJsonStr, to: editorSeqJsonView.state.doc.length } });
 
