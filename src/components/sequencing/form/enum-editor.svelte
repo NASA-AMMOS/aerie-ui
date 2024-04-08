@@ -12,19 +12,17 @@
   $: value = unquoteUnescape(initVal);
   $: enumValues = commandDictionary.enumMap[argDef.enum_name]?.values ?? [];
   $: isValueInEnum = !!enumValues.find(ev => ev.symbol === value);
-  $: { setInEditor(quoteEscape(value)); }
+  $: {
+    setInEditor(quoteEscape(value));
+  }
 </script>
 
 <div>
-  <select
-    class="st-select"
-    required
-    bind:value
-  >
+  <select class="st-select" required bind:value>
     {#if !isValueInEnum}
       <option>{value}</option>
     {/if}
-    {#each enumValues as ev }
+    {#each enumValues as ev}
       <option>{ev.symbol}</option>
     {/each}
   </select>
