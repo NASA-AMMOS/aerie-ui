@@ -39,3 +39,11 @@ Sequence(Commands(
   Command(Stem,Args(RepeatArg(⚠))),
   Command(Stem,Args(RepeatArg(⚠,Enum)))
 ))
+
+# locals with wrong value types
+
+@LOCALS "string_not_enum"
+
+==>
+
+Sequence(LocalDeclaration(⚠(String)))

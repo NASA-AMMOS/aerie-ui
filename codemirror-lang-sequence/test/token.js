@@ -35,7 +35,7 @@ describe('error positions', () => {
       testname: 'bad number arg',
     },
     {
-      first_error: 20,
+      first_error: 24,
       input: `COM 12345
   COM "dsa"
   @UNKNOWN DIRECTIVE`,
@@ -58,7 +58,9 @@ describe('error positions', () => {
 describe('seqfiles', () => {
   const seqDir = path.dirname(fileURLToPath(import.meta.url)) + '/sequences';
   for (const file of readdirSync(seqDir)) {
-    if (!/\.txt$/.test(file)) {continue};
+    if (!/\.txt$/.test(file)) {
+      continue;
+    }
 
     const name = /^[^.]*/.exec(file)[0];
     it(name, () => {
@@ -91,7 +93,6 @@ CMD0
       return {
         from,
         to: from + nodeText.length,
-
       };
     };
     const expectedCommentLocations = {

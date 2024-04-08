@@ -80,6 +80,7 @@
     loadAdaptation(adaptation);
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async function getUserSequenceFromSeqJson() {
     const file: File = seqJsonFiles[0];
     const text = await file.text();
@@ -256,7 +257,7 @@
           }}
         />
       </fieldset>
-<!--
+      <!--
       <fieldset>
         <label for="seqJsonFile">Create Sequence from Seq JSON (optional)</label>
         <input

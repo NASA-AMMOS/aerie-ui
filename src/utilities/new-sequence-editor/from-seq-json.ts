@@ -2,6 +2,8 @@ import type {
   Args,
   BooleanArgument,
   HexArgument,
+  Metadata,
+  Model,
   NumberArgument,
   SeqJson,
   StringArgument,
@@ -9,6 +11,7 @@ import type {
   Time,
 } from '@nasa-jpl/seq-json-schema/types';
 import { isArray } from 'lodash-es';
+import { quoteEscape } from '../../components/sequencing/form/utils';
 import { logError } from './logger';
 
 /**
@@ -102,6 +105,35 @@ export function seqJsonArgsToSequence(args: Args): string {
   return argsStr;
 }
 
+export function seqJsonModelsToSequence(models: Model[]) {
+  // MODEL directives are one per line, the last new line is to start the next token
+  return (
+    models
+      .map(model => {
+        let formattedValue: Model['value'] = model.value;
+        if (typeof model.value === 'string') {
+          formattedValue = quoteEscape(model.value);
+        } else if (typeof model.value === 'boolean') {
+          formattedValue = model.value.toString().toUpperCase();
+        }
+        return `@MODEL ${quoteEscape(model.variable)} ${formattedValue} ${quoteEscape(model.offset)}`;
+      })
+      .join('\n') + '\n'
+  );
+}
+
+export function seqJsonMetadataToSequence(metadata: Metadata) {
+  // METADATA directives are one per line, the last new line is to start the next token
+  return (
+    Object.entries(metadata)
+      .map(
+        ([key, value]: [key: string, value: unknown]) =>
+          `@METADATA ${quoteEscape(key)} ${quoteEscape(value as string)}`,
+      )
+      .join('\n') + '\n'
+  );
+}
+
 /**
  * Transforms a sequence JSON to a sequence string.
  */
@@ -118,7 +150,9 @@ export function seqJsonToSequence(seqJson: SeqJson | null): string {
         if (step.type === 'command') {
           const time = seqJsonTimeToSequence(step.time);
           const args = seqJsonArgsToSequence(step.args);
-          sequence.push(`${time} ${step.stem}${args}\n`);
+          const metadata = step.metadata ? seqJsonMetadataToSequence(step.metadata) : '';
+          const models = step.models ? seqJsonModelsToSequence(step.models) : '';
+          sequence.push(`${time} ${step.stem}${args}\n${models}${metadata}`);
         }
       }
     }

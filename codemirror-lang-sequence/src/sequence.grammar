@@ -1,11 +1,9 @@
 @top Sequence {
   (newLine | whiteSpace)?
-  commentLine* ~maybeComments
-  IdDeclaration?
-  commentLine* ~maybeComments
-  ParameterDeclaration?
-  commentLine* ~maybeComments
-  LocalDeclaration?
+  (
+    commentLine* ~maybeComments
+    (IdDeclaration | ParameterDeclaration | LocalDeclaration | GenericDirective)
+  )*
   commentLine* ~maybeComments
   Metadata?
   Commands?
@@ -14,12 +12,15 @@
 }
 
 // Potential Improvements
-// flexibility - allow indentation of directives
 // maintainability - use @specialize on directives
-// extensibility - add generic Directive { "@"identifier }
+// expressiveness - add activate, load and ground syntax
 
 @precedence {
   stemStart @cut
+}
+
+GenericDirective {
+  genericDirective (whiteSpace String)* newLine
 }
 
 IdDeclaration {
@@ -148,10 +149,9 @@ Stem { !stemStart identifier }
   parameterDirective { "@INPUT_PARAMS" }
   metadataDirective { "@METADATA" }
   modelDirective { "@MODEL" }
+  genericDirective { "@"identifier }
 
-  @precedence {
-    newLine, whiteSpace
-  }
+  @precedence { newLine, whiteSpace }
 
   @precedence{ TimeAbsolute, TimeRelative, TimeEpoch, TimeComplete, identifier }
 
@@ -164,6 +164,7 @@ Stem { !stemStart identifier }
     localsDirective,
     parameterDirective,
     LoadAndGoDirective,
+    genericDirective,
     identifier
   }
 }
