@@ -34,12 +34,17 @@ export function seqJsonDefault(): SeqJson {
 /**
  * Walks the sequence parse tree and converts it to a valid Seq JSON object.
  */
-export function sequenceToSeqJson(node: Tree, text: string, commandDictionary: CommandDictionary | null): SeqJson {
+export function sequenceToSeqJson(
+  node: Tree,
+  text: string,
+  commandDictionary: CommandDictionary | null,
+  sequenceName: string,
+): SeqJson {
   const baseNode = node.topNode;
   const seqJson: SeqJson = seqJsonDefault();
   variableList = [];
 
-  seqJson.id = parseId(baseNode, text);
+  seqJson.id = parseId(baseNode, text, sequenceName);
   seqJson.metadata = { ...parseLGO(baseNode), ...parseMetadata(baseNode, text) };
   seqJson.locals = parseVariables(baseNode, text, 'LocalDeclaration') ?? undefined;
   seqJson.parameters = parseVariables(baseNode, text, 'ParameterDeclaration') ?? undefined;
@@ -472,15 +477,18 @@ export function parseHardwareCommand(commandNode: SyntaxNode, text: string): Har
   };
 }
 
-export function parseId(node: SyntaxNode, text: string): string {
-  const idNode = node.getChild('IdDeclaration');
-  if (!idNode) {
-    return '';
-  }
-
-  const stringNode = idNode.getChild('String');
+/**
+ *  This looks for a @ID directive to specify sequence id, if not present use ground name without extensions
+ *
+ * @param node - top node of parsed tree
+ * @param text - text of sequence
+ * @param sequenceName - ground name of sequence
+ * @returns
+ */
+function parseId(node: SyntaxNode, text: string, sequenceName: string): string {
+  const stringNode = node.getChild('IdDeclaration')?.getChild('String');
   if (!stringNode) {
-    return '';
+    return sequenceName.split('.')[0];
   }
 
   const id = JSON.parse(text.slice(stringNode.from, stringNode.to));
