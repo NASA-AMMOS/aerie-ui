@@ -129,6 +129,7 @@
   }
 
   function selectedCommandUpdateListener(viewUpdate: ViewUpdate) {
+    // This is broken out into a different listener as debouncing this can cause cursor to move around
     const tree = syntaxTree(viewUpdate.state);
     const updatedSelectionNode = tree.resolveInner(viewUpdate.state.selection.asSingle().main.from, -1);
     // minimize triggering selected command view
@@ -137,10 +138,10 @@
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   function downloadSeqJson() {
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([sequenceDefinition], { type: 'application/json' }));
+    // TODO -- we should write to Hasura in save action
+    a.href = URL.createObjectURL(new Blob([editorSeqJsonView.state.doc.toString()], { type: 'application/json' }));
     a.download = sequenceName;
     a.click();
   }
@@ -168,9 +169,9 @@
       <svelte:fragment slot="header">
         <SectionTitle>Seq JSON (Read-only)</SectionTitle>
 
-        <!-- <div class="right">
+        <div class="right">
           <button class="st-button secondary ellipsis" on:click={downloadSeqJson}>Download</button>
-        </div> -->
+        </div>
       </svelte:fragment>
 
       <svelte:fragment slot="body">
