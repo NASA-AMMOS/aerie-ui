@@ -5,7 +5,7 @@
 
   export let command: FswCommand | HwCommand;
 
-  let commandExample: string;
+  $: commandExample = command.stem;
 
   $: if (command.type === 'hw_command') {
     commandExample = command.stem;

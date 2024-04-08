@@ -3,7 +3,11 @@ import { linter, type Diagnostic } from '@codemirror/lint';
 import type { Extension } from '@codemirror/state';
 import type { SyntaxNode } from '@lezer/common';
 import type { CommandDictionary, EnumMap, FswCommand, FswCommandArgument, HwCommand } from '@nasa-jpl/aerie-ampcs';
-import { TOKEN_REPEAT_ARG } from './sequencer-grammar-constants';
+import { closest, distance } from 'fastest-levenshtein';
+import { addDefaultArgs } from '../../components/sequencing/form/utils';
+
+import type { EditorView } from 'codemirror';
+import { TOKEN_COMMAND, TOKEN_ERROR, TOKEN_REPEAT_ARG } from './sequencer-grammar-constants';
 import {
   ABSOLUTE_TIME,
   EPOCH_SIMPLE,
@@ -15,12 +19,27 @@ import {
 } from './time-utils';
 import { getChildrenNode, getDeepestNode, getFromAndTo } from './tree-utils';
 
-const ERROR = '⚠';
+const KNOWN_DIRECTIVES = [
+  'LOAD_AND_GO',
+  'ID',
+  'IMMEDIATE',
+  'HARDWARE',
+  'LOCALS',
+  'INPUT_PARAMS',
+  'MODEL',
+  'METADATA',
+].map(name => `@${name}`);
 
 export function getAllEnumSymbols(enumMap: EnumMap, enumName: string) {
   const enumSymbols = enumMap[enumName].values.map(({ symbol }) => symbol);
   const enumSymbolsDisplayStr = enumSymbols.join('  |  ');
   return { enumSymbols, enumSymbolsDisplayStr };
+}
+
+function closestStrings(value: string, potentialMatches: string[], n: number) {
+  const distances = potentialMatches.map(s => ({ distance: distance(s, value), s }));
+  distances.sort((a, b) => a.distance - b.distance);
+  return distances.slice(0, n).map(pair => pair.s);
 }
 
 /**
@@ -35,25 +54,25 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
     // Validate top level metadata
     diagnostics.push(...validateMetadata(treeNode));
 
+    diagnostics.push(...validateLocals(treeNode.getChildren('LocalDeclaration')));
+
+    diagnostics.push(...validateParameters(treeNode.getChildren('ParameterDeclaration')));
+
     // Validate command type mixing
     diagnostics.push(...validateCommandTypeMixing(treeNode));
 
+    const docText = view.state.doc.toString();
+
+    diagnostics.push(...validateCustomDirectives(treeNode, docText));
+
+    diagnostics.push(...commandLinter(treeNode.getChild('Commands')?.getChildren(TOKEN_COMMAND) || [], docText));
+
     diagnostics.push(
-      ...commandLinter(treeNode.getChild('Commands')?.getChildren('Command') || [], view.state.doc.toString()),
+      ...immediateCommandLinter(treeNode.getChild('ImmediateCommands')?.getChildren(TOKEN_COMMAND) || [], docText),
     );
 
     diagnostics.push(
-      ...immediateCommandLinter(
-        treeNode.getChild('ImmediateCommands')?.getChildren('Command') || [],
-        view.state.doc.toString(),
-      ),
-    );
-
-    diagnostics.push(
-      ...hardwareCommandLinter(
-        treeNode.getChild('HardwareCommands')?.getChildren('Command') || [],
-        view.state.doc.toString(),
-      ),
+      ...hardwareCommandLinter(treeNode.getChild('HardwareCommands')?.getChildren(TOKEN_COMMAND) || [], docText),
     );
 
     return diagnostics;
@@ -73,7 +92,7 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
     const lgo = commands?.getChild('LoadAndGoDirective') ?? null;
 
     // Check if each command type exists and has at least one child node.
-    const hasCommands = commands !== null && (commands?.getChildren('Command').length > 0 || lgo !== null);
+    const hasCommands = commands !== null && (commands?.getChildren(TOKEN_COMMAND).length > 0 || lgo !== null);
     const hasImmediateCommands = immediateCommands !== null;
     const hasHardwareCommands = hardwareCommands !== null;
 
@@ -89,20 +108,116 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
     ) {
       if (lgo) {
         diagnostics.push({
-            from,
-            message: `Directive 'LOAD_AND_GO' cannot be used with 'Immediate Commands' or 'Hardware Commands'.`,
-            severity: 'error',
-            to,
+          from,
+          message: `Directive 'LOAD_AND_GO' cannot be used with 'Immediate Commands' or 'Hardware Commands'.`,
+          severity: 'error',
+          to,
         });
       }
       diagnostics.push({
-          from,
-          message: 'Cannot mix different command types in one Sequence.',
-          severity: 'error',
-          to,
+        from,
+        message: 'Cannot mix different command types in one Sequence.',
+        severity: 'error',
+        to,
       });
     }
     return diagnostics;
+  }
+
+  function validateLocals(locals: SyntaxNode[]) {
+    const diagnostics: Diagnostic[] = [];
+    diagnostics.push(
+      ...locals.slice(1).map(
+        local =>
+          ({
+            ...getFromAndTo([local]),
+            message: 'There is a maximum of @LOCALS directive per sequence',
+            severity: 'error',
+          }) as Diagnostic,
+      ),
+    );
+    locals.forEach(local => {
+      let child = local.firstChild;
+      while (child) {
+        if (child.name !== 'Enum') {
+          diagnostics.push({
+            from: child.from,
+            message: `@LOCALS values are required to be Enums`,
+            severity: 'error',
+            to: child.to,
+          });
+        }
+        child = child.nextSibling;
+      }
+    });
+    // TODO - hook to check mission specific nomenclature
+    return diagnostics;
+  }
+
+  function validateParameters(inputParams: SyntaxNode[]) {
+    const diagnostics: Diagnostic[] = [];
+    diagnostics.push(
+      ...inputParams.slice(1).map(
+        inputParam =>
+          ({
+            ...getFromAndTo([inputParam]),
+            message: 'There is a maximum of @INPUT_PARAMS directive per sequence',
+            severity: 'error',
+          }) as Diagnostic,
+      ),
+    );
+    inputParams.forEach(inputParam => {
+      let child = inputParam.firstChild;
+      while (child) {
+        if (child.name !== 'Enum') {
+          diagnostics.push({
+            from: child.from,
+            message: `@INPUT_PARAMS values are required to be Enums`,
+            severity: 'error',
+            to: child.to,
+          });
+        }
+        child = child.nextSibling;
+      }
+    });
+    // TODO - hook to check mission specific nomenclature
+    return diagnostics;
+  }
+
+  function validateCustomDirectives(node: SyntaxNode, text: string): Diagnostic[] {
+    const diagnostics: Diagnostic[] = [];
+    node.getChildren('GenericDirective').forEach(directiveNode => {
+      const child = directiveNode.firstChild;
+      // use first token as directive, preserve remainder of line
+      const { from, to } = { ...getFromAndTo([directiveNode]), ...(child ? { to: child.from } : {}) };
+      const custom = text.slice(from, to).trim();
+      const guess = closest(custom, KNOWN_DIRECTIVES);
+      const insert = guess + (child ? ' ' : '\n');
+      diagnostics.push({
+        actions: [
+          {
+            apply(view, from, to) {
+              view.dispatch({ changes: { from, insert, to } });
+            },
+            name: `Change to ${guess}`,
+          },
+        ],
+        from,
+        message: `Unknown Directive ${custom}, did you mean ${guess}`,
+        severity: 'error',
+        to,
+      });
+    });
+    return diagnostics;
+  }
+
+  function insertAction(name: string, insert: string) {
+    return {
+      apply(view: EditorView, from: number, _to: number) {
+        view.dispatch({ changes: { from, insert } });
+      },
+      name,
+    };
   }
 
   /**
@@ -129,7 +244,10 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
       // If the TimeTag node is missing, create a diagnostic
       if (!timeTagNode) {
         diagnostics.push({
-          actions: [],
+          actions: [
+            insertAction(`Insert 'C' (command complete)`, 'C '),
+            insertAction(`Insert 'R1' (relative 1)`, 'R '),
+          ],
           from: command.from,
           message: "Missing 'Time Tag' for command",
           severity: 'error',
@@ -298,7 +416,6 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
       const modelsNode = command.getChild('Models');
       if (modelsNode) {
         diagnostics.push({
-          actions: [],
           from: modelsNode.from,
           message: "Immediate commands can't have models",
           severity: 'error',
@@ -432,21 +549,27 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
     if (commandDictionary === null) {
       return null;
     }
-    const { fswCommandMap, hwCommandMap } = commandDictionary;
+    const { fswCommandMap, fswCommands, hwCommandMap, hwCommands } = commandDictionary;
 
     const stemText = text.slice(stem.from, stem.to);
 
-    const dictionaryCommand : FswCommand | HwCommand | null = fswCommandMap[stemText]
+    const dictionaryCommand: FswCommand | HwCommand | null = fswCommandMap[stemText]
       ? fswCommandMap[stemText]
       : hwCommandMap[stemText]
-      ? hwCommandMap[stemText]
-      : null;
+        ? hwCommandMap[stemText]
+        : null;
 
     if (!dictionaryCommand) {
+      const ALL_STEMS = [...fswCommands.map(cmd => cmd.stem), ...hwCommands.map(cmd => cmd.stem)];
       return {
-        actions: [],
+        actions: closestStrings(stemText.toUpperCase(), ALL_STEMS, 3).map(guess => ({
+          apply(view, from, to) {
+            view.dispatch({ changes: { from, insert: guess, to } });
+          },
+          name: `Change to ${guess}`,
+        })),
         from: stem.from,
-        message: 'Command not found',
+        message: `Command '${stemText}' not found`,
         severity: 'error',
         to: stem.to,
       };
@@ -457,7 +580,6 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
       case 'immediate':
         if (!fswCommandMap[stemText]) {
           return {
-            actions: [],
             from: stem.from,
             message: 'Command must be a fsw command',
             severity: 'error',
@@ -468,7 +590,6 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
       case 'hardware':
         if (!hwCommandMap[stemText]) {
           return {
-            actions: [],
             from: stem.from,
             message: 'Command must be a hardware command',
             severity: 'error',
@@ -511,29 +632,65 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
         return diagnostics;
       }
 
-      if (argNode.length !== dictArgs.length) {
-        const { from, to } = getFromAndTo(argNode);
+      if (argNode.length > dictArgs.length) {
+        const extraArgs = argNode.slice(dictArgs.length);
+        const { from, to } = getFromAndTo(extraArgs);
         diagnostics.push({
-          actions: [],
+          actions: [
+            {
+              apply(view, from, to) {
+                view.dispatch({ changes: { from, to } });
+              },
+              name: `Remove ${extraArgs.length} extra argument${extraArgs.length > 1 ? 's' : ''}`,
+            },
+          ],
           from,
-          message: `Should only have ${dictArgs.length} arguments`,
+          message: `Extra arguments, definition has ${dictArgs.length}, but ${argNode.length} are present`,
+          severity: 'error',
+          to,
+        });
+        return diagnostics;
+      } else if (argNode.length < dictArgs.length) {
+        const { from, to } = getFromAndTo(argNode);
+        const pluralS = dictArgs.length > argNode.length + 1 ? 's' : '';
+        diagnostics.push({
+          actions: [
+            {
+              apply(view, _from, _to) {
+                if (commandDictionary) {
+                  addDefaultArgs(commandDictionary, view, command, dictArgs.slice(argNode.length));
+                }
+              },
+              name: `Add default missing argument${pluralS}`,
+            },
+          ],
+          from,
+          message: `Missing argument${pluralS}, definition has ${argNode.length}, but ${dictArgs.length} are present`,
           severity: 'error',
           to,
         });
         return diagnostics;
       }
     } else if (argNode && argNode.length > 0) {
+      const { from, to } = getFromAndTo(argNode);
       diagnostics.push({
-        actions: [],
-        from: command.from,
+        actions: [
+          {
+            apply(view, from, to) {
+              view.dispatch({ changes: { from, to } });
+            },
+            name: `Remove argument${argNode.length > 1 ? 's' : ''}`,
+          },
+        ],
+        from: from,
         message: 'The command should not have arguments',
         severity: 'error',
-        to: command.to,
+        to: to,
       });
       return diagnostics;
     }
 
-    // don't check any further as there is no arguments in the command dictionary
+    // don't check any further as there are no arguments in the command dictionary
     if (dictArgs.length === 0) {
       return diagnostics;
     }
@@ -604,9 +761,18 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
               commandDictionary?.enumMap,
               dictArg.enum_name,
             );
-            if (!symbols.includes(argText.replace(/^"|"$/g, ''))) {
+            const unquotedArgText = argText.replace(/^"|"$/g, '');
+            if (!symbols.includes(unquotedArgText)) {
+              const guess = closest(unquotedArgText.toUpperCase(), symbols);
               diagnostics.push({
-                actions: [],
+                actions: [
+                  {
+                    apply(view, from, to) {
+                      view.dispatch({ changes: { from, insert: `"${guess}"`, to } });
+                    },
+                    name: `Change to ${guess}`,
+                  },
+                ],
                 from: argNode.from,
                 message: `Enum should be "${availableSymbols}"`,
                 severity: 'error',
@@ -617,10 +783,17 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
           }
           if (argType === 'Enum') {
             diagnostics.push({
-              actions: [],
+              actions: [
+                {
+                  apply(view, from, to) {
+                    view.dispatch({ changes: { from, insert: `"${argText}"`, to } });
+                  },
+                  name: `Add quotes around ${argText}`,
+                },
+              ],
               from: argNode.from,
               message: `Enum should be a "string"`,
-              severity: 'warning',
+              severity: 'error',
               to: argNode.to,
             });
           }
@@ -640,7 +813,6 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
           if (nodeTextAsNumber < min || nodeTextAsNumber > max) {
             const message = `Number out of range. Make sure this number is between ${min} and ${max} inclusive.`;
             diagnostics.push({
-              actions: [],
               from: argNode.from,
               message,
               severity: 'error',
@@ -649,7 +821,6 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
           }
         } else {
           diagnostics.push({
-            actions: [],
             from: argNode.from,
             message: `Incorrect type - expected 'Number' but got ${argType}`,
             severity: 'error',
@@ -661,7 +832,6 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
       case 'var_string':
         if (argType !== 'String') {
           diagnostics.push({
-            actions: [],
             from: argNode.from,
             message: `Incorrect type - expected 'String' but got ${argType}`,
             severity: 'error',
@@ -672,7 +842,6 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
       case 'repeat':
         if (argType !== TOKEN_REPEAT_ARG) {
           diagnostics.push({
-            actions: [],
             from: argNode.from,
             message: `Incorrect type - expected '${TOKEN_REPEAT_ARG}' but got ${argType}`,
             severity: 'error',
@@ -825,7 +994,6 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
               case 'Enum':
               case 'Boolean':
                 diagnostics.push({
-                  actions: [],
                   from: metadataNode.from,
                   message: `Incorrect type - expected 'String' but got ${deepestNodeName}`,
                   severity: 'error',
@@ -834,7 +1002,6 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
                 break;
               default:
                 diagnostics.push({
-                  actions: [],
                   from: entry.from,
                   message: `Missing ${templateName}`,
                   severity: 'error',
@@ -850,11 +1017,7 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
   }
 
   function validateModel(commandNode: SyntaxNode): Diagnostic[] {
-    const modelConstainerNode = commandNode.getChild('Models');
-    if (!modelConstainerNode) {
-      return [];
-    }
-    const models = modelConstainerNode.getChildren('Model');
+    const models = commandNode.getChild('Models')?.getChildren('Model');
     if (!models) {
       return [];
     }
@@ -865,7 +1028,6 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
       const modelChildren = getChildrenNode(model);
       if (modelChildren.length > 3) {
         diagnostics.push({
-          actions: [],
           from: model.from,
           message: `Should only have 'Variable', 'value', and 'Offset'`,
           severity: 'error',
@@ -878,7 +1040,6 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
           const modelNode = modelChildren[i];
           if (!modelNode) {
             diagnostics.push({
-              actions: [],
               from: model.from,
               message: `Missing ${templateName}`,
               severity: 'error',
@@ -888,9 +1049,8 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
 
           if (modelNode.name !== templateName) {
             const deepestNodeName = getDeepestNode(modelNode).name;
-            if (deepestNodeName === ERROR) {
+            if (deepestNodeName === TOKEN_ERROR) {
               diagnostics.push({
-                actions: [],
                 from: model.from,
                 message: `Missing ${templateName}`,
                 severity: 'error',
@@ -901,7 +1061,6 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
               if (templateName === 'Variable' || templateName === 'Offset') {
                 if (deepestNodeName !== 'String') {
                   diagnostics.push({
-                    actions: [],
                     from: modelNode.from,
                     message: `Incorrect type - expected 'String' but got ${deepestNodeName}`,
                     severity: 'error',
@@ -913,7 +1072,6 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
                 // Value
                 if (deepestNodeName !== 'Number' && deepestNodeName !== 'String' && deepestNodeName !== 'Boolean') {
                   diagnostics.push({
-                    actions: [],
                     from: modelNode.from,
                     message: `Incorrect type - expected 'Number', 'String', or 'Boolean' but got ${deepestNodeName}`,
                     severity: 'error',

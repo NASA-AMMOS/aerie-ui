@@ -26,6 +26,7 @@ export const SeqLanguage = LRLanguage.define({
       }),
       styleTags({
         Boolean: t.bool,
+        GenericDirective: t.namespace,
         Global: t.namespace,
         HardwareCommands: t.namespace,
         IdDeclaration: t.namespace,

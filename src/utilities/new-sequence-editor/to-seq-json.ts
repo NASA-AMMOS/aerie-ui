@@ -40,7 +40,7 @@ export function sequenceToSeqJson(node: Tree, text: string, commandDictionary: C
   variableList = [];
 
   seqJson.id = parseId(baseNode, text);
-  seqJson.metadata = { ...parseLGO(baseNode), ...parseMetatdata(baseNode, text) } ?? {};
+  seqJson.metadata = { ...parseLGO(baseNode), ...parseMetadata(baseNode, text) };
   seqJson.locals = parseVariables(baseNode, text, 'LocalDeclaration') ?? undefined;
   seqJson.parameters = parseVariables(baseNode, text, 'ParameterDeclaration') ?? undefined;
   seqJson.steps =
@@ -369,10 +369,25 @@ function parseModel(node: SyntaxNode, text: string): Model[] | undefined {
     const variable = variableNode
       ? (removeQuotes(text.slice(variableNode.from, variableNode.to)) as string)
       : 'UNKNOWN';
-    const value = valueNode ? removeQuotes(text.slice(valueNode.from, valueNode.to)) : 0;
+
+    // Value can be string, number or boolean
+    let value: Model['value'] = 0;
+    if (valueNode) {
+      const valueChild = valueNode.firstChild;
+      if (valueChild) {
+        const valueText = text.slice(valueChild.from, valueChild.to);
+        if (valueChild.name === 'String') {
+          value = removeQuotes(valueText);
+        } else if (valueChild.name === 'Boolean') {
+          value = !/^FALSE$/i.test(valueText);
+        } else if (valueChild.name === 'Number') {
+          value = Number(valueText);
+        }
+      }
+    }
     const offset = offsetNode ? (removeQuotes(text.slice(offsetNode.from, offsetNode.to)) as string) : 'UNKNOWN';
 
-    models.push({ offset, value, variable});
+    models.push({ offset, value, variable });
   }
 
   return models;
@@ -389,7 +404,7 @@ function parseDescription(node: SyntaxNode, text: string): string | undefined {
 
 function removeQuotes(text: string | number | boolean): string | number | boolean {
   if (typeof text === 'string') {
-    return text.replace(/^"|"$/g, '');
+    return text.replace(/^"|"$/g, '').replaceAll('\\"', '"');
   }
   return text;
 }
@@ -408,7 +423,7 @@ export function parseCommand(
   const args = argsNode ? parseArgs(argsNode, text, commandDictionary, stem) : [];
 
   const description = parseDescription(commandNode, text);
-  const metadata: Metadata | undefined = parseMetatdata(commandNode, text);
+  const metadata: Metadata | undefined = parseMetadata(commandNode, text);
   const models: Model[] | undefined = parseModel(commandNode, text);
 
   return {
@@ -434,7 +449,7 @@ export function parseImmediateCommand(
   const args = argsNode ? parseArgs(argsNode, text, commandDictionary, stem) : [];
 
   const description = parseDescription(commandNode, text);
-  const metadata: Metadata | undefined = parseMetatdata(commandNode, text);
+  const metadata: Metadata | undefined = parseMetadata(commandNode, text);
 
   return {
     args,
@@ -448,7 +463,7 @@ export function parseHardwareCommand(commandNode: SyntaxNode, text: string): Har
   const stemNode = commandNode.getChild('Stem');
   const stem = stemNode ? text.slice(stemNode.from, stemNode.to) : 'UNKNOWN';
   const description = parseDescription(commandNode, text);
-  const metadata: Metadata | undefined = parseMetatdata(commandNode, text);
+  const metadata: Metadata | undefined = parseMetadata(commandNode, text);
 
   return {
     stem,
@@ -472,7 +487,7 @@ export function parseId(node: SyntaxNode, text: string): string {
   return id;
 }
 
-export function parseMetatdata(node: SyntaxNode, text: string): Metadata | undefined {
+function parseMetadata(node: SyntaxNode, text: string): Metadata | undefined {
   const metadataNode = node.getChild('Metadata');
   if (!metadataNode) {
     return undefined;
@@ -492,8 +507,8 @@ export function parseMetatdata(node: SyntaxNode, text: string): Metadata | undef
       return; // Skip this entry if either the key or value is missing
     }
 
-    const keyText = text.slice(keyNode.from, keyNode.to);
-    const valueText = text.slice(valueNode.from, valueNode.to);
+    const keyText = removeQuotes(text.slice(keyNode.from, keyNode.to)) as string;
+    const valueText = removeQuotes(text.slice(valueNode.from, valueNode.to));
 
     obj[keyText] = valueText;
   });

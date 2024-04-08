@@ -6,12 +6,13 @@
   import { lintGutter } from '@codemirror/lint';
   import { Compartment, EditorState } from '@codemirror/state';
   import type { ViewUpdate } from '@codemirror/view';
+  import type { SyntaxNode } from '@lezer/common';
   import type { CommandDictionary } from '@nasa-jpl/aerie-ampcs';
   import { EditorView, basicSetup } from 'codemirror';
   import { seq } from 'codemirror-lang-sequence';
   import { debounce } from 'lodash-es';
   import { createEventDispatcher, onMount } from 'svelte';
-  import { commandDictionaries, userSequencesRows } from '../../stores/sequencing';
+  import { commandDictionaries, userSequenceEditorColumns, userSequencesRows } from '../../stores/sequencing';
   import type { User } from '../../types/app';
   import effects from '../../utilities/effects';
   import { seqJsonLinter } from '../../utilities/new-sequence-editor/seq-json-linter';
@@ -23,6 +24,7 @@
   import CssGridGutter from '../ui/CssGridGutter.svelte';
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
+  import SelectedCommand from './form/selected-command.svelte';
 
   export let readOnly: boolean = false;
   export let sequenceCommandDictionaryId: number | null = null;
@@ -48,6 +50,7 @@
   let editorSeqJsonView: EditorView;
   let editorSequenceDiv: HTMLDivElement;
   let editorSequenceView: EditorView;
+  let selectedNode: SyntaxNode | null;
 
   $: {
     if (editorSequenceView) {
@@ -122,8 +125,15 @@
     editorSeqJsonView.dispatch({ changes: { from: 0, insert: seqJsonStr, to: editorSeqJsonView.state.doc.length } });
 
     dispatch('sequence', sequence);
+
+    const updatedSelectionNode = tree.resolveInner(viewUpdate.state.selection.asSingle().main.from, -1);
+    // minimize triggering selected command view
+    if (selectedNode !== updatedSelectionNode) {
+      selectedNode = updatedSelectionNode;
+    }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   function downloadSeqJson() {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([sequenceDefinition], { type: 'application/json' }));
@@ -132,34 +142,44 @@
   }
 </script>
 
-<CssGrid bind:rows={$userSequencesRows} minHeight={'0'}>
-  <Panel>
-    <svelte:fragment slot="header">
-      <SectionTitle>{title}</SectionTitle>
+<CssGrid bind:columns={$userSequenceEditorColumns} minHeight={'0'}>
+  <CssGrid bind:rows={$userSequencesRows} minHeight={'0'}>
+    <Panel>
+      <svelte:fragment slot="header">
+        <SectionTitle>{title}</SectionTitle>
 
-      <div class="right">
-        <slot />
-      </div>
-    </svelte:fragment>
+        <div class="right">
+          <slot />
+        </div>
+      </svelte:fragment>
 
-    <svelte:fragment slot="body">
-      <div bind:this={editorSequenceDiv} />
-    </svelte:fragment>
-  </Panel>
+      <svelte:fragment slot="body">
+        <div bind:this={editorSequenceDiv} />
+      </svelte:fragment>
+    </Panel>
 
-  <CssGridGutter track={1} type="row" />
+    <CssGridGutter track={1} type="row" />
 
-  <Panel>
-    <svelte:fragment slot="header">
-      <SectionTitle>Seq JSON (Read-only)</SectionTitle>
+    <Panel>
+      <svelte:fragment slot="header">
+        <SectionTitle>Seq JSON (Read-only)</SectionTitle>
 
-      <div class="right">
-        <button class="st-button secondary ellipsis" on:click={downloadSeqJson}>Download</button>
-      </div>
-    </svelte:fragment>
+        <!-- <div class="right">
+          <button class="st-button secondary ellipsis" on:click={downloadSeqJson}>Download</button>
+        </div> -->
+      </svelte:fragment>
 
-    <svelte:fragment slot="body">
-      <div bind:this={editorSeqJsonDiv} />
-    </svelte:fragment>
-  </Panel>
+      <svelte:fragment slot="body">
+        <div bind:this={editorSeqJsonDiv} />
+      </svelte:fragment>
+    </Panel>
+  </CssGrid>
+
+  <CssGridGutter track={1} type="column" />
+
+  {#if !!commandDictionary && !!selectedNode}
+    <SelectedCommand node={selectedNode} {commandDictionary} {editorSequenceView} />
+  {:else}
+    <div>Selected Command</div>
+  {/if}
 </CssGrid>
