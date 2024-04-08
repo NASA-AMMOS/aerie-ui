@@ -155,7 +155,7 @@
           <ArgEditor
             {argInfo}
             {commandDictionary}
-            setInEditor={debounce(setInEditor, 2500)}
+            setInEditor={debounce(setInEditor, 250)}
             addDefaultArgs={(commandNode, missingArgDefArray) =>
               addDefaultArgs(commandDictionary, editorSequenceView, commandNode, missingArgDefArray)}
           />

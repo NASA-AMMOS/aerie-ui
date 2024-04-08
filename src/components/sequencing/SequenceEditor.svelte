@@ -95,6 +95,7 @@
         compartmentSeqLinter.of(sequenceLinter()),
         compartmentSeqTooltip.of(sequenceTooltip()),
         EditorView.updateListener.of(debounce(sequenceUpdateListener, 250)),
+        EditorView.updateListener.of(selectedCommandUpdateListener),
         EditorState.readOnly.of(readOnly),
       ],
       parent: editorSequenceDiv,
@@ -125,7 +126,10 @@
     editorSeqJsonView.dispatch({ changes: { from: 0, insert: seqJsonStr, to: editorSeqJsonView.state.doc.length } });
 
     dispatch('sequence', sequence);
+  }
 
+  function selectedCommandUpdateListener(viewUpdate: ViewUpdate) {
+    const tree = syntaxTree(viewUpdate.state);
     const updatedSelectionNode = tree.resolveInner(viewUpdate.state.selection.asSingle().main.from, -1);
     // minimize triggering selected command view
     if (selectedNode !== updatedSelectionNode) {
