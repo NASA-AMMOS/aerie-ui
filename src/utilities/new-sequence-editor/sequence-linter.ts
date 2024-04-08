@@ -3,7 +3,7 @@ import { linter, type Diagnostic } from '@codemirror/lint';
 import type { Extension } from '@codemirror/state';
 import type { SyntaxNode } from '@lezer/common';
 import type { CommandDictionary, EnumMap, FswCommand, FswCommandArgument, HwCommand } from '@nasa-jpl/aerie-ampcs';
-import { closest } from 'fastest-levenshtein';
+import { closest, distance } from 'fastest-levenshtein';
 import { addDefaultArgs } from '../../components/sequencing/form/utils';
 
 import type { EditorView } from 'codemirror';
@@ -36,6 +36,12 @@ export function getAllEnumSymbols(enumMap: EnumMap, enumName: string) {
   return { enumSymbols, enumSymbolsDisplayStr };
 }
 
+function closestStrings(value: string, potentialMatches: string[], n: number) {
+  const distances = potentialMatches.map(s => ({ distance: distance(s, value), s }));
+  distances.sort((a, b) => a.distance - b.distance);
+  return distances.slice(0, n).map(pair => pair.s);
+}
+
 /**
  * Linter function that returns a Code Mirror extension function.
  * Can be optionally called with a command dictionary so it's available during linting.
@@ -47,6 +53,10 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
 
     // Validate top level metadata
     diagnostics.push(...validateMetadata(treeNode));
+
+    diagnostics.push(...validateLocals(treeNode.getChildren('LocalDeclaration')));
+
+    diagnostics.push(...validateParameters(treeNode.getChildren('ParameterDeclaration')));
 
     // Validate command type mixing
     diagnostics.push(...validateCommandTypeMixing(treeNode));
@@ -111,6 +121,66 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
         to,
       });
     }
+    return diagnostics;
+  }
+
+  function validateLocals(locals: SyntaxNode[]) {
+    const diagnostics: Diagnostic[] = [];
+    diagnostics.push(
+      ...locals.slice(1).map(
+        local =>
+          ({
+            ...getFromAndTo([local]),
+            message: 'There is a maximum of @LOCALS directive per sequence',
+            severity: 'error',
+          }) as Diagnostic,
+      ),
+    );
+    locals.forEach(local => {
+      let child = local.firstChild;
+      while (child) {
+        if (child.name !== 'Enum') {
+          diagnostics.push({
+            from: child.from,
+            message: `@LOCALS values are required to be Enums`,
+            severity: 'error',
+            to: child.to,
+          });
+        }
+        child = child.nextSibling;
+      }
+    });
+    // TODO - hook to check mission specific nomenclature
+    return diagnostics;
+  }
+
+  function validateParameters(inputParams: SyntaxNode[]) {
+    const diagnostics: Diagnostic[] = [];
+    diagnostics.push(
+      ...inputParams.slice(1).map(
+        inputParam =>
+          ({
+            ...getFromAndTo([inputParam]),
+            message: 'There is a maximum of @INPUT_PARAMS directive per sequence',
+            severity: 'error',
+          }) as Diagnostic,
+      ),
+    );
+    inputParams.forEach(inputParam => {
+      let child = inputParam.firstChild;
+      while (child) {
+        if (child.name !== 'Enum') {
+          diagnostics.push({
+            from: child.from,
+            message: `@INPUT_PARAMS values are required to be Enums`,
+            severity: 'error',
+            to: child.to,
+          });
+        }
+        child = child.nextSibling;
+      }
+    });
+    // TODO - hook to check mission specific nomenclature
     return diagnostics;
   }
 
@@ -490,13 +560,16 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
         : null;
 
     if (!dictionaryCommand) {
-      const guess = closest(stemText.toUpperCase(), [
-        ...fswCommands.map(cmd => cmd.stem),
-        ...hwCommands.map(cmd => cmd.stem),
-      ]);
+      const ALL_STEMS = [...fswCommands.map(cmd => cmd.stem), ...hwCommands.map(cmd => cmd.stem)];
       return {
+        actions: closestStrings(stemText.toUpperCase(), ALL_STEMS, 3).map(guess => ({
+          apply(view, from, to) {
+            view.dispatch({ changes: { from, insert: guess, to } });
+          },
+          name: `Change to ${guess}`,
+        })),
         from: stem.from,
-        message: `Command '${stemText}' not found, '${guess}' is closest match in dictionary`,
+        message: `Command '${stemText}' not found`,
         severity: 'error',
         to: stem.to,
       };
@@ -599,17 +672,25 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
         return diagnostics;
       }
     } else if (argNode && argNode.length > 0) {
+      const { from, to } = getFromAndTo(argNode);
       diagnostics.push({
-        actions: [],
-        from: command.from,
+        actions: [
+          {
+            apply(view, from, to) {
+              view.dispatch({ changes: { from, to } });
+            },
+            name: `Remove argument${argNode.length > 1 ? 's' : ''}`,
+          },
+        ],
+        from: from,
         message: 'The command should not have arguments',
         severity: 'error',
-        to: command.to,
+        to: to,
       });
       return diagnostics;
     }
 
-    // don't check any further as there is no arguments in the command dictionary
+    // don't check any further as there are no arguments in the command dictionary
     if (dictArgs.length === 0) {
       return diagnostics;
     }
