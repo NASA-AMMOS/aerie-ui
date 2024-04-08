@@ -3,13 +3,19 @@
 <script lang="ts">
   import type { SyntaxNode } from '@lezer/common';
   import type { CommandDictionary, FswCommandArgument } from '@nasa-jpl/aerie-ampcs';
-  import EnumEditor from './enum-editor.svelte';
-  import ExtraArgumentEditor from './extra-argument-editor.svelte';
-  import StringEditor from './string-editor.svelte';
-  import NumEditor from './num-editor.svelte';
-  import { isNumberArg, type ArgTextDef, isFswCommandArgumentRepeat, isFswCommandArgumentVarString, getMissingArgDefs } from './utils';
   import AddMissingArgsButton from './add-missing-args-button.svelte';
   import ArgTitle from './arg-title.svelte';
+  import EnumEditor from './enum-editor.svelte';
+  import ExtraArgumentEditor from './extra-argument-editor.svelte';
+  import NumEditor from './num-editor.svelte';
+  import StringEditor from './string-editor.svelte';
+  import {
+    getMissingArgDefs,
+    isFswCommandArgumentRepeat,
+    isFswCommandArgumentVarString,
+    isNumberArg,
+    type ArgTextDef,
+  } from './utils';
 
   export let argInfo: ArgTextDef;
   export let commandDictionary: CommandDictionary;
@@ -36,7 +42,7 @@
       {commandDictionary}
       argDef={argInfo.argDef}
       initVal={argInfo.text ?? ''}
-      setInEditor={(val) => {
+      setInEditor={val => {
         if (argInfo.node) {
           setInEditor(argInfo.node, val);
         }
@@ -46,7 +52,7 @@
     <NumEditor
       argDef={argInfo.argDef}
       initVal={argInfo.text ?? (argInfo.argDef.default_value ?? 0).toString()}
-      setInEditor={(val) => {
+      setInEditor={val => {
         if (argInfo.node) {
           setInEditor(argInfo.node, val);
         }
@@ -56,21 +62,16 @@
     <StringEditor
       argDef={argInfo.argDef}
       initVal={argInfo.text ?? ''}
-      setInEditor={(val) => {
+      setInEditor={val => {
         if (argInfo.node) {
           setInEditor(argInfo.node, val);
         }
       }}
     />
   {:else if isFswCommandArgumentRepeat(argInfo.argDef) && !!argInfo.children}
-    {#each argInfo.children as childArgInfo }
+    {#each argInfo.children as childArgInfo}
       {#if childArgInfo.node}
-        <svelte:self
-          argInfo={childArgInfo}
-          {commandDictionary}
-          {setInEditor}
-          {addDefaultArgs}
-        />
+        <svelte:self argInfo={childArgInfo} {commandDictionary} {setInEditor} {addDefaultArgs} />
       {/if}
     {/each}
     {#if argInfo.children.find(childArgInfo => !childArgInfo.node)}
