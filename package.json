@@ -130,5 +130,8 @@
     "unique-names-generator": "^4.7.1",
     "vite": "5.1.6",
     "vitest": "^1.0.0"
-  }
+  },
+  "workspaces": [
+    "codemirror-lang-sequence"
+  ]
 }
