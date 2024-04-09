@@ -75,8 +75,78 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
       ...hardwareCommandLinter(treeNode.getChild('HardwareCommands')?.getChildren(TOKEN_COMMAND) || [], docText),
     );
 
+    diagnostics.push(
+      ...conditionalAndLoopKeywordsLinter(treeNode.getChild('Commands')?.getChildren(TOKEN_COMMAND) || [], docText),
+    );
+
     return diagnostics;
   });
+
+  function conditionalAndLoopKeywordsLinter(commandNodes: SyntaxNode[], text: string): Diagnostic[] {
+    const diagnostics: Diagnostic[] = [];
+    const conditionalStack: string[] = [];
+    const loopStack: string[] = [];
+    const conditionalKeywords = [];
+    const loopKeywords = [];
+    const conditionalStartingKeyword = globalThis.CONDITIONAL_KEYWORDS?.IF ?? 'CMD_IF';
+    const conditionalEndingKeyword = globalThis.CONDITIONAL_KEYWORDS?.END_IF ?? 'CMD_END_IF';
+    const loopStartingKeyword = globalThis.LOOP_KEYWORDS?.WHILE_LOOP ?? 'CMD_WHILE_LOOP';
+    const loopEndingKeyword = globalThis.LOOP_KEYWORDS?.END_WHILE_LOOP ?? 'CMD_END_WHILE_LOOP';
+
+    conditionalKeywords.push(globalThis.CONDITIONAL_KEYWORDS?.ELSE_IF ?? 'CMD_ELSE_IF', conditionalEndingKeyword);
+    loopKeywords.push(
+      globalThis.LOOP_KEYWORDS?.BREAK ?? 'CMD_BREAK',
+      globalThis.LOOP_KEYWORDS?.CONTINUE ?? 'CMD_CONTINUE',
+      loopEndingKeyword,
+    );
+
+    for (const command of commandNodes) {
+      const stem = command.getChild('Stem');
+      if (stem !== null) {
+        const word = text.slice(stem.from, stem.to);
+
+        if (word === conditionalStartingKeyword) {
+          conditionalStack.push(word);
+        }
+
+        if (conditionalKeywords.includes(word)) {
+          if (conditionalStack.length === 0) {
+            diagnostics.push({
+              from: stem.from,
+              message: `Conditional keyword ${word} found without a preceding ${conditionalStartingKeyword}.`,
+              severity: 'error',
+              to: stem.to,
+            });
+          }
+
+          if (word === conditionalEndingKeyword) {
+            conditionalStack.pop();
+          }
+        }
+
+        if (word === loopStartingKeyword) {
+          loopStack.push(word);
+        }
+
+        if (loopKeywords.includes(word)) {
+          if (loopStack.length === 0) {
+            diagnostics.push({
+              from: stem.from,
+              message: `Loop keyword ${word} found without a preceding ${loopStartingKeyword}.`,
+              severity: 'error',
+              to: stem.to,
+            });
+          }
+
+          if (word === loopEndingKeyword) {
+            loopStack.pop();
+          }
+        }
+      }
+    }
+
+    return diagnostics;
+  }
 
   /**
    * Validates that a syntax node does not mix different command types.
