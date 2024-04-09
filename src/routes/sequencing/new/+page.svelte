@@ -7,4 +7,4 @@
   export let data: PageData;
 </script>
 
-<SequenceForm mode="create" user={data.user} />
+<SequenceForm mode="create" adaptation={data.adaptation} user={data.user} />

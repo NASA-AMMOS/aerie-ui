@@ -23,6 +23,11 @@ export type GetSeqJsonResponse = {
   status: 'FAILURE' | 'SUCCESS';
 };
 
+export type SequenceAdaptation = {
+  adaptation: string;
+  created_at: string;
+};
+
 export type SeqJson = any; // TODO: Strongly type.
 
 export type UserSequence = {

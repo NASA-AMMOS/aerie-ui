@@ -1,4 +1,5 @@
 /* eslint @typescript-eslint/no-unused-vars: 0 */
+import type { GlobalType } from './types/global-type';
 
 declare global {
   namespace App {
@@ -43,6 +44,9 @@ declare global {
     const content: string;
     export default content;
   }
+
+  var GLOBALS: GlobalType[];
+  function LINT(commandDictionary, view, node);
 }
 
 export {};

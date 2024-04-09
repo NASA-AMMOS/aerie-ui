@@ -6,11 +6,12 @@
   import { onMount } from 'svelte';
   import { commandDictionaries, userSequenceFormColumns } from '../../stores/sequencing';
   import type { User, UserId } from '../../types/app';
-  import type { UserSequence, UserSequenceInsertInput } from '../../types/sequencing';
+  import type { SequenceAdaptation, UserSequence, UserSequenceInsertInput } from '../../types/sequencing';
   import effects from '../../utilities/effects';
   import { isSaveEvent } from '../../utilities/keyboardEvents';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
+  import { showSuccessToast } from '../../utilities/toast';
   import PageTitle from '../app/PageTitle.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
@@ -18,9 +19,10 @@
   import SectionTitle from '../ui/SectionTitle.svelte';
   import SequenceEditor from './SequenceEditor.svelte';
 
+  export let adaptation: SequenceAdaptation | null;
   export let initialSequenceCommandDictionaryId: number | null = null;
   export let initialSequenceCreatedAt: string | null = null;
-  export let initialSequenceDefinition: string = `export default () =>\n  Sequence.new({\n    seqId: '',\n    metadata: {},\n    steps: []\n  });\n`;
+  export let initialSequenceDefinition: string = ``;
   export let initialSequenceId: number | null = null;
   export let initialSequenceName: string = '';
   export let initialSequenceOwner: UserId = '';
@@ -28,6 +30,7 @@
   export let mode: 'create' | 'edit' = 'create';
   export let user: User | null;
 
+  let hasAdaptationCreatePermission: boolean = false;
   let hasPermission: boolean = false;
   let pageSubtitle: string = '';
   let pageTitle: string = '';
@@ -49,6 +52,12 @@
   let saveButtonText: string = '';
   let savingSequence: boolean = false;
 
+  const createPermissionError = 'You do not have permission to create Custom Adaptations';
+
+  $: {
+    // TODO: Fix these permissions
+    hasAdaptationCreatePermission = featurePermissions.commandDictionary.canCreate(user);
+  }
   $: saveButtonClass = sequenceModified && saveButtonEnabled ? 'primary' : 'secondary';
   $: saveButtonEnabled = sequenceCommandDictionaryId !== null && sequenceDefinition !== '' && sequenceName !== '';
   $: sequenceModified = sequenceDefinition !== savedSequenceDefinition || sequenceName !== savedSequenceName;
@@ -67,8 +76,11 @@
     if (mode === 'edit') {
       getUserSequenceSeqJson();
     }
+
+    loadAdaptation(adaptation);
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async function getUserSequenceFromSeqJson() {
     const file: File = seqJsonFiles[0];
     const text = await file.text();
@@ -83,6 +95,10 @@
     sequenceSeqJson = await effects.getUserSequenceSeqJson(sequenceCommandDictionaryId, sequenceDefinition, user);
   }
 
+  function onSequenceChange(event: CustomEvent) {
+    sequenceDefinition = event.detail;
+  }
+
   function onDidChangeModelContent(event: CustomEvent<{ value: string }>) {
     const { detail } = event;
     const { value } = detail;
@@ -93,6 +109,18 @@
     if (isSaveEvent(event)) {
       event.preventDefault();
       saveSequence();
+    }
+  }
+
+  async function onSeqAdaptationInput(e: Event & { currentTarget: EventTarget & HTMLInputElement }) {
+    loadAdaptation(await effects.createCustomAdaptation(e.currentTarget.files, user));
+
+    showSuccessToast('Custom Adaptation Uploaded Successfully');
+  }
+
+  function loadAdaptation(sequenceAdaptation: SequenceAdaptation | null): void {
+    if (sequenceAdaptation) {
+      Function(sequenceAdaptation.adaptation)();
     }
   }
 
@@ -215,6 +243,22 @@
       </fieldset>
 
       <fieldset>
+        <label for="seqJsonInput"> Upload a custom adaptation </label>
+        <input
+          on:change={onSeqAdaptationInput}
+          class="st-typography-body w-100"
+          id="seqAdaptationInput"
+          name="seqAdaptationInput"
+          required
+          type="file"
+          use:permissionHandler={{
+            hasPermission: hasAdaptationCreatePermission,
+            permissionError: createPermissionError,
+          }}
+        />
+      </fieldset>
+      <!--
+      <fieldset>
         <label for="seqJsonFile">Create Sequence from Seq JSON (optional)</label>
         <input
           bind:files={seqJsonFiles}
@@ -227,7 +271,7 @@
             permissionError,
           }}
         />
-      </fieldset>
+      </fieldset> -->
     </svelte:fragment>
   </Panel>
 
@@ -235,12 +279,13 @@
 
   <SequenceEditor
     {sequenceCommandDictionaryId}
-    {sequenceDefinition}
+    sequenceDefinition={initialSequenceDefinition}
     {sequenceName}
     {sequenceSeqJson}
     title="{mode === 'create' ? 'New' : 'Edit'} Sequence - Definition Editor"
     {user}
     readOnly={!hasPermission}
+    on:sequence={onSequenceChange}
     on:didChangeModelContent={onDidChangeModelContent}
     on:generate={getUserSequenceSeqJson}
   />
