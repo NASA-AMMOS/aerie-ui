@@ -1,7 +1,7 @@
 {
   "name": "aerie-ui",
   "description": "The client application for Aerie.",
-  "version": "2.6.100",
+  "version": "2.6.101",
   "type": "module",
   "private": true,
   "license": "MIT",
