@@ -14,7 +14,7 @@
   "scripts": {
     "build": "npm run clean && rollup -c",
     "clean": "rm -rf dist",
-    "postinstall": "npm run build",
+    "postinstall": "[ \"$NODE_ENV\" = production ] && exit 0; npm run build",
     "test": "npm run build && mocha test/*.js"
   },
   "dependencies": {
