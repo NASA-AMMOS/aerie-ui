@@ -45,7 +45,15 @@ declare global {
     export default content;
   }
 
+  // eslint-disable no-var
   var GLOBALS: GlobalType[];
+  var LOOP_KEYWORDS: {
+    BREAK: string;
+    CONTINUE: string;
+    END_WHILE_LOOP: string;
+    WHILE_LOOP: string;
+  };
+  var CONDITIONAL_KEYWORDS: { END_IF: string; ELSE_IF: string; IF: string };
   function LINT(commandDictionary, view, node);
 }
 
