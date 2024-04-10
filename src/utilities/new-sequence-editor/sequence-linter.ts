@@ -49,7 +49,7 @@ function closestStrings(value: string, potentialMatches: string[], n: number) {
 export function sequenceLinter(commandDictionary: CommandDictionary | null = null): Extension {
   return linter(view => {
     const treeNode = syntaxTree(view.state).topNode;
-    const diagnostics: Diagnostic[] = [];
+    let diagnostics: Diagnostic[] = [];
 
     // Validate top level metadata
     diagnostics.push(...validateMetadata(treeNode));
@@ -78,6 +78,10 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
     diagnostics.push(
       ...conditionalAndLoopKeywordsLinter(treeNode.getChild('Commands')?.getChildren(TOKEN_COMMAND) || [], docText),
     );
+
+    if (globalThis.LINT) {
+      diagnostics = [...diagnostics, ...globalThis.LINT(commandDictionary, view, treeNode)];
+    }
 
     return diagnostics;
   });
