@@ -173,6 +173,21 @@ export function sequenceCompletion(commandDictionary: CommandDictionary | null =
       //   }
       // }
 
+      const globals = globalThis.GLOBALS;
+      const globalCompletions: Completion[] = [];
+
+      if (globals) {
+        for (const global of globals) {
+          globalCompletions.push({
+            apply: global.name,
+            info: global.type,
+            label: global.name,
+            section: 'Globals',
+            type: 'keyword',
+          });
+        }
+      }
+
       return {
         from: word.from,
         options: [
@@ -181,6 +196,7 @@ export function sequenceCompletion(commandDictionary: CommandDictionary | null =
           ...enumerationCompletions,
           ...fswCommandsCompletions,
           ...hwCommandsCompletions,
+          ...globalCompletions,
         ],
       };
     }
