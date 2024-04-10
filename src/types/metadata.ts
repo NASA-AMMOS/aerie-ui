@@ -16,7 +16,7 @@ export type BaseDefinition = {
 
 export type BaseMetadataVersionDefinition = Pick<BaseDefinition, 'author' | 'definition' | 'revision' | 'tags'>;
 
-export type BaseMetadata<D> = {
+export type BaseMetadata<D extends BaseDefinition = BaseDefinition> = {
   created_at: string;
   description?: string;
   id: number;
@@ -31,4 +31,9 @@ export type BaseMetadata<D> = {
   versions: D[];
 };
 
-export type BaseMetadataSlim<D> = Omit<BaseMetadata<D>, 'models_using' | 'plans_using' | 'versions'>;
+export type BaseMetadataSlim<D extends BaseDefinition = BaseDefinition> = Omit<
+  BaseMetadata<D>,
+  'models_using' | 'plans_using' | 'versions'
+>;
+
+export type Association = 'constraint' | 'condition' | 'goal';

@@ -1,5 +1,5 @@
 import { writable, type Writable } from 'svelte/store';
-import type { ModelSlim } from '../types/model';
+import type { Model, ModelSlim } from '../types/model';
 import gql from '../utilities/gql';
 import { gqlSubscribable } from './subscribable';
 
@@ -8,7 +8,12 @@ export const creatingModel: Writable<boolean> = writable(false);
 
 export const createModelError: Writable<string | null> = writable(null);
 
+export const modelId: Writable<number> = writable(-1);
+
 /* Subscriptions. */
+
+export const model: Writable<Model | null> = writable(null);
+// export const model = gqlSubscribable<Model>(gql.SUB_MODEL, { id: modelId }, null, null);
 
 export const models = gqlSubscribable<ModelSlim[]>(gql.SUB_MODELS, {}, [], null);
 
