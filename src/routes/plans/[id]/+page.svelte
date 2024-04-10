@@ -651,7 +651,7 @@
           {#if selectedSimulationStatus === Status.Pending || selectedSimulationStatus === Status.Incomplete}
             <button
               on:click={() => effects.cancelSimulation($simulationDatasetId, data.user)}
-              class="st-button cancel-button"
+              class="st-button danger"
               disabled={$planReadOnly}>Cancel</button
             >
           {/if}
@@ -868,16 +868,6 @@
   .simulation-header {
     display: flex;
     justify-content: space-between;
-  }
-
-  .cancel-button {
-    background: rgba(219, 81, 57, 0.04);
-    border: 1px solid var(--st-utility-red);
-    color: var(--st-utility-red);
-  }
-
-  .cancel-button:hover {
-    background: rgba(219, 81, 57, 0.08);
   }
 
   .constraints-status {

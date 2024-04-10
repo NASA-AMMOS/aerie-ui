@@ -145,7 +145,7 @@
       New plan with model
     </button>
     <button
-      class="st-button destructive w-100"
+      class="st-button danger w-100"
       on:click|stopPropagation={onDeleteModel}
       use:permissionHandler={{
         hasPermission: hasDeleteModelPermission,

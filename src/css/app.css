@@ -79,17 +79,6 @@ fieldset {
   opacity: var(--st-button-disabled-opacity);
 }
 
-.st-button.destructive {
-  background: rgba(219, 81, 57, 0.08);
-  border-color: var(--st-error-red);
-  color: var(--st-typography-body-color);
-}
-.st-button.destructive:hover {
-  background: rgba(219, 81, 57, 0.5);
-  border-color: var(--st-error-red);
-  color: var(--st-typography-body-color);
-}
-
 /* Remove safari input margin */
 .st-input {
   margin: 0;
