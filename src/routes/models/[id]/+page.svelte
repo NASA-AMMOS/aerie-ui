@@ -90,12 +90,7 @@
   import { schedulingConditions, schedulingGoals } from '../../../stores/scheduling';
   import type { User, UserId } from '../../../types/app';
   import type { ConstraintModelSpec, ConstraintModelSpecInsertInput } from '../../../types/constraint';
-  import type {
-    Association,
-    AssociationSpecification,
-    AssociationSpecificationMap,
-    BaseMetadata,
-  } from '../../../types/metadata';
+  import type { Association, AssociationSpecification, BaseMetadata } from '../../../types/metadata';
   import type { Model } from '../../../types/model';
   import type {
     SchedulingConditionModelSpecification,
@@ -109,6 +104,14 @@
   import { featurePermissions, isAdminRole } from '../../../utilities/permissions';
   import type { PageData } from './$types';
 
+  type AssociationSpecificationMap = Record<
+    number,
+    {
+      priority?: number;
+      revision: number | null;
+      selected: boolean;
+    }
+  >;
   export let data: PageData;
 
   let hasCreatePermission: boolean = false;
