@@ -26,6 +26,14 @@
   import { featurePermissions } from '../../../utilities/permissions';
   import type { PageData } from './$types';
 
+  type AssociationSpecificationMap = Record<
+    number,
+    {
+      priority?: number;
+      revision: number | null;
+      selected: boolean;
+    }
+  >;
   export let data: PageData;
 
   let hasCreatePermission: boolean = false;
@@ -44,44 +52,13 @@
     owner: UserId;
     version: string;
   } | null = null;
-  let initialSelectedModelSpecifications: Record<
-    Association,
-    Record<
-      number,
-      {
-        priority?: number;
-        revision: number | null;
-        selected: boolean;
-      }
-    >
-  > = {
-    condition: {},
-    constraint: {},
-    goal: {},
-  };
-  let selectedModelSpecifications: Record<
-    Association,
-    Record<
-      number,
-      {
-        priority?: number;
-        revision: number | null;
-        selected: boolean;
-      }
-    >
-  > = {
-    condition: {},
-    constraint: {},
-    goal: {},
-  };
-  let selectedSpecifications: Record<
-    number,
-    {
-      priority?: number;
-      revision: number | null;
-      selected: boolean;
-    }
-  > = {};
+  let initialSelectedConstraintModelSpecifications: AssociationSpecificationMap;
+  let initialSelectedConditionModelSpecifications: AssociationSpecificationMap;
+  let initialSelectedGoalModelSpecifications: AssociationSpecificationMap;
+  let selectedConstraintModelSpecifications: AssociationSpecificationMap;
+  let selectedConditionModelSpecifications: AssociationSpecificationMap;
+  let selectedGoalModelSpecifications: AssociationSpecificationMap;
+  let selectedSpecifications: AssociationSpecificationMap = {};
   let selectedAssociation: Association = 'constraint';
   let user: User | null = null;
 
@@ -94,8 +71,8 @@
       owner: $model.owner,
       version: $model.version,
     };
-    initialSelectedModelSpecifications = {
-      condition: $model.scheduling_specification_conditions.reduce((selectedSpecs, conditionSpecification) => {
+    initialSelectedConditionModelSpecifications = $model.scheduling_specification_conditions.reduce(
+      (selectedSpecs, conditionSpecification) => {
         return {
           ...selectedSpecs,
           [conditionSpecification.condition_id]: {
@@ -103,8 +80,11 @@
             selected: true,
           },
         };
-      }, {}),
-      constraint: $model.constraint_specification.reduce((selectedSpecs, constraintSpecification) => {
+      },
+      {},
+    );
+    initialSelectedConstraintModelSpecifications = $model.constraint_specification.reduce(
+      (selectedSpecs, constraintSpecification) => {
         return {
           ...selectedSpecs,
           [constraintSpecification.constraint_id]: {
@@ -112,8 +92,11 @@
             selected: true,
           },
         };
-      }, {}),
-      goal: $model.scheduling_specification_goals.reduce((selectedSpecs, goalSpecification) => {
+      },
+      {},
+    );
+    initialSelectedGoalModelSpecifications = $model.scheduling_specification_goals.reduce(
+      (selectedSpecs, goalSpecification) => {
         return {
           ...selectedSpecs,
           [goalSpecification.goal_id]: {
@@ -122,34 +105,41 @@
             selected: true,
           },
         };
-      }, {}),
-    };
+      },
+      {},
+    );
     modelMetadata = { ...initialModelMetadata };
-    selectedModelSpecifications = { ...initialSelectedModelSpecifications };
+    selectedConditionModelSpecifications = { ...initialSelectedConditionModelSpecifications };
+    selectedConstraintModelSpecifications = { ...initialSelectedConstraintModelSpecifications };
+    selectedGoalModelSpecifications = { ...initialSelectedGoalModelSpecifications };
   }
   $: switch (selectedAssociation) {
     case 'goal':
       hasCreatePermission = featurePermissions.schedulingGoals.canCreate(user);
       hasEditSpecPermission = featurePermissions.schedulingGoalsModelSpec.canUpdate(user);
       metadataList = $schedulingGoals;
-      selectedSpecifications = selectedModelSpecifications.goal;
+      selectedSpecifications = selectedGoalModelSpecifications;
       break;
     case 'condition':
       hasCreatePermission = featurePermissions.schedulingConditions.canCreate(user);
       hasEditSpecPermission = featurePermissions.schedulingConditionsModelSpec.canUpdate(user);
       metadataList = $schedulingConditions;
-      selectedSpecifications = selectedModelSpecifications.condition;
+      selectedSpecifications = selectedConditionModelSpecifications;
       break;
     case 'constraint':
     default:
       hasCreatePermission = featurePermissions.constraints.canCreate(user);
       hasEditSpecPermission = featurePermissions.constraintsModelSpec.canUpdate(user);
       metadataList = $constraints;
-      selectedSpecifications = selectedModelSpecifications.constraint;
+      selectedSpecifications = selectedConstraintModelSpecifications;
   }
   $: hasModelChanged =
     JSON.stringify(initialModelMetadata) !== JSON.stringify(modelMetadata) ||
-    JSON.stringify(initialSelectedModelSpecifications) !== JSON.stringify(selectedModelSpecifications);
+    JSON.stringify(initialSelectedConditionModelSpecifications) !==
+      JSON.stringify(selectedConditionModelSpecifications) ||
+    JSON.stringify(initialSelectedConstraintModelSpecifications) !==
+      JSON.stringify(selectedConstraintModelSpecifications) ||
+    JSON.stringify(initialSelectedGoalModelSpecifications) !== JSON.stringify(selectedGoalModelSpecifications);
 
   function onClose() {
     goto(`${base}/models`);
@@ -189,7 +179,7 @@
       const constraintModelSpecUpdates: {
         constraintIdsToDelete: number[];
         constraintModelSpecsToAdd: ConstraintModelSpecInsertInput[];
-      } = Object.keys(selectedModelSpecifications.constraint).reduce(
+      } = Object.keys(selectedConstraintModelSpecifications).reduce(
         (
           prevConstraintPlanSpecUpdates: {
             constraintIdsToDelete: number[];
@@ -198,7 +188,7 @@
           selectedConstraintId: string,
         ) => {
           const constraintId = parseInt(selectedConstraintId);
-          const constraintSpecification = selectedModelSpecifications.constraint[constraintId];
+          const constraintSpecification = selectedConstraintModelSpecifications[constraintId];
           const isSelected = constraintSpecification.selected;
           if (isSelected) {
             return {
@@ -234,7 +224,7 @@
       const conditionModelSpecUpdates: {
         conditionIdsToDelete: number[];
         conditionModelSpecsToAdd: SchedulingConditionModelSpecificationInsertInput[];
-      } = Object.keys(selectedModelSpecifications.condition).reduce(
+      } = Object.keys(selectedConditionModelSpecifications).reduce(
         (
           prevConstraintPlanSpecUpdates: {
             conditionIdsToDelete: number[];
@@ -243,7 +233,7 @@
           selectedConstraintId: string,
         ) => {
           const conditionId = parseInt(selectedConstraintId);
-          const conditionSpecification = selectedModelSpecifications.condition[conditionId];
+          const conditionSpecification = selectedConditionModelSpecifications[conditionId];
           const isSelected = conditionSpecification.selected;
           if (isSelected) {
             return {
@@ -280,7 +270,7 @@
         goalIdsToDelete: number[];
         goalModelSpecsToAdd: SchedulingGoalModelSpecificationInsertInput[];
         goalModelSpecsToUpdate: SchedulingGoalModelSpecificationSetInput[];
-      } = Object.keys(selectedModelSpecifications.goal).reduce(
+      } = Object.keys(selectedGoalModelSpecifications).reduce(
         (
           prevConstraintPlanSpecUpdates: {
             goalIdsToDelete: number[];
@@ -290,10 +280,10 @@
           selectedConstraintId: string,
         ) => {
           const goalId = parseInt(selectedConstraintId);
-          const goalSpecification = selectedModelSpecifications.goal[goalId];
+          const goalSpecification = selectedGoalModelSpecifications[goalId];
           const isSelected = goalSpecification.selected;
 
-          if (isSelected && initialSelectedModelSpecifications.goal[goalId] === undefined) {
+          if (isSelected && initialSelectedGoalModelSpecifications[goalId] === undefined) {
             return {
               ...prevConstraintPlanSpecUpdates,
               goalModelSpecsToAdd: [
@@ -359,48 +349,54 @@
       detail: { id, selected },
     } = event;
 
-    selectedModelSpecifications = {
-      ...selectedModelSpecifications,
-      [selectedAssociation]: {
-        ...selectedModelSpecifications[selectedAssociation],
-        [id]: {
-          ...selectedModelSpecifications[selectedAssociation][id],
-          priority: selectedAssociation === 'goal' ? 0 : undefined,
-          selected,
-        },
-      },
-    };
+    switch (selectedAssociation) {
+      case 'condition':
+        selectedConditionModelSpecifications = {
+          ...selectedConditionModelSpecifications,
+          [id]: {
+            ...selectedConditionModelSpecifications[id],
+            selected,
+          },
+        };
+        break;
+      case 'goal':
+        selectedGoalModelSpecifications = {
+          ...selectedGoalModelSpecifications,
+          [id]: {
+            ...selectedGoalModelSpecifications[id],
+            priority: 0,
+            selected,
+          },
+        };
+        break;
+      case 'constraint':
+      default:
+        selectedConstraintModelSpecifications = {
+          ...selectedConstraintModelSpecifications,
+          [id]: {
+            ...selectedConstraintModelSpecifications[id],
+            selected,
+          },
+        };
+    }
   }
 
-  function onUpdateSpecifications(
-    event: CustomEvent<
-      Record<
-        number,
-        {
-          priority?: number;
-          revision: number | null;
-          selected: boolean;
-        }
-      >
-    >,
-  ) {
+  function onUpdateSpecifications(event: CustomEvent<AssociationSpecificationMap>) {
     const { detail: updatedSpecifications } = event;
 
     selectedSpecifications = updatedSpecifications;
 
     switch (selectedAssociation) {
       case 'condition':
-        selectedModelSpecifications.condition = selectedSpecifications;
+        selectedConditionModelSpecifications = selectedSpecifications;
         break;
       case 'goal':
-        selectedModelSpecifications.goal = selectedSpecifications;
+        selectedGoalModelSpecifications = selectedSpecifications;
         break;
       case 'constraint':
       default:
-        selectedModelSpecifications.constraint = selectedSpecifications;
+        selectedConstraintModelSpecifications = selectedSpecifications;
     }
-
-    selectedModelSpecifications = { ...selectedModelSpecifications };
   }
 
   function onViewMetadata(event: CustomEvent<number>) {
