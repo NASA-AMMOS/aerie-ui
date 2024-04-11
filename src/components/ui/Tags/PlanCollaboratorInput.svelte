@@ -22,14 +22,12 @@
   }>();
 
   let inputRef: TagsInput | null;
+  let options: PlanCollaboratorTag[] = [];
+  let selected: Tag[] = [];
 
-  // TODO make into map
   $: allowableCollaborators = users.filter(user => {
     return !collaborators.find(collaborator => collaborator.collaborator === user);
   });
-
-  let options: PlanCollaboratorTag[] = [];
-  let selected: Tag[] = [];
 
   $: userIsCollaborator = (userId: UserId) => {
     return allowableCollaborators.indexOf(userId) < 0;
@@ -96,7 +94,7 @@
     } else {
       // Add collaborators from plan if not already a collaborator on the target plan
       const tagPlanCollaborators = tagPlan.collaborators.map(c => c.collaborator);
-      tagPlanCollaborators.map(userId => {
+      tagPlanCollaborators.forEach(userId => {
         if (!userIsCollaborator(userId)) {
           newCollaborators.push({ collaborator: userId, plan_id: plan.id });
         }

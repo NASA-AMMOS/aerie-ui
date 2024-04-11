@@ -25,8 +25,6 @@ export const createPlanError: Writable<string | null> = writable(null);
 
 export const creatingPlan: Writable<boolean> = writable(false);
 
-export const initialPlan: Writable<Plan | null> = writable(null);
-
 export const planEndTimeMs: Writable<number> = writable(0);
 
 export const planStartTimeMs: Writable<number> = writable(0);
@@ -35,7 +33,9 @@ export const maxTimeRange: Writable<TimeRange> = writable({ end: 0, start: 0 });
 
 export const viewTimeRange: Writable<TimeRange> = writable({ end: 0, start: 0 });
 
-/* Subscriptions. TODO ordering */
+/* "plan" store dependencies */
+export const initialPlan: Writable<Plan | null> = writable(null);
+
 export const planId: Readable<number> = derived(initialPlan, $plan => ($plan ? $plan.id : -1));
 
 export const planMetadata = gqlSubscribable<PlanMetadata | null>(gql.SUB_PLAN_METADATA, { planId }, null, null);
@@ -54,7 +54,7 @@ export const plan: Readable<Plan | null> = derived([initialPlan, planMetadata], 
 
 export const modelId: Readable<number> = derived(plan, $plan => ($plan ? $plan.model.id : -1));
 
-/* Subscriptions. */
+/* Other Subscriptions. */
 
 export const activityTypes = gqlSubscribable<ActivityType[]>(gql.SUB_ACTIVITY_TYPES, { modelId }, [], null);
 
