@@ -50,7 +50,7 @@ test.afterAll(async () => {
   await context.close();
 });
 
-test.describe.serial.only('Model', () => {
+test.describe.serial('Model', () => {
   test('Should be able to update the name of a model', async () => {
     await model.updateName(uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] }));
   });
