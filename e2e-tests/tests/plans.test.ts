@@ -34,11 +34,12 @@ test.describe.serial('Plans', () => {
     await expect(plans.createButton).toBeDisabled();
   });
 
-  test('Clicking on a model on the models page should route you to the plans page with that model selected', async ({
+  test('Clicking on the "New plan with model" button should route you to the plans page with that model selected', async ({
     baseURL,
   }) => {
     await models.goto();
     await models.tableRow.click();
+    await page.getByRole('button', { name: 'New plan with model' }).click();
     await expect(page).toHaveURL(`${baseURL}/plans`);
     const { text } = await plans.selectedModel();
     expect(text).toEqual(`${models.modelName} (Version: ${models.modelVersion})`);
