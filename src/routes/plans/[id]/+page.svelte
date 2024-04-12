@@ -342,7 +342,14 @@
     const datasetId = $simulationDataset.dataset_id;
     simulationDataAbortController?.abort();
     simulationDataAbortController = new AbortController();
-    effects.getSpans(datasetId, data.user, simulationDataAbortController.signal).then(newSpans => ($spans = newSpans));
+    effects
+      .getSpans(
+        datasetId,
+        $simulationDataset.simulation_start_time ?? $plan.start_time,
+        data.user,
+        simulationDataAbortController.signal,
+      )
+      .then(newSpans => ($spans = newSpans));
   } else {
     simulationDataAbortController?.abort();
     $spans = [];

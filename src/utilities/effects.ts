@@ -179,7 +179,13 @@ import { reqExtension, reqGateway, reqHasura } from './requests';
 import { sampleProfiles } from './resources';
 import { convertResponseToMetadata } from './scheduling';
 import { pluralize } from './text';
-import { getDoyTime, getDoyTimeFromInterval, getIntervalFromDoyRange } from './time';
+import {
+  getDoyTime,
+  getDoyTimeFromInterval,
+  getIntervalFromDoyRange,
+  getIntervalInMs,
+  getUnixEpochTimeFromInterval,
+} from './time';
 import { createRow, duplicateRow } from './timeline';
 import { showFailureToast, showSuccessToast } from './toast';
 import { generateDefaultView, validateViewJSONAgainstSchema } from './view';
@@ -3099,12 +3105,26 @@ const effects = {
     }
   },
 
-  async getSpans(datasetId: number, user: User | null, signal: AbortSignal | undefined = undefined): Promise<Span[]> {
+  async getSpans(
+    datasetId: number,
+    planStartTimeYmd: string,
+    user: User | null,
+    signal: AbortSignal | undefined = undefined,
+  ): Promise<Span[]> {
     try {
       const data = await reqHasura<Span[]>(gql.GET_SPANS, { datasetId }, user, signal);
       const { span: spans } = data;
       if (spans != null) {
-        return spans;
+        return spans.map(span => {
+          const durationMs = getIntervalInMs(span.duration);
+          const startMs = getUnixEpochTimeFromInterval(planStartTimeYmd, span.start_offset);
+          return {
+            ...span,
+            durationMs,
+            endMs: startMs + durationMs,
+            startMs,
+          };
+        });
       } else {
         throw Error('Unable to get spans');
       }
@@ -3898,7 +3918,7 @@ const effects = {
         if (!queryPermissions.SIMULATE(user, plan, plan.model)) {
           throwPermissionError('simulate this plan');
         }
-        const data = await reqHasura<SimulateResponse>(gql.SIMULATE, { force, planId: plan.id }, user);
+        const data = await reqHasura<SimulateResponse>(gql.SIMULATE, { planId: plan.id }, user);
         const { simulate } = data;
         if (simulate != null) {
           const { simulationDatasetId: newSimulationDatasetId } = simulate;

@@ -1181,9 +1181,7 @@ const gql = {
           is_locked
         }
         revision
-        scheduling_specification {
-          id
-        }
+
         simulations(order_by: { id: desc }, limit: 1) {
           simulation_datasets(order_by: { id: desc }) {
             id
@@ -1616,8 +1614,8 @@ const gql = {
   `,
 
   SIMULATE: `#graphql
-    query Simulate($planId: Int!, $force: Boolean!) {
-      ${Queries.SIMULATE}(planId: $planId, force: $force) {
+    query Simulate($planId: Int!) {
+      ${Queries.SIMULATE}(planId: $planId) {
         reason
         simulationDatasetId
         status

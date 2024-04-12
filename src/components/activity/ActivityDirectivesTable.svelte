@@ -100,7 +100,7 @@
       headerName: '',
       lockPosition: 'left',
       resizable: true,
-      sortable: false,
+      // sortable: false,
       suppressMovable: true,
       suppressSizeToFit: true,
       width: 70,
