@@ -776,7 +776,7 @@ const effects = {
     files: FileList,
     user: User | null,
     description?: string,
-  ): Promise<void> {
+  ): Promise<number | null> {
     try {
       createModelError.set(null);
 
@@ -816,6 +816,7 @@ const effects = {
           createModelError.set(null);
           creatingModel.set(false);
           models.updateValue((currentModels: ModelSlim[]) => [...currentModels, model]);
+          return id;
         } else {
           throw Error(`Unable to create model "${name}"`);
         }
@@ -826,6 +827,8 @@ const effects = {
       createModelError.set((e as Error).message);
       creatingModel.set(false);
     }
+
+    return null;
   },
 
   async createPlan(

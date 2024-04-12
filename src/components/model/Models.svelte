@@ -29,6 +29,7 @@
 
   type CellRendererParams = {
     deleteModel: (model: ModelSlim) => void;
+    editModel: (model: ModelSlim) => void;
   };
   type ModelCellRendererParams = ICellRendererParams<ModelSlim> & CellRendererParams;
 
@@ -82,6 +83,7 @@
     hasCreateModelPermission = featurePermissions.model.canCreate(user);
     hasCreatePlanPermission = featurePermissions.plan.canCreate(user);
     hasDeleteModelPermission = featurePermissions.model.canDelete(user);
+    hasUpdateModelPermission = featurePermissions.model.canUpdate(user);
     columnDefs = [
       ...baseColumnDefs,
       {
@@ -96,7 +98,13 @@
                 content: 'Delete Model',
                 placement: 'bottom',
               },
+              editCallback: params.editModel,
+              editTooltip: {
+                content: 'Edit Model',
+                placement: 'bottom',
+              },
               hasDeletePermission: hasDeleteModelPermission,
+              hasEditPermission: hasUpdateModelPermission,
               rowData: params.data,
             },
             target: actionsDiv,
@@ -106,6 +114,7 @@
         },
         cellRendererParams: {
           deleteModel,
+          editModel,
         } as CellRendererParams,
         field: 'actions',
         headerName: '',
@@ -113,12 +122,9 @@
         sortable: false,
         suppressAutoSize: true,
         suppressSizeToFit: true,
-        width: 25,
+        width: 55,
       },
     ];
-  }
-  $: if (selectedModel) {
-    hasUpdateModelPermission = featurePermissions.model.canUpdate(user);
   }
 
   onDestroy(() => {
@@ -159,10 +165,9 @@
 
   async function submitForm(e: SubmitEvent) {
     if (files) {
-      await effects.createModel(name, version, files, user, description);
+      const newModelId = await effects.createModel(name, version, files, user, description);
       if ($createModelError === null && e.target instanceof HTMLFormElement) {
-        e.target.reset();
-        files = undefined; // reset list of files since they are not reset on form reset
+        goto(`${base}/models/${newModelId}`);
       }
     }
   }

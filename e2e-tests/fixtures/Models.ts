@@ -35,6 +35,8 @@ export class Models {
     await this.fillInputVersion();
     await this.fillInputFile();
     await this.createButton.click();
+    await expect(this.page).toHaveURL(/.*\/models\/\d+/);
+    await this.goto();
     await this.tableRow.waitFor({ state: 'attached' });
     await this.tableRow.waitFor({ state: 'visible' });
     await expect(this.tableRow).toBeVisible();
