@@ -50,10 +50,7 @@
   }
 
   function onSelect() {
-    dispatch('selectSpecification', {
-      id: metadataId,
-      revision: selectedRevision,
-    });
+    select(selectedRevision);
   }
 
   function onKeyDown(e: KeyboardEvent) {
@@ -92,11 +89,12 @@
 
   function onUpdateRevision(event: Event) {
     const { value } = getTarget(event);
+    const revision = value == null || value === '' ? null : parseInt(`${value}`);
     dispatch('updateRevision', {
       id: metadataId,
-      revision: value == null || value === '' ? null : parseInt(`${value}`),
+      revision,
     });
-    onSelect();
+    select(revision);
   }
 
   function updatePriority(updatedPriority: number) {
@@ -104,7 +102,14 @@
       id: metadataId,
       priority: updatedPriority,
     });
-    onSelect();
+    select(selectedRevision);
+  }
+
+  function select(revision: number | null) {
+    dispatch('selectSpecification', {
+      id: metadataId,
+      revision,
+    });
   }
 </script>
 
