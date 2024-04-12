@@ -10,9 +10,14 @@
   import SingleActionDataGrid from '../../components/ui/DataGrid/SingleActionDataGrid.svelte';
   import Panel from '../../components/ui/Panel.svelte';
   import SectionTitle from '../../components/ui/SectionTitle.svelte';
-  import { commandDictionaries, sequenceAdaptations } from '../../stores/sequencing';
+  import { dictionaries, sequenceAdaptations } from '../../stores/sequencing';
   import type { DataGridColumnDef, RowId } from '../../types/data-grid';
-  import { DictionaryTypes, type CommandDictionary, type SequenceAdaptation } from '../../types/sequencing';
+  import {
+    DictionaryTypes,
+    type CommandDictionary,
+    type ParameterDictionary,
+    type SequenceAdaptation,
+  } from '../../types/sequencing';
   import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
@@ -156,8 +161,8 @@
           case DictionaryTypes.channel_dictionary: {
             break;
           }
-          case DictionaryTypes.command_dictionary: {
-            commandDictionaries.updateValue((dictionaries: CommandDictionary[]) =>
+          case DictionaryTypes.command_dictionary || DictionaryTypes.parameter_dictionary: {
+            dictionaries.updateValue((dictionaries: (CommandDictionary | ParameterDictionary)[]) =>
               [uploadedDictionaryOrAdaptation, ...dictionaries].filter(val => {
                 if (!seenSet.has(val.id)) {
                   seenSet.add(val.id);
@@ -168,13 +173,12 @@
               }),
             );
 
-            showSuccessToast('Command Dictionary Created Successfully');
-            break;
-          }
-          case DictionaryTypes.parameter_dictionary: {
+            showSuccessToast('Dictionary Created Successfully');
             break;
           }
           case DictionaryTypes.sequence_adaptation: {
+            showSuccessToast('Sequence Adaptation Created Successfully');
+
             break;
           }
         }
@@ -260,12 +264,12 @@
         </svelte:fragment>
 
         <svelte:fragment slot="body">
-          {#if $commandDictionaries.length}
+          {#if $dictionaries.length}
             <SingleActionDataGrid
               {columnDefs}
               {hasDeletePermission}
-              itemDisplayText="Command Dictionary"
-              items={$commandDictionaries}
+              itemDisplayText="Dictionaries"
+              items={$dictionaries}
               user={data.user}
               on:deleteItem={deleteCommandDictionaryContext}
             />

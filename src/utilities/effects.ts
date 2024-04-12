@@ -18,7 +18,7 @@ import {
 import { createModelError, creatingModel, models } from '../stores/model';
 import { createPlanError, creatingPlan, planId } from '../stores/plan';
 import { schedulingRequests, selectedSpecId } from '../stores/scheduling';
-import { commandDictionaries } from '../stores/sequencing';
+import { dictionaries, sequenceAdaptations } from '../stores/sequencing';
 import { selectedSpanId, simulationDataset, simulationDatasetId } from '../stores/simulation';
 import { createTagError } from '../stores/tags';
 import { applyViewUpdate, view, viewUpdateTimeline } from '../stores/views';
@@ -118,15 +118,16 @@ import type {
   SchedulingResponse,
 } from '../types/scheduling';
 import type { ValueSchema } from '../types/schema';
-import type {
-  ChannelDictionary,
-  CommandDictionary,
-  GetSeqJsonResponse,
-  ParameterDictionary,
-  SeqJson,
-  SequenceAdaptation,
-  UserSequence,
-  UserSequenceInsertInput,
+import {
+  DictionaryTypes,
+  type ChannelDictionary,
+  type CommandDictionary,
+  type GetSeqJsonResponse,
+  type ParameterDictionary,
+  type SeqJson,
+  type SequenceAdaptation,
+  type UserSequence,
+  type UserSequenceInsertInput,
 } from '../types/sequencing';
 import type {
   PlanDataset,
@@ -1815,7 +1816,7 @@ const effects = {
         const data = await reqHasura<{ id: number }>(gql.DELETE_COMMAND_DICTIONARY, { id }, user);
         if (data.deleteCommandDictionary != null) {
           showSuccessToast('Command Dictionary Deleted Successfully');
-          commandDictionaries.filterValueById(id);
+          dictionaries.filterValueById(id);
         } else {
           throw Error(`Unable to delete command dictionary with ID: "${id}"`);
         }
@@ -2227,7 +2228,7 @@ const effects = {
         const data = await reqHasura<{ id: number }>(gql.DELETE_SEQUENCE_ADAPTATION, { id }, user);
         if (data.deleteSequenceAdaptation != null) {
           showSuccessToast('Sequence Adaptation Deleted Successfully');
-          commandDictionaries.filterValueById(id);
+          sequenceAdaptations.filterValueById(id);
         } else {
           throw Error(`Unable to delete sequence adaptation with ID: "${id}"`);
         }
@@ -4711,10 +4712,16 @@ const effects = {
 
     switch (splitLineDictionary[1]) {
       case '<command_dictionary>': {
-        return this.uploadCommandDictionary(text, user);
+        return {
+          ...((await this.uploadCommandDictionary(text, user)) as CommandDictionary),
+          type: DictionaryTypes.command_dictionary,
+        };
       }
       default:
-        return this.createCustomAdaptation({ adaptation: text }, user);
+        return {
+          ...((await this.createCustomAdaptation({ adaptation: text }, user)) as SequenceAdaptation),
+          type: DictionaryTypes.sequence_adaptation,
+        };
     }
   },
 
