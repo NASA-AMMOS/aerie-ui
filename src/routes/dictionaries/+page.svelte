@@ -212,7 +212,6 @@
               [uploadedDictionaryOrAdaptation.uploadedObject, ...parameterDictionaries].filter(val => {
                 if (!seenSet.has(val.id)) {
                   seenSet.add(val.id);
-                  return true;
                 }
 
                 return false;
@@ -228,9 +227,6 @@
 
             break;
           }
-        }
-      }
-    } catch (e) {
       createDictionaryError = (e as Error).message;
       showFailureToast('Command Dictionary Create Failed');
     }
@@ -319,7 +315,7 @@
         </svelte:fragment>
 
         <svelte:fragment slot="body">
-          {#if $commandDictionaries.length}
+          {#if $dictionaries.length}
             <SingleActionDataGrid
               columnDefs={commandDictionaryColumnDefs}
               {hasDeletePermission}
