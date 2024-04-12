@@ -435,7 +435,7 @@
 
 <PageTitle subTitle={data.initialModel.name} title="Models" />
 
-<CssGrid columns="0.5fr 3px 1fr">
+<CssGrid columns="0.25fr 3px 1fr">
   <Panel>
     <svelte:fragment slot="header">
       <SectionTitle>Model info</SectionTitle>
