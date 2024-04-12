@@ -1,4 +1,5 @@
 import { writable, type Writable } from 'svelte/store';
+<<<<<<< HEAD
 import {
   type CommandDictionary,
   type ParameterDictionary,
@@ -6,6 +7,9 @@ import {
   type SequenceAdaptation,
   type UserSequence,
 } from '../types/sequencing';
+=======
+import { type CommandDictionary, type SequenceAdaptation, type UserSequence } from '../types/sequencing';
+>>>>>>> 5a030ccd (Moved sequence adaptation uploading to the command dictionary page, started adding support for uploading parameter and channel dictionaries)
 import gql from '../utilities/gql';
 import { gqlSubscribable } from './subscribable';
 
@@ -13,6 +17,7 @@ import { gqlSubscribable } from './subscribable';
 
 export const commandDictionaries = gqlSubscribable<CommandDictionary[]>(gql.SUB_COMMAND_DICTIONARIES, {}, [], null);
 
+<<<<<<< HEAD
 export const parameterDictionaries = gqlSubscribable<ParameterDictionary[]>(
   gql.SUB_PARAMETER_DICTIONARIES,
   {},
@@ -26,6 +31,10 @@ export const sequenceAdaptations = gqlSubscribable<SequenceAdaptation[]>(gql.SUB
 
 export const userParcelColumns: Writable<string> = writable('2fr 3px 1fr');
 
+=======
+export const sequenceAdaptations = gqlSubscribable<SequenceAdaptation[]>(gql.SUB_SEQUENCE_ADAPTATIONS, {}, [], null);
+
+>>>>>>> 5a030ccd (Moved sequence adaptation uploading to the command dictionary page, started adding support for uploading parameter and channel dictionaries)
 export const userSequences = gqlSubscribable<UserSequence[]>(gql.SUB_USER_SEQUENCES, {}, [], null);
 
 /* Writeable. */
