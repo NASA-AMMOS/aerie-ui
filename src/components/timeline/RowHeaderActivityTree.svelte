@@ -2,7 +2,10 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import Collapse from '../Collapse.svelte';
+  import DirectiveAndSpanIcon from '../../assets/timeline-directive-and-span.svg?component';
+  import DirectiveIcon from '../../assets/timeline-directive.svg?component';
+  import SpanIcon from '../../assets/timeline-span.svg?component';
+  import Collapse from '../Collapse.svelte?component';
 
   export let activityTree;
   const dispatch = createEventDispatcher<{
@@ -19,6 +22,17 @@
       title={node.label}
       on:collapse={e => dispatch('activity-tree-node-change', node)}
     >
+      <div slot="left" style="display: flex;">
+        {#if node.directives}
+          {#if node.type === 'aggregate'}
+            <DirectiveIcon />
+          {:else}
+            <DirectiveAndSpanIcon />
+          {/if}
+        {:else}
+          <SpanIcon />
+        {/if}
+      </div>
       <svelte:self activityTree={node.groups} on:activity-tree-node-change />
 
       <!-- {#if node.groups}

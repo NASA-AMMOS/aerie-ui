@@ -935,7 +935,6 @@
   // }
 
   function drawTestGroups2() {
-    console.log('DRAW');
     if (xScaleView !== null) {
       if (mode === 'heatmap') {
         return;
@@ -1048,9 +1047,6 @@
       // console.log('group.spans :>> ', group.spans);
       const spansInView = [];
       group.spans.forEach(span => {
-        // draw span
-        const spanX = xScaleView(span.startMs);
-        const spanXEnd = xScaleView(span.endMs);
         // TODO store whether span is in view in the activityGroupTree thing? Maybe?
         const spanInBounds = span.startMs >= viewTimeRange.start && span.startMs < viewTimeRange.end;
         const sticky = span.startMs < viewTimeRange.start && span.startMs + span.durationMs >= viewTimeRange.start;
@@ -1086,12 +1082,14 @@
         const width = Math.max(1, spanXEnd - spanX);
         const y = newY + 4;
 
-        ctx.save();
+        // ctx.save();
         if (selectedSpanId === span.id) {
           ctx.fillStyle = activitySelectedColor;
+        } else if (ctx.fillStyle !== span.color) {
+          ctx.fillStyle = hexToRgba(span.color, 0.5);
         }
         ctx.fillRect(spanX, y, width, rowHeight - 4);
-        ctx.restore();
+        // ctx.restore();
 
         if (spansInViewTextLength <= drawWidth && spanX > lastSpanTextEnd) {
           ctx.save();
