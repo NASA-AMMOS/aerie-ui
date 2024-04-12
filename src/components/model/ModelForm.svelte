@@ -108,6 +108,7 @@
     <input
       class="st-input w-100"
       name="version"
+      placeholder="0.0.0"
       bind:value={version}
       use:permissionHandler={{
         hasPermission: hasUpdateModelPermission,

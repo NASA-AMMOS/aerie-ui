@@ -779,6 +779,21 @@ const gql = {
       deleteModel: ${Queries.DELETE_MISSION_MODEL}(id: $id) {
         id
       }
+      deleteConstraintModelSpec: ${Queries.DELETE_CONSTRAINT_MODEL_SPECIFICATIONS}(where: { model_id: { _eq: $id } }) {
+        returning {
+          model_id
+        }
+      }
+      deleteSchedulingConditionModelSpec: ${Queries.DELETE_SCHEDULING_CONDITION_MODEL_SPECIFICATIONS}(where: { model_id: { _eq: $id } }) {
+        returning {
+          model_id
+        }
+      }
+      deleteSchedulingGoalModelSpec: ${Queries.DELETE_SCHEDULING_GOAL_MODEL_SPECIFICATIONS}(where: { model_id: { _eq: $id } }) {
+        returning {
+          model_id
+        }
+      }
     }
   `,
 

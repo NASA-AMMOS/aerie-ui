@@ -155,7 +155,7 @@
     if ($model) {
       await effects.deleteModel($model, user);
 
-      goto(`${base}/models`);
+      onClose();
     }
   }
 
@@ -170,6 +170,20 @@
     const { detail: metadata } = event;
 
     modelMetadata = metadata;
+  }
+
+  function onNewMetadata() {
+    switch (selectedAssociation) {
+      case 'condition':
+        window.open(`${base}/scheduling/conditions/new?${SearchParameters.MODEL_ID}=${$model?.id}`);
+        break;
+      case 'goal':
+        window.open(`${base}/scheduling/goals/new?${SearchParameters.MODEL_ID}=${$model?.id}`);
+        break;
+      case 'constraint':
+      default:
+        window.open(`${base}/constraints/new?${SearchParameters.MODEL_ID}=${$model?.id}`);
+    }
   }
 
   async function onSave() {
@@ -355,6 +369,7 @@
           ...selectedConditionModelSpecifications,
           [id]: {
             ...selectedConditionModelSpecifications[id],
+            revision: selectedConditionModelSpecifications[id]?.revision ?? null,
             selected,
           },
         };
@@ -365,6 +380,7 @@
           [id]: {
             ...selectedGoalModelSpecifications[id],
             priority: 0,
+            revision: selectedGoalModelSpecifications[id]?.revision ?? null,
             selected,
           },
         };
@@ -375,6 +391,7 @@
           ...selectedConstraintModelSpecifications,
           [id]: {
             ...selectedConstraintModelSpecifications[id],
+            revision: selectedConstraintModelSpecifications[id]?.revision ?? null,
             selected,
           },
         };
@@ -451,6 +468,7 @@
     {selectedAssociation}
     {selectedSpecifications}
     on:close={onClose}
+    on:newMetadata={onNewMetadata}
     on:save={onSave}
     on:selectAssociation={onSelectAssociation}
     on:toggleSpecification={onToggleSpecification}

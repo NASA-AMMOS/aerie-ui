@@ -39,7 +39,7 @@ test.describe.serial('Plans', () => {
   }) => {
     await models.goto();
     await models.tableRow.click();
-    await page.getByRole('button', { name: 'New plan with model' }).click();
+    await models.createPlanButton.click();
     await expect(page).toHaveURL(`${baseURL}/plans`);
     const { text } = await plans.selectedModel();
     expect(text).toEqual(`${models.modelName} (Version: ${models.modelVersion})`);

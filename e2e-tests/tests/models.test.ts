@@ -10,7 +10,7 @@ test.beforeAll(async ({ browser }) => {
   context = await browser.newContext();
   page = await context.newPage();
   models = new Models(page);
-  constraints = new Constraints(page, models);
+  constraints = new Constraints(page);
   await models.goto();
 });
 
