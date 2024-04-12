@@ -119,8 +119,10 @@ import type {
 } from '../types/scheduling';
 import type { ValueSchema } from '../types/schema';
 import type {
+  ChannelDictionary,
   CommandDictionary,
   GetSeqJsonResponse,
+  ParameterDictionary,
   SeqJson,
   SequenceAdaptation,
   UserSequence,
@@ -532,27 +534,6 @@ const effects = {
     }
   },
 
-  async createCommandDictionary(files: FileList, user: User | null): Promise<CommandDictionary | null> {
-    try {
-      if (!queryPermissions.CREATE_COMMAND_DICTIONARY(user)) {
-        throwPermissionError('upload a command dictionary');
-      }
-
-      const file: File = files[0];
-      const dictionary = await file.text();
-      const data = await reqHasura<CommandDictionary>(gql.CREATE_COMMAND_DICTIONARY, { dictionary }, user);
-      const { createCommandDictionary: newCommandDictionary } = data;
-      if (newCommandDictionary != null) {
-        return newCommandDictionary;
-      } else {
-        throw Error('Unable to upload command dictionary');
-      }
-    } catch (e) {
-      catchError('Command Dictionary Upload Failed', e as Error);
-      return null;
-    }
-  },
-
   async createConstraint(
     name: string,
     isPublic: boolean,
@@ -643,16 +624,17 @@ const effects = {
     }
   },
 
-  async createCustomAdaptation(files: FileList | null, user: User | null): Promise<SequenceAdaptation | null> {
+  async createCustomAdaptation(
+    adaptation: { adaptation: string },
+    user: User | null,
+  ): Promise<SequenceAdaptation | null> {
     try {
       // TODO: Fix these permissions
       if (!queryPermissions.CREATE_COMMAND_DICTIONARY(user)) {
         throwPermissionError('upload a custom adaptation');
       }
 
-      if (files) {
-        const file: File = files[0];
-        const adaptation = { adaptation: await file.text() };
+      if (adaptation?.adaptation) {
         const data = await reqHasura<SequenceAdaptation>(gql.CREATE_CUSTOM_ADAPTATION, { adaptation }, user);
         const { createSequenceAdaptation: newSequenceAdaptation } = data;
         if (newSequenceAdaptation != null) {
@@ -2226,6 +2208,33 @@ const effects = {
       catchError('Scheduling Goal Delete Failed', e as Error);
       showFailureToast('Scheduling Goal Delete Failed');
       return false;
+    }
+  },
+
+  async deleteSequenceAdaptation(id: number, user: User | null): Promise<void> {
+    try {
+      if (!queryPermissions.DELETE_COMMAND_DICTIONARY(user)) {
+        throwPermissionError('delete this sequence adaptation');
+      }
+
+      const { confirm } = await showConfirmModal(
+        'Delete',
+        `Are you sure you want to delete the sequence adaptation with ID: "${id}"?`,
+        'Delete Sequence Adaptation',
+      );
+
+      if (confirm) {
+        const data = await reqHasura<{ id: number }>(gql.DELETE_SEQUENCE_ADAPTATION, { id }, user);
+        if (data.deleteSequenceAdaptation != null) {
+          showSuccessToast('Sequence Adaptation Deleted Successfully');
+          commandDictionaries.filterValueById(id);
+        } else {
+          throw Error(`Unable to delete sequence adaptation with ID: "${id}"`);
+        }
+      }
+    } catch (e) {
+      catchError('Sequence Adaptation Delete Failed', e as Error);
+      showFailureToast('Sequence Adaptation Delete Failed');
     }
   },
 
@@ -4670,6 +4679,42 @@ const effects = {
       catchError('View Update Failed', e as Error);
       showFailureToast('View Update Failed');
       return false;
+    }
+  },
+
+  async uploadCommandDictionary(dictionary: string, user: User | null): Promise<CommandDictionary | null> {
+    try {
+      if (!queryPermissions.CREATE_COMMAND_DICTIONARY(user)) {
+        throwPermissionError('upload a command dictionary');
+      }
+
+      const data = await reqHasura<CommandDictionary>(gql.CREATE_COMMAND_DICTIONARY, { dictionary }, user);
+      const { createCommandDictionary: newCommandDictionary } = data;
+      if (newCommandDictionary != null) {
+        return newCommandDictionary;
+      } else {
+        throw Error('Unable to upload command dictionary');
+      }
+    } catch (e) {
+      catchError('Command Dictionary Upload Failed', e as Error);
+      return null;
+    }
+  },
+
+  async uploadDictionaryOrAdaptation(
+    files: FileList,
+    user: User | null,
+  ): Promise<CommandDictionary | ChannelDictionary | ParameterDictionary | SequenceAdaptation | null> {
+    const file: File = files[0];
+    const text = await file.text();
+    const splitLineDictionary = text.split('\n');
+
+    switch (splitLineDictionary[1]) {
+      case '<command_dictionary>': {
+        return this.uploadCommandDictionary(text, user);
+      }
+      default:
+        return this.createCustomAdaptation({ adaptation: text }, user);
     }
   },
 

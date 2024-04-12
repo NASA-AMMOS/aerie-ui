@@ -10,9 +10,9 @@
   import SingleActionDataGrid from '../../components/ui/DataGrid/SingleActionDataGrid.svelte';
   import Panel from '../../components/ui/Panel.svelte';
   import SectionTitle from '../../components/ui/SectionTitle.svelte';
-  import { commandDictionaries } from '../../stores/sequencing';
+  import { commandDictionaries, sequenceAdaptations } from '../../stores/sequencing';
   import type { DataGridColumnDef, RowId } from '../../types/data-grid';
-  import type { CommandDictionary } from '../../types/sequencing';
+  import { DictionaryTypes, type CommandDictionary, type SequenceAdaptation } from '../../types/sequencing';
   import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
@@ -21,10 +21,15 @@
 
   export let data: PageData;
 
-  type CellRendererParams = {
-    deleteCommandDictionary: (dictionary: CommandDictionary) => void;
+  type cdCellRendererParams = {
+    deleteCommandDictionary?: (dictionary: CommandDictionary) => void;
+    deleteSequenceAdaptation?: (sequenceAdaptation: SequenceAdaptation) => void;
   };
-  type CommandDictionaryCellRendererParams = ICellRendererParams<CommandDictionary> & CellRendererParams;
+  type CommandDictionaryCellRendererParams = ICellRendererParams<CommandDictionary> & cdCellRendererParams;
+  type seqCellRendererParams = {
+    deleteSequenceAdaptation: (sequenceAdaptation: SequenceAdaptation) => void;
+  };
+  type SequenceAdaptationCellRendererParams = ICellRendererParams<SequenceAdaptation> & seqCellRendererParams;
 
   const columnDefs: DataGridColumnDef[] = [
     {
@@ -70,7 +75,52 @@
       },
       cellRendererParams: {
         deleteCommandDictionary,
-      } as CellRendererParams,
+      } as cdCellRendererParams,
+      field: 'actions',
+      headerName: '',
+      resizable: false,
+      sortable: false,
+      suppressAutoSize: true,
+      suppressSizeToFit: true,
+      width: 25,
+    },
+  ];
+
+  const sequenceColumnDefs: DataGridColumnDef[] = [
+    {
+      field: 'id',
+      filter: 'number',
+      headerName: 'ID',
+      resizable: true,
+      sortable: true,
+      suppressAutoSize: true,
+      suppressSizeToFit: true,
+      width: 60,
+    },
+    { field: 'created_at', filter: 'text', headerName: 'Created At', resizable: true, sortable: true },
+    {
+      cellClass: 'action-cell-container',
+      cellRenderer: (params: SequenceAdaptationCellRendererParams) => {
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'actions-cell';
+        new DataGridActions({
+          props: {
+            deleteCallback: params.deleteSequenceAdaptation,
+            deleteTooltip: {
+              content: 'Delete Sequence Adaptation',
+              placement: 'bottom',
+            },
+            hasDeletePermission,
+            rowData: params.data,
+          },
+          target: actionsDiv,
+        });
+
+        return actionsDiv;
+      },
+      cellRendererParams: {
+        deleteSequenceAdaptation,
+      } as seqCellRendererParams,
       field: 'actions',
       headerName: '',
       resizable: false,
@@ -92,25 +142,42 @@
   $: hasDeletePermission = featurePermissions.commandDictionary.canDelete(data.user);
   $: createButtonDisabled = !files;
 
-  async function createCommandDictionary(files: FileList) {
+  async function uploadDictionaryOrAdaptation(files: FileList) {
     createDictionaryError = null;
     creatingDictionary = true;
 
     try {
-      const newCommandDictionary = await effects.createCommandDictionary(files, data.user);
-      if (newCommandDictionary !== null) {
-        const seenSet = new Set<number>();
-        commandDictionaries.updateValue((dictionaries: CommandDictionary[]) =>
-          [newCommandDictionary, ...dictionaries].filter(val => {
-            if (!seenSet.has(val.id)) {
-              seenSet.add(val.id);
-              return true;
-            } else {
-              return false;
-            }
-          }),
-        );
-        showSuccessToast('Command Dictionary Created Successfully');
+      const uploadedDictionaryOrAdaptation = await effects.uploadDictionaryOrAdaptation(files, data.user);
+
+      if (uploadedDictionaryOrAdaptation !== null) {
+        let seenSet: Set<number> = new Set<number>();
+
+        switch (uploadedDictionaryOrAdaptation.type) {
+          case DictionaryTypes.channel_dictionary: {
+            break;
+          }
+          case DictionaryTypes.command_dictionary: {
+            commandDictionaries.updateValue((dictionaries: CommandDictionary[]) =>
+              [uploadedDictionaryOrAdaptation, ...dictionaries].filter(val => {
+                if (!seenSet.has(val.id)) {
+                  seenSet.add(val.id);
+                  return true;
+                } else {
+                  return false;
+                }
+              }),
+            );
+
+            showSuccessToast('Command Dictionary Created Successfully');
+            break;
+          }
+          case DictionaryTypes.parameter_dictionary: {
+            break;
+          }
+          case DictionaryTypes.sequence_adaptation: {
+            break;
+          }
+        }
       }
     } catch (e) {
       createDictionaryError = (e as Error).message;
@@ -126,6 +193,14 @@
 
   function deleteCommandDictionaryContext(event: CustomEvent<RowId[]>) {
     deleteCommandDictionary({ id: event.detail[0] as number });
+  }
+
+  function deleteSequenceAdaptation({ id }: Pick<SequenceAdaptation, 'id'>) {
+    effects.deleteSequenceAdaptation(id, data.user);
+  }
+
+  function deleteSequenceAdaptationContext(event: CustomEvent<RowId[]>) {
+    deleteSequenceAdaptation({ id: event.detail[0] as number });
   }
 </script>
 
@@ -143,11 +218,11 @@
       </svelte:fragment>
 
       <svelte:fragment slot="body">
-        <form on:submit|preventDefault={() => createCommandDictionary(files)}>
+        <form on:submit|preventDefault={() => uploadDictionaryOrAdaptation(files)}>
           <AlertError class="m-2" error={createDictionaryError} />
 
           <fieldset>
-            <label for="file">AMPCS Command Dictionary XML File</label>
+            <label for="file">AMPCS XML File</label>
             <input
               class="w-100 st-typography-body"
               name="file"
@@ -178,25 +253,54 @@
       </svelte:fragment>
     </Panel>
 
-    <Panel>
-      <svelte:fragment slot="header">
-        <SectionTitle>Command Dictionaries</SectionTitle>
-      </svelte:fragment>
+    <div class="table-container">
+      <Panel>
+        <svelte:fragment slot="header">
+          <SectionTitle>Command Dictionaries</SectionTitle>
+        </svelte:fragment>
 
-      <svelte:fragment slot="body">
-        {#if $commandDictionaries.length}
-          <SingleActionDataGrid
-            {columnDefs}
-            {hasDeletePermission}
-            itemDisplayText="Command Dictionary"
-            items={$commandDictionaries}
-            user={data.user}
-            on:deleteItem={deleteCommandDictionaryContext}
-          />
-        {:else}
-          No Command Dictionaries Found
-        {/if}
-      </svelte:fragment>
-    </Panel>
+        <svelte:fragment slot="body">
+          {#if $commandDictionaries.length}
+            <SingleActionDataGrid
+              {columnDefs}
+              {hasDeletePermission}
+              itemDisplayText="Command Dictionary"
+              items={$commandDictionaries}
+              user={data.user}
+              on:deleteItem={deleteCommandDictionaryContext}
+            />
+          {:else}
+            No Command Dictionaries Found
+          {/if}
+        </svelte:fragment>
+      </Panel>
+
+      <Panel>
+        <svelte:fragment slot="header">
+          <SectionTitle>Sequence Adaptations</SectionTitle>
+        </svelte:fragment>
+
+        <svelte:fragment slot="body">
+          {#if $sequenceAdaptations.length}
+            <SingleActionDataGrid
+              columnDefs={sequenceColumnDefs}
+              {hasDeletePermission}
+              itemDisplayText="Sequence Adaptations"
+              items={$sequenceAdaptations}
+              user={data.user}
+              on:deleteItem={deleteSequenceAdaptationContext}
+            />
+          {:else}
+            No Sequence Adaptations Found
+          {/if}
+        </svelte:fragment>
+      </Panel>
+    </div>
   </CssGrid>
 </CssGrid>
+
+<style>
+  .table-container {
+    display: grid;
+  }
+</style>

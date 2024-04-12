@@ -1,11 +1,13 @@
 import { writable, type Writable } from 'svelte/store';
-import type { CommandDictionary, UserSequence } from '../types/sequencing';
+import { type CommandDictionary, type SequenceAdaptation, type UserSequence } from '../types/sequencing';
 import gql from '../utilities/gql';
 import { gqlSubscribable } from './subscribable';
 
 /* Subscriptions. */
 
 export const commandDictionaries = gqlSubscribable<CommandDictionary[]>(gql.SUB_COMMAND_DICTIONARIES, {}, [], null);
+
+export const sequenceAdaptations = gqlSubscribable<SequenceAdaptation[]>(gql.SUB_SEQUENCE_ADAPTATIONS, {}, [], null);
 
 export const userSequences = gqlSubscribable<UserSequence[]>(gql.SUB_USER_SEQUENCES, {}, [], null);
 

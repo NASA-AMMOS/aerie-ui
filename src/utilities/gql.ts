@@ -52,6 +52,7 @@ export enum Queries {
   DELETE_SCHEDULING_SPECIFICATION_CONDITIONS = 'delete_scheduling_specification_conditions',
   DELETE_SCHEDULING_SPECIFICATION_GOALS = 'delete_scheduling_specification_goals',
   DELETE_SEQUENCE = 'delete_sequence_by_pk',
+  DELETE_SEQUENCE_ADAPTATION = 'delete_sequence_adaptation_by_pk',
   DELETE_SEQUENCE_TO_SIMULATED_ACTIVITY = 'delete_sequence_to_simulated_activity_by_pk',
   DELETE_SIMULATION_TEMPLATE = 'delete_simulation_template_by_pk',
   DELETE_TAG = 'delete_tags_by_pk',
@@ -134,6 +135,7 @@ export enum Queries {
   SCHEDULING_SPECIFICATION_CONDITIONS = 'scheduling_specification_conditions',
   SCHEDULING_SPECIFICATION_GOALS = 'scheduling_specification_goals',
   SEQUENCE = 'sequence',
+  SEQUENCE_ADAPTATION = 'sequence_adaptation',
   SEQUENCE_TO_SIMULATED_ACTIVITY = 'sequence_to_simulated_activity_by_pk',
   SET_RESOLUTION = 'set_resolution',
   SET_RESOLUTIONS = 'set_resolution_bulk',
@@ -879,6 +881,14 @@ const gql = {
         }
       ) {
         affected_rows
+      }
+    }
+`,
+
+  DELETE_SEQUENCE_ADAPTATION: `#graphql
+    mutation DeleteSequenceAdaptation($id: Int!) {
+      deleteSequenceAdaptation: ${Queries.DELETE_SEQUENCE_ADAPTATION}(id: $id) {
+        id
       }
     }
   `,
@@ -2398,6 +2408,17 @@ const gql = {
         dataset_id
         specification_revision
         canceled
+      }
+    }
+  `,
+
+  SUB_SEQUENCE_ADAPTATIONS: `#graphql
+    subscription SubSequenceAdaptations {
+      ${Queries.SEQUENCE_ADAPTATION}(order_by: { id: desc }) {
+        adaptation
+        created_at
+        id
+        updated_by
       }
     }
   `,

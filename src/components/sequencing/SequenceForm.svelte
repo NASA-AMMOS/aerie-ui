@@ -11,7 +11,6 @@
   import { isSaveEvent } from '../../utilities/keyboardEvents';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
-  import { showSuccessToast } from '../../utilities/toast';
   import PageTitle from '../app/PageTitle.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
@@ -30,7 +29,6 @@
   export let mode: 'create' | 'edit' = 'create';
   export let user: User | null;
 
-  let hasAdaptationCreatePermission: boolean = false;
   let hasPermission: boolean = false;
   let pageSubtitle: string = '';
   let pageTitle: string = '';
@@ -52,12 +50,6 @@
   let saveButtonText: string = '';
   let savingSequence: boolean = false;
 
-  const createPermissionError = 'You do not have permission to create Custom Adaptations';
-
-  $: {
-    // TODO: Fix these permissions
-    hasAdaptationCreatePermission = featurePermissions.commandDictionary.canCreate(user);
-  }
   $: saveButtonClass = sequenceModified && saveButtonEnabled ? 'primary' : 'secondary';
   $: saveButtonEnabled = sequenceCommandDictionaryId !== null && sequenceDefinition !== '' && sequenceName !== '';
   $: sequenceModified = sequenceDefinition !== savedSequenceDefinition || sequenceName !== savedSequenceName;
@@ -110,12 +102,6 @@
       event.preventDefault();
       saveSequence();
     }
-  }
-
-  async function onSeqAdaptationInput(e: Event & { currentTarget: EventTarget & HTMLInputElement }) {
-    loadAdaptation(await effects.createCustomAdaptation(e.currentTarget.files, user));
-
-    showSuccessToast('Custom Adaptation Uploaded Successfully');
   }
 
   function loadAdaptation(sequenceAdaptation: SequenceAdaptation | null): void {
@@ -242,21 +228,6 @@
         />
       </fieldset>
 
-      <fieldset>
-        <label for="seqJsonInput"> Upload a custom adaptation </label>
-        <input
-          on:change={onSeqAdaptationInput}
-          class="st-typography-body w-100"
-          id="seqAdaptationInput"
-          name="seqAdaptationInput"
-          required
-          type="file"
-          use:permissionHandler={{
-            hasPermission: hasAdaptationCreatePermission,
-            permissionError: createPermissionError,
-          }}
-        />
-      </fieldset>
       <!--
       <fieldset>
         <label for="seqJsonFile">Create Sequence from Seq JSON (optional)</label>
