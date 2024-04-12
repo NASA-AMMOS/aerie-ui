@@ -19,6 +19,7 @@ export type DictionaryType = {
   created_at: string;
   id: number;
   mission: string;
+  type: DictionaryTypes;
   version: string;
 };
 
