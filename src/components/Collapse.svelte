@@ -3,6 +3,7 @@
 <script lang="ts">
   import CaretDownIcon from '@nasa-jpl/stellar/icons/caret_down.svg?component';
   import CaretRightIcon from '@nasa-jpl/stellar/icons/caret_right.svg?component';
+  import { createEventDispatcher } from 'svelte';
   import { classNames } from '../utilities/generic';
   import { tooltip } from '../utilities/tooltip';
   import ContextMenu from './context-menu/ContextMenu.svelte';
@@ -15,6 +16,10 @@
   export let title: string = '';
   export let titleClassName: string = '';
   export let tooltipContent: string = '';
+
+  const dispatch = createEventDispatcher<{
+    collapse: boolean;
+  }>();
 
   let contextMenu: ContextMenu;
 
@@ -36,6 +41,7 @@
     on:click={() => {
       if (collapsible) {
         expanded = !expanded;
+        dispatch('collapse', !expanded);
       }
     }}
   >

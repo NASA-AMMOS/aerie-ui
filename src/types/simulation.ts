@@ -167,8 +167,11 @@ export type Span = {
   attributes: SpanAttributes;
   dataset_id: number;
   duration: string;
+  durationMs: number;
+  endMs: number;
   id: SpanId;
   parent_id: number | null;
+  startMs: number;
   start_offset: string;
   type: string;
 };

@@ -5,7 +5,7 @@
   import ActivityAnchorIconSVG from '@nasa-jpl/stellar/icons/activity_anchor.svg?raw';
   import ActivityDirectiveIconSVG from '@nasa-jpl/stellar/icons/activity_directive.svg?raw';
   import { quadtree as d3Quadtree, type Quadtree } from 'd3-quadtree';
-  import type { ScaleTime } from 'd3-scale';
+  import { type ScaleTime } from 'd3-scale';
   import { createEventDispatcher, onDestroy, onMount, tick } from 'svelte';
   import SpanHashMarksSVG from '../../assets/span-hash-marks.svg?raw';
   import type { ActivityDirective, ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
@@ -20,7 +20,6 @@
     PointBounds,
     QuadtreeRect,
     RowMouseOverEvent,
-    SpanTimeBounds,
     TimeRange,
   } from '../../types/timeline';
   import { getSpanRootParent, sortActivityDirectivesOrSpans } from '../../utilities/activities';
@@ -31,7 +30,6 @@
   import {
     getActivityDirectiveStartTimeMs,
     getDoyTime,
-    getIntervalInMs,
     getIntervalUnixEpochTime,
     getUnixEpochTime,
     getUnixEpochTimeFromInterval,
@@ -39,6 +37,7 @@
   import { searchQuadtreeRect, TimelineInteractionMode, TimelineLockStatus } from '../../utilities/timeline';
 
   export let activityDirectives: ActivityDirective[] = [];
+  export let activityLayerGroups = [];
   export let activityDirectivesMap: ActivityDirectivesMap = {};
   export let activityColor: string = '';
   export let activityHeight: number = 16;
@@ -57,7 +56,7 @@
   export let hasUpdateDirectivePermission: boolean = false;
   export let id: number;
   export let focus: FocusEvent | undefined;
-  export let mode: 'packed' | 'heatmap' = 'packed';
+  export let mode: 'packed' | 'heatmap' | 'test1' = 'packed';
   export let mousedown: MouseEvent | undefined;
   export let mousemove: MouseEvent | undefined;
   export let mouseout: MouseEvent | undefined;
@@ -103,7 +102,7 @@
   let quadtreeActivityDirectives: Quadtree<QuadtreeRect>;
   let quadtreeSpans: Quadtree<QuadtreeRect>;
   let quadtreeHeatmap: Quadtree<QuadtreeRect>;
-  let spanTimeBoundCache: Record<SpanId, SpanTimeBounds> = {};
+  // let spanTimeBoundCache: Record<SpanId, SpanTimeBounds> = {};
   let visibleActivityDirectivesById: Record<ActivityDirectiveId, ActivityDirective> = {};
   let visibleSpansById: Record<SpanId, Span> = {};
   let visibleHeatmapBoxesById: Record<ActivityDirectiveId, ActivityDirective> = {};
@@ -169,7 +168,8 @@
     spansMap &&
     mode &&
     viewTimeRange &&
-    xScaleView
+    xScaleView &&
+    activityLayerGroups
   ) {
     draw();
   }
@@ -294,7 +294,7 @@
 
   function onMousedown(e: MouseEvent | undefined): void {
     // Do not process events if meta/ctrl is pressed to avoid interaction conflicts with zoom/pan
-    if (e && timelineInteractionMode === TimelineInteractionMode.Interact) {
+    if (e && timelineInteractionMode === TimelineInteractionMode.Interact && e.button !== 1) {
       const { offsetX, offsetY } = e;
       const { activityDirectives, spans } = getDirectivesAndSpansForOffset(offsetX, offsetY);
 
@@ -541,6 +541,12 @@
       ctx.scale(dpr, dpr);
       ctx.clearRect(0, 0, drawWidth, drawHeight);
 
+      // if (mode === 'heatmap') {
+      //   // drawTest1();
+      //   // drawTestGroups();
+      //   return;
+      // }
+
       quadtreeActivityDirectives = d3Quadtree<QuadtreeRect>()
         .x(p => p.x)
         .y(p => p.y)
@@ -565,21 +571,59 @@
       visibleActivityDirectivesById = {};
       visibleSpansById = {};
       visibleHeatmapBoxesById = {};
-      spanTimeBoundCache = {};
+      if (mode === 'test1') {
+        drawTestGroups2();
+      }
+
+      return;
+
+      // spanTimeBoundCache = {};
 
       maxActivityWidth = Number.MIN_SAFE_INTEGER;
       let totalMaxY = Number.MIN_SAFE_INTEGER;
       let maxXPerY: Record<number, number> = {};
 
       const sortedActivityDirectives: ActivityDirective[] = activityDirectives.sort(sortActivityDirectivesOrSpans);
+      const directivesCount = activityDirectives.length;
+      const spansInView = Object.values(spansMap).map(span => {
+        const sticky = span.startMs < viewTimeRange.start && span.startMs + span.durationMs >= viewTimeRange.start;
+        return sticky || (span.startMs >= viewTimeRange.start && span.startMs < viewTimeRange.end);
+      });
+      if (activityDirectives.length + spansInView.length > 10000) {
+        // const { labelText, textMetrics } = setLabelContext(
+        //   `Activity (${directivesCount}) and Span (${spansCount}) Count Exceeds Draw Limit of 10000`,
+        // );
+        // // console.log('spansMap :>> ', spansMap);
+        // ctx.fillText(labelText, drawWidth / 2 - textMetrics.width / 2, drawHeight / 2, textMetrics.width);
+        console.log('drawing fast heatmap');
+        activityDirectives.forEach(activityDirective => {
+          const span = getSpanForActivityDirective(activityDirective);
+          if (span && xScaleView) {
+            // drawSpanHeatmapBox(span, 3);
+            const boxes = getSpanHeatmapBoxes(span, 4);
+            // TODO maybe we can break up this rendering iteratively - both for getting span boxes and drawing them.
+            // That said maybe just grouping them in the new design will be better? Could disable all of this original
+            // drawing behavior for big stuff..?
+            drawHeatmapBoxes(boxes);
+            console.log('boxes :>> ', boxes.length);
+          }
+          // const spanBounds = getSpanBoundsFast(span);
+        });
+        return;
+      }
+
+      console.log('DRAWING', spansInView.length);
+
       for (const activityDirective of sortedActivityDirectives) {
         let spanInView = false;
         let initialSpanBounds = null;
         let span;
         if (showSpans) {
           span = getSpanForActivityDirective(activityDirective);
+          console.log('span :>> ', span);
           if (span) {
             initialSpanBounds = getSpanBounds(span);
+            console.log('initialSpanBounds :>> ', initialSpanBounds);
             if (initialSpanBounds !== null) {
               spanInView = initialSpanBounds.minX <= xScaleViewRangeMax && initialSpanBounds.maxX >= 0;
             }
@@ -590,6 +634,7 @@
         const directiveInView = directiveBounds.xCanvas <= xScaleViewRangeMax && directiveBounds.xEndCanvas >= 0;
         if (directiveInView || spanInView) {
           if (mode === 'packed') {
+            console.log('Packed mode');
             const {
               spanBounds,
               directiveStartY,
@@ -604,6 +649,7 @@
             // Draw spans
             let constrainedSpanY = -1;
             if (span) {
+              console.log('placing span', span);
               const spanStartY = directiveStartY;
               // Wrap spans if overflowing draw height
               constrainedSpanY =
@@ -646,40 +692,638 @@
     }
   }
 
-  function drawHeatmapBox(x: number, y: number, end: number, activityDirective: ActivityDirective) {
-    visibleHeatmapBoxesById[activityDirective.id] = activityDirective;
+  function drawHeatmapBoxes(boxes) {
+    // visibleHeatmapBoxesById[activityDirective.id] = activityDirective;
 
-    ctx.save();
-    ctx.globalCompositeOperation = 'multiply';
-    const width = end === 0 ? 2 : end - x;
-    if (end === 0) {
-      const rect = new Path2D();
-      ctx.fillStyle = hexToRgba(activityColor, 0.5);
-      rect.rect(x, y, 2, drawHeight);
-      ctx.fill(rect);
-    } else {
-      ctx.strokeStyle = `rgba(0,0,0,0.02)`;
-      const rect = new Path2D();
-      ctx.fillStyle = hexToRgba(activityColor, 0.5);
-      rect.rect(x, y, Math.max(width, 2), drawHeight);
-      // ctx.strokeRect(x, y, width, drawHeight);
-      ctx.fill(rect);
+    // ctx.save();
+    // ctx.globalCompositeOperation = 'multiply';
+    ctx.fillStyle = `rgba(255,0,0,0.002)`;
+    console.log('boxes :>> ', boxes);
+    let elapsedTime = 0;
+    for (let i = 0; i < boxes.length; i++) {
+      const box = boxes[i];
+      const start = performance.now();
+      const { x, y, end } = box;
+      const width = end === 0 ? 2 : end - x;
+      if (end === 0) {
+        // const rect = new Path2D();
+        // ctx.fillStyle = hexToRgba(activityColor, 0.5);
+        // rect.rect(x, y, 2, drawHeight);
+        ctx.fillRect(x, y, 2, drawHeight);
+      } else {
+        // ctx.strokeStyle = `rgba(255,0,0,0.02)`;
+        // const rect = new Path2D();
+        // ctx.fillStyle = `rgba(255,0,0,0.02)`;
+        // rect.rect(x, y, Math.max(width, 2), drawHeight);
+        // ctx.strokeRect(x, y, width, drawHeight);
+        // ctx.fill(rect);
+        ctx.fillRect(x, y, Math.max(width, 2), drawHeight);
+      }
+      elapsedTime += performance.now() - start;
+      if (i % 100 === 0) {
+        console.log('elapsedTime :>> ', elapsedTime);
+      }
+      if (elapsedTime > 20) {
+        return;
+      }
     }
-    ctx.restore();
+    // ctx.restore();
 
-    quadtreeHeatmap.add({
-      height: drawHeight,
-      id: activityDirective.id,
-      width,
-      x,
-      y,
-    });
+    // quadtreeHeatmap.add({
+    //   height: drawHeight,
+    //   id: activityDirective.id,
+    //   width,
+    //   x,
+    //   y,
+    // });
 
     // Update maxActivityWidth
-    if (width > maxActivityWidth) {
-      maxActivityWidth = width;
+    // if (width > maxActivityWidth) {
+    // maxActivityWidth = width;
+    // }
+  }
+
+  function getSpanHeatmapBoxes(span: Span, remainingDepthCalls: number = 1): { end: number; x: number; y: number }[] {
+    if (xScaleView !== null && remainingDepthCalls > 0) {
+      const x = xScaleView(span.startMs);
+      const endTimeX = xScaleView(span.startMs + span.durationMs);
+      const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[span.id].map(id => spansMap[id]);
+      const childBoxes = spanChildren.map(childSpan => getSpanHeatmapBoxes(childSpan, remainingDepthCalls - 1)).flat();
+      return [{ end: endTimeX, x, y: 0 }, ...childBoxes];
+      // drawHeatmapBox(x, 0, endTimeX);
+      // spanChildren.map(span => getSpanHeatmapBox(span, remainingDepthCalls - 1));
+    }
+    return [];
+  }
+
+  // function drawTest2() {
+  //   ctx.fillRect(100, 0, 10, drawHeight);
+  //   // ctx.fillRect(100.3 , 0, 10, drawHeight);
+  //   // ctx.fillRect(101, 0, 10, drawHeight);
+  //   return;
+  //   if (xScaleView !== null) {
+  //     const [viewStartTime, viewEndTime] = xScaleView.domain();
+  //     // const numBins = Math.round(drawWidth / 2);
+  //     const numBins = drawWidth;
+  //     const binSize = (viewEndTime.getTime() - viewStartTime.getTime()) / numBins;
+  //     const activityHistValues: number[] = Array(numBins).fill(0);
+
+  //     // Get directives + spans in view
+  //     const sortedActivityDirectives: ActivityDirective[] = activityDirectives.sort(sortActivityDirectivesOrSpans);
+  //     const activityDirectivesInView = sortedActivityDirectives.filter(activityDirective => {
+  //       const directiveStartTime = getUnixEpochTimeFromInterval(planStartTimeYmd, activityDirective.start_offset);
+  //       return directiveStartTime >= viewTimeRange.start && directiveStartTime < viewTimeRange.end;
+  //     });
+  //     const spansIdsInView: SpanId[] = [];
+  //     const xMap: Record<number, number> = {};
+  //     Object.values(spansMap).forEach(span => {
+  //       if (span.id < 10000) {
+  //         // return;
+  //       }
+  //       const sticky = span.startMs < viewTimeRange.start && span.startMs + span.durationMs >= viewTimeRange.start;
+  //       // TODO fixme?
+  //       // const inView = sticky || (span.startMs >= viewTimeRange.start && span.startMs < viewTimeRange.end);
+  //       const inView = span.startMs >= viewTimeRange.start && span.startMs < viewTimeRange.end;
+  //       if (inView) {
+  //         spansIdsInView.push(span.id);
+  //       }
+  //     });
+
+  //     /* TODO round to like half a pixel and then draw those? */
+  //     // console.log('activityDirectivesInView :>> ', activityDirectivesInView);
+  //     // console.log('spansInView :>> ', spansIdsInView);
+  //     const viewStartTimeMs = viewStartTime.getTime();
+
+  //     activityDirectivesInView.forEach(activityDirective => {
+  //       // TODO cache this
+  //       const directiveStartTime = getUnixEpochTimeFromInterval(planStartTimeYmd, activityDirective.start_offset);
+
+  //       // Figure out which start bin this is in
+  //       const startBin = Math.min(Math.round((directiveStartTime - viewStartTimeMs) / binSize), numBins - 1);
+  //       if (xScaleView) {
+  //         const x = xScaleView(directiveStartTime);
+  //         const xRounded = Math.round(x);
+  //         xMap[x] = typeof xMap[x] === 'number' ? xMap[x] + 1 : 0;
+  //       }
+  //     });
+  //     console.log('spansIdsInViesw :>> ', spansIdsInView);
+  //     const start = performance.now();
+  //     spansIdsInView.forEach(key => {
+  //       // Figure out which start bin this is in
+  //       const span: Span = spansMap[key];
+  //       // const startBin = Math.max(0, Math.min(Math.round((span.startMs - viewStartTimeMs) / binSize), numBins - 1));
+  //       const startBin = Math.max(0, Math.min(Math.round((span.startMs - viewStartTimeMs) / binSize), numBins - 1));
+  //       // console.log(startBin, 'startbin', numBins);
+  //       activityHistValues[startBin]++;
+
+  //       if (xScaleView) {
+  //         const x = xScaleView(span.startMs);
+  //         const xEnd = xScaleView(span.endMs);
+  //         // const xRounded = +x.toFixed(2);
+  //         const xRounded = Math.floor(x);
+  //         // xMap[xRounded] = typeof xMap[xRounded] === 'number' ? Math.max(xMap[xRounded], xEnd) : 0;
+  //         xMap[xRounded] = typeof xMap[xRounded] === 'number' ? xMap[xRounded] + 1 : 0;
+  //       }
+
+  //       // Figure out which other bins this value is in
+  //       const x = Math.floor(span.durationMs / binSize) + 1;
+  //       for (let i = 1; i < x; i++) {
+  //         if (startBin + i >= activityHistValues.length) {
+  //           // console.log(startBin + i, x, '1??');
+  //           return;
+  //         }
+  //         const xx = xScaleView(span.startMs + x);
+  //         // const xEnd = xScaleView(span.endMs);
+  //         // const xRounded = +x.toFixed(2);
+  //         const xRounded = Math.round(xx);
+  //         console.log('xRounded :>> ', xRounded);
+  //         // TODO what?
+  //         xMap[xRounded] = typeof xMap[xRounded] === 'number' ? xMap[xRounded] + 1 : 0;
+  //         // activityHistValues[startBin + i]++;
+  //       }
+  //     });
+
+  //     console.log('xMap :>> ', xMap);
+
+  //     console.log(performance.now() - start);
+
+  //     const scale = scaleLinear([0, 1], ['rgba(255,0,0,0.1)', 'rgba(255,0,0,1)']);
+
+  //     const activityHistMax = Math.max(...activityHistValues);
+  //     // const activityHistMax = (activityDirectives.length + Object.keys(spansMap).length) / numBins;
+  //     console.log('activityHistValues :>> ', activityHistValues);
+  //     console.log('activityHistMax :>> ', activityHistMax);
+  //     const binnedActivityHistValues = activityHistValues.map(value => {
+  //       // const percentOfMax = value / activityHistMax || 0;
+  //       // const binnedPercentOfMax = parseFloat(percentOfMax.toFixed(3));
+  //       // const binnedPercentOfMax = percentOfMax;
+  //       // const binnedPercentOfMax = value / activityHistMax;
+  //       const binnedPercentOfMax = value / activityHistMax;
+  //       return binnedPercentOfMax;
+  //     });
+
+  //     const boxes = [];
+  //     let currentBox = null;
+  //     console.log('binnedActivityHistValues :>> ', binnedActivityHistValues);
+  //     binnedActivityHistValues.forEach((value, i) => {
+  //       if (!currentBox) {
+  //         currentBox = { start: i, end: i + 1, value };
+  //       }
+  //       if (value === currentBox.value) {
+  //         currentBox.end = i + 1;
+  //         if (i === binnedActivityHistValues.length - 1) {
+  //           boxes.push(currentBox);
+  //         }
+  //       } else {
+  //         boxes.push(currentBox);
+  //         currentBox = { start: i, end: i + 1, value };
+  //       }
+  //     });
+  //     console.log('boxes :>> ', boxes);
+  //     // boxes.forEach(box => {
+  //     //   // Draw box
+  //     //   // console.log('scale(box.value**3) :>> ', scale(box.value ** 3));
+  //     //   // ctx.fillStyle = scale(box.value ** 3);
+  //     //   ctx.fillStyle = 'rgba(255,0,0,0.2)';
+  //     //   ctx.strokeStyle = `rgba(255, 0, 0, 0.9)`;
+  //     //   // ctx.fillStyle = scale(box.value ** 3);
+  //     //   // ctx.fillStyle = `rgba(255,0,0,${value})`;
+  //     //   // ctx.fillStyle = `rgba(255,0,0,0.2)`;
+  //     //   ctx.fillRect(box.start, 0, Math.max(0, box.end - box.start), drawHeight);
+  //     //   ctx.strokeRect(box.start, 0, Math.max(0, box.end - box.start), drawHeight);
+  //     // });
+  //     // Object.entries(xMap).forEach(([key, value]) => {
+  //     //   // Draw box
+  //     //   // console.log('scale(box.value**3) :>> ', scale(box.value ** 3));
+  //     //   // console.log('scale(value ** 3 :>> ', `rgba(255,0,0,${scale(value ** 3)})`);
+  //     //   // console.log('value :>> ', value);
+  //     //   ctx.fillStyle = value === 0 ? 'rgba(0,0,0,0)' : scale(value);
+  //     //   // ctx.globalCompositeOperation = 'multiply';
+  //     //   // ctx.fillStyle = `rgba(255,0,0,0.1)`;
+  //     //   ctx.strokeStyle = `rgba(255, 0, 0, 0.1)`;
+  //     //   // ctx.fillStyle = scale(box.value ** 3);
+  //     //   // ctx.fillStyle = `rgba(255,0,0,${value})`;
+  //     //   // ctx.fillStyle = `rgba(255,0,0,0.2)`;
+  //     //   ctx.fillRect(key, 0, value - key, drawHeight);
+  //     //   // ctx.strokeRect(i, 0, 0, drawHeight);
+  //     // });
+  //     console.log('yeah');
+  //     for (let i = 0; i < drawWidth; i++) {
+  //       if (!Object.prototype.hasOwnProperty.call(xMap, i)) {
+  //         continue;
+  //       }
+  //       const count = xMap[i];
+  //       // ctx.fillStyle = scale(count);
+  //       ctx.fillStyle = 'rgba(255,0,0,1)';
+  //       ctx.fillRect(i, 0, 1, drawHeight);
+  //     }
+
+  //     // console.log('binnedActivityHistValues :>> ', binnedActivityHistValues);
+  //     // Draw bboxes
+  //   }
+  // }
+
+  // function drawGroupRow(title, count, y, x) {
+  //   if (xScaleView) {
+  //     const text = `${title} (${count})`;
+  //     const { textMetrics, textHeight } = setLabelContext(text, 'red');
+  //     ctx.fillText(text, x, y + textHeight / 2, textMetrics.width);
+  //     const rowMaxY = y + textHeight;
+  //     return rowMaxY;
+  //   }
+  //   return 0;
+  // }
+
+  function drawTestGroups2() {
+    console.log('DRAW');
+    if (xScaleView !== null) {
+      if (mode === 'heatmap') {
+        return;
+      }
+      let y = 23;
+      const expectedRowHeight = 20;
+      activityLayerGroups.forEach(group => {
+        y = drawGroup(group, y, expectedRowHeight);
+      });
+      const newRowHeight = y + 36;
+      if (newRowHeight > 0 && drawHeight !== newRowHeight) {
+        dispatch('updateRowHeight', { layerId: id, newHeight: newRowHeight });
+      }
     }
   }
+
+  function drawGroup(group, y, rowHeight) {
+    // console.log('drawing group', group);
+    let newY = y;
+    ctx.strokeStyle = '#bec0c2';
+    ctx.beginPath();
+    ctx.moveTo(0, newY + rowHeight);
+    ctx.lineTo(drawWidth, newY + rowHeight);
+    ctx.stroke();
+
+    const directivesInView = [];
+
+    (group.directives || []).forEach(directive => {
+      const directiveX = getXForDirective(directive);
+      const directiveInBounds = directiveX >= viewTimeRange.start && directiveX < viewTimeRange.end;
+
+      // TODO obviously repetitive (see below), clean all of this up
+      let childSpanInBounds = false;
+      const childSpan = getSpanForActivityDirective(directive);
+      if (childSpan) {
+        const spanX = xScaleView(childSpan.startMs);
+        const spanXEnd = xScaleView(childSpan.endMs);
+        // TODO store whether span is in view in the activityGroupTree thing? Maybe?
+        const sticky =
+          childSpan.startMs < viewTimeRange.start && childSpan.startMs + childSpan.durationMs >= viewTimeRange.start;
+        childSpanInBounds =
+          sticky || (childSpan.startMs >= viewTimeRange.start && childSpan.startMs < viewTimeRange.end);
+      }
+      if (directiveInBounds || childSpanInBounds) {
+        directivesInView.push(directive);
+      }
+    });
+    // TODO spans and directives should have their labels taken into account when deciding if they are in view...
+
+    if (group.directives) {
+      const directivesInViewTextLength = directivesInView.reduce((total, directive) => {
+        // TODO stop measuring if we've already exceeded limit?
+        let textMetrics = textMetricsCache[directive.name] ?? ctx.measureText(directive.name);
+        return total + textMetrics.width;
+      }, 0);
+      let lastDirectiveTextEnd = -1;
+      directivesInView.forEach(directive => {
+        // ctx.fillStyle =  `rgba(255,0,0,0.5)`;
+        const color = hexToRgba(directive.color, 0.5);
+        if (ctx.fillStyle !== color) {
+          ctx.fillStyle = hexToRgba(directive.color, 0.5);
+        }
+        // TODO directive start time needs to use this function to take anchors into account, use this in Row and elsewhere
+        // can pass the cache down?
+        if (xScaleView) {
+          // Draw bounds of child span
+          if (showSpans) {
+            const childSpan = getSpanForActivityDirective(directive);
+            if (childSpan) {
+              const spanX = xScaleView(childSpan.startMs);
+              const spanXEnd = xScaleView(childSpan.endMs);
+              // console.log('xEnd - x :>> ', xEnd - x);
+              const width = Math.max(1, spanXEnd - spanX);
+
+              ctx.save();
+              if (selectedSpanId === childSpan.id) {
+                ctx.fillStyle = activitySelectedColor;
+              }
+              ctx.fillRect(spanX, newY + 4, width, rowHeight - 4);
+              ctx.restore();
+
+              visibleSpansById[childSpan.id] = childSpan;
+              quadtreeSpans.add({
+                height: rowHeight - 4,
+                id: childSpan.id,
+                width: width,
+                x: spanX,
+                y: newY + 4,
+              });
+            }
+          }
+
+          if (showDirectives) {
+            const directiveX = getXForDirective(directive);
+            const directiveXCanvas = xScaleView(directiveX);
+            ctx.fillRect(directiveXCanvas, newY + 4, 2, rowHeight - 4);
+
+            if (directivesInViewTextLength <= drawWidth && lastDirectiveTextEnd < directiveXCanvas) {
+              ctx.save();
+              const { labelText, textMetrics, textHeight } = setLabelContext(directive.name, 'black');
+              ctx.fillText(labelText, directiveXCanvas + 4, newY + 5 + textHeight, textMetrics.width);
+              ctx.restore();
+              lastDirectiveTextEnd = directiveXCanvas + textMetrics.width;
+            }
+          }
+        }
+      });
+    } else if (group.spans && showSpans) {
+      // Draw bounds of each child span
+      // console.log('group.spans :>> ', group.spans);
+      const spansInView = [];
+      group.spans.forEach(span => {
+        // draw span
+        const spanX = xScaleView(span.startMs);
+        const spanXEnd = xScaleView(span.endMs);
+        // TODO store whether span is in view in the activityGroupTree thing? Maybe?
+        const spanInBounds = span.startMs >= viewTimeRange.start && span.startMs < viewTimeRange.end;
+        const sticky = span.startMs < viewTimeRange.start && span.startMs + span.durationMs >= viewTimeRange.start;
+        if (sticky || spanInBounds) {
+          spansInView.push(span);
+        }
+        // console.log('xEnd - x :>> ', xEnd - x);
+        // ctx.fillRect(spanX, newY + 4, Math.max(1, spanXEnd - spanX), rowHeight - 4);
+
+        // // draw children
+        // const children = spanUtilityMaps.spanIdToChildIdsMap[span.id];
+        // children.forEach(childSpanId => {
+        //   if (xScaleView) {
+        //     const span = spansMap[childSpanId];
+        //     if (span) {
+        //       const spanX = xScaleView(span.startMs);
+        //       const spanXEnd = xScaleView(span.endMs);
+        //       // console.log('xEnd - x :>> ', xEnd - x);
+        //       ctx.fillRect(spanX, newY + 4, Math.max(1, spanXEnd - spanX), rowHeight - 4);
+        //     }
+        //   }
+        // });
+      });
+      const spansInViewTextLength = spansInView.reduce((total, span) => {
+        // TODO stop measuring if we've already exceeded limit?
+        let textMetrics = textMetricsCache[span.type] ?? ctx.measureText(span.type);
+        return total + textMetrics.width;
+      }, 0);
+      let lastSpanTextEnd = -1;
+      spansInView.forEach(span => {
+        const spanX = xScaleView(span.startMs);
+        const spanXEnd = xScaleView(span.endMs);
+        const width = Math.max(1, spanXEnd - spanX);
+        const y = newY + 4;
+
+        ctx.save();
+        if (selectedSpanId === span.id) {
+          ctx.fillStyle = activitySelectedColor;
+        }
+        ctx.fillRect(spanX, y, width, rowHeight - 4);
+        ctx.restore();
+
+        if (spansInViewTextLength <= drawWidth && spanX > lastSpanTextEnd) {
+          ctx.save();
+          const { labelText, textMetrics, textHeight } = setLabelContext(span.type, 'black');
+          ctx.fillText(labelText, spanX + 4, newY + 4 + textHeight, textMetrics.width);
+          ctx.restore();
+          lastSpanTextEnd = spanX + textMetrics.width;
+        }
+
+        visibleSpansById[span.id] = span;
+        quadtreeSpans.add({
+          height: rowHeight - 4,
+          id: span.id,
+          width: width,
+          x: spanX,
+          y: newY + 4,
+        });
+      });
+    }
+    newY += rowHeight;
+    if (group.expanded && group.groups.length) {
+      group.groups.forEach(childGroup => {
+        newY = drawGroup(childGroup, newY, rowHeight);
+      });
+    }
+    return newY;
+  }
+
+  // function drawTestGroups() {
+  //   if (xScaleView !== null) {
+  //     const groupedActivities = activityDirectives.reduce((acc, next) => {
+  //       if (!acc[next.type]) {
+  //         acc[next.type] = [];
+  //       }
+  //       acc[next.type].push(next);
+  //       return acc;
+  //     }, {});
+  //     let rowCurrentMaxY = 0;
+  //     Object.entries(groupedActivities).forEach(([type, activities], i) => {
+  //       rowCurrentMaxY = drawGroupRow(type, activities.length, rowCurrentMaxY, 0);
+
+  //       activities.forEach((activity, j) => {
+  //         const rootSpan = getSpanForActivityDirective(activity);
+  //         if (rootSpan) {
+  //           rowCurrentMaxY = drawGroupRow(rootSpan.type, 1, rowCurrentMaxY, 8);
+  //           const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[rootSpan.id].map(id => spansMap[id]);
+  //           Object.entries(
+  //             spanChildren.reduce((acc, next) => {
+  //               if (!acc[next.type]) {
+  //                 acc[next.type] = [];
+  //               }
+  //               acc[next.type].push(next);
+  //               return acc;
+  //             }, {}),
+  //           ).forEach(([type, spanGroup], k) => {
+  //             console.log('type, spanGroup,k :>> ', type, spanGroup, k);
+  //             rowCurrentMaxY = drawGroupRow(type, 1, rowCurrentMaxY, 16);
+  //           });
+  //         }
+  //       });
+  //     });
+
+  //     // const newHeight = totalMaxY + rowHeight;
+  //     const newHeight = 20 + Object.keys(groupedActivities).length * 20;
+  //     if (newHeight > 0 && drawHeight !== newHeight) {
+  //       console.log('newHeight :>> ', newHeight);
+  //       dispatch('updateRowHeight', { layerId: id, newHeight });
+  //     }
+  //   }
+  // }
+
+  // function drawTest1() {
+  //   if (xScaleView !== null) {
+  //     const [viewStartTime, viewEndTime] = xScaleView.domain();
+  //     // const numBins = Math.round(drawWidth / 2);
+  //     const numBins = Math.round(drawWidth);
+  //     const binSize = (viewEndTime.getTime() - viewStartTime.getTime()) / numBins;
+  //     const activityHistValues: number[] = Array(numBins).fill(0);
+
+  //     // Get directives + spans in view
+  //     const sortedActivityDirectives: ActivityDirective[] = activityDirectives.sort(sortActivityDirectivesOrSpans);
+  //     const activityDirectivesInView = sortedActivityDirectives.filter(activityDirective => {
+  //       const directiveStartTime = getUnixEpochTimeFromInterval(planStartTimeYmd, activityDirective.start_offset);
+  //       return directiveStartTime >= viewTimeRange.start && directiveStartTime < viewTimeRange.end;
+  //     });
+  //     const spansIdsInView: SpanId[] = [];
+  //     // console.log('spanssMap :>> ', spansMap);
+  //     Object.values(spansMap).forEach(span => {
+  //       if (span.id <= 30000) {
+  //         return;
+  //       }
+  //       const sticky = span.startMs < viewTimeRange.start && span.startMs + span.durationMs >= viewTimeRange.start;
+  //       // TODO fixme?
+  //       const inView = sticky || (span.startMs >= viewTimeRange.start && span.startMs < viewTimeRange.end);
+  //       // const inView = span.startMs >= viewTimeRange.start && span.startMs < viewTimeRange.end;
+  //       if (inView) {
+  //         spansIdsInView.push(span.id);
+  //       }
+  //     });
+  //     // console.log('activityDirectivesInView :>> ', activityDirectivesInView);
+  //     // console.log('spansInView :>> ', spansIdsInView);
+  //     const viewStartTimeMs = viewStartTime.getTime();
+
+  //     activityDirectivesInView.forEach(activityDirective => {
+  //       // TODO cache this
+  //       const directiveStartTime = getUnixEpochTimeFromInterval(planStartTimeYmd, activityDirective.start_offset);
+
+  //       // Figure out which start bin this is in
+  //       const startBin = Math.min(Math.round((directiveStartTime - viewStartTimeMs) / binSize), numBins - 1);
+  //       activityHistValues[startBin]++;
+  //     });
+  //     // console.log('spansIdsInView :>> ', spansIdsInView);
+  //     const start = performance.now();
+  //     spansIdsInView.forEach(key => {
+  //       // Figure out which start bin this is in
+  //       const span: Span = spansMap[key];
+  //       // const startBin = Math.max(0, Math.min(Math.round((span.startMs - viewStartTimeMs) / binSize), numBins - 1));
+  //       const startBin = Math.max(0, Math.min(Math.round((span.startMs - viewStartTimeMs) / binSize), numBins - 1));
+  //       // console.log(startBin, 'startbin', numBins);
+  //       activityHistValues[startBin]++;
+
+  //       // Figure out which other bins this value is in
+  //       const x = Math.floor(span.durationMs / binSize) + 1;
+  //       for (let i = 1; i < x; i++) {
+  //         if (startBin + i >= activityHistValues.length) {
+  //           // console.log(startBin + i, x, '1??');
+  //           return;
+  //         }
+  //         activityHistValues[startBin + i]++;
+  //       }
+  //     });
+
+  //     /*
+  //       TODO: try
+  //       1. Compute xMap, rounded to pix
+  //       2. For each pixel, see how many entries there are in xMap
+  //       3. Histogram it?
+  //     */
+  //     /*
+  //     TODO: maybe just max time range of spans instead of each one
+  //     TODO: maybe round to pixel when drawing spans
+  //     TODO: first go, no rails auto height,
+
+  //    */
+  //     // ctx.globalCompositeOperation = 'multiply';
+  //     ctx.fillStyle = `rgba(255,0,0,0.5)`;
+  //     spansIdsInView.forEach(id => {
+  //       const span: Span = spansMap[id];
+  //       // ctx.fillStyle = value === 0 ? 'rgba(0,0,0,0)' : scale(value);
+  //       // ctx.strokeStyle = `rgba(255, 0, 0, 1)`;
+  //       // ctx.fillStyle = scale(box.value ** 3);
+  //       // ctx.fillStyle = `rgba(255,0,0,${value})`;
+  //       // ctx.fillStyle = `rgba(255,0,0,0.1)`;
+  //       if (xScaleView) {
+  //         // console.log('drawing');
+  //         const x = xScaleView(span.startMs);
+  //         const xEnd = xScaleView(span.endMs);
+  //         // console.log('xEnd - x :>> ', xEnd - x);
+  //         ctx.fillRect(x, 0, Math.max(1, xEnd - x), drawHeight);
+  //         // ctx.fillRect(x, 0, xEnd, drawHeight);
+  //         // ctx.strokeRect(x, 0, xEnd - x, drawHeight);
+  //       }
+  //     });
+  //     return;
+
+  //     console.log(performance.now() - start);
+
+  //     const scale = scaleLinear([0, 1], ['rgba(255,0,0,0.1)', 'rgba(255,0,0,1)']);
+
+  //     const activityHistMax = Math.max(...activityHistValues);
+  //     // const activityHistMax = (activityDirectives.length + Object.keys(spansMap).length) / numBins;
+  //     console.log('activityHistValues :>> ', activityHistValues);
+  //     console.log('activityHistMax :>> ', activityHistMax);
+  //     const binnedActivityHistValues = activityHistValues.map(value => {
+  //       // const percentOfMax = value / activityHistMax || 0;
+  //       // const binnedPercentOfMax = parseFloat(percentOfMax.toFixed(3));
+  //       // const binnedPercentOfMax = percentOfMax;
+  //       // const binnedPercentOfMax = value / activityHistMax;
+  //       const binnedPercentOfMax = value / activityHistMax;
+  //       return binnedPercentOfMax;
+  //     });
+
+  //     const boxes = [];
+  //     let currentBox = null;
+  //     console.log('binnedActivityHistValues :>> ', binnedActivityHistValues);
+  //     binnedActivityHistValues.forEach((value, i) => {
+  //       if (!currentBox) {
+  //         currentBox = { start: i, end: i + 1, value };
+  //       }
+  //       if (value === currentBox.value) {
+  //         currentBox.end = i + 1;
+  //         if (i === binnedActivityHistValues.length - 1) {
+  //           boxes.push(currentBox);
+  //         }
+  //       } else {
+  //         boxes.push(currentBox);
+  //         currentBox = { start: i, end: i + 1, value };
+  //       }
+  //     });
+  //     console.log('boxes :>> ', boxes);
+  //     // boxes.forEach(box => {
+  //     //   // Draw box
+  //     //   // console.log('scale(box.value**3) :>> ', scale(box.value ** 3));
+  //     //   // ctx.fillStyle = scale(box.value ** 3);
+  //     //   ctx.fillStyle = 'rgba(255,0,0,0.2)';
+  //     //   ctx.strokeStyle = `rgba(255, 0, 0, 0.9)`;
+  //     //   // ctx.fillStyle = scale(box.value ** 3);
+  //     //   // ctx.fillStyle = `rgba(255,0,0,${value})`;
+  //     //   // ctx.fillStyle = `rgba(255,0,0,0.2)`;
+  //     //   ctx.fillRect(box.start, 0, Math.max(0, box.end - box.start), drawHeight);
+  //     //   ctx.strokeRect(box.start, 0, Math.max(0, box.end - box.start), drawHeight);
+  //     // });
+  //     binnedActivityHistValues.forEach((value, i) => {
+  //       // Draw box
+  //       // console.log('scale(box.value**3) :>> ', scale(box.value ** 3));
+  //       // console.log('scale(value ** 3 :>> ', `rgba(255,0,0,${scale(value ** 3)})`);
+  //       // console.log('value :>> ', value);
+  //       ctx.fillStyle = value === 0 ? 'rgba(0,0,0,0)' : scale(value);
+  //       // ctx.globalCompositeOperation = 'multiply';
+  //       // ctx.fillStyle = `rgba(255,0,0,0.1)`;
+  //       ctx.strokeStyle = `rgba(255, 0, 0, 0.1)`;
+  //       // ctx.fillStyle = scale(box.value ** 3);
+  //       // ctx.fillStyle = `rgba(255,0,0,${value})`;
+  //       // ctx.fillStyle = `rgba(255,0,0,0.2)`;
+  //       ctx.fillRect(i, 0, 1, drawHeight);
+  //       // ctx.strokeRect(i, 0, 0, drawHeight);
+  //     });
+
+  //     // console.log('binnedActivityHistValues :>> ', binnedActivityHistValues);
+  //     // Draw bboxes
+  //   }
+  // }
 
   function drawActivityDirective(activityDirective: ActivityDirective, x: number, y: number) {
     visibleActivityDirectivesById[activityDirective.id] = activityDirective;
@@ -852,22 +1496,24 @@
     ctx.restore();
   }
 
-  function getSpanTimeBounds(span: Span): SpanTimeBounds {
-    if (span.id in spanTimeBoundCache) {
-      return spanTimeBoundCache[span.id];
-    }
+  // function getSpanTimeBounds(span: Span): SpanTimeBounds {
+  //   // return {}
+  //   if (span.id in spanTimeBoundCache) {
+  //     return spanTimeBoundCache[span.id];
+  //   }
 
-    // Use simulation start YMD time if available, otherwise use the plan start YMD
-    const startYmd = simulationDataset?.simulation_start_time ?? planStartTimeYmd;
-    const start = getUnixEpochTimeFromInterval(startYmd, span.start_offset);
-    const duration = getIntervalInMs(span.duration);
-    const end = start + duration;
-    const timeBounds = { duration, end, start };
-    spanTimeBoundCache[span.id] = timeBounds;
-    return timeBounds;
-  }
+  //   // Use simulation start YMD time if available, otherwise use the plan start YMD
+  //   const startYmd = simulationDataset?.simulation_start_time ?? planStartTimeYmd;
+  //   const start = getUnixEpochTimeFromInterval(startYmd, span.start_offset);
+  //   const duration = getIntervalInMs(span.duration);
+  //   const end = start + duration;
+  //   const timeBounds = { duration, end, start };
+  //   spanTimeBoundCache[span.id] = timeBounds;
+  //   return timeBounds;
+  // }
 
   function drawSpans(spans: Span[], parentY: number, draw = true, ghosted = false): BoundingBox | null {
+    console.log('drawing spans', spans.length);
     if (spans && xScaleView !== null) {
       const boundingBoxes: BoundingBox[] = [];
 
@@ -878,12 +1524,12 @@
       let y = parentY + rowHeight;
 
       for (const span of spans) {
-        const { start, duration } = getSpanTimeBounds(span);
-        const x = xScaleView(start);
-        const endTimeX = xScaleView(start + duration);
+        // const { start, duration } = getSpanTimeBounds(span);
+        const x = xScaleView(span.startMs);
+        const endTimeX = xScaleView(span.startMs + span.durationMs);
 
         // The label should be sticky if the start of the span is clipped and the span is still in view
-        const sticky = start < viewTimeRange.start && start + duration >= viewTimeRange.start;
+        const sticky = span.startMs < viewTimeRange.start && span.startMs + span.durationMs >= viewTimeRange.start;
 
         // Consider the span to be in view if the rect and label are in view or if the label should be sticky
         const rectWithLabelInView = x + spanLabelLeftMargin + setLabelContext(getLabelForSpan(span)).textWidth > 0;
@@ -948,8 +1594,67 @@
     return null;
   }
 
+  // function getMaxSpan(spans: Span[], parentY: number): BoundingBox | null {
+  //   console.log('drawing spans', spans.length);
+  //   if (spans && xScaleView !== null) {
+  //     const boundingBoxes: BoundingBox[] = [];
+
+  //     let maxX = Number.MIN_SAFE_INTEGER;
+  //     let maxTimeX = Number.MIN_SAFE_INTEGER;
+  //     let maxY = Number.MIN_SAFE_INTEGER;
+  //     let minX = Number.MAX_SAFE_INTEGER;
+  //     let y = parentY + rowHeight;
+
+  //     for (const span of spans) {
+  //       const spanInBounds = span.startMs >= viewTimeRange.start && span.startMs < viewTimeRange.end;
+
+  //       // The label should be sticky if the start of the span is clipped and the span is still in view
+  //       const sticky = span.startMs < viewTimeRange.start && span.startMs + span.durationMs >= viewTimeRange.start;
+
+  //       // Consider the span to be in view if the rect and label are in view or if the label should be sticky
+  //       const spanInView = spanInBounds || sticky;
+
+  //       // Only add to bounds if the span is in view
+  //       if (spanInView) {
+  //         if (endTimeX > maxTimeX) {
+  //           maxTime = endTimeX;
+  //         }
+  //         if (y > maxY) {
+  //           maxY = y;
+  //         }
+  //       }
+
+  //       const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[span.id].map(id => spansMap[id]);
+  //       if (spanChildren) {
+  //         const childrenBoundingBox: BoundingBox | null = drawSpans(spanChildren, y, draw, ghosted);
+
+  //         if (childrenBoundingBox) {
+  //           if (childrenBoundingBox.minX < minX) {
+  //             minX = childrenBoundingBox.minX;
+  //           }
+  //           if (childrenBoundingBox.maxX > maxX) {
+  //             maxX = childrenBoundingBox.maxX;
+  //           }
+  //           if (childrenBoundingBox.maxY > maxY) {
+  //             maxY = childrenBoundingBox.maxY;
+  //           }
+  //           if (childrenBoundingBox.maxTimeX > maxTimeX) {
+  //             maxTimeX = childrenBoundingBox.maxTimeX;
+  //           }
+  //         }
+  //       }
+
+  //       boundingBoxes.push({ maxTimeX, maxX, maxY, minX });
+  //     }
+
+  //     return { maxTimeX, maxX, maxY, minX };
+  //   }
+
+  //   return null;
+  // }
+
   function setLabelContext(labelText: string, color = '#000000') {
-    const fontSize = 12;
+    const fontSize = 10;
     const fontFace = 'Inter';
     ctx.fillStyle = color;
     ctx.font = `${fontSize}px ${fontFace}`;

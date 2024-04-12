@@ -1,6 +1,8 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import CollapseIcon from '@nasa-jpl/stellar/icons/collapse.svg?component';
+  import FilterIcon from '@nasa-jpl/stellar/icons/filter.svg?component';
   import type { ScaleTime } from 'd3-scale';
   import { select, type Selection } from 'd3-selection';
   import { zoom as d3Zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior, type ZoomTransform } from 'd3-zoom';
@@ -49,13 +51,14 @@
   import { sampleProfiles } from '../../utilities/resources';
   import { getSimulationStatus } from '../../utilities/simulation';
   import { pluralize } from '../../utilities/text';
-  import { getDoyTime } from '../../utilities/time';
+  import { getActivityDirectiveStartTimeMs, getDoyTime } from '../../utilities/time';
   import {
     getYAxesWithScaleDomains,
     isXRangeLayer,
     TimelineInteractionMode,
     type TimelineLockStatus,
   } from '../../utilities/timeline';
+  import { tooltip } from '../../utilities/tooltip';
   import ConstraintViolations from './ConstraintViolations.svelte';
   import LayerActivity from './LayerActivity.svelte';
   import LayerGaps from './LayerGaps.svelte';
@@ -148,6 +151,10 @@
   let loadedResources: Resource[];
   let loadingErrors: string[];
   let anyResourcesLoading: boolean = true;
+  let activityLayerGroups = [];
+  let activityTreeExpansionMap = {};
+  let filterActivitiesByTime = false;
+  let activityDirectiveTimeCache = {};
 
   $: if (plan && simulationDataset !== null && layers && $externalResources && !$resourceTypesLoading) {
     const simulationDatasetId = simulationDataset.dataset_id;
@@ -328,6 +335,254 @@
     overlaySvgSelection.call(zoom.transform, timelineZoomTransform);
   }
 
+  $: if (
+    hasActivityLayer &&
+    spansMap &&
+    activityDirectivesByView?.byLayerId &&
+    typeof filterActivitiesByTime === 'boolean'
+  ) {
+    // TODO manage this cache more correctly/better/in a store?
+    activityDirectiveTimeCache = {};
+    activityLayerGroups = [];
+
+    const activityLayers = layers.filter(layer => layer.chartType === 'activity');
+    // const combinedActivityLayer = layers.find(layer => layer.chartType === 'activity');
+    // TODO Only doing this for 1 layer right now
+    if (activityLayers.length) {
+      // TODO decouple from view, instead compute on the fly
+
+      // TODO grouping should probably be..
+      /*
+        1. Group directives by type
+        2. Directive type=N (count(N))
+        3. Group directive type N instance M
+
+        v EnduranceSim (2) # directive type group, has two directives of this type
+          v EnduranceSim # first directive of this type
+            v EnduranceSim (1) # span type group, has 1 span of this type
+              v EnduranceSim # first instance of this type
+                v Commissioning (1) # span type group, has 1 span of this type
+                  v Commissioning (1) # span type group, has 1 span of this type
+                    v Commissioning # first of this span
+                v SurfaceMission (1) # span, has 1 span of this type
+                  v SurfaceMission # first of this span
+                    > PerformScience (1202) # span type group, has 1202 of this type
+                    > Traverse (176606) # span type group, has 176606 of this type
+                    > ...
+                v Rendezvous (1) # span, has 1 span of this type
+          v EnduranceSim # second directive of this type
+
+      */
+
+      let directives = [];
+      activityLayers.forEach(layer => {
+        const layerDirectives = activityDirectivesByView.byLayerId[layer.id];
+        if (layerDirectives) {
+          // console.log('layer :>> ', layer);
+          layerDirectives.forEach(d => (d.color = layer.activityColor));
+          directives = directives.concat(layerDirectives);
+        }
+      });
+      if (directives.length) {
+        activityLayerGroups = generateActivityTree(directives, activityTreeExpansionMap, viewTimeRange);
+      }
+    }
+  }
+
+  function groupBy(objArr: Record<any, any>[], key: any) {
+    return objArr.reduce((acc, next) => {
+      if (!acc[next[key]]) {
+        acc[next[key]] = [];
+      }
+      acc[next[key]].push(next);
+      return acc;
+    }, {});
+  }
+
+  function getNodeExpanded(id, expansionMap) {
+    if (!expansionMap.hasOwnProperty(id)) {
+      return false;
+    }
+    return expansionMap[id];
+  }
+
+  function spanInView(span, viewTimeRange) {
+    const spanInBounds = span.startMs >= viewTimeRange.start && span.startMs < viewTimeRange.end;
+    const sticky = span.startMs < viewTimeRange.start && span.startMs + span.durationMs >= viewTimeRange.start;
+    return spanInBounds || sticky;
+  }
+
+  function generateActivityTree(directives: ActivityDirective[], visibilityMap, viewTimeRange) {
+    const tree = [];
+    let computedDirectives = directives;
+    if (filterActivitiesByTime) {
+      computedDirectives = directives.filter(directive => {
+        const directiveStartTime = getActivityDirectiveStartTimeMs(
+          directive.id,
+          planStartTimeYmd,
+          planEndTimeDoy,
+          activityDirectivesMap,
+          spansMap,
+          spanUtilityMaps,
+          activityDirectiveTimeCache,
+        );
+
+        const directiveInView = directiveStartTime >= viewTimeRange.start && directiveStartTime < viewTimeRange.end;
+        if (!directiveInView) {
+          // Get max span bounds
+          const rootSpanId = spanUtilityMaps.directiveIdToSpanIdMap[directive.id];
+          const rootSpan = spansMap[rootSpanId];
+          if (rootSpan) {
+            return spanInView(rootSpan, viewTimeRange);
+          }
+          // TODO handle case where duration is null (unfinished), need to look at child spans to get time bounds
+        }
+        return directiveInView;
+      });
+    }
+    const groupedDirectives = groupBy(computedDirectives, 'type');
+    // Activities grouped by type
+    Object.keys(groupedDirectives)
+      .sort()
+      .forEach(type => {
+        // Specific Activity type
+        const directiveGroup = groupedDirectives[type];
+        directiveGroup.sort((a, b) => {
+          const aTime = getActivityDirectiveStartTimeMs(
+            a.id,
+            planStartTimeYmd,
+            planEndTimeDoy,
+            activityDirectivesMap,
+            spansMap,
+            spanUtilityMaps,
+            activityDirectiveTimeCache,
+          );
+          const bTime = getActivityDirectiveStartTimeMs(
+            b.id,
+            planStartTimeYmd,
+            planEndTimeDoy,
+            activityDirectivesMap,
+            spansMap,
+            spanUtilityMaps,
+            activityDirectiveTimeCache,
+          );
+          return aTime < bTime ? -1 : 0;
+        });
+        const label = `type=${type} (${directiveGroup.length})`;
+        const id = type;
+        const expanded = getNodeExpanded(id, activityTreeExpansionMap);
+        const groups = [];
+        if (expanded) {
+          directiveGroup.forEach(directive => {
+            // Get number of child spans for the root span
+            let count = 0;
+            const rootSpanId = spanUtilityMaps.directiveIdToSpanIdMap[directive.id];
+            const id2 = `${id}_${directive.id}`;
+            let groups2 = [];
+            if (typeof rootSpanId === 'number') {
+              const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[rootSpanId].map(id => spansMap[id]);
+              count += spanChildren.length;
+              groups2 = getSpanSubtree(
+                spansMap[rootSpanId],
+                id2,
+                activityTreeExpansionMap,
+                'aggregation',
+                filterActivitiesByTime,
+              );
+            }
+            const label2 = `${directive.type} id=${directive.id} ${count > 0 ? `(${count} children)` : ''}`;
+            const expanded2 = getNodeExpanded(id2, activityTreeExpansionMap);
+
+            groups.push({
+              expanded: expanded2,
+              label: label2,
+              id: id2,
+              groups: groups2,
+              isLeaf: count < 1,
+              type: 'directive',
+              directives: [directive],
+            });
+          });
+        }
+        tree.push({
+          expanded,
+          label,
+          id,
+          groups,
+          isLeaf: false,
+          type: 'aggregate',
+          directives: directiveGroup,
+        });
+      });
+    return tree;
+  }
+
+  function getSpanSubtree(span: Span, parentId: string, activityTreeExpansionMap, type, filterActivitiesByTime) {
+    const groups = [];
+    const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[span.id].map(id => spansMap[id]);
+    if (type === 'aggregation') {
+      // Group by type
+      let computedSpans = spanChildren;
+      if (filterActivitiesByTime) {
+        computedSpans = spanChildren.filter(span => spanInView(span, viewTimeRange));
+      }
+      // const groupedSpanChildren = groupBy(spanChildrenInView, 'type');
+      const groupedSpanChildren = groupBy(computedSpans, 'type');
+      Object.keys(groupedSpanChildren)
+        .sort() // TODO sort by time or name? Both have different effects
+        .forEach(key => {
+          const spanGroup = groupedSpanChildren[key];
+          const id = `${parentId}_${key}`;
+          const expanded = getNodeExpanded(id, activityTreeExpansionMap);
+          groups.push({
+            expanded,
+            label: `type=${key} (${spanGroup.length})`,
+            id,
+            isLeaf: false,
+            spans: spanGroup,
+            groups: expanded
+              ? spanGroup
+                  // .slice(0, 10)
+                  .map(spanChild =>
+                    getSpanSubtree(spanChild, id, activityTreeExpansionMap, 'span', filterActivitiesByTime),
+                  )
+                  .flat()
+              : [],
+            type: 'aggregate',
+          });
+        });
+    } else if (type === 'span') {
+      const id = `${parentId}_${span.id}`;
+      const expanded = getNodeExpanded(id, activityTreeExpansionMap);
+      const count = spanChildren.length;
+      groups.push({
+        expanded,
+        label: `${span.type} id=${span.id} ${count > 0 ? `(${count} children)` : ''}`,
+        id,
+        spans: [span],
+        groups: expanded
+          ? getSpanSubtree(span, id, activityTreeExpansionMap, 'aggregation', filterActivitiesByTime)
+          : [],
+        isLeaf: count < 1,
+        type: 'aggregate',
+      });
+    }
+    return groups;
+  }
+
+  function onActivityTreeNodeChange(e) {
+    const group = e.detail;
+    activityTreeExpansionMap = { ...activityTreeExpansionMap, [group.id]: !group.expanded };
+  }
+
+  function onActivityTimeFilterChange() {
+    filterActivitiesByTime = !filterActivitiesByTime;
+  }
+
+  function onActivityHierarchyCollapse() {
+    activityTreeExpansionMap = {};
+  }
+
   function zoomed(e: D3ZoomEvent<HTMLCanvasElement, any>) {
     // Prevent dispatch when zoom did not originate from this row (i.e. propagated from zoomTransform)
     if (e.transform && timelineZoomTransform && e.transform.toString() === timelineZoomTransform.toString()) {
@@ -462,6 +717,8 @@
   <div class="row-content">
     <!-- Row Header. -->
     <RowHeader
+      on:activity-tree-node-change={onActivityTreeNodeChange}
+      {activityLayerGroups}
       width={marginLeft}
       height={computedDrawHeight}
       {expanded}
@@ -476,7 +733,25 @@
       on:mouseUpRowMove
       on:toggleRowExpansion
       on:contextMenu
-    />
+    >
+      {#if hasActivityLayer}
+        <button
+          class="st-button icon"
+          style:color={filterActivitiesByTime ? 'var(--st-utility-blue)' : ''}
+          on:click|stopPropagation={onActivityTimeFilterChange}
+          use:tooltip={{ content: 'Filter Activities by Time Window', placement: 'top' }}
+        >
+          <FilterIcon />
+        </button>
+        <button
+          class="st-button icon"
+          on:click|stopPropagation={onActivityHierarchyCollapse}
+          use:tooltip={{ content: 'Collapse Hierarchy', placement: 'top' }}
+        >
+          <CollapseIcon />
+        </button>
+      {/if}
+    </RowHeader>
 
     <div
       class={rowClasses}
@@ -548,6 +823,7 @@
           {#if layer.chartType === 'activity'}
             <LayerActivity
               {...layer}
+              {activityLayerGroups}
               activityDirectives={activityDirectivesByView?.byLayerId[layer.id] ?? []}
               {activityDirectivesMap}
               {hasUpdateDirectivePermission}
@@ -565,7 +841,7 @@
               {mousemove}
               {mouseout}
               {mouseup}
-              mode={expanded ? 'packed' : 'heatmap'}
+              mode={expanded ? 'test1' : 'heatmap'}
               {planEndTimeDoy}
               {plan}
               {planStartTimeYmd}

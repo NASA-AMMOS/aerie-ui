@@ -10,6 +10,7 @@
   import type { Axis, Layer, LineLayer, MouseOver } from '../../types/timeline';
   import { filterResourcesByLayer } from '../../utilities/timeline';
   import { tooltip } from '../../utilities/tooltip';
+  import RowHeaderActivityTree from './RowHeaderActivityTree.svelte';
   import RowHeaderMenu from './RowHeaderMenu.svelte';
   import RowYAxes from './RowYAxes.svelte';
 
@@ -23,6 +24,7 @@
   export let title: string = '';
   export let width: number = 0;
   export let yAxes: Axis[];
+  export let activityLayerGroups = [];
 
   let resourceLabels: { color: string; label: string; resource: Resource; unit: string; yAxisId: number }[] = [];
   let yAxesWidth = 0;
@@ -100,24 +102,31 @@
     {/if}
 
     <div class="row-header-left-column-row">
-      <button class="st-button icon row-header-title-button" on:click={toggleExpansion}>
-        {#if expanded}
-          <CaretDownIcon class="row-header-collapse" />
-        {:else}
-          <CaretRightIcon class="row-header-collapse" />
-        {/if}
-        <div class="row-header-title-container">
-          <div
-            class="row-header-title st-typography-label small-text"
-            on:mousedown={() => dispatch('mouseDownRowMove')}
-            on:mouseup={() => dispatch('mouseUpRowMove')}
-            role="none"
-            style={rowDragMoveDisabled ? 'cursor: grab' : 'cursor: grabbing'}
-          >
-            {title}
+      <div style=" align-items: center;display: flex; justify-content: space-between">
+        <button class="st-button icon row-header-title-button" on:click={toggleExpansion} style="flex: 1">
+          {#if expanded}
+            <CaretDownIcon class="row-header-collapse" />
+          {:else}
+            <CaretRightIcon class="row-header-collapse" />
+          {/if}
+          <div class="row-header-title-container">
+            <div
+              class="row-header-title st-typography-label small-text"
+              on:mousedown={() => dispatch('mouseDownRowMove')}
+              on:mouseup={() => dispatch('mouseUpRowMove')}
+              role="none"
+              style={rowDragMoveDisabled ? 'cursor: grab' : 'cursor: grabbing'}
+            >
+              {title}
+            </div>
           </div>
-        </div>
-      </button>
+        </button>
+        <slot />
+      </div>
+
+      <div class="activity-tree">
+        <RowHeaderActivityTree activityTree={activityLayerGroups} on:activity-tree-node-change />
+      </div>
 
       {#if resourceLabels.length > 0}
         <div class="row-header-y-axis-labels">
@@ -297,5 +306,9 @@
     text-align: left;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .activity-tree {
+    padding-left: 16px;
   }
 </style>
