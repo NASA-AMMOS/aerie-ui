@@ -239,7 +239,6 @@
   .metadata-container {
     display: grid;
     grid-template-rows: min-content min-content auto;
-    height: 100%;
     row-gap: 0.5rem;
   }
 
@@ -263,7 +262,6 @@
   }
 
   .metadata-table-container {
-    height: 100%;
     padding: 0 1rem 0.5rem;
     width: 100%;
   }

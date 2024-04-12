@@ -179,7 +179,7 @@
       </button>
     </div>
   </div>
-  <CssGrid columns="1fr 3px 1fr">
+  <CssGrid class="associations-css-grid" columns="1fr 3px 1fr">
     <div class="associations-content">
       <div class="associations-view">
         <RadioButtons selectedButtonId={selectedViewId} on:select-radio-button={onSelectView}>
@@ -257,6 +257,7 @@
   .associations-container {
     display: grid;
     grid-template-rows: min-content auto;
+    overflow: hidden;
     position: relative;
     width: 100%;
   }
@@ -287,8 +288,15 @@
     padding-right: 16px;
   }
 
+  .associations-container :global(.associations-css-grid) {
+    overflow: hidden;
+  }
+
   .associations-content {
+    display: grid;
+    grid-template-rows: min-content auto;
     min-width: 300px;
+    overflow: hidden;
   }
 
   .associations-view {
@@ -297,8 +305,9 @@
   }
 
   .association-items-container {
-    display: grid;
     margin-top: 1rem;
+    overflow-y: auto;
+    padding-bottom: 1rem;
   }
 
   .empty-associations {
