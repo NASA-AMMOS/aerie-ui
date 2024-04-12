@@ -58,7 +58,7 @@ test.describe.serial('Models', () => {
     await models.deleteModel();
   });
 
-  test('Successfully creating a model should navigate to the model edit page', async ({ baseURL }) => {
+  test('Successfully creating a model should navigate to the model edit page', async () => {
     // Setup the test
     await expect(models.tableRow).not.toBeVisible();
     await models.fillInputName();
