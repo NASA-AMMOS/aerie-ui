@@ -204,6 +204,7 @@
   <CssGridGutter track={1} type="column" />
 
   <SequenceEditor
+    showCommandFormBuild={false}
     sequenceCommandDictionaryId={selectedSequence?.authoring_command_dict_id}
     sequenceDefinition={selectedSequence?.definition ?? ''}
     sequenceName={selectedSequence?.name}

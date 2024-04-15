@@ -12,8 +12,14 @@
   import { seq } from 'codemirror-lang-sequence';
   import { debounce } from 'lodash-es';
   import { createEventDispatcher, onMount } from 'svelte';
-  import { commandDictionaries, userSequenceEditorColumns, userSequencesRows } from '../../stores/sequencing';
+  import {
+    dictionaries,
+    userSequenceEditorColumns,
+    userSequenceEditorColumnsWithFormBuilder,
+    userSequencesRows,
+  } from '../../stores/sequencing';
   import type { User } from '../../types/app';
+  import { DictionaryTypes } from '../../types/sequencing';
   import effects from '../../utilities/effects';
   import { seqJsonLinter } from '../../utilities/new-sequence-editor/seq-json-linter';
   import { sequenceCompletion } from '../../utilities/new-sequence-editor/sequence-completion';
@@ -26,6 +32,7 @@
   import SectionTitle from '../ui/SectionTitle.svelte';
   import SelectedCommand from './form/selected-command.svelte';
 
+  export let showCommandFormBuilder: boolean = false;
   export let readOnly: boolean = false;
   export let sequenceCommandDictionaryId: number | null = null;
   export let sequenceName: string = '';
@@ -46,6 +53,7 @@
   let compartmentSeqLinter: Compartment;
   let compartmentSeqTooltip: Compartment;
   let commandDictionary: CommandDictionary | null;
+  let commandFormBuilderGrid: string;
   let editorSeqJsonDiv: HTMLDivElement;
   let editorSeqJsonView: EditorView;
   let editorSequenceDiv: HTMLDivElement;
@@ -61,7 +69,15 @@
   }
 
   $: {
-    const unparsedCommandDictionary = $commandDictionaries.find(cd => cd.id === sequenceCommandDictionaryId);
+    commandFormBuilderGrid = showCommandFormBuilder
+      ? $userSequenceEditorColumnsWithFormBuilder
+      : $userSequenceEditorColumns;
+  }
+
+  $: {
+    const unparsedCommandDictionary = $dictionaries.find(
+      cd => cd.id === sequenceCommandDictionaryId && cd.type === DictionaryTypes.command_dictionary,
+    );
 
     if (unparsedCommandDictionary) {
       effects.getParsedAmpcsCommandDictionary(unparsedCommandDictionary.id, user).then(parsedDictionary => {
@@ -147,7 +163,7 @@
   }
 </script>
 
-<CssGrid bind:columns={$userSequenceEditorColumns} minHeight={'0'}>
+<CssGrid bind:columns={commandFormBuilderGrid} minHeight={'0'}>
   <CssGrid bind:rows={$userSequencesRows} minHeight={'0'}>
     <Panel>
       <svelte:fragment slot="header">
@@ -182,9 +198,7 @@
 
   <CssGridGutter track={1} type="column" />
 
-  {#if !!commandDictionary && !!selectedNode}
+  {#if !!commandDictionary && !!selectedNode && showCommandFormBuilder}
     <SelectedCommand node={selectedNode} {commandDictionary} {editorSequenceView} />
-  {:else}
-    <div>Selected Command</div>
   {/if}
 </CssGrid>

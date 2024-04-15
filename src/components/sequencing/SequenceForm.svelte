@@ -4,9 +4,14 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import { onMount } from 'svelte';
-  import { commandDictionaries, userSequenceFormColumns } from '../../stores/sequencing';
+  import { dictionaries, userSequenceFormColumns } from '../../stores/sequencing';
   import type { User, UserId } from '../../types/app';
-  import type { SequenceAdaptation, UserSequence, UserSequenceInsertInput } from '../../types/sequencing';
+  import {
+    DictionaryTypes,
+    type SequenceAdaptation,
+    type UserSequence,
+    type UserSequenceInsertInput,
+  } from '../../types/sequencing';
   import effects from '../../utilities/effects';
   import { isSaveEvent } from '../../utilities/keyboardEvents';
   import { permissionHandler } from '../../utilities/permissionHandler';
@@ -203,10 +208,10 @@
           }}
         >
           <option value={null} />
-          {#each $commandDictionaries as commandDictionary}
-            <option value={commandDictionary.id}>
-              {commandDictionary.mission} -
-              {commandDictionary.version}
+          {#each $dictionaries.filter(cd => cd.type === DictionaryTypes.command_dictionary) as dictionary}
+            <option value={dictionary.id}>
+              {dictionary.mission} -
+              {dictionary.version}
             </option>
           {/each}
         </select>
@@ -249,6 +254,7 @@
   <CssGridGutter track={1} type="column" />
 
   <SequenceEditor
+    showCommandFormBuilder={true}
     {sequenceCommandDictionaryId}
     sequenceDefinition={initialSequenceDefinition}
     {sequenceName}
