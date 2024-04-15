@@ -1827,6 +1827,7 @@ const gql = {
         created_at
         id
         mission
+        type
         version
       }
     }
