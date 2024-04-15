@@ -175,10 +175,10 @@
         <label for="commandDictionary">Command Dictionary</label>
         <select bind:value={setDictionaryId} class="st-select w-100" name="commandDictionary">
           <option value={null} />
-          {#each $commandDictionaries as commandDictionary}
-            <option value={commandDictionary.id}>
-              {commandDictionary.mission} -
-              {commandDictionary.version}
+          {#each $commandDictionaries as dictionary}
+            <option value={dictionary.id}>
+              {dictionary.mission} -
+              {dictionary.version}
             </option>
           {/each}
         </select>

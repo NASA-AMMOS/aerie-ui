@@ -267,10 +267,10 @@
           }}
         >
           <option value={null} />
-          {#each $commandDictionaries as commandDictionary}
-            <option value={commandDictionary.id}>
-              {commandDictionary.mission} -
-              {commandDictionary.version}
+          {#each $commandDictionaries as dictionary}
+            <option value={dictionary.id}>
+              {dictionary.mission} -
+              {dictionary.version}
             </option>
           {/each}
         </select>
