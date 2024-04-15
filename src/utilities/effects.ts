@@ -1,7 +1,12 @@
 import { goto } from '$app/navigation';
 import { base } from '$app/paths';
 import { env } from '$env/dynamic/public';
-import { parse, type CommandDictionary as AmpcsCommandDictionary } from '@nasa-jpl/aerie-ampcs';
+import {
+  parse,
+  parseParameterDictionary,
+  type CommandDictionary as AmpcsCommandDictionary,
+  type ParameterDictionary as AmpcsParameterDictionary,
+} from '@nasa-jpl/aerie-ampcs';
 import { get } from 'svelte/store';
 import { SearchParameters } from '../enums/searchParameters';
 import { Status } from '../enums/status';
@@ -4683,8 +4688,8 @@ const effects = {
     }
   },
 
-  async uploadCommandDictionary(
-    dictionary: string,
+  async uploadDictionary(
+    dictionary: AmpcsCommandDictionary | AmpcsParameterDictionary,
     user: User | null,
     type: DictionaryTypes,
   ): Promise<ChannelDictionary | CommandDictionary | ParameterDictionary | null> {
@@ -4693,16 +4698,14 @@ const effects = {
         throwPermissionError('upload a command dictionary');
       }
 
-      const parsedDictionary: AmpcsCommandDictionary = parse(dictionary);
-
       const data = await reqHasura<CommandDictionary>(
         gql.CREATE_COMMAND_DICTIONARY,
         {
           commandDictionary: {
-            mission: parsedDictionary.header.mission_name,
-            parsed_json: parsedDictionary,
+            mission: dictionary.header.mission_name,
+            parsed_json: dictionary,
             type,
-            version: parsedDictionary.header.version,
+            version: dictionary.header.version,
           },
         },
         user,
@@ -4731,8 +4734,8 @@ const effects = {
       case `<${DictionaryTypes.command_dictionary}>`: {
         try {
           return {
-            ...((await this.uploadCommandDictionary(
-              text,
+            ...((await this.uploadDictionary(
+              parse(text),
               user,
               DictionaryTypes.command_dictionary,
             )) as CommandDictionary),
@@ -4745,7 +4748,11 @@ const effects = {
       case `<${DictionaryTypes.param_def}>`: {
         try {
           return {
-            ...((await this.uploadCommandDictionary(text, user, DictionaryTypes.param_def)) as ParameterDictionary),
+            ...((await this.uploadDictionary(
+              parseParameterDictionary(text),
+              user,
+              DictionaryTypes.param_def,
+            )) as ParameterDictionary),
           };
         } catch (e) {
           catchError('Parameter Dictionary Upload Failed', e as Error);
@@ -4753,18 +4760,17 @@ const effects = {
         }
       }
       case `<${DictionaryTypes.telemetry_dictionary}>`: {
+        /**
         try {
           return {
-            ...((await this.uploadCommandDictionary(
-              text,
-              user,
-              DictionaryTypes.telemetry_dictionary,
-            )) as ChannelDictionary),
+            ...((await this.uploadDictionary(text, user, DictionaryTypes.telemetry_dictionary)) as ChannelDictionary),
           };
         } catch (e) {
           catchError('Channel Dictionary Upload Failed', e as Error);
           return null;
         }
+        */
+        break;
       }
       default:
         try {
@@ -4777,6 +4783,8 @@ const effects = {
           return null;
         }
     }
+
+    return null;
   },
 
   async uploadFile(file: File, user: User | null): Promise<number | null> {
