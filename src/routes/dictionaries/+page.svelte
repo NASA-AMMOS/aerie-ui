@@ -16,7 +16,7 @@
     DictionaryTypes,
     type CommandDictionary,
     type ParameterDictionary,
-    type SequenceAdaptation,
+    type SequenceAdaptation
   } from '../../types/sequencing';
   import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';

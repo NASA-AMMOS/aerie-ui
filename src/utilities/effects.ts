@@ -4833,7 +4833,6 @@ const effects = {
         },
         user,
       );
-
       const { createCommandDictionary: newCommandDictionary } = data;
 
       if (newCommandDictionary === null) {
