@@ -14,6 +14,7 @@
   import type { DataGridColumnDef, RowId } from '../../types/data-grid';
   import {
     DictionaryTypes,
+    type ChannelDictionary,
     type CommandDictionary,
     type ParameterDictionary,
     type SequenceAdaptation,
@@ -50,9 +51,9 @@
     { field: 'mission', filter: 'text', headerName: 'Mission', sortable: true, width: 100 },
     { field: 'version', filter: 'text', headerName: 'Version', sortable: true, suppressAutoSize: true, width: 100 },
     {
-      field: 'command_types_typescript_path',
+      field: 'type',
       filter: 'text',
-      headerName: 'Types Path',
+      headerName: 'Type',
       resizable: true,
       sortable: true,
       width: 220,
@@ -158,11 +159,10 @@
         let seenSet: Set<number> = new Set<number>();
 
         switch (uploadedDictionaryOrAdaptation.type) {
-          case DictionaryTypes.channel_dictionary: {
-            break;
-          }
-          case DictionaryTypes.command_dictionary || DictionaryTypes.parameter_dictionary: {
-            dictionaries.updateValue((dictionaries: (CommandDictionary | ParameterDictionary)[]) =>
+          case DictionaryTypes.telemetry_dictionary ||
+            DictionaryTypes.command_dictionary ||
+            DictionaryTypes.param_def: {
+            dictionaries.updateValue((dictionaries: (ChannelDictionary | CommandDictionary | ParameterDictionary)[]) =>
               [uploadedDictionaryOrAdaptation, ...dictionaries].filter(val => {
                 if (!seenSet.has(val.id)) {
                   seenSet.add(val.id);

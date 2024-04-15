@@ -1,7 +1,7 @@
 import { goto } from '$app/navigation';
 import { base } from '$app/paths';
 import { env } from '$env/dynamic/public';
-import type { CommandDictionary as AmpcsCommandDictionary } from '@nasa-jpl/aerie-ampcs';
+import { parse, type CommandDictionary as AmpcsCommandDictionary } from '@nasa-jpl/aerie-ampcs';
 import { get } from 'svelte/store';
 import { SearchParameters } from '../enums/searchParameters';
 import { Status } from '../enums/status';
@@ -4683,13 +4683,30 @@ const effects = {
     }
   },
 
-  async uploadCommandDictionary(dictionary: string, user: User | null): Promise<CommandDictionary | null> {
+  async uploadCommandDictionary(
+    dictionary: string,
+    user: User | null,
+    type: DictionaryTypes,
+  ): Promise<ChannelDictionary | CommandDictionary | ParameterDictionary | null> {
     try {
       if (!queryPermissions.CREATE_COMMAND_DICTIONARY(user)) {
         throwPermissionError('upload a command dictionary');
       }
 
-      const data = await reqHasura<CommandDictionary>(gql.CREATE_COMMAND_DICTIONARY, { dictionary }, user);
+      const parsedDictionary: AmpcsCommandDictionary = parse(dictionary);
+
+      const data = await reqHasura<CommandDictionary>(
+        gql.CREATE_COMMAND_DICTIONARY,
+        {
+          commandDictionary: {
+            mission: parsedDictionary.header.mission_name,
+            parsed_json: parsedDictionary,
+            type,
+            version: parsedDictionary.header.version,
+          },
+        },
+        user,
+      );
       const { createCommandDictionary: newCommandDictionary } = data;
       if (newCommandDictionary != null) {
         return newCommandDictionary;
@@ -4711,17 +4728,54 @@ const effects = {
     const splitLineDictionary = text.split('\n');
 
     switch (splitLineDictionary[1]) {
-      case '<command_dictionary>': {
-        return {
-          ...((await this.uploadCommandDictionary(text, user)) as CommandDictionary),
-          type: DictionaryTypes.command_dictionary,
-        };
+      case `<${DictionaryTypes.command_dictionary}>`: {
+        try {
+          return {
+            ...((await this.uploadCommandDictionary(
+              text,
+              user,
+              DictionaryTypes.command_dictionary,
+            )) as CommandDictionary),
+          };
+        } catch (e) {
+          catchError('Command Dictionary Upload Failed', e as Error);
+          return null;
+        }
+      }
+      case `<${DictionaryTypes.param_def}>`: {
+        try {
+          return {
+            ...((await this.uploadCommandDictionary(text, user, DictionaryTypes.param_def)) as ParameterDictionary),
+          };
+        } catch (e) {
+          catchError('Parameter Dictionary Upload Failed', e as Error);
+          return null;
+        }
+      }
+      case `<${DictionaryTypes.telemetry_dictionary}>`: {
+        try {
+          return {
+            ...((await this.uploadCommandDictionary(
+              text,
+              user,
+              DictionaryTypes.telemetry_dictionary,
+            )) as ChannelDictionary),
+          };
+        } catch (e) {
+          catchError('Channel Dictionary Upload Failed', e as Error);
+          return null;
+        }
       }
       default:
-        return {
-          ...((await this.createCustomAdaptation({ adaptation: text }, user)) as SequenceAdaptation),
-          type: DictionaryTypes.sequence_adaptation,
-        };
+        try {
+          return {
+            ...((await this.createCustomAdaptation({ adaptation: text }, user)) as SequenceAdaptation),
+            type: DictionaryTypes.sequence_adaptation,
+          };
+        } catch (e) {
+          catchError('Sequence Adaptation Upload Failed', e as Error);
+          return null;
+        }
     }
   },
 

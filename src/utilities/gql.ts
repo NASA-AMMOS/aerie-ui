@@ -80,6 +80,7 @@ export enum Queries {
   INSERT_ACTIVITY_DIRECTIVE = 'insert_activity_directive_one',
   INSERT_ACTIVITY_DIRECTIVE_TAGS = 'insert_activity_directive_tags',
   INSERT_ACTIVITY_PRESET = 'insert_activity_presets_one',
+  INSERT_COMMAND_DICTIONARY = 'insert_command_dictionary_one',
   INSERT_CONSTRAINT_DEFINITION = 'insert_constraint_definition_one',
   INSERT_CONSTRAINT_DEFINITION_TAGS = 'insert_constraint_definition_tags',
   INSERT_CONSTRAINT_METADATA = 'insert_constraint_metadata_one',
@@ -166,7 +167,6 @@ export enum Queries {
   UPDATE_USER_SEQUENCE = 'update_user_sequence_by_pk',
   UPDATE_VIEW = 'update_view_by_pk',
   UPLOADED_FILES = 'uploaded_file',
-  UPLOAD_DICTIONARY = 'uploadDictionary',
   USER_ROLE_PERMISSION = 'user_role_permission',
   USER_SEQUENCE = 'user_sequence_by_pk',
   USER_SEQUENCES = 'user_sequence',
@@ -297,12 +297,13 @@ const gql = {
   `,
 
   CREATE_COMMAND_DICTIONARY: `#graphql
-    mutation CreateCommandDictionary($dictionary: String!) {
-      createCommandDictionary: ${Queries.UPLOAD_DICTIONARY}(dictionary: $dictionary) {
-        command_types_typescript_path
+    mutation CreateCommandDictionary($commandDictionary: command_dictionary_insert_input!) {
+      createCommandDictionary: ${Queries.INSERT_COMMAND_DICTIONARY}(object: $commandDictionary) {
         created_at
         id
         mission
+        parsed_json
+        type
         version
       }
     }
@@ -1758,10 +1759,10 @@ const gql = {
   SUB_COMMAND_DICTIONARIES: `#graphql
     subscription SubCommandDictionaries {
       ${Queries.COMMAND_DICTIONARIES}(order_by: { id: desc }) {
-        command_types_typescript_path
         created_at
         id
         mission
+        type
         version
       }
     }

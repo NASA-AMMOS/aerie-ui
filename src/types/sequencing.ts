@@ -1,23 +1,22 @@
 import type { UserId } from './app';
 
 export enum DictionaryTypes {
-  'channel_dictionary',
-  'command_dictionary',
-  'parameter_dictionary',
-  'sequence_adaptation',
+  'command_dictionary' = 'command_dictionary',
+  'param_def' = 'param-def',
+  'sequence_adaptation' = 'sequence_adaptation',
+  'telemetry_dictionary' = 'telemetry_dictionary',
 }
 
 export type CommandDictionary = {
-  command_types_typescript_path: string;
   type: DictionaryTypes.command_dictionary;
 } & DictionaryType;
 
 export type ChannelDictionary = {
-  type: DictionaryTypes.channel_dictionary;
+  type: DictionaryTypes.telemetry_dictionary;
 } & DictionaryType;
 
 export type ParameterDictionary = {
-  type: DictionaryTypes.parameter_dictionary;
+  type: DictionaryTypes.param_def;
 } & DictionaryType;
 
 export type SequenceAdaptation = {
