@@ -7,7 +7,7 @@
   import { createExpansionRuleError, expansionRulesFormColumns, savingExpansionRule } from '../../stores/expansion';
   import { models } from '../../stores/model';
   import { activityTypes } from '../../stores/plan';
-  import { commandDictionaries } from '../../stores/sequencing';
+  import { dictionaries } from '../../stores/sequencing';
   import { tags } from '../../stores/tags';
   import type { User, UserId } from '../../types/app';
   import type { ExpansionRule, ExpansionRuleInsertInput, ExpansionRuleSetInput } from '../../types/expansion';
@@ -267,10 +267,10 @@
           }}
         >
           <option value={null} />
-          {#each $commandDictionaries as commandDictionary}
-            <option value={commandDictionary.id}>
-              {commandDictionary.mission} -
-              {commandDictionary.version}
+          {#each $dictionaries as dictionary}
+            <option value={dictionary.id}>
+              {dictionary.mission} -
+              {dictionary.version}
             </option>
           {/each}
         </select>
