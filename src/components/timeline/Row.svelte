@@ -3,6 +3,7 @@
 <script lang="ts">
   import CollapseIcon from '@nasa-jpl/stellar/icons/collapse.svg?component';
   import FilterIcon from '@nasa-jpl/stellar/icons/filter.svg?component';
+  import LineHeightIcon from '@nasa-jpl/stellar/icons/line_height.svg?component';
   import type { ScaleTime } from 'd3-scale';
   import { select, type Selection } from 'd3-selection';
   import { zoom as d3Zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior, type ZoomTransform } from 'd3-zoom';
@@ -154,6 +155,7 @@
   let activityLayerGroups = [];
   let activityTreeExpansionMap = {};
   let filterActivitiesByTime = false;
+  let flatMode = false;
   let activityDirectiveTimeCache = {};
 
   $: if (plan && simulationDataset !== null && layers && $externalResources && !$resourceTypesLoading) {
@@ -395,10 +397,12 @@
         spans = spans.concat(layerSpans);
       });
       spans.sort((a, b) => (a.startMs < b.startMs ? -1 : 1));
-      if (directives.length) {
-        activityLayerGroups = generateActivityTree(directives, activityTreeExpansionMap, viewTimeRange);
-        // console.log('spans :>> ', spans);
-        // activityLayerGroups = generateActivityTreeFlat(directives, spans, activityTreeExpansionMap, viewTimeRange);
+      if (directives.length || spans.length) {
+        if (flatMode) {
+          activityLayerGroups = generateActivityTreeFlat(directives, spans, activityTreeExpansionMap, viewTimeRange);
+        } else {
+          activityLayerGroups = generateActivityTree(directives, activityTreeExpansionMap, viewTimeRange);
+        }
       }
     }
   }
@@ -732,6 +736,10 @@
     filterActivitiesByTime = !filterActivitiesByTime;
   }
 
+  function onFlatModeChange() {
+    flatMode = !flatMode;
+  }
+
   function onActivityHierarchyCollapse() {
     activityTreeExpansionMap = {};
   }
@@ -895,6 +903,14 @@
           use:tooltip={{ content: 'Filter Activities by Time Window', placement: 'top' }}
         >
           <FilterIcon />
+        </button>
+        <button
+          class="st-button icon"
+          style:color={flatMode ? 'var(--st-utility-blue)' : ''}
+          on:click|stopPropagation={onFlatModeChange}
+          use:tooltip={{ content: flatMode ? 'Hierarchy Mode' : 'Flat Mode', placement: 'top' }}
+        >
+          <LineHeightIcon />
         </button>
         <button
           class="st-button icon"
