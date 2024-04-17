@@ -336,7 +336,7 @@
       );
       await effects.updateSchedulingGoalModelSpecifications(
         $model,
-        goalModelSpecUpdates.goalModelSpecsToAdd,
+        goalModelSpecUpdates.goalModelSpecsToAdd.sort((goalA, goalB) => goalA.priority - goalB.priority),
         goalModelSpecUpdates.goalIdsToDelete,
         user,
       );
