@@ -89,7 +89,7 @@
   </Input>
   <Input layout="inline">
     <label for="id">Model id</label>
-    <input class="st-input w-100" disabled name="id" value={modelId} />
+    <input class="st-input w-100" disabled name="id" value={modelId ?? ''} />
   </Input>
   <Input layout="inline">
     <label for="description">Model description</label>

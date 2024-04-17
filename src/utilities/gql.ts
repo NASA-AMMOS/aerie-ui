@@ -1961,7 +1961,7 @@ const gql = {
   `,
 
   SUB_MODEL: `#graphql
-    query SubModel($id: Int!) {
+    subscription SubModel($id: Int!) {
       model: ${Queries.MISSION_MODEL}(id: $id) {
         constraint_specification {
           constraint_id

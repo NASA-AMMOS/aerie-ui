@@ -12,7 +12,7 @@
   import SectionTitle from '../../../components/ui/SectionTitle.svelte';
   import { SearchParameters } from '../../../enums/searchParameters';
   import { constraints } from '../../../stores/constraints';
-  import { model } from '../../../stores/model';
+  import { initialModel, model } from '../../../stores/model';
   import { schedulingConditions, schedulingGoals } from '../../../stores/scheduling';
   import type { User, UserId } from '../../../types/app';
   import type { ConstraintModelSpecInsertInput } from '../../../types/constraint';
@@ -61,7 +61,10 @@
   let user: User | null = null;
 
   $: user = data.user;
-  $: model.update(() => data.initialModel);
+  $: if (data.initialModel) {
+    $initialModel = data.initialModel;
+    model.updateValue(() => data.initialModel);
+  }
   $: if ($model) {
     initialModelMetadata = {
       description: $model.description,
@@ -344,10 +347,6 @@
         const goalSpecUpdate = goalModelSpecUpdates.goalModelSpecsToUpdate[i];
         await effects.updateSchedulingGoalModelSpecification($model, goalSpecUpdate, user);
       }
-
-      const finalUpdatedModel = await effects.getModel($model.id, user);
-
-      model.update(() => finalUpdatedModel);
     }
   }
 
