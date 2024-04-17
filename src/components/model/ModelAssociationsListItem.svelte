@@ -40,6 +40,9 @@
 
   $: permissionError = `You do not have permission to edit model ${metadataType}s`;
   $: upButtonHidden = priority !== undefined && priority <= 0;
+  $: if (metadataId && isSelected) {
+    focusPriorityInput();
+  }
 
   function focusPriorityInput() {
     if (document.activeElement !== priorityInput) {
