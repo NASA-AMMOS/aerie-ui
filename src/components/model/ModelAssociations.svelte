@@ -33,14 +33,12 @@
     close: void;
     save: void;
     selectAssociation: Association;
-    updateSpecifications: Record<
-      number,
-      {
-        priority?: number;
-        revision: number | null;
-        selected: boolean;
-      }
-    >;
+    updateSpecifications: {
+      id: number;
+      priority?: number;
+      revision: number | null;
+      selected: boolean;
+    };
   }>();
 
   let metadataMap: Record<number, BaseMetadata> = {};
@@ -106,11 +104,9 @@
       detail: { id, priority },
     } = event;
     dispatch('updateSpecifications', {
-      ...selectedSpecifications,
-      [id]: {
-        ...selectedSpecifications[id],
-        priority,
-      },
+      ...selectedSpecifications[id],
+      id,
+      priority,
     });
   }
 
@@ -119,11 +115,9 @@
       detail: { id, revision },
     } = event;
     dispatch('updateSpecifications', {
-      ...selectedSpecifications,
-      [id]: {
-        ...selectedSpecifications[id],
-        revision,
-      },
+      ...selectedSpecifications[id],
+      id,
+      revision,
     });
   }
 
@@ -204,16 +198,16 @@
         <div class="association-items-container">
           {#if model !== null && selectedSpecificationsList.length > 0}
             {#each selectedSpecificationsList as spec}
-              {#if spec.selected}
+              {#if spec.selected && metadataMap[spec.id]}
                 {#if selectedAssociationId === 'goal'}
                   <ModelAssociationsListItem
                     hasEditPermission={hasEditSpecPermission}
                     isSelected={selectedSpecification?.id === spec.id}
                     metadataId={spec.id}
-                    metadataName={metadataMap[spec.id]?.name}
+                    metadataName={metadataMap[spec.id].name}
                     metadataType={selectedAssociationId}
                     priority={selectedSpecifications[spec.id]?.priority}
-                    revisions={metadataMap[spec.id]?.versions.map(({ revision }) => revision)}
+                    revisions={metadataMap[spec.id].versions.map(({ revision }) => revision)}
                     selectedRevision={selectedSpecifications[spec.id].revision}
                     on:updatePriority={onUpdatePriority}
                     on:updateRevision={onUpdateRevision}
@@ -224,9 +218,9 @@
                     hasEditPermission={hasEditSpecPermission}
                     isSelected={selectedSpecification?.id === spec.id}
                     metadataId={spec.id}
-                    metadataName={metadataMap[spec.id]?.name}
+                    metadataName={metadataMap[spec.id].name}
                     metadataType={selectedAssociationId}
-                    revisions={metadataMap[spec.id]?.versions.map(({ revision }) => revision)}
+                    revisions={metadataMap[spec.id].versions.map(({ revision }) => revision)}
                     selectedRevision={selectedSpecifications[spec.id].revision}
                     on:updateRevision={onUpdateRevision}
                     on:selectSpecification={onSelectSpecification}

@@ -41,9 +41,9 @@
   $: permissionError = `You do not have permission to edit model ${metadataType}s`;
   $: upButtonHidden = priority !== undefined && priority <= 0;
 
-  function focusInput() {
+  function focusPriorityInput() {
     if (document.activeElement !== priorityInput) {
-      priorityInput.focus();
+      priorityInput?.focus();
     }
 
     return true;
@@ -69,14 +69,14 @@
 
   function onDecreasePriority() {
     if (priority !== undefined) {
-      focusInput();
+      focusPriorityInput();
       updatePriority(priority + 1);
     }
   }
 
   function onIncreasePriority() {
     if (priority !== undefined) {
-      focusInput();
+      focusPriorityInput();
       updatePriority(priority - 1);
     }
   }
@@ -113,14 +113,7 @@
   }
 </script>
 
-<div
-  class="specification-list-item"
-  class:selected={isSelected}
-  on:click={onSelect}
-  on:keydown={onSelect}
-  role="button"
-  tabindex={1}
->
+<div class="specification-list-item" class:selected={isSelected} on:mousedown={onSelect} role="button" tabindex={1}>
   <div class="metadata-name">{metadataName}</div>
   <div class="inputs-container">
     {#if priority !== undefined}

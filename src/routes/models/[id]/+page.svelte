@@ -26,14 +26,12 @@
   import { featurePermissions } from '../../../utilities/permissions';
   import type { PageData } from './$types';
 
-  type AssociationSpecificationMap = Record<
-    number,
-    {
-      priority?: number;
-      revision: number | null;
-      selected: boolean;
-    }
-  >;
+  type AssociationSpecification = {
+    priority?: number;
+    revision: number | null;
+    selected: boolean;
+  };
+  type AssociationSpecificationMap = Record<number, AssociationSpecification>;
   export let data: PageData;
 
   let hasCreatePermission: boolean = false;
@@ -374,17 +372,28 @@
           },
         };
         break;
-      case 'goal':
+      case 'goal': {
+        const nextPriority = Object.keys(selectedGoalModelSpecifications).reduce(
+          (prevPriority: number, selectedGoalModelSpecificationId) => {
+            const goalSpecification = selectedGoalModelSpecifications[parseInt(selectedGoalModelSpecificationId)];
+            if (goalSpecification.selected === true) {
+              return prevPriority + 1;
+            }
+            return prevPriority;
+          },
+          0,
+        );
         selectedGoalModelSpecifications = {
           ...selectedGoalModelSpecifications,
           [id]: {
             ...selectedGoalModelSpecifications[id],
-            priority: 0,
+            priority: nextPriority,
             revision: selectedGoalModelSpecifications[id]?.revision ?? null,
             selected,
           },
         };
         break;
+      }
       case 'constraint':
       default:
         selectedConstraintModelSpecifications = {
@@ -398,21 +407,113 @@
     }
   }
 
-  function onUpdateSpecifications(event: CustomEvent<AssociationSpecificationMap>) {
-    const { detail: updatedSpecifications } = event;
-
-    selectedSpecifications = updatedSpecifications;
+  function onUpdateSpecifications(
+    event: CustomEvent<{
+      id: number;
+      priority?: number;
+      revision: number | null;
+      selected: boolean;
+    }>,
+  ) {
+    const {
+      detail: { id, priority, revision, selected },
+    } = event;
 
     switch (selectedAssociation) {
       case 'condition':
-        selectedConditionModelSpecifications = selectedSpecifications;
+        selectedConditionModelSpecifications = {
+          ...selectedConditionModelSpecifications,
+          [id]: {
+            revision,
+            selected,
+          },
+        };
         break;
-      case 'goal':
-        selectedGoalModelSpecifications = selectedSpecifications;
+      case 'goal': {
+        const goalModelSpecificationsList = Object.keys(selectedGoalModelSpecifications)
+          .reduce(
+            (
+              prevSpecificationsList: {
+                id: string;
+                priority?: number;
+                revision: number | null;
+                selected: boolean;
+              }[],
+              key,
+            ) => {
+              if (`${key}` !== `${id}`) {
+                return [
+                  ...prevSpecificationsList,
+                  {
+                    id: key,
+                    ...selectedGoalModelSpecifications[parseInt(key)],
+                  },
+                ];
+              }
+
+              return prevSpecificationsList;
+            },
+            [],
+          )
+          .sort((goalSpecA, goalSpecB) => {
+            if (goalSpecA.priority != null && goalSpecB.priority != null) {
+              return goalSpecA.priority - goalSpecB.priority;
+            }
+            return 0;
+          });
+
+        const prevPriority = selectedGoalModelSpecifications[id].priority ?? 0;
+        const nextPriority = priority != null ? Math.min(priority, goalModelSpecificationsList.length) : 0;
+        const priorityModifier = nextPriority < prevPriority ? 1 : -1;
+
+        selectedGoalModelSpecifications = goalModelSpecificationsList
+          .map(goalSpecification => {
+            if (
+              goalSpecification.selected &&
+              goalSpecification.priority != null &&
+              ((priorityModifier < 0 &&
+                goalSpecification.priority >= prevPriority &&
+                goalSpecification.priority <= nextPriority) ||
+                (goalSpecification.priority <= prevPriority && goalSpecification.priority >= nextPriority))
+            ) {
+              return {
+                ...goalSpecification,
+                priority: goalSpecification.priority + priorityModifier,
+              };
+            }
+
+            return goalSpecification;
+          })
+          .reduce(
+            (prevGoalSpecificationMap: Record<number, AssociationSpecification>, goalModelSpecification) => {
+              return {
+                ...prevGoalSpecificationMap,
+                [goalModelSpecification.id]: {
+                  priority: goalModelSpecification.priority,
+                  revision: goalModelSpecification.revision,
+                  selected: goalModelSpecification.selected,
+                },
+              };
+            },
+            {
+              [id]: {
+                priority: nextPriority,
+                revision,
+                selected,
+              },
+            },
+          );
         break;
+      }
       case 'constraint':
       default:
-        selectedConstraintModelSpecifications = selectedSpecifications;
+        selectedConstraintModelSpecifications = {
+          ...selectedConstraintModelSpecifications,
+          [id]: {
+            revision,
+            selected,
+          },
+        };
     }
   }
 
