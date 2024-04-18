@@ -1191,9 +1191,13 @@ const gql = {
         name
         owner
 <<<<<<< HEAD
+<<<<<<< HEAD
         parameter_dictionary_id
 =======
 >>>>>>> e8573482 (First pass at adding parcels)
+=======
+        parameter_dictionary_id
+>>>>>>> e4b876fa (Added support for a single parameter dictionary)
         sequence_adaptation_id
       }
     }
@@ -2047,9 +2051,13 @@ const gql = {
         id
         name
 <<<<<<< HEAD
+<<<<<<< HEAD
         parameter_dictionary_id
 =======
 >>>>>>> 0cb62002 (Changed sequence editing to use parcels rather than command dictionaries)
+=======
+        parameter_dictionary_id
+>>>>>>> e4b876fa (Added support for a single parameter dictionary)
         sequence_adaptation_id
       }
     }
