@@ -23,7 +23,7 @@ import {
 import { createModelError, creatingModel, models } from '../stores/model';
 import { createPlanError, creatingPlan, planId } from '../stores/plan';
 import { schedulingRequests, selectedSpecId } from '../stores/scheduling';
-import { parameterDictionaries, sequenceAdaptations } from '../stores/sequencing';
+import { commandDictionaries, parameterDictionaries, sequenceAdaptations } from '../stores/sequencing';
 import { selectedSpanId, simulationDataset, simulationDatasetId } from '../stores/simulation';
 import { createTagError } from '../stores/tags';
 import { applyViewUpdate, view, viewUpdateTimeline } from '../stores/views';
@@ -1821,7 +1821,7 @@ const effects = {
         const data = await reqHasura<{ id: number }>(gql.DELETE_COMMAND_DICTIONARY, { id }, user);
         if (data.deleteCommandDictionary != null) {
           showSuccessToast('Command Dictionary Deleted Successfully');
-          dictionaries.filterValueById(id);
+          commandDictionaries.filterValueById(id);
         } else {
           throw Error(`Unable to delete command dictionary with ID: "${id}"`);
         }

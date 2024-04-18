@@ -28,7 +28,6 @@
   export let initialParcelName: string = '';
   export let initialParcelId: number | null = null;
   export let initialParcelOwner: UserId = '';
-  export let initialParcelParameterDictionaryId: number | null = null;
   export let initialSequenceAdaptationId: number | null = null;
   export let mode: 'create' | 'edit' = 'create';
   export let user: User | null;
@@ -39,7 +38,7 @@
   let pageSubtitle: string = '';
   let pageTitle: string = '';
   let parameterDictionaryColumnDefs: DataGridColumnDef[];
-  let parameterDictionaryDataGrid: DataGrid<ParameterDictionary> = undefined;
+  let parameterDictionaryDataGrid: DataGrid<ParameterDictionary> | undefined = undefined;
   let parcelModified: boolean = false;
   let parcelCommandDictionaryId: number | null = initialParcelCommandDictionaryId;
   let parcelCreatedAt: string | null = initialParcelCreatedAt;

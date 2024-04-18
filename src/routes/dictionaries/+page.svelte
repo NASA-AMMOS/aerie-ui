@@ -315,7 +315,7 @@
         </svelte:fragment>
 
         <svelte:fragment slot="body">
-          {#if $dictionaries.length}
+          {#if $commandDictionaries.length}
             <SingleActionDataGrid
               columnDefs={commandDictionaryColumnDefs}
               {hasDeletePermission}

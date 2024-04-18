@@ -1,6 +1,5 @@
 import { writable, type Writable } from 'svelte/store';
 import {
-  type ChannelDictionary,
   type CommandDictionary,
   type ParameterDictionary,
   type Parcel,
@@ -12,12 +11,7 @@ import { gqlSubscribable } from './subscribable';
 
 /* Subscriptions. */
 
-export const dictionaries = gqlSubscribable<(ChannelDictionary | CommandDictionary | ParameterDictionary)[]>(
-  gql.SUB_COMMAND_DICTIONARIES,
-  {},
-  [],
-  null,
-);
+export const commandDictionaries = gqlSubscribable<CommandDictionary[]>(gql.SUB_COMMAND_DICTIONARIES, {}, [], null);
 
 export const parameterDictionaries = gqlSubscribable<ParameterDictionary[]>(
   gql.SUB_PARAMETER_DICTIONARIES,
