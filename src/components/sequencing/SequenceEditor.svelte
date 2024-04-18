@@ -13,13 +13,12 @@
   import { debounce } from 'lodash-es';
   import { createEventDispatcher, onMount } from 'svelte';
   import {
-    dictionaries,
+    commandDictionaries,
     userSequenceEditorColumns,
     userSequenceEditorColumnsWithFormBuilder,
     userSequencesRows,
   } from '../../stores/sequencing';
   import type { User } from '../../types/app';
-  import { DictionaryTypes } from '../../types/sequencing';
   import effects from '../../utilities/effects';
   import { seqJsonLinter } from '../../utilities/new-sequence-editor/seq-json-linter';
   import { sequenceCompletion } from '../../utilities/new-sequence-editor/sequence-completion';
@@ -75,9 +74,7 @@
   }
 
   $: {
-    const unparsedCommandDictionary = $dictionaries.find(
-      cd => cd.id === sequenceCommandDictionaryId && cd.type === DictionaryTypes.command_dictionary,
-    );
+    const unparsedCommandDictionary = $commandDictionaries.find(cd => cd.id === sequenceCommandDictionaryId);
 
     if (unparsedCommandDictionary) {
       effects.getParsedAmpcsCommandDictionary(unparsedCommandDictionary.id, user).then(parsedDictionary => {

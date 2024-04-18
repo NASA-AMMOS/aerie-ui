@@ -36,6 +36,8 @@ export enum Queries {
   DELETE_EXPANSION_RULE_TAGS = 'delete_expansion_rule_tags',
   DELETE_EXPANSION_SET = 'delete_expansion_set_by_pk',
   DELETE_MISSION_MODEL = 'delete_mission_model_by_pk',
+  DELETE_PARAMETER_DICTIONARY = 'delete_parameter_dictionary_by_pk',
+  DELETE_PARCEL = 'delete_parcel_by_pk',
   DELETE_PLAN = 'delete_plan_by_pk',
   DELETE_PLAN_SNAPSHOT = 'delete_plan_snapshot_by_pk',
   DELETE_PLAN_TAGS = 'delete_plan_tags',
@@ -90,6 +92,8 @@ export enum Queries {
   INSERT_EXPANSION_RULE = 'insert_expansion_rule_one',
   INSERT_EXPANSION_RULE_TAGS = 'insert_expansion_rule_tags',
   INSERT_MISSION_MODEL = 'insert_mission_model_one',
+  INSERT_PARAMETER_DICTIONARY = 'insert_parameter_dictionary_one',
+  INSERT_PARCEL = 'insert_parcel_one',
   INSERT_PLAN = 'insert_plan_one',
   INSERT_PLAN_SNAPSHOT_TAGS = 'insert_plan_snapshot_tags',
   INSERT_PLAN_TAGS = 'insert_plan_tags',
@@ -116,6 +120,9 @@ export enum Queries {
   MERGE_REQUEST = 'merge_request_by_pk',
   MERGE_REQUESTS = 'merge_request',
   MISSION_MODELS = 'mission_model',
+  PARAMETER_DICTIONARIES = 'parameter_dictionary',
+  PARCEL_BY_PK = 'parcel_by_pk',
+  PARCELS = 'parcel',
   PLAN = 'plan_by_pk',
   PLANS = 'plan',
   PLAN_DATASETS = 'plan_dataset',
@@ -152,6 +159,7 @@ export enum Queries {
   UPDATE_CONSTRAINT_METADATA = 'update_constraint_metadata_by_pk',
   UPDATE_CONSTRAINT_SPECIFICATION = 'update_constraint_specification_by_pk',
   UPDATE_EXPANSION_RULE = 'update_expansion_rule_by_pk',
+  UPDATE_PARCEL = 'update_parcel_by_pk',
   UPDATE_PLAN_SNAPSHOT = 'update_plan_snapshot_by_pk',
   UPDATE_SCHEDULING_CONDITION_METADATA = 'update_scheduling_condition_metadata_by_pk',
   UPDATE_SCHEDULING_GOAL_METADATA = 'update_scheduling_goal_metadata_by_pk',
@@ -303,7 +311,6 @@ const gql = {
         id
         mission
         parsed_json
-        type
         version
       }
     }
@@ -407,6 +414,26 @@ const gql = {
         id
         created_at
         owner
+      }
+    }
+  `,
+
+  CREATE_PARAMETER_DICTIONARY: `#graphql
+    mutation CreateParameterDictionary($parameterDictionary: parameter_dictionary_insert_input!) {
+      createParameterDictionary: ${Queries.INSERT_PARAMETER_DICTIONARY}(object: $parameterDictionary) {
+        created_at
+        id
+        mission
+        parsed_json
+        version
+      }
+    }
+  `,
+
+  CREATE_PARCEL: `#graphql
+    mutation CreateParcel($parcel: parcel_insert_input!) {
+      createParcel: ${Queries.INSERT_PARCEL}(object: $parcel) {
+        id
       }
     }
   `,
@@ -768,6 +795,22 @@ const gql = {
   DELETE_MODEL: `#graphql
     mutation DeleteModel($id: Int!) {
       deleteModel: ${Queries.DELETE_MISSION_MODEL}(id: $id) {
+        id
+      }
+    }
+  `,
+
+  DELETE_PARAMETER_DICTIONARY: `#graphql
+    mutation DeleteParameterDictionary($id: Int!) {
+      deleteParameterDictionary: ${Queries.DELETE_PARAMETER_DICTIONARY}(id: $id) {
+        id
+      }
+    }
+  `,
+
+  DELETE_PARCEL: `#graphql
+    mutation DeleteParcel($id: Int!) {
+      deleteParcel: ${Queries.DELETE_PARCEL}(id: $id) {
         id
       }
     }
@@ -1135,6 +1178,19 @@ const gql = {
         }
         owner
         version
+      }
+    }
+  `,
+
+  GET_PARCEL: `#graphql
+    query GetParcel($id: Int!) {
+      parcel: ${Queries.PARCEL_BY_PK}(id: $id) {
+        command_dictionary_id
+        created_at
+        id
+        name
+        owner
+        sequence_adaptation_id
       }
     }
   `,
@@ -1762,7 +1818,6 @@ const gql = {
         created_at
         id
         mission
-        type
         version
       }
     }
@@ -1957,6 +2012,27 @@ const gql = {
         }
         owner
         version
+      }
+    }
+  `,
+
+  SUB_PARAMETER_DICTIONARIES: `#graphql
+    subscription SubParameterDictionaries {
+      ${Queries.PARAMETER_DICTIONARIES}(order_by: { id: desc }) {
+        created_at
+        id
+        mission
+        version
+      }
+    }
+  `,
+
+  SUB_PARCELS: `#graphql
+    subscription SubParcels {
+      ${Queries.PARCELS}(order_by: { id: desc }) {
+        created_at
+        id
+        name
       }
     }
   `,
@@ -2707,6 +2783,17 @@ const gql = {
       updateExpansionRule: ${Queries.UPDATE_EXPANSION_RULE}(
         pk_columns: { id: $id }, _set: $rule
       ) {
+        updated_at
+      }
+    }
+  `,
+
+  UPDATE_PARCEL: `#graphql
+    mutation UpdateParcel($id: Int!, $parcel: parcel_set_input!) {
+      updateParcel: ${Queries.UPDATE_PARCEL}(
+        pk_columns: { id: $id }, _set: $parcel
+      ) {
+        id
         updated_at
       }
     }

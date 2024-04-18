@@ -7,31 +7,31 @@ export enum DictionaryTypes {
   'telemetry_dictionary' = 'telemetry_dictionary',
 }
 
-export type CommandDictionary = {
-  type: DictionaryTypes.command_dictionary;
-} & DictionaryType;
+export type CommandDictionary = DictionaryType;
 
-export type ChannelDictionary = {
-  type: DictionaryTypes.telemetry_dictionary;
-} & DictionaryType;
-
-export type ParameterDictionary = {
-  type: DictionaryTypes.param_def;
-} & DictionaryType;
+export type ParameterDictionary = DictionaryType;
 
 export type SequenceAdaptation = {
   adaptation: string;
-  created_at: string;
-  type: DictionaryTypes.sequence_adaptation;
 } & DictionaryType;
 
 export type DictionaryType = {
   created_at: string;
   id: number;
   mission: string;
-  type: DictionaryTypes;
   version: string;
 };
+
+export type Parcel = {
+  command_dictionary_id: number;
+  created_at: string;
+  id: number;
+  name: string;
+  owner: UserId;
+  sequence_adaptation_id?: number;
+};
+
+export type ParcelInsertInput = Omit<Parcel, 'created_at' | 'id' | 'owner' | 'sequence_adaptation_id'>;
 
 export type GetSeqJsonResponseError = {
   location: {

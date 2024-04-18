@@ -4,14 +4,9 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import { onMount } from 'svelte';
-  import { dictionaries, userSequenceFormColumns } from '../../stores/sequencing';
+  import { commandDictionaries, userSequenceFormColumns } from '../../stores/sequencing';
   import type { User, UserId } from '../../types/app';
-  import {
-    DictionaryTypes,
-    type SequenceAdaptation,
-    type UserSequence,
-    type UserSequenceInsertInput,
-  } from '../../types/sequencing';
+  import { type SequenceAdaptation, type UserSequence, type UserSequenceInsertInput } from '../../types/sequencing';
   import effects from '../../utilities/effects';
   import { isSaveEvent } from '../../utilities/keyboardEvents';
   import { permissionHandler } from '../../utilities/permissionHandler';
@@ -208,10 +203,10 @@
           }}
         >
           <option value={null} />
-          {#each $dictionaries.filter(cd => cd.type === DictionaryTypes.command_dictionary) as dictionary}
-            <option value={dictionary.id}>
-              {dictionary.mission} -
-              {dictionary.version}
+          {#each $commandDictionaries as commandDictionary}
+            <option value={commandDictionary.id}>
+              {commandDictionary.mission} -
+              {commandDictionary.version}
             </option>
           {/each}
         </select>

@@ -6,7 +6,7 @@
   import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
   import { expansionSetsFormColumns, savingExpansionSet } from '../../stores/expansion';
   import { models } from '../../stores/model';
-  import { dictionaries } from '../../stores/sequencing';
+  import { commandDictionaries } from '../../stores/sequencing';
   import type { ActivityTypeExpansionRules } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
@@ -175,10 +175,10 @@
         <label for="commandDictionary">Command Dictionary</label>
         <select bind:value={setDictionaryId} class="st-select w-100" name="commandDictionary">
           <option value={null} />
-          {#each $dictionaries as dictionary}
-            <option value={dictionary.id}>
-              {dictionary.mission} -
-              {dictionary.version}
+          {#each $commandDictionaries as commandDictionary}
+            <option value={commandDictionary.id}>
+              {commandDictionary.mission} -
+              {commandDictionary.version}
             </option>
           {/each}
         </select>

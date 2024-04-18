@@ -10,11 +10,10 @@
   import SingleActionDataGrid from '../../components/ui/DataGrid/SingleActionDataGrid.svelte';
   import Panel from '../../components/ui/Panel.svelte';
   import SectionTitle from '../../components/ui/SectionTitle.svelte';
-  import { dictionaries, sequenceAdaptations } from '../../stores/sequencing';
+  import { commandDictionaries, parameterDictionaries, sequenceAdaptations } from '../../stores/sequencing';
   import type { DataGridColumnDef, RowId } from '../../types/data-grid';
   import {
     DictionaryTypes,
-    type ChannelDictionary,
     type CommandDictionary,
     type ParameterDictionary,
     type SequenceAdaptation,
@@ -28,16 +27,19 @@
   export let data: PageData;
 
   type cdCellRendererParams = {
-    deleteCommandDictionary?: (dictionary: CommandDictionary) => void;
-    deleteSequenceAdaptation?: (sequenceAdaptation: SequenceAdaptation) => void;
+    deleteCommandDictionary?: (commandDictionary: CommandDictionary) => void;
   };
   type CommandDictionaryCellRendererParams = ICellRendererParams<CommandDictionary> & cdCellRendererParams;
+  type pCellRendererParams = {
+    deleteParameterDictionary?: (parameterDictionary: ParameterDictionary) => void;
+  };
+  type ParameterDictionaryCellRendererParams = ICellRendererParams<ParameterDictionary> & pCellRendererParams;
   type seqCellRendererParams = {
     deleteSequenceAdaptation: (sequenceAdaptation: SequenceAdaptation) => void;
   };
   type SequenceAdaptationCellRendererParams = ICellRendererParams<SequenceAdaptation> & seqCellRendererParams;
 
-  const columnDefs: DataGridColumnDef[] = [
+  const sharedDictionaryColumnDefs: DataGridColumnDef[] = [
     {
       field: 'id',
       filter: 'number',
@@ -50,15 +52,11 @@
     },
     { field: 'mission', filter: 'text', headerName: 'Mission', sortable: true, width: 100 },
     { field: 'version', filter: 'text', headerName: 'Version', sortable: true, suppressAutoSize: true, width: 100 },
-    {
-      field: 'type',
-      filter: 'text',
-      headerName: 'Type',
-      resizable: true,
-      sortable: true,
-      width: 220,
-    },
     { field: 'created_at', filter: 'text', headerName: 'Created At', resizable: true, sortable: true },
+  ];
+
+  const commandDictionaryColumnDefs: DataGridColumnDef[] = [
+    ...sharedDictionaryColumnDefs,
     {
       cellClass: 'action-cell-container',
       cellRenderer: (params: CommandDictionaryCellRendererParams) => {
@@ -81,6 +79,41 @@
       },
       cellRendererParams: {
         deleteCommandDictionary,
+      } as pCellRendererParams,
+      field: 'actions',
+      headerName: '',
+      resizable: false,
+      sortable: false,
+      suppressAutoSize: true,
+      suppressSizeToFit: true,
+      width: 25,
+    },
+  ];
+
+  const parameterDictionaryColumnDefs: DataGridColumnDef[] = [
+    ...sharedDictionaryColumnDefs,
+    {
+      cellClass: 'action-cell-container',
+      cellRenderer: (params: ParameterDictionaryCellRendererParams) => {
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'actions-cell';
+        new DataGridActions({
+          props: {
+            deleteCallback: params.deleteParameterDictionary,
+            deleteTooltip: {
+              content: 'Delete Parameter Dictionary',
+              placement: 'bottom',
+            },
+            hasDeletePermission,
+            rowData: params.data,
+          },
+          target: actionsDiv,
+        });
+
+        return actionsDiv;
+      },
+      cellRendererParams: {
+        deleteParameterDictionary,
       } as cdCellRendererParams,
       field: 'actions',
       headerName: '',
@@ -159,11 +192,9 @@
         let seenSet: Set<number> = new Set<number>();
 
         switch (uploadedDictionaryOrAdaptation.type) {
-          case DictionaryTypes.telemetry_dictionary ||
-            DictionaryTypes.command_dictionary ||
-            DictionaryTypes.param_def: {
-            dictionaries.updateValue((dictionaries: (ChannelDictionary | CommandDictionary | ParameterDictionary)[]) =>
-              [uploadedDictionaryOrAdaptation, ...dictionaries].filter(val => {
+          case DictionaryTypes.command_dictionary: {
+            commandDictionaries.updateValue((commandDictionaries: CommandDictionary[]) =>
+              [uploadedDictionaryOrAdaptation.uploadedObject, ...commandDictionaries].filter(val => {
                 if (!seenSet.has(val.id)) {
                   seenSet.add(val.id);
                   return true;
@@ -173,9 +204,25 @@
               }),
             );
 
-            showSuccessToast('Dictionary Created Successfully');
+            showSuccessToast('Command Dictionary Created Successfully');
             break;
           }
+          case DictionaryTypes.param_def:
+            parameterDictionaries.updateValue((parameterDictionaries: ParameterDictionary[]) =>
+              [uploadedDictionaryOrAdaptation.uploadedObject, ...parameterDictionaries].filter(val => {
+                if (!seenSet.has(val.id)) {
+                  seenSet.add(val.id);
+                  return true;
+                } else {
+                  return false;
+                }
+              }),
+            );
+
+            showSuccessToast('Parameter Dictionary Created Successfully');
+            break;
+          case DictionaryTypes.telemetry_dictionary:
+            break;
           case DictionaryTypes.sequence_adaptation: {
             showSuccessToast('Sequence Adaptation Created Successfully');
 
@@ -199,6 +246,14 @@
     deleteCommandDictionary({ id: event.detail[0] as number });
   }
 
+  function deleteParameterDictionary({ id }: Pick<ParameterDictionary, 'id'>) {
+    effects.deleteParameterDictionary(id, data.user);
+  }
+
+  function deleteParameterDictionaryContext(event: CustomEvent<RowId[]>) {
+    deleteParameterDictionary({ id: event.detail[0] as number });
+  }
+
   function deleteSequenceAdaptation({ id }: Pick<SequenceAdaptation, 'id'>) {
     effects.deleteSequenceAdaptation(id, data.user);
   }
@@ -208,17 +263,17 @@
   }
 </script>
 
-<PageTitle title="Command Dictionaries" />
+<PageTitle title="Dictionaries" />
 
 <CssGrid rows="var(--nav-header-height) calc(100vh - var(--nav-header-height))">
   <Nav user={data.user}>
-    <span slot="title">Command Dictionaries</span>
+    <span slot="title">Dictionaries</span>
   </Nav>
 
   <CssGrid columns="20% auto">
     <Panel borderRight padBody={false}>
       <svelte:fragment slot="header">
-        <SectionTitle>New Command Dictionary</SectionTitle>
+        <SectionTitle>New Dictionary</SectionTitle>
       </svelte:fragment>
 
       <svelte:fragment slot="body">
@@ -226,7 +281,7 @@
           <AlertError class="m-2" error={createDictionaryError} />
 
           <fieldset>
-            <label for="file">AMPCS XML File</label>
+            <label for="file">AMPCS XML File or Sequence Adaptation</label>
             <input
               class="w-100 st-typography-body"
               name="file"
@@ -264,17 +319,38 @@
         </svelte:fragment>
 
         <svelte:fragment slot="body">
-          {#if $dictionaries.length}
+          {#if $commandDictionaries.length}
             <SingleActionDataGrid
-              {columnDefs}
+              columnDefs={commandDictionaryColumnDefs}
               {hasDeletePermission}
-              itemDisplayText="Dictionaries"
-              items={$dictionaries}
+              itemDisplayText="Command Dictionaries"
+              items={$commandDictionaries}
               user={data.user}
               on:deleteItem={deleteCommandDictionaryContext}
             />
           {:else}
             No Command Dictionaries Found
+          {/if}
+        </svelte:fragment>
+      </Panel>
+
+      <Panel>
+        <svelte:fragment slot="header">
+          <SectionTitle>Parameter Dictionaries</SectionTitle>
+        </svelte:fragment>
+
+        <svelte:fragment slot="body">
+          {#if $parameterDictionaries.length}
+            <SingleActionDataGrid
+              columnDefs={parameterDictionaryColumnDefs}
+              {hasDeletePermission}
+              itemDisplayText="Parameter Dictionaries"
+              items={$parameterDictionaries}
+              user={data.user}
+              on:deleteItem={deleteParameterDictionaryContext}
+            />
+          {:else}
+            No Parameter Dictionaries Found
           {/if}
         </svelte:fragment>
       </Panel>
