@@ -14,12 +14,12 @@
   import { createEventDispatcher, onMount } from 'svelte';
   import {
     commandDictionaries,
-    parcels,
     userSequenceEditorColumns,
     userSequenceEditorColumnsWithFormBuilder,
     userSequencesRows,
   } from '../../stores/sequencing';
   import type { User } from '../../types/app';
+  import type { Parcel } from '../../types/sequencing';
   import effects from '../../utilities/effects';
   import { seqJsonLinter } from '../../utilities/new-sequence-editor/seq-json-linter';
   import { sequenceCompletion } from '../../utilities/new-sequence-editor/sequence-completion';
@@ -32,11 +32,11 @@
   import SectionTitle from '../ui/SectionTitle.svelte';
   import SelectedCommand from './form/selected-command.svelte';
 
+  export let parcel: Parcel | null = null;
   export let showCommandFormBuilder: boolean = false;
   export let readOnly: boolean = false;
   export let sequenceName: string = '';
   export let sequenceDefinition: string = '';
-  export let sequenceParcelId: number | null = null;
   export let sequenceSeqJson: string = '';
   export let title: string = 'Sequence - Definition Editor';
   export let user: User | null;
@@ -74,7 +74,6 @@
   }
 
   $: {
-    const parcel = $parcels.find(p => p.id === sequenceParcelId);
     const unparsedCommandDictionary = $commandDictionaries.find(cd => cd.id === parcel?.command_dictionary_id);
 
     if (unparsedCommandDictionary) {

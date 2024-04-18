@@ -28,10 +28,10 @@ export type Parcel = {
   id: number;
   name: string;
   owner: UserId;
-  sequence_adaptation_id?: number;
+  sequence_adaptation_id: number | null;
 };
 
-export type ParcelInsertInput = Omit<Parcel, 'created_at' | 'id' | 'owner' | 'sequence_adaptation_id'>;
+export type ParcelInsertInput = Omit<Parcel, 'created_at' | 'id' | 'owner'>;
 
 export type GetSeqJsonResponseError = {
   location: {

@@ -8,7 +8,6 @@
 </script>
 
 <SequenceForm
-  adaptation={data.adaptation}
   initialSequenceCreatedAt={data.initialSequence.created_at}
   initialSequenceDefinition={data.initialSequence.definition}
   initialSequenceName={data.initialSequence.name}

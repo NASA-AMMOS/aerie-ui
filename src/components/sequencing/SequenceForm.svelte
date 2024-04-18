@@ -3,10 +3,9 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import { onMount } from 'svelte';
   import { parcels, userSequenceFormColumns } from '../../stores/sequencing';
   import type { User, UserId } from '../../types/app';
-  import { type SequenceAdaptation, type UserSequence, type UserSequenceInsertInput } from '../../types/sequencing';
+  import { type Parcel, type UserSequence, type UserSequenceInsertInput } from '../../types/sequencing';
   import effects from '../../utilities/effects';
   import { isSaveEvent } from '../../utilities/keyboardEvents';
   import { permissionHandler } from '../../utilities/permissionHandler';
@@ -18,7 +17,6 @@
   import SectionTitle from '../ui/SectionTitle.svelte';
   import SequenceEditor from './SequenceEditor.svelte';
 
-  export let adaptation: SequenceAdaptation | null;
   export let initialSequenceCreatedAt: string | null = null;
   export let initialSequenceDefinition: string = ``;
   export let initialSequenceId: number | null = null;
@@ -30,6 +28,7 @@
   export let user: User | null;
 
   let hasPermission: boolean = false;
+  let parcel: Parcel | null = null;
   let pageSubtitle: string = '';
   let pageTitle: string = '';
   let permissionError = 'You do not have permission to edit this sequence.';
@@ -63,10 +62,23 @@
     pageSubtitle = mode === 'edit' ? savedSequenceName : '';
     saveButtonText = mode === 'edit' && !sequenceModified ? 'Saved' : 'Save';
   }
+  $: {
+    if (sequenceParcelId) {
+      parcel = $parcels.find(p => p.id === sequenceParcelId) ?? null;
 
-  onMount(() => {
-    loadAdaptation(adaptation);
-  });
+      loadSequenceAdaptation();
+    }
+  }
+
+  async function loadSequenceAdaptation(): Promise<void> {
+    if (parcel?.sequence_adaptation_id) {
+      const adaptation = await effects.getSequenceAdaptation(parcel?.sequence_adaptation_id, user);
+
+      if (adaptation) {
+        Function(adaptation.adaptation)();
+      }
+    }
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async function getUserSequenceFromSeqJson() {
@@ -92,12 +104,6 @@
     if (isSaveEvent(event)) {
       event.preventDefault();
       saveSequence();
-    }
-  }
-
-  function loadAdaptation(sequenceAdaptation: SequenceAdaptation | null): void {
-    if (sequenceAdaptation) {
-      Function(sequenceAdaptation.adaptation)();
     }
   }
 
@@ -238,10 +244,10 @@
   <CssGridGutter track={1} type="column" />
 
   <SequenceEditor
+    {parcel}
     showCommandFormBuilder={true}
     sequenceDefinition={initialSequenceDefinition}
     {sequenceName}
-    {sequenceParcelId}
     {sequenceSeqJson}
     title="{mode === 'create' ? 'New' : 'Edit'} Sequence - Definition Editor"
     {user}

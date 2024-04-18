@@ -3231,11 +3231,11 @@ const effects = {
     }
   },
 
-  async getSequenceAdaptation(user: User | null): Promise<SequenceAdaptation | null> {
+  async getSequenceAdaptation(sequence_adaptation_id: number, user: User | null): Promise<SequenceAdaptation | null> {
     try {
       const data = await reqHasura<[sequence_adaptation: SequenceAdaptation]>(
         gql.GET_SEQUENCE_ADAPTATION,
-        undefined,
+        { sequence_adaptation_id },
         user,
       );
       const { sequence_adaptation } = data;

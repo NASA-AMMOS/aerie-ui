@@ -15,11 +15,9 @@ export const load: PageLoad = async ({ parent, params }) => {
 
     if (sequenceIdAsNumber !== null) {
       const initialSequence: UserSequence | null = await effects.getUserSequence(sequenceIdAsNumber, user);
-      const adaptation = await effects.getSequenceAdaptation(user);
 
       if (initialSequence !== null) {
         return {
-          adaptation,
           initialSequence,
           user,
         };

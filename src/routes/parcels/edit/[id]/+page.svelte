@@ -13,6 +13,7 @@
   initialParcelId={data.initialParcel.id}
   initialParcelName={data.initialParcel.name}
   initialParcelOwner={data.initialParcel.owner}
+  initialSequenceAdaptationId={data.initialParcel.sequence_adaptation_id}
   mode="edit"
   user={data.user}
 />

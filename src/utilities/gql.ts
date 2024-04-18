@@ -1439,8 +1439,8 @@ const gql = {
   `,
 
   GET_SEQUENCE_ADAPTATION: `#graphql
-    query GetSequenceAdaptation {
-      sequence_adaptation(order_by: {created_at: desc}) {
+    query GetSequenceAdaptation($sequence_adaptation_id: Int!) {
+      ${Queries.SEQUENCE_ADAPTATION}(where: { id: { _eq: $sequence_adaptation_id }}) {
         adaptation
       }
     }
@@ -2796,7 +2796,6 @@ const gql = {
         pk_columns: { id: $id }, _set: $parcel
       ) {
         id
-        updated_at
       }
     }
   `,

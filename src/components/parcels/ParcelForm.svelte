@@ -4,10 +4,10 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import type { CellEditingStoppedEvent, ValueGetterParams } from 'ag-grid-community';
-  import { commandDictionaries } from '../../stores/sequencing';
+  import { commandDictionaries, sequenceAdaptations } from '../../stores/sequencing';
   import type { User, UserId } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
-  import type { CommandDictionary, Parcel, ParcelInsertInput } from '../../types/sequencing';
+  import type { CommandDictionary, Parcel, ParcelInsertInput, SequenceAdaptation } from '../../types/sequencing';
   import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
@@ -22,6 +22,7 @@
   export let initialParcelName: string = '';
   export let initialParcelId: number | null = null;
   export let initialParcelOwner: UserId = '';
+  export let initialSequenceAdaptationId: number | null = null;
   export let mode: 'create' | 'edit' = 'create';
   export let user: User | null;
 
@@ -36,14 +37,18 @@
   let parcelName: string = initialParcelName;
   let parcelId: number | null = initialParcelId;
   let parcelOwner: UserId = initialParcelOwner;
+  let parcelSequenceAdaptationId: number | null = initialSequenceAdaptationId;
   let permissionError = 'You do not have permission to edit this parcel.';
   let saveButtonClass: 'primary' | 'secondary' = 'primary';
   let saveButtonText: string = '';
   let savedParcelCommandDictionaryId: number | null = parcelCommandDictionaryId;
   let savedParcelName: string = parcelName;
+  let savedSequenceAdaptationId: number | null = parcelSequenceAdaptationId;
   let savingParcel: boolean = false;
+  let sequenceAdaptationColumnDefs: DataGridColumnDef[];
+  let sequenceAdaptationDataGrid: DataGrid<SequenceAdaptation> | undefined = undefined;
 
-  const sharedDictionaryColumnDefs: DataGridColumnDef[] = [
+  const sharedColumnDefs: DataGridColumnDef[] = [
     {
       field: 'id',
       filter: 'number',
@@ -54,9 +59,17 @@
       suppressSizeToFit: true,
       width: 60,
     },
+  ];
+
+  const createdAtColumnDef: DataGridColumnDef[] = [
+    { field: 'created_at', filter: 'text', headerName: 'Created At', resizable: true, sortable: true },
+  ];
+
+  const sharedDictionaryColumnDefs: DataGridColumnDef[] = [
+    ...sharedColumnDefs,
     { field: 'mission', filter: 'text', headerName: 'Mission', sortable: true, width: 100 },
     { field: 'version', filter: 'text', headerName: 'Version', sortable: true, suppressAutoSize: true, width: 100 },
-    { field: 'created_at', filter: 'text', headerName: 'Created At', resizable: true, sortable: true },
+    ...createdAtColumnDef,
   ];
 
   $: {
@@ -80,9 +93,35 @@
     ];
   }
 
+  $: {
+    sequenceAdaptationColumnDefs = [
+      {
+        cellDataType: 'boolean',
+        editable: hasPermission,
+        headerName: '',
+        suppressAutoSize: true,
+        suppressSizeToFit: true,
+        valueGetter: (params: ValueGetterParams<SequenceAdaptation>) => {
+          const { data } = params;
+          if (data) {
+            return parcelSequenceAdaptationId === data.id;
+          }
+          return false;
+        },
+        width: 35,
+      },
+      { field: 'name', filter: 'text', headerName: 'Name', sortable: true, width: 100 },
+      ...sharedColumnDefs,
+      ...createdAtColumnDef,
+    ];
+  }
+
   $: saveButtonClass = parcelModified && saveButtonEnabled ? 'primary' : 'secondary';
   $: saveButtonEnabled = parcelCommandDictionaryId !== null && parcelName !== '';
-  $: parcelModified = parcelCommandDictionaryId !== savedParcelCommandDictionaryId || parcelName !== savedParcelName;
+  $: parcelModified =
+    parcelCommandDictionaryId !== savedParcelCommandDictionaryId ||
+    parcelName !== savedParcelName ||
+    parcelSequenceAdaptationId !== savedSequenceAdaptationId;
 
   $: {
     hasPermission =
@@ -107,15 +146,28 @@
     commandDictionaryDataGrid?.redrawRows();
   }
 
+  function onToggleSequenceAdaptation(event: CustomEvent<CellEditingStoppedEvent<SequenceAdaptation, boolean>>) {
+    const {
+      detail: { data, newValue },
+    } = event;
+
+    if (data) {
+      parcelSequenceAdaptationId = newValue ? data.id : null;
+    }
+
+    sequenceAdaptationDataGrid?.redrawRows();
+  }
+
   async function saveParcel() {
     if (saveButtonEnabled) {
       savingParcel = true;
 
-      if (parcelCommandDictionaryId !== undefined && parcelName !== '') {
+      if (parcelCommandDictionaryId !== null && parcelName !== '') {
         if (mode === 'create') {
           const newParcel: ParcelInsertInput = {
             command_dictionary_id: parcelCommandDictionaryId,
             name: parcelName,
+            sequence_adaptation_id: parcelSequenceAdaptationId,
           };
           const newParcelId = await effects.createParcel(newParcel, user);
 
@@ -126,6 +178,7 @@
           const updatedParcel: Partial<Parcel> = {
             command_dictionary_id: parcelCommandDictionaryId,
             name: parcelName,
+            sequence_adaptation_id: parcelSequenceAdaptationId,
           };
           await effects.updateParcel(parcelId, updatedParcel, parcelOwner, user);
         }
@@ -208,6 +261,25 @@
           />
         {:else}
           No Command Dictionaries Found
+        {/if}
+      </svelte:fragment>
+    </Panel>
+
+    <Panel>
+      <svelte:fragment slot="header">
+        <SectionTitle>Sequence Adaptations</SectionTitle>
+      </svelte:fragment>
+
+      <svelte:fragment slot="body">
+        {#if $sequenceAdaptations.length}
+          <DataGrid
+            bind:this={sequenceAdaptationDataGrid}
+            columnDefs={sequenceAdaptationColumnDefs}
+            rowData={$sequenceAdaptations}
+            on:cellEditingStopped={onToggleSequenceAdaptation}
+          />
+        {:else}
+          No Sequence Adaptations Found
         {/if}
       </svelte:fragment>
     </Panel>
