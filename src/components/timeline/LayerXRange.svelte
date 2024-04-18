@@ -106,6 +106,8 @@
       maxXWidth = Number.MIN_SAFE_INTEGER;
       const colorScale = getColorScale();
 
+      const [viewStart, viewEnd] = xScaleView.domain().map(x => x.getTime());
+
       for (let i = 0; i < points.length; ++i) {
         const point = points[i];
         if (point.is_gap || point.is_null) {
@@ -121,8 +123,16 @@
         }
         i = j - 1; // Minus since the loop auto increments i at the end of the block.
 
+        const startMs = point.x;
+        const endMs = nextPoint ? nextPoint.x : points[i].x;
+
+        // Do not draw if box is out of view
+        if (startMs < viewStart && endMs > viewEnd) {
+          continue;
+        }
+
         const xStart = clamp(xScaleView(point.x), 0, drawWidth);
-        const xEnd = clamp(xScaleView(nextPoint ? nextPoint.x : points[i].x), 0, drawWidth);
+        const xEnd = clamp(xScaleView(endMs), 0, drawWidth);
 
         const xWidth = xEnd - xStart;
         const y = 0;
