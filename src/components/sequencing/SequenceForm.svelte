@@ -245,6 +245,7 @@
     showCommandFormBuilder={true}
     sequenceDefinition={initialSequenceDefinition}
     {sequenceName}
+    {sequenceParcelId}
     {sequenceSeqJson}
     title="{mode === 'create' ? 'New' : 'Edit'} Sequence - Definition Editor"
     {user}

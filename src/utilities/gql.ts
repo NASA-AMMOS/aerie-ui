@@ -2046,7 +2046,10 @@ const gql = {
         created_at
         id
         name
+<<<<<<< HEAD
         parameter_dictionary_id
+=======
+>>>>>>> 0cb62002 (Changed sequence editing to use parcels rather than command dictionaries)
         sequence_adaptation_id
       }
     }
