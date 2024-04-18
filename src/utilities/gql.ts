@@ -1190,6 +1190,7 @@ const gql = {
         id
         name
         owner
+        parameter_dictionary_id
         sequence_adaptation_id
       }
     }
@@ -2034,6 +2035,7 @@ const gql = {
         created_at
         id
         name
+        parameter_dictionary_id
         sequence_adaptation_id
       }
     }

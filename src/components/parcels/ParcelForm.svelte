@@ -4,10 +4,16 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import type { CellEditingStoppedEvent, ValueGetterParams } from 'ag-grid-community';
-  import { commandDictionaries, sequenceAdaptations } from '../../stores/sequencing';
+  import { commandDictionaries, parameterDictionaries, sequenceAdaptations } from '../../stores/sequencing';
   import type { User, UserId } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
-  import type { CommandDictionary, Parcel, ParcelInsertInput, SequenceAdaptation } from '../../types/sequencing';
+  import type {
+    CommandDictionary,
+    ParameterDictionary,
+    Parcel,
+    ParcelInsertInput,
+    SequenceAdaptation,
+  } from '../../types/sequencing';
   import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
@@ -22,6 +28,7 @@
   export let initialParcelName: string = '';
   export let initialParcelId: number | null = null;
   export let initialParcelOwner: UserId = '';
+  export let initialParcelParameterDictionaryId: number | null = null;
   export let initialSequenceAdaptationId: number | null = null;
   export let mode: 'create' | 'edit' = 'create';
   export let user: User | null;
@@ -31,18 +38,22 @@
   let hasPermission: boolean = false;
   let pageSubtitle: string = '';
   let pageTitle: string = '';
+  let parameterDictionaryColumnDefs: DataGridColumnDef[];
+  let parameterDictionaryDataGrid: DataGrid<ParameterDictionary> = undefined;
   let parcelModified: boolean = false;
   let parcelCommandDictionaryId: number | null = initialParcelCommandDictionaryId;
   let parcelCreatedAt: string | null = initialParcelCreatedAt;
   let parcelName: string = initialParcelName;
   let parcelId: number | null = initialParcelId;
   let parcelOwner: UserId = initialParcelOwner;
+  let parcelParameterDictionaryId: number | null = initialParcelCommandDictionaryId;
   let parcelSequenceAdaptationId: number | null = initialSequenceAdaptationId;
   let permissionError = 'You do not have permission to edit this parcel.';
   let saveButtonClass: 'primary' | 'secondary' = 'primary';
   let saveButtonText: string = '';
   let savedParcelCommandDictionaryId: number | null = parcelCommandDictionaryId;
   let savedParcelName: string = parcelName;
+  let savedParcelParameterDictionaryId: number | null = parcelParameterDictionaryId;
   let savedSequenceAdaptationId: number | null = parcelSequenceAdaptationId;
   let savingParcel: boolean = false;
   let sequenceAdaptationColumnDefs: DataGridColumnDef[];
@@ -94,6 +105,27 @@
   }
 
   $: {
+    parameterDictionaryColumnDefs = [
+      {
+        cellDataType: 'boolean',
+        editable: hasPermission,
+        headerName: '',
+        suppressAutoSize: true,
+        suppressSizeToFit: true,
+        valueGetter: (params: ValueGetterParams<ParameterDictionary>) => {
+          const { data } = params;
+          if (data) {
+            return parcelParameterDictionaryId === data.id;
+          }
+          return false;
+        },
+        width: 35,
+      },
+      ...sharedDictionaryColumnDefs,
+    ];
+  }
+
+  $: {
     sequenceAdaptationColumnDefs = [
       {
         cellDataType: 'boolean',
@@ -121,6 +153,7 @@
   $: parcelModified =
     parcelCommandDictionaryId !== savedParcelCommandDictionaryId ||
     parcelName !== savedParcelName ||
+    parcelParameterDictionaryId !== savedParcelParameterDictionaryId ||
     parcelSequenceAdaptationId !== savedSequenceAdaptationId;
 
   $: {
@@ -146,6 +179,18 @@
     commandDictionaryDataGrid?.redrawRows();
   }
 
+  function onToggleParameterDictionary(event: CustomEvent<CellEditingStoppedEvent<ParameterDictionary, boolean>>) {
+    const {
+      detail: { data, newValue },
+    } = event;
+
+    if (data) {
+      parcelParameterDictionaryId = newValue ? data.id : null;
+    }
+
+    parameterDictionaryDataGrid?.redrawRows();
+  }
+
   function onToggleSequenceAdaptation(event: CustomEvent<CellEditingStoppedEvent<SequenceAdaptation, boolean>>) {
     const {
       detail: { data, newValue },
@@ -167,6 +212,7 @@
           const newParcel: ParcelInsertInput = {
             command_dictionary_id: parcelCommandDictionaryId,
             name: parcelName,
+            parameter_dictionary_id: parcelParameterDictionaryId,
             sequence_adaptation_id: parcelSequenceAdaptationId,
           };
           const newParcelId = await effects.createParcel(newParcel, user);
@@ -261,6 +307,25 @@
           />
         {:else}
           No Command Dictionaries Found
+        {/if}
+      </svelte:fragment>
+    </Panel>
+
+    <Panel>
+      <svelte:fragment slot="header">
+        <SectionTitle>Parameter Dictionaries</SectionTitle>
+      </svelte:fragment>
+
+      <svelte:fragment slot="body">
+        {#if $parameterDictionaries.length}
+          <DataGrid
+            bind:this={parameterDictionaryDataGrid}
+            columnDefs={parameterDictionaryColumnDefs}
+            rowData={$parameterDictionaries}
+            on:cellEditingStopped={onToggleParameterDictionary}
+          />
+        {:else}
+          No Sequence Adaptations Found
         {/if}
       </svelte:fragment>
     </Panel>

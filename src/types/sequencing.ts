@@ -28,6 +28,7 @@ export type Parcel = {
   id: number;
   name: string;
   owner: UserId;
+  parameter_dictionary_id: number | null;
   sequence_adaptation_id: number | null;
 };
 
