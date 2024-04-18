@@ -51,12 +51,12 @@ export type GetSeqJsonResponse = {
 export type SeqJson = any; // TODO: Strongly type.
 
 export type UserSequence = {
-  authoring_command_dict_id: number;
   created_at: string;
   definition: string;
   id: number;
   name: string;
   owner: UserId;
+  parcel_id: number;
   updated_at: string;
 };
 

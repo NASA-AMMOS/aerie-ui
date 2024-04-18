@@ -1531,12 +1531,12 @@ const gql = {
   GET_USER_SEQUENCE: `#graphql
     query GetUserSequence($id: Int!) {
       userSequence: ${Queries.USER_SEQUENCE}(id: $id) {
-        authoring_command_dict_id
         created_at
         definition
         id
         name
         owner
+        parcel_id
         updated_at
       }
     }
@@ -2030,9 +2030,11 @@ const gql = {
   SUB_PARCELS: `#graphql
     subscription SubParcels {
       ${Queries.PARCELS}(order_by: { id: desc }) {
+        command_dictionary_id
         created_at
         id
         name
+        sequence_adaptation_id
       }
     }
   `,
@@ -2622,12 +2624,12 @@ const gql = {
   SUB_USER_SEQUENCES: `#graphql
     subscription SubUserSequences {
       ${Queries.USER_SEQUENCES}(order_by: { id: desc }) {
-        authoring_command_dict_id
         created_at
         definition
         id
         name
         owner
+        parcel_id
         updated_at
       }
     }

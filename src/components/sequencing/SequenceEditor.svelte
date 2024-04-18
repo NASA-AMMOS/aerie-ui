@@ -14,6 +14,7 @@
   import { createEventDispatcher, onMount } from 'svelte';
   import {
     commandDictionaries,
+    parcels,
     userSequenceEditorColumns,
     userSequenceEditorColumnsWithFormBuilder,
     userSequencesRows,
@@ -33,15 +34,14 @@
 
   export let showCommandFormBuilder: boolean = false;
   export let readOnly: boolean = false;
-  export let sequenceCommandDictionaryId: number | null = null;
   export let sequenceName: string = '';
   export let sequenceDefinition: string = '';
+  export let sequenceParcelId: number | null = null;
   export let sequenceSeqJson: string = '';
   export let title: string = 'Sequence - Definition Editor';
   export let user: User | null;
 
   const dispatch = createEventDispatcher<{
-    generate: void;
     sequence: string;
   }>();
 
@@ -74,7 +74,8 @@
   }
 
   $: {
-    const unparsedCommandDictionary = $commandDictionaries.find(cd => cd.id === sequenceCommandDictionaryId);
+    const parcel = $parcels.find(p => p.id === sequenceParcelId);
+    const unparsedCommandDictionary = $commandDictionaries.find(cd => cd.id === parcel?.command_dictionary_id);
 
     if (unparsedCommandDictionary) {
       effects.getParsedAmpcsCommandDictionary(unparsedCommandDictionary.id, user).then(parsedDictionary => {
