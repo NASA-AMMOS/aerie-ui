@@ -4,6 +4,7 @@
   import CollapseIcon from '@nasa-jpl/stellar/icons/collapse.svg?component';
   import FilterIcon from '@nasa-jpl/stellar/icons/filter.svg?component';
   import LineHeightIcon from '@nasa-jpl/stellar/icons/line_height.svg?component';
+  import WaterfallIcon from '@nasa-jpl/stellar/icons/waterfall.svg?component';
   import type { ScaleTime } from 'd3-scale';
   import { select, type Selection } from 'd3-selection';
   import { zoom as d3Zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior, type ZoomTransform } from 'd3-zoom';
@@ -153,8 +154,12 @@
   let loadingErrors: string[];
   let anyResourcesLoading: boolean = true;
   let activityLayerGroups = [];
+  let finalActivityDirectives = [];
+  let finalSpans = [];
   let activityTreeExpansionMap = {};
   let filterActivitiesByTime = false;
+  let packedMode = false;
+  let labelMode: 'on' | 'auto' | 'off' = 'on';
   let flatMode = false;
   let activityDirectiveTimeCache = {};
 
@@ -390,15 +395,34 @@
         }
         let layerSpans = Object.values(spansMap);
         if (layer.filter && layer.filter.activity !== undefined) {
+          // TODO this is slow and doesn't need to be done every time that view timerange changes
+          const a = performance.now();
           const types = layer.filter.activity.types;
-          layerSpans = layerSpans.filter(span => types.indexOf(span.type) > -1);
-          layerSpans.forEach(span => (span.color = layer.activityColor));
+          const typeMap = types.reduce((acc, next) => {
+            acc[next] = true;
+            return acc;
+          }, {});
+          const newSpans = [];
+          layerSpans.forEach(span => {
+            if (typeMap[span.type]) {
+              span.color = layer.activityColor;
+              newSpans.push(span);
+              // span
+            }
+          });
+          console.log(performance.now() - a);
+          layerSpans = newSpans;
+
+          // layerSpans = layerSpans.filter(span => types.indexOf(span.type) > -1);
         }
         spans = spans.concat(layerSpans);
       });
       spans.sort((a, b) => (a.startMs < b.startMs ? -1 : 1));
       if (directives.length || spans.length) {
-        if (flatMode) {
+        if (packedMode) {
+          finalActivityDirectives = directives;
+          finalSpans = spans;
+        } else if (flatMode) {
           activityLayerGroups = generateActivityTreeFlat(directives, spans, activityTreeExpansionMap, viewTimeRange);
         } else {
           activityLayerGroups = generateActivityTree(directives, activityTreeExpansionMap, viewTimeRange);
@@ -898,6 +922,29 @@
       {#if hasActivityLayer}
         <button
           class="st-button icon"
+          on:click|stopPropagation={() => {
+            if (labelMode === 'on') {
+              labelMode = 'auto';
+            } else if (labelMode === 'auto') {
+              labelMode = 'off';
+            } else {
+              labelMode = 'on';
+            }
+          }}
+          use:tooltip={{ content: 'Toggle Packed Mode', placement: 'top' }}
+        >
+          {labelMode}
+        </button>
+        <button
+          class="st-button icon"
+          style:color={packedMode ? 'var(--st-utility-blue)' : ''}
+          on:click|stopPropagation={() => (packedMode = !packedMode)}
+          use:tooltip={{ content: 'Toggle Packed Mode', placement: 'top' }}
+        >
+          <WaterfallIcon />
+        </button>
+        <button
+          class="st-button icon"
           style:color={filterActivitiesByTime ? 'var(--st-utility-blue)' : ''}
           on:click|stopPropagation={onActivityTimeFilterChange}
           use:tooltip={{ content: 'Filter Activities by Time Window', placement: 'top' }}
@@ -993,7 +1040,9 @@
             <LayerActivity
               {...layer}
               {activityLayerGroups}
-              activityDirectives={activityDirectivesByView?.byLayerId[layer.id] ?? []}
+              activityDirectives={finalActivityDirectives}
+              spans={finalSpans}
+              {labelMode}
               {activityDirectivesMap}
               {hasUpdateDirectivePermission}
               {showDirectives}
@@ -1010,7 +1059,7 @@
               {mousemove}
               {mouseout}
               {mouseup}
-              mode={expanded ? 'test1' : 'heatmap'}
+              mode={packedMode ? 'packed2' : 'test1'}
               {planEndTimeDoy}
               {plan}
               {planStartTimeYmd}

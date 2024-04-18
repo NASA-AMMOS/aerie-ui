@@ -56,7 +56,8 @@
   export let hasUpdateDirectivePermission: boolean = false;
   export let id: number;
   export let focus: FocusEvent | undefined;
-  export let mode: 'packed' | 'heatmap' | 'test1' = 'packed';
+  export let labelMode: 'on' | 'auto' | 'off' = 'on';
+  export let mode: 'packed' | 'heatmap' | 'test1' | 'packed2' = 'packed';
   export let mousedown: MouseEvent | undefined;
   export let mousemove: MouseEvent | undefined;
   export let mouseout: MouseEvent | undefined;
@@ -76,6 +77,7 @@
   export let user: User | null;
   export let viewTimeRange: TimeRange = { end: 0, start: 0 };
   export let xScaleView: ScaleTime<number, number> | null = null;
+  export let spans: Span[] = [];
 
   const dispatch = createEventDispatcher<{
     contextMenu: MouseOver;
@@ -169,6 +171,8 @@
     mode &&
     viewTimeRange &&
     xScaleView &&
+    spans &&
+    labelMode &&
     activityLayerGroups
   ) {
     draw();
@@ -573,6 +577,8 @@
       visibleHeatmapBoxesById = {};
       if (mode === 'test1') {
         drawTestGroups2();
+      } else {
+        drawPackedMode2();
       }
 
       return;
@@ -934,9 +940,274 @@
   //   return 0;
   // }
 
+  function drawPackedMode2() {
+    if (xScaleView !== null) {
+      // Draw all directives and spans (combine)
+      const directivesInView = [];
+      let newY = 0;
+      const seenSpans = {};
+      const itemsToDraw = [];
+      activityDirectives.forEach(directive => {
+        // TODO obviously repetitive (see below), clean all of this up
+        const directiveX = getXForDirective(directive);
+        const directiveInBounds = directiveX >= viewTimeRange.start && directiveX < viewTimeRange.end;
+
+        // TODO obviously repetitive (see below), clean all of this up
+        let childSpanInBounds = false;
+        const childSpan = getSpanForActivityDirective(directive);
+        if (childSpan) {
+          seenSpans[childSpan.id] = true;
+          // const spanX = xScaleView(childSpan.startMs);
+          // const spanXEnd = xScaleView(childSpan.endMs);
+          // TODO store whether span is in view in the activityGroupTree thing? Maybe?
+          const sticky =
+            childSpan.startMs < viewTimeRange.start && childSpan.startMs + childSpan.durationMs >= viewTimeRange.start;
+          childSpanInBounds =
+            sticky || (childSpan.startMs >= viewTimeRange.start && childSpan.startMs < viewTimeRange.end);
+
+          // TODO mark span as seen and do not draw it after
+        }
+        if (directiveInBounds || childSpanInBounds) {
+          directivesInView.push(directive);
+          let textMetrics = textMetricsCache[directive.name] ?? ctx.measureText(directive.name);
+          itemsToDraw.push({
+            directive,
+            directiveX,
+            directiveCanvasX: xScaleView(directiveX),
+            span: childSpan,
+            spanCanvasX: xScaleView(childSpan.startMs),
+            spanCanvasXEnd: xScaleView(childSpan.endMs),
+            textMetrics,
+            label: directive.name,
+          });
+        }
+      });
+      spans.forEach(span => {
+        if (seenSpans[span.id]) {
+          return;
+        }
+        const spanInBounds = span.startMs >= viewTimeRange.start && span.startMs < viewTimeRange.end;
+        const sticky = span.startMs < viewTimeRange.start && span.startMs + span.durationMs >= viewTimeRange.start;
+        if (sticky || spanInBounds) {
+          let textMetrics = textMetricsCache[span.type] ?? ctx.measureText(span.type);
+          itemsToDraw.push({
+            span,
+            spanCanvasX: xScaleView(span.startMs),
+            spanCanvasXEnd: xScaleView(span.endMs),
+            textMetrics,
+            label: span.type,
+          });
+        }
+      });
+      itemsToDraw.sort((a, b) => {
+        let aMs = a.span ? a.span.spanMs : a.directive ? a.directiveX : 0;
+        let bMs = b.span ? b.span.spanMs : b.directive ? b.directiveX : 0;
+        return aMs < bMs ? -1 : 1;
+      });
+      const rows = {};
+      // console.log('itemsToDraw :>> ', itemsToDraw);
+      itemsToDraw.forEach(item => {
+        const { span, spanCanvasX, spanCanvasXEnd, directive, directiveX, directiveXCanvas, textMetrics } = item;
+        let itemX = span ? span.spanMs : directive ? directiveX : 0;
+        let row = 0;
+        let openRowSpaceFound = false;
+        while (!openRowSpaceFound) {
+          const maxXForRow = rows[row] ? rows[row].max : Number.MIN_SAFE_INTEGER;
+          let minX = directiveXCanvas || spanCanvasX;
+          let maxX = Math.max(
+            spanCanvasXEnd ?? directiveXCanvas + 2,
+            labelMode === 'on' ? 4 + spanCanvasX + textMetrics.width : 0,
+          );
+          if (minX < maxXForRow) {
+            row += 1;
+          } else {
+            openRowSpaceFound = true;
+            const existingItemsForRow = rows[row] ? rows[row].items : [];
+            rows[row] = {
+              max: maxX,
+              items: existingItemsForRow.concat(item),
+            };
+          }
+        }
+      });
+      const extraSpace = drawHeight - 24;
+      const rowCount = Object.keys(rows).length;
+      const rectHeight = 24;
+      Object.entries(rows).forEach(([i, entry]) => {
+        // console.log('entry :>> ', entry);
+        const { items } = entry;
+        const yRow = i * (extraSpace / (rowCount - 1)) || 0;
+        // console.log('yRow :>> ', yRow);
+        items.forEach(item => {
+          const { span, directive, spanCanvasX, spanCanvasXEnd, directiveX, directiveXCanvas, label, textMetrics } =
+            item;
+          ctx.fillStyle = hexToRgba(span.color || directive.color || 'red', 0.5);
+          if (directive) {
+            // ctx.fillRect(directiveXCanvas, yRow, 2, rectHeight);
+          }
+          if (span) {
+            const width = Math.max(1, spanCanvasXEnd - spanCanvasX);
+            ctx.fillRect(spanCanvasX, yRow, width, rectHeight);
+          }
+          if (labelMode === 'on') {
+            // const textHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
+            // TODO optimize not measure the text?
+            const { textMetrics, textHeight } = setLabelContext(label, 'black');
+            ctx.save();
+            ctx.fillText(
+              label,
+              Math.max((spanCanvasX ?? directiveXCanvas) + 4, 2),
+              yRow + rowHeight / 2 + textHeight / 4,
+              textMetrics.width,
+            );
+            ctx.restore();
+          }
+        });
+      });
+      return;
+
+      // directivesInView.sort((a, b) => {
+      //   const aTime = getActivityDirectiveStartTimeMs(
+      //     a.id,
+      //     planStartTimeYmd,
+      //     planEndTimeDoy,
+      //     activityDirectivesMap,
+      //     spansMap,
+      //     spanUtilityMaps,
+      //     {},
+      //   );
+      //   const bTime = getActivityDirectiveStartTimeMs(
+      //     b.id,
+      //     planStartTimeYmd,
+      //     planEndTimeDoy,
+      //     activityDirectivesMap,
+      //     spansMap,
+      //     spanUtilityMaps,
+      //     {},
+      //   );
+      //   return aTime < bTime ? -1 : 0;
+      // });
+
+      // const directivesInViewTextLength = directivesInView.reduce((total, directive) => {
+      //   // TODO stop measuring if we've already exceeded limit?
+      //   let textMetrics = textMetricsCache[directive.name] ?? ctx.measureText(directive.name);
+      //   return total + textMetrics.width;
+      // }, 0);
+      // let lastDirectiveTextEnd = -1;
+      // Compute number of rows needed
+      let maxXPerRow = {};
+      directivesInView.forEach(directive => {
+        let row = 0;
+        let openRowFound = false;
+        while (!openRowFound) {
+          const maxXForRow = maxXPerRow[row] ?? Number.MIN_SAFE_INTEGER;
+          const directiveX = getXForDirective(directive);
+          const directiveXCanvas = xScaleView(directiveX);
+          const childSpan = getSpanForActivityDirective(directive);
+          let maxX = directiveXCanvas;
+          if (childSpan) {
+            const spanX = xScaleView(childSpan.startMs);
+            const spanXEnd = xScaleView(childSpan.endMs);
+            // console.log('xEnd - x :>> ', xEnd - x);
+            const width = Math.max(1, spanXEnd - spanX);
+            maxX = directiveXCanvas + width;
+          }
+          if (maxX < maxXForRow) {
+            row += 1;
+          } else {
+            openRowFound = true;
+            maxXPerRow[row] = maxX + (labelMode === 'on' ? ctx.measureText(directive.name).width : 0);
+          }
+        }
+      });
+      console.log('maxXPerRow :>> ', maxXPerRow);
+
+      // const rowCount = Object.keys(maxXPerRow).length;
+      // const rowSize = 24 + (drawHeight - 24) / rowCount;
+      // const extraSpace = drawHeight - 24;
+      let maxXPerY = {};
+      directivesInView.forEach(directive => {
+        let y = 0;
+        let yPositionFound = false;
+        while (!yPositionFound) {
+          const maxXForY = maxXPerY[y] ?? Number.MIN_SAFE_INTEGER;
+          const directiveX = getXForDirective(directive);
+          const directiveXCanvas = xScaleView(directiveX);
+          if (directiveXCanvas < maxXForY) {
+            y += 1;
+          } else {
+            yPositionFound = true;
+          }
+        }
+        const yRow = y * (extraSpace / (rowCount - 1)) || 0;
+        // ctx.fillStyle =  `rgba(255,0,0,0.5)`;
+        const color = hexToRgba(directive.color, 0.5);
+        if (ctx.fillStyle !== color) {
+          ctx.fillStyle = hexToRgba(directive.color, 0.5);
+        }
+        // TODO directive start time needs to use this function to take anchors into account, use this in Row and elsewhere
+        // can pass the cache down?
+        const rectHeight = 24;
+        if (xScaleView) {
+          // Draw bounds of child span
+          if (showSpans) {
+            const childSpan = getSpanForActivityDirective(directive);
+            if (childSpan) {
+              const spanX = xScaleView(childSpan.startMs);
+              const spanXEnd = xScaleView(childSpan.endMs);
+              // console.log('xEnd - x :>> ', xEnd - x);
+              const width = Math.max(1, spanXEnd - spanX);
+
+              ctx.save();
+              if (selectedSpanId === childSpan.id) {
+                ctx.fillStyle = activitySelectedColor;
+              }
+              ctx.fillRect(spanX, yRow, width, rectHeight);
+              ctx.restore();
+
+              visibleSpansById[childSpan.id] = childSpan;
+              quadtreeSpans.add({
+                height: rectHeight,
+                id: childSpan.id,
+                width: width,
+                x: spanX,
+                y: yRow,
+              });
+            }
+          }
+
+          if (showDirectives) {
+            const directiveX = getXForDirective(directive);
+            const directiveXCanvas = xScaleView(directiveX);
+            ctx.fillRect(directiveXCanvas, yRow, 2, rectHeight);
+
+            // if (directivesInViewTextLength <= drawWidth && lastDirectiveTextEnd < directiveXCanvas) {
+            // console.log('yRow + textHeight :>> ', yRow + textHeight);
+            let newEnd = directiveXCanvas;
+            if (labelMode === 'on') {
+              const { labelText, textMetrics, textHeight } = setLabelContext(directive.name, 'black');
+              ctx.save();
+              ctx.fillText(
+                labelText,
+                Math.max(directiveXCanvas + 4, 2),
+                yRow + rowHeight / 2 + textHeight / 4,
+                textMetrics.width,
+              );
+              ctx.restore();
+              newEnd += textMetrics.width;
+            }
+            lastDirectiveTextEnd = newEnd;
+            // }
+            maxXPerY[y] = newEnd;
+          }
+        }
+      });
+    }
+  }
+
   function drawTestGroups2() {
     if (xScaleView !== null) {
-      if (mode === 'heatmap') {
+      if (mode === 'heatmap' || drawHeight < 40) {
         return;
       }
       let y = 23;
@@ -970,8 +1241,8 @@
       let childSpanInBounds = false;
       const childSpan = getSpanForActivityDirective(directive);
       if (childSpan) {
-        const spanX = xScaleView(childSpan.startMs);
-        const spanXEnd = xScaleView(childSpan.endMs);
+        // const spanX = xScaleView(childSpan.startMs);
+        // const spanXEnd = xScaleView(childSpan.endMs);
         // TODO store whether span is in view in the activityGroupTree thing? Maybe?
         const sticky =
           childSpan.startMs < viewTimeRange.start && childSpan.startMs + childSpan.durationMs >= viewTimeRange.start;
