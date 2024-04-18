@@ -1190,7 +1190,10 @@ const gql = {
         id
         name
         owner
+<<<<<<< HEAD
         parameter_dictionary_id
+=======
+>>>>>>> e8573482 (First pass at adding parcels)
         sequence_adaptation_id
       }
     }
@@ -1827,7 +1830,6 @@ const gql = {
         created_at
         id
         mission
-        type
         version
       }
     }
