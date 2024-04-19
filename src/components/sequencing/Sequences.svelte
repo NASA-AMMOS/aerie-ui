@@ -210,6 +210,7 @@
     sequenceName={selectedSequence?.name}
     sequenceSeqJson={selectedSequenceSeqJson}
     title="Sequence - Definition Editor (Read-only)"
+    readOnly={true}
     {user}
   />
 </CssGrid>
