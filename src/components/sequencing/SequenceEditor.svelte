@@ -7,13 +7,15 @@
   import { Compartment, EditorState } from '@codemirror/state';
   import type { ViewUpdate } from '@codemirror/view';
   import type { SyntaxNode } from '@lezer/common';
-  import type { CommandDictionary } from '@nasa-jpl/aerie-ampcs';
+  import type { CommandDictionary, ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
+  import ClipboardIcon from 'bootstrap-icons/icons/clipboard.svg?component';
   import { EditorView, basicSetup } from 'codemirror';
   import { seq } from 'codemirror-lang-sequence';
   import { debounce } from 'lodash-es';
   import { createEventDispatcher, onMount } from 'svelte';
   import {
     commandDictionaries,
+    parameterDictionaries as parameterDictionariesStore,
     userSequenceEditorColumns,
     userSequenceEditorColumnsWithFormBuilder,
     userSequencesRows,
@@ -26,6 +28,8 @@
   import { sequenceLinter } from '../../utilities/new-sequence-editor/sequence-linter';
   import { sequenceTooltip } from '../../utilities/new-sequence-editor/sequence-tooltip';
   import { sequenceToSeqJson } from '../../utilities/new-sequence-editor/to-seq-json';
+  import { showFailureToast, showSuccessToast } from '../../utilities/toast';
+  import { tooltip } from '../../utilities/tooltip';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
   import Panel from '../ui/Panel.svelte';
@@ -52,6 +56,7 @@
   let compartmentSeqLinter: Compartment;
   let compartmentSeqTooltip: Compartment;
   let commandDictionary: CommandDictionary | null;
+  let parameterDictionaries: ParameterDictionary[];
   let commandFormBuilderGrid: string;
   let editorSeqJsonDiv: HTMLDivElement;
   let editorSeqJsonView: EditorView;
@@ -76,14 +81,39 @@
   $: {
     const unparsedCommandDictionary = $commandDictionaries.find(cd => cd.id === parcel?.command_dictionary_id);
 
+    // TODO --- once parcel is updated to store an array this needs an update
+    const parameterDictionaryIds = parcel?.parameter_dictionary_id ? [parcel.parameter_dictionary_id] : [];
+    const unparsedParameterDictionaries = $parameterDictionariesStore.filter(pd =>
+      parameterDictionaryIds.includes(pd.id),
+    );
+
     if (unparsedCommandDictionary) {
-      effects.getParsedAmpcsCommandDictionary(unparsedCommandDictionary.id, user).then(parsedDictionary => {
+      Promise.all([
+        effects.getParsedAmpcsCommandDictionary(unparsedCommandDictionary.id, user),
+        ...unparsedParameterDictionaries.map(unparsedParameterDictionary => {
+          return effects.getParsedAmpcsParameterDictionary(unparsedParameterDictionary.id, user);
+        }),
+      ]).then(([parsedDictionary, ...parsedParameterDictionaries]) => {
+        const nonNullParsedParameterDictionaries = parsedParameterDictionaries.filter(
+          (pd): pd is ParameterDictionary => !!pd,
+        );
+
         commandDictionary = parsedDictionary;
+        parameterDictionaries = nonNullParsedParameterDictionaries;
         // Reconfigure sequence editor.
-        const newSeqLanguage = seq(sequenceCompletion(parsedDictionary));
-        editorSequenceView.dispatch({ effects: compartmentSeqLanguage.reconfigure(newSeqLanguage) });
-        editorSequenceView.dispatch({ effects: compartmentSeqLinter.reconfigure(sequenceLinter(parsedDictionary)) });
-        editorSequenceView.dispatch({ effects: compartmentSeqTooltip.reconfigure(sequenceTooltip(parsedDictionary)) });
+        editorSequenceView.dispatch({
+          effects: compartmentSeqLanguage.reconfigure(seq(sequenceCompletion(parsedDictionary))),
+        });
+        editorSequenceView.dispatch({
+          effects: compartmentSeqLinter.reconfigure(
+            sequenceLinter(parsedDictionary, nonNullParsedParameterDictionaries),
+          ),
+        });
+        editorSequenceView.dispatch({
+          effects: compartmentSeqTooltip.reconfigure(
+            sequenceTooltip(parsedDictionary, nonNullParsedParameterDictionaries),
+          ),
+        });
 
         // Reconfigure seq JSON editor.
         editorSeqJsonView.dispatch({ effects: compartmentSeqJsonLinter.reconfigure(seqJsonLinter(parsedDictionary)) });
@@ -134,7 +164,7 @@
     const sequence = viewUpdate.state.doc.toString();
 
     const tree = syntaxTree(viewUpdate.state);
-    const seqJson = sequenceToSeqJson(tree, sequence, commandDictionary, sequenceName);
+    const seqJson = sequenceToSeqJson(tree, sequence, commandDictionary, parameterDictionaries, sequenceName);
     const seqJsonStr = JSON.stringify(seqJson, null, 2);
     editorSeqJsonView.dispatch({ changes: { from: 0, insert: seqJsonStr, to: editorSeqJsonView.state.doc.length } });
 
@@ -157,6 +187,15 @@
     a.href = URL.createObjectURL(new Blob([editorSeqJsonView.state.doc.toString()], { type: 'application/json' }));
     a.download = sequenceName;
     a.click();
+  }
+
+  async function copySeqJsonToClipboard() {
+    try {
+      await navigator.clipboard.writeText(editorSeqJsonView.state.doc.toString());
+      showSuccessToast('Sequence.json copied to clipboard');
+    } catch {
+      showFailureToast('Error copying sequence.json to clipboard');
+    }
   }
 </script>
 
@@ -183,7 +222,16 @@
         <SectionTitle>Seq JSON (Read-only)</SectionTitle>
 
         <div class="right">
-          <button class="st-button secondary ellipsis" on:click={downloadSeqJson}>Download</button>
+          <button
+            use:tooltip={{ content: `Copy to clipboard`, placement: 'top' }}
+            class="st-button icon"
+            on:click={copySeqJsonToClipboard}><ClipboardIcon /></button
+          >
+          <button
+            use:tooltip={{ content: `Download Seq.json`, placement: 'top' }}
+            class="st-button secondary ellipsis"
+            on:click={downloadSeqJson}>Download</button
+          >
         </div>
       </svelte:fragment>
 
@@ -196,6 +244,14 @@
   <CssGridGutter track={1} type="column" />
 
   {#if !!commandDictionary && !!selectedNode && showCommandFormBuilder}
-    <SelectedCommand node={selectedNode} {commandDictionary} {editorSequenceView} />
+    <SelectedCommand node={selectedNode} {commandDictionary} {editorSequenceView} {parameterDictionaries} />
   {/if}
 </CssGrid>
+
+<style>
+  .right {
+    align-items: center;
+    display: flex;
+    justify-content: space-around;
+  }
+</style>

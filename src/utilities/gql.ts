@@ -1204,6 +1204,14 @@ const gql = {
     }
   `,
 
+  GET_PARSED_PARAMETER_DICTIONARY: `#graphql
+    query GetParsedParameterDictionary($parameterDictionaryId: Int!) {
+      ${Queries.PARAMETER_DICTIONARIES}(where: { id: { _eq: $parameterDictionaryId } }) {
+        parsed_json
+      }
+    }
+  `,
+
   GET_PERMISSIBLE_QUERIES: `#graphql
     query GetPermissibleQueries {
       queries: __schema {

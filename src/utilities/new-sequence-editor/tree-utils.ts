@@ -47,9 +47,9 @@ export function getFromAndTo(nodes: (SyntaxNode | null)[]): { from: number; to: 
 }
 
 export function getAncestorNode(node: SyntaxNode | null, name: string) {
-  let commandNode: SyntaxNode | null = node;
-  while (commandNode && commandNode.name !== name) {
-    commandNode = commandNode.parent;
+  let ancestorNode: SyntaxNode | null = node;
+  while (ancestorNode && ancestorNode.name !== name) {
+    ancestorNode = ancestorNode.parent;
   }
-  return commandNode;
+  return ancestorNode;
 }

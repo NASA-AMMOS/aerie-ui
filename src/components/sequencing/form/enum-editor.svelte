@@ -10,8 +10,10 @@
   export let setInEditor: (val: string) => void;
 
   $: value = unquoteUnescape(initVal);
-  $: enumValues = commandDictionary.enumMap[argDef.enum_name]?.values ?? [];
-  $: isValueInEnum = !!enumValues.find(ev => ev.symbol === value);
+  // $: enumValues = commandDictionary.enumMap[argDef.enum_name]?.values ?? argDef.range ?? [];
+  // $: isValueInEnum = !!enumValues.find(ev => ev.symbol === value);
+  $: enumValues = commandDictionary.enumMap[argDef.enum_name]?.values?.map(v => v.symbol) ?? argDef.range ?? [];
+  $: isValueInEnum = !!enumValues.find(ev => ev === value);
   $: {
     setInEditor(quoteEscape(value));
   }
@@ -23,7 +25,7 @@
       <option>{value}</option>
     {/if}
     {#each enumValues as ev}
-      <option>{ev.symbol}</option>
+      <option>{ev}</option>
     {/each}
   </select>
 </div>

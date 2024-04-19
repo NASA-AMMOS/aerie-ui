@@ -10,8 +10,8 @@
   let enumSymbolsDisplayStr: string;
 
   $: if (commandDictionary && arg?.arg_type === 'enum') {
-    const { enumSymbolsDisplayStr: displayStr } = getAllEnumSymbols(commandDictionary.enumMap, arg.enum_name);
-    enumSymbolsDisplayStr = displayStr;
+    const enumValues = getAllEnumSymbols(commandDictionary.enumMap, arg.enum_name);
+    enumSymbolsDisplayStr = enumValues?.join('  |  ') ?? '';
   }
 </script>
 

@@ -1,5 +1,10 @@
 import type { SyntaxNode, Tree } from '@lezer/common';
-import type { CommandDictionary, FswCommandArgument, FswCommandArgumentRepeat } from '@nasa-jpl/aerie-ampcs';
+import type {
+  CommandDictionary,
+  FswCommandArgument,
+  FswCommandArgumentRepeat,
+  ParameterDictionary,
+} from '@nasa-jpl/aerie-ampcs';
 import type {
   Args,
   BooleanArgument,
@@ -17,11 +22,10 @@ import type {
   Time,
   VariableDeclaration,
 } from '@nasa-jpl/seq-json-schema/types';
+import { customizeSeqJson } from './extension-points';
 import { logInfo } from './logger';
 import { TOKEN_REPEAT_ARG } from './sequencer-grammar-constants';
 import { EPOCH_SIMPLE, EPOCH_TIME, RELATIVE_SIMPLE, RELATIVE_TIME, testTime } from './time-utils';
-
-let variableList: string[] = [];
 
 /**
  * Returns a minimal valid Seq JSON object.
@@ -38,31 +42,39 @@ export function sequenceToSeqJson(
   node: Tree,
   text: string,
   commandDictionary: CommandDictionary | null,
+  parameterDictionaries: ParameterDictionary[],
   sequenceName: string,
 ): SeqJson {
   const baseNode = node.topNode;
   const seqJson: SeqJson = seqJsonDefault();
-  variableList = [];
+  const variableList: string[] = [];
 
   seqJson.id = parseId(baseNode, text, sequenceName);
   seqJson.metadata = { ...parseLGO(baseNode), ...parseMetadata(baseNode, text) };
   seqJson.locals = parseVariables(baseNode, text, 'LocalDeclaration') ?? undefined;
+  if (seqJson.locals) {
+    variableList.push(...seqJson.locals.map(value => value.name));
+  }
   seqJson.parameters = parseVariables(baseNode, text, 'ParameterDeclaration') ?? undefined;
+  if (seqJson.parameters) {
+    variableList.push(...seqJson.parameters.map(value => value.name));
+  }
   seqJson.steps =
     baseNode
       .getChild('Commands')
       ?.getChildren('Command')
-      .map(command => parseCommand(command, text, commandDictionary)) ?? undefined;
+      .map(command => parseCommand(command, text, commandDictionary, variableList)) ?? undefined;
   seqJson.immediate_commands =
     baseNode
       .getChild('ImmediateCommands')
       ?.getChildren('Command')
-      .map(command => parseImmediateCommand(command, text, commandDictionary)) ?? undefined;
+      .map(command => parseImmediateCommand(command, text, commandDictionary, variableList)) ?? undefined;
   seqJson.hardware_commands =
     baseNode
       .getChild('HardwareCommands')
       ?.getChildren('Command')
       .map(command => parseHardwareCommand(command, text)) ?? undefined;
+  customizeSeqJson(seqJson, parameterDictionaries);
   return seqJson;
 }
 
@@ -77,10 +89,11 @@ function parseLGO(node: SyntaxNode): Metadata | undefined {
   };
 }
 
-export function parseArg(
+function parseArg(
   node: SyntaxNode,
   text: string,
   dictionaryArg: FswCommandArgument | null,
+  variableList: string[],
 ): BooleanArgument | HexArgument | NumberArgument | StringArgument | SymbolArgument | undefined {
   const nodeValue = text.slice(node.from, node.to);
 
@@ -93,7 +106,7 @@ export function parseArg(
     return booleanArg;
   } else if (node.name === 'Enum') {
     const value = nodeValue;
-    const enumArg: StringArgument = { type: 'string', value };
+    const enumArg: SymbolArgument = { type: 'symbol', value };
     if (dictionaryArg) {
       enumArg.name = dictionaryArg.name;
     }
@@ -133,39 +146,39 @@ export function parseRepeatArgs(
   repeatArgsNode: SyntaxNode,
   text: string,
   dictRepeatArgument: FswCommandArgumentRepeat | null,
+  variableList: string[],
 ) {
-  const repeatArg: RepeatArgument = { type: 'repeat', value: [] };
+  const repeatArg: RepeatArgument = { name: dictRepeatArgument?.name, type: 'repeat', value: [] };
+  const repeatArgs = dictRepeatArgument?.repeat?.arguments;
+  const repeatArgsLength = repeatArgs?.length ?? Infinity;
   let repeatArgNode: SyntaxNode | null = repeatArgsNode;
+  // console.log(`repeatArgsLength: ${repeatArgsLength}`);
+  // console.log(`dictRepeatArgument: ${JSON.stringify(dictRepeatArgument, null, 2)}`);
 
   if (repeatArgNode) {
+    let args: RepeatArgument['value'][0] = [];
+    let argNode = repeatArgNode.firstChild;
+
     let i = 0;
-    do {
-      const args: RepeatArgument['value'][0] = [];
-      let argNode = repeatArgNode.firstChild;
-      const repeatArgs = dictRepeatArgument?.repeat?.arguments ?? null;
-
-      if (argNode) {
-        do {
-          const arg = parseArg(argNode, text, repeatArgs ? repeatArgs[i] : null);
-          if (arg) {
-            args.push(arg);
-          } else {
-            logInfo(`Could not parse arg for node with name ${argNode.name}`);
-          }
-
-          argNode = argNode?.nextSibling;
-          i = (i + 1) % (repeatArgs?.length ?? 0);
-        } while (argNode);
+    while (argNode) {
+      if (i % repeatArgsLength === 0) {
+        // [[1 2] [3 4]] in seq.json is flattened in seqN [1 2 3 4]
+        // dictionary definition is required to disambiguate
+        args = [];
+        repeatArg.value.push(args);
+      }
+      const arg = parseArg(argNode, text, repeatArgs?.[i % repeatArgsLength] ?? null, variableList);
+      if (arg) {
+        args.push(arg);
+      } else {
+        logInfo(`Could not parse arg for node with name ${argNode.name}`);
       }
 
-      repeatArg.value.push(args);
+      argNode = argNode.nextSibling;
+      i++;
+    }
 
-      repeatArgNode = repeatArgNode?.nextSibling;
-    } while (repeatArgNode);
-  }
-
-  if (dictRepeatArgument) {
-    repeatArg.name = dictRepeatArgument.name;
+    repeatArgNode = repeatArgNode.nextSibling;
   }
 
   return repeatArg;
@@ -176,33 +189,32 @@ export function parseArgs(
   text: string,
   commandDictionary: CommandDictionary | null,
   stem: string,
+  variableList: string[],
 ): Args {
   const args: Args = [];
   let argNode = argsNode.firstChild;
   const dictArguments = commandDictionary?.fswCommandMap[stem]?.arguments ?? [];
   let i = 0;
 
-  if (argNode) {
-    do {
-      const dictArg = dictArguments[i] ?? null;
-      if (argNode.name === TOKEN_REPEAT_ARG) {
-        const arg = parseRepeatArgs(argNode, text, (dictArg as FswCommandArgumentRepeat) ?? null);
-        if (arg) {
-          args.push(arg);
-        } else {
-          logInfo(`Could not parse repeat arg for node with name ${argNode.name}`);
-        }
+  while (argNode) {
+    const dictArg = dictArguments[i] ?? null;
+    if (argNode.name === TOKEN_REPEAT_ARG) {
+      const arg = parseRepeatArgs(argNode, text, (dictArg as FswCommandArgumentRepeat) ?? null, variableList);
+      if (arg) {
+        args.push(arg);
       } else {
-        const arg = parseArg(argNode, text, dictArg);
-        if (arg) {
-          args.push(arg);
-        } else {
-          logInfo(`Could not parse arg for node with name ${argNode.name}`);
-        }
+        logInfo(`Could not parse repeat arg for node with name ${argNode.name}`);
       }
-      argNode = argNode?.nextSibling;
-      ++i;
-    } while (argNode);
+    } else {
+      const arg = parseArg(argNode, text, dictArg, variableList);
+      if (arg) {
+        args.push(arg);
+      } else {
+        logInfo(`Could not parse arg for node with name ${argNode.name}`);
+      }
+    }
+    argNode = argNode?.nextSibling;
+    ++i;
   }
 
   return args;
@@ -303,11 +315,14 @@ function secondsToHMS(seconds: number): string {
   return `${hoursString}:${minutesString}:${remainingSecondsString}`;
 }
 
+// min length of one
+type VariableDeclarationArray = [VariableDeclaration, ...VariableDeclaration[]];
+
 function parseVariables(
   node: SyntaxNode,
   text: string,
   type: 'LocalDeclaration' | 'ParameterDeclaration' = 'LocalDeclaration',
-): [VariableDeclaration, ...VariableDeclaration[]] | undefined {
+): VariableDeclarationArray | undefined {
   const variableContainer = node.getChild(type);
   if (!variableContainer) {
     return undefined;
@@ -317,15 +332,13 @@ function parseVariables(
     return undefined;
   }
 
-  const variableDeclaration: VariableDeclaration[] = [];
-  variables.map((variable: SyntaxNode) => {
+  return variables.map((variable: SyntaxNode) => {
     const variableText = text.slice(variable.from, variable.to);
-    variableList.push(variableText);
 
     //parse the text [a-z]D*("UINT"|"INT"|"FLOAT"|"ENUM"|"STR")L07
-    const match = /([a-zA-Z]*)([0-9]{2})(INT|UINT|FLT|ENUM|STR)/g.exec(variableText);
+    const match = /(?:[a-zA-Z]*)(?:[0-9]{2})(INT|UINT|FLT|ENUM|STR)/g.exec(variableText);
     if (match) {
-      const [, , , kind] = match;
+      const kind = match[1];
 
       let type = 'UNKNOWN';
       switch (kind) {
@@ -340,18 +353,17 @@ function parseVariables(
           break;
       }
 
-      variableDeclaration.push({
+      return {
         name: variableText,
         type: type as VariableDeclaration['type'],
-      });
+      };
     } else {
-      variableDeclaration.push({
+      return {
         name: variableText,
         type: 'UNKNOWN' as VariableDeclaration['type'],
-      });
+      };
     }
-  });
-  return [variableDeclaration[0], ...variableDeclaration.slice(1)] as [VariableDeclaration, ...VariableDeclaration[]];
+  }) as VariableDeclarationArray;
 }
 
 function parseModel(node: SyntaxNode, text: string): Model[] | undefined {
@@ -418,6 +430,7 @@ export function parseCommand(
   commandNode: SyntaxNode,
   text: string,
   commandDictionary: CommandDictionary | null,
+  variableList: string[],
 ): Command {
   const time = parseTime(commandNode, text);
 
@@ -425,7 +438,7 @@ export function parseCommand(
   const stem = stemNode ? text.slice(stemNode.from, stemNode.to) : 'UNKNOWN';
 
   const argsNode = commandNode.getChild('Args');
-  const args = argsNode ? parseArgs(argsNode, text, commandDictionary, stem) : [];
+  const args = argsNode ? parseArgs(argsNode, text, commandDictionary, stem, variableList) : [];
 
   const description = parseDescription(commandNode, text);
   const metadata: Metadata | undefined = parseMetadata(commandNode, text);
@@ -446,12 +459,13 @@ export function parseImmediateCommand(
   commandNode: SyntaxNode,
   text: string,
   commandDictionary: CommandDictionary | null,
+  variableList: string[],
 ): ImmediateCommand {
   const stemNode = commandNode.getChild('Stem');
   const stem = stemNode ? text.slice(stemNode.from, stemNode.to) : 'UNKNOWN';
 
   const argsNode = commandNode.getChild('Args');
-  const args = argsNode ? parseArgs(argsNode, text, commandDictionary, stem) : [];
+  const args = argsNode ? parseArgs(argsNode, text, commandDictionary, stem, variableList) : [];
 
   const description = parseDescription(commandNode, text);
   const metadata: Metadata | undefined = parseMetadata(commandNode, text);

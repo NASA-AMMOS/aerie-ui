@@ -2,11 +2,19 @@ import { syntaxTree } from '@codemirror/language';
 import { linter, type Diagnostic } from '@codemirror/lint';
 import type { Extension } from '@codemirror/state';
 import type { SyntaxNode } from '@lezer/common';
-import type { CommandDictionary, EnumMap, FswCommand, FswCommandArgument, HwCommand } from '@nasa-jpl/aerie-ampcs';
+import type {
+  CommandDictionary,
+  EnumMap,
+  FswCommand,
+  FswCommandArgument,
+  HwCommand,
+  ParameterDictionary,
+} from '@nasa-jpl/aerie-ampcs';
 import { closest, distance } from 'fastest-levenshtein';
 import { addDefaultArgs } from '../../components/sequencing/form/utils';
 
 import type { EditorView } from 'codemirror';
+import { getCustomArgDef } from './extension-points';
 import { TOKEN_COMMAND, TOKEN_ERROR, TOKEN_REPEAT_ARG } from './sequencer-grammar-constants';
 import {
   ABSOLUTE_TIME,
@@ -30,10 +38,11 @@ const KNOWN_DIRECTIVES = [
   'METADATA',
 ].map(name => `@${name}`);
 
-export function getAllEnumSymbols(enumMap: EnumMap, enumName: string) {
-  const enumSymbols = enumMap[enumName].values.map(({ symbol }) => symbol);
-  const enumSymbolsDisplayStr = enumSymbols.join('  |  ');
-  return { enumSymbols, enumSymbolsDisplayStr };
+export function getAllEnumSymbols(enumMap: EnumMap, enumName: string): undefined | string[] {
+  return enumMap[enumName]?.values.map(({ symbol }) => symbol);
+  // const enumSymbols = enumMap[enumName]?.values.map(({ symbol }) => symbol) ?? [];
+  // const enumSymbolsDisplayStr = enumSymbols.join('  |  ');
+  // return { enumSymbols, enumSymbolsDisplayStr };
 }
 
 function closestStrings(value: string, potentialMatches: string[], n: number) {
@@ -46,7 +55,10 @@ function closestStrings(value: string, potentialMatches: string[], n: number) {
  * Linter function that returns a Code Mirror extension function.
  * Can be optionally called with a command dictionary so it's available during linting.
  */
-export function sequenceLinter(commandDictionary: CommandDictionary | null = null): Extension {
+export function sequenceLinter(
+  commandDictionary: CommandDictionary | null = null,
+  parameterDictionaries: ParameterDictionary[] = [],
+): Extension {
   return linter(view => {
     const treeNode = syntaxTree(view.state).topNode;
     let diagnostics: Diagnostic[] = [];
@@ -88,16 +100,22 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
 
   function conditionalAndLoopKeywordsLinter(commandNodes: SyntaxNode[], text: string): Diagnostic[] {
     const diagnostics: Diagnostic[] = [];
-    const conditionalStack: string[] = [];
+    // array length is 'if' block depth, boolean is if 'else' is present
+    const conditionalStack: boolean[] = [];
     const loopStack: string[] = [];
     const conditionalKeywords = [];
     const loopKeywords = [];
-    const conditionalStartingKeyword = globalThis.CONDITIONAL_KEYWORDS?.IF ?? 'CMD_IF';
+    const conditionalStartingKeywords = globalThis.CONDITIONAL_KEYWORDS?.IF ?? ['CMD_IF'];
+    const conditionalElseKeyword = globalThis.CONDITIONAL_KEYWORDS?.ELSE ?? 'CMD_ELSE';
     const conditionalEndingKeyword = globalThis.CONDITIONAL_KEYWORDS?.END_IF ?? 'CMD_END_IF';
-    const loopStartingKeyword = globalThis.LOOP_KEYWORDS?.WHILE_LOOP ?? 'CMD_WHILE_LOOP';
+    const loopStartingKeywords = globalThis.LOOP_KEYWORDS?.WHILE_LOOP ?? ['CMD_WHILE_LOOP', 'CMD_WHILE_LOOP_OR'];
     const loopEndingKeyword = globalThis.LOOP_KEYWORDS?.END_WHILE_LOOP ?? 'CMD_END_WHILE_LOOP';
 
-    conditionalKeywords.push(globalThis.CONDITIONAL_KEYWORDS?.ELSE_IF ?? 'CMD_ELSE_IF', conditionalEndingKeyword);
+    conditionalKeywords.push(
+      conditionalElseKeyword,
+      ...(globalThis.CONDITIONAL_KEYWORDS?.ELSE_IF ?? ['CMD_ELSE_IF']),
+      conditionalEndingKeyword,
+    );
     loopKeywords.push(
       globalThis.LOOP_KEYWORDS?.BREAK ?? 'CMD_BREAK',
       globalThis.LOOP_KEYWORDS?.CONTINUE ?? 'CMD_CONTINUE',
@@ -106,29 +124,41 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
 
     for (const command of commandNodes) {
       const stem = command.getChild('Stem');
-      if (stem !== null) {
+      if (stem) {
         const word = text.slice(stem.from, stem.to);
 
-        if (word === conditionalStartingKeyword) {
-          conditionalStack.push(word);
+        if (conditionalStartingKeywords.includes(word)) {
+          conditionalStack.push(false);
         }
+
+        // TODO -- check max one else
 
         if (conditionalKeywords.includes(word)) {
           if (conditionalStack.length === 0) {
             diagnostics.push({
               from: stem.from,
-              message: `Conditional keyword ${word} found without a preceding ${conditionalStartingKeyword}.`,
+              message: `Conditional keyword ${word} found without a preceding ${conditionalStartingKeywords.join(', ')}.`,
               severity: 'error',
               to: stem.to,
             });
-          }
-
-          if (word === conditionalEndingKeyword) {
+          } else if (word === conditionalElseKeyword) {
+            if (conditionalStack[conditionalStack.length - 1] === false) {
+              // 'else' detected for this 'if'
+              conditionalStack[conditionalStack.length - 1] = true;
+            } else {
+              diagnostics.push({
+                from: stem.from,
+                message: `ELSE command ${word} doesn't match a preceding ${conditionalStartingKeywords.join(', ')}.`,
+                severity: 'error',
+                to: stem.to,
+              });
+            }
+          } else if (word === conditionalEndingKeyword) {
             conditionalStack.pop();
           }
         }
 
-        if (word === loopStartingKeyword) {
+        if (loopStartingKeywords.includes(word)) {
           loopStack.push(word);
         }
 
@@ -136,7 +166,7 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
           if (loopStack.length === 0) {
             diagnostics.push({
               from: stem.from,
-              message: `Loop keyword ${word} found without a preceding ${loopStartingKeyword}.`,
+              message: `Loop keyword ${word} found without a preceding ${loopStartingKeywords.join(', ')}.`,
               severity: 'error',
               to: stem.to,
             });
@@ -582,11 +612,13 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
       return [];
     }
 
+    const stemText = text.slice(stem.from, stem.to);
+
     // Initialize an array to store the diagnostic errors.
     const diagnostics: Diagnostic[] = [];
 
     // Validate the stem of the command.
-    const result = validateStem(stem, text, type);
+    const result = validateStem(stem, stemText, type);
     // No command dictionary return [].
     if (result === null) {
       return [];
@@ -602,7 +634,9 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
     const dictArgs = (result as FswCommand).arguments ?? [];
 
     // Lint the arguments of the command.
-    diagnostics.push(...validateAndLintArguments(dictArgs, argNode ? getChildrenNode(argNode) : null, command, text));
+    diagnostics.push(
+      ...validateAndLintArguments(dictArgs, argNode ? getChildrenNode(argNode) : null, command, text, stemText),
+    );
 
     // Return the array of diagnostics.
     return diagnostics;
@@ -611,21 +645,19 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
   /**
    * Validates the stem of a command.
    * @param stem - The SyntaxNode representing the stem of the command.
-   * @param text - The text of the whole command.
+   * @param stemText - The command name
    * @param type - The type of command (default: 'command').
    * @returns A Diagnostic if the stem is invalid, a FswCommand if the stem is valid, or null if the command dictionary is not initialized.
    */
   function validateStem(
     stem: SyntaxNode,
-    text: string,
+    stemText: string,
     type: 'command' | 'immediate' | 'hardware' = 'command',
   ): Diagnostic | FswCommand | HwCommand | null {
     if (commandDictionary === null) {
       return null;
     }
     const { fswCommandMap, fswCommands, hwCommandMap, hwCommands } = commandDictionary;
-
-    const stemText = text.slice(stem.from, stem.to);
 
     const dictionaryCommand: FswCommand | HwCommand | null = fswCommandMap[stemText]
       ? fswCommandMap[stemText]
@@ -689,6 +721,7 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
     argNode: SyntaxNode[] | null,
     command: SyntaxNode,
     text: string,
+    stem: string,
   ): Diagnostic[] {
     // Initialize an array to store the validation errors
     let diagnostics: Diagnostic[] = [];
@@ -769,6 +802,8 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
       return diagnostics;
     }
 
+    const argValues = argNode?.map(arg => text.slice(arg.from, arg.to)) ?? [];
+
     // grab the first argument node
     // let node = argNode?.firstChild ?? null;
 
@@ -790,7 +825,7 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
       }
 
       // Validate and lint the current argument node
-      diagnostics = diagnostics.concat(...validateArguments(dictArg, arg, command, text));
+      diagnostics = diagnostics.concat(...validateArgument(dictArg, arg, command, text, stem, argValues.slice(0, i)));
     }
 
     // Return the array of validation errors
@@ -807,12 +842,16 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
 + * @param text The full text of the document.
 + * @returns An array of diagnostics generated during the validation.
 + */
-  function validateArguments(
+  function validateArgument(
     dictArg: FswCommandArgument,
     argNode: SyntaxNode,
     command: SyntaxNode,
     text: string,
+    stemText: string,
+    precedingArgValues: string[],
   ): Diagnostic[] {
+    dictArg = getCustomArgDef(stemText, dictArg, precedingArgValues, parameterDictionaries);
+
     const diagnostics: Diagnostic[] = [];
 
     const dictArgType = dictArg.arg_type;
@@ -831,10 +870,7 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
           });
         } else {
           if (commandDictionary) {
-            const { enumSymbols: symbols, enumSymbolsDisplayStr: availableSymbols } = getAllEnumSymbols(
-              commandDictionary?.enumMap,
-              dictArg.enum_name,
-            );
+            const symbols = getAllEnumSymbols(commandDictionary?.enumMap, dictArg.enum_name) ?? dictArg.range ?? [];
             const unquotedArgText = argText.replace(/^"|"$/g, '');
             if (!symbols.includes(unquotedArgText)) {
               const guess = closest(unquotedArgText.toUpperCase(), symbols);
@@ -848,7 +884,7 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
                   },
                 ],
                 from: argNode.from,
-                message: `Enum should be "${availableSymbols}"`,
+                message: `Enum should be "${symbols.join(' | ')}"`,
                 severity: 'error',
                 to: argNode.to,
               });
@@ -885,8 +921,22 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
           const nodeTextAsNumber = parseFloat(argText);
 
           if (nodeTextAsNumber < min || nodeTextAsNumber > max) {
-            const message = `Number out of range. Make sure this number is between ${min} and ${max} inclusive.`;
+            const message =
+              max !== min
+                ? `Number out of range. Range is between ${min} and ${max} inclusive.`
+                : `Number out of range. Range is ${min}.`;
             diagnostics.push({
+              actions:
+                max === min
+                  ? [
+                      {
+                        apply(view, from, to) {
+                          view.dispatch({ changes: { from, insert: `${min}`, to } });
+                        },
+                        name: `Change to ${min}`,
+                      },
+                    ]
+                  : [],
               from: argNode.from,
               message,
               severity: 'error',
@@ -989,7 +1039,9 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
                 }, [])
                 .forEach((repeat: SyntaxNode[]) => {
                   // check individual args
-                  diagnostics.push(...validateAndLintArguments(repeatDef.arguments ?? [], repeat, command, text));
+                  diagnostics.push(
+                    ...validateAndLintArguments(repeatDef.arguments ?? [], repeat, command, text, stemText),
+                  );
                 });
             }
           }

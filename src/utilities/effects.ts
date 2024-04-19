@@ -2874,6 +2874,35 @@ const effects = {
     }
   },
 
+  async getParsedAmpcsParameterDictionary(
+    parameterDictionaryId: number | null | undefined,
+    user: User | null,
+  ): Promise<AmpcsParameterDictionary | null> {
+    if (parameterDictionaryId !== null && parameterDictionaryId !== undefined) {
+      try {
+        const data = await reqHasura<[{ parsed_json: AmpcsParameterDictionary }]>(
+          gql.GET_PARSED_PARAMETER_DICTIONARY,
+          { parameterDictionaryId },
+          user,
+        );
+        const { parameter_dictionary } = data;
+
+        if (!Array.isArray(parameter_dictionary) || !parameter_dictionary.length) {
+          catchError(`Unable to find parameter dictionary with id ${parameterDictionaryId}`);
+          return null;
+        } else {
+          const [{ parsed_json }] = parameter_dictionary;
+          return parsed_json;
+        }
+      } catch (e) {
+        catchError(e as Error);
+        return null;
+      }
+    } else {
+      return null;
+    }
+  },
+
   async getPlan(id: number, user: User | null): Promise<Plan | null> {
     try {
       const data = await reqHasura<PlanSchema>(gql.GET_PLAN, { id }, user);

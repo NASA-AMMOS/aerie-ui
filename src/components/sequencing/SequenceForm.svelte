@@ -71,10 +71,14 @@
   }
 
   async function loadSequenceAdaptation(): Promise<void> {
+    // console.log(`load1: par`);
     if (parcel?.sequence_adaptation_id) {
+      // console.log(`load2: ${parcel?.sequence_adaptation_id}`);
       const adaptation = await effects.getSequenceAdaptation(parcel?.sequence_adaptation_id, user);
 
       if (adaptation) {
+        // console.log(`load3: ${adaptation}`);
+        // console.log(`load4: ${adaptation.adaptation}`);
         Function(adaptation.adaptation)();
       }
     }
