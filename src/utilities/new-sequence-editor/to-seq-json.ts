@@ -85,7 +85,7 @@ function parseLGO(node: SyntaxNode): Metadata | undefined {
   }
 
   return {
-    lgo: 'true',
+    lgo: true,
   };
 }
 
