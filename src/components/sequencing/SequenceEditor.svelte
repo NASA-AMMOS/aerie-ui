@@ -56,7 +56,7 @@
   let compartmentSeqLinter: Compartment;
   let compartmentSeqTooltip: Compartment;
   let commandDictionary: CommandDictionary | null;
-  let parameterDictionaries: ParameterDictionary[];
+  let parameterDictionaries: ParameterDictionary[] = [];
   let commandFormBuilderGrid: string;
   let editorSeqJsonDiv: HTMLDivElement;
   let editorSeqJsonView: EditorView;
@@ -102,7 +102,9 @@
         parameterDictionaries = nonNullParsedParameterDictionaries;
         // Reconfigure sequence editor.
         editorSequenceView.dispatch({
-          effects: compartmentSeqLanguage.reconfigure(seq(sequenceCompletion(parsedDictionary))),
+          effects: compartmentSeqLanguage.reconfigure(
+            seq(sequenceCompletion(parsedDictionary, nonNullParsedParameterDictionaries)),
+          ),
         });
         editorSequenceView.dispatch({
           effects: compartmentSeqLinter.reconfigure(
@@ -134,7 +136,7 @@
         EditorView.lineWrapping,
         EditorView.theme({ '.cm-gutter': { 'min-height': `${clientHeightGridRightTop}px` } }),
         lintGutter(),
-        compartmentSeqLanguage.of(seq(sequenceCompletion())),
+        compartmentSeqLanguage.of(seq(sequenceCompletion(null, []))),
         compartmentSeqLinter.of(sequenceLinter()),
         compartmentSeqTooltip.of(sequenceTooltip()),
         EditorView.updateListener.of(debounce(sequenceUpdateListener, 250)),
