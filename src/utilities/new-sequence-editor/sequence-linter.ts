@@ -13,6 +13,7 @@ import type {
 import { closest, distance } from 'fastest-levenshtein';
 import { addDefaultArgs } from '../../components/sequencing/form/utils';
 
+import type { VariableDeclaration } from '@nasa-jpl/seq-json-schema/types';
 import type { EditorView } from 'codemirror';
 import { getCustomArgDef } from './extension-points';
 import { TOKEN_COMMAND, TOKEN_ERROR, TOKEN_REPEAT_ARG } from './sequencer-grammar-constants';
@@ -60,6 +61,10 @@ type IfOpener = WhileOpener & {
   hasElse: boolean;
 };
 
+type VariableMap = {
+  [name: string]: VariableDeclaration;
+};
+
 /**
  * Linter function that returns a Code Mirror extension function.
  * Can be optionally called with a command dictionary so it's available during linting.
@@ -71,28 +76,50 @@ export function sequenceLinter(
   return linter(view => {
     const tree = syntaxTree(view.state);
     const treeNode = tree.topNode;
+    const docText = view.state.doc.toString();
     let diagnostics: Diagnostic[] = [];
 
-    diagnostics.push(...parserErrors(tree));
+    diagnostics.push(...validateParserErrors(tree));
+
+    // TODO: Get identify type mapping to use
+    const variables: VariableDeclaration[] = [
+      ...(globalThis.GLOBALS?.map(g => ({ name: g.name, type: 'STRING' }) as const) ?? []),
+    ];
 
     // Validate top level metadata
     diagnostics.push(...validateMetadata(treeNode));
 
-    diagnostics.push(...validateLocals(treeNode.getChildren('LocalDeclaration')));
+    const localsValidation = validateLocals(treeNode.getChildren('LocalDeclaration'), docText);
+    variables.push(...localsValidation.variables);
+    diagnostics.push(...localsValidation.diagnostics);
 
-    diagnostics.push(...validateParameters(treeNode.getChildren('ParameterDeclaration')));
+    const parameterValidation = validateParameters(treeNode.getChildren('ParameterDeclaration'), docText);
+    variables.push(...parameterValidation.variables);
+    diagnostics.push(...parameterValidation.diagnostics);
+
+    const variableMap = variables.reduce(
+      (vMap: VariableMap, variable: VariableDeclaration) => ({
+        ...vMap,
+        [variable.name]: variable,
+      }),
+      {},
+    );
 
     // Validate command type mixing
     diagnostics.push(...validateCommandTypeMixing(treeNode));
 
-    const docText = view.state.doc.toString();
-
     diagnostics.push(...validateCustomDirectives(treeNode, docText));
 
-    diagnostics.push(...commandLinter(treeNode.getChild('Commands')?.getChildren(TOKEN_COMMAND) || [], docText));
+    diagnostics.push(
+      ...commandLinter(treeNode.getChild('Commands')?.getChildren(TOKEN_COMMAND) || [], docText, variableMap),
+    );
 
     diagnostics.push(
-      ...immediateCommandLinter(treeNode.getChild('ImmediateCommands')?.getChildren(TOKEN_COMMAND) || [], docText),
+      ...immediateCommandLinter(
+        treeNode.getChild('ImmediateCommands')?.getChildren(TOKEN_COMMAND) || [],
+        docText,
+        variableMap,
+      ),
     );
 
     diagnostics.push(
@@ -110,17 +137,24 @@ export function sequenceLinter(
     return diagnostics;
   });
 
-  function parserErrors(tree: Tree) {
+  /**
+   * Checks for unexpected tokens.
+   *
+   * @param tree
+   * @returns
+   */
+  function validateParserErrors(tree: Tree) {
     const diagnostics: Diagnostic[] = [];
     const MAX_PARSER_ERRORS = 100;
     tree.iterate({
       enter: node => {
         if (node.name === TOKEN_ERROR && diagnostics.length < MAX_PARSER_ERRORS) {
+          const { from, to } = node;
           diagnostics.push({
-            from: node.from,
+            from,
             message: `Unexpected token`,
             severity: 'error',
-            to: node.to,
+            to,
           });
         }
       },
@@ -291,7 +325,8 @@ export function sequenceLinter(
     return diagnostics;
   }
 
-  function validateLocals(locals: SyntaxNode[]) {
+  function validateLocals(locals: SyntaxNode[], text: string) {
+    const variables: VariableDeclaration[] = [];
     const diagnostics: Diagnostic[] = [];
     diagnostics.push(
       ...locals.slice(1).map(
@@ -313,15 +348,24 @@ export function sequenceLinter(
             severity: 'error',
             to: child.to,
           });
+        } else {
+          variables.push({
+            name: text.slice(child.from, child.to),
+            // TODO - hook to check mission specific nomenclature
+            type: 'STRING',
+          });
         }
         child = child.nextSibling;
       }
     });
-    // TODO - hook to check mission specific nomenclature
-    return diagnostics;
+    return {
+      diagnostics,
+      variables,
+    };
   }
 
-  function validateParameters(inputParams: SyntaxNode[]) {
+  function validateParameters(inputParams: SyntaxNode[], text: string) {
+    const variables: VariableDeclaration[] = [];
     const diagnostics: Diagnostic[] = [];
     diagnostics.push(
       ...inputParams.slice(1).map(
@@ -343,12 +387,20 @@ export function sequenceLinter(
             severity: 'error',
             to: child.to,
           });
+        } else {
+          variables.push({
+            name: text.slice(child.from, child.to),
+            // TODO - hook to check mission specific nomenclature
+            type: 'STRING',
+          });
         }
         child = child.nextSibling;
       }
     });
-    // TODO - hook to check mission specific nomenclature
-    return diagnostics;
+    return {
+      diagnostics,
+      variables,
+    };
   }
 
   function validateCustomDirectives(node: SyntaxNode, text: string): Diagnostic[] {
@@ -394,7 +446,7 @@ export function sequenceLinter(
    * @param {string} text - the text to validate against
    * @return {Diagnostic[]} an array of diagnostics
    */
-  function commandLinter(commandNodes: SyntaxNode[] | undefined, text: string): Diagnostic[] {
+  function commandLinter(commandNodes: SyntaxNode[] | undefined, text: string, variables: VariableMap): Diagnostic[] {
     // If there are no command nodes, return an empty array of diagnostics
     if (!commandNodes) {
       return [];
@@ -530,7 +582,7 @@ export function sequenceLinter(
       }
 
       // Validate the command and push the generated diagnostics to the array
-      diagnostics.push(...validateCommand(command, text, 'command'));
+      diagnostics.push(...validateCommand(command, text, 'command', variables));
 
       // Lint the metadata and models
       diagnostics.push(...validateMetadata(command));
@@ -548,7 +600,11 @@ export function sequenceLinter(
    * @param {string} text - Text of the sequence.
    * @return {Diagnostic[]} Array of diagnostics.
    */
-  function immediateCommandLinter(commandNodes: SyntaxNode[] | undefined, text: string): Diagnostic[] {
+  function immediateCommandLinter(
+    commandNodes: SyntaxNode[] | undefined,
+    text: string,
+    variables: VariableMap,
+  ): Diagnostic[] {
     // If there are no command nodes, return the empty array
     if (!commandNodes) {
       return [];
@@ -574,7 +630,7 @@ export function sequenceLinter(
       }
 
       // Validate the command and push the generated diagnostics to the array
-      diagnostics.push(...validateCommand(command, text, 'immediate'));
+      diagnostics.push(...validateCommand(command, text, 'immediate', variables));
 
       // Lint the metadata
       diagnostics.push(...validateMetadata(command));
@@ -629,7 +685,7 @@ export function sequenceLinter(
       }
 
       // Validate the command and push the generated diagnostics to the array
-      diagnostics.push(...validateCommand(command, text, 'hardware'));
+      diagnostics.push(...validateCommand(command, text, 'hardware', {}));
 
       // Lint the metadata
       diagnostics.push(...validateMetadata(command));
@@ -662,6 +718,7 @@ export function sequenceLinter(
     command: SyntaxNode,
     text: string,
     type: 'command' | 'immediate' | 'hardware' = 'command',
+    variables: VariableMap,
   ): Diagnostic[] {
     // If the command dictionary is not initialized, return an empty array of diagnostics.
     if (!commandDictionary) {
@@ -698,7 +755,14 @@ export function sequenceLinter(
 
     // Lint the arguments of the command.
     diagnostics.push(
-      ...validateAndLintArguments(dictArgs, argNode ? getChildrenNode(argNode) : null, command, text, stemText),
+      ...validateAndLintArguments(
+        dictArgs,
+        argNode ? getChildrenNode(argNode) : null,
+        command,
+        text,
+        stemText,
+        variables,
+      ),
     );
 
     // Return the array of diagnostics.
@@ -785,6 +849,7 @@ export function sequenceLinter(
     command: SyntaxNode,
     text: string,
     stem: string,
+    variables: VariableMap,
   ): Diagnostic[] {
     // Initialize an array to store the validation errors
     let diagnostics: Diagnostic[] = [];
@@ -888,7 +953,9 @@ export function sequenceLinter(
       }
 
       // Validate and lint the current argument node
-      diagnostics = diagnostics.concat(...validateArgument(dictArg, arg, command, text, stem, argValues.slice(0, i)));
+      diagnostics = diagnostics.concat(
+        ...validateArgument(dictArg, arg, command, text, stem, argValues.slice(0, i), variables),
+      );
     }
 
     // Return the array of validation errors
@@ -912,6 +979,7 @@ export function sequenceLinter(
     text: string,
     stemText: string,
     precedingArgValues: string[],
+    variables: VariableMap,
   ): Diagnostic[] {
     dictArg = getCustomArgDef(stemText, dictArg, precedingArgValues, parameterDictionaries);
 
@@ -1006,6 +1074,13 @@ export function sequenceLinter(
               to: argNode.to,
             });
           }
+        } else if (argType === 'Enum' && !variables[argText]) {
+          diagnostics.push({
+            from: argNode.from,
+            message: `Unrecognized variable name ${argType}`,
+            severity: 'error',
+            to: argNode.to,
+          });
         } else {
           diagnostics.push({
             from: argNode.from,
@@ -1017,7 +1092,25 @@ export function sequenceLinter(
         break;
       case 'fixed_string':
       case 'var_string':
-        if (argType !== 'String') {
+        if (argType === 'Enum') {
+          if (!variables[argText]) {
+            const insert = closest(argText, Object.keys(variables));
+            diagnostics.push({
+              actions: [
+                {
+                  apply(view, from, to) {
+                    view.dispatch({ changes: { from, insert, to } });
+                  },
+                  name: `Change to ${insert}`,
+                },
+              ],
+              from: argNode.from,
+              message: `Unrecognized variable name ${argText}`,
+              severity: 'error',
+              to: argNode.to,
+            });
+          }
+        } else if (argType !== 'String') {
           diagnostics.push({
             from: argNode.from,
             message: `Incorrect type - expected 'String' but got ${argType}`,
@@ -1103,7 +1196,7 @@ export function sequenceLinter(
                 .forEach((repeat: SyntaxNode[]) => {
                   // check individual args
                   diagnostics.push(
-                    ...validateAndLintArguments(repeatDef.arguments ?? [], repeat, command, text, stemText),
+                    ...validateAndLintArguments(repeatDef.arguments ?? [], repeat, command, text, stemText, variables),
                   );
                 });
             }
