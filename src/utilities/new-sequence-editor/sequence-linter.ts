@@ -1,7 +1,7 @@
 import { syntaxTree } from '@codemirror/language';
 import { linter, type Diagnostic } from '@codemirror/lint';
 import type { Extension } from '@codemirror/state';
-import type { SyntaxNode } from '@lezer/common';
+import type { SyntaxNode, Tree } from '@lezer/common';
 import type {
   CommandDictionary,
   EnumMap,
@@ -69,8 +69,11 @@ export function sequenceLinter(
   parameterDictionaries: ParameterDictionary[] = [],
 ): Extension {
   return linter(view => {
-    const treeNode = syntaxTree(view.state).topNode;
+    const tree = syntaxTree(view.state);
+    const treeNode = tree.topNode;
     let diagnostics: Diagnostic[] = [];
+
+    diagnostics.push(...parserErrors(tree));
 
     // Validate top level metadata
     diagnostics.push(...validateMetadata(treeNode));
@@ -106,6 +109,24 @@ export function sequenceLinter(
 
     return diagnostics;
   });
+
+  function parserErrors(tree: Tree) {
+    const diagnostics: Diagnostic[] = [];
+    const MAX_PARSER_ERRORS = 100;
+    tree.iterate({
+      enter: node => {
+        if (node.name === TOKEN_ERROR && diagnostics.length < MAX_PARSER_ERRORS) {
+          diagnostics.push({
+            from: node.from,
+            message: `Unexpected token`,
+            severity: 'error',
+            to: node.to,
+          });
+        }
+      },
+    });
+    return diagnostics;
+  }
 
   function conditionalAndLoopKeywordsLinter(commandNodes: SyntaxNode[], text: string): Diagnostic[] {
     const diagnostics: Diagnostic[] = [];
