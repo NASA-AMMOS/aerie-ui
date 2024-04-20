@@ -40,9 +40,6 @@ const KNOWN_DIRECTIVES = [
 
 export function getAllEnumSymbols(enumMap: EnumMap, enumName: string): undefined | string[] {
   return enumMap[enumName]?.values.map(({ symbol }) => symbol);
-  // const enumSymbols = enumMap[enumName]?.values.map(({ symbol }) => symbol) ?? [];
-  // const enumSymbolsDisplayStr = enumSymbols.join('  |  ');
-  // return { enumSymbols, enumSymbolsDisplayStr };
 }
 
 function closestStrings(value: string, potentialMatches: string[], n: number) {
@@ -50,6 +47,18 @@ function closestStrings(value: string, potentialMatches: string[], n: number) {
   distances.sort((a, b) => a.distance - b.distance);
   return distances.slice(0, n).map(pair => pair.s);
 }
+
+type WhileOpener = {
+  command: SyntaxNode;
+  from: number;
+  stemToClose: string;
+  to: number;
+  word: string;
+};
+
+type IfOpener = WhileOpener & {
+  hasElse: boolean;
+};
 
 /**
  * Linter function that returns a Code Mirror extension function.
@@ -100,22 +109,18 @@ export function sequenceLinter(
 
   function conditionalAndLoopKeywordsLinter(commandNodes: SyntaxNode[], text: string): Diagnostic[] {
     const diagnostics: Diagnostic[] = [];
-    // array length is 'if' block depth, boolean is if 'else' is present
-    const conditionalStack: boolean[] = [];
-    const loopStack: string[] = [];
+    const conditionalStack: IfOpener[] = [];
+    const loopStack: WhileOpener[] = [];
     const conditionalKeywords = [];
     const loopKeywords = [];
     const conditionalStartingKeywords = globalThis.CONDITIONAL_KEYWORDS?.IF ?? ['CMD_IF'];
     const conditionalElseKeyword = globalThis.CONDITIONAL_KEYWORDS?.ELSE ?? 'CMD_ELSE';
+    const conditionalElseIfKeywords = globalThis.CONDITIONAL_KEYWORDS?.ELSE_IF ?? ['CMD_ELSE_IF'];
     const conditionalEndingKeyword = globalThis.CONDITIONAL_KEYWORDS?.END_IF ?? 'CMD_END_IF';
     const loopStartingKeywords = globalThis.LOOP_KEYWORDS?.WHILE_LOOP ?? ['CMD_WHILE_LOOP', 'CMD_WHILE_LOOP_OR'];
     const loopEndingKeyword = globalThis.LOOP_KEYWORDS?.END_WHILE_LOOP ?? 'CMD_END_WHILE_LOOP';
 
-    conditionalKeywords.push(
-      conditionalElseKeyword,
-      ...(globalThis.CONDITIONAL_KEYWORDS?.ELSE_IF ?? ['CMD_ELSE_IF']),
-      conditionalEndingKeyword,
-    );
+    conditionalKeywords.push(conditionalElseKeyword, ...conditionalElseIfKeywords, conditionalEndingKeyword);
     loopKeywords.push(
       globalThis.LOOP_KEYWORDS?.BREAK ?? 'CMD_BREAK',
       globalThis.LOOP_KEYWORDS?.CONTINUE ?? 'CMD_CONTINUE',
@@ -128,27 +133,31 @@ export function sequenceLinter(
         const word = text.slice(stem.from, stem.to);
 
         if (conditionalStartingKeywords.includes(word)) {
-          conditionalStack.push(false);
+          conditionalStack.push({
+            command,
+            from: stem.from,
+            hasElse: false,
+            stemToClose: conditionalEndingKeyword,
+            to: stem.to,
+            word,
+          });
         }
-
-        // TODO -- check max one else
 
         if (conditionalKeywords.includes(word)) {
           if (conditionalStack.length === 0) {
             diagnostics.push({
               from: stem.from,
-              message: `Conditional keyword ${word} found without a preceding ${conditionalStartingKeywords.join(', ')}.`,
+              message: `${word} doesn't match a preceding ${conditionalStartingKeywords.join(', ')}.`,
               severity: 'error',
               to: stem.to,
             });
           } else if (word === conditionalElseKeyword) {
-            if (conditionalStack[conditionalStack.length - 1] === false) {
-              // 'else' detected for this 'if'
-              conditionalStack[conditionalStack.length - 1] = true;
+            if (!conditionalStack[conditionalStack.length - 1].hasElse) {
+              conditionalStack[conditionalStack.length - 1].hasElse = true;
             } else {
               diagnostics.push({
                 from: stem.from,
-                message: `ELSE command ${word} doesn't match a preceding ${conditionalStartingKeywords.join(', ')}.`,
+                message: `${word} doesn't match a preceding ${conditionalStartingKeywords.join(', ')}.`,
                 severity: 'error',
                 to: stem.to,
               });
@@ -159,14 +168,20 @@ export function sequenceLinter(
         }
 
         if (loopStartingKeywords.includes(word)) {
-          loopStack.push(word);
+          loopStack.push({
+            command,
+            from: stem.from,
+            stemToClose: loopEndingKeyword,
+            to: stem.to,
+            word,
+          });
         }
 
         if (loopKeywords.includes(word)) {
           if (loopStack.length === 0) {
             diagnostics.push({
               from: stem.from,
-              message: `Loop keyword ${word} found without a preceding ${loopStartingKeywords.join(', ')}.`,
+              message: `${word} doesn't match a preceding ${loopStartingKeywords.join(', ')}.`,
               severity: 'error',
               to: stem.to,
             });
@@ -178,6 +193,33 @@ export function sequenceLinter(
         }
       }
     }
+
+    // Anything left on the stack is unclosed
+    diagnostics.push(
+      ...[...loopStack, ...conditionalStack].map(block => {
+        return {
+          actions: [
+            {
+              apply(view: EditorView, _from: number, _to: number) {
+                // const line = view.state.doc.lineAt(block.command.to);
+                // const onLastLine = line.number === view.state.doc.lines;
+                view.dispatch({
+                  changes: {
+                    from: block.command.to,
+                    insert: `\nC ${block.stemToClose}\n`,
+                  },
+                });
+              },
+              name: `Insert ${block.stemToClose}`,
+            },
+          ],
+          from: block.from,
+          message: `Unclosed ${block.word}`,
+          severity: 'error',
+          to: block.to,
+        } as const;
+      }),
+    );
 
     return diagnostics;
   }
