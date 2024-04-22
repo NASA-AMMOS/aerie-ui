@@ -372,25 +372,56 @@
         };
         break;
       case 'goal': {
-        const nextPriority = Object.keys(selectedGoalModelSpecifications).reduce(
-          (prevPriority: number, selectedGoalModelSpecificationId) => {
-            const goalSpecification = selectedGoalModelSpecifications[parseInt(selectedGoalModelSpecificationId)];
-            if (goalSpecification.selected === true) {
-              return prevPriority + 1;
-            }
-            return prevPriority;
-          },
-          0,
-        );
-        selectedGoalModelSpecifications = {
-          ...selectedGoalModelSpecifications,
-          [id]: {
-            ...selectedGoalModelSpecifications[id],
-            priority: nextPriority,
-            revision: selectedGoalModelSpecifications[id]?.revision ?? null,
-            selected,
-          },
-        };
+        if (selected) {
+          const nextPriority = Object.keys(selectedGoalModelSpecifications).reduce(
+            (prevPriority: number, selectedGoalModelSpecificationId) => {
+              const goalSpecification = selectedGoalModelSpecifications[parseInt(selectedGoalModelSpecificationId)];
+              if (goalSpecification.selected === true) {
+                return prevPriority + 1;
+              }
+              return prevPriority;
+            },
+            0,
+          );
+          selectedGoalModelSpecifications = {
+            ...selectedGoalModelSpecifications,
+            [id]: {
+              ...selectedGoalModelSpecifications[id],
+              priority: nextPriority,
+              revision: selectedGoalModelSpecifications[id]?.revision ?? null,
+              selected,
+            },
+          };
+        } else {
+          const toggledGoalModelSpecification = selectedGoalModelSpecifications[id];
+          selectedGoalModelSpecifications = Object.keys(selectedGoalModelSpecifications).reduce(
+            (prevSelectedGoalModelSpecifications: AssociationSpecificationMap, selectedGoalModelSpecificationId) => {
+              const goalSpecification = selectedGoalModelSpecifications[parseInt(selectedGoalModelSpecificationId)];
+              if (
+                parseInt(selectedGoalModelSpecificationId) !== id &&
+                goalSpecification.priority !== undefined &&
+                toggledGoalModelSpecification.priority !== undefined &&
+                goalSpecification.priority > toggledGoalModelSpecification.priority
+              ) {
+                prevSelectedGoalModelSpecifications = {
+                  ...prevSelectedGoalModelSpecifications,
+                  [selectedGoalModelSpecificationId]: {
+                    ...goalSpecification,
+                    priority: goalSpecification.priority - 1,
+                  },
+                };
+              }
+              return prevSelectedGoalModelSpecifications;
+            },
+            {
+              ...selectedGoalModelSpecifications,
+              [id]: {
+                ...selectedGoalModelSpecifications[id],
+                selected: false,
+              },
+            },
+          );
+        }
         break;
       }
       case 'constraint':
