@@ -48,6 +48,7 @@
     constraintsStatus,
     constraintsViolationStatus,
     resetConstraintStores,
+    resetPlanConstraintStores,
     uncheckedConstraintCount,
   } from '../../../stores/constraints';
   import {
@@ -80,6 +81,7 @@
   import {
     enableScheduling,
     latestSchedulingRequest,
+    resetPlanSchedulingStores,
     satisfiedSchedulingGoalCount,
     schedulingAnalysisStatus,
     schedulingGoalCount,
@@ -399,7 +401,9 @@
 
   onDestroy(() => {
     resetActivityStores();
+    resetPlanConstraintStores();
     resetConstraintStores();
+    resetPlanSchedulingStores();
     resetExpansionStores();
     resetPlanStores();
     resetSimulationStores();
