@@ -202,7 +202,7 @@
 
 <div class="metadata-container">
   <div class="metadata-filter-container">
-    <div class="metadata-title">{formattedType}s</div>
+    <div class="st-typography-bold">{formattedType}s</div>
     <Input>
       <input bind:value={filterText} class="st-input" placeholder={`Filter ${metadataType}s`} style="width: 100%;" />
     </Input>
@@ -255,10 +255,6 @@
     display: grid;
     grid-template-columns: min-content auto min-content;
     margin: 0.5rem 1rem 0;
-  }
-
-  .metadata-title {
-    font-weight: bold;
   }
 
   .metadata-table-container {

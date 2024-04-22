@@ -87,6 +87,7 @@
         id: specId,
       };
     })
+    .filter(({ selected }) => selected)
     .sort((specA, specB) => {
       if (specA.priority !== undefined && specB.priority !== undefined && specA.priority !== specB.priority) {
         return specA.priority - specB.priority;
@@ -295,7 +296,7 @@
 
   .associations-view {
     padding: 8px;
-    width: 100px;
+    width: 200px;
   }
 
   .association-items-container {

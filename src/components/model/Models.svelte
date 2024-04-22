@@ -137,10 +137,8 @@
     }
   }
 
-  function editModel() {
-    if (selectedModel) {
-      goto(`${base}/models/${selectedModel.id}`);
-    }
+  function editModel(model: ModelSlim) {
+    goto(`${base}/models/${model.id}`);
   }
 
   function deleteModel(model: ModelSlim) {
@@ -155,8 +153,22 @@
     }
   }
 
+  function editModelContext(event: CustomEvent<RowId[]>) {
+    const selectedModelId = event.detail[0] as number;
+    const modelToDelete = $models.find((model: ModelSlim) => model.id === selectedModelId);
+    if (modelToDelete) {
+      editModel(modelToDelete);
+    }
+  }
+
   function deselectModel() {
     selectModel(null);
+  }
+
+  function onEditModel() {
+    if (selectedModel) {
+      editModel(selectedModel);
+    }
   }
 
   function selectModel(model: ModelSlim | null) {
@@ -180,7 +192,11 @@
     <svelte:fragment slot="header">
       <SectionTitle>{selectedModel ? selectedModel.name : 'New Model'}</SectionTitle>
       {#if selectedModel}
-        <button class="st-button icon fs-6" on:click={deselectModel}>
+        <button
+          class="st-button icon fs-6"
+          on:click={deselectModel}
+          use:tooltip={{ content: 'Deselect model', placement: 'top' }}
+        >
           <XIcon />
         </button>
       {/if}
@@ -239,7 +255,7 @@
           </button>
           <button
             class="st-button w-100"
-            on:click={editModel}
+            on:click={onEditModel}
             use:permissionHandler={{
               hasPermission: hasUpdateModelPermission,
               permissionError: updateModelPermissionError,
@@ -339,12 +355,15 @@
       {#if $models.length}
         <SingleActionDataGrid
           {columnDefs}
+          hasEdit={hasUpdateModelPermission}
+          hasEditPermission={hasUpdateModelPermission}
           hasDeletePermission={hasDeleteModelPermission}
           itemDisplayText="Model"
           items={$models}
           {user}
           selectedItemId={selectedModel?.id}
           on:deleteItem={deleteModelContext}
+          on:editItem={editModelContext}
           on:rowClicked={({ detail }) => selectModel(detail.data)}
         />
       {:else}

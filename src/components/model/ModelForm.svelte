@@ -75,65 +75,68 @@
 </script>
 
 <div class="model-form-container">
-  <Input layout="inline">
-    <label for="name">Model name</label>
-    <input
-      class="st-input w-100"
-      name="name"
-      bind:value={name}
-      use:permissionHandler={{
-        hasPermission: hasUpdateModelPermission,
-        permissionError: updateModelPermissionError,
-      }}
-    />
-  </Input>
-  <Input layout="inline">
-    <label for="id">Model id</label>
-    <input class="st-input w-100" disabled name="id" value={modelId ?? ''} />
-  </Input>
-  <Input layout="inline">
-    <label for="description">Model description</label>
-    <textarea
-      class="st-input w-100"
-      name="description"
-      bind:value={description}
-      use:permissionHandler={{
-        hasPermission: hasUpdateModelPermission,
-        permissionError: updateModelPermissionError,
-      }}
-    />
-  </Input>
-  <Input layout="inline">
-    <label for="version">Model version</label>
-    <input
-      class="st-input w-100"
-      name="version"
-      placeholder="0.0.0"
-      bind:value={version}
-      use:permissionHandler={{
-        hasPermission: hasUpdateModelPermission,
-        permissionError: updateModelPermissionError,
-      }}
-    />
-  </Input>
-  <Input layout="inline">
-    <label for="owner">Owner</label>
-    <input
-      class="st-input w-100"
-      name="owner"
-      bind:value={owner}
-      use:permissionHandler={{
-        hasPermission: hasUpdateModelPermission,
-        permissionError: updateModelPermissionError,
-      }}
-    />
-  </Input>
-  {#if createdAt}
+  <div class="inputs">
     <Input layout="inline">
-      <label use:tooltip={{ content: 'Date Created', placement: 'top' }} for="createdAt">Date Created</label>
-      <input class="st-input w-100" disabled name="createdAt" value={getShortISOForDate(new Date(createdAt))} />
+      <label for="name">Model name</label>
+      <input
+        class="st-input w-100"
+        name="name"
+        autocomplete="off"
+        bind:value={name}
+        use:permissionHandler={{
+          hasPermission: hasUpdateModelPermission,
+          permissionError: updateModelPermissionError,
+        }}
+      />
     </Input>
-  {/if}
+    <Input layout="inline">
+      <label for="id">Model id</label>
+      <input class="st-input w-100" disabled name="id" value={modelId ?? ''} />
+    </Input>
+    <Input layout="inline">
+      <label for="description">Model description</label>
+      <textarea
+        class="st-input w-100"
+        name="description"
+        bind:value={description}
+        use:permissionHandler={{
+          hasPermission: hasUpdateModelPermission,
+          permissionError: updateModelPermissionError,
+        }}
+      />
+    </Input>
+    <Input layout="inline">
+      <label for="version">Model version</label>
+      <input
+        class="st-input w-100"
+        name="version"
+        placeholder="0.0.0"
+        bind:value={version}
+        use:permissionHandler={{
+          hasPermission: hasUpdateModelPermission,
+          permissionError: updateModelPermissionError,
+        }}
+      />
+    </Input>
+    <Input layout="inline">
+      <label for="owner">Owner</label>
+      <input
+        class="st-input w-100"
+        name="owner"
+        bind:value={owner}
+        use:permissionHandler={{
+          hasPermission: hasUpdateModelPermission,
+          permissionError: updateModelPermissionError,
+        }}
+      />
+    </Input>
+    {#if createdAt}
+      <Input layout="inline">
+        <label use:tooltip={{ content: 'Date Created', placement: 'top' }} for="createdAt">Date Created</label>
+        <input class="st-input w-100" disabled name="createdAt" value={getShortISOForDate(new Date(createdAt))} />
+      </Input>
+    {/if}
+  </div>
   <div class="buttons">
     <button
       class="st-button secondary w-100"
@@ -159,9 +162,13 @@
 </div>
 
 <style>
+  .model-form-container .inputs {
+    padding: 0 8px;
+  }
+
   .model-form-container .buttons {
     display: grid;
-    margin-top: 2rem;
-    row-gap: 1rem;
+    padding: 8px;
+    row-gap: 8px;
   }
 </style>
