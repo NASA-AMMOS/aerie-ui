@@ -54,13 +54,18 @@
     selected: boolean;
   }[] = [];
 
-  $: metadataMap = metadataList.reduce(
-    (prevMap, metadata) => ({
-      ...prevMap,
-      [metadata.id]: metadata,
-    }),
-    {},
-  );
+  $: {
+    metadataMap = metadataList.reduce(
+      (prevMap, metadata) => ({
+        ...prevMap,
+        [metadata.id]: metadata,
+      }),
+      {},
+    );
+    if (selectedSpecification && !metadataMap[selectedSpecification.id]) {
+      selectedSpecification = null;
+    }
+  }
   $: if (selectedAssociation) {
     selectedSpecification = null;
   }
