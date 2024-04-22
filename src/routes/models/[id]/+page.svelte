@@ -115,12 +115,62 @@
     selectedGoalModelSpecifications = { ...initialSelectedGoalModelSpecifications };
   }
   $: switch (selectedAssociation) {
-    case 'goal':
+    // goals require special logic because of priority management
+    // goals must have consecutive priorities starting at 0
+    case 'goal': {
       hasCreatePermission = featurePermissions.schedulingGoals.canCreate(user);
       hasEditSpecPermission = featurePermissions.schedulingGoalsModelSpec.canUpdate(user);
       metadataList = $schedulingGoals;
+
+      // only maintain a list of specifications added to the model if they exist in the db
+      let selectedGoalModelSpecificationList: (AssociationSpecification & { id: number })[] = metadataList.reduce(
+        (prevSelectedGoalModelSpecifications: (AssociationSpecification & { id: number })[], metadata) => {
+          if (selectedGoalModelSpecifications[metadata.id]) {
+            return [
+              ...prevSelectedGoalModelSpecifications,
+              {
+                id: metadata.id,
+                ...selectedGoalModelSpecifications[metadata.id],
+              },
+            ];
+          }
+          return prevSelectedGoalModelSpecifications;
+        },
+        [],
+      );
+      // modify existing priorities to ensure that they are consecutive
+      let lastPriority = -1;
+      selectedGoalModelSpecificationList = selectedGoalModelSpecificationList
+        .sort((specificationA, specificationB) => {
+          return (specificationA?.priority ?? 0) - (specificationB?.priority ?? 0);
+        })
+        .map(goalSpecification => {
+          if (goalSpecification.selected && (goalSpecification.priority ?? 0 - lastPriority > 1)) {
+            lastPriority = lastPriority + 1;
+            return {
+              ...goalSpecification,
+              priority: lastPriority,
+            };
+          }
+          lastPriority = goalSpecification.priority ?? 0;
+          return goalSpecification;
+        });
+      selectedGoalModelSpecifications = selectedGoalModelSpecificationList.reduce(
+        (prevSelectedGoalModelSpecifications: AssociationSpecificationMap, goalSpecification) => {
+          return {
+            ...prevSelectedGoalModelSpecifications,
+            [goalSpecification.id]: {
+              priority: goalSpecification.priority,
+              revision: goalSpecification.revision,
+              selected: goalSpecification.selected,
+            },
+          };
+        },
+        {},
+      );
       selectedSpecifications = selectedGoalModelSpecifications;
       break;
+    }
     case 'condition':
       hasCreatePermission = featurePermissions.schedulingConditions.canCreate(user);
       hasEditSpecPermission = featurePermissions.schedulingConditionsModelSpec.canUpdate(user);
@@ -372,56 +422,26 @@
         };
         break;
       case 'goal': {
-        if (selected) {
-          const nextPriority = Object.keys(selectedGoalModelSpecifications).reduce(
-            (prevPriority: number, selectedGoalModelSpecificationId) => {
-              const goalSpecification = selectedGoalModelSpecifications[parseInt(selectedGoalModelSpecificationId)];
-              if (goalSpecification.selected === true) {
-                return prevPriority + 1;
-              }
-              return prevPriority;
-            },
-            0,
-          );
-          selectedGoalModelSpecifications = {
-            ...selectedGoalModelSpecifications,
-            [id]: {
-              ...selectedGoalModelSpecifications[id],
-              priority: nextPriority,
-              revision: selectedGoalModelSpecifications[id]?.revision ?? null,
-              selected,
-            },
-          };
-        } else {
-          const toggledGoalModelSpecification = selectedGoalModelSpecifications[id];
-          selectedGoalModelSpecifications = Object.keys(selectedGoalModelSpecifications).reduce(
-            (prevSelectedGoalModelSpecifications: AssociationSpecificationMap, selectedGoalModelSpecificationId) => {
-              const goalSpecification = selectedGoalModelSpecifications[parseInt(selectedGoalModelSpecificationId)];
-              if (
-                parseInt(selectedGoalModelSpecificationId) !== id &&
-                goalSpecification.priority !== undefined &&
-                toggledGoalModelSpecification.priority !== undefined &&
-                goalSpecification.priority > toggledGoalModelSpecification.priority
-              ) {
-                prevSelectedGoalModelSpecifications = {
-                  ...prevSelectedGoalModelSpecifications,
-                  [selectedGoalModelSpecificationId]: {
-                    ...goalSpecification,
-                    priority: goalSpecification.priority - 1,
-                  },
-                };
-              }
-              return prevSelectedGoalModelSpecifications;
-            },
-            {
-              ...selectedGoalModelSpecifications,
-              [id]: {
-                ...selectedGoalModelSpecifications[id],
-                selected: false,
-              },
-            },
-          );
-        }
+        // find the next highest priority that is available to add
+        const nextPriority = Object.keys(selectedGoalModelSpecifications).reduce(
+          (prevPriority: number, selectedGoalModelSpecificationId) => {
+            const goalSpecification = selectedGoalModelSpecifications[parseInt(selectedGoalModelSpecificationId)];
+            if (goalSpecification.selected === true) {
+              return prevPriority + 1;
+            }
+            return prevPriority;
+          },
+          0,
+        );
+        selectedGoalModelSpecifications = {
+          ...selectedGoalModelSpecifications,
+          [id]: {
+            ...selectedGoalModelSpecifications[id],
+            priority: nextPriority,
+            revision: selectedGoalModelSpecifications[id]?.revision ?? null,
+            selected,
+          },
+        };
         break;
       }
       case 'constraint':
