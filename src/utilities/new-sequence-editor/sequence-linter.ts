@@ -335,7 +335,7 @@ export function sequenceLinter(
             ...getFromAndTo([local]),
             message: 'There is a maximum of @LOCALS directive per sequence',
             severity: 'error',
-          }) as Diagnostic,
+          }) as const,
       ),
     );
     locals.forEach(local => {
@@ -374,7 +374,7 @@ export function sequenceLinter(
             ...getFromAndTo([inputParam]),
             message: 'There is a maximum of @INPUT_PARAMS directive per sequence',
             severity: 'error',
-          }) as Diagnostic,
+          }) as const,
       ),
     );
     inputParams.forEach(inputParam => {
