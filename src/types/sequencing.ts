@@ -28,8 +28,13 @@ export type Parcel = {
   id: number;
   name: string;
   owner: UserId;
-  parameter_dictionary_id: number | null;
   sequence_adaptation_id: number | null;
+};
+
+export type ParcelToParameterDictionary = {
+  id: number;
+  parameter_dictionary_id: number;
+  parcel_id: number;
 };
 
 export type ParcelInsertInput = Omit<Parcel, 'created_at' | 'id' | 'owner'>;

@@ -4,7 +4,13 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import type { CellEditingStoppedEvent, ValueGetterParams } from 'ag-grid-community';
-  import { commandDictionaries, parameterDictionaries, sequenceAdaptations } from '../../stores/sequencing';
+  import {
+    commandDictionaries,
+    parameterDictionaries,
+    parcel,
+    parcelToParameterDictionaries,
+    sequenceAdaptations,
+  } from '../../stores/sequencing';
   import type { User, UserId } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type {
@@ -12,6 +18,7 @@
     ParameterDictionary,
     Parcel,
     ParcelInsertInput,
+    ParcelToParameterDictionary,
     SequenceAdaptation,
   } from '../../types/sequencing';
   import effects from '../../utilities/effects';
@@ -45,16 +52,16 @@
   let parcelName: string = initialParcelName;
   let parcelId: number | null = initialParcelId;
   let parcelOwner: UserId = initialParcelOwner;
-  let parcelParameterDictionaryId: number | null = initialParcelCommandDictionaryId;
   let parcelSequenceAdaptationId: number | null = initialSequenceAdaptationId;
   let permissionError = 'You do not have permission to edit this parcel.';
   let saveButtonClass: 'primary' | 'secondary' = 'primary';
   let saveButtonText: string = '';
   let savedParcelCommandDictionaryId: number | null = parcelCommandDictionaryId;
   let savedParcelName: string = parcelName;
-  let savedParcelParameterDictionaryId: number | null = parcelParameterDictionaryId;
+  let savedParameterDictionaryIds: Record<number, boolean> = {};
   let savedSequenceAdaptationId: number | null = parcelSequenceAdaptationId;
   let savingParcel: boolean = false;
+  let selectedParmeterDictionaries: Record<number, boolean> = {};
   let sequenceAdaptationColumnDefs: DataGridColumnDef[];
   let sequenceAdaptationDataGrid: DataGrid<SequenceAdaptation> | undefined = undefined;
 
@@ -81,6 +88,16 @@
     { field: 'version', filter: 'text', headerName: 'Version', sortable: true, suppressAutoSize: true, width: 100 },
     ...createdAtColumnDef,
   ];
+
+  $: selectedParmeterDictionaries = savedParameterDictionaryIds = $parcelToParameterDictionaries.reduce(
+    (prevBooleanMap: Record<number, boolean>, parcelToParameterDictionary: ParcelToParameterDictionary) => {
+      return {
+        ...prevBooleanMap,
+        [parcelToParameterDictionary.parameter_dictionary_id]: true,
+      };
+    },
+    {},
+  );
 
   $: {
     commandDictionaryColumnDefs = [
@@ -114,7 +131,7 @@
         valueGetter: (params: ValueGetterParams<ParameterDictionary>) => {
           const { data } = params;
           if (data) {
-            return parcelParameterDictionaryId === data.id;
+            return !!selectedParmeterDictionaries[data.id];
           }
           return false;
         },
@@ -122,6 +139,10 @@
       },
       ...sharedDictionaryColumnDefs,
     ];
+  }
+
+  $: if (selectedParmeterDictionaries) {
+    parameterDictionaryDataGrid?.redrawRows();
   }
 
   $: {
@@ -152,8 +173,8 @@
   $: parcelModified =
     parcelCommandDictionaryId !== savedParcelCommandDictionaryId ||
     parcelName !== savedParcelName ||
-    parcelParameterDictionaryId !== savedParcelParameterDictionaryId ||
-    parcelSequenceAdaptationId !== savedSequenceAdaptationId;
+    parcelSequenceAdaptationId !== savedSequenceAdaptationId ||
+    didParameterDictionariesChange(selectedParmeterDictionaries);
 
   $: {
     hasPermission =
@@ -164,6 +185,26 @@
     pageTitle = mode === 'edit' ? 'Parcel' : 'New Parcel';
     pageSubtitle = mode === 'edit' ? savedParcelName : '';
     saveButtonText = mode === 'edit' && !parcelModified ? 'Saved' : 'Save';
+  }
+
+  /**
+   * selectedParameterDictionaries keeps track of false values for the table while the saved list doesn't so
+   * we need to do a custom comparison.
+   */
+  function didParameterDictionariesChange(parameterDictionaryMap: Record<number, boolean>): boolean {
+    for (const parameterDictionaryIdString of Object.keys(parameterDictionaryMap)) {
+      const parameterDictionaryId = parseInt(parameterDictionaryIdString);
+
+      if (
+        (selectedParmeterDictionaries[parameterDictionaryId] &&
+          !(parameterDictionaryId in savedParameterDictionaryIds)) ||
+        (!selectedParmeterDictionaries[parameterDictionaryId] && savedParameterDictionaryIds[parameterDictionaryId])
+      ) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   function onToggleCommandDictionary(event: CustomEvent<CellEditingStoppedEvent<CommandDictionary, boolean>>) {
@@ -183,8 +224,11 @@
       detail: { data, newValue },
     } = event;
 
-    if (data) {
-      parcelParameterDictionaryId = newValue ? data.id : null;
+    if (data && typeof newValue === 'boolean') {
+      selectedParmeterDictionaries = {
+        ...selectedParmeterDictionaries,
+        [data.id]: newValue,
+      };
     }
 
     parameterDictionaryDataGrid?.redrawRows();
@@ -202,6 +246,49 @@
     sequenceAdaptationDataGrid?.redrawRows();
   }
 
+  async function saveParcelToParameterDictionaries(): Promise<void> {
+    const parcelToParameterDictionariesToAdd: Omit<ParcelToParameterDictionary, 'id'>[] = [];
+    const parcelToParameterDictionaryIdsToDelete: number[] = [];
+
+    Object.keys(selectedParmeterDictionaries).forEach(parameterDictionaryIdString => {
+      const parameterDictionaryId = parseInt(parameterDictionaryIdString);
+      const isSelected = selectedParmeterDictionaries[parameterDictionaryId];
+
+      if (!isSelected && savedParameterDictionaryIds[parameterDictionaryId]) {
+        // Parameter dictionary was removed from the parcel.
+        parcelToParameterDictionaryIdsToDelete.push(parameterDictionaryId);
+      } else if (isSelected && !savedParameterDictionaryIds[parameterDictionaryId] && parcelId) {
+        // Parameter dictionary was freshly added to the parcel and hasn't been saved yet.
+        parcelToParameterDictionariesToAdd.push({
+          parameter_dictionary_id: parameterDictionaryId,
+          parcel_id: parcelId,
+        });
+      }
+    });
+
+    if (parcelToParameterDictionariesToAdd.length > 0) {
+      await effects.createParcelToParameterDictionaries(parcelOwner, parcelToParameterDictionariesToAdd, user);
+    }
+
+    if (parcelToParameterDictionaryIdsToDelete.length > 0) {
+      const idsToDelete = [];
+
+      for (const paramDictionaryId of parcelToParameterDictionaryIdsToDelete) {
+        const parcelId: number | undefined = $parcelToParameterDictionaries.find(
+          p => p.parameter_dictionary_id === paramDictionaryId && p.parcel_id === initialParcelId,
+        )?.id;
+
+        if (parcelId) {
+          idsToDelete.push(parcelId);
+        }
+
+        if (idsToDelete.length > 0 && $parcel) {
+          await effects.deleteParcelToParameterDictionaries(idsToDelete, $parcel, user);
+        }
+      }
+    }
+  }
+
   async function saveParcel() {
     if (saveButtonEnabled) {
       savingParcel = true;
@@ -211,13 +298,14 @@
           const newParcel: ParcelInsertInput = {
             command_dictionary_id: parcelCommandDictionaryId,
             name: parcelName,
-            parameter_dictionary_id: parcelParameterDictionaryId,
             sequence_adaptation_id: parcelSequenceAdaptationId,
           };
-          const newParcelId = await effects.createParcel(newParcel, user);
+          parcelId = await effects.createParcel(newParcel, user);
 
-          if (newParcelId !== null) {
-            goto(`${base}/parcels/edit/${newParcelId}`);
+          await saveParcelToParameterDictionaries();
+
+          if (parcelId !== null) {
+            goto(`${base}/parcels/edit/${parcelId}`);
           }
         } else if (mode === 'edit' && parcelId !== null) {
           const updatedParcel: Partial<Parcel> = {
@@ -225,6 +313,9 @@
             name: parcelName,
             sequence_adaptation_id: parcelSequenceAdaptationId,
           };
+
+          saveParcelToParameterDictionaries();
+
           await effects.updateParcel(parcelId, updatedParcel, parcelOwner, user);
         }
       }
