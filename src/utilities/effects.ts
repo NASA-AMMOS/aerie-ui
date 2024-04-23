@@ -846,13 +846,14 @@ const effects = {
 
       const data = await reqHasura<Pick<Parcel, 'id'>>(gql.CREATE_PARCEL, { parcel }, user);
       const { createParcel } = data;
-      if (createParcel != null) {
-        const { id } = createParcel;
-        showSuccessToast('Parcel Created Successfully');
-        return id;
-      } else {
+
+      if (createParcel === null) {
         throw Error(`Unable to create parcel "${parcel.name}"`);
       }
+
+      const { id } = createParcel;
+      showSuccessToast('Parcel Created Successfully');
+      return id;
     } catch (e) {
       catchError('Parcel Create Failed', e as Error);
       showFailureToast('Parcel Create Failed');
@@ -957,30 +958,6 @@ const effects = {
       }
 
       const { confirm, value = null } = await showCreatePlanBranchModal(plan);
-
-      if (confirm && value) {
-        const { name, plan } = value;
-        const data = await reqHasura(gql.DUPLICATE_PLAN, { new_plan_name: name, plan_id: plan.id }, user);
-        const { duplicate_plan } = data;
-        if (duplicate_plan != null) {
-          const { new_plan_id } = duplicate_plan;
-          await effects.createSchedulingPlanSpecification(
-            {
-              analysis_only: false,
-              horizon_end: plan.end_time_doy,
-              horizon_start: plan.start_time_doy,
-              plan_id: new_plan_id,
-              plan_revision: 0,
-              simulation_arguments: {},
-            },
-            user,
-          );
-          goto(`${base}/plans/${duplicate_plan.new_plan_id}`);
-          showSuccessToast('Branch Created Successfully');
-        } else {
-          throw Error('');
-        }
-      }
     } catch (e) {
       catchError('Branch Creation Failed', e as Error);
       showFailureToast('Branch Creation Failed');
@@ -2131,12 +2108,13 @@ const effects = {
 
       if (confirm) {
         const data = await reqHasura<{ id: number }>(gql.DELETE_PARCEL, { id: parcel.id }, user);
-        if (data.deleteParcel != null) {
-          showSuccessToast('Parcel Deleted Successfully');
-          return true;
-        } else {
+
+        if (data.deleteParcel === null) {
           throw Error(`Unable to delete parcel "${parcel.name}"`);
         }
+
+        showSuccessToast('Parcel Deleted Successfully');
+        return true;
       }
 
       return false;
@@ -2311,12 +2289,12 @@ const effects = {
 
       if (confirm) {
         const data = await reqHasura<{ id: number }>(gql.DELETE_SEQUENCE_ADAPTATION, { id }, user);
-        if (data.deleteSequenceAdaptation != null) {
-          showSuccessToast('Sequence Adaptation Deleted Successfully');
-          sequenceAdaptations.filterValueById(id);
-        } else {
+        if (data.deleteSequenceAdaptation === null) {
           throw Error(`Unable to delete sequence adaptation with ID: "${id}"`);
         }
+
+        showSuccessToast('Sequence Adaptation Deleted Successfully');
+        sequenceAdaptations.filterValueById(id);
       }
     } catch (e) {
       catchError('Sequence Adaptation Delete Failed', e as Error);
@@ -4360,12 +4338,13 @@ const effects = {
 
       const data = await reqHasura<Pick<Parcel, 'id'>>(gql.UPDATE_PARCEL, { id, parcel }, user);
       const { updateParcel } = data;
-      if (updateParcel != null) {
-        showSuccessToast('Parcel Updated Successfully');
-        return '';
-      } else {
+
+      if (updateParcel === null) {
         throw Error(`Unable to update parcel with ID: "${id}"`);
       }
+
+      showSuccessToast('Parcel Updated Successfully');
+      return '';
     } catch (e) {
       catchError('Parcel Update Failed', e as Error);
       showFailureToast('Parcel Update Failed');
@@ -4854,12 +4833,14 @@ const effects = {
         },
         user,
       );
+
       const { createCommandDictionary: newCommandDictionary } = data;
-      if (newCommandDictionary != null) {
-        return newCommandDictionary;
-      } else {
+
+      if (newCommandDictionary === null) {
         throw Error('Unable to upload command dictionary');
       }
+
+      return newCommandDictionary;
     } catch (e) {
       catchError('Command Dictionary Upload Failed', e as Error);
       return null;
@@ -4999,12 +4980,14 @@ const effects = {
         },
         user,
       );
+
       const { createParameterDictionary: newParameterDictionary } = data;
-      if (newParameterDictionary != null) {
-        return newParameterDictionary;
-      } else {
+
+      if (newParameterDictionary === null) {
         throw Error('Unable to upload parameter dictionary');
       }
+
+      return newParameterDictionary;
     } catch (e) {
       catchError('Parameter Dictionary Upload Failed', e as Error);
       return null;

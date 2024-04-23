@@ -110,7 +110,7 @@
   function deleteParcelContext(event: CustomEvent<RowId[]>) {
     const id = event.detail[0] as number;
     const parcel = $parcels.find(p => p.id === id);
-    console.log(parcel);
+
     if (parcel) {
       deleteParcel(parcel);
     }

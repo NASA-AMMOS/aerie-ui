@@ -198,9 +198,9 @@
                 if (!seenSet.has(val.id)) {
                   seenSet.add(val.id);
                   return true;
-                } else {
-                  return false;
                 }
+
+                return false;
               }),
             );
 
@@ -213,9 +213,9 @@
                 if (!seenSet.has(val.id)) {
                   seenSet.add(val.id);
                   return true;
-                } else {
-                  return false;
                 }
+
+                return false;
               }),
             );
 
