@@ -42,6 +42,7 @@
   }>();
 
   let metadataMap: Record<number, BaseMetadata> = {};
+  let numOfPrivateMetadata: number = 0;
   let selectedAssociationId: Association = 'constraint';
   let selectedAssociationTitle = 'Constraint';
   let selectedDefinition: string | null;
@@ -100,6 +101,7 @@
 
       return specA.id - specB.id;
     });
+  $: numOfPrivateMetadata = selectedSpecificationsList.filter(({ id }) => !metadataMap[id]).length;
 
   function onClose() {
     dispatch('close');
@@ -203,6 +205,13 @@
       {:else}
         <div class="association-items-container">
           {#if model !== null && selectedSpecificationsList.length > 0}
+            <div class="private-label">
+              {#if numOfPrivateMetadata > 0}
+                {numOfPrivateMetadata}
+                {selectedAssociation}{numOfPrivateMetadata !== 1 ? 's' : ''}
+                {numOfPrivateMetadata > 1 ? 'are' : 'is'} private and not shown
+              {/if}
+            </div>
             {#each selectedSpecificationsList as spec}
               {#if spec.selected && metadataMap[spec.id]}
                 {#if selectedAssociationId === 'goal'}
@@ -311,6 +320,11 @@
   }
 
   .empty-associations {
+    padding: 0 1rem;
+  }
+
+  .private-label {
+    color: #e6b300;
     padding: 0 1rem;
   }
 </style>
