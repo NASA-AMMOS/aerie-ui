@@ -37,3 +37,15 @@ export type BaseMetadataSlim<D extends BaseDefinition = BaseDefinition> = Omit<
 >;
 
 export type Association = 'constraint' | 'condition' | 'goal';
+
+export type AssociationSpecificationEntry = {
+  priority?: number;
+  revision: number | null;
+  selected: boolean;
+};
+
+export type AssociationSpecification = AssociationSpecificationEntry & {
+  id: number;
+};
+
+export type AssociationSpecificationMap = Record<number, AssociationSpecificationEntry>;

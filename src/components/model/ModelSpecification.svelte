@@ -4,7 +4,7 @@
   import type { CellEditingStoppedEvent, ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
   import { createEventDispatcher } from 'svelte';
   import type { DataGridColumnDef } from '../../types/data-grid';
-  import type { Association, BaseMetadata } from '../../types/metadata';
+  import type { Association, AssociationSpecificationMap, BaseMetadata } from '../../types/metadata';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import Input from '../form/Input.svelte';
   import DataGrid from '../ui/DataGrid/DataGrid.svelte';
@@ -15,14 +15,7 @@
   export let hasEditSpecPermission: boolean = false;
   export let metadataList: BaseMetadata[];
   export let metadataType: Association = 'constraint';
-  export let selectedSpecifications: Record<
-    number,
-    {
-      priority?: number;
-      revision: number | null;
-      selected: boolean;
-    }
-  > = {};
+  export let selectedSpecifications: AssociationSpecificationMap = {};
   export let selectedSpecification: { id: number; revision: number | null } | null = null;
 
   type CellRendererParams = {

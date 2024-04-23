@@ -16,22 +16,21 @@
   import { schedulingConditions, schedulingGoals } from '../../../stores/scheduling';
   import type { User, UserId } from '../../../types/app';
   import type { ConstraintModelSpecInsertInput } from '../../../types/constraint';
-  import type { Association, BaseMetadata } from '../../../types/metadata';
+  import type {
+    Association,
+    AssociationSpecification,
+    AssociationSpecificationMap,
+    BaseMetadata,
+  } from '../../../types/metadata';
   import type {
     SchedulingConditionModelSpecificationInsertInput,
     SchedulingGoalModelSpecificationInsertInput,
     SchedulingGoalModelSpecificationSetInput,
   } from '../../../types/scheduling';
   import effects from '../../../utilities/effects';
-  import { featurePermissions } from '../../../utilities/permissions';
+  import { featurePermissions, isAdminRole } from '../../../utilities/permissions';
   import type { PageData } from './$types';
 
-  type AssociationSpecification = {
-    priority?: number;
-    revision: number | null;
-    selected: boolean;
-  };
-  type AssociationSpecificationMap = Record<number, AssociationSpecification>;
   export let data: PageData;
 
   let hasCreatePermission: boolean = false;
@@ -120,11 +119,19 @@
     case 'goal': {
       hasCreatePermission = featurePermissions.schedulingGoals.canCreate(user);
       hasEditSpecPermission = featurePermissions.schedulingGoalsModelSpec.canUpdate(user);
-      metadataList = $schedulingGoals;
-
+      metadataList = $schedulingGoals.filter(goalMetadata => {
+        if (goalMetadata) {
+          const { public: isPublic, owner } = goalMetadata;
+          if (!isPublic && !isAdminRole(user?.activeRole)) {
+            return owner === user?.id;
+          }
+          return true;
+        }
+        return false;
+      });
       // only maintain a list of specifications added to the model if they exist in the db
-      let selectedGoalModelSpecificationList: (AssociationSpecification & { id: number })[] = metadataList.reduce(
-        (prevSelectedGoalModelSpecifications: (AssociationSpecification & { id: number })[], metadata) => {
+      let selectedGoalModelSpecificationList: AssociationSpecification[] = $schedulingGoals.reduce(
+        (prevSelectedGoalModelSpecifications: AssociationSpecification[], metadata) => {
           if (selectedGoalModelSpecifications[metadata.id]) {
             return [
               ...prevSelectedGoalModelSpecifications,
@@ -174,7 +181,16 @@
     case 'condition':
       hasCreatePermission = featurePermissions.schedulingConditions.canCreate(user);
       hasEditSpecPermission = featurePermissions.schedulingConditionsModelSpec.canUpdate(user);
-      metadataList = $schedulingConditions;
+      metadataList = $schedulingConditions.filter(conditionMetadata => {
+        if (conditionMetadata) {
+          const { public: isPublic, owner } = conditionMetadata;
+          if (!isPublic && !isAdminRole(user?.activeRole)) {
+            return owner === user?.id;
+          }
+          return true;
+        }
+        return false;
+      });
       selectedSpecifications = selectedConditionModelSpecifications;
       break;
     case 'constraint':
@@ -457,14 +473,7 @@
     }
   }
 
-  function onUpdateSpecifications(
-    event: CustomEvent<{
-      id: number;
-      priority?: number;
-      revision: number | null;
-      selected: boolean;
-    }>,
-  ) {
+  function onUpdateSpecifications(event: CustomEvent<AssociationSpecification>) {
     const {
       detail: { id, priority, revision, selected },
     } = event;
@@ -481,30 +490,20 @@
         break;
       case 'goal': {
         const goalModelSpecificationsList = Object.keys(selectedGoalModelSpecifications)
-          .reduce(
-            (
-              prevSpecificationsList: {
-                id: string;
-                priority?: number;
-                revision: number | null;
-                selected: boolean;
-              }[],
-              key,
-            ) => {
-              if (`${key}` !== `${id}`) {
-                return [
-                  ...prevSpecificationsList,
-                  {
-                    id: key,
-                    ...selectedGoalModelSpecifications[parseInt(key)],
-                  },
-                ];
-              }
+          .reduce((prevSpecificationsList: AssociationSpecification[], key) => {
+            const specificationId: number = parseInt(key);
+            if (key !== `${id}`) {
+              return [
+                ...prevSpecificationsList,
+                {
+                  id: specificationId,
+                  ...selectedGoalModelSpecifications[specificationId],
+                },
+              ];
+            }
 
-              return prevSpecificationsList;
-            },
-            [],
-          )
+            return prevSpecificationsList;
+          }, [])
           .sort((goalSpecA, goalSpecB) => {
             if (goalSpecA.priority != null && goalSpecB.priority != null) {
               return goalSpecA.priority - goalSpecB.priority;
@@ -535,7 +534,7 @@
             return goalSpecification;
           })
           .reduce(
-            (prevGoalSpecificationMap: Record<number, AssociationSpecification>, goalModelSpecification) => {
+            (prevGoalSpecificationMap: AssociationSpecificationMap, goalModelSpecification) => {
               return {
                 ...prevGoalSpecificationMap,
                 [goalModelSpecification.id]: {

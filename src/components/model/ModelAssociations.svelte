@@ -2,7 +2,12 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import type { Association, BaseMetadata } from '../../types/metadata';
+  import type {
+    Association,
+    AssociationSpecification,
+    AssociationSpecificationMap,
+    BaseMetadata,
+  } from '../../types/metadata';
   import type { Model } from '../../types/model';
   import type { RadioButtonId } from '../../types/radio-buttons';
   import { permissionHandler } from '../../utilities/permissionHandler';
@@ -20,25 +25,13 @@
   export let metadataList: BaseMetadata[] = [];
   export let model: Model | null = null;
   export let selectedAssociation: Association = 'constraint';
-  export let selectedSpecifications: Record<
-    number,
-    {
-      priority?: number;
-      revision: number | null;
-      selected: boolean;
-    }
-  > = {};
+  export let selectedSpecifications: AssociationSpecificationMap = {};
 
   const dispatch = createEventDispatcher<{
     close: void;
     save: void;
     selectAssociation: Association;
-    updateSpecifications: {
-      id: number;
-      priority?: number;
-      revision: number | null;
-      selected: boolean;
-    };
+    updateSpecifications: AssociationSpecification;
   }>();
 
   let metadataMap: Record<number, BaseMetadata> = {};
@@ -48,12 +41,7 @@
   let selectedDefinition: string | null;
   let selectedViewId: RadioButtonId = 'model';
   let selectedSpecification: { id: number; revision: number | null } | null = null;
-  let selectedSpecificationsList: {
-    id: number;
-    priority?: number;
-    revision: number | null;
-    selected: boolean;
-  }[] = [];
+  let selectedSpecificationsList: AssociationSpecification[] = [];
 
   $: {
     metadataMap = metadataList.reduce(
