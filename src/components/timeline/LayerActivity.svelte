@@ -1263,10 +1263,9 @@
       }, 0);
       let lastDirectiveTextEnd = -1;
       directivesInView.forEach(directive => {
-        // ctx.fillStyle =  `rgba(255,0,0,0.5)`;
         const color = hexToRgba(directive.color, 0.5);
         if (ctx.fillStyle !== color) {
-          ctx.fillStyle = hexToRgba(directive.color, 0.5);
+          ctx.fillStyle = color;
         }
         // TODO directive start time needs to use this function to take anchors into account, use this in Row and elsewhere
         // can pass the cache down?
@@ -1324,42 +1323,35 @@
         if (sticky || spanInBounds) {
           spansInView.push(span);
         }
-        // console.log('xEnd - x :>> ', xEnd - x);
-        // ctx.fillRect(spanX, newY + 4, Math.max(1, spanXEnd - spanX), rowHeight - 4);
-
-        // // draw children
-        // const children = spanUtilityMaps.spanIdToChildIdsMap[span.id];
-        // children.forEach(childSpanId => {
-        //   if (xScaleView) {
-        //     const span = spansMap[childSpanId];
-        //     if (span) {
-        //       const spanX = xScaleView(span.startMs);
-        //       const spanXEnd = xScaleView(span.endMs);
-        //       // console.log('xEnd - x :>> ', xEnd - x);
-        //       ctx.fillRect(spanX, newY + 4, Math.max(1, spanXEnd - spanX), rowHeight - 4);
-        //     }
-        //   }
-        // });
       });
-      const spansInViewTextLength = spansInView.reduce((total, span) => {
-        // TODO stop measuring if we've already exceeded limit?
+      let spansInViewTextLength = 0;
+      for (let i = 0; i < spansInView.length; i++) {
+        const span = spansInView[i];
         let textMetrics = textMetricsCache[span.type] ?? ctx.measureText(span.type);
-        return total + textMetrics.width;
-      }, 0);
+        spansInViewTextLength += textMetrics.width;
+        // Break early if no text can be drawn
+        if (spansInViewTextLength > drawWidth) {
+          break;
+        }
+      }
       let lastSpanTextEnd = -1;
-      spansInView.forEach(span => {
+      // TODO fix this, obviously bad
+      const spanColor = spansInView.length > 0 ? hexToRgba(spansInView[0].color, 0.5) : '#FFFFFF';
+      spansInView.forEach((span, i) => {
         const spanX = xScaleView(span.startMs);
         const spanXEnd = xScaleView(span.endMs);
         const width = Math.max(1, spanXEnd - spanX);
         const y = newY + 4;
 
         // ctx.save();
+
         if (selectedSpanId === span.id) {
           ctx.fillStyle = activitySelectedColor;
         } else if (ctx.fillStyle !== span.color) {
-          ctx.fillStyle = hexToRgba(span.color, 0.5);
+          ctx.fillStyle = spanColor;
         }
         ctx.fillRect(spanX, y, width, rowHeight - 4);
+
         // ctx.restore();
 
         if (spansInViewTextLength <= drawWidth && spanX > lastSpanTextEnd) {
