@@ -13,7 +13,7 @@
 
   export let hasCreatePermission: boolean = false;
   export let hasEditSpecPermission: boolean = false;
-  export let metadataList: BaseMetadata[];
+  export let metadataList: Pick<BaseMetadata, 'id' | 'name' | 'public' | 'versions'>[] = [];
   export let metadataType: Association = 'constraint';
   export let selectedSpecifications: AssociationSpecificationMap = {};
   export let selectedSpecification: { id: number; revision: number | null } | null = null;
@@ -93,9 +93,9 @@
   const permissionError = `You do not have permission to add this ${metadataType}.`;
 
   let columnDefs = baseColumnDefs;
-  let dataGrid: DataGrid<BaseMetadata> | undefined = undefined;
+  let dataGrid: DataGrid<Pick<BaseMetadata, 'id' | 'name' | 'public' | 'versions'>> | undefined = undefined;
   let filterText: string = '';
-  let filteredMetadata: BaseMetadata[] = [];
+  let filteredMetadata: Pick<BaseMetadata, 'id' | 'name' | 'public' | 'versions'>[] = [];
   let formattedType: string = '';
 
   $: formattedType = `${metadataType.charAt(0).toUpperCase()}${metadataType.slice(1)}`;
@@ -163,7 +163,7 @@
     dispatch('newMetadata');
   }
 
-  function onSelectDefinition(event: CustomEvent<BaseMetadata[]>) {
+  function onSelectDefinition(event: CustomEvent<Pick<BaseMetadata, 'id' | 'name' | 'public' | 'versions'>[]>) {
     const { detail: selectedMetadata } = event;
     if (selectedMetadata.length > 0) {
       dispatch('selectSpecification', {
@@ -179,7 +179,9 @@
     dispatch('viewMetadata', id);
   }
 
-  function onToggleSpecification(event: CustomEvent<CellEditingStoppedEvent<BaseMetadata, boolean>>) {
+  function onToggleSpecification(
+    event: CustomEvent<CellEditingStoppedEvent<Pick<BaseMetadata, 'id' | 'name' | 'public' | 'versions'>, boolean>>,
+  ) {
     const {
       detail: { data, newValue },
     } = event;

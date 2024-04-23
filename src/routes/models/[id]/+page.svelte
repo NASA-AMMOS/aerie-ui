@@ -28,6 +28,7 @@
     SchedulingGoalModelSpecificationSetInput,
   } from '../../../types/scheduling';
   import effects from '../../../utilities/effects';
+  import { filterEmpty } from '../../../utilities/generic';
   import { featurePermissions, isAdminRole } from '../../../utilities/permissions';
   import type { PageData } from './$types';
 
@@ -36,7 +37,7 @@
   let hasCreatePermission: boolean = false;
   let hasEditSpecPermission: boolean = false;
   let hasModelChanged: boolean = false;
-  let metadataList: BaseMetadata[] = [];
+  let metadataList: Pick<BaseMetadata, 'id' | 'name' | 'public' | 'versions'>[] = [];
   let modelMetadata: {
     description?: string;
     name: string;
@@ -119,16 +120,13 @@
     case 'goal': {
       hasCreatePermission = featurePermissions.schedulingGoals.canCreate(user);
       hasEditSpecPermission = featurePermissions.schedulingGoalsModelSpec.canUpdate(user);
-      metadataList = $schedulingGoals.filter(goalMetadata => {
-        if (goalMetadata) {
-          const { public: isPublic, owner } = goalMetadata;
-          if (!isPublic && !isAdminRole(user?.activeRole)) {
-            return owner === user?.id;
-          }
-          return true;
-        }
-        return false;
-      });
+      metadataList = (
+        $schedulingGoals.length
+          ? $schedulingGoals
+          : $model.scheduling_specification_goals
+              .map(({ goal_metadata }) => createInitialMetadata(goal_metadata))
+              .filter(filterEmpty)
+      ).filter(goalMetadata => isMetadataViewable(goalMetadata, user));
       // only maintain a list of specifications added to the model if they exist in the db
       let selectedGoalModelSpecificationList: AssociationSpecification[] = $schedulingGoals.reduce(
         (prevSelectedGoalModelSpecifications: AssociationSpecification[], metadata) => {
@@ -162,6 +160,7 @@
           lastPriority = goalSpecification.priority ?? 0;
           return goalSpecification;
         });
+
       selectedGoalModelSpecifications = selectedGoalModelSpecificationList.reduce(
         (prevSelectedGoalModelSpecifications: AssociationSpecificationMap, goalSpecification) => {
           return {
@@ -181,23 +180,24 @@
     case 'condition':
       hasCreatePermission = featurePermissions.schedulingConditions.canCreate(user);
       hasEditSpecPermission = featurePermissions.schedulingConditionsModelSpec.canUpdate(user);
-      metadataList = $schedulingConditions.filter(conditionMetadata => {
-        if (conditionMetadata) {
-          const { public: isPublic, owner } = conditionMetadata;
-          if (!isPublic && !isAdminRole(user?.activeRole)) {
-            return owner === user?.id;
-          }
-          return true;
-        }
-        return false;
-      });
+      metadataList = (
+        $schedulingConditions.length
+          ? $schedulingConditions
+          : $model.scheduling_specification_conditions
+              .map(({ condition_metadata }) => createInitialMetadata(condition_metadata))
+              .filter(filterEmpty)
+      ).filter(conditionMetadata => isMetadataViewable(conditionMetadata, user));
       selectedSpecifications = selectedConditionModelSpecifications;
       break;
     case 'constraint':
     default:
       hasCreatePermission = featurePermissions.constraints.canCreate(user);
       hasEditSpecPermission = featurePermissions.constraintsModelSpec.canUpdate(user);
-      metadataList = $constraints;
+      metadataList = $constraints.length
+        ? $constraints
+        : ($model?.constraint_specification ?? [])
+            .map(({ constraint_metadata }) => createInitialMetadata(constraint_metadata))
+            .filter(filterEmpty);
       selectedSpecifications = selectedConstraintModelSpecifications;
   }
   $: hasModelChanged =
@@ -207,6 +207,37 @@
     JSON.stringify(initialSelectedConstraintModelSpecifications) !==
       JSON.stringify(selectedConstraintModelSpecifications) ||
     JSON.stringify(initialSelectedGoalModelSpecifications) !== JSON.stringify(selectedGoalModelSpecifications);
+
+  /**
+   * Because we only get `id` and `name` from the specification query to save on size, this function will fill in the missing data
+   * needed to drive the UI.
+   * This is only invoked when the full list of metadata is still downloading from the subscription
+   * @param metadata
+   * @param user
+   */
+  function createInitialMetadata(metadata: Pick<BaseMetadata, 'id' | 'name'> | null) {
+    if (metadata) {
+      return { ...metadata, owner: '', public: true, versions: [] };
+    }
+    return null;
+  }
+
+  /**
+   * Determines if the user is allowed to view the metadata passed in
+   * NOTE: this function is only needed until scheduling goals/conditions get the same permission treatment as constraints in Aerie
+   * @param metadata
+   * @param user
+   */
+  function isMetadataViewable(metadata: Pick<BaseMetadata, 'owner' | 'public'>, user: User | null) {
+    if (metadata) {
+      const { public: isPublic, owner } = metadata;
+      if (!isPublic && !isAdminRole(user?.activeRole)) {
+        return owner === user?.id;
+      }
+      return true;
+    }
+    return false;
+  }
 
   function onClose() {
     goto(`${base}/models`);

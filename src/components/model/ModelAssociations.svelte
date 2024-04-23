@@ -22,7 +22,7 @@
   export let hasCreatePermission: boolean = false;
   export let hasEditSpecPermission: boolean = false;
   export let hasModelChanged: boolean = false;
-  export let metadataList: BaseMetadata[] = [];
+  export let metadataList: Pick<BaseMetadata, 'id' | 'name' | 'public' | 'versions'>[] = [];
   export let model: Model | null = null;
   export let selectedAssociation: Association = 'constraint';
   export let selectedSpecifications: AssociationSpecificationMap = {};

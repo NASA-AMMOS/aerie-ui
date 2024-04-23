@@ -118,7 +118,7 @@ export type SchedulingResponse = {
 
 export type SchedulingGoalModelSpecification = {
   goal_id: number;
-  goal_metadata: SchedulingGoalMetadata | null;
+  goal_metadata: Pick<SchedulingGoalMetadata, 'id' | 'name'> | null;
   goal_revision: number | null;
   model_id: number;
   priority: number;
@@ -127,7 +127,7 @@ export type SchedulingGoalModelSpecification = {
 
 export type SchedulingConditionModelSpecification = {
   condition_id: number;
-  condition_metadata: SchedulingConditionMetadata | null;
+  condition_metadata: Pick<SchedulingConditionMetadata, 'id' | 'name'> | null;
   condition_revision: number | null;
   model_id: number;
   // condition_definition: SchedulingConditionDefinition;
