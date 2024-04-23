@@ -130,6 +130,7 @@ import {
   type ParameterDictionary,
   type Parcel,
   type ParcelInsertInput,
+  type ParcelToParameterDictionary,
   type SeqJson,
   type SequenceAdaptation,
   type UserSequence,
@@ -859,6 +860,40 @@ const effects = {
       showFailureToast('Parcel Create Failed');
       return null;
     }
+  },
+
+  async createParcelToParameterDictionaries(
+    parcelOwner: UserId,
+    parcelToParameterDictionariesToAdd: Omit<ParcelToParameterDictionary, 'id'>[],
+    user: User | null,
+  ): Promise<ParcelToParameterDictionary[] | null> {
+    console.log(parcelToParameterDictionariesToAdd);
+
+    try {
+      if (!queryPermissions.UPDATE_PARCEL(user, { owner: parcelOwner })) {
+        throwPermissionError('create parcel to parameter dictionary');
+      }
+
+      const data = await reqHasura<{ returning: ParcelToParameterDictionary[] }>(
+        gql.CREATE_PARCEL_TO_PARAMETER_DICTIONARIES,
+        { parcelToParameterDictionaries: parcelToParameterDictionariesToAdd },
+        user,
+      );
+      const { insert_parcel_to_parameter_dictionary } = data;
+
+      if (insert_parcel_to_parameter_dictionary) {
+        showSuccessToast('Parcel to parameter dictionaries created successfully');
+      } else {
+        throw Error('Unable to create parcel to parameter dictionaries');
+      }
+
+      return insert_parcel_to_parameter_dictionary.returning;
+    } catch (e) {
+      catchError('Create parcel to parameter dictionaries failed', e as Error);
+      showFailureToast('Create parcel to parameter dictionaries failed');
+    }
+
+    return null;
   },
 
   async createPlan(
@@ -2122,6 +2157,37 @@ const effects = {
       catchError('Parcel Delete Failed', e as Error);
       showFailureToast('Parcel Delete Failed');
       return false;
+    }
+  },
+
+  async deleteParcelToParameterDictionaries(ids: number[], parcel: Parcel, user: User | null): Promise<number | null> {
+    try {
+      if (!queryPermissions.DELETE_PARCEL(user, parcel)) {
+        throwPermissionError('delete parcel to parameter dictionaries');
+      }
+
+      const data = await reqHasura<{ affected_rows: number }>(
+        gql.DELETE_PARCEL_TO_PARAMETER_DICTIONARIES,
+        { ids },
+        user,
+      );
+      const { delete_parcel_to_parameter_dictionary } = data;
+      if (delete_parcel_to_parameter_dictionary != null) {
+        const { affected_rows } = delete_parcel_to_parameter_dictionary;
+
+        if (affected_rows !== ids.length) {
+          throw Error('Some parcel to parameter dictioanries were not successfully deleted');
+        }
+
+        showSuccessToast('Parcel to parameter dictionaries updated Successfully');
+        return affected_rows;
+      } else {
+        throw Error('Unable to delete parcel to parameter dictionaries');
+      }
+    } catch (e) {
+      catchError('Delete parcel to parameter dictionaries failed', e as Error);
+      showFailureToast('Delete parcel to parameter dictionaries failed');
+      return null;
     }
   },
 
