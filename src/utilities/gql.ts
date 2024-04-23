@@ -38,6 +38,7 @@ export enum Queries {
   DELETE_MISSION_MODEL = 'delete_mission_model_by_pk',
   DELETE_PARAMETER_DICTIONARY = 'delete_parameter_dictionary_by_pk',
   DELETE_PARCEL = 'delete_parcel_by_pk',
+  DELETE_PARCEL_TO_PARAMETER_DICTIONARY = 'delete_parcel_to_parameter_dictionary',
   DELETE_PLAN = 'delete_plan_by_pk',
   DELETE_PLAN_SNAPSHOT = 'delete_plan_snapshot_by_pk',
   DELETE_PLAN_TAGS = 'delete_plan_tags',
@@ -94,6 +95,7 @@ export enum Queries {
   INSERT_MISSION_MODEL = 'insert_mission_model_one',
   INSERT_PARAMETER_DICTIONARY = 'insert_parameter_dictionary_one',
   INSERT_PARCEL = 'insert_parcel_one',
+  INSERT_PARCEL_TO_PARAMETER_DICTIONARY = 'insert_parcel_to_parameter_dictionary',
   INSERT_PLAN = 'insert_plan_one',
   INSERT_PLAN_SNAPSHOT_TAGS = 'insert_plan_snapshot_tags',
   INSERT_PLAN_TAGS = 'insert_plan_tags',
@@ -123,6 +125,7 @@ export enum Queries {
   PARAMETER_DICTIONARIES = 'parameter_dictionary',
   PARCEL_BY_PK = 'parcel_by_pk',
   PARCELS = 'parcel',
+  PARCEL_TO_PARAMETER_DICTIONARY = 'parcel_to_parameter_dictionary',
   PLAN = 'plan_by_pk',
   PLANS = 'plan',
   PLAN_DATASETS = 'plan_dataset',
@@ -434,6 +437,22 @@ const gql = {
     mutation CreateParcel($parcel: parcel_insert_input!) {
       createParcel: ${Queries.INSERT_PARCEL}(object: $parcel) {
         id
+      }
+    }
+  `,
+
+  CREATE_PARCEL_TO_PARAMETER_DICTIONARIES: `#graphql
+    mutation CreateParcelToParameterDictionaries($parcelToParameterDictionaries : [parcel_to_parameter_dictionary_insert_input!]!) {
+      ${Queries.INSERT_PARCEL_TO_PARAMETER_DICTIONARY}(objects: $parcelToParameterDictionaries, on_conflict: {
+        constraint: parcel_to_parameter_dictionary_synthetic_key,
+        update_columns: []
+      }) {
+        affected_rows
+        returning {
+          id
+          parcel_id
+          parameter_dictionary_id
+        }
       }
     }
   `,
@@ -816,6 +835,14 @@ const gql = {
     }
   `,
 
+  DELETE_PARCEL_TO_PARAMETER_DICTIONARIES: `#graphql
+    mutation deleteParcelToParameterDictionaries($ids: [Int!]!) {
+        ${Queries.DELETE_PARCEL_TO_PARAMETER_DICTIONARY}(where: { id: { _in: $ids } }) {
+          affected_rows
+      }
+    }
+  `,
+
   DELETE_PLAN: `#graphql
     mutation DeletePlan($id: Int!) {
       deletePlan: ${Queries.DELETE_PLAN}(id: $id) {
@@ -1192,12 +1219,15 @@ const gql = {
         owner
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         parameter_dictionary_id
 =======
 >>>>>>> e8573482 (First pass at adding parcels)
 =======
         parameter_dictionary_id
 >>>>>>> e4b876fa (Added support for a single parameter dictionary)
+=======
+>>>>>>> 549e67e4 (Added support for multiple parameter dictionaries)
         sequence_adaptation_id
       }
     }
@@ -2052,13 +2082,26 @@ const gql = {
         name
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         parameter_dictionary_id
 =======
 >>>>>>> 0cb62002 (Changed sequence editing to use parcels rather than command dictionaries)
 =======
         parameter_dictionary_id
 >>>>>>> e4b876fa (Added support for a single parameter dictionary)
+=======
+>>>>>>> 549e67e4 (Added support for multiple parameter dictionaries)
         sequence_adaptation_id
+      }
+    }
+  `,
+
+  SUB_PARCEL_TO_PARAMETER_DICTIONARIES: `#graphql
+    subscription SubParcelsToParameterDictionaries($parcelId: Int!) {
+      ${Queries.PARCEL_TO_PARAMETER_DICTIONARY}(where: {parcel_id: {_eq: $parcelId }}) {
+        id
+        parameter_dictionary_id
+        parcel_id
       }
     }
   `,
