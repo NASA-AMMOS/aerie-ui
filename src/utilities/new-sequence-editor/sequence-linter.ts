@@ -256,8 +256,6 @@ export function sequenceLinter(
           actions: [
             {
               apply(view: EditorView, _from: number, _to: number) {
-                // const line = view.state.doc.lineAt(block.command.to);
-                // const onLastLine = line.number === view.state.doc.lines;
                 view.dispatch({
                   changes: {
                     from: block.command.to,

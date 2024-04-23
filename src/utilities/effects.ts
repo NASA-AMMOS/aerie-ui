@@ -2849,27 +2849,27 @@ const effects = {
     commandDictionaryId: number | null | undefined,
     user: User | null,
   ): Promise<AmpcsCommandDictionary | null> {
-    if (commandDictionaryId !== null && commandDictionaryId !== undefined) {
-      try {
-        const data = await reqHasura<[{ parsed_json: AmpcsCommandDictionary }]>(
-          gql.GET_PARSED_COMMAND_DICTIONARY,
-          { commandDictionaryId },
-          user,
-        );
-        const { command_dictionary } = data;
+    if (typeof commandDictionaryId !== 'number') {
+      return null;
+    }
 
-        if (!Array.isArray(command_dictionary) || !command_dictionary.length) {
-          catchError(`Unable to find command dictionary with id ${commandDictionaryId}`);
-          return null;
-        } else {
-          const [{ parsed_json }] = command_dictionary;
-          return parsed_json;
-        }
-      } catch (e) {
-        catchError(e as Error);
+    try {
+      const data = await reqHasura<[{ parsed_json: AmpcsCommandDictionary }]>(
+        gql.GET_PARSED_COMMAND_DICTIONARY,
+        { commandDictionaryId },
+        user,
+      );
+      const { command_dictionary } = data;
+
+      if (!Array.isArray(command_dictionary) || !command_dictionary.length) {
+        catchError(`Unable to find command dictionary with id ${commandDictionaryId}`);
         return null;
+      } else {
+        const [{ parsed_json }] = command_dictionary;
+        return parsed_json;
       }
-    } else {
+    } catch (e) {
+      catchError(e as Error);
       return null;
     }
   },
@@ -2878,27 +2878,27 @@ const effects = {
     parameterDictionaryId: number | null | undefined,
     user: User | null,
   ): Promise<AmpcsParameterDictionary | null> {
-    if (parameterDictionaryId !== null && parameterDictionaryId !== undefined) {
-      try {
-        const data = await reqHasura<[{ parsed_json: AmpcsParameterDictionary }]>(
-          gql.GET_PARSED_PARAMETER_DICTIONARY,
-          { parameterDictionaryId },
-          user,
-        );
-        const { parameter_dictionary } = data;
+    if (typeof parameterDictionaryId !== 'number') {
+      return null;
+    }
 
-        if (!Array.isArray(parameter_dictionary) || !parameter_dictionary.length) {
-          catchError(`Unable to find parameter dictionary with id ${parameterDictionaryId}`);
-          return null;
-        } else {
-          const [{ parsed_json }] = parameter_dictionary;
-          return parsed_json;
-        }
-      } catch (e) {
-        catchError(e as Error);
+    try {
+      const data = await reqHasura<[{ parsed_json: AmpcsParameterDictionary }]>(
+        gql.GET_PARSED_PARAMETER_DICTIONARY,
+        { parameterDictionaryId },
+        user,
+      );
+      const { parameter_dictionary } = data;
+
+      if (!Array.isArray(parameter_dictionary) || !parameter_dictionary.length) {
+        catchError(`Unable to find parameter dictionary with id ${parameterDictionaryId}`);
         return null;
+      } else {
+        const [{ parsed_json }] = parameter_dictionary;
+        return parsed_json;
       }
-    } else {
+    } catch (e) {
+      catchError(e as Error);
       return null;
     }
   },

@@ -176,8 +176,7 @@
   function selectedCommandUpdateListener(viewUpdate: ViewUpdate) {
     // This is broken out into a different listener as debouncing this can cause cursor to move around
     const tree = syntaxTree(viewUpdate.state);
-    // const updatedSelectionNode = tree.resolveInner(viewUpdate.state.selection.asSingle().main.from, 1);
-    // Command Node includes trailing newline and white space
+    // Command Node includes trailing newline and white space, move to next command
     const selectionLine = viewUpdate.state.doc.lineAt(viewUpdate.state.selection.asSingle().main.from);
     const leadingWhiteSpaceLength = selectionLine.text.length - selectionLine.text.trimStart().length;
     const updatedSelectionNode = tree.resolveInner(selectionLine.from + leadingWhiteSpaceLength, 1);
