@@ -1039,6 +1039,23 @@ const gql = {
     }
   `,
 
+  GET_EVENTS: `#graphql
+    query GetEvents($datasetId: Int!) {
+      topic(where: { dataset_id: { _eq: $datasetId }}) {
+        name
+        value_schema
+        topic_index
+      }
+      event(where: { dataset_id: { _eq: $datasetId }}) {
+        causal_time
+        real_time
+        topic_index
+        transaction_index
+        value
+      }
+    }
+  `,
+
   GET_EXPANSION_RULE: `#graphql
     query GetExpansionRule($id: Int!) {
       expansionRule: ${Queries.EXPANSION_RULE}(id: $id) {

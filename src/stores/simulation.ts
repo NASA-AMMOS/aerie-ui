@@ -7,6 +7,7 @@ import type {
   Simulation,
   SimulationDataset,
   SimulationDatasetSlim,
+  SimulationEvent,
   SimulationTemplate,
   Span,
   SpanId,
@@ -38,6 +39,8 @@ export const resourceTypesLoading: Writable<boolean> = writable(true);
 export const spans: Writable<Span[]> = writable([]);
 
 export const yAxesWithScaleDomainsCache: Writable<Record<number, Axis[]>> = writable({});
+
+export const simulationEvents: Writable<SimulationEvent[]> = writable([]);
 
 /* Subscriptions. */
 
@@ -92,6 +95,8 @@ export const simulationTemplates = gqlSubscribable<SimulationTemplate[]>(
 );
 
 export const selectedSpanId: Writable<SpanId | null> = writable(null);
+
+export const selectedSimulationEventId: Writable<number | null> = writable(null);
 
 /* Derived. */
 

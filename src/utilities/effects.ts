@@ -133,15 +133,18 @@ import type {
 import type {
   PlanDataset,
   Profile,
+  RawSimulationEvent,
   Resource,
   ResourceType,
   SimulateResponse,
   Simulation,
+  SimulationEvent,
   SimulationInitialUpdateInput,
   SimulationTemplate,
   SimulationTemplateInsertInput,
   SimulationTemplateSetInput,
   Span,
+  Topic,
 } from '../types/simulation';
 import type {
   ActivityDirectiveTagsInsertInput,
@@ -184,7 +187,7 @@ import { reqExtension, reqGateway, reqHasura } from './requests';
 import { sampleProfiles } from './resources';
 import { convertResponseToMetadata } from './scheduling';
 import { pluralize } from './text';
-import { getDoyTime, getDoyTimeFromInterval, getIntervalFromDoyRange } from './time';
+import { getDoyTime, getDoyTimeFromInterval, getIntervalFromDoyRange, getIntervalInMs } from './time';
 import { createRow, duplicateRow } from './timeline';
 import { showFailureToast, showSuccessToast } from './toast';
 import { generateDefaultView, validateViewJSONAgainstSchema } from './view';
@@ -2615,6 +2618,41 @@ const effects = {
     }
   },
 
+  async getEvents(
+    datasetId: number,
+    user: User | null,
+    signal: AbortSignal | undefined = undefined,
+  ): Promise<SimulationEvent[]> {
+    try {
+      const data = await reqHasura<any>(gql.GET_EVENTS, { datasetId }, user, signal);
+      const { topic: topics, event: events } = data;
+      if (topics === null || events === null) {
+        throw Error('Unable to get events');
+      }
+      const topicById: Record<number, Topic> = {};
+      for (const topic of topics) {
+        topicById[topic.topic_index] = topic;
+      }
+
+      events.sort(compareEvents);
+
+      const simulationEvents: SimulationEvent[] = [];
+      for (const event of events) {
+        simulationEvents.push({
+          dense_time: event.transaction_index + '.0' + event.causal_time,
+          id: simulationEvents.length,
+          start_offset: event.real_time,
+          topic: topicById[event.topic_index].name,
+          value: typeof event.value === 'string' ? event.value : JSON.stringify(event.value),
+        });
+      }
+      return simulationEvents;
+    } catch (e) {
+      catchError(e as Error);
+      return [];
+    }
+  },
+
   async getExpansionRule(id: number, user: User | null): Promise<ExpansionRule | null> {
     try {
       const data = await reqHasura(gql.GET_EXPANSION_RULE, { id }, user);
@@ -4994,6 +5032,42 @@ function replacePathsHelper(schema: ValueSchema, arg: Argument, pathsToReplace: 
     default:
       return arg;
   }
+}
+
+// Sort events using their dense time markings
+function compareEvents(a: RawSimulationEvent, b: RawSimulationEvent) {
+  const aMs = getIntervalInMs(a.real_time);
+  const bMs = getIntervalInMs(b.real_time);
+  if (aMs !== bMs) {
+    return aMs - bMs;
+  }
+
+  if (a.transaction_index !== b.transaction_index) {
+    return a.transaction_index - b.transaction_index;
+  }
+
+  const aDenseTime = a.causal_time.slice(1).split('.');
+  const bDenseTime = b.causal_time.slice(1).split('.');
+
+  let i = 0;
+  let isSequential = true;
+  while (i < Math.min(aDenseTime.length, bDenseTime.length)) {
+    const aVal = parseInt(aDenseTime[i]);
+    const bVal = parseInt(bDenseTime[i]);
+
+    if (aVal === bVal) {
+      i = i + 1;
+      isSequential = !isSequential;
+    } else if (!isSequential) {
+      return 0;
+    } else if (aVal < bVal) {
+      return -1;
+    } else {
+      return 1;
+    }
+  }
+
+  return 0;
 }
 
 export default effects;
