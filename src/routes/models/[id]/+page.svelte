@@ -1,5 +1,79 @@
 <svelte:options immutable={true} />
 
+<script lang="ts" context="module">
+  function isGoalSpecification(
+    specification: ConstraintModelSpec | SchedulingGoalModelSpecification | SchedulingConditionModelSpecification,
+  ): specification is SchedulingGoalModelSpecification {
+    return !!(specification as SchedulingGoalModelSpecification).goal_metadata;
+  }
+
+  function isConditionSpecification(
+    specification: ConstraintModelSpec | SchedulingGoalModelSpecification | SchedulingConditionModelSpecification,
+  ): specification is SchedulingConditionModelSpecification {
+    return !!(specification as SchedulingConditionModelSpecification).condition_metadata;
+  }
+
+  /**
+   * Attempts to return the metadata from the subscribed store if available.
+   * If no data is available yet, then it will use the data from the specification to build stubs in the meantime
+   * @param metadataSubscription
+   * @param model
+   * @param modelKey
+   */
+  function getMetadata(
+    metadataSubscription: BaseMetadata[],
+    model: Model | undefined,
+    modelKey: keyof Pick<
+      Model,
+      'constraint_specification' | 'scheduling_specification_conditions' | 'scheduling_specification_goals'
+    >,
+  ): Pick<BaseMetadata, 'id' | 'name' | 'owner' | 'public' | 'versions'>[] {
+    return metadataSubscription.length
+      ? metadataSubscription
+      : model?.[modelKey]
+          .map(metadata => {
+            if (isGoalSpecification(metadata)) {
+              return createInitialMetadata(metadata.goal_metadata);
+            } else if (isConditionSpecification(metadata)) {
+              return createInitialMetadata(metadata.condition_metadata);
+            }
+            return createInitialMetadata(metadata.constraint_metadata);
+          })
+          .filter(filterEmpty) ?? [];
+  }
+
+  /**
+   * Because we only get `id` and `name` from the specification query to save on size, this function will fill in the missing data
+   * needed to drive the UI.
+   * This is only invoked when the full list of metadata is still downloading from the subscription
+   * @param metadata
+   * @param user
+   */
+  function createInitialMetadata(metadata: Pick<BaseMetadata, 'id' | 'name'> | null) {
+    if (metadata) {
+      return { ...metadata, owner: '', public: true, versions: [] };
+    }
+    return null;
+  }
+
+  /**
+   * Determines if the user is allowed to view the metadata passed in
+   * NOTE: this function is only needed until scheduling goals/conditions get the same permission treatment as constraints in Aerie
+   * @param metadata
+   * @param user
+   */
+  function isMetadataViewable(metadata: Pick<BaseMetadata, 'owner' | 'public'>, user: User | null) {
+    if (metadata) {
+      const { public: isPublic, owner } = metadata;
+      if (!isPublic && !isAdminRole(user?.activeRole)) {
+        return owner === user?.id;
+      }
+      return true;
+    }
+    return false;
+  }
+</script>
+
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
@@ -15,15 +89,18 @@
   import { initialModel, model } from '../../../stores/model';
   import { schedulingConditions, schedulingGoals } from '../../../stores/scheduling';
   import type { User, UserId } from '../../../types/app';
-  import type { ConstraintModelSpecInsertInput } from '../../../types/constraint';
+  import type { ConstraintModelSpec, ConstraintModelSpecInsertInput } from '../../../types/constraint';
   import type {
     Association,
     AssociationSpecification,
     AssociationSpecificationMap,
     BaseMetadata,
   } from '../../../types/metadata';
+  import type { Model } from '../../../types/model';
   import type {
+    SchedulingConditionModelSpecification,
     SchedulingConditionModelSpecificationInsertInput,
+    SchedulingGoalModelSpecification,
     SchedulingGoalModelSpecificationInsertInput,
     SchedulingGoalModelSpecificationSetInput,
   } from '../../../types/scheduling';
@@ -120,13 +197,9 @@
     case 'goal': {
       hasCreatePermission = featurePermissions.schedulingGoals.canCreate(user);
       hasEditSpecPermission = featurePermissions.schedulingGoalsModelSpec.canUpdate(user);
-      metadataList = (
-        $schedulingGoals.length
-          ? $schedulingGoals
-          : $model.scheduling_specification_goals
-              .map(({ goal_metadata }) => createInitialMetadata(goal_metadata))
-              .filter(filterEmpty)
-      ).filter(goalMetadata => isMetadataViewable(goalMetadata, user));
+      metadataList = getMetadata($schedulingGoals, $model, 'scheduling_specification_goals').filter(goalMetadata =>
+        isMetadataViewable(goalMetadata, user),
+      );
       // only maintain a list of specifications added to the model if they exist in the db
       let selectedGoalModelSpecificationList: AssociationSpecification[] = $schedulingGoals.reduce(
         (prevSelectedGoalModelSpecifications: AssociationSpecification[], metadata) => {
@@ -180,24 +253,16 @@
     case 'condition':
       hasCreatePermission = featurePermissions.schedulingConditions.canCreate(user);
       hasEditSpecPermission = featurePermissions.schedulingConditionsModelSpec.canUpdate(user);
-      metadataList = (
-        $schedulingConditions.length
-          ? $schedulingConditions
-          : $model.scheduling_specification_conditions
-              .map(({ condition_metadata }) => createInitialMetadata(condition_metadata))
-              .filter(filterEmpty)
-      ).filter(conditionMetadata => isMetadataViewable(conditionMetadata, user));
+      metadataList = getMetadata($schedulingConditions, $model, 'scheduling_specification_conditions').filter(
+        conditionMetadata => isMetadataViewable(conditionMetadata, user),
+      );
       selectedSpecifications = selectedConditionModelSpecifications;
       break;
     case 'constraint':
     default:
       hasCreatePermission = featurePermissions.constraints.canCreate(user);
       hasEditSpecPermission = featurePermissions.constraintsModelSpec.canUpdate(user);
-      metadataList = $constraints.length
-        ? $constraints
-        : ($model?.constraint_specification ?? [])
-            .map(({ constraint_metadata }) => createInitialMetadata(constraint_metadata))
-            .filter(filterEmpty);
+      metadataList = getMetadata($constraints, $model, 'constraint_specification');
       selectedSpecifications = selectedConstraintModelSpecifications;
   }
   $: hasModelChanged =
@@ -207,37 +272,6 @@
     JSON.stringify(initialSelectedConstraintModelSpecifications) !==
       JSON.stringify(selectedConstraintModelSpecifications) ||
     JSON.stringify(initialSelectedGoalModelSpecifications) !== JSON.stringify(selectedGoalModelSpecifications);
-
-  /**
-   * Because we only get `id` and `name` from the specification query to save on size, this function will fill in the missing data
-   * needed to drive the UI.
-   * This is only invoked when the full list of metadata is still downloading from the subscription
-   * @param metadata
-   * @param user
-   */
-  function createInitialMetadata(metadata: Pick<BaseMetadata, 'id' | 'name'> | null) {
-    if (metadata) {
-      return { ...metadata, owner: '', public: true, versions: [] };
-    }
-    return null;
-  }
-
-  /**
-   * Determines if the user is allowed to view the metadata passed in
-   * NOTE: this function is only needed until scheduling goals/conditions get the same permission treatment as constraints in Aerie
-   * @param metadata
-   * @param user
-   */
-  function isMetadataViewable(metadata: Pick<BaseMetadata, 'owner' | 'public'>, user: User | null) {
-    if (metadata) {
-      const { public: isPublic, owner } = metadata;
-      if (!isPublic && !isAdminRole(user?.activeRole)) {
-        return owner === user?.id;
-      }
-      return true;
-    }
-    return false;
-  }
 
   function onClose() {
     goto(`${base}/models`);
