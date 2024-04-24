@@ -7,27 +7,38 @@
   import { Compartment, EditorState } from '@codemirror/state';
   import type { ViewUpdate } from '@codemirror/view';
   import type { SyntaxNode } from '@lezer/common';
-  import type { CommandDictionary } from '@nasa-jpl/aerie-ampcs';
+  import type { CommandDictionary, ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
+  import ClipboardIcon from 'bootstrap-icons/icons/clipboard.svg?component';
   import { EditorView, basicSetup } from 'codemirror';
   import { seq } from 'codemirror-lang-sequence';
   import { debounce } from 'lodash-es';
   import { createEventDispatcher, onMount } from 'svelte';
-  import { commandDictionaries, userSequenceEditorColumns, userSequencesRows } from '../../stores/sequencing';
+  import {
+    commandDictionaries,
+    parameterDictionaries as parameterDictionariesStore,
+    userSequenceEditorColumns,
+    userSequenceEditorColumnsWithFormBuilder,
+    userSequencesRows,
+  } from '../../stores/sequencing';
   import type { User } from '../../types/app';
+  import type { Parcel } from '../../types/sequencing';
   import effects from '../../utilities/effects';
   import { seqJsonLinter } from '../../utilities/new-sequence-editor/seq-json-linter';
   import { sequenceCompletion } from '../../utilities/new-sequence-editor/sequence-completion';
   import { sequenceLinter } from '../../utilities/new-sequence-editor/sequence-linter';
   import { sequenceTooltip } from '../../utilities/new-sequence-editor/sequence-tooltip';
   import { sequenceToSeqJson } from '../../utilities/new-sequence-editor/to-seq-json';
+  import { showFailureToast, showSuccessToast } from '../../utilities/toast';
+  import { tooltip } from '../../utilities/tooltip';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
   import SelectedCommand from './form/selected-command.svelte';
 
+  export let parcel: Parcel | null = null;
+  export let showCommandFormBuilder: boolean = false;
   export let readOnly: boolean = false;
-  export let sequenceCommandDictionaryId: number | null = null;
   export let sequenceName: string = '';
   export let sequenceDefinition: string = '';
   export let sequenceSeqJson: string = '';
@@ -35,7 +46,6 @@
   export let user: User | null;
 
   const dispatch = createEventDispatcher<{
-    generate: void;
     sequence: string;
   }>();
 
@@ -46,6 +56,8 @@
   let compartmentSeqLinter: Compartment;
   let compartmentSeqTooltip: Compartment;
   let commandDictionary: CommandDictionary | null;
+  let parameterDictionaries: ParameterDictionary[] = [];
+  let commandFormBuilderGrid: string;
   let editorSeqJsonDiv: HTMLDivElement;
   let editorSeqJsonView: EditorView;
   let editorSequenceDiv: HTMLDivElement;
@@ -61,16 +73,49 @@
   }
 
   $: {
-    const unparsedCommandDictionary = $commandDictionaries.find(cd => cd.id === sequenceCommandDictionaryId);
+    commandFormBuilderGrid = showCommandFormBuilder
+      ? $userSequenceEditorColumnsWithFormBuilder
+      : $userSequenceEditorColumns;
+  }
+
+  $: {
+    const unparsedCommandDictionary = $commandDictionaries.find(cd => cd.id === parcel?.command_dictionary_id);
+
+    // TODO --- once parcel is updated to store an array this needs an update
+    const parameterDictionaryIds = parcel?.parameter_dictionary_id ? [parcel.parameter_dictionary_id] : [];
+    const unparsedParameterDictionaries = $parameterDictionariesStore.filter(pd =>
+      parameterDictionaryIds.includes(pd.id),
+    );
 
     if (unparsedCommandDictionary) {
-      effects.getParsedAmpcsCommandDictionary(unparsedCommandDictionary.id, user).then(parsedDictionary => {
+      Promise.all([
+        effects.getParsedAmpcsCommandDictionary(unparsedCommandDictionary.id, user),
+        ...unparsedParameterDictionaries.map(unparsedParameterDictionary => {
+          return effects.getParsedAmpcsParameterDictionary(unparsedParameterDictionary.id, user);
+        }),
+      ]).then(([parsedDictionary, ...parsedParameterDictionaries]) => {
+        const nonNullParsedParameterDictionaries = parsedParameterDictionaries.filter(
+          (pd): pd is ParameterDictionary => !!pd,
+        );
+
         commandDictionary = parsedDictionary;
+        parameterDictionaries = nonNullParsedParameterDictionaries;
         // Reconfigure sequence editor.
-        const newSeqLanguage = seq(sequenceCompletion(parsedDictionary));
-        editorSequenceView.dispatch({ effects: compartmentSeqLanguage.reconfigure(newSeqLanguage) });
-        editorSequenceView.dispatch({ effects: compartmentSeqLinter.reconfigure(sequenceLinter(parsedDictionary)) });
-        editorSequenceView.dispatch({ effects: compartmentSeqTooltip.reconfigure(sequenceTooltip(parsedDictionary)) });
+        editorSequenceView.dispatch({
+          effects: compartmentSeqLanguage.reconfigure(
+            seq(sequenceCompletion(parsedDictionary, nonNullParsedParameterDictionaries)),
+          ),
+        });
+        editorSequenceView.dispatch({
+          effects: compartmentSeqLinter.reconfigure(
+            sequenceLinter(parsedDictionary, nonNullParsedParameterDictionaries),
+          ),
+        });
+        editorSequenceView.dispatch({
+          effects: compartmentSeqTooltip.reconfigure(
+            sequenceTooltip(parsedDictionary, nonNullParsedParameterDictionaries),
+          ),
+        });
 
         // Reconfigure seq JSON editor.
         editorSeqJsonView.dispatch({ effects: compartmentSeqJsonLinter.reconfigure(seqJsonLinter(parsedDictionary)) });
@@ -91,7 +136,7 @@
         EditorView.lineWrapping,
         EditorView.theme({ '.cm-gutter': { 'min-height': `${clientHeightGridRightTop}px` } }),
         lintGutter(),
-        compartmentSeqLanguage.of(seq(sequenceCompletion())),
+        compartmentSeqLanguage.of(seq(sequenceCompletion(null, []))),
         compartmentSeqLinter.of(sequenceLinter()),
         compartmentSeqTooltip.of(sequenceTooltip()),
         EditorView.updateListener.of(debounce(sequenceUpdateListener, 250)),
@@ -121,7 +166,7 @@
     const sequence = viewUpdate.state.doc.toString();
 
     const tree = syntaxTree(viewUpdate.state);
-    const seqJson = sequenceToSeqJson(tree, sequence, commandDictionary, sequenceName);
+    const seqJson = sequenceToSeqJson(tree, sequence, commandDictionary, parameterDictionaries, sequenceName);
     const seqJsonStr = JSON.stringify(seqJson, null, 2);
     editorSeqJsonView.dispatch({ changes: { from: 0, insert: seqJsonStr, to: editorSeqJsonView.state.doc.length } });
 
@@ -131,7 +176,10 @@
   function selectedCommandUpdateListener(viewUpdate: ViewUpdate) {
     // This is broken out into a different listener as debouncing this can cause cursor to move around
     const tree = syntaxTree(viewUpdate.state);
-    const updatedSelectionNode = tree.resolveInner(viewUpdate.state.selection.asSingle().main.from, -1);
+    // Command Node includes trailing newline and white space, move to next command
+    const selectionLine = viewUpdate.state.doc.lineAt(viewUpdate.state.selection.asSingle().main.from);
+    const leadingWhiteSpaceLength = selectionLine.text.length - selectionLine.text.trimStart().length;
+    const updatedSelectionNode = tree.resolveInner(selectionLine.from + leadingWhiteSpaceLength, 1);
     // minimize triggering selected command view
     if (selectedNode !== updatedSelectionNode) {
       selectedNode = updatedSelectionNode;
@@ -145,9 +193,18 @@
     a.download = sequenceName;
     a.click();
   }
+
+  async function copySeqJsonToClipboard() {
+    try {
+      await navigator.clipboard.writeText(editorSeqJsonView.state.doc.toString());
+      showSuccessToast('Sequence.json copied to clipboard');
+    } catch {
+      showFailureToast('Error copying sequence.json to clipboard');
+    }
+  }
 </script>
 
-<CssGrid bind:columns={$userSequenceEditorColumns} minHeight={'0'}>
+<CssGrid bind:columns={commandFormBuilderGrid} minHeight={'0'}>
   <CssGrid bind:rows={$userSequencesRows} minHeight={'0'}>
     <Panel>
       <svelte:fragment slot="header">
@@ -170,7 +227,16 @@
         <SectionTitle>Seq JSON (Read-only)</SectionTitle>
 
         <div class="right">
-          <button class="st-button secondary ellipsis" on:click={downloadSeqJson}>Download</button>
+          <button
+            use:tooltip={{ content: `Copy to clipboard`, placement: 'top' }}
+            class="st-button icon"
+            on:click={copySeqJsonToClipboard}><ClipboardIcon /></button
+          >
+          <button
+            use:tooltip={{ content: `Download Seq.json`, placement: 'top' }}
+            class="st-button secondary ellipsis"
+            on:click={downloadSeqJson}>Download</button
+          >
         </div>
       </svelte:fragment>
 
@@ -182,9 +248,15 @@
 
   <CssGridGutter track={1} type="column" />
 
-  {#if !!commandDictionary && !!selectedNode}
-    <SelectedCommand node={selectedNode} {commandDictionary} {editorSequenceView} />
-  {:else}
-    <div>Selected Command</div>
+  {#if !!commandDictionary && !!selectedNode && showCommandFormBuilder}
+    <SelectedCommand node={selectedNode} {commandDictionary} {editorSequenceView} {parameterDictionaries} />
   {/if}
 </CssGrid>
+
+<style>
+  .right {
+    align-items: center;
+    display: flex;
+    justify-content: space-around;
+  }
+</style>

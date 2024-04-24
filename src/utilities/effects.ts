@@ -1,7 +1,12 @@
 import { goto } from '$app/navigation';
 import { base } from '$app/paths';
 import { env } from '$env/dynamic/public';
-import type { CommandDictionary as AmpcsCommandDictionary } from '@nasa-jpl/aerie-ampcs';
+import {
+  parse,
+  parseParameterDictionary,
+  type CommandDictionary as AmpcsCommandDictionary,
+  type ParameterDictionary as AmpcsParameterDictionary,
+} from '@nasa-jpl/aerie-ampcs';
 import { get } from 'svelte/store';
 import { SearchParameters } from '../enums/searchParameters';
 import { Status } from '../enums/status';
@@ -18,7 +23,7 @@ import {
 import { createModelError, creatingModel, models } from '../stores/model';
 import { createPlanError, creatingPlan, planId } from '../stores/plan';
 import { schedulingRequests, selectedSpecId } from '../stores/scheduling';
-import { commandDictionaries } from '../stores/sequencing';
+import { commandDictionaries, parameterDictionaries, sequenceAdaptations } from '../stores/sequencing';
 import { selectedSpanId, simulationDataset, simulationDatasetId } from '../stores/simulation';
 import { createTagError } from '../stores/tags';
 import { applyViewUpdate, view, viewUpdateTimeline } from '../stores/views';
@@ -118,13 +123,17 @@ import type {
   SchedulingResponse,
 } from '../types/scheduling';
 import type { ValueSchema } from '../types/schema';
-import type {
-  CommandDictionary,
-  GetSeqJsonResponse,
-  SeqJson,
-  SequenceAdaptation,
-  UserSequence,
-  UserSequenceInsertInput,
+import {
+  DictionaryTypes,
+  type CommandDictionary,
+  type GetSeqJsonResponse,
+  type ParameterDictionary,
+  type Parcel,
+  type ParcelInsertInput,
+  type SeqJson,
+  type SequenceAdaptation,
+  type UserSequence,
+  type UserSequenceInsertInput,
 } from '../types/sequencing';
 import type {
   PlanDataset,
@@ -532,27 +541,6 @@ const effects = {
     }
   },
 
-  async createCommandDictionary(files: FileList, user: User | null): Promise<CommandDictionary | null> {
-    try {
-      if (!queryPermissions.CREATE_COMMAND_DICTIONARY(user)) {
-        throwPermissionError('upload a command dictionary');
-      }
-
-      const file: File = files[0];
-      const dictionary = await file.text();
-      const data = await reqHasura<CommandDictionary>(gql.CREATE_COMMAND_DICTIONARY, { dictionary }, user);
-      const { createCommandDictionary: newCommandDictionary } = data;
-      if (newCommandDictionary != null) {
-        return newCommandDictionary;
-      } else {
-        throw Error('Unable to upload command dictionary');
-      }
-    } catch (e) {
-      catchError('Command Dictionary Upload Failed', e as Error);
-      return null;
-    }
-  },
-
   async createConstraint(
     name: string,
     isPublic: boolean,
@@ -643,16 +631,17 @@ const effects = {
     }
   },
 
-  async createCustomAdaptation(files: FileList | null, user: User | null): Promise<SequenceAdaptation | null> {
+  async createCustomAdaptation(
+    adaptation: { adaptation: string },
+    user: User | null,
+  ): Promise<SequenceAdaptation | null> {
     try {
       // TODO: Fix these permissions
       if (!queryPermissions.CREATE_COMMAND_DICTIONARY(user)) {
         throwPermissionError('upload a custom adaptation');
       }
 
-      if (files) {
-        const file: File = files[0];
-        const adaptation = { adaptation: await file.text() };
+      if (adaptation?.adaptation) {
         const data = await reqHasura<SequenceAdaptation>(gql.CREATE_CUSTOM_ADAPTATION, { adaptation }, user);
         const { createSequenceAdaptation: newSequenceAdaptation } = data;
         if (newSequenceAdaptation != null) {
@@ -849,6 +838,29 @@ const effects = {
     }
   },
 
+  async createParcel(parcel: ParcelInsertInput, user: User | null): Promise<number | null> {
+    try {
+      if (!queryPermissions.CREATE_PARCEL(user)) {
+        throwPermissionError('create a parcel');
+      }
+
+      const data = await reqHasura<Pick<Parcel, 'id'>>(gql.CREATE_PARCEL, { parcel }, user);
+      const { createParcel } = data;
+
+      if (createParcel === null) {
+        throw Error(`Unable to create parcel "${parcel.name}"`);
+      }
+
+      const { id } = createParcel;
+      showSuccessToast('Parcel Created Successfully');
+      return id;
+    } catch (e) {
+      catchError('Parcel Create Failed', e as Error);
+      showFailureToast('Parcel Create Failed');
+      return null;
+    }
+  },
+
   async createPlan(
     end_time_doy: string,
     model_id: number,
@@ -946,30 +958,6 @@ const effects = {
       }
 
       const { confirm, value = null } = await showCreatePlanBranchModal(plan);
-
-      if (confirm && value) {
-        const { name, plan } = value;
-        const data = await reqHasura(gql.DUPLICATE_PLAN, { new_plan_name: name, plan_id: plan.id }, user);
-        const { duplicate_plan } = data;
-        if (duplicate_plan != null) {
-          const { new_plan_id } = duplicate_plan;
-          await effects.createSchedulingPlanSpecification(
-            {
-              analysis_only: false,
-              horizon_end: plan.end_time_doy,
-              horizon_start: plan.start_time_doy,
-              plan_id: new_plan_id,
-              plan_revision: 0,
-              simulation_arguments: {},
-            },
-            user,
-          );
-          goto(`${base}/plans/${duplicate_plan.new_plan_id}`);
-          showSuccessToast('Branch Created Successfully');
-        } else {
-          throw Error('');
-        }
-      }
     } catch (e) {
       catchError('Branch Creation Failed', e as Error);
       showFailureToast('Branch Creation Failed');
@@ -2079,6 +2067,64 @@ const effects = {
     }
   },
 
+  async deleteParameterDictionary(id: number, user: User | null): Promise<void> {
+    try {
+      if (!queryPermissions.DELETE_PARAMETER_DICTIONARY(user)) {
+        throwPermissionError('delete this parameter dictionary');
+      }
+
+      const { confirm } = await showConfirmModal(
+        'Delete',
+        `Are you sure you want to delete the dictionary with ID: "${id}"?`,
+        'Delete Parameter Dictionary',
+      );
+
+      if (confirm) {
+        const data = await reqHasura<{ id: number }>(gql.DELETE_PARAMETER_DICTIONARY, { id }, user);
+        if (data.deleteParameterDictionary != null) {
+          showSuccessToast('Parameter Dictionary Deleted Successfully');
+          parameterDictionaries.filterValueById(id);
+        } else {
+          throw Error(`Unable to delete parameter dictionary with ID: "${id}"`);
+        }
+      }
+    } catch (e) {
+      catchError('Parameter Dictionary Delete Failed', e as Error);
+      showFailureToast('Parameter Dictionary Delete Failed');
+    }
+  },
+
+  async deleteParcel(parcel: Parcel, user: User | null): Promise<boolean> {
+    try {
+      if (!queryPermissions.DELETE_PARCEL(user, parcel)) {
+        throwPermissionError('delete this parcel');
+      }
+
+      const { confirm } = await showConfirmModal(
+        'Delete',
+        `Are you sure you want to delete "${parcel.name}"?`,
+        'Delete Parcel',
+      );
+
+      if (confirm) {
+        const data = await reqHasura<{ id: number }>(gql.DELETE_PARCEL, { id: parcel.id }, user);
+
+        if (data.deleteParcel === null) {
+          throw Error(`Unable to delete parcel "${parcel.name}"`);
+        }
+
+        showSuccessToast('Parcel Deleted Successfully');
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      catchError('Parcel Delete Failed', e as Error);
+      showFailureToast('Parcel Delete Failed');
+      return false;
+    }
+  },
+
   async deletePlan(plan: PlanSlim, user: User | null): Promise<boolean> {
     try {
       if (!queryPermissions.DELETE_PLAN(user, plan)) {
@@ -2226,6 +2272,33 @@ const effects = {
       catchError('Scheduling Goal Delete Failed', e as Error);
       showFailureToast('Scheduling Goal Delete Failed');
       return false;
+    }
+  },
+
+  async deleteSequenceAdaptation(id: number, user: User | null): Promise<void> {
+    try {
+      if (!queryPermissions.DELETE_COMMAND_DICTIONARY(user)) {
+        throwPermissionError('delete this sequence adaptation');
+      }
+
+      const { confirm } = await showConfirmModal(
+        'Delete',
+        `Are you sure you want to delete the sequence adaptation with ID: "${id}"?`,
+        'Delete Sequence Adaptation',
+      );
+
+      if (confirm) {
+        const data = await reqHasura<{ id: number }>(gql.DELETE_SEQUENCE_ADAPTATION, { id }, user);
+        if (data.deleteSequenceAdaptation === null) {
+          throw Error(`Unable to delete sequence adaptation with ID: "${id}"`);
+        }
+
+        showSuccessToast('Sequence Adaptation Deleted Successfully');
+        sequenceAdaptations.filterValueById(id);
+      }
+    } catch (e) {
+      catchError('Sequence Adaptation Delete Failed', e as Error);
+      showFailureToast('Sequence Adaptation Delete Failed');
     }
   },
 
@@ -2739,31 +2812,71 @@ const effects = {
     }
   },
 
+  async getParcel(id: number, user: User | null): Promise<Parcel | null> {
+    try {
+      const data = await reqHasura<Parcel>(gql.GET_PARCEL, { id }, user);
+      const { parcel } = data;
+      return parcel;
+    } catch (e) {
+      catchError(e as Error);
+      return null;
+    }
+  },
+
   async getParsedAmpcsCommandDictionary(
     commandDictionaryId: number | null | undefined,
     user: User | null,
   ): Promise<AmpcsCommandDictionary | null> {
-    if (commandDictionaryId !== null && commandDictionaryId !== undefined) {
-      try {
-        const data = await reqHasura<[{ parsed_json: AmpcsCommandDictionary }]>(
-          gql.GET_PARSED_COMMAND_DICTIONARY,
-          { commandDictionaryId },
-          user,
-        );
-        const { command_dictionary } = data;
+    if (typeof commandDictionaryId !== 'number') {
+      return null;
+    }
 
-        if (!Array.isArray(command_dictionary) || !command_dictionary.length) {
-          catchError(`Unable to find command dictionary with id ${commandDictionaryId}`);
-          return null;
-        } else {
-          const [{ parsed_json }] = command_dictionary;
-          return parsed_json;
-        }
-      } catch (e) {
-        catchError(e as Error);
+    try {
+      const data = await reqHasura<[{ parsed_json: AmpcsCommandDictionary }]>(
+        gql.GET_PARSED_COMMAND_DICTIONARY,
+        { commandDictionaryId },
+        user,
+      );
+      const { command_dictionary } = data;
+
+      if (!Array.isArray(command_dictionary) || !command_dictionary.length) {
+        catchError(`Unable to find command dictionary with id ${commandDictionaryId}`);
         return null;
+      } else {
+        const [{ parsed_json }] = command_dictionary;
+        return parsed_json;
       }
-    } else {
+    } catch (e) {
+      catchError(e as Error);
+      return null;
+    }
+  },
+
+  async getParsedAmpcsParameterDictionary(
+    parameterDictionaryId: number | null | undefined,
+    user: User | null,
+  ): Promise<AmpcsParameterDictionary | null> {
+    if (typeof parameterDictionaryId !== 'number') {
+      return null;
+    }
+
+    try {
+      const data = await reqHasura<[{ parsed_json: AmpcsParameterDictionary }]>(
+        gql.GET_PARSED_PARAMETER_DICTIONARY,
+        { parameterDictionaryId },
+        user,
+      );
+      const { parameter_dictionary } = data;
+
+      if (!Array.isArray(parameter_dictionary) || !parameter_dictionary.length) {
+        catchError(`Unable to find parameter dictionary with id ${parameterDictionaryId}`);
+        return null;
+      } else {
+        const [{ parsed_json }] = parameter_dictionary;
+        return parsed_json;
+      }
+    } catch (e) {
+      catchError(e as Error);
       return null;
     }
   },
@@ -3125,11 +3238,11 @@ const effects = {
     }
   },
 
-  async getSequenceAdaptation(user: User | null): Promise<SequenceAdaptation | null> {
+  async getSequenceAdaptation(sequence_adaptation_id: number, user: User | null): Promise<SequenceAdaptation | null> {
     try {
       const data = await reqHasura<[sequence_adaptation: SequenceAdaptation]>(
         gql.GET_SEQUENCE_ADAPTATION,
-        undefined,
+        { sequence_adaptation_id },
         user,
       );
       const { sequence_adaptation } = data;
@@ -4212,6 +4325,33 @@ const effects = {
     }
   },
 
+  async updateParcel(
+    id: number,
+    parcel: Partial<Parcel>,
+    parcelOwner: UserId,
+    user: User | null,
+  ): Promise<string | null> {
+    try {
+      if (!queryPermissions.UPDATE_PARCEL(user, { owner: parcelOwner })) {
+        throwPermissionError('update this parcel');
+      }
+
+      const data = await reqHasura<Pick<Parcel, 'id'>>(gql.UPDATE_PARCEL, { id, parcel }, user);
+      const { updateParcel } = data;
+
+      if (updateParcel === null) {
+        throw Error(`Unable to update parcel with ID: "${id}"`);
+      }
+
+      showSuccessToast('Parcel Updated Successfully');
+      return '';
+    } catch (e) {
+      catchError('Parcel Update Failed', e as Error);
+      showFailureToast('Parcel Update Failed');
+      return null;
+    }
+  },
+
   async updatePlanSnapshot(id: number, snapshot: Partial<PlanSnapshot>, user: User | null): Promise<void> {
     try {
       if (!queryPermissions.UPDATE_PLAN_SNAPSHOT(user)) {
@@ -4673,6 +4813,106 @@ const effects = {
     }
   },
 
+  async uploadCommandDictionary(
+    dictionary: AmpcsCommandDictionary,
+    user: User | null,
+  ): Promise<CommandDictionary | null> {
+    try {
+      if (!queryPermissions.CREATE_COMMAND_DICTIONARY(user)) {
+        throwPermissionError('upload a command dictionary');
+      }
+
+      const data = await reqHasura<CommandDictionary>(
+        gql.CREATE_COMMAND_DICTIONARY,
+        {
+          commandDictionary: {
+            mission: dictionary.header.mission_name,
+            parsed_json: dictionary,
+            version: dictionary.header.version,
+          },
+        },
+        user,
+      );
+
+      const { createCommandDictionary: newCommandDictionary } = data;
+
+      if (newCommandDictionary === null) {
+        throw Error('Unable to upload command dictionary');
+      }
+
+      return newCommandDictionary;
+    } catch (e) {
+      catchError('Command Dictionary Upload Failed', e as Error);
+      return null;
+    }
+  },
+
+  async uploadDictionaryOrAdaptation(
+    files: FileList,
+    user: User | null,
+  ): Promise<{
+    type: DictionaryTypes;
+    uploadedObject: CommandDictionary | ParameterDictionary | SequenceAdaptation;
+  } | null> {
+    const file: File = files[0];
+    const text = await file.text();
+    const splitLineDictionary = text.split('\n');
+
+    switch (splitLineDictionary[1]) {
+      case `<${DictionaryTypes.command_dictionary}>`: {
+        try {
+          return {
+            type: DictionaryTypes.command_dictionary,
+            uploadedObject: { ...((await this.uploadCommandDictionary(parse(text), user)) as CommandDictionary) },
+          };
+        } catch (e) {
+          catchError('Command Dictionary Upload Failed', e as Error);
+          return null;
+        }
+      }
+      case `<${DictionaryTypes.param_def}>`: {
+        try {
+          return {
+            type: DictionaryTypes.param_def,
+            uploadedObject: {
+              ...((await this.uploadParameterDictionary(parseParameterDictionary(text), user)) as ParameterDictionary),
+            },
+          };
+        } catch (e) {
+          catchError('Parameter Dictionary Upload Failed', e as Error);
+          return null;
+        }
+      }
+      case `<${DictionaryTypes.telemetry_dictionary}>`: {
+        /**
+        try {
+          return {
+            ...((await this.uploadDictionary(text, user, DictionaryTypes.telemetry_dictionary)) as ChannelDictionary),
+          };
+        } catch (e) {
+          catchError('Channel Dictionary Upload Failed', e as Error);
+          return null;
+        }
+        */
+        break;
+      }
+      default:
+        try {
+          return {
+            type: DictionaryTypes.sequence_adaptation,
+            uploadedObject: {
+              ...((await this.createCustomAdaptation({ adaptation: text }, user)) as SequenceAdaptation),
+            },
+          };
+        } catch (e) {
+          catchError('Sequence Adaptation Upload Failed', e as Error);
+          return null;
+        }
+    }
+
+    return null;
+  },
+
   async uploadFile(file: File, user: User | null): Promise<number | null> {
     try {
       const body = new FormData();
@@ -4717,6 +4957,40 @@ const effects = {
     } catch (e) {
       catchError(e as Error);
       return {};
+    }
+  },
+
+  async uploadParameterDictionary(
+    dictionary: AmpcsParameterDictionary,
+    user: User | null,
+  ): Promise<ParameterDictionary | null> {
+    try {
+      if (!queryPermissions.CREATE_PARAMETER_DICTIONARY(user)) {
+        throwPermissionError('upload a parameter dictionary');
+      }
+
+      const data = await reqHasura<ParameterDictionary>(
+        gql.CREATE_PARAMETER_DICTIONARY,
+        {
+          parameterDictionary: {
+            mission: dictionary.header.mission_name,
+            parsed_json: dictionary,
+            version: dictionary.header.version,
+          },
+        },
+        user,
+      );
+
+      const { createParameterDictionary: newParameterDictionary } = data;
+
+      if (newParameterDictionary === null) {
+        throw Error('Unable to upload parameter dictionary');
+      }
+
+      return newParameterDictionary;
+    } catch (e) {
+      catchError('Parameter Dictionary Upload Failed', e as Error);
+      return null;
     }
   },
 
