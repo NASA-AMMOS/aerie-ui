@@ -3,9 +3,15 @@
 <script lang="ts">
   import type { EditorState } from '@codemirror/state';
   import type { SyntaxNode } from '@lezer/common';
-  import type { CommandDictionary, FswCommandArgument, FswCommandArgumentRepeat } from '@nasa-jpl/aerie-ampcs';
+  import type {
+    CommandDictionary,
+    FswCommandArgument,
+    FswCommandArgumentRepeat,
+    ParameterDictionary,
+  } from '@nasa-jpl/aerie-ampcs';
   import type { EditorView } from 'codemirror';
   import { debounce } from 'lodash-es';
+  import { getCustomArgDef } from '../../../utilities/new-sequence-editor/extension-points';
   import { TOKEN_COMMAND, TOKEN_ERROR } from '../../../utilities/new-sequence-editor/sequencer-grammar-constants';
   import { getAncestorNode } from '../../../utilities/new-sequence-editor/tree-utils';
   import AddMissingArgsButton from './add-missing-args-button.svelte';
@@ -14,13 +20,19 @@
 
   export let editorSequenceView: EditorView;
   export let commandDictionary: CommandDictionary;
+  export let parameterDictionaries: ParameterDictionary[];
   export let node: SyntaxNode | null;
 
   const ID_COMMAND_DETAIL_PANE = 'ID_COMMAND_DETAIL_PANE';
 
   $: commandNode = getAncestorNode(node, TOKEN_COMMAND);
   $: commandDef = getCommandDef(commandDictionary, editorSequenceView.state, commandNode);
-  $: argInfoArray = getArgumentInfo(commandNode?.getChild('Args') ?? null, commandDef?.arguments);
+  $: argInfoArray = getArgumentInfo(
+    commandNode?.getChild('Args') ?? null,
+    commandDef?.arguments,
+    undefined,
+    parameterDictionaries,
+  );
   $: editorArgInfoArray = argInfoArray.filter(argInfo => !!argInfo.node);
   $: missingArgDefArray = getMissingArgDefs(argInfoArray);
   $: timeTagNode = getTimeTagInfo(commandNode);
@@ -38,34 +50,43 @@
   function getArgumentInfo(
     args: SyntaxNode | null,
     argumentDefs: FswCommandArgument[] | undefined,
-    parentArgDef?: FswCommandArgumentRepeat,
+    parentArgDef: FswCommandArgumentRepeat | undefined,
+    parameterDictionaries: ParameterDictionary[],
   ) {
     const argArray: ArgTextDef[] = [];
     let node = args?.firstChild;
+
+    const precedingArgValues: string[] = [];
 
     // loop through nodes in editor and pair with definitions
     while (node) {
       // TODO - Consider early out on grammar error as higher chance of argument mismatch
       // skip error tokens in grammar and try to give best guess at what argument we're on
       if (node.name !== TOKEN_ERROR) {
-        const argDef =
+        let argDef =
           argumentDefs &&
           argumentDefs[
             parentArgDef?.repeat?.arguments.length !== undefined
               ? argArray.length % parentArgDef?.repeat?.arguments.length
               : argArray.length
           ];
+        if (commandDef && argDef) {
+          argDef = getCustomArgDef(commandDef?.stem, argDef, precedingArgValues, parameterDictionaries);
+        }
+
         let children: ArgTextDef[] | undefined = undefined;
         if (!!argDef && isFswCommandArgumentRepeat(argDef)) {
-          children = getArgumentInfo(node, argDef.repeat?.arguments, argDef);
+          children = getArgumentInfo(node, argDef.repeat?.arguments, argDef, parameterDictionaries);
         }
+        const argValue = editorSequenceView.state.sliceDoc(node.from, node.to);
         argArray.push({
           argDef,
           children,
           node,
           parentArgDef,
-          text: editorSequenceView.state.sliceDoc(node.from, node.to),
+          text: argValue,
         });
+        precedingArgValues.push(argValue);
       }
       node = node.nextSibling;
     }
@@ -148,7 +169,12 @@
       {#if !!timeTagNode}
         <div>Time Tag: {timeTagNode.text.trim()}</div>
       {/if}
-      <div>{commandDef.stem}</div>
+      <div>
+        <details>
+          <summary>{commandDef.stem}</summary>
+          {commandDef.description}
+        </details>
+      </div>
       <hr />
       <div class="select-command-argument-detail">
         {#each editorArgInfoArray as argInfo}

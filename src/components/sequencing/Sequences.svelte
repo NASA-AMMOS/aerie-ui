@@ -41,9 +41,9 @@
     },
     { field: 'name', filter: 'text', headerName: 'Name', resizable: true, sortable: true },
     {
-      field: 'authoring_command_dict_id',
+      field: 'parcel_id',
       filter: 'number',
-      headerName: 'Command Dictionary ID',
+      headerName: 'Parcel ID',
       resizable: true,
       sortable: true,
     },
@@ -204,11 +204,13 @@
   <CssGridGutter track={1} type="column" />
 
   <SequenceEditor
-    sequenceCommandDictionaryId={selectedSequence?.authoring_command_dict_id}
+    parcelId={selectedSequence?.parcel_id}
+    showCommandFormBuilder={false}
     sequenceDefinition={selectedSequence?.definition ?? ''}
     sequenceName={selectedSequence?.name}
     sequenceSeqJson={selectedSequenceSeqJson}
     title="Sequence - Definition Editor (Read-only)"
+    readOnly={true}
     {user}
   />
 </CssGrid>

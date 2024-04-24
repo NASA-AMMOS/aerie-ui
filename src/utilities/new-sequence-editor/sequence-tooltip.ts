@@ -2,9 +2,10 @@ import { syntaxTree } from '@codemirror/language';
 import type { Extension } from '@codemirror/state';
 import { hoverTooltip, type EditorView, type Tooltip } from '@codemirror/view';
 import type { SyntaxNode } from '@lezer/common';
-import type { CommandDictionary, FswCommand, HwCommand } from '@nasa-jpl/aerie-ampcs';
+import type { CommandDictionary, FswCommand, HwCommand, ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
 import ArgumentTooltip from '../../components/sequencing/ArgumentTooltip.svelte';
 import CommandTooltip from '../../components/sequencing/CommandTooltip.svelte';
+import { getCustomArgDef } from './extension-points';
 
 /**
  * Searches up through a node's ancestors to find a node by the given name.
@@ -12,6 +13,7 @@ import CommandTooltip from '../../components/sequencing/CommandTooltip.svelte';
 function getParentNodeByName(view: EditorView, pos: number, name: string): SyntaxNode | undefined {
   let node: SyntaxNode | undefined = syntaxTree(view.state).resolveInner(pos, -1);
 
+  // TODO - replace with getAncestorNode
   while (node && node.name !== name) {
     node = node.parent?.node;
   }
@@ -45,7 +47,10 @@ function getTokenPositionInLine(view: EditorView, pos: number) {
  * Tooltip function that returns a Code Mirror extension function.
  * Can be optionally called with a command dictionary so it's available during tooltip generation.
  */
-export function sequenceTooltip(commandDictionary: CommandDictionary | null = null): Extension {
+export function sequenceTooltip(
+  commandDictionary: CommandDictionary | null = null,
+  parameterDictionaries: ParameterDictionary[] = [],
+): Extension {
   return hoverTooltip((view, pos, side): Tooltip | null => {
     const { from, to } = getTokenPositionInLine(view, pos);
 
@@ -79,19 +84,36 @@ export function sequenceTooltip(commandDictionary: CommandDictionary | null = nu
     const argsNode = getParentNodeByName(view, pos, 'Args');
 
     if (argsNode) {
-      const stem = argsNode?.parent?.getChild('Stem');
+      const stem = argsNode.parent?.getChild('Stem');
 
       if (commandDictionary && stem) {
         const { fswCommandMap } = commandDictionary;
         const text = view.state.doc.sliceString(stem.from, stem.to);
         const fswCommand: FswCommand | null = fswCommandMap[text] ?? null;
+        const argValues: string[] = [];
 
-        let argNode = argsNode?.firstChild;
+        if (!fswCommand) {
+          return null;
+        }
+
+        let argNode = argsNode.firstChild;
+
+        while (argNode) {
+          argValues.push(view.state.doc.sliceString(argNode.from, argNode.to));
+          argNode = argNode.nextSibling;
+        }
+
         let i = 0;
+        argNode = argsNode.firstChild;
+        // TODO tooltips in repeats
+        while (argNode) {
+          // if (argNode.name === TOKEN_REPEAT_ARG) {
+          //   let repeatArg = argNode.firstChild;
 
-        do {
-          if (fswCommand && argNode && argNode.from === from && argNode.to === to) {
-            const arg = fswCommand.arguments[i];
+          // }
+
+          if (argNode.from === from && argNode.to === to) {
+            const arg = getCustomArgDef(text, fswCommand.arguments[i], argValues, parameterDictionaries);
 
             // TODO. Type check arg for type found in AST so we do not show tooltips incorrectly.
             if (arg) {
@@ -108,9 +130,9 @@ export function sequenceTooltip(commandDictionary: CommandDictionary | null = nu
             }
           }
 
-          argNode = argNode?.nextSibling ?? null;
+          argNode = argNode.nextSibling;
           ++i;
-        } while (argNode);
+        }
       }
     }
 

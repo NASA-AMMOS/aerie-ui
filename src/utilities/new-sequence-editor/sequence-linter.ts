@@ -1,12 +1,21 @@
 import { syntaxTree } from '@codemirror/language';
 import { linter, type Diagnostic } from '@codemirror/lint';
 import type { Extension } from '@codemirror/state';
-import type { SyntaxNode } from '@lezer/common';
-import type { CommandDictionary, EnumMap, FswCommand, FswCommandArgument, HwCommand } from '@nasa-jpl/aerie-ampcs';
+import type { SyntaxNode, Tree } from '@lezer/common';
+import type {
+  CommandDictionary,
+  EnumMap,
+  FswCommand,
+  FswCommandArgument,
+  HwCommand,
+  ParameterDictionary,
+} from '@nasa-jpl/aerie-ampcs';
 import { closest, distance } from 'fastest-levenshtein';
 import { addDefaultArgs } from '../../components/sequencing/form/utils';
 
+import type { VariableDeclaration } from '@nasa-jpl/seq-json-schema/types';
 import type { EditorView } from 'codemirror';
+import { getCustomArgDef } from './extension-points';
 import { TOKEN_COMMAND, TOKEN_ERROR, TOKEN_REPEAT_ARG } from './sequencer-grammar-constants';
 import {
   ABSOLUTE_TIME,
@@ -30,10 +39,8 @@ const KNOWN_DIRECTIVES = [
   'METADATA',
 ].map(name => `@${name}`);
 
-export function getAllEnumSymbols(enumMap: EnumMap, enumName: string) {
-  const enumSymbols = enumMap[enumName].values.map(({ symbol }) => symbol);
-  const enumSymbolsDisplayStr = enumSymbols.join('  |  ');
-  return { enumSymbols, enumSymbolsDisplayStr };
+export function getAllEnumSymbols(enumMap: EnumMap, enumName: string): undefined | string[] {
+  return enumMap[enumName]?.values.map(({ symbol }) => symbol);
 }
 
 function closestStrings(value: string, potentialMatches: string[], n: number) {
@@ -42,33 +49,77 @@ function closestStrings(value: string, potentialMatches: string[], n: number) {
   return distances.slice(0, n).map(pair => pair.s);
 }
 
+type WhileOpener = {
+  command: SyntaxNode;
+  from: number;
+  stemToClose: string;
+  to: number;
+  word: string;
+};
+
+type IfOpener = WhileOpener & {
+  hasElse: boolean;
+};
+
+type VariableMap = {
+  [name: string]: VariableDeclaration;
+};
+
 /**
  * Linter function that returns a Code Mirror extension function.
  * Can be optionally called with a command dictionary so it's available during linting.
  */
-export function sequenceLinter(commandDictionary: CommandDictionary | null = null): Extension {
+export function sequenceLinter(
+  commandDictionary: CommandDictionary | null = null,
+  parameterDictionaries: ParameterDictionary[] = [],
+): Extension {
   return linter(view => {
-    const treeNode = syntaxTree(view.state).topNode;
+    const tree = syntaxTree(view.state);
+    const treeNode = tree.topNode;
+    const docText = view.state.doc.toString();
     let diagnostics: Diagnostic[] = [];
+
+    diagnostics.push(...validateParserErrors(tree));
+
+    // TODO: Get identify type mapping to use
+    const variables: VariableDeclaration[] = [
+      ...(globalThis.GLOBALS?.map(g => ({ name: g.name, type: 'STRING' }) as const) ?? []),
+    ];
 
     // Validate top level metadata
     diagnostics.push(...validateMetadata(treeNode));
 
-    diagnostics.push(...validateLocals(treeNode.getChildren('LocalDeclaration')));
+    const localsValidation = validateLocals(treeNode.getChildren('LocalDeclaration'), docText);
+    variables.push(...localsValidation.variables);
+    diagnostics.push(...localsValidation.diagnostics);
 
-    diagnostics.push(...validateParameters(treeNode.getChildren('ParameterDeclaration')));
+    const parameterValidation = validateParameters(treeNode.getChildren('ParameterDeclaration'), docText);
+    variables.push(...parameterValidation.variables);
+    diagnostics.push(...parameterValidation.diagnostics);
+
+    const variableMap = variables.reduce(
+      (vMap: VariableMap, variable: VariableDeclaration) => ({
+        ...vMap,
+        [variable.name]: variable,
+      }),
+      {},
+    );
 
     // Validate command type mixing
     diagnostics.push(...validateCommandTypeMixing(treeNode));
 
-    const docText = view.state.doc.toString();
-
     diagnostics.push(...validateCustomDirectives(treeNode, docText));
 
-    diagnostics.push(...commandLinter(treeNode.getChild('Commands')?.getChildren(TOKEN_COMMAND) || [], docText));
+    diagnostics.push(
+      ...commandLinter(treeNode.getChild('Commands')?.getChildren(TOKEN_COMMAND) || [], docText, variableMap),
+    );
 
     diagnostics.push(
-      ...immediateCommandLinter(treeNode.getChild('ImmediateCommands')?.getChildren(TOKEN_COMMAND) || [], docText),
+      ...immediateCommandLinter(
+        treeNode.getChild('ImmediateCommands')?.getChildren(TOKEN_COMMAND) || [],
+        docText,
+        variableMap,
+      ),
     );
 
     diagnostics.push(
@@ -86,18 +137,45 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
     return diagnostics;
   });
 
+  /**
+   * Checks for unexpected tokens.
+   *
+   * @param tree
+   * @returns
+   */
+  function validateParserErrors(tree: Tree) {
+    const diagnostics: Diagnostic[] = [];
+    const MAX_PARSER_ERRORS = 100;
+    tree.iterate({
+      enter: node => {
+        if (node.name === TOKEN_ERROR && diagnostics.length < MAX_PARSER_ERRORS) {
+          const { from, to } = node;
+          diagnostics.push({
+            from,
+            message: `Unexpected token`,
+            severity: 'error',
+            to,
+          });
+        }
+      },
+    });
+    return diagnostics;
+  }
+
   function conditionalAndLoopKeywordsLinter(commandNodes: SyntaxNode[], text: string): Diagnostic[] {
     const diagnostics: Diagnostic[] = [];
-    const conditionalStack: string[] = [];
-    const loopStack: string[] = [];
+    const conditionalStack: IfOpener[] = [];
+    const loopStack: WhileOpener[] = [];
     const conditionalKeywords = [];
     const loopKeywords = [];
-    const conditionalStartingKeyword = globalThis.CONDITIONAL_KEYWORDS?.IF ?? 'CMD_IF';
+    const conditionalStartingKeywords = globalThis.CONDITIONAL_KEYWORDS?.IF ?? ['CMD_IF'];
+    const conditionalElseKeyword = globalThis.CONDITIONAL_KEYWORDS?.ELSE ?? 'CMD_ELSE';
+    const conditionalElseIfKeywords = globalThis.CONDITIONAL_KEYWORDS?.ELSE_IF ?? ['CMD_ELSE_IF'];
     const conditionalEndingKeyword = globalThis.CONDITIONAL_KEYWORDS?.END_IF ?? 'CMD_END_IF';
-    const loopStartingKeyword = globalThis.LOOP_KEYWORDS?.WHILE_LOOP ?? 'CMD_WHILE_LOOP';
+    const loopStartingKeywords = globalThis.LOOP_KEYWORDS?.WHILE_LOOP ?? ['CMD_WHILE_LOOP', 'CMD_WHILE_LOOP_OR'];
     const loopEndingKeyword = globalThis.LOOP_KEYWORDS?.END_WHILE_LOOP ?? 'CMD_END_WHILE_LOOP';
 
-    conditionalKeywords.push(globalThis.CONDITIONAL_KEYWORDS?.ELSE_IF ?? 'CMD_ELSE_IF', conditionalEndingKeyword);
+    conditionalKeywords.push(conditionalElseKeyword, ...conditionalElseIfKeywords, conditionalEndingKeyword);
     loopKeywords.push(
       globalThis.LOOP_KEYWORDS?.BREAK ?? 'CMD_BREAK',
       globalThis.LOOP_KEYWORDS?.CONTINUE ?? 'CMD_CONTINUE',
@@ -106,37 +184,59 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
 
     for (const command of commandNodes) {
       const stem = command.getChild('Stem');
-      if (stem !== null) {
+      if (stem) {
         const word = text.slice(stem.from, stem.to);
 
-        if (word === conditionalStartingKeyword) {
-          conditionalStack.push(word);
+        if (conditionalStartingKeywords.includes(word)) {
+          conditionalStack.push({
+            command,
+            from: stem.from,
+            hasElse: false,
+            stemToClose: conditionalEndingKeyword,
+            to: stem.to,
+            word,
+          });
         }
 
         if (conditionalKeywords.includes(word)) {
           if (conditionalStack.length === 0) {
             diagnostics.push({
               from: stem.from,
-              message: `Conditional keyword ${word} found without a preceding ${conditionalStartingKeyword}.`,
+              message: `${word} doesn't match a preceding ${conditionalStartingKeywords.join(', ')}.`,
               severity: 'error',
               to: stem.to,
             });
-          }
-
-          if (word === conditionalEndingKeyword) {
+          } else if (word === conditionalElseKeyword) {
+            if (!conditionalStack[conditionalStack.length - 1].hasElse) {
+              conditionalStack[conditionalStack.length - 1].hasElse = true;
+            } else {
+              diagnostics.push({
+                from: stem.from,
+                message: `${word} doesn't match a preceding ${conditionalStartingKeywords.join(', ')}.`,
+                severity: 'error',
+                to: stem.to,
+              });
+            }
+          } else if (word === conditionalEndingKeyword) {
             conditionalStack.pop();
           }
         }
 
-        if (word === loopStartingKeyword) {
-          loopStack.push(word);
+        if (loopStartingKeywords.includes(word)) {
+          loopStack.push({
+            command,
+            from: stem.from,
+            stemToClose: loopEndingKeyword,
+            to: stem.to,
+            word,
+          });
         }
 
         if (loopKeywords.includes(word)) {
           if (loopStack.length === 0) {
             diagnostics.push({
               from: stem.from,
-              message: `Loop keyword ${word} found without a preceding ${loopStartingKeyword}.`,
+              message: `${word} doesn't match a preceding ${loopStartingKeywords.join(', ')}.`,
               severity: 'error',
               to: stem.to,
             });
@@ -148,6 +248,31 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
         }
       }
     }
+
+    // Anything left on the stack is unclosed
+    diagnostics.push(
+      ...[...loopStack, ...conditionalStack].map(block => {
+        return {
+          actions: [
+            {
+              apply(view: EditorView, _from: number, _to: number) {
+                view.dispatch({
+                  changes: {
+                    from: block.command.to,
+                    insert: `\nC ${block.stemToClose}\n`,
+                  },
+                });
+              },
+              name: `Insert ${block.stemToClose}`,
+            },
+          ],
+          from: block.from,
+          message: `Unclosed ${block.word}`,
+          severity: 'error',
+          to: block.to,
+        } as const;
+      }),
+    );
 
     return diagnostics;
   }
@@ -198,7 +323,8 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
     return diagnostics;
   }
 
-  function validateLocals(locals: SyntaxNode[]) {
+  function validateLocals(locals: SyntaxNode[], text: string) {
+    const variables: VariableDeclaration[] = [];
     const diagnostics: Diagnostic[] = [];
     diagnostics.push(
       ...locals.slice(1).map(
@@ -207,7 +333,7 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
             ...getFromAndTo([local]),
             message: 'There is a maximum of @LOCALS directive per sequence',
             severity: 'error',
-          }) as Diagnostic,
+          }) as const,
       ),
     );
     locals.forEach(local => {
@@ -220,15 +346,24 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
             severity: 'error',
             to: child.to,
           });
+        } else {
+          variables.push({
+            name: text.slice(child.from, child.to),
+            // TODO - hook to check mission specific nomenclature
+            type: 'STRING',
+          });
         }
         child = child.nextSibling;
       }
     });
-    // TODO - hook to check mission specific nomenclature
-    return diagnostics;
+    return {
+      diagnostics,
+      variables,
+    };
   }
 
-  function validateParameters(inputParams: SyntaxNode[]) {
+  function validateParameters(inputParams: SyntaxNode[], text: string) {
+    const variables: VariableDeclaration[] = [];
     const diagnostics: Diagnostic[] = [];
     diagnostics.push(
       ...inputParams.slice(1).map(
@@ -237,7 +372,7 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
             ...getFromAndTo([inputParam]),
             message: 'There is a maximum of @INPUT_PARAMS directive per sequence',
             severity: 'error',
-          }) as Diagnostic,
+          }) as const,
       ),
     );
     inputParams.forEach(inputParam => {
@@ -250,12 +385,20 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
             severity: 'error',
             to: child.to,
           });
+        } else {
+          variables.push({
+            name: text.slice(child.from, child.to),
+            // TODO - hook to check mission specific nomenclature
+            type: 'STRING',
+          });
         }
         child = child.nextSibling;
       }
     });
-    // TODO - hook to check mission specific nomenclature
-    return diagnostics;
+    return {
+      diagnostics,
+      variables,
+    };
   }
 
   function validateCustomDirectives(node: SyntaxNode, text: string): Diagnostic[] {
@@ -301,7 +444,7 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
    * @param {string} text - the text to validate against
    * @return {Diagnostic[]} an array of diagnostics
    */
-  function commandLinter(commandNodes: SyntaxNode[] | undefined, text: string): Diagnostic[] {
+  function commandLinter(commandNodes: SyntaxNode[] | undefined, text: string, variables: VariableMap): Diagnostic[] {
     // If there are no command nodes, return an empty array of diagnostics
     if (!commandNodes) {
       return [];
@@ -437,7 +580,7 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
       }
 
       // Validate the command and push the generated diagnostics to the array
-      diagnostics.push(...validateCommand(command, text, 'command'));
+      diagnostics.push(...validateCommand(command, text, 'command', variables));
 
       // Lint the metadata and models
       diagnostics.push(...validateMetadata(command));
@@ -455,7 +598,11 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
    * @param {string} text - Text of the sequence.
    * @return {Diagnostic[]} Array of diagnostics.
    */
-  function immediateCommandLinter(commandNodes: SyntaxNode[] | undefined, text: string): Diagnostic[] {
+  function immediateCommandLinter(
+    commandNodes: SyntaxNode[] | undefined,
+    text: string,
+    variables: VariableMap,
+  ): Diagnostic[] {
     // If there are no command nodes, return the empty array
     if (!commandNodes) {
       return [];
@@ -481,7 +628,7 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
       }
 
       // Validate the command and push the generated diagnostics to the array
-      diagnostics.push(...validateCommand(command, text, 'immediate'));
+      diagnostics.push(...validateCommand(command, text, 'immediate', variables));
 
       // Lint the metadata
       diagnostics.push(...validateMetadata(command));
@@ -536,7 +683,7 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
       }
 
       // Validate the command and push the generated diagnostics to the array
-      diagnostics.push(...validateCommand(command, text, 'hardware'));
+      diagnostics.push(...validateCommand(command, text, 'hardware', {}));
 
       // Lint the metadata
       diagnostics.push(...validateMetadata(command));
@@ -569,6 +716,7 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
     command: SyntaxNode,
     text: string,
     type: 'command' | 'immediate' | 'hardware' = 'command',
+    variables: VariableMap,
   ): Diagnostic[] {
     // If the command dictionary is not initialized, return an empty array of diagnostics.
     if (!commandDictionary) {
@@ -582,11 +730,13 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
       return [];
     }
 
+    const stemText = text.slice(stem.from, stem.to);
+
     // Initialize an array to store the diagnostic errors.
     const diagnostics: Diagnostic[] = [];
 
     // Validate the stem of the command.
-    const result = validateStem(stem, text, type);
+    const result = validateStem(stem, stemText, type);
     // No command dictionary return [].
     if (result === null) {
       return [];
@@ -602,7 +752,16 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
     const dictArgs = (result as FswCommand).arguments ?? [];
 
     // Lint the arguments of the command.
-    diagnostics.push(...validateAndLintArguments(dictArgs, argNode ? getChildrenNode(argNode) : null, command, text));
+    diagnostics.push(
+      ...validateAndLintArguments(
+        dictArgs,
+        argNode ? getChildrenNode(argNode) : null,
+        command,
+        text,
+        stemText,
+        variables,
+      ),
+    );
 
     // Return the array of diagnostics.
     return diagnostics;
@@ -611,21 +770,19 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
   /**
    * Validates the stem of a command.
    * @param stem - The SyntaxNode representing the stem of the command.
-   * @param text - The text of the whole command.
+   * @param stemText - The command name
    * @param type - The type of command (default: 'command').
    * @returns A Diagnostic if the stem is invalid, a FswCommand if the stem is valid, or null if the command dictionary is not initialized.
    */
   function validateStem(
     stem: SyntaxNode,
-    text: string,
+    stemText: string,
     type: 'command' | 'immediate' | 'hardware' = 'command',
   ): Diagnostic | FswCommand | HwCommand | null {
     if (commandDictionary === null) {
       return null;
     }
     const { fswCommandMap, fswCommands, hwCommandMap, hwCommands } = commandDictionary;
-
-    const stemText = text.slice(stem.from, stem.to);
 
     const dictionaryCommand: FswCommand | HwCommand | null = fswCommandMap[stemText]
       ? fswCommandMap[stemText]
@@ -689,6 +846,8 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
     argNode: SyntaxNode[] | null,
     command: SyntaxNode,
     text: string,
+    stem: string,
+    variables: VariableMap,
   ): Diagnostic[] {
     // Initialize an array to store the validation errors
     let diagnostics: Diagnostic[] = [];
@@ -769,6 +928,8 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
       return diagnostics;
     }
 
+    const argValues = argNode?.map(arg => text.slice(arg.from, arg.to)) ?? [];
+
     // grab the first argument node
     // let node = argNode?.firstChild ?? null;
 
@@ -790,7 +951,9 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
       }
 
       // Validate and lint the current argument node
-      diagnostics = diagnostics.concat(...validateArguments(dictArg, arg, command, text));
+      diagnostics = diagnostics.concat(
+        ...validateArgument(dictArg, arg, command, text, stem, argValues.slice(0, i), variables),
+      );
     }
 
     // Return the array of validation errors
@@ -807,12 +970,17 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
 + * @param text The full text of the document.
 + * @returns An array of diagnostics generated during the validation.
 + */
-  function validateArguments(
+  function validateArgument(
     dictArg: FswCommandArgument,
     argNode: SyntaxNode,
     command: SyntaxNode,
     text: string,
+    stemText: string,
+    precedingArgValues: string[],
+    variables: VariableMap,
   ): Diagnostic[] {
+    dictArg = getCustomArgDef(stemText, dictArg, precedingArgValues, parameterDictionaries);
+
     const diagnostics: Diagnostic[] = [];
 
     const dictArgType = dictArg.arg_type;
@@ -831,10 +999,7 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
           });
         } else {
           if (commandDictionary) {
-            const { enumSymbols: symbols, enumSymbolsDisplayStr: availableSymbols } = getAllEnumSymbols(
-              commandDictionary?.enumMap,
-              dictArg.enum_name,
-            );
+            const symbols = getAllEnumSymbols(commandDictionary?.enumMap, dictArg.enum_name) ?? dictArg.range ?? [];
             const unquotedArgText = argText.replace(/^"|"$/g, '');
             if (!symbols.includes(unquotedArgText)) {
               const guess = closest(unquotedArgText.toUpperCase(), symbols);
@@ -848,7 +1013,7 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
                   },
                 ],
                 from: argNode.from,
-                message: `Enum should be "${availableSymbols}"`,
+                message: `Enum should be "${symbols.join(' | ')}"`,
                 severity: 'error',
                 to: argNode.to,
               });
@@ -885,14 +1050,35 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
           const nodeTextAsNumber = parseFloat(argText);
 
           if (nodeTextAsNumber < min || nodeTextAsNumber > max) {
-            const message = `Number out of range. Make sure this number is between ${min} and ${max} inclusive.`;
+            const message =
+              max !== min
+                ? `Number out of range. Range is between ${min} and ${max} inclusive.`
+                : `Number out of range. Range is ${min}.`;
             diagnostics.push({
+              actions:
+                max === min
+                  ? [
+                      {
+                        apply(view, from, to) {
+                          view.dispatch({ changes: { from, insert: `${min}`, to } });
+                        },
+                        name: `Change to ${min}`,
+                      },
+                    ]
+                  : [],
               from: argNode.from,
               message,
               severity: 'error',
               to: argNode.to,
             });
           }
+        } else if (argType === 'Enum' && !variables[argText]) {
+          diagnostics.push({
+            from: argNode.from,
+            message: `Unrecognized variable name ${argType}`,
+            severity: 'error',
+            to: argNode.to,
+          });
         } else {
           diagnostics.push({
             from: argNode.from,
@@ -904,7 +1090,25 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
         break;
       case 'fixed_string':
       case 'var_string':
-        if (argType !== 'String') {
+        if (argType === 'Enum') {
+          if (!variables[argText]) {
+            const insert = closest(argText, Object.keys(variables));
+            diagnostics.push({
+              actions: [
+                {
+                  apply(view, from, to) {
+                    view.dispatch({ changes: { from, insert, to } });
+                  },
+                  name: `Change to ${insert}`,
+                },
+              ],
+              from: argNode.from,
+              message: `Unrecognized variable name ${argText}`,
+              severity: 'error',
+              to: argNode.to,
+            });
+          }
+        } else if (argType !== 'String') {
           diagnostics.push({
             from: argNode.from,
             message: `Incorrect type - expected 'String' but got ${argType}`,
@@ -989,7 +1193,9 @@ export function sequenceLinter(commandDictionary: CommandDictionary | null = nul
                 }, [])
                 .forEach((repeat: SyntaxNode[]) => {
                   // check individual args
-                  diagnostics.push(...validateAndLintArguments(repeatDef.arguments ?? [], repeat, command, text));
+                  diagnostics.push(
+                    ...validateAndLintArguments(repeatDef.arguments ?? [], repeat, command, text, stemText, variables),
+                  );
                 });
             }
           }

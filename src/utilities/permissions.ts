@@ -22,7 +22,7 @@ import type {
   SchedulingGoalDefinition,
   SchedulingGoalMetadata,
 } from '../types/scheduling';
-import type { UserSequence } from '../types/sequencing';
+import type { Parcel, UserSequence } from '../types/sequencing';
 import type { Simulation, SimulationTemplate } from '../types/simulation';
 import type { Tag } from '../types/tags';
 import type { View, ViewSlim } from '../types/view';
@@ -320,7 +320,7 @@ const queryPermissions = {
     return isUserAdmin(user) || getPermission([Queries.INSERT_ACTIVITY_PRESET], user);
   },
   CREATE_COMMAND_DICTIONARY: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission([Queries.UPLOAD_DICTIONARY], user);
+    return isUserAdmin(user) || getPermission([Queries.INSERT_COMMAND_DICTIONARY], user);
   },
   CREATE_CONSTRAINT: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_CONSTRAINT_METADATA], user);
@@ -346,6 +346,12 @@ const queryPermissions = {
   },
   CREATE_MODEL: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_MISSION_MODEL], user);
+  },
+  CREATE_PARAMETER_DICTIONARY: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.INSERT_PARAMETER_DICTIONARY], user);
+  },
+  CREATE_PARCEL: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.INSERT_PARCEL], user);
   },
   CREATE_PLAN: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_PLAN], user);
@@ -488,6 +494,12 @@ const queryPermissions = {
   },
   DELETE_MODEL: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.DELETE_MISSION_MODEL], user);
+  },
+  DELETE_PARAMETER_DICTIONARY: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.DELETE_PARAMETER_DICTIONARY], user);
+  },
+  DELETE_PARCEL: (user: User | null, parcel: AssetWithOwner<Parcel>): boolean => {
+    return isUserAdmin(user) || (getPermission([Queries.DELETE_PARCEL], user) && isUserOwner(user, parcel));
   },
   DELETE_PLAN: (user: User | null, plan: PlanWithOwners): boolean => {
     return (
@@ -744,6 +756,9 @@ const queryPermissions = {
   },
   SUB_MODEL: () => true,
   SUB_MODELS: () => true,
+  SUB_PARCELS: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.PARCELS], user);
+  },
   SUB_PLANS_USER_WRITABLE: () => true,
   SUB_PLAN_DATASET: () => true,
   SUB_PLAN_LOCKED: () => true,
@@ -850,6 +865,9 @@ const queryPermissions = {
   },
   UPDATE_MODEL: (user: User | null) => {
     return isUserAdmin(user) && getPermission([Queries.UPDATE_MISSION_MODEL], user);
+  },
+  UPDATE_PARCEL: (user: User | null, parcel: AssetWithOwner<Parcel>): boolean => {
+    return isUserAdmin(user) || (getPermission([Queries.UPDATE_PARCEL], user) && isUserOwner(user, parcel));
   },
   UPDATE_PLAN_SNAPSHOT: (user: User | null): boolean => {
     return getPermission([Queries.UPDATE_PLAN_SNAPSHOT], user);
@@ -1133,6 +1151,7 @@ interface FeaturePermissions {
   expansionSequences: ExpansionSequenceCRUDPermission<AssetWithOwner<ExpansionSequence>>;
   expansionSets: ExpansionSetsCRUDPermission<AssetWithOwner<ExpansionSet>>;
   model: CRUDPermission<void>;
+  parcels: CRUDPermission<AssetWithOwner<Parcel>>;
   plan: CRUDPermission<PlanWithOwners>;
   planBranch: PlanBranchCRUDPermission;
   planCollaborators: PlanCollaboratorsCRUDPermission;
@@ -1210,6 +1229,12 @@ const featurePermissions: FeaturePermissions = {
     canDelete: user => queryPermissions.DELETE_MODEL(user),
     canRead: user => queryPermissions.GET_PLANS_AND_MODELS(user),
     canUpdate: user => queryPermissions.UPDATE_MODEL(user),
+  },
+  parcels: {
+    canCreate: user => queryPermissions.CREATE_PARCEL(user),
+    canDelete: (user, parcel) => queryPermissions.DELETE_PARCEL(user, parcel),
+    canRead: user => queryPermissions.SUB_PARCELS(user),
+    canUpdate: (user, parcel) => queryPermissions.UPDATE_PARCEL(user, parcel),
   },
   plan: {
     canCreate: user => queryPermissions.CREATE_PLAN(user),
