@@ -387,7 +387,7 @@ export class Plan {
     this.gridMenu = page.locator('.header > .grid-menu > .menu > .menu-slot');
     this.gridMenuButton = page.locator('.header > .grid-menu');
     this.gridMenuItem = (name: string) =>
-      page.locator(`.header > .grid-menu > .menu > .menu-slot > .menu-item:has-text("${name}")`);
+      page.locator(`.header > .grid-menu > .menu > .menu-slot > .menu-item:text-is("${name}")`);
     this.navButtonActivityChecking = page.locator(`.nav-button:has-text("Activities")`);
     this.navButtonActivityCheckingMenu = page.locator(`.nav-button:has-text("Activities") .menu`);
     this.navButtonExpansion = page.locator(`.nav-button:has-text("Expansion")`);
