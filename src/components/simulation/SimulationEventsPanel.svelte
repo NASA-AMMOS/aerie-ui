@@ -21,9 +21,7 @@
   export let gridSection: ViewGridSection;
 
   type SimulationEventColumns = keyof SimulationEvent | 'derived_start_time';
-  interface SimulationEventColDef extends ColDef<SimulationEvent> {
-    field: SimulationEventColumns;
-  }
+  type SimulationEventColDef = ColDef<SimulationEvent>;
 
   let simulationEventsTable: ViewTable | undefined;
   let autoSizeColumns: AutoSizeColumns | undefined;
@@ -39,9 +37,8 @@
   /* eslint-disable sort-keys */
   $: defaultColumnDefinitions = {
     derived_start_time: {
-      field: 'derived_start_time',
       filter: 'text',
-      headerName: 'Absolute Time',
+      headerName: 'Absolute Start Time (UTC)',
       hide: true,
       resizable: true,
       sortable: true,
