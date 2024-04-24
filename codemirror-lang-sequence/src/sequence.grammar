@@ -1,5 +1,5 @@
 @top Sequence {
-  (newLine | whiteSpace)?
+  optionalSpace
   (
     commentLine* ~maybeComments
     (IdDeclaration | ParameterDeclaration | LocalDeclaration | GenericDirective)
@@ -43,6 +43,10 @@ commentLine {
   LineComment newLine
 }
 
+optionalSpace {
+  (newLine | whiteSpace)?
+}
+
 Commands {
   (LoadAndGoDirective newLine)?
   commandBlock
@@ -80,14 +84,35 @@ Command {
   Models?
 }
 
+// Metadata {
+//   MetaEntry {
+//     metadataDirective
+//     whiteSpace Key { String }
+//     whiteSpace Value { String | Number | Boolean | Null }
+//     newLine
+//   }+
+// }
+
 Metadata {
   MetaEntry {
     metadataDirective
     whiteSpace Key { String }
-    whiteSpace Value { String }
+    whiteSpace Value { metaValue }
     newLine
   }+
 }
+
+metaValue {
+  String | Number | Boolean | Null | Array
+}
+
+Object { "{" list<Property>? "}" }
+Array  { "[" list<metaValue>? "]" }
+
+Property { PropertyName ":" metaValue }
+PropertyName[isolate] { String }
+
+list<item> { optionalSpace item (optionalSpace "," optionalSpace item)* optionalSpace }
 
 Models {
   Model {
@@ -131,9 +156,10 @@ Stem { !stemStart identifier }
     "0x" (hex | "_")+ "n"?
   }
 
-  TRUE { "TRUE" }
-  FALSE { "FALSE" }
+  TRUE { "true" }
+  FALSE { "false" }
   Boolean { TRUE | FALSE }
+  Null { "null" }
 
   LineComment { "#"![\n\r]* }
 
@@ -150,6 +176,9 @@ Stem { !stemStart identifier }
   metadataDirective { "@METADATA" }
   modelDirective { "@MODEL" }
   genericDirective { "@"identifier }
+
+  // literal tokens for JSON metadata objects
+  "{" "}" "[" "]"
 
   @precedence { newLine, whiteSpace }
 

@@ -12,6 +12,55 @@ const LINE_COMMENT_TOKEN = 'LineComment';
 const METADATA_TOKEN = 'Metadata';
 const METADATA_ENTRY_TOKEN = 'MetaEntry';
 
+function getMetaValueType(node) {
+  return node.firstChild.nextSibling.firstChild.name;
+}
+
+describe('metadata', () => {
+  it('primitive types', () => {
+    const input = `
+@METADATA "name 1" "string val"
+@METADATA "name 2" false
+@METADATA "name3" 3
+@METADATA "name4" 4e1
+C STEM
+`;
+    const parseTree = SeqLanguage.parser.parse(input);
+    assertNoErrorNodes(input);
+    const topLevelMetaData = parseTree.topNode.getChild(METADATA_TOKEN);
+    const metaEntries = topLevelMetaData.getChildren(METADATA_ENTRY_TOKEN);
+    assert.equal(metaEntries.length, 4);
+    assert.equal(getMetaValueType(metaEntries[0]), 'String');
+    assert.equal(getMetaValueType(metaEntries[1]), 'Boolean');
+    assert.equal(getMetaValueType(metaEntries[2]), 'Number');
+    assert.equal(getMetaValueType(metaEntries[3]), 'Number');
+  });
+
+  it('structured types', () => {
+    // @METADATA "name 1" {
+    //   "level1": {
+    //     "level2": [
+    //       false,
+    //       1,
+    //       "two"
+    //     ]
+    //   }
+    // }
+
+    const input = `
+@METADATA "name 1" [ 1,2  , 3 ]
+@METADATA "name 2" ["a", "b space"  ,
+  "CCCC" ]
+C STEM
+`;
+    const parseTree = SeqLanguage.parser.parse(input);
+    assertNoErrorNodes(input);
+    const topLevelMetaData = parseTree.topNode.getChild(METADATA_TOKEN);
+    const metaEntries = topLevelMetaData.getChildren(METADATA_ENTRY_TOKEN);
+    assert.equal(metaEntries.length, 2);
+  });
+});
+
 describe('error positions', () => {
   for (const { testname, input, first_error } of [
     {
