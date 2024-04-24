@@ -272,4 +272,70 @@ R10 PACKAGE_BANANA     2      [    "bundle1"    5 "bundle2" 10]
     const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandBanana, [], id);
     expect(actual).toEqual(expectedJson);
   });
+
+  it('local variables', () => {
+    const id = 'test.sequence';
+    const seq = `@ID "test.inline"
+@LOCALS L00STR
+C ECHO L00STR
+C ECHO "L00STR"
+C ECHO L01STR
+    `;
+    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandBanana, [], id);
+    const expectedJson = {
+      id: 'test.inline',
+      locals: [
+        {
+          name: 'L00STR',
+          type: 'STRING',
+        },
+      ],
+      metadata: {},
+      steps: [
+        {
+          args: [
+            {
+              name: 'echo_string',
+              type: 'symbol',
+              value: 'L00STR',
+            },
+          ],
+          stem: 'ECHO',
+          time: {
+            type: 'COMMAND_COMPLETE',
+          },
+          type: 'command',
+        },
+        {
+          args: [
+            {
+              name: 'echo_string',
+              type: 'string',
+              value: 'L00STR',
+            },
+          ],
+          stem: 'ECHO',
+          time: {
+            type: 'COMMAND_COMPLETE',
+          },
+          type: 'command',
+        },
+        {
+          args: [
+            {
+              name: 'echo_string',
+              type: 'symbol',
+              value: 'L01STR',
+            },
+          ],
+          stem: 'ECHO',
+          time: {
+            type: 'COMMAND_COMPLETE',
+          },
+          type: 'command',
+        },
+      ],
+    };
+    expect(actual).toEqual(expectedJson);
+  });
 });

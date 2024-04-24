@@ -63,12 +63,12 @@ export function sequenceToSeqJson(
     baseNode
       .getChild('Commands')
       ?.getChildren('Command')
-      .map(command => parseCommand(command, text, commandDictionary, variableList)) ?? undefined;
+      .map(command => parseCommand(command, text, commandDictionary)) ?? undefined;
   seqJson.immediate_commands =
     baseNode
       .getChild('ImmediateCommands')
       ?.getChildren('Command')
-      .map(command => parseImmediateCommand(command, text, commandDictionary, variableList)) ?? undefined;
+      .map(command => parseImmediateCommand(command, text, commandDictionary)) ?? undefined;
   seqJson.hardware_commands =
     baseNode
       .getChild('HardwareCommands')
@@ -93,7 +93,6 @@ function parseArg(
   node: SyntaxNode,
   text: string,
   dictionaryArg: FswCommandArgument | null,
-  variableList: string[],
 ): BooleanArgument | HexArgument | NumberArgument | StringArgument | SymbolArgument | undefined {
   const nodeValue = text.slice(node.from, node.to);
 
@@ -128,13 +127,7 @@ function parseArg(
     }
   } else if (node.name === 'String') {
     const value = JSON.parse(nodeValue);
-    let arg: StringArgument | SymbolArgument;
-    if (variableList.includes(value)) {
-      arg = { type: 'symbol', value };
-    } else {
-      arg = { type: 'string', value };
-    }
-
+    const arg: StringArgument = { type: 'string', value };
     if (dictionaryArg) {
       arg.name = dictionaryArg.name;
     }
@@ -146,14 +139,11 @@ export function parseRepeatArgs(
   repeatArgsNode: SyntaxNode,
   text: string,
   dictRepeatArgument: FswCommandArgumentRepeat | null,
-  variableList: string[],
 ) {
   const repeatArg: RepeatArgument = { name: dictRepeatArgument?.name, type: 'repeat', value: [] };
   const repeatArgs = dictRepeatArgument?.repeat?.arguments;
   const repeatArgsLength = repeatArgs?.length ?? Infinity;
   let repeatArgNode: SyntaxNode | null = repeatArgsNode;
-  // console.log(`repeatArgsLength: ${repeatArgsLength}`);
-  // console.log(`dictRepeatArgument: ${JSON.stringify(dictRepeatArgument, null, 2)}`);
 
   if (repeatArgNode) {
     let args: RepeatArgument['value'][0] = [];
@@ -167,7 +157,7 @@ export function parseRepeatArgs(
         args = [];
         repeatArg.value.push(args);
       }
-      const arg = parseArg(argNode, text, repeatArgs?.[i % repeatArgsLength] ?? null, variableList);
+      const arg = parseArg(argNode, text, repeatArgs?.[i % repeatArgsLength] ?? null);
       if (arg) {
         args.push(arg);
       } else {
@@ -189,7 +179,6 @@ export function parseArgs(
   text: string,
   commandDictionary: CommandDictionary | null,
   stem: string,
-  variableList: string[],
 ): Args {
   const args: Args = [];
   let argNode = argsNode.firstChild;
@@ -199,14 +188,14 @@ export function parseArgs(
   while (argNode) {
     const dictArg = dictArguments[i] ?? null;
     if (argNode.name === TOKEN_REPEAT_ARG) {
-      const arg = parseRepeatArgs(argNode, text, (dictArg as FswCommandArgumentRepeat) ?? null, variableList);
+      const arg = parseRepeatArgs(argNode, text, (dictArg as FswCommandArgumentRepeat) ?? null);
       if (arg) {
         args.push(arg);
       } else {
         logInfo(`Could not parse repeat arg for node with name ${argNode.name}`);
       }
     } else {
-      const arg = parseArg(argNode, text, dictArg, variableList);
+      const arg = parseArg(argNode, text, dictArg);
       if (arg) {
         args.push(arg);
       } else {
@@ -430,7 +419,6 @@ export function parseCommand(
   commandNode: SyntaxNode,
   text: string,
   commandDictionary: CommandDictionary | null,
-  variableList: string[],
 ): Command {
   const time = parseTime(commandNode, text);
 
@@ -438,7 +426,7 @@ export function parseCommand(
   const stem = stemNode ? text.slice(stemNode.from, stemNode.to) : 'UNKNOWN';
 
   const argsNode = commandNode.getChild('Args');
-  const args = argsNode ? parseArgs(argsNode, text, commandDictionary, stem, variableList) : [];
+  const args = argsNode ? parseArgs(argsNode, text, commandDictionary, stem) : [];
 
   const description = parseDescription(commandNode, text);
   const metadata: Metadata | undefined = parseMetadata(commandNode, text);
@@ -459,13 +447,12 @@ export function parseImmediateCommand(
   commandNode: SyntaxNode,
   text: string,
   commandDictionary: CommandDictionary | null,
-  variableList: string[],
 ): ImmediateCommand {
   const stemNode = commandNode.getChild('Stem');
   const stem = stemNode ? text.slice(stemNode.from, stemNode.to) : 'UNKNOWN';
 
   const argsNode = commandNode.getChild('Args');
-  const args = argsNode ? parseArgs(argsNode, text, commandDictionary, stem, variableList) : [];
+  const args = argsNode ? parseArgs(argsNode, text, commandDictionary, stem) : [];
 
   const description = parseDescription(commandNode, text);
   const metadata: Metadata | undefined = parseMetadata(commandNode, text);
