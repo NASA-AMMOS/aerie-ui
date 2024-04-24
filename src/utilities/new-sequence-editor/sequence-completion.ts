@@ -1,7 +1,8 @@
 import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
 import { syntaxTree } from '@codemirror/language';
-import type { CommandDictionary } from '@nasa-jpl/aerie-ampcs';
+import type { CommandDictionary, ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
 import { fswCommandArgDefault } from './command-dictionary';
+import { getCustomArgDef } from './extension-points';
 
 type CursorInfo = {
   isAtLineComment: boolean;
@@ -16,7 +17,10 @@ type CursorInfo = {
  * Completion function that returns a Code Mirror extension function.
  * Can be optionally called with a command dictionary so it's available for completion.
  */
-export function sequenceCompletion(commandDictionary: CommandDictionary | null = null) {
+export function sequenceCompletion(
+  commandDictionary: CommandDictionary | null = null,
+  parameterDictionaries: ParameterDictionary[],
+) {
   return (context: CompletionContext): CompletionResult | null => {
     const nodeBefore = syntaxTree(context.state).resolveInner(context.pos, -1);
     const nodeCurrent = syntaxTree(context.state).resolveInner(context.pos, 0);
@@ -152,7 +156,7 @@ export function sequenceCompletion(commandDictionary: CommandDictionary | null =
       // If TimeTag has not been entered by the user wait for 2 characters before showing the command completions list
       // If TimeTag has been entered show the completion list when 1 character has been entered
       if (word.text.length > (cursor.isTimeTagBefore || cursor.isBeforeImmedOrHDWCommands === false ? 0 : 1)) {
-        fswCommandsCompletions.push(...generateCommandCompletions(commandDictionary, cursor));
+        fswCommandsCompletions.push(...generateCommandCompletions(commandDictionary, cursor, parameterDictionaries));
       }
 
       // TODO: Move to a function like generateCommandCompletions
@@ -205,7 +209,11 @@ export function sequenceCompletion(commandDictionary: CommandDictionary | null =
   };
 }
 
-function generateCommandCompletions(commandDictionary: CommandDictionary | null, cursor: CursorInfo): Completion[] {
+function generateCommandCompletions(
+  commandDictionary: CommandDictionary | null,
+  cursor: CursorInfo,
+  parameterDictionaries: ParameterDictionary[],
+): Completion[] {
   if (commandDictionary === null) {
     return [];
   }
@@ -221,7 +229,16 @@ function generateCommandCompletions(commandDictionary: CommandDictionary | null,
     let apply = stem;
 
     if (args.length) {
-      const argsStr = args.map(arg => fswCommandArgDefault(arg, commandDictionary.enumMap)).join(' ');
+      const argDefaults: string[] = [];
+      args.forEach(arg => {
+        argDefaults.push(
+          fswCommandArgDefault(
+            getCustomArgDef(stem, arg, argDefaults.slice(), parameterDictionaries),
+            commandDictionary.enumMap,
+          ),
+        );
+      });
+      const argsStr = argDefaults.join(' ');
       apply = `${stem} ${argsStr} `;
     }
 

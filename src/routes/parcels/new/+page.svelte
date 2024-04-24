@@ -1,10 +1,10 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import SequenceForm from '../../../components/sequencing/SequenceForm.svelte';
+  import ParcelForm from '../../../components/parcels/ParcelForm.svelte';
   import type { PageData } from './$types';
 
   export let data: PageData;
 </script>
 
-<SequenceForm mode="create" user={data.user} />
+<ParcelForm mode="create" user={data.user} />

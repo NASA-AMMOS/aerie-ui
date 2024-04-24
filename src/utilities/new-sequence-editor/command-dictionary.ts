@@ -31,7 +31,8 @@ export function fswCommandArgDefault(fswCommandArg: FswCommandArgument, enumMap:
     }
   } else if (arg_type === 'enum') {
     const enumArg = fswCommandArg as FswCommandArgumentEnum;
-    const enumSymbolValue = enumMap[enumArg.enum_name].values[0].symbol;
+    const enumSymbolValue =
+      enumMap[enumArg.enum_name]?.values[0]?.symbol ?? fswCommandArg.default_value ?? fswCommandArg.name;
 
     if (enumSymbolValue && /\s+/.test(enumSymbolValue)) {
       // If the enum symbol has whitespace, return it in quotes so it does not mess everything up.

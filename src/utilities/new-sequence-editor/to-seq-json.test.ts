@@ -56,12 +56,12 @@ const commandDictionary: CommandDictionary = {
   header: {
     mission_name: 'unittest',
     schema_version: '1',
-    spacecraft_id: '1',
+    spacecraft_ids: [1],
     version: '1',
   },
   hwCommandMap,
   hwCommands,
-  id: 'commanddictionary',
+  id: 'command_dictionary',
   path: '/file/path',
 };
 
@@ -81,7 +81,7 @@ HDW_CMD`;
       id: 'test',
       metadata: {},
     };
-    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandDictionary, id);
+    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandDictionary, [], id);
     expect(actual).toEqual(expectedJson);
   });
 
@@ -97,7 +97,7 @@ HDW_CMD_2
       id: 'test',
       metadata: {},
     };
-    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandDictionary, id);
+    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandDictionary, [], id);
     expect(actual).toEqual(expectedJson);
   });
 
@@ -151,19 +151,20 @@ C FSW_CMD_1 0.123 -2.34 # inline description
         },
       ],
     };
-    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandDictionary, id);
+    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandDictionary, [], id);
     expect(actual).toEqual(expectedJson);
   });
 
-  it('banana', () => {
+  it('command dictionary file', () => {
     const id = 'test.sequence';
     const seq = `
 @ID "test.inline"
 
-@INPUT_PARAMS L00INT L01INT
+@INPUT_PARAMS L00INT L01INT L02STR
 
 # comment
 R10 ECHO    "string arg"
+R71 ECHO    L02STR
     `;
     const expectedJson = {
       id: 'test.inline',
@@ -176,6 +177,10 @@ R10 ECHO    "string arg"
         {
           name: 'L01INT',
           type: 'INT',
+        },
+        {
+          name: 'L02STR',
+          type: 'STRING',
         },
       ],
       steps: [
@@ -191,9 +196,146 @@ R10 ECHO    "string arg"
           time: { tag: '00:00:10', type: 'COMMAND_RELATIVE' },
           type: 'command',
         },
+        {
+          args: [
+            {
+              name: 'echo_string',
+              type: 'symbol',
+              value: 'L02STR',
+            },
+          ],
+          stem: 'ECHO',
+          time: { tag: '00:01:11', type: 'COMMAND_RELATIVE' },
+          type: 'command',
+        },
       ],
     };
-    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandBanana, id);
+    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandBanana, [], id);
+    expect(actual).toEqual(expectedJson);
+  });
+
+  it('repeat args', () => {
+    const id = 'test.sequence';
+    const seq = `@ID "test.inline"
+
+# comment
+R10 PACKAGE_BANANA     2      [    "bundle1"    5 "bundle2" 10]
+    `;
+    const expectedJson = {
+      id: 'test.inline',
+      metadata: {},
+      steps: [
+        {
+          args: [
+            {
+              name: 'lot_number',
+              type: 'number',
+              value: 2,
+            },
+            {
+              name: 'bundle',
+              type: 'repeat',
+              value: [
+                [
+                  {
+                    name: 'bundle_name',
+                    type: 'string',
+                    value: 'bundle1',
+                  },
+                  {
+                    name: 'number_of_bananas',
+                    type: 'number',
+                    value: 5,
+                  },
+                ],
+                [
+                  {
+                    name: 'bundle_name',
+                    type: 'string',
+                    value: 'bundle2',
+                  },
+                  {
+                    name: 'number_of_bananas',
+                    type: 'number',
+                    value: 10,
+                  },
+                ],
+              ],
+            },
+          ],
+          stem: 'PACKAGE_BANANA',
+          time: { tag: '00:00:10', type: 'COMMAND_RELATIVE' },
+          type: 'command',
+        },
+      ],
+    };
+    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandBanana, [], id);
+    expect(actual).toEqual(expectedJson);
+  });
+
+  it('local variables', () => {
+    const id = 'test.sequence';
+    const seq = `@ID "test.inline"
+@LOCALS L00STR
+C ECHO L00STR
+C ECHO "L00STR"
+C ECHO L01STR
+    `;
+    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandBanana, [], id);
+    const expectedJson = {
+      id: 'test.inline',
+      locals: [
+        {
+          name: 'L00STR',
+          type: 'STRING',
+        },
+      ],
+      metadata: {},
+      steps: [
+        {
+          args: [
+            {
+              name: 'echo_string',
+              type: 'symbol',
+              value: 'L00STR',
+            },
+          ],
+          stem: 'ECHO',
+          time: {
+            type: 'COMMAND_COMPLETE',
+          },
+          type: 'command',
+        },
+        {
+          args: [
+            {
+              name: 'echo_string',
+              type: 'string',
+              value: 'L00STR',
+            },
+          ],
+          stem: 'ECHO',
+          time: {
+            type: 'COMMAND_COMPLETE',
+          },
+          type: 'command',
+        },
+        {
+          args: [
+            {
+              name: 'echo_string',
+              type: 'symbol',
+              value: 'L01STR',
+            },
+          ],
+          stem: 'ECHO',
+          time: {
+            type: 'COMMAND_COMPLETE',
+          },
+          type: 'command',
+        },
+      ],
+    };
     expect(actual).toEqual(expectedJson);
   });
 });
