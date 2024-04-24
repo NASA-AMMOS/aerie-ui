@@ -22,15 +22,11 @@
               "type": "array"
             }
           },
-          "required": [
-            "names"
-          ],
+          "required": ["names"],
           "type": "object"
         }
       },
-      "required": [
-        "resource"
-      ],
+      "required": ["resource"],
       "type": "object"
     },
     "id": {
@@ -50,9 +46,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "text"
-      ],
+      "required": ["text"],
       "type": "object"
     },
     "table": {
@@ -79,10 +73,7 @@
           "type": "array"
         }
       },
-      "required": [
-        "columnDefs",
-        "columnStates"
-      ],
+      "required": ["columnDefs", "columnStates"],
       "type": "object"
     },
     "viewGridComponent": {
@@ -105,10 +96,7 @@
     },
     "yAxisId": {
       "description": "Id of the associated y-axis. Can be null for no association.",
-      "type": [
-        "number",
-        "null"
-      ]
+      "type": ["number", "null"]
     }
   },
   "description": "JSON schema definition used for configuring the Aerie UI",
@@ -217,11 +205,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "id",
-              "src",
-              "title"
-            ],
+            "required": ["id", "src", "title"],
             "type": "object"
           },
           "type": "array"
@@ -282,12 +266,7 @@
                             "$ref": "#/definitions/id"
                           }
                         },
-                        "required": [
-                          "id",
-                          "label",
-                          "y",
-                          "yAxisId"
-                        ],
+                        "required": ["id", "label", "y", "yAxisId"],
                         "type": "object"
                       },
                       "type": "array"
@@ -328,15 +307,11 @@
                                         "type": "array"
                                       }
                                     },
-                                    "required": [
-                                      "types"
-                                    ],
+                                    "required": ["types"],
                                     "type": "object"
                                   }
                                 },
-                                "required": [
-                                  "activity"
-                                ],
+                                "required": ["activity"],
                                 "type": "object"
                               },
                               "id": {
@@ -350,14 +325,7 @@
                                 "$ref": "#/definitions/yAxisId"
                               }
                             },
-                            "required": [
-                              "activityColor",
-                              "activityHeight",
-                              "chartType",
-                              "filter",
-                              "id",
-                              "yAxisId"
-                            ],
+                            "required": ["activityColor", "activityHeight", "chartType", "filter", "id", "yAxisId"],
                             "type": "object"
                           },
                           {
@@ -448,14 +416,7 @@
                                 "$ref": "#/definitions/yAxisId"
                               }
                             },
-                            "required": [
-                              "chartType",
-                              "colorScheme",
-                              "filter",
-                              "id",
-                              "opacity",
-                              "yAxisId"
-                            ],
+                            "required": ["chartType", "colorScheme", "filter", "id", "opacity", "yAxisId"],
                             "type": "object"
                           }
                         ]
@@ -476,11 +437,7 @@
                           },
                           "domainFitMode": {
                             "description": "Describes the domain fitting behavior for the axis",
-                            "enum": [
-                              "fitPlan",
-                              "fitTimeWindow",
-                              "manual"
-                            ],
+                            "enum": ["fitPlan", "fitTimeWindow", "manual"],
                             "type": "string"
                           },
                           "id": {
@@ -506,12 +463,7 @@
                             "type": "number"
                           }
                         },
-                        "required": [
-                          "color",
-                          "id",
-                          "label",
-                          "tickCount"
-                        ],
+                        "required": ["color", "id", "label", "tickCount"],
                         "type": "object"
                       },
                       "type": "array"
@@ -547,41 +499,23 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "id",
-                    "label",
-                    "timestamp"
-                  ],
+                  "required": ["id", "label", "timestamp"],
                   "type": "object"
                 },
                 "type": "array"
               }
             },
-            "required": [
-              "id",
-              "marginLeft",
-              "marginRight",
-              "rows",
-              "verticalGuides"
-            ],
+            "required": ["id", "marginLeft", "marginRight", "rows", "verticalGuides"],
             "type": "object"
           },
           "type": "array"
         }
       },
-      "required": [
-        "activityDirectivesTable",
-        "activitySpansTable",
-        "grid",
-        "iFrames",
-        "timelines"
-      ],
+      "required": ["activityDirectivesTable", "activitySpansTable", "grid", "iFrames", "timelines"],
       "type": "object"
     }
   },
-  "required": [
-    "plan"
-  ],
+  "required": ["plan"],
   "title": "View",
   "type": "object"
 }
