@@ -1,5 +1,5 @@
 @top Sequence {
-  optionalSpace
+  optSpace
   (
     commentLine* ~maybeComments
     (IdDeclaration | ParameterDeclaration | LocalDeclaration | GenericDirective)
@@ -43,7 +43,7 @@ commentLine {
   LineComment newLine
 }
 
-optionalSpace {
+optSpace {
   (newLine | whiteSpace)?
 }
 
@@ -84,15 +84,6 @@ Command {
   Models?
 }
 
-// Metadata {
-//   MetaEntry {
-//     metadataDirective
-//     whiteSpace Key { String }
-//     whiteSpace Value { String | Number | Boolean | Null }
-//     newLine
-//   }+
-// }
-
 Metadata {
   MetaEntry {
     metadataDirective
@@ -103,16 +94,16 @@ Metadata {
 }
 
 metaValue {
-  String | Number | Boolean | Null | Array
+  String | Number | Boolean | Null | Array | Object
 }
 
 Object { "{" list<Property>? "}" }
 Array  { "[" list<metaValue>? "]" }
 
-Property { PropertyName ":" metaValue }
+Property { PropertyName optSpace ":" optSpace metaValue }
 PropertyName[isolate] { String }
 
-list<item> { optionalSpace item (optionalSpace "," optionalSpace item)* optionalSpace }
+list<item> { optSpace item (optSpace "," optSpace item)* optSpace }
 
 Models {
   Model {
