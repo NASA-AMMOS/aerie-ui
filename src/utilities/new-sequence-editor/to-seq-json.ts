@@ -517,9 +517,15 @@ function parseMetadata(node: SyntaxNode, text: string): Metadata | undefined {
     }
 
     const keyText = removeQuotes(text.slice(keyNode.from, keyNode.to)) as string;
-    const valueText = removeQuotes(text.slice(valueNode.from, valueNode.to));
 
-    obj[keyText] = valueText;
+    let value = text.slice(valueNode.from, valueNode.to);
+    try {
+      value = JSON.parse(value);
+    } catch (e) {
+      logInfo(`Malformed metadata ${value}`);
+    }
+
+    obj[keyText] = value;
   });
 
   return obj;

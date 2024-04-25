@@ -168,9 +168,6 @@ Stem { !stemStart identifier }
   modelDirective { "@MODEL" }
   genericDirective { "@"identifier }
 
-  // literal tokens for JSON metadata objects
-  "{" "}" "[" "]"
-
   @precedence { newLine, whiteSpace }
 
   @precedence{ TimeAbsolute, TimeRelative, TimeEpoch, TimeComplete, identifier }
