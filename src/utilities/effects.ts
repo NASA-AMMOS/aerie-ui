@@ -2924,6 +2924,35 @@ const effects = {
     }
   },
 
+  async getParsedAmpcsChannelDictionary(
+    channelDictionaryId: number | null | undefined,
+    user: User | null,
+  ): Promise<AmpcsChannelDictionary | null> {
+    if (typeof channelDictionaryId !== 'number') {
+      return null;
+    }
+
+    try {
+      const data = await reqHasura<[{ parsed_json: AmpcsChannelDictionary }]>(
+        gql.GET_PARSED_CHANNEL_DICTIONARY,
+        { channelDictionaryId },
+        user,
+      );
+      const { channel_dictionary } = data;
+
+      if (!Array.isArray(channel_dictionary) || !channel_dictionary.length) {
+        catchError(`Unable to find channel dictionary with id ${channelDictionaryId}`);
+        return null;
+      } else {
+        const [{ parsed_json }] = channel_dictionary;
+        return parsed_json;
+      }
+    } catch (e) {
+      catchError(e as Error);
+      return null;
+    }
+  },
+
   async getParsedAmpcsCommandDictionary(
     commandDictionaryId: number | null | undefined,
     user: User | null,

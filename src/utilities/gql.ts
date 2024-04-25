@@ -1246,6 +1246,14 @@ const gql = {
     }
   `,
 
+  GET_PARSED_CHANNEL_DICTIONARY: `#graphql
+    query GetParsedChannelDictionary($channelDictionaryId: Int!) {
+      ${Queries.CHANNEL_DICTIONARIES}(where: { id: { _eq: $channelDictionaryId } }) {
+        parsed_json
+      }
+    }
+  `,
+
   GET_PARSED_COMMAND_DICTIONARY: `#graphql
     query GetParsedCommandDictionary($commandDictionaryId: Int!) {
       ${Queries.COMMAND_DICTIONARIES}(where: { id: { _eq: $commandDictionaryId } }) {

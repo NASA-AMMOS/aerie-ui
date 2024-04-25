@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { type FswCommandArgument, type ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
+import { type ChannelDictionary, type FswCommandArgument, type ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
 import type { SeqJson } from '@nasa-jpl/seq-json-schema/types';
 
 // TODO: serialization
@@ -25,6 +25,7 @@ export function getCustomArgDef(
   dictArg: FswCommandArgument,
   precedingArgs: string[],
   parameterDictionaries: ParameterDictionary[],
+  channelDictionary: ChannelDictionary | null,
 ) {
   const delegate = globalThis.ARG_DELEGATOR?.[stem]?.[dictArg.name];
   return delegate?.(dictArg, parameterDictionaries, precedingArgs) ?? dictArg;

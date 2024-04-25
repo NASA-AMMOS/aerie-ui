@@ -3,6 +3,7 @@ import { linter, type Diagnostic } from '@codemirror/lint';
 import type { Extension } from '@codemirror/state';
 import type { SyntaxNode, Tree } from '@lezer/common';
 import type {
+  ChannelDictionary,
   CommandDictionary,
   EnumMap,
   FswCommand,
@@ -70,6 +71,7 @@ type VariableMap = {
  * Can be optionally called with a command dictionary so it's available during linting.
  */
 export function sequenceLinter(
+  channelDictionary: ChannelDictionary | null = null,
   commandDictionary: CommandDictionary | null = null,
   parameterDictionaries: ParameterDictionary[] = [],
 ): Extension {
@@ -979,7 +981,7 @@ export function sequenceLinter(
     precedingArgValues: string[],
     variables: VariableMap,
   ): Diagnostic[] {
-    dictArg = getCustomArgDef(stemText, dictArg, precedingArgValues, parameterDictionaries);
+    dictArg = getCustomArgDef(stemText, dictArg, precedingArgValues, parameterDictionaries, channelDictionary);
 
     const diagnostics: Diagnostic[] = [];
 

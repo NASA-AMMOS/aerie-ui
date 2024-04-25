@@ -2,7 +2,13 @@ import { syntaxTree } from '@codemirror/language';
 import type { Extension } from '@codemirror/state';
 import { hoverTooltip, type EditorView, type Tooltip } from '@codemirror/view';
 import type { SyntaxNode } from '@lezer/common';
-import type { CommandDictionary, FswCommand, HwCommand, ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
+import type {
+  ChannelDictionary,
+  CommandDictionary,
+  FswCommand,
+  HwCommand,
+  ParameterDictionary,
+} from '@nasa-jpl/aerie-ampcs';
 import ArgumentTooltip from '../../components/sequencing/ArgumentTooltip.svelte';
 import CommandTooltip from '../../components/sequencing/CommandTooltip.svelte';
 import { getCustomArgDef } from './extension-points';
@@ -48,6 +54,7 @@ function getTokenPositionInLine(view: EditorView, pos: number) {
  * Can be optionally called with a command dictionary so it's available during tooltip generation.
  */
 export function sequenceTooltip(
+  channelDictionary: ChannelDictionary | null = null,
   commandDictionary: CommandDictionary | null = null,
   parameterDictionaries: ParameterDictionary[] = [],
 ): Extension {
@@ -113,7 +120,13 @@ export function sequenceTooltip(
           // }
 
           if (argNode.from === from && argNode.to === to) {
-            const arg = getCustomArgDef(text, fswCommand.arguments[i], argValues, parameterDictionaries);
+            const arg = getCustomArgDef(
+              text,
+              fswCommand.arguments[i],
+              argValues,
+              parameterDictionaries,
+              channelDictionary,
+            );
 
             // TODO. Type check arg for type found in AST so we do not show tooltips incorrectly.
             if (arg) {

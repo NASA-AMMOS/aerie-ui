@@ -7,13 +7,14 @@
   import { Compartment, EditorState } from '@codemirror/state';
   import type { ViewUpdate } from '@codemirror/view';
   import type { SyntaxNode } from '@lezer/common';
-  import type { CommandDictionary, ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
+  import type { ChannelDictionary, CommandDictionary, ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
   import ClipboardIcon from 'bootstrap-icons/icons/clipboard.svg?component';
   import { EditorView, basicSetup } from 'codemirror';
   import { seq } from 'codemirror-lang-sequence';
   import { debounce } from 'lodash-es';
   import { createEventDispatcher, onMount } from 'svelte';
   import {
+    channelDictionaries,
     commandDictionaries,
     parameterDictionaries as parameterDictionariesStore,
     parcelToParameterDictionaries,
@@ -56,6 +57,7 @@
   let compartmentSeqLanguage: Compartment;
   let compartmentSeqLinter: Compartment;
   let compartmentSeqTooltip: Compartment;
+  let channelDictionary: ChannelDictionary | null;
   let commandDictionary: CommandDictionary | null;
   let parameterDictionaries: ParameterDictionary[] = [];
   let commandFormBuilderGrid: string;
@@ -80,6 +82,7 @@
   }
 
   $: {
+    const unparsedChannelDictionary = $channelDictionaries.find(cd => cd.id === parcel?.channel_dictionary_id);
     const unparsedCommandDictionary = $commandDictionaries.find(cd => cd.id === parcel?.command_dictionary_id);
     const unparsedParameterDictionaries = $parameterDictionariesStore.filter(pd => {
       const parameterDictionary = $parcelToParameterDictionaries.find(p => p.parameter_dictionary_id === pd.id);
@@ -92,35 +95,40 @@
     if (unparsedCommandDictionary) {
       Promise.all([
         effects.getParsedAmpcsCommandDictionary(unparsedCommandDictionary.id, user),
+        unparsedChannelDictionary ? effects.getParsedAmpcsChannelDictionary(unparsedChannelDictionary.id, user) : null,
         ...unparsedParameterDictionaries.map(unparsedParameterDictionary => {
           return effects.getParsedAmpcsParameterDictionary(unparsedParameterDictionary.id, user);
         }),
-      ]).then(([parsedDictionary, ...parsedParameterDictionaries]) => {
+      ]).then(([parsedCommandDictionary, parsedChannelDictionary, ...parsedParameterDictionaries]) => {
         const nonNullParsedParameterDictionaries = parsedParameterDictionaries.filter(
           (pd): pd is ParameterDictionary => !!pd,
         );
 
-        commandDictionary = parsedDictionary;
+        channelDictionary = parsedChannelDictionary;
+        commandDictionary = parsedCommandDictionary;
         parameterDictionaries = nonNullParsedParameterDictionaries;
+
         // Reconfigure sequence editor.
         editorSequenceView.dispatch({
           effects: compartmentSeqLanguage.reconfigure(
-            seq(sequenceCompletion(parsedDictionary, nonNullParsedParameterDictionaries)),
+            seq(sequenceCompletion(channelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries)),
           ),
         });
         editorSequenceView.dispatch({
           effects: compartmentSeqLinter.reconfigure(
-            sequenceLinter(parsedDictionary, nonNullParsedParameterDictionaries),
+            sequenceLinter(channelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
           ),
         });
         editorSequenceView.dispatch({
           effects: compartmentSeqTooltip.reconfigure(
-            sequenceTooltip(parsedDictionary, nonNullParsedParameterDictionaries),
+            sequenceTooltip(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
           ),
         });
 
         // Reconfigure seq JSON editor.
-        editorSeqJsonView.dispatch({ effects: compartmentSeqJsonLinter.reconfigure(seqJsonLinter(parsedDictionary)) });
+        editorSeqJsonView.dispatch({
+          effects: compartmentSeqJsonLinter.reconfigure(seqJsonLinter(parsedCommandDictionary)),
+        });
       });
     }
   }
@@ -138,7 +146,7 @@
         EditorView.lineWrapping,
         EditorView.theme({ '.cm-gutter': { 'min-height': `${clientHeightGridRightTop}px` } }),
         lintGutter(),
-        compartmentSeqLanguage.of(seq(sequenceCompletion(null, []))),
+        compartmentSeqLanguage.of(seq(sequenceCompletion(null, null, []))),
         compartmentSeqLinter.of(sequenceLinter()),
         compartmentSeqTooltip.of(sequenceTooltip()),
         EditorView.updateListener.of(debounce(sequenceUpdateListener, 250)),
@@ -251,7 +259,13 @@
   <CssGridGutter track={1} type="column" />
 
   {#if !!commandDictionary && !!selectedNode && showCommandFormBuilder}
-    <SelectedCommand node={selectedNode} {commandDictionary} {editorSequenceView} {parameterDictionaries} />
+    <SelectedCommand
+      node={selectedNode}
+      {channelDictionary}
+      {commandDictionary}
+      {editorSequenceView}
+      {parameterDictionaries}
+    />
   {/if}
 </CssGrid>
 
