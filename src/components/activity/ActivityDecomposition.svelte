@@ -23,6 +23,13 @@
   let childIds: SpanId[] = [];
   let span: Span | null = null;
   let childLimit = childPageSize;
+  let isRoot: boolean = true;
+  let type: string;
+  let hasChildren: boolean = false;
+  let role: 'tree' | 'treeitem' = 'tree';
+  let nodeClass: string = '';
+  let buttonClass: string = '';
+  let childIdsInView: SpanId[] = [];
 
   $: span = rootSpanId !== null ? spansMap[rootSpanId] : null;
   $: isRoot = span ? !span.parent_id : true;
