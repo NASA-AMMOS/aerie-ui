@@ -54,8 +54,6 @@
   let savingParcel: boolean = false;
   let selectedParmeterDictionaries: Record<number, boolean> = {};
 
-  $: console.log(parcelChannelDictionaryId);
-
   $: selectedParmeterDictionaries = savedParameterDictionaryIds = $parcelToParameterDictionaries.reduce(
     (prevBooleanMap: Record<number, boolean>, parcelToParameterDictionary: ParcelToParameterDictionary) => {
       return {

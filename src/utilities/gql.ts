@@ -1241,17 +1241,6 @@ const gql = {
         id
         name
         owner
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-        parameter_dictionary_id
-=======
->>>>>>> e8573482 (First pass at adding parcels)
-=======
-        parameter_dictionary_id
->>>>>>> e4b876fa (Added support for a single parameter dictionary)
-=======
->>>>>>> 549e67e4 (Added support for multiple parameter dictionaries)
         sequence_adaptation_id
       }
     }
@@ -2111,21 +2100,11 @@ const gql = {
   SUB_PARCELS: `#graphql
     subscription SubParcels {
       ${Queries.PARCELS}(order_by: { id: desc }) {
+        channel_dictionary_id
         command_dictionary_id
         created_at
         id
         name
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-        parameter_dictionary_id
-=======
->>>>>>> 0cb62002 (Changed sequence editing to use parcels rather than command dictionaries)
-=======
-        parameter_dictionary_id
->>>>>>> e4b876fa (Added support for a single parameter dictionary)
-=======
->>>>>>> 549e67e4 (Added support for multiple parameter dictionaries)
         sequence_adaptation_id
       }
     }

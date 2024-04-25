@@ -51,14 +51,16 @@
         switch (uploadedDictionaryOrAdaptation.type) {
           case DictionaryTypes.command_dictionary: {
             commandDictionaries.updateValue((commandDictionaries: CommandDictionary[]) =>
-              [uploadedDictionaryOrAdaptation.uploadedObject as CommandDictionary, ...commandDictionaries].filter(val => {
-                if (!seenSet.has(val.id)) {
-                  seenSet.add(val.id);
-                  return true;
-                }
+              [uploadedDictionaryOrAdaptation.uploadedObject as CommandDictionary, ...commandDictionaries].filter(
+                val => {
+                  if (!seenSet.has(val.id)) {
+                    seenSet.add(val.id);
+                    return true;
+                  }
 
-                return false;
-              }),
+                  return false;
+                },
+              ),
             );
 
             showSuccessToast('Command Dictionary Created Successfully');
@@ -94,6 +96,9 @@
 
             break;
           }
+        }
+      }
+    } catch (e) {
       createDictionaryError = (e as Error).message;
       showFailureToast('Command Dictionary Create Failed');
     }
