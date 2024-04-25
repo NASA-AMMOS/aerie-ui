@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import type { ICellRendererParams } from 'ag-grid-community';
+  import type { CellEditingStoppedEvent, ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
   import { createEventDispatcher } from 'svelte';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef, RowId } from '../../types/data-grid';
@@ -13,11 +13,20 @@
   import SectionTitle from '../ui/SectionTitle.svelte';
 
   export let dictionaries: DictionaryType[];
+  export let dictionaryId: number | null = null;
+  export let dictionaryIds: Record<number, boolean> = {};
+  export let isEditingParcel: boolean = false;
+  export let isMultiselect: boolean = false;
+  export let hasEditPermission: boolean = false;
   export let type: string;
   export let user: User | null;
 
+  let dictionaryDataGrid: SingleActionDataGrid<DictionaryType> | undefined = undefined;
+
   const dispatch = createEventDispatcher<{
     delete: { id: number };
+    multiSelect: { ids: Record<number, boolean> };
+    select: { id: number | null };
   }>();
 
   type dCellRendererParams = {
@@ -30,7 +39,34 @@
   $: displayTextPlural = isSequenceAdaptation ? `${type} Adaptations` : `${type} Dictionaries`;
   $: hasDeletePermission = featurePermissions.commandDictionary.canDelete(user);
 
+  $: if (dictionaryIds) {
+    dictionaryDataGrid?.redrawRows();
+  }
+
+  const editingColumnDefs: DataGridColumnDef[] = [
+    {
+      cellDataType: 'boolean',
+      editable: hasEditPermission,
+      headerName: '',
+      suppressAutoSize: true,
+      suppressSizeToFit: true,
+      valueGetter: (params: ValueGetterParams<DictionaryType>) => {
+        const { data } = params;
+        if (data) {
+          if (isMultiselect) {
+            return !!dictionaryIds[data.id];
+          }
+
+          return dictionaryId === data.id;
+        }
+        return false;
+      },
+      width: 35,
+    },
+  ];
+
   const dictionaryColumnDefs: DataGridColumnDef[] = [
+    ...(isEditingParcel ? editingColumnDefs : []),
     {
       field: 'id',
       filter: 'number',
@@ -47,6 +83,7 @@
   ];
 
   const sequenceAdaptationColumDefs: DataGridColumnDef[] = [
+    ...(isEditingParcel ? editingColumnDefs : []),
     {
       field: 'id',
       filter: 'number',
@@ -102,6 +139,27 @@
   function deleteDictionaryContext(event: CustomEvent<RowId[]>) {
     deleteDictionary({ id: event.detail[0] as number });
   }
+
+  function onToggle(event: CustomEvent<CellEditingStoppedEvent<DictionaryType, boolean>>) {
+    const {
+      detail: { data, newValue },
+    } = event;
+
+    if (data) {
+      if (isMultiselect && typeof newValue === 'boolean') {
+        dictionaryIds = {
+          ...dictionaryIds,
+          [data.id]: newValue,
+        };
+        dispatch('multiSelect', { ids: dictionaryIds });
+      } else {
+        dictionaryId = newValue ? data.id : null;
+        dispatch('select', { id: dictionaryId });
+      }
+    }
+
+    dictionaryDataGrid?.redrawRows();
+  }
 </script>
 
 <Panel>
@@ -112,11 +170,13 @@
   <svelte:fragment slot="body">
     {#if dictionaries.length}
       <SingleActionDataGrid
+        bind:this={dictionaryDataGrid}
         {columnDefs}
         {hasDeletePermission}
         itemDisplayText={displayText}
         items={dictionaries}
         {user}
+        on:cellEditingStopped={onToggle}
         on:deleteItem={deleteDictionaryContext}
       />
     {:else}
