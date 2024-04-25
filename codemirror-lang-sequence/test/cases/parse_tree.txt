@@ -192,7 +192,7 @@ CMD_1 1 2 3
 CMD_2 "hello, it's me"
 @METADATA "bar" "{ \"foo\": 5}"
 @MODEL "a" 5 "c"
-@MODEL "d" TRUE "f"
+@MODEL "d" true "f"
 ==>
 
 Sequence(
