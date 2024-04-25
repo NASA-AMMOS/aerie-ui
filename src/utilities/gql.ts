@@ -9,6 +9,7 @@ export enum Queries {
   APPLY_PRESET_TO_ACTIVITY = 'apply_preset_to_activity',
   BEGIN_MERGE = 'begin_merge',
   CANCEL_MERGE = 'cancel_merge',
+  CHANNEL_DICTIONARIES = 'channel_dictionary',
   COMMAND_DICTIONARIES = 'command_dictionary',
   COMMIT_MERGE = 'commit_merge',
   CONSTRAINTS_DSL_TYPESCRIPT = 'constraintsDslTypescript',
@@ -26,6 +27,7 @@ export enum Queries {
   DELETE_ACTIVITY_PRESET = 'delete_activity_presets_by_pk',
   DELETE_ACTIVITY_REANCHOR_PLAN_START_BULK = 'delete_activity_by_pk_reanchor_plan_start_bulk',
   DELETE_ACTIVITY_REANCHOR_TO_ANCHOR_BULK = 'delete_activity_by_pk_reanchor_to_anchor_bulk',
+  DELETE_CHANNEL_DICTIONARY = 'delete_channel_dictionary_by_pk',
   DELETE_COMMAND_DICTIONARY = 'delete_command_dictionary_by_pk',
   DELETE_CONSTRAINT_DEFINITION_TAGS = 'delete_constraint_definition_tags',
   DELETE_CONSTRAINT_METADATA = 'delete_constraint_metadata_by_pk',
@@ -83,6 +85,7 @@ export enum Queries {
   INSERT_ACTIVITY_DIRECTIVE = 'insert_activity_directive_one',
   INSERT_ACTIVITY_DIRECTIVE_TAGS = 'insert_activity_directive_tags',
   INSERT_ACTIVITY_PRESET = 'insert_activity_presets_one',
+  INSERT_CHANNEL_DICTIONARY = 'insert_channel_dictionary_one',
   INSERT_COMMAND_DICTIONARY = 'insert_command_dictionary_one',
   INSERT_CONSTRAINT_DEFINITION = 'insert_constraint_definition_one',
   INSERT_CONSTRAINT_DEFINITION_TAGS = 'insert_constraint_definition_tags',
@@ -303,6 +306,18 @@ const gql = {
         model_id
         name
         owner
+      }
+    }
+  `,
+
+  CREATE_CHANNEL_DICTIONARY: `#graphql
+    mutation CreateChannelDictionary($channelDictionary: channel_dictionary_insert_input!) {
+      createChannelDictionary: ${Queries.INSERT_CHANNEL_DICTIONARY}(object: $channelDictionary) {
+        created_at
+        id
+        mission
+        parsed_json
+        version
       }
     }
   `,
@@ -717,6 +732,14 @@ const gql = {
   DELETE_ACTIVITY_PRESET: `#graphql
     mutation DeleteActivityPreset($id: Int!) {
       deleteActivityPreset: ${Queries.DELETE_ACTIVITY_PRESET}(id: $id) {
+        id
+      }
+    }
+  `,
+
+  DELETE_CHANNEL_DICTIONARY: `#graphql
+    mutation DeleteChannelDictionary($id: Int!) {
+      deleteChannelDictionary: ${Queries.DELETE_CHANNEL_DICTIONARY}(id: $id) {
         id
       }
     }
@@ -1854,6 +1877,17 @@ const gql = {
         activity_id,
         plan_id,
         reason_invalid
+      }
+    }
+  `,
+
+  SUB_CHANNEL_DICTIONARIES: `#graphql
+    subscription SubChannelDictionaries {
+      ${Queries.CHANNEL_DICTIONARIES}(order_by: { id: desc }) {
+        created_at
+        id
+        mission
+        version
       }
     }
   `,

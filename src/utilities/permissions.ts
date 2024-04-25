@@ -319,6 +319,9 @@ const queryPermissions = {
   CREATE_ACTIVITY_PRESET: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_ACTIVITY_PRESET], user);
   },
+  CREATE_CHANNEL_DICTIONARY: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.INSERT_CHANNEL_DICTIONARY], user);
+  },
   CREATE_COMMAND_DICTIONARY: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_COMMAND_DICTIONARY], user);
   },
@@ -446,6 +449,9 @@ const queryPermissions = {
   },
   DELETE_ACTIVITY_PRESET: (user: User | null, preset: AssetWithOwner<ActivityPreset>): boolean => {
     return isUserAdmin(user) || (getPermission([Queries.DELETE_ACTIVITY_PRESET], user) && isUserOwner(user, preset));
+  },
+  DELETE_CHANNEL_DICTIONARY: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.DELETE_CHANNEL_DICTIONARY], user);
   },
   DELETE_COMMAND_DICTIONARY: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.DELETE_COMMAND_DICTIONARY], user);

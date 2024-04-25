@@ -1,5 +1,6 @@
 import { derived, writable, type Readable, type Writable } from 'svelte/store';
 import {
+  type ChannelDictionary,
   type CommandDictionary,
   type ParameterDictionary,
   type Parcel,
@@ -19,6 +20,8 @@ export const parcel: Writable<Parcel | null> = writable(null);
 export const parcelId: Readable<number> = derived(parcel, $parcel => ($parcel ? $parcel.id : -1));
 
 /* Subscriptions. */
+
+export const channelDictionaries = gqlSubscribable<ChannelDictionary[]>(gql.SUB_CHANNEL_DICTIONARIES, {}, [], null);
 
 export const commandDictionaries = gqlSubscribable<CommandDictionary[]>(gql.SUB_COMMAND_DICTIONARIES, {}, [], null);
 

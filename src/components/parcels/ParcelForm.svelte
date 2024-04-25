@@ -4,6 +4,7 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import {
+    channelDictionaries,
     commandDictionaries,
     parameterDictionaries,
     parcel,
@@ -21,6 +22,7 @@
   import SectionTitle from '../ui/SectionTitle.svelte';
   import DictionaryTable from './DictionaryTable.svelte';
 
+  export let initialParcelChannelDictionaryId: number | null = null;
   export let initialParcelCommandDictionaryId: number | null = null;
   export let initialParcelCreatedAt: string | null = null;
   export let initialParcelName: string = '';
@@ -34,6 +36,7 @@
   let pageSubtitle: string = '';
   let pageTitle: string = '';
   let parcelModified: boolean = false;
+  let parcelChannelDictionaryId: number | null = initialParcelChannelDictionaryId;
   let parcelCommandDictionaryId: number | null = initialParcelCommandDictionaryId;
   let parcelCreatedAt: string | null = initialParcelCreatedAt;
   let parcelName: string = initialParcelName;
@@ -43,6 +46,7 @@
   let permissionError = 'You do not have permission to edit this parcel.';
   let saveButtonClass: 'primary' | 'secondary' = 'primary';
   let saveButtonText: string = '';
+  let savedParcelChannelDictionaryId: number | null = parcelChannelDictionaryId;
   let savedParcelCommandDictionaryId: number | null = parcelCommandDictionaryId;
   let savedParcelName: string = parcelName;
   let savedParameterDictionaryIds: Record<number, boolean> = {};
@@ -63,6 +67,7 @@
   $: saveButtonClass = parcelModified && saveButtonEnabled ? 'primary' : 'secondary';
   $: saveButtonEnabled = parcelCommandDictionaryId !== null && parcelName !== '';
   $: parcelModified =
+    parcelChannelDictionaryId !== savedParcelChannelDictionaryId ||
     parcelCommandDictionaryId !== savedParcelCommandDictionaryId ||
     parcelName !== savedParcelName ||
     parcelSequenceAdaptationId !== savedSequenceAdaptationId ||
@@ -97,6 +102,10 @@
     }
 
     return false;
+  }
+
+  function onToggleChannelDictionary(event: CustomEvent) {
+    parcelChannelDictionaryId = event.detail.id;
   }
 
   function onToggleCommandDictionary(event: CustomEvent) {
@@ -161,6 +170,7 @@
       if (parcelCommandDictionaryId !== null && parcelName !== '') {
         if (mode === 'create') {
           const newParcel: ParcelInsertInput = {
+            channel_dictionary_id: parcelChannelDictionaryId,
             command_dictionary_id: parcelCommandDictionaryId,
             name: parcelName,
             sequence_adaptation_id: parcelSequenceAdaptationId,
@@ -174,6 +184,7 @@
           }
         } else if (mode === 'edit' && parcelId !== null) {
           const updatedParcel: Partial<Parcel> = {
+            channel_dictionary_id: parcelChannelDictionaryId,
             command_dictionary_id: parcelCommandDictionaryId,
             name: parcelName,
             sequence_adaptation_id: parcelSequenceAdaptationId,
@@ -185,6 +196,7 @@
         }
       }
 
+      savedParcelChannelDictionaryId = parcelChannelDictionaryId;
       savedParcelCommandDictionaryId = parcelCommandDictionaryId;
       savedSequenceAdaptationId = parcelSequenceAdaptationId;
 
@@ -258,6 +270,16 @@
       type="Command"
       {user}
       on:select={onToggleCommandDictionary}
+    />
+
+    <DictionaryTable
+      dictionaries={$channelDictionaries}
+      dictionaryId={parcelChannelDictionaryId}
+      isEditingParcel={true}
+      hasEditPermission={hasPermission}
+      type="Channel"
+      {user}
+      on:select={onToggleChannelDictionary}
     />
 
     <DictionaryTable

@@ -8,11 +8,17 @@
   import CssGrid from '../../components/ui/CssGrid.svelte';
   import Panel from '../../components/ui/Panel.svelte';
   import SectionTitle from '../../components/ui/SectionTitle.svelte';
-  import { commandDictionaries, parameterDictionaries, sequenceAdaptations } from '../../stores/sequencing';
+  import {
+    channelDictionaries,
+    commandDictionaries,
+    parameterDictionaries,
+    sequenceAdaptations,
+  } from '../../stores/sequencing';
   import {
     DictionaryTypes,
+    type ChannelDictionary,
     type CommandDictionary,
-    type ParameterDictionary
+    type ParameterDictionary,
   } from '../../types/sequencing';
   import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';
@@ -45,7 +51,7 @@
         switch (uploadedDictionaryOrAdaptation.type) {
           case DictionaryTypes.command_dictionary: {
             commandDictionaries.updateValue((commandDictionaries: CommandDictionary[]) =>
-              [uploadedDictionaryOrAdaptation.uploadedObject, ...commandDictionaries].filter(val => {
+              [uploadedDictionaryOrAdaptation.uploadedObject as CommandDictionary, ...commandDictionaries].filter(val => {
                 if (!seenSet.has(val.id)) {
                   seenSet.add(val.id);
                   return true;
@@ -72,6 +78,16 @@
             showSuccessToast('Parameter Dictionary Created Successfully');
             break;
           case DictionaryTypes.telemetry_dictionary:
+            channelDictionaries.updateValue((channelDictionaries: ChannelDictionary[]) =>
+              [uploadedDictionaryOrAdaptation.uploadedObject, ...channelDictionaries].filter(val => {
+                if (!seenSet.has(val.id)) {
+                  seenSet.add(val.id);
+                  return true;
+                } else {
+                  return false;
+                }
+              }),
+            );
             break;
           case DictionaryTypes.sequence_adaptation: {
             showSuccessToast('Sequence Adaptation Created Successfully');
@@ -83,6 +99,10 @@
     }
 
     creatingDictionary = false;
+  }
+
+  function deleteChannelDictionary(event: CustomEvent) {
+    effects.deleteCommandDictionary(event.detail.id, data.user);
   }
 
   function deleteCommandDictionary(event: CustomEvent) {
@@ -153,6 +173,13 @@
         type={'Command'}
         user={data.user}
         on:delete={deleteCommandDictionary}
+      />
+
+      <DictionaryTable
+        dictionaries={$channelDictionaries}
+        type={'Channel'}
+        user={data.user}
+        on:delete={deleteChannelDictionary}
       />
 
       <DictionaryTable

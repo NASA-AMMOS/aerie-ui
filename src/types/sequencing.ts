@@ -7,7 +7,11 @@ export enum DictionaryTypes {
   'telemetry_dictionary' = 'telemetry_dictionary',
 }
 
-export type CommandDictionary = DictionaryType;
+export type ChannelDictionary = DictionaryType;
+
+export type CommandDictionary = {
+  command_types_typescript_path: string;
+} & DictionaryType;
 
 export type ParameterDictionary = DictionaryType;
 
@@ -23,6 +27,7 @@ export type DictionaryType = {
 };
 
 export type Parcel = {
+  channel_dictionary_id: number | null;
   command_dictionary_id: number;
   created_at: string;
   id: number;

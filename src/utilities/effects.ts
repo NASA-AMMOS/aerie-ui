@@ -3,7 +3,9 @@ import { base } from '$app/paths';
 import { env } from '$env/dynamic/public';
 import {
   parse,
+  parseChannelDictionary,
   parseParameterDictionary,
+  type ChannelDictionary as AmpcsChannelDictionary,
   type CommandDictionary as AmpcsCommandDictionary,
   type ParameterDictionary as AmpcsParameterDictionary,
 } from '@nasa-jpl/aerie-ampcs';
@@ -23,7 +25,12 @@ import {
 import { createModelError, creatingModel, models } from '../stores/model';
 import { createPlanError, creatingPlan, planId } from '../stores/plan';
 import { schedulingRequests, selectedSpecId } from '../stores/scheduling';
-import { commandDictionaries, parameterDictionaries, sequenceAdaptations } from '../stores/sequencing';
+import {
+  channelDictionaries,
+  commandDictionaries,
+  parameterDictionaries,
+  sequenceAdaptations,
+} from '../stores/sequencing';
 import { selectedSpanId, simulationDataset, simulationDatasetId } from '../stores/simulation';
 import { createTagError } from '../stores/tags';
 import { applyViewUpdate, view, viewUpdateTimeline } from '../stores/views';
@@ -125,6 +132,7 @@ import type {
 import type { ValueSchema } from '../types/schema';
 import {
   DictionaryTypes,
+  type ChannelDictionary,
   type CommandDictionary,
   type GetSeqJsonResponse,
   type ParameterDictionary,
@@ -1838,6 +1846,33 @@ const effects = {
     }
 
     return false;
+  },
+
+  async deleteChannelDictionary(id: number, user: User | null): Promise<void> {
+    try {
+      if (!queryPermissions.DELETE_CHANNEL_DICTIONARY(user)) {
+        throwPermissionError('delete this channel dictionary');
+      }
+
+      const { confirm } = await showConfirmModal(
+        'Delete',
+        `Are you sure you want to delete the dictionary with ID: "${id}"?`,
+        'Delete Channel Dictionary',
+      );
+
+      if (confirm) {
+        const data = await reqHasura<{ id: number }>(gql.DELETE_CHANNEL_DICTIONARY, { id }, user);
+        if (data.deleteChannelDictionary != null) {
+          showSuccessToast('Channel Dictionary Deleted Successfully');
+          channelDictionaries.filterValueById(id);
+        } else {
+          throw Error(`Unable to delete channel dictionary with ID: "${id}"`);
+        }
+      }
+    } catch (e) {
+      catchError('Channel Dictionary Delete Failed', e as Error);
+      showFailureToast('Channel Dictionary Delete Failed');
+    }
   },
 
   async deleteCommandDictionary(id: number, user: User | null): Promise<void> {
@@ -4879,6 +4914,38 @@ const effects = {
     }
   },
 
+  async uploadChannelDictionary(
+    dictionary: AmpcsChannelDictionary,
+    user: User | null,
+  ): Promise<ChannelDictionary | null> {
+    try {
+      if (!queryPermissions.CREATE_CHANNEL_DICTIONARY(user)) {
+        throwPermissionError('upload a channel dictionary');
+      }
+
+      const data = await reqHasura<ChannelDictionary>(
+        gql.CREATE_CHANNEL_DICTIONARY,
+        {
+          channelDictionary: {
+            mission: dictionary.header.mission_name,
+            parsed_json: dictionary,
+            version: dictionary.header.version,
+          },
+        },
+        user,
+      );
+      const { createChannelDictionary: newChannelDictionary } = data;
+      if (newChannelDictionary != null) {
+        return newChannelDictionary;
+      } else {
+        throw Error('Unable to upload channel dictionary');
+      }
+    } catch (e) {
+      catchError('Channel Dictionary Upload Failed', e as Error);
+      return null;
+    }
+  },
+
   async uploadCommandDictionary(
     dictionary: AmpcsCommandDictionary,
     user: User | null,
@@ -4892,6 +4959,8 @@ const effects = {
         gql.CREATE_COMMAND_DICTIONARY,
         {
           commandDictionary: {
+            // TODO: Placeholder for command_types_typescript_path because it cannot be null.
+            command_types_typescript_path: '',
             mission: dictionary.header.mission_name,
             parsed_json: dictionary,
             version: dictionary.header.version,
@@ -4949,17 +5018,17 @@ const effects = {
         }
       }
       case `<${DictionaryTypes.telemetry_dictionary}>`: {
-        /**
         try {
           return {
-            ...((await this.uploadDictionary(text, user, DictionaryTypes.telemetry_dictionary)) as ChannelDictionary),
+            type: DictionaryTypes.telemetry_dictionary,
+            uploadedObject: {
+              ...((await this.uploadChannelDictionary(parseChannelDictionary(text), user)) as ChannelDictionary),
+            },
           };
         } catch (e) {
           catchError('Channel Dictionary Upload Failed', e as Error);
           return null;
         }
-        */
-        break;
       }
       default:
         try {
@@ -4974,8 +5043,6 @@ const effects = {
           return null;
         }
     }
-
-    return null;
   },
 
   async uploadFile(file: File, user: User | null): Promise<number | null> {
