@@ -1235,6 +1235,7 @@ const gql = {
   GET_PARCEL: `#graphql
     query GetParcel($id: Int!) {
       parcel: ${Queries.PARCEL_BY_PK}(id: $id) {
+        channel_dictionary_id
         command_dictionary_id
         created_at
         id
