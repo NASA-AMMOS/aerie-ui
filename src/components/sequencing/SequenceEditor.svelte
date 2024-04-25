@@ -16,6 +16,7 @@
   import {
     commandDictionaries,
     parameterDictionaries as parameterDictionariesStore,
+    parcelToParameterDictionaries,
     userSequenceEditorColumns,
     userSequenceEditorColumnsWithFormBuilder,
     userSequencesRows,
@@ -80,12 +81,13 @@
 
   $: {
     const unparsedCommandDictionary = $commandDictionaries.find(cd => cd.id === parcel?.command_dictionary_id);
+    const unparsedParameterDictionaries = $parameterDictionariesStore.filter(pd => {
+      const parameterDictionary = $parcelToParameterDictionaries.find(p => p.parameter_dictionary_id === pd.id);
 
-    // TODO --- once parcel is updated to store an array this needs an update
-    const parameterDictionaryIds = parcel?.parameter_dictionary_id ? [parcel.parameter_dictionary_id] : [];
-    const unparsedParameterDictionaries = $parameterDictionariesStore.filter(pd =>
-      parameterDictionaryIds.includes(pd.id),
-    );
+      if (parameterDictionary) {
+        return pd;
+      }
+    });
 
     if (unparsedCommandDictionary) {
       Promise.all([
