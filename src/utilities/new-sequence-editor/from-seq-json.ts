@@ -103,7 +103,7 @@ export function seqJsonMetadataToSequence(metadata: Metadata): string {
   const metaDataString = Object.entries(metadata)
     .map(
       ([key, value]: [key: string, value: unknown]) =>
-        `@METADATA ${quoteEscape(key)} ${typeof value === 'string' ? quoteEscape(String(value)) : `"${value}"`}`,
+        `@METADATA ${quoteEscape(key)} ${JSON.stringify(value, null, 2)}`,
     )
     .join('\n');
   return metaDataString.length > 0 ? `${metaDataString}\n` : '';
@@ -127,7 +127,6 @@ export function seqJsonToSequence(seqJson: SeqJson | null): string {
   const sequence: string[] = [];
 
   if (seqJson) {
-
     // ID
     sequence.push(`@ID "${seqJson.id}"\n`);
 

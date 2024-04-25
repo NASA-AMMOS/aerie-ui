@@ -12,6 +12,81 @@ const LINE_COMMENT_TOKEN = 'LineComment';
 const METADATA_TOKEN = 'Metadata';
 const METADATA_ENTRY_TOKEN = 'MetaEntry';
 
+function getMetaType(node) {
+  return node.firstChild.nextSibling.firstChild.name;
+}
+
+function getMetaValue(node, input) {
+  const mv = node.firstChild.nextSibling.firstChild;
+  return JSON.parse(input.slice(mv.from, mv.to));
+}
+
+describe('metadata', () => {
+  it('primitive types', () => {
+    const input = `
+@METADATA "name 1" "string val"
+@METADATA "name 2" false
+@METADATA "name3" 3
+@METADATA "name4" 4e1
+C STEM
+`;
+    const parseTree = SeqLanguage.parser.parse(input);
+    assertNoErrorNodes(input);
+    const topLevelMetaData = parseTree.topNode.getChild(METADATA_TOKEN);
+    const metaEntries = topLevelMetaData.getChildren(METADATA_ENTRY_TOKEN);
+    assert.equal(metaEntries.length, 4);
+    assert.equal(getMetaType(metaEntries[0]), 'String');
+    assert.equal(getMetaType(metaEntries[1]), 'Boolean');
+    assert.equal(getMetaType(metaEntries[2]), 'Number');
+    assert.equal(getMetaType(metaEntries[3]), 'Number');
+  });
+
+  it('structured types', () => {
+    const input = `
+@METADATA "name 1" [ 1,2  , 3 ]
+@METADATA "name 2" ["a",    true  ,
+  2 ]
+
+@METADATA "name 3" {
+   "level1": {
+     "level2": [
+       false,
+       1,
+       "two"
+     ],
+     "level2 nest": {
+      "level3": true
+     }
+   }
+}
+
+          @METADATA  "name 4"         {}
+
+C STEM
+`;
+    const parseTree = SeqLanguage.parser.parse(input);
+    assertNoErrorNodes(input);
+    const topLevelMetaData = parseTree.topNode.getChild(METADATA_TOKEN);
+    const metaEntries = topLevelMetaData.getChildren(METADATA_ENTRY_TOKEN);
+    assert.equal(metaEntries.length, 4);
+    assert.equal(getMetaType(metaEntries[0]), 'Array');
+    assert.equal(getMetaType(metaEntries[1]), 'Array');
+    assert.equal(getMetaType(metaEntries[2]), 'Object');
+    assert.equal(getMetaType(metaEntries[3]), 'Object');
+    assert.deepStrictEqual(getMetaValue(metaEntries[0], input), [1, 2, 3]);
+    assert.deepStrictEqual(getMetaValue(metaEntries[1], input), ['a', true, 2]);
+    assert.deepStrictEqual(getMetaValue(metaEntries[2], input), {
+      level1: {
+        level2: [false, 1, 'two'],
+        'level2 nest': {
+          level3: true,
+        },
+      },
+    });
+    assert.deepStrictEqual(getMetaValue(metaEntries[3], input), {});
+  });
+});
+
 describe('error positions', () => {
   for (const { testname, input, first_error } of [
     {
