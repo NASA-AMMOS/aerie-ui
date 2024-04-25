@@ -8,6 +8,7 @@
   import { type Parcel, type UserSequence, type UserSequenceInsertInput } from '../../types/sequencing';
   import effects from '../../utilities/effects';
   import { isSaveEvent } from '../../utilities/keyboardEvents';
+  import { parseSeqJsonFromFile, seqJsonToSequence } from '../../utilities/new-sequence-editor/from-seq-json';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import PageTitle from '../app/PageTitle.svelte';
@@ -80,14 +81,11 @@
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async function getUserSequenceFromSeqJson() {
-    const file: File = seqJsonFiles[0];
-    const text = await file.text();
-    const seqJson = JSON.parse(text);
-    const sequence = await effects.getUserSequenceFromSeqJson(seqJson, user);
-    sequenceDefinition = sequence;
-    sequenceSeqJson = text;
+  async function onSeqJsonInput(e: Event & { currentTarget: EventTarget & HTMLInputElement }) {
+    const seqJson = await parseSeqJsonFromFile(e.currentTarget.files);
+    const sequence = seqJsonToSequence(seqJson);
+    initialSequenceDefinition = sequence;
+    sequenceSeqJson = '';
   }
 
   function onSequenceChange(event: CustomEvent) {
@@ -223,7 +221,6 @@
         />
       </fieldset>
 
-      <!--
       <fieldset>
         <label for="seqJsonFile">Create Sequence from Seq JSON (optional)</label>
         <input
@@ -231,13 +228,13 @@
           class="w-100"
           name="seqJsonFile"
           type="file"
-          on:change={getUserSequenceFromSeqJson}
+          on:change={onSeqJsonInput}
           use:permissionHandler={{
             hasPermission,
             permissionError,
           }}
         />
-      </fieldset> -->
+      </fieldset>
     </svelte:fragment>
   </Panel>
 
