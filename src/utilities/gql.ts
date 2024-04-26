@@ -9,6 +9,7 @@ export enum Queries {
   APPLY_PRESET_TO_ACTIVITY = 'apply_preset_to_activity',
   BEGIN_MERGE = 'begin_merge',
   CANCEL_MERGE = 'cancel_merge',
+  CHANNEL_DICTIONARIES = 'channel_dictionary',
   COMMAND_DICTIONARIES = 'command_dictionary',
   COMMIT_MERGE = 'commit_merge',
   CONSTRAINTS_DSL_TYPESCRIPT = 'constraintsDslTypescript',
@@ -26,6 +27,7 @@ export enum Queries {
   DELETE_ACTIVITY_PRESET = 'delete_activity_presets_by_pk',
   DELETE_ACTIVITY_REANCHOR_PLAN_START_BULK = 'delete_activity_by_pk_reanchor_plan_start_bulk',
   DELETE_ACTIVITY_REANCHOR_TO_ANCHOR_BULK = 'delete_activity_by_pk_reanchor_to_anchor_bulk',
+  DELETE_CHANNEL_DICTIONARY = 'delete_channel_dictionary_by_pk',
   DELETE_COMMAND_DICTIONARY = 'delete_command_dictionary_by_pk',
   DELETE_CONSTRAINT_DEFINITION_TAGS = 'delete_constraint_definition_tags',
   DELETE_CONSTRAINT_METADATA = 'delete_constraint_metadata_by_pk',
@@ -38,6 +40,7 @@ export enum Queries {
   DELETE_MISSION_MODEL = 'delete_mission_model_by_pk',
   DELETE_PARAMETER_DICTIONARY = 'delete_parameter_dictionary_by_pk',
   DELETE_PARCEL = 'delete_parcel_by_pk',
+  DELETE_PARCEL_TO_PARAMETER_DICTIONARY = 'delete_parcel_to_parameter_dictionary',
   DELETE_PLAN = 'delete_plan_by_pk',
   DELETE_PLAN_COLLABORATOR = 'delete_plan_collaborators_by_pk',
   DELETE_PLAN_SNAPSHOT = 'delete_plan_snapshot_by_pk',
@@ -84,6 +87,7 @@ export enum Queries {
   INSERT_ACTIVITY_DIRECTIVE = 'insert_activity_directive_one',
   INSERT_ACTIVITY_DIRECTIVE_TAGS = 'insert_activity_directive_tags',
   INSERT_ACTIVITY_PRESET = 'insert_activity_presets_one',
+  INSERT_CHANNEL_DICTIONARY = 'insert_channel_dictionary_one',
   INSERT_COMMAND_DICTIONARY = 'insert_command_dictionary_one',
   INSERT_CONSTRAINT_DEFINITION = 'insert_constraint_definition_one',
   INSERT_CONSTRAINT_DEFINITION_TAGS = 'insert_constraint_definition_tags',
@@ -97,6 +101,7 @@ export enum Queries {
   INSERT_MISSION_MODEL = 'insert_mission_model_one',
   INSERT_PARAMETER_DICTIONARY = 'insert_parameter_dictionary_one',
   INSERT_PARCEL = 'insert_parcel_one',
+  INSERT_PARCEL_TO_PARAMETER_DICTIONARY = 'insert_parcel_to_parameter_dictionary',
   INSERT_PLAN = 'insert_plan_one',
   INSERT_PLAN_SNAPSHOT_TAGS = 'insert_plan_snapshot_tags',
   INSERT_PLAN_COLLABORATORS = 'insert_plan_collaborators',
@@ -130,6 +135,7 @@ export enum Queries {
   PARAMETER_DICTIONARIES = 'parameter_dictionary',
   PARCEL_BY_PK = 'parcel_by_pk',
   PARCELS = 'parcel',
+  PARCEL_TO_PARAMETER_DICTIONARY = 'parcel_to_parameter_dictionary',
   PLAN = 'plan_by_pk',
   PLANS = 'plan',
   PLAN_DATASETS = 'plan_dataset',
@@ -319,6 +325,18 @@ const gql = {
     }
   `,
 
+  CREATE_CHANNEL_DICTIONARY: `#graphql
+    mutation CreateChannelDictionary($channelDictionary: channel_dictionary_insert_input!) {
+      createChannelDictionary: ${Queries.INSERT_CHANNEL_DICTIONARY}(object: $channelDictionary) {
+        created_at
+        id
+        mission
+        parsed_json
+        version
+      }
+    }
+  `,
+
   CREATE_COMMAND_DICTIONARY: `#graphql
     mutation CreateCommandDictionary($commandDictionary: command_dictionary_insert_input!) {
       createCommandDictionary: ${Queries.INSERT_COMMAND_DICTIONARY}(object: $commandDictionary) {
@@ -449,6 +467,22 @@ const gql = {
     mutation CreateParcel($parcel: parcel_insert_input!) {
       createParcel: ${Queries.INSERT_PARCEL}(object: $parcel) {
         id
+      }
+    }
+  `,
+
+  CREATE_PARCEL_TO_PARAMETER_DICTIONARIES: `#graphql
+    mutation CreateParcelToParameterDictionaries($parcelToParameterDictionaries : [parcel_to_parameter_dictionary_insert_input!]!) {
+      ${Queries.INSERT_PARCEL_TO_PARAMETER_DICTIONARY}(objects: $parcelToParameterDictionaries, on_conflict: {
+        constraint: parcel_to_parameter_dictionary_synthetic_key,
+        update_columns: []
+      }) {
+        affected_rows
+        returning {
+          id
+          parcel_id
+          parameter_dictionary_id
+        }
       }
     }
   `,
@@ -726,6 +760,14 @@ const gql = {
     }
   `,
 
+  DELETE_CHANNEL_DICTIONARY: `#graphql
+    mutation DeleteChannelDictionary($id: Int!) {
+      deleteChannelDictionary: ${Queries.DELETE_CHANNEL_DICTIONARY}(id: $id) {
+        id
+      }
+    }
+  `,
+
   DELETE_COMMAND_DICTIONARY: `#graphql
     mutation DeleteCommandDictionary($id: Int!) {
       deleteCommandDictionary: ${Queries.DELETE_COMMAND_DICTIONARY}(id: $id) {
@@ -850,6 +892,14 @@ const gql = {
     mutation DeleteParcel($id: Int!) {
       deleteParcel: ${Queries.DELETE_PARCEL}(id: $id) {
         id
+      }
+    }
+  `,
+
+  DELETE_PARCEL_TO_PARAMETER_DICTIONARIES: `#graphql
+    mutation deleteParcelToParameterDictionaries($ids: [Int!]!) {
+        ${Queries.DELETE_PARCEL_TO_PARAMETER_DICTIONARY}(where: { id: { _in: $ids } }) {
+          affected_rows
       }
     }
   `,
@@ -1248,13 +1298,21 @@ const gql = {
   GET_PARCEL: `#graphql
     query GetParcel($id: Int!) {
       parcel: ${Queries.PARCEL_BY_PK}(id: $id) {
+        channel_dictionary_id
         command_dictionary_id
         created_at
         id
         name
         owner
-        parameter_dictionary_id
         sequence_adaptation_id
+      }
+    }
+  `,
+
+  GET_PARSED_CHANNEL_DICTIONARY: `#graphql
+    query GetParsedChannelDictionary($channelDictionaryId: Int!) {
+      ${Queries.CHANNEL_DICTIONARIES}(where: { id: { _eq: $channelDictionaryId } }) {
+        parsed_json
       }
     }
   `,
@@ -1884,6 +1942,17 @@ const gql = {
     }
   `,
 
+  SUB_CHANNEL_DICTIONARIES: `#graphql
+    subscription SubChannelDictionaries {
+      ${Queries.CHANNEL_DICTIONARIES}(order_by: { id: desc }) {
+        created_at
+        id
+        mission
+        version
+      }
+    }
+  `,
+
   SUB_COMMAND_DICTIONARIES: `#graphql
     subscription SubCommandDictionaries {
       ${Queries.COMMAND_DICTIONARIES}(order_by: { id: desc }) {
@@ -2163,12 +2232,22 @@ const gql = {
   SUB_PARCELS: `#graphql
     subscription SubParcels {
       ${Queries.PARCELS}(order_by: { id: desc }) {
+        channel_dictionary_id
         command_dictionary_id
         created_at
         id
         name
-        parameter_dictionary_id
         sequence_adaptation_id
+      }
+    }
+  `,
+
+  SUB_PARCEL_TO_PARAMETER_DICTIONARIES: `#graphql
+    subscription SubParcelsToParameterDictionaries($parcelId: Int!) {
+      ${Queries.PARCEL_TO_PARAMETER_DICTIONARY}(where: {parcel_id: {_eq: $parcelId }}) {
+        id
+        parameter_dictionary_id
+        parcel_id
       }
     }
   `,

@@ -4,6 +4,7 @@
   import type { EditorState } from '@codemirror/state';
   import type { SyntaxNode } from '@lezer/common';
   import type {
+    ChannelDictionary,
     CommandDictionary,
     FswCommandArgument,
     FswCommandArgumentRepeat,
@@ -19,6 +20,7 @@
   import { addDefaultArgs, getMissingArgDefs, isFswCommandArgumentRepeat, type ArgTextDef } from './utils';
 
   export let editorSequenceView: EditorView;
+  export let channelDictionary: ChannelDictionary | null = null;
   export let commandDictionary: CommandDictionary;
   export let parameterDictionaries: ParameterDictionary[];
   export let node: SyntaxNode | null;
@@ -71,7 +73,13 @@
               : argArray.length
           ];
         if (commandDef && argDef) {
-          argDef = getCustomArgDef(commandDef?.stem, argDef, precedingArgValues, parameterDictionaries);
+          argDef = getCustomArgDef(
+            commandDef?.stem,
+            argDef,
+            precedingArgValues,
+            parameterDictionaries,
+            channelDictionary,
+          );
         }
 
         let children: ArgTextDef[] | undefined = undefined;

@@ -8,6 +8,7 @@
 </script>
 
 <ParcelForm
+  initialParcelChannelDictionaryId={data.initialParcel.channel_dictionary_id}
   initialParcelCommandDictionaryId={data.initialParcel.command_dictionary_id}
   initialParcelCreatedAt={data.initialParcel.created_at}
   initialParcelId={data.initialParcel.id}

@@ -3,158 +3,75 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import type { CellEditingStoppedEvent, ValueGetterParams } from 'ag-grid-community';
-  import { commandDictionaries, parameterDictionaries, sequenceAdaptations } from '../../stores/sequencing';
+  import {
+    channelDictionaries,
+    commandDictionaries,
+    parameterDictionaries,
+    parcel,
+    parcelToParameterDictionaries,
+    sequenceAdaptations,
+  } from '../../stores/sequencing';
   import type { User, UserId } from '../../types/app';
-  import type { DataGridColumnDef } from '../../types/data-grid';
-  import type {
-    CommandDictionary,
-    ParameterDictionary,
-    Parcel,
-    ParcelInsertInput,
-    SequenceAdaptation,
-  } from '../../types/sequencing';
+  import type { Parcel, ParcelInsertInput, ParcelToParameterDictionary } from '../../types/sequencing';
   import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import PageTitle from '../app/PageTitle.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
-  import DataGrid from '../ui/DataGrid/DataGrid.svelte';
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
+  import DictionaryTable from './DictionaryTable.svelte';
 
+  export let initialParcelChannelDictionaryId: number | null = null;
   export let initialParcelCommandDictionaryId: number | null = null;
   export let initialParcelCreatedAt: string | null = null;
   export let initialParcelName: string = '';
   export let initialParcelId: number | null = null;
   export let initialParcelOwner: UserId = '';
-  export let initialParcelParameterDictionaryId: number | null = null;
   export let initialSequenceAdaptationId: number | null = null;
   export let mode: 'create' | 'edit' = 'create';
   export let user: User | null;
 
-  let commandDictionaryColumnDefs: DataGridColumnDef[];
-  let commandDictionaryDataGrid: DataGrid<CommandDictionary> | undefined = undefined;
   let hasPermission: boolean = false;
   let pageSubtitle: string = '';
   let pageTitle: string = '';
-  let parameterDictionaryColumnDefs: DataGridColumnDef[];
-  let parameterDictionaryDataGrid: DataGrid<ParameterDictionary> = undefined;
   let parcelModified: boolean = false;
+  let parcelChannelDictionaryId: number | null = initialParcelChannelDictionaryId;
   let parcelCommandDictionaryId: number | null = initialParcelCommandDictionaryId;
   let parcelCreatedAt: string | null = initialParcelCreatedAt;
   let parcelName: string = initialParcelName;
   let parcelId: number | null = initialParcelId;
   let parcelOwner: UserId = initialParcelOwner;
-  let parcelParameterDictionaryId: number | null = initialParcelCommandDictionaryId;
   let parcelSequenceAdaptationId: number | null = initialSequenceAdaptationId;
   let permissionError = 'You do not have permission to edit this parcel.';
   let saveButtonClass: 'primary' | 'secondary' = 'primary';
   let saveButtonText: string = '';
+  let savedParcelChannelDictionaryId: number | null = parcelChannelDictionaryId;
   let savedParcelCommandDictionaryId: number | null = parcelCommandDictionaryId;
   let savedParcelName: string = parcelName;
-  let savedParcelParameterDictionaryId: number | null = parcelParameterDictionaryId;
+  let savedParameterDictionaryIds: Record<number, boolean> = {};
   let savedSequenceAdaptationId: number | null = parcelSequenceAdaptationId;
   let savingParcel: boolean = false;
-  let sequenceAdaptationColumnDefs: DataGridColumnDef[];
-  let sequenceAdaptationDataGrid: DataGrid<SequenceAdaptation> | undefined = undefined;
+  let selectedParmeterDictionaries: Record<number, boolean> = {};
 
-  const sharedColumnDefs: DataGridColumnDef[] = [
-    {
-      field: 'id',
-      filter: 'number',
-      headerName: 'ID',
-      resizable: true,
-      sortable: true,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
-      width: 60,
+  $: selectedParmeterDictionaries = savedParameterDictionaryIds = $parcelToParameterDictionaries.reduce(
+    (prevBooleanMap: Record<number, boolean>, parcelToParameterDictionary: ParcelToParameterDictionary) => {
+      return {
+        ...prevBooleanMap,
+        [parcelToParameterDictionary.parameter_dictionary_id]: true,
+      };
     },
-  ];
-
-  const createdAtColumnDef: DataGridColumnDef[] = [
-    { field: 'created_at', filter: 'text', headerName: 'Created At', resizable: true, sortable: true },
-  ];
-
-  const sharedDictionaryColumnDefs: DataGridColumnDef[] = [
-    ...sharedColumnDefs,
-    { field: 'mission', filter: 'text', headerName: 'Mission', sortable: true, width: 100 },
-    { field: 'version', filter: 'text', headerName: 'Version', sortable: true, suppressAutoSize: true, width: 100 },
-    ...createdAtColumnDef,
-  ];
-
-  $: {
-    commandDictionaryColumnDefs = [
-      {
-        cellDataType: 'boolean',
-        editable: hasPermission,
-        headerName: '',
-        suppressAutoSize: true,
-        suppressSizeToFit: true,
-        valueGetter: (params: ValueGetterParams<CommandDictionary>) => {
-          const { data } = params;
-          if (data) {
-            return parcelCommandDictionaryId === data.id;
-          }
-          return false;
-        },
-        width: 35,
-      },
-      ...sharedDictionaryColumnDefs,
-    ];
-  }
-
-  $: {
-    parameterDictionaryColumnDefs = [
-      {
-        cellDataType: 'boolean',
-        editable: hasPermission,
-        headerName: '',
-        suppressAutoSize: true,
-        suppressSizeToFit: true,
-        valueGetter: (params: ValueGetterParams<ParameterDictionary>) => {
-          const { data } = params;
-          if (data) {
-            return parcelParameterDictionaryId === data.id;
-          }
-          return false;
-        },
-        width: 35,
-      },
-      ...sharedDictionaryColumnDefs,
-    ];
-  }
-
-  $: {
-    sequenceAdaptationColumnDefs = [
-      {
-        cellDataType: 'boolean',
-        editable: hasPermission,
-        headerName: '',
-        suppressAutoSize: true,
-        suppressSizeToFit: true,
-        valueGetter: (params: ValueGetterParams<SequenceAdaptation>) => {
-          const { data } = params;
-          if (data) {
-            return parcelSequenceAdaptationId === data.id;
-          }
-          return false;
-        },
-        width: 35,
-      },
-      { field: 'name', filter: 'text', headerName: 'Name', sortable: true, width: 100 },
-      ...sharedColumnDefs,
-      ...createdAtColumnDef,
-    ];
-  }
+    {},
+  );
 
   $: saveButtonClass = parcelModified && saveButtonEnabled ? 'primary' : 'secondary';
   $: saveButtonEnabled = parcelCommandDictionaryId !== null && parcelName !== '';
   $: parcelModified =
+    parcelChannelDictionaryId !== savedParcelChannelDictionaryId ||
     parcelCommandDictionaryId !== savedParcelCommandDictionaryId ||
     parcelName !== savedParcelName ||
-    parcelParameterDictionaryId !== savedParcelParameterDictionaryId ||
-    parcelSequenceAdaptationId !== savedSequenceAdaptationId;
+    parcelSequenceAdaptationId !== savedSequenceAdaptationId ||
+    didParameterDictionariesChange(selectedParmeterDictionaries);
 
   $: {
     hasPermission =
@@ -167,40 +84,83 @@
     saveButtonText = mode === 'edit' && !parcelModified ? 'Saved' : 'Save';
   }
 
-  function onToggleCommandDictionary(event: CustomEvent<CellEditingStoppedEvent<CommandDictionary, boolean>>) {
-    const {
-      detail: { data, newValue },
-    } = event;
+  /**
+   * selectedParameterDictionaries keeps track of false values for the table while the saved list doesn't so
+   * we need to do a custom comparison.
+   */
+  function didParameterDictionariesChange(parameterDictionaryMap: Record<number, boolean>): boolean {
+    for (const parameterDictionaryIdString of Object.keys(parameterDictionaryMap)) {
+      const parameterDictionaryId = parseInt(parameterDictionaryIdString);
 
-    if (data) {
-      parcelCommandDictionaryId = newValue ? data.id : null;
+      if (
+        (selectedParmeterDictionaries[parameterDictionaryId] &&
+          !(parameterDictionaryId in savedParameterDictionaryIds)) ||
+        (!selectedParmeterDictionaries[parameterDictionaryId] && savedParameterDictionaryIds[parameterDictionaryId])
+      ) {
+        return true;
+      }
     }
 
-    commandDictionaryDataGrid?.redrawRows();
+    return false;
   }
 
-  function onToggleParameterDictionary(event: CustomEvent<CellEditingStoppedEvent<ParameterDictionary, boolean>>) {
-    const {
-      detail: { data, newValue },
-    } = event;
-
-    if (data) {
-      parcelParameterDictionaryId = newValue ? data.id : null;
-    }
-
-    parameterDictionaryDataGrid?.redrawRows();
+  function onToggleChannelDictionary(event: CustomEvent) {
+    parcelChannelDictionaryId = event.detail.id;
   }
 
-  function onToggleSequenceAdaptation(event: CustomEvent<CellEditingStoppedEvent<SequenceAdaptation, boolean>>) {
-    const {
-      detail: { data, newValue },
-    } = event;
+  function onToggleCommandDictionary(event: CustomEvent) {
+    parcelCommandDictionaryId = event.detail.id;
+  }
 
-    if (data) {
-      parcelSequenceAdaptationId = newValue ? data.id : null;
+  function onToggleParameterDictionary(event: CustomEvent) {
+    selectedParmeterDictionaries = event.detail.ids;
+  }
+
+  function onToggleSequenceAdaptation(event: CustomEvent) {
+    parcelSequenceAdaptationId = event.detail.id;
+  }
+
+  async function saveParcelToParameterDictionaries(): Promise<void> {
+    const parcelToParameterDictionariesToAdd: Omit<ParcelToParameterDictionary, 'id'>[] = [];
+    const parcelToParameterDictionaryIdsToDelete: number[] = [];
+
+    Object.keys(selectedParmeterDictionaries).forEach(parameterDictionaryIdString => {
+      const parameterDictionaryId = parseInt(parameterDictionaryIdString);
+      const isSelected = selectedParmeterDictionaries[parameterDictionaryId];
+
+      if (!isSelected && savedParameterDictionaryIds[parameterDictionaryId]) {
+        // Parameter dictionary was removed from the parcel.
+        parcelToParameterDictionaryIdsToDelete.push(parameterDictionaryId);
+      } else if (isSelected && !savedParameterDictionaryIds[parameterDictionaryId] && parcelId) {
+        // Parameter dictionary was freshly added to the parcel and hasn't been saved yet.
+        parcelToParameterDictionariesToAdd.push({
+          parameter_dictionary_id: parameterDictionaryId,
+          parcel_id: parcelId,
+        });
+      }
+    });
+
+    if (parcelToParameterDictionariesToAdd.length > 0) {
+      await effects.createParcelToParameterDictionaries(parcelOwner, parcelToParameterDictionariesToAdd, user);
     }
 
-    sequenceAdaptationDataGrid?.redrawRows();
+    if (parcelToParameterDictionaryIdsToDelete.length > 0) {
+      const idsToDelete = [];
+
+      for (const paramDictionaryId of parcelToParameterDictionaryIdsToDelete) {
+        const parcelId: number | undefined = $parcelToParameterDictionaries.find(
+          p => p.parameter_dictionary_id === paramDictionaryId && p.parcel_id === initialParcelId,
+        )?.id;
+
+        if (parcelId) {
+          idsToDelete.push(parcelId);
+        }
+
+        if (idsToDelete.length > 0 && $parcel) {
+          await effects.deleteParcelToParameterDictionaries(idsToDelete, $parcel, user);
+        }
+      }
+    }
   }
 
   async function saveParcel() {
@@ -210,25 +170,35 @@
       if (parcelCommandDictionaryId !== null && parcelName !== '') {
         if (mode === 'create') {
           const newParcel: ParcelInsertInput = {
+            channel_dictionary_id: parcelChannelDictionaryId,
             command_dictionary_id: parcelCommandDictionaryId,
             name: parcelName,
-            parameter_dictionary_id: parcelParameterDictionaryId,
             sequence_adaptation_id: parcelSequenceAdaptationId,
           };
-          const newParcelId = await effects.createParcel(newParcel, user);
+          parcelId = await effects.createParcel(newParcel, user);
 
-          if (newParcelId !== null) {
-            goto(`${base}/parcels/edit/${newParcelId}`);
+          await saveParcelToParameterDictionaries();
+
+          if (parcelId !== null) {
+            goto(`${base}/parcels/edit/${parcelId}`);
           }
         } else if (mode === 'edit' && parcelId !== null) {
           const updatedParcel: Partial<Parcel> = {
+            channel_dictionary_id: parcelChannelDictionaryId,
             command_dictionary_id: parcelCommandDictionaryId,
             name: parcelName,
             sequence_adaptation_id: parcelSequenceAdaptationId,
           };
+
+          saveParcelToParameterDictionaries();
+
           await effects.updateParcel(parcelId, updatedParcel, parcelOwner, user);
         }
       }
+
+      savedParcelChannelDictionaryId = parcelChannelDictionaryId;
+      savedParcelCommandDictionaryId = parcelCommandDictionaryId;
+      savedSequenceAdaptationId = parcelSequenceAdaptationId;
 
       savingParcel = false;
     }
@@ -292,62 +262,46 @@
   </Panel>
 
   <div class="table-container">
-    <Panel>
-      <svelte:fragment slot="header">
-        <SectionTitle>Command Dictionaries</SectionTitle>
-      </svelte:fragment>
+    <DictionaryTable
+      dictionaries={$commandDictionaries}
+      dictionaryId={parcelCommandDictionaryId}
+      isEditingParcel={true}
+      hasEditPermission={hasPermission}
+      type="Command"
+      {user}
+      on:select={onToggleCommandDictionary}
+    />
 
-      <svelte:fragment slot="body">
-        {#if $commandDictionaries.length}
-          <DataGrid
-            bind:this={commandDictionaryDataGrid}
-            columnDefs={commandDictionaryColumnDefs}
-            rowData={$commandDictionaries}
-            on:cellEditingStopped={onToggleCommandDictionary}
-          />
-        {:else}
-          No Command Dictionaries Found
-        {/if}
-      </svelte:fragment>
-    </Panel>
+    <DictionaryTable
+      dictionaries={$channelDictionaries}
+      dictionaryId={parcelChannelDictionaryId}
+      isEditingParcel={true}
+      hasEditPermission={hasPermission}
+      type="Channel"
+      {user}
+      on:select={onToggleChannelDictionary}
+    />
 
-    <Panel>
-      <svelte:fragment slot="header">
-        <SectionTitle>Parameter Dictionaries</SectionTitle>
-      </svelte:fragment>
+    <DictionaryTable
+      dictionaries={$parameterDictionaries}
+      dictionaryIds={selectedParmeterDictionaries}
+      isEditingParcel={true}
+      isMultiselect={true}
+      hasEditPermission={hasPermission}
+      type="Parameter"
+      {user}
+      on:multiSelect={onToggleParameterDictionary}
+    />
 
-      <svelte:fragment slot="body">
-        {#if $parameterDictionaries.length}
-          <DataGrid
-            bind:this={parameterDictionaryDataGrid}
-            columnDefs={parameterDictionaryColumnDefs}
-            rowData={$parameterDictionaries}
-            on:cellEditingStopped={onToggleParameterDictionary}
-          />
-        {:else}
-          No Sequence Adaptations Found
-        {/if}
-      </svelte:fragment>
-    </Panel>
-
-    <Panel>
-      <svelte:fragment slot="header">
-        <SectionTitle>Sequence Adaptations</SectionTitle>
-      </svelte:fragment>
-
-      <svelte:fragment slot="body">
-        {#if $sequenceAdaptations.length}
-          <DataGrid
-            bind:this={sequenceAdaptationDataGrid}
-            columnDefs={sequenceAdaptationColumnDefs}
-            rowData={$sequenceAdaptations}
-            on:cellEditingStopped={onToggleSequenceAdaptation}
-          />
-        {:else}
-          No Sequence Adaptations Found
-        {/if}
-      </svelte:fragment>
-    </Panel>
+    <DictionaryTable
+      dictionaries={$sequenceAdaptations}
+      dictionaryId={parcelSequenceAdaptationId}
+      isEditingParcel={true}
+      hasEditPermission={hasPermission}
+      type="Sequence"
+      {user}
+      on:select={onToggleSequenceAdaptation}
+    />
   </div>
 </CssGrid>
 

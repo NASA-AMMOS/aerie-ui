@@ -1,6 +1,6 @@
 import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
 import { syntaxTree } from '@codemirror/language';
-import type { CommandDictionary, ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
+import type { ChannelDictionary, CommandDictionary, ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
 import { fswCommandArgDefault } from './command-dictionary';
 import { getCustomArgDef } from './extension-points';
 
@@ -18,6 +18,7 @@ type CursorInfo = {
  * Can be optionally called with a command dictionary so it's available for completion.
  */
 export function sequenceCompletion(
+  channelDictionary: ChannelDictionary | null = null,
   commandDictionary: CommandDictionary | null = null,
   parameterDictionaries: ParameterDictionary[],
 ) {
@@ -156,7 +157,9 @@ export function sequenceCompletion(
       // If TimeTag has not been entered by the user wait for 2 characters before showing the command completions list
       // If TimeTag has been entered show the completion list when 1 character has been entered
       if (word.text.length > (cursor.isTimeTagBefore || cursor.isBeforeImmedOrHDWCommands === false ? 0 : 1)) {
-        fswCommandsCompletions.push(...generateCommandCompletions(commandDictionary, cursor, parameterDictionaries));
+        fswCommandsCompletions.push(
+          ...generateCommandCompletions(channelDictionary, commandDictionary, cursor, parameterDictionaries),
+        );
       }
 
       // TODO: Move to a function like generateCommandCompletions
@@ -210,6 +213,7 @@ export function sequenceCompletion(
 }
 
 function generateCommandCompletions(
+  channelDictionary: ChannelDictionary | null,
   commandDictionary: CommandDictionary | null,
   cursor: CursorInfo,
   parameterDictionaries: ParameterDictionary[],
@@ -233,7 +237,7 @@ function generateCommandCompletions(
       args.forEach(arg => {
         argDefaults.push(
           fswCommandArgDefault(
-            getCustomArgDef(stem, arg, argDefaults.slice(), parameterDictionaries),
+            getCustomArgDef(stem, arg, argDefaults.slice(), parameterDictionaries, channelDictionary),
             commandDictionary.enumMap,
           ),
         );

@@ -7,7 +7,11 @@ export enum DictionaryTypes {
   'telemetry_dictionary' = 'telemetry_dictionary',
 }
 
-export type CommandDictionary = DictionaryType;
+export type ChannelDictionary = DictionaryType;
+
+export type CommandDictionary = {
+  command_types_typescript_path: string;
+} & DictionaryType;
 
 export type ParameterDictionary = DictionaryType;
 
@@ -23,13 +27,19 @@ export type DictionaryType = {
 };
 
 export type Parcel = {
+  channel_dictionary_id: number | null;
   command_dictionary_id: number;
   created_at: string;
   id: number;
   name: string;
   owner: UserId;
-  parameter_dictionary_id: number | null;
   sequence_adaptation_id: number | null;
+};
+
+export type ParcelToParameterDictionary = {
+  id: number;
+  parameter_dictionary_id: number;
+  parcel_id: number;
 };
 
 export type ParcelInsertInput = Omit<Parcel, 'created_at' | 'id' | 'owner'>;
