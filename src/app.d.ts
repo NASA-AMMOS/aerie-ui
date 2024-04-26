@@ -59,7 +59,11 @@ declare global {
   var GLOBALS: GlobalType[];
   var ARG_DELEGATOR: ArgDelegator;
   function LINT(commandDictionary, view, node);
-  function TO_SEQ_JSON(seqJson: SeqJson, parameterDictionaries: ParameterDictionary[]);
+  function TO_SEQ_JSON(
+    seqJson: SeqJson,
+    parameterDictionaries: ParameterDictionary[],
+    channelDictionary: ChannelDictionary | null,
+  );
 }
 
 export {};

@@ -15,6 +15,7 @@ export type ArgDelegator = {
       | ((
           argDef: FswCommandArgument,
           paramDictionaries: ParameterDictionary[],
+          channelDictionary: ChannelDictionary | null,
           precedingArgValues: string[],
         ) => FswCommandArgument | undefined);
   };
@@ -28,9 +29,13 @@ export function getCustomArgDef(
   channelDictionary: ChannelDictionary | null,
 ) {
   const delegate = globalThis.ARG_DELEGATOR?.[stem]?.[dictArg.name];
-  return delegate?.(dictArg, parameterDictionaries, precedingArgs) ?? dictArg;
+  return delegate?.(dictArg, parameterDictionaries, channelDictionary, precedingArgs) ?? dictArg;
 }
 
-export function customizeSeqJson(seqJson: SeqJson, parameterDictionaries: ParameterDictionary[]) {
-  return globalThis.TO_SEQ_JSON?.(seqJson, parameterDictionaries) ?? seqJson;
+export function customizeSeqJson(
+  seqJson: SeqJson,
+  parameterDictionaries: ParameterDictionary[],
+  channelDictionary: ChannelDictionary | null,
+) {
+  return globalThis.TO_SEQ_JSON?.(seqJson, parameterDictionaries, channelDictionary) ?? seqJson;
 }
