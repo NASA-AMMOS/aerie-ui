@@ -133,7 +133,6 @@ import type {
 import type {
   PlanDataset,
   Profile,
-  RawSimulationEvent,
   Resource,
   ResourceType,
   SimulateResponse,
@@ -186,8 +185,9 @@ import { queryPermissions } from './permissions';
 import { reqExtension, reqGateway, reqHasura } from './requests';
 import { sampleProfiles } from './resources';
 import { convertResponseToMetadata } from './scheduling';
+import { compareEvents } from './simulation';
 import { pluralize } from './text';
-import { getDoyTime, getDoyTimeFromInterval, getIntervalFromDoyRange, getIntervalInMs } from './time';
+import { getDoyTime, getDoyTimeFromInterval, getIntervalFromDoyRange } from './time';
 import { createRow, duplicateRow } from './timeline';
 import { showFailureToast, showSuccessToast } from './toast';
 import { generateDefaultView, validateViewJSONAgainstSchema } from './view';
@@ -5032,42 +5032,6 @@ function replacePathsHelper(schema: ValueSchema, arg: Argument, pathsToReplace: 
     default:
       return arg;
   }
-}
-
-// Sort events using their dense time markings
-function compareEvents(a: RawSimulationEvent, b: RawSimulationEvent) {
-  const aMs = getIntervalInMs(a.real_time);
-  const bMs = getIntervalInMs(b.real_time);
-  if (aMs !== bMs) {
-    return aMs - bMs;
-  }
-
-  if (a.transaction_index !== b.transaction_index) {
-    return a.transaction_index - b.transaction_index;
-  }
-
-  const aDenseTime = a.causal_time.slice(1).split('.');
-  const bDenseTime = b.causal_time.slice(1).split('.');
-
-  let i = 0;
-  let isSequential = true;
-  while (i < Math.min(aDenseTime.length, bDenseTime.length)) {
-    const aVal = parseInt(aDenseTime[i]);
-    const bVal = parseInt(bDenseTime[i]);
-
-    if (aVal === bVal) {
-      i = i + 1;
-      isSequential = !isSequential;
-    } else if (!isSequential) {
-      return 0;
-    } else if (aVal < bVal) {
-      return -1;
-    } else {
-      return 1;
-    }
-  }
-
-  return 0;
 }
 
 export default effects;

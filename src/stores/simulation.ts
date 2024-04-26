@@ -168,6 +168,7 @@ export function resetSimulationStores() {
   simulationDatasetId.set(-1);
   simulationDataset.updateValue(() => null);
   simulationDatasetLatest.updateValue(() => null);
+  simulationEvents.set([]);
   simulationTemplates.updateValue(() => []);
   simulationDatasetsPlan.updateValue(() => []);
   simulationDatasetsAll.updateValue(() => []);
