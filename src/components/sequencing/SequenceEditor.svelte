@@ -111,12 +111,14 @@
         // Reconfigure sequence editor.
         editorSequenceView.dispatch({
           effects: compartmentSeqLanguage.reconfigure(
-            seq(sequenceCompletion(channelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries)),
+            seq(
+              sequenceCompletion(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
+            ),
           ),
         });
         editorSequenceView.dispatch({
           effects: compartmentSeqLinter.reconfigure(
-            sequenceLinter(channelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
+            sequenceLinter(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
           ),
         });
         editorSequenceView.dispatch({
