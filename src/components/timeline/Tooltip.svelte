@@ -28,14 +28,12 @@
 
   function onMouseOver(event: MouseOver | undefined) {
     if (event && !hidden) {
-      activityDirectives = event?.activityDirectivesByLayer
-        ? Object.values(event.activityDirectivesByLayer).flat()
-        : [];
+      activityDirectives = event.activityDirectives || [];
       constraintResults = event?.constraintResults ?? [];
       gaps = event?.gapsByLayer ? Object.values(event.gapsByLayer).flat() : [];
       points = event?.pointsByLayer ? Object.values(event.pointsByLayer).flat() : [];
       row = event?.row ?? null;
-      spans = event?.spansByLayer ? Object.values(event.spansByLayer).flat() : [];
+      spans = event.spans || [];
 
       show(event.e);
     }
@@ -116,7 +114,9 @@
       }
     }
 
-    activityDirectives.forEach((activityDirective: ActivityDirective, i: number) => {
+    const limit = 3;
+    const activityDirectivesOverLimit = activityDirectives.length > limit;
+    activityDirectives.slice(0, limit).forEach((activityDirective: ActivityDirective, i: number) => {
       const text = textForActivityDirective(activityDirective);
       tooltipText = `${tooltipText} ${text}`;
 
@@ -124,6 +124,11 @@
         tooltipText = `${tooltipText}<hr>`;
       }
     });
+    if (activityDirectivesOverLimit) {
+      tooltipText += `<div class='tooltip-row-container'>
+                      <div class='st-typography-bold' style='color: var(--st-gray-10)'>+${activityDirectives.length - limit} directives</div>
+                    </div>`;
+    }
 
     if (constraintResults.length && activityDirectives.length) {
       tooltipText = `${tooltipText}<hr>`;
@@ -169,7 +174,9 @@
       tooltipText = `${tooltipText}<hr>`;
     }
 
-    spans.forEach((span: Span, i: number) => {
+    const spansOverLimit = spans.length > limit;
+    // TODO faster to just use a for loop here
+    spans.slice(0, limit).forEach((span: Span, i: number) => {
       const text = textForSpan(span);
       tooltipText = `${tooltipText} ${text}`;
 
@@ -177,6 +184,11 @@
         tooltipText = `${tooltipText}<hr>`;
       }
     });
+    if (spansOverLimit) {
+      tooltipText += `<div class='tooltip-row-container'>
+                      <div class='st-typography-bold' style='color: var(--st-gray-10)'>+${spans.length - limit} spans</div>
+                    </div>`;
+    }
 
     return tooltipText;
   }

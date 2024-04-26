@@ -98,7 +98,7 @@ export type MouseDown = {
 };
 
 export type MouseOver = {
-  activityDirectivesByLayer?: Record<number, ActivityDirective[]>;
+  activityDirectives?: ActivityDirective[];
   constraintResults?: ConstraintResultWithName[];
   e: MouseEvent;
   gapsByLayer?: Record<number, Point[]>;
@@ -108,7 +108,7 @@ export type MouseOver = {
   row?: Row;
   selectedActivityDirectiveId?: number;
   selectedSpanId?: number;
-  spansByLayer?: Record<number, Span[]>;
+  spans?: Span[];
 };
 
 export type RowMouseOverEvent = Omit<

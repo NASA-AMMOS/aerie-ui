@@ -58,6 +58,7 @@
       <slot name="left" />
     </div>
     <div class={titleClasses} use:tooltip={{ content: tooltipContent, placement: 'top' }}>
+      <slot name="title" />
       {title}
     </div>
     <div class="right">

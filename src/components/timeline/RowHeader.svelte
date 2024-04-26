@@ -6,7 +6,8 @@
   import CaretRightIcon from '@nasa-jpl/stellar/icons/caret_right.svg?component';
   import GripVerticalIcon from 'bootstrap-icons/icons/grip-vertical.svg?component';
   import { createEventDispatcher } from 'svelte';
-  import type { Resource } from '../../types/simulation';
+  import type { ActivityDirectiveId } from '../../types/activity';
+  import type { Resource, SpanId } from '../../types/simulation';
   import type { Axis, Layer, LineLayer, MouseOver } from '../../types/timeline';
   import { filterResourcesByLayer } from '../../utilities/timeline';
   import { tooltip } from '../../utilities/tooltip';
@@ -25,6 +26,8 @@
   export let width: number = 0;
   export let yAxes: Axis[];
   export let activityLayerGroups = [];
+  export let selectedActivityDirectiveId: ActivityDirectiveId | null = null;
+  export let selectedSpanId: SpanId | null = null;
 
   let resourceLabels: { color: string; label: string; resource: Resource; unit: string; yAxisId: number }[] = [];
   let yAxesWidth = 0;
@@ -125,7 +128,14 @@
       </div>
 
       <div class="activity-tree">
-        <RowHeaderActivityTree activityTree={activityLayerGroups} on:activity-tree-node-change />
+        <!-- TODO only render if the row has activities -->
+        <RowHeaderActivityTree
+          activityTree={activityLayerGroups}
+          {selectedActivityDirectiveId}
+          {selectedSpanId}
+          on:activity-tree-node-change
+          on:mouseDown
+        />
       </div>
 
       {#if resourceLabels.length > 0}

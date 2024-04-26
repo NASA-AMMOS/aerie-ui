@@ -13,7 +13,7 @@ import {
   type CountableTimeInterval,
   type TimeInterval,
 } from 'd3-time';
-import type { Resource, ResourceType, ResourceValue } from '../types/simulation';
+import type { Resource, ResourceType, ResourceValue, Span } from '../types/simulation';
 import type {
   ActivityLayer,
   Axis,
@@ -765,4 +765,10 @@ export function minMaxDecimation<T>(
  */
 export function filterResourcesByLayer(layer: Layer, resources: Resource[] | ResourceType[]) {
   return resources.filter(resource => (layer.filter.resource?.names || []).indexOf(resource.name) > -1);
+}
+
+export function spanInView(span: Span, viewTimeRange: TimeRange) {
+  const spanInBounds = span.startMs >= viewTimeRange.start && span.startMs < viewTimeRange.end;
+  const sticky = span.startMs < viewTimeRange.start && span.startMs + span.durationMs >= viewTimeRange.start;
+  return spanInBounds || sticky;
 }

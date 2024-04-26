@@ -57,6 +57,7 @@
   import {
     getYAxesWithScaleDomains,
     isXRangeLayer,
+    spanInView,
     TimelineInteractionMode,
     type TimelineLockStatus,
   } from '../../utilities/timeline';
@@ -138,12 +139,10 @@
   let mousemove: MouseEvent;
   let mouseout: MouseEvent;
   let mouseup: MouseEvent;
-  let mouseDownActivityDirectivesByLayer: Record<number, ActivityDirective[]> = {};
-  let mouseDownSpansByLayer: Record<number, Span[]> = {};
-  let mouseOverActivityDirectivesByLayer: Record<number, ActivityDirective[]> = {};
+  let mouseOverActivityDirectives: ActivityDirective[] = [];
   let mouseOverConstraintResults: ConstraintResultWithName[] = []; // For this row.
   let mouseOverPointsByLayer: Record<number, Point[]> = {};
-  let mouseOverSpansByLayer: Record<number, Span[]> = {};
+  let mouseOverSpans: Span[] = [];
   let mouseOverGapsByLayer: Record<number, Point[]> = {};
   let overlaySvg: SVGElement;
   let yAxesWithScaleDomains: Axis[];
@@ -156,10 +155,11 @@
   let activityLayerGroups = [];
   let finalActivityDirectives = [];
   let finalSpans = [];
+  let idToColorMaps = { directives: {}, spans: {} };
   let activityTreeExpansionMap = {};
   let filterActivitiesByTime = false;
   let packedMode = false;
-  let labelMode: 'on' | 'auto' | 'off' = 'on';
+  let labelMode: 'on' | 'auto' | 'off' = 'auto';
   let flatMode = false;
   let activityDirectiveTimeCache = {};
 
@@ -351,13 +351,10 @@
     // TODO manage this cache more correctly/better/in a store?
     activityDirectiveTimeCache = {};
     activityLayerGroups = [];
+    idToColorMaps = { directives: {}, spans: {} };
 
     const activityLayers = layers.filter(layer => layer.chartType === 'activity');
-    // const combinedActivityLayer = layers.find(layer => layer.chartType === 'activity');
-    // TODO Only doing this for 1 layer right now
     if (activityLayers.length) {
-      // TODO decouple from view, instead compute on the fly
-
       let directives = [];
       let spans = [];
       activityLayers.forEach(layer => {
@@ -365,32 +362,33 @@
         // using the layer filters
         const layerDirectives = activityDirectivesByView.byLayerId[layer.id];
         if (layerDirectives) {
-          // TODO causes bug since mutates original object, carries through to next row
-          // need to specify color some other way or make a copy of these but don't make a copy plz
-          layerDirectives.forEach(d => (d.color = layer.activityColor));
+          layerDirectives.forEach(d => (idToColorMaps.directives[d.id] = layer.activityColor));
+          // TODO consider making a directivesInView map
           directives = directives.concat(layerDirectives);
         }
         let layerSpans = Object.values(spansMap);
+        // TODO util for filtering activities/spans
         if (layer.filter && layer.filter.activity !== undefined) {
-          // TODO this is slow and doesn't need to be done every time that view timerange changes
           const a = performance.now();
           const types = layer.filter.activity.types;
           const typeMap = types.reduce((acc, next) => {
             acc[next] = true;
             return acc;
           }, {});
-          const newSpans = [];
+          // const newSpans = [];
           layerSpans.forEach(span => {
             if (typeMap[span.type]) {
-              span.color = layer.activityColor;
-              newSpans.push(span);
+              // span.color = layer.activityColor;
+              // newSpans.push({ ...span, color: layer.activityColor });
+              idToColorMaps.spans[span.id] = layer.activityColor;
+              // TODO consider making a spansInView map
+              spans.push(span);
               // span
             }
           });
-          console.log(performance.now() - a);
-          layerSpans = newSpans;
+          // layerSpans = newSpans;
         }
-        spans = spans.concat(layerSpans);
+        // spans = spans.concat(layerSpans);
       });
       spans.sort((a, b) => (a.startMs < b.startMs ? -1 : 1));
       if (directives.length || spans.length) {
@@ -400,16 +398,26 @@
     }
   }
 
-  $: if (finalActivityDirectives && finalSpans && !packedMode) {
-    if (flatMode) {
-      activityLayerGroups = generateActivityTreeFlat(
-        finalActivityDirectives,
-        finalSpans,
-        activityTreeExpansionMap,
-        viewTimeRange,
-      );
+  $: if (
+    finalActivityDirectives &&
+    finalSpans &&
+    typeof showSpans === 'boolean' &&
+    typeof showDirectives === 'boolean'
+  ) {
+    // TODO figure out how to work in activity layer height to all of this since before it was on each layer but now all activity layers are combined?
+    if (!packedMode) {
+      if (flatMode) {
+        activityLayerGroups = generateActivityTreeFlat(
+          finalActivityDirectives,
+          finalSpans,
+          activityTreeExpansionMap,
+          viewTimeRange,
+        );
+      } else {
+        activityLayerGroups = generateActivityTree(finalActivityDirectives, activityTreeExpansionMap, viewTimeRange);
+      }
     } else {
-      activityLayerGroups = generateActivityTree(finalActivityDirectives, activityTreeExpansionMap, viewTimeRange);
+      activityLayerGroups = [];
     }
   }
 
@@ -430,12 +438,6 @@
     return expansionMap[id];
   }
 
-  function spanInView(span, viewTimeRange) {
-    const spanInBounds = span.startMs >= viewTimeRange.start && span.startMs < viewTimeRange.end;
-    const sticky = span.startMs < viewTimeRange.start && span.startMs + span.durationMs >= viewTimeRange.start;
-    return spanInBounds || sticky;
-  }
-
   function generateActivityTreeFlat(directives: ActivityDirective[], spans: Span[], visibilityMap, viewTimeRange) {
     const tree = [];
     let computedDirectives = directives;
@@ -454,7 +456,7 @@
         );
 
         const directiveInView = directiveStartTime >= viewTimeRange.start && directiveStartTime < viewTimeRange.end;
-        if (!directiveInView) {
+        if (!directiveInView && showSpans) {
           // Get max span bounds
           const rootSpanId = spanUtilityMaps.directiveIdToSpanIdMap[directive.id];
           const rootSpan = spansMap[rootSpanId];
@@ -472,15 +474,20 @@
      */
 
     // TODO filter by activity filter?
-    const groupedSpans = groupBy(computedSpans, 'type');
+    // TODO duplicates appear when you have two layers with the same type
+    const groupedSpans = showSpans ? groupBy(computedSpans, 'type') : {};
+    const groupedDirectives = showDirectives ? groupBy(computedDirectives, 'type') : {};
     const groups = [];
-    Object.keys(groupedSpans)
+    const allKeys = new Set(Object.keys(groupedSpans).concat(Object.keys(groupedDirectives)));
+    Array.from(allKeys)
       .sort()
       .forEach(type => {
+        // TODO figure out concept for having directives in here
         const spanGroup = groupedSpans[type];
+        // const directiveGroup = groupedSpans[type];
         const id = type;
         const expanded = getNodeExpanded(id, activityTreeExpansionMap);
-        const label = `type=${type} (${spanGroup.length})`;
+        const label = type;
         groups.push({
           expanded: expanded,
           label,
@@ -495,84 +502,9 @@
           isLeaf: false,
           type: 'aggregation',
           spans: spanGroup,
-          // directives: [directive],
         });
       });
     return groups;
-    // Activities grouped by type
-    // Object.keys(groupedDirectives)
-    //   .sort()
-    //   .forEach(type => {
-    //     // Specific Activity type
-    //     const directiveGroup = groupedDirectives[type];
-    //     directiveGroup.sort((a, b) => {
-    //       const aTime = getActivityDirectiveStartTimeMs(
-    //         a.id,
-    //         planStartTimeYmd,
-    //         planEndTimeDoy,
-    //         activityDirectivesMap,
-    //         spansMap,
-    //         spanUtilityMaps,
-    //         activityDirectiveTimeCache,
-    //       );
-    //       const bTime = getActivityDirectiveStartTimeMs(
-    //         b.id,
-    //         planStartTimeYmd,
-    //         planEndTimeDoy,
-    //         activityDirectivesMap,
-    //         spansMap,
-    //         spanUtilityMaps,
-    //         activityDirectiveTimeCache,
-    //       );
-    //       return aTime < bTime ? -1 : 0;
-    //     });
-    //     const label = `type=${type} (${directiveGroup.length})`;
-    //     const id = type;
-    //     const expanded = getNodeExpanded(id, activityTreeExpansionMap);
-    //     const groups = [];
-    //     if (expanded) {
-    //       directiveGroup.forEach(directive => {
-    //         // Get number of child spans for the root span
-    //         let count = 0;
-    //         const rootSpanId = spanUtilityMaps.directiveIdToSpanIdMap[directive.id];
-    //         const id2 = `${id}_${directive.id}`;
-    //         let groups2 = [];
-    //         if (typeof rootSpanId === 'number') {
-    //           const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[rootSpanId].map(id => spansMap[id]);
-    //           count += spanChildren.length;
-    //           groups2 = getSpanSubtree(
-    //             spansMap[rootSpanId],
-    //             id2,
-    //             activityTreeExpansionMap,
-    //             'aggregation',
-    //             filterActivitiesByTime,
-    //           );
-    //         }
-    //         const label2 = `${directive.type} id=${directive.id} ${count > 0 ? `(${count} children)` : ''}`;
-    //         const expanded2 = getNodeExpanded(id2, activityTreeExpansionMap);
-
-    //         groups.push({
-    //           expanded: expanded2,
-    //           label: label2,
-    //           id: id2,
-    //           groups: groups2,
-    //           isLeaf: count < 1,
-    //           type: 'directive',
-    //           directives: [directive],
-    //         });
-    //       });
-    //     }
-    //     tree.push({
-    //       expanded,
-    //       label,
-    //       id,
-    //       groups,
-    //       isLeaf: false,
-    //       type: 'aggregate',
-    //       directives: directiveGroup,
-    //     });
-    //   });
-    // return tree;
   }
 
   function generateActivityTree(directives: ActivityDirective[], visibilityMap, viewTimeRange) {
@@ -596,7 +528,7 @@
           // Get max span bounds
           const rootSpanId = spanUtilityMaps.directiveIdToSpanIdMap[directive.id];
           const rootSpan = spansMap[rootSpanId];
-          if (rootSpan) {
+          if (rootSpan && showSpans) {
             return spanInView(rootSpan, viewTimeRange);
           }
           // TODO handle case where duration is null (unfinished), need to look at child spans to get time bounds
@@ -632,7 +564,7 @@
           );
           return aTime < bTime ? -1 : 0;
         });
-        const label = `type=${type} (${directiveGroup.length})`;
+        const label = type;
         const id = type;
         const expanded = getNodeExpanded(id, activityTreeExpansionMap);
         const groups = [];
@@ -640,21 +572,31 @@
           directiveGroup.forEach(directive => {
             // Get number of child spans for the root span
             let count = 0;
-            const rootSpanId = spanUtilityMaps.directiveIdToSpanIdMap[directive.id];
-            const id2 = `${id}_${directive.id}`;
             let groups2 = [];
-            if (typeof rootSpanId === 'number') {
-              const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[rootSpanId].map(id => spansMap[id]);
-              count += spanChildren.length;
-              groups2 = getSpanSubtree(
-                spansMap[rootSpanId],
-                id2,
-                activityTreeExpansionMap,
-                'aggregation',
-                filterActivitiesByTime,
-              );
+            const id2 = `${id}_${directive.id}`;
+            let spans2 = [];
+            if (showSpans) {
+              const rootSpanId = spanUtilityMaps.directiveIdToSpanIdMap[directive.id];
+              const rootSpan = spansMap[rootSpanId];
+              if (rootSpan) {
+                spans2 = [rootSpan];
+              }
+              if (typeof rootSpanId === 'number') {
+                const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[rootSpanId].map(id => ({
+                  ...spansMap[id],
+                  color: directive.color,
+                }));
+                count += spanChildren.length;
+                groups2 = getSpanSubtree(
+                  rootSpan,
+                  id2,
+                  activityTreeExpansionMap,
+                  'aggregation',
+                  filterActivitiesByTime,
+                );
+              }
             }
-            const label2 = `${directive.type} id=${directive.id} ${count > 0 ? `(${count} children)` : ''}`;
+            const label2 = `${directive.type}`;
             const expanded2 = getNodeExpanded(id2, activityTreeExpansionMap);
 
             groups.push({
@@ -665,6 +607,7 @@
               isLeaf: count < 1,
               type: 'directive',
               directives: [directive],
+              spans: spans2,
             });
           });
         }
@@ -674,7 +617,7 @@
           id,
           groups,
           isLeaf: false,
-          type: 'aggregate',
+          type: 'aggregation',
           directives: directiveGroup,
         });
       });
@@ -683,7 +626,10 @@
 
   function getSpanSubtree(span: Span, parentId: string, activityTreeExpansionMap, type, filterActivitiesByTime) {
     const groups = [];
-    const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[span.id].map(id => spansMap[id]);
+    const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[span.id].map(id => ({
+      ...spansMap[id],
+      color: span.color,
+    }));
     if (type === 'aggregation') {
       // Group by type
       let computedSpans = spanChildren;
@@ -700,7 +646,7 @@
           const expanded = getNodeExpanded(id, activityTreeExpansionMap);
           groups.push({
             expanded,
-            label: `type=${key} (${spanGroup.length})`,
+            label: `${key} (${spanGroup.length})`,
             id,
             isLeaf: false,
             spans: spanGroup,
@@ -712,7 +658,7 @@
                   )
                   .flat()
               : [],
-            type: 'aggregate',
+            type: 'aggregation',
           });
         });
     } else if (type === 'span') {
@@ -721,20 +667,21 @@
       const count = spanChildren.length;
       groups.push({
         expanded,
-        label: `${span.type} id=${span.id} ${count > 0 ? `(${count} children)` : ''}`,
+        label: `${span.type} ${count > 0 ? `(${count} children)` : ''}`,
         id,
         spans: [span],
         groups: expanded
           ? getSpanSubtree(span, id, activityTreeExpansionMap, 'aggregation', filterActivitiesByTime)
           : [],
         isLeaf: count < 1,
-        type: 'aggregate',
+        type: count < 1 ? 'span' : 'aggregation',
       });
     }
     return groups;
   }
 
   function onActivityTreeNodeChange(e) {
+    console.log('CHANGE');
     const group = e.detail;
     activityTreeExpansionMap = { ...activityTreeExpansionMap, [group.id]: !group.expanded };
   }
@@ -807,38 +754,35 @@
   function onMouseDown(event: CustomEvent<RowMouseOverEvent>) {
     const { detail } = event;
     const { layerId } = detail;
-
-    if (layerId != null) {
-      mouseDownActivityDirectivesByLayer[layerId] = detail?.activityDirectives ?? [];
-      mouseDownSpansByLayer[layerId] = detail?.spans ?? [];
-
-      const activityDirectives = Object.values(mouseDownActivityDirectivesByLayer).flat();
-      const spans = Object.values(mouseDownSpansByLayer).flat();
-
-      dispatch('mouseDown', { ...detail, activityDirectives, layerId, rowId: id, spans });
-    }
+    dispatch('mouseDown', {
+      ...detail,
+      activityDirectives: detail?.activityDirectives ?? [],
+      layerId,
+      rowId: id,
+      spans: detail?.spans ?? [],
+    });
   }
 
   function onMouseOver(event: CustomEvent<RowMouseOverEvent>) {
     const { detail } = event;
     const { layerId } = detail;
 
-    if (layerId != null) {
-      mouseOverActivityDirectivesByLayer[layerId] = detail?.activityDirectives ?? [];
-      mouseOverConstraintResults = detail?.constraintResults ?? mouseOverConstraintResults;
-      mouseOverPointsByLayer[layerId] = detail?.points ?? [];
-      mouseOverSpansByLayer[layerId] = detail?.spans ?? [];
-      mouseOverGapsByLayer[layerId] = detail?.gaps ?? mouseOverGapsByLayer[layerId] ?? [];
+    // if (layerId != null) {
+    mouseOverActivityDirectives = detail?.activityDirectives ?? [];
+    mouseOverConstraintResults = detail?.constraintResults ?? mouseOverConstraintResults;
+    mouseOverPointsByLayer[layerId] = detail?.points ?? [];
+    mouseOverSpans = detail?.spans ?? [];
+    mouseOverGapsByLayer[layerId] = detail?.gaps ?? mouseOverGapsByLayer[layerId] ?? [];
 
-      dispatch('mouseOver', {
-        ...detail,
-        activityDirectivesByLayer: mouseOverActivityDirectivesByLayer,
-        constraintResults: mouseOverConstraintResults,
-        gapsByLayer: mouseOverGapsByLayer,
-        pointsByLayer: mouseOverPointsByLayer,
-        spansByLayer: mouseOverSpansByLayer,
-      });
-    }
+    dispatch('mouseOver', {
+      ...detail,
+      activityDirectives: mouseOverActivityDirectives,
+      constraintResults: mouseOverConstraintResults,
+      gapsByLayer: mouseOverGapsByLayer,
+      pointsByLayer: mouseOverPointsByLayer,
+      spans: mouseOverSpans,
+    });
+    // }
   }
 
   function onUpdateRowHeightDrag(event: CustomEvent<{ newHeight: number }>) {
@@ -886,6 +830,7 @@
     <!-- Row Header. -->
     <RowHeader
       on:activity-tree-node-change={onActivityTreeNodeChange}
+      on:mouseDown={onMouseDown}
       {activityLayerGroups}
       width={marginLeft}
       height={computedDrawHeight}
@@ -901,6 +846,8 @@
       on:mouseUpRowMove
       on:toggleRowExpansion
       on:contextMenu
+      {selectedActivityDirectiveId}
+      {selectedSpanId}
     >
       {#if hasActivityLayer}
         <button
@@ -1018,52 +965,51 @@
       {/if}
       <!-- Layers of Canvas Visualizations. -->
       <div class="layers" style="width: {drawWidth}px">
+        {#if hasActivityLayer}
+          <LayerActivity
+            {idToColorMaps}
+            {activityLayerGroups}
+            activityDirectives={finalActivityDirectives}
+            spans={finalSpans}
+            {labelMode}
+            {activityDirectivesMap}
+            {hasUpdateDirectivePermission}
+            {showDirectives}
+            {showSpans}
+            {blur}
+            {contextmenu}
+            {dpr}
+            drawHeight={computedDrawHeight}
+            {drawWidth}
+            {focus}
+            {dblclick}
+            {mousedown}
+            {mousemove}
+            {mouseout}
+            {mouseup}
+            mode={packedMode ? 'packed' : 'grouped'}
+            {planEndTimeDoy}
+            {plan}
+            {planStartTimeYmd}
+            {selectedActivityDirectiveId}
+            {selectedSpanId}
+            {simulationDataset}
+            {spanUtilityMaps}
+            {spansMap}
+            {timelineInteractionMode}
+            {timelineLockStatus}
+            {user}
+            {viewTimeRange}
+            {xScaleView}
+            on:contextMenu
+            on:deleteActivityDirective
+            on:dblClick
+            on:mouseDown={onMouseDown}
+            on:mouseOver={onMouseOver}
+            on:updateRowHeight={onUpdateRowHeightLayer}
+          />
+        {/if}
         {#each layers as layer (layer.id)}
-          {#if layer.chartType === 'activity'}
-            <LayerActivity
-              {...layer}
-              {activityLayerGroups}
-              activityDirectives={finalActivityDirectives}
-              spans={finalSpans}
-              {labelMode}
-              {activityDirectivesMap}
-              {hasUpdateDirectivePermission}
-              {showDirectives}
-              {showSpans}
-              {blur}
-              {contextmenu}
-              {dpr}
-              drawHeight={computedDrawHeight}
-              {drawWidth}
-              filter={layer.filter.activity}
-              {focus}
-              {dblclick}
-              {mousedown}
-              {mousemove}
-              {mouseout}
-              {mouseup}
-              mode={packedMode ? 'packed2' : 'test1'}
-              {planEndTimeDoy}
-              {plan}
-              {planStartTimeYmd}
-              {selectedActivityDirectiveId}
-              {selectedSpanId}
-              {simulationDataset}
-              {spanUtilityMaps}
-              {spansMap}
-              {timelineInteractionMode}
-              {timelineLockStatus}
-              {user}
-              {viewTimeRange}
-              {xScaleView}
-              on:contextMenu
-              on:deleteActivityDirective
-              on:dblClick
-              on:mouseDown={onMouseDown}
-              on:mouseOver={onMouseOver}
-              on:updateRowHeight={onUpdateRowHeightLayer}
-            />
-          {/if}
           {#if layer.chartType === 'line' || layer.chartType === 'x-range'}
             <LayerGaps
               {...layer}
