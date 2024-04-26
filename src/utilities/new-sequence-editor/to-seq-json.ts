@@ -1,5 +1,6 @@
 import type { SyntaxNode, Tree } from '@lezer/common';
 import type {
+  ChannelDictionary,
   CommandDictionary,
   FswCommandArgument,
   FswCommandArgumentRepeat,
@@ -43,6 +44,7 @@ export function sequenceToSeqJson(
   text: string,
   commandDictionary: CommandDictionary | null,
   parameterDictionaries: ParameterDictionary[],
+  channelDictionary: ChannelDictionary | null,
   sequenceName: string,
 ): SeqJson {
   const baseNode = node.topNode;
@@ -74,7 +76,7 @@ export function sequenceToSeqJson(
       .getChild('HardwareCommands')
       ?.getChildren('Command')
       .map(command => parseHardwareCommand(command, text)) ?? undefined;
-  customizeSeqJson(seqJson, parameterDictionaries);
+  customizeSeqJson(seqJson, parameterDictionaries, channelDictionary);
   return seqJson;
 }
 

@@ -81,7 +81,7 @@ HDW_CMD`;
       id: 'test',
       metadata: {},
     };
-    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandDictionary, [], id);
+    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandDictionary, [], null, id);
     expect(actual).toEqual(expectedJson);
   });
 
@@ -97,7 +97,7 @@ HDW_CMD_2
       id: 'test',
       metadata: {},
     };
-    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandDictionary, [], id);
+    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandDictionary, [], null, id);
     expect(actual).toEqual(expectedJson);
   });
 
@@ -151,7 +151,7 @@ C FSW_CMD_1 0.123 -2.34 # inline description
         },
       ],
     };
-    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandDictionary, [], id);
+    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandDictionary, [], null, id);
     expect(actual).toEqual(expectedJson);
   });
 
@@ -210,7 +210,7 @@ R71 ECHO    L02STR
         },
       ],
     };
-    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandBanana, [], id);
+    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandBanana, [], null, id);
     expect(actual).toEqual(expectedJson);
   });
 
@@ -269,7 +269,7 @@ R10 PACKAGE_BANANA     2      [    "bundle1"    5 "bundle2" 10]
         },
       ],
     };
-    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandBanana, [], id);
+    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandBanana, [], null, id);
     expect(actual).toEqual(expectedJson);
   });
 
@@ -281,7 +281,7 @@ C ECHO L00STR
 C ECHO "L00STR"
 C ECHO L01STR
     `;
-    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandBanana, [], id);
+    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandBanana, [], null, id);
     const expectedJson = {
       id: 'test.inline',
       locals: [
