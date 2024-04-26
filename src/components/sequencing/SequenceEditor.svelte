@@ -111,12 +111,14 @@
         // Reconfigure sequence editor.
         editorSequenceView.dispatch({
           effects: compartmentSeqLanguage.reconfigure(
-            seq(sequenceCompletion(channelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries)),
+            seq(
+              sequenceCompletion(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
+            ),
           ),
         });
         editorSequenceView.dispatch({
           effects: compartmentSeqLinter.reconfigure(
-            sequenceLinter(channelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
+            sequenceLinter(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
           ),
         });
         editorSequenceView.dispatch({
@@ -176,7 +178,14 @@
     const sequence = viewUpdate.state.doc.toString();
 
     const tree = syntaxTree(viewUpdate.state);
-    const seqJson = sequenceToSeqJson(tree, sequence, commandDictionary, parameterDictionaries, sequenceName);
+    const seqJson = sequenceToSeqJson(
+      tree,
+      sequence,
+      commandDictionary,
+      parameterDictionaries,
+      channelDictionary,
+      sequenceName,
+    );
     const seqJsonStr = JSON.stringify(seqJson, null, 2);
     editorSeqJsonView.dispatch({ changes: { from: 0, insert: seqJsonStr, to: editorSeqJsonView.state.doc.length } });
 
