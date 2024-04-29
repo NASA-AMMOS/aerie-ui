@@ -1,3 +1,4 @@
+import type { ChannelDictionary, ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
 import type {
   Args,
   BooleanArgument,
@@ -13,6 +14,7 @@ import type {
   VariableDeclaration,
 } from '@nasa-jpl/seq-json-schema/types';
 import { quoteEscape } from '../../components/sequencing/form/utils';
+import { customizeSeqJsonParsing } from './extension-points';
 import { logError } from './logger';
 
 /**
@@ -123,10 +125,16 @@ function seqJsonDescriptionToSequence(description: Description): string {
 /**
  * Transforms a sequence JSON to a sequence string.
  */
-export function seqJsonToSequence(seqJson: SeqJson | null): string {
+export function seqJsonToSequence(
+  seqJson: SeqJson | null,
+  parameterDictionaries: ParameterDictionary[],
+  channelDictionary: ChannelDictionary | null,
+): string {
   const sequence: string[] = [];
 
   if (seqJson) {
+    customizeSeqJsonParsing(seqJson, parameterDictionaries, channelDictionary);
+
     // ID
     sequence.push(`@ID "${seqJson.id}"\n`);
 
@@ -216,8 +224,8 @@ export async function parseSeqJsonFromFile(files: FileList | null | undefined): 
     if (file) {
       try {
         const fileText = await file.text();
-        const commandDictionary = JSON.parse(fileText);
-        return commandDictionary;
+        const seqJson = JSON.parse(fileText);
+        return seqJson;
       } catch (e) {
         const errorMessage = (e as Error).message;
         logError(errorMessage);

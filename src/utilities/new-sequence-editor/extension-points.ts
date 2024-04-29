@@ -39,3 +39,11 @@ export function customizeSeqJson(
 ) {
   return globalThis.TO_SEQ_JSON?.(seqJson, parameterDictionaries, channelDictionary) ?? seqJson;
 }
+
+export function customizeSeqJsonParsing(
+  seqJson: SeqJson,
+  parameterDictionaries: ParameterDictionary[],
+  channelDictionary: ChannelDictionary | null,
+) {
+  return globalThis.FROM_SEQ_JSON?.(seqJson, parameterDictionaries, channelDictionary) ?? seqJson;
+}

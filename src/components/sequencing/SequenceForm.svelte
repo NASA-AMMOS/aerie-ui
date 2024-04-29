@@ -3,7 +3,16 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import { parcel, parcels, userSequenceFormColumns } from '../../stores/sequencing';
+  import type { ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
+
+  import {
+    parameterDictionaries as parameterDictionariesStore,
+    parcel,
+    parcelToParameterDictionaries,
+    parcels,
+    userSequenceFormColumns,
+  } from '../../stores/sequencing';
+
   import type { User, UserId } from '../../types/app';
   import { type UserSequence, type UserSequenceInsertInput } from '../../types/sequencing';
   import effects from '../../utilities/effects';
@@ -81,8 +90,33 @@
   }
 
   async function onSeqJsonInput(e: Event & { currentTarget: EventTarget & HTMLInputElement }) {
-    const seqJson = await parseSeqJsonFromFile(e.currentTarget.files);
-    const sequence = seqJsonToSequence(seqJson);
+    // const seqJson = await parseSeqJsonFromFile(e.currentTarget.files);
+    // const sequence = seqJsonToSequence(seqJson, para);
+
+    const unparsedParameterDictionaries = $parameterDictionariesStore.filter(pd => {
+      const parameterDictionary = $parcelToParameterDictionaries.find(p => p.parameter_dictionary_id === pd.id);
+
+      if (parameterDictionary) {
+        return pd;
+      }
+    });
+
+    const [seqJson, parsedChannelDictionary, ...parsedParameterDictionaries] = await Promise.all([
+      parseSeqJsonFromFile(e.currentTarget.files),
+      $parcel?.channel_dictionary_id
+        ? effects.getParsedAmpcsChannelDictionary($parcel?.channel_dictionary_id, user)
+        : null,
+      ...unparsedParameterDictionaries.map(unparsedParameterDictionary => {
+        return effects.getParsedAmpcsParameterDictionary(unparsedParameterDictionary.id, user);
+      }),
+    ]);
+
+    const sequence = seqJsonToSequence(
+      seqJson,
+      parsedParameterDictionaries.filter((pd): pd is ParameterDictionary => pd !== null),
+      parsedChannelDictionary,
+    );
+
     initialSequenceDefinition = sequence;
     sequenceSeqJson = '';
   }
