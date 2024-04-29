@@ -68,6 +68,7 @@ export type UserSequence = {
   name: string;
   owner: UserId;
   parcel_id: number;
+  seq_json: SeqJson;
   updated_at: string;
 };
 
