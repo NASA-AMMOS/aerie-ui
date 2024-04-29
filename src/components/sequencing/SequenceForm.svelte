@@ -90,9 +90,6 @@
   }
 
   async function onSeqJsonInput(e: Event & { currentTarget: EventTarget & HTMLInputElement }) {
-    // const seqJson = await parseSeqJsonFromFile(e.currentTarget.files);
-    // const sequence = seqJsonToSequence(seqJson, para);
-
     const unparsedParameterDictionaries = $parameterDictionariesStore.filter(pd => {
       const parameterDictionary = $parcelToParameterDictionaries.find(p => p.parameter_dictionary_id === pd.id);
 
