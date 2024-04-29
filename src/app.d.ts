@@ -64,6 +64,11 @@ declare global {
     parameterDictionaries: ParameterDictionary[],
     channelDictionary: ChannelDictionary | null,
   );
+  function FROM_SEQ_JSON(
+    seqJson: SeqJson,
+    parameterDictionaries: ParameterDictionary[],
+    channelDictionary: ChannelDictionary | null,
+  );
 }
 
 export {};
