@@ -47,7 +47,7 @@
   export let user: User | null;
 
   const dispatch = createEventDispatcher<{
-    sequence: string;
+    sequence: { seqJson: string; sequence: string };
   }>();
 
   let clientHeightGridRightBottom: number;
@@ -188,7 +188,7 @@
     const seqJsonStr = JSON.stringify(seqJson, null, 2);
     editorSeqJsonView.dispatch({ changes: { from: 0, insert: seqJsonStr, to: editorSeqJsonView.state.doc.length } });
 
-    dispatch('sequence', sequence);
+    dispatch('sequence', { seqJson: seqJsonStr, sequence });
   }
 
   function selectedCommandUpdateListener(viewUpdate: ViewUpdate) {
@@ -206,7 +206,6 @@
 
   function downloadSeqJson() {
     const a = document.createElement('a');
-    // TODO -- we should write to Hasura in save action
     a.href = URL.createObjectURL(new Blob([editorSeqJsonView.state.doc.toString()], { type: 'application/json' }));
     a.download = sequenceName;
     a.click();
