@@ -118,8 +118,11 @@
     sequenceSeqJson = '';
   }
 
-  function onSequenceChange(event: CustomEvent) {
-    sequenceDefinition = event.detail;
+  function onSequenceChange(event: CustomEvent<{ seqJson: string; sequence: string }>) {
+    const { detail } = event;
+    const { seqJson, sequence } = detail;
+    sequenceDefinition = sequence;
+    sequenceSeqJson = seqJson;
   }
 
   function onDidChangeModelContent(event: CustomEvent<{ value: string }>) {
@@ -145,6 +148,7 @@
             definition: sequenceDefinition,
             name: sequenceName,
             parcel_id: sequenceParcelId,
+            seq_json: sequenceSeqJson,
           };
           const newSequenceId = await effects.createUserSequence(newSequence, user);
 
@@ -156,6 +160,7 @@
             definition: sequenceDefinition,
             name: sequenceName,
             parcel_id: sequenceParcelId,
+            seq_json: sequenceSeqJson,
           };
           const updated_at = await effects.updateUserSequence(sequenceId, updatedSequence, sequenceOwner, user);
           if (updated_at !== null) {
