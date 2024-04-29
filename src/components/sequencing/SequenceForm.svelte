@@ -3,9 +3,9 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import { parcels, userSequenceFormColumns } from '../../stores/sequencing';
+  import { parcel, parcels, userSequenceFormColumns } from '../../stores/sequencing';
   import type { User, UserId } from '../../types/app';
-  import { type Parcel, type UserSequence, type UserSequenceInsertInput } from '../../types/sequencing';
+  import { type UserSequence, type UserSequenceInsertInput } from '../../types/sequencing';
   import effects from '../../utilities/effects';
   import { isSaveEvent } from '../../utilities/keyboardEvents';
   import { parseSeqJsonFromFile, seqJsonToSequence } from '../../utilities/new-sequence-editor/from-seq-json';
@@ -29,7 +29,6 @@
   export let user: User | null;
 
   let hasPermission: boolean = false;
-  let parcel: Parcel | null = null;
   let pageSubtitle: string = '';
   let pageTitle: string = '';
   let permissionError = 'You do not have permission to edit this sequence.';
@@ -65,15 +64,15 @@
   }
   $: {
     if (sequenceParcelId) {
-      parcel = $parcels.find(p => p.id === sequenceParcelId) ?? null;
+      $parcel = $parcels.find(p => p.id === sequenceParcelId) ?? null;
 
-      loadSequenceAdaptation();
+      loadSequenceAdaptation($parcel?.sequence_adaptation_id);
     }
   }
 
-  async function loadSequenceAdaptation(): Promise<void> {
-    if (parcel?.sequence_adaptation_id) {
-      const adaptation = await effects.getSequenceAdaptation(parcel?.sequence_adaptation_id, user);
+  async function loadSequenceAdaptation(id: number | null | undefined): Promise<void> {
+    if (id) {
+      const adaptation = await effects.getSequenceAdaptation(id, user);
 
       if (adaptation) {
         Function(adaptation.adaptation)();
@@ -241,7 +240,6 @@
   <CssGridGutter track={1} type="column" />
 
   <SequenceEditor
-    {parcel}
     showCommandFormBuilder={true}
     sequenceDefinition={initialSequenceDefinition}
     {sequenceName}

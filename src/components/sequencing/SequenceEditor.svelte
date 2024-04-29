@@ -17,13 +17,13 @@
     channelDictionaries,
     commandDictionaries,
     parameterDictionaries as parameterDictionariesStore,
+    parcel,
     parcelToParameterDictionaries,
     userSequenceEditorColumns,
     userSequenceEditorColumnsWithFormBuilder,
     userSequencesRows,
   } from '../../stores/sequencing';
   import type { User } from '../../types/app';
-  import type { Parcel } from '../../types/sequencing';
   import effects from '../../utilities/effects';
   import { seqJsonLinter } from '../../utilities/new-sequence-editor/seq-json-linter';
   import { sequenceCompletion } from '../../utilities/new-sequence-editor/sequence-completion';
@@ -38,7 +38,6 @@
   import SectionTitle from '../ui/SectionTitle.svelte';
   import SelectedCommand from './form/selected-command.svelte';
 
-  export let parcel: Parcel | null = null;
   export let showCommandFormBuilder: boolean = false;
   export let readOnly: boolean = false;
   export let sequenceName: string = '';
@@ -82,8 +81,8 @@
   }
 
   $: {
-    const unparsedChannelDictionary = $channelDictionaries.find(cd => cd.id === parcel?.channel_dictionary_id);
-    const unparsedCommandDictionary = $commandDictionaries.find(cd => cd.id === parcel?.command_dictionary_id);
+    const unparsedChannelDictionary = $channelDictionaries.find(cd => cd.id === $parcel?.channel_dictionary_id);
+    const unparsedCommandDictionary = $commandDictionaries.find(cd => cd.id === $parcel?.command_dictionary_id);
     const unparsedParameterDictionaries = $parameterDictionariesStore.filter(pd => {
       const parameterDictionary = $parcelToParameterDictionaries.find(p => p.parameter_dictionary_id === pd.id);
 

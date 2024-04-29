@@ -4,7 +4,7 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import type { ICellRendererParams } from 'ag-grid-community';
-  import { userSequences, userSequencesColumns } from '../../stores/sequencing';
+  import { parcel, userSequences, userSequencesColumns } from '../../stores/sequencing';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef, DataGridRowSelection, RowId } from '../../types/data-grid';
   import type { UserSequence } from '../../types/sequencing';
@@ -64,8 +64,17 @@
 
   $: if (selectedSequence !== null) {
     const found = $userSequences.findIndex(sequence => sequence.id === selectedSequence?.id);
+
     if (found === -1) {
       selectedSequence = null;
+    }
+
+    setParcel();
+  }
+
+  async function setParcel(): Promise<void> {
+    if (selectedSequence !== null) {
+      $parcel = await effects.getParcel(selectedSequence.parcel_id, user);
     }
   }
 
@@ -204,7 +213,6 @@
   <CssGridGutter track={1} type="column" />
 
   <SequenceEditor
-    parcelId={selectedSequence?.parcel_id}
     showCommandFormBuilder={false}
     sequenceDefinition={selectedSequence?.definition ?? ''}
     sequenceName={selectedSequence?.name}
