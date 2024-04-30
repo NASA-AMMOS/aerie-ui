@@ -5,6 +5,7 @@
   import { base } from '$app/paths';
   import type { ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
 
+  import { onDestroy } from 'svelte';
   import {
     parameterDictionaries as parameterDictionariesStore,
     parcel,
@@ -12,7 +13,6 @@
     parcels,
     userSequenceFormColumns,
   } from '../../stores/sequencing';
-
   import type { User, UserId } from '../../types/app';
   import { type UserSequence, type UserSequenceInsertInput } from '../../types/sequencing';
   import effects from '../../utilities/effects';
@@ -79,6 +79,19 @@
     }
   }
 
+  onDestroy(() => {
+    resetSequenceAdaptation();
+  });
+
+  function resetSequenceAdaptation(): void {
+    globalThis.CONDITIONAL_KEYWORDS = undefined;
+    globalThis.LOOP_KEYWORDS = undefined;
+    globalThis.GLOBALS = undefined;
+    globalThis.ARG_DELEGATOR = undefined;
+    globalThis.LINT = () => undefined;
+    globalThis.TO_SEQ_JSON = () => undefined;
+  }
+
   async function loadSequenceAdaptation(id: number | null | undefined): Promise<void> {
     if (id) {
       const adaptation = await effects.getSequenceAdaptation(id, user);
@@ -86,6 +99,8 @@
       if (adaptation) {
         Function(adaptation.adaptation)();
       }
+    } else {
+      resetSequenceAdaptation();
     }
   }
 
