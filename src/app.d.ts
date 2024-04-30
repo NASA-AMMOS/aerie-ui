@@ -49,15 +49,17 @@ declare global {
     export default content;
   }
 
-  var CONDITIONAL_KEYWORDS: { ELSE: string; ELSE_IF?: string[]; END_IF: string; IF: string[] };
-  var LOOP_KEYWORDS: {
-    BREAK: string;
-    CONTINUE: string;
-    END_WHILE_LOOP: string;
-    WHILE_LOOP: string[];
-  };
-  var GLOBALS: GlobalType[];
-  var ARG_DELEGATOR: ArgDelegator;
+  var CONDITIONAL_KEYWORDS: { ELSE: string; ELSE_IF?: string[]; END_IF: string; IF: string[] } | undefined;
+  var LOOP_KEYWORDS:
+    | {
+        BREAK: string;
+        CONTINUE: string;
+        END_WHILE_LOOP: string;
+        WHILE_LOOP: string[];
+      }
+    | undefined;
+  var GLOBALS: GlobalType[] | undefined;
+  var ARG_DELEGATOR: ArgDelegator | undefined;
   function LINT(commandDictionary, view, node);
   function TO_SEQ_JSON(
     seqJson: SeqJson,
