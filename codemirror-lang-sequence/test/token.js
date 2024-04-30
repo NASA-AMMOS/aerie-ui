@@ -15,6 +15,9 @@ const ACTIVATE_NODE = 'Activate';
 const LOAD_NODE = 'Load';
 const GROUND_BLOCK_NODE = 'GroundBlock';
 const GROUND_EVENT_NODE = 'GroundEvent';
+const REQUEST_NODE = 'Request';
+const COMMAND_NODE = 'Command';
+const OBJECT_NODE = 'Object';
 
 function getMetaType(node) {
   return node.firstChild.nextSibling.firstChild.name;
@@ -75,8 +78,8 @@ C STEM
     assert.equal(metaEntries.length, 4);
     assert.equal(getMetaType(metaEntries[0]), 'Array');
     assert.equal(getMetaType(metaEntries[1]), 'Array');
-    assert.equal(getMetaType(metaEntries[2]), 'Object');
-    assert.equal(getMetaType(metaEntries[3]), 'Object');
+    assert.equal(getMetaType(metaEntries[2]), OBJECT_NODE);
+    assert.equal(getMetaType(metaEntries[3]), OBJECT_NODE);
     assert.deepStrictEqual(getMetaValue(metaEntries[0], input), [1, 2, 3]);
     assert.deepStrictEqual(getMetaValue(metaEntries[1], input), ['a', true, 2]);
     assert.deepStrictEqual(getMetaValue(metaEntries[2], input), {
@@ -119,7 +122,7 @@ describe('seqgen directives', () => {
 
     `;
     const parseTree = SeqLanguage.parser.parse(input);
-    assertNoErrorNodes(input, true);
+    assertNoErrorNodes(input);
     const activates = parseTree.topNode.firstChild.getChildren(LOAD_NODE);
     assert.equal(activates.length, 2);
   });
@@ -135,7 +138,7 @@ describe('seqgen directives', () => {
 
     `;
     const parseTree = SeqLanguage.parser.parse(input);
-    assertNoErrorNodes(input, true);
+    assertNoErrorNodes(input);
     const loads = parseTree.topNode.firstChild.getChildren(LOAD_NODE);
     assert.equal(loads.length, 2);
   });
@@ -148,11 +151,38 @@ describe('seqgen directives', () => {
 
     `;
     const parseTree = SeqLanguage.parser.parse(input);
-    assertNoErrorNodes(input, true);
+    assertNoErrorNodes(input);
     const groundBlocks = parseTree.topNode.firstChild.getChildren(GROUND_BLOCK_NODE);
     assert.equal(groundBlocks.length, 1);
     const groundEvents = parseTree.topNode.firstChild.getChildren(GROUND_EVENT_NODE);
     assert.equal(groundEvents.length, 1);
+  });
+
+  it('requests', () => {
+    const input = `
+@REQUEST_START A2024-123T12:34:56 "request.name" # No Args
+C CMD_1 1 2 3
+R100 CMD_2 "1 2 3"
+@REQUEST_END
+
+@REQUEST_START @GROUND_EPOCH "Delta" "Name" { "extra": true } "request.name" # No Args
+C CMD_1 1 2 3
+R100 CMD_2 "1 2 3"
+C CMD_1 1 2 3
+R100 CMD_2 "1 2 3"
+@REQUEST_END
+
+    `;
+    const parseTree = SeqLanguage.parser.parse(input);
+    assertNoErrorNodes(input);
+    const requests = parseTree.topNode.firstChild.getChildren(REQUEST_NODE);
+    assert.equal(requests.length, 2);
+
+    assert.equal(requests[0].getChildren(COMMAND_NODE).length, 2);
+    assert.equal(requests[1].getChildren(COMMAND_NODE).length, 4);
+    const groundEpochNode1 = requests[1].getChild('GroundEpoch');
+    const groundEpochObject = groundEpochNode1.getChild(OBJECT_NODE);
+    assert.deepStrictEqual(JSON.parse(input.slice(groundEpochObject.from, groundEpochObject.to)), { extra: true });
   });
 });
 
@@ -257,7 +287,6 @@ CMD0
     const cursor = parseTree.cursor();
     do {
       const { node } = cursor;
-      // printNode(input, node);
       if ([LINE_COMMENT_TOKEN, STEM_TOKEN].includes(node.type.name)) {
         const { to, from } = node;
         if (actualCommentLocations[node.type.name] === undefined) {
@@ -283,6 +312,9 @@ CMD0
 
 function assertNoErrorNodes(input, verbose) {
   const cursor = SeqLanguage.parser.parse(input).cursor();
+  if (verbose) {
+    console.log('---STARTING---');
+  }
   do {
     const { node } = cursor;
     if (verbose) {

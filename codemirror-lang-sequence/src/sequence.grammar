@@ -42,6 +42,7 @@ commandBlock {
     GroundBlock |
     GroundEvent |
     Load |
+    Request |
     commentLine ~maybeComments
   )+
 }
@@ -121,6 +122,20 @@ Command {
   newLine
   Metadata?
   Models?
+}
+
+Request {
+  requestStartDirective whiteSpace
+  (TimeTag  | GroundEpoch {
+    groundEpochDirective
+    whiteSpace Delta { String }
+    whiteSpace Name { String }
+    (whiteSpace Object)?
+    whiteSpace
+  })
+  RequestName { String } whiteSpace? LineComment? newLine
+  Command*
+  requestEndDirective newLine
 }
 
 Metadata {
@@ -209,8 +224,11 @@ Stem { !stemStart identifier }
   epochDirective { "@EPOCH" }
   groundBlockDirective { "@GROUND_BLOCK" }
   groundEventDirective { "@GROUND_EVENT" }
+  groundEpochDirective { "@GROUND_EPOCH" }
   metadataDirective { "@METADATA" }
   modelDirective { "@MODEL" }
+  requestStartDirective { "@REQUEST_START" }
+  requestEndDirective { "@REQUEST_END" }
   genericDirective { "@"identifier }
 
   @precedence { newLine, whiteSpace }
@@ -230,6 +248,9 @@ Stem { !stemStart identifier }
     loadDirective,
     groundBlockDirective,
     groundEventDirective,
+    groundEpochDirective,
+    requestStartDirective,
+    requestEndDirective,
     engineDirective,
     epochDirective,
     genericDirective,
