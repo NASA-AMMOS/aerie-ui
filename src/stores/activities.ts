@@ -3,17 +3,17 @@ import type {
   ActivityDirective,
   ActivityDirectiveId,
   ActivityDirectiveValidationStatus,
-  ActivityDirectivesByView,
   ActivityDirectivesMap,
   AnchorValidationStatus,
 } from '../types/activity';
 import type { ActivityMetadataDefinition } from '../types/activity-metadata';
 import type { SpanId } from '../types/simulation';
 import gql from '../utilities/gql';
-import { planId } from './plan';
-import { selectedSpanId } from './simulation';
+import { getActivityDirectiveStartTimeMs } from '../utilities/time';
+import { initialPlan, planId } from './plan';
+import { selectedSpanId, spanUtilityMaps, spansMap } from './simulation';
 import { gqlSubscribable } from './subscribable';
-import { view, viewUpdateGrid } from './views';
+import { viewUpdateGrid } from './views';
 
 /* Subscriptions. */
 
@@ -54,56 +54,25 @@ export const selectedActivityDirectiveId: Writable<ActivityDirectiveId | null> =
 /* Derived. */
 
 export const activityDirectivesList: Readable<ActivityDirective[]> = derived(
-  activityDirectivesMap,
-  $activityDirectivesMap => Object.values($activityDirectivesMap),
-);
-
-export const activityDirectivesByView: Readable<ActivityDirectivesByView> = derived(
-  [activityDirectivesList, view],
-  ([$activityDirectivesList, $view]) => {
-    const byLayerId: Record<number, ActivityDirective[]> = {};
-    const byTimelineId: Record<number, ActivityDirective[]> = {};
-
-    if ($view) {
-      const { definition } = $view;
-      const { plan } = definition;
-      const { timelines } = plan;
-      for (const activityDirective of $activityDirectivesList) {
-        for (const timeline of timelines) {
-          const { rows } = timeline;
-
-          for (const row of rows) {
-            const { layers } = row;
-
-            for (const layer of layers) {
-              const { filter } = layer;
-
-              if (filter.activity !== undefined) {
-                const { activity: activityFilter } = filter;
-                const { types } = activityFilter;
-                const includeActivity = types.indexOf(activityDirective.type) > -1;
-
-                if (includeActivity) {
-                  if (byLayerId[layer.id] === undefined) {
-                    byLayerId[layer.id] = [activityDirective];
-                  } else {
-                    byLayerId[layer.id].push(activityDirective);
-                  }
-
-                  if (byTimelineId[timeline.id] === undefined) {
-                    byTimelineId[timeline.id] = [activityDirective];
-                  } else {
-                    byTimelineId[timeline.id].push(activityDirective);
-                  }
-                }
-              }
-            }
-          }
-        }
+  [activityDirectivesMap, initialPlan, spansMap, spanUtilityMaps],
+  ([$activityDirectivesMap, $initialPlan, $spansMap, $spanUtilityMaps]) => {
+    const cachedStartTimes = {};
+    return Object.values($activityDirectivesMap).map(directive => {
+      if (!$initialPlan || !$initialPlan.start_time) {
+        return directive;
       }
-    }
-
-    return { byLayerId, byTimelineId };
+      const startTimeMs = getActivityDirectiveStartTimeMs(
+        directive.id,
+        $initialPlan.start_time,
+        $initialPlan.end_time_doy,
+        $activityDirectivesMap,
+        $spansMap,
+        $spanUtilityMaps,
+        cachedStartTimes,
+      );
+      directive.start_time_ms = startTimeMs;
+      return directive;
+    });
   },
 );
 

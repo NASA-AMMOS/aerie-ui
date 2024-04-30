@@ -19,12 +19,7 @@
     resourceTypesLoading,
   } from '../../stores/simulation';
   import { selectedRow } from '../../stores/views';
-  import type {
-    ActivityDirective,
-    ActivityDirectiveId,
-    ActivityDirectivesByView,
-    ActivityDirectivesMap,
-  } from '../../types/activity';
+  import type { ActivityDirective, ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { ConstraintResultWithName } from '../../types/constraint';
   import type { Plan } from '../../types/plan';
@@ -38,6 +33,7 @@
     SpanUtilityMaps,
   } from '../../types/simulation';
   import type {
+    ActivityLayer,
     Axis,
     HorizontalGuide,
     Layer,
@@ -53,7 +49,7 @@
   import { sampleProfiles } from '../../utilities/resources';
   import { getSimulationStatus } from '../../utilities/simulation';
   import { pluralize } from '../../utilities/text';
-  import { getActivityDirectiveStartTimeMs, getDoyTime } from '../../utilities/time';
+  import { getDoyTime } from '../../utilities/time';
   import {
     getYAxesWithScaleDomains,
     isXRangeLayer,
@@ -63,7 +59,7 @@
   } from '../../utilities/timeline';
   import { tooltip } from '../../utilities/tooltip';
   import ConstraintViolations from './ConstraintViolations.svelte';
-  import LayerActivity from './LayerActivity.svelte';
+  import LayerActivities from './LayerActivities.svelte';
   import LayerGaps from './LayerGaps.svelte';
   import LayerLine from './LayerLine.svelte';
   import LayerXRange from './LayerXRange.svelte';
@@ -73,7 +69,7 @@
   import RowXAxisTicks from './RowXAxisTicks.svelte';
   import RowYAxisTicks from './RowYAxisTicks.svelte';
 
-  export let activityDirectivesByView: ActivityDirectivesByView = { byLayerId: {}, byTimelineId: {} };
+  export let activityDirectives: ActivityDirective[] = [];
   export let activityDirectivesMap: ActivityDirectivesMap = {};
   export let autoAdjustHeight: boolean = false;
   export let constraintResults: ConstraintResultWithName[] = [];
@@ -153,9 +149,12 @@
   let loadingErrors: string[];
   let anyResourcesLoading: boolean = true;
   let activityLayerGroups = [];
-  let finalActivityDirectives = [];
-  let finalSpans = [];
-  let idToColorMaps = { directives: {}, spans: {} };
+  let filteredActivityDirectives: ActivityDirective[] = [];
+  let filteredSpans: Span[] = [];
+  let idToColorMaps: { directives: Record<number, string>; spans: Record<number, string> } = {
+    directives: {},
+    spans: {},
+  };
   let activityTreeExpansionMap = {};
   let filterActivitiesByTime = false;
   let packedMode = false;
@@ -345,62 +344,55 @@
   $: if (
     hasActivityLayer &&
     spansMap &&
-    activityDirectivesByView?.byLayerId &&
+    activityDirectives /* TODO pass in */ &&
     typeof filterActivitiesByTime === 'boolean'
   ) {
     // TODO manage this cache more correctly/better/in a store?
-    activityDirectiveTimeCache = {};
+    // activityDirectiveTimeCache = {};
     activityLayerGroups = [];
     idToColorMaps = { directives: {}, spans: {} };
 
-    const activityLayers = layers.filter(layer => layer.chartType === 'activity');
+    const activityLayers = layers.filter(layer => layer.chartType === 'activity') as ActivityLayer[];
     if (activityLayers.length) {
-      let directives = [];
-      let spans = [];
+      let directives: ActivityDirective[] = [];
+      let spans: Span[] = [];
       activityLayers.forEach(layer => {
-        // TODO get rid of activityDirectivesByView concept and compute it on the fly
-        // using the layer filters
-        const layerDirectives = activityDirectivesByView.byLayerId[layer.id];
-        if (layerDirectives) {
-          layerDirectives.forEach(d => (idToColorMaps.directives[d.id] = layer.activityColor));
-          // TODO consider making a directivesInView map
-          directives = directives.concat(layerDirectives);
-        }
-        let layerSpans = Object.values(spansMap);
+        let spansList = Object.values(spansMap);
         // TODO util for filtering activities/spans
         if (layer.filter && layer.filter.activity !== undefined) {
-          const a = performance.now();
+          // const a = performance.now();
           const types = layer.filter.activity.types;
-          const typeMap = types.reduce((acc, next) => {
+          const typeMap = types.reduce((acc: Record<string, boolean>, next) => {
             acc[next] = true;
             return acc;
           }, {});
-          // const newSpans = [];
-          layerSpans.forEach(span => {
+          activityDirectives.forEach(directive => {
+            if (typeMap[directive.type]) {
+              idToColorMaps.directives[directive.id] = layer.activityColor;
+              // TODO consider making a directivesInView map
+              directives.push(directive);
+            }
+          });
+          spansList.forEach(span => {
             if (typeMap[span.type]) {
-              // span.color = layer.activityColor;
-              // newSpans.push({ ...span, color: layer.activityColor });
               idToColorMaps.spans[span.id] = layer.activityColor;
               // TODO consider making a spansInView map
               spans.push(span);
-              // span
             }
           });
-          // layerSpans = newSpans;
         }
-        // spans = spans.concat(layerSpans);
       });
       spans.sort((a, b) => (a.startMs < b.startMs ? -1 : 1));
       if (directives.length || spans.length) {
-        finalActivityDirectives = directives;
-        finalSpans = spans;
+        filteredActivityDirectives = directives;
+        filteredSpans = spans;
       }
     }
   }
 
   $: if (
-    finalActivityDirectives &&
-    finalSpans &&
+    filteredActivityDirectives &&
+    filteredSpans &&
     typeof showSpans === 'boolean' &&
     typeof showDirectives === 'boolean'
   ) {
@@ -408,13 +400,13 @@
     if (!packedMode) {
       if (flatMode) {
         activityLayerGroups = generateActivityTreeFlat(
-          finalActivityDirectives,
-          finalSpans,
+          filteredActivityDirectives,
+          filteredSpans,
           activityTreeExpansionMap,
           viewTimeRange,
         );
       } else {
-        activityLayerGroups = generateActivityTree(finalActivityDirectives, activityTreeExpansionMap, viewTimeRange);
+        activityLayerGroups = generateActivityTree(filteredActivityDirectives, activityTreeExpansionMap, viewTimeRange);
       }
     } else {
       activityLayerGroups = [];
@@ -439,23 +431,13 @@
   }
 
   function generateActivityTreeFlat(directives: ActivityDirective[], spans: Span[], visibilityMap, viewTimeRange) {
-    const tree = [];
     let computedDirectives = directives;
     let computedSpans = spans;
     if (filterActivitiesByTime) {
       computedSpans = computedSpans.filter(span => spanInView(span, viewTimeRange));
       computedDirectives = directives.filter(directive => {
-        const directiveStartTime = getActivityDirectiveStartTimeMs(
-          directive.id,
-          planStartTimeYmd,
-          planEndTimeDoy,
-          activityDirectivesMap,
-          spansMap,
-          spanUtilityMaps,
-          activityDirectiveTimeCache,
-        );
-
-        const directiveInView = directiveStartTime >= viewTimeRange.start && directiveStartTime < viewTimeRange.end;
+        const directiveInView =
+          directive.start_time_ms >= viewTimeRange.start && directive.start_time_ms < viewTimeRange.end;
         if (!directiveInView && showSpans) {
           // Get max span bounds
           const rootSpanId = spanUtilityMaps.directiveIdToSpanIdMap[directive.id];
@@ -468,12 +450,7 @@
         return directiveInView;
       });
     }
-    /* Steps
-      1. Group spans by type
-      2. For each span within each group, tack on the directive if the span has an immediate directive parent
-     */
 
-    // TODO filter by activity filter?
     // TODO duplicates appear when you have two layers with the same type
     const groupedSpans = showSpans ? groupBy(computedSpans, 'type') : {};
     const groupedDirectives = showDirectives ? groupBy(computedDirectives, 'type') : {};
@@ -513,17 +490,18 @@
     if (filterActivitiesByTime) {
       computedDirectives = directives.filter(directive => {
         // TODO get from cache
-        const directiveStartTime = getActivityDirectiveStartTimeMs(
-          directive.id,
-          planStartTimeYmd,
-          planEndTimeDoy,
-          activityDirectivesMap,
-          spansMap,
-          spanUtilityMaps,
-          activityDirectiveTimeCache,
-        );
+        // const directiveStartTime = getActivityDirectiveStartTimeMs(
+        //   directive.id,
+        //   planStartTimeYmd,
+        //   planEndTimeDoy,
+        //   activityDirectivesMap,
+        //   spansMap,
+        //   spanUtilityMaps,
+        //   activityDirectiveTimeCache,
+        // );
 
-        const directiveInView = directiveStartTime >= viewTimeRange.start && directiveStartTime < viewTimeRange.end;
+        const directiveInView =
+          directive.start_time_ms >= viewTimeRange.start && directive.start_time_ms < viewTimeRange.end;
         if (!directiveInView) {
           // Get max span bounds
           const rootSpanId = spanUtilityMaps.directiveIdToSpanIdMap[directive.id];
@@ -536,7 +514,7 @@
         return directiveInView;
       });
     }
-    const groupedDirectives = groupBy(computedDirectives, 'type');
+    const groupedDirectives: Record<string, ActivityDirective[]> = groupBy(computedDirectives, 'type');
     // Activities grouped by type
     Object.keys(groupedDirectives)
       .sort()
@@ -544,25 +522,7 @@
         // Specific Activity type
         const directiveGroup = groupedDirectives[type];
         directiveGroup.sort((a, b) => {
-          const aTime = getActivityDirectiveStartTimeMs(
-            a.id,
-            planStartTimeYmd,
-            planEndTimeDoy,
-            activityDirectivesMap,
-            spansMap,
-            spanUtilityMaps,
-            activityDirectiveTimeCache,
-          );
-          const bTime = getActivityDirectiveStartTimeMs(
-            b.id,
-            planStartTimeYmd,
-            planEndTimeDoy,
-            activityDirectivesMap,
-            spansMap,
-            spanUtilityMaps,
-            activityDirectiveTimeCache,
-          );
-          return aTime < bTime ? -1 : 0;
+          return (a.start_time_ms || 0) < (b.start_time_ms || 0) ? -1 : 0;
         });
         const label = type;
         const id = type;
@@ -652,7 +612,6 @@
             spans: spanGroup,
             groups: expanded
               ? spanGroup
-                  // .slice(0, 10)
                   .map(spanChild =>
                     getSpanSubtree(spanChild, id, activityTreeExpansionMap, 'span', filterActivitiesByTime),
                   )
@@ -681,7 +640,6 @@
   }
 
   function onActivityTreeNodeChange(e) {
-    console.log('CHANGE');
     const group = e.detail;
     activityTreeExpansionMap = { ...activityTreeExpansionMap, [group.id]: !group.expanded };
   }
@@ -766,7 +724,6 @@
   function onMouseOver(event: CustomEvent<RowMouseOverEvent>) {
     const { detail } = event;
     const { layerId } = detail;
-
     // if (layerId != null) {
     mouseOverActivityDirectives = detail?.activityDirectives ?? [];
     mouseOverConstraintResults = detail?.constraintResults ?? mouseOverConstraintResults;
@@ -966,11 +923,11 @@
       <!-- Layers of Canvas Visualizations. -->
       <div class="layers" style="width: {drawWidth}px">
         {#if hasActivityLayer}
-          <LayerActivity
+          <LayerActivities
             {idToColorMaps}
             {activityLayerGroups}
-            activityDirectives={finalActivityDirectives}
-            spans={finalSpans}
+            activityDirectives={filteredActivityDirectives}
+            spans={filteredSpans}
             {labelMode}
             {activityDirectivesMap}
             {hasUpdateDirectivePermission}
@@ -993,7 +950,6 @@
             {planStartTimeYmd}
             {selectedActivityDirectiveId}
             {selectedSpanId}
-            {simulationDataset}
             {spanUtilityMaps}
             {spansMap}
             {timelineInteractionMode}

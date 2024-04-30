@@ -7,7 +7,7 @@
   import { afterUpdate, createEventDispatcher, onDestroy, onMount, tick } from 'svelte';
   import { SOURCES, TRIGGERS, dndzone } from 'svelte-dnd-action';
   import { viewUpdateTimeline } from '../../stores/views';
-  import type { ActivityDirectiveId, ActivityDirectivesByView, ActivityDirectivesMap } from '../../types/activity';
+  import type { ActivityDirective, ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { ConstraintResultWithName } from '../../types/constraint';
   import type { Plan } from '../../types/plan';
@@ -52,7 +52,7 @@
   import Tooltip from './Tooltip.svelte';
   import TimelineXAxis from './XAxis.svelte';
 
-  export let activityDirectivesByView: ActivityDirectivesByView = { byLayerId: {}, byTimelineId: {} };
+  export let activityDirectives: ActivityDirective[] = [];
   export let activityDirectivesMap: ActivityDirectivesMap = {};
   export let constraintResults: ConstraintResultWithName[] = [];
   export let hasUpdateDirectivePermission: boolean = false;
@@ -405,9 +405,7 @@
     {/if}
     <div class="timeline-histogram-container">
       <TimelineHistogram
-        activityDirectives={timeline && activityDirectivesByView?.byTimelineId[timeline.id]
-          ? activityDirectivesByView.byTimelineId[timeline.id]
-          : []}
+        {activityDirectives}
         {constraintResults}
         {cursorEnabled}
         drawHeight={timelineHistogramDrawHeight}
@@ -476,7 +474,7 @@
       {#each rows as row (row.id)}
         <div class="timeline-row-wrapper">
           <TimelineRow
-            {activityDirectivesByView}
+            {activityDirectives}
             {activityDirectivesMap}
             autoAdjustHeight={row.autoAdjustHeight}
             {constraintResults}

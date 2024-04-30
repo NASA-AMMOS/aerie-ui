@@ -2,7 +2,7 @@
 
 <script lang="ts">
   import {
-    activityDirectivesByView,
+    activityDirectivesList,
     activityDirectivesMap,
     selectActivity,
     selectedActivityDirectiveId,
@@ -283,7 +283,7 @@
       {interpolateHoverValue}
       {limitTooltipToLine}
       {showTimelineTooltip}
-      activityDirectivesByView={$activityDirectivesByView}
+      activityDirectives={$activityDirectivesList}
       activityDirectivesMap={$activityDirectivesMap}
       constraintResults={$visibleConstraintResults}
       {hasUpdateDirectivePermission}

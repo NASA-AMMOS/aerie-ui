@@ -7,11 +7,6 @@ import type { ArgumentsMap, ParametersMap } from './parameter';
 import type { ValueSchema } from './schema';
 import type { Tag } from './tags';
 
-export type ActivityDirectivesByView = {
-  byLayerId: Record<number, ActivityDirective[]>;
-  byTimelineId: Record<number, ActivityDirective[]>;
-};
-
 export type ActivityType = {
   computed_attributes_value_schema: ValueSchema;
   name: string;
@@ -49,6 +44,7 @@ export type ActivityDirective = {
   plan_id: number;
   source_scheduling_goal_id: number | null;
   start_offset: string;
+  start_time_ms: number | null; // TODO not from db, computed on the fly, how to handle this? Extend the type? Call it computed_start_time_ms?
   tags: { tag: Tag }[];
   type: string;
 };

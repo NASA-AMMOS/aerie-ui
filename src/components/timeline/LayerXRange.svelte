@@ -127,7 +127,7 @@
 
     for (let i = pointsStartIndex; i < points.length; ++i) {
       if (performance.now() - startTime > WORK_TIME_THRESHOLD) {
-        drawPointsRequest = window.requestAnimationFrame(() => drawPoints(points, i + 1));
+        drawPointsRequest = window.requestAnimationFrame(() => drawPoints(points, i));
         return;
       }
 

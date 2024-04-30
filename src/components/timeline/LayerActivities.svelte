@@ -3,24 +3,14 @@
 <script lang="ts">
   import { browser } from '$app/environment';
   import ActivityAnchorIconSVG from '@nasa-jpl/stellar/icons/activity_anchor.svg?raw';
-  import ActivityDirectiveIconSVG from '@nasa-jpl/stellar/icons/activity_directive.svg?raw';
   import { quadtree as d3Quadtree, type Quadtree } from 'd3-quadtree';
   import { type ScaleTime } from 'd3-scale';
   import { createEventDispatcher, onDestroy, onMount, tick } from 'svelte';
-  import SpanHashMarksSVG from '../../assets/span-hash-marks.svg?raw';
   import type { ActivityDirective, ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { Plan } from '../../types/plan';
-  import type { SimulationDataset, Span, SpanId, SpansMap, SpanUtilityMaps } from '../../types/simulation';
-  import type {
-    BoundingBox,
-    MouseDown,
-    MouseOver,
-    PointBounds,
-    QuadtreeRect,
-    RowMouseOverEvent,
-    TimeRange,
-  } from '../../types/timeline';
+  import type { Span, SpanId, SpansMap, SpanUtilityMaps } from '../../types/simulation';
+  import type { MouseDown, MouseOver, QuadtreeRect, RowMouseOverEvent, TimeRange } from '../../types/timeline';
   import { hexToRgba, shadeColor } from '../../utilities/color';
   import effects from '../../utilities/effects';
   import { isRightClick } from '../../utilities/generic';
@@ -38,7 +28,6 @@
   export let activityLayerGroups = [];
   export let idToColorMaps = { directives: {}, spans: {} };
   export let activityDirectivesMap: ActivityDirectivesMap = {};
-  // export let activityColor: string = '';
   export let activityHeight: number = 16;
   export let activityRowPadding: number = 4;
   export let activitySelectedColor: string = '#a9eaff';
@@ -46,12 +35,10 @@
   export let activityUnfinishedColor: string = '#fc674d';
   export let blur: FocusEvent | undefined;
   export let contextmenu: MouseEvent | undefined;
-  export let debugMode: boolean = false;
   export let dblclick: MouseEvent | undefined;
   export let dpr: number = 1;
   export let drawHeight: number = 0;
   export let drawWidth: number = 0;
-  // export let filter: ActivityLayerFilter | undefined;
   export let hasUpdateDirectivePermission: boolean = false;
   export let focus: FocusEvent | undefined;
   export let labelMode: 'on' | 'auto' | 'off' = 'on';
@@ -67,7 +54,6 @@
   export let selectedSpanId: SpanId | null = null;
   export let showDirectives: boolean = true;
   export let showSpans: boolean = true;
-  export let simulationDataset: SimulationDataset | null = null;
   export let spanUtilityMaps: SpanUtilityMaps;
   export let spansMap: SpansMap = {};
   export let timelineInteractionMode: TimelineInteractionMode;
@@ -90,7 +76,6 @@
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
-  let nativeDirectiveIconWidth: number = 16;
   let dragCurrentX: number | null = null;
   let dragOffsetX: number | null = null;
   let dragPreviousX: number | null = null;
@@ -100,31 +85,12 @@
   let planStartTimeMs: number;
   let quadtreeActivityDirectives: Quadtree<QuadtreeRect>;
   let quadtreeSpans: Quadtree<QuadtreeRect>;
-  let quadtreeHeatmap: Quadtree<QuadtreeRect>;
-  // let spanTimeBoundCache: Record<SpanId, SpanTimeBounds> = {};
   let visibleActivityDirectivesById: Record<ActivityDirectiveId, ActivityDirective> = {};
   let visibleSpansById: Record<SpanId, Span> = {};
-  let visibleHeatmapBoxesById: Record<ActivityDirectiveId, ActivityDirective> = {};
-  let xScaleViewRangeMax: number;
-
-  let activityDirectiveTimeCache = {};
+  // let xScaleViewRangeMax: number;
 
   // Asset cache
-  const assets: {
-    anchorIcon: HTMLImageElement | null;
-    directiveIcon: HTMLImageElement | null;
-    directiveIconShape: Path2D | null;
-    directiveIconShapeStroke: Path2D | null;
-    hashMarks: HTMLImageElement | null;
-    pattern: HTMLCanvasElement | null;
-  } = {
-    anchorIcon: null,
-    directiveIcon: null,
-    directiveIconShape: null,
-    directiveIconShapeStroke: null,
-    hashMarks: null,
-    pattern: null,
-  };
+  const assets: { anchorIcon: HTMLImageElement | null } = { anchorIcon: null };
   const textMetricsCache: Record<string, TextMetrics> = {};
 
   $: onBlur(blur);
@@ -136,24 +102,23 @@
   $: onMouseout(mouseout);
   $: onMouseup(mouseup);
 
-  $: scaleFactor = activityHeight / nativeDirectiveIconWidth;
-  $: directiveIconWidth = nativeDirectiveIconWidth * scaleFactor;
-  $: anchorIconWidth = directiveIconWidth * scaleFactor;
-  $: anchorIconMarginLeft = 4 * scaleFactor;
+  // TODO bring anchor icon back
+  // $: scaleFactor = activityHeight / nativeDirectiveIconWidth;
+  // $: anchorIconWidth = directiveIconWidth * scaleFactor;
+  // $: anchorIconMarginLeft = 4 * scaleFactor;
   $: canvasHeightDpr = drawHeight * dpr;
   $: canvasWidthDpr = drawWidth * dpr;
-  $: directiveIconMarginRight = 2 * scaleFactor;
+  // $: directiveIconMarginRight = 2 * scaleFactor;
   $: rowHeight = activityHeight + activityRowPadding;
-  $: spanLabelLeftMargin = 6;
+  // $: spanLabelLeftMargin = 6;
   $: timelineLocked = timelineLockStatus === TimelineLockStatus.Locked;
   $: planStartTimeMs = getUnixEpochTime(getDoyTime(new Date(planStartTimeYmd)));
-  $: if (xScaleView !== null) {
-    xScaleViewRangeMax = xScaleView.range()[1];
-  }
+  // $: if (xScaleView !== null) {
+  //   xScaleViewRangeMax = xScaleView.range()[1];
+  // }
 
   $: if (
     activityDirectives &&
-    // activityColor &&
     activityHeight &&
     showDirectives !== undefined &&
     showSpans !== undefined &&
@@ -163,7 +128,6 @@
     drawHeight &&
     drawWidth &&
     dpr &&
-    // filter &&
     selectedActivityDirectiveId !== undefined &&
     selectedSpanId !== undefined &&
     spansMap &&
@@ -187,16 +151,9 @@
     if (canvas) {
       ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
     }
-    assets.directiveIcon = loadSVG(ActivityDirectiveIconSVG);
     assets.anchorIcon = loadSVG(ActivityAnchorIconSVG);
-    assets.hashMarks = loadSVG(SpanHashMarksSVG);
-    assets.directiveIconShape = new Path2D(
-      'M0 0.470589C0 0.21069 0.21069 0 0.470588 0H8C12.4183 0 16 3.58172 16 8V8C16 12.4183 12.4183 16 8 16H0.470589C0.21069 16 0 15.7893 0 15.5294V0.470589Z',
-    );
-    assets.directiveIconShapeStroke = new Path2D(
-      'M0.5 15.5V0.5H8C12.1421 0.5 15.5 3.85786 15.5 8C15.5 12.1421 12.1421 15.5 8 15.5H0.5Z',
-    );
   }
+
   function loadSVG(svgString: string) {
     var svg64 = window.btoa(svgString);
     var b64Start = 'data:image/svg+xml;base64,';
@@ -230,6 +187,15 @@
       if (dragCurrentX !== dragPreviousX) {
         const start_offset = getIntervalUnixEpochTime(planStartTimeMs, dragCurrentX);
         dragActivityDirectiveActive.start_offset = start_offset; // Update activity in memory.
+        dragActivityDirectiveActive.start_time_ms = getActivityDirectiveStartTimeMs(
+          dragActivityDirectiveActive.id,
+          planStartTimeYmd,
+          planEndTimeDoy,
+          activityDirectivesMap,
+          spansMap,
+          spanUtilityMaps,
+        );
+
         dragPreviousX = dragCurrentX;
         draw();
       }
@@ -322,32 +288,11 @@
       const { offsetX, offsetY } = e;
       let activityDirectives: ActivityDirective[] = [];
       let spans: Span[] = [];
-      if (mode === 'grouped') {
-        const hits = getDirectivesAndSpansForOffset(offsetX, offsetY);
-        activityDirectives = hits.activityDirectives;
-        spans = hits.spans;
-      } else {
-        activityDirectives = searchQuadtreeRect<ActivityDirective>(
-          quadtreeHeatmap,
-          offsetX,
-          offsetY,
-          activityHeight,
-          maxActivityWidth,
-          visibleHeatmapBoxesById,
-        );
-        spans = activityDirectives
-          .map(directive => {
-            const rootSpan = getSpanForActivityDirective(directive);
-            if (rootSpan) {
-              const spanChildren = (spanUtilityMaps.spanIdToChildIdsMap[rootSpan.id] || []).map(id => spansMap[id]);
-              return [rootSpan].concat(spanChildren);
-            }
-            return [];
-          })
-          .flat();
-      }
+      const hits = getDirectivesAndSpansForOffset(offsetX, offsetY);
+      activityDirectives = hits.activityDirectives;
+      spans = hits.spans;
 
-      /* TODO tooltip renders offscreen if there are too many items, maybe show a more compact tooltip summary in heatmap mode hover? */
+      /* TODO tooltip renders offscreen if there are too many items even when limited to 6 with a +x more */
       dispatch('mouseOver', { activityDirectives, e, spans });
       dragActivityDirective(offsetX);
     }
@@ -405,130 +350,15 @@
     }
   }
 
-  function getXForDirective(activityDirective: ActivityDirective) {
-    return getActivityDirectiveStartTimeMs(
-      activityDirective.id,
-      planStartTimeYmd,
-      planEndTimeDoy,
-      activityDirectivesMap,
-      spansMap,
-      spanUtilityMaps,
-    );
-  }
-
   function getSpanForActivityDirective(activityDirective: ActivityDirective): Span {
     const spanId = spanUtilityMaps.directiveIdToSpanIdMap[activityDirective.id];
     return spansMap[spanId];
-  }
-
-  function getDirectiveBounds(activityDirective: ActivityDirective): PointBounds {
-    const { textWidth } = setLabelContext(activityDirective.name);
-    const x = getXForDirective(activityDirective);
-    const xCanvas = xScaleView?.(x) ?? 0;
-    let xEndCanvas = xCanvas + textWidth + directiveIconWidth + directiveIconMarginRight;
-    if (activityDirective.anchor_id !== null) {
-      xEndCanvas += anchorIconWidth + anchorIconMarginLeft;
-    }
-    return {
-      maxXCanvas: xEndCanvas,
-      x,
-      xCanvas,
-      xEnd: x,
-      xEndCanvas,
-    };
-  }
-
-  function getSpanBounds(span: Span): BoundingBox | null {
-    return drawSpans([span], 0, false);
   }
 
   function getLabelForSpan(span: Span, sticky: boolean = false): string {
     // Display an arrow to the left of a span label if the span is sticky
     return `${sticky ? '← ' : ''}${span.type}${span.duration === null ? ' (Unfinished)' : ''}`;
   }
-
-  // Determine starting Y position for the activity directive, taking into account any associated spans
-  // function placeActivityDirective(
-  //   maxXPerY: Record<number, number>,
-  //   directiveBounds: PointBounds,
-  //   initialSpanBounds: BoundingBox | null,
-  //   showDirectives: boolean = true,
-  // ) {
-  //   // Place the elements where they will fit in packed waterfall
-  //   const directiveRowHeight = showDirectives ? rowHeight : 0;
-  //   let i = directiveRowHeight;
-  //   let directiveStartY = 0;
-  //   let foundY = false;
-  //   while (!foundY) {
-  //     let maxDirectiveXForY = maxXPerY[i];
-  //     const directiveXForYExists = maxDirectiveXForY !== undefined;
-  //     const directiveFits =
-  //       !directiveXForYExists || (directiveXForYExists && directiveBounds.xCanvas > maxDirectiveXForY);
-  //     if (directiveFits) {
-  //       if (!initialSpanBounds) {
-  //         foundY = true;
-  //         directiveStartY = i;
-  //       } else {
-  //         // Construct actual span bounds for this Y
-  //         const adjustedSpanBounds = { ...initialSpanBounds };
-  //         adjustedSpanBounds.maxY += i + rowHeight;
-  //         // Check span bounds for each y
-  //         let spanYCheckIndex = i + rowHeight;
-  //         let allSpansFit = true;
-  //         while (spanYCheckIndex <= adjustedSpanBounds.maxY) {
-  //           // TODO span bounds could provide a maxXForY instead of absolute corner bounds?
-  //           const maxXForSpanY = maxXPerY[spanYCheckIndex];
-  //           // If the spans bbox is earlier than maxX for that Y we can't fit the bbox
-  //           if (maxXForSpanY !== undefined && adjustedSpanBounds.minX < maxXForSpanY) {
-  //             allSpansFit = false;
-  //             break;
-  //           }
-  //           spanYCheckIndex += rowHeight;
-  //         }
-  //         if (allSpansFit) {
-  //           foundY = true;
-  //           directiveStartY = i;
-  //         }
-  //       }
-  //     }
-  //     // If the directive does not fit, try the next row
-  //     i += rowHeight;
-  //   }
-  //   const newMaxXPerY = { ...maxXPerY };
-  //   // Update maxXForY for directive if no entry exists at that Y or if the directive end x is greater than the existing entry
-  //   if (newMaxXPerY[directiveStartY] === undefined || directiveBounds.maxXCanvas > newMaxXPerY[directiveStartY]) {
-  //     newMaxXPerY[directiveStartY] = directiveBounds.maxXCanvas;
-  //   }
-
-  //   // Construct actual span bounds for this final Y
-  //   const adjustedSpanBounds = initialSpanBounds
-  //     ? { ...initialSpanBounds }
-  //     : {
-  //         maxX: 0,
-  //         maxY: 0,
-  //         minX: 0,
-  //       };
-  //   adjustedSpanBounds.maxY = directiveStartY + rowHeight + adjustedSpanBounds.maxY;
-  //   let childrenYIterator = 0;
-  //   let spanStartY = 0;
-  //   if (initialSpanBounds) {
-  //     childrenYIterator = directiveStartY + directiveRowHeight;
-  //     spanStartY = initialSpanBounds.maxY + childrenYIterator;
-  //     while (childrenYIterator < spanStartY) {
-  //       // TODO span bounds could provide a maxXForY instead of absolute corner bounds?
-  //       const maxXForSpanY = maxXPerY[childrenYIterator];
-  //       if (maxXForSpanY === undefined || maxXForSpanY < initialSpanBounds.maxX) {
-  //         newMaxXPerY[childrenYIterator] = initialSpanBounds.maxX;
-  //       }
-  //       childrenYIterator += rowHeight;
-  //     }
-  //   }
-  //   return {
-  //     directiveStartY,
-  //     maxXPerY: newMaxXPerY,
-  //     spanBounds: adjustedSpanBounds,
-  //   };
-  // }
 
   /**
    * Draws activity points to the canvas context.
@@ -542,7 +372,6 @@
       ctx.scale(dpr, dpr);
       ctx.clearRect(0, 0, drawWidth, drawHeight);
 
-      activityDirectiveTimeCache = {};
       quadtreeActivityDirectives = d3Quadtree<QuadtreeRect>()
         .x(p => p.x)
         .y(p => p.y)
@@ -557,16 +386,9 @@
           [0, 0],
           [drawWidth, drawHeight],
         ]);
-      quadtreeHeatmap = d3Quadtree<QuadtreeRect>()
-        .x(p => p.x)
-        .y(p => p.y)
-        .extent([
-          [0, 0],
-          [drawWidth, drawHeight],
-        ]);
+
       visibleActivityDirectivesById = {};
       visibleSpansById = {};
-      visibleHeatmapBoxesById = {};
       if (mode === 'grouped') {
         drawGroupedMode();
       } else {
@@ -584,7 +406,8 @@
       if (showDirectives) {
         activityDirectives.forEach(directive => {
           // TODO obviously repetitive (see below), clean all of this up
-          const directiveX = getXForDirective(directive);
+          // TODO see if directive ms can be pre-computed somewhere before LayerActivity
+          const directiveX = directive.start_time_ms || 0;
           const directiveInBounds = directiveX >= viewTimeRange.start && directiveX < viewTimeRange.end;
 
           // TODO obviously repetitive (see below), clean all of this up
@@ -594,7 +417,7 @@
           if (childSpan) {
             seenSpans[childSpan.id] = true;
             if (childSpan) {
-              spanTextMetrics = textMetricsCache[childSpan.type] ?? ctx.measureText(childSpan.type);
+              spanTextMetrics = measureText(childSpan.type, textMetricsCache);
             }
             // TODO store whether span is in view in the activityGroupTree thing? Maybe?
             const sticky =
@@ -607,7 +430,7 @@
           }
           if (directiveInBounds || (childSpanInBounds && showSpans)) {
             directivesInView.push(directive);
-            let textMetrics = textMetricsCache[directive.name] ?? ctx.measureText(directive.name);
+            let textMetrics = measureText(directive.name, textMetricsCache);
             itemsToDraw.push({
               startX: xScaleView(directiveX),
               span: childSpan,
@@ -626,7 +449,7 @@
           const spanInBounds = span.startMs >= viewTimeRange.start && span.startMs < viewTimeRange.end;
           const sticky = span.startMs < viewTimeRange.start && span.startMs + span.durationMs >= viewTimeRange.start;
           if (sticky || spanInBounds) {
-            let textMetrics = textMetricsCache[span.type] ?? ctx.measureText(span.type);
+            let textMetrics = measureText(span.type, textMetricsCache);
             itemsToDraw.push({
               span,
               startX: xScaleView(span.startMs),
@@ -636,7 +459,7 @@
         });
       }
       if (itemsToDraw.length > 10000) {
-        const text = `Draw limit (5000) exceeded (${itemsToDraw.length})`;
+        const text = `Activity drawing limit (10000) exceeded (${itemsToDraw.length})`;
         const textMetrics = setLabelContext(text);
         ctx.fillText(text, drawWidth / 2 - textMetrics.textWidth / 2, drawHeight / 2, textMetrics.textWidth);
         return;
@@ -729,14 +552,14 @@
     if (item.directive && showDirectives) {
       boxEndX = 2;
       if (labelMode !== 'off') {
-        labelEndX = item.startX + 4 + item.directiveLabelWidth; // TODO figure out how to codify the spacing of a directive
+        labelEndX = Math.max(item.startX, 4) + 4 + item.directiveLabelWidth; // TODO figure out how to codify the spacing of a directive
       }
     }
     if (item.span && showSpans) {
       const spanEndX = xScaleView(item.span.endMs);
       boxEndX = Math.max(boxEndX, spanEndX);
       if (labelMode !== 'off') {
-        labelEndX = Math.max(labelEndX, item.startX + 4 + item.spanLabelWidth);
+        labelEndX = Math.max(labelEndX, Math.max(4, item.startX) + 4 + item.spanLabelWidth);
       }
     }
     return Math.max(boxEndX, labelEndX);
@@ -745,7 +568,6 @@
   function drawRow(y, items, idToColorMaps, defaultColor = '#cbcbcb') {
     // Determine label visibility
     let labelsToDraw = [];
-    let newDefaultColor = '';
     let lastTextEnd = Number.NEGATIVE_INFINITY;
     // TODO maybe hide all labels at some point? Experiment with this.
     items.forEach(item => {
@@ -765,13 +587,14 @@
         const spanEndX = xScaleView(span.endMs); // TODO store in item
         const spanRectWidth = Math.max(2, Math.min(spanEndX, drawWidth) - spanStartX);
         const spanColor = idToColorMaps.spans[span.id] || defaultColor;
-        newDefaultColor = spanColor;
         // if (spanColor) {
         //   defaultChildrenColor = spanColor;
         // }
-        if (selectedSpanId === span.id) {
+        const isSelected = selectedSpanId === span.id;
+        if (isSelected) {
           ctx.fillStyle = activitySelectedColor;
         } else {
+          // TODO cache this computation
           const color = hexToRgba(spanColor, 0.5);
           ctx.fillStyle = color;
         }
@@ -781,10 +604,10 @@
         // Draw label if no directive
         if (!directive || !showDirectives) {
           if (labelMode === 'on' || (labelMode === 'auto' && spanStartX > lastTextEnd)) {
-            const { labelText } = setLabelContext(span.type, 'black');
             labelsToDraw.push({
-              labelText,
-              x: spanStartX + 4,
+              isSelected,
+              labelText: span.type,
+              x: spanStartX + 4, // TODO sort out label left sticky with packing
               y: y + activityHeight / 2,
               width: spanLabelWidth,
             });
@@ -806,10 +629,11 @@
         // Draw directive
         const directiveColor = idToColorMaps.directives[directive.id] || defaultColor;
         const color = hexToRgba(shadeColor(directiveColor || '#FF0000', 1.2), 1);
-        newDefaultColor = color;
-        const directiveMs = getXForDirective(directive); // Rename getDirectiveStartTime
+        // const directiveMs = getXForDirective(directive, activityDirectiveTimeCache); // Rename getDirectiveStartTime
+        const directiveMs = directive.start_time_ms || 0;
         const directiveStartX = xScaleView(directiveMs);
-        if (selectedActivityDirectiveId === directive.id) {
+        const isSelected = selectedActivityDirectiveId === directive.id;
+        if (isSelected) {
           ctx.fillStyle = activitySelectedColor;
         } else {
           ctx.fillStyle = color;
@@ -818,9 +642,9 @@
 
         // Draw label
         if (labelMode === 'on' || (labelMode === 'auto' && directiveStartX > lastTextEnd)) {
-          const { labelText } = setLabelContext(directive.type, 'black');
           labelsToDraw.push({
-            labelText,
+            isSelected,
+            labelText: directive.name,
             x: directiveStartX + 4,
             y: y + activityHeight / 2,
             width: directiveLabelWidth,
@@ -838,13 +662,16 @@
         });
       }
     });
-    setLabelContext('whatever', 'black');
-    // console.log('labelsToDraw.length :>> ', labelsToDraw.length);
 
     // TODO guardrail, be smarter than this for labelMode="on"
     if (labelsToDraw.length < 1000) {
-      labelsToDraw.forEach(({ labelText, x, y, width }) => {
-        ctx.fillText(labelText, x, y, width);
+      labelsToDraw.forEach(({ isSelected, labelText, x, y, width }) => {
+        if (isSelected) {
+          setLabelContext('whatever', '#0a4c7e');
+        } else {
+          setLabelContext('whatever', 'black');
+        }
+        ctx.fillText(labelText, Math.max(x, 4), y, width);
       });
     }
   }
@@ -882,7 +709,7 @@
     const seenSpans = {};
     const items = [];
     (group.directives || []).forEach(directive => {
-      const directiveX = getXForDirective(directive);
+      const directiveX = directive.start_time_ms || 0;
       const directiveInBounds = directiveX >= viewTimeRange.start && directiveX < viewTimeRange.end;
 
       // TODO obviously repetitive (see below), clean all of this up
@@ -903,22 +730,13 @@
       }
       if (directiveInBounds || childSpanInBounds) {
         directivesInView.push(directive);
-        let directiveTextMetrics = textMetricsCache[directive.name] ?? ctx.measureText(directive.name);
+        let directiveTextMetrics = measureText(directive.name, textMetricsCache);
         let spanTextMetrics;
         if (childSpan) {
-          spanTextMetrics = textMetricsCache[childSpan.type] ?? ctx.measureText(childSpan.type);
+          spanTextMetrics = measureText(childSpan.type, textMetricsCache);
         }
-        const directiveStartTime = getActivityDirectiveStartTimeMs(
-          directive.id,
-          planStartTimeYmd,
-          planEndTimeDoy,
-          activityDirectivesMap,
-          spansMap,
-          spanUtilityMaps,
-          activityDirectiveTimeCache,
-        );
         items.push({
-          startX: xScaleView(directiveStartTime),
+          startX: xScaleView(directive.start_time_ms || 0),
           directive,
           span: childSpan,
           directiveLabelWidth: directiveTextMetrics.width,
@@ -935,7 +753,7 @@
         const spanInBounds = span.startMs >= viewTimeRange.start && span.startMs < viewTimeRange.end;
         const sticky = span.startMs < viewTimeRange.start && span.startMs + span.durationMs >= viewTimeRange.start;
         if (sticky || spanInBounds) {
-          let spanTextMetrics = textMetricsCache[span.type] ?? ctx.measureText(span.type);
+          let spanTextMetrics = measureText(span.type, textMetricsCache);
           items.push({
             span,
             startX: xScaleView(span.startMs),
@@ -1102,6 +920,16 @@
       });
     }
     return newY;
+  }
+
+  function measureText(text, cache) {
+    const cachedMeasurement = cache[text];
+    if (cachedMeasurement) {
+      return cachedMeasurement;
+    }
+    const measurement = ctx.measureText(text);
+    cache[text] = measurement;
+    return measurement;
   }
 
   // function drawActivityDirective(activityDirective: ActivityDirective, x: number, y: number) {
