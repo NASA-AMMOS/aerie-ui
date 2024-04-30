@@ -134,7 +134,7 @@ export function sequenceLinter(
       ...conditionalAndLoopKeywordsLinter(treeNode.getChild('Commands')?.getChildren(TOKEN_COMMAND) || [], docText),
     );
 
-    if (globalThis.LINT) {
+    if (globalThis.LINT !== undefined && globalThis.LINT(commandDictionary, view, treeNode) !== undefined) {
       diagnostics = [...diagnostics, ...globalThis.LINT(commandDictionary, view, treeNode)];
     }
 
