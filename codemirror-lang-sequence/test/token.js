@@ -11,6 +11,10 @@ const STEM_TOKEN = 'Stem';
 const LINE_COMMENT_TOKEN = 'LineComment';
 const METADATA_TOKEN = 'Metadata';
 const METADATA_ENTRY_TOKEN = 'MetaEntry';
+const ACTIVATE_NODE = 'Activate';
+const LOAD_NODE = 'Load';
+const GROUND_BLOCK_NODE = 'GroundBlock';
+const GROUND_EVENT_NODE = 'GroundEvent';
 
 function getMetaType(node) {
   return node.firstChild.nextSibling.firstChild.name;
@@ -84,6 +88,71 @@ C STEM
       },
     });
     assert.deepStrictEqual(getMetaValue(metaEntries[3], input), {});
+  });
+});
+
+describe('seqgen directives', () => {
+  it('activates', () => {
+    const input = `
+@ACTIVATE A2024-123T12:34:56 "sequence.name" # No Args
+@ENGINE 10
+@EPOCH "epoch string"
+
+@ACTIVATE R123T12:34:56 "sequence2.name" "foo" 1 2 3  # No Args
+@ENGINE -1
+
+    `;
+    const parseTree = SeqLanguage.parser.parse(input);
+    assertNoErrorNodes(input);
+    const activates = parseTree.topNode.firstChild.getChildren(ACTIVATE_NODE);
+    assert.equal(activates.length, 2);
+  });
+
+  it('loads', () => {
+    const input = `
+@LOAD A2024-123T12:34:56 "sequence.name" # No Args
+@ENGINE 10
+@EPOCH "epoch string"
+
+@LOAD R123T12:34:56 "sequence2.name" "foo" 1 2 3  # No Args
+@ENGINE -1
+
+    `;
+    const parseTree = SeqLanguage.parser.parse(input);
+    assertNoErrorNodes(input, true);
+    const activates = parseTree.topNode.firstChild.getChildren(LOAD_NODE);
+    assert.equal(activates.length, 2);
+  });
+
+  it('loads', () => {
+    const input = `
+@LOAD A2024-123T12:34:56 "sequence.name" # No Args
+@ENGINE 10
+@EPOCH "epoch string"
+
+@LOAD R123T12:34:56 "sequence2.name" "foo" 1 2 3  # No Args
+@ENGINE -1
+
+    `;
+    const parseTree = SeqLanguage.parser.parse(input);
+    assertNoErrorNodes(input, true);
+    const loads = parseTree.topNode.firstChild.getChildren(LOAD_NODE);
+    assert.equal(loads.length, 2);
+  });
+
+  it('ground', () => {
+    const input = `
+@GROUND_BLOCK A2024-123T12:34:56 "sequence.name" # No Args
+
+@GROUND_EVENT R123T12:34:56 "sequence2.name" "foo" 1 2 3  # No Args
+
+    `;
+    const parseTree = SeqLanguage.parser.parse(input);
+    assertNoErrorNodes(input, true);
+    const groundBlocks = parseTree.topNode.firstChild.getChildren(GROUND_BLOCK_NODE);
+    assert.equal(groundBlocks.length, 1);
+    const groundEvents = parseTree.topNode.firstChild.getChildren(GROUND_EVENT_NODE);
+    assert.equal(groundEvents.length, 1);
   });
 });
 
@@ -212,10 +281,13 @@ CMD0
   });
 });
 
-function assertNoErrorNodes(input) {
+function assertNoErrorNodes(input, verbose) {
   const cursor = SeqLanguage.parser.parse(input).cursor();
   do {
     const { node } = cursor;
+    if (verbose) {
+      console.log(node.type.name);
+    }
     assert.notStrictEqual(node.type.name, ERROR);
   } while (cursor.next());
 }

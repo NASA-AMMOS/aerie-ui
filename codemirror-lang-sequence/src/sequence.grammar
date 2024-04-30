@@ -36,7 +36,14 @@ LocalDeclaration {
 }
 
 commandBlock {
-  (Command | commentLine ~maybeComments)+
+  (
+    Command |
+    Activate |
+    GroundBlock |
+    GroundEvent |
+    Load |
+    commentLine ~maybeComments
+  )+
 }
 
 commentLine {
@@ -73,6 +80,38 @@ RepeatArg {
 }
 
 arg[@isGroup=Arguments] { Number | String | Enum }
+
+Activate { activateDirective commonLoadActivate }
+
+Load { loadDirective commonLoadActivate }
+
+commonLoadActivate {
+  whiteSpace
+  TimeTag
+  SequencePath { String }
+  Args
+  LineComment?
+  newLine
+  Engine  { engineDirective whiteSpace Number newLine }?
+  Epoch { epochDirective whiteSpace String newLine }?
+  Metadata?
+  Models?
+}
+
+GroundBlock { groundBlockDirective commonGround }
+
+GroundEvent { groundEventDirective commonGround }
+
+commonGround {
+  whiteSpace
+  TimeTag
+  GroundName { String }
+  Args
+  LineComment?
+  newLine
+  Metadata?
+  Models?
+}
 
 Command {
   TimeTag?
@@ -164,6 +203,12 @@ Stem { !stemStart identifier }
   hardwareDirective { "@HARDWARE" }
   localsDirective { "@LOCALS" }
   parameterDirective { "@INPUT_PARAMS" }
+  activateDirective { "@ACTIVATE" }
+  loadDirective { "@LOAD" }
+  engineDirective { "@ENGINE" }
+  epochDirective { "@EPOCH" }
+  groundBlockDirective { "@GROUND_BLOCK" }
+  groundEventDirective { "@GROUND_EVENT" }
   metadataDirective { "@METADATA" }
   modelDirective { "@MODEL" }
   genericDirective { "@"identifier }
@@ -173,6 +218,7 @@ Stem { !stemStart identifier }
   @precedence{ TimeAbsolute, TimeRelative, TimeEpoch, TimeComplete, identifier }
 
   @precedence {
+    LoadAndGoDirective,
     idDirective,
     metadataDirective,
     modelDirective,
@@ -180,7 +226,12 @@ Stem { !stemStart identifier }
     hardwareDirective,
     localsDirective,
     parameterDirective,
-    LoadAndGoDirective,
+    activateDirective,
+    loadDirective,
+    groundBlockDirective,
+    groundEventDirective,
+    engineDirective,
+    epochDirective,
     genericDirective,
     identifier
   }
