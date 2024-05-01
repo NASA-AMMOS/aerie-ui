@@ -134,6 +134,7 @@ Request {
     whiteSpace
   })
   RequestName { String } whiteSpace? LineComment? newLine
+  Metadata?
   Command*
   requestEndDirective newLine
 }

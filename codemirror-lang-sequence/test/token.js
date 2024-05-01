@@ -97,11 +97,14 @@ C STEM
 describe('seqgen directives', () => {
   it('activates', () => {
     const input = `
-@ACTIVATE A2024-123T12:34:56 "sequence.name" # No Args
-@ENGINE 10
-@EPOCH "epoch string"
+    @ACTIVATE A2024-123T12:34:56 "sequence.name" 1 "2" [ "three" 4 ]  # Multiple Args
+    @ENGINE 10
+    @EPOCH "epoch string"
+    @METADATA "name 1" [ 1,2  , 3 ]
+    @METADATA "name 2" ["a",    true  ,
+      2 ]
 
-@ACTIVATE R123T12:34:56 "sequence2.name" "foo" 1 2 3  # No Args
+@ACTIVATE R123T12:34:56 "sequence2.name"
 @ENGINE -1
 
     `;
@@ -117,7 +120,7 @@ describe('seqgen directives', () => {
 @ENGINE 10
 @EPOCH "epoch string"
 
-@LOAD R123T12:34:56 "sequence2.name" "foo" 1 2 3  # No Args
+@LOAD R123T12:34:56 "sequence2.name" "foo" 1 2 3  # Description
 @ENGINE -1
 
     `;
@@ -127,27 +130,11 @@ describe('seqgen directives', () => {
     assert.equal(activates.length, 2);
   });
 
-  it('loads', () => {
-    const input = `
-@LOAD A2024-123T12:34:56 "sequence.name" # No Args
-@ENGINE 10
-@EPOCH "epoch string"
-
-@LOAD R123T12:34:56 "sequence2.name" "foo" 1 2 3  # No Args
-@ENGINE -1
-
-    `;
-    const parseTree = SeqLanguage.parser.parse(input);
-    assertNoErrorNodes(input);
-    const loads = parseTree.topNode.firstChild.getChildren(LOAD_NODE);
-    assert.equal(loads.length, 2);
-  });
-
   it('ground', () => {
     const input = `
 @GROUND_BLOCK A2024-123T12:34:56 "sequence.name" # No Args
 
-@GROUND_EVENT R123T12:34:56 "sequence2.name" "foo" 1 2 3  # No Args
+@GROUND_EVENT R123T12:34:56 "sequence2.name" "foo" 1 2 3  # With some Args
 
     `;
     const parseTree = SeqLanguage.parser.parse(input);
@@ -165,16 +152,24 @@ C CMD_1 1 2 3
 R100 CMD_2 "1 2 3"
 @REQUEST_END
 
+# indented for readability
 @REQUEST_START @GROUND_EPOCH "Delta" "Name" { "extra": true } "request.name" # No Args
-C CMD_1 1 2 3
-R100 CMD_2 "1 2 3"
-C CMD_1 1 2 3
-R100 CMD_2 "1 2 3"
+@METADATA "foo" "bar"
+  C CMD_1 1 2 3
+  @METADATA "foo" "bar"
+  @MODEL "a" 1 "00:00:00"
+
+  R100 CMD_2 "1 2 3"
+
+  C CMD_1 1 2 3
+
+  R100 CMD_2 "1 2 3"
+
 @REQUEST_END
 
     `;
     const parseTree = SeqLanguage.parser.parse(input);
-    assertNoErrorNodes(input);
+    assertNoErrorNodes(input, true);
     const requests = parseTree.topNode.firstChild.getChildren(REQUEST_NODE);
     assert.equal(requests.length, 2);
 
