@@ -159,8 +159,7 @@
   let filterActivitiesByTime = false;
   let packedMode = false;
   let labelMode: 'on' | 'auto' | 'off' = 'auto';
-  let flatMode = false;
-  let activityDirectiveTimeCache = {};
+  let flatMode = true;
 
   $: if (plan && simulationDataset !== null && layers && $externalResources && !$resourceTypesLoading) {
     const simulationDatasetId = simulationDataset.dataset_id;
@@ -347,14 +346,12 @@
     activityDirectives /* TODO pass in */ &&
     typeof filterActivitiesByTime === 'boolean'
   ) {
-    // TODO manage this cache more correctly/better/in a store?
-    // activityDirectiveTimeCache = {};
     activityLayerGroups = [];
     idToColorMaps = { directives: {}, spans: {} };
 
     const activityLayers = layers.filter(layer => layer.chartType === 'activity') as ActivityLayer[];
     let spansList = Object.values(spansMap);
-    const directivesByType = groupBy(activityDirectives, 'name');
+    const directivesByType = groupBy(activityDirectives, 'type');
     const spansByType = groupBy(spansList, 'type');
     if (activityLayers.length) {
       let directives: ActivityDirective[] = [];
@@ -469,6 +466,12 @@
     return paginate(newGroups, parentId, depth + 1);
   }
 
+  // TODO repeated in LayerActivites, move to a util?
+  function getSpanForActivityDirective(activityDirective: ActivityDirective): Span {
+    const spanId = spanUtilityMaps.directiveIdToSpanIdMap[activityDirective.id];
+    return spansMap[spanId];
+  }
+
   function generateActivityTreeFlat(directives: ActivityDirective[], spans: Span[], visibilityMap, viewTimeRange) {
     let computedDirectives = directives;
     let computedSpans = spans;
@@ -500,26 +503,44 @@
       .forEach(type => {
         // TODO figure out concept for having directives in here
         const spanGroup = groupedSpans[type];
-        // const directiveGroup = groupedSpans[type];
+        const directiveGroup = groupedDirectives[type];
         const id = type;
         const expanded = getNodeExpanded(id, activityTreeExpansionMap);
         const label = type;
         let subgroup = [];
         if (expanded) {
           const subtrees = [];
-          spanGroup.forEach(spanChild => {
-            subtrees.push(...getSpanSubtrees(spanChild, id, activityTreeExpansionMap, 'span', filterActivitiesByTime));
-          });
+          const seenSpans = {};
+          if (directiveGroup) {
+            directiveGroup.forEach(directive => {
+              let childSpan;
+              if (showSpans) {
+                childSpan = getSpanForActivityDirective(directive);
+                if (childSpan) {
+                  seenSpans[childSpan.id] = true;
+                }
+              }
+              subtrees.push(getDirectiveSubtree(directive, id));
+            });
+          }
+          if (spanGroup) {
+            spanGroup.forEach(span => {
+              if (!seenSpans[span]) {
+                subtrees.push(...getSpanSubtrees(span, id, activityTreeExpansionMap, 'span', filterActivitiesByTime));
+              }
+            });
+          }
           subgroup = paginate(subtrees, id);
         }
         groups.push({
+          directives: directiveGroup,
           expanded: expanded,
-          label,
-          id: id,
           groups: subgroup,
+          id,
           isLeaf: false,
-          type: 'aggregation',
+          label,
           spans: spanGroup,
+          type: 'aggregation',
         });
       });
     return groups;
@@ -530,17 +551,6 @@
     let computedDirectives = directives;
     if (filterActivitiesByTime) {
       computedDirectives = directives.filter(directive => {
-        // TODO get from cache
-        // const directiveStartTime = getActivityDirectiveStartTimeMs(
-        //   directive.id,
-        //   planStartTimeYmd,
-        //   planEndTimeDoy,
-        //   activityDirectivesMap,
-        //   spansMap,
-        //   spanUtilityMaps,
-        //   activityDirectiveTimeCache,
-        // );
-
         const directiveInView =
           directive.start_time_ms >= viewTimeRange.start && directive.start_time_ms < viewTimeRange.end;
         if (!directiveInView) {
@@ -555,9 +565,8 @@
         return directiveInView;
       });
     }
-    const groupedDirectives: Record<string, ActivityDirective[]> = groupBy(computedDirectives, 'type');
     // Activities grouped by type
-
+    const groupedDirectives: Record<string, ActivityDirective[]> = groupBy(computedDirectives, 'type');
     Object.keys(groupedDirectives)
       .sort()
       .forEach(type => {
