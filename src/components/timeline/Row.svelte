@@ -353,31 +353,30 @@
     idToColorMaps = { directives: {}, spans: {} };
 
     const activityLayers = layers.filter(layer => layer.chartType === 'activity') as ActivityLayer[];
+    let spansList = Object.values(spansMap);
+    const directivesByType = groupBy(activityDirectives, 'name');
+    const spansByType = groupBy(spansList, 'type');
     if (activityLayers.length) {
       let directives: ActivityDirective[] = [];
       let spans: Span[] = [];
       activityLayers.forEach(layer => {
-        let spansList = Object.values(spansMap);
         // TODO util for filtering activities/spans
         if (layer.filter && layer.filter.activity !== undefined) {
-          // const a = performance.now();
-          const types = layer.filter.activity.types;
-          const typeMap = types.reduce((acc: Record<string, boolean>, next) => {
-            acc[next] = true;
-            return acc;
-          }, {});
-          activityDirectives.forEach(directive => {
-            if (typeMap[directive.type]) {
-              idToColorMaps.directives[directive.id] = layer.activityColor;
-              // TODO consider making a directivesInView map
-              directives.push(directive);
+          const types = layer.filter.activity.types || [];
+          types.forEach(type => {
+            const matchingDirectives = directivesByType[type];
+            if (matchingDirectives) {
+              matchingDirectives.forEach(directive => {
+                idToColorMaps.directives[directive.id] = layer.activityColor;
+              });
+              directives = directives.concat(matchingDirectives);
             }
-          });
-          spansList.forEach(span => {
-            if (typeMap[span.type]) {
-              idToColorMaps.spans[span.id] = layer.activityColor;
-              // TODO consider making a spansInView map
-              spans.push(span);
+            const matchingSpans = spansByType[type];
+            if (matchingSpans) {
+              matchingSpans.forEach(span => {
+                idToColorMaps.spans[span.id] = layer.activityColor;
+              });
+              spans = spans.concat(matchingSpans);
             }
           });
         }
