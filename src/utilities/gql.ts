@@ -1242,6 +1242,7 @@ const gql = {
         name
         owner
         sequence_adaptation_id
+        updated_at
       }
     }
   `,
@@ -1886,6 +1887,8 @@ const gql = {
         id
         mission
         version
+        created_at
+        updated_at
       }
     }
   `,
@@ -2100,6 +2103,7 @@ const gql = {
         created_at
         id
         mission
+        updated_at
         version
       }
     }
@@ -2114,6 +2118,7 @@ const gql = {
         id
         name
         sequence_adaptation_id
+        updated_at
       }
     }
   `,

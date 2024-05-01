@@ -16,6 +16,9 @@
   import {
     channelDictionaries,
     commandDictionaries,
+    getParsedChannelDictionary,
+    getParsedCommandDictionary,
+    getParsedParameterDictionary,
     parameterDictionaries as parameterDictionariesStore,
     parcel,
     parcelToParameterDictionaries,
@@ -24,7 +27,6 @@
     userSequencesRows,
   } from '../../stores/sequencing';
   import type { User } from '../../types/app';
-  import effects from '../../utilities/effects';
   import { seqJsonLinter } from '../../utilities/new-sequence-editor/seq-json-linter';
   import { sequenceCompletion } from '../../utilities/new-sequence-editor/sequence-completion';
   import { sequenceLinter } from '../../utilities/new-sequence-editor/sequence-linter';
@@ -93,10 +95,10 @@
 
     if (unparsedCommandDictionary) {
       Promise.all([
-        effects.getParsedAmpcsCommandDictionary(unparsedCommandDictionary.id, user),
-        unparsedChannelDictionary ? effects.getParsedAmpcsChannelDictionary(unparsedChannelDictionary.id, user) : null,
+        getParsedCommandDictionary(unparsedCommandDictionary, user),
+        unparsedChannelDictionary ? getParsedChannelDictionary(unparsedChannelDictionary, user) : null,
         ...unparsedParameterDictionaries.map(unparsedParameterDictionary => {
-          return effects.getParsedAmpcsParameterDictionary(unparsedParameterDictionary.id, user);
+          return getParsedParameterDictionary(unparsedParameterDictionary, user);
         }),
       ]).then(([parsedCommandDictionary, parsedChannelDictionary, ...parsedParameterDictionaries]) => {
         const nonNullParsedParameterDictionaries = parsedParameterDictionaries.filter(
