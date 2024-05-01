@@ -213,24 +213,29 @@ Stem { !stemStart identifier }
 
   whiteSpace { $[ \t]+ }
 
+  // Applicable to Sequences
   idDirective { "@ID" }
   LoadAndGoDirective { "@LOAD_AND_GO"}
   immediateDirective { "@IMMEDIATE" }
   hardwareDirective { "@HARDWARE" }
   localsDirective { "@LOCALS" }
   parameterDirective { "@INPUT_PARAMS" }
+  genericDirective { "@"identifier } // hook for adaptation specific
+
+  // Alternate command types
   activateDirective { "@ACTIVATE" }
   loadDirective { "@LOAD" }
-  engineDirective { "@ENGINE" }
-  epochDirective { "@EPOCH" }
   groundBlockDirective { "@GROUND_BLOCK" }
   groundEventDirective { "@GROUND_EVENT" }
-  groundEpochDirective { "@GROUND_EPOCH" }
-  metadataDirective { "@METADATA" }
-  modelDirective { "@MODEL" }
   requestStartDirective { "@REQUEST_START" }
   requestEndDirective { "@REQUEST_END" }
-  genericDirective { "@"identifier }
+
+  // Attributes on commands,activiates,etcß
+  groundEpochDirective { "@GROUND_EPOCH" }
+  engineDirective { "@ENGINE" }
+  epochDirective { "@EPOCH" }
+  metadataDirective { "@METADATA" }
+  modelDirective { "@MODEL" }
 
   @precedence { newLine, whiteSpace }
 
