@@ -430,6 +430,45 @@
     return expansionMap[id];
   }
 
+  function paginate(groups, parentId: string, depth = 1) {
+    const binSize = 100;
+    if (groups.length <= binSize) {
+      return groups;
+    }
+    const newGroups = [];
+    groups.forEach((group, i) => {
+      const bin = Math.floor(i / binSize);
+      if (!newGroups[bin]) {
+        newGroups[bin] = {
+          id: '',
+          directives: [],
+          label: '',
+          expanded: false,
+          groups: [],
+          isLeaf: false,
+          spans: [],
+          type: 'aggregation',
+        };
+      }
+      newGroups[bin].groups.push(group);
+      if (group.directives) {
+        newGroups[bin].directives.push(...group.directives);
+      }
+      if (group.spans) {
+        newGroups[bin].spans.push(...group.spans);
+      }
+    });
+    newGroups.forEach((group, i) => {
+      const groupStart = i * binSize ** depth;
+      const groupEnd = Math.min(groupStart + group.groups.length * depth ** binSize, (i + 1) * binSize ** depth);
+      const label = `${groupStart}–${groupEnd - 1}`;
+      group.id = `${parentId}_${label}_page`;
+      group.label = label;
+      group.expanded = getNodeExpanded(group.id, activityTreeExpansionMap);
+    });
+    return paginate(newGroups, parentId, depth + 1);
+  }
+
   function generateActivityTreeFlat(directives: ActivityDirective[], spans: Span[], visibilityMap, viewTimeRange) {
     let computedDirectives = directives;
     let computedSpans = spans;
@@ -465,17 +504,19 @@
         const id = type;
         const expanded = getNodeExpanded(id, activityTreeExpansionMap);
         const label = type;
+        let subgroup = [];
+        if (expanded) {
+          const subtrees = [];
+          spanGroup.forEach(directive => {
+            subtrees.push(getSpanSubtree(spanChild, id, activityTreeExpansionMap, 'span', filterActivitiesByTime));
+          });
+          subgroup = paginate(subtrees, id).flat();
+        }
         groups.push({
           expanded: expanded,
           label,
           id: id,
-          groups: expanded
-            ? spanGroup
-                .map(spanChild =>
-                  getSpanSubtree(spanChild, id, activityTreeExpansionMap, 'span', filterActivitiesByTime),
-                )
-                .flat()
-            : [],
+          groups: subgroup,
           isLeaf: false,
           type: 'aggregation',
           spans: spanGroup,
@@ -516,6 +557,7 @@
     }
     const groupedDirectives: Record<string, ActivityDirective[]> = groupBy(computedDirectives, 'type');
     // Activities grouped by type
+
     Object.keys(groupedDirectives)
       .sort()
       .forEach(type => {
@@ -529,47 +571,11 @@
         const expanded = getNodeExpanded(id, activityTreeExpansionMap);
         const groups = [];
         if (expanded) {
+          const subtrees = [];
           directiveGroup.forEach(directive => {
-            // Get number of child spans for the root span
-            let count = 0;
-            let groups2 = [];
-            const id2 = `${id}_${directive.id}`;
-            let spans2 = [];
-            if (showSpans) {
-              const rootSpanId = spanUtilityMaps.directiveIdToSpanIdMap[directive.id];
-              const rootSpan = spansMap[rootSpanId];
-              if (rootSpan) {
-                spans2 = [rootSpan];
-              }
-              if (typeof rootSpanId === 'number') {
-                const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[rootSpanId].map(id => ({
-                  ...spansMap[id],
-                  color: directive.color,
-                }));
-                count += spanChildren.length;
-                groups2 = getSpanSubtree(
-                  rootSpan,
-                  id2,
-                  activityTreeExpansionMap,
-                  'aggregation',
-                  filterActivitiesByTime,
-                );
-              }
-            }
-            const label2 = `${directive.type}`;
-            const expanded2 = getNodeExpanded(id2, activityTreeExpansionMap);
-
-            groups.push({
-              expanded: expanded2,
-              label: label2,
-              id: id2,
-              groups: groups2,
-              isLeaf: count < 1,
-              type: 'directive',
-              directives: [directive],
-              spans: spans2,
-            });
+            subtrees.push(getDirectiveSubtree(directive, id));
           });
+          groups.push(...paginate(subtrees, id));
         }
         tree.push({
           expanded,
@@ -584,12 +590,42 @@
     return tree;
   }
 
+  function getDirectiveSubtree(directive: ActivityDirective, parentId: string) {
+    // Get number of child spans for the root span
+    let count = 0;
+    let groups = [];
+    const id = `${parentId}_${directive.id}`;
+    let spans: Span[] = [];
+    if (showSpans) {
+      const rootSpanId = spanUtilityMaps.directiveIdToSpanIdMap[directive.id];
+      const rootSpan = spansMap[rootSpanId];
+      if (rootSpan) {
+        spans = [rootSpan];
+      }
+      if (typeof rootSpanId === 'number') {
+        const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[rootSpanId] || [];
+        count += spanChildren.length;
+        groups = getSpanSubtree(rootSpan, id, activityTreeExpansionMap, 'aggregation', filterActivitiesByTime);
+      }
+    }
+    const label = `${directive.type}`;
+    const expanded = getNodeExpanded(id, activityTreeExpansionMap);
+
+    return {
+      directives: [directive],
+      id,
+      expanded,
+      groups,
+      isLeaf: count < 1,
+      label,
+      spans,
+      type: 'directive',
+    };
+  }
+
   function getSpanSubtree(span: Span, parentId: string, activityTreeExpansionMap, type, filterActivitiesByTime) {
     const groups = [];
-    const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[span.id].map(id => ({
-      ...spansMap[id],
-      color: span.color,
-    }));
+    const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[span.id].map(id => spansMap[id]);
     if (type === 'aggregation') {
       // Group by type
       let computedSpans = spanChildren;
@@ -751,7 +787,7 @@
     if (autoAdjustHeight) {
       const { detail } = event;
       heightsByLayer[detail.layerId] = detail.newHeight;
-      const heights = Object.values(heightsByLayer);
+      const heights = Object.values(heightsByLayer); // TODO now with LayerActivities we have a combo layer that might need a derived layer ID?
       const newHeight = Math.max(...heights);
 
       // Only update row height if a change has occurred to avoid loopback
