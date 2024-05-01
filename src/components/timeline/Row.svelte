@@ -431,7 +431,7 @@
   }
 
   function paginate(groups, parentId: string, depth = 1) {
-    const binSize = 3;
+    const binSize = 100;
     if (groups.length <= binSize) {
       return groups;
     }

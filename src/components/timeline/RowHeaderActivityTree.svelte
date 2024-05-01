@@ -94,13 +94,15 @@
           </div>
         </div>
 
-        <svelte:self
-          activityTree={node.groups}
-          on:activity-tree-node-change
-          on:mouseDown
-          {selectedActivityDirectiveId}
-          {selectedSpanId}
-        />
+        {#if node.expanded}
+          <svelte:self
+            activityTree={node.groups}
+            on:activity-tree-node-change
+            on:mouseDown
+            {selectedActivityDirectiveId}
+            {selectedSpanId}
+          />
+        {/if}
       </Collapse>
     {/if}
   {/each}
