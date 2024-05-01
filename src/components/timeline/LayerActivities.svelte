@@ -87,6 +87,7 @@
   let quadtreeSpans: Quadtree<QuadtreeRect>;
   let visibleActivityDirectivesById: Record<ActivityDirectiveId, ActivityDirective> = {};
   let visibleSpansById: Record<SpanId, Span> = {};
+  let colorCache: Record<string, string> = {};
   // let xScaleViewRangeMax: number;
 
   // Asset cache
@@ -475,7 +476,6 @@
         const { startX, directiveLabelWidth, span, spanLabelWidth, directive } = item;
         // let itemCanvasX = span ? spanCanvasX : directive ? directiveCanvasX : 0;
         const itemEndX = getItemEnd(item);
-        console.log('itemEndX :>> ', itemEndX, item);
         // if (span) {
         //   itemEndX = Math.max(spanCanvasXEnd, labelMode === 'on' ? 4 + spanCanvasX + textMetrics.width : 0);
         // } else if (directive) {
@@ -594,8 +594,7 @@
         if (isSelected) {
           ctx.fillStyle = activitySelectedColor;
         } else {
-          // TODO cache this computation
-          const color = hexToRgba(spanColor, 0.5);
+          const color = getRGBAFromHex(spanColor, 0.5);
           ctx.fillStyle = color;
         }
         ctx.fillRect(spanStartX, y, spanRectWidth, height);
@@ -674,6 +673,16 @@
         ctx.fillText(labelText, Math.max(x, 4), y, width);
       });
     }
+  }
+
+  function getRGBAFromHex(color: string, opacity: number = 1) {
+    const key = `${color}_${opacity}`;
+    let rgba = colorCache[key];
+    if (!rgba) {
+      rgba = hexToRgba(color, opacity);
+      colorCache[key] = rgba;
+    }
+    return rgba;
   }
 
   function drawGroupedMode() {
