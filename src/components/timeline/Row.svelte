@@ -431,7 +431,7 @@
   }
 
   function paginate(groups, parentId: string, depth = 1) {
-    const binSize = 100;
+    const binSize = 3;
     if (groups.length <= binSize) {
       return groups;
     }
@@ -606,7 +606,10 @@
       if (typeof rootSpanId === 'number') {
         const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[rootSpanId] || [];
         count += spanChildren.length;
-        groups = getSpanSubtrees(rootSpan, id, activityTreeExpansionMap, 'aggregation', filterActivitiesByTime);
+        groups = paginate(
+          getSpanSubtrees(rootSpan, id, activityTreeExpansionMap, 'aggregation', filterActivitiesByTime),
+          id,
+        );
       }
     }
     const label = `${directive.type}`;
@@ -641,19 +644,23 @@
           const spanGroup = groupedSpanChildren[key];
           const id = `${parentId}_${key}`;
           const expanded = getNodeExpanded(id, activityTreeExpansionMap);
+          let subgroup = [];
+          if (expanded) {
+            const subtrees = [];
+            spanGroup.forEach(spanChild => {
+              subtrees.push(
+                ...getSpanSubtrees(spanChild, id, activityTreeExpansionMap, 'span', filterActivitiesByTime),
+              );
+            });
+            subgroup = paginate(subtrees, id);
+          }
           groups.push({
             expanded,
             label: `${key} (${spanGroup.length})`,
             id,
             isLeaf: false,
             spans: spanGroup,
-            groups: expanded
-              ? spanGroup
-                  .map(spanChild =>
-                    getSpanSubtrees(spanChild, id, activityTreeExpansionMap, 'span', filterActivitiesByTime),
-                  )
-                  .flat()
-              : [],
+            groups: subgroup,
             type: 'aggregation',
           });
         });
@@ -661,14 +668,19 @@
       const id = `${parentId}_${span.id}`;
       const expanded = getNodeExpanded(id, activityTreeExpansionMap);
       const count = spanChildren.length;
+      let subgroup = [];
+      if (expanded) {
+        subgroup = paginate(
+          getSpanSubtrees(span, id, activityTreeExpansionMap, 'aggregation', filterActivitiesByTime),
+          id,
+        );
+      }
       groups.push({
         expanded,
         label: `${span.type} ${count > 0 ? `(${count} children)` : ''}`,
         id,
         spans: [span],
-        groups: expanded
-          ? getSpanSubtrees(span, id, activityTreeExpansionMap, 'aggregation', filterActivitiesByTime)
-          : [],
+        groups: subgroup,
         isLeaf: count < 1,
         type: count < 1 ? 'span' : 'aggregation',
       });
