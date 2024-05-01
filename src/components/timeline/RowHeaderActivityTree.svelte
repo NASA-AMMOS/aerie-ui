@@ -19,9 +19,8 @@
     'activity-tree-node-change': any;
     mouseDown: MouseDown;
   }>();
-  // $: console.log('activityTree :>> ', activityTree);
 
-  function isSelected(node) {
+  function isSelected(node, selectedActivityDirectiveId: number, selectedSpanId: number) {
     if (node.directives && node.directives.length) {
       if (node.directives[0].id === selectedActivityDirectiveId) {
         return true;
@@ -41,7 +40,7 @@
     {#if node.isLeaf}
       <button
         class="row-header-activity-group leaf st-button tertiary"
-        class:selected={isSelected(node)}
+        class:selected={isSelected(node, selectedActivityDirectiveId, selectedSpanId)}
         on:click={() => {
           dispatch('mouseDown', { activityDirectives: node.directives || [], spans: node.spans || [] });
         }}
