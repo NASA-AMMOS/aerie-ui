@@ -461,7 +461,8 @@
     newGroups.forEach((group, i) => {
       const groupStart = i * binSize ** depth;
       const groupEnd = Math.min(groupStart + group.groups.length * depth ** binSize, (i + 1) * binSize ** depth);
-      const label = `${groupStart}–${groupEnd - 1}`;
+      // const label = `${groupStart}–${groupEnd - 1}`;
+      const label = `[${groupStart} … ${groupEnd - 1}]`;
       group.id = `${parentId}_${label}_page`;
       group.label = label;
       group.expanded = getNodeExpanded(group.id, activityTreeExpansionMap);
@@ -507,10 +508,10 @@
         let subgroup = [];
         if (expanded) {
           const subtrees = [];
-          spanGroup.forEach(directive => {
-            subtrees.push(getSpanSubtree(spanChild, id, activityTreeExpansionMap, 'span', filterActivitiesByTime));
+          spanGroup.forEach(spanChild => {
+            subtrees.push(...getSpanSubtrees(spanChild, id, activityTreeExpansionMap, 'span', filterActivitiesByTime));
           });
-          subgroup = paginate(subtrees, id).flat();
+          subgroup = paginate(subtrees, id);
         }
         groups.push({
           expanded: expanded,
@@ -605,7 +606,7 @@
       if (typeof rootSpanId === 'number') {
         const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[rootSpanId] || [];
         count += spanChildren.length;
-        groups = getSpanSubtree(rootSpan, id, activityTreeExpansionMap, 'aggregation', filterActivitiesByTime);
+        groups = getSpanSubtrees(rootSpan, id, activityTreeExpansionMap, 'aggregation', filterActivitiesByTime);
       }
     }
     const label = `${directive.type}`;
@@ -623,7 +624,7 @@
     };
   }
 
-  function getSpanSubtree(span: Span, parentId: string, activityTreeExpansionMap, type, filterActivitiesByTime) {
+  function getSpanSubtrees(span: Span, parentId: string, activityTreeExpansionMap, type, filterActivitiesByTime) {
     const groups = [];
     const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[span.id].map(id => spansMap[id]);
     if (type === 'aggregation') {
@@ -649,7 +650,7 @@
             groups: expanded
               ? spanGroup
                   .map(spanChild =>
-                    getSpanSubtree(spanChild, id, activityTreeExpansionMap, 'span', filterActivitiesByTime),
+                    getSpanSubtrees(spanChild, id, activityTreeExpansionMap, 'span', filterActivitiesByTime),
                   )
                   .flat()
               : [],
@@ -666,7 +667,7 @@
         id,
         spans: [span],
         groups: expanded
-          ? getSpanSubtree(span, id, activityTreeExpansionMap, 'aggregation', filterActivitiesByTime)
+          ? getSpanSubtrees(span, id, activityTreeExpansionMap, 'aggregation', filterActivitiesByTime)
           : [],
         isLeaf: count < 1,
         type: count < 1 ? 'span' : 'aggregation',
