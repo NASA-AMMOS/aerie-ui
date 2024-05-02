@@ -135,6 +135,7 @@
           {selectedSpanId}
           on:activity-tree-node-change
           on:mouseDown
+          on:dblClick
         />
       </div>
 

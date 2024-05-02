@@ -845,6 +845,7 @@
     <RowHeader
       on:activity-tree-node-change={onActivityTreeNodeChange}
       on:mouseDown={onMouseDown}
+      on:dblClick
       {activityLayerGroups}
       width={marginLeft}
       height={computedDrawHeight}

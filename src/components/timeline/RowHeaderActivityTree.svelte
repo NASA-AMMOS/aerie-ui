@@ -8,7 +8,7 @@
   import SpanIcon from '../../assets/timeline-span.svg?component';
   import type { ActivityDirectiveId } from '../../types/activity';
   import type { SpanId } from '../../types/simulation';
-  import type { MouseDown } from '../../types/timeline';
+  import type { MouseDown, MouseOver } from '../../types/timeline';
   import Collapse from '../Collapse.svelte?component';
 
   export let activityTree;
@@ -17,6 +17,7 @@
 
   const dispatch = createEventDispatcher<{
     'activity-tree-node-change': any;
+    dblClick: MouseOver;
     mouseDown: MouseDown;
   }>();
 
@@ -41,6 +42,9 @@
       <button
         class="row-header-activity-group leaf st-button tertiary"
         class:selected={isSelected(node, selectedActivityDirectiveId, selectedSpanId)}
+        on:dblclick={() => {
+          dispatch('dblClick', { activityDirectives: node.directives || [], spans: node.spans || [] });
+        }}
         on:click={() => {
           dispatch('mouseDown', { activityDirectives: node.directives || [], spans: node.spans || [] });
         }}
@@ -99,6 +103,7 @@
             activityTree={node.groups}
             on:activity-tree-node-change
             on:mouseDown
+            on:dblClick
             {selectedActivityDirectiveId}
             {selectedSpanId}
           />
