@@ -1256,43 +1256,43 @@
     ctx.globalAlpha = 1;
   }
 
-  function drawPointLabel(
-    text: string,
-    x: number,
-    y: number,
-    primaryHighlight: boolean,
-    secondaryHighlight: boolean,
-    unfinished: boolean = false,
-  ) {
-    let color = activityColor;
-    if (unfinished) {
-      color = activityUnfinishedColor;
-    }
-    if (primaryHighlight || secondaryHighlight) {
-      if (unfinished) {
-        color = activityUnfinishedSelectedColor;
-      } else {
-        color = activitySelectedColor;
-      }
-    }
+  // function drawPointLabel(
+  //   text: string,
+  //   x: number,
+  //   y: number,
+  //   primaryHighlight: boolean,
+  //   secondaryHighlight: boolean,
+  //   unfinished: boolean = false,
+  // ) {
+  //   let color = activityColor;
+  //   if (unfinished) {
+  //     color = activityUnfinishedColor;
+  //   }
+  //   if (primaryHighlight || secondaryHighlight) {
+  //     if (unfinished) {
+  //       color = activityUnfinishedSelectedColor;
+  //     } else {
+  //       color = activitySelectedColor;
+  //     }
+  //   }
 
-    let textOpacity = 1;
-    if (selectedActivityDirectiveId !== null || selectedSpanId !== null) {
-      if (!primaryHighlight) {
-        if (secondaryHighlight) {
-          textOpacity = 0.8;
-        } else {
-          textOpacity = 0.6;
-        }
-      }
-    }
+  //   let textOpacity = 1;
+  //   if (selectedActivityDirectiveId !== null || selectedSpanId !== null) {
+  //     if (!primaryHighlight) {
+  //       if (secondaryHighlight) {
+  //         textOpacity = 0.8;
+  //       } else {
+  //         textOpacity = 0.6;
+  //       }
+  //     }
+  //   }
 
-    const darkenFactor = unfinished ? 1.1 : 2.5;
-    color = hexToRgba(shadeColor(color, darkenFactor), textOpacity); // Tint the color to be darker
-    const { labelText, textMetrics } = setLabelContext(text, color);
-    ctx.fillText(labelText, x, y, textMetrics.width);
-    return textMetrics;
-  }
+  //   const darkenFactor = unfinished ? 1.1 : 2.5;
+  //   color = hexToRgba(shadeColor(color, darkenFactor), textOpacity); // Tint the color to be darker
+  //   const { labelText, textMetrics } = setLabelContext(text, color);
+  //   ctx.fillText(labelText, x, y, textMetrics.width);
+  //   return textMetrics;
+  // }
 
   // function drawDebugHitbox(x: number, y: number, width: number, height: number) {
   //   ctx.save();
