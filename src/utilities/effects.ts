@@ -2,7 +2,6 @@ import { goto } from '$app/navigation';
 import { base } from '$app/paths';
 import { env } from '$env/dynamic/public';
 import {
-  parse,
   parseChannelDictionary,
   parseParameterDictionary,
   type ChannelDictionary as AmpcsChannelDictionary,
@@ -5227,30 +5226,15 @@ const effects = {
     }
   },
 
-  async uploadCommandDictionary(
-    dictionary: AmpcsCommandDictionary,
-    user: User | null,
-  ): Promise<CommandDictionary | null> {
+  async uploadCommandDictionary(dictionary: string, user: User | null): Promise<CommandDictionary | null> {
     try {
       if (!queryPermissions.CREATE_COMMAND_DICTIONARY(user)) {
         throwPermissionError('upload a command dictionary');
       }
 
-      const data = await reqHasura<CommandDictionary>(
-        gql.CREATE_COMMAND_DICTIONARY,
-        {
-          commandDictionary: {
-            // TODO: Placeholder for command_types_typescript_path because it cannot be null.
-            command_types_typescript_path: '',
-            mission: dictionary.header.mission_name,
-            parsed_json: dictionary,
-            version: dictionary.header.version,
-          },
-        },
-        user,
-      );
-      const { createCommandDictionary: newCommandDictionary } = data;
+      const data = await reqHasura<CommandDictionary>(gql.CREATE_COMMAND_DICTIONARY, { dictionary }, user);
 
+      const { createCommandDictionary: newCommandDictionary } = data;
       if (newCommandDictionary === null) {
         throw Error('Unable to upload command dictionary');
       }
@@ -5278,7 +5262,7 @@ const effects = {
         try {
           return {
             type: DictionaryTypes.command_dictionary,
-            uploadedObject: { ...((await this.uploadCommandDictionary(parse(text), user)) as CommandDictionary) },
+            uploadedObject: { ...((await this.uploadCommandDictionary(text, user)) as CommandDictionary) },
           };
         } catch (e) {
           catchError('Command Dictionary Upload Failed', e as Error);
