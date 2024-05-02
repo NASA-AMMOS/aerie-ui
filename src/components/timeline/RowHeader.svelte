@@ -2,13 +2,14 @@
 
 <script lang="ts">
   import CaretDownIcon from '@nasa-jpl/stellar/icons/caret_down.svg?component';
-
   import CaretRightIcon from '@nasa-jpl/stellar/icons/caret_right.svg?component';
   import GripVerticalIcon from 'bootstrap-icons/icons/grip-vertical.svg?component';
   import { createEventDispatcher } from 'svelte';
+  import TimelineLineLayerIcon from '../../assets/timeline-line-layer.svg?component';
+  import TimelineXRangeLayerIcon from '../../assets/timeline-x-range-layer.svg?component';
   import type { ActivityDirectiveId } from '../../types/activity';
   import type { Resource, SpanId } from '../../types/simulation';
-  import type { Axis, Layer, LineLayer, MouseOver } from '../../types/timeline';
+  import type { Axis, ChartType, Layer, LineLayer, MouseOver } from '../../types/timeline';
   import { filterResourcesByLayer } from '../../utilities/timeline';
   import { tooltip } from '../../utilities/tooltip';
   import RowHeaderActivityTree from './RowHeaderActivityTree.svelte';
@@ -29,7 +30,14 @@
   export let selectedActivityDirectiveId: ActivityDirectiveId | null = null;
   export let selectedSpanId: SpanId | null = null;
 
-  let resourceLabels: { color: string; label: string; resource: Resource; unit: string; yAxisId: number }[] = [];
+  let resourceLabels: {
+    chartType: ChartType;
+    color: string;
+    label: string;
+    resource: Resource;
+    unit: string;
+    yAxisId: number;
+  }[] = [];
   let yAxesWidth = 0;
 
   const dispatch = createEventDispatcher<{
@@ -65,6 +73,7 @@
             const color = (layer as LineLayer).lineColor || 'var(--st-gray-80)';
             const unit = resource.schema.metadata?.unit?.value || '';
             return {
+              chartType: layer.chartType,
               color,
               label: layer.name || resource.name,
               resource,
@@ -142,18 +151,25 @@
       {#if resourceLabels.length > 0}
         <div class="row-header-y-axis-labels">
           {#each resourceLabels as label}
-            <div
-              class="st-typography-label small-text"
-              style:color={label.color}
-              use:tooltip={{ content: label.resource.name, interactive: true, placement: 'right' }}
-            >
-              <!-- See https://stackoverflow.com/a/27961022 for explanation of &lrm; "left to right mark" -->
-              &lrm;{label.label}
-              {#if label.unit}
-                ({label.unit})
-              {:else}
-                &lrm;&nbsp;
+            <div class="row-header-y-axis-label" style:color={label.color}>
+              {#if label.chartType === 'x-range'}
+                <TimelineXRangeLayerIcon />
+              {:else if label.chartType === 'line'}
+                <TimelineLineLayerIcon />
               {/if}
+              <div
+                class="st-typography-label small-text text-content"
+                style:color={label.color}
+                use:tooltip={{ content: label.resource.name, interactive: true, placement: 'right' }}
+              >
+                <!-- See https://stackoverflow.com/a/27961022 for explanation of &lrm; "left to right mark" -->
+                &lrm;{label.label}
+                {#if label.unit}
+                  ({label.unit})
+                {:else}
+                  &lrm;&nbsp;
+                {/if}
+              </div>
             </div>
           {/each}
         </div>
@@ -279,7 +295,7 @@
     background: initial;
   }
 
-  .row-header :global(.st-button):hover :global(svg) {
+  .row-header :global(.st-button):hover :global(.row-header-collapse) {
     color: var(--st-gray-50);
   }
 
@@ -310,7 +326,12 @@
     margin-left: 16px;
   }
 
-  .row-header-y-axis-labels div {
+  .row-header-y-axis-label {
+    display: flex;
+    gap: 4px;
+  }
+
+  .row-header-y-axis-labels .text-content {
     direction: rtl;
     max-width: max-content;
     overflow: hidden;

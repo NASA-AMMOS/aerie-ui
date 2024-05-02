@@ -9,6 +9,7 @@
   import type { ActivityDirectiveId } from '../../types/activity';
   import type { SpanId } from '../../types/simulation';
   import type { MouseDown, MouseOver } from '../../types/timeline';
+  import { pluralize } from '../../utilities/text';
   import Collapse from '../Collapse.svelte?component';
 
   export let activityTree;
@@ -51,11 +52,17 @@
       >
         <div style=" align-items: center;color: var(--st-gray-50);display: flex; gap: 4px;">
           {#if node.directives?.length && node.spans?.length}
-            <DirectiveAndSpanIcon />
+            <div title="Activity Directive and Simulated Activity" class="icon-group">
+              <DirectiveAndSpanIcon />
+            </div>
           {:else if node.directives?.length}
-            <DirectiveIcon />
+            <div title="Activity Directive" class="icon-group">
+              <DirectiveIcon />
+            </div>
           {:else if node.spans?.length}
-            <SpanIcon />
+            <div title="Simulated Activity" class="icon-group">
+              <SpanIcon />
+            </div>
           {/if}
         </div>
         {node.label}
@@ -69,31 +76,52 @@
       >
         <div slot="left" style="align-items: center;display: flex">
           {#if node.type === 'aggregation'}
-            <FolderIcon />
+            <div title="Type Group" class="icon-group">
+              <FolderIcon />
+            </div>
           {:else if node.directives?.length}
             {#if node.spans?.length}
-              <DirectiveAndSpanIcon />
+              <div title="Activity Directive and Simulated Activity" class="icon-group">
+                <DirectiveAndSpanIcon />
+              </div>
             {:else}
-              <DirectiveIcon />
+              <div title="Activity Directive" class="icon-group">
+                <DirectiveIcon />
+              </div>
             {/if}
           {:else if node.spans?.length}
-            <SpanIcon />
+            <div title="Simulated Activity" class="icon-group">
+              <SpanIcon />
+            </div>
           {/if}
         </div>
         <div slot="title" style="align-items: center;display: flex; gap: 8px;">
           {node.label}
           <div style=" align-items: center;color: var(--st-gray-50);display: flex; gap: 4px;">
-            {#if node.directives?.length && node.spans?.length}
-              <DirectiveAndSpanIcon />
-              d: <span>{node.directives.length}</span>
-              s: <span>{node.spans.length}</span>
-              s: <span>{node.groups.length}</span>
-            {:else if node.directives?.length}
-              <DirectiveIcon />
-              <span>{node.directives.length}</span>
-            {:else if node.spans?.length}
-              <SpanIcon />
-              <span>{node.spans.length}</span>
+            {#if node.type === 'directive'}
+              <div title={`${node.groups.length} child type group${pluralize(node.groups.length)}`} class="icon-group">
+                <FolderIcon />
+                <span>{node.groups.length}</span>
+              </div>
+            {:else}
+              {#if node.directives?.length}
+                <div
+                  title={`${node.directives.length} Activity Directive${pluralize(node.directives.length)}`}
+                  class="icon-group"
+                >
+                  <DirectiveIcon />
+                  <span>{node.directives.length}</span>
+                </div>
+              {/if}
+              {#if node.spans?.length}
+                <div
+                  title={`${node.spans.length} Simulated Activit${node.spans.length === 1 ? 'y' : 'ies'}`}
+                  class="icon-group"
+                >
+                  <SpanIcon />
+                  <span>{node.spans.length}</span>
+                </div>
+              {/if}
             {/if}
           </div>
         </div>
@@ -146,7 +174,21 @@
     padding: 8px 0px 8px 0px;
   }
 
+  :global(.row-header-activity-group.collapse .collapse-icon svg) {
+    color: var(--st-gray-40);
+  }
+
   .selected {
     background-color: #e3effd !important;
+  }
+
+  .icon-group {
+    display: flex;
+    gap: 4px;
+  }
+
+  .row-header-activity-group.selected,
+  .row-header-activity-group.selected :global(svg) {
+    color: var(--st-utility-blue) !important;
   }
 </style>
