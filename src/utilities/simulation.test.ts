@@ -4,13 +4,12 @@ import { compareEvents } from './simulation';
 
 // Helper function to make events for testing
 function ev(start_offset: string, transaction_index: number, dense_time: string): RawSimulationEvent {
+  // topic_index and value are not relevant for sorting
   return {
-    real_time: start_offset,
     causal_time: dense_time,
-    transaction_index,
-
-    // topic_index and value are not relevant for sorting
+    real_time: start_offset,
     topic_index: 1,
+    transaction_index,
     value: {},
   };
 }
