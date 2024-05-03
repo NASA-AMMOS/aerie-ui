@@ -1,6 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import HourglassIcon from 'bootstrap-icons/icons/hourglass-top.svg?component';
   import Nav from '../../components/app/Nav.svelte';
   import PageTitle from '../../components/app/PageTitle.svelte';
   import DictionaryTable from '../../components/parcels/DictionaryTable.svelte';
@@ -71,6 +72,7 @@
               [uploadedDictionaryOrAdaptation.uploadedObject, ...parameterDictionaries].filter(val => {
                 if (!seenSet.has(val.id)) {
                   seenSet.add(val.id);
+                  return true;
                 }
 
                 return false;
@@ -165,7 +167,12 @@
                 permissionError: createPermissionError,
               }}
             >
-              {creatingDictionary ? 'Creating...' : 'Create'}
+              {#if creatingDictionary}
+                Creating...
+                <HourglassIcon />
+              {:else}
+                Create
+              {/if}
             </button>
           </fieldset>
         </form>

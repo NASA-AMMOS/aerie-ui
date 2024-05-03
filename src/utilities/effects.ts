@@ -874,8 +874,6 @@ const effects = {
     parcelToParameterDictionariesToAdd: Omit<ParcelToParameterDictionary, 'id'>[],
     user: User | null,
   ): Promise<ParcelToParameterDictionary[] | null> {
-    console.log(parcelToParameterDictionariesToAdd);
-
     try {
       if (!queryPermissions.UPDATE_PARCEL(user, { owner: parcelOwner })) {
         throwPermissionError('create parcel to parameter dictionary');

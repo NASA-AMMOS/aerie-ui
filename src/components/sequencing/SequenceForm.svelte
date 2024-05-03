@@ -4,7 +4,6 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import type { ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
-
   import { onDestroy } from 'svelte';
   import {
     parameterDictionaries as parameterDictionariesStore,
