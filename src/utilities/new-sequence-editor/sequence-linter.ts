@@ -40,6 +40,8 @@ const KNOWN_DIRECTIVES = [
   'METADATA',
 ].map(name => `@${name}`);
 
+const MAX_ENUMS_TO_SHOW = 20;
+
 export function getAllEnumSymbols(enumMap: EnumMap, enumName: string): undefined | string[] {
   return enumMap[enumName]?.values.map(({ symbol }) => symbol);
 }
@@ -132,7 +134,7 @@ export function sequenceLinter(
       ...conditionalAndLoopKeywordsLinter(treeNode.getChild('Commands')?.getChildren(TOKEN_COMMAND) || [], docText),
     );
 
-    if (globalThis.LINT) {
+    if (globalThis.LINT !== undefined && globalThis.LINT(commandDictionary, view, treeNode) !== undefined) {
       diagnostics = [...diagnostics, ...globalThis.LINT(commandDictionary, view, treeNode)];
     }
 
@@ -1015,7 +1017,7 @@ export function sequenceLinter(
                   },
                 ],
                 from: argNode.from,
-                message: `Enum should be "${symbols.join(' | ')}"`,
+                message: `Enum should be "${symbols.slice(0, MAX_ENUMS_TO_SHOW).join(' | ')}${symbols.length > MAX_ENUMS_TO_SHOW ? ' ...' : ''}"\n`,
                 severity: 'error',
                 to: argNode.to,
               });

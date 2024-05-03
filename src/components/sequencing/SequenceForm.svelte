@@ -3,7 +3,15 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import { parcel, parcels, userSequenceFormColumns } from '../../stores/sequencing';
+  import type { ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
+  import { onDestroy } from 'svelte';
+  import {
+    parameterDictionaries as parameterDictionariesStore,
+    parcel,
+    parcelToParameterDictionaries,
+    parcels,
+    userSequenceFormColumns,
+  } from '../../stores/sequencing';
   import type { User, UserId } from '../../types/app';
   import { type UserSequence, type UserSequenceInsertInput } from '../../types/sequencing';
   import effects from '../../utilities/effects';
@@ -70,6 +78,19 @@
     }
   }
 
+  onDestroy(() => {
+    resetSequenceAdaptation();
+  });
+
+  function resetSequenceAdaptation(): void {
+    globalThis.CONDITIONAL_KEYWORDS = undefined;
+    globalThis.LOOP_KEYWORDS = undefined;
+    globalThis.GLOBALS = undefined;
+    globalThis.ARG_DELEGATOR = undefined;
+    globalThis.LINT = () => undefined;
+    globalThis.TO_SEQ_JSON = () => undefined;
+  }
+
   async function loadSequenceAdaptation(id: number | null | undefined): Promise<void> {
     if (id) {
       const adaptation = await effects.getSequenceAdaptation(id, user);
@@ -77,12 +98,36 @@
       if (adaptation) {
         Function(adaptation.adaptation)();
       }
+    } else {
+      resetSequenceAdaptation();
     }
   }
 
   async function onSeqJsonInput(e: Event & { currentTarget: EventTarget & HTMLInputElement }) {
-    const seqJson = await parseSeqJsonFromFile(e.currentTarget.files);
-    const sequence = seqJsonToSequence(seqJson);
+    const unparsedParameterDictionaries = $parameterDictionariesStore.filter(pd => {
+      const parameterDictionary = $parcelToParameterDictionaries.find(p => p.parameter_dictionary_id === pd.id);
+
+      if (parameterDictionary) {
+        return pd;
+      }
+    });
+
+    const [seqJson, parsedChannelDictionary, ...parsedParameterDictionaries] = await Promise.all([
+      parseSeqJsonFromFile(e.currentTarget.files),
+      $parcel?.channel_dictionary_id
+        ? effects.getParsedAmpcsChannelDictionary($parcel?.channel_dictionary_id, user)
+        : null,
+      ...unparsedParameterDictionaries.map(unparsedParameterDictionary => {
+        return effects.getParsedAmpcsParameterDictionary(unparsedParameterDictionary.id, user);
+      }),
+    ]);
+
+    const sequence = seqJsonToSequence(
+      seqJson,
+      parsedParameterDictionaries.filter((pd): pd is ParameterDictionary => pd !== null),
+      parsedChannelDictionary,
+    );
+
     initialSequenceDefinition = sequence;
     sequenceSeqJson = '';
   }
