@@ -23,6 +23,7 @@ export type DictionaryType = {
   created_at: string;
   id: number;
   mission: string;
+  updated_at: string;
   version: string;
 };
 
@@ -34,6 +35,7 @@ export type Parcel = {
   name: string;
   owner: UserId;
   sequence_adaptation_id: number | null;
+  updated_at: string;
 };
 
 export type ParcelToParameterDictionary = {

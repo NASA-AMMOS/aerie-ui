@@ -1307,6 +1307,7 @@ mutation CreateCommandDictionary($dictionary: String!) {
         name
         owner
         sequence_adaptation_id
+        updated_at
       }
     }
   `,
@@ -1951,6 +1952,8 @@ mutation CreateCommandDictionary($dictionary: String!) {
         id
         mission
         version
+        created_at
+        updated_at
       }
     }
   `,
@@ -2226,6 +2229,7 @@ mutation CreateCommandDictionary($dictionary: String!) {
         created_at
         id
         mission
+        updated_at
         version
       }
     }
@@ -2240,6 +2244,7 @@ mutation CreateCommandDictionary($dictionary: String!) {
         id
         name
         sequence_adaptation_id
+        updated_at
       }
     }
   `,
