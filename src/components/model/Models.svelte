@@ -361,7 +361,7 @@
           itemDisplayText="Model"
           items={$models}
           {user}
-          selectedItemId={selectedModel?.id}
+          selectedItemId={selectedModel?.id ?? null}
           on:deleteItem={deleteModelContext}
           on:editItem={editModelContext}
           on:rowClicked={({ detail }) => selectModel(detail.data)}
