@@ -865,6 +865,15 @@
       {selectedSpanId}
     >
       {#if hasActivityLayer}
+        {#if !packedMode}
+          <button
+            class="st-button icon"
+            on:click|stopPropagation={onActivityHierarchyCollapse}
+            use:tooltip={{ content: 'Collapse Hierarchy', placement: 'top' }}
+          >
+            <CollapseIcon />
+          </button>
+        {/if}
         <button
           class="st-button icon"
           on:click|stopPropagation={() => {
@@ -903,13 +912,6 @@
           use:tooltip={{ content: flatMode ? 'Hierarchy Mode' : 'Flat Mode', placement: 'top' }}
         >
           <LineHeightIcon />
-        </button>
-        <button
-          class="st-button icon"
-          on:click|stopPropagation={onActivityHierarchyCollapse}
-          use:tooltip={{ content: 'Collapse Hierarchy', placement: 'top' }}
-        >
-          <CollapseIcon />
         </button>
       {/if}
     </RowHeader>
