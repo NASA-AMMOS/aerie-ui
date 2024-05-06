@@ -9,6 +9,7 @@
   import type { DataGridColumnDef, DataGridRowSelection, RowId } from '../../types/data-grid';
   import type { UserSequence } from '../../types/sequencing';
   import effects from '../../utilities/effects';
+  import { getTarget } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import Input from '../form/Input.svelte';
@@ -28,6 +29,25 @@
   };
   type SequencesCellRendererParams = ICellRendererParams<UserSequence> & CellRendererParams;
 
+  /**
+   * Sort the sequence table with the current users sequences at the top.
+   * @param valueA
+   * @param valueB
+   */
+  function usernameComparator(valueA: string, valueB: string): number {
+    if (valueA === null && valueB === null) {
+      return 0;
+    }
+    if (valueA === null) {
+      return -1;
+    }
+    if (valueB === null) {
+      return 1;
+    }
+
+    return valueA === user?.id ? 1 : -1;
+  }
+
   const baseColumnDefs: DataGridColumnDef[] = [
     {
       field: 'id',
@@ -46,6 +66,16 @@
       headerName: 'Parcel ID',
       resizable: true,
       sortable: true,
+    },
+    {
+      comparator: usernameComparator,
+      field: 'owner',
+      filter: 'string',
+      headerName: 'Owner',
+      sort: 'desc',
+      suppressAutoSize: true,
+      suppressSizeToFit: true,
+      width: 80,
     },
   ];
 
@@ -157,6 +187,18 @@
     return featurePermissions.sequences.canUpdate(user, sequence);
   }
 
+  function onFilterToUsersSequences(event: Event) {
+    const { value: enabled } = getTarget(event);
+
+    if (enabled as boolean) {
+      filteredSequences = $userSequences.filter(sequence => {
+        return sequence.owner === user?.id;
+      });
+    } else {
+      filteredSequences = $userSequences;
+    }
+  }
+
   async function toggleSequence(event: CustomEvent<DataGridRowSelection<UserSequence>>) {
     const { detail } = event;
     const { data: clickedSequence, isSelected } = detail;
@@ -191,6 +233,11 @@
     </svelte:fragment>
 
     <svelte:fragment slot="body">
+      <div class="filter-container">
+        <input type="checkbox" on:change={onFilterToUsersSequences} />
+        <span class=" st-typography-body">Filter to my sequences</span>
+      </div>
+
       {#if filteredSequences.length}
         <SingleActionDataGrid
           {columnDefs}
@@ -222,3 +269,9 @@
     {user}
   />
 </CssGrid>
+
+<style>
+  .filter-container {
+    margin-bottom: 8px;
+  }
+</style>
