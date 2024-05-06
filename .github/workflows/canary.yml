@@ -1,15 +1,6 @@
 name: Mission Model Canary
 
 on:
-  # TODO: remove before merge
-  # begin remove section
-  pull_request:
-    branches:
-      - develop
-  push:
-    branches:
-      - develop
-  # end remove section
   workflow_dispatch:
   schedule:
     - cron: '0 * * * *' # every hour at the top of the hour
