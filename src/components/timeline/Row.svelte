@@ -51,6 +51,7 @@
   import { pluralize } from '../../utilities/text';
   import { getDoyTime } from '../../utilities/time';
   import {
+    directiveInView,
     getYAxesWithScaleDomains,
     isXRangeLayer,
     spanInView,
@@ -151,6 +152,8 @@
   let activityLayerGroups = [];
   let filteredActivityDirectives: ActivityDirective[] = [];
   let filteredSpans: Span[] = [];
+  let timeFilteredActivityDirectives: ActivityDirective[] = [];
+  let timeFilteredSpans: Span[] = [];
   let idToColorMaps: { directives: Record<number, string>; spans: Record<number, string> } = {
     directives: {},
     spans: {},
@@ -378,17 +381,39 @@
           });
         }
       });
+      directives.sort((a, b) => ((a.start_time_ms || 0) < (b.start_time_ms || 0) ? -1 : 1));
       spans.sort((a, b) => (a.startMs < b.startMs ? -1 : 1));
       if (directives.length || spans.length) {
+        // Populate both sets of directive and span lists in order to more precisely
+        // react to the filterActivitiesByTime variable later and avoid unnecessary activity tree
+        // regeneration upon viewTimeRange change when not in filterActivitiesByTime mode.
         filteredActivityDirectives = directives;
         filteredSpans = spans;
+        timeFilteredActivityDirectives = directives;
+        timeFilteredSpans = spans;
       }
     }
   }
 
+  $: if (filterActivitiesByTime && filteredActivityDirectives && filteredSpans && viewTimeRange) {
+    timeFilteredSpans = filteredSpans.filter(span => spanInView(span, viewTimeRange));
+    timeFilteredActivityDirectives = filteredActivityDirectives.filter(directive => {
+      let inView = directiveInView(directive, viewTimeRange);
+      if (inView && showSpans) {
+        // Get max span bounds
+        const rootSpanId = spanUtilityMaps.directiveIdToSpanIdMap[directive.id];
+        const rootSpan = spansMap[rootSpanId];
+        if (rootSpan) {
+          return spanInView(rootSpan, viewTimeRange);
+        }
+      }
+      return inView;
+    });
+  }
+
   $: if (
-    filteredActivityDirectives &&
-    filteredSpans &&
+    timeFilteredActivityDirectives &&
+    timeFilteredSpans &&
     typeof showSpans === 'boolean' &&
     typeof showDirectives === 'boolean'
   ) {
@@ -396,13 +421,12 @@
     if (!packedMode) {
       if (flatMode) {
         activityLayerGroups = generateActivityTreeFlat(
-          filteredActivityDirectives,
-          filteredSpans,
+          timeFilteredActivityDirectives,
+          timeFilteredSpans,
           activityTreeExpansionMap,
-          viewTimeRange,
         );
       } else {
-        activityLayerGroups = generateActivityTree(filteredActivityDirectives, activityTreeExpansionMap, viewTimeRange);
+        activityLayerGroups = generateActivityTree(timeFilteredActivityDirectives, activityTreeExpansionMap);
       }
     } else {
       activityLayerGroups = [];
@@ -437,22 +461,25 @@
       if (!newGroups[bin]) {
         newGroups[bin] = {
           id: '',
-          directives: [],
+          // directives: [],
+          items: [],
           label: '',
           expanded: false,
           groups: [],
           isLeaf: false,
-          spans: [],
+          // spans: [],
           type: 'aggregation',
         };
       }
       newGroups[bin].groups.push(group);
-      if (group.directives) {
-        newGroups[bin].directives.push(...group.directives);
+      if (group.items) {
+        newGroups[bin].items.push(...group.items);
       }
-      if (group.spans) {
-        newGroups[bin].spans.push(...group.spans);
-      }
+      // if (group.directives) {
+      // }
+      // if (group.spans) {
+      //   newGroups[bin].spans.push(...group.spans);
+      // }
     });
     newGroups.forEach((group, i) => {
       const groupStart = i * binSize ** depth;
@@ -472,128 +499,103 @@
     return spansMap[spanId];
   }
 
-  function generateActivityTreeFlat(directives: ActivityDirective[], spans: Span[], visibilityMap, viewTimeRange) {
-    let computedDirectives = directives;
-    let computedSpans = spans;
-    if (filterActivitiesByTime) {
-      computedSpans = computedSpans.filter(span => spanInView(span, viewTimeRange));
-      computedDirectives = directives.filter(directive => {
-        const directiveInView =
-          directive.start_time_ms >= viewTimeRange.start && directive.start_time_ms < viewTimeRange.end;
-        if (!directiveInView && showSpans) {
-          // Get max span bounds
-          const rootSpanId = spanUtilityMaps.directiveIdToSpanIdMap[directive.id];
-          const rootSpan = spansMap[rootSpanId];
-          if (rootSpan) {
-            return spanInView(rootSpan, viewTimeRange);
-          }
-          // TODO handle case where duration is null (unfinished), need to look at child spans to get time bounds
-        }
-        return directiveInView;
-      });
-    }
-
+  function generateActivityTreeFlat(directives: ActivityDirective[], spans: Span[], visibilityMap) {
     // TODO duplicates appear when you have two layers with the same type
-    const groupedSpans = showSpans ? groupBy(computedSpans, 'type') : {};
-    const groupedDirectives = showDirectives ? groupBy(computedDirectives, 'type') : {};
+    const groupedSpans = showSpans ? groupBy(spans, 'type') : {};
+    const groupedDirectives = showDirectives ? groupBy(directives, 'type') : {};
     const groups = [];
     const allKeys = new Set(Object.keys(groupedSpans).concat(Object.keys(groupedDirectives)));
     Array.from(allKeys)
       .sort()
       .forEach(type => {
-        // TODO figure out concept for having directives in here
         const spanGroup = groupedSpans[type];
         const directiveGroup = groupedDirectives[type];
         const id = type;
         const expanded = getNodeExpanded(id, activityTreeExpansionMap);
         const label = type;
         let subgroup = [];
-        if (expanded) {
-          const subtrees = [];
-          const seenSpans = {};
-          if (directiveGroup) {
-            directiveGroup.forEach(directive => {
-              let childSpan;
-              if (showSpans) {
-                childSpan = getSpanForActivityDirective(directive);
-                if (childSpan) {
-                  seenSpans[childSpan.id] = true;
-                }
+        let items = [];
+        const subtrees = [];
+        const seenSpans = {};
+        if (directiveGroup) {
+          directiveGroup.forEach(directive => {
+            let childSpan;
+            if (showSpans) {
+              childSpan = getSpanForActivityDirective(directive);
+              if (childSpan) {
+                seenSpans[childSpan.id] = true;
               }
+            }
+            if (expanded) {
               subtrees.push(getDirectiveSubtree(directive, id));
-            });
-          }
-          if (spanGroup) {
-            spanGroup.forEach(span => {
-              if (!seenSpans[span]) {
+            }
+            items.push({ directive, ...(childSpan ? { span: childSpan } : null) });
+          });
+        }
+        if (spanGroup) {
+          spanGroup.forEach(span => {
+            if (!seenSpans[span.id]) {
+              if (expanded) {
                 subtrees.push(...getSpanSubtrees(span, id, activityTreeExpansionMap, 'span', filterActivitiesByTime));
               }
-            });
-          }
-          subgroup = paginate(subtrees, id);
+              items.push({ span });
+            }
+          });
         }
+        subgroup = paginate(subtrees, id);
         groups.push({
-          directives: directiveGroup,
           expanded: expanded,
           groups: subgroup,
+          items,
           id,
           isLeaf: false,
           label,
-          spans: spanGroup,
           type: 'aggregation',
         });
       });
     return groups;
   }
 
-  function generateActivityTree(directives: ActivityDirective[], visibilityMap, viewTimeRange) {
+  function generateActivityTree(directives: ActivityDirective[], visibilityMap) {
     const tree = [];
-    let computedDirectives = directives;
-    if (filterActivitiesByTime) {
-      computedDirectives = directives.filter(directive => {
-        const directiveInView =
-          directive.start_time_ms >= viewTimeRange.start && directive.start_time_ms < viewTimeRange.end;
-        if (!directiveInView) {
-          // Get max span bounds
-          const rootSpanId = spanUtilityMaps.directiveIdToSpanIdMap[directive.id];
-          const rootSpan = spansMap[rootSpanId];
-          if (rootSpan && showSpans) {
-            return spanInView(rootSpan, viewTimeRange);
-          }
-          // TODO handle case where duration is null (unfinished), need to look at child spans to get time bounds
-        }
-        return directiveInView;
-      });
-    }
+
     // Activities grouped by type
-    const groupedDirectives: Record<string, ActivityDirective[]> = groupBy(computedDirectives, 'type');
+    const groupedDirectives: Record<string, ActivityDirective[]> = groupBy(directives, 'type');
     Object.keys(groupedDirectives)
       .sort()
       .forEach(type => {
         // Specific Activity type
-        const directiveGroup = groupedDirectives[type];
+        const directiveGroup = groupedDirectives[type] || [];
+        // TODO why sort here vs not in flat mode at same place?
         directiveGroup.sort((a, b) => {
           return (a.start_time_ms || 0) < (b.start_time_ms || 0) ? -1 : 0;
         });
         const label = type;
         const id = type;
         const expanded = getNodeExpanded(id, activityTreeExpansionMap);
+        let items = [];
         const groups = [];
-        if (expanded) {
-          const subtrees = [];
-          directiveGroup.forEach(directive => {
+        const subtrees = [];
+        // TODO basically the same as in flat mode
+        directiveGroup.forEach(directive => {
+          let childSpan;
+          if (showSpans) {
+            childSpan = getSpanForActivityDirective(directive);
+          }
+          if (expanded) {
             subtrees.push(getDirectiveSubtree(directive, id));
-          });
-          groups.push(...paginate(subtrees, id));
-        }
+          }
+          items.push({ directive, ...(childSpan ? { span: childSpan } : null) });
+        });
+        groups.push(...paginate(subtrees, id));
         tree.push({
           expanded,
           label,
           id,
           groups,
           isLeaf: false,
+          items,
           type: 'aggregation',
-          directives: directiveGroup,
         });
       });
     return tree;
@@ -605,11 +607,13 @@
     let groups = [];
     const id = `${parentId}_${directive.id}`;
     let spans: Span[] = [];
+    let span;
     if (showSpans) {
       const rootSpanId = spanUtilityMaps.directiveIdToSpanIdMap[directive.id];
       const rootSpan = spansMap[rootSpanId];
       if (rootSpan) {
         spans = [rootSpan];
+        span = rootSpan;
       }
       if (typeof rootSpanId === 'number') {
         const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[rootSpanId] || [];
@@ -624,13 +628,12 @@
     const expanded = getNodeExpanded(id, activityTreeExpansionMap);
 
     return {
-      directives: [directive],
       id,
       expanded,
       groups,
       isLeaf: count < 1,
       label,
-      spans,
+      items: [{ directive, span }],
       type: 'directive',
     };
   }
@@ -667,7 +670,7 @@
             label: `${key} (${spanGroup.length})`,
             id,
             isLeaf: false,
-            spans: spanGroup,
+            items: spanGroup.map(span => ({ span })),
             groups: subgroup,
             type: 'aggregation',
           });
@@ -687,7 +690,7 @@
         expanded,
         label: `${span.type} ${count > 0 ? `(${count} children)` : ''}`,
         id,
-        spans: [span],
+        items: [{ span }],
         groups: subgroup,
         isLeaf: count < 1,
         type: count < 1 ? 'span' : 'aggregation',

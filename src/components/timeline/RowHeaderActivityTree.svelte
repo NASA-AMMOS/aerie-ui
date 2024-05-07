@@ -6,8 +6,8 @@
   import DirectiveAndSpanIcon from '../../assets/timeline-directive-and-span.svg?component';
   import DirectiveIcon from '../../assets/timeline-directive.svg?component';
   import SpanIcon from '../../assets/timeline-span.svg?component';
-  import type { ActivityDirectiveId } from '../../types/activity';
-  import type { SpanId } from '../../types/simulation';
+  import type { ActivityDirective, ActivityDirectiveId } from '../../types/activity';
+  import type { Span, SpanId } from '../../types/simulation';
   import type { MouseDown, MouseOver } from '../../types/timeline';
   import { pluralize } from '../../utilities/text';
   import Collapse from '../Collapse.svelte?component';
@@ -22,44 +22,62 @@
     mouseDown: MouseDown;
   }>();
 
-  function isSelected(node, selectedActivityDirectiveId: number, selectedSpanId: number) {
-    if (node.directives && node.directives.length) {
-      if (node.directives[0].id === selectedActivityDirectiveId) {
-        return true;
+  function onLeafClick(node, event) {
+    dispatch(event, getDirectivesAndSpansForNode(node));
+  }
+
+  function getDirectivesAndSpansForNode(node) {
+    const activityDirectives: ActivityDirective[] = [];
+    const spans: Span[] = [];
+    (node.items || []).forEach(({ directive, span }) => {
+      if (directive) {
+        activityDirectives.push(directive);
       }
-    }
-    if (node.spans && node.spans.length) {
-      if (node.spans[0].id === selectedSpanId) {
-        return true;
+      if (span) {
+        spans.push(span);
       }
-    }
-    return false;
+    });
+    return { activityDirectives, spans };
+  }
+
+  function getNodeComposition(node) {
+    let activityDirectiveCount = 0;
+    let spanCount = 0;
+    let combinedActivityDirectiveSpanCount = 0;
+    (node.items || []).forEach(({ directive, span }) => {
+      if (directive && span) {
+        combinedActivityDirectiveSpanCount++;
+      } else if (directive) {
+        activityDirectiveCount++;
+      } else if (span) {
+        spanCount++;
+      }
+    });
+    return { activityDirectiveCount, combinedActivityDirectiveSpanCount, spanCount };
   }
 </script>
 
 {#if activityTree.length}
   {#each activityTree as node}
     {#if node.isLeaf}
+      {@const directive = node.items[0].directive}
+      {@const span = node.items[0].span}
       <button
         class="row-header-activity-group leaf st-button tertiary"
-        class:selected={isSelected(node, selectedActivityDirectiveId, selectedSpanId)}
-        on:dblclick={() => {
-          dispatch('dblClick', { activityDirectives: node.directives || [], spans: node.spans || [] });
-        }}
-        on:click={() => {
-          dispatch('mouseDown', { activityDirectives: node.directives || [], spans: node.spans || [] });
-        }}
+        class:selected={directive?.id === selectedActivityDirectiveId || span?.id === selectedSpanId}
+        on:dblclick={() => onLeafClick(node, 'dblClick')}
+        on:click={() => onLeafClick(node, 'mouseDown')}
       >
-        <div style=" align-items: center;color: var(--st-gray-50);display: flex; gap: 4px;">
-          {#if node.directives?.length && node.spans?.length}
-            <div title="Activity Directive and Simulated Activity" class="icon-group">
+        <div style=" align-items: center;color: var(--st-button-tertiary-color);display: flex; gap: 4px;">
+          {#if directive && span}
+            <div title="Combined Activity Directive and Simulated Activity" class="icon-group">
               <DirectiveAndSpanIcon />
             </div>
-          {:else if node.directives?.length}
+          {:else if directive}
             <div title="Activity Directive" class="icon-group">
               <DirectiveIcon />
             </div>
-          {:else if node.spans?.length}
+          {:else if span}
             <div title="Simulated Activity" class="icon-group">
               <SpanIcon />
             </div>
@@ -68,6 +86,7 @@
         {node.label}
       </button>
     {:else}
+      {@const { activityDirectiveCount, spanCount, combinedActivityDirectiveSpanCount } = getNodeComposition(node)}
       <Collapse
         collapsible={!node.isLeaf}
         defaultExpanded={node.expanded}
@@ -79,17 +98,15 @@
             <div title="Type Group" class="icon-group">
               <FolderIcon />
             </div>
-          {:else if node.directives?.length}
-            {#if node.spans?.length}
-              <div title="Activity Directive and Simulated Activity" class="icon-group">
-                <DirectiveAndSpanIcon />
-              </div>
-            {:else}
-              <div title="Activity Directive" class="icon-group">
-                <DirectiveIcon />
-              </div>
-            {/if}
-          {:else if node.spans?.length}
+          {:else if combinedActivityDirectiveSpanCount > 0}
+            <div title="Combined Activity Directive and Simulated Activity" class="icon-group">
+              <DirectiveAndSpanIcon />
+            </div>
+          {:else if activityDirectiveCount > 0}
+            <div title="Activity Directive" class="icon-group">
+              <DirectiveIcon />
+            </div>
+          {:else if spanCount > 0}
             <div title="Simulated Activity" class="icon-group">
               <SpanIcon />
             </div>
@@ -104,22 +121,28 @@
                 <span>{node.groups.length}</span>
               </div>
             {:else}
-              {#if node.directives?.length}
+              {#if combinedActivityDirectiveSpanCount}
                 <div
-                  title={`${node.directives.length} Activity Directive${pluralize(node.directives.length)}`}
+                  title={`${combinedActivityDirectiveSpanCount} Combined Activity Directive and Simulated Activit${combinedActivityDirectiveSpanCount === 1 ? 'y' : 'ies'}`}
+                  class="icon-group"
+                >
+                  <DirectiveAndSpanIcon />
+                  <span>{combinedActivityDirectiveSpanCount}</span>
+                </div>
+              {/if}
+              {#if activityDirectiveCount}
+                <div
+                  title={`${activityDirectiveCount} Activity Directive${pluralize(activityDirectiveCount)}`}
                   class="icon-group"
                 >
                   <DirectiveIcon />
-                  <span>{node.directives.length}</span>
+                  <span>{activityDirectiveCount}</span>
                 </div>
               {/if}
-              {#if node.spans?.length}
-                <div
-                  title={`${node.spans.length} Simulated Activit${node.spans.length === 1 ? 'y' : 'ies'}`}
-                  class="icon-group"
-                >
+              {#if spanCount}
+                <div title={`${spanCount} Simulated Activit${spanCount === 1 ? 'y' : 'ies'}`} class="icon-group">
                   <SpanIcon />
-                  <span>{node.spans.length}</span>
+                  <span>{spanCount}</span>
                 </div>
               {/if}
             {/if}

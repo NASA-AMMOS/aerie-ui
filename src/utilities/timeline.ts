@@ -13,6 +13,7 @@ import {
   type CountableTimeInterval,
   type TimeInterval,
 } from 'd3-time';
+import type { ActivityDirective } from '../types/activity';
 import type { Resource, ResourceType, ResourceValue, Span } from '../types/simulation';
 import type {
   ActivityLayer,
@@ -767,8 +768,14 @@ export function filterResourcesByLayer(layer: Layer, resources: Resource[] | Res
   return resources.filter(resource => (layer.filter.resource?.names || []).indexOf(resource.name) > -1);
 }
 
+export function directiveInView(directive: ActivityDirective, viewTimeRange: TimeRange) {
+  // TODO should we use the old behavior of having the label be sticky too?
+  const directiveX = directive.start_time_ms || 0;
+  return directiveX >= viewTimeRange.start && directiveX < viewTimeRange.end;
+}
+
 export function spanInView(span: Span, viewTimeRange: TimeRange) {
+  // TODO should we use the old behavior of having the label be sticky too?
   const spanInBounds = span.startMs >= viewTimeRange.start && span.startMs < viewTimeRange.end;
-  const sticky = span.startMs < viewTimeRange.start && span.startMs + span.durationMs >= viewTimeRange.start;
-  return spanInBounds || sticky;
+  return spanInBounds || (span.startMs < viewTimeRange.start && span.startMs + span.durationMs >= viewTimeRange.start);
 }

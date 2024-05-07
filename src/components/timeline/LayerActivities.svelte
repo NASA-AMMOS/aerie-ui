@@ -22,7 +22,13 @@
     getUnixEpochTime,
     getUnixEpochTimeFromInterval,
   } from '../../utilities/time';
-  import { searchQuadtreeRect, TimelineInteractionMode, TimelineLockStatus } from '../../utilities/timeline';
+  import {
+    directiveInView,
+    searchQuadtreeRect,
+    spanInView,
+    TimelineInteractionMode,
+    TimelineLockStatus,
+  } from '../../utilities/timeline';
 
   export let activityDirectives: ActivityDirective[] = [];
   export let activityLayerGroups = [];
@@ -31,6 +37,7 @@
   export let activityHeight: number = 16;
   export let activityRowPadding: number = 4;
   export let activitySelectedColor: string = '#a9eaff';
+  export let activityDefaultColor = '#cbcbcb';
   export let activityUnfinishedSelectedColor: string = '#ff3b19';
   export let activityUnfinishedColor: string = '#fc674d';
   export let blur: FocusEvent | undefined;
@@ -42,6 +49,9 @@
   export let hasUpdateDirectivePermission: boolean = false;
   export let focus: FocusEvent | undefined;
   export let labelMode: 'on' | 'auto' | 'off' = 'on';
+  export let labelPaddingLeft: number = 2;
+  export let maxLabelCount: number = 1000;
+  export let maxPackedActivityCount: number = 10000;
   export let mode: 'packed' | 'grouped' = 'packed';
   export let mousedown: MouseEvent | undefined;
   export let mousemove: MouseEvent | undefined;
@@ -401,43 +411,25 @@
   function drawPackedMode() {
     if (xScaleView !== null) {
       // Draw all directives and spans (combine)
-      const directivesInView = [];
       const seenSpans = {};
       const itemsToDraw = [];
       if (showDirectives) {
         activityDirectives.forEach(directive => {
           // TODO obviously repetitive (see below), clean all of this up
-          // TODO see if directive ms can be pre-computed somewhere before LayerActivity
           const directiveX = directive.start_time_ms || 0;
-          const directiveInBounds = directiveX >= viewTimeRange.start && directiveX < viewTimeRange.end;
 
           // TODO obviously repetitive (see below), clean all of this up
-          let childSpanInBounds = false;
+          let childSpanInView = false;
           const childSpan = getSpanForActivityDirective(directive);
-          let spanTextMetrics;
           if (childSpan) {
             seenSpans[childSpan.id] = true;
-            if (childSpan) {
-              spanTextMetrics = measureText(childSpan.type, textMetricsCache);
-            }
-            // TODO store whether span is in view in the activityGroupTree thing? Maybe?
-            const sticky =
-              childSpan.startMs < viewTimeRange.start &&
-              childSpan.startMs + childSpan.durationMs >= viewTimeRange.start;
-            childSpanInBounds =
-              sticky || (childSpan.startMs >= viewTimeRange.start && childSpan.startMs < viewTimeRange.end);
-
-            // TODO mark span as seen and do not draw it after
+            childSpanInView = spanInView(childSpan, viewTimeRange);
           }
-          if (directiveInBounds || (childSpanInBounds && showSpans)) {
-            directivesInView.push(directive);
-            let textMetrics = measureText(directive.name, textMetricsCache);
+          if (directiveInView(directive, viewTimeRange) || (childSpanInView && showSpans)) {
             itemsToDraw.push({
               startX: xScaleView(directiveX),
               span: childSpan,
               directive,
-              directiveLabelWidth: textMetrics.width,
-              ...(spanTextMetrics ? { spanLabelWidth: spanTextMetrics.width } : null),
             });
           }
         });
@@ -447,41 +439,28 @@
           if (seenSpans[span.id]) {
             return;
           }
-          const spanInBounds = span.startMs >= viewTimeRange.start && span.startMs < viewTimeRange.end;
-          const sticky = span.startMs < viewTimeRange.start && span.startMs + span.durationMs >= viewTimeRange.start;
-          if (sticky || spanInBounds) {
-            let textMetrics = measureText(span.type, textMetricsCache);
+          if (spanInView(span, viewTimeRange)) {
             itemsToDraw.push({
               span,
               startX: xScaleView(span.startMs),
-              spanLabelWidth: textMetrics.width,
             });
           }
         });
       }
-      if (itemsToDraw.length > 10000) {
-        const text = `Activity drawing limit (10000) exceeded (${itemsToDraw.length})`;
+      if (itemsToDraw.length > maxPackedActivityCount) {
+        const text = `Activity drawing limit (${maxPackedActivityCount}) exceeded (${itemsToDraw.length})`;
         const textMetrics = setLabelContext(text);
         ctx.fillText(text, drawWidth / 2 - textMetrics.textWidth / 2, drawHeight / 2, textMetrics.textWidth);
         return;
       }
 
       itemsToDraw.sort((a, b) => {
-        // let aMs = a.span ? a.span.spanMs : a.directive ? a.directiveX : 0;
-        // let bMs = b.span ? b.span.spanMs : b.directive ? b.directiveX : 0;
         return a.startX < b.startX ? -1 : 1;
       });
       const rows = {};
       itemsToDraw.forEach(item => {
-        const { startX, directiveLabelWidth, span, spanLabelWidth, directive } = item;
-        // let itemCanvasX = span ? spanCanvasX : directive ? directiveCanvasX : 0;
+        const { startX } = item;
         const itemEndX = getItemEnd(item);
-        // if (span) {
-        //   itemEndX = Math.max(spanCanvasXEnd, labelMode === 'on' ? 4 + spanCanvasX + textMetrics.width : 0);
-        // } else if (directive) {
-        //   itemEndX = Math.max(directiveCanvasX + 2, labelMode === 'on' ? 4 + directiveCanvasX + textMetrics.width : 0);
-        // }
-        // span ? spanCanvasXEnd : directive ? directiveCanvasX : 0;
         let row = 0;
         let openRowSpaceFound = false;
         while (!openRowSpaceFound) {
@@ -513,59 +492,30 @@
           drawRow(yRow, items, idToColorMaps);
         }
       });
-
-      //   Object.entries(rows).forEach(([i, entry]) => {
-      //     const { items } = entry;
-      //     const yRow = i * (extraSpace / (rowCount - 1)) || 0;
-      //     items.forEach(item => {
-      //       const { span, directive, spanCanvasX, spanCanvasXEnd, directiveX, directiveCanvasX, label, textMetrics } =
-      //         item;
-      //       if (span) {
-      //         const width = Math.max(1, spanCanvasXEnd - spanCanvasX);
-      //         ctx.fillStyle = hexToRgba(idToColorMaps.spans[span.id] || 'red', 0.5);
-      //         ctx.fillRect(spanCanvasX, yRow, width, rectHeight);
-      //       }
-      //       if (directive) {
-      //         ctx.fillStyle = hexToRgba(shadeColor(idToColorMaps.directives[directive.id] || '#FF0000', 1.2), 1);
-      //         ctx.fillRect(directiveCanvasX, yRow, 2, rectHeight);
-      //       }
-      //       if (labelMode === 'on') {
-      //         // const textHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
-      //         // TODO optimize not measure the text?
-      //         const { textMetrics } = setLabelContext(label, 'black');
-      //         ctx.fillText(
-      //           label,
-      //           Math.max((spanCanvasX ?? directiveCanvasX) + 4, 2),
-      //           yRow + activityHeight / 2,
-      //           textMetrics.width,
-      //         );
-      //       }
-      //     });
-      //   });
-      //   return;
     }
   }
 
   function getItemEnd(item) {
+    const { span, directive, startX } = item;
     let labelEndX = 0;
     let boxEndX = 0;
-    if (item.directive && showDirectives) {
+    if (directive && showDirectives) {
       boxEndX = 2;
       if (labelMode !== 'off') {
-        labelEndX = Math.max(item.startX, 4) + 4 + item.directiveLabelWidth; // TODO figure out how to codify the spacing of a directive
+        labelEndX = Math.max(startX, 4) + 4 + measureText(directive.name, textMetricsCache).width; // TODO figure out how to codify the spacing of a directive
       }
     }
-    if (item.span && showSpans) {
-      const spanEndX = xScaleView(item.span.endMs);
+    if (span && showSpans) {
+      const spanEndX = xScaleView(span.endMs);
       boxEndX = Math.max(boxEndX, spanEndX);
       if (labelMode !== 'off') {
-        labelEndX = Math.max(labelEndX, Math.max(4, item.startX) + 4 + item.spanLabelWidth);
+        labelEndX = Math.max(labelEndX, Math.max(4, startX) + 4 + measureText(span.type, textMetricsCache).width);
       }
     }
     return Math.max(boxEndX, labelEndX);
   }
 
-  function drawRow(y, items, idToColorMaps, defaultColor = '#cbcbcb') {
+  function drawRow(y, items, idToColorMaps) {
     // Determine label visibility
     let labelsToDraw = [];
     let lastTextEnd = Number.NEGATIVE_INFINITY;
@@ -575,21 +525,18 @@
         return;
       }
 
-      const { directiveLabelWidth, spanLabelWidth, startX, span, directive } = item;
+      const { span, directive } = item;
 
-      let endX = startX + 2 + directiveLabelWidth; // directive
-      // TODO move to arg
+      // TODO move to arg / control from a view property?
       const height = rowHeight - 4;
       // TODO should we filter out spans in the activityLayerGroups instead of here and in RowHeaderActivityTree?
-      if (span && showSpans) {
+      if (span && showSpans && spanInView(span, viewTimeRange)) {
         // Draw span
+        let spanLabelWidth = 0;
         const spanStartX = xScaleView(span.startMs);
-        const spanEndX = xScaleView(span.endMs); // TODO store in item
+        const spanEndX = xScaleView(span.endMs);
         const spanRectWidth = Math.max(2, Math.min(spanEndX, drawWidth) - spanStartX);
-        const spanColor = idToColorMaps.spans[span.id] || defaultColor;
-        // if (spanColor) {
-        //   defaultChildrenColor = spanColor;
-        // }
+        const spanColor = idToColorMaps.spans[span.id] || activityDefaultColor;
         const isSelected = selectedSpanId === span.id;
         if (isSelected) {
           ctx.fillStyle = activitySelectedColor;
@@ -598,11 +545,11 @@
           ctx.fillStyle = color;
         }
         ctx.fillRect(spanStartX, y, spanRectWidth, height);
-        endX = Math.max(endX, spanEndX);
 
         // Draw label if no directive
         if (!directive || !showDirectives) {
           if (labelMode === 'on' || (labelMode === 'auto' && spanStartX > lastTextEnd)) {
+            spanLabelWidth = measureText(span.type, textMetricsCache).width;
             labelsToDraw.push({
               isSelected,
               labelText: span.type,
@@ -624,14 +571,14 @@
           y,
         });
       }
-      if (directive && showDirectives) {
+      if (directive && showDirectives && directiveInView(directive, viewTimeRange)) {
         // Draw directive
-        const directiveColor = idToColorMaps.directives[directive.id] || defaultColor;
+        const directiveColor = idToColorMaps.directives[directive.id] || activityDefaultColor;
         const color = hexToRgba(shadeColor(directiveColor || '#FF0000', 1.2), 1);
-        // const directiveMs = getXForDirective(directive, activityDirectiveTimeCache); // Rename getDirectiveStartTime
         const directiveMs = directive.start_time_ms || 0;
         const directiveStartX = xScaleView(directiveMs);
         const isSelected = selectedActivityDirectiveId === directive.id;
+        let directiveLabelWidth = 0;
         if (isSelected) {
           ctx.fillStyle = activitySelectedColor;
         } else {
@@ -641,6 +588,7 @@
 
         // Draw label
         if (labelMode === 'on' || (labelMode === 'auto' && directiveStartX > lastTextEnd)) {
+          directiveLabelWidth = measureText(directive.name, textMetricsCache).width;
           labelsToDraw.push({
             isSelected,
             labelText: directive.name,
@@ -655,7 +603,7 @@
         quadtreeActivityDirectives.add({
           height,
           id: directive.id,
-          width: directiveLabelWidth + 2 + 4,
+          width: directiveLabelWidth + labelPaddingLeft + 4, // TODO what is 4?
           x: directiveStartX,
           y,
         });
@@ -663,12 +611,13 @@
     });
 
     // TODO guardrail, be smarter than this for labelMode="on"
-    if (labelsToDraw.length < 1000) {
+    if (labelsToDraw.length < maxLabelCount) {
+      setLabelContext('whatever', 'black');
       labelsToDraw.forEach(({ isSelected, labelText, x, y, width }) => {
         if (isSelected) {
-          setLabelContext('whatever', '#0a4c7e');
+          ctx.fillStyle = '#0a4c7e';
         } else {
-          setLabelContext('whatever', 'black');
+          ctx.fillStyle = 'black';
         }
         ctx.fillText(labelText, Math.max(x, 4), y, width);
       });
@@ -703,229 +652,26 @@
     }
   }
 
-  function drawGroup(group, y, rowHeight, drawLine = true, color = '#FF0000') {
+  function drawBottomLine(y, width) {
+    ctx.strokeStyle = '#bec0c2';
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(width, y);
+    ctx.stroke();
+  }
+
+  function drawGroup(group, y, rowHeight, drawLine = true) {
     let newY = y;
     if (drawLine) {
-      ctx.strokeStyle = '#bec0c2';
-      ctx.beginPath();
-      ctx.moveTo(0, newY + rowHeight);
-      ctx.lineTo(drawWidth, newY + rowHeight);
-      ctx.stroke();
+      drawBottomLine(newY + rowHeight, drawWidth);
     }
 
-    const directivesInView = [];
-    const spansInView = [];
-    const seenSpans = {};
-    const items = [];
-    (group.directives || []).forEach(directive => {
-      const directiveX = directive.start_time_ms || 0;
-      const directiveInBounds = directiveX >= viewTimeRange.start && directiveX < viewTimeRange.end;
-
-      // TODO obviously repetitive (see below), clean all of this up
-      let childSpanInBounds = false;
-      let childSpan;
-      if (showSpans) {
-        childSpan = getSpanForActivityDirective(directive);
-        if (childSpan) {
-          seenSpans[childSpan.id] = true;
-          // const spanX = xScaleView(childSpan.startMs);
-          // const spanXEnd = xScaleView(childSpan.endMs);
-          // TODO store whether span is in view in the activityGroupTree thing? Maybe?
-          const sticky =
-            childSpan.startMs < viewTimeRange.start && childSpan.startMs + childSpan.durationMs >= viewTimeRange.start;
-          childSpanInBounds =
-            sticky || (childSpan.startMs >= viewTimeRange.start && childSpan.startMs < viewTimeRange.end);
-        }
-      }
-      if (directiveInBounds || childSpanInBounds) {
-        directivesInView.push(directive);
-        let directiveTextMetrics = measureText(directive.name, textMetricsCache);
-        let spanTextMetrics;
-        if (childSpan) {
-          spanTextMetrics = measureText(childSpan.type, textMetricsCache);
-        }
-        items.push({
-          startX: xScaleView(directive.start_time_ms || 0),
-          directive,
-          span: childSpan,
-          directiveLabelWidth: directiveTextMetrics.width,
-          ...(spanTextMetrics ? { spanLabelWidth: spanTextMetrics.width } : null),
-        });
-      }
-    });
-    // TODO add the spans that were not associated with directives
-    if (group.spans) {
-      group.spans.forEach(span => {
-        if (seenSpans[span.id]) {
-          return;
-        }
-        const spanInBounds = span.startMs >= viewTimeRange.start && span.startMs < viewTimeRange.end;
-        const sticky = span.startMs < viewTimeRange.start && span.startMs + span.durationMs >= viewTimeRange.start;
-        if (sticky || spanInBounds) {
-          let spanTextMetrics = measureText(span.type, textMetricsCache);
-          items.push({
-            span,
-            startX: xScaleView(span.startMs),
-            spanLabelWidth: spanTextMetrics.width,
-          });
-        }
-      });
-    }
-    let defaultChildrenColor = '';
-    // if (group.directives) {
-    //   const directivesInViewTextLength = directivesInView.reduce((total, directive) => {
-    //     // TODO stop measuring if we've already exceeded limit?
-    //     let textMetrics = textMetricsCache[directive.name] ?? ctx.measureText(directive.name);
-    //     return total + textMetrics.width;
-    //   }, 0);
-    //   let lastDirectiveTextEnd = -1;
-    //   directivesInView.forEach(directive => {
-    //     // TODO directive start time needs to use this function to take anchors into account, use this in Row and elsewhere
-    //     // can pass the cache down?
-    //     if (xScaleView) {
-    //       // Draw bounds of child span
-    //       if (showSpans) {
-    //         const childSpan = getSpanForActivityDirective(directive);
-    //         if (childSpan) {
-    //           const spanX = xScaleView(childSpan.startMs);
-    //           const spanXEnd = xScaleView(childSpan.endMs);
-    //           const width = Math.max(1, spanXEnd - spanX);
-
-    //           ctx.save();
-    //           if (selectedSpanId === childSpan.id) {
-    //             ctx.fillStyle = activitySelectedColor;
-    //           } else {
-    //             // TODO need to pass in the parent color for decomposition when the activity isn't included in the idToColorMap
-    //             const spanColor = idToColorMaps.spans[childSpan.id] || color;
-    //             if (spanColor) {
-    //               defaultChildrenColor = spanColor;
-    //             }
-    //             const color = hexToRgba(spanColor || '#FF0000', 0.5);
-    //             ctx.fillStyle = color;
-    //           }
-    //           ctx.fillRect(spanX, newY + 4, width, rowHeight - 4);
-    //           ctx.restore();
-
-    //           visibleSpansById[childSpan.id] = childSpan;
-    //           quadtreeSpans.add({
-    //             height: rowHeight - 4,
-    //             id: childSpan.id,
-    //             width: width,
-    //             x: spanX,
-    //             y: newY + 4,
-    //           });
-    //         }
-    //       }
-
-    //       if (showDirectives) {
-    //         const directiveColor = idToColorMaps.directives[directive.id] || color;
-    //         if (directiveColor) {
-    //           defaultChildrenColor = directiveColor;
-    //         }
-    //         const color = hexToRgba(shadeColor(directiveColor || '#FF0000', 1.2), 1);
-    //         ctx.fillStyle = color;
-    //         // if (ctx.fillStyle !== color) {
-    //         // }
-    //         const directiveX = getXForDirective(directive);
-    //         const directiveXCanvas = xScaleView(directiveX);
-    //         if (selectedActivityDirectiveId === directive.id) {
-    //           ctx.fillStyle = activitySelectedColor;
-    //         }
-    //         ctx.fillRect(directiveXCanvas, newY + 4, 2, rowHeight - 4);
-
-    //         let directiveWidth = 2;
-    //         // TODO save labels and draw them on top after rectangles are drawn
-    //         if (directivesInViewTextLength <= drawWidth && lastDirectiveTextEnd < directiveXCanvas) {
-    //           // ctx.save();
-    //           const { labelText, textMetrics, textHeight } = setLabelContext(directive.name, 'black');
-    //           ctx.fillText(
-    //             labelText,
-    //             directiveXCanvas + 4,
-    //             newY + textHeight + (rowHeight - 4 - textHeight) / 2,
-    //             textMetrics.width,
-    //           );
-    //           // ctx.restore();
-    //           lastDirectiveTextEnd = directiveXCanvas + textMetrics.width;
-    //           directiveWidth += textMetrics.width;
-    //         }
-    //         visibleActivityDirectivesById[directive.id] = directive;
-    //         quadtreeActivityDirectives.add({
-    //           height: rowHeight - 4,
-    //           id: directive.id,
-    //           width: directiveWidth,
-    //           x: directiveXCanvas,
-    //           y: newY + 4,
-    //         });
-    //       }
-    //     }
-    //   });
-    // }
-    if (group.spans && showSpans) {
-      // TODO not an else if
-      // Draw bounds of each child span
-      // console.log('group.spans :>> ', group.spans);
-      group.spans.forEach(span => {
-        // TODO store whether span is in view in the activityGroupTree thing? Maybe?
-        const spanInBounds = span.startMs >= viewTimeRange.start && span.startMs < viewTimeRange.end;
-        const sticky = span.startMs < viewTimeRange.start && span.startMs + span.durationMs >= viewTimeRange.start;
-        if (sticky || spanInBounds) {
-          spansInView.push(span);
-        }
-      });
-      let spansInViewTextLength = 0;
-      // for (let i = 0; i < spansInView.length; i++) {
-      //   const span = spansInView[i];
-      //   let textMetrics = textMetricsCache[span.type] ?? ctx.measureText(span.type);
-      //   spansInViewTextLength += textMetrics.width;
-      //   // Break early if no text can be drawn
-      //   if (spansInViewTextLength > drawWidth) {
-      //     break;
-      //   }
-      // }
-      // let lastTextEnd = -1;
-      // // TODO fix this, obviously bad
-      // // const spanColor = spansInView.length > 0 ? hexToRgba(spansInView[0].color, 0.5) : '#FFFFFF';
-      // spansInView.forEach((span, i) => {
-      //   const spanX = xScaleView(span.startMs);
-      //   const spanXEnd = xScaleView(span.endMs);
-      //   const width = Math.max(1, spanXEnd - spanX);
-      //   const y = newY + 4;
-
-      //   const spanColor = idToColorMaps.spans[span.id] || color;
-      //   if (spanColor) {
-      //     defaultChildrenColor = spanColor;
-      //   }
-
-      //   if (selectedSpanId === span.id) {
-      //     ctx.fillStyle = activitySelectedColor;
-      //   } else {
-      //     ctx.fillStyle = hexToRgba(spanColor, 0.5);
-      //   }
-      //   ctx.fillRect(spanX, y, width, rowHeight - 4);
-
-      //   if (spansInViewTextLength <= drawWidth && spanX > lastTextEnd) {
-      //     ctx.save();
-      //     const { labelText, textMetrics, textHeight } = setLabelContext(span.type, 'black');
-      //     ctx.fillText(labelText, spanX + 4, newY + textHeight + (rowHeight - 4 - textHeight) / 2, textMetrics.width);
-      //     ctx.restore();
-      //     lastTextEnd = spanX + textMetrics.width;
-      //   }
-
-      //   visibleSpansById[span.id] = span;
-      //   quadtreeSpans.add({
-      //     height: rowHeight - 4,
-      //     id: span.id,
-      //     width: width,
-      //     x: spanX,
-      //     y: newY + 4,
-      //   });
-      // });
-    }
-    drawRow(newY + 4, items, idToColorMaps);
+    drawRow(newY + 4, group.items || [], idToColorMaps);
     newY += rowHeight;
+
     if (group.expanded && group.groups.length) {
       group.groups.forEach(childGroup => {
-        newY = drawGroup(childGroup, newY, rowHeight, true, defaultChildrenColor);
+        newY = drawGroup(childGroup, newY, rowHeight, true);
       });
     }
     return newY;
