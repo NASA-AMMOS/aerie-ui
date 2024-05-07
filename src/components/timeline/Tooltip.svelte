@@ -194,7 +194,8 @@
   }
 
   function textForActivityDirective(activityDirective: ActivityDirective): string {
-    const { anchor_id, id, name, start_offset, type } = activityDirective;
+    const { anchor_id, id, name, start_time_ms, type } = activityDirective;
+    const startTimeYmd = typeof start_time_ms === 'number' ? getDoyTime(new Date(start_time_ms)) : 'Unknown';
     return `
       <div class='tooltip-row-container'>
         <div class='st-typography-bold' style='color: var(--st-gray-10)'>Activity Directive</div>
@@ -213,8 +214,8 @@
           <span class='tooltip-value-highlight st-typography-medium'>${type}</span>
         </div>
         <div class='tooltip-row'>
-          <span>Start Offset:</span>
-          <span class='tooltip-value-highlight st-typography-medium'>${start_offset}</span>
+          <span>Start Time (UTC):</span>
+          <span class='tooltip-value-highlight st-typography-medium'>${startTimeYmd}</span>
         </div>
         <div class='tooltip-row'>
           <span>Anchored To ID:</span>
@@ -281,7 +282,9 @@
   }
 
   function textForSpan(span: Span): string {
-    const { id, duration, start_offset, type } = span;
+    const { id, duration, startMs, endMs, type } = span;
+    const startTimeYmd = getDoyTime(new Date(startMs));
+    const endTimeYmd = getDoyTime(new Date(endMs));
     return `
       <div class='tooltip-row-container'>
         <div class='st-typography-bold' style='color: var(--st-gray-10)'>Simulated Activity (Span)</div>
@@ -294,8 +297,12 @@
           <span class='tooltip-value-highlight st-typography-medium'>${type}</span>
         </div>
         <div class='tooltip-row'>
-          <span>Start Offset:</span>
-          <span class='tooltip-value-highlight st-typography-medium'>${start_offset}</span>
+          <span>Start Time (UTC):</span>
+          <span class='tooltip-value-highlight st-typography-medium'>${startTimeYmd}</span>
+        </div>
+        <div class='tooltip-row'>
+          <span>End Time (UTC):</span>
+          <span class='tooltip-value-highlight st-typography-medium'>${endTimeYmd}</span>
         </div>
         <div class='tooltip-row'>
           <span>Duration:</span>
