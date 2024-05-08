@@ -322,8 +322,8 @@ const queryPermissions = {
   CREATE_CHANNEL_DICTIONARY: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_CHANNEL_DICTIONARY], user);
   },
-  CREATE_COMMAND_DICTIONARY: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission([Queries.INSERT_COMMAND_DICTIONARY], user);
+  CREATE_DICTIONARY: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.INSERT_DICTIONARY], user);
   },
   CREATE_CONSTRAINT: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_CONSTRAINT_METADATA], user);
@@ -1117,7 +1117,7 @@ const featurePermissions: FeaturePermissions = {
     canUpdate: (user, _plan, preset) => queryPermissions.UPDATE_ACTIVITY_PRESET(user, preset),
   },
   commandDictionary: {
-    canCreate: user => queryPermissions.CREATE_COMMAND_DICTIONARY(user),
+    canCreate: user => queryPermissions.CREATE_DICTIONARY(user),
     canDelete: user => queryPermissions.DELETE_COMMAND_DICTIONARY(user),
     canRead: () => false, // Not implemented
     canUpdate: () => false, // Not implemented
