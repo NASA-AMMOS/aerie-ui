@@ -1,13 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import type {
-    ChannelDictionary,
-    CommandDictionary,
-    FswCommand,
-    HwCommand,
-    ParameterDictionary,
-  } from '@nasa-jpl/aerie-ampcs';
+  import type { ChannelDictionary, CommandDictionary, ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
   import {
     channelDictionaries,
     commandDictionaries,
@@ -19,7 +13,6 @@
     parcelToParameterDictionaries,
   } from '../../stores/sequencing';
   import type { User } from '../../types/app';
-  import type { Parcel } from '../../types/sequencing';
   import ChannelDictionaryView from './dictionary/channel-dictionary-view.svelte';
   import CommandDictionaryView from './dictionary/command-dictionary-view.svelte';
   import ParameterDictionaryView from './dictionary/parameter-dictionary-view.svelte';
@@ -30,30 +23,18 @@
   let commandDictionary: CommandDictionary | null;
   let parameterDictionary: ParameterDictionary | null;
   let parameterDictionaries: ParameterDictionary[] = [];
-
-  let contextPath: [
-    parcel?: Parcel,
-    dictionary?: ChannelDictionary | CommandDictionary | ParameterDictionary,
-    node?: FswCommand | HwCommand,
-  ] = [];
-
+  let selectedDictionary: ChannelDictionary | CommandDictionary | ParameterDictionary | null = null;
   let selectedDictionaryType: 'command' | 'channel' | 'parameter' | undefined = undefined;
 
   $: {
-    if (!contextPath[1]) {
+    if (!selectedDictionary) {
       selectedDictionaryType = undefined;
-    } else if ('telemetries' in contextPath[1]) {
+    } else if ('telemetries' in selectedDictionary) {
       selectedDictionaryType = 'channel';
-    } else if ('fswCommands' in contextPath[1]) {
+    } else if ('fswCommands' in selectedDictionary) {
       selectedDictionaryType = 'command';
-    } else if ('params' in contextPath[1]) {
+    } else if ('params' in selectedDictionary) {
       selectedDictionaryType = 'parameter';
-    }
-  }
-
-  $: {
-    if ($parcel) {
-      contextPath = [$parcel];
     }
   }
 
@@ -86,29 +67,40 @@
       });
     }
   }
+
+  function isCommandDictionary(dictionary: any): dictionary is CommandDictionary {
+    return 'fswCommands' in dictionary;
+  }
+
+  function isChannelDictionary(dictionary: any): dictionary is ChannelDictionary {
+    return 'telemetries' in dictionary;
+  }
+
+  function isParameterDictionary(dictionary: any): dictionary is ParameterDictionary {
+    return 'params' in dictionary;
+  }
 </script>
 
 <div class="parcel-view">
-  {#if contextPath.length}
+  {#if $parcel}
     <nav class="breadcrumbs">
       <ol>
-        {#if contextPath.length && contextPath[0]}
-          {#if contextPath.length > 1}
-            <li>
-              <a
-                href="#parcel"
-                on:click={() => {
-                  contextPath = [contextPath[0]];
-                }}>{contextPath[0].name}</a
-              >
-            </li>
-          {:else}
-            <li>{contextPath[0].name}</li>
-          {/if}
-        {/if}
-        {#if contextPath.length > 1 && contextPath[1]}
+        {#if selectedDictionary}
           <li>
-            {contextPath[1].id}
+            <a
+              href="#parcel"
+              on:click={() => {
+                selectedDictionary = null;
+              }}>{$parcel.name}</a
+            >
+          </li>
+        {:else}
+          <li>{$parcel.name}</li>
+        {/if}
+
+        {#if selectedDictionary}
+          <li>
+            {selectedDictionary.id}
             {#if selectedDictionaryType}
               ({selectedDictionaryType})
             {/if}
@@ -118,13 +110,13 @@
     </nav>
   {/if}
 
-  {#if contextPath.length === 1 && contextPath[0]}
+  {#if $parcel && !selectedDictionary}
     {#if commandDictionary}
       <div>
         Command Dictionary: <a
           href="#parcel"
           on:click={() => {
-            contextPath = [contextPath[0], commandDictionary ?? undefined];
+            selectedDictionary = commandDictionary;
           }}>{commandDictionary.id}</a
         >
       </div>
@@ -134,7 +126,7 @@
         Channel Dictionary: <a
           href="#parcel"
           on:click={() => {
-            contextPath = [contextPath[0], channelDictionary ?? undefined];
+            selectedDictionary = channelDictionary;
           }}>{channelDictionary.id}</a
         >
       </div>
@@ -146,20 +138,20 @@
           <a
             href="#parcel"
             on:click={() => {
-              contextPath = [contextPath[0], pd ?? undefined];
               parameterDictionary = pd;
+              selectedDictionary = parameterDictionary;
             }}>{pd.id}</a
           >
         {/each}
       </div>
     {/if}
-  {:else if contextPath.length > 1 && contextPath[1]}
-    {#if selectedDictionaryType === 'command' && commandDictionary}
-      <CommandDictionaryView {commandDictionary} />
-    {:else if selectedDictionaryType === 'channel' && channelDictionary}
-      <ChannelDictionaryView {channelDictionary} />
-    {:else if selectedDictionaryType === 'parameter' && parameterDictionary}
-      <ParameterDictionaryView {parameterDictionary} />
+  {:else if selectedDictionary}
+    {#if isCommandDictionary(selectedDictionary)}
+      <CommandDictionaryView commandDictionary={selectedDictionary} />
+    {:else if isChannelDictionary(selectedDictionary)}
+      <ChannelDictionaryView channelDictionary={selectedDictionary} />
+    {:else if isParameterDictionary(selectedDictionary)}
+      <ParameterDictionaryView parameterDictionary={selectedDictionary} />
     {/if}
   {/if}
 </div>
