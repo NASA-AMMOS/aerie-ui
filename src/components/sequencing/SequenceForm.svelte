@@ -11,6 +11,7 @@
     parcelToParameterDictionaries,
     parcels,
     userSequenceFormColumns,
+    userSequenceFormLeftColumnRows,
   } from '../../stores/sequencing';
   import type { User, UserId } from '../../types/app';
   import { type UserSequence, type UserSequenceInsertInput } from '../../types/sequencing';
@@ -24,6 +25,7 @@
   import CssGridGutter from '../ui/CssGridGutter.svelte';
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
+  import ParcelInfo from './ParcelInfo.svelte';
   import SequenceEditor from './SequenceEditor.svelte';
 
   export let initialSequenceCreatedAt: string | null = null;
@@ -189,98 +191,104 @@
 <PageTitle subTitle={pageSubtitle} title={pageTitle} />
 
 <CssGrid bind:columns={$userSequenceFormColumns}>
-  <Panel overflowYBody="hidden" padBody={false}>
-    <svelte:fragment slot="header">
-      <SectionTitle>{mode === 'create' ? 'New Sequence' : 'Edit Sequence'}</SectionTitle>
+  <CssGrid bind:rows={$userSequenceFormLeftColumnRows}>
+    <Panel overflowYBody="hidden" padBody={false}>
+      <svelte:fragment slot="header">
+        <SectionTitle>{mode === 'create' ? 'New Sequence' : 'Edit Sequence'}</SectionTitle>
 
-      <div class="right">
-        <button class="st-button secondary ellipsis" on:click={() => goto(`${base}/sequencing`)}>
-          {mode === 'create' ? 'Cancel' : 'Close'}
-        </button>
-        <button
-          class="st-button {saveButtonClass} ellipsis"
-          disabled={!saveButtonEnabled}
-          use:permissionHandler={{
-            hasPermission,
-            permissionError,
-          }}
-          on:click={saveSequence}
-        >
-          {savingSequence ? 'Saving...' : saveButtonText}
-        </button>
-      </div>
-    </svelte:fragment>
+        <div class="right">
+          <button class="st-button secondary ellipsis" on:click={() => goto(`${base}/sequencing`)}>
+            {mode === 'create' ? 'Cancel' : 'Close'}
+          </button>
+          <button
+            class="st-button {saveButtonClass} ellipsis"
+            disabled={!saveButtonEnabled}
+            use:permissionHandler={{
+              hasPermission,
+              permissionError,
+            }}
+            on:click={saveSequence}
+          >
+            {savingSequence ? 'Saving...' : saveButtonText}
+          </button>
+        </div>
+      </svelte:fragment>
 
-    <svelte:fragment slot="body">
-      {#if mode === 'edit'}
+      <svelte:fragment slot="body">
+        {#if mode === 'edit'}
+          <fieldset>
+            <label for="ruleId">ID</label>
+            <input class="st-input w-100" disabled name="ruleId" value={sequenceId} />
+          </fieldset>
+
+          <fieldset>
+            <label for="createdAt">Created At</label>
+            <input class="st-input w-100" disabled name="createdAt" value={sequenceCreatedAt} />
+          </fieldset>
+
+          <fieldset>
+            <label for="updatedAt">Updated At</label>
+            <input class="st-input w-100" disabled name="updatedAt" value={sequenceUpdatedAt} />
+          </fieldset>
+        {/if}
+
         <fieldset>
-          <label for="ruleId">ID</label>
-          <input class="st-input w-100" disabled name="ruleId" value={sequenceId} />
+          <label for="commandDictionary">Parcel (required)</label>
+          <select
+            bind:value={sequenceParcelId}
+            class="st-select w-100"
+            name="parcel"
+            use:permissionHandler={{
+              hasPermission,
+              permissionError,
+            }}
+          >
+            <option value={null} />
+            {#each $parcels as parcel}
+              <option value={parcel.id}>
+                {parcel.name}
+              </option>
+            {/each}
+          </select>
         </fieldset>
 
         <fieldset>
-          <label for="createdAt">Created At</label>
-          <input class="st-input w-100" disabled name="createdAt" value={sequenceCreatedAt} />
+          <label for="sequenceName">Name (required)</label>
+          <input
+            bind:value={sequenceName}
+            autocomplete="off"
+            class="st-input w-100"
+            name="sequenceName"
+            placeholder="Enter Sequence Name"
+            required
+            use:permissionHandler={{
+              hasPermission,
+              permissionError,
+            }}
+          />
         </fieldset>
 
         <fieldset>
-          <label for="updatedAt">Updated At</label>
-          <input class="st-input w-100" disabled name="updatedAt" value={sequenceUpdatedAt} />
+          <label for="seqJsonFile">Create Sequence from Seq JSON (optional)</label>
+          <input
+            bind:files={seqJsonFiles}
+            class="w-100"
+            name="seqJsonFile"
+            type="file"
+            on:change={onSeqJsonInput}
+            use:permissionHandler={{
+              hasPermission,
+              permissionError,
+            }}
+          />
         </fieldset>
-      {/if}
+      </svelte:fragment>
+    </Panel>
 
-      <fieldset>
-        <label for="commandDictionary">Parcel (required)</label>
-        <select
-          bind:value={sequenceParcelId}
-          class="st-select w-100"
-          name="parcel"
-          use:permissionHandler={{
-            hasPermission,
-            permissionError,
-          }}
-        >
-          <option value={null} />
-          {#each $parcels as parcel}
-            <option value={parcel.id}>
-              {parcel.name}
-            </option>
-          {/each}
-        </select>
-      </fieldset>
+    <CssGridGutter track={1} type="row" />
 
-      <fieldset>
-        <label for="sequenceName">Name (required)</label>
-        <input
-          bind:value={sequenceName}
-          autocomplete="off"
-          class="st-input w-100"
-          name="sequenceName"
-          placeholder="Enter Sequence Name"
-          required
-          use:permissionHandler={{
-            hasPermission,
-            permissionError,
-          }}
-        />
-      </fieldset>
-
-      <fieldset>
-        <label for="seqJsonFile">Create Sequence from Seq JSON (optional)</label>
-        <input
-          bind:files={seqJsonFiles}
-          class="w-100"
-          name="seqJsonFile"
-          type="file"
-          on:change={onSeqJsonInput}
-          use:permissionHandler={{
-            hasPermission,
-            permissionError,
-          }}
-        />
-      </fieldset>
-    </svelte:fragment>
-  </Panel>
+    <ParcelInfo {user} />
+  </CssGrid>
 
   <CssGridGutter track={1} type="column" />
 

@@ -64,6 +64,8 @@ export const userSequencesColumns: Writable<string> = writable('1.5fr 3px 1fr');
 
 export const userSequenceFormColumns: Writable<string> = writable('1fr 3px 2fr');
 
+export const userSequenceFormLeftColumnRows: Writable<string> = writable('400px 3px 1fr');
+
 export const userSequencesRows: Writable<string> = writable('1fr 3px 1fr');
 
 export const userSequenceEditorColumns: Writable<string> = writable('3fr 3px');
