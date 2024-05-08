@@ -4,7 +4,7 @@
   import type { ScaleTime } from 'd3-scale';
   import { select, type Selection } from 'd3-selection';
   import { zoom as d3Zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior, type ZoomTransform } from 'd3-zoom';
-  import { pick } from 'lodash-es';
+  import { groupBy, pick } from 'lodash-es';
   import { createEventDispatcher } from 'svelte';
   import FilterWithXIcon from '../../assets/filter-with-x.svg?component';
   import { Status } from '../../enums/status';
@@ -430,16 +430,6 @@
     } else {
       activityGroups = [];
     }
-  }
-
-  function groupBy(objArr: Record<any, any>[], key: any) {
-    return objArr.reduce((acc, next) => {
-      if (!acc[next[key]]) {
-        acc[next[key]] = [];
-      }
-      acc[next[key]].push(next);
-      return acc;
-    }, {});
   }
 
   function getNodeExpanded(id, activityTreeExpansionMap) {

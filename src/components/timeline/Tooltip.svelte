@@ -2,10 +2,13 @@
 
 <script lang="ts">
   import { select } from 'd3-selection';
+  import DirectiveIcon from '../../assets/timeline-directive.svg?raw';
+  import SpanIcon from '../../assets/timeline-span.svg?raw';
   import type { ActivityDirective } from '../../types/activity';
   import type { ConstraintResultWithName } from '../../types/constraint';
   import type { ResourceType, Span } from '../../types/simulation';
   import type { LineLayer, LinePoint, MouseOver, Point, Row, XRangePoint } from '../../types/timeline';
+  import { groupBy } from '../../utilities/generic';
   import { getDoyTime } from '../../utilities/time';
   import { filterResourcesByLayer } from '../../utilities/timeline';
 
@@ -114,9 +117,30 @@
       }
     }
 
-    const limit = 3;
-    const activityDirectivesOverLimit = activityDirectives.length > limit;
-    activityDirectives.slice(0, limit).forEach((activityDirective: ActivityDirective, i: number) => {
+    const limit = 2;
+    let count = 0;
+    const activityDirectivesToDisplay: ActivityDirective[] = [];
+    const overflowingActivityDirectives: ActivityDirective[] = [];
+    const spansToDisplay: Span[] = [];
+    const overflowingSpans: Span[] = [];
+    activityDirectives.forEach(directive => {
+      if (count < limit) {
+        activityDirectivesToDisplay.push(directive);
+        count++;
+      } else {
+        overflowingActivityDirectives.push(directive);
+      }
+    });
+    spans.forEach(span => {
+      if (count < limit) {
+        spansToDisplay.push(span);
+        count++;
+      } else {
+        overflowingSpans.push(span);
+      }
+    });
+
+    activityDirectivesToDisplay.forEach((activityDirective: ActivityDirective, i: number) => {
       const text = textForActivityDirective(activityDirective);
       tooltipText = `${tooltipText} ${text}`;
 
@@ -124,10 +148,42 @@
         tooltipText = `${tooltipText}<hr>`;
       }
     });
-    if (activityDirectivesOverLimit) {
+
+    if (spansToDisplay.length && activityDirectivesToDisplay.length) {
+      tooltipText = `${tooltipText}<hr>`;
+    }
+    spansToDisplay.forEach((span: Span, i: number) => {
+      const text = textForSpan(span);
+      tooltipText = `${tooltipText} ${text}`;
+
+      if (i !== spans.length - 1) {
+        tooltipText = `${tooltipText}<hr>`;
+      }
+    });
+
+    if (overflowingActivityDirectives.length) {
+      const groups = groupBy(overflowingActivityDirectives, 'type');
       tooltipText += `<div class='tooltip-row-container'>
-                      <div class='st-typography-bold' style='color: var(--st-gray-10)'>+${activityDirectives.length - limit} directives</div>
-                    </div>`;
+        ${Object.entries(groups)
+          .map(([key, members]) => {
+            return `<div class='st-typography-bold' style='color: var(--st-gray-10); display: flex; gap: 4px;'>${DirectiveIcon} +${members.length} ${key}</div>`;
+          })
+          .join('')}
+      </div>`;
+    }
+
+    if (overflowingSpans.length) {
+      if (overflowingActivityDirectives.length) {
+        tooltipText += '<hr>';
+      }
+      const groups = groupBy(overflowingSpans, 'type');
+      tooltipText += `<div class='tooltip-row-container'>
+        ${Object.entries(groups)
+          .map(([key, members]) => {
+            return `<div class='st-typography-bold' style='color: var(--st-gray-10); display: flex; gap: 4px;'>${SpanIcon} +${members.length} ${key}</div>`;
+          })
+          .join('')}
+      </div>`;
     }
 
     if (constraintResults.length && activityDirectives.length) {
@@ -170,26 +226,6 @@
       }
     });
 
-    if (spans.length && (points.length || constraintResults.length || activityDirectives.length)) {
-      tooltipText = `${tooltipText}<hr>`;
-    }
-
-    const spansOverLimit = spans.length > limit;
-    // TODO faster to just use a for loop here
-    spans.slice(0, limit).forEach((span: Span, i: number) => {
-      const text = textForSpan(span);
-      tooltipText = `${tooltipText} ${text}`;
-
-      if (i !== spans.length - 1) {
-        tooltipText = `${tooltipText}<hr>`;
-      }
-    });
-    if (spansOverLimit) {
-      tooltipText += `<div class='tooltip-row-container'>
-                      <div class='st-typography-bold' style='color: var(--st-gray-10)'>+${spans.length - limit} spans</div>
-                    </div>`;
-    }
-
     return tooltipText;
   }
 
@@ -198,7 +234,7 @@
     const startTimeYmd = typeof start_time_ms === 'number' ? getDoyTime(new Date(start_time_ms)) : 'Unknown';
     return `
       <div class='tooltip-row-container'>
-        <div class='st-typography-bold' style='color: var(--st-gray-10)'>Activity Directive</div>
+        <div class='st-typography-bold' style='color: var(--st-gray-10); display: flex; gap: 4px;'>${DirectiveIcon} Activity Directive</div>
         <div class='tooltip-row'>
           <span>Name:</span>
           <span class='tooltip-value-row'>
@@ -287,7 +323,7 @@
     const endTimeYmd = getDoyTime(new Date(endMs));
     return `
       <div class='tooltip-row-container'>
-        <div class='st-typography-bold' style='color: var(--st-gray-10)'>Simulated Activity (Span)</div>
+        <div class='st-typography-bold' style='color: var(--st-gray-10); display: flex; gap: 4px;'>${SpanIcon} Simulated Activity (Span)</div>
         <div class='tooltip-row'>
           <span>Id:</span>
           <span class='tooltip-value-highlight st-typography-medium'>${id}</span>
