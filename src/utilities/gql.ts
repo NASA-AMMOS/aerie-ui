@@ -181,6 +181,7 @@ export enum Queries {
   UPDATE_USER_SEQUENCE = 'update_user_sequence_by_pk',
   UPDATE_VIEW = 'update_view_by_pk',
   UPLOADED_FILES = 'uploaded_file',
+  UPLOAD_DICTIONARY = 'uploadDictionary',
   USER_ROLE_PERMISSION = 'user_role_permission',
   USER_SEQUENCE = 'user_sequence_by_pk',
   USER_SEQUENCES = 'user_sequence',
@@ -323,16 +324,17 @@ const gql = {
   `,
 
   CREATE_COMMAND_DICTIONARY: `#graphql
-    mutation CreateCommandDictionary($commandDictionary: command_dictionary_insert_input!) {
-      createCommandDictionary: ${Queries.INSERT_COMMAND_DICTIONARY}(object: $commandDictionary) {
-        created_at
-        id
-        mission
-        parsed_json
-        version
-      }
-    }
-  `,
+mutation CreateCommandDictionary($dictionary: String!) {
+  createCommandDictionary: ${Queries.UPLOAD_DICTIONARY}(dictionary: $dictionary) {
+    command_types_typescript_path
+    created_at
+    id
+    mission
+    parsed_json
+    version
+  }
+}
+`,
 
   CREATE_CONSTRAINT: `#graphql
     mutation CreateConstraint($constraint: constraint_metadata_insert_input!) {
@@ -1242,6 +1244,7 @@ const gql = {
         name
         owner
         sequence_adaptation_id
+        updated_at
       }
     }
   `,
@@ -1886,6 +1889,8 @@ const gql = {
         id
         mission
         version
+        created_at
+        updated_at
       }
     }
   `,
@@ -2100,6 +2105,7 @@ const gql = {
         created_at
         id
         mission
+        updated_at
         version
       }
     }
@@ -2114,6 +2120,7 @@ const gql = {
         id
         name
         sequence_adaptation_id
+        updated_at
       }
     }
   `,
