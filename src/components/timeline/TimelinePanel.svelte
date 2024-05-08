@@ -31,6 +31,7 @@
   import type { ActivityDirectiveId } from '../../types/activity';
   import type { User } from '../../types/app';
   import type {
+    ActivityOptions,
     Axis,
     DirectiveVisibilityToggleMap,
     MouseDown,
@@ -157,14 +158,11 @@
       : {};
   }
 
-  function onToggleDirectiveVisibility(event: CustomEvent<{ row: Row; show: boolean }>) {
+  function onToggleActivityComposition(event: CustomEvent<{ row: Row; composition: ActivityOptions['composition'] }>) {
     const {
-      detail: { row, show },
+      detail: { row, composition },
     } = event;
-    timelineDirectiveVisibilityToggles = {
-      ...timelineDirectiveVisibilityToggles,
-      ...toggleDirectiveVisibility(row.id, show),
-    };
+    viewUpdateRow('activityOptions', { ...row.activityOptions, composition }, timelineId, row.id);
   }
 
   function toggleDirectiveVisibility(rowId: number, visible: boolean) {
@@ -312,8 +310,7 @@
       on:jumpToActivityDirective={jumpToActivityDirective}
       on:jumpToSpan={jumpToSpan}
       on:mouseDown={onMouseDown}
-      on:toggleDirectiveVisibility={onToggleDirectiveVisibility}
-      on:toggleSpanVisibility={onToggleSpanVisibility}
+      on:toggleActivityComposition={onToggleActivityComposition}
       on:toggleRowExpansion={({ detail: { expanded, rowId } }) => {
         viewUpdateRow('expanded', expanded, timelineId, rowId);
       }}

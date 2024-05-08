@@ -1,5 +1,4 @@
 import Ajv from 'ajv';
-import { ViewConstants } from '../enums/view';
 import jsonSchema from '../schemas/ui-view-schema.json';
 import type { ActivityType } from '../types/activity';
 import type { ResourceType } from '../types/simulation';
@@ -21,16 +20,15 @@ export function generateDefaultView(activityTypes: ActivityType[] = [], resource
   const now = new Date().toISOString();
   const types: string[] = activityTypes.map(({ name }) => name);
 
-  const timeline = createTimeline([], { marginLeft: ViewConstants.MIN_MARGIN_LEFT, marginRight: 30 });
+  const timeline = createTimeline([], { marginLeft: 250, marginRight: 30 });
   const timelines = [timeline];
 
   const activityLayer = createTimelineActivityLayer(timelines, {
     filter: { activity: { types } },
   });
   const activityRow = createRow(timelines, {
-    autoAdjustHeight: false,
+    autoAdjustHeight: true,
     expanded: true,
-    height: 200,
     layers: [activityLayer],
     name: 'Activities',
   });

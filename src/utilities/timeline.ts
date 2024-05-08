@@ -13,6 +13,7 @@ import {
   type CountableTimeInterval,
   type TimeInterval,
 } from 'd3-time';
+import { ViewDefaultActivityOptions } from '../enums/view';
 import type { ActivityDirective } from '../types/activity';
 import type { Resource, ResourceType, ResourceValue, Span } from '../types/simulation';
 import type {
@@ -392,6 +393,7 @@ export function createRow(timelines: Timeline[], args: Partial<Row> = {}): Row {
   const id = getNextRowID(timelines);
 
   return {
+    activityOptions: { ...ViewDefaultActivityOptions },
     autoAdjustHeight: false,
     expanded: true,
     height: 160,

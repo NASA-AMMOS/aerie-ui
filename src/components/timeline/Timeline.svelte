@@ -20,16 +20,7 @@
     SpanUtilityMaps,
     SpansMap,
   } from '../../types/simulation';
-  import type {
-    DirectiveVisibilityToggleMap,
-    MouseDown,
-    MouseOver,
-    Row,
-    SpanVisibilityToggleMap,
-    TimeRange,
-    Timeline,
-    XAxisTick,
-  } from '../../types/timeline';
+  import type { MouseDown, MouseOver, Row, TimeRange, Timeline, XAxisTick } from '../../types/timeline';
   import { clamp } from '../../utilities/generic';
   import { getDoyTime } from '../../utilities/time';
   import {
@@ -70,9 +61,8 @@
   export let spansMap: SpansMap = {};
   export let spans: Span[] = [];
   export let timeline: Timeline | null = null;
-  export let timelineDirectiveVisibilityToggles: DirectiveVisibilityToggleMap = {};
   export let timelineInteractionMode: TimelineInteractionMode;
-  export let timelineSpanVisibilityToggles: SpanVisibilityToggleMap = {};
+  // export let timelineSpanVisibilityToggles: SpanVisibilityToggleMap = {}; /* TODO get rid of this in other places */
   export let timelineLockStatus: TimelineLockStatus;
   export let viewTimeRange: TimeRange = { end: 0, start: 0 };
   export let user: User | null;
@@ -94,6 +84,7 @@
     viewTimeRangeChanged: TimeRange;
   }>();
 
+  let activityTreeExpansionMapByRow: Record<string, boolean> = {};
   let timelineZoomTransform: ZoomTransform | null = null;
   let clientWidth: number = 0;
   let contextMenu: MouseOver | null;
@@ -306,6 +297,11 @@
     histogramCursorTime = null;
   }
 
+  function onCollapseActivityTree(event: CustomEvent<Row>) {
+    const row = event.detail;
+    activityTreeExpansionMapByRow = { ...activityTreeExpansionMapByRow, [row.id]: {} };
+  }
+
   function onHistogramCursorTimeChanged(event: CustomEvent<Date | null>) {
     histogramCursorTime = event.detail;
   }
@@ -476,6 +472,11 @@
           <TimelineRow
             {activityDirectives}
             {activityDirectivesMap}
+            activityTreeExpansionMap={activityTreeExpansionMapByRow[row.id]}
+            on:activityTreeExpansionChange={e => {
+              activityTreeExpansionMapByRow = { ...activityTreeExpansionMapByRow, [row.id]: e.detail };
+            }}
+            {...row.activityOptions ? { activityOptions: row.activityOptions } : null}
             autoAdjustHeight={row.autoAdjustHeight}
             {constraintResults}
             {dpr}
@@ -498,8 +499,6 @@
             {rowHeaderDragHandleWidthPx}
             {selectedActivityDirectiveId}
             {selectedSpanId}
-            showDirectives={timelineDirectiveVisibilityToggles[row.id]}
-            showSpans={timelineSpanVisibilityToggles[row.id]}
             {simulationDataset}
             {spanUtilityMaps}
             {spansMap}
@@ -539,6 +538,7 @@
     {hasUpdateDirectivePermission}
     {hasUpdateSimulationPermission}
     {maxTimeRange}
+    on:collapseActivityTree={onCollapseActivityTree}
     on:deleteActivityDirective
     on:jumpToActivityDirective
     on:jumpToSpan
@@ -551,14 +551,11 @@
     {spansMap}
     {spanUtilityMaps}
     {plan}
-    {timelineDirectiveVisibilityToggles}
-    {timelineSpanVisibilityToggles}
     {planStartTimeYmd}
     verticalGuides={timeline?.verticalGuides ?? []}
     {xScaleView}
     {user}
-    on:toggleDirectiveVisibility
-    on:toggleSpanVisibility
+    on:toggleActivityComposition
     on:editRow
     on:deleteRow
     on:moveRow={onMoveRow}
@@ -586,7 +583,7 @@
 
   .timeline-time-row {
     background: white;
-    border-bottom: 1px solid var(--st-gray-20);
+    border-bottom: 1px solid rgba(210, 210, 210, 1);
     display: flex;
   }
 

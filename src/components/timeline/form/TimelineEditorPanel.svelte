@@ -9,7 +9,15 @@
   import GripVerticalIcon from 'bootstrap-icons/icons/grip-vertical.svg?component';
   import { onMount } from 'svelte';
   import { dndzone } from 'svelte-dnd-action';
-  import { ViewConstants } from '../../../enums/view';
+  import ActivityModeTextNoneIcon from '../../../assets/text-none.svg?component';
+  import ActivityModeTextIcon from '../../../assets/text.svg?component';
+  import ActivityModeCompactIcon from '../../../assets/timeline-activity-mode-compact.svg?component';
+  import ActivityModeGroupedIcon from '../../../assets/timeline-activity-mode-grouped.svg?component';
+  import DirectiveAndSpanIcon from '../../../assets/timeline-directive-and-span.svg?component';
+  import DirectiveIcon from '../../../assets/timeline-directive.svg?component';
+  import SpanIcon from '../../../assets/timeline-span.svg?component';
+  import ActivityModeWidthIcon from '../../../assets/width.svg?component';
+  import { ViewConstants, ViewDefaultActivityOptions } from '../../../enums/view';
   import { activityTypes, maxTimeRange, viewTimeRange } from '../../../stores/plan';
   import { externalResourceNames, resourceTypes, yAxesWithScaleDomainsCache } from '../../../stores/simulation';
   import {
@@ -24,8 +32,10 @@
     viewUpdateTimeline,
   } from '../../../stores/views';
   import type { ActivityType } from '../../../types/activity';
+  import type { RadioButtonId } from '../../../types/radio-buttons';
   import type {
     ActivityLayer,
+    ActivityOptions,
     Axis,
     HorizontalGuide,
     Layer,
@@ -57,6 +67,8 @@
   import CssGrid from '../../ui/CssGrid.svelte';
   import DatePicker from '../../ui/DatePicker/DatePicker.svelte';
   import Panel from '../../ui/Panel.svelte';
+  import RadioButton from '../../ui/RadioButtons/RadioButton.svelte';
+  import RadioButtons from '../../ui/RadioButtons/RadioButtons.svelte';
   import TimelineEditorLayerFilter from './TimelineEditorLayerFilter.svelte';
   import TimelineEditorLayerSelectedFilters from './TimelineEditorLayerSelectedFilters.svelte';
   import TimelineEditorLayerSettings from './TimelineEditorLayerSettings.svelte';
@@ -75,7 +87,12 @@
   $: horizontalGuides = $selectedRow?.horizontalGuides || [];
   $: yAxes = $selectedRow?.yAxes || [];
   $: layers = $selectedRow?.layers || [];
+  $: rowHasActivityLayer = $selectedRow?.layers.find(layer => layer.chartType === 'activity') || false;
   $: rowHasNonActivityChartLayer = !!$selectedRow?.layers.find(layer => layer.chartType !== 'activity') || false;
+  $: if (rowHasActivityLayer && $selectedRow && !$selectedRow.activityOptions) {
+    viewUpdateRow('activityOptions', ViewDefaultActivityOptions);
+  }
+  $: activityOptions = $selectedRow?.activityOptions || { ...ViewDefaultActivityOptions };
 
   function updateRowEvent(event: Event) {
     const { name, value } = getTarget(event);
@@ -145,6 +162,17 @@
   function handleDeleteLayerFilterValue(layer: Layer, value: string) {
     const newValues = getFilterValuesForLayer(layer).filter(i => value !== i);
     handleUpdateLayerFilter(newValues, layer);
+  }
+
+  function handleActivityOptionRadioChange(
+    event: CustomEvent<{
+      id: RadioButtonId;
+      index: number;
+    }>,
+    name: keyof ActivityOptions,
+  ) {
+    const { id } = event.detail;
+    viewUpdateRow('activityOptions', { ...activityOptions, [name]: id });
   }
 
   function addTimelineRow() {
@@ -812,6 +840,127 @@
           {/if}
         </fieldset>
       {/if}
+      {#if rowHasActivityLayer}
+        <fieldset class="editor-section">
+          <div class="editor-section-header">
+            <div class="st-typography-medium">Activity Options</div>
+          </div>
+          <div class="radio-input">
+            <div class="radio-input-label">Display</div>
+            <RadioButtons
+              selectedButtonId={activityOptions.displayMode}
+              on:select-radio-button={e => handleActivityOptionRadioChange(e, 'displayMode')}
+            >
+              <RadioButton
+                use={[[tooltip, { content: 'Group activities by type in collapsible rows', placement: 'top' }]]}
+                id="grouped"
+              >
+                <div class="radio-button-icon">
+                  <ActivityModeGroupedIcon />Grouped
+                </div>
+              </RadioButton>
+              <RadioButton
+                use={[[tooltip, { content: 'Pack activities into a single row', placement: 'top' }]]}
+                id="compact"
+              >
+                <div class="radio-button-icon">
+                  <ActivityModeCompactIcon />
+                  Compact
+                </div>
+              </RadioButton>
+            </RadioButtons>
+          </div>
+          {#if activityOptions.displayMode === 'grouped'}
+            <!-- TODO naming for this one is tricky -->
+            <div class="radio-input">
+              <div class="radio-input-label">Hierarchy</div>
+              <RadioButtons
+                selectedButtonId={activityOptions.hierarchyMode}
+                on:select-radio-button={e => handleActivityOptionRadioChange(e, 'hierarchyMode')}
+              >
+                <RadioButton
+                  use={[[tooltip, { content: 'Group starting with directives', placement: 'top' }]]}
+                  id="directive"
+                >
+                  <div class="radio-button-icon">
+                    <ActivityModeGroupedIcon />Directives
+                  </div>
+                </RadioButton>
+                <RadioButton
+                  use={[
+                    [
+                      tooltip,
+                      { content: 'Group starting with directives and spans regardless of depth', placement: 'top' },
+                    ],
+                  ]}
+                  id="all"
+                >
+                  <div class="radio-button-icon">
+                    <ActivityModeCompactIcon />
+                    All
+                  </div>
+                </RadioButton>
+              </RadioButtons>
+            </div>
+          {/if}
+          <div class="radio-input">
+            <div class="radio-input-label">Labels</div>
+            <RadioButtons
+              selectedButtonId={activityOptions.labelVisibility}
+              on:select-radio-button={e => handleActivityOptionRadioChange(e, 'labelVisibility')}
+            >
+              <RadioButton use={[[tooltip, { content: 'Always show labels', placement: 'top' }]]} id="on">
+                <div class="radio-button-icon">
+                  <ActivityModeTextIcon />On
+                </div>
+              </RadioButton>
+              <RadioButton use={[[tooltip, { content: 'Never show labels', placement: 'top' }]]} id="off">
+                <div class="radio-button-icon">
+                  <ActivityModeTextNoneIcon />
+                  Off
+                </div>
+              </RadioButton>
+              <RadioButton
+                use={[[tooltip, { content: 'Show labels that do not overlap', placement: 'top' }]]}
+                id="auto"
+              >
+                <div class="radio-button-icon">
+                  <ActivityModeWidthIcon />
+                  Auto
+                </div>
+              </RadioButton>
+            </RadioButtons>
+          </div>
+          <div class="radio-input">
+            <div class="radio-input-label">Show</div>
+            <RadioButtons
+              selectedButtonId={activityOptions.composition}
+              on:select-radio-button={e => handleActivityOptionRadioChange(e, 'composition')}
+            >
+              <RadioButton use={[[tooltip, { content: 'Only show directives', placement: 'top' }]]} id="directives">
+                <div class="radio-button-icon">
+                  <DirectiveIcon />Directives
+                </div>
+              </RadioButton>
+              <RadioButton use={[[tooltip, { content: 'Only show simulated', placement: 'top' }]]} id="spans">
+                <div class="radio-button-icon">
+                  <SpanIcon />
+                  Simulated
+                </div>
+              </RadioButton>
+              <RadioButton
+                use={[[tooltip, { content: 'Show directives and simulated activities', placement: 'top' }]]}
+                id="both"
+              >
+                <div class="radio-button-icon">
+                  <DirectiveAndSpanIcon />
+                  Both
+                </div>
+              </RadioButton>
+            </RadioButtons>
+          </div>
+        </fieldset>
+      {/if}
       <!-- TODO perhaps separate out each section into a mini editor? -->
       {#if yAxes.length > 0 || rowHasNonActivityChartLayer}
         <fieldset class="editor-section editor-section-draggable">
@@ -1199,5 +1348,21 @@
   .timeline-layer {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .radio-input {
+    align-items: center;
+    display: flex;
+    gap: 4px;
+    width: 100%;
+  }
+
+  .radio-input-label {
+    min-width: 60px;
+  }
+
+  .radio-button-icon {
+    display: flex;
+    gap: 4px;
   }
 </style>

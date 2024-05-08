@@ -148,7 +148,18 @@ export type ResourceLayerFilter = {
   names: string[];
 };
 
+export type ActivityOptions = {
+  // TODO should these be optional for backwards compatibility
+  // or is it enough to make the root options object optional?
+  activityHeight: number;
+  composition: 'directives' | 'spans' | 'both';
+  displayMode: 'grouped' | 'compact';
+  hierarchyMode: 'directive' | 'all';
+  labelVisibility: 'on' | 'off' | 'auto';
+};
+
 export type Row = {
+  activityOptions?: ActivityOptions;
   autoAdjustHeight: boolean;
   expanded: boolean;
   height: number;

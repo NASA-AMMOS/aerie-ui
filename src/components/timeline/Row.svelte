@@ -1,16 +1,14 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import CollapseIcon from '@nasa-jpl/stellar/icons/collapse.svg?component';
-  import FilterIcon from '@nasa-jpl/stellar/icons/filter.svg?component';
-  import LineHeightIcon from '@nasa-jpl/stellar/icons/line_height.svg?component';
-  import WaterfallIcon from '@nasa-jpl/stellar/icons/waterfall.svg?component';
   import type { ScaleTime } from 'd3-scale';
   import { select, type Selection } from 'd3-selection';
   import { zoom as d3Zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior, type ZoomTransform } from 'd3-zoom';
   import { pick } from 'lodash-es';
   import { createEventDispatcher } from 'svelte';
+  import FilterWithXIcon from '../../assets/filter-with-x.svg?component';
   import { Status } from '../../enums/status';
+  import { ViewDefaultActivityOptions } from '../../enums/view';
   import { catchError } from '../../stores/errors';
   import {
     externalResources,
@@ -34,6 +32,7 @@
   } from '../../types/simulation';
   import type {
     ActivityLayer,
+    ActivityOptions,
     Axis,
     HorizontalGuide,
     Layer,
@@ -72,6 +71,8 @@
 
   export let activityDirectives: ActivityDirective[] = [];
   export let activityDirectivesMap: ActivityDirectivesMap = {};
+  export let activityTreeExpansionMap: Record<string, boolean> = {};
+  export let activityOptions: ActivityOptions;
   export let autoAdjustHeight: boolean = false;
   export let constraintResults: ConstraintResultWithName[] = [];
   export let decimate: boolean = false;
@@ -94,8 +95,6 @@
   export let rowHeaderDragHandleWidthPx: number = 2;
   export let selectedActivityDirectiveId: ActivityDirectiveId | null = null;
   export let selectedSpanId: SpanId | null = null;
-  export let showDirectives: boolean = true;
-  export let showSpans: boolean = true;
   export let simulationDataset: SimulationDataset | null = null;
   export let spanUtilityMaps: SpanUtilityMaps;
   export let spansMap: SpansMap = {};
@@ -107,6 +106,12 @@
   export let xTicksView: XAxisTick[] = [];
   export let yAxes: Axis[] = [];
   export let user: User | null;
+
+  $: activityOptions = activityOptions || { ...ViewDefaultActivityOptions };
+  $: activityTreeExpansionMap = activityTreeExpansionMap || {};
+
+  $: showSpans = activityOptions.composition === 'both' || activityOptions.composition === 'spans';
+  $: showDirectives = activityOptions.composition === 'both' || activityOptions.composition === 'directives';
 
   const dispatch = createEventDispatcher<{
     mouseDown: MouseDown;
@@ -149,7 +154,7 @@
   let loadedResources: Resource[];
   let loadingErrors: string[];
   let anyResourcesLoading: boolean = true;
-  let activityLayerGroups = [];
+  let activityGroups = [];
   let filteredActivityDirectives: ActivityDirective[] = [];
   let filteredSpans: Span[] = [];
   let timeFilteredActivityDirectives: ActivityDirective[] = [];
@@ -158,11 +163,7 @@
     directives: {},
     spans: {},
   };
-  let activityTreeExpansionMap = {};
   let filterActivitiesByTime = false;
-  let packedMode = false;
-  let labelMode: 'on' | 'auto' | 'off' = 'auto';
-  let flatMode = true;
 
   $: if (plan && simulationDataset !== null && layers && $externalResources && !$resourceTypesLoading) {
     const simulationDatasetId = simulationDataset.dataset_id;
@@ -343,13 +344,8 @@
     overlaySvgSelection.call(zoom.transform, timelineZoomTransform);
   }
 
-  $: if (
-    hasActivityLayer &&
-    spansMap &&
-    activityDirectives /* TODO pass in */ &&
-    typeof filterActivitiesByTime === 'boolean'
-  ) {
-    activityLayerGroups = [];
+  $: if (hasActivityLayer && spansMap && activityDirectives && typeof filterActivitiesByTime === 'boolean') {
+    activityGroups = [];
     idToColorMaps = { directives: {}, spans: {} };
 
     const activityLayers = layers.filter(layer => layer.chartType === 'activity') as ActivityLayer[];
@@ -395,7 +391,7 @@
     }
   }
 
-  $: if (filterActivitiesByTime && filteredActivityDirectives && filteredSpans && viewTimeRange) {
+  $: if (hasActivityLayer && filterActivitiesByTime && filteredActivityDirectives && filteredSpans && viewTimeRange) {
     timeFilteredSpans = filteredSpans.filter(span => spanInView(span, viewTimeRange));
     timeFilteredActivityDirectives = filteredActivityDirectives.filter(directive => {
       let inView = directiveInView(directive, viewTimeRange);
@@ -412,24 +408,27 @@
   }
 
   $: if (
+    hasActivityLayer &&
     timeFilteredActivityDirectives &&
     timeFilteredSpans &&
+    activityOptions &&
     typeof showSpans === 'boolean' &&
-    typeof showDirectives === 'boolean'
+    typeof showDirectives === 'boolean' &&
+    activityTreeExpansionMap
   ) {
     // TODO figure out how to work in activity layer height to all of this since before it was on each layer but now all activity layers are combined?
-    if (!packedMode) {
-      if (flatMode) {
-        activityLayerGroups = generateActivityTreeFlat(
+    if (activityOptions.displayMode === 'grouped') {
+      if (activityOptions.hierarchyMode === 'directive') {
+        activityGroups = generateActivityTree(timeFilteredActivityDirectives, activityTreeExpansionMap);
+      } else {
+        activityGroups = generateActivityTreeFlat(
           timeFilteredActivityDirectives,
           timeFilteredSpans,
           activityTreeExpansionMap,
         );
-      } else {
-        activityLayerGroups = generateActivityTree(timeFilteredActivityDirectives, activityTreeExpansionMap);
       }
     } else {
-      activityLayerGroups = [];
+      activityGroups = [];
     }
   }
 
@@ -443,14 +442,14 @@
     }, {});
   }
 
-  function getNodeExpanded(id, expansionMap) {
-    if (!expansionMap.hasOwnProperty(id)) {
+  function getNodeExpanded(id, activityTreeExpansionMap) {
+    if (!activityTreeExpansionMap.hasOwnProperty(id)) {
       return false;
     }
-    return expansionMap[id];
+    return activityTreeExpansionMap[id];
   }
 
-  function paginate(groups, parentId: string, depth = 1) {
+  function paginate(groups, parentId: string, activityTreeExpansionMap, depth = 1) {
     const binSize = 100;
     if (groups.length <= binSize) {
       return groups;
@@ -490,7 +489,7 @@
       group.label = label;
       group.expanded = getNodeExpanded(group.id, activityTreeExpansionMap);
     });
-    return paginate(newGroups, parentId, depth + 1);
+    return paginate(newGroups, parentId, activityTreeExpansionMap, depth + 1);
   }
 
   // TODO repeated in LayerActivites, move to a util?
@@ -499,7 +498,7 @@
     return spansMap[spanId];
   }
 
-  function generateActivityTreeFlat(directives: ActivityDirective[], spans: Span[], visibilityMap) {
+  function generateActivityTreeFlat(directives: ActivityDirective[], spans: Span[], activityTreeExpansionMap) {
     // TODO duplicates appear when you have two layers with the same type
     const groupedSpans = showSpans ? groupBy(spans, 'type') : {};
     const groupedDirectives = showDirectives ? groupBy(directives, 'type') : {};
@@ -542,7 +541,7 @@
             }
           });
         }
-        subgroup = paginate(subtrees, id);
+        subgroup = paginate(subtrees, id, activityTreeExpansionMap);
         groups.push({
           expanded: expanded,
           groups: subgroup,
@@ -556,7 +555,7 @@
     return groups;
   }
 
-  function generateActivityTree(directives: ActivityDirective[], visibilityMap) {
+  function generateActivityTree(directives: ActivityDirective[], activityTreeExpansionMap) {
     const tree = [];
 
     // Activities grouped by type
@@ -587,7 +586,7 @@
           }
           items.push({ directive, ...(childSpan ? { span: childSpan } : null) });
         });
-        groups.push(...paginate(subtrees, id));
+        groups.push(...paginate(subtrees, id, activityTreeExpansionMap));
         tree.push({
           expanded,
           label,
@@ -701,19 +700,11 @@
 
   function onActivityTreeNodeChange(e) {
     const group = e.detail;
-    activityTreeExpansionMap = { ...activityTreeExpansionMap, [group.id]: !group.expanded };
+    dispatch('activityTreeExpansionChange', { ...(activityTreeExpansionMap || {}), [group.id]: !group.expanded });
   }
 
   function onActivityTimeFilterChange() {
     filterActivitiesByTime = !filterActivitiesByTime;
-  }
-
-  function onFlatModeChange() {
-    flatMode = !flatMode;
-  }
-
-  function onActivityHierarchyCollapse() {
-    activityTreeExpansionMap = {};
   }
 
   function zoomed(e: D3ZoomEvent<HTMLCanvasElement, any>) {
@@ -849,7 +840,7 @@
       on:activity-tree-node-change={onActivityTreeNodeChange}
       on:mouseDown={onMouseDown}
       on:dblClick
-      {activityLayerGroups}
+      {activityGroups}
       width={marginLeft}
       height={computedDrawHeight}
       {expanded}
@@ -868,53 +859,13 @@
       {selectedSpanId}
     >
       {#if hasActivityLayer}
-        {#if !packedMode}
-          <button
-            class="st-button icon"
-            on:click|stopPropagation={onActivityHierarchyCollapse}
-            use:tooltip={{ content: 'Collapse Hierarchy', placement: 'top' }}
-          >
-            <CollapseIcon />
-          </button>
-        {/if}
         <button
-          class="st-button icon"
-          on:click|stopPropagation={() => {
-            if (labelMode === 'on') {
-              labelMode = 'auto';
-            } else if (labelMode === 'auto') {
-              labelMode = 'off';
-            } else {
-              labelMode = 'on';
-            }
-          }}
-          use:tooltip={{ content: 'Toggle Packed Mode', placement: 'top' }}
-        >
-          {labelMode}
-        </button>
-        <button
-          class="st-button icon"
-          style:color={packedMode ? 'var(--st-utility-blue)' : ''}
-          on:click|stopPropagation={() => (packedMode = !packedMode)}
-          use:tooltip={{ content: 'Toggle Packed Mode', placement: 'top' }}
-        >
-          <WaterfallIcon />
-        </button>
-        <button
-          class="st-button icon"
-          style:color={filterActivitiesByTime ? 'var(--st-utility-blue)' : ''}
+          class="st-button icon row-action"
+          class:row-action-active={filterActivitiesByTime}
           on:click|stopPropagation={onActivityTimeFilterChange}
           use:tooltip={{ content: 'Filter Activities by Time Window', placement: 'top' }}
         >
-          <FilterIcon />
-        </button>
-        <button
-          class="st-button icon"
-          style:color={flatMode ? 'var(--st-utility-blue)' : ''}
-          on:click|stopPropagation={onFlatModeChange}
-          use:tooltip={{ content: flatMode ? 'Hierarchy Mode' : 'Flat Mode', placement: 'top' }}
-        >
-          <LineHeightIcon />
+          <FilterWithXIcon />
         </button>
       {/if}
     </RowHeader>
@@ -987,11 +938,11 @@
       <div class="layers" style="width: {drawWidth}px">
         {#if hasActivityLayer}
           <LayerActivities
+            {activityOptions}
             {idToColorMaps}
-            {activityLayerGroups}
+            {activityGroups}
             activityDirectives={filteredActivityDirectives}
             spans={filteredSpans}
-            {labelMode}
             {activityDirectivesMap}
             {hasUpdateDirectivePermission}
             {showDirectives}
@@ -1007,7 +958,6 @@
             {mousemove}
             {mouseout}
             {mouseup}
-            mode={packedMode ? 'packed' : 'grouped'}
             {planEndTimeDoy}
             {plan}
             {planStartTimeYmd}
@@ -1135,16 +1085,16 @@
     z-index: 0;
   }
 
-  .row-edit-button {
-    display: flex;
-  }
-
-  :global(.row-edit-button.st-button.icon svg) {
+  :global(.row-action.st-button.icon svg) {
     color: var(--st-gray-50);
   }
 
-  :global(.row-edit-button.st-button.icon:hover svg) {
+  :global(.row-action.st-button.icon:hover svg) {
     color: var(--st-gray-70);
+  }
+
+  :global(.row-action.row-action-active.st-button.icon svg) {
+    color: var(--st-utility-blue);
   }
 
   .row-root {

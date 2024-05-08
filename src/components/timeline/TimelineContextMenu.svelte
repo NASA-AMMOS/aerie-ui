@@ -12,11 +12,10 @@
   import type { Plan } from '../../types/plan';
   import type { Simulation, SimulationDataset, Span, SpanUtilityMaps, SpansMap } from '../../types/simulation';
   import type {
-    DirectiveVisibilityToggleMap,
+    ActivityOptions,
     MouseOver,
     MouseOverOrigin,
     Row,
-    SpanVisibilityToggleMap,
     TimeRange,
     VerticalGuide,
   } from '../../types/timeline';
@@ -32,6 +31,7 @@
   import ContextSubMenuItem from '../context-menu/ContextSubMenuItem.svelte';
 
   export let activityDirectivesMap: ActivityDirectivesMap;
+  // export let activityOptions: ActivityOptions;
   export let contextMenu: MouseOver | null;
   export let hasUpdateDirectivePermission: boolean = false;
   export let hasUpdateSimulationPermission: boolean = false;
@@ -42,13 +42,14 @@
   export let simulationDataset: SimulationDataset | null = null;
   export let spansMap: SpansMap;
   export let spanUtilityMaps: SpanUtilityMaps;
-  export let timelineDirectiveVisibilityToggles: DirectiveVisibilityToggleMap;
-  export let timelineSpanVisibilityToggles: SpanVisibilityToggleMap;
+  // export let timelineDirectiveVisibilityToggles: DirectiveVisibilityToggleMap;
+  // export let timelineSpanVisibilityToggles: SpanVisibilityToggleMap;
   export let verticalGuides: VerticalGuide[];
   export let xScaleView: ScaleTime<number, number> | null = null;
   export let user: User | null;
 
   const dispatch = createEventDispatcher<{
+    collapseActivityTree: Row;
     deleteActivityDirective: number;
     deleteRow: Row;
     duplicateRow: Row;
@@ -57,16 +58,16 @@
     jumpToActivityDirective: number;
     jumpToSpan: number;
     moveRow: { direction: 'up' | 'down'; row: Row };
-    toggleDirectiveVisibility: { row: Row; show: boolean };
-    toggleSpanVisibility: { row: Row; show: boolean };
+    toggleActivityComposition: { composition: ActivityOptions['composition']; row: Row };
     updateVerticalGuides: VerticalGuide[];
     viewTimeRangeChanged: TimeRange;
     viewTimeRangeReset: void;
   }>();
-  let contextMenuComponent: ContextMenu;
+  let activityOptions: ActivityOptions | undefined;
   let activityDirective: ActivityDirective | null;
   let activityDirectiveSpans: Span[] | null = [];
   let activityDirectiveStartDate: Date | null = null;
+  let contextMenuComponent: ContextMenu;
   let span: Span | null;
   let hasActivityLayer: boolean = false;
   let mouseOverOrigin: MouseOverOrigin | undefined = undefined;
@@ -90,8 +91,7 @@
     showSpans = false;
 
     if (row) {
-      showDirectives = timelineDirectiveVisibilityToggles[row.id];
-      showSpans = timelineSpanVisibilityToggles[row.id];
+      activityOptions = row.activityOptions;
       hasActivityLayer = !!row.layers.find(layer => layer.chartType === 'activity');
     }
 
@@ -104,10 +104,9 @@
   } else {
     activityDirective = null;
     span = null;
+    activityOptions = undefined;
     activityDirectiveSpans = null;
     hasActivityLayer = false;
-    showDirectives = false;
-    showSpans = false;
   }
 
   $: startYmd = simulationDataset?.simulation_start_time ?? planStartTimeYmd;
@@ -221,13 +220,16 @@
     }
   }
 
+  function onCollapseActivityTree() {
+    if (row) {
+      dispatch('collapseActivityTree', row);
+    }
+  }
+
   function onShowDirectivesAndActivitiesChange(event: Event) {
     const { value } = getTarget(event);
-    const newShowDirectives = value !== 'show-spans';
-    const newShowSpans = value !== 'show-directives';
     if (row) {
-      dispatch('toggleDirectiveVisibility', { row, show: newShowDirectives });
-      dispatch('toggleSpanVisibility', { row, show: newShowSpans });
+      dispatch('toggleActivityComposition', { composition: value as ActivityOptions['composition'], row });
     }
   }
 
@@ -450,34 +452,38 @@
   <ContextMenuItem on:click={onDuplicateRow}>Duplicate Row</ContextMenuItem>
   <ContextMenuItem on:click={onDeleteRow}>Delete Row</ContextMenuItem>
   {#if hasActivityLayer}
+    {#if activityOptions?.displayMode === 'grouped'}
+      <ContextMenuSeparator />
+      <ContextMenuItem on:click={onCollapseActivityTree}>Collapse All Hierarchies</ContextMenuItem>
+    {/if}
     <ContextMenuSeparator />
     <div role="radiogroup" class="st-radio-group">
-      <label for="show-directives" class="st-radio-option st-typography-body">
+      <label for="directives" class="st-radio-option st-typography-body">
         <input
-          id="show-directives"
+          id="directives"
           type="radio"
-          value="show-directives"
-          checked={showDirectives && !showSpans}
+          value="directives"
+          checked={activityOptions?.composition === 'directives'}
           on:change={onShowDirectivesAndActivitiesChange}
         />
         Show activity directives
       </label>
-      <label for="show-spans" class="st-radio-option st-typography-body">
+      <label for="spans" class="st-radio-option st-typography-body">
         <input
-          id="show-spans"
+          id="spans"
           type="radio"
-          value="show-spans"
-          checked={!showDirectives && showSpans}
+          value="spans"
+          checked={activityOptions?.composition === 'spans'}
           on:change={onShowDirectivesAndActivitiesChange}
         />
         Show simulated activities
       </label>
-      <label for="show-both" class="st-radio-option st-typography-body">
+      <label for="both" class="st-radio-option st-typography-body">
         <input
-          id="show-both"
+          id="both"
           type="radio"
-          value="show-both"
-          checked={showDirectives && showSpans}
+          value="both"
+          checked={activityOptions?.composition === 'both'}
           on:change={onShowDirectivesAndActivitiesChange}
         />
         Show both

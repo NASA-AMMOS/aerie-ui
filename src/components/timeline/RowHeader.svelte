@@ -26,7 +26,7 @@
   export let title: string = '';
   export let width: number = 0;
   export let yAxes: Axis[];
-  export let activityLayerGroups = [];
+  export let activityGroups = [];
   export let selectedActivityDirectiveId: ActivityDirectiveId | null = null;
   export let selectedSpanId: SpanId | null = null;
 
@@ -139,7 +139,7 @@
       <div class="activity-tree">
         <!-- TODO only render if the row has activities -->
         <RowHeaderActivityTree
-          activityTree={activityLayerGroups}
+          activityTree={activityGroups}
           {selectedActivityDirectiveId}
           {selectedSpanId}
           on:activity-tree-node-change

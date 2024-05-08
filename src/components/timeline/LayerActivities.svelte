@@ -6,11 +6,19 @@
   import { quadtree as d3Quadtree, type Quadtree } from 'd3-quadtree';
   import { type ScaleTime } from 'd3-scale';
   import { createEventDispatcher, onDestroy, onMount, tick } from 'svelte';
+  import { ViewDefaultActivityOptions } from '../../enums/view';
   import type { ActivityDirective, ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { Plan } from '../../types/plan';
   import type { Span, SpanId, SpansMap, SpanUtilityMaps } from '../../types/simulation';
-  import type { MouseDown, MouseOver, QuadtreeRect, RowMouseOverEvent, TimeRange } from '../../types/timeline';
+  import type {
+    ActivityOptions,
+    MouseDown,
+    MouseOver,
+    QuadtreeRect,
+    RowMouseOverEvent,
+    TimeRange,
+  } from '../../types/timeline';
   import { hexToRgba, shadeColor } from '../../utilities/color';
   import effects from '../../utilities/effects';
   import { isRightClick } from '../../utilities/generic';
@@ -31,7 +39,8 @@
   } from '../../utilities/timeline';
 
   export let activityDirectives: ActivityDirective[] = [];
-  export let activityLayerGroups = [];
+  export let activityGroups = [];
+  export let activityOptions: ActivityOptions = { ...ViewDefaultActivityOptions };
   export let idToColorMaps = { directives: {}, spans: {} };
   export let activityDirectivesMap: ActivityDirectivesMap = {};
   export let activityHeight: number = 16;
@@ -48,11 +57,9 @@
   export let drawWidth: number = 0;
   export let hasUpdateDirectivePermission: boolean = false;
   export let focus: FocusEvent | undefined;
-  export let labelMode: 'on' | 'auto' | 'off' = 'on';
   export let labelPaddingLeft: number = 2;
   export let maxLabelCount: number = 1000;
   export let maxPackedActivityCount: number = 10000;
-  export let mode: 'packed' | 'grouped' = 'packed';
   export let mousedown: MouseEvent | undefined;
   export let mousemove: MouseEvent | undefined;
   export let mouseout: MouseEvent | undefined;
@@ -142,12 +149,11 @@
     selectedActivityDirectiveId !== undefined &&
     selectedSpanId !== undefined &&
     spansMap &&
-    mode &&
+    activityOptions &&
     viewTimeRange &&
     xScaleView &&
     spans &&
-    labelMode &&
-    activityLayerGroups
+    activityGroups
   ) {
     draw();
   }
@@ -400,7 +406,7 @@
 
       visibleActivityDirectivesById = {};
       visibleSpansById = {};
-      if (mode === 'grouped') {
+      if (activityOptions.displayMode === 'grouped') {
         drawGroupedMode();
       } else {
         drawPackedMode();
@@ -501,14 +507,14 @@
     let boxEndX = 0;
     if (directive && showDirectives) {
       boxEndX = 2;
-      if (labelMode !== 'off') {
+      if (activityOptions.labelVisibility !== 'off') {
         labelEndX = Math.max(startX, 4) + 4 + measureText(directive.name, textMetricsCache).width; // TODO figure out how to codify the spacing of a directive
       }
     }
     if (span && showSpans) {
       const spanEndX = xScaleView(span.endMs);
       boxEndX = Math.max(boxEndX, spanEndX);
-      if (labelMode !== 'off') {
+      if (activityOptions.labelVisibility !== 'off') {
         labelEndX = Math.max(labelEndX, Math.max(4, startX) + 4 + measureText(span.type, textMetricsCache).width);
       }
     }
@@ -529,7 +535,7 @@
 
       // TODO move to arg / control from a view property?
       const height = rowHeight - 4;
-      // TODO should we filter out spans in the activityLayerGroups instead of here and in RowHeaderActivityTree?
+      // TODO should we filter out spans in the activityGroups instead of here and in RowHeaderActivityTree?
       if (span && showSpans && spanInView(span, viewTimeRange)) {
         // Draw span
         let spanLabelWidth = 0;
@@ -548,7 +554,10 @@
 
         // Draw label if no directive
         if (!directive || !showDirectives) {
-          if (labelMode === 'on' || (labelMode === 'auto' && spanStartX > lastTextEnd)) {
+          if (
+            activityOptions.labelVisibility === 'on' ||
+            (activityOptions.labelVisibility === 'auto' && spanStartX > lastTextEnd)
+          ) {
             spanLabelWidth = measureText(span.type, textMetricsCache).width;
             labelsToDraw.push({
               isSelected,
@@ -587,7 +596,10 @@
         ctx.fillRect(directiveStartX, y, 2, rowHeight - 4);
 
         // Draw label
-        if (labelMode === 'on' || (labelMode === 'auto' && directiveStartX > lastTextEnd)) {
+        if (
+          activityOptions.labelVisibility === 'on' ||
+          (activityOptions.labelVisibility === 'auto' && directiveStartX > lastTextEnd)
+        ) {
           directiveLabelWidth = measureText(directive.name, textMetricsCache).width;
           labelsToDraw.push({
             isSelected,
@@ -610,7 +622,7 @@
       }
     });
 
-    // TODO guardrail, be smarter than this for labelMode="on"
+    // TODO guardrail, be smarter than this for activityOptions.labelVisibility="on"
     if (labelsToDraw.length < maxLabelCount) {
       setLabelContext('whatever', 'black');
       labelsToDraw.forEach(({ isSelected, labelText, x, y, width }) => {
@@ -639,7 +651,7 @@
       const collapsedMode = drawHeight < 25;
       let y = collapsedMode ? 0 : 23;
       const expectedRowHeight = 20;
-      activityLayerGroups.forEach(group => {
+      activityGroups.forEach(group => {
         const newY = drawGroup(group, y, expectedRowHeight, !collapsedMode);
         if (!collapsedMode) {
           y = newY;
@@ -652,8 +664,8 @@
     }
   }
 
-  function drawBottomLine(y, width) {
-    ctx.strokeStyle = '#bec0c2';
+  function drawBottomLine(y: number, width: number) {
+    ctx.strokeStyle = 'rgba(210, 210, 210, 1)';
     ctx.beginPath();
     ctx.moveTo(0, y);
     ctx.lineTo(width, y);
