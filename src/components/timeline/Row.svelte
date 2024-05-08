@@ -848,7 +848,7 @@
       {selectedActivityDirectiveId}
       {selectedSpanId}
     >
-      {#if hasActivityLayer}
+      {#if hasActivityLayer && activityOptions.displayMode === 'grouped'}
         <button
           class="st-button icon row-action"
           class:row-action-active={filterActivitiesByTime}
