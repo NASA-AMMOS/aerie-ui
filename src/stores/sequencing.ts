@@ -10,6 +10,7 @@ import {
   type CommandDictionary,
   type ParameterDictionary,
   type Parcel,
+  type ParcelBundle,
   type ParcelToParameterDictionary,
   type SequenceAdaptation,
   type UserSequence,
@@ -51,6 +52,35 @@ export const parcelToParameterDictionaries = gqlSubscribable<ParcelToParameterDi
 );
 
 export const parcels = gqlSubscribable<Parcel[]>(gql.SUB_PARCELS, {}, [], null);
+
+export const parcelBundles: Readable<ParcelBundle[]> = derived(
+  [parcels, parcelToParameterDictionaries, commandDictionaries],
+  ([$parcels, $parcelToParameterDictionaries, $commandDictionaries]) => {
+    if (!$parcels || !$parcelToParameterDictionaries) {
+      return [];
+    }
+    return $parcels.map(parcel => {
+      const parameterDictionaryIds = $parcelToParameterDictionaries
+        .filter(parcelToParameterDictionary => parcelToParameterDictionary.parcel_id === parcel.id)
+        .map(parcelToParameterDictionary => parcelToParameterDictionary.parameter_dictionary_id);
+
+      const commandDictionary = $commandDictionaries.find(
+        commandDictionary => commandDictionary.id === parcel.command_dictionary_id,
+      )?.id;
+
+      return {
+        channel_dictionary_id: parcel.channel_dictionary_id,
+        command_dictionary_id: commandDictionary,
+        created_at: parcel.created_at,
+        id: parcel.id,
+        name: parcel.name,
+        owner: parcel.owner,
+        parameter_dictionary_ids: parameterDictionaryIds,
+        sequence_adaptation_id: parcel.sequence_adaptation_id,
+      };
+    });
+  },
+);
 
 export const sequenceAdaptations = gqlSubscribable<SequenceAdaptation[]>(gql.SUB_SEQUENCE_ADAPTATIONS, {}, [], null);
 
