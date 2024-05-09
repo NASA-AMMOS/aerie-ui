@@ -1,28 +1,41 @@
 import type { UserId } from './app';
 
-export enum DictionaryTypes {
+export enum DictionaryHeaders {
   'command_dictionary' = 'command_dictionary',
   'param_def' = 'param-def',
   'sequence_adaptation' = 'sequence_adaptation',
   'telemetry_dictionary' = 'telemetry_dictionary',
 }
 
-export type ChannelDictionary = DictionaryType;
+export enum DictionaryTypes {
+  'CHANNEL' = 'CHANNEL',
+  'COMMAND' = 'COMMAND',
+  'PARAMETER' = 'PARAMETER',
+  'ADAPTATION' = 'ADAPTATION',
+}
 
-export type CommandDictionary = {
-  command_types_typescript_path: string;
+export type ChannelDictionary = {
+  type: DictionaryTypes.CHANNEL;
 } & DictionaryType;
 
-export type ParameterDictionary = DictionaryType;
+export type CommandDictionary = {
+  type: DictionaryTypes.COMMAND;
+} & DictionaryType;
+
+export type ParameterDictionary = {
+  type: DictionaryTypes.PARAMETER;
+} & DictionaryType;
 
 export type SequenceAdaptation = {
   adaptation: string;
+  type: DictionaryTypes.ADAPTATION;
 } & DictionaryType;
 
 export type DictionaryType = {
   created_at: string;
   id: number;
   mission: string;
+  path: string;
   updated_at: string;
   version: string;
 };
@@ -36,6 +49,17 @@ export type Parcel = {
   owner: UserId;
   sequence_adaptation_id: number | null;
   updated_at: string;
+};
+
+export type ParcelBundle = {
+  channel_dictionary_id: number | null;
+  command_dictionary_id: number | undefined;
+  created_at: string;
+  id: number;
+  name: string;
+  owner: UserId;
+  parameter_dictionary_ids: number[];
+  sequence_adaptation_id: number | null;
 };
 
 export type ParcelToParameterDictionary = {

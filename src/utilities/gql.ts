@@ -88,7 +88,7 @@ export enum Queries {
   INSERT_ACTIVITY_DIRECTIVE_TAGS = 'insert_activity_directive_tags',
   INSERT_ACTIVITY_PRESET = 'insert_activity_presets_one',
   INSERT_CHANNEL_DICTIONARY = 'insert_channel_dictionary_one',
-  INSERT_COMMAND_DICTIONARY = 'insert_command_dictionary_one',
+  INSERT_DICTIONARY = 'insert_dictionary_one',
   INSERT_CONSTRAINT_DEFINITION = 'insert_constraint_definition_one',
   INSERT_CONSTRAINT_DEFINITION_TAGS = 'insert_constraint_definition_tags',
   INSERT_CONSTRAINT_METADATA = 'insert_constraint_metadata_one',
@@ -338,15 +338,16 @@ const gql = {
     }
   `,
 
-  CREATE_COMMAND_DICTIONARY: `#graphql
-mutation CreateCommandDictionary($dictionary: String!) {
-  createCommandDictionary: ${Queries.UPLOAD_DICTIONARY}(dictionary: $dictionary) {
-    command_types_typescript_path
+  CREATE_DICTIONARY: `#graphql
+mutation CreateDictionary($dictionary: String!, $type: String!) {
+  createDictionary: ${Queries.UPLOAD_DICTIONARY}(dictionary: $dictionary, type : $type) {
+    path
     created_at
     id
     mission
     parsed_json
     version
+    type
   }
 }
 `,
@@ -430,13 +431,13 @@ mutation CreateCommandDictionary($dictionary: String!) {
   `,
 
   CREATE_EXPANSION_SET: `#graphql
-    mutation CreateExpansionSet($dictionaryId: Int!, $modelId: Int!, $expansionRuleIds: [Int!]!, $name: String,  $description: String) {
+    mutation CreateExpansionSet($parcelId: Int!, $modelId: Int!, $expansionRuleIds: [Int!]!, $name: String,  $description: String) {
       ${Queries.CREATE_EXPANSION_SET}(
-        commandDictionaryId: $dictionaryId,
         missionModelId: $modelId,
         expansionIds: $expansionRuleIds,
         name: $name,
         description: $description
+        parcelId : $parcelId
       ) {
         id
       }
@@ -1117,11 +1118,11 @@ mutation CreateCommandDictionary($dictionary: String!) {
       activity_types: ${Queries.ACTIVITY_TYPES}(where: { model_id: { _eq: $modelId } }) {
         expansion_rules {
           activity_type
-          authoring_command_dict_id
           authoring_mission_model_id
           created_at
           expansion_logic
           id
+          parcel_id
           updated_at
         }
         name
@@ -1177,7 +1178,6 @@ mutation CreateCommandDictionary($dictionary: String!) {
     query GetExpansionRule($id: Int!) {
       expansionRule: ${Queries.EXPANSION_RULE}(id: $id) {
         activity_type
-        authoring_command_dict_id
         authoring_mission_model_id
         created_at
         description
@@ -1185,6 +1185,7 @@ mutation CreateCommandDictionary($dictionary: String!) {
         id
         name
         owner
+        parcel_id
         updated_at
         updated_by
         tags {
@@ -1203,13 +1204,12 @@ mutation CreateCommandDictionary($dictionary: String!) {
       expansionRuns: ${Queries.EXPANSION_RUNS}(order_by: { id: desc }) {
         created_at
         expansion_set {
-          command_dict_id
           created_at
           id
           name
+          parcel_id
         }
         expanded_sequences {
-          edsl_string
           expanded_sequence
           id
           seq_id
@@ -2084,7 +2084,6 @@ mutation CreateCommandDictionary($dictionary: String!) {
     subscription SubExpansionRules {
       expansionRules: ${Queries.EXPANSION_RULES}(order_by: { id: desc }) {
         activity_type
-        authoring_command_dict_id
         authoring_mission_model_id
         created_at
         description
@@ -2092,6 +2091,7 @@ mutation CreateCommandDictionary($dictionary: String!) {
         id
         name
         owner
+        parcel_id
         updated_at
         updated_by
         tags {
@@ -2124,21 +2124,21 @@ mutation CreateCommandDictionary($dictionary: String!) {
   SUB_EXPANSION_SETS: `#graphql
     subscription SubExpansionSets {
       expansionSets: ${Queries.EXPANSION_SETS}(order_by: { id: desc }) {
-        command_dict_id
         created_at
         description
         expansion_rules {
           activity_type
-          authoring_command_dict_id
           authoring_mission_model_id
           expansion_logic
           id
           owner
+          parcel_id
         }
         id
         mission_model_id
         name
         owner
+        parcel_id
         updated_at
         updated_by
       }

@@ -2,8 +2,6 @@ import { goto } from '$app/navigation';
 import { base } from '$app/paths';
 import { env } from '$env/dynamic/public';
 import {
-  parseChannelDictionary,
-  parseParameterDictionary,
   type ChannelDictionary as AmpcsChannelDictionary,
   type CommandDictionary as AmpcsCommandDictionary,
   type ParameterDictionary as AmpcsParameterDictionary,
@@ -135,7 +133,7 @@ import type {
 } from '../types/scheduling';
 import type { ValueSchema } from '../types/schema';
 import {
-  DictionaryTypes,
+  DictionaryHeaders,
   type ChannelDictionary,
   type CommandDictionary,
   type GetSeqJsonResponse,
@@ -653,7 +651,7 @@ const effects = {
   ): Promise<SequenceAdaptation | null> {
     try {
       // TODO: Fix these permissions
-      if (!queryPermissions.CREATE_COMMAND_DICTIONARY(user)) {
+      if (!queryPermissions.CREATE_DICTIONARY(user)) {
         throwPermissionError('upload a custom adaptation');
       }
 
@@ -754,7 +752,7 @@ const effects = {
   },
 
   async createExpansionSet(
-    dictionaryId: number,
+    parcelId: number,
     model: ModelSlim,
     expansionRuleIds: number[],
     user: User | null,
@@ -771,10 +769,10 @@ const effects = {
       const data = await reqHasura<ExpansionSet>(
         gql.CREATE_EXPANSION_SET,
         {
-          dictionaryId,
           expansionRuleIds,
           modelId: model.id,
           ...(name && { name }),
+          parcelId,
           ...(description && { description }),
         },
         user,
@@ -5192,52 +5190,28 @@ const effects = {
     }
   },
 
-  async uploadChannelDictionary(
-    dictionary: AmpcsChannelDictionary,
+  async uploadDictionary(
+    dictionary: string,
+    type: 'COMMAND' | 'CHANNEL' | 'PARAMETER',
     user: User | null,
-  ): Promise<ChannelDictionary | null> {
+  ): Promise<CommandDictionary | ChannelDictionary | ParameterDictionary | null> {
     try {
-      if (!queryPermissions.CREATE_CHANNEL_DICTIONARY(user)) {
-        throwPermissionError('upload a channel dictionary');
-      }
-
-      const data = await reqHasura<ChannelDictionary>(
-        gql.CREATE_CHANNEL_DICTIONARY,
-        {
-          channelDictionary: {
-            mission: dictionary.header.mission_name,
-            parsed_json: dictionary,
-            version: dictionary.header.version,
-          },
-        },
-        user,
-      );
-      const { createChannelDictionary: newChannelDictionary } = data;
-      if (newChannelDictionary != null) {
-        return newChannelDictionary;
-      } else {
-        throw Error('Unable to upload channel dictionary');
-      }
-    } catch (e) {
-      catchError('Channel Dictionary Upload Failed', e as Error);
-      return null;
-    }
-  },
-
-  async uploadCommandDictionary(dictionary: string, user: User | null): Promise<CommandDictionary | null> {
-    try {
-      if (!queryPermissions.CREATE_COMMAND_DICTIONARY(user)) {
+      if (!queryPermissions.CREATE_DICTIONARY(user)) {
         throwPermissionError('upload a command dictionary');
       }
 
-      const data = await reqHasura<CommandDictionary>(gql.CREATE_COMMAND_DICTIONARY, { dictionary }, user);
+      const data = await reqHasura<CommandDictionary | ChannelDictionary | ParameterDictionary>(
+        gql.CREATE_DICTIONARY,
+        { dictionary, type },
+        user,
+      );
 
-      const { createCommandDictionary: newCommandDictionary } = data;
-      if (newCommandDictionary === null) {
+      const { createDictionary: newDictionary } = data;
+      if (newDictionary === null) {
         throw Error('Unable to upload command dictionary');
       }
 
-      return newCommandDictionary;
+      return newDictionary;
     } catch (e) {
       catchError('Command Dictionary Upload Failed', e as Error);
       return null;
@@ -5247,65 +5221,32 @@ const effects = {
   async uploadDictionaryOrAdaptation(
     files: FileList,
     user: User | null,
-  ): Promise<{
-    type: DictionaryTypes;
-    uploadedObject: CommandDictionary | ParameterDictionary | SequenceAdaptation;
-  } | null> {
+  ): Promise<CommandDictionary | ChannelDictionary | ParameterDictionary | SequenceAdaptation | null> {
     const file: File = files[0];
     const text = await file.text();
     const splitLineDictionary = text.split('\n');
 
+    let type: 'COMMAND' | 'CHANNEL' | 'PARAMETER' = 'COMMAND';
     switch (splitLineDictionary[1]) {
-      case `<${DictionaryTypes.command_dictionary}>`: {
-        try {
-          return {
-            type: DictionaryTypes.command_dictionary,
-            uploadedObject: { ...((await this.uploadCommandDictionary(text, user)) as CommandDictionary) },
-          };
-        } catch (e) {
-          catchError('Command Dictionary Upload Failed', e as Error);
-          return null;
-        }
+      case `<${DictionaryHeaders.command_dictionary}>`: {
+        type = 'COMMAND';
+        break;
       }
-      case `<${DictionaryTypes.param_def}>`: {
-        try {
-          return {
-            type: DictionaryTypes.param_def,
-            uploadedObject: {
-              ...((await this.uploadParameterDictionary(parseParameterDictionary(text), user)) as ParameterDictionary),
-            },
-          };
-        } catch (e) {
-          catchError('Parameter Dictionary Upload Failed', e as Error);
-          return null;
-        }
+      case `<${DictionaryHeaders.telemetry_dictionary}>`: {
+        type = 'CHANNEL';
+        break;
       }
-      case `<${DictionaryTypes.telemetry_dictionary}>`: {
-        try {
-          return {
-            type: DictionaryTypes.telemetry_dictionary,
-            uploadedObject: {
-              ...((await this.uploadChannelDictionary(parseChannelDictionary(text), user)) as ChannelDictionary),
-            },
-          };
-        } catch (e) {
-          catchError('Channel Dictionary Upload Failed', e as Error);
-          return null;
-        }
+      case `<${DictionaryHeaders.param_def}>`: {
+        type = 'PARAMETER';
+        break;
       }
-      default:
-        try {
-          return {
-            type: DictionaryTypes.sequence_adaptation,
-            uploadedObject: {
-              ...((await this.createCustomAdaptation({ adaptation: text }, user)) as SequenceAdaptation),
-            },
-          };
-        } catch (e) {
-          catchError('Sequence Adaptation Upload Failed', e as Error);
-          return null;
-        }
+      default: {
+        const adaptation = await this.createCustomAdaptation({ adaptation: text }, user);
+        return adaptation;
+      }
     }
+    const dictionary = await this.uploadDictionary(text, type, user);
+    return dictionary;
   },
 
   async uploadFile(file: File, user: User | null): Promise<number | null> {
@@ -5352,40 +5293,6 @@ const effects = {
     } catch (e) {
       catchError(e as Error);
       return {};
-    }
-  },
-
-  async uploadParameterDictionary(
-    dictionary: AmpcsParameterDictionary,
-    user: User | null,
-  ): Promise<ParameterDictionary | null> {
-    try {
-      if (!queryPermissions.CREATE_PARAMETER_DICTIONARY(user)) {
-        throwPermissionError('upload a parameter dictionary');
-      }
-
-      const data = await reqHasura<ParameterDictionary>(
-        gql.CREATE_PARAMETER_DICTIONARY,
-        {
-          parameterDictionary: {
-            mission: dictionary.header.mission_name,
-            parsed_json: dictionary,
-            version: dictionary.header.version,
-          },
-        },
-        user,
-      );
-
-      const { createParameterDictionary: newParameterDictionary } = data;
-
-      if (newParameterDictionary === null) {
-        throw Error('Unable to upload parameter dictionary');
-      }
-
-      return newParameterDictionary;
-    } catch (e) {
-      catchError('Parameter Dictionary Upload Failed', e as Error);
-      return null;
     }
   },
 
