@@ -450,14 +450,16 @@ HWC2`;
           type: 'command',
         },
         {
-          args: [ {
-            type: 'number',
-            value: 10,
-          },
-          {
-            type: 'string',
-            value: 'ENUM',
-          }],
+          args: [
+            {
+              type: 'number',
+              value: 10,
+            },
+            {
+              type: 'string',
+              value: 'ENUM',
+            },
+          ],
           stem: 'FSE_CMD',
           time: { tag: '-00:00:01.000', type: 'EPOCH_RELATIVE' },
           type: 'command',
