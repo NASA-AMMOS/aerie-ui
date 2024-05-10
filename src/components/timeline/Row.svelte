@@ -436,8 +436,8 @@
     }
   }
 
-  function getNodeExpanded(id, activityTreeExpansionMap) {
-    if (!activityTreeExpansionMap.hasOwnProperty(id)) {
+  function getNodeExpanded(id: string, activityTreeExpansionMap) {
+    if (!Object.hasOwn(activityTreeExpansionMap, id)) {
       return false;
     }
     return activityTreeExpansionMap[id];
