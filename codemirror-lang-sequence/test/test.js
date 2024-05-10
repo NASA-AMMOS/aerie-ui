@@ -9,7 +9,9 @@ import { fileURLToPath } from 'url';
 const caseDir = path.dirname(fileURLToPath(import.meta.url)) + '/cases';
 
 for (const file of readdirSync(caseDir)) {
-  if (!/\.txt$/.test(file)) {continue};
+  if (!/\.txt$/.test(file)) {
+    continue;
+  }
 
   const name = /^[^.]*/.exec(file)[0];
   describe(name, () => {
@@ -27,7 +29,7 @@ function fileTests(file, fileName, mayIgnore, _run) {
   var lastIndex = 0;
   var _loop_1 = function () {
     var m = caseExpr.exec(file);
-    if (!m){
+    if (!m) {
       throw new Error(
         'Unexpected file format in '.concat(fileName, ' around\n\n').concat(toLineContext(file, lastIndex)),
       );
@@ -51,11 +53,15 @@ function fileTests(file, fileName, mayIgnore, _run) {
       text: text,
     });
     lastIndex = m.index + m[0].length;
-    if (lastIndex === file.length) {return 'break'};
+    if (lastIndex === file.length) {
+      return 'break';
+    }
   };
   for (;;) {
     var state_1 = _loop_1();
-    if (state_1 === 'break') {break};
+    if (state_1 === 'break') {
+      break;
+    }
   }
   return tests;
 }
