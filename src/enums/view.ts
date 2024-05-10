@@ -6,7 +6,7 @@ export enum ViewConstants {
 }
 
 export const ViewDefaultActivityOptions: ActivityOptions = {
-  activityHeight: 20,
+  activityHeight: 16,
   composition: 'both',
   displayMode: 'compact',
   hierarchyMode: 'all',
