@@ -1,4 +1,5 @@
 import Ajv from 'ajv';
+import { ViewDefaultActivityOptions } from '../enums/view';
 import jsonSchema from '../schemas/ui-view-schema.json';
 import type { ActivityType } from '../types/activity';
 import type { ResourceType } from '../types/simulation';
@@ -27,6 +28,7 @@ export function generateDefaultView(activityTypes: ActivityType[] = [], resource
     filter: { activity: { types } },
   });
   const activityRow = createRow(timelines, {
+    activityOptions: { ...ViewDefaultActivityOptions, displayMode: 'grouped' },
     autoAdjustHeight: true,
     expanded: true,
     layers: [activityLayer],
