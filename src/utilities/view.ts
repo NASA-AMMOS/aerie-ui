@@ -32,7 +32,7 @@ export function generateDefaultView(activityTypes: ActivityType[] = [], resource
     autoAdjustHeight: true,
     expanded: true,
     layers: [activityLayer],
-    name: 'Activities',
+    name: 'Activities by Type',
   });
   timeline.rows.push(activityRow);
 
