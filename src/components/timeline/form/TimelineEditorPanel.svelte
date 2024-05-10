@@ -477,7 +477,7 @@
     <GridMenu {gridSection} title="Timeline Editor" />
   </svelte:fragment>
 
-  <div slot="body" bind:clientWidth={editorWidth} class:compact={editorWidth < 360}>
+  <div slot="body" bind:clientWidth={editorWidth} class="timeline-editor" class:compact={editorWidth < 360}>
     {#if !$selectedRow}
       <!-- Select Timeline. -->
       <div class="timeline-select-container">
@@ -1201,6 +1201,10 @@
 </Panel>
 
 <style>
+  .timeline-editor {
+    display: flex;
+    flex-direction: column;
+  }
   .timeline-select-container {
     border-bottom: 1px solid var(--st-gray-20);
     padding: 16px 8px;
