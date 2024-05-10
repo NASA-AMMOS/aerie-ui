@@ -370,8 +370,10 @@
     return spansMap[spanId];
   }
 
-  function getLabelForSpan(span: Span, sticky: boolean = false): string {
+  function getLabelForSpan(span: Span): string {
     // Display an arrow to the left of a span label if the span is sticky
+    // The label should be sticky if the start of the span is clipped and the span is still in view
+    const sticky = span.startMs < viewTimeRange.start && span.startMs + span.durationMs >= viewTimeRange.start;
     return `${sticky ? '← ' : ''}${span.type}${span.duration === null ? ' (Unfinished)' : ''}`;
   }
 
@@ -515,7 +517,10 @@
       const spanEndX = xScaleView(span.endMs);
       boxEndX = Math.max(boxEndX, spanEndX);
       if (activityOptions.labelVisibility !== 'off') {
-        labelEndX = Math.max(labelEndX, Math.max(4, startX) + 4 + measureText(span.type, textMetricsCache).width);
+        labelEndX = Math.max(
+          labelEndX,
+          Math.max(4, startX) + 4 + measureText(getLabelForSpan(span), textMetricsCache).width,
+        );
       }
     }
     return Math.max(boxEndX, labelEndX);
@@ -535,13 +540,20 @@
       if (span && showSpans && spanInView(span, viewTimeRange)) {
         // Draw span
         let spanLabelWidth = 0;
+        const unfinished = span.duration === null;
         const spanStartX = xScaleView(span.startMs);
         const spanEndX = xScaleView(span.endMs);
         const spanRectWidth = Math.max(2, Math.min(spanEndX, drawWidth) - spanStartX);
         const spanColor = idToColorMaps.spans[span.id] || activityDefaultColor;
         const isSelected = selectedSpanId === span.id;
         if (isSelected) {
-          ctx.fillStyle = activitySelectedColor;
+          if (unfinished) {
+            ctx.fillStyle = activityUnfinishedSelectedColor;
+          } else {
+            ctx.fillStyle = activitySelectedColor;
+          }
+        } else if (unfinished) {
+          ctx.fillStyle = shadeColor(activityUnfinishedColor, 1.2);
         } else {
           const color = getRGBAFromHex(spanColor, 0.5);
           ctx.fillStyle = color;
@@ -550,11 +562,13 @@
 
         // Draw label if no directive
         if (drawLabels && (!directive || !showDirectives)) {
-          spanLabelWidth = measureText(span.type, textMetricsCache).width;
+          const label = getLabelForSpan(span);
+          spanLabelWidth = measureText(label, textMetricsCache).width;
           labelsToDraw.push({
+            unfinished,
             color: spanColor,
             isSelected,
-            labelText: span.type,
+            labelText: label,
             x: spanStartX + 4, // TODO sort out label left sticky with packing
             y: y + rowHeight / 2,
             width: spanLabelWidth,
@@ -615,7 +629,7 @@
       setLabelContext('', 'black');
       labelsToDraw
         .sort((a, b) => (a.x < b.x ? -1 : 1))
-        .forEach(({ color, isSelected, labelText, x, y, width }, i) => {
+        .forEach(({ color, isSelected, labelText, x, y, width, unfinished }, i) => {
           if (activityOptions.labelVisibility === 'auto') {
             const nextX = labelsToDraw[i + 1]?.x;
             if (typeof nextX === 'number' && x + width >= nextX) {
@@ -623,7 +637,13 @@
             }
           }
           if (isSelected) {
-            ctx.fillStyle = '#0a4c7e';
+            if (unfinished) {
+              ctx.fillStyle = activityUnfinishedSelectedColor;
+            } else {
+              ctx.fillStyle = '#0a4c7e';
+            }
+          } else if (unfinished) {
+            ctx.fillStyle = ctx.fillStyle = shadeColor(activityUnfinishedColor, 1.3);
           } else {
             // TODO what color should we use for the text? Black or a darkened version of layer color?
             // If using shadeColor make sure to cache it
