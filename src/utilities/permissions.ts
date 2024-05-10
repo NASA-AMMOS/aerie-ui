@@ -322,9 +322,6 @@ const queryPermissions = {
   CREATE_CHANNEL_DICTIONARY: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_CHANNEL_DICTIONARY], user);
   },
-  CREATE_DICTIONARY: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission([Queries.INSERT_DICTIONARY], user);
-  },
   CREATE_CONSTRAINT: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_CONSTRAINT_METADATA], user);
   },
@@ -333,6 +330,9 @@ const queryPermissions = {
   },
   CREATE_CONSTRAINT_MODEL_SPECIFICATION: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_CONSTRAINT_MODEL_SPECIFICATION], user);
+  },
+  CREATE_DICTIONARY: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.INSERT_DICTIONARY], user);
   },
   CREATE_EXPANSION_RULE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_EXPANSION_RULE], user);
@@ -355,6 +355,9 @@ const queryPermissions = {
   },
   CREATE_PARCEL: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_PARCEL], user);
+  },
+  CREATE_PARCEL_TO_PARAMETER_DICTIONARIES: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.INSERT_PARCEL_TO_PARAMETER_DICTIONARY], user);
   },
   CREATE_PLAN: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_PLAN], user);
@@ -408,6 +411,9 @@ const queryPermissions = {
   },
   CREATE_SCHEDULING_PLAN_SPECIFICATION: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_SCHEDULING_SPECIFICATION], user);
+  },
+  CREATE_SEQUENCE_ADAPTATION: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.INSERT_SEQUENCE_ADAPTATION], user);
   },
   CREATE_SIMULATION_TEMPLATE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_SIMULATION_TEMPLATE], user);
@@ -507,6 +513,9 @@ const queryPermissions = {
   DELETE_PARCEL: (user: User | null, parcel: AssetWithOwner<Parcel>): boolean => {
     return isUserAdmin(user) || (getPermission([Queries.DELETE_PARCEL], user) && isUserOwner(user, parcel));
   },
+  DELETE_PARCEL_TO_PARAMETER_DICTIONARIES: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.DELETE_PARCEL_TO_PARAMETER_DICTIONARY], user);
+  },
   DELETE_PLAN: (user: User | null, plan: PlanWithOwners): boolean => {
     return (
       isUserAdmin(user) ||
@@ -559,6 +568,10 @@ const queryPermissions = {
   DELETE_SCHEDULING_GOAL_PLAN_SPECIFICATIONS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.DELETE_SCHEDULING_SPECIFICATION_GOALS], user);
   },
+  DELETE_SEQUENCE_ADAPTATION: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.DELETE_SEQUENCE_ADAPTATION], user);
+  },
+
   DELETE_SIMULATION_TEMPLATE: (user: User | null, template: SimulationTemplate): boolean => {
     return (
       isUserAdmin(user) || (getPermission([Queries.DELETE_SIMULATION_TEMPLATE], user) && isUserOwner(user, template))
@@ -599,7 +612,10 @@ const queryPermissions = {
   GET_EXPANSION_SEQUENCE_SEQ_JSON: () => true,
   GET_EXTENSIONS: () => true,
   GET_MODELS: () => true,
+  GET_PARCEL: () => true,
+  GET_PARSED_CHANNEL_DICTIONARY: () => true,
   GET_PARSED_COMMAND_DICTIONARY: () => true,
+  GET_PARSED_PARAMETER_DICTIONARY: () => true,
   GET_PERMISSIBLE_QUERIES: () => true,
   GET_PLAN: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.PLAN], user);
@@ -617,6 +633,7 @@ const queryPermissions = {
   GET_ROLE_PERMISSIONS: () => true,
   GET_SCHEDULING_SPEC_CONDITIONS_FOR_CONDITION: () => true,
   GET_SCHEDULING_SPEC_GOALS_FOR_GOAL: () => true,
+  GET_SEQUENCE_ADAPTATION: () => true,
   GET_SIMULATION_DATASET_ID: () => true,
   GET_SPANS: () => true,
   GET_TYPESCRIPT_ACTIVITY_TYPE: () => true,
@@ -745,6 +762,7 @@ const queryPermissions = {
   },
   SUB_ACTIVITY_TYPES: () => true,
   SUB_ANCHOR_VALIDATION_STATUS: () => true,
+  SUB_CHANNEL_DICTIONARIES: () => true,
   SUB_COMMAND_DICTIONARIES: () => true,
   SUB_CONSTRAINT: () => true,
   SUB_CONSTRAINTS: (user: User | null): boolean => {
@@ -762,9 +780,11 @@ const queryPermissions = {
   },
   SUB_MODEL: () => true,
   SUB_MODELS: () => true,
+  SUB_PARAMETER_DICTIONARIES: () => true,
   SUB_PARCELS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.PARCELS], user);
   },
+  SUB_PARCEL_TO_PARAMETER_DICTIONARIES: () => true,
   SUB_PLANS_USER_WRITABLE: () => true,
   SUB_PLAN_DATASET: () => true,
   SUB_PLAN_LOCKED: () => true,
@@ -791,6 +811,7 @@ const queryPermissions = {
     return isUserAdmin(user) || getPermission([Queries.SCHEDULING_SPECIFICATION], user);
   },
   SUB_SCHEDULING_REQUESTS: () => true,
+  SUB_SEQUENCE_ADAPTATIONS: () => true,
   SUB_SIMULATION: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.SIMULATIONS], user);
   },

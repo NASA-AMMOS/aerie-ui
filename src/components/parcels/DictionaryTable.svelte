@@ -39,8 +39,8 @@
   $: displayTextPlural = isSequenceAdaptation ? `${type} Adaptations` : `${type} Dictionaries`;
   $: hasDeletePermission = featurePermissions.commandDictionary.canDelete(user);
 
-  $: if (dictionaryIds) {
-    dictionaryDataGrid?.redrawRows();
+  $: if (dictionaryIds && dictionaryDataGrid?.redrawRows !== undefined) {
+    dictionaryDataGrid.redrawRows();
   }
 
   const editingColumnDefs: DataGridColumnDef[] = [
@@ -158,7 +158,9 @@
       }
     }
 
-    dictionaryDataGrid?.redrawRows();
+    if (dictionaryDataGrid?.redrawRows !== undefined) {
+      dictionaryDataGrid.redrawRows();
+    }
   }
 </script>
 

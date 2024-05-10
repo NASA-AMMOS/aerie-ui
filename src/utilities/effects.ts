@@ -656,7 +656,7 @@ const effects = {
       }
 
       if (adaptation?.adaptation) {
-        const data = await reqHasura<SequenceAdaptation>(gql.CREATE_CUSTOM_ADAPTATION, { adaptation }, user);
+        const data = await reqHasura<SequenceAdaptation>(gql.CREATE_SEQUENCE_ADAPTATION, { adaptation }, user);
         const { createSequenceAdaptation: newSequenceAdaptation } = data;
         if (newSequenceAdaptation != null) {
           return newSequenceAdaptation;

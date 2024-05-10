@@ -68,7 +68,7 @@ export type ParcelToParameterDictionary = {
   parcel_id: number;
 };
 
-export type ParcelInsertInput = Omit<Parcel, 'created_at' | 'id' | 'owner'>;
+export type ParcelInsertInput = Omit<Parcel, 'created_at' | 'id' | 'owner' | 'updated_at'>;
 
 export type GetSeqJsonResponseError = {
   location: {
