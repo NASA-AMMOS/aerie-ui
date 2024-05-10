@@ -387,6 +387,11 @@
         filteredSpans = spans;
         timeFilteredActivityDirectives = directives;
         timeFilteredSpans = spans;
+      } else {
+        filteredActivityDirectives = [];
+        filteredSpans = [];
+        timeFilteredActivityDirectives = [];
+        timeFilteredSpans = [];
       }
     }
   }
