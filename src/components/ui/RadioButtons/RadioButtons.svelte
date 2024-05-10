@@ -16,6 +16,7 @@
   export let radioButtonContextKey: string = DefaultRadioButtonContextKey;
   export let radioButtonContainerClassName: string | undefined = undefined;
   export let selectedButtonId: RadioButtonId | undefined = undefined;
+  export let id: string = '';
 
   let className: string = '';
 
@@ -80,6 +81,8 @@
     [className]: !!className,
     ...(radioButtonContainerClassName ? { [radioButtonContainerClassName]: !!radioButtonContainerClassName } : {}),
   })}
+  role="radiogroup"
+  {id}
 >
   <div class="radio-buttons-background"></div>
   <slot />

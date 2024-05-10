@@ -29,6 +29,8 @@
 </script>
 
 <button
+  aria-checked={$selectedRadioButton === id}
+  role="radio"
   class={className}
   class:radio-button={true}
   class:st-button={true}
