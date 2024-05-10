@@ -126,7 +126,7 @@
   $: canvasHeightDpr = drawHeight * dpr;
   $: canvasWidthDpr = drawWidth * dpr;
   // $: directiveIconMarginRight = 2 * scaleFactor;
-  $: rowHeight = activityOptions.displayMode === 'compact' ? activityOptions.activityHeight + activityRowPadding : 20;
+  $: rowHeight = activityOptions.displayMode === 'compact' ? activityOptions.activityHeight + activityRowPadding : 16;
   // $: spanLabelLeftMargin = 6;
   $: timelineLocked = timelineLockStatus === TimelineLockStatus.Locked;
   $: planStartTimeMs = getUnixEpochTime(getDoyTime(new Date(planStartTimeYmd)));
@@ -522,10 +522,8 @@
   }
 
   function drawRow(y, items, idToColorMaps) {
-    // Determine label visibility
+    const drawLabels = activityOptions.labelVisibility === 'on' || activityOptions.labelVisibility === 'auto';
     let labelsToDraw = [];
-    let lastTextEnd = Number.NEGATIVE_INFINITY;
-    // TODO maybe hide all labels at some point? Experiment with this.
     items.forEach(item => {
       if (!xScaleView) {
         return;
@@ -533,8 +531,6 @@
 
       const { span, directive } = item;
 
-      // TODO move to arg / control from a view property?
-      const height = rowHeight - 4;
       // TODO should we filter out spans in the activityGroups instead of here and in RowHeaderActivityTree?
       if (span && showSpans && spanInView(span, viewTimeRange)) {
         // Draw span
@@ -550,30 +546,25 @@
           const color = getRGBAFromHex(spanColor, 0.5);
           ctx.fillStyle = color;
         }
-        ctx.fillRect(spanStartX, y, spanRectWidth, height);
+        ctx.fillRect(spanStartX, y, spanRectWidth, rowHeight);
 
         // Draw label if no directive
-        if (!directive || !showDirectives) {
-          if (
-            activityOptions.labelVisibility === 'on' ||
-            (activityOptions.labelVisibility === 'auto' && spanStartX > lastTextEnd)
-          ) {
-            spanLabelWidth = measureText(span.type, textMetricsCache).width;
-            labelsToDraw.push({
-              isSelected,
-              labelText: span.type,
-              x: spanStartX + 4, // TODO sort out label left sticky with packing
-              y: y + activityOptions.activityHeight / 2,
-              width: spanLabelWidth,
-            });
-            lastTextEnd = spanStartX + spanLabelWidth;
-          }
+        if (drawLabels && (!directive || !showDirectives)) {
+          spanLabelWidth = measureText(span.type, textMetricsCache).width;
+          labelsToDraw.push({
+            color: spanColor,
+            isSelected,
+            labelText: span.type,
+            x: spanStartX + 4, // TODO sort out label left sticky with packing
+            y: y + rowHeight / 2,
+            width: spanLabelWidth,
+          });
         }
 
         // Add to quadtree
         visibleSpansById[span.id] = span;
         quadtreeSpans.add({
-          height,
+          height: rowHeight,
           id: span.id,
           width: Math.max(spanLabelWidth, spanRectWidth),
           x: spanStartX,
@@ -593,27 +584,24 @@
         } else {
           ctx.fillStyle = color;
         }
-        ctx.fillRect(directiveStartX, y, 2, rowHeight - 4);
+        ctx.fillRect(directiveStartX, y, 2, rowHeight);
 
         // Draw label
-        if (
-          activityOptions.labelVisibility === 'on' ||
-          (activityOptions.labelVisibility === 'auto' && directiveStartX > lastTextEnd)
-        ) {
+        if (drawLabels) {
           directiveLabelWidth = measureText(directive.name, textMetricsCache).width;
           labelsToDraw.push({
+            color: directiveColor,
             isSelected,
             labelText: directive.name,
             x: directiveStartX + 4,
-            y: y + activityOptions.activityHeight / 2,
+            y: y + rowHeight / 2,
             width: directiveLabelWidth,
           });
-          lastTextEnd = directiveStartX + directiveLabelWidth;
         }
         // Add to quadtree
         visibleActivityDirectivesById[directive.id] = directive;
         quadtreeActivityDirectives.add({
-          height,
+          height: rowHeight,
           id: directive.id,
           width: directiveLabelWidth + labelPaddingLeft + 4, // TODO what is 4?
           x: directiveStartX,
@@ -624,15 +612,26 @@
 
     // TODO guardrail, be smarter than this for activityOptions.labelVisibility="on"
     if (labelsToDraw.length < maxLabelCount) {
-      setLabelContext('whatever', 'black');
-      labelsToDraw.forEach(({ isSelected, labelText, x, y, width }) => {
-        if (isSelected) {
-          ctx.fillStyle = '#0a4c7e';
-        } else {
-          ctx.fillStyle = 'black';
-        }
-        ctx.fillText(labelText, Math.max(x, 4), y, width);
-      });
+      setLabelContext('', 'black');
+      labelsToDraw
+        .sort((a, b) => (a.x < b.x ? -1 : 1))
+        .forEach(({ color, isSelected, labelText, x, y, width }, i) => {
+          if (activityOptions.labelVisibility === 'auto') {
+            const nextX = labelsToDraw[i + 1]?.x;
+            if (typeof nextX === 'number' && x + width >= nextX) {
+              return;
+            }
+          }
+          if (isSelected) {
+            ctx.fillStyle = '#0a4c7e';
+          } else {
+            // TODO what color should we use for the text? Black or a darkened version of layer color?
+            // If using shadeColor make sure to cache it
+            ctx.fillStyle = shadeColor(color, 2.8);
+            // ctx.fillStyle = 'black';
+          }
+          ctx.fillText(labelText, Math.max(x, 4), y, width);
+        });
     }
   }
 
@@ -699,66 +698,6 @@
     cache[text] = measurement;
     return measurement;
   }
-
-  // function drawActivityDirective(activityDirective: ActivityDirective, x: number, y: number) {
-  //   visibleActivityDirectivesById[activityDirective.id] = activityDirective;
-
-  //   const primaryHighlight = activityDirective.id === selectedActivityDirectiveId;
-  //   const spanRootParent = getSpanRootParent(spansMap, selectedSpanId);
-  //   const secondaryHighlight =
-  //     selectedSpanId !== null && spanRootParent
-  //       ? spanUtilityMaps.spanIdToDirectiveIdMap[spanRootParent.id] === activityDirective.id
-  //       : false;
-
-  //   // Handle opacity if a point is selected
-  //   let opacity = 1;
-  //   if (selectedActivityDirectiveId !== null || selectedSpanId !== null) {
-  //     if (primaryHighlight) {
-  //       opacity = 1;
-  //     } else {
-  //       opacity = 0.24;
-  //     }
-  //   }
-
-  //   const svgIconOpacity = selectedActivityDirectiveId !== null && !primaryHighlight ? 0.4 : opacity;
-
-  //   // Draw directive icon
-  //   setActivityRectContext(primaryHighlight, secondaryHighlight, opacity);
-  //   drawDirectiveIcon(x, y, svgIconOpacity);
-
-  //   // Draw label
-  //   const textMetrics = drawPointLabel(
-  //     activityDirective.name,
-  //     x + directiveIconWidth + directiveIconMarginRight,
-  //     y + activityHeight / 2,
-  //     primaryHighlight,
-  //     secondaryHighlight,
-  //   );
-  //   let hitboxWidth = directiveIconWidth + directiveIconMarginRight + textMetrics.width;
-
-  //   // Draw anchor icon
-  //   if (activityDirective.anchor_id !== null) {
-  //     drawAnchorIcon(x + hitboxWidth + 4, y, svgIconOpacity);
-  //     hitboxWidth += anchorIconWidth + anchorIconMarginLeft;
-  //   }
-
-  //   quadtreeActivityDirectives.add({
-  //     height: activityHeight,
-  //     id: activityDirective.id,
-  //     width: hitboxWidth,
-  //     x,
-  //     y,
-  //   });
-
-  //   // Update maxActivityWidth
-  //   if (hitboxWidth > maxActivityWidth) {
-  //     maxActivityWidth = hitboxWidth;
-  //   }
-
-  //   if (debugMode) {
-  //     drawDebugHitbox(x, y, hitboxWidth, activityHeight);
-  //   }
-  // }
 
   // function drawSpan(span: Span, x: number, y: number, end: number, ghosted: boolean = false, sticky = false) {
   //   ctx.save();
@@ -966,46 +905,6 @@
     textMetricsCache[labelText] = textMetrics; // Cache to avoid recomputing this measurement
     return { labelText, textHeight, textMetrics, textWidth };
   }
-
-  // function setActivityRectContext(
-  //   primaryHighlight: boolean,
-  //   secondaryHighlight: boolean,
-  //   opacity: number,
-  //   unfinished: boolean = false,
-  // ) {
-  //   // Set fill and stroke styles
-  //   ctx.strokeStyle = `rgba(0,0,0,${opacity * 0.2})`;
-  //   if (unfinished) {
-  //     ctx.fillStyle = hexToRgba(activityUnfinishedColor, opacity);
-  //   } else if (primaryHighlight) {
-  //     ctx.fillStyle = activitySelectedColor;
-  //   } else if (secondaryHighlight) {
-  //     ctx.fillStyle = hexToRgba(activitySelectedColor, 0.24);
-  //   } else {
-  //     ctx.fillStyle = hexToRgba(activityColor, opacity);
-  //   }
-  // }
-
-  // function drawDirectiveIcon(x: number, y: number, svgOpacity: number) {
-  //   // Draw the shape
-  //   ctx.save();
-  //   ctx.setTransform(dpr, 0, 0, dpr, x * dpr, y * dpr);
-  //   ctx.scale(scaleFactor, scaleFactor);
-  //   if (assets.directiveIconShape) {
-  //     ctx.fill(assets.directiveIconShape);
-  //   }
-  //   if (assets.directiveIconShapeStroke) {
-  //     ctx.stroke(assets.directiveIconShapeStroke);
-  //   }
-  //   ctx.restore();
-
-  //   // Draw the icon
-  //   ctx.globalAlpha = svgOpacity;
-  //   if (assets.directiveIcon) {
-  //     ctx.drawImage(assets.directiveIcon, x + 1, y, activityHeight, activityHeight);
-  //   }
-  //   ctx.globalAlpha = 1;
-  // }
 
   function drawAnchorIcon(x: number, y: number, svgOpacity: number) {
     ctx.globalAlpha = svgOpacity;

@@ -520,7 +520,7 @@
               }
             }
             if (expanded) {
-              subtrees.push(getDirectiveSubtree(directive, id));
+              subtrees.push(getDirectiveSubtree(directive, id, activityTreeExpansionMap));
             }
             items.push({ directive, ...(childSpan ? { span: childSpan } : null) });
           });
@@ -576,7 +576,7 @@
             childSpan = getSpanForActivityDirective(directive);
           }
           if (expanded) {
-            subtrees.push(getDirectiveSubtree(directive, id));
+            subtrees.push(getDirectiveSubtree(directive, id, activityTreeExpansionMap));
           }
           items.push({ directive, ...(childSpan ? { span: childSpan } : null) });
         });
@@ -594,7 +594,7 @@
     return tree;
   }
 
-  function getDirectiveSubtree(directive: ActivityDirective, parentId: string) {
+  function getDirectiveSubtree(directive: ActivityDirective, parentId: string, activityTreeExpansionMap) {
     // Get number of child spans for the root span
     let count = 0;
     let groups = [];
@@ -614,6 +614,7 @@
         groups = paginate(
           getSpanSubtrees(rootSpan, id, activityTreeExpansionMap, 'aggregation', filterActivitiesByTime),
           id,
+          activityTreeExpansionMap,
         );
       }
     }
