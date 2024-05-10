@@ -356,7 +356,6 @@
       let directives: ActivityDirective[] = [];
       let spans: Span[] = [];
       activityLayers.forEach(layer => {
-        // TODO util for filtering activities/spans
         if (layer.filter && layer.filter.activity !== undefined) {
           const types = layer.filter.activity.types || [];
           types.forEach(type => {
