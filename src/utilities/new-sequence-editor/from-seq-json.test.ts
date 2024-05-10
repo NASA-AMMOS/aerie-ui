@@ -12,7 +12,7 @@ describe('from-seq-json.ts', () => {
         other_arbitrary_metadata: 'test_metadata',
       },
     };
-    const sequence = seqJsonToSequence(seqJson);
+    const sequence = seqJsonToSequence(seqJson, [], null);
     const expectedSequence = `@ID "test"
 @METADATA "onboard_name" "test.mod"
 @METADATA "onboard_path" "/eng"
@@ -41,7 +41,7 @@ describe('from-seq-json.ts', () => {
         },
       ],
     };
-    const sequence = seqJsonToSequence(seqJson);
+    const sequence = seqJsonToSequence(seqJson, [], null);
     const expectedSequence = `@ID "test"
 @METADATA "onboard_name" "test.mod"
 @METADATA "onboard_path" "/eng"
@@ -105,7 +105,7 @@ C FSW_CMD_3
         },
       ],
     };
-    const sequence = seqJsonToSequence(seqJson);
+    const sequence = seqJsonToSequence(seqJson, [], null);
     const expectedSequence = `@ID "testVariable"
 @INPUT_PARAMS L00INT L01STR L02FLT L03UINT L01ENUM
 @LOCALS L00INT L01STR L02FLT L03UINT L01ENUM
@@ -213,7 +213,7 @@ C FSW_CMD_3
         },
       ],
     };
-    const sequence = seqJsonToSequence(seqJson);
+    const sequence = seqJsonToSequence(seqJson, [], null);
     const expectedSequence = `@ID "42"
 
 A2024-001T00:00:00 FSW_CMD_0 TRUE 0xFF "Hello" "World" [FALSE 0xAA "Foo" "BAR" TRUE 0xBB "Baz" "BAT"]
@@ -272,7 +272,7 @@ C FSW_CMD_3
         },
       ],
     };
-    const sequence = seqJsonToSequence(seqJson);
+    const sequence = seqJsonToSequence(seqJson, [], null);
     const expectedSequence = `@ID "testCommandModeling"
 @METADATA "onboard_name" "test.mod"
 
@@ -352,7 +352,7 @@ C ECHO "test"
       ],
     };
 
-    const sequence = seqJsonToSequence(seqJson);
+    const sequence = seqJsonToSequence(seqJson, [], null);
     const expectedSequence = `@ID "testDescription"
 
 C ECHO "TEST1" # a description
@@ -388,7 +388,7 @@ C FSW_CMD_2 10 "ENUM" # fsw cmd 2 description
       metadata: {},
     };
 
-    const sequence = seqJsonToSequence(seqJson);
+    const sequence = seqJsonToSequence(seqJson, [], null);
     const expectedSequence = `@ID "testImmediate"
 
 @IMMEDIATE
@@ -418,7 +418,7 @@ NOOP # noop command, no arguments
       metadata: {},
     };
 
-    const sequence = seqJsonToSequence(seqJson);
+    const sequence = seqJsonToSequence(seqJson, [], null);
     const expectedSequence = `@ID "testHardware"
 
 @HARDWARE
@@ -467,7 +467,7 @@ HWC2`;
       ],
     };
 
-    const sequence = seqJsonToSequence(seqJson);
+    const sequence = seqJsonToSequence(seqJson, [], null);
     const expectedSequence = `@ID "testTime"
 
 A2020-173T20:00:00.000 FSA_CMD

@@ -122,6 +122,7 @@ export enum Queries {
   INSERT_SCHEDULING_SPECIFICATION_GOAL = 'insert_scheduling_specification_goals_one',
   INSERT_SCHEDULING_SPECIFICATION_GOALS = 'insert_scheduling_specification_goals',
   INSERT_SEQUENCE = 'insert_sequence_one',
+  INSERT_SEQUENCE_ADAPTATION = 'insert_sequence_adaptation_one',
   INSERT_SEQUENCE_TO_SIMULATED_ACTIVITY = 'insert_sequence_to_simulated_activity_one',
   INSERT_SIMULATION_TEMPLATE = 'insert_simulation_template_one',
   INSERT_TAG = 'insert_tags_one',
@@ -338,20 +339,6 @@ const gql = {
     }
   `,
 
-  CREATE_DICTIONARY: `#graphql
-mutation CreateDictionary($dictionary: String!, $type: String!) {
-  createDictionary: ${Queries.UPLOAD_DICTIONARY}(dictionary: $dictionary, type : $type) {
-    path
-    created_at
-    id
-    mission
-    parsed_json
-    version
-    type
-  }
-}
-`,
-
   CREATE_CONSTRAINT: `#graphql
     mutation CreateConstraint($constraint: constraint_metadata_insert_input!) {
       constraint: ${Queries.INSERT_CONSTRAINT_METADATA}(object: $constraint) {
@@ -394,14 +381,19 @@ mutation CreateDictionary($dictionary: String!, $type: String!) {
     }
   `,
 
-  CREATE_CUSTOM_ADAPTATION: `#graphql
-    mutation CreateCustomAdaptation($adaptation: sequence_adaptation_insert_input!) {
-      createSequenceAdaptation: insert_sequence_adaptation_one(object: $adaptation) {
-        adaptation
-        created_at
-      }
+  CREATE_DICTIONARY: `#graphql
+  mutation CreateDictionary($dictionary: String!, $type: String!) {
+    createDictionary: ${Queries.UPLOAD_DICTIONARY}(dictionary: $dictionary, type : $type) {
+      path
+      created_at
+      id
+      mission
+      parsed_json
+      version
+      type
     }
-  `,
+  }
+`,
 
   CREATE_EXPANSION_RULE: `#graphql
     mutation CreateExpansionRule($rule: expansion_rule_insert_input!) {
@@ -643,6 +635,15 @@ mutation CreateDictionary($dictionary: String!, $type: String!) {
     mutation CreateSchedulingSpec($spec: scheduling_specification_insert_input!) {
       createSchedulingSpec: ${Queries.INSERT_SCHEDULING_SPECIFICATION}(object: $spec) {
         id
+      }
+    }
+  `,
+
+  CREATE_SEQUENCE_ADAPTATION: `#graphql
+    mutation CreateCustomAdaptation($adaptation: sequence_adaptation_insert_input!) {
+      createSequenceAdaptation: ${Queries.INSERT_SEQUENCE_ADAPTATION}(object: $adaptation) {
+        adaptation
+        created_at
       }
     }
   `,

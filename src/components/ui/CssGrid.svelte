@@ -78,7 +78,7 @@
 <div
   bind:this={div}
   class={className}
-  style="gap: {gap}; grid-template-columns: {columns}; grid-template-rows: {rows}; padding: {padding}; min-height: {minHeight}"
+  style="gap: {gap}; grid-template-columns: {columns}; grid-template-rows: {rows}; min-height: {minHeight}; padding: {padding}"
 >
   <slot />
 </div>
