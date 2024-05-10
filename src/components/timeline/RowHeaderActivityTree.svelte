@@ -121,30 +121,7 @@
                 <span>{node.groups.length}</span>
               </div>
             {:else}
-              {#if combinedActivityDirectiveSpanCount}
-                <div
-                  title={`${combinedActivityDirectiveSpanCount} Combined Activity Directive and Simulated Activit${combinedActivityDirectiveSpanCount === 1 ? 'y' : 'ies'}`}
-                  class="icon-group"
-                >
-                  <DirectiveAndSpanIcon />
-                  <span>{combinedActivityDirectiveSpanCount}</span>
-                </div>
-              {/if}
-              {#if activityDirectiveCount}
-                <div
-                  title={`${activityDirectiveCount} Activity Directive${pluralize(activityDirectiveCount)}`}
-                  class="icon-group"
-                >
-                  <DirectiveIcon />
-                  <span>{activityDirectiveCount}</span>
-                </div>
-              {/if}
-              {#if spanCount}
-                <div title={`${spanCount} Simulated Activit${spanCount === 1 ? 'y' : 'ies'}`} class="icon-group">
-                  <SpanIcon />
-                  <span>{spanCount}</span>
-                </div>
-              {/if}
+              {activityDirectiveCount + spanCount + combinedActivityDirectiveSpanCount}
             {/if}
           </div>
         </div>
