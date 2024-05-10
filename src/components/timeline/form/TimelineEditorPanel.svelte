@@ -64,6 +64,7 @@
   import ColorSchemePicker from '../../form/ColorSchemePicker.svelte';
   import Input from '../../form/Input.svelte';
   import GridMenu from '../../menus/GridMenu.svelte';
+  import ParameterUnits from '../../parameters/ParameterUnits.svelte';
   import CssGrid from '../../ui/CssGrid.svelte';
   import DatePicker from '../../ui/DatePicker/DatePicker.svelte';
   import Panel from '../../ui/Panel.svelte';
@@ -80,6 +81,7 @@
   let rows: Row[] = [];
   let timelines: Timeline[] = [];
   let verticalGuides: VerticalGuide[] = [];
+  let editorWidth: number;
 
   $: rows = $selectedTimeline?.rows || [];
   $: timelines = $view?.definition.plan.timelines || [];
@@ -164,13 +166,7 @@
     handleUpdateLayerFilter(newValues, layer);
   }
 
-  function handleActivityOptionRadioChange(
-    event: CustomEvent<{
-      id: RadioButtonId;
-      index: number;
-    }>,
-    name: keyof ActivityOptions,
-  ) {
+  function handleActivityOptionRadioChange(event: CustomEvent<{ id: RadioButtonId }>, name: keyof ActivityOptions) {
     const { id } = event.detail;
     viewUpdateRow('activityOptions', { ...activityOptions, [name]: id });
   }
@@ -481,7 +477,7 @@
     <GridMenu {gridSection} title="Timeline Editor" />
   </svelte:fragment>
 
-  <svelte:fragment slot="body">
+  <div slot="body" bind:clientWidth={editorWidth} class:compact={editorWidth < 360}>
     {#if !$selectedRow}
       <!-- Select Timeline. -->
       <div class="timeline-select-container">
@@ -845,8 +841,8 @@
           <div class="editor-section-header">
             <div class="st-typography-medium">Activity Options</div>
           </div>
-          <div class="radio-input">
-            <div class="radio-input-label">Display</div>
+          <Input layout="inline" class="editor-input">
+            <label for="activity-composition">Display</label>
             <RadioButtons
               selectedButtonId={activityOptions.displayMode}
               on:select-radio-button={e => handleActivityOptionRadioChange(e, 'displayMode')}
@@ -856,7 +852,8 @@
                 id="grouped"
               >
                 <div class="radio-button-icon">
-                  <ActivityModeGroupedIcon />Grouped
+                  <ActivityModeGroupedIcon />
+                  <span class="timeline-editor-responsive-label">Grouped</span>
                 </div>
               </RadioButton>
               <RadioButton
@@ -865,15 +862,72 @@
               >
                 <div class="radio-button-icon">
                   <ActivityModeCompactIcon />
-                  Compact
+                  <span class="timeline-editor-responsive-label">Compact</span>
                 </div>
               </RadioButton>
             </RadioButtons>
-          </div>
+          </Input>
+          <Input layout="inline" class="editor-input">
+            <label for="activity-composition">Labels</label>
+            <RadioButtons
+              selectedButtonId={activityOptions.labelVisibility}
+              on:select-radio-button={e => handleActivityOptionRadioChange(e, 'labelVisibility')}
+            >
+              <RadioButton use={[[tooltip, { content: 'Always show labels', placement: 'top' }]]} id="on">
+                <div class="radio-button-icon">
+                  <ActivityModeTextIcon />
+                  <span class="timeline-editor-responsive-label">On</span>
+                </div>
+              </RadioButton>
+              <RadioButton use={[[tooltip, { content: 'Never show labels', placement: 'top' }]]} id="off">
+                <div class="radio-button-icon">
+                  <ActivityModeTextNoneIcon />
+                  <span class="timeline-editor-responsive-label">Off</span>
+                </div>
+              </RadioButton>
+              <RadioButton
+                use={[[tooltip, { content: 'Show labels that do not overlap', placement: 'top' }]]}
+                id="auto"
+              >
+                <div class="radio-button-icon">
+                  <ActivityModeWidthIcon />
+                  <span class="timeline-editor-responsive-label">Auto</span>
+                </div>
+              </RadioButton>
+            </RadioButtons>
+          </Input>
+          <Input layout="inline" class="editor-input">
+            <label for="activity-composition">Show</label>
+            <RadioButtons
+              id="activity-composition"
+              selectedButtonId={activityOptions.composition}
+              on:select-radio-button={e => handleActivityOptionRadioChange(e, 'composition')}
+            >
+              <RadioButton use={[[tooltip, { content: 'Only show directives', placement: 'top' }]]} id="directives">
+                <div class="radio-button-icon">
+                  <DirectiveIcon /><span class="timeline-editor-responsive-label">Directives</span>
+                </div>
+              </RadioButton>
+              <RadioButton use={[[tooltip, { content: 'Only show simulated', placement: 'top' }]]} id="spans">
+                <div class="radio-button-icon">
+                  <SpanIcon />
+                  <span class="timeline-editor-responsive-label">Simulated</span>
+                </div>
+              </RadioButton>
+              <RadioButton
+                use={[[tooltip, { content: 'Show directives and simulated activities', placement: 'top' }]]}
+                id="both"
+              >
+                <div class="radio-button-icon">
+                  <DirectiveAndSpanIcon />
+                  <span class="timeline-editor-responsive-label">Both</span>
+                </div>
+              </RadioButton>
+            </RadioButtons>
+          </Input>
           {#if activityOptions.displayMode === 'grouped'}
-            <!-- TODO naming for this one is tricky -->
-            <div class="radio-input">
-              <div class="radio-input-label">Hierarchy</div>
+            <Input layout="inline" class="editor-input">
+              <label for="activity-composition">Hierarchy</label>
               <RadioButtons
                 selectedButtonId={activityOptions.hierarchyMode}
                 on:select-radio-button={e => handleActivityOptionRadioChange(e, 'hierarchyMode')}
@@ -883,7 +937,8 @@
                   id="directive"
                 >
                   <div class="radio-button-icon">
-                    <ActivityModeGroupedIcon />Directives
+                    <ActivityModeGroupedIcon />
+                    <span class="timeline-editor-responsive-label">Directives</span>
                   </div>
                 </RadioButton>
                 <RadioButton
@@ -897,68 +952,37 @@
                 >
                   <div class="radio-button-icon">
                     <ActivityModeCompactIcon />
-                    All
+                    <span class="timeline-editor-responsive-label">All</span>
                   </div>
                 </RadioButton>
               </RadioButtons>
-            </div>
+            </Input>
           {/if}
-          <div class="radio-input">
-            <div class="radio-input-label">Labels</div>
-            <RadioButtons
-              selectedButtonId={activityOptions.labelVisibility}
-              on:select-radio-button={e => handleActivityOptionRadioChange(e, 'labelVisibility')}
-            >
-              <RadioButton use={[[tooltip, { content: 'Always show labels', placement: 'top' }]]} id="on">
-                <div class="radio-button-icon">
-                  <ActivityModeTextIcon />On
-                </div>
-              </RadioButton>
-              <RadioButton use={[[tooltip, { content: 'Never show labels', placement: 'top' }]]} id="off">
-                <div class="radio-button-icon">
-                  <ActivityModeTextNoneIcon />
-                  Off
-                </div>
-              </RadioButton>
-              <RadioButton
-                use={[[tooltip, { content: 'Show labels that do not overlap', placement: 'top' }]]}
-                id="auto"
-              >
-                <div class="radio-button-icon">
-                  <ActivityModeWidthIcon />
-                  Auto
-                </div>
-              </RadioButton>
-            </RadioButtons>
-          </div>
-          <div class="radio-input">
-            <div class="radio-input-label">Show</div>
-            <RadioButtons
-              selectedButtonId={activityOptions.composition}
-              on:select-radio-button={e => handleActivityOptionRadioChange(e, 'composition')}
-            >
-              <RadioButton use={[[tooltip, { content: 'Only show directives', placement: 'top' }]]} id="directives">
-                <div class="radio-button-icon">
-                  <DirectiveIcon />Directives
-                </div>
-              </RadioButton>
-              <RadioButton use={[[tooltip, { content: 'Only show simulated', placement: 'top' }]]} id="spans">
-                <div class="radio-button-icon">
-                  <SpanIcon />
-                  Simulated
-                </div>
-              </RadioButton>
-              <RadioButton
-                use={[[tooltip, { content: 'Show directives and simulated activities', placement: 'top' }]]}
-                id="both"
-              >
-                <div class="radio-button-icon">
-                  <DirectiveAndSpanIcon />
-                  Both
-                </div>
-              </RadioButton>
-            </RadioButtons>
-          </div>
+          <!-- TODO when creating a new activity layer from editor default to compact? -->
+          {#if activityOptions.displayMode === 'compact'}
+            <form on:submit={event => event.preventDefault()} style="flex: 1">
+              <Input layout="inline" class="editor-input">
+                <label for="text">Height</label>
+                <input
+                  min={12}
+                  autocomplete="off"
+                  class="st-input w-100"
+                  name="text"
+                  type="number"
+                  value={activityOptions.activityHeight}
+                  on:input={event => {
+                    const { value } = getTarget(event);
+                    if (typeof value === 'number' && !isNaN(value)) {
+                      if (value >= 12) {
+                        viewUpdateRow('activityOptions', { ...activityOptions, activityHeight: value });
+                      }
+                    }
+                  }}
+                />
+                <ParameterUnits unit="px" slot="right" />
+              </Input>
+            </form>
+          {/if}
         </fieldset>
       {/if}
       <!-- TODO perhaps separate out each section into a mini editor? -->
@@ -1173,7 +1197,7 @@
         {/if}
       </fieldset>
     {/if}
-  </svelte:fragment>
+  </div>
 </Panel>
 
 <style>
@@ -1337,6 +1361,11 @@
     display: none;
   }
 
+  :global(.input.input-inline.editor-input) {
+    grid-template-columns: 60px auto;
+    padding: 0;
+  }
+
   .section-back-button {
     border-radius: 0;
     flex-shrink: 0;
@@ -1350,19 +1379,12 @@
     flex-direction: column;
   }
 
-  .radio-input {
-    align-items: center;
-    display: flex;
-    gap: 4px;
-    width: 100%;
-  }
-
-  .radio-input-label {
-    min-width: 60px;
-  }
-
   .radio-button-icon {
     display: flex;
     gap: 4px;
+  }
+
+  .compact .timeline-editor-responsive-label {
+    display: none;
   }
 </style>

@@ -43,7 +43,6 @@
   export let activityOptions: ActivityOptions = { ...ViewDefaultActivityOptions };
   export let idToColorMaps = { directives: {}, spans: {} };
   export let activityDirectivesMap: ActivityDirectivesMap = {};
-  export let activityHeight: number = 16;
   export let activityRowPadding: number = 4;
   export let activitySelectedColor: string = '#a9eaff';
   export let activityDefaultColor = '#cbcbcb';
@@ -127,7 +126,7 @@
   $: canvasHeightDpr = drawHeight * dpr;
   $: canvasWidthDpr = drawWidth * dpr;
   // $: directiveIconMarginRight = 2 * scaleFactor;
-  $: rowHeight = activityHeight + activityRowPadding;
+  $: rowHeight = activityOptions.displayMode === 'compact' ? activityOptions.activityHeight + activityRowPadding : 20;
   // $: spanLabelLeftMargin = 6;
   $: timelineLocked = timelineLockStatus === TimelineLockStatus.Locked;
   $: planStartTimeMs = getUnixEpochTime(getDoyTime(new Date(planStartTimeYmd)));
@@ -137,7 +136,6 @@
 
   $: if (
     activityDirectives &&
-    activityHeight &&
     showDirectives !== undefined &&
     showSpans !== undefined &&
     canvasHeightDpr &&
@@ -263,7 +261,7 @@
       quadtreeActivityDirectives,
       offsetX,
       offsetY,
-      activityHeight,
+      activityOptions.activityHeight,
       maxActivityWidth,
       visibleActivityDirectivesById,
     );
@@ -271,7 +269,7 @@
       quadtreeSpans,
       offsetX,
       offsetY,
-      activityHeight,
+      activityOptions.activityHeight,
       maxActivityWidth,
       visibleSpansById,
     );
@@ -408,13 +406,15 @@
       visibleSpansById = {};
       if (activityOptions.displayMode === 'grouped') {
         drawGroupedMode();
+      } else if (activityOptions.displayMode === 'compact') {
+        drawCompactMode();
       } else {
-        drawPackedMode();
+        console.warn('Unsupported LayerActivity displayMode: ', activityOptions.displayMode);
       }
     }
   }
 
-  function drawPackedMode() {
+  function drawCompactMode() {
     if (xScaleView !== null) {
       // Draw all directives and spans (combine)
       const seenSpans = {};
@@ -485,16 +485,16 @@
           }
         }
       });
-      const extraSpace = drawHeight - activityHeight;
+      const extraSpace = drawHeight - activityOptions.activityHeight;
       const rowCount = Object.keys(rows).length;
       Object.entries(rows).forEach(([_, entry], i) => {
         const { items } = entry;
         let yRow = i * (extraSpace / (rowCount - 1)) || 0;
         // If we can't have at least two rows then draw everything at 0
-        if (activityHeight * 2 > drawHeight) {
+        if (activityOptions.activityHeight * 2 > drawHeight) {
           yRow = 4;
         }
-        if (activityHeight) {
+        if (activityOptions.activityHeight) {
           drawRow(yRow, items, idToColorMaps);
         }
       });
@@ -563,7 +563,7 @@
               isSelected,
               labelText: span.type,
               x: spanStartX + 4, // TODO sort out label left sticky with packing
-              y: y + activityHeight / 2,
+              y: y + activityOptions.activityHeight / 2,
               width: spanLabelWidth,
             });
             lastTextEnd = spanStartX + spanLabelWidth;
@@ -605,7 +605,7 @@
             isSelected,
             labelText: directive.name,
             x: directiveStartX + 4,
-            y: y + activityHeight / 2,
+            y: y + activityOptions.activityHeight / 2,
             width: directiveLabelWidth,
           });
           lastTextEnd = directiveStartX + directiveLabelWidth;
@@ -659,6 +659,7 @@
       });
       const newRowHeight = y + 36;
       if (!collapsedMode && newRowHeight > 0 && drawHeight !== newRowHeight) {
+        /* TODO a change from manual to auto height does not take effect until you trigger a redraw on this row, could pass in whether or not to update row height but that might be odd? */
         dispatch('updateRowHeight', { newHeight: newRowHeight });
       }
     }
