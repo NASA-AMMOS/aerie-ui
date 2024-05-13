@@ -30,7 +30,6 @@
   export let id: string = '';
   export let ignoreCase: boolean = true;
   export let inputRef: HTMLInputElement | null = null;
-  export let minWidth: number = 82;
   export let name: string = '';
   export let placeholder: string = 'Enter a tag...';
   export let selected: Tag[] = [];
@@ -235,10 +234,12 @@
   bind:this={tagsRef}
   bind:clientWidth={tagsWidth}
 >
-  <div class="tags-input-selected-items">
-    {#each selectedTags as tag}
-      <TagChip {tag} removable={!disabled} on:click={() => onTagRemove(tag)} {disabled} ariaRole="option" />
-    {/each}
+  <div class="tags-input-container">
+    <div class="tags-input-selected-items">
+      {#each selectedTags as tag}
+        <TagChip {tag} removable={!disabled} on:click={() => onTagRemove(tag)} {disabled} ariaRole="option" />
+      {/each}
+    </div>
     {#if !disabled || (disabled && !selectedTags.length)}
       {#if !(!allowMultiple && selectedTags.length)}
         <input
@@ -247,7 +248,6 @@
           {disabled}
           placeholder={disabled ? '' : placeholder}
           class="st-input"
-          style:min-width={`${minWidth}px`}
           on:mouseup={openSuggestions}
           on:focus={openSuggestions}
           on:keydown|stopPropagation={onKeydown}
@@ -327,6 +327,10 @@
   :global(.tags-input.permission-disabled) input {
     cursor: not-allowed;
     opacity: 1;
+  }
+
+  .tags-input-container {
+    width: 100%;
   }
 
   .tags-input-selected-items {
