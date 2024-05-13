@@ -91,7 +91,7 @@ export interface LinePoint extends Point {
 export type MouseDown = {
   activityDirectives: ActivityDirective[];
   e: MouseEvent;
-  layerId: number;
+  layerId?: number;
   rowId?: number;
   spans: Span[];
   timelineId?: number;

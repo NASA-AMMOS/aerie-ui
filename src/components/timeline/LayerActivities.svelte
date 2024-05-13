@@ -6,6 +6,7 @@
   import { quadtree as d3Quadtree, type Quadtree } from 'd3-quadtree';
   import { type ScaleTime } from 'd3-scale';
   import { createEventDispatcher, onDestroy, onMount, tick } from 'svelte';
+  import SpanHashMarksSVG from '../../assets/span-hash-marks.svg?raw';
   import { ViewDefaultActivityOptions } from '../../enums/view';
   import type { ActivityDirective, ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
@@ -45,6 +46,7 @@
   export let activityDirectivesMap: ActivityDirectivesMap = {};
   export let activityRowPadding: number = 4;
   export let activitySelectedColor: string = '#a9eaff';
+  export let activitySelectedTextColor: string = '#0a4c7e';
   export let activityDefaultColor = '#cbcbcb';
   export let activityUnfinishedSelectedColor: string = '#ff3b19';
   export let activityUnfinishedColor: string = '#fc674d';
@@ -56,8 +58,7 @@
   export let drawWidth: number = 0;
   export let hasUpdateDirectivePermission: boolean = false;
   export let focus: FocusEvent | undefined;
-  export let labelPaddingLeft: number = 2;
-  export let maxLabelCount: number = 1000;
+  export let labelPaddingLeft: number = 4;
   export let maxPackedActivityCount: number = 10000;
   export let mousedown: MouseEvent | undefined;
   export let mousemove: MouseEvent | undefined;
@@ -98,6 +99,7 @@
   let dragActivityDirectiveActive: ActivityDirective | null = null;
   let dragStartX: number | null = null;
   let maxActivityWidth: number;
+  let minRectSize: number = 4;
   let planStartTimeMs: number;
   let quadtreeActivityDirectives: Quadtree<QuadtreeRect>;
   let quadtreeSpans: Quadtree<QuadtreeRect>;
@@ -121,7 +123,8 @@
 
   // TODO bring anchor icon back
   // $: scaleFactor = activityHeight / nativeDirectiveIconWidth;
-  // $: anchorIconWidth = directiveIconWidth * scaleFactor;
+  $: anchorIconWidth = 16;
+  $: anchorIconMarginLeft = 4;
   // $: anchorIconMarginLeft = 4 * scaleFactor;
   $: canvasHeightDpr = drawHeight * dpr;
   $: canvasWidthDpr = drawWidth * dpr;
@@ -167,6 +170,7 @@
       ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
     }
     assets.anchorIcon = loadSVG(ActivityAnchorIconSVG);
+    assets.hashMarks = loadSVG(SpanHashMarksSVG);
   }
 
   function loadSVG(svgString: string) {
@@ -307,7 +311,6 @@
       activityDirectives = hits.activityDirectives;
       spans = hits.spans;
 
-      /* TODO tooltip renders offscreen if there are too many items even when limited to 6 with a +x more */
       dispatch('mouseOver', { activityDirectives, e, spans });
       dragActivityDirective(offsetX);
     }
@@ -418,15 +421,12 @@
 
   function drawCompactMode() {
     if (xScaleView !== null) {
-      // Draw all directives and spans (combine)
       const seenSpans = {};
       const itemsToDraw = [];
       if (showDirectives) {
         activityDirectives.forEach(directive => {
-          // TODO obviously repetitive (see below), clean all of this up
           const directiveX = directive.start_time_ms || 0;
 
-          // TODO obviously repetitive (see below), clean all of this up
           let childSpanInView = false;
           const childSpan = getSpanForActivityDirective(directive);
           if (childSpan) {
@@ -457,8 +457,9 @@
       }
       if (itemsToDraw.length > maxPackedActivityCount) {
         const text = `Activity drawing limit (${maxPackedActivityCount}) exceeded (${itemsToDraw.length})`;
-        const textMetrics = setLabelContext(text);
-        ctx.fillText(text, drawWidth / 2 - textMetrics.textWidth / 2, drawHeight / 2, textMetrics.textWidth);
+        const { width } = measureText(text, textMetricsCache);
+        setLabelContext('black');
+        ctx.fillText(text, drawWidth / 2 - width / 2, drawHeight / 2, width);
         return;
       }
 
@@ -510,7 +511,9 @@
     if (directive && showDirectives) {
       boxEndX = 2;
       if (activityOptions.labelVisibility !== 'off') {
-        labelEndX = Math.max(startX, 4) + 4 + measureText(directive.name, textMetricsCache).width; // TODO figure out how to codify the spacing of a directive
+        // TODO include anchor sizing here
+        labelEndX =
+          Math.max(startX, minRectSize) + labelPaddingLeft + measureText(directive.name, textMetricsCache).width; // TODO figure out how to codify the spacing of a directive
       }
     }
     if (span && showSpans) {
@@ -519,7 +522,7 @@
       if (activityOptions.labelVisibility !== 'off') {
         labelEndX = Math.max(
           labelEndX,
-          Math.max(4, startX) + 4 + measureText(getLabelForSpan(span), textMetricsCache).width,
+          Math.max(minRectSize, startX) + labelPaddingLeft + measureText(getLabelForSpan(span), textMetricsCache).width,
         );
       }
     }
@@ -528,24 +531,44 @@
 
   function drawRow(y, items, idToColorMaps) {
     const drawLabels = activityOptions.labelVisibility === 'on' || activityOptions.labelVisibility === 'auto';
-    let labelsToDraw = [];
+    let itemsToDraw = [];
     items.forEach(item => {
       if (!xScaleView) {
         return;
       }
 
       const { span, directive } = item;
+      let newItem;
 
       // TODO should we filter out spans in the activityGroups instead of here and in RowHeaderActivityTree?
       if (span && showSpans && spanInView(span, viewTimeRange)) {
-        // Draw span
-        let spanLabelWidth = 0;
+        newItem = { span, spanStartX: xScaleView(span.startMs) };
+      }
+      if (directive && showDirectives && directiveInView(directive, viewTimeRange)) {
+        newItem = { ...newItem, directive, directiveStartX: xScaleView(directive.start_time_ms || 0) };
+      }
+      if (newItem) {
+        itemsToDraw.push(newItem);
+      }
+    });
+
+    // itemsToDraw.sort((a, b) => {
+    //   return (a.spanStartX ?? a.directiveStartX) < (b.spanStartX ?? b.directiveStartX) ? -1 : 1;
+    // });
+
+    itemsToDraw.forEach(({ directive, directiveStartX, span, spanStartX }, i) => {
+      if (!xScaleView) {
+        return;
+      }
+      const nextItem = itemsToDraw[i + 1];
+
+      // Draw span
+      if (span) {
         const unfinished = span.duration === null;
-        const spanStartX = xScaleView(span.startMs);
         const spanEndX = xScaleView(span.endMs);
         const spanRectWidth = Math.max(2, Math.min(spanEndX, drawWidth) - spanStartX);
         const spanColor = idToColorMaps.spans[span.id] || activityDefaultColor;
-        const isSelected = selectedSpanId === span.id;
+        const isSelected = selectedSpanId === span.id || (directive && selectedActivityDirectiveId === directive.id);
         if (isSelected) {
           if (unfinished) {
             ctx.fillStyle = activityUnfinishedSelectedColor;
@@ -560,19 +583,25 @@
         }
         ctx.fillRect(spanStartX, y, spanRectWidth, rowHeight);
 
-        // Draw label if no directive
+        // Draw label if no directive and the label will fit
+        let spanLabelWidth = 0;
         if (drawLabels && (!directive || !showDirectives)) {
           const label = getLabelForSpan(span);
-          spanLabelWidth = measureText(label, textMetricsCache).width;
-          labelsToDraw.push({
-            unfinished,
-            color: spanColor,
-            isSelected,
-            labelText: label,
-            x: spanStartX + 4, // TODO sort out label left sticky with packing
-            y: y + rowHeight / 2,
-            width: spanLabelWidth,
-          });
+          spanLabelWidth = measureText(label, textMetricsCache).width + labelPaddingLeft;
+          let shouldDrawLabel = true;
+          if (activityOptions.labelVisibility === 'auto') {
+            if (nextItem) {
+              const nextX = nextItem.spanStartX ?? nextItem.directiveStartX ?? null;
+              if (typeof nextX === 'number' && spanStartX + spanLabelWidth >= nextX) {
+                shouldDrawLabel = false;
+                spanLabelWidth = 0;
+              }
+            }
+          }
+          if (shouldDrawLabel) {
+            const spanColor = idToColorMaps.spans[span.id] || activityDefaultColor;
+            drawLabel(label, spanStartX, y, spanLabelWidth, spanColor, unfinished, isSelected);
+          }
         }
 
         // Add to quadtree
@@ -585,74 +614,92 @@
           y,
         });
       }
-      if (directive && showDirectives && directiveInView(directive, viewTimeRange)) {
-        // Draw directive
+
+      // Draw directive
+      if (directive) {
         const directiveColor = idToColorMaps.directives[directive.id] || activityDefaultColor;
         const color = hexToRgba(shadeColor(directiveColor || '#FF0000', 1.2), 1);
-        const directiveMs = directive.start_time_ms || 0;
-        const directiveStartX = xScaleView(directiveMs);
         const isSelected = selectedActivityDirectiveId === directive.id;
         let directiveLabelWidth = 0;
+        const anchored = directive.anchor_id !== null;
         if (isSelected) {
-          ctx.fillStyle = activitySelectedColor;
+          ctx.fillStyle = shadeColor(activitySelectedColor, 1.3);
         } else {
           ctx.fillStyle = color;
         }
         ctx.fillRect(directiveStartX, y, 2, rowHeight);
 
-        // Draw label
+        // Determine if label has space to draw
         if (drawLabels) {
-          directiveLabelWidth = measureText(directive.name, textMetricsCache).width;
-          labelsToDraw.push({
-            color: directiveColor,
-            isSelected,
-            labelText: directive.name,
-            x: directiveStartX + 4,
-            y: y + rowHeight / 2,
-            width: directiveLabelWidth,
-          });
+          const label = directive.name;
+          directiveLabelWidth = measureText(label, textMetricsCache).width + labelPaddingLeft;
+          let shouldDrawLabel = true;
+          if (activityOptions.labelVisibility === 'auto') {
+            const finalWidth = anchored
+              ? anchorIconWidth + anchorIconMarginLeft + directiveLabelWidth
+              : directiveLabelWidth;
+            // TODO could consider both? That said an item could have a span at the start of a plan and a directive at the beginning...
+            const nextX = nextItem?.spanStartX || nextItem?.directiveStartX || null;
+            if (typeof nextX === 'number' && directiveStartX + finalWidth >= nextX) {
+              shouldDrawLabel = false;
+              directiveLabelWidth = 0;
+            }
+          }
+          if (shouldDrawLabel) {
+            const isSelected = selectedActivityDirectiveId === directive.id || (span && selectedSpanId === span.id);
+            drawLabel(label, directiveStartX, y, directiveLabelWidth, directiveColor, false, isSelected);
+
+            // Draw anchor
+            if (anchored) {
+              const anchorOpacity = selectedActivityDirectiveId !== null || selectedSpanId !== null ? 0.4 : 1;
+              drawAnchorIcon(
+                directiveStartX + directiveLabelWidth + anchorIconMarginLeft,
+                y + rowHeight / 2 - anchorIconWidth / 2,
+                isSelected ? 1 : anchorOpacity,
+              );
+            }
+          }
         }
+
         // Add to quadtree
         visibleActivityDirectivesById[directive.id] = directive;
         quadtreeActivityDirectives.add({
           height: rowHeight,
           id: directive.id,
-          width: directiveLabelWidth + labelPaddingLeft + 4, // TODO what is 4?
+          width: directiveLabelWidth + labelPaddingLeft,
           x: directiveStartX,
           y,
         });
       }
     });
+  }
 
-    // TODO guardrail, be smarter than this for activityOptions.labelVisibility="on"
-    if (labelsToDraw.length < maxLabelCount) {
-      setLabelContext('', 'black');
-      labelsToDraw
-        .sort((a, b) => (a.x < b.x ? -1 : 1))
-        .forEach(({ color, isSelected, labelText, x, y, width, unfinished }, i) => {
-          if (activityOptions.labelVisibility === 'auto') {
-            const nextX = labelsToDraw[i + 1]?.x;
-            if (typeof nextX === 'number' && x + width >= nextX) {
-              return;
-            }
-          }
-          if (isSelected) {
-            if (unfinished) {
-              ctx.fillStyle = activityUnfinishedSelectedColor;
-            } else {
-              ctx.fillStyle = '#0a4c7e';
-            }
-          } else if (unfinished) {
-            ctx.fillStyle = ctx.fillStyle = shadeColor(activityUnfinishedColor, 1.3);
-          } else {
-            // TODO what color should we use for the text? Black or a darkened version of layer color?
-            // If using shadeColor make sure to cache it
-            ctx.fillStyle = shadeColor(color, 2.8);
-            // ctx.fillStyle = 'black';
-          }
-          ctx.fillText(labelText, Math.max(x, 4), y, width);
-        });
+  function drawLabel(
+    text: string,
+    x: number,
+    y: number,
+    width: number,
+    color: string,
+    unfinished = false,
+    selected = false,
+  ) {
+    setLabelContext('black');
+    if (selected) {
+      if (unfinished) {
+        ctx.fillStyle = activityUnfinishedSelectedColor;
+      } else {
+        ctx.fillStyle = activitySelectedTextColor;
+      }
+    } else if (unfinished) {
+      ctx.fillStyle = ctx.fillStyle = shadeColor(activityUnfinishedColor, 1.3);
+    } else {
+      // TODO what color should we use for the text? Black or a darkened version of layer color?
+      // If using shadeColor make sure to cache it
+      const opacity = selectedActivityDirectiveId !== null || selectedSpanId !== null ? 0.4 : 1;
+      ctx.fillStyle = getRGBAFromHex(shadeColor(color, 2.8), opacity);
+      // ctx.fillStyle = 'black';
     }
+    ctx.fillText(text, Math.max(x + labelPaddingLeft, minRectSize), y + rowHeight / 2, width);
   }
 
   function getRGBAFromHex(color: string, opacity: number = 1) {
@@ -686,19 +733,20 @@
 
   function drawBottomLine(y: number, width: number) {
     ctx.strokeStyle = 'rgba(210, 210, 210, 1)';
+    ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(0, y);
     ctx.lineTo(width, y);
     ctx.stroke();
   }
 
-  function drawGroup(group, y, rowHeight, drawLine = true) {
+  function drawGroup(group, y: number, rowHeight: number, drawLine = true) {
     let newY = y;
     if (drawLine) {
-      drawBottomLine(newY + rowHeight, drawWidth);
+      drawBottomLine(newY + rowHeight + 0.5, drawWidth);
     }
 
-    drawRow(newY + 4, group.items || [], idToColorMaps);
+    drawRow(newY + activityRowPadding, group.items || [], idToColorMaps);
     newY += rowHeight;
 
     if (group.expanded && group.groups.length) {
@@ -709,7 +757,7 @@
     return newY;
   }
 
-  function measureText(text, cache) {
+  function measureText(text: string, cache) {
     const cachedMeasurement = cache[text];
     if (cachedMeasurement) {
       return cachedMeasurement;
@@ -719,211 +767,13 @@
     return measurement;
   }
 
-  // function drawSpan(span: Span, x: number, y: number, end: number, ghosted: boolean = false, sticky = false) {
-  //   ctx.save();
-  //   visibleSpansById[span.id] = span;
-  //   const primaryHighlight = span.id === selectedSpanId;
-  //   let secondaryHighlight = false;
-  //   const unfinished = span.duration === null;
-  //   const rootSpan = getSpanRootParent(spansMap, span.id);
-  //   if (rootSpan && selectedActivityDirectiveId !== null) {
-  //     const spanDirectiveId = spanUtilityMaps.spanIdToDirectiveIdMap[rootSpan.id];
-  //     if (spanDirectiveId === selectedActivityDirectiveId) {
-  //       secondaryHighlight = true;
-  //     }
-  //   }
-  //   if (selectedSpanId) {
-  //     const rootSelectedSpan = getSpanRootParent(spansMap, selectedSpanId);
-  //     if (rootSelectedSpan && rootSelectedSpan.id === rootSpan?.id) {
-  //       secondaryHighlight = true;
-  //     }
-  //   }
-  //   // Handle opacity if a point is selected
-  //   let opacity = 1;
-  //   if (selectedActivityDirectiveId !== null || selectedSpanId !== null) {
-  //     if (primaryHighlight) {
-  //       opacity = 1;
-  //     } else {
-  //       opacity = 0.24;
-  //     }
-  //   }
-  //   if (ghosted) {
-  //     opacity = 0.24;
-  //   }
-
-  //   setActivityRectContext(primaryHighlight, secondaryHighlight, opacity, unfinished);
-
-  //   // Draw span rect
-  //   const activityWidth = Math.max(4.0, end - x);
-
-  //   // Check for roundRect support, Firefox does not yet support this as of 3/21/2023
-  //   const rect = new Path2D();
-  //   if (rect.roundRect) {
-  //     rect.roundRect(x, y, activityWidth, activityHeight, 2);
-  //   } else {
-  //     rect.rect(x, y, activityWidth, activityHeight);
-  //   }
-
-  //   // Draw span rect stroke
-  //   if (ghosted) {
-  //     ctx.setLineDash([3, 3]);
-  //     ctx.strokeStyle = `rgba(0,0,0,${opacity * 0.6})`;
-  //   } else {
-  //     ctx.setLineDash([]);
-  //   }
-  //   const strokeRect = new Path2D();
-  //   // Check for roundRect support, Firefox does not yet support this as of 3/21/2023
-  //   if (strokeRect.roundRect) {
-  //     strokeRect.roundRect(x + 0.5, y + 0.5, activityWidth - 1, activityHeight - 1, 1);
-  //   } else {
-  //     strokeRect.rect(x + 0.5, y + 0.5, activityWidth - 1, activityHeight - 1);
-  //   }
-  //   ctx.fill(rect);
-  //   ctx.stroke(strokeRect);
-
-  //   // Draw hash marks if requested and if there is room
-  //   if (ghosted && activityWidth > 8) {
-  //     const patternCanvas = document.createElement('canvas');
-  //     patternCanvas.width = 20;
-  //     patternCanvas.height = 16;
-  //     if (assets.hashMarks !== null) {
-  //       patternCanvas?.getContext('2d')?.drawImage(assets.hashMarks, 0, 0);
-  //     }
-  //     ctx.save();
-  //     ctx.translate(x, y);
-  //     const pattern = ctx.createPattern(patternCanvas, 'repeat');
-  //     if (pattern !== null) {
-  //       ctx.fillStyle = pattern;
-  //     }
-  //     ctx.fillRect(0, 0, activityWidth, activityHeight);
-  //     ctx.restore();
-  //   }
-
-  //   // TODO deprecate point.label.hidden
-  //   // Draw label
-  //   const textMetrics = drawPointLabel(
-  //     getLabelForSpan(span, sticky),
-  //     sticky ? Math.max(spanLabelLeftMargin, x + spanLabelLeftMargin) : x + spanLabelLeftMargin,
-  //     y + activityHeight / 2,
-  //     primaryHighlight,
-  //     secondaryHighlight,
-  //     unfinished,
-  //   );
-
-  //   const hitboxWidth = Math.max(activityWidth, textMetrics.width + spanLabelLeftMargin);
-  //   quadtreeSpans.add({
-  //     height: activityHeight,
-  //     id: span.id,
-  //     width: hitboxWidth,
-  //     x,
-  //     y,
-  //   });
-
-  //   if (hitboxWidth > maxActivityWidth) {
-  //     maxActivityWidth = hitboxWidth;
-  //   }
-
-  //   if (debugMode) {
-  //     drawDebugHitbox(x, y, hitboxWidth, activityHeight);
-  //   }
-
-  //   ctx.restore();
-  // }
-
-  // function drawSpans(spans: Span[], parentY: number, draw = true, ghosted = false): BoundingBox | null {
-  //   console.log('drawing spans', spans.length);
-  //   if (spans && xScaleView !== null) {
-  //     const boundingBoxes: BoundingBox[] = [];
-
-  //     let maxX = Number.MIN_SAFE_INTEGER;
-  //     let maxTimeX = Number.MIN_SAFE_INTEGER;
-  //     let maxY = Number.MIN_SAFE_INTEGER;
-  //     let minX = Number.MAX_SAFE_INTEGER;
-  //     let y = parentY + rowHeight;
-
-  //     for (const span of spans) {
-  //       // const { start, duration } = getSpanTimeBounds(span);
-  //       const x = xScaleView(span.startMs);
-  //       const endTimeX = xScaleView(span.startMs + span.durationMs);
-
-  //       // The label should be sticky if the start of the span is clipped and the span is still in view
-  //       const sticky = span.startMs < viewTimeRange.start && span.startMs + span.durationMs >= viewTimeRange.start;
-
-  //       // Consider the span to be in view if the rect and label are in view or if the label should be sticky
-  //       const rectWithLabelInView = x + spanLabelLeftMargin + setLabelContext(getLabelForSpan(span)).textWidth > 0;
-  //       const spanInView = rectWithLabelInView || sticky;
-
-  //       // Get the final text width now that we know if we're in sticky mode
-  //       const { textWidth } = setLabelContext(getLabelForSpan(span, sticky));
-  //       const textXEnd = Math.max(spanLabelLeftMargin, x + spanLabelLeftMargin) + textWidth;
-  //       const xEnd = Math.max(endTimeX, textXEnd);
-
-  //       for (const boundingBox of boundingBoxes) {
-  //         if (x <= boundingBox.maxX) {
-  //           y = boundingBox.maxY + (spanInView ? rowHeight : 0);
-  //         }
-  //       }
-
-  //       // Only add to bounds if the span is in view
-  //       if (spanInView) {
-  //         if (draw) {
-  //           drawSpan(span, x, y, endTimeX, ghosted, sticky);
-  //         }
-  //         if (x < minX) {
-  //           minX = x;
-  //         }
-  //         if (xEnd > maxX) {
-  //           maxX = xEnd;
-  //         }
-  //         if (endTimeX > maxTimeX) {
-  //           maxTimeX = endTimeX;
-  //         }
-  //         if (y > maxY) {
-  //           maxY = y;
-  //         }
-  //       }
-
-  //       const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[span.id].map(id => spansMap[id]);
-  //       if (spanChildren) {
-  //         const childrenBoundingBox: BoundingBox | null = drawSpans(spanChildren, y, draw, ghosted);
-
-  //         if (childrenBoundingBox) {
-  //           if (childrenBoundingBox.minX < minX) {
-  //             minX = childrenBoundingBox.minX;
-  //           }
-  //           if (childrenBoundingBox.maxX > maxX) {
-  //             maxX = childrenBoundingBox.maxX;
-  //           }
-  //           if (childrenBoundingBox.maxY > maxY) {
-  //             maxY = childrenBoundingBox.maxY;
-  //           }
-  //           if (childrenBoundingBox.maxTimeX > maxTimeX) {
-  //             maxTimeX = childrenBoundingBox.maxTimeX;
-  //           }
-  //         }
-  //       }
-
-  //       boundingBoxes.push({ maxTimeX, maxX, maxY, minX });
-  //     }
-
-  //     return { maxTimeX, maxX, maxY, minX };
-  //   }
-
-  //   return null;
-  // }
-
-  function setLabelContext(labelText: string, color = '#000000') {
+  function setLabelContext(color = '#000000') {
     const fontSize = 10;
     const fontFace = 'Inter';
     ctx.fillStyle = color;
     ctx.font = `${fontSize}px ${fontFace}`;
     ctx.textAlign = 'start';
     ctx.textBaseline = 'middle';
-    let textMetrics = textMetricsCache[labelText] ?? ctx.measureText(labelText);
-    const textWidth = textMetrics.width;
-    const textHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
-    textMetricsCache[labelText] = textMetrics; // Cache to avoid recomputing this measurement
-    return { labelText, textHeight, textMetrics, textWidth };
   }
 
   function drawAnchorIcon(x: number, y: number, svgOpacity: number) {
@@ -933,73 +783,6 @@
     }
     ctx.globalAlpha = 1;
   }
-
-  // function drawPointLabel(
-  //   text: string,
-  //   x: number,
-  //   y: number,
-  //   primaryHighlight: boolean,
-  //   secondaryHighlight: boolean,
-  //   unfinished: boolean = false,
-  // ) {
-  //   let color = activityColor;
-  //   if (unfinished) {
-  //     color = activityUnfinishedColor;
-  //   }
-  //   if (primaryHighlight || secondaryHighlight) {
-  //     if (unfinished) {
-  //       color = activityUnfinishedSelectedColor;
-  //     } else {
-  //       color = activitySelectedColor;
-  //     }
-  //   }
-
-  //   let textOpacity = 1;
-  //   if (selectedActivityDirectiveId !== null || selectedSpanId !== null) {
-  //     if (!primaryHighlight) {
-  //       if (secondaryHighlight) {
-  //         textOpacity = 0.8;
-  //       } else {
-  //         textOpacity = 0.6;
-  //       }
-  //     }
-  //   }
-
-  //   const darkenFactor = unfinished ? 1.1 : 2.5;
-  //   color = hexToRgba(shadeColor(color, darkenFactor), textOpacity); // Tint the color to be darker
-  //   const { labelText, textMetrics } = setLabelContext(text, color);
-  //   ctx.fillText(labelText, x, y, textMetrics.width);
-  //   return textMetrics;
-  // }
-
-  // function drawDebugHitbox(x: number, y: number, width: number, height: number) {
-  //   ctx.save();
-  //   ctx.strokeStyle = 'red';
-  //   ctx.strokeRect(x, y, width, height);
-  //   ctx.restore();
-  // }
-
-  // function drawDebugInfo(maxXPerY: Record<number, number>, height: number) {
-  //   ctx.save();
-  //   Object.keys(maxXPerY).forEach(key => {
-  //     const x = parseFloat(`${maxXPerY[parseInt(key)]}`);
-  //     const rect = new Path2D();
-  //     rect.rect(x, parseInt(key), 2, rowHeight - 4);
-  //     ctx.fillStyle = 'red';
-  //     ctx.fill(rect);
-  //     ctx.fillText(x.toFixed(2), x + 4, parseInt(key) + 8);
-  //   });
-
-  //   for (let i = 0; i < height; i += rowHeight) {
-  //     ctx.strokeStyle = '#ff00002e';
-  //     ctx.beginPath();
-  //     ctx.moveTo(0, i);
-  //     ctx.lineTo(canvasWidthDpr, i);
-  //     ctx.stroke();
-  //     ctx.fillText(i.toString(), 0, i, 20);
-  //   }
-  //   ctx.restore();
-  // }
 </script>
 
 <canvas

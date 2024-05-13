@@ -4,7 +4,7 @@
   import type { ScaleTime } from 'd3-scale';
   import { select, type Selection } from 'd3-selection';
   import { zoom as d3Zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior, type ZoomTransform } from 'd3-zoom';
-  import { groupBy, pick } from 'lodash-es';
+  import { groupBy } from 'lodash-es';
   import { createEventDispatcher } from 'svelte';
   import FilterWithXIcon from '../../assets/filter-with-x.svg?component';
   import { Status } from '../../enums/status';
@@ -136,7 +136,6 @@
   let dragover: DragEvent;
   let drop: DragEvent;
   let focus: FocusEvent;
-  let heightsByLayer: Record<number, number> = {};
   let mousedown: MouseEvent;
   let mousemove: MouseEvent;
   let mouseout: MouseEvent;
@@ -283,11 +282,6 @@
   $: onDragover(dragover);
   $: onDrop(drop);
   $: computedDrawHeight = expanded ? drawHeight : 24;
-
-  $: heightsByLayer = pick(
-    heightsByLayer,
-    layers.map(({ id }) => id),
-  );
   $: overlaySvgSelection = select(overlaySvg) as Selection<SVGElement, unknown, any, any>;
   $: rowClasses = classNames('row', { 'row-collapsed': !expanded });
   $: hasActivityLayer = !!layers.find(layer => layer.chartType === 'activity');
@@ -454,13 +448,11 @@
       if (!newGroups[bin]) {
         newGroups[bin] = {
           id: '',
-          // directives: [],
           items: [],
           label: '',
           expanded: false,
           groups: [],
           isLeaf: false,
-          // spans: [],
           type: 'aggregation',
         };
       }
@@ -468,16 +460,10 @@
       if (group.items) {
         newGroups[bin].items.push(...group.items);
       }
-      // if (group.directives) {
-      // }
-      // if (group.spans) {
-      //   newGroups[bin].spans.push(...group.spans);
-      // }
     });
     newGroups.forEach((group, i) => {
       const groupStart = i * binSize ** depth;
       const groupEnd = Math.min(groupStart + group.groups.length * depth ** binSize, (i + 1) * binSize ** depth);
-      // const label = `${groupStart}–${groupEnd - 1}`;
       const label = `[${groupStart} … ${groupEnd - 1}]`;
       group.id = `${parentId}_${label}_page`;
       group.label = label;
@@ -661,7 +647,7 @@
           }
           groups.push({
             expanded,
-            label: `${key} (${spanGroup.length})`,
+            label: key,
             id,
             isLeaf: false,
             items: spanGroup.map(span => ({ span })),
@@ -757,11 +743,9 @@
 
   function onMouseDown(event: CustomEvent<RowMouseOverEvent>) {
     const { detail } = event;
-    const { layerId } = detail;
     dispatch('mouseDown', {
       ...detail,
       activityDirectives: detail?.activityDirectives ?? [],
-      layerId,
       rowId: id,
       spans: detail?.spans ?? [],
     });
@@ -770,12 +754,13 @@
   function onMouseOver(event: CustomEvent<RowMouseOverEvent>) {
     const { detail } = event;
     const { layerId } = detail;
-    // if (layerId != null) {
     mouseOverActivityDirectives = detail?.activityDirectives ?? [];
     mouseOverConstraintResults = detail?.constraintResults ?? mouseOverConstraintResults;
-    mouseOverPointsByLayer[layerId] = detail?.points ?? [];
     mouseOverSpans = detail?.spans ?? [];
-    mouseOverGapsByLayer[layerId] = detail?.gaps ?? mouseOverGapsByLayer[layerId] ?? [];
+    if (typeof layerId === 'number') {
+      mouseOverPointsByLayer[layerId] = detail?.points ?? [];
+      mouseOverGapsByLayer[layerId] = detail?.gaps ?? mouseOverGapsByLayer[layerId] ?? [];
+    }
 
     dispatch('mouseOver', {
       ...detail,
@@ -793,13 +778,11 @@
     dispatch('updateRowHeight', { newHeight, rowId: id });
   }
 
-  function onUpdateRowHeightLayer(event: CustomEvent<{ layerId: number; newHeight: number }>) {
+  function onUpdateRowHeightLayer(event: CustomEvent<{ newHeight: number }>) {
+    const {
+      detail: { newHeight },
+    } = event;
     if (autoAdjustHeight) {
-      const { detail } = event;
-      heightsByLayer[detail.layerId] = detail.newHeight;
-      const heights = Object.values(heightsByLayer); // TODO now with LayerActivities we have a combo layer that might need a derived layer ID?
-      const newHeight = Math.max(...heights);
-
       // Only update row height if a change has occurred to avoid loopback
       if (newHeight !== computedDrawHeight) {
         dispatch('updateRowHeight', { newHeight, rowId: id, wasAutoAdjusted: true });
