@@ -16,6 +16,10 @@
   export let initVal: string;
   export let setInEditor: (val: string) => void;
 
+  let max: number = Infinity;
+  let min: number = -Infinity;
+  let value: string;
+
   // $: pattern = isFswCommandArgumentUnsigned(argDef) ? PAT_INT : PAT_FLOAT;
 
   $: max = argDef.range?.max ?? Infinity;

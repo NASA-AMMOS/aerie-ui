@@ -54,6 +54,7 @@
   let ruleId: number | null = initialRuleId;
   let ruleLogic: string = initialRuleLogic;
   let ruleModelId: number | null = initialRuleModelId;
+  let ruleModified: boolean = false;
   let ruleName: string = initialRuleName;
   let ruleOwner: UserId = initialRuleOwner;
   let ruleTags: Tag[] | null = initialRuleTags;

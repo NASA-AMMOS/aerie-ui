@@ -3,12 +3,12 @@
 <script lang="ts">
   import type { SyntaxNode } from '@lezer/common';
   import type { CommandDictionary, FswCommandArgument } from '@nasa-jpl/aerie-ampcs';
-  import AddMissingArgsButton from './add-missing-args-button.svelte';
-  import ArgTitle from './arg-title.svelte';
-  import EnumEditor from './enum-editor.svelte';
-  import ExtraArgumentEditor from './extra-argument-editor.svelte';
-  import NumEditor from './num-editor.svelte';
-  import StringEditor from './string-editor.svelte';
+  import AddMissingArgsButton from './AddMissingArgsButton.svelte';
+  import ArgTitle from './ArgTitle.svelte';
+  import EnumEditor from './EnumEditor.svelte';
+  import ExtraArgumentEditor from './ExtraArgumentEditor.svelte';
+  import NumEditor from './NumEditor.svelte';
+  import StringEditor from './StringEditor.svelte';
   import {
     getMissingArgDefs,
     isFswCommandArgumentRepeat,

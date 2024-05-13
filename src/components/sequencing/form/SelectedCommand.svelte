@@ -6,6 +6,7 @@
   import type {
     ChannelDictionary,
     CommandDictionary,
+    FswCommand,
     FswCommandArgument,
     FswCommandArgumentRepeat,
     ParameterDictionary,
@@ -15,9 +16,11 @@
   import { getCustomArgDef } from '../../../utilities/new-sequence-editor/extension-points';
   import { TOKEN_COMMAND, TOKEN_ERROR } from '../../../utilities/new-sequence-editor/sequencer-grammar-constants';
   import { getAncestorNode } from '../../../utilities/new-sequence-editor/tree-utils';
-  import AddMissingArgsButton from './add-missing-args-button.svelte';
-  import ArgEditor from './arg-editor.svelte';
+  import AddMissingArgsButton from './AddMissingArgsButton.svelte';
+  import ArgEditor from './ArgEditor.svelte';
   import { addDefaultArgs, getMissingArgDefs, isFswCommandArgumentRepeat, type ArgTextDef } from './utils';
+
+  type TimeTagInfo = { node: SyntaxNode; text: string } | null | undefined;
 
   export let editorSequenceView: EditorView;
   export let channelDictionary: ChannelDictionary | null = null;
@@ -26,6 +29,13 @@
   export let node: SyntaxNode | null;
 
   const ID_COMMAND_DETAIL_PANE = 'ID_COMMAND_DETAIL_PANE';
+
+  let argInfoArray: ArgTextDef[] = [];
+  let commandNode: SyntaxNode | null = null;
+  let commandDef: FswCommand | null = null;
+  let editorArgInfoArray: ArgTextDef[] = [];
+  let missingArgDefArray: FswCommandArgument[] = [];
+  let timeTagNode: TimeTagInfo = null;
 
   $: commandNode = getAncestorNode(node, TOKEN_COMMAND);
   $: commandDef = getCommandDef(commandDictionary, editorSequenceView.state, commandNode);
@@ -39,8 +49,9 @@
   $: missingArgDefArray = getMissingArgDefs(argInfoArray);
   $: timeTagNode = getTimeTagInfo(commandNode);
 
-  function getTimeTagInfo(commandNode: SyntaxNode | null) {
+  function getTimeTagInfo(commandNode: SyntaxNode | null): TimeTagInfo {
     const node = commandNode?.getChild('TimeTag');
+
     return (
       node && {
         node,

@@ -38,7 +38,7 @@
   import CssGridGutter from '../ui/CssGridGutter.svelte';
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
-  import SelectedCommand from './form/selected-command.svelte';
+  import SelectedCommand from './form/SelectedCommand.svelte';
 
   export let showCommandFormBuilder: boolean = false;
   export let readOnly: boolean = false;

@@ -22,6 +22,10 @@
   export let user: User | null;
 
   let dictionaryDataGrid: SingleActionDataGrid<DictionaryType> | undefined = undefined;
+  let displayText: string = '';
+  let displayTextPlural: string = '';
+  let hasDeletePermission: boolean = false;
+  let isSequenceAdaptation: boolean = false;
 
   const dispatch = createEventDispatcher<{
     delete: { id: number };
