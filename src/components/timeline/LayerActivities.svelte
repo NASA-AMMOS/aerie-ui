@@ -619,7 +619,7 @@
       if (directive) {
         const directiveColor = idToColorMaps.directives[directive.id] || activityDefaultColor;
         const color = hexToRgba(shadeColor(directiveColor || '#FF0000', 1.2), 1);
-        const isSelected = selectedActivityDirectiveId === directive.id;
+        const isSelected = selectedActivityDirectiveId === directive.id || (span && selectedSpanId === span.id);
         let directiveLabelWidth = 0;
         const anchored = directive.anchor_id !== null;
         if (isSelected) {
@@ -646,7 +646,6 @@
             }
           }
           if (shouldDrawLabel) {
-            const isSelected = selectedActivityDirectiveId === directive.id || (span && selectedSpanId === span.id);
             drawLabel(label, directiveStartX, y, directiveLabelWidth, directiveColor, false, isSelected);
 
             // Draw anchor
