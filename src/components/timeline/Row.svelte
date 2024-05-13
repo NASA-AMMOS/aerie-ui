@@ -604,7 +604,7 @@
         );
       }
     }
-    const label = `${directive.type}`;
+    const label = `${directive.name}`;
     const expanded = getNodeExpanded(id, activityTreeExpansionMap);
 
     return {
@@ -618,7 +618,13 @@
     };
   }
 
-  function getSpanSubtrees(span: Span, parentId: string, activityTreeExpansionMap, type, filterActivitiesByTime) {
+  function getSpanSubtrees(
+    span: Span,
+    parentId: string,
+    activityTreeExpansionMap,
+    type: string,
+    filterActivitiesByTime,
+  ) {
     const groups = [];
     const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[span.id].map(id => spansMap[id]);
     if (type === 'aggregation') {
@@ -627,10 +633,9 @@
       if (filterActivitiesByTime) {
         computedSpans = spanChildren.filter(span => spanInView(span, viewTimeRange));
       }
-      // const groupedSpanChildren = groupBy(spanChildrenInView, 'type');
       const groupedSpanChildren = groupBy(computedSpans, 'type');
       Object.keys(groupedSpanChildren)
-        .sort() // TODO sort by time or name? Both have different effects
+        .sort()
         .forEach(key => {
           const spanGroup = groupedSpanChildren[key];
           const id = `${parentId}_${key}`;
@@ -643,7 +648,7 @@
                 ...getSpanSubtrees(spanChild, id, activityTreeExpansionMap, 'span', filterActivitiesByTime),
               );
             });
-            subgroup = paginate(subtrees, id);
+            subgroup = paginate(subtrees, id, activityTreeExpansionMap);
           }
           groups.push({
             expanded,
@@ -668,12 +673,12 @@
       }
       groups.push({
         expanded,
-        label: `${span.type} ${count > 0 ? `(${count} children)` : ''}`,
+        label: span.type,
         id,
         items: [{ span }],
         groups: subgroup,
         isLeaf: count < 1,
-        type: count < 1 ? 'span' : 'aggregation',
+        type: 'span',
       });
     }
     return groups;
