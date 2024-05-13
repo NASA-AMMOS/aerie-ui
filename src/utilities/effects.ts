@@ -20,7 +20,7 @@ import {
   savingExpansionRule,
   savingExpansionSet,
 } from '../stores/expansion';
-import { createModelError, creatingModel, models } from '../stores/model';
+import { createModelError, creatingModelStatus, initialModel, models } from '../stores/model';
 import { createPlanError, creatingPlan, planId } from '../stores/plan';
 import { schedulingRequests, selectedSpecId } from '../stores/scheduling';
 import {
@@ -819,7 +819,7 @@ const effects = {
         throwPermissionError('upload a model');
       }
 
-      creatingModel.set(true);
+      creatingModelStatus.set('creating');
 
       const file: File = files[0];
       const jar_id = await effects.uploadFile(file, user);
@@ -847,9 +847,23 @@ const effects = {
             ...(description && { description }),
           };
 
+          creatingModelStatus.set('pending');
+          initialModel.set({
+            ...model,
+            constraint_specification: [],
+            mission: '',
+            parameters: {
+              parameters: {},
+            },
+            refresh_activity_type_logs: [],
+            refresh_model_parameter_logs: [],
+            refresh_resource_type_logs: [],
+            scheduling_specification_conditions: [],
+            scheduling_specification_goals: [],
+          });
+
           showSuccessToast('Model Created Successfully');
           createModelError.set(null);
-          creatingModel.set(false);
           models.updateValue((currentModels: ModelSlim[]) => [...currentModels, model]);
           return id;
         } else {
@@ -860,7 +874,7 @@ const effects = {
       catchError('Model Create Failed', e as Error);
       showFailureToast('Model Create Failed');
       createModelError.set((e as Error).message);
-      creatingModel.set(false);
+      creatingModelStatus.set('error');
     }
 
     return null;

@@ -440,8 +440,8 @@ const gql = {
   CREATE_MODEL: `#graphql
     mutation CreateModel($model: mission_model_insert_input!) {
       createModel: ${Queries.INSERT_MISSION_MODEL}(object: $model) {
-        id
         created_at
+        id
         owner
       }
     }
@@ -2178,6 +2178,18 @@ const gql = {
         plans {
           id
         }
+        refresh_activity_type_logs(order_by: { created_at: desc }, limit: 1) {
+          success
+          error_message
+        }
+        refresh_resource_type_logs(order_by: { created_at: desc }, limit: 1) {
+          success
+          error_message
+        }
+        refresh_model_parameter_logs(order_by: { created_at: desc }, limit: 1) {
+          success
+          error_message
+        }
         scheduling_specification_conditions {
           condition_id
           condition_revision
@@ -2224,6 +2236,18 @@ const gql = {
           id
         }
         owner
+        refresh_activity_type_logs(order_by: { created_at: desc }, limit: 1) {
+          success
+          error_message
+        }
+        refresh_resource_type_logs(order_by: { created_at: desc }, limit: 1) {
+          success
+          error_message
+        }
+        refresh_model_parameter_logs(order_by: { created_at: desc }, limit: 1) {
+          success
+          error_message
+        }
         version
       }
     }

@@ -22,7 +22,7 @@
    */
   function getMetadata(
     metadataSubscription: BaseMetadata[],
-    model: Model | undefined,
+    model: Model | null,
     modelKey: keyof Pick<
       Model,
       'constraint_specification' | 'scheduling_specification_conditions' | 'scheduling_specification_goals'

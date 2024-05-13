@@ -5,7 +5,7 @@ import gql from '../utilities/gql';
 import { gqlSubscribable } from './subscribable';
 
 /* Writeable. */
-export const creatingModel: Writable<boolean> = writable(false);
+export const creatingModelStatus: Writable<'idle' | 'creating' | 'pending' | 'done' | 'error'> = writable('idle');
 
 export const createModelError: Writable<string | null> = writable(null);
 
@@ -16,13 +16,15 @@ export const modelId: Readable<number> = derived(initialModel, $model => ($model
 
 /* Subscriptions. */
 
-export const model = gqlSubscribable<Model>(gql.SUB_MODEL, { id: modelId }, null, null);
+export const model = gqlSubscribable<Model | null>(gql.SUB_MODEL, { id: modelId }, null, null);
 
 export const models = gqlSubscribable<ModelSlim[]>(gql.SUB_MODELS, {}, [], null);
 
 /* Helper Functions. */
 
 export function resetModelStores() {
-  creatingModel.set(false);
+  initialModel.set(null);
+  model.updateValue(() => null);
+  creatingModelStatus.set('idle');
   createModelError.set(null);
 }

@@ -13,7 +13,7 @@
   import SingleActionDataGrid from '../../components/ui/DataGrid/SingleActionDataGrid.svelte';
   import Panel from '../../components/ui/Panel.svelte';
   import SectionTitle from '../../components/ui/SectionTitle.svelte';
-  import { createModelError, creatingModel, models, resetModelStores } from '../../stores/model';
+  import { createModelError, creatingModelStatus, model, models, resetModelStores } from '../../stores/model';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef, RowId } from '../../types/data-grid';
   import type { ModelSlim } from '../../types/model';
@@ -78,7 +78,12 @@
   let selectedModel: ModelSlim | null = null;
   let version = '';
 
-  $: createButtonDisabled = !files || name === '' || version === '' || $creatingModel === true;
+  $: createButtonDisabled =
+    !files ||
+    name === '' ||
+    version === '' ||
+    $creatingModelStatus === 'creating' ||
+    $creatingModelStatus === 'pending';
   $: {
     hasCreateModelPermission = featurePermissions.model.canCreate(user);
     hasCreatePlanPermission = featurePermissions.plan.canCreate(user);
@@ -125,6 +130,34 @@
         width: 55,
       },
     ];
+  }
+  $: console.log('$model :>> ', $model);
+  $: if ($model != null && $creatingModelStatus === 'pending') {
+    const { refresh_activity_type_logs, refresh_resource_type_logs, refresh_model_parameter_logs } = $model;
+
+    if (refresh_activity_type_logs.length || refresh_resource_type_logs.length || refresh_model_parameter_logs.length) {
+      const modelErrors = [
+        ...new Set(
+          [...refresh_activity_type_logs, ...refresh_model_parameter_logs, ...refresh_resource_type_logs]
+            .filter(({ success }) => !success)
+            .map(({ error_message }) => error_message),
+        ),
+      ];
+
+      console.log(
+        'modelErrors :>> ',
+        modelErrors,
+        refresh_activity_type_logs,
+        refresh_model_parameter_logs,
+        refresh_resource_type_logs,
+      );
+      if (modelErrors.length) {
+        createModelError.set(modelErrors[0]);
+        creatingModelStatus.set('error');
+      }
+    }
+  } else if ($model && $creatingModelStatus === 'done') {
+    // goto(`${base}/models/${$model.id}`);
   }
 
   onDestroy(() => {
@@ -175,12 +208,9 @@
     selectedModel = model;
   }
 
-  async function submitForm(e: SubmitEvent) {
+  async function submitForm() {
     if (files) {
-      const newModelId = await effects.createModel(name, version, files, user, description);
-      if ($createModelError === null && e.target instanceof HTMLFormElement) {
-        goto(`${base}/models/${newModelId}`);
-      }
+      await effects.createModel(name, version, files, user, description);
     }
   }
 </script>
@@ -335,7 +365,7 @@
                 permissionError: createModelPermissionError,
               }}
             >
-              {$creatingModel ? 'Creating...' : 'Create'}
+              {$creatingModelStatus === 'creating' ? 'Creating...' : 'Create'}
             </button>
           </fieldset>
         </form>
