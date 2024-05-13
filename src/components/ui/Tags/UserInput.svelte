@@ -141,6 +141,7 @@
   {getTagName}
   {options}
   {selected}
+  minWidth={168}
   on:change={onTagsInputChange}
   let:prop={tag}
   {use}
