@@ -99,18 +99,23 @@
 >
   <div class="row-header-left-column">
     {#if expanded}
-      <div
-        class="row-drag-handle-container"
-        on:mousedown={() => dispatch('mouseDownRowMove')}
-        on:mouseup={() => dispatch('mouseUpRowMove')}
-        role="none"
-        style={rowDragMoveDisabled ? 'cursor: grab' : 'cursor: grabbing'}
-      >
-        <GripVerticalIcon />
-      </div>
-      <div class="row-menu-container">
-        <RowHeaderMenu on:contextMenu />
-      </div>
+      {#if height > 60}
+        <div
+          class="row-drag-handle-container"
+          on:mousedown={() => dispatch('mouseDownRowMove')}
+          on:mouseup={() => dispatch('mouseUpRowMove')}
+          role="none"
+          style={rowDragMoveDisabled ? 'cursor: grab' : 'cursor: grabbing'}
+        >
+          <GripVerticalIcon />
+        </div>
+      {/if}
+
+      {#if height > 48}
+        <div class="row-menu-container">
+          <RowHeaderMenu on:contextMenu />
+        </div>
+      {/if}
     {/if}
 
     <div class="row-header-left-column-row">

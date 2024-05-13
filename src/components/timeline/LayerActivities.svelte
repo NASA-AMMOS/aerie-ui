@@ -121,21 +121,13 @@
   $: onMouseout(mouseout);
   $: onMouseup(mouseup);
 
-  // TODO bring anchor icon back
-  // $: scaleFactor = activityHeight / nativeDirectiveIconWidth;
   $: anchorIconWidth = 16;
   $: anchorIconMarginLeft = 4;
-  // $: anchorIconMarginLeft = 4 * scaleFactor;
   $: canvasHeightDpr = drawHeight * dpr;
   $: canvasWidthDpr = drawWidth * dpr;
-  // $: directiveIconMarginRight = 2 * scaleFactor;
   $: rowHeight = activityOptions.displayMode === 'compact' ? activityOptions.activityHeight + activityRowPadding : 16;
-  // $: spanLabelLeftMargin = 6;
   $: timelineLocked = timelineLockStatus === TimelineLockStatus.Locked;
   $: planStartTimeMs = getUnixEpochTime(getDoyTime(new Date(planStartTimeYmd)));
-  // $: if (xScaleView !== null) {
-  //   xScaleViewRangeMax = xScaleView.range()[1];
-  // }
 
   $: if (
     activityDirectives &&
@@ -488,13 +480,13 @@
           }
         }
       });
-      const extraSpace = drawHeight - activityOptions.activityHeight;
+      const extraSpace = Math.max(0, drawHeight - activityOptions.activityHeight - activityRowPadding);
       const rowCount = Object.keys(rows).length;
       Object.entries(rows).forEach(([_, entry], i) => {
         const { items } = entry;
         let yRow = i * (extraSpace / (rowCount - 1)) || 0;
         // If we can't have at least two rows then draw everything at 0
-        if (activityOptions.activityHeight * 2 > drawHeight) {
+        if (activityOptions.activityHeight * 2 >= drawHeight) {
           yRow = 4;
         }
         if (activityOptions.activityHeight) {
