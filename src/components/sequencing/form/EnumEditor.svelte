@@ -9,6 +9,10 @@
   export let initVal: string;
   export let setInEditor: (val: string) => void;
 
+  let enumValues: string[];
+  let isValueInEnum: boolean = false;
+  let value: string;
+
   $: value = unquoteUnescape(initVal);
   $: enumValues = commandDictionary.enumMap[argDef.enum_name]?.values?.map(v => v.symbol) ?? argDef.range ?? [];
   $: isValueInEnum = !!enumValues.find(ev => ev === value);

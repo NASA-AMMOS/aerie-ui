@@ -6,6 +6,8 @@
   export let initVal: string;
   export let setInEditor: (val: string) => void;
 
+  let value: string;
+
   $: value = initVal;
 
   $: {

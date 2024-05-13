@@ -46,6 +46,7 @@
   let permissionError = 'You do not have permission to edit this parcel.';
   let saveButtonClass: 'primary' | 'secondary' = 'primary';
   let saveButtonText: string = '';
+  let saveButtonEnabled: boolean = false;
   let savedParcelChannelDictionaryId: number | null = parcelChannelDictionaryId;
   let savedParcelCommandDictionaryId: number | null = parcelCommandDictionaryId;
   let savedParcelName: string = parcelName;

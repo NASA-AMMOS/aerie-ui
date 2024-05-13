@@ -8,6 +8,9 @@
   export let initVal: string;
   export let setInEditor: (val: string) => void;
 
+  let initHadQuotes: boolean = false;
+  let value: string;
+
   $: initHadQuotes = isQuoted(initVal);
   $: value = unquoteUnescape(initVal);
 
