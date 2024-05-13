@@ -13,7 +13,14 @@
   import SingleActionDataGrid from '../../components/ui/DataGrid/SingleActionDataGrid.svelte';
   import Panel from '../../components/ui/Panel.svelte';
   import SectionTitle from '../../components/ui/SectionTitle.svelte';
-  import { createModelError, creatingModelStatus, model, models, resetModelStores } from '../../stores/model';
+  import {
+    createModelError,
+    creatingModelStatus,
+    initialModel,
+    model,
+    models,
+    resetModelStores,
+  } from '../../stores/model';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef, RowId } from '../../types/data-grid';
   import type { ModelSlim } from '../../types/model';
@@ -131,11 +138,18 @@
       },
     ];
   }
-  $: console.log('$model :>> ', $model);
+
+  /**
+   * Continuation of `submitForm` function logic after model upload
+   * We need to check on the $model status via subscription
+   */
   $: if ($model != null && $creatingModelStatus === 'pending') {
     const { refresh_activity_type_logs, refresh_resource_type_logs, refresh_model_parameter_logs } = $model;
 
+    // if all of the model logs are empty, then it is considered still "pending"
+    // if any of the logs are populated, then we can find the latest logs and display any errors
     if (refresh_activity_type_logs.length || refresh_resource_type_logs.length || refresh_model_parameter_logs.length) {
+      // get a unique set of errors
       const modelErrors = [
         ...new Set(
           [...refresh_activity_type_logs, ...refresh_model_parameter_logs, ...refresh_resource_type_logs]
@@ -144,20 +158,31 @@
         ),
       ];
 
-      console.log(
-        'modelErrors :>> ',
-        modelErrors,
-        refresh_activity_type_logs,
-        refresh_model_parameter_logs,
-        refresh_resource_type_logs,
-      );
+      // display the first error
       if (modelErrors.length) {
         createModelError.set(modelErrors[0]);
         creatingModelStatus.set('error');
+      } else {
+        createModelError.set(null);
+        creatingModelStatus.set('pending');
       }
     }
-  } else if ($model && $creatingModelStatus === 'done') {
-    // goto(`${base}/models/${$model.id}`);
+
+    if (
+      refresh_activity_type_logs.length &&
+      refresh_activity_type_logs[0].success &&
+      refresh_resource_type_logs.length &&
+      refresh_resource_type_logs[0].success &&
+      refresh_model_parameter_logs.length &&
+      refresh_model_parameter_logs[0].success
+    ) {
+      $creatingModelStatus = 'done';
+    }
+  }
+
+  $: if ($model && $creatingModelStatus === 'done') {
+    // once the model is done
+    goto(`${base}/models/${$model.id}`);
   }
 
   onDestroy(() => {
@@ -209,8 +234,39 @@
   }
 
   async function submitForm() {
+    createModelError.set(null);
     if (files) {
-      await effects.createModel(name, version, files, user, description);
+      // attempt to upload and process the model
+      try {
+        creatingModelStatus.set('creating');
+        const model = await effects.createModel(name, version, files, user, description);
+
+        // after the model is uploaded, it still needs some time to process in the backend
+        creatingModelStatus.set('pending');
+
+        if (model) {
+          // set the initialModel to trigger the $model store to subscribe to the newly created model
+          initialModel.set({
+            ...model,
+            constraint_specification: [],
+            mission: '',
+            parameters: {
+              parameters: {},
+            },
+            refresh_activity_type_logs: [],
+            refresh_model_parameter_logs: [],
+            refresh_resource_type_logs: [],
+            scheduling_specification_conditions: [],
+            scheduling_specification_goals: [],
+          });
+
+          // update the model list
+          models.updateValue((currentModels: ModelSlim[]) => [...currentModels, model]);
+        }
+      } catch (e) {
+        createModelError.set((e as Error).message);
+        creatingModelStatus.set('error');
+      }
     }
   }
 </script>
@@ -365,7 +421,7 @@
                 permissionError: createModelPermissionError,
               }}
             >
-              {$creatingModelStatus === 'creating' ? 'Creating...' : 'Create'}
+              {$creatingModelStatus === 'creating' || $creatingModelStatus === 'pending' ? 'Creating...' : 'Create'}
             </button>
           </fieldset>
         </form>

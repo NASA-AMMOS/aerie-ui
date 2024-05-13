@@ -20,7 +20,7 @@ import {
   savingExpansionRule,
   savingExpansionSet,
 } from '../stores/expansion';
-import { createModelError, creatingModelStatus, initialModel, models } from '../stores/model';
+import { models } from '../stores/model';
 import { createPlanError, creatingPlan, planId } from '../stores/plan';
 import { schedulingRequests, selectedSpecId } from '../stores/scheduling';
 import {
@@ -811,18 +811,15 @@ const effects = {
     files: FileList,
     user: User | null,
     description?: string,
-  ): Promise<number | null> {
+  ): Promise<ModelSlim | null> {
     try {
-      createModelError.set(null);
-
       if (!queryPermissions.CREATE_MODEL(user)) {
         throwPermissionError('upload a model');
       }
 
-      creatingModelStatus.set('creating');
-
       const file: File = files[0];
       const jar_id = await effects.uploadFile(file, user);
+      showSuccessToast('Model Uploaded Successfully. Processing model...');
 
       if (jar_id !== null) {
         const modelInsertInput: ModelInsertInput = {
@@ -847,25 +844,7 @@ const effects = {
             ...(description && { description }),
           };
 
-          creatingModelStatus.set('pending');
-          initialModel.set({
-            ...model,
-            constraint_specification: [],
-            mission: '',
-            parameters: {
-              parameters: {},
-            },
-            refresh_activity_type_logs: [],
-            refresh_model_parameter_logs: [],
-            refresh_resource_type_logs: [],
-            scheduling_specification_conditions: [],
-            scheduling_specification_goals: [],
-          });
-
-          showSuccessToast('Model Created Successfully');
-          createModelError.set(null);
-          models.updateValue((currentModels: ModelSlim[]) => [...currentModels, model]);
-          return id;
+          return model;
         } else {
           throw Error(`Unable to create model "${name}"`);
         }
@@ -873,8 +852,7 @@ const effects = {
     } catch (e) {
       catchError('Model Create Failed', e as Error);
       showFailureToast('Model Create Failed');
-      createModelError.set((e as Error).message);
-      creatingModelStatus.set('error');
+      throw Error((e as Error).message);
     }
 
     return null;
