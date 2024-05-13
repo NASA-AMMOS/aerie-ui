@@ -65,6 +65,7 @@
       <slot name="right" />
     </div>
   </button>
+  <slot name="action-row" />
   <div class="content" class:pad-content={padContent} class:expanded aria-hidden={collapsible ? !expanded : false}>
     <slot />
   </div>

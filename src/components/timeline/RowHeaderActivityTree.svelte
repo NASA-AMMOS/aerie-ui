@@ -3,14 +3,17 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import FolderIcon from '../../assets/folder.svg?component';
+  import SelectIcon from '../../assets/select.svg?component';
   import DirectiveAndSpanIcon from '../../assets/timeline-directive-and-span.svg?component';
   import DirectiveIcon from '../../assets/timeline-directive.svg?component';
   import SpanIcon from '../../assets/timeline-span.svg?component';
   import type { ActivityDirective, ActivityDirectiveId } from '../../types/activity';
   import type { Span, SpanId } from '../../types/simulation';
   import type { MouseDown, MouseOver } from '../../types/timeline';
+  import { classNames } from '../../utilities/generic';
   import { pluralize } from '../../utilities/text';
-  import Collapse from '../Collapse.svelte?component';
+  import { tooltip } from '../../utilities/tooltip';
+  import Collapse from '../Collapse.svelte';
 
   export let activityTree;
   export let selectedActivityDirectiveId: ActivityDirectiveId | null = null;
@@ -87,11 +90,16 @@
       </button>
     {:else}
       {@const { activityDirectiveCount, spanCount, combinedActivityDirectiveSpanCount } = getNodeComposition(node)}
+      {@const directive = node.items[0]?.directive}
+      {@const span = node.items[0]?.span}
       <Collapse
-        collapsible={!node.isLeaf}
         defaultExpanded={node.expanded}
-        className="row-header-activity-group"
-        on:collapse={e => dispatch('activity-tree-node-change', node)}
+        className={classNames('row-header-activity-group', {
+          selected:
+            node.type !== 'aggregation' &&
+            (directive?.id === selectedActivityDirectiveId || span?.id === selectedSpanId),
+        })}
+        on:collapse={() => dispatch('activity-tree-node-change', node)}
       >
         <div slot="left" style="align-items: center;display: flex">
           {#if node.type === 'aggregation'}
@@ -113,8 +121,10 @@
           {/if}
         </div>
         <div slot="title" style="align-items: center;display: flex; gap: 8px;">
-          {node.label}
-          <div style=" align-items: center;color: var(--st-gray-50);display: flex; gap: 4px;">
+          <div class="label">
+            {node.label}
+          </div>
+          <div class="title-metadata">
             {#if node.type === 'directive'}
               <div title={`${node.groups.length} child type group${pluralize(node.groups.length)}`} class="icon-group">
                 <FolderIcon />
@@ -125,7 +135,17 @@
             {/if}
           </div>
         </div>
-
+        <svelte:fragment slot="action-row">
+          {#if node.type !== 'aggregation'}
+            <button
+              use:tooltip={{ content: 'Select' }}
+              class="st-button icon select"
+              on:click={() => onLeafClick(node, 'mouseDown')}
+            >
+              <SelectIcon />
+            </button>
+          {/if}
+        </svelte:fragment>
         {#if node.expanded}
           <svelte:self
             activityTree={node.groups}
@@ -142,6 +162,10 @@
 {/if}
 
 <style>
+  :global(.row-header-activity-group) {
+    position: relative;
+  }
+
   :global(.row-header-activity-group.collapse > .collapse-header),
   .row-header-activity-group.leaf {
     border-bottom: 1px solid var(--st-gray-30);
@@ -153,7 +177,7 @@
     padding-left: 4px !important;
   }
 
-  :global(.row-header-activity-group.collapse > .collapse-header:hover),
+  :global(.row-header-activity-group.collapse:not(.selected) > .collapse-header:hover),
   .row-header-activity-group.leaf:hover:not(.selected) {
     background: var(--st-gray-20) !important;
   }
@@ -174,21 +198,58 @@
     padding: 8px 0px 8px 0px;
   }
 
-  :global(.row-header-activity-group.collapse .collapse-icon svg) {
-    color: var(--st-gray-40);
-  }
-
-  .selected {
-    background-color: #e3effd !important;
-  }
-
   .icon-group {
     display: flex;
     gap: 4px;
   }
 
+  .title-metadata {
+    align-items: center;
+    color: var(--st-gray-50);
+    display: flex;
+    gap: 4px;
+  }
+
+  :global(.row-header-activity-group.collapse .collapse-icon svg) {
+    color: var(--st-gray-40);
+  }
+
+  .selected,
+  :global(.collapse.selected > .collapse-header) {
+    background-color: #e3effd !important;
+  }
+
+  :global(.collapse.selected > .collapse-header *),
   .row-header-activity-group.selected,
   .row-header-activity-group.selected :global(svg) {
     color: var(--st-utility-blue) !important;
+  }
+
+  :global(.row-header-activity-group button.select) {
+    background: var(--st-gray-20);
+    height: 16px;
+    min-width: 16px;
+    opacity: 0;
+    position: absolute;
+    right: 0;
+    top: 2px;
+    width: 16px;
+  }
+
+  :global(.row-header-activity-group button.select:hover) {
+    background: var(--st-gray-20) !important;
+  }
+
+  :global(.row-header-activity-group.collapse:has(> .collapse-header:focus-visible) > button.select),
+  :global(.row-header-activity-group.collapse:has(> button.select:focus-visible) > button.select),
+  :global(.row-header-activity-group.collapse:has(> .collapse-header:hover) > button.select),
+  :global(.row-header-activity-group.collapse:has(> button.select:hover) > button.select) {
+    opacity: 1;
+  }
+
+  :global(.row-header-activity-group .label) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 </style>
