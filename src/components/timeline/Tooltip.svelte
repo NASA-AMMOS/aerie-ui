@@ -242,16 +242,16 @@
           </span>
         </div>
         <div class='tooltip-row'>
-          <span>Id:</span>
-          <span class='tooltip-value-highlight st-typography-medium'>${id}</span>
-        </div>
-        <div class='tooltip-row'>
           <span>Type:</span>
           <span class='tooltip-value-highlight st-typography-medium'>${type}</span>
         </div>
         <div class='tooltip-row'>
           <span>Start Time (UTC):</span>
           <span class='tooltip-value-highlight st-typography-medium'>${startTimeYmd}</span>
+        </div>
+        <div class='tooltip-row'>
+          <span>Id:</span>
+          <span class='tooltip-value-highlight st-typography-medium'>${id}</span>
         </div>
         <div class='tooltip-row'>
           <span>Anchored To ID:</span>
@@ -325,10 +325,6 @@
       <div class='tooltip-row-container'>
         <div class='st-typography-bold' style='color: var(--st-gray-10); display: flex; gap: 4px;'>${SpanIcon} Simulated Activity (Span)</div>
         <div class='tooltip-row'>
-          <span>Id:</span>
-          <span class='tooltip-value-highlight st-typography-medium'>${id}</span>
-        </div>
-        <div class='tooltip-row'>
           <span>Type:</span>
           <span class='tooltip-value-highlight st-typography-medium'>${type}</span>
         </div>
@@ -343,6 +339,10 @@
         <div class='tooltip-row'>
           <span>Duration:</span>
           <span class='tooltip-value-highlight st-typography-medium'>${duration}</span>
+        </div>
+        <div class='tooltip-row'>
+          <span>Id:</span>
+          <span class='tooltip-value-highlight st-typography-medium'>${id}</span>
         </div>
       </div>
     `;
