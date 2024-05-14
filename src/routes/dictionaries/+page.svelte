@@ -9,6 +9,7 @@
   import CssGrid from '../../components/ui/CssGrid.svelte';
   import Panel from '../../components/ui/Panel.svelte';
   import SectionTitle from '../../components/ui/SectionTitle.svelte';
+  import { DictionaryTypes } from '../../enums/dictionaryTypes';
   import {
     channelDictionaries,
     commandDictionaries,
@@ -16,7 +17,6 @@
     sequenceAdaptations,
   } from '../../stores/sequencing';
   import type { ChannelDictionary, CommandDictionary, ParameterDictionary } from '../../types/sequencing';
-  import { DictionaryTypes } from '../../types/sequencing';
   import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
