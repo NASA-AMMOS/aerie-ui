@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { SeqLanguage } from 'codemirror-lang-sequence';
+  import { SeqLanguage } from '../../../utilities/codemirror';
 
   export let initVal: string;
   export let setInEditor: (val: string) => void;

@@ -10,7 +10,6 @@
   import type { ChannelDictionary, CommandDictionary, ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
   import ClipboardIcon from 'bootstrap-icons/icons/clipboard.svg?component';
   import { EditorView, basicSetup } from 'codemirror';
-  import { seq } from 'codemirror-lang-sequence';
   import { debounce } from 'lodash-es';
   import { createEventDispatcher, onMount } from 'svelte';
   import {
@@ -27,6 +26,7 @@
     userSequencesRows,
   } from '../../stores/sequencing';
   import type { User } from '../../types/app';
+  import { seq } from '../../utilities/codemirror';
   import { seqJsonLinter } from '../../utilities/new-sequence-editor/seq-json-linter';
   import { sequenceCompletion } from '../../utilities/new-sequence-editor/sequence-completion';
   import { sequenceLinter } from '../../utilities/new-sequence-editor/sequence-linter';
