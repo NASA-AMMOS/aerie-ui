@@ -6,7 +6,6 @@
   import { quadtree as d3Quadtree, type Quadtree } from 'd3-quadtree';
   import { type ScaleTime } from 'd3-scale';
   import { createEventDispatcher, onDestroy, onMount, tick } from 'svelte';
-  import SpanHashMarksSVG from '../../assets/span-hash-marks.svg?raw';
   import { ViewDefaultActivityOptions } from '../../enums/view';
   import type { ActivityDirective, ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
@@ -14,6 +13,10 @@
   import type { Span, SpanId, SpansMap, SpanUtilityMaps } from '../../types/simulation';
   import type {
     ActivityOptions,
+    ActivityTree,
+    ActivityTreeNode,
+    ActivityTreeNodeDrawItem,
+    ActivityTreeNodeItem,
     MouseDown,
     MouseOver,
     QuadtreeRect,
@@ -39,10 +42,13 @@
     TimelineLockStatus,
   } from '../../utilities/timeline';
 
+  type IdToColorMap = Record<number, string>;
+  type IdToColorMaps = { directives: IdToColorMap; spans: IdToColorMap };
+
   export let activityDirectives: ActivityDirective[] = [];
-  export let activityGroups = [];
+  export let activityTree: ActivityTree = [];
   export let activityOptions: ActivityOptions = { ...ViewDefaultActivityOptions };
-  export let idToColorMaps = { directives: {}, spans: {} };
+  export let idToColorMaps: IdToColorMaps = { directives: {}, spans: {} };
   export let activityDirectivesMap: ActivityDirectivesMap = {};
   export let activityRowPadding: number = 4;
   export let activitySelectedColor: string = '#a9eaff';
@@ -146,7 +152,7 @@
     viewTimeRange &&
     xScaleView &&
     spans &&
-    activityGroups
+    activityTree
   ) {
     draw();
   }
@@ -162,7 +168,6 @@
       ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
     }
     assets.anchorIcon = loadSVG(ActivityAnchorIconSVG);
-    assets.hashMarks = loadSVG(SpanHashMarksSVG);
   }
 
   function loadSVG(svgString: string) {
@@ -413,10 +418,14 @@
 
   function drawCompactMode() {
     if (xScaleView !== null) {
-      const seenSpans = {};
-      const itemsToDraw = [];
+      const seenSpans: Record<number, boolean> = {};
+      const itemsToDraw: ActivityTreeNodeDrawItem[] = [];
       if (showDirectives) {
         activityDirectives.forEach(directive => {
+          if (!xScaleView) {
+            return;
+          }
+
           const directiveX = directive.start_time_ms || 0;
 
           let childSpanInView = false;
@@ -427,16 +436,16 @@
           }
           if (directiveInView(directive, viewTimeRange) || (childSpanInView && showSpans)) {
             itemsToDraw.push({
-              startX: xScaleView(directiveX),
-              span: childSpan,
               directive,
+              span: childSpan,
+              startX: xScaleView(directiveX),
             });
           }
         });
       }
       if (showSpans) {
         spans.forEach(span => {
-          if (seenSpans[span.id]) {
+          if (seenSpans[span.id] || !xScaleView) {
             return;
           }
           if (spanInView(span, viewTimeRange)) {
@@ -458,7 +467,7 @@
       itemsToDraw.sort((a, b) => {
         return a.startX < b.startX ? -1 : 1;
       });
-      const rows = {};
+      const rows: Record<number, { items: ActivityTreeNodeDrawItem[]; max: number }> = {};
       itemsToDraw.forEach(item => {
         const { startX } = item;
         const itemEndX = getItemEnd(item);
@@ -474,8 +483,8 @@
             openRowSpaceFound = true;
             const existingItemsForRow = rows[row] ? rows[row].items : [];
             rows[row] = {
-              max: maxX,
               items: existingItemsForRow.concat(item),
+              max: maxX,
             };
           }
         }
@@ -496,7 +505,7 @@
     }
   }
 
-  function getItemEnd(item) {
+  function getItemEnd(item: { directive?: ActivityDirective; span?: Span; startX: number }) {
     const { span, directive, startX } = item;
     let labelEndX = 0;
     let boxEndX = 0;
@@ -508,7 +517,7 @@
           Math.max(startX, minRectSize) + labelPaddingLeft + measureText(directive.name, textMetricsCache).width; // TODO figure out how to codify the spacing of a directive
       }
     }
-    if (span && showSpans) {
+    if (span && showSpans && xScaleView) {
       const spanEndX = xScaleView(span.endMs);
       boxEndX = Math.max(boxEndX, spanEndX);
       if (activityOptions.labelVisibility !== 'off') {
@@ -521,9 +530,15 @@
     return Math.max(boxEndX, labelEndX);
   }
 
-  function drawRow(y, items, idToColorMaps) {
+  function drawRow(y: number, items: ActivityTreeNodeItem[], idToColorMaps: IdToColorMaps) {
+    /* TODO this is doing unnecessary work in compact mode - should be able to preprocess grouped mode and skip this first part for compact mode */
     const drawLabels = activityOptions.labelVisibility === 'on' || activityOptions.labelVisibility === 'auto';
-    let itemsToDraw = [];
+    let itemsToDraw: {
+      directive?: ActivityDirective;
+      directiveStartX?: number;
+      span?: Span;
+      spanStartX?: number;
+    }[] = [];
     items.forEach(item => {
       if (!xScaleView) {
         return;
@@ -532,7 +547,7 @@
       const { span, directive } = item;
       let newItem;
 
-      // TODO should we filter out spans in the activityGroups instead of here and in RowHeaderActivityTree?
+      // TODO should we filter out spans in the activityTree instead of here and in RowHeaderActivityTree?
       if (span && showSpans && spanInView(span, viewTimeRange)) {
         newItem = { span, spanStartX: xScaleView(span.startMs) };
       }
@@ -555,7 +570,7 @@
       const nextItem = itemsToDraw[i + 1];
 
       // Draw span
-      if (span) {
+      if (span && typeof spanStartX === 'number') {
         const unfinished = span.duration === null;
         const spanEndX = xScaleView(span.endMs);
         const spanRectWidth = Math.max(2, Math.min(spanEndX, drawWidth) - spanStartX);
@@ -608,7 +623,7 @@
       }
 
       // Draw directive
-      if (directive) {
+      if (directive && typeof directiveStartX === 'number') {
         const directiveColor = idToColorMaps.directives[directive.id] || activityDefaultColor;
         const color = hexToRgba(shadeColor(directiveColor || '#FF0000', 1.2), 1);
         const isSelected = selectedActivityDirectiveId === directive.id || (span && selectedSpanId === span.id);
@@ -708,8 +723,8 @@
       const collapsedMode = drawHeight < 25;
       let y = collapsedMode ? 0 : 23;
       const expectedRowHeight = 20;
-      activityGroups.forEach(group => {
-        const newY = drawGroup(group, y, expectedRowHeight, !collapsedMode);
+      activityTree.forEach(node => {
+        const newY = drawGroup(node, y, expectedRowHeight, !collapsedMode);
         if (!collapsedMode) {
           y = newY;
         }
@@ -731,24 +746,24 @@
     ctx.stroke();
   }
 
-  function drawGroup(group, y: number, rowHeight: number, drawLine = true) {
+  function drawGroup(node: ActivityTreeNode, y: number, rowHeight: number, drawLine = true) {
     let newY = y;
     if (drawLine) {
       drawBottomLine(newY + rowHeight + 0.5, drawWidth);
     }
 
-    drawRow(newY + activityRowPadding, group.items || [], idToColorMaps);
+    drawRow(newY + activityRowPadding, node.items || [], idToColorMaps);
     newY += rowHeight;
 
-    if (group.expanded && group.groups.length) {
-      group.groups.forEach(childGroup => {
-        newY = drawGroup(childGroup, newY, rowHeight, true);
+    if (node.expanded && node.children.length) {
+      node.children.forEach(childNode => {
+        newY = drawGroup(childNode, newY, rowHeight, true);
       });
     }
     return newY;
   }
 
-  function measureText(text: string, cache) {
+  function measureText(text: string, cache: Record<string, TextMetrics>) {
     const cachedMeasurement = cache[text];
     if (cachedMeasurement) {
       return cachedMeasurement;

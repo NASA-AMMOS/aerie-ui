@@ -20,7 +20,15 @@
     SpanUtilityMaps,
     SpansMap,
   } from '../../types/simulation';
-  import type { MouseDown, MouseOver, Row, TimeRange, Timeline, XAxisTick } from '../../types/timeline';
+  import type {
+    ActivityTreeExpansionMap,
+    MouseDown,
+    MouseOver,
+    Row,
+    TimeRange,
+    Timeline,
+    XAxisTick,
+  } from '../../types/timeline';
   import { clamp } from '../../utilities/generic';
   import { getDoyTime } from '../../utilities/time';
   import {
@@ -84,7 +92,7 @@
     viewTimeRangeChanged: TimeRange;
   }>();
 
-  let activityTreeExpansionMapByRow: Record<string, boolean> = {};
+  let activityTreeExpansionMapByRow: Record<string, ActivityTreeExpansionMap> = {};
   let timelineZoomTransform: ZoomTransform | null = null;
   let clientWidth: number = 0;
   let contextMenu: MouseOver | null;

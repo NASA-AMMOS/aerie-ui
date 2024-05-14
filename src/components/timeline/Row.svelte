@@ -33,6 +33,9 @@
   import type {
     ActivityLayer,
     ActivityOptions,
+    ActivityTree,
+    ActivityTreeExpansionMap,
+    ActivityTreeNode,
     Axis,
     HorizontalGuide,
     Layer,
@@ -71,8 +74,8 @@
 
   export let activityDirectives: ActivityDirective[] = [];
   export let activityDirectivesMap: ActivityDirectivesMap = {};
-  export let activityTreeExpansionMap: Record<string, boolean> = {};
-  export let activityOptions: ActivityOptions;
+  export let activityTreeExpansionMap: ActivityTreeExpansionMap = {};
+  export let activityOptions: ActivityOptions | undefined = undefined;
   export let autoAdjustHeight: boolean = false;
   export let constraintResults: ConstraintResultWithName[] = [];
   export let decimate: boolean = false;
@@ -108,12 +111,16 @@
   export let user: User | null;
 
   $: activityOptions = activityOptions || { ...ViewDefaultActivityOptions };
+
+  // Enforce assignment to object in case of undefined prop since svelte does not
+  // re-assign the default you use in the const export.
   $: activityTreeExpansionMap = activityTreeExpansionMap || {};
 
-  $: showSpans = activityOptions.composition === 'both' || activityOptions.composition === 'spans';
-  $: showDirectives = activityOptions.composition === 'both' || activityOptions.composition === 'directives';
+  $: showSpans = activityOptions?.composition === 'both' || activityOptions?.composition === 'spans';
+  $: showDirectives = activityOptions?.composition === 'both' || activityOptions?.composition === 'directives';
 
   const dispatch = createEventDispatcher<{
+    activityTreeExpansionChange: ActivityTreeExpansionMap;
     mouseDown: MouseDown;
     mouseOver: MouseOver;
     updateRowHeight: {
@@ -153,7 +160,7 @@
   let loadedResources: Resource[];
   let loadingErrors: string[];
   let anyResourcesLoading: boolean = true;
-  let activityGroups = [];
+  let activityTree: ActivityTree = [];
   let filteredActivityDirectives: ActivityDirective[] = [];
   let filteredSpans: Span[] = [];
   let timeFilteredActivityDirectives: ActivityDirective[] = [];
@@ -339,7 +346,7 @@
   }
 
   $: if (hasActivityLayer && spansMap && activityDirectives && typeof filterActivitiesByTime === 'boolean') {
-    activityGroups = [];
+    activityTree = [];
     idToColorMaps = { directives: {}, spans: {} };
 
     const activityLayers = layers.filter(layer => layer.chartType === 'activity') as ActivityLayer[];
@@ -416,60 +423,71 @@
   ) {
     // TODO figure out how to work in activity layer height to all of this since before it was on each layer but now all activity layers are combined?
     if (activityOptions.displayMode === 'grouped') {
-      if (activityOptions.hierarchyMode === 'directive') {
-        activityGroups = generateActivityTree(timeFilteredActivityDirectives, activityTreeExpansionMap);
-      } else {
-        activityGroups = generateActivityTreeFlat(
-          timeFilteredActivityDirectives,
-          timeFilteredSpans,
-          activityTreeExpansionMap,
-        );
-      }
+      activityTree = generateActivityTree(
+        timeFilteredActivityDirectives,
+        timeFilteredSpans,
+        activityTreeExpansionMap,
+        activityOptions.hierarchyMode,
+      );
+      // if (activityOptions.hierarchyMode === 'directive') {
+      //   activityTree = generateActivityTree(timeFilteredActivityDirectives, activityTreeExpansionMap);
+      // } else {
+      //   activityTree = generateActivityTreeFlat(
+      //     timeFilteredActivityDirectives,
+      //     timeFilteredSpans,
+      //     activityTreeExpansionMap,
+      //   );
+      // }
     } else {
-      activityGroups = [];
+      activityTree = [];
     }
   }
 
-  function getNodeExpanded(id: string, activityTreeExpansionMap) {
+  function getNodeExpanded(id: string, activityTreeExpansionMap: ActivityTreeExpansionMap) {
     if (!Object.hasOwn(activityTreeExpansionMap, id)) {
       return false;
     }
     return activityTreeExpansionMap[id];
   }
 
-  function paginate(groups, parentId: string, activityTreeExpansionMap, depth = 1) {
+  function paginate(
+    nodes: ActivityTreeNode[],
+    parentId: string,
+    activityTreeExpansionMap: ActivityTreeExpansionMap,
+    depth = 1,
+  ) {
     const binSize = 100;
-    if (groups.length <= binSize) {
-      return groups;
+    if (nodes.length <= binSize) {
+      return nodes;
     }
-    const newGroups = [];
-    groups.forEach((group, i) => {
+    const newNodes: ActivityTreeNode[] = [];
+    nodes.forEach((node, i) => {
       const bin = Math.floor(i / binSize);
-      if (!newGroups[bin]) {
-        newGroups[bin] = {
+      if (!newNodes[bin]) {
+        newNodes[bin] = {
+          children: [],
+          expanded: false,
           id: '',
+          isLeaf: false,
           items: [],
           label: '',
-          expanded: false,
-          groups: [],
-          isLeaf: false,
           type: 'aggregation',
         };
       }
-      newGroups[bin].groups.push(group);
-      if (group.items) {
-        newGroups[bin].items.push(...group.items);
+      newNodes[bin].children.push(node);
+      if (node.items) {
+        newNodes[bin].items.push(...node.items);
       }
     });
-    newGroups.forEach((group, i) => {
-      const groupStart = i * binSize ** depth;
-      const groupEnd = Math.min(groupStart + group.groups.length * depth ** binSize, (i + 1) * binSize ** depth);
-      const label = `[${groupStart} … ${groupEnd - 1}]`;
-      group.id = `${parentId}_${label}_page`;
-      group.label = label;
-      group.expanded = getNodeExpanded(group.id, activityTreeExpansionMap);
+    newNodes.forEach((node, i) => {
+      const nodeStart = i * binSize ** depth;
+      const nodeEnd = Math.min(nodeStart + node.children.length * depth ** binSize, (i + 1) * binSize ** depth);
+      const label = `[${nodeStart} … ${nodeEnd - 1}]`;
+      node.id = `${parentId}_${label}_page`;
+      node.label = label;
+      node.expanded = getNodeExpanded(node.id, activityTreeExpansionMap);
     });
-    return paginate(newGroups, parentId, activityTreeExpansionMap, depth + 1);
+    return paginate(newNodes, parentId, activityTreeExpansionMap, depth + 1);
   }
 
   // TODO repeated in LayerActivites, move to a util?
@@ -478,11 +496,16 @@
     return spansMap[spanId];
   }
 
-  function generateActivityTreeFlat(directives: ActivityDirective[], spans: Span[], activityTreeExpansionMap) {
+  function generateActivityTree(
+    directives: ActivityDirective[],
+    spans: Span[],
+    activityTreeExpansionMap: ActivityTreeExpansionMap,
+    hierarchyMode: ActivityOptions['hierarchyMode'] = 'all',
+  ): ActivityTree {
     // TODO duplicates appear when you have two layers with the same type
-    const groupedSpans = showSpans ? groupBy(spans, 'type') : {};
+    const groupedSpans = showSpans && hierarchyMode === 'all' ? groupBy(spans, 'type') : {};
     const groupedDirectives = showDirectives ? groupBy(directives, 'type') : {};
-    const groups = [];
+    const nodes: ActivityTreeNode[] = [];
     const allKeys = new Set(Object.keys(groupedSpans).concat(Object.keys(groupedDirectives)));
     Array.from(allKeys)
       .sort()
@@ -492,140 +515,92 @@
         const id = type;
         const expanded = getNodeExpanded(id, activityTreeExpansionMap);
         const label = type;
-        let subgroup = [];
-        let items = [];
-        const subtrees = [];
-        const seenSpans = {};
+        let children: ActivityTreeNode['children'] = [];
+        let items: ActivityTreeNode['items'] = [];
+        const seenSpans: Record<string, boolean> = {};
         if (directiveGroup) {
           directiveGroup.forEach(directive => {
             let childSpan;
             if (showSpans) {
               childSpan = getSpanForActivityDirective(directive);
-              if (childSpan) {
+              if (childSpan && hierarchyMode === 'all') {
                 seenSpans[childSpan.id] = true;
               }
             }
             if (expanded) {
-              subtrees.push(getDirectiveSubtree(directive, id, activityTreeExpansionMap));
+              children.push(getDirectiveSubtree(directive, id, activityTreeExpansionMap));
             }
             items.push({ directive, ...(childSpan ? { span: childSpan } : null) });
           });
         }
-        if (spanGroup) {
+        if (spanGroup && hierarchyMode === 'all') {
           spanGroup.forEach(span => {
             if (!seenSpans[span.id]) {
               if (expanded) {
-                subtrees.push(...getSpanSubtrees(span, id, activityTreeExpansionMap, 'span', filterActivitiesByTime));
+                children.push(...getSpanSubtrees(span, id, activityTreeExpansionMap, 'span', filterActivitiesByTime));
               }
               items.push({ span });
             }
           });
         }
-        subgroup = paginate(subtrees, id, activityTreeExpansionMap);
-        groups.push({
+        children = paginate(children, id, activityTreeExpansionMap);
+        nodes.push({
+          children,
           expanded: expanded,
-          groups: subgroup,
-          items,
           id,
           isLeaf: false,
+          items,
           label,
           type: 'aggregation',
         });
       });
-    return groups;
+    return nodes;
   }
 
-  function generateActivityTree(directives: ActivityDirective[], activityTreeExpansionMap) {
-    const tree = [];
-
-    // Activities grouped by type
-    const groupedDirectives: Record<string, ActivityDirective[]> = groupBy(directives, 'type');
-    Object.keys(groupedDirectives)
-      .sort()
-      .forEach(type => {
-        // Specific Activity type
-        const directiveGroup = groupedDirectives[type] || [];
-        // TODO why sort here vs not in flat mode at same place?
-        directiveGroup.sort((a, b) => {
-          return (a.start_time_ms || 0) < (b.start_time_ms || 0) ? -1 : 0;
-        });
-        const label = type;
-        const id = type;
-        const expanded = getNodeExpanded(id, activityTreeExpansionMap);
-        let items = [];
-        const groups = [];
-        const subtrees = [];
-        // TODO basically the same as in flat mode
-        directiveGroup.forEach(directive => {
-          let childSpan;
-          if (showSpans) {
-            childSpan = getSpanForActivityDirective(directive);
-          }
-          if (expanded) {
-            subtrees.push(getDirectiveSubtree(directive, id, activityTreeExpansionMap));
-          }
-          items.push({ directive, ...(childSpan ? { span: childSpan } : null) });
-        });
-        groups.push(...paginate(subtrees, id, activityTreeExpansionMap));
-        tree.push({
-          expanded,
-          label,
-          id,
-          groups,
-          isLeaf: false,
-          items,
-          type: 'aggregation',
-        });
-      });
-    return tree;
-  }
-
-  function getDirectiveSubtree(directive: ActivityDirective, parentId: string, activityTreeExpansionMap) {
-    // Get number of child spans for the root span
-    let count = 0;
-    let groups = [];
+  function getDirectiveSubtree(
+    directive: ActivityDirective,
+    parentId: string,
+    activityTreeExpansionMap: ActivityTreeExpansionMap,
+  ) {
+    let children: ActivityTreeNode[] = [];
     const id = `${parentId}_${directive.id}`;
-    let spans: Span[] = [];
     let span;
+    const expanded = getNodeExpanded(id, activityTreeExpansionMap);
+
     if (showSpans) {
       const rootSpanId = spanUtilityMaps.directiveIdToSpanIdMap[directive.id];
       const rootSpan = spansMap[rootSpanId];
       if (rootSpan) {
-        spans = [rootSpan];
         span = rootSpan;
       }
       if (typeof rootSpanId === 'number') {
-        const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[rootSpanId] || [];
-        count += spanChildren.length;
-        groups = paginate(
+        children = paginate(
           getSpanSubtrees(rootSpan, id, activityTreeExpansionMap, 'aggregation', filterActivitiesByTime),
           id,
           activityTreeExpansionMap,
         );
       }
     }
-    const label = `${directive.name}`;
-    const expanded = getNodeExpanded(id, activityTreeExpansionMap);
 
     return {
-      id,
+      children,
       expanded,
-      groups,
-      isLeaf: count < 1,
-      label,
+      id,
+      isLeaf: children.length < 1,
       items: [{ directive, span }],
+      label: directive.name,
       type: 'directive',
-    };
+    } as ActivityTreeNode;
   }
 
   function getSpanSubtrees(
     span: Span,
     parentId: string,
-    activityTreeExpansionMap,
-    type: string,
-    filterActivitiesByTime,
+    activityTreeExpansionMap: ActivityTreeExpansionMap,
+    type: ActivityTreeNode['type'],
+    filterActivitiesByTime: boolean,
   ) {
-    const groups = [];
+    let children: ActivityTreeNode[] = [];
     const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[span.id].map(id => spansMap[id]);
     if (type === 'aggregation') {
       // Group by type
@@ -640,23 +615,22 @@
           const spanGroup = groupedSpanChildren[key];
           const id = `${parentId}_${key}`;
           const expanded = getNodeExpanded(id, activityTreeExpansionMap);
-          let subgroup = [];
+          let childrenForKey: ActivityTreeNode[] = [];
           if (expanded) {
-            const subtrees = [];
             spanGroup.forEach(spanChild => {
-              subtrees.push(
+              childrenForKey.push(
                 ...getSpanSubtrees(spanChild, id, activityTreeExpansionMap, 'span', filterActivitiesByTime),
               );
             });
-            subgroup = paginate(subtrees, id, activityTreeExpansionMap);
+            childrenForKey = paginate(childrenForKey, id, activityTreeExpansionMap);
           }
-          groups.push({
+          children.push({
+            children: childrenForKey,
             expanded,
-            label: key,
             id,
             isLeaf: false,
             items: spanGroup.map(span => ({ span })),
-            groups: subgroup,
+            label: key,
             type: 'aggregation',
           });
         });
@@ -664,29 +638,30 @@
       const id = `${parentId}_${span.id}`;
       const expanded = getNodeExpanded(id, activityTreeExpansionMap);
       const count = spanChildren.length;
-      let subgroup = [];
+      let childrenForKey: ActivityTreeNode[] = [];
       if (expanded) {
-        subgroup = paginate(
+        childrenForKey = paginate(
           getSpanSubtrees(span, id, activityTreeExpansionMap, 'aggregation', filterActivitiesByTime),
           id,
+          activityTreeExpansionMap,
         );
       }
-      groups.push({
+      children.push({
+        children: childrenForKey,
         expanded,
-        label: span.type,
         id,
-        items: [{ span }],
-        groups: subgroup,
         isLeaf: count < 1,
+        items: [{ span }],
+        label: span.type,
         type: 'span',
       });
     }
-    return groups;
+    return children;
   }
 
-  function onActivityTreeNodeChange(e) {
-    const group = e.detail;
-    dispatch('activityTreeExpansionChange', { ...(activityTreeExpansionMap || {}), [group.id]: !group.expanded });
+  function onActivityTreeNodeChange(e: { detail: ActivityTreeNode }) {
+    const node = e.detail;
+    dispatch('activityTreeExpansionChange', { ...(activityTreeExpansionMap || {}), [node.id]: !node.expanded });
   }
 
   function onActivityTimeFilterChange() {
@@ -823,7 +798,7 @@
       on:activity-tree-node-change={onActivityTreeNodeChange}
       on:mouseDown={onMouseDown}
       on:dblClick
-      {activityGroups}
+      {activityTree}
       width={marginLeft}
       height={computedDrawHeight}
       {expanded}
@@ -841,7 +816,7 @@
       {selectedActivityDirectiveId}
       {selectedSpanId}
     >
-      {#if hasActivityLayer && activityOptions.displayMode === 'grouped'}
+      {#if hasActivityLayer && activityOptions?.displayMode === 'grouped'}
         <button
           class="st-button icon row-action"
           class:row-action-active={filterActivitiesByTime}
@@ -923,7 +898,7 @@
           <LayerActivities
             {activityOptions}
             {idToColorMaps}
-            {activityGroups}
+            {activityTree}
             activityDirectives={filteredActivityDirectives}
             spans={filteredSpans}
             {activityDirectivesMap}

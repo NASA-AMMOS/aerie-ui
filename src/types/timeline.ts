@@ -3,6 +3,24 @@ import type { ActivityDirective } from './activity';
 import type { ConstraintResultWithName } from './constraint';
 import type { Span } from './simulation';
 
+export type ActivityTree = ActivityTreeNode[];
+
+export type ActivityTreeNode = {
+  children: ActivityTreeNode[];
+  expanded: boolean;
+  id: string;
+  isLeaf: boolean;
+  items: ActivityTreeNodeItem[];
+  label: string;
+  type: 'aggregation' | 'directive' | 'span';
+};
+
+export type ActivityTreeNodeItem = { directive?: ActivityDirective; span?: Span };
+
+export type ActivityTreeNodeDrawItem = ActivityTreeNodeItem & { startX: number };
+
+export type ActivityTreeExpansionMap = Record<string, boolean>;
+
 export interface ActivityLayer extends Layer {
   activityColor: string;
   activityHeight: number;

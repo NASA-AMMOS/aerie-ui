@@ -9,13 +9,14 @@
   import TimelineXRangeLayerIcon from '../../assets/timeline-x-range-layer.svg?component';
   import type { ActivityDirectiveId } from '../../types/activity';
   import type { Resource, SpanId } from '../../types/simulation';
-  import type { Axis, ChartType, Layer, LineLayer, MouseOver } from '../../types/timeline';
+  import type { ActivityTree, Axis, ChartType, Layer, LineLayer, MouseOver } from '../../types/timeline';
   import { filterResourcesByLayer } from '../../utilities/timeline';
   import { tooltip } from '../../utilities/tooltip';
   import RowHeaderActivityTree from './RowHeaderActivityTree.svelte';
   import RowHeaderMenu from './RowHeaderMenu.svelte';
   import RowYAxes from './RowYAxes.svelte';
 
+  export let activityTree: ActivityTree = [];
   export let expanded: boolean = true;
   export let height: number = 0;
   export let layers: Layer[];
@@ -26,7 +27,6 @@
   export let title: string = '';
   export let width: number = 0;
   export let yAxes: Axis[];
-  export let activityGroups = [];
   export let selectedActivityDirectiveId: ActivityDirectiveId | null = null;
   export let selectedSpanId: SpanId | null = null;
 
@@ -144,7 +144,7 @@
       <div class="activity-tree">
         <!-- TODO only render if the row has activities -->
         <RowHeaderActivityTree
-          activityTree={activityGroups}
+          {activityTree}
           {selectedActivityDirectiveId}
           {selectedSpanId}
           on:activity-tree-node-change

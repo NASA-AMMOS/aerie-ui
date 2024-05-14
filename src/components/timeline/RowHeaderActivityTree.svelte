@@ -9,27 +9,27 @@
   import SpanIcon from '../../assets/timeline-span.svg?component';
   import type { ActivityDirective, ActivityDirectiveId } from '../../types/activity';
   import type { Span, SpanId } from '../../types/simulation';
-  import type { MouseDown, MouseOver } from '../../types/timeline';
+  import type { ActivityTree, ActivityTreeNode, MouseDown, MouseOver } from '../../types/timeline';
   import { classNames } from '../../utilities/generic';
   import { pluralize } from '../../utilities/text';
   import { tooltip } from '../../utilities/tooltip';
   import Collapse from '../Collapse.svelte';
 
-  export let activityTree;
+  export let activityTree: ActivityTree = [];
   export let selectedActivityDirectiveId: ActivityDirectiveId | null = null;
   export let selectedSpanId: SpanId | null = null;
 
   const dispatch = createEventDispatcher<{
-    'activity-tree-node-change': any;
+    'activity-tree-node-change': ActivityTreeNode;
     dblClick: MouseOver;
     mouseDown: MouseDown;
   }>();
 
-  function onLeafClick(node, event) {
-    dispatch(event, getDirectivesAndSpansForNode(node));
+  function onLeafClick(e: MouseEvent, node: ActivityTreeNode, type: 'dblClick' | 'mouseDown') {
+    dispatch(type, { e, ...getDirectivesAndSpansForNode(node) });
   }
 
-  function getDirectivesAndSpansForNode(node) {
+  function getDirectivesAndSpansForNode(node: ActivityTreeNode) {
     const activityDirectives: ActivityDirective[] = [];
     const spans: Span[] = [];
     (node.items || []).forEach(({ directive, span }) => {
@@ -43,7 +43,7 @@
     return { activityDirectives, spans };
   }
 
-  function getNodeComposition(node) {
+  function getNodeComposition(node: ActivityTreeNode) {
     let activityDirectiveCount = 0;
     let spanCount = 0;
     let combinedActivityDirectiveSpanCount = 0;
@@ -68,8 +68,8 @@
       <button
         class="row-header-activity-group leaf st-button tertiary"
         class:selected={directive?.id === selectedActivityDirectiveId || span?.id === selectedSpanId}
-        on:dblclick={() => onLeafClick(node, 'dblClick')}
-        on:click={() => onLeafClick(node, 'mouseDown')}
+        on:dblclick={e => onLeafClick(e, node, 'dblClick')}
+        on:click={e => onLeafClick(e, node, 'mouseDown')}
       >
         <div style=" align-items: center;color: var(--st-button-tertiary-color);display: flex; gap: 4px;">
           {#if directive && span}
@@ -126,9 +126,12 @@
           </div>
           <div class="title-metadata">
             {#if node.type === 'directive'}
-              <div title={`${node.groups.length} child type group${pluralize(node.groups.length)}`} class="icon-group">
+              <div
+                title={`${node.children.length} child type group${pluralize(node.children.length)}`}
+                class="icon-group"
+              >
                 <FolderIcon />
-                <span>{node.groups.length}</span>
+                <span>{node.children.length}</span>
               </div>
             {:else}
               {activityDirectiveCount + spanCount + combinedActivityDirectiveSpanCount}
@@ -137,10 +140,11 @@
         </div>
         <svelte:fragment slot="action-row">
           {#if node.type !== 'aggregation'}
+            <!-- TODO unclear why e type is not inferred, is inferred in other places in this component -->
             <button
               use:tooltip={{ content: 'Select' }}
               class="st-button icon select"
-              on:click={() => onLeafClick(node, 'mouseDown')}
+              on:click={e => onLeafClick(e, node, 'mouseDown')}
             >
               <SelectIcon />
             </button>
@@ -148,7 +152,7 @@
         </svelte:fragment>
         {#if node.expanded}
           <svelte:self
-            activityTree={node.groups}
+            activityTree={node.children}
             on:activity-tree-node-change
             on:mouseDown
             on:dblClick
