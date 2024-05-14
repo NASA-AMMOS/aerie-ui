@@ -6,7 +6,7 @@ module.exports = {
     node: true,
   },
   extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'plugin:svelte/recommended', 'prettier'],
-  ignorePatterns: ['*.cjs', 'static/*.worker.js', 'static/*.worker.js.map', 'codemirror-lang-sequence/dist'],
+  ignorePatterns: ['*.cjs', 'static/*.worker.js', 'static/*.worker.js.map'],
   overrides: [
     {
       files: ['*.svelte'],

@@ -1,4 +1,4 @@
-import { CompletionContext, CompletionResult } from '@codemirror/autocomplete';
+import { CompletionContext, type CompletionResult } from '@codemirror/autocomplete';
 import {
   LRLanguage,
   LanguageSupport,
@@ -8,8 +8,8 @@ import {
   indentNodeProp,
 } from '@codemirror/language';
 import { styleTags, tags as t } from '@lezer/highlight';
+import { customFoldInside } from './custom-folder';
 import { parser } from './sequence.grammar';
-import { customFoldInside } from './utilities/custom-folder';
 
 export const SeqLanguage = LRLanguage.define({
   languageData: {

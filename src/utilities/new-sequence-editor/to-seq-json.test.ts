@@ -7,9 +7,9 @@ import {
   type FswCommandArgumentMap,
   type HwCommand,
 } from '@nasa-jpl/aerie-ampcs';
-import { SeqLanguage } from 'codemirror-lang-sequence';
 import { readFileSync } from 'fs';
 import { describe, expect, it } from 'vitest';
+import { SeqLanguage } from '../codemirror';
 import { sequenceToSeqJson } from './to-seq-json';
 
 function argArrToMap(cmdArgs: FswCommandArgument[]): FswCommandArgumentMap {

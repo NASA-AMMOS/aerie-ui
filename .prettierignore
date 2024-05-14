@@ -1,6 +1,5 @@
 .svelte-kit/**
 build/**
-codemirror-lang-sequence/dist/index.js
 e2e-test-results/**
 node_modules/**
 src/css/utilities.css
