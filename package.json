@@ -119,7 +119,6 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-svelte": "^2.32.0",
     "jsdom": "^24.0.0",
-    "mocha": "^10.4.0",
     "picocolors": "^1.0.0",
     "picomatch": "^4.0.1",
     "postcss-html": "^1.5.0",

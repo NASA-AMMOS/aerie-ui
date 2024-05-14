@@ -45,7 +45,6 @@ const config = ({ mode }) => {
       ),
     ],
     server: {
-      fs: { allow: ['..'] },
       host: viteEnvVars.VITE_HOST ?? 'localhost',
     },
     test: {
