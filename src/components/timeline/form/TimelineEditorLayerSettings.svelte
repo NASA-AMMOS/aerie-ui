@@ -5,6 +5,7 @@
   import { createEventDispatcher } from 'svelte';
   import type { ActivityLayer, Axis, Layer, LineLayer, XRangeLayer } from '../../../types/timeline';
   import { getTarget } from '../../../utilities/generic';
+  import { isActivityLayer, isLineLayer, isXRangeLayer } from '../../../utilities/timeline';
   import { tooltip } from '../../../utilities/tooltip';
   import Input from '../../form/Input.svelte';
   import Menu from '../../menus/Menu.svelte';
@@ -19,12 +20,12 @@
   let layerAsXRange: XRangeLayer;
 
   $: if (layer) {
-    if (layer.chartType === 'activity') {
-      layerAsActivity = layer as ActivityLayer;
-    } else if (layer.chartType === 'line') {
-      layerAsLine = layer as LineLayer;
-    } else if (layer.chartType === 'x-range') {
-      layerAsXRange = layer as XRangeLayer;
+    if (isActivityLayer(layer)) {
+      layerAsActivity = layer;
+    } else if (isLineLayer(layer)) {
+      layerAsLine = layer;
+    } else if (isXRangeLayer(layer)) {
+      layerAsXRange = layer;
     }
   }
 
@@ -60,7 +61,7 @@
   <Menu bind:this={layerMenu} hideAfterClick={false} placement="bottom-end" width={300}>
     <MenuHeader title={`${layer.chartType} Layer Settings`} />
     <div class="body st-typography-body">
-      {#if layer.chartType === 'activity'}
+      {#if isActivityLayer(layer)}
         <Input layout="inline">
           <label for="activityHeight">Activity Height</label>
           <input
@@ -72,7 +73,7 @@
             on:input={onInput}
           />
         </Input>
-      {:else if layer.chartType === 'line'}
+      {:else if isLineLayer(layer)}
         <Input layout="inline">
           <label for="name">Layer Name</label>
           <input
@@ -123,7 +124,7 @@
             on:input={onInput}
           />
         </Input>
-      {:else if layer.chartType === 'x-range'}
+      {:else if isXRangeLayer(layer)}
         <Input layout="inline">
           <label for="name">Layer Name</label>
           <input

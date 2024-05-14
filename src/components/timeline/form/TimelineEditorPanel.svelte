@@ -57,6 +57,9 @@
     createTimelineXRangeLayer,
     createVerticalGuide,
     createYAxis,
+    isActivityLayer,
+    isLineLayer,
+    isXRangeLayer,
   } from '../../../utilities/timeline';
   import { tooltip } from '../../../utilities/tooltip';
   import ColorPicker from '../../form/ColorPicker.svelte';
@@ -89,8 +92,9 @@
   $: horizontalGuides = $selectedRow?.horizontalGuides || [];
   $: yAxes = $selectedRow?.yAxes || [];
   $: layers = $selectedRow?.layers || [];
-  $: rowHasActivityLayer = $selectedRow?.layers.find(layer => layer.chartType === 'activity') || false;
-  $: rowHasNonActivityChartLayer = !!$selectedRow?.layers.find(layer => layer.chartType !== 'activity') || false;
+  $: rowHasActivityLayer = $selectedRow?.layers.find(isActivityLayer) || false;
+  $: rowHasNonActivityChartLayer =
+    !!$selectedRow?.layers.find(layer => isLineLayer(layer) || isXRangeLayer(layer)) || false;
   $: if (rowHasActivityLayer && $selectedRow && !$selectedRow.activityOptions) {
     viewUpdateRow('activityOptions', ViewDefaultActivityOptions);
   }
@@ -289,7 +293,7 @@
   function handleUpdateLayerFilter(values: string[], layer: Layer) {
     const newLayers = layers.map(currentLayer => {
       if (layer.id === currentLayer.id) {
-        if (currentLayer.chartType === 'activity') {
+        if (isActivityLayer(currentLayer)) {
           const newLayer: Layer = {
             ...currentLayer,
             filter: {
@@ -372,7 +376,7 @@
     const { value } = event.detail;
     const newLayers = layers.map(l => {
       if (layer.id === l.id) {
-        if (l.chartType === 'activity') {
+        if (isActivityLayer(l)) {
           (l as ActivityLayer).activityColor = value as string;
         } else if (l.chartType === 'line') {
           (l as LineLayer).lineColor = value as string;
@@ -427,22 +431,22 @@
   }
 
   function getColorForLayer(layer: Layer) {
-    if (layer.chartType === 'activity') {
-      return (layer as ActivityLayer).activityColor;
-    } else if (layer.chartType === 'line') {
-      return (layer as LineLayer).lineColor;
-    } else if (layer.chartType === 'x-range') {
-      return (layer as XRangeLayer).colorScheme;
+    if (isActivityLayer(layer)) {
+      return layer.activityColor;
+    } else if (isLineLayer(layer)) {
+      return layer.lineColor;
+    } else if (isXRangeLayer(layer)) {
+      return layer.colorScheme;
     }
   }
 
   function getFilterValuesForLayer(layer: Layer) {
-    if (layer.chartType === 'activity') {
-      const activityLayer = layer as ActivityLayer;
+    if (isActivityLayer(layer)) {
+      const activityLayer = layer;
       const activityTypes = activityLayer.filter?.activity?.types ?? [];
       return [...activityTypes];
-    } else if (layer.chartType === 'line' || layer.chartType === 'x-range') {
-      const resourceLayer = layer as LineLayer | XRangeLayer;
+    } else if (isLineLayer(layer) || isXRangeLayer(layer)) {
+      const resourceLayer = layer;
       const resourceNames = resourceLayer.filter?.resource?.names ?? [];
       return [...resourceNames];
     }
@@ -450,9 +454,9 @@
   }
 
   function getFilterOptionsForLayer(layer: Layer, activityTypes: ActivityType[], externalResourceNames: string[]) {
-    if (layer.chartType === 'activity') {
+    if (isActivityLayer(layer)) {
       return activityTypes.map(t => t.name);
-    } else if (layer.chartType === 'line' || layer.chartType === 'x-range') {
+    } else if (isLineLayer(layer) || isXRangeLayer(layer)) {
       return $resourceTypes
         .map(t => t.name)
         .concat(externalResourceNames)
@@ -1128,7 +1132,7 @@
                       {yAxes}
                     />
 
-                    {#if layer.chartType === 'activity'}
+                    {#if isActivityLayer(layer)}
                       <ColorPresetsPicker
                         presetColors={[
                           '#FFD1D2',
@@ -1146,7 +1150,7 @@
                         value={getColorForLayer(layer)}
                         on:input={event => handleUpdateLayerColor(event, layer)}
                       />
-                    {:else if layer.chartType === 'line'}
+                    {:else if isLineLayer(layer)}
                       <ColorPresetsPicker
                         presetColors={[
                           '#e31a1c',
@@ -1164,7 +1168,7 @@
                         value={getColorForLayer(layer)}
                         on:input={event => handleUpdateLayerColor(event, layer)}
                       />
-                    {:else if layer.chartType === 'x-range'}
+                    {:else if isXRangeLayer(layer)}
                       <ColorSchemePicker
                         layout="compact"
                         value={getColorForLayer(layer)}

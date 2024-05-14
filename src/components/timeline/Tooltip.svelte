@@ -117,14 +117,16 @@
       }
     }
 
-    const limit = 2;
+    // Limit total number of directives and spans displayed to 2 to prevent visual overflow
+    // Aggregate the remaining items by directive vs span and then by type
+    const activityDisplayLimit = 2;
     let count = 0;
     const activityDirectivesToDisplay: ActivityDirective[] = [];
     const overflowingActivityDirectives: ActivityDirective[] = [];
     const spansToDisplay: Span[] = [];
     const overflowingSpans: Span[] = [];
     activityDirectives.forEach(directive => {
-      if (count < limit) {
+      if (count < activityDisplayLimit) {
         activityDirectivesToDisplay.push(directive);
         count++;
       } else {
@@ -132,7 +134,7 @@
       }
     });
     spans.forEach(span => {
-      if (count < limit) {
+      if (count < activityDisplayLimit) {
         spansToDisplay.push(span);
         count++;
       } else {
@@ -199,7 +201,7 @@
       }
     });
 
-    if (points.length && (constraintResults.length || activityDirectives.length)) {
+    if (points.length && (constraintResults.length || activityDirectives.length || spans.length)) {
       tooltipText = `${tooltipText}<hr>`;
     }
 

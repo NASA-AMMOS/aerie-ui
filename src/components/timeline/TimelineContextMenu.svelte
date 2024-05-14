@@ -24,7 +24,7 @@
   import { getTarget } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { getDoyTime, getIntervalInMs, getUnixEpochTimeFromInterval } from '../../utilities/time';
-  import { createVerticalGuide } from '../../utilities/timeline';
+  import { createVerticalGuide, isActivityLayer } from '../../utilities/timeline';
   import ContextMenu from '../context-menu/ContextMenu.svelte';
   import ContextMenuItem from '../context-menu/ContextMenuItem.svelte';
   import ContextMenuSeparator from '../context-menu/ContextMenuSeparator.svelte';
@@ -85,7 +85,7 @@
 
     if (row) {
       activityOptions = row.activityOptions;
-      hasActivityLayer = !!row.layers.find(layer => layer.chartType === 'activity');
+      hasActivityLayer = !!row.layers.find(isActivityLayer);
     }
 
     if (selectedActivityDirectiveId != null) {

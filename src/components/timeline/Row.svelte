@@ -31,7 +31,6 @@
     SpanUtilityMaps,
   } from '../../types/simulation';
   import type {
-    ActivityLayer,
     ActivityOptions,
     ActivityTree,
     ActivityTreeExpansionMap,
@@ -55,6 +54,8 @@
   import {
     directiveInView,
     getYAxesWithScaleDomains,
+    isActivityLayer,
+    isLineLayer,
     isXRangeLayer,
     spanInView,
     TimelineInteractionMode,
@@ -109,15 +110,6 @@
   export let xTicksView: XAxisTick[] = [];
   export let yAxes: Axis[] = [];
   export let user: User | null;
-
-  $: activityOptions = activityOptions || { ...ViewDefaultActivityOptions };
-
-  // Enforce assignment to object in case of undefined prop since svelte does not
-  // re-assign the default you use in the const export.
-  $: activityTreeExpansionMap = activityTreeExpansionMap || {};
-
-  $: showSpans = activityOptions?.composition === 'both' || activityOptions?.composition === 'spans';
-  $: showDirectives = activityOptions?.composition === 'both' || activityOptions?.composition === 'directives';
 
   const dispatch = createEventDispatcher<{
     activityTreeExpansionChange: ActivityTreeExpansionMap;
@@ -291,8 +283,18 @@
   $: computedDrawHeight = expanded ? drawHeight : 24;
   $: overlaySvgSelection = select(overlaySvg) as Selection<SVGElement, unknown, any, any>;
   $: rowClasses = classNames('row', { 'row-collapsed': !expanded });
-  $: hasActivityLayer = !!layers.find(layer => layer.chartType === 'activity');
-  $: hasResourceLayer = !!layers.find(layer => layer.chartType === 'line' || layer.chartType === 'x-range');
+  $: activityOptions = activityOptions || { ...ViewDefaultActivityOptions };
+  $: activityLayers = layers.filter(isActivityLayer);
+  $: lineLayers = layers.filter(l => isLineLayer(l) || (isXRangeLayer(l) && l.showAsLinePlot));
+  $: xRangeLayers = layers.filter(l => isXRangeLayer(l) && !l.showAsLinePlot);
+  $: hasActivityLayer = activityLayers.length > 0;
+  $: hasResourceLayer = lineLayers.length + xRangeLayers.length > 0;
+  $: showSpans = activityOptions?.composition === 'both' || activityOptions?.composition === 'spans';
+  $: showDirectives = activityOptions?.composition === 'both' || activityOptions?.composition === 'directives';
+
+  // Enforce assignment to object in case of undefined prop since svelte does not
+  // re-assign the default you use in the const export.
+  $: activityTreeExpansionMap = activityTreeExpansionMap || {};
 
   // Track resource loading status for this Row
   $: if (resourceRequestMap) {
@@ -345,11 +347,10 @@
     overlaySvgSelection.call(zoom.transform, timelineZoomTransform);
   }
 
-  $: if (hasActivityLayer && spansMap && activityDirectives && typeof filterActivitiesByTime === 'boolean') {
+  $: if (activityLayers && spansMap && activityDirectives && typeof filterActivitiesByTime === 'boolean') {
     activityTree = [];
     idToColorMaps = { directives: {}, spans: {} };
 
-    const activityLayers = layers.filter(layer => layer.chartType === 'activity') as ActivityLayer[];
     let spansList = Object.values(spansMap);
     const directivesByType = groupBy(activityDirectives, 'type');
     const spansByType = groupBy(spansList, 'type');
@@ -734,9 +735,9 @@
   function onMouseOver(event: CustomEvent<RowMouseOverEvent>) {
     const { detail } = event;
     const { layerId } = detail;
-    mouseOverActivityDirectives = detail?.activityDirectives ?? [];
+    mouseOverActivityDirectives = detail?.activityDirectives ?? mouseOverActivityDirectives;
     mouseOverConstraintResults = detail?.constraintResults ?? mouseOverConstraintResults;
-    mouseOverSpans = detail?.spans ?? [];
+    mouseOverSpans = detail?.spans ?? mouseOverSpans;
     if (typeof layerId === 'number') {
       mouseOverPointsByLayer[layerId] = detail?.points ?? [];
       mouseOverGapsByLayer[layerId] = detail?.gaps ?? mouseOverGapsByLayer[layerId] ?? [];
@@ -750,7 +751,6 @@
       pointsByLayer: mouseOverPointsByLayer,
       spans: mouseOverSpans,
     });
-    // }
   }
 
   function onUpdateRowHeightDrag(event: CustomEvent<{ newHeight: number }>) {
@@ -887,7 +887,11 @@
       {#if hasResourceLayer && anyResourcesLoading}
         <div class="layer-message loading st-typography-label">Loading</div>
       {/if}
-      <!-- Loading indicator -->
+      <!-- Empty state -->
+      {#if !layers.length}
+        <div class="layer-message st-typography-label">No layers added to this row</div>
+      {/if}
+      <!-- Resource error indicator -->
       {#if hasResourceLayer && loadingErrors.length}
         <div class="layer-message error st-typography-label">
           Failed to load profiles for {loadingErrors.length} layer{pluralize(loadingErrors.length)}
@@ -895,6 +899,34 @@
       {/if}
       <!-- Layers of Canvas Visualizations. -->
       <div class="layers" style="width: {drawWidth}px">
+        {#each xRangeLayers as layer (layer.id)}
+          <LayerGaps
+            {...layer}
+            {dpr}
+            drawHeight={computedDrawHeight}
+            {drawWidth}
+            filter={layer.filter.resource}
+            {mousemove}
+            {mouseout}
+            resources={getResourcesForLayer(layer, resourceRequestMap)}
+            {xScaleView}
+            on:mouseOver={onMouseOver}
+          />
+          <LayerXRange
+            {...layer}
+            {contextmenu}
+            {dpr}
+            drawHeight={computedDrawHeight}
+            {drawWidth}
+            filter={layer.filter.resource}
+            {mousemove}
+            {mouseout}
+            resources={getResourcesForLayer(layer, resourceRequestMap)}
+            {xScaleView}
+            on:mouseOver={onMouseOver}
+            on:contextMenu
+          />
+        {/each}
         {#if hasActivityLayer}
           <LayerActivities
             {activityOptions}
@@ -937,59 +969,39 @@
             on:updateRowHeight={onUpdateRowHeightLayer}
           />
         {/if}
-        {#each layers as layer (layer.id)}
-          {#if layer.chartType === 'line' || layer.chartType === 'x-range'}
-            <LayerGaps
-              {...layer}
-              {dpr}
-              drawHeight={computedDrawHeight}
-              {drawWidth}
-              filter={layer.filter.resource}
-              {mousemove}
-              {mouseout}
-              resources={getResourcesForLayer(layer, resourceRequestMap)}
-              {xScaleView}
-              on:mouseOver={onMouseOver}
-            />
-          {/if}
-          {#if layer.chartType === 'line' || (isXRangeLayer(layer) && layer.showAsLinePlot)}
-            <LayerLine
-              {...layer}
-              ordinalScale={isXRangeLayer(layer) && layer.showAsLinePlot}
-              {decimate}
-              {interpolateHoverValue}
-              {limitTooltipToLine}
-              {contextmenu}
-              {dpr}
-              drawHeight={computedDrawHeight}
-              {drawWidth}
-              filter={layer.filter.resource}
-              {mousemove}
-              {mouseout}
-              resources={getResourcesForLayer(layer, resourceRequestMap)}
-              {viewTimeRange}
-              {xScaleView}
-              yAxes={yAxesWithScaleDomains}
-              on:mouseOver={onMouseOver}
-              on:contextMenu
-            />
-          {/if}
-          {#if isXRangeLayer(layer) && !layer.showAsLinePlot}
-            <LayerXRange
-              {...layer}
-              {contextmenu}
-              {dpr}
-              drawHeight={computedDrawHeight}
-              {drawWidth}
-              filter={layer.filter.resource}
-              {mousemove}
-              {mouseout}
-              resources={getResourcesForLayer(layer, resourceRequestMap)}
-              {xScaleView}
-              on:mouseOver={onMouseOver}
-              on:contextMenu
-            />
-          {/if}
+        {#each lineLayers as layer (layer.id)}
+          <LayerGaps
+            {...layer}
+            {dpr}
+            drawHeight={computedDrawHeight}
+            {drawWidth}
+            filter={layer.filter.resource}
+            {mousemove}
+            {mouseout}
+            resources={getResourcesForLayer(layer, resourceRequestMap)}
+            {xScaleView}
+            on:mouseOver={onMouseOver}
+          />
+          <LayerLine
+            {...layer}
+            ordinalScale={isXRangeLayer(layer) && layer.showAsLinePlot}
+            {decimate}
+            {interpolateHoverValue}
+            {limitTooltipToLine}
+            {contextmenu}
+            {dpr}
+            drawHeight={computedDrawHeight}
+            {drawWidth}
+            filter={layer.filter.resource}
+            {mousemove}
+            {mouseout}
+            resources={getResourcesForLayer(layer, resourceRequestMap)}
+            {viewTimeRange}
+            {xScaleView}
+            yAxes={yAxesWithScaleDomains}
+            on:mouseOver={onMouseOver}
+            on:contextMenu
+          />
         {/each}
       </div>
     </div>
@@ -1090,6 +1102,7 @@
 
   .layer-message {
     align-items: center;
+    color: var(--st-gray-50);
     display: flex;
     font-size: 10px;
     height: 100%;
@@ -1102,7 +1115,6 @@
 
   .loading {
     animation: 1s delayVisibility;
-    color: var(--st-gray-50);
   }
 
   .error {

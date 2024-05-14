@@ -153,8 +153,16 @@ export function getYScale(domain: (number | null)[], height: number): ScaleLinea
     .range([height - CANVAS_PADDING_Y, CANVAS_PADDING_Y]);
 }
 
+export function isActivityLayer(layer: Layer): layer is ActivityLayer {
+  return layer.chartType === 'activity';
+}
+
 export function isXRangeLayer(layer: Layer): layer is XRangeLayer {
   return layer.chartType === 'x-range';
+}
+
+export function isLineLayer(layer: Layer): layer is LineLayer {
+  return layer.chartType === 'line';
 }
 
 function isQuadtreeLeaf<T>(node?: QuadtreeInternalNode<T> | QuadtreeLeaf<T>): node is QuadtreeLeaf<T> {
