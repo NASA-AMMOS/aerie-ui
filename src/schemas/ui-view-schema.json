@@ -239,7 +239,7 @@
                       "description": "Defines the options used for rendering activities on the timeline",
                       "properties": {
                         "activityHeight": {
-                          "description": "Height of activities when using displayMode=compact",
+                          "description": "Height of activity subrows",
                           "type": "number",
                           "minimum": 12
                         },

@@ -7,17 +7,23 @@
   import DirectiveAndSpanIcon from '../../assets/timeline-directive-and-span.svg?component';
   import DirectiveIcon from '../../assets/timeline-directive.svg?component';
   import SpanIcon from '../../assets/timeline-span.svg?component';
+  import { ViewDefaultActivityOptions } from '../../enums/view';
   import type { ActivityDirective, ActivityDirectiveId } from '../../types/activity';
   import type { Span, SpanId } from '../../types/simulation';
-  import type { ActivityTree, ActivityTreeNode, MouseDown, MouseOver } from '../../types/timeline';
+  import type { ActivityOptions, ActivityTree, ActivityTreeNode, MouseDown, MouseOver } from '../../types/timeline';
   import { classNames } from '../../utilities/generic';
   import { pluralize } from '../../utilities/text';
   import { tooltip } from '../../utilities/tooltip';
   import Collapse from '../Collapse.svelte';
 
+  export let activityOptions: ActivityOptions = { ...ViewDefaultActivityOptions };
   export let activityTree: ActivityTree = [];
   export let selectedActivityDirectiveId: ActivityDirectiveId | null = null;
   export let selectedSpanId: SpanId | null = null;
+
+  let rowHeight = 0;
+
+  $: rowHeight = activityOptions.activityHeight + 4; // Add activityRowPadding from LayerActivities
 
   const dispatch = createEventDispatcher<{
     'activity-tree-node-change': ActivityTreeNode;
@@ -66,6 +72,7 @@
       {@const directive = node.items[0].directive}
       {@const span = node.items[0].span}
       <button
+        style:height={`${rowHeight}px`}
         class="row-header-activity-group leaf st-button tertiary"
         class:selected={directive?.id === selectedActivityDirectiveId || span?.id === selectedSpanId}
         on:dblclick={e => onLeafClick(e, node, 'dblClick')}
@@ -93,6 +100,7 @@
       {@const directive = node.items[0]?.directive}
       {@const span = node.items[0]?.span}
       <Collapse
+        headerHeight={rowHeight}
         defaultExpanded={node.expanded}
         className={classNames('row-header-activity-group', {
           selected:
@@ -175,7 +183,6 @@
     border-bottom: 1px solid var(--st-gray-30);
     border-radius: 0px;
     font-size: 10px;
-    height: 20px !important;
     letter-spacing: 0.1px;
     padding: 0 !important;
     padding-left: 4px !important;

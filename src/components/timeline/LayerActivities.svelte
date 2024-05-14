@@ -112,7 +112,6 @@
   let visibleActivityDirectivesById: Record<ActivityDirectiveId, ActivityDirective> = {};
   let visibleSpansById: Record<SpanId, Span> = {};
   let colorCache: Record<string, string> = {};
-  // let xScaleViewRangeMax: number;
 
   // Asset cache
   const assets: { anchorIcon: HTMLImageElement | null } = { anchorIcon: null };
@@ -131,7 +130,7 @@
   $: anchorIconMarginLeft = 4;
   $: canvasHeightDpr = drawHeight * dpr;
   $: canvasWidthDpr = drawWidth * dpr;
-  $: rowHeight = activityOptions.displayMode === 'compact' ? activityOptions.activityHeight + activityRowPadding : 16;
+  $: rowHeight = activityOptions.activityHeight + (activityOptions.displayMode === 'compact' ? 0 : 0);
   $: timelineLocked = timelineLockStatus === TimelineLockStatus.Locked;
   $: planStartTimeMs = getUnixEpochTime(getDoyTime(new Date(planStartTimeYmd)));
 
@@ -722,7 +721,7 @@
     if (xScaleView !== null) {
       const collapsedMode = drawHeight < 25;
       let y = collapsedMode ? 0 : 23;
-      const expectedRowHeight = 20;
+      const expectedRowHeight = rowHeight + activityRowPadding;
       activityTree.forEach(node => {
         const newY = drawGroup(node, y, expectedRowHeight, !collapsedMode);
         if (!collapsedMode) {

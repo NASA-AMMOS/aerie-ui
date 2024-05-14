@@ -795,6 +795,7 @@
   <div class="row-content">
     <!-- Row Header. -->
     <RowHeader
+      {activityOptions}
       on:activity-tree-node-change={onActivityTreeNodeChange}
       on:mouseDown={onMouseDown}
       on:dblClick
@@ -1083,9 +1084,6 @@
     z-index: 9;
   }
 
-  .active-row .row-content {
-    /* background: rgba(47, 128, 237, 0.06); */
-  }
   .active-row :global(.row-header) {
     background: rgba(47, 128, 237, 0.06);
   }

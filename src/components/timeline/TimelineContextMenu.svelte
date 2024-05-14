@@ -31,7 +31,6 @@
   import ContextSubMenuItem from '../context-menu/ContextSubMenuItem.svelte';
 
   export let activityDirectivesMap: ActivityDirectivesMap;
-  // export let activityOptions: ActivityOptions;
   export let contextMenu: MouseOver | null;
   export let hasUpdateDirectivePermission: boolean = false;
   export let hasUpdateSimulationPermission: boolean = false;
@@ -42,8 +41,6 @@
   export let simulationDataset: SimulationDataset | null = null;
   export let spansMap: SpansMap;
   export let spanUtilityMaps: SpanUtilityMaps;
-  // export let timelineDirectiveVisibilityToggles: DirectiveVisibilityToggleMap;
-  // export let timelineSpanVisibilityToggles: SpanVisibilityToggleMap;
   export let verticalGuides: VerticalGuide[];
   export let xScaleView: ScaleTime<number, number> | null = null;
   export let user: User | null;
@@ -72,8 +69,6 @@
   let hasActivityLayer: boolean = false;
   let mouseOverOrigin: MouseOverOrigin | undefined = undefined;
   let row: Row | undefined = undefined;
-  let showDirectives: boolean = false;
-  let showSpans: boolean = false;
 
   // TODO imports here could be better, should we handle the vertical guide creation in Timeline?
   $: timelines = $view?.definition.plan.timelines ?? [];
@@ -87,8 +82,6 @@
     span = null;
     activityDirectiveSpans = null;
     hasActivityLayer = false;
-    showDirectives = false;
-    showSpans = false;
 
     if (row) {
       activityOptions = row.activityOptions;

@@ -245,7 +245,3 @@ export interface XRangePoint extends Point {
   is_null?: boolean;
   label: Label;
 }
-
-export type DirectiveVisibilityToggleMap = Record<string, boolean>;
-
-export type SpanVisibilityToggleMap = Record<string, boolean>;

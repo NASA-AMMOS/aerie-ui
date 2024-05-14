@@ -11,6 +11,7 @@
   export let className: string = '';
   export let collapsible: boolean = true;
   export let defaultExpanded: boolean = true;
+  export let headerHeight: number = 32;
   export let error: boolean = false;
   export let padContent: boolean = true;
   export let title: string = '';
@@ -38,6 +39,7 @@
     class="collapse-header st-button st-typography-medium tertiary"
     class:static={!collapsible}
     class:expanded
+    style:height={`${headerHeight}px`}
     on:click={() => {
       if (collapsible) {
         expanded = !expanded;
@@ -88,7 +90,6 @@
     display: flex;
     flex-direction: row;
     gap: 3px;
-    height: 32px;
     justify-content: flex-start;
     padding: 8px 0px 8px 0px;
   }

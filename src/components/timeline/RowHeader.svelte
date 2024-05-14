@@ -7,9 +7,18 @@
   import { createEventDispatcher } from 'svelte';
   import TimelineLineLayerIcon from '../../assets/timeline-line-layer.svg?component';
   import TimelineXRangeLayerIcon from '../../assets/timeline-x-range-layer.svg?component';
+  import { ViewDefaultActivityOptions } from '../../enums/view';
   import type { ActivityDirectiveId } from '../../types/activity';
   import type { Resource, SpanId } from '../../types/simulation';
-  import type { ActivityTree, Axis, ChartType, Layer, LineLayer, MouseOver } from '../../types/timeline';
+  import type {
+    ActivityOptions,
+    ActivityTree,
+    Axis,
+    ChartType,
+    Layer,
+    LineLayer,
+    MouseOver,
+  } from '../../types/timeline';
   import { filterResourcesByLayer } from '../../utilities/timeline';
   import { tooltip } from '../../utilities/tooltip';
   import RowHeaderActivityTree from './RowHeaderActivityTree.svelte';
@@ -17,6 +26,7 @@
   import RowYAxes from './RowYAxes.svelte';
 
   export let activityTree: ActivityTree = [];
+  export let activityOptions: ActivityOptions = { ...ViewDefaultActivityOptions };
   export let expanded: boolean = true;
   export let height: number = 0;
   export let layers: Layer[];
@@ -144,6 +154,7 @@
       <div class="activity-tree">
         <!-- TODO only render if the row has activities -->
         <RowHeaderActivityTree
+          {activityOptions}
           {activityTree}
           {selectedActivityDirectiveId}
           {selectedSpanId}

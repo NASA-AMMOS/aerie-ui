@@ -70,7 +70,6 @@
   export let spans: Span[] = [];
   export let timeline: Timeline | null = null;
   export let timelineInteractionMode: TimelineInteractionMode;
-  // export let timelineSpanVisibilityToggles: SpanVisibilityToggleMap = {}; /* TODO get rid of this in other places */
   export let timelineLockStatus: TimelineLockStatus;
   export let viewTimeRange: TimeRange = { end: 0, start: 0 };
   export let user: User | null;

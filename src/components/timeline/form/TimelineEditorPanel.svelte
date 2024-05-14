@@ -958,31 +958,28 @@
               </RadioButtons>
             </Input>
           {/if}
-          <!-- TODO when creating a new activity layer from editor default to compact? -->
-          {#if activityOptions.displayMode === 'compact'}
-            <form on:submit={event => event.preventDefault()} style="flex: 1">
-              <Input layout="inline" class="editor-input">
-                <label for="text">Height</label>
-                <input
-                  min={12}
-                  autocomplete="off"
-                  class="st-input w-100"
-                  name="text"
-                  type="number"
-                  value={activityOptions.activityHeight}
-                  on:input={event => {
-                    const { value } = getTarget(event);
-                    if (typeof value === 'number' && !isNaN(value)) {
-                      if (value >= 12) {
-                        viewUpdateRow('activityOptions', { ...activityOptions, activityHeight: value });
-                      }
+          <form on:submit={event => event.preventDefault()} style="flex: 1">
+            <Input layout="inline" class="editor-input">
+              <label for="text">Height</label>
+              <input
+                min={12}
+                autocomplete="off"
+                class="st-input w-100"
+                name="text"
+                type="number"
+                value={activityOptions.activityHeight}
+                on:input={event => {
+                  const { value } = getTarget(event);
+                  if (typeof value === 'number' && !isNaN(value)) {
+                    if (value >= 12) {
+                      viewUpdateRow('activityOptions', { ...activityOptions, activityHeight: value });
                     }
-                  }}
-                />
-                <ParameterUnits unit="px" slot="right" />
-              </Input>
-            </form>
-          {/if}
+                  }
+                }}
+              />
+              <ParameterUnits unit="px" slot="right" />
+            </Input>
+          </form>
         </fieldset>
       {/if}
       <!-- TODO perhaps separate out each section into a mini editor? -->
