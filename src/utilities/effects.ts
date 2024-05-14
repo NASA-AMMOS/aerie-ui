@@ -7,6 +7,7 @@ import {
   type ParameterDictionary as AmpcsParameterDictionary,
 } from '@nasa-jpl/aerie-ampcs';
 import { get } from 'svelte/store';
+import { DictionaryHeaders } from '../enums/dictionaryHeaders';
 import { SearchParameters } from '../enums/searchParameters';
 import { Status } from '../enums/status';
 import { activityDirectives, activityDirectivesMap, selectedActivityDirectiveId } from '../stores/activities';
@@ -133,7 +134,6 @@ import type {
 } from '../types/scheduling';
 import type { ValueSchema } from '../types/schema';
 import {
-  DictionaryHeaders,
   type ChannelDictionary,
   type CommandDictionary,
   type GetSeqJsonResponse,

@@ -1,18 +1,5 @@
+import type { DictionaryTypes } from '../enums/dictionaryTypes';
 import type { UserId } from './app';
-
-export enum DictionaryHeaders {
-  'command_dictionary' = 'command_dictionary',
-  'param_def' = 'param-def',
-  'sequence_adaptation' = 'sequence_adaptation',
-  'telemetry_dictionary' = 'telemetry_dictionary',
-}
-
-export enum DictionaryTypes {
-  'CHANNEL' = 'CHANNEL',
-  'COMMAND' = 'COMMAND',
-  'PARAMETER' = 'PARAMETER',
-  'ADAPTATION' = 'ADAPTATION',
-}
 
 export type ChannelDictionary = {
   type: DictionaryTypes.CHANNEL;

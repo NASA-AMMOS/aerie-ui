@@ -134,7 +134,7 @@ export enum Queries {
   MISSION_MODEL = 'mission_model_by_pk',
   MISSION_MODELS = 'mission_model',
   PARAMETER_DICTIONARIES = 'parameter_dictionary',
-  PARCEL_BY_PK = 'parcel_by_pk',
+  PARCEL = 'parcel_by_pk',
   PARCELS = 'parcel',
   PARCEL_TO_PARAMETER_DICTIONARY = 'parcel_to_parameter_dictionary',
   PLAN = 'plan_by_pk',
@@ -1300,7 +1300,7 @@ const gql = {
 
   GET_PARCEL: `#graphql
     query GetParcel($id: Int!) {
-      parcel: ${Queries.PARCEL_BY_PK}(id: $id) {
+      parcel: ${Queries.PARCEL}(id: $id) {
         channel_dictionary_id
         command_dictionary_id
         created_at
