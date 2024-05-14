@@ -204,7 +204,6 @@
   <fieldset>
     <Collapse title="Decomposition" defaultExpanded={rootSpanHasChildren}>
       {#if rootSpanHasChildren}
-        <!-- TODO ActivityDecomposition tanks performance for huge flat span sets like Endurance -->
         <ActivityDecomposition
           rootSpanId={rootSpan?.id}
           selectedSpanId={span.id}
