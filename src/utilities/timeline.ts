@@ -772,7 +772,7 @@ export function filterResourcesByLayer(layer: Layer, resources: Resource[] | Res
 
 export function directiveInView(directive: ActivityDirective, viewTimeRange: TimeRange) {
   // TODO should we use the old behavior of having the label be sticky too?
-  const directiveX = directive.start_time_ms || 0;
+  const directiveX = directive.start_time_ms ?? 0;
   return directiveX >= viewTimeRange.start && directiveX < viewTimeRange.end;
 }
 

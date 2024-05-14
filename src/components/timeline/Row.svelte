@@ -377,7 +377,7 @@
           });
         }
       });
-      directives.sort((a, b) => ((a.start_time_ms || 0) < (b.start_time_ms || 0) ? -1 : 1));
+      directives.sort((a, b) => ((a.start_time_ms ?? 0) < (b.start_time_ms ?? 0) ? -1 : 1));
       spans.sort((a, b) => (a.startMs < b.startMs ? -1 : 1));
       if (directives.length || spans.length) {
         // Populate both sets of directive and span lists in order to more precisely

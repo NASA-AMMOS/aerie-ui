@@ -425,7 +425,7 @@
             return;
           }
 
-          const directiveX = directive.start_time_ms || 0;
+          const directiveX = directive.start_time_ms ?? 0;
 
           let childSpanInView = false;
           const childSpan = getSpanForActivityDirective(directive);
@@ -551,7 +551,7 @@
         newItem = { span, spanStartX: xScaleView(span.startMs) };
       }
       if (directive && showDirectives && directiveInView(directive, viewTimeRange)) {
-        newItem = { ...newItem, directive, directiveStartX: xScaleView(directive.start_time_ms || 0) };
+        newItem = { ...newItem, directive, directiveStartX: xScaleView(directive.start_time_ms ?? 0) };
       }
       if (newItem) {
         itemsToDraw.push(newItem);
