@@ -1828,8 +1828,8 @@ const gql = {
   `,
 
   SIMULATE: `#graphql
-    query Simulate($planId: Int!) {
-      ${Queries.SIMULATE}(planId: $planId) {
+     query Simulate($planId: Int!, $force: Boolean!) {
+      ${Queries.SIMULATE}(planId: $planId, force: $force)
         reason
         simulationDatasetId
         status
