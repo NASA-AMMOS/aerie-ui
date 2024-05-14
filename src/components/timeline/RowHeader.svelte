@@ -151,18 +151,20 @@
         <slot />
       </div>
 
-      <div class="activity-tree">
-        <!-- TODO only render if the row has activities -->
-        <RowHeaderActivityTree
-          {activityOptions}
-          {activityTree}
-          {selectedActivityDirectiveId}
-          {selectedSpanId}
-          on:activity-tree-node-change
-          on:mouseDown
-          on:dblClick
-        />
-      </div>
+      {#if activityTree.length}
+        <div class="activity-tree">
+          <!-- TODO only render if the row has activities -->
+          <RowHeaderActivityTree
+            {activityOptions}
+            {activityTree}
+            {selectedActivityDirectiveId}
+            {selectedSpanId}
+            on:activity-tree-node-change
+            on:mouseDown
+            on:dblClick
+          />
+        </div>
+      {/if}
 
       {#if resourceLabels.length > 0}
         <div class="row-header-y-axis-labels">
