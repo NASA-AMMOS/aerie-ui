@@ -94,7 +94,6 @@ export function getAllSpanChildrenIds(spanId: number, spanUtilityMaps: SpanUtili
 /**
  * Sort function to sort activities in start time ascending order.
  */
-console.log('getIntervalInMs :>> ', getIntervalInMs);
 export function sortActivityDirectivesOrSpans(a: ActivityDirective | Span, b: ActivityDirective | Span): number {
   const aStartOffsetMs = getIntervalInMs(a.start_offset);
   const bStartOffsetMs = getIntervalInMs(b.start_offset);
