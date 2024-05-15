@@ -35,7 +35,6 @@ test.afterAll(async () => {
   await models.goto();
   await models.deleteModel();
   await parcels.goto();
-  await parcels.deleteParcel();
   await page.close();
   await context.close();
 });

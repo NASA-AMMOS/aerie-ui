@@ -114,7 +114,7 @@ export class ExpansionRules {
 
   async selectParcel() {
     const { parcelName } = this.parcels;
-    await this.page.waitForSelector(`option:has-text("${parcelName} - 1.0.0")`, { state: 'attached' });
+    await this.page.waitForSelector(`option:has-text("${parcelName}")`, { state: 'attached' });
     const value = await getOptionValueFromText(this.page, this.inputParcelSelector, parcelName);
     await this.inputCommandDictionary.focus();
     await this.inputCommandDictionary.selectOption(value);
