@@ -4,7 +4,7 @@
   import type { CellEditingStoppedEvent, ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
   import { createEventDispatcher } from 'svelte';
   import type { User } from '../../types/app';
-  import type { DataGridColumnDef, RowId } from '../../types/data-grid';
+  import type { DataGridColumnDef, DataGridRowSelection, RowId } from '../../types/data-grid';
   import type { DictionaryType } from '../../types/sequencing';
   import { featurePermissions } from '../../utilities/permissions';
   import DataGridActions from '../ui/DataGrid/DataGridActions.svelte';
@@ -144,26 +144,34 @@
     deleteDictionary({ id: event.detail[0] as number });
   }
 
+  function onRowClicked(event: CustomEvent<DataGridRowSelection<DictionaryType>>) {
+    selectRow(event.detail.data.id, true);
+  }
+
   function onToggle(event: CustomEvent<CellEditingStoppedEvent<DictionaryType, boolean>>) {
     const {
       detail: { data, newValue },
     } = event;
 
     if (data) {
-      if (isMultiselect && typeof newValue === 'boolean') {
-        dictionaryIds = {
-          ...dictionaryIds,
-          [data.id]: newValue,
-        };
-        dispatch('multiSelect', { ids: dictionaryIds });
-      } else {
-        dictionaryId = newValue ? data.id : null;
-        dispatch('select', { id: dictionaryId });
-      }
+      selectRow(data.id, newValue as boolean);
     }
 
     if (dictionaryDataGrid?.redrawRows !== undefined) {
       dictionaryDataGrid.redrawRows();
+    }
+  }
+
+  function selectRow(id: number, newValue: boolean) {
+    if (isMultiselect && typeof newValue === 'boolean') {
+      dictionaryIds = {
+        ...dictionaryIds,
+        [id]: newValue,
+      };
+      dispatch('multiSelect', { ids: dictionaryIds });
+    } else {
+      dictionaryId = newValue ? id : null;
+      dispatch('select', { id: dictionaryId });
     }
   }
 </script>
@@ -182,6 +190,7 @@
         itemDisplayText={displayText}
         items={dictionaries}
         {user}
+        on:rowClicked={onRowClicked}
         on:cellEditingStopped={onToggle}
         on:deleteItem={deleteDictionaryContext}
       />
