@@ -61,19 +61,7 @@
   <Menu bind:this={layerMenu} hideAfterClick={false} placement="bottom-end" width={300}>
     <MenuHeader title={`${layer.chartType} Layer Settings`} />
     <div class="body st-typography-body">
-      {#if isActivityLayer(layer)}
-        <Input layout="inline">
-          <label for="activityHeight">Activity Height</label>
-          <input
-            min={0}
-            class="st-input w-100"
-            name="activityHeight"
-            type="number"
-            value={layerAsActivity.activityHeight}
-            on:input={onInput}
-          />
-        </Input>
-      {:else if isLineLayer(layer)}
+      {#if isLineLayer(layer)}
         <Input layout="inline">
           <label for="name">Layer Name</label>
           <input
