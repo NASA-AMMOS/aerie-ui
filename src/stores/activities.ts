@@ -1,23 +1,23 @@
-import { derived, writable, type Readable, type Writable } from 'svelte/store';
+import { derived, writable, type Writable } from 'svelte/store';
 import type {
-  ActivityDirective,
+  ActivityDirectiveDB,
   ActivityDirectiveId,
   ActivityDirectiveValidationStatus,
-  ActivityDirectivesMap,
   AnchorValidationStatus,
 } from '../types/activity';
 import type { ActivityMetadataDefinition } from '../types/activity-metadata';
 import type { SpanId } from '../types/simulation';
+import { computeActivityDirectivesMap } from '../utilities/activities';
 import gql from '../utilities/gql';
-import { getActivityDirectiveStartTimeMs } from '../utilities/time';
 import { initialPlan, planId } from './plan';
-import { selectedSpanId, spanUtilityMaps, spansMap } from './simulation';
+import { planSnapshotActivityDirectives, planSnapshotId } from './planSnapshots';
+import { selectedSpanId, spansMap, spanUtilityMaps } from './simulation';
 import { gqlSubscribable } from './subscribable';
 import { viewUpdateGrid } from './views';
 
 /* Subscriptions. */
 
-export const activityDirectives = gqlSubscribable<ActivityDirective[]>(
+export const activityDirectivesDB = gqlSubscribable<ActivityDirectiveDB[]>(
   gql.SUB_ACTIVITY_DIRECTIVES,
   { planId },
   [],
@@ -47,32 +47,29 @@ export const activityDirectiveValidationStatuses = gqlSubscribable<ActivityDirec
 
 /* Writeable. */
 
-export const activityDirectivesMap: Writable<ActivityDirectivesMap> = writable({});
-
 export const selectedActivityDirectiveId: Writable<ActivityDirectiveId | null> = writable(null);
 
 /* Derived. */
 
-export const activityDirectivesList: Readable<ActivityDirective[]> = derived(
-  [activityDirectivesMap, initialPlan, spansMap, spanUtilityMaps],
-  ([$activityDirectivesMap, $initialPlan, $spansMap, $spanUtilityMaps]) => {
-    const cachedStartTimes = {};
-    return Object.values($activityDirectivesMap).map(directive => {
-      if (!$initialPlan || !$initialPlan.start_time) {
-        return directive;
-      }
-      const startTimeMs = getActivityDirectiveStartTimeMs(
-        directive.id,
-        $initialPlan.start_time,
-        $initialPlan.end_time_doy,
-        $activityDirectivesMap,
-        $spansMap,
-        $spanUtilityMaps,
-        cachedStartTimes,
-      );
-      directive.start_time_ms = startTimeMs;
-      return directive;
-    });
+export const activityDirectivesMap = derived(
+  [activityDirectivesDB, planSnapshotId, planSnapshotActivityDirectives, initialPlan, spansMap, spanUtilityMaps],
+  ([
+    $activityDirectivesDB,
+    $planSnapshotId,
+    $planSnapshotActivityDirectives,
+    $initialPlan,
+    $spansMap,
+    $spanUtilityMaps,
+  ]) => {
+    if ($initialPlan === null) {
+      return {};
+    }
+    return computeActivityDirectivesMap(
+      $planSnapshotId !== null ? $planSnapshotActivityDirectives : $activityDirectivesDB,
+      $initialPlan,
+      $spansMap,
+      $spanUtilityMaps,
+    );
   },
 );
 
@@ -120,9 +117,8 @@ export function selectActivity(
 
 export function resetActivityStores() {
   activityMetadataDefinitions.updateValue(() => []);
-  activityDirectivesMap.set({});
   selectedActivityDirectiveId.set(null);
-  activityDirectives.updateValue(() => []);
+  activityDirectivesDB.updateValue(() => []);
   anchorValidationStatuses.updateValue(() => []);
   activityMetadataDefinitions.updateValue(() => []);
   activityDirectiveValidationStatuses.updateValue(() => []);

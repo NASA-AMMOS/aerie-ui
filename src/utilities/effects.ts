@@ -10,7 +10,7 @@ import { get } from 'svelte/store';
 import { DictionaryHeaders } from '../enums/dictionaryHeaders';
 import { SearchParameters } from '../enums/searchParameters';
 import { Status } from '../enums/status';
-import { activityDirectives, activityDirectivesMap, selectedActivityDirectiveId } from '../stores/activities';
+import { activityDirectivesDB, selectedActivityDirectiveId } from '../stores/activities';
 import { checkConstraintsStatus, constraintsViolationStatus, rawConstraintResponses } from '../stores/constraints';
 import { catchError, catchSchedulingError } from '../stores/errors';
 import {
@@ -34,12 +34,12 @@ import { createTagError } from '../stores/tags';
 import { applyViewUpdate, view, viewUpdateTimeline } from '../stores/views';
 import type {
   ActivityDirective,
+  ActivityDirectiveDB,
   ActivityDirectiveId,
   ActivityDirectiveInsertInput,
   ActivityDirectiveRevision,
   ActivityDirectiveSetInput,
   ActivityDirectiveValidationStatus,
-  ActivityDirectivesMap,
   ActivityPreset,
   ActivityPresetId,
   ActivityPresetInsertInput,
@@ -465,7 +465,7 @@ const effects = {
           start_offset,
           type,
         };
-        const data = await reqHasura<ActivityDirective>(
+        const data = await reqHasura<ActivityDirectiveDB>(
           gql.CREATE_ACTIVITY_DIRECTIVE,
           {
             activityDirectiveInsertInput,
@@ -476,10 +476,14 @@ const effects = {
         if (newActivityDirective != null) {
           const { id } = newActivityDirective;
 
-          activityDirectivesMap.update((currentActivityDirectivesMap: ActivityDirectivesMap) => ({
-            ...currentActivityDirectivesMap,
-            [id]: newActivityDirective,
-          }));
+          activityDirectivesDB.updateValue(directives => {
+            return directives.map(directive => {
+              if (directive.id === id) {
+                return newActivityDirective;
+              }
+              return directive;
+            });
+          });
           selectedActivityDirectiveId.set(id);
           selectedSpanId.set(null);
 
@@ -1726,9 +1730,10 @@ const effects = {
               })
               .map(({ affected_row: { id } }) => id);
 
-            activityDirectivesMap.update((currentActivityDirectivesMap: ActivityDirectivesMap) => {
-              deletedActivityIds.forEach(id => delete currentActivityDirectivesMap[id]);
-              return { ...currentActivityDirectivesMap };
+            activityDirectivesDB.updateValue(directives => {
+              return directives.filter(directive => {
+                return deletedActivityIds.indexOf(directive.id) < 1;
+              });
             });
 
             // If there are activities that did not get deleted
@@ -1765,9 +1770,10 @@ const effects = {
               })
               .map(({ affected_row: { id } }) => id);
 
-            activityDirectivesMap.update((currentActivityDirectivesMap: ActivityDirectivesMap) => {
-              deletedActivityIds.forEach(id => delete currentActivityDirectivesMap[id]);
-              return { ...currentActivityDirectivesMap };
+            activityDirectivesDB.updateValue(directives => {
+              return directives.filter(directive => {
+                return deletedActivityIds.indexOf(directive.id) < 1;
+              });
             });
 
             // If there are activities that did not get deleted
@@ -1802,9 +1808,10 @@ const effects = {
               })
               .map(({ affected_row: { id } }) => id);
 
-            activityDirectivesMap.update((currentActivityDirectivesMap: ActivityDirectivesMap) => {
-              deletedActivityIds.forEach(id => delete currentActivityDirectivesMap[id]);
-              return { ...currentActivityDirectivesMap };
+            activityDirectivesDB.updateValue(directives => {
+              return directives.filter(directive => {
+                return deletedActivityIds.indexOf(directive.id) < 1;
+              });
             });
             // If there are activities that did not get deleted
             const leftoverActivities = subtreeDeletions.filter(id => !deletedActivityIds.includes(id));
@@ -1828,9 +1835,10 @@ const effects = {
 
           if (response.deleteActivityDirectives) {
             const deletedActivityIds = response.deleteActivityDirectives.returning.map(({ id }) => id);
-            activityDirectivesMap.update((currentActivityDirectivesMap: ActivityDirectivesMap) => {
-              deletedActivityIds.forEach(id => delete currentActivityDirectivesMap[id]);
-              return { ...currentActivityDirectivesMap };
+            activityDirectivesDB.updateValue(directives => {
+              return directives.filter(directive => {
+                return deletedActivityIds.indexOf(directive.id) < 1;
+              });
             });
             // If there are activities that did not get deleted
             const leftoverActivities = normalDeletions.filter(id => !deletedActivityIds.includes(id));
@@ -3218,7 +3226,7 @@ const effects = {
   async getPlanSnapshotActivityDirectives(
     snapshot: PlanSnapshot,
     user: User | null,
-  ): Promise<ActivityDirective[] | null> {
+  ): Promise<ActivityDirectiveDB[] | null> {
     try {
       const data = await reqHasura<PlanSnapshotActivity[]>(
         gql.GET_PLAN_SNAPSHOT_ACTIVITY_DIRECTIVES,
@@ -4174,7 +4182,7 @@ const effects = {
         throwPermissionError('restore plan snapshot');
       }
 
-      const { confirm, value } = await showRestorePlanSnapshotModal(snapshot, get(activityDirectives).length, user);
+      const { confirm, value } = await showRestorePlanSnapshotModal(snapshot, get(activityDirectivesDB).length, user);
 
       if (confirm) {
         if (value && value.shouldCreateSnapshot) {
@@ -4366,7 +4374,7 @@ const effects = {
         activityDirectiveSetInput.metadata = partialActivityDirective.metadata;
       }
 
-      const data = await reqHasura<ActivityDirective>(
+      const data = await reqHasura<ActivityDirectiveDB>(
         gql.UPDATE_ACTIVITY_DIRECTIVE,
         {
           activityDirectiveSetInput,
@@ -4378,10 +4386,14 @@ const effects = {
 
       if (data.update_activity_directive_by_pk) {
         const { update_activity_directive_by_pk: updatedDirective } = data;
-        activityDirectivesMap.update((currentActivityDirectivesMap: ActivityDirectivesMap) => ({
-          ...currentActivityDirectivesMap,
-          [id]: updatedDirective,
-        }));
+        activityDirectivesDB.updateValue(directives => {
+          return directives.map(directive => {
+            if (directive.id === id) {
+              return updatedDirective;
+            }
+            return directive;
+          });
+        });
         showSuccessToast('Activity Directive Updated Successfully');
       } else {
         throw Error(`Unable to update directive with ID: "${id}"`);

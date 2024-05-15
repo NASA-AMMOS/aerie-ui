@@ -2,13 +2,13 @@
 
 <script lang="ts">
   import { select } from 'd3-selection';
+  import { groupBy } from 'lodash-es';
   import DirectiveIcon from '../../assets/timeline-directive.svg?raw';
   import SpanIcon from '../../assets/timeline-span.svg?raw';
   import type { ActivityDirective } from '../../types/activity';
   import type { ConstraintResultWithName } from '../../types/constraint';
   import type { ResourceType, Span } from '../../types/simulation';
   import type { LineLayer, LinePoint, MouseOver, Point, Row, XRangePoint } from '../../types/timeline';
-  import { groupBy } from '../../utilities/generic';
   import { getDoyTime } from '../../utilities/time';
   import { filterResourcesByLayer } from '../../utilities/timeline';
 

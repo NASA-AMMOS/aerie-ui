@@ -1,12 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import {
-    activityDirectivesList,
-    activityDirectivesMap,
-    selectActivity,
-    selectedActivityDirectiveId,
-  } from '../../stores/activities';
+  import { activityDirectivesMap, selectActivity, selectedActivityDirectiveId } from '../../stores/activities';
   import { visibleConstraintResults } from '../../stores/constraints';
   import { maxTimeRange, plan, planReadOnly, viewTimeRange } from '../../stores/plan';
   import {
@@ -189,13 +184,14 @@
   </svelte:fragment>
 
   <svelte:fragment slot="body">
+    <!-- TODO no need to pass activity directives in twice, just pass the map in? -->
     <Timeline
       bind:this={timelineRef}
       {decimate}
       {interpolateHoverValue}
       {limitTooltipToLine}
       {showTimelineTooltip}
-      activityDirectives={$activityDirectivesList}
+      activityDirectives={Object.values($activityDirectivesMap)}
       activityDirectivesMap={$activityDirectivesMap}
       constraintResults={$visibleConstraintResults}
       {hasUpdateDirectivePermission}

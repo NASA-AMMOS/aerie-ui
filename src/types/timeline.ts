@@ -6,11 +6,11 @@ import type { Span } from './simulation';
 export type ActivityTree = ActivityTreeNode[];
 
 export type ActivityTreeNode = {
-  children: ActivityTreeNode[];
+  children: ActivityTreeNode[]; // Child nodes of this directive/span/aggregation
   expanded: boolean;
   id: string;
   isLeaf: boolean;
-  items: ActivityTreeNodeItem[];
+  items: ActivityTreeNodeItem[]; // Directives and/or spans to render on the timeline at this level of the tree
   label: string;
   type: 'aggregation' | 'directive' | 'span';
 };
@@ -23,7 +23,7 @@ export type ActivityTreeExpansionMap = Record<string, boolean>;
 
 export interface ActivityLayer extends Layer {
   activityColor: string;
-  activityHeight: number;
+  activityHeight: number; // @deprecated TODO how should we deprecate view properties?
 }
 
 export type ActivityLayerFilter = {

@@ -348,14 +348,3 @@ export function addPageFocusListener(onChange: (string: 'out' | 'in') => void): 
     document.removeEventListener('visibilitychange', handleChange);
   };
 }
-
-// TODO maybe use the lodash fn?
-export function groupBy(objArr: Record<any, any>[], key: any) {
-  return objArr.reduce((acc, next) => {
-    if (!acc[next[key]]) {
-      acc[next[key]] = [];
-    }
-    acc[next[key]].push(next);
-    return acc;
-  }, {});
-}

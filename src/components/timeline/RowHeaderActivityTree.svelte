@@ -64,6 +64,10 @@
     });
     return { activityDirectiveCount, combinedActivityDirectiveSpanCount, spanCount };
   }
+
+  function onSelectClick(node: ActivityTreeNode, e: MouseEvent) {
+    onLeafClick(e, node, 'mouseDown');
+  }
 </script>
 
 {#if activityTree.length}
@@ -148,11 +152,10 @@
         </div>
         <svelte:fragment slot="action-row">
           {#if node.type !== 'aggregation'}
-            <!-- TODO unclear why e type is not inferred, is inferred in other places in this component -->
             <button
               use:tooltip={{ content: 'Select' }}
               class="st-button icon select"
-              on:click={e => onLeafClick(e, node, 'mouseDown')}
+              on:click={onSelectClick.bind(null, node)}
             >
               <SelectIcon />
             </button>

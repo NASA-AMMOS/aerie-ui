@@ -12,7 +12,6 @@
   import VerticalCollapseIcon from '@nasa-jpl/stellar/icons/vertical_collapse_with_center_line.svg?component';
   import WaterfallIcon from '@nasa-jpl/stellar/icons/waterfall.svg?component';
   import GearWideConnectedIcon from 'bootstrap-icons/icons/gear-wide-connected.svg?component';
-  import { keyBy } from 'lodash-es';
   import { onDestroy } from 'svelte';
   import Nav from '../../../components/app/Nav.svelte';
   import PageTitle from '../../../components/app/PageTitle.svelte';
@@ -36,8 +35,6 @@
   import { Status } from '../../../enums/status';
   import {
     activityDirectiveValidationStatuses,
-    activityDirectives,
-    activityDirectivesMap,
     resetActivityStores,
     selectActivity,
     selectedActivityDirectiveId,
@@ -77,7 +74,12 @@
     resetPlanStores,
     viewTimeRange,
   } from '../../../stores/plan';
-  import { planSnapshot, planSnapshotId } from '../../../stores/planSnapshots';
+  import {
+    planSnapshot,
+    planSnapshotActivityDirectives,
+    planSnapshotId,
+    resetPlanSnapshotStores,
+  } from '../../../stores/planSnapshots';
   import {
     enableScheduling,
     latestSchedulingRequest,
@@ -111,7 +113,6 @@
     viewTogglePanel,
     viewUpdateGrid,
   } from '../../../stores/views';
-  import type { ActivityDirective } from '../../../types/activity';
   import type { ActivityErrorCounts } from '../../../types/errors';
   import type { Extension } from '../../../types/extension';
   import type { PlanSnapshot } from '../../../types/plan-snapshot';
@@ -167,7 +168,6 @@
   let hasSimulatePermission: boolean = false;
   let hasCheckConstraintsPermission: boolean = false;
   let invalidActivityCount: number = 0;
-  let planSnapshotActivityDirectives: ActivityDirective[] = [];
   let simulationExtent: string | null;
   let selectedSimulationStatus: Status | null;
   let windowWidth = 0;
@@ -282,7 +282,7 @@
   $: if ($planSnapshot !== null) {
     effects.getPlanSnapshotActivityDirectives($planSnapshot, data.user).then(directives => {
       if (directives !== null) {
-        planSnapshotActivityDirectives = directives;
+        $planSnapshotActivityDirectives = directives;
       }
     });
 
@@ -365,11 +365,6 @@
     $simulationEvents = [];
   }
 
-  $: {
-    $activityDirectivesMap =
-      $planSnapshotId !== null ? keyBy(planSnapshotActivityDirectives, 'id') : keyBy($activityDirectives, 'id');
-  }
-
   $: compactNavMode = windowWidth < 1100;
 
   $: if ($schedulingAnalysisStatus) {
@@ -418,6 +413,7 @@
     resetPlanSchedulingStores();
     resetExpansionStores();
     resetPlanStores();
+    resetPlanSnapshotStores();
     resetSimulationStores();
     closeActiveModal();
   });
@@ -791,7 +787,7 @@
   </Nav>
   {#if $planSnapshot}
     <PlanSnapshotBar
-      numOfDirectives={planSnapshotActivityDirectives.length}
+      numOfDirectives={$planSnapshotActivityDirectives.length}
       snapshot={$planSnapshot}
       on:close={onCloseSnapshotPreview}
       on:restore={onRestoreSnapshot}
