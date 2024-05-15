@@ -12,12 +12,12 @@ export class ExpansionRules {
   confirmModalDeleteButton: Locator;
   inputActivityType: Locator;
   inputActivityTypeSelector: string = 'select[name="activityType"]';
-  inputCommandDictionary: Locator;
   inputEditor: Locator;
   inputModel: Locator;
   inputModelSelector: string = 'select[name="modelId"]';
   inputName: Locator;
   inputNameSelector: string = 'input[name="name"]';
+  inputParcel: Locator;
   inputParcelSelector: string = 'select[name="parcel"]';
   newButton: Locator;
   ruleActivityType = 'PeelBanana';
@@ -116,9 +116,9 @@ export class ExpansionRules {
     const { parcelName } = this.parcels;
     await this.page.waitForSelector(`option:has-text("${parcelName}")`, { state: 'attached' });
     const value = await getOptionValueFromText(this.page, this.inputParcelSelector, parcelName);
-    await this.inputCommandDictionary.focus();
-    await this.inputCommandDictionary.selectOption(value);
-    await this.inputCommandDictionary.evaluate(e => e.blur());
+    await this.inputParcel.focus();
+    await this.inputParcel.selectOption(value);
+    await this.inputParcel.evaluate(e => e.blur());
   }
 
   updatePage(page: Page): void {
@@ -129,7 +129,7 @@ export class ExpansionRules {
       `.modal:has-text("Delete Expansion Rule") >> button:has-text("Delete")`,
     );
     this.inputActivityType = page.locator(this.inputActivityTypeSelector);
-    this.inputCommandDictionary = page.locator(this.inputParcelSelector);
+    this.inputParcel = page.locator(this.inputParcelSelector);
     this.inputEditor = page.locator('.panel >> textarea.inputarea');
     this.inputModel = page.locator(this.inputModelSelector);
     this.inputName = page.locator(this.inputNameSelector);

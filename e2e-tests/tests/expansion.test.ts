@@ -20,7 +20,7 @@ test.beforeAll(async ({ browser }) => {
   dictionaries = new Dictionaries(page);
   parcels = new Parcels(page);
   expansionRules = new ExpansionRules(page, parcels, models);
-  expansionSets = new ExpansionSets(page, dictionaries, models, expansionRules);
+  expansionSets = new ExpansionSets(page, parcels, models, expansionRules);
 
   await models.goto();
   await models.createModel();
