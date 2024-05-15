@@ -159,6 +159,7 @@ import type {
   SimulationTemplateInsertInput,
   SimulationTemplateSetInput,
   Span,
+  SpanDB,
   Topic,
 } from '../types/simulation';
 import type {
@@ -3507,7 +3508,7 @@ const effects = {
     signal: AbortSignal | undefined = undefined,
   ): Promise<Span[]> {
     try {
-      const data = await reqHasura<Span[]>(gql.GET_SPANS, { datasetId }, user, signal);
+      const data = await reqHasura<SpanDB[]>(gql.GET_SPANS, { datasetId }, user, signal);
       const { span: spans } = data;
       if (spans != null) {
         return spans.map(span => {
