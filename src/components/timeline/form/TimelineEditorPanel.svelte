@@ -196,17 +196,6 @@
     viewUpdateTimeline('rows', rows, $selectedTimelineId);
   }
 
-  function handleDndConsiderLayers(e: CustomEvent<DndEvent>) {
-    const { detail } = e;
-    layers = detail.items as Layer[];
-  }
-
-  function handleDndFinalizeLayers(e: CustomEvent<DndEvent>) {
-    const { detail } = e;
-    layers = detail.items as Layer[];
-    viewUpdateRow('layers', layers);
-  }
-
   function handleDndConsiderYAxes(e: CustomEvent<DndEvent>) {
     const { detail } = e;
     yAxes = detail.items as Axis[];
@@ -1090,22 +1079,10 @@
               <div>Layer Type</div>
             </CssGrid>
             <!-- TODO bug when dragging something into a different draggable area -->
-            <div
-              class="timeline-layers timeline-elements"
-              on:consider={handleDndConsiderLayers}
-              on:finalize={handleDndFinalizeLayers}
-              use:dndzone={{
-                items: layers,
-                transformDraggedElement,
-                type: 'rows',
-              }}
-            >
+            <div class="timeline-layers timeline-elements">
               {#each layers as layer (layer.id)}
                 <div class="timeline-layer timeline-element">
                   <CssGrid columns="1fr 0.75fr 24px 24px 24px" gap="8px" class="editor-section-grid">
-                    <span class="drag-icon">
-                      <GripVerticalIcon />
-                    </span>
                     <TimelineEditorLayerFilter
                       values={getFilterValuesForLayer(layer)}
                       options={getFilterOptionsForLayer(layer, $activityTypes, $externalResourceNames)}
