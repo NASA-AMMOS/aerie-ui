@@ -6,7 +6,7 @@
   import { quadtree as d3Quadtree, type Quadtree } from 'd3-quadtree';
   import { type ScaleTime } from 'd3-scale';
   import { createEventDispatcher, onDestroy, onMount, tick } from 'svelte';
-  import { ViewDefaultActivityOptions } from '../../enums/view';
+  import { ViewConstants, ViewDefaultActivityOptions } from '../../enums/view';
   import type { ActivityDirective, ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { Plan } from '../../types/plan';
@@ -376,41 +376,47 @@
     return `${sticky ? '← ' : ''}${span.type}${span.duration === null ? ' (Unfinished)' : ''}`;
   }
 
-  /**
-   * Draws activity points to the canvas context.
-   * @note Points must be sorted in time ascending order before calling this function.
-   */
-  async function draw(): Promise<void> {
-    if (ctx) {
-      await tick();
+  function drawBottomLine(y: number, width: number) {
+    ctx.strokeStyle = 'rgba(210, 210, 210, 1)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(width, y);
+    ctx.stroke();
+  }
 
-      ctx.resetTransform();
-      ctx.scale(dpr, dpr);
-      ctx.clearRect(0, 0, drawWidth, drawHeight);
+  function drawGroup(node: ActivityTreeNode, y: number, rowHeight: number, drawLine = true) {
+    let newY = y;
+    if (drawLine) {
+      drawBottomLine(newY + rowHeight + 0.5, drawWidth);
+    }
 
-      quadtreeActivityDirectives = d3Quadtree<QuadtreeRect>()
-        .x(p => p.x)
-        .y(p => p.y)
-        .extent([
-          [0, 0],
-          [drawWidth, drawHeight],
-        ]);
-      quadtreeSpans = d3Quadtree<QuadtreeRect>()
-        .x(p => p.x)
-        .y(p => p.y)
-        .extent([
-          [0, 0],
-          [drawWidth, drawHeight],
-        ]);
+    drawRow(newY + activityRowPadding, node.items || [], idToColorMaps);
+    newY += rowHeight;
 
-      visibleActivityDirectivesById = {};
-      visibleSpansById = {};
-      if (activityOptions.displayMode === 'grouped') {
-        drawGroupedMode();
-      } else if (activityOptions.displayMode === 'compact') {
-        drawCompactMode();
-      } else {
-        console.warn('Unsupported LayerActivity displayMode: ', activityOptions.displayMode);
+    if (node.expanded && node.children.length) {
+      node.children.forEach(childNode => {
+        newY = drawGroup(childNode, newY, rowHeight, true);
+      });
+    }
+    return newY;
+  }
+
+  function drawGroupedMode() {
+    if (xScaleView !== null) {
+      const collapsedMode = drawHeight <= ViewConstants.MIN_ROW_HEIGHT;
+      let y = collapsedMode ? 0 : ViewConstants.MIN_ROW_HEIGHT - 1; // pad starting y with the min row height to align with activity tree
+      const expectedRowHeight = rowHeight + activityRowPadding;
+      activityTree.forEach(node => {
+        const newY = drawGroup(node, y, expectedRowHeight, !collapsedMode);
+        if (!collapsedMode) {
+          y = newY;
+        }
+      });
+      const newRowHeight = y + 36; // add padding to the bottom to account for buttons in the activity tree
+      if (!collapsedMode && newRowHeight > 0 && drawHeight !== newRowHeight) {
+        /* TODO a change from manual to auto height does not take effect until you trigger a redraw on this row, could pass in whether or not to update row height but that might be odd? */
+        dispatch('updateRowHeight', { newHeight: newRowHeight });
       }
     }
   }
@@ -717,51 +723,6 @@
     return rgba;
   }
 
-  function drawGroupedMode() {
-    if (xScaleView !== null) {
-      const collapsedMode = drawHeight < 25;
-      let y = collapsedMode ? 0 : 23;
-      const expectedRowHeight = rowHeight + activityRowPadding;
-      activityTree.forEach(node => {
-        const newY = drawGroup(node, y, expectedRowHeight, !collapsedMode);
-        if (!collapsedMode) {
-          y = newY;
-        }
-      });
-      const newRowHeight = y + 36;
-      if (!collapsedMode && newRowHeight > 0 && drawHeight !== newRowHeight) {
-        /* TODO a change from manual to auto height does not take effect until you trigger a redraw on this row, could pass in whether or not to update row height but that might be odd? */
-        dispatch('updateRowHeight', { newHeight: newRowHeight });
-      }
-    }
-  }
-
-  function drawBottomLine(y: number, width: number) {
-    ctx.strokeStyle = 'rgba(210, 210, 210, 1)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(width, y);
-    ctx.stroke();
-  }
-
-  function drawGroup(node: ActivityTreeNode, y: number, rowHeight: number, drawLine = true) {
-    let newY = y;
-    if (drawLine) {
-      drawBottomLine(newY + rowHeight + 0.5, drawWidth);
-    }
-
-    drawRow(newY + activityRowPadding, node.items || [], idToColorMaps);
-    newY += rowHeight;
-
-    if (node.expanded && node.children.length) {
-      node.children.forEach(childNode => {
-        newY = drawGroup(childNode, newY, rowHeight, true);
-      });
-    }
-    return newY;
-  }
-
   function measureText(text: string, cache: Record<string, TextMetrics>) {
     const cachedMeasurement = cache[text];
     if (cachedMeasurement) {
@@ -787,6 +748,45 @@
       ctx.drawImage(assets.anchorIcon, x, y);
     }
     ctx.globalAlpha = 1;
+  }
+
+  /**
+   * Draws activity points to the canvas context.
+   * @note Points must be sorted in time ascending order before calling this function.
+   */
+  async function draw(): Promise<void> {
+    if (ctx) {
+      await tick();
+
+      ctx.resetTransform();
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, drawWidth, drawHeight);
+
+      quadtreeActivityDirectives = d3Quadtree<QuadtreeRect>()
+        .x(p => p.x)
+        .y(p => p.y)
+        .extent([
+          [0, 0],
+          [drawWidth, drawHeight],
+        ]);
+      quadtreeSpans = d3Quadtree<QuadtreeRect>()
+        .x(p => p.x)
+        .y(p => p.y)
+        .extent([
+          [0, 0],
+          [drawWidth, drawHeight],
+        ]);
+
+      visibleActivityDirectivesById = {};
+      visibleSpansById = {};
+      if (activityOptions.displayMode === 'grouped') {
+        drawGroupedMode();
+      } else if (activityOptions.displayMode === 'compact') {
+        drawCompactMode();
+      } else {
+        console.warn('Unsupported LayerActivity displayMode: ', activityOptions.displayMode);
+      }
+    }
   }
 </script>
 
