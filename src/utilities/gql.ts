@@ -1830,7 +1830,7 @@ const gql = {
   `,
 
   SIMULATE: `#graphql
-     query Simulate($planId: Int!, $force: Boolean!) {
+    query Simulate($planId: Int!, $force: Boolean!) {
       ${Queries.SIMULATE}(planId: $planId, force: $force)
         reason
         simulationDatasetId
