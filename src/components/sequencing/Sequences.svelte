@@ -4,7 +4,7 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import type { ICellRendererParams } from 'ag-grid-community';
-  import { parcel, userSequences, userSequencesColumns } from '../../stores/sequencing';
+  import { parcel, parcels, userSequences, userSequencesColumns } from '../../stores/sequencing';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef, DataGridRowSelection, RowId } from '../../types/data-grid';
   import type { UserSequence } from '../../types/sequencing';
@@ -61,11 +61,14 @@
     },
     { field: 'name', filter: 'text', headerName: 'Name', resizable: true, sortable: true },
     {
-      field: 'parcel_id',
-      filter: 'number',
-      headerName: 'Parcel ID',
+      field: 'parcel',
+      filter: 'text',
+      headerName: 'Parcel',
       resizable: true,
       sortable: true,
+      valueGetter: ({ data }) => {
+        return $parcels.find(p => data.parcel_id === p.id)?.name;
+      },
     },
     {
       comparator: usernameComparator,
