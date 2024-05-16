@@ -8,7 +8,10 @@
   import type { ViewUpdate } from '@codemirror/view';
   import type { SyntaxNode } from '@lezer/common';
   import type { ChannelDictionary, CommandDictionary, ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
+  import CollapseIcon from 'bootstrap-icons/icons/arrow-bar-down.svg?component';
+  import ExpandIcon from 'bootstrap-icons/icons/arrow-bar-up.svg?component';
   import ClipboardIcon from 'bootstrap-icons/icons/clipboard.svg?component';
+  import SaveIcon from 'bootstrap-icons/icons/save.svg?component';
   import { EditorView, basicSetup } from 'codemirror';
   import { debounce } from 'lodash-es';
   import { createEventDispatcher, onMount } from 'svelte';
@@ -23,6 +26,7 @@
     parcelToParameterDictionaries,
     userSequenceEditorColumns,
     userSequenceEditorColumnsWithFormBuilder,
+    userSequencesJSONCollapsedRows,
     userSequencesRows,
   } from '../../stores/sequencing';
   import type { User } from '../../types/app';
@@ -67,6 +71,7 @@
   let editorSequenceDiv: HTMLDivElement;
   let editorSequenceView: EditorView;
   let selectedNode: SyntaxNode | null;
+  let toggleSeqJsonPreview: boolean = false;
 
   $: {
     if (editorSequenceView) {
@@ -213,6 +218,13 @@
     a.click();
   }
 
+  function downloadSeqN() {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([editorSequenceView.state.doc.toString()], { type: 'application/json' }));
+    a.download = sequenceName;
+    a.click();
+  }
+
   async function copySeqJsonToClipboard() {
     try {
       await navigator.clipboard.writeText(editorSeqJsonView.state.doc.toString());
@@ -221,16 +233,56 @@
       showFailureToast('Error copying sequence.json to clipboard');
     }
   }
+
+  async function copySeqNClipboard() {
+    try {
+      await navigator.clipboard.writeText(editorSequenceView.state.doc.toString());
+      showSuccessToast('SeqN copied to clipboard');
+    } catch {
+      showFailureToast('Error copying SeqN to clipboard');
+    }
+  }
+
+  function toggleSeqJsonEditor() {
+    toggleSeqJsonPreview = !toggleSeqJsonPreview;
+  }
 </script>
 
 <CssGrid bind:columns={commandFormBuilderGrid} minHeight={'0'}>
-  <CssGrid bind:rows={$userSequencesRows} minHeight={'0'}>
+  <CssGrid rows={toggleSeqJsonPreview ? $userSequencesRows : $userSequencesJSONCollapsedRows} minHeight={'0'}>
     <Panel>
       <svelte:fragment slot="header">
         <SectionTitle>{title}</SectionTitle>
 
+        <!-- Bryan can you align the icon form me :) -->
         <div class="right">
-          <slot />
+          <button
+            use:tooltip={{ content: `Copy to clipboard`, placement: 'top' }}
+            class="st-button icon"
+            style={' margin-right: 5px; '}
+            on:click={copySeqNClipboard}><ClipboardIcon /> SeqN</button
+          >
+          <!-- Bryan can you align the icon form me :) -->
+          <button
+            use:tooltip={{ content: `Copy to clipboard`, placement: 'top' }}
+            class="st-button icon"
+            style={'margin-left: 5px; margin-right: 15px; '}
+            on:click={copySeqJsonToClipboard}><ClipboardIcon /> JSON</button
+          >
+          <!-- Bryan can you align the icon form me :) -->
+          <button
+            use:tooltip={{ content: `Download Seq.json`, placement: 'top' }}
+            class="st-button secondary ellipsis"
+            style={' margin-left: 15px; margin-right: 2px;'}
+            on:click|stopPropagation={downloadSeqN}><SaveIcon /> SeqN</button
+          >
+          <!-- Bryan can you align the icon form me :) -->
+          <button
+            use:tooltip={{ content: `Download Seq.json`, placement: 'top' }}
+            class="st-button secondary ellipsis"
+            style={' margin-left: 2px; margin-right: 10px;'}
+            on:click|stopPropagation={downloadSeqJson}><SaveIcon /> JSON</button
+          >
         </div>
       </svelte:fragment>
 
@@ -247,14 +299,15 @@
 
         <div class="right">
           <button
-            use:tooltip={{ content: `Copy to clipboard`, placement: 'top' }}
+            use:tooltip={{ content: toggleSeqJsonPreview ? `Collapse Editor` : `Expand Editor`, placement: 'top' }}
             class="st-button icon"
-            on:click={copySeqJsonToClipboard}><ClipboardIcon /></button
+            on:click={toggleSeqJsonEditor}
           >
-          <button
-            use:tooltip={{ content: `Download Seq.json`, placement: 'top' }}
-            class="st-button secondary ellipsis"
-            on:click={downloadSeqJson}>Download</button
+            {#if toggleSeqJsonPreview}
+              <CollapseIcon />
+            {:else}
+              <ExpandIcon />
+            {/if}</button
           >
         </div>
       </svelte:fragment>
