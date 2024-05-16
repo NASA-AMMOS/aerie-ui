@@ -149,7 +149,12 @@
   function setInEditor(token: SyntaxNode, val: string) {
     // checking that we are not in the code mirror editor
     // this breaks cycle of form edits triggering document updates and vice versa
-    if (editorSequenceView && hasAncestorWithId(document.activeElement, ID_COMMAND_DETAIL_PANE)) {
+    if (
+      editorSequenceView &&
+      (hasAncestorWithId(document.activeElement, ID_COMMAND_DETAIL_PANE) ||
+        // Searchable Dropdown has pop out that is not a descendent
+        document.activeElement?.tagName === 'BODY')
+    ) {
       const currentVal = editorSequenceView.state.sliceDoc(token.node.from, token.node.to);
       if (currentVal !== val) {
         editorSequenceView.dispatch(

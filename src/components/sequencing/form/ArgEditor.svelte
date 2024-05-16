@@ -14,6 +14,7 @@
     isFswCommandArgumentRepeat,
     isFswCommandArgumentVarString,
     isNumberArg,
+    quoteEscape,
     type ArgTextDef,
   } from './utils';
 
@@ -21,6 +22,20 @@
   export let commandDictionary: CommandDictionary;
   export let setInEditor: (token: SyntaxNode, val: string) => void;
   export let addDefaultArgs: (commandNode: SyntaxNode, argDefs: FswCommandArgument[]) => void;
+
+  $: enableRepeatAdd =
+    argInfo.argDef &&
+    isFswCommandArgumentRepeat(argInfo.argDef) &&
+    argInfo.children &&
+    argInfo.argDef.repeat &&
+    argInfo.children.length < argInfo.argDef.repeat.arguments.length * (argInfo.argDef.repeat.max ?? Infinity);
+
+  function addRepeatTuple() {
+    const repeatArgs = argInfo.argDef && isFswCommandArgumentRepeat(argInfo.argDef) && argInfo.argDef.repeat?.arguments;
+    if (argInfo.node && repeatArgs) {
+      addDefaultArgs(argInfo.node, repeatArgs);
+    }
+  }
 </script>
 
 {#if !argInfo.argDef}
@@ -37,17 +52,27 @@
   {/if}
 {:else}
   <ArgTitle argDef={argInfo.argDef} />
-  {#if argInfo.argDef.arg_type === 'enum' && argInfo.node?.name === 'String'}
-    <EnumEditor
-      {commandDictionary}
-      argDef={argInfo.argDef}
-      initVal={argInfo.text ?? ''}
-      setInEditor={val => {
-        if (argInfo.node) {
-          setInEditor(argInfo.node, val);
-        }
-      }}
-    />
+  {#if argInfo.argDef.arg_type === 'enum' && argInfo.node}
+    {#if argInfo.node?.name === 'String'}
+      <EnumEditor
+        {commandDictionary}
+        argDef={argInfo.argDef}
+        initVal={argInfo.text ?? ''}
+        setInEditor={val => {
+          if (argInfo.node) {
+            setInEditor(argInfo.node, val);
+          }
+        }}
+      />
+    {:else}
+      <button
+        on:click={() => {
+          if (argInfo.node && argInfo.text) {
+            setInEditor(argInfo.node, quoteEscape(argInfo.text));
+          }
+        }}>Convert to enum type</button
+      >
+    {/if}
   {:else if isNumberArg(argInfo.argDef) && argInfo.node?.name === 'Number'}
     <NumEditor
       argDef={argInfo.argDef}
@@ -82,6 +107,15 @@
           }
         }}
       />
+    {:else if !!argInfo.argDef.repeat}
+      <div>
+        <button
+          disabled={!enableRepeatAdd}
+          on:click={addRepeatTuple}
+          title={`Add additional set of argument values to ${argInfo.argDef.name} repeat array`}
+          >Add {argInfo.argDef.name} tuple</button
+        >
+      </div>
     {/if}
   {:else}
     <div>Unexpected value for definition</div>
