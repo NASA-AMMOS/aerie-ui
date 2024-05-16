@@ -338,4 +338,66 @@ C ECHO L01STR
     };
     expect(actual).toEqual(expectedJson);
   });
+
+  it('header ordering', () => {
+    function allPermutations(inputArr: string[]) {
+      const result: string[][] = [];
+      function permute(arr: string[], m: string[] = []) {
+        if (arr.length === 0) {
+          result.push(m);
+        } else {
+          for (let i = 0; i < arr.length; i++) {
+            const curr = arr.slice();
+            const next = curr.splice(i, 1);
+            permute(curr.slice(), m.concat(next));
+          }
+        }
+      }
+      permute(inputArr);
+      return result;
+    }
+
+    const permutations = allPermutations([
+      `@ID "test.seq"`,
+      `@INPUT_PARAMS L01STR L02STR`,
+      `@LOCALS L01INT L02INT L01UINT L02UINT`,
+    ]);
+    permutations.forEach((ordering: string[]) => {
+      const input = ordering.join('\n\n');
+      const actual = sequenceToSeqJson(SeqLanguage.parser.parse(input), input, commandBanana, [], null, 'id');
+      const expected = {
+        id: 'test.seq',
+        locals: [
+          {
+            name: 'L01INT',
+            type: 'INT',
+          },
+          {
+            name: 'L02INT',
+            type: 'INT',
+          },
+          {
+            name: 'L01UINT',
+            type: 'UINT',
+          },
+          {
+            name: 'L02UINT',
+            type: 'UINT',
+          },
+        ],
+        metadata: {},
+        parameters: [
+          {
+            name: 'L01STR',
+            type: 'STRING',
+          },
+          {
+            name: 'L02STR',
+            type: 'STRING',
+          },
+        ],
+      };
+      expect(actual).toEqual(expected);
+    });
+  });
 });
