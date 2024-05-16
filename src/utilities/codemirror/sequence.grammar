@@ -24,7 +24,7 @@ GenericDirective {
 }
 
 IdDeclaration {
-  idDirective whiteSpace String newLine
+  idDirective (whiteSpace (String | Enum | Number)?)? newLine
 }
 
 ParameterDeclaration {

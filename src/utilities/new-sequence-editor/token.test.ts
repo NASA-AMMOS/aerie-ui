@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 
-import type { SyntaxNode } from '@lezer/common';
+import type { SyntaxNode, Tree } from '@lezer/common';
 import assert from 'assert';
 import { readFileSync, readdirSync } from 'fs';
 import * as path from 'path';
@@ -9,10 +9,15 @@ import { describe, it } from 'vitest';
 import { SeqLanguage } from '../codemirror';
 
 const ERROR = '⚠';
-const STEM_TOKEN = 'Stem';
+const ENUM_TOKEN = 'Enum';
 const LINE_COMMENT_TOKEN = 'LineComment';
+const STEM_TOKEN = 'Stem';
+const STRING_TOKEN = 'String';
 const METADATA_TOKEN = 'Metadata';
 const METADATA_ENTRY_TOKEN = 'MetaEntry';
+const ID_DECLARATION = 'IdDeclaration';
+const PARAMETER_DECLARATION = 'ParameterDeclaration';
+const LOCAL_DECLARATION = 'LocalDeclaration';
 
 function getMetaType(node: SyntaxNode) {
   return node?.firstChild?.nextSibling?.firstChild?.name;
@@ -37,7 +42,7 @@ C STEM
     const topLevelMetaData = parseTree.topNode.getChild(METADATA_TOKEN);
     const metaEntries = topLevelMetaData!.getChildren(METADATA_ENTRY_TOKEN);
     assert.equal(metaEntries.length, 4);
-    assert.equal(getMetaType(metaEntries[0]), 'String');
+    assert.equal(getMetaType(metaEntries[0]), STRING_TOKEN);
     assert.equal(getMetaType(metaEntries[1]), 'Boolean');
     assert.equal(getMetaType(metaEntries[2]), 'Number');
     assert.equal(getMetaType(metaEntries[3]), 'Number');
@@ -66,8 +71,8 @@ C STEM
 
 C STEM
 `;
-    const parseTree = SeqLanguage.parser.parse(input);
     assertNoErrorNodes(input);
+    const parseTree = SeqLanguage.parser.parse(input);
     const topLevelMetaData = parseTree.topNode.getChild(METADATA_TOKEN);
     const metaEntries = topLevelMetaData!.getChildren(METADATA_ENTRY_TOKEN);
     assert.equal(metaEntries.length, 4);
@@ -86,6 +91,100 @@ C STEM
       },
     });
     assert.deepStrictEqual(getMetaValue(metaEntries[3], input), {});
+  });
+});
+
+describe('header directives', () => {
+  function getIdValue(parseTree: Tree, input: string) {
+    const idToken = parseTree.topNode.getChild(ID_DECLARATION)?.firstChild;
+    if (idToken) {
+      return input.slice(idToken.from, idToken.to);
+    }
+    return null;
+  }
+
+  function getNodeText(node: SyntaxNode, input: string) {
+    return input.slice(node.from, node.to);
+  }
+
+  function allPermutations(inputArr: string[]) {
+    const result: string[][] = [];
+    function permute(arr: string[], m: string[] = []) {
+      if (arr.length === 0) {
+        result.push(m);
+      } else {
+        for (let i = 0; i < arr.length; i++) {
+          const curr = arr.slice();
+          const next = curr.splice(i, 1);
+          permute(curr.slice(), m.concat(next));
+        }
+      }
+    }
+    permute(inputArr);
+    return result;
+  }
+
+  it('expected id', () => {
+    const input = `
+  @ID "test.name"
+
+  C CMD_NO_ARGS
+    `;
+    assertNoErrorNodes(input);
+    const parseTree = SeqLanguage.parser.parse(input);
+    assert.equal(getIdValue(parseTree, input), '"test.name"');
+  });
+
+  it('enum id type', () => {
+    // This is an error in the linter, but an easy mistake to mistake
+    const input = `
+  @ID test_name
+
+  C CMD_NO_ARGS
+    `;
+    assertNoErrorNodes(input);
+    const parseTree = SeqLanguage.parser.parse(input);
+    assert.equal(getIdValue(parseTree, input), 'test_name');
+  });
+
+  it('number id type', () => {
+    // This is an error in the linter, but an easy mistake to mistake
+    const input = `
+  @ID 21
+
+  C CMD_NO_ARGS
+    `;
+    assertNoErrorNodes(input);
+    const parseTree = SeqLanguage.parser.parse(input);
+    assert.equal(getIdValue(parseTree, input), '21');
+  });
+
+  it('all permutations', () => {
+    const permutations = allPermutations([
+      `@ID "test.seq"`,
+      `@INPUT_PARAMS L01STR L02STR`,
+      `@LOCALS L01INT L02INT L01UINT L02UINT`,
+    ]);
+    permutations.forEach((ordering: string[]) => {
+      const input = ordering.join('\n\n');
+      assertNoErrorNodes(input);
+      const parseTree = SeqLanguage.parser.parse(input);
+      assert.equal(getIdValue(parseTree, input), `"test.seq"`);
+      assert.deepEqual(
+        parseTree.topNode
+          .getChild(LOCAL_DECLARATION)
+          ?.getChildren(ENUM_TOKEN)
+          .map(node => getNodeText(node, input)),
+        ['L01INT', 'L02INT', 'L01UINT', 'L02UINT'],
+      );
+      assert.deepEqual(
+        parseTree.topNode
+          .getChild(PARAMETER_DECLARATION)
+          ?.getChildren(ENUM_TOKEN)
+          .map(node => getNodeText(node, input)),
+        ['L01STR', 'L02STR'],
+      );
+    });
   });
 });
 
@@ -133,7 +232,7 @@ describe('error positions', () => {
 });
 
 describe('seqfiles', () => {
-  const seqDir = path.dirname(fileURLToPath(import.meta.url)) + '/sequences';
+  const seqDir = path.dirname(fileURLToPath(import.meta.url)) + '/../../tests/mocks/sequencing/sequences';
   for (const file of readdirSync(seqDir)) {
     if (!/\.txt$/.test(file)) {
       continue;

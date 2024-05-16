@@ -1,5 +1,3 @@
-/* eslint-disable no-undef */
-
 import { testTree } from '@lezer/generator/dist/test';
 import { readFileSync, readdirSync } from 'fs';
 import * as path from 'path';
@@ -7,7 +5,7 @@ import { fileURLToPath } from 'url';
 import { describe, it } from 'vitest';
 import { SeqLanguage } from '../codemirror';
 
-const caseDir = path.dirname(fileURLToPath(import.meta.url)) + '/cases';
+const caseDir = path.dirname(fileURLToPath(import.meta.url)) + '/../../tests/mocks/sequencing/cases';
 
 for (const file of readdirSync(caseDir)) {
   if (!/\.txt$/.test(file)) {

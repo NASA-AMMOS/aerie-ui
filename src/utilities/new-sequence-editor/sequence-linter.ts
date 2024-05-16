@@ -12,7 +12,7 @@ import type {
   ParameterDictionary,
 } from '@nasa-jpl/aerie-ampcs';
 import { closest, distance } from 'fastest-levenshtein';
-import { addDefaultArgs } from '../../components/sequencing/form/utils';
+import { addDefaultArgs, quoteEscape } from '../../components/sequencing/form/utils';
 
 import type { VariableDeclaration } from '@nasa-jpl/seq-json-schema/types';
 import type { EditorView } from 'codemirror';
@@ -92,6 +92,8 @@ export function sequenceLinter(
 
     // Validate top level metadata
     diagnostics.push(...validateMetadata(treeNode));
+
+    diagnostics.push(...validateId(treeNode, docText));
 
     const localsValidation = validateLocals(treeNode.getChildren('LocalDeclaration'), docText);
     variables.push(...localsValidation.variables);
@@ -335,7 +337,7 @@ export function sequenceLinter(
         local =>
           ({
             ...getFromAndTo([local]),
-            message: 'There is a maximum of @LOCALS directive per sequence',
+            message: 'There is a maximum of one @LOCALS directive per sequence',
             severity: 'error',
           }) as const,
       ),
@@ -1207,6 +1209,52 @@ export function sequenceLinter(
 
         break;
     }
+    return diagnostics;
+  }
+
+  function validateId(commandNode: SyntaxNode, text: string): Diagnostic[] {
+    const diagnostics: Diagnostic[] = [];
+    const idNodes = commandNode.getChildren('IdDeclaration');
+    if (idNodes.length) {
+      const idNode = idNodes[0];
+      const idValNode = idNode.firstChild;
+      if (idValNode?.name === 'Enum' || idValNode?.name === 'Number') {
+        const { from, to } = getFromAndTo([idValNode]);
+        const idVal = text.slice(from, to);
+        diagnostics.push({
+          actions: idValNode
+            ? [
+                {
+                  apply(view, from, to) {
+                    view.dispatch({ changes: { from, insert: quoteEscape(idVal), to } });
+                  },
+                  name: `Quote ${idVal}`,
+                },
+              ]
+            : [],
+          from,
+          message: `@ID directives must include double quoted string e.g. '@ID "sequence.name"'`,
+          severity: 'error',
+          to,
+        });
+      } else if (!idValNode) {
+        diagnostics.push({
+          ...getFromAndTo([idNode]),
+          message: `@ID directives must include a double quoted string e.g. '@ID "sequence.name"`,
+          severity: 'error',
+        });
+      }
+    }
+    diagnostics.push(
+      ...idNodes.slice(1).map(
+        idNode =>
+          ({
+            ...getFromAndTo([idNode]),
+            message: 'Only one @ID directive is allowed per sequence',
+            severity: 'error',
+          }) as const,
+      ),
+    );
     return diagnostics;
   }
 
