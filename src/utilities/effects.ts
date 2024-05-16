@@ -650,8 +650,7 @@ const effects = {
     user: User | null,
   ): Promise<SequenceAdaptation | null> {
     try {
-      // TODO: Fix these permissions
-      if (!queryPermissions.CREATE_DICTIONARY(user)) {
+      if (!queryPermissions.CREATE_SEQUENCE_ADAPTATION(user)) {
         throwPermissionError('upload a custom adaptation');
       }
 
@@ -884,7 +883,7 @@ const effects = {
     user: User | null,
   ): Promise<ParcelToParameterDictionary[] | null> {
     try {
-      if (!queryPermissions.UPDATE_PARCEL(user, { owner: parcelOwner })) {
+      if (!queryPermissions.CREATE_PARCEL_TO_PARAMETER_DICTIONARIES(user)) {
         throwPermissionError('create parcel to parameter dictionary');
       }
 
@@ -2226,7 +2225,7 @@ const effects = {
 
   async deleteParcelToParameterDictionaries(ids: number[], parcel: Parcel, user: User | null): Promise<number | null> {
     try {
-      if (!queryPermissions.DELETE_PARCEL(user, parcel)) {
+      if (!queryPermissions.DELETE_PARCEL_TO_PARAMETER_DICTIONARIES(user, parcel)) {
         throwPermissionError('delete parcel to parameter dictionaries');
       }
 
@@ -2240,7 +2239,7 @@ const effects = {
         const { affected_rows } = delete_parcel_to_parameter_dictionary;
 
         if (affected_rows !== ids.length) {
-          throw Error('Some parcel to parameter dictioanries were not successfully deleted');
+          throw Error('Some parcel to parameter dictionaries were not successfully deleted');
         }
 
         showSuccessToast('Parcel to parameter dictionaries updated Successfully');

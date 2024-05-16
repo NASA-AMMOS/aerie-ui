@@ -48,7 +48,7 @@ export const SeqLanguage = LRLanguage.define({
   }),
 });
 
-export function seq(autocomplete?: (context: CompletionContext) => CompletionResult | null) {
+export function setupLanguageSupport(autocomplete?: (context: CompletionContext) => CompletionResult | null) {
   if (autocomplete) {
     const autocompleteExtension = SeqLanguage.data.of({ autocomplete });
     return new LanguageSupport(SeqLanguage, [autocompleteExtension]);

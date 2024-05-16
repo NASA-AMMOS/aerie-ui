@@ -5,27 +5,25 @@
   import { base } from '$app/paths';
   import type { ICellRendererParams } from 'ag-grid-community';
   import PageTitle from '../../components/app/PageTitle.svelte';
-  import CssGrid from '../../components/ui/CssGrid.svelte';
   import Panel from '../../components/ui/Panel.svelte';
   import SectionTitle from '../../components/ui/SectionTitle.svelte';
-  import { parcels, userParcelColumns } from '../../stores/sequencing';
+  import { parcels } from '../../stores/sequencing';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef, DataGridRowSelection, RowId } from '../../types/data-grid';
   import type { Parcel } from '../../types/sequencing';
   import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
-  import CssGridGutter from '../ui/CssGridGutter.svelte';
   import DataGridActions from '../ui/DataGrid/DataGridActions.svelte';
   import SingleActionDataGrid from '../ui/DataGrid/SingleActionDataGrid.svelte';
 
   export let user: User | null;
 
-  type pCellRendererParams = {
+  type CellRendererParams = {
     deleteParcel?: (parcel: Parcel) => void;
     editParcel?: (parcel: Parcel) => void;
   };
-  type ParcelCellRendererParams = ICellRendererParams<Parcel> & pCellRendererParams;
+  type ParcelCellRendererParams = ICellRendererParams<Parcel> & CellRendererParams;
 
   const baseColumnDefs: DataGridColumnDef[] = [
     {
@@ -77,7 +75,7 @@
       cellRendererParams: {
         deleteParcel,
         editParcel,
-      } as pCellRendererParams,
+      } as CellRendererParams,
       field: 'actions',
       headerName: '',
       resizable: false,
@@ -143,52 +141,40 @@
 
 <PageTitle title="Parcels" />
 
-<CssGrid bind:columns={$userParcelColumns}>
-  <Panel>
-    <svelte:fragment slot="header">
-      <SectionTitle>Parcels</SectionTitle>
+<Panel>
+  <svelte:fragment slot="header">
+    <SectionTitle>Parcels</SectionTitle>
 
-      <div class="right">
-        <button
-          class="st-button secondary ellipsis"
-          use:permissionHandler={{
-            hasPermission: featurePermissions.parcels.canCreate(user),
-            permissionError: 'You do not have permission to create a new parcel',
-          }}
-          on:click={() => goto(`${base}/parcels/new`)}
-        >
-          New
-        </button>
-      </div>
-    </svelte:fragment>
+    <div class="right">
+      <button
+        class="st-button secondary ellipsis"
+        use:permissionHandler={{
+          hasPermission: featurePermissions.parcels.canCreate(user),
+          permissionError: 'You do not have permission to create a new parcel',
+        }}
+        on:click={() => goto(`${base}/parcels/new`)}
+      >
+        New
+      </button>
+    </div>
+  </svelte:fragment>
 
-    <svelte:fragment slot="body">
-      {#if filteredParcels.length}
-        <SingleActionDataGrid
-          {columnDefs}
-          hasEdit={true}
-          {hasEditPermission}
-          {hasDeletePermission}
-          itemDisplayText="Parcel"
-          items={filteredParcels}
-          {user}
-          on:deleteItem={deleteParcelContext}
-          on:editItem={editParcelContext}
-          on:rowSelected={toggleParcel}
-        />
-      {:else}
-        <div class="p1 st-typography-label">No Parcels Found</div>
-      {/if}
-    </svelte:fragment>
-  </Panel>
-
-  <CssGridGutter track={1} type="column" />
-
-  <Panel>
-    <svelte:fragment slot="header">
-      <SectionTitle>Parcel Content</SectionTitle>
-    </svelte:fragment>
-
-    <svelte:fragment slot="body"></svelte:fragment>
-  </Panel>
-</CssGrid>
+  <svelte:fragment slot="body">
+    {#if filteredParcels.length}
+      <SingleActionDataGrid
+        {columnDefs}
+        hasEdit={true}
+        {hasEditPermission}
+        {hasDeletePermission}
+        itemDisplayText="Parcel"
+        items={filteredParcels}
+        {user}
+        on:deleteItem={deleteParcelContext}
+        on:editItem={editParcelContext}
+        on:rowSelected={toggleParcel}
+      />
+    {:else}
+      <div class="p1 st-typography-label">No Parcels Found</div>
+    {/if}
+  </svelte:fragment>
+</Panel>

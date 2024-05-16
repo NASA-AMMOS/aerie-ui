@@ -13,8 +13,10 @@
   import SectionTitle from '../ui/SectionTitle.svelte';
 
   export let dictionaries: DictionaryType[];
+  // Used when the table is in single select mode.
   export let dictionaryId: number | null = null;
-  export let dictionaryIds: Record<number, boolean> = {};
+  // Used when the table is in multiselect mode.
+  export let multiSelectDictionaryIds: Record<number, boolean> = {};
   export let isEditingParcel: boolean = false;
   export let isMultiselect: boolean = false;
   export let hasEditPermission: boolean = false;
@@ -22,10 +24,12 @@
   export let user: User | null;
 
   let dictionaryDataGrid: SingleActionDataGrid<DictionaryType> | undefined = undefined;
+  let dictionaryColumnDefs: DataGridColumnDef[];
   let displayText: string = '';
   let displayTextPlural: string = '';
   let hasDeletePermission: boolean = false;
   let isSequenceAdaptation: boolean = false;
+  let sequenceAdaptationColumDefs: DataGridColumnDef[];
 
   const dispatch = createEventDispatcher<{
     delete: { id: number };
@@ -33,17 +37,17 @@
     select: { id: number | null };
   }>();
 
-  type dCellRendererParams = {
+  type CellRendererParams = {
     deleteDictionary?: (dictionary: DictionaryType) => void;
   };
-  type DictionaryCellRendererParams = ICellRendererParams<DictionaryType> & dCellRendererParams;
+  type DictionaryCellRendererParams = ICellRendererParams<DictionaryType> & CellRendererParams;
 
   $: isSequenceAdaptation = type === 'Sequence';
   $: displayText = isSequenceAdaptation ? `${type} Adaptation` : `${type} Dictionary`;
   $: displayTextPlural = isSequenceAdaptation ? `${type} Adaptations` : `${type} Dictionaries`;
   $: hasDeletePermission = featurePermissions.commandDictionary.canDelete(user);
 
-  $: if (dictionaryIds && dictionaryDataGrid?.redrawRows !== undefined) {
+  $: if ((multiSelectDictionaryIds || dictionaryId) && dictionaryDataGrid?.redrawRows !== undefined) {
     dictionaryDataGrid.redrawRows();
   }
 
@@ -58,7 +62,7 @@
         const { data } = params;
         if (data) {
           if (isMultiselect) {
-            return !!dictionaryIds[data.id];
+            return !!multiSelectDictionaryIds[data.id];
           }
 
           return dictionaryId === data.id;
@@ -69,7 +73,7 @@
     },
   ];
 
-  const dictionaryColumnDefs: DataGridColumnDef[] = [
+  $: dictionaryColumnDefs = [
     ...(isEditingParcel ? editingColumnDefs : []),
     {
       field: 'id',
@@ -86,7 +90,7 @@
     { field: 'created_at', filter: 'text', headerName: 'Created At', resizable: true, sortable: true },
   ];
 
-  const sequenceAdaptationColumDefs: DataGridColumnDef[] = [
+  $: sequenceAdaptationColumDefs = [
     ...(isEditingParcel ? editingColumnDefs : []),
     {
       field: 'id',
@@ -125,7 +129,7 @@
       },
       cellRendererParams: {
         deleteDictionary,
-      } as dCellRendererParams,
+      } as CellRendererParams,
       field: 'actions',
       headerName: '',
       resizable: false,
@@ -164,11 +168,11 @@
 
   function selectRow(id: number, newValue: boolean) {
     if (isMultiselect && typeof newValue === 'boolean') {
-      dictionaryIds = {
-        ...dictionaryIds,
+      multiSelectDictionaryIds = {
+        ...multiSelectDictionaryIds,
         [id]: newValue,
       };
-      dispatch('multiSelect', { ids: dictionaryIds });
+      dispatch('multiSelect', { ids: multiSelectDictionaryIds });
     } else {
       dictionaryId = newValue ? id : null;
       dispatch('select', { id: dictionaryId });
