@@ -384,7 +384,7 @@ const gql = {
   CREATE_DICTIONARY: `#graphql
   mutation CreateDictionary($dictionary: String!, $type: String!) {
     createDictionary: ${Queries.UPLOAD_DICTIONARY}(dictionary: $dictionary, type : $type) {
-      path
+      dictionary_path
       created_at
       id
       mission
@@ -468,13 +468,9 @@ const gql = {
 
   CREATE_PARCEL_TO_PARAMETER_DICTIONARIES: `#graphql
     mutation CreateParcelToParameterDictionaries($parcelToParameterDictionaries : [parcel_to_parameter_dictionary_insert_input!]!) {
-      ${Queries.INSERT_PARCEL_TO_PARAMETER_DICTIONARY}(objects: $parcelToParameterDictionaries, on_conflict: {
-        constraint: parcel_to_parameter_dictionary_synthetic_key,
-        update_columns: []
-      }) {
+      ${Queries.INSERT_PARCEL_TO_PARAMETER_DICTIONARY}(objects: $parcelToParameterDictionaries) {
         affected_rows
         returning {
-          id
           parcel_id
           parameter_dictionary_id
         }
@@ -2253,7 +2249,6 @@ const gql = {
   SUB_PARCEL_TO_PARAMETER_DICTIONARIES: `#graphql
     subscription SubParcelsToParameterDictionaries($parcelId: Int!) {
       ${Queries.PARCEL_TO_PARAMETER_DICTIONARY}(where: {parcel_id: {_eq: $parcelId }}) {
-        id
         parameter_dictionary_id
         parcel_id
       }
