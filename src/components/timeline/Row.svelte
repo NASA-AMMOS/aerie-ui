@@ -358,23 +358,38 @@
     if (activityLayers.length) {
       let directives: ActivityDirective[] = [];
       let spans: Span[] = [];
+
+      // track directives and spans that have been seen to avoid double counting
+      // if more than one layer matches a type
+      let seenDirectiveIds: Record<number, boolean> = {};
+      let seenSpanIds: Record<number, boolean> = {};
       activityLayers.forEach(layer => {
         if (layer.filter && layer.filter.activity !== undefined) {
           const types = layer.filter.activity.types || [];
           types.forEach(type => {
             const matchingDirectives = directivesByType[type];
             if (matchingDirectives) {
+              const uniqueDirectives: ActivityDirective[] = [];
               matchingDirectives.forEach(directive => {
-                idToColorMaps.directives[directive.id] = layer.activityColor;
+                if (!seenDirectiveIds[directive.id]) {
+                  idToColorMaps.directives[directive.id] = layer.activityColor;
+                  seenDirectiveIds[directive.id] = true;
+                  uniqueDirectives.push(directive);
+                }
               });
-              directives = directives.concat(matchingDirectives);
+              directives = directives.concat(uniqueDirectives);
             }
             const matchingSpans = spansByType[type];
             if (matchingSpans) {
+              const uniqueSpans: Span[] = [];
               matchingSpans.forEach(span => {
-                idToColorMaps.spans[span.id] = layer.activityColor;
+                if (!seenSpanIds[span.id]) {
+                  idToColorMaps.spans[span.id] = layer.activityColor;
+                  seenSpanIds[span.id] = true;
+                  uniqueSpans.push(span);
+                }
               });
-              spans = spans.concat(matchingSpans);
+              spans = spans.concat(uniqueSpans);
             }
           });
         }

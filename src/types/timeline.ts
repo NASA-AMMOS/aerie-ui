@@ -167,12 +167,19 @@ export type ResourceLayerFilter = {
 };
 
 export type ActivityOptions = {
-  // TODO should these be optional for backwards compatibility
-  // or is it enough to make the root options object optional?
+  // Height of activity subrows
   activityHeight: number;
+
+  // Whether or not to display only directives, only spans, or both in the row
   composition: 'directives' | 'spans' | 'both';
+
+  // Describes the primary method in which activities are visualized within this row
   displayMode: 'grouped' | 'compact';
+
+  // If true the activities are grouped starting with directive types, if false activities are grouped by type regardless of hierarchy.
   hierarchyMode: 'directive' | 'all';
+
+  // Activity text label behavior
   labelVisibility: 'on' | 'off' | 'auto';
 };
 

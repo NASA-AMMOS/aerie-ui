@@ -644,9 +644,9 @@ export function getYAxesWithScaleDomains(
   });
 }
 
-/* TODO this would all be much easier if we just gave things UUIDs instead of incrementing numerical ids.  */
 /**
  * Duplicates the given row and internal axes, layers, and horizontal guides.
+ * @todo this would all be much easier if we just gave things UUIDs instead of incrementing numerical ids
  */
 export function duplicateRow(row: Row, timelines: Timeline[], timelineId: number): Row | null {
   const timelinesClone = structuredClone(timelines);
@@ -783,18 +783,28 @@ export function filterResourcesByLayer(layer: Layer, resources: Resource[] | Res
   return resources.filter(resource => (layer.filter.resource?.names || []).indexOf(resource.name) > -1);
 }
 
-/* TODO docstrings */
+/**
+ * Returns true if the directive falls within the viewTimeRange bounds
+ */
 export function directiveInView(directive: ActivityDirective, viewTimeRange: TimeRange) {
-  // TODO should we use the old behavior of having the label be sticky too?
   const directiveX = directive.start_time_ms ?? 0;
   return directiveX >= viewTimeRange.start && directiveX < viewTimeRange.end;
 }
 
+/**
+ * Returns true if the span falls within or encompasses the viewTimeRange
+ */
 export function spanInView(span: Span, viewTimeRange: TimeRange) {
   const spanInBounds = span.startMs >= viewTimeRange.start && span.startMs < viewTimeRange.end;
   return spanInBounds || (span.startMs < viewTimeRange.start && span.startMs + span.durationMs >= viewTimeRange.start);
 }
 
+/**
+ * Returns an `ActivityTree` representing the given directives and spans.
+ * An `ActivityTree` is a list of `ActivityTreeNode`s, each node representing
+ * a directive, a span, a directive plus its root span, or an aggregation of
+ * nodes by type. The expansion of nodes in the tree is tracked by `ActivityTreeExpansionMap`.
+ */
 export function generateActivityTree(
   directives: ActivityDirective[],
   spans: Span[],
@@ -807,7 +817,6 @@ export function generateActivityTree(
   showDirectives: boolean,
   viewTimeRange: TimeRange,
 ): ActivityTree {
-  // TODO duplicates appear when you have two layers with the same type
   const groupedSpans = showSpans && hierarchyMode === 'all' ? groupBy(spans, 'type') : {};
   const groupedDirectives = showDirectives ? groupBy(directives, 'type') : {};
   const nodes: ActivityTreeNode[] = [];
@@ -885,6 +894,9 @@ export function generateActivityTree(
   return nodes;
 }
 
+/**
+ * Returns the subtree for the given directive
+ */
 export function getDirectiveSubtree(
   directive: ActivityDirective,
   parentId: string,
@@ -894,7 +906,7 @@ export function getDirectiveSubtree(
   spansMap: SpansMap,
   showSpans: boolean,
   viewTimeRange: TimeRange,
-) {
+): ActivityTreeNode {
   let children: ActivityTreeNode[] = [];
   const id = `${parentId}_${directive.id}`;
   let span;
@@ -935,6 +947,9 @@ export function getDirectiveSubtree(
   } as ActivityTreeNode;
 }
 
+/**
+ * Returns the span subtrees for the given span
+ */
 export function getSpanSubtrees(
   span: Span,
   parentId: string,
@@ -944,7 +959,7 @@ export function getSpanSubtrees(
   spanUtilityMaps: SpanUtilityMaps,
   spansMap: SpansMap,
   viewTimeRange: TimeRange,
-) {
+): ActivityTreeNode[] {
   const children: ActivityTreeNode[] = [];
   const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[span.id].map(id => spansMap[id]);
   if (type === 'aggregation') {
@@ -1022,6 +1037,9 @@ export function getSpanSubtrees(
   return children;
 }
 
+/**
+ * Returns whether or not the node is expanded in the activity tree
+ */
 export function getNodeExpanded(id: string, activityTreeExpansionMap: ActivityTreeExpansionMap) {
   if (!Object.hasOwn(activityTreeExpansionMap, id)) {
     return false;
@@ -1029,6 +1047,10 @@ export function getNodeExpanded(id: string, activityTreeExpansionMap: ActivityTr
   return activityTreeExpansionMap[id];
 }
 
+/**
+ * Recursively paginates the given `ActivityTreeNode` list such that no subgrouping exceeds
+ * the `binSize` argument.
+ */
 export function paginateNodes(
   nodes: ActivityTreeNode[],
   parentId: string,
