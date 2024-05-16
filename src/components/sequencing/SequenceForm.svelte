@@ -13,7 +13,7 @@
     userSequenceFormColumns,
   } from '../../stores/sequencing';
   import type { User, UserId } from '../../types/app';
-  import { type UserSequence, type UserSequenceInsertInput } from '../../types/sequencing';
+  import type { UserSequence, UserSequenceInsertInput } from '../../types/sequencing';
   import effects from '../../utilities/effects';
   import { isSaveEvent } from '../../utilities/keyboardEvents';
   import { parseSeqJsonFromFile, seqJsonToSequence } from '../../utilities/new-sequence-editor/from-seq-json';
@@ -96,6 +96,7 @@
       const adaptation = await effects.getSequenceAdaptation(id, user);
 
       if (adaptation) {
+        // This evaulates the custom sequence adaptation that is optionally provided by the user.
         Function(adaptation.adaptation)();
       }
     } else {

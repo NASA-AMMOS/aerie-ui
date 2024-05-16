@@ -3,6 +3,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
+  import { createEventDispatcher } from 'svelte';
   import {
     channelDictionaries,
     commandDictionaries,
@@ -55,6 +56,10 @@
   let savingParcel: boolean = false;
   let selectedParmeterDictionaries: Record<number, boolean> = {};
 
+  const dispatch = createEventDispatcher<{
+    save: { parcelId: number };
+  }>();
+
   $: selectedParmeterDictionaries = savedParameterDictionaryIds = $parcelToParameterDictionaries.reduce(
     (prevBooleanMap: Record<number, boolean>, parcelToParameterDictionary: ParcelToParameterDictionary) => {
       return {
@@ -105,19 +110,19 @@
     return false;
   }
 
-  function onToggleChannelDictionary(event: CustomEvent) {
+  function onToggleChannelDictionary(event: CustomEvent<{ id: number | null }>) {
     parcelChannelDictionaryId = event.detail.id;
   }
 
-  function onToggleCommandDictionary(event: CustomEvent) {
+  function onToggleCommandDictionary(event: CustomEvent<{ id: number | null }>) {
     parcelCommandDictionaryId = event.detail.id;
   }
 
-  function onToggleParameterDictionary(event: CustomEvent) {
+  function onToggleParameterDictionary(event: CustomEvent<{ ids: Record<number, boolean> }>) {
     selectedParmeterDictionaries = event.detail.ids;
   }
 
-  function onToggleSequenceAdaptation(event: CustomEvent) {
+  function onToggleSequenceAdaptation(event: CustomEvent<{ id: number | null }>) {
     parcelSequenceAdaptationId = event.detail.id;
   }
 
@@ -181,7 +186,7 @@
           await saveParcelToParameterDictionaries();
 
           if (parcelId !== null) {
-            goto(`${base}/parcels/edit/${parcelId}`);
+            dispatch('save', { parcelId });
           }
         } else if (mode === 'edit' && parcelId !== null) {
           const updatedParcel: Partial<Parcel> = {
@@ -219,7 +224,7 @@
         </button>
         <button
           class="st-button {saveButtonClass} ellipsis"
-          disabled={!saveButtonEnabled}
+          disabled={!saveButtonEnabled || !parcelModified}
           use:permissionHandler={{
             hasPermission,
             permissionError,
@@ -285,7 +290,7 @@
 
     <DictionaryTable
       dictionaries={$parameterDictionaries}
-      dictionaryIds={selectedParmeterDictionaries}
+      multiSelectDictionaryIds={selectedParmeterDictionaries}
       isEditingParcel={true}
       isMultiselect={true}
       hasEditPermission={hasPermission}

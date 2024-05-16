@@ -23,6 +23,8 @@
 
   export let user: User | null;
 
+  let baseColumnDefs: DataGridColumnDef[];
+
   type CellRendererParams = {
     deleteSequence: (sequence: UserSequence) => void;
     editSequence: (sequence: UserSequence) => void;
@@ -48,7 +50,7 @@
     return valueA === user?.id ? 1 : -1;
   }
 
-  const baseColumnDefs: DataGridColumnDef[] = [
+  $: baseColumnDefs = [
     {
       field: 'id',
       filter: 'text',

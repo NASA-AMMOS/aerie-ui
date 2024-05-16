@@ -26,7 +26,7 @@
     userSequencesRows,
   } from '../../stores/sequencing';
   import type { User } from '../../types/app';
-  import { seq } from '../../utilities/codemirror';
+  import { setupLanguageSupport } from '../../utilities/codemirror';
   import { seqJsonLinter } from '../../utilities/new-sequence-editor/seq-json-linter';
   import { sequenceCompletion } from '../../utilities/new-sequence-editor/sequence-completion';
   import { sequenceLinter } from '../../utilities/new-sequence-editor/sequence-linter';
@@ -149,7 +149,7 @@
         EditorView.lineWrapping,
         EditorView.theme({ '.cm-gutter': { 'min-height': `${clientHeightGridRightTop}px` } }),
         lintGutter(),
-        compartmentSeqLanguage.of(seq(sequenceCompletion(null, null, []))),
+        compartmentSeqLanguage.of(setupLanguageSupport(sequenceCompletion(null, null, []))),
         compartmentSeqLinter.of(sequenceLinter()),
         compartmentSeqTooltip.of(sequenceTooltip()),
         EditorView.updateListener.of(debounce(sequenceUpdateListener, 250)),
