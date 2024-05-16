@@ -13,11 +13,16 @@ import {
   type CountableTimeInterval,
   type TimeInterval,
 } from 'd3-time';
+import { groupBy } from 'lodash-es';
 import { ViewDefaultActivityOptions } from '../enums/view';
 import type { ActivityDirective } from '../types/activity';
-import type { Resource, ResourceType, ResourceValue, Span } from '../types/simulation';
+import type { Resource, ResourceType, ResourceValue, Span, SpanUtilityMaps, SpansMap } from '../types/simulation';
 import type {
   ActivityLayer,
+  ActivityOptions,
+  ActivityTree,
+  ActivityTreeExpansionMap,
+  ActivityTreeNode,
   Axis,
   HorizontalGuide,
   Layer,
@@ -772,12 +777,13 @@ export function minMaxDecimation<T>(
 }
 
 /**
- * Filteres list of resources by the layer's resource filter
+ * Filters list of resources by the layer's resource filter
  */
 export function filterResourcesByLayer(layer: Layer, resources: Resource[] | ResourceType[]) {
   return resources.filter(resource => (layer.filter.resource?.names || []).indexOf(resource.name) > -1);
 }
 
+/* TODO docstrings */
 export function directiveInView(directive: ActivityDirective, viewTimeRange: TimeRange) {
   // TODO should we use the old behavior of having the label be sticky too?
   const directiveX = directive.start_time_ms ?? 0;
@@ -785,7 +791,280 @@ export function directiveInView(directive: ActivityDirective, viewTimeRange: Tim
 }
 
 export function spanInView(span: Span, viewTimeRange: TimeRange) {
-  // TODO should we use the old behavior of having the label be sticky too?
   const spanInBounds = span.startMs >= viewTimeRange.start && span.startMs < viewTimeRange.end;
   return spanInBounds || (span.startMs < viewTimeRange.start && span.startMs + span.durationMs >= viewTimeRange.start);
+}
+
+export function generateActivityTree(
+  directives: ActivityDirective[],
+  spans: Span[],
+  activityTreeExpansionMap: ActivityTreeExpansionMap,
+  hierarchyMode: ActivityOptions['hierarchyMode'],
+  filterActivitiesByTime: boolean,
+  spanUtilityMaps: SpanUtilityMaps,
+  spansMap: SpansMap,
+  showSpans: boolean,
+  showDirectives: boolean,
+  viewTimeRange: TimeRange,
+): ActivityTree {
+  // TODO duplicates appear when you have two layers with the same type
+  const groupedSpans = showSpans && hierarchyMode === 'all' ? groupBy(spans, 'type') : {};
+  const groupedDirectives = showDirectives ? groupBy(directives, 'type') : {};
+  const nodes: ActivityTreeNode[] = [];
+  const allKeys = new Set(Object.keys(groupedSpans).concat(Object.keys(groupedDirectives)));
+  Array.from(allKeys)
+    .sort()
+    .forEach(type => {
+      const spanGroup = groupedSpans[type];
+      const directiveGroup = groupedDirectives[type];
+      const id = type;
+      const expanded = getNodeExpanded(id, activityTreeExpansionMap);
+      const label = type;
+      let children: ActivityTreeNode['children'] = [];
+      const items: ActivityTreeNode['items'] = [];
+      const seenSpans: Record<string, boolean> = {};
+      if (directiveGroup) {
+        directiveGroup.forEach(directive => {
+          let childSpan;
+          if (showSpans) {
+            const childSpanId = spanUtilityMaps.directiveIdToSpanIdMap[directive.id];
+            childSpan = spansMap[childSpanId];
+            if (childSpan && hierarchyMode === 'all') {
+              seenSpans[childSpan.id] = true;
+            }
+          }
+          if (expanded) {
+            children.push(
+              getDirectiveSubtree(
+                directive,
+                id,
+                activityTreeExpansionMap,
+                filterActivitiesByTime,
+                spanUtilityMaps,
+                spansMap,
+                showSpans,
+                viewTimeRange,
+              ),
+            );
+          }
+          items.push({ directive, ...(childSpan ? { span: childSpan } : null) });
+        });
+      }
+      if (spanGroup && hierarchyMode === 'all') {
+        spanGroup.forEach(span => {
+          if (!seenSpans[span.id]) {
+            if (expanded) {
+              children.push(
+                ...getSpanSubtrees(
+                  span,
+                  id,
+                  activityTreeExpansionMap,
+                  'span',
+                  filterActivitiesByTime,
+                  spanUtilityMaps,
+                  spansMap,
+                  viewTimeRange,
+                ),
+              );
+            }
+            items.push({ span });
+          }
+        });
+      }
+      children = paginateNodes(children, id, activityTreeExpansionMap);
+      nodes.push({
+        children,
+        expanded: expanded,
+        id,
+        isLeaf: false,
+        items,
+        label,
+        type: 'aggregation',
+      });
+    });
+  return nodes;
+}
+
+export function getDirectiveSubtree(
+  directive: ActivityDirective,
+  parentId: string,
+  activityTreeExpansionMap: ActivityTreeExpansionMap,
+  filterActivitiesByTime: boolean,
+  spanUtilityMaps: SpanUtilityMaps,
+  spansMap: SpansMap,
+  showSpans: boolean,
+  viewTimeRange: TimeRange,
+) {
+  let children: ActivityTreeNode[] = [];
+  const id = `${parentId}_${directive.id}`;
+  let span;
+  const expanded = getNodeExpanded(id, activityTreeExpansionMap);
+
+  if (showSpans) {
+    const rootSpanId = spanUtilityMaps.directiveIdToSpanIdMap[directive.id];
+    const rootSpan = spansMap[rootSpanId];
+    if (rootSpan) {
+      span = rootSpan;
+    }
+    if (typeof rootSpanId === 'number') {
+      children = paginateNodes(
+        getSpanSubtrees(
+          rootSpan,
+          id,
+          activityTreeExpansionMap,
+          'aggregation',
+          filterActivitiesByTime,
+          spanUtilityMaps,
+          spansMap,
+          viewTimeRange,
+        ),
+        id,
+        activityTreeExpansionMap,
+      );
+    }
+  }
+
+  return {
+    children,
+    expanded,
+    id,
+    isLeaf: children.length < 1,
+    items: [{ directive, span }],
+    label: directive.name,
+    type: 'directive',
+  } as ActivityTreeNode;
+}
+
+export function getSpanSubtrees(
+  span: Span,
+  parentId: string,
+  activityTreeExpansionMap: ActivityTreeExpansionMap,
+  type: ActivityTreeNode['type'],
+  filterActivitiesByTime: boolean,
+  spanUtilityMaps: SpanUtilityMaps,
+  spansMap: SpansMap,
+  viewTimeRange: TimeRange,
+) {
+  const children: ActivityTreeNode[] = [];
+  const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[span.id].map(id => spansMap[id]);
+  if (type === 'aggregation') {
+    // Group by type
+    let computedSpans = spanChildren;
+    if (filterActivitiesByTime) {
+      computedSpans = spanChildren.filter(span => spanInView(span, viewTimeRange));
+    }
+    const groupedSpanChildren = groupBy(computedSpans, 'type');
+    Object.keys(groupedSpanChildren)
+      .sort()
+      .forEach(key => {
+        const spanGroup = groupedSpanChildren[key];
+        const id = `${parentId}_${key}`;
+        const expanded = getNodeExpanded(id, activityTreeExpansionMap);
+        let childrenForKey: ActivityTreeNode[] = [];
+        if (expanded) {
+          spanGroup.forEach(spanChild => {
+            childrenForKey.push(
+              ...getSpanSubtrees(
+                spanChild,
+                id,
+                activityTreeExpansionMap,
+                'span',
+                filterActivitiesByTime,
+                spanUtilityMaps,
+                spansMap,
+                viewTimeRange,
+              ),
+            );
+          });
+          childrenForKey = paginateNodes(childrenForKey, id, activityTreeExpansionMap);
+        }
+        children.push({
+          children: childrenForKey,
+          expanded,
+          id,
+          isLeaf: false,
+          items: spanGroup.map(span => ({ span })),
+          label: key,
+          type: 'aggregation',
+        });
+      });
+  } else if (type === 'span') {
+    const id = `${parentId}_${span.id}`;
+    const expanded = getNodeExpanded(id, activityTreeExpansionMap);
+    const count = spanChildren.length;
+    let childrenForKey: ActivityTreeNode[] = [];
+    if (expanded) {
+      childrenForKey = paginateNodes(
+        getSpanSubtrees(
+          span,
+          id,
+          activityTreeExpansionMap,
+          'aggregation',
+          filterActivitiesByTime,
+          spanUtilityMaps,
+          spansMap,
+          viewTimeRange,
+        ),
+        id,
+        activityTreeExpansionMap,
+      );
+    }
+    children.push({
+      children: childrenForKey,
+      expanded,
+      id,
+      isLeaf: count < 1,
+      items: [{ span }],
+      label: span.type,
+      type: 'span',
+    });
+  }
+  return children;
+}
+
+export function getNodeExpanded(id: string, activityTreeExpansionMap: ActivityTreeExpansionMap) {
+  if (!Object.hasOwn(activityTreeExpansionMap, id)) {
+    return false;
+  }
+  return activityTreeExpansionMap[id];
+}
+
+export function paginateNodes(
+  nodes: ActivityTreeNode[],
+  parentId: string,
+  activityTreeExpansionMap: ActivityTreeExpansionMap,
+  depth = 1,
+  binSize = 100,
+) {
+  if (nodes.length <= binSize) {
+    return nodes;
+  }
+  const newNodes: ActivityTreeNode[] = [];
+  nodes.forEach((node, i) => {
+    const bin = Math.floor(i / binSize);
+    if (!newNodes[bin]) {
+      newNodes[bin] = {
+        children: [],
+        expanded: false,
+        id: '',
+        isLeaf: false,
+        items: [],
+        label: '',
+        type: 'aggregation',
+      };
+    }
+    newNodes[bin].children.push(node);
+    if (node.items) {
+      newNodes[bin].items.push(...node.items);
+    }
+  });
+  newNodes.forEach((node, i) => {
+    const nodeStart = i * binSize ** depth;
+    const nodeEnd = Math.min(nodeStart + node.children.length * depth ** binSize, (i + 1) * binSize ** depth);
+    const label = `[${nodeStart} … ${nodeEnd - 1}]`;
+    node.id = `${parentId}_${label}_page`;
+    node.label = label;
+    node.expanded = getNodeExpanded(node.id, activityTreeExpansionMap);
+  });
+  return paginateNodes(newNodes, parentId, activityTreeExpansionMap, depth + 1);
 }
