@@ -1,13 +1,13 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  // This uses JS number to represents arguments which shoul
+  // This uses JS number to represents arguments
 
   // ("+" | "-")? (@digit ("_" | @digit)* ("." ("_" | @digit)*)? | "." @digit ("_" | @digit)*)
   // (("e" | "E") ("+" | "-")? ("_" | @digit)+)? |
   // @digit ("_" | @digit)* "n" |
 
-  import { isFswCommandArgumentInteger, isFswCommandArgumentUnsigned, type NumberArg } from './utils';
+  import { isFswCommandArgumentUnsigned, type NumberArg } from './utils';
 
   // const PAT_INT = "^[-+]?\\d+$";
   // const PAT_FLOAT = "^[-+]?\\d+\.?\\d*$";
@@ -23,12 +23,10 @@
   // $: pattern = isFswCommandArgumentUnsigned(argDef) ? PAT_INT : PAT_FLOAT;
 
   $: max = argDef.range?.max ?? Infinity;
-  $: min =
-    argDef.range?.min ?? (isFswCommandArgumentUnsigned(argDef) || isFswCommandArgumentInteger(argDef) ? 0 : -Infinity);
+  $: min = argDef.range?.min ?? (isFswCommandArgumentUnsigned(argDef) ? 0 : -Infinity);
   $: value = initVal;
+  $: valFloat = Number(value);
   $: {
-    const valFloat = Number(value);
-    //  && valFloat > min && valFloat < max
     if (value && !isNaN(valFloat)) {
       setInEditor(value);
     }
@@ -52,6 +50,9 @@
   <input class="st-input" type="string" bind:value required />
   <!-- {pattern} -->
   <!-- on:input={customValidate} -->
+  {#if typeof min === 'number' && typeof max === 'number' && min === max && valFloat !== max}
+    <button on:click={() => setInEditor(max.toString())} title="Set to allowed value">{max}</button>
+  {/if}
 </div>
 
 <style>
