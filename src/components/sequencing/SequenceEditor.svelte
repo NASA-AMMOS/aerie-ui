@@ -1,4 +1,4 @@
-<svelte:options immutable={true} />
+<<svelte:options immutable={true} />
 
 <script lang="ts">
   import { json } from '@codemirror/lang-json';
@@ -252,7 +252,6 @@
       <svelte:fragment slot="header">
         <SectionTitle>{title}</SectionTitle>
 
-        <!-- Bryan can you align the icon form me :) -->
         <div class="right">
           <button
             use:tooltip={{ content: `Copy to clipboard`, placement: 'top' }}
@@ -260,21 +259,18 @@
             style={' margin-right: 5px; '}
             on:click={copySeqNClipboard}><ClipboardIcon /> SeqN</button
           >
-          <!-- Bryan can you align the icon form me :) -->
           <button
             use:tooltip={{ content: `Copy to clipboard`, placement: 'top' }}
             class="st-button icon-button secondary ellipsis"
             style={'margin-left: 5px; margin-right: 15px; '}
             on:click={copySeqJsonToClipboard}><ClipboardIcon /> JSON</button
           >
-          <!-- Bryan can you align the icon form me :) -->
           <button
             use:tooltip={{ content: `Download Seq.json`, placement: 'top' }}
             class="st-button icon-button secondary ellipsis"
             style={' margin-left: 15px; margin-right: 2px;'}
             on:click|stopPropagation={downloadSeqN}><SaveIcon /> SeqN</button
           >
-          <!-- Bryan can you align the icon form me :) -->
           <button
             use:tooltip={{ content: `Download Seq.json`, placement: 'top' }}
             class="st-button icon-button secondary ellipsis"
@@ -342,3 +338,4 @@
     display: flex;
   }
 </style>
+>
