@@ -39,15 +39,8 @@ export type Parcel = {
 };
 
 export type ParcelBundle = {
-  channel_dictionary_id: number | null;
   command_dictionary_id: number | undefined;
-  created_at: string;
-  id: number;
-  name: string;
-  owner: UserId;
-  parameter_dictionary_ids: number[];
-  sequence_adaptation_id: number | null;
-};
+} & Parcel;
 
 export type ParcelToParameterDictionary = {
   id: number;

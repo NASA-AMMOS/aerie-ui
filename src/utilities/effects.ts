@@ -2223,9 +2223,9 @@ const effects = {
     }
   },
 
-  async deleteParcelToParameterDictionaries(ids: number[], parcel: Parcel, user: User | null): Promise<number | null> {
+  async deleteParcelToParameterDictionaries(ids: number[], user: User | null): Promise<number | null> {
     try {
-      if (!queryPermissions.DELETE_PARCEL_TO_PARAMETER_DICTIONARIES(user, parcel)) {
+      if (!queryPermissions.DELETE_PARCEL_TO_PARAMETER_DICTIONARIES(user)) {
         throwPermissionError('delete parcel to parameter dictionaries');
       }
 
@@ -2426,7 +2426,7 @@ const effects = {
 
   async deleteSequenceAdaptation(id: number, user: User | null): Promise<void> {
     try {
-      if (!queryPermissions.DELETE_COMMAND_DICTIONARY(user)) {
+      if (!queryPermissions.DELETE_SEQUENCE_ADAPTATION(user)) {
         throwPermissionError('delete this sequence adaptation');
       }
 

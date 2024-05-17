@@ -1,4 +1,4 @@
-export const ABSOLUTE_TIME = RegExp(/^(\d{4})-(\d{3})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{3}))?$/g);
+export const ABSOLUTE_TIME = /^(\d{4})-(\d{3})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{3}))?$/g;
 
 export const RELATIVE_TIME = /([0-9]{3}T)?([0-9]{2}):([0-9]{2}):([0-9]{2})(\.[0-9]+)?$/g;
 export const RELATIVE_SIMPLE = /(\d+)(\.[0-9]+)?$/g;
@@ -160,7 +160,6 @@ function balanceDuration(
       Suggestion: ${balancedTime}`,
     };
   }
-  return {};
 }
 
 function balanceAbsolute(

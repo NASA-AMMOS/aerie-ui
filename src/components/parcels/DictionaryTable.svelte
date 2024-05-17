@@ -27,6 +27,7 @@
   let dictionaryColumnDefs: DataGridColumnDef[];
   let displayText: string = '';
   let displayTextPlural: string = '';
+  let editingColumnDefs: DataGridColumnDef[];
   let hasDeletePermission: boolean = false;
   let isSequenceAdaptation: boolean = false;
   let sequenceAdaptationColumDefs: DataGridColumnDef[];
@@ -51,7 +52,7 @@
     dictionaryDataGrid.redrawRows();
   }
 
-  const editingColumnDefs: DataGridColumnDef[] = [
+  $: editingColumnDefs = [
     {
       cellDataType: 'boolean',
       editable: hasEditPermission,
