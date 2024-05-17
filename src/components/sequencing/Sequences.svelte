@@ -23,8 +23,6 @@
 
   export let user: User | null;
 
-  let baseColumnDefs: DataGridColumnDef[];
-
   type CellRendererParams = {
     deleteSequence: (sequence: UserSequence) => void;
     editSequence: (sequence: UserSequence) => void;
@@ -49,6 +47,13 @@
 
     return valueA === user?.id ? 1 : -1;
   }
+
+  let baseColumnDefs: DataGridColumnDef[] = [];
+  let columnDefs = baseColumnDefs;
+  let filterText: string = '';
+  let filteredSequences: UserSequence[] = [];
+  let selectedSequence: UserSequence | null = null;
+  let selectedSequenceSeqJson: string = '';
 
   $: baseColumnDefs = [
     {
@@ -83,12 +88,6 @@
       width: 80,
     },
   ];
-
-  let columnDefs = baseColumnDefs;
-  let filterText: string = '';
-  let filteredSequences: UserSequence[] = [];
-  let selectedSequence: UserSequence | null = null;
-  let selectedSequenceSeqJson: string = '';
 
   $: filteredSequences = $userSequences.filter(sequence => {
     const filterTextLowerCase = filterText.toLowerCase();
