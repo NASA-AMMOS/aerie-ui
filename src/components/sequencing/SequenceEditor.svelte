@@ -26,8 +26,6 @@
     parcelToParameterDictionaries,
     userSequenceEditorColumns,
     userSequenceEditorColumnsWithFormBuilder,
-    userSequencesJSONCollapsedRows,
-    userSequencesRows,
   } from '../../stores/sequencing';
   import type { User } from '../../types/app';
   import { setupLanguageSupport } from '../../utilities/codemirror';
@@ -291,7 +289,7 @@
       </svelte:fragment>
     </Panel>
 
-    <CssGridGutter track={1} type="row" />
+    <CssGridGutter draggable={toggleSeqJsonPreview} track={1} type="row" />
 
     <Panel>
       <svelte:fragment slot="header">
