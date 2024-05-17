@@ -220,7 +220,7 @@
 
   function downloadSeqN() {
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([editorSequenceView.state.doc.toString()], { type: 'application/json' }));
+    a.href = URL.createObjectURL(new Blob([editorSequenceView.state.doc.toString()], { type: 'text/plain' }));
     a.download = sequenceName;
     a.click();
   }
