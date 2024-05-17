@@ -161,10 +161,6 @@
     if (data) {
       selectRow(data.id, newValue as boolean);
     }
-
-    if (dictionaryDataGrid?.redrawRows !== undefined) {
-      dictionaryDataGrid.redrawRows();
-    }
   }
 
   function selectRow(id: number, newValue: boolean) {

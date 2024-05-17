@@ -19,6 +19,7 @@
   import { parseSeqJsonFromFile, seqJsonToSequence } from '../../utilities/new-sequence-editor/from-seq-json';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
+  import { showFailureToast } from '../../utilities/toast';
   import PageTitle from '../app/PageTitle.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
@@ -96,8 +97,13 @@
       const adaptation = await effects.getSequenceAdaptation(id, user);
 
       if (adaptation) {
-        // This evaulates the custom sequence adaptation that is optionally provided by the user.
-        Function(adaptation.adaptation)();
+        try {
+          // This evaulates the custom sequence adaptation that is optionally provided by the user.
+          Function(adaptation.adaptation)();
+        } catch (e) {
+          console.log(e);
+          showFailureToast('Invalid sequence adaptation');
+        }
       }
     } else {
       resetSequenceAdaptation();

@@ -112,7 +112,7 @@
         // Reconfigure sequence editor.
         editorSequenceView.dispatch({
           effects: compartmentSeqLanguage.reconfigure(
-            seq(
+            setupLanguageSupport(
               sequenceCompletion(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
             ),
           ),
