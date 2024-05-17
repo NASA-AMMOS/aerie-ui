@@ -249,7 +249,7 @@
 </script>
 
 <CssGrid bind:columns={commandFormBuilderGrid} minHeight={'0'}>
-  <CssGrid rows={toggleSeqJsonPreview ? $userSequencesRows : $userSequencesJSONCollapsedRows} minHeight={'0'}>
+  <CssGrid rows={toggleSeqJsonPreview ? '1fr 3px 1fr' : `1.88fr 3px minmax(50px,0.12fr)`} minHeight={'0'}>
     <Panel>
       <svelte:fragment slot="header">
         <SectionTitle>{title}</SectionTitle>
