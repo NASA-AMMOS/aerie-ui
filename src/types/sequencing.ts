@@ -40,7 +40,7 @@ export type Parcel = {
 
 export type ParcelBundle = {
   command_dictionary_id: number | undefined;
-} & Exclude<Parcel, 'command_dictionary_id'>;
+} & Omit<Parcel, 'command_dictionary_id' | 'updated_at'>;
 
 export type ParcelToParameterDictionary = {
   id: number;
