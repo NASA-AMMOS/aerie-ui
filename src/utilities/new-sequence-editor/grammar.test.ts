@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 import { describe, it } from 'vitest';
 import { SeqLanguage } from '../codemirror';
 
-const caseDir = path.dirname(fileURLToPath(import.meta.url)) + '/../../tests/mocks/sequencing/cases';
+const caseDir = path.dirname(fileURLToPath(import.meta.url)) + '/../../tests/mocks/sequencing/grammar-cases';
 
 for (const file of readdirSync(caseDir)) {
   if (!/\.txt$/.test(file)) {

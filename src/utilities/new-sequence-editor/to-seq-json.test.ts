@@ -65,7 +65,7 @@ const commandDictionary: CommandDictionary = {
   path: '/file/path',
 };
 
-const commandBanana = parse(readFileSync('src/utilities/new-sequence-editor/command_banananation.xml', 'utf-8'));
+const commandBanana = parse(readFileSync('src/tests/mocks/sequencing/dictionaries/command_banananation.xml', 'utf-8'));
 
 describe('convert a sequence to seq json', () => {
   it('hardware command', () => {

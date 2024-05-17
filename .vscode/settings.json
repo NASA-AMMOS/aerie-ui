@@ -23,28 +23,5 @@
       "args": ["--login", "--interactive"],
       "path": "zsh"
     }
-  },
-  "playwright.workspaceSettings": {
-    "configs": [
-      {
-        "relativeConfigFile": "playwright.config.ts",
-        "selected": true,
-        "enabled": true,
-        "projects": [
-          {
-            "name": "teardown",
-            "enabled": true
-          },
-          {
-            "name": "setup",
-            "enabled": true
-          },
-          {
-            "name": "e2e tests",
-            "enabled": true
-          }
-        ]
-      }
-    ]
   }
 }
