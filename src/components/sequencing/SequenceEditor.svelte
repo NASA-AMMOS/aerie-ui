@@ -324,7 +324,6 @@
     />
   {/if}
 </CssGrid>
->
 
 <style>
   .right {
