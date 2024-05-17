@@ -1,4 +1,4 @@
-<<svelte:options immutable={true} />
+<svelte:options immutable={true} />
 
 <script lang="ts">
   import { json } from '@codemirror/lang-json';
@@ -324,6 +324,7 @@
     />
   {/if}
 </CssGrid>
+>
 
 <style>
   .right {
@@ -338,4 +339,3 @@
     display: flex;
   }
 </style>
->
