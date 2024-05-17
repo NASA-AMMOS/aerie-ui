@@ -16,7 +16,6 @@
     parameterDictionaries,
     sequenceAdaptations,
   } from '../../stores/sequencing';
-  import type { ChannelDictionary, CommandDictionary, ParameterDictionary } from '../../types/sequencing';
   import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
@@ -46,49 +45,16 @@
         throw Error('Failed to upload file');
       }
 
-      let seenSet: Set<number> = new Set<number>();
       switch (uploadedDictionaryOrAdaptation.type) {
         case DictionaryTypes.COMMAND: {
-          commandDictionaries.updateValue((commandDictionaries: CommandDictionary[]) =>
-            [uploadedDictionaryOrAdaptation as CommandDictionary, ...commandDictionaries].filter(val => {
-              if (!seenSet.has(val.id)) {
-                seenSet.add(val.id);
-                return true;
-              }
-              return false;
-            }),
-          );
-
           showSuccessToast('Command Dictionary Created Successfully');
           break;
         }
         case DictionaryTypes.CHANNEL: {
-          channelDictionaries.updateValue((channelDictionaries: ChannelDictionary[]) =>
-            [uploadedDictionaryOrAdaptation, ...channelDictionaries].filter(val => {
-              if (!seenSet.has(val.id)) {
-                seenSet.add(val.id);
-                return true;
-              } else {
-                return false;
-              }
-            }),
-          );
           showSuccessToast('Channel Dictionary Created Successfully');
           break;
         }
-
         case DictionaryTypes.PARAMETER: {
-          parameterDictionaries.updateValue((parameterDictionaries: ParameterDictionary[]) =>
-            [uploadedDictionaryOrAdaptation, ...parameterDictionaries].filter(val => {
-              if (!seenSet.has(val.id)) {
-                seenSet.add(val.id);
-                return true;
-              }
-
-              return false;
-            }),
-          );
-
           showSuccessToast('Parameter Dictionary Created Successfully');
           break;
         }
@@ -101,38 +67,6 @@
       createDictionaryError = (e as Error).message;
       showFailureToast('Command Dictionary Create Failed');
     }
-
-    //   if (uploadedDictionaryOrAdaptation !== null) {
-    //     let seenSet: Set<number> = new Set<number>();
-
-    //
-    //       }
-    //       case DictionaryTypes.param_def:
-    //         parameterDictionaries.updateValue((parameterDictionaries: ParameterDictionary[]) =>
-    //           [uploadedDictionaryOrAdaptation.uploadedObject, ...parameterDictionaries].filter(val => {
-    //             if (!seenSet.has(val.id)) {
-    //               seenSet.add(val.id);
-    //               return true;
-    //             }
-
-    //             return false;
-    //           }),
-    //         );
-
-    //         showSuccessToast('Parameter Dictionary Created Successfully');
-    //         break;
-    //
-    //       case DictionaryTypes.sequence_adaptation: {
-    //         showSuccessToast('Sequence Adaptation Created Successfully');
-
-    //         break;
-    //       }
-    //     }
-    //   }
-    // } catch (e) {
-    //   createDictionaryError = (e as Error).message;
-    //   showFailureToast('Command Dictionary Create Failed');
-    // }
 
     creatingDictionary = false;
   }

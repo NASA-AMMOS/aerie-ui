@@ -163,7 +163,7 @@
         }
 
         if (idsToDelete.length > 0 && $parcel) {
-          await effects.deleteParcelToParameterDictionaries(idsToDelete, $parcel, user);
+          await effects.deleteParcelToParameterDictionaries(idsToDelete, user);
         }
       }
     }

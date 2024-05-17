@@ -382,18 +382,18 @@ const gql = {
   `,
 
   CREATE_DICTIONARY: `#graphql
-  mutation CreateDictionary($dictionary: String!, $type: String!) {
-    createDictionary: ${Queries.UPLOAD_DICTIONARY}(dictionary: $dictionary, type : $type) {
-      dictionary_path
-      created_at
-      id
-      mission
-      parsed_json
-      version
-      type
+    mutation CreateDictionary($dictionary: String!, $type: String!) {
+      createDictionary: ${Queries.UPLOAD_DICTIONARY}(dictionary: $dictionary, type : $type) {
+        dictionary_path
+        created_at
+        id
+        mission
+        parsed_json
+        version
+        type
+      }
     }
-  }
-`,
+  `,
 
   CREATE_EXPANSION_RULE: `#graphql
     mutation CreateExpansionRule($rule: expansion_rule_insert_input!) {
