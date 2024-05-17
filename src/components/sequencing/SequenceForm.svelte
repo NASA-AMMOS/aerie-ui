@@ -98,10 +98,10 @@
 
       if (adaptation) {
         try {
-          // This evaulates the custom sequence adaptation that is optionally provided by the user.
+          // This evaluates the custom sequence adaptation that is optionally provided by the user.
           Function(adaptation.adaptation)();
         } catch (e) {
-          console.log(e);
+          console.error(e);
           showFailureToast('Invalid sequence adaptation');
         }
       }
