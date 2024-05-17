@@ -258,28 +258,28 @@
         <div class="right">
           <button
             use:tooltip={{ content: `Copy to clipboard`, placement: 'top' }}
-            class="st-button icon"
+            class="st-button icon-button secondary ellipsis"
             style={' margin-right: 5px; '}
             on:click={copySeqNClipboard}><ClipboardIcon /> SeqN</button
           >
           <!-- Bryan can you align the icon form me :) -->
           <button
             use:tooltip={{ content: `Copy to clipboard`, placement: 'top' }}
-            class="st-button icon"
+            class="st-button icon-button secondary ellipsis"
             style={'margin-left: 5px; margin-right: 15px; '}
             on:click={copySeqJsonToClipboard}><ClipboardIcon /> JSON</button
           >
           <!-- Bryan can you align the icon form me :) -->
           <button
             use:tooltip={{ content: `Download Seq.json`, placement: 'top' }}
-            class="st-button secondary ellipsis"
+            class="st-button icon-button secondary ellipsis"
             style={' margin-left: 15px; margin-right: 2px;'}
             on:click|stopPropagation={downloadSeqN}><SaveIcon /> SeqN</button
           >
           <!-- Bryan can you align the icon form me :) -->
           <button
             use:tooltip={{ content: `Download Seq.json`, placement: 'top' }}
-            class="st-button secondary ellipsis"
+            class="st-button icon-button secondary ellipsis"
             style={' margin-left: 2px; margin-right: 10px;'}
             on:click|stopPropagation={downloadSeqJson}><SaveIcon /> JSON</button
           >
@@ -336,5 +336,11 @@
     align-items: center;
     display: flex;
     justify-content: space-around;
+  }
+
+  .icon-button {
+    align-items: center;
+    column-gap: 5px;
+    display: flex;
   }
 </style>
