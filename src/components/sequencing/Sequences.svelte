@@ -5,7 +5,7 @@
   import { base } from '$app/paths';
   import type { ICellRendererParams } from 'ag-grid-community';
   import { parcel, parcels, userSequences, userSequencesColumns } from '../../stores/sequencing';
-  import type { User } from '../../types/app';
+  import type { User, UserId } from '../../types/app';
   import type { DataGridColumnDef, DataGridRowSelection, RowId } from '../../types/data-grid';
   import type { UserSequence } from '../../types/sequencing';
   import effects from '../../utilities/effects';
@@ -36,7 +36,7 @@
    * @param valueA
    * @param valueB
    */
-  function usernameComparator(valueA: string, valueB: string): number {
+  function usernameComparator(valueA: UserId, valueB: UserId): number {
     if (valueA === null && valueB === null) {
       return 0;
     }
