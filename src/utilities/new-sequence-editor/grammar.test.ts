@@ -1,64 +1,460 @@
 import { testTree } from '@lezer/generator/dist/test';
-import { readFileSync, readdirSync } from 'fs';
-import * as path from 'path';
-import { fileURLToPath } from 'url';
-import { describe, it } from 'vitest';
+import { describe, test } from 'vitest';
 import { SeqLanguage } from '../codemirror';
 
-const caseDir = path.dirname(fileURLToPath(import.meta.url)) + '/../../tests/mocks/sequencing/grammar-cases';
+const parseTreeTests = [
+  [
+    'Command with no args',
+    'FSW_CMD',
+    `Sequence(
+    Commands(
+      Command(Stem,Args)
+    )
+  )`,
+  ],
+  [
+    'Hardware commands',
+    `@HARDWARE
+HARDWARE_COMMAND_1
+HDW_2`,
+    `Sequence(
+HardwareCommands(
+Command(Stem,Args),
+Command(Stem,Args)
+)
+)`,
+  ],
+  [
+    'Generic directive',
+    `@WRONG_LOAD_AND_GO
 
-for (const file of readdirSync(caseDir)) {
-  if (!/\.txt$/.test(file)) {
-    continue;
-  }
+C CMD_1`,
+    `Sequence(
+GenericDirective,
+Commands(
+Command(TimeTag(TimeComplete),Stem,Args)
+)
+)`,
+  ],
+  ['Command with two string args', `FSW_CMD "hello" "world"`, `Sequence(Commands(Command(Stem,Args(String,String))))`],
+  [
+    'Command with mixed args',
+    `FSW_CMD "hello" 10`,
+    `Sequence(Commands(
+Command(Stem,Args(String,Number))
+))`,
+  ],
+  [
+    'Command with mixed args and comment',
+    `FSW_CMD "hello" 10# yay comment`,
+    `Sequence(Commands(
+Command(Stem,Args(String,Number),LineComment)
+))`,
+  ],
+  [
+    'Command with two sting args wrapped by comments',
+    `# full line comment
+FSW_CMD "TRUE" "FALSE" # end of line
+# full line comment`,
+    `Sequence(Commands(
+LineComment,
+Command(Stem,Args(String,String),LineComment),
+LineComment
+))`,
+  ],
+  [
+    'Command with enum args (disallowed in linter)',
+    `FSW_CMD TRUE FALSE`,
+    `Sequence(Commands(Command(Stem,Args(Enum,Enum))))`,
+  ],
+  [
+    'Command with enum args and comments',
+    `# Com
+FSW_CMD TRUE FALSE # Com 1
+# Com`,
+    `Sequence(Commands(
+LineComment,
+Command(Stem,Args(Enum,Enum),LineComment),
+LineComment
+))`,
+  ],
+  [
+    'Command with repeat args',
+    `C CMD_1 ["asd"] [] ["asdf" 2] [   4      4]`,
+    `Sequence(Commands(
+Command(TimeTag(TimeComplete),Stem,Args(
+RepeatArg(String),
+RepeatArg,
+RepeatArg(String,Number),
+RepeatArg(Number,Number)
+))
+))`,
+  ],
+  [
+    'Locals and commands',
+    `# comment before parameter
+@INPUT_PARAMS L02INT
+# declare my local variables, types are defined in adaptation
+# comment before directive
+@LOCALS L01STRING L02INT
+# before metadata comment
+@METADATA "foo" "val foo"
+# before commands comment
+FSW_CMD 1 2
+FSW_CMD2`,
+    `Sequence(
+LineComment,
+ParameterDeclaration(Enum),
+LineComment,
+LineComment,
+LocalDeclaration(Enum,Enum),
+LineComment,
+Metadata(
+MetaEntry(Key(String),Value(String))
+),
+Commands(
+LineComment,
+Command(Stem,Args(Number,Number)),
+Command(Stem,Args)
+)
+)`,
+  ],
+  [
+    'Parameters, locals, and commands',
+    `@INPUT_PARAMS L01STRING L02INT
+@LOCALS L01STRING L02INT
+FSW_CMD 1 2
+FSW_CMD2`,
+    `Sequence(
+ParameterDeclaration(Enum,Enum),
+LocalDeclaration(Enum,Enum),
+Commands(
+Command(Stem,Args(Number,Number)),
+Command(Stem,Args)
+)
+)`,
+  ],
+  [
+    'Parameters, locals, and indented commands',
+    `@INPUT_PARAMS L01STRING L02INT
+@LOCALS L01STRING L02INT
+  FSW_CMD 1 2
+  FSW_CMD2 "string val"`,
+    `Sequence(
+ParameterDeclaration(Enum,Enum),
+LocalDeclaration(Enum,Enum),
+Commands(
+Command(Stem,Args(Number,Number)),
+Command(Stem,Args(String))
+)
+)`,
+  ],
+  [
+    'Commands with models and metadata',
+    `@ID "big test"
 
-  const name = /^[^.]*/.exec(file)![0];
-  describe(name, () => {
-    for (const { name, run } of fileTests(readFileSync(path.join(caseDir, file), 'utf8'), file)) {
-      it(name, () => run(SeqLanguage.parser));
-    }
-  });
-}
+@METADATA "foo" "val foo"
 
-// modified version of function in @lezer/generator/dist/test
-// lezer's fileTests strips whitespace off test strings which is bad for a whitespace delimited grammar
-function fileTests(file: string, fileName: string, mayIgnore?: any) {
-  const caseExpr = /\s*#[ \t]*(.*)(?:\r\n|\r|\n)([^]*?)==+>([^]*?)(?:$|(?:\r\n|\r|\n)+(?=#))/gy;
-  const tests: any[] = [];
-  let lastIndex = 0;
-  const _loop_1 = function () {
-    const m = caseExpr.exec(file);
-    if (!m) {
-      throw new Error('Unexpected file format in '.concat(fileName, ' around\n\n').concat(`${fileName}: ${lastIndex}`));
-    }
-    const text = m[2].trimStart(),
-      expected = m[3].trim();
-    const _a = /(.*?)(\{.*?\})?$/.exec(m[1]),
-      name_2 = _a?.[1],
-      configStr = _a?.[2];
-    const config = configStr ? JSON.parse(configStr) : null;
-    const strict = !/⚠|\.\.\./.test(expected);
-    tests.push({
-      config: config,
-      configStr: configStr,
-      expected: expected,
-      name: name_2,
-      run: function (parser: any) {
-        testTree(parser.parse(text), expected, mayIgnore);
-      },
-      strict: strict,
-      text: text,
-    });
-    lastIndex = m.index + m[0].length;
-    if (lastIndex === file.length) {
-      return 'break';
-    }
+
+CMD_1 1 2 3
+@METADATA "foo" "val\\" foo2"
+@METADATA "bar" "val bar"
+
+CMD_2 "hello, it's me"
+@METADATA "bar" { "foo": 5}
+@MODEL "a" 5 "c"
+@MODEL "d" true "f"`,
+    `Sequence(
+IdDeclaration(String),
+Metadata(
+MetaEntry(Key(String),Value(String))
+),
+Commands(
+Command(
+  Stem,
+  Args(Number,Number,Number),
+  Metadata(
+    MetaEntry(Key(String),Value(String)),
+    MetaEntry(Key(String),Value(String))
+  )
+),
+Command(
+  Stem,
+  Args(String),
+  Metadata(
+    MetaEntry(
+      Key(String),
+      Value(Object(Property(PropertyName(String),Number)))
+    )
+  ),
+  Models(
+    Model(Variable(String),Value(Number),Offset(String)),
+    Model(Variable(String),Value(Boolean),Offset(String))
+  )
+)
+)
+)`,
+  ],
+  [
+    'Commands with models and metadata, with mixed indentation',
+    `@ID "big test"
+
+@METADATA "foo" "val foo"
+
+# indented 4 spaces
+CMD_1 1 2 3
+@METADATA "foo" "val\\" foo2"
+@METADATA "bar" "val bar"
+
+
+    # indented 8 spaces
+    CMD_2 "hello, it's me"
+    @METADATA "bar" "val bar2"
+    @MODEL "a" "b" "c"
+    @MODEL  "d" "e" "f"`,
+    `Sequence(
+IdDeclaration(String),
+Metadata(
+MetaEntry(Key(String),Value(String))
+),
+Commands(
+LineComment,
+Command(
+  Stem,
+  Args(Number,Number,Number),
+  Metadata(
+    MetaEntry(Key(String),Value(String)),
+    MetaEntry(Key(String),Value(String))
+  )
+),
+LineComment,
+Command(
+  Stem,
+  Args(String),
+  Metadata(
+    MetaEntry(Key(String),Value(String))
+  ),
+  Models(
+    Model(Variable(String),Value(String),Offset(String)),
+    Model(Variable(String),Value(String),Offset(String))
+  )
+)
+)
+)`,
+  ],
+  [
+    'Mega Sequence',
+    `
+@ID "big test"
+
+# Welcome
+
+
+@INPUT_PARAMS PARM1
+
+
+# Bingo
+
+@LOCALS FOO    BAR     BIZ
+
+
+
+
+
+
+
+@METADATA "foo" "val foo"
+
+
+
+@LOAD_AND_GO
+
+# indented 4 spaces
+CMD_1 1 2 3
+@METADATA "foo" "val\\" foo2"
+@METADATA "bar" "val bar"
+
+
+# indented 8 spaces
+CMD_2 "hello, it's me"
+@MODEL "a" "b" "c"
+@MODEL  "d" "e" "f"
+`,
+    `Sequence(
+IdDeclaration(String),
+LineComment,
+ParameterDeclaration(Enum),
+LineComment,
+LocalDeclaration(Enum,Enum,Enum),
+Metadata(MetaEntry(Key(String),Value(String))),
+Commands(
+LoadAndGoDirective,
+LineComment,
+Command(Stem,Args(Number,Number,Number),Metadata(MetaEntry(Key(String),Value(String)),MetaEntry(Key(String),Value(String)))),
+LineComment,
+Command(Stem,Args(String),Models(Model(Variable(String),Value(String),Offset(String)),Model(Variable(String),Value(String),Offset(String))))
+)
+)`,
+  ],
+];
+
+const errorTests = [
+  [
+    'Bad Input - Invalid stems',
+    `C 2_STEM_NAME
+STEM$BAR`,
+    `Sequence(Commands(Command(TimeTag(TimeComplete),⚠(Number),Stem,Args),Command(Stem,⚠),Command(Stem,Args)))`,
+  ],
+  [
+    'Stem with disallowed characters',
+    `FSW_CMD%BAR$BAZ`,
+    `Sequence(Commands(
+Command(Stem,⚠),
+Command(Stem,⚠),
+Command(Stem,Args)
+))`,
+  ],
+  [
+    'Stem ending in disallowed character',
+    `FSW_CMD%`,
+    `Sequence(Commands(
+Command(Stem,⚠,Args)
+))`,
+  ],
+  [
+    'Mismatched brackets',
+    `CMD [[]
+CMD2 [
+CMD3 ]`,
+    `Sequence(Commands(
+Command(Stem,Args(RepeatArg(⚠))),
+Command(Stem,Args(RepeatArg(⚠,Enum)))
+))`,
+  ],
+  ['locals with wrong value types', `@LOCALS "string_not_enum"`, `Sequence(LocalDeclaration(⚠(String)))`],
+];
+
+const timeFormatTests = [
+  [
+    'Different absolute time tags',
+    `C CMD_1
+  A2030-001T12:34:56 CMD_2 "hello" "world"
+  A2030-001T12:34:56.789 CMD_3 "subseconds"
+  `,
+    `Sequence(Commands(
+Command(
+TimeTag(TimeComplete),
+Stem,
+Args
+),
+Command(
+TimeTag(TimeAbsolute),
+Stem,
+Args(String,String)
+),
+Command(
+TimeTag(TimeAbsolute),
+Stem,
+Args(String)
+),
+))`,
+  ],
+  [
+    'Different relative times',
+    `R010T01:00:00.000 CMD_4 "hello" 10
+R00:10:00.000 CMD_5
+R00:00:01 CMD_6
+R00:00:01.123 CMD_7
+R10 CMD_8 10
+R10.123 CMD_9 10`,
+    `Sequence(Commands(
+Command(
+TimeTag(TimeRelative),
+Stem,
+Args(String,Number)
+),
+Command(
+TimeTag(TimeRelative),
+Stem,
+Args
+),
+Command(
+TimeTag(TimeRelative),
+Stem,
+Args
+),
+Command(
+TimeTag(TimeRelative),
+Stem,
+Args
+),
+Command(
+TimeTag(TimeRelative),
+Stem,
+Args(Number)
+),
+Command(
+TimeTag(TimeRelative),
+Stem,
+Args(Number)
+)
+))`,
+  ],
+  [
+    'Different epoch times',
+    `E123T12:34:56.789 CMD_3
+E-123T12:34:56.789 CMD_3
+E+123T12:34:56.789 CMD_3
+E12:34:56.789 CMD_3
+E-12:34:56.789 CMD_3
+E+12:34:56.789 CMD_3
+E123T12:34:56 CMD_3
+E-123T12:34:56 CMD_3
+E+123T12:34:56 CMD_3
+E12:34:56 CMD_3
+E-12:34:56 CMD_3
+E+12:34:56 CMD_3
+E123 CMD_3
+E-123 CMD_3
+E+123 CMD_3
+E123.456 CMD_3
+E-123.456 CMD_3
+E+123.456 CMD_3
+  `,
+    `Sequence(Commands(
+Command(TimeTag(TimeEpoch),Stem,Args),
+Command(TimeTag(TimeEpoch),Stem,Args),
+Command(TimeTag(TimeEpoch),Stem,Args),
+Command(TimeTag(TimeEpoch),Stem,Args),
+Command(TimeTag(TimeEpoch),Stem,Args),
+Command(TimeTag(TimeEpoch),Stem,Args),
+Command(TimeTag(TimeEpoch),Stem,Args),
+Command(TimeTag(TimeEpoch),Stem,Args),
+Command(TimeTag(TimeEpoch),Stem,Args),
+Command(TimeTag(TimeEpoch),Stem,Args),
+Command(TimeTag(TimeEpoch),Stem,Args),
+Command(TimeTag(TimeEpoch),Stem,Args),
+Command(TimeTag(TimeEpoch),Stem,Args),
+Command(TimeTag(TimeEpoch),Stem,Args),
+Command(TimeTag(TimeEpoch),Stem,Args),
+Command(TimeTag(TimeEpoch),Stem,Args),
+Command(TimeTag(TimeEpoch),Stem,Args),
+Command(TimeTag(TimeEpoch),Stem,Args)
+  ))`,
+  ],
+];
+
+describe('grammar tests', () => {
+  const testGrammar = (_, input: string, expected: string) => {
+    testTree(SeqLanguage.parser.parse(input), expected, undefined);
   };
-  for (;;) {
-    const state_1 = _loop_1();
-    if (state_1 === 'break') {
-      break;
-    }
-  }
-  return tests;
-}
+  Object.entries({
+    'error tokens': errorTests,
+    'parse tree structure': parseTreeTests,
+    'time formats': timeFormatTests,
+  }).forEach(([name, testArray]: [string, string[][]]) => {
+    describe(name, () => {
+      test.each(testArray)('%s', testGrammar);
+    });
+  });
+});
