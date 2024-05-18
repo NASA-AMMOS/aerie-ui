@@ -339,7 +339,7 @@ const timeFormatTests = [
     'Different absolute time tags',
     `C CMD_1
   A2030-001T12:34:56 CMD_2 "hello" "world"
-  A2030-001T12:34:56.789 CMD_3 "subseconds"
+  A2030-001T12:34:56.789 CMD_3 "sub seconds"
   `,
     `Sequence(Commands(
 Command(
@@ -445,7 +445,7 @@ Command(TimeTag(TimeEpoch),Stem,Args)
 ];
 
 describe('grammar tests', () => {
-  const testGrammar = (_, input: string, expected: string) => {
+  const testGrammar = (_: string, input: string, expected: string) => {
     testTree(SeqLanguage.parser.parse(input), expected, undefined);
   };
   Object.entries({
