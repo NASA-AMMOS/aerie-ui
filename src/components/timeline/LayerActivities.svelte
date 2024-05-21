@@ -414,7 +414,7 @@
         }
       });
       const newRowHeight = y + 36; // add padding to the bottom to account for buttons in the activity tree
-      if (!collapsedMode && newRowHeight > 0 && drawHeight !== newRowHeight) {
+      if (!collapsedMode && newRowHeight > 0) {
         /* TODO a change from manual to auto height does not take effect until you trigger a redraw on this row, could pass in whether or not to update row height but that might be odd? */
         dispatch('updateRowHeight', { newHeight: newRowHeight });
       }
@@ -475,7 +475,7 @@
       const rows: Record<number, { items: ActivityTreeNodeDrawItem[]; max: number }> = {};
       itemsToDraw.forEach(item => {
         const { startX } = item;
-        const itemEndX = getItemEnd(item);
+        const itemEndX = getItemEndX(item);
         let row = 0;
         let openRowSpaceFound = false;
         while (!openRowSpaceFound) {
@@ -510,16 +510,19 @@
     }
   }
 
-  function getItemEnd(item: { directive?: ActivityDirective; span?: Span; startX: number }) {
+  function getItemEndX(item: { directive?: ActivityDirective; span?: Span; startX: number }) {
     const { span, directive, startX } = item;
     let labelEndX = 0;
     let boxEndX = 0;
     if (directive && showDirectives) {
       boxEndX = 2;
       if (activityOptions.labelVisibility !== 'off') {
-        // TODO include anchor sizing here
-        labelEndX =
-          Math.max(startX, minRectSize) + labelPaddingLeft + measureText(directive.name, textMetricsCache).width; // TODO figure out how to codify the spacing of a directive
+        const anchored = directive.anchor_id !== null;
+        const directiveLabelWidth = measureText(directive.name, textMetricsCache).width + labelPaddingLeft;
+        const finalWidth = anchored
+          ? anchorIconWidth + anchorIconMarginLeft + directiveLabelWidth
+          : directiveLabelWidth;
+        labelEndX = Math.max(startX, minRectSize) + finalWidth;
       }
     }
     if (span && showSpans && xScaleView) {
@@ -552,7 +555,6 @@
       const { span, directive } = item;
       let newItem;
 
-      // TODO should we filter out spans in the activityTree instead of here and in RowHeaderActivityTree?
       if (span && showSpans && spanInView(span, viewTimeRange)) {
         newItem = { span, spanStartX: xScaleView(span.startMs) };
       }
@@ -563,10 +565,6 @@
         itemsToDraw.push(newItem);
       }
     });
-
-    // itemsToDraw.sort((a, b) => {
-    //   return (a.spanStartX ?? a.directiveStartX) < (b.spanStartX ?? b.directiveStartX) ? -1 : 1;
-    // });
 
     itemsToDraw.forEach(({ directive, directiveStartX, span, spanStartX }, i) => {
       if (!xScaleView) {
@@ -704,11 +702,8 @@
     } else if (unfinished) {
       ctx.fillStyle = ctx.fillStyle = shadeColor(activityUnfinishedColor, 1.3);
     } else {
-      // TODO what color should we use for the text? Black or a darkened version of layer color?
-      // If using shadeColor make sure to cache it
       const opacity = selectedActivityDirectiveId !== null || selectedSpanId !== null ? 0.4 : 1;
       ctx.fillStyle = getRGBAFromHex(shadeColor(color, 2.8), opacity);
-      // ctx.fillStyle = 'black';
     }
     ctx.fillText(text, Math.max(x + labelPaddingLeft, minRectSize), y + rowHeight / 2, width);
   }

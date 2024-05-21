@@ -153,7 +153,6 @@
 
       {#if activityTree.length}
         <div class="activity-tree">
-          <!-- TODO only render if the row has activities -->
           <RowHeaderActivityTree
             {activityOptions}
             {activityTree}

@@ -7,7 +7,7 @@
   import { afterUpdate, createEventDispatcher, onDestroy, onMount, tick } from 'svelte';
   import { SOURCES, TRIGGERS, dndzone } from 'svelte-dnd-action';
   import { viewUpdateTimeline } from '../../stores/views';
-  import type { ActivityDirective, ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
+  import type { ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { ConstraintResultWithName } from '../../types/constraint';
   import type { Plan } from '../../types/plan';
@@ -51,7 +51,6 @@
   import Tooltip from './Tooltip.svelte';
   import TimelineXAxis from './XAxis.svelte';
 
-  export let activityDirectives: ActivityDirective[] = [];
   export let activityDirectivesMap: ActivityDirectivesMap = {};
   export let constraintResults: ConstraintResultWithName[] = [];
   export let hasUpdateDirectivePermission: boolean = false;
@@ -125,6 +124,8 @@
     leading: true,
     trailing: true,
   });
+
+  $: activityDirectives = Object.values(activityDirectivesMap);
 
   $: rows = timeline?.rows || [];
   $: drawWidth = clientWidth > 0 ? clientWidth - (timeline?.marginLeft ?? 0) - (timeline?.marginRight ?? 0) : 0;

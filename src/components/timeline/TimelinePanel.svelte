@@ -184,14 +184,12 @@
   </svelte:fragment>
 
   <svelte:fragment slot="body">
-    <!-- TODO no need to pass activity directives in twice, just pass the map in? -->
     <Timeline
       bind:this={timelineRef}
       {decimate}
       {interpolateHoverValue}
       {limitTooltipToLine}
       {showTimelineTooltip}
-      activityDirectives={Object.values($activityDirectivesMap)}
       activityDirectivesMap={$activityDirectivesMap}
       constraintResults={$visibleConstraintResults}
       {hasUpdateDirectivePermission}
