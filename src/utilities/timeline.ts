@@ -829,7 +829,7 @@ export function generateActivityTree(
       const id = type;
       const expanded = getNodeExpanded(id, activityTreeExpansionMap);
       const label = type;
-      let children: ActivityTreeNode['children'] = [];
+      const children: ActivityTreeNode['children'] = [];
       const items: ActivityTreeNode['items'] = [];
       const seenSpans: Record<string, boolean> = {};
       if (directiveGroup) {
@@ -880,9 +880,8 @@ export function generateActivityTree(
           }
         });
       }
-      children = paginateNodes(children, id, activityTreeExpansionMap);
       nodes.push({
-        children,
+        children: paginateNodes(children, id, activityTreeExpansionMap),
         expanded: expanded,
         id,
         isLeaf: false,
