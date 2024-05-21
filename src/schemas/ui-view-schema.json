@@ -252,8 +252,8 @@
                           "enum": ["grouped", "compact"]
                         },
                         "hierarchyMode": {
-                          "description": "If true the activities are grouped starting with directive types, if false activities are grouped by type regardless of hierarchy.",
-                          "enum": ["directive", "all"]
+                          "description": "If 'directive' the activities are grouped starting with directive types, if 'flat' activities are grouped by type regardless of hierarchy",
+                          "enum": ["directive", "flat"]
                         },
                         "labelVisibility": {
                           "description": "Activity text label behavior",

@@ -817,7 +817,7 @@ export function generateActivityTree(
   showDirectives: boolean,
   viewTimeRange: TimeRange,
 ): ActivityTree {
-  const groupedSpans = showSpans && hierarchyMode === 'all' ? groupBy(spans, 'type') : {};
+  const groupedSpans = showSpans && hierarchyMode === 'flat' ? groupBy(spans, 'type') : {};
   const groupedDirectives = showDirectives ? groupBy(directives, 'type') : {};
   const nodes: ActivityTreeNode[] = [];
   const allKeys = new Set(Object.keys(groupedSpans).concat(Object.keys(groupedDirectives)));
@@ -838,7 +838,7 @@ export function generateActivityTree(
           if (showSpans) {
             const childSpanId = spanUtilityMaps.directiveIdToSpanIdMap[directive.id];
             childSpan = spansMap[childSpanId];
-            if (childSpan && hierarchyMode === 'all') {
+            if (childSpan && hierarchyMode === 'flat') {
               seenSpans[childSpan.id] = true;
             }
           }
@@ -859,7 +859,7 @@ export function generateActivityTree(
           items.push({ directive, ...(childSpan ? { span: childSpan } : null) });
         });
       }
-      if (spanGroup && hierarchyMode === 'all') {
+      if (spanGroup && hierarchyMode === 'flat') {
         spanGroup.forEach(span => {
           if (!seenSpans[span.id]) {
             if (expanded) {

@@ -176,8 +176,8 @@ export type ActivityOptions = {
   // Describes the primary method in which activities are visualized within this row
   displayMode: 'grouped' | 'compact';
 
-  // If true the activities are grouped starting with directive types, if false activities are grouped by type regardless of hierarchy.
-  hierarchyMode: 'directive' | 'all';
+  // If 'directive' the activities are grouped starting with directive types, if 'flat' activities are grouped by type regardless of hierarchy
+  hierarchyMode: 'directive' | 'flat';
 
   // Activity text label behavior
   labelVisibility: 'on' | 'off' | 'auto';

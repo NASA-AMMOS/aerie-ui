@@ -439,10 +439,10 @@
     typeof showDirectives === 'boolean'
   ) {
     if (activityOptions.displayMode === 'grouped') {
-      /* Note: here we only pass in a few variables in order to
-        limit the scope of what is reacted to in order to avoid unnecessary re-rendering.
-        A wrapper function is used to provide the other props needed to generate the tree.
-      */
+      /*  Note: here we only pass in a few variables in order to
+       *  limit the scope of what is reacted to in order to avoid unnecessary re-rendering.
+       *  A wrapper function is used to provide the other props needed to generate the tree.
+       */
       activityTree = generateActivityTree(
         timeFilteredActivityDirectives,
         timeFilteredSpans,
@@ -458,7 +458,7 @@
     directives: ActivityDirective[],
     spans: Span[],
     activityTreeExpansionMap: ActivityTreeExpansionMap,
-    hierarchyMode: ActivityOptions['hierarchyMode'] = 'all',
+    hierarchyMode: ActivityOptions['hierarchyMode'] = 'flat',
   ) {
     return generateActivityTreeUtil(
       directives,

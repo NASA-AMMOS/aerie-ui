@@ -15,6 +15,8 @@
   import ActivityModeGroupedIcon from '../../../assets/timeline-activity-mode-grouped.svg?component';
   import DirectiveAndSpanIcon from '../../../assets/timeline-directive-and-span.svg?component';
   import DirectiveIcon from '../../../assets/timeline-directive.svg?component';
+  import HierarchyModeDirectiveIcon from '../../../assets/timeline-hierarchy-mode-directive.svg?component';
+  import HierarchyModeFlatIcon from '../../../assets/timeline-hierarchy-mode-flat.svg?component';
   import SpanIcon from '../../../assets/timeline-span.svg?component';
   import ActivityModeWidthIcon from '../../../assets/width.svg?component';
   import { ViewConstants, ViewDefaultActivityOptions } from '../../../enums/view';
@@ -930,8 +932,8 @@
                   id="directive"
                 >
                   <div class="radio-button-icon">
-                    <ActivityModeGroupedIcon />
-                    <span class="timeline-editor-responsive-label">Directives</span>
+                    <HierarchyModeDirectiveIcon />
+                    <span class="timeline-editor-responsive-label">By Directive</span>
                   </div>
                 </RadioButton>
                 <RadioButton
@@ -941,11 +943,11 @@
                       { content: 'Group starting with directives and spans regardless of depth', placement: 'top' },
                     ],
                   ]}
-                  id="all"
+                  id="flat"
                 >
                   <div class="radio-button-icon">
-                    <ActivityModeCompactIcon />
-                    <span class="timeline-editor-responsive-label">All</span>
+                    <HierarchyModeFlatIcon />
+                    <span class="timeline-editor-responsive-label">Flat</span>
                   </div>
                 </RadioButton>
               </RadioButtons>

@@ -9,6 +9,6 @@ export const ViewDefaultActivityOptions: ActivityOptions = {
   activityHeight: 16,
   composition: 'both',
   displayMode: 'compact',
-  hierarchyMode: 'all',
+  hierarchyMode: 'flat',
   labelVisibility: 'auto',
 };
