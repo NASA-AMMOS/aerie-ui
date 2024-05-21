@@ -3,9 +3,9 @@
 <script lang="ts">
   import SettingsIcon from '@nasa-jpl/stellar/icons/settings.svg?component';
   import { createEventDispatcher } from 'svelte';
-  import type { ActivityLayer, Axis, Layer, LineLayer, XRangeLayer } from '../../../types/timeline';
+  import type { Axis, Layer, LineLayer, XRangeLayer } from '../../../types/timeline';
   import { getTarget } from '../../../utilities/generic';
-  import { isActivityLayer, isLineLayer, isXRangeLayer } from '../../../utilities/timeline';
+  import { isLineLayer, isXRangeLayer } from '../../../utilities/timeline';
   import { tooltip } from '../../../utilities/tooltip';
   import Input from '../../form/Input.svelte';
   import Menu from '../../menus/Menu.svelte';
@@ -15,14 +15,11 @@
   export let yAxes: Axis[];
 
   let layerMenu: Menu;
-  let layerAsActivity: ActivityLayer;
   let layerAsLine: LineLayer;
   let layerAsXRange: XRangeLayer;
 
   $: if (layer) {
-    if (isActivityLayer(layer)) {
-      layerAsActivity = layer;
-    } else if (isLineLayer(layer)) {
+    if (isLineLayer(layer)) {
       layerAsLine = layer;
     } else if (isXRangeLayer(layer)) {
       layerAsXRange = layer;
