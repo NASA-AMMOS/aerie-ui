@@ -18,10 +18,10 @@ test.afterAll(async () => {
 
 test.describe.serial('Dictionaries', () => {
   test('Create command dictionary', async () => {
-    await dictionaries.createDictionary();
+    await dictionaries.createCommandDictionary();
   });
 
   test('Delete command dictionary', async () => {
-    await dictionaries.deleteDictionary();
+    await dictionaries.deleteCommandDictionary();
   });
 });

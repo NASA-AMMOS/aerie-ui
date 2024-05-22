@@ -3,36 +3,45 @@ import { expect } from '@playwright/test';
 import { readFileSync } from 'fs';
 import { adjectives, animals, colors, uniqueNamesGenerator } from 'unique-names-generator';
 
+type DictionaryType = 'Command Dictionary' | 'Channel Dictionary' | 'Parameter Dictionary';
+
 export class Dictionaries {
+  commandDictionaryBuffer: Buffer;
+  commandDictionaryName: string;
+  commandDictionaryPath: string = 'e2e-tests/data/command-dictionary.xml';
   confirmModal: Locator;
   confirmModalDeleteButton: Locator;
   createButton: Locator;
-  dictionaryBuffer: Buffer;
-  dictionaryName: string;
-  dictionaryPath: string = 'e2e-tests/data/command-dictionary.xml';
   inputFile: Locator;
   tableRow: Locator;
   tableRowDeleteButton: Locator;
 
   constructor(public page: Page) {
-    this.dictionaryName = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
+    this.commandDictionaryName = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
+    this.commandDictionaryBuffer = this.readDictionary(this.commandDictionaryName, this.commandDictionaryPath);
 
-    const dictionaryFile = readFileSync(this.dictionaryPath);
-    const dictionaryXml = dictionaryFile.toString().replace(/GENERIC/, this.dictionaryName);
-    this.dictionaryBuffer = Buffer.from(dictionaryXml);
-
-    this.updatePage(page);
+    this.page = page;
   }
 
-  async createDictionary(): Promise<string> {
+  async createCommandDictionary(): Promise<void> {
+    this.updatePage(this.commandDictionaryName, 'Command Dictionary');
+
+    await this.createDictionary(this.commandDictionaryBuffer, this.commandDictionaryName);
+  }
+
+  async createDictionary(dictionaryBuffer: Buffer, dictionaryName: string): Promise<void> {
     await expect(this.tableRow).not.toBeVisible();
-    await this.fillInputFile();
+    await this.fillInputFile(dictionaryBuffer, dictionaryName);
     await this.createButton.click();
     await this.tableRow.waitFor({ state: 'attached' });
     await this.tableRow.waitFor({ state: 'visible' });
     await expect(this.tableRow).toBeVisible();
+  }
 
-    return this.dictionaryName;
+  async deleteCommandDictionary(): Promise<void> {
+    this.updatePage(this.commandDictionaryName, 'Command Dictionary');
+
+    await this.deleteDictionary();
   }
 
   /**
@@ -60,12 +69,12 @@ export class Dictionaries {
     await expect(this.tableRow).not.toBeVisible();
   }
 
-  async fillInputFile() {
+  async fillInputFile(dictionaryBuffer: Buffer, dictionaryName: string) {
     await this.inputFile.focus();
     await this.inputFile.setInputFiles({
-      buffer: this.dictionaryBuffer,
+      buffer: dictionaryBuffer,
       mimeType: 'application/xml',
-      name: this.dictionaryName,
+      name: dictionaryName,
     });
     await this.inputFile.evaluate(e => e.blur());
   }
@@ -75,17 +84,25 @@ export class Dictionaries {
     await this.page.waitForTimeout(250);
   }
 
-  updatePage(page: Page): void {
-    this.confirmModal = page.locator(`.modal:has-text("Delete Command Dictionary")`);
-    this.confirmModalDeleteButton = page.locator(
-      `.modal:has-text("Delete Command Dictionary") >> button:has-text("Delete")`,
+  readDictionary(dictionaryName: string, dictionaryPath: string): Buffer {
+    const dictionaryFile = readFileSync(dictionaryPath)
+      .toString()
+      .replace(/GENERIC/, dictionaryName);
+    const dictionaryXml = dictionaryFile.toString().replace(/GENERIC/, dictionaryName);
+
+    return Buffer.from(dictionaryXml);
+  }
+
+  updatePage(dictionaryName: string, dictionaryType: DictionaryType): void {
+    this.confirmModal = this.page.locator(`.modal:has-text("Delete ${dictionaryType}")`);
+    this.confirmModalDeleteButton = this.page.locator(
+      `.modal:has-text("Delete ${dictionaryType}") >> button:has-text("Delete")`,
     );
-    this.createButton = page.locator(`button:has-text("Create")`);
-    this.inputFile = page.locator('input[name="file"]');
-    this.page = page;
-    this.tableRow = page.locator(`.ag-row:has-text("${this.dictionaryName}")`);
-    this.tableRowDeleteButton = page.locator(
-      `.ag-row:has-text("${this.dictionaryName}") >> button[aria-label="Delete Command Dictionary"]`,
+    this.createButton = this.page.locator(`button:has-text("Create")`);
+    this.inputFile = this.page.locator('input[name="file"]');
+    this.tableRow = this.page.locator(`.ag-row:has-text("${dictionaryName}")`);
+    this.tableRowDeleteButton = this.page.locator(
+      `.ag-row:has-text("${dictionaryName}") >> button[aria-label="Delete ${dictionaryType}"]`,
     );
   }
 }
