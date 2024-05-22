@@ -36,4 +36,14 @@ test.describe('Dictionaries', () => {
       await dictionaries.deleteCommandDictionary();
     });
   });
+
+  test.describe.serial('Parameter Dictionary', () => {
+    test('Create parameter dictionary', async () => {
+      await dictionaries.createParameterDictionary();
+    });
+
+    test('Delete parameter dictionary', async () => {
+      await dictionaries.deleteParameterDictionary();
+    });
+  });
 });

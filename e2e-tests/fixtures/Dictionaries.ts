@@ -16,6 +16,9 @@ export class Dictionaries {
   confirmModalDeleteButton: Locator;
   createButton: Locator;
   inputFile: Locator;
+  parameterDictionaryBuffer: Buffer;
+  parameterDictionaryName: string;
+  parameterDictionaryPath: string = 'e2e-tests/data/parameter-dictionary.xml';
   tableRow: Locator;
   tableRowDeleteButton: Locator;
 
@@ -24,6 +27,8 @@ export class Dictionaries {
     this.channelDictionaryBuffer = this.readDictionary(this.channelDictionaryName, this.channelDictionaryPath);
     this.commandDictionaryName = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
     this.commandDictionaryBuffer = this.readDictionary(this.commandDictionaryName, this.commandDictionaryPath);
+    this.parameterDictionaryName = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
+    this.parameterDictionaryBuffer = this.readDictionary(this.parameterDictionaryName, this.parameterDictionaryPath);
 
     this.page = page;
   }
@@ -49,6 +54,12 @@ export class Dictionaries {
     await this.tableRow.waitFor({ state: 'attached' });
     await this.tableRow.waitFor({ state: 'visible' });
     await expect(this.tableRow).toBeVisible();
+  }
+
+  async createParameterDictionary(): Promise<void> {
+    this.updatePage(this.parameterDictionaryName, 'Parameter Dictionary');
+
+    await this.createDictionary(this.parameterDictionaryBuffer, this.parameterDictionaryName);
   }
 
   async deleteChannelDictionary(): Promise<void> {
@@ -86,6 +97,12 @@ export class Dictionaries {
     await this.tableRow.waitFor({ state: 'detached' });
     await this.tableRow.waitFor({ state: 'hidden' });
     await expect(this.tableRow).not.toBeVisible();
+  }
+
+  async deleteParameterDictionary(): Promise<void> {
+    this.updatePage(this.parameterDictionaryName, 'Parameter Dictionary');
+
+    await this.deleteDictionary();
   }
 
   async fillInputFile(dictionaryBuffer: Buffer, dictionaryName: string) {
