@@ -164,7 +164,7 @@
     },
     start_time_ms: {
       filter: 'text',
-      headerName: 'Absolute Start Time (UTC)',
+      headerName: `Absolute Start Time (UTC)`,
       hide: true,
       resizable: true,
       sortable: true,

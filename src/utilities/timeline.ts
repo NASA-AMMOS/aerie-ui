@@ -14,6 +14,7 @@ import {
   type TimeInterval,
 } from 'd3-time';
 import { groupBy } from 'lodash-es';
+import { Spice } from 'timecraftjs';
 import { ViewDefaultActivityOptions } from '../constants/view';
 import type { ActivityDirective } from '../types/activity';
 import type { Resource, ResourceType, ResourceValue, Span, SpanUtilityMaps, SpansMap } from '../types/simulation';
@@ -36,6 +37,64 @@ import type {
   XRangeLayer,
 } from '../types/timeline';
 import { filterEmpty } from './generic';
+
+let spiceInstance: any = undefined;
+
+const LMST_SC_ID = -168900;
+const SPICE_LMST_RE = /^\d\/(\d+):(\d{2}):(\d{2}):(\d{2}):(\d+)?$/;
+
+function trimLeadingZeroes(s: string): string {
+  return parseInt(s, 10).toString(10);
+}
+
+function toLMST(et: number): string {
+  const lmst: string = spiceInstance.sce2s(LMST_SC_ID, et);
+  // something like "1/01641:07:16:13:65583"
+  const m = lmst.match(SPICE_LMST_RE);
+  if (m) {
+    const sol = trimLeadingZeroes(m[1]);
+    const hour = m[2];
+    const mins = m[3];
+    const secs = m[4];
+    const subsecs = m[5] || '0';
+    return sol + 'M' + hour + ':' + mins + ':' + secs + '.' + subsecs;
+  }
+  return '';
+}
+
+export function utcToLmst(utc: string) {
+  if (spiceInstance) {
+    const et = spiceInstance.str2et(utc);
+    return toLMST(et);
+  }
+  return 'no spice';
+}
+
+(async () => {
+  const initializingSpice = await new Spice().init();
+
+  // Load the kernels
+  const kernelBuffers = await Promise.all(
+    [
+      'http://localhost:3000/kernels/m2020_lmst_ops210303_v1.tsc',
+      'http://localhost:3000/kernels/m2020.tls',
+      'http://localhost:3000/kernels/m2020.tsc',
+    ].map(url => fetch(url).then(res => res.arrayBuffer())),
+  );
+
+  // Load the kernels into Spice
+  for (let i = 0; i < kernelBuffers.length; i++) {
+    initializingSpice.loadKernel(kernelBuffers[i]);
+  }
+
+  spiceInstance = initializingSpice;
+
+  // const utc = new Date().toISOString().slice(0, -1);
+  // console.log(`utc: ${utc}`);
+  // console.log(`et: ${initializingSpice.utc2et(utc)}`);
+  // console.log(`MIN_SCLK: ${initializingSpice.scs2e(LMST_SC_ID, '00000:00:00:00:00')}`);
+  // console.log(`lmst: ${utcToLmst(utc)}`);
+})();
 
 export enum TimelineLockStatus {
   Locked = 'Locked',
