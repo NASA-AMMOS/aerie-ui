@@ -72,7 +72,7 @@ export class Dictionaries {
     );
   }
 
-  private async createDictionary(
+  async createDictionary(
     dictionaryBuffer: Buffer,
     dictionaryName: string,
     tableRow: Locator,
@@ -201,7 +201,7 @@ export class Dictionaries {
     await this.page.waitForTimeout(250);
   }
 
-  private readDictionary(dictionaryName: string, dictionaryPath: string): Buffer {
+  readDictionary(dictionaryName: string, dictionaryPath: string): Buffer {
     const dictionaryFile = readFileSync(dictionaryPath)
       .toString()
       .replace(/GENERIC/, dictionaryName);
@@ -210,11 +210,7 @@ export class Dictionaries {
     return Buffer.from(dictionary);
   }
 
-  private async updatePage(
-    page: Page,
-    dictionaryType: DictionaryType,
-    dictionaryName?: string | undefined,
-  ): Promise<void> {
+  async updatePage(page: Page, dictionaryType: DictionaryType, dictionaryName?: string | undefined): Promise<void> {
     this.page = page;
 
     this.confirmModal = this.page.locator(`.modal:has-text("Delete ${dictionaryType}")`);
