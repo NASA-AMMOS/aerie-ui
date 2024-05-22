@@ -1609,6 +1609,7 @@ const gql = {
         enabled
         goal_id
         priority
+        arguments
         specification_id
       }
     }
@@ -2726,6 +2727,7 @@ const gql = {
           author
           definition
           revision
+          parameter_schema
           tags {
             tag_id
           }
@@ -2839,12 +2841,14 @@ const gql = {
                   activity_id
                 }
               }
+              parameter_schema
               revision
             }
           }
           goal_revision
           priority
           simulate_after
+          arguments
           specification_id
         }
       }
@@ -3448,7 +3452,7 @@ const gql = {
   `,
 
   UPDATE_SCHEDULING_GOAL_PLAN_SPECIFICATION: `#graphql
-    mutation UpdateSchedulingGoalPlanSpecification($id: Int!, $revision: Int!, $enabled: Boolean!, $priority: Int!, $simulateAfter: Boolean!, $specificationId: Int!) {
+    mutation UpdateSchedulingGoalPlanSpecification($arguments: jsonb, $id: Int!, $revision: Int!, $enabled: Boolean!, $priority: Int!, $simulateAfter: Boolean!, $specificationId: Int!) {
       updateSchedulingGoalPlanSpecification: ${Queries.UPDATE_SCHEDULING_SPECIFICATION_GOAL}(
         pk_columns: { goal_id: $id, specification_id: $specificationId },
         _set: {
@@ -3456,6 +3460,7 @@ const gql = {
           enabled: $enabled,
           priority: $priority,
           simulate_after: $simulateAfter
+          arguments: $arguments
         }
       ) {
         goal_revision

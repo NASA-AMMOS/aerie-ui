@@ -7,12 +7,15 @@
   import { createEventDispatcher } from 'svelte';
   import { PlanStatusMessages } from '../../../enums/planStatusMessages';
   import { SearchParameters } from '../../../enums/searchParameters';
+  import type { FormParameter } from '../../../types/parameter';
   import type { SchedulingGoalMetadata, SchedulingGoalPlanSpecification } from '../../../types/scheduling';
   import { getTarget } from '../../../utilities/generic';
   import { permissionHandler } from '../../../utilities/permissionHandler';
   import { tooltip } from '../../../utilities/tooltip';
   import Collapse from '../../Collapse.svelte';
   import ContextMenuItem from '../../context-menu/ContextMenuItem.svelte';
+  import Input from '../../form/Input.svelte';
+  import Parameters from '../../parameters/Parameters.svelte';
   import SchedulingGoalAnalysesActivities from './SchedulingGoalAnalysesActivities.svelte';
   import SchedulingGoalAnalysesBadge from './SchedulingGoalAnalysesBadge.svelte';
 
@@ -33,6 +36,7 @@
   let schedulingGoalInput: HTMLInputElement;
   let simulateGoal: boolean = false;
   let upButtonHidden: boolean = false;
+  let formParameters: FormParameter[] = [];
 
   $: revisions = goal.versions.map(({ revision }) => revision);
   $: {
@@ -40,6 +44,36 @@
     priority = goalPlanSpec.priority;
     upButtonHidden = priority <= 0;
     simulateGoal = goalPlanSpec.simulate_after; // Copied to local var to reflect changed values immediately in the UI
+  }
+
+  $: {
+    let revision = null;
+    console.log({ goalPlanSpec });
+    if (goalPlanSpec.goal_revision == null) {
+      revision = Math.max(goalPlanSpec.goal_metadata?.versions.filter(x => x.revision));
+    } else {
+      revision = goalPlanSpec.goal_revision;
+    }
+    let version = goalPlanSpec.goal_metadata?.versions.filter(x => x.revision == revision)[0];
+    let schema = version?.parameter_schema;
+    let result = [];
+    if (schema.type === 'struct') {
+      Object.entries(schema.items).forEach(([name, subschema], i) => {
+        result.push({
+          errors: null,
+          // file?: File,
+          // index?: number,
+          // key?: string,
+          name,
+          order: i,
+          required: true,
+          schema: subschema,
+          value: (goalPlanSpec && goalPlanSpec.arguments && goalPlanSpec.arguments[name]) || '',
+          valueSource: 'none',
+        });
+      });
+    }
+    formParameters = result;
   }
 
   function focusInput() {
@@ -93,10 +127,20 @@
       priority,
     });
   }
+
+  function onChangeFormParameters(event: CustomEvent<FormParameter>) {
+    const {
+      detail: { name, value },
+    } = event;
+    dispatch('updateGoalPlanSpec', {
+      ...goalPlanSpec,
+      arguments: { ...goalPlanSpec.arguments, [name]: value },
+    });
+  }
 </script>
 
 <div class="scheduling-goal" class:disabled={!enabled}>
-  <Collapse title={goal.name} tooltipContent={goal.name} defaultExpanded={false}>
+  <Collapse title={goal.name} tooltipContent={goal.name} defaultExpanded={true}>
     <svelte:fragment slot="left">
       <div class="left-content">
         <input
@@ -174,6 +218,10 @@
         </select>
       </div>
     </svelte:fragment>
+
+    <Collapse title="Parameters" className="scheduling-goal-analysis-activities" defaultExpanded={true}>
+      <Parameters disabled={false} expanded={true} {formParameters} on:change={onChangeFormParameters} />
+    </Collapse>
 
     <SchedulingGoalAnalysesActivities analyses={goal.analyses} />
 

@@ -5361,7 +5361,7 @@ const effects = {
 
       const { updateSchedulingGoalPlanSpecification } = await reqHasura(
         gql.UPDATE_SCHEDULING_GOAL_PLAN_SPECIFICATION,
-        { enabled, id: goalId, priority, revision, simulateAfter, specificationId: schedulingSpecificationId },
+        { arguments: schedulingGoalPlanSpecification.arguments, enabled, id: goalId, priority, revision, simulateAfter, specificationId: schedulingSpecificationId },
         user,
       );
 
