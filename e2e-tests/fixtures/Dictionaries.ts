@@ -5,13 +5,14 @@ import { adjectives, animals, colors, uniqueNamesGenerator } from 'unique-names-
 
 type DictionaryType = 'Command Dictionary' | 'Channel Dictionary' | 'Parameter Dictionary';
 
+export const COMMAND_DICTIONARY_PATH = 'e2e-tests/data/command-dictionary.xml';
+
 export class Dictionaries {
   channelDictionaryBuffer: Buffer;
   channelDictionaryName: string;
   channelDictionaryPath: string = 'e2e-tests/data/channel-dictionary.xml';
   commandDictionaryBuffer: Buffer;
   commandDictionaryName: string;
-  commandDictionaryPath: string = 'e2e-tests/data/command-dictionary.xml';
   confirmModal: Locator;
   confirmModalDeleteButton: Locator;
   createButton: Locator;
@@ -26,7 +27,7 @@ export class Dictionaries {
     this.channelDictionaryName = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
     this.channelDictionaryBuffer = this.readDictionary(this.channelDictionaryName, this.channelDictionaryPath);
     this.commandDictionaryName = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
-    this.commandDictionaryBuffer = this.readDictionary(this.commandDictionaryName, this.commandDictionaryPath);
+    this.commandDictionaryBuffer = this.readDictionary(this.commandDictionaryName, COMMAND_DICTIONARY_PATH);
     this.parameterDictionaryName = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
     this.parameterDictionaryBuffer = this.readDictionary(this.parameterDictionaryName, this.parameterDictionaryPath);
 
@@ -35,8 +36,6 @@ export class Dictionaries {
 
   async createChannelDictionary(): Promise<void> {
     this.updatePage(this.channelDictionaryName, 'Channel Dictionary');
-
-    console.log(this.channelDictionaryName);
 
     await this.createDictionary(this.channelDictionaryBuffer, this.channelDictionaryName);
   }

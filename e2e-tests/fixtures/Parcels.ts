@@ -18,10 +18,32 @@ export class Parcels {
     this.updatePage(page);
   }
 
+  async changeSelectedCommandDictionary(firstCommandDictionaryName: string, secondCommandDictionaryName: string) {
+    await this.page.pause();
+
+    const parcelTableRow = this.page.locator(`.ag-row:has-text("${this.parcelName}")`);
+    const parcelTableRowEditButton = await this.page.locator(
+      `.ag-row:has-text("${this.parcelName}") >> button[aria-label="Edit Parcel"]`,
+    );
+
+    parcelTableRow.hover();
+    await parcelTableRowEditButton.waitFor({ state: 'attached' });
+    await parcelTableRowEditButton.waitFor({ state: 'visible' });
+    await expect(parcelTableRowEditButton).toBeVisible();
+    parcelTableRowEditButton.click();
+
+    this.updatePage(this.page);
+    await expect(this.tableRow).toBeVisible();
+    await expect(this.page.locator(`.ag-row:has-text("${firstCommandDictionaryName}") >> input`)).toBeChecked();
+
+    await this.page.locator(`.ag-row:has-text("${secondCommandDictionaryName}") >> input`).click();
+    await expect(this.page.locator(`.ag-row:has-text("${secondCommandDictionaryName}") >> input`)).toBeChecked();
+  }
+
   async createParcel(dictionaryName: string) {
     await this.newButton.click();
     await this.page.getByText(dictionaryName).click();
-    await this.updatePage(this.page);
+    this.updatePage(this.page);
     await expect(this.tableRow).not.toBeVisible();
     await this.nameField.fill(this.parcelName);
     await this.createButton.click();
