@@ -16,12 +16,24 @@ test.afterAll(async () => {
   await context.close();
 });
 
-test.describe.serial('Dictionaries', () => {
-  test('Create command dictionary', async () => {
-    await dictionaries.createCommandDictionary();
+test.describe('Dictionaries', () => {
+  test.describe.serial('Channel Dictionary', () => {
+    test('Create channel dictionary', async () => {
+      await dictionaries.createChannelDictionary();
+    });
+
+    test('Delete channel dictionary', async () => {
+      await dictionaries.deleteChannelDictionary();
+    });
   });
 
-  test('Delete command dictionary', async () => {
-    await dictionaries.deleteCommandDictionary();
+  test.describe.serial('Command Dictionary', () => {
+    test('Create command dictionary', async () => {
+      await dictionaries.createCommandDictionary();
+    });
+
+    test('Delete command dictionary', async () => {
+      await dictionaries.deleteCommandDictionary();
+    });
   });
 });

@@ -6,6 +6,9 @@ import { adjectives, animals, colors, uniqueNamesGenerator } from 'unique-names-
 type DictionaryType = 'Command Dictionary' | 'Channel Dictionary' | 'Parameter Dictionary';
 
 export class Dictionaries {
+  channelDictionaryBuffer: Buffer;
+  channelDictionaryName: string;
+  channelDictionaryPath: string = 'e2e-tests/data/channel-dictionary.xml';
   commandDictionaryBuffer: Buffer;
   commandDictionaryName: string;
   commandDictionaryPath: string = 'e2e-tests/data/command-dictionary.xml';
@@ -17,10 +20,20 @@ export class Dictionaries {
   tableRowDeleteButton: Locator;
 
   constructor(public page: Page) {
+    this.channelDictionaryName = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
+    this.channelDictionaryBuffer = this.readDictionary(this.channelDictionaryName, this.channelDictionaryPath);
     this.commandDictionaryName = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
     this.commandDictionaryBuffer = this.readDictionary(this.commandDictionaryName, this.commandDictionaryPath);
 
     this.page = page;
+  }
+
+  async createChannelDictionary(): Promise<void> {
+    this.updatePage(this.channelDictionaryName, 'Channel Dictionary');
+
+    console.log(this.channelDictionaryName);
+
+    await this.createDictionary(this.channelDictionaryBuffer, this.channelDictionaryName);
   }
 
   async createCommandDictionary(): Promise<void> {
@@ -36,6 +49,12 @@ export class Dictionaries {
     await this.tableRow.waitFor({ state: 'attached' });
     await this.tableRow.waitFor({ state: 'visible' });
     await expect(this.tableRow).toBeVisible();
+  }
+
+  async deleteChannelDictionary(): Promise<void> {
+    this.updatePage(this.channelDictionaryName, 'Channel Dictionary');
+
+    await this.deleteDictionary();
   }
 
   async deleteCommandDictionary(): Promise<void> {
@@ -93,7 +112,7 @@ export class Dictionaries {
     return Buffer.from(dictionaryXml);
   }
 
-  updatePage(dictionaryName: string, dictionaryType: DictionaryType): void {
+  async updatePage(dictionaryName: string, dictionaryType: DictionaryType): Promise<void> {
     this.confirmModal = this.page.locator(`.modal:has-text("Delete ${dictionaryType}")`);
     this.confirmModalDeleteButton = this.page.locator(
       `.modal:has-text("Delete ${dictionaryType}") >> button:has-text("Delete")`,
