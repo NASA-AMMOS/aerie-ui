@@ -35,7 +35,7 @@ function getParentNodeByName(view: EditorView, pos: number, name: string): Synta
  */
 function getTokenPositionInLine(view: EditorView, pos: number) {
   const { from, to, text } = view.state.doc.lineAt(pos);
-  const tokenRegex = /[a-zA-Z0-9_".-]/;
+  const tokenRegex = /[a-zA-Z0-9_".-[\]]/;
 
   let start = pos;
   let end = pos;
@@ -116,12 +116,14 @@ export function sequenceTooltip(
         argNode = argsNode.firstChild;
         while (argNode) {
           const argDef = fswCommand.arguments[i];
-          if (argNode.name === TOKEN_REPEAT_ARG && isFswCommandArgumentRepeat(argDef) && argDef.repeat) {
+          const isRepeatArg = isFswCommandArgumentRepeat(argDef) && argDef.repeat;
+
+          if (argNode.name === TOKEN_REPEAT_ARG && isRepeatArg) {
             let repeatArgNode = argNode.firstChild;
             let j = 0;
             while (repeatArgNode) {
               if (repeatArgNode.from === from && repeatArgNode.to === to) {
-                const arg = argDef.repeat.arguments[j % argDef.repeat.arguments.length];
+                const arg = argDef.repeat?.arguments[j % argDef.repeat.arguments.length];
                 if (arg) {
                   return {
                     above: true,
@@ -140,7 +142,7 @@ export function sequenceTooltip(
             }
           }
 
-          if (argNode.from === from && argNode.to === to) {
+          if ((argNode.from === from && argNode.to === to) || isRepeatArg) {
             const arg = getCustomArgDef(
               text,
               fswCommand.arguments[i],
