@@ -377,7 +377,7 @@
   }
 
   function drawBottomLine(y: number, width: number) {
-    ctx.strokeStyle = 'rgba(210, 210, 210, 1)';
+    ctx.strokeStyle = getComputedStyle(canvas).getPropertyValue('--timeline-divider-color');
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(0, y);

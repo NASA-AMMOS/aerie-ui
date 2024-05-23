@@ -587,11 +587,12 @@
     overflow-x: hidden;
     overflow-y: hidden;
     width: 100%;
+    --timeline-divider-color: rgba(210, 210, 210, 1);
   }
 
   .timeline-time-row {
     background: white;
-    border-bottom: 1px solid rgba(210, 210, 210, 1);
+    border-bottom: 1px solid var(--timeline-divider-color);
     display: flex;
   }
 
