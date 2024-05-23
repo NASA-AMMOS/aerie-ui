@@ -19,8 +19,6 @@ export class Parcels {
   }
 
   async changeSelectedCommandDictionary(firstCommandDictionaryName: string, secondCommandDictionaryName: string) {
-    await this.page.pause();
-
     const parcelTableRow = this.page.locator(`.ag-row:has-text("${this.parcelName}")`);
     const parcelTableRowEditButton = await this.page.locator(
       `.ag-row:has-text("${this.parcelName}") >> button[aria-label="Edit Parcel"]`,
@@ -81,13 +79,14 @@ export class Parcels {
   }
 
   updatePage(page: Page): void {
+    this.page = page;
+
     this.closeButton = page.locator(`button:has-text("Close")`);
     this.confirmModal = page.locator(`.modal:has-text("Delete Parcel")`);
     this.confirmModalDeleteButton = page.locator(`.modal:has-text("Delete Parcel") >> button:has-text("Delete")`);
     this.createButton = page.locator(`button:has-text("Save")`);
     this.nameField = page.locator(`input[name="parcelName"]`);
     this.newButton = page.locator(`button:has-text("New")`);
-    this.page = page;
     this.tableRow = page.locator(`.ag-row:has-text("${this.parcelName}")`);
     this.tableRowDeleteButton = page.locator(
       `.ag-row:has-text("${this.parcelName}") >> button[aria-label="Delete Parcel"]`,
