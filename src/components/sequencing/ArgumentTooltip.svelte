@@ -2,7 +2,7 @@
 
 <script lang="ts">
   import type { CommandDictionary, FswCommandArgument } from '@nasa-jpl/aerie-ampcs';
-  import { getAllEnumSymbols } from '../../utilities/new-sequence-editor/sequence-linter';
+  import { getAllEnumSymbols } from '../../utilities/sequence-editor/sequence-linter';
 
   export let arg: FswCommandArgument;
   export let commandDictionary: CommandDictionary;

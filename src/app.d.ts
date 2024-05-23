@@ -49,28 +49,37 @@ declare global {
     | {
         ARG_DELEGATOR?: ArgDelegator;
         CONDITIONAL_KEYWORDS?: { ELSE?: string; ELSE_IF?: string[]; END_IF?: string; IF: string[] };
-        FROM_OUTPUT_FORMAT?: (
-          output: SeqJson | any,
-          parameterDictionaries: ParameterDictionary[],
-          channelDictionary: ChannelDictionary | null,
-        ) => any;
         GLOBALS?: GlobalType[];
-        INPUT_FORMAT?: { name: string };
+        INPUT_FORMAT?: {
+          NAME: string;
+          TO_INPUT_FORMAT?: (input: string) => Promise<string>;
+        };
         LINT?: (commandDictionary, view, node) => any;
-        LOOP_KEYWORDS:
-          | {
-              BREAK: string;
-              CONTINUE: string;
-              END_WHILE_LOOP: string;
-              WHILE_LOOP: string[];
-            }
-          | undefined;
-        OUTPUT_FORMAT?: { name: string };
-        TO_OUTPUT_FORMAT?: (
+        LOOP_KEYWORDS?: {
+          BREAK: string;
+          CONTINUE: string;
+          END_WHILE_LOOP: string;
+          WHILE_LOOP: string[];
+        };
+        MODFIY_OUTPUT?: (
           output: SeqJson | any,
           parameterDictionaries: ParameterDictionary[],
           channelDictionary: ChannelDictionary | null,
         ) => any;
+        MODIFY_OUTPUT_PARSE?: (
+          output: SeqJson | any,
+          parameterDictionaries: ParameterDictionary[],
+          channelDictionary: ChannelDictionary | null,
+        ) => any;
+        OUTPUT_FORMAT?: {
+          NAME: string;
+          TO_OUTPUT_FORMAT?: (
+            tree: Tree | any,
+            sequence: string,
+            commandDictionary: CommandDictionary | null,
+            sequenceName: string,
+          ) => Promise<string>;
+        };
       }
     | undefined;
 }

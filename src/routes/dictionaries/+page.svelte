@@ -10,12 +10,8 @@
   import Panel from '../../components/ui/Panel.svelte';
   import SectionTitle from '../../components/ui/SectionTitle.svelte';
   import { DictionaryTypes } from '../../enums/dictionaryTypes';
-  import {
-    channelDictionaries,
-    commandDictionaries,
-    parameterDictionaries,
-    sequenceAdaptations,
-  } from '../../stores/sequencing';
+  import { sequenceAdaptations } from '../../stores/sequence-adaptation';
+  import { channelDictionaries, commandDictionaries, parameterDictionaries } from '../../stores/sequencing';
   import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';

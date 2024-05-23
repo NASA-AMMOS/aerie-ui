@@ -1,8 +1,7 @@
 import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
 import { syntaxTree } from '@codemirror/language';
 import type { ChannelDictionary, CommandDictionary, ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
-import { get } from 'svelte/store';
-import { sequenceAdaptation } from '../../stores/sequencing';
+import { getGlobals } from '../../stores/sequence-adaptation';
 import { getDoyTime } from '../time';
 import { fswCommandArgDefault } from './command-dictionary';
 import { getCustomArgDef } from './extension-points';
@@ -191,7 +190,7 @@ export function sequenceCompletion(
       //   }
       // }
 
-      const globals = get(sequenceAdaptation)?.globals ?? [];
+      const globals = getGlobals();
       const globalCompletions: Completion[] = [];
 
       if (globals) {

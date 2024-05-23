@@ -4,12 +4,12 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import { createEventDispatcher, onMount } from 'svelte';
+  import { sequenceAdaptations } from '../../stores/sequence-adaptation';
   import {
     channelDictionaries,
     commandDictionaries,
     parameterDictionaries,
     parcelToParameterDictionaries,
-    sequenceAdaptations,
   } from '../../stores/sequencing';
   import type { User, UserId } from '../../types/app';
   import type { Parcel, ParcelInsertInput, ParcelToParameterDictionary } from '../../types/sequencing';

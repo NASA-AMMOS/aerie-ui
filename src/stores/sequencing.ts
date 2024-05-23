@@ -12,8 +12,6 @@ import {
   type Parcel,
   type ParcelBundle,
   type ParcelToParameterDictionary,
-  type SequenceAdaptation,
-  type SequenceAdaptationI,
   type UserSequence,
 } from '../types/sequencing';
 import effects from '../utilities/effects';
@@ -27,8 +25,6 @@ export const parsedChannelDictionaries: Writable<Record<string, AmpcsChannelDict
 export const parsedCommandDictionaries: Writable<Record<string, AmpcsCommandDictionary>> = writable({});
 
 export const parsedParameterDictionaries: Writable<Record<string, AmpcsParameterDictionary>> = writable({});
-
-export const sequenceAdaptation: Writable<SequenceAdaptationI | undefined> = writable(undefined);
 
 /* Subscriptions. */
 
@@ -80,8 +76,6 @@ export const parcelBundles: Readable<ParcelBundle[]> = derived(
     });
   },
 );
-
-export const sequenceAdaptations = gqlSubscribable<SequenceAdaptation[]>(gql.SUB_SEQUENCE_ADAPTATIONS, {}, [], null);
 
 export const userParcelColumns: Writable<string> = writable('2fr 3px 1fr');
 
@@ -164,28 +158,4 @@ export async function getParsedParameterDictionary(
 
 function generateId(id: number, updatedAt: string): string {
   return `${id.toString()}_${updatedAt}`;
-}
-
-export function setSequenceAdaptation(): void {
-  sequenceAdaptation.set({
-    argDelegator: globalThis.SequenceAdaptation?.ARG_DELEGATOR ?? undefined,
-    conditionalKeywords: {
-      else: globalThis.CONDITIONAL_KEYWORDS?.ELSE ?? 'CMD_ELSE',
-      elseIf: globalThis.CONDITIONAL_KEYWORDS?.ELSE_IF ?? ['CMD_ELSE_IF'],
-      endIf: globalThis.CONDITIONAL_KEYWORDS?.END_IF ?? 'CMD_END_IF',
-      if: globalThis.CONDITIONAL_KEYWORDS?.IF ?? ['CMD_IF'],
-    },
-    fromOutputFormat: globalThis.SequenceAdaptation?.FROM_OUTPUT_FORMAT ?? undefined,
-    globals: globalThis.SequenceAdaptation?.GLOBALS ?? [],
-    inputFormat: { name: globalThis.SequenceAdaptation?.INPUT_FORMAT?.name ?? 'SeqN' },
-    lint: globalThis.SequenceAdaptation?.LINT ?? undefined,
-    loopKeywords: {
-      break: globalThis.LOOP_KEYWORDS?.BREAK ?? 'CMD_BREAK',
-      continue: globalThis.LOOP_KEYWORDS?.CONTINUE ?? 'CMD_CONTINUE',
-      endWhileLoop: globalThis.LOOP_KEYWORDS?.END_WHILE_LOOP ?? 'CMD_END_WHILE_LOOP',
-      whileLoop: globalThis.LOOP_KEYWORDS?.WHILE_LOOP ?? ['CMD_WHILE_LOOP', 'CMD_WHILE_LOOP_OR'],
-    },
-    outputFormat: { name: globalThis.SequenceAdaptation?.OUTPUT_FORMAT?.name ?? 'Seq JSON' },
-    toOutputFormat: globalThis.SequenceAdaptation?.TO_OUTPUT_FORMAT ?? undefined,
-  });
 }

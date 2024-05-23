@@ -17,7 +17,7 @@ import type { VariableDeclaration } from '@nasa-jpl/seq-json-schema/types';
 import type { EditorView } from 'codemirror';
 import { get } from 'svelte/store';
 import { TimeTypes } from '../../enums/time';
-import { sequenceAdaptation } from '../../stores/sequencing';
+import { getGlobals, sequenceAdaptation } from '../../stores/sequence-adaptation';
 import { CustomErrorCodes } from '../../workers/customCodes';
 import { addDefaultArgs, quoteEscape } from '../codemirror/codemirror-utils';
 import {
@@ -91,7 +91,7 @@ export function sequenceLinter(
 
     // TODO: Get identify type mapping to use
     const variables: VariableDeclaration[] = [
-      ...((get(sequenceAdaptation)?.globals ?? []).map(g => ({ name: g.name, type: 'STRING' }) as const) ?? []),
+      ...(getGlobals().map(g => ({ name: g.name, type: 'STRING' }) as const) ?? []),
     ];
 
     // Validate top level metadata
