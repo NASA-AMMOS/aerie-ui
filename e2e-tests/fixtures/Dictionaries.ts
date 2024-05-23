@@ -35,13 +35,13 @@ export class Dictionaries {
   }
 
   async createChannelDictionary(): Promise<void> {
-    this.updatePage(this.channelDictionaryName, 'Channel Dictionary');
+    this.updatePage(this.page, this.channelDictionaryName, 'Channel Dictionary');
 
     await this.createDictionary(this.channelDictionaryBuffer, this.channelDictionaryName);
   }
 
   async createCommandDictionary(): Promise<void> {
-    this.updatePage(this.commandDictionaryName, 'Command Dictionary');
+    this.updatePage(this.page, this.commandDictionaryName, 'Command Dictionary');
 
     await this.createDictionary(this.commandDictionaryBuffer, this.commandDictionaryName);
   }
@@ -56,19 +56,19 @@ export class Dictionaries {
   }
 
   async createParameterDictionary(): Promise<void> {
-    this.updatePage(this.parameterDictionaryName, 'Parameter Dictionary');
+    this.updatePage(this.page, this.parameterDictionaryName, 'Parameter Dictionary');
 
     await this.createDictionary(this.parameterDictionaryBuffer, this.parameterDictionaryName);
   }
 
   async deleteChannelDictionary(): Promise<void> {
-    this.updatePage(this.channelDictionaryName, 'Channel Dictionary');
+    this.updatePage(this.page, this.channelDictionaryName, 'Channel Dictionary');
 
     await this.deleteDictionary();
   }
 
   async deleteCommandDictionary(): Promise<void> {
-    this.updatePage(this.commandDictionaryName, 'Command Dictionary');
+    this.updatePage(this.page, this.commandDictionaryName, 'Command Dictionary');
 
     await this.deleteDictionary();
   }
@@ -99,7 +99,7 @@ export class Dictionaries {
   }
 
   async deleteParameterDictionary(): Promise<void> {
-    this.updatePage(this.parameterDictionaryName, 'Parameter Dictionary');
+    this.updatePage(this.page, this.parameterDictionaryName, 'Parameter Dictionary');
 
     await this.deleteDictionary();
   }
@@ -128,7 +128,9 @@ export class Dictionaries {
     return Buffer.from(dictionaryXml);
   }
 
-  async updatePage(dictionaryName: string, dictionaryType: DictionaryType): Promise<void> {
+  async updatePage(page: Page, dictionaryName: string, dictionaryType: DictionaryType): Promise<void> {
+    this.page = page;
+
     this.confirmModal = this.page.locator(`.modal:has-text("Delete ${dictionaryType}")`);
     this.confirmModalDeleteButton = this.page.locator(
       `.modal:has-text("Delete ${dictionaryType}") >> button:has-text("Delete")`,

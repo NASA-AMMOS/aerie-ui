@@ -29,7 +29,7 @@ test.beforeAll(async ({ browser }) => {
   await models.goto();
   await models.createModel();
   await dictionaries.goto();
-  await dictionaries.updatePage(dictionaryName, 'Command Dictionary');
+  await dictionaries.updatePage(page, dictionaryName, 'Command Dictionary');
   await dictionaries.createDictionary(dictionaryBuffer, dictionaryName);
   await parcels.goto();
   await parcels.createParcel(dictionaryName);

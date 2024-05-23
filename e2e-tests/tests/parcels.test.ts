@@ -24,9 +24,9 @@ test.beforeAll(async ({ browser }) => {
   );
 
   await dictionaries.goto();
-  await dictionaries.updatePage(firstCommandDictionaryName, 'Command Dictionary');
+  await dictionaries.updatePage(page, firstCommandDictionaryName, 'Command Dictionary');
   await dictionaries.createDictionary(firstCommandDictionaryBuffer, firstCommandDictionaryName);
-  await dictionaries.updatePage(secondCommandDictionaryName, 'Command Dictionary');
+  await dictionaries.updatePage(page, secondCommandDictionaryName, 'Command Dictionary');
   await dictionaries.createDictionary(secondCommandDictionaryBuffer, secondCommandDictionaryName);
   await parcels.goto();
 });
