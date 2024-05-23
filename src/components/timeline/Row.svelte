@@ -76,7 +76,7 @@
 
   export let activityDirectives: ActivityDirective[] = [];
   export let activityDirectivesMap: ActivityDirectivesMap = {};
-  export let activityTreeExpansionMap: ActivityTreeExpansionMap = {};
+  export let activityTreeExpansionMap: ActivityTreeExpansionMap | undefined = {};
   export let activityOptions: ActivityOptions | undefined = undefined;
   export let autoAdjustHeight: boolean = false;
   export let constraintResults: ConstraintResultWithName[] = [];
@@ -293,9 +293,7 @@
   $: showSpans = activityOptions?.composition === 'both' || activityOptions?.composition === 'spans';
   $: showDirectives = activityOptions?.composition === 'both' || activityOptions?.composition === 'directives';
 
-  // Enforce assignment to object in case of undefined prop since svelte does not
-  // re-assign the default you use in the const export.
-  $: activityTreeExpansionMap = activityTreeExpansionMap || {};
+  $: activityTreeExpansionMap = activityTreeExpansionMap === undefined ? {} : activityTreeExpansionMap;
 
   // Track resource loading status for this Row
   $: if (resourceRequestMap) {
