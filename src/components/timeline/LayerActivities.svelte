@@ -6,7 +6,8 @@
   import { quadtree as d3Quadtree, type Quadtree } from 'd3-quadtree';
   import { type ScaleTime } from 'd3-scale';
   import { createEventDispatcher, onDestroy, onMount, tick } from 'svelte';
-  import { ViewConstants, ViewDefaultActivityOptions } from '../../enums/view';
+  import { ViewDefaultActivityOptions } from '../../constants/view';
+  import { ViewConstants } from '../../enums/view';
   import type { ActivityDirective, ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { Plan } from '../../types/plan';

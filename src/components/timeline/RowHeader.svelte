@@ -7,7 +7,7 @@
   import { createEventDispatcher } from 'svelte';
   import TimelineLineLayerIcon from '../../assets/timeline-line-layer.svg?component';
   import TimelineXRangeLayerIcon from '../../assets/timeline-x-range-layer.svg?component';
-  import { ViewDefaultActivityOptions } from '../../enums/view';
+  import { ViewDefaultActivityOptions } from '../../constants/view';
   import type { ActivityDirectiveId } from '../../types/activity';
   import type { Resource, SpanId } from '../../types/simulation';
   import type {

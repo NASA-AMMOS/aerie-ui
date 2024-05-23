@@ -7,7 +7,7 @@
   import DirectiveAndSpanIcon from '../../assets/timeline-directive-and-span.svg?component';
   import DirectiveIcon from '../../assets/timeline-directive.svg?component';
   import SpanIcon from '../../assets/timeline-span.svg?component';
-  import { ViewDefaultActivityOptions } from '../../enums/view';
+  import { ViewDefaultActivityOptions } from '../../constants/view';
   import type { ActivityDirective, ActivityDirectiveId } from '../../types/activity';
   import type { Span, SpanId } from '../../types/simulation';
   import type { ActivityOptions, ActivityTree, ActivityTreeNode, MouseDown, MouseOver } from '../../types/timeline';

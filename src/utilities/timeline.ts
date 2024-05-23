@@ -14,7 +14,7 @@ import {
   type TimeInterval,
 } from 'd3-time';
 import { groupBy } from 'lodash-es';
-import { ViewDefaultActivityOptions } from '../enums/view';
+import { ViewDefaultActivityOptions } from '../constants/view';
 import type { ActivityDirective } from '../types/activity';
 import type { Resource, ResourceType, ResourceValue, Span, SpanUtilityMaps, SpansMap } from '../types/simulation';
 import type {

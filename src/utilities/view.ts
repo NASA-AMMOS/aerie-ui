@@ -1,5 +1,5 @@
 import Ajv from 'ajv';
-import { ViewDefaultActivityOptions } from '../enums/view';
+import { ViewDefaultActivityOptions } from '../constants/view';
 import jsonSchema from '../schemas/ui-view-schema.json';
 import type { ActivityType } from '../types/activity';
 import type { ResourceType } from '../types/simulation';

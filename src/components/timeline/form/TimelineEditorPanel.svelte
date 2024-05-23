@@ -19,7 +19,8 @@
   import HierarchyModeFlatIcon from '../../../assets/timeline-hierarchy-mode-flat.svg?component';
   import SpanIcon from '../../../assets/timeline-span.svg?component';
   import ActivityModeWidthIcon from '../../../assets/width.svg?component';
-  import { ViewConstants, ViewDefaultActivityOptions } from '../../../enums/view';
+  import { ViewDefaultActivityOptions } from '../../../constants/view';
+  import { ViewConstants } from '../../../enums/view';
   import { activityTypes, maxTimeRange, viewTimeRange } from '../../../stores/plan';
   import { externalResourceNames, resourceTypes, yAxesWithScaleDomainsCache } from '../../../stores/simulation';
   import {

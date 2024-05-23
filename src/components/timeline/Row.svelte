@@ -7,8 +7,8 @@
   import { groupBy } from 'lodash-es';
   import { createEventDispatcher } from 'svelte';
   import FilterWithXIcon from '../../assets/filter-with-x.svg?component';
+  import { ViewDefaultActivityOptions } from '../../constants/view';
   import { Status } from '../../enums/status';
-  import { ViewDefaultActivityOptions } from '../../enums/view';
   import { catchError } from '../../stores/errors';
   import {
     externalResources,
