@@ -129,8 +129,8 @@
     {/if}
 
     <div class="row-header-left-column-row">
-      <div style=" align-items: center;display: flex; justify-content: space-between">
-        <button class="st-button icon row-header-title-button" on:click={toggleExpansion} style="flex: 1">
+      <div class="row-header-title-button-container">
+        <button class="st-button icon row-header-title-button" on:click={toggleExpansion}>
           {#if expanded}
             <CaretDownIcon class="row-header-collapse" />
           {:else}
@@ -239,8 +239,14 @@
     flex-direction: column;
     width: 100%;
   }
+  .row-header-title-button-container {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+  }
 
   .row-header-title-button {
+    flex: 1;
     justify-content: flex-start;
     text-align: left;
   }
