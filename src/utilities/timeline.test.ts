@@ -15,6 +15,9 @@ import {
   duplicateRow,
   filterResourcesByLayer,
   getYAxisBounds,
+  isActivityLayer,
+  isLineLayer,
+  isXRangeLayer,
   spanInView,
 } from './timeline';
 
@@ -309,4 +312,22 @@ test('spanInView', () => {
   expect(spanInView(generateSpan({ durationMs: 1, endMs: 9716332383896, startMs: 9716332383895 }), viewTimeRange)).toBe(
     false,
   );
+});
+
+test('isActivityLayer', () => {
+  expect(isActivityLayer(createTimelineActivityLayer([]))).toBe(true);
+  expect(isActivityLayer(createTimelineLineLayer([], []))).toBe(false);
+  expect(isActivityLayer(createTimelineXRangeLayer([], []))).toBe(false);
+});
+
+test('isLineLayer', () => {
+  expect(isLineLayer(createTimelineActivityLayer([]))).toBe(false);
+  expect(isLineLayer(createTimelineLineLayer([], []))).toBe(true);
+  expect(isLineLayer(createTimelineXRangeLayer([], []))).toBe(false);
+});
+
+test('isXRangeLayer', () => {
+  expect(isXRangeLayer(createTimelineActivityLayer([]))).toBe(false);
+  expect(isXRangeLayer(createTimelineLineLayer([], []))).toBe(false);
+  expect(isXRangeLayer(createTimelineXRangeLayer([], []))).toBe(true);
 });
