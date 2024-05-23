@@ -293,7 +293,9 @@
   $: showSpans = activityOptions?.composition === 'both' || activityOptions?.composition === 'spans';
   $: showDirectives = activityOptions?.composition === 'both' || activityOptions?.composition === 'directives';
 
-  $: activityTreeExpansionMap = activityTreeExpansionMap === undefined ? {} : activityTreeExpansionMap;
+  $: if (activityTreeExpansionMap === undefined) {
+    activityTreeExpansionMap = {};
+  }
 
   // Track resource loading status for this Row
   $: if (resourceRequestMap) {
