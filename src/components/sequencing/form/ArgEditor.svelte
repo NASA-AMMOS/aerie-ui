@@ -76,10 +76,10 @@
   {:else if isNumberArg(argInfo.argDef) && argInfo.node?.name === 'Number'}
     <NumEditor
       argDef={argInfo.argDef}
-      initVal={argInfo.text ?? (argInfo.argDef.default_value ?? 0).toString()}
+      initVal={Number(argInfo.text) ?? argInfo.argDef.default_value ?? 0}
       setInEditor={val => {
         if (argInfo.node) {
-          setInEditor(argInfo.node, val);
+          setInEditor(argInfo.node, val.toString());
         }
       }}
     />
