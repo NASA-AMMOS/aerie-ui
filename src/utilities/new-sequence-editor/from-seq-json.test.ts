@@ -216,7 +216,7 @@ C FSW_CMD_3
     const sequence = seqJsonToSequence(seqJson, [], null);
     const expectedSequence = `@ID "42"
 
-A2024-001T00:00:00 FSW_CMD_0 TRUE 0xFF "Hello" "World" [FALSE 0xAA "Foo" "BAR" TRUE 0xBB "Baz" "BAT"]
+A2024-001T00:00:00 FSW_CMD_0 TRUE 0xFF "Hello" World [FALSE 0xAA "Foo" BAR TRUE 0xBB "Baz" BAT]
 R00:01:00 FSW_CMD_1 22
 E15:00:00 FSW_CMD_2 "Fab"
 C FSW_CMD_3
@@ -533,6 +533,38 @@ E-00:00:01.000 FSE_CMD 10 "ENUM"
     const expectedSequence = `@ID "testRepeat"
 
 C FSA_CMD 10 [] "USA" ["96707-898" "92604-623"]
+`;
+    expect(sequence).toEqual(expectedSequence);
+  });
+
+  it('symbol arguments', () => {
+    const seqJson: SeqJson = {
+      id: 'seq_with_symbols',
+      metadata: {},
+      steps: [
+        {
+          args: [
+            {
+              type: 'symbol',
+              value: 'L00INT',
+            },
+            {
+              type: 'symbol',
+              value: 'L01INT',
+            },
+          ],
+          stem: 'MY_COMMAND_STEM',
+          time: {
+            type: 'COMMAND_COMPLETE',
+          },
+          type: 'command',
+        },
+      ],
+    };
+    const sequence = seqJsonToSequence(seqJson, [], null);
+    const expectedSequence = `@ID "seq_with_symbols"
+
+C MY_COMMAND_STEM L00INT L01INT
 `;
     expect(sequence).toEqual(expectedSequence);
   });

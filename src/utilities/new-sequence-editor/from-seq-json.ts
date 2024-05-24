@@ -43,7 +43,6 @@ export function seqJsonBaseArgToSequence(
 ): string {
   switch (arg.type) {
     case 'string':
-    case 'symbol':
       return `"${arg.value}"`;
     case 'boolean':
       return arg.value ? 'TRUE' : 'FALSE';
