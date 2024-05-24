@@ -1,5 +1,5 @@
 import { testTree } from '@lezer/generator/dist/test';
-import { describe, test } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import { SeqLanguage } from '../codemirror';
 
 const parseTreeTests = [
@@ -444,17 +444,13 @@ Command(TimeTag(TimeEpoch),Stem,Args)
   ],
 ];
 
-describe('grammar tests', () => {
-  const testGrammar = (_: string, input: string, expected: string) => {
-    testTree(SeqLanguage.parser.parse(input), expected, undefined);
-  };
-  Object.entries({
-    'error tokens': errorTests,
-    'parse tree structure': parseTreeTests,
-    'time formats': timeFormatTests,
-  }).forEach(([name, testArray]: [string, string[][]]) => {
-    describe(name, () => {
-      test.each(testArray)('%s', testGrammar);
-    });
+describe.each([
+  ['error tokens', errorTests],
+  ['parse tree structure', parseTreeTests],
+  ['time formats', timeFormatTests],
+])('grammar tests - %s', (_name: string, testArray: string[][]) => {
+  test.each(testArray)('%s', (_: string, input: string, expected: string) => {
+    // testTree will throw if there's a mismatch
+    expect(testTree(SeqLanguage.parser.parse(input), expected, undefined)).toBeUndefined();
   });
 });
