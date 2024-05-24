@@ -10,7 +10,7 @@
     isNumberArg,
     quoteEscape,
     type ArgTextDef,
-  } from '../../../utilities/codemirror/codemirror-utils';
+  } from './../../../utilities/codemirror/codemirror-utils';
   import AddMissingArgsButton from './AddMissingArgsButton.svelte';
   import ArgTitle from './ArgTitle.svelte';
   import EnumEditor from './EnumEditor.svelte';

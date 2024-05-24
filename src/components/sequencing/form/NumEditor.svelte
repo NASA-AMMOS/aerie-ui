@@ -7,7 +7,7 @@
   // (("e" | "E") ("+" | "-")? ("_" | @digit)+)? |
   // @digit ("_" | @digit)* "n" |
 
-  import { isFswCommandArgumentUnsigned, type NumberArg } from '../../../utilities/codemirror/codemirror-utils';
+  import { isFswCommandArgumentUnsigned, type NumberArg } from './../../../utilities/codemirror/codemirror-utils';
 
   export let argDef: NumberArg;
   export let initVal: number;
