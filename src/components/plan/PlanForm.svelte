@@ -306,4 +306,8 @@
   .plan-form-field :global(fieldset) {
     padding: 0;
   }
+
+  .plan-form-field :global(fieldset .error *) {
+    padding-left: calc(40% + 8px);
+  }
 </style>
