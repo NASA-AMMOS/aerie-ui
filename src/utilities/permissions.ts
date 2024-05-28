@@ -896,6 +896,9 @@ const queryPermissions = {
   UPDATE_PARCEL: (user: User | null, parcel: AssetWithOwner<Parcel>): boolean => {
     return isUserAdmin(user) || (getPermission([Queries.UPDATE_PARCEL], user) && isUserOwner(user, parcel));
   },
+  UPDATE_PLAN: (user: User | null, plan: PlanWithOwners): boolean => {
+    return isUserAdmin(user) || (getPermission([Queries.UPDATE_PLAN], user) && isPlanOwner(user, plan));
+  },
   UPDATE_PLAN_SNAPSHOT: (user: User | null): boolean => {
     return getPermission([Queries.UPDATE_PLAN_SNAPSHOT], user);
   },
@@ -1267,7 +1270,7 @@ const featurePermissions: FeaturePermissions = {
     canCreate: user => queryPermissions.CREATE_PLAN(user),
     canDelete: (user, plan) => queryPermissions.DELETE_PLAN(user, plan),
     canRead: user => queryPermissions.GET_PLAN(user),
-    canUpdate: (user, plan) => queryPermissions.CREATE_PLAN_TAGS(user, plan),
+    canUpdate: (user, plan) => queryPermissions.UPDATE_PLAN(user, plan),
   },
   planBranch: {
     canCreateBranch: (user, plan, model) => queryPermissions.DUPLICATE_PLAN(user, plan, model),
