@@ -5,6 +5,8 @@
   globalThis.LINT = function commandDictionary(commandDictionary, view, node) {
     const diagnostics = [];
 
+    console.log(commandDictionary, view, node);
+
     return diagnostics;
   };
 })();

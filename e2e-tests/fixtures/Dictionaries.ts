@@ -102,8 +102,6 @@ export class Dictionaries {
   }
 
   async createSequenceAdaptation(): Promise<void> {
-    await this.page.pause();
-
     await this.updatePage(this.page, DictionaryType.SequenceAdaptation);
 
     this.createDictionary(
@@ -115,8 +113,6 @@ export class Dictionaries {
   }
 
   async deleteChannelDictionary(): Promise<void> {
-    await this.page.pause();
-
     await this.updatePage(this.page, DictionaryType.ChannelDictionary, this.channelDictionaryName);
 
     await this.deleteDictionary(
@@ -179,8 +175,6 @@ export class Dictionaries {
 
   async deleteSequenceAdaptation(): Promise<void> {
     await this.updatePage(this.page, DictionaryType.SequenceAdaptation);
-
-    await this.page.pause();
 
     await this.deleteDictionary(
       this.sequenceAdaptationTableRow,
