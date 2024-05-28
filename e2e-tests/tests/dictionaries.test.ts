@@ -46,4 +46,14 @@ test.describe('Dictionaries', () => {
       await dictionaries.deleteParameterDictionary();
     });
   });
+
+  test.describe.serial('Sequence Adaptation', () => {
+    test('Create sequence adaptation', async () => {
+      await dictionaries.createSequenceAdaptation();
+    });
+
+    test('Delete sequence adaptation', async () => {
+      await dictionaries.deleteSequenceAdaptation();
+    });
+  });
 });
