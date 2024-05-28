@@ -132,7 +132,16 @@
           <Field field={planNameField} on:change={onPlanNameChange}>
             <Input layout="inline">
               <label use:tooltip={{ content: 'Name', placement: 'top' }} for="plan-name">Plan Name</label>
-              <input autocomplete="off" class="st-input w-100" name="plan-name" placeholder="Enter a plan name" />
+              <input
+                autocomplete="off"
+                class="st-input w-100"
+                name="plan-name"
+                placeholder="Enter a plan name"
+                use:permissionHandler={{
+                  hasPermission: hasPlanUpdatePermission,
+                  permissionError,
+                }}
+              />
             </Input>
           </Field>
         </div>
@@ -223,7 +232,7 @@
               [
                 permissionHandler,
                 {
-                  hasPermission: hasPlanUpdatePermission && !$planReadOnly,
+                  hasPermission: hasPlanUpdatePermission,
                   permissionError,
                 },
               ],
