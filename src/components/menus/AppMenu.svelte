@@ -72,6 +72,13 @@
       <JournalCodeIcon />
       Sequencing
     </MenuItem>
+    <MenuItem
+      on:click={() => goto(`${base}/external-sources`)}
+      on:pointerenter={() => preloadData(`${base}/external-sources`)}
+    >
+      <TagIcon />
+      External Sources
+    </MenuItem>
     <MenuItem on:click={() => goto(`${base}/tags`)} on:pointerenter={() => preloadData(`${base}/tags`)}>
       <TagIcon />
       Tags
