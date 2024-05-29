@@ -1,15 +1,22 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import type { ValueGetterParams } from 'ag-grid-community';
+  import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import Nav from '../../components/app/Nav.svelte';
   import PageTitle from '../../components/app/PageTitle.svelte';
   import DatePickerField from '../../components/form/DatePickerField.svelte';
   import Field from '../../components/form/Field.svelte';
+  import AlertError from '../../components/ui/AlertError.svelte';
   import CssGrid from '../../components/ui/CssGrid.svelte';
+  import SingleActionDataGrid from '../../components/ui/DataGrid/SingleActionDataGrid.svelte';
   import Panel from '../../components/ui/Panel.svelte';
   import SectionTitle from '../../components/ui/SectionTitle.svelte';
+  import { createExternalSourceError, creatingExternalSource, externalSources } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import type { User } from '../../types/app';
+  import type { DataGridColumnDef } from '../../types/data-grid';
+  import type { ExternalSourceSlim } from '../../types/external-source';
   import effects from '../../utilities/effects';
   import { required, timestamp } from '../../utilities/validators';
   import type { PageData } from './$types';
@@ -24,7 +31,78 @@
   let endTimeDoyField = field<string>('', [required, timestamp]); // requires validation function
   let validAtDoyField = field<string>('', [required, timestamp]); // requires validation function
 
-  async function onFormSubmit() {
+  // $: createButtonDisabled = !files || key === '' ||   $creatingModel === true; TODO: do this later
+
+  const baseColumnDefs: DataGridColumnDef[] = [
+    {
+      field: 'id',
+      filter: 'number',
+      headerName: 'ID',
+      resizable: true,
+      sortable: true,
+    },
+    { 
+      field: 'key', 
+      filter: 'text', 
+      headerName: 'Key', 
+      resizable: true, 
+      sortable: true 
+    },
+    { 
+      field: 'source_type', 
+      filter: 'text', 
+      headerName: 'Source Type', 
+      resizable: true, 
+      sortable: true 
+    },
+    {
+      field: 'file_id',
+      filter: 'number',
+      headerName: 'File ID',
+      resizable: true,
+      sortable: true,
+    },
+    {
+      field: 'start_time',
+      filter: 'text',
+      headerName: 'Start Time',
+      resizable: true,
+      sortable: true,
+      valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
+        if (params.data?.start_time) {
+          return new Date(params.data?.start_time).toISOString().slice(0, 19);
+        }
+      },
+    },
+    {
+      field: 'end_time',
+      filter: 'text',
+      headerName: 'End Time',
+      resizable: true,
+      sortable: true,
+      valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
+        if (params.data?.end_time) {
+          return new Date(params.data?.end_time).toISOString().slice(0, 19);
+        }
+      },
+    },
+    {
+      field: 'valid_at',
+      filter: 'text',
+      headerName: 'Valid At',
+      resizable: true,
+      sortable: true,
+      valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
+        if (params.data?.valid_at) {
+          return new Date(params.data?.valid_at).toISOString().slice(0, 19);
+        }
+      },
+    },
+  ];
+  let columnDefs: DataGridColumnDef[] = baseColumnDefs;
+  // TODO: add actions like delete as in Models.svelte
+
+  async function onFormSubmit(e: SubmitEvent) {
     if (files !== undefined) {
       // break input into an object
       sourceId = await effects.createExternalSource(
@@ -36,9 +114,8 @@
         files, 
         user
       );
-      // if ($createModelError === null && e.target instanceof HTMLFormElement) { // create model error in stores
-      //   goto(`${base}/external-sources/${sourceId}`); // base in types
-      // TODO: make external-source specific pages
+      // if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) { 
+      //   goto(`${base}/external-sources/${sourceId}`); 
       // }
     }
   }
@@ -62,11 +139,13 @@
   <CssGrid columns="20% auto">
     <Panel borderRight padBody={false}>
       <svelte:fragment slot="header">
-        <SectionTitle>Hello!</SectionTitle>
+        <SectionTitle>New External Source</SectionTitle>
       </svelte:fragment>
 
       <svelte:fragment slot="body">
         <form on:submit|preventDefault={onFormSubmit}>
+          <AlertError class="m-2" error={$createExternalSourceError} />
+
           <Field field={keyField}>
             <label for="key" slot="label">Key</label>
             <input
@@ -118,7 +197,7 @@
             <input class="w-100" name="file" required type="file" bind:files />
           </fieldset>
           <fieldset>
-            <button class="st-button w-100" type="submit">Upload!</button>
+            <button class="st-button w-100" type="submit">{$creatingExternalSource ? 'Uploading...' : 'Upload'}</button>
           </fieldset>
         </form>
       </svelte:fragment>
@@ -127,12 +206,20 @@
     <!-- svelte-ignore missing-declaration -->
     <Panel>
       <svelte:fragment slot="header">
-        <SectionTitle>Header Hello</SectionTitle>
+        <SectionTitle><Truck />External Sources</SectionTitle>
       </svelte:fragment>
 
-      <svelte:fragment slot="body"
-        >Body Hello
-        {sourceId}
+      <svelte:fragment slot="body">
+        {#if $externalSources.length}
+          <SingleActionDataGrid
+            {columnDefs}
+            itemDisplayText="External Source"
+            items={$externalSources}
+            {user}
+          />
+        {:else}
+          No Models Found
+        {/if}
       </svelte:fragment>
     </Panel>
   </CssGrid>
