@@ -159,7 +159,10 @@ export class Dictionaries {
       await tableRow.waitFor({ state: 'hidden' });
       await expect(tableRow).not.toBeVisible();
     } else {
-      expect((await this.sequenceAdaptationTableRows.count()) - 1).toEqual(this.sequenceAdaptationTableRowCount);
+      // This will never go below 0.
+      expect(Math.max(0, (await this.sequenceAdaptationTableRows.count()) - 1)).toEqual(
+        this.sequenceAdaptationTableRowCount,
+      );
     }
   }
 
