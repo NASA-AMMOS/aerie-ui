@@ -99,6 +99,7 @@ export enum Queries {
   INSERT_CONSTRAINT_TAGS = 'insert_constraint_tags',
   INSERT_EXPANSION_RULE = 'insert_expansion_rule_one',
   INSERT_EXPANSION_RULE_TAGS = 'insert_expansion_rule_tags',
+  INSERT_EXTERNAL_SOURCE = 'insert_external_source_one',
   INSERT_MISSION_MODEL = 'insert_mission_model_one',
   INSERT_PARAMETER_DICTIONARY = 'insert_parameter_dictionary_one',
   INSERT_PARCEL = 'insert_parcel_one',
@@ -438,8 +439,8 @@ const gql = {
   `,
 
   CREATE_EXTERNAL_SOURCE: `#graphql
-    mutation CreateExternalSource($source: external_source_insert_input) {
-      insert_external_source_one(object: {file_id: 10}) {
+    mutation CreateExternalSource($source: external_source_insert_input!) {
+      createExternalSource: insert_external_source_one(object: $source) {
         id
         key
       }

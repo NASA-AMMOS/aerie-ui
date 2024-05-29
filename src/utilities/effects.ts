@@ -799,20 +799,68 @@ const effects = {
     }
   },
 
-  async createExternalSource(files: FileList, user: User | null) {
+  async createExternalSource(
+    key: String, 
+    sourceType: String, 
+    startTimeDoy: String, 
+    endTimeDoy: String, 
+    validAtDoy: String, 
+    files: FileList, 
+    user: User | null
+  ) {
     try {
+      // createModelError.set(null);
+
+      // if (!queryPermissions.CREATE_MODEL(user)) {
+      //   throwPermissionError('upload a model');
+      // }
+
+      // creatingModel.set(true);
+      // TODO: ^^ add an external_sources.ts entry in stores/
+
+
+
       const file: File = files[0];
       const file_id = await effects.uploadFile(file, user);
       console.log(file_id);
-      return file_id;
-      // const file = files[0];
-      // const data = await reqHasura(gql.CREATE_EXTERNAL_SOURCE, { file }, user);
-      // const { createExternalSource } = data;
-      // if (createExternalSource != null) {
-      //   showSuccessToast('External Source Created Successfully');
-      // } else {
-      //   throw Error('Unable to create external source');
-      // }
+      
+      if (file_id != null) {
+        const data = await reqHasura(gql.CREATE_EXTERNAL_SOURCE, {
+          source: { 
+            file_id: file_id,
+            key: key,
+            source_type: sourceType,
+            start_time: startTimeDoy,
+            end_time: endTimeDoy,
+            valid_at: validAtDoy
+          }
+        }, user)
+        console.log(data);
+        const { createExternalSource } = data;
+        if (createExternalSource != null) {
+          const { id, key } = createExternalSource;
+          // const model: ModelSlim = {
+          //   created_at,
+          //   id,
+          //   jar_id,
+          //   name,
+          //   owner,
+          //   plans: [],
+          //   version,
+          //   ...(description && { description }),
+          // };
+
+          showSuccessToast("External Source Created Successfully");
+          console.log(`External Source Created Succesfully: ${ key } -> ${ id }`)
+          // createModelError.set(null);
+          // creatingModel.set(false);
+          // models.updateValue((currentModels: ModelSlim[]) => [...currentModels, model]);
+          // TODO: ^^ add an external_sources.ts entry in stores/
+          return id;
+        } else {
+          throw Error(`Unable to create model "${name}"`);
+        }
+      }
     } catch (e) {
       catchError('External Source Create Failed', e as Error);
       showFailureToast('External Source Create Failed');
