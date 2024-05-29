@@ -72,7 +72,7 @@ export class Dictionaries {
     );
   }
 
-  async createDictionary(
+  private async createDictionary(
     dictionaryBuffer: Buffer,
     dictionaryName: string,
     tableRow: Locator,
@@ -135,7 +135,7 @@ export class Dictionaries {
   /**
    * @note Automatically cascade deletes any dependent expansion rules and expansion sets.
    */
-  async deleteDictionary(tableRow: Locator, tableRowDeleteButton: Locator, type: DictionaryType) {
+  private async deleteDictionary(tableRow: Locator, tableRowDeleteButton: Locator, type: DictionaryType) {
     await expect(tableRow).toBeVisible();
     await expect(tableRowDeleteButton).not.toBeVisible();
 
@@ -186,7 +186,7 @@ export class Dictionaries {
     );
   }
 
-  async fillInputFile(dictionaryBuffer: Buffer, dictionaryName: string) {
+  private async fillInputFile(dictionaryBuffer: Buffer, dictionaryName: string) {
     await this.inputFile.focus();
     await this.inputFile.setInputFiles({
       buffer: dictionaryBuffer,
@@ -201,7 +201,7 @@ export class Dictionaries {
     await this.page.waitForTimeout(250);
   }
 
-  readDictionary(dictionaryName: string, dictionaryPath: string): Buffer {
+  private readDictionary(dictionaryName: string, dictionaryPath: string): Buffer {
     const dictionaryFile = readFileSync(dictionaryPath)
       .toString()
       .replace(/GENERIC/, dictionaryName);
@@ -210,7 +210,11 @@ export class Dictionaries {
     return Buffer.from(dictionary);
   }
 
-  async updatePage(page: Page, dictionaryType: DictionaryType, dictionaryName?: string | undefined): Promise<void> {
+  private async updatePage(
+    page: Page,
+    dictionaryType: DictionaryType,
+    dictionaryName?: string | undefined,
+  ): Promise<void> {
     this.page = page;
 
     this.confirmModal = this.page.locator(`.modal:has-text("Delete ${dictionaryType}")`);
