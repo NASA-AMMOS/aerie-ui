@@ -437,6 +437,15 @@ const gql = {
     }
   `,
 
+  CREATE_EXTERNAL_SOURCE: `#graphql
+    mutation CreateExternalSource($source: external_source_insert_input) {
+      insert_external_source_one(object: {file_id: 10}) {
+        id
+        key
+      }
+    }
+  `,
+
   CREATE_MODEL: `#graphql
     mutation CreateModel($model: mission_model_insert_input!) {
       createModel: ${Queries.INSERT_MISSION_MODEL}(object: $model) {
