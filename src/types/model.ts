@@ -12,7 +12,7 @@ export type ModelSetInput = Pick<Model, 'description' | 'mission' | 'name' | 'ow
 export type ModelLog = {
   // created_at: string;
   // delivered: boolean;
-  // error: string | null;
+  error: string | null;
   error_message: string | null;
   // error_type: string | null;
   // status: string | null;

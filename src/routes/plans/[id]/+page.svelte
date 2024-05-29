@@ -13,12 +13,14 @@
   import WaterfallIcon from '@nasa-jpl/stellar/icons/waterfall.svg?component';
   import GearWideConnectedIcon from 'bootstrap-icons/icons/gear-wide-connected.svg?component';
   import { onDestroy } from 'svelte';
+  import MissionModelIcon from '../../../assets/mission-model.svg?component';
   import Nav from '../../../components/app/Nav.svelte';
   import PageTitle from '../../../components/app/PageTitle.svelte';
   import Console from '../../../components/console/Console.svelte';
   import ConsoleTab from '../../../components/console/ConsoleTab.svelte';
   import ConsoleActivityErrors from '../../../components/console/views/ActivityErrors.svelte';
   import ConsoleGenericErrors from '../../../components/console/views/GenericErrors.svelte';
+  import ConsoleModelErrors from '../../../components/console/views/ModelErrors.svelte';
   import ActivityStatusMenu from '../../../components/menus/ActivityStatusMenu.svelte';
   import ExtensionMenu from '../../../components/menus/ExtensionMenu.svelte';
   import PlanMenu from '../../../components/menus/PlanMenu.svelte';
@@ -146,6 +148,7 @@
     SCHEDULING = 'scheduling',
     SIMULATION = 'simulation',
     ACTIVITY = 'activity',
+    MODEL = 'model',
   }
 
   let activityErrorCounts: ActivityErrorCounts = {
@@ -168,6 +171,7 @@
   let hasSimulatePermission: boolean = false;
   let hasCheckConstraintsPermission: boolean = false;
   let invalidActivityCount: number = 0;
+  let modelErrorCount: number = 0;
   let simulationExtent: string | null;
   let selectedSimulationStatus: Status | null;
   let windowWidth = 0;
@@ -219,6 +223,23 @@
       wrongType: 0,
     },
   ));
+  $: if ($plan?.model) {
+    const {
+      refresh_activity_type_logs: activityLogs,
+      refresh_model_parameter_logs: parameterLogs,
+      refresh_resource_type_logs: resourceLogs,
+    } = $plan.model;
+    modelErrorCount = 0;
+    if (!activityLogs[0]?.success) {
+      modelErrorCount += 1;
+    }
+    if (!parameterLogs[0]?.success) {
+      modelErrorCount += 1;
+    }
+    if (!resourceLogs[0]?.success) {
+      modelErrorCount += 1;
+    }
+  }
   $: hasCreateViewPermission = featurePermissions.view.canCreate(data.user);
   $: hasUpdateViewPermission = $view !== null ? featurePermissions.view.canUpdate(data.user, $view) : false;
   $: if ($initialPlan) {
@@ -614,6 +635,7 @@
           ? 'Simulation up-to-date'
           : ''}
         hasPermission={hasSimulatePermission}
+        indeterminate={$simulationProgress === 0}
         permissionError={$planReadOnly
           ? PlanStatusMessages.READ_ONLY
           : 'You do not have permission to run a simulation'}
@@ -838,6 +860,9 @@
           >
             <WaterfallIcon />
           </ConsoleTab>
+          <ConsoleTab tabId={ConsoleTabs.MODEL} numberOfErrors={modelErrorCount} title="Mission Model Errors">
+            <MissionModelIcon />
+          </ConsoleTab>
         </div>
       </div>
     </svelte:fragment>
@@ -856,6 +881,7 @@
       title="Activity Validation Errors"
       on:selectionChanged={onActivityValidationSelected}
     />
+    <ConsoleModelErrors model={$plan?.model} title="Mission Model Errors" />
   </Console>
 </CssGrid>
 

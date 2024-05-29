@@ -1373,6 +1373,21 @@ const gql = {
           parameters {
             parameters
           }
+          refresh_activity_type_logs(order_by: { created_at: desc }, limit: 1) {
+            success
+            error
+            error_message
+          }
+          refresh_resource_type_logs(order_by: { created_at: desc }, limit: 1) {
+            success
+            error
+            error_message
+          }
+          refresh_model_parameter_logs(order_by: { created_at: desc }, limit: 1) {
+            success
+            error
+            error_message
+          }
           version
           view {
             created_at
@@ -2180,14 +2195,17 @@ const gql = {
         }
         refresh_activity_type_logs(order_by: { created_at: desc }, limit: 1) {
           success
+          error
           error_message
         }
         refresh_resource_type_logs(order_by: { created_at: desc }, limit: 1) {
           success
+          error
           error_message
         }
         refresh_model_parameter_logs(order_by: { created_at: desc }, limit: 1) {
           success
+          error
           error_message
         }
         scheduling_specification_conditions {
@@ -2238,14 +2256,17 @@ const gql = {
         owner
         refresh_activity_type_logs(order_by: { created_at: desc }, limit: 1) {
           success
+          error
           error_message
         }
         refresh_resource_type_logs(order_by: { created_at: desc }, limit: 1) {
           success
+          error
           error_message
         }
         refresh_model_parameter_logs(order_by: { created_at: desc }, limit: 1) {
           success
+          error
           error_message
         }
         version

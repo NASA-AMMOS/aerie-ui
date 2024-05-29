@@ -215,8 +215,8 @@
   }
 
   .model-status-logs-container.horizontal {
-    column-gap: 16px;
-    grid-template-columns: repeat(3, auto);
+    column-gap: 8px;
+    grid-template-columns: repeat(3, min-content);
   }
 
   .model-status-logs-container .model-status-button {
@@ -224,9 +224,15 @@
     border: 0;
     border-radius: 8px;
     column-gap: var(--model-status-gap);
+    cursor: pointer;
     display: grid;
     grid-template-columns: min-content min-content;
+    padding: 6px;
     white-space: nowrap;
+  }
+
+  .model-status-logs-container .model-status-button:hover {
+    background-color: var(--tab-hover-background-color, var(--st-gray-15));
   }
 
   .model-status-logs-container .model-status-button.selected {
@@ -237,6 +243,7 @@
     background-color: inherit;
     border: 0;
     color: var(--st-primary-text-color);
+    cursor: inherit;
     padding: 0;
     -webkit-user-select: text;
     -moz-user-select: text;
