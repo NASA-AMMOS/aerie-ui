@@ -785,6 +785,7 @@ const queryPermissions = {
     return isUserAdmin(user) || getPermission([Queries.PARCELS], user);
   },
   SUB_PARCEL_TO_PARAMETER_DICTIONARIES: () => true,
+  SUB_PLANS: () => true,
   SUB_PLANS_USER_WRITABLE: () => true,
   SUB_PLAN_DATASET: () => true,
   SUB_PLAN_LOCKED: () => true,
