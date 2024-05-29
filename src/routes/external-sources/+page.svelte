@@ -1,6 +1,8 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { goto } from '$app/navigation';
+  import { base } from '$app/paths';
   import type { ValueGetterParams } from 'ag-grid-community';
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import Nav from '../../components/app/Nav.svelte';
@@ -109,11 +111,15 @@
         $keyField.value, 
         $sourceTypeField.value,
         $startTimeDoyField.value,
+        $endTimeDoyField.value, // sanitize, make sure this is after start time
         $endTimeDoyField.value,
-        $endTimeDoyField.value,
-        files, 
+        files, // ensure file has right format
         user
       );
+      // force reload the page???
+      if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) { 
+        goto(`${base}/external-sources`); 
+      }
       // if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) { 
       //   goto(`${base}/external-sources/${sourceId}`); 
       // }
