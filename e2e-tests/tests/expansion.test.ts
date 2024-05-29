@@ -1,6 +1,6 @@
 import test, { type BrowserContext, type Page } from '@playwright/test';
 import { adjectives, animals, colors, uniqueNamesGenerator } from 'unique-names-generator';
-import { COMMAND_DICTIONARY_PATH, Dictionaries } from '../fixtures/Dictionaries.js';
+import { COMMAND_DICTIONARY_PATH, Dictionaries, DictionaryType } from '../fixtures/Dictionaries.js';
 import { ExpansionRules } from '../fixtures/ExpansionRules.js';
 import { ExpansionSets } from '../fixtures/ExpansionSets.js';
 import { Models } from '../fixtures/Models.js';
@@ -29,8 +29,13 @@ test.beforeAll(async ({ browser }) => {
   await models.goto();
   await models.createModel();
   await dictionaries.goto();
-  await dictionaries.updatePage(page, dictionaryName, 'Command Dictionary');
-  await dictionaries.createDictionary(dictionaryBuffer, dictionaryName);
+  await dictionaries.updatePage(page, DictionaryType.CommandDictionary, dictionaryName);
+  await dictionaries.createDictionary(
+    dictionaryBuffer,
+    dictionaryName,
+    dictionaries.commandDictionaryTableRow,
+    DictionaryType.CommandDictionary,
+  );
   await parcels.goto();
   await parcels.createParcel(dictionaryName);
   await expansionRules.goto();

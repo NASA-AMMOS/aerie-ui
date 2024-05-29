@@ -3,7 +3,7 @@ import { expect } from '@playwright/test';
 import { readFileSync } from 'fs';
 import { adjectives, animals, colors, uniqueNamesGenerator } from 'unique-names-generator';
 
-enum DictionaryType {
+export enum DictionaryType {
   CommandDictionary = 'Command Dictionary',
   ChannelDictionary = 'Channel Dictionary',
   ParameterDictionary = 'Parameter Dictionary',

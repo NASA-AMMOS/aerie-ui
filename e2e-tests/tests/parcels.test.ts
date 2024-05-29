@@ -1,6 +1,6 @@
 import test, { type BrowserContext, type Page } from '@playwright/test';
 import { adjectives, animals, colors, uniqueNamesGenerator } from 'unique-names-generator';
-import { COMMAND_DICTIONARY_PATH, Dictionaries } from '../fixtures/Dictionaries.js';
+import { COMMAND_DICTIONARY_PATH, Dictionaries, DictionaryType } from '../fixtures/Dictionaries.js';
 import { Parcels } from '../fixtures/Parcels.js';
 let context: BrowserContext;
 let dictionaries: Dictionaries;
@@ -24,10 +24,20 @@ test.beforeAll(async ({ browser }) => {
   );
 
   await dictionaries.goto();
-  await dictionaries.updatePage(page, firstCommandDictionaryName, 'Command Dictionary');
-  await dictionaries.createDictionary(firstCommandDictionaryBuffer, firstCommandDictionaryName);
-  await dictionaries.updatePage(page, secondCommandDictionaryName, 'Command Dictionary');
-  await dictionaries.createDictionary(secondCommandDictionaryBuffer, secondCommandDictionaryName);
+  await dictionaries.updatePage(page, DictionaryType.CommandDictionary, firstCommandDictionaryName);
+  await dictionaries.createDictionary(
+    firstCommandDictionaryBuffer,
+    firstCommandDictionaryName,
+    dictionaries.commandDictionaryTableRow,
+    DictionaryType.CommandDictionary,
+  );
+  await dictionaries.updatePage(page, DictionaryType.CommandDictionary, secondCommandDictionaryName);
+  await dictionaries.createDictionary(
+    secondCommandDictionaryBuffer,
+    secondCommandDictionaryName,
+    dictionaries.commandDictionaryTableRow,
+    DictionaryType.CommandDictionary,
+  );
   await parcels.goto();
 });
 
