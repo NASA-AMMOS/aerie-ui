@@ -25,6 +25,7 @@ import {
   savingExpansionRule,
   savingExpansionSet,
 } from '../stores/expansion';
+import { createExternalSourceError, creatingExternalSource, externalSources } from '../stores/external-source';
 import { createModelError, creatingModel, models } from '../stores/model';
 import { createPlanError, creatingPlan, planId } from '../stores/plan';
 import { schedulingRequests, selectedSpecId } from '../stores/scheduling';
@@ -77,6 +78,7 @@ import type {
 } from '../types/expansion';
 import type { Extension, ExtensionPayload } from '../types/extension';
 import type { Model, ModelInsertInput, ModelLog, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
+import type { ExternalSourceSlim } from '../types/external-source';
 import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
 import type {
   Argument,
@@ -800,33 +802,32 @@ const effects = {
   },
 
   async createExternalSource(
-    key: String, 
-    sourceType: String, 
-    startTimeDoy: String, 
-    endTimeDoy: String, 
-    validAtDoy: String, 
-    files: FileList, 
+    key: string,
+    sourceType: string,
+    startTimeDoy: string,
+    endTimeDoy: string,
+    validAtDoy: string,
+    files: FileList,
     user: User | null
   ) {
     try {
-      // createModelError.set(null);
+      createExternalSourceError.set(null);
 
       // if (!queryPermissions.CREATE_MODEL(user)) {
       //   throwPermissionError('upload a model');
-      // }
+      // } // permissions are yet unhandled anywhere in external-source/page or anywhere else
 
-      // creatingModel.set(true);
-      // TODO: ^^ add an external_sources.ts entry in stores/
+      creatingExternalSource.set(true);
 
 
 
       const file: File = files[0];
       const file_id = await effects.uploadFile(file, user);
       console.log(file_id);
-      
+
       if (file_id != null) {
         const data = await reqHasura(gql.CREATE_EXTERNAL_SOURCE, {
-          source: { 
+          source: {
             file_id: file_id,
             key: key,
             source_type: sourceType,
@@ -839,23 +840,21 @@ const effects = {
         const { createExternalSource } = data;
         if (createExternalSource != null) {
           const { id, key } = createExternalSource;
-          // const model: ModelSlim = {
-          //   created_at,
-          //   id,
-          //   jar_id,
-          //   name,
-          //   owner,
-          //   plans: [],
-          //   version,
-          //   ...(description && { description }),
-          // };
+          const external_source: ExternalSourceSlim = {
+            id,
+            file_id,
+            key,
+            source_type: sourceType,
+            start_time: startTimeDoy,
+            end_time: endTimeDoy,
+            valid_at: validAtDoy
+          };
 
           showSuccessToast("External Source Created Successfully");
           console.log(`External Source Created Succesfully: ${ key } -> ${ id }`)
-          // createModelError.set(null);
-          // creatingModel.set(false);
-          // models.updateValue((currentModels: ModelSlim[]) => [...currentModels, model]);
-          // TODO: ^^ add an external_sources.ts entry in stores/
+          createExternalSourceError.set(null);
+          creatingExternalSource.set(false);
+          externalSources.updateValue((externalSources: ExternalSourceSlim[]) => [...externalSources, external_source]);
           return id;
         } else {
           throw Error(`Unable to create model "${name}"`);
@@ -864,6 +863,8 @@ const effects = {
     } catch (e) {
       catchError('External Source Create Failed', e as Error);
       showFailureToast('External Source Create Failed');
+      createExternalSourceError.set((e as Error).message);
+      creatingExternalSource.set(false);
     }
   },
 

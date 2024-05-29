@@ -76,6 +76,8 @@ export enum Queries {
   EXPANSION_RUNS = 'expansion_run',
   EXPANSION_SETS = 'expansion_set',
   EXTENSIONS = 'extensions',
+  EXTERNAL_SOURCE = 'external_source_by_pk',
+  EXTERNAL_SOURCES = 'external_source',
   GET_ACTIVITY_EFFECTIVE_ARGUMENTS = 'getActivityEffectiveArguments',
   GET_ACTIVITY_TYPE_SCRIPT = 'getActivityTypeScript',
   GET_COMMAND_TYPE_SCRIPT = 'getCommandTypeScript',
@@ -2226,6 +2228,22 @@ const gql = {
         parcel_id
         updated_at
         updated_by
+      }
+    }
+  `,
+
+  // SUB_EXTERNAL_SOURCE:
+
+  SUB_EXTERNAL_SOURCES: `#graphql
+    subscription SubExternalSources {
+      models: ${Queries.EXTERNAL_SOURCES}(order_by: { key: asc }) {
+        id
+        file_id
+        key
+        source_type
+        start_time
+        end_time
+        valid_at
       }
     }
   `,
