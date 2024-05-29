@@ -7,6 +7,7 @@
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import Nav from '../../components/app/Nav.svelte';
   import PageTitle from '../../components/app/PageTitle.svelte';
+  import ExternalSource from '../../components/external-source/ExternalSource.svelte';
   import DatePickerField from '../../components/form/DatePickerField.svelte';
   import Field from '../../components/form/Field.svelte';
   import AlertError from '../../components/ui/AlertError.svelte';
@@ -18,11 +19,10 @@
   import { field } from '../../stores/form';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
-  import type { ExternalSourceSlim } from '../../types/external-source';
+  import type { ExternalSourceInsertInput, ExternalSourceSlim } from '../../types/external-source';
   import effects from '../../utilities/effects';
   import { required, timestamp } from '../../utilities/validators';
   import type { PageData } from './$types';
-
 
   let keyInputField: HTMLInputElement; // need this to set a focus on it. not related to the value
 
@@ -43,19 +43,19 @@
       resizable: true,
       sortable: true,
     },
-    { 
-      field: 'key', 
-      filter: 'text', 
-      headerName: 'Key', 
-      resizable: true, 
-      sortable: true 
+    {
+      field: 'key',
+      filter: 'text',
+      headerName: 'Key',
+      resizable: true,
+      sortable: true,
     },
-    { 
-      field: 'source_type', 
-      filter: 'text', 
-      headerName: 'Source Type', 
-      resizable: true, 
-      sortable: true 
+    {
+      field: 'source_type',
+      filter: 'text',
+      headerName: 'Source Type',
+      resizable: true,
+      sortable: true,
     },
     {
       field: 'file_id',
@@ -106,22 +106,14 @@
 
   async function onFormSubmit(e: SubmitEvent) {
     if (files !== undefined) {
-      // break input into an object
-      sourceId = await effects.createExternalSource(
-        $keyField.value, 
-        $sourceTypeField.value,
-        $startTimeDoyField.value,
-        $endTimeDoyField.value, // sanitize, make sure this is after start time
-        $endTimeDoyField.value,
-        files, // ensure file has right format
-        user
-      );
+      var sourceId = await effects.createExternalSource(file, sourceInsert, user);
       // force reload the page???
-      if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) { 
-        goto(`${base}/external-sources`); 
+      if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) {
+        console.log(sourceId);
+        goto(`${base}/external-sources`);
       }
-      // if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) { 
-      //   goto(`${base}/external-sources/${sourceId}`); 
+      // if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) {
+      //   goto(`${base}/external-sources/${sourceId}`);
       // }
     }
   }
@@ -130,9 +122,55 @@
 
   let user: User | null = data.user;
 
+  // We want to parse a file selected for upload.
   let files: FileList | undefined;
+  let file: File | undefined;
+  let parsed: object | undefined;
 
-  let sourceId: any;
+  // TODO: this doesn't let people modify the form properties.
+  // We need to figure out if things like the start, end, and valid_at
+  // time *should* be editable. I don't think any of them should be, but we
+  // need to talk about it.
+  $: if (files) {
+    file = files[0];
+    const fileText = file.text();
+    fileText.then(async text => {
+      parsed = JSON.parse(await text);
+      $keyField.value = parsed.source.key;
+      $sourceTypeField.value = parsed.source.source_type;
+      $startTimeDoyField.value = parsed.source.period.start_time;
+      $endTimeDoyField.value = parsed.source.period.end_time;
+      $validAtDoyField.value = parsed.source.valid_at;
+    });
+  }
+
+  // We want to build the GraphQL input object for the external
+  // source and child events. The only thing that is missing at
+  // this point is the uploaded file ID.
+  // TODO: Define types.
+  let sourceInsert: ExternalSourceInsertInput;
+  $: {
+    if (parsed) {
+      sourceInsert = {
+        end_time: $endTimeDoyField.value,
+        key: $keyField.value,
+        source_type: $sourceTypeField.value,
+        start_time: $startTimeDoyField.value,
+        valid_at: $validAtDoyField.value,
+        file_id: 2, // can't hard code this of course. Link somehow to onFormSubmit vi
+        external_events: {
+          data: parsed?.events?.map(e => {
+            return {
+              key: e.key,
+              event_type: e.event_type,
+              start_time: e.time,
+              end_time: e.end_time, // do some sanitization/checking to convert this to a duration, or to keep the duration if provided so we can push it into the database :)
+            };
+          }),
+        },
+      };
+    }
+  }
 </script>
 
 <PageTitle title="External Sources" />
@@ -154,49 +192,25 @@
 
           <Field field={keyField}>
             <label for="key" slot="label">Key</label>
-            <input
-              bind:value={keyInputField}
-              autocomplete="off"
-              class="st-input w-100"
-              name="key"
-              required
-            />
+            <input bind:value={keyInputField} autocomplete="off" class="st-input w-100" name="key" required />
           </Field>
 
           <Field field={sourceTypeField}>
             <label for="source-type" slot="label">Source Type</label>
-            <input
-              autocomplete="off"
-              class="st-input w-100"
-              name="source-type"
-              required
-            />
+            <input autocomplete="off" class="st-input w-100" name="source-type" required />
           </Field>
 
           <fieldset>
-            <DatePickerField
-              field={startTimeDoyField}
-              label="Start Time - YYYY-DDDThh:mm:ss"
-              name="start-time"
-            />
+            <DatePickerField field={startTimeDoyField} label="Start Time - YYYY-DDDThh:mm:ss" name="start-time" />
           </fieldset>
 
           <fieldset>
-            <DatePickerField
-              field={endTimeDoyField}
-              label="End Time - YYYY-DDDThh:mm:ss"
-              name="end_time"
-            />
+            <DatePickerField field={endTimeDoyField} label="End Time - YYYY-DDDThh:mm:ss" name="end_time" />
           </fieldset>
 
           <fieldset>
-            <DatePickerField
-              field={validAtDoyField}
-              label="Valid At Time - YYYY-DDDThh:mm:ss"
-              name="valid_at"
-            />
+            <DatePickerField field={validAtDoyField} label="Valid At Time - YYYY-DDDThh:mm:ss" name="valid_at" />
           </fieldset>
-
 
           <fieldset>
             <label for="file">Source File</label>
@@ -216,13 +230,14 @@
       </svelte:fragment>
 
       <svelte:fragment slot="body">
+        {#if parsed}
+          <ExternalSource {parsed}></ExternalSource>
+          <pre>{JSON.stringify({ source: sourceInsert }, null, 2)}</pre>
+        {:else}
+          <p>There is no file selected.</p>
+        {/if}
         {#if $externalSources.length}
-          <SingleActionDataGrid
-            {columnDefs}
-            itemDisplayText="External Source"
-            items={$externalSources}
-            {user}
-          />
+          <SingleActionDataGrid {columnDefs} itemDisplayText="External Source" items={$externalSources} {user} />
         {:else}
           No Models Found
         {/if}

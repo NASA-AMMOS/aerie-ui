@@ -801,15 +801,7 @@ const effects = {
     }
   },
 
-  async createExternalSource(
-    key: string,
-    sourceType: string,
-    startTimeDoy: string,
-    endTimeDoy: string,
-    validAtDoy: string,
-    files: FileList,
-    user: User | null
-  ) {
+  async createExternalSource(file: File, source: ExternalSourceInsertInput, user: User | null) {
     try {
       createExternalSourceError.set(null);
 
@@ -819,23 +811,31 @@ const effects = {
 
       creatingExternalSource.set(true);
 
-
-
       const file: File = files[0];
       const file_id = await effects.uploadFile(file, user);
       console.log(file_id);
 
+      // We build the source object to be inserted into the database
+      // *with* child events.
+      // const source = {
+      //   file_id: file_id,
+      //   key: key,
+      //   source_type: sourceType,
+      //   start_time: startTimeDoy,
+      //   end_time: endTimeDoy,
+      //   valid_at: validAtDoy,
+      //   external_events: src.events,
+      // };
+
       if (file_id != null) {
-        const data = await reqHasura(gql.CREATE_EXTERNAL_SOURCE, {
-          source: {
-            file_id: file_id,
-            key: key,
-            source_type: sourceType,
-            start_time: startTimeDoy,
-            end_time: endTimeDoy,
-            valid_at: validAtDoy
-          }
-        }, user)
+        source.file_id = file_id;
+        const data = await reqHasura(
+          gql.CREATE_EXTERNAL_SOURCE,
+          {
+            source,
+          },
+          user,
+        );
         console.log(data);
         const { createExternalSource } = data;
         if (createExternalSource != null) {
@@ -847,11 +847,11 @@ const effects = {
             source_type: sourceType,
             start_time: startTimeDoy,
             end_time: endTimeDoy,
-            valid_at: validAtDoy
+            valid_at: validAtDoy,
           };
 
-          showSuccessToast("External Source Created Successfully");
-          console.log(`External Source Created Succesfully: ${ key } -> ${ id }`)
+          showSuccessToast('External Source Created Successfully');
+          console.log(`External Source Created Succesfully: ${key} -> ${id}`);
           createExternalSourceError.set(null);
           creatingExternalSource.set(false);
           externalSources.updateValue((externalSources: ExternalSourceSlim[]) => [...externalSources, external_source]);
