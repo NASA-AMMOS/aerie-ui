@@ -109,9 +109,9 @@
         resourceLogStatus === 'extracting'
       ) {
         status = 'extracting';
-      } else {
-        status = 'none';
       }
+    } else {
+      status = 'none';
     }
   }
 
@@ -131,67 +131,73 @@
   }
 </script>
 
-{#if mode === 'rollup' || mode === 'iconOnly'}
-  <div class="model-status-rollup" class:icon-only={mode === 'iconOnly'}>
-    <ModelStatusIcon {showCompleteStatus} {status} tooltipContent={status && rollupTooltipMessages[status]} />
-    {#if mode === 'rollup'}
-      {#if status === 'extracting'}
-        Extracting
-      {:else if status === 'complete' && showCompleteStatus}
-        Extracted
-      {:else if status === 'error'}
-        Errors extracting
+<div class="model-status-container">
+  {#if mode === 'rollup' || mode === 'iconOnly'}
+    <div class="model-status-rollup" class:icon-only={mode === 'iconOnly'}>
+      <ModelStatusIcon {showCompleteStatus} {status} tooltipContent={status && rollupTooltipMessages[status]} />
+      {#if mode === 'rollup'}
+        {#if status === 'extracting'}
+          Extracting
+        {:else if status === 'complete' && showCompleteStatus}
+          Extracted
+        {:else if status === 'error'}
+          Errors extracting
+        {/if}
       {/if}
-    {/if}
-  </div>
-{:else}
-  <div class="model-status-container" class:horizontal={flow === 'horizontal'}>
-    <button
-      disabled={!selectable}
-      class="model-status-button"
-      class:selected={selectedLog === 'activity'}
-      on:click={selectActivityLog}
-    >
-      <ModelStatusIcon
-        {showCompleteStatus}
-        status={activityLogStatus}
-        tooltipContent={activityLog?.error_message ?? activityLogTooltipMessages[activityLogStatus]}
-      />
-      Extract activity types
-    </button>
-    <button
-      disabled={!selectable}
-      class="model-status-button"
-      class:selected={selectedLog === 'parameter'}
-      on:click={selectParameterLog}
-    >
-      <ModelStatusIcon
-        {showCompleteStatus}
-        status={parameterLogStatus}
-        tooltipContent={parameterLog?.error_message ?? parameterLogTooltipMessages[parameterLogStatus]}
-      />
-      Extract resource types
-    </button>
-    <button
-      disabled={!selectable}
-      class="model-status-button"
-      class:selected={selectedLog === 'resource'}
-      on:click={selectResourceLog}
-    >
-      <ModelStatusIcon
-        {showCompleteStatus}
-        status={resourceLogStatus}
-        tooltipContent={resourceLog?.error_message ?? resourceLogTooltipMessages[resourceLogStatus]}
-      />
-      Extract mission model parameters
-    </button>
-  </div>
-{/if}
+    </div>
+  {:else}
+    <div class="model-status-logs-container" class:horizontal={flow === 'horizontal'}>
+      <button
+        disabled={!selectable}
+        class="model-status-button"
+        class:selected={selectedLog === 'activity'}
+        on:click={selectActivityLog}
+      >
+        <ModelStatusIcon
+          {showCompleteStatus}
+          status={activityLogStatus}
+          tooltipContent={activityLog?.error_message ?? activityLogTooltipMessages[activityLogStatus]}
+        />
+        Extract activity types
+      </button>
+      <button
+        disabled={!selectable}
+        class="model-status-button"
+        class:selected={selectedLog === 'parameter'}
+        on:click={selectParameterLog}
+      >
+        <ModelStatusIcon
+          {showCompleteStatus}
+          status={parameterLogStatus}
+          tooltipContent={parameterLog?.error_message ?? parameterLogTooltipMessages[parameterLogStatus]}
+        />
+        Extract resource types
+      </button>
+      <button
+        disabled={!selectable}
+        class="model-status-button"
+        class:selected={selectedLog === 'resource'}
+        on:click={selectResourceLog}
+      >
+        <ModelStatusIcon
+          {showCompleteStatus}
+          status={resourceLogStatus}
+          tooltipContent={resourceLog?.error_message ?? resourceLogTooltipMessages[resourceLogStatus]}
+        />
+        Extract mission model parameters
+      </button>
+    </div>
+  {/if}
+</div>
 
 <style>
+  .model-status-container {
+    --model-status-gap: 2px;
+  }
+
   .model-status-rollup {
     align-items: center;
-    column-gap: 2px;
+    column-gap: var(--model-status-gap);
     display: grid;
     grid-template-columns: min-content auto;
     white-space: nowrap;
@@ -202,32 +208,32 @@
     grid-template-columns: min-content;
   }
 
-  .model-status-container {
+  .model-status-logs-container {
     display: grid;
     grid-template-rows: repeat(3, min-content);
     row-gap: 8px;
   }
 
-  .model-status-container.horizontal {
+  .model-status-logs-container.horizontal {
     column-gap: 16px;
     grid-template-columns: repeat(3, auto);
   }
 
-  .model-status-container .model-status-button {
+  .model-status-logs-container .model-status-button {
     background: none;
     border: 0;
     border-radius: 8px;
-    column-gap: 5px;
+    column-gap: var(--model-status-gap);
     display: grid;
     grid-template-columns: min-content min-content;
     white-space: nowrap;
   }
 
-  .model-status-container .model-status-button.selected {
+  .model-status-logs-container .model-status-button.selected {
     background: var(--st-white, #fff);
   }
 
-  .model-status-container .model-status-button:disabled {
+  .model-status-logs-container .model-status-button:disabled {
     background-color: inherit;
     border: 0;
     color: var(--st-primary-text-color);

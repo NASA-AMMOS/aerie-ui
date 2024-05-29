@@ -168,13 +168,15 @@
         <input class="st-input w-100" disabled name="createdAt" value={getShortISOForDate(new Date(createdAt))} />
       </Input>
     {/if}
-    <Input layout="inline">
-      <label class="model-metadata-item-label" for="status">Jar file status</label>
-      <ModelStatusRollup mode="rollup" model={modelLogs} />
-    </Input>
-    <div class="model-status-full">
-      <ModelStatusRollup mode="full" model={modelLogs} />
-    </div>
+    {#if modelId}
+      <Input layout="inline">
+        <label class="model-metadata-item-label" for="status">Jar file status</label>
+        <ModelStatusRollup mode="rollup" model={modelLogs} />
+      </Input>
+      <div class="model-status-full">
+        <ModelStatusRollup mode="full" model={modelLogs} />
+      </div>
+    {/if}
   </div>
   <div class="buttons">
     <button
