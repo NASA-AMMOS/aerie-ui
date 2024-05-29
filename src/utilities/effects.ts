@@ -799,6 +799,26 @@ const effects = {
     }
   },
 
+  async createExternalSource(files: FileList, user: User | null) {
+    try {
+      const file: File = files[0];
+      const file_id = await effects.uploadFile(file, user);
+      console.log(file_id);
+      return file_id;
+      // const file = files[0];
+      // const data = await reqHasura(gql.CREATE_EXTERNAL_SOURCE, { file }, user);
+      // const { createExternalSource } = data;
+      // if (createExternalSource != null) {
+      //   showSuccessToast('External Source Created Successfully');
+      // } else {
+      //   throw Error('Unable to create external source');
+      // }
+    } catch (e) {
+      catchError('External Source Create Failed', e as Error);
+      showFailureToast('External Source Create Failed');
+    }
+  },
+
   async createModel(
     name: string,
     version: string,
