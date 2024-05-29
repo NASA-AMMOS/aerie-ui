@@ -10,7 +10,9 @@
 
   export let flow: 'horizontal' | 'vertical' = 'vertical';
   export let mode: Mode = 'full';
-  export let model: ModelSlim | undefined;
+  export let model:
+    | Pick<ModelSlim, 'refresh_activity_type_logs' | 'refresh_model_parameter_logs' | 'refresh_resource_type_logs'>
+    | undefined;
   export let selectable: boolean = false;
   export let showCompleteStatus: boolean = true;
 

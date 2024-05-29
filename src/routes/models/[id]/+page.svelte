@@ -663,6 +663,9 @@
         initialModelName={$model?.name}
         initialModelOwner={$model?.owner}
         initialModelVersion={$model?.version}
+        activityTypeLogs={$model?.refresh_activity_type_logs}
+        modelParameterLogs={$model?.refresh_model_parameter_logs}
+        resourceTypeLogs={$model?.refresh_resource_type_logs}
         modelId={$model?.id}
         createdAt={$model?.created_at}
         user={data.user}
