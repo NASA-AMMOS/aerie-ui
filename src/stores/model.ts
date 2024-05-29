@@ -5,7 +5,7 @@ import gql from '../utilities/gql';
 import { gqlSubscribable } from './subscribable';
 
 /* Writeable. */
-export const creatingModelStatus: Writable<'idle' | 'creating' | 'pending' | 'done' | 'error'> = writable('idle');
+export const creatingModel: Writable<boolean> = writable(false);
 
 export const createModelError: Writable<string | null> = writable(null);
 
@@ -23,8 +23,8 @@ export const models = gqlSubscribable<ModelSlim[]>(gql.SUB_MODELS, {}, [], null)
 /* Helper Functions. */
 
 export function resetModelStores() {
+  creatingModel.set(false);
+  createModelError.set(null);
   initialModel.set(null);
   model.updateValue(() => null);
-  creatingModelStatus.set('idle');
-  createModelError.set(null);
 }

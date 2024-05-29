@@ -32,9 +32,9 @@ export type ModelSchema = {
   owner: UserId;
   parameters: { parameters: ParametersMap };
   plans: { id: number }[];
-  refresh_activity_type_logs: ModelLog[];
-  refresh_model_parameter_logs: ModelLog[];
-  refresh_resource_type_logs: ModelLog[];
+  refresh_activity_type_logs: ModelLog[]; // query returns the last entry as it is the most relevant
+  refresh_model_parameter_logs: ModelLog[]; // query returns the last entry as it is the most relevant
+  refresh_resource_type_logs: ModelLog[]; // query returns the last entry as it is the most relevant
   scheduling_specification_conditions: SchedulingConditionModelSpecification[];
   scheduling_specification_goals: SchedulingGoalModelSpecification[];
   version: string;
@@ -43,5 +43,15 @@ export type ModelSchema = {
 
 export type ModelSlim = Pick<
   Model,
-  'created_at' | 'description' | 'id' | 'jar_id' | 'name' | 'plans' | 'owner' | 'version'
+  | 'created_at'
+  | 'description'
+  | 'id'
+  | 'jar_id'
+  | 'name'
+  | 'plans'
+  | 'owner'
+  | 'refresh_activity_type_logs'
+  | 'refresh_model_parameter_logs'
+  | 'refresh_resource_type_logs'
+  | 'version'
 >;

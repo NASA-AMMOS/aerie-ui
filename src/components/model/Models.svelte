@@ -13,14 +13,7 @@
   import SingleActionDataGrid from '../../components/ui/DataGrid/SingleActionDataGrid.svelte';
   import Panel from '../../components/ui/Panel.svelte';
   import SectionTitle from '../../components/ui/SectionTitle.svelte';
-  import {
-    createModelError,
-    creatingModelStatus,
-    initialModel,
-    model,
-    models,
-    resetModelStores,
-  } from '../../stores/model';
+  import { createModelError, creatingModel, models, resetModelStores } from '../../stores/model';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef, RowId } from '../../types/data-grid';
   import type { ModelSlim } from '../../types/model';
@@ -31,6 +24,8 @@
   import { tooltip } from '../../utilities/tooltip';
   import Input from '../form/Input.svelte';
   import AlertError from '../ui/AlertError.svelte';
+  import ModelId from './ModelId.svelte';
+  import ModelStatusRollup from './ModelStatusRollup.svelte';
 
   export let user: User | null;
 
@@ -39,22 +34,13 @@
     editModel: (model: ModelSlim) => void;
   };
   type ModelCellRendererParams = ICellRendererParams<ModelSlim> & CellRendererParams;
+  type ModelIdCellRendererParams = ICellRendererParams<ModelSlim>;
 
   const createModelPermissionError: string = 'You do not have permission to upload a model';
   const updateModelPermissionError: string = 'You do not have permission to update this model';
   const createPlanPermissionError: string = 'You do not have permission to create a plan';
 
   const baseColumnDefs: DataGridColumnDef[] = [
-    {
-      field: 'id',
-      filter: 'number',
-      headerName: 'ID',
-      resizable: true,
-      sortable: true,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
-      width: 60,
-    },
     { field: 'name', filter: 'text', headerName: 'Name', resizable: true, sortable: true },
     { field: 'owner', filter: 'text', headerName: 'Owner', resizable: true, sortable: true },
     {
@@ -85,18 +71,36 @@
   let selectedModel: ModelSlim | null = null;
   let version = '';
 
-  $: createButtonDisabled =
-    !files ||
-    name === '' ||
-    version === '' ||
-    $creatingModelStatus === 'creating' ||
-    $creatingModelStatus === 'pending';
+  $: createButtonDisabled = !files || name === '' || version === '' || $creatingModel === true;
   $: {
     hasCreateModelPermission = featurePermissions.model.canCreate(user);
     hasCreatePlanPermission = featurePermissions.plan.canCreate(user);
     hasDeleteModelPermission = featurePermissions.model.canDelete(user);
     hasUpdateModelPermission = featurePermissions.model.canUpdate(user);
     columnDefs = [
+      {
+        cellClass: 'action-cell-container',
+        cellRenderer: (params: ModelIdCellRendererParams) => {
+          const modelIdDiv = document.createElement('div');
+          modelIdDiv.className = 'model-id-cell';
+          new ModelId({
+            props: {
+              model: params.data,
+            },
+            target: modelIdDiv,
+          });
+
+          return modelIdDiv;
+        },
+        field: 'id',
+        filter: 'number',
+        headerName: 'ID',
+        resizable: true,
+        sortable: true,
+        suppressAutoSize: true,
+        suppressSizeToFit: true,
+        width: 75,
+      },
       ...baseColumnDefs,
       {
         cellClass: 'action-cell-container',
@@ -137,52 +141,6 @@
         width: 55,
       },
     ];
-  }
-
-  /**
-   * Continuation of `submitForm` function logic after model upload
-   * We need to check on the $model status via subscription
-   */
-  $: if ($model != null && $creatingModelStatus === 'pending') {
-    const { refresh_activity_type_logs, refresh_resource_type_logs, refresh_model_parameter_logs } = $model;
-
-    // if all of the model logs are empty, then it is considered still "pending"
-    // if any of the logs are populated, then we can find the latest logs and display any errors
-    if (refresh_activity_type_logs.length || refresh_resource_type_logs.length || refresh_model_parameter_logs.length) {
-      // get a unique set of errors
-      const modelErrors = [
-        ...new Set(
-          [...refresh_activity_type_logs, ...refresh_model_parameter_logs, ...refresh_resource_type_logs]
-            .filter(({ success }) => !success)
-            .map(({ error_message }) => error_message),
-        ),
-      ];
-
-      // display the first error
-      if (modelErrors.length) {
-        createModelError.set(modelErrors[0]);
-        creatingModelStatus.set('error');
-      } else {
-        createModelError.set(null);
-        creatingModelStatus.set('pending');
-      }
-    }
-
-    if (
-      refresh_activity_type_logs.length &&
-      refresh_activity_type_logs[0].success &&
-      refresh_resource_type_logs.length &&
-      refresh_resource_type_logs[0].success &&
-      refresh_model_parameter_logs.length &&
-      refresh_model_parameter_logs[0].success
-    ) {
-      $creatingModelStatus = 'done';
-    }
-  }
-
-  $: if ($model && $creatingModelStatus === 'done') {
-    // once the model is done
-    goto(`${base}/models/${$model.id}`);
   }
 
   onDestroy(() => {
@@ -233,39 +191,11 @@
     selectedModel = model;
   }
 
-  async function submitForm() {
-    createModelError.set(null);
+  async function submitForm(e: SubmitEvent) {
     if (files) {
-      // attempt to upload and process the model
-      try {
-        creatingModelStatus.set('creating');
-        const model = await effects.createModel(name, version, files, user, description);
-
-        // after the model is uploaded, it still needs some time to process in the backend
-        creatingModelStatus.set('pending');
-
-        if (model) {
-          // set the initialModel to trigger the $model store to subscribe to the newly created model
-          initialModel.set({
-            ...model,
-            constraint_specification: [],
-            mission: '',
-            parameters: {
-              parameters: {},
-            },
-            refresh_activity_type_logs: [],
-            refresh_model_parameter_logs: [],
-            refresh_resource_type_logs: [],
-            scheduling_specification_conditions: [],
-            scheduling_specification_goals: [],
-          });
-
-          // update the model list
-          models.updateValue((currentModels: ModelSlim[]) => [...currentModels, model]);
-        }
-      } catch (e) {
-        createModelError.set((e as Error).message);
-        creatingModelStatus.set('error');
+      const newModelId = await effects.createModel(name, version, files, user, description);
+      if ($createModelError === null && e.target instanceof HTMLFormElement) {
+        goto(`${base}/models/${newModelId}`);
       }
     }
   }
@@ -326,6 +256,11 @@
                 value={getShortISOForDate(new Date(selectedModel.created_at))}
               />
             </Input>
+            <Input layout="inline">
+              <label class="model-metadata-item-label" for="status">Jar file status</label>
+              <ModelStatusRollup mode="rollup" model={selectedModel} />
+            </Input>
+            <div class="model-status-full"><ModelStatusRollup mode="full" model={selectedModel} /></div>
           </fieldset>
         </div>
         <div class="model-buttons">
@@ -421,7 +356,7 @@
                 permissionError: createModelPermissionError,
               }}
             >
-              {$creatingModelStatus === 'creating' || $creatingModelStatus === 'pending' ? 'Creating...' : 'Create'}
+              {$creatingModel ? 'Creating...' : 'Create'}
             </button>
           </fieldset>
         </form>
@@ -474,5 +409,9 @@
     flex-flow: column;
     padding: 8px;
     row-gap: 8px;
+  }
+
+  .model-status-full {
+    margin: 8px 0;
   }
 </style>

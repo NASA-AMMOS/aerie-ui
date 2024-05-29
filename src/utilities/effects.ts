@@ -20,7 +20,7 @@ import {
   savingExpansionRule,
   savingExpansionSet,
 } from '../stores/expansion';
-import { models } from '../stores/model';
+import { createModelError, creatingModel, models } from '../stores/model';
 import { createPlanError, creatingPlan, planId } from '../stores/plan';
 import { schedulingRequests, selectedSpecId } from '../stores/scheduling';
 import {
@@ -811,11 +811,15 @@ const effects = {
     files: FileList,
     user: User | null,
     description?: string,
-  ): Promise<ModelSlim | null> {
+  ): Promise<number | null> {
     try {
+      createModelError.set(null);
+
       if (!queryPermissions.CREATE_MODEL(user)) {
         throwPermissionError('upload a model');
       }
+
+      creatingModel.set(true);
 
       const file: File = files[0];
       const jar_id = await effects.uploadFile(file, user);
@@ -840,11 +844,18 @@ const effects = {
             name,
             owner,
             plans: [],
+            refresh_activity_type_logs: [],
+            refresh_model_parameter_logs: [],
+            refresh_resource_type_logs: [],
             version,
             ...(description && { description }),
           };
 
-          return model;
+          showSuccessToast('Model Created Successfully');
+          createModelError.set(null);
+          creatingModel.set(false);
+          models.updateValue((currentModels: ModelSlim[]) => [...currentModels, model]);
+          return id;
         } else {
           throw Error(`Unable to create model "${name}"`);
         }
@@ -852,7 +863,8 @@ const effects = {
     } catch (e) {
       catchError('Model Create Failed', e as Error);
       showFailureToast('Model Create Failed');
-      throw Error((e as Error).message);
+      createModelError.set((e as Error).message);
+      creatingModel.set(false);
     }
 
     return null;

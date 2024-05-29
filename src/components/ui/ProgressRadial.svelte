@@ -1,6 +1,4 @@
 <script lang="ts">
-  import HourglassIcon from 'bootstrap-icons/icons/hourglass-top.svg?component';
-
   export let progress: number = 0; // number between 0 and 100
   export let size: number = 16;
   export let useBackground: boolean = true;
@@ -12,27 +10,22 @@
 <div
   class="radial-progress"
   class:radial-progress-background={useBackground}
+  class:indeterminate-progress={!progress}
   style={`width:${size}px; height:${size}px`}
 >
-  {#if progress}
-    <svg class="radial-progress-ring" width={size} height={size}>
-      <circle
-        class="radial-progress-ring-circle"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-dasharray={`${circumference} ${circumference}`}
-        stroke-dashoffset={circumference - (progress / 100) * circumference}
-        fill="transparent"
-        r={radius}
-        cx={size / 2}
-        cy={size / 2}
-      />
-    </svg>
-  {:else}
-    <div class="indeterminate-progress">
-      <HourglassIcon />
-    </div>
-  {/if}
+  <svg class="radial-progress-ring" width={size} height={size}>
+    <circle
+      class="radial-progress-ring-circle"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-dasharray={`${circumference} ${circumference}`}
+      stroke-dashoffset={circumference - ((progress || 80) / 100) * circumference}
+      fill="transparent"
+      r={radius}
+      cx={size / 2}
+      cy={size / 2}
+    />
+  </svg>
 </div>
 
 <style>
@@ -51,15 +44,16 @@
     transition: 0.35s stroke-dashoffset;
   }
 
-  .radial-progress-background .indeterminate-progress {
-    padding: 2px;
+  .indeterminate-progress .radial-progress-ring {
+    animation: spin 1s linear infinite;
   }
 
-  .indeterminate-progress {
-    align-items: center;
-    display: flex;
-    flex: 1 0 auto;
-    height: 100%;
-    width: 100%;
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 </style>

@@ -9,6 +9,10 @@ import type { TimeRange } from '../../types/timeline';
 
 export const activityEditingLocked: Writable<boolean> = writable(false);
 
+export const creatingModel: Writable<boolean> = writable(false);
+
+export const createModelError: Writable<string | null> = writable(null);
+
 export const createPlanError: Writable<string | null> = writable(null);
 
 export const creatingPlan: Writable<boolean> = writable(false);
@@ -62,6 +66,8 @@ export const planRevision = writable<number>(-1);
 
 export function resetPlanStores() {
   activityEditingLocked.set(false);
+  creatingModel.set(false);
+  createModelError.set(null);
   createPlanError.set(null);
   creatingPlan.set(false);
   initialPlan.set(null);
