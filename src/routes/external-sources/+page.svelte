@@ -11,6 +11,3 @@
 <PageTitle title="External Sources" />
 
 <ExternalSourceManager user={data.user}></ExternalSourceManager>
-
-<style>
-</style>
