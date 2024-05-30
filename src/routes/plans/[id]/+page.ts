@@ -42,6 +42,8 @@ export const load: PageLoad = async ({ parent, params, url }) => {
         };
       }
 
+      console.log(initialPlan.model.view);
+
       const initialActivityTypes = await effects.getActivityTypes(initialPlan.model_id, user);
       const initialResourceTypes = await effects.getResourceTypes(initialPlan.model_id, user, 20);
       const initialPlanTags = await effects.getPlanTags(initialPlan.id, user);
@@ -50,7 +52,7 @@ export const load: PageLoad = async ({ parent, params, url }) => {
         user,
         initialActivityTypes,
         initialResourceTypes,
-        initialPlan.model_id,
+        initialPlan.model.view,
       );
       const initialPlanSnapshotId = getSearchParameterNumber(SearchParameters.SNAPSHOT_ID, url.searchParams);
       const extensions = await effects.getExtensions(user);

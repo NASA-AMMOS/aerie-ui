@@ -1129,21 +1129,6 @@ const gql = {
     }
   `,
 
-  GET_DEFAULT_VIEW: `#graphql
-    query GetDefaultView($mission_model_id: Int!) {
-      defaultView: ${Queries.VIEW_TO_MISSION_MODEL}(where: {mission_model_id: {_eq: $mission_model_id}}) {
-        view {
-          created_at
-          definition
-          id
-          name
-          owner
-          updated_at
-        }
-      }
-    }
-  `,
-
   GET_EFFECTIVE_ACTIVITY_ARGUMENTS: `#graphql
     query GetEffectiveActivityArguments($modelId: ID!, $activityTypeName: String!, $arguments: ActivityArguments!) {
       effectiveActivityArguments: ${Queries.GET_ACTIVITY_EFFECTIVE_ARGUMENTS}(
@@ -1390,6 +1375,14 @@ const gql = {
             parameters
           }
           version
+          view {
+            created_at
+            definition
+            id
+            name
+            owner
+            updated_at
+          }
         }
         model_id
         name

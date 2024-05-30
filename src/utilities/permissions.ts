@@ -599,7 +599,6 @@ const queryPermissions = {
   },
   GET_ACTIVITY_DIRECTIVE_CHANGELOG: () => true,
   GET_ACTIVITY_TYPES_EXPANSION_RULES: () => true,
-  GET_DEFAULT_VIEW: () => true,
   GET_EFFECTIVE_ACTIVITY_ARGUMENTS: () => true,
   GET_EFFECTIVE_MODEL_ARGUMENTS: () => true,
   GET_EVENTS: () => true,
