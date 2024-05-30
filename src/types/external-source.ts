@@ -40,15 +40,11 @@ export type ExternalSourceJson = {
 };
 
 // This is used for the GraphQL mutation.
-export type ExternalSourceInsertInput = {
-  end_time: string;
+export type ExternalSourceInsertInput = Pick<
+  ExternalSource,
+  'key' | 'source_type' | 'metadata' | 'file_id' | 'start_time' | 'end_time' | 'valid_at'
+> & {
   external_events: {
     data: ExternalEventInsertInput[];
   };
-  file_id: number;
-  key: string;
-  metadata: Record<string, any>;
-  source_type: string;
-  start_time: string;
-  valid_at: string;
 };
