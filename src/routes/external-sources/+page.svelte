@@ -159,17 +159,23 @@
         valid_at: $validAtDoyField.value,
         file_id: 2, // can't hard code this of course. Link somehow to onFormSubmit vi
         external_events: {
-          data: parsed?.events?.map(e => {
-            return {
-              key: e.key,
-              event_type: e.event_type,
-              start_time: e.time,
-              end_time: e.end_time, // do some sanitization/checking to convert this to a duration, or to keep the duration if provided so we can push it into the database :)
-            };
-          }),
+          data: parsed?.events?.map(transformer),
         },
       };
     }
+  }
+
+  /** Transforms the event in the source to one compatible with the db schema */
+  function transformer(event: any): any {
+    // TODO: do some sanitization/checking to convert this to a duration, or to keep the duration
+    //   if provided so we can push it into the database :)
+    return {
+      key: event.key,
+      event_type: event.event_type,
+      start_time: event.time,
+      duration: event.duration,
+      properties: event.properties,
+    };
   }
 </script>
 
