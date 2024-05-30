@@ -804,59 +804,23 @@ const effects = {
 
   async createExternalSource(file: File, source: ExternalSourceInsertInput, user: User | null) {
     try {
-      createExternalSourceError.set(null);
-
+      // TODO: Check permissions.
       // if (!queryPermissions.CREATE_MODEL(user)) {
       //   throwPermissionError('upload a model');
       // } // permissions are yet unhandled anywhere in external-source/page or anywhere else
 
       creatingExternalSource.set(true);
-
-      const file: File = files[0];
+      createExternalSourceError.set(null);
       const file_id = await effects.uploadFile(file, user);
-      console.log(file_id);
 
-      // We build the source object to be inserted into the database
-      // *with* child events.
-      // const source = {
-      //   file_id: file_id,
-      //   key: key,
-      //   source_type: sourceType,
-      //   start_time: startTimeDoy,
-      //   end_time: endTimeDoy,
-      //   valid_at: validAtDoy,
-      //   external_events: src.events,
-      // };
-
-      if (file_id != null) {
+      if (file_id !== null) {
         source.file_id = file_id;
-        const data = await reqHasura(
-          gql.CREATE_EXTERNAL_SOURCE,
-          {
-            source,
-          },
-          user,
-        );
-        console.log(data);
-        const { createExternalSource } = data;
-        if (createExternalSource != null) {
-          const { id, key } = createExternalSource;
-          const external_source: ExternalSourceSlim = {
-            id,
-            file_id,
-            key,
-            source_type: sourceType,
-            start_time: startTimeDoy,
-            end_time: endTimeDoy,
-            valid_at: validAtDoy,
-          };
-
+        const { createExternalSource: created } = await reqHasura(gql.CREATE_EXTERNAL_SOURCE, { source }, user);
+        if (created !== null) {
           showSuccessToast('External Source Created Successfully');
-          console.log(`External Source Created Succesfully: ${key} -> ${id}`);
-          createExternalSourceError.set(null);
           creatingExternalSource.set(false);
-          externalSources.updateValue((externalSources: ExternalSourceSlim[]) => [...externalSources, external_source]);
-          return id;
+          externalSources.updateValue((externalSources: ExternalSourceSlim[]) => [...externalSources, created]);
+          return created.id;
         } else {
           throw Error(`Unable to create model "${name}"`);
         }
