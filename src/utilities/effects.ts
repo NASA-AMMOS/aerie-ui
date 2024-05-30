@@ -3005,6 +3005,22 @@ const effects = {
     }
   },
 
+  async getMissionModelDefaultView(mission_model_id: number, user: User | null): Promise<View | null> {
+    try {
+      const data = await reqHasura<{ view: View }[]>(gql.GET_DEFAULT_VIEW, { mission_model_id }, user);
+      const { defaultView } = data;
+
+      if (defaultView !== null && defaultView.length) {
+        return defaultView[0].view;
+      }
+
+      return null;
+    } catch (e) {
+      catchError(e as Error);
+      return null;
+    }
+  },
+
   async getModel(modelId: number, user: User | null): Promise<Model | null> {
     try {
       const query = convertToQuery(gql.SUB_MODEL);
@@ -3762,11 +3778,16 @@ const effects = {
     }
   },
 
+  /**
+   * Try and get the view from the query parameters, otherwise check if there's a default view set at the
+   * mission model level, otherwise just return a generated default view.
+   */
   async getView(
     query: URLSearchParams | null,
     user: User | null,
     activityTypes: ActivityType[] = [],
     resourceTypes: ResourceType[] = [],
+    mission_model_id?: number,
   ): Promise<View | null> {
     try {
       if (query !== null) {
@@ -3778,6 +3799,12 @@ const effects = {
 
           if (view !== null) {
             return view;
+          }
+        } else if (mission_model_id !== null && mission_model_id !== undefined) {
+          const missionModelDefaultView = await this.getMissionModelDefaultView(mission_model_id, user);
+
+          if (missionModelDefaultView !== null) {
+            return missionModelDefaultView;
           }
         }
       }
