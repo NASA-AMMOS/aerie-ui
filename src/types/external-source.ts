@@ -1,28 +1,54 @@
-import type { ExternalEvent } from '../types/external-event';
+import type { ExternalEvent, ExternalEventInsertInput } from '../types/external-event';
+
 // TODO: CONVERT STUFF IN THE'CREATE_EXTERNAL_SOURCE' EFFECT TO TERMS OF THIS.
 
-export type ExternalSource = ExternalSourceSchema;
-
-export type ExternalSourceInsertInput = Pick<
-  ExternalSource,
-  'file_id' | 'key' | 'source_type' | 'start_time' | 'end_time' | 'valid_at' | 'external_events'
->;
-// export type ModelSetInput = Pick<ExternalSource, 'description' | 'mission' | 'name' | 'owner' | 'version'>;
-
-export type ExternalSourceSchema = {
+// This is the type that conforms with the database schema.
+export type ExternalSource = {
   end_time: string;
   external_events: ExternalEvent[];
   file_id: number;
   id: number;
   key: string;
-  metadata: object;
+  metadata: Record<string, any>;
   source_type: string;
   start_time: string;
   valid_at: string;
-  // uploaded_file??? not there in mission
+  // Things to consider:
+  // associated file?
+  // owner?
+  // created_at?
 };
 
 export type ExternalSourceSlim = Pick<
-  ExternalSource, // TODO: add owner, eventually
-  'id' | 'file_id' | 'key' | 'source_type' | 'start_time' | 'end_time' | 'valid_at' // whatever we want to show up on the external_sources page. may include external_events too, but the original schema may get more stuff that we don't want here, so we split things out
+  ExternalSource,
+  'id' | 'file_id' | 'key' | 'source_type' | 'start_time' | 'end_time' | 'valid_at'
 >;
+
+// This is the JSON type that the user can upload.
+export type ExternalSourceJson = {
+  events: ExternalEvent[];
+  source: {
+    key: string;
+    metadata: object;
+    period: {
+      end_time: string;
+      start_time: string;
+    };
+    source_type: string;
+    valid_at: string;
+  };
+};
+
+// This is used for the GraphQL mutation.
+export type ExternalSourceInsertInput = {
+  end_time: string;
+  external_events: {
+    data: ExternalEventInsertInput[];
+  };
+  file_id: number;
+  key: string;
+  metadata: Record<string, any>;
+  source_type: string;
+  start_time: string;
+  valid_at: string;
+};
