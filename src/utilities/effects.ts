@@ -77,8 +77,8 @@ import type {
   SeqId,
 } from '../types/expansion';
 import type { Extension, ExtensionPayload } from '../types/extension';
-import type { Model, ModelInsertInput, ModelLog, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
-import type { ExternalSourceSlim } from '../types/external-source';
+import type { ExternalSourceInsertInput, ExternalSourceSlim } from '../types/external-source';
+import type { Model, ModelInsertInput, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
 import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
 import type {
   Argument,
@@ -801,7 +801,7 @@ const effects = {
     }
   },
 
-  async createExternalSource(file: File, source: ExternalSourceInsertInput, user: User | null) {
+  async createExternalSource(file: File | undefined, source: ExternalSourceInsertInput, user: User | null) {
     try {
       // TODO: Check permissions.
       // if (!queryPermissions.CREATE_MODEL(user)) {
