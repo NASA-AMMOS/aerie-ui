@@ -223,23 +223,6 @@
       wrongType: 0,
     },
   ));
-  $: if ($plan?.model) {
-    const {
-      refresh_activity_type_logs: activityLogs,
-      refresh_model_parameter_logs: parameterLogs,
-      refresh_resource_type_logs: resourceLogs,
-    } = $plan.model;
-    modelErrorCount = 0;
-    if (!activityLogs[0]?.success) {
-      modelErrorCount += 1;
-    }
-    if (!parameterLogs[0]?.success) {
-      modelErrorCount += 1;
-    }
-    if (!resourceLogs[0]?.success) {
-      modelErrorCount += 1;
-    }
-  }
   $: hasCreateViewPermission = featurePermissions.view.canCreate(data.user);
   $: hasUpdateViewPermission = $view !== null ? featurePermissions.view.canUpdate(data.user, $view) : false;
   $: if ($initialPlan) {
@@ -425,6 +408,23 @@
       $resourceTypes = initialResourceTypes;
       $resourceTypesLoading = false;
     });
+  }
+  $: if ($plan) {
+    const {
+      refresh_activity_type_logs: activityLogs,
+      refresh_model_parameter_logs: parameterLogs,
+      refresh_resource_type_logs: resourceLogs,
+    } = $plan.model;
+    modelErrorCount = 0;
+    if (!activityLogs[0]?.success) {
+      modelErrorCount += 1;
+    }
+    if (!parameterLogs[0]?.success) {
+      modelErrorCount += 1;
+    }
+    if (!resourceLogs[0]?.success) {
+      modelErrorCount += 1;
+    }
   }
 
   onDestroy(() => {

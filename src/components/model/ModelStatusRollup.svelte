@@ -15,6 +15,7 @@
     | undefined;
   export let selectable: boolean = false;
   export let showCompleteStatus: boolean = true;
+  export let selectedLog: 'activity' | 'parameter' | 'resource' | undefined = undefined;
 
   const dispatch = createEventDispatcher<{
     select: ModelLog | null;
@@ -50,7 +51,6 @@
   let parameterLogStatus: ModelStatus = 'none';
   let resourceLog: ModelLog | null = null;
   let resourceLogStatus: ModelStatus = 'none';
-  let selectedLog: 'activity' | 'parameter' | 'resource' | null = null;
   let status: ModelStatus = 'none';
 
   $: {
@@ -208,7 +208,7 @@
     grid-template-columns: min-content;
   }
 
-  .model-status-logs-container {
+  .model-status-logs-container:not(.horizontal) {
     display: grid;
     grid-template-rows: repeat(3, min-content);
     row-gap: 8px;
@@ -216,6 +216,7 @@
 
   .model-status-logs-container.horizontal {
     column-gap: 8px;
+    display: grid;
     grid-template-columns: repeat(3, min-content);
   }
 

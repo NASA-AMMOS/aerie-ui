@@ -9,7 +9,45 @@
   export let model: ModelSlim | undefined;
   export let title: string;
 
+  let selectedLog: 'activity' | 'parameter' | 'resource' | undefined = undefined;
   let selectedModelLog: ModelLog | null = null;
+
+  $: {
+    if (model) {
+      const {
+        refresh_activity_type_logs: activityLogs,
+        refresh_model_parameter_logs: parameterLogs,
+        refresh_resource_type_logs: resourceLogs,
+      } = model;
+
+      const activityLog = activityLogs[0] ?? null;
+      const parameterLog = parameterLogs[0] ?? null;
+      const resourceLog = resourceLogs[0] ?? null;
+      let isActivityLogError: boolean = false;
+      let isParameterLogError: boolean = false;
+      let isResourceLogError: boolean = false;
+
+      if (!activityLog?.success) {
+        isActivityLogError = true;
+      }
+      if (!parameterLog?.success) {
+        isParameterLogError = true;
+      }
+      if (!resourceLog?.success) {
+        isResourceLogError = true;
+      }
+      if (isActivityLogError) {
+        selectedLog = 'activity';
+        selectedModelLog = activityLog;
+      } else if (isParameterLogError) {
+        selectedLog = 'parameter';
+        selectedModelLog = parameterLog;
+      } else if (isResourceLogError) {
+        selectedLog = 'resource';
+        selectedModelLog = resourceLog;
+      }
+    }
+  }
 
   function onSelectCategory(event: CustomEvent<ModelLog | null>) {
     const { detail: value } = event;
@@ -22,7 +60,7 @@
     <div class="console-header">
       <div class="console-title">{title}</div>
       <div class="model-statuses">
-        <ModelStatusRollup {model} selectable on:select={onSelectCategory} flow="horizontal" />
+        <ModelStatusRollup {model} selectable {selectedLog} flow="horizontal" on:select={onSelectCategory} />
       </div>
     </div>
     <div class="errors">
@@ -34,7 +72,7 @@
             </div>
           </div>
           <div class="trace">
-            <pre>{JSON.stringify(selectedModelLog?.error)}</pre>
+            <pre>{JSON.stringify(selectedModelLog?.error, undefined, 2)}</pre>
           </div>
         </div>
       {/if}
@@ -47,6 +85,7 @@
     display: grid;
     grid-template-rows: min-content auto;
     height: 100%;
+    row-gap: 5px;
   }
 
   .console-header .console-title {
