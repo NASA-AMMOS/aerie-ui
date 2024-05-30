@@ -1,8 +1,5 @@
 <script lang="ts">
-  export let parsed: any;
+  export let source: any;
 </script>
 
-<pre>
-  Key: {parsed.source.key}
-  Events: {parsed.events.length}
-</pre>
+<div>This source contains {source.events.length} events.</div>
