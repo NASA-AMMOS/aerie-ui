@@ -3,15 +3,6 @@
   import { base } from '$app/paths';
   import type { ValueGetterParams } from 'ag-grid-community';
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
-  import Nav from '../../components/app/Nav.svelte';
-  import ExternalSource from '../../components/external-source/ExternalSource.svelte';
-  import DatePickerField from '../../components/form/DatePickerField.svelte';
-  import Field from '../../components/form/Field.svelte';
-  import AlertError from '../../components/ui/AlertError.svelte';
-  import CssGrid from '../../components/ui/CssGrid.svelte';
-  import SingleActionDataGrid from '../../components/ui/DataGrid/SingleActionDataGrid.svelte';
-  import Panel from '../../components/ui/Panel.svelte';
-  import SectionTitle from '../../components/ui/SectionTitle.svelte';
   import { createExternalSourceError, creatingExternalSource, externalSources } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import type { User } from '../../types/app';
@@ -19,6 +10,13 @@
   import type { ExternalSourceInsertInput, ExternalSourceSlim } from '../../types/external-source';
   import effects from '../../utilities/effects';
   import { required, timestamp } from '../../utilities/validators';
+  import DatePickerField from '../form/DatePickerField.svelte';
+  import Field from '../form/Field.svelte';
+  import AlertError from '../ui/AlertError.svelte';
+  import CssGrid from '../ui/CssGrid.svelte';
+  import SingleActionDataGrid from '../ui/DataGrid/SingleActionDataGrid.svelte';
+  import Panel from '../ui/Panel.svelte';
+  import SectionTitle from '../ui/SectionTitle.svelte';
 
   let keyInputField: HTMLInputElement; // need this to set a focus on it. not related to the value
 
@@ -151,7 +149,6 @@
         source_type: $sourceTypeField.value,
         start_time: $startTimeDoyField.value,
         valid_at: $validAtDoyField.value,
-        file_id: 2, // can't hard code this of course. Link somehow to onFormSubmit vi
         external_events: {
           data: parsed?.events?.map(transformer),
         },
@@ -173,58 +170,54 @@
   }
 </script>
 
-<CssGrid rows="var(--nav-header-height) calc(100vh - var(--nav-header-height))">
-  <Nav {user}>
-    <span slot="title">External Sources</span>
-  </Nav>
-
+<CssGrid>
   <CssGrid columns="20% auto">
     <Panel borderRight padBody={false}>
       <svelte:fragment slot="header">
-        <SectionTitle>New External Source</SectionTitle>
+        <SectionTitle>Upload a Source File</SectionTitle>
       </svelte:fragment>
 
       <svelte:fragment slot="body">
         <form on:submit|preventDefault={onFormSubmit}>
           <AlertError class="m-2" error={$createExternalSourceError} />
 
-          <Field field={keyField}>
-            <label for="key" slot="label">Key</label>
-            <input bind:value={keyInputField} autocomplete="off" class="st-input w-100" name="key" required />
-          </Field>
-
-          <Field field={sourceTypeField}>
-            <label for="source-type" slot="label">Source Type</label>
-            <input autocomplete="off" class="st-input w-100" name="source-type" required />
-          </Field>
-
-          <fieldset>
-            <DatePickerField field={startTimeDoyField} label="Start Time - YYYY-DDDThh:mm:ss" name="start-time" />
-          </fieldset>
-
-          <fieldset>
-            <DatePickerField field={endTimeDoyField} label="End Time - YYYY-DDDThh:mm:ss" name="end_time" />
-          </fieldset>
-
-          <fieldset>
-            <DatePickerField field={validAtDoyField} label="Valid At Time - YYYY-DDDThh:mm:ss" name="valid_at" />
-          </fieldset>
-
           <fieldset>
             <label for="file">Source File</label>
             <input class="w-100" name="file" required type="file" bind:files />
           </fieldset>
-          <fieldset>
-            <button class="st-button w-100" type="submit">{$creatingExternalSource ? 'Uploading...' : 'Upload'}</button>
-          </fieldset>
+
+          {#if parsed}
+            <fieldset>
+              <button class="st-button w-100" type="submit"
+                >{$creatingExternalSource ? 'Uploading...' : 'Upload'}</button
+              >
+            </fieldset>
+            <Field field={keyField}>
+              <label for="key" slot="label">Key</label>
+              <input bind:value={keyInputField} autocomplete="off" class="st-input w-100" name="key" required />
+            </Field>
+
+            <Field field={sourceTypeField}>
+              <label for="source-type" slot="label">Source Type</label>
+              <input autocomplete="off" class="st-input w-100" name="source-type" required />
+            </Field>
+
+            <fieldset>
+              <DatePickerField field={startTimeDoyField} label="Start Time - YYYY-DDDThh:mm:ss" name="start-time" />
+            </fieldset>
+
+            <fieldset>
+              <DatePickerField field={endTimeDoyField} label="End Time - YYYY-DDDThh:mm:ss" name="end_time" />
+            </fieldset>
+
+            <fieldset>
+              <DatePickerField field={validAtDoyField} label="Valid At Time - YYYY-DDDThh:mm:ss" name="valid_at" />
+            </fieldset>
+          {/if}
         </form>
-        {#if parsed}
-          <ExternalSource source={parsed}></ExternalSource>
-        {/if}
       </svelte:fragment>
     </Panel>
 
-    <!-- svelte-ignore missing-declaration -->
     <Panel>
       <svelte:fragment slot="header">
         <SectionTitle><Truck />External Sources</SectionTitle>
