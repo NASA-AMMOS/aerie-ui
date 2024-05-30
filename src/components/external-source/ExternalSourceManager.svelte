@@ -3,12 +3,14 @@
   import { base } from '$app/paths';
   import type { ValueGetterParams } from 'ag-grid-community';
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
+  import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { createExternalSourceError, creatingExternalSource, externalSources } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalSourceInsertInput, ExternalSourceSlim } from '../../types/external-source';
   import effects from '../../utilities/effects';
+  import { tooltip } from '../../utilities/tooltip';
   import { required, timestamp } from '../../utilities/validators';
   import DatePickerField from '../form/DatePickerField.svelte';
   import Field from '../form/Field.svelte';
@@ -168,53 +170,88 @@
       properties: event.properties,
     };
   }
+
+  let selectedSource: ExternalSourceSlim | null = null;
+
+  function selectSource(detail: ExternalSourceSlim) {
+    selectedSource = detail;
+  }
+
+  function deselectSource() {
+    selectedSource = null;
+  }
 </script>
 
 <CssGrid>
   <CssGrid columns="20% auto">
-    <Panel borderRight padBody={false}>
+    <Panel borderRight padBody={true}>
       <svelte:fragment slot="header">
-        <SectionTitle>Upload a Source File</SectionTitle>
+        <SectionTitle
+          >{selectedSource
+            ? `#${selectedSource.id} – ${selectedSource.source_type}`
+            : 'Upload a Source File'}</SectionTitle
+        >
+        {#if selectedSource}
+          <button
+            class="st-button icon fs-6"
+            on:click={deselectSource}
+            use:tooltip={{ content: 'Deselect source', placement: 'top' }}
+          >
+            <XIcon />
+          </button>
+        {/if}
       </svelte:fragment>
 
       <svelte:fragment slot="body">
-        <form on:submit|preventDefault={onFormSubmit}>
-          <AlertError class="m-2" error={$createExternalSourceError} />
-
-          <fieldset>
-            <label for="file">Source File</label>
-            <input class="w-100" name="file" required type="file" bind:files />
-          </fieldset>
-
-          {#if parsed}
-            <fieldset>
-              <button class="st-button w-100" type="submit"
-                >{$creatingExternalSource ? 'Uploading...' : 'Upload'}</button
-              >
-            </fieldset>
-            <Field field={keyField}>
-              <label for="key" slot="label">Key</label>
-              <input bind:value={keyInputField} autocomplete="off" class="st-input w-100" name="key" required />
-            </Field>
-
-            <Field field={sourceTypeField}>
-              <label for="source-type" slot="label">Source Type</label>
-              <input autocomplete="off" class="st-input w-100" name="source-type" required />
-            </Field>
+        {#if selectedSource}
+          <div title={selectedSource.key}>{selectedSource.key}</div>
+          <div class="tbd">
+            <ul>
+              <li>Summarize the events?</li>
+              <li>What plans should refer to this source?</li>
+              <li>What plans do refer to this source?</li>
+              <li>Is this newest source of this type?</li>
+            </ul>
+          </div>
+        {:else}
+          <form on:submit|preventDefault={onFormSubmit}>
+            <AlertError class="m-2" error={$createExternalSourceError} />
 
             <fieldset>
-              <DatePickerField field={startTimeDoyField} label="Start Time - YYYY-DDDThh:mm:ss" name="start-time" />
+              <label for="file">Source File</label>
+              <input class="w-100" name="file" required type="file" bind:files />
             </fieldset>
 
-            <fieldset>
-              <DatePickerField field={endTimeDoyField} label="End Time - YYYY-DDDThh:mm:ss" name="end_time" />
-            </fieldset>
+            {#if parsed}
+              <fieldset>
+                <button class="st-button w-100" type="submit"
+                  >{$creatingExternalSource ? 'Uploading...' : 'Upload'}</button
+                >
+              </fieldset>
+              <Field field={keyField}>
+                <label for="key" slot="label">Key</label>
+                <input bind:value={keyInputField} autocomplete="off" class="st-input w-100" name="key" required />
+              </Field>
 
-            <fieldset>
-              <DatePickerField field={validAtDoyField} label="Valid At Time - YYYY-DDDThh:mm:ss" name="valid_at" />
-            </fieldset>
-          {/if}
-        </form>
+              <Field field={sourceTypeField}>
+                <label for="source-type" slot="label">Source Type</label>
+                <input autocomplete="off" class="st-input w-100" name="source-type" required />
+              </Field>
+
+              <fieldset>
+                <DatePickerField field={startTimeDoyField} label="Start Time - YYYY-DDDThh:mm:ss" name="start-time" />
+              </fieldset>
+
+              <fieldset>
+                <DatePickerField field={endTimeDoyField} label="End Time - YYYY-DDDThh:mm:ss" name="end_time" />
+              </fieldset>
+
+              <fieldset>
+                <DatePickerField field={validAtDoyField} label="Valid At Time - YYYY-DDDThh:mm:ss" name="valid_at" />
+              </fieldset>
+            {/if}
+          </form>
+        {/if}
       </svelte:fragment>
     </Panel>
 
@@ -224,8 +261,15 @@
       </svelte:fragment>
 
       <svelte:fragment slot="body">
+        <div class="filter">TBD: Filter by type and time? Show me unused sources?</div>
         {#if $externalSources.length}
-          <SingleActionDataGrid {columnDefs} itemDisplayText="External Source" items={$externalSources} {user} />
+          <SingleActionDataGrid
+            {columnDefs}
+            itemDisplayText="External Source"
+            items={$externalSources}
+            {user}
+            on:rowClicked={({ detail }) => selectSource(detail.data)}
+          />
         {:else}
           <p>No External Sources present.</p>
         {/if}
@@ -233,3 +277,19 @@
     </Panel>
   </CssGrid>
 </CssGrid>
+
+<style>
+  .filter {
+    margin: 0.8rem 0;
+  }
+  .truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tbd ul,
+  .tbd li {
+    list-style: none;
+    margin: 0.2rem 0;
+    padding: 0;
+  }
+</style>
