@@ -449,6 +449,11 @@ const gql = {
       createExternalSource: insert_external_source_one(object: $source) {
         id
         key
+        source_type
+        start_time
+        end_time
+        valid_at
+        metadata
       }
     }
   `,
