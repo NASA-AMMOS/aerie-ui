@@ -3771,7 +3771,7 @@ const effects = {
     user: User | null,
     activityTypes: ActivityType[] = [],
     resourceTypes: ResourceType[] = [],
-    view: View | null,
+    view?: View | null,
   ): Promise<View | null> {
     try {
       if (query !== null) {
@@ -3784,7 +3784,7 @@ const effects = {
           if (view !== null) {
             return view;
           }
-        } else if (view !== null) {
+        } else if (view !== null && view !== undefined) {
           return view;
         }
       }
