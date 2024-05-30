@@ -8,7 +8,7 @@
   import { field } from '../../stores/form';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
-  import type { ExternalSourceInsertInput, ExternalSourceSlim } from '../../types/external-source';
+  import type { ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceSlim } from '../../types/external-source';
   import effects from '../../utilities/effects';
   import { tooltip } from '../../utilities/tooltip';
   import { required, timestamp } from '../../utilities/validators';
@@ -101,9 +101,9 @@
   // TODO: add actions like delete as in Models.svelte
 
   async function onFormSubmit(e: SubmitEvent) {
+    // TBD: force reload the page???
     if (files !== undefined) {
       var sourceId = await effects.createExternalSource(file, sourceInsert, user);
-      // force reload the page???
       if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) {
         console.log(sourceId);
         goto(`${base}/external-sources`);
@@ -119,7 +119,7 @@
   // We want to parse a file selected for upload.
   let files: FileList | undefined;
   let file: File | undefined;
-  let parsed: object | undefined;
+  let parsed: ExternalSourceJson | undefined;
 
   // TODO: this doesn't let people modify the form properties.
   // We need to figure out if things like the start, end, and valid_at
@@ -130,45 +130,35 @@
     const fileText = file.text();
     fileText.then(async text => {
       parsed = JSON.parse(await text);
-      $keyField.value = parsed.source.key;
-      $sourceTypeField.value = parsed.source.source_type;
-      $startTimeDoyField.value = parsed.source.period.start_time;
-      $endTimeDoyField.value = parsed.source.period.end_time;
-      $validAtDoyField.value = parsed.source.valid_at;
+      if (parsed) {
+        $keyField.value = parsed.source.key;
+        $sourceTypeField.value = parsed.source.source_type;
+        $startTimeDoyField.value = parsed.source.period.start_time;
+        $endTimeDoyField.value = parsed.source.period.end_time;
+        $validAtDoyField.value = parsed.source.valid_at;
+      }
     });
   }
 
   // We want to build the GraphQL input object for the external
   // source and child events. The only thing that is missing at
   // this point is the uploaded file ID.
-  // TODO: Define types.
   let sourceInsert: ExternalSourceInsertInput;
   $: {
     if (parsed) {
       sourceInsert = {
         end_time: $endTimeDoyField.value,
+        external_events: {
+          data: parsed?.events,
+        },
+        file_id: -1, // updated in the effect.
         key: $keyField.value,
+        metadata: parsed.source.metadata,
         source_type: $sourceTypeField.value,
         start_time: $startTimeDoyField.value,
         valid_at: $validAtDoyField.value,
-        external_events: {
-          data: parsed?.events?.map(transformer),
-        },
       };
     }
-  }
-
-  /** Transforms the event in the source to one compatible with the db schema */
-  function transformer(event: any): any {
-    // TODO: do some sanitization/checking to convert this to a duration, or to keep the duration
-    //   if provided so we can push it into the database :)
-    return {
-      key: event.key,
-      event_type: event.event_type,
-      start_time: event.time,
-      duration: event.duration,
-      properties: event.properties,
-    };
   }
 
   let selectedSource: ExternalSourceSlim | null = null;
