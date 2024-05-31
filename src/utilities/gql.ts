@@ -78,6 +78,7 @@ export enum Queries {
   EXTENSIONS = 'extensions',
   EXTERNAL_SOURCE = 'external_source_by_pk',
   EXTERNAL_SOURCES = 'external_source',
+  PLAN_EXTERNAL_SOURCE = 'plan_external_source',
   GET_ACTIVITY_EFFECTIVE_ARGUMENTS = 'getActivityEffectiveArguments',
   GET_ACTIVITY_TYPE_SCRIPT = 'getActivityTypeScript',
   GET_COMMAND_TYPE_SCRIPT = 'getCommandTypeScript',
@@ -450,6 +451,15 @@ const gql = {
         end_time
         valid_at
         metadata
+      }
+    }
+  `,
+
+  // TODO: handle owner, created_at, etc.
+  CREATE_PLAN_EXTERNAL_SOURCE: `#graphql
+    mutation CreatePlanExternalSource($source: plan_external_source_insert_input!) {
+      planExternalSourceLink: insert_plan_external_source_one(object: $source) {
+        id
       }
     }
   `,
@@ -884,6 +894,18 @@ const gql = {
     mutation DeleteExpansionSet($id: Int!) {
       deleteExpansionSet: ${Queries.DELETE_EXPANSION_SET}(id: $id) {
         id
+      }
+    }
+  `,
+
+  // DELETE_EXTERNAL_SOURCE ?
+
+  DELETE_PLAN_EXTERNAL_SOURCE: `#graphql
+    mutation DeletePlanExternalSource($where: plan_external_source_bool_exp!) {
+      planExternalSourceLink: delete_plan_external_source(where: $where) {
+        returning {
+          id
+        }
       }
     }
   `,
@@ -2249,6 +2271,16 @@ const gql = {
         start_time
         end_time
         valid_at
+      }
+    }
+  `,
+
+  SUB_PLAN_EXTERNAL_SOURCE: `#graphql
+    subscription SubPlanExternalSource {
+      links: ${Queries.PLAN_EXTERNAL_SOURCE}(order_by: { plan_id: asc }) {
+        id
+        external_source_id
+        plan_id
       }
     }
   `,
