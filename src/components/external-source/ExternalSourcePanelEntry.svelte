@@ -12,7 +12,6 @@
   export let user: User | null;
 
   function onEnable(event: Event) {
-    console.log(JSON.stringify(externalSource), JSON.stringify(event), enabled);
     if (enabled) {
       // insert
       effects.insertExternalSourceForPlan(externalSource.id, plan_id, user);
