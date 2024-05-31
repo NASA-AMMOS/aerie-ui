@@ -24,6 +24,11 @@ export type ExternalSourceSlim = Pick<
   'id' | 'file_id' | 'key' | 'source_type' | 'start_time' | 'end_time' | 'valid_at'
 >;
 
+export type PlanExternalSource = {
+  external_source_id: number;
+  plan_id: number | undefined; // because in plan.ts plan is defined on Plan | null...
+};
+
 // This is the JSON type that the user can upload.
 export type ExternalSourceJson = {
   events: ExternalEvent[];
