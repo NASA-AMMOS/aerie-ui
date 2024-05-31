@@ -3,19 +3,25 @@
 <script lang="ts">
   import { externalSources, planExternalSourceLinks } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
+  import type { User } from '../../types/app';
   import type { ViewGridSection } from '../../types/view';
   import GridMenu from '../menus/GridMenu.svelte';
   import ListItem from '../ui/ListItem.svelte';
   import Panel from '../ui/Panel.svelte';
+  import ExternalSourcePanelEntry from './ExternalSourcePanelEntry.svelte';
 
   export let gridSection: ViewGridSection;
 
-  // We need to keep track of...
-  // * the possible sources
-  // * the actual sources included in the plan
-  // * the plan itself
+  export let user: User | null;
 
-  let selection: any[] = [];
+  // Track which source ids are enabled, from planExternalSourceLinks, to check membership from our list of externalSources
+  let enabledSourceIds: number[] = [];
+
+  // Perform the relevant mapping every time planExternalSourceLinks updates
+  $: {
+    enabledSourceIds = $planExternalSourceLinks.map(link => link.external_source_id);
+    console.log(enabledSourceIds)
+  }
 
 </script>
 
@@ -27,35 +33,17 @@
   <svelte:fragment slot="body">
     {#if $externalSources.length}
       {#each $externalSources as externalSource}
-        <ListItem>
-          {externalSource.key}
-          <span slot="suffix">
-            <label>
-              <input
-                type="checkbox"
-                bind:group={selection}
-                value={{ plan_id: $plan?.id, source_id: externalSource.id }}
-              />
-            </label>
-          </span>
-        </ListItem>
+        <ExternalSourcePanelEntry
+          enabled={enabledSourceIds.includes(externalSource.id)}
+          externalSource={externalSource}
+          plan_id={$plan?.id}
+          user={user}
+        >
+
+        </ExternalSourcePanelEntry>
       {/each}
     {:else}
       <ListItem>No External Sources Found</ListItem>
     {/if}
-    <div class="debug">
-      <div>
-        Possible Sources:
-        <pre>{JSON.stringify($externalSources, null, 2)}</pre>
-      </div>
-      <div>
-        Selected Sources:
-        <pre>{JSON.stringify($planExternalSourceLinks, null, 2)}</pre>
-      </div>
-      <div>
-        Selection Group:
-        <pre>{JSON.stringify(selection, null, 2)}</pre>
-      </div>
-    </div>
   </svelte:fragment>
 </Panel>
