@@ -1,5 +1,5 @@
 import { writable, type Writable } from 'svelte/store';
-import type { ExternalSourceSlim } from '../types/external-source';
+import type { ExternalSourceSlim, PlanExternalSource } from '../types/external-source';
 import gql from '../utilities/gql';
 import { gqlSubscribable } from './subscribable';
 
@@ -18,6 +18,9 @@ export const createExternalSourceError: Writable<string | null> = writable(null)
 // export const externalSource = gqlSubscribable<Model>(gql.SUB_MODEL, { id: externalSourceId }, null, null);
 
 export const externalSources = gqlSubscribable<ExternalSourceSlim[]>(gql.SUB_EXTERNAL_SOURCES, {}, [], null);
+
+// use to keep track of associations between plans and goals
+export const planExternalSourceLinks = gqlSubscribable<PlanExternalSource[]>(gql.SUB_PLAN_EXTERNAL_SOURCE, {}, [], null);
 
 /* Helper Functions. */
 
