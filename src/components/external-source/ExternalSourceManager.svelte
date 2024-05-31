@@ -149,7 +149,7 @@
       sourceInsert = {
         end_time: $endTimeDoyField.value,
         external_events: {
-          data: parsed?.events,
+          data: parsed?.events, // does NOT filter for keys. Trusts that the input is right before forwarding to Hasura...even though a type IS defined... I mean to say if there are extra keys, in excess of what the type specifies, it just includes all of them
         },
         file_id: -1, // updated in the effect.
         key: $keyField.value,
