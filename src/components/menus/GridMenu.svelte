@@ -11,6 +11,7 @@
   import VerticalCollapseIcon from '@nasa-jpl/stellar/icons/vertical_collapse_with_center_line.svg?component';
   import CodeSquareIcon from 'bootstrap-icons/icons/code-square.svg?component';
   import GearWideConnectedIcon from 'bootstrap-icons/icons/gear-wide-connected.svg?component';
+  import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import WindowFullscreenIcon from 'bootstrap-icons/icons/window-fullscreen.svg?component';
   import { viewUpdateGrid } from '../../stores/views';
   import type { ViewGrid, ViewGridComponent, ViewGridSection } from '../../types/view';
@@ -65,6 +66,10 @@
     <MenuItem on:click={() => onClickMenuItem('ExpansionPanel')}>
       <CodeSquareIcon />
       Expansion
+    </MenuItem>
+    <MenuItem on:click={() => onClickMenuItem('ExternalSourcesPanel')}>
+      <Truck />
+      External Sources
     </MenuItem>
     <MenuItem on:click={() => onClickMenuItem('IFramePanel')}>
       <WindowFullscreenIcon />
