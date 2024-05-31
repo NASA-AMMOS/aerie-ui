@@ -19,7 +19,7 @@
 
   // Perform the relevant mapping every time planExternalSourceLinks updates
   $: {
-    enabledSourceIds = $planExternalSourceLinks.map(link => link.external_source_id);
+    enabledSourceIds = $planExternalSourceLinks.filter(link => link.plan_id === $plan?.id).map(link => link.external_source_id);
   }
 
 </script>
