@@ -10,6 +10,7 @@
   import TimelineItemsPanel from '../activity/TimelineItemsPanel.svelte';
   import ConstraintsPanel from '../constraints/ConstraintsPanel.svelte';
   import ExpansionPanel from '../expansion/ExpansionPanel.svelte';
+  import ExternalSourcesPanel from '../external-source/ExternalSourcesPanel.svelte';
   import PlanMetadataPanel from '../plan/PlanMetadataPanel.svelte';
   import SchedulingConditionsPanel from '../scheduling/SchedulingConditionsPanel.svelte';
   import SchedulingGoalsPanel from '../scheduling/SchedulingGoalsPanel.svelte';
@@ -50,6 +51,7 @@
     ActivitySpansTablePanel,
     ConstraintsPanel,
     ExpansionPanel,
+    ExternalSourcesPanel,
     IFramePanel,
     PlanMetadataPanel,
     SchedulingConditionsPanel,
