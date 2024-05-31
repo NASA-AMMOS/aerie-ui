@@ -26,7 +26,7 @@ import {
   savingExpansionRule,
   savingExpansionSet,
 } from '../stores/expansion';
-import { createExternalSourceError, creatingExternalSource, externalSources } from '../stores/external-source';
+import { createExternalSourceError, creatingExternalSource } from '../stores/external-source';
 import { createModelError, creatingModel, models } from '../stores/model';
 import { createPlanError, creatingPlan, planId } from '../stores/plan';
 import { schedulingRequests, selectedSpecId } from '../stores/scheduling';
@@ -78,7 +78,7 @@ import type {
   SeqId,
 } from '../types/expansion';
 import type { Extension, ExtensionPayload } from '../types/extension';
-import type { ExternalSourceInsertInput, ExternalSourceSlim } from '../types/external-source';
+import type { ExternalSourceInsertInput, PlanExternalSource } from '../types/external-source';
 import type { Model, ModelInsertInput, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
 import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
 import type {
@@ -495,6 +495,94 @@ const effects = {
     } catch (e) {
       catchError('Activity Directive Create Failed', e as Error);
       showFailureToast('Activity Directive Create Failed');
+    }
+  },
+
+  async insertExternalSourceForPlan(
+    source_id: number,
+    plan_id: number | undefined,
+    user: User | null,
+  ): Promise<void> {
+    try {
+      // TODO: permissions!
+      // if ((plan && !queryPermissions.CREATE_PLAN_EXTERNAL_SOURCE(user, plan)) || !plan) {
+      //   throwPermissionError('add a directive to the plan');
+      // }
+
+      if (plan_id != undefined) {
+        const data = await reqHasura<PlanExternalSource>(
+          gql.CREATE_PLAN_EXTERNAL_SOURCE,
+          {
+            source: {
+              plan_id: plan_id,
+              external_source_id: source_id
+            }
+          },
+          user,
+        );
+        const { planExternalSourceLink: sourceAssociation } = data;
+        if (sourceAssociation != null) {
+          // TODO: set up stores, display events as a list or smth
+          const newLink: PlanExternalSource = { plan_id: plan_id, external_source_id: source_id };
+          console.log(newLink)
+
+          // store updates automatically, because its a subscription!
+          showSuccessToast('External Source Linked Successfully');
+        } else {
+          // show the name instead??? unsure
+          throw Error(`Unable to link External Source with ID "${source_id}" on plan with ID ${plan_id}`);
+        }
+      } else {
+        throw Error('Plan is not defined.');
+      }
+    } catch (e) {
+      catchError('External Source Linking Failed', e as Error);
+      showFailureToast('External Source Linking Failed');
+    }
+  },
+
+  async deleteExternalSourceForPlan(
+    source_id: number,
+    plan_id: number | undefined,
+    user: User | null,
+  ): Promise<void> {
+    try {
+      // TODO: permissions!
+      // if ((plan && !queryPermissions.CREATE_ACTIVITY_DIRECTIVE(user, plan)) || !plan) {
+      //   throwPermissionError('add a directive to the plan');
+      // }
+
+      if (plan_id != undefined) {
+        const data = await reqHasura<{
+          returning: {
+            id: number
+          }[]
+        }>(
+          gql.DELETE_PLAN_EXTERNAL_SOURCE,
+          {
+            where: {
+              _and: {
+                plan_id: {_eq: plan_id},
+                external_source_id: {_eq: source_id}
+              }
+            }
+          },
+          user,
+        );
+        let sourceDissociation = data.planExternalSourceLink?.returning[0].id;
+        if (sourceDissociation != null) {
+          // source automatically updates!
+          showSuccessToast('External Source Disassociated Successfully');
+        } else {
+          // show the source name instead??? unsure
+          throw Error(`Unable to disassociate External Source with ID "${source_id}" on plan with ID ${plan_id}`);
+        }
+      } else {
+        throw Error('Plan is not defined.');
+      }
+    } catch (e) {
+      catchError('External Source De-linking Failed', e as Error);
+      showFailureToast('External Source De-linking Failed');
     }
   },
 
