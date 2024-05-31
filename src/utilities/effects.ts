@@ -907,7 +907,6 @@ const effects = {
         if (created !== null) {
           showSuccessToast('External Source Created Successfully');
           creatingExternalSource.set(false);
-          externalSources.updateValue((externalSources: ExternalSourceSlim[]) => [...externalSources, created]);
           return created.id;
         } else {
           throw Error(`Unable to create model "${name}"`);
@@ -970,6 +969,8 @@ const effects = {
           showSuccessToast('Model Created Successfully');
           createModelError.set(null);
           creatingModel.set(false);
+
+          // TODO: Why is this necessary? Shouldn't this happen automatically because models is subscribed to GQL? That's how it worked out for externalSource.
           models.updateValue((currentModels: ModelSlim[]) => [...currentModels, model]);
           return id;
         } else {
