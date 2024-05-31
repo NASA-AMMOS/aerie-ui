@@ -523,7 +523,6 @@ const effects = {
         if (sourceAssociation != null) {
           // TODO: set up stores, display events as a list or smth
           const newLink: PlanExternalSource = { plan_id: plan_id, external_source_id: source_id };
-          console.log(newLink)
 
           // store updates automatically, because its a subscription!
           showSuccessToast('External Source Linked Successfully');

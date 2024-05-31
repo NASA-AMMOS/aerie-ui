@@ -20,7 +20,6 @@
   // Perform the relevant mapping every time planExternalSourceLinks updates
   $: {
     enabledSourceIds = $planExternalSourceLinks.map(link => link.external_source_id);
-    console.log(enabledSourceIds)
   }
 
 </script>
