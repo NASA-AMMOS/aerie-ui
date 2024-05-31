@@ -272,10 +272,6 @@
   .filter {
     margin: 0.8rem 0;
   }
-  .truncate {
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
   .tbd ul,
   .tbd li {
     list-style: none;
