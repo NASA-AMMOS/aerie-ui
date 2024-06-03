@@ -77,6 +77,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
+  import { onDestroy } from 'svelte';
   import PageTitle from '../../../components/app/PageTitle.svelte';
   import ModelAssociations from '../../../components/model/ModelAssociations.svelte';
   import ModelForm from '../../../components/model/ModelForm.svelte';
@@ -86,7 +87,7 @@
   import SectionTitle from '../../../components/ui/SectionTitle.svelte';
   import { SearchParameters } from '../../../enums/searchParameters';
   import { constraints } from '../../../stores/constraints';
-  import { initialModel, model } from '../../../stores/model';
+  import { initialModel, model, resetModelStores } from '../../../stores/model';
   import { schedulingConditions, schedulingGoals } from '../../../stores/scheduling';
   import { users } from '../../../stores/user';
   import type { User, UserId } from '../../../types/app';
@@ -273,6 +274,10 @@
     JSON.stringify(initialSelectedConstraintModelSpecifications) !==
       JSON.stringify(selectedConstraintModelSpecifications) ||
     JSON.stringify(initialSelectedGoalModelSpecifications) !== JSON.stringify(selectedGoalModelSpecifications);
+
+  onDestroy(() => {
+    resetModelStores();
+  });
 
   function onClose() {
     goto(`${base}/models`);

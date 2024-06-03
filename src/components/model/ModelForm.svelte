@@ -1,8 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { createEventDispatcher, onDestroy } from 'svelte';
-  import { resetModelStores } from '../../stores/model';
+  import { createEventDispatcher } from 'svelte';
   import type { User, UserId } from '../../types/app';
   import type { ModelLog, ModelSlim } from '../../types/model';
   import { permissionHandler } from '../../utilities/permissionHandler';
@@ -92,10 +91,6 @@
   function onClearOwner() {
     owner = null;
   }
-
-  onDestroy(() => {
-    resetModelStores();
-  });
 </script>
 
 <div class="model-form-container">
