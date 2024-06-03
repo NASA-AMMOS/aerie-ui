@@ -111,6 +111,17 @@ export function getMissingArgDefs(argInfoArray: ArgTextDef[]) {
     .map(argInfo => argInfo.argDef);
 }
 
+export function isQuoted(s: string) {
+  return s.startsWith('"') && s.endsWith('"');
+}
+
+export function unquoteUnescape(s: string) {
+  if (isQuoted(s)) {
+    return s.slice(1, -1).replaceAll('\\"', '"');
+  }
+  return s;
+}
+
 export function quoteEscape(s: string) {
   return `"${s.replaceAll('"', '\\"')}"`;
 }
