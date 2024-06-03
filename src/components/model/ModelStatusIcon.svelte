@@ -20,11 +20,11 @@
   }}
 >
   {#if status === 'extracting'}
-    <ProgressRadial useBackground={false} size={14} />
+    <div data-testid="extracting"><ProgressRadial useBackground={false} size={14} /></div>
   {:else if status === 'complete' && showCompleteStatus}
-    <div class="check"><CheckIcon /></div>
+    <div class="check" data-testid="complete"><CheckIcon /></div>
   {:else if status === 'error'}
-    <WarningIcon class="red-icon" />
+    <div data-testid="error"><WarningIcon class="red-icon" /></div>
   {/if}
 </div>
 
