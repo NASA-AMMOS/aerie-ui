@@ -54,7 +54,7 @@
   }>();
 
   $: {
-    if ($parcel !== null) {
+    if ($parcel !== null && $parcel !== undefined) {
       parcelChannelDictionaryId = $parcel.channel_dictionary_id;
       parcelCommandDictionaryId = $parcel.command_dictionary_id;
       parcelCreatedAt = $parcel.created_at;
