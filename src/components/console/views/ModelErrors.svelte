@@ -6,7 +6,9 @@
   import TabPanel from '../../ui/Tabs/TabPanel.svelte';
   import { ConsoleContextKey } from '../Console.svelte';
 
-  export let model: ModelSlim | undefined;
+  export let model:
+    | Pick<ModelSlim, 'refresh_activity_type_logs' | 'refresh_model_parameter_logs' | 'refresh_resource_type_logs'>
+    | undefined;
   export let title: string;
 
   let selectedLog: 'activity' | 'parameter' | 'resource' | undefined = undefined;
