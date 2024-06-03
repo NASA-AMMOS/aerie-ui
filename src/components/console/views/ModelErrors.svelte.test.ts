@@ -2,7 +2,7 @@ import { render } from '@testing-library/svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import ModelErrorsTest from './ModelErrors.test.svelte';
 
-describe('Activity Decomposition component', () => {
+describe('Model Errors Console', () => {
   afterEach(() => {
     vi.resetAllMocks();
   });
