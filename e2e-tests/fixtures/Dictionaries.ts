@@ -104,7 +104,7 @@ export class Dictionaries {
   async createSequenceAdaptation(): Promise<void> {
     await this.updatePage(this.page, DictionaryType.SequenceAdaptation);
 
-    this.createDictionary(
+    await this.createDictionary(
       this.sequenceAdaptationBuffer,
       'Sequence Adaptation',
       this.sequenceAdaptationTableRow,
