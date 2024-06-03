@@ -1,6 +1,5 @@
 import { base } from '$app/paths';
 import { redirect } from '@sveltejs/kit';
-import { parcelId } from '../../../../stores/sequencing';
 import type { Parcel } from '../../../../types/sequencing';
 import effects from '../../../../utilities/effects';
 import { parseFloatOrNull } from '../../../../utilities/generic';
@@ -18,8 +17,6 @@ export const load: PageLoad = async ({ parent, params }) => {
       const initialParcel: Parcel | null = await effects.getParcel(parcelIdAsNumber, user);
 
       if (initialParcel !== null) {
-        parcelId.set(initialParcel?.id);
-
         return {
           initialParcel,
           user,
