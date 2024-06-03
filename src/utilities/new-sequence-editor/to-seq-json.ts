@@ -23,7 +23,7 @@ import type {
   Time,
   VariableDeclaration,
 } from '@nasa-jpl/seq-json-schema/types';
-import { removeEscapedQuotes } from '../codemirror/codemirror-utils';
+import { removeQuotes } from '../codemirror/codemirror-utils';
 import { customizeSeqJson } from './extension-points';
 import { logInfo } from './logger';
 import { TOKEN_REPEAT_ARG } from './sequencer-grammar-constants';
@@ -406,7 +406,7 @@ function parseDescription(node: SyntaxNode, text: string): string | undefined {
     return undefined;
   }
   const description = text.slice(descriptionNode.from + 1, descriptionNode.to).trim();
-  return removeEscapedQuotes(description) as string;
+  return removeQuotes(description) as string;
 }
 
 export function parseCommand(
