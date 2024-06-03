@@ -905,6 +905,7 @@
   .plan-content {
     display: flex;
     flex-flow: column;
+    overflow: hidden;
   }
 
   .plan-content :global(div.plan-grid) {
