@@ -272,7 +272,7 @@
       }));
       await effects.createPlanTags(newPlanTags, newPlan, user);
       newPlan.tags = planTags.map(tag => ({ tag }));
-      plans.updateValue(() => [...$plans, newPlan]);
+      plans.updateValue(storePlans => [...storePlans, newPlan]);
     }
   }
 
@@ -280,7 +280,7 @@
     const success = await effects.deletePlan(plan, user);
 
     if (success) {
-      plans.updateValue(() => $plans.filter(p => plan.id !== p.id));
+      plans.updateValue(storePlans => storePlans.filter(p => plan.id !== p.id));
     }
   }
 
