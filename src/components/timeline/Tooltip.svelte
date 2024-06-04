@@ -5,6 +5,7 @@
   import { groupBy } from 'lodash-es';
   import DirectiveIcon from '../../assets/timeline-directive.svg?raw';
   import SpanIcon from '../../assets/timeline-span.svg?raw';
+  import { adaptations } from '../../stores/adaptations';
   import type { ActivityDirective } from '../../types/activity';
   import type { ConstraintResultWithName } from '../../types/constraint';
   import type { ResourceType, Span } from '../../types/simulation';
@@ -28,6 +29,9 @@
   $: if (mouseOver) {
     onMouseOver(mouseOver);
   }
+
+  $: primaryTimeLabel = $adaptations.time?.primary?.label || 'UTC';
+  $: primaryTimeFormatter = $adaptations.time?.primary?.format || getDoyTime;
 
   function onMouseOver(event: MouseOver | undefined) {
     if (event && !hidden) {
@@ -233,7 +237,8 @@
 
   function textForActivityDirective(activityDirective: ActivityDirective): string {
     const { anchor_id, id, name, start_time_ms, type } = activityDirective;
-    const startTimeYmd = typeof start_time_ms === 'number' ? getDoyTime(new Date(start_time_ms)) : 'Unknown';
+    const directiveStartTime =
+      typeof start_time_ms === 'number' ? primaryTimeFormatter(new Date(start_time_ms)) : 'Unknown';
     return `
       <div class='tooltip-row-container'>
         <div class='st-typography-bold' style='color: var(--st-gray-10); display: flex; gap: 4px;'>${DirectiveIcon} Activity Directive</div>
@@ -248,8 +253,8 @@
           <span class='tooltip-value-highlight st-typography-medium'>${type}</span>
         </div>
         <div class='tooltip-row'>
-          <span>Start Time (UTC):</span>
-          <span class='tooltip-value-highlight st-typography-medium'>${startTimeYmd}</span>
+          <span>Start Time (${primaryTimeLabel}):</span>
+          <span class='tooltip-value-highlight st-typography-medium'>${directiveStartTime}</span>
         </div>
         <div class='tooltip-row'>
           <span>Id:</span>
@@ -294,6 +299,8 @@
       color = (layer as LineLayer).lineColor;
     }
 
+    const pointTime = primaryTimeFormatter(new Date(x));
+
     return `
       <div class='tooltip-row-container'>
         <div class='tooltip-row'>
@@ -304,9 +311,9 @@
           </span>
         </div>
         <div class='tooltip-row'>
-          <span>Time:</span>
+          <span>Time (${primaryTimeLabel}):</span>
           <span class='tooltip-value-highlight st-typography-medium'>
-            ${getDoyTime(new Date(x))} UTC
+            ${pointTime}
           </span>
         </div>
         <div class='tooltip-row'>
@@ -321,8 +328,8 @@
 
   function textForSpan(span: Span): string {
     const { id, duration, startMs, endMs, type } = span;
-    const startTimeYmd = getDoyTime(new Date(startMs));
-    const endTimeYmd = getDoyTime(new Date(endMs));
+    const spanStartTime = primaryTimeFormatter(new Date(startMs));
+    const spanEndTime = primaryTimeFormatter(new Date(endMs));
     return `
       <div class='tooltip-row-container'>
         <div class='st-typography-bold' style='color: var(--st-gray-10); display: flex; gap: 4px;'>${SpanIcon} Simulated Activity (Span)</div>
@@ -331,12 +338,12 @@
           <span class='tooltip-value-highlight st-typography-medium'>${type}</span>
         </div>
         <div class='tooltip-row'>
-          <span>Start Time (UTC):</span>
-          <span class='tooltip-value-highlight st-typography-medium'>${startTimeYmd}</span>
+          <span>Start Time (${primaryTimeLabel}):</span>
+          <span class='tooltip-value-highlight st-typography-medium'>${spanStartTime}</span>
         </div>
         <div class='tooltip-row'>
-          <span>End Time (UTC):</span>
-          <span class='tooltip-value-highlight st-typography-medium'>${endTimeYmd}</span>
+          <span>End Time (${primaryTimeLabel}):</span>
+          <span class='tooltip-value-highlight st-typography-medium'>${spanEndTime}</span>
         </div>
         <div class='tooltip-row'>
           <span>Duration:</span>
@@ -360,6 +367,7 @@
       name = layer.name ? layer.name : point.name;
       color = (layer as LineLayer).lineColor;
     }
+    const pointTime = primaryTimeFormatter(new Date(x));
 
     return `
       <div class='tooltip-row-container'>
@@ -371,9 +379,9 @@
           </span>
         </div>
         <div class='tooltip-row'>
-          <span>Start:</span>
+          <span>Start Time (${primaryTimeLabel}):</span>
           <span class='tooltip-value-highlight st-typography-medium'>
-            ${getDoyTime(new Date(x))} UTC
+            ${pointTime}
           </span>
         </div>
         <div class='tooltip-row'>

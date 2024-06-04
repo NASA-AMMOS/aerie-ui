@@ -150,6 +150,12 @@
   $: xScaleMax = getXScale(xDomainMax, drawWidth);
   $: xScaleView = getXScale(xDomainView, drawWidth);
   $: xScaleViewDuration = viewTimeRange.end - viewTimeRange.start;
+  $: formattedPlanStartTime = $adaptations.time?.primary?.format
+    ? $adaptations.time?.primary?.format(xDomainMax[0])
+    : plan?.start_time_doy;
+  $: formattedPlanEndTime = $adaptations.time?.primary?.format
+    ? $adaptations.time?.primary?.format(xDomainMax[1])
+    : plan?.end_time_doy;
 
   $: if (viewTimeRangeStartDate && viewTimeRangeEndDate && tickCount) {
     let labelWidth = estimatedLabelWidthPx; // Adjust label width depending on zoom level
@@ -423,8 +429,9 @@
   <div bind:this={timelineHistogramDiv} class="timeline-time-row">
     {#if plan}
       <TimelineTimeDisplay
-        planEndTimeDoy={plan?.end_time_doy}
-        planStartTimeDoy={plan?.start_time_doy}
+        planStartTime={formattedPlanStartTime}
+        planEndTime={formattedPlanEndTime}
+        timeLabel={$adaptations.time?.primary?.label || 'UTC'}
         width={timeline?.marginLeft}
       />
     {/if}
