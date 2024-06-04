@@ -195,25 +195,15 @@ export function lmstTicks(start, stop, tickCount) {
   stepSize = lmstSteps[i];
   console.log('stepSize :>> ', stepSize);
 
-  // // sol -> ms
-  // const stepSizeMs = stepSize * 24 * 60 * 60 * 1000;
-  // console.log('stepSizeMs :>> ', stepSizeMs);
-
   // round the domain to nearest step size values
   const minValRounded = Math.round(lsmtStartSols / stepSize) * stepSize;
   const maxValRounded = Math.round(lsmtEndSols / stepSize) * stepSize;
   console.log('minValRounded :>> ', minValRounded);
   console.log('maxValRounded :>> ', maxValRounded);
 
-  console.log(
-    'ticksLMST :>> ',
-    range(minValRounded, maxValRounded, stepSize).map(x => msss0_to_lmst(x * 24 * 60 * 60)),
-  );
   const ticks = range(minValRounded, maxValRounded, stepSize)
-    .map(x => msss0_to_lmst(x * 24 * 60 * 60))
-    .map(lmstToUTC)
-    .map(utcString => {
-      console.log('utcString :>> ', utcString);
+    .map(x => {
+      const utcString = lmstToUTC(msss0_to_lmst(x * 24 * 60 * 60));
       return new Date(utcString + 'Z');
     })
     .filter(date => date.getTime() >= start && date.getTime() <= stop);

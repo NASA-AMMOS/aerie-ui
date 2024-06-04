@@ -32,7 +32,7 @@
   let svg: SVGElement;
   let zoom: ZoomBehavior<SVGElement, unknown>;
 
-  $: primaryTimeLabel = $adaptations.time?.primary?.label ?? getTimeZoneName();
+  $: primaryTimeLabel = $adaptations.time?.primary?.label ?? 'UTC';
   $: secondaryTimeLabel = $adaptations.time?.secondary?.label ?? getTimeZoneName();
   $: svgSelection = select(svg) as Selection<SVGElement, unknown, any, any>;
 

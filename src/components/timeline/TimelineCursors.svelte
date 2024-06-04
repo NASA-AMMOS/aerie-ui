@@ -156,6 +156,7 @@
         }
         date = new Date(unixEpochTime);
         cursorTimeLabel = ($adaptations.time?.primary?.format || getDoyTime)(date);
+        cursorTimeLabel += ' ' + $adaptations.time?.primary?.label || 'UTC';
       }
       cursorMaxWidth = drawWidth - cursorX;
       cursorX = cursorX + marginLeft;
