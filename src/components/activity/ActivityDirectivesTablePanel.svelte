@@ -6,6 +6,7 @@
   import type { ColDef, ColumnResizedEvent, ColumnState, ValueGetterParams } from 'ag-grid-community';
   import { debounce } from 'lodash-es';
   import { activityDirectivesMap, selectActivity, selectedActivityDirectiveId } from '../../stores/activities';
+  import { adaptations } from '../../stores/adaptations';
   import { activityErrorRollupsMap } from '../../stores/errors';
   import { plan, planReadOnly } from '../../stores/plan';
   import { view, viewTogglePanel, viewUpdateActivityDirectivesTable } from '../../stores/views';
@@ -16,7 +17,7 @@
   import { getDoyTime, getUnixEpochTimeFromInterval } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import GridMenu from '../menus/GridMenu.svelte';
-  import type DataGrid from '../ui/DataGrid/DataGrid.svelte';
+  import DataGrid from '../ui/DataGrid/DataGrid.svelte';
   import { tagsCellRenderer, tagsFilterValueGetter } from '../ui/DataGrid/DataGridTags';
   import Panel from '../ui/Panel.svelte';
   import ActivityDirectivesTable from './ActivityDirectivesTable.svelte';
@@ -39,6 +40,7 @@
 
   $: activityDirectivesTable = $view?.definition.plan.activityDirectivesTable;
   $: autoSizeColumns = activityDirectivesTable?.autoSizeColumns;
+  $: primaryTimeLabel = $adaptations.time?.primary?.label ?? 'UTC';
   $: defaultColumnDefinitions = {
     anchor_id: {
       field: 'anchor_id',
@@ -164,13 +166,13 @@
     },
     start_time_ms: {
       filter: 'text',
-      headerName: `Absolute Start Time (UTC)`,
+      headerName: `Absolute Start Time (${primaryTimeLabel})`,
       hide: true,
       resizable: true,
       sortable: true,
       valueGetter: (params: ValueGetterParams<ActivityDirective>) => {
         if ($plan && params && params.data && typeof params.data.start_time_ms === 'number') {
-          return getDoyTime(new Date(params.data.start_time_ms), false);
+          return ($adaptations.time?.primary?.format ?? getDoyTime)(new Date(params.data.start_time_ms), false);
         }
         return '';
       },
