@@ -8,25 +8,25 @@ describe('Model Status Icon', () => {
   });
 
   it('Should display an error icon', () => {
-    const { getByTestId } = render(ModelStatusIcon, {
+    const { queryByTestId } = render(ModelStatusIcon, {
       props: {
         status: 'error',
         tooltipContent: 'Test 1 tooltip',
       },
     });
 
-    expect(getByTestId('error')).not.toBeNull();
+    expect(queryByTestId('error')).not.toBeNull();
   });
 
   it('Should display an check icon', () => {
-    const { getByTestId } = render(ModelStatusIcon, {
+    const { queryByTestId } = render(ModelStatusIcon, {
       props: {
         status: 'complete',
         tooltipContent: 'Test 2 tooltip',
       },
     });
 
-    expect(getByTestId('complete')).not.toBeNull();
+    expect(queryByTestId('complete')).not.toBeNull();
   });
 
   it('Should not display an check icon when `showCompleteStatus` is false', () => {
@@ -42,13 +42,13 @@ describe('Model Status Icon', () => {
   });
 
   it('Should display a spinner icon', () => {
-    const { getByTestId } = render(ModelStatusIcon, {
+    const { queryByTestId } = render(ModelStatusIcon, {
       props: {
         status: 'extracting',
         tooltipContent: 'Test 4 tooltip',
       },
     });
 
-    expect(getByTestId('extracting')).not.toBeNull();
+    expect(queryByTestId('extracting')).not.toBeNull();
   });
 });

@@ -1,10 +1,10 @@
-import { render } from '@testing-library/svelte';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render } from '@testing-library/svelte';
+import { afterEach, describe, expect, it } from 'vitest';
 import ModelErrorsTest from './ModelErrors.test.svelte';
 
 describe('Model Errors Console', () => {
   afterEach(() => {
-    vi.resetAllMocks();
+    cleanup();
   });
 
   it('Should display an error log automatically if present within the model', () => {
