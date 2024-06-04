@@ -5,6 +5,7 @@
   import { select, type Selection } from 'd3-selection';
   import { zoom as d3Zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior, type ZoomTransform } from 'd3-zoom';
   import { createEventDispatcher } from 'svelte';
+  import { adaptations } from '../../stores/adaptations';
   import type { ConstraintResultWithName } from '../../types/constraint';
   import type { TimeRange, XAxisTick } from '../../types/timeline';
   import { getTimeZoneName } from '../../utilities/time';
@@ -25,13 +26,14 @@
   const dispatch = createEventDispatcher<{
     zoom: D3ZoomEvent<HTMLCanvasElement, any>;
   }>();
-  const userTimeZone = getTimeZoneName();
 
   let axisOffset = 12;
   let violationsOffset = 0;
   let svg: SVGElement;
   let zoom: ZoomBehavior<SVGElement, unknown>;
 
+  $: primaryTimeLabel = $adaptations.time?.primary?.label ?? getTimeZoneName();
+  $: secondaryTimeLabel = $adaptations.time?.secondary?.label ?? getTimeZoneName();
   $: svgSelection = select(svg) as Selection<SVGElement, unknown, any, any>;
 
   /* TODO could this be a custom svelte use action? */
@@ -74,9 +76,9 @@
   class="x-axis-content"
 >
   <div class="x-axis-time-formats" style={`width:${marginLeft}px`}>
-    <div class="x-axis-time-format st-typography-medium">UTC</div>
+    <div class="x-axis-time-format st-typography-medium">{primaryTimeLabel}</div>
     <div class="x-axis-time-format x-axis-time-format-secondary st-typography-medium">
-      {userTimeZone}
+      {secondaryTimeLabel}
     </div>
   </div>
   <svg style="height: {drawHeight}px; width: {drawWidth}px;" bind:this={svg}>
@@ -90,13 +92,13 @@
             {#each xTicksView as tick}
               {#if !tick.hideLabel}
                 <g class="tick st-typography-medium" transform="translate({xScaleView?.(tick.date)}, 0)">
-                  <text fill="currentColor" dy="0.5em">{tick.formattedDateUTC}</text>
+                  <text fill="currentColor" dy="0.5em">{tick.formattedPrimaryDate}</text>
                 </g>
                 <g
                   class="tick st-typography-medium tick-secondary"
                   transform="translate({xScaleView?.(tick.date)}, 16)"
                 >
-                  <text fill="currentColor" dy="0.5em">{tick.formattedDateLocal}</text>
+                  <text fill="currentColor" dy="0.5em">{tick.formattedSecondaryDate}</text>
                 </g>
               {/if}
             {/each}

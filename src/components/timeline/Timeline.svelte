@@ -6,6 +6,7 @@
   import { throttle } from 'lodash-es';
   import { afterUpdate, createEventDispatcher, onDestroy, onMount, tick } from 'svelte';
   import { SOURCES, TRIGGERS, dndzone } from 'svelte-dnd-action';
+  import { adaptations } from '../../stores/adaptations';
   import { viewUpdateTimeline } from '../../stores/views';
   import type { ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
@@ -129,6 +130,7 @@
 
   $: rows = timeline?.rows || [];
   $: drawWidth = clientWidth > 0 ? clientWidth - (timeline?.marginLeft ?? 0) - (timeline?.marginRight ?? 0) : 0;
+  $: estimatedLabelWidthPx = $adaptations.time?.ticks?.tickLabelWidth ?? 130;
 
   // Compute number of ticks based off draw width
   $: if (drawWidth) {
@@ -150,26 +152,44 @@
   $: xScaleViewDuration = viewTimeRange.end - viewTimeRange.start;
 
   $: if (viewTimeRangeStartDate && viewTimeRangeEndDate && tickCount) {
-    let labelWidth = estimatedLabelWidthPx; // Compute the actual label width
-    xTicksView = customD3Ticks(viewTimeRangeStartDate, viewTimeRangeEndDate, tickCount).map((date: Date) => {
-      // Format fine and coarse time based off duration
+    let labelWidth = estimatedLabelWidthPx; // Adjust label width depending on zoom level
+    const ticksFn = $adaptations.time?.ticks?.getTicks ?? customD3Ticks;
+    xTicksView = ticksFn(viewTimeRangeStartDate, viewTimeRangeEndDate, tickCount).map((date: Date) => {
       const doyTimestamp = getDoyTime(date, true);
-      let formattedDateUTC = doyTimestamp;
-      let formattedDateLocal = date.toLocaleString();
-      if (xScaleViewDuration > durationYear * tickCount) {
-        formattedDateUTC = doyTimestamp.slice(0, 4);
-        formattedDateLocal = date.getFullYear().toString();
-        labelWidth = 28;
-      } else if (xScaleViewDuration > durationMonth * tickCount) {
-        formattedDateUTC = doyTimestamp.slice(0, 8);
-        formattedDateLocal = date.toLocaleDateString();
-        labelWidth = 50;
-      } else if (xScaleViewDuration > durationWeek) {
-        formattedDateUTC = doyTimestamp.slice(0, 8);
-        formattedDateLocal = date.toLocaleDateString();
-        labelWidth = 58;
+      let formattedPrimaryDate = '';
+      if ($adaptations.time?.primary?.format) {
+        formattedPrimaryDate = $adaptations.time?.primary?.format(date);
+      } else {
+        formattedPrimaryDate = doyTimestamp;
+        if (xScaleViewDuration > durationYear * tickCount) {
+          formattedPrimaryDate = doyTimestamp.slice(0, 4);
+          labelWidth = $adaptations.time?.ticks?.tickLabelWidth ?? 28;
+        } else if (xScaleViewDuration > durationMonth * tickCount) {
+          formattedPrimaryDate = doyTimestamp.slice(0, 8);
+          labelWidth = $adaptations.time?.ticks?.tickLabelWidth ?? 50;
+        } else if (xScaleViewDuration > durationWeek) {
+          formattedPrimaryDate = doyTimestamp.slice(0, 8);
+          labelWidth = $adaptations.time?.ticks?.tickLabelWidth ?? 58;
+        }
       }
-      return { date, formattedDateLocal, formattedDateUTC, hideLabel: false };
+
+      let formattedSecondaryDate = '';
+      if ($adaptations.time?.secondary?.format) {
+        formattedSecondaryDate = $adaptations.time?.secondary?.format(date);
+      } else {
+        formattedSecondaryDate = date.toLocaleString();
+        if (xScaleViewDuration > durationYear * tickCount) {
+          formattedSecondaryDate = date.getFullYear().toString();
+          labelWidth = $adaptations.time?.ticks?.tickLabelWidth ?? 28;
+        } else if (xScaleViewDuration > durationMonth * tickCount) {
+          formattedSecondaryDate = date.toLocaleDateString();
+          labelWidth = $adaptations.time?.ticks?.tickLabelWidth ?? 50;
+        } else if (xScaleViewDuration > durationWeek) {
+          formattedSecondaryDate = date.toLocaleDateString();
+          labelWidth = $adaptations.time?.ticks?.tickLabelWidth ?? 58;
+        }
+      }
+      return { date, formattedPrimaryDate, formattedSecondaryDate, hideLabel: false };
     });
 
     // Determine whether or not to hide the last tick label
@@ -180,6 +200,7 @@
         lastTick.hideLabel = true;
       }
     }
+    console.log('xTicksView :>> ', xTicksView);
   }
 
   afterUpdate(() => {
