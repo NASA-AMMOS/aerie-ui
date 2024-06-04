@@ -130,6 +130,7 @@
 
   function onToggleParameterDictionary(event: CustomEvent<{ ids: Record<number, boolean> }>) {
     selectedParmeterDictionaries = event.detail.ids;
+    console.log(selectedParmeterDictionaries);
   }
 
   function onToggleSequenceAdaptation(event: CustomEvent<{ id: number | null }>) {
@@ -161,20 +162,21 @@
     }
 
     if (parcelToParameterDictionaryIdsToDelete.length > 0) {
-      const idsToDelete = [];
+      const parcelToParameterDictionariesToDelete: ParcelToParameterDictionary[] = [];
 
       for (const paramDictionaryId of parcelToParameterDictionaryIdsToDelete) {
-        const parcelId: number | undefined = $parcelToParameterDictionaries.find(
-          p => p.parameter_dictionary_id === paramDictionaryId && p.parcel_id === parcelId,
-        )?.id;
+        const parcelToParameterDictionary: ParcelToParameterDictionary | undefined =
+          $parcelToParameterDictionaries.find(
+            p => p.parameter_dictionary_id === paramDictionaryId && p.parcel_id === $parcel?.id,
+          );
 
-        if (parcelId) {
-          idsToDelete.push(parcelId);
+        if (parcelToParameterDictionary) {
+          parcelToParameterDictionariesToDelete.push(parcelToParameterDictionary);
         }
+      }
 
-        if (idsToDelete.length > 0 && $parcel) {
-          await effects.deleteParcelToParameterDictionaries(idsToDelete, user);
-        }
+      if (parcelToParameterDictionariesToDelete.length > 0) {
+        await effects.deleteParcelToParameterDictionaries(parcelToParameterDictionariesToDelete, user);
       }
     }
   }
