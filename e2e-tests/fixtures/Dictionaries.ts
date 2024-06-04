@@ -34,7 +34,6 @@ export class Dictionaries {
   sequenceAdaptationBuffer: Buffer;
   sequenceAdaptationPath: string = 'e2e-tests/data/sequence-adaptation.js';
   sequenceAdaptationTableRow: Locator;
-  sequenceAdaptationTableRowCount: number;
   sequenceAdaptationTableRowDeleteButton: Locator;
   sequenceAdaptationTableRows: Locator;
 
@@ -159,9 +158,11 @@ export class Dictionaries {
       await tableRow.waitFor({ state: 'hidden' });
       await expect(tableRow).not.toBeVisible();
     } else {
+      await this.updatePage(this.page, type);
+
       // This will never go below 0.
-      expect(Math.max(0, (await this.sequenceAdaptationTableRows.count()) - 1)).toEqual(
-        this.sequenceAdaptationTableRowCount,
+      expect(Math.max(0, (await this.sequenceAdaptationTableRows.count()) - 1)).toBe(
+        await this.sequenceAdaptationTableRows.count(),
       );
     }
   }
@@ -240,7 +241,6 @@ export class Dictionaries {
       this.sequenceAdaptationTableRows = this.page
         .locator('.panel', { hasText: 'Sequence Adaptations' })
         .locator('.body .ag-row');
-      this.sequenceAdaptationTableRowCount = await this.sequenceAdaptationTableRows.count();
       this.sequenceAdaptationTableRow = this.sequenceAdaptationTableRows.first();
       this.sequenceAdaptationTableRowDeleteButton = this.sequenceAdaptationTableRow.locator(
         `button[aria-label="Delete ${DictionaryType.SequenceAdaptation}"]`,
