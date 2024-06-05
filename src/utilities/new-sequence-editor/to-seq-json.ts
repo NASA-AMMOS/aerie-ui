@@ -27,7 +27,7 @@ import { removeQuotes } from '../codemirror/codemirror-utils';
 import { customizeSeqJson } from './extension-points';
 import { logInfo } from './logger';
 import { TOKEN_REPEAT_ARG } from './sequencer-grammar-constants';
-import { EPOCH_SIMPLE, EPOCH_TIME, RELATIVE_SIMPLE, RELATIVE_TIME, testTime } from './time-utils';
+import { EPOCH_SIMPLE, EPOCH_TIME, RELATIVE_SIMPLE, RELATIVE_TIME } from './time-utils';
 
 /**
  * Returns a minimal valid Seq JSON object.
@@ -251,7 +251,7 @@ export function parseTime(commandNode: SyntaxNode, text: string): Time {
     const timeTagEpochText = text.slice(timeTagEpochNode.from + 1, timeTagEpochNode.to).trim();
 
     // a regex to determine if this string [+/-]####T##:##:##.###
-    let match = testTime(timeTagEpochText, EPOCH_TIME);
+    let match = EPOCH_TIME.exec(timeTagEpochText);
     if (match) {
       const [, sign, doy, hh, mm, ss, ms] = match;
       tag = `${sign === '-' ? '-' : ''}${doy !== undefined ? doy : ''}${hh ? hh : '00'}:${mm ? mm : '00'}:${
@@ -261,7 +261,7 @@ export function parseTime(commandNode: SyntaxNode, text: string): Time {
     }
 
     // a regex to determine if this string [+/-]###.###
-    match = testTime(timeTagEpochText, EPOCH_SIMPLE);
+    match = EPOCH_SIMPLE.exec(timeTagEpochText);
     if (match) {
       const [, sign, second, ms] = match;
       tag = `${sign === '-' ? '-' : ''}${second ? secondsToHMS(Number(second)) : ''}${ms ? ms : ''}`;
@@ -271,14 +271,14 @@ export function parseTime(commandNode: SyntaxNode, text: string): Time {
     const timeTagRelativeText = text.slice(timeTagRelativeNode.from + 1, timeTagRelativeNode.to).trim();
 
     // a regex to determine if this string ####T##:##:##.###
-    let match = testTime(timeTagRelativeText, RELATIVE_TIME);
+    let match = RELATIVE_TIME.exec(timeTagRelativeText);
     if (match) {
       RELATIVE_TIME.lastIndex = 0;
       const [, doy, hh, mm, ss, ms] = match;
       tag = `${doy !== undefined ? doy : ''}${hh ? hh : '00'}:${mm ? mm : '00'}:${ss ? ss : '00'}${ms ? ms : ''}`;
       return { tag, type: 'COMMAND_RELATIVE' };
     }
-    match = testTime(timeTagRelativeText, RELATIVE_SIMPLE);
+    match = RELATIVE_SIMPLE.exec(timeTagRelativeText);
     if (match) {
       RELATIVE_SIMPLE.lastIndex = 0;
       const [, second, ms] = match;
