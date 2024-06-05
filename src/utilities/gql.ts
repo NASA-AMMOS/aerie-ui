@@ -204,7 +204,6 @@ export enum Queries {
   USERS = 'users',
   VALIDATE_ACTIVITY_ARGUMENTS = 'validateActivityArguments',
   VIEW = 'view_by_pk',
-  VIEW_TO_MISSION_MODEL = 'view_to_mission_model',
   VIEWS = 'view',
   WITHDRAW_MERGE_REQUEST = 'withdraw_merge_request',
 }
