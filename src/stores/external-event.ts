@@ -1,8 +1,10 @@
-import { derived } from 'svelte/store';
-import type { ExternalEventDB } from "../types/external-event";
+import { derived, writable, type Writable } from 'svelte/store';
+import type { ExternalEventDB, ExternalEventId } from "../types/external-event";
 import gql from '../utilities/gql';
 import { selectedPlanExternalSourceIds } from './external-source';
 import { gqlSubscribable } from './subscribable';
+
+export const selectedExternalEventId: Writable<ExternalEventId | undefined> = writable(undefined);
 
 export const externalEventsDB = gqlSubscribable<ExternalEventDB[]>(
   gql.SUB_PLAN_EXTERNAL_EVENTS,
