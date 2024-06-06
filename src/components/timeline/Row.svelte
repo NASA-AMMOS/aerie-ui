@@ -32,8 +32,8 @@
     SimulationDataset,
     Span,
     SpanId,
-    SpansMap,
     SpanUtilityMaps,
+    SpansMap,
   } from '../../types/simulation';
   import type {
     ActivityOptions,
@@ -59,19 +59,21 @@
   import { pluralize } from '../../utilities/text';
   import { getDoyTime } from '../../utilities/time';
   import {
+    TimelineInteractionMode,
     directiveInView,
     generateActivityTree as generateActivityTreeUtil,
     getYAxesWithScaleDomains,
     isActivityLayer,
+    isExternalEventLayer,
     isLineLayer,
     isXRangeLayer,
     spanInView,
-    TimelineInteractionMode,
     type TimelineLockStatus,
   } from '../../utilities/timeline';
   import { tooltip } from '../../utilities/tooltip';
   import ConstraintViolations from './ConstraintViolations.svelte';
   import LayerActivities from './LayerActivities.svelte';
+  import LayerExternalSources from './LayerExternalSources.svelte';
   import LayerGaps from './LayerGaps.svelte';
   import LayerLine from './LayerLine.svelte';
   import LayerXRange from './LayerXRange.svelte';
@@ -300,9 +302,11 @@
   $: rowClasses = classNames('row', { 'row-collapsed': !expanded });
   $: activityOptions = activityOptions || { ...ViewDefaultActivityOptions };
   $: activityLayers = layers.filter(isActivityLayer);
+  $: externalEventLayers = layers.filter(isExternalEventLayer);
   $: lineLayers = layers.filter(l => isLineLayer(l) || (isXRangeLayer(l) && l.showAsLinePlot));
   $: xRangeLayers = layers.filter(l => isXRangeLayer(l) && !l.showAsLinePlot);
   $: hasActivityLayer = activityLayers.length > 0;
+  $: hasExternalEventsLayer = externalEventLayers.length > 0;
   $: hasResourceLayer = lineLayers.length + xRangeLayers.length > 0;
   $: showSpans = activityOptions?.composition === 'both' || activityOptions?.composition === 'spans';
   $: showDirectives = activityOptions?.composition === 'both' || activityOptions?.composition === 'directives';
@@ -863,6 +867,31 @@
             {timelineInteractionMode}
             {timelineLockStatus}
             {user}
+            {viewTimeRange}
+            {xScaleView}
+            on:contextMenu
+            on:deleteActivityDirective
+            on:dblClick
+            on:mouseDown={onMouseDown}
+            on:mouseOver={onMouseOver}
+            on:updateRowHeight={onUpdateRowHeightLayer}
+          />
+        {/if}
+        {#if hasExternalEventsLayer}
+          <LayerExternalSources
+            {idToColorMaps}
+            {showDirectives}
+            {contextmenu}
+            {dpr}
+            drawHeight={computedDrawHeight}
+            {drawWidth}
+            {dblclick}
+            {mousedown}
+            {mousemove}
+            {mouseout}
+            {planStartTimeYmd}
+            {selectedSpanId}
+            {timelineInteractionMode}
             {viewTimeRange}
             {xScaleView}
             on:contextMenu
