@@ -37,6 +37,8 @@ export type ViewGridComponent =
   | 'TimelineItemsPanel'
   | 'ConstraintsPanel'
   | 'ExpansionPanel'
+  | 'ExternalSourcesPanel'
+  | 'ExternalEventsTablePanel'
   | 'IFramePanel'
   | 'PlanMetadataPanel'
   | 'SchedulingConditionsPanel'
