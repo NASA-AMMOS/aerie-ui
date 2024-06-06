@@ -6,9 +6,9 @@
   import type { ColDef, ColumnResizedEvent, ColumnState, ValueGetterParams } from 'ag-grid-community';
   import { debounce } from 'lodash-es';
   import { activityDirectivesMap, selectActivity, selectedActivityDirectiveId } from '../../stores/activities';
-  import { adaptations } from '../../stores/adaptations';
   import { activityErrorRollupsMap } from '../../stores/errors';
   import { plan, planReadOnly } from '../../stores/plan';
+  import { plugins } from '../../stores/plugins';
   import { view, viewTogglePanel, viewUpdateActivityDirectivesTable } from '../../stores/views';
   import type { ActivityDirective } from '../../types/activity';
   import type { User } from '../../types/app';
@@ -40,7 +40,7 @@
 
   $: activityDirectivesTable = $view?.definition.plan.activityDirectivesTable;
   $: autoSizeColumns = activityDirectivesTable?.autoSizeColumns;
-  $: primaryTimeLabel = $adaptations.time?.primary?.label ?? 'UTC';
+  $: primaryTimeLabel = $plugins.time?.primary?.label ?? 'UTC';
   $: defaultColumnDefinitions = {
     anchor_id: {
       field: 'anchor_id',
@@ -172,7 +172,7 @@
       sortable: true,
       valueGetter: (params: ValueGetterParams<ActivityDirective>) => {
         if ($plan && params && params.data && typeof params.data.start_time_ms === 'number') {
-          return ($adaptations.time?.primary?.format ?? getDoyTime)(new Date(params.data.start_time_ms), false);
+          return ($plugins.time?.primary?.format ?? getDoyTime)(new Date(params.data.start_time_ms), false);
         }
         return '';
       },

@@ -5,7 +5,7 @@
   import { groupBy } from 'lodash-es';
   import DirectiveIcon from '../../assets/timeline-directive.svg?raw';
   import SpanIcon from '../../assets/timeline-span.svg?raw';
-  import { adaptations } from '../../stores/adaptations';
+  import { plugins } from '../../stores/plugins';
   import type { ActivityDirective } from '../../types/activity';
   import type { ConstraintResultWithName } from '../../types/constraint';
   import type { ResourceType, Span } from '../../types/simulation';
@@ -30,8 +30,8 @@
     onMouseOver(mouseOver);
   }
 
-  $: primaryTimeLabel = $adaptations.time?.primary?.label || 'UTC';
-  $: primaryTimeFormatter = $adaptations.time?.primary?.format || getDoyTime;
+  $: primaryTimeLabel = $plugins.time?.primary?.label || 'UTC';
+  $: primaryTimeFormatter = $plugins.time?.primary?.format || getDoyTime;
 
   function onMouseOver(event: MouseOver | undefined) {
     if (event && !hidden) {

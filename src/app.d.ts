@@ -72,34 +72,6 @@ declare global {
     parameterDictionaries: ParameterDictionary[],
     channelDictionary: ChannelDictionary | null,
   );
-
-  /* Time adaptation types */
-  // TODO should we namespace these better?
-  // var PRIMARY_TIME_LABEL: string;
-  // var TICK_LABEL_WIDTH: number;
-  // function DATE_TO_PRIMARY_TIME_STRING(date: Date): string;
-  // function PRIMARY_TIME_STRING_TO_DATE(date: Date): string;
-  // function PRIMARY_TIME_STRING_TO_DATE(date: Date): string;
-  // function GET_TICKS(start: Date, stop: Date, count: number): Date[];
-  // var adaptations: {
-  //   sequncing?: null;
-  //   time?: {
-  //     primary?: {
-  //       format?: (date: Date) => string;
-  //       label?: string;
-  //       parse?: (string: string) => Date;
-  //     };
-  //     secondary?: {
-  //       format?: (date: Date) => string;
-  //       label?: string;
-  //       parse?: (string: string) => Date;
-  //     };
-  //     ticks?: {
-  //       getTicks?: (start: Date, stop: Date, count: number) => Date[];
-  //       tickWidth?: number;
-  //     };
-  //   };
-  // };
 }
 
 export {};

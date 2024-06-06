@@ -888,11 +888,3 @@ export function getTimeZoneName() {
   }
   return 'UNK';
 }
-
-export function getPrimaryTimeLabel(): string {
-  return globalThis.PRIMARY_TIME_LABEL ?? 'UTC';
-}
-
-export function getPrimaryTimeString(date: Date): string {
-  return globalThis.DATE_TO_PRIMARY_TIME_STRING(date) ?? date.toISOString();
-}

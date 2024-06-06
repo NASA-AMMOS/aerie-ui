@@ -6,7 +6,7 @@
   import { throttle } from 'lodash-es';
   import { afterUpdate, createEventDispatcher, onDestroy, onMount, tick } from 'svelte';
   import { SOURCES, TRIGGERS, dndzone } from 'svelte-dnd-action';
-  import { adaptations } from '../../stores/adaptations';
+  import { plugins } from '../../stores/plugins';
   import { viewUpdateTimeline } from '../../stores/views';
   import type { ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
@@ -130,7 +130,7 @@
 
   $: rows = timeline?.rows || [];
   $: drawWidth = clientWidth > 0 ? clientWidth - (timeline?.marginLeft ?? 0) - (timeline?.marginRight ?? 0) : 0;
-  $: estimatedLabelWidthPx = $adaptations.time?.ticks?.tickLabelWidth ?? 130;
+  $: estimatedLabelWidthPx = $plugins.time?.ticks?.tickLabelWidth ?? 130;
 
   // Compute number of ticks based off draw width
   $: if (drawWidth) {
@@ -150,49 +150,49 @@
   $: xScaleMax = getXScale(xDomainMax, drawWidth);
   $: xScaleView = getXScale(xDomainView, drawWidth);
   $: xScaleViewDuration = viewTimeRange.end - viewTimeRange.start;
-  $: formattedPlanStartTime = $adaptations.time?.primary?.format
-    ? $adaptations.time?.primary?.format(xDomainMax[0])
+  $: formattedPlanStartTime = $plugins.time?.primary?.format
+    ? $plugins.time?.primary?.format(xDomainMax[0])
     : plan?.start_time_doy;
-  $: formattedPlanEndTime = $adaptations.time?.primary?.format
-    ? $adaptations.time?.primary?.format(xDomainMax[1])
+  $: formattedPlanEndTime = $plugins.time?.primary?.format
+    ? $plugins.time?.primary?.format(xDomainMax[1])
     : plan?.end_time_doy;
 
   $: if (viewTimeRangeStartDate && viewTimeRangeEndDate && tickCount) {
     let labelWidth = estimatedLabelWidthPx; // Adjust label width depending on zoom level
-    const ticksFn = $adaptations.time?.ticks?.getTicks ?? customD3Ticks;
+    const ticksFn = $plugins.time?.ticks?.getTicks ?? customD3Ticks;
     xTicksView = ticksFn(viewTimeRangeStartDate, viewTimeRangeEndDate, tickCount).map((date: Date) => {
       const doyTimestamp = getDoyTime(date, true);
       let formattedPrimaryDate = '';
-      if ($adaptations.time?.primary?.format) {
-        formattedPrimaryDate = $adaptations.time?.primary?.format(date);
+      if ($plugins.time?.primary?.format) {
+        formattedPrimaryDate = $plugins.time?.primary?.format(date);
       } else {
         formattedPrimaryDate = doyTimestamp;
         if (xScaleViewDuration > durationYear * tickCount) {
           formattedPrimaryDate = doyTimestamp.slice(0, 4);
-          labelWidth = $adaptations.time?.ticks?.tickLabelWidth ?? 28;
+          labelWidth = $plugins.time?.ticks?.tickLabelWidth ?? 28;
         } else if (xScaleViewDuration > durationMonth * tickCount) {
           formattedPrimaryDate = doyTimestamp.slice(0, 8);
-          labelWidth = $adaptations.time?.ticks?.tickLabelWidth ?? 50;
+          labelWidth = $plugins.time?.ticks?.tickLabelWidth ?? 50;
         } else if (xScaleViewDuration > durationWeek) {
           formattedPrimaryDate = doyTimestamp.slice(0, 8);
-          labelWidth = $adaptations.time?.ticks?.tickLabelWidth ?? 58;
+          labelWidth = $plugins.time?.ticks?.tickLabelWidth ?? 58;
         }
       }
 
       let formattedSecondaryDate = '';
-      if ($adaptations.time?.secondary?.format) {
-        formattedSecondaryDate = $adaptations.time?.secondary?.format(date);
+      if ($plugins.time?.secondary?.format) {
+        formattedSecondaryDate = $plugins.time?.secondary?.format(date);
       } else {
         formattedSecondaryDate = date.toLocaleString();
         if (xScaleViewDuration > durationYear * tickCount) {
           formattedSecondaryDate = date.getFullYear().toString();
-          labelWidth = $adaptations.time?.ticks?.tickLabelWidth ?? 28;
+          labelWidth = $plugins.time?.ticks?.tickLabelWidth ?? 28;
         } else if (xScaleViewDuration > durationMonth * tickCount) {
           formattedSecondaryDate = date.toLocaleDateString();
-          labelWidth = $adaptations.time?.ticks?.tickLabelWidth ?? 50;
+          labelWidth = $plugins.time?.ticks?.tickLabelWidth ?? 50;
         } else if (xScaleViewDuration > durationWeek) {
           formattedSecondaryDate = date.toLocaleDateString();
-          labelWidth = $adaptations.time?.ticks?.tickLabelWidth ?? 58;
+          labelWidth = $plugins.time?.ticks?.tickLabelWidth ?? 58;
         }
       }
       return { date, formattedPrimaryDate, formattedSecondaryDate, hideLabel: false };
@@ -206,7 +206,6 @@
         lastTick.hideLabel = true;
       }
     }
-    console.log('xTicksView :>> ', xTicksView);
   }
 
   afterUpdate(() => {
@@ -431,7 +430,7 @@
       <TimelineTimeDisplay
         planStartTime={formattedPlanStartTime}
         planEndTime={formattedPlanEndTime}
-        timeLabel={$adaptations.time?.primary?.label || 'UTC'}
+        timeLabel={$plugins.time?.primary?.label || 'UTC'}
         width={timeline?.marginLeft}
       />
     {/if}
