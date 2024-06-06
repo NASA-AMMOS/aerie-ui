@@ -11,6 +11,7 @@
   import VerticalCollapseIcon from '@nasa-jpl/stellar/icons/vertical_collapse_with_center_line.svg?component';
   import Balloon from 'bootstrap-icons/icons/balloon.svg?component';
   import CodeSquareIcon from 'bootstrap-icons/icons/code-square.svg?component';
+  import Cookie from 'bootstrap-icons/icons/cookie.svg?component';
   import GearWideConnectedIcon from 'bootstrap-icons/icons/gear-wide-connected.svg?component';
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import WindowFullscreenIcon from 'bootstrap-icons/icons/window-fullscreen.svg?component';
@@ -95,6 +96,10 @@
     <MenuItem on:click={() => onClickMenuItem('ActivityFormPanel')}>
       <ActivityIcon />
       Selected Activity
+    </MenuItem>
+    <MenuItem on:click={() => onClickMenuItem('ExternalEventFormPanel')}>
+      <Cookie />
+      Selected External Event
     </MenuItem>
     <MenuItem on:click={() => onClickMenuItem('SimulationPanel')}>
       <GearWideConnectedIcon />
