@@ -10,6 +10,7 @@
   import TimelineItemsPanel from '../activity/TimelineItemsPanel.svelte';
   import ConstraintsPanel from '../constraints/ConstraintsPanel.svelte';
   import ExpansionPanel from '../expansion/ExpansionPanel.svelte';
+  import ExternalEventFormPanel from '../external-events/ExternalEventFormPanel.svelte';
   import ExternalEventsTablePanel from '../external-events/ExternalEventsTablePanel.svelte';
   import ExternalSourcesPanel from '../external-source/ExternalSourcesPanel.svelte';
   import PlanMetadataPanel from '../plan/PlanMetadataPanel.svelte';
@@ -49,6 +50,7 @@
   const gridComponentsByName: Record<ViewGridComponent, any> = {
     ActivityDirectivesTablePanel,
     ActivityFormPanel,
+    ExternalEventFormPanel,
     ActivitySpansTablePanel,
     ConstraintsPanel,
     ExpansionPanel,

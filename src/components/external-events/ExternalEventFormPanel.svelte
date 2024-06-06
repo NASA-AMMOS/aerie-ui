@@ -27,7 +27,7 @@
         editable={!$activityEditingLocked}
       />
     {:else}
-      <div class="p-2 st-typography-label">No Activity Selected</div>
+      <div class="p-2 st-typography-label">No External Event Selected</div>
     {/if}
   </svelte:fragment>
 </Panel>
