@@ -169,6 +169,7 @@
   let activityTree: ActivityTree = [];
   let filteredActivityDirectives: ActivityDirective[] = [];
   let filteredSpans: Span[] = [];
+  let filteredExternalEvents: ExternalEvent[] = [];
   let timeFilteredActivityDirectives: ActivityDirective[] = [];
   let timeFilteredSpans: Span[] = [];
   let idToColorMaps: { directives: Record<number, string>; spans: Record<number, string> } = {
@@ -448,6 +449,23 @@
       return inView;
     });
   }
+
+  $: if (hasExternalEventsLayer) {
+    filteredExternalEvents = []
+    const externalEventsByType = groupBy(externalEvents, 'event_type');
+    externalEventLayers.forEach(layer => {
+      if (layer.filter && layer.filter.externalEvent !== undefined) {
+        const event_types = layer.filter.externalEvent.event_types || [];
+        event_types.forEach(type => {
+          const matchingEventTypes = externalEventsByType[type];
+          if (matchingEventTypes) {
+            filteredExternalEvents = filteredExternalEvents.concat(matchingEventTypes.filter((val, ind, arr) => arr.indexOf(val) == ind)); // uniqueness
+          }
+        })
+      }
+    });
+  }
+
 
   $: if (
     hasActivityLayer &&
@@ -881,7 +899,7 @@
         {/if}
         {#if hasExternalEventsLayer}
           <LayerExternalSources
-            {externalEvents}
+            externalEvents={filteredExternalEvents}
             {idToColorMaps}
             {showDirectives}
             {contextmenu}
