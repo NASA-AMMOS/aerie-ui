@@ -12,6 +12,7 @@
   import type { ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { ConstraintResultWithName } from '../../types/constraint';
+  import type { ExternalEventDB } from '../../types/external-event';
   import type { Plan } from '../../types/plan';
   import type {
     ResourceType,
@@ -45,6 +46,7 @@
   import TimelineXAxis from './XAxis.svelte';
 
   export let activityDirectivesMap: ActivityDirectivesMap = {};
+  export let externalEventsDB: ExternalEventDB[] = [];
   export let constraintResults: ConstraintResultWithName[] = [];
   export let hasUpdateDirectivePermission: boolean = false;
   export let hasUpdateSimulationPermission: boolean = false;
@@ -117,7 +119,36 @@
     trailing: true,
   });
 
+  function convertUTCtoMs(date: string): number {
+    var d = new Date(date)
+    return d.getTime();
+  }
+
+  // handles durations of format: "89:44:09.000000", or "89:44:09" with no decimal point, or n <= 6 zeroes if point included
+  function convertDurationToMs(duration: string): number {
+    var aerieDurationRegex = /^([0-9]*):([0-9]{2}):([0-9]{2})(?:\.([0-9]{6}))?$/;
+    var matches = duration.match(aerieDurationRegex);
+
+    // "89:44:09.000000" -> [ "89:44:09.000000", "189", "44", "09", "000000" ]
+    // "123:44:09"       -> [ "123:44:09",       "123", "44", "09", undefined]
+    if (matches != null && matches.length == 5) {
+      return +matches[1]*1000*60*60 + +matches[2]*1000*60 + +matches[3]*1000 + (matches[4] == undefined ? 0 : +matches[4]); // https://stackoverflow.com/questions/14667713/how-to-convert-a-string-to-number-in-typescript 
+    }
+    else {
+      console.log("Duration parsing failed...")
+      return 30000;
+    }
+  }
+
+
   $: activityDirectives = Object.values(activityDirectivesMap);
+  $: externalEvents = externalEventsDB.map(eDB => {
+    return {
+      ...eDB,
+      startMs: convertUTCtoMs(eDB.start_time),
+      durationMs: convertDurationToMs(eDB.duration)
+    }
+  });
 
   $: rows = timeline?.rows || [];
   $: drawWidth = clientWidth > 0 ? clientWidth - (timeline?.marginLeft ?? 0) - (timeline?.marginRight ?? 0) : 0;
@@ -455,6 +486,7 @@
           <TimelineRow
             {activityDirectives}
             {activityDirectivesMap}
+            {externalEvents}
             activityTreeExpansionMap={activityTreeExpansionMapByRow[row.id]}
             on:activityTreeExpansionChange={e => {
               activityTreeExpansionMapByRow = { ...activityTreeExpansionMapByRow, [row.id]: e.detail };
