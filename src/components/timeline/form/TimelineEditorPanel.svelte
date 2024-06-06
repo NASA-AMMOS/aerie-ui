@@ -45,13 +45,14 @@
     ActivityLayer,
     ActivityOptions,
     Axis,
+    ExternalEventLayer,
     HorizontalGuide,
     Layer,
     LineLayer,
     Row,
     Timeline,
     VerticalGuide,
-    XRangeLayer,
+    XRangeLayer
   } from '../../../types/timeline';
   import type { ViewGridSection } from '../../../types/view';
   import effects from '../../../utilities/effects';
@@ -60,11 +61,13 @@
   import {
     createHorizontalGuide,
     createTimelineActivityLayer,
+    createTimelineExternalEventLayer,
     createTimelineLineLayer,
     createTimelineXRangeLayer,
     createVerticalGuide,
     createYAxis,
     isActivityLayer,
+    isExternalEventLayer,
     isLineLayer,
     isXRangeLayer,
   } from '../../../utilities/timeline';
@@ -319,6 +322,19 @@
             },
           };
           return newLayer;
+        } 
+        else if (isExternalEventLayer(currentLayer)) {
+          console.log(values)
+          const newLayer: Layer = {
+            ...currentLayer,
+            filter: {
+              ...currentLayer.filter,
+              externalEvent: {
+                event_types: values,
+              },
+            },
+          };
+          return newLayer;
         } else if (currentLayer.chartType === 'line' || currentLayer.chartType === 'x-range') {
           const newLayer: Layer = {
             ...currentLayer,
@@ -357,9 +373,12 @@
 
     const newLayers = layers.map(l => {
       if (layer.id === l.id) {
-        let newLayer: ActivityLayer | LineLayer | XRangeLayer | undefined;
+        let newLayer: ActivityLayer | LineLayer | XRangeLayer | ExternalEventLayer | undefined;
         if (value === 'activity') {
           newLayer = { ...createTimelineActivityLayer(timelines), id: l.id };
+        }
+        else if (value === 'external-event') {
+          newLayer = { ...createTimelineExternalEventLayer(timelines), id: l.id };
         } else if (value === 'line' || value === 'x-range') {
           if (value === 'line') {
             newLayer = { ...createTimelineLineLayer(timelines, yAxes), id: l.id };
@@ -393,6 +412,8 @@
       if (layer.id === l.id) {
         if (isActivityLayer(l)) {
           (l as ActivityLayer).activityColor = value as string;
+        } else if (isExternalEventLayer(l)) {
+          (l as ExternalEventLayer).externalEventColor = value as string;
         } else if (l.chartType === 'line') {
           (l as LineLayer).lineColor = value as string;
         }
@@ -456,6 +477,8 @@
   function getColorForLayer(layer: Layer) {
     if (isActivityLayer(layer)) {
       return layer.activityColor;
+    } else if (isExternalEventLayer(layer)) {
+      return layer.externalEventColor;
     } else if (isLineLayer(layer)) {
       return layer.lineColor;
     } else if (isXRangeLayer(layer)) {
@@ -1190,6 +1213,7 @@
                       <option value="activity">Activity</option>
                       <option value="line">Line</option>
                       <option value="x-range">X-Range</option>
+                      <option value="external-event">External Event</option>
                     </select>
                     <TimelineEditorLayerSettings
                       {layer}
