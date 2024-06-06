@@ -55,12 +55,7 @@
   export let timelineInteractionMode: TimelineInteractionMode;
   export let viewTimeRange: TimeRange = { end: 0, start: 0 };
   export let xScaleView: ScaleTime<number, number> | null = null;
-
-  function convertUTCtoMs(date: string): number {
-    var d = new Date(date)
-    return d.getTime() + (d.getTimezoneOffset() * 60000);
-  }
-
+  
   const dispatch = createEventDispatcher<{
     contextMenu: MouseOver;
     dblClick: MouseOver;
@@ -71,8 +66,6 @@
       newHeight: number;
     };
   }>();  
-
-  $: console.log(externalEvents)
 
   let externalEventHeight = 16;
   let canvas: HTMLCanvasElement;
@@ -172,7 +165,6 @@
     }
   }
 
-  // TODO: KEEP ME FOR THE SAKE OF TOOLTIPS
   function onMousemove(e: MouseEvent | undefined): void {
     if (e) {
       const { offsetX, offsetY } = e;
@@ -180,7 +172,7 @@
       const hits = getExternalEventsByOffset(offsetX, offsetY);
       externalEvents = hits.externalEvents;
 
-      // dispatch('mouseOver', { e, externalEvents });
+      dispatch('mouseOver', { e, externalEvents });
     }
   }
 
@@ -225,7 +217,6 @@
     }
   }
 
-  // TODO: Revisit this!
   function getLabelForExternalEvent(externalEvent: ExternalEvent): string {
     // Display an arrow to the left of a event label if the span is sticky
     // The label should be sticky if the start of the event is clipped and the event is still in view

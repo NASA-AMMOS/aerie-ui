@@ -154,6 +154,7 @@
   let mouseout: MouseEvent;
   let mouseup: MouseEvent;
   let mouseOverActivityDirectives: ActivityDirective[] = [];
+  let mouseOverExternalEvents: ExternalEvent[] = [];
   let mouseOverConstraintResults: ConstraintResultWithName[] = []; // For this row.
   let mouseOverPointsByLayer: Record<number, Point[]> = {};
   let mouseOverSpans: Span[] = [];
@@ -666,6 +667,7 @@
     const { detail } = event;
     const { layerId } = detail;
     mouseOverActivityDirectives = detail?.activityDirectives ?? mouseOverActivityDirectives;
+    mouseOverExternalEvents = detail?.externalEvents ?? mouseOverExternalEvents;
     mouseOverConstraintResults = detail?.constraintResults ?? mouseOverConstraintResults;
     mouseOverSpans = detail?.spans ?? mouseOverSpans;
     if (typeof layerId === 'number') {
@@ -676,6 +678,7 @@
     dispatch('mouseOver', {
       ...detail,
       activityDirectives: mouseOverActivityDirectives,
+      externalEvents: mouseOverExternalEvents,
       constraintResults: mouseOverConstraintResults,
       gapsByLayer: mouseOverGapsByLayer,
       pointsByLayer: mouseOverPointsByLayer,
