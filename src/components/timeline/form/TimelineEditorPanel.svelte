@@ -26,6 +26,7 @@
     ViewLineLayerColorPresets,
   } from '../../../constants/view';
   import { ViewConstants } from '../../../enums/view';
+  import { externalEventTypes } from '../../../stores/external-event';
   import { activityTypes, maxTimeRange, viewTimeRange } from '../../../stores/plan';
   import { plugins } from '../../../stores/plugins';
   import { externalResourceNames, resourceTypes, yAxesWithScaleDomainsCache } from '../../../stores/simulation';
@@ -112,6 +113,7 @@
   $: yAxes = selectedRow?.yAxes || [];
   $: layers = selectedRow?.layers || [];
   $: rowHasActivityLayer = !!selectedRow?.layers.find(isActivityLayer) || false;
+  $: rowHasExternalEventLayer = $selectedRow?.layers.find(isExternalEventLayer) || false;
   $: rowHasNonActivityChartLayer =
     !!selectedRow?.layers.find(layer => isLineLayer(layer) || isXRangeLayer(layer)) || false;
   $: if (rowHasActivityLayer && selectedRow && !selectedRow.activityOptions) {
@@ -322,7 +324,7 @@
             },
           };
           return newLayer;
-        } 
+        }
         else if (isExternalEventLayer(currentLayer)) {
           console.log(values)
           const newLayer: Layer = {
@@ -491,6 +493,11 @@
       const activityLayer = layer;
       const activityTypes = activityLayer.filter?.activity?.types ?? [];
       return [...activityTypes];
+    } else if (isExternalEventLayer(layer)) {
+      const externalEventLayer = layer;
+      const externalEventTypes = externalEventLayer.filter?.externalEvent?.event_types ?? [];
+      console.log(externalEventLayer, externalEventTypes)
+      return [...externalEventTypes];
     } else if (isLineLayer(layer) || isXRangeLayer(layer)) {
       const resourceLayer = layer;
       const resourceNames = resourceLayer.filter?.resource?.names ?? [];
@@ -499,9 +506,11 @@
     return [];
   }
 
-  function getFilterOptionsForLayer(layer: Layer, activityTypes: ActivityType[], externalResourceNames: string[]) {
+  function getFilterOptionsForLayer(layer: Layer, activityTypes: ActivityType[], externalResourceNames: string[], externalEventTypes: string[]) {
     if (isActivityLayer(layer)) {
       return activityTypes.map(t => t.name);
+    } else if (isExternalEventLayer(layer)) {
+      return externalEventTypes;
     } else if (isLineLayer(layer) || isXRangeLayer(layer)) {
       return $resourceTypes
         .map(t => t.name)
@@ -1197,7 +1206,7 @@
                   <CssGrid columns="1fr 0.75fr 24px 24px 24px" gap="8px" class="editor-section-grid">
                     <TimelineEditorLayerFilter
                       values={getFilterValuesForLayer(layer)}
-                      options={getFilterOptionsForLayer(layer, $activityTypes, $externalResourceNames)}
+                      options={getFilterOptionsForLayer(layer, $activityTypes, $externalResourceNames, $externalEventTypes)}
                       {layer}
                       on:change={event => {
                         const { values } = event.detail;

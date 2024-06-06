@@ -4,7 +4,7 @@
   import SearchIcon from '@nasa-jpl/stellar/icons/search.svg?component';
   import { createEventDispatcher } from 'svelte';
   import type { Layer } from '../../../types/timeline';
-  import { isActivityLayer, isLineLayer, isXRangeLayer } from '../../../utilities/timeline';
+  import { isActivityLayer, isExternalEventLayer, isLineLayer, isXRangeLayer } from '../../../utilities/timeline';
   import Input from '../../form/Input.svelte';
   import Menu from '../../menus/Menu.svelte';
   import MenuHeader from '../../menus/MenuHeader.svelte';
@@ -28,6 +28,8 @@
     selectedValuesMap = listToMap(values);
     if (isActivityLayer(layer)) {
       menuTitle = 'Activity Dictionary';
+    } else if (isExternalEventLayer(layer)) {
+      menuTitle = 'External Event Types';
     } else if (isLineLayer(layer)) {
       menuTitle = 'Resource Types';
     } else if (isXRangeLayer(layer)) {
@@ -88,7 +90,7 @@
       autocomplete="off"
       class="st-input w-100"
       name="filter"
-      placeholder={isActivityLayer(layer) ? 'Search activities' : 'Search resources'}
+      placeholder={isActivityLayer(layer) ? 'Search activities' : isExternalEventLayer(layer) ? 'Search external event types' : 'Search resources'}
     />
     <div class="filter-search-icon" slot="left"><SearchIcon /></div>
   </Input>
@@ -116,9 +118,9 @@
         <button class="st-button secondary list-button" on:click={selectFilteredValues}>
           Select {filteredValues.length}
           {#if filteredValues.length === 1}
-            {isActivityLayer(layer) ? 'activity' : 'resource'}
+            {isActivityLayer(layer) ? 'activity' : isExternalEventLayer(layer) ? 'external event type' : 'resource'}
           {:else}
-            {isActivityLayer(layer) ? 'activities' : 'resources'}
+            {isActivityLayer(layer) ? 'activities' : isExternalEventLayer(layer) ? 'external event types' : 'resources'}
           {/if}
         </button>
         <button class="st-button secondary list-button" on:click={unselectFilteredValues}>Unselect all</button>
