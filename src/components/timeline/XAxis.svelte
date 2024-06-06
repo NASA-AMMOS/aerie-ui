@@ -5,7 +5,7 @@
   import { select, type Selection } from 'd3-selection';
   import { zoom as d3Zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior, type ZoomTransform } from 'd3-zoom';
   import { createEventDispatcher } from 'svelte';
-  import { adaptations } from '../../stores/adaptations';
+  import { plugins } from '../../stores/plugins';
   import type { ConstraintResultWithName } from '../../types/constraint';
   import type { TimeRange, XAxisTick } from '../../types/timeline';
   import { getTimeZoneName } from '../../utilities/time';
@@ -32,8 +32,8 @@
   let svg: SVGElement;
   let zoom: ZoomBehavior<SVGElement, unknown>;
 
-  $: primaryTimeLabel = $adaptations.time?.primary?.label ?? 'UTC';
-  $: secondaryTimeLabel = $adaptations.time?.secondary?.label ?? getTimeZoneName();
+  $: primaryTimeLabel = $plugins.time?.primary?.label ?? 'UTC';
+  $: secondaryTimeLabel = $plugins.time?.secondary?.label ?? getTimeZoneName();
   $: svgSelection = select(svg) as Selection<SVGElement, unknown, any, any>;
 
   /* TODO could this be a custom svelte use action? */

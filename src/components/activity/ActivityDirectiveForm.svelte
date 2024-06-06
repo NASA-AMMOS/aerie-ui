@@ -11,6 +11,7 @@
   import { activityErrorRollupsMap, activityValidationErrors } from '../../stores/errors';
   import { field } from '../../stores/form';
   import { plan, planReadOnly } from '../../stores/plan';
+  import { plugins } from '../../stores/plugins';
   import type {
     ActivityDirective,
     ActivityDirectiveId,
@@ -37,7 +38,12 @@
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import { pluralize } from '../../utilities/text';
-  import { getDoyTime, getDoyTimeFromInterval, getIntervalFromDoyRange } from '../../utilities/time';
+  import {
+    getDoyTime,
+    getDoyTimeFromInterval,
+    getIntervalFromDoyRange,
+    getUnixEpochTimeFromInterval,
+  } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import { required, timestamp } from '../../utilities/validators';
   import Collapse from '../Collapse.svelte';
@@ -83,11 +89,8 @@
   let numOfUserChanges: number = 0;
   let parameterErrorMap: Record<string, string[]> = {};
   let parametersWithErrorsCount: number = 0;
-  let startTimeDoy: string = getDoyTimeFromInterval(
-    planStartTimeYmd,
-    revision ? revision.start_offset : activityDirective.start_offset,
-  );
-  let startTimeDoyField: FieldStore<string> = field<string>(startTimeDoy, [required, timestamp]);
+  let startTime: string;
+  let startTimeField: FieldStore<string>;
 
   $: if (user !== null && $plan !== null) {
     hasUpdatePermission =
@@ -99,6 +102,25 @@
   $: highlightKeysMap = keyByBoolean(highlightKeys);
   $: activityType =
     (activityTypes ?? []).find(({ name: activityTypeName }) => activityDirective?.type === activityTypeName) ?? null;
+  $: {
+    if ($plugins.time?.primary?.format && $plugins.time?.primary?.parse) {
+      const planStartTimeMs = getUnixEpochTimeFromInterval(
+        planStartTimeYmd,
+        revision ? revision.start_offset : activityDirective.start_offset,
+      );
+      startTime = $plugins.time?.primary?.format(new Date(planStartTimeMs));
+      console.log('planStartTime :>> ', new Date(planStartTimeMs), startTime);
+    } else {
+      startTime = getDoyTimeFromInterval(
+        planStartTimeYmd,
+        revision ? revision.start_offset : activityDirective.start_offset,
+      );
+    }
+  }
+
+  $: startTimeFieldValidators = $plugins.time?.primary?.validate || timestamp;
+  $: startTimeField = field<string>(startTime, [required, startTimeFieldValidators]);
+  $: activityNameField = field<string>(activityDirective.name);
   $: startTimeDoy = getDoyTimeFromInterval(
     planStartTimeYmd,
     revision ? revision.start_offset : activityDirective.start_offset,
@@ -369,13 +391,23 @@
   }
 
   function onUpdateStartTime() {
-    if ($startTimeDoyField.valid && startTimeDoy !== $startTimeDoyField.value) {
+    if ($startTimeField.valid /* && startTime !== $startTimeField.value */) {
+      console.log('startTimeField.value :>> ', $startTimeField.value);
       const { id } = activityDirective;
       const planStartTimeDoy = getDoyTime(new Date(planStartTimeYmd));
-      const start_offset = getIntervalFromDoyRange(planStartTimeDoy, $startTimeDoyField.value);
+      const startTimeDoy = $plugins.time?.primary?.parse
+        ? getDoyTime($plugins.time?.primary?.parse($startTimeField.value))
+        : $startTimeField.value;
+      const start_offset = getIntervalFromDoyRange(planStartTimeDoy, startTimeDoy);
       if ($plan) {
         effects.updateActivityDirective($plan, id, { start_offset }, activityType, user);
       }
+    }
+  }
+
+  function onStartTimeKeyUp(event: KeyboardEvent) {
+    if (event.key !== 'Enter') {
+      startTimeField.validateAndSet($startTimeField.value);
     }
   }
 
@@ -555,24 +587,41 @@
         </Highlight>
 
         <Highlight highlight={highlightKeysMap.start_offset}>
-          <DatePickerField
-            disabled={!editable || activityDirective.anchor_id !== null}
-            field={startTimeDoyField}
-            label="Start Time (UTC) - YYYY-DDDThh:mm:ss"
-            layout="inline"
-            name="start-time"
-            use={[
-              [
-                permissionHandler,
-                {
-                  hasPermission: hasUpdatePermission,
-                  permissionError: updatePermissionError,
-                },
-              ],
-            ]}
-            on:change={onUpdateStartTime}
-            on:keydown={onUpdateStartTime}
-          />
+          {#if $plugins.time?.primary?.parse}
+            <div class="start-time-field">
+              <Field field={startTimeField} on:change={onUpdateStartTime}>
+                <Input layout="inline">
+                  <label use:tooltip={{ content: 'Start Time', placement: 'top' }} for="start-time"> Start Time </label>
+                  <input
+                    autocomplete="off"
+                    class="st-input w-100"
+                    name="start-time"
+                    value={activityDirective.type}
+                    on:keyup={onStartTimeKeyUp}
+                  />
+                </Input>
+              </Field>
+            </div>
+          {:else}
+            <DatePickerField
+              disabled={!editable || activityDirective.anchor_id !== null}
+              field={startTimeField}
+              label="Start Time (UTC) - YYYY-DDDThh:mm:ss"
+              layout="inline"
+              name="start-time"
+              use={[
+                [
+                  permissionHandler,
+                  {
+                    hasPermission: hasUpdatePermission,
+                    permissionError: updatePermissionError,
+                  },
+                ],
+              ]}
+              on:change={onUpdateStartTime}
+              on:keydown={onUpdateStartTime}
+            />
+          {/if}
         </Highlight>
 
         <ActivityAnchorForm
@@ -877,5 +926,9 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
+  }
+
+  .start-time-field :global(fieldset) {
+    padding: 0;
   }
 </style>

@@ -1,34 +1,31 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { merge } from 'lodash-es';
   import { onMount } from 'svelte';
   import Nav from '../components/app/Nav.svelte';
-  import { adaptations } from '../stores/adaptations';
-  import { loadAdaptationCode } from '../utilities/adaptations';
+  import { plugins } from '../stores/plugins';
   import { modalBodyClickListener, modalBodyKeyListener } from '../utilities/modal';
+  import { loadPluginCode } from '../utilities/plugins';
+  import type { LayoutData } from './$types';
 
-  let adaptationsLoaded = false;
+  export let data: LayoutData;
+  let pluginsLoaded = data.timePluginPath ? false : true;
 
   onMount(() => {
-    loadAdaptations();
+    loadPlugins();
   });
 
-  async function loadAdaptations() {
-    const adaptationPaths = ['../time-adaptation.js', '../sequence-adaptation.js'];
-    let loadedAdaptations = {};
-    (await Promise.all(adaptationPaths.map(loadAdaptationCode))).map(result => {
-      loadedAdaptations = merge(result, loadedAdaptations);
-    });
-    $adaptations = loadedAdaptations;
-    adaptationsLoaded = true;
-    console.log('adaptations :>> ', $adaptations);
+  async function loadPlugins() {
+    if (data.timePluginPath) {
+      $plugins = await loadPluginCode(data.timePluginPath);
+    }
+    pluginsLoaded = true;
   }
 </script>
 
 <svelte:body on:click={modalBodyClickListener} on:keydown={modalBodyKeyListener} />
 
-{#if adaptationsLoaded}
+{#if pluginsLoaded}
   <slot />
 {:else}
   <div style="display: flex; flex-direction: column; height: 100%">
@@ -37,7 +34,7 @@
       class="st-typography-header"
       style="align-items: center;display: flex; flex: 1; justify-content: center; width: 100%"
     >
-      Loading adaptations...
+      Loading plugins...
     </div>
   </div>
 {/if}

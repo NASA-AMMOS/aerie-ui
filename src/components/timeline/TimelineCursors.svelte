@@ -3,7 +3,7 @@
 
   import type { ScaleTime } from 'd3-scale';
   import { createEventDispatcher } from 'svelte';
-  import { adaptations } from '../../stores/adaptations';
+  import { plugins } from '../../stores/plugins';
   import { view } from '../../stores/views';
   import type { Label, MouseOver, Timeline, VerticalGuide } from '../../types/timeline';
   import { getDoyTime, getUnixEpochTime } from '../../utilities/time';
@@ -155,8 +155,8 @@
           cursorX = offsetX;
         }
         date = new Date(unixEpochTime);
-        cursorTimeLabel = ($adaptations.time?.primary?.format || getDoyTime)(date);
-        cursorTimeLabel += ' ' + $adaptations.time?.primary?.label || 'UTC';
+        cursorTimeLabel = ($plugins.time?.primary?.format || getDoyTime)(date);
+        cursorTimeLabel += ' ' + ($plugins.time?.primary?.label || 'UTC');
       }
       cursorMaxWidth = drawWidth - cursorX;
       cursorX = cursorX + marginLeft;
