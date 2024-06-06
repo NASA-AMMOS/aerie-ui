@@ -85,9 +85,9 @@
   function onMouseDown(event: CustomEvent<MouseDown>) {
     const { detail } = event;
     const { activityDirectives, spans } = detail;
-    if (spans.length) {
+    if (spans != null && spans.length) {
       selectActivity(null, spans[0].span_id);
-    } else if (activityDirectives.length) {
+    } else if (activityDirectives != null && activityDirectives.length) {
       selectActivity(activityDirectives[0].id, null);
     } else {
       selectActivity(null, null);
