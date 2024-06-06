@@ -1,6 +1,7 @@
 import type { Selection } from 'd3-selection';
-import type { ActivityDirective, ActivityType } from './activity';
+import type { ActivityDirective } from './activity';
 import type { ConstraintResultWithName } from './constraint';
+import type { ExternalEvent } from './external-event';
 import type { ResourceType, Span } from './simulation';
 
 export type ActivityTree = ActivityTreeNode[];
@@ -49,6 +50,19 @@ export type BoundingBox = {
   minX: number;
 };
 
+export type ExternalEventItem = { externalEvent?: ExternalEvent };
+
+export type ExternalEventDrawItem = ExternalEventItem & { startX: number };
+
+export interface ExternalEventLayer extends Layer {
+  externalEventColor: string;
+  externalEventHeight: number; // @deprecated TODO how should we deprecate view properties?
+}
+
+export type ExternalEventLayerFilter = {
+  event_types: string[];
+};
+
 export type PointBounds = {
   maxXCanvas: number;
   x: number;
@@ -80,7 +94,7 @@ export type Label = {
   text: string;
 };
 
-export type ChartType = 'activity' | 'line' | 'x-range';
+export type ChartType = 'activity' | 'line' | 'x-range' | 'external-event';
 
 export interface Layer {
   chartType: ChartType;
@@ -88,6 +102,7 @@ export interface Layer {
     // TODO refactor in next PR to a unified filter
     activity?: ActivityLayerFilter;
     resource?: ResourceLayerFilter;
+    externalEvent?: ExternalEventLayerFilter;
   };
   id: number;
   name: string;
@@ -108,12 +123,13 @@ export interface LinePoint extends Point {
 }
 
 export type MouseDown = {
-  activityDirectives: ActivityDirective[];
+  activityDirectives?: ActivityDirective[];
   e: MouseEvent;
   layerId?: number;
   rowId?: number;
-  spans: Span[];
+  spans?: Span[];
   timelineId?: number;
+  externalEvents?: ExternalEvent[];
 };
 
 export type MouseOver = {
@@ -128,19 +144,22 @@ export type MouseOver = {
   selectedActivityDirectiveId?: number;
   selectedSpanId?: number;
   spans?: Span[];
+  externalEvents?: ExternalEvent[];
+  selectedExternalEventId?: number;
 };
 
 export type RowMouseOverEvent = Omit<
   MouseOver,
-  'activityDirectivesByLayer' | 'gapsByLayer' | 'pointsByLayer' | 'spansByLayer'
+  'activityDirectivesByLayer' | 'externalEventsByLayer' | 'gapsByLayer' | 'pointsByLayer' | 'spansByLayer'
 > & {
   activityDirectives?: ActivityDirective[];
   gaps?: Point[];
   points?: Point[];
   spans?: Span[];
+  externalEvents?: ExternalEvent[];
 };
 
-export type MouseOverOrigin = 'row-header' | 'layer-line' | 'layer-activity' | 'layer-x-range';
+export type MouseOverOrigin = 'row-header' | 'layer-line' | 'layer-activity' | 'layer-x-range' | 'layer-external-event';
 
 export interface Point {
   id: number;

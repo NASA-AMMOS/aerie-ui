@@ -21,6 +21,7 @@ import {
   ViewXRangeLayerSchemePresets,
 } from '../constants/view';
 import type { ActivityDirective } from '../types/activity';
+import type { ExternalEvent } from '../types/external-event';
 import type { Resource, ResourceType, ResourceValue, Span, SpanUtilityMaps, SpansMap } from '../types/simulation';
 import type {
   ActivityLayer,
@@ -29,6 +30,7 @@ import type {
   ActivityTreeExpansionMap,
   ActivityTreeNode,
   Axis,
+  ExternalEventLayer,
   HorizontalGuide,
   Layer,
   LineLayer,
@@ -187,6 +189,10 @@ export function getYScale(domain: (number | null)[], height: number): ScaleLinea
 
 export function isActivityLayer(layer: Layer): layer is ActivityLayer {
   return layer.chartType === 'activity';
+}
+
+export function isExternalEventLayer(layer: Layer): layer is ExternalEventLayer {
+  return layer.chartType === 'external-event';
 }
 
 export function isXRangeLayer(layer: Layer): layer is XRangeLayer {
@@ -555,6 +561,30 @@ export function createTimelineActivityLayer(timelines: Timeline[], args: Partial
   };
 }
 
+/**
+ * Returns a new external event layer
+ */
+export function createTimelineExternalEventLayer(timelines: Timeline[], args: Partial<ExternalEventLayer> = {}): ExternalEventLayer {
+  const id = getNextLayerID(timelines);
+
+  return {
+    externalEventColor: '#fcdd8f',
+    externalEventHeight: 16,
+    chartType: 'external-event',
+    filter: {
+      activity: {
+        types: [],
+      },
+    },
+    id,
+    name: '',
+    yAxisId: null,
+    ...args,
+  };
+}
+
+
+
 export function createTimelineResourceLayer(timelines: Timeline[], resourceType: ResourceType) {
   const { name, schema } = resourceType;
   const { type: schemaType } = schema;
@@ -903,6 +933,18 @@ export function directiveInView(directive: ActivityDirective, viewTimeRange: Tim
 export function spanInView(span: Span, viewTimeRange: TimeRange) {
   const spanInBounds = span.startMs >= viewTimeRange.start && span.startMs < viewTimeRange.end;
   return spanInBounds || (span.startMs < viewTimeRange.start && span.startMs + span.durationMs >= viewTimeRange.start);
+}
+
+/**
+ * Returns true if the external event falls within or encompasses the viewTimeRange
+ */
+export function externalEventInView(externalEvent: ExternalEvent, viewTimeRange: TimeRange) {
+  // var startMs = convertUTCtoMs(externalEvent.start_time);
+  // var durationMs = convertDurationToMs(externalEvent.duration);
+  // console.log(viewTimeRange.start, externalEvent.startMs, viewTimeRange.end)
+  const externalEventInBounds = externalEvent.startMs >= viewTimeRange.start && externalEvent.startMs < viewTimeRange.end;
+  // console.log(externalEventInBounds)
+  return externalEventInBounds || (externalEvent.startMs < viewTimeRange.start && externalEvent.startMs + externalEvent.durationMs >= viewTimeRange.start);
 }
 
 /**
