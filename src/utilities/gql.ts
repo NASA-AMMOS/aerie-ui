@@ -76,6 +76,7 @@ export enum Queries {
   EXPANSION_RUNS = 'expansion_run',
   EXPANSION_SETS = 'expansion_set',
   EXTENSIONS = 'extensions',
+  EXTERNAL_EVENT = 'external_event',
   EXTERNAL_SOURCE = 'external_source_by_pk',
   EXTERNAL_SOURCES = 'external_source',
   PLAN_EXTERNAL_SOURCE = 'plan_external_source',
@@ -2281,6 +2282,20 @@ const gql = {
         id
         external_source_id
         plan_id
+      }
+    }
+  `,
+
+  SUB_PLAN_EXTERNAL_EVENTS: `#graphql
+    subscription SubPlanExternalEvents($source_ids: [Int!]!) {
+      events: ${Queries.EXTERNAL_EVENT}(where: {source_id: {_in: $source_ids}}) {
+        properties
+        event_type
+        id
+        key
+        duration
+        start_time
+        source_id
       }
     }
   `,
