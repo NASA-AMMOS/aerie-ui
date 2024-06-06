@@ -1,7 +1,9 @@
 import type { ModelLog, ModelSlim, ModelStatus, ModelStatusRollup } from '../types/model';
 
 export function getModelStatusRollup(
-  model?: Pick<ModelSlim, 'refresh_activity_type_logs' | 'refresh_model_parameter_logs' | 'refresh_resource_type_logs'>,
+  model?: Partial<
+    Pick<ModelSlim, 'refresh_activity_type_logs' | 'refresh_model_parameter_logs' | 'refresh_resource_type_logs'>
+  >,
 ): ModelStatusRollup {
   let activityLog: ModelLog | null = null;
   let activityLogStatus: ModelStatus = 'none';
@@ -13,42 +15,48 @@ export function getModelStatusRollup(
 
   if (model) {
     const {
-      refresh_activity_type_logs: activityLogs = [],
-      refresh_model_parameter_logs: parameterLogs = [],
-      refresh_resource_type_logs: resourceLogs = [],
+      refresh_activity_type_logs: activityLogs,
+      refresh_model_parameter_logs: parameterLogs,
+      refresh_resource_type_logs: resourceLogs,
     } = model;
 
-    activityLog = activityLogs[0] ?? null;
-    parameterLog = parameterLogs[0] ?? null;
-    resourceLog = resourceLogs[0] ?? null;
-    if (activityLog) {
-      if (activityLog.success) {
-        activityLogStatus = 'complete';
+    if (activityLogs) {
+      activityLog = activityLogs[0] ?? null;
+      if (activityLog) {
+        if (activityLog.success) {
+          activityLogStatus = 'complete';
+        } else {
+          activityLogStatus = 'error';
+        }
       } else {
-        activityLogStatus = 'error';
+        activityLogStatus = 'extracting';
       }
-    } else {
-      activityLogStatus = 'extracting';
     }
 
-    if (parameterLog) {
-      if (parameterLog.success) {
-        parameterLogStatus = 'complete';
+    if (parameterLogs) {
+      parameterLog = parameterLogs[0] ?? null;
+      if (parameterLog) {
+        if (parameterLog.success) {
+          parameterLogStatus = 'complete';
+        } else {
+          parameterLogStatus = 'error';
+        }
       } else {
-        parameterLogStatus = 'error';
+        parameterLogStatus = 'extracting';
       }
-    } else {
-      parameterLogStatus = 'extracting';
     }
 
-    if (resourceLog) {
-      if (resourceLog.success) {
-        resourceLogStatus = 'complete';
+    if (resourceLogs) {
+      resourceLog = resourceLogs[0] ?? null;
+      if (resourceLog) {
+        if (resourceLog.success) {
+          resourceLogStatus = 'complete';
+        } else {
+          resourceLogStatus = 'error';
+        }
       } else {
-        resourceLogStatus = 'error';
+        resourceLogStatus = 'extracting';
       }
-    } else {
-      resourceLogStatus = 'extracting';
     }
 
     if (activityLogStatus === 'error' || parameterLogStatus === 'error' || resourceLogStatus === 'error') {

@@ -2,12 +2,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ModelSlim, ModelStatus, ModelStatusRollup } from '../types/model';
 import { getModelStatusRollup } from './model';
 
-type ModelTest = Pick<
-  ModelSlim,
-  'refresh_activity_type_logs' | 'refresh_model_parameter_logs' | 'refresh_resource_type_logs'
+type ModelTest = Partial<
+  Pick<ModelSlim, 'refresh_activity_type_logs' | 'refresh_model_parameter_logs' | 'refresh_resource_type_logs'>
 >;
 
-type TestTuple = [string, ModelTest, keyof ModelStatusRollup, ModelStatus];
+type TestTuple = [string, ModelTest | undefined, keyof ModelStatusRollup, ModelStatus];
 
 describe('Model util functions', () => {
   afterEach(() => {
@@ -202,13 +201,20 @@ describe('Model util functions', () => {
         'modelStatus',
         'error',
       ],
+      ['a model error', undefined, 'modelStatus', 'none'],
+      [
+        'a activity log none',
+        {
+          refresh_model_parameter_logs: [],
+          refresh_resource_type_logs: [],
+        },
+        'activityLogStatus',
+        'none',
+      ],
     ];
 
-    it.each<TestTuple>(testCases)(
-      'should return %s status',
-      (_message: string, model: ModelTest, accessor: keyof ModelStatusRollup, result: ModelStatus) => {
-        expect(getModelStatusRollup(model)[accessor]).toEqual(result);
-      },
-    );
+    it.each<TestTuple>(testCases)('should return %s status', (_message, model, accessor, result) => {
+      expect(getModelStatusRollup(model)[accessor]).toEqual(result);
+    });
   });
 });

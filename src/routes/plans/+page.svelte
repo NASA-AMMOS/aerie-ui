@@ -169,7 +169,6 @@
   let filterText: string = '';
   let nameInputField: HTMLInputElement;
   let planTags: Tag[] = [];
-  let selectedModelId: number | null = null;
   let selectedModel: ModelSlim | undefined;
   let user: User | null = null;
 
@@ -240,7 +239,12 @@
     );
   });
   $: simulationTemplates.setVariables({ modelId: $modelIdField.value });
-  $: selectedModel = $models.find(({ id }) => selectedModelId === id);
+  // Because the list of models is now tied to a subscription, the slot into the field gets updated, but the selected value
+  // needs to get re-set again to trigger an update in the Field.
+  $: if ($models) {
+    modelIdField.validateAndSet();
+  }
+  $: selectedModel = $models.find(({ id }) => $modelIdField.value === id);
 
   onMount(() => {
     const queryModelId = $page.url.searchParams.get(SearchParameters.MODEL_ID);
@@ -365,7 +369,6 @@
               class="st-select w-100"
               data-type="number"
               name="model"
-              bind:value={selectedModelId}
               use:permissionHandler={{
                 hasPermission: canCreate,
                 permissionError,
