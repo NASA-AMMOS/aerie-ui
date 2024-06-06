@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { externalSources, planExternalSourceLinks } from '../../stores/external-source';
+  import { externalSources, selectedPlanExternalSourceIds } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import type { User } from '../../types/app';
   import type { ExternalSourceSlim } from '../../types/external-source';
@@ -23,15 +23,6 @@
       const includesName = source.key.toLocaleLowerCase().includes(filterTextLowerCase);
       return includesName;
     });
-
-  // Track which source ids are enabled, from planExternalSourceLinks, to check membership from our list of externalSources
-  let enabledSourceIds: number[] = [];
-
-  // Perform the relevant mapping every time planExternalSourceLinks updates
-  $: {
-    enabledSourceIds = $planExternalSourceLinks.filter(link => link.plan_id === $plan?.id).map(link => link.external_source_id);
-  }
-
 </script>
 
 <Panel>
@@ -50,7 +41,7 @@
     {#if fileteredExternalEvents.length}
       {#each fileteredExternalEvents as externalSource}
         <ExternalSourcePanelEntry
-          enabled={enabledSourceIds.includes(externalSource.id)}
+          enabled={$selectedPlanExternalSourceIds.includes(externalSource.id)}
           externalSource={externalSource}
           plan_id={$plan?.id}
           user={user}
