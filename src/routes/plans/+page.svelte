@@ -12,6 +12,7 @@
   import DatePickerField from '../../components/form/DatePickerField.svelte';
   import Field from '../../components/form/Field.svelte';
   import Input from '../../components/form/Input.svelte';
+  import ModelStatusRollup from '../../components/model/ModelStatusRollup.svelte';
   import AlertError from '../../components/ui/AlertError.svelte';
   import CssGrid from '../../components/ui/CssGrid.svelte';
   import DataGridActions from '../../components/ui/DataGrid/DataGridActions.svelte';
@@ -22,6 +23,7 @@
   import TagsInput from '../../components/ui/Tags/TagsInput.svelte';
   import { SearchParameters } from '../../enums/searchParameters';
   import { field } from '../../stores/form';
+  import { models } from '../../stores/model';
   import { createPlanError, creatingPlan, resetPlanStores } from '../../stores/plan';
   import { plans } from '../../stores/plans';
   import { simulationTemplates } from '../../stores/simulation';
@@ -165,9 +167,10 @@
   let columnDefs: DataGridColumnDef[] = baseColumnDefs;
   let durationString: string = 'None';
   let filterText: string = '';
-  let models: ModelSlim[];
   let nameInputField: HTMLInputElement;
   let planTags: Tag[] = [];
+  let selectedModelId: number | null = null;
+  let selectedModel: ModelSlim | undefined;
   let user: User | null = null;
 
   let endTimeDoyField = field<string>('', [required, timestamp]);
@@ -182,7 +185,7 @@
   let simTemplateField = field<number | null>(null);
   let startTimeDoyField = field<string>('', [required, timestamp]);
 
-  $: models = data.models;
+  $: models.updateValue(() => data.models);
   $: {
     user = data.user;
     canCreate = user ? featurePermissions.plan.canCreate(user) : false;
@@ -237,6 +240,7 @@
     );
   });
   $: simulationTemplates.setVariables({ modelId: $modelIdField.value });
+  $: selectedModel = $models.find(({ id }) => selectedModelId === id);
 
   onMount(() => {
     const queryModelId = $page.url.searchParams.get(SearchParameters.MODEL_ID);
@@ -361,13 +365,14 @@
               class="st-select w-100"
               data-type="number"
               name="model"
+              bind:value={selectedModelId}
               use:permissionHandler={{
                 hasPermission: canCreate,
                 permissionError,
               }}
             >
               <option value="-1" />
-              {#each models as model}
+              {#each $models as model}
                 <option value={model.id}>
                   {model.name}
                   (Version: {model.version})
@@ -375,6 +380,11 @@
               {/each}
             </select>
           </Field>
+          {#if selectedModel}
+            <div class="model-status">
+              <ModelStatusRollup mode="rollup" model={selectedModel} showCompleteStatus />
+            </div>
+          {/if}
 
           <Field field={nameField}>
             <label for="name" slot="label">Name</label>
@@ -522,3 +532,9 @@
     </Panel>
   </CssGrid>
 </CssGrid>
+
+<style>
+  .model-status {
+    padding: 5px 16px 0;
+  }
+</style>

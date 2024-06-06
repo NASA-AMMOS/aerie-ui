@@ -2,11 +2,11 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import type { ModelLog, ModelSlim } from '../../types/model';
+  import type { ModelLog, ModelSlim, ModelStatus } from '../../types/model';
+  import { getModelStatusRollup } from '../../utilities/model';
   import ModelStatusIcon from './ModelStatusIcon.svelte';
 
   type Mode = 'full' | 'rollup' | 'iconOnly';
-  type ModelStatus = 'extracting' | 'complete' | 'error' | 'none';
 
   export let flow: 'horizontal' | 'vertical' = 'vertical';
   export let mode: Mode = 'full';
@@ -53,67 +53,15 @@
   let resourceLogStatus: ModelStatus = 'none';
   let status: ModelStatus = 'none';
 
-  $: {
-    if (model) {
-      const {
-        refresh_activity_type_logs: activityLogs,
-        refresh_model_parameter_logs: parameterLogs,
-        refresh_resource_type_logs: resourceLogs,
-      } = model;
-
-      activityLog = activityLogs[0] ?? null;
-      parameterLog = parameterLogs[0] ?? null;
-      resourceLog = resourceLogs[0] ?? null;
-
-      if (activityLog) {
-        if (activityLog.success) {
-          activityLogStatus = 'complete';
-        } else {
-          activityLogStatus = 'error';
-        }
-      } else {
-        activityLogStatus = 'extracting';
-      }
-
-      if (parameterLog) {
-        if (parameterLog.success) {
-          parameterLogStatus = 'complete';
-        } else {
-          parameterLogStatus = 'error';
-        }
-      } else {
-        parameterLogStatus = 'extracting';
-      }
-
-      if (resourceLog) {
-        if (resourceLog.success) {
-          resourceLogStatus = 'complete';
-        } else {
-          resourceLogStatus = 'error';
-        }
-      } else {
-        resourceLogStatus = 'extracting';
-      }
-
-      if (activityLogStatus === 'error' || parameterLogStatus === 'error' || resourceLogStatus === 'error') {
-        status = 'error';
-      } else if (
-        activityLogStatus === 'complete' &&
-        parameterLogStatus === 'complete' &&
-        resourceLogStatus === 'complete'
-      ) {
-        status = 'complete';
-      } else if (
-        activityLogStatus === 'extracting' &&
-        parameterLogStatus === 'extracting' &&
-        resourceLogStatus === 'extracting'
-      ) {
-        status = 'extracting';
-      }
-    } else {
-      status = 'none';
-    }
-  }
+  $: ({
+    modelStatus: status,
+    activityLog,
+    activityLogStatus,
+    parameterLog,
+    parameterLogStatus,
+    resourceLog,
+    resourceLogStatus,
+  } = getModelStatusRollup(model));
 
   function selectActivityLog() {
     selectedLog = 'activity';
@@ -211,7 +159,7 @@
   .model-status-logs-container:not(.horizontal) {
     display: grid;
     grid-template-rows: repeat(3, min-content);
-    row-gap: 8px;
+    row-gap: 12px;
   }
 
   .model-status-logs-container.horizontal {

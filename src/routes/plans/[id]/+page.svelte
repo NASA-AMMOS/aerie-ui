@@ -124,6 +124,7 @@
   import { getSearchParameterNumber, removeQueryParam, setQueryParam } from '../../../utilities/generic';
   import { isSaveEvent } from '../../../utilities/keyboardEvents';
   import { closeActiveModal } from '../../../utilities/modal';
+  import { getModelStatusRollup } from '../../../utilities/model';
   import { featurePermissions } from '../../../utilities/permissions';
   import {
     formatSimulationQueuePosition,
@@ -411,19 +412,15 @@
     });
   }
   $: if ($plan) {
-    const {
-      refresh_activity_type_logs: activityLogs,
-      refresh_model_parameter_logs: parameterLogs,
-      refresh_resource_type_logs: resourceLogs,
-    } = $plan.model;
+    const { activityLogStatus, parameterLogStatus, resourceLogStatus } = getModelStatusRollup($plan.model);
     modelErrorCount = 0;
-    if (!activityLogs[0]?.success) {
+    if (activityLogStatus === 'error') {
       modelErrorCount += 1;
     }
-    if (!parameterLogs[0]?.success) {
+    if (parameterLogStatus === 'error') {
       modelErrorCount += 1;
     }
-    if (!resourceLogs[0]?.success) {
+    if (resourceLogStatus === 'error') {
       modelErrorCount += 1;
     }
   }

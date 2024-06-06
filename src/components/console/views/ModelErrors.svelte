@@ -2,6 +2,7 @@
 
 <script lang="ts">
   import type { ModelLog, ModelSlim } from '../../../types/model';
+  import { getModelStatusRollup } from '../../../utilities/model';
   import ModelStatusRollup from '../../model/ModelStatusRollup.svelte';
   import TabPanel from '../../ui/Tabs/TabPanel.svelte';
   import { ConsoleContextKey } from '../Console.svelte';
@@ -15,39 +16,18 @@
   let selectedModelLog: ModelLog | null = null;
 
   $: {
-    if (model) {
-      const {
-        refresh_activity_type_logs: activityLogs,
-        refresh_model_parameter_logs: parameterLogs,
-        refresh_resource_type_logs: resourceLogs,
-      } = model;
+    const { activityLog, activityLogStatus, parameterLog, parameterLogStatus, resourceLog, resourceLogStatus } =
+      getModelStatusRollup(model);
 
-      const activityLog = activityLogs[0] ?? null;
-      const parameterLog = parameterLogs[0] ?? null;
-      const resourceLog = resourceLogs[0] ?? null;
-      let isActivityLogError: boolean = false;
-      let isParameterLogError: boolean = false;
-      let isResourceLogError: boolean = false;
-
-      if (!activityLog?.success) {
-        isActivityLogError = true;
-      }
-      if (!parameterLog?.success) {
-        isParameterLogError = true;
-      }
-      if (!resourceLog?.success) {
-        isResourceLogError = true;
-      }
-      if (isActivityLogError) {
-        selectedLog = 'activity';
-        selectedModelLog = activityLog;
-      } else if (isParameterLogError) {
-        selectedLog = 'parameter';
-        selectedModelLog = parameterLog;
-      } else if (isResourceLogError) {
-        selectedLog = 'resource';
-        selectedModelLog = resourceLog;
-      }
+    if (activityLogStatus === 'error') {
+      selectedLog = 'activity';
+      selectedModelLog = activityLog;
+    } else if (parameterLogStatus === 'error') {
+      selectedLog = 'parameter';
+      selectedModelLog = parameterLog;
+    } else if (resourceLogStatus === 'error') {
+      selectedLog = 'resource';
+      selectedModelLog = resourceLog;
     }
   }
 

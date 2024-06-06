@@ -9,6 +9,17 @@ export type Model = ModelSchema;
 export type ModelInsertInput = Pick<Model, 'description' | 'jar_id' | 'mission' | 'name' | 'version'>;
 export type ModelSetInput = Pick<Model, 'description' | 'mission' | 'name' | 'owner' | 'version'>;
 
+export type ModelStatus = 'extracting' | 'complete' | 'error' | 'none';
+export type ModelStatusRollup = {
+  activityLog: ModelLog | null;
+  activityLogStatus: ModelStatus;
+  modelStatus: ModelStatus;
+  parameterLog: ModelLog | null;
+  parameterLogStatus: ModelStatus;
+  resourceLog: ModelLog | null;
+  resourceLogStatus: ModelStatus;
+};
+
 export type ModelLog = {
   // created_at: string;
   // delivered: boolean;

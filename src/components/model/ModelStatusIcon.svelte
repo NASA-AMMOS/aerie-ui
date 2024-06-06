@@ -29,7 +29,7 @@
 </div>
 
 <style>
-  .model-status-icon-container {
+  .model-status-icon-container > div {
     align-items: center;
     display: flex;
   }
