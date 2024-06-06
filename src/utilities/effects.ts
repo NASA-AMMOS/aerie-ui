@@ -907,7 +907,7 @@ const effects = {
           creatingExternalSource.set(false);
           return created.id;
         } else {
-          throw Error(`Unable to create model "${name}"`);
+          throw Error(`Unable to create external source`);
         }
       }
     } catch (e) {
