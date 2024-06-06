@@ -5,7 +5,6 @@
   import { quadtree as d3Quadtree, type Quadtree } from 'd3-quadtree';
   import { type ScaleTime } from 'd3-scale';
   import { createEventDispatcher, onMount, tick } from 'svelte';
-  import { externalEventsDB } from '../../stores/external-event';
   import type { ActivityDirective, ActivityDirectiveId } from '../../types/activity';
   import type { ExternalEvent, ExternalEventId } from '../../types/external-event';
   import type { SpanId } from '../../types/simulation';
@@ -33,6 +32,7 @@
   type IdToColorMap = Record<number, string>;
   type IdToColorMaps = { directives: IdToColorMap; spans: IdToColorMap };
 
+  export let externalEvents: ExternalEvent[] = [];
   export let idToColorMaps: IdToColorMaps = { directives: {}, spans: {} };
   export let externalEventRowPadding: number = 4;
   export let externalEventSelectedColor: string = '#a9eaff';
@@ -61,32 +61,6 @@
     return d.getTime() + (d.getTimezoneOffset() * 60000);
   }
 
-  function convertDurationToMs(duration: string): number {
-    // shamelessly borrowed from: https://stackoverflow.com/questions/14934089/convert-iso-8601-duration-with-javascript
-    var iso8601DurationRegex = /(-)?P(?:([.,\d]+)Y)?(?:([.,\d]+)M)?(?:([.,\d]+)W)?(?:([.,\d]+)D)?T(?:([.,\d]+)H)?(?:([.,\d]+)M)?(?:([.,\d]+)S)?/;
-
-    var matches = duration.match(iso8601DurationRegex);
-
-    // years: matches[2], months: matches[3], weeks: matches[4], days: matches[5], hours: matches[6], minutes: matches[7], seconds: matches[8]
-    if (matches != null && matches.length == 9) {
-      return +matches[6]*1000*60*60 + +matches[7]*1000*60 + +matches[8]*1000; // https://stackoverflow.com/questions/14667713/how-to-convert-a-string-to-number-in-typescript 
-    }
-    else {
-      return 30000;
-    }
-  }
-
-  // this would be events, derive from DB
-  let externalEvents: ExternalEvent[] = [];
-  $: externalEvents = $externalEventsDB.map(eDB => {
-    return {
-      ...eDB,
-      startMs: convertUTCtoMs(eDB.start_time),
-      durationMs: convertDurationToMs(eDB.duration)
-    }
-  });
-
-
   const dispatch = createEventDispatcher<{
     contextMenu: MouseOver;
     dblClick: MouseOver;
@@ -97,7 +71,6 @@
       newHeight: number;
     };
   }>();  
-
 
   $: console.log(externalEvents)
 
@@ -177,7 +150,6 @@
     return { externalEvents };
   }
 
-  // TODO: USE FOR SELECTION OF EVENTS
   function onMousedown(e: MouseEvent | undefined): void {
     // Do not process events if meta/ctrl is pressed to avoid interaction conflicts with zoom/pan
     if (e && timelineInteractionMode === TimelineInteractionMode.Interact && e.button !== 1) { // KEEP THESE.
@@ -255,8 +227,8 @@
 
   // TODO: Revisit this!
   function getLabelForExternalEvent(externalEvent: ExternalEvent): string {
-    // Display an arrow to the left of a span label if the span is sticky
-    // The label should be sticky if the start of the span is clipped and the span is still in view
+    // Display an arrow to the left of a event label if the span is sticky
+    // The label should be sticky if the start of the event is clipped and the event is still in view
     const sticky = externalEvent.startMs < viewTimeRange.start && externalEvent.startMs + externalEvent.durationMs >= viewTimeRange.start;
     return `${sticky ? '← ' : ''}${externalEvent.key}`;
   }

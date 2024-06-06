@@ -25,6 +25,7 @@
   } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { ConstraintResultWithName } from '../../types/constraint';
+  import type { ExternalEvent } from '../../types/external-event';
   import type { Plan } from '../../types/plan';
   import type {
     Resource,
@@ -85,6 +86,7 @@
   import RowYAxisTicks from './RowYAxisTicks.svelte';
 
   export let activityDirectives: ActivityDirective[] = [];
+  export let externalEvents: ExternalEvent[] = [];
   export let activityDirectivesMap: ActivityDirectivesMap = {};
   export let activityTreeExpansionMap: ActivityTreeExpansionMap | undefined = {};
   export let activityOptions: ActivityOptions | undefined = undefined;
@@ -879,6 +881,7 @@
         {/if}
         {#if hasExternalEventsLayer}
           <LayerExternalSources
+            {externalEvents}
             {idToColorMaps}
             {showDirectives}
             {contextmenu}
