@@ -1,6 +1,7 @@
-import { writable, type Writable } from 'svelte/store';
+import { derived, writable, type Writable } from 'svelte/store';
 import type { ExternalSourceSlim, PlanExternalSource } from '../types/external-source';
 import gql from '../utilities/gql';
+import { planId } from './plan';
 import { gqlSubscribable } from './subscribable';
 
 /* Writeable. */
@@ -14,13 +15,14 @@ export const createExternalSourceError: Writable<string | null> = writable(null)
 // export const externalSourceId: Readable<number> = derived(initialExternalSource, $external_source => ($external_source ? $external_source.id : -1));
 
 /* Subscriptions. */
-
-// export const externalSource = gqlSubscribable<Model>(gql.SUB_MODEL, { id: externalSourceId }, null, null);
-
 export const externalSources = gqlSubscribable<ExternalSourceSlim[]>(gql.SUB_EXTERNAL_SOURCES, {}, [], null);
 
 // use to keep track of associations between plans and goals
 export const planExternalSourceLinks = gqlSubscribable<PlanExternalSource[]>(gql.SUB_PLAN_EXTERNAL_SOURCE, {}, [], null);
+export const selectedPlanExternalSourceIds = derived(
+  [planExternalSourceLinks, planId],
+  ([$planExternalSourceLinks, $planId]) => $planExternalSourceLinks.filter(link => link.plan_id === $planId).map(link => link.external_source_id)
+);
 
 /* Helper Functions. */
 
