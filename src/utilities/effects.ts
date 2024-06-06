@@ -4197,6 +4197,7 @@ const effects = {
     user: User | null,
     activityTypes: ActivityType[] = [],
     resourceTypes: ResourceType[] = [],
+    externalEventTypes: string[] = []
     defaultView?: View | null,
   ): Promise<View | null> {
     try {
@@ -4214,7 +4215,7 @@ const effects = {
           return defaultView;
         }
       }
-      return generateDefaultView(activityTypes, resourceTypes);
+      return generateDefaultView(activityTypes, resourceTypes, externalEventTypes);
     } catch (e) {
       catchError(e as Error);
       return null;

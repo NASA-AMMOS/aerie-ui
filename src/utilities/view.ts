@@ -4,17 +4,37 @@ import jsonSchema from '../schemas/ui-view-schema.json';
 import type { ActivityType } from '../types/activity';
 import type { ResourceType } from '../types/simulation';
 import type { View, ViewGridColumns, ViewGridRows } from '../types/view';
-import { createRow, createTimeline, createTimelineActivityLayer, createTimelineResourceLayer } from './timeline';
+import { createRow,
+         createTimeline,
+         createTimelineActivityLayer,
+         createTimelineExternalEventLayer,
+         createTimelineResourceLayer,
+         createTimelineLineLayer,
+         createTimelineXRangeLayer,
+         createYAxis,
+} from './timeline';
 
 /**
  * Generates a default generic UI view.
  */
-export function generateDefaultView(activityTypes: ActivityType[] = [], resourceTypes: ResourceType[] = []): View {
+export function generateDefaultView(activityTypes: ActivityType[] = [], resourceTypes: ResourceType[] = [], externalEventTypes: string[] = []): View {
   const now = new Date().toISOString();
   const types: string[] = activityTypes.map(({ name }) => name);
 
   const timeline = createTimeline([], { marginLeft: 250, marginRight: 30 });
   const timelines = [timeline];
+
+  const externalEventLayer = createTimelineExternalEventLayer((timelines), {
+    filter: { externalEvent: { event_types: externalEventTypes }}
+  });
+  const externalEventRow = createRow(timelines, {
+    autoAdjustHeight: false,
+    expanded: true,
+    height: 100,
+    layers: [externalEventLayer],
+    name: 'External Events'
+  });
+  timeline.rows.push(externalEventRow);
 
   const activityLayer = createTimelineActivityLayer(timelines, {
     filter: { activity: { types } },
