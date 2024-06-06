@@ -38,6 +38,7 @@ export type ViewGridComponent =
   | 'ConstraintsPanel'
   | 'ExpansionPanel'
   | 'ExternalSourcesPanel'
+  | 'ExternalEventFormPanel'
   | 'ExternalEventsTablePanel'
   | 'IFramePanel'
   | 'PlanMetadataPanel'
