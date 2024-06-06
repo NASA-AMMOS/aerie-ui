@@ -1,6 +1,8 @@
 import { base } from '$app/paths';
 import { redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
 import { SearchParameters } from '../../../enums/searchParameters';
+import { externalEventTypes } from '../../../stores/external-event';
 import { planReadOnlyMergeRequest } from '../../../stores/plan';
 import effects from '../../../utilities/effects';
 import { getSearchParameterNumber } from '../../../utilities/generic';
@@ -44,12 +46,14 @@ export const load: PageLoad = async ({ parent, params, url }) => {
 
       const initialActivityTypes = await effects.getActivityTypes(initialPlan.model_id, user);
       const initialResourceTypes = await effects.getResourceTypes(initialPlan.model_id, user, 20);
+      const initialExternalEventTypes: string[] = get(externalEventTypes); // TODO: in MPS-111, get this from a database instead of a store. Getting a store on page mount doesn't grab values correctly
       const initialPlanTags = await effects.getPlanTags(initialPlan.id, user);
       const initialView = await effects.getView(
         url.searchParams,
         user,
         initialActivityTypes,
         initialResourceTypes,
+        initialExternalEventTypes
         initialPlan.model.view,
       );
       const initialPlanSnapshotId = getSearchParameterNumber(SearchParameters.SNAPSHOT_ID, url.searchParams);
