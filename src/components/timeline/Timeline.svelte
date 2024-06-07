@@ -33,8 +33,13 @@
     XAxisTick,
   } from '../../types/timeline';
   import { clamp } from '../../utilities/generic';
-  import { formatDate } from '../../utilities/time';
-  import { MAX_CANVAS_SIZE, TimelineInteractionMode, TimelineLockStatus, getXScale } from '../../utilities/timeline';
+  import { convertDurationToMs, convertUTCtoMs, formatDate, getDoyTime } from '../../utilities/time';
+  import {
+    MAX_CANVAS_SIZE,
+    TimelineInteractionMode,
+    TimelineLockStatus,
+    getXScale,
+  } from '../../utilities/timeline';
   import TimelineRow from './Row.svelte';
   import RowHeaderDragHandleWidth from './RowHeaderDragHandleWidth.svelte';
   import TimelineContextMenu from './TimelineContextMenu.svelte';
@@ -118,28 +123,6 @@
     leading: true,
     trailing: true,
   });
-
-  function convertUTCtoMs(date: string): number {
-    var d = new Date(date)
-    return d.getTime();
-  }
-
-  // handles durations of format: "89:44:09.000000", or "89:44:09" with no decimal point, or n <= 6 zeroes if point included
-  function convertDurationToMs(duration: string): number {
-    var aerieDurationRegex = /^([0-9]*):([0-9]{2}):([0-9]{2})(?:\.([0-9]{6}))?$/;
-    var matches = duration.match(aerieDurationRegex);
-
-    // "89:44:09.000000" -> [ "89:44:09.000000", "189", "44", "09", "000000" ]
-    // "123:44:09"       -> [ "123:44:09",       "123", "44", "09", undefined]
-    if (matches != null && matches.length == 5) {
-      return +matches[1]*1000*60*60 + +matches[2]*1000*60 + +matches[3]*1000 + (matches[4] == undefined ? 0 : +matches[4]); // https://stackoverflow.com/questions/14667713/how-to-convert-a-string-to-number-in-typescript 
-    }
-    else {
-      console.log("Duration parsing failed...")
-      return 30000;
-    }
-  }
-
 
   $: activityDirectives = Object.values(activityDirectivesMap);
   $: externalEvents = externalEventsDB.map(eDB => {
