@@ -239,12 +239,12 @@
     );
   });
   $: simulationTemplates.setVariables({ modelId: $modelIdField.value });
+  $: selectedModel = $models.find(({ id }) => $modelIdField.value === id);
   // Because the list of models is now tied to a subscription, the slot into the field gets updated, but the selected value
   // needs to get re-set again to trigger an update in the Field.
-  $: if ($models) {
+  $: if (selectedModel) {
     modelIdField.validateAndSet();
   }
-  $: selectedModel = $models.find(({ id }) => $modelIdField.value === id);
 
   onMount(() => {
     const queryModelId = $page.url.searchParams.get(SearchParameters.MODEL_ID);
