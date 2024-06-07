@@ -8,8 +8,6 @@
   export let formProperty: Property;
   export let highlightKeysMap: Record<string, boolean> = {};
 
-  let expanded = true;
-
   $: formProperties = formProperty.value === undefined ? [{name: "-", value: "-"}] : Object.entries(formProperty.value).map(e => {
     return {
       name: e[0],
