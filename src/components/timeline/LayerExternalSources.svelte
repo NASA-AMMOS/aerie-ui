@@ -321,19 +321,20 @@
       }
       const nextItem = itemsToDraw[i + 1];
 
-      // Draw span
+      // Draw external event like a span
+      // TODO: FIX COLORING. IT DOESN'T DECOLOR ON DESELECTION PROPERLY, AND IT ISN'T CLEAR WHAT ACTIVITY DIRECTIVES LAYER IS DOING DIFFERENTLY...
       if (externalEvent && typeof externalEventStartX === 'number') {
-        const spanEndX = xScaleView(externalEvent.startMs+externalEvent.durationMs)
-        const spanRectWidth = Math.max(2, Math.min(spanEndX, drawWidth) - externalEventStartX);
-        const spanColor = idToColorMaps.spans[externalEvent.id] || externalEventDefaultColor;
+        const externalEventEndX = xScaleView(externalEvent.startMs+externalEvent.durationMs)
+        const externalEventRectWidth = Math.max(2, Math.min(externalEventEndX, drawWidth) - externalEventStartX);
+        const externalEventColor = idToColorMaps.spans[externalEvent.id] || externalEventDefaultColor;
         const isSelected = selectedExternalEventId === externalEvent.id;
         if (isSelected) {
           ctx.fillStyle = externalEventSelectedColor;
         } else {
-          const color = getRGBAFromHex(spanColor, 0.5);
+          const color = getRGBAFromHex(externalEventColor, 0.5);
           ctx.fillStyle = color;
         }
-        ctx.fillRect(externalEventStartX, y, spanRectWidth, rowHeight);
+        ctx.fillRect(externalEventStartX, y, externalEventRectWidth, rowHeight);
 
         // Draw label if no directive and the label will fit
         let spanLabelWidth = 0;
@@ -361,7 +362,7 @@
         quadtreeSpans.add({
           height: rowHeight,
           id: externalEvent.id,
-          width: Math.max(spanLabelWidth, spanRectWidth),
+          width: Math.max(spanLabelWidth, externalEventRectWidth),
           x: externalEventStartX,
           y,
         });
