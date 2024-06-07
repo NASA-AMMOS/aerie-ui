@@ -326,7 +326,6 @@
           return newLayer;
         }
         else if (isExternalEventLayer(currentLayer)) {
-          console.log(values)
           const newLayer: Layer = {
             ...currentLayer,
             filter: {
@@ -496,7 +495,6 @@
     } else if (isExternalEventLayer(layer)) {
       const externalEventLayer = layer;
       const externalEventTypes = externalEventLayer.filter?.externalEvent?.event_types ?? [];
-      console.log(externalEventLayer, externalEventTypes)
       return [...externalEventTypes];
     } else if (isLineLayer(layer) || isXRangeLayer(layer)) {
       const resourceLayer = layer;
