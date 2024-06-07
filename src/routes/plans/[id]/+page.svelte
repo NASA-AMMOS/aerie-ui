@@ -819,6 +819,7 @@
     {/if}
     {#if modelErrorCount}
       <PlanModelErrorBar
+        modelName={$plan?.model.name}
         hasErrors={modelErrorCount > 0}
         on:close={onCloseSnapshotPreview}
         on:viewModelErrors={() => {
