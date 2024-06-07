@@ -376,6 +376,7 @@
       {#if $models.length}
         <SingleActionDataGrid
           {columnDefs}
+          columnsToForceRefreshOnDataUpdate={['id']}
           hasEdit={hasUpdateModelPermission}
           hasEditPermission={hasUpdateModelPermission}
           hasDeletePermission={hasDeleteModelPermission}
