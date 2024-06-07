@@ -48,11 +48,13 @@
     <div class="errors">
       {#if selectedModelLog && !selectedModelLog.success}
         <div class="error">
-          <div class="reason">
-            <div>
-              {selectedModelLog?.error_message}
+          {#if selectedModelLog?.error_message}
+            <div class="reason">
+              <div>
+                {selectedModelLog?.error_message}
+              </div>
             </div>
-          </div>
+          {/if}
           <div class="trace">
             <pre>{JSON.stringify(selectedModelLog?.error, undefined, 2)}</pre>
           </div>
