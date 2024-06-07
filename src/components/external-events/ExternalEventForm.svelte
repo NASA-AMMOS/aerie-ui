@@ -26,26 +26,24 @@
     }
   })
   let highlightKeysMap: Record<string, boolean> = {};
-  let parametersWithErrorsCount: number = 0;
 </script>
 
-<div class="activity-form-container">
+<div class="external-event-form-container">
   {#if showHeader}
-    <div class="activity-header">
-      <div class={classNames('activity-header-title')}>
-        <div class="activity-header-title-value st-typography-medium">
+    <div class="external-event-header">
+      <div class={classNames('external-event-header-title')}>
+        <div class="external-event-header-title-value st-typography-medium">
           {event.key}
         </div>
       </div>
     </div>
   {/if}
 
-  <div class="activity-form">
+  <div class="external-event-form">
     <fieldset>
       <Collapse title="Definition">
         <Highlight highlight={highlightKeysMap.id}>
           <Input layout="inline">
-            <!-- <label use:tooltip={{ content: 'Activity ID', placement: 'top' }} for="id"> ID</label> -->
             ID
             <input class="st-input w-100" disabled={!editable} name="id" value={event.id} />
           </Input>
@@ -53,9 +51,7 @@
 
         <Highlight highlight={highlightKeysMap.type}>
           <Input layout="inline">
-            <!-- <label use:tooltip={{ content: 'Activity Type', placement: 'top' }} for="activity-type"> -->
               Type
-            <!-- </label> -->
             <input class="st-input w-100" disabled={!editable} name="event-type" value={event.event_type} />
           </Input>
         </Highlight>
@@ -104,26 +100,22 @@
 </div>
 
 <style>
-  .activity-form-container {
+  .external-event-form-container {
     display: grid;
     grid-template-rows: min-content auto;
     height: 100%;
     overflow: hidden;
   }
 
-  .activity-form {
+  .external-event-form {
     overflow-y: auto;
   }
 
-  .activity-form fieldset:last-child {
-    padding-bottom: 16px;
-  }
-
-  .activity-directive-definition {
+  .external-event-directive-definition {
     padding: 0.5rem;
   }
 
-  .activity-header {
+  .external-event-header {
     align-items: center;
     background: var(--st-gray-10);
     border-bottom: 1px solid var(--st-gray-15);
@@ -134,22 +126,22 @@
     padding-left: 8px;
   }
 
-  .activity-header-icons {
+  .external-event-header-icons {
     align-items: center;
     display: flex;
   }
 
-  .activity-error-rollup {
+  .external-event-error-rollup {
     display: inline;
     font-style: normal;
   }
 
-  .activity-header-title-placeholder,
-  .activity-header-title-value {
+  .external-event-header-title-placeholder,
+  .external-event-header-title-value {
     word-break: break-word;
   }
 
-  .activity-header-title-value {
+  .external-event-header-title-value {
     overflow: hidden;
     padding: 4px 0px;
     text-overflow: ellipsis;
@@ -157,39 +149,39 @@
     word-break: break-all;
   }
 
-  .activity-header-title-placeholder {
+  .external-event-header-title-placeholder {
     padding: 4px 8px;
   }
 
-  .activity-header-title {
+  .external-event-header-title {
     align-items: flex-start;
     border-radius: 4px;
     display: flex;
     width: 100%;
   }
 
-  .activity-header-title :global(fieldset) {
+  .external-event-header-title :global(fieldset) {
     padding: 0;
     width: 100%;
   }
 
-  .activity-header-title-edit-button:hover {
+  .external-event-header-title-edit-button:hover {
     background-color: var(--st-white);
   }
 
-  .activity-header-title--editing {
+  .external-event-header-title--editing {
     gap: 8px;
     padding: 0;
     width: 100%;
   }
 
-  .activity-header-changelog {
+  .external-event-header-changelog {
     border: 1px solid transparent;
     display: flex;
     width: 24px;
   }
 
-  .activity-header-changelog:hover {
+  .external-event-header-changelog:hover {
     color: #007bff;
   }
 

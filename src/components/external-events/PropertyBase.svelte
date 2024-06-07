@@ -13,10 +13,10 @@
   $: console.log(formProperty)
 </script>
 
-<div class="parameters-container">
+<div class="properties-container">
   <Highlight highlight={highlightKeysMap[formProperty.name]}>
-    <div bind:clientWidth class="parameter">
-      <div class="parameter-base-string">
+    <div bind:clientWidth class="property">
+      <div class="property-base-string">
         <Input layout="inline">
           {formProperty.name}
           <Input>
@@ -31,22 +31,22 @@
 </div>
 
 <style>
-  .parameter {
+  .property {
     column-gap: 4px;
     display: grid;
     grid-template-columns: auto 16px;
   }
 
-  .parameter :global(.st-input) {
+  .property :global(.st-input) {
     text-overflow: ellipsis;
   }
 
-  .parameter :global(.st-input.error) {
+  .property :global(.st-input.error) {
     background-color: inherit;
     color: inherit;
   }
 
-  .parameters-container :global(> div.highlight) {
+  .properties-container :global(> div.highlight) {
     border: 1px solid transparent;
     box-sizing: border-box;
     margin-bottom: -1px;
@@ -54,12 +54,12 @@
     padding: 4px 0;
   }
 
-  .parameters-container :global(> div.highlight:hover) {
+  .properties-container :global(> div.highlight:hover) {
     border-bottom: 1px solid var(--st-gray-20);
     border-top: 1px solid var(--st-gray-20);
   }
 
-  .parameters-container :global(> div.highlight:hover .parameter-info) {
+  .properties-container :global(> div.highlight:hover .property-info) {
     visibility: visible;
   }
 </style>
