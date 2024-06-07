@@ -11,7 +11,6 @@ describe('Model Status Icon', () => {
     const { queryByTestId } = render(ModelStatusIcon, {
       props: {
         status: 'error',
-        tooltipContent: 'Test 1 tooltip',
       },
     });
 
@@ -22,7 +21,6 @@ describe('Model Status Icon', () => {
     const { queryByTestId } = render(ModelStatusIcon, {
       props: {
         status: 'complete',
-        tooltipContent: 'Test 2 tooltip',
       },
     });
 
@@ -34,7 +32,6 @@ describe('Model Status Icon', () => {
       props: {
         showCompleteStatus: false,
         status: 'complete',
-        tooltipContent: 'Test 3 tooltip',
       },
     });
 
@@ -45,7 +42,6 @@ describe('Model Status Icon', () => {
     const { queryByTestId } = render(ModelStatusIcon, {
       props: {
         status: 'extracting',
-        tooltipContent: 'Test 4 tooltip',
       },
     });
 
