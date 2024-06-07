@@ -3,7 +3,6 @@
 <script lang="ts">
   import { externalEventsDB, selectedExternalEventId } from '../../stores/external-event';
   import {
-    activityEditingLocked,
     plan
   } from '../../stores/plan';
   import type { ViewGridSection } from '../../types/view';
@@ -24,7 +23,6 @@
       <ExternalEventForm
         externalEvents={$externalEventsDB}
         externalEvent={$selectedExternalEventId}
-        editable={!$activityEditingLocked}
       />
     {:else}
       <div class="p-2 st-typography-label">No External Event Selected</div>
