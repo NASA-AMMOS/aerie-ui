@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import type { ExternalEventDB, ExternalEventId } from '../../types/external-event';
+  import type { ExternalEventDB } from '../../types/external-event';
   import type { ExternalEventProperty } from '../../types/external-event-property';
   import { classNames } from '../../utilities/generic';
   import Collapse from '../Collapse.svelte';
@@ -10,16 +10,12 @@
   import Highlight from '../ui/Highlight.svelte';
   import ExternalEventProperties from './ExternalEventProperties.svelte';
 
-  export let externalEvent: ExternalEventId;
-  export let externalEvents: ExternalEventDB[];
+  export let externalEvent: ExternalEventDB;
   export let showHeader: boolean = true;
-
-  let event: ExternalEventDB;
-  $: event = externalEvents.filter(e => e.id == externalEvent)[0]
 
   let editable: boolean = false;
   let formProperties: ExternalEventProperty[] = [];
-  $: formProperties = Object.entries(event.properties).map(e => {
+  $: formProperties = Object.entries(externalEvent.properties).map(e => {
     return {
       name: e[0],
       value: e[1]
@@ -33,7 +29,7 @@
     <div class="external-event-header">
       <div class={classNames('external-event-header-title')}>
         <div class="external-event-header-title-value st-typography-medium">
-          {event.key}
+          {externalEvent.key}
         </div>
       </div>
     </div>
@@ -45,14 +41,14 @@
         <Highlight highlight={highlightKeysMap.id}>
           <Input layout="inline">
             ID
-            <input class="st-input w-100" disabled={!editable} name="id" value={event.id} />
+            <input class="st-input w-100" disabled={!editable} name="id" value={externalEvent.id} />
           </Input>
         </Highlight>
 
         <Highlight highlight={highlightKeysMap.type}>
           <Input layout="inline">
               Type
-            <input class="st-input w-100" disabled={!editable} name="event-type" value={event.event_type} />
+            <input class="st-input w-100" disabled={!editable} name="event-type" value={externalEvent.event_type} />
           </Input>
         </Highlight>
 
@@ -60,7 +56,7 @@
           <Input layout="inline">
             Start Time (UTC)
             <DatePicker
-              dateString={event.start_time}
+              dateString={externalEvent.start_time}
               disabled={!editable}
               name="start-time"
             />
@@ -70,14 +66,14 @@
         <Highlight highlight={highlightKeysMap.start_offset}>
           <Input layout="inline">
             Duration
-            <input class="st-input w-100" disabled={!editable} name="duration" value={event.duration} />
+            <input class="st-input w-100" disabled={!editable} name="duration" value={externalEvent.duration} />
           </Input>
         </Highlight>
 
         <Highlight highlight={highlightKeysMap.last_modified_by}>
           <Input layout="inline">
             Source File ID
-            <input class="st-input w-100" disabled={!editable} name="source-id" value={event.source_id} />
+            <input class="st-input w-100" disabled={!editable} name="source-id" value={externalEvent.source_id} />
           </Input>
         </Highlight>
       </Collapse>
