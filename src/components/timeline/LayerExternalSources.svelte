@@ -5,7 +5,6 @@
   import { type ScaleTime } from 'd3-scale';
   import { createEventDispatcher, onMount, tick } from 'svelte';
   import type { ExternalEvent, ExternalEventId } from '../../types/external-event';
-  import type { SpanId } from '../../types/simulation';
   import type {
     ExternalEventDrawItem,
     ExternalEventItem,
@@ -30,6 +29,7 @@
   type IdToColorMap = Record<number, string>;
   type IdToColorMaps = { directives: IdToColorMap; spans: IdToColorMap };
 
+  export let selectedExternalEventId: ExternalEventId | null = null;
   export let externalEvents: ExternalEvent[] = [];
   export let idToColorMaps: IdToColorMaps = { directives: {}, spans: {} };
   export let externalEventRowPadding: number = 4;
@@ -47,13 +47,11 @@
   export let mousemove: MouseEvent | undefined;
   export let mouseout: MouseEvent | undefined;
   export let planStartTimeYmd: string;
-  export let selectedExternalEventId: ExternalEventId | null = null;
-  export let selectedSpanId: SpanId | null = null;
   export let showDirectives: boolean = true;
   export let timelineInteractionMode: TimelineInteractionMode;
   export let viewTimeRange: TimeRange = { end: 0, start: 0 };
   export let xScaleView: ScaleTime<number, number> | null = null;
-  
+
   const dispatch = createEventDispatcher<{
     contextMenu: MouseOver;
     dblClick: MouseOver;
@@ -62,7 +60,7 @@
     updateRowHeight: {
       newHeight: number;
     };
-  }>();  
+  }>();
 
   let externalEventHeight = 16;
   let canvas: HTMLCanvasElement;
@@ -97,7 +95,6 @@
     drawWidth &&
     dpr &&
     selectedExternalEventId !== undefined &&
-    selectedSpanId !== undefined &&
     viewTimeRange &&
     xScaleView &&
     externalEvents
@@ -150,10 +147,7 @@
        * @see https://github.com/NASA-AMMOS/aerie-ui/issues/590
        */
       setTimeout(() => {
-        // dispatch('mouseDown', { e, externalEvents });
-        // if (!isRightClick(e)) {
-        //   dragActivityDirectiveStart(activityDirectives, offsetX);
-        // }
+        dispatch('mouseDown', { e, externalEvents });
       });
     }
   }
@@ -187,16 +181,16 @@
       // since there is no guarantee that the mousedown event triggering updates to those stores will complete
       // before the context menu event dispatch fires
       const { offsetX, offsetY } = e;
-      const {externalEvents } = getExternalEventsByOffset(offsetX, offsetY);
+      const { externalEvents } = getExternalEventsByOffset(offsetX, offsetY);
 
-      let newSelectedSpanId = null;
+      let newSelectedExternalEventId = null;
       if (externalEvents.length > 0) {
-        newSelectedSpanId = externalEvents[0].id;
+        newSelectedExternalEventId = externalEvents[0].id;
       }
       dispatch('contextMenu', {
         e,
         origin: 'layer-external-event',
-        selectedExternalEventId: selectedExternalEventId ?? undefined
+        selectedExternalEventId: newSelectedExternalEventId ?? undefined
       });
     }
   }
@@ -228,7 +222,7 @@
           });
         }
       });
-      
+
       if (itemsToDraw.length > maxPackedExternalEventCount) {
         const text = `External Event drawing limit (${maxPackedExternalEventCount}) exceeded (${itemsToDraw.length})`;
         const { width } = measureText(text, textMetricsCache);
@@ -332,7 +326,7 @@
         const spanEndX = xScaleView(externalEvent.startMs+externalEvent.durationMs)
         const spanRectWidth = Math.max(2, Math.min(spanEndX, drawWidth) - externalEventStartX);
         const spanColor = idToColorMaps.spans[externalEvent.id] || externalEventDefaultColor;
-        const isSelected = selectedSpanId === externalEvent.id;
+        const isSelected = selectedExternalEventId === externalEvent.id;
         if (isSelected) {
           ctx.fillStyle = externalEventSelectedColor;
         } else {
@@ -387,7 +381,7 @@
     if (selected) {
       ctx.fillStyle = externalEventSelectedTextColor;
     } else {
-      const opacity = selectedExternalEventId !== null || selectedSpanId !== null ? 0.4 : 1;
+      const opacity = selectedExternalEventId !== null ? 0.4 : 1;
       ctx.fillStyle = getRGBAFromHex(shadeColor(color, 2.8), opacity);
     }
     ctx.fillText(text, Math.max(x + labelPaddingLeft, minRectSize), y + rowHeight / 2, width);
