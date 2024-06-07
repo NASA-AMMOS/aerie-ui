@@ -1,5 +1,5 @@
 
 export type Property = {
-    name: string,
-    value: string
-  };
+  name: string,
+  value: any
+};
