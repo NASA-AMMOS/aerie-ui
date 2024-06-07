@@ -176,8 +176,8 @@
     }
     const showContextMenu = !!e && isRightClick(e);
     if (showContextMenu) {
-      // Get _new_ selected directive or span in order to ensure that no race condition exists between
-      // the selectedActivityDirectiveId and selectedSpanId stores and the dispatching of this event
+      // Get _new_ selectedExternalEventId in order to ensure that no race condition exists between
+      // the selectedExternalEventIdstores and the dispatching of this event
       // since there is no guarantee that the mousedown event triggering updates to those stores will complete
       // before the context menu event dispatch fires
       const { offsetX, offsetY } = e;
@@ -322,7 +322,6 @@
       const nextItem = itemsToDraw[i + 1];
 
       // Draw external event like a span
-      // TODO: FIX COLORING. IT DOESN'T DECOLOR ON DESELECTION PROPERLY, AND IT ISN'T CLEAR WHAT ACTIVITY DIRECTIVES LAYER IS DOING DIFFERENTLY...
       if (externalEvent && typeof externalEventStartX === 'number') {
         const externalEventEndX = xScaleView(externalEvent.startMs+externalEvent.durationMs)
         const externalEventRectWidth = Math.max(2, Math.min(externalEventEndX, drawWidth) - externalEventStartX);
@@ -418,7 +417,7 @@
   }
 
   /**
-   * Draws activity points to the canvas context.
+   * Draws external event points to the canvas context.
    * @note Points must be sorted in time ascending order before calling this function.
    */
   async function draw(): Promise<void> {
