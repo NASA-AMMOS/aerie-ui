@@ -215,6 +215,7 @@
       {user}
       viewTimeRange={$viewTimeRange}
       on:deleteActivityDirective={deleteActivityDirective}
+      on:dblClick={openSelectedActivityPanel}
       on:jumpToActivityDirective={jumpToActivityDirective}
       on:jumpToSpan={jumpToSpan}
       on:mouseDown={onMouseDown}
