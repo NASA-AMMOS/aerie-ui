@@ -3,22 +3,15 @@
 <script lang="ts">
   import CheckIcon from '@nasa-jpl/stellar/icons/check.svg?component';
   import WarningIcon from '@nasa-jpl/stellar/icons/warning.svg?component';
-  import { tooltip } from '../../utilities/tooltip';
   import ProgressRadial from '../ui/ProgressRadial.svelte';
 
-  export let tooltipContent: string | null = null;
   export let showCompleteStatus: boolean = true;
   export let status: 'extracting' | 'complete' | 'error' | 'none' = 'none';
 
   $: showCompleteStatus;
 </script>
 
-<div
-  class="model-status-icon-container"
-  use:tooltip={{
-    content: tooltipContent,
-  }}
->
+<div class="model-status-icon-container">
   {#if status === 'extracting'}
     <div data-testid="extracting"><ProgressRadial useBackground={false} size={14} /></div>
   {:else if status === 'complete' && showCompleteStatus}

@@ -4,6 +4,7 @@
   import { createEventDispatcher } from 'svelte';
   import type { ModelLog, ModelSlim, ModelStatus } from '../../types/model';
   import { getModelStatusRollup } from '../../utilities/model';
+  import { tooltip } from '../../utilities/tooltip';
   import ModelStatusIcon from './ModelStatusIcon.svelte';
 
   type Mode = 'full' | 'rollup' | 'iconOnly';
@@ -81,8 +82,12 @@
 
 <div class="model-status-container">
   {#if mode === 'rollup' || mode === 'iconOnly'}
-    <div class="model-status-rollup" class:icon-only={mode === 'iconOnly'}>
-      <ModelStatusIcon {showCompleteStatus} {status} tooltipContent={status && rollupTooltipMessages[status]} />
+    <div
+      class="model-status-rollup"
+      class:icon-only={mode === 'iconOnly'}
+      use:tooltip={{ content: status && rollupTooltipMessages[status] }}
+    >
+      <ModelStatusIcon {showCompleteStatus} {status} />
       {#if mode === 'rollup'}
         {#if status === 'extracting'}
           Extracting
@@ -96,42 +101,39 @@
   {:else}
     <div class="model-status-logs-container" class:horizontal={flow === 'horizontal'}>
       <button
-        disabled={!selectable}
         class="model-status-button"
         class:selected={selectedLog === 'activity'}
+        class:disabled={!selectable}
         on:click={selectActivityLog}
+        use:tooltip={{
+          content: activityLog?.error_message ?? activityLogTooltipMessages[activityLogStatus],
+        }}
       >
-        <ModelStatusIcon
-          {showCompleteStatus}
-          status={activityLogStatus}
-          tooltipContent={activityLog?.error_message ?? activityLogTooltipMessages[activityLogStatus]}
-        />
+        <ModelStatusIcon {showCompleteStatus} status={activityLogStatus} />
         Extract activity types
       </button>
       <button
-        disabled={!selectable}
         class="model-status-button"
         class:selected={selectedLog === 'parameter'}
+        class:disabled={!selectable}
         on:click={selectParameterLog}
+        use:tooltip={{
+          content: parameterLog?.error_message ?? parameterLogTooltipMessages[parameterLogStatus],
+        }}
       >
-        <ModelStatusIcon
-          {showCompleteStatus}
-          status={parameterLogStatus}
-          tooltipContent={parameterLog?.error_message ?? parameterLogTooltipMessages[parameterLogStatus]}
-        />
+        <ModelStatusIcon {showCompleteStatus} status={parameterLogStatus} />
         Extract resource types
       </button>
       <button
-        disabled={!selectable}
         class="model-status-button"
         class:selected={selectedLog === 'resource'}
+        class:disabled={!selectable}
         on:click={selectResourceLog}
+        use:tooltip={{
+          content: resourceLog?.error_message ?? resourceLogTooltipMessages[resourceLogStatus],
+        }}
       >
-        <ModelStatusIcon
-          {showCompleteStatus}
-          status={resourceLogStatus}
-          tooltipContent={resourceLog?.error_message ?? resourceLogTooltipMessages[resourceLogStatus]}
-        />
+        <ModelStatusIcon {showCompleteStatus} status={resourceLogStatus} />
         Extract mission model parameters
       </button>
     </div>
@@ -140,7 +142,7 @@
 
 <style>
   .model-status-container {
-    --model-status-gap: 2px;
+    --model-status-gap: 8px;
   }
 
   .model-status-rollup {
@@ -169,6 +171,7 @@
   }
 
   .model-status-logs-container .model-status-button {
+    align-items: center;
     background: none;
     border: 0;
     border-radius: 8px;
@@ -181,14 +184,14 @@
   }
 
   .model-status-logs-container .model-status-button:hover {
-    background-color: var(--tab-hover-background-color, var(--st-gray-15));
+    background-color: var(--tab-hover-background-color, var(--st-gray-20));
   }
 
   .model-status-logs-container .model-status-button.selected {
     background: var(--st-white, #fff);
   }
 
-  .model-status-logs-container .model-status-button:disabled {
+  .model-status-logs-container .model-status-button.disabled {
     background-color: inherit;
     border: 0;
     color: var(--st-primary-text-color);
