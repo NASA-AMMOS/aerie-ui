@@ -233,7 +233,7 @@
           .join('')}
       </div>`;
     }
-    
+
     if (overflowingExternalEvents.length) {
       const groups = groupBy(externalEvents, 'event_type');
       tooltipText += `<div class='tooltip-row-container'>
