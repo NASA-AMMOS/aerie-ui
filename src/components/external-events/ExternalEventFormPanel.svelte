@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { externalEventsDB, selectedExternalEventId } from '../../stores/external-event';
+  import { selectedExternalEvent } from '../../stores/external-event';
   import {
     plan
   } from '../../stores/plan';
@@ -19,10 +19,9 @@
   </svelte:fragment>
 
   <svelte:fragment slot="body">
-    {#if $selectedExternalEventId && $plan !== null}
+    {#if $selectedExternalEvent && $plan !== null}
       <ExternalEventForm
-        externalEvents={$externalEventsDB}
-        externalEvent={$selectedExternalEventId}
+        externalEvent={$selectedExternalEvent}
       />
     {:else}
       <div class="p-2 st-typography-label">No External Event Selected</div>
