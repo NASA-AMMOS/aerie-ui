@@ -1,11 +1,9 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import ActivityAnchorIconSVG from '@nasa-jpl/stellar/icons/activity_anchor.svg?raw';
   import { quadtree as d3Quadtree, type Quadtree } from 'd3-quadtree';
   import { type ScaleTime } from 'd3-scale';
   import { createEventDispatcher, onMount, tick } from 'svelte';
-  import type { ActivityDirective, ActivityDirectiveId } from '../../types/activity';
   import type { ExternalEvent, ExternalEventId } from '../../types/external-event';
   import type { SpanId } from '../../types/simulation';
   import type {
@@ -49,7 +47,7 @@
   export let mousemove: MouseEvent | undefined;
   export let mouseout: MouseEvent | undefined;
   export let planStartTimeYmd: string;
-  export let selectedExternalEventId: ActivityDirectiveId | null = null;
+  export let selectedExternalEventId: ExternalEventId | null = null;
   export let selectedSpanId: SpanId | null = null;
   export let showDirectives: boolean = true;
   export let timelineInteractionMode: TimelineInteractionMode;
@@ -59,7 +57,6 @@
   const dispatch = createEventDispatcher<{
     contextMenu: MouseOver;
     dblClick: MouseOver;
-    deleteActivityDirective: number;
     mouseDown: MouseDown;
     mouseOver: RowMouseOverEvent;
     updateRowHeight: {
@@ -74,12 +71,10 @@
   let minRectSize: number = 4;
   let planStartTimeMs: number;
   let quadtreeSpans: Quadtree<QuadtreeRect>;
-  let visibleExternalEventsById: Record<ActivityDirectiveId, ActivityDirective> = {};
-  let visibleSpansById: Record<ExternalEventId, ExternalEvent> = {};
+  let visibleExternalEventsById: Record<ExternalEventId, ExternalEvent> = {};
   let colorCache: Record<string, string> = {};
 
   // Asset cache
-  const assets: { anchorIcon: HTMLImageElement | null } = { anchorIcon: null };
   const textMetricsCache: Record<string, TextMetrics> = {};
 
   $: onContextmenu(contextmenu);
@@ -118,7 +113,6 @@
     if (canvas) {
       ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
     }
-    assets.anchorIcon = loadSVG(ActivityAnchorIconSVG);
   }
 
   function loadSVG(svgString: string) {
@@ -138,7 +132,7 @@
       offsetY,
       externalEventHeight,
       maxExternalEventWidth,
-      visibleSpansById,
+      visibleExternalEventsById,
     );
     return { externalEvents };
   }
@@ -151,8 +145,7 @@
 
       /**
        * The setTimeout is needed to prevent a race condition with mousedown events and change events.
-       * Without the setTimeout, mousedown events happen before change events in the activity directive form.
-       * This caused invalid updates to activity parameters.
+       * Without the setTimeout, mousedown events happen before change events in the external event selection form.
        * Make sure you understand the linked issue before changing this code!
        * @see https://github.com/NASA-AMMOS/aerie-ui/issues/590
        */
@@ -189,7 +182,7 @@
     }
     const showContextMenu = !!e && isRightClick(e);
     if (showContextMenu) {
-      // Get new selected directive or span in order to ensure that no race condition exists between
+      // Get _new_ selected directive or span in order to ensure that no race condition exists between
       // the selectedActivityDirectiveId and selectedSpanId stores and the dispatching of this event
       // since there is no guarantee that the mousedown event triggering updates to those stores will complete
       // before the context menu event dispatch fires
@@ -236,7 +229,6 @@
         }
       });
       
-      // TODO: address this:
       if (itemsToDraw.length > maxPackedExternalEventCount) {
         const text = `External Event drawing limit (${maxPackedExternalEventCount}) exceeded (${itemsToDraw.length})`;
         const { width } = measureText(text, textMetricsCache);
@@ -371,7 +363,7 @@
         // }
 
         // Add to quadtree
-        visibleSpansById[externalEvent.id] = externalEvent;
+        visibleExternalEventsById[externalEvent.id] = externalEvent;
         quadtreeSpans.add({
           height: rowHeight,
           id: externalEvent.id,
@@ -451,7 +443,6 @@
         ]);
 
       visibleExternalEventsById = {};
-      visibleSpansById = {};
       // TODO: Eventually draw grouped. That is a way easier way to read. Offer both options, at least.
       drawCompactMode();
     }

@@ -162,6 +162,7 @@
     // Limit total number of directives and spans displayed to 2 to prevent visual overflow
     // Aggregate the remaining items by directive vs span and then by type
     const activityDisplayLimit = 2;
+    const externalEventDisplayLimit = 2;
     let count = 0;
     const activityDirectivesToDisplay: ActivityDirective[] = [];
     const overflowingActivityDirectives: ActivityDirective[] = [];
@@ -178,7 +179,7 @@
       }
     });
     externalEvents.forEach(externalEvent => {
-      if (count < activityDisplayLimit) {
+      if (count < externalEventDisplayLimit) {
         externalEventsToDisplay.push(externalEvent);
         count++;
       } else {
