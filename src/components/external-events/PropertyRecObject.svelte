@@ -15,7 +15,6 @@
   let expanded = true;
   
   $: sortedFormProperties = formProperties.sort((a, b) => compare(a.name, b.name));
-  $: console.log(sortedFormProperties)
 </script>
 
 <div>
