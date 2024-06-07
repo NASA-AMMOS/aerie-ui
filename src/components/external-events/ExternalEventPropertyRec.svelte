@@ -1,11 +1,11 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import type { Property } from '../../types/property';
+  import type { ExternalEventProperty } from '../../types/external-event-property';
   import { compare } from '../../utilities/generic';
-  import PropertyRecObject from './PropertyRecObject.svelte';
+  import ExternalEventPropertyRecObject from './ExternalEventPropertyRecObject.svelte';
   
-  export let formProperty: Property;
+  export let formProperty: ExternalEventProperty;
   export let highlightKeysMap: Record<string, boolean> = {};
 
   $: formProperties = formProperty.value === undefined ? [{name: "-", value: "-"}] : Object.entries(formProperty.value).map(e => {
@@ -18,7 +18,7 @@
 
 </script>
 
-<PropertyRecObject
+<ExternalEventPropertyRecObject
   {formPropertyName}
   {formProperties}
   {highlightKeysMap}

@@ -2,13 +2,13 @@
 
 <script lang="ts">
   import type { ExternalEventDB, ExternalEventId } from '../../types/external-event';
-  import type { Property } from '../../types/property';
+  import type { ExternalEventProperty } from '../../types/external-event-property';
   import { classNames } from '../../utilities/generic';
   import Collapse from '../Collapse.svelte';
   import Input from '../form/Input.svelte';
   import DatePicker from '../ui/DatePicker/DatePicker.svelte';
   import Highlight from '../ui/Highlight.svelte';
-  import Properties from './Properties.svelte';
+  import ExternalEventProperties from './ExternalEventProperties.svelte';
 
   export let externalEvent: ExternalEventId;
   export let externalEvents: ExternalEventDB[];
@@ -18,7 +18,7 @@
   $: event = externalEvents.filter(e => e.id == externalEvent)[0]
 
   let editable: boolean = false;
-  let formProperties: Property[] = [];
+  let formProperties: ExternalEventProperty[] = [];
   $: formProperties = Object.entries(event.properties).map(e => {
     return {
       name: e[0],
@@ -87,7 +87,7 @@
       <Collapse
         title={formProperties.length > 0 ? `Properties` : ''}
       >
-        <Properties
+        <ExternalEventProperties
           {formProperties}
           {highlightKeysMap}
         />
