@@ -167,6 +167,7 @@
   let columnDefs: DataGridColumnDef[] = baseColumnDefs;
   let durationString: string = 'None';
   let filterText: string = '';
+  let orderedModels: ModelSlim[] = [];
   let nameInputField: HTMLInputElement;
   let planTags: Tag[] = [];
   let selectedModel: ModelSlim | undefined;
@@ -185,6 +186,16 @@
   let startTimeDoyField = field<string>('', [required, timestamp]);
 
   $: models.updateValue(() => data.models);
+  // sort in descending ID order
+  $: orderedModels = [...$models].sort(({ id: idA }, { id: idB }) => {
+    if (idA < idB) {
+      return 1;
+    }
+    if (idA > idB) {
+      return -1;
+    }
+    return 0;
+  });
   $: {
     user = data.user;
     canCreate = user ? featurePermissions.plan.canCreate(user) : false;
@@ -240,17 +251,12 @@
   });
   $: simulationTemplates.setVariables({ modelId: $modelIdField.value });
   $: selectedModel = $models.find(({ id }) => $modelIdField.value === id);
-  // Because the list of models is now tied to a subscription, the slot into the field gets updated, but the selected value
-  // needs to get re-set again to trigger an update in the Field.
-  $: if (selectedModel) {
-    modelIdField.validateAndSet();
-  }
 
   onMount(() => {
     const queryModelId = $page.url.searchParams.get(SearchParameters.MODEL_ID);
     if (queryModelId) {
       $modelIdField.value = parseFloat(queryModelId);
-      modelIdField.validateAndSet();
+      modelIdField.validateAndSet(parseFloat(queryModelId));
       removeQueryParam(SearchParameters.MODEL_ID);
       if (nameInputField) {
         nameInputField.focus();
@@ -375,7 +381,7 @@
               }}
             >
               <option value="-1" />
-              {#each $models as model}
+              {#each orderedModels as model (model.id)}
                 <option value={model.id}>
                   {model.name}
                   (Version: {model.version})
