@@ -11,8 +11,6 @@
   export let highlightKeysMap: Record<string, boolean> = {};
   
   $: sortedFormProperties = formProperties.sort((a, b) => compare(a.name, b.name));
-  $: console.log(sortedFormProperties)
-  $: console.log("HERE.")
 </script>
 
 <div>

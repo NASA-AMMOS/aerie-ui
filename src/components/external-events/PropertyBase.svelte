@@ -10,7 +10,6 @@
   export let highlightKeysMap: Record<string, boolean> = {};
 
   let clientWidth: number;
-  $: console.log(formProperty)
 </script>
 
 <div class="properties-container">
