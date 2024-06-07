@@ -42,7 +42,10 @@ export const selectedExternalEvent = derived(
   [selectedExternalEventId, externalEventsDB],
   ([$selectedExternalEventId, $externalEventsDB]) => {
     if ($selectedExternalEventId !== null) {
-      return $externalEventsDB.filter(e => e.id == $selectedExternalEventId) || null; // TODO: REFACTOR WITH A MAP, EVENTUALLY.
+      let filtered = $externalEventsDB.filter(e => e.id == $selectedExternalEventId);
+      if (filtered.length) {
+        return filtered[0]
+      } // TODO: REFACTOR WITH A MAP, EVENTUALLY.
     }
     return null;
   },
