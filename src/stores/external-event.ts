@@ -17,14 +17,14 @@ export const externalEventTypes = derived(
   ($externalEventsDB) => $externalEventsDB.map(event => event.event_type).filter((val, index, arr) => arr.indexOf(val) === index) // https://stackoverflow.com/questions/1960473/get-all-unique-values-in-a-javascript-array-remove-duplicates
 );
 
-export const selectedExternalEventId: Writable<ExternalEventId | undefined> = writable(undefined);
+export const selectedExternalEventId: Writable<ExternalEventId | null> = writable(null);
 
 export function selectExternalEvent(
-  externalEventId: ExternalEventId | undefined,
+  externalEventId: ExternalEventId | null,
   switchToTable = true,
   switchToPanel = false,
 ): void {
-  if (externalEventId !== undefined) {
+  if (externalEventId !== null) {
     selectedExternalEventId.set(externalEventId);
     // TODO: flesh this out
     if (switchToTable) {
@@ -34,7 +34,7 @@ export function selectExternalEvent(
       viewUpdateGrid({ rightComponentTop: 'ExternalEventFormPanel' });
     }
   } else {
-    selectedExternalEventId.set(undefined);
+    selectedExternalEventId.set(null);
   }
 }
 
