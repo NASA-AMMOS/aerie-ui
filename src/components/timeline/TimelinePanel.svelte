@@ -3,7 +3,7 @@
 <script lang="ts">
   import { activityDirectivesMap, selectActivity, selectedActivityDirectiveId } from '../../stores/activities';
   import { visibleConstraintResults } from '../../stores/constraints';
-  import { externalEventsDB } from '../../stores/external-event';
+  import { externalEventsDB, selectExternalEvent, selectedExternalEventId } from '../../stores/external-event';
   import { maxTimeRange, plan, planReadOnly, viewTimeRange } from '../../stores/plan';
   import {
     resourceTypes,
@@ -64,12 +64,15 @@
     }
   }
 
-  function openSelectedActivityPanel(event: CustomEvent) {
+  function openSelectedPanel(event: CustomEvent) {
     const {
-      detail: { selectedActivityDirectiveId, selectedSpanId },
+      detail: { selectedActivityDirectiveId, selectedSpanId, selectedExternalEventId },
     } = event;
-    if (selectedActivityDirectiveId !== null || selectedSpanId !== null) {
+    if (selectedActivityDirectiveId !== undefined || selectedSpanId !== undefined) {
       viewTogglePanel({ state: true, type: 'right', update: { rightComponentTop: 'ActivityFormPanel' } });
+    }
+    else if (selectedExternalEventId !== undefined) {
+      viewTogglePanel({ state: true, type: 'right', update: { rightComponentTop: 'ExternalEventFormPanel' } });
     }
   }
 
@@ -85,13 +88,16 @@
 
   function onMouseDown(event: CustomEvent<MouseDown>) {
     const { detail } = event;
-    const { activityDirectives, spans } = detail;
-    if (spans != null && spans.length) {
-      selectActivity(null, spans[0].span_id);
+    const { activityDirectives, spans, externalEvents } = detail;
+    if (externalEvents != null && externalEvents.length) {
+      selectExternalEvent(externalEvents[0].span_id)
+    } else if (spans != null && spans.length) {
+      selectActivity(null, spans[0].id);
     } else if (activityDirectives != null && activityDirectives.length) {
       selectActivity(activityDirectives[0].id, null);
     } else {
       selectActivity(null, null);
+      selectExternalEvent(null)
     }
   }
 
@@ -205,6 +211,7 @@
       {timeline}
       timelineInteractionMode={$timelineInteractionMode}
       selectedActivityDirectiveId={$selectedActivityDirectiveId}
+      selectedExternalEventId={$selectedExternalEventId}
       selectedSpanId={$selectedSpanId}
       simulation={$simulation}
       simulationDataset={$simulationDataset}
@@ -215,7 +222,7 @@
       {user}
       viewTimeRange={$viewTimeRange}
       on:deleteActivityDirective={deleteActivityDirective}
-      on:dblClick={openSelectedActivityPanel}
+      on:dblClick={openSelectedPanel}
       on:jumpToActivityDirective={jumpToActivityDirective}
       on:jumpToSpan={jumpToSpan}
       on:mouseDown={onMouseDown}
