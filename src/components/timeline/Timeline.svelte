@@ -12,7 +12,7 @@
   import type { ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { ConstraintResultWithName } from '../../types/constraint';
-  import type { ExternalEventDB } from '../../types/external-event';
+  import type { ExternalEventDB, ExternalEventId } from '../../types/external-event';
   import type { Plan } from '../../types/plan';
   import type {
     ResourceType,
@@ -61,6 +61,7 @@
   export let planStartTimeYmd: string;
   export let resourceTypes: ResourceType[] = [];
   export let selectedActivityDirectiveId: ActivityDirectiveId | null = null;
+  export let selectedExternalEventId: ExternalEventId | null = null;
   export let selectedSpanId: SpanId | null = null;
   export let simulation: Simulation | null = null;
   export let simulationDataset: SimulationDataset | null = null;
@@ -497,6 +498,7 @@
             {limitTooltipToLine}
             {rowHeaderDragHandleWidthPx}
             {selectedActivityDirectiveId}
+            {selectedExternalEventId}
             {selectedSpanId}
             {simulationDataset}
             {spanUtilityMaps}

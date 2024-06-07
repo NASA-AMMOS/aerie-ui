@@ -2,7 +2,8 @@
 
 <script lang="ts">
   import type { ValueGetterParams } from 'ag-grid-community';
-  import { externalEventsDB } from '../../stores/external-event';
+  import { externalEventsDB, selectExternalEvent, selectedExternalEventId } from '../../stores/external-event';
+  import { viewTogglePanel } from '../../stores/views';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalSourceSlim } from '../../types/external-source';
@@ -72,6 +73,14 @@
   ];
 
   let columnDefs = baseColumnDefs;
+
+  function onRowDoubleClicked() {
+    viewTogglePanel({ state: true, type: 'right', update: { rightComponentTop: 'ExternalEventFormPanel' } });
+  }
+
+  function onSelectionChanged() {
+    selectExternalEvent($selectedExternalEventId);
+  }
 </script>
 
 <Panel padBody={false}>
@@ -85,6 +94,9 @@
       itemDisplayText="External Source"
       items={$externalEventsDB}
       {user}
+      bind:selectedItemId={$selectedExternalEventId}
+      on:rowDoubleClicked={onRowDoubleClicked}
+      on:selectionChanged={onSelectionChanged}
     />
   </svelte:fragment>
 </Panel>
