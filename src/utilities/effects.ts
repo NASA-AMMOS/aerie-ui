@@ -77,6 +77,7 @@ import type {
   SeqId,
 } from '../types/expansion';
 import type { Extension, ExtensionPayload } from '../types/extension';
+import type { ExternalEventDB } from '../types/external-event';
 import type { ExternalSourceInsertInput, PlanExternalSource } from '../types/external-source';
 import type { Model, ModelInsertInput, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
 import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
@@ -3208,6 +3209,42 @@ const effects = {
       return simulationEvents;
     } catch (e) {
       catchError(e as Error);
+      return [];
+    }
+  },
+
+  async getExternalEvents(
+    source_id: number | undefined,
+    user: User | null
+  ): Promise<ExternalEventDB[]> {
+    if (!source_id) {
+      console.log("SourceId is undefined.")
+      return [];
+    }
+    try {
+      console.log(user, source_id, "MEMSDJFSDJK")
+      const data = await reqHasura<any>(gql.GET_EXTERNAL_EVENTS, { source_id }, user);
+      const { external_event: events} = data;
+      if (events === null) {
+        throw Error(`Unable to get external events for external source id ${source_id}.`);
+      }
+
+      const externalEvents: ExternalEventDB[] = [];
+      for (const event of events) {
+        externalEvents.push({
+          duration: event.duration,
+          event_type: event.event_type,
+          id: event.id,
+          key: event.key,
+          properties: event.properties,
+          source_id: event.source_id,
+          start_time: event.start_time
+        });
+      }
+      return externalEvents;
+    } catch (e) {
+      catchError('Failed to retried external events.', e as Error);
+      showFailureToast('External Events Retrieval Failed');
       return [];
     }
   },
