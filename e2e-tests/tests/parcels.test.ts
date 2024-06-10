@@ -24,7 +24,7 @@ test.beforeAll(async ({ browser }) => {
   );
 
   await dictionaries.goto();
-  await dictionaries.updatePage(page, DictionaryType.CommandDictionary, firstCommandDictionaryName);
+  await dictionaries.updatePage(DictionaryType.CommandDictionary, firstCommandDictionaryName);
   await dictionaries.createDictionary(
     firstCommandDictionaryBuffer,
     firstCommandDictionaryName,
@@ -32,7 +32,7 @@ test.beforeAll(async ({ browser }) => {
     dictionaries.commandDictionaryTableRow,
     DictionaryType.CommandDictionary,
   );
-  await dictionaries.updatePage(page, DictionaryType.CommandDictionary, secondCommandDictionaryName);
+  await dictionaries.updatePage(DictionaryType.CommandDictionary, secondCommandDictionaryName);
   await dictionaries.createDictionary(
     secondCommandDictionaryBuffer,
     secondCommandDictionaryName,
