@@ -8,6 +8,7 @@
   import { field } from '../../stores/form';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
+  import type { ExternalEventDB } from '../../types/external-event';
   import type { ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceSlim } from '../../types/external-source';
   import effects from '../../utilities/effects';
   import { tooltip } from '../../utilities/tooltip';
@@ -16,6 +17,7 @@
   import Field from '../form/Field.svelte';
   import AlertError from '../ui/AlertError.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
+  import CssGridGutter from '../ui/CssGridGutter.svelte';
   import SingleActionDataGrid from '../ui/DataGrid/SingleActionDataGrid.svelte';
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
@@ -103,6 +105,7 @@
   async function onFormSubmit(e: SubmitEvent) {
     // TBD: force reload the page???
     if (files !== undefined) {
+      console.log(user)
       var sourceId = await effects.createExternalSource(file, sourceInsert, user);
       if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) {
         console.log(sourceId);
@@ -163,6 +166,11 @@
 
   let selectedSource: ExternalSourceSlim | null = null;
 
+  let selectedEvents: ExternalEventDB[] = [];
+  $: effects.getExternalEvents(selectedSource?.id, user).then(fetched => selectedEvents = fetched);
+  $: console.log(selectedSource)
+  $: console.log(selectedEvents)
+
   function selectSource(detail: ExternalSourceSlim) {
     selectedSource = detail;
   }
@@ -197,10 +205,11 @@
           <div title={selectedSource.key}>{selectedSource.key}</div>
           <div class="tbd">
             <ul>
-              <li>Summarize the events?</li>
-              <li>What plans should refer to this source?</li>
               <li>What plans do refer to this source?</li>
               <li>Is this newest source of this type?</li>
+              <li>Show me information relating to this type?</li>
+              <li>Show me all information about this source from the file (i.e. properties)?</li>
+              <li>General info bar?</li>
             </ul>
           </div>
         {:else}
@@ -245,21 +254,89 @@
       </svelte:fragment>
     </Panel>
 
-    <Panel>
+    <Panel padBody={false}>
       <svelte:fragment slot="header">
         <SectionTitle><Truck />External Sources</SectionTitle>
       </svelte:fragment>
 
       <svelte:fragment slot="body">
-        <div class="filter">TBD: Filter by type and time? Show me unused sources?</div>
+        <div class="filter">TBD: Filter by type and time? Filter by used/unused by?</div>
         {#if $externalSources.length}
-          <SingleActionDataGrid
-            {columnDefs}
-            itemDisplayText="External Source"
-            items={$externalSources}
-            {user}
-            on:rowClicked={({ detail }) => selectSource(detail.data)}
-          />
+          <CssGrid class="plan-grid" rows={'3fr 5px 3fr'}>
+            <div class="plan-grid-component">
+              <Panel>
+                <svelte:fragment slot="header">
+                </svelte:fragment>
+                <svelte:fragment slot="body">
+                  <SingleActionDataGrid
+                    {columnDefs}
+                    itemDisplayText="External Source"
+                    items={$externalSources}
+                    {user}
+                    on:rowClicked={({ detail }) => selectSource(detail.data)}
+                  />
+                </svelte:fragment>
+              </Panel>
+            </div>
+            <CssGridGutter track={1} type="row" />
+            <div class="plan-grid-component">
+              <Panel>
+                <svelte:fragment slot="header">
+                </svelte:fragment>
+                <svelte:fragment slot="body">
+                  <SingleActionDataGrid
+                    columnDefs={[
+                      {
+                        field: 'id',
+                        filter: 'number',
+                        headerName: 'Event ID',
+                        resizable: true,
+                        sortable: true,
+                      },
+                      {
+                        field: 'key',
+                        filter: 'text',
+                        headerName: 'Event Key',
+                        resizable: true,
+                        sortable: true,
+                      },
+                      {
+                        field: 'event_type',
+                        filter: 'text',
+                        headerName: 'Event Type',
+                        resizable: true,
+                        sortable: true,
+                      },
+                      {
+                        field: 'source_id',
+                        filter: 'number',
+                        headerName: 'Source ID',
+                        resizable: true,
+                        sortable: true,
+                      },
+                      {
+                        field: 'start_time',
+                        filter: 'text',
+                        headerName: 'Start Time',
+                        resizable: true,
+                        sortable: true
+                      },
+                      {
+                        field: 'duration',
+                        filter: 'text',
+                        headerName: 'Duration',
+                        resizable: true,
+                        sortable: true,
+                      }
+                    ]}
+                    itemDisplayText="External Source"
+                    items={selectedEvents}
+                    {user}
+                  />
+                </svelte:fragment>
+              </Panel>
+            </div>
+          </CssGrid>
         {:else}
           <p>No External Sources present.</p>
         {/if}
@@ -269,6 +346,9 @@
 </CssGrid>
 
 <style>
+  :global(.plan-grid) {
+    overflow: auto;
+  }
   .filter {
     margin: 0.8rem 0;
   }
@@ -278,4 +358,11 @@
     margin: 0.2rem 0;
     padding: 0;
   }
+
+.plan-grid-component {
+  display: grid;
+  height: 100%;
+  overflow-y: auto;
+  width: 100%;
+}
 </style>
