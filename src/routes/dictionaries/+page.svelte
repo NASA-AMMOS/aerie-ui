@@ -30,16 +30,31 @@
   let createDictionaryError: string | null = null;
   let creatingDictionary: boolean = false;
   let files: FileList;
+  let file: File;
+  let isSequenceAdaptation: boolean = false;
+  let sequenceAdaptationName: string;
 
   $: hasCreatePermission = featurePermissions.commandDictionary.canCreate(data.user);
   $: createButtonDisabled = !files;
+  $: {
+    if (files) {
+      file = files[0];
 
-  async function uploadDictionaryOrAdaptation(files: FileList) {
+      isSequenceAdaptation = file.type === 'application/x-javascript';
+      sequenceAdaptationName = '';
+    }
+  }
+
+  async function uploadDictionaryOrAdaptation() {
     createDictionaryError = null;
     creatingDictionary = true;
 
     try {
-      const uploadedDictionaryOrAdaptation = await effects.uploadDictionaryOrAdaptation(files, data.user);
+      const uploadedDictionaryOrAdaptation = await effects.uploadDictionaryOrAdaptation(
+        file,
+        data.user,
+        sequenceAdaptationName,
+      );
 
       if (uploadedDictionaryOrAdaptation === null) {
         throw Error('Failed to upload file');
@@ -102,12 +117,13 @@
       </svelte:fragment>
 
       <svelte:fragment slot="body">
-        <form on:submit|preventDefault={() => uploadDictionaryOrAdaptation(files)}>
+        <form on:submit|preventDefault={uploadDictionaryOrAdaptation}>
           <AlertError class="m-2" error={createDictionaryError} />
 
           <fieldset>
             <label for="file">AMPCS XML File or Sequence Adaptation</label>
             <input
+              accept=".xml,.js"
               class="w-100 st-typography-body"
               name="file"
               required
@@ -119,6 +135,19 @@
               }}
             />
           </fieldset>
+
+          {#if isSequenceAdaptation}
+            <fieldset>
+              <input
+                bind:value={sequenceAdaptationName}
+                autocomplete="off"
+                class="st-input w-100"
+                name="sequenceAdaptationName"
+                placeholder="Enter Sequence Adaptation Name"
+                required={isSequenceAdaptation}
+              />
+            </fieldset>
+          {/if}
 
           <fieldset>
             <button

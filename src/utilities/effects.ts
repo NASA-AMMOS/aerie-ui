@@ -663,7 +663,7 @@ const effects = {
   },
 
   async createCustomAdaptation(
-    adaptation: { adaptation: string },
+    adaptation: { adaptation: string; name: string },
     user: User | null,
   ): Promise<SequenceAdaptation | null> {
     try {
@@ -5301,10 +5301,10 @@ const effects = {
   },
 
   async uploadDictionaryOrAdaptation(
-    files: FileList,
+    file: File,
     user: User | null,
+    sequenceAdaptationName?: string | undefined,
   ): Promise<CommandDictionary | ChannelDictionary | ParameterDictionary | SequenceAdaptation | null> {
-    const file: File = files[0];
     const text = await file.text();
     const splitLineDictionary = text.split('\n');
 
@@ -5323,8 +5323,14 @@ const effects = {
         break;
       }
       default: {
-        const adaptation = await this.createCustomAdaptation({ adaptation: text }, user);
-        return adaptation;
+        if (sequenceAdaptationName) {
+          const adaptation = await this.createCustomAdaptation(
+            { adaptation: text, name: sequenceAdaptationName },
+            user,
+          );
+          return adaptation;
+        }
+        break;
       }
     }
     const dictionary = await this.uploadDictionary(text, type, user);

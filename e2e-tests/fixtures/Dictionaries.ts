@@ -35,6 +35,8 @@ export class Dictionaries {
   parameterDictionaryTableRow: Locator;
   parameterDictionaryTableRowDeleteButton: Locator;
   sequenceAdaptationBuffer: Buffer;
+  sequenceAdaptationName: string;
+  sequenceAdaptationNameInputField: Locator;
   sequenceAdaptationPath: string = 'e2e-tests/data/sequence-adaptation.js';
   sequenceAdaptationTable: Locator;
   sequenceAdaptationTableRow: Locator;
@@ -48,7 +50,8 @@ export class Dictionaries {
     this.commandDictionaryBuffer = this.readDictionary(this.commandDictionaryName, COMMAND_DICTIONARY_PATH);
     this.parameterDictionaryName = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
     this.parameterDictionaryBuffer = this.readDictionary(this.parameterDictionaryName, this.parameterDictionaryPath);
-    this.sequenceAdaptationBuffer = this.readDictionary(DictionaryType.SequenceAdaptation, this.sequenceAdaptationPath);
+    this.sequenceAdaptationName = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
+    this.sequenceAdaptationBuffer = this.readDictionary(this.sequenceAdaptationName, this.sequenceAdaptationPath);
 
     this.page = page;
   }
@@ -84,12 +87,13 @@ export class Dictionaries {
     tableRow: Locator,
     type: DictionaryType,
   ): Promise<void> {
-    // TODO: Remove this conditional when we add Sequence Adaptation names and we can tie to a specific row.
-    if (type !== DictionaryType.SequenceAdaptation) {
-      await expect(tableRow).not.toBeVisible();
+    await this.fillInputFile(dictionaryBuffer, dictionaryName, type);
+
+    if (type === DictionaryType.SequenceAdaptation) {
+      await expect(this.sequenceAdaptationNameInputField).toBeVisible();
+      await this.sequenceAdaptationNameInputField.fill(this.sequenceAdaptationName);
     }
 
-    await this.fillInputFile(dictionaryBuffer, dictionaryName);
     await this.createButton.click();
     await this.filterTable(table, dictionaryName);
     await tableRow.waitFor({ state: 'attached' });
@@ -110,7 +114,7 @@ export class Dictionaries {
   }
 
   async createSequenceAdaptation(): Promise<void> {
-    await this.updatePage(this.page, DictionaryType.SequenceAdaptation);
+    await this.updatePage(this.page, DictionaryType.SequenceAdaptation, this.sequenceAdaptationName);
 
     await this.createDictionary(
       this.sequenceAdaptationBuffer,
@@ -169,17 +173,28 @@ export class Dictionaries {
   }
 
   async deleteSequenceAdaptation(): Promise<void> {
-    await this.updatePage(this.page, DictionaryType.SequenceAdaptation);
+    await this.updatePage(this.page, DictionaryType.SequenceAdaptation, this.sequenceAdaptationName);
 
     await this.deleteDictionary(this.sequenceAdaptationTableRow, this.sequenceAdaptationTableRowDeleteButton);
   }
 
-  private async fillInputFile(dictionaryBuffer: Buffer, dictionaryName: string) {
+  private async fillInputFile(dictionaryBuffer: Buffer, dictionaryName: string, type: DictionaryType) {
+    let mimeType: string;
+    let name: string;
+
+    if (type === DictionaryType.SequenceAdaptation) {
+      mimeType = 'application/x-javascript';
+      name = dictionaryName + '.js';
+    } else {
+      mimeType = 'application/xml';
+      name = dictionaryName + '.xml';
+    }
+
     await this.inputFile.focus();
     await this.inputFile.setInputFiles({
       buffer: dictionaryBuffer,
-      mimeType: 'application/xml',
-      name: dictionaryName,
+      mimeType,
+      name,
     });
     await this.inputFile.evaluate(e => e.blur());
   }
@@ -221,36 +236,31 @@ export class Dictionaries {
     this.createButton = this.page.locator(`button:has-text("Create")`);
     this.inputFile = this.page.locator('input[name="file"]');
 
-    // TODO: Sequence Adaptations don't have a name, so skip this for these tests. Can be cleaned up when we add names.
-    if (dictionaryName !== undefined) {
-      this.channelDictionaryTable = this.page.locator('.panel:has-text("Channel Dictionaries")').getByRole('treegrid');
-      this.channelDictionaryTableRow = this.channelDictionaryTable.getByRole('row', { name: dictionaryName });
-      this.channelDictionaryTableRowDeleteButton = this.channelDictionaryTableRow
-        .getByRole('gridcell')
-        .getByRole('button', { name: `Delete ${DictionaryType.ChannelDictionary}` });
+    this.channelDictionaryTable = this.page.locator('.panel:has-text("Channel Dictionaries")').getByRole('treegrid');
+    this.channelDictionaryTableRow = this.channelDictionaryTable.getByRole('row', { name: dictionaryName });
+    this.channelDictionaryTableRowDeleteButton = this.channelDictionaryTableRow
+      .getByRole('gridcell')
+      .getByRole('button', { name: `Delete ${DictionaryType.ChannelDictionary}` });
 
-      this.commandDictionaryTable = this.page.locator('.panel:has-text("Command Dictionaries")').getByRole('treegrid');
-      this.commandDictionaryTableRow = this.commandDictionaryTable.getByRole('row', { name: dictionaryName });
-      this.commandDictionaryTableRowDeleteButton = this.commandDictionaryTable
-        .getByRole('gridcell')
-        .getByRole('button', { name: `Delete ${DictionaryType.CommandDictionary}` });
+    this.commandDictionaryTable = this.page.locator('.panel:has-text("Command Dictionaries")').getByRole('treegrid');
+    this.commandDictionaryTableRow = this.commandDictionaryTable.getByRole('row', { name: dictionaryName });
+    this.commandDictionaryTableRowDeleteButton = this.commandDictionaryTable
+      .getByRole('gridcell')
+      .getByRole('button', { name: `Delete ${DictionaryType.CommandDictionary}` });
 
-      this.parameterDictionaryTable = this.page
-        .locator('.panel:has-text("Parameter Dictionaries")')
-        .getByRole('treegrid');
-      this.parameterDictionaryTableRow = this.parameterDictionaryTable.getByRole('row', { name: dictionaryName });
-      this.parameterDictionaryTableRowDeleteButton = this.parameterDictionaryTable
-        .getByRole('gridcell')
-        .getByRole('button', { name: `Delete ${DictionaryType.ParameterDictionary}` });
-    } else {
-      this.sequenceAdaptationTable = this.page.locator('.panel:has-text("Sequence Adaptations")').getByRole('treegrid');
-      this.sequenceAdaptationTableRows = this.page
-        .locator('.panel', { hasText: 'Sequence Adaptations' })
-        .locator('.body .ag-row');
-      this.sequenceAdaptationTableRow = this.sequenceAdaptationTableRows.first();
-      this.sequenceAdaptationTableRowDeleteButton = this.sequenceAdaptationTableRow.locator(
-        `button[aria-label="Delete ${DictionaryType.SequenceAdaptation}"]`,
-      );
-    }
+    this.parameterDictionaryTable = this.page
+      .locator('.panel:has-text("Parameter Dictionaries")')
+      .getByRole('treegrid');
+    this.parameterDictionaryTableRow = this.parameterDictionaryTable.getByRole('row', { name: dictionaryName });
+    this.parameterDictionaryTableRowDeleteButton = this.parameterDictionaryTable
+      .getByRole('gridcell')
+      .getByRole('button', { name: `Delete ${DictionaryType.ParameterDictionary}` });
+
+    this.sequenceAdaptationTable = this.page.locator('.panel:has-text("Sequence Adaptations")').getByRole('treegrid');
+    this.sequenceAdaptationTableRow = this.sequenceAdaptationTable.getByRole('row', { name: dictionaryName });
+    this.sequenceAdaptationTableRowDeleteButton = this.sequenceAdaptationTable
+      .getByRole('gridcell')
+      .getByRole('button', { name: `Delete ${DictionaryType.SequenceAdaptation}` });
+    this.sequenceAdaptationNameInputField = this.page.locator(`input[name="sequenceAdaptationName"]`);
   }
 }
