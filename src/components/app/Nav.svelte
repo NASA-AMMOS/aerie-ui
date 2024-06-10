@@ -1,8 +1,9 @@
 <script lang="ts">
-  import AppMenu from '../../components/menus/AppMenu.svelte';
+  import { Button, Popover } from 'svelte-stellar';
   import type { User, UserRole } from '../../types/app';
   import { getTarget } from '../../utilities/generic';
   import { changeUserRole } from '../../utilities/permissions';
+  import AppMenu2 from '../menus/AppMenu2.svelte';
 
   export let user: User | null;
 
@@ -21,7 +22,17 @@
 
 <div class="nav">
   <div class="left">
-    <AppMenu {user} />
+    <!-- <AppMenu {user} /> -->
+    <AppMenu2 {user} />
+    <Popover.Root>
+      <Popover.Trigger>
+        <Button>test</Button>
+      </Popover.Trigger>
+      <Popover.Content>
+        <div class="text-primary-background">Place content for the popover here.</div>
+      </Popover.Content>
+    </Popover.Root>
+    <Button variant="secondary" on:click={() => console.log(1)}>Test</Button>
     <div class="divider" />
     <div class="title st-typography-medium">
       <slot name="title" />

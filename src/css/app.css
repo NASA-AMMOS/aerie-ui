@@ -1,5 +1,6 @@
-@import 'bootstrap/dist/css/bootstrap-utilities.min.css';
+/* @import 'bootstrap/dist/css/bootstrap-utilities.min.css'; */
 @import 'tippy.js/dist/tippy.css';
+@import 'svelte-stellar/index.css';
 @import 'toastify-js/src/toastify.css';
 @import 'ag-grid-community/styles/ag-grid.min.css';
 
@@ -34,7 +35,7 @@ body {
   color: var(--st-primary-text-color);
   font-family: Inter, Roboto;
   font-size: 12px;
-  font-weight: 300;
+  /* font-weight: 300; */
 }
 
 label.error,
