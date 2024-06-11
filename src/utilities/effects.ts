@@ -25,7 +25,7 @@ import {
   savingExpansionRule,
   savingExpansionSet,
 } from '../stores/expansion';
-import { createExternalSourceError, creatingExternalSource, createExternalSourceTypeError, creatingExternalSourceType } from '../stores/external-source';
+import { createExternalSourceError, createExternalSourceTypeError, creatingExternalSource, creatingExternalSourceType } from '../stores/external-source';
 import { createModelError, creatingModel, models } from '../stores/model';
 import { createPlanError, creatingPlan, planId } from '../stores/plan';
 import { schedulingRequests, selectedSpecId } from '../stores/scheduling';
@@ -890,7 +890,7 @@ const effects = {
     }
   },
 
-  async createExternalSourceType(source: ExternalSourceTypeInsertInput, user: User | null) {
+  async createExternalSourceType(sourceType: ExternalSourceTypeInsertInput, user: User | null) {
     try {
       // TODO: Check permissions.
       // if (!queryPermissions.CREATE_MODEL(user)) {
@@ -899,7 +899,7 @@ const effects = {
 
       creatingExternalSourceType.set(true);
       createExternalSourceTypeError.set(null);
-      const { createExternalSourceType: created } = await reqHasura(gql.CREATE_EXTERNAL_SOURCE_TYPE, { source }, user);
+      const { createExternalSourceType: created } = await reqHasura(gql.CREATE_EXTERNAL_SOURCE_TYPE, { sourceType }, user);
       if (created !== null) {
         showSuccessToast('External Source Type Created Successfully');
         creatingExternalSourceType.set(false);
