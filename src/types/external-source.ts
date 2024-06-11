@@ -19,7 +19,6 @@ export type ExternalSource = {
   // created_at?
 };
 
-// TODO - we should probably include the string-named source type here to use later for UI interactions
 export type ExternalSourceSlim = Pick<
   ExternalSource,
   'id' | 'file_id' | 'key' | 'source_type_id' | 'start_time' | 'end_time' | 'valid_at'
@@ -40,7 +39,6 @@ export type PlanExternalSource = {
 };
 
 // This is the JSON type that the user can upload.
-// TODO - does source_type need to be changed here? can we remove it?
 export type ExternalSourceJson = {
   events: ExternalEventDB[];
   source: {
