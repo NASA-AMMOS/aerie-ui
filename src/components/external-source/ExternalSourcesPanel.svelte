@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { externalSources, selectedPlanExternalSourceIds } from '../../stores/external-source';
+  import { externalSourceWithTypeName, selectedPlanExternalSourceIds } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import type { User } from '../../types/app';
   import type { ExternalSourceSlim } from '../../types/external-source';
@@ -16,8 +16,8 @@
 
   // filter which sources are visible
   let filterText: string = '';
-  let fileteredExternalEvents: ExternalSourceSlim[] = [];
-  $: fileteredExternalEvents = $externalSources
+  let filteredExternalEvents: (ExternalSourceSlim & {source_type: string | undefined})[] = [];
+  $: filteredExternalEvents = $externalSourceWithTypeName
     .filter(source => {
       const filterTextLowerCase = filterText.toLowerCase();
       const includesName = source.key.toLocaleLowerCase().includes(filterTextLowerCase);
@@ -38,8 +38,8 @@
     </CollapsibleListControls>
 
 
-    {#if fileteredExternalEvents.length}
-      {#each fileteredExternalEvents as externalSource}
+    {#if filteredExternalEvents.length}
+      {#each filteredExternalEvents as externalSource}
         <ExternalSourcePanelEntry
           enabled={$selectedPlanExternalSourceIds.includes(externalSource.id)}
           externalSource={externalSource}
