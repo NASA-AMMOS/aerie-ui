@@ -8,11 +8,13 @@
   import { field } from '../../stores/form';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
-  import type { ExternalEventDB } from '../../types/external-event';
+  import type { ExternalEvent } from '../../types/external-event';
   import type { ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceSlim } from '../../types/external-source';
   import effects from '../../utilities/effects';
+  import { convertDurationToMs, convertUTCtoMs } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import { required, timestamp } from '../../utilities/validators';
+  import ExternalEventForm from '../external-events/ExternalEventForm.svelte';
   import DatePickerField from '../form/DatePickerField.svelte';
   import Field from '../form/Field.svelte';
   import AlertError from '../ui/AlertError.svelte';
@@ -22,17 +24,24 @@
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
 
+  export let user: User | null;
+
   let keyInputField: HTMLInputElement; // need this to set a focus on it. not related to the value
 
-  // TODO: make these autofill???
+  // form variables (TODO: make these autofill???)
   let keyField = field<string>('', [required]);
   let sourceTypeField = field<string>('', [required]); // need function to check if in list of allowable types...
   let startTimeDoyField = field<string>('', [required, timestamp]); // requires validation function
   let endTimeDoyField = field<string>('', [required, timestamp]); // requires validation function
   let validAtDoyField = field<string>('', [required, timestamp]); // requires validation function
+  
+  // upload variables (We want to parse a file selected for upload.)
+  let files: FileList | undefined;
+  let file: File | undefined;
+  let parsed: ExternalSourceJson | undefined;
+  let sourceInsert: ExternalSourceInsertInput;
 
-  // $: createButtonDisabled = !files || key === '' ||   $creatingModel === true; TODO: do this later
-
+  // table variables
   const baseColumnDefs: DataGridColumnDef[] = [
     {
       field: 'id',
@@ -99,30 +108,16 @@
       },
     },
   ];
-  let columnDefs: DataGridColumnDef[] = baseColumnDefs;
-  // TODO: add actions like delete as in Models.svelte
+  let columnDefs: DataGridColumnDef[] = baseColumnDefs; // TODO: add actions like delete as in Models.svelte
+  let selectedSource: ExternalSourceSlim | null = null;
+  let selectedSourceId: number | null = null;
 
-  async function onFormSubmit(e: SubmitEvent) {
-    // TBD: force reload the page???
-    if (files !== undefined) {
-      console.log(user)
-      var sourceId = await effects.createExternalSource(file, sourceInsert, user);
-      if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) {
-        console.log(sourceId);
-        goto(`${base}/external-sources`);
-      }
-      // if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) {
-      //   goto(`${base}/external-sources/${sourceId}`);
-      // }
-    }
-  }
+  // pseudo-timeline variables
+  let clientWidth: number = 0;
+  let selectedEvent: ExternalEvent | null = null;
+  let selectedEvents: ExternalEvent[] = [];
 
-  export let user: User | null;
-
-  // We want to parse a file selected for upload.
-  let files: FileList | undefined;
-  let file: File | undefined;
-  let parsed: ExternalSourceJson | undefined;
+  // $: createButtonDisabled = !files || key === '' ||   $creatingModel === true; TODO: do this later
 
   // TODO: this doesn't let people modify the form properties.
   // We need to figure out if things like the start, end, and valid_at
@@ -146,7 +141,6 @@
   // We want to build the GraphQL input object for the external
   // source and child events. The only thing that is missing at
   // this point is the uploaded file ID.
-  let sourceInsert: ExternalSourceInsertInput;
   $: {
     if (parsed) {
       sourceInsert = {
@@ -164,12 +158,52 @@
     }
   }
 
-  let selectedSource: ExternalSourceSlim | null = null;
+  $: selectedSourceId = selectedSource ? selectedSource.id : null;
+  $: startTime = selectedSource ? new Date(selectedSource.start_time) : new Date();
+  $: endTime = selectedSource ? new Date(selectedSource.end_time) : new Date();
+  $: timeSpan = selectedSource ? endTime.getTime() - startTime.getTime() : -1;
+  
+  $: effects.getExternalEvents(selectedSource?.id, user).then(fetched => selectedEvents = fetched.map(eDB => {
+    return {
+      ...eDB,
+      startMs: convertUTCtoMs(eDB.start_time),
+      durationMs: convertDurationToMs(eDB.duration)
+    }
+  }));
 
-  let selectedEvents: ExternalEventDB[] = [];
-  $: effects.getExternalEvents(selectedSource?.id, user).then(fetched => selectedEvents = fetched);
-  $: console.log(selectedSource)
-  $: console.log(selectedEvents)
+  async function onFormSubmit(e: SubmitEvent) {
+    // TBD: force reload the page???
+    if (files !== undefined) {
+      console.log(user)
+      var sourceId = await effects.createExternalSource(file, sourceInsert, user);
+      if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) {
+        console.log(sourceId);
+        goto(`${base}/external-sources`);
+      }
+      // if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) {
+      //   goto(`${base}/external-sources/${sourceId}`);
+      // }
+    }
+  }
+
+  // there are functions performing this conversion already, but they utilize some variable and parameter structure that implies a more complex timeline setup,
+  //    so I just wrote a shorter and simpler one that works for our demo timeline.
+  function timeToX(eventTime: string) {
+    if (selectedSource == null) {
+      return 0;
+    }
+    let currentDate = new Date(eventTime).getTime(); // TODO: add validation
+    if (startTime.getTime() > currentDate || currentDate > endTime.getTime()) {
+      return -1; // fail. TODO: add some handling around this, or add validation earlier in this file or in schema to ensure never happens
+    }
+    return ((currentDate-startTime.getTime())/timeSpan) * clientWidth;
+  }
+
+  function selectEvent(e: MouseEvent, event: ExternalEvent) {
+    e.stopPropagation(); // so outer div doesn't fire.
+    selectedEvent = event;
+    console.log("HI")
+  }
 
   function selectSource(detail: ExternalSourceSlim) {
     selectedSource = detail;
@@ -178,6 +212,10 @@
   function deselectSource() {
     selectedSource = null;
   }
+
+  function deselectEvent() {
+    selectedEvent = null;
+  }
 </script>
 
 <CssGrid>
@@ -185,11 +223,20 @@
     <Panel borderRight padBody={true}>
       <svelte:fragment slot="header">
         <SectionTitle
-          >{selectedSource
+          >{selectedEvent ? `Selected Event`
+            : selectedSource
             ? `#${selectedSource.id} – ${selectedSource.source_type}`
             : 'Upload a Source File'}</SectionTitle
         >
-        {#if selectedSource}
+        {#if selectedEvent}
+          <button
+            class="st-button icon fs-6"
+            on:click={deselectEvent}
+            use:tooltip={{ content: 'Deselect event', placement: 'top' }}
+          >
+            <XIcon />
+          </button>
+        {:else if selectedSource}
           <button
             class="st-button icon fs-6"
             on:click={deselectSource}
@@ -201,7 +248,12 @@
       </svelte:fragment>
 
       <svelte:fragment slot="body">
-        {#if selectedSource}
+        {#if selectedEvent}
+          <ExternalEventForm
+            externalEvent={selectedEvent}
+            showHeader={true}
+          />
+        {:else if selectedSource}
           <div title={selectedSource.key}>{selectedSource.key}</div>
           <div class="tbd">
             <ul>
@@ -276,6 +328,7 @@
                     itemDisplayText="External Source"
                     items={$externalSources}
                     {user}
+                    bind:selectedItemId={selectedSourceId}
                     on:rowClicked={({ detail }) => selectSource(detail.data)}
                   />
                 </svelte:fragment>
@@ -283,59 +336,33 @@
             </div>
             <CssGridGutter track={1} type="row" />
             <div class="plan-grid-component">
-              <Panel>
+              <Panel padBody={true}>
                 <svelte:fragment slot="header">
                 </svelte:fragment>
                 <svelte:fragment slot="body">
-                  <SingleActionDataGrid
-                    columnDefs={[
-                      {
-                        field: 'id',
-                        filter: 'number',
-                        headerName: 'Event ID',
-                        resizable: true,
-                        sortable: true,
-                      },
-                      {
-                        field: 'key',
-                        filter: 'text',
-                        headerName: 'Event Key',
-                        resizable: true,
-                        sortable: true,
-                      },
-                      {
-                        field: 'event_type',
-                        filter: 'text',
-                        headerName: 'Event Type',
-                        resizable: true,
-                        sortable: true,
-                      },
-                      {
-                        field: 'source_id',
-                        filter: 'number',
-                        headerName: 'Source ID',
-                        resizable: true,
-                        sortable: true,
-                      },
-                      {
-                        field: 'start_time',
-                        filter: 'text',
-                        headerName: 'Start Time',
-                        resizable: true,
-                        sortable: true
-                      },
-                      {
-                        field: 'duration',
-                        filter: 'text',
-                        headerName: 'Duration',
-                        resizable: true,
-                        sortable: true,
-                      }
-                    ]}
-                    itemDisplayText="External Source"
-                    items={selectedEvents}
-                    {user}
-                  />
+                  <div bind:clientWidth style="width:95%;"
+                    on:mousedown={() => {
+                      selectedEvent = null;
+                      console.log("BYE")
+                    }}
+                    role="none"
+                  >
+                    <div style="height:15px; background-color:#ebe9e6;">
+                      <div style="display:inline; float:left;">{startTime}</div>
+                      <div style="display:inline; float:right;">{endTime}</div>
+                    </div>
+                    {#each selectedEvents as event}
+                      <div style="padding-top: 3px; padding-left:{timeToX(event.start_time)}px;">
+                        <div style="background-color:{selectedEvent?.id == event.id ? 'blue' : 'coral'}; width:10px; height:10px;"
+                          on:mousedown={(e) => selectEvent(e, event)}
+                          use:tooltip={{ content: `${event.key}`, placement: 'top' }}
+                          role="none"
+                        />
+                        <!--error not something to worry about...-->
+                        <!--svelte is unable to recognize this correctly: https://stackoverflow.com/questions/76122895/svelte-svelte-check-parameter-x-implicitly-has-an-any-type-ts-->
+                      </div>
+                    {/each}
+                  </div>
                 </svelte:fragment>
               </Panel>
             </div>
