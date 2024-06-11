@@ -48,7 +48,7 @@
       const startTimeMs = getUnixEpochTimeFromInterval(planStartTimeYmd, span.start_offset);
       startTime = $plugins.time?.primary?.format(new Date(startTimeMs));
     } else {
-      getDoyTimeFromInterval(planStartTimeYmd, span.start_offset);
+      startTime = getDoyTimeFromInterval(planStartTimeYmd, span.start_offset);
     }
   }
 
