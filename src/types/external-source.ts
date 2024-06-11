@@ -32,7 +32,6 @@ export type ExternalSourceWithTypeName = ExternalSourceSlim & {
 export type ExternalSourceType = {
   id: number;
   name: string;
-  version: string;
 };
 
 export type PlanExternalSource = {
@@ -68,5 +67,5 @@ export type ExternalSourceInsertInput = Pick<
 
 export type ExternalSourceTypeInsertInput = Pick<
   ExternalSourceType,
-  'name' | 'version'
+  'name'
 >;

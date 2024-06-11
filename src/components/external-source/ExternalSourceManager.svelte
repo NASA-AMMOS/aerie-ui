@@ -136,11 +136,11 @@
   async function onFormSubmit(e: SubmitEvent) {
     // TBD: force reload the page???
     let sourceTypeId: number | undefined = undefined;
-    if (file !== undefined && fileVersion !== undefined) {
+    if (file !== undefined) {
       if (!($externalSourceTypes.includes($sourceTypeField.value))) {
         sourceTypeId = await effects.createExternalSourceType(file, sourceTypeInsert, user);
       } else {
-        sourceTypeId = $externalSourceTypes.filter(externalSource => (externalSource.name === $filename && externalSource.version === fileVersion))[0].source_type_id
+        sourceTypeId = $externalSourceTypes.filter(externalSource => externalSource.name === $sourceTypeField.value)[0].source_type_id
       }
       if (sourceTypeId !== undefined ) {
         sourceInsert.source_type_id = sourceTypeId;
@@ -163,8 +163,6 @@
   let files: FileList | undefined;
   let file: File | undefined;
   let parsed: ExternalSourceJson | undefined;
-  let fileVersion: string | undefined;
-  let $filename: string | undefined;  // Tracks the current file's name - to workaround 'undefined' checks in onFormSubmit
 
   // TODO: this doesn't let people modify the form properties.
   // We need to figure out if things like the start, end, and valid_at
@@ -172,7 +170,6 @@
   // need to talk about it.
   $: if (files) {
     file = files[0];
-    $filename = file.name;
     const fileText = file.text();
     fileText.then(async text => {
       parsed = JSON.parse(await text);
@@ -194,10 +191,9 @@
   $: {
     if (parsed && file) {
       // Create an entry for the current source type if it does not already exist. Otherwise, retrieve the id
-      if (fileVersion !== undefined && !($externalSourceTypes.includes($sourceTypeField.value))) {
+      if (!($externalSourceTypes.includes($sourceTypeField.value))) {
         sourceTypeInsert = {
-          name: file.name,  // TODO - how do we parse out the source type? should that be manual input?
-          version: fileVersion
+          name: $sourceTypeField.value
         };
       }
       sourceInsert = {
@@ -347,12 +343,11 @@
         {:else}
           <form on:submit|preventDefault={onFormSubmit}>
             <AlertError class="m-2" error={$createExternalSourceError} />
+            <AlertError class="m-2" error={$createExternalSourceTypeError} />
 
             <fieldset>
               <label for="file">Source File</label>
               <input class="w-100" name="file" required type="file" bind:files />
-              <label for="file-version">File Version</label>
-              <input class="w-100" name="file-version" required type="text" bind:fileVersion />
             </fieldset>
 
             {#if parsed}
