@@ -8,6 +8,7 @@
   import { onDestroy, onMount } from 'svelte';
   import { createExternalSourceError, creatingExternalSource, externalSourceWithTypeName, externalSourceTypes } from '../../stores/external-source';
   import { createExternalSourceError, creatingExternalSource, externalSourceWithTypeName, externalSourceTypes, createExternalSourceTypeError } from '../../stores/external-source';
+  import { createExternalSourceError, createExternalSourceTypeError, creatingExternalSource, externalSourceTypes, externalSourceWithTypeName } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
@@ -139,10 +140,10 @@
     // TBD: force reload the page???
     let sourceTypeId: number | undefined = undefined;
     if (file !== undefined) {
-      if (!($externalSourceTypes.includes($sourceTypeField.value)) && sourceTypeInsert !== undefined) {
+      if (!($externalSourceTypes.map(s => s.name).includes($sourceTypeField.value)) && sourceTypeInsert !== undefined) {
         sourceTypeId = await effects.createExternalSourceType(sourceTypeInsert, user);
       } else {
-        sourceTypeId = $externalSourceTypes.find(externalSource => externalSource.name === $sourceTypeField.value).source_type_id
+        sourceTypeId = $externalSourceTypes.find(externalSource => externalSource.name === $sourceTypeField.value)?.id
       }
       if (sourceTypeId !== undefined ) {
         sourceInsert.source_type_id = sourceTypeId;
@@ -186,6 +187,9 @@
   // this point are the uploaded file ID and external source type ID.
   let sourceInsert: ExternalSourceInsertInput;
   let sourceTypeInsert: ExternalSourceTypeInsertInput;
+
+  $: console.log("EXTERNAL SOURCE WITH TYPE NAME:", $externalSourceWithTypeName)
+
   $: {
     if (parsed && file) {
       // Create an entry for the current source type if it does not already exist. Otherwise, retrieve the id
