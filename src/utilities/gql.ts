@@ -462,7 +462,6 @@ const gql = {
       createExternalSourceType: insert_external_source_type_one(object: $source) {
         id
         name
-        version
       }
     }
   `,
@@ -2306,7 +2305,6 @@ const gql = {
       models: ${Queries.EXTERNAL_SOURCE_TYPES}(order_by: { key: asc }) {
         id
         name
-        version
       }
     }
   `,
