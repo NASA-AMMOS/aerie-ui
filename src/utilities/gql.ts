@@ -79,6 +79,7 @@ export enum Queries {
   EXTERNAL_EVENT = 'external_event',
   EXTERNAL_SOURCE = 'external_source_by_pk',
   EXTERNAL_SOURCES = 'external_source',
+  EXTERNAL_SOURCE_TYPES = 'external_source_type',
   PLAN_EXTERNAL_SOURCE = 'plan_external_source',
   GET_ACTIVITY_EFFECTIVE_ARGUMENTS = 'getActivityEffectiveArguments',
   GET_ACTIVITY_TYPE_SCRIPT = 'getActivityTypeScript',
@@ -451,11 +452,21 @@ const gql = {
       createExternalSource: insert_external_source_one(object: $source) {
         id
         key
-        source_type
+        source_type_id
         start_time
         end_time
         valid_at
         metadata
+      }
+    }
+  `,
+
+  CREATE_EXTERNAL_SOURCE_TYPE: `#graphql
+    mutation CreateExternalSourceType($sourceType: external_source_type_insert_input!) {
+      createExternalSourceType: insert_external_source_type_one(object: $source) {
+        id
+        name
+        version
       }
     }
   `,
@@ -2286,10 +2297,20 @@ const gql = {
         id
         file_id
         key
-        source_type
+        source_type_id
         start_time
         end_time
         valid_at
+      }
+    }
+  `,
+
+  SUB_EXTERNAL_SOURCE_TYPES: `#graphql
+    subscription SubExternalSourceTypes {
+      models: ${Queries.EXTERNAL_SOURCE_TYPES}(order_by: { key: asc }) {
+        id
+        name
+        version
       }
     }
   `,

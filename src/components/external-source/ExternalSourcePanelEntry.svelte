@@ -2,12 +2,12 @@
 
 <script lang="ts">
   import type { User } from '../../types/app';
-  import type { ExternalSourceSlim } from '../../types/external-source';
+  import type { ExternalSourceWithTypeName } from '../../types/external-source';
   import effects from '../../utilities/effects';
   import Collapse from '../Collapse.svelte';
 
   export let enabled: boolean;
-  export let externalSource: ExternalSourceSlim;
+  export let externalSource: ExternalSourceWithTypeName;
   export let plan_id: number | undefined;
   export let user: User | null;
 

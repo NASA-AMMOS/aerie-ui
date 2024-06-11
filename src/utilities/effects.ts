@@ -26,7 +26,7 @@ import {
   savingExpansionRule,
   savingExpansionSet,
 } from '../stores/expansion';
-import { createExternalSourceError, creatingExternalSource } from '../stores/external-source';
+import { createExternalSourceError, creatingExternalSource, createExternalSourceTypeError, creatingExternalSourceType } from '../stores/external-source';
 import { createModelError, creatingModel, models } from '../stores/model';
 import { createPlanError, creatingPlan, planId } from '../stores/plan';
 import { schedulingRequests, selectedSpecId } from '../stores/scheduling';
@@ -78,6 +78,7 @@ import type {
   SeqId,
 } from '../types/expansion';
 import type { Extension, ExtensionPayload } from '../types/extension';
+import type { ExternalSourceInsertInput, ExternalSourceTypeInsertInput, PlanExternalSource } from '../types/external-source';
 import type { ExternalEventDB } from '../types/external-event';
 import type { ExternalSourceInsertInput, PlanExternalSource } from '../types/external-source';
 import type { Model, ModelInsertInput, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
@@ -887,6 +888,32 @@ const effects = {
       showFailureToast('Expansion Set Create Failed');
       savingExpansionSet.set(false);
       return null;
+    }
+  },
+
+  // TODO - do we need to use file for anything here?
+  async createExternalSourceType(file: File | undefined, source: ExternalSourceTypeInsertInput, user: User | null) {
+    try {
+      // TODO: Check permissions.
+      // if (!queryPermissions.CREATE_MODEL(user)) {
+      //   throwPermissionError('upload a model');
+      // } // permissions are yet unhandled anywhere in external-source/page or anywhere else
+
+      creatingExternalSourceType.set(true);
+      createExternalSourceTypeError.set(null);
+      const { createExternalSourceType: created } = await reqHasura(gql.CREATE_EXTERNAL_SOURCE_TYPE, { source }, user);
+      if (created !== null) {
+        showSuccessToast('External Source Type Created Successfully');
+        creatingExternalSourceType.set(false);
+        return created.id;
+      } else {
+        throw Error(`Unable to create external source type`);
+      }
+    } catch (e) {
+      catchError('External Source Type Create Failed', e as Error);
+      showFailureToast('External Source Type Create Failed');
+      createExternalSourceTypeError.set((e as Error).message);
+      creatingExternalSourceType.set(false);
     }
   },
 
