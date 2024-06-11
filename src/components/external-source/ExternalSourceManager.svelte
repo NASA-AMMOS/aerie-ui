@@ -4,8 +4,8 @@
   import type { ValueGetterParams } from 'ag-grid-community';
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
+  import { createExternalSourceError, creatingExternalSource, externalSources, externalSourceTypes } from '../../stores/external-source';
   import { onDestroy, onMount } from 'svelte';
-  import { createExternalSourceError, creatingExternalSource, externalSources } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
@@ -13,6 +13,7 @@
   import type { ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceSlim } from '../../types/external-source';
   import type { TimeRange } from '../../types/timeline';
   import { type MouseDown, type MouseOver } from '../../types/timeline';
+  import type { ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceSlim, ExternalSourceTypeInsertInput, ExternalSourceWithTypeName } from '../../types/external-source';
   import effects from '../../utilities/effects';
   import { convertDurationToMs, convertUTCtoMs } from '../../utilities/time';
   import { TimelineInteractionMode, getXScale } from '../../utilities/timeline';
@@ -40,7 +41,7 @@
   let startTimeDoyField = field<string>('', [required, timestamp]); // requires validation function
   let endTimeDoyField = field<string>('', [required, timestamp]); // requires validation function
   let validAtDoyField = field<string>('', [required, timestamp]); // requires validation function
-  
+
   // upload variables (We want to parse a file selected for upload.)
   let files: FileList | undefined;
   let file: File | undefined;
@@ -131,9 +132,39 @@
   let removeDPRChangeListener: (() => void) | null = null;
   let eventTooltip: Tooltip;
   let mouseOver: MouseOver | null;
-  
+
+  async function onFormSubmit(e: SubmitEvent) {
+    // TBD: force reload the page???
+    let sourceTypeId: number | undefined = undefined;
+    if (file !== undefined && fileVersion !== undefined) {
+      if (!($externalSourceTypes.includes($sourceTypeField.value))) {
+        sourceTypeId = await effects.createExternalSourceType(file, sourceTypeInsert, user);
+      } else {
+        sourceTypeId = $externalSourceTypes.filter(externalSource => (externalSource.name === $filename && externalSource.version === fileVersion))[0].source_type_id
+      }
+      if (sourceTypeId !== undefined ) {
+        sourceInsert.source_type_id = sourceTypeId;
+        var sourceId = await effects.createExternalSource(file, sourceInsert, user);
+        if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) {
+          console.log(sourceId);
+          goto(`${base}/external-sources`);
+        }
+        // if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) {
+        //   goto(`${base}/external-sources/${sourceId}`);
+        // }
+      }
+    }
+  }
+
+  export let user: User | null;
 
   // $: createButtonDisabled = !files || key === '' ||   $creatingModel === true; TODO: do this later
+  // We want to parse a file selected for upload.
+  let files: FileList | undefined;
+  let file: File | undefined;
+  let parsed: ExternalSourceJson | undefined;
+  let fileVersion: string | undefined;
+  let $filename: string | undefined;  // Tracks the current file's name - to workaround 'undefined' checks in onFormSubmit
 
   // TODO: this doesn't let people modify the form properties.
   // We need to figure out if things like the start, end, and valid_at
@@ -141,6 +172,7 @@
   // need to talk about it.
   $: if (files) {
     file = files[0];
+    $filename = file.name;
     const fileText = file.text();
     fileText.then(async text => {
       parsed = JSON.parse(await text);
@@ -155,10 +187,19 @@
   }
 
   // We want to build the GraphQL input object for the external
-  // source and child events. The only thing that is missing at
-  // this point is the uploaded file ID.
+  // source and child events. The only things that are missing at
+  // this point are the uploaded file ID and external source type ID.
+  let sourceInsert: ExternalSourceInsertInput;
+  let sourceTypeInsert: ExternalSourceTypeInsertInput;
   $: {
-    if (parsed) {
+    if (parsed && file) {
+      // Create an entry for the current source type if it does not already exist. Otherwise, retrieve the id
+      if (fileVersion !== undefined && !($externalSourceTypes.includes($sourceTypeField.value))) {
+        sourceTypeInsert = {
+          name: file.name,  // TODO - how do we parse out the source type? should that be manual input?
+          version: fileVersion
+        };
+      }
       sourceInsert = {
         end_time: $endTimeDoyField.value,
         external_events: {
@@ -167,20 +208,21 @@
         file_id: -1, // updated in the effect.
         key: $keyField.value,
         metadata: parsed.source.metadata,
-        source_type: $sourceTypeField.value,
+        source_type_id: -1,  //updated in the effect.
         start_time: $startTimeDoyField.value,
         valid_at: $validAtDoyField.value,
       };
     }
   }
 
+  let selectedSource: ExternalSourceWithTypeName | null = null;
   $: selectedSourceId = selectedSource ? selectedSource.id : null;
   $: startTime = selectedSource ? new Date(selectedSource.start_time) : new Date();
   $: endTime = selectedSource ? new Date(selectedSource.end_time) : new Date();
   $: viewTimeRange = { end: endTime.getTime(), start: startTime.getTime() }
   $: xDomainView = [startTime, endTime];
   $: xScaleView = getXScale(xDomainView, 500);
-  
+
   $: effects.getExternalEvents(selectedSource?.id, user).then(fetched => selectedEvents = fetched.map(eDB => {
     return {
       ...eDB,
@@ -228,7 +270,7 @@
     }
   }
 
-  function selectSource(detail: ExternalSourceSlim) {
+  function selectSource(detail: ExternalSourceWithTypeName) {
     selectedSource = detail;
   }
 
@@ -244,10 +286,10 @@
     const { externalEvents } = e.detail;
 
     // selectedEvent is our source of an ExternalEvent as well as the ExternalEventId used by this instance
-    //    of the LayerExternalSources (as opposed to using a store, like the timeline one does, which is 
+    //    of the LayerExternalSources (as opposed to using a store, like the timeline one does, which is
     //    unnecessary as everything we need is in on single component or can be passed down via parameters to
     //    children).
-    selectedEvent = externalEvents?.length ? externalEvents[0] : null 
+    selectedEvent = externalEvents?.length ? externalEvents[0] : null
   }
 
   function onCanvasMouseOver(e: CustomEvent<MouseOver>) {
@@ -309,6 +351,8 @@
             <fieldset>
               <label for="file">Source File</label>
               <input class="w-100" name="file" required type="file" bind:files />
+              <label for="file-version">File Version</label>
+              <input class="w-100" name="file-version" required type="text" bind:fileVersion />
             </fieldset>
 
             {#if parsed}
@@ -370,11 +414,11 @@
               <div style="height:15px; background-color:#ebe9e6;">
                 <div style="display:inline; float:left;">{startTime}</div>
                 <div style="display:inline; float:right;">{endTime}</div>
-              </div> 
-              <div style="height: 100%; width: 100%; position: relative" 
-                bind:this={canvasContainerRef} 
-                bind:clientWidth={canvasContainerWidth} 
-                bind:clientHeight={canvasContainerHeight} 
+              </div>
+              <div style="height: 100%; width: 100%; position: relative"
+                bind:this={canvasContainerRef}
+                bind:clientWidth={canvasContainerWidth}
+                bind:clientHeight={canvasContainerHeight}
                 on:mousedown={e => {
                   canvasMouseDownEvent = e
                 }}
