@@ -599,7 +599,7 @@
           <PlanIcon />
           Plans
         </SectionTitle>
-        <Input>
+        <Input layout="inline">
           <input bind:value={filterText} class="st-input" placeholder="Filter plans" style="width: 300px" />
         </Input>
       </svelte:fragment>
