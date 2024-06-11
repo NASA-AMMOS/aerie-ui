@@ -25,7 +25,7 @@ export type ExternalSourceSlim = Pick<
 >;
 
 export type ExternalSourceWithTypeName = ExternalSourceSlim & {
-  source_type: string
+  source_type: string | undefined
 };
 
 export type ExternalSourceType = {
