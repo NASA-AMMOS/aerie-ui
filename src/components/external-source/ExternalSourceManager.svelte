@@ -226,27 +226,30 @@
                 <button class="st-button w-100" type="submit"
                   >{$creatingExternalSource ? 'Uploading...' : 'Upload'}</button
                 >
+                <div style="padding-top:10px">
+                  <button class="st-button w-100" type="reset">Reset</button>
+                </div>
               </fieldset>
               <Field field={keyField}>
                 <label for="key" slot="label">Key</label>
-                <input bind:value={keyInputField} autocomplete="off" class="st-input w-100" name="key" required />
+                <input disabled bind:value={keyInputField} autocomplete="off" class="st-input w-100" name="key" required />
               </Field>
 
               <Field field={sourceTypeField}>
                 <label for="source-type" slot="label">Source Type</label>
-                <input autocomplete="off" class="st-input w-100" name="source-type" required />
+                <input disabled autocomplete="off" class="st-input w-100" name="source-type" required />
               </Field>
 
               <fieldset>
-                <DatePickerField field={startTimeDoyField} label="Start Time - YYYY-DDDThh:mm:ss" name="start-time" />
+                <DatePickerField disabled={true} field={startTimeDoyField} label="Start Time - YYYY-DDDThh:mm:ss" name="start-time" />
               </fieldset>
 
               <fieldset>
-                <DatePickerField field={endTimeDoyField} label="End Time - YYYY-DDDThh:mm:ss" name="end_time" />
+                <DatePickerField disabled={true} field={endTimeDoyField} label="End Time - YYYY-DDDThh:mm:ss" name="end_time" />
               </fieldset>
 
               <fieldset>
-                <DatePickerField field={validAtDoyField} label="Valid At Time - YYYY-DDDThh:mm:ss" name="valid_at" />
+                <DatePickerField disabled={true} field={validAtDoyField} label="Valid At Time - YYYY-DDDThh:mm:ss" name="valid_at" />
               </fieldset>
             {/if}
           </form>
