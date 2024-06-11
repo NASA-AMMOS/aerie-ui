@@ -1,5 +1,5 @@
 import { derived, writable, type Writable } from 'svelte/store';
-import type { ExternalSourceSlim, PlanExternalSource, ExternalSourceType } from '../types/external-source';
+import { type ExternalSourceSlim, type ExternalSourceType, type ExternalSourceWithTypeName, type PlanExternalSource } from '../types/external-source';
 import gql from '../utilities/gql';
 import { planId } from './plan';
 import { gqlSubscribable } from './subscribable';
@@ -25,11 +25,11 @@ export const selectedPlanExternalSourceIds = derived(
 );
 
 // Creates a store for each externalSource with the added 'source_type' field that maps to the human-readable source type name
-export const externalSourceWithTypeName = derived(
+export const externalSourceWithTypeName = derived<[typeof externalSources, typeof externalSourceTypes], ExternalSourceWithTypeName[]>(
   [externalSources, externalSourceTypes],
   ([$externalSources, $externalSourceTypes]) => $externalSources.map(externalSource => ({
     ...externalSource,
-    source_type: $externalSourceTypes.find(sourceType => sourceType.id === externalSource.source_type_id).name
+    source_type: $externalSourceTypes.find(sourceType => sourceType.id === externalSource.source_type_id)?.name
   }))
 );
 
