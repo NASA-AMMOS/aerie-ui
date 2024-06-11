@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
+  import MarkerIcon from '@nasa-jpl/stellar/icons/marker.svg?component';
   import type { ValueGetterParams } from 'ag-grid-community';
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
@@ -25,6 +26,8 @@
   import SectionTitle from '../ui/SectionTitle.svelte';
 
   export let user: User | null;
+
+  let x = 0;
 
   let keyInputField: HTMLInputElement; // need this to set a focus on it. not related to the value
 
@@ -114,6 +117,8 @@
 
   // pseudo-timeline variables
   let clientWidth: number = 0;
+  let cursorOffsetHeader: number = 0;
+  let cursorOffsetDiv: number = 0;
   let selectedEvent: ExternalEvent | null = null;
   let selectedEvents: ExternalEvent[] = [];
 
@@ -198,6 +203,11 @@
     }
     return ((currentDate-startTime.getTime())/timeSpan) * clientWidth;
   }
+  function xToTime(xPos: number) {
+    let xMillisOffset = (xPos / clientWidth) * timeSpan
+    let xMillis = startTime.getTime() + xMillisOffset;
+    return new Date(xMillis)
+  }
 
   function selectEvent(e: MouseEvent, event: ExternalEvent) {
     e.stopPropagation(); // so outer div doesn't fire.
@@ -216,6 +226,8 @@
   function deselectEvent() {
     selectedEvent = null;
   }
+
+  $: console.log(cursorOffsetDiv, cursorOffsetHeader)
 </script>
 
 <CssGrid>
@@ -317,7 +329,14 @@
       <svelte:fragment slot="body">
         <div class="filter">TBD: Filter by type and time? Filter by used/unused by?</div>
         {#if $externalSources.length}
-          <CssGrid class="plan-grid" rows={'3fr 5px 3fr'}>
+          <CssGrid class="plan-grid" rows={'3fr 5px 3fr'}  on:changeRowSizes={(e) => {
+            console.log(e.detail.split(" ")[2].slice(0,-2))
+            console.log(e.detail.split(" ")[0].slice(0,-2))
+            let currentFrac = Number(e.detail.split(" ")[2].slice(0,-2))
+            let currentMultiplier = Number(e.detail.split(" ")[0].slice(0,-2))
+            cursorOffsetDiv = cursorOffsetHeader/currentFrac * currentMultiplier;
+            console.log(cursorOffsetDiv)
+          }}>
             <div class="plan-grid-component">
               <Panel>
                 <svelte:fragment slot="header">
@@ -340,10 +359,23 @@
                 <svelte:fragment slot="header">
                 </svelte:fragment>
                 <svelte:fragment slot="body">
+                  <div class="timeline-cursor" style="transform: translateX({x}px)" bind:clientHeight={cursorOffsetHeader}>
+                    <button
+                      class="timeline-cursor-icon"
+                      style="color: grey"
+                    >
+                      <MarkerIcon />
+                    </button>
+                    <div class="timeline-cursor-label" style="max-width: 50px; top: {cursorOffsetDiv}px">{xToTime(x)}</div>
+                    <div class="timeline-cursor-line" style="background: grey; top: {cursorOffsetDiv}px" />
+                  </div>
                   <div bind:clientWidth style="width:95%;"
                     on:mousedown={() => {
                       selectedEvent = null;
                       console.log("BYE")
+                    }}
+                    on:mousemove={e => {
+                      x = e.x
                     }}
                     role="none"
                   >
@@ -351,6 +383,7 @@
                       <div style="display:inline; float:left;">{startTime}</div>
                       <div style="display:inline; float:right;">{endTime}</div>
                     </div>
+                    
                     {#each selectedEvents as event}
                       <div style="padding-top: 3px; padding-left:{timeToX(event.start_time)}px;">
                         <div style="background-color:{selectedEvent?.id == event.id ? 'blue' : 'coral'}; width:10px; height:10px;"
@@ -395,4 +428,61 @@
   overflow-y: auto;
   width: 100%;
 }
+
+.timeline-cursor {
+    height: 100%;
+    left: 0;
+    opacity: 1;
+    position: absolute;
+    top: -10px;
+    transform: translateX(0);
+  }
+
+  .timeline-cursor-icon {
+    background-color: transparent;
+    border: none;
+    color: var(--st-gray-60);
+    cursor: pointer;
+    display: block;
+    height: 16px;
+    left: 0;
+    left: -7.5px;
+    margin: 0;
+    padding: 0;
+    pointer-events: all;
+    position: relative;
+    top: -9px;
+    width: 15px;
+  }
+
+  .timeline-cursor-line {
+    background-color: var(--st-gray-50);
+    display: block;
+    height: 60%;
+    position: relative;
+    width: 1px;
+  }
+
+  .timeline-cursor-label {
+    background-color: var(--st-gray-15);
+    border-radius: 16px;
+    box-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.25);
+    font-size: 12px;
+    left: 10px;
+    letter-spacing: 0.04em;
+    line-height: 16px;
+    overflow: hidden;
+    padding: 0 5px;
+    pointer-events: all;
+    position: relative;
+    text-overflow: ellipsis;
+    top: -11px;
+    white-space: nowrap;
+    z-index: 0;
+  }
+
+  .timeline-cursor:hover .timeline-cursor-label {
+    max-width: 100vw !important;
+    z-index: 4;
+  }
 </style>
