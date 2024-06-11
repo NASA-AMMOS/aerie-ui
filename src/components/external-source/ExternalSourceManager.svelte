@@ -6,6 +6,7 @@
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { createExternalSourceError, creatingExternalSource, externalSources, externalSourceTypes } from '../../stores/external-source';
   import { onDestroy, onMount } from 'svelte';
+  import { createExternalSourceError, creatingExternalSource, externalSourceWithTypeName, externalSourceTypes } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
@@ -393,7 +394,7 @@
 
       <svelte:fragment slot="body">
         <div class="filter">TBD: Filter by type and time? Filter by used/unused by?</div>
-        {#if $externalSourcesWithTypeName.length}
+        {#if $externalSourceWithTypeName.length}
         <CssGrid rows="1fr 5px 1fr" gap="8px" class="source-grid">
           <SingleActionDataGrid
             {columnDefs}
