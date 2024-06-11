@@ -170,7 +170,10 @@
 
   .input > .left,
   .input > .right {
+    align-items: center;
     cursor: default;
+    display: flex;
+    height: 100%;
     position: absolute;
   }
 
