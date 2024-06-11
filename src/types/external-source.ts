@@ -10,7 +10,7 @@ export type ExternalSource = {
   id: number;
   key: string;
   metadata: Record<string, any>;
-  source_type: string;
+  source_type_id: number;
   start_time: string;
   valid_at: string;
   // Things to consider:
@@ -19,10 +19,21 @@ export type ExternalSource = {
   // created_at?
 };
 
+// TODO - we should probably include the string-named source type here to use later for UI interactions
 export type ExternalSourceSlim = Pick<
   ExternalSource,
-  'id' | 'file_id' | 'key' | 'source_type' | 'start_time' | 'end_time' | 'valid_at'
+  'id' | 'file_id' | 'key' | 'source_type_id' | 'start_time' | 'end_time' | 'valid_at'
 >;
+
+export type ExternalSourceWithTypeName = ExternalSourceSlim & {
+  source_type: string
+};
+
+export type ExternalSourceType = {
+  id: number;
+  name: string;
+  version: string;
+};
 
 export type PlanExternalSource = {
   external_source_id: number;
@@ -30,6 +41,7 @@ export type PlanExternalSource = {
 };
 
 // This is the JSON type that the user can upload.
+// TODO - does source_type need to be changed here? can we remove it?
 export type ExternalSourceJson = {
   events: ExternalEventDB[];
   source: {
@@ -47,9 +59,14 @@ export type ExternalSourceJson = {
 // This is used for the GraphQL mutation.
 export type ExternalSourceInsertInput = Pick<
   ExternalSource,
-  'key' | 'source_type' | 'metadata' | 'file_id' | 'start_time' | 'end_time' | 'valid_at'
+  'key' | 'metadata' | 'source_type_id' | 'file_id' | 'start_time' | 'end_time' | 'valid_at'
 > & {
   external_events: {
     data: ExternalEventInsertInput[];
   };
 };
+
+export type ExternalSourceTypeInsertInput = Pick<
+  ExternalSourceType,
+  'name' | 'version'
+>;
