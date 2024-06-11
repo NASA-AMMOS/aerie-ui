@@ -29,7 +29,7 @@ export const externalSourceWithTypeName = derived(
   [externalSources, externalSourceTypes],
   ([$externalSources, $externalSourceTypes]) => $externalSources.map(externalSource => ({
     ...externalSource,
-    source_type: $externalSourceTypes.filter(sourceType => sourceType.id === externalSource.source_type_id)
+    source_type: $externalSourceTypes.filter(sourceType => sourceType.id === externalSource.source_type_id)[0].name
   }))
 );
 
