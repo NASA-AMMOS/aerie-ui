@@ -7,6 +7,7 @@
   import { createExternalSourceError, creatingExternalSource, externalSources, externalSourceTypes } from '../../stores/external-source';
   import { onDestroy, onMount } from 'svelte';
   import { createExternalSourceError, creatingExternalSource, externalSourceWithTypeName, externalSourceTypes } from '../../stores/external-source';
+  import { createExternalSourceError, creatingExternalSource, externalSourceWithTypeName, externalSourceTypes, createExternalSourceTypeError } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
@@ -138,10 +139,10 @@
     // TBD: force reload the page???
     let sourceTypeId: number | undefined = undefined;
     if (file !== undefined) {
-      if (!($externalSourceTypes.includes($sourceTypeField.value))) {
+      if (!($externalSourceTypes.includes($sourceTypeField.value)) && sourceTypeInsert !== undefined) {
         sourceTypeId = await effects.createExternalSourceType(file, sourceTypeInsert, user);
       } else {
-        sourceTypeId = $externalSourceTypes.filter(externalSource => externalSource.name === $sourceTypeField.value)[0].source_type_id
+        sourceTypeId = $externalSourceTypes.find(externalSource => externalSource.name === $sourceTypeField.value).source_type_id
       }
       if (sourceTypeId !== undefined ) {
         sourceInsert.source_type_id = sourceTypeId;
@@ -192,7 +193,7 @@
   $: {
     if (parsed && file) {
       // Create an entry for the current source type if it does not already exist. Otherwise, retrieve the id
-      if (!($externalSourceTypes.includes($sourceTypeField.value))) {
+      if (!($externalSourceTypes.some(externalSourceType => externalSourceType.name === $sourceTypeField.value))) {
         sourceTypeInsert = {
           name: $sourceTypeField.value
         };
