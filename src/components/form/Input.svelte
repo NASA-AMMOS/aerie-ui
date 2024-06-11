@@ -188,7 +188,9 @@
   }
 
   .input-stacked {
+    align-items: flex-start;
     display: inherit;
+    flex-direction: column;
     gap: 4px;
   }
 </style>
