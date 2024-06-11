@@ -26,6 +26,7 @@
   import { models } from '../../stores/model';
   import { createPlanError, creatingPlan, resetPlanStores } from '../../stores/plan';
   import { plans } from '../../stores/plans';
+  import { plugins } from '../../stores/plugins';
   import { simulationTemplates } from '../../stores/simulation';
   import { tags } from '../../stores/tags';
   import type { User } from '../../types/app';
@@ -37,7 +38,13 @@
   import { removeQueryParam } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
-  import { convertUsToDurationString, getDoyTime, getShortISOForDate, getUnixEpochTime } from '../../utilities/time';
+  import {
+    convertDoyToYmd,
+    convertUsToDurationString,
+    getDoyTime,
+    getShortISOForDate,
+    getUnixEpochTime,
+  } from '../../utilities/time';
   import { min, required, timestamp, unique } from '../../utilities/validators';
   import type { PageData } from './$types';
 
@@ -97,27 +104,38 @@
       width: 150,
     },
     {
-      field: 'start_time_doy',
+      field: 'start_time',
       filter: 'text',
-      headerName: 'Start Time',
+      headerName: `Start ${$plugins.time?.primary?.label || 'Time'}`,
       resizable: true,
       sortable: true,
       valueGetter: (params: ValueGetterParams<Plan>) => {
-        if (params.data?.start_time_doy) {
-          return params.data?.start_time_doy.split('T')[0];
+        if (params.data) {
+          if ($plugins.time?.primary?.format) {
+            return $plugins.time?.primary?.format(new Date(params.data.start_time));
+          } else {
+            return params.data?.start_time_doy.split('T')[0];
+          }
         }
       },
       width: 150,
     },
     {
-      field: 'end_time_doy',
+      field: 'end_time',
       filter: 'text',
-      headerName: 'End Time',
+      headerName: `End ${$plugins.time?.primary?.label || 'Time'}`,
       resizable: true,
       sortable: true,
       valueGetter: (params: ValueGetterParams<Plan>) => {
-        if (params.data?.end_time_doy) {
-          return params.data?.end_time_doy.split('T')[0];
+        if (params.data) {
+          if ($plugins.time?.primary?.format) {
+            const endTime = convertDoyToYmd(params.data.end_time_doy);
+            if (endTime) {
+              return $plugins.time?.primary?.format(new Date(endTime));
+            }
+          } else {
+            return params.data?.end_time_doy.split('T')[0];
+          }
         }
       },
       width: 140,
@@ -147,7 +165,7 @@
         }
       },
     },
-    { field: 'updated_by', filter: 'text', headerName: 'Updated By', resizable: true, sortable: true },
+    { field: 'updated_by', filter: 'text', headerName: 'Updated By', resizable: true, sortable: true, width: 150 },
     {
       autoHeight: true,
       cellRenderer: tagsCellRenderer,
@@ -173,7 +191,6 @@
   let selectedModel: ModelSlim | undefined;
   let user: User | null = null;
 
-  let endTimeDoyField = field<string>('', [required, timestamp]);
   let modelIdField = field<number>(-1, [min(1, 'Field is required')]);
   let nameField = field<string>('', [
     required,
@@ -183,7 +200,10 @@
     ),
   ]);
   let simTemplateField = field<number | null>(null);
-  let startTimeDoyField = field<string>('', [required, timestamp]);
+
+  $: timeFieldValidators = $plugins.time?.primary?.validate || timestamp;
+  $: startTimeField = field<string>('', [required, timeFieldValidators]);
+  $: endTimeField = field<string>('', [required, timeFieldValidators]);
 
   $: if ($plans) {
     nameField.updateValidators([
@@ -244,11 +264,10 @@
     ];
   }
   $: createButtonEnabled =
-    $endTimeDoyField.dirtyAndValid &&
+    $endTimeField.dirtyAndValid &&
     $modelIdField.dirtyAndValid &&
     $nameField.dirtyAndValid &&
-    $startTimeDoyField.dirtyAndValid;
-
+    $startTimeField.dirtyAndValid;
   $: filteredPlans = $plans.filter(plan => {
     const filterTextLowerCase = filterText.toLowerCase();
     return (
@@ -279,11 +298,17 @@
   });
 
   async function createPlan() {
+    let startTime = $startTimeField.value;
+    let endTime = $endTimeField.value;
+    if ($plugins.time?.primary?.parse) {
+      startTime = getDoyTime($plugins.time?.primary?.parse(startTime));
+      endTime = getDoyTime($plugins.time?.primary?.parse(endTime));
+    }
     const newPlan = await effects.createPlan(
-      $endTimeDoyField.value,
+      endTime,
       $modelIdField.value,
       $nameField.value,
-      $startTimeDoyField.value,
+      startTime,
       $simTemplateField.value,
       user,
     );
@@ -338,22 +363,38 @@
   }
 
   async function onStartTimeChanged() {
-    if ($startTimeDoyField.value && $startTimeDoyField.valid && $endTimeDoyField.value === '') {
+    if ($startTimeField.value && $startTimeField.valid && $endTimeField.value === '') {
       // Set end time as start time plus a day by default
-      const startTimeDate = new Date(getUnixEpochTime($startTimeDoyField.value));
-      startTimeDate.setDate(startTimeDate.getDate() + 1);
-      const newEndTimeDoy = getDoyTime(startTimeDate, false);
-      await endTimeDoyField.validateAndSet(newEndTimeDoy);
+      let newEndTime = '';
+      if ($plugins.time?.primary?.parse && $plugins.time?.primary?.format) {
+        const startTimeDate = $plugins.time?.primary?.parse($startTimeField.value);
+        // TODO this isn't actually incrementing the plugin's date by 1
+        startTimeDate.setDate(startTimeDate.getDate() + 1);
+        newEndTime = $plugins.time?.primary?.format(startTimeDate);
+      } else {
+        const startTimeDate = new Date(getUnixEpochTime($startTimeField.value));
+        startTimeDate.setDate(startTimeDate.getDate() + 1);
+        newEndTime = getDoyTime(startTimeDate, false);
+      }
+      await endTimeField.validateAndSet(newEndTime);
     }
 
     updateDurationString();
   }
 
   function updateDurationString() {
-    if ($startTimeDoyField.valid && $endTimeDoyField.valid) {
-      durationString = convertUsToDurationString(
-        (getUnixEpochTime($endTimeDoyField.value) - getUnixEpochTime($startTimeDoyField.value)) * 1000,
-      );
+    if ($startTimeField.valid && $endTimeField.valid) {
+      let startTimeMS = 0;
+      let endTimeMS = 0;
+      if ($plugins.time?.primary?.parse) {
+        startTimeMS = $plugins.time?.primary?.parse($startTimeField.value).getTime();
+        endTimeMS = $plugins.time?.primary?.parse($endTimeField.value).getTime();
+      } else {
+        startTimeMS = getUnixEpochTime($startTimeField.value);
+        endTimeMS = getUnixEpochTime($endTimeField.value);
+      }
+
+      durationString = convertUsToDurationString((endTimeMS - startTimeMS) * 1000);
 
       if (!durationString) {
         durationString = 'None';
@@ -422,43 +463,70 @@
             />
           </Field>
 
-          <fieldset>
-            <DatePickerField
-              field={startTimeDoyField}
-              label="Start Time - YYYY-DDDThh:mm:ss"
-              name="start-time"
-              on:change={onStartTimeChanged}
-              on:keydown={updateDurationString}
-              use={[
-                [
-                  permissionHandler,
-                  {
-                    hasPermission: canCreate,
-                    permissionError,
-                  },
-                ],
-              ]}
-            />
-          </fieldset>
+          {#if $plugins.time?.primary?.parse}
+            <div class="start-time-field">
+              <Field field={startTimeField} on:change={onStartTimeChanged}>
+                <Input layout="stacked">
+                  <label for="start-time"
+                    >Start {$plugins.time?.primary?.label} - {$plugins.time?.primary?.formatString}</label
+                  >
+                  <input autocomplete="off" class="st-input w-100" name="start-time" value={$startTimeField.value} />
+                </Input>
+              </Field>
+            </div>
+          {:else}
+            <!-- TODO not sure if the on:keydown actually exists in DatePickerField -->
+            <fieldset>
+              <DatePickerField
+                field={startTimeField}
+                label="Start Time - YYYY-DDDThh:mm:ss"
+                name="start-time"
+                on:change={onStartTimeChanged}
+                on:keydown={updateDurationString}
+                use={[
+                  [
+                    permissionHandler,
+                    {
+                      hasPermission: canCreate,
+                      permissionError,
+                    },
+                  ],
+                ]}
+              />
+            </fieldset>
+          {/if}
 
-          <fieldset>
-            <DatePickerField
-              field={endTimeDoyField}
-              label="End Time - YYYY-DDDThh:mm:ss"
-              name="end-time"
-              on:change={updateDurationString}
-              on:keydown={updateDurationString}
-              use={[
-                [
-                  permissionHandler,
-                  {
-                    hasPermission: canCreate,
-                    permissionError,
-                  },
-                ],
-              ]}
-            />
-          </fieldset>
+          {#if $plugins.time?.primary?.parse}
+            <div class="end-time-field">
+              <Field field={endTimeField} on:change={updateDurationString}>
+                <Input layout="stacked">
+                  <label for="end-time"
+                    >End {$plugins.time?.primary?.label} - {$plugins.time?.primary?.formatString}</label
+                  >
+                  <input autocomplete="off" class="st-input w-100" name="end-time" value={$endTimeField.value} />
+                </Input>
+              </Field>
+            </div>
+          {:else}
+            <fieldset>
+              <DatePickerField
+                field={endTimeField}
+                label="End Time - YYYY-DDDThh:mm:ss"
+                name="end-time"
+                on:change={updateDurationString}
+                on:keydown={updateDurationString}
+                use={[
+                  [
+                    permissionHandler,
+                    {
+                      hasPermission: canCreate,
+                      permissionError,
+                    },
+                  ],
+                ]}
+              />
+            </fieldset>
+          {/if}
 
           <fieldset>
             <label for="plan-duration">Plan Duration</label>

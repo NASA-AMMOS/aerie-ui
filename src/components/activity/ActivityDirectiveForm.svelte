@@ -104,12 +104,11 @@
     (activityTypes ?? []).find(({ name: activityTypeName }) => activityDirective?.type === activityTypeName) ?? null;
   $: {
     if ($plugins.time?.primary?.format && $plugins.time?.primary?.parse) {
-      const planStartTimeMs = getUnixEpochTimeFromInterval(
+      const startTimeMs = getUnixEpochTimeFromInterval(
         planStartTimeYmd,
         revision ? revision.start_offset : activityDirective.start_offset,
       );
-      startTime = $plugins.time?.primary?.format(new Date(planStartTimeMs));
-      console.log('planStartTime :>> ', new Date(planStartTimeMs), startTime);
+      startTime = $plugins.time?.primary?.format(new Date(startTimeMs));
     } else {
       startTime = getDoyTimeFromInterval(
         planStartTimeYmd,
@@ -391,7 +390,7 @@
   }
 
   function onUpdateStartTime() {
-    if ($startTimeField.valid /* && startTime !== $startTimeField.value */) {
+    if ($startTimeField.valid && startTime !== $startTimeField.value) {
       console.log('startTimeField.value :>> ', $startTimeField.value);
       const { id } = activityDirective;
       const planStartTimeDoy = getDoyTime(new Date(planStartTimeYmd));
@@ -591,7 +590,9 @@
             <div class="start-time-field">
               <Field field={startTimeField} on:change={onUpdateStartTime}>
                 <Input layout="inline">
-                  <label use:tooltip={{ content: 'Start Time', placement: 'top' }} for="start-time"> Start Time </label>
+                  <label use:tooltip={{ content: 'Start Time', placement: 'top' }} for="start-time">
+                    Start Time ({$plugins.time?.primary.label}) - {$plugins.time?.primary.formatString}
+                  </label>
                   <input
                     autocomplete="off"
                     class="st-input w-100"
