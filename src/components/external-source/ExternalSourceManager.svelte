@@ -140,7 +140,7 @@
     let sourceTypeId: number | undefined = undefined;
     if (file !== undefined) {
       if (!($externalSourceTypes.includes($sourceTypeField.value)) && sourceTypeInsert !== undefined) {
-        sourceTypeId = await effects.createExternalSourceType(file, sourceTypeInsert, user);
+        sourceTypeId = await effects.createExternalSourceType(sourceTypeInsert, user);
       } else {
         sourceTypeId = $externalSourceTypes.find(externalSource => externalSource.name === $sourceTypeField.value).source_type_id
       }
@@ -148,12 +148,8 @@
         sourceInsert.source_type_id = sourceTypeId;
         var sourceId = await effects.createExternalSource(file, sourceInsert, user);
         if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) {
-          console.log(sourceId);
           goto(`${base}/external-sources`);
         }
-        // if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) {
-        //   goto(`${base}/external-sources/${sourceId}`);
-        // }
       }
     }
   }
