@@ -393,12 +393,12 @@
 
       <svelte:fragment slot="body">
         <div class="filter">TBD: Filter by type and time? Filter by used/unused by?</div>
-        {#if $externalSources.length}
+        {#if $externalSourcesWithTypeName.length}
         <CssGrid rows="1fr 5px 1fr" gap="8px" class="source-grid">
           <SingleActionDataGrid
             {columnDefs}
             itemDisplayText="External Source"
-            items={$externalSources}
+            items={$externalSourceWithTypeName}
             {user}
             bind:selectedItemId={selectedSourceId}
             on:rowClicked={({ detail }) => selectSource(detail.data)}
