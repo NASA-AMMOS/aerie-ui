@@ -3771,7 +3771,7 @@ const effects = {
     user: User | null,
     activityTypes: ActivityType[] = [],
     resourceTypes: ResourceType[] = [],
-    view?: View | null,
+    defaultView?: View | null,
   ): Promise<View | null> {
     try {
       if (query !== null) {
@@ -3784,8 +3784,8 @@ const effects = {
           if (view !== null) {
             return view;
           }
-        } else if (view !== null && view !== undefined) {
-          return view;
+        } else if (defaultView !== null && defaultView !== undefined) {
+          return defaultView;
         }
       }
       return generateDefaultView(activityTypes, resourceTypes);
