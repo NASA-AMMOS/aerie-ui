@@ -890,8 +890,7 @@ const effects = {
     }
   },
 
-  // TODO - do we need to use file for anything here?
-  async createExternalSourceType(file: File | undefined, source: ExternalSourceTypeInsertInput, user: User | null) {
+  async createExternalSourceType(source: ExternalSourceTypeInsertInput, user: User | null) {
     try {
       // TODO: Check permissions.
       // if (!queryPermissions.CREATE_MODEL(user)) {
