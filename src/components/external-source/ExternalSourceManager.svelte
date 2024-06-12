@@ -2,7 +2,6 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import type { IRowNode, ValueGetterParams } from 'ag-grid-community';
-  import { GridApi } from 'ag-grid-community';
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { onDestroy, onMount } from 'svelte';
@@ -117,7 +116,6 @@
   // source detail variables
   let selectedSourceId: number | null = null;
   let selectedSourceFull: ExternalSource | null = null;
-  let gridApi: GridApi<any> | undefined;
 
   // timeline variables
   let dpr = 0;
@@ -289,28 +287,17 @@
     mouseOver = e.detail
   }
 
-  let currentExternalSourceTypeFilter: string | null;
-
-  function isExternalFilterPresent(): boolean {
-    return currentExternalSourceTypeFilter !== null && currentExternalSourceTypeFilter !== "all";
-  }
-
-  function doesExternalFilterPass(node: IRowNode<ExternalSourceWithTypeName>): boolean {
-    console.log("doesExternalFilterPass ", node)
-    if (node.data) {
-      console.log("if node.data")
-      if (node.data.source_type === currentExternalSourceTypeFilter) {
-        console.log("all the way in") 
-        return true;
-      }
-    }
-    return false;
-  }
+  let currentExternalSourceTypeFilter: string | null = null;
+  let filteredExternalSources: ExternalSourceWithTypeName[] = currentExternalSourceTypeFilter === null ? $externalSourceWithTypeName : $externalSourceWithTypeName.filter(externalSource => {
+    externalSource.source_type === currentExternalSourceTypeFilter;
+  });
 
   function externalFilterChanged(newValue: string) {
-    console.log("newvalue:", newValue)
-    currentExternalSourceTypeFilter = newValue;
-    gridApi?.onFilterChanged();
+    if (newValue === "all") {
+      currentExternalSourceTypeFilter = null;
+    } else {
+      currentExternalSourceTypeFilter = newValue;
+    }
   }
 </script>
 
@@ -427,10 +414,8 @@
             <SingleActionDataGrid
               {columnDefs}
               itemDisplayText="External Source"
-              items={$externalSourceWithTypeName}
+              items={filteredExternalSources}
               {user}
-              {doesExternalFilterPass}
-              {isExternalFilterPresent}
               on:rowClicked={({ detail }) => selectSource(detail.data)}
             />
             <CssGridGutter track={1} type="row" />
