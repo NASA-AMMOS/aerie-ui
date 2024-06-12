@@ -299,6 +299,23 @@
     // just assign the MouseOver object so that the tooltip can access it
     mouseOver = e.detail
   }
+
+  let currentExternalSourceTypeFilter: string | null;
+
+  function isExternalFilterPresent(): boolean {
+    return currentExternalSourceTypeFilter !== null;  // TODO - how should we handle null'ing this? an option that says 'All'?
+  }
+
+  function doesExternalFilterPass(node: ExternalSourceWithTypeName): boolean {
+    if (node) {
+      if (node.source_type === currentExternalSourceTypeFilter) return true;
+    }
+    return false;
+  }
+
+  function externalFilterChanged(newValue: string) {
+    currentExternalSourceTypeFilter = newValue;
+  }
 </script>
 
 <!-- <CssGrid> -->
@@ -395,7 +412,16 @@
       <svelte:fragment slot="header">
         <SectionTitle><Truck />External Sources</SectionTitle>
       </svelte:fragment>
+      <!-- TODO: Add toggleable button to filter by type for now -->
+      <label>
+        <input type="radio" name="filter" id="all" value="all" on:change={externalFilterChanged}>
+      </label>
+      {#each $externalSourceTypes as externalSourceType}
+        <label>
+          <input type="radio" name="filter" id={externalSourceType.name} value={externalSourceType.name} on:change={externalFilterChanged}>
 
+        </label>
+      {/each}
       <svelte:fragment slot="body">
         <div class="filter">TBD: Filter by type and time? Filter by used/unused by?</div>
         {#if $externalSourceWithTypeName.length}
@@ -406,6 +432,8 @@
             items={$externalSourceWithTypeName}
             {user}
             bind:selectedItemId={selectedSourceId}
+            {doesExternalFilterPass}
+            {isExternalFilterPresent}
             on:rowClicked={({ detail }) => selectSource(detail.data)}
           />
           <CssGridGutter track={1} type="row" />
