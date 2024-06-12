@@ -120,20 +120,20 @@
     return false;
   }
 
-  function onToggleChannelDictionary(event: CustomEvent<{ id: number | null }>) {
-    parcelChannelDictionaryId = event.detail.id;
+  function onToggleChannelDictionary(event: CustomEvent<{ id: number; value: boolean }>) {
+    parcelChannelDictionaryId = event.detail.value ? event.detail.id : null;
   }
 
-  function onToggleCommandDictionary(event: CustomEvent<{ id: number | null }>) {
-    parcelCommandDictionaryId = event.detail.id;
+  function onToggleCommandDictionary(event: CustomEvent<{ id: number; value: boolean }>) {
+    parcelCommandDictionaryId = event.detail.value ? event.detail.id : null;
   }
 
   function onToggleParameterDictionary(event: CustomEvent<{ ids: Record<number, boolean> }>) {
     selectedParmeterDictionaries = event.detail.ids;
   }
 
-  function onToggleSequenceAdaptation(event: CustomEvent<{ id: number | null }>) {
-    parcelSequenceAdaptationId = event.detail.id;
+  function onToggleSequenceAdaptation(event: CustomEvent<{ id: number; value: boolean }>) {
+    parcelSequenceAdaptationId = event.detail.value ? event.detail.id : null;
   }
 
   async function saveParcelToParameterDictionaries(): Promise<void> {
@@ -281,7 +281,7 @@
   <div class="table-container">
     <DictionaryTable
       dictionaries={$commandDictionaries}
-      dictionaryId={parcelCommandDictionaryId}
+      selectedDictionaryIds={parcelCommandDictionaryId ? { [parcelCommandDictionaryId]: true } : {}}
       isEditingParcel={true}
       hasEditPermission={hasPermission}
       type="Command"
@@ -291,7 +291,7 @@
 
     <DictionaryTable
       dictionaries={$channelDictionaries}
-      dictionaryId={parcelChannelDictionaryId}
+      selectedDictionaryIds={parcelChannelDictionaryId ? { [parcelChannelDictionaryId]: true } : {}}
       isEditingParcel={true}
       hasEditPermission={hasPermission}
       type="Channel"
@@ -301,7 +301,7 @@
 
     <DictionaryTable
       dictionaries={$parameterDictionaries}
-      multiSelectDictionaryIds={selectedParmeterDictionaries}
+      selectedDictionaryIds={selectedParmeterDictionaries}
       isEditingParcel={true}
       isMultiselect={true}
       hasEditPermission={hasPermission}
@@ -312,7 +312,7 @@
 
     <DictionaryTable
       dictionaries={$sequenceAdaptations}
-      dictionaryId={parcelSequenceAdaptationId}
+      selectedDictionaryIds={parcelSequenceAdaptationId ? { [parcelSequenceAdaptationId]: true } : {}}
       isEditingParcel={true}
       hasEditPermission={hasPermission}
       type="Sequence"

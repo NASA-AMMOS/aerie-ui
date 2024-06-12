@@ -13,10 +13,7 @@
   import SectionTitle from '../ui/SectionTitle.svelte';
 
   export let dictionaries: DictionaryType[];
-  // Used when the table is in single select mode.
-  export let dictionaryId: number | null = null;
-  // Used when the table is in multiselect mode.
-  export let multiSelectDictionaryIds: Record<number, boolean> = {};
+  export let selectedDictionaryIds: Record<number, boolean> = {};
   export let isEditingParcel: boolean = false;
   export let isMultiselect: boolean = false;
   export let hasEditPermission: boolean = false;
@@ -34,8 +31,7 @@
 
   const dispatch = createEventDispatcher<{
     delete: { id: number };
-    multiSelect: { ids: Record<number, boolean> };
-    select: { id: number | null };
+    select: { id: number; value: boolean };
   }>();
 
   type CellRendererParams = {
@@ -48,7 +44,7 @@
   $: displayTextPlural = isSequenceAdaptation ? `${type} Adaptations` : `${type} Dictionaries`;
   $: hasDeletePermission = featurePermissions.commandDictionary.canDelete(user);
 
-  $: if ((multiSelectDictionaryIds || dictionaryId) && dictionaryDataGrid?.redrawRows !== undefined) {
+  $: if (selectedDictionaryIds && dictionaryDataGrid?.redrawRows !== undefined) {
     dictionaryDataGrid.redrawRows();
   }
 
@@ -61,13 +57,20 @@
       suppressSizeToFit: true,
       valueGetter: (params: ValueGetterParams<DictionaryType>) => {
         const { data } = params;
+
         if (data) {
           if (isMultiselect) {
-            return !!multiSelectDictionaryIds[data.id];
+            return !!selectedDictionaryIds[data.id];
           }
 
-          return dictionaryId === data.id;
+          // We have a single id if we're not in multiselect mode.
+          const idList = Object.keys(selectedDictionaryIds);
+
+          if (idList.length > 0) {
+            return Number(idList[0]) === data.id;
+          }
         }
+
         return false;
       },
       width: 35,
@@ -164,17 +167,13 @@
     }
   }
 
-  function selectRow(id: number, newValue: boolean) {
-    if (isMultiselect && typeof newValue === 'boolean') {
-      multiSelectDictionaryIds = {
-        ...multiSelectDictionaryIds,
-        [id]: newValue,
-      };
-      dispatch('multiSelect', { ids: multiSelectDictionaryIds });
-    } else {
-      dictionaryId = newValue ? id : null;
-      dispatch('select', { id: dictionaryId });
-    }
+  function selectRow(id: number, value: boolean) {
+    selectedDictionaryIds = {
+      ...selectedDictionaryIds,
+      [id]: value,
+    };
+
+    dispatch('select', { id, value });
   }
 </script>
 
