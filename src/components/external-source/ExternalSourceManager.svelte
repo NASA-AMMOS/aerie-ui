@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
+  import SearchIcon from '@nasa-jpl/stellar/icons/search.svg?component';
   import type { ValueGetterParams } from 'ag-grid-community';
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
@@ -11,7 +12,7 @@
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalEvent, ExternalEventDB } from '../../types/external-event';
-  import type { ExternalSource, ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceSlim, ExternalSourceTypeInsertInput, ExternalSourceWithTypeName } from '../../types/external-source';
+  import type { ExternalSource, ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceSlim, ExternalSourceType, ExternalSourceTypeInsertInput, ExternalSourceWithTypeName } from '../../types/external-source';
   import type { TimeRange } from '../../types/timeline';
   import { type MouseDown, type MouseOver } from '../../types/timeline';
   import effects from '../../utilities/effects';
@@ -19,9 +20,13 @@
   import { TimelineInteractionMode, getXScale } from '../../utilities/timeline';
   import { tooltip } from '../../utilities/tooltip';
   import { required, timestamp } from '../../utilities/validators';
+  import Collapse from '../Collapse.svelte';
   import ExternalEventForm from '../external-events/ExternalEventForm.svelte';
   import DatePickerField from '../form/DatePickerField.svelte';
   import Field from '../form/Field.svelte';
+  import Input from '../form/Input.svelte';
+  import Menu from '../menus/Menu.svelte';
+  import MenuHeader from '../menus/MenuHeader.svelte';
   import LayerExternalSources from '../timeline/LayerExternalSources.svelte';
   import TimelineCursors from '../timeline/TimelineCursors.svelte';
   import Tooltip from '../timeline/Tooltip.svelte';
@@ -32,7 +37,9 @@
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
 
+
   export let user: User | null;
+
 
   let keyInputField: HTMLInputElement; // need this to set a focus on it. not related to the value
   // form variables (TODO: make these autofill???)
@@ -136,9 +143,18 @@
   let file: File | undefined;
   let parsed: ExternalSourceJson | undefined;
 
+  // For filtering purposes (modelled after TimelineEditorLayerFilter):
+  let filterMenu: Menu;
+  let input: HTMLInputElement;
+  let filterString: string = '';
+  let filteredValues: ExternalSourceType[] = [];
+  let selectedFilters: ExternalSourceType[] = [...$externalSourceTypes];
+  let menuTitle: string = '';
+  let filteredExternalSources: ExternalSourceWithTypeName[] = [];
+
+
   // $: createButtonDisabled = !files || key === '' ||   $creatingModel === true; TODO: do this later
   
-
   // TODO: this doesn't let people modify the form properties.
   // We need to figure out if things like the start, end, and valid_at
   // time *should* be editable. I don't think any of them should be, but we
@@ -196,6 +212,11 @@
   $: xDomainView = [startTime, endTime];
   $: xScaleView = getXScale(xDomainView, 500);
 
+  $: filteredExternalSources = $externalSourceWithTypeName.filter(externalSource => {
+    return selectedFilters.find(f => f.name === externalSource.source_type) !== undefined
+  });
+  $: filteredValues = $externalSourceTypes.filter(externalSourceType => externalSourceType.name.toLowerCase().includes(filterString))
+  
   $: effects.getExternalEvents(selectedSource?.id, user).then(fetched => selectedEvents = fetched.map(eDB => {
     return {
       ...eDB,
@@ -203,6 +224,7 @@
       durationMs: convertDurationToMs(eDB.duration)
     }
   }));
+
 
   onMount(() => {
     detectDPRChange();
@@ -213,6 +235,7 @@
       removeDPRChangeListener();
     }
   });
+
 
   function detectDPRChange() {
     // Adapted from https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio#monitoring_screen_resolution_or_zoom_level_changes
@@ -253,7 +276,6 @@
     }
   }
 
-
   function selectSource(detail: ExternalSourceWithTypeName) {
     selectedSource = detail;
     if (selectedSource) {
@@ -287,197 +309,248 @@
     mouseOver = e.detail
   }
 
-  let currentExternalSourceTypeFilter: string | null = null;
-  let filteredExternalSources: ExternalSourceWithTypeName[] = [];
-  $: filteredExternalSources = currentExternalSourceTypeFilter === null ? $externalSourceWithTypeName : $externalSourceWithTypeName.filter(externalSource => {
-    return externalSource.source_type === currentExternalSourceTypeFilter;
-  });
-
-  function externalFilterChanged(newValue: string) {
-    if (newValue === "all") {
-      currentExternalSourceTypeFilter = null;
-    } else {
-      currentExternalSourceTypeFilter = newValue;
+  function toggleItem(value: ExternalSourceType) {
+    if (!selectedFilters.find(f => f.id == value.id)) {
+      selectedFilters = selectedFilters.concat(value)
     }
+    else {
+      selectedFilters = selectedFilters.filter(filter => filter.id !== value.id)
+    }
+  }
+
+  function unselectFilteredValues() {
+    selectedFilters = [];
+  }
+
+  function selectFilteredValues() {
+    selectedFilters = [...new Set([...selectedFilters, ...filteredValues])];
   }
 </script>
 
-<!-- <CssGrid> -->
-  <CssGrid columns="20% auto">
-    <Panel borderRight padBody={true}>
-      <svelte:fragment slot="header">
-        <SectionTitle
-          >{selectedEvent ? `Selected Event`
-            : selectedSource
-            ? `#${selectedSource.id} – ${$externalSourceTypes.find(st => st.id == selectedSource?.source_type_id)}`
-            : 'Upload a Source File'}</SectionTitle
+<CssGrid columns="20% auto">
+  <Panel borderRight padBody={true}>
+    <svelte:fragment slot="header">
+      <SectionTitle
+        >{selectedEvent ? `Selected Event`
+          : selectedSource
+          ? `#${selectedSource.id} – ${$externalSourceTypes.find(st => st.id == selectedSource?.source_type_id)}`
+          : 'Upload a Source File'}</SectionTitle
+      >
+      {#if selectedEvent}
+        <button
+          class="st-button icon fs-6"
+          on:click={deselectEvent}
+          use:tooltip={{ content: 'Deselect event', placement: 'top' }}
         >
-        {#if selectedEvent}
-          <button
-            class="st-button icon fs-6"
-            on:click={deselectEvent}
-            use:tooltip={{ content: 'Deselect event', placement: 'top' }}
-          >
-            <XIcon />
-          </button>
-        {:else if selectedSource}
-          <button
-            class="st-button icon fs-6"
-            on:click={deselectSource}
-            use:tooltip={{ content: 'Deselect source', placement: 'top' }}
-          >
-            <XIcon />
-          </button>
-        {/if}
-      </svelte:fragment>
+          <XIcon />
+        </button>
+      {:else if selectedSource}
+        <button
+          class="st-button icon fs-6"
+          on:click={deselectSource}
+          use:tooltip={{ content: 'Deselect source', placement: 'top' }}
+        >
+          <XIcon />
+        </button>
+      {/if}
+    </svelte:fragment>
 
-      <svelte:fragment slot="body">
-        {#if selectedEvent}
-          <ExternalEventForm
-            externalEvent={selectedEvent}
-            showHeader={true}
-          />
-        {:else if selectedSource}
-          <div title={selectedSource.key}>{selectedSource.key}</div>
-          <div class="tbd">
-            {#if selectedSourceFull !== null}
-              {#each selectedSourceFull.external_events as externalEvent}
-                <ul>{externalEvent}</ul>
-              {/each}
-            {/if}
-          </div>
-        {:else}
-          <form on:submit|preventDefault={onFormSubmit}>
-            <AlertError class="m-2" error={$createExternalSourceError} />
-            <AlertError class="m-2" error={$createExternalSourceTypeError} />
+    <svelte:fragment slot="body">
+      {#if selectedEvent}
+        <ExternalEventForm
+          externalEvent={selectedEvent}
+          showHeader={true}
+        />
+      {:else if selectedSource}
+        <div title={selectedSource.key}>{selectedSource.key}</div>
+        <div class="tbd">
+          {#if selectedSourceFull !== null}
+            {#each selectedSourceFull.external_events as externalEvent}
+              <ul>{externalEvent}</ul>
+            {/each}
+          {/if}
+        </div>
+      {:else}
+        <form on:submit|preventDefault={onFormSubmit}>
+          <AlertError class="m-2" error={$createExternalSourceError} />
+          <AlertError class="m-2" error={$createExternalSourceTypeError} />
+
+          <fieldset>
+            <label for="file">Source File</label>
+            <input class="w-100" name="file" required type="file" bind:files />
+          </fieldset>
+
+          {#if parsed}
+            <fieldset>
+              <button class="st-button w-100" type="submit"
+                >{$creatingExternalSource ? 'Uploading...' : 'Upload'}</button
+              >
+              <div style="padding-top:10px">
+                <button class="st-button w-100" type="reset">Reset</button>
+              </div>
+            </fieldset>
+            <Field field={keyField}>
+              <label for="key" slot="label">Key</label>
+              <input disabled bind:value={keyInputField} autocomplete="off" class="st-input w-100" name="key" required />
+            </Field>
+
+            <Field field={sourceTypeField}>
+              <label for="source-type" slot="label">Source Type</label>
+              <input disabled autocomplete="off" class="st-input w-100" name="source-type" required />
+            </Field>
 
             <fieldset>
-              <label for="file">Source File</label>
-              <input class="w-100" name="file" required type="file" bind:files />
+              <DatePickerField disabled={true} field={startTimeDoyField} label="Start Time - YYYY-DDDThh:mm:ss" name="start-time" />
             </fieldset>
 
-            {#if parsed}
-              <fieldset>
-                <button class="st-button w-100" type="submit"
-                  >{$creatingExternalSource ? 'Uploading...' : 'Upload'}</button
-                >
-                <div style="padding-top:10px">
-                  <button class="st-button w-100" type="reset">Reset</button>
+            <fieldset>
+              <DatePickerField disabled={true} field={endTimeDoyField} label="End Time - YYYY-DDDThh:mm:ss" name="end_time" />
+            </fieldset>
+
+            <fieldset>
+              <DatePickerField disabled={true} field={validAtDoyField} label="Valid At Time - YYYY-DDDThh:mm:ss" name="valid_at" />
+            </fieldset>
+          {/if}
+        </form>
+      {/if}
+    </svelte:fragment>
+  </Panel>
+
+  <Panel padBody={false}>
+    <svelte:fragment slot="header">
+      <SectionTitle><Truck />External Sources</SectionTitle>
+    </svelte:fragment>
+    <svelte:fragment slot="body">
+      <div class="filter" style="padding-left: 5px; padding-right: 15px">
+        <Collapse
+          className="anchor-collapse"
+          defaultExpanded={false}
+          title="Filters"
+          tooltipContent="Filter External Sources"
+        >
+          <div class="timeline-editor-layer-filter" style="position: relative">
+            <Input>
+              <input
+                bind:this={input}
+                bind:value={filterString}
+                on:click|stopPropagation={() => {
+                  if (!filterMenu.isShown()) {
+                    filterMenu.show();
+                    input.focus();
+                  }
+                }}
+                autocomplete="off"
+                class="st-input w-100"
+                name="filter"
+                placeholder={'Filter by Source Type'}
+              />
+              <div class="filter-search-icon" slot='left'><SearchIcon /></div>
+            </Input>
+            <Menu hideAfterClick={false} bind:this={filterMenu} placement="bottom-start" on:hide={() => (filterString = '')}>
+              <div class="menu-content">
+                <MenuHeader title={menuTitle} />
+                <div class="body st-typography-body">
+                  {#if filteredValues.length}
+                    <div class="values">
+                      {#each filteredValues as filteredSourceType}
+                        <button
+                          class="value st-button tertiary st-typography-body"
+                          on:click={() => toggleItem(filteredSourceType)}
+                          class:active={selectedFilters.map(f => f.name).find(f => f === filteredSourceType.name) !== undefined}
+                        >
+                          {filteredSourceType.name}
+                        </button>
+                      {/each}
+                    </div>
+                  {:else}
+                    <div class="st-typography-label empty-state">No external source types matching filter</div>
+                  {/if}
                 </div>
-              </fieldset>
-              <Field field={keyField}>
-                <label for="key" slot="label">Key</label>
-                <input disabled bind:value={keyInputField} autocomplete="off" class="st-input w-100" name="key" required />
-              </Field>
-
-              <Field field={sourceTypeField}>
-                <label for="source-type" slot="label">Source Type</label>
-                <input disabled autocomplete="off" class="st-input w-100" name="source-type" required />
-              </Field>
-
-              <fieldset>
-                <DatePickerField disabled={true} field={startTimeDoyField} label="Start Time - YYYY-DDDThh:mm:ss" name="start-time" />
-              </fieldset>
-
-              <fieldset>
-                <DatePickerField disabled={true} field={endTimeDoyField} label="End Time - YYYY-DDDThh:mm:ss" name="end_time" />
-              </fieldset>
-
-              <fieldset>
-                <DatePickerField disabled={true} field={validAtDoyField} label="Valid At Time - YYYY-DDDThh:mm:ss" name="valid_at" />
-              </fieldset>
-            {/if}
-          </form>
-        {/if}
-      </svelte:fragment>
-    </Panel>
-
-    <Panel padBody={false}>
-      <svelte:fragment slot="header">
-        <SectionTitle><Truck />External Sources</SectionTitle>
-      </svelte:fragment>
-      <svelte:fragment slot="body">
-        <div class="filter">
-          <!-- TODO: Add toggleable button to filter by type for now -->
-          <label>
-            <input type="radio" name="filter" id="all" value="all" on:change={() => externalFilterChanged("all")}>
-            All
-          </label>
-          {#each $externalSourceTypes as externalSourceType}
-            <label>
-              <input type="radio" name="filter" id={externalSourceType.name} value={externalSourceType.name} on:change={() => externalFilterChanged(externalSourceType.name)}>
-              {externalSourceType.name}
-            </label>
-          {/each}
-        </div>
-        {#if $externalSourceWithTypeName.length}
-          <CssGrid rows="1fr 5px 1fr" gap="8px" class="source-grid">
-            <SingleActionDataGrid
-              {columnDefs}
-              itemDisplayText="External Source"
-              items={filteredExternalSources}
-              {user}
-              on:rowClicked={({ detail }) => selectSource(detail.data)}
-            />
-            <CssGridGutter track={1} type="row" />
-            {#if selectedSource}
-              <div style="padding-left: 5px; padding-right: 5px">
-                <div style="height:15px; background-color:#ebe9e6;">
-                  <div style="display:inline; float:left;">{startTime}</div>
-                  <div style="display:inline; float:right;">{endTime}</div>
-                </div>
-                <div style="height: 100%; width: 100%; position: relative"
-                  bind:this={canvasContainerRef}
-                  bind:clientWidth={canvasContainerWidth}
-                  bind:clientHeight={canvasContainerHeight}
-                  on:mousedown={e => {
-                    canvasMouseDownEvent = e
-                  }}
-                  on:mousemove={e => {
-                    canvasMouseOverEvent = e
-                  }}
-                  role="none"
-                >
-                  <TimelineCursors
-                    marginLeft={0}
-                    drawWidth={canvasContainerWidth}
-                    {mouseOver}
-                    {xScaleView}
-                  />
-                  <Tooltip bind:this={eventTooltip} {mouseOver} interpolateHoverValue={false} hidden={false} resourceTypes={[]} />
-                  <div style="padding-top: 3px; padding-bottom: 10px">
-                    <LayerExternalSources
-                      selectedExternalEventId={selectedEvent?.id ?? null}
-                      externalEvents={selectedEvents}
-                      {viewTimeRange}
-                      {xScaleView}
-                      {dpr}
-                      mousedown={canvasMouseDownEvent}
-                      drawHeight={canvasContainerHeight-3-10 ?? 200}
-                      drawWidth={canvasContainerWidth ?? 200}
-                      timelineInteractionMode={TimelineInteractionMode.Interact}
-                      on:mouseDown={onCanvasMouseDown}
-                      on:mouseOver={onCanvasMouseOver}
-                      mousemove={canvasMouseOverEvent}
-                      mouseout={undefined}
-                      contextmenu={undefined}
-                      dblclick={undefined}
-                      planStartTimeYmd={""}
-                    />
-                  </div>
+                <div class="list-buttons menu-border-top">
+                  <!-- <button class="st-button secondary list-button" on:click={selectFilteredValues}> -->
+                  <button class="st-button secondary list-button" on:click={selectFilteredValues}>
+                    Select {filteredValues.length}
+                    {#if filteredValues.length === 1}
+                      {'external source type'}
+                    {:else}
+                      {'external source types'}
+                    {/if}
+                  </button>
+                  <!-- <button class="st-button secondary list-button" on:click={unselectFilteredValues}>Unselect all</button> -->
+                  <button class="st-button secondary list-button" on:click={unselectFilteredValues}>Unselect all</button>
                 </div>
               </div>
-            {:else}
-              <p style="padding-left: 5px">Select a source to view contents.</p>
-            {/if}
-          </CssGrid>
-        {:else}
-          <p style="padding-left: 5px">No External Sources present.</p>
-        {/if}
-      </svelte:fragment>
-    </Panel>
-  </CssGrid>
-<!-- </CssGrid> -->
+            </Menu>
+          </div>
+        </Collapse>
+      </div>
+      {#if $externalSourceWithTypeName.length}
+        <CssGrid rows="1fr 5px 1fr" gap="8px" class="source-grid">
+          <SingleActionDataGrid
+            {columnDefs}
+            itemDisplayText="External Source"
+            items={filteredExternalSources}
+            {user}
+            on:rowClicked={({ detail }) => selectSource(detail.data)}
+          />
+          <CssGridGutter track={1} type="row" />
+          {#if selectedSource}
+            <div style="padding-left: 5px; padding-right: 5px">
+              <div style="height:15px; background-color:#ebe9e6;">
+                <div style="display:inline; float:left;">{startTime}</div>
+                <div style="display:inline; float:right;">{endTime}</div>
+              </div>
+              <div style="height: 100%; width: 100%; position: relative"
+                bind:this={canvasContainerRef}
+                bind:clientWidth={canvasContainerWidth}
+                bind:clientHeight={canvasContainerHeight}
+                on:mousedown={e => {
+                  canvasMouseDownEvent = e
+                }}
+                on:mousemove={e => {
+                  canvasMouseOverEvent = e
+                }}
+                role="none"
+              >
+                <TimelineCursors
+                  marginLeft={0}
+                  drawWidth={canvasContainerWidth}
+                  {mouseOver}
+                  {xScaleView}
+                />
+                <Tooltip bind:this={eventTooltip} {mouseOver} interpolateHoverValue={false} hidden={false} resourceTypes={[]} />
+                <div style="padding-top: 3px; padding-bottom: 10px">
+                  <LayerExternalSources
+                    selectedExternalEventId={selectedEvent?.id ?? null}
+                    externalEvents={selectedEvents}
+                    {viewTimeRange}
+                    {xScaleView}
+                    {dpr}
+                    mousedown={canvasMouseDownEvent}
+                    drawHeight={canvasContainerHeight-3-10 ?? 200}
+                    drawWidth={canvasContainerWidth ?? 200}
+                    timelineInteractionMode={TimelineInteractionMode.Interact}
+                    on:mouseDown={onCanvasMouseDown}
+                    on:mouseOver={onCanvasMouseOver}
+                    mousemove={canvasMouseOverEvent}
+                    mouseout={undefined}
+                    contextmenu={undefined}
+                    dblclick={undefined}
+                    planStartTimeYmd={""}
+                  />
+                </div>
+              </div>
+            </div>
+          {:else}
+            <p style="padding-left: 5px">Select a source to view contents.</p>
+          {/if}
+        </CssGrid>
+      {:else}
+        <p style="padding-left: 5px">No External Sources present.</p>
+      {/if}
+    </svelte:fragment>
+  </Panel>
+</CssGrid>
 
 <style>
   :global(.plan-grid) {
@@ -491,5 +564,72 @@
   :global(.source-grid) {
     height: 100%;
     width: 100%;
+  }
+  .timeline-editor-layer-filter {
+    display: flex;
+  }
+
+  .timeline-editor-layer-filter :global(.input) {
+    z-index: 1;
+  }
+
+  .filter-search-icon {
+    align-items: center;
+    color: var(--st-gray-50);
+    display: flex;
+  }
+
+  .menu-content {
+    display: grid;
+    grid-template-rows: min-content 1fr min-content;
+    max-height: 360px;
+  }
+
+  .body {
+    cursor: auto;
+    display: grid;
+    gap: 8px;
+    overflow: auto;
+    text-align: left;
+  }
+
+  .values {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .value {
+    border-radius: 0;
+    justify-content: left;
+    padding: 16px 8px;
+  }
+
+  .value:hover {
+    background: var(--st-gray-20);
+  }
+
+  .value.active,
+  .value.active:hover {
+    background: #4fa1ff4f;
+  }
+
+  .body :global(.input-inline) {
+    padding: 0;
+  }
+
+  .list-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
+    width: 100%;
+  }
+
+  .empty-state {
+    margin: 8px;
+  }
+
+  .menu-border-top {
+    border-top: 1px solid var(--st-gray-20);
   }
 </style>
