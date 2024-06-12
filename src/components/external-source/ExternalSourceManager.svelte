@@ -23,6 +23,7 @@
   import Field from '../form/Field.svelte';
   import LayerExternalSources from '../timeline/LayerExternalSources.svelte';
   import TimelineCursors from '../timeline/TimelineCursors.svelte';
+  import Tooltip from '../timeline/Tooltip.svelte';
   import AlertError from '../ui/AlertError.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
@@ -126,8 +127,10 @@
   let canvasContainerWidth: number = 0;
   let canvasContainerHeight: number = 0;
   let canvasMouseDownEvent: MouseEvent | undefined = undefined;
-  let canvasMouseOverEvent: MouseOver | null = null;
+  let canvasMouseOverEvent: MouseEvent | undefined = undefined;
   let removeDPRChangeListener: (() => void) | null = null;
+  let eventTooltip: Tooltip;
+  let mouseOver: MouseOver | null;
   
 
   // $: createButtonDisabled = !files || key === '' ||   $creatingModel === true; TODO: do this later
@@ -247,8 +250,9 @@
     selectedEvent = externalEvents?.length ? externalEvents[0] : null 
   }
 
-  function onCanvasContainerMouseMove(e: MouseEvent) {
-    canvasMouseOverEvent = { e }
+  function onCanvasMouseOver(e: CustomEvent<MouseOver>) {
+    // just assign the MouseOver object so that the tooltip can access it
+    mouseOver = e.detail
   }
 </script>
 
@@ -371,16 +375,21 @@
                 bind:this={canvasContainerRef} 
                 bind:clientWidth={canvasContainerWidth} 
                 bind:clientHeight={canvasContainerHeight} 
-                on:mousedown={e => canvasMouseDownEvent = e}
-                on:mousemove={onCanvasContainerMouseMove}
+                on:mousedown={e => {
+                  canvasMouseDownEvent = e
+                }}
+                on:mousemove={e => {
+                  canvasMouseOverEvent = e
+                }}
                 role="none"
               >
                 <TimelineCursors
                   marginLeft={0}
                   drawWidth={canvasContainerWidth}
-                  mouseOver={canvasMouseOverEvent}
+                  {mouseOver}
                   {xScaleView}
                 />
+                <Tooltip bind:this={eventTooltip} {mouseOver} interpolateHoverValue={false} hidden={false} resourceTypes={[]} />
                 <div style="padding-top: 3px; padding-bottom: 10px">
                   <LayerExternalSources
                     selectedExternalEventId={selectedEvent?.id ?? null}
@@ -393,7 +402,8 @@
                     drawWidth={canvasContainerWidth ?? 200}
                     timelineInteractionMode={TimelineInteractionMode.Interact}
                     on:mouseDown={onCanvasMouseDown}
-                    mousemove={undefined}
+                    on:mouseOver={onCanvasMouseOver}
+                    mousemove={canvasMouseOverEvent}
                     mouseout={undefined}
                     contextmenu={undefined}
                     dblclick={undefined}
