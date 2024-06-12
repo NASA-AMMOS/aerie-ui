@@ -47,6 +47,21 @@ export class Model {
     await this.confirmModalDeleteButton.click();
   }
 
+  async filterTable(associationName: string) {
+    await this.associationTable.waitFor({ state: 'attached' });
+    await this.associationTable.waitFor({ state: 'visible' });
+
+    const nameColumnHeader = await this.associationTable.getByRole('columnheader', { name: 'Name' });
+    await nameColumnHeader.hover();
+
+    const filterIcon = await nameColumnHeader.locator('.ag-icon-menu');
+    await expect(filterIcon).toBeVisible();
+    await filterIcon.click();
+    await this.page.getByRole('textbox', { name: 'Filter Value' }).fill(associationName);
+    await expect(this.associationTable.getByRole('row', { name: associationName })).toBeVisible();
+    await this.page.keyboard.press('Escape');
+  }
+
   /**
    * Wait for Hasura events to finish seeding the database after a model is created.
    * If we do not wait then navigation to the plan will fail because the data is not there yet.

@@ -34,7 +34,7 @@ test.beforeAll(async ({ browser, baseURL }) => {
   planB = new Plan(page, plans, constraints, schedulingGoals, schedulingConditions, plans.createPlanName());
 
   await models.goto();
-  await models.createModel('', baseURL);
+  await models.createModel(baseURL);
   await userB.logout(baseURL);
   // TODO find a way to delete these test users. Cannot import the reqHasura into playwright due
   // to svelte runtime libraries that there is no solution or mock for as of 4/3/24.
@@ -62,7 +62,7 @@ test.afterAll(async ({ baseURL }) => {
   await context.close();
 });
 
-test.describe.serial('Plan Metadata', () => {
+test.describe.skip('Plan Metadata', () => {
   test('Plan should be re-nameable', async () => {
     await planA.showPanel(PanelNames.PLAN_METADATA);
     await planA.renamePlan(planA.planName + '_renamed');

@@ -284,9 +284,11 @@
         plan_id: newPlan.id,
         tag_id,
       }));
-      await effects.createPlanTags(newPlanTags, newPlan, user);
       newPlan.tags = planTags.map(tag => ({ tag }));
-      plans.updateValue(storePlans => [...storePlans, newPlan]);
+      if (!$plans.find(({ id }) => newPlan.id === id)) {
+        plans.updateValue(storePlans => [...storePlans, newPlan]);
+      }
+      await effects.createPlanTags(newPlanTags, newPlan, user);
     }
   }
 
@@ -402,6 +404,7 @@
               autocomplete="off"
               class="st-input w-100"
               name="name"
+              aria-label="name"
               use:permissionHandler={{
                 hasPermission: canCreate,
                 permissionError,

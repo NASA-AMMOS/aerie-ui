@@ -15,6 +15,7 @@ export class Constraints {
   inputConstraintModelSelector: string = 'select[name="model"]';
   inputConstraintName: Locator;
   saveButton: Locator;
+  table: Locator;
   tableRow: Locator;
   tableRowDeleteButton: Locator;
 
@@ -38,9 +39,11 @@ export class Constraints {
 
   async deleteConstraint() {
     await this.goto();
+    await this.filterTable(this.constraintName);
     await expect(this.tableRow).toBeVisible();
     await expect(this.tableRowDeleteButton).not.toBeVisible();
     await this.tableRow.hover();
+    await expect(this.tableRow.locator('.actions-cell')).toBeVisible();
     await this.tableRowDeleteButton.waitFor({ state: 'attached' });
     await this.tableRowDeleteButton.waitFor({ state: 'visible' });
     await expect(this.tableRowDeleteButton).toBeVisible();
@@ -74,6 +77,21 @@ export class Constraints {
     await this.inputConstraintName.evaluate(e => e.blur());
   }
 
+  private async filterTable(constraintName: string) {
+    await this.table.waitFor({ state: 'attached' });
+    await this.table.waitFor({ state: 'visible' });
+
+    const nameColumnHeader = await this.table.getByRole('columnheader', { name: 'Name' });
+    await nameColumnHeader.hover();
+
+    const filterIcon = await nameColumnHeader.locator('.ag-icon-menu');
+    await expect(filterIcon).toBeVisible();
+    await filterIcon.click();
+    await this.page.getByRole('textbox', { name: 'Filter Value' }).fill(constraintName);
+    await expect(this.table.getByRole('row', { name: constraintName })).toBeVisible();
+    await this.page.keyboard.press('Escape');
+  }
+
   async goto() {
     await this.page.goto('/constraints', { waitUntil: 'networkidle' });
     await this.page.waitForTimeout(250);
@@ -93,9 +111,8 @@ export class Constraints {
     this.inputConstraintName = page.locator('input[name="metadata-name"]');
     this.page = page;
     this.saveButton = page.locator(`button:has-text("Save")`);
-    this.tableRow = page.locator(`.ag-row:has-text("${this.constraintName}")`);
-    this.tableRowDeleteButton = page.locator(
-      `.ag-row:has-text("${this.constraintName}") >> button[aria-label="Delete Constraint"]`,
-    );
+    this.table = page.getByRole('treegrid');
+    this.tableRow = this.table.getByRole('row', { name: this.constraintName });
+    this.tableRowDeleteButton = this.tableRow.getByRole('gridcell').getByRole('button', { name: 'Delete Constraint' });
   }
 }

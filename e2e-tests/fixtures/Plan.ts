@@ -89,7 +89,11 @@ export class Plan {
   }
 
   async addActivity(name: string = 'GrowBanana') {
+    const currentNumOfActivitiesWithName = await this.panelActivityDirectivesTable.getByRole('row', { name }).count();
     await this.page.getByRole('button', { name: `CreateActivity-${name}` }).click();
+    await expect(this.panelActivityDirectivesTable.getByRole('row', { name })).toHaveCount(
+      currentNumOfActivitiesWithName + 1,
+    );
   }
 
   async addPlanCollaborator(name: string, isUsername = true) {
@@ -218,6 +222,13 @@ export class Plan {
     await this.page.waitForTimeout(250);
   }
 
+  async hoverMenu(menuButton: Locator) {
+    await menuButton.hover();
+    const menu = menuButton.getByRole('menu');
+    await menu.waitFor({ state: 'attached' });
+    await menu.waitFor({ state: 'visible' });
+  }
+
   async reRunSimulation(expectedFinalState = Status.Complete) {
     await this.reSimulateButton.click();
     await this.page.waitForTimeout(1000);
@@ -324,7 +335,7 @@ export class Plan {
     await this.panelSimulation.getByRole('menuitem', { name: templateName }).waitFor({ state: 'detached' });
 
     try {
-      const applyTemplateButton = this.page.getByRole('button', { name: 'Apply Simulation Template' });
+      const applyTemplateButton = await this.page.getByRole('button', { name: 'Apply Simulation Template' });
 
       // allow time for modal to apply the preset to show up if applicable
       await applyTemplateButton.waitFor({ state: 'attached', timeout: 1000 });
@@ -397,21 +408,20 @@ export class Plan {
     this.constraintManageButton = page.locator(`button[name="manage-constraints"]`);
     this.constraintNewButton = page.locator(`button[name="new-constraint"]`);
     this.consoleContainer = page.locator(`.console-container`);
-    this.gridMenu = page.locator('.header > .grid-menu > .menu > .menu-slot');
     this.gridMenuButton = page.locator('.header > .grid-menu');
-    this.gridMenuItem = (name: string) =>
-      page.locator(`.header > .grid-menu > .menu > .menu-slot > .menu-item:text-is("${name}")`);
+    this.gridMenu = this.gridMenuButton.getByRole('menu');
+    this.gridMenuItem = (name: string) => this.gridMenu.getByRole('menuitem', { exact: true, name });
     this.navButtonActivityChecking = page.locator(`.nav-button:has-text("Activities")`);
-    this.navButtonActivityCheckingMenu = page.locator(`.nav-button:has-text("Activities") .menu`);
+    this.navButtonActivityCheckingMenu = this.navButtonActivityChecking.getByRole('menu');
     this.navButtonExpansion = page.locator(`.nav-button:has-text("Expansion")`);
-    this.navButtonExpansionMenu = page.locator(`.nav-button:has-text("Expansion") .menu`);
+    this.navButtonExpansionMenu = this.navButtonExpansion.getByRole('menu');
     this.navButtonConstraints = page.locator(`.nav-button:has-text("Constraints")`);
-    this.navButtonConstraintsMenu = page.locator(`.nav-button:has-text("Constraints") .menu`);
+    this.navButtonConstraintsMenu = this.navButtonConstraints.getByRole('menu');
     this.navButtonScheduling = page.locator(`.nav-button:has-text("Scheduling")`);
-    this.navButtonSchedulingMenu = page.locator(`.nav-button:has-text("Scheduling") .menu`);
+    this.navButtonSchedulingMenu = this.navButtonScheduling.getByRole('menu');
     this.navButtonSimulation = page.locator(`.nav-button:has-text("Simulation")`);
-    this.navButtonSimulationMenu = page.locator(`.nav-button:has-text("Simulation") .menu`);
-    this.navButtonSimulationMenuStatus = page.locator(`.nav-button:has-text("Simulation") .status-badge`);
+    this.navButtonSimulationMenu = this.navButtonSimulation.getByRole('menu');
+    this.navButtonSimulationMenuStatus = this.navButtonSimulation.locator(`.status-badge`);
     this.page = page;
     this.panelActivityDirectivesTable = page.locator('[data-component-name="ActivityDirectivesTablePanel"]');
     this.panelActivityForm = page.locator('[data-component-name="ActivityFormPanel"]');

@@ -27,7 +27,7 @@ test.beforeAll(async ({ baseURL, browser }) => {
   const dictionaryBuffer = dictionaries.readDictionary(dictionaryName, COMMAND_DICTIONARY_PATH);
 
   await models.goto();
-  await models.createModel('', baseURL);
+  await models.createModel(baseURL);
   await dictionaries.goto();
   await dictionaries.updatePage(page, DictionaryType.CommandDictionary, dictionaryName);
   await dictionaries.createDictionary(
@@ -37,7 +37,7 @@ test.beforeAll(async ({ baseURL, browser }) => {
     DictionaryType.CommandDictionary,
   );
   await parcels.goto();
-  await parcels.createParcel(dictionaryName);
+  await parcels.createParcel(dictionaryName, baseURL);
   await expansionRules.goto();
 });
 

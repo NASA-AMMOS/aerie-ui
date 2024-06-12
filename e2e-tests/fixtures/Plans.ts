@@ -39,6 +39,9 @@ export class Plans {
     await this.fillInputStartTime();
     await this.fillInputEndTime();
     await this.modelStatus.getByText('Extracted', { exact: true }).waitFor({ state: 'visible' });
+    await this.createButton.waitFor({ state: 'attached' });
+    await this.createButton.waitFor({ state: 'visible' });
+    await this.createButton.isEnabled({ timeout: 500 });
     await this.createButton.click();
     await this.tableRow(planName).waitFor({ state: 'attached' });
     await this.tableRow(planName).waitFor({ state: 'visible' });
@@ -61,7 +64,8 @@ export class Plans {
     await expect(this.tableRowDeleteButton(planName)).toBeVisible();
 
     await expect(this.confirmModal).not.toBeVisible();
-    await this.tableRowDeleteButton(planName).click();
+    await this.tableRow(planName).locator('.actions-cell').waitFor({ state: 'visible' });
+    await this.tableRowDeleteButton(planName).click({ position: { x: 2, y: 2 } });
     await this.confirmModal.waitFor({ state: 'attached' });
     await this.confirmModal.waitFor({ state: 'visible' });
     await expect(this.confirmModal).toBeVisible();
@@ -83,7 +87,7 @@ export class Plans {
   async fillInputName(planName = this.planName) {
     await this.inputName.focus();
     await this.inputName.fill(planName);
-    await this.inputName.evaluate(e => e.blur());
+    await this.inputName.blur();
   }
 
   async fillInputStartTime() {
@@ -112,7 +116,7 @@ export class Plans {
     const value = await getOptionValueFromText(this.page, this.inputModelSelector, this.models.modelName);
     await this.inputModel.focus();
     await this.inputModel.selectOption(value);
-    await this.inputModel.evaluate(e => e.blur());
+    await this.inputModel.blur();
   }
 
   async selectedModel() {
@@ -131,9 +135,9 @@ export class Plans {
     this.inputStartTime = page.locator('input[name="start-time"]');
     this.modelStatus = page.locator('.model-status-container');
     this.page = page;
-    this.tableRow = (planName: string) => page.locator(`.ag-row:has-text("${planName}")`);
+    this.tableRow = (planName: string) => page.getByRole('row', { name: planName });
     this.tableRowDeleteButton = (planName: string) =>
-      page.locator(`.ag-row:has-text("${planName}") >> button[aria-label="Delete Plan"]`);
-    this.tableRowPlanId = (planName: string) => page.locator(`.ag-row:has-text("${planName}") > div >> nth=0`);
+      this.tableRow(planName).getByRole('gridcell').getByRole('button', { name: 'Delete Plan' });
+    this.tableRowPlanId = (planName: string) => this.tableRow(planName).getByRole('gridcell').first();
   }
 }

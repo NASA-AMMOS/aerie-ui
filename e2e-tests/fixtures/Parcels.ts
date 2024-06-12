@@ -10,6 +10,7 @@ export class Parcels {
   nameField: Locator;
   newButton: Locator;
   parcelName: string;
+  table: Locator;
   tableRow: Locator;
   tableRowDeleteButton: Locator;
 
@@ -39,20 +40,29 @@ export class Parcels {
     await expect(this.page.locator(`.ag-row:has-text("${secondCommandDictionaryName}") >> input`)).toBeChecked();
   }
 
-  async createParcel(dictionaryName: string) {
+  async createParcel(dictionaryName: string, baseURL?: string) {
     await this.newButton.click();
     await this.page.getByText(dictionaryName).click();
     this.updatePage(this.page);
     await expect(this.tableRow).not.toBeVisible();
     await this.nameField.fill(this.parcelName);
     await this.createButton.click();
-    await this.cancelButton.click();
+
+    const editParcelUrlRegex = new RegExp(`${baseURL}/parcels/edit/(?<parcelId>\\d+)`);
+    await this.page.waitForURL(editParcelUrlRegex);
+
+    await this.closeButton.click();
+
+    const parcelsUrlRegex = new RegExp(`${baseURL}/parcels`);
+    await this.page.waitForURL(parcelsUrlRegex);
+
     await this.tableRow.waitFor({ state: 'attached' });
     await this.tableRow.waitFor({ state: 'visible' });
-    await expect(this.tableRow).toBeVisible();
+    await this.filterTable(this.parcelName);
   }
 
   async deleteParcel() {
+    await this.filterTable(this.parcelName);
     await expect(this.tableRow).toBeVisible();
     await expect(this.tableRowDeleteButton).not.toBeVisible();
 
@@ -74,6 +84,21 @@ export class Parcels {
     await expect(this.tableRow).not.toBeVisible();
   }
 
+  private async filterTable(parcelName: string) {
+    await this.table.waitFor({ state: 'attached' });
+    await this.table.waitFor({ state: 'visible' });
+
+    const nameColumnHeader = await this.table.getByRole('columnheader', { name: 'Name' });
+    await nameColumnHeader.hover();
+
+    const filterIcon = await nameColumnHeader.locator('.ag-icon-menu');
+    await expect(filterIcon).toBeVisible();
+    await filterIcon.click();
+    await this.page.getByRole('textbox', { name: 'Filter Value' }).fill(parcelName);
+    await expect(this.table.getByRole('row', { name: parcelName })).toBeVisible();
+    await this.page.keyboard.press('Escape');
+  }
+
   async goto() {
     await this.page.goto('/parcels', { waitUntil: 'networkidle' });
     await this.page.waitForTimeout(250);
@@ -89,6 +114,7 @@ export class Parcels {
     this.createButton = page.locator(`button:has-text("Save")`);
     this.nameField = page.locator(`input[name="parcelName"]`);
     this.newButton = page.locator(`button:has-text("New")`);
+    this.table = page.locator('.panel:has-text("Parcels")').getByRole('treegrid');
     this.tableRow = page.locator(`.ag-row:has-text("${this.parcelName}")`);
     this.tableRowDeleteButton = page.locator(
       `.ag-row:has-text("${this.parcelName}") >> button[aria-label="Delete Parcel"]`,

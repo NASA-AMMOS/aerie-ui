@@ -16,6 +16,7 @@ export class SchedulingConditions {
   inputConditionName: Locator;
   newButton: Locator;
   saveButton: Locator;
+  table: Locator;
   tableRow: Locator;
   tableRowDeleteButton: Locator;
 
@@ -39,9 +40,11 @@ export class SchedulingConditions {
 
   async deleteSchedulingCondition() {
     await this.goto();
+    await this.filterTable(this.conditionName);
     await expect(this.tableRow).toBeVisible();
     await expect(this.tableRowDeleteButton).not.toBeVisible();
     await this.tableRow.hover();
+    await expect(this.tableRow.locator('.actions-cell')).toBeVisible();
     await this.tableRowDeleteButton.waitFor({ state: 'attached' });
     await this.tableRowDeleteButton.waitFor({ state: 'visible' });
     await expect(this.tableRowDeleteButton).toBeVisible();
@@ -75,6 +78,21 @@ export class SchedulingConditions {
     await this.inputConditionName.evaluate(e => e.blur());
   }
 
+  private async filterTable(goalName: string) {
+    await this.table.waitFor({ state: 'attached' });
+    await this.table.waitFor({ state: 'visible' });
+
+    const nameColumnHeader = await this.table.getByRole('columnheader', { name: 'Name' });
+    await nameColumnHeader.hover();
+
+    const filterIcon = await nameColumnHeader.locator('.ag-icon-menu');
+    await expect(filterIcon).toBeVisible();
+    await filterIcon.click();
+    await this.page.getByRole('textbox', { name: 'Filter Value' }).fill(goalName);
+    await expect(this.table.getByRole('row', { name: goalName })).toBeVisible();
+    await this.page.keyboard.press('Escape');
+  }
+
   async goto() {
     await this.page.goto('/scheduling/conditions', { waitUntil: 'networkidle' });
     await this.page.waitForTimeout(250);
@@ -98,9 +116,8 @@ export class SchedulingConditions {
     this.newButton = page.locator(`button:has-text("New")`);
     this.page = page;
     this.saveButton = page.locator(`button:has-text("Save")`);
-    this.tableRow = page.locator(`.ag-row:has-text("${this.conditionName}")`);
-    this.tableRowDeleteButton = page.locator(
-      `.ag-row:has-text("${this.conditionName}") >> button[aria-label="Delete Condition"]`,
-    );
+    this.table = page.locator('.panel:has-text("Scheduling Conditions")').getByRole('treegrid');
+    this.tableRow = this.table.getByRole('row', { name: this.conditionName });
+    this.tableRowDeleteButton = this.tableRow.getByRole('gridcell').getByRole('button', { name: 'Delete Condition' });
   }
 }
