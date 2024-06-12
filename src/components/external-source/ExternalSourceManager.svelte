@@ -1,23 +1,28 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import MarkerIcon from '@nasa-jpl/stellar/icons/marker.svg?component';
   import type { ValueGetterParams } from 'ag-grid-community';
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
+  import { onDestroy, onMount } from 'svelte';
   import { createExternalSourceError, creatingExternalSource, externalSources } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalEvent } from '../../types/external-event';
   import type { ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceSlim } from '../../types/external-source';
+  import type { TimeRange } from '../../types/timeline';
+  import { type MouseDown, type MouseOver } from '../../types/timeline';
   import effects from '../../utilities/effects';
   import { convertDurationToMs, convertUTCtoMs } from '../../utilities/time';
+  import { TimelineInteractionMode, getXScale } from '../../utilities/timeline';
   import { tooltip } from '../../utilities/tooltip';
   import { required, timestamp } from '../../utilities/validators';
   import ExternalEventForm from '../external-events/ExternalEventForm.svelte';
   import DatePickerField from '../form/DatePickerField.svelte';
   import Field from '../form/Field.svelte';
+  import LayerExternalSources from '../timeline/LayerExternalSources.svelte';
+  import TimelineCursors from '../timeline/TimelineCursors.svelte';
   import AlertError from '../ui/AlertError.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
@@ -28,6 +33,7 @@
   export let user: User | null;
 
   let x = 0;
+  let dpr = 0;
 
   let keyInputField: HTMLInputElement; // need this to set a focus on it. not related to the value
 
@@ -116,11 +122,19 @@
   let selectedSourceId: number | null = null;
 
   // pseudo-timeline variables
+  let viewTimeRange: TimeRange = { end: 0, start: 0 };
   let clientWidth: number = 0;
   let cursorOffsetHeader: number = 0;
   let cursorOffsetDiv: number = 0;
   let selectedEvent: ExternalEvent | null = null;
   let selectedEvents: ExternalEvent[] = [];
+  let canvasContainerRef: HTMLDivElement;
+  let canvasContainerWidth: number = 0;
+  let canvasContainerHeight: number = 0;
+  let canvasMouseDownEvent: MouseEvent | undefined = undefined;
+  let canvasMouseOverEvent: MouseOver | null = null;
+  let removeDPRChangeListener: (() => void) | null = null;
+  
 
   // $: createButtonDisabled = !files || key === '' ||   $creatingModel === true; TODO: do this later
 
@@ -167,6 +181,9 @@
   $: startTime = selectedSource ? new Date(selectedSource.start_time) : new Date();
   $: endTime = selectedSource ? new Date(selectedSource.end_time) : new Date();
   $: timeSpan = selectedSource ? endTime.getTime() - startTime.getTime() : -1;
+  $: viewTimeRange = { end: endTime.getTime(), start: startTime.getTime() }
+  $: xDomainView = [startTime, endTime];
+  $: xScaleView = getXScale(xDomainView, 500);
   
   $: effects.getExternalEvents(selectedSource?.id, user).then(fetched => selectedEvents = fetched.map(eDB => {
     return {
@@ -175,6 +192,32 @@
       durationMs: convertDurationToMs(eDB.duration)
     }
   }));
+
+  onMount(() => {
+    detectDPRChange();
+  });
+
+  onDestroy(() => {
+    if (removeDPRChangeListener !== null) {
+      removeDPRChangeListener();
+    }
+  });
+
+  function detectDPRChange() {
+    // Adapted from https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio#monitoring_screen_resolution_or_zoom_level_changes
+
+    if (removeDPRChangeListener !== null) {
+      removeDPRChangeListener();
+    }
+
+    // Create new change listener using current DPR
+    const mqString = `(resolution: ${window.devicePixelRatio}dppx)`;
+    const deviceMedia = matchMedia(mqString);
+    deviceMedia.addEventListener('change', detectDPRChange);
+    removeDPRChangeListener = () => deviceMedia.removeEventListener('change', detectDPRChange);
+
+    dpr = window.devicePixelRatio;
+  }
 
   async function onFormSubmit(e: SubmitEvent) {
     // TBD: force reload the page???
@@ -227,10 +270,22 @@
     selectedEvent = null;
   }
 
+  function onCanvasMouseDown(e: CustomEvent<MouseDown>) {
+    // console.log('e :>> ', e);
+    const { externalEvents } = e.detail;
+    console.log(externalEvents)
+    selectedEvent = externalEvents?.length ? externalEvents[0] : null
+    // TODO: SELECTED EVENT GOES HERE. USE selectedExternalEventId.
+  }
+
+  function onCanvasContainerMouseMove(e: MouseEvent) {
+    canvasMouseOverEvent = { e }
+  }
+
   $: console.log(cursorOffsetDiv, cursorOffsetHeader)
 </script>
 
-<CssGrid>
+<!-- <CssGrid> -->
   <CssGrid columns="20% auto">
     <Panel borderRight padBody={true}>
       <svelte:fragment slot="header">
@@ -321,6 +376,8 @@
       </svelte:fragment>
     </Panel>
 
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
+    <!-- svelte-ignore a11y-mouse-events-have-key-events -->
     <Panel padBody={false}>
       <svelte:fragment slot="header">
         <SectionTitle><Truck />External Sources</SectionTitle>
@@ -329,84 +386,68 @@
       <svelte:fragment slot="body">
         <div class="filter">TBD: Filter by type and time? Filter by used/unused by?</div>
         {#if $externalSources.length}
-          <CssGrid class="plan-grid" rows={'3fr 5px 3fr'}  on:changeRowSizes={(e) => {
-            console.log(e.detail.split(" ")[2].slice(0,-2))
-            console.log(e.detail.split(" ")[0].slice(0,-2))
-            let currentFrac = Number(e.detail.split(" ")[2].slice(0,-2))
-            let currentMultiplier = Number(e.detail.split(" ")[0].slice(0,-2))
-            cursorOffsetDiv = cursorOffsetHeader/currentFrac * currentMultiplier;
-            console.log(cursorOffsetDiv)
-          }}>
-            <div class="plan-grid-component">
-              <Panel>
-                <svelte:fragment slot="header">
-                </svelte:fragment>
-                <svelte:fragment slot="body">
-                  <SingleActionDataGrid
-                    {columnDefs}
-                    itemDisplayText="External Source"
-                    items={$externalSources}
-                    {user}
-                    bind:selectedItemId={selectedSourceId}
-                    on:rowClicked={({ detail }) => selectSource(detail.data)}
+        <CssGrid rows="1fr 5px 1fr" gap="8px" class="source-grid">
+          <SingleActionDataGrid
+            {columnDefs}
+            itemDisplayText="External Source"
+            items={$externalSources}
+            {user}
+            bind:selectedItemId={selectedSourceId}
+            on:rowClicked={({ detail }) => selectSource(detail.data)}
+          />
+          <CssGridGutter track={1} type="row" />
+          <!--hide until source is selected-->
+          {#if selectedSource}
+            <div style="padding-left: 5px; padding-right: 5px">
+              <div style="height:15px; background-color:#ebe9e6;">
+                <div style="display:inline; float:left;">{startTime}</div>
+                <div style="display:inline; float:right;">{endTime}</div>
+              </div> 
+              <div style="height: 100%; width: 100%; position: relative" 
+                bind:this={canvasContainerRef} 
+                bind:clientWidth={canvasContainerWidth} 
+                bind:clientHeight={canvasContainerHeight} 
+                on:mousedown={e => canvasMouseDownEvent = e}
+                on:mousemove={onCanvasContainerMouseMove}
+              >
+                <TimelineCursors
+                  marginLeft={0}
+                  drawWidth={canvasContainerWidth}
+                  mouseOver={canvasMouseOverEvent}
+                  {xScaleView}
+                />
+                <div style="padding-top: 3px; padding-bottom: 10px">
+                  <LayerExternalSources
+                    selectedExternalEventId={selectedEvent?.id ?? null}
+                    externalEvents={selectedEvents}
+                    {viewTimeRange}
+                    {xScaleView}
+                    {dpr}
+                    mousedown={canvasMouseDownEvent}
+                    drawHeight={canvasContainerHeight-3-10 ?? 200}
+                    drawWidth={canvasContainerWidth ?? 200}
+                    timelineInteractionMode={TimelineInteractionMode.Interact}
+                    on:mouseDown={onCanvasMouseDown}
+                    mousemove={undefined}
+                    mouseout={undefined}
+                    contextmenu={undefined}
+                    dblclick={undefined}
+                    planStartTimeYmd={""}
                   />
-                </svelte:fragment>
-              </Panel>
+                </div>
+              </div>
             </div>
-            <CssGridGutter track={1} type="row" />
-            <div class="plan-grid-component">
-              <Panel padBody={true}>
-                <svelte:fragment slot="header">
-                </svelte:fragment>
-                <svelte:fragment slot="body">
-                  <div class="timeline-cursor" style="transform: translateX({x}px)" bind:clientHeight={cursorOffsetHeader}>
-                    <button
-                      class="timeline-cursor-icon"
-                      style="color: grey"
-                    >
-                      <MarkerIcon />
-                    </button>
-                    <div class="timeline-cursor-label" style="max-width: 50px; top: {cursorOffsetDiv}px">{xToTime(x)}</div>
-                    <div class="timeline-cursor-line" style="background: grey; top: {cursorOffsetDiv}px" />
-                  </div>
-                  <div bind:clientWidth style="width:95%;"
-                    on:mousedown={() => {
-                      selectedEvent = null;
-                      console.log("BYE")
-                    }}
-                    on:mousemove={e => {
-                      x = e.x
-                    }}
-                    role="none"
-                  >
-                    <div style="height:15px; background-color:#ebe9e6;">
-                      <div style="display:inline; float:left;">{startTime}</div>
-                      <div style="display:inline; float:right;">{endTime}</div>
-                    </div>
-                    
-                    {#each selectedEvents as event}
-                      <div style="padding-top: 3px; padding-left:{timeToX(event.start_time)}px;">
-                        <div style="background-color:{selectedEvent?.id == event.id ? 'blue' : 'coral'}; width:10px; height:10px;"
-                          on:mousedown={(e) => selectEvent(e, event)}
-                          use:tooltip={{ content: `${event.key}`, placement: 'top' }}
-                          role="none"
-                        />
-                        <!--error not something to worry about...-->
-                        <!--svelte is unable to recognize this correctly: https://stackoverflow.com/questions/76122895/svelte-svelte-check-parameter-x-implicitly-has-an-any-type-ts-->
-                      </div>
-                    {/each}
-                  </div>
-                </svelte:fragment>
-              </Panel>
-            </div>
-          </CssGrid>
+          {:else}
+            <p style="padding-left: 5px">Select a source to view contents.</p>
+          {/if}
+        </CssGrid>
         {:else}
-          <p>No External Sources present.</p>
+          <p style="padding-left: 5px">No External Sources present.</p>
         {/if}
       </svelte:fragment>
     </Panel>
   </CssGrid>
-</CssGrid>
+<!-- </CssGrid> -->
 
 <style>
   :global(.plan-grid) {
@@ -422,67 +463,8 @@
     padding: 0;
   }
 
-.plan-grid-component {
-  display: grid;
-  height: 100%;
-  overflow-y: auto;
-  width: 100%;
-}
-
-.timeline-cursor {
+  :global(.source-grid) {
     height: 100%;
-    left: 0;
-    opacity: 1;
-    position: absolute;
-    top: -10px;
-    transform: translateX(0);
-  }
-
-  .timeline-cursor-icon {
-    background-color: transparent;
-    border: none;
-    color: var(--st-gray-60);
-    cursor: pointer;
-    display: block;
-    height: 16px;
-    left: 0;
-    left: -7.5px;
-    margin: 0;
-    padding: 0;
-    pointer-events: all;
-    position: relative;
-    top: -9px;
-    width: 15px;
-  }
-
-  .timeline-cursor-line {
-    background-color: var(--st-gray-50);
-    display: block;
-    height: 60%;
-    position: relative;
-    width: 1px;
-  }
-
-  .timeline-cursor-label {
-    background-color: var(--st-gray-15);
-    border-radius: 16px;
-    box-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.25);
-    font-size: 12px;
-    left: 10px;
-    letter-spacing: 0.04em;
-    line-height: 16px;
-    overflow: hidden;
-    padding: 0 5px;
-    pointer-events: all;
-    position: relative;
-    text-overflow: ellipsis;
-    top: -11px;
-    white-space: nowrap;
-    z-index: 0;
-  }
-
-  .timeline-cursor:hover .timeline-cursor-label {
-    max-width: 100vw !important;
-    z-index: 4;
+    width: 100%;
   }
 </style>
