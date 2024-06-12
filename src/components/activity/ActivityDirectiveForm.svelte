@@ -390,7 +390,7 @@
   }
 
   function onUpdateStartTime() {
-    if ($startTimeField.valid && startTime !== $startTimeField.value) {
+    if ($startTimeField.valid /* && startTime !== $startTimeField.value */) {
       console.log('startTimeField.value :>> ', $startTimeField.value);
       const { id } = activityDirective;
       const planStartTimeDoy = getDoyTime(new Date(planStartTimeYmd));
@@ -624,6 +624,20 @@
             />
           {/if}
         </Highlight>
+
+        <!--   <Input layout="inline">
+          <label use:tooltip={{ content: 'Start Time', placement: 'top' }} for="start-time">
+            Start Time ({$plugins.time?.secondary?.label ?? 'UTC'})
+          </label>
+          <input
+            disabled
+            autocomplete="off"
+            class="st-input w-100"
+            name="start-time"
+            value={}
+            on:keyup={onStartTimeKeyUp}
+          />
+        </Input> -->
 
         <ActivityAnchorForm
           {activityDirective}

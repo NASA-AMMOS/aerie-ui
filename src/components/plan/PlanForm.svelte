@@ -262,6 +262,7 @@
           <input class="st-input w-100" disabled name="modelVersion" value={plan.model.version} />
         </Input>
         <Input layout="inline">
+          <!-- TODO use time plugin -->
           <label use:tooltip={{ content: 'Start Time (UTC)', placement: 'top' }} for="startTime">Start Time (UTC)</label
           >
           <input class="st-input w-100" disabled name="startTime" value={plan.start_time_doy} />
