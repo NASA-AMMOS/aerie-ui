@@ -18,7 +18,13 @@ describe('Model util functions', () => {
       [
         'a activity log extracting',
         {
-          refresh_activity_type_logs: [],
+          refresh_activity_type_logs: [
+            {
+              error: null,
+              error_message: null,
+              success: false,
+            },
+          ],
           refresh_model_parameter_logs: [],
           refresh_resource_type_logs: [],
         },
@@ -61,7 +67,13 @@ describe('Model util functions', () => {
         'a parameter log extracting',
         {
           refresh_activity_type_logs: [],
-          refresh_model_parameter_logs: [],
+          refresh_model_parameter_logs: [
+            {
+              error: null,
+              error_message: null,
+              success: false,
+            },
+          ],
           refresh_resource_type_logs: [],
         },
         'parameterLogStatus',
@@ -104,7 +116,13 @@ describe('Model util functions', () => {
         {
           refresh_activity_type_logs: [],
           refresh_model_parameter_logs: [],
-          refresh_resource_type_logs: [],
+          refresh_resource_type_logs: [
+            {
+              error: null,
+              error_message: null,
+              success: false,
+            },
+          ],
         },
         'resourceLogStatus',
         'extracting',
@@ -148,7 +166,7 @@ describe('Model util functions', () => {
             {
               error: null,
               error_message: null,
-              success: true,
+              success: false,
             },
           ],
           refresh_model_parameter_logs: [],
@@ -205,6 +223,7 @@ describe('Model util functions', () => {
       [
         'a activity log none',
         {
+          refresh_activity_type_logs: [],
           refresh_model_parameter_logs: [],
           refresh_resource_type_logs: [],
         },

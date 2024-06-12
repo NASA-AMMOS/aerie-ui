@@ -78,7 +78,13 @@ describe('Model Status Rollup', () => {
         props: {
           mode: 'rollup',
           model: {
-            refresh_activity_type_logs: [],
+            refresh_activity_type_logs: [
+              {
+                error: null,
+                error_message: null,
+                success: false,
+              },
+            ],
             refresh_model_parameter_logs: [],
             refresh_resource_type_logs: [],
           },

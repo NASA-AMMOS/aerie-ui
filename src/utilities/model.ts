@@ -25,11 +25,11 @@ export function getModelStatusRollup(
       if (activityLog) {
         if (activityLog.success) {
           activityLogStatus = 'complete';
-        } else {
+        } else if (activityLog.error != null) {
           activityLogStatus = 'error';
+        } else {
+          activityLogStatus = 'extracting';
         }
-      } else {
-        activityLogStatus = 'extracting';
       }
     }
 
@@ -38,11 +38,11 @@ export function getModelStatusRollup(
       if (parameterLog) {
         if (parameterLog.success) {
           parameterLogStatus = 'complete';
-        } else {
+        } else if (parameterLog.error != null) {
           parameterLogStatus = 'error';
+        } else {
+          parameterLogStatus = 'extracting';
         }
-      } else {
-        parameterLogStatus = 'extracting';
       }
     }
 
@@ -51,11 +51,11 @@ export function getModelStatusRollup(
       if (resourceLog) {
         if (resourceLog.success) {
           resourceLogStatus = 'complete';
-        } else {
+        } else if (resourceLog.error != null) {
           resourceLogStatus = 'error';
+        } else {
+          resourceLogStatus = 'extracting';
         }
-      } else {
-        resourceLogStatus = 'extracting';
       }
     }
 
