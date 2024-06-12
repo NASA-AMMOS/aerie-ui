@@ -8,7 +8,7 @@
     editItem: CustomEvent<RowId[]>;
   }
   import { browser } from '$app/environment';
-  import type { ColDef, ColumnState, IRowNode, IsExternalFilterPresentParams, RedrawRowsParams } from 'ag-grid-community';
+  import type { ColDef, ColumnState, IRowNode, RedrawRowsParams } from 'ag-grid-community';
   import { createEventDispatcher, onDestroy, type ComponentEvents } from 'svelte';
   import type { User } from '../../../types/app';
   import type { Dispatcher } from '../../../types/component';
@@ -38,9 +38,6 @@
   export let getRowId: (data: RowData) => RowId = (data: RowData): RowId => parseInt(data[idKey]);
   export let isRowSelectable: ((node: IRowNode<RowData>) => boolean) | undefined = undefined;
   export let redrawRows: ((params?: RedrawRowsParams<RowData> | undefined) => void) | undefined = undefined;
-
-  export let doesExternalFilterPass: ((node: IRowNode<RowData>) => boolean) | undefined = undefined;
-  export let isExternalFilterPresent: ((params: IsExternalFilterPresentParams<RowData, any>) => boolean) | undefined = undefined;
 
   const dispatch = createEventDispatcher<Dispatcher<$$Events>>();
 
@@ -120,8 +117,6 @@
   rowData={items}
   rowSelection="single"
   {scrollToSelection}
-  {isExternalFilterPresent}
-  {doesExternalFilterPass}
   on:blur={onBlur}
   on:cellEditingStarted
   on:cellEditingStopped
