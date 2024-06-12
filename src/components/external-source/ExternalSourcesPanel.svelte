@@ -4,7 +4,7 @@
   import { externalSourceWithTypeName, selectedPlanExternalSourceIds } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import type { User } from '../../types/app';
-  import type { ExternalSourceSlim } from '../../types/external-source';
+  import type { ExternalSourceWithTypeName } from '../../types/external-source';
   import type { ViewGridSection } from '../../types/view';
   import CollapsibleListControls from '../CollapsibleListControls.svelte';
   import GridMenu from '../menus/GridMenu.svelte';
@@ -16,7 +16,7 @@
 
   // filter which sources are visible
   let filterText: string = '';
-  let filteredExternalEvents: (ExternalSourceSlim & {source_type: string | undefined})[] = [];
+  let filteredExternalEvents: ExternalSourceWithTypeName[] = [];
   $: filteredExternalEvents = $externalSourceWithTypeName
     .filter(source => {
       const filterTextLowerCase = filterText.toLowerCase();
