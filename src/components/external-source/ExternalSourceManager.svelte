@@ -303,7 +303,7 @@
   let currentExternalSourceTypeFilter: string | null;
 
   function isExternalFilterPresent(): boolean {
-    return currentExternalSourceTypeFilter !== null;  // TODO - how should we handle null'ing this? an option that says 'All'?
+    return currentExternalSourceTypeFilter !== null && currentExternalSourceTypeFilter !== "all";
   }
 
   function doesExternalFilterPass(node: ExternalSourceWithTypeName): boolean {
