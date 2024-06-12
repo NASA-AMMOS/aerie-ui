@@ -57,7 +57,7 @@ export class Model {
     const filterIcon = await nameColumnHeader.locator('.ag-icon-menu');
     await expect(filterIcon).toBeVisible();
     await filterIcon.click();
-    await this.page.getByRole('textbox', { name: 'Filter Value' }).fill(associationName);
+    await this.page.locator('.ag-popup').getByRole('textbox', { name: 'Filter Value' }).first().fill(associationName);
     await expect(this.associationTable.getByRole('row', { name: associationName })).toBeVisible();
     await this.page.keyboard.press('Escape');
   }

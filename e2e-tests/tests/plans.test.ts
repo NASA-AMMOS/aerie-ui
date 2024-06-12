@@ -38,6 +38,7 @@ test.describe.serial('Plans', () => {
     baseURL,
   }) => {
     await models.goto();
+    await models.filterTable(models.modelName);
     await models.tableRow().click();
     await models.createPlanButton.click();
     await expect(page).toHaveURL(`${baseURL}/plans`);

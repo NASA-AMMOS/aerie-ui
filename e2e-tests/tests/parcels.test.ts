@@ -28,6 +28,7 @@ test.beforeAll(async ({ browser }) => {
   await dictionaries.createDictionary(
     firstCommandDictionaryBuffer,
     firstCommandDictionaryName,
+    dictionaries.commandDictionaryTable,
     dictionaries.commandDictionaryTableRow,
     DictionaryType.CommandDictionary,
   );
@@ -35,6 +36,7 @@ test.beforeAll(async ({ browser }) => {
   await dictionaries.createDictionary(
     secondCommandDictionaryBuffer,
     secondCommandDictionaryName,
+    dictionaries.commandDictionaryTable,
     dictionaries.commandDictionaryTableRow,
     DictionaryType.CommandDictionary,
   );

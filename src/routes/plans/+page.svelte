@@ -175,7 +175,7 @@
 
   let endTimeDoyField = field<string>('', [required, timestamp]);
   let modelIdField = field<number>(-1, [min(1, 'Field is required')]);
-  $: nameField = field<string>('', [
+  let nameField = field<string>('', [
     required,
     unique(
       $plans.map(plan => plan.name),
@@ -185,6 +185,15 @@
   let simTemplateField = field<number | null>(null);
   let startTimeDoyField = field<string>('', [required, timestamp]);
 
+  $: if ($plans) {
+    nameField.updateValidators([
+      required,
+      unique(
+        $plans.map(plan => plan.name),
+        'Plan name already exists',
+      ),
+    ]);
+  }
   $: models.updateValue(() => data.models);
   // sort in descending ID order
   $: orderedModels = [...$models].sort(({ id: idA }, { id: idB }) => {

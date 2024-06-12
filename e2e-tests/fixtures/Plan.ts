@@ -176,7 +176,7 @@ export class Plan {
       await this.panelActivityDirectivesTable.getByRole('gridcell').first().click({ button: 'right' });
       await this.page.getByText(/Delete \d+ Activit(y|ies) Directives?/).click();
 
-      const confirmDeletionButton = this.page.getByRole('button', { name: 'Confirm' });
+      const confirmDeletionButton = await this.page.getByRole('button', { name: 'Confirm' });
       await confirmDeletionButton.waitFor({ state: 'attached', timeout: 1000 });
       await confirmDeletionButton.click();
     }
@@ -305,7 +305,7 @@ export class Plan {
     await this.panelActivityForm.getByRole('menuitem', { name: presetName }).waitFor({ state: 'detached' });
 
     try {
-      const applyPresetButton = this.page.getByRole('button', { name: 'Apply Preset' });
+      const applyPresetButton = await this.page.getByRole('button', { name: 'Apply Preset' });
 
       // allow time for modal to apply the preset to show up if applicable
       await applyPresetButton.waitFor({ state: 'attached', timeout: 1000 });

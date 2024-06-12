@@ -62,7 +62,7 @@ test.afterAll(async ({ baseURL }) => {
   await context.close();
 });
 
-test.describe.skip('Plan Metadata', () => {
+test.describe.serial('Plan Metadata', () => {
   test('Plan should be re-nameable', async () => {
     await planA.showPanel(PanelNames.PLAN_METADATA);
     await planA.renamePlan(planA.planName + '_renamed');

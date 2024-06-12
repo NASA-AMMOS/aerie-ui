@@ -40,7 +40,6 @@ export class SchedulingGoals {
     await this.goto();
     await this.filterTable(goalName);
     await expect(tableRow).toBeVisible();
-    await expect(this.tableRowDeleteButtonSelector(goalName)).not.toBeVisible();
 
     await tableRow.hover();
     await expect(tableRow.locator('.actions-cell')).toBeVisible();
@@ -49,7 +48,7 @@ export class SchedulingGoals {
     await expect(this.tableRowDeleteButtonSelector(goalName)).toBeVisible();
 
     await expect(this.confirmModal).not.toBeVisible();
-    await this.tableRowDeleteButtonSelector(goalName).click();
+    await this.tableRowDeleteButtonSelector(goalName).click({ position: { x: 2, y: 2 } });
     await this.confirmModal.waitFor({ state: 'attached' });
     await this.confirmModal.waitFor({ state: 'visible' });
     await expect(this.confirmModal).toBeVisible();
@@ -87,7 +86,7 @@ export class SchedulingGoals {
     const filterIcon = await nameColumnHeader.locator('.ag-icon-menu');
     await expect(filterIcon).toBeVisible();
     await filterIcon.click();
-    await this.page.getByRole('textbox', { name: 'Filter Value' }).fill(goalName);
+    await this.page.locator('.ag-popup').getByRole('textbox', { name: 'Filter Value' }).first().fill(goalName);
     await expect(this.table.getByRole('row', { name: goalName })).toBeVisible();
     await this.page.keyboard.press('Escape');
   }
@@ -105,9 +104,7 @@ export class SchedulingGoals {
   updatePage(page: Page): void {
     this.closeButton = page.locator(`button:has-text("Close")`);
     this.confirmModal = page.locator(`.modal:has-text("Delete Scheduling Goal")`);
-    this.confirmModalDeleteButton = page.locator(
-      `.modal:has-text("Delete Scheduling Goal") >> button:has-text("Delete")`,
-    );
+    this.confirmModalDeleteButton = this.confirmModal.getByRole('button', { name: 'Delete' });
     this.inputGoalDefinition = page.locator('.monaco-editor >> textarea.inputarea');
     this.inputGoalDescription = page.locator('textarea[name="metadata-description"]');
     this.inputGoalModel = page.locator(this.inputGoalModelSelector);

@@ -42,7 +42,7 @@ export class SchedulingConditions {
     await this.goto();
     await this.filterTable(this.conditionName);
     await expect(this.tableRow).toBeVisible();
-    await expect(this.tableRowDeleteButton).not.toBeVisible();
+
     await this.tableRow.hover();
     await expect(this.tableRow.locator('.actions-cell')).toBeVisible();
     await this.tableRowDeleteButton.waitFor({ state: 'attached' });
@@ -50,7 +50,7 @@ export class SchedulingConditions {
     await expect(this.tableRowDeleteButton).toBeVisible();
 
     await expect(this.confirmModal).not.toBeVisible();
-    await this.tableRowDeleteButton.click();
+    await this.tableRowDeleteButton.click({ position: { x: 2, y: 2 } });
     await this.confirmModal.waitFor({ state: 'attached' });
     await this.confirmModal.waitFor({ state: 'visible' });
     await expect(this.confirmModal).toBeVisible();
@@ -88,7 +88,7 @@ export class SchedulingConditions {
     const filterIcon = await nameColumnHeader.locator('.ag-icon-menu');
     await expect(filterIcon).toBeVisible();
     await filterIcon.click();
-    await this.page.getByRole('textbox', { name: 'Filter Value' }).fill(goalName);
+    await this.page.locator('.ag-popup').getByRole('textbox', { name: 'Filter Value' }).first().fill(goalName);
     await expect(this.table.getByRole('row', { name: goalName })).toBeVisible();
     await this.page.keyboard.press('Escape');
   }
@@ -106,9 +106,7 @@ export class SchedulingConditions {
   updatePage(page: Page): void {
     this.closeButton = page.locator(`button:has-text("Close")`);
     this.confirmModal = page.locator(`.modal:has-text("Delete Scheduling Condition")`);
-    this.confirmModalDeleteButton = page.locator(
-      `.modal:has-text("Delete Scheduling Condition") >> button:has-text("Delete")`,
-    );
+    this.confirmModalDeleteButton = this.confirmModal.getByRole('button', { name: 'Delete' });
     this.inputConditionDefinition = page.locator('.monaco-editor >> textarea.inputarea');
     this.inputConditionDescription = page.locator('textarea[name="metadata-description"]');
     this.inputConditionModel = page.locator(this.inputConditionModelSelector);

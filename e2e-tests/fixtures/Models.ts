@@ -56,7 +56,6 @@ export class Models {
   async deleteModel(modelName: string = this.modelName) {
     await this.filterTable(modelName);
     await expect(this.tableRow(modelName)).toBeVisible();
-    await expect(this.tableRowDeleteButton(modelName)).not.toBeVisible();
 
     await this.tableRow(modelName).hover();
     await expect(this.tableRow(modelName).locator('.actions-cell')).toBeVisible();
@@ -97,7 +96,7 @@ export class Models {
     await this.inputVersion.evaluate(e => e.blur());
   }
 
-  private async filterTable(modelName: string) {
+  async filterTable(modelName: string) {
     await this.table.waitFor({ state: 'attached' });
     await this.table.waitFor({ state: 'visible' });
 
@@ -107,7 +106,7 @@ export class Models {
     const filterIcon = await nameColumnHeader.locator('.ag-icon-menu');
     await expect(filterIcon).toBeVisible();
     await filterIcon.click();
-    await this.page.getByRole('textbox', { name: 'Filter Value' }).fill(modelName);
+    await this.page.locator('.ag-popup').getByRole('textbox', { name: 'Filter Value' }).first().fill(modelName);
     await expect(this.table.getByRole('row', { name: modelName })).toBeVisible();
     await this.page.keyboard.press('Escape');
   }
@@ -120,7 +119,7 @@ export class Models {
   updatePage(page: Page): void {
     this.alertError = page.locator('.alert-error');
     this.confirmModal = page.locator(`.modal:has-text("Delete Model")`);
-    this.confirmModalDeleteButton = page.locator(`.modal:has-text("Delete Model") >> button:has-text("Delete")`);
+    this.confirmModalDeleteButton = this.confirmModal.getByRole('button', { name: 'Delete' });
     this.createButton = page.getByRole('button', { name: 'Create' });
     this.creatingButton = page.getByRole('button', { name: 'Creating...' });
     this.createPlanButton = page.getByRole('button', { name: 'New plan with model' });

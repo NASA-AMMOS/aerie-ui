@@ -33,6 +33,7 @@ test.beforeAll(async ({ baseURL, browser }) => {
   await dictionaries.createDictionary(
     dictionaryBuffer,
     dictionaryName,
+    dictionaries.commandDictionaryTable,
     dictionaries.commandDictionaryTableRow,
     DictionaryType.CommandDictionary,
   );
