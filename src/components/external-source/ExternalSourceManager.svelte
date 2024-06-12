@@ -1,24 +1,20 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import type { ValueGetterParams } from 'ag-grid-community';
+  import type { IRowNode, ValueGetterParams } from 'ag-grid-community';
+  import { GridApi } from 'ag-grid-community';
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
-  import { createExternalSourceError, creatingExternalSource, externalSources, externalSourceTypes } from '../../stores/external-source';
   import { onDestroy, onMount } from 'svelte';
-  import { createExternalSourceError, creatingExternalSource, externalSourceWithTypeName, externalSourceTypes } from '../../stores/external-source';
-  import { createExternalSourceError, creatingExternalSource, externalSourceWithTypeName, externalSourceTypes, createExternalSourceTypeError } from '../../stores/external-source';
+  import { externalEventsDB } from '../../stores/external-event';
   import { createExternalSourceError, createExternalSourceTypeError, creatingExternalSource, externalSourceTypes, externalSourceWithTypeName } from '../../stores/external-source';
-  import { createExternalSourceError, createExternalSourceTypeError, creatingExternalSource, externalSourceTypes, externalSourceWithTypeName, externalSources } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
+  import type { ExternalEvent, ExternalEventDB } from '../../types/external-event';
   import type { ExternalSource, ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceSlim, ExternalSourceTypeInsertInput, ExternalSourceWithTypeName } from '../../types/external-source';
-  import type { ExternalEvent } from '../../types/external-event';
-  import type { ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceSlim } from '../../types/external-source';
   import type { TimeRange } from '../../types/timeline';
   import { type MouseDown, type MouseOver } from '../../types/timeline';
-  import type { ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceSlim, ExternalSourceTypeInsertInput, ExternalSourceWithTypeName } from '../../types/external-source';
   import effects from '../../utilities/effects';
   import { convertDurationToMs, convertUTCtoMs } from '../../utilities/time';
   import { TimelineInteractionMode, getXScale } from '../../utilities/timeline';
@@ -46,12 +42,6 @@
   let startTimeDoyField = field<string>('', [required, timestamp]); // requires validation function
   let endTimeDoyField = field<string>('', [required, timestamp]); // requires validation function
   let validAtDoyField = field<string>('', [required, timestamp]); // requires validation function
-
-  // upload variables (We want to parse a file selected for upload.)
-  let files: FileList | undefined;
-  let file: File | undefined;
-  let parsed: ExternalSourceJson | undefined;
-  let sourceInsert: ExternalSourceInsertInput;
 
   // table variables
   const baseColumnDefs: DataGridColumnDef[] = [
@@ -122,7 +112,12 @@
   ];
   let columnDefs: DataGridColumnDef[] = baseColumnDefs; // TODO: add actions like delete as in Models.svelte
   let selectedSource: ExternalSourceSlim | null = null;
+  let selectedSourceEvents: ExternalEventDB[] = []
+
+  // source detail variables
   let selectedSourceId: number | null = null;
+  let selectedSourceFull: ExternalSource | null = null;
+  let gridApi: GridApi<any> | undefined;
 
   // timeline variables
   let dpr = 0;
@@ -138,32 +133,13 @@
   let eventTooltip: Tooltip;
   let mouseOver: MouseOver | null;
 
-  async function onFormSubmit(e: SubmitEvent) {
-    // TBD: force reload the page???
-    let sourceTypeId: number | undefined = undefined;
-    if (file !== undefined) {
-      if (!($externalSourceTypes.map(s => s.name).includes($sourceTypeField.value)) && sourceTypeInsert !== undefined) {
-        sourceTypeId = await effects.createExternalSourceType(sourceTypeInsert, user);
-      } else {
-        sourceTypeId = $externalSourceTypes.find(externalSource => externalSource.name === $sourceTypeField.value)?.id
-      }
-      if (sourceTypeId !== undefined ) {
-        sourceInsert.source_type_id = sourceTypeId;
-        var sourceId = await effects.createExternalSource(file, sourceInsert, user);
-        if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) {
-          goto(`${base}/external-sources`);
-        }
-      }
-    }
-  }
-
-  export let user: User | null;
-
-  // $: createButtonDisabled = !files || key === '' ||   $creatingModel === true; TODO: do this later
   // We want to parse a file selected for upload.
   let files: FileList | undefined;
   let file: File | undefined;
   let parsed: ExternalSourceJson | undefined;
+
+  // $: createButtonDisabled = !files || key === '' ||   $creatingModel === true; TODO: do this later
+  
 
   // TODO: this doesn't let people modify the form properties.
   // We need to figure out if things like the start, end, and valid_at
@@ -215,7 +191,6 @@
     }
   }
 
-  let selectedSource: ExternalSourceWithTypeName | null = null;
   $: selectedSourceId = selectedSource ? selectedSource.id : null;
   $: startTime = selectedSource ? new Date(selectedSource.start_time) : new Date();
   $: endTime = selectedSource ? new Date(selectedSource.end_time) : new Date();
@@ -257,23 +232,37 @@
     dpr = window.devicePixelRatio;
   }
 
+  
   async function onFormSubmit(e: SubmitEvent) {
     // TBD: force reload the page???
-    if (files !== undefined) {
-      var sourceId = await effects.createExternalSource(file, sourceInsert, user);
-      if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) {
-        goto(`${base}/external-sources`);
+    let sourceTypeId: number | undefined = undefined;
+    if (file !== undefined) {
+      if (!($externalSourceTypes.map(s => s.name).includes($sourceTypeField.value)) && sourceTypeInsert !== undefined) {
+        sourceTypeId = await effects.createExternalSourceType(sourceTypeInsert, user);
+      } else {
+        sourceTypeId = $externalSourceTypes.find(externalSource => externalSource.name === $sourceTypeField.value)?.id
       }
-      // if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) {
-      //   goto(`${base}/external-sources/${sourceId}`);
-      // }
+      if (sourceTypeId !== undefined ) {
+        sourceInsert.source_type_id = sourceTypeId;
+        var sourceId = await effects.createExternalSource(file, sourceInsert, user);
+        if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) {
+          goto(`${base}/external-sources`);
+        }
+        // if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) {
+        //   goto(`${base}/external-sources/${sourceId}`);
+        // }
+      }
     }
   }
-  let selectedSourceFull: ExternalSource | null = null;
+
 
   function selectSource(detail: ExternalSourceWithTypeName) {
     selectedSource = detail;
-    selectedSourceFull = $externalSources.find(externalSource => externalSource.id === selectedSource?.id);
+    if (selectedSource) {
+      selectedSourceEvents = $externalEventsDB.filter(externalEvent => {
+        externalEvent.source?.source_type_id === selectedSource?.id
+      })
+    }
   }
 
   function deselectSource() {
@@ -306,15 +295,22 @@
     return currentExternalSourceTypeFilter !== null && currentExternalSourceTypeFilter !== "all";
   }
 
-  function doesExternalFilterPass(node: ExternalSourceWithTypeName): boolean {
-    if (node) {
-      if (node.source_type === currentExternalSourceTypeFilter) return true;
+  function doesExternalFilterPass(node: IRowNode<ExternalSourceWithTypeName>): boolean {
+    console.log("doesExternalFilterPass ", node)
+    if (node.data) {
+      console.log("if node.data")
+      if (node.data.source_type === currentExternalSourceTypeFilter) {
+        console.log("all the way in") 
+        return true;
+      }
     }
     return false;
   }
 
   function externalFilterChanged(newValue: string) {
+    console.log("newvalue:", newValue)
     currentExternalSourceTypeFilter = newValue;
+    gridApi?.onFilterChanged();
   }
 </script>
 
@@ -325,7 +321,7 @@
         <SectionTitle
           >{selectedEvent ? `Selected Event`
             : selectedSource
-            ? `#${selectedSource.id} – ${selectedSource.source_type}`
+            ? `#${selectedSource.id} – ${$externalSourceTypes.find(st => st.id == selectedSource?.source_type_id)}`
             : 'Upload a Source File'}</SectionTitle
         >
         {#if selectedEvent}
@@ -412,82 +408,83 @@
       <svelte:fragment slot="header">
         <SectionTitle><Truck />External Sources</SectionTitle>
       </svelte:fragment>
-      <!-- TODO: Add toggleable button to filter by type for now -->
-      <label>
-        <input type="radio" name="filter" id="all" value="all" on:change={externalFilterChanged}>
-      </label>
-      {#each $externalSourceTypes as externalSourceType}
-        <label>
-          <input type="radio" name="filter" id={externalSourceType.name} value={externalSourceType.name} on:change={externalFilterChanged}>
-
-        </label>
-      {/each}
       <svelte:fragment slot="body">
-        <div class="filter">TBD: Filter by type and time? Filter by used/unused by?</div>
+        <div class="filter">
+          <!-- TODO: Add toggleable button to filter by type for now -->
+          <label>
+            <input type="radio" name="filter" id="all" value="all" on:change={() => externalFilterChanged("all")}>
+            All
+          </label>
+          {#each $externalSourceTypes as externalSourceType}
+            <label>
+              <input type="radio" name="filter" id={externalSourceType.name} value={externalSourceType.name} on:change={() => externalFilterChanged(externalSourceType.name)}>
+              {externalSourceType.name}
+            </label>
+          {/each}
+        </div>
         {#if $externalSourceWithTypeName.length}
-        <CssGrid rows="1fr 5px 1fr" gap="8px" class="source-grid">
-          <SingleActionDataGrid
-            {columnDefs}
-            itemDisplayText="External Source"
-            items={$externalSourceWithTypeName}
-            {user}
-            bind:selectedItemId={selectedSourceId}
-            {doesExternalFilterPass}
-            {isExternalFilterPresent}
-            on:rowClicked={({ detail }) => selectSource(detail.data)}
-          />
-          <CssGridGutter track={1} type="row" />
-          {#if selectedSource}
-            <div style="padding-left: 5px; padding-right: 5px">
-              <div style="height:15px; background-color:#ebe9e6;">
-                <div style="display:inline; float:left;">{startTime}</div>
-                <div style="display:inline; float:right;">{endTime}</div>
-              </div>
-              <div style="height: 100%; width: 100%; position: relative"
-                bind:this={canvasContainerRef}
-                bind:clientWidth={canvasContainerWidth}
-                bind:clientHeight={canvasContainerHeight}
-                on:mousedown={e => {
-                  canvasMouseDownEvent = e
-                }}
-                on:mousemove={e => {
-                  canvasMouseOverEvent = e
-                }}
-                role="none"
-              >
-                <TimelineCursors
-                  marginLeft={0}
-                  drawWidth={canvasContainerWidth}
-                  {mouseOver}
-                  {xScaleView}
-                />
-                <Tooltip bind:this={eventTooltip} {mouseOver} interpolateHoverValue={false} hidden={false} resourceTypes={[]} />
-                <div style="padding-top: 3px; padding-bottom: 10px">
-                  <LayerExternalSources
-                    selectedExternalEventId={selectedEvent?.id ?? null}
-                    externalEvents={selectedEvents}
-                    {viewTimeRange}
+          <CssGrid rows="1fr 5px 1fr" gap="8px" class="source-grid">
+            <SingleActionDataGrid
+              {columnDefs}
+              itemDisplayText="External Source"
+              items={$externalSourceWithTypeName}
+              {user}
+              {doesExternalFilterPass}
+              {isExternalFilterPresent}
+              on:rowClicked={({ detail }) => selectSource(detail.data)}
+            />
+            <CssGridGutter track={1} type="row" />
+            {#if selectedSource}
+              <div style="padding-left: 5px; padding-right: 5px">
+                <div style="height:15px; background-color:#ebe9e6;">
+                  <div style="display:inline; float:left;">{startTime}</div>
+                  <div style="display:inline; float:right;">{endTime}</div>
+                </div>
+                <div style="height: 100%; width: 100%; position: relative"
+                  bind:this={canvasContainerRef}
+                  bind:clientWidth={canvasContainerWidth}
+                  bind:clientHeight={canvasContainerHeight}
+                  on:mousedown={e => {
+                    canvasMouseDownEvent = e
+                  }}
+                  on:mousemove={e => {
+                    canvasMouseOverEvent = e
+                  }}
+                  role="none"
+                >
+                  <TimelineCursors
+                    marginLeft={0}
+                    drawWidth={canvasContainerWidth}
+                    {mouseOver}
                     {xScaleView}
-                    {dpr}
-                    mousedown={canvasMouseDownEvent}
-                    drawHeight={canvasContainerHeight-3-10 ?? 200}
-                    drawWidth={canvasContainerWidth ?? 200}
-                    timelineInteractionMode={TimelineInteractionMode.Interact}
-                    on:mouseDown={onCanvasMouseDown}
-                    on:mouseOver={onCanvasMouseOver}
-                    mousemove={canvasMouseOverEvent}
-                    mouseout={undefined}
-                    contextmenu={undefined}
-                    dblclick={undefined}
-                    planStartTimeYmd={""}
                   />
+                  <Tooltip bind:this={eventTooltip} {mouseOver} interpolateHoverValue={false} hidden={false} resourceTypes={[]} />
+                  <div style="padding-top: 3px; padding-bottom: 10px">
+                    <LayerExternalSources
+                      selectedExternalEventId={selectedEvent?.id ?? null}
+                      externalEvents={selectedEvents}
+                      {viewTimeRange}
+                      {xScaleView}
+                      {dpr}
+                      mousedown={canvasMouseDownEvent}
+                      drawHeight={canvasContainerHeight-3-10 ?? 200}
+                      drawWidth={canvasContainerWidth ?? 200}
+                      timelineInteractionMode={TimelineInteractionMode.Interact}
+                      on:mouseDown={onCanvasMouseDown}
+                      on:mouseOver={onCanvasMouseOver}
+                      mousemove={canvasMouseOverEvent}
+                      mouseout={undefined}
+                      contextmenu={undefined}
+                      dblclick={undefined}
+                      planStartTimeYmd={""}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          {:else}
-            <p style="padding-left: 5px">Select a source to view contents.</p>
-          {/if}
-        </CssGrid>
+            {:else}
+              <p style="padding-left: 5px">Select a source to view contents.</p>
+            {/if}
+          </CssGrid>
         {:else}
           <p style="padding-left: 5px">No External Sources present.</p>
         {/if}
@@ -504,11 +501,6 @@
     margin: 0.8rem 0;
   }
   .tbd ul,
-  .tbd li {
-    list-style: none;
-    margin: 0.2rem 0;
-    padding: 0;
-  }
 
   :global(.source-grid) {
     height: 100%;
