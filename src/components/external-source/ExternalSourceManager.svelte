@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import type { IRowNode, ValueGetterParams } from 'ag-grid-community';
+  import type { ValueGetterParams } from 'ag-grid-community';
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { onDestroy, onMount } from 'svelte';
@@ -288,8 +288,9 @@
   }
 
   let currentExternalSourceTypeFilter: string | null = null;
-  let filteredExternalSources: ExternalSourceWithTypeName[] = currentExternalSourceTypeFilter === null ? $externalSourceWithTypeName : $externalSourceWithTypeName.filter(externalSource => {
-    externalSource.source_type === currentExternalSourceTypeFilter;
+  let filteredExternalSources: ExternalSourceWithTypeName[] = [];
+  $: filteredExternalSources = currentExternalSourceTypeFilter === null ? $externalSourceWithTypeName : $externalSourceWithTypeName.filter(externalSource => {
+    return externalSource.source_type === currentExternalSourceTypeFilter;
   });
 
   function externalFilterChanged(newValue: string) {
