@@ -9,9 +9,11 @@
   import { createExternalSourceError, creatingExternalSource, externalSourceWithTypeName, externalSourceTypes } from '../../stores/external-source';
   import { createExternalSourceError, creatingExternalSource, externalSourceWithTypeName, externalSourceTypes, createExternalSourceTypeError } from '../../stores/external-source';
   import { createExternalSourceError, createExternalSourceTypeError, creatingExternalSource, externalSourceTypes, externalSourceWithTypeName } from '../../stores/external-source';
+  import { createExternalSourceError, createExternalSourceTypeError, creatingExternalSource, externalSourceTypes, externalSourceWithTypeName, externalSources } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
+  import type { ExternalSource, ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceSlim, ExternalSourceTypeInsertInput, ExternalSourceWithTypeName } from '../../types/external-source';
   import type { ExternalEvent } from '../../types/external-event';
   import type { ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceSlim } from '../../types/external-source';
   import type { TimeRange } from '../../types/timeline';
@@ -267,13 +269,16 @@
       // }
     }
   }
+  let selectedSourceFull: ExternalSource | null = null;
 
   function selectSource(detail: ExternalSourceWithTypeName) {
     selectedSource = detail;
+    selectedSourceFull = $externalSources.find(externalSource => externalSource.id === selectedSource?.id);
   }
 
   function deselectSource() {
     selectedSource = null;
+    selectedSourceFull = null;
   }
 
   function deselectEvent() {
@@ -334,13 +339,11 @@
         {:else if selectedSource}
           <div title={selectedSource.key}>{selectedSource.key}</div>
           <div class="tbd">
-            <ul>
-              <li>What plans do refer to this source?</li>
-              <li>Is this newest source of this type?</li>
-              <li>Show me information relating to this type?</li>
-              <li>Show me all information about this source from the file (i.e. properties)?</li>
-              <li>General info bar?</li>
-            </ul>
+            {#if selectedSourceFull !== null}
+              {#each selectedSourceFull.external_events as externalEvent}
+                <ul>{externalEvent}</ul>
+              {/each}
+            {/if}
           </div>
         {:else}
           <form on:submit|preventDefault={onFormSubmit}>
