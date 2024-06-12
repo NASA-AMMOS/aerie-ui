@@ -3222,7 +3222,6 @@ const effects = {
       return [];
     }
     try {
-      console.log(user, source_id, "MEMSDJFSDJK")
       const data = await reqHasura<any>(gql.GET_EXTERNAL_EVENTS, { source_id }, user);
       const { external_event: events} = data;
       if (events === null) {
