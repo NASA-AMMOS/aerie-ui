@@ -13,12 +13,6 @@
   } from '@nasa-jpl/aerie-ampcs';
   import type { EditorView } from 'codemirror';
   import { debounce } from 'lodash-es';
-  import {
-    addDefaultArgs,
-    getMissingArgDefs,
-    isFswCommandArgumentRepeat,
-    type ArgTextDef,
-  } from '../../../utilities/codemirror/codemirror-utils';
   import { getCustomArgDef } from '../../../utilities/new-sequence-editor/extension-points';
   import { TOKEN_COMMAND, TOKEN_ERROR } from '../../../utilities/new-sequence-editor/sequencer-grammar-constants';
   import { getAncestorNode } from '../../../utilities/new-sequence-editor/tree-utils';
