@@ -32,11 +32,7 @@
 
   export let user: User | null;
 
-  let x = 0;
-  let dpr = 0;
-
   let keyInputField: HTMLInputElement; // need this to set a focus on it. not related to the value
-
   // form variables (TODO: make these autofill???)
   let keyField = field<string>('', [required]);
   let sourceTypeField = field<string>('', [required]); // need function to check if in list of allowable types...
@@ -121,11 +117,9 @@
   let selectedSource: ExternalSourceSlim | null = null;
   let selectedSourceId: number | null = null;
 
-  // pseudo-timeline variables
+  // timeline variables
+  let dpr = 0;
   let viewTimeRange: TimeRange = { end: 0, start: 0 };
-  let clientWidth: number = 0;
-  let cursorOffsetHeader: number = 0;
-  let cursorOffsetDiv: number = 0;
   let selectedEvent: ExternalEvent | null = null;
   let selectedEvents: ExternalEvent[] = [];
   let canvasContainerRef: HTMLDivElement;
@@ -180,7 +174,6 @@
   $: selectedSourceId = selectedSource ? selectedSource.id : null;
   $: startTime = selectedSource ? new Date(selectedSource.start_time) : new Date();
   $: endTime = selectedSource ? new Date(selectedSource.end_time) : new Date();
-  $: timeSpan = selectedSource ? endTime.getTime() - startTime.getTime() : -1;
   $: viewTimeRange = { end: endTime.getTime(), start: startTime.getTime() }
   $: xDomainView = [startTime, endTime];
   $: xScaleView = getXScale(xDomainView, 500);
@@ -222,40 +215,14 @@
   async function onFormSubmit(e: SubmitEvent) {
     // TBD: force reload the page???
     if (files !== undefined) {
-      console.log(user)
       var sourceId = await effects.createExternalSource(file, sourceInsert, user);
       if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) {
-        console.log(sourceId);
         goto(`${base}/external-sources`);
       }
       // if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) {
       //   goto(`${base}/external-sources/${sourceId}`);
       // }
     }
-  }
-
-  // there are functions performing this conversion already, but they utilize some variable and parameter structure that implies a more complex timeline setup,
-  //    so I just wrote a shorter and simpler one that works for our demo timeline.
-  function timeToX(eventTime: string) {
-    if (selectedSource == null) {
-      return 0;
-    }
-    let currentDate = new Date(eventTime).getTime(); // TODO: add validation
-    if (startTime.getTime() > currentDate || currentDate > endTime.getTime()) {
-      return -1; // fail. TODO: add some handling around this, or add validation earlier in this file or in schema to ensure never happens
-    }
-    return ((currentDate-startTime.getTime())/timeSpan) * clientWidth;
-  }
-  function xToTime(xPos: number) {
-    let xMillisOffset = (xPos / clientWidth) * timeSpan
-    let xMillis = startTime.getTime() + xMillisOffset;
-    return new Date(xMillis)
-  }
-
-  function selectEvent(e: MouseEvent, event: ExternalEvent) {
-    e.stopPropagation(); // so outer div doesn't fire.
-    selectedEvent = event;
-    console.log("HI")
   }
 
   function selectSource(detail: ExternalSourceSlim) {
@@ -271,18 +238,18 @@
   }
 
   function onCanvasMouseDown(e: CustomEvent<MouseDown>) {
-    // console.log('e :>> ', e);
     const { externalEvents } = e.detail;
-    console.log(externalEvents)
-    selectedEvent = externalEvents?.length ? externalEvents[0] : null
-    // TODO: SELECTED EVENT GOES HERE. USE selectedExternalEventId.
+
+    // selectedEvent is our source of an ExternalEvent as well as the ExternalEventId used by this instance
+    //    of the LayerExternalSources (as opposed to using a store, like the timeline one does, which is 
+    //    unnecessary as everything we need is in on single component or can be passed down via parameters to
+    //    children).
+    selectedEvent = externalEvents?.length ? externalEvents[0] : null 
   }
 
   function onCanvasContainerMouseMove(e: MouseEvent) {
     canvasMouseOverEvent = { e }
   }
-
-  $: console.log(cursorOffsetDiv, cursorOffsetHeader)
 </script>
 
 <!-- <CssGrid> -->
@@ -376,8 +343,6 @@
       </svelte:fragment>
     </Panel>
 
-    <!-- svelte-ignore a11y-no-static-element-interactions -->
-    <!-- svelte-ignore a11y-mouse-events-have-key-events -->
     <Panel padBody={false}>
       <svelte:fragment slot="header">
         <SectionTitle><Truck />External Sources</SectionTitle>
@@ -396,7 +361,6 @@
             on:rowClicked={({ detail }) => selectSource(detail.data)}
           />
           <CssGridGutter track={1} type="row" />
-          <!--hide until source is selected-->
           {#if selectedSource}
             <div style="padding-left: 5px; padding-right: 5px">
               <div style="height:15px; background-color:#ebe9e6;">
@@ -409,6 +373,7 @@
                 bind:clientHeight={canvasContainerHeight} 
                 on:mousedown={e => canvasMouseDownEvent = e}
                 on:mousemove={onCanvasContainerMouseMove}
+                role="none"
               >
                 <TimelineCursors
                   marginLeft={0}
