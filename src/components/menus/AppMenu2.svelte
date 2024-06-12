@@ -38,11 +38,12 @@
   </DropdownMenu.Trigger>
   <DropdownMenu.Content>
     <DropdownMenu.Group>
-      <DropdownMenu.Separator />
-      <DropdownMenu.Item style="gap: 4px"><PlanIcon />Plans</DropdownMenu.Item>
+      <DropdownMenu.Item href={`${base}/plans`} style="gap: 4px"><PlanIcon />Plans</DropdownMenu.Item>
       <DropdownMenu.Item>Billing</DropdownMenu.Item>
       <DropdownMenu.Item>Team</DropdownMenu.Item>
       <DropdownMenu.Item>Subscription</DropdownMenu.Item>
+      <DropdownMenu.Separator />
+      <DropdownMenu.Item>Logout</DropdownMenu.Item>
     </DropdownMenu.Group>
   </DropdownMenu.Content>
 </DropdownMenu.Root>

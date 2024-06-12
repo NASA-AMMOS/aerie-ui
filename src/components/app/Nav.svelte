@@ -26,13 +26,13 @@
     <AppMenu2 {user} />
     <Popover.Root>
       <Popover.Trigger>
-        <Button>test</Button>
+        <Button>Popover</Button>
       </Popover.Trigger>
       <Popover.Content>
         <div class="text-primary-background">Place content for the popover here.</div>
       </Popover.Content>
     </Popover.Root>
-    <Button variant="secondary" on:click={() => console.log(1)}>Test</Button>
+    <Button variant="secondary" on:click={() => window.alert('Success')}>Test</Button>
     <div class="divider" />
     <div class="title st-typography-medium">
       <slot name="title" />
