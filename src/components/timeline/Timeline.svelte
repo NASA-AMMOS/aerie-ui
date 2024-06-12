@@ -131,6 +131,7 @@
   $: rows = timeline?.rows || [];
   $: drawWidth = clientWidth > 0 ? clientWidth - (timeline?.marginLeft ?? 0) - (timeline?.marginRight ?? 0) : 0;
   $: estimatedLabelWidthPx = $plugins.time?.ticks?.tickLabelWidth ?? 130;
+  $: xAxisDrawHeight = 48 + 16 * ($plugins.time?.additional ? Math.max($plugins.time.additional.length, 1) : 1);
 
   // Compute number of ticks based off draw width
   $: if (drawWidth) {
@@ -179,11 +180,17 @@
         }
       }
 
-      let formattedSecondaryDate = '';
-      if ($plugins.time?.secondary?.format) {
-        formattedSecondaryDate = $plugins.time?.secondary?.format(date);
+      const additionalFormats: string[] = [];
+      let tick: XAxisTick = { additionalFormats: [], date, formattedPrimaryDate, hideLabel: false };
+
+      if ($plugins.time?.additional?.length) {
+        $plugins.time.additional.forEach(timeSystem => {
+          if (timeSystem.format) {
+            additionalFormats.push(timeSystem.format(date));
+          }
+        });
       } else {
-        formattedSecondaryDate = date.toLocaleString();
+        let formattedSecondaryDate = date.toLocaleString();
         if (xScaleViewDuration > durationYear * tickCount) {
           formattedSecondaryDate = date.getFullYear().toString();
           labelWidth = $plugins.time?.ticks?.tickLabelWidth ?? 28;
@@ -194,8 +201,12 @@
           formattedSecondaryDate = date.toLocaleDateString();
           labelWidth = $plugins.time?.ticks?.tickLabelWidth ?? 58;
         }
+        additionalFormats.push(formattedSecondaryDate);
       }
-      return { date, formattedPrimaryDate, formattedSecondaryDate, hideLabel: false };
+
+      tick.additionalFormats = additionalFormats;
+
+      return { additionalFormats, date, formattedPrimaryDate, hideLabel: false };
     });
 
     // Determine whether or not to hide the last tick label

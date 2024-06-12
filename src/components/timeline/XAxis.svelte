@@ -33,7 +33,6 @@
   let zoom: ZoomBehavior<SVGElement, unknown>;
 
   $: primaryTimeLabel = $plugins.time?.primary?.label ?? 'UTC';
-  $: secondaryTimeLabel = $plugins.time?.secondary?.label ?? getTimeZoneName();
   $: svgSelection = select(svg) as Selection<SVGElement, unknown, any, any>;
 
   /* TODO could this be a custom svelte use action? */
@@ -77,9 +76,17 @@
 >
   <div class="x-axis-time-formats" style={`width:${marginLeft}px`}>
     <div class="x-axis-time-format st-typography-medium">{primaryTimeLabel}</div>
-    <div class="x-axis-time-format x-axis-time-format-secondary st-typography-medium">
-      {secondaryTimeLabel}
-    </div>
+    {#if $plugins.time?.additional && $plugins.time?.additional?.length > 0}
+      {#each $plugins.time?.additional as timeSystem}
+        <div class="x-axis-time-format x-axis-time-format-secondary st-typography-medium">
+          {timeSystem.label}
+        </div>
+      {/each}
+    {:else}
+      <div class="x-axis-time-format x-axis-time-format-secondary st-typography-medium">
+        {getTimeZoneName()}
+      </div>
+    {/if}
   </div>
   <svg style="height: {drawHeight}px; width: {drawWidth}px;" bind:this={svg}>
     <g>
@@ -94,12 +101,14 @@
                 <g class="tick st-typography-medium" transform="translate({xScaleView?.(tick.date)}, 0)">
                   <text fill="currentColor" dy="0.5em">{tick.formattedPrimaryDate}</text>
                 </g>
-                <g
-                  class="tick st-typography-medium tick-secondary"
-                  transform="translate({xScaleView?.(tick.date)}, 16)"
-                >
-                  <text fill="currentColor" dy="0.5em">{tick.formattedSecondaryDate}</text>
-                </g>
+                {#each tick.additionalFormats as label, i}
+                  <g
+                    class="tick st-typography-medium tick-secondary"
+                    transform="translate({xScaleView?.(tick.date)}, {(i + 1) * 16})"
+                  >
+                    <text fill="currentColor" dy="0.5em">{label}</text>
+                  </g>
+                {/each}
               {/if}
             {/each}
           {/if}
