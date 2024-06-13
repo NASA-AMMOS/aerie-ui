@@ -83,7 +83,7 @@
 <div class="model-status-container">
   {#if mode === 'rollup' || mode === 'iconOnly'}
     <div
-      class="model-status-rollup"
+      class="model-status-rollup st-typography-body"
       class:icon-only={mode === 'iconOnly'}
       use:tooltip={{ content: status && rollupTooltipMessages[status] }}
     >
