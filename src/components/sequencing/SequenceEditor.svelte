@@ -64,6 +64,7 @@
   let compartmentSeqTooltip: Compartment;
   let channelDictionary: ChannelDictionary | null;
   let commandDictionary: CommandDictionary | null;
+  let disableCopyAndExport: boolean = true;
   let parameterDictionaries: ParameterDictionary[] = [];
   let commandFormBuilderGrid: string;
   let editorSeqJsonDiv: HTMLDivElement;
@@ -219,7 +220,7 @@
 
   function sequenceUpdateListener(viewUpdate: ViewUpdate) {
     const sequence = viewUpdate.state.doc.toString();
-
+    disableCopyAndExport = sequence === '';
     const tree = syntaxTree(viewUpdate.state);
     const seqJson = sequenceToSeqJson(
       tree,
@@ -295,22 +296,26 @@
           <button
             use:tooltip={{ content: `Copy sequence contents as SeqN to clipboard`, placement: 'top' }}
             class="st-button icon-button secondary ellipsis"
-            on:click={copySeqNClipboard}><ClipboardIcon /> SeqN</button
+            on:click={copySeqNClipboard}
+            disabled={disableCopyAndExport}><ClipboardIcon /> SeqN</button
           >
           <button
             use:tooltip={{ content: `Copy sequence contents as JSON to clipboard`, placement: 'top' }}
             class="st-button icon-button secondary ellipsis"
-            on:click={copySeqJsonToClipboard}><ClipboardIcon /> JSON</button
+            on:click={copySeqJsonToClipboard}
+            disabled={disableCopyAndExport}><ClipboardIcon /> JSON</button
           >
           <button
             use:tooltip={{ content: `Download sequence contents as SeqN`, placement: 'top' }}
             class="st-button icon-button secondary ellipsis"
-            on:click|stopPropagation={downloadSeqN}><SaveIcon /> SeqN</button
+            on:click|stopPropagation={downloadSeqN}
+            disabled={disableCopyAndExport}><SaveIcon /> SeqN</button
           >
           <button
             use:tooltip={{ content: `Download sequence contents as Seq.json`, placement: 'top' }}
             class="st-button icon-button secondary ellipsis"
-            on:click|stopPropagation={downloadSeqJson}><SaveIcon /> JSON</button
+            on:click|stopPropagation={downloadSeqJson}
+            disabled={disableCopyAndExport}><SaveIcon /> JSON</button
           >
         </div>
       </svelte:fragment>
