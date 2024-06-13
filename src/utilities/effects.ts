@@ -5326,9 +5326,11 @@ const effects = {
     type: DictionaryTypes,
     user: User | null,
   ): Promise<CommandDictionary | ChannelDictionary | ParameterDictionary | null> {
+    const typeString = type.charAt(0).toUpperCase() + type.slice(1);
+
     try {
       if (!queryPermissions.CREATE_DICTIONARY(user)) {
-        throwPermissionError('upload a command dictionary');
+        throwPermissionError(`upload a ${typeString} dictionary`);
       }
 
       const data = await reqHasura<CommandDictionary | ChannelDictionary | ParameterDictionary>(
@@ -5340,12 +5342,12 @@ const effects = {
       const { createDictionary: newDictionary } = data;
 
       if (newDictionary === null) {
-        throw Error('Unable to upload command dictionary');
+        throw Error(`Unable to upload ${typeString} Dictionary`);
       }
 
       return newDictionary;
     } catch (e) {
-      catchError('Command Dictionary Upload Failed', e as Error);
+      catchError(`${typeString} Dictionary Upload Failed`, e as Error);
       return null;
     }
   },

@@ -180,6 +180,7 @@
     <div class="table-container">
       <DictionaryTable
         dictionaries={$commandDictionaries}
+        hasDeletePermission={featurePermissions.commandDictionary.canDelete(data.user)}
         type={'Command'}
         user={data.user}
         on:delete={deleteCommandDictionary}
@@ -187,6 +188,7 @@
 
       <DictionaryTable
         dictionaries={$channelDictionaries}
+        hasDeletePermission={featurePermissions.channelDictionary.canDelete(data.user)}
         type={'Channel'}
         user={data.user}
         on:delete={deleteChannelDictionary}
@@ -194,6 +196,7 @@
 
       <DictionaryTable
         dictionaries={$parameterDictionaries}
+        hasDeletePermission={featurePermissions.parameterDictionary.canDelete(data.user)}
         type={'Parameter'}
         user={data.user}
         on:delete={deleteParameterDictionary}
@@ -201,6 +204,7 @@
 
       <DictionaryTable
         dictionaries={$sequenceAdaptations}
+        hasDeletePermission={featurePermissions.sequenceAdaptation.canDelete(data.user)}
         type={'Sequence'}
         user={data.user}
         on:delete={deleteSequenceAdaptation}

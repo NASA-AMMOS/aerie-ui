@@ -6,7 +6,6 @@
   import type { User } from '../../types/app';
   import type { DataGridColumnDef, DataGridRowSelection, RowId } from '../../types/data-grid';
   import type { DictionaryType } from '../../types/sequencing';
-  import { featurePermissions } from '../../utilities/permissions';
   import DataGridActions from '../ui/DataGrid/DataGridActions.svelte';
   import SingleActionDataGrid from '../ui/DataGrid/SingleActionDataGrid.svelte';
   import Panel from '../ui/Panel.svelte';
@@ -16,6 +15,7 @@
   export let selectedDictionaryIds: Record<number, boolean> = {};
   export let isEditingParcel: boolean = false;
   export let isMultiselect: boolean = false;
+  export let hasDeletePermission: boolean = false;
   export let hasEditPermission: boolean = false;
   export let type: string;
   export let user: User | null;
@@ -25,7 +25,6 @@
   let displayText: string = '';
   let displayTextPlural: string = '';
   let editingColumnDefs: DataGridColumnDef[];
-  let hasDeletePermission: boolean = false;
   let isSequenceAdaptation: boolean = false;
   let sequenceAdaptationColumDefs: DataGridColumnDef[];
 
@@ -42,7 +41,6 @@
   $: isSequenceAdaptation = type === 'Sequence';
   $: displayText = isSequenceAdaptation ? `${type} Adaptation` : `${type} Dictionary`;
   $: displayTextPlural = isSequenceAdaptation ? `${type} Adaptations` : `${type} Dictionaries`;
-  $: hasDeletePermission = featurePermissions.commandDictionary.canDelete(user);
 
   $: if (selectedDictionaryIds && dictionaryDataGrid?.redrawRows !== undefined) {
     dictionaryDataGrid.redrawRows();
