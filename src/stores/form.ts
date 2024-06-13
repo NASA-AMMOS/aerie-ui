@@ -36,7 +36,12 @@ export function field<T>(initialValue: T, initialValidators: ValidatorFn<T>[] = 
     subscribe,
     update,
     updateValidators(validators: ValidatorFn<T>[]) {
-      update(currentField => initialField(currentField.value, validators));
+      update(currentField => {
+        return {
+          ...currentField,
+          validators,
+        };
+      });
     },
     async validateAndSet(newValue?: T): Promise<boolean> {
       const currentField: Field<T> = get(this);
