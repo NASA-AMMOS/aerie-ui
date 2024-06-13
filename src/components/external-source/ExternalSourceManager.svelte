@@ -6,16 +6,16 @@
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { onDestroy, onMount } from 'svelte';
-  import { externalEventsDB } from '../../stores/external-event';
   import { createExternalSourceError, createExternalSourceTypeError, creatingExternalSource, externalSourceTypes, externalSourceWithTypeName } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
-  import type { ExternalEvent, ExternalEventDB } from '../../types/external-event';
-  import type { ExternalSourceDB, ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceSlim, ExternalSourceType, ExternalSourceTypeInsertInput, ExternalSourceWithTypeName } from '../../types/external-source';
+  import type { ExternalEvent } from '../../types/external-event';
+  import type { ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceSlim, ExternalSourceType, ExternalSourceTypeInsertInput, ExternalSourceWithTypeName } from '../../types/external-source';
   import type { TimeRange } from '../../types/timeline';
   import { type MouseDown, type MouseOver } from '../../types/timeline';
   import effects from '../../utilities/effects';
+  import { classNames } from '../../utilities/generic';
   import { convertDurationToMs, convertUTCtoMs } from '../../utilities/time';
   import { TimelineInteractionMode, getXScale } from '../../utilities/timeline';
   import { tooltip } from '../../utilities/tooltip';
@@ -34,6 +34,7 @@
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
   import SingleActionDataGrid from '../ui/DataGrid/SingleActionDataGrid.svelte';
+  import DatePicker from '../ui/DatePicker/DatePicker.svelte';
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
 
@@ -118,11 +119,9 @@
   ];
   let columnDefs: DataGridColumnDef[] = baseColumnDefs; // TODO: add actions like delete as in Models.svelte
   let selectedSource: ExternalSourceSlim | null = null;
-  let selectedSourceEvents: ExternalEventDB[] = []
 
   // source detail variables
   let selectedSourceId: number | null = null;
-  let selectedSourceFull: ExternalSourceDB | null = null;
 
   // timeline variables
   let dpr = 0;
@@ -276,18 +275,14 @@
     }
   }
 
-  function selectSource(detail: ExternalSourceWithTypeName) {
+  async function selectSource(detail: ExternalSourceWithTypeName) {
     selectedSource = detail;
-    if (selectedSource) {
-      selectedSourceEvents = $externalEventsDB.filter(externalEvent => {
-        externalEvent.source?.source_type_id === selectedSource?.id
-      })
-    }
+    deselectEvent()
   }
 
   function deselectSource() {
+    deselectEvent()
     selectedSource = null;
-    selectedSourceFull = null;
   }
 
   function deselectEvent() {
@@ -327,13 +322,13 @@
   }
 </script>
 
-<CssGrid columns="20% auto">
+<CssGrid columns="1fr 3px 4fr">
   <Panel borderRight padBody={true}>
     <svelte:fragment slot="header">
       <SectionTitle
         >{selectedEvent ? `Selected Event`
           : selectedSource
-          ? `#${selectedSource.id} – ${$externalSourceTypes.find(st => st.id == selectedSource?.source_type_id)}`
+          ? `#${selectedSource.id} – ${$externalSourceTypes.find(st => st.id == selectedSource?.source_type_id)?.name}`
           : 'Upload a Source File'}</SectionTitle
       >
       {#if selectedEvent}
@@ -362,13 +357,52 @@
           showHeader={true}
         />
       {:else if selectedSource}
-        <div title={selectedSource.key}>{selectedSource.key}</div>
+        <div class="external-event-header">
+          <div class={classNames('external-event-header-title')}>
+            <div class="external-event-header-title-value st-typography-medium">
+              {selectedSource.key}
+            </div>
+          </div>
+        </div>
         <div class="tbd">
-          {#if selectedSourceFull !== null}
-            {#each selectedSourceFull.external_events as externalEvent}
-              <ul>{externalEvent}</ul>
-            {/each}
-          {/if}
+          <fieldset>
+            <Input layout="inline">
+              ID
+              <input class="st-input w-100" disabled={true} name="id" value={selectedSource.id} />
+            </Input>
+
+            <Input layout="inline">
+              File ID
+              <input class="st-input w-100" disabled={true} name="file-id" value={selectedSource.file_id} />
+            </Input>
+  
+            <Input layout="inline">
+              Start Time (UTC)
+              <DatePicker
+                dateString={selectedSource.start_time}
+                disabled={true}
+                name="start-time"
+              />
+            </Input>
+  
+            <Input layout="inline">
+              End Time (UTC)
+              <DatePicker
+                dateString={selectedSource.end_time}
+                disabled={true}
+                name="end-time"
+              />
+            </Input>
+
+            <Input layout="inline">
+              End Time (UTC)
+              <DatePicker
+                dateString={selectedSource.valid_at}
+                disabled={true}
+                name="valid-at"
+              />
+            </Input>
+          </fieldset>
         </div>
       {:else}
         <form on:submit|preventDefault={onFormSubmit}>
@@ -415,6 +449,8 @@
       {/if}
     </svelte:fragment>
   </Panel>
+
+  <CssGridGutter track={1} type="column" />
 
   <Panel padBody={false}>
     <svelte:fragment slot="header">
@@ -559,7 +595,6 @@
   .filter {
     margin: 0.8rem 0;
   }
-  .tbd ul,
 
   :global(.source-grid) {
     height: 100%;
@@ -631,5 +666,107 @@
 
   .menu-border-top {
     border-top: 1px solid var(--st-gray-20);
+  }
+  .external-event-form-container {
+    display: grid;
+    grid-template-rows: min-content auto;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .external-event-form {
+    overflow-y: auto;
+  }
+
+  .external-event-directive-definition {
+    padding: 0.5rem;
+  }
+
+  .external-event-header {
+    align-items: center;
+    background: var(--st-gray-10);
+    border-bottom: 1px solid var(--st-gray-15);
+    display: flex;
+    flex-shrink: 0;
+    font-style: italic;
+    padding: 4px 8px;
+    padding-left: 8px;
+  }
+
+  .external-event-header-icons {
+    align-items: center;
+    display: flex;
+  }
+
+  .external-event-error-rollup {
+    display: inline;
+    font-style: normal;
+  }
+
+  .external-event-header-title-placeholder,
+  .external-event-header-title-value {
+    word-break: break-word;
+  }
+
+  .external-event-header-title-value {
+    overflow: hidden;
+    padding: 4px 0px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    word-break: break-all;
+  }
+
+  .external-event-header-title-placeholder {
+    padding: 4px 8px;
+  }
+
+  .external-event-header-title {
+    align-items: flex-start;
+    border-radius: 4px;
+    display: flex;
+    width: 100%;
+  }
+
+  .external-event-header-title :global(fieldset) {
+    padding: 0;
+    width: 100%;
+  }
+
+  .external-event-header-title-edit-button:hover {
+    background-color: var(--st-white);
+  }
+
+  .external-event-header-title--editing {
+    gap: 8px;
+    padding: 0;
+    width: 100%;
+  }
+
+  .external-event-header-changelog {
+    border: 1px solid transparent;
+    display: flex;
+    width: 24px;
+  }
+
+  .external-event-header-changelog:hover {
+    color: #007bff;
+  }
+
+  .revision-preview-header {
+    align-items: center;
+    background-color: #e6e6ff;
+    border-bottom: 1px solid #c4c6ff;
+    border-top: 1px solid #c4c6ff;
+    display: flex;
+    flex-shrink: 0;
+    justify-content: space-between;
+    padding: 4px 8px;
+    padding-left: 8px;
+  }
+
+  .annotations {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
   }
 </style>
