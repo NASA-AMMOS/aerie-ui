@@ -528,6 +528,7 @@
             items={filteredExternalSources}
             {user}
             on:rowClicked={({ detail }) => selectSource(detail.data)}
+            bind:selectedItemId={selectedSourceId}
           />
           <CssGridGutter track={1} type="row" />
           {#if selectedSource}
