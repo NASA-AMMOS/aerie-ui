@@ -1,4 +1,4 @@
-import type { ExternalSource } from './external-source';
+import type { ExternalSourceDB } from './external-source';
 
 export type ExternalEventId = number;
 
@@ -8,7 +8,7 @@ export type ExternalEventDB = {
   id: number;
   key: string;
   properties: Record<string, any>;
-  source?: ExternalSource;
+  source?: ExternalSourceDB;
   source_id: number;
   start_time: string;
 };
