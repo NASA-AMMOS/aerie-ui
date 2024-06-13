@@ -46,20 +46,20 @@
       </div>
     </div>
     <div class="errors">
-      {#if selectedModelLog && !selectedModelLog.success}
-        <div class="error">
+      <div class="error">
+        {#if selectedModelLog && !selectedModelLog.success}
           {#if selectedModelLog?.error_message}
             <div class="reason">
-              <div>
-                {selectedModelLog?.error_message}
-              </div>
+              {selectedModelLog?.error_message}
             </div>
           {/if}
           <div class="trace">
             <pre>{JSON.stringify(selectedModelLog?.error, undefined, 2)}</pre>
           </div>
-        </div>
-      {/if}
+        {:else}
+          <div class="reason">Successful extraction</div>
+        {/if}
+      </div>
     </div>
   </div>
 </TabPanel>
