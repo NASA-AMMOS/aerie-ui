@@ -12,7 +12,7 @@
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalEvent, ExternalEventDB } from '../../types/external-event';
-  import type { ExternalSource, ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceSlim, ExternalSourceType, ExternalSourceTypeInsertInput, ExternalSourceWithTypeName } from '../../types/external-source';
+  import type { ExternalSourceDB, ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceSlim, ExternalSourceType, ExternalSourceTypeInsertInput, ExternalSourceWithTypeName } from '../../types/external-source';
   import type { TimeRange } from '../../types/timeline';
   import { type MouseDown, type MouseOver } from '../../types/timeline';
   import effects from '../../utilities/effects';
@@ -122,7 +122,7 @@
 
   // source detail variables
   let selectedSourceId: number | null = null;
-  let selectedSourceFull: ExternalSource | null = null;
+  let selectedSourceFull: ExternalSourceDB | null = null;
 
   // timeline variables
   let dpr = 0;
