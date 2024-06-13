@@ -3,7 +3,7 @@ import type { ExternalEventDB, ExternalEventInsertInput } from '../types/externa
 // TODO: CONVERT STUFF IN THE'CREATE_EXTERNAL_SOURCE' EFFECT TO TERMS OF THIS.
 
 // This is the type that conforms with the database schema.
-export type ExternalSource = {
+export type ExternalSourceDB = {
   end_time: string;
   external_events: ExternalEventDB[];
   file_id: number;
@@ -20,7 +20,7 @@ export type ExternalSource = {
 };
 
 export type ExternalSourceSlim = Pick<
-  ExternalSource,
+  ExternalSourceDB,
   'id' | 'file_id' | 'key' | 'source_type_id' | 'start_time' | 'end_time' | 'valid_at'
 >;
 
@@ -55,7 +55,7 @@ export type ExternalSourceJson = {
 
 // This is used for the GraphQL mutation.
 export type ExternalSourceInsertInput = Pick<
-  ExternalSource,
+  ExternalSourceDB,
   'key' | 'metadata' | 'source_type_id' | 'file_id' | 'start_time' | 'end_time' | 'valid_at'
 > & {
   external_events: {
