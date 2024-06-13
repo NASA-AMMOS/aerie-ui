@@ -11,7 +11,7 @@
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalEvent } from '../../types/external-event';
-  import type { ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceSlim, ExternalSourceType, ExternalSourceTypeInsertInput, ExternalSourceWithTypeName } from '../../types/external-source';
+  import type { ExternalSourceDB, ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceSlim, ExternalSourceType, ExternalSourceTypeInsertInput, ExternalSourceWithTypeName } from '../../types/external-source';
   import type { TimeRange } from '../../types/timeline';
   import { type MouseDown, type MouseOver } from '../../types/timeline';
   import effects from '../../utilities/effects';
@@ -22,6 +22,7 @@
   import { required, timestamp } from '../../utilities/validators';
   import Collapse from '../Collapse.svelte';
   import ExternalEventForm from '../external-events/ExternalEventForm.svelte';
+  import ExternalEventProperties from '../external-events/ExternalEventProperties.svelte';
   import DatePickerField from '../form/DatePickerField.svelte';
   import Field from '../form/Field.svelte';
   import Input from '../form/Input.svelte';
@@ -118,7 +119,7 @@
     },
   ];
   let columnDefs: DataGridColumnDef[] = baseColumnDefs; // TODO: add actions like delete as in Models.svelte
-  let selectedSource: ExternalSourceSlim | null = null;
+  let selectedSource: ExternalSourceDB & { source_type: string | undefined} | null = null;
 
   // source detail variables
   let selectedSourceId: number | null = null;
@@ -276,7 +277,11 @@
   }
 
   async function selectSource(detail: ExternalSourceWithTypeName) {
-    selectedSource = detail;
+    selectedSource = {
+      ...detail,
+      external_events: [],
+      metadata: await effects.getExternalSourceMetadata(detail.id, user) 
+    }
     deselectEvent()
   }
 
@@ -377,6 +382,11 @@
             </Input>
   
             <Input layout="inline">
+                Source Type
+              <input class="st-input w-100" disabled={true} name="source-type" value={selectedSource.source_type} />
+            </Input>
+  
+            <Input layout="inline">
               Start Time (UTC)
               <DatePicker
                 dateString={selectedSource.start_time}
@@ -403,6 +413,23 @@
               />
             </Input>
           </fieldset>
+          <Collapse
+            className="anchor-collapse"
+            defaultExpanded={false}
+            title="Metadata"
+            tooltipContent="View Event Source Metadata"
+          >
+            {@const formProperties = Object.entries(selectedSource.metadata).map(e => {
+              return {
+                name: e[0],
+                value: e[1]
+              }
+            })}
+            <!--May want to call ExternalEventProperties something more generic for anything with name and value pairs that's expanded recursively. Modelled similarly to ActivityParameters, but this could be made generic...-->
+            <ExternalEventProperties
+              {formProperties}
+            />
+          </Collapse>
         </div>
       {:else}
         <form on:submit|preventDefault={onFormSubmit}>
