@@ -44,6 +44,7 @@ export class Plans {
     await this.createButton.waitFor({ state: 'visible' });
     await this.createButton.isEnabled({ timeout: 500 });
     await this.createButton.click();
+    await this.filterTable(planName);
     await this.tableRow(planName).waitFor({ state: 'attached' });
     await this.tableRow(planName).waitFor({ state: 'visible' });
     const planId = await this.getPlanId(planName);

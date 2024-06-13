@@ -16,6 +16,7 @@ export class Plan {
   consoleContainer: Locator;
   constraintListItemSelector: string;
   constraintManageButton: Locator;
+  constraintModalFilter: Locator;
   constraintNewButton: Locator;
   gridMenu: Locator;
   gridMenuButton: Locator;
@@ -51,17 +52,19 @@ export class Plan {
   reSimulateButton: Locator;
   roleSelector: Locator;
   scheduleButton: Locator;
-  schedulingConditionEnabledCheckbox: Locator;
-  schedulingConditionListItemSelector: string;
+  schedulingConditionEnabledCheckboxSelector: (conditionName: string) => Locator;
+  schedulingConditionListItemSelector: (conditionName: string) => string;
   schedulingConditionManageButton: Locator;
   schedulingConditionNewButton: Locator;
-  schedulingGoal: Locator;
-  schedulingGoalDifferenceBadge: Locator;
+  schedulingConditionsModalFilter: Locator;
+  schedulingGoal: (goalName: string) => Locator;
+  schedulingGoalDifferenceBadge: (goalName: string) => Locator;
   schedulingGoalEnabledCheckboxSelector: (goalName: string) => Locator;
-  schedulingGoalExpand: Locator;
+  schedulingGoalExpand: (goalName: string) => Locator;
   schedulingGoalListItemSelector: (goalName: string) => string;
   schedulingGoalManageButton: Locator;
   schedulingGoalNewButton: Locator;
+  schedulingGoalsModalFilter: Locator;
   schedulingSatisfiedActivity: Locator;
   schedulingStatusSelector: (status: string) => string;
   simulateButton: Locator;
@@ -77,7 +80,8 @@ export class Plan {
     public planName = plans.planName,
   ) {
     this.constraintListItemSelector = `.constraint-list-item:has-text("${constraints.constraintName}")`;
-    this.schedulingConditionListItemSelector = `.scheduling-condition:has-text("${schedulingConditions.conditionName}")`;
+    this.schedulingConditionListItemSelector = (conditionName: string) =>
+      `.scheduling-condition:has-text("${conditionName}")`;
     this.schedulingGoalListItemSelector = (goalName: string) => `.scheduling-goal:has-text("${goalName}")`;
     this.schedulingStatusSelector = (status: string) =>
       `div[data-component-name="SchedulingGoalsPanel"] .header-actions > .status-badge.${status.toLowerCase()}`;
@@ -131,6 +135,9 @@ export class Plan {
     await this.constraints.createConstraint(baseURL);
     await newConstraintPage.close();
     this.constraints.updatePage(this.page);
+    await this.constraintModalFilter.fill(this.constraints.constraintName);
+    // wait for table to filter
+    await this.page.waitForTimeout(100);
     await this.page.getByRole('row', { name: this.constraints.constraintName }).getByRole('checkbox').click();
     await this.page.getByRole('button', { name: 'Update' }).click();
     await this.page.waitForSelector(this.constraintListItemSelector, { state: 'visible', strict: true });
@@ -147,9 +154,18 @@ export class Plan {
     await this.schedulingConditions.createSchedulingCondition(baseURL);
     await newSchedulingConditionPage.close();
     this.schedulingConditions.updatePage(this.page);
-    await this.page.getByRole('row', { name: this.schedulingConditions.conditionName }).getByRole('checkbox').click();
+    await this.schedulingConditionsModalFilter.fill(this.schedulingConditions.conditionName);
+    // wait for table to filter
+    await this.page.waitForTimeout(100);
+    await this.page
+      .getByRole('row', { name: this.schedulingConditions.conditionName })
+      .getByRole('checkbox')
+      .click({ position: { x: 2, y: 2 } });
     await this.page.getByRole('button', { name: 'Update' }).click();
-    await this.page.waitForSelector(this.schedulingConditionListItemSelector, { state: 'visible', strict: true });
+    await this.page.waitForSelector(this.schedulingConditionListItemSelector(this.schedulingConditions.conditionName), {
+      state: 'visible',
+      strict: true,
+    });
   }
 
   async createSchedulingGoal(baseURL: string | undefined, goalName: string) {
@@ -163,7 +179,13 @@ export class Plan {
     await this.schedulingGoals.createSchedulingGoal(baseURL, goalName);
     await newSchedulingGoalPage.close();
     this.schedulingGoals.updatePage(this.page);
-    await this.page.getByRole('row', { name: goalName }).getByRole('checkbox').click();
+    await this.schedulingGoalsModalFilter.fill(goalName);
+    // wait for table to filter
+    await this.page.waitForTimeout(100);
+    await this.page
+      .getByRole('row', { name: goalName })
+      .getByRole('checkbox')
+      .click({ position: { x: 2, y: 2 } });
     await this.page.getByRole('button', { name: 'Update' }).click();
     await this.page.waitForSelector(this.schedulingGoalListItemSelector(goalName), { state: 'visible', strict: true });
   }
@@ -237,7 +259,10 @@ export class Plan {
 
   async removeConstraint() {
     await this.constraintManageButton.click();
-    await this.page.getByRole('row', { name: this.constraints.constraintName }).getByRole('checkbox').click();
+    await this.constraintModalFilter.fill(this.constraints.constraintName);
+    // wait for table to filter
+    await this.page.waitForTimeout(100);
+    await this.page.getByRole('row', { name: this.constraints.constraintName }).getByRole('checkbox').uncheck();
     await this.page.getByRole('button', { name: 'Update' }).click();
     await this.page.locator(this.constraintListItemSelector).waitFor({ state: 'detached' });
   }
@@ -254,7 +279,10 @@ export class Plan {
 
   async removeSchedulingGoal(goalName: string) {
     await this.schedulingGoalManageButton.click();
-    await this.page.getByRole('row', { name: goalName }).getByRole('checkbox').click();
+    await this.schedulingGoalsModalFilter.fill(goalName);
+    // wait for table to filter
+    await this.page.waitForTimeout(100);
+    await this.page.getByRole('row', { name: goalName }).getByRole('checkbox').uncheck();
     await this.page.getByRole('button', { name: 'Update' }).click();
     await this.page.locator(this.schedulingGoalListItemSelector(goalName)).waitFor({ state: 'detached' });
   }
@@ -406,6 +434,7 @@ export class Plan {
       .locator(`div.ag-theme-stellar.table .ag-center-cols-container > .ag-row`)
       .nth(0);
     this.constraintManageButton = page.locator(`button[name="manage-constraints"]`);
+    this.constraintModalFilter = page.locator('.modal').getByPlaceholder('Filter constraints');
     this.constraintNewButton = page.locator(`button[name="new-constraint"]`);
     this.consoleContainer = page.locator(`.console-container`);
     this.gridMenuButton = page.locator('.header > .grid-menu');
@@ -448,14 +477,17 @@ export class Plan {
     this.analyzeButton = page.locator('.header-actions button[aria-label="Analyze"]');
     this.schedulingGoalManageButton = page.locator(`button[name="manage-goals"]`);
     this.schedulingConditionManageButton = page.locator(`button[name="manage-conditions"]`);
-    this.schedulingGoal = page.locator('.scheduling-goal').first();
-    this.schedulingGoalDifferenceBadge = this.schedulingGoal.locator('.difference-badge');
+    this.schedulingGoal = (goalName: string) => page.locator(`.scheduling-goal:has-text("${goalName}")`);
+    this.schedulingGoalDifferenceBadge = (goalName: string) =>
+      this.schedulingGoal(goalName).locator('.difference-badge');
     this.schedulingGoalEnabledCheckboxSelector = (goalName: string) =>
-      page.locator(`.scheduling-goal:has-text("${goalName}") >> input[type="checkbox"]`).first();
-    this.schedulingConditionEnabledCheckbox = page
-      .locator(`.scheduling-condition:has-text("${this.schedulingConditions.conditionName}") >> input[type="checkbox"]`)
-      .first();
-    this.schedulingGoalExpand = page.locator('.scheduling-goal > .collapse > button').first();
+      this.schedulingGoal(goalName).getByRole('checkbox');
+    this.schedulingGoalsModalFilter = this.page.locator('.modal').getByPlaceholder('Filter goals');
+    this.schedulingConditionsModalFilter = this.page.locator('.modal').getByPlaceholder('Filter conditions');
+    this.schedulingConditionEnabledCheckboxSelector = (conditionName: string) =>
+      page.locator(`.scheduling-condition:has-text("${conditionName}")`).getByRole('checkbox');
+    this.schedulingGoalExpand = (goalName: string) =>
+      this.schedulingGoal(goalName).locator('.collapse > button').first();
     this.schedulingGoalNewButton = page.locator(`button[name="new-scheduling-goal"]`);
     this.schedulingConditionNewButton = page.locator(`button[name="new-scheduling-condition"]`);
     this.schedulingSatisfiedActivity = page.locator('.scheduling-goal-analysis-activities-list > .satisfied-activity');
@@ -481,7 +513,7 @@ export class Plan {
   }
 
   async waitForToast(message: string) {
-    await this.page.waitForSelector(`.toastify:has-text("${message}")`, { timeout: 3000 });
+    await this.page.waitForSelector(`.toastify:has-text("${message}")`, { timeout: 10000 });
   }
 }
 
