@@ -77,9 +77,8 @@ import type {
   SeqId,
 } from '../types/expansion';
 import type { Extension, ExtensionPayload } from '../types/extension';
-import type { ExternalSourceInsertInput, ExternalSourceTypeInsertInput, PlanExternalSource } from '../types/external-source';
 import type { ExternalEventDB } from '../types/external-event';
-import type { ExternalSourceInsertInput, PlanExternalSource } from '../types/external-source';
+import type { ExternalSourceInsertInput, ExternalSourceTypeInsertInput, PlanExternalSource } from '../types/external-source';
 import type { Model, ModelInsertInput, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
 import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
 import type {
@@ -3268,8 +3267,31 @@ const effects = {
       }
       return externalEvents;
     } catch (e) {
-      catchError('Failed to retried external events.', e as Error);
+      catchError('Failed to retrieve external events.', e as Error);
       showFailureToast('External Events Retrieval Failed');
+      return [];
+    }
+  },
+
+  async getExternalSourceMetadata(
+    id: number | undefined,
+    user: User | null
+  ): Promise<Record<string, any>> {
+    if (!id) {
+      console.log("Source id is undefined.")
+      return [];
+    }
+    try {
+      const data = await reqHasura<any>(gql.GET_EXTERNAL_SOURCE_METADATA, { id }, user);
+      const metadata: Record<string, any> = data["external_source"][0]["metadata"];
+      if (metadata === null) {
+        throw Error(`Unable to get external source metadata for external source id ${id}.`);
+      }
+      console.log(metadata)
+      return metadata;
+    } catch (e) {
+      catchError('Failed to retrieve external source metadata.', e as Error);
+      showFailureToast('External Source Metadata Retrieval Failed');
       return [];
     }
   },

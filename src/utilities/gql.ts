@@ -1371,6 +1371,15 @@ const gql = {
   }
   `,
 
+  GET_EXTERNAL_SOURCE_METADATA: `#graphql
+  query GetExternalEvents($id: Int!) {
+    ${Queries.EXTERNAL_SOURCES}(where: {id: {_eq: $id}}) {
+      metadata
+    }
+  }
+  `,
+
+
   GET_MODELS: `#graphql
     query GetModels {
       models: ${Queries.MISSION_MODELS} {
