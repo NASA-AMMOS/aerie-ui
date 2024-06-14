@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import type { ExternalEventDB } from '../../types/external-event';
+  import type { ExternalEvent } from '../../types/external-event';
   import type { ExternalEventProperty } from '../../types/external-event-property';
   import { classNames } from '../../utilities/generic';
   import Collapse from '../Collapse.svelte';
@@ -10,7 +10,7 @@
   import Highlight from '../ui/Highlight.svelte';
   import ExternalEventProperties from './ExternalEventProperties.svelte';
 
-  export let externalEvent: ExternalEventDB;
+  export let externalEvent: ExternalEvent;
   export let showHeader: boolean = true;
 
   let editable: boolean = false;

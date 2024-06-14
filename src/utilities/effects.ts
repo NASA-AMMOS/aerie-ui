@@ -26,6 +26,7 @@ import {
   savingExpansionRule,
   savingExpansionSet,
 } from '../stores/expansion';
+import { createExternalEventTypeError, creatingExternalEventType } from '../stores/external-event';
 import { createExternalSourceError, createExternalSourceTypeError, creatingExternalSource, creatingExternalSourceType } from '../stores/external-source';
 import { createModelError, creatingModel, models } from '../stores/model';
 import { createPlanError, creatingPlan, planId } from '../stores/plan';
@@ -78,9 +79,8 @@ import type {
   SeqId,
 } from '../types/expansion';
 import type { Extension, ExtensionPayload } from '../types/extension';
-import type { ExternalSourceInsertInput, ExternalSourceTypeInsertInput, PlanExternalSource } from '../types/external-source';
 import type { ExternalEventDB, ExternalEventTypeInsertInput } from '../types/external-event';
-import { createExternalEventTypeError, creatingExternalEventType, externalEventTypes } from '../stores/external-event';
+import type { ExternalSourceInsertInput, ExternalSourceTypeInsertInput, PlanExternalSource } from '../types/external-source';
 import type { Model, ModelInsertInput, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
 import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
 import type {
@@ -916,14 +916,15 @@ const effects = {
     }
   },
 
-  async createExternalEventType(eventTypeInsert: ExternalEventTypeInsertInput, user: User | null) {
+  async createExternalEventType(eventType: ExternalEventTypeInsertInput, user: User | null) {
     try {
       creatingExternalEventType.set(true);
       createExternalEventTypeError.set(null);
-      if (!(eventTypeInsert == null)) {
-        const { createExternalEventType: created } = await reqHasura<any>(gql.CREATE_EXTERNAL_EVENT_TYPE, { eventTypeInsert }, user);
+      if (!(eventType == null)) {
+        // console.log(eventType)
+        const { createExternalEventType: created } = await reqHasura<any>(gql.CREATE_EXTERNAL_EVENT_TYPE, { eventType }, user);
         if (created !== null) {
-          showSuccessToast('External Event Type Created Successfully');
+          // showSuccessToast('External Event Type Created Successfully');
           creatingExternalEventType.set(false);
           return created.id;
         } else {
@@ -947,7 +948,13 @@ const effects = {
 
       creatingExternalSource.set(true);
       createExternalSourceError.set(null);
-      const file_id = await effects.uploadFile(file, user);
+      let file_id: number | null = null;
+      if (file) {
+        file_id = await effects.uploadFile(file, user);
+      }
+
+      console.log(source)
+      console.log(source.external_events.data)
 
       if (file_id !== null) {
         source.file_id = file_id;
@@ -3281,7 +3288,7 @@ const effects = {
       for (const event of events) {
         externalEvents.push({
           duration: event.duration,
-          event_type: event.event_type,
+          event_type_id: event.event_type_id,
           id: event.id,
           key: event.key,
           properties: event.properties,
