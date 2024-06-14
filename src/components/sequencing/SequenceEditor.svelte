@@ -29,7 +29,10 @@
   } from '../../stores/sequencing';
   import type { User } from '../../types/app';
   import { setupLanguageSupport } from '../../utilities/codemirror';
-  import { commandNumberGutter } from '../../utilities/new-sequence-editor/command-number-gutter';
+  import {
+    commandNumberGutter,
+    commandNumberUpdateListener,
+  } from '../../utilities/new-sequence-editor/command-number-gutter';
   import { seqJsonLinter } from '../../utilities/new-sequence-editor/seq-json-linter';
   import { sequenceCompletion } from '../../utilities/new-sequence-editor/sequence-completion';
   import { sequenceLinter } from '../../utilities/new-sequence-editor/sequence-linter';
@@ -152,6 +155,7 @@
         basicSetup,
         EditorView.lineWrapping,
         EditorView.theme({ '.cm-gutter': { 'min-height': `${clientHeightGridRightTop}px` } }),
+        commandNumberUpdateListener(),
         commandNumberGutter,
         lintGutter(),
         compartmentSeqLanguage.of(setupLanguageSupport(sequenceCompletion(null, null, []))),
