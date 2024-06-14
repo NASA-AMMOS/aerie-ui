@@ -1,10 +1,15 @@
 import { derived, writable, type Writable } from 'svelte/store';
-import type { ExternalEventDB, ExternalEventId } from "../types/external-event";
+import type { ExternalEventDB, ExternalEventId, ExternalEventType, ExternalEventWithTypeName } from "../types/external-event";
 import gql from '../utilities/gql';
 import { selectedPlanExternalSourceIds } from './external-source';
 import { gqlSubscribable } from './subscribable';
 import { viewUpdateGrid } from './views';
 
+/* Writeable. */
+export const creatingExternalEventType: Writable<boolean> = writable(false);
+export const createExternalEventTypeError: Writable<string | null> = writable(null);
+
+/* Subscriptions. */
 export const externalEventsDB = gqlSubscribable<ExternalEventDB[]>(
   gql.SUB_PLAN_EXTERNAL_EVENTS,
   { source_ids: selectedPlanExternalSourceIds },
@@ -12,10 +17,7 @@ export const externalEventsDB = gqlSubscribable<ExternalEventDB[]>(
   null,
 );
 
-export const externalEventTypes = derived(
-  externalEventsDB,
-  ($externalEventsDB) => $externalEventsDB.map(event => event.event_type).filter((val, index, arr) => arr.indexOf(val) === index) // https://stackoverflow.com/questions/1960473/get-all-unique-values-in-a-javascript-array-remove-duplicates
-);
+export const externalEventTypes = gqlSubscribable<ExternalEventType[]>(gql.SUB_EXTERNAL_EVENT_TYPES, {}, [], null);
 
 export const selectedExternalEventId: Writable<ExternalEventId | null> = writable(null);
 
@@ -38,6 +40,8 @@ export function selectExternalEvent(
   }
 }
 
+
+/* Derived. */
 export const selectedExternalEvent = derived(
   [selectedExternalEventId, externalEventsDB],
   ([$selectedExternalEventId, $externalEventsDB]) => {
@@ -50,3 +54,11 @@ export const selectedExternalEvent = derived(
     return null;
   },
 );
+
+export const externalEventWithTypeName = derived<[typeof externalEventsDB, typeof externalEventTypes], ExternalEventWithTypeName[]>(
+  [externalEventsDB, externalEventTypes],
+  ([$externalEventsDB, $externalEventTypes]) => $externalEventsDB.map(externalEvent => ({
+    ...externalEvent,
+    event_type: $externalEventTypes.find(eventType => eventType.id === externalEvent.event_type_id)?.name
+  }));
+)
