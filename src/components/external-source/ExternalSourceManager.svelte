@@ -10,8 +10,8 @@
   import { field } from '../../stores/form';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
-  import type { ExternalEvent } from '../../types/external-event';
   import type { ExternalSourceDB, ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceSlim, ExternalSourceType, ExternalSourceTypeInsertInput, ExternalSourceWithTypeName } from '../../types/external-source';
+  import type { ExternalEvent, ExternalEventTypeInsertInput } from '../../types/external-event';
   import type { TimeRange } from '../../types/timeline';
   import { type MouseDown, type MouseOver } from '../../types/timeline';
   import effects from '../../utilities/effects';
@@ -38,6 +38,7 @@
   import DatePicker from '../ui/DatePicker/DatePicker.svelte';
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
+  import { externalEventTypes } from '../../stores/external-event';
 
 
   export let user: User | null;
@@ -143,6 +144,11 @@
   let file: File | undefined;
   let parsed: ExternalSourceJson | undefined;
 
+  // external event type creation variables
+  let externalEventTypeId: number | undefined = undefined;
+  let externalEventTypeInsertInput: ExternalEventTypeInsertInput;
+  let externalEventsCreated: ExternalEvent[] = [];
+
   // For filtering purposes (modelled after TimelineEditorLayerFilter):
   let filterMenu: Menu;
   let input: HTMLInputElement;
@@ -154,7 +160,7 @@
 
 
   // $: createButtonDisabled = !files || key === '' ||   $creatingModel === true; TODO: do this later
-  
+
   // TODO: this doesn't let people modify the form properties.
   // We need to figure out if things like the start, end, and valid_at
   // time *should* be editable. I don't think any of them should be, but we
@@ -193,7 +199,7 @@
       sourceInsert = {
         end_time: $endTimeDoyField.value,
         external_events: {
-          data: parsed?.events, // does NOT filter for keys. Trusts that the input is right before forwarding to Hasura...even though a type IS defined... I mean to say if there are extra keys, in excess of what the type specifies, it just includes all of them
+          data: null  // updated after this map is created
         },
         file_id: -1, // updated in the effect.
         key: $keyField.value,
@@ -202,6 +208,28 @@
         start_time: $startTimeDoyField.value,
         valid_at: $validAtDoyField.value,
       };
+      parsed?.events.forEach(externalEvent => {
+        externalEventTypeInsertInput = {
+          name: externalEvent.event_type
+        };
+        if (externalEvent.event_type !== undefined && externalEvent.start_time !== undefined && externalEvent.duration !== undefined) {
+          // Create ExternalEventType if it doesn't exist or grab the ID of the previously created entry
+          if (!($externalEventTypes.map(e => e.name).includes(externalEvent.event_type))) {
+            externalEventTypeId = await effects.createExternalEventType(externalEventTypeInsertInput, user);
+          } else {
+            externalEventTypeId = $externalEventTypes.find(externalEventType => externalEventType.name === externalEvent.event_type)?.id
+          }
+          if (externalEventTypeId !== undefined) {
+            externalEventsCreated.push({
+              ...externalEvent,
+              event_type_id: externalEventTypeId,
+              startMs: convertUTCtoMs(externalEvent.start_time),
+              durationMs: convertDurationToMs(externalEvent.duration),
+            });
+          }
+        }
+      });
+      sourceInsert.external_events.data = externalEventsCreated;
     }
   }
 
@@ -216,7 +244,8 @@
     return selectedFilters.find(f => f.name === externalSource.source_type) !== undefined
   });
   $: filteredValues = $externalSourceTypes.filter(externalSourceType => externalSourceType.name.toLowerCase().includes(filterString))
-  
+
+  /** TODO - don't think we need this with how external events are handled now
   $: effects.getExternalEvents(selectedSource?.id, user).then(fetched => selectedEvents = fetched.map(eDB => {
     return {
       ...eDB,
@@ -224,6 +253,8 @@
       durationMs: convertDurationToMs(eDB.duration)
     }
   }));
+  **/
+
 
 
   onMount(() => {
@@ -253,7 +284,7 @@
     dpr = window.devicePixelRatio;
   }
 
-  
+
   async function onFormSubmit(e: SubmitEvent) {
     // TBD: force reload the page???
     let sourceTypeId: number | undefined = undefined;
@@ -280,7 +311,7 @@
     selectedSource = {
       ...detail,
       external_events: [],
-      metadata: await effects.getExternalSourceMetadata(detail.id, user) 
+      metadata: await effects.getExternalSourceMetadata(detail.id, user)
     }
     deselectEvent()
   }
@@ -380,12 +411,12 @@
               File ID
               <input class="st-input w-100" disabled={true} name="file-id" value={selectedSource.file_id} />
             </Input>
-  
+
             <Input layout="inline">
                 Source Type
               <input class="st-input w-100" disabled={true} name="source-type" value={selectedSource.source_type} />
             </Input>
-  
+
             <Input layout="inline">
               Start Time (UTC)
               <DatePicker
@@ -394,7 +425,7 @@
                 name="start-time"
               />
             </Input>
-  
+
             <Input layout="inline">
               End Time (UTC)
               <DatePicker
