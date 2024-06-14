@@ -77,8 +77,9 @@ import type {
   SeqId,
 } from '../types/expansion';
 import type { Extension, ExtensionPayload } from '../types/extension';
-import type { ExternalEventDB } from '../types/external-event';
 import type { ExternalSourceInsertInput, ExternalSourceTypeInsertInput, PlanExternalSource } from '../types/external-source';
+import type { ExternalEventDB, ExternalEventTypeInsertInput } from '../types/external-event';
+import { createExternalEventTypeError, creatingExternalEventType, externalEventTypes } from '../stores/external-event';
 import type { Model, ModelInsertInput, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
 import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
 import type {
@@ -911,6 +912,28 @@ const effects = {
       showFailureToast('External Source Type Create Failed');
       createExternalSourceTypeError.set((e as Error).message);
       creatingExternalSourceType.set(false);
+    }
+  },
+
+  async createExternalEventType(eventTypeInsert: ExternalEventTypeInsertInput, user: User | null) {
+    try {
+      creatingExternalEventType.set(true);
+      createExternalEventTypeError.set(null);
+      if (!(eventTypeInsert == null)) {
+        const { createExternalEventType: created } = await reqHasura<any>(gql.CREATE_EXTERNAL_EVENT_TYPE, { eventTypeInsert }, user);
+        if (created !== null) {
+          showSuccessToast('External Event Type Created Successfully');
+          creatingExternalEventType.set(false);
+          return created.id;
+        } else {
+          throw Error('Unable to create external event type');
+        }
+      }
+    } catch (e) {
+      catchError('External Event Type Create Failed', e as Error);
+      showFailureToast('External Event Type Create Failed');
+      createExternalEventTypeError.set((e as Error).message);
+      creatingExternalEventType.set(false);
     }
   },
 

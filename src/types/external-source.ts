@@ -59,7 +59,7 @@ export type ExternalSourceInsertInput = Pick<
   'key' | 'metadata' | 'source_type_id' | 'file_id' | 'start_time' | 'end_time' | 'valid_at'
 > & {
   external_events: {
-    data: ExternalEventInsertInput[];
+    data: ExternalEventInsertInput[] | null;
   };
 };
 
