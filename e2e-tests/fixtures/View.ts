@@ -82,8 +82,9 @@ export class View {
     await expect(filterIcon).toBeVisible();
     await filterIcon.click();
     await this.page.locator('.ag-popup').getByRole('textbox', { name: 'Filter Value' }).first().fill(viewName);
-    await this.page.waitForTimeout(200);
     await expect(this.table.getByRole('row', { name: viewName })).toBeVisible();
+    // dismiss the table filter
+    await this.page.locator('.modal-header').click();
   }
 
   async openRenameView() {

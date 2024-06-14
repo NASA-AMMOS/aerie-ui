@@ -121,7 +121,7 @@ test.describe.serial('Timeline View Editing', () => {
 
     // Expect the filter list to open
     await page.getByPlaceholder('Search').last().click();
-    expect(await page.locator('.menu-slot > .header')).toBeDefined();
+    await expect(page.locator('.menu-slot > .header')).toBeDefined();
 
     // Add all activities
     await page.locator('button', { hasText: /Select [0-9]* activit/ }).click();

@@ -69,9 +69,8 @@ export class Model {
    * Re-run the tests and increase the timeout if you get consistent failures.
    */
   async goto() {
-    await this.page.waitForTimeout(1200);
     await this.page.goto(`/models/${this.models.modelId}`, { waitUntil: 'networkidle' });
-    await this.page.waitForTimeout(250);
+    await expect(this.page.getByText('Jar file status')).toBeVisible();
   }
 
   async saveModel() {

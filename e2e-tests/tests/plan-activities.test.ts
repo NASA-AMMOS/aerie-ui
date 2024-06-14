@@ -60,14 +60,16 @@ test.describe.serial('Plan Activities', () => {
     await plan.panelActivityDirectivesTable.getByRole('button', { name: 'Delete Activity Directive' }).click();
     await page.locator('.modal-content select').nth(1).selectOption('anchor-plan');
     await page.getByRole('button', { name: 'Confirm' }).click();
+    await plan.panelActivityDirectivesTable
+      .getByRole('row', { name: 'GrowBanana' })
+      .waitFor({ state: 'detached', timeout: 2000 });
     await plan.panelActivityDirectivesTable.getByRole('gridcell', { name: 'PickBanana' }).nth(1).click();
     await plan.panelActivityForm.getByRole('button', { name: 'Is Relative To Another Activity Directive' }).click();
     await page.waitForFunction(
       () => document.querySelector('.anchor-form .selected-display-value')?.innerHTML === 'To Plan',
     );
 
-    await plan.panelActivityForm.getByRole('button', { name: 'Is Relative To Another Activity Directive' }).click();
-    expect(plan.panelActivityForm.getByRole('textbox', { name: 'To Plan' })).toBeVisible();
+    await expect(plan.panelActivityForm.getByRole('textbox', { name: 'To Plan' })).toBeVisible();
   });
 
   test('Deleting multiple activity directives but only 1 has a remaining anchored dependent should prompt for just the one with a remaining dependent', async () => {
@@ -130,7 +132,7 @@ test.describe.serial('Plan Activities', () => {
     const tbSugar = await plan.panelActivityForm.locator('.parameter', { hasText: 'tbSugar' }).locator('input');
     await tbSugar.fill('100');
     await tbSugar.evaluate(e => e.blur());
-    await plan.panelActivityForm.locator('.parameter', { hasText: 'glutenFree' }).getByRole('checkbox').check();
+    await plan.panelActivityForm.locator('.parameter', { hasText: 'glutenFree' }).getByRole('checkbox').click();
     await plan.waitForActivityCheckingStatus(Status.Complete);
     await plan.hoverMenu(plan.navButtonActivityChecking);
     await expect(plan.navButtonActivityCheckingMenu).toContainText('3/3 activities checked');

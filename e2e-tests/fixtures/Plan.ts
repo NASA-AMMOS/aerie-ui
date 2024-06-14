@@ -101,10 +101,10 @@ export class Plan {
   }
 
   async addPlanCollaborator(name: string, isUsername = true) {
-    await this.showPanel(PanelNames.PLAN_METADATA);
+    await this.showPanel(PanelNames.PLAN_METADATA, true);
     await this.waitForPlanCollaboratorLoad();
     await this.planCollaboratorInput.fill(name);
-    await this.planCollaboratorInput.evaluate(e => e.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' })));
+    await this.page.getByRole('option', { name }).click();
     // If the name is a username then check for the existence of the username in selected items
     // Otherwise it is a plan option and will add an unspecified amount of users
     if (isUsername) {
@@ -115,13 +115,29 @@ export class Plan {
     await this.waitForToast('Plan Collaborators Updated');
   }
 
-  async createBranch(name: string = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] })) {
+  async createBranch(
+    baseURL?: string,
+    name: string = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] }),
+  ) {
+    const branchPlanUrlRegex = new RegExp(`${baseURL}/plans/(?<planId>\\d+)`);
+    await this.page.waitForURL(branchPlanUrlRegex);
+    const matches = this.page.url().match(branchPlanUrlRegex);
+    expect(matches).not.toBeNull();
+
+    let currentPlanId = 'foo';
+    if (matches) {
+      const { groups: { planId } = {} } = matches;
+      currentPlanId = planId;
+    }
+
     await this.page.getByText(this.planName).first().click();
     await this.page.getByText('Create branch').click();
     await this.page.getByPlaceholder('Name of branch').click();
     await this.page.getByPlaceholder('Name of branch').fill(name);
     await this.page.getByRole('button', { name: 'Create Branch' }).click();
-    await this.page.waitForTimeout(500);
+
+    const parentPlanUrlRegex = new RegExp(`${baseURL}/plans/((?!${currentPlanId}).)*`);
+    await this.page.waitForURL(parentPlanUrlRegex);
   }
 
   async createConstraint(baseURL: string | undefined) {
@@ -239,9 +255,9 @@ export class Plan {
    * Re-run the tests and increase the timeout if you get consistent failures.
    */
   async goto(planId = this.plans.planId) {
-    await this.page.waitForTimeout(1200);
-    await this.page.goto(`/plans/${planId}`, { waitUntil: 'networkidle' });
-    await this.page.waitForTimeout(250);
+    await this.page.goto(`/plans/${planId}`);
+    await this.page.waitForURL(`/plans/${planId}`, { waitUntil: 'networkidle' });
+    await expect(this.page.locator('.nav-button-title:has-text("Activities")')).toBeVisible();
   }
 
   async hoverMenu(menuButton: Locator) {
@@ -268,7 +284,7 @@ export class Plan {
   }
 
   async removePlanCollaborator(name: string) {
-    await this.showPanel(PanelNames.PLAN_METADATA);
+    await this.showPanel(PanelNames.PLAN_METADATA, true);
     await this.waitForPlanCollaboratorLoad();
     await this.planCollaboratorInputContainer
       .locator('.tags-input-selected-items')
@@ -322,7 +338,7 @@ export class Plan {
       anchorMenuName => document.querySelector('.anchor-form .selected-display-value')?.innerHTML === anchorMenuName,
       anchorMenuName,
     );
-    expect(await this.panelActivityForm.getByRole('textbox', { name: anchorMenuName })).toBeVisible();
+    await expect(this.panelActivityForm.getByRole('textbox', { name: anchorMenuName })).toBeVisible();
   }
 
   async selectActivityPresetByName(presetName: string) {
@@ -352,7 +368,7 @@ export class Plan {
         document.querySelector('.activity-preset-input-container .selected-display-value')?.innerHTML === presetName,
       presetName,
     );
-    expect(await this.panelActivityForm.getByRole('textbox', { name: presetName })).toBeVisible();
+    await expect(this.panelActivityForm.getByRole('textbox', { name: presetName })).toBeVisible();
   }
 
   async selectSimulationTemplateByName(templateName: string) {
@@ -383,7 +399,7 @@ export class Plan {
         templateName,
       templateName,
     );
-    expect(await this.panelSimulation.getByRole('textbox', { name: templateName })).toBeVisible();
+    await expect(this.panelSimulation.getByRole('textbox', { name: templateName })).toBeVisible();
   }
 
   async showConstraintsLayout() {
@@ -401,11 +417,18 @@ export class Plan {
 
   async showPanel(name: PanelNames, pickLastMenu: boolean = false) {
     await expect(this.gridMenu).not.toBeVisible();
+    let gridMenuButton: Locator;
     if (pickLastMenu) {
-      await this.gridMenuButton.last().click();
+      gridMenuButton = await this.gridMenuButton.last();
     } else {
-      await this.gridMenuButton.first().click();
+      gridMenuButton = await this.gridMenuButton.first();
     }
+
+    await expect(gridMenuButton).toBeVisible();
+    await expect(gridMenuButton).toBeEnabled();
+    await this.page.waitForTimeout(1000);
+    await gridMenuButton.click();
+
     await this.gridMenu.waitFor({ state: 'attached' });
     await this.gridMenu.waitFor({ state: 'visible' });
     await this.gridMenuItem(name).click();
@@ -513,7 +536,7 @@ export class Plan {
   }
 
   async waitForToast(message: string) {
-    await this.page.waitForSelector(`.toastify:has-text("${message}")`, { timeout: 10000 });
+    await this.page.waitForSelector(`.toastify:has-text("${message}")`, { timeout: 3000 });
   }
 }
 

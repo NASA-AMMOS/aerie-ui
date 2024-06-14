@@ -99,7 +99,7 @@ export class Plans {
     await this.inputStartTime.evaluate(e => e.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' })));
   }
 
-  private async filterTable(planName: string) {
+  async filterTable(planName: string) {
     await this.table.waitFor({ state: 'attached' });
     await this.table.waitFor({ state: 'visible' });
 
@@ -115,6 +115,7 @@ export class Plans {
   }
 
   async getPlanId(planName = this.planName) {
+    await this.filterTable(planName);
     await expect(this.tableRow(planName)).toBeVisible();
     await expect(this.tableRowPlanId(planName)).toBeVisible();
     const el = await this.tableRowPlanId(planName).elementHandle();
@@ -126,6 +127,7 @@ export class Plans {
 
   async goto() {
     await this.page.goto('/plans', { waitUntil: 'networkidle' });
+    await this.page.waitForURL('/plans', { waitUntil: 'networkidle' });
     await this.page.waitForTimeout(250);
   }
 

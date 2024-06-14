@@ -249,7 +249,6 @@
     $nameField.dirtyAndValid &&
     $startTimeDoyField.dirtyAndValid;
 
-  $: console.log($nameField.value, $nameField.dirtyAndValid);
   $: filteredPlans = $plans.filter(plan => {
     const filterTextLowerCase = filterText.toLowerCase();
     return (
