@@ -5,7 +5,7 @@
   import { syntaxTree } from '@codemirror/language';
   import { lintGutter } from '@codemirror/lint';
   import { Compartment, EditorState } from '@codemirror/state';
-  import type { ViewUpdate } from '@codemirror/view';
+  import { type ViewUpdate } from '@codemirror/view';
   import type { SyntaxNode } from '@lezer/common';
   import type { ChannelDictionary, CommandDictionary, ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
   import CollapseIcon from 'bootstrap-icons/icons/arrow-bar-down.svg?component';
@@ -29,6 +29,7 @@
   } from '../../stores/sequencing';
   import type { User } from '../../types/app';
   import { setupLanguageSupport } from '../../utilities/codemirror';
+  import { commandNumberGutter } from '../../utilities/new-sequence-editor/command-number-gutter';
   import { seqJsonLinter } from '../../utilities/new-sequence-editor/seq-json-linter';
   import { sequenceCompletion } from '../../utilities/new-sequence-editor/sequence-completion';
   import { sequenceLinter } from '../../utilities/new-sequence-editor/sequence-linter';
@@ -151,6 +152,7 @@
         basicSetup,
         EditorView.lineWrapping,
         EditorView.theme({ '.cm-gutter': { 'min-height': `${clientHeightGridRightTop}px` } }),
+        commandNumberGutter,
         lintGutter(),
         compartmentSeqLanguage.of(setupLanguageSupport(sequenceCompletion(null, null, []))),
         compartmentSeqLinter.of(sequenceLinter()),
