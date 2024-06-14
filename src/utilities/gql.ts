@@ -452,7 +452,7 @@ const gql = {
     mutation CreateExternalEventType($eventType: external_event_type_insert_input!) {
       createExternalEventType: insert_external_event_type_one(object: $eventType) {
         id
-        name'
+        name
       }
     }
   `,

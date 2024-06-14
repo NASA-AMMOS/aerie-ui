@@ -6,18 +6,21 @@
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { onDestroy, onMount } from 'svelte';
+  import { catchError } from '../../stores/errors';
+  import { externalEventTypes } from '../../stores/external-event';
   import { createExternalSourceError, createExternalSourceTypeError, creatingExternalSource, externalSourceTypes, externalSourceWithTypeName } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
+  import type { ExternalEvent, ExternalEventDB, ExternalEventTypeInsertInput } from '../../types/external-event';
   import type { ExternalSourceDB, ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceSlim, ExternalSourceType, ExternalSourceTypeInsertInput, ExternalSourceWithTypeName } from '../../types/external-source';
-  import type { ExternalEvent, ExternalEventTypeInsertInput } from '../../types/external-event';
   import type { TimeRange } from '../../types/timeline';
   import { type MouseDown, type MouseOver } from '../../types/timeline';
   import effects from '../../utilities/effects';
   import { classNames } from '../../utilities/generic';
   import { convertDurationToMs, convertUTCtoMs } from '../../utilities/time';
   import { TimelineInteractionMode, getXScale } from '../../utilities/timeline';
+  import { showFailureToast } from '../../utilities/toast';
   import { tooltip } from '../../utilities/tooltip';
   import { required, timestamp } from '../../utilities/validators';
   import Collapse from '../Collapse.svelte';
@@ -38,7 +41,6 @@
   import DatePicker from '../ui/DatePicker/DatePicker.svelte';
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
-  import { externalEventTypes } from '../../stores/external-event';
 
 
   export let user: User | null;
@@ -147,7 +149,7 @@
   // external event type creation variables
   let externalEventTypeId: number | undefined = undefined;
   let externalEventTypeInsertInput: ExternalEventTypeInsertInput;
-  let externalEventsCreated: ExternalEvent[] = [];
+  let externalEventsCreated: ExternalEventDB[] = [];
 
   // For filtering purposes (modelled after TimelineEditorLayerFilter):
   let filterMenu: Menu;
@@ -166,18 +168,29 @@
   // time *should* be editable. I don't think any of them should be, but we
   // need to talk about it.
   $: if (files) {
-    file = files[0];
-    const fileText = file.text();
-    fileText.then(async text => {
-      parsed = JSON.parse(await text);
-      if (parsed) {
-        $keyField.value = parsed.source.key;
-        $sourceTypeField.value = parsed.source.source_type;
-        $startTimeDoyField.value = parsed.source.period.start_time;
-        $endTimeDoyField.value = parsed.source.period.end_time;
-        $validAtDoyField.value = parsed.source.valid_at;
-      }
-    });
+    // files repeatedly refreshes, meaning the reaction to file and parsed keeps repeating infinitely. This if statement prevents that.
+    if (file !== files[0]) {
+      file = files[0];
+      const fileText = file.text();
+      fileText.then(async text => {
+        parsed = JSON.parse(await text);
+        if (parsed) {
+          // TODO: replace try/catch with actual JSONSchema logic
+          try {
+            $keyField.value = parsed.source.key;
+            $sourceTypeField.value = parsed.source.source_type;
+            $startTimeDoyField.value = parsed.source.period.start_time;
+            $endTimeDoyField.value = parsed.source.period.end_time;
+            $validAtDoyField.value = parsed.source.valid_at;
+          }
+          catch (e) {
+            catchError('External Source has Invalid Format', e as Error);
+            showFailureToast('External Source has Invalid Format');
+            parsed = undefined;
+          }
+        }
+      });
+    }
   }
 
   // We want to build the GraphQL input object for the external
@@ -187,51 +200,6 @@
   let sourceTypeInsert: ExternalSourceTypeInsertInput;
 
   $: console.log("EXTERNAL SOURCE WITH TYPE NAME:", $externalSourceWithTypeName)
-
-  $: {
-    if (parsed && file) {
-      // Create an entry for the current source type if it does not already exist. Otherwise, retrieve the id
-      if (!($externalSourceTypes.some(externalSourceType => externalSourceType.name === $sourceTypeField.value))) {
-        sourceTypeInsert = {
-          name: $sourceTypeField.value
-        };
-      }
-      sourceInsert = {
-        end_time: $endTimeDoyField.value,
-        external_events: {
-          data: null  // updated after this map is created
-        },
-        file_id: -1, // updated in the effect.
-        key: $keyField.value,
-        metadata: parsed.source.metadata,
-        source_type_id: -1,  //updated in the effect.
-        start_time: $startTimeDoyField.value,
-        valid_at: $validAtDoyField.value,
-      };
-      parsed?.events.forEach(externalEvent => {
-        externalEventTypeInsertInput = {
-          name: externalEvent.event_type
-        };
-        if (externalEvent.event_type !== undefined && externalEvent.start_time !== undefined && externalEvent.duration !== undefined) {
-          // Create ExternalEventType if it doesn't exist or grab the ID of the previously created entry
-          if (!($externalEventTypes.map(e => e.name).includes(externalEvent.event_type))) {
-            externalEventTypeId = await effects.createExternalEventType(externalEventTypeInsertInput, user);
-          } else {
-            externalEventTypeId = $externalEventTypes.find(externalEventType => externalEventType.name === externalEvent.event_type)?.id
-          }
-          if (externalEventTypeId !== undefined) {
-            externalEventsCreated.push({
-              ...externalEvent,
-              event_type_id: externalEventTypeId,
-              startMs: convertUTCtoMs(externalEvent.start_time),
-              durationMs: convertDurationToMs(externalEvent.duration),
-            });
-          }
-        }
-      });
-      sourceInsert.external_events.data = externalEventsCreated;
-    }
-  }
 
   $: selectedSourceId = selectedSource ? selectedSource.id : null;
   $: startTime = selectedSource ? new Date(selectedSource.start_time) : new Date();
@@ -245,15 +213,15 @@
   });
   $: filteredValues = $externalSourceTypes.filter(externalSourceType => externalSourceType.name.toLowerCase().includes(filterString))
 
-  /** TODO - don't think we need this with how external events are handled now
+  // TODO: figure out a way to use already existing 'externalEventWithTypeName'???
   $: effects.getExternalEvents(selectedSource?.id, user).then(fetched => selectedEvents = fetched.map(eDB => {
     return {
       ...eDB,
+      event_type: $externalEventTypes.find(eventType => eventType.id === eDB.event_type_id)?.name,
       startMs: convertUTCtoMs(eDB.start_time),
       durationMs: convertDurationToMs(eDB.duration)
     }
   }));
-  **/
 
 
 
@@ -286,25 +254,83 @@
 
 
   async function onFormSubmit(e: SubmitEvent) {
-    // TBD: force reload the page???
-    let sourceTypeId: number | undefined = undefined;
-    if (file !== undefined) {
-      if (!($externalSourceTypes.map(s => s.name).includes($sourceTypeField.value)) && sourceTypeInsert !== undefined) {
-        sourceTypeId = await effects.createExternalSourceType(sourceTypeInsert, user);
-      } else {
-        sourceTypeId = $externalSourceTypes.find(externalSource => externalSource.name === $sourceTypeField.value)?.id
+    if (parsed && file) {
+
+      // Create an entry for the current source type if it does not already exist. Otherwise, retrieve the id
+      if (!($externalSourceTypes.some(externalSourceType => externalSourceType.name === $sourceTypeField.value))) {
+        sourceTypeInsert = {
+          name: $sourceTypeField.value
+        };
       }
-      if (sourceTypeId !== undefined ) {
-        sourceInsert.source_type_id = sourceTypeId;
-        var sourceId = await effects.createExternalSource(file, sourceInsert, user);
-        if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) {
-          goto(`${base}/external-sources`);
+
+      // create the source object to upload to AERIE
+      sourceInsert = {
+        end_time: $endTimeDoyField.value,
+        external_events: {
+          data: null  // updated after this map is created
+        },
+        file_id: -1, // updated in the effect.
+        key: $keyField.value,
+        metadata: parsed.source.metadata,
+        source_type_id: -1,  //updated in the effect.
+        start_time: $startTimeDoyField.value,
+        valid_at: $validAtDoyField.value,
+      };
+
+      // handle the events, as they need special logic to handle event types
+      parsed?.events.forEach(externalEvent => {
+        externalEventTypeInsertInput = {
+          name: externalEvent.event_type
+        };
+
+        // if the event is valid...
+        if (externalEvent.event_type !== undefined && externalEvent.start_time !== undefined && externalEvent.duration !== undefined) {
+          
+          // create ExternalEventType if it doesn't exist or grab the ID of the previously created entry,
+          if (!($externalEventTypes.map(e => e.name).includes(externalEvent.event_type))) {
+            effects.createExternalEventType(externalEventTypeInsertInput, user).then(type_id => externalEventTypeId = type_id);
+          } else {
+            // ...or find the existing ExternalEventType's id,
+            externalEventTypeId = $externalEventTypes.find(externalEventType => externalEventType.name === externalEvent.event_type)?.id
+          }
+          if (externalEventTypeId !== undefined) {
+            // ...and then add it to a list. We have this extra split out step as our JSON/DB-compatible hybrids at this point contain both 
+            //      event_type and event_type_id, but the database can only accept event_type_id, so this step drops event_type
+            const { event_type, ...db_compatible_fields } = externalEvent;
+            externalEventsCreated.push({
+              ...db_compatible_fields,
+              event_type_id: externalEventTypeId
+            });
+          }
         }
-        // if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) {
-        //   goto(`${base}/external-sources/${sourceId}`);
-        // }
+      });
+      sourceInsert.external_events.data = externalEventsCreated;
+      console.log(externalEventsCreated)
+
+
+      // TBD: force reload the page???
+      let sourceTypeId: number | undefined = undefined;
+      if (file !== undefined) {
+        if (!($externalSourceTypes.map(s => s.name).includes($sourceTypeField.value)) && sourceTypeInsert !== undefined) {
+          sourceTypeId = await effects.createExternalSourceType(sourceTypeInsert, user);
+        } else {
+          sourceTypeId = $externalSourceTypes.find(externalSource => externalSource.name === $sourceTypeField.value)?.id
+        }
+        if (sourceTypeId !== undefined ) {
+          sourceInsert.source_type_id = sourceTypeId;
+          var sourceId = await effects.createExternalSource(file, sourceInsert, user);
+          if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) {
+            goto(`${base}/external-sources`);
+          }
+          // if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) {
+          //   goto(`${base}/external-sources/${sourceId}`);
+          // }
+        }
       }
     }
+    else {
+      console.log("Upload failed - no file present, or parsing failed.")
+    } 
   }
 
   async function selectSource(detail: ExternalSourceWithTypeName) {

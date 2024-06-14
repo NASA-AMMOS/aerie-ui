@@ -1,4 +1,4 @@
-import type { ExternalEventDB, ExternalEventInsertInput } from '../types/external-event';
+import type { ExternalEventDB, ExternalEventInsertInput, ExternalEventJson } from '../types/external-event';
 
 // TODO: CONVERT STUFF IN THE'CREATE_EXTERNAL_SOURCE' EFFECT TO TERMS OF THIS.
 
@@ -40,7 +40,7 @@ export type PlanExternalSource = {
 
 // This is the JSON type that the user can upload.
 export type ExternalSourceJson = {
-  events: ExternalEventDB[];
+  events: ExternalEventJson[];
   source: {
     key: string;
     metadata: object;

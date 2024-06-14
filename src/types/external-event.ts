@@ -4,25 +4,34 @@ export type ExternalEventId = number;
 
 export type ExternalEventDB = {
   duration: string;
-  event_type: string;
+  event_type_id: number;
   id: number;
   key: string;
   properties: Record<string, any>;
   source?: ExternalSourceDB;
-  source_id: number;
+  source_id?: number;
+  start_time: string;
+};
+
+// This is the JSON type that the user can upload.
+export type ExternalEventJson = {
+  duration: string;
+  event_type: string;
+  id: number;
+  key: string;
+  properties: Record<string, any>;
   start_time: string;
 };
 
 export type ExternalEvent = Pick<
-  ExternalEventDB,
-  'duration' | 'id' | 'key' | 'properties' | 'source' | 'source_id' | 'start_time'
+  ExternalEventWithTypeName,
+  'duration' | 'id' | 'key' | 'properties' | 'source' | 'source_id' | 'start_time' | 'event_type'
 > & {
-  event_type_id: number;
   durationMs: number;
   startMs: number;
 };
 
-export type ExternalEventWithTypeName = ExternalEvent & {
+export type ExternalEventWithTypeName = ExternalEventDB & {
   event_type: string | undefined;
 };
 
