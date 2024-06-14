@@ -42,8 +42,16 @@ export function selectExternalEvent(
 
 
 /* Derived. */
+export const externalEventWithTypeName = derived<[typeof externalEventsDB, typeof externalEventTypes], ExternalEventWithTypeName[]>(
+  [externalEventsDB, externalEventTypes],
+  ([$externalEventsDB, $externalEventTypes]) => $externalEventsDB.map(externalEvent => ({
+    ...externalEvent,
+    event_type: $externalEventTypes.find(eventType => eventType.id === externalEvent.event_type_id)?.name
+  }))
+);
+
 export const selectedExternalEvent = derived(
-  [selectedExternalEventId, externalEventsDB],
+  [selectedExternalEventId, externalEventWithTypeName],
   ([$selectedExternalEventId, $externalEventsDB]) => {
     if ($selectedExternalEventId !== null) {
       let filtered = $externalEventsDB.filter(e => e.id == $selectedExternalEventId);
@@ -54,11 +62,3 @@ export const selectedExternalEvent = derived(
     return null;
   },
 );
-
-export const externalEventWithTypeName = derived<[typeof externalEventsDB, typeof externalEventTypes], ExternalEventWithTypeName[]>(
-  [externalEventsDB, externalEventTypes],
-  ([$externalEventsDB, $externalEventTypes]) => $externalEventsDB.map(externalEvent => ({
-    ...externalEvent,
-    event_type: $externalEventTypes.find(eventType => eventType.id === externalEvent.event_type_id)?.name
-  }));
-)
