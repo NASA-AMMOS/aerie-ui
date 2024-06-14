@@ -12,7 +12,7 @@
   import { field } from '../../stores/form';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
-  import type { ExternalEvent, ExternalEventDB, ExternalEventTypeInsertInput } from '../../types/external-event';
+  import type { ExternalEvent, ExternalEventDB, ExternalEventType, ExternalEventTypeInsertInput } from '../../types/external-event';
   import type { ExternalSourceDB, ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceSlim, ExternalSourceType, ExternalSourceTypeInsertInput, ExternalSourceWithTypeName } from '../../types/external-source';
   import type { TimeRange } from '../../types/timeline';
   import { type MouseDown, type MouseOver } from '../../types/timeline';
@@ -147,7 +147,6 @@
   let parsed: ExternalSourceJson | undefined;
 
   // external event type creation variables
-  let externalEventTypeId: number | undefined = undefined;
   let externalEventTypeInsertInput: ExternalEventTypeInsertInput;
   let externalEventsCreated: ExternalEventDB[] = [];
 
@@ -277,21 +276,37 @@
         valid_at: $validAtDoyField.value,
       };
 
+      console.log("PARSED: ", parsed)
+
+      // the ones uploaded in this run won't show up as quickly in $externalEventTypes, so we keep a local log as well
+      //    If event types act up during upload, this line is a likely culprit (if you upload twice really fast and $externalEventTypes doesn't update quick enough)
+      //    If that's the case, directly use $externalEventTypes concatted with this list each time in the if statement a few lines below
+      let localExternalEventTypes: ExternalEventType[] = [...$externalEventTypes]; 
       // handle the events, as they need special logic to handle event types
-      parsed?.events.forEach(externalEvent => {
+      for (let externalEvent of parsed?.events) {
         externalEventTypeInsertInput = {
           name: externalEvent.event_type
         };
+        console.log("EVENT")
 
         // if the event is valid...
         if (externalEvent.event_type !== undefined && externalEvent.start_time !== undefined && externalEvent.duration !== undefined) {
-          
+          console.log("EVENT - VALID")
+          let externalEventTypeId: number | undefined = undefined;
           // create ExternalEventType if it doesn't exist or grab the ID of the previously created entry,
-          if (!($externalEventTypes.map(e => e.name).includes(externalEvent.event_type))) {
-            effects.createExternalEventType(externalEventTypeInsertInput, user).then(type_id => externalEventTypeId = type_id);
+          if (!(localExternalEventTypes.map(e => e.name).includes(externalEvent.event_type))) {
+            externalEventTypeId = await effects.createExternalEventType(externalEventTypeInsertInput, user);
+            console.log("BEFORE", localExternalEventTypes)
+            if (externalEventTypeId) {
+              localExternalEventTypes.push({
+                id: externalEventTypeId,
+                name: externalEvent.event_type
+              })
+            }
+            console.log("AFTER", localExternalEventTypes)
           } else {
             // ...or find the existing ExternalEventType's id,
-            externalEventTypeId = $externalEventTypes.find(externalEventType => externalEventType.name === externalEvent.event_type)?.id
+            externalEventTypeId = localExternalEventTypes.find(externalEventType => externalEventType.name === externalEvent.event_type)?.id
           }
           if (externalEventTypeId !== undefined) {
             // ...and then add it to a list. We have this extra split out step as our JSON/DB-compatible hybrids at this point contain both 
@@ -303,7 +318,7 @@
             });
           }
         }
-      });
+      }
       sourceInsert.external_events.data = externalEventsCreated;
       console.log(externalEventsCreated)
 
