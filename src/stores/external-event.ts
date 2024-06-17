@@ -9,6 +9,7 @@ import { viewUpdateGrid } from './views';
 export const creatingExternalEventType: Writable<boolean> = writable(false);
 export const createExternalEventTypeError: Writable<string | null> = writable(null);
 
+
 /* Subscriptions. */
 export const externalEventsDB = gqlSubscribable<ExternalEventDB[]>(
   gql.SUB_PLAN_EXTERNAL_EVENTS,
@@ -16,11 +17,37 @@ export const externalEventsDB = gqlSubscribable<ExternalEventDB[]>(
   [],
   null,
 );
-
 export const externalEventTypes = gqlSubscribable<ExternalEventType[]>(gql.SUB_EXTERNAL_EVENT_TYPES, {}, [], null);
 
+// use to track which event is selected in the plan view, as this information is shared across several sibling panels
 export const selectedExternalEventId: Writable<ExternalEventId | null> = writable(null);
 
+
+/* Derived. */
+// (helper for the below)
+export const externalEventWithTypeName = derived<[typeof externalEventsDB, typeof externalEventTypes], ExternalEventWithTypeName[]>(
+  [externalEventsDB, externalEventTypes],
+  ([$externalEventsDB, $externalEventTypes]) => $externalEventsDB.map(externalEvent => ({
+    ...externalEvent,
+    event_type: getEventTypeName(externalEvent.event_type_id, $externalEventTypes)
+  }))
+);
+
+export const selectedExternalEvent = derived(
+  [selectedExternalEventId, externalEventWithTypeName],
+  ([$selectedExternalEventId, $externalEventsDB]) => {
+    if ($selectedExternalEventId !== null) {
+      let filtered = $externalEventsDB.filter(e => e.id == $selectedExternalEventId);
+      if (filtered.length) {
+        return filtered[0]
+      } // TODO: REFACTOR WITH A MAP, EVENTUALLY.
+    }
+    return null;
+  },
+);
+
+
+/** Helper functions. */
 export function selectExternalEvent(
   externalEventId: ExternalEventId | null,
   switchToTable = true,
@@ -40,25 +67,11 @@ export function selectExternalEvent(
   }
 }
 
+// Cannot access list form of a store in a .ts as it isn't a 'reactive' file like svelte. Thus, list must manually be passed in.
+export function getEventTypeName(id: number, eventTypes: ExternalEventType[]): string | undefined {
+  return eventTypes.find(eventType => eventType.id === id)?.name
+}
 
-/* Derived. */
-export const externalEventWithTypeName = derived<[typeof externalEventsDB, typeof externalEventTypes], ExternalEventWithTypeName[]>(
-  [externalEventsDB, externalEventTypes],
-  ([$externalEventsDB, $externalEventTypes]) => $externalEventsDB.map(externalEvent => ({
-    ...externalEvent,
-    event_type: $externalEventTypes.find(eventType => eventType.id === externalEvent.event_type_id)?.name
-  }))
-);
-
-export const selectedExternalEvent = derived(
-  [selectedExternalEventId, externalEventWithTypeName],
-  ([$selectedExternalEventId, $externalEventsDB]) => {
-    if ($selectedExternalEventId !== null) {
-      let filtered = $externalEventsDB.filter(e => e.id == $selectedExternalEventId);
-      if (filtered.length) {
-        return filtered[0]
-      } // TODO: REFACTOR WITH A MAP, EVENTUALLY.
-    }
-    return null;
-  },
-);
+export function getEventTypeId(name: string, eventTypes: ExternalEventType[]): number | undefined {
+  return eventTypes.find(eventType => eventType.name === name)?.id
+}

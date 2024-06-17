@@ -11,7 +11,6 @@ export const creatingExternalSourceType: Writable<boolean> = writable(false);
 export const createExternalSourceError: Writable<string | null> = writable(null);
 export const createExternalSourceTypeError: Writable<string | null> = writable(null);
 
-/* Derived. */
 
 /* Subscriptions. */
 export const externalSources = gqlSubscribable<ExternalSourceSlim[]>(gql.SUB_EXTERNAL_SOURCES, {}, [], null);
@@ -19,18 +18,21 @@ export const externalSourceTypes = gqlSubscribable<ExternalSourceType[]>(gql.SUB
 
 // use to keep track of associations between plans and goals
 export const planExternalSourceLinks = gqlSubscribable<PlanExternalSource[]>(gql.SUB_PLAN_EXTERNAL_SOURCE, {}, [], null);
-export const selectedPlanExternalSourceIds = derived(
-  [planExternalSourceLinks, planId],
-  ([$planExternalSourceLinks, $planId]) => $planExternalSourceLinks.filter(link => link.plan_id === $planId).map(link => link.external_source_id)
-);
 
+
+/* Derived. */
 // Creates a store for each externalSource with the added 'source_type' field that maps to the human-readable source type name
 export const externalSourceWithTypeName = derived<[typeof externalSources, typeof externalSourceTypes], ExternalSourceWithTypeName[]>(
   [externalSources, externalSourceTypes],
   ([$externalSources, $externalSourceTypes]) => $externalSources.map(externalSource => ({
     ...externalSource,
-    source_type: $externalSourceTypes.find(sourceType => sourceType.id === externalSource.source_type_id)?.name
+    source_type: getEventSourceTypeName(externalSource.source_type_id, $externalSourceTypes)
   }))
+);
+
+export const selectedPlanExternalSourceIds = derived(
+  [planExternalSourceLinks, planId],
+  ([$planExternalSourceLinks, $planId]) => $planExternalSourceLinks.filter(link => link.plan_id === $planId).map(link => link.external_source_id)
 );
 
 
@@ -38,4 +40,12 @@ export const externalSourceWithTypeName = derived<[typeof externalSources, typeo
 export function resetModelStores() {
   creatingExternalSource.set(false);
   createExternalSourceError.set(null);
+}
+
+export function getEventSourceTypeName(id: number, sourceTypes: ExternalSourceType[]): string | undefined {
+  return sourceTypes.find(sourceType => sourceType.id === id)?.name
+}
+
+export function getEventSourceTypeId(name: string, sourceTypes: ExternalSourceType[]): number | undefined {
+  return sourceTypes.find(sourceType => sourceType.name === name)?.id
 }
