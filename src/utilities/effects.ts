@@ -80,7 +80,7 @@ import type {
 } from '../types/expansion';
 import type { Extension, ExtensionPayload } from '../types/extension';
 import type { ExternalEventDB, ExternalEventType, ExternalEventTypeInsertInput } from '../types/external-event';
-import type { ExternalSourceInsertInput, ExternalSourceTypeInsertInput, PlanExternalSource } from '../types/external-source';
+import type { ExternalSourceEventType, ExternalSourceInsertInput, ExternalSourceTypeInsertInput, PlanExternalSource } from '../types/external-source';
 import type { Model, ModelInsertInput, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
 import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
 import type {
@@ -972,6 +972,29 @@ const effects = {
       showFailureToast('External Source Create Failed');
       createExternalSourceError.set((e as Error).message);
       creatingExternalSource.set(false);
+    }
+  },
+
+  async createExternalSourceEventTypeLink(link: ExternalSourceEventType, user: User | null) {
+    try {
+      // TODO: this + permissions
+      // creatingExternalEventType.set(true);
+      // createExternalEventTypeError.set(null);
+
+      if (!link !== null) {
+        const { createExternalSourceEventType: created } = await reqHasura<any>(gql.CREATE_EXTERNAL_SOURCE_EVENT_TYPE, { link }, user);
+        if (created !== null) {
+          // creatingExternalEventType.set(false);
+          return created.id;
+        } else {
+          throw Error('Unable to link external source to component external event type');
+        }
+      }
+    } catch (e) {
+      catchError('External Source Event Type Link Create Failed', e as Error);
+      showFailureToast('External Source Event Type Link Create Failed');
+      // createExternalEventTypeError.set((e as Error).message);
+      // creatingExternalEventType.set(false);
     }
   },
 

@@ -63,7 +63,7 @@ export type ExternalSourceType = {
 
 export type ExternalSourceEventType = { // to specify what types are contained in each source. TODO
   external_source_id: number,
-  event_type_id: number
+  external_event_type_id: number
 }
 
 // This is used for the GraphQL mutation.
