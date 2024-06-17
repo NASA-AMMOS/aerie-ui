@@ -572,8 +572,8 @@ export function createTimelineExternalEventLayer(timelines: Timeline[], args: Pa
     externalEventHeight: 16,
     chartType: 'external-event',
     filter: {
-      activity: {
-        types: [],
+      externalEvent: {
+        event_types: [],
       },
     },
     id,

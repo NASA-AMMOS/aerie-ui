@@ -2,6 +2,7 @@ import Ajv from 'ajv';
 import { ViewDefaultActivityOptions } from '../constants/view';
 import jsonSchema from '../schemas/ui-view-schema.json';
 import type { ActivityType } from '../types/activity';
+import type { ExternalEventType } from '../types/external-event';
 import type { ResourceType } from '../types/simulation';
 import type { View, ViewGridColumns, ViewGridRows } from '../types/view';
 import { createRow,
@@ -17,7 +18,7 @@ import { createRow,
 /**
  * Generates a default generic UI view.
  */
-export function generateDefaultView(activityTypes: ActivityType[] = [], resourceTypes: ResourceType[] = [], externalEventTypes: string[] = []): View {
+export function generateDefaultView(activityTypes: ActivityType[] = [], resourceTypes: ResourceType[] = [], externalEventTypes: ExternalEventType[] = []): View {
   const now = new Date().toISOString();
   const types: string[] = activityTypes.map(({ name }) => name);
 
@@ -25,7 +26,7 @@ export function generateDefaultView(activityTypes: ActivityType[] = [], resource
   const timelines = [timeline];
 
   const externalEventLayer = createTimelineExternalEventLayer((timelines), {
-    filter: { externalEvent: { event_types: externalEventTypes }}
+    filter: { externalEvent: { event_types: externalEventTypes.map(({ name }) => name) }}
   });
   const externalEventRow = createRow(timelines, {
     autoAdjustHeight: false,
