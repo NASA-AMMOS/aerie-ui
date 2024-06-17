@@ -2,6 +2,13 @@ import { testTree } from '@lezer/generator/dist/test';
 import { describe, expect, test } from 'vitest';
 import { SeqLanguage } from '../codemirror';
 
+/*
+ * Test cases here are canaries against unintended changes to the grammar. Certain grammar changes will alter the parse tree which
+ * has may have subtle downstream effects on the behavior of serialization, tooltips, content assist, etc.
+ *
+ * When invalid input is parsed the tree will contain "⚠" nodes.
+ */
+
 const parseTreeTests = [
   [
     'Command with no args',
@@ -450,7 +457,13 @@ describe.each([
   ['time formats', timeFormatTests],
 ])('grammar tests - %s', (_name: string, testArray: string[][]) => {
   test.each(testArray)('%s', (_: string, input: string, expected: string) => {
-    // testTree will throw if there's a mismatch
+    /* The Lezer parser is "Error-Insensitive"
+    "Being designed for the code editor use case, the parser is equipped with strategies for recovering
+    from syntax errors, and can produce a tree for any input." - (https://lezer.codemirror.net/) as such
+    it always returns a tree, though the tree may have error tokens ("⚠").
+
+    testTree will throw if there's a mismatch between the returned actual and expected trees, it returns
+    undefined when they match. */
     expect(testTree(SeqLanguage.parser.parse(input), expected, undefined)).toBeUndefined();
   });
 });
