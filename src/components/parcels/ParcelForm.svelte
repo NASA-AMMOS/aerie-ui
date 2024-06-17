@@ -161,7 +161,7 @@
     }
 
     if (parcelToParameterDictionaryIdsToDelete.length > 0) {
-      const parcelToParameterDictionariesToDelete: ParcelToParameterDictionary[] = [];
+      const parcelToParameterDictionaryAssociationsToDelete: ParcelToParameterDictionary[] = [];
 
       for (const paramDictionaryId of parcelToParameterDictionaryIdsToDelete) {
         const parcelToParameterDictionary: ParcelToParameterDictionary | undefined =
@@ -170,12 +170,12 @@
           );
 
         if (parcelToParameterDictionary) {
-          parcelToParameterDictionariesToDelete.push(parcelToParameterDictionary);
+          parcelToParameterDictionaryAssociationsToDelete.push(parcelToParameterDictionary);
         }
       }
 
-      if (parcelToParameterDictionariesToDelete.length > 0) {
-        await effects.deleteParcelToParameterDictionaries(parcelToParameterDictionariesToDelete, user);
+      if (parcelToParameterDictionaryAssociationsToDelete.length > 0) {
+        await effects.deleteParcelToDictionaryAssociations(parcelToParameterDictionaryAssociationsToDelete, user);
       }
     }
   }

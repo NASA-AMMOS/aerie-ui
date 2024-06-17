@@ -513,8 +513,8 @@ const queryPermissions = {
   DELETE_PARCEL: (user: User | null, parcel: AssetWithOwner<Parcel>): boolean => {
     return isUserAdmin(user) || (getPermission([Queries.DELETE_PARCEL], user) && isUserOwner(user, parcel));
   },
-  DELETE_PARCEL_TO_PARAMETER_DICTIONARIES: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission([Queries.DELETE_PARCEL_TO_PARAMETER_DICTIONARY], user);
+  DELETE_PARCEL_TO_DICTIONARY_ASSOCIATION: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.DELETE_PARCEL_TO_DICTIONARY_ASSOCIATION], user);
   },
   DELETE_PLAN: (user: User | null, plan: PlanWithOwners): boolean => {
     return (
