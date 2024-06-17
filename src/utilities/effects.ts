@@ -4241,6 +4241,31 @@ const effects = {
     return false;
   },
 
+  async retriggerModelExtraction(id: number, user: User | null) {
+    try {
+      if (!queryPermissions.UPDATE_MODEL(user)) {
+        throwPermissionError('retrigger this model extraction');
+      }
+
+      const data = await reqHasura<Pick<Model, 'description' | 'name' | 'owner' | 'version'>>(
+        gql.UPDATE_MODEL,
+        { id, model: { mission: '' } },
+        user,
+      );
+
+      if (data != null) {
+        showSuccessToast('Model Extraction Retriggered Successfully');
+        return data.updateModel;
+      } else {
+        throw Error(`Unable to retrigger model extraction with ID: "${id}"`);
+      }
+    } catch (e) {
+      catchError('Model Extraction Failed', e as Error);
+      showFailureToast('Model Extraction Failed');
+    }
+    return null;
+  },
+
   async schedule(analysis_only: boolean = false, plan: Plan | null, user: User | null): Promise<void> {
     try {
       if (plan) {

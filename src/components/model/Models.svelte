@@ -188,6 +188,12 @@
     }
   }
 
+  function onRetriggerModelExtraction() {
+    if (selectedModel != null) {
+      effects.retriggerModelExtraction(selectedModel.id, user);
+    }
+  }
+
   function selectModel(model: ModelSlim | null) {
     selectedModel = model;
   }
@@ -260,7 +266,7 @@
             <Input layout="inline">
               <div class="model-jar-label">
                 <label class="model-metadata-item-label" for="status">Jar file status</label>
-                <div class="icon-button"><RefreshIcon /></div>
+                <button class="icon-button" on:click={onRetriggerModelExtraction}><RefreshIcon /></button>
               </div>
               <ModelStatusRollup mode="rollup" model={selectedModel} />
             </Input>
@@ -427,14 +433,16 @@
     grid-template-columns: auto min-content;
   }
 
-  .icon-button {
+  button.icon-button {
     align-items: center;
+    background: none;
+    border: none;
     color: var(--st-primary-70);
     cursor: pointer;
     display: flex;
   }
 
-  .icon-button:hover {
+  button.icon-button:hover {
     color: var(--st-primary-100);
   }
 </style>

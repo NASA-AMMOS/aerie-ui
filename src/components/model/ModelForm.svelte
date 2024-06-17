@@ -5,6 +5,7 @@
   import { createEventDispatcher } from 'svelte';
   import type { User, UserId } from '../../types/app';
   import type { ModelLog, ModelSlim } from '../../types/model';
+  import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import { getShortISOForDate } from '../../utilities/time';
@@ -91,6 +92,12 @@
   function onClearOwner() {
     owner = null;
   }
+
+  function onRetriggerModelExtraction() {
+    if (modelId != null) {
+      effects.retriggerModelExtraction(modelId, user);
+    }
+  }
 </script>
 
 <div class="model-form-container">
@@ -167,7 +174,7 @@
       <Input layout="inline">
         <div class="model-jar-label">
           <label class="model-metadata-item-label" for="status">Jar file status</label>
-          <div class="icon-button"><RefreshIcon /></div>
+          <button class="icon-button" on:click={onRetriggerModelExtraction}><RefreshIcon /></button>
         </div>
         <ModelStatusRollup mode="rollup" model={modelLogs} />
       </Input>
@@ -220,14 +227,16 @@
     margin: 8px 0;
   }
 
-  .icon-button {
+  button.icon-button {
     align-items: center;
+    background: none;
+    border: none;
     color: var(--st-primary-70);
     cursor: pointer;
     display: flex;
   }
 
-  .icon-button:hover {
+  button.icon-button:hover {
     color: var(--st-primary-100);
   }
 </style>
