@@ -78,7 +78,7 @@ import type {
   SeqId,
 } from '../types/expansion';
 import type { Extension, ExtensionPayload } from '../types/extension';
-import type { ExternalEventDB, ExternalEventTypeInsertInput } from '../types/external-event';
+import type { ExternalEventDB, ExternalEventType, ExternalEventTypeInsertInput } from '../types/external-event';
 import type { ExternalSourceInsertInput, ExternalSourceTypeInsertInput, PlanExternalSource } from '../types/external-source';
 import type { Model, ModelInsertInput, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
 import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
@@ -3303,6 +3303,21 @@ const effects = {
     }
   },
 
+  async getExternalEventTypes(model_id: number, user: User | null, limit: number | null = null): Promise<ExternalEventType[]> { // TODO: eventually, restrict to just linked sources.xx
+    try {
+      const data = await reqHasura<ExternalEventType[]>(gql.GET_EXTERNAL_EVENT_TYPES, {}, user);
+      const { external_event_types } = data;
+      if (external_event_types != null) {
+        return external_event_types;
+      } else {
+        throw Error('Unable to retrieve external event types');
+      }
+    } catch (e) {
+      catchError(e as Error);
+      return [];
+    }
+  },
+
   async getExternalSourceMetadata(
     id: number | undefined,
     user: User | null
@@ -4311,7 +4326,7 @@ const effects = {
     user: User | null,
     activityTypes: ActivityType[] = [],
     resourceTypes: ResourceType[] = [],
-    externalEventTypes: string[] = []
+    externalEventTypes: ExternalEventType[] = []
     defaultView?: View | null,
   ): Promise<View | null> {
     try {
