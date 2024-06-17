@@ -1,6 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { externalSources, getSourceName } from '../../stores/external-source';
   import type { ExternalEventWithTypeName } from '../../types/external-event';
   import type { ExternalEventProperty } from '../../types/external-event-property';
   import { classNames } from '../../utilities/generic';
@@ -72,8 +73,15 @@
 
         <Highlight highlight={highlightKeysMap.last_modified_by}>
           <Input layout="inline">
-            Source File ID
+            Source ID
             <input class="st-input w-100" disabled={!editable} name="source-id" value={externalEvent.source_id} />
+          </Input>
+        </Highlight>
+
+        <Highlight highlight={highlightKeysMap.last_modified_by}>
+          <Input layout="inline">
+            Source File
+            <input class="st-input w-100" disabled={!editable} name="source-id-resolved" value={getSourceName(externalEvent.source_id, $externalSources)} />
           </Input>
         </Highlight>
       </Collapse>

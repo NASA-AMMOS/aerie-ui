@@ -7,6 +7,7 @@
   import DirectiveIcon from '../../assets/timeline-directive.svg?raw';
   import SpanIcon from '../../assets/timeline-span.svg?raw';
   import { plugins } from '../../stores/plugins';
+  import { externalSources, getSourceName } from '../../stores/external-source';
   import type { ActivityDirective } from '../../types/activity';
   import type { ConstraintResultWithName } from '../../types/constraint';
   import type { ExternalEvent } from '../../types/external-event';
@@ -351,7 +352,7 @@
   }
 
   function textForExternalEvent(externalEvent: ExternalEvent): string {
-    const { duration, event_type, id, key, source, source_id, start_time } = externalEvent;
+    const { duration, event_type, id, key, source_id, start_time } = externalEvent;
     // TODO: Convert start_time to startTimeYmd-like value? Currently we include the timezone offset (ex: +00:00) but we could reformat to match other Aerie times
     return `
       <div class='tooltip-row-container'>
@@ -371,8 +372,8 @@
           <span class='tooltip-value-highlight st-typography-medium'>${event_type}</span>
         </div>
         <div class='tooltip-row'>
-          <span>Source:</span>
-          <span class='tooltip-value-highlight st-typography-medium'>${source ?? 'None'}</span>
+          <span>Source File:</span>
+          <span class='tooltip-value-highlight st-typography-medium'>${getSourceName(source_id, $externalSources)}</span>
         </div>
         <div class='tooltip-row'>
           <span>Source Id:</span>

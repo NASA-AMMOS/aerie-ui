@@ -42,6 +42,10 @@ export function resetModelStores() {
   createExternalSourceError.set(null);
 }
 
+export function getSourceName(source_id: number | undefined, sources: ExternalSourceSlim[]): string {
+  return sources.find(s => s.id === source_id)?.key ?? 'None'  
+}
+
 export function getEventSourceTypeName(id: number, sourceTypes: ExternalSourceType[]): string | undefined {
   return sourceTypes.find(sourceType => sourceType.id === id)?.name
 }
