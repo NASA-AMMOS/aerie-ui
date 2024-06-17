@@ -310,13 +310,13 @@ export class Plan {
 
   async runAnalysis() {
     await this.analyzeButton.click();
-    await this.waitForSchedulingStatus(Status.Incomplete);
+    await this.waitForSchedulingStatus(Status.Pending);
     await this.waitForSchedulingStatus(Status.Complete);
   }
 
   async runScheduling(expectedFinalState = Status.Complete) {
     await this.scheduleButton.click();
-    await this.waitForSchedulingStatus(Status.Incomplete);
+    await this.waitForSchedulingStatus(Status.Pending);
     await this.waitForSchedulingStatus(expectedFinalState);
   }
 
