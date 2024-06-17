@@ -120,7 +120,7 @@ Expected: A number within the range of [${min}, ${max}]].`,
       id: CustomErrorCodes.Type.INVALID_RELATIVE,
       message: `Time Error: Incorrectly formatted duration string.
 Received: A malformed duration.
-Expected: hh:mm:ss[.sss] or DDDThh:mm:ss[.sss]`,
+Expected: hh:mm:ss[.sss]`,
     };
   },
 
@@ -143,32 +143,21 @@ Expected: A signed value`,
     return {
       id: CustomErrorCodes.Type.MAX_ABSOLUTE,
       message: `Time Error: Maximum time reached
-Received: Balanced time - ${balancedTime}.
-Expected: ${balancedTime} <= 9999-365T23:59:59.999`,
+  Received: Balanced time - ${balancedTime}.
+  Expected: ${balancedTime} <= 9999-365T23:59:59.999`,
     };
   },
 
   /**
    * MaxEpochTime error code and message.
    */
-  MaxEpochTime: (balancedTime: string, sign: '+' | '-' | undefined): ErrorCode => {
-    switch (sign) {
-      case '+':
-      case undefined:
-        return {
-          id: CustomErrorCodes.Type.MAX_EPOCH,
-          message: `Time Error: Maximum time reached.
-Received: Balanced time : ${balancedTime}.
+  MaxEpochTime: (balancedTime: string): ErrorCode => {
+    return {
+      id: CustomErrorCodes.Type.MAX_EPOCH,
+      message: `Time Error: Maximum time reached.
+Received: Balanced time - ${balancedTime}.
 Expected: ${balancedTime} <= 365T23:59:59.999`,
-        };
-      case '-':
-        return {
-          id: CustomErrorCodes.Type.MAX_EPOCH,
-          message: `Time Error: Maximum time reached.
-Received: Balanced time : ${balancedTime}.
-Expected: ${balancedTime} >= -365T23:59:59.999`,
-        };
-    }
+    };
   },
 
   /**
@@ -178,8 +167,8 @@ Expected: ${balancedTime} >= -365T23:59:59.999`,
     return {
       id: CustomErrorCodes.Type.MAX_RELATIVE,
       message: `Time Error: Maximum time reached.
-Received: Balanced time - ${balancedTime}.
-Expected: ${balancedTime} <= 365T23:59:59.999`,
+  Received: Balanced time - ${balancedTime}.
+  Expected: ${balancedTime} <= 23:59:59.999`,
     };
   },
   /**
