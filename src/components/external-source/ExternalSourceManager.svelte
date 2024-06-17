@@ -7,13 +7,13 @@
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { onDestroy, onMount } from 'svelte';
   import { catchError } from '../../stores/errors';
-  import { externalEventTypes } from '../../stores/external-event';
-  import { createExternalSourceError, createExternalSourceTypeError, creatingExternalSource, externalSourceTypes, externalSourceWithTypeName } from '../../stores/external-source';
+  import { externalEventTypes, getEventTypeName } from '../../stores/external-event';
+  import { createExternalSourceError, createExternalSourceTypeError, creatingExternalSource, externalSourceTypes, externalSourceWithTypeName, getEventSourceTypeId } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalEvent, ExternalEventDB, ExternalEventType, ExternalEventTypeInsertInput } from '../../types/external-event';
-  import type { ExternalSourceDB, ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceSlim, ExternalSourceType, ExternalSourceTypeInsertInput, ExternalSourceWithTypeName } from '../../types/external-source';
+  import type { ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceType, ExternalSourceTypeInsertInput, ExternalSourceWithTypeName } from '../../types/external-source';
   import type { TimeRange } from '../../types/timeline';
   import { type MouseDown, type MouseOver } from '../../types/timeline';
   import effects from '../../utilities/effects';
@@ -90,7 +90,7 @@
       headerName: 'Start Time',
       resizable: true,
       sortable: true,
-      valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
+      valueGetter: (params: ValueGetterParams<ExternalSourceWithTypeName>) => {
         if (params.data?.start_time) {
           return new Date(params.data?.start_time).toISOString().slice(0, 19);
         }
@@ -102,7 +102,7 @@
       headerName: 'End Time',
       resizable: true,
       sortable: true,
-      valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
+      valueGetter: (params: ValueGetterParams<ExternalSourceWithTypeName>) => {
         if (params.data?.end_time) {
           return new Date(params.data?.end_time).toISOString().slice(0, 19);
         }
@@ -114,7 +114,7 @@
       headerName: 'Valid At',
       resizable: true,
       sortable: true,
-      valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
+      valueGetter: (params: ValueGetterParams<ExternalSourceWithTypeName>) => {
         if (params.data?.valid_at) {
           return new Date(params.data?.valid_at).toISOString().slice(0, 19);
         }
@@ -122,9 +122,9 @@
     },
   ];
   let columnDefs: DataGridColumnDef[] = baseColumnDefs; // TODO: add actions like delete as in Models.svelte
-  let selectedSource: ExternalSourceDB & { source_type: string | undefined} | null = null;
-
+  
   // source detail variables
+  let selectedSource: ExternalSourceWithTypeName & { metadata: Record<string, any> } | null = null; // special type only for the selected entry, don't want entire table to lug around metadata
   let selectedSourceId: number | null = null;
 
   // timeline variables
@@ -212,11 +212,11 @@
   });
   $: filteredValues = $externalSourceTypes.filter(externalSourceType => externalSourceType.name.toLowerCase().includes(filterString))
 
-  // TODO: figure out a way to use already existing 'externalEventWithTypeName'???
+  // TODO: figure out a way to use already existing 'externalEventWithTypeName'??? Likely can't as we aren't using PLAN_EXTERNAL_EVENTS, so no externalEventsDB
   $: effects.getExternalEvents(selectedSource?.id, user).then(fetched => selectedEvents = fetched.map(eDB => {
     return {
       ...eDB,
-      event_type: $externalEventTypes.find(eventType => eventType.id === eDB.event_type_id)?.name,
+      event_type: getEventTypeName(eDB.event_type_id, $externalEventTypes),
       startMs: convertUTCtoMs(eDB.start_time),
       durationMs: convertDurationToMs(eDB.duration)
     }
@@ -287,23 +287,19 @@
         externalEventTypeInsertInput = {
           name: externalEvent.event_type
         };
-        console.log("EVENT")
 
         // if the event is valid...
         if (externalEvent.event_type !== undefined && externalEvent.start_time !== undefined && externalEvent.duration !== undefined) {
-          console.log("EVENT - VALID")
           let externalEventTypeId: number | undefined = undefined;
           // create ExternalEventType if it doesn't exist or grab the ID of the previously created entry,
           if (!(localExternalEventTypes.map(e => e.name).includes(externalEvent.event_type))) {
             externalEventTypeId = await effects.createExternalEventType(externalEventTypeInsertInput, user);
-            console.log("BEFORE", localExternalEventTypes)
             if (externalEventTypeId) {
               localExternalEventTypes.push({
                 id: externalEventTypeId,
                 name: externalEvent.event_type
               })
             }
-            console.log("AFTER", localExternalEventTypes)
           } else {
             // ...or find the existing ExternalEventType's id,
             externalEventTypeId = localExternalEventTypes.find(externalEventType => externalEventType.name === externalEvent.event_type)?.id
@@ -320,7 +316,6 @@
         }
       }
       sourceInsert.external_events.data = externalEventsCreated;
-      console.log(externalEventsCreated)
 
 
       // TBD: force reload the page???
@@ -329,7 +324,7 @@
         if (!($externalSourceTypes.map(s => s.name).includes($sourceTypeField.value)) && sourceTypeInsert !== undefined) {
           sourceTypeId = await effects.createExternalSourceType(sourceTypeInsert, user);
         } else {
-          sourceTypeId = $externalSourceTypes.find(externalSource => externalSource.name === $sourceTypeField.value)?.id
+          sourceTypeId = getEventSourceTypeId($sourceTypeField.value, $externalSourceTypes)
         }
         if (sourceTypeId !== undefined ) {
           sourceInsert.source_type_id = sourceTypeId;
@@ -351,7 +346,6 @@
   async function selectSource(detail: ExternalSourceWithTypeName) {
     selectedSource = {
       ...detail,
-      external_events: [],
       metadata: await effects.getExternalSourceMetadata(detail.id, user)
     }
     deselectEvent()
@@ -405,7 +399,7 @@
       <SectionTitle
         >{selectedEvent ? `Selected Event`
           : selectedSource
-          ? `#${selectedSource.id} – ${$externalSourceTypes.find(st => st.id == selectedSource?.source_type_id)?.name}`
+          ? `#${selectedSource.id} – ${selectedSource.source_type}`
           : 'Upload a Source File'}</SectionTitle
       >
       {#if selectedEvent}

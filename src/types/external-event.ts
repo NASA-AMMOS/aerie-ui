@@ -2,6 +2,7 @@ import type { ExternalSourceDB } from './external-source';
 
 export type ExternalEventId = number;
 
+// This is the type that conforms with the database schema.
 export type ExternalEventDB = {
   duration: string;
   event_type_id: number;
@@ -23,6 +24,12 @@ export type ExternalEventJson = {
   start_time: string;
 };
 
+// no analogue to ExternalSourceSlim as we have no subevents or anything of the sort that we may elect to exclude
+
+export type ExternalEventWithTypeName = Omit<ExternalEventDB, 'event_type_id'> & {
+  event_type: string | undefined;
+};
+
 export type ExternalEvent = Pick<
   ExternalEventWithTypeName,
   'duration' | 'id' | 'key' | 'properties' | 'source' | 'source_id' | 'start_time' | 'event_type'
@@ -31,15 +38,16 @@ export type ExternalEvent = Pick<
   startMs: number;
 };
 
-export type ExternalEventWithTypeName = ExternalEventDB & {
-  event_type: string | undefined;
-};
+// no analgoue to PlanExternalSource as such a link doesn't exist for external events
+
+// no analgoue to ExternalSourceEventTypes as external events don't have children with named types
 
 export type ExternalEventType = {
   id: number;
   name: string;
 }
 
+// This is used for the GraphQL mutation.
 // this doesn't do any actual filtering. extra keys in surplus of this are NOT checked.
 export type ExternalEventInsertInput = Pick<ExternalEventDB, 'key' | 'event_type_id' | 'start_time' | 'duration' | 'properties'>;
 
