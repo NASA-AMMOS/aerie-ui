@@ -18,7 +18,15 @@ import type { EditorView } from 'codemirror';
 import { addDefaultArgs, quoteEscape } from '../codemirror/codemirror-utils';
 import { getCustomArgDef } from './extension-points';
 import { TOKEN_COMMAND, TOKEN_ERROR, TOKEN_REPEAT_ARG } from './sequencer-grammar-constants';
-import { EPOCH_SIMPLE, EPOCH_TIME, RELATIVE_SIMPLE, RELATIVE_TIME, TimeTypes, isTimeBalanced } from './time-utils';
+import {
+  ABSOLUTE_TIME,
+  EPOCH_SIMPLE,
+  EPOCH_TIME,
+  RELATIVE_SIMPLE,
+  RELATIVE_TIME,
+  isTimeBalanced,
+  testTime,
+} from './time-utils';
 import { getChildrenNode, getDeepestNode, getFromAndTo } from './tree-utils';
 
 const KNOWN_DIRECTIVES = [
@@ -473,28 +481,39 @@ export function sequenceLinter(
         if (timeTagAbsoluteNode) {
           const absoluteText = text.slice(timeTagAbsoluteNode.from + 1, timeTagAbsoluteNode.to).trim();
 
-          const result = isTimeBalanced(absoluteText, TimeTypes.ABSOLUTE);
-          if (result.error) {
+          if (!testTime(absoluteText, ABSOLUTE_TIME)) {
             diagnostics.push({
               actions: [],
               from: timeTagAbsoluteNode.from,
-              message: result.error.message,
+              message: `Time Error: Incorrectly formatted 'Absolute' time.
+              Received : Malformed Absolute time.
+              Expected: YYYY-DOYThh:mm:ss[.sss]`,
               severity: 'error',
               to: timeTagAbsoluteNode.to,
             });
-          } else if (result.warning) {
-            diagnostics.push({
-              actions: [],
-              from: timeTagAbsoluteNode.from,
-              message: result.warning.message,
-              severity: 'warning',
-              to: timeTagAbsoluteNode.to,
-            });
+          } else {
+            const result = isTimeBalanced(absoluteText, ABSOLUTE_TIME);
+            if (result.error) {
+              diagnostics.push({
+                actions: [],
+                from: timeTagAbsoluteNode.from,
+                message: result.error,
+                severity: 'error',
+                to: timeTagAbsoluteNode.to,
+              });
+            } else if (result.warning) {
+              diagnostics.push({
+                actions: [],
+                from: timeTagAbsoluteNode.from,
+                message: result.warning,
+                severity: 'warning',
+                to: timeTagAbsoluteNode.to,
+              });
+            }
           }
-          // }
         } else if (timeTagEpochNode) {
           const epochText = text.slice(timeTagEpochNode.from + 1, timeTagEpochNode.to).trim();
-          if (!EPOCH_TIME.test(epochText) && !EPOCH_SIMPLE.test(epochText)) {
+          if (!testTime(epochText, EPOCH_TIME) && !testTime(epochText, EPOCH_SIMPLE)) {
             diagnostics.push({
               actions: [],
               from: timeTagEpochNode.from,
@@ -505,13 +524,13 @@ export function sequenceLinter(
               to: timeTagEpochNode.to,
             });
           } else {
-            if (EPOCH_TIME.test(epochText)) {
-              const result = isTimeBalanced(epochText, TimeTypes.EPOCH);
+            if (testTime(epochText, EPOCH_TIME)) {
+              const result = isTimeBalanced(epochText, EPOCH_TIME);
               if (result.error) {
                 diagnostics.push({
                   actions: [],
                   from: timeTagEpochNode.from,
-                  message: result.error.message,
+                  message: result.error,
                   severity: 'error',
                   to: timeTagEpochNode.to,
                 });
@@ -519,7 +538,7 @@ export function sequenceLinter(
                 diagnostics.push({
                   actions: [],
                   from: timeTagEpochNode.from,
-                  message: result.warning.message,
+                  message: result.warning,
                   severity: 'warning',
                   to: timeTagEpochNode.to,
                 });
@@ -528,7 +547,7 @@ export function sequenceLinter(
           }
         } else if (timeTagRelativeNode) {
           const relativeText = text.slice(timeTagRelativeNode.from + 1, timeTagRelativeNode.to).trim();
-          if (!RELATIVE_TIME.test(relativeText) && !RELATIVE_SIMPLE.test(relativeText)) {
+          if (!testTime(relativeText, RELATIVE_TIME) && !testTime(relativeText, RELATIVE_SIMPLE)) {
             diagnostics.push({
               actions: [],
               from: timeTagRelativeNode.from,
@@ -539,13 +558,13 @@ export function sequenceLinter(
               to: timeTagRelativeNode.to,
             });
           } else {
-            if (RELATIVE_TIME.test(relativeText)) {
-              const result = isTimeBalanced(relativeText, TimeTypes.RELATIVE);
+            if (testTime(relativeText, RELATIVE_TIME)) {
+              const result = isTimeBalanced(relativeText, RELATIVE_TIME);
               if (result.error) {
                 diagnostics.push({
                   actions: [],
                   from: timeTagRelativeNode.from,
-                  message: result.error.message,
+                  message: result.error,
                   severity: 'error',
                   to: timeTagRelativeNode.to,
                 });
@@ -553,7 +572,7 @@ export function sequenceLinter(
                 diagnostics.push({
                   actions: [],
                   from: timeTagRelativeNode.from,
-                  message: result.warning.message,
+                  message: result.warning,
                   severity: 'warning',
                   to: timeTagRelativeNode.to,
                 });
