@@ -3,6 +3,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
+  import RefreshIcon from '@nasa-jpl/stellar/icons/refresh.svg?component';
   import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
   import BarChartIcon from 'bootstrap-icons/icons/bar-chart.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
@@ -257,10 +258,15 @@
               />
             </Input>
             <Input layout="inline">
-              <label class="model-metadata-item-label" for="status">Jar file status</label>
+              <div class="model-jar-label">
+                <label class="model-metadata-item-label" for="status">Jar file status</label>
+                <div class="icon-button"><RefreshIcon /></div>
+              </div>
               <ModelStatusRollup mode="rollup" model={selectedModel} />
             </Input>
-            <div class="model-status-full"><ModelStatusRollup mode="full" model={selectedModel} /></div>
+            <div class="model-status-full">
+              <ModelStatusRollup mode="full" model={selectedModel} />
+            </div>
           </fieldset>
         </div>
         <div class="model-buttons">
@@ -414,5 +420,21 @@
 
   .model-status-full {
     margin: 8px 0;
+  }
+
+  .model-jar-label {
+    display: grid;
+    grid-template-columns: auto min-content;
+  }
+
+  .icon-button {
+    align-items: center;
+    color: var(--st-primary-70);
+    cursor: pointer;
+    display: flex;
+  }
+
+  .icon-button:hover {
+    color: var(--st-primary-100);
   }
 </style>

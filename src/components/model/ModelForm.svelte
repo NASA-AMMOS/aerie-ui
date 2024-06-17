@@ -1,6 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import RefreshIcon from '@nasa-jpl/stellar/icons/refresh.svg?component';
   import { createEventDispatcher } from 'svelte';
   import type { User, UserId } from '../../types/app';
   import type { ModelLog, ModelSlim } from '../../types/model';
@@ -164,7 +165,10 @@
     {/if}
     {#if modelId}
       <Input layout="inline">
-        <label class="model-metadata-item-label" for="status">Jar file status</label>
+        <div class="model-jar-label">
+          <label class="model-metadata-item-label" for="status">Jar file status</label>
+          <div class="icon-button"><RefreshIcon /></div>
+        </div>
         <ModelStatusRollup mode="rollup" model={modelLogs} />
       </Input>
       <div class="model-status-full">
@@ -207,7 +211,23 @@
     row-gap: 8px;
   }
 
+  .model-jar-label {
+    display: grid;
+    grid-template-columns: auto min-content;
+  }
+
   .model-status-full {
     margin: 8px 0;
+  }
+
+  .icon-button {
+    align-items: center;
+    color: var(--st-primary-70);
+    cursor: pointer;
+    display: flex;
+  }
+
+  .icon-button:hover {
+    color: var(--st-primary-100);
   }
 </style>
