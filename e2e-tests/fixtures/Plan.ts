@@ -310,19 +310,31 @@ export class Plan {
 
   async runAnalysis() {
     await this.analyzeButton.click();
-    await this.waitForSchedulingStatus(Status.Pending);
+    /**
+     * wait for UI to update with pending status, but don't explicitly check because
+     * the final state of the status might update before the check occurs
+     **/
+    await this.page.waitForTimeout(300);
     await this.waitForSchedulingStatus(Status.Complete);
   }
 
   async runScheduling(expectedFinalState = Status.Complete) {
     await this.scheduleButton.click();
-    await this.waitForSchedulingStatus(Status.Pending);
+    /**
+     * wait for UI to update with pending status, but don't explicitly check because
+     * the final state of the status might update before the check occurs
+     **/
+    await this.page.waitForTimeout(300);
     await this.waitForSchedulingStatus(expectedFinalState);
   }
 
   async runSimulation(expectedFinalState = Status.Complete) {
     await this.simulateButton.click();
-    await this.page.waitForTimeout(1000);
+    /**
+     * wait for UI to update with pending status, but don't explicitly check because
+     * the final state of the status might update before the check occurs
+     **/
+    await this.page.waitForTimeout(300);
     await this.waitForSimulationStatus(expectedFinalState);
   }
 
@@ -517,8 +529,8 @@ export class Plan {
   }
 
   async waitForActivityCheckingStatus(status: Status) {
-    await this.page.waitForSelector(this.activityCheckingStatusSelector(status), { state: 'attached', strict: true });
-    await this.page.waitForSelector(this.activityCheckingStatusSelector(status), { state: 'visible', strict: true });
+    await expect(this.page.locator(this.activityCheckingStatusSelector(status))).toBeAttached();
+    await expect(this.page.locator(this.activityCheckingStatusSelector(status))).toBeVisible();
   }
 
   async waitForPlanCollaboratorLoad() {
@@ -526,13 +538,13 @@ export class Plan {
   }
 
   async waitForSchedulingStatus(status: Status) {
-    await this.page.waitForSelector(this.schedulingStatusSelector(status), { state: 'attached', strict: true });
-    await this.page.waitForSelector(this.schedulingStatusSelector(status), { state: 'visible', strict: true });
+    await expect(this.page.locator(this.schedulingStatusSelector(status))).toBeAttached();
+    await expect(this.page.locator(this.schedulingStatusSelector(status))).toBeVisible();
   }
 
   async waitForSimulationStatus(status: Status) {
-    await this.page.waitForSelector(this.simulationStatusSelector(status), { state: 'attached', strict: true });
-    await this.page.waitForSelector(this.simulationStatusSelector(status), { state: 'visible', strict: true });
+    await expect(this.page.locator(this.simulationStatusSelector(status))).toBeAttached();
+    await expect(this.page.locator(this.simulationStatusSelector(status))).toBeVisible();
   }
 
   async waitForToast(message: string) {
