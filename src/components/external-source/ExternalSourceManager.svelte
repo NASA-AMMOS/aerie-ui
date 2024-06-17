@@ -320,6 +320,7 @@
         }
       }
       sourceInsert.external_events.data = externalEventsCreated;
+      externalEventsCreated = [];
 
 
       // TBD: force reload the page???
