@@ -1204,7 +1204,12 @@
                   <CssGrid columns="1fr 0.75fr 24px 24px 24px" gap="8px" class="editor-section-grid">
                     <TimelineEditorLayerFilter
                       values={getFilterValuesForLayer(layer)}
-                      options={getFilterOptionsForLayer(layer, $activityTypes, $externalResourceNames, $externalEventTypes)}
+                      options={getFilterOptionsForLayer(
+                        layer, 
+                        $activityTypes, 
+                        $externalResourceNames, 
+                        $externalEventTypes.map(eventType => eventType.name) // TODO: filter this by what sources are selected and the event types they contain. May need a store for this in external-source.ts
+                      )}
                       {layer}
                       on:change={event => {
                         const { values } = event.detail;
