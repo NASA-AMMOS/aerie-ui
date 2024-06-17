@@ -1,9 +1,10 @@
-import { expect, test } from 'vitest';
+import { describe, expect, it, test } from 'vitest';
 import {
   convertDoyToYmd,
   convertDurationStringToInterval,
   convertDurationStringToUs,
   convertUsToDurationString,
+  getBalancedDuration,
   getDaysInMonth,
   getDaysInYear,
   getDoy,
@@ -12,8 +13,12 @@ import {
   getShortISOForDate,
   getTimeAgo,
   getUnixEpochTime,
+  isTimeBalanced,
+  isTimeMax,
   parseDoyOrYmdTime,
+  validateTime,
 } from '../../src/utilities/time';
+import { TimeTypes } from '../enums/time';
 
 test('convertDurationStringToUs', () => {
   expect(convertDurationStringToUs('2y 318d 6h 16m 19s 200ms 0us')).toEqual(90577779200000);
@@ -147,4 +152,68 @@ test('getTimeAgo', () => {
 
 test('getShortISOForDate', () => {
   expect(getShortISOForDate(new Date('2023-05-23T00:00:00.000Z'))).toEqual('2023-05-23T00:00:00');
+});
+
+describe('Sequence Editor Time Utils Tests', () => {
+  it('Absolute Time', () => {
+    expect(isTimeBalanced('2024-001T00:00:00', TimeTypes.ABSOLUTE)).toBe(true);
+
+    expect(isTimeBalanced('2024-001T12:90:00', TimeTypes.ABSOLUTE)).toBe(false);
+
+    expect(isTimeBalanced('9999-365T23:59:60.999', TimeTypes.ABSOLUTE)).toBe(false);
+    expect(isTimeMax('9999-365T23:59:60.999', TimeTypes.ABSOLUTE)).toBe(true);
+
+    expect(isTimeBalanced('2024-365T23:59:60', TimeTypes.ABSOLUTE)).toBe(false);
+
+    expect(isTimeBalanced('2023-365T23:59:60', TimeTypes.ABSOLUTE)).toBe(false);
+
+    expect(isTimeBalanced('0000-000T00:00:00', TimeTypes.ABSOLUTE)).toBe(false);
+
+    expect(isTimeBalanced('0000-000T24:60:60', TimeTypes.ABSOLUTE)).toBe(false);
+
+    expect(validateTime('24:60:60', TimeTypes.ABSOLUTE)).toBe(false);
+  });
+  it('Relative Time', () => {
+    expect(isTimeBalanced('001T12:43:20.000', TimeTypes.RELATIVE)).toBe(true);
+
+    expect(isTimeBalanced('09:04:00.340', TimeTypes.RELATIVE)).toBe(true);
+
+    expect(isTimeBalanced('001T23:59:60.000', TimeTypes.RELATIVE)).toBe(false);
+    expect(getBalancedDuration('001T23:59:60.000')).toBe('002T00:00:00.000');
+
+    expect(isTimeBalanced('365T23:59:60.000', TimeTypes.RELATIVE)).toBe(false);
+    expect(isTimeMax('365T23:59:60.000', TimeTypes.RELATIVE)).toBe(true);
+
+    expect(isTimeBalanced('24:60:60', TimeTypes.RELATIVE)).toBe(false);
+    expect(getBalancedDuration('24:60:60')).toBe('001T01:01:00.000');
+
+    expect(getBalancedDuration('000T90:59:60.000')).toBe('003T19:00:00.000');
+
+    expect(isTimeBalanced('365T23:59:60.999', TimeTypes.RELATIVE)).toBe(false);
+    expect(isTimeMax('365T23:59:60.999', TimeTypes.RELATIVE)).toBe(true);
+
+    expect(isTimeBalanced('365T23:59:60.000', TimeTypes.RELATIVE)).toBe(false);
+    expect(isTimeMax('365T23:59:60.000', TimeTypes.RELATIVE)).toBe(true);
+
+    expect(validateTime('2023-365T23:59:60', TimeTypes.RELATIVE)).toBe(false);
+  });
+
+  it('epoch Time', () => {
+    expect(isTimeBalanced('+001T12:43:20.000', TimeTypes.EPOCH)).toBe(true);
+    expect(isTimeBalanced('-09:04:00.340', TimeTypes.EPOCH)).toBe(true);
+
+    expect(isTimeBalanced('-001T23:59:60.000', TimeTypes.EPOCH)).toBe(false);
+    expect(getBalancedDuration('-001T23:59:60.000')).toBe('-002T00:00:00.000');
+
+    expect(isTimeBalanced('-365T23:59:60.000', TimeTypes.EPOCH)).toBe(false);
+    expect(isTimeMax('-365T23:59:60.999', TimeTypes.RELATIVE)).toBe(true);
+
+    expect(isTimeBalanced('365T22:59:60.000', TimeTypes.EPOCH)).toBe(false);
+    expect(getBalancedDuration('-365T22:59:60.999')).toBe('-365T23:00:00.999');
+    expect(isTimeMax('-365T22:59:60.999', TimeTypes.RELATIVE)).toBe(false);
+
+    expect(validateTime('2023-365T23:59:60', TimeTypes.EPOCH)).toBe(false);
+
+    expect(validateTime('3:59:60', TimeTypes.EPOCH)).toBe(false);
+  });
 });
