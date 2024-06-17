@@ -2,7 +2,7 @@
 
 <script lang="ts">
   import type { ValueGetterParams } from 'ag-grid-community';
-  import { externalEventsDB, selectExternalEvent, selectedExternalEventId } from '../../stores/external-event';
+  import { externalEventWithTypeName, selectExternalEvent, selectedExternalEventId } from '../../stores/external-event';
   import { viewTogglePanel } from '../../stores/views';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
@@ -19,7 +19,7 @@
     {
       field: 'id',
       filter: 'number',
-      headerName: 'ID',
+      headerName: 'External Event ID',
       resizable: true,
       sortable: true,
     },
@@ -92,7 +92,7 @@
     <SingleActionDataGrid
       {columnDefs}
       itemDisplayText="External Source"
-      items={$externalEventsDB}
+      items={$externalEventWithTypeName}
       {user}
       bind:selectedItemId={$selectedExternalEventId}
       on:rowDoubleClicked={onRowDoubleClicked}
