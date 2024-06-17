@@ -16,6 +16,8 @@
   import { getCustomArgDef } from '../../../utilities/new-sequence-editor/extension-points';
   import { TOKEN_COMMAND, TOKEN_ERROR } from '../../../utilities/new-sequence-editor/sequencer-grammar-constants';
   import { getAncestorNode } from '../../../utilities/new-sequence-editor/tree-utils';
+  import Panel from '../../ui/Panel.svelte';
+  import SectionTitle from '../../ui/SectionTitle.svelte';
   import {
     addDefaultArgs,
     getMissingArgDefs,
@@ -191,21 +193,29 @@
   // {'unsigned_arg', 'enum_arg', 'var_string_arg', 'float_arg'}
 </script>
 
-<div class="select-command-detail" id={ID_COMMAND_DETAIL_PANE}>
-  {#if !!commandNode}
-    <div>Selected Command</div>
-    {#if !!commandDef}
-      {#if !!timeTagNode}
-        <div>Time Tag: {timeTagNode.text.trim()}</div>
-      {/if}
-      <div>
-        <details>
-          <summary>{commandDef.stem}</summary>
-          {commandDef.description}
-        </details>
-      </div>
-      <hr />
-      <div class="select-command-argument-detail">
+<Panel overflowYBody="hidden" padBody={false}>
+  <svelte:fragment slot="header">
+    <SectionTitle>Selected Command</SectionTitle>
+  </svelte:fragment>
+
+  <svelte:fragment slot="body">
+    {#if !!commandNode}
+      <div class="header"></div>
+
+      {#if !!commandDef}
+        {#if !!timeTagNode}
+          <fieldset>
+            <div>Time Tag: {timeTagNode.text.trim()}</div>
+          </fieldset>
+        {/if}
+
+        <fieldset>
+          <details>
+            <summary>{commandDef.stem}</summary>
+            {commandDef.description}
+          </details>
+        </fieldset>
+
         {#each editorArgInfoArray as argInfo}
           <ArgEditor
             {argInfo}
@@ -215,6 +225,7 @@
               addDefaultArgs(commandDictionary, editorSequenceView, commandNode, missingArgDefArray)}
           />
         {/each}
+
         {#if missingArgDefArray.length}
           <AddMissingArgsButton
             setInEditor={() => {
@@ -224,14 +235,7 @@
             }}
           />
         {/if}
-      </div>
+      {/if}
     {/if}
-  {/if}
-</div>
-
-<style>
-  .select-command-detail {
-    padding: 10px;
-    width: 100%;
-  }
-</style>
+  </svelte:fragment>
+</Panel>
