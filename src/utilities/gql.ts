@@ -481,6 +481,14 @@ const gql = {
     }
   `,
 
+  CREATE_EXTERNAL_SOURCE_EVENT_TYPE: `#graphql
+    mutation CreateExternalSourceEventType($link: external_source_event_type_insert_input!) {
+      createExternalSourceEventType: insert_external_source_event_type_one(object: $link) {
+        id
+      }
+    }
+  `,
+
   CREATE_EXTERNAL_SOURCE_TYPE: `#graphql
     mutation CreateExternalSourceType($sourceType: external_source_type_insert_input!) {
       createExternalSourceType: insert_external_source_type_one(object: $sourceType) {
