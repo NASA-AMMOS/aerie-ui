@@ -1,8 +1,106 @@
 import { padStart } from 'lodash-es';
 import parseInterval from 'postgres-interval';
+import { TimeTypes } from '../enums/time';
 import type { ActivityDirectiveId, ActivityDirectivesMap } from '../types/activity';
 import type { SpanUtilityMaps, SpansMap } from '../types/simulation';
 import type { ParsedDoyString, ParsedDurationString, ParsedYmdString } from '../types/time';
+
+export const ABSOLUTE_TIME = /^(\d{4})-(\d{3})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{3}))?$/;
+export const RELATIVE_TIME = /^([0-9]{3}T)?([0-9]{2}):([0-9]{2}):([0-9]{2})(\.[0-9]+)?$/;
+export const RELATIVE_SIMPLE = /(\d+)(\.[0-9]+)?$/;
+export const EPOCH_TIME = /(^[+-]?)([0-9]{3}T)?([0-9]{2}):([0-9]{2}):([0-9]{2})(\.[0-9]+)?$/;
+export const EPOCH_SIMPLE = /(^[+-]?)(\d+)(\.[0-9]+)?$/;
+
+/**
+ * Validates a time string based on the specified type.
+ * @param {string} time - The time string to validate.
+ * @param {TimeTypes} type - The type of time to validate against.
+ * @returns {boolean} - True if the time string is valid, false otherwise.
+ * @example
+ * validateTime('2022-012T12:34:56.789', TimeTypes.ABSOLUTE); // true
+ */
+export function validateTime(time: string, type: TimeTypes): boolean {
+  switch (type) {
+    case TimeTypes.ABSOLUTE:
+      return ABSOLUTE_TIME.exec(time) !== null;
+    case TimeTypes.EPOCH:
+      return EPOCH_TIME.exec(time) !== null;
+    case TimeTypes.RELATIVE:
+      return RELATIVE_TIME.exec(time) !== null;
+    case TimeTypes.EPOCH_SIMPLE:
+      return EPOCH_SIMPLE.exec(time) !== null;
+    case TimeTypes.RELATIVE_SIMPLE:
+      return RELATIVE_SIMPLE.exec(time) !== null;
+    default:
+      return false;
+  }
+}
+
+/**
+ * Determines if the given time string is a max time based on the specified time type.
+ * @param {string} time - The time string to check.
+ * @param {TimeTypes} type - The time type to check against.
+ * @returns {boolean} - True if the time string is a max time, false otherwise.
+ * @example
+ * isTimeMax('2099-365T23:59:59.999', TimeTypes.ABSOLUTE); // false
+ */
+export function isTimeMax(time: string, type: TimeTypes): boolean {
+  switch (type) {
+    case TimeTypes.ABSOLUTE: {
+      const year = parseDoyOrYmdTime(getDoyTime(new Date(getUnixEpochTime(time))))?.year;
+      return year ? year > 9999 : true;
+    }
+    case TimeTypes.EPOCH:
+    case TimeTypes.RELATIVE: {
+      const duration = parseDuration(time);
+      const originalYear = parseInt(formatDurationToDoy(duration).slice(0, 4));
+      const year = parseDoyOrYmdTime(getDoyTime(new Date(getUnixEpochTime(formatDurationToDoy(duration)))))?.year;
+      return originalYear !== year;
+    }
+    default:
+      return false;
+  }
+}
+
+/**
+ * Determines if the given time string is balanced based on the specified time type.
+ * @param {string} time - The time string to check.
+ * @param {TimeTypes} type - The time type to check against.
+ * @returns {boolean} - True if the time string is balanced, false otherwise.
+ * @example
+ * isTimeBalanced('2022-01-01T00:00:00.000', TimeTypes.ABSOLUTE); // true
+ * isTimeBalanced('50000d', TimeTypes.RELATIVE); // false
+ */
+export function isTimeBalanced(time: string, type: TimeTypes): boolean {
+  switch (type) {
+    case TimeTypes.ABSOLUTE: {
+      const balancedTime = parseDoyOrYmdTime(getDoyTime(new Date(getUnixEpochTime(time))));
+      const originalTime = parseDoyOrYmdTime(time);
+      if (balancedTime === null || originalTime === null) {
+        return false;
+      }
+      return originalTime.year === balancedTime.year;
+    }
+    case TimeTypes.EPOCH:
+    case TimeTypes.RELATIVE: {
+      const originalTime = parseDuration(time);
+      const balancedTime = parseDuration(getBalancedDuration(time));
+
+      if (balancedTime === null || originalTime === null) {
+        return false;
+      }
+      return (
+        balancedTime.days === originalTime.days &&
+        balancedTime.hours === originalTime.hours &&
+        balancedTime.minutes === originalTime.minutes &&
+        balancedTime.seconds === originalTime.seconds &&
+        balancedTime.milliseconds === originalTime.milliseconds
+      );
+    }
+    default:
+      return false;
+  }
+}
 
 function parseDurationString(durationString: string): ParsedDurationString | never {
   const validNegationRegex = `((?<isNegative>-)\\s)?`;
@@ -64,6 +162,106 @@ function parseDurationString(durationString: string): ParsedDurationString | nev
   }
 
   throw Error('Must be of format: 1y 3d 2h 24m 35s 18ms 70us');
+}
+
+/**
+ * Format a duration object to a day of year string.
+ *
+ * @example
+ * formatDurationToDoy({
+ *   years: 0,
+ *   days: 1,
+ *   hours: 0,
+ *   minutes: 45,
+ *   seconds: 0,
+ *   milliseconds: 10,
+ *   microseconds: 0,
+ * })
+ *
+ * result: '1970-1T00:45:00.010'
+ *
+ * @param {ParsedDurationString} duration - The duration object to format.
+ * @returns {string} - The formatted day of year string.
+ */
+function formatDurationToDoy(duration: ParsedDurationString): string {
+  const years = duration.years === 0 ? '1970' : String(duration.years).padStart(4, '0');
+  const day = Math.max(1, Math.floor(duration.days));
+  const hours = String(duration.hours).padStart(2, '0');
+  const minutes = String(duration.minutes).padStart(2, '0');
+  const seconds = String(duration.seconds).padStart(2, '0');
+  const milliseconds = String(duration.milliseconds * 1000).padStart(3, '0');
+
+  return `${years}-${day.toString().padStart(3, '0')}T${hours}:${minutes}:${seconds}.${milliseconds}`;
+}
+
+/**
+ * Gets the balanced duration based on the given time string.
+ *
+ * @example
+ * getBalancedDuration('-002T00:60:00.010')
+ * // => '-002T01:00:00.010'
+ *
+ * @param {string} time - The time string to calculate the balanced duration from.
+ * @returns {string} The balanced duration string.
+ */
+export function getBalancedDuration(time: string): string {
+  const duration = parseDuration(time);
+  const balancedTime = getDoyTime(new Date(getUnixEpochTime(formatDurationToDoy(duration))));
+  const parsedBalancedTime = parseDoyOrYmdTime(balancedTime) as ParsedDoyString;
+  const shouldIncludeDay = duration.days > 0 || parsedBalancedTime.doy > 1;
+
+  const sign = duration.isNegative ? '-' : '';
+  const day = shouldIncludeDay
+    ? `${String(parsedBalancedTime.doy - (duration.days > 0 ? 0 : 1)).padStart(3, '0')}T`
+    : '';
+  const hour = String(parsedBalancedTime.hour).padStart(2, '0');
+  const minutes = String(parsedBalancedTime.min).padStart(2, '0');
+  const seconds = String(parsedBalancedTime.sec).padStart(2, '0');
+  const milliseconds = String(parsedBalancedTime.ms).padStart(3, '0');
+  return `${sign}${day}${hour}:${minutes}:${seconds}.${milliseconds}`;
+}
+
+/**
+ * Parses a duration string into a `ParsedDurationString` object.
+ *
+ * @example
+ * parseDuration('-2T00:45:00.010')
+ * // => {
+ * // =>   days: 2,
+ * // =>   hours: 0,
+ * // =>   isNegative: true,
+ * // =>   microseconds: 0,
+ * // =>   milliseconds: 10,
+ * // =>   minutes: 45,
+ * // =>   seconds: 0,
+ * // =>   years: 0,
+ * // => }
+ *
+ * @param {string} durationString - The duration string to parse.
+ * @returns {ParsedDurationString} - The parsed duration object.
+ */
+export function parseDuration(durationString: string): ParsedDurationString {
+  const isEpoch = validateTime(durationString, TimeTypes.EPOCH);
+  const matches = isEpoch ? EPOCH_TIME.exec(durationString) : RELATIVE_TIME.exec(durationString);
+
+  const [, sign = '', days = '0', hours = '0', minutes = '0', seconds = '0', milliseconds = '0'] =
+    matches as RegExpExecArray;
+
+  const hoursNum = Number(hours);
+  const minuteNum = Number(minutes);
+  const secondsNum = Number(seconds);
+  const millisecondNum = Number(milliseconds);
+
+  return {
+    days: days !== undefined ? Number(days.replace('T', '')) : 0,
+    hours: hoursNum,
+    isNegative: sign !== '' && sign !== '+',
+    microseconds: 0,
+    milliseconds: millisecondNum,
+    minutes: minuteNum,
+    seconds: secondsNum,
+    years: 0,
+  };
 }
 
 function addUnit(value: number, unit: string, isNegative: boolean) {
