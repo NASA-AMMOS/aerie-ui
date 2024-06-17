@@ -12,7 +12,7 @@
   import type { ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { ConstraintResultWithName } from '../../types/constraint';
-  import type { ExternalEventDB, ExternalEventId } from '../../types/external-event';
+  import type { ExternalEventId, ExternalEventWithTypeName } from '../../types/external-event';
   import type { Plan } from '../../types/plan';
   import type {
     ResourceType,
@@ -51,7 +51,7 @@
   import TimelineXAxis from './XAxis.svelte';
 
   export let activityDirectivesMap: ActivityDirectivesMap = {};
-  export let externalEventsDB: ExternalEventDB[] = [];
+  export let externalEventsWithTypeName: ExternalEventWithTypeName[] = [];
   export let constraintResults: ConstraintResultWithName[] = [];
   export let hasUpdateDirectivePermission: boolean = false;
   export let hasUpdateSimulationPermission: boolean = false;
@@ -126,7 +126,7 @@
   });
 
   $: activityDirectives = Object.values(activityDirectivesMap);
-  $: externalEvents = externalEventsDB.map(eDB => {
+  $: externalEvents = externalEventsWithTypeName.map(eDB => {
     return {
       ...eDB,
       startMs: convertUTCtoMs(eDB.start_time),
