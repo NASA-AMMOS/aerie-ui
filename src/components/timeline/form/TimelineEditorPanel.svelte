@@ -26,7 +26,8 @@
     ViewLineLayerColorPresets,
   } from '../../../constants/view';
   import { ViewConstants } from '../../../enums/view';
-  import { externalEventTypes } from '../../../stores/external-event';
+  import { externalEventTypes, getEventTypeName } from '../../../stores/external-event';
+  import { selectedPlanExternalSourceEventTypes } from '../../../stores/external-source';
   import { activityTypes, maxTimeRange, viewTimeRange } from '../../../stores/plan';
   import { plugins } from '../../../stores/plugins';
   import { externalResourceNames, resourceTypes, yAxesWithScaleDomainsCache } from '../../../stores/simulation';
@@ -120,6 +121,7 @@
     viewUpdateRow('activityOptions', ViewDefaultActivityOptions);
   }
   $: activityOptions = selectedRow?.activityOptions || { ...ViewDefaultActivityOptions };
+  $: validEventTypes = $selectedPlanExternalSourceEventTypes.map(id => getEventTypeName(id, $externalEventTypes)) as string[]
 
   function updateRowEvent(event: Event) {
     const { name, value } = getTarget(event);
@@ -1205,10 +1207,10 @@
                     <TimelineEditorLayerFilter
                       values={getFilterValuesForLayer(layer)}
                       options={getFilterOptionsForLayer(
-                        layer, 
-                        $activityTypes, 
-                        $externalResourceNames, 
-                        $externalEventTypes.map(eventType => eventType.name) // TODO: filter this by what sources are selected and the event types they contain. May need a store for this in external-source.ts
+                        layer,
+                        $activityTypes,
+                        $externalResourceNames,
+                        validEventTypes
                       )}
                       {layer}
                       on:change={event => {
