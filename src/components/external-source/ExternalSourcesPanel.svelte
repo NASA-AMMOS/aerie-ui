@@ -34,9 +34,7 @@
     <CollapsibleListControls
       placeholder="Filter External Sources"
       on:input={event => (filterText = event.detail.value)}
-    >
-    </CollapsibleListControls>
-
+    />
 
     {#if filteredExternalEvents.length}
       {#each filteredExternalEvents as externalSource}

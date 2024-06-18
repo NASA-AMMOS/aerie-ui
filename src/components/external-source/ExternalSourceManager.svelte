@@ -17,13 +17,14 @@
   import type { TimeRange } from '../../types/timeline';
   import { type MouseDown, type MouseOver } from '../../types/timeline';
   import effects from '../../utilities/effects';
-  import { classNames } from '../../utilities/generic';
+  import { classNames, getTarget } from '../../utilities/generic';
   import { convertDurationToMs, convertUTCtoMs } from '../../utilities/time';
   import { TimelineInteractionMode, getXScale } from '../../utilities/timeline';
   import { showFailureToast } from '../../utilities/toast';
   import { tooltip } from '../../utilities/tooltip';
   import { required, timestamp } from '../../utilities/validators';
   import Collapse from '../Collapse.svelte';
+  import CollapsibleListControls from '../CollapsibleListControls.svelte';
   import ExternalEventForm from '../external-events/ExternalEventForm.svelte';
   import ExternalEventProperties from '../external-events/ExternalEventProperties.svelte';
   import DatePickerField from '../form/DatePickerField.svelte';
@@ -42,6 +43,7 @@
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
 
+  
 
   export let user: User | null;
 
@@ -121,6 +123,9 @@
       },
     }
   ];
+  let columnDefs: DataGridColumnDef[] = baseColumnDefs; // TODO: add actions like delete as in Models.svelte
+  
+  // for external events table
   let eventColumnBaseDefs = [
     {
       field: 'id',
@@ -182,9 +187,9 @@
       sortable: true,
     },
   ]
-  let columnDefs: DataGridColumnDef[] = baseColumnDefs; // TODO: add actions like delete as in Models.svelte
   let eventColumnDefs: DataGridColumnDef[] = eventColumnBaseDefs;
-  
+  let externalEventsTableFilterString: string = '';
+
   // source detail variables
   let selectedSource: ExternalSourceWithTypeName & { metadata: Record<string, any> } | null = null; // special type only for the selected entry, don't want entire table to lug around metadata
   let selectedSourceId: number | null = null;
@@ -278,6 +283,12 @@
     return selectedFilters.find(f => f.name === externalSource.source_type) !== undefined
   });
   $: filteredValues = $externalSourceTypes.filter(externalSourceType => externalSourceType.name.toLowerCase().includes(filterString))
+  $: filteredTableExternalEvents = selectedEvents
+    .filter(event => {
+      const filterTextLowerCase = externalEventsTableFilterString.toLowerCase();
+      const includesName = externalEventsTableFilterString.length ? event.key.toLocaleLowerCase().includes(filterTextLowerCase) : true;
+      return includesName;
+    });
 
   $: effects.getExternalEvents(selectedSource?.id, user).then(fetched => selectedEvents = fetched.map(eDB => {
     return {
@@ -656,14 +667,43 @@
 
   <Panel padBody={false}>
     <svelte:fragment slot="header">
-      <SectionTitle><Truck />External Sources</SectionTitle>
+      <slot name="left">
+        <SectionTitle><Truck />External Sources</SectionTitle>
+      </slot>
+      <slot name="right">
+        <select class="st-select" on:change={
+          (e) => {
+            const { value } = getTarget(e)
+            if (value === "table") {
+              showExternalEventTable = true;
+              showExternalEventTimeline = false;
+              externalEventsTableFilterString = '';
+              selectedRowId = selectedEvent?.id ?? null;
+            }
+            else {
+              showExternalEventTable = false;
+              showExternalEventTimeline = true;
+              externalEventsTableFilterString = '';
+
+              // TODO: this sometimes works...except every once in a while when you select a source, 
+              //    select an event in timeline, go to table, select a different source, select an event, then go back to timeline.
+              //    only then does it fail...sometimes...
+              onSelectionChanged()
+              // selectedEvent = selectedEvents.find(event => event.id === selectedRowId) ?? null
+            }
+          }
+        }>
+            <option value={"table"}>Table</option>
+            <option value={"timeline"}>Timeline</option>
+        </select>
+      </slot>
     </svelte:fragment>
     <svelte:fragment slot="body">
       <div class="filter" style="padding-left: 5px; padding-right: 15px">
         <Collapse
           className="anchor-collapse"
           defaultExpanded={false}
-          title="Filters"
+          title="External Source Filters"
           tooltipContent="Filter External Sources"
         >
         <div class="timeline-editor-layer-filter" style="position: relative">
@@ -783,15 +823,31 @@
                 </div>
               </div>
             {:else if showExternalEventTable}
-              <SingleActionDataGrid
-                columnDefs={eventColumnDefs}
-                itemDisplayText="External Events"
-                items={selectedEvents}
-                {user}
-                bind:selectedItemId={selectedRowId}
-                on:selectionChanged={onSelectionChanged}
-                on:rowDoubleClicked={onSelectionChanged}
-              />
+              <div style="height: 100%; width: 100%; position: relative">
+                <div style="padding-left:5px; padding-right:5px">
+                  <Collapse
+                    className="anchor-collapse"
+                    defaultExpanded={false}
+                    title="External Event Filters"
+                    tooltipContent="Filter External Events"
+                  >
+                    <CollapsibleListControls
+                      placeholder="Filter External Events By Name"
+                      on:input={event => (externalEventsTableFilterString = event.detail.value)}
+                    />
+                  </Collapse>
+                </div>
+                <div style="height:10px; width:100%"></div>
+                <SingleActionDataGrid
+                  columnDefs={eventColumnDefs}
+                  itemDisplayText="External Events"
+                  items={filteredTableExternalEvents}
+                  {user}
+                  bind:selectedItemId={selectedRowId}
+                  on:selectionChanged={onSelectionChanged}
+                  on:rowDoubleClicked={onSelectionChanged}
+                />
+              </div>
             {/if}
           {:else}
             <p style="padding-left: 5px">Select a source to view contents.</p>
