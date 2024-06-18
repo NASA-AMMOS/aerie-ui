@@ -95,7 +95,7 @@ export class Dictionaries {
     }
 
     await this.createButton.click();
-    await this.filterTable(table, dictionaryName);
+    await this.filterTable(table, dictionaryName, type);
     await tableRow.waitFor({ state: 'attached' });
     await tableRow.waitFor({ state: 'visible' });
     await expect(tableRow).toBeVisible();
@@ -118,7 +118,7 @@ export class Dictionaries {
 
     await this.createDictionary(
       this.sequenceAdaptationBuffer,
-      'Sequence Adaptation',
+      this.sequenceAdaptationName,
       this.sequenceAdaptationTable,
       this.sequenceAdaptationTableRow,
       DictionaryType.SequenceAdaptation,
@@ -128,13 +128,13 @@ export class Dictionaries {
   async deleteChannelDictionary(): Promise<void> {
     await this.updatePage(this.page, DictionaryType.ChannelDictionary, this.channelDictionaryName);
 
-    await this.filterTable(this.channelDictionaryTable, this.channelDictionaryName);
+    await this.filterTable(this.channelDictionaryTable, this.channelDictionaryName, DictionaryType.ChannelDictionary);
     await this.deleteDictionary(this.channelDictionaryTableRow, this.channelDictionaryTableRowDeleteButton);
   }
 
   async deleteCommandDictionary(): Promise<void> {
     await this.updatePage(this.page, DictionaryType.CommandDictionary, this.commandDictionaryName);
-    await this.filterTable(this.commandDictionaryTable, this.commandDictionaryName);
+    await this.filterTable(this.commandDictionaryTable, this.commandDictionaryName, DictionaryType.CommandDictionary);
 
     await this.deleteDictionary(this.commandDictionaryTableRow, this.commandDictionaryTableRowDeleteButton);
   }
@@ -168,13 +168,22 @@ export class Dictionaries {
   async deleteParameterDictionary(): Promise<void> {
     await this.updatePage(this.page, DictionaryType.ParameterDictionary, this.parameterDictionaryName);
 
-    await this.filterTable(this.parameterDictionaryTable, this.parameterDictionaryName);
+    await this.filterTable(
+      this.parameterDictionaryTable,
+      this.parameterDictionaryName,
+      DictionaryType.ParameterDictionary,
+    );
     await this.deleteDictionary(this.parameterDictionaryTableRow, this.parameterDictionaryTableRowDeleteButton);
   }
 
   async deleteSequenceAdaptation(): Promise<void> {
     await this.updatePage(this.page, DictionaryType.SequenceAdaptation, this.sequenceAdaptationName);
 
+    await this.filterTable(
+      this.sequenceAdaptationTable,
+      this.sequenceAdaptationName,
+      DictionaryType.SequenceAdaptation,
+    );
     await this.deleteDictionary(this.sequenceAdaptationTableRow, this.sequenceAdaptationTableRowDeleteButton);
   }
 
@@ -199,11 +208,17 @@ export class Dictionaries {
     await this.inputFile.evaluate(e => e.blur());
   }
 
-  private async filterTable(table: Locator, dictionaryName: string) {
+  private async filterTable(table: Locator, dictionaryName: string, type: DictionaryType) {
     await table.waitFor({ state: 'attached' });
     await table.waitFor({ state: 'visible' });
+    let nameColumnHeader: Locator | undefined = undefined;
 
-    const nameColumnHeader = await table.getByRole('columnheader', { name: 'Mission' });
+    if (type === DictionaryType.SequenceAdaptation) {
+      nameColumnHeader = table.getByRole('columnheader', { name: 'Name' });
+    } else {
+      nameColumnHeader = table.getByRole('columnheader', { name: 'Mission' });
+    }
+
     await nameColumnHeader.hover();
 
     const filterIcon = await nameColumnHeader.locator('.ag-icon-menu');
