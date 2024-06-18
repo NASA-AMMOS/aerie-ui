@@ -8,11 +8,11 @@
   import { onDestroy, onMount } from 'svelte';
   import { catchError } from '../../stores/errors';
   import { externalEventTypes, getEventTypeName } from '../../stores/external-event';
-  import { createExternalSourceError, createExternalSourceTypeError, creatingExternalSource, externalSourceTypes, externalSourceWithTypeName, getEventSourceTypeId } from '../../stores/external-source';
+  import { createExternalSourceError, createExternalSourceTypeError, creatingExternalSource, externalSourceTypes, externalSourceWithTypeName, externalSources, getEventSourceTypeId, getSourceName } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
-  import type { ExternalEvent, ExternalEventDB, ExternalEventType, ExternalEventTypeInsertInput } from '../../types/external-event';
+  import type { ExternalEvent, ExternalEventDB, ExternalEventType, ExternalEventTypeInsertInput, ExternalEventWithTypeName } from '../../types/external-event';
   import type { ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceType, ExternalSourceTypeInsertInput, ExternalSourceWithTypeName } from '../../types/external-source';
   import type { TimeRange } from '../../types/timeline';
   import { type MouseDown, type MouseOver } from '../../types/timeline';
@@ -41,7 +41,6 @@
   import DatePicker from '../ui/DatePicker/DatePicker.svelte';
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
-  import ExternalEventsTablePanel from '../external-events/ExternalEventsTablePanel.svelte';
 
 
   export let user: User | null;
@@ -120,9 +119,71 @@
           return new Date(params.data?.valid_at).toISOString().slice(0, 19);
         }
       },
-    },
+    }
   ];
+  let eventColumnBaseDefs = [
+    {
+      field: 'id',
+      filter: 'number',
+      headerName: 'ID',
+      resizable: true,
+      sortable: true,
+    },
+    {
+      field: 'key',
+      filter: 'text',
+      headerName: 'Key',
+      resizable: true,
+      sortable: true,
+    },
+    {
+      field: 'event_type',
+      filter: 'text',
+      headerName: 'Event Type',
+      resizable: true,
+      sortable: true,
+    },
+    {
+      field: 'source_id',
+      filter: 'number',
+      headerName: 'Source ID',
+      resizable: true,
+      sortable: true,
+    },
+    {
+      field: 'source',
+      filter: 'number',
+      headerName: 'Source',
+      resizable: true,
+      sortable: true,
+      valueGetter: (params: ValueGetterParams<ExternalEventWithTypeName>) => {
+        if (params.data?.source_id) {
+          return getSourceName(params.data?.source_id, $externalSources);
+        }
+      },
+    },
+    {
+      field: 'start_time',
+      filter: 'text',
+      headerName: 'Start Time',
+      resizable: true,
+      sortable: true,
+      valueGetter: (params: ValueGetterParams<ExternalEventWithTypeName>) => {
+        if (params.data?.start_time) {
+          return new Date(params.data?.start_time).toISOString().slice(0, 19);
+        }
+      },
+    },
+    {
+      field: 'duration',
+      filter: 'text',
+      headerName: 'Duration',
+      resizable: true,
+      sortable: true,
+    },
+  ]
   let columnDefs: DataGridColumnDef[] = baseColumnDefs; // TODO: add actions like delete as in Models.svelte
+  let eventColumnDefs: DataGridColumnDef[] = eventColumnBaseDefs;
   
   // source detail variables
   let selectedSource: ExternalSourceWithTypeName & { metadata: Record<string, any> } | null = null; // special type only for the selected entry, don't want entire table to lug around metadata
@@ -130,13 +191,14 @@
   let selectedSourceEventTypes: ExternalEventType[] | null = null
 
   // variables for choosing display format of an external source's external events
-  let showExternalEventTimeline: boolean = true;
-  let showExternalEventTable: boolean = false;
+  let showExternalEventTimeline: boolean = false;
+  let showExternalEventTable: boolean = true;
 
   // timeline variables
   let dpr = 0;
   let viewTimeRange: TimeRange = { end: 0, start: 0 };
   let selectedEvent: ExternalEvent | null = null;
+  let selectedRowId: number | null = null;
   let selectedEvents: ExternalEvent[] = [];
   let canvasContainerRef: HTMLDivElement;
   let canvasContainerWidth: number = 0;
@@ -378,6 +440,7 @@
 
   function deselectEvent() {
     selectedEvent = null;
+    selectedRowId = null;
   }
 
   function onCanvasMouseDown(e: CustomEvent<MouseDown>) {
@@ -388,6 +451,7 @@
     //    unnecessary as everything we need is in on single component or can be passed down via parameters to
     //    children).
     selectedEvent = externalEvents?.length ? externalEvents[0] : null
+    selectedRowId = null
   }
 
   function onCanvasMouseOver(e: CustomEvent<MouseOver>) {
@@ -411,13 +475,17 @@
   function selectFilteredValues() {
     selectedFilters = [...new Set([...selectedFilters, ...filteredValues])];
   }
+
+  function onSelectionChanged() {
+    selectedEvent = selectedEvents.find(event => event.id === selectedRowId) ?? null
+  }
 </script>
 
 <CssGrid columns="1fr 3px 4fr">
   <Panel borderRight padBody={true}>
     <svelte:fragment slot="header">
       <SectionTitle
-        >{selectedEvent ? `Selected Event`
+        >{selectedEvent ? `Selected Event` : selectedRowId ? `Selected Event`
           : selectedSource
           ? `#${selectedSource.id} – ${selectedSource.source_type}`
           : 'Upload a Source File'}</SectionTitle
@@ -430,6 +498,14 @@
         >
           <XIcon />
         </button>
+      {:else if selectedRowId} 
+      <button
+        class="st-button icon fs-6"
+        on:click={deselectEvent}
+        use:tooltip={{ content: 'Deselect event', placement: 'top' }}
+      >
+        <XIcon />
+      </button>
       {:else if selectedSource}
         <button
           class="st-button icon fs-6"
@@ -658,31 +734,32 @@
           />
           <CssGridGutter track={1} type="row" />
           {#if selectedSource}
-            <div style="padding-left: 5px; padding-right: 5px">
-              <div style="height:15px; background-color:#ebe9e6;">
-                <div style="display:inline; float:left;">{startTime}</div>
-                <div style="display:inline; float:right;">{endTime}</div>
-              </div>
-              <div style="height: 100%; width: 100%; position: relative"
-                bind:this={canvasContainerRef}
-                bind:clientWidth={canvasContainerWidth}
-                bind:clientHeight={canvasContainerHeight}
-                on:mousedown={e => {
-                  canvasMouseDownEvent = e
-                }}
-                on:mousemove={e => {
-                  canvasMouseOverEvent = e
-                }}
-                role="none"
-              >
-                <TimelineCursors
-                  marginLeft={0}
-                  drawWidth={canvasContainerWidth}
-                  {mouseOver}
-                  {xScaleView}
-                />
-                <Tooltip bind:this={eventTooltip} {mouseOver} interpolateHoverValue={false} hidden={false} resourceTypes={[]} />
-                {#if showExternalEventTimeline}
+            {#if showExternalEventTimeline}
+              <div style="padding-left: 5px; padding-right: 5px">
+                <div style="height:15px; background-color:#ebe9e6;">
+                  <div style="display:inline; float:left;">{startTime}</div>
+                  <div style="display:inline; float:right;">{endTime}</div>
+                </div>
+                <div style="height: 100%; width: 100%; position: relative"
+                  bind:this={canvasContainerRef}
+                  bind:clientWidth={canvasContainerWidth}
+                  bind:clientHeight={canvasContainerHeight}
+                  on:mousedown={e => {
+                    canvasMouseDownEvent = e
+                  }}
+                  on:mousemove={e => {
+                    canvasMouseOverEvent = e
+                  }}
+                  role="none"
+                >
+                  <TimelineCursors
+                    marginLeft={0}
+                    drawWidth={canvasContainerWidth}
+                    {mouseOver}
+                    {xScaleView}
+                  />
+                  <Tooltip bind:this={eventTooltip} {mouseOver} interpolateHoverValue={false} hidden={false} resourceTypes={[]} />
+                    
                   <div style="padding-top: 3px; padding-bottom: 10px">
                     <LayerExternalSources
                       selectedExternalEventId={selectedEvent?.id ?? null}
@@ -703,11 +780,19 @@
                       planStartTimeYmd={""}
                     />
                   </div>
-                {:else if showExternalEventTable}
-                  <ExternalEventsTablePanel {user} gridSection="MiddleBottom"/>
-                {/if}
+                </div>
               </div>
-            </div>
+            {:else if showExternalEventTable}
+              <SingleActionDataGrid
+                columnDefs={eventColumnDefs}
+                itemDisplayText="External Events"
+                items={selectedEvents}
+                {user}
+                bind:selectedItemId={selectedRowId}
+                on:selectionChanged={onSelectionChanged}
+                on:rowDoubleClicked={onSelectionChanged}
+              />
+            {/if}
           {:else}
             <p style="padding-left: 5px">Select a source to view contents.</p>
           {/if}
