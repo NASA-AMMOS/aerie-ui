@@ -26,7 +26,7 @@ export function generateDefaultView(activityTypes: ActivityType[] = [], resource
   const timelines = [timeline];
 
   const externalEventLayer = createTimelineExternalEventLayer((timelines), {
-    filter: { externalEvent: { event_types: externalEventTypes.map(e => e?.name ?? "undefined").filter(name => name !== "undefined") }} // TODO: ADD LOGIC TO MAKE THIS JUST THE ONES FROM SELECTED SOURCE
+    filter: { externalEvent: { event_types: externalEventTypes.map(e => e.name) }} 
   });
   const externalEventRow = createRow(timelines, {
     autoAdjustHeight: false,

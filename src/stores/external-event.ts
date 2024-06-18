@@ -9,6 +9,9 @@ import { viewUpdateGrid } from './views';
 export const creatingExternalEventType: Writable<boolean> = writable(false);
 export const createExternalEventTypeError: Writable<string | null> = writable(null);
 
+export const creatingExternalSourceEventTypeLink: Writable<boolean> = writable(false);
+export const creatingExternalSourceEventTypeLinkError: Writable<string | null> = writable(null);
+
 
 /* Subscriptions. */
 export const externalEventsDB = gqlSubscribable<ExternalEventDB[]>(

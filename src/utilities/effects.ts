@@ -26,7 +26,7 @@ import {
   savingExpansionRule,
   savingExpansionSet,
 } from '../stores/expansion';
-import { createExternalEventTypeError, creatingExternalEventType, getEventTypeById } from '../stores/external-event';
+import { createExternalEventTypeError, creatingExternalEventType, creatingExternalSourceEventTypeLink, creatingExternalSourceEventTypeLinkError, getEventTypeById } from '../stores/external-event';
 import { createExternalSourceError, createExternalSourceTypeError, creatingExternalSource, creatingExternalSourceType } from '../stores/external-source';
 import { createModelError, creatingModel, models } from '../stores/model';
 import { createPlanError, creatingPlan, planId } from '../stores/plan';
@@ -921,10 +921,8 @@ const effects = {
       creatingExternalEventType.set(true);
       createExternalEventTypeError.set(null);
       if (!(eventType == null)) {
-        // console.log(eventType)
         const { createExternalEventType: created } = await reqHasura<any>(gql.CREATE_EXTERNAL_EVENT_TYPE, { eventType }, user);
         if (created !== null) {
-          // showSuccessToast('External Event Type Created Successfully');
           creatingExternalEventType.set(false);
           return created.id;
         } else {
@@ -953,9 +951,6 @@ const effects = {
         file_id = await effects.uploadFile(file, user);
       }
 
-      console.log(source)
-      console.log(source.external_events.data)
-
       if (file_id !== null) {
         source.file_id = file_id;
         const { createExternalSource: created } = await reqHasura(gql.CREATE_EXTERNAL_SOURCE, { source }, user);
@@ -977,14 +972,14 @@ const effects = {
 
   async createExternalSourceEventTypeLink(link: ExternalSourceEventType, user: User | null) {
     try {
-      // TODO: this + permissions
-      // creatingExternalEventType.set(true);
-      // createExternalEventTypeError.set(null);
+      // TODO: permissions
+      creatingExternalSourceEventTypeLink.set(true);
+      creatingExternalSourceEventTypeLinkError.set(null);
 
       if (!link !== null) {
         const { createExternalSourceEventType: created } = await reqHasura<any>(gql.CREATE_EXTERNAL_SOURCE_EVENT_TYPE, { link }, user);
         if (created !== null) {
-          // creatingExternalEventType.set(false);
+          creatingExternalSourceEventTypeLink.set(false);
           return created.id;
         } else {
           throw Error('Unable to link external source to component external event type');
@@ -993,8 +988,8 @@ const effects = {
     } catch (e) {
       catchError('External Source Event Type Link Create Failed', e as Error);
       showFailureToast('External Source Event Type Link Create Failed');
-      // createExternalEventTypeError.set((e as Error).message);
-      // creatingExternalEventType.set(false);
+      creatingExternalSourceEventTypeLinkError.set((e as Error).message);
+      creatingExternalSourceEventTypeLink.set(false);
     }
   },
 
@@ -3327,43 +3322,6 @@ const effects = {
     }
   },
 
-  async getExternalEventTypes(plan_id: number, user: User | null): Promise<(ExternalEventType)[]> { 
-    try {
-      // get source ids
-      const source_data = await reqHasura<PlanExternalSource[]>(gql.GET_PLAN_EXTERNAL_SOURCE, { plan_id }, user);
-      const { links } = source_data;
-      if (links === null) {
-        throw Error('Unable to retrieve all source ids for given plan');
-      }
-      let source_ids = links.map(l => l.external_source_id)
-
-      // get all event types
-      const event_type_data = await reqHasura<ExternalEventType[]>(gql.GET_EXTERNAL_EVENT_TYPES, {}, user);
-      const { external_event_types } = event_type_data;
-      if (external_event_types === null) {
-        throw Error('Unable to retrieve all external event types');
-      }
-
-      // finally, get event types for the source
-      const data = await reqHasura<{
-        external_event_type_id: number
-      }[]>(gql.GET_EXTERNAL_EVENT_TYPE_BY_SOURCE, { source_ids }, user); 
-      const { external_event_type_ids } = data;
-      if (external_event_type_ids != null) {
-        return Array.from(
-          new Set(
-            external_event_type_ids.map(eventType => getEventTypeById(eventType.external_event_type_id, external_event_types)).filter(type => type) as ExternalEventType[]
-          )
-        );
-      } else {
-        throw Error('Unable to retrieve external event types by source');
-      }
-    } catch (e) {
-      catchError(e as Error);
-      return [];
-    }
-  },
-
   async getExternalEventTypesBySource(source_ids: number[], eventTypes: ExternalEventType[], user: User | null): Promise<(ExternalEventType)[]> { 
     try {
       if (!source_ids || !source_ids.length) {
@@ -3388,6 +3346,31 @@ const effects = {
     }
   },
 
+  async getExternalEventTypes(plan_id: number, user: User | null): Promise<(ExternalEventType)[]> { 
+    try {
+      // get source ids
+      const source_data = await reqHasura<PlanExternalSource[]>(gql.GET_PLAN_EXTERNAL_SOURCE, { plan_id }, user);
+      const { links } = source_data;
+      if (links === null) {
+        throw Error('Unable to retrieve all source ids for given plan');
+      }
+      let source_ids = links.map(l => l.external_source_id)
+
+      // get all event types
+      const event_type_data = await reqHasura<ExternalEventType[]>(gql.GET_EXTERNAL_EVENT_TYPES, {}, user);
+      const { external_event_types } = event_type_data;
+      if (external_event_types === null) {
+        throw Error('Unable to retrieve all external event types');
+      }
+
+      // finally, get event types for the source
+      return effects.getExternalEventTypesBySource(source_ids, external_event_types, user);
+    } catch (e) {
+      catchError(e as Error);
+      return [];
+    }
+  },
+
   async getExternalSourceMetadata(
     id: number | undefined,
     user: User | null
@@ -3402,7 +3385,6 @@ const effects = {
       if (metadata === null) {
         throw Error(`Unable to get external source metadata for external source id ${id}.`);
       }
-      console.log(metadata)
       return metadata;
     } catch (e) {
       catchError('Failed to retrieve external source metadata.', e as Error);
