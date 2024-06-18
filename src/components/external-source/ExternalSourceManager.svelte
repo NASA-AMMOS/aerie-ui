@@ -212,7 +212,6 @@
   });
   $: filteredValues = $externalSourceTypes.filter(externalSourceType => externalSourceType.name.toLowerCase().includes(filterString))
 
-  // TODO: figure out a way to use already existing 'externalEventWithTypeName'??? Likely can't as we aren't using PLAN_EXTERNAL_EVENTS, so no externalEventsDB
   $: effects.getExternalEvents(selectedSource?.id, user).then(fetched => selectedEvents = fetched.map(eDB => {
     return {
       ...eDB,
@@ -279,8 +278,6 @@
         start_time: $startTimeDoyField.value,
         valid_at: $validAtDoyField.value,
       };
-
-      console.log("PARSED: ", parsed)
 
       // the ones uploaded in this run won't show up as quickly in $externalEventTypes, so we keep a local log as well
       //    If event types act up during upload, this line is a likely culprit (if you upload twice really fast and $externalEventTypes doesn't update quick enough)
