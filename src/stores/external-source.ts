@@ -154,3 +154,7 @@ export function getDerivationGroupByNameSourceTypeId(
 export function getDerivationGroupName(id: number, derivationGroups: DerivationGroup[]): string | undefined {
   return derivationGroups.find(derivationGroup => derivationGroup.id === id)?.name;
 }
+
+export function getEventSourceTypeByName(name: string, sourceTypes: ExternalSourceType[]): ExternalSourceType | undefined {
+  return sourceTypes.find(sourceType => sourceType.name === name)
+}
