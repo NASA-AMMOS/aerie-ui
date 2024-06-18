@@ -8,7 +8,7 @@
   import { onDestroy, onMount } from 'svelte';
   import { catchError } from '../../stores/errors';
   import { externalEventTypes, getEventTypeName } from '../../stores/external-event';
-  import { createExternalSourceError, createExternalSourceTypeError, creatingExternalSource, externalSourceTypes, externalSourceWithTypeName, externalSources, getEventSourceTypeId, getSourceName } from '../../stores/external-source';
+  import { createExternalSourceError, createExternalSourceTypeError, creatingExternalSource, externalSourceTypes, externalSourceWithTypeName, externalSources, getEventSourceTypeByName, getSourceName } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
@@ -403,16 +403,22 @@
 
 
       // TBD: force reload the page???
-      let sourceTypeId: number | undefined = undefined;
+      let sourceType: ExternalSourceType | undefined = undefined;
       let sourceId: number | undefined = undefined;
       if (file !== undefined) {
         if (!($externalSourceTypes.map(s => s.name).includes($sourceTypeField.value)) && sourceTypeInsert !== undefined) {
-          sourceTypeId = await effects.createExternalSourceType(sourceTypeInsert, user);
+          sourceType = await effects.createExternalSourceType(sourceTypeInsert, user);
         } else {
-          sourceTypeId = getEventSourceTypeId($sourceTypeField.value, $externalSourceTypes)
+          sourceType = getEventSourceTypeByName($sourceTypeField.value, $externalSourceTypes)
         }
-        if (sourceTypeId !== undefined ) {
-          sourceInsert.source_type_id = sourceTypeId;
+        if (sourceType !== undefined ) {
+          sourceInsert.source_type_id = sourceType.id;
+
+          // autoselect this source type upon uploading if not autoselected already
+          if (selectedFilters.find(filter => filter.name === sourceType?.name) === undefined) {
+            selectedFilters.push(sourceType);  
+          }
+          
           sourceId = await effects.createExternalSource(file, sourceInsert, user);
           if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) {
             goto(`${base}/external-sources`);
@@ -501,7 +507,7 @@
           ? `#${selectedSource.id} – ${selectedSource.source_type}`
           : 'Upload a Source File'}</SectionTitle
       >
-      {#if selectedEvent}
+      {#if selectedEvent || selectedRowId}
         <button
           class="st-button icon fs-6"
           on:click={deselectEvent}
@@ -509,14 +515,6 @@
         >
           <XIcon />
         </button>
-      {:else if selectedRowId} 
-      <button
-        class="st-button icon fs-6"
-        on:click={deselectEvent}
-        use:tooltip={{ content: 'Deselect event', placement: 'top' }}
-      >
-        <XIcon />
-      </button>
       {:else if selectedSource}
         <button
           class="st-button icon fs-6"
