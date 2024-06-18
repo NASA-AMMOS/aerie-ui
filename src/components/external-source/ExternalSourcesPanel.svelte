@@ -45,9 +45,7 @@
           externalSource={externalSource}
           plan_id={$plan?.id}
           user={user}
-        >
-
-        </ExternalSourcePanelEntry>
+        />
       {/each}
     {:else}
       <p>

@@ -68,6 +68,10 @@ export function selectExternalEvent(
 }
 
 // Cannot access list form of a store in a .ts as it isn't a 'reactive' file like svelte. Thus, list must manually be passed in.
+export function getEventTypeById(id: number, eventTypes: ExternalEventType[]): ExternalEventType | undefined {
+  return eventTypes.find(eventType => eventType.id === id)
+}
+
 export function getEventTypeName(id: number, eventTypes: ExternalEventType[]): string | undefined {
   return eventTypes.find(eventType => eventType.id === id)?.name
 }

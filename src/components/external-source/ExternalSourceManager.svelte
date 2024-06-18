@@ -126,6 +126,7 @@
   // source detail variables
   let selectedSource: ExternalSourceWithTypeName & { metadata: Record<string, any> } | null = null; // special type only for the selected entry, don't want entire table to lug around metadata
   let selectedSourceId: number | null = null;
+  let selectedSourceEventTypes: ExternalEventType[] | null = null
 
   // timeline variables
   let dpr = 0;
@@ -158,6 +159,12 @@
   let selectedFilters: ExternalSourceType[] = [...$externalSourceTypes];
   let menuTitle: string = '';
   let filteredExternalSources: ExternalSourceWithTypeName[] = [];
+
+  // We want to build the GraphQL input object for the external
+  // source and child events. The only things that are missing at
+  // this point are the uploaded file ID and external source type ID.
+  let sourceInsert: ExternalSourceInsertInput;
+  let sourceTypeInsert: ExternalSourceTypeInsertInput;
 
 
   // $: createButtonDisabled = !files || key === '' ||   $creatingModel === true; TODO: do this later
@@ -192,15 +199,8 @@
     }
   }
 
-  // We want to build the GraphQL input object for the external
-  // source and child events. The only things that are missing at
-  // this point are the uploaded file ID and external source type ID.
-  let sourceInsert: ExternalSourceInsertInput;
-  let sourceTypeInsert: ExternalSourceTypeInsertInput;
-
-  $: console.log("EXTERNAL SOURCE WITH TYPE NAME:", $externalSourceWithTypeName)
-
   $: selectedSourceId = selectedSource ? selectedSource.id : null;
+
   $: startTime = selectedSource ? new Date(selectedSource.start_time) : new Date();
   $: endTime = selectedSource ? new Date(selectedSource.end_time) : new Date();
   $: viewTimeRange = { end: endTime.getTime(), start: startTime.getTime() }
@@ -251,6 +251,10 @@
     dpr = window.devicePixelRatio;
   }
 
+
+  async function getExternalEventTypes() {
+    selectedSourceEventTypes = (await effects.getExternalEventTypesBySource(selectedSourceId ? [selectedSourceId] : [], $externalEventTypes, user))
+  }
 
   async function onFormSubmit(e: SubmitEvent) {
     if (parsed && file) {
@@ -492,7 +496,20 @@
                 name="valid-at"
               />
             </Input>
+
+            <Collapse
+              className="anchor-collapse"
+              defaultExpanded={false}
+              title="Event Types"
+              tooltipContent="View Contained Event Types"
+              on:collapse={() => {getExternalEventTypes()}}
+            >
+              {#each selectedSourceEventTypes ? selectedSourceEventTypes : [{ id: -1, name: "None" }] as eventType}
+                <i>{eventType.name}</i>
+              {/each}
+            </Collapse>
           </fieldset>
+
           <Collapse
             className="anchor-collapse"
             defaultExpanded={false}
