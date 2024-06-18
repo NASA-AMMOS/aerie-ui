@@ -78,6 +78,7 @@ export enum Queries {
   EXTENSIONS = 'extensions',
   EXTERNAL_EVENT = 'external_event',
   EXTERNAL_EVENT_TYPES = 'external_event_type',
+  EXTERNAL_SOURCE_EVENT_TYPES = 'external_source_event_type',
   EXTERNAL_SOURCE = 'external_source_by_pk',
   EXTERNAL_SOURCES = 'external_source',
   EXTERNAL_SOURCE_TYPES = 'external_source_type',
@@ -1400,16 +1401,33 @@ const gql = {
         name
       }
     }
-  `, // TODO: add source id to this
-
-  GET_EXTERNAL_SOURCE_METADATA: `#graphql
-  query GetExternalEvents($id: Int!) {
-    ${Queries.EXTERNAL_SOURCES}(where: {id: {_eq: $id}}) {
-      metadata
-    }
-  }
   `,
 
+  GET_EXTERNAL_EVENT_TYPE_BY_SOURCE: `#graphql
+    query GetExternalEventTypesBySource($source_ids: [Int!]!) {
+      external_event_type_ids: ${Queries.EXTERNAL_SOURCE_EVENT_TYPES}(where: {external_source_id: {_in: $source_ids} }) {
+        external_event_type_id
+      }
+    }
+  `,
+
+  GET_EXTERNAL_SOURCE_METADATA: `#graphql
+    query GetExternalEvents($id: Int!) {
+      ${Queries.EXTERNAL_SOURCES}(where: {id: {_eq: $id}}) {
+        metadata
+      }
+    }
+  `,
+
+  GET_PLAN_EXTERNAL_SOURCE: `#graphql
+    query GetPlanExternalSource($plan_id: Int!) {
+      links: ${Queries.PLAN_EXTERNAL_SOURCE}(where: {plan_id: {_eq: $plan_id}}) {
+        id
+        external_source_id
+        plan_id
+      }
+    }
+  `,
 
   GET_MODELS: `#graphql
     query GetModels {
@@ -2362,6 +2380,15 @@ const gql = {
         id
         external_source_id
         plan_id
+      }
+    }
+  `,
+
+  SUB_EXTERNAL_SOURCE_EVENT_TYPE: `#graphql
+    subscription SubExternalSourceEventType {
+      links: ${Queries.EXTERNAL_SOURCE_EVENT_TYPES}(order_by: {external_source_id: asc}) {
+        external_source_id,
+        external_event_type_id
       }
     }
   `,
