@@ -80,7 +80,7 @@ import type {
 } from '../types/expansion';
 import type { Extension, ExtensionPayload } from '../types/extension';
 import type { ExternalEventDB, ExternalEventType, ExternalEventTypeInsertInput } from '../types/external-event';
-import type { ExternalSourceEventType, ExternalSourceInsertInput, ExternalSourceTypeInsertInput, PlanExternalSource } from '../types/external-source';
+import type { ExternalSourceEventType, ExternalSourceInsertInput, ExternalSourceType, ExternalSourceTypeInsertInput, PlanExternalSource } from '../types/external-source';
 import type { Model, ModelInsertInput, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
 import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
 import type {
@@ -891,7 +891,7 @@ const effects = {
     }
   },
 
-  async createExternalSourceType(sourceType: ExternalSourceTypeInsertInput, user: User | null) {
+  async createExternalSourceType(sourceType: ExternalSourceTypeInsertInput, user: User | null): Promise<ExternalSourceType | undefined> {
     try {
       // TODO: Check permissions.
       // if (!queryPermissions.CREATE_MODEL(user)) {
@@ -904,7 +904,7 @@ const effects = {
       if (created !== null) {
         showSuccessToast('External Source Type Created Successfully');
         creatingExternalSourceType.set(false);
-        return created.id;
+        return created as ExternalSourceType;
       } else {
         throw Error(`Unable to create external source type`);
       }
@@ -913,6 +913,7 @@ const effects = {
       showFailureToast('External Source Type Create Failed');
       createExternalSourceTypeError.set((e as Error).message);
       creatingExternalSourceType.set(false);
+      return undefined
     }
   },
 

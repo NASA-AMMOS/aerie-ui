@@ -67,3 +67,7 @@ export function getEventSourceTypeName(id: number, sourceTypes: ExternalSourceTy
 export function getEventSourceTypeId(name: string, sourceTypes: ExternalSourceType[]): number | undefined {
   return sourceTypes.find(sourceType => sourceType.name === name)?.id
 }
+
+export function getEventSourceTypeByName(name: string, sourceTypes: ExternalSourceType[]): ExternalSourceType | undefined {
+  return sourceTypes.find(sourceType => sourceType.name === name)
+}
