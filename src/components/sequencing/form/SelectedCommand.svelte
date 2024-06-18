@@ -236,6 +236,14 @@
           />
         {/if}
       {/if}
+    {:else}
+      <div class="content">Select a command to modify its parameters.</div>
     {/if}
   </svelte:fragment>
 </Panel>
+
+<style>
+  .content {
+    padding: 8px 16px 0px;
+  }
+</style>
