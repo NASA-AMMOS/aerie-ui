@@ -25,7 +25,7 @@ import {
   savingExpansionRule,
   savingExpansionSet,
 } from '../stores/expansion';
-import { createExternalEventTypeError, creatingExternalEventType } from '../stores/external-event';
+import { createExternalEventTypeError, creatingExternalEventType, getEventTypeById } from '../stores/external-event';
 import { createExternalSourceError, createExternalSourceTypeError, creatingExternalSource, creatingExternalSourceType } from '../stores/external-source';
 import { createModelError, creatingModel, models } from '../stores/model';
 import { createPlanError, creatingPlan, planId } from '../stores/plan';
@@ -3326,12 +3326,58 @@ const effects = {
     }
   },
 
-  async getExternalEventTypes(model_id: number, user: User | null, limit: number | null = null): Promise<ExternalEventType[]> { // TODO: eventually, restrict to just linked sources.xx
+  async getExternalEventTypes(plan_id: number, user: User | null): Promise<(ExternalEventType)[]> { 
     try {
-      const data = await reqHasura<ExternalEventType[]>(gql.GET_EXTERNAL_EVENT_TYPES, {}, user);
-      const { external_event_types } = data;
-      if (external_event_types != null) {
-        return external_event_types;
+      // get source ids
+      const source_data = await reqHasura<PlanExternalSource[]>(gql.GET_PLAN_EXTERNAL_SOURCE, { plan_id }, user);
+      const { links } = source_data;
+      if (links === null) {
+        throw Error('Unable to retrieve all source ids for given plan');
+      }
+      let source_ids = links.map(l => l.external_source_id)
+
+      // get all event types
+      const event_type_data = await reqHasura<ExternalEventType[]>(gql.GET_EXTERNAL_EVENT_TYPES, {}, user);
+      const { external_event_types } = event_type_data;
+      if (external_event_types === null) {
+        throw Error('Unable to retrieve all external event types');
+      }
+
+      // finally, get event types for the source
+      const data = await reqHasura<{
+        external_event_type_id: number
+      }[]>(gql.GET_EXTERNAL_EVENT_TYPE_BY_SOURCE, { source_ids }, user); 
+      const { external_event_type_ids } = data;
+      if (external_event_type_ids != null) {
+        return Array.from(
+          new Set(
+            external_event_type_ids.map(eventType => getEventTypeById(eventType.external_event_type_id, external_event_types)).filter(type => type) as ExternalEventType[]
+          )
+        );
+      } else {
+        throw Error('Unable to retrieve external event types by source');
+      }
+    } catch (e) {
+      catchError(e as Error);
+      return [];
+    }
+  },
+
+  async getExternalEventTypesBySource(source_ids: number[], eventTypes: ExternalEventType[], user: User | null): Promise<(ExternalEventType)[]> { 
+    try {
+      if (!source_ids || !source_ids.length) {
+        return []
+      }
+      const data = await reqHasura<{
+        external_event_type_id: number
+      }[]>(gql.GET_EXTERNAL_EVENT_TYPE_BY_SOURCE, { source_ids }, user);
+      const { external_event_type_ids } = data;
+      if (external_event_type_ids != null) {
+        return Array.from(
+          new Set(
+            external_event_type_ids.map(eventType => getEventTypeById(eventType.external_event_type_id, eventTypes)).filter(type => type) as ExternalEventType[]
+          )
+        );
       } else {
         throw Error('Unable to retrieve external event types');
       }
