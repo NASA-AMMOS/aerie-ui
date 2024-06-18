@@ -41,6 +41,7 @@
   import DatePicker from '../ui/DatePicker/DatePicker.svelte';
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
+  import ExternalEventsTablePanel from '../external-events/ExternalEventsTablePanel.svelte';
 
 
   export let user: User | null;
@@ -127,6 +128,10 @@
   let selectedSource: ExternalSourceWithTypeName & { metadata: Record<string, any> } | null = null; // special type only for the selected entry, don't want entire table to lug around metadata
   let selectedSourceId: number | null = null;
   let selectedSourceEventTypes: ExternalEventType[] | null = null
+
+  // variables for choosing display format of an external source's external events
+  let showExternalEventTimeline: boolean = true;
+  let showExternalEventTable: boolean = false;
 
   // timeline variables
   let dpr = 0;
@@ -585,60 +590,60 @@
           title="Filters"
           tooltipContent="Filter External Sources"
         >
-          <div class="timeline-editor-layer-filter" style="position: relative">
-            <Input>
-              <input
-                bind:this={input}
-                bind:value={filterString}
-                on:click|stopPropagation={() => {
-                  if (!filterMenu.isShown()) {
-                    filterMenu.show();
-                    input.focus();
-                  }
-                }}
-                autocomplete="off"
-                class="st-input w-100"
-                name="filter"
-                placeholder={'Filter by Source Type'}
-              />
-              <div class="filter-search-icon" slot='left'><SearchIcon /></div>
-            </Input>
-            <Menu hideAfterClick={false} bind:this={filterMenu} placement="bottom-start" on:hide={() => (filterString = '')}>
-              <div class="menu-content">
-                <MenuHeader title={menuTitle} />
-                <div class="body st-typography-body">
-                  {#if filteredValues.length}
-                    <div class="values">
-                      {#each filteredValues as filteredSourceType}
-                        <button
-                          class="value st-button tertiary st-typography-body"
-                          on:click={() => toggleItem(filteredSourceType)}
-                          class:active={selectedFilters.map(f => f.name).find(f => f === filteredSourceType.name) !== undefined}
-                        >
-                          {filteredSourceType.name}
-                        </button>
-                      {/each}
-                    </div>
-                  {:else}
-                    <div class="st-typography-label empty-state">No external source types matching filter</div>
-                  {/if}
-                </div>
-                <div class="list-buttons menu-border-top">
-                  <!-- <button class="st-button secondary list-button" on:click={selectFilteredValues}> -->
-                  <button class="st-button secondary list-button" on:click={selectFilteredValues}>
-                    Select {filteredValues.length}
-                    {#if filteredValues.length === 1}
-                      {'external source type'}
-                    {:else}
-                      {'external source types'}
-                    {/if}
-                  </button>
-                  <!-- <button class="st-button secondary list-button" on:click={unselectFilteredValues}>Unselect all</button> -->
-                  <button class="st-button secondary list-button" on:click={unselectFilteredValues}>Unselect all</button>
-                </div>
+        <div class="timeline-editor-layer-filter" style="position: relative">
+          <Input>
+            <input
+              bind:this={input}
+              bind:value={filterString}
+              on:click|stopPropagation={() => {
+                if (!filterMenu.isShown()) {
+                  filterMenu.show();
+                  input.focus();
+                }
+              }}
+              autocomplete="off"
+              class="st-input w-100"
+              name="filter"
+              placeholder={'Filter by Source Type'}
+            />
+            <div class="filter-search-icon" slot='left'><SearchIcon /></div>
+          </Input>
+          <Menu hideAfterClick={false} bind:this={filterMenu} placement="bottom-start" on:hide={() => (filterString = '')}>
+            <div class="menu-content">
+              <MenuHeader title={menuTitle} />
+              <div class="body st-typography-body">
+                {#if filteredValues.length}
+                  <div class="values">
+                    {#each filteredValues as filteredSourceType}
+                      <button
+                        class="value st-button tertiary st-typography-body"
+                        on:click={() => toggleItem(filteredSourceType)}
+                        class:active={selectedFilters.map(f => f.name).find(f => f === filteredSourceType.name) !== undefined}
+                      >
+                        {filteredSourceType.name}
+                      </button>
+                    {/each}
+                  </div>
+                {:else}
+                  <div class="st-typography-label empty-state">No external source types matching filter</div>
+                {/if}
               </div>
-            </Menu>
-          </div>
+              <div class="list-buttons menu-border-top">
+                <!-- <button class="st-button secondary list-button" on:click={selectFilteredValues}> -->
+                <button class="st-button secondary list-button" on:click={selectFilteredValues}>
+                  Select {filteredValues.length}
+                  {#if filteredValues.length === 1}
+                    {'external source type'}
+                  {:else}
+                    {'external source types'}
+                  {/if}
+                </button>
+                <!-- <button class="st-button secondary list-button" on:click={unselectFilteredValues}>Unselect all</button> -->
+                <button class="st-button secondary list-button" on:click={unselectFilteredValues}>Unselect all</button>
+              </div>
+            </div>
+          </Menu>
+        </div>
         </Collapse>
       </div>
       {#if $externalSourceWithTypeName.length}
@@ -677,26 +682,30 @@
                   {xScaleView}
                 />
                 <Tooltip bind:this={eventTooltip} {mouseOver} interpolateHoverValue={false} hidden={false} resourceTypes={[]} />
-                <div style="padding-top: 3px; padding-bottom: 10px">
-                  <LayerExternalSources
-                    selectedExternalEventId={selectedEvent?.id ?? null}
-                    externalEvents={selectedEvents}
-                    {viewTimeRange}
-                    {xScaleView}
-                    {dpr}
-                    mousedown={canvasMouseDownEvent}
-                    drawHeight={canvasContainerHeight-3-10 ?? 200}
-                    drawWidth={canvasContainerWidth ?? 200}
-                    timelineInteractionMode={TimelineInteractionMode.Interact}
-                    on:mouseDown={onCanvasMouseDown}
-                    on:mouseOver={onCanvasMouseOver}
-                    mousemove={canvasMouseOverEvent}
-                    mouseout={undefined}
-                    contextmenu={undefined}
-                    dblclick={undefined}
-                    planStartTimeYmd={""}
-                  />
-                </div>
+                {#if showExternalEventTimeline}
+                  <div style="padding-top: 3px; padding-bottom: 10px">
+                    <LayerExternalSources
+                      selectedExternalEventId={selectedEvent?.id ?? null}
+                      externalEvents={selectedEvents}
+                      {viewTimeRange}
+                      {xScaleView}
+                      {dpr}
+                      mousedown={canvasMouseDownEvent}
+                      drawHeight={canvasContainerHeight-3-10 ?? 200}
+                      drawWidth={canvasContainerWidth ?? 200}
+                      timelineInteractionMode={TimelineInteractionMode.Interact}
+                      on:mouseDown={onCanvasMouseDown}
+                      on:mouseOver={onCanvasMouseOver}
+                      mousemove={canvasMouseOverEvent}
+                      mouseout={undefined}
+                      contextmenu={undefined}
+                      dblclick={undefined}
+                      planStartTimeYmd={""}
+                    />
+                  </div>
+                {:else if showExternalEventTable}
+                  <ExternalEventsTablePanel {user} gridSection="MiddleBottom"/>
+                {/if}
               </div>
             </div>
           {:else}
