@@ -126,11 +126,11 @@
   });
 
   $: activityDirectives = Object.values(activityDirectivesMap);
-  $: externalEvents = externalEventsWithTypeName.map(eDB => {
+  $: externalEvents = externalEventsWithTypeName.map(eWTN => {
     return {
-      ...eDB,
-      startMs: convertUTCtoMs(eDB.start_time),
-      durationMs: convertDurationToMs(eDB.duration)
+      ...eWTN,
+      startMs: convertUTCtoMs(eWTN.start_time),
+      durationMs: convertDurationToMs(eWTN.duration)
     }
   });
 
