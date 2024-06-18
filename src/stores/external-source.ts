@@ -1,5 +1,5 @@
 import { derived, writable, type Writable } from 'svelte/store';
-import { type ExternalSourceSlim, type ExternalSourceType, type ExternalSourceWithTypeName, type PlanExternalSource } from '../types/external-source';
+import { type ExternalSourceEventType, type ExternalSourceSlim, type ExternalSourceType, type ExternalSourceWithTypeName, type PlanExternalSource } from '../types/external-source';
 import gql from '../utilities/gql';
 import { planId } from './plan';
 import { gqlSubscribable } from './subscribable';
@@ -19,6 +19,9 @@ export const externalSourceTypes = gqlSubscribable<ExternalSourceType[]>(gql.SUB
 // use to keep track of associations between plans and goals
 export const planExternalSourceLinks = gqlSubscribable<PlanExternalSource[]>(gql.SUB_PLAN_EXTERNAL_SOURCE, {}, [], null);
 
+// use to keep track of associations between sources and their event types
+export const externalSourceEventTypes = gqlSubscribable<ExternalSourceEventType[]>(gql.SUB_EXTERNAL_SOURCE_EVENT_TYPE, {}, [], null)
+
 
 /* Derived. */
 // Creates a store for each externalSource with the added 'source_type' field that maps to the human-readable source type name
@@ -34,6 +37,17 @@ export const selectedPlanExternalSourceIds = derived(
   [planExternalSourceLinks, planId],
   ([$planExternalSourceLinks, $planId]) => $planExternalSourceLinks.filter(link => link.plan_id === $planId).map(link => link.external_source_id)
 );
+
+export const selectedPlanExternalSourceEventTypes = derived(
+  [externalSourceEventTypes, planExternalSourceLinks, planId],
+  ([$externalSourceEventTypes, $planExternalSourceLinks, $planId]) => {
+    let validSources = $planExternalSourceLinks.filter(link => link.plan_id == $planId).map(link => link.external_source_id)
+    let allValidEventTypes = $externalSourceEventTypes.filter(eset => validSources.includes(eset.external_source_id)).map(eset => eset.external_event_type_id)
+    
+    // remove duplicates
+    return Array.from(new Set(allValidEventTypes))
+  }
+)
 
 
 /* Helper Functions. */
