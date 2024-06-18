@@ -4334,6 +4334,7 @@ const effects = {
         if (!queryPermissions.SIMULATE(user, plan, plan.model)) {
           throwPermissionError('simulate this plan');
         }
+        checkConstraintsStatus.set(Status.Unchecked);
         const data = await reqHasura<SimulateResponse>(gql.SIMULATE, { force, planId: plan.id }, user);
         const { simulate } = data;
         if (simulate != null) {
