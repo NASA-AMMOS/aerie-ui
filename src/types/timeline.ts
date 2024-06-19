@@ -5,6 +5,7 @@ import type { ExternalEvent } from './external-event';
 import type { ResourceType, Span } from './simulation';
 
 export type ActivityTree = ActivityTreeNode[];
+export type ExternalEventTree = ExternalEventTreeNode[];
 
 export type ActivityTreeNode = {
   children: ActivityTreeNode[]; // Child nodes of this directive/span/aggregation
@@ -15,20 +16,39 @@ export type ActivityTreeNode = {
   label: string;
   type: 'aggregation' | 'directive' | 'span';
 };
+export type ExternalEventTreeNode = {
+  children: ExternalEventTreeNode[];  // Child nodes of this external event
+  expanded: boolean;
+  id: string;  // TODO - should this be a number?
+  isLeaf: boolean;
+  items: ExternalEventItem[];  // External events to render on the timeline at this level of the tree
+  label: string;
+  // type: ...  TODO - I think this is always ExternalEvent for these.
+}
 
 export type ActivityTreeNodeItem = { directive?: ActivityDirective; span?: Span };
+export type ExternalEventItem = { externalEvent?: ExternalEvent };
 
 export type ActivityTreeNodeDrawItem = ActivityTreeNodeItem & { startX: number };
+export type ExternalEventDrawItem = ExternalEventItem & { startX: number };
 
 export type ActivityTreeExpansionMap = Record<string, boolean>;
+export type ExternalEventTreeExpansionMap = Record<string, boolean>;
 
 export interface ActivityLayer extends Layer {
   activityColor: string;
   activityHeight: number; // @deprecated TODO how should we deprecate view properties?
 }
+export interface ExternalEventLayer extends Layer {
+  externalEventColor: string;
+  externalEventHeight: number; // @deprecated TODO how should we deprecate view properties?
+}
 
 export type ActivityLayerFilter = {
   types: string[];
+};
+export type ExternalEventLayerFilter = {
+  event_types: string[];
 };
 
 export type AxisDomainFitMode = 'fitPlan' | 'fitTimeWindow' | 'manual';
@@ -48,19 +68,6 @@ export type BoundingBox = {
   maxX: number;
   maxY: number;
   minX: number;
-};
-
-export type ExternalEventItem = { externalEvent?: ExternalEvent };
-
-export type ExternalEventDrawItem = ExternalEventItem & { startX: number };
-
-export interface ExternalEventLayer extends Layer {
-  externalEventColor: string;
-  externalEventHeight: number; // @deprecated TODO how should we deprecate view properties?
-}
-
-export type ExternalEventLayerFilter = {
-  event_types: string[];
 };
 
 export type PointBounds = {
@@ -203,8 +210,27 @@ export type ActivityOptions = {
   labelVisibility: 'on' | 'off' | 'auto';
 };
 
+// based on ActivityOptions, but exclusive for drawing ExternalEvents
+export type ExternalEventOptions = {
+  // Height of external event subrows
+  externalEventHeight: number;
+
+  // TODO - I don't think we need to support composition here. Do we ever draw spans + EEs?
+
+  // Describes the primary method in which external events are visualized within this row
+  displayMode: 'grouped' | 'compact';
+
+  // If 'source' the external events are grouped by source type. If 'event' the external events are grouped by external event type. If 'flat' the external events are grouped by event type regardless of hierarchy
+  // TODO - what exactly is the hierarchy? based on the tree setup?
+  hierarchyMode: 'source' | 'event' | 'flat';
+
+  // External event text label behavior
+  labelVisibility: 'on' | 'off' | 'auto';
+};
+
 export type Row = {
   activityOptions?: ActivityOptions;
+  externalEventOptions?: ExternalEventOptions;
   autoAdjustHeight: boolean;
   expanded: boolean;
   height: number;
