@@ -1,18 +1,18 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import CaretRight from 'bootstrap-icons/icons/caret-right.svg?component';
   import { createEventDispatcher } from 'svelte';
   import FolderIcon from '../../assets/folder.svg?component';
   import SelectIcon from '../../assets/select.svg?component';
   import { ViewDefaultExternalEventOptions } from '../../constants/view';
-  import type { ActivityDirective } from '../../types/activity';
-  import type { Span } from '../../types/simulation';
+  import { externalSources, getSourceName } from '../../stores/external-source';
+  import type { ExternalEvent, ExternalEventId } from '../../types/external-event';
   import type { ExternalEventOptions, ExternalEventTree, ExternalEventTreeNode, MouseDown, MouseOver } from '../../types/timeline';
   import { classNames } from '../../utilities/generic';
   import { pluralize } from '../../utilities/text';
   import { tooltip } from '../../utilities/tooltip';
   import Collapse from '../Collapse.svelte';
-  import { ExternalEvent, ExternalEventId } from '../../types/external-event';
 
   export let externalEventOptions: ExternalEventOptions = { ...ViewDefaultExternalEventOptions };
   export let externalEventTree: ExternalEventTree = [];
@@ -28,20 +28,27 @@
     mouseDown: MouseDown;
   }>();
 
-  function onLeafClick(e: MouseEvent, node: ExternalEventTreeNode, type: 'dblClick' | 'mouseDown') {
-    dispatch(type, { e, ...getExternalEventsForNode(node) });
+  function onMouseDownLeaf(e: MouseEvent, node: ExternalEventTreeNode) {
+    dispatch('mouseDown', { e, externalEvents: getExternalEventsForNode(node) });
   }
 
-  // TODO I think we can just delete this
+  function onDblclickLeaf(e: MouseEvent): void {
+    if (e) {
+      dispatch('dblClick', {
+        e,
+        selectedExternalEventId: selectedExternalEventId ?? undefined
+      });
+    }
+  }
+
   function getExternalEventsForNode(node: ExternalEventTreeNode) {
     const externalEvents: ExternalEvent[] = [];
     (node.items || []).forEach(externalEvent => {
-        externalEvents.push(externalEvent);
+        if(externalEvent.externalEvent) externalEvents.push(externalEvent.externalEvent);
     });
     return externalEvents;
   }
 
-  // TODO I think we can just delete this
   function getNodeComposition(node: ExternalEventTreeNode) {
     let externalEventCount = 0;
     (node.items || []).forEach(externalEvent => {
@@ -51,7 +58,7 @@
   }
 
   function onSelectClick(node: ExternalEventTreeNode, e: MouseEvent) {
-    onLeafClick(e, node, 'mouseDown');
+    onMouseDownLeaf(e, node);
   }
 </script>
 
@@ -61,15 +68,18 @@
       {@const externalEvent = node.items[0].externalEvent}
       <button
         style:height={`${rowHeight}px`}
+        style:white-space='nowrap'
+        style:overflow='hidden'
+        style:text-overflow='ellipsis ellipsis'
         class="row-header-external-event-group leaf st-button tertiary"
         class:selected={externalEvent?.id === selectedExternalEventId}
-        on:dblclick={e => onLeafClick(e, node, 'dblClick')}
-        on:click={e => onLeafClick(e, node, 'mouseDown')}
+        on:dblclick={e => onDblclickLeaf(e)}
+        on:click={e => onMouseDownLeaf(e, node)}
       >
         <div style=" align-items: center;color: var(--st-button-tertiary-color);display: flex; gap: 4px;">
           <div title="External Event" class="icon-group">
             <!-- TODO what have we used in other spots? -->
-            <ExternalEventIcon />
+              <CaretRight style="width:13px"/>
           </div>
         </div>
         {node.label}
@@ -89,24 +99,32 @@
         <div slot="left" style="align-items: center;display: flex">
           <div title="External Event" class="icon-group">
             <!-- TODO what have we used in other spots? -->
-            <ExternalEventIcon />
+            <FolderIcon />
           </div>
         </div>
         <div slot="title" style="align-items: center;display: flex; gap: 8px;">
-          <div class="label">
-            {node.label}
+          <div 
+            class="label"
+            style:white-space='nowrap'
+            style:overflow='hidden'
+            style:text-overflow='ellipsis ellipsis'
+          >
+            {#if externalEventOptions.groupBy === 'source_id'}
+              {getSourceName(Number.parseInt(node.label), $externalSources)}
+            {:else}
+              {node.label}
+            {/if}
           </div>
           <div class="title-metadata">
             <div
               title={`${node.children.length} child type group${pluralize(node.children.length)}`}
               class="icon-group"
             >
-              <FolderIcon />
               <span>{node.children.length}</span>
             </div>
           </div>
         </div>
-        <svelte:fragment slot="external-event-row">
+        <svelte:fragment slot="action-row">
           <button
             use:tooltip={{ content: 'Select' }}
             class="st-button icon select"
@@ -114,9 +132,6 @@
           >
             <SelectIcon />
           </button>
-        </svelte:fragment>
-        <svelte:fragment slot="external-event-row">
-          {#if node.}
         </svelte:fragment>
         {#if node.expanded}
           <svelte:self
@@ -218,6 +233,67 @@
   }
 
   :global(.row-header-external-event-group .label) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  :global(.row-header-activity-group) {
+    position: relative;
+  }
+
+  :global(.row-header-activity-group.collapse > .content.pad-content) {
+    margin-left: 16px !important;
+  }
+
+  :global(.row-header-activity-group.collapse > .content) {
+    gap: 0px;
+  }
+
+  .icon-group {
+    display: flex;
+    gap: 4px;
+  }
+
+  .title-metadata {
+    align-items: center;
+    color: var(--st-gray-50);
+    display: flex;
+    gap: 4px;
+  }
+
+  :global(.row-header-activity-group.collapse .collapse-icon svg) {
+    color: var(--st-gray-40);
+  }
+
+  .selected,
+  :global(.collapse.selected > .collapse-header) {
+    background-color: #e3effd !important;
+  }
+
+  :global(.row-header-activity-group button.select) {
+    background: var(--st-gray-20);
+    height: 16px;
+    min-width: 16px;
+    opacity: 0;
+    position: absolute;
+    right: 0;
+    top: 2px;
+    width: 16px;
+  }
+
+  :global(.row-header-activity-group button.select:hover) {
+    background: var(--st-gray-20) !important;
+  }
+
+  :global(.row-header-activity-group.collapse:has(> .collapse-header:focus-visible) > button.select),
+  :global(.row-header-activity-group.collapse:has(> button.select:focus-visible) > button.select),
+  :global(.row-header-activity-group.collapse:has(> .collapse-header:hover) > button.select),
+  :global(.row-header-activity-group.collapse:has(> button.select:hover) > button.select) {
+    opacity: 1;
+  }
+
+  :global(.row-header-activity-group .label) {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

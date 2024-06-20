@@ -4,19 +4,20 @@
   import { quadtree as d3Quadtree, type Quadtree } from 'd3-quadtree';
   import { type ScaleTime } from 'd3-scale';
   import { createEventDispatcher, onMount, tick } from 'svelte';
+  import { ViewDefaultExternalEventOptions } from '../../constants/view';
+  import { ViewConstants } from '../../enums/view';
   import type { ExternalEvent, ExternalEventId } from '../../types/external-event';
   import type {
-    ExternalEventOptions,
     ExternalEventDrawItem,
     ExternalEventItem,
+    ExternalEventOptions,
+    ExternalEventTree,
+    ExternalEventTreeNode,
     MouseDown,
     MouseOver,
     QuadtreeRect,
     RowMouseOverEvent,
     TimeRange,
-    ExternalEventTree,
-    ExternalEventTreeNode,
-
   } from '../../types/timeline';
   import { hexToRgba, shadeColor } from '../../utilities/color';
   import { isRightClick } from '../../utilities/generic';
@@ -29,8 +30,6 @@
     externalEventInView,
     searchQuadtreeRect
   } from '../../utilities/timeline';
-  import { ViewDefaultExternalEventOptions } from '../../constants/view';
-  import { ViewConstants } from '../../enums/view';
 
   type IdToColorMap = Record<number, string>;
   type IdToColorMaps = { directives: IdToColorMap; spans: IdToColorMap };
@@ -43,7 +42,7 @@
   export let externalEventSelectedTextColor: string = '#0a4c7e';
   export let externalEventDefaultColor = '#cbcbcb';
   export let externalEventOptions: ExternalEventOptions = { ...ViewDefaultExternalEventOptions };
-  export let externalEventTree: ExternalEventTree = [];  // TODO - Check for all references that Activity uses for this
+  export let externalEventTree: ExternalEventTree = [];
   export let contextmenu: MouseEvent | undefined;
   export let dblclick: MouseEvent | undefined;
   export let dpr: number = 1;
@@ -106,7 +105,7 @@
     viewTimeRange &&
     xScaleView &&
     externalEventOptions &&
-    externalEvents &&  // TODO - this is now kind of redundant with checking for externalEventTree
+    externalEvents &&
     externalEventTree
   ) {
     draw();
@@ -238,7 +237,6 @@
 
     drawRow(newY + externalEventRowPadding, node.items || [], idToColorMaps);
     newY += rowHeight;
-
     if (node.expanded && node.children.length) {
       node.children.forEach(childNode => {
         newY = drawGroup(childNode, newY, rowHeight, true);
@@ -392,7 +390,7 @@
 
         // Draw label if no directive and the label will fit
         let spanLabelWidth = 0;
-        if (drawLabels && (!externalEvent)) { //|| !showDirectives)) {
+        if (drawLabels) {
           const label = getLabelForExternalEvent(externalEvent);
           spanLabelWidth = measureText(label, textMetricsCache).width + labelPaddingLeft;
           let shouldDrawLabel = true;
@@ -404,12 +402,12 @@
                 spanLabelWidth = 0;
               }
             }
-          // }
+          }
           if (shouldDrawLabel) {
-            const spanColor = idToColorMaps.spans[externalEvent.id] || externalEventDefaultColor;
+            const spanColor = externalEventDefaultColor;
             drawLabel(label, externalEventStartX, y, spanLabelWidth, spanColor, isSelected);
           }
-        // }
+        }
 
         // Add to quadtree
         visibleExternalEventsById[externalEvent.id] = externalEvent;
@@ -475,7 +473,8 @@
    * Draws external event points to the canvas context.
    * @note Points must be sorted in time ascending order before calling this function.
    */
-  async function draw(): Promise<void> {
+  async function draw
+  (): Promise<void> {
     if (ctx) {
       await tick();
 
@@ -492,7 +491,6 @@
         ]);
 
       visibleExternalEventsById = {};
-      // TODO: Eventually draw grouped. That is a way easier way to read. Offer both options, at least.
       if (externalEventOptions.displayMode === 'grouped') {
         drawGroupedMode();
       } else if (externalEventOptions.displayMode === 'compact') {

@@ -9,6 +9,7 @@
   import TimelineXRangeLayerIcon from '../../assets/timeline-x-range-layer.svg?component';
   import { ViewDefaultActivityOptions, ViewDefaultExternalEventOptions } from '../../constants/view';
   import type { ActivityDirectiveId } from '../../types/activity';
+  import type { ExternalEventId } from '../../types/external-event';
   import type { Resource, SpanId } from '../../types/simulation';
   import type {
     ActivityOptions,
@@ -25,9 +26,9 @@
   import { tooltip } from '../../utilities/tooltip';
   import DropTarget from './DropTarget.svelte';
   import RowHeaderActivityTree from './RowHeaderActivityTree.svelte';
+  import RowHeaderExternalEvent from './RowHeaderExternalEventTree.svelte';
   import RowHeaderMenu from './RowHeaderMenu.svelte';
   import RowYAxes from './RowYAxes.svelte';
-  import { ExternalEventId } from '../../types/external-event';
 
   export let activityTree: ActivityTree = [];
   export let activityOptions: ActivityOptions = { ...ViewDefaultActivityOptions };
@@ -173,7 +174,7 @@
           </div>
         {:else if externalEventTree.length}
           <div class="external-event-tree">
-            <RowHeaderExternalEventTree
+            <RowHeaderExternalEvent
               {externalEventOptions}
               {externalEventTree}
               {selectedExternalEventId}
@@ -383,6 +384,10 @@
   }
 
   .activity-tree {
+    padding-left: 16px;
+  }
+
+  .external-event-tree {
     padding-left: 16px;
   }
 </style>

@@ -42,6 +42,10 @@
     ActivityTreeExpansionMap,
     ActivityTreeNode,
     Axis,
+    ExternalEventOptions,
+    ExternalEventTree,
+    ExternalEventTreeExpansionMap,
+    ExternalEventTreeNode,
     HorizontalGuide,
     Layer,
     MouseDown,
@@ -51,10 +55,6 @@
     TimelineItemType,
     TimeRange,
     XAxisTick,
-    ExternalEventTree,
-    ExternalEventOptions,
-    ExternalEventTreeExpansionMap,
-    ExternalEventTreeNode,
   } from '../../types/timeline';
   import effects from '../../utilities/effects';
   import { classNames } from '../../utilities/generic';
@@ -89,14 +89,13 @@
   import RowHorizontalGuides from './RowHorizontalGuides.svelte';
   import RowXAxisTicks from './RowXAxisTicks.svelte';
   import RowYAxisTicks from './RowYAxisTicks.svelte';
-  import AboutModal from '../modals/AboutModal.svelte';
 
   export let activityDirectives: ActivityDirective[] = [];
   export let externalEvents: ExternalEvent[] = [];
   export let activityDirectivesMap: ActivityDirectivesMap = {};
   export let activityTreeExpansionMap: ActivityTreeExpansionMap | undefined = {};
   export let activityOptions: ActivityOptions | undefined = undefined;
-  export let externalEventTreeExpansionMap: ExternalEventTreeExpansionMap | undefined = {};
+  export let externalEventTreeExpansionMap: ExternalEventTreeExpansionMap = {};
   export let externalEventOptions: ExternalEventOptions | undefined = undefined;
   export let autoAdjustHeight: boolean = false;
   export let constraintResults: ConstraintResultWithName[] = [];
@@ -510,12 +509,9 @@
     }
   }
 
-  // TODO - understand externalEventTreeExpansionMap
-  // TODO - how should showExternalEvents be set?
-  // TODO - how should filterExternalEventsByTime be set?
   $: if (
     hasExternalEventsLayer &&
-    externalEventOptions &&
+    externalEventOptions
   ) {
     if (externalEventOptions.displayMode === 'grouped') {
       /*  Note: here we only pass in a few variables in order to
@@ -524,8 +520,8 @@
        */
       externalEventTree = generateExternalEventTree(
         externalEvents,
-        externalEventTreeExpansionMap,  // TODO
-        externalEventOptions.hierarchyMode,
+        externalEventTreeExpansionMap,
+        externalEventOptions.groupBy,
       )
     } else {
       externalEventTree = [];
@@ -555,12 +551,12 @@
   function generateExternalEventTree(
     externalEvents: ExternalEvent[],
     externalEventTreeExpansionMap: ExternalEventTreeExpansionMap,
-    hierarchyMode: ExternalEventOptions['hierarchyMode'] = 'flat',
+    groupByMethod: ExternalEventOptions['groupBy'] = 'event_type',
   ) {
     return generateExternalEventTreeUtil(
         externalEvents,
         externalEventTreeExpansionMap,
-        hierarchyMode,
+        groupByMethod,
         filterExternalEventsByTime,
         true,
         viewTimeRange
@@ -721,6 +717,7 @@
     dispatch('mouseDown', {
       ...detail,
       activityDirectives: detail?.activityDirectives ?? [],
+      externalEvents: detail?.externalEvents ?? [],
       rowId: id,
       spans: detail?.spans ?? [],
     });
@@ -978,6 +975,7 @@
         {/if}
         {#if hasExternalEventsLayer}
           <LayerExternalSources
+            {externalEventOptions}
             externalEvents={filteredExternalEvents}
             {idToColorMaps}
             {externalEventTree}
