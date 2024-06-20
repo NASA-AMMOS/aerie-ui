@@ -7,7 +7,7 @@
   import { groupBy } from 'lodash-es';
   import { createEventDispatcher } from 'svelte';
   import FilterWithXIcon from '../../assets/filter-with-x.svg?component';
-  import { ViewDefaultActivityOptions } from '../../constants/view';
+  import { ViewDefaultActivityOptions, ViewDefaultExternalEventOptions } from '../../constants/view';
   import { Status } from '../../enums/status';
   import { catchError } from '../../stores/errors';
   import {
@@ -51,6 +51,10 @@
     TimelineItemType,
     TimeRange,
     XAxisTick,
+    ExternalEventTree,
+    ExternalEventOptions,
+    ExternalEventTreeExpansionMap,
+    ExternalEventTreeNode,
   } from '../../types/timeline';
   import effects from '../../utilities/effects';
   import { classNames } from '../../utilities/generic';
@@ -63,6 +67,7 @@
     TimelineInteractionMode,
     directiveInView,
     generateActivityTree as generateActivityTreeUtil,
+    generateExternalEventTree as generateExternalEventTreeUtil,
     getYAxesWithScaleDomains,
     isActivityLayer,
     isExternalEventLayer,
@@ -84,12 +89,15 @@
   import RowHorizontalGuides from './RowHorizontalGuides.svelte';
   import RowXAxisTicks from './RowXAxisTicks.svelte';
   import RowYAxisTicks from './RowYAxisTicks.svelte';
+  import AboutModal from '../modals/AboutModal.svelte';
 
   export let activityDirectives: ActivityDirective[] = [];
   export let externalEvents: ExternalEvent[] = [];
   export let activityDirectivesMap: ActivityDirectivesMap = {};
   export let activityTreeExpansionMap: ActivityTreeExpansionMap | undefined = {};
   export let activityOptions: ActivityOptions | undefined = undefined;
+  export let externalEventTreeExpansionMap: ExternalEventTreeExpansionMap | undefined = {};
+  export let externalEventOptions: ExternalEventOptions | undefined = undefined;
   export let autoAdjustHeight: boolean = false;
   export let constraintResults: ConstraintResultWithName[] = [];
   export let decimate: boolean = false;
@@ -128,6 +136,7 @@
 
   const dispatch = createEventDispatcher<{
     activityTreeExpansionChange: ActivityTreeExpansionMap;
+    externalEventTreeExpansionChange: ExternalEventTreeExpansionMap;
     mouseDown: MouseDown;
     mouseOver: MouseOver;
     updateRowHeight: {
@@ -169,6 +178,7 @@
   let loadingErrors: string[];
   let anyResourcesLoading: boolean = true;
   let activityTree: ActivityTree = [];
+  let externalEventTree: ExternalEventTree = [];
   let filteredActivityDirectives: ActivityDirective[] = [];
   let filteredSpans: Span[] = [];
   let filteredExternalEvents: ExternalEvent[] = [];
@@ -306,6 +316,7 @@
   $: overlaySvgSelection = select(overlaySvg) as Selection<SVGElement, unknown, any, any>;
   $: rowClasses = classNames('row', { 'row-collapsed': !expanded });
   $: activityOptions = activityOptions || { ...ViewDefaultActivityOptions };
+  $: externalEventOptions = externalEventOptions || { ...ViewDefaultExternalEventOptions };
   $: activityLayers = layers.filter(isActivityLayer);
   $: externalEventLayers = layers.filter(isExternalEventLayer);
   $: lineLayers = layers.filter(l => isLineLayer(l) || (isXRangeLayer(l) && l.showAsLinePlot));
@@ -318,6 +329,9 @@
 
   $: if (activityTreeExpansionMap === undefined) {
     activityTreeExpansionMap = {};
+  }
+  $: if (externalEventTreeExpansionMap === undefined) {
+    externalEventTreeExpansionMap = {};
   }
 
   // Track resource loading status for this Row
@@ -453,6 +467,7 @@
   }
 
   $: if (hasExternalEventsLayer) {
+    externalEventTree = [];
     filteredExternalEvents = []
     const externalEventsByType = groupBy(externalEvents, 'event_type');
     externalEventLayers.forEach(layer => {
@@ -494,6 +509,28 @@
     }
   }
 
+  // TODO - understand externalEventTreeExpansionMap
+  // TODO - how should showExternalEvents be set?
+  // TODO - how should filterExternalEventsByTime be set?
+  $: if (
+    hasExternalEventsLayer &&
+    externalEventOptions &&
+  ) {
+    if (externalEventOptions.displayMode === 'grouped') {
+      /*  Note: here we only pass in a few variables in order to
+       *  limit the scope of what is reacted to in order to avoid unnecessary re-rendering.
+       *  A wrapper function is used to provide the other props needed to generate the tree.
+       */
+      externalEventTree = generateExternalEventTree(
+        externalEvents,
+        externalEventTreeExpansionMap,  // TODO
+        externalEventOptions.hierarchyMode,
+      )
+    } else {
+      externalEventTree = [];
+    }
+  }
+
   function generateActivityTree(
     directives: ActivityDirective[],
     spans: Span[],
@@ -514,9 +551,29 @@
     );
   }
 
+  function generateExternalEventTree(
+    externalEvents: ExternalEvent[],
+    externalEventTreeExpansionMap: ExternalEventTreeExpansionMap,
+    hierarchyMode: ExternalEventOptions['hierarchyMode'] = 'flat',
+  ) {
+    return generateExternalEventTreeUtil(
+        externalEvents,
+        externalEventTreeExpansionMap,
+        hierarchyMode,
+        false,
+        true,
+        viewTimeRange
+    );
+  }
+
   function onActivityTreeNodeChange(e: { detail: ActivityTreeNode }) {
     const node = e.detail;
     dispatch('activityTreeExpansionChange', { ...(activityTreeExpansionMap || {}), [node.id]: !node.expanded });
+  }
+
+  function onExternalEventTreeNodeChange(e: { detail: ExternalEventTreeNode }) {
+    const node = e.detail;
+    dispatch('externalEventTreeExpansionChange', { ...(externalEventTreeExpansionMap || {}), [node.id]: !node.expanded });
   }
 
   function onActivityTimeFilterChange() {
@@ -746,11 +803,14 @@
     <!-- Row Header. -->
     <RowHeader
       {activityOptions}
+      {externalEventOptions}
       on:activity-tree-node-change={onActivityTreeNodeChange}
+      on:external-event-tree-node-change={onExternalEventTreeNodeChange}
       on:mouseDown={onMouseDown}
       on:dblClick
       on:drop={e => onTimelineItemsDrop(id, e.detail.type, e.detail.items)}
       {activityTree}
+      {externalEventTree}
       width={marginLeft}
       height={computedDrawHeight}
       {expanded}
@@ -767,6 +827,7 @@
       on:contextMenu
       {selectedActivityDirectiveId}
       {selectedSpanId}
+      {selectedExternalEventId}
     >
       {#if hasActivityLayer && activityOptions?.displayMode === 'grouped'}
         <button
@@ -905,6 +966,7 @@
           <LayerExternalSources
             externalEvents={filteredExternalEvents}
             {idToColorMaps}
+            {externalEventTree}
             {showDirectives}
             {contextmenu}
             {dpr}

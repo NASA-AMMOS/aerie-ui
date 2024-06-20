@@ -7,7 +7,7 @@
   import { createEventDispatcher } from 'svelte';
   import TimelineLineLayerIcon from '../../assets/timeline-line-layer.svg?component';
   import TimelineXRangeLayerIcon from '../../assets/timeline-x-range-layer.svg?component';
-  import { ViewDefaultActivityOptions } from '../../constants/view';
+  import { ViewDefaultActivityOptions, ViewDefaultExternalEventOptions } from '../../constants/view';
   import type { ActivityDirectiveId } from '../../types/activity';
   import type { Resource, SpanId } from '../../types/simulation';
   import type {
@@ -15,6 +15,8 @@
     ActivityTree,
     Axis,
     ChartType,
+    ExternalEventOptions,
+    ExternalEventTree,
     Layer,
     LineLayer,
     MouseOver,
@@ -25,9 +27,12 @@
   import RowHeaderActivityTree from './RowHeaderActivityTree.svelte';
   import RowHeaderMenu from './RowHeaderMenu.svelte';
   import RowYAxes from './RowYAxes.svelte';
+  import { ExternalEventId } from '../../types/external-event';
 
   export let activityTree: ActivityTree = [];
   export let activityOptions: ActivityOptions = { ...ViewDefaultActivityOptions };
+  export let externalEventTree: ExternalEventTree = [];
+  export let externalEventOptions: ExternalEventOptions = { ...ViewDefaultExternalEventOptions };
   export let expanded: boolean = true;
   export let height: number = 0;
   export let layers: Layer[];
@@ -40,6 +45,7 @@
   export let yAxes: Axis[];
   export let selectedActivityDirectiveId: ActivityDirectiveId | null = null;
   export let selectedSpanId: SpanId | null = null;
+  export let selectedExternalEventId: ExternalEventId | null = null;
 
   let resourceLabels: {
     chartType: ChartType;
@@ -165,8 +171,18 @@
               on:dblClick
             />
           </div>
+        {:else if externalEventTree.length}
+          <div class="external-event-tree">
+            <RowHeaderExternalEventTree
+              {externalEventOptions}
+              {externalEventTree}
+              {selectedExternalEventId}
+              on:external-event-tree-node-change
+              on:mouseDown
+              on:dblClick
+            />
+          </div>
         {/if}
-
         {#if resourceLabels.length > 0}
           <div class="row-header-y-axis-labels">
             {#each resourceLabels as label}
