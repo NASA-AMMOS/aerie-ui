@@ -362,10 +362,24 @@
       {editorSequenceView}
       {parameterDictionaries}
     />
+  {:else}
+    <Panel overflowYBody="hidden" padBody={false}>
+      <svelte:fragment slot="header">
+        <SectionTitle>Selected Command</SectionTitle>
+      </svelte:fragment>
+
+      <svelte:fragment slot="body">
+        <div class="st-typography-body no-selected-parcel">Select a parcel to enable the Selected Command panel.</div>
+      </svelte:fragment>
+    </Panel>
   {/if}
 </CssGrid>
 
 <style>
+  .no-selected-parcel {
+    padding: 8px;
+  }
+
   .right {
     align-items: center;
     display: flex;
