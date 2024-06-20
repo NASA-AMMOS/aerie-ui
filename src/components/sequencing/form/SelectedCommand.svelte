@@ -160,7 +160,8 @@
       editorSequenceView &&
       (hasAncestorWithId(document.activeElement, ID_COMMAND_DETAIL_PANE) ||
         // Searchable Dropdown has pop out that is not a descendent
-        document.activeElement?.tagName === 'BODY')
+        document.activeElement?.tagName === 'BODY' ||
+        document.activeElement?.tagName === 'BUTTON')
     ) {
       const currentVal = editorSequenceView.state.sliceDoc(token.node.from, token.node.to);
       if (currentVal !== val) {
