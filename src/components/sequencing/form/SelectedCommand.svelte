@@ -238,7 +238,7 @@
         {/if}
       {/if}
     {:else}
-      <div class="content">Select a command to modify its parameters.</div>
+      <div class="content st-typography-body">Select a command to modify its parameters.</div>
     {/if}
   </svelte:fragment>
 </Panel>
