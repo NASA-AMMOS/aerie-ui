@@ -116,52 +116,55 @@ export function sequenceTooltip(
         argNode = argsNode.firstChild;
         while (argNode) {
           const argDef = fswCommand.arguments[i];
-          const isRepeatArg = isFswCommandArgumentRepeat(argDef) && argDef.repeat;
 
-          if (argNode.name === TOKEN_REPEAT_ARG && isRepeatArg) {
-            let repeatArgNode = argNode.firstChild;
-            let j = 0;
-            while (repeatArgNode) {
-              if (repeatArgNode.from === from && repeatArgNode.to === to) {
-                const arg = argDef.repeat?.arguments[j % argDef.repeat.arguments.length];
-                if (arg) {
-                  return {
-                    above: true,
-                    create() {
-                      const dom = document.createElement('div');
-                      new ArgumentTooltip({ props: { arg, commandDictionary }, target: dom });
-                      return { dom };
-                    },
-                    end: to,
-                    pos: from,
-                  };
+          if (argDef !== undefined) {
+            const isRepeatArg = isFswCommandArgumentRepeat(argDef) && argDef.repeat;
+
+            if (argNode.name === TOKEN_REPEAT_ARG && isRepeatArg) {
+              let repeatArgNode = argNode.firstChild;
+              let j = 0;
+              while (repeatArgNode) {
+                if (repeatArgNode.from === from && repeatArgNode.to === to) {
+                  const arg = argDef.repeat?.arguments[j % argDef.repeat.arguments.length];
+                  if (arg) {
+                    return {
+                      above: true,
+                      create() {
+                        const dom = document.createElement('div');
+                        new ArgumentTooltip({ props: { arg, commandDictionary }, target: dom });
+                        return { dom };
+                      },
+                      end: to,
+                      pos: from,
+                    };
+                  }
                 }
+                repeatArgNode = repeatArgNode.nextSibling;
+                ++j;
               }
-              repeatArgNode = repeatArgNode.nextSibling;
-              ++j;
             }
-          }
 
-          if ((argNode.from === from && argNode.to === to) || isRepeatArg) {
-            const arg = getCustomArgDef(
-              text,
-              fswCommand.arguments[i],
-              argValues,
-              parameterDictionaries,
-              channelDictionary,
-            );
+            if ((argNode.from === from && argNode.to === to) || isRepeatArg) {
+              const arg = getCustomArgDef(
+                text,
+                fswCommand.arguments[i],
+                argValues,
+                parameterDictionaries,
+                channelDictionary,
+              );
 
-            if (arg) {
-              return {
-                above: true,
-                create() {
-                  const dom = document.createElement('div');
-                  new ArgumentTooltip({ props: { arg, commandDictionary }, target: dom });
-                  return { dom };
-                },
-                end: to,
-                pos: from,
-              };
+              if (arg) {
+                return {
+                  above: true,
+                  create() {
+                    const dom = document.createElement('div');
+                    new ArgumentTooltip({ props: { arg, commandDictionary }, target: dom });
+                    return { dom };
+                  },
+                  end: to,
+                  pos: from,
+                };
+              }
             }
           }
 
