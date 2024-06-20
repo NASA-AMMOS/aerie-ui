@@ -6,13 +6,17 @@
   import { createEventDispatcher, onMount, tick } from 'svelte';
   import type { ExternalEvent, ExternalEventId } from '../../types/external-event';
   import type {
+    ExternalEventOptions,
     ExternalEventDrawItem,
     ExternalEventItem,
     MouseDown,
     MouseOver,
     QuadtreeRect,
     RowMouseOverEvent,
-    TimeRange
+    TimeRange,
+    ExternalEventTree,
+    ExternalEventTreeNode,
+
   } from '../../types/timeline';
   import { hexToRgba, shadeColor } from '../../utilities/color';
   import { isRightClick } from '../../utilities/generic';
@@ -25,6 +29,8 @@
     externalEventInView,
     searchQuadtreeRect
   } from '../../utilities/timeline';
+  import { ViewDefaultExternalEventOptions } from '../../constants/view';
+  import { ViewConstants } from '../../enums/view';
 
   type IdToColorMap = Record<number, string>;
   type IdToColorMaps = { directives: IdToColorMap; spans: IdToColorMap };
@@ -36,6 +42,8 @@
   export let externalEventSelectedColor: string = '#a9eaff';
   export let externalEventSelectedTextColor: string = '#0a4c7e';
   export let externalEventDefaultColor = '#cbcbcb';
+  export let externalEventOptions: ExternalEventOptions = { ...ViewDefaultExternalEventOptions };
+  export let externalEventTree: ExternalEventTree = [];  // TODO - Check for all references that Activity uses for this
   export let contextmenu: MouseEvent | undefined;
   export let dblclick: MouseEvent | undefined;
   export let dpr: number = 1;
@@ -83,7 +91,7 @@
 
   $: canvasHeightDpr = drawHeight * dpr;
   $: canvasWidthDpr = drawWidth * dpr;
-  $: rowHeight = externalEventHeight;
+  $: rowHeight = externalEventOptions.externalEventHeight + (externalEventOptions.displayMode === 'compact' ? 0 : 0);
   $: planStartTimeMs = getUnixEpochTime(getDoyTime(new Date(planStartTimeYmd)));
 
   $: if (
@@ -97,7 +105,9 @@
     selectedExternalEventId !== undefined &&
     viewTimeRange &&
     xScaleView &&
-    externalEvents
+    externalEventOptions &&
+    externalEvents &&  // TODO - this is now kind of redundant with checking for externalEventTree
+    externalEventTree
   ) {
     draw();
   }
@@ -127,7 +137,7 @@
       quadtreeSpans,
       offsetX,
       offsetY,
-      externalEventHeight,
+      externalEventOptions.externalEventHeight,
       maxExternalEventWidth,
       visibleExternalEventsById,
     );
@@ -211,6 +221,51 @@
     return `${sticky ? '← ' : ''}${externalEvent.key}`;
   }
 
+  function drawBottomLine(y: number, width: number) {
+    ctx.strokeStyle = getComputedStyle(canvas).getPropertyValue('--timeline-divider-color');
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(width, y);
+    ctx.stroke();
+  }
+
+  function drawGroup(node: ExternalEventTreeNode, y: number, rowHeight: number, drawLine = true) {
+    let newY = y;
+    if (drawLine) {
+      drawBottomLine(newY + rowHeight + 0.5, drawWidth);
+    }
+
+    drawRow(newY + externalEventRowPadding, node.items || [], idToColorMaps);
+    newY += rowHeight;
+
+    if (node.expanded && node.children.length) {
+      node.children.forEach(childNode => {
+        newY = drawGroup(childNode, newY, rowHeight, true);
+      });
+    }
+    return newY;
+  }
+
+  function drawGroupedMode() {
+    if (xScaleView !== null) {
+      const collapsedMode = drawHeight <= ViewConstants.MIN_ROW_HEIGHT;
+      let y = collapsedMode ? 0 : ViewConstants.MIN_ROW_HEIGHT - 1; // pad starting y with the min row height to align with activity tree
+      const expectedRowHeight = rowHeight + externalEventRowPadding;
+      externalEventTree.forEach(node => {
+        const newY = drawGroup(node, y, expectedRowHeight, !collapsedMode);
+        if (!collapsedMode) {
+          y = newY;
+        }
+      });
+      const newRowHeight = y + 36; // add padding to the bottom to account for buttons in the activity tree
+      if (!collapsedMode && newRowHeight > 0) {
+        /* TODO a change from manual to auto height does not take effect until you trigger a redraw on this row, could pass in whether or not to update row height but that might be odd? */
+        dispatch('updateRowHeight', { newHeight: newRowHeight });
+      }
+    }
+  }
+
   function drawCompactMode() {
     if (xScaleView !== null) {
       const itemsToDraw: ExternalEventDrawItem[] = [];
@@ -258,16 +313,16 @@
         }
       });
 
-      const extraSpace = Math.max(0, drawHeight - externalEventHeight - externalEventRowPadding);
+      const extraSpace = Math.max(0, drawHeight - externalEventOptions.externalEventHeight - externalEventRowPadding);
       const rowCount = Object.keys(rows).length;
       Object.entries(rows).forEach(([_, entry], i) => {
         const { items } = entry;
         let yRow = i * (extraSpace / (rowCount - 1)) || 0;
         // If we can't have at least two rows then draw everything at 0
-        if (externalEventHeight * 2 >= drawHeight) {
+        if (externalEventOptions.externalEventHeight * 2 >= drawHeight) {
           yRow = 4;
         }
-        if (externalEventHeight) {
+        if (externalEventOptions.externalEventHeight) {
           drawRow(yRow, items, idToColorMaps);
         }
       });
@@ -281,19 +336,19 @@
     if (externalEvent && xScaleView) {
       const spanEndX = xScaleView(externalEvent.startMs + externalEvent.durationMs);
       boxEndX = Math.max(boxEndX, spanEndX);
-      // if (activityOptions.labelVisibility !== 'off') {
-      labelEndX = Math.max(
-        labelEndX,
-        Math.max(minRectSize, startX) + labelPaddingLeft + measureText(getLabelForExternalEvent(externalEvent), textMetricsCache).width,
-      );
-      // }
+      if (externalEventOptions.labelVisibility !== 'off') {
+        labelEndX = Math.max(
+          labelEndX,
+          Math.max(minRectSize, startX) + labelPaddingLeft + measureText(getLabelForExternalEvent(externalEvent), textMetricsCache).width,
+        );
+      }
     }
     return Math.max(boxEndX, labelEndX);
   }
 
   function drawRow(y: number, items: ExternalEventItem[], idToColorMaps: IdToColorMaps) {
     /* TODO this is doing unnecessary work in compact mode - should be able to preprocess grouped mode and skip this first part for compact mode */
-    // const drawLabels = true; //activityOptions.labelVisibility === 'on' || activityOptions.labelVisibility === 'auto';
+    const drawLabels = externalEventOptions.labelVisibility === 'on' || externalEventOptions.labelVisibility === 'auto';
     let itemsToDraw: {
       externalEvent?: ExternalEvent;
       externalEventStartX?: number;
@@ -337,11 +392,11 @@
 
         // Draw label if no directive and the label will fit
         let spanLabelWidth = 0;
-        // if (drawLabels && (!directive || !showDirectives)) {
+        if (drawLabels && (!externalEvent)) { //|| !showDirectives)) {
           const label = getLabelForExternalEvent(externalEvent);
           spanLabelWidth = measureText(label, textMetricsCache).width + labelPaddingLeft;
           let shouldDrawLabel = true;
-          // if (activityOptions.labelVisibility === 'auto') {
+          if (externalEventOptions.labelVisibility === 'auto') {
             if (nextItem) {
               const nextX = nextItem.externalEventStartX ?? null;
               if (typeof nextX === 'number' && externalEventStartX + spanLabelWidth >= nextX) {
@@ -438,7 +493,13 @@
 
       visibleExternalEventsById = {};
       // TODO: Eventually draw grouped. That is a way easier way to read. Offer both options, at least.
-      drawCompactMode();
+      if (externalEventOptions.displayMode === 'grouped') {
+        drawGroupedMode();
+      } else if (externalEventOptions.displayMode === 'compact') {
+        drawCompactMode();
+      } else {
+        console.warn('Unsupported LayerExternalSources displayMode: ', externalEventOptions.displayMode);
+      }
     }
   }
 </script>
