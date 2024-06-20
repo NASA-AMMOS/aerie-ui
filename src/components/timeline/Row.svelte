@@ -838,6 +838,15 @@
         >
           <FilterWithXIcon />
         </button>
+      {:else if hasExternalEventsLayer && externalEventOptions?.displayMode === 'grouped'}
+        <button
+          class="st-button icon row-external-event"
+          class:row-external-event-active={}
+          on:click|stopPropagation={}
+          use:tooltip={{ content: 'Filter External Events by Time Window', placement: 'top' }}
+        >
+          <FilterWithXIcon />
+        </button>
       {/if}
     </RowHeader>
 
@@ -1108,6 +1117,18 @@
   }
 
   :global(.row-action.row-action-active.st-button.icon svg) {
+    color: var(--st-utility-blue);
+  }
+
+  :global(.row-external-event.st-button.icon svg) {
+    color: var(--st-gray-50);
+  }
+
+  :global(.row-external-event.st-button.icon:hover svg) {
+    color: var(--st-gray-70);
+  }
+
+  :global(.row-external-event.row-external-event-active.st-button.icon svg) {
     color: var(--st-utility-blue);
   }
 
