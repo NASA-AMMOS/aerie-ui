@@ -105,6 +105,7 @@
    * we need to do a custom comparison.
    */
   function didParameterDictionariesChange(parameterDictionaryMap: Record<number, boolean>): boolean {
+    console.log('here');
     for (const parameterDictionaryIdString of Object.keys(parameterDictionaryMap)) {
       const parameterDictionaryId = parseInt(parameterDictionaryIdString);
 
@@ -128,8 +129,11 @@
     parcelCommandDictionaryId = event.detail.value ? event.detail.id : null;
   }
 
-  function onToggleParameterDictionary(event: CustomEvent<{ ids: Record<number, boolean> }>) {
-    selectedParmeterDictionaries = event.detail.ids;
+  function onToggleParameterDictionary(event: CustomEvent<{ id: number; value: boolean }>) {
+    selectedParmeterDictionaries = {
+      ...selectedParmeterDictionaries,
+      [event.detail.id]: event.detail.value,
+    };
   }
 
   function onToggleSequenceAdaptation(event: CustomEvent<{ id: number; value: boolean }>) {
@@ -307,7 +311,7 @@
       hasEditPermission={hasPermission}
       type="Parameter"
       {user}
-      on:multiSelect={onToggleParameterDictionary}
+      on:select={onToggleParameterDictionary}
     />
 
     <DictionaryTable
