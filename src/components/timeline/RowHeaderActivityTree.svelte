@@ -31,8 +31,17 @@
     mouseDown: MouseDown;
   }>();
 
-  function onLeafClick(e: MouseEvent, node: ActivityTreeNode, type: 'dblClick' | 'mouseDown') {
-    dispatch(type, { e, ...getDirectivesAndSpansForNode(node) });
+  function onLeafMouseDown(e: MouseEvent, node: ActivityTreeNode) {
+    dispatch('mouseDown', { e, ...getDirectivesAndSpansForNode(node) });
+  }
+
+  function onLeafDblClick(e: MouseEvent) {
+    if (e) {
+      dispatch('dblClick', {
+        e,
+        selectedSpanId: selectedSpanId ?? undefined
+      });
+    }
   }
 
   function getDirectivesAndSpansForNode(node: ActivityTreeNode) {
@@ -66,7 +75,7 @@
   }
 
   function onSelectClick(node: ActivityTreeNode, e: MouseEvent) {
-    onLeafClick(e, node, 'mouseDown');
+    onLeafMouseDown(e, node);
   }
 </script>
 
@@ -78,9 +87,9 @@
       <button
         style:height={`${rowHeight}px`}
         class="row-header-activity-group leaf st-button tertiary"
-        class:selected={directive?.id === selectedActivityDirectiveId || span?.span_id === selectedSpanId}
-        on:dblclick={e => onLeafClick(e, node, 'dblClick')}
-        on:click={e => onLeafClick(e, node, 'mouseDown')}
+        class:selected={directive?.id === selectedActivityDirectiveId || span?.id === selectedSpanId}
+        on:dblclick={e => onLeafDblClick(e)}
+        on:click={e => onLeafMouseDown(e, node)}
       >
         <div style=" align-items: center;color: var(--st-button-tertiary-color);display: flex; gap: 4px;">
           {#if directive && span}

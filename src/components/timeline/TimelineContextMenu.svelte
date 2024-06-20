@@ -48,6 +48,7 @@
 
   const dispatch = createEventDispatcher<{
     collapseActivityTree: Row;
+    collapseExternalEventTree: Row;
     deleteActivityDirective: number;
     deleteRow: Row;
     duplicateRow: Row;
@@ -221,6 +222,12 @@
   function onCollapseActivityTree() {
     if (row) {
       dispatch('collapseActivityTree', row);
+    }
+  }
+
+  function onCollapseExternalEventTree() {
+    if (row) {
+      dispatch('collapseExternalEventTree', row);
     }
   }
 
