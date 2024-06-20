@@ -151,10 +151,20 @@
     deleteDictionary({ id: event.detail[0] as number });
   }
 
+  /**
+   * Called when a row is clicked on.
+   * @param event
+   */
   function onRowClicked(event: CustomEvent<DataGridRowSelection<DictionaryType>>) {
-    selectRow(event.detail.data.id, true);
+    const currentValue = selectedDictionaryIds[event.detail.data.id];
+
+    selectRow(event.detail.data.id, currentValue === undefined ? true : !currentValue);
   }
 
+  /**
+   * Called when a checkbox is selected.
+   * @param event
+   */
   function onToggle(event: CustomEvent<CellEditingStoppedEvent<DictionaryType, boolean>>) {
     const {
       detail: { data, newValue },
