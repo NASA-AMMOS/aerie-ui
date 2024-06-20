@@ -189,6 +189,7 @@
     spans: {},
   };
   let filterActivitiesByTime = false;
+  let filterExternalEventsByTime = false;
   let rowRef: HTMLDivElement;
 
   $: if ($selectedRow?.id === id && rowRef) {
@@ -560,7 +561,7 @@
         externalEvents,
         externalEventTreeExpansionMap,
         hierarchyMode,
-        false,
+        filterExternalEventsByTime,
         true,
         viewTimeRange
     );
@@ -578,6 +579,10 @@
 
   function onActivityTimeFilterChange() {
     filterActivitiesByTime = !filterActivitiesByTime;
+  }
+
+  function onExternalEventTimeFilterChange() {
+    filterExternalEventsByTime = !filterExternalEventsByTime;
   }
 
   function zoomed(e: D3ZoomEvent<HTMLCanvasElement, any>) {
@@ -841,8 +846,8 @@
       {:else if hasExternalEventsLayer && externalEventOptions?.displayMode === 'grouped'}
         <button
           class="st-button icon row-external-event"
-          class:row-external-event-active={}
-          on:click|stopPropagation={}
+          class:row-external-event-active={filterExternalEventsByTime}
+          on:click|stopPropagation={onExternalEventTimeFilterChange}
           use:tooltip={{ content: 'Filter External Events by Time Window', placement: 'top' }}
         >
           <FilterWithXIcon />
