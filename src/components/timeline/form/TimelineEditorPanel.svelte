@@ -7,7 +7,9 @@
   import PlusIcon from '@nasa-jpl/stellar/icons/plus.svg?component';
   import RemoveAllIcon from '@nasa-jpl/stellar/icons/remove_all.svg?component';
   import TrashIcon from '@nasa-jpl/stellar/icons/trash.svg?component';
+  import Balloon from 'bootstrap-icons/icons/balloon.svg?component';
   import GripVerticalIcon from 'bootstrap-icons/icons/grip-vertical.svg?component';
+  import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import { onMount } from 'svelte';
   import { dndzone } from 'svelte-dnd-action';
   import ActivityModeTextNoneIcon from '../../../assets/text-none.svg?component';
@@ -23,6 +25,7 @@
   import {
     ViewActivityLayerColorPresets,
     ViewDefaultActivityOptions,
+    ViewDefaultExternalEventOptions,
     ViewLineLayerColorPresets,
   } from '../../../constants/view';
   import { ViewConstants } from '../../../enums/view';
@@ -48,6 +51,7 @@
     ActivityOptions,
     Axis,
     ExternalEventLayer,
+    ExternalEventOptions,
     HorizontalGuide,
     Layer,
     LineLayer,
@@ -121,6 +125,7 @@
     viewUpdateRow('activityOptions', ViewDefaultActivityOptions);
   }
   $: activityOptions = selectedRow?.activityOptions || { ...ViewDefaultActivityOptions };
+  $: externalEventOptions = selectedRow?.externalEventOptions || { ...ViewDefaultExternalEventOptions };
   $: validEventTypes = $selectedPlanExternalSourceEventTypes.map(id => getEventTypeName(id, $externalEventTypes)) as string[]
 
   function updateRowEvent(event: Event) {
@@ -204,6 +209,11 @@
   function handleActivityOptionRadioChange(event: CustomEvent<{ id: RadioButtonId }>, name: keyof ActivityOptions) {
     const { id } = event.detail;
     viewUpdateRow('activityOptions', { ...activityOptions, [name]: id });
+  }
+
+  function handleExternalEventOptionRadioChange(event: CustomEvent<{ id: RadioButtonId }>, name: keyof ExternalEventOptions) {
+    const { id } = event.detail;
+    viewUpdateRow('externalEventOptions', { ...externalEventOptions, [name]: id });
   }
 
   function addTimelineRow() {
@@ -1065,6 +1075,123 @@
                   if (typeof value === 'number' && !isNaN(value)) {
                     if (value >= 12) {
                       viewUpdateRow('activityOptions', { ...activityOptions, activityHeight: value });
+                    }
+                  }
+                }}
+              />
+              <ParameterUnits unit="px" slot="right" />
+            </Input>
+          </form>
+        </fieldset>
+      {:else if rowHasExternalEventLayer}
+        <fieldset class="editor-section">
+          <div class="editor-section-header">
+            <div class="st-typography-medium">External Event Options</div>
+          </div>
+          <Input layout="inline" class="editor-input">
+            <label for="activity-composition">Display</label>
+            <RadioButtons
+              selectedButtonId={externalEventOptions.displayMode}
+              on:select-radio-button={e => handleExternalEventOptionRadioChange(e, 'displayMode')}
+            >
+              <RadioButton
+                use={[[tooltip, { content: 'Group external events by type in collapsible rows', placement: 'top' }]]}
+                id="grouped"
+              >
+                <div class="radio-button-icon">
+                  <ActivityModeGroupedIcon />
+                  <span class="timeline-editor-responsive-label">Grouped</span>
+                </div>
+              </RadioButton>
+              <RadioButton
+                use={[[tooltip, { content: 'Pack external events into a single row', placement: 'top' }]]}
+                id="compact"
+              >
+                <div class="radio-button-icon">
+                  <ActivityModeCompactIcon />
+                  <span class="timeline-editor-responsive-label">Compact</span>
+                </div>
+              </RadioButton>
+            </RadioButtons>
+          </Input>
+          <Input layout="inline" class="editor-input">
+            <label for="activity-composition">Labels</label>
+            <RadioButtons
+              selectedButtonId={externalEventOptions.labelVisibility}
+              on:select-radio-button={e => handleExternalEventOptionRadioChange(e, 'labelVisibility')}
+            >
+              <RadioButton use={[[tooltip, { content: 'Always show labels', placement: 'top' }]]} id="on">
+                <div class="radio-button-icon">
+                  <ActivityModeTextIcon />
+                  <span class="timeline-editor-responsive-label">On</span>
+                </div>
+              </RadioButton>
+              <RadioButton use={[[tooltip, { content: 'Never show labels', placement: 'top' }]]} id="off">
+                <div class="radio-button-icon">
+                  <ActivityModeTextNoneIcon />
+                  <span class="timeline-editor-responsive-label">Off</span>
+                </div>
+              </RadioButton>
+              <RadioButton
+                use={[[tooltip, { content: 'Show labels that do not overlap', placement: 'top' }]]}
+                id="auto"
+              >
+                <div class="radio-button-icon">
+                  <ActivityModeWidthIcon />
+                  <span class="timeline-editor-responsive-label">Auto</span>
+                </div>
+              </RadioButton>
+            </RadioButtons>
+          </Input>
+          <!-- TODO - update hierarchy modes -->
+          {#if externalEventOptions.displayMode === 'grouped'}
+            <Input layout="inline" class="editor-input">
+              <label for="activity-composition">Hierarchy</label>
+              <RadioButtons
+                selectedButtonId={externalEventOptions.groupBy}
+                on:select-radio-button={e => handleExternalEventOptionRadioChange(e, 'groupBy')}
+              >
+                <RadioButton
+                  use={[[tooltip, { content: 'Group according to external source', placement: 'top' }]]}
+                  id="source_id"
+                >
+                  <div class="radio-button-icon">
+                    <Truck />
+                    <span class="timeline-editor-responsive-label">By Source</span>
+                  </div>
+                </RadioButton>
+                <RadioButton
+                  use={[
+                    [
+                      tooltip,
+                      { content: 'Group according to event type', placement: 'top' },
+                    ],
+                  ]}
+                  id="event_type"
+                >
+                  <div class="radio-button-icon">
+                    <Balloon />
+                    <span class="timeline-editor-responsive-label">By Event Type</span>
+                  </div>
+                </RadioButton>
+              </RadioButtons>
+            </Input>
+          {/if}
+          <form on:submit={event => event.preventDefault()} style="flex: 1">
+            <Input layout="inline" class="editor-input">
+              <label for="text">Height</label>
+              <input
+                min={12}
+                autocomplete="off"
+                class="st-input w-100"
+                name="text"
+                type="number"
+                value={externalEventOptions.externalEventHeight}
+                on:input={event => {
+                  const { value } = getTarget(event);
+                  if (typeof value === 'number' && !isNaN(value)) {
+                    if (value >= 12) {
+                      viewUpdateRow('externalEventOptions', { ...externalEventOptions, externalEventHeight: value });
                     }
                   }
                 }}
