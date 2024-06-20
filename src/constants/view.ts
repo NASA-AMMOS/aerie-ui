@@ -10,7 +10,7 @@ import {
   schemeSet3,
   schemeTableau10,
 } from 'd3-scale-chromatic';
-import type { ActivityOptions, XRangeLayerColorScheme } from '../types/timeline';
+import type { ActivityOptions, ExternalEventOptions, XRangeLayerColorScheme } from '../types/timeline';
 
 export const ViewDefaultActivityOptions: ActivityOptions = {
   activityHeight: 16,
@@ -19,6 +19,13 @@ export const ViewDefaultActivityOptions: ActivityOptions = {
   hierarchyMode: 'flat',
   labelVisibility: 'auto',
 };
+
+export const ViewDefaultExternalEventOptions: ExternalEventOptions = {
+  externalEventHeight: 16,
+  displayMode: 'compact',
+  hierarchyMode: 'flat',
+  labelVisibility: 'auto',
+}
 
 export const ViewActivityLayerColorPresets: string[] = [
   '#fcdd8f',
