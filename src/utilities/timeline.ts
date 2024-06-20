@@ -1063,26 +1063,13 @@ export function generateActivityTree(
  */
 export function generateExternalEventTree(
   externalEvents: ExternalEvent[],
-  externalEventTreeExpansionMap: ExternalEventTreeExpansionMap,  // TODO what does this do?
-  hierarchyMode: ExternalEventOptions['hierarchyMode'],
+  externalEventTreeExpansionMap: ExternalEventTreeExpansionMap,
+  groupByMethod: ExternalEventOptions['groupBy'] = 'event_type',
   filterExternalEventsByTime: boolean,
   showExternalEvents: boolean,
   viewTimeRange: TimeRange
 ): ExternalEventTree {
-  let groupedExternalEvents = {};
-  // Group the tree's potential events by the type determined in the options (source, event, or flat)
-  if (hierarchyMode === 'source') {
-    groupedExternalEvents = groupBy(externalEvents, 'source_id');
-  }
-  else if (hierarchyMode === 'event') {
-    groupedExternalEvents = groupBy(externalEvents, 'event_type');
-  }
-  else if (hierarchyMode === 'flat') {
-    groupedExternalEvents = { 'events': externalEvents };  // TODO - might be wrong way to go about this
-  }
-  else {
-    // TODO - handle improper input here
-  }
+  let groupedExternalEvents = groupBy(externalEvents, groupByMethod);
 
   const nodes: ExternalEventTreeNode[] = [];
   if (Object.keys(groupedExternalEvents).length !== 0) {
@@ -1093,19 +1080,26 @@ export function generateExternalEventTree(
       .forEach(type => {
         const externalEventsGroup = groupedExternalEvents[type];
         const id = type;
-        const expanded = false;  // TODO - getNodeExpanded(.., ..)
+        const expanded = getNodeExpandedExternalEvent(id, externalEventTreeExpansionMap);
         const label = type;
         const children: ExternalEventTreeNode['children'] = [];
         const items: ExternalEventTreeNode['items'] = [];
         if (externalEventsGroup) {
           externalEventsGroup.forEach(externalEvent => {
-            //if (exapnded) { ... }
             items.push({ externalEvent });  // TODO - do we include anything else - the original includes child spans?
+            children.push({
+              children: [],
+              expanded: expanded,
+              id: `${externalEvent.id}`,
+              isLeaf: true,
+              items: [{ externalEvent }],
+              label: externalEvent.key,
+            });
           });
         }
+        // TODO: This should implement a function similar to paginateNode for the children
         nodes.push({
-          //children: paginateNodes(children, id, externalEventTreeExpansionMap)  TODO
-          children: [],
+          children: children,
           expanded: expanded,
           id,
           isLeaf: false,
@@ -1268,6 +1262,17 @@ export function getNodeExpanded(id: string, activityTreeExpansionMap: ActivityTr
     return false;
   }
   return activityTreeExpansionMap[id];
+}
+
+/**
+ * Returns whether or not the node is expanded in the external event tree
+ * TODO: This can be merged with getNodeExpanded in the future for better reusability
+ */
+export function getNodeExpandedExternalEvent(id: string, externalEventTreeExpansionMap: ExternalEventTreeExpansionMap) {
+  if (!Object.hasOwn(externalEventTreeExpansionMap, id)) {
+    return false;
+  }
+  return externalEventTreeExpansionMap[id];
 }
 
 /**

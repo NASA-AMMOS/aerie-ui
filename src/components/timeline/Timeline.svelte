@@ -25,6 +25,7 @@
   } from '../../types/simulation';
   import type {
     ActivityTreeExpansionMap,
+    ExternalEventTreeExpansionMap,
     MouseDown,
     MouseOver,
     Row,
@@ -92,6 +93,7 @@
   }>();
 
   let activityTreeExpansionMapByRow: Record<string, ActivityTreeExpansionMap> = {};
+  let externalEventTreeExpansionMapByRow: Record<string, ExternalEventTreeExpansionMap> = {};
   let timelineZoomTransform: ZoomTransform | null = null;
   let clientWidth: number = 0;
   let contextMenu: MouseOver | null;
@@ -299,6 +301,11 @@
     activityTreeExpansionMapByRow = { ...activityTreeExpansionMapByRow, [row.id]: {} };
   }
 
+  function onCollapseExternalEventTree(event: CustomEvent<Row>) {
+    const row = event.detail;
+    externalEventTreeExpansionMapByRow = { ...externalEventTreeExpansionMapByRow, [row.id]: {} };
+  }
+
   function onHistogramCursorTimeChanged(event: CustomEvent<Date | null>) {
     histogramCursorTime = event.detail;
   }
@@ -475,7 +482,12 @@
             on:activityTreeExpansionChange={e => {
               activityTreeExpansionMapByRow = { ...activityTreeExpansionMapByRow, [row.id]: e.detail };
             }}
+            externalEventTreeExpansionMap={externalEventTreeExpansionMapByRow[row.id]}
+            on:externalEventTreeExpansionChange={e => {
+              externalEventTreeExpansionMapByRow = { ...externalEventTreeExpansionMapByRow, [row.id]: e.detail };
+            }}
             {...row.activityOptions ? { activityOptions: row.activityOptions } : null}
+            {...row.externalEventOptions ? { externalEventOptions: row.externalEventOptions } : null}
             autoAdjustHeight={row.autoAdjustHeight}
             {constraintResults}
             {dpr}
@@ -545,6 +557,7 @@
     {hasUpdateSimulationPermission}
     {maxTimeRange}
     on:collapseActivityTree={onCollapseActivityTree}
+    on:collapseExternalEventTree={onCollapseExternalEventTree}
     on:deleteActivityDirective
     on:jumpToActivityDirective
     on:jumpToSpan

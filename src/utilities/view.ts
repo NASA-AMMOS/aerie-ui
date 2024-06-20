@@ -1,5 +1,5 @@
 import Ajv from 'ajv';
-import { ViewDefaultActivityOptions } from '../constants/view';
+import { ViewDefaultActivityOptions, ViewDefaultExternalEventOptions } from '../constants/view';
 import jsonSchema from '../schemas/ui-view-schema.json';
 import type { ActivityType } from '../types/activity';
 import type { ExternalEventType } from '../types/external-event';
@@ -29,6 +29,7 @@ export function generateDefaultView(activityTypes: ActivityType[] = [], resource
     filter: { externalEvent: { event_types: externalEventTypes.map(e => e.name) }} 
   });
   const externalEventRow = createRow(timelines, {
+    externalEventOptions: { ...ViewDefaultExternalEventOptions, displayMode: 'grouped'},
     autoAdjustHeight: false,
     expanded: true,
     height: 100,

@@ -220,9 +220,8 @@ export type ExternalEventOptions = {
   // Describes the primary method in which external events are visualized within this row
   displayMode: 'grouped' | 'compact';
 
-  // If 'source' the external events are grouped by source type. If 'event' the external events are grouped by external event type. If 'flat' the external events are grouped by event type regardless of hierarchy
-  // TODO - what exactly is the hierarchy? based on the tree setup?
-  hierarchyMode: 'source' | 'event' | 'flat';
+  // Determines whether to group the External Events by their event type, or their external source
+  groupBy: 'event_type' | 'source_id'
 
   // External event text label behavior
   labelVisibility: 'on' | 'off' | 'auto';
