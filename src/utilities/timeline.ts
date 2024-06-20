@@ -31,6 +31,10 @@ import type {
   ActivityTreeNode,
   Axis,
   ExternalEventLayer,
+  ExternalEventOptions,
+  ExternalEventTree,
+  ExternalEventTreeExpansionMap,
+  ExternalEventTreeNode,
   HorizontalGuide,
   Layer,
   LineLayer,
@@ -1034,6 +1038,82 @@ export function generateActivityTree(
         type: 'aggregation',
       });
     });
+  return nodes;
+}
+
+/**
+ * Returns an 'ExternalEventTree' representing the given external event type,
+ * external source, or external source type. Each node represents an external event.
+ *
+ * TODO - so I think we have 3 different draw cases for 'grouped'/tree use
+ * 1) Group by source
+ *  - 1 layer deep where the tree represents an External Source, and each item underneath is the events from the source
+ * 2) Group by event type
+ *  - 1 layer deep where the tree represents an External Event Type, and each item underneath is the events that are of that type
+ * 3) Group by source type
+ *  - 1 layer deep where the tree represents an External Source Type, and each item underneath is the events from those external sources that are of that type
+ *
+ * Then on top of that, I think there is a case where we would want to sub-tree the following..
+ * 1) Group by source -> group by event type
+ *  - Show source at top level, then sub-groups of event type underneath
+ * 2) Group by source type -> group by event type
+ *  - Show source type at top level, then sub-groups of event type underneath
+ * I think we could also consider: Group by event type -> group by source type
+ * These seem more complicated and I'm not 100% sure on how these are implemented for ADs..
+ */
+export function generateExternalEventTree(
+  externalEvents: ExternalEvent[],
+  externalEventTreeExpansionMap: ExternalEventTreeExpansionMap,  // TODO what does this do?
+  hierarchyMode: ExternalEventOptions['hierarchyMode'],
+  filterExternalEventsByTime: boolean,
+  showExternalEvents: boolean,
+  viewTimeRange: TimeRange
+): ExternalEventTree {
+  let groupedExternalEvents = {};
+  // Group the tree's potential events by the type determined in the options (source, event, or flat)
+  if (hierarchyMode === 'source') {
+    groupedExternalEvents = groupBy(externalEvents, 'source_id');
+  }
+  else if (hierarchyMode === 'event') {
+    groupedExternalEvents = groupBy(externalEvents, 'event_type');
+  }
+  else if (hierarchyMode === 'flat') {
+    groupedExternalEvents = { 'events': externalEvents };  // TODO - might be wrong way to go about this
+  }
+  else {
+    // TODO - handle improper input here
+  }
+
+  const nodes: ExternalEventTreeNode[] = [];
+  if (Object.keys(groupedExternalEvents).length !== 0) {
+    const allKeys = new Set(Object.keys(groupedExternalEvents));
+    // Iterate through all groups - either external event types, external source types, or external sources
+    Array.from(allKeys)
+      .sort()
+      .forEach(type => {
+        const externalEventsGroup = groupedExternalEvents[type];
+        const id = type;
+        const expanded = false;  // TODO - getNodeExpanded(.., ..)
+        const label = type;
+        const children: ExternalEventTreeNode['children'] = [];
+        const items: ExternalEventTreeNode['items'] = [];
+        if (externalEventsGroup) {
+          externalEventsGroup.forEach(externalEvent => {
+            //if (exapnded) { ... }
+            items.push({ externalEvent });  // TODO - do we include anything else - the original includes child spans?
+          });
+        }
+        nodes.push({
+          //children: paginateNodes(children, id, externalEventTreeExpansionMap)  TODO
+          children: [],
+          expanded: expanded,
+          id,
+          isLeaf: false,
+          items,
+          label,
+        });
+      });
+  }
   return nodes;
 }
 
