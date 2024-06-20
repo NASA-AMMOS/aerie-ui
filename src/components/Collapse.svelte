@@ -68,6 +68,7 @@
     </div>
   </button>
   <slot name="action-row" />
+  <slot name="external-event-row" />
   <div class="content" class:pad-content={padContent} class:expanded aria-hidden={collapsible ? !expanded : false}>
     <slot />
   </div>
