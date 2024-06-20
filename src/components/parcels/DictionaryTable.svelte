@@ -13,6 +13,7 @@
 
   export let dictionaries: DictionaryType[];
   export let selectedDictionaryIds: Record<number, boolean> = {};
+  export let isEditingDictionaries: boolean = false;
   export let isEditingParcel: boolean = false;
   export let isMultiselect: boolean = false;
   export let hasDeletePermission: boolean = false;
@@ -20,11 +21,13 @@
   export let type: string;
   export let user: User | null;
 
+  let columnDefs: DataGridColumnDef[];
   let dictionaryDataGrid: SingleActionDataGrid<DictionaryType> | undefined = undefined;
   let dictionaryColumnDefs: DataGridColumnDef[];
   let displayText: string = '';
   let displayTextPlural: string = '';
-  let editingColumnDefs: DataGridColumnDef[];
+  let editingDictionariesColumnDefs: DataGridColumnDef[];
+  let editingParcelColumnDefs: DataGridColumnDef[];
   let isSequenceAdaptation: boolean = false;
   let sequenceAdaptationColumDefs: DataGridColumnDef[];
 
@@ -46,70 +49,7 @@
     dictionaryDataGrid.redrawRows();
   }
 
-  $: editingColumnDefs = [
-    {
-      cellDataType: 'boolean',
-      editable: hasEditPermission,
-      headerName: '',
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
-      valueGetter: (params: ValueGetterParams<DictionaryType>) => {
-        const { data } = params;
-
-        if (data) {
-          if (isMultiselect) {
-            return !!selectedDictionaryIds[data.id];
-          }
-
-          // We have a single id if we're not in multiselect mode.
-          const idList = Object.keys(selectedDictionaryIds);
-
-          if (idList.length > 0) {
-            return Number(idList[0]) === data.id;
-          }
-        }
-
-        return false;
-      },
-      width: 35,
-    },
-  ];
-
-  $: dictionaryColumnDefs = [
-    ...(isEditingParcel ? editingColumnDefs : []),
-    {
-      field: 'id',
-      filter: 'number',
-      headerName: 'ID',
-      resizable: true,
-      sortable: true,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
-      width: 60,
-    },
-    { field: 'mission', filter: 'text', headerName: 'Mission', sortable: true, width: 100 },
-    { field: 'version', filter: 'text', headerName: 'Version', sortable: true, suppressAutoSize: true, width: 100 },
-    { field: 'created_at', filter: 'text', headerName: 'Created At', resizable: true, sortable: true },
-  ];
-
-  $: sequenceAdaptationColumDefs = [
-    ...(isEditingParcel ? editingColumnDefs : []),
-    { field: 'name', filter: 'text', headerName: 'Name', sortable: true, width: 100 },
-    {
-      field: 'id',
-      filter: 'number',
-      headerName: 'ID',
-      resizable: true,
-      sortable: true,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
-      width: 60,
-    },
-    { field: 'created_at', filter: 'text', headerName: 'Created At', resizable: true, sortable: true },
-  ];
-
-  $: columnDefs = [
-    ...(isSequenceAdaptation ? sequenceAdaptationColumDefs : dictionaryColumnDefs),
+  $: editingDictionariesColumnDefs = [
     {
       cellClass: 'action-cell-container',
       cellRenderer: (params: DictionaryCellRendererParams) => {
@@ -141,6 +81,72 @@
       suppressSizeToFit: true,
       width: 25,
     },
+  ];
+
+  $: editingParcelColumnDefs = [
+    {
+      cellDataType: 'boolean',
+      editable: hasEditPermission,
+      headerName: '',
+      suppressAutoSize: true,
+      suppressSizeToFit: true,
+      valueGetter: (params: ValueGetterParams<DictionaryType>) => {
+        const { data } = params;
+
+        if (data) {
+          if (isMultiselect) {
+            return !!selectedDictionaryIds[data.id];
+          }
+
+          // We have a single id if we're not in multiselect mode.
+          const idList = Object.keys(selectedDictionaryIds);
+
+          if (idList.length > 0) {
+            return Number(idList[0]) === data.id;
+          }
+        }
+
+        return false;
+      },
+      width: 35,
+    },
+  ];
+
+  $: dictionaryColumnDefs = [
+    ...(isEditingParcel ? editingParcelColumnDefs : []),
+    {
+      field: 'id',
+      filter: 'number',
+      headerName: 'ID',
+      resizable: true,
+      sortable: true,
+      suppressAutoSize: true,
+      suppressSizeToFit: true,
+      width: 60,
+    },
+    { field: 'mission', filter: 'text', headerName: 'Mission', sortable: true, width: 100 },
+    { field: 'version', filter: 'text', headerName: 'Version', sortable: true, suppressAutoSize: true, width: 100 },
+    { field: 'created_at', filter: 'text', headerName: 'Created At', resizable: true, sortable: true },
+  ];
+
+  $: sequenceAdaptationColumDefs = [
+    ...(isEditingParcel ? editingParcelColumnDefs : []),
+    {
+      field: 'id',
+      filter: 'number',
+      headerName: 'ID',
+      resizable: true,
+      sortable: true,
+      suppressAutoSize: true,
+      suppressSizeToFit: true,
+      width: 60,
+    },
+    { field: 'created_at', filter: 'text', headerName: 'Created At', resizable: true, sortable: true },
+  ];
+
+  $: columnDefs = [
+    ...(isSequenceAdaptation ? sequenceAdaptationColumDefs : dictionaryColumnDefs),
+    ...(isEditingDictionaries ? editingDictionariesColumnDefs : []),
   ];
 
   function deleteDictionary({ id }: Pick<DictionaryType, 'id'>) {
