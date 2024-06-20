@@ -277,8 +277,8 @@
 
 <style>
   .filter-container {
-    display: flex;
     align-items: center;
+    display: flex;
     margin-bottom: 8px;
   }
 </style>

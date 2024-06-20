@@ -105,7 +105,6 @@
    * we need to do a custom comparison.
    */
   function didParameterDictionariesChange(parameterDictionaryMap: Record<number, boolean>): boolean {
-    console.log('here');
     for (const parameterDictionaryIdString of Object.keys(parameterDictionaryMap)) {
       const parameterDictionaryId = parseInt(parameterDictionaryIdString);
 

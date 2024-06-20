@@ -181,6 +181,7 @@
       <DictionaryTable
         dictionaries={$commandDictionaries}
         hasDeletePermission={featurePermissions.commandDictionary.canDelete(data.user)}
+        isEditingDictionaries={true}
         type={'Command'}
         user={data.user}
         on:delete={deleteCommandDictionary}
@@ -189,6 +190,7 @@
       <DictionaryTable
         dictionaries={$channelDictionaries}
         hasDeletePermission={featurePermissions.channelDictionary.canDelete(data.user)}
+        isEditingDictionaries={true}
         type={'Channel'}
         user={data.user}
         on:delete={deleteChannelDictionary}
@@ -197,6 +199,7 @@
       <DictionaryTable
         dictionaries={$parameterDictionaries}
         hasDeletePermission={featurePermissions.parameterDictionary.canDelete(data.user)}
+        isEditingDictionaries={true}
         type={'Parameter'}
         user={data.user}
         on:delete={deleteParameterDictionary}
@@ -205,6 +208,7 @@
       <DictionaryTable
         dictionaries={$sequenceAdaptations}
         hasDeletePermission={featurePermissions.sequenceAdaptation.canDelete(data.user)}
+        isEditingDictionaries={true}
         type={'Sequence'}
         user={data.user}
         on:delete={deleteSequenceAdaptation}
