@@ -1085,14 +1085,13 @@ export function generateExternalEventTree(
             });
           });
         }
-        // TODO: This should implement a function similar to paginateNode for the children
         nodes.push({
           children: paginateExternalEventTreeNodes(children, id, externalEventTreeExpansionMap, binSize),
           expanded: expanded,
           id,
           isLeaf: false,
           items: items,
-          label
+          label,
         });
       });
   }
@@ -1242,64 +1241,6 @@ export function getSpanSubtrees(
   return children;
 }
 
-// export function getExternalEventSubtrees(
-//   // externalEvents: ExternalEvent[],
-//   externalEventTreeExpansionMap: ExternalEventTreeExpansionMap,
-//   // groupByMethod: ExternalEventOptions['groupBy'] = 'event_type',
-//   // filterExternalEventsByTime: boolean,
-//   // showExternalEvents: boolean,
-//   // viewTimeRange: TimeRange,
-
-//   // parentId: string,
-//   // activityTreeExpansionMap: ActivityTreeExpansionMap,
-//   // type: ActivityTreeNode['type'],
-//   // spanUtilityMaps: SpanUtilityMaps,
-//   // spansMap: SpansMap,
-// ): ExternalEventTreeNode[] {
-//   const children: ExternalEventTreeNode[] = [];
-//   const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[span.id].map(id => spansMap[id]);
-
-//   // Group by type
-//   let computedSpans = spanChildren;
-//   const groupedSpanChildren = groupBy(computedSpans, 'type');
-//   Object.keys(groupedSpanChildren)
-//     .sort()
-//     .forEach(key => {
-//       const spanGroup = groupedSpanChildren[key];
-//       const id = `${parentId}_${key}`;
-//       const expanded = getNodeExpanded(id, activityTreeExpansionMap);
-//       let childrenForKey: ActivityTreeNode[] = [];
-//       if (expanded) {
-//         spanGroup.forEach(spanChild => {
-//           childrenForKey.push(
-//             ...getSpanSubtrees(
-//               spanChild,
-//               id,
-//               activityTreeExpansionMap,
-//               'span',
-//               filterActivitiesByTime,
-//               spanUtilityMaps,
-//               spansMap,
-//               viewTimeRange,
-//             ),
-//           );
-//         });
-//         childrenForKey = paginateNodes(childrenForKey, id, activityTreeExpansionMap);
-//       }
-//       children.push({
-//         children: childrenForKey,
-//         expanded,
-//         id,
-//         isLeaf: false,
-//         items: spanGroup.map(span => ({ span })),
-//         label: key,
-//         type: 'aggregation',
-//       });
-//     });
-
-//   return children;
-// }
-
 /**
  * Returns whether or not the node is expanded in the activity tree
  */
@@ -1370,7 +1311,7 @@ export function paginateExternalEventTreeNodes(
   parentId: string,
   externalEventTreeExpansionMap: ExternalEventTreeExpansionMap,
   binSize: ExternalEventOptions['groupedModeBinSize'],
-  depth = 1
+  depth = 1,
 ) {
   // If we have less nodes left than our binSize, just return this set of nodes
   if (nodes.length <= binSize) {
