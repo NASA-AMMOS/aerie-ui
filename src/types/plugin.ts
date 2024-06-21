@@ -13,7 +13,6 @@ export type PluginTime = {
 };
 
 export type Plugins = {
-  sequencing?: null;
   time?: {
     additional?: PluginTime[]; // TODO bikeshed
     primary?: PluginTime;
