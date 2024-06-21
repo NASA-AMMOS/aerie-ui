@@ -147,6 +147,7 @@
           </div>
           <div class="title-metadata">
             {#if node.type === 'directive'}
+            <!--NOTE: Doesn't appear to run under any setting for directive/span visibility-->
               <div
                 title={`${node.children.length} child type group${pluralize(node.children.length)}`}
                 class="icon-group"
