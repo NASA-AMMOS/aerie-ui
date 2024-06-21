@@ -522,6 +522,7 @@
         externalEvents,
         externalEventTreeExpansionMap,
         externalEventOptions.groupBy,
+        externalEventOptions.groupedModeBinSize,
       )
     } else {
       externalEventTree = [];
@@ -552,14 +553,13 @@
     externalEvents: ExternalEvent[],
     externalEventTreeExpansionMap: ExternalEventTreeExpansionMap,
     groupByMethod: ExternalEventOptions['groupBy'] = 'event_type',
+    binSize: ExternalEventOptions['groupedModeBinSize'],
   ) {
     return generateExternalEventTreeUtil(
-        externalEvents,
-        externalEventTreeExpansionMap,
-        groupByMethod,
-        filterExternalEventsByTime,
-        true,
-        viewTimeRange
+      externalEvents,
+      externalEventTreeExpansionMap,
+      groupByMethod,
+      binSize
     );
   }
 
