@@ -4379,7 +4379,7 @@ const effects = {
     user: User | null,
     activityTypes: ActivityType[] = [],
     resourceTypes: ResourceType[] = [],
-    externalEventTypes: ExternalEventType[] = []
+    externalEventTypes: ExternalEventType[] = [],
     defaultView?: View | null,
   ): Promise<View | null> {
     try {

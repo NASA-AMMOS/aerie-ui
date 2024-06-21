@@ -51,7 +51,7 @@ export const load: PageLoad = async ({ parent, params, url }) => {
         user,
         initialActivityTypes,
         initialResourceTypes,
-        initialExternalEventTypes
+        initialExternalEventTypes,
         initialPlan.model.view,
       );
       const initialPlanSnapshotId = getSearchParameterNumber(SearchParameters.SNAPSHOT_ID, url.searchParams);
