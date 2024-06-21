@@ -17,14 +17,13 @@ export type ActivityTreeNode = {
   type: 'aggregation' | 'directive' | 'span';
 };
 export type ExternalEventTreeNode = {
-  children: ExternalEventTreeNode[];  // Child nodes of this external event
+  children: ExternalEventTreeNode[];
   expanded: boolean;
-  id: string;  // TODO - should this be a number?
+  id: string;
   isLeaf: boolean;
-  items: ExternalEventItem[];  // External events to render on the timeline at this level of the tree
+  items: ExternalEventItem[];
   label: string;
-  // type: ...  TODO - I think this is always ExternalEvent for these.
-}
+};
 
 export type ActivityTreeNodeItem = { directive?: ActivityDirective; span?: Span };
 export type ExternalEventItem = { externalEvent?: ExternalEvent };
@@ -221,7 +220,7 @@ export type ExternalEventOptions = {
   displayMode: 'grouped' | 'compact';
 
   // Determines whether to group the External Events by their event type, or their external source
-  groupBy: 'event_type' | 'source_id'
+  groupBy: 'event_type' | 'source_id';
 
   // External event text label behavior
   labelVisibility: 'on' | 'off' | 'auto';
