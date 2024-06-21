@@ -568,7 +568,10 @@ export function createTimelineActivityLayer(timelines: Timeline[], args: Partial
 /**
  * Returns a new external event layer
  */
-export function createTimelineExternalEventLayer(timelines: Timeline[], args: Partial<ExternalEventLayer> = {}): ExternalEventLayer {
+export function createTimelineExternalEventLayer(
+  timelines: Timeline[],
+  args: Partial<ExternalEventLayer> = {},
+): ExternalEventLayer {
   const id = getNextLayerID(timelines);
 
   return {
@@ -586,8 +589,6 @@ export function createTimelineExternalEventLayer(timelines: Timeline[], args: Pa
     ...args,
   };
 }
-
-
 
 export function createTimelineResourceLayer(timelines: Timeline[], resourceType: ResourceType) {
   const { name, schema } = resourceType;
@@ -943,8 +944,13 @@ export function spanInView(span: Span, viewTimeRange: TimeRange) {
  * Returns true if the external event falls within or encompasses the viewTimeRange
  */
 export function externalEventInView(externalEvent: ExternalEvent, viewTimeRange: TimeRange) {
-  const externalEventInBounds = externalEvent.startMs >= viewTimeRange.start && externalEvent.startMs < viewTimeRange.end;
-  return externalEventInBounds || (externalEvent.startMs < viewTimeRange.start && externalEvent.startMs + externalEvent.durationMs >= viewTimeRange.start);
+  const externalEventInBounds =
+    externalEvent.startMs >= viewTimeRange.start && externalEvent.startMs < viewTimeRange.end;
+  return (
+    externalEventInBounds ||
+    (externalEvent.startMs < viewTimeRange.start &&
+      externalEvent.startMs + externalEvent.durationMs >= viewTimeRange.start)
+  );
 }
 
 /**
@@ -1044,32 +1050,14 @@ export function generateActivityTree(
 /**
  * Returns an 'ExternalEventTree' representing the given external event type,
  * external source, or external source type. Each node represents an external event.
- *
- * TODO - so I think we have 3 different draw cases for 'grouped'/tree use
- * 1) Group by source
- *  - 1 layer deep where the tree represents an External Source, and each item underneath is the events from the source
- * 2) Group by event type
- *  - 1 layer deep where the tree represents an External Event Type, and each item underneath is the events that are of that type
- * 3) Group by source type
- *  - 1 layer deep where the tree represents an External Source Type, and each item underneath is the events from those external sources that are of that type
- *
- * Then on top of that, I think there is a case where we would want to sub-tree the following..
- * 1) Group by source -> group by event type
- *  - Show source at top level, then sub-groups of event type underneath
- * 2) Group by source type -> group by event type
- *  - Show source type at top level, then sub-groups of event type underneath
- * I think we could also consider: Group by event type -> group by source type
- * These seem more complicated and I'm not 100% sure on how these are implemented for ADs..
  */
 export function generateExternalEventTree(
   externalEvents: ExternalEvent[],
   externalEventTreeExpansionMap: ExternalEventTreeExpansionMap,
   groupByMethod: ExternalEventOptions['groupBy'] = 'event_type',
-  filterExternalEventsByTime: boolean,
-  showExternalEvents: boolean,
-  viewTimeRange: TimeRange
+  binSize: ExternalEventOptions['groupedModeBinSize'],
 ): ExternalEventTree {
-  let groupedExternalEvents = groupBy(externalEvents, groupByMethod);
+  const groupedExternalEvents = groupBy(externalEvents, groupByMethod);
 
   const nodes: ExternalEventTreeNode[] = [];
   if (Object.keys(groupedExternalEvents).length !== 0) {
@@ -1086,7 +1074,7 @@ export function generateExternalEventTree(
         const items: ExternalEventTreeNode['items'] = [];
         if (externalEventsGroup) {
           externalEventsGroup.forEach(externalEvent => {
-            items.push({ externalEvent });  // TODO - do we include anything else - the original includes child spans?
+            items.push({ externalEvent });
             children.push({
               children: [],
               expanded: expanded,
@@ -1099,12 +1087,12 @@ export function generateExternalEventTree(
         }
         // TODO: This should implement a function similar to paginateNode for the children
         nodes.push({
-          children: children,
+          children: paginateExternalEventTreeNodes(children, id, externalEventTreeExpansionMap, binSize),
           expanded: expanded,
           id,
           isLeaf: false,
-          items,
-          label,
+          items: items,
+          label
         });
       });
   }
@@ -1254,6 +1242,64 @@ export function getSpanSubtrees(
   return children;
 }
 
+// export function getExternalEventSubtrees(
+//   // externalEvents: ExternalEvent[],
+//   externalEventTreeExpansionMap: ExternalEventTreeExpansionMap,
+//   // groupByMethod: ExternalEventOptions['groupBy'] = 'event_type',
+//   // filterExternalEventsByTime: boolean,
+//   // showExternalEvents: boolean,
+//   // viewTimeRange: TimeRange,
+
+//   // parentId: string,
+//   // activityTreeExpansionMap: ActivityTreeExpansionMap,
+//   // type: ActivityTreeNode['type'],
+//   // spanUtilityMaps: SpanUtilityMaps,
+//   // spansMap: SpansMap,
+// ): ExternalEventTreeNode[] {
+//   const children: ExternalEventTreeNode[] = [];
+//   const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[span.id].map(id => spansMap[id]);
+
+//   // Group by type
+//   let computedSpans = spanChildren;
+//   const groupedSpanChildren = groupBy(computedSpans, 'type');
+//   Object.keys(groupedSpanChildren)
+//     .sort()
+//     .forEach(key => {
+//       const spanGroup = groupedSpanChildren[key];
+//       const id = `${parentId}_${key}`;
+//       const expanded = getNodeExpanded(id, activityTreeExpansionMap);
+//       let childrenForKey: ActivityTreeNode[] = [];
+//       if (expanded) {
+//         spanGroup.forEach(spanChild => {
+//           childrenForKey.push(
+//             ...getSpanSubtrees(
+//               spanChild,
+//               id,
+//               activityTreeExpansionMap,
+//               'span',
+//               filterActivitiesByTime,
+//               spanUtilityMaps,
+//               spansMap,
+//               viewTimeRange,
+//             ),
+//           );
+//         });
+//         childrenForKey = paginateNodes(childrenForKey, id, activityTreeExpansionMap);
+//       }
+//       children.push({
+//         children: childrenForKey,
+//         expanded,
+//         id,
+//         isLeaf: false,
+//         items: spanGroup.map(span => ({ span })),
+//         label: key,
+//         type: 'aggregation',
+//       });
+//     });
+
+//   return children;
+// }
+
 /**
  * Returns whether or not the node is expanded in the activity tree
  */
@@ -1317,4 +1363,50 @@ export function paginateNodes(
     node.expanded = getNodeExpanded(node.id, activityTreeExpansionMap);
   });
   return paginateNodes(newNodes, parentId, activityTreeExpansionMap, depth + 1);
+}
+
+export function paginateExternalEventTreeNodes(
+  nodes: ExternalEventTreeNode[],
+  parentId: string,
+  externalEventTreeExpansionMap: ExternalEventTreeExpansionMap,
+  binSize: ExternalEventOptions['groupedModeBinSize'],
+  depth = 1
+) {
+  // If we have less nodes left than our binSize, just return this set of nodes
+  if (nodes.length <= binSize) {
+    return nodes;
+  }
+  // Create a new tree of nodes to cover all indexes of Math.floor(i / binSize)
+  const newNodes: ExternalEventTreeNode[] = [];
+  nodes.forEach((node, i) => {
+    const bin = Math.floor(i / binSize);
+    // If a node for this bin index doesn't already exist, create it
+    if (!newNodes[bin]) {
+      newNodes[bin] = {
+        children: [],
+        expanded: false,
+        id: '',
+        isLeaf: false,
+        items: [],
+        label: '',
+      };
+    }
+    // Push the original node to this bin node's children
+    newNodes[bin].children.push(node);
+    // Bin node now inherits any items the original node has
+    if (node.items) {
+      newNodes[bin].items.push(...node.items);
+    }
+  });
+  // Set metadata (id, label, expanded?) for all new nodes
+  newNodes.forEach((node, i) => {
+    const nodeStart = i * binSize ** depth;
+    const nodeEnd = Math.min(nodeStart + node.children.length * depth ** binSize, (i + 1) * binSize ** depth);
+    const label = `[${nodeStart} … ${nodeEnd - 1}]`;
+    node.id = `${parentId}_${label}_page`;
+    node.label = label;
+    node.expanded = getNodeExpanded(node.id, externalEventTreeExpansionMap);
+  });
+  // Recurse throughout each new node created, attempting to further bin the nodes
+  return paginateExternalEventTreeNodes(newNodes, parentId, externalEventTreeExpansionMap, depth + 1);
 }

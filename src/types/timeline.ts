@@ -225,6 +225,9 @@ export type ExternalEventOptions = {
 
   // External event text label behavior
   labelVisibility: 'on' | 'off' | 'auto';
+
+  // Bin size for external event children in grouped mode
+  groupedModeBinSize: number;
 };
 
 export type Row = {

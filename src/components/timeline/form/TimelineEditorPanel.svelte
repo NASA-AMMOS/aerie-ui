@@ -1143,10 +1143,9 @@
               </RadioButton>
             </RadioButtons>
           </Input>
-          <!-- TODO - update hierarchy modes -->
           {#if externalEventOptions.displayMode === 'grouped'}
             <Input layout="inline" class="editor-input">
-              <label for="activity-composition">Hierarchy</label>
+              <label for="activity-composition">Group By</label>
               <RadioButtons
                 selectedButtonId={externalEventOptions.groupBy}
                 on:select-radio-button={e => handleExternalEventOptionRadioChange(e, 'groupBy')}
@@ -1175,6 +1174,31 @@
                   </div>
                 </RadioButton>
               </RadioButtons>
+            </Input>
+            <Input layout="inline" class="editor-input">
+              <label for="activity-composition">Bin Size</label>
+              <input
+                min={2}
+                autocomplete="off"
+                class="st-input w-100"
+                name="text"
+                type="number"
+                value={externalEventOptions.groupedModeBinSize}
+                on:input={e => { // TODO: for optimization sake, only run this when submitted!
+                  const { value } = getTarget(e);
+                  if (typeof value === 'number' && !isNaN(value)) {
+                    if (value >= 2) {
+                      viewUpdateRow(
+                        'externalEventOptions', 
+                        { ...externalEventOptions, groupedModeBinSize: value }, 
+                        null,
+                        null,
+                        true
+                      );
+                    }
+                  }
+                }}
+              />
             </Input>
           {/if}
           <form on:submit={event => event.preventDefault()} style="flex: 1">
