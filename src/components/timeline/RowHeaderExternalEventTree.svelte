@@ -78,7 +78,6 @@
       >
         <div style=" align-items: center;color: var(--st-button-tertiary-color);display: flex; gap: 4px;">
           <div title="External Event" class="icon-group">
-            <!-- TODO what have we used in other spots? -->
               <CaretRight style="width:13px"/>
           </div>
         </div>
@@ -98,7 +97,6 @@
       >
         <div slot="left" style="align-items: center;display: flex">
           <div title="External Event" class="icon-group">
-            <!-- TODO what have we used in other spots? -->
             <FolderIcon />
           </div>
         </div>
@@ -120,7 +118,7 @@
               title={`${node.children.length} child type group${pluralize(node.children.length)}`}
               class="icon-group"
             >
-              <span>{node.children.length}</span>
+              <span>{externalEventCount}</span>
             </div>
           </div>
         </div>
