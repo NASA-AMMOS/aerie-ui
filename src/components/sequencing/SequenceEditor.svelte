@@ -14,7 +14,7 @@
   import SaveIcon from 'bootstrap-icons/icons/save.svg?component';
   import { EditorView, basicSetup } from 'codemirror';
   import { debounce } from 'lodash-es';
-  import { createEventDispatcher, onMount } from 'svelte';
+  import { createEventDispatcher, onDestroy, onMount } from 'svelte';
   import {
     channelDictionaries,
     commandDictionaries,
@@ -29,6 +29,7 @@
   } from '../../stores/sequencing';
   import type { User } from '../../types/app';
   import { setupLanguageSupport } from '../../utilities/codemirror';
+  import effects from '../../utilities/effects';
   import { seqJsonLinter } from '../../utilities/new-sequence-editor/seq-json-linter';
   import { sequenceCompletion } from '../../utilities/new-sequence-editor/sequence-completion';
   import { sequenceLinter } from '../../utilities/new-sequence-editor/sequence-linter';
@@ -72,11 +73,9 @@
   let toggleSeqJsonPreview: boolean = false;
 
   $: {
-    if (editorSequenceView) {
-      editorSequenceView.dispatch({
-        changes: { from: 0, insert: sequenceDefinition, to: editorSequenceView.state.doc.length },
-      });
-    }
+    editorSequenceView.dispatch({
+      changes: { from: 0, insert: sequenceDefinition, to: editorSequenceView.state.doc.length },
+    });
   }
 
   $: {
@@ -177,6 +176,37 @@
       parent: editorSeqJsonDiv,
     });
   });
+
+  onDestroy(() => {
+    resetSequenceAdaptation();
+  });
+
+  async function loadSequenceAdaptation(id: number | null | undefined): Promise<void> {
+    if (id) {
+      const adaptation = await effects.getSequenceAdaptation(id, user);
+
+      if (adaptation) {
+        try {
+          // This evaluates the custom sequence adaptation that is optionally provided by the user.
+          Function(adaptation.adaptation)();
+        } catch (e) {
+          console.error(e);
+          showFailureToast('Invalid sequence adaptation');
+        }
+      }
+    } else {
+      resetSequenceAdaptation();
+    }
+  }
+
+  function resetSequenceAdaptation(): void {
+    globalThis.CONDITIONAL_KEYWORDS = undefined;
+    globalThis.LOOP_KEYWORDS = undefined;
+    globalThis.GLOBALS = undefined;
+    globalThis.ARG_DELEGATOR = undefined;
+    globalThis.LINT = () => undefined;
+    globalThis.TO_SEQ_JSON = () => undefined;
+  }
 
   function sequenceUpdateListener(viewUpdate: ViewUpdate) {
     const sequence = viewUpdate.state.doc.toString();
