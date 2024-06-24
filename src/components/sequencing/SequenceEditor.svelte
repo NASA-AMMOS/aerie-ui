@@ -197,7 +197,6 @@
         try {
           // This evaluates the custom sequence adaptation that is optionally provided by the user.
           Function(adaptation.adaptation)();
-          showSuccessToast('Adaptation Loaded');
         } catch (e) {
           console.error(e);
           showFailureToast('Invalid sequence adaptation');
