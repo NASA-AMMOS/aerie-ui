@@ -21,7 +21,7 @@
   export let gridSection: ViewGridSection;
 
   type SimulationEventColumns = keyof SimulationEvent | 'derived_start_time';
-  type SimulationEventColDef = ColDef<SimulationEvent>;
+  type SimulationEventColDef = ColDef<SimulationEvent & { derived_start_time: number }>;
 
   let simulationEventsTable: ViewTable | undefined;
   let autoSizeColumns: AutoSizeColumns | undefined;
@@ -38,8 +38,9 @@
   $: defaultColumnDefinitions = {
     derived_start_time: {
       filter: 'text',
+      field: 'derived_start_time',
       headerName: 'Absolute Start Time (UTC)',
-      hide: true,
+      sort: 'asc',
       resizable: true,
       sortable: true,
       valueGetter: params => {

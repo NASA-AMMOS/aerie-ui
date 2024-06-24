@@ -6,12 +6,13 @@
   import type { ColDef, ColumnResizedEvent, ColumnState } from 'ag-grid-community';
   import { debounce } from 'lodash-es';
   import { selectActivity } from '../../stores/activities';
-  import { selectedSpanId, simulationDataset, spans } from '../../stores/simulation';
+  import { plugins } from '../../stores/plugins';
+  import { selectedSpanId, spans } from '../../stores/simulation';
   import { view, viewTogglePanel, viewUpdateActivitySpansTable } from '../../stores/views';
   import type { Span } from '../../types/simulation';
   import type { AutoSizeColumns, ViewGridSection, ViewTable } from '../../types/view';
   import { filterEmpty } from '../../utilities/generic';
-  import { convertDoyToYmd, getDoyTimeFromInterval } from '../../utilities/time';
+  import { getDoyTime } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import GridMenu from '../menus/GridMenu.svelte';
   import type DataGrid from '../ui/DataGrid/DataGrid.svelte';
@@ -45,35 +46,6 @@
       resizable: true,
       sortable: true,
     },
-    derived_start_time: {
-      filter: 'text',
-      headerName: 'Absolute Start Time (UTC)',
-      hide: true,
-      resizable: true,
-      sortable: true,
-      valueGetter: params => {
-        if ($simulationDataset && $simulationDataset.simulation_start_time && params.data) {
-          return getDoyTimeFromInterval($simulationDataset?.simulation_start_time, params.data.start_offset);
-        }
-        return '';
-      },
-    },
-    derived_end_time: {
-      filter: 'text',
-      headerName: 'Absolute End Time (UTC)',
-      hide: true,
-      resizable: true,
-      sortable: true,
-      valueGetter: params => {
-        if ($simulationDataset && $simulationDataset.simulation_start_time && params.data) {
-          const startTime = convertDoyToYmd(
-            getDoyTimeFromInterval($simulationDataset?.simulation_start_time, params.data.start_offset),
-          );
-          return startTime ? getDoyTimeFromInterval(startTime, params.data.duration) : '';
-        }
-        return '';
-      },
-    },
     duration: {
       field: 'duration',
       filter: 'text',
@@ -81,6 +53,7 @@
       hide: true,
       resizable: true,
       sortable: true,
+      maxWidth: 120,
     },
     id: {
       field: 'id',
@@ -89,6 +62,7 @@
       hide: true,
       resizable: true,
       sortable: true,
+      maxWidth: 80,
     },
     parent_id: {
       field: 'parent_id',
@@ -97,6 +71,7 @@
       hide: true,
       resizable: true,
       sortable: true,
+      maxWidth: 140,
     },
     start_offset: {
       field: 'start_offset',
@@ -105,6 +80,35 @@
       hide: true,
       resizable: true,
       sortable: true,
+    },
+    derived_start_time: {
+      filter: 'text',
+      field: 'startMs',
+      headerName: `Absolute End Time (${$plugins.time?.primary?.label ?? 'UTC'})`,
+      hide: true,
+      resizable: true,
+      sortable: true,
+      valueGetter: params => {
+        if (params && params.data && typeof params.data.startMs === 'number') {
+          return ($plugins.time?.primary?.format ?? getDoyTime)(new Date(params.data.startMs), false);
+        }
+        return '';
+      },
+    },
+
+    derived_end_time: {
+      filter: 'text',
+      field: 'endMs',
+      headerName: 'Absolute End Time (UTC)',
+      hide: true,
+      resizable: true,
+      sortable: true,
+      valueGetter: params => {
+        if (params && params.data && typeof params.data.endMs === 'number') {
+          return ($plugins.time?.primary?.format ?? getDoyTime)(new Date(params.data.endMs), false);
+        }
+        return '';
+      },
     },
     type: {
       field: 'type',

@@ -40,7 +40,7 @@
 
   $: activityDirectivesTable = $view?.definition.plan.activityDirectivesTable;
   $: autoSizeColumns = activityDirectivesTable?.autoSizeColumns;
-  $: primaryTimeLabel = $plugins.time?.primary?.label ?? 'UTC';
+  /* eslint-disable sort-keys */
   $: defaultColumnDefinitions = {
     anchor_id: {
       field: 'anchor_id',
@@ -164,10 +164,11 @@
       resizable: true,
       sortable: true,
     },
-    start_time_ms: {
+    derived_start_time: {
+      field: 'start_time_ms',
       filter: 'text',
-      headerName: `Absolute Start Time (${primaryTimeLabel})`,
-      hide: true,
+      headerName: `Absolute Start Time (${$plugins.time?.primary?.label ?? 'UTC'})`,
+      hide: false,
       resizable: true,
       sortable: true,
       valueGetter: (params: ValueGetterParams<ActivityDirective>) => {
