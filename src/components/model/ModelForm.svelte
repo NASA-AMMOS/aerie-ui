@@ -6,6 +6,7 @@
   import type { User, UserId } from '../../types/app';
   import type { ModelLog, ModelSlim } from '../../types/model';
   import effects from '../../utilities/effects';
+  import { getModelStatusRollup } from '../../utilities/model';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import { getShortISOForDate } from '../../utilities/time';
@@ -40,10 +41,12 @@
   const updateModelPermissionError: string = 'You do not have permission to update this model';
   const deleteModelPermissionError: string = 'You do not have permission to delete this model';
   const createPlanPermissionError: string = 'You do not have permission to create a plan';
+  const extractionPermissionError: string = 'You do not have permission to re-trigger a model extraction';
 
   let hasUpdateModelPermission: boolean = false;
   let hasDeleteModelPermission: boolean = false;
   let hasCreatePlanPermission: boolean = false;
+  let hasExtractionPermission: boolean = false;
   let name: string = '';
   let owner: UserId | null = null;
   let version: string = '';
@@ -51,6 +54,7 @@
   let modelLogs:
     | Pick<ModelSlim, 'refresh_activity_type_logs' | 'refresh_model_parameter_logs' | 'refresh_resource_type_logs'>
     | undefined = undefined;
+  let modelHasExtractionError: boolean = false;
 
   $: description = initialModelDescription;
   $: name = initialModelName;
@@ -61,11 +65,21 @@
     refresh_model_parameter_logs: modelParameterLogs ?? [],
     refresh_resource_type_logs: resourceTypeLogs ?? [],
   };
+  $: {
+    const { activityLogStatus, parameterLogStatus, resourceLogStatus } = getModelStatusRollup(modelLogs);
+
+    if (activityLogStatus === 'error' || parameterLogStatus === 'error' || resourceLogStatus === 'error') {
+      modelHasExtractionError = true;
+    } else {
+      modelHasExtractionError = false;
+    }
+  }
 
   $: if (user) {
     hasUpdateModelPermission = featurePermissions.model.canUpdate(user);
     hasDeleteModelPermission = featurePermissions.model.canDelete(user);
     hasCreatePlanPermission = featurePermissions.plan.canCreate(user);
+    hasExtractionPermission = featurePermissions.model.canUpdate(user);
   }
 
   $: dispatch('hasModelChanged', {
@@ -95,7 +109,24 @@
 
   function onRetriggerModelExtraction() {
     if (modelId != null) {
-      effects.retriggerModelExtraction(modelId, user);
+      const prevLogs = modelLogs;
+
+      modelLogs = {
+        refresh_activity_type_logs: [{ error: null, error_message: null, pending: true, success: false }],
+        refresh_model_parameter_logs: [{ error: null, error_message: null, pending: true, success: false }],
+        refresh_resource_type_logs: [{ error: null, error_message: null, pending: true, success: false }],
+      } as Pick<
+        ModelSlim,
+        'refresh_activity_type_logs' | 'refresh_model_parameter_logs' | 'refresh_resource_type_logs'
+      >;
+
+      // introduce delay for UX feedback
+      setTimeout(async () => {
+        const extractionResponse = await effects.retriggerModelExtraction(modelId, user);
+        if (extractionResponse == null) {
+          modelLogs = prevLogs;
+        }
+      }, 200);
     }
   }
 </script>
@@ -174,7 +205,22 @@
       <Input layout="inline">
         <div class="model-jar-label">
           <label class="model-metadata-item-label" for="status">Jar file status</label>
-          <button class="icon-button" on:click={onRetriggerModelExtraction}><RefreshIcon /></button>
+          {#if modelHasExtractionError}
+            <button
+              class="icon-button"
+              on:click={onRetriggerModelExtraction}
+              use:permissionHandler={{
+                hasPermission: hasExtractionPermission,
+                permissionError: extractionPermissionError,
+              }}
+              use:tooltip={{
+                content: 'Re-run extraction',
+                disabled: !hasExtractionPermission,
+              }}
+            >
+              <RefreshIcon />
+            </button>
+          {/if}
         </div>
         <ModelStatusRollup mode="rollup" model={modelLogs} />
       </Input>

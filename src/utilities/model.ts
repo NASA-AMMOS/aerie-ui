@@ -23,12 +23,12 @@ export function getModelStatusRollup(
     if (activityLogs) {
       activityLog = activityLogs[0] ?? null;
       if (activityLog) {
-        if (activityLog.success) {
-          activityLogStatus = 'complete';
-        } else if (activityLog.error != null) {
-          activityLogStatus = 'error';
-        } else {
+        if (activityLog.pending) {
           activityLogStatus = 'extracting';
+        } else if (activityLog.success) {
+          activityLogStatus = 'complete';
+        } else {
+          activityLogStatus = 'error';
         }
       }
     }
@@ -36,12 +36,12 @@ export function getModelStatusRollup(
     if (parameterLogs) {
       parameterLog = parameterLogs[0] ?? null;
       if (parameterLog) {
-        if (parameterLog.success) {
-          parameterLogStatus = 'complete';
-        } else if (parameterLog.error != null) {
-          parameterLogStatus = 'error';
-        } else {
+        if (parameterLog.pending) {
           parameterLogStatus = 'extracting';
+        } else if (parameterLog.success) {
+          parameterLogStatus = 'complete';
+        } else {
+          parameterLogStatus = 'error';
         }
       }
     }
@@ -49,12 +49,12 @@ export function getModelStatusRollup(
     if (resourceLogs) {
       resourceLog = resourceLogs[0] ?? null;
       if (resourceLog) {
-        if (resourceLog.success) {
-          resourceLogStatus = 'complete';
-        } else if (resourceLog.error != null) {
-          resourceLogStatus = 'error';
-        } else {
+        if (resourceLog.pending) {
           resourceLogStatus = 'extracting';
+        } else if (resourceLog.success) {
+          resourceLogStatus = 'complete';
+        } else {
+          resourceLogStatus = 'error';
         }
       }
     }

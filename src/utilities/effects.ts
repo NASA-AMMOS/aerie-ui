@@ -4247,15 +4247,24 @@ const effects = {
         throwPermissionError('retrigger this model extraction');
       }
 
-      const data = await reqHasura<Pick<Model, 'description' | 'name' | 'owner' | 'version'>>(
-        gql.UPDATE_MODEL,
-        { id, model: { mission: '' } },
-        user,
-      );
-
+      const data = await reqGateway('/modelExtraction', 'POST', JSON.stringify({ missionModelId: id }), user, false);
       if (data != null) {
+        const {
+          response: { activity_types, model_parameters, resource_types },
+        } = data;
+
+        if (activity_types.error) {
+          throw Error(activity_types.error);
+        }
+        if (model_parameters.error) {
+          throw Error(model_parameters.error);
+        }
+        if (resource_types.error) {
+          throw Error(resource_types.error);
+        }
+
         showSuccessToast('Model Extraction Retriggered Successfully');
-        return data.updateModel;
+        return data;
       } else {
         throw Error(`Unable to retrigger model extraction with ID: "${id}"`);
       }
