@@ -4,6 +4,7 @@
   import { base } from '$app/paths';
   import type { ICellRendererParams } from 'ag-grid-community';
   import { expansionRunsColumns } from '../../stores/expansion';
+  import { parcel } from '../../stores/sequencing';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef, DataGridRowSelection } from '../../types/data-grid';
   import type { ActivityInstanceJoin, ExpandedSequence, ExpansionRun } from '../../types/expansion';
@@ -173,6 +174,7 @@
   <CssGridGutter track={1} type="column" />
 
   <SequenceEditor
+    parcel={$parcel}
     sequenceDefinition={seqJsonToSequence(selectedSequence?.expanded_sequence, [], null) ?? 'No Sequence Selected'}
     sequenceName={selectedSequence?.seq_id}
     sequenceSeqJson={selectedSequence ? JSON.stringify(selectedSequence.expanded_sequence, null, 2) : undefined}
