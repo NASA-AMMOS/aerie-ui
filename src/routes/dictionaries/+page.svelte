@@ -31,16 +31,17 @@
   let creatingDictionary: boolean = false;
   let files: FileList;
   let file: File;
+  let fileInput: HTMLInputElement;
   let isSequenceAdaptation: boolean = false;
   let sequenceAdaptationName: string;
 
   $: hasCreatePermission = featurePermissions.commandDictionary.canCreate(data.user);
-  $: createButtonDisabled = !files;
+  $: createButtonDisabled = !files || (isSequenceAdaptation && sequenceAdaptationName === '');
   $: {
     if (files) {
       file = files[0];
 
-      isSequenceAdaptation = file.type === 'application/x-javascript';
+      isSequenceAdaptation = file.name.substring(file.name.lastIndexOf('.')) === '.js';
       sequenceAdaptationName = '';
     }
   }
@@ -73,11 +74,15 @@
           showSuccessToast('Parameter Dictionary Created Successfully');
           break;
         }
-        case 'ADAPTATION': {
+        case DictionaryTypes.ADAPTATION: {
           showSuccessToast('Sequence Adaptation Created Successfully');
           break;
         }
       }
+
+      fileInput.value = '';
+      isSequenceAdaptation = false;
+      sequenceAdaptationName = '';
     } catch (e) {
       createDictionaryError = (e as Error).message;
       showFailureToast('Command Dictionary Create Failed');
@@ -129,6 +134,7 @@
               required
               type="file"
               bind:files
+              bind:this={fileInput}
               use:permissionHandler={{
                 hasPermission: hasCreatePermission,
                 permissionError: createPermissionError,
