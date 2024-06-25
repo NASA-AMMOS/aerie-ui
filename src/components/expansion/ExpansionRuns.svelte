@@ -4,7 +4,7 @@
   import { base } from '$app/paths';
   import type { ICellRendererParams } from 'ag-grid-community';
   import { expansionRunsColumns } from '../../stores/expansion';
-  import { parcel } from '../../stores/sequencing';
+  import { parcel, parcelId } from '../../stores/sequencing';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef, DataGridRowSelection } from '../../types/data-grid';
   import type { ActivityInstanceJoin, ExpandedSequence, ExpansionRun } from '../../types/expansion';
@@ -106,8 +106,11 @@
 
     if (isSelected) {
       selectedExpansionRun = clickedRun;
+
+      $parcelId = selectedExpansionRun.expansion_set.parcel_id;
     } else if (selectedExpansionRun?.id === clickedRun.id) {
       selectedExpansionRun = null;
+      $parcelId = null;
     }
   }
 
