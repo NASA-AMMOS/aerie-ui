@@ -18,6 +18,7 @@ describe('Model Status Rollup', () => {
               {
                 error: '',
                 error_message: testError,
+                pending: false,
                 success: false,
               },
             ],
@@ -40,6 +41,7 @@ describe('Model Status Rollup', () => {
               {
                 error: '',
                 error_message: testError,
+                pending: false,
                 success: false,
               },
             ],
@@ -62,6 +64,7 @@ describe('Model Status Rollup', () => {
               {
                 error: '',
                 error_message: testError,
+                pending: false,
                 success: false,
               },
             ],
@@ -82,6 +85,7 @@ describe('Model Status Rollup', () => {
               {
                 error: null,
                 error_message: null,
+                pending: true,
                 success: false,
               },
             ],
@@ -103,6 +107,7 @@ describe('Model Status Rollup', () => {
               {
                 error: '',
                 error_message: '',
+                pending: false,
                 success: true,
               },
             ],
@@ -110,6 +115,7 @@ describe('Model Status Rollup', () => {
               {
                 error: '',
                 error_message: '',
+                pending: false,
                 success: true,
               },
             ],
@@ -117,6 +123,7 @@ describe('Model Status Rollup', () => {
               {
                 error: '',
                 error_message: '',
+                pending: false,
                 success: true,
               },
             ],
@@ -136,6 +143,7 @@ describe('Model Status Rollup', () => {
               {
                 error: '',
                 error_message: '',
+                pending: false,
                 success: true,
               },
             ],
@@ -143,6 +151,7 @@ describe('Model Status Rollup', () => {
               {
                 error: '',
                 error_message: 'Test Error',
+                pending: false,
                 success: false,
               },
             ],
@@ -150,6 +159,7 @@ describe('Model Status Rollup', () => {
               {
                 error: '',
                 error_message: '',
+                pending: false,
                 success: true,
               },
             ],
@@ -170,6 +180,7 @@ describe('Model Status Rollup', () => {
               {
                 error: '',
                 error_message: testError,
+                pending: false,
                 success: false,
               },
             ],
@@ -192,6 +203,7 @@ describe('Model Status Rollup', () => {
               {
                 error: '',
                 error_message: testError,
+                pending: false,
                 success: false,
               },
             ],
@@ -214,6 +226,7 @@ describe('Model Status Rollup', () => {
               {
                 error: '',
                 error_message: testError,
+                pending: false,
                 success: false,
               },
             ],
@@ -230,9 +243,30 @@ describe('Model Status Rollup', () => {
         props: {
           mode: 'iconOnly',
           model: {
-            refresh_activity_type_logs: [],
-            refresh_model_parameter_logs: [],
-            refresh_resource_type_logs: [],
+            refresh_activity_type_logs: [
+              {
+                error: '',
+                error_message: '',
+                pending: true,
+                success: false,
+              },
+            ],
+            refresh_model_parameter_logs: [
+              {
+                error: '',
+                error_message: '',
+                pending: true,
+                success: false,
+              },
+            ],
+            refresh_resource_type_logs: [
+              {
+                error: '',
+                error_message: '',
+                pending: true,
+                success: false,
+              },
+            ],
           },
         },
       });
@@ -249,6 +283,7 @@ describe('Model Status Rollup', () => {
               {
                 error: '',
                 error_message: '',
+                pending: false,
                 success: true,
               },
             ],
@@ -256,6 +291,7 @@ describe('Model Status Rollup', () => {
               {
                 error: '',
                 error_message: '',
+                pending: false,
                 success: true,
               },
             ],
@@ -263,6 +299,7 @@ describe('Model Status Rollup', () => {
               {
                 error: '',
                 error_message: '',
+                pending: false,
                 success: true,
               },
             ],
@@ -282,6 +319,7 @@ describe('Model Status Rollup', () => {
               {
                 error: '',
                 error_message: '',
+                pending: false,
                 success: true,
               },
             ],
@@ -289,6 +327,7 @@ describe('Model Status Rollup', () => {
               {
                 error: '',
                 error_message: 'Test Error',
+                pending: false,
                 success: false,
               },
             ],
@@ -296,6 +335,7 @@ describe('Model Status Rollup', () => {
               {
                 error: '',
                 error_message: '',
+                pending: false,
                 success: true,
               },
             ],
