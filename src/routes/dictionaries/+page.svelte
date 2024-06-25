@@ -36,9 +36,9 @@
   let sequenceAdaptationName: string;
 
   $: hasCreatePermission = featurePermissions.commandDictionary.canCreate(data.user);
-  $: createButtonDisabled = !files || (isSequenceAdaptation && sequenceAdaptationName === '');
+  $: createButtonDisabled = !files || files?.length === 0 || (isSequenceAdaptation && sequenceAdaptationName === '');
   $: {
-    if (files) {
+    if (files && files.length > 0) {
       file = files[0];
 
       isSequenceAdaptation = file.name.substring(file.name.lastIndexOf('.')) === '.js';
