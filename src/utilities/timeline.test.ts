@@ -6,6 +6,7 @@ import {
   ViewXRangeLayerSchemePresets,
 } from '../constants/view';
 import type { ActivityDirective } from '../types/activity';
+import type { ExternalEvent } from '../types/external-event';
 import type { Resource, ResourceType, Span, SpanUtilityMaps, SpansMap } from '../types/simulation';
 import type { ActivityTreeNode, TimeRange, Timeline, XRangeLayer } from '../types/timeline';
 import { createSpanUtilityMaps } from './activities';
@@ -14,12 +15,14 @@ import {
   createRow,
   createTimeline,
   createTimelineActivityLayer,
+  createTimelineExternalEventLayer,
   createTimelineLineLayer,
   createTimelineXRangeLayer,
   createVerticalGuide,
   createYAxis,
   directiveInView,
   duplicateRow,
+  externalEventInView,
   filterResourcesByLayer,
   generateActivityTree,
   getUniqueColorForActivityLayer,
@@ -27,6 +30,7 @@ import {
   getUniqueColorSchemeForXRangeLayer,
   getYAxisBounds,
   isActivityLayer,
+  isExternalEventLayer,
   isLineLayer,
   isXRangeLayer,
   paginateNodes,
@@ -142,6 +146,7 @@ function populateTimelineLayers(timelines: Timeline[]) {
       row.layers.push(createTimelineActivityLayer(timelines));
       row.layers.push(createTimelineLineLayer(timelines, row.yAxes));
       row.layers.push(createTimelineXRangeLayer(timelines, row.yAxes));
+      row.layers.push(createTimelineExternalEventLayer(timelines));  // TODO - do we need to include any other args, like row.yAxes?
     });
   });
   return timelines;
@@ -204,6 +209,22 @@ function generateSpan(properties: Partial<Span>): Span {
   };
 }
 
+function generateExternalEvent(properties: Partial<ExternalEvent>): ExternalEvent {
+  return {
+    duration: '',
+    start_time: '',
+    event_type: "test",
+    id: 1,
+    key: "test",
+    properties: {},
+    source: undefined,
+    source_id: 1,
+    durationMs: 0,
+    startMs: 0,
+    ...properties,
+  };
+}
+
 test('createTimeline', () => {
   const timelines = generateTimelines();
   expect(timelines[0].id).toBe(0);
@@ -241,16 +262,22 @@ test('createTimelineLayers', () => {
   expect(timelines[0].rows[0].layers[2].chartType).toBe('x-range');
   expect(timelines[0].rows[0].layers[2].id).toBe(2);
   expect(timelines[0].rows[0].layers[2].yAxisId).toBe(0);
+  expect(timelines[0].rows[0].layers[3].chartType).toBe('external-event');
+  expect(timelines[0].rows[0].layers[3].id).toBe(3);
+  expect(timelines[0].rows[0].layers[3].yAxisId).toBe(null);
 
   expect(timelines[1].rows[0].layers[0].chartType).toBe('activity');
-  expect(timelines[1].rows[0].layers[0].id).toBe(6);
+  expect(timelines[1].rows[0].layers[0].id).toBe(8);
   expect(timelines[1].rows[0].layers[0].yAxisId).toBe(null);
   expect(timelines[1].rows[0].layers[1].chartType).toBe('line');
-  expect(timelines[1].rows[0].layers[1].id).toBe(7);
+  expect(timelines[1].rows[0].layers[1].id).toBe(9);
   expect(timelines[1].rows[0].layers[1].yAxisId).toBe(2);
   expect(timelines[1].rows[0].layers[2].chartType).toBe('x-range');
-  expect(timelines[1].rows[0].layers[2].id).toBe(8);
+  expect(timelines[1].rows[0].layers[2].id).toBe(10);
   expect(timelines[1].rows[0].layers[2].yAxisId).toBe(2);
+  expect(timelines[1].rows[0].layers[3].chartType).toBe('external-event');
+  expect(timelines[1].rows[0].layers[3].id).toBe(11);
+  expect(timelines[1].rows[0].layers[3].yAxisId).toBe(null);
 });
 
 test('createTimelineHorizontalGuides', () => {
@@ -371,6 +398,8 @@ test('filterResourcesByLayer', () => {
   expect(filterResourcesByLayer(layer3, [resourceA, resourceB])).to.deep.equal([resourceA]);
 });
 
+// TODO - should we make a test case for filtering the sources in an ExternalEventsLayer?
+
 test('directiveInView', () => {
   const viewTimeRange: TimeRange = { end: 1716332383895 + 60000, start: 1716332383895 }; // One minute duration
   expect(directiveInView(generateActivityDirective({ start_time_ms: null }), viewTimeRange)).toBe(false);
@@ -408,23 +437,57 @@ test('spanInView', () => {
   );
 });
 
+test('externalEventInView', () => {
+  const viewTimeRange: TimeRange = { end: 1716332383895 + 60000, start: 1716332383895 }; // One minute duration
+  expect(externalEventInView(generateExternalEvent({ durationMs: 1, startMs: 0}), viewTimeRange)).toBe(false);
+  expect(externalEventInView(generateExternalEvent({ durationMs: 3, startMs: 1716332383893}), viewTimeRange)).toBe(
+    true,
+  );
+  expect(externalEventInView(generateExternalEvent({ durationMs: 1, startMs: 1716332383895 }), viewTimeRange)).toBe(
+    true,
+  );
+  expect(externalEventInView(generateExternalEvent({ durationMs: 1, startMs: 1716332383896 }), viewTimeRange)).toBe(
+    true,
+  );
+  expect(externalEventInView(generateExternalEvent({ durationMs: 1, startMs: 9716332383895 }), viewTimeRange)).toBe(
+    false,
+  );
+  expect(externalEventInView(generateExternalEvent({ durationMs: 1, startMs: 1716332383895 + 60000 }), viewTimeRange)).toBe(
+    false,
+  );
+  expect(externalEventInView(generateExternalEvent({ durationMs: 1, startMs: 9716332383895 }), viewTimeRange)).toBe(
+    false,
+  );
+  
+});
+
 test('isActivityLayer', () => {
   expect(isActivityLayer(createTimelineActivityLayer([]))).toBe(true);
   expect(isActivityLayer(createTimelineLineLayer([], []))).toBe(false);
   expect(isActivityLayer(createTimelineXRangeLayer([], []))).toBe(false);
+  expect(isActivityLayer(createTimelineExternalEventLayer([]))).toBe(false);
 });
 
 test('isLineLayer', () => {
   expect(isLineLayer(createTimelineActivityLayer([]))).toBe(false);
   expect(isLineLayer(createTimelineLineLayer([], []))).toBe(true);
   expect(isLineLayer(createTimelineXRangeLayer([], []))).toBe(false);
+  expect(isLineLayer(createTimelineExternalEventLayer([]))).toBe(false);
 });
 
 test('isXRangeLayer', () => {
   expect(isXRangeLayer(createTimelineActivityLayer([]))).toBe(false);
   expect(isXRangeLayer(createTimelineLineLayer([], []))).toBe(false);
   expect(isXRangeLayer(createTimelineXRangeLayer([], []))).toBe(true);
+  expect(isXRangeLayer(createTimelineExternalEventLayer([]))).toBe(false);
 });
+
+test('isExternalEventLayer', () => {
+  expect(isExternalEventLayer(createTimelineActivityLayer([]))).toBe(false);
+  expect(isExternalEventLayer(createTimelineLineLayer([], []))).toBe(false);
+  expect(isExternalEventLayer(createTimelineXRangeLayer([], []))).toBe(false);
+  expect(isExternalEventLayer(createTimelineExternalEventLayer([]))).toBe(true);
+})
 
 test('paginateNodes', () => {
   const testNodes: ActivityTreeNode[] = [];
