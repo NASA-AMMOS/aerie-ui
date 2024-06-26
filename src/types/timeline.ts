@@ -214,8 +214,6 @@ export type ExternalEventOptions = {
   // Height of external event subrows
   externalEventHeight: number;
 
-  // TODO - I don't think we need to support composition here. Do we ever draw spans + EEs?
-
   // Describes the primary method in which external events are visualized within this row
   displayMode: 'grouped' | 'compact';
 
