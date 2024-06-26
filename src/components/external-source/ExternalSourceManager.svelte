@@ -43,7 +43,7 @@
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
 
-  
+
 
   export let user: User | null;
 
@@ -124,7 +124,7 @@
     }
   ];
   let columnDefs: DataGridColumnDef[] = baseColumnDefs; // TODO: add actions like delete as in Models.svelte
-  
+
   // for external events table
   let eventColumnBaseDefs = [
     {
@@ -360,8 +360,8 @@
       // the ones uploaded in this run won't show up as quickly in $externalEventTypes, so we keep a local log as well
       //    If event types act up during upload, this line is a likely culprit (if you upload twice really fast and $externalEventTypes doesn't update quick enough)
       //    If that's the case, directly use $externalEventTypes concatted with this list each time in the if statement a few lines below
-      let localExternalEventTypes: ExternalEventType[] = [...$externalEventTypes]; 
-      // each source bears different event types. While eventually that's a schema concern, for now we manually add all found event types in a source to their pairing table. 
+      let localExternalEventTypes: ExternalEventType[] = [...$externalEventTypes];
+      // each source bears different event types. While eventually that's a schema concern, for now we manually add all found event types in a source to their pairing table.
       //    That way, upon selecting a source, we can see what event types it contains.
       let externalSourceEventTypes: Set<number> = new Set<number>();
       // handle the events, as they need special logic to handle event types
@@ -387,7 +387,7 @@
             externalEventTypeId = localExternalEventTypes.find(externalEventType => externalEventType.name === externalEvent.event_type)?.id
           }
           if (externalEventTypeId !== undefined) {
-            // ...and then add it to a list. We have this extra split out step as our JSON/DB-compatible hybrids at this point contain both 
+            // ...and then add it to a list. We have this extra split out step as our JSON/DB-compatible hybrids at this point contain both
             //      event_type and event_type_id, but the database can only accept event_type_id, so this step drops event_type
             const { event_type, ...db_compatible_fields } = externalEvent;
             externalEventsCreated.push({
@@ -416,9 +416,9 @@
 
           // autoselect this source type upon uploading if not autoselected already
           if (selectedFilters.find(filter => filter.name === sourceType?.name) === undefined) {
-            selectedFilters.push(sourceType);  
+            selectedFilters.push(sourceType);
           }
-          
+
           sourceId = await effects.createExternalSource(file, sourceInsert, user);
           if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) {
             goto(`${base}/external-sources`);
@@ -439,7 +439,7 @@
     }
     else {
       console.log("Upload failed - no file present, or parsing failed.")
-    } 
+    }
   }
 
   async function selectSource(detail: ExternalSourceWithTypeName) {
@@ -533,9 +533,9 @@
           showHeader={true}
         />
       {:else if selectedSource}
-        <div class="external-event-header">
-          <div class={classNames('external-event-header-title')}>
-            <div class="external-event-header-title-value st-typography-medium">
+        <div class="external-source-header">
+          <div class={classNames('external-source-header-title')}>
+            <div class="external-source-header-title-value st-typography-medium">
               {selectedSource.key}
             </div>
           </div>
@@ -683,7 +683,7 @@
               showExternalEventTimeline = true;
               externalEventsTableFilterString = '';
 
-              // TODO: this sometimes works...except every once in a while when you select a source, 
+              // TODO: this sometimes works...except every once in a while when you select a source,
               //    select an event in timeline, go to table, select a different source, select an event, then go back to timeline.
               //    only then does it fail...sometimes...
               onSelectionChanged()
@@ -774,11 +774,11 @@
           {#if selectedSource}
             {#if showExternalEventTimeline}
               <div style="padding-left: 5px; padding-right: 5px">
-                <div style="height:15px; background-color:#ebe9e6;">
+                <div style=" background-color:#ebe9e6;height:15px;">
                   <div style="display:inline; float:left;">{startTime}</div>
                   <div style="display:inline; float:right;">{endTime}</div>
                 </div>
-                <div style="height: 100%; width: 100%; position: relative"
+                <div style="height: 100%; position: relative; width: 100%"
                   bind:this={canvasContainerRef}
                   bind:clientWidth={canvasContainerWidth}
                   bind:clientHeight={canvasContainerHeight}
@@ -797,8 +797,8 @@
                     {xScaleView}
                   />
                   <Tooltip bind:this={eventTooltip} {mouseOver} interpolateHoverValue={false} hidden={false} resourceTypes={[]} />
-                    
-                  <div style="padding-top: 3px; padding-bottom: 10px">
+
+                  <div style=" padding-bottom: 10px;padding-top: 3px">
                     <LayerExternalSources
                       selectedExternalEventId={selectedEvent?.id ?? null}
                       externalEvents={selectedEvents}
@@ -821,7 +821,7 @@
                 </div>
               </div>
             {:else if showExternalEventTable}
-              <div style="height: 100%; width: 100%; position: relative">
+              <div style="height: 100%; position: relative; width: 100%">
                 <div style="padding-left:5px; padding-right:5px">
                   <Collapse
                     className="anchor-collapse"
