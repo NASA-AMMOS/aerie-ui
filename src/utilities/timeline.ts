@@ -816,6 +816,9 @@ export function duplicateRow(row: Row, timelines: Timeline[], timelineId: number
     } else if (layer.chartType === 'x-range') {
       const { id, yAxisId, ...layerArgs } = layer;
       newRow.layers.push(createTimelineXRangeLayer(timelinesClone, newRow.yAxes, layerArgs));
+    } else if (layer.chartType === 'external-event') {
+      const { id, ...layerArgs } = layer;
+      newRow.layers.push(createTimelineExternalEventLayer(timelinesClone, layerArgs));
     } else {
       console.warn('Unable to clone row layer with chart type:', layer.chartType);
     }
