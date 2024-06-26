@@ -8,7 +8,7 @@
   import { onDestroy, onMount } from 'svelte';
   import { catchError } from '../../stores/errors';
   import { externalEventTypes, getEventTypeName } from '../../stores/external-event';
-  import { createExternalSourceError, createExternalSourceTypeError, creatingExternalSource, externalSourceTypes, externalSourceWithTypeName, externalSources, getEventSourceTypeByName, getSourceName } from '../../stores/external-source';
+  import { createExternalSourceError, createExternalSourceEventTypeLinkError, createExternalSourceTypeError, creatingExternalSource, externalSourceTypes, externalSourceWithTypeName, externalSources, getEventSourceTypeByName, getSourceName } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
@@ -619,6 +619,7 @@
         <form on:submit|preventDefault={onFormSubmit}>
           <AlertError class="m-2" error={$createExternalSourceError} />
           <AlertError class="m-2" error={$createExternalSourceTypeError} />
+          <AlertError class="m-2" error={$createExternalSourceEventTypeLinkError} />
 
           <fieldset>
             <label for="file">Source File</label>

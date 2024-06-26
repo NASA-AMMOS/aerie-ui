@@ -1,13 +1,14 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { externalSourceWithTypeName, selectedPlanExternalSourceIds } from '../../stores/external-source';
+  import { createExternalSourcePlanError, externalSourceWithTypeName, selectedPlanExternalSourceIds } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import type { User } from '../../types/app';
   import type { ExternalSourceWithTypeName } from '../../types/external-source';
   import type { ViewGridSection } from '../../types/view';
   import CollapsibleListControls from '../CollapsibleListControls.svelte';
   import GridMenu from '../menus/GridMenu.svelte';
+  import AlertError from '../ui/AlertError.svelte';
   import Panel from '../ui/Panel.svelte';
   import ExternalSourcePanelEntry from './ExternalSourcePanelEntry.svelte';
 
@@ -35,6 +36,8 @@
       placeholder="Filter External Sources"
       on:input={event => (filterText = event.detail.value)}
     />
+
+    <AlertError class="m-2" error={$createExternalSourcePlanError} />
 
     {#if filteredExternalEvents.length}
       {#each filteredExternalEvents as externalSource}

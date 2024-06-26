@@ -26,8 +26,8 @@ import {
   savingExpansionRule,
   savingExpansionSet,
 } from '../stores/expansion';
-import { createExternalEventTypeError, creatingExternalEventType, creatingExternalSourceEventTypeLink, creatingExternalSourceEventTypeLinkError, getEventTypeById } from '../stores/external-event';
-import { createExternalSourceError, createExternalSourceTypeError, creatingExternalSource, creatingExternalSourceType } from '../stores/external-source';
+import { createExternalEventTypeError, creatingExternalEventType, getEventTypeById } from '../stores/external-event';
+import { createExternalSourceError, createExternalSourceEventTypeLinkError, createExternalSourcePlanError, createExternalSourceTypeError, creatingExternalSource } from '../stores/external-source';
 import { createModelError, creatingModel, models } from '../stores/model';
 import { createPlanError, creatingPlan, planId } from '../stores/plan';
 import { schedulingRequests, selectedSpecId } from '../stores/scheduling';
@@ -511,6 +511,7 @@ const effects = {
       //   throwPermissionError('add a directive to the plan');
       // }
 
+      createExternalSourcePlanError.set(null);
       if (plan_id !== undefined) {
         const data = await reqHasura<PlanExternalSource>(
           gql.CREATE_PLAN_EXTERNAL_SOURCE,
@@ -524,13 +525,9 @@ const effects = {
         );
         const { planExternalSourceLink: sourceAssociation } = data;
         if (sourceAssociation != null) {
-          // TODO: set up stores, display events as a list or smth
-          const newLink: PlanExternalSource = { plan_id: plan_id, external_source_id: source_id };
-
           // store updates automatically, because its a subscription!
           showSuccessToast('External Source Linked Successfully');
         } else {
-          // show the name instead??? unsure
           throw Error(`Unable to link External Source with ID "${source_id}" on plan with ID ${plan_id}`);
         }
       } else {
@@ -539,6 +536,7 @@ const effects = {
     } catch (e) {
       catchError('External Source Linking Failed', e as Error);
       showFailureToast('External Source Linking Failed');
+      createExternalSourcePlanError.set((e as Error).message);
     }
   },
 
@@ -553,6 +551,8 @@ const effects = {
       //   throwPermissionError('add a directive to the plan');
       // }
 
+      // (use the same as above store, as the behavior is employed on the same panel, therefore so would the error)
+      createExternalSourcePlanError.set(null);
       if (plan_id != undefined) {
         const data = await reqHasura<{
           returning: {
@@ -584,6 +584,7 @@ const effects = {
     } catch (e) {
       catchError('External Source De-linking Failed', e as Error);
       showFailureToast('External Source De-linking Failed');
+      createExternalSourcePlanError.set((e as Error).message);
     }
   },
 
@@ -898,12 +899,10 @@ const effects = {
       //   throwPermissionError('upload a model');
       // } // permissions are yet unhandled anywhere in external-source/page or anywhere else
 
-      creatingExternalSourceType.set(true);
       createExternalSourceTypeError.set(null);
       const { createExternalSourceType: created } = await reqHasura(gql.CREATE_EXTERNAL_SOURCE_TYPE, { sourceType }, user);
       if (created) {
         showSuccessToast('External Source Type Created Successfully');
-        creatingExternalSourceType.set(false);
         return created as ExternalSourceType;
       } else {
         throw Error(`Unable to create external source type`);
@@ -912,7 +911,6 @@ const effects = {
       catchError('External Source Type Create Failed', e as Error);
       showFailureToast('External Source Type Create Failed');
       createExternalSourceTypeError.set((e as Error).message);
-      creatingExternalSourceType.set(false);
       return undefined
     }
   },
@@ -976,13 +974,11 @@ const effects = {
   async createExternalSourceEventTypeLink(link: ExternalSourceEventType, user: User | null) {
     try {
       // TODO: permissions
-      creatingExternalSourceEventTypeLink.set(true);
-      creatingExternalSourceEventTypeLinkError.set(null);
 
+      createExternalSourceEventTypeLinkError.set(null);
       if (link) {
         const { createExternalSourceEventTypeLink: created } = await reqHasura<any>(gql.CREATE_EXTERNAL_SOURCE_EVENT_TYPE, { link }, user);
         if (created) {
-          creatingExternalSourceEventTypeLink.set(false);
           return created.id;
         } else {
           throw Error('Unable to link external source to component external event type');
@@ -993,8 +989,7 @@ const effects = {
     } catch (e) {
       catchError('External Source Event Type Link Create Failed', e as Error);
       showFailureToast('External Source Event Type Link Create Failed');
-      creatingExternalSourceEventTypeLinkError.set((e as Error).message);
-      creatingExternalSourceEventTypeLink.set(false);
+      createExternalSourceEventTypeLinkError.set((e as Error).message);
     }
   },
 
@@ -3327,7 +3322,7 @@ const effects = {
     }
   },
 
-  async getExternalEventTypesBySource(source_ids: number[], eventTypes: ExternalEventType[], user: User | null): Promise<(ExternalEventType)[]> { 
+  async getExternalEventTypesBySource(source_ids: number[], eventTypes: ExternalEventType[], user: User | null): Promise<(ExternalEventType)[]> {
     try {
       if (!source_ids || !source_ids.length) {
         return []
@@ -3343,15 +3338,16 @@ const effects = {
           )
         );
       } else {
-        throw Error('Unable to retrieve external event types');
+        throw Error('Unable to retrieve external event types for source');
       }
     } catch (e) {
       catchError(e as Error);
+      showFailureToast('External Event Type Retrieval Failed');
       return [];
     }
   },
 
-  async getExternalEventTypes(plan_id: number, user: User | null): Promise<(ExternalEventType)[]> { 
+  async getExternalEventTypes(plan_id: number, user: User | null): Promise<(ExternalEventType)[]> {
     try {
       // get source ids
       const source_data = await reqHasura<PlanExternalSource[]>(gql.GET_PLAN_EXTERNAL_SOURCE, { plan_id }, user);
@@ -3398,7 +3394,7 @@ const effects = {
         throw Error(`Unable to get external source metadata for external source id ${id} - source may not exist.`);
       }
     } catch (e) {
-      catchError('Failed to retrieve external source metadata.', e as Error);
+      catchError(e as Error);
       showFailureToast('External Source Metadata Retrieval Failed');
       return [];
     }

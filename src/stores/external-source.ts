@@ -6,10 +6,13 @@ import { gqlSubscribable } from './subscribable';
 
 /* Writeable. */
 export const creatingExternalSource: Writable<boolean> = writable(false);
-export const creatingExternalSourceType: Writable<boolean> = writable(false);
-
 export const createExternalSourceError: Writable<string | null> = writable(null);
+
 export const createExternalSourceTypeError: Writable<string | null> = writable(null);
+
+export const createExternalSourcePlanError: Writable<string | null> = writable(null);
+
+export const createExternalSourceEventTypeLinkError: Writable<string | null> = writable(null);
 
 
 /* Subscriptions. */
@@ -52,8 +55,10 @@ export const selectedPlanExternalSourceEventTypes = derived(
 
 /* Helper Functions. */
 export function resetModelStores() {
-  creatingExternalSource.set(false);
   createExternalSourceError.set(null);
+  createExternalSourceTypeError.set(null);
+  createExternalSourcePlanError.set(null);
+  createExternalSourceEventTypeLinkError.set(null);
 }
 
 export function getSourceName(source_id: number | undefined, sources: ExternalSourceSlim[]): string {
