@@ -1,6 +1,8 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as Errors from '../stores/errors';
 import { mockUser } from '../tests/mocks/user/mockUser';
+import type { ExternalEventTypeInsertInput } from '../types/external-event';
+import type { ExternalSourceEventType, ExternalSourceInsertInput, ExternalSourceTypeInsertInput } from '../types/external-source';
 import type { Model } from '../types/model';
 import type { ArgumentsMap, ParametersMap } from '../types/parameter';
 import type { Plan } from '../types/plan';
@@ -132,6 +134,219 @@ describe('Handle modal and requests in effects', () => {
       expect(catchErrorSpy).toHaveBeenCalledWith(
         'Check Constraints Failed',
         Error('Unable to check constraints for plan with ID: "1"'),
+      );
+    });
+  });
+
+  describe('insertExternalSourceForPlan', () => {
+    it('should correctly handle null responses', async () => {
+      vi.spyOn(Requests, 'reqHasura').mockResolvedValue({
+        planExternalSourceLink: null,
+      });
+      vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
+
+      await effects.insertExternalSourceForPlan(
+        1,
+        1,
+        user
+      )
+
+      expect(catchErrorSpy).toHaveBeenCalledWith(
+        'External Source Linking Failed',
+        Error('Unable to link External Source with ID "1" on plan with ID 1')
+      );
+    });
+  });
+
+  describe('deleteExternalSourceForPlan', () => {
+    it('should correctly handle null responses', async () => {
+      vi.spyOn(Requests, 'reqHasura').mockResolvedValue({
+        id: 1,
+      });
+      vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
+
+      await effects.deleteExternalSourceForPlan(
+        1,
+        1,
+        user
+      )
+
+      expect(catchErrorSpy).toHaveBeenCalledWith(
+        'External Source De-linking Failed',
+        Error('Unable to disassociate External Source with ID "1" on plan with ID 1')
+      );
+    });
+  });
+
+  describe('createExternalSourceType', () => {
+    it('should correctly handle null responses', async () => {
+      vi.spyOn(Requests, 'reqHasura').mockResolvedValue({
+        createExternalSourceType: null
+      })
+      vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
+
+      await effects.createExternalSourceType(
+        {
+          name: "SourceTypeA"
+        } as ExternalSourceTypeInsertInput,
+        user,
+      );
+
+      expect(catchErrorSpy).toHaveBeenCalledWith(
+        'External Source Type Create Failed',
+        Error('Unable to create external source type')
+      );
+    });
+  });
+
+  describe('createExternalEventType', () => {
+    it('should correctly handle null responses', async () => {
+      vi.spyOn(Requests, 'reqHasura').mockResolvedValue({
+        createExternalEventType: null
+      })
+      vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
+
+      await effects.createExternalEventType(
+        {
+          name: "EventTypeA"
+        } as ExternalEventTypeInsertInput,
+        user,
+      );
+
+      expect(catchErrorSpy).toHaveBeenCalledWith(
+        'External Event Type Create Failed',
+        Error('Unable to create external event type')
+      );
+    });
+  });
+
+  describe('createExternalSource', () => {
+    it('should correctly handle null responses', async () => {
+      vi.spyOn(effects, 'uploadFile').mockResolvedValue(1);
+      vi.spyOn(Requests, 'reqHasura').mockResolvedValue({
+        createExternalSource: null,
+      });
+      vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
+
+      await effects.createExternalSource(
+        new File(["{sample-source-data}"], "sample-source.json", {
+          type: "text/plain",
+        }),
+        {
+          key: "",
+          metadata: {},
+          source_type_id: 1,
+          file_id: 1,
+          start_time: "",
+          end_time: "",
+          valid_at: "",
+          external_events: {
+            data: {}
+          }
+        } as ExternalSourceInsertInput,
+        user,
+      )
+
+      expect(catchErrorSpy).toHaveBeenCalledWith(
+        'External Source Create Failed',
+        Error('Unable to create external source')
+      );
+    });
+  });
+
+  describe('createExternalSourceEventTypeLink', () => {
+    it('should correctly handle null responses', async () => {
+      vi.spyOn(Requests, 'reqHasura').mockResolvedValue({
+        createExternalSourceEventTypeLink: null,
+      });
+      vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
+
+      await effects.createExternalSourceEventTypeLink(
+        {
+          external_source_id: 1,
+          external_event_type_id: 1
+        } as ExternalSourceEventType,
+        user
+      )
+
+      expect(catchErrorSpy).toHaveBeenCalledWith(
+        'External Source Event Type Link Create Failed',
+        Error('Unable to link external source to component external event type')
+      );
+    });
+  });
+
+  describe('getExternalEvents', () => {
+    it('should correctly handle null responses', async () => {
+      vi.spyOn(Requests, 'reqHasura').mockResolvedValue({
+        external_event: null,
+      });
+      vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
+
+      await effects.getExternalEvents(
+        1,
+        user
+      )
+
+      expect(catchErrorSpy).toHaveBeenCalledWith(
+        'Failed to retrieve external events.',
+        Error('Unable to get external events for external source id 1.')
+      );
+    });
+  });
+
+  describe('getExternalEventTypesBySource', () => {
+    it('should correctly handle null responses', async () => {
+      vi.spyOn(Requests, 'reqHasura').mockResolvedValue({
+        external_event_type_ids: null,
+      });
+      vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
+
+      await effects.getExternalEventTypesBySource(
+        [1],
+        [{id: 1, name: "ExternalEventTypeA"}, {id: 2, name: "ExternalEventTypeB"}],
+        user
+      )
+
+      expect(catchErrorSpy).toHaveBeenCalledWith(
+        Error('Unable to retrieve external event types')
+      );
+    });
+  });
+
+  describe('getExternalEventTypes', () => {
+    it('should correctly handle null responses', async () => {
+      vi.spyOn(Requests, 'reqHasura').mockResolvedValue({
+        links: null,
+      });
+      vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
+
+      await effects.getExternalEventTypes(
+        1,
+        user
+      )
+
+      expect(catchErrorSpy).toHaveBeenCalledWith(
+        Error('Unable to retrieve all source ids for given plan')
+      );
+    });
+  });
+
+  describe('getExternalSourceMetadata', () => {
+    it('should correctly handle null responses', async () => {
+      vi.spyOn(Requests, 'reqHasura').mockResolvedValue({
+        external_source: null,
+      });
+      vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
+
+      await effects.getExternalSourceMetadata(
+        1,
+        user
+      )
+
+      expect(catchErrorSpy).toHaveBeenCalledWith(
+        'Failed to retrieve external source metadata.',
+        Error('Unable to get external source metadata for external source id 1 - source may not exist.')
       );
     });
   });

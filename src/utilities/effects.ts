@@ -511,7 +511,7 @@ const effects = {
       //   throwPermissionError('add a directive to the plan');
       // }
 
-      if (plan_id != undefined) {
+      if (plan_id !== undefined) {
         const data = await reqHasura<PlanExternalSource>(
           gql.CREATE_PLAN_EXTERNAL_SOURCE,
           {
@@ -571,7 +571,7 @@ const effects = {
           user,
         );
         let sourceDissociation = data.planExternalSourceLink?.returning[0].id;
-        if (sourceDissociation != null) {
+        if (sourceDissociation) {
           // source automatically updates!
           showSuccessToast('External Source Disassociated Successfully');
         } else {
@@ -901,7 +901,7 @@ const effects = {
       creatingExternalSourceType.set(true);
       createExternalSourceTypeError.set(null);
       const { createExternalSourceType: created } = await reqHasura(gql.CREATE_EXTERNAL_SOURCE_TYPE, { sourceType }, user);
-      if (created !== null) {
+      if (created) {
         showSuccessToast('External Source Type Created Successfully');
         creatingExternalSourceType.set(false);
         return created as ExternalSourceType;
@@ -921,14 +921,16 @@ const effects = {
     try {
       creatingExternalEventType.set(true);
       createExternalEventTypeError.set(null);
-      if (!(eventType == null)) {
+      if (eventType) {
         const { createExternalEventType: created } = await reqHasura<any>(gql.CREATE_EXTERNAL_EVENT_TYPE, { eventType }, user);
-        if (created !== null) {
+        if (created) {
           creatingExternalEventType.set(false);
           return created.id;
         } else {
           throw Error('Unable to create external event type');
         }
+      } else {
+        throw Error('Unable to create external event type');
       }
     } catch (e) {
       catchError('External Event Type Create Failed', e as Error);
@@ -955,7 +957,7 @@ const effects = {
       if (file_id !== null) {
         source.file_id = file_id;
         const { createExternalSource: created } = await reqHasura(gql.CREATE_EXTERNAL_SOURCE, { source }, user);
-        if (created !== null) {
+        if (created) {
           showSuccessToast('External Source Created Successfully');
           creatingExternalSource.set(false);
           return created.id;
@@ -977,14 +979,16 @@ const effects = {
       creatingExternalSourceEventTypeLink.set(true);
       creatingExternalSourceEventTypeLinkError.set(null);
 
-      if (!link !== null) {
-        const { createExternalSourceEventType: created } = await reqHasura<any>(gql.CREATE_EXTERNAL_SOURCE_EVENT_TYPE, { link }, user);
-        if (created !== null) {
+      if (link) {
+        const { createExternalSourceEventTypeLink: created } = await reqHasura<any>(gql.CREATE_EXTERNAL_SOURCE_EVENT_TYPE, { link }, user);
+        if (created) {
           creatingExternalSourceEventTypeLink.set(false);
           return created.id;
         } else {
           throw Error('Unable to link external source to component external event type');
         }
+      } else {
+        throw Error('Unable to link external source to component external event type');
       }
     } catch (e) {
       catchError('External Source Event Type Link Create Failed', e as Error);
@@ -3382,11 +3386,17 @@ const effects = {
     }
     try {
       const data = await reqHasura<any>(gql.GET_EXTERNAL_SOURCE_METADATA, { id }, user);
-      const metadata: Record<string, any> = data["external_source"][0]["metadata"];
-      if (metadata === null) {
-        throw Error(`Unable to get external source metadata for external source id ${id}.`);
+      const { external_source } = data;
+      if (external_source) {
+        const { metadata } : Record<string, any> = external_source[0];
+        if (metadata === null) {
+          throw Error(`Unable to get external source metadata for external source id ${id}.`);
+        }
+        return metadata;
       }
-      return metadata;
+      else {
+        throw Error(`Unable to get external source metadata for external source id ${id} - source may not exist.`);
+      }
     } catch (e) {
       catchError('Failed to retrieve external source metadata.', e as Error);
       showFailureToast('External Source Metadata Retrieval Failed');
