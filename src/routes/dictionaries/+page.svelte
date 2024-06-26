@@ -35,7 +35,11 @@
   let isSequenceAdaptation: boolean = false;
   let sequenceAdaptationName: string;
 
-  $: hasCreatePermission = featurePermissions.commandDictionary.canCreate(data.user);
+  $: hasCreatePermission =
+    featurePermissions.channelDictionary.canCreate(data.user) &&
+    featurePermissions.commandDictionary.canCreate(data.user) &&
+    featurePermissions.parameterDictionary.canCreate(data.user) &&
+    featurePermissions.sequenceAdaptation.canCreate(data.user);
   $: createButtonDisabled = !files || files?.length === 0 || (isSequenceAdaptation && sequenceAdaptationName === '');
   $: {
     if (files && files.length > 0) {
