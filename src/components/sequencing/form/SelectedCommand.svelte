@@ -201,46 +201,48 @@
   </svelte:fragment>
 
   <svelte:fragment slot="body">
-    {#if !!commandNode}
-      <div class="header"></div>
+    <div id={ID_COMMAND_DETAIL_PANE}>
+      {#if !!commandNode}
+        <div class="header"></div>
 
-      {#if !!commandDef}
-        {#if !!timeTagNode}
+        {#if !!commandDef}
+          {#if !!timeTagNode}
+            <fieldset>
+              <div>Time Tag: {timeTagNode.text.trim()}</div>
+            </fieldset>
+          {/if}
+
           <fieldset>
-            <div>Time Tag: {timeTagNode.text.trim()}</div>
+            <details>
+              <summary>{commandDef.stem}</summary>
+              {commandDef.description}
+            </details>
           </fieldset>
+
+          {#each editorArgInfoArray as argInfo}
+            <ArgEditor
+              {argInfo}
+              {commandDictionary}
+              setInEditor={debounce(setInEditor, 250)}
+              addDefaultArgs={(commandNode, missingArgDefArray) =>
+                addDefaultArgs(commandDictionary, editorSequenceView, commandNode, missingArgDefArray)}
+            />
+          {/each}
+
+          {#if missingArgDefArray.length}
+            <AddMissingArgsButton
+              setInEditor={() => {
+                if (commandNode) {
+                  addDefaultArgs(commandDictionary, editorSequenceView, commandNode, missingArgDefArray);
+                }
+              }}
+            />
+          {/if}
         {/if}
-
-        <fieldset>
-          <details>
-            <summary>{commandDef.stem}</summary>
-            {commandDef.description}
-          </details>
-        </fieldset>
-
-        {#each editorArgInfoArray as argInfo}
-          <ArgEditor
-            {argInfo}
-            {commandDictionary}
-            setInEditor={debounce(setInEditor, 250)}
-            addDefaultArgs={(commandNode, missingArgDefArray) =>
-              addDefaultArgs(commandDictionary, editorSequenceView, commandNode, missingArgDefArray)}
-          />
-        {/each}
-
-        {#if missingArgDefArray.length}
-          <AddMissingArgsButton
-            setInEditor={() => {
-              if (commandNode) {
-                addDefaultArgs(commandDictionary, editorSequenceView, commandNode, missingArgDefArray);
-              }
-            }}
-          />
-        {/if}
+      {:else}
+        <div class="content st-typography-body">Select a command to modify its parameters.</div>
       {/if}
-    {:else}
-      <div class="content st-typography-body">Select a command to modify its parameters.</div>
-    {/if}
+    </div>
   </svelte:fragment>
 </Panel>
 
