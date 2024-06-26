@@ -1179,7 +1179,6 @@ interface FeaturePermissions {
   constraints: AssociationCRUDPermission<ConstraintMetadata, ConstraintDefinition>;
   constraintsModelSpec: ModelSpecificationCRUDPermission;
   constraintsPlanSpec: ConstraintPlanSpecCRUDPermission;
-  dictionary: CRUDPermission<void>;
   expansionRules: CRUDPermission<AssetWithOwner>;
   expansionSequences: ExpansionSequenceCRUDPermission<AssetWithOwner<ExpansionSequence>>;
   expansionSets: ExpansionSetsCRUDPermission<AssetWithOwner<ExpansionSet>>;
@@ -1220,13 +1219,13 @@ const featurePermissions: FeaturePermissions = {
     canUpdate: (user, _plan, preset) => queryPermissions.UPDATE_ACTIVITY_PRESET(user, preset),
   },
   channelDictionary: {
-    canCreate: () => false, // Shared create permissions with all dictionary types
+    canCreate: user => queryPermissions.CREATE_DICTIONARY(user),
     canDelete: user => queryPermissions.DELETE_CHANNEL_DICTIONARY(user),
     canRead: () => false, // Not implemented
     canUpdate: () => false, // Not implemented
   },
   commandDictionary: {
-    canCreate: () => false, // Shared create permissions with all dictionary types
+    canCreate: user => queryPermissions.CREATE_DICTIONARY(user),
     canDelete: user => queryPermissions.DELETE_COMMAND_DICTIONARY(user),
     canRead: () => false, // Not implemented
     canUpdate: () => false, // Not implemented
@@ -1245,12 +1244,6 @@ const featurePermissions: FeaturePermissions = {
     canCheck: (user, plan, model) => queryPermissions.CHECK_CONSTRAINTS(user, plan, model),
     canRead: user => queryPermissions.SUB_CONSTRAINTS(user),
     canUpdate: (user, plan) => queryPermissions.UPDATE_CONSTRAINT_PLAN_SPECIFICATIONS(user, plan),
-  },
-  dictionary: {
-    canCreate: user => queryPermissions.CREATE_DICTIONARY(user),
-    canDelete: () => false, // Each dictionary type has its own delete permission
-    canRead: () => false, // Not implemented
-    canUpdate: () => false, // Not implemented
   },
   expansionRules: {
     canCreate: user => queryPermissions.CREATE_EXPANSION_RULE(user),
@@ -1278,7 +1271,7 @@ const featurePermissions: FeaturePermissions = {
     canUpdate: user => queryPermissions.UPDATE_MODEL(user),
   },
   parameterDictionary: {
-    canCreate: () => false, // Shared create permissions with all dictionary types
+    canCreate: user => queryPermissions.CREATE_DICTIONARY(user),
     canDelete: user => queryPermissions.DELETE_PARAMETER_DICTIONARY(user),
     canRead: () => false, // Not implemented
     canUpdate: () => false, // Not implemented
