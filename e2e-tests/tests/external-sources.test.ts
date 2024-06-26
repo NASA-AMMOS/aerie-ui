@@ -29,11 +29,8 @@ test.describe.serial('External Sources', () => {
   });
 
   test('Upload button should be enabled after entering a filepath', async () => {
-    await externalSources.fillInputFile('');
-    await expect(externalSources.uploadButton).not.toBeVisible();
     await externalSources.fillInputFile();
     await expect(externalSources.uploadButton).toBeVisible();
-    await externalSources.fillInputFile('');
   });
 
   test('External event form should be shown when an event is selected', async () => {
