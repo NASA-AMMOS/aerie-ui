@@ -74,8 +74,8 @@
   let toggleSeqJsonPreview: boolean = false;
 
   $: {
-    if ($parcel?.sequence_adaptation_id) {
-      loadSequenceAdaptation($parcel?.sequence_adaptation_id);
+    if (parcel?.sequence_adaptation_id) {
+      loadSequenceAdaptation(parcel?.sequence_adaptation_id);
     }
   }
 
