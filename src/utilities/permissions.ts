@@ -1349,7 +1349,7 @@ const featurePermissions: FeaturePermissions = {
     canUpdate: (user, plan) => queryPermissions.UPDATE_SCHEDULING_GOAL_PLAN_SPECIFICATION(user, plan),
   },
   sequenceAdaptation: {
-    canCreate: () => false, // Shared create permissions with all dictionary types
+    canCreate: user => queryPermissions.CREATE_SEQUENCE_ADAPTATION(user),
     canDelete: user => queryPermissions.DELETE_PARAMETER_DICTIONARY(user),
     canRead: () => false, // Not implemented
     canUpdate: () => false, // Not implemented
