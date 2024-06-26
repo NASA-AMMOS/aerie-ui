@@ -38,6 +38,7 @@ export enum Queries {
   DELETE_EXPANSION_RULE = 'delete_expansion_rule_by_pk',
   DELETE_EXPANSION_RULE_TAGS = 'delete_expansion_rule_tags',
   DELETE_EXPANSION_SET = 'delete_expansion_set_by_pk',
+  DELETE_EXTERNAL_SOURCE = 'delete_external_source_by_pk',
   DELETE_MISSION_MODEL = 'delete_mission_model_by_pk',
   DELETE_PARAMETER_DICTIONARY = 'delete_parameter_dictionary_by_pk',
   DELETE_PARCEL = 'delete_parcel_by_pk',
@@ -928,7 +929,13 @@ const gql = {
     }
   `,
 
-  // DELETE_EXTERNAL_SOURCE ?
+  DELETE_EXTERNAL_SOURCE: `#graphql
+    mutation DeleteExternalSource($id: Int!) {
+      deleteExternalSource: ${Queries.DELETE_EXTERNAL_SOURCE}(id: $id) {
+        id
+      }
+    }
+  `,
 
   DELETE_PLAN_EXTERNAL_SOURCE: `#graphql
     mutation DeletePlanExternalSource($where: plan_external_source_bool_exp!) {
