@@ -445,7 +445,7 @@ export function convertUTCtoMs(date: string): number {
  */
 // 
 export function convertDurationToMs(duration: string): number {
-  var aerieDurationRegex = /^([0-9]*):([0-9]{2}):([0-9]{2})(?:\.([0-9]{6}))?$/;
+  var aerieDurationRegex = /^([0-9]*):([0-9]{2}):([0-9]{2})(?:\.([0-9]{1,6}))?$/;
   var matches = duration.match(aerieDurationRegex);
 
   // "89:44:09.000000" -> [ "89:44:09.000000", "189", "44", "09", "000000" ]
@@ -454,8 +454,7 @@ export function convertDurationToMs(duration: string): number {
     return +matches[1]*1000*60*60 + +matches[2]*1000*60 + +matches[3]*1000 + (matches[4] == undefined ? 0 : +matches[4]); // https://stackoverflow.com/questions/14667713/how-to-convert-a-string-to-number-in-typescript 
   }
   else {
-    console.log("Duration parsing failed...")
-    return 30000;
+    throw Error(`Duration parsing failed for duration ${duration}; doesn't match regex ${aerieDurationRegex}, has matches [${matches}]...`)
   }
 }
 
