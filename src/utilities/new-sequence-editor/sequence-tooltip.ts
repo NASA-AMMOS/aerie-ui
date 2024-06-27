@@ -35,7 +35,7 @@ function getParentNodeByName(view: EditorView, pos: number, name: string): Synta
  */
 function getTokenPositionInLine(view: EditorView, pos: number) {
   const { from, to, text } = view.state.doc.lineAt(pos);
-  const tokenRegex = /[a-zA-Z0-9_".-[\]]/;
+  const tokenRegex = /[a-zA-Z0-9_".-]/;
 
   let start = pos;
   let end = pos;
