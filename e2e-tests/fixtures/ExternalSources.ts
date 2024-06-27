@@ -27,19 +27,11 @@ export class ExternalSources {
 
   async close() {
     await this.closeButton.click();
-    //await expect(this.page).toHaveURL('.*/models$'); TODO
   }
-
-  /** TODO - How do we get a valid user to allow us to then use the Hasura API?
-  async deleteAllExternalSources() {
-    // TODO - is this kind of awkward since we haven't really implemented a delete yet...?
-  }
-  **/
 
   async fillInputFile(externalSourceFilePath: string = this.externalSourceFilePath) {
     await this.inputFile.focus();
     await this.inputFile.setInputFiles(externalSourceFilePath);
-    console.log(this.inputFile);
     await this.inputFile.evaluate(e => e.blur());
   }
 
@@ -49,21 +41,30 @@ export class ExternalSources {
   }
 
   async selectEvent() {
-    // Switch to the event table to click the row
-    await this.selectEventTableView.selectOption({ value: 'table' });
-    await this.externalEventTableRow.click();
+    // Assumes the selected source was the test source, and selects the specific event from it
+    // NOTE: This may not be the case, and should be re-visited when we implement deletion for External Sources!
+    await this.selectSource();
+    await this.page.getByRole('gridcell', { name: 'DSNContact:79/MMS/MMS3:54:X/' }).click();
   }
 
   async selectSource() {
-    await this.externalSourceTableRow.click();
+    // Always selects the first source with the example's source type in the table
+    await this.selectSourceFilter();
+    await this.page.getByRole('gridcell', { name: 'DSN Contact Confirmed' }).first().click();
+  }
+
+  async selectSourceFilter() {
+    // Always selects the first source filter possible in the dropdown
+    await this.page.getByRole('button', { name: 'Filter External Sources' }).click();
+    await this.page.getByPlaceholder('Filter by Source Type').click();
+    await this.page.getByRole('button', { name: 'DSN Contact Confirmed' }).click();
   }
 
   updatePage(page: Page): void {
-    this.externalSourceTableRow = page.locator(`.ag-row:has-text("${this.externalSourceKey}")`); // TODO - validate this, this should match the row in the table that the newly uploaded external source goes to
+    this.externalSourceTableRow = page.locator(`.ag-row:has-text("${this.externalSourceKey}")`);
     this.inputFile = page.locator('input[name="file"]');
-
-    this.uploadButton = page.getByRole('button', { name: 'Upload' }); // TODO - validate this, SHOULD be correct!
-    this.tableRowExternalSourceId = page.locator(`.ag-row:has-text("${this.externalSourceFilePath}") > div >> nth=0`); // TODO - this probably needs to be updated
+    this.uploadButton = page.getByRole('button', { name: 'Upload' });
+    this.tableRowExternalSourceId = page.locator(`.ag-row:has-text("${this.externalSourceFilePath}") > div >> nth=0`);
     this.externalEventSelectedForm = page.locator('.external-event-form-container');
     this.externalSourceSelectedForm = page.locator('.selected-external-source-details');
     this.alertError = page.locator('.alert-error');
@@ -75,16 +76,5 @@ export class ExternalSources {
   async uploadExternalSource() {
     await this.fillInputFile();
     await this.uploadButton.click();
-    /**
-    // TODO - do these waited conditions make sense for external sources?
-    await this.externalSourceTableRow.waitFor({ state: 'attached' });
-    await this.externalSourceTableRow.waitFor({ state: 'visible' });
-    await expect(this.externalSourceTableRow).toBeVisible();
-    await expect(this.tableRowExternalSourceId).toBeVisible();
-    const el = await this.tableRowExternalSourceId.elementHandle();
-    if (el) {
-      this.externalSourceId = (await el.textContent()) as string;
-    }
-      **/
   }
 }
