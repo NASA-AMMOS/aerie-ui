@@ -16,7 +16,7 @@
   import { type MouseDown, type MouseOver } from '../../types/timeline';
   import effects from '../../utilities/effects';
   import { classNames, getTarget } from '../../utilities/generic';
-  import { convertDurationToMs, convertUTCtoMs } from '../../utilities/time';
+  import { convertDoyToYmd, convertDurationToMs, convertUTCtoMs } from '../../utilities/time';
   import { TimelineInteractionMode, getXScale } from '../../utilities/timeline';
   import { showFailureToast } from '../../utilities/toast';
   import { tooltip } from '../../utilities/tooltip';
@@ -47,7 +47,7 @@
 
 
   let keyInputField: HTMLInputElement; // need this to set a focus on it. not related to the value
-  
+
   let keyField = field<string>('', [required]);
   let sourceTypeField = field<string>('', [required]); // need function to check if in list of allowable types...
   let startTimeDoyField = field<string>('', [required, timestamp]); // requires validation function
@@ -189,7 +189,7 @@
   let externalEventsTableFilterString: string = '';
 
   // source detail variables
-  let selectedSource: ExternalSourceWithTypeName & { metadata: Record<string, any> } | null = null; // special type only for the selected entry, don't want entire table to lug around metadata
+  let selectedSource: ExternalSourceWithTypeName | null = null;
   let selectedSourceId: number | null = null;
   let selectedSourceEventTypes: ExternalEventType[] | null = null
 
@@ -232,6 +232,7 @@
 
   let sourceInsert: ExternalSourceInsertInput;
   let sourceTypeInsert: ExternalSourceTypeInsertInput;
+
 
   $: if (files) {
     // files repeatedly refreshes, meaning the reaction to file and parsed keeps repeating infinitely. This if statement prevents that.
@@ -288,7 +289,6 @@
   }));
 
 
-
   onMount(() => {
     detectDPRChange();
   });
@@ -332,8 +332,21 @@
       }
 
       // create the source object to upload to AERIE
+      const start_time: string | null = convertDoyToYmd($startTimeDoyField.value)
+      const end_time: string | null = convertDoyToYmd($endTimeDoyField.value)
+      const valid_at: string | null = convertDoyToYmd($validAtDoyField.value)
+      if (!start_time || !end_time || !valid_at) {
+        showFailureToast("Upload failed.")
+        console.log("Upload failed - parsing dates in input failed.")
+        return
+      }
+      if (new Date(start_time) > new Date(end_time)) {
+        showFailureToast("Upload failed.")
+        console.log(`Upload failed - start time ${start_time} after end time ${end_time}.`)
+        return
+      }
       sourceInsert = {
-        end_time: $endTimeDoyField.value,
+        end_time,
         external_events: {
           data: null  // updated after this map is created
         },
@@ -341,8 +354,8 @@
         key: $keyField.value,
         metadata: parsed.source.metadata,
         source_type_id: -1,  //updated in the effect.
-        start_time: $startTimeDoyField.value,
-        valid_at: $validAtDoyField.value,
+        start_time,
+        valid_at,
       };
 
       // the ones uploaded in this run won't show up as quickly in $externalEventTypes, so we keep a local log as well
@@ -389,7 +402,6 @@
       sourceInsert.external_events.data = externalEventsCreated;
       externalEventsCreated = [];
 
-
       // TBD: force reload the page???
       let sourceType: ExternalSourceType | undefined = undefined;
       let sourceId: number | undefined = undefined;
@@ -418,6 +430,15 @@
         }
       }
 
+      // select the next source
+      if (sourceId && sourceType) {
+        selectedSource = {
+          id: sourceId,
+          ...sourceInsert,
+          source_type: sourceType?.name
+        }
+      }
+
       // reset the form behind the source
       parsed = undefined
       keyField.reset("");
@@ -434,10 +455,7 @@
   }
 
   async function selectSource(detail: ExternalSourceWithTypeName) {
-    selectedSource = {
-      ...detail,
-      metadata: await effects.getExternalSourceMetadata(detail.id, user)
-    }
+    selectedSource = detail
     deselectEvent()
   }
 
@@ -594,16 +612,16 @@
             title="Metadata"
             tooltipContent="View Event Source Metadata"
           >
-            {@const formProperties = Object.entries(selectedSource.metadata).map(e => {
-              return {
-                name: e[0],
-                value: e[1]
-              }
-            })}
-            <!--May want to call ExternalEventProperties something more generic for anything with name and value pairs that's expanded recursively. Modelled similarly to ActivityParameters, but this could be made generic...-->
-            <ExternalEventProperties
-              {formProperties}
-            />
+            {#await effects.getExternalSourceMetadata(selectedSource.id, user)}
+              <em>loading metadata...</em>
+            {:then metadata}
+              <ExternalEventProperties
+                formProperties={Object.entries(metadata).map(e => {return {name: e[0], value: e[1]}})}
+              />
+            {:catch error}
+              <em>error loading metadata...try refreshing the page.</em>
+              {console.log(error)}
+            {/await}
           </Collapse>
         </div>
       {:else}
