@@ -8,7 +8,6 @@
     channelDictionaries,
     commandDictionaries,
     parameterDictionaries,
-    parcel,
     parcelToParameterDictionaries,
     sequenceAdaptations,
   } from '../../stores/sequencing';
@@ -24,6 +23,7 @@
   import DictionaryTable from './DictionaryTable.svelte';
 
   export let mode: 'create' | 'edit' = 'create';
+  export let parcel: Parcel | null;
   export let user: User | null;
 
   let hasPermission: boolean = false;
@@ -54,28 +54,30 @@
   }>();
 
   $: {
-    if ($parcel !== null && $parcel !== undefined) {
-      parcelChannelDictionaryId = $parcel.channel_dictionary_id;
-      parcelCommandDictionaryId = $parcel.command_dictionary_id;
-      parcelCreatedAt = $parcel.created_at;
-      parcelName = $parcel.name;
-      parcelId = $parcel.id;
-      parcelOwner = $parcel.owner;
-      parcelSequenceAdaptationId = $parcel.sequence_adaptation_id;
+    if (parcel !== null && parcel !== undefined) {
+      parcelChannelDictionaryId = parcel.channel_dictionary_id;
+      parcelCommandDictionaryId = parcel.command_dictionary_id;
+      parcelCreatedAt = parcel.created_at;
+      parcelName = parcel.name;
+      parcelId = parcel.id;
+      parcelOwner = parcel.owner;
+      parcelSequenceAdaptationId = parcel.sequence_adaptation_id;
 
-      savedParcelChannelDictionaryId = $parcel.channel_dictionary_id;
-      savedParcelCommandDictionaryId = $parcel.command_dictionary_id;
-      savedParcelName = $parcel.name;
-      savedSequenceAdaptationId = $parcel.sequence_adaptation_id;
+      savedParcelChannelDictionaryId = parcel.channel_dictionary_id;
+      savedParcelCommandDictionaryId = parcel.command_dictionary_id;
+      savedParcelName = parcel.name;
+      savedSequenceAdaptationId = parcel.sequence_adaptation_id;
     }
   }
 
   $: selectedParmeterDictionaries = savedParameterDictionaryIds = $parcelToParameterDictionaries.reduce(
     (prevBooleanMap: Record<number, boolean>, parcelToParameterDictionary: ParcelToParameterDictionary) => {
-      return {
-        ...prevBooleanMap,
-        [parcelToParameterDictionary.parameter_dictionary_id]: true,
-      };
+      return parcelToParameterDictionary.parcel_id === parcel?.id
+        ? {
+            ...prevBooleanMap,
+            [parcelToParameterDictionary.parameter_dictionary_id]: true,
+          }
+        : {};
     },
     {},
   );
@@ -169,7 +171,7 @@
       for (const paramDictionaryId of parcelToParameterDictionaryIdsToDelete) {
         const parcelToParameterDictionary: ParcelToParameterDictionary | undefined =
           $parcelToParameterDictionaries.find(
-            p => p.parameter_dictionary_id === paramDictionaryId && p.parcel_id === $parcel?.id,
+            p => p.parameter_dictionary_id === paramDictionaryId && p.parcel_id === parcel?.id,
           );
 
         if (parcelToParameterDictionary) {

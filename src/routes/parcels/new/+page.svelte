@@ -13,4 +13,4 @@
   }
 </script>
 
-<ParcelForm mode="create" user={data.user} on:save={onParcelSave} />
+<ParcelForm mode="create" parcel={null} user={data.user} on:save={onParcelSave} />

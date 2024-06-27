@@ -6,14 +6,12 @@
   import type { ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
   import {
     parameterDictionaries as parameterDictionariesStore,
-    parcel,
-    parcelId,
     parcelToParameterDictionaries,
     parcels,
     userSequenceFormColumns,
   } from '../../stores/sequencing';
   import type { User, UserId } from '../../types/app';
-  import type { UserSequence, UserSequenceInsertInput } from '../../types/sequencing';
+  import type { Parcel, UserSequence, UserSequenceInsertInput } from '../../types/sequencing';
   import effects from '../../utilities/effects';
   import { isSaveEvent } from '../../utilities/keyboardEvents';
   import { parseSeqJsonFromFile, seqJsonToSequence } from '../../utilities/new-sequence-editor/from-seq-json';
@@ -39,6 +37,7 @@
   let hasPermission: boolean = false;
   let pageSubtitle: string = '';
   let pageTitle: string = '';
+  let parcel: Parcel | null;
   let permissionError = 'You do not have permission to edit this sequence.';
   let saveButtonClass: 'primary' | 'secondary' = 'primary';
   let savedSequenceDefinition: string = mode === 'create' ? '' : initialSequenceDefinition;
@@ -57,6 +56,7 @@
   let saveButtonText: string = '';
   let savingSequence: boolean = false;
 
+  $: parcel = $parcels.find(p => p.id === initialSequenceParcelId) ?? null;
   $: saveButtonClass = sequenceModified && saveButtonEnabled ? 'primary' : 'secondary';
   $: saveButtonEnabled = sequenceParcelId !== null && sequenceDefinition !== '' && sequenceName !== '';
   $: sequenceModified = sequenceDefinition !== savedSequenceDefinition || sequenceName !== savedSequenceName;
@@ -70,15 +70,12 @@
     pageSubtitle = mode === 'edit' ? savedSequenceName : '';
     saveButtonText = mode === 'edit' && !sequenceModified ? 'Saved' : 'Save';
   }
-  $: {
-    if (sequenceParcelId) {
-      $parcelId = sequenceParcelId;
-    }
-  }
 
   async function onSeqJsonInput(e: Event & { currentTarget: EventTarget & HTMLInputElement }) {
     const unparsedParameterDictionaries = $parameterDictionariesStore.filter(pd => {
-      const parameterDictionary = $parcelToParameterDictionaries.find(p => p.parameter_dictionary_id === pd.id);
+      const parameterDictionary = $parcelToParameterDictionaries.find(
+        p => p.parameter_dictionary_id === pd.id && p.parcel_id === parcel?.id,
+      );
 
       if (parameterDictionary) {
         return pd;
@@ -87,8 +84,8 @@
 
     const [seqJson, parsedChannelDictionary, ...parsedParameterDictionaries] = await Promise.all([
       parseSeqJsonFromFile(e.currentTarget.files),
-      $parcel?.channel_dictionary_id
-        ? effects.getParsedAmpcsChannelDictionary($parcel?.channel_dictionary_id, user)
+      parcel?.channel_dictionary_id
+        ? effects.getParsedAmpcsChannelDictionary(parcel?.channel_dictionary_id, user)
         : null,
       ...unparsedParameterDictionaries.map(unparsedParameterDictionary => {
         return effects.getParsedAmpcsParameterDictionary(unparsedParameterDictionary.id, user);
@@ -263,7 +260,7 @@
   <CssGridGutter track={1} type="column" />
 
   <SequenceEditor
-    parcel={$parcel}
+    {parcel}
     showCommandFormBuilder={true}
     sequenceDefinition={initialSequenceDefinition}
     {sequenceName}
