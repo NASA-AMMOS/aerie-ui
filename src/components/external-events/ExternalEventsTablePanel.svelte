@@ -62,14 +62,7 @@
       headerName: 'Duration',
       resizable: true,
       sortable: true,
-    },
-    // { // TODO: figure out a dropdown or something for this....
-    //   field: 'properties',
-    //   filter: 'record',
-    //   headerName: 'Properties',
-    //   resizable: true,
-    //   sortable: true,
-    // },
+    }
   ];
 
   let columnDefs = baseColumnDefs;
