@@ -38,7 +38,10 @@ export enum Queries {
   DELETE_EXPANSION_RULE = 'delete_expansion_rule_by_pk',
   DELETE_EXPANSION_RULE_TAGS = 'delete_expansion_rule_tags',
   DELETE_EXPANSION_SET = 'delete_expansion_set_by_pk',
+  DELETE_EXTERNAL_EVENT = 'delete_external_event',
   DELETE_EXTERNAL_SOURCE = 'delete_external_source_by_pk',
+  DELETE_EXTERNAL_SOURCE_EVENT_TYPE = 'delete_external_source_event_type',
+  DELETE_UPLOADED_FILE = 'delete_uploaded_file_by_pk',
   DELETE_MISSION_MODEL = 'delete_mission_model_by_pk',
   DELETE_PARAMETER_DICTIONARY = 'delete_parameter_dictionary_by_pk',
   DELETE_PARCEL = 'delete_parcel_by_pk',
@@ -930,8 +933,21 @@ const gql = {
   `,
 
   DELETE_EXTERNAL_SOURCE: `#graphql
-    mutation DeleteExternalSource($id: Int!) {
+    mutation DeleteExternalSource($file_id: Int!, $id: Int!) {
+      deleteExternalEvent: ${Queries.DELETE_EXTERNAL_EVENT}(where: { source_id: { _eq: $id }}) {
+        returning {
+          source_id
+        }
+      }
+      deleteExternalSourceEventType: ${Queries.DELETE_EXTERNAL_SOURCE_EVENT_TYPE}(where: { external_source_id: { _eq: $id }}) {
+        returning {
+          external_source_id
+        }
+      }
       deleteExternalSource: ${Queries.DELETE_EXTERNAL_SOURCE}(id: $id) {
+        id
+      }
+      deleteUploadedFile: ${Queries.DELETE_UPLOADED_FILE}(id: $file_id) {
         id
       }
     }

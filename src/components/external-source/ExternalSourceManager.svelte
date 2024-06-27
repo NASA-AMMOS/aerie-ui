@@ -271,6 +271,13 @@
     selectedSourceEventTypes = (await effects.getExternalEventTypesBySource(selectedSourceId ? [selectedSourceId] : [], $externalEventTypes, user))
   }
 
+  async function onDeleteExternalSource(selectedSource: ExternalSourceWithTypeName | null, user: User | null) {
+    const deletionWasSuccessful = await effects.deleteExternalSource(selectedSource, user);
+    if (deletionWasSuccessful) {
+      deselectSource();
+    }
+  }
+
   async function onFormSubmit(e: SubmitEvent) {
     if (parsed && file) {
 
@@ -594,6 +601,12 @@
               {catchError(error)}
             {/await}
           </Collapse>
+          <button
+            class="st-button danger w-100"
+            on:click|stopPropagation={onDeleteExternalSource(selectedSource, user)}
+          >
+            Delete external source
+          </button>
         </div>
       {:else}
         <form on:submit|preventDefault={onFormSubmit} on:reset={() => parsed = undefined}>
