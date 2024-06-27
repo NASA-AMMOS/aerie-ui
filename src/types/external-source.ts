@@ -1,10 +1,8 @@
 import type { ExternalEventDB, ExternalEventInsertInput, ExternalEventJson } from '../types/external-event';
 
-// TODO: CONVERT STUFF IN THE'CREATE_EXTERNAL_SOURCE' EFFECT TO TERMS OF THIS.
-
 // no analogue to ExternalEventId as that is only necessary in plan view where information on the selected event is shared across several sibling panels (see stores)
 
-// This is the type that conforms with the database schema.
+// This is the type that conforms with the database schema. We don't really use it, as it is pretty heavyweight - instead we derive lighter types from it.
 export type ExternalSourceDB = {
   end_time: string;
   external_events: ExternalEventDB[];
