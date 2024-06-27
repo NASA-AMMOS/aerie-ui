@@ -31,7 +31,7 @@
 <div>
   <input class="st-input" type="string" bind:value required />
   {#if typeof min === 'number' && typeof max === 'number' && min === max && valFloat !== max}
-    <button on:click={() => setInEditor(max)} title="Set to allowed value">{max}</button>
+    <button class="st-button" on:click={() => setInEditor(max)} title="Set to allowed value">{max}</button>
   {/if}
 </div>
 

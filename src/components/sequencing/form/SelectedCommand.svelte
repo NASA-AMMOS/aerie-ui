@@ -201,7 +201,7 @@
   </svelte:fragment>
 
   <svelte:fragment slot="body">
-    <div id={ID_COMMAND_DETAIL_PANE}>
+    <div id={ID_COMMAND_DETAIL_PANE} class="content">
       {#if !!commandNode}
         <div class="header"></div>
 
@@ -230,17 +230,19 @@
           {/each}
 
           {#if missingArgDefArray.length}
-            <AddMissingArgsButton
-              setInEditor={() => {
-                if (commandNode) {
-                  addDefaultArgs(commandDictionary, editorSequenceView, commandNode, missingArgDefArray);
-                }
-              }}
-            />
+            <fieldset>
+              <AddMissingArgsButton
+                setInEditor={() => {
+                  if (commandNode) {
+                    addDefaultArgs(commandDictionary, editorSequenceView, commandNode, missingArgDefArray);
+                  }
+                }}
+              />
+            </fieldset>
           {/if}
         {/if}
       {:else}
-        <div class="content st-typography-body">Select a command to modify its parameters.</div>
+        <div>Select a command to modify its parameters.</div>
       {/if}
     </div>
   </svelte:fragment>

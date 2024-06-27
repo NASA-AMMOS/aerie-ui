@@ -7,6 +7,6 @@
 </script>
 
 <div>
-  <button on:click={setInEditor}>Remove</button>
+  <button on:click={setInEditor} class="st-button">Remove</button>
   <span>{initVal}</span>
 </div>
