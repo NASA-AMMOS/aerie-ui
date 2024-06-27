@@ -24,7 +24,7 @@
   import Collapse from '../Collapse.svelte';
   import CollapsibleListControls from '../CollapsibleListControls.svelte';
   import ExternalEventForm from '../external-events/ExternalEventForm.svelte';
-  import ExternalEventProperties from '../external-events/ExternalEventProperties.svelte';
+  import Properties from '../external-events/Properties.svelte';
   import DatePickerField from '../form/DatePickerField.svelte';
   import Field from '../form/Field.svelte';
   import Input from '../form/Input.svelte';
@@ -634,7 +634,7 @@
             {#await effects.getExternalSourceMetadata(selectedSource.id, user)}
               <em>loading metadata...</em>
             {:then metadata}
-              <ExternalEventProperties
+              <Properties
                 formProperties={Object.entries(metadata).map(e => {return {name: e[0], value: e[1]}})}
               />
             {:catch error}
