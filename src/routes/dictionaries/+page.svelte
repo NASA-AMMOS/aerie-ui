@@ -29,7 +29,7 @@
   let createButtonDisabled: boolean = false;
   let createDictionaryError: string | null = null;
   let creatingDictionary: boolean = false;
-  let files: FileList;
+  let files: FileList | undefined;
   let file: File;
   let fileInput: HTMLInputElement;
   let isSequenceAdaptation: boolean = false;
@@ -84,6 +84,8 @@
         }
       }
 
+      // Set files to undefined to reset the input form and set the value to empty string to clear the uploaded file.
+      files = undefined;
       fileInput.value = '';
       isSequenceAdaptation = false;
       sequenceAdaptationName = '';
