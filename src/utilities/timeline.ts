@@ -1071,7 +1071,7 @@ export function generateExternalEventTree(
       .forEach(type => {
         const externalEventsGroup = groupedExternalEvents[type];
         const id = type;
-        const expanded = getNodeExpandedExternalEvent(id, externalEventTreeExpansionMap);
+        const expanded = getNodeExpanded(id, externalEventTreeExpansionMap);
         const label = type;
         const children: ExternalEventTreeNode['children'] = [];
         const items: ExternalEventTreeNode['items'] = [];
@@ -1245,24 +1245,13 @@ export function getSpanSubtrees(
 }
 
 /**
- * Returns whether or not the node is expanded in the activity tree
+ * Returns whether or not the node is expanded in the activity/external-event tree
  */
-export function getNodeExpanded(id: string, activityTreeExpansionMap: ActivityTreeExpansionMap) {
-  if (!Object.hasOwn(activityTreeExpansionMap, id)) {
+export function getNodeExpanded(id: string, treeExpansionMap: ActivityTreeExpansionMap | ExternalEventTreeExpansionMap) {
+  if (!Object.hasOwn(treeExpansionMap, id)) {
     return false;
   }
-  return activityTreeExpansionMap[id];
-}
-
-/**
- * Returns whether or not the node is expanded in the external event tree
- * TODO: This can be merged with getNodeExpanded in the future for better reusability
- */
-export function getNodeExpandedExternalEvent(id: string, externalEventTreeExpansionMap: ExternalEventTreeExpansionMap) {
-  if (!Object.hasOwn(externalEventTreeExpansionMap, id)) {
-    return false;
-  }
-  return externalEventTreeExpansionMap[id];
+  return treeExpansionMap[id];
 }
 
 /**
