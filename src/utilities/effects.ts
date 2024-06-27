@@ -80,7 +80,14 @@ import type {
 } from '../types/expansion';
 import type { Extension, ExtensionPayload } from '../types/extension';
 import type { ExternalEventDB, ExternalEventType, ExternalEventTypeInsertInput } from '../types/external-event';
-import type { ExternalSourceEventType, ExternalSourceInsertInput, ExternalSourceType, ExternalSourceTypeInsertInput, PlanExternalSource } from '../types/external-source';
+import type {
+  ExternalSourceEventType,
+  ExternalSourceInsertInput,
+  ExternalSourceType,
+  ExternalSourceTypeInsertInput,
+  ExternalSourceWithTypeName,
+  PlanExternalSource,
+} from '../types/external-source';
 import type { Model, ModelInsertInput, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
 import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
 import type {
@@ -500,11 +507,7 @@ const effects = {
     }
   },
 
-  async insertExternalSourceForPlan(
-    source_id: number,
-    plan_id: number | undefined,
-    user: User | null,
-  ): Promise<void> {
+  async insertExternalSourceForPlan(source_id: number, plan_id: number | undefined, user: User | null): Promise<void> {
     try {
       // TODO: permissions!
       // if ((plan && !queryPermissions.CREATE_PLAN_EXTERNAL_SOURCE(user, plan)) || !plan) {
@@ -518,8 +521,8 @@ const effects = {
           {
             source: {
               plan_id: plan_id,
-              external_source_id: source_id
-            }
+              external_source_id: source_id,
+            },
           },
           user,
         );
@@ -540,11 +543,37 @@ const effects = {
     }
   },
 
-  async deleteExternalSourceForPlan(
-    source_id: number,
-    plan_id: number | undefined,
-    user: User | null,
-  ): Promise<void> {
+  async deleteExternalSource(externalSource: ExternalSourceWithTypeName | null, user: User | null): Promise<boolean> {
+    try {
+      if (externalSource !== null) {
+        const { confirm } = await showConfirmModal(
+          'Delete',
+          `Are you sure you want to delete "${externalSource.key}"?`,
+          'Delete External Source',
+        );
+        if (confirm) {
+          const data = await reqHasura<{ id: number }>(
+            gql.DELETE_EXTERNAL_SOURCE,
+            { file_id: externalSource.file_id, id: externalSource.id },
+            user,
+          );
+          if (data.deleteExternalSource !== null) {
+            showSuccessToast('External Source Deleted Successfully');
+            return true;
+          } else {
+            throw Error('Unable to delete external source');
+          }
+        }
+      }
+    } catch (e) {
+      catchError('External Source Deletion Failed', e as Error);
+      showFailureToast('External Source Deletion Failed');
+      return false;
+    }
+    return false;
+  },
+
+  async deleteExternalSourceForPlan(source_id: number, plan_id: number | undefined, user: User | null): Promise<void> {
     try {
       // TODO: permissions!
       // if ((plan && !queryPermissions.CREATE_ACTIVITY_DIRECTIVE(user, plan)) || !plan) {
@@ -556,17 +585,17 @@ const effects = {
       if (plan_id != undefined) {
         const data = await reqHasura<{
           returning: {
-            id: number
-          }[]
+            id: number;
+          }[];
         }>(
           gql.DELETE_PLAN_EXTERNAL_SOURCE,
           {
             where: {
               _and: {
-                plan_id: {_eq: plan_id},
-                external_source_id: {_eq: source_id}
-              }
-            }
+                plan_id: { _eq: plan_id },
+                external_source_id: { _eq: source_id },
+              },
+            },
           },
           user,
         );
@@ -892,7 +921,10 @@ const effects = {
     }
   },
 
-  async createExternalSourceType(sourceType: ExternalSourceTypeInsertInput, user: User | null): Promise<ExternalSourceType | undefined> {
+  async createExternalSourceType(
+    sourceType: ExternalSourceTypeInsertInput,
+    user: User | null,
+  ): Promise<ExternalSourceType | undefined> {
     try {
       // TODO: Check permissions.
       // if (!queryPermissions.CREATE_MODEL(user)) {
@@ -900,8 +932,12 @@ const effects = {
       // } // permissions are yet unhandled anywhere in external-source/page or anywhere else
 
       createExternalSourceTypeError.set(null);
-      const { createExternalSourceType: created } = await reqHasura(gql.CREATE_EXTERNAL_SOURCE_TYPE, { sourceType }, user);
-      if (created) {
+      const { createExternalSourceType: created } = await reqHasura(
+        gql.CREATE_EXTERNAL_SOURCE_TYPE,
+        { sourceType },
+        user,
+      );
+      if (created !== null) {
         showSuccessToast('External Source Type Created Successfully');
         return created as ExternalSourceType;
       } else {
@@ -920,7 +956,11 @@ const effects = {
       creatingExternalEventType.set(true);
       createExternalEventTypeError.set(null);
       if (eventType) {
-        const { createExternalEventType: created } = await reqHasura<any>(gql.CREATE_EXTERNAL_EVENT_TYPE, { eventType }, user);
+        const { createExternalEventType: created } = await reqHasura<any>(
+          gql.CREATE_EXTERNAL_EVENT_TYPE,
+          { eventType },
+          user,
+        );
         if (created) {
           creatingExternalEventType.set(false);
           return created.id;
@@ -977,7 +1017,11 @@ const effects = {
 
       createExternalSourceEventTypeLinkError.set(null);
       if (link) {
-        const { createExternalSourceEventTypeLink: created } = await reqHasura<any>(gql.CREATE_EXTERNAL_SOURCE_EVENT_TYPE, { link }, user);
+        const { createExternalSourceEventTypeLink: created } = await reqHasura<any>(
+          gql.CREATE_EXTERNAL_SOURCE_EVENT_TYPE,
+          { link },
+          user
+        );
         if (created) {
           return created.id;
         } else {
@@ -3287,17 +3331,14 @@ const effects = {
     }
   },
 
-  async getExternalEvents(
-    source_id: number | undefined,
-    user: User | null
-  ): Promise<ExternalEventDB[]> {
+  async getExternalEvents(source_id: number | undefined, user: User | null): Promise<ExternalEventDB[]> {
     if (!source_id) {
-      console.log("SourceId is undefined.")
+      console.log('SourceId is undefined.');
       return [];
     }
     try {
       const data = await reqHasura<any>(gql.GET_EXTERNAL_EVENTS, { source_id }, user);
-      const { external_event: events} = data;
+      const { external_event: events } = data;
       if (events === null) {
         throw Error(`Unable to get external events for external source id ${source_id}.`);
       }
@@ -3311,7 +3352,7 @@ const effects = {
           key: event.key,
           properties: event.properties,
           source_id: event.source_id,
-          start_time: event.start_time
+          start_time: event.start_time,
         });
       }
       return externalEvents;
@@ -3322,10 +3363,14 @@ const effects = {
     }
   },
 
-  async getExternalEventTypesBySource(source_ids: number[], eventTypes: ExternalEventType[], user: User | null): Promise<(ExternalEventType)[]> {
+  async getExternalEventTypesBySource(
+    source_ids: number[],
+    eventTypes: ExternalEventType[],
+    user: User | null,
+  ): Promise<ExternalEventType[]> {
     try {
       if (!source_ids || !source_ids.length) {
-        return []
+        return [];
       }
       const data = await reqHasura<{
         external_event_type_id: number
@@ -3334,8 +3379,10 @@ const effects = {
       if (external_event_type_ids != null) {
         return Array.from(
           new Set(
-            external_event_type_ids.map(eventType => getEventTypeById(eventType.external_event_type_id, eventTypes)).filter(type => type) as ExternalEventType[]
-          )
+            external_event_type_ids
+              .map(eventType => getEventTypeById(eventType.external_event_type_id, eventTypes))
+              .filter(type => type) as ExternalEventType[],
+          ),
         );
       } else {
         throw Error('Unable to retrieve external event types for source');
@@ -3347,7 +3394,7 @@ const effects = {
     }
   },
 
-  async getExternalEventTypes(plan_id: number, user: User | null): Promise<(ExternalEventType)[]> {
+  async getExternalEventTypes(plan_id: number, user: User | null): Promise<ExternalEventType[]> {
     try {
       // get source ids
       const source_data = await reqHasura<PlanExternalSource[]>(gql.GET_PLAN_EXTERNAL_SOURCE, { plan_id }, user);
@@ -3355,7 +3402,7 @@ const effects = {
       if (links === null) {
         throw Error('Unable to retrieve all source ids for given plan');
       }
-      let source_ids = links.map(l => l.external_source_id)
+      const source_ids = links.map(l => l.external_source_id);
 
       // get all event types
       const event_type_data = await reqHasura<ExternalEventType[]>(gql.GET_EXTERNAL_EVENT_TYPES, {}, user);
@@ -3372,12 +3419,9 @@ const effects = {
     }
   },
 
-  async getExternalSourceMetadata(
-    id: number | undefined,
-    user: User | null
-  ): Promise<Record<string, any>> {
+  async getExternalSourceMetadata(id: number | undefined, user: User | null): Promise<Record<string, any>> {
     if (!id) {
-      console.log("Source id is undefined.")
+      console.log('Source id is undefined.');
       return [];
     }
     try {
