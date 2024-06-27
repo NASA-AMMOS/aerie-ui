@@ -1,3 +1,4 @@
+import { keyBy } from 'lodash-es';
 import { derived, writable, type Writable } from 'svelte/store';
 import type { ExternalEventDB, ExternalEventId, ExternalEventType, ExternalEventWithTypeName } from "../types/external-event";
 import gql from '../utilities/gql';
@@ -33,14 +34,18 @@ export const externalEventWithTypeName = derived<[typeof externalEventsDB, typeo
   }))
 );
 
+// just to prevent repeated lookups
+export const externalEventsMap = derived(
+  [externalEventWithTypeName],
+  ([$externalEventWithTypeName]) => keyBy($externalEventWithTypeName, 'id')
+);
+
 export const selectedExternalEvent = derived(
-  [selectedExternalEventId, externalEventWithTypeName],
-  ([$selectedExternalEventId, $externalEventsDB]) => {
+  [selectedExternalEventId, externalEventsMap],
+  ([$selectedExternalEventId, $externalEventsMap]) => {
     if ($selectedExternalEventId !== null) {
-      let filtered = $externalEventsDB.filter(e => e.id == $selectedExternalEventId);
-      if (filtered.length) {
-        return filtered[0]
-      } // TODO: REFACTOR WITH A MAP, EVENTUALLY.
+      let selected = $externalEventsMap[$selectedExternalEventId];
+      return selected ? selected : null
     }
     return null;
   },
@@ -59,7 +64,6 @@ export function selectExternalEvent(
 ): void {
   if (externalEventId !== null) {
     selectedExternalEventId.set(externalEventId);
-    // TODO: flesh this out
     if (switchToTable) {
       viewUpdateGrid({ middleComponentBottom: 'ExternalEventsTablePanel' });
     }
