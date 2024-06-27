@@ -233,9 +233,6 @@
   let sourceInsert: ExternalSourceInsertInput;
   let sourceTypeInsert: ExternalSourceTypeInsertInput;
 
-
-  // $: createButtonDisabled = !files || key === '' ||   $creatingModel === true; TODO: do this later
-
   $: if (files) {
     // files repeatedly refreshes, meaning the reaction to file and parsed keeps repeating infinitely. This if statement prevents that.
     if (file !== files[0]) {
@@ -421,6 +418,14 @@
         }
       }
 
+      // reset the form behind the source
+      parsed = undefined
+      keyField.reset("");
+      sourceTypeField.reset("");
+      startTimeDoyField.reset("");
+      endTimeDoyField.reset("");
+      validAtDoyField.reset("");
+
     }
     else {
       showFailureToast("Upload failed.")
@@ -602,7 +607,7 @@
           </Collapse>
         </div>
       {:else}
-        <form on:submit|preventDefault={onFormSubmit}>
+        <form on:submit|preventDefault={onFormSubmit} on:reset={() => parsed = undefined}>
           <AlertError class="m-2" error={$createExternalSourceError} />
           <AlertError class="m-2" error={$createExternalSourceTypeError} />
           <AlertError class="m-2" error={$createExternalSourceEventTypeLinkError} />
@@ -612,37 +617,37 @@
             <input class="w-100" name="file" required type="file" bind:files />
           </fieldset>
 
-          {#if parsed}
-            <fieldset>
-              <button class="st-button w-100" type="submit"
-                >{$creatingExternalSource ? 'Uploading...' : 'Upload'}</button
-              >
+          <fieldset>
+            <button disabled={!parsed} class="st-button w-100" type="submit"
+              >{$creatingExternalSource ? 'Uploading...' : 'Upload'}</button
+            >
+            {#if parsed}
               <div style="padding-top:10px">
                 <button class="st-button w-100" type="reset">Reset</button>
               </div>
-            </fieldset>
-            <Field field={keyField}>
-              <label for="key" slot="label">Key</label>
-              <input disabled bind:value={keyInputField} autocomplete="off" class="st-input w-100" name="key" required />
-            </Field>
+            {/if}
+          </fieldset>
+          <Field field={keyField}>
+            <label for="key" slot="label">Key</label>
+            <input disabled bind:value={keyInputField} autocomplete="off" class="st-input w-100" name="key" required />
+          </Field>
 
-            <Field field={sourceTypeField}>
-              <label for="source-type" slot="label">Source Type</label>
-              <input disabled autocomplete="off" class="st-input w-100" name="source-type" required />
-            </Field>
+          <Field field={sourceTypeField}>
+            <label for="source-type" slot="label">Source Type</label>
+            <input disabled autocomplete="off" class="st-input w-100" name="source-type" required />
+          </Field>
 
-            <fieldset>
-              <DatePickerField disabled={true} field={startTimeDoyField} label="Start Time - YYYY-DDDThh:mm:ss" name="start-time" />
-            </fieldset>
+          <fieldset>
+            <DatePickerField disabled={true} field={startTimeDoyField} label="Start Time - YYYY-DDDThh:mm:ss" name="start-time" />
+          </fieldset>
 
-            <fieldset>
-              <DatePickerField disabled={true} field={endTimeDoyField} label="End Time - YYYY-DDDThh:mm:ss" name="end_time" />
-            </fieldset>
+          <fieldset>
+            <DatePickerField disabled={true} field={endTimeDoyField} label="End Time - YYYY-DDDThh:mm:ss" name="end_time" />
+          </fieldset>
 
-            <fieldset>
-              <DatePickerField disabled={true} field={validAtDoyField} label="Valid At Time - YYYY-DDDThh:mm:ss" name="valid_at" />
-            </fieldset>
-          {/if}
+          <fieldset>
+            <DatePickerField disabled={true} field={validAtDoyField} label="Valid At Time - YYYY-DDDThh:mm:ss" name="valid_at" />
+          </fieldset>
         </form>
       {/if}
     </svelte:fragment>
