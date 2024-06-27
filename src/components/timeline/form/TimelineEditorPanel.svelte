@@ -1407,6 +1407,24 @@
                         value={getColorForLayer(layer)}
                         on:input={event => handleUpdateLayerColorScheme(event, layer)}
                       />
+                    {:else if isExternalEventLayer(layer)}
+                      <ColorPresetsPicker
+                        presetColors={[
+                          '#FFD1D2',
+                          '#FFCB9E',
+                          '#fcdd8f',
+                          '#CAEBAE',
+                          '#C9E4F5',
+                          '#F8CCFF',
+                          '#ECE0F2',
+                          '#E8D3BE',
+                          '#F5E9DA',
+                          '#EBEBEB',
+                        ]}
+                        tooltipText="Layer Color"
+                        value={getColorForLayer(layer)}
+                        on:input={event => handleUpdateLayerColor(event, layer)}
+                      />
                     {/if}
 
                     <button

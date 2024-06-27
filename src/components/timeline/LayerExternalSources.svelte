@@ -32,11 +32,11 @@
   } from '../../utilities/timeline';
 
   type IdToColorMap = Record<number, string>;
-  type IdToColorMaps = { directives: IdToColorMap; spans: IdToColorMap };
+  type IdToColorMaps = { directives: IdToColorMap; spans: IdToColorMap, external_events: IdToColorMap };
 
   export let selectedExternalEventId: ExternalEventId | null = null;
   export let externalEvents: ExternalEvent[] = [];
-  export let idToColorMaps: IdToColorMaps = { directives: {}, spans: {} };
+  export let idToColorMaps: IdToColorMaps = { directives: {}, spans: {}, external_events: {} };
   export let externalEventRowPadding: number = 4;
   export let externalEventSelectedColor: string = '#a9eaff';
   export let externalEventSelectedTextColor: string = '#0a4c7e';
@@ -378,7 +378,7 @@
       if (externalEvent && typeof externalEventStartX === 'number') {
         const externalEventEndX = xScaleView(externalEvent.startMs+externalEvent.durationMs)
         const externalEventRectWidth = Math.max(2, Math.min(externalEventEndX, drawWidth) - externalEventStartX);
-        const externalEventColor = idToColorMaps.spans[externalEvent.id] || externalEventDefaultColor;
+        const externalEventColor = idToColorMaps.external_events[externalEvent.id] || externalEventDefaultColor;
         const isSelected = selectedExternalEventId === externalEvent.id;
         if (isSelected) {
           ctx.fillStyle = externalEventSelectedColor;
