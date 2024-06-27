@@ -353,7 +353,6 @@
 
   function textForExternalEvent(externalEvent: ExternalEvent): string {
     const { duration, event_type, id, key, source_id, start_time } = externalEvent;
-    // TODO: Convert start_time to startTimeYmd-like value? Currently we include the timezone offset (ex: +00:00) but we could reformat to match other Aerie times
     return `
       <div class='tooltip-row-container'>
         <div class='st-typography-bold' style='color: var(--st-gray-10); display: flex; gap: 4px;'>${DirectiveIcon} ExternalEvent</div>
@@ -381,7 +380,7 @@
         </div>
         <div class='tooltip-row'>
           <span>Start Time (UTC):</span>
-          <span class='tooltip-value-highlight st-typography-medium'>${start_time}</span>
+          <span class='tooltip-value-highlight st-typography-medium'>${getDoyTime(new Date(start_time))}</span>
         </div>
         <div class='tooltip-row'>
           <span>Duration:</span>
