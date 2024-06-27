@@ -421,7 +421,6 @@
       sourceInsert.external_events.data = externalEventsCreated;
       externalEventsCreated = [];
 
-      // TBD: force reload the page???
       let sourceType: ExternalSourceType | undefined = undefined;
       let sourceId: number | undefined = undefined;
       if (file !== undefined) {
@@ -432,8 +431,6 @@
         }
         if (sourceType !== undefined ) {
           sourceInsert.source_type_id = sourceType.id;
-
-          // autoselect this source type upon uploading if not autoselected already
           if (selectedFilters.find(filter => filter.name === sourceType?.name) === undefined) {
             selectedFilters.push(sourceType);
           }
@@ -449,7 +446,7 @@
         }
       }
 
-      // select the next source
+      // autoselect the new source
       if (sourceId && sourceType) {
         selectedSource = {
           id: sourceId,
