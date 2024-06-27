@@ -1,12 +1,12 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import type { ExternalEventProperty } from '../../types/external-event-property';
+  import type { Property } from "../../types/property";
   import Input from '../form/Input.svelte';
   import Highlight from '../ui/Highlight.svelte';
 
   export let disabled: boolean = true;
-  export let formProperty: ExternalEventProperty;
+  export let formProperty: Property;
   export let highlightKeysMap: Record<string, boolean> = {};
 
   let clientWidth: number;
@@ -19,8 +19,8 @@
         <Input layout="inline">
           {formProperty.name}
           <Input>
-            <!--with introduction of event types and event schemas, may have type schemas and diff formatting for durations, times, strings, ints, etc. They are uneditable so maybe its not important-->
-            <!--but at least handling for units... something should be done there-->
+            <!--because properties are uneditable, schemas are unimportant. This is a large contrast with Parameter's implementation.-->
+            <!--What does remain unhandled is handling for units, but that's something we want to handle and enforce only after the JSONSchema is made.-->
             <input bind:value={formProperty.value} class="st-input w-100" {disabled}/>
           </Input>
       </Input>
