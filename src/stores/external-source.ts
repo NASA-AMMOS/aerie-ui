@@ -48,7 +48,7 @@ export const selectedPlanExternalSourceEventTypes = derived(
     let allValidEventTypes = $externalSourceEventTypes.filter(eset => validSources.includes(eset.external_source_id)).map(eset => eset.external_event_type_id)
     
     // remove duplicates
-    return Array.from(new Set(allValidEventTypes))
+    return allValidEventTypes.filter((val, ind, arr) => arr.indexOf(val) == ind);
   }
 )
 
