@@ -141,6 +141,7 @@
       suppressSizeToFit: true,
       width: 60,
     },
+    { field: 'name', filter: 'text', headerName: 'Name', sortable: true, width: 100 },
     { field: 'created_at', filter: 'text', headerName: 'Created At', resizable: true, sortable: true },
   ];
 
