@@ -12,7 +12,7 @@
   $pluginsLoaded = pluginsEnabled ? false : true;
 
   onMount(() => {
-    if (pluginsEnabled) {
+    if (pluginsEnabled && !$pluginsLoaded) {
       loadPlugins();
     }
   });

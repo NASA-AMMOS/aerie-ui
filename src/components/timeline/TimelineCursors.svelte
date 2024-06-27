@@ -155,7 +155,9 @@
           cursorX = offsetX;
         }
         date = new Date(unixEpochTime);
-        cursorTimeLabel = ($plugins.time?.primary?.format || getDoyTime)(date);
+        // cursorTimeDOY = getDoyTime(date);
+        /* BROKENNN */
+        cursorTimeLabel = $plugins.time?.primary?.format ? $plugins.time?.primary?.format(date) : cursorTimeDOY;
         cursorTimeLabel += ' ' + ($plugins.time?.primary?.label || 'UTC');
       }
       cursorMaxWidth = drawWidth - cursorX;
@@ -182,9 +184,9 @@
   {#if cursorEnabled && cursorWithinView}
     <TimelineCursor
       x={cursorX}
-      label={`${cursorTimeLabel}`}
+      label={cursorTimeLabel}
       maxWidth={cursorMaxWidth}
-      on:click={() => addVerticalGuide(cursorTimeLabel)}
+      on:click={() => addVerticalGuide(getDoyTime(date))}
       activeCursor
     />
   {/if}
