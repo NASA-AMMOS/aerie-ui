@@ -2338,7 +2338,20 @@ const gql = {
     }
   `,
 
-  // SUB_EXTERNAL_SOURCE:
+  SUB_EXTERNAL_SOURCE: `#graphql
+  subscription SubExternalSource($id: Int!) {
+    models: ${Queries.EXTERNAL_SOURCE}(id: $id) {
+      id
+      file_id
+      key
+      source_type_id
+      start_time
+      end_time
+      valid_at
+    }
+  }
+`,
+
   SUB_EXTERNAL_EVENT_TYPES: `#graphql
     subscription SubExternalEventTypes {
       models: ${Queries.EXTERNAL_EVENT_TYPES}(order_by: { id: asc }) {
