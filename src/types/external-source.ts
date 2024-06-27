@@ -59,7 +59,7 @@ export type ExternalSourceType = {
   name: string;
 };
 
-export type ExternalSourceEventType = { // to specify what types are contained in each source. TODO
+export type ExternalSourceEventType = { // to specify what types are contained in each source.
   external_source_id: number,
   external_event_type_id: number
 }

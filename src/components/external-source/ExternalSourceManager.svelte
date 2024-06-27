@@ -391,8 +391,16 @@
             // ...and then add it to a list. We have this extra split out step as our JSON/DB-compatible hybrids at this point contain both
             //      event_type and event_type_id, but the database can only accept event_type_id, so this step drops event_type
             const { event_type, ...db_compatible_fields } = externalEvent;
+
+            // extra, optional step to only take stuff that the database can accept in. Eventually, can be handled by JSON Schema, see comment in external-event.ts
+            const { duration, id, key, properties, start_time } = db_compatible_fields;
+
             externalEventsCreated.push({
-              ...db_compatible_fields,
+              duration,
+              id,
+              key,
+              properties,
+              start_time,
               event_type_id: externalEventTypeId
             });
             externalSourceEventTypes.add(externalEventTypeId)
