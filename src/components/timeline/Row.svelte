@@ -183,9 +183,10 @@
   let filteredExternalEvents: ExternalEvent[] = [];
   let timeFilteredActivityDirectives: ActivityDirective[] = [];
   let timeFilteredSpans: Span[] = [];
-  let idToColorMaps: { directives: Record<number, string>; spans: Record<number, string> } = {
+  let idToColorMaps: { directives: Record<number, string>; spans: Record<number, string>; external_events: Record<number, string> } = {
     directives: {},
     spans: {},
+    external_events: {}
   };
   let filterActivitiesByTime = false;
   let filterExternalEventsByTime = false;
@@ -387,7 +388,8 @@
 
   $: if (activityLayers && spansMap && activityDirectives && typeof filterActivitiesByTime === 'boolean') {
     activityTree = [];
-    idToColorMaps = { directives: {}, spans: {} };
+    idToColorMaps.directives = {};
+    idToColorMaps.spans = {};
 
     let spansList = Object.values(spansMap);
     const directivesByType = groupBy(activityDirectives, 'type');
@@ -474,9 +476,10 @@
       if (layer.filter && layer.filter.externalEvent !== undefined) {
         const event_types = layer.filter.externalEvent.event_types || [];
         event_types.forEach(type => {
-          const matchingEventTypes = externalEventsByType[type];
-          if (matchingEventTypes) {
-            filteredExternalEvents = filteredExternalEvents.concat(matchingEventTypes.filter((val, ind, arr) => arr.indexOf(val) == ind)); // uniqueness
+          const matchingEvents = externalEventsByType[type];
+          if (matchingEvents) {
+            matchingEvents.forEach(event => idToColorMaps.external_events[event.id] = layer.externalEventColor)
+            filteredExternalEvents = filteredExternalEvents.concat(matchingEvents.filter((val, ind, arr) => arr.indexOf(val) == ind)); // uniqueness
           }
         })
       }
