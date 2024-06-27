@@ -332,12 +332,12 @@
       }
 
       // create the source object to upload to AERIE
-      const start_time: string | null = convertDoyToYmd($startTimeDoyField.value)
-      const end_time: string | null = convertDoyToYmd($endTimeDoyField.value)
-      const valid_at: string | null = convertDoyToYmd($validAtDoyField.value)
+      const start_time: string | null = convertDoyToYmd($startTimeDoyField.value.replaceAll("Z", ""))
+      const end_time: string | null = convertDoyToYmd($endTimeDoyField.value.replaceAll("Z", ""))
+      const valid_at: string | null = convertDoyToYmd($validAtDoyField.value.replaceAll("Z", ""))
       if (!start_time || !end_time || !valid_at) {
         showFailureToast("Upload failed.")
-        console.log("Upload failed - parsing dates in input failed.")
+        console.log(`Upload failed - parsing dates in input failed. ${start_time}, ${end_time}, ${valid_at}`)
         return
       }
       if (new Date(start_time) > new Date(end_time)) {
@@ -370,6 +370,17 @@
         externalEventTypeInsertInput = {
           name: externalEvent.event_type
         };
+
+        // ensure the duration is valid
+        try {
+          convertDurationToMs(externalEvent.duration)
+        }
+        catch (e) {
+          // skip this event
+          showFailureToast("Upload failed.")
+          catchError(`Event duration has invalid format...excluding event ${externalEvent.key}\n`, e as Error);
+          return
+        }
 
         // if the event is valid...
         if (externalEvent.event_type !== undefined && externalEvent.start_time !== undefined && externalEvent.duration !== undefined) {
