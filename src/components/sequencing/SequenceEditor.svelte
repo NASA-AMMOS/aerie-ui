@@ -354,24 +354,26 @@
 
   <CssGridGutter track={1} type="column" />
 
-  {#if !!commandDictionary && !!selectedNode && showCommandFormBuilder}
-    <SelectedCommand
-      node={selectedNode}
-      {channelDictionary}
-      {commandDictionary}
-      {editorSequenceView}
-      {parameterDictionaries}
-    />
-  {:else}
-    <Panel overflowYBody="hidden" padBody={false}>
-      <svelte:fragment slot="header">
-        <SectionTitle>Selected Command</SectionTitle>
-      </svelte:fragment>
+  {#if showCommandFormBuilder}
+    {#if !!commandDictionary && !!selectedNode}
+      <SelectedCommand
+        node={selectedNode}
+        {channelDictionary}
+        {commandDictionary}
+        {editorSequenceView}
+        {parameterDictionaries}
+      />
+    {:else}
+      <Panel overflowYBody="hidden" padBody={false}>
+        <svelte:fragment slot="header">
+          <SectionTitle>Selected Command</SectionTitle>
+        </svelte:fragment>
 
-      <svelte:fragment slot="body">
-        <div class="st-typography-body no-selected-parcel">Select a parcel to enable the Selected Command panel.</div>
-      </svelte:fragment>
-    </Panel>
+        <svelte:fragment slot="body">
+          <div class="st-typography-body no-selected-parcel">Select a parcel to enable the Selected Command panel.</div>
+        </svelte:fragment>
+      </Panel>
+    {/if}
   {/if}
 </CssGrid>
 
