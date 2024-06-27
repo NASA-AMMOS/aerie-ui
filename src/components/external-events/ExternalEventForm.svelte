@@ -3,19 +3,19 @@
 <script lang="ts">
   import { externalSources, getSourceName } from '../../stores/external-source';
   import type { ExternalEventWithTypeName } from '../../types/external-event';
-  import type { ExternalEventProperty } from '../../types/external-event-property';
+  import type { Property } from "../../types/property";
   import { classNames } from '../../utilities/generic';
   import Collapse from '../Collapse.svelte';
   import Input from '../form/Input.svelte';
   import DatePicker from '../ui/DatePicker/DatePicker.svelte';
   import Highlight from '../ui/Highlight.svelte';
-  import ExternalEventProperties from './ExternalEventProperties.svelte';
+  import Properties from './Properties.svelte';
 
   export let externalEvent: ExternalEventWithTypeName;
   export let showHeader: boolean = true;
 
   let editable: boolean = false;
-  let formProperties: ExternalEventProperty[] = [];
+  let formProperties: Property[] = [];
   $: formProperties = Object.entries(externalEvent.properties).map(e => {
     return {
       name: e[0],
@@ -91,7 +91,7 @@
       <Collapse
         title={formProperties.length > 0 ? `Properties` : ''}
       >
-        <ExternalEventProperties
+        <Properties
           {formProperties}
           {highlightKeysMap}
         />

@@ -1,15 +1,15 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import type { ExternalEventProperty } from '../../types/external-event-property';
+  import type { Property } from "../../types/property";
   import { compare } from '../../utilities/generic';
   import Collapse from '../Collapse.svelte';
   import Highlight from '../ui/Highlight.svelte';
-  import ExternalEventPropertyBase from './ExternalEventPropertyBase.svelte';
-  import ExternalEventPropertyRec from './ExternalEventPropertyRec.svelte';
+  import PropertyBase from './PropertyBase.svelte';
+  import PropertyRec from './PropertyRec.svelte';
 
   export let formPropertyName: string = "";
-  export let formProperties: ExternalEventProperty[] = [];
+  export let formProperties: Property[] = [];
   export let highlightKeysMap: Record<string, boolean> = {};
 
   let expanded = true;
@@ -26,12 +26,12 @@
       <Highlight highlight={highlightKeysMap[formProperty.name]}>
         <div>
           {#if typeof formProperty.value == 'string' || typeof formProperty.value == 'number'}
-            <ExternalEventPropertyBase
+            <PropertyBase
               formProperty={formProperty}
               highlightKeysMap={highlightKeysMap}
             />
           {:else if typeof formProperty.value == 'object'}
-            <ExternalEventPropertyRec
+            <PropertyRec
               formProperty={formProperty}
               highlightKeysMap={highlightKeysMap}
             />
