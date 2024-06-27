@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
-  import { base } from '$app/paths';
   import SearchIcon from '@nasa-jpl/stellar/icons/search.svg?component';
   import type { ValueGetterParams } from 'ag-grid-community';
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
@@ -49,7 +47,7 @@
 
 
   let keyInputField: HTMLInputElement; // need this to set a focus on it. not related to the value
-  // form variables (TODO: make these autofill???)
+  
   let keyField = field<string>('', [required]);
   let sourceTypeField = field<string>('', [required]); // need function to check if in list of allowable types...
   let startTimeDoyField = field<string>('', [required, timestamp]); // requires validation function
@@ -232,19 +230,12 @@
   let menuTitle: string = '';
   let filteredExternalSources: ExternalSourceWithTypeName[] = [];
 
-  // We want to build the GraphQL input object for the external
-  // source and child events. The only things that are missing at
-  // this point are the uploaded file ID and external source type ID.
   let sourceInsert: ExternalSourceInsertInput;
   let sourceTypeInsert: ExternalSourceTypeInsertInput;
 
 
   // $: createButtonDisabled = !files || key === '' ||   $creatingModel === true; TODO: do this later
 
-  // TODO: this doesn't let people modify the form properties.
-  // We need to figure out if things like the start, end, and valid_at
-  // time *should* be editable. I don't think any of them should be, but we
-  // need to talk about it.
   $: if (files) {
     // files repeatedly refreshes, meaning the reaction to file and parsed keeps repeating infinitely. This if statement prevents that.
     if (file !== files[0]) {
@@ -420,12 +411,6 @@
           }
 
           sourceId = await effects.createExternalSource(file, sourceInsert, user);
-          if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) {
-            goto(`${base}/external-sources`);
-          }
-          // if ($createExternalSourceError === null && e.target instanceof HTMLFormElement) {
-          //   goto(`${base}/external-sources/${sourceId}`);
-          // }
         }
       }
 
@@ -438,6 +423,7 @@
 
     }
     else {
+      showFailureToast("Upload failed.")
       console.log("Upload failed - no file present, or parsing failed.")
     }
   }
@@ -744,7 +730,6 @@
                 {/if}
               </div>
               <div class="list-buttons menu-border-top">
-                <!-- <button class="st-button secondary list-button" on:click={selectFilteredValues}> -->
                 <button class="st-button secondary list-button" on:click={selectFilteredValues}>
                   Select {filteredValues.length}
                   {#if filteredValues.length === 1}
@@ -753,7 +738,6 @@
                     {'external source types'}
                   {/if}
                 </button>
-                <!-- <button class="st-button secondary list-button" on:click={unselectFilteredValues}>Unselect all</button> -->
                 <button class="st-button secondary list-button" on:click={unselectFilteredValues}>Unselect all</button>
               </div>
             </div>
