@@ -6,11 +6,11 @@
   import { onDestroy, onMount } from 'svelte';
   import { catchError } from '../../stores/errors';
   import { externalEventTypes, getEventTypeName } from '../../stores/external-event';
-  import { createExternalSourceError, createExternalSourceEventTypeLinkError, createExternalSourceTypeError, creatingExternalSource, externalSourceTypes, externalSourceWithTypeName, externalSources, getEventSourceTypeByName, getSourceName } from '../../stores/external-source';
+  import { createExternalSourceError, createExternalSourceEventTypeLinkError, createExternalSourceTypeError, creatingExternalSource, externalSourceTypes, externalSourceWithTypeName, getEventSourceTypeByName } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
-  import type { ExternalEvent, ExternalEventDB, ExternalEventType, ExternalEventTypeInsertInput, ExternalEventWithTypeName } from '../../types/external-event';
+  import type { ExternalEvent, ExternalEventDB, ExternalEventType, ExternalEventTypeInsertInput } from '../../types/external-event';
   import type { ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceType, ExternalSourceTypeInsertInput, ExternalSourceWithTypeName } from '../../types/external-source';
   import type { TimeRange } from '../../types/timeline';
   import { type MouseDown, type MouseOver } from '../../types/timeline';
@@ -24,6 +24,7 @@
   import Collapse from '../Collapse.svelte';
   import CollapsibleListControls from '../CollapsibleListControls.svelte';
   import ExternalEventForm from '../external-events/ExternalEventForm.svelte';
+  import ExternalEventsTable from '../external-events/ExternalEventsTable.svelte';
   import Properties from '../external-events/Properties.svelte';
   import DatePickerField from '../form/DatePickerField.svelte';
   import Field from '../form/Field.svelte';
@@ -124,68 +125,6 @@
   let columnDefs: DataGridColumnDef[] = baseColumnDefs; // TODO: add actions like delete as in Models.svelte
 
   // for external events table
-  let eventColumnBaseDefs = [
-    {
-      field: 'id',
-      filter: 'number',
-      headerName: 'ID',
-      resizable: true,
-      sortable: true,
-    },
-    {
-      field: 'key',
-      filter: 'text',
-      headerName: 'Key',
-      resizable: true,
-      sortable: true,
-    },
-    {
-      field: 'event_type',
-      filter: 'text',
-      headerName: 'Event Type',
-      resizable: true,
-      sortable: true,
-    },
-    {
-      field: 'source_id',
-      filter: 'number',
-      headerName: 'Source ID',
-      resizable: true,
-      sortable: true,
-    },
-    {
-      field: 'source',
-      filter: 'number',
-      headerName: 'Source',
-      resizable: true,
-      sortable: true,
-      valueGetter: (params: ValueGetterParams<ExternalEventWithTypeName>) => {
-        if (params.data?.source_id) {
-          return getSourceName(params.data?.source_id, $externalSources);
-        }
-      },
-    },
-    {
-      field: 'start_time',
-      filter: 'text',
-      headerName: 'Start Time',
-      resizable: true,
-      sortable: true,
-      valueGetter: (params: ValueGetterParams<ExternalEventWithTypeName>) => {
-        if (params.data?.start_time) {
-          return new Date(params.data?.start_time).toISOString().slice(0, 19);
-        }
-      },
-    },
-    {
-      field: 'duration',
-      filter: 'text',
-      headerName: 'Duration',
-      resizable: true,
-      sortable: true,
-    },
-  ]
-  let eventColumnDefs: DataGridColumnDef[] = eventColumnBaseDefs;
   let externalEventsTableFilterString: string = '';
 
   // source detail variables
@@ -860,9 +799,7 @@
                   </Collapse>
                 </div>
                 <div style="height:10px; width:100%"></div>
-                <SingleActionDataGrid
-                  columnDefs={eventColumnDefs}
-                  itemDisplayText="External Events"
+                <ExternalEventsTable
                   items={filteredTableExternalEvents}
                   {user}
                   bind:selectedItemId={selectedRowId}
