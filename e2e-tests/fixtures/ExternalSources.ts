@@ -2,6 +2,8 @@ import { type Locator, type Page } from '@playwright/test';
 export class ExternalSources {
   alertError: Locator;
   closeButton: Locator;
+  deleteSourceButton: Locator;
+  deleteSourceButtonConfirmation: Locator;
   deselectEventButton: Locator;
   deselectSourceButton: Locator;
   externalEventSelectedForm: Locator;
@@ -27,6 +29,13 @@ export class ExternalSources {
 
   async close() {
     await this.closeButton.click();
+  }
+
+  async deleteSource() {
+    // Assumes a source has already been uploaded and it is the first row in the table
+    await this.selectSource();
+    await this.deleteSourceButton.click();
+    await this.deleteSourceButtonConfirmation.click();
   }
 
   async fillInputFile(externalSourceFilePath: string = this.externalSourceFilePath) {
@@ -70,6 +79,9 @@ export class ExternalSources {
     this.alertError = page.locator('.alert-error');
     this.deselectEventButton = page.locator('[name="DeselectEvent"]');
     this.deselectSourceButton = page.locator('[name="DeselectSource"]');
+
+    this.deleteSourceButton = page.getByRole('button', { name: 'Delete external source' });
+    this.deleteSourceButtonConfirmation = page.getByRole('button', { name: 'Delete', exact: true });
     this.selectEventTableView = page.locator('[name="SelectEventViewType"]');
   }
 
