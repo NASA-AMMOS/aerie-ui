@@ -69,7 +69,6 @@
     };
   }>();
 
-  let externalEventHeight = 16;
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
   let maxExternalEventWidth: number;
