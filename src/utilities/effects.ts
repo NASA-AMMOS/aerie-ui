@@ -572,12 +572,12 @@ const effects = {
     return false;
   },
 
-  async deleteExternalSourceType(externalSourceType: string | undefined, user: User | null): Promise<void> {
+  async deleteExternalSourceType(externalSourceTypeId: number | undefined, user: User | null): Promise<void> {
     try {
-      if (externalSourceType !== undefined) {
-        const data = await reqHasura<{ name: string }>(
+      if (externalSourceTypeId !== undefined) {
+        const data = await reqHasura<{ id: number }>(
           gql.DELETE_EXTERNAL_SOURCE_TYPE,
-          { name: externalSourceType },
+          { id: externalSourceTypeId },
           user,
         );
         if (data.deleteExternalSourceType === null) {
@@ -3444,13 +3444,12 @@ const effects = {
       const data = await reqHasura<any>(gql.GET_EXTERNAL_SOURCE_METADATA, { id }, user);
       const { external_source } = data;
       if (external_source) {
-        const { metadata } : Record<string, any> = external_source[0];
+        const { metadata }: Record<string, any> = external_source[0];
         if (metadata === null) {
           throw Error(`Unable to get external source metadata for external source id ${id}.`);
         }
         return metadata;
-      }
-      else {
+      } else {
         throw Error(`Unable to get external source metadata for external source id ${id} - source may not exist.`);
       }
     } catch (e) {

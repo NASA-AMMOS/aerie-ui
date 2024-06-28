@@ -279,11 +279,10 @@
         // Determine if there are no remaining external sources that use the type of the source that was just deleted. If there are none, delete the source type
         // NOTE: This work could be moved to Hasura in the future, or re-worked as it might be costly.
         const remainingSourcesWithThisType = $externalSourceWithTypeName.filter(externalSource => {
-          externalSource.source_type === selectedSource.source_type
+          externalSource.source_type_id === selectedSource.source_type_id
         });
         if (remainingSourcesWithThisType.length === 0) {
-          // TODO: This assumes names are unique, which is not a database assumption. We COULD make it one though!
-          await effects.deleteExternalSourceType(selectedSource.source_type, user);
+          await effects.deleteExternalSourceType(selectedSource.source_type_id, user);
         }
       }
     }
