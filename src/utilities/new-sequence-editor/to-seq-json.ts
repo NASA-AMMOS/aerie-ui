@@ -7,17 +7,22 @@ import type {
   ParameterDictionary,
 } from '@nasa-jpl/aerie-ampcs';
 import type {
+  Activate,
   Args,
   BooleanArgument,
   Command,
+  GroundBlock,
+  GroundEvent,
   HardwareCommand,
   HexArgument,
   ImmediateCommand,
+  Load,
   Metadata,
   Model,
   NumberArgument,
   RepeatArgument,
   SeqJson,
+  Step,
   StringArgument,
   SymbolArgument,
   Time,
@@ -61,11 +66,34 @@ export function sequenceToSeqJson(
   if (seqJson.parameters) {
     variableList.push(...seqJson.parameters.map(value => value.name));
   }
-  seqJson.steps =
-    baseNode
-      .getChild('Commands')
-      ?.getChildren('Command')
-      .map(command => parseCommand(command, text, commandDictionary)) ?? undefined;
+
+  let child = baseNode.getChild('Commands')?.firstChild;
+  seqJson.steps = [];
+  while (child) {
+    let step: Step | undefined = undefined;
+    switch (child.name) {
+      case 'Command':
+        step = parseCommand(child, text, commandDictionary);
+        break;
+      case 'Activate':
+      case 'Load':
+        step = parseActivateLoad(child, text);
+        break;
+      case 'GroundBlock':
+      case 'GroundEvent':
+        step = parseGroundBlockEvent(child, text);
+        break;
+      case 'Request':
+    }
+    if (step) {
+      seqJson.steps.push(step);
+    }
+    child = child?.nextSibling;
+  }
+  if (!seqJson.steps.length) {
+    seqJson.steps = undefined;
+  }
+
   seqJson.immediate_commands =
     baseNode
       .getChild('ImmediateCommands')
@@ -374,26 +402,24 @@ function parseModel(node: SyntaxNode, text: string): Model[] | undefined {
     const valueNode = modelNode.getChild('Value');
     const offsetNode = modelNode.getChild('Offset');
 
-    const variable = variableNode
-      ? (removeQuotes(text.slice(variableNode.from, variableNode.to)) as string)
-      : 'UNKNOWN';
+    const variable = variableNode ? removeQuotes(text.slice(variableNode.from, variableNode.to)) : 'UNKNOWN';
 
     // Value can be string, number or boolean
     let value: Model['value'] = 0;
-    if (valueNode) {
-      const valueChild = valueNode.firstChild;
-      if (valueChild) {
-        const valueText = text.slice(valueChild.from, valueChild.to);
-        if (valueChild.name === 'String') {
-          value = removeQuotes(valueText);
-        } else if (valueChild.name === 'Boolean') {
-          value = !/^FALSE$/i.test(valueText);
-        } else if (valueChild.name === 'Number') {
-          value = Number(valueText);
-        }
+
+    const valueChild = valueNode?.firstChild;
+    if (valueChild) {
+      const valueText = text.slice(valueChild.from, valueChild.to);
+      if (valueChild.name === 'String') {
+        value = removeQuotes(valueText);
+      } else if (valueChild.name === 'Boolean') {
+        value = !/^FALSE$/i.test(valueText);
+      } else if (valueChild.name === 'Number') {
+        value = Number(valueText);
       }
     }
-    const offset = offsetNode ? (removeQuotes(text.slice(offsetNode.from, offsetNode.to)) as string) : 'UNKNOWN';
+
+    const offset = offsetNode ? removeQuotes(text.slice(offsetNode.from, offsetNode.to)) : 'UNKNOWN';
 
     models.push({ offset, value, variable });
   }
@@ -406,22 +432,85 @@ function parseDescription(node: SyntaxNode, text: string): string | undefined {
   if (!descriptionNode) {
     return undefined;
   }
+  // +1 offset to drop '#' prefix
   const description = text.slice(descriptionNode.from + 1, descriptionNode.to).trim();
-  return removeQuotes(description) as string;
+  return removeQuotes(description);
 }
 
-function removeQuotes(text: string | number | boolean): string | number | boolean {
+function removeQuotes(text: string): string;
+function removeQuotes(text: string | unknown): string | unknown {
   if (typeof text === 'string') {
     return text.replace(/^"|"$/g, '').replaceAll('\\"', '"');
   }
   return text;
 }
 
-export function parseCommand(
-  commandNode: SyntaxNode,
-  text: string,
-  commandDictionary: CommandDictionary | null,
-): Command {
+function parseGroundBlockEvent(stepNode: SyntaxNode, text: string): GroundBlock | GroundEvent {
+  const time = parseTime(stepNode, text);
+
+  const nameNode = stepNode.getChild('GroundName');
+  const name = nameNode ? removeQuotes(text.slice(nameNode.from, nameNode.to)) : 'UNKNOWN';
+
+  const argsNode = stepNode.getChild('Args');
+  // step not in dictionary, so not passing command dict
+  const args = argsNode ? parseArgs(argsNode, text, null, name) : [];
+
+  const description = parseDescription(stepNode, text);
+  const metadata = parseMetadata(stepNode, text);
+  const models = parseModel(stepNode, text);
+
+  return {
+    args,
+    name,
+    time,
+    type: stepNode.name === 'GroundBlock' ? 'ground_block' : 'ground_event',
+    ...{ description },
+    ...{ models },
+    ...{ metadata },
+  };
+}
+
+function parseActivateLoad(stepNode: SyntaxNode, text: string): Activate | Load {
+  const time = parseTime(stepNode, text);
+
+  const nameNode = stepNode.getChild('SequenceName');
+  const sequence = nameNode ? removeQuotes(text.slice(nameNode.from, nameNode.to)) : 'UNKNOWN';
+
+  const argsNode = stepNode.getChild('Args');
+  // step not in dictionary, so not passing command dict
+  const args = argsNode ? parseArgs(argsNode, text, null, sequence) : [];
+
+  const engine = parseEngine(stepNode, text);
+  const epoch = parseEpoch(stepNode, text);
+
+  const description = parseDescription(stepNode, text);
+  const metadata = parseMetadata(stepNode, text);
+  const models = parseModel(stepNode, text);
+
+  return {
+    args,
+    engine,
+    epoch,
+    sequence,
+    time,
+    type: stepNode.name === 'Load' ? 'load' : 'activate',
+    ...{ description },
+    ...{ models },
+    ...{ metadata },
+  };
+}
+
+function parseEngine(stepNode: SyntaxNode, text: string): number | undefined {
+  const engineNode = stepNode.getChild('Engine')?.getChild('Number');
+  return engineNode ? parseInt(text.slice(engineNode.from, engineNode.to), 10) : undefined;
+}
+
+function parseEpoch(stepNode: SyntaxNode, text: string): string | undefined {
+  const engineNode = stepNode.getChild('Epoch')?.getChild('String');
+  return engineNode ? removeQuotes(text.slice(engineNode.from, engineNode.to)) : undefined;
+}
+
+function parseCommand(commandNode: SyntaxNode, text: string, commandDictionary: CommandDictionary | null): Command {
   const time = parseTime(commandNode, text);
 
   const stemNode = commandNode.getChild('Stem');
@@ -439,13 +528,13 @@ export function parseCommand(
     stem,
     time,
     type: 'command',
-    ...(description ? { description } : {}),
-    ...(models ? { models } : {}),
-    ...(metadata ? { metadata } : {}),
+    ...{ description },
+    ...{ models },
+    ...{ metadata },
   };
 }
 
-export function parseImmediateCommand(
+function parseImmediateCommand(
   commandNode: SyntaxNode,
   text: string,
   commandDictionary: CommandDictionary | null,
@@ -467,7 +556,7 @@ export function parseImmediateCommand(
   };
 }
 
-export function parseHardwareCommand(commandNode: SyntaxNode, text: string): HardwareCommand {
+function parseHardwareCommand(commandNode: SyntaxNode, text: string): HardwareCommand {
   const stemNode = commandNode.getChild('Stem');
   const stem = stemNode ? text.slice(stemNode.from, stemNode.to) : 'UNKNOWN';
   const description = parseDescription(commandNode, text);
@@ -518,7 +607,7 @@ function parseMetadata(node: SyntaxNode, text: string): Metadata | undefined {
       return; // Skip this entry if either the key or value is missing
     }
 
-    const keyText = removeQuotes(text.slice(keyNode.from, keyNode.to)) as string;
+    const keyText = removeQuotes(text.slice(keyNode.from, keyNode.to));
 
     let value = text.slice(valueNode.from, valueNode.to);
     try {

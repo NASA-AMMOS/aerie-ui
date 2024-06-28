@@ -92,15 +92,15 @@ Command {
   Models?
 }
 
-Activate { TimeTag activateDirective "("String")" commonLoadActivate }
+Activate { TimeTag activateDirective "(" SequenceName { String } ")" commonLoadActivate }
 
-Load { TimeTag loadDirective "("String")" commonLoadActivate }
+Load { TimeTag loadDirective "(" SequenceName { String } ")" commonLoadActivate }
 
 commonLoadActivate {
   Args
   LineComment?
   newLine
-  Engine  { engineDirective whiteSpace Number newLine }?
+  Engine { engineDirective whiteSpace Number newLine }?
   Epoch { epochDirective whiteSpace String newLine }?
   Metadata?
   Models?

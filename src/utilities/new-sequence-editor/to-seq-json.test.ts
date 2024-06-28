@@ -339,6 +339,148 @@ C ECHO L01STR
     expect(actual).toEqual(expectedJson);
   });
 
+  it('loads, activates', () => {
+    const id = 'test.sequence';
+    const seq = `@ID "${id}"
+A2024-123T12:34:56 @ACTIVATE("activate.name") # No Args
+@ENGINE 10
+@EPOCH "epoch string"
+
+A2024-123T12:34:56 @GROUND_BLOCK("ground_block.name") # No Args
+
+A2024-123T12:34:56 @LOAD("load.name") # No Args
+@ENGINE 22
+@EPOCH "load epoch string"
+
+R123T12:34:56 @LOAD("load2.name") "foobar" 1 2
+@ENGINE 5
+
+R123T11:55:33 @GROUND_EVENT("ground_event.name") "foo" 1 2 3
+
+R123T12:34:56 @ACTIVATE("act2.name") "foo" 1 2 3  # Comment text
+@ENGINE -1
+    `;
+    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandBanana, [], null, '');
+    const expectedJson = {
+      id,
+      metadata: {},
+      steps: [
+        {
+          args: [],
+          description: 'No Args',
+          engine: 10,
+          epoch: 'epoch string',
+          sequence: 'activate.name',
+          time: {
+            tag: '2024-123T12:34:56',
+            type: 'ABSOLUTE',
+          },
+          type: 'activate',
+        },
+        {
+          args: [],
+          description: 'No Args',
+          name: 'ground_block.name',
+          time: {
+            tag: '2024-123T12:34:56',
+            type: 'ABSOLUTE',
+          },
+          type: 'ground_block',
+        },
+        {
+          args: [],
+          description: 'No Args',
+          engine: 22,
+          epoch: 'load epoch string',
+          sequence: 'load.name',
+          time: {
+            tag: '2024-123T12:34:56',
+            type: 'ABSOLUTE',
+          },
+          type: 'load',
+        },
+        {
+          args: [
+            {
+              type: 'string',
+              value: 'foobar',
+            },
+            {
+              type: 'number',
+              value: 1,
+            },
+            {
+              type: 'number',
+              value: 2,
+            },
+          ],
+          engine: 5,
+          sequence: 'load2.name',
+          time: {
+            tag: '123T123T12:34:56',
+            type: 'COMMAND_RELATIVE',
+          },
+          type: 'load',
+        },
+        {
+          args: [
+            {
+              type: 'string',
+              value: 'foo',
+            },
+            {
+              type: 'number',
+              value: 1,
+            },
+            {
+              type: 'number',
+              value: 2,
+            },
+            {
+              type: 'number',
+              value: 3,
+            },
+          ],
+          name: 'ground_event.name',
+          time: {
+            tag: '123T123T11:55:33',
+            type: 'COMMAND_RELATIVE',
+          },
+          type: 'ground_event',
+        },
+        {
+          args: [
+            {
+              type: 'string',
+              value: 'foo',
+            },
+            {
+              type: 'number',
+              value: 1,
+            },
+            {
+              type: 'number',
+              value: 2,
+            },
+            {
+              type: 'number',
+              value: 3,
+            },
+          ],
+          description: 'Comment text',
+          engine: -1,
+          sequence: 'act2.name',
+          time: {
+            tag: '123T123T12:34:56',
+            type: 'COMMAND_RELATIVE',
+          },
+          type: 'activate',
+        },
+      ],
+    };
+    expect(actual).toEqual(expectedJson);
+  });
+
   it('header ordering', () => {
     function allPermutations(inputArr: string[]) {
       const result: string[][] = [];

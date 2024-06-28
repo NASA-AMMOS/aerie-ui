@@ -197,7 +197,7 @@ describe('seqgen directives', () => {
 A2024-123T12:34:56 @ACTIVATE("activate.name") # No Args
 @ENGINE 10
 @EPOCH "epoch string"
-R123T12:34:56 @ACTIVATE("act2.name") "foo" 1 2 3  # No Args
+R123T12:34:56 @ACTIVATE("act2.name") "foo" 1 2 3  # Comment text
 @ENGINE -1
   `;
     assertNoErrorNodes(input);
@@ -218,22 +218,6 @@ R123T12:34:56 @ACTIVATE("act2.name") "foo" 1 2 3  # No Args
     const parseTree = SeqLanguage.parser.parse(input);
     const activates = parseTree.topNode.firstChild?.getChildren(LOAD_NODE);
     assert.equal(activates?.length, 2);
-  });
-
-  it('ground', () => {
-    const input = `
-A2024-123T12:34:56 @GROUND_BLOCK("ground_block.name") # No Args
-R123T12:34:56 @GROUND_EVENT("ground_event.name") "foo" 1 2 3  # No Args
-  `;
-    assertNoErrorNodes(input);
-    const parseTree = SeqLanguage.parser.parse(input);
-    assert.isNotNull(parseTree.topNode.firstChild);
-    const groundBlocks = parseTree.topNode.firstChild!.getChildren(GROUND_BLOCK_NODE);
-    assert.equal(groundBlocks.length, 1);
-    assert.equal(getNodeText(groundBlocks[0].getChild('GroundName')!, input), '"ground_block.name"');
-    const groundEvents = parseTree.topNode.firstChild!.getChildren(GROUND_EVENT_NODE);
-    assert.equal(groundEvents.length, 1);
-    assert.equal(getNodeText(groundEvents[0].getChild('GroundName')!, input), '"ground_event.name"');
   });
 
   it('ground', () => {
