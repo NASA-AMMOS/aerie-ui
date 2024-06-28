@@ -65,4 +65,12 @@ test.describe.serial('External Sources', () => {
     await expect(externalSources.externalEventSelectedForm).not.toBeVisible();
     await expect(externalSources.externalSourceSelectedForm).not.toBeVisible();
   });
+
+  test('Deleting an external source', async () => {
+    await externalSources.deleteSource();
+    await expect(page.getByText('External Source Deleted')).toBeVisible();
+    await expect(externalSources.inputFile).toBeVisible();
+    await expect(externalSources.externalEventSelectedForm).not.toBeVisible();
+    await expect(externalSources.externalSourceSelectedForm).not.toBeVisible();
+  });
 });
