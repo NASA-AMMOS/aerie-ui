@@ -272,9 +272,20 @@
   }
 
   async function onDeleteExternalSource(selectedSource: ExternalSourceWithTypeName | null, user: User | null) {
-    const deletionWasSuccessful = await effects.deleteExternalSource(selectedSource, user);
-    if (deletionWasSuccessful) {
-      deselectSource();
+    if (selectedSource !== null) {
+      const deletionWasSuccessful = await effects.deleteExternalSource(selectedSource, user);
+      if (deletionWasSuccessful) {
+        deselectSource();
+        // Determine if there are no remaining external sources that use the type of the source that was just deleted. If there are none, delete the source type
+        // NOTE: This work could be moved to Hasura in the future, or re-worked as it might be costly.
+        const remainingSourcesWithThisType = $externalSourceWithTypeName.filter(externalSource => {
+          externalSource.source_type === selectedSource.source_type
+        });
+        if (remainingSourcesWithThisType.length === 0) {
+          // TODO: This assumes names are unique, which is not a database assumption. We COULD make it one though!
+          await effects.deleteExternalSourceType(selectedSource.source_type, user);
+        }
+      }
     }
   }
 
