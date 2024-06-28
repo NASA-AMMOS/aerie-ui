@@ -41,8 +41,8 @@ export type ExternalSourceSlim = Pick<
 >;
 
 // For use in ExternalSourceManager tables
-export type ExternalSourceWithTypeName = Omit<ExternalSourceSlim, 'source_type_id'> & {
-  source_type: string | undefined
+export type ExternalSourceWithTypeName = ExternalSourceSlim & {
+  source_type: string | undefined;
 };
 
 // no analogue (yet) to ExternalEvent because no special durationMs or startMs to draw on a timeline
