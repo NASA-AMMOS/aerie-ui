@@ -573,6 +573,23 @@ const effects = {
     return false;
   },
 
+  async deleteExternalSourceType(externalSourceType: string | undefined, user: User | null): Promise<void> {
+    try {
+      if (externalSourceType !== undefined) {
+        const data = await reqHasura<{ name: string }>(
+          gql.DELETE_EXTERNAL_SOURCE_TYPE,
+          { name: externalSourceType },
+          user,
+        );
+        if (data.deleteExternalSourceType === null) {
+          throw Error('Unable to delete external source type');
+        }
+      }
+    } catch (e) {
+      catchError('External Source Type Deletion Failed', e as Error);
+    }
+  },
+
   async deleteExternalSourceForPlan(source_id: number, plan_id: number | undefined, user: User | null): Promise<void> {
     try {
       // TODO: permissions!
