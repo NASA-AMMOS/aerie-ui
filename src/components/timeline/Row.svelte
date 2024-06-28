@@ -522,7 +522,7 @@
        *  A wrapper function is used to provide the other props needed to generate the tree.
        */
       externalEventTree = generateExternalEventTree(
-        externalEvents,
+        filteredExternalEvents,
         externalEventTreeExpansionMap,
         externalEventOptions.groupBy,
         externalEventOptions.groupedModeBinSize,
