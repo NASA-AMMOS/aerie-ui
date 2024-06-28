@@ -43,7 +43,6 @@
   import SectionTitle from '../ui/SectionTitle.svelte';
 
 
-
   export let user: User | null;
 
 
@@ -171,6 +170,18 @@
 
   let sourceInsert: ExternalSourceInsertInput;
   let sourceTypeInsert: ExternalSourceTypeInsertInput;
+
+  // There was a strange issue where when:
+  //   - you select a source, 
+  //   - select an event in timeline, 
+  //   - go to table, 
+  //   - select a different source, 
+  //   - select an event, 
+  //   - then go back to timeline.
+  //  The event autodeselected. Some prints led to the discovery that an onMouseDown gets fired, somewhere on the canvas, immediately after selection.
+  //  As this mouseDown only occurs after the table switches back to a timeline, a simple boolean check was added to remedy this, saying to ignore
+  //    the mouseDown occurring right after a switch from a table to a timeline.
+  let mouseDownAfterTable: boolean = false;
 
 
   $: if (files) {
@@ -425,14 +436,19 @@
   }
 
   function onCanvasMouseDown(e: CustomEvent<MouseDown>) {
-    const { externalEvents } = e.detail;
+    if (!mouseDownAfterTable) {
+      const { externalEvents } = e.detail;
 
-    // selectedEvent is our source of an ExternalEvent as well as the ExternalEventId used by this instance
-    //    of the LayerExternalSources (as opposed to using a store, like the timeline one does, which is
-    //    unnecessary as everything we need is in on single component or can be passed down via parameters to
-    //    children).
-    selectedEvent = externalEvents?.length ? externalEvents[0] : null
-    selectedRowId = null
+      // selectedEvent is our source of an ExternalEvent as well as the ExternalEventId used by this instance
+      //    of the LayerExternalSources (as opposed to using a store, like the timeline one does, which is
+      //    unnecessary as everything we need is in on single component or can be passed down via parameters to
+      //    children).
+      selectedEvent = externalEvents?.length ? externalEvents[0] : null
+      selectedRowId = null
+    }
+    else {
+      mouseDownAfterTable = false
+    }
   }
 
   function onCanvasMouseOver(e: CustomEvent<MouseOver>) {
@@ -575,7 +591,7 @@
               />
             {:catch error}
               <em>error loading metadata...try refreshing the page.</em>
-              {console.log(error)}
+              {catchError(error)}
             {/await}
           </Collapse>
         </div>
@@ -634,7 +650,7 @@
         <SectionTitle><Truck />External Sources</SectionTitle>
       </slot>
       <slot name="right">
-        <select class="st-select" on:change={
+        <select class="st-select" on:change|stopPropagation={
           (e) => {
             const { value } = getTarget(e)
             if (value === "table") {
@@ -647,12 +663,7 @@
               showExternalEventTable = false;
               showExternalEventTimeline = true;
               externalEventsTableFilterString = '';
-
-              // TODO: this sometimes works...except every once in a while when you select a source,
-              //    select an event in timeline, go to table, select a different source, select an event, then go back to timeline.
-              //    only then does it fail...sometimes...
-              onSelectionChanged()
-              // selectedEvent = selectedEvents.find(event => event.id === selectedRowId) ?? null
+              mouseDownAfterTable = true
             }
           }
         }>
