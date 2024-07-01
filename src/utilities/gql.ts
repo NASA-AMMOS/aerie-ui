@@ -49,6 +49,7 @@ export enum Queries {
   DELETE_PARCEL_TO_DICTIONARY_ASSOCIATION = 'delete_parcel_to_parameter_dictionary',
   DELETE_PLAN = 'delete_plan_by_pk',
   DELETE_PLAN_COLLABORATOR = 'delete_plan_collaborators_by_pk',
+  DELETE_PLAN_EXTERNAL_SOURCE = 'delete_plan_external_source',
   DELETE_PLAN_SNAPSHOT = 'delete_plan_snapshot_by_pk',
   DELETE_PLAN_TAGS = 'delete_plan_tags',
   DELETE_PRESET_TO_DIRECTIVE = 'delete_preset_to_directive_by_pk',
@@ -945,6 +946,11 @@ const gql = {
         }
       }
       deleteExternalSourceEventType: ${Queries.DELETE_EXTERNAL_SOURCE_EVENT_TYPE}(where: { external_source_id: { _eq: $id }}) {
+        returning {
+          external_source_id
+        }
+      }
+      deletePlanExternalSource: ${Queries.DELETE_PLAN_EXTERNAL_SOURCE}(where: { external_source_id: { _eq: $id }}) {
         returning {
           external_source_id
         }
