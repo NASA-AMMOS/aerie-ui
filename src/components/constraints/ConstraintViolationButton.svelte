@@ -8,9 +8,7 @@
 
   export let window: TimeRange;
 
-  let isDoyPattern = false;
-
-  $: isDoyPattern = new RegExp(/^(\d{4})-(\d{3})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?$/);
+  let isDoyPattern = new RegExp(/^(\d{4})-(\d{3})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?$/);
 
   function zoomToViolation(window: TimeRange): void {
     $viewTimeRange = window;
