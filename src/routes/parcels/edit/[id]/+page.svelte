@@ -7,4 +7,14 @@
   export let data: PageData;
 </script>
 
-<ParcelForm mode="edit" parcel={data.initialParcel} user={data.user} />
+<ParcelForm
+  mode="edit"
+  parcelChannelDictionaryId={data.initialParcel.channel_dictionary_id}
+  parcelCommandDictionaryId={data.initialParcel.command_dictionary_id}
+  parcelCreatedAt={data.initialParcel.created_at}
+  parcelId={data.initialParcel.id}
+  parcelName={data.initialParcel.name}
+  parcelOwner={data.initialParcel.owner}
+  parcelSequenceAdaptationId={data.initialParcel.sequence_adaptation_id}
+  user={data.user}
+/>
