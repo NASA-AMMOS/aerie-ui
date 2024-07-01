@@ -23,6 +23,7 @@
   } from '../../stores/constraints';
   import { field } from '../../stores/form';
   import { plan, planReadOnly, viewTimeRange } from '../../stores/plan';
+  import { plugins } from '../../stores/plugins';
   import { simulationStatus } from '../../stores/simulation';
   import type { User } from '../../types/app';
   import type {
@@ -261,7 +262,7 @@
         <div>
           <DatePickerField
             field={startTimeDoyField}
-            label="Violation Start Time (UTC)"
+            label={`Violation Start Time (${$plugins.time.primary.label})`}
             layout="inline"
             name="start-time"
             on:change={onUpdateStartTime}
@@ -273,7 +274,7 @@
           </DatePickerField>
           <DatePickerField
             field={endTimeDoyField}
-            label="Violation End Time (UTC)"
+            label={`Violation End Time (${$plugins.time.primary.label})`}
             layout="inline"
             name="end-time"
             on:change={onUpdateEndTime}
