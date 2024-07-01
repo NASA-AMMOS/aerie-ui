@@ -81,7 +81,7 @@ import type {
   SeqId,
 } from '../types/expansion';
 import type { Extension, ExtensionPayload } from '../types/extension';
-import type { Model, ModelInsertInput, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
+import type { Model, ModelInsertInput, ModelLog, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
 import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
 import type {
   Argument,
@@ -4241,7 +4241,16 @@ const effects = {
     return false;
   },
 
-  async retriggerModelExtraction(id: number, user: User | null) {
+  async retriggerModelExtraction(
+    id: number,
+    user: User | null,
+  ): Promise<{
+    response: {
+      activity_types: ModelLog;
+      model_parameters: ModelLog;
+      resource_types: ModelLog;
+    };
+  } | null> {
     try {
       if (!queryPermissions.UPDATE_MODEL(user)) {
         throwPermissionError('retrigger this model extraction');
