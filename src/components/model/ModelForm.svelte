@@ -108,26 +108,23 @@
   }
 
   function onRetriggerModelExtraction() {
-    if (modelId != null) {
-      const prevLogs = modelLogs;
+    const prevLogs = modelLogs;
 
-      modelLogs = {
-        refresh_activity_type_logs: [{ error: null, error_message: null, pending: true, success: false }],
-        refresh_model_parameter_logs: [{ error: null, error_message: null, pending: true, success: false }],
-        refresh_resource_type_logs: [{ error: null, error_message: null, pending: true, success: false }],
-      } as Pick<
-        ModelSlim,
-        'refresh_activity_type_logs' | 'refresh_model_parameter_logs' | 'refresh_resource_type_logs'
-      >;
+    modelLogs = {
+      refresh_activity_type_logs: [{ error: null, error_message: null, pending: true, success: false }],
+      refresh_model_parameter_logs: [{ error: null, error_message: null, pending: true, success: false }],
+      refresh_resource_type_logs: [{ error: null, error_message: null, pending: true, success: false }],
+    } as Pick<ModelSlim, 'refresh_activity_type_logs' | 'refresh_model_parameter_logs' | 'refresh_resource_type_logs'>;
 
-      // introduce delay to allow users to see a transition in case retriggering is instantaneous
-      setTimeout(async () => {
+    // introduce delay to allow users to see a transition in case retriggering is instantaneous
+    setTimeout(async () => {
+      if (modelId != null) {
         const extractionResponse = await effects.retriggerModelExtraction(modelId, user);
         if (extractionResponse == null) {
           modelLogs = prevLogs;
         }
-      }, 200);
-    }
+      }
+    }, 200);
   }
 </script>
 
