@@ -73,6 +73,12 @@
   let toggleSeqJsonPreview: boolean = false;
 
   $: {
+    if ($parcel?.sequence_adaptation_id) {
+      loadSequenceAdaptation($parcel?.sequence_adaptation_id);
+    }
+  }
+
+  $: {
     editorSequenceView.dispatch({
       changes: { from: 0, insert: sequenceDefinition, to: editorSequenceView.state.doc.length },
     });
