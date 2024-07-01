@@ -493,6 +493,7 @@
     }
   }
 
+  // TODO: logging reveals that this doesn't get called! As such, usage of on:deleteItem is not done for source grid in ExternalSourceManager. We should probably remove this and the on:deleteItem too to reduce confusion
   function deletePlanContext(event: CustomEvent<RowId[]>, plans: PlanSlim[]) {
     const id = event.detail[0] as number;
     const plan = plans.find(t => t.id === id);

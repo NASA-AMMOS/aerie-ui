@@ -1,6 +1,6 @@
 <script lang="ts">
   import SearchIcon from '@nasa-jpl/stellar/icons/search.svg?component';
-  import type { ValueGetterParams } from 'ag-grid-community';
+  import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { onDestroy, onMount } from 'svelte';
@@ -37,6 +37,7 @@
   import AlertError from '../ui/AlertError.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
+  import DataGridActions from '../ui/DataGrid/DataGridActions.svelte';
   import SingleActionDataGrid from '../ui/DataGrid/SingleActionDataGrid.svelte';
   import DatePicker from '../ui/DatePicker/DatePicker.svelte';
   import Panel from '../ui/Panel.svelte';
@@ -44,6 +45,12 @@
 
 
   export let user: User | null;
+
+
+  type CellRendererParams = {
+    onDeleteExternalSource: (source: ExternalSourceWithTypeName) => void;
+  };
+  type SourceCellRendererParams = ICellRendererParams<ExternalSourceWithTypeName> & CellRendererParams;
 
 
   let keyInputField: HTMLInputElement; // need this to set a focus on it. not related to the value
@@ -121,7 +128,7 @@
       },
     }
   ];
-  let columnDefs: DataGridColumnDef[] = baseColumnDefs; // TODO: add actions like delete as in Models.svelte
+  let columnDefs: DataGridColumnDef[] = baseColumnDefs;
 
   // for external events table
   let externalEventsTableFilterString: string = '';
@@ -212,6 +219,41 @@
 
   $: selectedSourceId = selectedSource ? selectedSource.id : null;
 
+  $: columnDefs = [
+      ...baseColumnDefs,
+      {
+        cellClass: 'action-cell-container',
+        cellRenderer: (params: SourceCellRendererParams) => {
+          const actionsDiv = document.createElement('div');
+          actionsDiv.className = 'actions-cell';
+          new DataGridActions({
+            props: {
+              deleteCallback: params.onDeleteExternalSource,
+              deleteTooltip: {
+                content: 'Delete External Source',
+                placement: 'bottom',
+              },
+              hasDeletePermission: true, // TODO: permissions
+              rowData: params.data,
+            },
+            target: actionsDiv,
+          });
+
+          return actionsDiv;
+        },
+        cellRendererParams: {
+          onDeleteExternalSource,
+        } as CellRendererParams,
+        field: 'actions',
+        headerName: '',
+        resizable: false,
+        sortable: false,
+        suppressAutoSize: true,
+        suppressSizeToFit: true,
+        width: 25,
+      },
+    ];
+
   $: startTime = selectedSource ? new Date(selectedSource.start_time) : new Date();
   $: endTime = selectedSource ? new Date(selectedSource.end_time) : new Date();
   $: viewTimeRange = { end: endTime.getTime(), start: startTime.getTime() }
@@ -271,7 +313,7 @@
     selectedSourceEventTypes = (await effects.getExternalEventTypesBySource(selectedSourceId ? [selectedSourceId] : [], $externalEventTypes, user))
   }
 
-  async function onDeleteExternalSource(selectedSource: ExternalSourceWithTypeName | null, user: User | null) {
+  async function onDeleteExternalSource(selectedSource: ExternalSourceWithTypeName | null) {
     if (selectedSource !== null) {
       const deletionWasSuccessful = await effects.deleteExternalSource(selectedSource, user);
       if (deletionWasSuccessful) {
@@ -613,7 +655,7 @@
           </Collapse>
           <button
             class="st-button danger w-100"
-            on:click|stopPropagation={onDeleteExternalSource(selectedSource, user)}
+            on:click|stopPropagation={async() => onDeleteExternalSource(selectedSource)}
           >
             Delete external source
           </button>
@@ -759,8 +801,10 @@
       </div>
       {#if $externalSourceWithTypeName.length}
         <CssGrid rows="1fr 5px 1fr" gap="8px" class="source-grid">
+          <!--TODO: delete permissions. For example, hasDeletePermission while set true can be set to false and will still delete-->
           <SingleActionDataGrid
             {columnDefs}
+            hasDeletePermission={true}
             itemDisplayText="External Source"
             items={filteredExternalSources}
             {user}

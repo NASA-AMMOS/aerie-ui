@@ -1034,7 +1034,7 @@ const effects = {
 
       createExternalSourceEventTypeLinkError.set(null);
       if (link) {
-        const { createExternalSourceEventTypeLink: created } = await reqHasura<any>(
+        const { createExternalSourceEventType: created } = await reqHasura<any>(
           gql.CREATE_EXTERNAL_SOURCE_EVENT_TYPE,
           { link },
           user
