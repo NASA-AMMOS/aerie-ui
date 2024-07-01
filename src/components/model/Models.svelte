@@ -220,7 +220,7 @@
         refresh_resource_type_logs: [{ error: null, error_message: null, pending: true, success: false }],
       };
 
-      // introduce delay for UX feedback
+      // introduce delay to allow users to see a transition in case retriggering is instantaneous
       setTimeout(async () => {
         if (selectedModel) {
           const extractionResponse = await effects.retriggerModelExtraction(selectedModel.id, user);
