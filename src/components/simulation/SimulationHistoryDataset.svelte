@@ -167,9 +167,9 @@
       </div>
       <div>
         {#if extent}
-          <span use:tooltip={{ content: 'Simulation Time', placement: 'top' }} class="simulation-dataset-extent"
-            >{getSimulationTimestamp(simulationDataset)}</span
-          >,
+          <span use:tooltip={{ content: 'Simulation Time', placement: 'top' }} class="simulation-dataset-extent">
+            {getSimulationTimestamp(simulationDataset)}
+          </span>
         {/if}
         {progress.toFixed()}%
       </div>

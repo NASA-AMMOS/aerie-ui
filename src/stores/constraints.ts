@@ -7,9 +7,11 @@ import type {
   ConstraintPlanSpec,
   ConstraintResponse,
   ConstraintResultWithName,
+  ConstraintRun,
 } from '../types/constraint';
 import gql from '../utilities/gql';
 import { planId, planStartTimeMs } from './plan';
+import { simulationDatasetId } from './simulation';
 import { gqlSubscribable } from './subscribable';
 
 /* Writeable. */
@@ -20,7 +22,7 @@ export const constraintsViolationStatus: Writable<Status | null> = writable(null
 
 export const constraintVisibilityMapWritable: Writable<Record<ConstraintMetadata['id'], boolean>> = writable({});
 
-export const checkConstraintsStatus: Writable<Status | null> = writable(null);
+// export const checkConstraintsStatus: Writable<Status | null> = writable(null);
 
 export const rawConstraintResponses: Writable<ConstraintResponse[]> = writable([]);
 
@@ -29,6 +31,13 @@ export const constraintsColumns: Writable<string> = writable('1fr 3px 1fr');
 /* Subscriptions. */
 
 export const constraints = gqlSubscribable<ConstraintMetadata[]>(gql.SUB_CONSTRAINTS, {}, [], null);
+
+export const constraintRuns = gqlSubscribable<ConstraintRun[]>(
+  gql.SUB_CONSTRAINT_RUNS,
+  { simulationDatasetId },
+  [],
+  null,
+);
 
 export const constraintPlanSpecs = gqlSubscribable<ConstraintPlanSpec[]>(
   gql.SUB_CONSTRAINT_PLAN_SPECIFICATIONS,
@@ -47,6 +56,11 @@ export const constraintMetadata = gqlSubscribable<ConstraintMetadata | null>(
 /* Derived. */
 export const constraintsMap: Readable<Record<string, ConstraintMetadata>> = derived([constraints], ([$constraints]) =>
   keyBy($constraints, 'id'),
+);
+
+export const constraintPlanSpecsMap: Readable<Record<string, ConstraintPlanSpec>> = derived(
+  [constraintPlanSpecs],
+  ([$constraintPlanSpecs]) => keyBy($constraintPlanSpecs, 'constraint_id'),
 );
 
 export const allowedConstraintSpecs: Readable<ConstraintPlanSpec[]> = derived(
@@ -107,6 +121,58 @@ export const uncheckedConstraintCount: Readable<number> = derived(
   },
 );
 
+export const relevantConstraintRuns: Readable<ConstraintRun[]> = derived(
+  [constraintRuns, constraintPlanSpecsMap],
+  ([$constraintRuns, $constraintPlanSpecsMap]) => {
+    return $constraintRuns.filter(constraintRun => {
+      const constraintPlanSpec = $constraintPlanSpecsMap[constraintRun.constraint_id];
+      let revision = -1;
+
+      if (constraintPlanSpec) {
+        if (constraintPlanSpec.constraint_revision === null) {
+          revision =
+            constraintPlanSpec.constraint_metadata?.versions[
+              (constraintPlanSpec.constraint_metadata?.versions.length ?? 0) - 1
+            ]?.revision ?? -1;
+        } else {
+          revision = constraintPlanSpec.constraint_revision;
+        }
+      }
+
+      return revision === constraintRun.constraint_revision;
+    });
+  },
+);
+
+export const visibleConstraintResults: Readable<ConstraintResultWithName[]> = derived(
+  [constraintRuns, allowedConstraintPlanSpecMap],
+  ([$constraintRuns, $allowedConstraintPlanSpecMap]) =>
+    $constraintRuns
+      .filter(constraintRun => {
+        return (
+          $allowedConstraintPlanSpecMap[constraintRun.constraint_id] &&
+          $allowedConstraintPlanSpecMap[constraintRun.constraint_id].constraint_revision ===
+            constraintRun.constraint_revision
+        );
+      })
+      .map(constraintRun => constraintRun.results),
+);
+
+export const checkConstraintsStatus: Readable<Status | null> = derived(
+  [relevantConstraintRuns],
+  ([$relevantConstraintRuns]) => {
+    return $relevantConstraintRuns.reduce((status: Status, constraintRun: ConstraintRun) => {
+      if (constraintRun.results.violations?.length) {
+        return Status.Failed;
+      } else if (status !== Status.Failed) {
+        return Status.Complete;
+      }
+
+      return status;
+    }, Status.Incomplete);
+  },
+);
+
 export const constraintsStatus: Readable<Status | null> = derived(
   [checkConstraintsStatus, constraintsViolationStatus, uncheckedConstraintCount],
   ([$checkConstraintsStatus, $constraintsViolationStatus, $uncheckedConstraintCount]) => {
@@ -122,17 +188,6 @@ export const constraintsStatus: Readable<Status | null> = derived(
 
     return $constraintsViolationStatus;
   },
-);
-
-export const visibleConstraintResults: Readable<ConstraintResultWithName[]> = derived(
-  [constraintResponseMap, constraintVisibilityMap],
-  ([$constraintResponseMap, $constraintVisibilityMap]) =>
-    Object.values($constraintResponseMap)
-      .filter(response => $constraintVisibilityMap[response.constraintId])
-      .map(response => ({
-        ...response.results,
-        constraintName: response.constraintName,
-      })),
 );
 
 /* Helper Functions. */
@@ -155,11 +210,11 @@ export function resetPlanConstraintStores() {
 }
 
 export function resetConstraintStores(): void {
-  checkConstraintsStatus.set(null);
+  // checkConstraintsStatus.set(null);
   rawConstraintResponses.set([]);
 }
 
 export function resetConstraintStoresForSimulation(): void {
-  checkConstraintsStatus.set(Status.Unchecked);
+  // checkConstraintsStatus.set(Status.Unchecked);
   rawConstraintResponses.set([]);
 }

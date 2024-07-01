@@ -13,7 +13,6 @@ import { SearchParameters } from '../enums/searchParameters';
 import { Status } from '../enums/status';
 import { activityDirectivesDB, selectedActivityDirectiveId } from '../stores/activities';
 import {
-  checkConstraintsStatus,
   constraintsViolationStatus,
   rawConstraintResponses,
   resetConstraintStoresForSimulation,
@@ -381,7 +380,7 @@ const effects = {
 
   async checkConstraints(plan: Plan, user: User | null): Promise<void> {
     try {
-      checkConstraintsStatus.set(Status.Incomplete);
+      // checkConstraintsStatus.set(Status.Incomplete);
       constraintsViolationStatus.set(null);
       if (plan !== null) {
         const { id: planId } = plan;
@@ -414,13 +413,13 @@ const effects = {
 
           if (successfulConstraintResults.length === 0 && data.constraintResponses.length > 0) {
             showFailureToast('All Constraints Failed');
-            checkConstraintsStatus.set(Status.Failed);
+            // checkConstraintsStatus.set(Status.Failed);
           } else if (successfulConstraintResults.length !== data.constraintResponses.length) {
             showFailureToast('Constraints Partially Checked');
-            checkConstraintsStatus.set(successfulConstraintResults.length !== 0 ? Status.Failed : Status.Failed);
+            // checkConstraintsStatus.set(successfulConstraintResults.length !== 0 ? Status.Failed : Status.Failed);
           } else {
             showSuccessToast('All Constraints Checked');
-            checkConstraintsStatus.set(Status.Complete);
+            // checkConstraintsStatus.set(Status.Complete);
           }
 
           if (failedConstraintResponses.length > 0) {
@@ -438,7 +437,7 @@ const effects = {
       }
     } catch (e) {
       catchError('Check Constraints Failed', e as Error);
-      checkConstraintsStatus.set(Status.Failed);
+      // checkConstraintsStatus.set(Status.Failed);
       showFailureToast('Check Constraints Failed');
     }
   },

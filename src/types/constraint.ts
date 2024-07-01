@@ -84,6 +84,13 @@ export type ConstraintResponse = {
   type: ConstraintType;
 };
 
+export type ConstraintRun = {
+  constraint_id: number;
+  constraint_revision: number;
+  results: ConstraintResultWithName;
+  simulation_data_id: number;
+};
+
 export type UserCodeError = {
   location: CodeLocation;
   message: string;

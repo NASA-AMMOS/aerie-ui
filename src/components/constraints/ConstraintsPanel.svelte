@@ -232,7 +232,7 @@
             permissionHandler,
             {
               hasPermission: $plan
-                ? featurePermissions.constraintsPlanSpec.canCheck(user, $plan, $plan.model) && !$planReadOnly
+                ? featurePermissions.constraintRuns.canCreate(user, $plan, $plan.model) && !$planReadOnly
                 : false,
               permissionError: $planReadOnly
                 ? PlanStatusMessages.READ_ONLY
