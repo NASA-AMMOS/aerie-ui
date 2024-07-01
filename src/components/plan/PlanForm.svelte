@@ -7,6 +7,7 @@
   import { planMetadata, planReadOnly, planReadOnlySnapshot } from '../../stores/plan';
   import { planSnapshotId, planSnapshotsWithSimulations } from '../../stores/planSnapshots';
   import { plans } from '../../stores/plans';
+  import { plugins } from '../../stores/plugins';
   import { simulationDataset, simulationDatasetId } from '../../stores/simulation';
   import { viewTogglePanel } from '../../stores/views';
   import type { User, UserId } from '../../types/app';
@@ -17,7 +18,7 @@
   import { removeQueryParam, setQueryParam } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
-  import { getShortISOForDate } from '../../utilities/time';
+  import { convertDoyToYmd, getShortISOForDate } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import { required, unique } from '../../utilities/validators';
   import Collapse from '../Collapse.svelte';
@@ -48,10 +49,19 @@
       'Plan name already exists',
     ),
   ]);
+  let planStartTime: string = '';
+  let planEndTime: string = '';
 
   $: permissionError = $planReadOnly ? PlanStatusMessages.READ_ONLY : 'You do not have permission to edit this plan.';
   $: if (plan) {
     hasCreateSnapshotPermission = featurePermissions.planSnapshot.canCreate(user, plan, plan.model) && !$planReadOnly;
+    planStartTime = $plugins.time.primary.format(new Date(plan.start_time));
+    const endTime = convertDoyToYmd(plan.end_time_doy);
+    if (endTime) {
+      planEndTime = $plugins.time.primary.format(new Date(endTime));
+    } else {
+      planEndTime = '';
+    }
   }
   $: {
     if (plan && user) {
@@ -173,14 +183,19 @@
           <input class="st-input w-100" disabled name="modelVersion" value={plan.model.version} />
         </Input>
         <Input layout="inline">
-          <!-- TODO use time plugin -->
-          <label use:tooltip={{ content: 'Start Time (UTC)', placement: 'top' }} for="startTime">Start Time (UTC)</label
+          <label
+            use:tooltip={{ content: `Start Time (${$plugins.time.primary.label})`, placement: 'top' }}
+            for="startTime"
           >
-          <input class="st-input w-100" disabled name="startTime" value={plan.start_time_doy} />
+            Start Time ({$plugins.time.primary.label})
+          </label>
+          <input class="st-input w-100" disabled name="startTime" value={planStartTime} />
         </Input>
         <Input layout="inline">
-          <label use:tooltip={{ content: 'End Time (UTC)', placement: 'top' }} for="endTime">End Time (UTC)</label>
-          <input class="st-input w-100" disabled name="endTime" value={plan.end_time_doy} />
+          <label use:tooltip={{ content: `End Time (${$plugins.time.primary.label})`, placement: 'top' }} for="endTime">
+            End Time ({$plugins.time.primary.label})
+          </label>
+          <input class="st-input w-100" disabled name="endTime" value={planEndTime} />
         </Input>
         <Input layout="inline">
           <label use:tooltip={{ content: 'Owner', placement: 'top' }} for="owner">Owner</label>

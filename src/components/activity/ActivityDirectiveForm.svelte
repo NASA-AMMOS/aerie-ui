@@ -107,11 +107,7 @@
 
   $: startTimeField = field<string>(startTime, [required, $plugins.time.primary.validate]);
   $: activityNameField = field<string>(activityDirective.name);
-  $: startTimeDoy = getDoyTimeFromInterval(
-    planStartTimeYmd,
-    revision ? revision.start_offset : activityDirective.start_offset,
-  );
-  $: startTimeDoyField.validateAndSet(startTimeDoy);
+  $: startTimeField.validateAndSet(startTime);
   $: activityNameField.validateAndSet(activityDirective.name);
 
   $: if (activityType && activityDirective.arguments) {
