@@ -4,6 +4,7 @@
   import HistoryIcon from '@nasa-jpl/stellar/icons/history.svg?component';
   import { createEventDispatcher, onMount } from 'svelte';
   import { plan } from '../../stores/plan';
+  import { plugins } from '../../stores/plugins';
   import type {
     ActivityDirective,
     ActivityDirectiveRevision,
@@ -112,12 +113,12 @@
     // Manually check remaining fields that could have changed and require extra formatting
 
     if (current.start_offset !== previous.start_offset) {
-      const currentStartTimeDoy = getDoyTimeFromInterval(planStartTimeYmd, current.start_offset);
-      const previousStartTimeDoy = getDoyTimeFromInterval(planStartTimeYmd, previous.start_offset);
+      const currentStartTime = getDoyTimeFromInterval(planStartTimeYmd, current.start_offset);
+      const previousStartTime = getDoyTimeFromInterval(planStartTimeYmd, previous.start_offset);
 
-      differences['Start Time (UTC)'] = {
-        currentValue: currentStartTimeDoy,
-        previousValue: previousStartTimeDoy,
+      differences[`Start Time (${$plugins.time.primary.label})`] = {
+        currentValue: currentStartTime,
+        previousValue: previousStartTime,
       };
     }
 

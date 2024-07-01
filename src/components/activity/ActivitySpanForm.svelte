@@ -11,7 +11,7 @@
   import { getSpanRootParent } from '../../utilities/activities';
   import effects from '../../utilities/effects';
   import { getFormParameters } from '../../utilities/parameters';
-  import { getDoyTimeFromInterval, getUnixEpochTime, getUnixEpochTimeFromInterval } from '../../utilities/time';
+  import { getUnixEpochTimeFromInterval } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import Collapse from '../Collapse.svelte';
   import Input from '../form/Input.svelte';
@@ -43,23 +43,15 @@
   $: activityType = (activityTypes ?? []).find(({ name: activityTypeName }) => span.type === activityTypeName) ?? null;
   $: rootSpan = getSpanRootParent(spansMap, span.id);
   $: rootSpanHasChildren = (rootSpan && spanUtilityMaps.spanIdToChildIdsMap[rootSpan.id]?.length > 0) ?? false;
+
   $: {
-    if ($plugins.time?.primary?.format && $plugins.time?.primary?.parse) {
-      const startTimeMs = getUnixEpochTimeFromInterval(planStartTimeYmd, span.start_offset);
-      startTime = $plugins.time?.primary?.format(new Date(startTimeMs));
-    } else {
-      startTime = getDoyTimeFromInterval(planStartTimeYmd, span.start_offset);
-    }
+    const startTimeMs = getUnixEpochTimeFromInterval(planStartTimeYmd, span.start_offset);
+    startTime = $plugins.time.primary.format(new Date(startTimeMs));
   }
 
   $: if (span.duration) {
-    if ($plugins.time?.primary?.format && $plugins.time?.primary?.parse) {
-      const endTimeMs = getUnixEpochTimeFromInterval(planStartTimeYmd, span.duration);
-      endTime = $plugins.time?.primary?.format(new Date(endTimeMs));
-    } else {
-      const startTimeISO = new Date(getUnixEpochTime(startTime)).toISOString();
-      endTime = getDoyTimeFromInterval(startTimeISO, span.duration);
-    }
+    const endTimeMs = getUnixEpochTimeFromInterval(planStartTimeYmd, span.duration);
+    endTime = $plugins.time.primary.format(new Date(endTimeMs));
   } else {
     endTime = null;
   }
@@ -182,14 +174,14 @@
 
       <Input layout="inline">
         <label use:tooltip={{ content: 'Start Time', placement: 'top' }} for="startTime">
-          Start Time ({$plugins.time?.primary?.label ?? 'UTC'})
+          Start Time ({$plugins.time.primary.label})
         </label>
         <input class="st-input w-100" disabled name="startTime" value={startTime} />
       </Input>
 
       <Input layout="inline">
         <label use:tooltip={{ content: 'End Time', placement: 'top' }} for="endTime">
-          End Time ({$plugins.time?.primary?.label ?? 'UTC'})
+          End Time ({$plugins.time.primary.label})
         </label>
         <input class="st-input w-100" disabled name="endTime" value={endTime ?? 'None'} />
       </Input>

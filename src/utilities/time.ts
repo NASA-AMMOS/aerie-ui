@@ -662,7 +662,7 @@ export function getDoyTime(date: Date, includeMsecs = true): string {
   const { doy, hours, mins, msecs, secs, year } = getDoyTimeComponents(date);
   let doyTimestamp = `${year}-${doy}T${hours}:${mins}:${secs}`;
 
-  if (includeMsecs) {
+  if (includeMsecs && date.getMilliseconds() > 0) {
     doyTimestamp += `.${msecs}`;
   }
 

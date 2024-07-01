@@ -155,10 +155,8 @@
           cursorX = offsetX;
         }
         date = new Date(unixEpochTime);
-        // cursorTimeDOY = getDoyTime(date);
-        /* BROKENNN */
-        cursorTimeLabel = $plugins.time?.primary?.format ? $plugins.time?.primary?.format(date) : cursorTimeDOY;
-        cursorTimeLabel += ' ' + ($plugins.time?.primary?.label || 'UTC');
+        cursorTimeLabel = $plugins.time.primary.format(date);
+        cursorTimeLabel += ' ' + $plugins.time.primary.label;
       }
       cursorMaxWidth = drawWidth - cursorX;
       cursorX = cursorX + marginLeft;
@@ -186,7 +184,11 @@
       x={cursorX}
       label={cursorTimeLabel}
       maxWidth={cursorMaxWidth}
-      on:click={() => addVerticalGuide(getDoyTime(date))}
+      on:click={() => {
+        if (xScaleView) {
+          addVerticalGuide(getDoyTime(xScaleView.invert(offsetX)));
+        }
+      }}
       activeCursor
     />
   {/if}

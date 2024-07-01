@@ -32,7 +32,6 @@
   let svg: SVGElement;
   let zoom: ZoomBehavior<SVGElement, unknown>;
 
-  $: primaryTimeLabel = $plugins.time?.primary?.label ?? 'UTC';
   $: svgSelection = select(svg) as Selection<SVGElement, unknown, any, any>;
 
   /* TODO could this be a custom svelte use action? */
@@ -68,6 +67,13 @@
     }
     dispatch('zoom', e);
   }
+
+  function measureTick(tick: XAxisTick): number {
+    // TODO is this heuristic good enough for now? Actually measuring text is expensive
+    // and the previous method of estimating tick size based on the dynamic format was ugly especially for plugins
+    const labels = [tick.label].concat(tick.additionalLabels);
+    return Math.max(...labels.map(label => label.length * 6));
+  }
 </script>
 
 <div
@@ -75,9 +81,9 @@
   class="x-axis-content"
 >
   <div class="x-axis-time-formats" style={`width:${marginLeft}px`}>
-    <div class="x-axis-time-format st-typography-medium">{primaryTimeLabel}</div>
-    {#if $plugins.time?.additional && $plugins.time?.additional?.length > 0}
-      {#each $plugins.time?.additional as timeSystem}
+    <div class="x-axis-time-format st-typography-medium">{$plugins.time.primary.label}</div>
+    {#if $plugins.time.additional.length > 0}
+      {#each $plugins.time.additional as timeSystem}
         <div class="x-axis-time-format x-axis-time-format-secondary st-typography-medium">
           {timeSystem.label}
         </div>
@@ -97,11 +103,13 @@
         <g fill="none" class="ticks" text-anchor="left">
           {#if drawWidth > 0}
             {#each xTicksView as tick}
-              {#if !tick.hideLabel}
+              {@const x = xScaleView?.(tick.date) ?? 0}
+              {#if x + measureTick(tick) < drawWidth}
+                <!-- TODO measure instead of using magic numbers for tick widths -->
                 <g class="tick st-typography-medium" transform="translate({xScaleView?.(tick.date)}, 0)">
-                  <text fill="currentColor" dy="0.5em">{tick.formattedPrimaryDate}</text>
+                  <text fill="currentColor" dy="0.5em">{tick.label}</text>
                 </g>
-                {#each tick.additionalFormats as label, i}
+                {#each tick.additionalLabels as label, i}
                   <g
                     class="tick st-typography-medium tick-secondary"
                     transform="translate({xScaleView?.(tick.date)}, {(i + 1) * 16})"

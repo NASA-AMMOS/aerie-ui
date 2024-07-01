@@ -10,7 +10,6 @@
   import type { ConstraintResultWithName } from '../../types/constraint';
   import type { ResourceType, Span } from '../../types/simulation';
   import type { LineLayer, LinePoint, MouseOver, Point, Row, XRangePoint } from '../../types/timeline';
-  import { getDoyTime } from '../../utilities/time';
   import { filterResourcesByLayer } from '../../utilities/timeline';
 
   export let interpolateHoverValue: boolean = false;
@@ -30,8 +29,7 @@
     onMouseOver(mouseOver);
   }
 
-  $: primaryTimeLabel = $plugins.time?.primary?.label || 'UTC';
-  $: primaryTimeFormatter = $plugins.time?.primary?.format || getDoyTime;
+  $: primaryTimeLabel = $plugins.time.primary.label;
 
   function onMouseOver(event: MouseOver | undefined) {
     if (event && !hidden) {
@@ -238,7 +236,7 @@
   function textForActivityDirective(activityDirective: ActivityDirective): string {
     const { anchor_id, id, name, start_time_ms, type } = activityDirective;
     const directiveStartTime =
-      typeof start_time_ms === 'number' ? primaryTimeFormatter(new Date(start_time_ms)) : 'Unknown';
+      typeof start_time_ms === 'number' ? $plugins.time.primary.format(new Date(start_time_ms)) : 'Unknown';
     return `
       <div class='tooltip-row-container'>
         <div class='st-typography-bold' style='color: var(--st-gray-10); display: flex; gap: 4px;'>${DirectiveIcon} Activity Directive</div>
@@ -299,7 +297,7 @@
       color = (layer as LineLayer).lineColor;
     }
 
-    const pointTime = primaryTimeFormatter(new Date(x));
+    const pointTime = $plugins.time.primary.format(new Date(x));
 
     return `
       <div class='tooltip-row-container'>
@@ -328,8 +326,8 @@
 
   function textForSpan(span: Span): string {
     const { id, duration, startMs, endMs, type } = span;
-    const spanStartTime = primaryTimeFormatter(new Date(startMs));
-    const spanEndTime = primaryTimeFormatter(new Date(endMs));
+    const spanStartTime = $plugins.time.primary.format(new Date(startMs));
+    const spanEndTime = $plugins.time.primary.format(new Date(endMs));
     return `
       <div class='tooltip-row-container'>
         <div class='st-typography-bold' style='color: var(--st-gray-10); display: flex; gap: 4px;'>${SpanIcon} Simulated Activity (Span)</div>
@@ -367,7 +365,7 @@
       name = layer.name ? layer.name : point.name;
       color = (layer as LineLayer).lineColor;
     }
-    const pointTime = primaryTimeFormatter(new Date(x));
+    const pointTime = $plugins.time.primary.format(new Date(x));
 
     return `
       <div class='tooltip-row-container'>

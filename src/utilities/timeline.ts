@@ -36,135 +36,7 @@ import type {
   XRangeLayer,
 } from '../types/timeline';
 import { filterEmpty } from './generic';
-
-// let spiceInstance: any = undefined;
-
-// const LMST_SC_ID = -168900;
-// const SPICE_LMST_RE = /^\d\/(\d+):(\d{2}):(\d{2}):(\d{2}):(\d+)?$/;
-// const DISPLAY_LMST_RE = /^(Sol-)?(\d+)M(\d{2}):(\d{2}):(\d{2})(.(\d*))?$/;
-
-// function trimLeadingZeroes(s: string): string {
-//   return parseInt(s, 10).toString(10);
-// }
-
-// function lmstToEphemeris(lmst: string): number {
-//   const matcher = lmst.match(DISPLAY_LMST_RE);
-//   if (!matcher) {
-//     return NaN;
-//   }
-
-//   const sol = trimLeadingZeroes(matcher[2] || '');
-//   const hour = matcher[3] || '';
-//   const mins = matcher[4] || '';
-//   const secs = matcher[5] || '';
-//   const subsecs = parseFloat(matcher[6] || '0')
-//     .toFixed(5)
-//     .substring(2);
-//   const sclkch = `${sol}:${hour}:${mins}:${secs}:${subsecs}`;
-//   // const sclkch = sol + ':' + hour + ':' + mins + ':' + secs + ':' + subsecs;
-//   return spiceInstance.scs2e(LMST_SC_ID, sclkch);
-// }
-
-// function ephemerisToLMST(et: number): string {
-//   const lmst: string = spiceInstance.sce2s(LMST_SC_ID, et);
-//   // something like "1/01641:07:16:13:65583"
-//   const m = lmst.match(SPICE_LMST_RE);
-//   if (m) {
-//     const sol = trimLeadingZeroes(m[1]);
-//     const hour = m[2];
-//     const mins = m[3];
-//     const secs = m[4];
-//     const subsecs = m[5] || '0';
-//     return sol + 'M' + hour + ':' + mins + ':' + secs + '.' + subsecs;
-//   }
-//   return '';
-// }
-
-// export function ephemerisToUTC(et: number): string {
-//   return spiceInstance.et2utc(et, 'ISOC', 100);
-// }
-
-// export function lmstToUTC(lmst: string) {
-//   if (spiceInstance) {
-//     try {
-//       const et = lmstToEphemeris(lmst);
-//       const utc = ephemerisToUTC(et);
-//       return utc;
-//     } catch (error) {
-//       console.log('error :>> ', error);
-//     }
-//   }
-//   return '';
-// }
-
-// export function utcToLmst(utc: string) {
-//   if (spiceInstance) {
-//     try {
-//       const et = spiceInstance.str2et(utc);
-//       return ephemerisToLMST(et);
-//     } catch (error) {
-//       console.error(error);
-//       return '';
-//     }
-//   }
-//   return 'no spice';
-// }
-
-// export async function initializeSpice() {
-//   const initializingSpice = await new Spice().init();
-
-//   // Load the kernels
-//   const kernelBuffers = await Promise.all(
-//     [
-//       'http://localhost:3000/kernels/m2020_lmst_ops210303_v1.tsc',
-//       'http://localhost:3000/kernels/m2020.tls',
-//       'http://localhost:3000/kernels/m2020.tsc',
-//     ].map(url => fetch(url).then(res => res.arrayBuffer())),
-//   );
-
-//   // Load the kernels into Spice
-//   for (let i = 0; i < kernelBuffers.length; i++) {
-//     initializingSpice.loadKernel(kernelBuffers[i]);
-//   }
-
-//   spiceInstance = initializingSpice;
-
-//   // console.log('spiceInstance :>> ', spiceInstance);
-
-//   console.log('Spice initialized');
-
-//   const utc = new Date().toISOString().slice(0, -1);
-//   console.log(`utc: ${utc}`);
-//   console.log(`et: ${initializingSpice.utc2et(utc)}`);
-//   console.log(`MIN_SCLK: ${initializingSpice.scs2e(LMST_SC_ID, '00000:00:00:00:00')}`);
-//   console.log(`lmst: ${utcToLmst(utc)}`);
-// }
-
-// (async () => {
-//   const initializingSpice = await new Spice().init();
-
-//   // Load the kernels
-//   const kernelBuffers = await Promise.all(
-//     [
-//       'http://localhost:3000/kernels/m2020_lmst_ops210303_v1.tsc',
-//       'http://localhost:3000/kernels/m2020.tls',
-//       'http://localhost:3000/kernels/m2020.tsc',
-//     ].map(url => fetch(url).then(res => res.arrayBuffer())),
-//   );
-
-//   // Load the kernels into Spice
-//   for (let i = 0; i < kernelBuffers.length; i++) {
-//     initializingSpice.loadKernel(kernelBuffers[i]);
-//   }
-
-//   spiceInstance = initializingSpice;
-
-//   // const utc = new Date().toISOString().slice(0, -1);
-//   // console.log(`utc: ${utc}`);
-//   // console.log(`et: ${initializingSpice.utc2et(utc)}`);
-//   // console.log(`MIN_SCLK: ${initializingSpice.scs2e(LMST_SC_ID, '00000:00:00:00:00')}`);
-//   // console.log(`lmst: ${utcToLmst(utc)}`);
-// })();
+import { getDoyTime } from './time';
 
 export enum TimelineLockStatus {
   Locked = 'Locked',
@@ -248,7 +120,7 @@ export function customD3TickInterval(start: Date, stop: Date, count: number): Ti
 }
 
 // Based on https://github.com/d3/d3-time/blob/main/src/ticks.js
-export function customD3Ticks(start: Date, stop: Date, count: number) {
+export function utcTicks(start: Date, stop: Date, count: number) {
   const reverse = stop < start;
   if (reverse) {
     [start, stop] = [stop, start];
@@ -257,6 +129,25 @@ export function customD3Ticks(start: Date, stop: Date, count: number) {
   // Make end date inclusive by creating a new date +1ms from stop date
   const ticks = interval ? interval.range(start, new Date(+stop + 1)) : []; // inclusive stop
   return reverse ? ticks.reverse() : ticks;
+}
+
+export function formatTickUtc(date: Date, viewDurationMs: number, tickCount: number): string {
+  let label = getDoyTime(date);
+  if (viewDurationMs > durationYear * tickCount) {
+    label = label.slice(0, 4);
+  } else if (viewDurationMs > durationMonth * tickCount) {
+    label = label.slice(0, 8);
+  } else if (viewDurationMs > durationWeek) {
+    label = label.slice(0, 8);
+  }
+  return label;
+}
+
+export function formatTickLocalTZ(date: Date, viewDurationMs: number, tickCount: number): string {
+  if (viewDurationMs > durationYear * tickCount) {
+    return date.getFullYear().toString();
+  }
+  return date.toLocaleString();
 }
 
 export const CANVAS_PADDING_X = 0;

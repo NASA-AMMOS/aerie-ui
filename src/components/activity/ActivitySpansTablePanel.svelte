@@ -12,7 +12,6 @@
   import type { Span } from '../../types/simulation';
   import type { AutoSizeColumns, ViewGridSection, ViewTable } from '../../types/view';
   import { filterEmpty } from '../../utilities/generic';
-  import { getDoyTime } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import GridMenu from '../menus/GridMenu.svelte';
   import type DataGrid from '../ui/DataGrid/DataGrid.svelte';
@@ -84,13 +83,14 @@
     derived_start_time: {
       filter: 'text',
       field: 'startMs',
-      headerName: `Absolute End Time (${$plugins.time?.primary?.label ?? 'UTC'})`,
+      headerName: `Absolute Start Time (${$plugins.time.primary.label})`,
       hide: true,
       resizable: true,
       sortable: true,
       valueGetter: params => {
         if (params && params.data && typeof params.data.startMs === 'number') {
-          return ($plugins.time?.primary?.format ?? getDoyTime)(new Date(params.data.startMs), false);
+          /* TODO could use short format here to skip ms but do we need short(er) format somewhere else? */
+          return $plugins.time.primary.format(new Date(params.data.startMs));
         }
         return '';
       },
@@ -99,13 +99,13 @@
     derived_end_time: {
       filter: 'text',
       field: 'endMs',
-      headerName: 'Absolute End Time (UTC)',
+      headerName: `Absolute End Time (${$plugins.time.primary.label})`,
       hide: true,
       resizable: true,
       sortable: true,
       valueGetter: params => {
         if (params && params.data && typeof params.data.endMs === 'number') {
-          return ($plugins.time?.primary?.format ?? getDoyTime)(new Date(params.data.endMs), false);
+          return $plugins.time.primary.format(new Date(params.data.endMs));
         }
         return '';
       },
