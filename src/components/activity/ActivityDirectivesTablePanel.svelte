@@ -14,7 +14,7 @@
   import type { User } from '../../types/app';
   import type { AutoSizeColumns, ViewGridSection, ViewTable } from '../../types/view';
   import { filterEmpty } from '../../utilities/generic';
-  import { getDoyTime, getUnixEpochTimeFromInterval } from '../../utilities/time';
+  import { getUnixEpochTimeFromInterval } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import GridMenu from '../menus/GridMenu.svelte';
   import DataGrid from '../ui/DataGrid/DataGrid.svelte';
@@ -167,13 +167,13 @@
     derived_start_time: {
       field: 'start_time_ms',
       filter: 'text',
-      headerName: `Absolute Start Time (${$plugins.time?.primary?.label ?? 'UTC'})`,
+      headerName: `Absolute Start Time (${$plugins.time.primary.label})`,
       hide: false,
       resizable: true,
       sortable: true,
       valueGetter: (params: ValueGetterParams<ActivityDirective>) => {
         if ($plan && params && params.data && typeof params.data.start_time_ms === 'number') {
-          return ($plugins.time?.primary?.format ?? getDoyTime)(new Date(params.data.start_time_ms), false);
+          return $plugins.time.primary.format(new Date(params.data.start_time_ms));
         }
         return '';
       },

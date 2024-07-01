@@ -220,10 +220,9 @@ export type VerticalGuideSelection = {
 };
 
 export type XAxisTick = {
-  additionalFormats: string[];
+  additionalLabels: string[];
   date: Date;
-  formattedPrimaryDate: string;
-  hideLabel: boolean;
+  label: string;
 };
 
 /**

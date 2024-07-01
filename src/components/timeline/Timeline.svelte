@@ -31,17 +31,7 @@
     XAxisTick,
   } from '../../types/timeline';
   import { clamp } from '../../utilities/generic';
-  import { getDoyTime } from '../../utilities/time';
-  import {
-    MAX_CANVAS_SIZE,
-    TimelineInteractionMode,
-    TimelineLockStatus,
-    customD3Ticks,
-    durationMonth,
-    durationWeek,
-    durationYear,
-    getXScale,
-  } from '../../utilities/timeline';
+  import { MAX_CANVAS_SIZE, TimelineInteractionMode, TimelineLockStatus, getXScale } from '../../utilities/timeline';
   import TimelineRow from './Row.svelte';
   import RowHeaderDragHandleWidth from './RowHeaderDragHandleWidth.svelte';
   import TimelineContextMenu from './TimelineContextMenu.svelte';
@@ -100,7 +90,6 @@
   let tooltip: Tooltip;
   let cursorEnabled: boolean = true;
   let cursorHeaderHeight: number = 0;
-  let estimatedLabelWidthPx: number = 130; // Width of MS time which is the largest display format
   let histogramCursorTime: Date | null = null;
   let mouseOver: MouseOver | null;
   let removeDPRChangeListener: (() => void) | null = null;
@@ -130,13 +119,12 @@
 
   $: rows = timeline?.rows || [];
   $: drawWidth = clientWidth > 0 ? clientWidth - (timeline?.marginLeft ?? 0) - (timeline?.marginRight ?? 0) : 0;
-  $: estimatedLabelWidthPx = $plugins.time?.ticks?.tickLabelWidth ?? 130;
-  $: xAxisDrawHeight = 48 + 16 * ($plugins.time?.additional ? Math.max($plugins.time.additional.length, 1) : 1);
+  $: xAxisDrawHeight = 48 + 16 * ($plugins.time.additional.length ? Math.max($plugins.time.additional.length, 1) : 1);
 
   // Compute number of ticks based off draw width
   $: if (drawWidth) {
     const padding = 1.5;
-    let ticks = Math.round(drawWidth / (estimatedLabelWidthPx * padding));
+    let ticks = Math.round(drawWidth / ($plugins.time.ticks.maxLabelWidth * padding));
     tickCount = clamp(ticks, 2, 16);
 
     // Recompute zoom transform based off new drawWidth
@@ -151,72 +139,19 @@
   $: xScaleMax = getXScale(xDomainMax, drawWidth);
   $: xScaleView = getXScale(xDomainView, drawWidth);
   $: xScaleViewDuration = viewTimeRange.end - viewTimeRange.start;
-  $: formattedPlanStartTime = $plugins.time?.primary?.format
-    ? $plugins.time?.primary?.format(xDomainMax[0])
-    : plan?.start_time_doy;
-  $: formattedPlanEndTime = $plugins.time?.primary?.format
-    ? $plugins.time?.primary?.format(xDomainMax[1])
-    : plan?.end_time_doy;
+  $: formattedPlanStartTime = $plugins.time.primary.format(xDomainMax[0]);
+  $: formattedPlanEndTime = $plugins.time.primary.format(xDomainMax[1]);
 
   $: if (viewTimeRangeStartDate && viewTimeRangeEndDate && tickCount) {
-    let labelWidth = estimatedLabelWidthPx; // Adjust label width depending on zoom level
-    const ticksFn = $plugins.time?.ticks?.getTicks ?? customD3Ticks;
-    xTicksView = ticksFn(viewTimeRangeStartDate, viewTimeRangeEndDate, tickCount).map((date: Date) => {
-      const doyTimestamp = getDoyTime(date, true);
-      let formattedPrimaryDate = '';
-      if ($plugins.time?.primary?.format) {
-        formattedPrimaryDate = $plugins.time?.primary?.format(date);
-      } else {
-        formattedPrimaryDate = doyTimestamp;
-        if (xScaleViewDuration > durationYear * tickCount) {
-          formattedPrimaryDate = doyTimestamp.slice(0, 4);
-          labelWidth = $plugins.time?.ticks?.tickLabelWidth ?? 28;
-        } else if (xScaleViewDuration > durationMonth * tickCount) {
-          formattedPrimaryDate = doyTimestamp.slice(0, 8);
-          labelWidth = $plugins.time?.ticks?.tickLabelWidth ?? 50;
-        } else if (xScaleViewDuration > durationWeek) {
-          formattedPrimaryDate = doyTimestamp.slice(0, 8);
-          labelWidth = $plugins.time?.ticks?.tickLabelWidth ?? 58;
-        }
-      }
-
-      const additionalFormats: string[] = [];
-      let tick: XAxisTick = { additionalFormats: [], date, formattedPrimaryDate, hideLabel: false };
-
-      if ($plugins.time?.additional?.length) {
-        $plugins.time.additional.forEach(timeSystem => {
-          if (timeSystem.format) {
-            additionalFormats.push(timeSystem.format(date));
-          }
-        });
-      } else {
-        let formattedSecondaryDate = date.toLocaleString();
-        if (xScaleViewDuration > durationYear * tickCount) {
-          formattedSecondaryDate = date.getFullYear().toString();
-          labelWidth = $plugins.time?.ticks?.tickLabelWidth ?? 28;
-        } else if (xScaleViewDuration > durationMonth * tickCount) {
-          formattedSecondaryDate = date.toLocaleDateString();
-          labelWidth = $plugins.time?.ticks?.tickLabelWidth ?? 50;
-        } else if (xScaleViewDuration > durationWeek) {
-          formattedSecondaryDate = date.toLocaleDateString();
-          labelWidth = $plugins.time?.ticks?.tickLabelWidth ?? 58;
-        }
-        additionalFormats.push(formattedSecondaryDate);
-      }
-
-      tick.additionalFormats = additionalFormats;
-
-      return { additionalFormats, date, formattedPrimaryDate, hideLabel: false };
+    xTicksView = $plugins.time.ticks.getTicks(viewTimeRangeStartDate, viewTimeRangeEndDate, tickCount).map(date => {
+      const label = $plugins.time.primary.formatTick(date, xScaleViewDuration, tickCount);
+      const additionalLabels = $plugins.time.additional.map(timeSystem => {
+        return timeSystem.formatTick
+          ? timeSystem.formatTick(date, xScaleViewDuration, tickCount)
+          : timeSystem.format(date);
+      });
+      return { additionalLabels, date, label };
     });
-
-    // Determine whether or not to hide the last tick label
-    // which has the potential to draw past the drawWidth
-    if (xTicksView.length) {
-      const lastTick = xTicksView[xTicksView.length - 1];
-      if (xScaleView(lastTick.date) + labelWidth > drawWidth) {
-        lastTick.hideLabel = true;
-      }
-    }
   }
 
   afterUpdate(() => {
@@ -441,7 +376,7 @@
       <TimelineTimeDisplay
         planStartTime={formattedPlanStartTime}
         planEndTime={formattedPlanEndTime}
-        timeLabel={$plugins.time?.primary?.label || 'UTC'}
+        timeLabel={$plugins.time.primary.label}
         width={timeline?.marginLeft}
       />
     {/if}

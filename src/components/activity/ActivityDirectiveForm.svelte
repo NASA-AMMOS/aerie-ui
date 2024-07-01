@@ -38,14 +38,9 @@
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import { pluralize } from '../../utilities/text';
-  import {
-    getDoyTime,
-    getDoyTimeFromInterval,
-    getIntervalFromDoyRange,
-    getUnixEpochTimeFromInterval,
-  } from '../../utilities/time';
+  import { getDoyTime, getIntervalFromDoyRange, getUnixEpochTimeFromInterval } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
-  import { required, timestamp } from '../../utilities/validators';
+  import { required } from '../../utilities/validators';
   import Collapse from '../Collapse.svelte';
   import ActivityMetadataField from '../activityMetadata/ActivityMetadataField.svelte';
   import DatePickerField from '../form/DatePickerField.svelte';
@@ -103,22 +98,14 @@
   $: activityType =
     (activityTypes ?? []).find(({ name: activityTypeName }) => activityDirective?.type === activityTypeName) ?? null;
   $: {
-    if ($plugins.time?.primary?.format && $plugins.time?.primary?.parse) {
-      const startTimeMs = getUnixEpochTimeFromInterval(
-        planStartTimeYmd,
-        revision ? revision.start_offset : activityDirective.start_offset,
-      );
-      startTime = $plugins.time?.primary?.format(new Date(startTimeMs));
-    } else {
-      startTime = getDoyTimeFromInterval(
-        planStartTimeYmd,
-        revision ? revision.start_offset : activityDirective.start_offset,
-      );
-    }
+    const startTimeMs = getUnixEpochTimeFromInterval(
+      planStartTimeYmd,
+      revision ? revision.start_offset : activityDirective.start_offset,
+    );
+    startTime = $plugins.time.primary.format(new Date(startTimeMs));
   }
 
-  $: startTimeFieldValidators = $plugins.time?.primary?.validate || timestamp;
-  $: startTimeField = field<string>(startTime, [required, startTimeFieldValidators]);
+  $: startTimeField = field<string>(startTime, [required, $plugins.time.primary.validate]);
   $: activityNameField = field<string>(activityDirective.name);
   $: startTimeDoy = getDoyTimeFromInterval(
     planStartTimeYmd,
@@ -390,13 +377,10 @@
   }
 
   function onUpdateStartTime() {
-    if ($startTimeField.valid /* && startTime !== $startTimeField.value */) {
-      console.log('startTimeField.value :>> ', $startTimeField.value);
+    if ($startTimeField.valid && startTime !== $startTimeField.value) {
       const { id } = activityDirective;
       const planStartTimeDoy = getDoyTime(new Date(planStartTimeYmd));
-      const startTimeDoy = $plugins.time?.primary?.parse
-        ? getDoyTime($plugins.time?.primary?.parse($startTimeField.value))
-        : $startTimeField.value;
+      const startTimeDoy = getDoyTime($plugins.time.primary.parse($startTimeField.value));
       const start_offset = getIntervalFromDoyRange(planStartTimeDoy, startTimeDoy);
       if ($plan) {
         effects.updateActivityDirective($plan, id, { start_offset }, activityType, user);
@@ -586,28 +570,11 @@
         </Highlight>
 
         <Highlight highlight={highlightKeysMap.start_offset}>
-          {#if $plugins.time?.primary?.parse}
-            <div class="start-time-field">
-              <Field field={startTimeField} on:change={onUpdateStartTime}>
-                <Input layout="inline">
-                  <label use:tooltip={{ content: 'Start Time', placement: 'top' }} for="start-time">
-                    Start Time ({$plugins.time?.primary.label}) - {$plugins.time?.primary.formatString}
-                  </label>
-                  <input
-                    autocomplete="off"
-                    class="st-input w-100"
-                    name="start-time"
-                    value={activityDirective.type}
-                    on:keyup={onStartTimeKeyUp}
-                  />
-                </Input>
-              </Field>
-            </div>
-          {:else}
+          {#if $plugins.time.enableDatePicker}
             <DatePickerField
               disabled={!editable || activityDirective.anchor_id !== null}
               field={startTimeField}
-              label="Start Time (UTC) - YYYY-DDDThh:mm:ss"
+              label={`Start Time (${$plugins.time.primary.label}) - ${$plugins.time.primary.formatString}`}
               layout="inline"
               name="start-time"
               use={[
@@ -622,22 +589,25 @@
               on:change={onUpdateStartTime}
               on:keydown={onUpdateStartTime}
             />
+          {:else}
+            <div class="start-time-field">
+              <Field field={startTimeField} on:change={onUpdateStartTime}>
+                <Input layout="inline">
+                  <label use:tooltip={{ content: 'Start Time', placement: 'top' }} for="start-time">
+                    Start Time ({$plugins.time.primary.label}) - {$plugins.time.primary.formatString}
+                  </label>
+                  <input
+                    autocomplete="off"
+                    class="st-input w-100"
+                    name="start-time"
+                    value={activityDirective.type}
+                    on:keyup={onStartTimeKeyUp}
+                  />
+                </Input>
+              </Field>
+            </div>
           {/if}
         </Highlight>
-
-        <!--   <Input layout="inline">
-          <label use:tooltip={{ content: 'Start Time', placement: 'top' }} for="start-time">
-            Start Time ({$plugins.time?.secondary?.label ?? 'UTC'})
-          </label>
-          <input
-            disabled
-            autocomplete="off"
-            class="st-input w-100"
-            name="start-time"
-            value={}
-            on:keyup={onStartTimeKeyUp}
-          />
-        </Input> -->
 
         <ActivityAnchorForm
           {activityDirective}

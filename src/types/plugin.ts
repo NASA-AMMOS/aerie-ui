@@ -5,20 +5,26 @@ export type PluginCode = {
 };
 
 export type PluginTime = {
-  format?: (date: Date) => string;
-  formatString?: string;
-  label?: string;
-  parse?: (string: string) => Date;
-  validate?: (string: string) => Promise<ValidationResult>;
+  format: (date: Date) => string;
+  formatShort: (date: Date) => string;
+  formatString: string;
+  formatTick: (date: Date, durationMs: number, tickCount: number) => string;
+  label: string;
+  parse: (string: string) => Date;
+  validate: (string: string) => Promise<ValidationResult>;
 };
 
+type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
+
 export type Plugins = {
-  time?: {
-    additional?: PluginTime[]; // TODO bikeshed
-    primary?: PluginTime;
-    ticks?: {
-      getTicks?: (start: Date, stop: Date, count: number) => Date[];
-      tickLabelWidth?: number;
+  time: {
+    additional: Optional<PluginTime, 'validate' | 'parse' | 'formatString' | 'formatTick' | 'formatShort'>[];
+    enableDatePicker: boolean;
+    getDefaultPlanEndDate: (start: Date) => Date;
+    primary: PluginTime;
+    ticks: {
+      getTicks: (start: Date, stop: Date, count: number) => Date[];
+      maxLabelWidth: number;
     };
   };
 };

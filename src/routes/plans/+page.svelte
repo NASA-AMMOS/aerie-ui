@@ -38,14 +38,8 @@
   import { removeQueryParam } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
-  import {
-    convertDoyToYmd,
-    convertUsToDurationString,
-    getDoyTime,
-    getShortISOForDate,
-    getUnixEpochTime,
-  } from '../../utilities/time';
-  import { min, required, timestamp, unique } from '../../utilities/validators';
+  import { convertDoyToYmd, convertUsToDurationString, getDoyTime, getShortISOForDate } from '../../utilities/time';
+  import { min, required, unique } from '../../utilities/validators';
   import type { PageData } from './$types';
 
   export let data: PageData;
@@ -106,16 +100,12 @@
     {
       field: 'start_time',
       filter: 'text',
-      headerName: `Start ${$plugins.time?.primary?.label || 'Time'}`,
+      headerName: 'Start Time',
       resizable: true,
       sortable: true,
       valueGetter: (params: ValueGetterParams<Plan>) => {
         if (params.data) {
-          if ($plugins.time?.primary?.format) {
-            return $plugins.time?.primary?.format(new Date(params.data.start_time));
-          } else {
-            return params.data?.start_time_doy.split('T')[0];
-          }
+          return $plugins.time.primary.formatShort(new Date(params.data.start_time));
         }
       },
       width: 150,
@@ -123,18 +113,14 @@
     {
       field: 'end_time',
       filter: 'text',
-      headerName: `End ${$plugins.time?.primary?.label || 'Time'}`,
+      headerName: 'End Time',
       resizable: true,
       sortable: true,
       valueGetter: (params: ValueGetterParams<Plan>) => {
         if (params.data) {
-          if ($plugins.time?.primary?.format) {
-            const endTime = convertDoyToYmd(params.data.end_time_doy);
-            if (endTime) {
-              return $plugins.time?.primary?.format(new Date(endTime));
-            }
-          } else {
-            return params.data?.end_time_doy.split('T')[0];
+          const endTime = convertDoyToYmd(params.data.end_time_doy);
+          if (endTime) {
+            return $plugins.time.primary.formatShort(new Date(endTime));
           }
         }
       },
@@ -201,9 +187,8 @@
   ]);
   let simTemplateField = field<number | null>(null);
 
-  $: timeFieldValidators = $plugins.time?.primary?.validate || timestamp;
-  $: startTimeField = field<string>('', [required, timeFieldValidators]);
-  $: endTimeField = field<string>('', [required, timeFieldValidators]);
+  $: startTimeField = field<string>('', [required, $plugins.time.primary.validate]);
+  $: endTimeField = field<string>('', [required, $plugins.time.primary.validate]);
 
   $: if ($plans) {
     nameField.updateValidators([
@@ -298,12 +283,8 @@
   });
 
   async function createPlan() {
-    let startTime = $startTimeField.value;
-    let endTime = $endTimeField.value;
-    if ($plugins.time?.primary?.parse) {
-      startTime = getDoyTime($plugins.time?.primary?.parse(startTime));
-      endTime = getDoyTime($plugins.time?.primary?.parse(endTime));
-    }
+    let startTime = getDoyTime($plugins.time.primary.parse($startTimeField.value));
+    let endTime = getDoyTime($plugins.time.primary.parse($endTimeField.value));
     const newPlan = await effects.createPlan(
       endTime,
       $modelIdField.value,
@@ -365,17 +346,8 @@
   async function onStartTimeChanged() {
     if ($startTimeField.value && $startTimeField.valid && $endTimeField.value === '') {
       // Set end time as start time plus a day by default
-      let newEndTime = '';
-      if ($plugins.time?.primary?.parse && $plugins.time?.primary?.format) {
-        const startTimeDate = $plugins.time?.primary?.parse($startTimeField.value);
-        // TODO this isn't actually incrementing the plugin's date by 1
-        startTimeDate.setDate(startTimeDate.getDate() + 1);
-        newEndTime = $plugins.time?.primary?.format(startTimeDate);
-      } else {
-        const startTimeDate = new Date(getUnixEpochTime($startTimeField.value));
-        startTimeDate.setDate(startTimeDate.getDate() + 1);
-        newEndTime = getDoyTime(startTimeDate, false);
-      }
+      const startTimeDate = $plugins.time.primary.parse($startTimeField.value);
+      let newEndTime = $plugins.time.primary.format($plugins.time.getDefaultPlanEndDate(startTimeDate));
       await endTimeField.validateAndSet(newEndTime);
     }
 
@@ -384,17 +356,10 @@
 
   function updateDurationString() {
     if ($startTimeField.valid && $endTimeField.valid) {
-      let startTimeMS = 0;
-      let endTimeMS = 0;
-      if ($plugins.time?.primary?.parse) {
-        startTimeMS = $plugins.time?.primary?.parse($startTimeField.value).getTime();
-        endTimeMS = $plugins.time?.primary?.parse($endTimeField.value).getTime();
-      } else {
-        startTimeMS = getUnixEpochTime($startTimeField.value);
-        endTimeMS = getUnixEpochTime($endTimeField.value);
-      }
+      let startTimeMs = $plugins.time.primary.parse($startTimeField.value).getTime();
+      let endTimeMs = $plugins.time.primary.parse($endTimeField.value).getTime();
 
-      durationString = convertUsToDurationString((endTimeMS - startTimeMS) * 1000);
+      durationString = convertUsToDurationString((endTimeMs - startTimeMs) * 1000);
 
       if (!durationString) {
         durationString = 'None';
@@ -463,23 +428,12 @@
             />
           </Field>
 
-          {#if $plugins.time?.primary?.parse}
-            <div class="start-time-field">
-              <Field field={startTimeField} on:change={onStartTimeChanged}>
-                <Input layout="stacked">
-                  <label for="start-time"
-                    >Start {$plugins.time?.primary?.label} - {$plugins.time?.primary?.formatString}</label
-                  >
-                  <input autocomplete="off" class="st-input w-100" name="start-time" value={$startTimeField.value} />
-                </Input>
-              </Field>
-            </div>
-          {:else}
+          {#if $plugins.time.enableDatePicker}
             <!-- TODO not sure if the on:keydown actually exists in DatePickerField -->
             <fieldset>
               <DatePickerField
                 field={startTimeField}
-                label="Start Time - YYYY-DDDThh:mm:ss"
+                label={`Start Time - ${$plugins.time.primary.formatString}`}
                 name="start-time"
                 on:change={onStartTimeChanged}
                 on:keydown={updateDurationString}
@@ -494,24 +448,10 @@
                 ]}
               />
             </fieldset>
-          {/if}
-
-          {#if $plugins.time?.primary?.parse}
-            <div class="end-time-field">
-              <Field field={endTimeField} on:change={updateDurationString}>
-                <Input layout="stacked">
-                  <label for="end-time"
-                    >End {$plugins.time?.primary?.label} - {$plugins.time?.primary?.formatString}</label
-                  >
-                  <input autocomplete="off" class="st-input w-100" name="end-time" value={$endTimeField.value} />
-                </Input>
-              </Field>
-            </div>
-          {:else}
             <fieldset>
               <DatePickerField
                 field={endTimeField}
-                label="End Time - YYYY-DDDThh:mm:ss"
+                label={`End Time - ${$plugins.time.primary.formatString}`}
                 name="end-time"
                 on:change={updateDurationString}
                 on:keydown={updateDurationString}
@@ -526,6 +466,27 @@
                 ]}
               />
             </fieldset>
+          {:else}
+            <div class="start-time-field">
+              <Field field={startTimeField} on:change={onStartTimeChanged}>
+                <Input layout="stacked">
+                  <label for="start-time">
+                    Start {$plugins.time.primary.label} - {$plugins.time.primary.formatString}
+                  </label>
+                  <input autocomplete="off" class="st-input w-100" name="start-time" value={$startTimeField.value} />
+                </Input>
+              </Field>
+            </div>
+            <div class="end-time-field">
+              <Field field={endTimeField} on:change={updateDurationString}>
+                <Input layout="stacked">
+                  <label for="end-time">
+                    End {$plugins.time.primary.label} - {$plugins.time.primary.formatString}
+                  </label>
+                  <input autocomplete="off" class="st-input w-100" name="end-time" value={$endTimeField.value} />
+                </Input>
+              </Field>
+            </div>
           {/if}
 
           <fieldset>

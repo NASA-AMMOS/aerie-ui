@@ -8,23 +8,9 @@
 
   export let window: TimeRange;
 
-  $: ({
-    doy: startDoy,
-    hours: startHours,
-    mins: startMins,
-    msecs: startMsecs,
-    secs: startSecs,
-    year: startYear,
-  } = getDoyTimeComponents(new Date(window.start)));
+  let isDoyPattern = false;
 
-  $: ({
-    doy: endDoy,
-    hours: endHours,
-    mins: endMins,
-    msecs: endMsecs,
-    secs: endSecs,
-    year: endYear,
-  } = getDoyTimeComponents(new Date(window.end)));
+  $: isDoyPattern = new RegExp(/^(\d{4})-(\d{3})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?$/);
 
   function zoomToViolation(window: TimeRange): void {
     $viewTimeRange = window;
@@ -33,21 +19,36 @@
 
 <button class="st-button tertiary violation-button" on:click={() => zoomToViolation(window)}>
   <div>
-    {#if $plugins.time?.primary?.format}
-      {$plugins.time?.primary?.format(new Date(window.start))}
-    {:else}
+    {#if isDoyPattern}
+      {@const {
+        doy: startDoy,
+        hours: startHours,
+        mins: startMins,
+        msecs: startMsecs,
+        secs: startSecs,
+        year: startYear,
+      } = getDoyTimeComponents(new Date(window.start))}
       {startYear}-<span class="st-typography-bold">{startDoy}</span> T {startHours}:{startMins}:{startSecs}.{startMsecs}
-      UTC
+      {$plugins.time.primary.label}
+    {:else}
+      {$plugins.time.primary.format(new Date(window.start))}
     {/if}
   </div>
-
   <div class="separator">–</div>
   <div>
-    <!-- TODO use regex to detect this and make plugin have defaults -->
-    {#if $plugins.time?.primary?.format}
-      {$plugins.time?.primary?.format(new Date(window.start))}
+    {#if isDoyPattern}
+      {@const {
+        doy: endDoy,
+        hours: endHours,
+        mins: endMins,
+        msecs: endMsecs,
+        secs: endSecs,
+        year: endYear,
+      } = getDoyTimeComponents(new Date(window.end))}
+      {endYear}-<span class="st-typography-bold">{endDoy}</span> T {endHours}:{endMins}:{endSecs}.{endMsecs}
+      {$plugins.time.primary.label}
     {:else}
-      {endYear}-<span class="st-typography-bold">{endDoy}</span> T {endHours}:{endMins}:{endSecs}.{endMsecs} UTC UTC
+      {$plugins.time.primary.format(new Date(window.start))}
     {/if}
   </div>
 </button>
