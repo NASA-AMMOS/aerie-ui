@@ -3392,6 +3392,37 @@ const effects = {
     }
   },
 
+  async getExternalEventsByEventType(
+    eventType: ExternalEventType | null,
+    user: User | null,
+  ): Promise<ExternalEventDB[]> {
+    try {
+      if (eventType) {
+        const eventTypeId = eventType.id;
+        const data = await reqHasura<any>(gql.GET_EXTERNAL_EVENT_BY_EVENT_TYPE, { event_type_id: eventTypeId }, user);
+        const { external_event: events } = data;
+        const outputEvents: ExternalEventDB[] = [];
+        for (const event of events) {
+          outputEvents.push({
+            duration: event.duration,
+            event_type_id: event.event_type_id,
+            id: event.id,
+            key: event.key,
+            properties: event.properties,
+            source_id: event.source_id,
+            start_time: event.start_time,
+          });
+        }
+        return outputEvents;
+      } else {
+        return [];
+      }
+    } catch (e) {
+      catchError(e as Error);
+      return [];
+    }
+  },
+
   async getExternalEventTypesBySource(
     source_ids: number[],
     eventTypes: ExternalEventType[],

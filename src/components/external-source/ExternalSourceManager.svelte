@@ -5,7 +5,7 @@
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { onDestroy, onMount } from 'svelte';
   import { catchError } from '../../stores/errors';
-  import { externalEventTypes, externalEventWithTypeName, getEventTypeName } from '../../stores/external-event';
+  import { externalEventTypes, getEventTypeName } from '../../stores/external-event';
   import { createExternalSourceError, createExternalSourceEventTypeLinkError, createExternalSourceTypeError, creatingExternalSource, externalSourceTypes, externalSourceWithTypeName, getEventSourceTypeByName } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import type { User } from '../../types/app';
@@ -329,8 +329,9 @@
           await effects.deleteExternalSourceType(selectedSource.source_type_id, user);
         }
          deletedSourceEventTypes.forEach(async (eventType) => {
-          let remainingEventsWithThisType = $externalEventWithTypeName.filter(externalEvent => {
-            return externalEvent.event_type === eventType.name
+          const externalEventsWithThisType = await effects.getExternalEventsByEventType(eventType, user);
+          let remainingEventsWithThisType = externalEventsWithThisType.filter(externalEvent => {
+            return externalEvent.event_type_id === eventType.id
           });
           if (remainingEventsWithThisType.length === 0) {
             await effects.deleteExternalEventType(eventType.id, user);

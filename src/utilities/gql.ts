@@ -1437,6 +1437,20 @@ const gql = {
   }
   `,
 
+  GET_EXTERNAL_EVENT_BY_EVENT_TYPE: `#graphql
+  query GetExternalEventByEventType($event_type_id: Int!) {
+    ${Queries.EXTERNAL_EVENT}(where: {event_type_id: { _eq: $event_type_id }}) {
+      id
+      key
+      event_type_id
+      source_id
+      start_time
+      duration
+      properties
+    }
+  }
+  `,
+
   GET_EXTERNAL_EVENT_TYPES: `#graphql
     query GetExternalEventTypes {
       external_event_types: ${Queries.EXTERNAL_EVENT_TYPES} {
