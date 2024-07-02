@@ -542,6 +542,19 @@ const effects = {
     }
   },
 
+  async deleteExternalEventType(externalEventTypeId: number | null, user: User | null): Promise<void> {
+    try {
+      if (externalEventTypeId !== null) {
+        const data = await reqHasura<{ id: number }>(gql.DELETE_EXTERNAL_EVENT_TYPE, { id: externalEventTypeId }, user);
+        if (data.deleteExternalEventType === null) {
+          throw Error('Unable to delete external event type');
+        }
+      }
+    } catch (e) {
+      catchError('External Event Type Deletion Failed', e as Error);
+    }
+  },
+
   async deleteExternalSource(externalSource: ExternalSourceWithTypeName | null, user: User | null): Promise<boolean> {
     try {
       if (externalSource !== null) {
@@ -615,7 +628,7 @@ const effects = {
           },
           user,
         );
-        let sourceDissociation = data.planExternalSourceLink?.returning[0].id;
+        const sourceDissociation = data.planExternalSourceLink?.returning[0].id;
         if (sourceDissociation) {
           // source automatically updates!
           showSuccessToast('External Source Disassociated Successfully');
@@ -963,7 +976,7 @@ const effects = {
       catchError('External Source Type Create Failed', e as Error);
       showFailureToast('External Source Type Create Failed');
       createExternalSourceTypeError.set((e as Error).message);
-      return undefined
+      return undefined;
     }
   },
 
@@ -1036,7 +1049,7 @@ const effects = {
         const { createExternalSourceEventType: created } = await reqHasura<any>(
           gql.CREATE_EXTERNAL_SOURCE_EVENT_TYPE,
           { link },
-          user
+          user,
         );
         if (created) {
           return created.id;
@@ -3388,9 +3401,11 @@ const effects = {
       if (!source_ids || !source_ids.length) {
         return [];
       }
-      const data = await reqHasura<{
-        external_event_type_id: number
-      }[]>(gql.GET_EXTERNAL_EVENT_TYPE_BY_SOURCE, { source_ids }, user);
+      const data = await reqHasura<
+        {
+          external_event_type_id: number;
+        }[]
+      >(gql.GET_EXTERNAL_EVENT_TYPE_BY_SOURCE, { source_ids }, user);
       const { external_event_type_ids } = data;
       if (external_event_type_ids != null) {
         return Array.from(

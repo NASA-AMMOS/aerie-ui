@@ -5,7 +5,7 @@
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { onDestroy, onMount } from 'svelte';
   import { catchError } from '../../stores/errors';
-  import { externalEventTypes, getEventTypeName } from '../../stores/external-event';
+  import { externalEventTypes, externalEventWithTypeName, getEventTypeName } from '../../stores/external-event';
   import { createExternalSourceError, createExternalSourceEventTypeLinkError, createExternalSourceTypeError, creatingExternalSource, externalSourceTypes, externalSourceWithTypeName, getEventSourceTypeByName } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import type { User } from '../../types/app';
@@ -315,17 +315,27 @@
 
   async function onDeleteExternalSource(selectedSource: ExternalSourceWithTypeName | null) {
     if (selectedSource !== null) {
+      const deletedSourceEventTypes = await effects.getExternalEventTypesBySource(selectedSourceId ? [selectedSourceId] : [], $externalEventTypes, user);
       const deletionWasSuccessful = await effects.deleteExternalSource(selectedSource, user);
       if (deletionWasSuccessful) {
         deselectSource();
         // Determine if there are no remaining external sources that use the type of the source that was just deleted. If there are none, delete the source type
         // NOTE: This work could be moved to Hasura in the future, or re-worked as it might be costly.
+        // NOTE: There is an issue where sometimes the deletion hasn't fully caught up so there is still '1' source with the sourcetype or event(s) with the eventtype, when in reality the source/event referenced is gone.
         const remainingSourcesWithThisType = $externalSourceWithTypeName.filter(externalSource => {
           return externalSource.source_type_id === selectedSource.source_type_id
         });
         if (remainingSourcesWithThisType.length === 0) {
           await effects.deleteExternalSourceType(selectedSource.source_type_id, user);
         }
+         deletedSourceEventTypes.forEach(async (eventType) => {
+          let remainingEventsWithThisType = $externalEventWithTypeName.filter(externalEvent => {
+            return externalEvent.event_type === eventType.name
+          });
+          if (remainingEventsWithThisType.length === 0) {
+            await effects.deleteExternalEventType(eventType.id, user);
+          }
+        });
       }
     }
   }
