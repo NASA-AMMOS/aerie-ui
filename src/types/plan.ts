@@ -92,6 +92,16 @@ export type PlanSchema = {
   updated_by: UserId;
 };
 
+export type PlanTransfer = Pick<PlanSchema, 'id' | 'model_id' | 'name' | 'start_time'> & {
+  activities: Pick<
+    ActivityDirective,
+    'anchor_id' | 'anchored_to_start' | 'arguments' | 'id' | 'metadata' | 'name' | 'start_offset' | 'type'
+  >[];
+  end_time: string;
+  sim_id: number;
+  tags: { tag: Pick<Tag, 'id' | 'name'> }[];
+};
+
 export type PlanMetadata = Pick<
   PlanSchema,
   'id' | 'updated_at' | 'updated_by' | 'name' | 'owner' | 'created_at' | 'collaborators' | 'model'
