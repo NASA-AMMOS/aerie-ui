@@ -1480,6 +1480,20 @@ const gql = {
     }
   `,
 
+  GET_EXTERNAL_SOURCE_BY_TYPE: `#graphql
+    query GetExternalSourceByType($source_type_id: Int!) {
+      ${Queries.EXTERNAL_SOURCES}(where: {source_type_id: { _eq: $source_type_id }}) {
+        id
+        key
+        file_id
+        source_type_id
+        valid_at
+        start_time
+        end_time
+      }
+    }
+  `,
+
   GET_PLAN_EXTERNAL_SOURCE: `#graphql
     query GetPlanExternalSource($plan_id: Int!) {
       links: ${Queries.PLAN_EXTERNAL_SOURCE}(where: {plan_id: {_eq: $plan_id}}) {
