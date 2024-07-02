@@ -179,11 +179,11 @@
   let sourceTypeInsert: ExternalSourceTypeInsertInput;
 
   // There was a strange issue where when:
-  //   - you select a source, 
-  //   - select an event in timeline, 
-  //   - go to table, 
-  //   - select a different source, 
-  //   - select an event, 
+  //   - you select a source,
+  //   - select an event in timeline,
+  //   - go to table,
+  //   - select a different source,
+  //   - select an event,
   //   - then go back to timeline.
   //  The event autodeselected. Some prints led to the discovery that an onMouseDown gets fired, somewhere on the canvas, immediately after selection.
   //  As this mouseDown only occurs after the table switches back to a timeline, a simple boolean check was added to remedy this, saying to ignore
@@ -321,7 +321,7 @@
         // Determine if there are no remaining external sources that use the type of the source that was just deleted. If there are none, delete the source type
         // NOTE: This work could be moved to Hasura in the future, or re-worked as it might be costly.
         const remainingSourcesWithThisType = $externalSourceWithTypeName.filter(externalSource => {
-          externalSource.source_type_id === selectedSource.source_type_id
+          return externalSource.source_type_id === selectedSource.source_type_id
         });
         if (remainingSourcesWithThisType.length === 0) {
           await effects.deleteExternalSourceType(selectedSource.source_type_id, user);
