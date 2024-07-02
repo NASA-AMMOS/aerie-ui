@@ -3,7 +3,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount } from 'svelte';
   import {
     channelDictionaries,
     commandDictionaries,
@@ -52,13 +52,6 @@
     save: { parcelId: number };
   }>();
 
-  $: {
-    savedParcelChannelDictionaryId = parcelChannelDictionaryId;
-    savedParcelCommandDictionaryId = parcelCommandDictionaryId;
-    savedParcelName = parcelName;
-    savedSequenceAdaptationId = parcelSequenceAdaptationId;
-  }
-
   $: selectedParmeterDictionaries = savedParameterDictionaryIds = $parcelToParameterDictionaries.reduce(
     (prevBooleanMap: Record<number, boolean>, parcelToParameterDictionary: ParcelToParameterDictionary) => {
       return parcelToParameterDictionary.parcel_id === parcelId
@@ -90,6 +83,13 @@
     pageSubtitle = mode === 'edit' && savedParcelName !== undefined ? savedParcelName : '';
     saveButtonText = mode === 'edit' && !parcelModified ? 'Saved' : 'Save';
   }
+
+  onMount(() => {
+    savedParcelChannelDictionaryId = parcelChannelDictionaryId;
+    savedParcelCommandDictionaryId = parcelCommandDictionaryId;
+    savedParcelName = parcelName;
+    savedSequenceAdaptationId = parcelSequenceAdaptationId;
+  });
 
   /**
    * selectedParameterDictionaries keeps track of false values for the table while the saved list doesn't so
