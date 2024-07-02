@@ -39,6 +39,7 @@ export enum Queries {
   DELETE_EXPANSION_RULE_TAGS = 'delete_expansion_rule_tags',
   DELETE_EXPANSION_SET = 'delete_expansion_set_by_pk',
   DELETE_EXTERNAL_EVENT = 'delete_external_event',
+  DELETE_EXTERNAL_EVENT_TYPE = 'delete_external_event_type_by_pk',
   DELETE_EXTERNAL_SOURCE = 'delete_external_source_by_pk',
   DELETE_EXTERNAL_SOURCE_TYPE = 'delete_external_source_type_by_pk',
   DELETE_EXTERNAL_SOURCE_EVENT_TYPE = 'delete_external_source_event_type',
@@ -934,6 +935,14 @@ const gql = {
     mutation DeleteExpansionSet($id: Int!) {
       deleteExpansionSet: ${Queries.DELETE_EXPANSION_SET}(id: $id) {
         id
+      }
+    }
+  `,
+
+  DELETE_EXTERNAL_EVENT_TYPE: `#graphql
+    mutation DeleteExternalEventType($id: Int!) {
+      deleteExternalEventType: ${Queries.DELETE_EXTERNAL_EVENT_TYPE}(id: $id) {
+        name
       }
     }
   `,
