@@ -316,24 +316,27 @@
   async function onDeleteExternalSource(selectedSource: ExternalSourceWithTypeName | null) {
     if (selectedSource !== null) {
       const deletedSourceEventTypes = await effects.getExternalEventTypesBySource(selectedSourceId ? [selectedSourceId] : [], $externalEventTypes, user);
+      const sourceTypeId = selectedSource.source_type_id;
       const deletionWasSuccessful = await effects.deleteExternalSource(selectedSource, user);
       if (deletionWasSuccessful) {
         deselectSource();
         // Determine if there are no remaining external sources that use the type of the source that was just deleted. If there are none, delete the source type
         // NOTE: This work could be moved to Hasura in the future, or re-worked as it might be costly.
-        // NOTE: There is an issue where sometimes the deletion hasn't fully caught up so there is still '1' source with the sourcetype or event(s) with the eventtype, when in reality the source/event referenced is gone.
         const remainingSourcesWithThisType = $externalSourceWithTypeName.filter(externalSource => {
           return externalSource.source_type_id === selectedSource.source_type_id
         });
         if (remainingSourcesWithThisType.length === 0) {
           await effects.deleteExternalSourceType(selectedSource.source_type_id, user);
         }
-         deletedSourceEventTypes.forEach(async (eventType) => {
+
+        const externalSourcesWithThisType = await effects.getExternalSourceByType(sourceTypeId, user);
+        if (externalSourcesWithThisType.length === 0) {
+          await effects.deleteExternalSourceType(sourceTypeId, user);
+        }
+        // Determine if there are no remaining external events that use the types contained in the now-deleted external source. If there are none, delete the external event type
+        deletedSourceEventTypes.forEach(async (eventType) => {
           const externalEventsWithThisType = await effects.getExternalEventsByEventType(eventType, user);
-          let remainingEventsWithThisType = externalEventsWithThisType.filter(externalEvent => {
-            return externalEvent.event_type_id === eventType.id
-          });
-          if (remainingEventsWithThisType.length === 0) {
+          if (externalEventsWithThisType.length === 0) {
             await effects.deleteExternalEventType(eventType.id, user);
           }
         });
