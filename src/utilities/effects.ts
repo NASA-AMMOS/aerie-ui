@@ -82,6 +82,7 @@ import type { ExternalEventDB, ExternalEventType, ExternalEventTypeInsertInput }
 import type {
   ExternalSourceEventType,
   ExternalSourceInsertInput,
+  ExternalSourceSlim,
   ExternalSourceType,
   ExternalSourceTypeInsertInput,
   ExternalSourceWithTypeName,
@@ -3475,6 +3476,33 @@ const effects = {
 
       // finally, get event types for the source
       return effects.getExternalEventTypesBySource(source_ids, external_event_types, user);
+    } catch (e) {
+      catchError(e as Error);
+      return [];
+    }
+  },
+
+  async getExternalSourceByType(sourceTypeId: number | undefined, user: User | null): Promise<ExternalSourceSlim[]> {
+    try {
+      if (sourceTypeId) {
+        const data = await reqHasura<any>(gql.GET_EXTERNAL_SOURCE_BY_TYPE, { source_type_id: sourceTypeId }, user);
+        const { external_source: sources } = data;
+        const outputSources: ExternalSourceSlim[] = [];
+        for (const source of sources) {
+          outputSources.push({
+            id: source.id,
+            key: source.key,
+            file_id: source.file_id,
+            source_type_id: source.source_type_id,
+            valid_at: source.valid_at,
+            start_time: source.start_time,
+            end_time: source.end_time,
+          });
+        }
+        return outputSources;
+      } else {
+        return [];
+      }
     } catch (e) {
       catchError(e as Error);
       return [];
