@@ -100,7 +100,7 @@ test('getDoyTimeComponents', () => {
 
 test('getDoyTime', () => {
   const doyTime = getDoyTime(new Date(1577779200000));
-  expect(doyTime).toEqual('2019-365T08:00:00.000');
+  expect(doyTime).toEqual('2019-365T08:00:00');
 });
 
 test('getUnixEpochTime', () => {
