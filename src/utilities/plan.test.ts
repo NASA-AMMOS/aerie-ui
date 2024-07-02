@@ -42,6 +42,7 @@ describe('Plan utility', () => {
             scheduling_specification: null,
             simulations: [
               {
+                id: 3,
                 simulation_datasets: [
                   {
                     id: 1,
@@ -108,7 +109,7 @@ describe('Plan utility', () => {
         id: 1,
         model_id: 1,
         name: 'Foo plan',
-        sim_id: 1,
+        sim_id: 3,
         start_time: '2024-01-01T00:00:00+00:00',
         tags: [
           {

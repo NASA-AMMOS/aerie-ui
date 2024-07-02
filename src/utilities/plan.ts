@@ -20,7 +20,7 @@ export function getPlanForTransfer(plan: Plan, activities: ActivityDirective[]):
     id: plan.id,
     model_id: plan.model_id,
     name: plan.name,
-    sim_id: plan.simulations[0].simulation_datasets[0].id,
+    sim_id: plan.simulations[0].id,
     start_time: (convertDoyToYmd(plan.start_time_doy) as string).replace('Z', '+00:00'),
     tags: plan.tags.map(({ tag: { id, name } }) => ({ tag: { id, name } })),
   };
