@@ -89,6 +89,7 @@ export enum Queries {
   EXTERNAL_SOURCE = 'external_source_by_pk',
   EXTERNAL_SOURCES = 'external_source',
   EXTERNAL_SOURCE_TYPES = 'external_source_type',
+  DERIVATION_GROUP = 'derivation_group',
   PLAN_EXTERNAL_SOURCE = 'plan_external_source',
   GET_ACTIVITY_EFFECTIVE_ARGUMENTS = 'getActivityEffectiveArguments',
   GET_ACTIVITY_TYPE_SCRIPT = 'getActivityTypeScript',
@@ -466,12 +467,6 @@ const gql = {
     mutation CreateExternalSource($source: external_source_insert_input!) {
       createExternalSource: insert_external_source_one(object: $source) {
         id
-        key
-        source_type_id
-        start_time
-        end_time
-        valid_at
-        metadata
       }
     }
   `,
@@ -487,6 +482,15 @@ const gql = {
   CREATE_EXTERNAL_SOURCE_TYPE: `#graphql
     mutation CreateExternalSourceType($sourceType: external_source_type_insert_input!) {
       createExternalSourceType: insert_external_source_type_one(object: $sourceType) {
+        id
+        name
+      }
+    }
+  `,
+
+  CREATE_DERIVATION_GROUP: `#graphql
+    mutation CreateDerivationGroup($derivationGroup: derivation_group_insert_input!) {
+      createDerivationGroup: insert_derivation_group_one(object: $derivationGroup) {
         id
         name
       }
@@ -2443,6 +2447,7 @@ const gql = {
         file_id
         key
         source_type_id
+        derivation_group_id
         start_time
         end_time
         valid_at
@@ -2453,6 +2458,15 @@ const gql = {
   SUB_EXTERNAL_SOURCE_TYPES: `#graphql
     subscription SubExternalSourceTypes {
       models: ${Queries.EXTERNAL_SOURCE_TYPES}(order_by: { id: asc }) {
+        id
+        name
+      }
+    }
+  `,
+
+  SUB_DERIVATION_GROUPS: `#graphql
+    subscription SubDerivationGroups {
+      models: ${Queries.DERIVATION_GROUP}(order_by: { id: asc }) {
         id
         name
       }
