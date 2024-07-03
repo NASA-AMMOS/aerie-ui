@@ -4,17 +4,19 @@ on:
   pull_request:
     branches:
       - develop
+      - ssmo-dev
       - dev-[0-9]+.[0-9]+.[0-9]+
   push:
     branches:
       - develop
+      - ssmo-dev
     tags:
       - v*
   workflow_dispatch:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
