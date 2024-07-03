@@ -119,6 +119,7 @@ export enum Queries {
   INSERT_PARCEL = 'insert_parcel_one',
   INSERT_PARCEL_TO_PARAMETER_DICTIONARY = 'insert_parcel_to_parameter_dictionary',
   INSERT_PLAN = 'insert_plan_one',
+  INSERT_PLAN_EXTERNAL_SOURCE = 'insert_plan_external_source_one',
   INSERT_PLAN_SNAPSHOT_TAGS = 'insert_plan_snapshot_tags',
   INSERT_PLAN_COLLABORATORS = 'insert_plan_collaborators',
   INSERT_PLAN_TAGS = 'insert_plan_tags',
@@ -495,7 +496,7 @@ const gql = {
   // TODO: handle owner, created_at, etc.
   CREATE_PLAN_EXTERNAL_SOURCE: `#graphql
     mutation CreatePlanExternalSource($source: plan_external_source_insert_input!) {
-      planExternalSourceLink: insert_plan_external_source_one(object: $source) {
+      planExternalSourceLink: ${Queries.INSERT_PLAN_EXTERNAL_SOURCE}(object: $source) {
         id
       }
     }
