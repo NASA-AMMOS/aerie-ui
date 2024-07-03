@@ -15,7 +15,7 @@ on:
 jobs:
   analyze:
     name: Analyze
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     permissions:
       actions: read
       contents: read
@@ -43,7 +43,7 @@ jobs:
           python3 -m scrub.tools.parsers.translate_results /home/runner/work/aerie-ui/results/*.sarif /home/runner/work/aerie-ui/results/codeql.scrub ${{ github.workspace }} scrub
           python3 -m scrub.tools.parsers.csv_parser /home/runner/work/aerie-ui/results
       - name: Upload Security Scan Results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: Security Scan Results
           path: /home/runner/work/aerie-ui/results/*
