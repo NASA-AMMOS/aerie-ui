@@ -6,12 +6,12 @@
   import { onDestroy, onMount } from 'svelte';
   import { catchError } from '../../stores/errors';
   import { externalEventTypes, getEventTypeName } from '../../stores/external-event';
-  import { createExternalSourceError, createExternalSourceEventTypeLinkError, createExternalSourceTypeError, creatingExternalSource, externalSourceTypes, externalSourceWithTypeName, getEventSourceTypeByName } from '../../stores/external-source';
+  import { createExternalSourceError, createExternalSourceEventTypeLinkError, createExternalSourceTypeError, creatingExternalSource, derivationGroups, externalSourceTypes, externalSourceWithTypeName, getDerivationGroupByName, getEventSourceTypeByName } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalEvent, ExternalEventDB, ExternalEventType, ExternalEventTypeInsertInput } from '../../types/external-event';
-  import type { ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceType, ExternalSourceTypeInsertInput, ExternalSourceWithTypeName } from '../../types/external-source';
+  import type { DerivationGroup, DerivationGroupInsertInput, ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceType, ExternalSourceTypeInsertInput, ExternalSourceWithResolvedNames } from '../../types/external-source';
   import type { TimeRange } from '../../types/timeline';
   import { type MouseDown, type MouseOver } from '../../types/timeline';
   import effects from '../../utilities/effects';
@@ -48,15 +48,16 @@
 
 
   type CellRendererParams = {
-    onDeleteExternalSource: (source: ExternalSourceWithTypeName) => void;
+    onDeleteExternalSource: (source: ExternalSourceWithResolvedNames) => void;
   };
-  type SourceCellRendererParams = ICellRendererParams<ExternalSourceWithTypeName> & CellRendererParams;
+  type SourceCellRendererParams = ICellRendererParams<ExternalSourceWithResolvedNames> & CellRendererParams;
 
 
   let keyInputField: HTMLInputElement; // need this to set a focus on it. not related to the value
 
   let keyField = field<string>('', [required]);
   let sourceTypeField = field<string>('', [required]); // need function to check if in list of allowable types...
+  let derivationGroupField = field<string>('', [required]);
   let startTimeDoyField = field<string>('', [required, timestamp]); // requires validation function
   let endTimeDoyField = field<string>('', [required, timestamp]); // requires validation function
   let validAtDoyField = field<string>('', [required, timestamp]); // requires validation function
@@ -85,6 +86,13 @@
       sortable: true,
     },
     {
+      field: 'derivation_group',
+      filter: 'text',
+      headerName: 'Derivation Group',
+      resizable: true,
+      sortable: true,
+    },
+    {
       field: 'file_id',
       filter: 'number',
       headerName: 'File ID',
@@ -97,7 +105,7 @@
       headerName: 'Start Time',
       resizable: true,
       sortable: true,
-      valueGetter: (params: ValueGetterParams<ExternalSourceWithTypeName>) => {
+      valueGetter: (params: ValueGetterParams<ExternalSourceWithResolvedNames>) => {
         if (params.data?.start_time) {
           return new Date(params.data?.start_time).toISOString().slice(0, 19);
         }
@@ -109,7 +117,7 @@
       headerName: 'End Time',
       resizable: true,
       sortable: true,
-      valueGetter: (params: ValueGetterParams<ExternalSourceWithTypeName>) => {
+      valueGetter: (params: ValueGetterParams<ExternalSourceWithResolvedNames>) => {
         if (params.data?.end_time) {
           return new Date(params.data?.end_time).toISOString().slice(0, 19);
         }
@@ -121,7 +129,7 @@
       headerName: 'Valid At',
       resizable: true,
       sortable: true,
-      valueGetter: (params: ValueGetterParams<ExternalSourceWithTypeName>) => {
+      valueGetter: (params: ValueGetterParams<ExternalSourceWithResolvedNames>) => {
         if (params.data?.valid_at) {
           return new Date(params.data?.valid_at).toISOString().slice(0, 19);
         }
@@ -134,7 +142,7 @@
   let externalEventsTableFilterString: string = '';
 
   // source detail variables
-  let selectedSource: ExternalSourceWithTypeName | null = null;
+  let selectedSource: ExternalSourceWithResolvedNames | null = null;
   let selectedSourceId: number | null = null;
   let selectedSourceEventTypes: ExternalEventType[] | null = null
 
@@ -173,10 +181,11 @@
   let filteredValues: ExternalSourceType[] = [];
   let selectedFilters: ExternalSourceType[] = [...$externalSourceTypes];
   let menuTitle: string = '';
-  let filteredExternalSources: ExternalSourceWithTypeName[] = [];
+  let filteredExternalSources: ExternalSourceWithResolvedNames[] = [];
 
   let sourceInsert: ExternalSourceInsertInput;
   let sourceTypeInsert: ExternalSourceTypeInsertInput;
+  let derivationGroupInsert: DerivationGroupInsertInput;
 
   // There was a strange issue where when:
   //   - you select a source,
@@ -313,7 +322,7 @@
     selectedSourceEventTypes = (await effects.getExternalEventTypesBySource(selectedSourceId ? [selectedSourceId] : [], $externalEventTypes, user))
   }
 
-  async function onDeleteExternalSource(selectedSource: ExternalSourceWithTypeName | null) {
+  async function onDeleteExternalSource(selectedSource: ExternalSourceWithResolvedNames | null) {
     if (selectedSource !== null) {
       const deletedSourceEventTypes = await effects.getExternalEventTypesBySource(selectedSourceId ? [selectedSourceId] : [], $externalEventTypes, user);
       const sourceTypeId = selectedSource.source_type_id;
@@ -323,7 +332,7 @@
         // Determine if there are no remaining external sources that use the type of the source that was just deleted. If there are none, delete the source type
         // NOTE: This work could be moved to Hasura in the future, or re-worked as it might be costly.
         const remainingSourcesWithThisType = $externalSourceWithTypeName.filter(externalSource => {
-          return externalSource.source_type_id === selectedSource.source_type_id
+          return externalSource.source_type_id === selectedSource.source_type_id && externalSource.id !== selectedSource.id
         });
         if (remainingSourcesWithThisType.length === 0) {
           await effects.deleteExternalSourceType(selectedSource.source_type_id, user);
@@ -346,6 +355,12 @@
 
   async function onFormSubmit(e: SubmitEvent) {
     if (parsed && file) {
+      // Create an entry for the derivation group
+      if (!($derivationGroups.some(derivationGroup => derivationGroup.name === $derivationGroupField.value))) {
+        derivationGroupInsert = {
+          name: $derivationGroupField.value
+        };
+      }
 
       // Create an entry for the current source type if it does not already exist. Otherwise, retrieve the id
       if (!($externalSourceTypes.some(externalSourceType => externalSourceType.name === $sourceTypeField.value))) {
@@ -376,9 +391,10 @@
         file_id: -1, // updated in the effect.
         key: $keyField.value,
         metadata: parsed.source.metadata,
-        source_type_id: -1,  //updated in the effect.
+        source_type_id: -1,  // updated in the effect.
         start_time,
         valid_at,
+        derivation_group_id: -1 // updated in the effect. TODO: effect
       };
 
       // the ones uploaded in this run won't show up as quickly in $externalEventTypes, so we keep a local log as well
@@ -445,15 +461,25 @@
       externalEventsCreated = [];
 
       let sourceType: ExternalSourceType | undefined = undefined;
+      let derivationGroup: DerivationGroup | undefined = undefined;
       let sourceId: number | undefined = undefined;
       if (file !== undefined) {
+        // check if derivation group exists in store, then grab it, otherwise make one
+        if (!($derivationGroups.map(s => s.name).includes($derivationGroupField.value)) && derivationGroupInsert !== undefined) {
+          derivationGroup = await effects.createDerivationGroup(derivationGroupInsert, user);
+        } else {
+          derivationGroup = getDerivationGroupByName($derivationGroupField.value, $derivationGroups)
+        }
+
         if (!($externalSourceTypes.map(s => s.name).includes($sourceTypeField.value)) && sourceTypeInsert !== undefined) {
           sourceType = await effects.createExternalSourceType(sourceTypeInsert, user);
         } else {
           sourceType = getEventSourceTypeByName($sourceTypeField.value, $externalSourceTypes)
         }
-        if (sourceType !== undefined ) {
+
+        if (sourceType !== undefined && derivationGroup !== undefined) {
           sourceInsert.source_type_id = sourceType.id;
+          sourceInsert.derivation_group_id = derivationGroup.id;
           if (selectedFilters.find(filter => filter.name === sourceType?.name) === undefined) {
             selectedFilters.push(sourceType);
           }
@@ -474,7 +500,8 @@
         selectedSource = {
           id: sourceId,
           ...sourceInsert,
-          source_type: sourceType?.name
+          source_type: sourceType?.name,
+          derivation_group: derivationGroup?.name
         }
       }
 
@@ -485,6 +512,7 @@
       startTimeDoyField.reset("");
       endTimeDoyField.reset("");
       validAtDoyField.reset("");
+      derivationGroupField.reset("");
 
     }
     else {
@@ -493,7 +521,7 @@
     }
   }
 
-  async function selectSource(detail: ExternalSourceWithTypeName) {
+  async function selectSource(detail: ExternalSourceWithResolvedNames) {
     selectedSource = detail
     deselectEvent()
   }
@@ -716,6 +744,11 @@
           <fieldset>
             <DatePickerField disabled={true} field={validAtDoyField} label="Valid At Time - YYYY-DDDThh:mm:ss" name="valid_at" />
           </fieldset>
+
+          <Field field={derivationGroupField}>
+            <label for="derivation-group" slot="label">Derivation Group</label>
+            <input autocomplete="off" class="st-input w-100" name="derivation-group" required />
+          </Field>
         </form>
       {/if}
     </svelte:fragment>
