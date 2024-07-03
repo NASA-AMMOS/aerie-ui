@@ -558,10 +558,9 @@ const effects = {
 
   async deleteExternalSource(externalSource: ExternalSourceWithTypeName | null, user: User | null): Promise<boolean> {
     try {
-      // TODO: permissions!
-      // if (!queryPermissions.DELETE_EXTERNAL_SOURCE(user)) {
-      //  throwPermissionError('add a directive to the plan');
-      //}
+      if (!queryPermissions.DELETE_EXTERNAL_SOURCE(user)) {
+        throwPermissionError('delete an external source');
+      }
       if (externalSource !== null) {
         const { confirm } = await showConfirmModal(
           'Delete',
@@ -959,11 +958,6 @@ const effects = {
     user: User | null,
   ): Promise<ExternalSourceType | undefined> {
     try {
-      // TODO: Check permissions.
-      // if (!queryPermissions.CREATE_MODEL(user)) {
-      //   throwPermissionError('upload a model');
-      // } // permissions are yet unhandled anywhere in external-source/page or anywhere else
-
       createExternalSourceTypeError.set(null);
       const { createExternalSourceType: created } = await reqHasura(
         gql.CREATE_EXTERNAL_SOURCE_TYPE,
@@ -1013,10 +1007,9 @@ const effects = {
 
   async createExternalSource(file: File | undefined, source: ExternalSourceInsertInput, user: User | null) {
     try {
-      // TODO: Check permissions.
-      // if (!queryPermissions.CREATE_MODEL(user)) {
-      //   throwPermissionError('upload a model');
-      // } // permissions are yet unhandled anywhere in external-source/page or anywhere else
+      if (!queryPermissions.CREATE_EXTERNAL_SOURCE(user)) {
+        throwPermissionError('upload an external source');
+      }
 
       creatingExternalSource.set(true);
       createExternalSourceError.set(null);
@@ -1046,8 +1039,6 @@ const effects = {
 
   async createExternalSourceEventTypeLink(link: ExternalSourceEventType, user: User | null) {
     try {
-      // TODO: permissions
-
       createExternalSourceEventTypeLinkError.set(null);
       if (link) {
         const { createExternalSourceEventType: created } = await reqHasura<any>(
