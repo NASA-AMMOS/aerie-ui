@@ -458,7 +458,6 @@ const gql = {
     mutation CreateExternalEventType($eventType: external_event_type_insert_input!) {
       createExternalEventType: insert_external_event_type_one(object: $eventType) {
         id
-        name
       }
     }
   `,
@@ -483,7 +482,6 @@ const gql = {
     mutation CreateExternalSourceType($sourceType: external_source_type_insert_input!) {
       createExternalSourceType: insert_external_source_type_one(object: $sourceType) {
         id
-        name
       }
     }
   `,
@@ -492,7 +490,6 @@ const gql = {
     mutation CreateDerivationGroup($derivationGroup: derivation_group_insert_input!) {
       createDerivationGroup: insert_derivation_group_one(object: $derivationGroup) {
         id
-        name
       }
     }
   `,
@@ -2469,6 +2466,7 @@ const gql = {
       models: ${Queries.DERIVATION_GROUP}(order_by: { id: asc }) {
         id
         name
+        source_type_id
       }
     }
   `,
