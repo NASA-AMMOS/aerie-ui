@@ -2,6 +2,7 @@
 
 <script lang="ts">
   import { externalEventTypes } from '../../stores/external-event';
+  import { plan } from '../../stores/plan';
   import type { User } from '../../types/app';
   import type { ExternalEventType } from '../../types/external-event';
   import type { ExternalSourceWithTypeName } from '../../types/external-source';
@@ -10,19 +11,19 @@
 
   export let enabled: boolean;
   export let externalSource: ExternalSourceWithTypeName;
-  export let plan_id: number | undefined;
   export let user: User | null;
+
 
   let selectedSourceEventTypes: ExternalEventType[] | null = null;
 
   function onEnable(event: Event) {
     if (enabled) {
       // insert
-      effects.insertExternalSourceForPlan(externalSource.id, plan_id, user);
+      effects.insertExternalSourceForPlan(externalSource.id, $plan, user);
     }
     else {
       // delete
-      effects.deleteExternalSourceForPlan(externalSource.id, plan_id, user);
+      effects.deleteExternalSourceForPlan(externalSource.id, $plan, user);
     }
   }
 
@@ -49,7 +50,7 @@
     <p>
       <strong>Key:</strong> {externalSource.key}
     </p>
-    
+
     <p>
       <strong>Source Type:</strong> {externalSource.source_type}
     </p>
