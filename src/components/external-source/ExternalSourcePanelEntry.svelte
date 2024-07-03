@@ -2,6 +2,7 @@
 
 <script lang="ts">
   import { externalEventTypes } from '../../stores/external-event';
+  import { createExternalSourcePlanError } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import type { User } from '../../types/app';
   import type { ExternalEventType } from '../../types/external-event';
@@ -18,12 +19,16 @@
 
   function onEnable(event: Event) {
     if (enabled) {
-      // insert
       effects.insertExternalSourceForPlan(externalSource.id, $plan, user);
+      if (createExternalSourcePlanError !== null) {
+        enabled = false;  // Unselect button if there was an error
+      }
     }
     else {
-      // delete
       effects.deleteExternalSourceForPlan(externalSource.id, $plan, user);
+      if (createExternalSourcePlanError !== null) {
+        enabled = true;  // Reselect button if there was an error
+      }
     }
   }
 

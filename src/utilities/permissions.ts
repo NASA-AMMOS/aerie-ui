@@ -543,6 +543,13 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
         (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
     );
   },
+  DELETE_PLAN_EXTERNAL_SOURCE: (user: User | null, plan: PlanWithOwners): boolean => {
+    return (
+      isUserAdmin(user) ||
+      (getPermission([Queries.DELETE_PLAN_EXTERNAL_SOURCE], user) &&
+        (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
+    );
+  },
   DELETE_PLAN_SNAPSHOT: (user: User | null): boolean => {
     return getPermission([Queries.DELETE_PLAN_SNAPSHOT], user) && isUserAdmin(user);
   },
