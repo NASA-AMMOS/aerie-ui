@@ -510,7 +510,7 @@ const effects = {
   async insertExternalSourceForPlan(source_id: number, plan: Plan | null, user: User | null): Promise<void> {
     try {
       if ((plan && !queryPermissions.CREATE_PLAN_EXTERNAL_SOURCE(user, plan)) || !plan) {
-        throwPermissionError('add a directive to the plan');
+        throwPermissionError('add an external source to the plan');
       }
 
       createExternalSourcePlanError.set(null);
@@ -608,10 +608,9 @@ const effects = {
 
   async deleteExternalSourceForPlan(source_id: number, plan: Plan | null, user: User | null): Promise<void> {
     try {
-      // TODO: permissions!
-      // if ((plan && !queryPermissions.CREATE_ACTIVITY_DIRECTIVE(user, plan)) || !plan) {
-      //   throwPermissionError('add a directive to the plan');
-      // }
+      if ((plan && !queryPermissions.DELETE_PLAN_EXTERNAL_SOURCE(user, plan)) || !plan) {
+        throwPermissionError('delete an external source from the plan');
+      }
 
       // (use the same as above store, as the behavior is employed on the same panel, therefore so would the error)
       createExternalSourcePlanError.set(null);
