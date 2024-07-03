@@ -81,12 +81,14 @@ import type {
 import type { Extension, ExtensionPayload } from '../types/extension';
 import type { ExternalEventDB, ExternalEventType, ExternalEventTypeInsertInput } from '../types/external-event';
 import type {
+  DerivationGroup,
+  DerivationGroupInsertInput,
   ExternalSourceEventType,
   ExternalSourceInsertInput,
   ExternalSourceSlim,
   ExternalSourceType,
   ExternalSourceTypeInsertInput,
-  ExternalSourceWithTypeName,
+  ExternalSourceWithResolvedNames,
   PlanExternalSource,
 } from '../types/external-source';
 import type { Model, ModelInsertInput, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
@@ -556,7 +558,7 @@ const effects = {
     }
   },
 
-  async deleteExternalSource(externalSource: ExternalSourceWithTypeName | null, user: User | null): Promise<boolean> {
+  async deleteExternalSource(externalSource: ExternalSourceWithResolvedNames | null, user: User | null): Promise<boolean> {
     try {
       if (!queryPermissions.DELETE_EXTERNAL_SOURCE(user)) {
         throwPermissionError('delete an external source');
@@ -588,6 +590,8 @@ const effects = {
     }
     return false;
   },
+
+  // TODO: deleteDerivationGroup
 
   async deleteExternalSourceType(externalSourceTypeId: number | undefined, user: User | null): Promise<void> {
     try {
@@ -953,6 +957,36 @@ const effects = {
     }
   },
 
+  async createDerivationGroup(
+    derivationGroup: DerivationGroupInsertInput,
+    user: User | null,
+  ): Promise<DerivationGroup | undefined> {
+    try {
+      // TODO: Check permissions.
+      // if (!queryPermissions.CREATE_MODEL(user)) {
+      //   throwPermissionError('upload a model');
+      // } // permissions are yet unhandled anywhere in external-source/page or anywhere else
+
+      // createExternalSourceTypeError.set(null); // TODO: errors
+      const { createDerivationGroup: created } = await reqHasura(
+        gql.CREATE_DERIVATION_GROUP,
+        { derivationGroup },
+        user,
+      );
+      if (created !== null) {
+        showSuccessToast('Derivation Group Created Successfully');
+        return created as DerivationGroup;
+      } else {
+        throw Error(`Unable to create derivation group`);
+      }
+    } catch (e) {
+      catchError('Derivation Group Create Failed', e as Error);
+      showFailureToast('Derivation Group Create Failed');
+      // createExternalSourceTypeError.set((e as Error).message); // TODO: errors
+      return undefined
+    }
+  },
+
   async createExternalSourceType(
     sourceType: ExternalSourceTypeInsertInput,
     user: User | null,
@@ -1017,6 +1051,8 @@ const effects = {
       if (file) {
         file_id = await effects.uploadFile(file, user);
       }
+
+      console.log(source)
 
       if (file_id !== null) {
         source.file_id = file_id;
