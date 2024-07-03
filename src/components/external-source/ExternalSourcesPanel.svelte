@@ -2,7 +2,6 @@
 
 <script lang="ts">
   import { createExternalSourcePlanError, externalSourceWithTypeName, selectedPlanExternalSourceIds } from '../../stores/external-source';
-  import { plan } from '../../stores/plan';
   import type { User } from '../../types/app';
   import type { ExternalSourceWithTypeName } from '../../types/external-source';
   import type { ViewGridSection } from '../../types/view';
@@ -44,7 +43,6 @@
         <ExternalSourcePanelEntry
           enabled={$selectedPlanExternalSourceIds.includes(externalSource.id)}
           externalSource={externalSource}
-          plan_id={$plan?.id}
           user={user}
         />
       {/each}
