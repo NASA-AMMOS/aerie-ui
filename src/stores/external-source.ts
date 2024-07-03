@@ -1,5 +1,5 @@
 import { derived, writable, type Writable } from 'svelte/store';
-import { type ExternalSourceEventType, type ExternalSourceSlim, type ExternalSourceType, type ExternalSourceWithTypeName, type PlanExternalSource } from '../types/external-source';
+import { type DerivationGroup, type ExternalSourceEventType, type ExternalSourceSlim, type ExternalSourceType, type ExternalSourceWithResolvedNames, type PlanExternalSource } from '../types/external-source';
 import gql from '../utilities/gql';
 import { planId } from './plan';
 import { gqlSubscribable } from './subscribable';
@@ -18,6 +18,7 @@ export const createExternalSourceEventTypeLinkError: Writable<string | null> = w
 /* Subscriptions. */
 export const externalSources = gqlSubscribable<ExternalSourceSlim[]>(gql.SUB_EXTERNAL_SOURCES, {}, [], null);
 export const externalSourceTypes = gqlSubscribable<ExternalSourceType[]>(gql.SUB_EXTERNAL_SOURCE_TYPES, {}, [], null);
+export const derivationGroups = gqlSubscribable<DerivationGroup[]>(gql.SUB_DERIVATION_GROUPS, {}, [], null);
 
 // use to keep track of associations between plans and goals
 export const planExternalSourceLinks = gqlSubscribable<PlanExternalSource[]>(gql.SUB_PLAN_EXTERNAL_SOURCE, {}, [], null);
@@ -28,11 +29,12 @@ export const externalSourceEventTypes = gqlSubscribable<ExternalSourceEventType[
 
 /* Derived. */
 // Creates a store for each externalSource with the added 'source_type' field that maps to the human-readable source type name
-export const externalSourceWithTypeName = derived<[typeof externalSources, typeof externalSourceTypes], ExternalSourceWithTypeName[]>(
-  [externalSources, externalSourceTypes],
-  ([$externalSources, $externalSourceTypes]) => $externalSources.map(externalSource => ({
-    ...externalSource,
-    source_type: getEventSourceTypeName(externalSource.source_type_id, $externalSourceTypes)
+export const externalSourceWithTypeName = derived<[typeof externalSources, typeof externalSourceTypes, typeof derivationGroups], ExternalSourceWithResolvedNames[]>(
+  [externalSources, externalSourceTypes, derivationGroups],
+  ([$externalSources, $externalSourceTypes, $derivationGroups]) => $externalSources.map(externalSource => ({
+      ...externalSource,
+      source_type: getEventSourceTypeName(externalSource.source_type_id, $externalSourceTypes),
+      derivation_group: getDerivationGroupName(externalSource.derivation_group_id, $derivationGroups)
   }))
 );
 
@@ -75,4 +77,12 @@ export function getEventSourceTypeId(name: string, sourceTypes: ExternalSourceTy
 
 export function getEventSourceTypeByName(name: string, sourceTypes: ExternalSourceType[]): ExternalSourceType | undefined {
   return sourceTypes.find(sourceType => sourceType.name === name)
+}
+
+export function getDerivationGroupByName(name: string, derivationGroups: DerivationGroup[]): DerivationGroup | undefined {
+  return derivationGroups.find(derivationGroup => derivationGroup.name === name)
+}
+
+export function getDerivationGroupName(id: number, derivationGroups: DerivationGroup[]): string | undefined {
+  return derivationGroups.find(derivationGroup => derivationGroup.id === id)?.name
 }
