@@ -70,6 +70,9 @@
   $: if (user !== undefined) {
     redrawRows?.();
   }
+  $: if (deletePermission != null) {
+    redrawRows?.();
+  }
 
   onDestroy(() => onBlur());
 
