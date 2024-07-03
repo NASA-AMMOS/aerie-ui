@@ -348,6 +348,9 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
     const queries = [Queries.CREATE_EXPANSION_SET];
     return isUserAdmin(user) || (getPermission(queries, user) && getRoleModelPermission(queries, user, plans, model));
   },
+  CREATE_EXTERNAL_SOURCE: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.INSERT_EXTERNAL_SOURCE], user);
+  },
   CREATE_MODEL: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_MISSION_MODEL], user);
   },
