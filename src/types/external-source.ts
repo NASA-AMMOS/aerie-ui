@@ -51,8 +51,8 @@ export type ExternalSourceWithResolvedNames = ExternalSourceSlim & {
 // TODO: add External Source span to timeline in External Source Manager, so if zooming out on timeline
 //        can see where external source spans relative to overall timeline?
 
-export type PlanExternalSource = {
-  external_source_id: number;
+export type PlanDerivationGroup = {
+  derivation_group_id: number;
   plan_id: number | undefined; // because in plan.ts plan is defined on Plan | null...
 };
 

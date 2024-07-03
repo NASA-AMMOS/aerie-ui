@@ -2,7 +2,7 @@ import { keyBy } from 'lodash-es';
 import { derived, writable, type Writable } from 'svelte/store';
 import type { ExternalEventDB, ExternalEventId, ExternalEventType, ExternalEventWithTypeName } from "../types/external-event";
 import gql from '../utilities/gql';
-import { selectedPlanExternalSourceIds } from './external-source';
+import { selectedPlanDerivationGroupIds } from './external-source';
 import { gqlSubscribable } from './subscribable';
 import { viewUpdateGrid } from './views';
 
@@ -14,7 +14,7 @@ export const createExternalEventTypeError: Writable<string | null> = writable(nu
 /* Subscriptions. */
 export const externalEventsDB = gqlSubscribable<ExternalEventDB[]>(
   gql.SUB_PLAN_EXTERNAL_EVENTS,
-  { source_ids: selectedPlanExternalSourceIds },
+  { source_ids: selectedPlanDerivationGroupIds },
   [],
   null,
 );
