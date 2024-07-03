@@ -63,6 +63,7 @@ export type ExternalSourceType = {
 
 export type DerivationGroup = {
   id: number;
+  source_type_id: number;
   name: string;
 }
 
@@ -88,5 +89,5 @@ export type ExternalSourceTypeInsertInput = Pick<
 
 export type DerivationGroupInsertInput = Pick<
   DerivationGroup,
-  'name'
+  'name' | 'source_type_id'
 >;

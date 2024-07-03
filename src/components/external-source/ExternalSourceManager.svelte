@@ -358,7 +358,8 @@
       // Create an entry for the derivation group
       if (!($derivationGroups.some(derivationGroup => derivationGroup.name === $derivationGroupField.value))) {
         derivationGroupInsert = {
-          name: $derivationGroupField.value
+          name: $derivationGroupField.value,
+          source_type_id: -1 // filled in later
         };
       }
 
@@ -464,17 +465,21 @@
       let derivationGroup: DerivationGroup | undefined = undefined;
       let sourceId: number | undefined = undefined;
       if (file !== undefined) {
-        // check if derivation group exists in store, then grab it, otherwise make one
-        if (!($derivationGroups.map(s => s.name).includes($derivationGroupField.value)) && derivationGroupInsert !== undefined) {
-          derivationGroup = await effects.createDerivationGroup(derivationGroupInsert, user);
-        } else {
-          derivationGroup = getDerivationGroupByName($derivationGroupField.value, $derivationGroups)
-        }
-
         if (!($externalSourceTypes.map(s => s.name).includes($sourceTypeField.value)) && sourceTypeInsert !== undefined) {
           sourceType = await effects.createExternalSourceType(sourceTypeInsert, user);
         } else {
           sourceType = getEventSourceTypeByName($sourceTypeField.value, $externalSourceTypes)
+        }
+
+        console.log($derivationGroups)
+
+        // FIND A BETTER WAY TO DO THIS? WE HAVE TWO SEPARATE CHECKS THAT sourceType !== undefined WHICH ISN'T NECESSARILY WRONG BUT FEELS SUSPICIOUS
+        if (!($derivationGroups.map(s => s.name).includes($derivationGroupField.value)) && derivationGroupInsert !== undefined) {
+          if(sourceType !== undefined) derivationGroupInsert.source_type_id = sourceType.id;
+          else console.log("Source type not registered correctly. Derivation group may be incorrect.")
+          derivationGroup = await effects.createDerivationGroup(derivationGroupInsert, user);
+        } else {
+          derivationGroup = getDerivationGroupByName($derivationGroupField.value, $derivationGroups)
         }
 
         if (sourceType !== undefined && derivationGroup !== undefined) {
@@ -512,7 +517,8 @@
       startTimeDoyField.reset("");
       endTimeDoyField.reset("");
       validAtDoyField.reset("");
-      derivationGroupField.reset("");
+      // derivationGroupField.reset("");
+      // TODO: add logic in table to group by derivation group!
 
     }
     else {
