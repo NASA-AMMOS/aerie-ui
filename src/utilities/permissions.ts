@@ -370,6 +370,13 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
         (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
     );
   },
+  CREATE_PLAN_EXTERNAL_SOURCE: (user: User | null, plan: PlanWithOwners): boolean => {
+    return (
+      isUserAdmin(user) ||
+      (getPermission([Queries.INSERT_PLAN_EXTERNAL_SOURCE], user) &&
+        (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
+    );
+  },
   CREATE_PLAN_MERGE_REQUEST: (
     user: User | null,
     sourcePlan: PlanWithOwners,
@@ -507,6 +514,9 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
     return (
       isUserAdmin(user) || (getPermission([Queries.DELETE_EXPANSION_SET], user) && isUserOwner(user, expansionSet))
     );
+  },
+  DELETE_EXTERNAL_SOURCE: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.DELETE_EXTERNAL_SOURCE], user);
   },
   DELETE_MODEL: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.DELETE_MISSION_MODEL], user);
@@ -1454,3 +1464,4 @@ export {
   isUserOwner,
   queryPermissions,
 };
+

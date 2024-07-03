@@ -508,20 +508,19 @@ const effects = {
     }
   },
 
-  async insertExternalSourceForPlan(source_id: number, plan_id: number | undefined, user: User | null): Promise<void> {
+  async insertExternalSourceForPlan(source_id: number, plan: Plan | null, user: User | null): Promise<void> {
     try {
-      // TODO: permissions!
-      // if ((plan && !queryPermissions.CREATE_PLAN_EXTERNAL_SOURCE(user, plan)) || !plan) {
-      //   throwPermissionError('add a directive to the plan');
-      // }
+      if ((plan && !queryPermissions.CREATE_PLAN_EXTERNAL_SOURCE(user, plan)) || !plan) {
+        throwPermissionError('add a directive to the plan');
+      }
 
       createExternalSourcePlanError.set(null);
-      if (plan_id !== undefined) {
+      if (plan !== null) {
         const data = await reqHasura<PlanExternalSource>(
           gql.CREATE_PLAN_EXTERNAL_SOURCE,
           {
             source: {
-              plan_id: plan_id,
+              plan_id: plan.id,
               external_source_id: source_id,
             },
           },
@@ -532,7 +531,7 @@ const effects = {
           // store updates automatically, because its a subscription!
           showSuccessToast('External Source Linked Successfully');
         } else {
-          throw Error(`Unable to link External Source with ID "${source_id}" on plan with ID ${plan_id}`);
+          throw Error(`Unable to link External Source with ID "${source_id}" on plan with ID ${plan.id}`);
         }
       } else {
         throw Error('Plan is not defined.');
@@ -559,6 +558,10 @@ const effects = {
 
   async deleteExternalSource(externalSource: ExternalSourceWithTypeName | null, user: User | null): Promise<boolean> {
     try {
+      // TODO: permissions!
+      // if (!queryPermissions.DELETE_EXTERNAL_SOURCE(user)) {
+      //  throwPermissionError('add a directive to the plan');
+      //}
       if (externalSource !== null) {
         const { confirm } = await showConfirmModal(
           'Delete',
@@ -604,7 +607,7 @@ const effects = {
     }
   },
 
-  async deleteExternalSourceForPlan(source_id: number, plan_id: number | undefined, user: User | null): Promise<void> {
+  async deleteExternalSourceForPlan(source_id: number, plan: Plan | null, user: User | null): Promise<void> {
     try {
       // TODO: permissions!
       // if ((plan && !queryPermissions.CREATE_ACTIVITY_DIRECTIVE(user, plan)) || !plan) {
@@ -613,7 +616,7 @@ const effects = {
 
       // (use the same as above store, as the behavior is employed on the same panel, therefore so would the error)
       createExternalSourcePlanError.set(null);
-      if (plan_id != undefined) {
+      if (plan !== null) {
         const data = await reqHasura<{
           returning: {
             id: number;
@@ -623,7 +626,7 @@ const effects = {
           {
             where: {
               _and: {
-                plan_id: { _eq: plan_id },
+                plan_id: { _eq: plan.id },
                 external_source_id: { _eq: source_id },
               },
             },
@@ -636,7 +639,7 @@ const effects = {
           showSuccessToast('External Source Disassociated Successfully');
         } else {
           // show the source name instead??? unsure
-          throw Error(`Unable to disassociate External Source with ID "${source_id}" on plan with ID ${plan_id}`);
+          throw Error(`Unable to disassociate External Source with ID "${source_id}" on plan with ID ${plan.id}`);
         }
       } else {
         throw Error('Plan is not defined.');
