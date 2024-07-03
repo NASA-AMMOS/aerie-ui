@@ -13,6 +13,7 @@ export type ExternalSourceDB = {
   source_type_id: number;
   start_time: string;
   valid_at: string;
+  derivation_group_id: number; // TODO: eventually a string, or something like that. for now just an ID. may need ExternalSourceWithGroupName type if this becomes a name
   // Things to consider:
   // associated file?
   // owner?
@@ -37,12 +38,13 @@ export type ExternalSourceJson = {
 // For use in retrieval of source information sans bulky items like metadata and event lists (see stores)
 export type ExternalSourceSlim = Pick<
   ExternalSourceDB,
-  'id' | 'file_id' | 'key' | 'source_type_id' | 'start_time' | 'end_time' | 'valid_at'
+  'id' | 'file_id' | 'key' | 'source_type_id' | 'start_time' | 'end_time' | 'valid_at' | 'derivation_group_id'
 >;
 
 // For use in ExternalSourceManager tables
-export type ExternalSourceWithTypeName = ExternalSourceSlim & {
+export type ExternalSourceWithResolvedNames = ExternalSourceSlim & {
   source_type: string | undefined;
+  derivation_group: string | undefined;
 };
 
 // no analogue (yet) to ExternalEvent because no special durationMs or startMs to draw on a timeline
@@ -59,6 +61,11 @@ export type ExternalSourceType = {
   name: string;
 };
 
+export type DerivationGroup = {
+  id: number;
+  name: string;
+}
+
 export type ExternalSourceEventType = { // to specify what types are contained in each source.
   external_source_id: number,
   external_event_type_id: number
@@ -67,7 +74,7 @@ export type ExternalSourceEventType = { // to specify what types are contained i
 // This is used for the GraphQL mutation.
 export type ExternalSourceInsertInput = Pick<
   ExternalSourceDB,
-  'key' | 'metadata' | 'source_type_id' | 'file_id' | 'start_time' | 'end_time' | 'valid_at'
+  'key' | 'metadata' | 'source_type_id' | 'file_id' | 'start_time' | 'end_time' | 'valid_at' | 'derivation_group_id'
 > & {
   external_events: {
     data: ExternalEventInsertInput[] | null;
@@ -76,5 +83,10 @@ export type ExternalSourceInsertInput = Pick<
 
 export type ExternalSourceTypeInsertInput = Pick<
   ExternalSourceType,
+  'name'
+>;
+
+export type DerivationGroupInsertInput = Pick<
+  DerivationGroup,
   'name'
 >;
