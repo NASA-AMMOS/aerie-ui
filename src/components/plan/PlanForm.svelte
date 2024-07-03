@@ -183,13 +183,14 @@
         }),
       );
 
-      const planDownload: PlanTransfer = getPlanForTransfer(plan, qualifiedActivityDirectives);
+      if (!planDownloadAbortController.signal.aborted) {
+        const planDownload: PlanTransfer = getPlanForTransfer(plan, qualifiedActivityDirectives);
 
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob([JSON.stringify(planDownload, null, 2)], { type: 'application/json' }));
-      a.download = planDownload.name;
-      a.click();
-
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([JSON.stringify(planDownload, null, 2)], { type: 'application/json' }));
+        a.download = planDownload.name;
+        a.click();
+      }
       planDownloadProgress = null;
     }
   }
@@ -215,7 +216,7 @@
         <svelte:fragment slot="right">
           <button
             class="st-button icon download"
-            on:click={onPlanDownload}
+            on:click|stopPropagation={onPlanDownload}
             use:tooltip={{ content: planDownloadProgress === null ? 'Download Plan JSON' : 'Cancel Plan Download' }}
           >
             {#if planDownloadProgress !== null}
