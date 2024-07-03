@@ -50,7 +50,7 @@ export enum Queries {
   DELETE_PARCEL_TO_DICTIONARY_ASSOCIATION = 'delete_parcel_to_parameter_dictionary',
   DELETE_PLAN = 'delete_plan_by_pk',
   DELETE_PLAN_COLLABORATOR = 'delete_plan_collaborators_by_pk',
-  DELETE_PLAN_EXTERNAL_SOURCE = 'delete_plan_external_source',
+  DELETE_PLAN_DERIVATION_GROUP = 'delete_plan_derivation_group',
   DELETE_PLAN_SNAPSHOT = 'delete_plan_snapshot_by_pk',
   DELETE_PLAN_TAGS = 'delete_plan_tags',
   DELETE_PRESET_TO_DIRECTIVE = 'delete_preset_to_directive_by_pk',
@@ -90,7 +90,7 @@ export enum Queries {
   EXTERNAL_SOURCES = 'external_source',
   EXTERNAL_SOURCE_TYPES = 'external_source_type',
   DERIVATION_GROUP = 'derivation_group',
-  PLAN_EXTERNAL_SOURCE = 'plan_external_source',
+  PLAN_DERIVATION_GROUP = 'plan_derivation_group',
   GET_ACTIVITY_EFFECTIVE_ARGUMENTS = 'getActivityEffectiveArguments',
   GET_ACTIVITY_TYPE_SCRIPT = 'getActivityTypeScript',
   GET_COMMAND_TYPE_SCRIPT = 'getCommandTypeScript',
@@ -120,7 +120,7 @@ export enum Queries {
   INSERT_PARCEL = 'insert_parcel_one',
   INSERT_PARCEL_TO_PARAMETER_DICTIONARY = 'insert_parcel_to_parameter_dictionary',
   INSERT_PLAN = 'insert_plan_one',
-  INSERT_PLAN_EXTERNAL_SOURCE = 'insert_plan_external_source_one',
+  INSERT_PLAN_DERIVATION_GROUP = 'insert_plan_derivation_group_one',
   INSERT_PLAN_SNAPSHOT_TAGS = 'insert_plan_snapshot_tags',
   INSERT_PLAN_COLLABORATORS = 'insert_plan_collaborators',
   INSERT_PLAN_TAGS = 'insert_plan_tags',
@@ -499,9 +499,9 @@ const gql = {
   `,
 
   // TODO: handle owner, created_at, etc.
-  CREATE_PLAN_EXTERNAL_SOURCE: `#graphql
-    mutation CreatePlanExternalSource($source: plan_external_source_insert_input!) {
-      planExternalSourceLink: ${Queries.INSERT_PLAN_EXTERNAL_SOURCE}(object: $source) {
+  CREATE_PLAN_DERIVATION_GROUP: `#graphql
+    mutation CreatePlanDerivationGroup($source: plan_derivation_group_insert_input!) {
+      planExternalSourceLink: ${Queries.INSERT_PLAN_DERIVATION_GROUP}(object: $source) {
         id
       }
     }
@@ -961,7 +961,7 @@ const gql = {
           external_source_id
         }
       }
-      deletePlanExternalSource: ${Queries.DELETE_PLAN_EXTERNAL_SOURCE}(where: { external_source_id: { _eq: $id }}) {
+      deletePlanExternalSource: ${Queries.DELETE_PLAN_DERIVATION_GROUP}(where: { external_source_id: { _eq: $id }}) {
         returning {
           external_source_id
         }
@@ -983,9 +983,9 @@ const gql = {
     }
   `,
 
-  DELETE_PLAN_EXTERNAL_SOURCE: `#graphql
-    mutation DeletePlanExternalSource($where: plan_external_source_bool_exp!) {
-      planExternalSourceLink: delete_plan_external_source(where: $where) {
+  DELETE_PLAN_DERIVATION_GROUP: `#graphql
+    mutation DeletePlanExternalSource($where: plan_derivation_group_bool_exp!) {
+      planDerivationGroupLink: ${Queries.DELETE_PLAN_DERIVATION_GROUP}(where: $where) {
         returning {
           id
         }
@@ -1483,22 +1483,22 @@ const gql = {
   `,
 
   GET_EXTERNAL_SOURCE_BY_TYPE: `#graphql
-    query GetExternalSourceByType($source_type_id: Int!) {
-      ${Queries.EXTERNAL_SOURCES}(where: {source_type_id: { _eq: $source_type_id }}) {
-        id
-        key
-        file_id
-        source_type_id
-        valid_at
-        start_time
-        end_time
+      query GetExternalSourceByType($source_type_id: Int!) {
+        ${Queries.EXTERNAL_SOURCES}(where: {source_type_id: { _eq: $source_type_id }}) {
+          id
+          key
+          file_id
+          source_type_id
+          valid_at
+          start_time
+          end_time
+        }
       }
-    }
-  `,
+    `,
 
-  GET_PLAN_EXTERNAL_SOURCE: `#graphql
+  GET_PLAN_DERIVATION_GROUP: `#graphql
     query GetPlanExternalSource($plan_id: Int!) {
-      links: ${Queries.PLAN_EXTERNAL_SOURCE}(where: {plan_id: {_eq: $plan_id}}) {
+      links: ${Queries.PLAN_DERIVATION_GROUP}(where: {plan_id: {_eq: $plan_id}}) {
         id
         external_source_id
         plan_id
@@ -2475,9 +2475,9 @@ const gql = {
     }
   `,
 
-  SUB_PLAN_EXTERNAL_SOURCE: `#graphql
+  SUB_PLAN_DERIVATION_GROUP: `#graphql
     subscription SubPlanExternalSource {
-      links: ${Queries.PLAN_EXTERNAL_SOURCE}(order_by: { plan_id: asc }) {
+      links: ${Queries.PLAN_DERIVATION_GROUP}(order_by: { plan_id: asc }) {
         id
         external_source_id
         plan_id
