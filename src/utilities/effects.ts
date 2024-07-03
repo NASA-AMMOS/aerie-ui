@@ -509,7 +509,7 @@ const effects = {
     }
   },
 
-  async insertExternalSourceForPlan(source_id: number, plan: Plan | null, user: User | null): Promise<void> {
+  async insertDerivationGroupForPlan(derivation_group_id: number, plan: Plan | null, user: User | null): Promise<void> {
     try {
       if ((plan && !queryPermissions.CREATE_PLAN_EXTERNAL_SOURCE(user, plan)) || !plan) {
         throwPermissionError('add an external source to the plan');
@@ -518,11 +518,11 @@ const effects = {
       createExternalSourcePlanError.set(null);
       if (plan !== null) {
         const data = await reqHasura<PlanExternalSource>(
-          gql.CREATE_PLAN_EXTERNAL_SOURCE,
+          gql.CREATE_PLAN_DERIVATION_GROUP,
           {
             source: {
               plan_id: plan.id,
-              external_source_id: source_id,
+              derivation_group_id: derivation_group_id,
             },
           },
           user,
@@ -530,16 +530,16 @@ const effects = {
         const { planExternalSourceLink: sourceAssociation } = data;
         if (sourceAssociation != null) {
           // store updates automatically, because its a subscription!
-          showSuccessToast('External Source Linked Successfully');
+          showSuccessToast('Derivation Gropu Linked Successfully');
         } else {
-          throw Error(`Unable to link External Source with ID "${source_id}" on plan with ID ${plan.id}`);
+          throw Error(`Unable to link Derivation Group with ID "${derivation_group_id}" on plan with ID ${plan.id}`);
         }
       } else {
         throw Error('Plan is not defined.');
       }
     } catch (e) {
-      catchError('External Source Linking Failed', e as Error);
-      showFailureToast('External Source Linking Failed');
+      catchError('Derivation Group Linking Failed', e as Error);
+      showFailureToast('Derivation Group Linking Failed');
       createExternalSourcePlanError.set((e as Error).message);
     }
   },
@@ -609,7 +609,7 @@ const effects = {
     }
   },
 
-  async deleteExternalSourceForPlan(source_id: number, plan: Plan | null, user: User | null): Promise<void> {
+  async deleteDerivationGroupForPlan(derivation_group_id: number, plan_id: Plan | null, user: User | null): Promise<void> {
     try {
       if ((plan && !queryPermissions.DELETE_PLAN_EXTERNAL_SOURCE(user, plan)) || !plan) {
         throwPermissionError('delete an external source from the plan');
@@ -623,12 +623,12 @@ const effects = {
             id: number;
           }[];
         }>(
-          gql.DELETE_PLAN_EXTERNAL_SOURCE,
+          gql.DELETE_PLAN_DERIVATION_GROUP,
           {
             where: {
               _and: {
                 plan_id: { _eq: plan.id },
-                external_source_id: { _eq: source_id },
+                derivation_group_id: { _eq: derivation_group_id },
               },
             },
           },
@@ -637,17 +637,17 @@ const effects = {
         const sourceDissociation = data.planExternalSourceLink?.returning[0].id;
         if (sourceDissociation) {
           // source automatically updates!
-          showSuccessToast('External Source Disassociated Successfully');
+          showSuccessToast('Derivation Group Disassociated Successfully');
         } else {
           // show the source name instead??? unsure
-          throw Error(`Unable to disassociate External Source with ID "${source_id}" on plan with ID ${plan.id}`);
+          throw Error(`Unable to disassociate Derivation Group with ID "${derivation_group_id}" on plan with ID ${plan.id}`);
         }
       } else {
         throw Error('Plan is not defined.');
       }
     } catch (e) {
-      catchError('External Source De-linking Failed', e as Error);
-      showFailureToast('External Source De-linking Failed');
+      catchError('Derivation Group De-linking Failed', e as Error);
+      showFailureToast('Derivation Group De-linking Failed');
       createExternalSourcePlanError.set((e as Error).message);
     }
   },
@@ -3486,6 +3486,7 @@ const effects = {
     }
   },
 
+  // TODO: rework this one entirely
   async getExternalEventTypes(plan_id: number, user: User | null): Promise<ExternalEventType[]> {
     try {
       // get source ids
