@@ -1,5 +1,5 @@
 import { derived, writable, type Writable } from 'svelte/store';
-import { type DerivationGroup, type ExternalSourceEventType, type ExternalSourceSlim, type ExternalSourceType, type ExternalSourceWithResolvedNames, type PlanExternalSource } from '../types/external-source';
+import { type DerivationGroup, type ExternalSourceEventType, type ExternalSourceSlim, type ExternalSourceType, type ExternalSourceWithResolvedNames, type PlanDerivationGroup } from '../types/external-source';
 import gql from '../utilities/gql';
 import { planId } from './plan';
 import { gqlSubscribable } from './subscribable';
@@ -21,7 +21,7 @@ export const externalSourceTypes = gqlSubscribable<ExternalSourceType[]>(gql.SUB
 export const derivationGroups = gqlSubscribable<DerivationGroup[]>(gql.SUB_DERIVATION_GROUPS, {}, [], null);
 
 // use to keep track of associations between plans and goals
-export const planExternalSourceLinks = gqlSubscribable<PlanExternalSource[]>(gql.SUB_PLAN_EXTERNAL_SOURCE, {}, [], null);
+export const planDerivationGroupLinks = gqlSubscribable<PlanDerivationGroup[]>(gql.SUB_PLAN_DERIVATION_GROUP, {}, [], null);
 
 // use to keep track of associations between sources and their event types
 export const externalSourceEventTypes = gqlSubscribable<ExternalSourceEventType[]>(gql.SUB_EXTERNAL_SOURCE_EVENT_TYPE, {}, [], null)
@@ -38,15 +38,15 @@ export const externalSourceWithTypeName = derived<[typeof externalSources, typeo
   }))
 );
 
-export const selectedPlanExternalSourceIds = derived(
-  [planExternalSourceLinks, planId],
-  ([$planExternalSourceLinks, $planId]) => $planExternalSourceLinks.filter(link => link.plan_id === $planId).map(link => link.external_source_id)
+export const selectedPlanDerivationGroupIds = derived( // TODO: make this link between derivation groups and plans instead
+  [planDerivationGroupLinks, planId],
+  ([$planDerivationGroupLinks, $planId]) => $planDerivationGroupLinks.filter(link => link.plan_id === $planId).map(link => link.derivation_group_id)
 );
 
 export const selectedPlanExternalSourceEventTypes = derived(
-  [externalSourceEventTypes, planExternalSourceLinks, planId],
-  ([$externalSourceEventTypes, $planExternalSourceLinks, $planId]) => {
-    let validSources = $planExternalSourceLinks.filter(link => link.plan_id == $planId).map(link => link.external_source_id)
+  [externalSourceEventTypes, planDerivationGroupLinks, planId],
+  ([$externalSourceEventTypes, $planDerivationGroupLinks, $planId]) => {
+    let validSources = $planDerivationGroupLinks.filter(link => link.plan_id == $planId).map(link => link.derivation_group_id)
     let allValidEventTypes = $externalSourceEventTypes.filter(eset => validSources.includes(eset.external_source_id)).map(eset => eset.external_event_type_id)
     
     // remove duplicates
