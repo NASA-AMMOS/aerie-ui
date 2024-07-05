@@ -88,7 +88,7 @@ import type {
   ExternalSourceType,
   ExternalSourceTypeInsertInput,
   ExternalSourceWithResolvedNames,
-  PlanExternalSource,
+  PlanDerivationGroup
 } from '../types/external-source';
 import type { Model, ModelInsertInput, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
 import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
@@ -517,7 +517,7 @@ const effects = {
 
       createExternalSourcePlanError.set(null);
       if (plan !== null) {
-        const data = await reqHasura<PlanExternalSource>(
+        const data = await reqHasura<PlanDerivationGroup>(
           gql.CREATE_PLAN_DERIVATION_GROUP,
           {
             source: {
@@ -527,10 +527,11 @@ const effects = {
           },
           user,
         );
+        console.log(data)
         const { planExternalSourceLink: sourceAssociation } = data;
         if (sourceAssociation != null) {
           // store updates automatically, because its a subscription!
-          showSuccessToast('Derivation Gropu Linked Successfully');
+          showSuccessToast('Derivation Group Linked Successfully');
         } else {
           throw Error(`Unable to link Derivation Group with ID "${derivation_group_id}" on plan with ID ${plan.id}`);
         }
@@ -3486,26 +3487,25 @@ const effects = {
     }
   },
 
-  // TODO: rework this one entirely
   async getExternalEventTypes(plan_id: number, user: User | null): Promise<ExternalEventType[]> {
     try {
-      // get source ids
-      const source_data = await reqHasura<PlanExternalSource[]>(gql.GET_PLAN_EXTERNAL_SOURCE, { plan_id }, user);
-      const { links } = source_data;
-      if (links === null) {
-        throw Error('Unable to retrieve all source ids for given plan');
-      }
-      const source_ids = links.map(l => l.external_source_id);
+      const source_data = await reqHasura<any>(gql.GET_PLAN_EVENT_TYPES, { plan_id }, user);
+      let type_ids: Set<number> = new Set();
+      let types: ExternalEventType[] = [];
 
-      // get all event types
-      const event_type_data = await reqHasura<ExternalEventType[]>(gql.GET_EXTERNAL_EVENT_TYPES, {}, user);
-      const { external_event_types } = event_type_data;
-      if (external_event_types === null) {
-        throw Error('Unable to retrieve all external event types');
+      for (const group of source_data["plan_derivation_group"]) {
+        for (const source of group["derivation_group"]["external_source"]) {
+          for (const event of source["external_events"]) {
+            const type = event["external_event_type"]
+            if (!type_ids.has(type["id"])) {
+              type_ids.add(type["id"])
+              types.push(type)
+            }
+          }
+        }
       }
 
-      // finally, get event types for the source
-      return effects.getExternalEventTypesBySource(source_ids, external_event_types, user);
+      return types;
     } catch (e) {
       catchError(e as Error);
       return [];
