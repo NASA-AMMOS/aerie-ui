@@ -384,12 +384,6 @@
     }
   }
 
-  function onStartTimeKeyUp(event: KeyboardEvent) {
-    if (event.key !== 'Enter') {
-      startTimeField.validateAndSet($startTimeField.value);
-    }
-  }
-
   async function onTagsInputChange(event: TagsChangeEvent) {
     const {
       detail: { tag, type },
@@ -566,43 +560,25 @@
         </Highlight>
 
         <Highlight highlight={highlightKeysMap.start_offset}>
-          {#if $plugins.time.enableDatePicker}
-            <DatePickerField
-              disabled={!editable || activityDirective.anchor_id !== null}
-              field={startTimeField}
-              label={`Start Time (${$plugins.time.primary.label}) - ${$plugins.time.primary.formatString}`}
-              layout="inline"
-              name="start-time"
-              use={[
-                [
-                  permissionHandler,
-                  {
-                    hasPermission: hasUpdatePermission,
-                    permissionError: updatePermissionError,
-                  },
-                ],
-              ]}
-              on:change={onUpdateStartTime}
-              on:keydown={onUpdateStartTime}
-            />
-          {:else}
-            <div class="start-time-field">
-              <Field field={startTimeField} on:change={onUpdateStartTime}>
-                <Input layout="inline">
-                  <label use:tooltip={{ content: 'Start Time', placement: 'top' }} for="start-time">
-                    Start Time ({$plugins.time.primary.label}) - {$plugins.time.primary.formatString}
-                  </label>
-                  <input
-                    autocomplete="off"
-                    class="st-input w-100"
-                    name="start-time"
-                    value={activityDirective.type}
-                    on:keyup={onStartTimeKeyUp}
-                  />
-                </Input>
-              </Field>
-            </div>
-          {/if}
+          <DatePickerField
+            useFallback={!$plugins.time.enableDatePicker}
+            disabled={!editable || activityDirective.anchor_id !== null}
+            field={startTimeField}
+            label={`Start Time (${$plugins.time.primary.label}) - ${$plugins.time.primary.formatString}`}
+            layout="inline"
+            name="start-time"
+            use={[
+              [
+                permissionHandler,
+                {
+                  hasPermission: hasUpdatePermission,
+                  permissionError: updatePermissionError,
+                },
+              ],
+            ]}
+            on:change={onUpdateStartTime}
+            on:keydown={onUpdateStartTime}
+          />
         </Highlight>
 
         <ActivityAnchorForm
@@ -907,9 +883,5 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
-  }
-
-  .start-time-field :global(fieldset) {
-    padding: 0;
   }
 </style>
