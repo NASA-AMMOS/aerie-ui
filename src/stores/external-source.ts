@@ -38,16 +38,16 @@ export const externalSourceWithTypeName = derived<[typeof externalSources, typeo
   }))
 );
 
-export const selectedPlanDerivationGroupIds = derived( // TODO: make this link between derivation groups and plans instead
+export const selectedPlanDerivationGroupIds = derived(
   [planDerivationGroupLinks, planId],
   ([$planDerivationGroupLinks, $planId]) => $planDerivationGroupLinks.filter(link => link.plan_id === $planId).map(link => link.derivation_group_id)
 );
 
 export const selectedPlanExternalSourceEventTypes = derived(
-  [externalSourceEventTypes, planDerivationGroupLinks, planId],
-  ([$externalSourceEventTypes, $planDerivationGroupLinks, $planId]) => {
-    let validSources = $planDerivationGroupLinks.filter(link => link.plan_id == $planId).map(link => link.derivation_group_id)
-    let allValidEventTypes = $externalSourceEventTypes.filter(eset => validSources.includes(eset.external_source_id)).map(eset => eset.external_event_type_id)
+  [externalSourceEventTypes, selectedPlanDerivationGroupIds, externalSources],
+  ([$externalSourceEventTypes, $selectedPlanDerivationGroupIds, $externalSources]) => {
+    let allValidSources = $externalSources.filter(source => $selectedPlanDerivationGroupIds.includes(source.derivation_group_id)).map(source => source.id)
+    let allValidEventTypes = $externalSourceEventTypes.filter(eset => allValidSources.includes(eset.external_source_id)).map(eset => eset.external_event_type_id)
     
     // remove duplicates
     return allValidEventTypes.filter((val, ind, arr) => arr.indexOf(val) == ind);
