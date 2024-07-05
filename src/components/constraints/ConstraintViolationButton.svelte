@@ -1,14 +1,17 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { TimeTypes } from '../../enums/time';
   import { viewTimeRange } from '../../stores/plan';
   import { plugins } from '../../stores/plugins';
   import type { TimeRange } from '../../types/timeline';
-  import { getDoyTimeComponents } from '../../utilities/time';
+  import { getDoyTimeComponents, validateTime } from '../../utilities/time';
 
   export let window: TimeRange;
 
-  let isDoyPattern = new RegExp(/^(\d{4})-(\d{3})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?$/);
+  let isDoyPattern = false;
+
+  $: isDoyPattern = validateTime($plugins.time.primary.format(new Date(window.start)), TimeTypes.ABSOLUTE);
 
   function zoomToViolation(window: TimeRange): void {
     $viewTimeRange = window;

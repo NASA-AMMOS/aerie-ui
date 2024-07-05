@@ -37,9 +37,9 @@
   import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
-  import { getDoyTime, getUnixEpochTime } from '../../utilities/time';
+  import { convertDoyToYmd, getDoyTime } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
-  import { required, timestamp } from '../../utilities/validators';
+  import { required } from '../../utilities/validators';
   import CollapsibleListControls from '../CollapsibleListControls.svelte';
   import DatePickerField from '../form/DatePickerField.svelte';
   import GridMenu from '../menus/GridMenu.svelte';
@@ -55,21 +55,29 @@
   let showAll: boolean = true;
   let filterText: string = '';
   let filteredConstraints: ConstraintPlanSpec[] = [];
-  let endTimeDoy: string;
-  let endTimeDoyField: FieldStore<string>;
+  let endTime: string;
+  let endTimeField: FieldStore<string>;
   let numOfPrivateConstraints: number = 0;
-  let startTimeDoy: string;
-  let startTimeDoyField: FieldStore<string>;
+  let startTime: string;
+  let startTimeField: FieldStore<string>;
   let showFilters: boolean = false;
   let showConstraintsWithNoViolations: boolean = true;
   let constraintToConstraintResponseMap: Record<ConstraintDefinition['constraint_id'], ConstraintResponse> = {};
 
-  $: startTimeDoy = $plan?.start_time_doy || '';
-  $: startTimeDoyField = field<string>(startTimeDoy, [required, timestamp]);
-  $: endTimeDoy = $plan?.end_time_doy || '';
-  $: endTimeDoyField = field<string>(endTimeDoy, [required, timestamp]);
-  $: startTimeMs = getUnixEpochTime(startTimeDoy);
-  $: endTimeMs = getUnixEpochTime(endTimeDoy);
+  $: if ($plan) {
+    startTime = $plugins.time.primary.format(new Date($plan.start_time));
+    const endTimeYmd = convertDoyToYmd($plan.end_time_doy);
+    if (endTimeYmd) {
+      endTime = $plugins.time.primary.format(new Date(endTimeYmd));
+    } else {
+      endTime = '';
+    }
+  }
+
+  $: startTimeField = field<string>(startTime, [required, $plugins.time.primary.validate]);
+  $: endTimeField = field<string>(endTime, [required, $plugins.time.primary.validate]);
+  $: startTimeMs = $plugins.time.primary.parse(startTime).getTime();
+  $: endTimeMs = $plugins.time.primary.parse(endTime).getTime();
   $: if ($allowedConstraintSpecs && $constraintResponseMap && startTimeMs && endTimeMs) {
     constraintToConstraintResponseMap = {};
     $allowedConstraintSpecs.forEach(constraintPlanSpec => {
@@ -103,6 +111,7 @@
   $: filteredConstraintResponses = Object.values(constraintToConstraintResponseMap).filter(r =>
     filteredConstraints.find(c => c.constraint_id === r.constraintId),
   );
+  $: console.log('filteredConstraintResponses :>> ', filteredConstraintResponses);
   $: numOfPrivateConstraints = $constraintPlanSpecs.length - $allowedConstraintSpecs.length;
 
   $: totalViolationCount = getViolationCount(Object.values($constraintResponseMap));
@@ -135,7 +144,9 @@
 
   function getViolationCount(constraintResponse: ConstraintResponse[]) {
     return constraintResponse.reduce((count, constraintResponse) => {
-      return constraintResponse.results.violations ? constraintResponse.results.violations.length + count : count;
+      return constraintResponse.results.violations
+        ? constraintResponse.results.violations.filter(violation => violation.windows.length > 0).length + count
+        : count;
     }, 0);
   }
 
@@ -144,32 +155,41 @@
   }
 
   function onUpdateStartTime() {
-    if ($startTimeDoyField.valid && startTimeDoy !== $startTimeDoyField.value) {
-      startTimeDoy = $startTimeDoyField.value;
+    if ($startTimeField.valid && startTime !== $startTimeField.value) {
+      startTime = $startTimeField.value;
     }
   }
 
   function onUpdateEndTime() {
-    if ($endTimeDoyField.valid && endTimeDoy !== $endTimeDoyField.value) {
-      endTimeDoy = $endTimeDoyField.value;
+    if ($endTimeField.valid && endTime !== $endTimeField.value) {
+      endTime = $endTimeField.value;
     }
   }
 
   async function setTimeBoundsToView() {
-    await startTimeDoyField.validateAndSet(getDoyTime(new Date($viewTimeRange.start)).toString());
-    await endTimeDoyField.validateAndSet(getDoyTime(new Date($viewTimeRange.end)).toString());
+    /* TODO */
+    await startTimeField.validateAndSet(getDoyTime(new Date($viewTimeRange.start)).toString());
+    await endTimeField.validateAndSet(getDoyTime(new Date($viewTimeRange.end)).toString());
     onUpdateStartTime();
     onUpdateEndTime();
   }
 
   async function onPlanStartTimeClick() {
-    await startTimeDoyField.validateAndSet($plan?.start_time_doy);
-    onUpdateStartTime();
+    if ($plan) {
+      await startTimeField.validateAndSet($plugins.time.primary.format(new Date($plan.start_time)));
+      onUpdateStartTime();
+    }
   }
 
   async function onPlanEndTimeClick() {
-    await endTimeDoyField.validateAndSet($plan?.end_time_doy);
-    onUpdateEndTime();
+    if ($plan) {
+      const endTimeYmd = convertDoyToYmd($plan.end_time_doy);
+      if (endTimeYmd) {
+        endTime = $plugins.time.primary.format(new Date(endTimeYmd));
+        await endTimeField.validateAndSet(endTime);
+        onUpdateEndTime();
+      }
+    }
   }
 
   async function onUpdateConstraint(event: CustomEvent<ConstraintPlanSpec>) {
@@ -261,7 +281,8 @@
         </div>
         <div>
           <DatePickerField
-            field={startTimeDoyField}
+            useFallback={!$plugins.time.enableDatePicker}
+            field={startTimeField}
             label={`Violation Start Time (${$plugins.time.primary.label})`}
             layout="inline"
             name="start-time"
@@ -273,7 +294,8 @@
             </DatePickerActionButton>
           </DatePickerField>
           <DatePickerField
-            field={endTimeDoyField}
+            useFallback={!$plugins.time.enableDatePicker}
+            field={endTimeField}
             label={`Violation End Time (${$plugins.time.primary.label})`}
             layout="inline"
             name="end-time"
