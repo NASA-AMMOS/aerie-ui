@@ -38,7 +38,7 @@
     }
   }
 
-  async function getExternalEventTypes() {
+  async function getExternalEventTypes() { // refactor
     if (!selectedSourceEventTypes || selectedSourceEventTypes.length === 0) {
       selectedSourceEventTypes = (await effects.getExternalEventTypesBySource([derivationGroup.id], $externalEventTypes, user))
     }
