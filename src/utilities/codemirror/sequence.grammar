@@ -13,7 +13,6 @@
 
 // Potential Improvements
 // maintainability - use @specialize on directives
-// expressiveness - add activate, load and ground syntax
 
 @precedence {
   stemStart @cut
@@ -37,15 +36,13 @@ LocalDeclaration {
 
 commandBlock {
   (
-    Command |
-    Activate |
-    GroundBlock |
-    GroundEvent |
-    Load |
+    step |
     Request |
     commentLine ~maybeComments
   )+
 }
+
+step { Command | Activate | GroundBlock | GroundEvent | Load }
 
 commentLine {
   LineComment newLine
@@ -135,7 +132,8 @@ Request {
   })
   requestStartDirective "(" RequestName { String } ")"
   whiteSpace? LineComment? newLine
-  Command*
+  // json schema requires step+, catch error in linter for cleaner message
+  Steps { step* }
   requestEndDirective newLine
   Metadata?
 }

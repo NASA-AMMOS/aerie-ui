@@ -12,6 +12,7 @@ import type {
   BooleanArgument,
   Command,
   GroundBlock,
+  GroundEpoch,
   GroundEvent,
   HardwareCommand,
   HexArgument,
@@ -21,6 +22,7 @@ import type {
   Model,
   NumberArgument,
   RepeatArgument,
+  Request,
   SeqJson,
   Step,
   StringArgument,
@@ -70,21 +72,7 @@ export function sequenceToSeqJson(
   let child = baseNode.getChild('Commands')?.firstChild;
   seqJson.steps = [];
   while (child) {
-    let step: Step | undefined = undefined;
-    switch (child.name) {
-      case 'Command':
-        step = parseCommand(child, text, commandDictionary);
-        break;
-      case 'Activate':
-      case 'Load':
-        step = parseActivateLoad(child, text);
-        break;
-      case 'GroundBlock':
-      case 'GroundEvent':
-        step = parseGroundBlockEvent(child, text);
-        break;
-      case 'Request':
-    }
+    const step = parseStep(child, text, commandDictionary);
     if (step) {
       seqJson.steps.push(step);
     }
@@ -93,7 +81,6 @@ export function sequenceToSeqJson(
   if (!seqJson.steps.length) {
     seqJson.steps = undefined;
   }
-
   seqJson.immediate_commands =
     baseNode
       .getChild('ImmediateCommands')
@@ -104,8 +91,33 @@ export function sequenceToSeqJson(
       .getChild('HardwareCommands')
       ?.getChildren('Command')
       .map(command => parseHardwareCommand(command, text)) ?? undefined;
+
+  seqJson.requests = baseNode
+    .getChild('Commands')
+    ?.getChildren('Request')
+    .map(requestNode => parseRequest(requestNode, text, commandDictionary));
+  if (seqJson.requests?.length === 0) {
+    seqJson.requests = undefined;
+  }
+
   customizeSeqJson(seqJson, parameterDictionaries, channelDictionary);
   return seqJson;
+}
+
+function parseStep(child: SyntaxNode, text: string, commandDictionary: CommandDictionary | null): Step | null {
+  switch (child.name) {
+    case 'Command':
+      return parseCommand(child, text, commandDictionary);
+    case 'Activate':
+    case 'Load':
+      return parseActivateLoad(child, text);
+    case 'GroundBlock':
+    case 'GroundEvent':
+      return parseGroundBlockEvent(child, text);
+  }
+  // SeqN allows comments that don't map to Seq.JSON
+  // Requests are also here in the tree
+  return null;
 }
 
 function parseLGO(node: SyntaxNode): Metadata | undefined {
@@ -165,7 +177,7 @@ function parseArg(
   }
 }
 
-export function parseRepeatArgs(
+function parseRepeatArgs(
   repeatArgsNode: SyntaxNode,
   text: string,
   dictRepeatArgument: FswCommandArgumentRepeat | null,
@@ -204,7 +216,7 @@ export function parseRepeatArgs(
   return repeatArg;
 }
 
-export function parseArgs(
+function parseArgs(
   argsNode: SyntaxNode,
   text: string,
   commandDictionary: CommandDictionary | null,
@@ -239,6 +251,15 @@ export function parseArgs(
   return args;
 }
 
+function parseGroundEpoch(groundEpochNode: SyntaxNode, text: string): GroundEpoch {
+  const deltaNode = groundEpochNode.getChild('Delta');
+  const nameNode = groundEpochNode.getChild('Name');
+  return {
+    delta: deltaNode ? removeQuotes(text.slice(deltaNode.from + 1, deltaNode.to)) : '',
+    name: nameNode ? removeQuotes(text.slice(nameNode.from + 1, nameNode.to)) : '',
+  };
+}
+
 /**
  *
  * @param commandNode
@@ -250,7 +271,7 @@ export function parseArgs(
  * Parses a time tag node and returns a Seq JSON time.
  * Defaults to an unknown absolute time if a command does not have a valid time tag.
  */
-export function parseTime(commandNode: SyntaxNode, text: string): Time {
+function parseTime(commandNode: SyntaxNode, text: string): Time {
   const timeTagNode = commandNode.getChild('TimeTag');
   let tag = 'UNKNOWN';
 
@@ -302,9 +323,7 @@ export function parseTime(commandNode: SyntaxNode, text: string): Time {
     if (match) {
       RELATIVE_TIME.lastIndex = 0;
       const [, doy, hh, mm, ss, ms] = match;
-      tag = `${doy !== undefined ? doy : ''}${doy !== undefined ? doy : ''}${hh ? hh : '00'}:${mm ? mm : '00'}:${
-        ss ? ss : '00'
-      }${ms ? ms : ''}`;
+      tag = `${doy !== undefined ? doy : ''}${hh ? hh : '00'}:${mm ? mm : '00'}:${ss ? ss : '00'}${ms ? ms : ''}`;
       return { tag, type: 'COMMAND_RELATIVE' };
     }
     match = testTime(timeTagRelativeText, RELATIVE_SIMPLE);
@@ -443,6 +462,55 @@ function removeQuotes(text: string | unknown): string | unknown {
     return text.replace(/^"|"$/g, '').replaceAll('\\"', '"');
   }
   return text;
+}
+
+function parseRequest(requestNode: SyntaxNode, text: string, commandDictionary: CommandDictionary | null): Request {
+  let ground_epoch = undefined;
+  let time = undefined;
+  const groundEpochNode = requestNode.getChild('GroundEpoch');
+  if (groundEpochNode) {
+    ground_epoch = parseGroundEpoch(groundEpochNode, text);
+  } else {
+    time = parseTime(requestNode, text);
+  }
+  const nameNode = requestNode.getChild('RequestName');
+  const name = nameNode ? removeQuotes(text.slice(nameNode.from, nameNode.to)) : 'UNKNOWN';
+  const description = parseDescription(requestNode, text);
+  const metadata = parseMetadata(requestNode, text);
+
+  const steps: Step[] = [];
+  const stepsNode = requestNode.getChild('Steps');
+  if (stepsNode) {
+    let stepNode = stepsNode.firstChild;
+    while (stepNode) {
+      const step = parseStep(stepNode, text, commandDictionary);
+      if (step) {
+        steps.push(step);
+      }
+      stepNode = stepNode?.nextSibling;
+    }
+  }
+
+  if (steps.length === 0) {
+    // request with empty steps is disallowed in seq.json
+    steps.push({
+      args: [],
+      stem: 'UNKNOWN',
+      time: { tag: 'UNKNOWN', type: 'ABSOLUTE' },
+      type: 'command',
+    });
+  }
+
+  // ground epoch
+  return {
+    ground_epoch,
+    name,
+    steps: steps as [Step, ...Step[]],
+    time,
+    type: 'request',
+    ...{ description },
+    ...{ metadata },
+  };
 }
 
 function parseGroundBlockEvent(stepNode: SyntaxNode, text: string): GroundBlock | GroundEvent {

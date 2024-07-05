@@ -272,7 +272,7 @@ A2024-123T12:34:56 @REQUEST_BEGIN("request2.name")
 @REQUEST_END
 @METADATA "foo" "bar"
 `;
-    assertNoErrorNodes(input, true);
+    assertNoErrorNodes(input);
     const parseTree = SeqLanguage.parser.parse(input);
     assert.isNotNull(parseTree.topNode.firstChild);
     const requests = parseTree.topNode.firstChild!.getChildren('Request');
@@ -283,7 +283,7 @@ A2024-123T12:34:56 @REQUEST_BEGIN("request2.name")
     const request0GrondEpoch = requests[0].getChild('GroundEpoch');
     assert.equal(getNodeText(request0GrondEpoch!.getChild('Name')!, input), '"Name"');
     assert.equal(getNodeText(request0GrondEpoch!.getChild('Delta')!, input), '"+3:00"');
-    assert.equal(requests[0].getChildren('Command').length, 4);
+    assert.equal(requests[0].getChild('Steps')?.getChildren('Command').length, 4);
     const request0Meta0 = requests[0].getChild('Metadata')!.getChild('MetaEntry')!;
     assert.deepEqual(JSON.parse(getNodeText(request0Meta0.getChild('Value')!, input)), {
       boolean: true,
@@ -291,7 +291,7 @@ A2024-123T12:34:56 @REQUEST_BEGIN("request2.name")
 
     assert.equal(getNodeText(requests[1].getChild('RequestName')!, input), '"request2.name"');
     assert.equal(getNodeText(requests[1].getChild('TimeTag')!, input), 'A2024-123T12:34:56 ');
-    assert.equal(requests[1].getChildren('Command').length, 6);
+    assert.equal(requests[1].getChild('Steps')?.getChildren('Command').length, 6);
   });
 });
 

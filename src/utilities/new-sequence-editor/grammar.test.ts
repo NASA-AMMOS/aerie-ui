@@ -352,32 +352,43 @@ A2024-123T12:34:56 @REQUEST_BEGIN("request2.name")
 @REQUEST_END
 @METADATA "foo" "bar"
 `,
-    `Sequence(Commands(
-GroundBlock(TimeTag(TimeAbsolute),GroundName(String),Args,LineComment),
-GroundEvent(TimeTag(TimeRelative),GroundName(String),Args(String,Number,Number,Number)),
+    `
+Sequence(Commands(
+  GroundBlock(TimeTag(TimeAbsolute),GroundName(String),Args,LineComment),
+  GroundEvent(TimeTag(TimeRelative),GroundName(String),Args(String,Number,Number,Number)),
 
-Activate(TimeTag(TimeAbsolute),SequenceName(String),Args,LineComment,Engine(Number),Epoch(String)),
-Activate(TimeTag(TimeRelative),SequenceName(String),Args(String,Number,Number,Number),LineComment,Engine(Number)),
+  Activate(TimeTag(TimeAbsolute),SequenceName(String),Args,LineComment,Engine(Number),Epoch(String)),
+  Activate(TimeTag(TimeRelative),SequenceName(String),Args(String,Number,Number,Number),LineComment,Engine(Number)),
 
-Load(TimeTag(TimeAbsolute),SequenceName(String),Args,LineComment,Engine(Number),Epoch(String)),
-Load(TimeTag(TimeRelative),SequenceName(String),Args(String,Number,Number,Number),LineComment,Engine(Number)),
+  Load(TimeTag(TimeAbsolute),SequenceName(String),Args,LineComment,Engine(Number),Epoch(String)),
+  Load(TimeTag(TimeRelative),SequenceName(String),Args(String,Number,Number,Number),LineComment,Engine(Number)),
 
-Request(
-  GroundEpoch(Name(String),Delta(String)),RequestName(String),LineComment,
-    Command(TimeTag(TimeComplete),Stem,Args(Number,Number,Number),Metadata(MetaEntry(Key(String),Value(String))),Models(Model(Variable(String),Value(Number),Offset(String)))),
-    Command(TimeTag(TimeRelative),Stem,Args(String)),Command(TimeTag(TimeComplete),Stem,Args(Number,Number,Number)),
-    Command(TimeTag(TimeRelative),Stem,Args(String)),Metadata(MetaEntry(Key(String),Value(Object(Property(PropertyName(String),Boolean))))
+  Request(
+    GroundEpoch(Name(String),Delta(String)),
+    RequestName(String),LineComment,
+    Steps(
+      Command(TimeTag(TimeComplete),Stem,Args(Number,Number,Number),Metadata(MetaEntry(Key(String),Value(String))),Models(Model(Variable(String),Value(Number),Offset(String)))),
+      Command(TimeTag(TimeRelative),Stem,Args(String)),
+      Command(TimeTag(TimeComplete),Stem,Args(Number,Number,Number)),
+      Command(TimeTag(TimeRelative),Stem,Args(String))
+    ),
+    Metadata(MetaEntry(Key(String),Value(Object(Property(PropertyName(String),Boolean)))))
+  ),
+  Request(
+    TimeTag(TimeAbsolute),
+    RequestName(String),
+    Steps(
+      Command(TimeTag(TimeComplete),Stem,Args(Number,Number,Number),Metadata(MetaEntry(Key(String),Value(String))),Models(Model(Variable(String),Value(Number),Offset(String)))),
+      Command(TimeTag(TimeRelative),Stem,Args(String)),
+      Command(TimeTag(TimeComplete),Stem,Args(Number,Number,Number)),
+      Command(TimeTag(TimeRelative),Stem,Args(String)),
+      Command(TimeTag(TimeComplete),Stem,Args(Number,Number,Number)),
+      Command(TimeTag(TimeRelative),Stem,Args(String))
+    ),
+    Metadata(MetaEntry(Key(String),Value(String)))
   )
-),
-Request(
-  TimeTag(TimeAbsolute),RequestName(String),
-    Command(TimeTag(TimeComplete),Stem,Args(Number,Number,Number),Metadata(MetaEntry(Key(String),Value(String))),Models(Model(Variable(String),Value(Number),Offset(String)))),
-    Command(TimeTag(TimeRelative),Stem,Args(String)),Command(TimeTag(TimeComplete),Stem,Args(Number,Number,Number)),
-    Command(TimeTag(TimeRelative),Stem,Args(String)),Command(TimeTag(TimeComplete),Stem,Args(Number,Number,Number)),
-    Command(TimeTag(TimeRelative),Stem,Args(String)),Metadata(MetaEntry(Key(String),Value(String))
-    )
-  )
-))`,
+))
+`,
   ],
 ];
 
