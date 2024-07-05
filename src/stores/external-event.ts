@@ -12,9 +12,9 @@ export const createExternalEventTypeError: Writable<string | null> = writable(nu
 
 
 /* Subscriptions. */
-export const externalEventsDB = gqlSubscribable<ExternalEventDB[]>(
-  gql.SUB_PLAN_EXTERNAL_EVENTS,
-  { source_ids: selectedPlanDerivationGroupIds },
+export const externalEventsDB = gqlSubscribable<{external_event: ExternalEventDB}[]>(
+  gql.SUB_PLAN_EXTERNAL_EVENTS_DG,
+  { derivation_group_ids: selectedPlanDerivationGroupIds },
   [],
   null,
 );
@@ -28,10 +28,12 @@ export const selectedExternalEventId: Writable<ExternalEventId | null> = writabl
 // (helper for the below)
 export const externalEventWithTypeName = derived<[typeof externalEventsDB, typeof externalEventTypes], ExternalEventWithTypeName[]>(
   [externalEventsDB, externalEventTypes],
-  ([$externalEventsDB, $externalEventTypes]) => $externalEventsDB.map(externalEvent => ({
-    ...externalEvent,
-    event_type: getEventTypeName(externalEvent.event_type_id, $externalEventTypes)
-  }))
+  ([$externalEventsDB, $externalEventTypes]) => $externalEventsDB.map(externalEvent => {
+      return {
+        ...externalEvent.external_event,
+        event_type: getEventTypeName(externalEvent.external_event.event_type_id, $externalEventTypes)
+      }
+  })
 );
 
 // just to prevent repeated lookups

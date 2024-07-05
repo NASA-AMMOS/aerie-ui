@@ -83,6 +83,7 @@ export enum Queries {
   EXPANSION_RUNS = 'expansion_run',
   EXPANSION_SETS = 'expansion_set',
   EXTENSIONS = 'extensions',
+  DERIVED_EVENTS = 'derived_events',
   EXTERNAL_EVENT = 'external_event',
   EXTERNAL_EVENT_TYPES = 'external_event_type',
   EXTERNAL_SOURCE_EVENT_TYPES = 'external_source_event_type',
@@ -1500,8 +1501,25 @@ const gql = {
     query GetPlanExternalSource($plan_id: Int!) {
       links: ${Queries.PLAN_DERIVATION_GROUP}(where: {plan_id: {_eq: $plan_id}}) {
         id
-        external_source_id
+        derivation_group_id
         plan_id
+      }
+    }
+  `,
+
+  GET_PLAN_EVENT_TYPES: `#graphql
+    query GetPlanEventTypes($plan_id: Int!){
+      plan_derivation_group(where: {plan_id: {_eq: $plan_id}}) {
+        derivation_group {
+          external_source {
+            external_events {
+              external_event_type {
+                id
+                name    
+              }
+            }
+          }
+        }
       }
     }
   `,
@@ -2479,7 +2497,7 @@ const gql = {
     subscription SubPlanExternalSource {
       links: ${Queries.PLAN_DERIVATION_GROUP}(order_by: { plan_id: asc }) {
         id
-        external_source_id
+        derivation_group_id
         plan_id
       }
     }
@@ -2504,6 +2522,22 @@ const gql = {
         duration
         start_time
         source_id
+      }
+    }
+  `, // deprecated in favor of the next query
+
+  SUB_PLAN_EXTERNAL_EVENTS_DG: `#graphql
+    subscription SubPlanExternalEventsDG($derivation_group_ids: [Int!]!){
+      events: derived_events(where: {derivation_group_id: {_in: $derivation_group_ids}}) {
+        external_event {
+          properties
+          event_type_id
+          id
+          key
+          duration
+          start_time
+          source_id
+        }
       }
     }
   `,
