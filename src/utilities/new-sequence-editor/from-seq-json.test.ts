@@ -564,7 +564,7 @@ A2024-123T12:34:56 @LOAD("load.name")
           ],
           name: 'ground_event.name',
           time: {
-            tag: '123T123T11:55:33',
+            tag: '123T11:55:33',
             type: 'COMMAND_RELATIVE',
           },
           type: 'ground_event',
@@ -576,7 +576,7 @@ A2024-123T12:34:56 @LOAD("load.name")
     const expectedSequence = `
 @ID "id"
 
-R123T123T11:55:33 @GROUND_EVENT("ground_event.name") "foo" 1 2 3
+R123T11:55:33 @GROUND_EVENT("ground_event.name") "foo" 1 2 3
 `;
     expect(sequence.trim()).toEqual(expectedSequence.trim());
   });
