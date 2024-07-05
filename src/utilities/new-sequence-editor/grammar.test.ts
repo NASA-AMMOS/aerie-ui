@@ -1,6 +1,13 @@
 import { testTree } from '@lezer/generator/dist/test';
-import { describe, test } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import { SeqLanguage } from '../codemirror';
+
+/*
+ * Test cases here are canaries against unintended changes to the grammar. Certain grammar changes will alter the parse tree which
+ * has may have subtle downstream effects on the behavior of serialization, tooltips, content assist, etc.
+ *
+ * When invalid input is parsed the tree will contain "⚠" nodes.
+ */
 
 const parseTreeTests = [
   [
@@ -154,7 +161,9 @@ Command(Stem,Args(String))
     `@ID "big test"
 
 @METADATA "foo" "val foo"
-
+@METADATA "empty_object" {}
+@METADATA "empty_object_with_space" { }
+@METADATA "level0" { "level1": { "l2obj": { }, "l2empty_arr": [ ], "l2arr": [ 1, 2, 3 ] } }
 
 CMD_1 1 2 3
 @METADATA "foo" "val\\" foo2"
@@ -167,7 +176,16 @@ CMD_2 "hello, it's me"
     `Sequence(
 IdDeclaration(String),
 Metadata(
-MetaEntry(Key(String),Value(String))
+  MetaEntry(Key(String),Value(String)),
+  MetaEntry(Key(String),Value(Object)),
+  MetaEntry(Key(String),Value(Object)),
+  MetaEntry(Key(String),Value(
+    Object(Property(PropertyName(String),Object(
+      Property(PropertyName(String),Object),
+      Property(PropertyName(String),Array),
+      Property(PropertyName(String),Array(Number,Number,Number))
+    ))
+  )))
 ),
 Commands(
 Command(
@@ -538,17 +556,19 @@ Command(TimeTag(TimeEpoch),Stem,Args)
   ],
 ];
 
-describe('grammar tests', () => {
-  const testGrammar = (_: string, input: string, expected: string) => {
-    testTree(SeqLanguage.parser.parse(input), expected, undefined);
-  };
-  Object.entries({
-    'error tokens': errorTests,
-    'parse tree structure': parseTreeTests,
-    'time formats': timeFormatTests,
-  }).forEach(([name, testArray]: [string, string[][]]) => {
-    describe(name, () => {
-      test.each(testArray)('%s', testGrammar);
-    });
+describe.each([
+  ['error tokens', errorTests],
+  ['parse tree structure', parseTreeTests],
+  ['time formats', timeFormatTests],
+])('grammar tests - %s', (_name: string, testArray: string[][]) => {
+  test.each(testArray)('%s', (_: string, input: string, expected: string) => {
+    /* The Lezer parser is "Error-Insensitive"
+    "Being designed for the code editor use case, the parser is equipped with strategies for recovering
+    from syntax errors, and can produce a tree for any input." - (https://lezer.codemirror.net/) as such
+    it always returns a tree, though the tree may have error tokens ("⚠").
+
+    testTree will throw if there's a mismatch between the returned actual and expected trees, it returns
+    undefined when they match. */
+    expect(testTree(SeqLanguage.parser.parse(input), expected, undefined)).toBeUndefined();
   });
 });
