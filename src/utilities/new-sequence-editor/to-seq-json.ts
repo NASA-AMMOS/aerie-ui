@@ -26,7 +26,7 @@ import type {
 import { TimeTypes } from '../../enums/time';
 import { removeEscapedQuotes, unquoteUnescape } from '../codemirror/codemirror-utils';
 import { getBalancedDuration, getDurationTimeComponents, parseDurationString, validateTime } from '../time';
-import { customizeSeqJson } from './extension-points';
+import { toOutputFormat } from './extension-points';
 import { logInfo } from './logger';
 import { TOKEN_REPEAT_ARG } from './sequencer-grammar-constants';
 
@@ -78,7 +78,7 @@ export function sequenceToSeqJson(
       .getChild('HardwareCommands')
       ?.getChildren('Command')
       .map(command => parseHardwareCommand(command, text)) ?? undefined;
-  customizeSeqJson(seqJson, parameterDictionaries, channelDictionary);
+  toOutputFormat(seqJson, parameterDictionaries, channelDictionary);
   return seqJson;
 }
 

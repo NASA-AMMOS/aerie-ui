@@ -1,5 +1,12 @@
+import type {
+  ChannelDictionary as AmpcsChannelDictionary,
+  CommandDictionary as AmpcsCommandDictionary,
+  ParameterDictionary as AmpcsParameterDictionary,
+} from '@nasa-jpl/aerie-ampcs';
 import type { DictionaryTypes } from '../enums/dictionaryTypes';
+import type { ArgDelegator } from '../utilities/new-sequence-editor/extension-points';
 import type { UserId } from './app';
+import type { GlobalType } from './global-type';
 
 export type ChannelDictionary = {
   type: DictionaryTypes.CHANNEL;
@@ -27,6 +34,26 @@ export type DictionaryType = {
   updated_at: string;
   version: string;
 };
+
+export interface SequenceAdaptationI {
+  argDelegator?: ArgDelegator;
+  conditionalKeywords: { else: string; elseIf: string[]; endIf: string; if: string[] };
+  fromOutputFormat?: (
+    output: SeqJson | any,
+    parameterDictionaries: AmpcsParameterDictionary[],
+    channelDictionary: AmpcsChannelDictionary | null,
+  ) => any;
+  globals?: GlobalType[];
+  inputFormat: { name: string };
+  lint?: (commandDictionary: AmpcsCommandDictionary, view: any, node: any) => any;
+  loopKeywords: { break: string; continue: string; endWhileLoop: string; whileLoop: string[] };
+  outputFormat: { name: string };
+  toOutputFormat?: (
+    output: SeqJson | any,
+    parameterDictionaries: AmpcsParameterDictionary[],
+    channelDictionary: AmpcsChannelDictionary | null,
+  ) => any;
+}
 
 export type Parcel = {
   channel_dictionary_id: number | null;

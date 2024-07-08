@@ -56,7 +56,7 @@
   let saveButtonText: string = '';
   let savingSequence: boolean = false;
 
-  $: parcel = $parcels.find(p => p.id === initialSequenceParcelId) ?? null;
+  $: parcel = $parcels.find(p => p.id === sequenceParcelId) ?? null;
   $: saveButtonClass = sequenceModified && saveButtonEnabled ? 'primary' : 'secondary';
   $: saveButtonEnabled = sequenceParcelId !== null && sequenceDefinition !== '' && sequenceName !== '';
   $: sequenceModified = sequenceDefinition !== savedSequenceDefinition || sequenceName !== savedSequenceName;

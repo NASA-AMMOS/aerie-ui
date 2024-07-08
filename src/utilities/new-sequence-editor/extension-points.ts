@@ -1,5 +1,7 @@
 import { type ChannelDictionary, type FswCommandArgument, type ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
 import type { SeqJson } from '@nasa-jpl/seq-json-schema/types';
+import { get } from 'svelte/store';
+import { sequenceAdaptation } from '../../stores/sequencing';
 
 // TODO: serialization
 // replace parameter names with hex ids
@@ -27,22 +29,39 @@ export function getCustomArgDef(
   parameterDictionaries: ParameterDictionary[],
   channelDictionary: ChannelDictionary | null,
 ) {
-  const delegate = globalThis.ARG_DELEGATOR?.[stem]?.[dictArg.name];
+  let delegate = undefined;
+
+  if (get(sequenceAdaptation)?.argDelegator !== undefined) {
+    delegate = globalThis.ARG_DELEGATOR?.[stem]?.[dictArg.name];
+  }
+
   return delegate?.(dictArg, parameterDictionaries, channelDictionary, precedingArgs) ?? dictArg;
 }
 
-export function customizeSeqJson(
+export function toOutputFormat(
   seqJson: SeqJson,
   parameterDictionaries: ParameterDictionary[],
   channelDictionary: ChannelDictionary | null,
 ) {
-  return globalThis.TO_SEQ_JSON?.(seqJson, parameterDictionaries, channelDictionary) ?? seqJson;
+  const seqAdaptationToOutputFormat = get(sequenceAdaptation)?.toOutputFormat;
+
+  if (seqAdaptationToOutputFormat !== undefined) {
+    return seqAdaptationToOutputFormat(seqJson, parameterDictionaries, channelDictionary);
+  }
+
+  return seqJson;
 }
 
-export function customizeSeqJsonParsing(
+export function fromOutputFormat(
   seqJson: SeqJson,
   parameterDictionaries: ParameterDictionary[],
   channelDictionary: ChannelDictionary | null,
 ) {
-  return globalThis.FROM_SEQ_JSON?.(seqJson, parameterDictionaries, channelDictionary) ?? seqJson;
+  const seqAdaptationToOutputFormat = get(sequenceAdaptation)?.fromOutputFormat;
+
+  if (seqAdaptationToOutputFormat !== undefined) {
+    return seqAdaptationToOutputFormat(seqJson, parameterDictionaries, channelDictionary);
+  }
+
+  return seqJson;
 }

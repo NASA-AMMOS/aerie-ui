@@ -14,7 +14,7 @@ import type {
   VariableDeclaration,
 } from '@nasa-jpl/seq-json-schema/types';
 import { quoteEscape } from '../codemirror/codemirror-utils';
-import { customizeSeqJsonParsing } from './extension-points';
+import { fromOutputFormat } from './extension-points';
 import { logError } from './logger';
 
 /**
@@ -132,7 +132,7 @@ export function seqJsonToSequence(
   const sequence: string[] = [];
 
   if (seqJson) {
-    customizeSeqJsonParsing(seqJson, parameterDictionaries, channelDictionary);
+    fromOutputFormat(seqJson, parameterDictionaries, channelDictionary);
 
     // ID
     sequence.push(`@ID "${seqJson.id}"\n`);

@@ -23,6 +23,8 @@
     getParsedParameterDictionary,
     parameterDictionaries as parameterDictionariesStore,
     parcelToParameterDictionaries,
+    sequenceAdaptation,
+    setSequenceAdaptation,
     userSequenceEditorColumns,
     userSequenceEditorColumnsWithFormBuilder,
   } from '../../stores/sequencing';
@@ -71,13 +73,16 @@
   let editorSeqJsonView: EditorView;
   let editorSequenceDiv: HTMLDivElement;
   let editorSequenceView: EditorView;
+  let inputFormatName: string | undefined;
+  let outputFormatName: string | undefined;
   let selectedNode: SyntaxNode | null;
   let toggleSeqJsonPreview: boolean = false;
 
+  $: inputFormatName = $sequenceAdaptation?.inputFormat.name;
+  $: outputFormatName = $sequenceAdaptation?.outputFormat.name;
+
   $: {
-    if (parcel?.sequence_adaptation_id) {
-      loadSequenceAdaptation(parcel?.sequence_adaptation_id);
-    }
+    loadSequenceAdaptation(parcel?.sequence_adaptation_id);
   }
 
   $: {
@@ -201,6 +206,8 @@
         try {
           // This evaluates the custom sequence adaptation that is optionally provided by the user.
           Function(adaptation.adaptation)();
+
+          setSequenceAdaptation();
         } catch (e) {
           console.error(e);
           showFailureToast('Invalid sequence adaptation');
@@ -212,12 +219,8 @@
   }
 
   function resetSequenceAdaptation(): void {
-    globalThis.CONDITIONAL_KEYWORDS = undefined;
-    globalThis.LOOP_KEYWORDS = undefined;
-    globalThis.GLOBALS = undefined;
-    globalThis.ARG_DELEGATOR = undefined;
-    globalThis.LINT = () => undefined;
-    globalThis.TO_SEQ_JSON = () => undefined;
+    globalThis.SequenceAdaptation = undefined;
+    setSequenceAdaptation();
   }
 
   function sequenceUpdateListener(viewUpdate: ViewUpdate) {
@@ -251,35 +254,35 @@
     }
   }
 
-  function downloadSeqJson() {
+  function downloadOutputFormat() {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([editorSeqJsonView.state.doc.toString()], { type: 'application/json' }));
     a.download = `${sequenceName}.json`;
     a.click();
   }
 
-  function downloadSeqN() {
+  function downloadInputFormat() {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([editorSequenceView.state.doc.toString()], { type: 'text/plain' }));
     a.download = `${sequenceName}.txt`;
     a.click();
   }
 
-  async function copySeqJsonToClipboard() {
+  async function copyOutputFormatToClipboard() {
     try {
       await navigator.clipboard.writeText(editorSeqJsonView.state.doc.toString());
-      showSuccessToast('Sequence.json copied to clipboard');
+      showSuccessToast(`${outputFormatName} copied to clipboard`);
     } catch {
-      showFailureToast('Error copying sequence.json to clipboard');
+      showFailureToast(`Error copying ${outputFormatName} to clipboard`);
     }
   }
 
-  async function copySeqNClipboard() {
+  async function copyInputFormatToClipboard() {
     try {
       await navigator.clipboard.writeText(editorSequenceView.state.doc.toString());
-      showSuccessToast('SeqN copied to clipboard');
+      showSuccessToast(`${inputFormatName} copied to clipboard`);
     } catch {
-      showFailureToast('Error copying SeqN to clipboard');
+      showFailureToast(`Error copying ${inputFormatName} to clipboard`);
     }
   }
 
@@ -296,28 +299,31 @@
 
         <div class="right">
           <button
-            use:tooltip={{ content: `Copy sequence contents as SeqN to clipboard`, placement: 'top' }}
+            use:tooltip={{ content: `Copy sequence contents as ${inputFormatName} to clipboard`, placement: 'top' }}
             class="st-button icon-button secondary ellipsis"
-            on:click={copySeqNClipboard}
-            disabled={disableCopyAndExport}><ClipboardIcon /> SeqN</button
+            on:click={copyInputFormatToClipboard}
+            disabled={disableCopyAndExport}><ClipboardIcon /> {inputFormatName}</button
           >
           <button
-            use:tooltip={{ content: `Copy sequence contents as JSON to clipboard`, placement: 'top' }}
+            use:tooltip={{ content: `Copy sequence contents as ${outputFormatName} to clipboard`, placement: 'top' }}
             class="st-button icon-button secondary ellipsis"
-            on:click={copySeqJsonToClipboard}
-            disabled={disableCopyAndExport}><ClipboardIcon /> JSON</button
+            on:click={copyOutputFormatToClipboard}
+            disabled={disableCopyAndExport}><ClipboardIcon /> {outputFormatName}</button
           >
           <button
-            use:tooltip={{ content: `Download sequence contents as SeqN`, placement: 'top' }}
+            use:tooltip={{
+              content: `Download sequence contents as ${inputFormatName}`,
+              placement: 'top',
+            }}
             class="st-button icon-button secondary ellipsis"
-            on:click|stopPropagation={downloadSeqN}
-            disabled={disableCopyAndExport}><SaveIcon /> SeqN</button
+            on:click|stopPropagation={downloadInputFormat}
+            disabled={disableCopyAndExport}><SaveIcon /> {inputFormatName}</button
           >
           <button
-            use:tooltip={{ content: `Download sequence contents as Seq.json`, placement: 'top' }}
+            use:tooltip={{ content: `Download sequence contents as ${outputFormatName}`, placement: 'top' }}
             class="st-button icon-button secondary ellipsis"
-            on:click|stopPropagation={downloadSeqJson}
-            disabled={disableCopyAndExport}><SaveIcon /> JSON</button
+            on:click|stopPropagation={downloadOutputFormat}
+            disabled={disableCopyAndExport}><SaveIcon /> {outputFormatName}</button
           >
         </div>
       </svelte:fragment>
