@@ -8,7 +8,11 @@
   import { PlanStatusMessages } from '../../../enums/planStatusMessages';
   import { SearchParameters } from '../../../enums/searchParameters';
   import type { FormParameter } from '../../../types/parameter';
-  import type { SchedulingGoalMetadata, SchedulingGoalPlanSpecification } from '../../../types/scheduling';
+  import type {
+    SchedulingGoalDefinition,
+    SchedulingGoalMetadata,
+    SchedulingGoalPlanSpecification,
+  } from '../../../types/scheduling';
   import { getTarget } from '../../../utilities/generic';
   import { permissionHandler } from '../../../utilities/permissionHandler';
   import { tooltip } from '../../../utilities/tooltip';
@@ -37,6 +41,7 @@
   let simulateGoal: boolean = false;
   let upButtonHidden: boolean = false;
   let formParameters: FormParameter[] = [];
+  let version: Pick<SchedulingGoalDefinition, 'revision' | 'analyses'> | undefined = undefined;
 
   $: revisions = goal.versions.map(({ revision }) => revision);
   $: {
@@ -54,7 +59,7 @@
     } else {
       revision = goalPlanSpec.goal_revision;
     }
-    let version = goalPlanSpec.goal_metadata?.versions.filter(x => x.revision == revision)[0];
+    version = goalPlanSpec.goal_metadata?.versions.filter(x => x.revision == revision)[0];
     let schema = version?.parameter_schema;
     let result = [];
     if (schema.type === 'struct') {
@@ -121,6 +126,18 @@
     });
   }
 
+  function duplicateGoalInvocation() {
+    dispatch('duplicateGoalInvocation', {
+      ...goalPlanSpec,
+    });
+  }
+
+  function deleteGoalInvocation() {
+    dispatch('deleteGoalInvocation', {
+      ...goalPlanSpec,
+    });
+  }
+
   function updatePriority(priority: number) {
     dispatch('updateGoalPlanSpec', {
       ...goalPlanSpec,
@@ -140,7 +157,7 @@
 </script>
 
 <div class="scheduling-goal" class:disabled={!enabled}>
-  <Collapse title={goal.name} tooltipContent={goal.name} defaultExpanded={true}>
+  <Collapse title={goal.name} tooltipContent={goal.name} defaultExpanded={false}>
     <svelte:fragment slot="left">
       <div class="left-content">
         <input
@@ -270,6 +287,10 @@
           <input bind:checked={simulateGoal} style:cursor="pointer" type="checkbox" /> Simulate After
         </div>
       </ContextMenuItem>
+      {#if version?.type === 'JAR'}
+        <ContextMenuItem on:click={duplicateGoalInvocation}>Duplicate Invocation</ContextMenuItem>
+        <ContextMenuItem on:click={deleteGoalInvocation}>Delete Invocation</ContextMenuItem>
+      {/if}
     </svelte:fragment>
   </Collapse>
 </div>

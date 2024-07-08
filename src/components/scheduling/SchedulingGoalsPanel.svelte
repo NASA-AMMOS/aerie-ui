@@ -7,9 +7,9 @@
   import { Status } from '../../enums/status';
   import { plan, planReadOnly } from '../../stores/plan';
   import {
-    allowedSchedulingGoalSpecs,
     enableScheduling,
     schedulingAnalysisStatus,
+    schedulingGoalInvocations,
     schedulingGoalSpecifications,
     schedulingGoalsMap,
   } from '../../stores/scheduling';
@@ -40,7 +40,7 @@
   let visibleSchedulingGoalSpecs: SchedulingGoalPlanSpecification[] = [];
 
   // TODO: remove this after db merge as it becomes redundant
-  $: visibleSchedulingGoalSpecs = $allowedSchedulingGoalSpecs.filter(({ goal_metadata: goalMetadata }) => {
+  $: visibleSchedulingGoalSpecs = $schedulingGoalInvocations.filter(({ goal_metadata: goalMetadata }) => {
     if (goalMetadata) {
       const { public: isPublic, owner } = goalMetadata;
       if (!isPublic && !isAdminRole(user?.activeRole)) {
@@ -93,6 +93,34 @@
         },
         user,
       );
+    }
+  }
+
+  async function duplicateGoalInvocation(event: CustomEvent<SchedulingGoalPlanSpecification>) {
+    const {
+      detail: { goal_metadata, specification_id, ...goalPlanSpec },
+    } = event;
+
+    if ($plan) {
+      await effects.updateSchedulingGoalPlanSpecifications(
+        $plan,
+        specification_id,
+        [{ ...goalPlanSpec, specification_id, priority: goalPlanSpec.priority + 1, goal_invocation_id: undefined }], // the goal_invocation_id is generated after insert
+        [],
+        user,
+      );
+    }
+  }
+
+  async function deleteGoalInvocation(event: CustomEvent<SchedulingGoalPlanSpecification>) {
+    const {
+      detail: { goal_metadata, specification_id, ...goalPlanSpec },
+    } = event;
+
+    console.log({ goalPlanSpec });
+
+    if ($plan) {
+      await effects.deleteSchedulingGoalInvocation($plan, specification_id, [goalPlanSpec.goal_invocation_id], user);
     }
   }
 
@@ -198,7 +226,7 @@
             {numOfPrivateGoals > 1 ? 'are' : 'is'} private and not shown
           {/if}
         </div>
-        {#each filteredSchedulingGoalSpecs as specGoal (specGoal.goal_id)}
+        {#each filteredSchedulingGoalSpecs as specGoal (specGoal.goal_invocation_id)}
           {#if $schedulingGoalsMap[specGoal.goal_id]}
             <SchedulingGoal
               hasEditPermission={hasSpecEditPermission}
@@ -209,6 +237,8 @@
                 ? PlanStatusMessages.READ_ONLY
                 : 'You do not have permission to edit scheduling goals for this plan.'}
               on:updateGoalPlanSpec={onUpdateGoal}
+              on:duplicateGoalInvocation={duplicateGoalInvocation}
+              on:deleteGoalInvocation={deleteGoalInvocation}
             />
           {/if}
         {/each}

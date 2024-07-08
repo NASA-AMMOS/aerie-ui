@@ -1,7 +1,7 @@
 import { keyBy } from 'lodash-es';
 import { derived, writable, type Readable, type Writable } from 'svelte/store';
 import { Status } from '../enums/status';
-import { plan, planRevision } from '../stores/plan';
+import { plan, planId, planRevision } from '../stores/plan';
 import type {
   SchedulingConditionDefinition,
   SchedulingConditionMetadata,
@@ -67,6 +67,12 @@ export const schedulingGoalResponse = gqlSubscribable<SchedulingGoalMetadataResp
   gql.SUB_SCHEDULING_GOAL,
   { id: schedulingGoalMetadataId },
   null,
+  null,
+);
+export const schedulingGoalInvocations = gqlSubscribable<any[]>(
+  gql.SUB_SCHEDULING_GOAL_INVOCATIONS,
+  { planId },
+  [],
   null,
 );
 
