@@ -47,7 +47,7 @@
   let hasCreateSnapshotPermission: boolean = false;
   let hasPlanUpdatePermission: boolean = false;
   let hasPlanCollaboratorsUpdatePermission: boolean = false;
-  let planDownloadAbortController: AbortController | null = null;
+  let planExportAbortController: AbortController | null = null;
   let planNameField = field<string>('', [
     required,
     unique(
@@ -55,7 +55,7 @@
       'Plan name already exists',
     ),
   ]);
-  let planDownloadProgress: number | null = null;
+  let planExportProgress: number | null = null;
 
   $: permissionError = $planReadOnly ? PlanStatusMessages.READ_ONLY : 'You do not have permission to edit this plan.';
   $: if (plan) {
@@ -142,16 +142,16 @@
     }
   }
 
-  async function downloadPlan() {
+  async function exportPlan() {
     if (plan) {
-      if (planDownloadAbortController) {
-        planDownloadAbortController.abort();
+      if (planExportAbortController) {
+        planExportAbortController.abort();
       }
 
-      planDownloadAbortController = new AbortController();
+      planExportAbortController = new AbortController();
 
       let qualifiedActivityDirectives: ActivityDirective[] = [];
-      planDownloadProgress = 0;
+      planExportProgress = 0;
 
       let totalProgress = 0;
       const numOfDirectives = Object.values(activityDirectivesMap).length;
@@ -164,11 +164,11 @@
               activityDirective.type,
               activityDirective.arguments,
               user,
-              planDownloadAbortController?.signal,
+              planExportAbortController?.signal,
             );
 
             totalProgress++;
-            planDownloadProgress = (totalProgress / numOfDirectives) * 100;
+            planExportProgress = (totalProgress / numOfDirectives) * 100;
 
             return {
               ...activityDirective,
@@ -177,34 +177,34 @@
           }
 
           totalProgress++;
-          planDownloadProgress = (totalProgress / numOfDirectives) * 100;
+          planExportProgress = (totalProgress / numOfDirectives) * 100;
 
           return activityDirective;
         }),
       );
 
-      if (!planDownloadAbortController.signal.aborted) {
-        const planDownload: PlanTransfer = getPlanForTransfer(plan, qualifiedActivityDirectives);
+      if (!planExportAbortController.signal.aborted) {
+        const planExport: PlanTransfer = getPlanForTransfer(plan, qualifiedActivityDirectives);
 
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(new Blob([JSON.stringify(planDownload, null, 2)], { type: 'application/json' }));
-        a.download = planDownload.name;
+        a.href = URL.createObjectURL(new Blob([JSON.stringify(planExport, null, 2)], { type: 'application/json' }));
+        a.download = planExport.name;
         a.click();
       }
-      planDownloadProgress = null;
+      planExportProgress = null;
     }
   }
 
-  function cancelPlanDownload() {
-    planDownloadAbortController?.abort();
-    planDownloadAbortController = null;
+  function cancelPlanExport() {
+    planExportAbortController?.abort();
+    planExportAbortController = null;
   }
 
-  function onPlanDownload() {
-    if (planDownloadProgress === null) {
-      downloadPlan();
+  function onPlanExport() {
+    if (planExportProgress === null) {
+      exportPlan();
     } else {
-      cancelPlanDownload();
+      cancelPlanExport();
     }
   }
 </script>
@@ -215,12 +215,12 @@
       <Collapse title="Details">
         <svelte:fragment slot="right">
           <button
-            class="st-button icon download"
-            on:click|stopPropagation={onPlanDownload}
-            use:tooltip={{ content: planDownloadProgress === null ? 'Download Plan JSON' : 'Cancel Plan Download' }}
+            class="st-button icon export"
+            on:click|stopPropagation={onPlanExport}
+            use:tooltip={{ content: planExportProgress === null ? 'Export Plan JSON' : 'Cancel Plan Export' }}
           >
-            {#if planDownloadProgress !== null}
-              <ProgressRadial progress={planDownloadProgress} useBackground={false} />
+            {#if planExportProgress !== null}
+              <ProgressRadial progress={planExportProgress} useBackground={false} />
               <div class="cancel"><CloseIcon /></div>
             {:else}
               <DownloadIcon />
@@ -421,15 +421,15 @@
     padding-left: calc(40% + 8px);
   }
 
-  .download {
+  .export {
     border-radius: 50%;
     position: relative;
   }
-  .download .cancel {
+  .export .cancel {
     display: none;
   }
 
-  .download:hover .cancel {
+  .export:hover .cancel {
     align-items: center;
     display: flex;
     height: 100%;
