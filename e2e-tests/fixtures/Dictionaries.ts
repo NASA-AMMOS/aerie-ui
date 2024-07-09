@@ -3,71 +3,231 @@ import { expect } from '@playwright/test';
 import { readFileSync } from 'fs';
 import { adjectives, animals, colors, uniqueNamesGenerator } from 'unique-names-generator';
 
+export enum DictionaryType {
+  CommandDictionary = 'Command Dictionary',
+  ChannelDictionary = 'Channel Dictionary',
+  ParameterDictionary = 'Parameter Dictionary',
+  SequenceAdaptation = 'Sequence Adaptation',
+}
+
+export const COMMAND_DICTIONARY_PATH = 'e2e-tests/data/command-dictionary.xml';
+
 export class Dictionaries {
+  channelDictionaryBuffer: Buffer;
+  channelDictionaryName: string;
+  channelDictionaryPath: string = 'e2e-tests/data/channel-dictionary.xml';
+  channelDictionaryTable: Locator;
+  channelDictionaryTableRow: Locator;
+  channelDictionaryTableRowDeleteButton: Locator;
+  commandDictionaryBuffer: Buffer;
+  commandDictionaryName: string;
+  commandDictionaryTable: Locator;
+  commandDictionaryTableRow: Locator;
+  commandDictionaryTableRowDeleteButton: Locator;
   confirmModal: Locator;
   confirmModalDeleteButton: Locator;
   createButton: Locator;
-  dictionaryBuffer: Buffer;
-  dictionaryName: string;
-  dictionaryPath: string = 'e2e-tests/data/command-dictionary.xml';
   inputFile: Locator;
-  tableRow: Locator;
-  tableRowDeleteButton: Locator;
+  parameterDictionaryBuffer: Buffer;
+  parameterDictionaryName: string;
+  parameterDictionaryPath: string = 'e2e-tests/data/parameter-dictionary.xml';
+  parameterDictionaryTable: Locator;
+  parameterDictionaryTableRow: Locator;
+  parameterDictionaryTableRowDeleteButton: Locator;
+  sequenceAdaptationBuffer: Buffer;
+  sequenceAdaptationName: string;
+  sequenceAdaptationNameInputField: Locator;
+  sequenceAdaptationPath: string = 'e2e-tests/data/sequence-adaptation.js';
+  sequenceAdaptationTable: Locator;
+  sequenceAdaptationTableRow: Locator;
+  sequenceAdaptationTableRowDeleteButton: Locator;
+  sequenceAdaptationTableRows: Locator;
 
   constructor(public page: Page) {
-    this.dictionaryName = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
+    this.channelDictionaryName = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
+    this.channelDictionaryBuffer = this.readDictionary(this.channelDictionaryName, this.channelDictionaryPath);
+    this.commandDictionaryName = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
+    this.commandDictionaryBuffer = this.readDictionary(this.commandDictionaryName, COMMAND_DICTIONARY_PATH);
+    this.parameterDictionaryName = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
+    this.parameterDictionaryBuffer = this.readDictionary(this.parameterDictionaryName, this.parameterDictionaryPath);
+    this.sequenceAdaptationName = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
+    this.sequenceAdaptationBuffer = this.readDictionary(this.sequenceAdaptationName, this.sequenceAdaptationPath);
 
-    const dictionaryFile = readFileSync(this.dictionaryPath);
-    const dictionaryXml = dictionaryFile.toString().replace(/GENERIC/, this.dictionaryName);
-    this.dictionaryBuffer = Buffer.from(dictionaryXml);
-
-    this.updatePage(page);
+    this.page = page;
   }
 
-  async createDictionary(): Promise<string> {
-    await expect(this.tableRow).not.toBeVisible();
-    await this.fillInputFile();
-    await this.createButton.click();
-    await this.tableRow.waitFor({ state: 'attached' });
-    await this.tableRow.waitFor({ state: 'visible' });
-    await expect(this.tableRow).toBeVisible();
+  async createChannelDictionary(): Promise<void> {
+    await this.updatePage(this.page, DictionaryType.ChannelDictionary, this.channelDictionaryName);
 
-    return this.dictionaryName;
+    await this.createDictionary(
+      this.channelDictionaryBuffer,
+      this.channelDictionaryName,
+      this.channelDictionaryTable,
+      this.channelDictionaryTableRow,
+      DictionaryType.ChannelDictionary,
+    );
+  }
+
+  async createCommandDictionary(): Promise<void> {
+    await this.updatePage(this.page, DictionaryType.CommandDictionary, this.commandDictionaryName);
+
+    await this.createDictionary(
+      this.commandDictionaryBuffer,
+      this.commandDictionaryName,
+      this.commandDictionaryTable,
+      this.commandDictionaryTableRow,
+      DictionaryType.CommandDictionary,
+    );
+  }
+
+  async createDictionary(
+    dictionaryBuffer: Buffer,
+    dictionaryName: string,
+    table: Locator,
+    tableRow: Locator,
+    type: DictionaryType,
+  ): Promise<void> {
+    await this.fillInputFile(dictionaryBuffer, dictionaryName, type);
+
+    if (type === DictionaryType.SequenceAdaptation) {
+      await expect(this.sequenceAdaptationNameInputField).toBeVisible();
+      await this.sequenceAdaptationNameInputField.fill(this.sequenceAdaptationName);
+    }
+
+    await this.createButton.click();
+    await this.filterTable(table, dictionaryName, type);
+    await tableRow.waitFor({ state: 'attached' });
+    await tableRow.waitFor({ state: 'visible' });
+    await expect(tableRow).toBeVisible();
+  }
+
+  async createParameterDictionary(): Promise<void> {
+    await this.updatePage(this.page, DictionaryType.ParameterDictionary, this.parameterDictionaryName);
+
+    await this.createDictionary(
+      this.parameterDictionaryBuffer,
+      this.parameterDictionaryName,
+      this.parameterDictionaryTable,
+      this.parameterDictionaryTableRow,
+      DictionaryType.ParameterDictionary,
+    );
+  }
+
+  async createSequenceAdaptation(): Promise<void> {
+    await this.updatePage(this.page, DictionaryType.SequenceAdaptation, this.sequenceAdaptationName);
+
+    await this.createDictionary(
+      this.sequenceAdaptationBuffer,
+      this.sequenceAdaptationName,
+      this.sequenceAdaptationTable,
+      this.sequenceAdaptationTableRow,
+      DictionaryType.SequenceAdaptation,
+    );
+  }
+
+  async deleteChannelDictionary(): Promise<void> {
+    await this.updatePage(this.page, DictionaryType.ChannelDictionary, this.channelDictionaryName);
+
+    await this.filterTable(this.channelDictionaryTable, this.channelDictionaryName, DictionaryType.ChannelDictionary);
+    await this.deleteDictionary(this.channelDictionaryTableRow, this.channelDictionaryTableRowDeleteButton);
+  }
+
+  async deleteCommandDictionary(): Promise<void> {
+    await this.updatePage(this.page, DictionaryType.CommandDictionary, this.commandDictionaryName);
+    await this.filterTable(this.commandDictionaryTable, this.commandDictionaryName, DictionaryType.CommandDictionary);
+
+    await this.deleteDictionary(this.commandDictionaryTableRow, this.commandDictionaryTableRowDeleteButton);
   }
 
   /**
    * @note Automatically cascade deletes any dependent expansion rules and expansion sets.
    */
-  async deleteDictionary() {
-    await expect(this.tableRow).toBeVisible();
-    await expect(this.tableRowDeleteButton).not.toBeVisible();
+  private async deleteDictionary(tableRow: Locator, tableRowDeleteButton: Locator) {
+    await expect(tableRow).toBeVisible();
 
-    await this.tableRow.hover();
-    await this.tableRowDeleteButton.waitFor({ state: 'attached' });
-    await this.tableRowDeleteButton.waitFor({ state: 'visible' });
-    await expect(this.tableRowDeleteButton).toBeVisible();
+    await tableRow.hover();
+    await expect(tableRow.locator('.actions-cell')).toBeVisible();
+    await tableRowDeleteButton.waitFor({ state: 'attached' });
+    await tableRowDeleteButton.waitFor({ state: 'visible' });
+    await expect(tableRowDeleteButton).toBeVisible();
 
     await expect(this.confirmModal).not.toBeVisible();
-    await this.tableRowDeleteButton.click();
+    await tableRowDeleteButton.click({ position: { x: 2, y: 2 } });
     await this.confirmModal.waitFor({ state: 'attached' });
     await this.confirmModal.waitFor({ state: 'visible' });
     await expect(this.confirmModal).toBeVisible();
 
     await expect(this.confirmModalDeleteButton).toBeVisible();
     await this.confirmModalDeleteButton.click();
-    await this.tableRow.waitFor({ state: 'detached' });
-    await this.tableRow.waitFor({ state: 'hidden' });
-    await expect(this.tableRow).not.toBeVisible();
+
+    await tableRow.waitFor({ state: 'detached' });
+    await tableRow.waitFor({ state: 'hidden' });
+    await expect(tableRow).not.toBeVisible();
   }
 
-  async fillInputFile() {
+  async deleteParameterDictionary(): Promise<void> {
+    await this.updatePage(this.page, DictionaryType.ParameterDictionary, this.parameterDictionaryName);
+
+    await this.filterTable(
+      this.parameterDictionaryTable,
+      this.parameterDictionaryName,
+      DictionaryType.ParameterDictionary,
+    );
+    await this.deleteDictionary(this.parameterDictionaryTableRow, this.parameterDictionaryTableRowDeleteButton);
+  }
+
+  async deleteSequenceAdaptation(): Promise<void> {
+    await this.updatePage(this.page, DictionaryType.SequenceAdaptation, this.sequenceAdaptationName);
+
+    await this.filterTable(
+      this.sequenceAdaptationTable,
+      this.sequenceAdaptationName,
+      DictionaryType.SequenceAdaptation,
+    );
+    await this.deleteDictionary(this.sequenceAdaptationTableRow, this.sequenceAdaptationTableRowDeleteButton);
+  }
+
+  private async fillInputFile(dictionaryBuffer: Buffer, dictionaryName: string, type: DictionaryType) {
+    let mimeType: string;
+    let name: string;
+
+    if (type === DictionaryType.SequenceAdaptation) {
+      mimeType = 'application/x-javascript';
+      name = dictionaryName + '.js';
+    } else {
+      mimeType = 'application/xml';
+      name = dictionaryName + '.xml';
+    }
+
     await this.inputFile.focus();
     await this.inputFile.setInputFiles({
-      buffer: this.dictionaryBuffer,
-      mimeType: 'application/xml',
-      name: this.dictionaryName,
+      buffer: dictionaryBuffer,
+      mimeType,
+      name,
     });
     await this.inputFile.evaluate(e => e.blur());
+  }
+
+  private async filterTable(table: Locator, dictionaryName: string, type: DictionaryType) {
+    await table.waitFor({ state: 'attached' });
+    await table.waitFor({ state: 'visible' });
+    let nameColumnHeader: Locator | undefined = undefined;
+
+    if (type === DictionaryType.SequenceAdaptation) {
+      nameColumnHeader = table.getByRole('columnheader', { name: 'Name' });
+    } else {
+      nameColumnHeader = table.getByRole('columnheader', { name: 'Mission' });
+    }
+
+    await nameColumnHeader.hover();
+
+    const filterIcon = await nameColumnHeader.locator('.ag-icon-menu');
+    await expect(filterIcon).toBeVisible();
+    await filterIcon.click();
+    await this.page.locator('.ag-popup').getByRole('textbox', { name: 'Filter Value' }).first().fill(dictionaryName);
+    await expect(table.getByRole('row', { name: dictionaryName })).toBeVisible();
+    await this.page.keyboard.press('Escape');
+    await this.page.waitForTimeout(250);
   }
 
   async goto() {
@@ -75,17 +235,47 @@ export class Dictionaries {
     await this.page.waitForTimeout(250);
   }
 
-  updatePage(page: Page): void {
-    this.confirmModal = page.locator(`.modal:has-text("Delete Command Dictionary")`);
-    this.confirmModalDeleteButton = page.locator(
-      `.modal:has-text("Delete Command Dictionary") >> button:has-text("Delete")`,
-    );
-    this.createButton = page.locator(`button:has-text("Create")`);
-    this.inputFile = page.locator('input[name="file"]');
+  readDictionary(dictionaryName: string, dictionaryPath: string): Buffer {
+    const dictionaryFile = readFileSync(dictionaryPath)
+      .toString()
+      .replace(/GENERIC/, dictionaryName);
+    const dictionary = dictionaryFile.toString().replace(/GENERIC/, dictionaryName);
+
+    return Buffer.from(dictionary);
+  }
+
+  async updatePage(page: Page, dictionaryType: DictionaryType, dictionaryName?: string | undefined): Promise<void> {
     this.page = page;
-    this.tableRow = page.locator(`.ag-row:has-text("${this.dictionaryName}")`);
-    this.tableRowDeleteButton = page.locator(
-      `.ag-row:has-text("${this.dictionaryName}") >> button[aria-label="Delete Command Dictionary"]`,
-    );
+    this.confirmModal = this.page.locator(`.modal:has-text("Delete ${dictionaryType}")`);
+    this.confirmModalDeleteButton = this.confirmModal.getByRole('button', { name: 'Delete' });
+    this.createButton = this.page.locator(`button:has-text("Create")`);
+    this.inputFile = this.page.locator('input[name="file"]');
+
+    this.channelDictionaryTable = this.page.locator('.panel:has-text("Channel Dictionaries")').getByRole('treegrid');
+    this.channelDictionaryTableRow = this.channelDictionaryTable.getByRole('row', { name: dictionaryName });
+    this.channelDictionaryTableRowDeleteButton = this.channelDictionaryTableRow
+      .getByRole('gridcell')
+      .getByRole('button', { name: `Delete ${DictionaryType.ChannelDictionary}` });
+
+    this.commandDictionaryTable = this.page.locator('.panel:has-text("Command Dictionaries")').getByRole('treegrid');
+    this.commandDictionaryTableRow = this.commandDictionaryTable.getByRole('row', { name: dictionaryName });
+    this.commandDictionaryTableRowDeleteButton = this.commandDictionaryTable
+      .getByRole('gridcell')
+      .getByRole('button', { name: `Delete ${DictionaryType.CommandDictionary}` });
+
+    this.parameterDictionaryTable = this.page
+      .locator('.panel:has-text("Parameter Dictionaries")')
+      .getByRole('treegrid');
+    this.parameterDictionaryTableRow = this.parameterDictionaryTable.getByRole('row', { name: dictionaryName });
+    this.parameterDictionaryTableRowDeleteButton = this.parameterDictionaryTable
+      .getByRole('gridcell')
+      .getByRole('button', { name: `Delete ${DictionaryType.ParameterDictionary}` });
+
+    this.sequenceAdaptationTable = this.page.locator('.panel:has-text("Sequence Adaptations")').getByRole('treegrid');
+    this.sequenceAdaptationTableRow = this.sequenceAdaptationTable.getByRole('row', { name: dictionaryName });
+    this.sequenceAdaptationTableRowDeleteButton = this.sequenceAdaptationTable
+      .getByRole('gridcell')
+      .getByRole('button', { name: `Delete ${DictionaryType.SequenceAdaptation}` });
+    this.sequenceAdaptationNameInputField = this.page.locator(`input[name="sequenceAdaptationName"]`);
   }
 }

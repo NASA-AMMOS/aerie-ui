@@ -3,8 +3,10 @@
 <script lang="ts">
   import { PlanStatusMessages } from '../../enums/planStatusMessages';
   import { SearchParameters } from '../../enums/searchParameters';
-  import { planReadOnly, planReadOnlySnapshot } from '../../stores/plan';
+  import { field } from '../../stores/form';
+  import { planMetadata, planReadOnly, planReadOnlySnapshot } from '../../stores/plan';
   import { planSnapshotId, planSnapshotsWithSimulations } from '../../stores/planSnapshots';
+  import { plans } from '../../stores/plans';
   import { simulationDataset, simulationDatasetId } from '../../stores/simulation';
   import { viewTogglePanel } from '../../stores/views';
   import type { User, UserId } from '../../types/app';
@@ -17,7 +19,9 @@
   import { featurePermissions } from '../../utilities/permissions';
   import { getShortISOForDate } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
+  import { required, unique } from '../../utilities/validators';
   import Collapse from '../Collapse.svelte';
+  import Field from '../form/Field.svelte';
   import Input from '../form/Input.svelte';
   import CardList from '../ui/CardList.svelte';
   import FilterToggleButton from '../ui/FilterToggleButton.svelte';
@@ -37,6 +41,13 @@
   let hasCreateSnapshotPermission: boolean = false;
   let hasPlanUpdatePermission: boolean = false;
   let hasPlanCollaboratorsUpdatePermission: boolean = false;
+  let planNameField = field<string>('', [
+    required,
+    unique(
+      $plans.filter(p => p.id !== plan?.id).map(p => p.name),
+      'Plan name already exists',
+    ),
+  ]);
 
   $: permissionError = $planReadOnly ? PlanStatusMessages.READ_ONLY : 'You do not have permission to edit this plan.';
   $: if (plan) {
@@ -59,6 +70,18 @@
     );
   } else {
     filteredPlanSnapshots = $planSnapshotsWithSimulations;
+  }
+  $: if ($plans) {
+    planNameField.updateValidators([
+      required,
+      unique(
+        $plans.filter(p => p.id !== plan?.id).map(p => p.name),
+        'Plan name already exists',
+      ),
+    ]);
+  }
+  $: if (plan) {
+    planNameField.validateAndSet(plan?.name ?? '');
   }
 
   async function onTagsInputChange(event: TagsChangeEvent) {
@@ -86,7 +109,7 @@
     }
   }
 
-  function onPlanCollaboratorCreate(event: CustomEvent<string>) {
+  function onPlanCollaboratorsDelete(event: CustomEvent<string>) {
     if (plan) {
       effects.deletePlanCollaborator(plan, event.detail, user);
     }
@@ -102,16 +125,37 @@
   function onToggleFilter() {
     isFilteredBySimulation = !isFilteredBySimulation;
   }
+
+  async function onPlanNameChange() {
+    if (plan && $planNameField.dirtyAndValid && $planNameField.value) {
+      // Optimistically update plan metadata
+      planMetadata.updateValue(pm => (pm ? { ...pm, name: $planNameField.value } : null));
+      effects.updatePlan(plan, { name: $planNameField.value }, user);
+    }
+  }
 </script>
 
 <div class="plan-form">
   {#if plan}
     <fieldset>
       <Collapse title="Details">
-        <Input layout="inline">
-          <label use:tooltip={{ content: 'Name', placement: 'top' }} for="name">Plan Name</label>
-          <input class="st-input w-100" disabled name="name" value={plan.name} />
-        </Input>
+        <div class="plan-form-field">
+          <Field field={planNameField} on:change={onPlanNameChange}>
+            <Input layout="inline">
+              <label use:tooltip={{ content: 'Name', placement: 'top' }} for="plan-name">Plan Name</label>
+              <input
+                autocomplete="off"
+                class="st-input w-100"
+                name="plan-name"
+                placeholder="Enter a plan name"
+                use:permissionHandler={{
+                  hasPermission: hasPlanUpdatePermission,
+                  permissionError,
+                }}
+              />
+            </Input>
+          </Field>
+        </div>
         <Input layout="inline">
           <label use:tooltip={{ content: 'ID', placement: 'top' }} for="id">Plan ID</label>
           <input class="st-input w-100" disabled name="id" value={plan.id} />
@@ -179,7 +223,7 @@
               {plan}
               {user}
               on:create={onPlanCollaboratorsCreate}
-              on:delete={onPlanCollaboratorCreate}
+              on:delete={onPlanCollaboratorsDelete}
               use={[
                 [
                   permissionHandler,
@@ -231,8 +275,10 @@
                 ? PlanStatusMessages.READ_ONLY
                 : 'You do not have permission to create a plan snapshot',
             }}
-            on:click={onCreatePlanSnapshot}>Take Snapshot</button
+            on:click={onCreatePlanSnapshot}
           >
+            Take Snapshot
+          </button>
         </div>
         <div style="margin-top: 8px">
           <CardList>
@@ -277,5 +323,13 @@
   .buttons {
     column-gap: 4px;
     display: flex;
+  }
+
+  .plan-form-field :global(fieldset) {
+    padding: 0;
+  }
+
+  .plan-form-field :global(fieldset .error *) {
+    padding-left: calc(40% + 8px);
   }
 </style>

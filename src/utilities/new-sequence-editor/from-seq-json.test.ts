@@ -708,7 +708,6 @@ R123T11:55:33 @GROUND_EVENT("ground_event.name") "foo" 1 2 3
   it('converts a seq json empty repeat args to sequence', () => {
     const seqJson: SeqJson = {
       id: 'testRepeat',
-
       metadata: {},
       steps: [
         {
@@ -757,10 +756,12 @@ R123T11:55:33 @GROUND_EVENT("ground_event.name") "foo" 1 2 3
         },
       ],
     };
+
     const expectedSequence = `@ID "testRepeat"
 
 C FSA_CMD 10 [] "USA" ["96707-898" "92604-623"]
 `;
+
     const sequence = seqJsonToSequence(seqJson, [], null);
     expect(sequence).toEqual(expectedSequence);
   });
@@ -839,6 +840,51 @@ C FSA_CMD 10 [] "USA" ["96707-898" "92604-623"]
     @METADATA "req_0_meta_name" "req_0_meta_value"
     `;
     expect(normalizeWhitespace(sequence)).toEqual(normalizeWhitespace(expectedSequence));
+  });
+
+  it('converts a quoted string', () => {
+    const seqJson: SeqJson = {
+      id: 'escaped_quotes',
+      metadata: {},
+      steps: [
+        {
+          args: [
+            {
+              type: 'string',
+              value: 'Can this handle " Escaped" quotes??',
+            },
+          ],
+          description: 'Can this handle "escape"',
+          stem: 'ECHO',
+          time: {
+            type: 'COMMAND_COMPLETE',
+          },
+          type: 'command',
+        },
+        {
+          args: [
+            {
+              type: 'string',
+              value: '"Can" this handle leading and trailing Escaped" quotes??"',
+            },
+          ],
+          description: '"Can" "this" handle "escape"',
+          stem: 'ECHO2',
+          time: {
+            type: 'COMMAND_COMPLETE',
+          },
+          type: 'command',
+        },
+      ],
+    };
+
+    const sequence = seqJsonToSequence(seqJson, [], null);
+    const expectedSequence = `@ID "escaped_quotes"
+
+C ECHO "Can this handle \\" Escaped\\" quotes??" # Can this handle "escape"
+C ECHO2 "\\"Can\\" this handle leading and trailing Escaped\\" quotes??\\"" # "Can" "this" handle "escape"
+`;
+    expect(sequence).toEqual(expectedSequence);
   });
 });
 

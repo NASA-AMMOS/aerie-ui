@@ -1,25 +1,24 @@
 import test, { expect, type BrowserContext, type Page } from '@playwright/test';
 import { Constraints } from '../fixtures/Constraints.js';
 import { Models } from '../fixtures/Models.js';
-let context: BrowserContext;
-let models: Models;
-let constraints: Constraints;
-let page: Page;
-
-test.beforeAll(async ({ browser }) => {
-  context = await browser.newContext();
-  page = await context.newPage();
-  models = new Models(page);
-  constraints = new Constraints(page);
-  await models.goto();
-});
-
-test.afterAll(async () => {
-  await page.close();
-  await context.close();
-});
 
 test.describe.serial('Models', () => {
+  let context: BrowserContext;
+  let models: Models;
+  let page: Page;
+
+  test.beforeAll(async ({ browser }) => {
+    context = await browser.newContext();
+    page = await context.newPage();
+    models = new Models(page);
+    await models.goto();
+  });
+
+  test.afterAll(async () => {
+    await page.close();
+    await context.close();
+  });
+
   test('Create model button should be disabled with no errors', async () => {
     await expect(models.alertError).not.toBeVisible();
     await expect(models.createButton).toBeDisabled();
@@ -49,27 +48,43 @@ test.describe.serial('Models', () => {
     await expect(models.createButton).not.toBeDisabled();
   });
 
-  test('Create model', async () => {
-    await models.createModel();
+  test('Create model', async ({ baseURL }) => {
+    await models.createModel(baseURL);
   });
 
   test('Delete model', async () => {
     await models.goto();
     await models.deleteModel();
   });
+});
 
-  test('Successfully creating a model should navigate to the model edit page', async () => {
+test.describe('Model navigation', () => {
+  let context: BrowserContext;
+  let models: Models;
+  let page: Page;
+
+  test.beforeAll(async ({ browser }) => {
+    context = await browser.newContext();
+    page = await context.newPage();
+    models = new Models(page);
+    await models.goto();
+  });
+
+  test.afterAll(async () => {
+    await page.close();
+    await context.close();
+  });
+
+  test('Successfully creating a model should navigate to the model edit page', async ({ baseURL }) => {
     // Setup the test
-    await expect(models.tableRow).not.toBeVisible();
+    await expect(models.tableRow()).not.toBeVisible();
     await models.fillInputName();
     await models.fillInputVersion();
     await models.fillInputFile();
     await models.createButton.click();
-    // The create button shouldn't be there
-    await expect(models.createButton).not.toBeVisible();
-    // Instead, the creating button should be present and disabled
-    await expect(models.creatingButton).toBeVisible();
-    await expect(models.creatingButton).toBeDisabled();
+
+    const editModelUrlRegex = new RegExp(`${baseURL}/models/(?<modelId>\\d+)`);
+    await page.waitForURL(editModelUrlRegex);
 
     // App now navigates away after model creation
     await models.goto();
@@ -83,10 +98,32 @@ test.describe.serial('Models', () => {
     // Cleanup
     await models.deleteModel();
   });
+});
 
-  test('Model creation errors should clear on page destroy', async () => {
+test.describe('Model creation error clearing', () => {
+  let context: BrowserContext;
+  let models: Models;
+  let constraints: Constraints;
+  let page: Page;
+
+  test.beforeAll(async ({ browser }) => {
+    context = await browser.newContext();
+    page = await context.newPage();
+    constraints = new Constraints(page);
+    models = new Models(page);
+    await models.goto();
+  });
+
+  test.afterAll(async () => {
+    await page.close();
+    await context.close();
+  });
+
+  test('Model creation errors should clear on page destroy', async ({ baseURL }) => {
     // Create model
-    await models.createModel(models.modelName);
+    await models.createModel(baseURL, models.modelName);
+
+    await models.goto();
 
     // Create model again with the same name
     await models.fillInputName(models.modelName);

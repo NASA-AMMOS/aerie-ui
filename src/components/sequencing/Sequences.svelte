@@ -4,7 +4,7 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import type { ICellRendererParams } from 'ag-grid-community';
-  import { parcel, parcels, userSequences, userSequencesColumns } from '../../stores/sequencing';
+  import { parcel, parcelId, parcels, userSequences, userSequencesColumns } from '../../stores/sequencing';
   import type { User, UserId } from '../../types/app';
   import type { DataGridColumnDef, DataGridRowSelection, RowId } from '../../types/data-grid';
   import type { UserSequence } from '../../types/sequencing';
@@ -108,7 +108,7 @@
 
   async function setParcel(): Promise<void> {
     if (selectedSequence !== null) {
-      $parcel = await effects.getParcel(selectedSequence.parcel_id, user);
+      $parcelId = selectedSequence.parcel_id;
     }
   }
 
@@ -264,6 +264,7 @@
   <CssGridGutter track={1} type="column" />
 
   <SequenceEditor
+    parcel={$parcel}
     showCommandFormBuilder={false}
     sequenceDefinition={selectedSequence?.definition ?? ''}
     sequenceName={selectedSequence?.name}

@@ -6,7 +6,7 @@ let models: Models;
 let page: Page;
 let plans: Plans;
 
-test.beforeAll(async ({ browser }) => {
+test.beforeAll(async ({ baseURL, browser }) => {
   context = await browser.newContext();
   page = await context.newPage();
 
@@ -14,7 +14,7 @@ test.beforeAll(async ({ browser }) => {
   plans = new Plans(page, models);
 
   await models.goto();
-  await models.createModel();
+  await models.createModel(baseURL);
 });
 
 test.afterAll(async () => {
@@ -38,7 +38,8 @@ test.describe.serial('Plans', () => {
     baseURL,
   }) => {
     await models.goto();
-    await models.tableRow.click();
+    await models.filterTable(models.modelName);
+    await models.tableRow().click();
     await models.createPlanButton.click();
     await expect(page).toHaveURL(`${baseURL}/plans`);
     const { text } = await plans.selectedModel();

@@ -16,19 +16,19 @@ let plans: Plans;
 let schedulingConditions: SchedulingConditions;
 let schedulingGoals: SchedulingGoals;
 
-test.beforeAll(async ({ browser }) => {
+test.beforeAll(async ({ baseURL, browser }) => {
   context = await browser.newContext();
   page = await context.newPage();
 
   models = new Models(page);
   plans = new Plans(page, models);
-  constraints = new Constraints(page, models);
-  schedulingConditions = new SchedulingConditions(page, models);
-  schedulingGoals = new SchedulingGoals(page, models);
+  constraints = new Constraints(page);
+  schedulingConditions = new SchedulingConditions(page);
+  schedulingGoals = new SchedulingGoals(page);
   plan = new Plan(page, plans, constraints, schedulingGoals, schedulingConditions);
 
   await models.goto();
-  await models.createModel();
+  await models.createModel(baseURL);
   await plans.goto();
   await plans.createPlan();
   await plan.goto();
@@ -52,43 +52,45 @@ test.describe.serial('Plan Activities', () => {
     await plan.addActivity('GrowBanana');
     await plan.addActivity('PickBanana');
     await plan.addActivity('ThrowBanana');
-    await plan.panelActivityDirectivesTable.getByRole('gridcell', { name: 'PickBanana' }).first().click();
+    await plan.panelActivityDirectivesTable.getByRole('row', { name: 'PickBanana' }).first().click();
     await plan.panelActivityForm.getByRole('button', { name: 'Is Relative To Another Activity Directive' }).click();
     await plan.selectActivityAnchorByIndex(1);
 
-    await plan.panelActivityDirectivesTable.getByRole('gridcell', { name: 'GrowBanana' }).nth(1).click();
+    await plan.panelActivityDirectivesTable.getByRole('row', { name: 'GrowBanana' }).first().click();
     await plan.panelActivityDirectivesTable.getByRole('button', { name: 'Delete Activity Directive' }).click();
     await page.locator('.modal-content select').nth(1).selectOption('anchor-plan');
     await page.getByRole('button', { name: 'Confirm' }).click();
-    await plan.panelActivityDirectivesTable.getByRole('gridcell', { name: 'PickBanana' }).nth(1).click();
+    await plan.panelActivityDirectivesTable
+      .getByRole('row', { name: 'GrowBanana' })
+      .waitFor({ state: 'detached', timeout: 2000 });
+    await plan.panelActivityDirectivesTable.getByRole('row', { name: 'PickBanana' }).first().click();
     await plan.panelActivityForm.getByRole('button', { name: 'Is Relative To Another Activity Directive' }).click();
     await page.waitForFunction(
       () => document.querySelector('.anchor-form .selected-display-value')?.innerHTML === 'To Plan',
     );
 
-    await plan.panelActivityForm.getByRole('button', { name: 'Is Relative To Another Activity Directive' }).click();
-    expect(plan.panelActivityForm.getByRole('textbox', { name: 'To Plan' })).toBeVisible();
+    await expect(plan.panelActivityForm.getByRole('textbox', { name: 'To Plan' })).toBeVisible();
   });
 
   test('Deleting multiple activity directives but only 1 has a remaining anchored dependent should prompt for just the one with a remaining dependent', async () => {
     await plan.addActivity('GrowBanana');
     await plan.addActivity('PickBanana');
     await plan.addActivity('ThrowBanana');
-    await plan.panelActivityDirectivesTable.getByRole('gridcell', { name: 'PickBanana' }).first().click();
+    await plan.panelActivityDirectivesTable.getByRole('row', { name: 'PickBanana' }).first().click();
     await plan.panelActivityForm.getByRole('button', { name: 'Is Relative To Another Activity Directive' }).click();
     await plan.selectActivityAnchorByIndex(1);
 
-    await plan.panelActivityDirectivesTable.getByRole('gridcell', { name: 'ThrowBanana' }).nth(1).click();
+    await plan.panelActivityDirectivesTable.getByRole('row', { name: 'ThrowBanana' }).first().click();
     await plan.selectActivityAnchorByIndex(2);
 
-    await plan.panelActivityDirectivesTable.getByRole('gridcell', { name: 'GrowBanana' }).nth(1).click();
+    await plan.panelActivityDirectivesTable.getByRole('row', { name: 'GrowBanana' }).first().click();
     await plan.panelActivityDirectivesTable
-      .getByRole('gridcell', { name: 'PickBanana' })
-      .nth(1)
+      .getByRole('row', { name: 'PickBanana' })
+      .first()
       .click({
         modifiers: ['Meta'],
       });
-    await plan.panelActivityDirectivesTable.getByRole('gridcell', { name: 'GrowBanana' }).nth(1).click({
+    await plan.panelActivityDirectivesTable.getByRole('row', { name: 'GrowBanana' }).first().click({
       button: 'right',
     });
     await page.getByText('Delete 2 Activity Directives').click();
@@ -110,30 +112,37 @@ test.describe.serial('Plan Activities', () => {
 
   test('Activity validation is run when activities are changed and is resolvable', async () => {
     await plan.waitForActivityCheckingStatus(Status.Complete);
-    await plan.navButtonActivityChecking.hover();
+    await plan.hoverMenu(plan.navButtonActivityChecking);
     await expect(plan.navButtonActivityCheckingMenu).toContainText('0/0 activities checked');
     await expect(plan.navButtonActivityCheckingMenu).toContainText('No problems detected');
     await plan.addActivity('GrowBanana');
     await plan.addActivity('GrowBanana');
     await plan.waitForActivityCheckingStatus(Status.Complete);
-    await plan.navButtonActivityChecking.hover();
+    await plan.hoverMenu(plan.navButtonActivityChecking);
     await expect(plan.navButtonActivityCheckingMenu).toContainText('2/2 activities checked');
     await expect(plan.navButtonActivityCheckingMenu).toContainText('No problems detected');
     await plan.addActivity('BakeBananaBread');
     await plan.waitForActivityCheckingStatus(Status.Failed);
-    await plan.navButtonActivityChecking.hover();
+    await plan.hoverMenu(plan.navButtonActivityChecking);
     await expect(plan.navButtonActivityCheckingMenu).toContainText('3/3 activities checked');
     await expect(plan.navButtonActivityCheckingMenu).toContainText('1 activity has problems');
     await expect(plan.navButtonActivityCheckingMenu).toContainText('2 missing parameters');
     await plan.navButtonActivityCheckingMenu.getByRole('button', { name: 'View in console' }).click();
-    await page.pause();
-    await plan.consoleContainer.getByRole('gridcell', { name: 'BakeBananaBread' }).first().click();
-    const tbSugar = await plan.panelActivityForm.locator('.parameter', { hasText: 'tbSugar' }).locator('input');
+    await plan.consoleContainer.getByRole('row', { name: 'BakeBananaBread' }).first().click();
+    const tbSugar = plan.panelActivityForm.locator('.parameter', { hasText: 'tbSugar' }).locator('input');
     await tbSugar.fill('100');
     await tbSugar.evaluate(e => e.blur());
-    await plan.panelActivityForm.locator('.parameter', { hasText: 'glutenFree' }).getByRole('checkbox').check();
+    await expect(
+      plan.panelActivityForm.locator('.parameter', { hasText: 'tbSugar' }).getByLabel('Parameter not explicitly set'),
+    ).not.toBeVisible();
+    await plan.panelActivityForm.locator('.parameter', { hasText: 'glutenFree' }).getByRole('checkbox').click();
+    await expect(
+      plan.panelActivityForm
+        .locator('.parameter', { hasText: 'glutenFree' })
+        .getByLabel('Parameter not explicitly set'),
+    ).not.toBeVisible();
     await plan.waitForActivityCheckingStatus(Status.Complete);
-    await plan.navButtonActivityChecking.hover();
+    await plan.hoverMenu(plan.navButtonActivityChecking);
     await expect(plan.navButtonActivityCheckingMenu).toContainText('3/3 activities checked');
     await expect(plan.navButtonActivityCheckingMenu).toContainText('No problems detected');
   });

@@ -19,7 +19,7 @@ import type {
   Time,
   VariableDeclaration,
 } from '@nasa-jpl/seq-json-schema/types';
-import { quoteEscape } from '../../components/sequencing/form/utils';
+import { quoteEscape } from '../codemirror/codemirror-utils';
 import { customizeSeqJsonParsing } from './extension-points';
 import { logError } from './logger';
 
@@ -227,6 +227,7 @@ export function seqJsonToSequence(
         // Add metadata data if it exists
         hardwareString += metadata;
         sequence.push(hardwareString);
+
       }
     }
 

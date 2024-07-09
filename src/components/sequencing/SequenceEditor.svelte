@@ -14,7 +14,7 @@
   import SaveIcon from 'bootstrap-icons/icons/save.svg?component';
   import { EditorView, basicSetup } from 'codemirror';
   import { debounce } from 'lodash-es';
-  import { createEventDispatcher, onMount } from 'svelte';
+  import { createEventDispatcher, onDestroy, onMount } from 'svelte';
   import {
     channelDictionaries,
     commandDictionaries,
@@ -22,13 +22,14 @@
     getParsedCommandDictionary,
     getParsedParameterDictionary,
     parameterDictionaries as parameterDictionariesStore,
-    parcel,
     parcelToParameterDictionaries,
     userSequenceEditorColumns,
     userSequenceEditorColumnsWithFormBuilder,
   } from '../../stores/sequencing';
   import type { User } from '../../types/app';
+  import type { Parcel } from '../../types/sequencing';
   import { setupLanguageSupport } from '../../utilities/codemirror';
+  import effects from '../../utilities/effects';
   import { seqJsonLinter } from '../../utilities/new-sequence-editor/seq-json-linter';
   import { sequenceCompletion } from '../../utilities/new-sequence-editor/sequence-completion';
   import { sequenceLinter } from '../../utilities/new-sequence-editor/sequence-linter';
@@ -42,6 +43,7 @@
   import SectionTitle from '../ui/SectionTitle.svelte';
   import SelectedCommand from './form/SelectedCommand.svelte';
 
+  export let parcel: Parcel | null;
   export let showCommandFormBuilder: boolean = false;
   export let readOnly: boolean = false;
   export let sequenceName: string = '';
@@ -72,6 +74,12 @@
   let toggleSeqJsonPreview: boolean = false;
 
   $: {
+    if (parcel?.sequence_adaptation_id) {
+      loadSequenceAdaptation(parcel?.sequence_adaptation_id);
+    }
+  }
+
+  $: {
     if (editorSequenceView) {
       editorSequenceView.dispatch({
         changes: { from: 0, insert: sequenceDefinition, to: editorSequenceView.state.doc.length },
@@ -86,8 +94,8 @@
   }
 
   $: {
-    const unparsedChannelDictionary = $channelDictionaries.find(cd => cd.id === $parcel?.channel_dictionary_id);
-    const unparsedCommandDictionary = $commandDictionaries.find(cd => cd.id === $parcel?.command_dictionary_id);
+    const unparsedChannelDictionary = $channelDictionaries.find(cd => cd.id === parcel?.channel_dictionary_id);
+    const unparsedCommandDictionary = $commandDictionaries.find(cd => cd.id === parcel?.command_dictionary_id);
     const unparsedParameterDictionaries = $parameterDictionariesStore.filter(pd => {
       const parameterDictionary = $parcelToParameterDictionaries.find(p => p.parameter_dictionary_id === pd.id);
 
@@ -177,6 +185,37 @@
       parent: editorSeqJsonDiv,
     });
   });
+
+  onDestroy(() => {
+    resetSequenceAdaptation();
+  });
+
+  async function loadSequenceAdaptation(id: number | null | undefined): Promise<void> {
+    if (id) {
+      const adaptation = await effects.getSequenceAdaptation(id, user);
+
+      if (adaptation) {
+        try {
+          // This evaluates the custom sequence adaptation that is optionally provided by the user.
+          Function(adaptation.adaptation)();
+        } catch (e) {
+          console.error(e);
+          showFailureToast('Invalid sequence adaptation');
+        }
+      }
+    } else {
+      resetSequenceAdaptation();
+    }
+  }
+
+  function resetSequenceAdaptation(): void {
+    globalThis.CONDITIONAL_KEYWORDS = undefined;
+    globalThis.LOOP_KEYWORDS = undefined;
+    globalThis.GLOBALS = undefined;
+    globalThis.ARG_DELEGATOR = undefined;
+    globalThis.LINT = () => undefined;
+    globalThis.TO_SEQ_JSON = () => undefined;
+  }
 
   function sequenceUpdateListener(viewUpdate: ViewUpdate) {
     const sequence = viewUpdate.state.doc.toString();

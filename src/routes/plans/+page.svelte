@@ -12,6 +12,7 @@
   import DatePickerField from '../../components/form/DatePickerField.svelte';
   import Field from '../../components/form/Field.svelte';
   import Input from '../../components/form/Input.svelte';
+  import ModelStatusRollup from '../../components/model/ModelStatusRollup.svelte';
   import AlertError from '../../components/ui/AlertError.svelte';
   import CssGrid from '../../components/ui/CssGrid.svelte';
   import DataGridActions from '../../components/ui/DataGrid/DataGridActions.svelte';
@@ -22,7 +23,9 @@
   import TagsInput from '../../components/ui/Tags/TagsInput.svelte';
   import { SearchParameters } from '../../enums/searchParameters';
   import { field } from '../../stores/form';
+  import { models } from '../../stores/model';
   import { createPlanError, creatingPlan, resetPlanStores } from '../../stores/plan';
+  import { plans } from '../../stores/plans';
   import { simulationTemplates } from '../../stores/simulation';
   import { tags } from '../../stores/tags';
   import type { User } from '../../types/app';
@@ -35,7 +38,7 @@
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import { convertUsToDurationString, getDoyTime, getShortISOForDate, getUnixEpochTime } from '../../utilities/time';
-  import { min, required, timestamp } from '../../utilities/validators';
+  import { min, required, timestamp, unique } from '../../utilities/validators';
   import type { PageData } from './$types';
 
   export let data: PageData;
@@ -164,20 +167,44 @@
   let columnDefs: DataGridColumnDef[] = baseColumnDefs;
   let durationString: string = 'None';
   let filterText: string = '';
-  let models: ModelSlim[];
+  let orderedModels: ModelSlim[] = [];
   let nameInputField: HTMLInputElement;
   let planTags: Tag[] = [];
-  let plans: PlanSlim[];
+  let selectedModel: ModelSlim | undefined;
   let user: User | null = null;
 
   let endTimeDoyField = field<string>('', [required, timestamp]);
   let modelIdField = field<number>(-1, [min(1, 'Field is required')]);
-  let nameField = field<string>('', [required]);
+  let nameField = field<string>('', [
+    required,
+    unique(
+      $plans.map(plan => plan.name),
+      'Plan name already exists',
+    ),
+  ]);
   let simTemplateField = field<number | null>(null);
   let startTimeDoyField = field<string>('', [required, timestamp]);
 
-  $: plans = data.plans;
-  $: models = data.models;
+  $: if ($plans) {
+    nameField.updateValidators([
+      required,
+      unique(
+        $plans.map(plan => plan.name),
+        'Plan name already exists',
+      ),
+    ]);
+  }
+  $: models.updateValue(() => data.models);
+  // sort in descending ID order
+  $: orderedModels = [...$models].sort(({ id: idA }, { id: idB }) => {
+    if (idA < idB) {
+      return 1;
+    }
+    if (idA > idB) {
+      return -1;
+    }
+    return 0;
+  });
   $: {
     user = data.user;
     canCreate = user ? featurePermissions.plan.canCreate(user) : false;
@@ -221,7 +248,8 @@
     $modelIdField.dirtyAndValid &&
     $nameField.dirtyAndValid &&
     $startTimeDoyField.dirtyAndValid;
-  $: filteredPlans = plans.filter(plan => {
+
+  $: filteredPlans = $plans.filter(plan => {
     const filterTextLowerCase = filterText.toLowerCase();
     return (
       plan.end_time_doy.includes(filterTextLowerCase) ||
@@ -232,12 +260,13 @@
     );
   });
   $: simulationTemplates.setVariables({ modelId: $modelIdField.value });
+  $: selectedModel = $models.find(({ id }) => $modelIdField.value === id);
 
   onMount(() => {
     const queryModelId = $page.url.searchParams.get(SearchParameters.MODEL_ID);
     if (queryModelId) {
       $modelIdField.value = parseFloat(queryModelId);
-      modelIdField.validateAndSet();
+      modelIdField.validateAndSet(parseFloat(queryModelId));
       removeQueryParam(SearchParameters.MODEL_ID);
       if (nameInputField) {
         nameInputField.focus();
@@ -265,9 +294,11 @@
         plan_id: newPlan.id,
         tag_id,
       }));
-      await effects.createPlanTags(newPlanTags, newPlan, user);
       newPlan.tags = planTags.map(tag => ({ tag }));
-      plans = [...plans, newPlan];
+      if (!$plans.find(({ id }) => newPlan.id === id)) {
+        plans.updateValue(storePlans => [...storePlans, newPlan]);
+      }
+      await effects.createPlanTags(newPlanTags, newPlan, user);
     }
   }
 
@@ -275,7 +306,7 @@
     const success = await effects.deletePlan(plan, user);
 
     if (success) {
-      plans = plans.filter(p => plan.id !== p.id);
+      plans.updateValue(storePlans => storePlans.filter(p => plan.id !== p.id));
     }
   }
 
@@ -294,7 +325,7 @@
     }
   }
 
-  function deletePlanContext(event: CustomEvent<RowId[]>) {
+  function deletePlanContext(event: CustomEvent<RowId[]>, plans: PlanSlim[]) {
     const id = event.detail[0] as number;
     const plan = plans.find(t => t.id === id);
     if (plan) {
@@ -362,7 +393,7 @@
               }}
             >
               <option value="-1" />
-              {#each models as model}
+              {#each orderedModels as model (model.id)}
                 <option value={model.id}>
                   {model.name}
                   (Version: {model.version})
@@ -370,6 +401,11 @@
               {/each}
             </select>
           </Field>
+          {#if selectedModel}
+            <div class="model-status">
+              <ModelStatusRollup mode="rollup" model={selectedModel} showCompleteStatus />
+            </div>
+          {/if}
 
           <Field field={nameField}>
             <label for="name" slot="label">Name</label>
@@ -378,6 +414,7 @@
               autocomplete="off"
               class="st-input w-100"
               name="name"
+              aria-label="name"
               use:permissionHandler={{
                 hasPermission: canCreate,
                 permissionError,
@@ -500,14 +537,14 @@
       </svelte:fragment>
 
       <svelte:fragment slot="body">
-        {#if filteredPlans.length}
+        {#if filteredPlans && filteredPlans.length}
           <SingleActionDataGrid
             {columnDefs}
             hasDeletePermission={featurePermissions.plan.canDelete}
             itemDisplayText="Plan"
             items={filteredPlans}
             {user}
-            on:deleteItem={deletePlanContext}
+            on:deleteItem={event => deletePlanContext(event, filteredPlans)}
             on:rowClicked={({ detail }) => showPlan(detail.data)}
           />
         {:else}
@@ -517,3 +554,9 @@
     </Panel>
   </CssGrid>
 </CssGrid>
+
+<style>
+  .model-status {
+    padding: 5px 16px 0;
+  }
+</style>

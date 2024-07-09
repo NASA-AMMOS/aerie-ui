@@ -16,19 +16,19 @@ let plans: Plans;
 let schedulingConditions: SchedulingConditions;
 let schedulingGoals: SchedulingGoals;
 
-test.beforeAll(async ({ browser }) => {
+test.beforeAll(async ({ baseURL, browser }) => {
   context = await browser.newContext();
   page = await context.newPage();
 
   models = new Models(page);
   plans = new Plans(page, models);
-  constraints = new Constraints(page, models);
-  schedulingConditions = new SchedulingConditions(page, models);
-  schedulingGoals = new SchedulingGoals(page, models);
+  constraints = new Constraints(page);
+  schedulingConditions = new SchedulingConditions(page);
+  schedulingGoals = new SchedulingGoals(page);
   plan = new Plan(page, plans, constraints, schedulingGoals, schedulingConditions);
 
   await models.goto();
-  await models.createModel();
+  await models.createModel(baseURL);
   await plans.goto();
   await plans.createPlan();
   await plan.goto();

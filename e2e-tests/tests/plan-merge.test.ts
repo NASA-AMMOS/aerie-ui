@@ -16,19 +16,19 @@ let plans: Plans;
 let schedulingConditions: SchedulingConditions;
 let schedulingGoals: SchedulingGoals;
 
-test.beforeAll(async ({ browser }) => {
+test.beforeAll(async ({ baseURL, browser }) => {
   context = await browser.newContext();
   page = await context.newPage();
 
   models = new Models(page);
   plans = new Plans(page, models);
-  constraints = new Constraints(page, models);
-  schedulingConditions = new SchedulingConditions(page, models);
-  schedulingGoals = new SchedulingGoals(page, models);
+  constraints = new Constraints(page);
+  schedulingConditions = new SchedulingConditions(page);
+  schedulingGoals = new SchedulingGoals(page);
   plan = new Plan(page, plans, constraints, schedulingGoals, schedulingConditions);
 
   await models.goto();
-  await models.createModel();
+  await models.createModel(baseURL);
   await plans.goto();
   await plans.createPlan();
   await plan.goto();
@@ -51,16 +51,14 @@ test.describe.serial('Plan Merge', () => {
     await page.getByRole('button', { name: 'CreateActivity-BiteBanana' }).click();
   });
 
-  test('Create a branch', async () => {
-    await plan.createBranch(planBranchName);
+  test('Create a branch', async ({ baseURL }) => {
+    await plan.createBranch(baseURL, planBranchName);
   });
 
   test('Change the start time of the activity on the branch', async () => {
-    await page.getByRole('gridcell', { name: 'BiteBanana' }).first().click();
+    await page.getByRole('row', { name: 'BiteBanana' }).first().click();
     await page.waitForSelector('button:has-text("BiteBanana")', { state: 'visible' });
-    await page.locator('input[name="start-time"]').click();
-    // Wait for date input to be open before inputting a date
-    await page.waitForTimeout(500);
+    await page.locator('input[name="start-time"]').click({ position: { x: 2, y: 2 } });
     await page.locator('input[name="start-time"]').fill(newActivityStartTime);
     await page.locator('input[name="start-time"]').press('Enter');
     await plan.waitForToast('Activity Directive Updated Successfully');

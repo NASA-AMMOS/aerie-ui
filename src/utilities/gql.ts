@@ -178,6 +178,7 @@ export enum Queries {
   UPDATE_MISSION_MODEL = 'update_mission_model_by_pk',
   UPDATE_PARCEL = 'update_parcel_by_pk',
   UPDATE_PLAN_SNAPSHOT = 'update_plan_snapshot_by_pk',
+  UPDATE_PLAN = 'update_plan_by_pk',
   UPDATE_SCHEDULING_CONDITION_METADATA = 'update_scheduling_condition_metadata_by_pk',
   UPDATE_SCHEDULING_GOAL_METADATA = 'update_scheduling_goal_metadata_by_pk',
   UPDATE_SCHEDULING_REQUEST = 'update_scheduling_request',
@@ -439,8 +440,8 @@ const gql = {
   CREATE_MODEL: `#graphql
     mutation CreateModel($model: mission_model_insert_input!) {
       createModel: ${Queries.INSERT_MISSION_MODEL}(object: $model) {
-        id
         created_at
+        id
         owner
       }
     }
@@ -639,6 +640,7 @@ const gql = {
     mutation CreateCustomAdaptation($adaptation: sequence_adaptation_insert_input!) {
       createSequenceAdaptation: ${Queries.INSERT_SEQUENCE_ADAPTATION}(object: $adaptation) {
         adaptation
+        name
         created_at
       }
     }
@@ -897,8 +899,8 @@ const gql = {
   `,
 
   DELETE_PARCEL_TO_PARAMETER_DICTIONARIES: `#graphql
-    mutation deleteParcelToParameterDictionaries($ids: [Int!]!) {
-        ${Queries.DELETE_PARCEL_TO_PARAMETER_DICTIONARY}(where: { id: { _in: $ids } }) {
+    mutation deleteParcelToParameterDictionary($parameterDictionaryIds: [Int!]!, $parcelIds: [Int!]!) {
+        ${Queries.DELETE_PARCEL_TO_PARAMETER_DICTIONARY}(where: { parcel_id: { _in: $parcelIds }, _and: { parameter_dictionary_id: { _in: $parameterDictionaryIds}}} ) {
           affected_rows
       }
     }
@@ -1372,7 +1374,33 @@ const gql = {
           parameters {
             parameters
           }
+          refresh_activity_type_logs(order_by: { created_at: desc }, limit: 1) {
+            error
+            error_message
+            pending
+            success
+          }
+          refresh_resource_type_logs(order_by: { created_at: desc }, limit: 1) {
+            error
+            error_message
+            pending
+            success
+          }
+          refresh_model_parameter_logs(order_by: { created_at: desc }, limit: 1) {
+            error
+            error_message
+            pending
+            success
+          }
           version
+          view {
+            created_at
+            definition
+            id
+            name
+            owner
+            updated_at
+          }
         }
         model_id
         name
@@ -1572,6 +1600,7 @@ const gql = {
     query GetSequenceAdaptation($sequence_adaptation_id: Int!) {
       ${Queries.SEQUENCE_ADAPTATION}(where: { id: { _eq: $sequence_adaptation_id }}) {
         adaptation
+        name
       }
     }
   `,
@@ -2169,6 +2198,24 @@ const gql = {
         plans {
           id
         }
+        refresh_activity_type_logs(order_by: { created_at: desc }, limit: 1) {
+          error
+          error_message
+          pending
+          success
+        }
+        refresh_resource_type_logs(order_by: { created_at: desc }, limit: 1) {
+          error
+          error_message
+          pending
+          success
+        }
+        refresh_model_parameter_logs(order_by: { created_at: desc }, limit: 1) {
+          error
+          error_message
+          pending
+          success
+        }
         scheduling_specification_conditions {
           condition_id
           condition_revision
@@ -2215,6 +2262,24 @@ const gql = {
           id
         }
         owner
+        refresh_activity_type_logs(order_by: { created_at: desc }, limit: 1) {
+          error
+          error_message
+          pending
+          success
+        }
+        refresh_resource_type_logs(order_by: { created_at: desc }, limit: 1) {
+          error
+          error_message
+          pending
+          success
+        }
+        refresh_model_parameter_logs(order_by: { created_at: desc }, limit: 1) {
+          error
+          error_message
+          pending
+          success
+        }
         version
       }
     }
@@ -2254,6 +2319,33 @@ const gql = {
       }
     }
   `,
+
+  SUB_PLANS: `#graphql
+    subscription SubPlans {
+      plans: ${Queries.PLANS}(order_by: { id: desc }) {
+        collaborators {
+          collaborator
+        }
+        created_at
+        duration
+        id
+        model_id
+        name
+        owner
+        revision
+        start_time
+        updated_at
+        updated_by
+        tags {
+          tag {
+            color
+            id
+            name
+          }
+        }
+      }
+    }
+`,
 
   SUB_PLANS_USER_WRITABLE: `#graphql
     subscription SubPlansUserWritable($userId: String!) {
@@ -2744,6 +2836,7 @@ const gql = {
         adaptation
         created_at
         id
+        name
         updated_by
       }
     }
@@ -3089,6 +3182,16 @@ const gql = {
     mutation UpdateParcel($id: Int!, $parcel: parcel_set_input!) {
       updateParcel: ${Queries.UPDATE_PARCEL}(
         pk_columns: { id: $id }, _set: $parcel
+      ) {
+        id
+      }
+    }
+  `,
+
+  UPDATE_PLAN: `#graphql
+    mutation UpdatePlan($plan_id: Int!, $plan: plan_set_input!) {
+      updatePlan: ${Queries.UPDATE_PLAN}(
+        pk_columns: { id: $plan_id }, _set: $plan
       ) {
         id
       }

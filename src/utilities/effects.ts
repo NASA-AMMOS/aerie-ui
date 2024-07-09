@@ -8,10 +8,16 @@ import {
 } from '@nasa-jpl/aerie-ampcs';
 import { get } from 'svelte/store';
 import { DictionaryHeaders } from '../enums/dictionaryHeaders';
+import { DictionaryTypes } from '../enums/dictionaryTypes';
 import { SearchParameters } from '../enums/searchParameters';
 import { Status } from '../enums/status';
-import { activityDirectives, activityDirectivesMap, selectedActivityDirectiveId } from '../stores/activities';
-import { checkConstraintsStatus, constraintsViolationStatus, rawConstraintResponses } from '../stores/constraints';
+import { activityDirectivesDB, selectedActivityDirectiveId } from '../stores/activities';
+import {
+  checkConstraintsStatus,
+  constraintsViolationStatus,
+  rawConstraintResponses,
+  resetConstraintStoresForSimulation,
+} from '../stores/constraints';
 import { catchError, catchSchedulingError } from '../stores/errors';
 import {
   createExpansionRuleError,
@@ -34,12 +40,12 @@ import { createTagError } from '../stores/tags';
 import { applyViewUpdate, view, viewUpdateTimeline } from '../stores/views';
 import type {
   ActivityDirective,
+  ActivityDirectiveDB,
   ActivityDirectiveId,
   ActivityDirectiveInsertInput,
   ActivityDirectiveRevision,
   ActivityDirectiveSetInput,
   ActivityDirectiveValidationStatus,
-  ActivityDirectivesMap,
   ActivityPreset,
   ActivityPresetId,
   ActivityPresetInsertInput,
@@ -75,7 +81,7 @@ import type {
   SeqId,
 } from '../types/expansion';
 import type { Extension, ExtensionPayload } from '../types/extension';
-import type { Model, ModelInsertInput, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
+import type { Model, ModelInsertInput, ModelLog, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
 import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
 import type {
   Argument,
@@ -103,6 +109,7 @@ import type {
   PlanMergeNonConflictingActivity,
   PlanMergeRequestSchema,
   PlanMergeResolution,
+  PlanMetadata,
   PlanSchema,
   PlanSlim,
 } from '../types/plan';
@@ -159,6 +166,7 @@ import type {
   SimulationTemplateInsertInput,
   SimulationTemplateSetInput,
   Span,
+  SpanDB,
   Topic,
 } from '../types/simulation';
 import type {
@@ -203,7 +211,13 @@ import { sampleProfiles } from './resources';
 import { convertResponseToMetadata } from './scheduling';
 import { compareEvents } from './simulation';
 import { pluralize } from './text';
-import { getDoyTime, getDoyTimeFromInterval, getIntervalFromDoyRange } from './time';
+import {
+  getDoyTime,
+  getDoyTimeFromInterval,
+  getIntervalFromDoyRange,
+  getIntervalInMs,
+  getUnixEpochTimeFromInterval,
+} from './time';
 import { createRow, duplicateRow } from './timeline';
 import { showFailureToast, showSuccessToast } from './toast';
 import { generateDefaultView, validateViewJSONAgainstSchema } from './view';
@@ -459,7 +473,7 @@ const effects = {
           start_offset,
           type,
         };
-        const data = await reqHasura<ActivityDirective>(
+        const data = await reqHasura<ActivityDirectiveDB>(
           gql.CREATE_ACTIVITY_DIRECTIVE,
           {
             activityDirectiveInsertInput,
@@ -470,10 +484,14 @@ const effects = {
         if (newActivityDirective != null) {
           const { id } = newActivityDirective;
 
-          activityDirectivesMap.update((currentActivityDirectivesMap: ActivityDirectivesMap) => ({
-            ...currentActivityDirectivesMap,
-            [id]: newActivityDirective,
-          }));
+          activityDirectivesDB.updateValue(directives => {
+            return directives.map(directive => {
+              if (directive.id === id) {
+                return newActivityDirective;
+              }
+              return directive;
+            });
+          });
           selectedActivityDirectiveId.set(id);
           selectedSpanId.set(null);
 
@@ -646,7 +664,7 @@ const effects = {
   },
 
   async createCustomAdaptation(
-    adaptation: { adaptation: string },
+    adaptation: { adaptation: string; name: string },
     user: User | null,
   ): Promise<SequenceAdaptation | null> {
     try {
@@ -657,8 +675,9 @@ const effects = {
       if (adaptation?.adaptation) {
         const data = await reqHasura<SequenceAdaptation>(gql.CREATE_SEQUENCE_ADAPTATION, { adaptation }, user);
         const { createSequenceAdaptation: newSequenceAdaptation } = data;
+
         if (newSequenceAdaptation != null) {
-          return newSequenceAdaptation;
+          return { ...newSequenceAdaptation, type: DictionaryTypes.ADAPTATION };
         } else {
           throw Error('Unable to upload sequence adaptation');
         }
@@ -811,6 +830,7 @@ const effects = {
 
       const file: File = files[0];
       const jar_id = await effects.uploadFile(file, user);
+      showSuccessToast('Model Uploaded Successfully. Processing model...');
 
       if (jar_id !== null) {
         const modelInsertInput: ModelInsertInput = {
@@ -831,6 +851,9 @@ const effects = {
             name,
             owner,
             plans: [],
+            refresh_activity_type_logs: [],
+            refresh_model_parameter_logs: [],
+            refresh_resource_type_logs: [],
             version,
             ...(description && { description }),
           };
@@ -1720,9 +1743,10 @@ const effects = {
               })
               .map(({ affected_row: { id } }) => id);
 
-            activityDirectivesMap.update((currentActivityDirectivesMap: ActivityDirectivesMap) => {
-              deletedActivityIds.forEach(id => delete currentActivityDirectivesMap[id]);
-              return { ...currentActivityDirectivesMap };
+            activityDirectivesDB.updateValue(directives => {
+              return directives.filter(directive => {
+                return deletedActivityIds.indexOf(directive.id) < 1;
+              });
             });
 
             // If there are activities that did not get deleted
@@ -1759,9 +1783,10 @@ const effects = {
               })
               .map(({ affected_row: { id } }) => id);
 
-            activityDirectivesMap.update((currentActivityDirectivesMap: ActivityDirectivesMap) => {
-              deletedActivityIds.forEach(id => delete currentActivityDirectivesMap[id]);
-              return { ...currentActivityDirectivesMap };
+            activityDirectivesDB.updateValue(directives => {
+              return directives.filter(directive => {
+                return deletedActivityIds.indexOf(directive.id) < 1;
+              });
             });
 
             // If there are activities that did not get deleted
@@ -1796,9 +1821,10 @@ const effects = {
               })
               .map(({ affected_row: { id } }) => id);
 
-            activityDirectivesMap.update((currentActivityDirectivesMap: ActivityDirectivesMap) => {
-              deletedActivityIds.forEach(id => delete currentActivityDirectivesMap[id]);
-              return { ...currentActivityDirectivesMap };
+            activityDirectivesDB.updateValue(directives => {
+              return directives.filter(directive => {
+                return deletedActivityIds.indexOf(directive.id) < 1;
+              });
             });
             // If there are activities that did not get deleted
             const leftoverActivities = subtreeDeletions.filter(id => !deletedActivityIds.includes(id));
@@ -1822,9 +1848,10 @@ const effects = {
 
           if (response.deleteActivityDirectives) {
             const deletedActivityIds = response.deleteActivityDirectives.returning.map(({ id }) => id);
-            activityDirectivesMap.update((currentActivityDirectivesMap: ActivityDirectivesMap) => {
-              deletedActivityIds.forEach(id => delete currentActivityDirectivesMap[id]);
-              return { ...currentActivityDirectivesMap };
+            activityDirectivesDB.updateValue(directives => {
+              return directives.filter(directive => {
+                return deletedActivityIds.indexOf(directive.id) < 1;
+              });
             });
             // If there are activities that did not get deleted
             const leftoverActivities = normalDeletions.filter(id => !deletedActivityIds.includes(id));
@@ -2223,22 +2250,30 @@ const effects = {
     }
   },
 
-  async deleteParcelToParameterDictionaries(ids: number[], user: User | null): Promise<number | null> {
+  async deleteParcelToParameterDictionaries(
+    parcelToParameterDictionariesToDelete: ParcelToParameterDictionary[],
+    user: User | null,
+  ): Promise<number | null> {
     try {
       if (!queryPermissions.DELETE_PARCEL_TO_PARAMETER_DICTIONARIES(user)) {
         throwPermissionError('delete parcel to parameter dictionaries');
       }
 
+      const parcelIds = parcelToParameterDictionariesToDelete.map(p => p.parcel_id);
+      const parameterDictionaryIds = parcelToParameterDictionariesToDelete.map(p => p.parameter_dictionary_id);
+
       const data = await reqHasura<{ affected_rows: number }>(
         gql.DELETE_PARCEL_TO_PARAMETER_DICTIONARIES,
-        { ids },
+        { parameterDictionaryIds, parcelIds },
         user,
       );
+
       const { delete_parcel_to_parameter_dictionary } = data;
+
       if (delete_parcel_to_parameter_dictionary != null) {
         const { affected_rows } = delete_parcel_to_parameter_dictionary;
 
-        if (affected_rows !== ids.length) {
+        if (affected_rows !== parameterDictionaryIds.length) {
           throw Error('Some parcel to parameter dictionaries were not successfully deleted');
         }
 
@@ -3212,7 +3247,7 @@ const effects = {
   async getPlanSnapshotActivityDirectives(
     snapshot: PlanSnapshot,
     user: User | null,
-  ): Promise<ActivityDirective[] | null> {
+  ): Promise<ActivityDirectiveDB[] | null> {
     try {
       const data = await reqHasura<PlanSnapshotActivity[]>(
         gql.GET_PLAN_SNAPSHOT_ACTIVITY_DIRECTIVES,
@@ -3486,12 +3521,26 @@ const effects = {
     return null;
   },
 
-  async getSpans(datasetId: number, user: User | null, signal: AbortSignal | undefined = undefined): Promise<Span[]> {
+  async getSpans(
+    datasetId: number,
+    planStartTimeYmd: string,
+    user: User | null,
+    signal: AbortSignal | undefined = undefined,
+  ): Promise<Span[]> {
     try {
-      const data = await reqHasura<Span[]>(gql.GET_SPANS, { datasetId }, user, signal);
+      const data = await reqHasura<SpanDB[]>(gql.GET_SPANS, { datasetId }, user, signal);
       const { span: spans } = data;
       if (spans != null) {
-        return spans;
+        return spans.map(span => {
+          const durationMs = getIntervalInMs(span.duration);
+          const startMs = getUnixEpochTimeFromInterval(planStartTimeYmd, span.start_offset);
+          return {
+            ...span,
+            durationMs,
+            endMs: startMs + durationMs,
+            startMs,
+          };
+        });
       } else {
         throw Error('Unable to get spans');
       }
@@ -3724,11 +3773,16 @@ const effects = {
     }
   },
 
+  /**
+   * Try and get the view from the query parameters, otherwise check if there's a default view set at the
+   * mission model level, otherwise just return a generated default view.
+   */
   async getView(
     query: URLSearchParams | null,
     user: User | null,
     activityTypes: ActivityType[] = [],
     resourceTypes: ResourceType[] = [],
+    defaultView?: View | null,
   ): Promise<View | null> {
     try {
       if (query !== null) {
@@ -3741,6 +3795,8 @@ const effects = {
           if (view !== null) {
             return view;
           }
+        } else if (defaultView !== null && defaultView !== undefined) {
+          return defaultView;
         }
       }
       return generateDefaultView(activityTypes, resourceTypes);
@@ -4154,7 +4210,7 @@ const effects = {
         throwPermissionError('restore plan snapshot');
       }
 
-      const { confirm, value } = await showRestorePlanSnapshotModal(snapshot, get(activityDirectives).length, user);
+      const { confirm, value } = await showRestorePlanSnapshotModal(snapshot, get(activityDirectivesDB).length, user);
 
       if (confirm) {
         if (value && value.shouldCreateSnapshot) {
@@ -4183,6 +4239,49 @@ const effects = {
       return false;
     }
     return false;
+  },
+
+  async retriggerModelExtraction(
+    id: number,
+    user: User | null,
+  ): Promise<{
+    response: {
+      activity_types: ModelLog;
+      model_parameters: ModelLog;
+      resource_types: ModelLog;
+    };
+  } | null> {
+    try {
+      if (!queryPermissions.UPDATE_MODEL(user)) {
+        throwPermissionError('retrigger this model extraction');
+      }
+
+      const data = await reqGateway('/modelExtraction', 'POST', JSON.stringify({ missionModelId: id }), user, false);
+      if (data != null) {
+        const {
+          response: { activity_types, model_parameters, resource_types },
+        } = data;
+
+        if (activity_types.error) {
+          throw Error(activity_types.error);
+        }
+        if (model_parameters.error) {
+          throw Error(model_parameters.error);
+        }
+        if (resource_types.error) {
+          throw Error(resource_types.error);
+        }
+
+        showSuccessToast('Model Extraction Retriggered Successfully');
+        return data;
+      } else {
+        throw Error(`Unable to retrigger model extraction with ID: "${id}"`);
+      }
+    } catch (e) {
+      catchError('Model Extraction Failed', e as Error);
+      showFailureToast('Model Extraction Failed');
+    }
+    return null;
   },
 
   async schedule(analysis_only: boolean = false, plan: Plan | null, user: User | null): Promise<void> {
@@ -4285,6 +4384,9 @@ const effects = {
         if (!queryPermissions.SIMULATE(user, plan, plan.model)) {
           throwPermissionError('simulate this plan');
         }
+
+        resetConstraintStoresForSimulation();
+
         const data = await reqHasura<SimulateResponse>(gql.SIMULATE, { force, planId: plan.id }, user);
         const { simulate } = data;
         if (simulate != null) {
@@ -4308,6 +4410,7 @@ const effects = {
     activityType: ActivityType | null,
     user: User | null,
     newFiles: File[] = [],
+    signal?: AbortSignal,
   ): Promise<void> {
     try {
       if (!queryPermissions.UPDATE_ACTIVITY_DIRECTIVE(user, plan)) {
@@ -4346,7 +4449,7 @@ const effects = {
         activityDirectiveSetInput.metadata = partialActivityDirective.metadata;
       }
 
-      const data = await reqHasura<ActivityDirective>(
+      const data = await reqHasura<ActivityDirectiveDB>(
         gql.UPDATE_ACTIVITY_DIRECTIVE,
         {
           activityDirectiveSetInput,
@@ -4354,14 +4457,19 @@ const effects = {
           plan_id: plan.id,
         },
         user,
+        signal,
       );
 
       if (data.update_activity_directive_by_pk) {
         const { update_activity_directive_by_pk: updatedDirective } = data;
-        activityDirectivesMap.update((currentActivityDirectivesMap: ActivityDirectivesMap) => ({
-          ...currentActivityDirectivesMap,
-          [id]: updatedDirective,
-        }));
+        activityDirectivesDB.updateValue(directives => {
+          return directives.map(directive => {
+            if (directive.id === id) {
+              return updatedDirective;
+            }
+            return directive;
+          });
+        });
         showSuccessToast('Activity Directive Updated Successfully');
       } else {
         throw Error(`Unable to update directive with ID: "${id}"`);
@@ -4635,6 +4743,28 @@ const effects = {
       catchError('Parcel Update Failed', e as Error);
       showFailureToast('Parcel Update Failed');
       return null;
+    }
+  },
+
+  async updatePlan(plan: Plan, planMetadata: Partial<PlanMetadata>, user: User | null): Promise<void> {
+    try {
+      if (!queryPermissions.UPDATE_PLAN(user, plan)) {
+        throwPermissionError('update plan');
+      }
+
+      const data = await reqHasura(gql.UPDATE_PLAN, { plan: planMetadata, plan_id: plan.id }, user);
+      const { updatePlan } = data;
+
+      if (updatePlan.id != null) {
+        showSuccessToast('Plan Updated Successfully');
+        return;
+      } else {
+        throw Error(`Unable to update plan with ID: "${plan.id}"`);
+      }
+    } catch (e) {
+      catchError('Plan Update Failed', e as Error);
+      showFailureToast('Plan Update Failed');
+      return;
     }
   },
 
@@ -5191,7 +5321,7 @@ const effects = {
 
   async uploadDictionary(
     dictionary: string,
-    type: 'COMMAND' | 'CHANNEL' | 'PARAMETER',
+    type: DictionaryTypes,
     user: User | null,
   ): Promise<CommandDictionary | ChannelDictionary | ParameterDictionary | null> {
     try {
@@ -5206,6 +5336,7 @@ const effects = {
       );
 
       const { createDictionary: newDictionary } = data;
+
       if (newDictionary === null) {
         throw Error('Unable to upload command dictionary');
       }
@@ -5218,33 +5349,42 @@ const effects = {
   },
 
   async uploadDictionaryOrAdaptation(
-    files: FileList,
+    file: File,
     user: User | null,
+    sequenceAdaptationName?: string | undefined,
   ): Promise<CommandDictionary | ChannelDictionary | ParameterDictionary | SequenceAdaptation | null> {
-    const file: File = files[0];
     const text = await file.text();
     const splitLineDictionary = text.split('\n');
 
-    let type: 'COMMAND' | 'CHANNEL' | 'PARAMETER' = 'COMMAND';
+    let type: DictionaryTypes = DictionaryTypes.COMMAND;
+
     switch (splitLineDictionary[1]) {
       case `<${DictionaryHeaders.command_dictionary}>`: {
-        type = 'COMMAND';
+        type = DictionaryTypes.COMMAND;
         break;
       }
       case `<${DictionaryHeaders.telemetry_dictionary}>`: {
-        type = 'CHANNEL';
+        type = DictionaryTypes.CHANNEL;
         break;
       }
       case `<${DictionaryHeaders.param_def}>`: {
-        type = 'PARAMETER';
+        type = DictionaryTypes.PARAMETER;
         break;
       }
       default: {
-        const adaptation = await this.createCustomAdaptation({ adaptation: text }, user);
-        return adaptation;
+        if (sequenceAdaptationName) {
+          const adaptation = await this.createCustomAdaptation(
+            { adaptation: text, name: sequenceAdaptationName },
+            user,
+          );
+          return adaptation;
+        }
+        break;
       }
     }
+
     const dictionary = await this.uploadDictionary(text, type, user);
+
     return dictionary;
   },
 

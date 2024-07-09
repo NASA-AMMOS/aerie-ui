@@ -1,5 +1,6 @@
 import test, { type BrowserContext, type Page } from '@playwright/test';
-import { Dictionaries } from '../fixtures/Dictionaries.js';
+import { adjectives, animals, colors, uniqueNamesGenerator } from 'unique-names-generator';
+import { COMMAND_DICTIONARY_PATH, Dictionaries, DictionaryType } from '../fixtures/Dictionaries.js';
 import { ExpansionRules } from '../fixtures/ExpansionRules.js';
 import { ExpansionSets } from '../fixtures/ExpansionSets.js';
 import { Models } from '../fixtures/Models.js';
@@ -12,7 +13,7 @@ let models: Models;
 let page: Page;
 let parcels: Parcels;
 
-test.beforeAll(async ({ browser }) => {
+test.beforeAll(async ({ baseURL, browser }) => {
   context = await browser.newContext();
   page = await context.newPage();
 
@@ -22,12 +23,22 @@ test.beforeAll(async ({ browser }) => {
   expansionRules = new ExpansionRules(page, parcels, models);
   expansionSets = new ExpansionSets(page, parcels, models, expansionRules);
 
+  const dictionaryName = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
+  const dictionaryBuffer = dictionaries.readDictionary(dictionaryName, COMMAND_DICTIONARY_PATH);
+
   await models.goto();
-  await models.createModel();
+  await models.createModel(baseURL);
   await dictionaries.goto();
-  const dictionaryName = await dictionaries.createDictionary();
+  await dictionaries.updatePage(page, DictionaryType.CommandDictionary, dictionaryName);
+  await dictionaries.createDictionary(
+    dictionaryBuffer,
+    dictionaryName,
+    dictionaries.commandDictionaryTable,
+    dictionaries.commandDictionaryTableRow,
+    DictionaryType.CommandDictionary,
+  );
   await parcels.goto();
-  await parcels.createParcel(dictionaryName);
+  await parcels.createParcel(dictionaryName, baseURL);
   await expansionRules.goto();
 });
 

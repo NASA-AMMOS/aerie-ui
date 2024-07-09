@@ -11,7 +11,6 @@
   import type { ColDef, ColumnState, IRowNode, RedrawRowsParams } from 'ag-grid-community';
   import { keyBy } from 'lodash-es';
   import { createEventDispatcher, onDestroy, type ComponentEvents } from 'svelte';
-  import { PlanStatusMessages } from '../../../enums/planStatusMessages';
   import type { User } from '../../../types/app';
   import type { Dispatcher } from '../../../types/component';
   import type { RowId, TRowData } from '../../../types/data-grid';
@@ -25,9 +24,10 @@
   export let autoSizeColumnsToFit: boolean = true;
   export let columnDefs: ColDef[];
   export let columnStates: ColumnState[] = [];
+  export let columnsToForceRefreshOnDataUpdate: (keyof RowData)[] = [];
   export let dataGrid: DataGrid<RowData> | undefined = undefined;
   export let hasDeletePermission: PermissionCheck<RowData> | boolean = true;
-  export let planReadOnly: boolean = false;
+  export let hasDeletePermissionError: string = 'You do not have permission to delete.';
   export let idKey: keyof RowData = 'id';
   export let items: RowData[];
   export let pluralItemDisplayText: string = '';
@@ -54,12 +54,12 @@
     const selectedItem = items.find(item => item.id === selectedItemId) ?? null;
     if (selectedItem) {
       if (typeof hasDeletePermission === 'function') {
-        deletePermission = hasDeletePermission(user, selectedItem) && !planReadOnly;
+        deletePermission = hasDeletePermission(user, selectedItem);
       }
     }
   }
   $: if (typeof hasDeletePermission === 'boolean') {
-    deletePermission = hasDeletePermission && !planReadOnly;
+    deletePermission = hasDeletePermission;
   }
   $: if (selectedItemId != null && !selectedItemIds.includes(selectedItemId)) {
     selectedItemIds = [selectedItemId];
@@ -67,6 +67,9 @@
     selectedItemIds = [];
   }
   $: if (user !== undefined) {
+    redrawRows?.();
+  }
+  $: if (deletePermission != null) {
     redrawRows?.();
   }
 
@@ -125,6 +128,7 @@
   {autoSizeColumnsToFit}
   {columnDefs}
   {columnStates}
+  {columnsToForceRefreshOnDataUpdate}
   {getRowId}
   {idKey}
   {isRowSelectable}
@@ -165,7 +169,7 @@
               permissionHandler,
               {
                 hasPermission: deletePermission,
-                permissionError: planReadOnly ? PlanStatusMessages.READ_ONLY : 'You do not have permission to delete.',
+                permissionError: hasDeletePermissionError,
               },
             ],
           ]}

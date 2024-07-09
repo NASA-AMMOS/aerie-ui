@@ -8,9 +8,11 @@
     isFswCommandArgumentRepeat,
     isFswCommandArgumentUnsigned,
     isFswCommandArgumentVarString,
-  } from './utils';
+  } from '../../../utilities/codemirror/codemirror-utils';
 
   export let argDef: FswCommandArgument;
+
+  $: title = getArgTitle(argDef);
 
   function compactType(argDef: FswCommandArgument) {
     if (isFswCommandArgumentUnsigned(argDef)) {
@@ -48,6 +50,6 @@
 </script>
 
 <details>
-  <summary>{getArgTitle(argDef)}</summary>
+  <summary>{title}</summary>
   {argDef.description}
 </details>

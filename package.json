@@ -1,7 +1,7 @@
 {
   "name": "aerie-ui",
   "description": "The client application for Aerie.",
-  "version": "2.11.0",
+  "version": "2.14.0",
   "type": "module",
   "private": true,
   "license": "MIT",
@@ -130,7 +130,7 @@
     "stylelint-order": "^6.0.4",
     "svelte-check": "^3.4.4",
     "tslib": "^2.6.0",
-    "typescript": "5.4.3",
+    "typescript": "5.0.4",
     "unique-names-generator": "^4.7.1",
     "vite": "5.1.6",
     "vitest": "^1.0.0"
