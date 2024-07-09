@@ -57,6 +57,8 @@
       />
     </span>
 
+    <p>TOTAL EVENTS COUNTED: {Array.from(derivationGroup.sources.values()).map(e => e.event_counts).reduce((sum, cur) => sum+cur, 0)}</p>
+
     {#if relevantSources.length}
       <Collapse title={"Contained Sources"} tooltipContent={"View sources in this group"} defaultExpanded={false}>
         {#each relevantSources as source}
@@ -80,6 +82,9 @@
 
             <p>
               <strong>ValidAt:</strong> {source.valid_at}
+            </p>
+            <p>
+              EVENTS COUNTED: {derivationGroup.sources.get(source.key)?.event_counts}
             </p>
           </Collapse>
         {/each}

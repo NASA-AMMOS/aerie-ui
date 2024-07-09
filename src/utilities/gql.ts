@@ -2489,6 +2489,14 @@ const gql = {
         id
         name
         source_type_id
+        external_source {
+          key
+          external_events_aggregate {
+            aggregate {
+              count
+            }
+          }
+        }
       }
     }
   `,
