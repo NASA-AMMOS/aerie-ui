@@ -642,7 +642,7 @@ export function getDoyTimeComponents(date: Date) {
  */
 export function getDurationTimeComponents(duration: ParsedDurationString): DurationTimeComponents {
   return {
-    days: duration.days !== 0 ? String(duration.days).padStart(3, '0') + 'T' : '',
+    days: duration.days !== 0 ? String(duration.days).padStart(3, '0') : '',
     hours: duration.hours.toString().padStart(2, '0'),
     isNegative: duration.isNegative ? '-' : '',
     microseconds: duration.microseconds !== 0 ? String(duration.microseconds).padStart(3, '0') : '',

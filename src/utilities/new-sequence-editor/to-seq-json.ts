@@ -305,7 +305,7 @@ function parseTime(commandNode: SyntaxNode, text: string): Time {
       const { isNegative, days, hours, minutes, seconds, milliseconds } = getDurationTimeComponents(
         parseDurationString(timeTagEpochText, 'seconds'),
       );
-      tag = `${isNegative}${days}${hours}:${minutes}:${seconds}${milliseconds}`;
+      tag = `${isNegative}${days}${days ? 'T' : ''}${hours}:${minutes}:${seconds}${milliseconds}`;
       return { tag, type: 'EPOCH_RELATIVE' };
     }
 
@@ -325,7 +325,7 @@ function parseTime(commandNode: SyntaxNode, text: string): Time {
       const { isNegative, days, hours, minutes, seconds, milliseconds } = getDurationTimeComponents(
         parseDurationString(timeTagRelativeText, 'seconds'),
       );
-      tag = `${isNegative}${days}${hours}:${minutes}:${seconds}${milliseconds}`;
+      tag = `${isNegative}${days}${days ? 'T' : ''}${hours}:${minutes}:${seconds}${milliseconds}`;
       return { tag, type: 'COMMAND_RELATIVE' };
     }
 

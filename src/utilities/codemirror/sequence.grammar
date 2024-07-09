@@ -89,11 +89,12 @@ Command {
   Models?
 }
 
-Activate { TimeTag activateDirective "(" SequenceName { String } ")" commonLoadActivate }
+Activate { TimeTag activateDirective commonLoadActivate }
 
-Load { TimeTag loadDirective "(" SequenceName { String } ")" commonLoadActivate }
+Load { TimeTag loadDirective commonLoadActivate }
 
 commonLoadActivate {
+  "(" SequenceName { String } ")"
   Args
   LineComment?
   newLine
@@ -103,11 +104,12 @@ commonLoadActivate {
   Models?
 }
 
-GroundBlock { TimeTag groundBlockDirective "(" GroundName { String } ")" commonGround }
+GroundBlock { TimeTag groundBlockDirective commonGround }
 
-GroundEvent { TimeTag groundEventDirective "(" GroundName { String } ")" commonGround }
+GroundEvent { TimeTag groundEventDirective commonGround }
 
 commonGround {
+  "(" GroundName { String } ")"
   Args
   LineComment?
   newLine
