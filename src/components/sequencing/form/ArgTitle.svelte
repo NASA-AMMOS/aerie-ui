@@ -46,7 +46,7 @@
     let base = `${argDef.name}${compactTypeInfo}`;
     if ('range' in argDef && argDef.range) {
       if (isArray(argDef.range)) {
-        base += ` ${argDef.range.join(', ')}`;
+        base += ` [${argDef.range.join(', ')}]`;
       } else {
         base += ` [${argDef.range.min} – ${argDef.range.max}]`;
       }
