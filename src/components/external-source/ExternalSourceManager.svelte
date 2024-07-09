@@ -6,7 +6,7 @@
   import { onDestroy, onMount } from 'svelte';
   import { catchError } from '../../stores/errors';
   import { externalEventTypes, getEventTypeName } from '../../stores/external-event';
-  import { createExternalSourceError, createExternalSourceEventTypeLinkError, createExternalSourceTypeError, creatingExternalSource, derivationGroups, externalSourceTypes, externalSourceWithTypeName, getDerivationGroupByName, getEventSourceTypeByName, planDerivationGroupLinks } from '../../stores/external-source';
+  import { createExternalSourceError, createExternalSourceEventTypeLinkError, createExternalSourceTypeError, creatingExternalSource, derivationGroups, externalSourceTypes, externalSourceWithTypeName, getDerivationGroupByNameSourceTypeId, getEventSourceTypeByName, planDerivationGroupLinks } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import { plans } from '../../stores/plans';
   import type { User } from '../../types/app';
@@ -205,6 +205,11 @@
   $: if (files) {
     // files repeatedly refreshes, meaning the reaction to file and parsed keeps repeating infinitely. This if statement prevents that.
     if (file !== files[0]) {
+      // Reset creation errors when a new file is set
+      $createExternalSourceError = null;
+      $createExternalSourceTypeError = null;
+      $createExternalSourceEventTypeLinkError = null;
+
       file = files[0];
       const fileText = file.text();
       fileText.then(async text => {
@@ -285,9 +290,9 @@
   $: effects.getExternalEvents(selectedSource?.id, user).then(fetched => selectedEvents = fetched.map(eDB => {
     return {
       ...eDB,
+      durationMs: convertDurationToMs(eDB.duration),
       event_type: getEventTypeName(eDB.event_type_id, $externalEventTypes),
       startMs: convertUTCtoMs(eDB.start_time),
-      durationMs: convertDurationToMs(eDB.duration)
     }
   }));
 
@@ -358,22 +363,23 @@
     }
   }
 
-  async function onFormSubmit(e: SubmitEvent) {
+  async function onFormSubmit(_e: SubmitEvent) {
     if (parsed && file) {
-      // Create an entry for the derivation group
-      if (!($derivationGroups.some(derivationGroup => derivationGroup.name === $derivationGroupField.value))) {
-        derivationGroupInsert = {
-          name: $derivationGroupField.value,
-          source_type_id: -1 // filled in later
-        };
-      }
-
       // Create an entry for the current source type if it does not already exist. Otherwise, retrieve the id
       if (!($externalSourceTypes.some(externalSourceType => externalSourceType.name === $sourceTypeField.value))) {
         sourceTypeInsert = {
           name: $sourceTypeField.value
         };
       }
+      // Create an entry for the derivation group
+      derivationGroupInsert = {
+        name: $derivationGroupField.value,
+        source_type_id: -1 // filled in later
+      };
+      /**
+      if (!($derivationGroups.some(derivationGroup => derivationGroup.name === $derivationGroupField.value && derivationGroup.source_type_id === ))) {
+      }
+      **/
 
       // create the source object to upload to AERIE
       const start_time: string | null = convertDoyToYmd($startTimeDoyField.value.replaceAll("Z", ""))
@@ -390,6 +396,7 @@
         return
       }
       sourceInsert = {
+        derivation_group_id: -1, // updated in the effect. TODO: effect
         end_time,
         external_events: {
           data: null  // updated after this map is created
@@ -400,7 +407,6 @@
         source_type_id: -1,  // updated in the effect.
         start_time,
         valid_at,
-        derivation_group_id: -1 // updated in the effect. TODO: effect
       };
 
       // the ones uploaded in this run won't show up as quickly in $externalEventTypes, so we keep a local log as well
@@ -453,11 +459,11 @@
 
             externalEventsCreated.push({
               duration,
+              event_type_id: externalEventTypeId,
               id,
               key,
               properties,
               start_time,
-              event_type_id: externalEventTypeId
             });
             externalSourceEventTypes.add(externalEventTypeId)
           }
@@ -481,8 +487,10 @@
           if(sourceType !== undefined) derivationGroupInsert.source_type_id = sourceType.id;
           else console.log("Source type not registered correctly. Derivation group may be incorrect.")
           derivationGroup = await effects.createDerivationGroup(derivationGroupInsert, user);
-        } else {
-          derivationGroup = getDerivationGroupByName($derivationGroupField.value, $derivationGroups)
+        } else if (($derivationGroups.filter(dGroup => { dGroup.source_type_id !== sourceType?.id && dGroup.name === derivationGroupInsert.name}))) {
+          derivationGroup = await effects.createDerivationGroup(derivationGroupInsert, user);
+        } else if (sourceType !== undefined) {
+          derivationGroup = getDerivationGroupByNameSourceTypeId($derivationGroupField.value, sourceType.id, $derivationGroups)
         }
 
         if (sourceType !== undefined && derivationGroup !== undefined) {
@@ -499,17 +507,17 @@
       // finally, create the event source -> contained event types entry
       if (sourceId !== undefined) {
         for (let external_event_type_id of externalSourceEventTypes) {
-          let linkId = await effects.createExternalSourceEventTypeLink({external_event_type_id, external_source_id: sourceId}, user);
+          await effects.createExternalSourceEventTypeLink({external_event_type_id, external_source_id: sourceId}, user);
         }
       }
 
       // autoselect the new source
       if (sourceId && sourceType) {
         selectedSource = {
+          derivation_group: derivationGroup?.name,
           id: sourceId,
           ...sourceInsert,
           source_type: sourceType?.name,
-          derivation_group: derivationGroup?.name
         }
       }
 
@@ -567,7 +575,7 @@
   }
 
   function toggleItem(value: ExternalSourceType) {
-    if (!selectedFilters.find(f => f.id == value.id)) {
+    if (!selectedFilters.find(f => f.id === value.id)) {
       selectedFilters = selectedFilters.concat(value)
     }
     else {
@@ -725,7 +733,13 @@
           </Collapse>
         </div>
       {:else}
-        <form on:submit|preventDefault={onFormSubmit} on:reset={() => parsed = undefined}>
+        <form on:submit|preventDefault={onFormSubmit} on:reset={() => {
+          parsed = undefined;
+          $createExternalSourceError = null;
+          $createExternalSourceTypeError = null;
+          $createExternalSourceEventTypeLinkError = null;
+          }
+        }>
           <AlertError class="m-2" error={$createExternalSourceError} />
           <AlertError class="m-2" error={$createExternalSourceTypeError} />
           <AlertError class="m-2" error={$createExternalSourceEventTypeLinkError} />

@@ -71,14 +71,17 @@ export const selectedPlanDerivationGroupIds = derived(
 export const selectedPlanExternalSourceEventTypes = derived(
   [externalSourceEventTypes, selectedPlanDerivationGroupIds, externalSources],
   ([$externalSourceEventTypes, $selectedPlanDerivationGroupIds, $externalSources]) => {
-    let allValidSources = $externalSources.filter(source => $selectedPlanDerivationGroupIds.includes(source.derivation_group_id)).map(source => source.id)
-    let allValidEventTypes = $externalSourceEventTypes.filter(eset => allValidSources.includes(eset.external_source_id)).map(eset => eset.external_event_type_id)
-    
+    const allValidSources = $externalSources
+      .filter(source => $selectedPlanDerivationGroupIds.includes(source.derivation_group_id))
+      .map(source => source.id);
+    const allValidEventTypes = $externalSourceEventTypes
+      .filter(eset => allValidSources.includes(eset.external_source_id))
+      .map(eset => eset.external_event_type_id);
+
     // remove duplicates
     return allValidEventTypes.filter((val, ind, arr) => arr.indexOf(val) == ind);
-  }
-)
-
+  },
+);
 
 /* Helper Functions. */
 export function resetModelStores() {
@@ -89,25 +92,32 @@ export function resetModelStores() {
 }
 
 export function getSourceName(source_id: number | undefined, sources: ExternalSourceSlim[]): string {
-  return sources.find(s => s.id === source_id)?.key ?? 'None'  
+  return sources.find(s => s.id === source_id)?.key ?? 'None';
 }
 
 export function getEventSourceTypeName(id: number, sourceTypes: ExternalSourceType[]): string | undefined {
-  return sourceTypes.find(sourceType => sourceType.id === id)?.name
+  return sourceTypes.find(sourceType => sourceType.id === id)?.name;
 }
 
 export function getEventSourceTypeId(name: string, sourceTypes: ExternalSourceType[]): number | undefined {
-  return sourceTypes.find(sourceType => sourceType.name === name)?.id
+  return sourceTypes.find(sourceType => sourceType.name === name)?.id;
 }
 
-export function getEventSourceTypeByName(name: string, sourceTypes: ExternalSourceType[]): ExternalSourceType | undefined {
-  return sourceTypes.find(sourceType => sourceType.name === name)
+export function getEventSourceTypeByName(
+  name: string,
+  sourceTypes: ExternalSourceType[],
+): ExternalSourceType | undefined {
+  return sourceTypes.find(sourceType => sourceType.name === name);
 }
 
-export function getDerivationGroupByName(name: string, derivationGroups: DerivationGroup[]): DerivationGroup | undefined {
-  return derivationGroups.find(derivationGroup => derivationGroup.name === name)
+export function getDerivationGroupByNameSourceTypeId(
+  name: string,
+  sourceTypeId: number,
+  derivationGroups: DerivationGroup[],
+): DerivationGroup | undefined {
+  return derivationGroups.find(derivationGroup => derivationGroup.name === name);
 }
 
 export function getDerivationGroupName(id: number, derivationGroups: DerivationGroup[]): string | undefined {
-  return derivationGroups.find(derivationGroup => derivationGroup.id === id)?.name
+  return derivationGroups.find(derivationGroup => derivationGroup.id === id)?.name;
 }
