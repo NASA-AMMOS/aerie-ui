@@ -22,24 +22,22 @@
   $: value = initVal;
   $: valFloat = Number(value);
   $: {
-    if (value && !isNaN(valFloat)) {
+    if (typeof value === 'number' && !isNaN(valFloat)) {
       setInEditor(value);
     }
   }
 </script>
 
 <div>
-  <input class="st-input" type="string" bind:value required />
-  {#if typeof min === 'number' && typeof max === 'number' && min === max && valFloat !== max}
-    <button class="st-button" on:click={() => setInEditor(max)} title="Set to allowed value">{max}</button>
+  <input class="st-input w-100" type="number" bind:value required {min} {max} />
+  {#if typeof min === 'number' && typeof max === 'number' && (valFloat < min || valFloat > max)}
+    <button style="margin-top: 4px" class="st-button" on:click={() => setInEditor(max)} title="Set to allowed value">
+      Set to maximum: {max}
+    </button>
   {/if}
 </div>
 
 <style>
-  input {
-    width: 90%;
-  }
-
   input:invalid {
     color: red;
   }

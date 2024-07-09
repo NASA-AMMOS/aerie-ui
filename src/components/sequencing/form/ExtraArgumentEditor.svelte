@@ -6,7 +6,7 @@
   export let setInEditor: () => void;
 </script>
 
-<div>
-  <button on:click={setInEditor} class="st-button">Remove</button>
-  <span>{initVal}</span>
+<div style="display: flex; gap: 8px">
+  <input class="st-input w-100" value={initVal} disabled={true} />
+  <button on:click={setInEditor} class="st-button secondary">Remove</button>
 </div>
