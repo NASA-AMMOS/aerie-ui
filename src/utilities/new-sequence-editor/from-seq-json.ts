@@ -227,7 +227,6 @@ export function seqJsonToSequence(
         // Add metadata data if it exists
         hardwareString += metadata;
         sequence.push(hardwareString);
-
       }
     }
 
