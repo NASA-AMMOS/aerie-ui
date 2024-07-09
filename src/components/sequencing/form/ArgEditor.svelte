@@ -41,7 +41,7 @@
 <fieldset>
   {#if !argInfo.argDef}
     {#if argInfo.text}
-      <div title="Unknown Argument">Unknown Argument</div>
+      <div class="st-typography-medium" title="Unknown Argument">Unknown Argument</div>
       <ExtraArgumentEditor
         initVal={argInfo.text}
         setInEditor={() => {
@@ -67,12 +67,15 @@
         />
       {:else}
         <button
+          class="st-button"
           on:click={() => {
             if (argInfo.node && argInfo.text) {
               setInEditor(argInfo.node, quoteEscape(argInfo.text));
             }
-          }}>Convert to enum type</button
+          }}
         >
+          Convert to enum type
+        </button>
       {/if}
     {:else if isNumberArg(argInfo.argDef) && argInfo.node?.name === 'Number'}
       <NumEditor
@@ -115,12 +118,13 @@
             disabled={!enableRepeatAdd}
             on:click={addRepeatTuple}
             title={`Add additional set of argument values to ${argInfo.argDef.name} repeat array`}
-            >Add {argInfo.argDef.name} tuple</button
           >
+            Add {argInfo.argDef.name} tuple
+          </button>
         </div>
       {/if}
     {:else}
-      <div>Unexpected value for definition</div>
+      <div class="st-typography-body">Unexpected value for definition</div>
     {/if}
   {/if}
 </fieldset>

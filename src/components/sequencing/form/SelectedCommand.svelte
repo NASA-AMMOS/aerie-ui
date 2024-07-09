@@ -16,6 +16,7 @@
   import { getCustomArgDef } from '../../../utilities/new-sequence-editor/extension-points';
   import { TOKEN_COMMAND, TOKEN_ERROR } from '../../../utilities/new-sequence-editor/sequencer-grammar-constants';
   import { getAncestorNode } from '../../../utilities/new-sequence-editor/tree-utils';
+  import Collapse from '../../Collapse.svelte';
   import Panel from '../../ui/Panel.svelte';
   import SectionTitle from '../../ui/SectionTitle.svelte';
   import {
@@ -208,15 +209,13 @@
         {#if !!commandDef}
           {#if !!timeTagNode}
             <fieldset>
-              <div>Time Tag: {timeTagNode.text.trim()}</div>
+              <label for="timeTag">Time Tag</label>
+              <input class="st-input w-100" disabled name="timeTag" value={timeTagNode.text.trim()} />
             </fieldset>
           {/if}
 
           <fieldset>
-            <details>
-              <summary>{commandDef.stem}</summary>
-              {commandDef.description}
-            </details>
+            <Collapse headerHeight={24} title={commandDef.stem} padContent={false}>{commandDef.description}</Collapse>
           </fieldset>
 
           {#each editorArgInfoArray as argInfo}
@@ -242,7 +241,7 @@
           {/if}
         {/if}
       {:else}
-        <div>Select a command to modify its parameters.</div>
+        <div class="empty-state st-typography-label">Select a command to modify its parameters.</div>
       {/if}
     </div>
   </svelte:fragment>
@@ -250,6 +249,11 @@
 
 <style>
   .content {
-    padding: 8px 16px 0px;
+    overflow: auto;
+    padding-bottom: 16px;
+  }
+
+  .empty-state {
+    padding: 8px 16px;
   }
 </style>

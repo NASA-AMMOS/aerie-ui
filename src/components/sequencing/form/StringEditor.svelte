@@ -26,12 +26,4 @@
   }
 </script>
 
-<div>
-  <input class="st-input" spellcheck="false" bind:value title={argDef.description} />
-</div>
-
-<style>
-  input {
-    width: 90%;
-  }
-</style>
+<input class="st-input w-100" spellcheck="false" bind:value title={argDef.description} />
