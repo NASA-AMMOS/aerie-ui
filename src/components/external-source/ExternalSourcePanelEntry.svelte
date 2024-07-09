@@ -18,10 +18,10 @@
 
 
   let selectedSourceEventTypes: ExternalEventType[] | null = null;
-  let relevantSources: ExternalSourceWithResolvedNames[] = []
-  $: relevantSources = $externalSourceWithTypeName.filter(source => derivationGroup.name === source.derivation_group)
+  let relevantSources: ExternalSourceWithResolvedNames[] = [];
+  $: relevantSources = $externalSourceWithTypeName.filter(source => derivationGroup.name === source.derivation_group);
 
-  function onEnable(event: Event) {
+  function onEnable(_event: Event) {
     if (enabled) {
       // insert
       effects.insertDerivationGroupForPlan(derivationGroup.id, $plan, user);
@@ -38,16 +38,30 @@
     }
   }
 
-  async function getExternalEventTypes() { // refactor
+  async function getExternalEventTypes() {
+    // refactor
     if (!selectedSourceEventTypes || selectedSourceEventTypes.length === 0) {
-      selectedSourceEventTypes = (await effects.getExternalEventTypesBySource([derivationGroup.id], $externalEventTypes, user))
+      selectedSourceEventTypes = await effects.getExternalEventTypesBySource(
+        [derivationGroup.id],
+        $externalEventTypes,
+        user,
+      );
     }
   }
 </script>
 
 <div class="external-source-pairing">
-  <Collapse title={derivationGroup.name} tooltipContent={"Derivation group " + derivationGroup.name} defaultExpanded={false}>
-    <span slot="left">
+  <Collapse
+    title={derivationGroup.name}
+    tooltipContent={'Derivation group ' + derivationGroup.name}
+    defaultExpanded={false}
+  >
+    <span slot="right">
+      <p style:float="left" style:padding-top="0.1rem" style:padding-right="0.25rem" style:color="gray">
+        {Array.from(derivationGroup.sources.values())
+          .map(e => e.event_counts)
+          .reduce((sum, cur) => sum + cur, 0)} derived events
+      </p>
       <input
         type="checkbox"
         bind:checked={enabled}
@@ -57,46 +71,51 @@
       />
     </span>
 
-    <p>TOTAL EVENTS COUNTED: {Array.from(derivationGroup.sources.values()).map(e => e.event_counts).reduce((sum, cur) => sum+cur, 0)}</p>
-
     {#if relevantSources.length}
-      <Collapse title={"Contained Sources"} tooltipContent={"View sources in this group"} defaultExpanded={false}>
-        {#each relevantSources as source}
-          <!-- Collapsible details -->
-          <Collapse title={source.key} tooltipContent={source.key} defaultExpanded={false}>
-            <p>
-              <strong>Key:</strong> {source.key}
+      {#each relevantSources as source}
+        <!-- Collapsible details -->
+        <Collapse title={source.key} tooltipContent={source.key} defaultExpanded={false}>
+          <span slot="right">
+            <p style:color="gray">
+              {derivationGroup.sources.get(source.key)?.event_counts} events
             </p>
+          </span>
+          <p>
+            <strong>Key:</strong>
+            {source.key}
+          </p>
 
-            <p>
-              <strong>Source Type:</strong> {source.source_type}
-            </p>
+          <p>
+            <strong>Source Type:</strong>
+            {source.source_type}
+          </p>
 
-            <p>
-              <strong>Start Time:</strong> {source.start_time}
-            </p>
+          <p>
+            <strong>Start Time:</strong>
+            {source.start_time}
+          </p>
 
-            <p>
-              <strong>End Time:</strong> {source.end_time}
-            </p>
+          <p>
+            <strong>End Time:</strong>
+            {source.end_time}
+          </p>
 
-            <p>
-              <strong>ValidAt:</strong> {source.valid_at}
-            </p>
-            <p>
-              EVENTS COUNTED: {derivationGroup.sources.get(source.key)?.event_counts}
-            </p>
-          </Collapse>
-        {/each}
-      </Collapse>
+          <p>
+            <strong>Valid At:</strong>
+            {source.valid_at}
+          </p>
+        </Collapse>
+      {/each}
       <Collapse
         className="anchor-collapse"
         defaultExpanded={false}
         title="Event Types"
         tooltipContent="View Contained Event Types"
-        on:collapse={() => {getExternalEventTypes()}}
+        on:collapse={() => {
+          getExternalEventTypes();
+        }}
       >
-        {#each selectedSourceEventTypes ? selectedSourceEventTypes : [{ id: -1, name: "None" }] as eventType}
+        {#each selectedSourceEventTypes ? selectedSourceEventTypes : [{ id: -1, name: 'None' }] as eventType}
           <i>{eventType.name}</i>
         {/each}
       </Collapse>
@@ -105,4 +124,3 @@
     {/if}
   </Collapse>
 </div>
-
