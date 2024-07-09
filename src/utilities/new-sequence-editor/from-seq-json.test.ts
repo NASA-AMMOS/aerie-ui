@@ -21,6 +21,74 @@ describe('from-seq-json.ts', () => {
     expect(sequence).toEqual(expectedSequence);
   });
 
+  it('Symbols should not be quoted', () => {
+    const seqJson: SeqJson = {
+      id: 'testSymbol',
+      locals: [
+        {
+          name: 'L00UINT',
+          type: 'UINT',
+        },
+        {
+          name: 'L00INT',
+          type: 'INT',
+        },
+        {
+          name: 'L01INT',
+          type: 'INT',
+        },
+      ],
+      metadata: {},
+
+      steps: [
+        {
+          args: [
+            {
+              type: 'symbol',
+              value: 'L00UINT',
+            },
+            {
+              type: 'number',
+              value: 10,
+            },
+          ],
+          description: 'line argument',
+          stem: 'PYRO_FIRE',
+
+          time: {
+            type: 'COMMAND_COMPLETE',
+          },
+          type: 'command',
+        },
+        {
+          args: [
+            {
+              type: 'symbol',
+              value: 'L00INT',
+            },
+            {
+              type: 'symbol',
+              value: 'L01INT',
+            },
+          ],
+          stem: 'DDM_BANANA',
+          time: {
+            type: 'COMMAND_COMPLETE',
+          },
+          type: 'command',
+        },
+      ],
+    };
+    const sequence = seqJsonToSequence(seqJson, [], null);
+    const expectedSequence = `@ID "testSymbol"
+@LOCALS L00UINT L00INT L01INT
+
+C PYRO_FIRE L00UINT 10 # line argument
+C DDM_BANANA L00INT L01INT
+`;
+    expect(sequence).toEqual(expectedSequence);
+  });
+
   it('converts a seq json LGO to sequence', () => {
     const seqJson: SeqJson = {
       id: 'test',
@@ -216,7 +284,7 @@ C FSW_CMD_3
     const sequence = seqJsonToSequence(seqJson, [], null);
     const expectedSequence = `@ID "42"
 
-A2024-001T00:00:00 FSW_CMD_0 TRUE 0xFF "Hello" "World" [FALSE 0xAA "Foo" "BAR" TRUE 0xBB "Baz" "BAT"]
+A2024-001T00:00:00 FSW_CMD_0 TRUE 0xFF "Hello" World [FALSE 0xAA "Foo" BAR TRUE 0xBB "Baz" BAT]
 R00:01:00 FSW_CMD_1 22
 E15:00:00 FSW_CMD_2 "Fab"
 C FSW_CMD_3
@@ -380,6 +448,10 @@ C FSW_CMD_2 10 "ENUM" # fsw cmd 2 description
         },
         {
           args: [],
+          stem: 'IC2',
+        },
+        {
+          args: [],
           description: 'noop command, no arguments',
           metadata: { processor: 'VC1A' },
           stem: 'NOOP',
@@ -393,6 +465,7 @@ C FSW_CMD_2 10 "ENUM" # fsw cmd 2 description
 
 @IMMEDIATE
 IC "1" 2 3 # immediate command
+IC2
 NOOP # noop command, no arguments
 @METADATA "processor" "VC1A"
 `;
@@ -413,6 +486,9 @@ NOOP # noop command, no arguments
         {
           stem: 'HWC2',
         },
+        {
+          stem: 'HWC3',
+        },
       ],
       id: 'testHardware',
       metadata: {},
@@ -425,7 +501,9 @@ NOOP # noop command, no arguments
 HWC # hardware command
 @METADATA "foo" "bar"
 @METADATA "hardware" "HWC"
-HWC2`;
+HWC2
+HWC3
+`;
     expect(sequence).toEqual(expectedSequence);
   });
 
@@ -473,6 +551,51 @@ HWC2`;
 A2020-173T20:00:00.000 FSA_CMD
 R00:00:10.000 FSR_CMD
 E-00:00:01.000 FSE_CMD 10 "ENUM"
+`;
+    expect(sequence).toEqual(expectedSequence);
+  });
+
+  it('converts a quoted string', () => {
+    const seqJson: SeqJson = {
+      id: 'escaped_quotes',
+      metadata: {},
+      steps: [
+        {
+          args: [
+            {
+              type: 'string',
+              value: 'Can this handle " Escaped" quotes??',
+            },
+          ],
+          description: 'Can this handle "escape"',
+          stem: 'ECHO',
+          time: {
+            type: 'COMMAND_COMPLETE',
+          },
+          type: 'command',
+        },
+        {
+          args: [
+            {
+              type: 'string',
+              value: '"Can" this handle leading and trailing Escaped" quotes??"',
+            },
+          ],
+          description: '"Can" "this" handle "escape"',
+          stem: 'ECHO2',
+          time: {
+            type: 'COMMAND_COMPLETE',
+          },
+          type: 'command',
+        },
+      ],
+    };
+
+    const sequence = seqJsonToSequence(seqJson, [], null);
+    const expectedSequence = `@ID "escaped_quotes"
+
+C ECHO "Can this handle \\" Escaped\\" quotes??" # Can this handle "escape"
+C ECHO2 "\\"Can\\" this handle leading and trailing Escaped\\" quotes??\\"" # "Can" "this" handle "escape"
 `;
     expect(sequence).toEqual(expectedSequence);
   });
@@ -573,12 +696,73 @@ A2024-123T12:34:56 @LOAD("load.name")
     };
 
     const sequence = seqJsonToSequence(seqJson, [], null);
+
     const expectedSequence = `
 @ID "id"
 
 R123T11:55:33 @GROUND_EVENT("ground_event.name") "foo" 1 2 3
 `;
     expect(sequence.trim()).toEqual(expectedSequence.trim());
+  });
+
+  it('converts a seq json empty repeat args to sequence', () => {
+    const seqJson: SeqJson = {
+      id: 'testRepeat',
+
+      metadata: {},
+      steps: [
+        {
+          args: [
+            {
+              name: 'lot_number',
+              type: 'number',
+              value: 10,
+            },
+            {
+              name: 'bundle',
+              type: 'repeat',
+              value: [],
+            },
+            {
+              name: 'country_origin',
+              type: 'string',
+              value: 'USA',
+            },
+            {
+              name: 'postal_code',
+              type: 'repeat',
+              value: [
+                [
+                  {
+                    name: 'region',
+                    type: 'string',
+                    value: '96707-898',
+                  },
+                ],
+                [
+                  {
+                    name: 'region',
+                    type: 'string',
+                    value: '92604-623',
+                  },
+                ],
+              ],
+            },
+          ],
+          stem: 'FSA_CMD',
+          time: {
+            type: 'COMMAND_COMPLETE',
+          },
+          type: 'command',
+        },
+      ],
+    };
+    const expectedSequence = `@ID "testRepeat"
+
+C FSA_CMD 10 [] "USA" ["96707-898" "92604-623"]
+`;
+    const sequence = seqJsonToSequence(seqJson, [], null);
+    expect(sequence).toEqual(expectedSequence);
   });
 
   it('should convert requests to seq format', () => {

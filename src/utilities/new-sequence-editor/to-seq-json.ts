@@ -30,6 +30,7 @@ import type {
   Time,
   VariableDeclaration,
 } from '@nasa-jpl/seq-json-schema/types';
+import { removeEscapedQuotes, unquoteUnescape } from '../codemirror/codemirror-utils';
 import { customizeSeqJson } from './extension-points';
 import { logInfo } from './logger';
 import { TOKEN_REPEAT_ARG } from './sequencer-grammar-constants';
@@ -255,8 +256,8 @@ function parseGroundEpoch(groundEpochNode: SyntaxNode, text: string): GroundEpoc
   const deltaNode = groundEpochNode.getChild('Delta');
   const nameNode = groundEpochNode.getChild('Name');
   return {
-    delta: deltaNode ? removeQuotes(text.slice(deltaNode.from + 1, deltaNode.to)) : '',
-    name: nameNode ? removeQuotes(text.slice(nameNode.from + 1, nameNode.to)) : '',
+    delta: deltaNode ? unquoteUnescape(text.slice(deltaNode.from, deltaNode.to)) : '',
+    name: nameNode ? unquoteUnescape(text.slice(nameNode.from, nameNode.to)) : '',
   };
 }
 
@@ -421,7 +422,7 @@ function parseModel(node: SyntaxNode, text: string): Model[] | undefined {
     const valueNode = modelNode.getChild('Value');
     const offsetNode = modelNode.getChild('Offset');
 
-    const variable = variableNode ? removeQuotes(text.slice(variableNode.from, variableNode.to)) : 'UNKNOWN';
+    const variable = variableNode ? unquoteUnescape(text.slice(variableNode.from, variableNode.to)) : 'UNKNOWN';
 
     // Value can be string, number or boolean
     let value: Model['value'] = 0;
@@ -430,7 +431,7 @@ function parseModel(node: SyntaxNode, text: string): Model[] | undefined {
     if (valueChild) {
       const valueText = text.slice(valueChild.from, valueChild.to);
       if (valueChild.name === 'String') {
-        value = removeQuotes(valueText);
+        value = unquoteUnescape(valueText);
       } else if (valueChild.name === 'Boolean') {
         value = !/^FALSE$/i.test(valueText);
       } else if (valueChild.name === 'Number') {
@@ -438,7 +439,7 @@ function parseModel(node: SyntaxNode, text: string): Model[] | undefined {
       }
     }
 
-    const offset = offsetNode ? removeQuotes(text.slice(offsetNode.from, offsetNode.to)) : 'UNKNOWN';
+    const offset = offsetNode ? unquoteUnescape(text.slice(offsetNode.from, offsetNode.to)) : 'UNKNOWN';
 
     models.push({ offset, value, variable });
   }
@@ -453,15 +454,7 @@ function parseDescription(node: SyntaxNode, text: string): string | undefined {
   }
   // +1 offset to drop '#' prefix
   const description = text.slice(descriptionNode.from + 1, descriptionNode.to).trim();
-  return removeQuotes(description);
-}
-
-function removeQuotes(text: string): string;
-function removeQuotes(text: string | unknown): string | unknown {
-  if (typeof text === 'string') {
-    return text.replace(/^"|"$/g, '').replaceAll('\\"', '"');
-  }
-  return text;
+  return removeEscapedQuotes(description);
 }
 
 function parseRequest(requestNode: SyntaxNode, text: string, commandDictionary: CommandDictionary | null): Request {
@@ -474,7 +467,7 @@ function parseRequest(requestNode: SyntaxNode, text: string, commandDictionary: 
     time = parseTime(requestNode, text);
   }
   const nameNode = requestNode.getChild('RequestName');
-  const name = nameNode ? removeQuotes(text.slice(nameNode.from, nameNode.to)) : 'UNKNOWN';
+  const name = nameNode ? unquoteUnescape(text.slice(nameNode.from, nameNode.to)) : 'UNKNOWN';
   const description = parseDescription(requestNode, text);
   const metadata = parseMetadata(requestNode, text);
 
@@ -517,7 +510,7 @@ function parseGroundBlockEvent(stepNode: SyntaxNode, text: string): GroundBlock 
   const time = parseTime(stepNode, text);
 
   const nameNode = stepNode.getChild('GroundName');
-  const name = nameNode ? removeQuotes(text.slice(nameNode.from, nameNode.to)) : 'UNKNOWN';
+  const name = nameNode ? unquoteUnescape(text.slice(nameNode.from, nameNode.to)) : 'UNKNOWN';
 
   const argsNode = stepNode.getChild('Args');
   // step not in dictionary, so not passing command dict
@@ -542,7 +535,7 @@ function parseActivateLoad(stepNode: SyntaxNode, text: string): Activate | Load 
   const time = parseTime(stepNode, text);
 
   const nameNode = stepNode.getChild('SequenceName');
-  const sequence = nameNode ? removeQuotes(text.slice(nameNode.from, nameNode.to)) : 'UNKNOWN';
+  const sequence = nameNode ? unquoteUnescape(text.slice(nameNode.from, nameNode.to)) : 'UNKNOWN';
 
   const argsNode = stepNode.getChild('Args');
   // step not in dictionary, so not passing command dict
@@ -574,8 +567,8 @@ function parseEngine(stepNode: SyntaxNode, text: string): number | undefined {
 }
 
 function parseEpoch(stepNode: SyntaxNode, text: string): string | undefined {
-  const engineNode = stepNode.getChild('Epoch')?.getChild('String');
-  return engineNode ? removeQuotes(text.slice(engineNode.from, engineNode.to)) : undefined;
+  const epochNode = stepNode.getChild('Epoch')?.getChild('String');
+  return epochNode ? unquoteUnescape(text.slice(epochNode.from, epochNode.to)) : undefined;
 }
 
 function parseCommand(commandNode: SyntaxNode, text: string, commandDictionary: CommandDictionary | null): Command {
@@ -675,7 +668,7 @@ function parseMetadata(node: SyntaxNode, text: string): Metadata | undefined {
       return; // Skip this entry if either the key or value is missing
     }
 
-    const keyText = removeQuotes(text.slice(keyNode.from, keyNode.to));
+    const keyText = unquoteUnescape(text.slice(keyNode.from, keyNode.to));
 
     let value = text.slice(valueNode.from, valueNode.to);
     try {
