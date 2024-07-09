@@ -471,8 +471,6 @@
           sourceType = getEventSourceTypeByName($sourceTypeField.value, $externalSourceTypes)
         }
 
-        console.log($derivationGroups)
-
         // FIND A BETTER WAY TO DO THIS? WE HAVE TWO SEPARATE CHECKS THAT sourceType !== undefined WHICH ISN'T NECESSARILY WRONG BUT FEELS SUSPICIOUS
         if (!($derivationGroups.map(s => s.name).includes($derivationGroupField.value)) && derivationGroupInsert !== undefined) {
           if(sourceType !== undefined) derivationGroupInsert.source_type_id = sourceType.id;

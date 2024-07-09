@@ -65,6 +65,7 @@ export type DerivationGroup = {
   id: number;
   source_type_id: number;
   name: string;
+  sources: Map<string, {event_counts: number}>;
 }
 
 export type ExternalSourceEventType = { // to specify what types are contained in each source.

@@ -18,7 +18,21 @@ export const createExternalSourceEventTypeLinkError: Writable<string | null> = w
 /* Subscriptions. */
 export const externalSources = gqlSubscribable<ExternalSourceSlim[]>(gql.SUB_EXTERNAL_SOURCES, {}, [], null);
 export const externalSourceTypes = gqlSubscribable<ExternalSourceType[]>(gql.SUB_EXTERNAL_SOURCE_TYPES, {}, [], null);
-export const derivationGroups = gqlSubscribable<DerivationGroup[]>(gql.SUB_DERIVATION_GROUPS, {}, [], null);
+export const derivationGroupsRaw = gqlSubscribable<{
+  id: number,
+  name: string,
+  source_type_id: number,
+  external_source: [
+    {
+      key: string,
+      external_events_aggregate: {
+        aggregate: {
+          count: number
+        }
+      }
+    }
+  ]
+}[]>(gql.SUB_DERIVATION_GROUPS, {}, [], null);
 
 // use to keep track of associations between plans and goals
 export const planDerivationGroupLinks = gqlSubscribable<PlanDerivationGroup[]>(gql.SUB_PLAN_DERIVATION_GROUP, {}, [], null);
@@ -28,6 +42,17 @@ export const externalSourceEventTypes = gqlSubscribable<ExternalSourceEventType[
 
 
 /* Derived. */
+// cleans up derivationGroupsRaw
+export const derivationGroups = derived<[typeof derivationGroupsRaw], DerivationGroup[]>(
+  [derivationGroupsRaw],
+  ([$derivationGroupsRaw]) => $derivationGroupsRaw.map(raw => ({
+    id: raw.id,
+    name: raw.name,
+    source_type_id: raw.source_type_id,
+    sources: new Map(raw.external_source.map(source => [source.key, {event_counts: source.external_events_aggregate.aggregate.count}]))
+  }))
+);
+
 // Creates a store for each externalSource with the added 'source_type' field that maps to the human-readable source type name
 export const externalSourceWithTypeName = derived<[typeof externalSources, typeof externalSourceTypes, typeof derivationGroups], ExternalSourceWithResolvedNames[]>(
   [externalSources, externalSourceTypes, derivationGroups],
