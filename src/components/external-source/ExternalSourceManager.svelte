@@ -483,13 +483,22 @@
         }
 
         // FIND A BETTER WAY TO DO THIS? WE HAVE TWO SEPARATE CHECKS THAT sourceType !== undefined WHICH ISN'T NECESSARILY WRONG BUT FEELS SUSPICIOUS
-        if (!($derivationGroups.map(s => s.name).includes($derivationGroupField.value)) && derivationGroupInsert !== undefined) {
+        // name not present
+        if ($derivationGroups.filter(dGroup => dGroup.name === derivationGroupInsert.name).length === 0
+              && derivationGroupInsert !== undefined) {
           if(sourceType !== undefined) derivationGroupInsert.source_type_id = sourceType.id;
           else console.log("Source type not registered correctly. Derivation group may be incorrect.")
           derivationGroup = await effects.createDerivationGroup(derivationGroupInsert, user);
-        } else if (($derivationGroups.filter(dGroup => { dGroup.source_type_id !== sourceType?.id && dGroup.name === derivationGroupInsert.name}))) {
+        }
+        // name present, but under a different source type id
+        else if ($derivationGroups.filter(dGroup => dGroup.source_type_id !== sourceType?.id && dGroup.name === derivationGroupInsert.name).length > 0
+              && $derivationGroups.filter(dGroup => dGroup.source_type_id === sourceType?.id && dGroup.name === derivationGroupInsert.name).length === 0) {
+          if(sourceType !== undefined) derivationGroupInsert.source_type_id = sourceType.id;
+          else console.log("Source type not registered correctly. Derivation group may be incorrect.")
           derivationGroup = await effects.createDerivationGroup(derivationGroupInsert, user);
-        } else if (sourceType !== undefined) {
+        }
+        // name and source type id pair present
+        else if (sourceType !== undefined) {
           derivationGroup = getDerivationGroupByNameSourceTypeId($derivationGroupField.value, sourceType.id, $derivationGroups)
         }
 
