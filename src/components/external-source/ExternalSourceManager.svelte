@@ -6,12 +6,13 @@
   import { onDestroy, onMount } from 'svelte';
   import { catchError } from '../../stores/errors';
   import { externalEventTypes, getEventTypeName } from '../../stores/external-event';
-  import { createExternalSourceError, createExternalSourceEventTypeLinkError, createExternalSourceTypeError, creatingExternalSource, derivationGroups, externalSourceTypes, externalSourceWithTypeName, getDerivationGroupByName, getEventSourceTypeByName } from '../../stores/external-source';
+  import { createExternalSourceError, createExternalSourceEventTypeLinkError, createExternalSourceTypeError, creatingExternalSource, derivationGroups, externalSourceTypes, externalSourceWithTypeName, getDerivationGroupByName, getEventSourceTypeByName, planDerivationGroupLinks } from '../../stores/external-source';
   import { field } from '../../stores/form';
+  import { plans } from '../../stores/plans';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalEvent, ExternalEventDB, ExternalEventType, ExternalEventTypeInsertInput } from '../../types/external-event';
-  import type { DerivationGroup, DerivationGroupInsertInput, ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceType, ExternalSourceTypeInsertInput, ExternalSourceWithResolvedNames } from '../../types/external-source';
+  import type { DerivationGroup, DerivationGroupInsertInput, ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceType, ExternalSourceTypeInsertInput, ExternalSourceWithResolvedNames, PlanDerivationGroup } from '../../types/external-source';
   import type { TimeRange } from '../../types/timeline';
   import { type MouseDown, type MouseOver } from '../../types/timeline';
   import effects from '../../utilities/effects';
@@ -186,6 +187,7 @@
   let sourceInsert: ExternalSourceInsertInput;
   let sourceTypeInsert: ExternalSourceTypeInsertInput;
   let derivationGroupInsert: DerivationGroupInsertInput;
+  let selectedSourceLinkedDerivationGroupsPlans: PlanDerivationGroup[] = [];
 
   // There was a strange issue where when:
   //   - you select a source,
@@ -289,6 +291,9 @@
     }
   }));
 
+  $: selectedSourceLinkedDerivationGroupsPlans = $planDerivationGroupLinks.filter(planDerivationGroupLink => {
+    return planDerivationGroupLink.derivation_group_id === selectedSource?.derivation_group_id
+  })
 
   onMount(() => {
     detectDPRChange();
@@ -705,6 +710,19 @@
           >
             Delete external source
           </button>
+
+          <Collapse
+            className="used-in-plans-collapse"
+            defaultExpanded={false}
+            title="Used in plans"
+            tooltipContent="View plans this source is used in"
+          >
+            {#each selectedSourceLinkedDerivationGroupsPlans as linkedPlanDerivationGroup}
+              <i>{$plans.find(plan => {
+                return linkedPlanDerivationGroup.plan_id === plan.id;
+              })?.name}</i>
+            {/each}
+          </Collapse>
         </div>
       {:else}
         <form on:submit|preventDefault={onFormSubmit} on:reset={() => parsed = undefined}>
