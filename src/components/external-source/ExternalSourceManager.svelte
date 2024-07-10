@@ -17,6 +17,8 @@
   import { type MouseDown, type MouseOver } from '../../types/timeline';
   import effects from '../../utilities/effects';
   import { classNames, getTarget } from '../../utilities/generic';
+  import { permissionHandler } from '../../utilities/permissionHandler';
+  import { featurePermissions } from '../../utilities/permissions';
   import { convertDoyToYmd, convertDurationToMs, convertUTCtoMs } from '../../utilities/time';
   import { TimelineInteractionMode, getXScale } from '../../utilities/timeline';
   import { showFailureToast } from '../../utilities/toast';
@@ -53,6 +55,8 @@
   };
   type SourceCellRendererParams = ICellRendererParams<ExternalSourceWithResolvedNames> & CellRendererParams;
 
+  const deletePermissionError = 'You do not have permission to delete an external source.';
+  const createPermissionError = 'You do not have permission to create an external source.';
 
   let keyInputField: HTMLInputElement; // need this to set a focus on it. not related to the value
 
@@ -189,6 +193,9 @@
   let derivationGroupInsert: DerivationGroupInsertInput;
   let selectedSourceLinkedDerivationGroupsPlans: PlanDerivationGroup[] = [];
 
+  let hasDeletePermission: boolean = false;
+  let hasCreatePermission: boolean = false;
+
   // There was a strange issue where when:
   //   - you select a source,
   //   - select an event in timeline,
@@ -299,6 +306,9 @@
   $: selectedSourceLinkedDerivationGroupsPlans = $planDerivationGroupLinks.filter(planDerivationGroupLink => {
     return planDerivationGroupLink.derivation_group_id === selectedSource?.derivation_group_id
   })
+
+  $: hasDeletePermission = featurePermissions.externalSource.canDelete(user);
+  $: hasCreatePermission = featurePermissions.externalSource.canCreate(user);
 
   onMount(() => {
     detectDPRChange();
@@ -735,6 +745,10 @@
           </Collapse>
           <button
             class="st-button danger w-100"
+            use:permissionHandler={{
+              hasPermission: hasDeletePermission,
+              permissionError: deletePermissionError,
+            }}
             on:click|stopPropagation={async() => onDeleteExternalSource(selectedSource)}
           >
             Delete external source
@@ -767,11 +781,18 @@
 
           <fieldset>
             <label for="file">Source File</label>
-            <input class="w-100" name="file" required type="file" bind:files />
+            <input class="w-100" name="file" required type="file" bind:files use:permissionHandler={{
+              hasPermission: hasCreatePermission,
+              permissionError: createPermissionError,
+            }}/>
           </fieldset>
 
           <fieldset>
             <button disabled={!parsed} class="st-button w-100" type="submit"
+              use:permissionHandler={{
+                hasPermission: hasCreatePermission,
+                permissionError: createPermissionError,
+              }}
               >{$creatingExternalSource ? 'Uploading...' : 'Upload'}</button
             >
             {#if parsed}
