@@ -80,6 +80,7 @@ export const externalSourceWithTypeName = derived<
       ...externalSource,
       source_type: getEventSourceTypeName(externalSource.source_type_id, $externalSourceTypes),
       derivation_group: getDerivationGroupName(externalSource.derivation_group_id, $derivationGroups),
+      total_groups: $derivationGroups.length
     })),
 );
 
@@ -136,7 +137,7 @@ export function getDerivationGroupByNameSourceTypeId(
   sourceTypeId: number,
   derivationGroups: DerivationGroup[],
 ): DerivationGroup | undefined {
-  return derivationGroups.find(derivationGroup => derivationGroup.name === name);
+  return derivationGroups.find(derivationGroup => derivationGroup.name === name && derivationGroup.source_type_id === sourceTypeId);
 }
 
 export function getDerivationGroupName(id: number, derivationGroups: DerivationGroup[]): string | undefined {
