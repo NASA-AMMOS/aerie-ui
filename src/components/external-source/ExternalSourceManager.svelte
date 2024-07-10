@@ -371,15 +371,16 @@
           name: $sourceTypeField.value
         };
       }
+
       // Create an entry for the derivation group
+      let derivationGroupName = $derivationGroupField.value;
+      if(derivationGroupName.length === 0) {
+        derivationGroupName = "Default"
+      }
       derivationGroupInsert = {
-        name: $derivationGroupField.value,
+        name: derivationGroupName,
         source_type_id: -1 // filled in later
       };
-      /**
-      if (!($derivationGroups.some(derivationGroup => derivationGroup.name === $derivationGroupField.value && derivationGroup.source_type_id === ))) {
-      }
-      **/
 
       // create the source object to upload to AERIE
       const start_time: string | null = convertDoyToYmd($startTimeDoyField.value.replaceAll("Z", ""))
@@ -499,7 +500,7 @@
         }
         // name and source type id pair present
         else if (sourceType !== undefined) {
-          derivationGroup = getDerivationGroupByNameSourceTypeId($derivationGroupField.value, sourceType.id, $derivationGroups)
+          derivationGroup = getDerivationGroupByNameSourceTypeId(derivationGroupName, sourceType.id, $derivationGroups)
         }
 
         if (sourceType !== undefined && derivationGroup !== undefined) {
@@ -537,7 +538,6 @@
       startTimeDoyField.reset("");
       endTimeDoyField.reset("");
       validAtDoyField.reset("");
-      // derivationGroupField.reset("");
       // TODO: add logic in table to group by derivation group!
 
     }
@@ -792,7 +792,7 @@
 
           <Field field={derivationGroupField}>
             <label for="derivation-group" slot="label">Derivation Group</label>
-            <input autocomplete="off" class="st-input w-100" name="derivation-group" required />
+            <input autocomplete="off" class="st-input w-100" name="derivation-group" placeholder="Default" />
           </Field>
         </form>
       {/if}
