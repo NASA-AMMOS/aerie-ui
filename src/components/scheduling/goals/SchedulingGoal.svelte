@@ -55,7 +55,7 @@
     let revision = null;
     console.log({ goalPlanSpec });
     if (goalPlanSpec.goal_revision == null) {
-      revision = Math.max(goalPlanSpec.goal_metadata?.versions.filter(x => x.revision));
+      revision = Math.max(...(goalPlanSpec.goal_metadata?.versions?.map(x => x.revision) ?? [0]));
     } else {
       revision = goalPlanSpec.goal_revision;
     }
