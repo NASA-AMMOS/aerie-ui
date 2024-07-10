@@ -115,6 +115,7 @@ export enum Queries {
   INSERT_CONSTRAINT_MODEL_SPECIFICATIONS = 'insert_constraint_model_specification',
   INSERT_CONSTRAINT_SPECIFICATIONS = 'insert_constraint_specification',
   INSERT_CONSTRAINT_TAGS = 'insert_constraint_tags',
+  INSERT_PLAN_DERIVATION_GROUP = 'insert_plan_derivation_group_one',
   INSERT_EXPANSION_RULE = 'insert_expansion_rule_one',
   INSERT_EXPANSION_RULE_TAGS = 'insert_expansion_rule_tags',
   INSERT_EXTERNAL_SOURCE = 'insert_external_source_one',
