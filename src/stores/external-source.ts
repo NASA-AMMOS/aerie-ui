@@ -70,7 +70,7 @@ export const derivationGroups = derived<[typeof derivationGroupsRaw], Derivation
 );
 
 // Creates a store for each externalSource with the added 'source_type' field that maps to the human-readable source type name
-export const externalSourceWithTypeName = derived<
+export const externalSourceWithResolvedNames = derived<
   [typeof externalSources, typeof externalSourceTypes, typeof derivationGroups],
   ExternalSourceWithResolvedNames[]
 >(

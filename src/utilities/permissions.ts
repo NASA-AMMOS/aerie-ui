@@ -335,6 +335,9 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   CREATE_DICTIONARY: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_DICTIONARY], user);
   },
+  CREATE_DERIVATION_GROUP: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.DERIVATION_GROUP], user);
+  },
   CREATE_EXPANSION_RULE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_EXPANSION_RULE], user);
   },
@@ -350,6 +353,15 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   },
   CREATE_EXTERNAL_SOURCE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_EXTERNAL_SOURCE], user);
+  },
+  CREATE_EXTERNAL_EVENT_TYPE: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.EXTERNAL_EVENT_TYPES], user);
+  },
+  CREATE_EXTERNAL_SOURCE_EVENT_TYPE: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.EXTERNAL_SOURCE_EVENT_TYPES], user);
+  },
+  CREATE_EXTERNAL_SOURCE_TYPE: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.EXTERNAL_SOURCE_TYPES], user);
   },
   CREATE_MODEL: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_MISSION_MODEL], user);
@@ -373,10 +385,10 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
         (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
     );
   },
-  CREATE_PLAN_EXTERNAL_SOURCE: (user: User | null, plan: PlanWithOwners): boolean => {
+  CREATE_PLAN_DERIVATION_GROUP: (user: User | null, plan: PlanWithOwners): boolean => {
     return (
       isUserAdmin(user) ||
-      (getPermission([Queries.INSERT_PLAN_EXTERNAL_SOURCE], user) &&
+      (getPermission([Queries.INSERT_PLAN_DERIVATION_GROUP], user) &&
         (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
     );
   },
@@ -499,12 +511,8 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
         (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
     );
   },
-  DELETE_DERIVATION_GROUP_FROM_PLAN: (user: User | null, plan: PlanWithOwners): boolean => {
-    return (
-      isUserAdmin(user) ||
-      (getPermission([Queries.DELETE_PLAN_DERIVATION_GROUP], user) && isPlanOwner(user, plan)) ||
-      isPlanCollaborator(user, plan)
-    );
+  DELETE_DERIVATION_GROUP: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.DELETE_DERIVATION_GROUP], user);
   },
   DELETE_EXPANSION_RULE: (user: User | null, expansionRule: AssetWithOwner<ExpansionRule>): boolean => {
     return (
@@ -527,6 +535,12 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   },
   DELETE_EXTERNAL_SOURCE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.DELETE_EXTERNAL_SOURCE], user);
+  },
+  DELETE_EXTERNAL_EVENT_TYPE: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.DELETE_EXTERNAL_EVENT_TYPE], user);
+  },
+  DELETE_EXTERNAL_SOURCE_TYPE: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.DELETE_EXTERNAL_SOURCE_TYPE], user);
   },
   DELETE_MODEL: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.DELETE_MISSION_MODEL], user);
@@ -553,10 +567,10 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
         (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
     );
   },
-  DELETE_PLAN_EXTERNAL_SOURCE: (user: User | null, plan: PlanWithOwners): boolean => {
+  DELETE_PLAN_DERIVATION_GROUP: (user: User | null, plan: PlanWithOwners): boolean => {
     return (
       isUserAdmin(user) ||
-      (getPermission([Queries.DELETE_PLAN_EXTERNAL_SOURCE], user) &&
+      (getPermission([Queries.DELETE_PLAN_DERIVATION_GROUP], user) &&
         (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
     );
   },
@@ -636,6 +650,12 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   GET_EFFECTIVE_ACTIVITY_ARGUMENTS: () => true,
   GET_EFFECTIVE_MODEL_ARGUMENTS: () => true,
   GET_EVENTS: () => true,
+  GET_EXTERNAL_EVENTS: () => true,
+  GET_EXTERNAL_EVENT_BY_EVENT_TYPE: () => true,
+  GET_EXTERNAL_EVENT_TYPES: () => true,
+  GET_EXTERNAL_EVENT_TYPE_BY_SOURCE: () => true,
+  GET_EXTERNAL_SOURCE_METADATA: () => true,
+  GET_EXTERNAL_SOURCE_BY_TYPE: () => true,
   GET_EXPANSION_RULE: () => true,
   GET_EXPANSION_RUNS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.EXPANSION_RUNS], user);
@@ -657,6 +677,8 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   GET_PLANS_AND_MODELS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.MISSION_MODELS, Queries.PLANS], user);
   },
+  GET_PLAN_DERIVATION_GROUP: () => true,
+  GET_PLAN_EVENT_TYPES: () => true,
   GET_PLAN_MERGE_NON_CONFLICTING_ACTIVITIES: () => true,
   GET_PLAN_SNAPSHOT_ACTIVITY_DIRECTIVES: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.PLAN_SNAPSHOT_ACTIVITIES], user);
@@ -681,13 +703,6 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   GET_VIEW: () => true,
   INITIAL_SIMULATION_UPDATE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.UPDATE_SIMULATIONS], user);
-  },
-  INSERT_DERIVATION_GROUP_FOR_PLAN: (user: User | null, plan: PlanWithOwners): boolean => {
-    return (
-      isUserAdmin(user) ||
-      (getPermission([Queries.INSERT_PLAN_DERIVATION_GROUP], user) && isPlanOwner(user, plan)) ||
-      isPlanCollaborator(user, plan)
-    );
   },
   INSERT_EXPANSION_SEQUENCE_TO_ACTIVITY: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_SEQUENCE_TO_SIMULATED_ACTIVITY], user);
@@ -822,9 +837,13 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   SUB_EXPANSION_SETS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.EXPANSION_SETS], user);
   },
-  SUB_EXTERNAL_SOURCES: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission([Queries.EXTERNAL_SOURCES], user);
-  },
+  SUB_DERIVATION_GROUPS: () => true,
+  SUB_PLAN_DERIVATION_GROUP: () => true,
+  SUB_EXTERNAL_SOURCES: () => true,
+  SUB_EXTERNAL_SOURCE: () => true,
+  SUB_EXTERNAL_SOURCE_TYPES: () => true,
+  SUB_EXTERNAL_SOURCE_EVENT_TYPE: () => true,
+  SUB_EXTERNAL_EVENT_TYPES: () => true,
   SUB_MODEL: () => true,
   SUB_MODELS: () => true,
   SUB_PARAMETER_DICTIONARIES: () => true,
@@ -835,6 +854,8 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   SUB_PLANS: () => true,
   SUB_PLANS_USER_WRITABLE: () => true,
   SUB_PLAN_DATASET: () => true,
+  SUB_PLAN_EXTERNAL_EVENTS: () => true,
+  SUB_PLAN_EXTERNAL_EVENTS_DG: () => true,
   SUB_PLAN_LOCKED: () => true,
   SUB_PLAN_MERGE_CONFLICTING_ACTIVITIES: () => true,
   SUB_PLAN_MERGE_REQUESTS_INCOMING: () => true,
@@ -1348,7 +1369,7 @@ const featurePermissions: FeaturePermissions = {
   externalSource: {
     canCreate: user => queryPermissions.CREATE_EXTERNAL_SOURCE(user),
     canDelete: user => queryPermissions.DELETE_EXTERNAL_SOURCE(user),
-    canRead: user => queryPermissions.SUB_EXTERNAL_SOURCES(user),
+    canRead: user => queryPermissions.SUB_EXTERNAL_SOURCES(),
     canUpdate: () => false, // no feature to update external sources
   },
   model: {
@@ -1496,6 +1517,6 @@ export {
   isPlanOwner,
   isUserAdmin,
   isUserOwner,
-  queryPermissions,
+  queryPermissions
 };
 
