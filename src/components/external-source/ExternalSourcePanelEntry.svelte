@@ -15,7 +15,6 @@
 
   export let enabled: boolean;
   export let derivationGroup: DerivationGroup;
-  export let plan_id: number | undefined;
   export let user: User | null;
 
 

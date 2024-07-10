@@ -1,6 +1,6 @@
 <script lang="ts">
   import SearchIcon from '@nasa-jpl/stellar/icons/search.svg?component';
-  import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
+  import type { ICellRendererParams, RowClassParams, RowStyle, ValueGetterParams } from 'ag-grid-community';
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { onDestroy, onMount } from 'svelte';
@@ -500,6 +500,7 @@
         }
         // name and source type id pair present
         else if (sourceType !== undefined) {
+          console.log("its over", $derivationGroups)
           derivationGroup = getDerivationGroupByNameSourceTypeId(derivationGroupName, sourceType.id, $derivationGroups)
         }
 
@@ -528,6 +529,7 @@
           id: sourceId,
           ...sourceInsert,
           source_type: sourceType?.name,
+          total_groups: $derivationGroups.length // kind of unnecessary here
         }
       }
 
@@ -602,6 +604,16 @@
 
   function onSelectionChanged() {
     selectedEvent = selectedEvents.find(event => event.id === selectedRowId) ?? null
+  }
+
+  function getRowStyle(params: RowClassParams<ExternalSourceWithResolvedNames>): RowStyle | undefined {
+    // evenly spread out color selection
+    if (params.data?.derivation_group_id && params.data?.total_groups) {
+      let spacing = 360/params.data?.total_groups;
+      let myVal = (params.data?.derivation_group_id-1)*spacing; // dg id starts at 1
+      return {'background-color': `hsl(${myVal} 100% 98%)`}
+    }
+    return undefined;
   }
 </script>
 
@@ -896,6 +908,7 @@
           <!--TODO: delete permissions. For example, hasDeletePermission while set true can be set to false and will still delete-->
           <SingleActionDataGrid
             {columnDefs}
+            {getRowStyle}
             hasDeletePermission={true}
             itemDisplayText="External Source"
             items={filteredExternalSources}

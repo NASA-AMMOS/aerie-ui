@@ -49,8 +49,9 @@
     type RowClickedEvent,
     type RowDoubleClickedEvent,
     type RowSelectedEvent,
+    type RowStyle,
     type SelectionChangedEvent,
-    type SortChangedEvent,
+    type SortChangedEvent
   } from 'ag-grid-community';
   import { debounce } from 'lodash-es';
   import { SvelteComponent, createEventDispatcher, onDestroy, onMount, type ComponentEvents } from 'svelte';
@@ -116,6 +117,7 @@
   export let getRowId: (data: RowData) => RowId = (data: RowData): number => {
     return parseInt(data[idKey]);
   };
+  export let getRowStyle: (params: RowClassParams<RowData>) => RowStyle | undefined = (params: RowClassParams<RowData>) => undefined;
   export let isRowSelectable: ((node: IRowNode<RowData>) => boolean) | undefined = undefined;
 
   type RowIdRef = {
@@ -273,6 +275,8 @@ This has been seen to result in unintended and often glitchy behavior, which oft
       animateRows: false,
       columnDefs,
       doesExternalFilterPass,
+      excludeHiddenColumnsFromQuickFilter: false,
+      getRowStyle,
       includeHiddenColumnsInQuickFilter: true,
       ...(shouldAutoGenerateId ? {} : { getRowId: (params: { data: RowData }) => `${getRowId(params.data)}` }),
       isExternalFilterPresent,
