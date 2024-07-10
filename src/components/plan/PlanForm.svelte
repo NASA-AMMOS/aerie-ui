@@ -183,7 +183,7 @@
         }),
       );
 
-      if (!planExportAbortController.signal.aborted) {
+      if (planExportAbortController && !planExportAbortController.signal.aborted) {
         const planExport: PlanTransfer = getPlanForTransfer(plan, qualifiedActivityDirectives);
 
         const a = document.createElement('a');
