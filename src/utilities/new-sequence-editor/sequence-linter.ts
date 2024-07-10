@@ -28,17 +28,7 @@ import {
   validateTime,
 } from '../time';
 import { getCustomArgDef } from './extension-points';
-import {
-  getNameNode,
-  TOKEN_ACTIVATE,
-  TOKEN_COMMAND,
-  TOKEN_ERROR,
-  TOKEN_GROUND_BLOCK,
-  TOKEN_GROUND_EVENT,
-  TOKEN_LOAD,
-  TOKEN_REPEAT_ARG,
-  TOKEN_REQUEST,
-} from './sequencer-grammar-constants';
+import { TOKEN_COMMAND, TOKEN_ERROR, TOKEN_REPEAT_ARG } from './sequencer-grammar-constants';
 import { getChildrenNode, getDeepestNode, getFromAndTo } from './tree-utils';
 
 const KNOWN_DIRECTIVES = [
@@ -145,39 +135,12 @@ export function sequenceLinter(
       ...conditionalAndLoopKeywordsLinter(treeNode.getChild('Commands')?.getChildren(TOKEN_COMMAND) || [], docText),
     );
 
-    diagnostics.push(...nonCommandStepLinter(treeNode));
-
     if (globalThis.LINT !== undefined && globalThis.LINT(commandDictionary, view, treeNode) !== undefined) {
       diagnostics = [...diagnostics, ...globalThis.LINT(commandDictionary, view, treeNode)];
     }
 
     return diagnostics;
   });
-
-  function nonCommandStepLinter(treeNode: SyntaxNode) {
-    const diagnostics: Diagnostic[] = [];
-    if (!globalThis.ALLOW_NON_COMMAND_STEPS) {
-      const commandBlocks = ['Commands', 'ImmediateCommands', 'HardwareCommands'];
-      const nonCommandSteps = [TOKEN_ACTIVATE, TOKEN_LOAD, TOKEN_GROUND_BLOCK, TOKEN_GROUND_EVENT, TOKEN_REQUEST];
-      commandBlocks.forEach(section => {
-        nonCommandSteps.forEach(stepType => {
-          treeNode
-            .getChild(section)
-            ?.getChildren(stepType)
-            .forEach(step => {
-              const node = getNameNode(step) ?? step;
-              diagnostics.push({
-                from: node.from,
-                message: `${stepType} not allowed in adaptation`,
-                severity: 'error',
-                to: node.to,
-              });
-            });
-        });
-      });
-    }
-    return diagnostics;
-  }
 
   /**
    * Checks for unexpected tokens.
