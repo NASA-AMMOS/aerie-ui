@@ -164,7 +164,7 @@
           <fieldset>
             <button
               class="st-button w-100"
-              disabled={createButtonDisabled}
+              disabled={createButtonDisabled || creatingDictionary}
               type="submit"
               use:permissionHandler={{
                 hasPermission: hasCreatePermission,
