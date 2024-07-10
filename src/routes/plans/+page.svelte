@@ -462,7 +462,6 @@
             <input
               class="w-100"
               name="file"
-              required
               type="file"
               bind:files={planUploadFiles}
               use:permissionHandler={{
