@@ -35,6 +35,7 @@ export enum Queries {
   DELETE_CONSTRAINT_MODEL_SPECIFICATIONS = 'delete_constraint_model_specification',
   DELETE_CONSTRAINT_SPECIFICATIONS = 'delete_constraint_specification',
   DELETE_CONSTRAINT_TAGS = 'delete_constraint_tags',
+  DELETE_DERIVATION_GROUP = 'delete_derivation_group',
   DELETE_EXPANSION_RULE = 'delete_expansion_rule_by_pk',
   DELETE_EXPANSION_RULE_TAGS = 'delete_expansion_rule_tags',
   DELETE_EXPANSION_SET = 'delete_expansion_set_by_pk',
@@ -896,6 +897,14 @@ const gql = {
     }
   `,
 
+  DELETE_DERIVATION_GROUP: `#graphql
+  mutation DeleteDerivationGroup($id: Int!) {
+    deleteDerivationGroup: ${Queries.DELETE_DERIVATION_GROUP}(where: { id: { _eq: $id } }) {
+      id
+    }
+  }
+  `,
+
   DELETE_EXPANSION_RULE: `#graphql
     mutation DeleteExpansionRule($id: Int!) {
       deleteExpansionRule: ${Queries.DELETE_EXPANSION_RULE}(id: $id) {
@@ -970,6 +979,11 @@ const gql = {
 
   DELETE_EXTERNAL_SOURCE_TYPE: `#graphql
     mutation DeleteExternalSourceType($id: Int!) {
+      deleteDerivationGroup: ${Queries.DELETE_DERIVATION_GROUP}(where: { source_type_id: { _eq: $id } }) {
+        returning {
+          id
+        }
+      }
       deleteExternalSourceType: ${Queries.DELETE_EXTERNAL_SOURCE_TYPE}(id: $id) {
         name
       }
