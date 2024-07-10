@@ -80,16 +80,14 @@
 
   async function onUpdateGoal(event: CustomEvent<SchedulingGoalPlanSpecification>) {
     const {
-      detail: { goal_metadata, specification_id, ...goalPlanSpec },
+      detail: { goal_metadata, ...goalPlanSpec },
     } = event;
 
     if ($plan) {
       await effects.updateSchedulingGoalPlanSpecification(
         $plan,
-        specification_id,
         {
           ...goalPlanSpec,
-          specification_id,
         },
         user,
       );
@@ -104,7 +102,6 @@
     if ($plan) {
       await effects.updateSchedulingGoalPlanSpecifications(
         $plan,
-        specification_id,
         [{ ...goalPlanSpec, specification_id, priority: goalPlanSpec.priority + 1, goal_invocation_id: undefined }], // the goal_invocation_id is generated after insert
         [],
         user,

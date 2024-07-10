@@ -5343,7 +5343,6 @@ const effects = {
 
   async updateSchedulingGoalPlanSpecification(
     plan: Plan,
-    schedulingSpecificationId: number,
     schedulingGoalPlanSpecification: SchedulingGoalPlanSpecInsertInput,
     user: User | null,
   ) {
@@ -5353,7 +5352,6 @@ const effects = {
       }
       const {
         enabled,
-        goal_id: goalId,
         goal_invocation_id,
         goal_revision: revision,
         priority,
@@ -5362,7 +5360,7 @@ const effects = {
 
       const { updateSchedulingGoalPlanSpecification } = await reqHasura(
         gql.UPDATE_SCHEDULING_GOAL_PLAN_SPECIFICATION,
-        { arguments: schedulingGoalPlanSpecification.arguments, enabled, id: goalId, goal_invocation_id, priority, revision, simulateAfter, specificationId: schedulingSpecificationId },
+        { arguments: schedulingGoalPlanSpecification.arguments, enabled, goal_invocation_id, priority, revision, simulateAfter },
         user,
       );
 
@@ -5379,7 +5377,6 @@ const effects = {
 
   async updateSchedulingGoalPlanSpecifications(
     plan: Plan,
-    schedulingSpecificationId: number,
     goalSpecsToUpdate: SchedulingGoalPlanSpecInsertInput[],
     goalSpecIdsToDelete: number[],
     user: User | null,
@@ -5393,7 +5390,6 @@ const effects = {
         {
           goalSpecIdsToDelete,
           goalSpecsToUpdate,
-          specificationId: schedulingSpecificationId,
         },
         user,
       );

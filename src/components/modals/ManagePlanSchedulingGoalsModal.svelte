@@ -249,7 +249,6 @@
       );
       await effects.updateSchedulingGoalPlanSpecifications(
         $plan,
-        $schedulingPlanSpecification.id,
         goalPlanSpecUpdates.goalPlanSpecsToAdd,
         goalPlanSpecUpdates.goalPlanSpecIdsToDelete,
         user,
