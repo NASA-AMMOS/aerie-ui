@@ -6,7 +6,7 @@
   import { onDestroy, onMount } from 'svelte';
   import { catchError } from '../../stores/errors';
   import { externalEventTypes, getEventTypeName } from '../../stores/external-event';
-  import { createExternalSourceError, createExternalSourceEventTypeLinkError, createExternalSourceTypeError, creatingExternalSource, derivationGroups, externalSourceEventTypes, externalSourceTypes, externalSourceWithResolvedNames, getDerivationGroupByNameSourceTypeId, getEventSourceTypeByName, planDerivationGroupLinks } from '../../stores/external-source';
+  import { createDerivationGroupError, createExternalSourceError, createExternalSourceEventTypeLinkError, createExternalSourceTypeError, creatingExternalSource, derivationGroups, externalSourceEventTypes, externalSourceTypes, externalSourceWithResolvedNames, getDerivationGroupByNameSourceTypeId, getEventSourceTypeByName, planDerivationGroupLinks } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import { plans } from '../../stores/plans';
   import type { User } from '../../types/app';
@@ -229,6 +229,7 @@
       // Reset creation errors when a new file is set
       $createExternalSourceError = null;
       $createExternalSourceTypeError = null;
+      $createDerivationGroupError = null;
       $createExternalSourceEventTypeLinkError = null;
 
       file = files[0];
@@ -270,7 +271,7 @@
                 content: 'Delete External Source',
                 placement: 'bottom',
               },
-              hasDeletePermission: hasDeletePermission, 
+              hasDeletePermission: hasDeletePermission,
               rowData: params.data,
             },
             target: actionsDiv,
@@ -444,7 +445,7 @@
         return
       }
       sourceInsert = {
-        derivation_group_id: -1, // updated in the effect. 
+        derivation_group_id: -1, // updated in the effect.
         end_time,
         external_events: {
           data: null  // updated after this map is created
@@ -534,15 +535,15 @@
         // name not present
         if ($derivationGroups.filter(dGroup => dGroup.name === derivationGroupInsert.name).length === 0
               && derivationGroupInsert !== undefined) {
-          if(sourceType !== undefined) derivationGroupInsert.source_type_id = sourceType.id;
-          else console.log("Source type not registered correctly. Derivation group may be incorrect.")
+          if(sourceType !== undefined) {derivationGroupInsert.source_type_id = sourceType.id;}
+          else {console.log("Source type not registered correctly. Derivation group may be incorrect.")}
           derivationGroup = await effects.createDerivationGroup(derivationGroupInsert, user);
         }
         // name present, but under a different source type id
         else if ($derivationGroups.filter(dGroup => dGroup.source_type_id !== sourceType?.id && dGroup.name === derivationGroupInsert.name).length > 0
               && $derivationGroups.filter(dGroup => dGroup.source_type_id === sourceType?.id && dGroup.name === derivationGroupInsert.name).length === 0) {
-          if(sourceType !== undefined) derivationGroupInsert.source_type_id = sourceType.id;
-          else console.log("Source type not registered correctly. Derivation group may be incorrect.")
+          if(sourceType !== undefined) {derivationGroupInsert.source_type_id = sourceType.id;}
+          else {console.log("Source type not registered correctly. Derivation group may be incorrect.")}
           derivationGroup = await effects.createDerivationGroup(derivationGroupInsert, user);
         }
         // name and source type id pair present
@@ -817,11 +818,13 @@
           parsed = undefined;
           $createExternalSourceError = null;
           $createExternalSourceTypeError = null;
+          $createDerivationGroupError = null;
           $createExternalSourceEventTypeLinkError = null;
           }
         }>
           <AlertError class="m-2" error={$createExternalSourceError} />
           <AlertError class="m-2" error={$createExternalSourceTypeError} />
+          <AlertError class="m-2" error={$createDerivationGroupError} />
           <AlertError class="m-2" error={$createExternalSourceEventTypeLinkError} />
 
           <fieldset>
