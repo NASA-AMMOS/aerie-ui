@@ -21,6 +21,7 @@
   } from '../../../utilities/codemirror/codemirror-utils';
   import { getCustomArgDef } from '../../../utilities/new-sequence-editor/extension-points';
   import {
+    getNameNode,
     TOKEN_ACTIVATE,
     TOKEN_COMMAND,
     TOKEN_ERROR,
@@ -147,25 +148,6 @@
     }
 
     return argArray;
-  }
-
-  function getNameNode(stepNode: SyntaxNode | null) {
-    if (stepNode) {
-      switch (stepNode.name) {
-        case TOKEN_ACTIVATE:
-        case TOKEN_LOAD:
-          return stepNode.getChild('SequenceName');
-        case TOKEN_GROUND_BLOCK:
-        case TOKEN_GROUND_EVENT: {
-          return stepNode.getChild('GroundName');
-        }
-        case TOKEN_COMMAND: {
-          return stepNode.getChild('Stem');
-        }
-      }
-    }
-
-    return null;
   }
 
   function getCommandDef(commandDictionary: CommandDictionary | null, stemName: string) {
