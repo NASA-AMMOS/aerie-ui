@@ -4,7 +4,9 @@
   import CancelIcon from '@nasa-jpl/stellar/icons/prohibited.svg?component';
   import { createEventDispatcher } from 'svelte';
   import { Status } from '../../enums/status';
+  import { TimeTypes } from '../../enums/time';
   import { planReadOnly } from '../../stores/plan';
+  import { plugins } from '../../stores/plugins';
   import type { SimulationDataset } from '../../types/simulation';
   import { hexToRgba } from '../../utilities/color';
   import {
@@ -16,7 +18,7 @@
     getSimulationStatus,
     getSimulationTimestamp,
   } from '../../utilities/simulation';
-  import { getDoyTime, getUnixEpochTimeFromInterval } from '../../utilities/time';
+  import { getUnixEpochTimeFromInterval, validateTime } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import Card from '../ui/Card.svelte';
   import StatusBadge from '../ui/StatusBadge.svelte';
@@ -56,17 +58,25 @@
     // Compute time range left and width
     if (simulationDataset.simulation_start_time) {
       const simulationStartTimeMS = new Date(simulationDataset.simulation_start_time).getTime();
-      simulationBoundsVizRangeLeft = ((simulationStartTimeMS - planStartTimeMs) / planDuration) * 100 || 0;
+      simulationBoundsVizRangeLeft = Math.max(0, ((simulationStartTimeMS - planStartTimeMs) / planDuration) * 100 || 0);
 
       if (simulationStartTimeMS === planStartTimeMs) {
         startTimeText = 'Plan Start';
       } else {
-        startTimeText = getDoyTime(new Date(simulationDataset.simulation_start_time)).split('+')[0];
+        startTimeText = $plugins.time.primary.format(new Date(simulationDataset.simulation_start_time));
+
+        // Remove milliseconds if DOY-like time
+        if (validateTime(startTimeText, TimeTypes.ABSOLUTE)) {
+          startTimeText = startTimeText.split('.')[0];
+        }
       }
 
       if (simulationDataset.simulation_end_time) {
         const simulationEndTimeMS = new Date(simulationDataset.simulation_end_time).getTime();
-        simulationBoundsVizRangeWidth = ((simulationEndTimeMS - simulationStartTimeMS) / planDuration) * 100 || 0;
+        simulationBoundsVizRangeWidth = Math.min(
+          100,
+          ((simulationEndTimeMS - simulationStartTimeMS) / planDuration) * 100 || 0,
+        );
 
         let simulationExtentMS = 0;
         if ((status === Status.Incomplete || status === Status.Failed || status === Status.Canceled) && extent) {
@@ -80,7 +90,12 @@
         if (simulationEndTimeMS === planEndTimeMs) {
           endTimeText = 'Plan End';
         } else {
-          endTimeText = getDoyTime(new Date(simulationDataset.simulation_end_time)).split('+')[0];
+          endTimeText = $plugins.time.primary.format(new Date(simulationDataset.simulation_end_time));
+
+          // Remove milliseconds if DOY-like time
+          if (validateTime(endTimeText, TimeTypes.ABSOLUTE)) {
+            endTimeText = endTimeText.split('.')[0];
+          }
         }
       }
     }
