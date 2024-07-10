@@ -71,7 +71,6 @@
               <ExternalSourcePanelEntry
                 enabled={$selectedPlanDerivationGroupIds.includes(group.id)}
                 derivationGroup={group}
-                plan_id={$plan?.id}
                 user={user}
               />
             {/each}
