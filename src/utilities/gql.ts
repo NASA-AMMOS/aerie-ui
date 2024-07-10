@@ -958,11 +958,6 @@ const gql = {
           external_source_id
         }
       }
-      deletePlanExternalSource: ${Queries.DELETE_PLAN_DERIVATION_GROUP}(where: { external_source_id: { _eq: $id }}) {
-        returning {
-          external_source_id
-        }
-      }
       deleteExternalSource: ${Queries.DELETE_EXTERNAL_SOURCE}(id: $id) {
         id
       }
@@ -1511,7 +1506,7 @@ const gql = {
             external_events {
               external_event_type {
                 id
-                name    
+                name
               }
             }
           }
