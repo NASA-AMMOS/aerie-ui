@@ -601,8 +601,6 @@ const effects = {
     return false;
   },
 
-  // TODO: deleteDerivationGroup
-
   async deleteExternalSourceType(externalSourceTypeId: number | undefined, user: User | null): Promise<void> {
     try {
       if (externalSourceTypeId !== undefined) {
@@ -617,6 +615,19 @@ const effects = {
       }
     } catch (e) {
       catchError('External Source Type Deletion Failed', e as Error);
+    }
+  },
+
+  async deleteDerivationGroup(derivation_group_id: number | null, user: User | null): Promise<void> {
+    try {
+      if (derivation_group_id !== null) {
+        const data = await reqHasura<{ id: number }>(gql.DELETE_DERIVATION_GROUP, { id: derivation_group_id }, user);
+        if (data.deleteDerivationGroup === null) {
+          throw Error('Unable to delete derivation group');
+        }
+      }
+    } catch (e) {
+      catchError('Derivation Group Deletion Failed', e as Error);
     }
   },
 
