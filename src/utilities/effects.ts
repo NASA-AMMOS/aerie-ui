@@ -517,7 +517,7 @@ const effects = {
 
   async insertDerivationGroupForPlan(derivation_group_id: number, plan: Plan | null, user: User | null): Promise<void> {
     try {
-      if ((plan && !queryPermissions.INSERT_DERIVATION_GROUP_FOR_PLAN(user, plan)) || !plan) {
+      if ((plan && !queryPermissions.CREATE_PLAN_DERIVATION_GROUP(user, plan)) || !plan) {
         throwPermissionError('add a derivation group to the plan');
       }
 
@@ -532,8 +532,7 @@ const effects = {
             },
           },
           user,
-        );
-        console.log(data);
+        )
         const { planExternalSourceLink: sourceAssociation } = data;
         if (sourceAssociation != null) {
           // store updates automatically, because its a subscription!
@@ -632,7 +631,7 @@ const effects = {
 
   async deleteDerivationGroupForPlan(derivation_group_id: number, plan: Plan | null, user: User | null): Promise<void> {
     try {
-      if ((plan && !queryPermissions.DELETE_DERIVATION_GROUP_FROM_PLAN(user, plan)) || !plan) {
+      if ((plan && !queryPermissions.DELETE_PLAN_DERIVATION_GROUP(user, plan)) || !plan) {
         throwPermissionError('delete a derivation group from the plan');
       }
 
@@ -1073,8 +1072,6 @@ const effects = {
       if (file) {
         file_id = await effects.uploadFile(file, user);
       }
-
-      console.log(source);
 
       if (file_id !== null) {
         source.file_id = file_id;
@@ -3549,6 +3546,8 @@ const effects = {
             valid_at: source.valid_at,
             start_time: source.start_time,
             end_time: source.end_time,
+            derivation_group_id: source.derivation_group_id,
+            created_at: source.created_at
           });
         }
         return outputSources;

@@ -2,10 +2,7 @@
 
 <script lang="ts">
   import { externalEventTypes } from '../../stores/external-event';
-  import { derivationGroupPlanLinkError, externalSourceWithTypeName } from '../../stores/external-source';
-  import { plan } from '../../stores/plan';
-  import { externalSourceWithTypeName } from '../../stores/external-source';
-  import { createExternalSourcePlanError } from '../../stores/external-source';
+  import { derivationGroupPlanLinkError, externalSourceWithResolvedNames } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import type { User } from '../../types/app';
   import type { ExternalEventType } from '../../types/external-event';
@@ -20,7 +17,7 @@
 
   let selectedSourceEventTypes: ExternalEventType[] | null = null;
   let relevantSources: ExternalSourceWithResolvedNames[] = [];
-  $: relevantSources = $externalSourceWithTypeName.filter(source => derivationGroup.name === source.derivation_group);
+  $: relevantSources = $externalSourceWithResolvedNames.filter(source => derivationGroup.name === source.derivation_group);
 
   function onEnable(_event: Event) {
     if (enabled) {
