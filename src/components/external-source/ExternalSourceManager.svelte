@@ -383,6 +383,16 @@
             await effects.deleteExternalEventType(eventType.id, user);
           }
         });
+        // Determine if the derivation group this source belonged to is now empty, if so delete it
+        // NOTE: This work could be moved to Hasura in the future, or re-worked as it might be costly.
+        const emptyDerivationGroups = $derivationGroups.filter(derivationGroup => {
+          return derivationGroup.sources.size === 0;
+        })
+        if (emptyDerivationGroups.length > 0) {
+          for await (const derivationGroup of emptyDerivationGroups) {
+            await effects.deleteDerivationGroup(derivationGroup.id, user);
+          }
+        }
       }
     }
   }
