@@ -75,6 +75,7 @@
       headerName: 'ID',
       resizable: true,
       sortable: true,
+      width: 70
     },
     {
       field: 'key',
@@ -103,6 +104,7 @@
       headerName: 'File ID',
       resizable: true,
       sortable: true,
+      width: 120
     },
     {
       field: 'start_time',
@@ -132,6 +134,18 @@
       field: 'valid_at',
       filter: 'text',
       headerName: 'Valid At',
+      resizable: true,
+      sortable: true,
+      valueGetter: (params: ValueGetterParams<ExternalSourceWithResolvedNames>) => {
+        if (params.data?.valid_at) {
+          return new Date(params.data?.valid_at).toISOString().slice(0, 19);
+        }
+      },
+    },
+    {
+      field: 'created_at',
+      filter: 'text',
+      headerName: 'Created At',
       resizable: true,
       sortable: true,
       valueGetter: (params: ValueGetterParams<ExternalSourceWithResolvedNames>) => {
@@ -393,9 +407,12 @@
       };
 
       // create the source object to upload to AERIE
-      const start_time: string | null = convertDoyToYmd($startTimeDoyField.value.replaceAll("Z", ""))
-      const end_time: string | null = convertDoyToYmd($endTimeDoyField.value.replaceAll("Z", ""))
-      const valid_at: string | null = convertDoyToYmd($validAtDoyField.value.replaceAll("Z", ""))
+      const start_time: string | undefined = convertDoyToYmd($startTimeDoyField.value.replaceAll("Z", ""))?.replace("Z", "+00:00")
+      const end_time: string | undefined = convertDoyToYmd($endTimeDoyField.value.replaceAll("Z", ""))?.replace("Z", "+00:00")
+      const valid_at: string | undefined = convertDoyToYmd($validAtDoyField.value.replaceAll("Z", "")) + "+00:00"
+      console.log("start_time", $startTimeDoyField.value, start_time)
+      console.log("end_time", $endTimeDoyField.value, end_time)
+      console.log("valid_at", $validAtDoyField.value, valid_at)
       if (!start_time || !end_time || !valid_at) {
         showFailureToast("Upload failed.")
         console.log(`Upload failed - parsing dates in input failed. ${start_time}, ${end_time}, ${valid_at}`)
@@ -417,7 +434,7 @@
         metadata: parsed.source.metadata,
         source_type_id: -1,  // updated in the effect.
         start_time,
-        valid_at,
+        valid_at
       };
 
       // the ones uploaded in this run won't show up as quickly in $externalEventTypes, so we keep a local log as well
@@ -539,7 +556,9 @@
           id: sourceId,
           ...sourceInsert,
           source_type: sourceType?.name,
-          total_groups: $derivationGroups.length // kind of unnecessary here
+          created_at: new Date().toISOString().replace("Z", "+00:00"), // technically not the exact time it shows up in the database
+
+          total_groups: $derivationGroups.length // kind of unnecessary here, but necessary in this type for the table and coloring
         }
       }
 
@@ -705,9 +724,18 @@
             </Input>
 
             <Input layout="inline">
-              End Time (UTC)
+              Valid At (UTC)
               <DatePicker
                 dateString={selectedSource.valid_at}
+                disabled={true}
+                name="valid-at"
+              />
+            </Input>
+
+            <Input layout="inline">
+              Created At (UTC)
+              <DatePicker
+                dateString={selectedSource.created_at}
                 disabled={true}
                 name="valid-at"
               />

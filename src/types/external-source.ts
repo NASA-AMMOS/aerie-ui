@@ -13,11 +13,11 @@ export type ExternalSourceDB = {
   source_type_id: number;
   start_time: string;
   valid_at: string;
-  derivation_group_id: number; // TODO: eventually a string, or something like that. for now just an ID. may need ExternalSourceWithGroupName type if this becomes a name
+  derivation_group_id: number;
   // Things to consider:
   // associated file?
   // owner?
-  // created_at?
+  created_at: string;
 };
 
 // This is the JSON type that the user can upload.
@@ -38,13 +38,16 @@ export type ExternalSourceJson = {
 // For use in retrieval of source information sans bulky items like metadata and event lists (see stores)
 export type ExternalSourceSlim = Pick<
   ExternalSourceDB,
-  'id' | 'file_id' | 'key' | 'source_type_id' | 'start_time' | 'end_time' | 'valid_at' | 'derivation_group_id'
+  'id' | 'file_id' | 'key' | 'source_type_id' | 'start_time' | 'end_time' | 'valid_at' | 'derivation_group_id' | 'created_at'
 >;
 
 // For use in ExternalSourceManager tables
 export type ExternalSourceWithResolvedNames = ExternalSourceSlim & {
   source_type: string | undefined;
   derivation_group: string | undefined;
+
+  // for coloring
+  total_groups: number; 
 };
 
 // no analogue (yet) to ExternalEvent because no special durationMs or startMs to draw on a timeline

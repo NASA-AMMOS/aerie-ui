@@ -104,6 +104,11 @@
             <strong>Valid At:</strong>
             {source.valid_at}
           </p>
+
+          <p>
+            <strong>Created At:</strong>
+            {source.created_at}
+          </p>
         </Collapse>
       {/each}
       <Collapse
