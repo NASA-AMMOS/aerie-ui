@@ -2443,6 +2443,7 @@ const gql = {
       start_time
       end_time
       valid_at
+      created_at
     }
   }
 `,
@@ -2466,6 +2467,7 @@ const gql = {
         start_time
         end_time
         valid_at
+        created_at
       }
     }
   `,
