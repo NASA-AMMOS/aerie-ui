@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { createExternalSourcePlanError, derivationGroups, externalSourceTypes, getEventSourceTypeName, selectedPlanDerivationGroupIds } from '../../stores/external-source';
+  import { derivationGroupPlanLinkError, derivationGroups, externalSourceTypes, getEventSourceTypeName, selectedPlanDerivationGroupIds } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import { createExternalSourcePlanError, externalSourceWithTypeName, selectedPlanExternalSourceIds } from '../../stores/external-source';
   import type { User } from '../../types/app';
@@ -52,7 +52,7 @@
       on:input={event => (filterText = event.detail.value)}
     />
 
-    <AlertError class="m-2" error={$createExternalSourcePlanError} />
+    <AlertError class="m-2" error={$derivationGroupPlanLinkError} />
 
     <!-- {#if filteredDerivationGroups.length}
       {#each filteredDerivationGroups as derivationGroup}

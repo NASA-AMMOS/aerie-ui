@@ -2,6 +2,8 @@
 
 <script lang="ts">
   import { externalEventTypes } from '../../stores/external-event';
+  import { derivationGroupPlanLinkError, externalSourceWithTypeName } from '../../stores/external-source';
+  import { plan } from '../../stores/plan';
   import { externalSourceWithTypeName } from '../../stores/external-source';
   import { createExternalSourcePlanError } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
@@ -25,14 +27,13 @@
     if (enabled) {
       // insert
       effects.insertDerivationGroupForPlan(derivationGroup.id, $plan, user);
-      if (createExternalSourcePlanError !== null) {
+      if (derivationGroupPlanLinkError !== null) {
         enabled = false;  // Unselect button if there was an error
       }
-    }
-    else {
+    } else {
       // delete
       effects.deleteDerivationGroupForPlan(derivationGroup.id, $plan, user);
-      if (createExternalSourcePlanError !== null) {
+      if (derivationGroupPlanLinkError !== null) {
         enabled = true;  // Reselect button if there was an error
       }
     }
