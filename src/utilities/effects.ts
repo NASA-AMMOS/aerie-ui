@@ -28,6 +28,7 @@ import {
 } from '../stores/expansion';
 import { createExternalEventTypeError, creatingExternalEventType, getEventTypeById } from '../stores/external-event';
 import {
+  createDerivationGroupError,
   createExternalSourceError,
   createExternalSourceEventTypeLinkError,
   createExternalSourceTypeError,
@@ -533,7 +534,7 @@ const effects = {
             },
           },
           user,
-        )
+        );
         const { planExternalSourceLink: sourceAssociation } = data;
         if (sourceAssociation != null) {
           // store updates automatically, because its a subscription!
@@ -984,12 +985,7 @@ const effects = {
     user: User | null,
   ): Promise<DerivationGroup | undefined> {
     try {
-      // TODO: Check permissions.
-      // if (!queryPermissions.CREATE_MODEL(user)) {
-      //   throwPermissionError('upload a model');
-      // } // permissions are yet unhandled anywhere in external-source/page or anywhere else
-
-      // createExternalSourceTypeError.set(null); // TODO: errors
+      createDerivationGroupError.set(null);
       const { createDerivationGroup: created } = await reqHasura(
         gql.CREATE_DERIVATION_GROUP,
         { derivationGroup },
@@ -1004,7 +1000,7 @@ const effects = {
     } catch (e) {
       catchError('Derivation Group Create Failed', e as Error);
       showFailureToast('Derivation Group Create Failed');
-      // createExternalSourceTypeError.set((e as Error).message); // TODO: errors
+      createDerivationGroupError.set((e as Error).message);
       return undefined;
     }
   },
@@ -3548,7 +3544,7 @@ const effects = {
             start_time: source.start_time,
             end_time: source.end_time,
             derivation_group_id: source.derivation_group_id,
-            created_at: source.created_at
+            created_at: source.created_at,
           });
         }
         return outputSources;
