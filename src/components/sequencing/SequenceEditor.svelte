@@ -79,7 +79,7 @@
   }
 
   $: {
-    editorSequenceView.dispatch({
+    editorSequenceView?.dispatch({
       changes: { from: 0, insert: sequenceDefinition, to: editorSequenceView.state.doc.length },
     });
   }
