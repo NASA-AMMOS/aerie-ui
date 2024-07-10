@@ -6,7 +6,7 @@
   import { onDestroy, onMount } from 'svelte';
   import { catchError } from '../../stores/errors';
   import { externalEventTypes, getEventTypeName } from '../../stores/external-event';
-  import { createExternalSourceError, createExternalSourceEventTypeLinkError, createExternalSourceTypeError, creatingExternalSource, derivationGroups, externalSourceEventTypes, externalSourceTypes, externalSourceWithTypeName, getDerivationGroupByNameSourceTypeId, getEventSourceTypeByName, planDerivationGroupLinks } from '../../stores/external-source';
+  import { createExternalSourceError, createExternalSourceEventTypeLinkError, createExternalSourceTypeError, creatingExternalSource, derivationGroups, externalSourceEventTypes, externalSourceTypes, externalSourceWithResolvedNames, getDerivationGroupByNameSourceTypeId, getEventSourceTypeByName, planDerivationGroupLinks } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import { plans } from '../../stores/plans';
   import type { User } from '../../types/app';
@@ -270,7 +270,7 @@
                 content: 'Delete External Source',
                 placement: 'bottom',
               },
-              hasDeletePermission: true, // TODO: permissions
+              hasDeletePermission: hasDeletePermission, 
               rowData: params.data,
             },
             target: actionsDiv,
@@ -297,7 +297,7 @@
   $: xDomainView = [startTime, endTime];
   $: xScaleView = getXScale(xDomainView, 500);
 
-  $: filteredExternalSources = $externalSourceWithTypeName.filter(externalSource => {
+  $: filteredExternalSources = $externalSourceWithResolvedNames.filter(externalSource => {
     return selectedFilters.find(f => f.name === externalSource.source_type) !== undefined
   });
   $: filteredValues = $externalSourceTypes.filter(externalSourceType => externalSourceType.name.toLowerCase().includes(filterString))
@@ -365,7 +365,7 @@
         deselectSource();
         // Determine if there are no remaining external sources that use the type of the source that was just deleted. If there are none, delete the source type
         // NOTE: This work could be moved to Hasura in the future, or re-worked as it might be costly.
-        const remainingSourcesWithThisType = $externalSourceWithTypeName.filter(externalSource => {
+        const remainingSourcesWithThisType = $externalSourceWithResolvedNames.filter(externalSource => {
           return externalSource.source_type_id === selectedSource.source_type_id && externalSource.id !== selectedSource.id
         });
         if (remainingSourcesWithThisType.length === 0) {
@@ -433,9 +433,6 @@
       const start_time: string | undefined = convertDoyToYmd($startTimeDoyField.value.replaceAll("Z", ""))?.replace("Z", "+00:00")
       const end_time: string | undefined = convertDoyToYmd($endTimeDoyField.value.replaceAll("Z", ""))?.replace("Z", "+00:00")
       const valid_at: string | undefined = convertDoyToYmd($validAtDoyField.value.replaceAll("Z", "")) + "+00:00"
-      console.log("start_time", $startTimeDoyField.value, start_time)
-      console.log("end_time", $endTimeDoyField.value, end_time)
-      console.log("valid_at", $validAtDoyField.value, valid_at)
       if (!start_time || !end_time || !valid_at) {
         showFailureToast("Upload failed.")
         console.log(`Upload failed - parsing dates in input failed. ${start_time}, ${end_time}, ${valid_at}`)
@@ -447,7 +444,7 @@
         return
       }
       sourceInsert = {
-        derivation_group_id: -1, // updated in the effect. TODO: effect
+        derivation_group_id: -1, // updated in the effect. 
         end_time,
         external_events: {
           data: null  // updated after this map is created
@@ -550,7 +547,6 @@
         }
         // name and source type id pair present
         else if (sourceType !== undefined) {
-          console.log("its over", $derivationGroups)
           derivationGroup = getDerivationGroupByNameSourceTypeId(derivationGroupName, sourceType.id, $derivationGroups)
         }
 
@@ -592,8 +588,6 @@
       startTimeDoyField.reset("");
       endTimeDoyField.reset("");
       validAtDoyField.reset("");
-      // TODO: add logic in table to group by derivation group!
-
     }
     else {
       showFailureToast("Upload failed.")
@@ -975,13 +969,12 @@
         </div>
         </Collapse>
       </div>
-      {#if $externalSourceWithTypeName.length}
+      {#if $externalSourceWithResolvedNames.length}
         <CssGrid rows="1fr 5px 1fr" gap="8px" class="source-grid">
-          <!--TODO: delete permissions. For example, hasDeletePermission while set true can be set to false and will still delete-->
           <SingleActionDataGrid
             {columnDefs}
             {getRowStyle}
-            hasDeletePermission={true}
+            hasDeletePermission={hasDeletePermission}
             itemDisplayText="External Source"
             items={filteredExternalSources}
             {user}
