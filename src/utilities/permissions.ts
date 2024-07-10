@@ -499,6 +499,13 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
         (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
     );
   },
+  DELETE_DERIVATION_GROUP_FROM_PLAN: (user: User | null, plan: PlanWithOwners): boolean => {
+    return (
+      isUserAdmin(user) ||
+      (getPermission([Queries.DELETE_PLAN_DERIVATION_GROUP], user) && isPlanOwner(user, plan)) ||
+      isPlanCollaborator(user, plan)
+    );
+  },
   DELETE_EXPANSION_RULE: (user: User | null, expansionRule: AssetWithOwner<ExpansionRule>): boolean => {
     return (
       isUserAdmin(user) || (getPermission([Queries.DELETE_EXPANSION_RULE], user) && isUserOwner(user, expansionRule))
@@ -674,6 +681,13 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   GET_VIEW: () => true,
   INITIAL_SIMULATION_UPDATE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.UPDATE_SIMULATIONS], user);
+  },
+  INSERT_DERIVATION_GROUP_FOR_PLAN: (user: User | null, plan: PlanWithOwners): boolean => {
+    return (
+      isUserAdmin(user) ||
+      (getPermission([Queries.INSERT_PLAN_DERIVATION_GROUP], user) && isPlanOwner(user, plan)) ||
+      isPlanCollaborator(user, plan)
+    );
   },
   INSERT_EXPANSION_SEQUENCE_TO_ACTIVITY: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_SEQUENCE_TO_SIMULATED_ACTIVITY], user);

@@ -26,7 +26,13 @@ import {
   savingExpansionSet,
 } from '../stores/expansion';
 import { createExternalEventTypeError, creatingExternalEventType, getEventTypeById } from '../stores/external-event';
-import { createExternalSourceError, createExternalSourceEventTypeLinkError, createExternalSourcePlanError, createExternalSourceTypeError, creatingExternalSource } from '../stores/external-source';
+import {
+  createExternalSourceError,
+  createExternalSourceEventTypeLinkError,
+  createExternalSourceTypeError,
+  creatingExternalSource,
+  derivationGroupPlanLinkError,
+} from '../stores/external-source';
 import { createModelError, creatingModel, models } from '../stores/model';
 import { createPlanError, creatingPlan, planId } from '../stores/plan';
 import { schedulingRequests, selectedSpecId } from '../stores/scheduling';
@@ -88,7 +94,7 @@ import type {
   ExternalSourceType,
   ExternalSourceTypeInsertInput,
   ExternalSourceWithResolvedNames,
-  PlanDerivationGroup
+  PlanDerivationGroup,
 } from '../types/external-source';
 import type { Model, ModelInsertInput, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
 import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
@@ -511,23 +517,23 @@ const effects = {
 
   async insertDerivationGroupForPlan(derivation_group_id: number, plan: Plan | null, user: User | null): Promise<void> {
     try {
-      if ((plan && !queryPermissions.CREATE_PLAN_EXTERNAL_SOURCE(user, plan)) || !plan) {
-        throwPermissionError('add an external source to the plan');
+      if ((plan && !queryPermissions.INSERT_DERIVATION_GROUP_FOR_PLAN(user, plan)) || !plan) {
+        throwPermissionError('add a derivation group to the plan');
       }
 
-      createExternalSourcePlanError.set(null);
+      derivationGroupPlanLinkError.set(null);
       if (plan !== null) {
         const data = await reqHasura<PlanDerivationGroup>(
           gql.CREATE_PLAN_DERIVATION_GROUP,
           {
             source: {
-              plan_id: plan.id,
               derivation_group_id: derivation_group_id,
+              plan_id: plan.id,
             },
           },
           user,
         );
-        console.log(data)
+        console.log(data);
         const { planExternalSourceLink: sourceAssociation } = data;
         if (sourceAssociation != null) {
           // store updates automatically, because its a subscription!
@@ -541,7 +547,7 @@ const effects = {
     } catch (e) {
       catchError('Derivation Group Linking Failed', e as Error);
       showFailureToast('Derivation Group Linking Failed');
-      createExternalSourcePlanError.set((e as Error).message);
+      derivationGroupPlanLinkError.set((e as Error).message);
     }
   },
 
@@ -558,7 +564,10 @@ const effects = {
     }
   },
 
-  async deleteExternalSource(externalSource: ExternalSourceWithResolvedNames | null, user: User | null): Promise<boolean> {
+  async deleteExternalSource(
+    externalSource: ExternalSourceWithResolvedNames | null,
+    user: User | null,
+  ): Promise<boolean> {
     try {
       if (!queryPermissions.DELETE_EXTERNAL_SOURCE(user)) {
         throwPermissionError('delete an external source');
@@ -610,14 +619,14 @@ const effects = {
     }
   },
 
-  async deleteDerivationGroupForPlan(derivation_group_id: number, plan_id: Plan | null, user: User | null): Promise<void> {
+  async deleteDerivationGroupForPlan(derivation_group_id: number, plan: Plan | null, user: User | null): Promise<void> {
     try {
-      if ((plan && !queryPermissions.DELETE_PLAN_EXTERNAL_SOURCE(user, plan)) || !plan) {
-        throwPermissionError('delete an external source from the plan');
+      if ((plan && !queryPermissions.DELETE_DERIVATION_GROUP_FROM_PLAN(user, plan)) || !plan) {
+        throwPermissionError('delete a derivation group from the plan');
       }
 
       // (use the same as above store, as the behavior is employed on the same panel, therefore so would the error)
-      createExternalSourcePlanError.set(null);
+      derivationGroupPlanLinkError.set(null);
       if (plan !== null) {
         const data = await reqHasura<{
           returning: {
@@ -628,8 +637,8 @@ const effects = {
           {
             where: {
               _and: {
-                plan_id: { _eq: plan.id },
                 derivation_group_id: { _eq: derivation_group_id },
+                plan_id: { _eq: plan.id },
               },
             },
           },
@@ -641,7 +650,9 @@ const effects = {
           showSuccessToast('Derivation Group Disassociated Successfully');
         } else {
           // show the source name instead??? unsure
-          throw Error(`Unable to disassociate Derivation Group with ID "${derivation_group_id}" on plan with ID ${plan.id}`);
+          throw Error(
+            `Unable to disassociate Derivation Group with ID "${derivation_group_id}" on plan with ID ${plan.id}`,
+          );
         }
       } else {
         throw Error('Plan is not defined.');
@@ -649,7 +660,7 @@ const effects = {
     } catch (e) {
       catchError('Derivation Group De-linking Failed', e as Error);
       showFailureToast('Derivation Group De-linking Failed');
-      createExternalSourcePlanError.set((e as Error).message);
+      derivationGroupPlanLinkError.set((e as Error).message);
     }
   },
 
@@ -983,7 +994,7 @@ const effects = {
       catchError('Derivation Group Create Failed', e as Error);
       showFailureToast('Derivation Group Create Failed');
       // createExternalSourceTypeError.set((e as Error).message); // TODO: errors
-      return undefined
+      return undefined;
     }
   },
 
@@ -1052,7 +1063,7 @@ const effects = {
         file_id = await effects.uploadFile(file, user);
       }
 
-      console.log(source)
+      console.log(source);
 
       if (file_id !== null) {
         source.file_id = file_id;
@@ -3490,16 +3501,16 @@ const effects = {
   async getExternalEventTypes(plan_id: number, user: User | null): Promise<ExternalEventType[]> {
     try {
       const source_data = await reqHasura<any>(gql.GET_PLAN_EVENT_TYPES, { plan_id }, user);
-      let type_ids: Set<number> = new Set();
-      let types: ExternalEventType[] = [];
+      const type_ids: Set<number> = new Set();
+      const types: ExternalEventType[] = [];
 
-      for (const group of source_data["plan_derivation_group"]) {
-        for (const source of group["derivation_group"]["external_source"]) {
-          for (const event of source["external_events"]) {
-            const type = event["external_event_type"]
-            if (!type_ids.has(type["id"])) {
-              type_ids.add(type["id"])
-              types.push(type)
+      for (const group of source_data['plan_derivation_group']) {
+        for (const source of group['derivation_group']['external_source']) {
+          for (const event of source['external_events']) {
+            const type = event['external_event_type'];
+            if (!type_ids.has(type['id'])) {
+              type_ids.add(type['id']);
+              types.push(type);
             }
           }
         }
