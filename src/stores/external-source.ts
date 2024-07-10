@@ -10,6 +10,8 @@ export const createExternalSourceError: Writable<string | null> = writable(null)
 
 export const createExternalSourceTypeError: Writable<string | null> = writable(null);
 
+export const createDerivationGroupError: Writable<string | null> = writable(null);
+
 export const derivationGroupPlanLinkError: Writable<string | null> = writable(null);
 
 export const createExternalSourceEventTypeLinkError: Writable<string | null> = writable(null);
@@ -80,7 +82,7 @@ export const externalSourceWithResolvedNames = derived<
       ...externalSource,
       source_type: getEventSourceTypeName(externalSource.source_type_id, $externalSourceTypes),
       derivation_group: getDerivationGroupName(externalSource.derivation_group_id, $derivationGroups),
-      total_groups: $derivationGroups.length
+      total_groups: $derivationGroups.length,
     })),
 );
 
@@ -109,6 +111,7 @@ export const selectedPlanExternalSourceEventTypes = derived(
 export function resetModelStores() {
   createExternalSourceError.set(null);
   createExternalSourceTypeError.set(null);
+  createDerivationGroupError.set(null);
   derivationGroupPlanLinkError.set(null);
   createExternalSourceEventTypeLinkError.set(null);
 }
