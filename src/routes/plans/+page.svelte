@@ -6,6 +6,7 @@
   import { page } from '$app/stores';
   import PlanIcon from '@nasa-jpl/stellar/icons/plan.svg?component';
   import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
+  import { flatten } from 'lodash-es';
   import { onDestroy, onMount } from 'svelte';
   import Nav from '../../components/app/Nav.svelte';
   import PageTitle from '../../components/app/PageTitle.svelte';
@@ -32,8 +33,9 @@
   import type { User } from '../../types/app';
   import type { DataGridColumnDef, RowId } from '../../types/data-grid';
   import type { ModelSlim } from '../../types/model';
-  import type { Plan, PlanSlim } from '../../types/plan';
+  import type { Plan, PlanSlim, PlanTransfer } from '../../types/plan';
   import type { PlanTagsInsertInput, Tag, TagsChangeEvent } from '../../types/tags';
+  import { generateRandomPastelColor } from '../../utilities/color';
   import effects from '../../utilities/effects';
   import { removeQueryParam } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
@@ -185,6 +187,7 @@
       'Plan name already exists',
     ),
   ]);
+  let planUploadFiles: FileList | undefined;
   let simTemplateField = field<number | null>(null);
 
   $: startTimeField = field<string>('', [required, $plugins.time.primary.validate]);
@@ -285,26 +288,40 @@
   async function createPlan() {
     let startTime = getDoyTime($plugins.time.primary.parse($startTimeField.value));
     let endTime = getDoyTime($plugins.time.primary.parse($endTimeField.value));
-    const newPlan = await effects.createPlan(
-      endTime,
-      $modelIdField.value,
-      $nameField.value,
-      startTime,
-      $simTemplateField.value,
-      user,
-    );
 
-    if (newPlan) {
-      // Associate new tags with plan
-      const newPlanTags: PlanTagsInsertInput[] = (planTags || []).map(({ id: tag_id }) => ({
-        plan_id: newPlan.id,
-        tag_id,
-      }));
-      newPlan.tags = planTags.map(tag => ({ tag }));
-      if (!$plans.find(({ id }) => newPlan.id === id)) {
-        plans.updateValue(storePlans => [...storePlans, newPlan]);
+    if (planUploadFiles && planUploadFiles.length) {
+      await effects.importPlan(
+        {
+          end_time: endTime,
+          model_id: $modelIdField.value,
+          name: $nameField.value,
+          start_time: startTime,
+          tags: planTags.map(({ id, name }) => ({ tag: { id, name } })),
+        },
+        planUploadFiles,
+        user,
+      );
+    } else {
+      const newPlan: PlanSlim | null = await effects.createPlan(
+        endTime,
+        $modelIdField.value,
+        $nameField.value,
+        startTime,
+        $simTemplateField.value,
+        user,
+      );
+      if (newPlan) {
+        // Associate new tags with plan
+        const newPlanTags: PlanTagsInsertInput[] = (planTags || []).map(({ id: tag_id }) => ({
+          plan_id: newPlan.id,
+          tag_id,
+        }));
+        newPlan.tags = planTags.map(tag => ({ tag }));
+        if (!$plans.find(({ id }) => newPlan.id === id)) {
+          plans.updateValue(storePlans => [...storePlans, newPlan]);
+        }
+        await effects.createPlanTags(newPlanTags, newPlan, user);
       }
-      await effects.createPlanTags(newPlanTags, newPlan, user);
     }
   }
 
@@ -368,6 +385,59 @@
       durationString = 'None';
     }
   }
+  async function onReaderLoad(event: ProgressEvent<FileReader>) {
+    if (event.target !== null && event.target.result !== null) {
+      const planJSON: PlanTransfer = JSON.parse(`${event.target.result}`) as PlanTransfer;
+      nameField.validateAndSet(planJSON.name);
+      const importedPlanTags = planJSON.tags.reduce(
+        (previousTags: { existingTags: Tag[]; newTagNames: string[] }, importedPlanTag) => {
+          const {
+            tag: { id: importedPlanTagId, name: importedPlanTagName },
+          } = importedPlanTag;
+          const existingTag = $tags.find(({ id }) => importedPlanTagId === id);
+
+          if (existingTag) {
+            return {
+              ...previousTags,
+              existingTags: [...previousTags.existingTags, existingTag],
+            };
+          } else {
+            return {
+              ...previousTags,
+              newTagNames: [...previousTags.newTagNames, importedPlanTagName],
+            };
+          }
+        },
+        {
+          existingTags: [],
+          newTagNames: [],
+        },
+      );
+
+      const newTags: Tag[] = flatten(
+        await Promise.all(
+          importedPlanTags.newTagNames.map(async tagName => {
+            return (await effects.createTags([{ color: generateRandomPastelColor(), name: tagName }], user)) || [];
+          }),
+        ),
+      );
+
+      planTags = [...importedPlanTags.existingTags, ...newTags];
+
+      await startTimeField.validateAndSet($plugins.time.primary.format(new Date(planJSON.start_time)));
+      await endTimeField.validateAndSet($plugins.time.primary.format(new Date(planJSON.end_time)));
+      updateDurationString();
+    }
+  }
+
+  function onPlanFileChange(event: Event) {
+    const files = (event.target as HTMLInputElement).files;
+    if (files !== null && files.length) {
+      const reader = new FileReader();
+      reader.onload = onReaderLoad;
+      reader.readAsText(files[0]);
+    }
+  }
 </script>
 
 <PageTitle title="Plans" />
@@ -386,6 +456,22 @@
       <svelte:fragment slot="body">
         <form on:submit|preventDefault={createPlan}>
           <AlertError class="m-2" error={$createPlanError} />
+
+          <fieldset>
+            <label for="file">Import Plan JSON File</label>
+            <input
+              class="w-100"
+              name="file"
+              required
+              type="file"
+              bind:files={planUploadFiles}
+              use:permissionHandler={{
+                hasPermission: canCreate,
+                permissionError,
+              }}
+              on:change={onPlanFileChange}
+            />
+          </fieldset>
 
           <Field field={modelIdField}>
             <label for="model" slot="label">Models</label>

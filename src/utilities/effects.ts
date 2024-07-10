@@ -112,6 +112,7 @@ import type {
   PlanMetadata,
   PlanSchema,
   PlanSlim,
+  PlanTransfer,
 } from '../types/plan';
 import type { PlanSnapshot } from '../types/plan-snapshot';
 import type {
@@ -205,7 +206,7 @@ import {
   showRestorePlanSnapshotModal,
   showUploadViewModal,
 } from './modal';
-import { queryPermissions } from './permissions';
+import { gatewayPermissions, queryPermissions } from './permissions';
 import { reqExtension, reqGateway, reqHasura } from './requests';
 import { sampleProfiles } from './resources';
 import { convertResponseToMetadata } from './scheduling';
@@ -3802,6 +3803,41 @@ const effects = {
         }
       }
       return generateDefaultView(activityTypes, resourceTypes);
+    } catch (e) {
+      catchError(e as Error);
+      return null;
+    }
+  },
+
+  async importPlan(
+    plan: Omit<PlanTransfer, 'id' | 'sim_id' | 'activities'>,
+    files: FileList,
+    user: User | null,
+  ): Promise<PlanSlim | null> {
+    try {
+      if (!gatewayPermissions.IMPORT_PLAN(user)) {
+        throwPermissionError('import a plan');
+      }
+      const file: File = files[0];
+
+      const duration = getIntervalFromDoyRange(plan.start_time, plan.end_time);
+
+      const body = new FormData();
+      console.log('tags :>> ', plan.tags);
+      body.append('name', `${plan.name}`);
+      body.append('model_id', `${plan.model_id}`);
+      body.append('start_time', `${plan.start_time}`);
+      body.append('duration', `${duration}`);
+      body.append('tags', JSON.stringify(plan.tags.map(({ tag: { id } }) => id)));
+      body.append('plan_file', file, file.name);
+
+      const createdPlan = await reqGateway<PlanSlim | null>('/importPlan', 'POST', body, user, true);
+
+      if (createdPlan != null) {
+        return createdPlan;
+      }
+
+      return null;
     } catch (e) {
       catchError(e as Error);
       return null;
