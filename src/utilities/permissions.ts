@@ -822,6 +822,9 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   SUB_EXPANSION_SETS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.EXPANSION_SETS], user);
   },
+  SUB_EXTERNAL_SOURCES: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.EXTERNAL_SOURCES], user);
+  },
   SUB_MODEL: () => true,
   SUB_MODELS: () => true,
   SUB_PARAMETER_DICTIONARIES: () => true,
@@ -1253,6 +1256,7 @@ interface FeaturePermissions {
   expansionRules: CRUDPermission<AssetWithOwner>;
   expansionSequences: ExpansionSequenceCRUDPermission<AssetWithOwner<ExpansionSequence>>;
   expansionSets: ExpansionSetsCRUDPermission<AssetWithOwner<ExpansionSet>>;
+  externalSource: CRUDPermission<void>;
   model: CRUDPermission<void>;
   parameterDictionary: CRUDPermission<void>;
   parcels: CRUDPermission<AssetWithOwner<Parcel>>;
@@ -1340,6 +1344,12 @@ const featurePermissions: FeaturePermissions = {
     canDelete: (user, expansionSet) => queryPermissions.DELETE_EXPANSION_SET(user, expansionSet),
     canRead: user => queryPermissions.SUB_EXPANSION_SETS(user),
     canUpdate: () => false, // no feature to update expansion sets exists
+  },
+  externalSource: {
+    canCreate: user => queryPermissions.CREATE_EXTERNAL_SOURCE(user),
+    canDelete: user => queryPermissions.DELETE_EXTERNAL_SOURCE(user),
+    canRead: user => queryPermissions.SUB_EXTERNAL_SOURCES(user),
+    canUpdate: () => false, // no feature to update external sources
   },
   model: {
     canCreate: user => queryPermissions.CREATE_MODEL(user),
