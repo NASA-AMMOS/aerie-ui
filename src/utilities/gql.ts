@@ -955,6 +955,7 @@ const gql = {
   DELETE_EXTERNAL_EVENT_TYPE: `#graphql
     mutation DeleteExternalEventType($id: Int!) {
       deleteExternalEventType: ${Queries.DELETE_EXTERNAL_EVENT_TYPE}(id: $id) {
+        id
         name
       }
     }

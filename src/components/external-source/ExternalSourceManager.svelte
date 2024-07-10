@@ -6,7 +6,7 @@
   import { onDestroy, onMount } from 'svelte';
   import { catchError } from '../../stores/errors';
   import { externalEventTypes, getEventTypeName } from '../../stores/external-event';
-  import { createExternalSourceError, createExternalSourceEventTypeLinkError, createExternalSourceTypeError, creatingExternalSource, derivationGroups, externalSourceTypes, externalSourceWithTypeName, getDerivationGroupByNameSourceTypeId, getEventSourceTypeByName, planDerivationGroupLinks } from '../../stores/external-source';
+  import { createExternalSourceError, createExternalSourceEventTypeLinkError, createExternalSourceTypeError, creatingExternalSource, derivationGroups, externalSourceEventTypes, externalSourceTypes, externalSourceWithTypeName, getDerivationGroupByNameSourceTypeId, getEventSourceTypeByName, planDerivationGroupLinks } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import { plans } from '../../stores/plans';
   import type { User } from '../../types/app';
@@ -20,7 +20,7 @@
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import { convertDoyToYmd, convertDurationToMs, convertUTCtoMs } from '../../utilities/time';
-  import { TimelineInteractionMode, getXScale } from '../../utilities/timeline';
+  import { getXScale, TimelineInteractionMode } from '../../utilities/timeline';
   import { showFailureToast } from '../../utilities/toast';
   import { tooltip } from '../../utilities/tooltip';
   import { required, timestamp } from '../../utilities/validators';
@@ -391,6 +391,19 @@
         if (emptyDerivationGroups.length > 0) {
           for await (const derivationGroup of emptyDerivationGroups) {
             await effects.deleteDerivationGroup(derivationGroup.id, user);
+          }
+        }
+        // Determine if the external event type(s) this source contained are now empty, if so delete it/them
+        // NOTE: This work could be moved to Hasura in the future, or re-worked as it might be costly.
+        const relatedExternalEventTypes = $externalSourceEventTypes.filter(typeLink => {
+          return typeLink.external_source_id === selectedSource.id;
+        })
+        for await (const relatedLink of relatedExternalEventTypes) {
+          const isExternalEventTypeUsed = $externalSourceEventTypes.filter(typeLink => {
+            return typeLink.external_event_type_id === relatedLink.external_event_type_id && typeLink.external_source_id !== selectedSource.id;
+          })
+          if (isExternalEventTypeUsed.length === 0) {
+            await effects.deleteExternalEventType(relatedLink.external_event_type_id, user);
           }
         }
       }
