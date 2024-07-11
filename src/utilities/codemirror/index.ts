@@ -32,6 +32,7 @@ export const SeqLanguage = LRLanguage.define({
         GenericDirective: t.namespace,
         Global: t.namespace,
         GroundBlock: t.namespace,
+        GroundEpoch: t.className,
         GroundEvent: t.namespace,
         HardwareCommands: t.namespace,
         IdDeclaration: t.namespace,
