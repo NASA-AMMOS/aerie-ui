@@ -16,7 +16,7 @@
   import type { TimeRange } from '../../types/timeline';
   import { type MouseDown, type MouseOver } from '../../types/timeline';
   import effects from '../../utilities/effects';
-  import { classNames, getTarget } from '../../utilities/generic';
+  import { classNames } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import { convertDoyToYmd, convertDurationToMs, convertUTCtoMs } from '../../utilities/time';
@@ -724,6 +724,11 @@
             </Input>
 
             <Input layout="inline">
+              Derivation Group
+              <input class="st-input w-100" disabled={true} name="derivation-group" value={selectedSource.derivation_group} />
+            </Input>
+
+            <Input layout="inline">
               Start Time (UTC)
               <DatePicker
                 dateString={selectedSource.start_time}
@@ -789,17 +794,6 @@
               {catchError(error)}
             {/await}
           </Collapse>
-          <button
-            class="st-button danger w-100"
-            use:permissionHandler={{
-              hasPermission: hasDeletePermission,
-              permissionError: deletePermissionError,
-            }}
-            on:click|stopPropagation={async() => onDeleteExternalSource(selectedSource)}
-          >
-            Delete external source
-          </button>
-
           <Collapse
             className="used-in-plans-collapse"
             defaultExpanded={false}
@@ -812,6 +806,16 @@
               })?.name}</i>
             {/each}
           </Collapse>
+          <button
+            class="st-button danger w-100"
+            use:permissionHandler={{
+              hasPermission: hasDeletePermission,
+              permissionError: deletePermissionError,
+            }}
+            on:click|stopPropagation={async() => onDeleteExternalSource(selectedSource)}
+          >
+            Delete external source
+          </button>
         </div>
       {:else}
         <form on:submit|preventDefault={onFormSubmit} on:reset={() => {
@@ -826,7 +830,6 @@
           <AlertError class="m-2" error={$createExternalSourceTypeError} />
           <AlertError class="m-2" error={$createDerivationGroupError} />
           <AlertError class="m-2" error={$createExternalSourceEventTypeLinkError} />
-
           <fieldset>
             <label for="file">Source File</label>
             <input class="w-100" name="file" required type="file" bind:files use:permissionHandler={{
@@ -886,28 +889,6 @@
     <svelte:fragment slot="header">
       <slot name="left">
         <SectionTitle><Truck />External Sources</SectionTitle>
-      </slot>
-      <slot name="right">
-        <select class="st-select" on:change|stopPropagation={
-          (e) => {
-            const { value } = getTarget(e)
-            if (value === "table") {
-              showExternalEventTable = true;
-              showExternalEventTimeline = false;
-              externalEventsTableFilterString = '';
-              selectedRowId = selectedEvent?.id ?? null;
-            }
-            else {
-              showExternalEventTable = false;
-              showExternalEventTimeline = true;
-              externalEventsTableFilterString = '';
-              mouseDownAfterTable = true
-            }
-          }
-        }>
-            <option value={"table"}>Table</option>
-            <option value={"timeline"}>Timeline</option>
-        </select>
       </slot>
     </svelte:fragment>
     <svelte:fragment slot="body">
@@ -987,7 +968,61 @@
           <CssGridGutter track={1} type="row" />
           {#if selectedSource}
             {#if showExternalEventTimeline}
+              <!--
+              <div class="btn-group" style="float: right;">
+                <button
+                  class="st-button secondary"
+                  on:click={() => {
+                    showExternalEventTable = true;
+                    showExternalEventTimeline = false;
+                    externalEventsTableFilterString = '';
+                    selectedRowId = selectedEvent?.id ?? null;
+                  }}
+                  use:tooltip={{ content: 'Toggle external event table', placement: 'top' }}
+                >
+                  Table
+                </button>
+                <button
+                  class="st-button primary"
+                  on:click={() => {
+                    showExternalEventTable = false;
+                    showExternalEventTimeline = true;
+                    externalEventsTableFilterString = '';
+                    mouseDownAfterTable = true;
+                  }}
+                  use:tooltip={{ content: 'Toggle external event timeline', placement: 'top' }}
+                >
+                  Timeline
+                </button>
+              </div>
+              -->
               <div style="padding-left: 5px; padding-right: 5px">
+                <div class="btn-group" style="display:flex;justify-content:flex-end;padding-bottom:5px;">
+                  <button
+                    class="st-button secondary"
+                    on:click={() => {
+                      showExternalEventTable = true;
+                      showExternalEventTimeline = false;
+                      externalEventsTableFilterString = '';
+                      selectedRowId = selectedEvent?.id ?? null;
+                    }}
+                    use:tooltip={{ content: 'Toggle external event table', placement: 'top' }}
+                  >
+                    Table
+                  </button>
+                  <button
+                    class="st-button primary"
+                    on:click={() => {
+                      showExternalEventTable = false;
+                      showExternalEventTimeline = true;
+                      externalEventsTableFilterString = '';
+                      mouseDownAfterTable = true;
+                    }}
+                    use:tooltip={{ content: 'Toggle external event timeline', placement: 'top' }}
+                  >
+                    Timeline
+                  </button>
+                </div>
                 <div style=" background-color:#ebe9e6;height:15px;">
                   <div style="display:inline; float:left;">{startTime}</div>
                   <div style="display:inline; float:right;">{endTime}</div>
@@ -1012,7 +1047,7 @@
                   />
                   <Tooltip bind:this={eventTooltip} {mouseOver} interpolateHoverValue={false} hidden={false} resourceTypes={[]} />
 
-                  <div style=" padding-bottom: 10px;padding-top: 3px">
+                  <div style="height: inherit; padding-bottom: 10px;padding-top: 3px">
                     <LayerExternalSources
                       selectedExternalEventId={selectedEvent?.id ?? null}
                       externalEvents={selectedEvents}
@@ -1036,18 +1071,46 @@
               </div>
             {:else if showExternalEventTable}
               <div style="height: 100%; position: relative; width: 100%">
-                <div style="padding-left:5px; padding-right:5px">
-                  <Collapse
-                    className="anchor-collapse"
-                    defaultExpanded={false}
-                    title="External Event Filters"
-                    tooltipContent="Filter External Events"
-                  >
-                    <CollapsibleListControls
-                      placeholder="Filter External Events By Name"
-                      on:input={event => (externalEventsTableFilterString = event.detail.value)}
-                    />
-                  </Collapse>
+                <div style="display: flex; width: 100%;">
+                  <div style="padding-left:5px; padding-right:5px;">
+                    <Collapse
+                      className="anchor-collapse"
+                      defaultExpanded={false}
+                      title="External Event Filters"
+                      tooltipContent="Filter External Events"
+                    >
+                      <CollapsibleListControls
+                        placeholder="Filter External Events By Name"
+                        on:input={event => (externalEventsTableFilterString = event.detail.value)}
+                      />
+                    </Collapse>
+                  </div>
+                  <div class="btn-group" style="padding-right:5px;">
+                    <button
+                      class="st-button primary"
+                      on:click={() => {
+                        showExternalEventTable = true;
+                        showExternalEventTimeline = false;
+                        externalEventsTableFilterString = '';
+                        selectedRowId = selectedEvent?.id ?? null;
+                      }}
+                      use:tooltip={{ content: 'Toggle external event table', placement: 'top' }}
+                    >
+                      Table
+                    </button>
+                    <button
+                      class="st-button secondary"
+                      on:click={() => {
+                        showExternalEventTable = false;
+                        showExternalEventTimeline = true;
+                        externalEventsTableFilterString = '';
+                        mouseDownAfterTable = true;
+                      }}
+                      use:tooltip={{ content: 'Toggle external event timeline', placement: 'top' }}
+                    >
+                      Timeline
+                    </button>
+                  </div>
                 </div>
                 <div style="height:10px; width:100%"></div>
                 <ExternalEventsTable
@@ -1250,5 +1313,10 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
+  }
+
+  .btn-group {
+    align-self: center;
+    margin-left: auto;
   }
 </style>
