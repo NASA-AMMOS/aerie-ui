@@ -1,6 +1,7 @@
 <script lang="ts">
   import SearchIcon from '@nasa-jpl/stellar/icons/search.svg?component';
   import type { ICellRendererParams, RowClassParams, RowStyle, ValueGetterParams } from 'ag-grid-community';
+  import Balloon from 'bootstrap-icons/icons/balloon.svg?component';
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { onDestroy, onMount } from 'svelte';
@@ -25,7 +26,6 @@
   import { tooltip } from '../../utilities/tooltip';
   import { required, timestamp } from '../../utilities/validators';
   import Collapse from '../Collapse.svelte';
-  import CollapsibleListControls from '../CollapsibleListControls.svelte';
   import ExternalEventForm from '../external-events/ExternalEventForm.svelte';
   import ExternalEventsTable from '../external-events/ExternalEventsTable.svelte';
   import Properties from '../external-events/Properties.svelte';
@@ -889,70 +889,63 @@
     <svelte:fragment slot="header">
       <slot name="left">
         <SectionTitle><Truck />External Sources</SectionTitle>
+        <div class="filter" style=" float: left; margin-right: auto;padding-left: 5px; padding-right: 5px;">
+          <div class="timeline-editor-layer-filter" style="position: relative">
+            <Input>
+              <input
+                bind:this={input}
+                bind:value={filterString}
+                on:click|stopPropagation={() => {
+                  if (!filterMenu.isShown()) {
+                    filterMenu.show();
+                    input.focus();
+                  }
+                }}
+                autocomplete="off"
+                class="st-input w-100"
+                name="filter"
+                placeholder={'Filter by Source Type'}
+              />
+              <div class="filter-search-icon" slot='left'><SearchIcon /></div>
+            </Input>
+            <Menu hideAfterClick={false} bind:this={filterMenu} placement="bottom-start" on:hide={() => (filterString = '')}>
+              <div class="menu-content">
+                <MenuHeader title={menuTitle} />
+                <div class="body st-typography-body">
+                  {#if filteredValues.length}
+                    <div class="values">
+                      {#each filteredValues as filteredSourceType}
+                        <button
+                          class="value st-button tertiary st-typography-body"
+                          on:click={() => toggleItem(filteredSourceType)}
+                          class:active={selectedFilters.map(f => f.name).find(f => f === filteredSourceType.name) !== undefined}
+                        >
+                          {filteredSourceType.name}
+                        </button>
+                      {/each}
+                    </div>
+                  {:else}
+                    <div class="st-typography-label empty-state">No external source types matching filter</div>
+                  {/if}
+                </div>
+                <div class="list-buttons menu-border-top">
+                  <button class="st-button secondary list-button" on:click={selectFilteredValues}>
+                    Select {filteredValues.length}
+                    {#if filteredValues.length === 1}
+                      {'external source type'}
+                    {:else}
+                      {'external source types'}
+                    {/if}
+                  </button>
+                  <button class="st-button secondary list-button" on:click={unselectFilteredValues}>Unselect all</button>
+                </div>
+              </div>
+            </Menu>
+          </div>
+        </div>
       </slot>
     </svelte:fragment>
     <svelte:fragment slot="body">
-      <div class="filter" style="padding-left: 5px; padding-right: 15px">
-        <Collapse
-          className="anchor-collapse"
-          defaultExpanded={false}
-          title="External Source Filters"
-          tooltipContent="Filter External Sources"
-        >
-        <div class="timeline-editor-layer-filter" style="position: relative">
-          <Input>
-            <input
-              bind:this={input}
-              bind:value={filterString}
-              on:click|stopPropagation={() => {
-                if (!filterMenu.isShown()) {
-                  filterMenu.show();
-                  input.focus();
-                }
-              }}
-              autocomplete="off"
-              class="st-input w-100"
-              name="filter"
-              placeholder={'Filter by Source Type'}
-            />
-            <div class="filter-search-icon" slot='left'><SearchIcon /></div>
-          </Input>
-          <Menu hideAfterClick={false} bind:this={filterMenu} placement="bottom-start" on:hide={() => (filterString = '')}>
-            <div class="menu-content">
-              <MenuHeader title={menuTitle} />
-              <div class="body st-typography-body">
-                {#if filteredValues.length}
-                  <div class="values">
-                    {#each filteredValues as filteredSourceType}
-                      <button
-                        class="value st-button tertiary st-typography-body"
-                        on:click={() => toggleItem(filteredSourceType)}
-                        class:active={selectedFilters.map(f => f.name).find(f => f === filteredSourceType.name) !== undefined}
-                      >
-                        {filteredSourceType.name}
-                      </button>
-                    {/each}
-                  </div>
-                {:else}
-                  <div class="st-typography-label empty-state">No external source types matching filter</div>
-                {/if}
-              </div>
-              <div class="list-buttons menu-border-top">
-                <button class="st-button secondary list-button" on:click={selectFilteredValues}>
-                  Select {filteredValues.length}
-                  {#if filteredValues.length === 1}
-                    {'external source type'}
-                  {:else}
-                    {'external source types'}
-                  {/if}
-                </button>
-                <button class="st-button secondary list-button" on:click={unselectFilteredValues}>Unselect all</button>
-              </div>
-            </div>
-          </Menu>
-        </div>
-        </Collapse>
-      </div>
       {#if $externalSourceWithResolvedNames.length}
         <CssGrid rows="1fr 5px 1fr" gap="8px" class="source-grid">
           <SingleActionDataGrid
@@ -968,35 +961,10 @@
           <CssGridGutter track={1} type="row" />
           {#if selectedSource}
             {#if showExternalEventTimeline}
-              <!--
-              <div class="btn-group" style="float: right;">
-                <button
-                  class="st-button secondary"
-                  on:click={() => {
-                    showExternalEventTable = true;
-                    showExternalEventTimeline = false;
-                    externalEventsTableFilterString = '';
-                    selectedRowId = selectedEvent?.id ?? null;
-                  }}
-                  use:tooltip={{ content: 'Toggle external event table', placement: 'top' }}
-                >
-                  Table
-                </button>
-                <button
-                  class="st-button primary"
-                  on:click={() => {
-                    showExternalEventTable = false;
-                    showExternalEventTimeline = true;
-                    externalEventsTableFilterString = '';
-                    mouseDownAfterTable = true;
-                  }}
-                  use:tooltip={{ content: 'Toggle external event timeline', placement: 'top' }}
-                >
-                  Timeline
-                </button>
-              </div>
-              -->
               <div style="padding-left: 5px; padding-right: 5px">
+                <div style="float:left;padding:0.5rem;">
+                  <SectionTitle><Balloon />External Events</SectionTitle>
+                </div>
                 <div class="btn-group" style="display:flex;justify-content:flex-end;padding-bottom:5px;">
                   <button
                     class="st-button secondary"
@@ -1072,18 +1040,13 @@
             {:else if showExternalEventTable}
               <div style="height: 100%; position: relative; width: 100%">
                 <div style="display: flex; width: 100%;">
-                  <div style="padding-left:5px; padding-right:5px;">
-                    <Collapse
-                      className="anchor-collapse"
-                      defaultExpanded={false}
-                      title="External Event Filters"
-                      tooltipContent="Filter External Events"
-                    >
-                      <CollapsibleListControls
-                        placeholder="Filter External Events By Name"
-                        on:input={event => (externalEventsTableFilterString = event.detail.value)}
-                      />
-                    </Collapse>
+                  <div style="float:left;padding:0.5rem;">
+                    <SectionTitle><Balloon />External Events</SectionTitle>
+                  </div>
+                  <div style="align-self: center;padding-left:5px; padding-right:5px;">
+                    <Input>
+                      <input bind:value={externalEventsTableFilterString} class="st-input" placeholder="Filter external events" style="width: 300px" />
+                    </Input>
                   </div>
                   <div class="btn-group" style="padding-right:5px;">
                     <button
