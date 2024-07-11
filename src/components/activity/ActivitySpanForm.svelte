@@ -11,7 +11,6 @@
   import { getSpanRootParent } from '../../utilities/activities';
   import effects from '../../utilities/effects';
   import { getFormParameters } from '../../utilities/parameters';
-  import { getUnixEpochTimeFromInterval } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import Collapse from '../Collapse.svelte';
   import Input from '../form/Input.svelte';
@@ -45,13 +44,11 @@
   $: rootSpanHasChildren = (rootSpan && spanUtilityMaps.spanIdToChildIdsMap[rootSpan.id]?.length > 0) ?? false;
 
   $: {
-    const startTimeMs = getUnixEpochTimeFromInterval(planStartTimeYmd, span.start_offset);
-    startTime = $plugins.time.primary.format(new Date(startTimeMs));
+    startTime = $plugins.time.primary.format(new Date(span.startMs));
   }
 
   $: if (span.duration) {
-    const endTimeMs = getUnixEpochTimeFromInterval(planStartTimeYmd, span.duration);
-    endTime = $plugins.time.primary.format(new Date(endTimeMs));
+    endTime = $plugins.time.primary.format(new Date(span.endMs));
   } else {
     endTime = null;
   }
