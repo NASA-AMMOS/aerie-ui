@@ -24,6 +24,7 @@
   let filterText: string = '';
   let mappedDerivationGroups: { [key: string]: DerivationGroup[] } = {};
   let filteredDerivationGroups: DerivationGroup[] = [];
+  let seenSourcesParsed: ExternalSourceWithResolvedNames[] = [];
   let unseenSources: ExternalSourceWithResolvedNames[] = [];
   $: filteredDerivationGroups = $derivationGroups
     .filter(group => {
@@ -42,8 +43,8 @@
       }
     }
   })
-  $: seenSourceIds = $seenSources.map(source => source.id)
-  $: unseenSources = $externalSourceWithResolvedNames.filter(source => !seenSourceIds.includes(source.id));
+  $: seenSourcesParsed = JSON.parse($seenSources)
+  $: unseenSources = $externalSourceWithResolvedNames.filter(source => !seenSourcesParsed.map(source => source.id).includes(source.id));
 
   function onManageDerivationGroups() {
     effects.managePlanDerivationGroups(user);
@@ -80,7 +81,7 @@
       {#if unseenSources.length}
         <div style="padding-top: 10px">
           <CardList>
-            <UpdateCard newSources={unseenSources} on:dismiss={() => seenSources.set($seenSources.concat(unseenSources))}/>
+            <UpdateCard newSources={unseenSources} on:dismiss={() => seenSources.set(JSON.stringify(seenSourcesParsed.concat(unseenSources)))}/>
           </CardList>
         </div>
       {/if}
