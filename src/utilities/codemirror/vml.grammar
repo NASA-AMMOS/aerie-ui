@@ -1,0 +1,470 @@
+// VML - Virtual Machine Language
+// Based on 2.0.11 SIS
+
+// TODOs
+// * figure out what vml_create_default(0) means
+// * confirm if order is strict on flags
+// * vml_create_range ?
+// * see if multiple ranges are allowed INPUT INT mode := 3 VALUES 1..6, 8..9
+
+@top Text_file {
+  optional_end_lines {
+    End_lines?
+  }
+  MODULE
+  End_lines
+  Optional_static_variable_section {
+    VARIABLES
+    End_lines
+    Variable_declarations_with_optional_tlm_ids
+    END_VARIABLES
+    End_lines
+  }?
+  Functions {
+    Function*
+  }
+  END_MODULE
+  End_lines
+}
+
+@skip { space | Comment }
+
+End_lines {
+  END_OF_LINE+
+}
+
+Function {
+  Block
+  | AbsoluteSequence
+}
+
+AbsoluteSequence {
+  ABSOLUTE_SEQUENCE
+  Common_Function
+}
+
+Block {
+  BLOCK
+  Common_Function
+}
+
+Function_name { SYMBOL_CONST }
+
+Common_Function {
+  Function_name End_lines
+  Parameters
+  Flags {
+    FLAGS
+    Flags_symbols {
+      // Confirm if order is strict
+      AUTOEXECUTE?
+      AUTOUNLOAD?
+      REENTRANT?
+    }
+  }?
+  Variable_declarations {
+    Variable_declaration*
+  }
+  Body {
+    BODY
+    End_lines
+    Time_tagged_statements {
+      Time_tagged_statement {
+        TIME_CONST
+        Statement
+      }*
+    }
+    END_BODY
+    End_lines
+  }
+}
+
+Statement {
+  statement_no_endline {
+    // issue
+// | issue_dynamic | issue_hex
+// | noop
+// | clear
+Assignment
+| Simple_call
+// | external_call | for
+// | end_for
+// | label
+// | flow
+| Vm_management
+// | vm_management | if
+// | else_if
+// | else
+// | end_if
+// | while
+// | end_while;
+  }
+  End_lines
+}
+
+Parameters {
+  Parameter*
+}
+
+Parameter {
+  Input_parameter {
+    INPUT
+    Data_kind?
+    Variable_name ~ambigVariableName
+    Optional_default_input_value?
+    Optional_value_list?
+    End_lines
+  }
+  // | Input_output_parameter
+}
+
+Optional_default_input_value {
+  (
+    ASSIGNMENT
+    Constant
+  )
+}
+
+Optional_value_list {
+  VALUES
+  Input_value
+  (COMMA Input_value)*
+}
+
+// input_value: range {vml_create_range(1, 0);} | constant {vml_create_default(0);};
+Input_value {
+  Constant
+  | Input_Range {
+    INT_RANGE_CONST
+  }
+}
+
+Variable_declaration {
+  DECLARE
+  Variable_declaration_type
+  End_lines
+}
+
+Variable_name { SYMBOL_CONST }
+
+Variable_declarations_with_optional_tlm_ids {
+  Variable_declaration_with_optional_tlm_id {
+    DECLARE
+    EXTERNAL?
+    READ_ONLY?
+    Variable_declaration_type
+    // (TLM_ID Tlm_id_const {
+    //   INT_CONST
+    //   | UINT_CONST
+    //   // TODO defined symbol
+    // })?
+    End_lines
+  }+
+}
+
+Variable_declaration_type {
+  Variable_name_constant {
+    Data_kind
+    Variable_name ~ambigVariableName
+    ASSIGNMENT
+    Constant
+  }
+}
+
+Data_kind {
+  INT
+  | UINT
+  | LOGICAL
+  | DOUBLE
+  | STRING
+  | UNKNOWN
+  | TIME
+  | ABSOLUTE_TIME
+  | RELATIVE_TIME
+}
+
+Constant {
+  INT_CONST
+  | (UINT_CONST | HEX_CONST)
+  | DOUBLE_CONST
+  | STRING_CONST
+  // Unknown_const |
+  // Boolean |
+  | TIME_CONST
+  // DEFINED_SYMBOL_CONST
+}
+
+TIME_CONST {
+  Full_or_spacecraft_or_day_or_short_time {
+    Full_time_const { FULL_TIME_CONST }
+    | Day_time_const { DAY_TIME_CONST }
+    | Short_time_const { SHORT_TIME_CONST }
+    | Spacecraft_time_const { SPACECRAFT_TIME_CONST }
+  }
+}
+
+Assignment {
+  Variable_name
+  ASSIGNMENT
+  Assignment_source {
+// | issue_no_time
+// | issue_hex_no_time
+// | simple_call_no_time
+// | external_call_no_time | wait
+// | test_and_set;
+    Compound_expr
+    | Simple_call_no_time
+  }
+}
+
+Compound_expr_base {
+  Simple_expr
+  | (Unop Simple_expr)
+  // | unop simple_expr
+  // | built_in_function;
+}
+
+Compound_expr_mid {
+  Compound_expr_base
+  | (OPEN_PAREN Compound_expr CLOSE_PAREN)
+}
+
+Compound_expr {
+  Compound_expr_mid
+  | (Compound_expr_mid Binop Compound_expr)
+}
+
+Simple_expr {
+  Constant
+  | Variable_name
+}
+
+Unop {
+  LOGICAL_NOT
+  // | BIT_INVERT
+  | BIT_NOT
+
+  // | Subtract
+}
+
+Binop {
+  Arith_binop
+  | Bit_binop
+  // Bit_binop ...
+
+  | String_binop
+}
+
+Arith_binop {
+  ADD
+  | SUBTRACT
+  | MULTIPLY
+  | DIVIDE
+  | MODULO
+  | POWER
+}
+
+Bit_binop {
+  BIT_AND
+  | BIT_OR
+  | BIT_XOR
+  | SHIFT_LEFT
+  | SHIFT_RIGHT
+}
+
+Comparison_binop {
+
+}
+
+Logical_binop {
+
+}
+
+String_binop {
+  CONCAT | SPLIT_LEFT | SPLIT_RIGHT
+}
+
+Tlm_id_const {
+  ()
+}
+
+Call_parameters {
+  (
+    Call_parameter
+    (COMMA Call_parameter)*
+  )?
+}
+
+Call_parameter {
+  Simple_expr
+}
+
+
+Simple_call {
+  CALL
+  Function_name
+  Call_parameters
+}
+
+Simple_call_no_time {
+  CALL
+  Function_name
+  Call_parameters
+}
+
+// ...
+
+Vm_management {
+  Spawn
+}
+
+// Halt {
+
+// }
+
+// Pause {
+
+// }
+
+// Resume {
+
+// }
+
+Spawn {
+  SPAWN
+  Simple_expr
+  Function_name
+  Call_parameters
+}
+
+// VMLmodulelexerconstructs
+ABSOLUTE_SEQUENCE { @specialize<SYMBOL_CONST, "ABSOLUTE_SEQUENCE"> }
+BLOCK { @specialize<SYMBOL_CONST, "BLOCK"> }
+INPUT { @specialize<SYMBOL_CONST, "INPUT"> }
+FLAGS { @specialize<SYMBOL_CONST, "FLAGS"> }
+DECLARE { @specialize<SYMBOL_CONST, "DECLARE"> }
+EXTERNAL { @specialize<SYMBOL_CONST, "EXTERNAL"> }
+INT { @specialize<SYMBOL_CONST, "INT"> }
+READ_ONLY { @specialize<SYMBOL_CONST, "READ_ONLY"> }
+HALT { @specialize<SYMBOL_CONST, "HALT"> }
+ABS { @specialize<SYMBOL_CONST, "ABS"> }
+MODULE { @specialize<SYMBOL_CONST, "MODULE"> }
+UINT { @specialize<SYMBOL_CONST, "UINT"> }
+SPAWN { @specialize<SYMBOL_CONST, "SPAWN"> }
+LOGICAL { @specialize<SYMBOL_CONST, "LOGICAL"> }
+DOUBLE { @specialize<SYMBOL_CONST, "DOUBLE"> }
+STRING { @specialize<SYMBOL_CONST, "STRING"> }
+UNKNOWN { @specialize<SYMBOL_CONST, "UNKNOWN"> }
+TIME { @specialize<SYMBOL_CONST, "TIME"> }
+ABSOLUTE_TIME { @specialize<SYMBOL_CONST, "ABSOLUTE_TIME"> }
+RELATIVE_TIME { @specialize<SYMBOL_CONST, "RELATIVE_TIME"> }
+TLM_ID { @specialize<SYMBOL_CONST, "TLM_ID"> }
+END_MODULE { @specialize<SYMBOL_CONST, "END_MODULE"> }
+END_VARIABLES { @specialize<SYMBOL_CONST, "END_VARIABLES"> }
+VARIABLES { @specialize<SYMBOL_CONST, "VARIABLES"> }
+WAIT { @specialize<SYMBOL_CONST, "WAIT"> }
+WAIT_CHANGE { @specialize<SYMBOL_CONST, "WAIT_CHANGE"> }
+AUTOEXECUTE { @specialize<SYMBOL_CONST, "AUTOEXECUTE"> }
+AUTOUNLOAD { @specialize<SYMBOL_CONST, "AUTOUNLOAD"> }
+REENTRANT { @specialize<SYMBOL_CONST, "REENTRANT"> }
+BODY { @specialize<SYMBOL_CONST, "BODY"> }
+END_BODY { @specialize<SYMBOL_CONST, "END_BODY"> }
+CALL { @specialize<SYMBOL_CONST, "CALL"> }
+VALUES { @specialize<SYMBOL_CONST, "VALUES"> }
+
+// grammar shows "&", but example uses "BIT_AND"
+BIT_AND {
+  BIT_AND_OP
+  | @specialize<SYMBOL_CONST, "BIT_AND">
+}
+
+// not in grammar, but in example
+BIT_NOT {
+  BIT_INVERT
+  | @specialize<SYMBOL_CONST, "BIT_NOT">
+}
+
+@tokens {
+  space { $[ \t]+ }
+  Comment { ";" ![\n]* }
+
+  // check if mix case is allowed
+  SYMBOL_CONST { @asciiLetter (@asciiLetter| @digit | "_" | "-")* }
+
+  ASSIGNMENT { ":=" }
+  OPEN_PAREN { "(" }
+  CLOSE_PAREN { ")" }
+
+  ADD { "+" }
+  SUBTRACT { "-" }
+  MULTIPLY { "*" }
+  DIVIDE { "/" }
+  MODULO { "%" }
+  POWER { "^" }
+
+  LOGICAL_NOT {"!"}
+
+  BIT_INVERT { "~" }
+  BIT_AND_OP { "&" }
+  BIT_OR { "|" }
+  BIT_XOR { "@" }
+  SHIFT_LEFT { "<<" }
+  SHIFT_RIGHT { ">>" }
+
+  CONCAT { "CONCAT" }
+  SPLIT_LEFT { "-|" }
+  SPLIT_RIGHT { "|-" }
+
+  FULL_TIME_CONST {
+    $[aArR]@digit+"-"@digit+$[Tt]@digit+":"@digit+":"@digit+("."@digit+)?
+  }
+
+  DAY_TIME_CONST {
+    // [r|R][0-9]+[t|T][0-9]+:[0-9]+:[0-9]+(\.[0-9]+)?
+    $[rR]@digit+$[tT]@digit+":"@digit+":"@digit+("."@digit+)?
+  }
+
+  SHORT_TIME_CONST {
+// [r|R][0-9]+:[0-9]+:[0-9]+(\.[0-9]+)?
+    $[rR]@digit+":"@digit+":"@digit+("."@digit+)?
+  }
+
+  SPACECRAFT_TIME_CONST {
+    $[sS]@digit+"."@digit+
+  }
+
+  COMMA { "," }
+
+  // Numbers
+
+  INT_CONST {
+    ("+" | "-")? @digit+
+  }
+
+  DOUBLE_CONST {
+    ("+" | "-")?
+    (
+      (@digit+ "." @digit*)
+      | ("." @digit+)
+    )
+  }
+
+  UINT_CONST {
+    @digit+ ("u" | "U")
+  }
+
+  HEX_CONST {
+    "0" ("x" | "X") (@digit | $[a-f] | $[A-F])+
+  }
+
+  INT_RANGE_CONST {
+    INT_CONST ".." INT_CONST
+  }
+
+  STRING_CONST { '"' (!["\\] | "\\" _)* '"' }
+
+  @precedence { INT_RANGE_CONST, DOUBLE_CONST, UINT_CONST, HEX_CONST, INT_CONST }
+  @precedence { FULL_TIME_CONST, DAY_TIME_CONST, SHORT_TIME_CONST, SPACECRAFT_TIME_CONST, CONCAT, SYMBOL_CONST }
+
+  END_OF_LINE { "\n" }
+}
