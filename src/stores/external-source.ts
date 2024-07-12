@@ -1,3 +1,4 @@
+import { browser } from "$app/environment";
 import { derived, writable, type Writable } from 'svelte/store';
 import { type DerivationGroup, type ExternalSourceEventType, type ExternalSourceSlim, type ExternalSourceType, type ExternalSourceWithResolvedNames, type PlanDerivationGroup } from '../types/external-source';
 import gql from '../utilities/gql';
@@ -16,7 +17,13 @@ export const derivationGroupPlanLinkError: Writable<string | null> = writable(nu
 
 export const createExternalSourceEventTypeLinkError: Writable<string | null> = writable(null);
 
-export const seenSources: Writable<ExternalSourceWithResolvedNames[]> = writable([]);
+// need extra logic for persistence
+export const seenSources = writable(browser && localStorage.getItem("seenSources") || "[]")
+seenSources.subscribe(val => {
+  // validate that val is list-like
+  if (browser && JSON.parse(val)) localStorage.setItem("seenSources", val)
+})
+// export const seenSources: Writable<ExternalSourceWithResolvedNames[]> = writable([]);
 
 /* Subscriptions. */
 export const externalSources = gqlSubscribable<ExternalSourceSlim[]>(gql.SUB_EXTERNAL_SOURCES, {}, [], null);
