@@ -775,6 +775,7 @@
               tooltipContent="View Contained Event Types"
             >
               {#await effects.getExternalEventTypesBySource(selectedSourceId ? [selectedSourceId] : [], $externalEventTypes, user)}
+                <i>Loading...</i>
               {:then eventTypes}
                 {#each eventTypes as eventType}
                   <i>{eventType.name}</i>
@@ -897,7 +898,7 @@
 
   <CssGrid rows={gridRowSizes}>
     <!-- External Source Table -->
-    <Panel padBody={false}>
+    <Panel padBody={true}>
       <svelte:fragment slot="header">
         <slot name="left">
           <SectionTitle><Truck />External Sources</SectionTitle>
@@ -977,14 +978,19 @@
       <CssGridGutter track={1} type="row" />
 
       <!-- External Event Table/Timeline -->
-      <Panel padBody={false}>
+      <Panel padBody={true}>
         <svelte:fragment slot="header">
           <slot name="left">
             <SectionTitle><Balloon />External Events</SectionTitle>
             {#if showExternalEventTable}
-              <Input>
-                <input bind:value={externalEventsTableFilterString} class="st-input" placeholder="Filter external events" style="width: 300px" />
-              </Input>
+              <div class="filter" style=" float: left; margin-right: auto;padding-left: 5px; padding-right: 5px;">
+                <div class="timeline-editor-layer-filter" style="position: relative">
+                  <Input>
+                    <input bind:value={externalEventsTableFilterString} autocomplete="off" class="st-input w-100" name="filter-ee" placeholder={'Filter external events'}/>
+                    <div class="filter-search-icon" slot='left'><SearchIcon /></div>
+                  </Input>
+                </div>
+              </div>
               <div class="btn-group" style="display:flex;justify-content:flex-end;padding-bottom:5px;">
                 <button
                   class="st-button primary"
