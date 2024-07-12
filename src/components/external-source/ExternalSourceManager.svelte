@@ -1,7 +1,7 @@
 <script lang="ts">
-  import SearchIcon from '@nasa-jpl/stellar/icons/search.svg?component';
   import type { ICellRendererParams, RowClassParams, RowStyle, ValueGetterParams } from 'ag-grid-community';
   import Balloon from 'bootstrap-icons/icons/balloon.svg?component';
+  import SearchIcon from 'bootstrap-icons/icons/search.svg?component';
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { onDestroy, onMount } from 'svelte';
@@ -885,69 +885,70 @@
 
   <CssGridGutter track={1} type="column" />
 
-  <Panel padBody={false}>
-    <svelte:fragment slot="header">
-      <slot name="left">
-        <SectionTitle><Truck />External Sources</SectionTitle>
-        <div class="filter" style=" float: left; margin-right: auto;padding-left: 5px; padding-right: 5px;">
-          <div class="timeline-editor-layer-filter" style="position: relative">
-            <Input>
-              <input
-                bind:this={input}
-                bind:value={filterString}
-                on:click|stopPropagation={() => {
-                  if (!filterMenu.isShown()) {
-                    filterMenu.show();
-                    input.focus();
-                  }
-                }}
-                autocomplete="off"
-                class="st-input w-100"
-                name="filter"
-                placeholder={'Filter by Source Type'}
-              />
-              <div class="filter-search-icon" slot='left'><SearchIcon /></div>
-            </Input>
-            <Menu hideAfterClick={false} bind:this={filterMenu} placement="bottom-start" on:hide={() => (filterString = '')}>
-              <div class="menu-content">
-                <MenuHeader title={menuTitle} />
-                <div class="body st-typography-body">
-                  {#if filteredValues.length}
-                    <div class="values">
-                      {#each filteredValues as filteredSourceType}
-                        <button
-                          class="value st-button tertiary st-typography-body"
-                          on:click={() => toggleItem(filteredSourceType)}
-                          class:active={selectedFilters.map(f => f.name).find(f => f === filteredSourceType.name) !== undefined}
-                        >
-                          {filteredSourceType.name}
-                        </button>
-                      {/each}
-                    </div>
-                  {:else}
-                    <div class="st-typography-label empty-state">No external source types matching filter</div>
-                  {/if}
-                </div>
-                <div class="list-buttons menu-border-top">
-                  <button class="st-button secondary list-button" on:click={selectFilteredValues}>
-                    Select {filteredValues.length}
-                    {#if filteredValues.length === 1}
-                      {'external source type'}
+  <CssGrid rows="1fr 3px 1fr">
+    <!-- External Source Table -->
+    <Panel padBody={false}>
+      <svelte:fragment slot="header">
+        <slot name="left">
+          <SectionTitle><Truck />External Sources</SectionTitle>
+          <div class="filter" style=" float: left; margin-right: auto;padding-left: 5px; padding-right: 5px;">
+            <div class="timeline-editor-layer-filter" style="position: relative">
+              <Input>
+                <input
+                  bind:this={input}
+                  bind:value={filterString}
+                  on:click|stopPropagation={() => {
+                    if (!filterMenu.isShown()) {
+                      filterMenu.show();
+                      input.focus();
+                    }
+                  }}
+                  autocomplete="off"
+                  class="st-input w-100"
+                  name="filter"
+                  placeholder={'Filter by Source Type'}
+                />
+                <div class="filter-search-icon" slot='left'><SearchIcon /></div>
+              </Input>
+              <Menu hideAfterClick={false} bind:this={filterMenu} placement="bottom-start" on:hide={() => (filterString = '')}>
+                <div class="menu-content">
+                  <MenuHeader title={menuTitle} />
+                  <div class="body st-typography-body">
+                    {#if filteredValues.length}
+                      <div class="values">
+                        {#each filteredValues as filteredSourceType}
+                          <button
+                            class="value st-button tertiary st-typography-body"
+                            on:click={() => toggleItem(filteredSourceType)}
+                            class:active={selectedFilters.map(f => f.name).find(f => f === filteredSourceType.name) !== undefined}
+                          >
+                            {filteredSourceType.name}
+                          </button>
+                        {/each}
+                      </div>
                     {:else}
-                      {'external source types'}
+                      <div class="st-typography-label empty-state">No external source types matching filter</div>
                     {/if}
-                  </button>
-                  <button class="st-button secondary list-button" on:click={unselectFilteredValues}>Unselect all</button>
+                  </div>
+                  <div class="list-buttons menu-border-top">
+                    <button class="st-button secondary list-button" on:click={selectFilteredValues}>
+                      Select {filteredValues.length}
+                      {#if filteredValues.length === 1}
+                        {'external source type'}
+                      {:else}
+                        {'external source types'}
+                      {/if}
+                    </button>
+                    <button class="st-button secondary list-button" on:click={unselectFilteredValues}>Unselect all</button>
+                  </div>
                 </div>
-              </div>
-            </Menu>
+              </Menu>
+            </div>
           </div>
-        </div>
-      </slot>
-    </svelte:fragment>
-    <svelte:fragment slot="body">
-      {#if $externalSourceWithResolvedNames.length}
-        <CssGrid rows="1fr 5px 1fr" gap="8px" class="source-grid">
+        </slot>
+      </svelte:fragment>
+      <svelte:fragment slot="body">
+        {#if $externalSourceWithResolvedNames.length}
           <SingleActionDataGrid
             {columnDefs}
             {getRowStyle}
@@ -958,142 +959,146 @@
             on:rowClicked={({ detail }) => selectSource(detail.data)}
             bind:selectedItemId={selectedSourceId}
           />
-          <CssGridGutter track={1} type="row" />
-          {#if selectedSource}
-            {#if showExternalEventTimeline}
-              <div style="padding-left: 5px; padding-right: 5px">
-                <div style="float:left;padding:0.5rem;">
-                  <SectionTitle><Balloon />External Events</SectionTitle>
-                </div>
-                <div class="btn-group" style="display:flex;justify-content:flex-end;padding-bottom:5px;">
-                  <button
-                    class="st-button secondary"
-                    on:click={() => {
-                      showExternalEventTable = true;
-                      showExternalEventTimeline = false;
-                      externalEventsTableFilterString = '';
-                      selectedRowId = selectedEvent?.id ?? null;
-                    }}
-                    use:tooltip={{ content: 'Toggle external event table', placement: 'top' }}
-                  >
-                    Table
-                  </button>
-                  <button
-                    class="st-button primary"
-                    on:click={() => {
-                      showExternalEventTable = false;
-                      showExternalEventTimeline = true;
-                      externalEventsTableFilterString = '';
-                      mouseDownAfterTable = true;
-                    }}
-                    use:tooltip={{ content: 'Toggle external event timeline', placement: 'top' }}
-                  >
-                    Timeline
-                  </button>
-                </div>
-                <div style=" background-color:#ebe9e6;height:15px;">
-                  <div style="display:inline; float:left;">{startTime}</div>
-                  <div style="display:inline; float:right;">{endTime}</div>
-                </div>
-                <div style="height: 100%; position: relative; width: 100%"
-                  bind:this={canvasContainerRef}
-                  bind:clientWidth={canvasContainerWidth}
-                  bind:clientHeight={canvasContainerHeight}
-                  on:mousedown={e => {
-                    canvasMouseDownEvent = e
-                  }}
-                  on:mousemove={e => {
-                    canvasMouseOverEvent = e
-                  }}
-                  role="none"
-                >
-                  <TimelineCursors
-                    marginLeft={0}
-                    drawWidth={canvasContainerWidth}
-                    {mouseOver}
-                    {xScaleView}
-                  />
-                  <Tooltip bind:this={eventTooltip} {mouseOver} interpolateHoverValue={false} hidden={false} resourceTypes={[]} />
-
-                  <div style="height: inherit; padding-bottom: 10px;padding-top: 3px">
-                    <LayerExternalSources
-                      selectedExternalEventId={selectedEvent?.id ?? null}
-                      externalEvents={selectedEvents}
-                      {viewTimeRange}
-                      {xScaleView}
-                      {dpr}
-                      mousedown={canvasMouseDownEvent}
-                      drawHeight={canvasContainerHeight-3-10 ?? 200}
-                      drawWidth={canvasContainerWidth ?? 200}
-                      timelineInteractionMode={TimelineInteractionMode.Interact}
-                      on:mouseDown={onCanvasMouseDown}
-                      on:mouseOver={onCanvasMouseOver}
-                      mousemove={canvasMouseOverEvent}
-                      mouseout={undefined}
-                      contextmenu={undefined}
-                      dblclick={undefined}
-                      planStartTimeYmd={""}
-                    />
-                  </div>
-                </div>
-              </div>
-            {:else if showExternalEventTable}
-              <div style="height: 100%; position: relative; width: 100%">
-                <div style="display: flex; width: 100%;">
-                  <div style="float:left;padding:0.5rem;">
-                    <SectionTitle><Balloon />External Events</SectionTitle>
-                  </div>
-                  <div style="align-self: center;padding-left:5px; padding-right:5px;">
-                    <Input>
-                      <input bind:value={externalEventsTableFilterString} class="st-input" placeholder="Filter external events" style="width: 300px" />
-                    </Input>
-                  </div>
-                  <div class="btn-group" style="padding-right:5px;">
-                    <button
-                      class="st-button primary"
-                      on:click={() => {
-                        showExternalEventTable = true;
-                        showExternalEventTimeline = false;
-                        externalEventsTableFilterString = '';
-                        selectedRowId = selectedEvent?.id ?? null;
-                      }}
-                      use:tooltip={{ content: 'Toggle external event table', placement: 'top' }}
-                    >
-                      Table
-                    </button>
-                    <button
-                      class="st-button secondary"
-                      on:click={() => {
-                        showExternalEventTable = false;
-                        showExternalEventTimeline = true;
-                        externalEventsTableFilterString = '';
-                        mouseDownAfterTable = true;
-                      }}
-                      use:tooltip={{ content: 'Toggle external event timeline', placement: 'top' }}
-                    >
-                      Timeline
-                    </button>
-                  </div>
-                </div>
-                <div style="height:10px; width:100%"></div>
-                <ExternalEventsTable
-                  items={filteredTableExternalEvents}
-                  {user}
-                  bind:selectedItemId={selectedRowId}
-                  on:selectionChanged={onSelectionChanged}
-                  on:rowDoubleClicked={onSelectionChanged}
-                />
-              </div>
-            {/if}
-          {:else}
-            <p style="padding-left: 5px">Select a source to view contents.</p>
           {/if}
-        </CssGrid>
-      {:else}
-        <p style="padding-left: 5px">No External Sources present.</p>
-      {/if}
-    </svelte:fragment>
-  </Panel>
+      </svelte:fragment>
+    </Panel>
+
+    <CssGridGutter track={1} type="row" />
+
+    <!-- External Event Table/Timeline -->
+    <Panel padBody={false}>
+      <svelte:fragment slot="header">
+        <slot name="left">
+          <SectionTitle><Balloon />External Events</SectionTitle>
+          {#if showExternalEventTable}
+            <Input>
+              <input bind:value={externalEventsTableFilterString} class="st-input" placeholder="Filter external events" style="width: 300px" />
+            </Input>
+            <div class="btn-group" style="display:flex;justify-content:flex-end;padding-bottom:5px;">
+              <button
+                class="st-button primary"
+                on:click={() => {
+                  showExternalEventTable = true;
+                  showExternalEventTimeline = false;
+                  externalEventsTableFilterString = '';
+                  selectedRowId = selectedEvent?.id ?? null;
+                }}
+                use:tooltip={{ content: 'Toggle external event table', placement: 'top' }}
+              >
+                Table
+              </button>
+              <button
+                class="st-button secondary"
+                on:click={() => {
+                  showExternalEventTable = false;
+                  showExternalEventTimeline = true;
+                  externalEventsTableFilterString = '';
+                  mouseDownAfterTable = true;
+                }}
+                use:tooltip={{ content: 'Toggle external event timeline', placement: 'top' }}
+              >
+                Timeline
+              </button>
+            </div>
+          {:else if showExternalEventTimeline}
+            <div class="btn-group" style="display:flex;justify-content:flex-end;padding-bottom:5px;">
+              <button
+                class="st-button secondary"
+                on:click={() => {
+                  showExternalEventTable = true;
+                  showExternalEventTimeline = false;
+                  externalEventsTableFilterString = '';
+                  selectedRowId = selectedEvent?.id ?? null;
+                }}
+                use:tooltip={{ content: 'Toggle external event table', placement: 'top' }}
+              >
+                Table
+              </button>
+              <button
+                class="st-button primary"
+                on:click={() => {
+                  showExternalEventTable = false;
+                  showExternalEventTimeline = true;
+                  externalEventsTableFilterString = '';
+                  mouseDownAfterTable = true;
+                }}
+                use:tooltip={{ content: 'Toggle external event timeline', placement: 'top' }}
+              >
+                Timeline
+              </button>
+            </div>
+          {/if}
+        </slot>
+      </svelte:fragment>
+      <svelte:fragment slot="body">
+        {#if selectedSource}
+          {#if showExternalEventTable}
+            <div style="height: 100%; position: relative; width: 100%">
+              <ExternalEventsTable
+                items={filteredTableExternalEvents}
+                {user}
+                bind:selectedItemId={selectedRowId}
+                on:selectionChanged={onSelectionChanged}
+                on:rowDoubleClicked={onSelectionChanged}
+              />
+          </div>
+          {:else if showExternalEventTimeline}
+            <div style=" height: 100%; padding-left: 5px; padding-right: 5px;">
+              <div style=" background-color:#ebe9e6;height:15px;">
+                <div style="display:inline; float:left;">{startTime}</div>
+                <div style="display:inline; float:right;">{endTime}</div>
+              </div>
+              <div style=" height: 100%; position: relative; width: 100%;"
+                bind:this={canvasContainerRef}
+                bind:clientWidth={canvasContainerWidth}
+                bind:clientHeight={canvasContainerHeight}
+                on:mousedown={e => {
+                  canvasMouseDownEvent = e
+                }}
+                on:mousemove={e => {
+                  canvasMouseOverEvent = e
+                }}
+                role="none"
+              >
+                <TimelineCursors
+                  marginLeft={0}
+                  drawWidth={canvasContainerWidth}
+                  {mouseOver}
+                  {xScaleView}
+                />
+                <Tooltip bind:this={eventTooltip} {mouseOver} interpolateHoverValue={false} hidden={false} resourceTypes={[]} />
+
+                <div style="display:flex; padding-bottom: 10px;padding-top: 3px">
+                  <LayerExternalSources
+                    selectedExternalEventId={selectedEvent?.id ?? null}
+                    externalEvents={selectedEvents}
+                    {viewTimeRange}
+                    {xScaleView}
+                    {dpr}
+                    mousedown={canvasMouseDownEvent}
+                    drawHeight={canvasContainerHeight-3-10 ?? 200}
+                    drawWidth={canvasContainerWidth ?? 200}
+                    timelineInteractionMode={TimelineInteractionMode.Interact}
+                    on:mouseDown={onCanvasMouseDown}
+                    on:mouseOver={onCanvasMouseOver}
+                    mousemove={canvasMouseOverEvent}
+                    mouseout={undefined}
+                    contextmenu={undefined}
+                    dblclick={undefined}
+                    planStartTimeYmd={""}
+                  />
+                </div>
+              </div>
+            </div>
+          {/if}
+        {:else if $externalSourceWithResolvedNames.length}
+          <p style="padding-left: 5px">Select a source to view contents.</p>
+        {:else}
+          <p style="padding-left: 5px">No External Sources present.</p>
+        {/if}
+      </svelte:fragment>
+    </Panel>
+  </CssGrid>
 </CssGrid>
 
 <style>
