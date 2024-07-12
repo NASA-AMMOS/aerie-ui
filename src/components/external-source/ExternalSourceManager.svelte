@@ -7,13 +7,13 @@
   import { onDestroy, onMount } from 'svelte';
   import { catchError } from '../../stores/errors';
   import { externalEventTypes, getEventTypeName } from '../../stores/external-event';
-  import { createDerivationGroupError, createExternalSourceError, createExternalSourceEventTypeLinkError, createExternalSourceTypeError, creatingExternalSource, derivationGroups, externalSourceEventTypes, externalSourceTypes, externalSourceWithResolvedNames, getDerivationGroupByNameSourceTypeId, getEventSourceTypeByName, planDerivationGroupLinks } from '../../stores/external-source';
+  import { createDerivationGroupError, createExternalSourceError, createExternalSourceEventTypeLinkError, createExternalSourceTypeError, creatingExternalSource, deletedSourcesSeen, derivationGroups, externalSourceEventTypes, externalSourceTypes, externalSourceWithResolvedNames, getDerivationGroupByNameSourceTypeId, getEventSourceTypeByName, planDerivationGroupLinks, unseenSources } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import { plans } from '../../stores/plans';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalEvent, ExternalEventDB, ExternalEventType, ExternalEventTypeInsertInput } from '../../types/external-event';
-  import type { DerivationGroup, DerivationGroupInsertInput, ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceType, ExternalSourceTypeInsertInput, ExternalSourceWithResolvedNames, PlanDerivationGroup } from '../../types/external-source';
+  import type { DerivationGroup, DerivationGroupInsertInput, ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceType, ExternalSourceTypeInsertInput, ExternalSourceWithDateInfo, ExternalSourceWithResolvedNames, PlanDerivationGroup } from '../../types/external-source';
   import type { TimeRange } from '../../types/timeline';
   import { type MouseDown, type MouseOver } from '../../types/timeline';
   import effects from '../../utilities/effects';
@@ -356,13 +356,30 @@
     dpr = window.devicePixelRatio;
   }
 
-  async function onDeleteExternalSource(selectedSource: ExternalSourceWithResolvedNames | null) {
-    if (selectedSource !== null) {
+  async function onDeleteExternalSource(selectedSource: ExternalSourceWithResolvedNames | null | undefined) {
+    if (selectedSource !== null && selectedSource !== undefined) {
       const deletedSourceEventTypes = await effects.getExternalEventTypesBySource(selectedSourceId ? [selectedSourceId] : [], $externalEventTypes, user);
       const sourceTypeId = selectedSource.source_type_id;
       const deletionWasSuccessful = await effects.deleteExternalSource(selectedSource, user);
       if (deletionWasSuccessful) {
         deselectSource();
+
+        // persist to list of unseen deletions, with a deleted_at time
+        let deletedSourcesParsed: ExternalSourceWithDateInfo[] = JSON.parse($deletedSourcesSeen);
+        deletedSourcesSeen.set(JSON.stringify(deletedSourcesParsed.concat({...selectedSource, change_date: new Date()})));
+        // in case it was added and then immediately deleted, though, remove it from both unseenSources and deletedSourcesParsed, to not confuse the user
+        {
+          let seenSourcesParsed: ExternalSourceWithDateInfo[] = JSON.parse($unseenSources);
+          let filtered = seenSourcesParsed.filter(s => s.id != selectedSource.id)
+          if (filtered.length != seenSourcesParsed.length) {
+            unseenSources.set(JSON.stringify(filtered));
+            deletedSourcesSeen.set(JSON.stringify(deletedSourcesParsed.filter(s => s.id != selectedSource.id)))
+          }
+          // NOTE: if I add a source, go to plans, DON'T ACKNOWLEDGE IT, then delete that source, and go back to plans, the warning card is gone as the 
+          //    system assumes I never got the first notification and as such the second is unnecessary as I never acknowledged knowing it was added, so 
+          //    it won't warn me that it was deleted.
+        }
+
         // Determine if there are no remaining external sources that use the type of the source that was just deleted. If there are none, delete the source type
         // NOTE: This work could be moved to Hasura in the future, or re-worked as it might be costly.
         const remainingSourcesWithThisType = $externalSourceWithResolvedNames.filter(externalSource => {
@@ -572,13 +589,17 @@
       if (sourceId && sourceType) {
         selectedSource = {
           created_at: new Date().toISOString().replace("Z", "+00:00"), // technically not the exact time it shows up in the database
-          derivation_group: derivationGroup?.name,
+          derivation_group: derivationGroupName,
           id: sourceId,
           ...sourceInsert,
           source_type: sourceType?.name,
 
           total_groups: $derivationGroups.length // kind of unnecessary here, but necessary in this type for the table and coloring
         }
+
+        // persist to list of newly added sources, restating (for uniformity in UpdateCard) the change_date (in the non-deletion case - created_at)
+        let seenSourcesParsed: ExternalSourceWithDateInfo[] = JSON.parse($unseenSources);
+        unseenSources.set(JSON.stringify(seenSourcesParsed.concat({...selectedSource, change_date: new Date()})));
       }
 
       // reset the form behind the source
@@ -970,6 +991,12 @@
             {user}
             on:rowClicked={({ detail }) => selectSource(detail.data)}
             bind:selectedItemId={selectedSourceId}
+            on:deleteItem={({ detail }) => {
+              let selectedSource = filteredExternalSources.find(s => s.id === detail[0]);
+              if (selectedSource) {
+                onDeleteExternalSource(selectedSource)
+              }
+            }}
           />
           {/if}
       </svelte:fragment>

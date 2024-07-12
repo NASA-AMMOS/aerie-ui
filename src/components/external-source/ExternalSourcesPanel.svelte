@@ -1,9 +1,9 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { derivationGroupPlanLinkError, derivationGroups, externalSourceTypes, externalSourceWithResolvedNames, getEventSourceTypeName, seenSources, selectedPlanDerivationGroupIds } from '../../stores/external-source';
+  import { deletedSourcesSeen, derivationGroupPlanLinkError, derivationGroups, externalSourceTypes, getEventSourceTypeName, selectedPlanDerivationGroupIds, unseenSources } from '../../stores/external-source';
   import type { User } from '../../types/app';
-  import type { DerivationGroup, ExternalSourceWithResolvedNames } from '../../types/external-source';
+  import type { DerivationGroup, ExternalSourceWithDateInfo } from '../../types/external-source';
   import type { ViewGridSection } from '../../types/view';
   import effects from '../../utilities/effects';
   import Collapse from '../Collapse.svelte';
@@ -24,8 +24,8 @@
   let filterText: string = '';
   let mappedDerivationGroups: { [key: string]: DerivationGroup[] } = {};
   let filteredDerivationGroups: DerivationGroup[] = [];
-  let seenSourcesParsed: ExternalSourceWithResolvedNames[] = [];
-  let unseenSources: ExternalSourceWithResolvedNames[] = [];
+  let unseenSourcesParsed: ExternalSourceWithDateInfo[] = [];
+  let deletedSourcesParsed: ExternalSourceWithDateInfo[] = [];
   $: filteredDerivationGroups = $derivationGroups
     .filter(group => {
       const filterTextLowerCase = filterText.toLowerCase();
@@ -43,8 +43,8 @@
       }
     }
   })
-  $: seenSourcesParsed = JSON.parse($seenSources)
-  $: unseenSources = $externalSourceWithResolvedNames.filter(source => !seenSourcesParsed.map(source => source.id).includes(source.id));
+  $: unseenSourcesParsed = JSON.parse($unseenSources)
+  $: deletedSourcesParsed = JSON.parse($deletedSourcesSeen)
 
   function onManageDerivationGroups() {
     effects.managePlanDerivationGroups(user);
@@ -78,10 +78,15 @@
     <AlertError class="m-2" error={$derivationGroupPlanLinkError} />
 
     {#if filteredDerivationGroups.length}
-      {#if unseenSources.length}
+      {#if unseenSourcesParsed.length || deletedSourcesParsed.length}
         <div style="padding-top: 10px">
           <CardList>
-            <UpdateCard newSources={unseenSources} on:dismiss={() => seenSources.set(JSON.stringify(seenSourcesParsed.concat(unseenSources)))}/>
+            {#if unseenSourcesParsed.length}
+              <UpdateCard deleted={false} sources={unseenSourcesParsed} on:dismiss={() => unseenSources.set(JSON.stringify([]))}/>
+            {/if}
+            {#if deletedSourcesParsed.length}
+              <UpdateCard deleted={true} sources={deletedSourcesParsed} on:dismiss={() => {deletedSourcesSeen.set(JSON.stringify([]))}}/>
+            {/if}
           </CardList>
         </div>
       {/if}

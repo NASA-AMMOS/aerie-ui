@@ -18,12 +18,22 @@ export const derivationGroupPlanLinkError: Writable<string | null> = writable(nu
 export const createExternalSourceEventTypeLinkError: Writable<string | null> = writable(null);
 
 // need extra logic for persistence
-export const seenSources = writable(browser && localStorage.getItem("seenSources") || "[]")
-seenSources.subscribe(val => {
+// track which sources have been acknowledged by user as added to AERIE
+export const unseenSources = writable(browser && localStorage.getItem("seenSources") || "[]")
+unseenSources.subscribe(val => {
   // validate that val is list-like
   if (browser && JSON.parse(val)) localStorage.setItem("seenSources", val)
 })
-// export const seenSources: Writable<ExternalSourceWithResolvedNames[]> = writable([]);
+// TODO: delete from this
+
+// track which sources have been acknowledged by user as deleted from AERIE
+export const deletedSourcesSeen = writable(browser && localStorage.getItem("deletedSources") || "[]")
+deletedSourcesSeen.subscribe(val => {
+  // validate that val is list-like
+  if (browser && JSON.parse(val)) localStorage.setItem("deletedSources", val)
+})
+// TODO: clear this at acknowledgement
+
 
 /* Subscriptions. */
 export const externalSources = gqlSubscribable<ExternalSourceSlim[]>(gql.SUB_EXTERNAL_SOURCES, {}, [], null);
