@@ -1,16 +1,18 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { derivationGroupPlanLinkError, derivationGroups, externalSourceTypes, getEventSourceTypeName, selectedPlanDerivationGroupIds } from '../../stores/external-source';
+  import { derivationGroupPlanLinkError, derivationGroups, externalSourceTypes, externalSourceWithResolvedNames, getEventSourceTypeName, seenSources, selectedPlanDerivationGroupIds } from '../../stores/external-source';
   import type { User } from '../../types/app';
-  import type { DerivationGroup } from '../../types/external-source';
+  import type { DerivationGroup, ExternalSourceWithResolvedNames } from '../../types/external-source';
   import type { ViewGridSection } from '../../types/view';
   import effects from '../../utilities/effects';
   import Collapse from '../Collapse.svelte';
   import CollapsibleListControls from '../CollapsibleListControls.svelte';
   import GridMenu from '../menus/GridMenu.svelte';
   import AlertError from '../ui/AlertError.svelte';
+  import CardList from '../ui/CardList.svelte';
   import Panel from '../ui/Panel.svelte';
+  import UpdateCard from '../ui/UpdateCard.svelte';
   import ExternalSourcePanelEntry from './ExternalSourcePanelEntry.svelte';
 
   export let gridSection: ViewGridSection;
@@ -22,6 +24,7 @@
   let filterText: string = '';
   let mappedDerivationGroups: { [key: string]: DerivationGroup[] } = {};
   let filteredDerivationGroups: DerivationGroup[] = [];
+  let unseenSources: ExternalSourceWithResolvedNames[] = [];
   $: filteredDerivationGroups = $derivationGroups
     .filter(group => {
       const filterTextLowerCase = filterText.toLowerCase();
@@ -39,6 +42,8 @@
       }
     }
   })
+  $: seenSourceIds = $seenSources.map(source => source.id)
+  $: unseenSources = $externalSourceWithResolvedNames.filter(source => !seenSourceIds.includes(source.id));
 
   function onManageDerivationGroups() {
     effects.managePlanDerivationGroups(user);
@@ -72,6 +77,13 @@
     <AlertError class="m-2" error={$derivationGroupPlanLinkError} />
 
     {#if filteredDerivationGroups.length}
+      {#if unseenSources.length}
+        <div style="padding-top: 10px">
+          <CardList>
+            <UpdateCard newSources={unseenSources} on:dismiss={() => seenSources.set($seenSources.concat(unseenSources))}/>
+          </CardList>
+        </div>
+      {/if}
       {#each Object.keys(mappedDerivationGroups) as sourceType}
         <Collapse title={sourceType.toString()} tooltipContent={sourceType.toString()} defaultExpanded={false}>
           {#if mappedDerivationGroups[sourceType]}
