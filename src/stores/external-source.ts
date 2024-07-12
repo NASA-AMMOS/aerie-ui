@@ -16,6 +16,8 @@ export const derivationGroupPlanLinkError: Writable<string | null> = writable(nu
 
 export const createExternalSourceEventTypeLinkError: Writable<string | null> = writable(null);
 
+export const seenSources: Writable<ExternalSourceWithResolvedNames[]> = writable([]);
+
 /* Subscriptions. */
 export const externalSources = gqlSubscribable<ExternalSourceSlim[]>(gql.SUB_EXTERNAL_SOURCES, {}, [], null);
 export const externalSourceTypes = gqlSubscribable<ExternalSourceType[]>(gql.SUB_EXTERNAL_SOURCE_TYPES, {}, [], null);
