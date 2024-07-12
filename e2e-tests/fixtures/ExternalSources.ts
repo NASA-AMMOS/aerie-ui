@@ -64,12 +64,12 @@ export class ExternalSources {
 
   async selectSourceFilter() {
     // Always selects the first source filter possible in the dropdown
-    await this.page.getByRole('button', { name: 'Filter External Sources' }).click();
     await this.page.getByPlaceholder('Filter by Source Type').click();
     await this.page.getByRole('button', { name: 'DSN Contact Confirmed' }).click();
+    await this.page.getByText('External Sources DSN Contact').click(); // Closes the menu that popped up
   }
 
-  updatePage(page: Page): void {
+  async updatePage(page: Page): Promise<void> {
     this.externalSourceTableRow = page.locator(`.ag-row:has-text("${this.externalSourceKey}")`);
     this.inputFile = page.locator('input[name="file"]');
     this.uploadButton = page.getByRole('button', { name: 'Upload' });
@@ -79,9 +79,8 @@ export class ExternalSources {
     this.alertError = page.locator('.alert-error');
     this.deselectEventButton = page.locator('[name="DeselectEvent"]');
     this.deselectSourceButton = page.locator('[name="DeselectSource"]');
-
-    this.deleteSourceButton = page.getByRole('button', { name: 'Delete external source' });
-    this.deleteSourceButtonConfirmation = page.getByRole('button', { name: 'Delete', exact: true });
+    this.deleteSourceButton = page.getByRole('button', { exact: true, name: 'Delete external source' });
+    this.deleteSourceButtonConfirmation = page.getByRole('button', { exact: true, name: 'Delete' });
     this.selectEventTableView = page.locator('[name="SelectEventViewType"]');
   }
 
