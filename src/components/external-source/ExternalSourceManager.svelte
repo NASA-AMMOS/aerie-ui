@@ -854,11 +854,12 @@
                   hasPermission: hasCreatePermission,
                   permissionError: createPermissionError,
                 }}
-                >{$creatingExternalSource ? 'Uploading...' : 'Upload'}</button
               >
+                {$creatingExternalSource ? 'Uploading...' : 'Upload'}
+              </button>
               {#if parsed}
                 <div style="padding-top:10px">
-                  <button class="st-button w-100" type="reset">Reset</button>
+                  <button class="st-button w-100" type="reset">Dismiss</button>
                 </div>
               {/if}
             </fieldset>
