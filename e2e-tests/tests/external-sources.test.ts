@@ -39,7 +39,7 @@ test.describe.serial('External Sources', () => {
 
   test('External event form should be shown when an event is selected', async () => {
     await externalSources.selectEvent();
-    await expect(page.locator('#svelte div').filter({ hasText: 'Selected Event' }).nth(3)).toBeVisible();
+    await expect(page.getByText('External Events Table Timeline')).toBeVisible();
     await expect(externalSources.inputFile).not.toBeVisible();
   });
 
