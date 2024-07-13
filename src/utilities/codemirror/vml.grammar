@@ -6,6 +6,8 @@
 // * confirm if order is strict on flags
 // * vml_create_range ?
 // * see if multiple ranges are allowed INPUT INT mode := 3 VALUES 1..6, 8..9
+// * Confirm EXTERNAL_CALL if there's comma after simple expression before call parameters
+// * Are assignments allowed in external_call parameters
 
 @top Text_file {
   optional_end_lines {
@@ -81,25 +83,43 @@ Common_Function {
 
 Statement {
   statement_no_endline {
-    // issue
-// | issue_dynamic | issue_hex
-// | noop
-// | clear
-Assignment
-| Simple_call
-// | external_call | for
-// | end_for
+    Issue
+// | issue_dynamic
+// | issue_hex
+    | Noop
+    | Clear
+    | Assignment
+    | Simple_call
+    | External_call
+    | For
+    | End_for
 // | label
-// | flow
-| Vm_management
-// | vm_management | if
-// | else_if
-// | else
-// | end_if
-// | while
-// | end_while;
+    | Flow
+    | Vm_management
+
+    | If
+    | Else_if
+    | Else
+    | End_if
+
+    | While
+    | End_while
   }
   End_lines
+}
+
+Noop {
+  NOOP
+}
+
+Clear {
+  CLEAR
+}
+
+Issue {
+  ISSUE
+  // Call_parameters not shown in schema
+  Call_parameters
 }
 
 Parameters {
@@ -214,8 +234,25 @@ Assignment {
 // | test_and_set;
     Compound_expr
     | Simple_call_no_time
+    //
+    | Wait
   }
 }
+
+External_call {
+  EXTERNAL_CALL
+  Simple_expr
+  Call_parameters
+}
+
+External_call_no_time {
+  EXTERNAL_CALL
+  Simple_expr
+  Call_parameters
+}
+
+
+// ...
 
 Compound_expr_base {
   Simple_expr
@@ -250,8 +287,8 @@ Unop {
 Binop {
   Arith_binop
   | Bit_binop
-  // Bit_binop ...
-
+  | Comparison_binop
+  | Logical_binop
   | String_binop
 }
 
@@ -273,15 +310,139 @@ Bit_binop {
 }
 
 Comparison_binop {
-
+  EQUAL
+  | NOT_EQUAL
+  | LESS
+  | LESS_OR_EQUAL
+  | GREATER
+  | GREATER_OR_EQUAL
 }
 
 Logical_binop {
-
+  LOGICAL_AND
+  | LOGICAL_OR
+  | LOGICAL_XOR
 }
 
 String_binop {
   CONCAT | SPLIT_LEFT | SPLIT_RIGHT
+}
+
+Wait_comparison_binop {
+  EQUAL
+  | NOT_EQUAL
+  | LESS
+  | LESS_OR_EQUAL
+  | GREATER
+  | GREATER_OR_EQUAL
+}
+
+Wait {
+  Wait_simple
+  | Wait_change
+  | Wait_compare
+}
+
+Wait_simple {
+  WAIT
+  Variable_name
+  Optional_timeout?
+}
+
+Wait_change {
+  WAIT_CHANGE
+  Variable_name
+  Optional_timeout?
+}
+
+Wait_compare {
+  WAIT
+  Variable_name
+  Wait_comparison_binop
+  Simple_expr
+  Optional_timeout?
+}
+
+Optional_timeout {
+  TIMEOUT
+  Simple_expr
+  // not shown in example
+}
+
+Flow {
+  // Branch |
+  Return
+  | Delay
+}
+
+If {
+  IF
+  If_condition
+  // not shown in grammar
+  THEN
+}
+
+Else_if {
+  ELSE_IF
+  If_condition
+  // not shown in grammar
+  THEN
+}
+
+Else {
+  ELSE
+}
+
+End_if {
+  END_IF
+}
+
+If_condition {
+  Compound_expr
+}
+
+While {
+  WHILE
+  While_condition {
+    Compound_expr
+  }
+  DO // DO is not in grammar, but in example
+}
+
+End_while {
+  END_WHILE
+}
+
+For {
+  FOR
+  For_assignment
+  For_bound
+  Optional_step {
+    STEP Compound_expr
+  }?
+  DO
+}
+
+End_for {
+  END_FOR
+}
+
+For_assignment {
+  Variable_name
+  ASSIGNMENT
+  Compound_expr
+}
+
+For_bound {
+  For_direction {
+    (TO | DOWN_TO)
+  }
+  Compound_expr
+}
+
+Return {
+  RETURN
+  Simple_expr
 }
 
 Tlm_id_const {
@@ -314,6 +475,19 @@ Simple_call_no_time {
 
 // ...
 
+
+// delay: delay_by | delay_until; delay_by: DELAY_BY simple_expr; delay_until: DELAY_UNTIL simple_expr;
+Delay {
+  Delay_by {
+    DELAY_BY
+    Simple_expr
+  }
+  | Delay_until {
+    DELAY_UNTIL
+    Simple_expr
+  }
+}
+
 Vm_management {
   Spawn
 }
@@ -338,39 +512,61 @@ Spawn {
 }
 
 // VMLmodulelexerconstructs
-ABSOLUTE_SEQUENCE { @specialize<SYMBOL_CONST, "ABSOLUTE_SEQUENCE"> }
-BLOCK { @specialize<SYMBOL_CONST, "BLOCK"> }
-INPUT { @specialize<SYMBOL_CONST, "INPUT"> }
-FLAGS { @specialize<SYMBOL_CONST, "FLAGS"> }
-DECLARE { @specialize<SYMBOL_CONST, "DECLARE"> }
-EXTERNAL { @specialize<SYMBOL_CONST, "EXTERNAL"> }
-INT { @specialize<SYMBOL_CONST, "INT"> }
-READ_ONLY { @specialize<SYMBOL_CONST, "READ_ONLY"> }
-HALT { @specialize<SYMBOL_CONST, "HALT"> }
 ABS { @specialize<SYMBOL_CONST, "ABS"> }
-MODULE { @specialize<SYMBOL_CONST, "MODULE"> }
-UINT { @specialize<SYMBOL_CONST, "UINT"> }
-SPAWN { @specialize<SYMBOL_CONST, "SPAWN"> }
-LOGICAL { @specialize<SYMBOL_CONST, "LOGICAL"> }
-DOUBLE { @specialize<SYMBOL_CONST, "DOUBLE"> }
-STRING { @specialize<SYMBOL_CONST, "STRING"> }
-UNKNOWN { @specialize<SYMBOL_CONST, "UNKNOWN"> }
-TIME { @specialize<SYMBOL_CONST, "TIME"> }
+ABSOLUTE_SEQUENCE { @specialize<SYMBOL_CONST, "ABSOLUTE_SEQUENCE"> }
 ABSOLUTE_TIME { @specialize<SYMBOL_CONST, "ABSOLUTE_TIME"> }
-RELATIVE_TIME { @specialize<SYMBOL_CONST, "RELATIVE_TIME"> }
-TLM_ID { @specialize<SYMBOL_CONST, "TLM_ID"> }
+AUTOEXECUTE { @specialize<SYMBOL_CONST, "AUTOEXECUTE"> }
+AUTOUNLOAD { @specialize<SYMBOL_CONST, "AUTOUNLOAD"> }
+BLOCK { @specialize<SYMBOL_CONST, "BLOCK"> }
+BODY { @specialize<SYMBOL_CONST, "BODY"> }
+CALL { @specialize<SYMBOL_CONST, "CALL"> }
+CLEAR { @specialize<SYMBOL_CONST, "CLEAR"> }
+CONCAT { @specialize<SYMBOL_CONST, "CONCAT"> }
+DECLARE { @specialize<SYMBOL_CONST, "DECLARE"> }
+DELAY_BY { @specialize<SYMBOL_CONST, "DELAY_BY"> }
+DELAY_UNTIL { @specialize<SYMBOL_CONST, "DELAY_UNTIL"> }
+DO { @specialize<SYMBOL_CONST, "DO"> }
+DOUBLE { @specialize<SYMBOL_CONST, "DOUBLE"> }
+DOWN_TO { @specialize<SYMBOL_CONST, "DOWN_TO"> }
+ELSE { @specialize<SYMBOL_CONST, "ELSE"> }
+ELSE_IF { @specialize<SYMBOL_CONST, "ELSE_IF"> }
+END_BODY { @specialize<SYMBOL_CONST, "END_BODY"> }
+END_FOR { @specialize<SYMBOL_CONST, "END_FOR"> }
+END_IF { @specialize<SYMBOL_CONST, "END_IF"> }
 END_MODULE { @specialize<SYMBOL_CONST, "END_MODULE"> }
 END_VARIABLES { @specialize<SYMBOL_CONST, "END_VARIABLES"> }
+END_WHILE { @specialize<SYMBOL_CONST, "END_WHILE"> }
+EXTERNAL { @specialize<SYMBOL_CONST, "EXTERNAL"> }
+EXTERNAL_CALL { @specialize<SYMBOL_CONST, "EXTERNAL_CALL"> }
+FLAGS { @specialize<SYMBOL_CONST, "FLAGS"> }
+FOR { @specialize<SYMBOL_CONST, "FOR"> }
+HALT { @specialize<SYMBOL_CONST, "HALT"> }
+IF { @specialize<SYMBOL_CONST, "IF"> }
+INPUT { @specialize<SYMBOL_CONST, "INPUT"> }
+INT { @specialize<SYMBOL_CONST, "INT"> }
+ISSUE { @specialize<SYMBOL_CONST, "ISSUE"> }
+LOGICAL { @specialize<SYMBOL_CONST, "LOGICAL"> }
+MODULE { @specialize<SYMBOL_CONST, "MODULE"> }
+NOOP { @specialize<SYMBOL_CONST, "NOOP"> }
+READ_ONLY { @specialize<SYMBOL_CONST, "READ_ONLY"> }
+REENTRANT { @specialize<SYMBOL_CONST, "REENTRANT"> }
+RELATIVE_TIME { @specialize<SYMBOL_CONST, "RELATIVE_TIME"> }
+RETURN { @specialize<SYMBOL_CONST, "RETURN"> }
+SPAWN { @specialize<SYMBOL_CONST, "SPAWN"> }
+STEP { @specialize<SYMBOL_CONST, "STEP"> }
+STRING { @specialize<SYMBOL_CONST, "STRING"> }
+THEN { @specialize<SYMBOL_CONST, "THEN"> }
+TIME { @specialize<SYMBOL_CONST, "TIME"> }
+TIMEOUT { @specialize<SYMBOL_CONST, "TIMEOUT"> }
+TLM_ID { @specialize<SYMBOL_CONST, "TLM_ID"> }
+TO { @specialize<SYMBOL_CONST, "TO"> }
+UINT { @specialize<SYMBOL_CONST, "UINT"> }
+UNKNOWN { @specialize<SYMBOL_CONST, "UNKNOWN"> }
+VALUES { @specialize<SYMBOL_CONST, "VALUES"> }
 VARIABLES { @specialize<SYMBOL_CONST, "VARIABLES"> }
 WAIT { @specialize<SYMBOL_CONST, "WAIT"> }
 WAIT_CHANGE { @specialize<SYMBOL_CONST, "WAIT_CHANGE"> }
-AUTOEXECUTE { @specialize<SYMBOL_CONST, "AUTOEXECUTE"> }
-AUTOUNLOAD { @specialize<SYMBOL_CONST, "AUTOUNLOAD"> }
-REENTRANT { @specialize<SYMBOL_CONST, "REENTRANT"> }
-BODY { @specialize<SYMBOL_CONST, "BODY"> }
-END_BODY { @specialize<SYMBOL_CONST, "END_BODY"> }
-CALL { @specialize<SYMBOL_CONST, "CALL"> }
-VALUES { @specialize<SYMBOL_CONST, "VALUES"> }
+WHILE { @specialize<SYMBOL_CONST, "WHILE"> }
 
 // grammar shows "&", but example uses "BIT_AND"
 BIT_AND {
@@ -402,7 +598,12 @@ BIT_NOT {
   MODULO { "%" }
   POWER { "^" }
 
-  LOGICAL_NOT {"!"}
+  EQUAL { "=""="? }
+  NOT_EQUAL { "!=" }
+  GREATER {">"}
+  GREATER_OR_EQUAL {">="}
+  LESS {"<"}
+  LESS_OR_EQUAL {"<="}
 
   BIT_INVERT { "~" }
   BIT_AND_OP { "&" }
@@ -411,7 +612,12 @@ BIT_NOT {
   SHIFT_LEFT { "<<" }
   SHIFT_RIGHT { ">>" }
 
-  CONCAT { "CONCAT" }
+  LOGICAL_NOT {"!"}
+  LOGICAL_AND {"&&"}
+  LOGICAL_OR {"||"}
+  LOGICAL_XOR {"@@"}
+
+  // CONCAT { "CONCAT" }
   SPLIT_LEFT { "-|" }
   SPLIT_RIGHT { "|-" }
 
@@ -463,7 +669,9 @@ BIT_NOT {
 
   STRING_CONST { '"' (!["\\] | "\\" _)* '"' }
 
-  @precedence { INT_RANGE_CONST, DOUBLE_CONST, UINT_CONST, HEX_CONST, INT_CONST }
+  @precedence { LESS_OR_EQUAL, SHIFT_LEFT, LESS }
+  @precedence { GREATER_OR_EQUAL, SHIFT_RIGHT, GREATER }
+  @precedence { INT_RANGE_CONST, DOUBLE_CONST, UINT_CONST, HEX_CONST, INT_CONST, ADD, SUBTRACT }
   @precedence { FULL_TIME_CONST, DAY_TIME_CONST, SHORT_TIME_CONST, SPACECRAFT_TIME_CONST, CONCAT, SYMBOL_CONST }
 
   END_OF_LINE { "\n" }

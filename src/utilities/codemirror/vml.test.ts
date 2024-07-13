@@ -67,12 +67,14 @@ R00:00:00.1 str := value
 R00:00:00.1 file_name := "d:/cfg/high_gain_" CONCAT str
 R00:00:00.1 mask := mask BIT_AND 0x132
 R00:00:00.1 mask := BIT_NOT mask
-R00:00:00.1 EXTERNAL_CALL "issue_cmd", "SSPA_LEVEL", mask i := 1
+; R00:00:00.1 EXTERNAL_CALL "issue_cmd", "SSPA_LEVEL", mask i := 1
 R00:00:00.1 i := 1
 R00:00:00.1 WHILE i <= 5 DO
 R00:00:02.0         ISSUE INCREMENT_GAIN
-R00:00:00.1         i := i + 1 R00:00:00.1 END_WHILE
-R00:00:00.1 FOR i := 1 to mode STEP 2 DO
+R00:00:00.1         i := i + 1
+R00:00:00.1 END_WHILE
+; R00:00:00.1 FOR i := 1 to mode STEP 2 DO
+R00:00:00.1 FOR i := 1 TO mode STEP 2 DO
 R00:00:02.0         ISSUE INCREMENT_mode
 R00:00:00.1 END_FOR
 R00:00:00.1 IF delay_time > 100.0 THEN
@@ -88,7 +90,8 @@ R00:00:00.1         delay_time := delay_time * 0.9
 R00:00:00.0 END_IF
 
 R00:00:00.0 DELAY_BY delay_time
-R00:00:00.0 value := WAIT gv_complete = 1 TIMEOUT
+; R00:00:00.0 value := WAIT gv_complete = 1 TIMEOUT
+R00:00:00.0 value := WAIT gv_complete = 1 TIMEOUT 5
 R00:05:00.0 RETURN TRUE
 
 END_BODY
