@@ -1,6 +1,20 @@
 // VML - Virtual Machine Language
 // Based on 2.0.11 SIS
 
+// A module is a set of functions (absolute sequences, relative sequences, and blocks) and
+// optional variable definitions. There may be one or more functions in a module. Typically,
+// a module either contains one function (e.g. a master sequence, a special-purpose relative
+// sequence, or a special-purpose block), or it contains a set of general-purpose blocks
+// stored together for convenience and known as a library.
+
+// Exactly one module exists per source file. A module is bounded
+// by the keywords MODULE and END_MODULE. Comments may appear before and
+// after the module portion of the file, and anywhere between the keywords.
+
+// Grammar implementation notes
+// Token and rule names are taken from VMLCOMP 2.0.11 Interface Specification and then capitalized
+// since code mirror does not create tree nodes for lower case names.
+
 // TODOs
 // * figure out what vml_create_default(0) means
 // * confirm if order is strict on flags
@@ -8,11 +22,13 @@
 // * see if multiple ranges are allowed INPUT INT mode := 3 VALUES 1..6, 8..9
 // * Confirm EXTERNAL_CALL if there's comma after simple expression before call parameters
 // * Are assignments allowed in external_call parameters
+// * Confirm if keywords are case sensitive
+// * vml_utils_check_for_keyword
+
+@skip { space | Comment }
 
 @top Text_file {
-  optional_end_lines {
-    End_lines?
-  }
+  optional_end_lines
   MODULE
   End_lines
   Optional_static_variable_section {
@@ -29,24 +45,32 @@
   End_lines
 }
 
-@skip { space | Comment }
-
 End_lines {
   END_OF_LINE+
 }
 
-Function {
-  Block
-  | AbsoluteSequence
+optional_end_lines {
+  End_lines?
 }
 
-AbsoluteSequence {
-  ABSOLUTE_SEQUENCE
-  Common_Function
+Function {
+  Block
+  | Relative_sequence
+  | Absolute_Sequence
 }
 
 Block {
   BLOCK
+  Common_Function
+}
+
+Relative_sequence {
+  RELATIVE_SEQUENCE
+  Common_Function
+}
+
+Absolute_Sequence {
+  ABSOLUTE_SEQUENCE
   Common_Function
 }
 
@@ -63,6 +87,7 @@ Common_Function {
       AUTOUNLOAD?
       REENTRANT?
     }
+    End_lines
   }?
   Variable_declarations {
     Variable_declaration*
@@ -84,8 +109,8 @@ Common_Function {
 Statement {
   statement_no_endline {
     Issue
-// | issue_dynamic
-// | issue_hex
+    | Issue_dynamic
+    | Issue_hex
     | Noop
     | Clear
     | Assignment
@@ -93,7 +118,7 @@ Statement {
     | External_call
     | For
     | End_for
-// | label
+    | Label
     | Flow
     | Vm_management
 
@@ -118,9 +143,22 @@ Clear {
 
 Issue {
   ISSUE
-  // Call_parameters not shown in schema
+  // Function_name, Call_parameters not shown in schema
+  Function_name
   Call_parameters
 }
+
+// Some examples include commas between arguments
+Issue_dynamic {
+  ISSUE_DYNAMIC
+  // Function_name not shown in schema
+  Function_name
+  Call_parameters
+}
+
+// Issue_no_time {
+// incomplete in schema
+// }
 
 Parameters {
   Parameter*
@@ -135,7 +173,14 @@ Parameter {
     Optional_value_list?
     End_lines
   }
-  // | Input_output_parameter
+  | Input_output_parameter {
+    INPUT_OUTPUT
+    Data_kind?
+    Variable_name ~ambigVariableName
+    Optional_default_input_value?
+    Optional_value_list?
+    End_lines
+  }
 }
 
 Optional_default_input_value {
@@ -208,10 +253,22 @@ Constant {
   | (UINT_CONST | HEX_CONST)
   | DOUBLE_CONST
   | STRING_CONST
-  // Unknown_const |
-  // Boolean |
+  | UNKNOWN_CONST
+  | Boolean
   | TIME_CONST
-  // DEFINED_SYMBOL_CONST
+  | DEFINED_SYMBOL_CONST
+}
+
+Boolean {
+  True_const
+  | False_const
+}
+
+True_const { TRUE_CONST }
+False_const { FALSE_CONST }
+
+UNKNOWN_CONST {
+  UNKNOWN
 }
 
 TIME_CONST {
@@ -223,19 +280,33 @@ TIME_CONST {
   }
 }
 
+Issue_hex {
+  ISSUE_HEX
+  Hex_const
+  Issue_hex_values
+}
+
+Issue_hex_no_time {
+  ISSUE_HEX
+  Hex_const
+  Issue_hex_values
+}
+
+Issue_hex_values { Issue_hex_value* }
+Issue_hex_value { HEX_CONST }
+Hex_const { HEX_CONST }
+
 Assignment {
   Variable_name
   ASSIGNMENT
   Assignment_source {
 // | issue_no_time
-// | issue_hex_no_time
-// | simple_call_no_time
-// | external_call_no_time | wait
-// | test_and_set;
-    Compound_expr
+    Issue_hex_no_time
+// | external_call_no_time
+    | Compound_expr
     | Simple_call_no_time
-    //
     | Wait
+    | Test_and_set
   }
 }
 
@@ -251,14 +322,38 @@ External_call_no_time {
   Call_parameters
 }
 
+Tlm_id_const {
+  INT_CONST | UINT_CONST | DEFINED_SYMBOL_CONST
+}
 
-// ...
+Call_parameters {
+  (
+    Call_parameter
+    (COMMA Call_parameter)*
+  )?
+}
+
+Call_parameter {
+  Simple_expr
+}
+
+
+Simple_call {
+  CALL
+  Function_name
+  Call_parameters
+}
+
+Simple_call_no_time {
+  CALL
+  Function_name
+  Call_parameters
+}
 
 Compound_expr_base {
   Simple_expr
-  | (Unop Simple_expr)
-  // | unop simple_expr
-  // | built_in_function;
+  | Unop Simple_expr
+  | Built_in_function
 }
 
 Compound_expr_mid {
@@ -282,6 +377,44 @@ Unop {
   | BIT_NOT
 
   // | Subtract
+}
+
+Built_in_function {
+  // Grammar shows 2 sets of paranthesis
+  (Zero_parm_built_in_function_name OPEN_PAREN CLOSE_PAREN)
+  | (Unary_parm_built_in_function_name OPEN_PAREN Compound_expr CLOSE_PAREN)
+}
+
+Zero_parm_built_in_function_name {
+  SPACECRAFT_TIME
+  // Odd to not have a name???
+  OPEN_PAREN CLOSE_PAREN
+}
+
+Unary_parm_built_in_function_name {
+  Simple_coerce
+  | Trig
+  | LENGTH
+  | ABS
+}
+
+Simple_coerce {
+  INT_COERCE
+  | UINT_COERCE
+  | LOGICAL_COERCE
+  | DOUBLE_COERCE
+  | STRING_COERCE
+  | TIME_COERCE
+  | UNKNOWN_COERCE
+}
+
+Trig {
+  SIN
+  | COS
+  | TAN
+  | ASIN
+  | ACOS
+  | ATAN
 }
 
 Binop {
@@ -365,14 +498,45 @@ Wait_compare {
 
 Optional_timeout {
   TIMEOUT
-  Simple_expr
-  // not shown in example
+  Simple_expr // not shown in example
 }
 
+Test_and_set {
+  TEST_AND_SET
+  Variable_name
+  Optional_timeout
+}
+
+Label {
+  LABEL
+  Label_name
+}
+
+Label_name { SYMBOL_CONST }
+
 Flow {
-  // Branch |
-  Return
+  Branch
+  | Return
   | Delay
+}
+
+Branch { Branch_always | Branch_true | Branch_false }
+
+Branch_always {
+  BRANCH
+  Label_name
+}
+
+Branch_true {
+  BRANCH_TRUE
+  Simple_expr
+  Label_name
+}
+
+Branch_false {
+  BRANCH_FALSE
+  Simple_expr
+  Label_name
 }
 
 If {
@@ -406,7 +570,7 @@ While {
   While_condition {
     Compound_expr
   }
-  DO // DO is not in grammar, but in example
+  DO // not shown in grammar, but in example
 }
 
 End_while {
@@ -445,38 +609,6 @@ Return {
   Simple_expr
 }
 
-Tlm_id_const {
-  ()
-}
-
-Call_parameters {
-  (
-    Call_parameter
-    (COMMA Call_parameter)*
-  )?
-}
-
-Call_parameter {
-  Simple_expr
-}
-
-
-Simple_call {
-  CALL
-  Function_name
-  Call_parameters
-}
-
-Simple_call_no_time {
-  CALL
-  Function_name
-  Call_parameters
-}
-
-// ...
-
-
-// delay: delay_by | delay_until; delay_by: DELAY_BY simple_expr; delay_until: DELAY_UNTIL simple_expr;
 Delay {
   Delay_by {
     DELAY_BY
@@ -488,21 +620,22 @@ Delay {
   }
 }
 
-Vm_management {
-  Spawn
+Vm_management { Halt | Pause | Resume | Spawn }
+
+Halt {
+  HALT
+  Simple_expr
 }
 
-// Halt {
+Pause {
+  PAUSE
+  Simple_expr
+}
 
-// }
-
-// Pause {
-
-// }
-
-// Resume {
-
-// }
+Resume {
+  RESUME
+  Simple_expr
+}
 
 Spawn {
   SPAWN
@@ -515,18 +648,28 @@ Spawn {
 ABS { @specialize<SYMBOL_CONST, "ABS"> }
 ABSOLUTE_SEQUENCE { @specialize<SYMBOL_CONST, "ABSOLUTE_SEQUENCE"> }
 ABSOLUTE_TIME { @specialize<SYMBOL_CONST, "ABSOLUTE_TIME"> }
+ACOS { @specialize<SYMBOL_CONST, "ACOS"> }
+ASIN { @specialize<SYMBOL_CONST, "ASIN"> }
+ATAN { @specialize<SYMBOL_CONST, "ATAN"> }
 AUTOEXECUTE { @specialize<SYMBOL_CONST, "AUTOEXECUTE"> }
 AUTOUNLOAD { @specialize<SYMBOL_CONST, "AUTOUNLOAD"> }
+BIT_INVERT { @specialize<SYMBOL_CONST, "BIT_INVERT"> }
 BLOCK { @specialize<SYMBOL_CONST, "BLOCK"> }
 BODY { @specialize<SYMBOL_CONST, "BODY"> }
+BRANCH { @specialize<SYMBOL_CONST, "BRANCH"> }
+BRANCH_FALSE { @specialize<SYMBOL_CONST, "BRANCH_FALSE"> }
+BRANCH_TRUE { @specialize<SYMBOL_CONST, "BRANCH_TRUE"> }
 CALL { @specialize<SYMBOL_CONST, "CALL"> }
 CLEAR { @specialize<SYMBOL_CONST, "CLEAR"> }
 CONCAT { @specialize<SYMBOL_CONST, "CONCAT"> }
+COS { @specialize<SYMBOL_CONST, "COS"> }
 DECLARE { @specialize<SYMBOL_CONST, "DECLARE"> }
+DEFINED_SYMBOL_CONST { @specialize<SYMBOL_CONST, "DEFINED_SYMBOL_CONST"> }
 DELAY_BY { @specialize<SYMBOL_CONST, "DELAY_BY"> }
 DELAY_UNTIL { @specialize<SYMBOL_CONST, "DELAY_UNTIL"> }
 DO { @specialize<SYMBOL_CONST, "DO"> }
 DOUBLE { @specialize<SYMBOL_CONST, "DOUBLE"> }
+DOUBLE_COERCE { @specialize<SYMBOL_CONST, "DOUBLE_COERCE"> }
 DOWN_TO { @specialize<SYMBOL_CONST, "DOWN_TO"> }
 ELSE { @specialize<SYMBOL_CONST, "ELSE"> }
 ELSE_IF { @specialize<SYMBOL_CONST, "ELSE_IF"> }
@@ -538,30 +681,51 @@ END_VARIABLES { @specialize<SYMBOL_CONST, "END_VARIABLES"> }
 END_WHILE { @specialize<SYMBOL_CONST, "END_WHILE"> }
 EXTERNAL { @specialize<SYMBOL_CONST, "EXTERNAL"> }
 EXTERNAL_CALL { @specialize<SYMBOL_CONST, "EXTERNAL_CALL"> }
+FALSE_CONST { @specialize<SYMBOL_CONST, "FALSE_CONST"> }
 FLAGS { @specialize<SYMBOL_CONST, "FLAGS"> }
 FOR { @specialize<SYMBOL_CONST, "FOR"> }
 HALT { @specialize<SYMBOL_CONST, "HALT"> }
 IF { @specialize<SYMBOL_CONST, "IF"> }
 INPUT { @specialize<SYMBOL_CONST, "INPUT"> }
+INPUT_OUTPUT { @specialize<SYMBOL_CONST, "INPUT_OUTPUT"> }
 INT { @specialize<SYMBOL_CONST, "INT"> }
+INT_COERCE { @specialize<SYMBOL_CONST, "INT_COERCE"> }
 ISSUE { @specialize<SYMBOL_CONST, "ISSUE"> }
+ISSUE_DYNAMIC { @specialize<SYMBOL_CONST, "ISSUE_DYNAMIC"> }
+ISSUE_HEX { @specialize<SYMBOL_CONST, "ISSUE_HEX"> }
+LABEL { @specialize<SYMBOL_CONST, "LABEL"> }
+LENGTH { @specialize<SYMBOL_CONST, "LENGTH"> }
 LOGICAL { @specialize<SYMBOL_CONST, "LOGICAL"> }
+LOGICAL_COERCE { @specialize<SYMBOL_CONST, "LOGICAL_COERCE"> }
 MODULE { @specialize<SYMBOL_CONST, "MODULE"> }
 NOOP { @specialize<SYMBOL_CONST, "NOOP"> }
+PAUSE { @specialize<SYMBOL_CONST, "PAUSE"> }
 READ_ONLY { @specialize<SYMBOL_CONST, "READ_ONLY"> }
 REENTRANT { @specialize<SYMBOL_CONST, "REENTRANT"> }
+RELATIVE_SEQUENCE { @specialize<SYMBOL_CONST, "RELATIVE_SEQUENCE"> }
 RELATIVE_TIME { @specialize<SYMBOL_CONST, "RELATIVE_TIME"> }
+RESUME { @specialize<SYMBOL_CONST, "RESUME"> }
 RETURN { @specialize<SYMBOL_CONST, "RETURN"> }
+SIN { @specialize<SYMBOL_CONST, "SIN"> }
+SPACECRAFT_TIME { @specialize<SYMBOL_CONST, "SPACECRAFT_TIME"> }
 SPAWN { @specialize<SYMBOL_CONST, "SPAWN"> }
 STEP { @specialize<SYMBOL_CONST, "STEP"> }
 STRING { @specialize<SYMBOL_CONST, "STRING"> }
+STRING_COERCE { @specialize<SYMBOL_CONST, "STRING_COERCE"> }
+SYNTAX_ERROR { @specialize<SYMBOL_CONST, "."> }
+TAN { @specialize<SYMBOL_CONST, "TAN"> }
+TEST_AND_SET { @specialize<SYMBOL_CONST, "TEST_AND_SET"> }
 THEN { @specialize<SYMBOL_CONST, "THEN"> }
 TIME { @specialize<SYMBOL_CONST, "TIME"> }
+TIME_COERCE { @specialize<SYMBOL_CONST, "TIME_COERCE"> }
 TIMEOUT { @specialize<SYMBOL_CONST, "TIMEOUT"> }
 TLM_ID { @specialize<SYMBOL_CONST, "TLM_ID"> }
 TO { @specialize<SYMBOL_CONST, "TO"> }
+TRUE_CONST { @specialize<SYMBOL_CONST, "TRUE_CONST"> }
 UINT { @specialize<SYMBOL_CONST, "UINT"> }
+UINT_COERCE { @specialize<SYMBOL_CONST, "UINT_COERCE"> }
 UNKNOWN { @specialize<SYMBOL_CONST, "UNKNOWN"> }
+UNKNOWN_COERCE { @specialize<SYMBOL_CONST, "UNKNOWN_COERCE"> }
 VALUES { @specialize<SYMBOL_CONST, "VALUES"> }
 VARIABLES { @specialize<SYMBOL_CONST, "VARIABLES"> }
 WAIT { @specialize<SYMBOL_CONST, "WAIT"> }
@@ -574,10 +738,17 @@ BIT_AND {
   | @specialize<SYMBOL_CONST, "BIT_AND">
 }
 
-// not in grammar, but in example
 BIT_NOT {
   BIT_INVERT
+  | BIT_INVERT_OP
+  // not in grammar, but in example
   | @specialize<SYMBOL_CONST, "BIT_NOT">
+}
+
+// not in grammar, but in example
+LOGICAL_NOT {
+  LOGICAL_NOT_OP
+  | @specialize<SYMBOL_CONST, "LOGICAL_NOT">
 }
 
 @tokens {
@@ -605,14 +776,14 @@ BIT_NOT {
   LESS {"<"}
   LESS_OR_EQUAL {"<="}
 
-  BIT_INVERT { "~" }
+  BIT_INVERT_OP { "~" }
   BIT_AND_OP { "&" }
   BIT_OR { "|" }
   BIT_XOR { "@" }
   SHIFT_LEFT { "<<" }
   SHIFT_RIGHT { ">>" }
 
-  LOGICAL_NOT {"!"}
+  LOGICAL_NOT_OP {"!"}
   LOGICAL_AND {"&&"}
   LOGICAL_OR {"||"}
   LOGICAL_XOR {"@@"}
@@ -625,13 +796,11 @@ BIT_NOT {
     $[aArR]@digit+"-"@digit+$[Tt]@digit+":"@digit+":"@digit+("."@digit+)?
   }
 
-  DAY_TIME_CONST {
-    // [r|R][0-9]+[t|T][0-9]+:[0-9]+:[0-9]+(\.[0-9]+)?
+  DAY_TIME_CONST { // [r|R][0-9]+[t|T][0-9]+:[0-9]+:[0-9]+(\.[0-9]+)?
     $[rR]@digit+$[tT]@digit+":"@digit+":"@digit+("."@digit+)?
   }
 
-  SHORT_TIME_CONST {
-// [r|R][0-9]+:[0-9]+:[0-9]+(\.[0-9]+)?
+  SHORT_TIME_CONST { // [r|R][0-9]+:[0-9]+:[0-9]+(\.[0-9]+)?
     $[rR]@digit+":"@digit+":"@digit+("."@digit+)?
   }
 
