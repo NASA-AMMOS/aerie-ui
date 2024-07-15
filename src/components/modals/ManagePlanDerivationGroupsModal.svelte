@@ -75,6 +75,7 @@
         input.addEventListener('click', (event) => {
           if (event?.target && params.data) {
             if (event.target.checked) {
+              // ADD TIMEOUTS IF NECESSARY, MAKE SURE SYNCS ACROSS TABS (USE STORES)
               // insert
               effects.insertDerivationGroupForPlan(params.data.id, $plan, user);
               if (derivationGroupPlanLinkError !== null) {
