@@ -55,24 +55,17 @@
     </div>
     <div class="card--body st-typography-body">
       {#each Object.keys(mappedSources) as sourceType}
-        <Collapse title={sourceType} tooltipContent={"Source Type"} defaultExpanded={false}>
+        <Collapse title={sourceType} tooltipContent={"Source Type"} defaultExpanded={true}>
           {#each Object.keys(mappedSources[sourceType]) as derivationGroup}
-            <Collapse title={derivationGroup} tooltipContent={"Derivation Group"} defaultExpanded={false}>
+            <Collapse title={derivationGroup} tooltipContent={"Derivation Group"} defaultExpanded={true}>
               {#each mappedSources[sourceType][derivationGroup] as source}
-                <div class="card--row">
-                  <div class="card--metadata-row">
-                      <div class="card--date">
-                        <span class="st-typography-body">
-                          <!--TODO: figure out how to make this go "..." so that we can always see getTimeAgo below-->
-                          <p>{source.key}</p>
-                        </span>
-                        <span class="card--date-time-ago">
-                          <p style:float="left" style:padding-top="0.1rem" style:padding-right="0.25rem" style:color="gray">
-                            {getTimeAgo(new Date(source.change_date),new Date(), Number.MAX_SAFE_INTEGER)}
-                          </p>
-                        </span>
-                      </div>
-                  </div>
+                <div class="card--source-info">
+                  <p style="flex-shrink: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%">
+                    {source.key}
+                  </p>
+                  <p style="flex-shrink: 0; white-space: nowrap: margin-left: auto; padding-top: 0.1rem; padding-right: 0.25rem; color: gray">
+                    {getTimeAgo(new Date(source.change_date),new Date(), Number.MAX_SAFE_INTEGER)}
+                  </p>
                 </div>
               {/each}
             </Collapse>
@@ -91,7 +84,6 @@
   .card {
     background: var(--bg-color, rgba(245, 245, 245, 0.35));
     border: 1px solid var(--border-color, rgba(152, 101, 35, 0.5));
-    /* border: 1px solid var(--border-color, rgba(152, 35, 35, 0.5));  // if deleted */
     border-radius: 4px;
     color: var(--st-gray-70);
     cursor: pointer;
@@ -111,12 +103,7 @@
 
   .card--title-row {
     background: var(--title-bg-color, rgb(254, 252, 234));
-    /* background: var(--title-bg-color, rgb(254, 234, 234)); // if deleted  */
     padding: 4px 0px;
-  }
-
-  .card--metadata-row {
-    display: flex;
   }
 
   .card--title {
@@ -124,17 +111,15 @@
     line-height: 24px;
   }
 
-  .card--date {
-    display: flex;
-    gap: 20px;
-  }
-
-  .card--date-time-ago {
-    color: var(--st-gray-50);
-  }
-
   .card--body {
     color: var(--st-gray-70);
     padding: 4px 0px;
+  }
+
+  .card--source-info {
+    display: flex;
+    justify-content: space-between;
+    overflow: hidden;
+    white-space: nowrap;
   }
 </style>
