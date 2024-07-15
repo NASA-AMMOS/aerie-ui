@@ -9,6 +9,7 @@ import DeleteActivitiesModal from '../components/modals/DeleteActivitiesModal.sv
 import EditViewModal from '../components/modals/EditViewModal.svelte';
 import ExpansionSequenceModal from '../components/modals/ExpansionSequenceModal.svelte';
 import ManagePlanConstraintsModal from '../components/modals/ManagePlanConstraintsModal.svelte';
+import ManagePlanDerivationGroupsModal from '../components/modals/ManagePlanDerivationGroupsModal.svelte';
 import ManagePlanSchedulingConditionsModal from '../components/modals/ManagePlanSchedulingConditionsModal.svelte';
 import ManagePlanSchedulingGoalsModal from '../components/modals/ManagePlanSchedulingGoalsModal.svelte';
 import MergeReviewEndedModal from '../components/modals/MergeReviewEndedModal.svelte';
@@ -173,6 +174,41 @@ export async function showManagePlanConstraintsModal(user: User | null): Promise
             managePlanConstraintsModal.$destroy();
           },
         );
+      }
+    } else {
+      resolve({ confirm: false });
+    }
+  });
+}
+
+/**
+ * Shows an ManagePlanDerivationGroupsModal component with the supplied arguments.
+ */
+export async function showManagePlanDerivationGroups(user: User | null): Promise<ModalElementValue> {
+  return new Promise(resolve => {
+    if (browser) {
+      const target: ModalElement | null = document.querySelector('#svelte-modal');
+
+      if (target) {
+        const managePlanDerivationGroupsModal = new ManagePlanDerivationGroupsModal({
+          props: { user },
+          target,
+        });
+        target.resolve = resolve;
+
+        managePlanDerivationGroupsModal.$on('close', () => {
+          target.replaceChildren();
+          target.resolve = null;
+          target.removeAttribute('data-dismissible');
+          managePlanDerivationGroupsModal.$destroy();
+        });
+        // TODO: Figure out how to incorporate the other two columns (Files in plan bounds, Included)
+        managePlanDerivationGroupsModal.$on('add', (e: CustomEvent<{ derivationGroupName: string }[]>) => {
+          target.replaceChildren();
+          target.resolve = null;
+          resolve({ confirm: true, value: e.detail });
+          managePlanDerivationGroupsModal.$destroy();
+        });
       }
     } else {
       resolve({ confirm: false });

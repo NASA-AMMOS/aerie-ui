@@ -218,6 +218,7 @@ import {
   showDeleteActivitiesModal,
   showEditViewModal,
   showManagePlanConstraintsModal,
+  showManagePlanDerivationGroups,
   showManagePlanSchedulingConditionsModal,
   showManagePlanSchedulingGoalsModal,
   showPlanBranchRequestModal,
@@ -4777,6 +4778,15 @@ const effects = {
     } catch (e) {
       catchError('Constraint Unable To Be Applied To Plan', e as Error);
       showFailureToast('Constraint Application Failed');
+    }
+  },
+
+  async managePlanDerivationGroups(user: User | null): Promise<void> {
+    try {
+      await showManagePlanDerivationGroups(user);
+    } catch (e) {
+      catchError('Derivation Group Unable To Be Modified In Plan', e as Error);
+      showFailureToast('Derivation Group Modification Failed');
     }
   },
 
