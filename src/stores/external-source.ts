@@ -68,6 +68,10 @@ export const derivationGroups = derived<[typeof derivationGroupsRaw], Derivation
           { event_counts: source.external_events_aggregate.aggregate.count },
         ]),
       ),
+      totalEventCount: raw.external_source.reduce(
+        (sum, currentSource) => sum + currentSource.external_events_aggregate.aggregate.count,
+        0,
+      ),
     })),
 );
 

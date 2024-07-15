@@ -1,4 +1,5 @@
 import type { ExternalEventDB, ExternalEventInsertInput, ExternalEventJson } from '../types/external-event';
+import type { BaseDefinition, BaseMetadata } from './metadata';
 
 // no analogue to ExternalEventId as that is only necessary in plan view where information on the selected event is shared across several sibling panels (see stores)
 
@@ -38,7 +39,15 @@ export type ExternalSourceJson = {
 // For use in retrieval of source information sans bulky items like metadata and event lists (see stores)
 export type ExternalSourceSlim = Pick<
   ExternalSourceDB,
-  'id' | 'file_id' | 'key' | 'source_type_id' | 'start_time' | 'end_time' | 'valid_at' | 'derivation_group_id' | 'created_at'
+  | 'id'
+  | 'file_id'
+  | 'key'
+  | 'source_type_id'
+  | 'start_time'
+  | 'end_time'
+  | 'valid_at'
+  | 'derivation_group_id'
+  | 'created_at'
 >;
 
 // For use in ExternalSourceManager tables
@@ -47,7 +56,7 @@ export type ExternalSourceWithResolvedNames = ExternalSourceSlim & {
   derivation_group: string | undefined;
 
   // for coloring
-  total_groups: number; 
+  total_groups: number;
 };
 
 // no analogue (yet) to ExternalEvent because no special durationMs or startMs to draw on a timeline
@@ -66,15 +75,28 @@ export type ExternalSourceType = {
 
 export type DerivationGroup = {
   id: number;
-  source_type_id: number;
   name: string;
-  sources: Map<string, {event_counts: number}>;
-}
+  source_type_id: number;
+  sources: Map<string, { event_counts: number }>;
+};
 
-export type ExternalSourceEventType = { // to specify what types are contained in each source.
-  external_source_id: number,
-  external_event_type_id: number
-}
+// Metadata types used for management modal
+export type DerivationGroupDefinition = BaseDefinition & {
+  derivation_group_id: number;
+  derivation_group_name: string;
+};
+export type DerivationGroupMetadataVersionDefinition = Pick<
+  DerivationGroupDefinition,
+  'author' | 'definition' | 'revision' | 'tags'
+>;
+export type DerivationGroupMetadata = BaseMetadata<DerivationGroupDefinition>;
+export type DerivationGroupMetadataSlim = Omit<DerivationGroupMetadata, 'models_using' | 'plans_using' | 'versions'>;
+
+export type ExternalSourceEventType = {
+  // to specify what types are contained in each source.
+  external_event_type_id: number;
+  external_source_id: number;
+};
 
 // This is used for the GraphQL mutation.
 export type ExternalSourceInsertInput = Pick<
