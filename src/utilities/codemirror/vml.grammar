@@ -11,6 +11,11 @@
 // by the keywords MODULE and END_MODULE. Comments may appear before and
 // after the module portion of the file, and anywhere between the keywords.
 
+// VML is not case sensitive: case is ignored. All keywords and symbols may be in upper and/or lower case.
+// It is recommended that keywords (like MODULE and BLOCK) be placed in upper case, and that symbols which
+// the user has control over be placed in lower case. This upper case / lower case convention is followed
+// throughout this document.
+
 // Grammar implementation notes
 // Token and rule names are taken from VMLCOMP 2.0.11 Interface Specification and then capitalized
 // since code mirror does not create tree nodes for lower case names.
@@ -57,6 +62,7 @@ Function {
   Block
   | Relative_sequence
   | Absolute_Sequence
+  | Sequence
 }
 
 Block {
@@ -71,6 +77,11 @@ Relative_sequence {
 
 Absolute_Sequence {
   ABSOLUTE_SEQUENCE
+  Common_Function
+}
+
+Sequence {
+  SEQUENCE
   Common_Function
 }
 
@@ -689,7 +700,7 @@ INPUT { @specialize<SYMBOL_CONST, "INPUT"> }
 INPUT_OUTPUT { @specialize<SYMBOL_CONST, "INPUT_OUTPUT"> }
 INT { @specialize<SYMBOL_CONST, "INT"> }
 INT_COERCE { @specialize<SYMBOL_CONST, "INT_COERCE"> }
-ISSUE { @specialize<SYMBOL_CONST, "ISSUE"> }
+ISSUE { @specialize<SYMBOL_CONST, "ISSUE"> | @specialize<SYMBOL_CONST, "issue"> }
 ISSUE_DYNAMIC { @specialize<SYMBOL_CONST, "ISSUE_DYNAMIC"> }
 ISSUE_HEX { @specialize<SYMBOL_CONST, "ISSUE_HEX"> }
 LABEL { @specialize<SYMBOL_CONST, "LABEL"> }
@@ -705,9 +716,10 @@ RELATIVE_SEQUENCE { @specialize<SYMBOL_CONST, "RELATIVE_SEQUENCE"> }
 RELATIVE_TIME { @specialize<SYMBOL_CONST, "RELATIVE_TIME"> }
 RESUME { @specialize<SYMBOL_CONST, "RESUME"> }
 RETURN { @specialize<SYMBOL_CONST, "RETURN"> }
+SEQUENCE { @specialize<SYMBOL_CONST, "SEQUENCE"> }
 SIN { @specialize<SYMBOL_CONST, "SIN"> }
 SPACECRAFT_TIME { @specialize<SYMBOL_CONST, "SPACECRAFT_TIME"> }
-SPAWN { @specialize<SYMBOL_CONST, "SPAWN"> }
+SPAWN { @specialize<SYMBOL_CONST, "SPAWN"> | @specialize<SYMBOL_CONST, "spawn"> }
 STEP { @specialize<SYMBOL_CONST, "STEP"> }
 STRING { @specialize<SYMBOL_CONST, "STRING"> }
 STRING_COERCE { @specialize<SYMBOL_CONST, "STRING_COERCE"> }

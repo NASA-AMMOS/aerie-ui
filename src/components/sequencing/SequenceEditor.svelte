@@ -103,11 +103,6 @@
         editorSequenceView.dispatch({
           effects: compartmentSeqLinter.reconfigure(vmlLinter()),
         });
-        // editorSequenceView.dispatch({
-        //   effects: compartmentSeqTooltip.reconfigure(
-        //     sequenceTooltip(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
-        //   ),
-        // });
       } else {
         const unparsedChannelDictionary = $channelDictionaries.find(cd => cd.id === parcel?.channel_dictionary_id);
         const unparsedCommandDictionary = $commandDictionaries.find(cd => cd.id === parcel?.command_dictionary_id);

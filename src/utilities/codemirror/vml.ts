@@ -15,24 +15,8 @@ export const TOKEN_WAIT_CHANGE = 'WAIT_CHANGE';
 const FoldBehavior: {
   [tokenName: string]: (node: SyntaxNode, _state: EditorState) => ReturnType<typeof foldInside>;
 } = {
-  Block: foldInside,
+  // only called on multi-line rules, may need custom service to handle FOR, WHILE, etc.
   Body: foldInside,
-  Common_Function: foldInside,
-  For_statement: function (node: SyntaxNode, _state: EditorState) {
-    if (node?.name === 'For_Statement') {
-      const cursor = node.cursor();
-      do {
-        const { node: closeNode } = cursor;
-        if (closeNode.type.name === 'End_for') {
-          return {
-            from: node.from,
-            to: closeNode.to,
-          };
-        }
-      } while (cursor.next());
-    }
-    return null;
-  },
 };
 
 export const VmlLanguage = LRLanguage.define({

@@ -193,8 +193,6 @@ R00:00:00.1 a := b ^ c ; power
     // grammar shows no commas between arguments
     // assertNoErrorNodes(wrapInModule(`R00:00:00.1 ISSUE_DYNAMIC "FSW_OBJ_INITIAL", "DWN", file_name, ""`), true);
   });
-
-  //
 });
 
 function wrapInModule(s: string) {
@@ -215,7 +213,7 @@ function assertNoErrorNodes(input: string, printPrefix?: boolean) {
     const { node } = cursor;
     if (printPrefix) {
       if (node.type.name === TOKEN_ERROR) {
-        printNodes(input);
+        printNodes(input.substring(0, node.to + 10));
         console.log(input.substring(0, node.to));
       }
     }
