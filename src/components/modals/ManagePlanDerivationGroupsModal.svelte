@@ -1,17 +1,24 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { base } from '$app/paths';
   import type { ICellRendererParams } from 'ag-grid-community';
+  import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import { createEventDispatcher } from 'svelte';
-  import { derivationGroupPlanLinkError, derivationGroups, selectedPlanDerivationGroupIds } from '../../stores/external-source';
+  import { derivationGroupPlanLinkError, derivationGroups, externalSourceTypes, externalSourceWithResolvedNames, getEventSourceTypeName, selectedPlanDerivationGroupIds } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import type { User } from '../../types/app';
-  import type { DerivationGroupMetadata } from '../../types/constraint';
   import type { DataGridColumnDef } from '../../types/data-grid';
+  import type { DerivationGroup, DerivationGroupMetadata, ExternalSourceWithResolvedNames } from '../../types/external-source';
   import effects from '../../utilities/effects';
+  import Collapse from '../Collapse.svelte';
   import Input from '../form/Input.svelte';
+  import CssGrid from '../ui/CssGrid.svelte';
+  import CssGridGutter from '../ui/CssGridGutter.svelte';
   import DataGrid from '../ui/DataGrid/DataGrid.svelte';
   import DataGridActions from '../ui/DataGrid/DataGridActions.svelte';
+  import Panel from '../ui/Panel.svelte';
+  import SectionTitle from '../ui/SectionTitle.svelte';
   import Modal from './Modal.svelte';
   import ModalContent from './ModalContent.svelte';
   import ModalFooter from './ModalFooter.svelte';
@@ -28,18 +35,29 @@
     close: void;
   }>();
 
-  // TODO: Finish updating these
-  // TODO: Include source type(s) here, maybe as a mouse-over to derivation group? or maybe swap that and the event counts?
-  const baseColumnDefs: DataGridColumnDef<DerivationGroupMetadata>[] = [
+  const baseColumnDefs: DataGridColumnDef<DerivationGroup>[] = [
     {
       field: 'name',
       filter: 'string',
       headerName: 'Derivation Group',
       resizable: true,
       sortable: true,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
-      width: 385,
+      suppressAutoSize: false,
+      suppressSizeToFit: false,
+    },
+    {
+      field: 'source_type_id',
+      filter: 'string',
+      headerName: 'Source type',
+      resizable: true,
+      sortable: true,
+      suppressAutoSize: false,
+      suppressSizeToFit: false,
+      valueFormatter: (params) => {
+        const sourceTypeName = getEventSourceTypeName(params?.value, $externalSourceTypes);
+        console.log(sourceTypeName);
+        return sourceTypeName ? sourceTypeName: ""
+      }
     },
     {
       field: 'totalEventCount',
@@ -48,13 +66,12 @@
       sortable: true,
       suppressAutoSize: true,
       suppressSizeToFit: true,
-      width: 190,
     },
     {
       cellRenderer: (params: DerivationGroupCellRendererParams) => {
         var input = document.createElement('input');
         input.type = 'checkbox';
-        input.checked=$selectedPlanDerivationGroupIds.includes(params.data.id)
+        input.checked=$selectedPlanDerivationGroupIds.includes(params?.data.id)
         input.addEventListener('click', (event) => {
           if (event?.target && params.data) {
             if (event.target.checked) {
@@ -83,18 +100,19 @@
       width: 100,
     },
   ];
-  // TODO
-  //const permissionError = 'You do not have permission to add this derivation group.';
-
+  const modalColumnSizeNoDetail: string = "1fr 3px 0fr";
+  const modalColumnSizeWithDetail: string = "3fr 3px 1fr";
+  let modalColumnSize: string = modalColumnSizeNoDetail;
   let columnDefs = baseColumnDefs;
+  let dataGrid: DataGrid<DerivationGroup> | undefined = undefined;
 
-  let dataGrid: DataGrid<DerivationGroupMetadata> | undefined = undefined;
   let filterText: string = '';
-  let filteredDerivationGroups: DerivationGroupMetadata[] = [];
-  // TODO
-  //let hasCreatePermission: boolean = false;
-  //let hasEditSpecPermission: boolean = false;
-  let selectedDerivationGroups: Record<string, boolean> = {};
+  let filteredDerivationGroups: DerivationGroup[] = [];
+
+  let selectedDerivationGroup: DerivationGroup | undefined = undefined;
+  let selectedDerivationGroupSources: ExternalSourceWithResolvedNames[] = [];
+  $: if(selectedDerivationGroup !== undefined) { modalColumnSize = modalColumnSizeWithDetail; console.log(modalColumnSize); };
+  $: selectedDerivationGroupSources = $externalSourceWithResolvedNames.filter(source => selectedDerivationGroup?.name === source.derivation_group);
 
   $: filteredDerivationGroups = $derivationGroups.filter(derivationGroup => {
     const filterTextLowerCase = filterText.toLowerCase();
@@ -102,29 +120,6 @@
     const includesName = derivationGroup.name.toLocaleLowerCase().includes(filterTextLowerCase);
     return includesId || includesName;
   });
-  // TODO
-  // $: selectedDerivationGroups = $allowedConstraintSpecs.reduce(
-  //   (prevBooleanMap: Record<string, boolean>, constraintPlanSpec: ConstraintPlanSpec) => {
-  //     return {
-  //       ...prevBooleanMap,
-  //       [constraintPlanSpec.constraint_id]: true,
-  //     };
-  //   },
-  //   {},
-  // );
-  /** TODO
-  $: hasCreatePermission = featurePermissions.derivationGroup.canCreate(user);
-  $: hasEditSpecPermission = $plan ? featurePermissions.constraintsPlanSpec.canUpdate(user, $plan) : false;
-  */
-
-
-  // <input
-  //       type="checkbox"
-  //       bind:checked={enabled}
-  //       style:cursor="pointer"
-  //       on:change={onEnable}
-  //       on:click|stopPropagation
-  //     />
 
   $: {
     columnDefs = [
@@ -160,149 +155,103 @@
       }
     ];
   }
-  // TODO
-  // $: if (selectedDerivationGroups) {
-  //   dataGrid?.redrawRows();
-  // }
 
   function viewDerivationGroup({ id }: Pick<DerivationGroupMetadata, 'id'>) {
     const derivationGroup = $derivationGroups.find(dg => dg.id === id);
-    console.log(derivationGroup);
-    /** TODO
-    window.open(
-      `${base}/constraints/edit/${derivation?.id}?${SearchParameters.REVISION}=${constraint?.versions[0].revision}&${SearchParameters.MODEL_ID}=${$plan?.model.id}`,
-    );
-    **/
+    selectedDerivationGroup = derivationGroup;
   }
-
-  // function onToggleConstraint(event: CustomEvent<CellEditingStoppedEvent<DerivationGroupMetadata, boolean>>) {
-  //   const {
-  //     detail: { data, newValue },
-  //   } = event;
-
-  //   if (data) {
-  //     selectedDerivationGroups = {
-  //       ...selectedDerivationGroups,
-  //       [data.id]: newValue,
-  //     };
-  //   }
-  // }
-
-  // async function onUpdateConstraints(selectedDerivationGroups: Record<number, boolean>) {
-  //   if ($plan) {
-  //     const constraintPlanSpecUpdates: {
-  //       constraintPlanSpecIdsToDelete: number[];
-  //       constraintPlanSpecsToAdd: ConstraintPlanSpecInsertInput[];
-  //     } = Object.keys(selectedDerivationGroups).reduce(
-  //       (
-  //         prevConstraintPlanSpecUpdates: {
-  //           constraintPlanSpecIdsToDelete: number[];
-  //           constraintPlanSpecsToAdd: ConstraintPlanSpecInsertInput[];
-  //         },
-  //         selectedConstraintId: string,
-  //       ) => {
-  //         const constraintId = parseInt(selectedConstraintId);
-  //         const isSelected = selectedDerivationGroups[constraintId];
-  //         const constraintPlanSpec = $allowedConstraintPlanSpecMap[constraintId];
-
-  //         if (isSelected) {
-  //           if (!constraintPlanSpec || constraintPlanSpec.constraint_metadata?.owner === user?.id) {
-  //             return {
-  //               ...prevConstraintPlanSpecUpdates,
-  //               constraintPlanSpecsToAdd: [
-  //                 ...prevConstraintPlanSpecUpdates.constraintPlanSpecsToAdd,
-  //                 {
-  //                   constraint_id: constraintId,
-  //                   constraint_revision: null,
-  //                   enabled: true,
-  //                   plan_id: $planId,
-  //                 } as ConstraintPlanSpecInsertInput,
-  //               ],
-  //             };
-  //           }
-  //           return prevConstraintPlanSpecUpdates;
-  //         } else {
-  //           return {
-  //             ...prevConstraintPlanSpecUpdates,
-  //             constraintPlanSpecIdsToDelete: [
-  //               ...prevConstraintPlanSpecUpdates.constraintPlanSpecIdsToDelete,
-  //               constraintId,
-  //             ],
-  //           };
-  //         }
-  //       },
-  //       {
-  //         constraintPlanSpecIdsToDelete: [],
-  //         constraintPlanSpecsToAdd: [],
-  //       },
-  //     );
-
-  //     await effects.updateConstraintPlanSpecifications(
-  //       $plan,
-  //       constraintPlanSpecUpdates.constraintPlanSpecsToAdd,
-  //       constraintPlanSpecUpdates.constraintPlanSpecIdsToDelete,
-  //       user,
-  //     );
-  //     dispatch('close');
-  //   }
-  // }
 </script>
 
-<Modal height={500} width={750}>
+<Modal height={600} width={1000}>
   <ModalHeader on:close>Manage Derivation Groups</ModalHeader>
-  <ModalContent style="padding:0">
-    <div class="derivationgroups-modal-container">
-      <div class="derivationgroups-modal-filter-container">
-        <div class="derivationgroups-modal-title">Derivation Groups</div>
-        <Input>
-          <input bind:value={filterText} class="st-input" placeholder="Filter derivation groups" style="width: 100%;" />
-        </Input>
-        <!-- TODO
-         use:permissionHandler={{
-          hasPermission: hasCreatePermission,
-          permissionError,
-        }} -->
-        <!-- TODO on:click={() => window.open(`${base}/constraints/new?${SearchParameters.MODEL_ID}=${$plan?.model_id}`)} -->
-        <button
-          class="st-button secondary ellipsis"
-          name="new-constraint"
-        >
-          Upload
-        </button>
+  <ModalContent style=" overflow-y:scroll; padding:0;">
+    <CssGrid columns={modalColumnSize} minHeight="100%">
+      <div class="derivationgroups-modal-container" style="height:100%">
+        <div class="derivationgroups-modal-filter-container">
+          <div class="derivationgroups-modal-title">Derivation Groups</div>
+          <Input>
+            <input bind:value={filterText} class="st-input" placeholder="Filter derivation groups" style="width: 100%;" />
+          </Input>
+          <button
+            class="st-button secondary ellipsis"
+            name="new-external-source"
+            on:click={() => window.open(`${base}/external-sources`)}
+          >
+            Upload
+          </button>
+        </div>
+        <hr />
+        <div class="constraiderivationgroups-modal-table-container" style="height:100%">
+          {#if filteredDerivationGroups.length}
+            <DataGrid
+              bind:this={dataGrid}
+              {columnDefs}
+              rowData={filteredDerivationGroups}
+            />
+          {:else}
+            <div class="p1 st-typography-label">No Derivation Groups Found</div>
+          {/if}
+        </div>
       </div>
-      <hr />
+      {#if selectedDerivationGroup !== undefined}
+        <CssGridGutter track={1} type="column" />
+        <Panel borderRight padBody={false} overflowYBody="scroll">
+          <svelte:fragment slot=header>
+            <SectionTitle>
+              <Truck />Sources in '{selectedDerivationGroup.name}'
+            </SectionTitle>
+          </svelte:fragment>
+          <svelte:fragment slot="body">
+            {#if selectedDerivationGroupSources.length > 0}
+              {#each selectedDerivationGroupSources as source}
+                <!-- Collapsible details -->
+                <Collapse title={source.key} tooltipContent={source.key} defaultExpanded={false}>
+                  <span slot="right">
+                    <p style:color="gray">
+                      {selectedDerivationGroup.sources.get(source.key)?.event_counts} events
+                    </p>
+                  </span>
+                  <p>
+                    <strong>Key:</strong>
+                    {source.key}
+                  </p>
 
-      <!-- TODO
-       on:cellEditingStopped={onToggleConstraint} -->
-      <div class="constraiderivationgroups-modal-table-container">
-        {#if filteredDerivationGroups.length}
-          <DataGrid
-            bind:this={dataGrid}
-            {columnDefs}
-            rowData={filteredDerivationGroups}
-          />
-        {:else}
-          <div class="p1 st-typography-label">No Derivation Groups Found</div>
-        {/if}
-      </div>
-    </div>
+                  <p>
+                    <strong>Source Type:</strong>
+                    {source.source_type}
+                  </p>
+
+                  <p>
+                    <strong>Start Time:</strong>
+                    {source.start_time}
+                  </p>
+
+                  <p>
+                    <strong>End Time:</strong>
+                    {source.end_time}
+                  </p>
+
+                  <p>
+                    <strong>Valid At:</strong>
+                    {source.valid_at}
+                  </p>
+
+                  <p>
+                    <strong>Created At:</strong>
+                    {source.created_at}
+                  </p>
+                </Collapse>
+              {/each}
+            {:else}
+              <p>No sources in this group.</p>
+            {/if}
+          </svelte:fragment>
+        </Panel>
+      {/if}
+    </CssGrid>
   </ModalContent>
   <ModalFooter>
     <button class="st-button secondary" on:click={() => dispatch('close')}> Cancel </button>
-
-    <!-- TODO
-    use:permissionHandler={{
-      hasPermission: hasEditSpecPermission && !$planReadOnly,
-      permissionError: $planReadOnly
-        ? PlanStatusMessages.READ_ONLY
-        : 'You do not have permission to update the constraints on this plan.',
-    }} -->
-    <!-- <button
-      class="st-button"
-      on:click={() => onUpdateConstraints(selectedDerivationGroups)}
-    >
-      Update
-    </button> -->
   </ModalFooter>
 </Modal>
 
