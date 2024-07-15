@@ -29,7 +29,7 @@
   import type { User } from '../../types/app';
   import type { Parcel } from '../../types/sequencing';
   import { setupLanguageSupport } from '../../utilities/codemirror';
-  import { setupVmlLanguageSupport } from '../../utilities/codemirror/vml';
+  import { setupVmlLanguageSupport, vmlLinter } from '../../utilities/codemirror/vml';
   import effects from '../../utilities/effects';
   import { seqJsonLinter } from '../../utilities/new-sequence-editor/seq-json-linter';
   import { sequenceCompletion } from '../../utilities/new-sequence-editor/sequence-completion';

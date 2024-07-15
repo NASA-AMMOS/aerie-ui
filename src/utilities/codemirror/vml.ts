@@ -1,7 +1,9 @@
 import { CompletionContext, type CompletionResult } from '@codemirror/autocomplete';
-import { LRLanguage, LanguageSupport } from '@codemirror/language';
+import { LRLanguage, LanguageSupport, foldInside, foldNodeProp } from '@codemirror/language';
 import { linter } from '@codemirror/lint';
 import type { Extension } from '@codemirror/state';
+import { EditorState } from '@codemirror/state';
+import type { SyntaxNode } from '@lezer/common';
 import { styleTags, tags as t } from '@lezer/highlight';
 import { parser } from './vml.grammar';
 
@@ -10,19 +12,36 @@ export const TOKEN_ERROR = '⚠';
 export const TOKEN_WAIT = 'WAIT';
 export const TOKEN_WAIT_CHANGE = 'WAIT_CHANGE';
 
+const FoldBehavior: {
+  [tokenName: string]: (node: SyntaxNode, _state: EditorState) => ReturnType<typeof foldInside>;
+} = {
+  Block: foldInside,
+  Body: foldInside,
+  Common_Function: foldInside,
+  For_statement: function (node: SyntaxNode, _state: EditorState) {
+    if (node?.name === 'For_Statement') {
+      const cursor = node.cursor();
+      do {
+        const { node: closeNode } = cursor;
+        if (closeNode.type.name === 'End_for') {
+          return {
+            from: node.from,
+            to: closeNode.to,
+          };
+        }
+      } while (cursor.next());
+    }
+    return null;
+  },
+};
+
 export const VmlLanguage = LRLanguage.define({
   languageData: {
     commentTokens: { line: ';' },
   },
   parser: parser.configure({
     props: [
-      // indentNodeProp.add({
-      //   Application: delimitedIndent({ align: false, closing: ')' }),
-      // }),
-      // foldNodeProp.add({
-      //   Application: foldInside,
-      //   Command: customFoldInside,
-      // }),
+      foldNodeProp.add(FoldBehavior),
       styleTags({
         ADD: t.arithmeticOperator,
         ASSIGNMENT: t.updateOperator,
@@ -33,19 +52,19 @@ export const VmlLanguage = LRLanguage.define({
         DECLARE: t.keyword,
         DELAY_BY: t.keyword,
         DIVIDE: t.arithmeticOperator,
-        DO: t.keyword,
+        DO: t.controlKeyword,
         DOUBLE_CONST: t.number,
-        ELSE: t.keyword,
-        ELSE_IF: t.keyword,
+        ELSE: t.controlKeyword,
+        ELSE_IF: t.controlKeyword,
         END_BODY: t.namespace,
-        END_FOR: t.keyword,
-        END_IF: t.keyword,
+        END_FOR: t.controlKeyword,
+        END_IF: t.controlKeyword,
         END_MODULE: t.namespace,
-        END_WHILE: t.keyword,
-        FOR: t.keyword,
+        END_WHILE: t.controlKeyword,
+        FOR: t.controlKeyword,
         FULL_TIME_CONST: t.className,
         HEX_CONST: t.number,
-        IF: t.keyword,
+        IF: t.controlKeyword,
         INPUT: t.keyword,
         INT_CONST: t.number,
         MODULE: t.namespace,
@@ -55,13 +74,15 @@ export const VmlLanguage = LRLanguage.define({
         RETURN: t.keyword,
         SHORT_TIME_CONST: t.className,
         SPACECRAFT_TIME_CONST: t.className,
+        STEP: t.controlKeyword,
         STRING_CONST: t.string,
         SUBTRACT: t.arithmeticOperator,
-        THEN: t.keyword,
+        THEN: t.controlKeyword,
         TIMEOUT: t.keyword,
         UINT_CONST: t.number,
+        Variable_name: t.variableName,
         WAIT: t.keyword,
-        WHILE: t.keyword,
+        WHILE: t.controlKeyword,
       }),
     ],
   }),

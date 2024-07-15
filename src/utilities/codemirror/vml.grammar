@@ -116,7 +116,7 @@ Statement {
     | Assignment
     | Simple_call
     | External_call
-    | For
+    | For_statement
     | End_for
     | Label
     | Flow
@@ -168,7 +168,7 @@ Parameter {
   Input_parameter {
     INPUT
     Data_kind?
-    Variable_name ~ambigVariableName
+    Variable_name
     Optional_default_input_value?
     Optional_value_list?
     End_lines
@@ -176,7 +176,7 @@ Parameter {
   | Input_output_parameter {
     INPUT_OUTPUT
     Data_kind?
-    Variable_name ~ambigVariableName
+    Variable_name
     Optional_default_input_value?
     Optional_value_list?
     End_lines
@@ -218,11 +218,11 @@ Variable_declarations_with_optional_tlm_ids {
     EXTERNAL?
     READ_ONLY?
     Variable_declaration_type
-    // (TLM_ID Tlm_id_const {
-    //   INT_CONST
-    //   | UINT_CONST
-    //   // TODO defined symbol
-    // })?
+    (TLM_ID Tlm_id_const {
+      INT_CONST
+      | UINT_CONST
+      | DEFINED_SYMBOL_CONST
+    })?
     End_lines
   }+
 }
@@ -230,7 +230,7 @@ Variable_declarations_with_optional_tlm_ids {
 Variable_declaration_type {
   Variable_name_constant {
     Data_kind
-    Variable_name ~ambigVariableName
+    Variable_name
     ASSIGNMENT
     Constant
   }
@@ -336,7 +336,6 @@ Call_parameters {
 Call_parameter {
   Simple_expr
 }
-
 
 Simple_call {
   CALL
@@ -577,7 +576,7 @@ End_while {
   END_WHILE
 }
 
-For {
+For_statement {
   FOR
   For_assignment
   For_bound
