@@ -3,6 +3,7 @@
 <script lang="ts">
   import { select } from 'd3-selection';
   import { groupBy } from 'lodash-es';
+  import { onMount } from 'svelte';
   import DirectiveIcon from '../../assets/timeline-directive.svg?raw';
   import SpanIcon from '../../assets/timeline-span.svg?raw';
   import { plugins } from '../../stores/plugins';
@@ -10,6 +11,7 @@
   import type { ConstraintResultWithName } from '../../types/constraint';
   import type { ResourceType, Span } from '../../types/simulation';
   import type { LineLayer, LinePoint, MouseOver, Point, Row, XRangePoint } from '../../types/timeline';
+  import { addPageFocusListener } from '../../utilities/generic';
   import { filterResourcesByLayer } from '../../utilities/timeline';
 
   export let interpolateHoverValue: boolean = false;
@@ -22,14 +24,47 @@
   let points: Point[] = [];
   let gaps: Point[] = [];
   let spans: Span[] = [];
+  let showAdditionalTimes: boolean = false;
   let row: Row | null = null;
   let visible: boolean = false;
 
-  $: if (mouseOver) {
+  $: if (mouseOver && typeof showAdditionalTimes === 'boolean') {
     onMouseOver(mouseOver);
   }
 
   $: primaryTimeLabel = $plugins.time.primary.label;
+
+  onMount(() => {
+    document.addEventListener('keydown', onKeydown);
+    document.addEventListener('keyup', onKeyup);
+
+    // Add page focus listener to handle command + tab events that
+    // can cause the mode change to be stuck in Navigation mode on Macs.
+    const removeDocumentFocusListener = addPageFocusListener(e => {
+      if (e === 'out') {
+        showAdditionalTimes = false;
+      }
+    });
+
+    return () => {
+      document.removeEventListener('keydown', onKeydown);
+      document.removeEventListener('keyup', onKeyup);
+      removeDocumentFocusListener();
+    };
+  });
+
+  function onKeydown(e: KeyboardEvent) {
+    // If user holds meta/control while not focused on an input then activate navigation mode
+    if (e.key === 'Shift') {
+      showAdditionalTimes = true;
+    }
+  }
+
+  function onKeyup(e: KeyboardEvent) {
+    if (e.key === 'Shift') {
+      showAdditionalTimes = false;
+    }
+  }
 
   function onMouseOver(event: MouseOver | undefined) {
     if (event && !hidden) {
@@ -254,6 +289,21 @@
           <span>Start Time (${primaryTimeLabel}):</span>
           <span class='tooltip-value-highlight st-typography-medium'>${directiveStartTime}</span>
         </div>
+        ${
+          showAdditionalTimes
+            ? $plugins.time.additional
+                .map(
+                  f =>
+                    `<div class='tooltip-row'>
+                      <span>Start Time (${f.label}):</span>
+                      <span class='tooltip-value-highlight st-typography-medium'>
+                        ${typeof start_time_ms === 'number' ? f.format(new Date(start_time_ms)) : 'Unknown'}
+                      </span>
+                  </div>`,
+                )
+                .join('')
+            : ''
+        }
         <div class='tooltip-row'>
           <span>Id:</span>
           <span class='tooltip-value-highlight st-typography-medium'>${id}</span>
@@ -314,6 +364,21 @@
             ${pointTime}
           </span>
         </div>
+        ${
+          showAdditionalTimes
+            ? $plugins.time.additional
+                .map(
+                  f =>
+                    `<div class='tooltip-row'>
+                      <span>Time (${f.label}):</span>
+                      <span class='tooltip-value-highlight st-typography-medium'>
+                        ${f.format(new Date(x))}
+                      </span>
+                  </div>`,
+                )
+                .join('')
+            : ''
+        }
         <div class='tooltip-row'>
           <span>${interpolateHoverValue ? 'Interpolated' : 'Nearest'} Value:</span>
           <span class='tooltip-value-highlight st-typography-medium'>
@@ -339,10 +404,40 @@
           <span>Start Time (${primaryTimeLabel}):</span>
           <span class='tooltip-value-highlight st-typography-medium'>${spanStartTime}</span>
         </div>
+        ${
+          showAdditionalTimes
+            ? $plugins.time.additional
+                .map(
+                  f =>
+                    `<div class='tooltip-row'>
+                      <span>Start Time (${f.label}):</span>
+                      <span class='tooltip-value-highlight st-typography-medium'>
+                        ${f.format(new Date(startMs))}
+                      </span>
+                  </div>`,
+                )
+                .join('')
+            : ''
+        }
         <div class='tooltip-row'>
           <span>End Time (${primaryTimeLabel}):</span>
           <span class='tooltip-value-highlight st-typography-medium'>${spanEndTime}</span>
         </div>
+        ${
+          showAdditionalTimes
+            ? $plugins.time.additional
+                .map(
+                  f =>
+                    `<div class='tooltip-row'>
+                      <span>End Time (${f.label}):</span>
+                      <span class='tooltip-value-highlight st-typography-medium'>
+                        ${f.format(new Date(endMs))}
+                      </span>
+                  </div>`,
+                )
+                .join('')
+            : ''
+        }
         <div class='tooltip-row'>
           <span>Duration:</span>
           <span class='tooltip-value-highlight st-typography-medium'>${duration}</span>
@@ -382,6 +477,21 @@
             ${pointTime}
           </span>
         </div>
+        ${
+          showAdditionalTimes
+            ? $plugins.time.additional
+                .map(
+                  f =>
+                    `<div class='tooltip-row'>
+                      <span>Start Time (${f.label}):</span>
+                      <span class='tooltip-value-highlight st-typography-medium'>
+                        ${f.format(new Date(x))}
+                      </span>
+                  </div>`,
+                )
+                .join('')
+            : ''
+        }
         <div class='tooltip-row'>
           <span>Value:</span>
           <span class='tooltip-value-highlight st-typography-medium'>
