@@ -5,6 +5,7 @@
   import type { User } from '../../types/app';
   import type { DerivationGroup } from '../../types/external-source';
   import type { ViewGridSection } from '../../types/view';
+  import effects from '../../utilities/effects';
   import Collapse from '../Collapse.svelte';
   import CollapsibleListControls from '../CollapsibleListControls.svelte';
   import GridMenu from '../menus/GridMenu.svelte';
@@ -36,6 +37,10 @@
       }
     }
   })
+
+  function onManageDerivationGroups() {
+    effects.managePlanDerivationGroups(user);
+  }
 </script>
 
 <Panel>
@@ -47,7 +52,20 @@
     <CollapsibleListControls
       placeholder="Filter External Sources"
       on:input={event => (filterText = event.detail.value)}
-    />
+    >
+
+      <svelte:fragment slot="right">
+        <!-- TODO: Attach permissionHandler to button -->
+        <button
+          name="manage-derivation-groups"
+          class="st-button secondary"
+          on:click|stopPropagation={onManageDerivationGroups}
+        >
+          Manage Derivation Groups
+        </button>
+      </svelte:fragment>
+
+    </CollapsibleListControls>
 
     <AlertError class="m-2" error={$derivationGroupPlanLinkError} />
 
@@ -73,3 +91,8 @@
     {/if}
   </svelte:fragment>
 </Panel>
+<style>
+  .st-button {
+    white-space: nowrap;
+  }
+</style>
