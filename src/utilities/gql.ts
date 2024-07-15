@@ -484,6 +484,7 @@ const gql = {
     mutation CreateExternalSourceType($sourceType: external_source_type_insert_input!) {
       createExternalSourceType: insert_external_source_type_one(object: $sourceType) {
         id
+        name
       }
     }
   `,
