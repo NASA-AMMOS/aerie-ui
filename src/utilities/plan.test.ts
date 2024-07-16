@@ -89,6 +89,9 @@ describe('Plan utility', () => {
               type: 'TestActivity',
             },
           ],
+          {
+            test: 1,
+          },
         ),
       ).toEqual({
         activities: [
@@ -105,16 +108,18 @@ describe('Plan utility', () => {
             type: 'TestActivity',
           },
         ],
-        end_time: '2025-01-01T00:00:00+00:00',
+        duration: '1y',
         id: 1,
         model_id: 1,
         name: 'Foo plan',
-        sim_id: 3,
+        simulation_arguments: {
+          test: 1,
+        },
         start_time: '2024-01-01T00:00:00+00:00',
         tags: [
           {
             tag: {
-              id: 0,
+              color: '#fff',
               name: 'test tag',
             },
           },

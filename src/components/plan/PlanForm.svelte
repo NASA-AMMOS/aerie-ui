@@ -14,8 +14,10 @@
   import { viewTogglePanel } from '../../stores/views';
   import type { ActivityDirective, ActivityDirectiveId } from '../../types/activity';
   import type { User, UserId } from '../../types/app';
+  import type { ArgumentsMap } from '../../types/parameter';
   import type { Plan, PlanCollaborator, PlanSlimmer, PlanTransfer } from '../../types/plan';
   import type { PlanSnapshot as PlanSnapshotType } from '../../types/plan-snapshot';
+  import type { Simulation } from '../../types/simulation';
   import type { PlanTagsInsertInput, Tag, TagsChangeEvent } from '../../types/tags';
   import effects from '../../utilities/effects';
   import { removeQueryParam, setQueryParam } from '../../utilities/generic';
@@ -166,6 +168,15 @@
       let totalProgress = 0;
       const numOfDirectives = Object.values(activityDirectivesMap).length;
 
+      const simulation: Simulation | null = await effects.getPlanLatestSimulation(plan.id, user);
+
+      const simulationArguments: ArgumentsMap = simulation
+        ? {
+            ...simulation.template?.arguments,
+            ...simulation.arguments,
+          }
+        : {};
+
       qualifiedActivityDirectives = await Promise.all(
         Object.values(activityDirectivesMap).map(async activityDirective => {
           if (plan) {
@@ -194,7 +205,7 @@
       );
 
       if (planExportAbortController && !planExportAbortController.signal.aborted) {
-        const planExport: PlanTransfer = getPlanForTransfer(plan, qualifiedActivityDirectives);
+        const planExport: PlanTransfer = getPlanForTransfer(plan, qualifiedActivityDirectives, simulationArguments);
 
         const a = document.createElement('a');
         a.href = URL.createObjectURL(new Blob([JSON.stringify(planExport, null, 2)], { type: 'application/json' }));
@@ -226,7 +237,6 @@
         <svelte:fragment slot="right">
           <button
             class="st-button icon export"
-            style={'visibility:hidden;'}
             on:click|stopPropagation={onPlanExport}
             use:tooltip={{ content: planExportProgress === null ? 'Export Plan JSON' : 'Cancel Plan Export' }}
           >

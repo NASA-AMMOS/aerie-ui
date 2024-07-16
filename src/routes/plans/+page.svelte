@@ -35,7 +35,7 @@
   import type { User } from '../../types/app';
   import type { DataGridColumnDef, RowId } from '../../types/data-grid';
   import type { ModelSlim } from '../../types/model';
-  import type { Plan, PlanSlim, PlanTransfer } from '../../types/plan';
+  import type { DeprecatedPlanTransfer, Plan, PlanSlim, PlanTransfer } from '../../types/plan';
   import type { PlanTagsInsertInput, Tag, TagsChangeEvent } from '../../types/tags';
   import { generateRandomPastelColor } from '../../utilities/color';
   import effects from '../../utilities/effects';
@@ -223,6 +223,7 @@
     ),
   ]);
   let planUploadFiles: FileList | undefined;
+  let fileInput: HTMLInputElement;
   let simTemplateField = field<number | null>(null);
 
   $: startTimeField = field<string>('', [required, $plugins.time.primary.validate]);
@@ -330,16 +331,20 @@
     let endTime = getDoyTime(endTimeDate);
     if (planUploadFiles && planUploadFiles.length) {
       await effects.importPlan(
-        {
-          end_time: endTime,
-          model_id: $modelIdField.value,
-          name: $nameField.value,
-          start_time: startTime,
-          tags: planTags.map(({ id, name }) => ({ tag: { id, name } })),
-        },
+        $nameField.value,
+        $modelIdField.value,
+        startTime,
+        endTime,
+        $simTemplateField.value,
+        planTags.map(({ id }) => id),
         planUploadFiles,
         user,
       );
+      fileInput.value = '';
+      planUploadFiles = undefined;
+      $startTimeField.value = '';
+      $endTimeField.value = '';
+      $nameField.value = '';
     } else {
       const newPlan: PlanSlim | null = await effects.createPlan(
         endTime,
@@ -360,6 +365,9 @@
           plans.updateValue(storePlans => [...storePlans, newPlan]);
         }
         await effects.createPlanTags(newPlanTags, newPlan, user);
+        $startTimeField.value = '';
+        $endTimeField.value = '';
+        $nameField.value = '';
       }
     }
   }
@@ -436,14 +444,16 @@
   }
   async function onReaderLoad(event: ProgressEvent<FileReader>) {
     if (event.target !== null && event.target.result !== null) {
-      const planJSON: PlanTransfer = JSON.parse(`${event.target.result}`) as PlanTransfer;
+      const planJSON: PlanTransfer | DeprecatedPlanTransfer = JSON.parse(`${event.target.result}`) as
+        | PlanTransfer
+        | DeprecatedPlanTransfer;
       nameField.validateAndSet(planJSON.name);
       const importedPlanTags = planJSON.tags.reduce(
-        (previousTags: { existingTags: Tag[]; newTagNames: string[] }, importedPlanTag) => {
+        (previousTags: { existingTags: Tag[]; newTags: Pick<Tag, 'color' | 'name'>[] }, importedPlanTag) => {
           const {
-            tag: { id: importedPlanTagId, name: importedPlanTagName },
+            tag: { color: importedPlanTagColor, name: importedPlanTagName },
           } = importedPlanTag;
-          const existingTag = $tags.find(({ id }) => importedPlanTagId === id);
+          const existingTag = $tags.find(({ name }) => importedPlanTagName === name);
 
           if (existingTag) {
             return {
@@ -453,28 +463,37 @@
           } else {
             return {
               ...previousTags,
-              newTagNames: [...previousTags.newTagNames, importedPlanTagName],
+              newTags: [
+                ...previousTags.newTags,
+                {
+                  color: importedPlanTagColor,
+                  name: importedPlanTagName,
+                },
+              ],
             };
           }
         },
         {
           existingTags: [],
-          newTagNames: [],
+          newTags: [],
         },
       );
 
       const newTags: Tag[] = flatten(
         await Promise.all(
-          importedPlanTags.newTagNames.map(async tagName => {
-            return (await effects.createTags([{ color: generateRandomPastelColor(), name: tagName }], user)) || [];
+          importedPlanTags.newTags.map(async ({ color: tagColor, name: tagName }) => {
+            return (
+              (await effects.createTags([{ color: tagColor ?? generateRandomPastelColor(), name: tagName }], user)) ||
+              []
+            );
           }),
         ),
       );
 
       planTags = [...importedPlanTags.existingTags, ...newTags];
 
-      await startTimeField.validateAndSet(getDoyTime(new Date(planJSON.start_time)));
-      await endTimeField.validateAndSet(getDoyTime(new Date(planJSON.end_time)));
+      await startTimeField.validateAndSet(getDoyTime(new Date(planJSON.start_time), true));
+      await endTimeField.validateAndSet(getDoyTime(new Date(planJSON.end_time), true));
       updateDurationString();
     }
   }
@@ -511,9 +530,9 @@
             <input
               class="w-100"
               name="file"
-              required
               type="file"
               bind:files={planUploadFiles}
+              bind:this={fileInput}
               use:permissionHandler={{
                 hasPermission: canCreate,
                 permissionError,
