@@ -17,7 +17,7 @@
 
   let selectedSourceEventTypes: ExternalEventType[] | null = null;
   let relevantSources: ExternalSourceWithResolvedNames[] = [];
-  $: relevantSources = $externalSourceWithResolvedNames.filter(source => derivationGroup.name === source.derivation_group);
+  $: relevantSources = $externalSourceWithResolvedNames.filter(source => derivationGroup.id === source.derivation_group_id);
 
   function onEnable(_event: Event) {
     if (enabled) {
@@ -44,6 +44,15 @@
         user,
       );
     }
+  }
+
+  async function deleteEmptyDerivationGroup() {
+    if (enabled) {
+      // delete plan derivation group association
+      await effects.deleteDerivationGroupForPlan(derivationGroup.id, $plan, user);
+    }
+    // delete the derivation group itself
+    await effects.deleteDerivationGroup(derivationGroup.id, user);
   }
 </script>
 
@@ -120,7 +129,15 @@
         {/each}
       </Collapse>
     {:else}
+      <!--This should be impossible, as the derivation group should have been deleted by this point. Just in case... we offer a delete button here.-->
       <p>No sources in this group.</p>
+      <button
+          name="delete-dg"
+          class="st-button secondary"
+          on:click|stopPropagation={deleteEmptyDerivationGroup}
+        >
+          Delete Empty Derivation Group
+        </button>
     {/if}
   </Collapse>
 </div>
