@@ -78,6 +78,8 @@ export type DerivationGroup = {
   name: string;
   source_type_id: number;
   sources: Map<string, { event_counts: number }>;
+  totalEventCount: number;
+  derivedEventIds: number[]
 };
 
 // Metadata types used for management modal
