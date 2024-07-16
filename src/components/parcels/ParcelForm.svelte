@@ -210,6 +210,7 @@
       savedParcelChannelDictionaryId = parcelChannelDictionaryId;
       savedParcelCommandDictionaryId = parcelCommandDictionaryId;
       savedSequenceAdaptationId = parcelSequenceAdaptationId;
+      savedParcelName = parcelName;
 
       savingParcel = false;
     }
