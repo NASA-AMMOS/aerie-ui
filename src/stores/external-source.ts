@@ -49,24 +49,11 @@ export const derivationGroupsRaw = gqlSubscribable<
     id: number;
     name: string;
     source_type_id: number;
-    external_source: [
-      {
-        key: string;
-        external_events_aggregate: {
-          aggregate: {
-            count: number;
-          };
-        };
-      },
-    ];
+    sources: string[];
+    event_types: string[];
+    derived_total: number
   }[]
 >(gql.SUB_DERIVATION_GROUPS, {}, [], null);
-export const derivationGroupsEventIds = gqlSubscribable<
-  {
-    derivation_group_id: number
-    event_id: number
-  }[]
->(gql.SUB_DERIVATION_GROUPS_EVENT_IDS, {}, [], null)
 
 
 // use to keep track of associations between plans and goals
@@ -87,26 +74,19 @@ export const externalSourceEventTypes = gqlSubscribable<ExternalSourceEventType[
 
 /* Derived. */
 // cleans up derivationGroupsRaw
-export const derivationGroups = derived<[typeof derivationGroupsRaw, typeof derivationGroupsEventIds], DerivationGroup[]>(
-  [derivationGroupsRaw, derivationGroupsEventIds],
-  ([$derivationGroupsRaw, $derivationGroupsEventIds]) =>
+export const derivationGroups = derived<[typeof derivationGroupsRaw], DerivationGroup[]>(
+  [derivationGroupsRaw],
+  ([$derivationGroupsRaw]) => 
     $derivationGroupsRaw.map(raw => ({
       id: raw.id,
       name: raw.name,
       source_type_id: raw.source_type_id,
       sources: new Map(
-        raw.external_source.map(source => [
-          source.key,
-          { event_counts: source.external_events_aggregate.aggregate.count },
-        ]),
+        // comes from view schema that is hardcoded as "{dg_id}, {source_key}, {source_id}""
+        raw.sources.map(s => [s.split(", ")[1], { event_counts: parseInt(s.split(", ")[2]) }])
       ),
-      totalEventCount: raw.external_source.reduce(
-        (sum, currentSource) => sum + currentSource.external_events_aggregate.aggregate.count,
-        0,
-      ),
-      derivedEventIds: $derivationGroupsEventIds
-                          .filter(e => e.derivation_group_id === raw.id)
-                          .map(e => e.event_id)
+      event_types: raw.event_types,
+      derivedEventTotal: raw.derived_total
     })),
 );
 

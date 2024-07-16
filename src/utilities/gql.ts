@@ -92,6 +92,7 @@ export enum Queries {
   EXTERNAL_SOURCES = 'external_source',
   EXTERNAL_SOURCE_TYPES = 'external_source_type',
   DERIVATION_GROUP = 'derivation_group',
+  DERIVATION_GROUP_COMP = 'derivation_group_comp',
   PLAN_DERIVATION_GROUP = 'plan_derivation_group',
   GET_ACTIVITY_EFFECTIVE_ARGUMENTS = 'getActivityEffectiveArguments',
   GET_ACTIVITY_TYPE_SCRIPT = 'getActivityTypeScript',
@@ -2500,27 +2501,13 @@ const gql = {
 
   SUB_DERIVATION_GROUPS: `#graphql
     subscription SubDerivationGroups {
-      models: ${Queries.DERIVATION_GROUP}(order_by: { id: asc }) {
+      models: ${Queries.DERIVATION_GROUP_COMP}(order_by: {id: asc}) {
         id
         name
         source_type_id
-        external_source {
-          key
-          external_events_aggregate {
-            aggregate {
-              count
-            }
-          }
-        }
-      }
-    }
-  `,
-
-  SUB_DERIVATION_GROUPS_EVENT_IDS: `#graphql
-    subscription SubDerivationGroups {
-      event_ids: derived_events {
-        derivation_group_id
-        event_id
+        sources
+        event_types
+        derived_total
       }
     }
   `,

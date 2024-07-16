@@ -30,8 +30,8 @@
   } from '../../../constants/view';
   import { ViewConstants } from '../../../enums/view';
   import { externalEventTypes, getEventTypeName } from '../../../stores/external-event';
-  import { selectedPlanExternalSourceEventTypes } from '../../../stores/external-source';
-  import { activityTypes, maxTimeRange, viewTimeRange } from '../../../stores/plan';
+  import { planDerivationGroupLinks, selectedPlanExternalSourceEventTypes } from '../../../stores/external-source';
+  import { activityTypes, maxTimeRange, plan, viewTimeRange } from '../../../stores/plan';
   import { plugins } from '../../../stores/plugins';
   import { externalResourceNames, resourceTypes, yAxesWithScaleDomainsCache } from '../../../stores/simulation';
   import {
@@ -45,6 +45,7 @@
     viewUpdateTimeline,
   } from '../../../stores/views';
   import type { ActivityType } from '../../../types/activity';
+  import type { ExternalEventType } from '../../../types/external-event';
   import type { RadioButtonId } from '../../../types/radio-buttons';
   import type {
     ActivityLayer,
@@ -126,6 +127,8 @@
   }
   $: activityOptions = selectedRow?.activityOptions || { ...ViewDefaultActivityOptions };
   $: externalEventOptions = selectedRow?.externalEventOptions || { ...ViewDefaultExternalEventOptions };
+
+  $: linkedDerivationGroupIds = $planDerivationGroupLinks.filter(link => link.plan_id === $plan?.id).map(link => link.derivation_group_id);
   $: validEventTypes = $selectedPlanExternalSourceEventTypes.map(id => getEventTypeName(id, $externalEventTypes)) as string[]
 
   function updateRowEvent(event: Event) {
@@ -516,11 +519,16 @@
     return [];
   }
 
-  function getFilterOptionsForLayer(layer: Layer, activityTypes: ActivityType[], externalResourceNames: string[], externalEventTypes: string[]) {
+  function getFilterOptionsForLayer(layer: Layer, activityTypes: ActivityType[], externalResourceNames: string[], externalEventTypes: ExternalEventType[]) {
     if (isActivityLayer(layer)) {
       return activityTypes.map(t => t.name);
     } else if (isExternalEventLayer(layer)) {
-      return externalEventTypes;
+      // return await effects.getExternalEventTypesByDerivationGroup(
+      //   linkedDerivationGroupIds,
+      //   externalEventTypes,
+      //   null
+      // ).then(l => l.map(t => t.name));
+      return validEventTypes;
     } else if (isLineLayer(layer) || isXRangeLayer(layer)) {
       return $resourceTypes
         .map(t => t.name)
@@ -1189,8 +1197,8 @@
                   if (typeof value === 'number' && !isNaN(value)) {
                     if (value >= 2) {
                       viewUpdateRow(
-                        'externalEventOptions', 
-                        { ...externalEventOptions, groupedModeBinSize: value }, 
+                        'externalEventOptions',
+                        { ...externalEventOptions, groupedModeBinSize: value },
                         null,
                         null,
                         true
@@ -1361,7 +1369,7 @@
                         layer,
                         $activityTypes,
                         $externalResourceNames,
-                        validEventTypes
+                        $externalEventTypes
                       )}
                       {layer}
                       on:change={event => {

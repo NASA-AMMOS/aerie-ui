@@ -60,7 +60,7 @@
       }
     },
     {
-      field: 'derivedEventIds',
+      field: 'derivedEventTotal',
       filter: 'number',
       headerName: 'Derived Events in Derivation Group',
       sortable: true,

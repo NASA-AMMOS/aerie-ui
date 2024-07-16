@@ -1,11 +1,9 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { externalEventTypes } from '../../stores/external-event';
   import { currentPlanDerivationGroupFilter, externalSourceWithResolvedNames } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import type { User } from '../../types/app';
-  import type { ExternalEventType } from '../../types/external-event';
   import type { DerivationGroup, ExternalSourceWithResolvedNames } from '../../types/external-source';
   import effects from '../../utilities/effects';
   import { tooltip } from '../../utilities/tooltip';
@@ -16,7 +14,6 @@
   export let user: User | null;
 
   let dgInFilter: boolean = false;
-  let selectedSourceEventTypes: ExternalEventType[] | null = null;
   let relevantSources: ExternalSourceWithResolvedNames[] = [];
 
   $: relevantSources = $externalSourceWithResolvedNames.filter(source => derivationGroup.id === source.derivation_group_id);
@@ -43,17 +40,6 @@
     })
   }
 
-  async function getExternalEventTypes() {
-    // refactor
-    if (!selectedSourceEventTypes || selectedSourceEventTypes.length === 0) {
-      selectedSourceEventTypes = await effects.getExternalEventTypesBySource(
-        [derivationGroup.id],
-        $externalEventTypes,
-        user,
-      );
-    }
-  }
-
   async function deleteEmptyDerivationGroup() {
     if (enabled) {
       // delete plan derivation group association
@@ -62,8 +48,6 @@
     // delete the derivation group itself
     await effects.deleteDerivationGroup(derivationGroup.id, user);
   }
-
-  $: console.log(derivationGroup)
 </script>
 
 <div class="external-source-pairing">
@@ -74,7 +58,7 @@
   >
     <span slot="right">
       <p style:float="left" style:padding-top="0.1rem" style:padding-right="0.25rem" style:color="gray">
-        {derivationGroup.derivedEventIds.length} derived events
+        {derivationGroup.derivedEventTotal} derived events
       </p>
       <input
         type="checkbox"
@@ -131,12 +115,9 @@
         defaultExpanded={false}
         title="Event Types"
         tooltipContent="View Contained Event Types"
-        on:collapse={() => {
-          getExternalEventTypes();
-        }}
       >
-        {#each selectedSourceEventTypes ? selectedSourceEventTypes : [{ id: -1, name: 'None' }] as eventType}
-          <i>{eventType.name}</i>
+        {#each derivationGroup.event_types as eventType}
+          <i>{eventType}</i>
         {/each}
       </Collapse>
     {:else}
