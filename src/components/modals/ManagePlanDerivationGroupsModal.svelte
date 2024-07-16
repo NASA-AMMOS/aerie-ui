@@ -60,21 +60,25 @@
       }
     },
     {
-      field: 'totalEventCount',
+      field: 'derivedEventIds',
       filter: 'number',
-      headerName: 'Events in derivation group',
+      headerName: 'Derived Events in Derivation Group',
       sortable: true,
       suppressAutoSize: true,
       suppressSizeToFit: true,
+      valueFormatter: (params) => {
+        return params?.value.length
+      }
     },
     {
       cellRenderer: (params: DerivationGroupCellRendererParams) => {
         var input = document.createElement('input');
         input.type = 'checkbox';
-        input.checked=$selectedPlanDerivationGroupIds.includes(params?.data.id)
+        input.checked=$selectedPlanDerivationGroupIds.includes(params?.data?.id ?? -1)
         input.addEventListener('click', (event) => {
           if (event?.target && params.data) {
-            if (event.target.checked) {
+            console.log(event?.target, params.data)
+            if ((event.target as any).checked) {
               // ADD TIMEOUTS IF NECESSARY, MAKE SURE SYNCS ACROSS TABS (USE STORES)
               // insert
               effects.insertDerivationGroupForPlan(params.data.id, $plan, user);
@@ -92,7 +96,6 @@
         });
         return input;
       },
-      field: 'updated_by',
       filter: 'string',
       headerName: 'Included',
       sortable: true,

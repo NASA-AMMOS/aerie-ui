@@ -55,9 +55,7 @@
   >
     <span slot="right">
       <p style:float="left" style:padding-top="0.1rem" style:padding-right="0.25rem" style:color="gray">
-        {Array.from(derivationGroup.sources.values())
-          .map(e => e.event_counts)
-          .reduce((sum, cur) => sum + cur, 0)} derived events
+        {derivationGroup.derivedEventIds.length} derived events
       </p>
       <input
         type="checkbox"

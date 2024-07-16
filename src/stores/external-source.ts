@@ -55,6 +55,13 @@ export const derivationGroupsRaw = gqlSubscribable<
     ];
   }[]
 >(gql.SUB_DERIVATION_GROUPS, {}, [], null);
+export const derivationGroupsEventIds = gqlSubscribable<
+  {
+    derivation_group_id: number
+    event_id: number
+  }[]
+>(gql.SUB_DERIVATION_GROUPS_EVENT_IDS, {}, [], null)
+
 
 // use to keep track of associations between plans and goals
 export const planDerivationGroupLinks = gqlSubscribable<PlanDerivationGroup[]>(
@@ -74,9 +81,9 @@ export const externalSourceEventTypes = gqlSubscribable<ExternalSourceEventType[
 
 /* Derived. */
 // cleans up derivationGroupsRaw
-export const derivationGroups = derived<[typeof derivationGroupsRaw], DerivationGroup[]>(
-  [derivationGroupsRaw],
-  ([$derivationGroupsRaw]) =>
+export const derivationGroups = derived<[typeof derivationGroupsRaw, typeof derivationGroupsEventIds], DerivationGroup[]>(
+  [derivationGroupsRaw, derivationGroupsEventIds],
+  ([$derivationGroupsRaw, $derivationGroupsEventIds]) =>
     $derivationGroupsRaw.map(raw => ({
       id: raw.id,
       name: raw.name,
@@ -91,6 +98,14 @@ export const derivationGroups = derived<[typeof derivationGroupsRaw], Derivation
         (sum, currentSource) => sum + currentSource.external_events_aggregate.aggregate.count,
         0,
       ),
+      derivedEventIds: $derivationGroupsEventIds
+                          .filter(e => {
+                            return e.derivation_group_id === raw.id
+                          })
+                          .map(e => {
+                            console.log(e)
+                            return e.event_id
+                          })
     })),
 );
 
