@@ -305,6 +305,7 @@
   $: filteredExternalSources = $externalSourceWithResolvedNames.filter(externalSource => {
     return selectedFilters.find(f => f.name === externalSource.source_type) !== undefined
   });
+  $: console.log($externalSourceTypes)
   $: filteredValues = $externalSourceTypes.filter(externalSourceType => externalSourceType.name.toLowerCase().includes(filterString))
   $: filteredTableExternalEvents = selectedEvents
     .filter(event => {
@@ -356,6 +357,8 @@
     dpr = window.devicePixelRatio;
   }
 
+  $: console.log("ALL DG", $derivationGroups)
+
   async function onDeleteExternalSource(selectedSource: ExternalSourceWithResolvedNames | null | undefined) {
     if (selectedSource !== null && selectedSource !== undefined) {
       const deletedSourceEventTypes = await effects.getExternalEventTypesBySource(selectedSourceId ? [selectedSourceId] : [], $externalEventTypes, user);
@@ -381,7 +384,7 @@
 
         // Determine if there are no remaining external sources that use the type of the source that was just deleted. If there are none, delete the source type
         // NOTE: This work could be moved to Hasura in the future, or re-worked as it might be costly.
-        const sourceTypesInUse = Array.from(new Set($externalSourceWithResolvedNames.map(s => s.source_type_id)).values())
+        const sourceTypesInUse = Array.from(new Set($externalSourceWithResolvedNames.filter(s => s.id != selectedSource.id).map(s => s.source_type_id)).values())
         const unusedSourceTypeIds = $externalSourceTypes.filter(st => !sourceTypesInUse.includes(st.id)).map(st => st.id)
         for (const unusedSourceTypeId of unusedSourceTypeIds) {
           await effects.deleteExternalSourceType(unusedSourceTypeId, user);
@@ -397,13 +400,10 @@
 
         // Determine if the derivation group this source belonged to is now empty, if so delete it
         // NOTE: This work could be moved to Hasura in the future, or re-worked as it might be costly.
-        const emptyDerivationGroups = $derivationGroups.filter(derivationGroup => {
-          return derivationGroup.sources.size === 0;
-        })
-        if (emptyDerivationGroups.length > 0) {
-          for await (const derivationGroup of emptyDerivationGroups) {
-            await effects.deleteDerivationGroup(derivationGroup.id, user);
-          }
+        const derivationGroupsInUse = Array.from(new Set($externalSourceWithResolvedNames.filter(s => s.id != selectedSource.id).map(s => s.derivation_group_id)).values())
+        const unusedDerivationGroupIds = $derivationGroups.filter(dg => !derivationGroupsInUse.includes(dg.id)).map(dg => dg.id)
+        for (const unusedDerivationGroupId of unusedDerivationGroupIds) {
+          await effects.deleteDerivationGroup(unusedDerivationGroupId, user);
         }
       }
     }
