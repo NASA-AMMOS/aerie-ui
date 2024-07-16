@@ -17,21 +17,27 @@ export const derivationGroupPlanLinkError: Writable<string | null> = writable(nu
 
 export const createExternalSourceEventTypeLinkError: Writable<string | null> = writable(null);
 
+export const currentPlanDerivationGroupFilter: Writable<Array<DerivationGroup>> = writable([]);
+
 // need extra logic for persistence
 // track which sources have been acknowledged by user as added to AERIE
-export const unseenSources = writable(browser && localStorage.getItem("seenSources") || "[]")
+export const unseenSources = writable((browser && localStorage.getItem('seenSources')) || '[]');
 unseenSources.subscribe(val => {
   // validate that val is list-like
-  if (browser && JSON.parse(val)) localStorage.setItem("seenSources", val)
-})
+  if (browser && JSON.parse(val)) {
+    localStorage.setItem('seenSources', val);
+  }
+});
 // TODO: delete from this
 
 // track which sources have been acknowledged by user as deleted from AERIE
-export const deletedSourcesSeen = writable(browser && localStorage.getItem("deletedSources") || "[]")
+export const deletedSourcesSeen = writable((browser && localStorage.getItem('deletedSources')) || '[]');
 deletedSourcesSeen.subscribe(val => {
   // validate that val is list-like
-  if (browser && JSON.parse(val)) localStorage.setItem("deletedSources", val)
-})
+  if (browser && JSON.parse(val)) {
+    localStorage.setItem('deletedSources', val);
+  }
+});
 // TODO: clear this at acknowledgement
 
 
