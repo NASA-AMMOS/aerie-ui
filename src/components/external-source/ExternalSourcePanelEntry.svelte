@@ -3,39 +3,44 @@
 <script lang="ts">
   import { externalEventTypes } from '../../stores/external-event';
   import { currentPlanDerivationGroupFilter, externalSourceWithResolvedNames } from '../../stores/external-source';
+  import { plan } from '../../stores/plan';
   import type { User } from '../../types/app';
   import type { ExternalEventType } from '../../types/external-event';
   import type { DerivationGroup, ExternalSourceWithResolvedNames } from '../../types/external-source';
   import effects from '../../utilities/effects';
+  import { tooltip } from '../../utilities/tooltip';
   import Collapse from '../Collapse.svelte';
 
-  export let enabled: boolean;
+  export let enabled: boolean = true;
   export let derivationGroup: DerivationGroup;
   export let user: User | null;
 
+  let dgInFilter: boolean = false;
   let selectedSourceEventTypes: ExternalEventType[] | null = null;
   let relevantSources: ExternalSourceWithResolvedNames[] = [];
+
   $: relevantSources = $externalSourceWithResolvedNames.filter(source => derivationGroup.id === source.derivation_group_id);
+  $: {
+      if (enabled) {
+        if (dgInFilter) {
+          currentPlanDerivationGroupFilter.update(current => {
+            return current.filter(f => f.id !== derivationGroup.id);
+          });
+        }
+      } else {
+        if (!(dgInFilter)) {
+          currentPlanDerivationGroupFilter.update(current => [
+            ...current,
+            derivationGroup,
+          ])
+        }
+      }
+    }
 
   function onChange(_event: Event) {
-    let dgInFilter: boolean = false;
     currentPlanDerivationGroupFilter.subscribe(filterArray => {
       dgInFilter = filterArray.some(dg => dg.id === derivationGroup.id);
     })
-    if (enabled) {
-      if (dgInFilter) {
-        currentPlanDerivationGroupFilter.update(current => {
-          return current.filter(f => f.id !== derivationGroup.id);
-        });
-      }
-    } else {
-       if (!(dgInFilter)) {
-        currentPlanDerivationGroupFilter.update(current => [
-          ...current,
-          derivationGroup,
-        ])
-      }
-    }
   }
 
   async function getExternalEventTypes() {
@@ -57,6 +62,8 @@
     // delete the derivation group itself
     await effects.deleteDerivationGroup(derivationGroup.id, user);
   }
+
+  $: console.log(derivationGroup)
 </script>
 
 <div class="external-source-pairing">
@@ -75,6 +82,7 @@
         style:cursor="pointer"
         on:change={onChange}
         on:click|stopPropagation
+        use:tooltip={{ content: 'Enable group', placement: 'top' }}
       />
     </span>
 
