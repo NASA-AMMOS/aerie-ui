@@ -3509,17 +3509,20 @@ const effects = {
       const source_data = await reqHasura<any>(gql.GET_PLAN_EVENT_TYPES, { plan_id }, user);
       const type_ids: Set<number> = new Set();
       const types: ExternalEventType[] = [];
-
-      for (const group of source_data['plan_derivation_group']) {
-        for (const source of group['derivation_group']['external_source']) {
-          for (const event of source['external_events']) {
-            const type = event['external_event_type'];
-            if (!type_ids.has(type['id'])) {
-              type_ids.add(type['id']);
-              types.push(type);
+      if (source_data?.plan_derivation_group !== null) {
+        for (const group of source_data['plan_derivation_group']) {
+          for (const source of group['derivation_group']['external_source']) {
+            for (const event of source['external_events']) {
+              const type = event['external_event_type'];
+              if (!type_ids.has(type['id'])) {
+                type_ids.add(type['id']);
+                types.push(type);
+              }
             }
           }
         }
+      } else {
+        throw Error('Unable to gather ell external event types for the source');
       }
 
       return types;
