@@ -82,14 +82,16 @@
               // ADD TIMEOUTS IF NECESSARY, MAKE SURE SYNCS ACROSS TABS (USE STORES)
               // insert
               effects.insertDerivationGroupForPlan(params.data.id, $plan, user);
-              if (derivationGroupPlanLinkError !== null) {
-                console.log("Successfully linked derivation group & plan.");
+              if ($derivationGroupPlanLinkError !== null) {
+                console.log($derivationGroupPlanLinkError)
+                console.log("Failed to link derivation group & plan.");
               }
             } else {
               // delete
               effects.deleteDerivationGroupForPlan(params.data.id, $plan, user);
-              if (derivationGroupPlanLinkError !== null) {
-                console.log("Failed to link derivation group & plan.");
+              if ($derivationGroupPlanLinkError !== null) {
+                console.log($derivationGroupPlanLinkError)
+                console.log("Failed to unlink derivation group & plan.");
               }
             }
           }
@@ -101,7 +103,7 @@
       sortable: true,
       suppressAutoSize: true,
       suppressSizeToFit: true,
-      width: 100,
+      width: 100
     },
   ];
   const modalColumnSizeNoDetail: string = "1fr 3px 0fr";

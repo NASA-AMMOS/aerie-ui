@@ -1,11 +1,13 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { deletedSourcesSeen, derivationGroupPlanLinkError, derivationGroups, externalSourceTypes, getEventSourceTypeName, selectedPlanDerivationGroupIds, unseenSources } from '../../stores/external-source';
+  import { deletedSourcesSeen, derivationGroupPlanLinkError, derivationGroups, externalSourceTypes, getEventSourceTypeName, planDerivationGroupLinks, unseenSources } from '../../stores/external-source';
+  import { plan } from '../../stores/plan';
   import type { User } from '../../types/app';
   import type { DerivationGroup, ExternalSourceWithDateInfo } from '../../types/external-source';
   import type { ViewGridSection } from '../../types/view';
   import effects from '../../utilities/effects';
+  import { tooltip } from '../../utilities/tooltip';
   import Collapse from '../Collapse.svelte';
   import CollapsibleListControls from '../CollapsibleListControls.svelte';
   import GridMenu from '../menus/GridMenu.svelte';
@@ -26,7 +28,9 @@
   let filteredDerivationGroups: DerivationGroup[] = [];
   let unseenSourcesParsed: ExternalSourceWithDateInfo[] = [];
   let deletedSourcesParsed: ExternalSourceWithDateInfo[] = [];
+  $: linkedDerivationGroupIds = $planDerivationGroupLinks.filter(link => link.plan_id === $plan?.id).map(link => link.derivation_group_id);
   $: filteredDerivationGroups = $derivationGroups
+    .filter(group => linkedDerivationGroupIds.includes(group.id))
     .filter(group => {
       const filterTextLowerCase = filterText.toLowerCase();
       const includesName = group.name.toLocaleLowerCase().includes(filterTextLowerCase);
@@ -35,7 +39,9 @@
   $: filteredDerivationGroups.forEach(group => {
     const sourceType = getEventSourceTypeName(group.source_type_id, $externalSourceTypes)
     if (sourceType) { // undefined is being very frustrating
-      if (mappedDerivationGroups[sourceType]) {// use string later for source type
+      if (mappedDerivationGroups[sourceType] &&
+        !mappedDerivationGroups[sourceType].map(g => g.id).includes(group.id)
+      ) {// use string later for source type
         mappedDerivationGroups[sourceType]?.push(group)
       }
       else {
@@ -68,6 +74,7 @@
           name="manage-derivation-groups"
           class="st-button secondary"
           on:click|stopPropagation={onManageDerivationGroups}
+          use:tooltip={{ content: 'Select derivation groups to associate with this plan', placement: 'top' }}
         >
           Manage Derivation Groups
         </button>
@@ -95,7 +102,7 @@
           {#if mappedDerivationGroups[sourceType]}
             {#each mappedDerivationGroups[sourceType] as group}
               <ExternalSourcePanelEntry
-                enabled={$selectedPlanDerivationGroupIds.includes(group.id)}
+                enabled={true}
                 derivationGroup={group}
                 user={user}
               />
@@ -106,7 +113,11 @@
     {:else}
       <p>
         <br>
-        No External Sources Found
+        No Derivation Groups Linked To This Plan
+      </p>
+      <p>
+        <br>
+        <i>Click "Manage Derivation Groups" to associate Derivation Groups to this plan.</i>
       </p>
     {/if}
   </svelte:fragment>
