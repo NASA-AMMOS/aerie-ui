@@ -110,13 +110,14 @@ export const externalSourceWithResolvedNames = derived<
   ExternalSourceWithResolvedNames[]
 >(
   [externalSources, externalSourceTypes, derivationGroups],
-  ([$externalSources, $externalSourceTypes, $derivationGroups]) =>
-    $externalSources.map(externalSource => ({
+  ([$externalSources, $externalSourceTypes, $derivationGroups]) => {
+    console.log("IN STORE - ", $externalSources);
+    return $externalSources.map(externalSource => ({
       ...externalSource,
       source_type: getEventSourceTypeName(externalSource.source_type_id, $externalSourceTypes),
       derivation_group: getDerivationGroupName(externalSource.derivation_group_id, $derivationGroups),
       total_groups: $derivationGroups.length,
-    })),
+    }))},
 );
 
 export const selectedPlanDerivationGroupIds = derived(
