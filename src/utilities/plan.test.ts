@@ -85,7 +85,17 @@ describe('Plan utility', () => {
               source_scheduling_goal_id: null,
               start_offset: '0:00:00',
               start_time_ms: 0,
-              tags: [],
+              tags: [
+                {
+                  tag: {
+                    color: '#ff0000',
+                    created_at: '',
+                    id: 1,
+                    name: 'test tag',
+                    owner: 'test',
+                  },
+                },
+              ],
               type: 'TestActivity',
             },
           ],
@@ -105,6 +115,14 @@ describe('Plan utility', () => {
             metadata: {},
             name: 'Test Activity',
             start_offset: '0:00:00',
+            tags: [
+              {
+                tag: {
+                  color: '#ff0000',
+                  name: 'test tag',
+                },
+              },
+            ],
             type: 'TestActivity',
           },
         ],
