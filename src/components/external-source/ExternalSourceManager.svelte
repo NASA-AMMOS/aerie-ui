@@ -531,6 +531,7 @@
 
         // FIND A BETTER WAY TO DO THIS? WE HAVE TWO SEPARATE CHECKS THAT sourceType !== undefined WHICH ISN'T NECESSARILY WRONG BUT FEELS SUSPICIOUS
         // name not present
+        console.log($derivationGroups, $derivationGroups.filter(dGroup => dGroup.name === derivationGroupInsert.name))
         if ($derivationGroups.filter(dGroup => dGroup.name === derivationGroupInsert.name).length === 0
               && derivationGroupInsert !== undefined) {
           if(sourceType !== undefined) {derivationGroupInsert.source_type_id = sourceType.id;}
