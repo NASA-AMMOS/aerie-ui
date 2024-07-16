@@ -2510,6 +2510,15 @@ const gql = {
     }
   `,
 
+  SUB_DERIVATION_GROUPS_EVENT_IDS: `#graphql
+    subscription SubDerivationGroups {
+      event_ids: derived_events {
+        derivation_group_id
+        event_id
+      }
+    }
+  `,
+
   SUB_PLAN_DERIVATION_GROUP: `#graphql
     subscription SubPlanExternalSource {
       links: ${Queries.PLAN_DERIVATION_GROUP}(order_by: { plan_id: asc }) {
