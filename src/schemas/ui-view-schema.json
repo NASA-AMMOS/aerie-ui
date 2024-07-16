@@ -270,6 +270,33 @@
                       "description": "Expanded state of the timeline row",
                       "type": "boolean"
                     },
+                    "externalEventOptions": {
+                      "additionalProperties": false,
+                      "description": "Defines the options used for rendering external events on the timeline",
+                      "properties": {
+                        "externalEventHeight": {
+                          "description": "Height of external event rows",
+                          "type": "number",
+                          "minimum": 16
+                        },
+                        "displayMode": {
+                          "description": "Describes the display mode to use for rendering external events",
+                          "enum": ["compact", "grouped"]
+                        },
+                        "groupBy": {
+                          "description": "Describes the way external events should be grouped when displayMode is 'grouped'",
+                          "enum": ["event_type", "source_id"]
+                        },
+                        "labelVisibility": {
+                          "description": "External event text label behavior",
+                          "enum": ["on", "off", "auto"]
+                        },
+                        "groupedModeBinSize": {
+                          "description": "Describes the size of each bin in grouped mode",
+                          "minimum": 1
+                        }
+                      }
+                    },
                     "height": {
                       "description": "Height of the row in pixels",
                       "minimum": 0,
@@ -447,6 +474,55 @@
                             },
                             "required": ["chartType", "colorScheme", "filter", "id", "opacity", "yAxisId"],
                             "type": "object"
+                          },
+                          {
+                            "additionalProperties": false,
+                            "description": "External event layer",
+                            "properties": {
+                              "externalEventColor": {
+                                "$ref": "#/definitions/color"
+                              },
+                              "externalEventHeight": {
+                                "description": "Height of each external event",
+                                "type": "number",
+                                "$comment": "deprecated"
+                              },
+                              "chartType": {
+                                "const": "external-event",
+                                "description": "Layer that visualizes external events"
+                              },
+                              "filter": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "externalEvent": {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "event_types": {
+                                        "description": "Array of external event types to display in this layer",
+                                        "items": {
+                                          "type": "string"
+                                        },
+                                        "type": "array"
+                                      }
+                                    },
+                                    "required": ["event_types"],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": ["externalEvent"],
+                                "type": "object"
+                              },
+                              "id": {
+                                "$ref": "#/definitions/id"
+                              },
+                              "name": {
+                                "description": "Name of the layer",
+                                "type": "string"
+                              },
+                              "yAxisId": {
+                                "$ref": "#/definitions/yAxisId"
+                              }
+                            }
                           }
                         ]
                       },
