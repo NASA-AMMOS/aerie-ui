@@ -186,7 +186,7 @@
 
   function formatTypeName(s: string) {
     // add spaces to CamelCase names, 'GroundEvent' -> 'Ground Event'
-    return s.split(/(?=[A-Z])/).join(' ');
+    return s.replace(/([^A-Z])(?=[A-Z])/g, '$1 ');
   }
 
   const nameArgumentDef: FswCommandArgumentVarString = {
