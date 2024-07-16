@@ -29,12 +29,8 @@ import {
 import { createModelError, creatingModel, models } from '../stores/model';
 import { createPlanError, creatingPlan, planId } from '../stores/plan';
 import { schedulingRequests, selectedSpecId } from '../stores/scheduling';
-import {
-  channelDictionaries,
-  commandDictionaries,
-  parameterDictionaries,
-  sequenceAdaptations,
-} from '../stores/sequencing';
+import { sequenceAdaptations } from '../stores/sequence-adaptation';
+import { channelDictionaries, commandDictionaries, parameterDictionaries } from '../stores/sequencing';
 import { selectedSpanId, simulationDataset, simulationDatasetId } from '../stores/simulation';
 import { createTagError } from '../stores/tags';
 import { applyViewUpdate, view, viewUpdateTimeline } from '../stores/views';

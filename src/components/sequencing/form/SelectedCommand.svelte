@@ -13,9 +13,9 @@
   } from '@nasa-jpl/aerie-ampcs';
   import type { EditorView } from 'codemirror';
   import { debounce } from 'lodash-es';
-  import { getCustomArgDef } from '../../../utilities/new-sequence-editor/extension-points';
-  import { TOKEN_COMMAND, TOKEN_ERROR } from '../../../utilities/new-sequence-editor/sequencer-grammar-constants';
-  import { getAncestorNode } from '../../../utilities/new-sequence-editor/tree-utils';
+  import { getCustomArgDef } from '../../../utilities/sequence-editor/extension-points';
+  import { TOKEN_COMMAND, TOKEN_ERROR } from '../../../utilities/sequence-editor/sequencer-grammar-constants';
+  import { getAncestorNode } from '../../../utilities/sequence-editor/tree-utils';
   import Collapse from '../../Collapse.svelte';
   import Panel from '../../ui/Panel.svelte';
   import SectionTitle from '../../ui/SectionTitle.svelte';

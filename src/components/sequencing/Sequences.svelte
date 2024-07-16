@@ -263,7 +263,7 @@
     showCommandFormBuilder={false}
     sequenceDefinition={selectedSequence?.definition ?? ''}
     sequenceName={selectedSequence?.name}
-    sequenceSeqJson={selectedSequenceSeqJson}
+    sequenceOutput={selectedSequenceSeqJson}
     title="Sequence - Definition Editor (Read-only)"
     readOnly={true}
     {user}

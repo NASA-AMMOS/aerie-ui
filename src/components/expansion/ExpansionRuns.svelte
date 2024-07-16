@@ -9,7 +9,7 @@
   import type { DataGridColumnDef, DataGridRowSelection } from '../../types/data-grid';
   import type { ActivityInstanceJoin, ExpandedSequence, ExpansionRun } from '../../types/expansion';
   import type { Parcel } from '../../types/sequencing';
-  import { seqJsonToSequence } from '../../utilities/new-sequence-editor/from-seq-json';
+  import { seqJsonToSequence } from '../../utilities/sequence-editor/from-seq-json';
   import SequenceEditor from '../sequencing/SequenceEditor.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
@@ -22,6 +22,16 @@
   export let user: User | null;
 
   let parcel: Parcel | null;
+  let selectedSequence: ExpandedSequence | null = null;
+  let selectedSequenceIds: number[] = [];
+  let selectedExpansionRun: ExpansionRun | null = null;
+  let sequenceDefinition: string;
+
+  $: convertOutputToSequence(selectedSequence);
+
+  async function convertOutputToSequence(sequence: ExpandedSequence | null): Promise<void> {
+    sequenceDefinition = (await seqJsonToSequence(sequence?.expanded_sequence)) ?? 'No Sequence Selected';
+  }
 
   const columnDefs: DataGridColumnDef[] = [
     {
@@ -93,10 +103,6 @@
       wrapText: true,
     },
   ];
-
-  let selectedSequence: ExpandedSequence | null = null;
-  let selectedSequenceIds: number[] = [];
-  let selectedExpansionRun: ExpansionRun | null = null;
 
   $: parcel = $parcels.find(p => p.id === selectedExpansionRun?.expansion_set.parcel_id) ?? null;
   $: selectedSequenceIds = selectedSequence ? [selectedSequence.id] : [];
@@ -179,9 +185,9 @@
 
   <SequenceEditor
     {parcel}
-    sequenceDefinition={seqJsonToSequence(selectedSequence?.expanded_sequence, [], null) ?? 'No Sequence Selected'}
+    {sequenceDefinition}
     sequenceName={selectedSequence?.seq_id}
-    sequenceSeqJson={selectedSequence ? JSON.stringify(selectedSequence.expanded_sequence, null, 2) : undefined}
+    sequenceOutput={selectedSequence ? JSON.stringify(selectedSequence.expanded_sequence, null, 2) : undefined}
     readOnly={true}
     title="Sequence - Definition Editor (Read-only)"
     {user}

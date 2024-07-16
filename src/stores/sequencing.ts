@@ -12,7 +12,6 @@ import {
   type Parcel,
   type ParcelBundle,
   type ParcelToParameterDictionary,
-  type SequenceAdaptation,
   type UserSequence,
 } from '../types/sequencing';
 import effects from '../utilities/effects';
@@ -77,8 +76,6 @@ export const parcelBundles: Readable<ParcelBundle[]> = derived(
     });
   },
 );
-
-export const sequenceAdaptations = gqlSubscribable<SequenceAdaptation[]>(gql.SUB_SEQUENCE_ADAPTATIONS, {}, [], null);
 
 export const userParcelColumns: Writable<string> = writable('2fr 3px 1fr');
 
