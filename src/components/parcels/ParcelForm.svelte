@@ -176,8 +176,6 @@
 
   async function saveParcel() {
     if (saveButtonEnabled) {
-      savingParcel = true;
-
       if (parcelCommandDictionaryId !== null && parcelName && parcelName !== '') {
         if (mode === 'create') {
           const newParcel: ParcelInsertInput = {
@@ -201,18 +199,15 @@
             sequence_adaptation_id: parcelSequenceAdaptationId,
           };
 
-          saveParcelToParameterDictionaries();
-
+          await saveParcelToParameterDictionaries();
           await effects.updateParcel(parcelId, updatedParcel, parcelOwner, user);
         }
+
+        savedParcelChannelDictionaryId = parcelChannelDictionaryId;
+        savedParcelCommandDictionaryId = parcelCommandDictionaryId;
+        savedSequenceAdaptationId = parcelSequenceAdaptationId;
+        savedParcelName = parcelName;
       }
-
-      savedParcelChannelDictionaryId = parcelChannelDictionaryId;
-      savedParcelCommandDictionaryId = parcelCommandDictionaryId;
-      savedSequenceAdaptationId = parcelSequenceAdaptationId;
-      savedParcelName = parcelName;
-
-      savingParcel = false;
     }
   }
 </script>
@@ -237,7 +232,7 @@
           }}
           on:click={saveParcel}
         >
-          {savingParcel ? 'Saving...' : saveButtonText}
+          {saveButtonText}
         </button>
       </div>
     </svelte:fragment>
