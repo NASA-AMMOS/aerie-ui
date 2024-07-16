@@ -2,8 +2,7 @@
 
 <script lang="ts">
   import { externalEventTypes } from '../../stores/external-event';
-  import { derivationGroupPlanLinkError, externalSourceWithResolvedNames } from '../../stores/external-source';
-  import { plan } from '../../stores/plan';
+  import { currentPlanDerivationGroupFilter, externalSourceWithResolvedNames } from '../../stores/external-source';
   import type { User } from '../../types/app';
   import type { ExternalEventType } from '../../types/external-event';
   import type { DerivationGroup, ExternalSourceWithResolvedNames } from '../../types/external-source';
@@ -14,23 +13,27 @@
   export let derivationGroup: DerivationGroup;
   export let user: User | null;
 
-
   let selectedSourceEventTypes: ExternalEventType[] | null = null;
   let relevantSources: ExternalSourceWithResolvedNames[] = [];
   $: relevantSources = $externalSourceWithResolvedNames.filter(source => derivationGroup.id === source.derivation_group_id);
 
-  function onEnable(_event: Event) {
+  function onChange(_event: Event) {
+    let dgInFilter: boolean = false;
+    currentPlanDerivationGroupFilter.subscribe(filterArray => {
+      dgInFilter = filterArray.some(dg => dg.id === derivationGroup.id);
+    })
     if (enabled) {
-      // insert
-      effects.insertDerivationGroupForPlan(derivationGroup.id, $plan, user);
-      if (derivationGroupPlanLinkError !== null) {
-        enabled = false;  // Unselect button if there was an error
+      if (dgInFilter) {
+        currentPlanDerivationGroupFilter.update(current => {
+          return current.filter(f => f.id !== derivationGroup.id);
+        });
       }
     } else {
-      // delete
-      effects.deleteDerivationGroupForPlan(derivationGroup.id, $plan, user);
-      if (derivationGroupPlanLinkError !== null) {
-        enabled = true;  // Reselect button if there was an error
+       if (!(dgInFilter)) {
+        currentPlanDerivationGroupFilter.update(current => [
+          ...current,
+          derivationGroup,
+        ])
       }
     }
   }
@@ -70,7 +73,7 @@
         type="checkbox"
         bind:checked={enabled}
         style:cursor="pointer"
-        on:change={onEnable}
+        on:change={onChange}
         on:click|stopPropagation
       />
     </span>

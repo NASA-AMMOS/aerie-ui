@@ -10,6 +10,7 @@
   import { ViewDefaultActivityOptions, ViewDefaultExternalEventOptions } from '../../constants/view';
   import { Status } from '../../enums/status';
   import { catchError } from '../../stores/errors';
+  import { currentPlanDerivationGroupFilter, externalSources, getSourceName } from '../../stores/external-source';
   import {
     externalResources,
     fetchingResourcesExternal,
@@ -190,6 +191,7 @@
   };
   let filterActivitiesByTime = false;
   let filterExternalEventsByTime = false;
+  let filteredExternalSources: Array<string> = [];
   let rowRef: HTMLDivElement;
 
   $: if ($selectedRow?.id === id && rowRef) {
@@ -335,6 +337,16 @@
     externalEventTreeExpansionMap = {};
   }
 
+  $: currentPlanDerivationGroupFilter.subscribe(arrayOfDerivationGroups => {
+    filteredExternalSources = [];
+    arrayOfDerivationGroups.forEach(filteredDerivationGroup => {
+      filteredExternalSources = [
+        ...filteredExternalSources,
+        ...filteredDerivationGroup.sources.keys(),
+      ]
+    });
+  });
+
   // Track resource loading status for this Row
   $: if (resourceRequestMap) {
     const newLoadedResources: Resource[] = [];
@@ -470,8 +482,13 @@
 
   $: if (hasExternalEventsLayer) {
     externalEventTree = [];
-    filteredExternalEvents = []
-    const externalEventsByType = groupBy(externalEvents, 'event_type');
+    filteredExternalEvents = [];
+    // Apply filter for hiding derivation groups
+    filteredExternalEvents = externalEvents.filter(ee => {
+      return !(ee.source_id === undefined) && !(filteredExternalSources.includes(getSourceName(ee?.source_id, $externalSources)));
+    });
+    // Filter by external event type
+    const externalEventsByType = groupBy(filteredExternalEvents, 'event_type');
     externalEventLayers.forEach(layer => {
       if (layer.filter && layer.filter.externalEvent !== undefined) {
         const event_types = layer.filter.externalEvent.event_types || [];
