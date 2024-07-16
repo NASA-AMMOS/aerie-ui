@@ -10,7 +10,7 @@ export function getPlanForTransfer(
 ): PlanTransfer {
   return {
     activities: activities.map(
-      ({ anchor_id, anchored_to_start, arguments: activityArguments, id, metadata, name, start_offset, type }) => ({
+      ({
         anchor_id,
         anchored_to_start,
         arguments: activityArguments,
@@ -18,6 +18,17 @@ export function getPlanForTransfer(
         metadata,
         name,
         start_offset,
+        tags,
+        type,
+      }) => ({
+        anchor_id,
+        anchored_to_start,
+        arguments: activityArguments,
+        id,
+        metadata,
+        name,
+        start_offset,
+        tags: tags.map(({ tag: { color, name } }) => ({ tag: { color, name } })),
         type,
       }),
     ),

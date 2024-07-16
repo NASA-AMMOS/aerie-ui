@@ -96,7 +96,14 @@ export type PlanSchema = {
 export type PlanTransfer = Pick<PlanSchema, 'id' | 'duration' | 'model_id' | 'name' | 'start_time'> & {
   activities: Pick<
     ActivityDirective,
-    'anchor_id' | 'anchored_to_start' | 'arguments' | 'id' | 'metadata' | 'name' | 'start_offset' | 'type'
+    | 'anchor_id'
+    | 'anchored_to_start'
+    | 'arguments'
+    | 'id'
+    | 'metadata'
+    | 'name'
+    | 'start_offset'
+    | ('type' & { tags: { tag: Pick<Tag, 'color' | 'name'> }[] })
   >[];
   simulation_arguments: ArgumentsMap;
   tags: { tag: Pick<Tag, 'color' | 'name'> }[];
