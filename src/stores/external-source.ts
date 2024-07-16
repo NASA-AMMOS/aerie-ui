@@ -99,13 +99,8 @@ export const derivationGroups = derived<[typeof derivationGroupsRaw, typeof deri
         0,
       ),
       derivedEventIds: $derivationGroupsEventIds
-                          .filter(e => {
-                            return e.derivation_group_id === raw.id
-                          })
-                          .map(e => {
-                            console.log(e)
-                            return e.event_id
-                          })
+                          .filter(e => e.derivation_group_id === raw.id)
+                          .map(e => e.event_id)
     })),
 );
 

@@ -900,7 +900,9 @@ const gql = {
   DELETE_DERIVATION_GROUP: `#graphql
   mutation DeleteDerivationGroup($id: Int!) {
     deleteDerivationGroup: ${Queries.DELETE_DERIVATION_GROUP}(where: { id: { _eq: $id } }) {
-      id
+      returning {
+        id
+      }
     }
   }
   `,
@@ -980,7 +982,7 @@ const gql = {
 
   DELETE_EXTERNAL_SOURCE_TYPE: `#graphql
     mutation DeleteExternalSourceType($id: Int!) {
-      deleteDerivationGroup: ${Queries.DELETE_DERIVATION_GROUP}(where: { source_type_id: { _eq: $id } }) {
+      deleteDerivationGroup: ${Queries.DELETE_DERIVATION_GROUP}(where: { source_type_id: { _eq: $id } }) { # as insurance...may be redundant
         returning {
           id
         }
