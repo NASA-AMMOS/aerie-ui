@@ -81,7 +81,7 @@ HDW_CMD`;
       id: 'test',
       metadata: {},
     };
-    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandDictionary, [], null, id);
+    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandDictionary, id);
     expect(actual).toEqual(expectedJson);
   });
 
@@ -97,7 +97,7 @@ HDW_CMD_2
       id: 'test',
       metadata: {},
     };
-    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandDictionary, [], null, id);
+    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandDictionary, id);
     expect(actual).toEqual(expectedJson);
   });
 
@@ -151,7 +151,7 @@ C FSW_CMD_1 0.123 -2.34 # inline description
         },
       ],
     };
-    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandDictionary, [], null, id);
+    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandDictionary, id);
     expect(actual).toEqual(expectedJson);
   });
 
@@ -210,7 +210,7 @@ R71 ECHO    L02STR
         },
       ],
     };
-    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandBanana, [], null, id);
+    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandBanana, id);
     expect(actual).toEqual(expectedJson);
   });
 
@@ -269,7 +269,7 @@ R10 PACKAGE_BANANA     2      [    "bundle1"    5 "bundle2" 10]
         },
       ],
     };
-    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandBanana, [], null, id);
+    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandBanana, id);
     expect(actual).toEqual(expectedJson);
   });
 
@@ -281,7 +281,7 @@ C ECHO L00STR
 C ECHO "L00STR"
 C ECHO L01STR
     `;
-    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandBanana, [], null, id);
+    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandBanana, id);
     const expectedJson = {
       id: 'test.inline',
       locals: [
@@ -364,7 +364,7 @@ C ECHO L01STR
     ]);
     permutations.forEach((ordering: string[]) => {
       const input = ordering.join('\n\n');
-      const actual = sequenceToSeqJson(SeqLanguage.parser.parse(input), input, commandBanana, [], null, 'id');
+      const actual = sequenceToSeqJson(SeqLanguage.parser.parse(input), input, commandBanana, 'id');
       const expected = {
         id: 'test.seq',
         locals: [
@@ -406,7 +406,7 @@ C ECHO L01STR
 
     R1 ECHO "Can this handle \\"Escaped\\" quotes??" # and this "too"`;
     const id = 'escaped_quotes';
-    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandBanana, [], null, id);
+    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandBanana, id);
     const expected = {
       id,
       metadata: {},
@@ -441,7 +441,7 @@ R00:00:01 ECHO "Can this handle \\"Escaped\\" quotes??" # and this "too"
 @MODEL "Variable" 0 "Offset"
 @MODEL "Variable \\"Escaped\\"" 0 "Offset \\" \\" \\"\\""`;
     const id = 'escaped_metadata';
-    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandBanana, [], null, id);
+    const actual = sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandBanana, id);
     const expected = {
       id,
       metadata: {},
