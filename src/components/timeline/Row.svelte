@@ -181,7 +181,8 @@
   let externalEventTree: ExternalEventTree = [];
   let filteredActivityDirectives: ActivityDirective[] = [];
   let filteredSpans: Span[] = [];
-  let filteredExternalEvents: ExternalEvent[] = [];
+  let externalEventsFilteredByDG: ExternalEvent[] = [];
+  let externalEventsFilteredByType: ExternalEvent[] = [];
   let timeFilteredActivityDirectives: ActivityDirective[] = [];
   let timeFilteredSpans: Span[] = [];
   let idToColorMaps: { directives: Record<number, string>; spans: Record<number, string>; external_events: Record<number, string> } = {
@@ -482,13 +483,14 @@
 
   $: if (hasExternalEventsLayer) {
     externalEventTree = [];
-    filteredExternalEvents = [];
+    externalEventsFilteredByDG = [];
+    externalEventsFilteredByType = [];
     // Apply filter for hiding derivation groups
-    filteredExternalEvents = externalEvents.filter(ee => {
+    externalEventsFilteredByDG = externalEvents.filter(ee => {
       return !(ee.source_id === undefined) && !(filteredExternalSources.includes(getSourceName(ee?.source_id, $externalSources)));
     });
     // Filter by external event type
-    const externalEventsByType = groupBy(filteredExternalEvents, 'event_type');
+    const externalEventsByType = groupBy(externalEventsFilteredByDG, 'event_type');
     externalEventLayers.forEach(layer => {
       if (layer.filter && layer.filter.externalEvent !== undefined) {
         const event_types = layer.filter.externalEvent.event_types || [];
@@ -496,7 +498,7 @@
           const matchingEvents = externalEventsByType[type];
           if (matchingEvents) {
             matchingEvents.forEach(event => idToColorMaps.external_events[event.id] = layer.externalEventColor)
-            filteredExternalEvents = filteredExternalEvents.concat(matchingEvents.filter((val, ind, arr) => arr.indexOf(val) == ind)); // uniqueness
+            externalEventsFilteredByType = externalEventsFilteredByType.concat(matchingEvents.filter((val, ind, arr) => arr.indexOf(val) == ind)); // uniqueness
           }
         })
       }
@@ -539,7 +541,7 @@
        *  A wrapper function is used to provide the other props needed to generate the tree.
        */
       externalEventTree = generateExternalEventTree(
-        filteredExternalEvents,
+        externalEventsFilteredByType,
         externalEventTreeExpansionMap,
         externalEventOptions.groupBy,
         externalEventOptions.groupedModeBinSize,
@@ -996,7 +998,7 @@
         {#if hasExternalEventsLayer}
           <LayerExternalSources
             {externalEventOptions}
-            externalEvents={filteredExternalEvents}
+            externalEvents={externalEventsFilteredByType}
             {idToColorMaps}
             {externalEventTree}
             {showDirectives}
