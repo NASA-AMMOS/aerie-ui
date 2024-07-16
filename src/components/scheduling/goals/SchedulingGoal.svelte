@@ -62,7 +62,7 @@
     version = goalPlanSpec.goal_metadata?.versions.filter(x => x.revision == revision)[0];
     let schema = version?.parameter_schema;
     let result = [];
-    if (schema.type === 'struct') {
+    if (schema && schema.type === 'struct') {
       Object.entries(schema.items).forEach(([name, subschema], i) => {
         result.push({
           errors: null,
