@@ -7,7 +7,7 @@
   import { onDestroy, onMount } from 'svelte';
   import { catchError } from '../../stores/errors';
   import { externalEventTypes, getEventTypeName } from '../../stores/external-event';
-  import { createDerivationGroupError, createExternalSourceError, createExternalSourceEventTypeLinkError, createExternalSourceTypeError, creatingExternalSource, deletedSourcesSeen, derivationGroups, externalSourceEventTypes, externalSourceTypes, externalSourceWithResolvedNames, getDerivationGroupByNameSourceTypeId, getEventSourceTypeByName, planDerivationGroupLinks, unseenSources } from '../../stores/external-source';
+  import { createDerivationGroupError, createExternalSourceError, createExternalSourceEventTypeLinkError, createExternalSourceTypeError, creatingExternalSource, deletedSourcesSeen, derivationGroups, externalSourceTypes, externalSourceWithResolvedNames, getDerivationGroupByNameSourceTypeId, getEventSourceTypeByName, planDerivationGroupLinks, unseenSources } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import { plans } from '../../stores/plans';
   import type { User } from '../../types/app';
@@ -359,7 +359,6 @@
   async function onDeleteExternalSource(selectedSource: ExternalSourceWithResolvedNames | null | undefined) {
     if (selectedSource !== null && selectedSource !== undefined) {
       const deletedSourceEventTypes = await effects.getExternalEventTypesBySource(selectedSourceId ? [selectedSourceId] : [], $externalEventTypes, user);
-      const sourceTypeId = selectedSource.source_type_id;
       const deletionWasSuccessful = await effects.deleteExternalSource(selectedSource, user);
       if (deletionWasSuccessful) {
         deselectSource();
@@ -382,17 +381,12 @@
 
         // Determine if there are no remaining external sources that use the type of the source that was just deleted. If there are none, delete the source type
         // NOTE: This work could be moved to Hasura in the future, or re-worked as it might be costly.
-        const remainingSourcesWithThisType = $externalSourceWithResolvedNames.filter(externalSource => {
-          return externalSource.source_type_id === selectedSource.source_type_id && externalSource.id !== selectedSource.id
-        });
-        if (remainingSourcesWithThisType.length === 0) {
-          await effects.deleteExternalSourceType(selectedSource.source_type_id, user);
+        const sourceTypesInUse = Array.from(new Set($externalSourceWithResolvedNames.map(s => s.source_type_id)).values())
+        const unusedSourceTypeIds = $externalSourceTypes.filter(st => !sourceTypesInUse.includes(st.id)).map(st => st.id)
+        for (const unusedSourceTypeId of unusedSourceTypeIds) {
+          await effects.deleteExternalSourceType(unusedSourceTypeId, user);
         }
 
-        const externalSourcesWithThisType = await effects.getExternalSourceByType(sourceTypeId, user);
-        if (externalSourcesWithThisType.length === 0) {
-          await effects.deleteExternalSourceType(sourceTypeId, user);
-        }
         // Determine if there are no remaining external events that use the types contained in the now-deleted external source. If there are none, delete the external event type
         deletedSourceEventTypes.forEach(async (eventType) => {
           const externalEventsWithThisType = await effects.getExternalEventsByEventType(eventType, user);
@@ -400,6 +394,7 @@
             await effects.deleteExternalEventType(eventType.id, user);
           }
         });
+
         // Determine if the derivation group this source belonged to is now empty, if so delete it
         // NOTE: This work could be moved to Hasura in the future, or re-worked as it might be costly.
         const emptyDerivationGroups = $derivationGroups.filter(derivationGroup => {
@@ -408,19 +403,6 @@
         if (emptyDerivationGroups.length > 0) {
           for await (const derivationGroup of emptyDerivationGroups) {
             await effects.deleteDerivationGroup(derivationGroup.id, user);
-          }
-        }
-        // Determine if the external event type(s) this source contained are now empty, if so delete it/them
-        // NOTE: This work could be moved to Hasura in the future, or re-worked as it might be costly.
-        const relatedExternalEventTypes = $externalSourceEventTypes.filter(typeLink => {
-          return typeLink.external_source_id === selectedSource.id;
-        })
-        for await (const relatedLink of relatedExternalEventTypes) {
-          const isExternalEventTypeUsed = $externalSourceEventTypes.filter(typeLink => {
-            return typeLink.external_event_type_id === relatedLink.external_event_type_id && typeLink.external_source_id !== selectedSource.id;
-          })
-          if (isExternalEventTypeUsed.length === 0) {
-            await effects.deleteExternalEventType(relatedLink.external_event_type_id, user);
           }
         }
       }
