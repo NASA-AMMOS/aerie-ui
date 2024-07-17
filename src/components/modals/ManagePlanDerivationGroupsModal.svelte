@@ -55,7 +55,6 @@
       suppressSizeToFit: false,
       valueFormatter: (params) => {
         const sourceTypeName = getEventSourceTypeName(params?.value, $externalSourceTypes);
-        console.log(sourceTypeName);
         return sourceTypeName ? sourceTypeName: ""
       }
     },
