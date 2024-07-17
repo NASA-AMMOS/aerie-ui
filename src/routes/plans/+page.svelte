@@ -48,6 +48,7 @@
     convertUsToDurationString,
     formatDate,
     getDoyTime,
+    getDoyTimeFromInterval,
     getShortISOForDate,
   } from '../../utilities/time';
   import { min, required, unique } from '../../utilities/validators';
@@ -449,7 +450,7 @@
         | PlanTransfer
         | DeprecatedPlanTransfer;
       nameField.validateAndSet(planJSON.name);
-      const importedPlanTags = planJSON.tags.reduce(
+      const importedPlanTags = (planJSON.tags ?? []).reduce(
         (previousTags: { existingTags: Tag[]; newTags: Pick<Tag, 'color' | 'name'>[] }, importedPlanTag) => {
           const {
             tag: { color: importedPlanTagColor, name: importedPlanTagName },
@@ -493,10 +494,18 @@
 
       planTags = [...importedPlanTags.existingTags, ...newTags];
 
-      await startTimeField.validateAndSet(getDoyTime(new Date(planJSON.start_time), true));
+      // remove the `+00:00` timezone before parsing
+      const startTime = `${convertDoyToYmd(planJSON.start_time.replace(/\+00:00/, ''))}`;
+      await startTimeField.validateAndSet(getDoyTime(new Date(startTime), true));
 
       if (isDeprecatedPlanTransfer(planJSON)) {
-        await endTimeField.validateAndSet(getDoyTime(new Date(planJSON.end_time), true));
+        await endTimeField.validateAndSet(
+          getDoyTime(new Date(`${convertDoyToYmd(planJSON.end_time.replace(/\+00:00/, ''))}`), true),
+        );
+      } else {
+        const { duration } = planJSON;
+
+        await endTimeField.validateAndSet(getDoyTimeFromInterval(startTime, duration));
       }
 
       updateDurationString();
