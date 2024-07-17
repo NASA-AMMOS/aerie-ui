@@ -197,7 +197,7 @@
   let input: HTMLInputElement;
   let filterString: string = '';
   let filteredValues: ExternalSourceType[] = [];
-  let selectedFilters: ExternalSourceType[] = [...$externalSourceTypes];
+  let selectedFilters: ExternalSourceType[] = [{id: -1, name: "LOADING TYPES..."}];
   let menuTitle: string = '';
   let filteredExternalSources: ExternalSourceWithResolvedNames[] = [];
 
@@ -224,6 +224,12 @@
   let isDerivationGroupFieldDisabled: boolean = true;
 
   let gridRowSizes: string = "1fr 3px 0fr";
+
+  // unfortunately very clunky, but it does correctly select all source types on page load as stores populate shortly AFTER the component loads, 
+  //    so populating selectedFilters with the store values on component load always yields an empty list
+  $: if (selectedFilters.length === 1 && selectedFilters[0].id === -1 && $externalSourceTypes.length > 0) {
+    selectedFilters = [...$externalSourceTypes]
+  }
 
   $: if (files) {
     // files repeatedly refreshes, meaning the reaction to file and parsed keeps repeating infinitely. This if statement prevents that.
