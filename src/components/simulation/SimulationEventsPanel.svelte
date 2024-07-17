@@ -5,12 +5,13 @@
   import TableFitIcon from '@nasa-jpl/stellar/icons/table_fit.svg?component';
   import type { ColDef, ColumnResizedEvent, ColumnState } from 'ag-grid-community';
   import { debounce } from 'lodash-es';
+  import { plugins } from '../../stores/plugins';
   import { simulationDataset, simulationEvents } from '../../stores/simulation';
   import { view, viewUpdateSimulationEventsTable } from '../../stores/views';
   import type { SimulationEvent } from '../../types/simulation';
   import type { AutoSizeColumns, ViewGridSection, ViewTable } from '../../types/view';
   import { filterEmpty } from '../../utilities/generic';
-  import { getDoyTimeFromInterval } from '../../utilities/time';
+  import { getUnixEpochTimeFromInterval } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import ActivityTableMenu from '../activity/ActivityTableMenu.svelte';
   import GridMenu from '../menus/GridMenu.svelte';
@@ -39,13 +40,15 @@
     derived_start_time: {
       filter: 'text',
       field: 'derived_start_time',
-      headerName: 'Absolute Start Time (UTC)',
+      headerName: `Absolute Start Time (${$plugins.time.primary.label})`,
       sort: 'asc',
       resizable: true,
       sortable: true,
       valueGetter: params => {
         if ($simulationDataset && $simulationDataset.simulation_start_time && params.data) {
-          return getDoyTimeFromInterval($simulationDataset?.simulation_start_time, params.data.start_offset);
+          return $plugins.time.primary.format(
+            new Date(getUnixEpochTimeFromInterval($simulationDataset?.simulation_start_time, params.data.start_offset)),
+          );
         }
         return '';
       },
