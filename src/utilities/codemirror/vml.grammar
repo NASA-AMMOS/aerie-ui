@@ -29,6 +29,10 @@
 // * Are assignments allowed in external_call parameters
 // * Confirm if keywords are case sensitive
 // * vml_utils_check_for_keyword
+// * external tokenizer to support case insensitive keywords
+// https://github.com/lezer-parser/generator/blob/10a697a11ebdef98cd08a2c6ac2ef6619604385c/test/cases/ExternalSpecializer.txt#L9
+// https://github.com/lezer-parser/css/blob/692710b42f83961151eee4cf73b0ae18ebccffad/src/tokens.js#L35
+// https://github.com/lezer-parser/css/blob/692710b42f83961151eee4cf73b0ae18ebccffad/src/css.grammar#L147
 
 @skip { space | Comment }
 

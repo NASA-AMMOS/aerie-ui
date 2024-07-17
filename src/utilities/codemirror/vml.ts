@@ -1,9 +1,9 @@
 import { CompletionContext, type CompletionResult } from '@codemirror/autocomplete';
-import { LRLanguage, LanguageSupport, foldInside, foldNodeProp } from '@codemirror/language';
-import { linter } from '@codemirror/lint';
+import { LRLanguage, LanguageSupport, foldInside, foldNodeProp, syntaxTree } from '@codemirror/language';
+import { linter, type Diagnostic } from '@codemirror/lint';
 import type { Extension } from '@codemirror/state';
 import { EditorState } from '@codemirror/state';
-import type { SyntaxNode } from '@lezer/common';
+import type { SyntaxNode, Tree } from '@lezer/common';
 import { styleTags, tags as t } from '@lezer/highlight';
 import { parser } from './vml.grammar';
 
@@ -82,5 +82,37 @@ export function setupVmlLanguageSupport(autocomplete?: (context: CompletionConte
 }
 
 export function vmlLinter(): Extension {
-  return linter(() => []);
+  return linter(view => {
+    const diagnostics: Diagnostic[] = [];
+    const tree = syntaxTree(view.state);
+    // const treeNode = tree.topNode;
+    // const docText = view.state.doc.toString();
+    diagnostics.push(...validateParserErrors(tree));
+    return diagnostics;
+  });
+}
+
+/**
+ * Checks for unexpected tokens.
+ *
+ * @param tree
+ * @returns
+ */
+function validateParserErrors(tree: Tree) {
+  const diagnostics: Diagnostic[] = [];
+  const MAX_PARSER_ERRORS = 100;
+  tree.iterate({
+    enter: node => {
+      if (node.name === TOKEN_ERROR && diagnostics.length < MAX_PARSER_ERRORS) {
+        const { from, to } = node;
+        diagnostics.push({
+          from,
+          message: `Unexpected token`,
+          severity: 'error',
+          to,
+        });
+      }
+    },
+  });
+  return diagnostics;
 }
