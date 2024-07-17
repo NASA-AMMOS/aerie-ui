@@ -305,7 +305,6 @@
   $: filteredExternalSources = $externalSourceWithResolvedNames.filter(externalSource => {
     return selectedFilters.find(f => f.name === externalSource.source_type) !== undefined
   });
-  $: console.log($externalSourceTypes)
   $: filteredValues = $externalSourceTypes.filter(externalSourceType => externalSourceType.name.toLowerCase().includes(filterString))
   $: filteredTableExternalEvents = selectedEvents
     .filter(event => {
@@ -357,8 +356,6 @@
     dpr = window.devicePixelRatio;
   }
 
-  $: console.log("ALL DG", $derivationGroups)
-
   async function onDeleteExternalSource(selectedSource: ExternalSourceWithResolvedNames | null | undefined) {
     if (selectedSource !== null && selectedSource !== undefined) {
       const deletedSourceEventTypes = await effects.getExternalEventTypesBySource(selectedSourceId ? [selectedSourceId] : [], $externalEventTypes, user);
@@ -372,19 +369,19 @@
         // in case it was added and then immediately deleted, though, remove it from both unseenSources and deletedSourcesParsed, to not confuse the user
         {
           let seenSourcesParsed: ExternalSourceWithDateInfo[] = JSON.parse($unseenSources);
-          let filtered = seenSourcesParsed.filter(s => s.id != selectedSource.id)
-          if (filtered.length != seenSourcesParsed.length) {
+          let filtered = seenSourcesParsed.filter(s => s.id !== selectedSource.id)
+          if (filtered.length !== seenSourcesParsed.length) {
             unseenSources.set(JSON.stringify(filtered));
-            deletedSourcesSeen.set(JSON.stringify(deletedSourcesParsed.filter(s => s.id != selectedSource.id)))
+            deletedSourcesSeen.set(JSON.stringify(deletedSourcesParsed.filter(s => s.id !== selectedSource.id)))
           }
-          // NOTE: if I add a source, go to plans, DON'T ACKNOWLEDGE IT, then delete that source, and go back to plans, the warning card is gone as the 
-          //    system assumes I never got the first notification and as such the second is unnecessary as I never acknowledged knowing it was added, so 
+          // NOTE: if I add a source, go to plans, DON'T ACKNOWLEDGE IT, then delete that source, and go back to plans, the warning card is gone as the
+          //    system assumes I never got the first notification and as such the second is unnecessary as I never acknowledged knowing it was added, so
           //    it won't warn me that it was deleted.
         }
 
         // Determine if there are no remaining external sources that use the type of the source that was just deleted. If there are none, delete the source type
         // NOTE: This work could be moved to Hasura in the future, or re-worked as it might be costly.
-        const sourceTypesInUse = Array.from(new Set($externalSourceWithResolvedNames.filter(s => s.id != selectedSource.id).map(s => s.source_type_id)).values())
+        const sourceTypesInUse = Array.from(new Set($externalSourceWithResolvedNames.filter(s => s.id !== selectedSource.id).map(s => s.source_type_id)).values())
         const unusedSourceTypeIds = $externalSourceTypes.filter(st => !sourceTypesInUse.includes(st.id)).map(st => st.id)
         for (const unusedSourceTypeId of unusedSourceTypeIds) {
           await effects.deleteExternalSourceType(unusedSourceTypeId, user);
@@ -400,7 +397,7 @@
 
         // Determine if the derivation group this source belonged to is now empty, if so delete it
         // NOTE: This work could be moved to Hasura in the future, or re-worked as it might be costly.
-        const derivationGroupsInUse = Array.from(new Set($externalSourceWithResolvedNames.filter(s => s.id != selectedSource.id).map(s => s.derivation_group_id)).values())
+        const derivationGroupsInUse = Array.from(new Set($externalSourceWithResolvedNames.filter(s => s.id !== selectedSource.id).map(s => s.derivation_group_id)).values())
         const unusedDerivationGroupIds = $derivationGroups.filter(dg => !derivationGroupsInUse.includes(dg.id)).map(dg => dg.id)
         for (const unusedDerivationGroupId of unusedDerivationGroupIds) {
           await effects.deleteDerivationGroup(unusedDerivationGroupId, user);
@@ -529,9 +526,6 @@
           sourceType = getEventSourceTypeByName($sourceTypeField.value, $externalSourceTypes)
         }
 
-        // FIND A BETTER WAY TO DO THIS? WE HAVE TWO SEPARATE CHECKS THAT sourceType !== undefined WHICH ISN'T NECESSARILY WRONG BUT FEELS SUSPICIOUS
-        // name not present
-        console.log($derivationGroups, $derivationGroups.filter(dGroup => dGroup.name === derivationGroupInsert.name))
         if ($derivationGroups.filter(dGroup => dGroup.name === derivationGroupInsert.name).length === 0
               && derivationGroupInsert !== undefined) {
           if(sourceType !== undefined) {derivationGroupInsert.source_type_id = sourceType.id;}
