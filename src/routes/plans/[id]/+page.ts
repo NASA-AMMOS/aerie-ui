@@ -4,7 +4,6 @@ import { SearchParameters } from '../../../enums/searchParameters';
 import { planReadOnlyMergeRequest } from '../../../stores/plan';
 import effects from '../../../utilities/effects';
 import { getSearchParameterNumber } from '../../../utilities/generic';
-// import { initializeSpice } from '../../../utilities/timeline';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ parent, params, url }) => {
