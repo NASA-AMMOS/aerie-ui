@@ -7,6 +7,10 @@ export class ExternalSources {
   deselectEventButton: Locator;
   deselectSourceButton: Locator;
   externalEventSelectedForm: Locator;
+  externalEventTableHeaderDuration: Locator;
+  externalEventTableHeaderEventType: Locator;
+  externalEventTableHeaderID: Locator;
+  externalEventTableHeaderSourceID: Locator;
   externalEventTableRow: Locator;
   externalSourceFilePath: string = 'e2e-tests/data/example-dsn-contacts.json';
   externalSourceId: string;
@@ -20,7 +24,11 @@ export class ExternalSources {
   saveButton: Locator;
   selectEventTableView: Locator;
   tableRowExternalSourceId: Locator;
+  timelineHeader: Locator;
+  toggleTimeline: Locator;
   uploadButton: Locator;
+  viewContainedEventTypes: Locator;
+  viewEventSourceMetadata: Locator;
 
   constructor(public page: Page) {
     this.externalSourceId = '';
@@ -53,20 +61,20 @@ export class ExternalSources {
     // Assumes the selected source was the test source, and selects the specific event from it
     // NOTE: This may not be the case, and should be re-visited when we implement deletion for External Sources!
     await this.selectSource();
-    await this.page.getByRole('gridcell', { name: 'DSNContact:79/MMS/MMS3:54:X/' }).click();
+    await this.page.getByRole('gridcell', { name: 'TestDSNContact:79/MMS/MMS3:54' }).click();
   }
 
   async selectSource() {
     // Always selects the first source with the example's source type in the table
     await this.selectSourceFilter();
-    await this.page.getByRole('gridcell', { name: 'DSN Contact Confirmed' }).first().click();
+    await this.page.getByRole('gridcell', { name: 'example-dsn-contacts.json' }).first().click();
   }
 
   async selectSourceFilter() {
     // Always selects the first source filter possible in the dropdown
     await this.page.getByPlaceholder('Filter by Source Type').click();
-    await this.page.getByRole('button', { name: 'DSN Contact Confirmed' }).click();
-    await this.page.getByText('External Sources DSN Contact').click(); // Closes the menu that popped up
+    await this.page.getByRole('button', { name: 'DSN Contact E2E Test' }).click();
+    await this.page.getByText('External Sources DSN Contact').click();
   }
 
   async updatePage(page: Page): Promise<void> {
@@ -82,6 +90,16 @@ export class ExternalSources {
     this.deleteSourceButton = page.getByRole('button', { exact: true, name: 'Delete external source' });
     this.deleteSourceButtonConfirmation = page.getByRole('button', { exact: true, name: 'Delete' });
     this.selectEventTableView = page.locator('[name="SelectEventViewType"]');
+    this.timelineHeader = page.getByText(
+      'Sat Jan 20 2024 19:00:00 GMT-0500 (Eastern Standard Time) Sat Jan 27 2024 19:00',
+    );
+    this.externalEventTableHeaderID = page.getByText('External Event ID');
+    this.externalEventTableHeaderEventType = page.getByText('Event Type', { exact: true });
+    this.externalEventTableHeaderSourceID = page.getByText('Source ID');
+    this.externalEventTableHeaderDuration = page.getByText('Duration');
+    this.toggleTimeline = page.getByLabel('Toggle external event timeline');
+    this.viewContainedEventTypes = page.getByRole('button', { name: 'View Contained Event Types' });
+    this.viewEventSourceMetadata = page.getByRole('button', { name: 'View Event Source Metadata' });
   }
 
   async uploadExternalSource() {
