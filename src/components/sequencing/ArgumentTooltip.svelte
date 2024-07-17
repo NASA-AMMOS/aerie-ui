@@ -15,7 +15,7 @@
   }
 </script>
 
-<div class="argument-tooltip">
+<div class="sequence-tooltip">
   <div class="container">
     Name: {arg.name}
     <br />

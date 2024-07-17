@@ -21,7 +21,7 @@
   }
 </script>
 
-<div class="command-tooltip st-typography-body">
+<div class="sequence-tooltip st-typography-body">
   <div class="container command-name">
     {commandExample}
   </div>
