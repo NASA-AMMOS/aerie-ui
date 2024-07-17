@@ -428,63 +428,43 @@
             />
           </Field>
 
-          {#if $plugins.time.enableDatePicker}
-            <fieldset>
-              <DatePickerField
-                field={startTimeField}
-                label={`Start Time - ${$plugins.time.primary.formatString}`}
-                name="start-time"
-                on:change={onStartTimeChanged}
-                use={[
-                  [
-                    permissionHandler,
-                    {
-                      hasPermission: canCreate,
-                      permissionError,
-                    },
-                  ],
-                ]}
-              />
-            </fieldset>
-            <fieldset>
-              <DatePickerField
-                field={endTimeField}
-                label={`End Time - ${$plugins.time.primary.formatString}`}
-                name="end-time"
-                on:change={updateDurationString}
-                use={[
-                  [
-                    permissionHandler,
-                    {
-                      hasPermission: canCreate,
-                      permissionError,
-                    },
-                  ],
-                ]}
-              />
-            </fieldset>
-          {:else}
-            <div class="start-time-field">
-              <Field field={startTimeField} on:change={onStartTimeChanged}>
-                <Input layout="stacked">
-                  <label for="start-time">
-                    Start {$plugins.time.primary.label} - {$plugins.time.primary.formatString}
-                  </label>
-                  <input autocomplete="off" class="st-input w-100" name="start-time" value={$startTimeField.value} />
-                </Input>
-              </Field>
-            </div>
-            <div class="end-time-field">
-              <Field field={endTimeField} on:change={updateDurationString}>
-                <Input layout="stacked">
-                  <label for="end-time">
-                    End {$plugins.time.primary.label} - {$plugins.time.primary.formatString}
-                  </label>
-                  <input autocomplete="off" class="st-input w-100" name="end-time" value={$endTimeField.value} />
-                </Input>
-              </Field>
-            </div>
-          {/if}
+          <fieldset>
+            <DatePickerField
+              layout="stacked"
+              useFallback={!$plugins.time.enableDatePicker}
+              field={startTimeField}
+              label={`Start Time - ${$plugins.time.primary.formatString}`}
+              name="start-time"
+              on:change={onStartTimeChanged}
+              use={[
+                [
+                  permissionHandler,
+                  {
+                    hasPermission: canCreate,
+                    permissionError,
+                  },
+                ],
+              ]}
+            />
+          </fieldset>
+          <fieldset>
+            <DatePickerField
+              useFallback={!$plugins.time.enableDatePicker}
+              field={endTimeField}
+              label={`End Time - ${$plugins.time.primary.formatString}`}
+              name="end-time"
+              on:change={updateDurationString}
+              use={[
+                [
+                  permissionHandler,
+                  {
+                    hasPermission: canCreate,
+                    permissionError,
+                  },
+                ],
+              ]}
+            />
+          </fieldset>
 
           <fieldset>
             <label for="plan-duration">Plan Duration</label>

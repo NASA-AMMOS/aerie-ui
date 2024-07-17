@@ -61,7 +61,7 @@
 {:else}
   <div class="date-picker-field-fallback">
     <Field {field} on:change={onChange}>
-      <Input layout="inline">
+      <Input {layout}>
         <label use:tooltip={{ content: 'Start Time', placement: 'top' }} for="start-time">
           {label}
         </label>
