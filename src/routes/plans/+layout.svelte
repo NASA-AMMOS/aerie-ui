@@ -2,6 +2,7 @@
 
 <script lang="ts">
   import { env } from '$env/dynamic/public';
+  import WarningIcon from '@nasa-jpl/stellar/icons/warning.svg?component';
   import { mergeWith } from 'lodash-es';
   import { onMount } from 'svelte';
   import Nav from '../../components/app/Nav.svelte';
@@ -34,17 +35,45 @@
 {#if !pluginsEnabled || ($pluginsLoaded && !$pluginsError)}
   <slot />
 {:else}
-  <div style="display: flex; flex-direction: column; height: 100%">
+  <div class="plans-layout">
     <Nav user={null} />
-    <div
-      class="st-typography-header"
-      style="align-items: center;display: flex; flex: 1; justify-content: center; width: 100%"
-    >
+    <div class="message st-typography-header">
       {#if $pluginsError}
-        {$pluginsError}
+        <div class="error">
+          <WarningIcon />
+          {$pluginsError}
+        </div>
       {:else}
         Loading plugins...
       {/if}
     </div>
   </div>
 {/if}
+
+<style>
+  .plans-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  .message {
+    align-items: center;
+    display: flex;
+    flex: 1;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .error {
+    align-items: center;
+    color: var(--st-error-red);
+    display: flex;
+    gap: 8px;
+    max-width: 70vw;
+    text-wrap: balance;
+  }
+
+  .error :global(svg) {
+    flex-shrink: 0;
+  }
+</style>
