@@ -20,8 +20,6 @@
   export let gridSection: ViewGridSection;
   export let user: User | null;
 
-  // TODO: ASSOCIATON HANDLED IN MODAL, MAKE THIS PANEL HANDLE ENABLED/DISABLED INSTEAD. UPDATE TIMELINE AND FILTERS ACCORDINGLY
-
   // filter which derivation groups are visible
   let filterText: string = '';
   let mappedDerivationGroups: { [key: string]: DerivationGroup[] } = {};

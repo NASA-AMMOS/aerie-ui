@@ -30,7 +30,7 @@
   } from '../../../constants/view';
   import { ViewConstants } from '../../../enums/view';
   import { externalEventTypes, getEventTypeName } from '../../../stores/external-event';
-  import { planDerivationGroupLinks, selectedPlanExternalSourceEventTypes } from '../../../stores/external-source';
+  import { derivationGroups, planDerivationGroupLinks, selectedPlanDerivationGroupIds } from '../../../stores/external-source';
   import { activityTypes, maxTimeRange, plan, viewTimeRange } from '../../../stores/plan';
   import { plugins } from '../../../stores/plugins';
   import { externalResourceNames, resourceTypes, yAxesWithScaleDomainsCache } from '../../../stores/simulation';
@@ -128,8 +128,7 @@
   $: activityOptions = selectedRow?.activityOptions || { ...ViewDefaultActivityOptions };
   $: externalEventOptions = selectedRow?.externalEventOptions || { ...ViewDefaultExternalEventOptions };
 
-  $: linkedDerivationGroupIds = $planDerivationGroupLinks.filter(link => link.plan_id === $plan?.id).map(link => link.derivation_group_id);
-  $: validEventTypes = $selectedPlanExternalSourceEventTypes.map(id => getEventTypeName(id, $externalEventTypes)) as string[]
+  $: validEventTypes = $derivationGroups.filter(dg => $selectedPlanDerivationGroupIds.includes(dg.source_type_id)).map(dg => dg.event_types).reduce((acc, curr) => acc.concat(curr), []);
 
   function updateRowEvent(event: Event) {
     const { name, value } = getTarget(event);
