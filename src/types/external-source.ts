@@ -100,7 +100,7 @@ export type ExternalSourceEventType = {
   external_source_id: number;
 };
 
-// used exclusively in ExternalSOurcesPanel and UpdateCard, to help track 'deleted_at' information. If in the future we have a comprehensive history of all sources' metadata ever, we will use this there too
+// used exclusively in ExternalSourcesPanel and UpdateCard, to help track 'deleted_at' information. If in the future we have a comprehensive history of all sources' metadata ever, we will use this there too
 export type ExternalSourceWithDateInfo = ExternalSourceWithResolvedNames & {change_date: Date};
 
 // This is used for the GraphQL mutation.
