@@ -1060,6 +1060,8 @@ const gatewayPermissions = {
           Queries.INSERT_PLAN_TAGS,
           Queries.INSERT_ACTIVITY_DIRECTIVE,
           Queries.UPDATE_ACTIVITY_DIRECTIVE,
+          Queries.UPDATE_SIMULATIONS,
+          Queries.TAGS,
           Queries.DELETE_PLAN,
         ],
         user,

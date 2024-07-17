@@ -42,6 +42,7 @@
   import { removeQueryParam } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
+  import { isDeprecatedPlanTransfer } from '../../utilities/plan';
   import {
     convertDoyToYmd,
     convertUsToDurationString,
@@ -493,7 +494,11 @@
       planTags = [...importedPlanTags.existingTags, ...newTags];
 
       await startTimeField.validateAndSet(getDoyTime(new Date(planJSON.start_time), true));
-      await endTimeField.validateAndSet(getDoyTime(new Date(planJSON.end_time), true));
+
+      if (isDeprecatedPlanTransfer(planJSON)) {
+        await endTimeField.validateAndSet(getDoyTime(new Date(planJSON.end_time), true));
+      }
+
       updateDurationString();
     }
   }

@@ -425,6 +425,17 @@ test('parseDurationString', () => {
     seconds: 0.01,
     years: 0,
   });
+
+  expect(parseDurationString('24:00:00')).toEqual({
+    days: 0,
+    hours: 24,
+    isNegative: false,
+    microseconds: 0,
+    milliseconds: 0,
+    minutes: 0,
+    seconds: 0,
+    years: 0,
+  });
 });
 
 test('isTimeBalanced', () => {
