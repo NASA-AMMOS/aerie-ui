@@ -16,7 +16,7 @@
   import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
-  import { convertUsToDurationString, getDoyTimeFromInterval } from '../../utilities/time';
+  import { convertUsToDurationString, getUnixEpochTimeFromInterval } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
 
   const dispatch = createEventDispatcher<{
@@ -113,8 +113,12 @@
     // Manually check remaining fields that could have changed and require extra formatting
 
     if (current.start_offset !== previous.start_offset) {
-      const currentStartTime = getDoyTimeFromInterval(planStartTimeYmd, current.start_offset);
-      const previousStartTime = getDoyTimeFromInterval(planStartTimeYmd, previous.start_offset);
+      const currentStartTime = $plugins.time.primary.format(
+        new Date(getUnixEpochTimeFromInterval(planStartTimeYmd, current.start_offset)),
+      );
+      const previousStartTime = $plugins.time.primary.format(
+        new Date(getUnixEpochTimeFromInterval(planStartTimeYmd, previous.start_offset)),
+      );
 
       differences[`Start Time (${$plugins.time.primary.label})`] = {
         currentValue: currentStartTime,
