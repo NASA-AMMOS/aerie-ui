@@ -33,10 +33,10 @@
   })
 </script>
 
-<div class="card st-typography-label" style="--border-color: {deleted ? "rgba(152, 35, 35, 0.5)" : "rgba(152, 101, 35, 0.5)"}">
-  <div class="card--row card--title-row" style="display:flex; background: {deleted ? "rgb(254, 234, 234)" : "rgb(254, 252, 234)"}">
+<div class="card st-typography-label" style="--border-color: {deleted ? 'rgba(152, 35, 35, 0.5)' : 'rgba(152, 101, 35, 0.5)'}">
+  <div class="card--row card--title-row" style="display:flex; background: {deleted ? 'rgb(254, 234, 234)' : 'rgb(254, 252, 234)'}">
     <div class="card--title t-typography-medium" style="padding-left:5px; align-items: center; display: flex; width: 100%; gap: 5px">
-      <LightningCharge class="filter-search-icon" style="color: {deleted ? "rgba(152, 35, 35, 0.5)" : "rgba(152, 101, 35, 0.5)"}"/>
+      <LightningCharge class="filter-search-icon" style="color: {deleted ? 'rgba(152, 35, 35, 0.5)' : 'rgba(152, 101, 35, 0.5)'}"/>
       {#if sources.length == 1 && !deleted} 1 new file has been uploaded
       {:else if sources.length == 1 && deleted} 1 file has been deleted
       {:else if deleted} {sources.length} files have been deleted
