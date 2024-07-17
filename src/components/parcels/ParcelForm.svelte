@@ -45,7 +45,6 @@
   let savedParcelName: string | undefined;
   let savedParameterDictionaryIds: Record<number, boolean> = {};
   let savedSequenceAdaptationId: number | null;
-  let savingParcel: boolean = false;
   let selectedParmeterDictionaries: Record<number, boolean> = {};
 
   const dispatch = createEventDispatcher<{
