@@ -67,7 +67,6 @@
     >
 
       <svelte:fragment slot="right">
-        <!-- TODO: Attach permissionHandler to button -->
         <button
           name="manage-derivation-groups"
           class="st-button secondary"

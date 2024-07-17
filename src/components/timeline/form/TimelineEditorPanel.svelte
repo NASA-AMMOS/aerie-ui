@@ -45,7 +45,6 @@
     viewUpdateTimeline,
   } from '../../../stores/views';
   import type { ActivityType } from '../../../types/activity';
-  import type { ExternalEventType } from '../../../types/external-event';
   import type { RadioButtonId } from '../../../types/radio-buttons';
   import type {
     ActivityLayer,
@@ -518,15 +517,10 @@
     return [];
   }
 
-  function getFilterOptionsForLayer(layer: Layer, activityTypes: ActivityType[], externalResourceNames: string[], externalEventTypes: ExternalEventType[]) {
+  function getFilterOptionsForLayer(layer: Layer, activityTypes: ActivityType[], externalResourceNames: string[]) {
     if (isActivityLayer(layer)) {
       return activityTypes.map(t => t.name);
     } else if (isExternalEventLayer(layer)) {
-      // return await effects.getExternalEventTypesByDerivationGroup(
-      //   linkedDerivationGroupIds,
-      //   externalEventTypes,
-      //   null
-      // ).then(l => l.map(t => t.name));
       return validEventTypes;
     } else if (isLineLayer(layer) || isXRangeLayer(layer)) {
       return $resourceTypes
@@ -1368,7 +1362,6 @@
                         layer,
                         $activityTypes,
                         $externalResourceNames,
-                        $externalEventTypes
                       )}
                       {layer}
                       on:change={event => {

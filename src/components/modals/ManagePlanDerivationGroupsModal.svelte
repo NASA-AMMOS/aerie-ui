@@ -109,7 +109,6 @@
   const modalColumnSizeWithDetail: string = "3fr 3px 1fr";
   let modalColumnSize: string = modalColumnSizeNoDetail;
   let columnDefs = baseColumnDefs;
-  let dataGrid: DataGrid<DerivationGroup> | undefined = undefined;
 
   let filterText: string = '';
   let filteredDerivationGroups: DerivationGroup[] = [];
@@ -189,7 +188,6 @@
         <div class="constraiderivationgroups-modal-table-container" style="height:100%">
           {#if filteredDerivationGroups.length}
             <DataGrid
-              bind:this={dataGrid}
               {columnDefs}
               rowData={filteredDerivationGroups}
             />
