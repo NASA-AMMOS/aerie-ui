@@ -111,21 +111,6 @@ export const selectedPlanDerivationGroupIds = derived(
     $planDerivationGroupLinks.filter(link => link.plan_id === $planId).map(link => link.derivation_group_id),
 );
 
-export const selectedPlanExternalSourceEventTypes = derived(
-  [externalSourceEventTypes, selectedPlanDerivationGroupIds, externalSources],
-  ([$externalSourceEventTypes, $selectedPlanDerivationGroupIds, $externalSources]) => {
-    const allValidSources = $externalSources
-      .filter(source => $selectedPlanDerivationGroupIds.includes(source.derivation_group_id))
-      .map(source => source.id);
-    const allValidEventTypes = $externalSourceEventTypes
-      .filter(eset => allValidSources.includes(eset.external_source_id))
-      .map(eset => eset.external_event_type_id);
-
-    // remove duplicates
-    return allValidEventTypes.filter((val, ind, arr) => arr.indexOf(val) == ind);
-  },
-);
-
 /* Helper Functions. */
 export function resetModelStores() {
   createExternalSourceError.set(null);
