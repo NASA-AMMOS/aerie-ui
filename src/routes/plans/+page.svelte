@@ -429,14 +429,12 @@
           </Field>
 
           {#if $plugins.time.enableDatePicker}
-            <!-- TODO not sure if the on:keydown actually exists in DatePickerField -->
             <fieldset>
               <DatePickerField
                 field={startTimeField}
                 label={`Start Time - ${$plugins.time.primary.formatString}`}
                 name="start-time"
                 on:change={onStartTimeChanged}
-                on:keydown={updateDurationString}
                 use={[
                   [
                     permissionHandler,
@@ -454,7 +452,6 @@
                 label={`End Time - ${$plugins.time.primary.formatString}`}
                 name="end-time"
                 on:change={updateDurationString}
-                on:keydown={updateDurationString}
                 use={[
                   [
                     permissionHandler,
