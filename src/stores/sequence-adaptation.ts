@@ -37,10 +37,10 @@ export function setSequenceAdaptation(): void {
     },
     globals: globalThis.SequenceAdaptation?.GLOBALS ?? [],
     inputFormat: {
+      linter: globalThis.SequenceAdaptation?.INPUT_FORMAT?.LINTER ?? undefined,
       name: globalThis.SequenceAdaptation?.INPUT_FORMAT?.NAME ?? 'SeqN',
       toInputFormat: globalThis.SequenceAdaptation?.INPUT_FORMAT?.TO_INPUT_FORMAT ?? seqJsonToSequence,
     },
-    lint: globalThis.SequenceAdaptation?.LINT ?? undefined,
     loopKeywords: {
       break: globalThis.SequenceAdaptation?.LOOP_KEYWORDS?.BREAK ?? 'CMD_BREAK',
       continue: globalThis.SequenceAdaptation?.LOOP_KEYWORDS?.CONTINUE ?? 'CMD_CONTINUE',
@@ -50,6 +50,7 @@ export function setSequenceAdaptation(): void {
     modifyOutput: globalThis.SequenceAdaptation?.MODIFY_OUTPUT ?? undefined,
     modifyOutputParse: globalThis.SequenceAdaptation?.MODIFY_OUTPUT_PARSE ?? undefined,
     outputFormat: {
+      linter: globalThis.SequenceAdaptation?.OUTPUT_FORMAT?.LINTER ?? undefined,
       name: globalThis.SequenceAdaptation?.OUTPUT_FORMAT?.NAME ?? 'Seq JSON',
       toOutputFormat: globalThis.SequenceAdaptation?.OUTPUT_FORMAT?.TO_OUTPUT_FORMAT ?? sequenceToSeqJson,
     },
