@@ -5,13 +5,8 @@ let page: Page;
 let context: BrowserContext;
 let externalSources: ExternalSources;
 
-/** Note: These tests should probably delete all External Sources & (optionally) re-upload the example source between iterations. Requires deletion to be implemented!
-test.afterEach(async () => {
-});
-*/
-
 test.beforeEach(async () => {
-  await externalSources.goto();  // Refresh page to reset the view
+  await externalSources.goto(); // Refresh page to reset the view
 });
 
 test.beforeAll(async ({ browser }) => {
@@ -64,6 +59,33 @@ test.describe.serial('External Sources', () => {
     await expect(externalSources.inputFile).toBeVisible();
     await expect(externalSources.externalEventSelectedForm).not.toBeVisible();
     await expect(externalSources.externalSourceSelectedForm).not.toBeVisible();
+  });
+
+  test('Selected external source should show metadata in a collapsible', async () => {
+    await externalSources.selectSource();
+    await externalSources.viewEventSourceMetadata.click();
+    await expect(page.getByText('0', { exact: true })).toBeVisible();
+    await expect(page.getByText('1', { exact: true })).toBeVisible();
+    await expect(page.getByText('2', { exact: true })).toBeVisible();
+    await expect(page.getByText('3', { exact: true })).toBeVisible();
+    await expect(page.getByText('version')).toBeVisible();
+    await expect(page.getByText('wrkcat')).toBeVisible();
+  });
+
+  test('Selected external source should show event types in a collapsible', async () => {
+    await externalSources.selectSource();
+    await externalSources.viewContainedEventTypes.click();
+    await expect(page.locator('i')).toBeVisible();
+  });
+
+  test('External event table and timeline should be accessible while a source is selected', async () => {
+    await externalSources.selectSource();
+    await expect(externalSources.externalEventTableHeaderID).toBeVisible();
+    await expect(externalSources.externalEventTableHeaderEventType).toBeVisible();
+    await expect(externalSources.externalEventTableHeaderSourceID).toBeVisible();
+    await expect(externalSources.externalEventTableHeaderDuration).toBeVisible();
+    await externalSources.toggleTimeline.click();
+    await expect(externalSources.timelineHeader).toBeVisible();
   });
 
   test('Deleting an external source', async () => {
