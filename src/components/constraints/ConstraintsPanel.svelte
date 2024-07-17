@@ -37,7 +37,7 @@
   import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
-  import { convertDoyToYmd, getDoyTime } from '../../utilities/time';
+  import { convertDoyToYmd } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import { required } from '../../utilities/validators';
   import CollapsibleListControls from '../CollapsibleListControls.svelte';
@@ -167,9 +167,9 @@
   }
 
   async function setTimeBoundsToView() {
-    /* TODO */
-    await startTimeField.validateAndSet(getDoyTime(new Date($viewTimeRange.start)).toString());
-    await endTimeField.validateAndSet(getDoyTime(new Date($viewTimeRange.end)).toString());
+    /* TODO use plugin*/
+    await startTimeField.validateAndSet($plugins.time.primary.format(new Date($viewTimeRange.start)));
+    await endTimeField.validateAndSet($plugins.time.primary.format(new Date($viewTimeRange.end)));
     onUpdateStartTime();
     onUpdateEndTime();
   }
