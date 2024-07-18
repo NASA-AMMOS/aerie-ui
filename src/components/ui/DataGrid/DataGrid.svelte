@@ -428,7 +428,7 @@ This has been seen to result in unintended and often glitchy behavior, which oft
   });
 </script>
 
-<div bind:this={gridDiv} class="ag-theme-stellar table" class:highlightOnSelection tabindex="-1" on:focus on:blur />
+<div bind:this={gridDiv} class="ag-theme-stellar table dynamics" class:highlightOnSelection tabindex="-1" on:focus on:blur />
 
 <ContextMenu bind:this={contextMenu}>
   <slot name="context-menu" />
@@ -439,6 +439,9 @@ This has been seen to result in unintended and often glitchy behavior, which oft
   .table {
     height: 100%;
     width: 100%;
+  }
+  .dynamics {
+    --ag-value-change-value-highlight-background-color: #f5565644;
   }
   :global(.tags-cell) {
     display: inline-block;
