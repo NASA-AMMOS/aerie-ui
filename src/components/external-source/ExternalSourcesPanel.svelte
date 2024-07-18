@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { deletedSourcesSeen, derivationGroupPlanLinkError, derivationGroups, externalSourceTypes, getEventSourceTypeName, planDerivationGroupLinks, unseenSources } from '../../stores/external-source';
+  import { deletedSourcesSeen, derivationGroupPlanLinkError, derivationGroups, externalSourceTypes, getEventSourceTypeName, planDerivationGroupIdsToFilter, planDerivationGroupLinks, unseenSources } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import type { User } from '../../types/app';
   import type { DerivationGroup, ExternalSourceWithDateInfo } from '../../types/external-source';
@@ -20,12 +20,15 @@
   export let gridSection: ViewGridSection;
   export let user: User | null;
 
+  console.log($planDerivationGroupIdsToFilter, JSON.parse($planDerivationGroupIdsToFilter))
+
   // filter which derivation groups are visible
   let filterText: string = '';
   let mappedDerivationGroups: { [key: string]: DerivationGroup[] } = {};
   let filteredDerivationGroups: DerivationGroup[] = [];
   let unseenSourcesParsed: ExternalSourceWithDateInfo[] = [];
   let deletedSourcesParsed: ExternalSourceWithDateInfo[] = [];
+
   $: linkedDerivationGroupIds = $planDerivationGroupLinks.filter(link => link.plan_id === $plan?.id).map(link => link.derivation_group_id);
   $: filteredDerivationGroups = $derivationGroups
     .filter(group => linkedDerivationGroupIds.includes(group.id))
@@ -95,11 +98,10 @@
         </div>
       {/if}
       {#each Object.keys(mappedDerivationGroups) as sourceType}
-        <Collapse title={sourceType.toString()} tooltipContent={sourceType.toString()} defaultExpanded={false}>
+        <Collapse title={sourceType.toString()} tooltipContent={sourceType.toString()} defaultExpanded={true}>
           {#if mappedDerivationGroups[sourceType]}
             {#each mappedDerivationGroups[sourceType] as group}
               <ExternalSourcePanelEntry
-                enabled={true}
                 derivationGroup={group}
                 user={user}
               />
