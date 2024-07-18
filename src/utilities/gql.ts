@@ -913,6 +913,11 @@ const gql = {
 
   DELETE_DERIVATION_GROUP: `#graphql
   mutation DeleteDerivationGroup($id: Int!) {
+    deleteDerivationGroupForPlan: ${Queries.DELETE_PLAN_DERIVATION_GROUP}(where: { derivation_group_id: { _eq: $id }}) {
+      returning {
+        id
+      }
+    }
     deleteDerivationGroup: ${Queries.DELETE_DERIVATION_GROUP}(where: { id: { _eq: $id } }) {
       returning {
         id
