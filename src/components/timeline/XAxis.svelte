@@ -105,7 +105,6 @@
             {#each xTicksView as tick}
               {@const x = xScaleView?.(tick.date) ?? 0}
               {#if x + measureTick(tick) < drawWidth}
-                <!-- TODO measure instead of using magic numbers for tick widths -->
                 <g class="tick st-typography-medium" transform="translate({xScaleView?.(tick.date)}, 0)">
                   <text fill="currentColor" dy="0.5em">{tick.label}</text>
                 </g>
