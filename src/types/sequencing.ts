@@ -38,7 +38,7 @@ export type DictionaryType = {
   version: string;
 };
 
-export interface SequenceAdaptationI {
+export interface ISequenceAdaptation {
   argDelegator?: ArgDelegator;
   conditionalKeywords: { else: string; elseIf: string[]; endIf: string; if: string[] };
   globals?: GlobalType[];
