@@ -4,7 +4,6 @@
   import CancelIcon from '@nasa-jpl/stellar/icons/prohibited.svg?component';
   import { createEventDispatcher } from 'svelte';
   import { Status } from '../../enums/status';
-  import { TimeTypes } from '../../enums/time';
   import { planReadOnly } from '../../stores/plan';
   import { plugins } from '../../stores/plugins';
   import type { SimulationDataset } from '../../types/simulation';
@@ -18,7 +17,7 @@
     getSimulationStatus,
     getSimulationTimestamp,
   } from '../../utilities/simulation';
-  import { getUnixEpochTimeFromInterval, validateTime } from '../../utilities/time';
+  import { getUnixEpochTimeFromInterval, removeDateStringMilliseconds } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import Card from '../ui/Card.svelte';
   import StatusBadge from '../ui/StatusBadge.svelte';
@@ -65,9 +64,8 @@
       } else {
         startTimeText = $plugins.time.primary.format(new Date(simulationDataset.simulation_start_time));
 
-        // Remove milliseconds if DOY-like time
-        if (typeof startTimeText === 'string' && validateTime(startTimeText, TimeTypes.ABSOLUTE)) {
-          startTimeText = startTimeText.split('.')[0];
+        if (typeof startTimeText === 'string') {
+          startTimeText = removeDateStringMilliseconds(startTimeText);
         }
       }
 
@@ -93,8 +91,8 @@
           endTimeText = $plugins.time.primary.format(new Date(simulationDataset.simulation_end_time));
 
           // Remove milliseconds if DOY-like time
-          if (typeof endTimeText === 'string' && validateTime(endTimeText, TimeTypes.ABSOLUTE)) {
-            endTimeText = endTimeText.split('.')[0];
+          if (typeof endTimeText === 'string') {
+            endTimeText = removeDateStringMilliseconds(endTimeText);
           }
         }
       }

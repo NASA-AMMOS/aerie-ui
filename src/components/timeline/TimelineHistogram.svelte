@@ -7,14 +7,13 @@
   import { zoom as d3Zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior, type ZoomTransform } from 'd3-zoom';
   import { isEmpty } from 'lodash-es';
   import { createEventDispatcher } from 'svelte';
-  import { TimeTypes } from '../../enums/time';
   import { plugins } from '../../stores/plugins';
   import type { ActivityDirective } from '../../types/activity';
   import type { ConstraintResult } from '../../types/constraint';
   import type { SimulationDataset, Span } from '../../types/simulation';
   import type { MouseOver, TimeRange } from '../../types/timeline';
   import { clamp } from '../../utilities/generic';
-  import { getIntervalInMs, getUnixEpochTimeFromInterval, validateTime } from '../../utilities/time';
+  import { getIntervalInMs, getUnixEpochTimeFromInterval, removeDateStringMilliseconds } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
 
   export let activityDirectives: ActivityDirective[] = [];
@@ -318,9 +317,7 @@
       cursorTooltip = $plugins.time.primary.format(cursorTime) ?? 'Invalid Date';
 
       // Remove milliseconds if DOY-like time
-      if (validateTime(cursorTooltip, TimeTypes.ABSOLUTE)) {
-        cursorTooltip = cursorTooltip.split('.')[0];
-      }
+      cursorTooltip = removeDateStringMilliseconds(cursorTooltip);
 
       // Only dispatch a cursor change if we're just hovering
       if (!brushing) {

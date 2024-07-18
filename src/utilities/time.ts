@@ -888,3 +888,14 @@ export function getTimeZoneName() {
   }
   return 'UNK';
 }
+
+/**
+ * Removes milliseconds from the string if in DOY time format,
+ * otherwise returns the original string.
+ */
+export function removeDateStringMilliseconds(dateString: string): string {
+  if (validateTime(dateString, TimeTypes.ABSOLUTE)) {
+    return dateString.split('.')[0];
+  }
+  return dateString;
+}

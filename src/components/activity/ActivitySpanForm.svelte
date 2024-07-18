@@ -42,9 +42,7 @@
   $: rootSpan = getSpanRootParent(spansMap, span.id);
   $: rootSpanHasChildren = (rootSpan && spanUtilityMaps.spanIdToChildIdsMap[rootSpan.id]?.length > 0) ?? false;
 
-  $: {
-    startTime = $plugins.time.primary.format(new Date(span.startMs));
-  }
+  $: startTime = $plugins.time.primary.format(new Date(span.startMs));
 
   $: if (span.duration) {
     endTime = $plugins.time.primary.format(new Date(span.endMs));

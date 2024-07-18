@@ -113,7 +113,6 @@
   $: filteredConstraintResponses = Object.values(constraintToConstraintResponseMap).filter(r =>
     filteredConstraints.find(c => c.constraint_id === r.constraintId),
   );
-  $: console.log('filteredConstraintResponses :>> ', filteredConstraintResponses);
   $: numOfPrivateConstraints = $constraintPlanSpecs.length - $allowedConstraintSpecs.length;
 
   $: totalViolationCount = getViolationCount(Object.values($constraintResponseMap));
@@ -169,7 +168,6 @@
   }
 
   async function setTimeBoundsToView() {
-    /* TODO use plugin*/
     await startTimeField.validateAndSet($plugins.time.primary.format(new Date($viewTimeRange.start)) ?? 'Invalid Date');
     await endTimeField.validateAndSet($plugins.time.primary.format(new Date($viewTimeRange.end)) ?? 'Invalid Date');
     onUpdateStartTime();

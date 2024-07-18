@@ -19,6 +19,7 @@ import {
   isTimeMax,
   parseDoyOrYmdTime,
   parseDurationString,
+  removeDateStringMilliseconds,
   validateTime,
 } from '../../src/utilities/time';
 import { TimeTypes } from '../enums/time';
@@ -480,4 +481,9 @@ test('validateTime', () => {
   expect(validateTime('365T23:59:60.000', TimeTypes.EPOCH)).toBe(true);
   expect(validateTime('+03:59:60.000', TimeTypes.EPOCH)).toBe(true);
   expect(validateTime('3:59:60', TimeTypes.EPOCH)).toBe(false);
+});
+
+test('removeDateStringMilliseconds', () => {
+  expect(removeDateStringMilliseconds('2024-001T00:00:00.593')).toBe('2024-001T00:00:00');
+  expect(removeDateStringMilliseconds('123456.593')).toBe('123456.593');
 });
