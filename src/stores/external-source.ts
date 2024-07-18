@@ -21,6 +21,7 @@ export const createExternalSourceEventTypeLinkError: Writable<string | null> = w
 /* Persisted. */
 // need extra logic for persistence
 // track which sources have been acknowledged by user as added to AERIE
+// assumes shape ExternalSourceWithDateInfo[]
 export const unseenSources = writable((browser && localStorage.getItem('seenSources')) || '[]');
 unseenSources.subscribe(val => {
   // validate that val is list-like
@@ -30,6 +31,7 @@ unseenSources.subscribe(val => {
 });
 
 // track which sources have been acknowledged by user as deleted from AERIE
+// assumes shape ExternalSourceWithDateInfo[]
 export const deletedSourcesSeen = writable((browser && localStorage.getItem('deletedSources')) || '[]');
 deletedSourcesSeen.subscribe(val => {
   // validate that val is list-like
@@ -38,17 +40,19 @@ deletedSourcesSeen.subscribe(val => {
   }
 });
 
-// // this store catches all derivation groups associated with the current plans that have been disabled
-// //    doesn't check if they're linked or not, simply acts as a list to filter out if they are associated
-// //    it is therefore possible to disable a group, dissociate it, reassociate it, and it'll still be disabled
-// export const currentPlanDerivationGroupsToFilter = writable((browser && localStorage.getItem('currentPlanDerivationGroupsToFilter')) || '{}');
-// currentPlanDerivationGroupsToFilter.subscribe(val => {
-//   // validate that val is list-like
-//   if (browser && JSON.parse(val)) {
-//     localStorage.setItem('currentPlanDerivationGroupsToFilter', val);
-//   }
-// });
-export const currentPlanDerivationGroupIdsToFilter: Writable<number[]> = writable([]);
+// this store catches all derivation groups associated with the current plans that have been disabled
+//    doesn't check if they're linked or not, simply acts as a list to filter out if they are associated
+//    it is therefore possible to disable a group, dissociate it, reassociate it, and it'll still be disabled
+// assumes shape {[plan_id: number]: number[]}, where the list of numbers is the list of filtered out 
+//    derivation groups for the given plan id
+export const planDerivationGroupIdsToFilter = writable((browser && localStorage.getItem('planDerivationGroupIdsToFilter')) || '{}');
+planDerivationGroupIdsToFilter.subscribe(val => {
+  // validate that val is list-like
+  if (browser && JSON.parse(val)) {
+    localStorage.setItem('planDerivationGroupIdsToFilter', val);
+  }
+});
+// export const currentPlanDerivationGroupIdsToFilter: Writable<number[]> = writable([]);
 
 
 /* Subscriptions. */
@@ -117,10 +121,7 @@ export const externalSourceWithResolvedNames = derived<
 
 export const selectedPlanDerivationGroupIds = derived(
   [planDerivationGroupLinks, planId],
-  ([$planDerivationGroupLinks, $planId]) => {
-    console.log("updating selectedplanderivationgroupids:", $planDerivationGroupLinks.filter(link => link.plan_id === $planId).map(link => link.derivation_group_id))
-    return $planDerivationGroupLinks.filter(link => link.plan_id === $planId).map(link => link.derivation_group_id)
-  }
+  ([$planDerivationGroupLinks, $planId]) => $planDerivationGroupLinks.filter(link => link.plan_id === $planId).map(link => link.derivation_group_id)
 );
 
 /* Helper Functions. */
