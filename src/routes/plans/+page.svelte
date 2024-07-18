@@ -107,7 +107,6 @@
       sortable: true,
       valueGetter: (params: ValueGetterParams<Plan>) => {
         if (params.data) {
-          // TODO add icon error here
           return $plugins.time.primary.formatShort(new Date(params.data.start_time)) ?? 'Invalid Date';
         }
       },
