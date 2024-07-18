@@ -86,7 +86,7 @@
     {#if relevantSources.length}
       {#each relevantSources as source}
         <!-- Collapsible details -->
-        <Collapse title={source.key} tooltipContent={source.key} defaultExpanded={true}>
+        <Collapse title={source.key} tooltipContent={source.key} defaultExpanded={false}>
           <span slot="right">
             <p style:color="gray">
               {derivationGroup.sources.get(source.key)?.event_counts} events

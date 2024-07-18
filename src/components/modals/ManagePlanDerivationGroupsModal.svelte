@@ -90,7 +90,6 @@
         input.checked=$selectedPlanDerivationGroupIds.includes(params?.data?.id ?? -1)
         input.addEventListener('click', (event) => {
           if (event?.target && params.data) {
-            console.log(event?.target, params.data)
             if ((event.target as any).checked) {
               // insert
               effects.insertDerivationGroupForPlan(params.data.id, $plan, user);

@@ -37,7 +37,8 @@
       const includesName = group.name.toLocaleLowerCase().includes(filterTextLowerCase);
       return includesName;
     });
-  $: filteredDerivationGroups.forEach(group => {
+  planDerivationGroupLinks.subscribe(_ => mappedDerivationGroups = {}) // clear the map...
+  $: filteredDerivationGroups.forEach(group => { // ...and repopulate it every time the links change. this handles deletion correctly
     const sourceType = getEventSourceTypeName(group.source_type_id, $externalSourceTypes)
     if (sourceType) { // undefined is being very frustrating
       if (mappedDerivationGroups[sourceType] &&
@@ -84,19 +85,20 @@
 
     <AlertError class="m-2" error={$derivationGroupPlanLinkError} />
 
+    {#if unseenSourcesParsed.length || deletedSourcesParsed.length}
+      <div style="padding-top: 10px">
+        <CardList>
+          {#if unseenSourcesParsed.length}
+            <UpdateCard deleted={false} sources={unseenSourcesParsed} on:dismiss={() => unseenSources.set(JSON.stringify([]))}/>
+          {/if}
+          {#if deletedSourcesParsed.length}
+            <UpdateCard deleted={true} sources={deletedSourcesParsed} on:dismiss={() => {deletedSourcesSeen.set(JSON.stringify([]))}}/>
+          {/if}
+        </CardList>
+      </div>
+    {/if}
+
     {#if filteredDerivationGroups.length}
-      {#if unseenSourcesParsed.length || deletedSourcesParsed.length}
-        <div style="padding-top: 10px">
-          <CardList>
-            {#if unseenSourcesParsed.length}
-              <UpdateCard deleted={false} sources={unseenSourcesParsed} on:dismiss={() => unseenSources.set(JSON.stringify([]))}/>
-            {/if}
-            {#if deletedSourcesParsed.length}
-              <UpdateCard deleted={true} sources={deletedSourcesParsed} on:dismiss={() => {deletedSourcesSeen.set(JSON.stringify([]))}}/>
-            {/if}
-          </CardList>
-        </div>
-      {/if}
       {#each Object.keys(mappedDerivationGroups) as sourceType}
         <Collapse title={sourceType.toString()} tooltipContent={sourceType.toString()} defaultExpanded={true}>
           {#if mappedDerivationGroups[sourceType]}
