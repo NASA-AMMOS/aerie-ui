@@ -225,7 +225,7 @@
 
   let gridRowSizes: string = "1fr 3px 0fr";
 
-  // unfortunately very clunky, but it does correctly select all source types on page load as stores populate shortly AFTER the component loads, 
+  // unfortunately very clunky, but it does correctly select all source types on page load as stores populate shortly AFTER the component loads,
   //    so populating selectedFilters with the store values on component load always yields an empty list
   $: if (selectedFilters.length === 1 && selectedFilters[0].id === -1 && $externalSourceTypes.length > 0) {
     selectedFilters = [...$externalSourceTypes]
@@ -385,6 +385,14 @@
           //    it won't warn me that it was deleted.
         }
 
+        // Determine if the derivation group this source belonged to is now empty, if so delete it
+        // NOTE: This work could be moved to Hasura in the future, or re-worked as it might be costly.
+        const derivationGroupsInUse = Array.from(new Set($externalSourceWithResolvedNames.filter(s => s.id !== selectedSource.id).map(s => s.derivation_group_id)).values())
+        const unusedDerivationGroupIds = $derivationGroups.filter(dg => !derivationGroupsInUse.includes(dg.id)).map(dg => dg.id)
+        for (const unusedDerivationGroupId of unusedDerivationGroupIds) {
+          await effects.deleteDerivationGroup(unusedDerivationGroupId, user);
+        }
+
         // Determine if there are no remaining external sources that use the type of the source that was just deleted. If there are none, delete the source type
         // NOTE: This work could be moved to Hasura in the future, or re-worked as it might be costly.
         const sourceTypesInUse = Array.from(new Set($externalSourceWithResolvedNames.filter(s => s.id !== selectedSource.id).map(s => s.source_type_id)).values())
@@ -400,14 +408,6 @@
             await effects.deleteExternalEventType(eventType.id, user);
           }
         });
-
-        // Determine if the derivation group this source belonged to is now empty, if so delete it
-        // NOTE: This work could be moved to Hasura in the future, or re-worked as it might be costly.
-        const derivationGroupsInUse = Array.from(new Set($externalSourceWithResolvedNames.filter(s => s.id !== selectedSource.id).map(s => s.derivation_group_id)).values())
-        const unusedDerivationGroupIds = $derivationGroups.filter(dg => !derivationGroupsInUse.includes(dg.id)).map(dg => dg.id)
-        for (const unusedDerivationGroupId of unusedDerivationGroupIds) {
-          await effects.deleteDerivationGroup(unusedDerivationGroupId, user);
-        }
       }
     }
   }
