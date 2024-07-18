@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { currentPlanDerivationGroupFilter, externalSourceWithResolvedNames } from '../../stores/external-source';
+  import { currentPlanDerivationGroupsToFilter, externalSourceWithResolvedNames } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import type { User } from '../../types/app';
   import type { DerivationGroup, ExternalSourceWithResolvedNames } from '../../types/external-source';
@@ -18,15 +18,17 @@
 
   $: relevantSources = $externalSourceWithResolvedNames.filter(source => derivationGroup.id === source.derivation_group_id);
   $: {
+      // ensure the current derivation group in the filter list if it has been disabled
+      // ensure the current derivation group is NOT in the filter list if it has been enabled
       if (enabled) {
         if (dgInFilter) {
-          currentPlanDerivationGroupFilter.update(current => {
+          currentPlanDerivationGroupsToFilter.update(current => {
             return current.filter(f => f.id !== derivationGroup.id);
           });
         }
       } else {
         if (!(dgInFilter)) {
-          currentPlanDerivationGroupFilter.update(current => [
+          currentPlanDerivationGroupsToFilter.update(current => [
             ...current,
             derivationGroup,
           ])
@@ -35,9 +37,7 @@
     }
 
   function onChange(_event: Event) {
-    currentPlanDerivationGroupFilter.subscribe(filterArray => {
-      dgInFilter = filterArray.some(dg => dg.id === derivationGroup.id);
-    })
+    dgInFilter = $currentPlanDerivationGroupsToFilter.some(dg => dg.id === derivationGroup.id)
   }
 
   async function deleteEmptyDerivationGroup() {

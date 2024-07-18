@@ -235,10 +235,10 @@
     // files repeatedly refreshes, meaning the reaction to file and parsed keeps repeating infinitely. This if statement prevents that.
     if (file !== files[0]) {
       // Reset creation errors when a new file is set
-      $createExternalSourceError = null;
-      $createExternalSourceTypeError = null;
-      $createDerivationGroupError = null;
-      $createExternalSourceEventTypeLinkError = null;
+      createExternalSourceError.set(null);
+      createExternalSourceTypeError.set(null);
+      createDerivationGroupError.set(null);
+      createExternalSourceEventTypeLinkError.set(null);
       isDerivationGroupFieldDisabled = true;
 
       file = files[0];
@@ -366,7 +366,7 @@
     if (selectedSource !== null && selectedSource !== undefined) {
       const deletedSourceEventTypes = await effects.getExternalEventTypesBySource(selectedSourceId ? [selectedSourceId] : [], $externalEventTypes, user);
       const deletionWasSuccessful = await effects.deleteExternalSource(selectedSource, user);
-      if (deletionWasSuccessful) {
+      if (deletionWasSuccessful) { // TODO: replace all of this except the stuff about unseen deletions with triggers in database
         deselectSource();
 
         // persist to list of unseen deletions, with a deleted_at time
@@ -535,14 +535,14 @@
         if ($derivationGroups.filter(dGroup => dGroup.name === derivationGroupInsert.name).length === 0
               && derivationGroupInsert !== undefined) {
           if(sourceType !== undefined) {derivationGroupInsert.source_type_id = sourceType.id;}
-          else {console.log("Source type not registered correctly. Derivation group may be incorrect.")}
+          else {console.log("Source type for this derivation group was not previously registered correctly. Derivation group may be incorrect.")}
           derivationGroup = await effects.createDerivationGroup(derivationGroupInsert, user);
         }
         // name present, but under a different source type id
         else if ($derivationGroups.filter(dGroup => dGroup.source_type_id !== sourceType?.id && dGroup.name === derivationGroupInsert.name).length > 0
               && $derivationGroups.filter(dGroup => dGroup.source_type_id === sourceType?.id && dGroup.name === derivationGroupInsert.name).length === 0) {
           if(sourceType !== undefined) {derivationGroupInsert.source_type_id = sourceType.id;}
-          else {console.log("Source type not registered correctly. Derivation group may be incorrect.")}
+          else {console.log("Source type for this derivation group was not previously registered correctly. Derivation group may be incorrect.")}
           derivationGroup = await effects.createDerivationGroup(derivationGroupInsert, user);
         }
         // name and source type id pair present
