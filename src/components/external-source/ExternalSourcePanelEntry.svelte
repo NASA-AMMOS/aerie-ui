@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { currentPlanDerivationGroupIdsToFilter, externalSourceWithResolvedNames } from '../../stores/external-source';
+  import { externalSourceWithResolvedNames, planDerivationGroupIdsToFilter } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import type { User } from '../../types/app';
   import type { DerivationGroup, ExternalSourceWithResolvedNames } from '../../types/external-source';
@@ -9,35 +9,48 @@
   import { tooltip } from '../../utilities/tooltip';
   import Collapse from '../Collapse.svelte';
 
-  export let enabled: boolean = true;
   export let derivationGroup: DerivationGroup;
   export let user: User | null;
 
   let dgInFilter: boolean = false;
   let relevantSources: ExternalSourceWithResolvedNames[] = [];
-
+  let planDerivationGroupIdsToFilterParsed: {[plan_id: number]: number[]} = JSON.parse($planDerivationGroupIdsToFilter);
+  let enabled = $plan ? !planDerivationGroupIdsToFilterParsed[$plan.id].includes(derivationGroup.id) : true
+  
+  $: planDerivationGroupIdsToFilterParsed = JSON.parse($planDerivationGroupIdsToFilter);
   $: relevantSources = $externalSourceWithResolvedNames.filter(source => derivationGroup.id === source.derivation_group_id);
   $: {
+      console.log(`[${derivationGroup.id}]: enabled=${enabled}, dgInFilter=${dgInFilter}, $plan=${$plan?.id}; ${planDerivationGroupIdsToFilterParsed[$plan?.id ?? -1000]}`)
       // ensure the current derivation group in the filter list if it has been disabled
       // ensure the current derivation group is NOT in the filter list if it has been enabled
-      if (enabled) {
-        if (dgInFilter) {
-          currentPlanDerivationGroupIdsToFilter.update(current => {
-            return current.filter(id => id !== derivationGroup.id);
-          });
+      if ($plan) {
+        if (enabled) {
+          if (dgInFilter) {
+            if (!planDerivationGroupIdsToFilterParsed[$plan.id]) {
+              planDerivationGroupIdsToFilterParsed[$plan.id] = []
+            }
+            else {
+              planDerivationGroupIdsToFilterParsed[$plan.id] = planDerivationGroupIdsToFilterParsed[$plan.id].filter(id => id !== derivationGroup.id)
+            }
+            planDerivationGroupIdsToFilter.set(JSON.stringify(planDerivationGroupIdsToFilterParsed));
+          }
         }
-      } else {
-        if (!(dgInFilter)) {
-          currentPlanDerivationGroupIdsToFilter.update(current => [
-            ...current,
-            derivationGroup.id
-          ])
+        else {
+          if (!(dgInFilter)) {
+            if (!planDerivationGroupIdsToFilterParsed[$plan.id]) {
+              planDerivationGroupIdsToFilterParsed[$plan.id] = [derivationGroup.id]
+            }
+            else if (!planDerivationGroupIdsToFilterParsed[$plan.id].includes(derivationGroup.id)){
+              planDerivationGroupIdsToFilterParsed[$plan.id] = planDerivationGroupIdsToFilterParsed[$plan.id].concat(derivationGroup.id)
+            }
+            planDerivationGroupIdsToFilter.set(JSON.stringify(planDerivationGroupIdsToFilterParsed));
+          }
         }
       }
     }
 
   function onChange(_event: Event) {
-    dgInFilter = $currentPlanDerivationGroupIdsToFilter.includes(derivationGroup.id)
+    if ($plan) dgInFilter = planDerivationGroupIdsToFilterParsed[$plan.id].includes(derivationGroup.id)
   }
 
   async function deleteEmptyDerivationGroup() {
@@ -73,7 +86,7 @@
     {#if relevantSources.length}
       {#each relevantSources as source}
         <!-- Collapsible details -->
-        <Collapse title={source.key} tooltipContent={source.key} defaultExpanded={false}>
+        <Collapse title={source.key} tooltipContent={source.key} defaultExpanded={true}>
           <span slot="right">
             <p style:color="gray">
               {derivationGroup.sources.get(source.key)?.event_counts} events
