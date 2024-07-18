@@ -117,8 +117,10 @@ export const externalSourceWithResolvedNames = derived<
 
 export const selectedPlanDerivationGroupIds = derived(
   [planDerivationGroupLinks, planId],
-  ([$planDerivationGroupLinks, $planId]) =>
-    $planDerivationGroupLinks.filter(link => link.plan_id === $planId).map(link => link.derivation_group_id),
+  ([$planDerivationGroupLinks, $planId]) => {
+    console.log("updating selectedplanderivationgroupids:", $planDerivationGroupLinks.filter(link => link.plan_id === $planId).map(link => link.derivation_group_id))
+    return $planDerivationGroupLinks.filter(link => link.plan_id === $planId).map(link => link.derivation_group_id)
+  }
 );
 
 /* Helper Functions. */

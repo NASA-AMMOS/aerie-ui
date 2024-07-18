@@ -35,7 +35,21 @@
     close: void;
   }>();
 
-  const baseColumnDefs: DataGridColumnDef<DerivationGroup>[] = [
+  let dataGrid: DataGrid<DerivationGroup>;
+  let baseColumnDefs: DataGridColumnDef<DerivationGroup>[] = [];
+
+  selectedPlanDerivationGroupIds.subscribe(e => {
+    if (baseColumnDefs.length > 0 && dataGrid) {
+      // no current way to change just a specific cell unless we add something about plan associations to the DG object, 
+      //    which we don't seek to do.
+      // this does mean every update to any entry in selectedPlanDerivationGroupIds refreshes the whole column, and flashes it,
+      //    though that isn't particularly a problem and does do good to signal association complete. Also a small delay, which
+      //    buffers button smashing and repeated updates pretty well!
+      dataGrid.refreshCells() 
+    }
+  })
+
+  $: baseColumnDefs = [
     {
       field: 'name',
       filter: 'string',
@@ -78,7 +92,6 @@
           if (event?.target && params.data) {
             console.log(event?.target, params.data)
             if ((event.target as any).checked) {
-              // ADD TIMEOUTS IF NECESSARY, MAKE SURE SYNCS ACROSS TABS (USE STORES)
               // insert
               effects.insertDerivationGroupForPlan(params.data.id, $plan, user);
               if ($derivationGroupPlanLinkError !== null) {
@@ -102,9 +115,11 @@
       sortable: true,
       suppressAutoSize: true,
       suppressSizeToFit: true,
-      width: 100
+      width: 100,
+      enableCellChangeFlash: true,      
     },
   ];
+
   const modalColumnSizeNoDetail: string = "1fr 3px 0fr";
   const modalColumnSizeWithDetail: string = "3fr 3px 1fr";
   let modalColumnSize: string = modalColumnSizeNoDetail;
@@ -188,6 +203,7 @@
         <div class="constraiderivationgroups-modal-table-container" style="height:100%">
           {#if filteredDerivationGroups.length}
             <DataGrid
+              bind:this={dataGrid}
               {columnDefs}
               rowData={filteredDerivationGroups}
             />
