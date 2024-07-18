@@ -17,7 +17,8 @@ export const derivationGroupPlanLinkError: Writable<string | null> = writable(nu
 
 export const createExternalSourceEventTypeLinkError: Writable<string | null> = writable(null);
 
-export const currentPlanDerivationGroupFilter: Writable<Array<DerivationGroup>> = writable([]);
+// this store catches all derivation groups associated with the current plan that have been disabled
+export const currentPlanDerivationGroupsToFilter: Writable<DerivationGroup[]> = writable([]);
 
 // need extra logic for persistence
 // track which sources have been acknowledged by user as added to AERIE

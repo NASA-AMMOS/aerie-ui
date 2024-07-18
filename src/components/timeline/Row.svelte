@@ -10,7 +10,7 @@
   import { ViewDefaultActivityOptions, ViewDefaultExternalEventOptions } from '../../constants/view';
   import { Status } from '../../enums/status';
   import { catchError } from '../../stores/errors';
-  import { currentPlanDerivationGroupFilter, externalSources, getSourceName } from '../../stores/external-source';
+  import { currentPlanDerivationGroupsToFilter, externalSources, getSourceName } from '../../stores/external-source';
   import {
     externalResources,
     fetchingResourcesExternal,
@@ -338,7 +338,7 @@
     externalEventTreeExpansionMap = {};
   }
 
-  $: currentPlanDerivationGroupFilter.subscribe(arrayOfDerivationGroups => {
+  $: currentPlanDerivationGroupsToFilter.subscribe(arrayOfDerivationGroups => {
     filteredExternalSources = [];
     arrayOfDerivationGroups.forEach(filteredDerivationGroup => {
       filteredExternalSources = [
