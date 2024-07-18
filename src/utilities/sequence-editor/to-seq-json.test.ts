@@ -10,6 +10,7 @@ import {
 import { readFileSync } from 'fs';
 import { describe, expect, it } from 'vitest';
 import { SeqLanguage } from '../codemirror';
+import { seqJsonToSequence } from './from-seq-json';
 import { sequenceToSeqJson } from './to-seq-json';
 
 function argArrToMap(cmdArgs: FswCommandArgument[]): FswCommandArgumentMap {
@@ -522,5 +523,487 @@ R00:00:01 ECHO "Can this handle \\"Escaped\\" quotes??" # and this "too"
   ]
 }`;
     expect(actual).toEqual(expected);
+  });
+
+  it('should generate loads, activates, ground blocks', async () => {
+    const id = 'test.sequence';
+    const seq = `@ID "${id}"
+A2024-123T12:34:56 @ACTIVATE("activate.name") # No Args
+@ENGINE 10
+@EPOCH "epoch string"
+
+A2024-123T12:34:56 @GROUND_BLOCK("ground_block.name") # No Args
+
+A2024-123T12:34:56 @LOAD("load.name") # No Args
+@ENGINE 22
+@EPOCH "load epoch string"
+
+R123T12:34:56 @LOAD("load2.name") "foobar" 1 2
+@ENGINE 5
+
+R123T11:55:33 @GROUND_EVENT("ground_event.name") "foo" 1 2 3
+
+R123T12:34:56 @ACTIVATE("act2.name") "foo" 1 2 3  # Comment text
+@ENGINE -1
+    `;
+    const actual = JSON.parse(await sequenceToSeqJson(SeqLanguage.parser.parse(seq), seq, commandBanana, ''));
+    const expectedJson = {
+      id,
+      metadata: {},
+      steps: [
+        {
+          args: [],
+          description: 'No Args',
+          engine: 10,
+          epoch: 'epoch string',
+          sequence: 'activate.name',
+          time: {
+            tag: '2024-123T12:34:56',
+            type: 'ABSOLUTE',
+          },
+          type: 'activate',
+        },
+        {
+          args: [],
+          description: 'No Args',
+          name: 'ground_block.name',
+          time: {
+            tag: '2024-123T12:34:56',
+            type: 'ABSOLUTE',
+          },
+          type: 'ground_block',
+        },
+        {
+          args: [],
+          description: 'No Args',
+          engine: 22,
+          epoch: 'load epoch string',
+          sequence: 'load.name',
+          time: {
+            tag: '2024-123T12:34:56',
+            type: 'ABSOLUTE',
+          },
+          type: 'load',
+        },
+        {
+          args: [
+            {
+              type: 'string',
+              value: 'foobar',
+            },
+            {
+              type: 'number',
+              value: 1,
+            },
+            {
+              type: 'number',
+              value: 2,
+            },
+          ],
+          engine: 5,
+          sequence: 'load2.name',
+          time: {
+            tag: '123T12:34:56',
+            type: 'COMMAND_RELATIVE',
+          },
+          type: 'load',
+        },
+        {
+          args: [
+            {
+              type: 'string',
+              value: 'foo',
+            },
+            {
+              type: 'number',
+              value: 1,
+            },
+            {
+              type: 'number',
+              value: 2,
+            },
+            {
+              type: 'number',
+              value: 3,
+            },
+          ],
+          name: 'ground_event.name',
+          time: {
+            tag: '123T11:55:33',
+            type: 'COMMAND_RELATIVE',
+          },
+          type: 'ground_event',
+        },
+        {
+          args: [
+            {
+              type: 'string',
+              value: 'foo',
+            },
+            {
+              type: 'number',
+              value: 1,
+            },
+            {
+              type: 'number',
+              value: 2,
+            },
+            {
+              type: 'number',
+              value: 3,
+            },
+          ],
+          description: 'Comment text',
+          engine: -1,
+          sequence: 'act2.name',
+          time: {
+            tag: '123T12:34:56',
+            type: 'COMMAND_RELATIVE',
+          },
+          type: 'activate',
+        },
+      ],
+    };
+    expect(actual).toEqual(expectedJson);
+  });
+
+  it('should serialize a request with nested metadata', async () => {
+    const input = `
+A2024-123T12:34:56 @REQUEST_BEGIN("request.name") # Description Text
+  C CMD_0 1 2 3
+  @METADATA "foo" "bar"
+  @MODEL "a" 1 "00:00:00"
+
+  R100 CMD_1 "1 2 3"
+
+@REQUEST_END
+@METADATA "sub_object" {
+  "boolean": true
+}
+    `;
+    const actual = JSON.parse(await sequenceToSeqJson(SeqLanguage.parser.parse(input), input, commandBanana, 'id'));
+    const expected = {
+      id: 'id',
+      metadata: {},
+      requests: [
+        {
+          description: 'Description Text',
+          metadata: {
+            sub_object: {
+              boolean: true,
+            },
+          },
+          name: 'request.name',
+          steps: [
+            {
+              args: [
+                {
+                  type: 'number',
+                  value: 1,
+                },
+                {
+                  type: 'number',
+                  value: 2,
+                },
+                {
+                  type: 'number',
+                  value: 3,
+                },
+              ],
+              metadata: { foo: 'bar' },
+              models: [{ offset: '00:00:00', value: 1, variable: 'a' }],
+              stem: 'CMD_0',
+              time: {
+                type: 'COMMAND_COMPLETE',
+              },
+              type: 'command',
+            },
+
+            {
+              args: [
+                {
+                  type: 'string',
+                  value: '1 2 3',
+                },
+              ],
+              stem: 'CMD_1',
+              time: {
+                tag: '00:01:40',
+                type: 'COMMAND_RELATIVE',
+              },
+              type: 'command',
+            },
+          ],
+          time: {
+            tag: '2024-123T12:34:56',
+            type: 'ABSOLUTE',
+          },
+          type: 'request',
+        },
+      ],
+    };
+    expect(actual).toEqual(expected);
+  });
+
+  it('should serialize a request with simple metadata', async () => {
+    const input = `
+@GROUND_EPOCH("GroundEpochName","+3:00") @REQUEST_BEGIN("request2.name")
+  C CMD_0 1 2 3
+  @METADATA "cmd_0_meta_name_0" "cmd_0_meta_value_0"
+  @MODEL "a" 1 "00:00:00"
+
+  R100 CMD_1 "1 2 3"
+
+@REQUEST_END
+@METADATA "req_0_meta_name" "req_0_meta_value"
+    `;
+    const actual = JSON.parse(await sequenceToSeqJson(SeqLanguage.parser.parse(input), input, commandBanana, 'id'));
+    const expected = {
+      id: 'id',
+      metadata: {},
+      requests: [
+        {
+          ground_epoch: {
+            delta: '+3:00',
+            name: 'GroundEpochName',
+          },
+          metadata: {
+            req_0_meta_name: 'req_0_meta_value',
+          },
+          name: 'request2.name',
+          steps: [
+            {
+              args: [
+                {
+                  type: 'number',
+                  value: 1,
+                },
+                {
+                  type: 'number',
+                  value: 2,
+                },
+                {
+                  type: 'number',
+                  value: 3,
+                },
+              ],
+              metadata: {
+                cmd_0_meta_name_0: 'cmd_0_meta_value_0',
+              },
+              models: [{ offset: '00:00:00', value: 1, variable: 'a' }],
+              stem: 'CMD_0',
+              time: {
+                type: 'COMMAND_COMPLETE',
+              },
+              type: 'command',
+            },
+
+            {
+              args: [
+                {
+                  type: 'string',
+                  value: '1 2 3',
+                },
+              ],
+              stem: 'CMD_1',
+              time: {
+                tag: '00:01:40',
+                type: 'COMMAND_RELATIVE',
+              },
+              type: 'command',
+            },
+          ],
+          type: 'request',
+        },
+      ],
+    };
+    expect(actual).toEqual(expected);
+  });
+
+  it('should serialize multiple requests', async () => {
+    const input = `
+A2024-123T12:34:56 @REQUEST_BEGIN("request.name") # Description Text
+  C CMD_0 1 2 3
+  @METADATA "foo" "bar"
+  @MODEL "a" 1 "00:00:00"
+
+  R100 CMD_1 "1 2 3"
+
+@REQUEST_END
+@METADATA "sub_object" {
+  "boolean": true
+}
+
+@GROUND_EPOCH("GroundEpochName","+3:00") @REQUEST_BEGIN("request2.name")
+  C CMD_0 1 2 3
+  @METADATA "foo" "bar"
+  @MODEL "a" 1 "00:00:00"
+
+  R100 CMD_1 "1 2 3"
+
+@REQUEST_END
+@METADATA "foo" "bar"
+
+`;
+
+    const actual = JSON.parse(await sequenceToSeqJson(SeqLanguage.parser.parse(input), input, commandBanana, 'id'));
+    const expected = {
+      id: 'id',
+      metadata: {},
+      requests: [
+        {
+          description: 'Description Text',
+          metadata: {
+            sub_object: {
+              boolean: true,
+            },
+          },
+          name: 'request.name',
+          steps: [
+            {
+              args: [
+                {
+                  type: 'number',
+                  value: 1,
+                },
+                {
+                  type: 'number',
+                  value: 2,
+                },
+                {
+                  type: 'number',
+                  value: 3,
+                },
+              ],
+              metadata: { foo: 'bar' },
+              models: [{ offset: '00:00:00', value: 1, variable: 'a' }],
+              stem: 'CMD_0',
+              time: {
+                type: 'COMMAND_COMPLETE',
+              },
+              type: 'command',
+            },
+
+            {
+              args: [
+                {
+                  type: 'string',
+                  value: '1 2 3',
+                },
+              ],
+              stem: 'CMD_1',
+              time: {
+                tag: '00:01:40',
+                type: 'COMMAND_RELATIVE',
+              },
+              type: 'command',
+            },
+          ],
+          time: {
+            tag: '2024-123T12:34:56',
+            type: 'ABSOLUTE',
+          },
+          type: 'request',
+        },
+
+        {
+          ground_epoch: {
+            delta: '+3:00',
+            name: 'GroundEpochName',
+          },
+          metadata: {
+            foo: 'bar',
+          },
+          name: 'request2.name',
+          steps: [
+            {
+              args: [
+                {
+                  type: 'number',
+                  value: 1,
+                },
+                {
+                  type: 'number',
+                  value: 2,
+                },
+                {
+                  type: 'number',
+                  value: 3,
+                },
+              ],
+              metadata: { foo: 'bar' },
+              models: [{ offset: '00:00:00', value: 1, variable: 'a' }],
+              stem: 'CMD_0',
+              time: {
+                type: 'COMMAND_COMPLETE',
+              },
+              type: 'command',
+            },
+
+            {
+              args: [
+                {
+                  type: 'string',
+                  value: '1 2 3',
+                },
+              ],
+              stem: 'CMD_1',
+              time: {
+                tag: '00:01:40',
+                type: 'COMMAND_RELATIVE',
+              },
+              type: 'command',
+            },
+          ],
+          type: 'request',
+        },
+      ],
+    };
+    expect(actual).toEqual(expected);
+  });
+
+  describe('round trip', () => {
+    it('should round trip commands', async () => {
+      const input = `
+  @ID "test.seq"
+  C FSW_CMD_1 1e3 2.34
+  # comment
+  C FSW_CMD_1 0.123 -2.34 # inline description`;
+
+      const seqJson1 = await sequenceToSeqJson(SeqLanguage.parser.parse(input), input, commandDictionary, 'id');
+      const seqN1 = await seqJsonToSequence(seqJson1);
+      const seqJson2 = await sequenceToSeqJson(SeqLanguage.parser.parse(seqN1), seqN1, commandDictionary, 'id');
+      expect(seqJson1).toEqual(seqJson2);
+    });
+
+    it('should round trip activates, loads, etc', async () => {
+      const input = `
+@ID "test.seq"
+C FSW_CMD_1 1e3 2.34
+# comment
+C FSW_CMD_1 0.123 -2.34 # inline description
+A2024-123T12:34:56 @REQUEST_BEGIN("request.name") # Description Text
+  C CMD_0 1 2 3
+  @METADATA "foo" "bar"
+  @MODEL "a" 1 "00:00:00"
+  R100 CMD_1 "1 2 3"
+@REQUEST_END
+@METADATA "sub_object" {
+  "boolean": true
+}
+@GROUND_EPOCH("GroundEpochName","+3:00") @REQUEST_BEGIN("request2.name")
+  C CMD_0 1 2 3
+  @METADATA "foo" "bar"
+  @MODEL "a" 1 "00:00:00"
+  R100 CMD_1 "1 2 3"
+@REQUEST_END
+@METADATA "foo" "bar"
+  `;
+
+      const seqJson1 = await sequenceToSeqJson(SeqLanguage.parser.parse(input), input, commandDictionary, 'id');
+      const seqN1 = await seqJsonToSequence(seqJson1);
+      const seqJson2 = await sequenceToSeqJson(SeqLanguage.parser.parse(seqN1), seqN1, commandDictionary, 'id');
+      expect(seqJson1).toEqual(seqJson2);
+    });
   });
 });
