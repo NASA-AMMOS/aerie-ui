@@ -17,9 +17,8 @@ export const derivationGroupPlanLinkError: Writable<string | null> = writable(nu
 
 export const createExternalSourceEventTypeLinkError: Writable<string | null> = writable(null);
 
-// this store catches all derivation groups associated with the current plan that have been disabled
-export const currentPlanDerivationGroupsToFilter: Writable<DerivationGroup[]> = writable([]);
 
+/* Persisted. */
 // need extra logic for persistence
 // track which sources have been acknowledged by user as added to AERIE
 export const unseenSources = writable((browser && localStorage.getItem('seenSources')) || '[]');
@@ -29,7 +28,6 @@ unseenSources.subscribe(val => {
     localStorage.setItem('seenSources', val);
   }
 });
-// TODO: delete from this
 
 // track which sources have been acknowledged by user as deleted from AERIE
 export const deletedSourcesSeen = writable((browser && localStorage.getItem('deletedSources')) || '[]');
@@ -39,7 +37,18 @@ deletedSourcesSeen.subscribe(val => {
     localStorage.setItem('deletedSources', val);
   }
 });
-// TODO: clear this at acknowledgement
+
+// // this store catches all derivation groups associated with the current plans that have been disabled
+// //    doesn't check if they're linked or not, simply acts as a list to filter out if they are associated
+// //    it is therefore possible to disable a group, dissociate it, reassociate it, and it'll still be disabled
+// export const currentPlanDerivationGroupsToFilter = writable((browser && localStorage.getItem('currentPlanDerivationGroupsToFilter')) || '{}');
+// currentPlanDerivationGroupsToFilter.subscribe(val => {
+//   // validate that val is list-like
+//   if (browser && JSON.parse(val)) {
+//     localStorage.setItem('currentPlanDerivationGroupsToFilter', val);
+//   }
+// });
+export const currentPlanDerivationGroupIdsToFilter: Writable<number[]> = writable([]);
 
 
 /* Subscriptions. */
