@@ -10,7 +10,7 @@
   import { ViewDefaultActivityOptions, ViewDefaultExternalEventOptions } from '../../constants/view';
   import { Status } from '../../enums/status';
   import { catchError } from '../../stores/errors';
-  import { currentPlanDerivationGroupsToFilter, externalSources, getSourceName } from '../../stores/external-source';
+  import { currentPlanDerivationGroupIdsToFilter, externalSources } from '../../stores/external-source';
   import {
     externalResources,
     fetchingResourcesExternal,
@@ -338,16 +338,6 @@
     externalEventTreeExpansionMap = {};
   }
 
-  $: currentPlanDerivationGroupsToFilter.subscribe(arrayOfDerivationGroups => {
-    filteredExternalSources = [];
-    arrayOfDerivationGroups.forEach(filteredDerivationGroup => {
-      filteredExternalSources = [
-        ...filteredExternalSources,
-        ...filteredDerivationGroup.sources.keys(),
-      ]
-    });
-  });
-
   // Track resource loading status for this Row
   $: if (resourceRequestMap) {
     const newLoadedResources: Resource[] = [];
@@ -487,7 +477,8 @@
     externalEventsFilteredByType = [];
     // Apply filter for hiding derivation groups
     externalEventsFilteredByDG = externalEvents.filter(ee => {
-      return !(ee.source_id === undefined) && !(filteredExternalSources.includes(getSourceName(ee?.source_id, $externalSources)));
+      let dg = $externalSources.find(es => es.id === ee.source_id)?.derivation_group_id ?? -1
+      return !(ee.source_id === undefined) && !($currentPlanDerivationGroupIdsToFilter.includes(dg));
     });
     // Filter by external event type
     const externalEventsByType = groupBy(externalEventsFilteredByDG, 'event_type');
