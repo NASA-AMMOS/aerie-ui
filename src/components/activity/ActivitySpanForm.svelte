@@ -20,7 +20,6 @@
   export let activityTypes: ActivityType[] = [];
   export let filteredExpansionSequences: ExpansionSequence[] = [];
   export let modelId: number;
-  export let planStartTimeYmd: string;
   export let simulationDatasetId: number = -1;
   export let span: Span;
   export let spansMap: SpansMap = {};
@@ -37,7 +36,7 @@
   let rootSpan: Span | null;
   let rootSpanHasChildren: boolean;
   let seqId: string | null;
-  let startTime: string;
+  let startTime: string | null;
 
   $: activityType = (activityTypes ?? []).find(({ name: activityTypeName }) => span.type === activityTypeName) ?? null;
   $: rootSpan = getSpanRootParent(spansMap, span.id);
@@ -173,7 +172,7 @@
         <label use:tooltip={{ content: 'Start Time', placement: 'top' }} for="startTime">
           Start Time ({$plugins.time.primary.label})
         </label>
-        <input class="st-input w-100" disabled name="startTime" value={startTime} />
+        <input class="st-input w-100" disabled name="startTime" value={startTime ?? 'Invalid Date'} />
       </Input>
 
       <Input layout="inline">

@@ -3,7 +3,13 @@
 <script lang="ts">
   import TableFillIcon from '@nasa-jpl/stellar/icons/table_fill.svg?component';
   import TableFitIcon from '@nasa-jpl/stellar/icons/table_fit.svg?component';
-  import type { ColDef, ColumnResizedEvent, ColumnState, ValueGetterParams } from 'ag-grid-community';
+  import type {
+    ColDef,
+    ColumnResizedEvent,
+    ColumnState,
+    ICellRendererParams,
+    ValueGetterParams,
+  } from 'ag-grid-community';
   import { debounce } from 'lodash-es';
   import { activityDirectivesMap, selectActivity, selectedActivityDirectiveId } from '../../stores/activities';
   import { activityErrorRollupsMap } from '../../stores/errors';
@@ -19,6 +25,7 @@
   import GridMenu from '../menus/GridMenu.svelte';
   import DataGrid from '../ui/DataGrid/DataGrid.svelte';
   import { tagsCellRenderer, tagsFilterValueGetter } from '../ui/DataGrid/DataGridTags';
+  import IconCellRenderer from '../ui/IconCellRenderer.svelte';
   import Panel from '../ui/Panel.svelte';
   import ActivityDirectivesTable from './ActivityDirectivesTable.svelte';
   import ActivityTableMenu from './ActivityTableMenu.svelte';
@@ -173,9 +180,22 @@
       sortable: true,
       valueGetter: (params: ValueGetterParams<ActivityDirective>) => {
         if ($plan && params && params.data && typeof params.data.start_time_ms === 'number') {
-          return $plugins.time.primary.format(new Date(params.data.start_time_ms));
+          return $plugins.time.primary.format(new Date(params.data.start_time_ms)) ?? 'Invalid Date';
         }
         return '';
+      },
+      cellRenderer: (params: ICellRendererParams<ActivityDirective>) => {
+        if (params.value !== 'Invalid Date') {
+          return params.value;
+        }
+        const div = document.createElement('div');
+
+        new IconCellRenderer({
+          props: { type: 'error' },
+          target: div,
+        });
+
+        return div;
       },
     },
     tags: {

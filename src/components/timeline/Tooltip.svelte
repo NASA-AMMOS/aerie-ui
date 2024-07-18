@@ -271,7 +271,9 @@
   function textForActivityDirective(activityDirective: ActivityDirective): string {
     const { anchor_id, id, name, start_time_ms, type } = activityDirective;
     const directiveStartTime =
-      typeof start_time_ms === 'number' ? $plugins.time.primary.format(new Date(start_time_ms)) : 'Unknown';
+      typeof start_time_ms === 'number'
+        ? $plugins.time.primary.format(new Date(start_time_ms)) ?? 'Invalid Date'
+        : 'Unknown';
     return `
       <div class='tooltip-row-container'>
         <div class='st-typography-bold' style='color: var(--st-gray-10); display: flex; gap: 4px;'>${DirectiveIcon} Activity Directive</div>
@@ -347,7 +349,7 @@
       color = (layer as LineLayer).lineColor;
     }
 
-    const pointTime = $plugins.time.primary.format(new Date(x));
+    const pointTime = $plugins.time.primary.format(new Date(x)) ?? 'Invalid Date';
 
     return `
       <div class='tooltip-row-container'>
@@ -372,7 +374,7 @@
                     `<div class='tooltip-row'>
                       <span>Time (${f.label}):</span>
                       <span class='tooltip-value-highlight st-typography-medium'>
-                        ${f.format(new Date(x))}
+                        ${f.format(new Date(x)) ?? 'Invalid Date'}
                       </span>
                   </div>`,
                 )
@@ -391,8 +393,8 @@
 
   function textForSpan(span: Span): string {
     const { id, duration, startMs, endMs, type } = span;
-    const spanStartTime = $plugins.time.primary.format(new Date(startMs));
-    const spanEndTime = $plugins.time.primary.format(new Date(endMs));
+    const spanStartTime = $plugins.time.primary.format(new Date(startMs)) ?? 'Invalid Date';
+    const spanEndTime = $plugins.time.primary.format(new Date(endMs)) ?? 'Invalid Date';
     return `
       <div class='tooltip-row-container'>
         <div class='st-typography-bold' style='color: var(--st-gray-10); display: flex; gap: 4px;'>${SpanIcon} Simulated Activity (Span)</div>

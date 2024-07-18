@@ -84,7 +84,7 @@
   let numOfUserChanges: number = 0;
   let parameterErrorMap: Record<string, string[]> = {};
   let parametersWithErrorsCount: number = 0;
-  let startTime: string;
+  let startTime: string | null;
   let startTimeField: FieldStore<string>;
 
   $: if (user !== null && $plan !== null) {
@@ -105,9 +105,9 @@
     startTime = $plugins.time.primary.format(new Date(startTimeMs));
   }
 
-  $: startTimeField = field<string>(startTime, [required, $plugins.time.primary.validate]);
+  $: startTimeField = field<string>(startTime ?? 'Invalid Date', [required, $plugins.time.primary.validate]);
   $: activityNameField = field<string>(activityDirective.name);
-  $: startTimeField.validateAndSet(startTime);
+  $: startTimeField.validateAndSet(startTime ?? 'Invalid Date');
   $: activityNameField.validateAndSet(activityDirective.name);
 
   $: if (activityType && activityDirective.arguments) {
@@ -376,7 +376,11 @@
     if ($startTimeField.valid && startTime !== $startTimeField.value) {
       const { id } = activityDirective;
       const planStartTimeDoy = getDoyTime(new Date(planStartTimeYmd));
-      const startTimeDoy = getDoyTime($plugins.time.primary.parse($startTimeField.value));
+      const startTimeDate = $plugins.time.primary.parse($startTimeField.value);
+      if (!startTimeDate) {
+        return;
+      }
+      const startTimeDoy = getDoyTime(startTimeDate);
       const start_offset = getIntervalFromDoyRange(planStartTimeDoy, startTimeDoy);
       if ($plan) {
         effects.updateActivityDirective($plan, id, { start_offset }, activityType, user);

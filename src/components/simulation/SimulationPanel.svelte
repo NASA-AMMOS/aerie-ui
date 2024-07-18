@@ -37,7 +37,7 @@
   import { featurePermissions } from '../../utilities/permissions';
   import { getSimulationQueuePosition } from '../../utilities/simulation';
   import { getDoyTime } from '../../utilities/time';
-  import { required, validateEndTime, validateStartTime } from '../../utilities/validators';
+  import { required, validateStartTime } from '../../utilities/validators';
   import Collapse from '../Collapse.svelte';
   import DatePickerField from '../form/DatePickerField.svelte';
   import GridMenu from '../menus/GridMenu.svelte';
@@ -57,28 +57,38 @@
 
   let simulateButtonTooltip: string = '';
   let reSimulateButtonTooltip: string = '';
-  let endTime: string;
+  let endTime: string | null;
   let endTimeField: FieldStore<string>;
   let formParameters: FormParameter[] = [];
   let hasRunPermission: boolean = false;
   let hasUpdatePermission: boolean = false;
   let isFilteredBySnapshot: boolean = false;
   let numOfUserChanges: number = 0;
-  let startTime: string;
+  let startTime: string | null;
   let startTimeField: FieldStore<string>;
   let modelParametersMap: ParametersMap = {};
   let filteredSimulationDatasets: SimulationDataset[] = [];
 
   function validateStartTimeField(startTime: string) {
-    const startTimeMs = $plugins.time.primary.parse(startTime).getTime();
-    const endTimeMs = $plugins.time.primary.parse($endTimeField.value).getTime();
-    return validateStartTime(startTimeMs, endTimeMs, 'Simulation');
+    const startTimeDate = $plugins.time.primary.parse(startTime);
+    const endTimeDate = $plugins.time.primary.parse($endTimeField.value);
+    if (!startTimeDate) {
+      return Promise.resolve('Invalid Start Date');
+    } else if (!endTimeDate) {
+      return Promise.resolve('Invalid End Date');
+    }
+    return validateStartTime(startTimeDate.getTime(), endTimeDate.getTime(), 'Simulation');
   }
 
   function validateEndTimeField(endTime: string) {
-    const startTimeMs = $plugins.time.primary.parse($startTimeField.value).getTime();
-    const endTimeMs = $plugins.time.primary.parse(endTime).getTime();
-    return validateEndTime(startTimeMs, endTimeMs, 'Simulation');
+    const startTimeDate = $plugins.time.primary.parse($startTimeField.value);
+    const endTimeDate = $plugins.time.primary.parse(endTime);
+    if (!startTimeDate) {
+      return Promise.resolve('Invalid Start Date');
+    } else if (!endTimeDate) {
+      return Promise.resolve('Invalid End Date');
+    }
+    return validateStartTime(startTimeDate.getTime(), endTimeDate.getTime(), 'Simulation');
   }
 
   $: if (user !== null && $plan !== null) {
@@ -99,8 +109,16 @@
     endTime = $plugins.time.primary.format(endTimeDate);
   }
 
-  $: startTimeField = field<string>(startTime, [required, $plugins.time.primary.validate, validateStartTimeField]);
-  $: endTimeField = field<string>(endTime, [required, $plugins.time.primary.validate, validateEndTimeField]);
+  $: startTimeField = field<string>(startTime ?? 'Invalid Date', [
+    required,
+    $plugins.time.primary.validate,
+    validateStartTimeField,
+  ]);
+  $: endTimeField = field<string>(endTime ?? 'Invalid Date', [
+    required,
+    $plugins.time.primary.validate,
+    validateEndTimeField,
+  ]);
   $: numOfUserChanges = formParameters.reduce((previousHasChanges: number, formParameter) => {
     return /user/.test(formParameter.valueSource) ? previousHasChanges + 1 : previousHasChanges;
   }, 0);
@@ -257,9 +275,14 @@
   }
 
   function updateStartEndTimes({ endString, startString }: { endString?: string; startString?: string }) {
-    if ($simulation !== null && $plan !== null) {
-      const startDoyString = startString ? getDoyTime($plugins.time.primary.parse(startString)) : null;
-      const endDoyString = endString ? getDoyTime($plugins.time.primary.parse(endString)) : null;
+    if ($simulation !== null && $plan !== null && startString && endString) {
+      const startTimeDate = $plugins.time.primary.parse(startString);
+      const endTimeDate = $plugins.time.primary.parse(endString);
+      if (!startTimeDate || !endTimeDate) {
+        return;
+      }
+      const startDoyString = startString ? getDoyTime(startTimeDate) : null;
+      const endDoyString = endString ? getDoyTime(endTimeDate) : null;
       const newSimulation: Simulation = {
         ...$simulation,
         ...(startDoyString ? { simulation_start_time: startDoyString } : {}),
@@ -292,14 +315,14 @@
 
   async function onPlanStartTimeClick() {
     if ($plan) {
-      await startTimeField.validateAndSet($plugins.time.primary.format(new Date($planStartTimeMs)));
+      await startTimeField.validateAndSet($plugins.time.primary.format(new Date($planStartTimeMs)) ?? 'Invalid Date');
       updateStartEndTimes({ startString: $startTimeField.value });
     }
   }
 
   async function onPlanEndTimeClick() {
     if ($plan) {
-      await endTimeField.validateAndSet($plugins.time.primary.format(new Date($planEndTimeMs)));
+      await endTimeField.validateAndSet($plugins.time.primary.format(new Date($planEndTimeMs)) ?? 'Invalid Date');
       updateStartEndTimes({ endString: $endTimeField.value });
     }
   }

@@ -11,7 +11,7 @@
 
   let isDoyPattern = false;
 
-  $: isDoyPattern = validateTime($plugins.time.primary.format(new Date(window.start)), TimeTypes.ABSOLUTE);
+  $: isDoyPattern = validateTime($plugins.time.primary.format(new Date(window.start)) ?? '', TimeTypes.ABSOLUTE);
 
   function zoomToViolation(window: TimeRange): void {
     $viewTimeRange = window;
@@ -32,7 +32,7 @@
       {startYear}-<span class="st-typography-bold">{startDoy}</span> T {startHours}:{startMins}:{startSecs}.{startMsecs}
       {$plugins.time.primary.label}
     {:else}
-      {$plugins.time.primary.format(new Date(window.start))}
+      {$plugins.time.primary.format(new Date(window.start)) ?? 'Invalid Date'}
     {/if}
   </div>
   <div class="separator">–</div>
@@ -49,7 +49,7 @@
       {endYear}-<span class="st-typography-bold">{endDoy}</span> T {endHours}:{endMins}:{endSecs}.{endMsecs}
       {$plugins.time.primary.label}
     {:else}
-      {$plugins.time.primary.format(new Date(window.start))}
+      {$plugins.time.primary.format(new Date(window.start)) ?? 'Invalid Date'}
     {/if}
   </div>
 </button>

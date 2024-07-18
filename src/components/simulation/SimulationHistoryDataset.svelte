@@ -38,8 +38,8 @@
   let simulationBoundsVizRangeLeft = 0;
   let simulationBoundsVizRangeWidth = 0;
   let simulationExtentVizRangeWidth = 0;
-  let startTimeText = '';
-  let endTimeText = '';
+  let startTimeText: string | null = '';
+  let endTimeText: string | null = '';
   let progress = 0;
   let extent: string | null = '';
   let status: Status | null = null;
@@ -66,7 +66,7 @@
         startTimeText = $plugins.time.primary.format(new Date(simulationDataset.simulation_start_time));
 
         // Remove milliseconds if DOY-like time
-        if (validateTime(startTimeText, TimeTypes.ABSOLUTE)) {
+        if (typeof startTimeText === 'string' && validateTime(startTimeText, TimeTypes.ABSOLUTE)) {
           startTimeText = startTimeText.split('.')[0];
         }
       }
@@ -93,7 +93,7 @@
           endTimeText = $plugins.time.primary.format(new Date(simulationDataset.simulation_end_time));
 
           // Remove milliseconds if DOY-like time
-          if (validateTime(endTimeText, TimeTypes.ABSOLUTE)) {
+          if (typeof endTimeText === 'string' && validateTime(endTimeText, TimeTypes.ABSOLUTE)) {
             endTimeText = endTimeText.split('.')[0];
           }
         }

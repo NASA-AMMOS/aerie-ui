@@ -57,8 +57,8 @@
     ),
   ]);
   let planExportProgress: number | null = null;
-  let planStartTime: string = '';
-  let planEndTime: string = '';
+  let planStartTime: string | null = '';
+  let planEndTime: string | null = '';
 
   $: permissionError = $planReadOnly ? PlanStatusMessages.READ_ONLY : 'You do not have permission to edit this plan.';
   $: if (plan) {
@@ -278,13 +278,13 @@
           >
             Start Time ({$plugins.time.primary.label})
           </label>
-          <input class="st-input w-100" disabled name="startTime" value={planStartTime} />
+          <input class="st-input w-100" disabled name="startTime" value={planStartTime ?? 'Invalid Date'} />
         </Input>
         <Input layout="inline">
           <label use:tooltip={{ content: `End Time (${$plugins.time.primary.label})`, placement: 'top' }} for="endTime">
             End Time ({$plugins.time.primary.label})
           </label>
-          <input class="st-input w-100" disabled name="endTime" value={planEndTime} />
+          <input class="st-input w-100" disabled name="endTime" value={planEndTime ?? 'Invalid Date'} />
         </Input>
         <Input layout="inline">
           <label use:tooltip={{ content: 'Owner', placement: 'top' }} for="owner">Owner</label>

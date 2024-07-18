@@ -155,7 +155,7 @@
           cursorX = offsetX;
         }
         date = new Date(unixEpochTime);
-        cursorTimeLabel = $plugins.time.primary.format(date);
+        cursorTimeLabel = $plugins.time.primary.format(date) ?? 'Invalid Date';
         cursorTimeLabel += ' ' + $plugins.time.primary.label;
       }
       cursorMaxWidth = drawWidth - cursorX;

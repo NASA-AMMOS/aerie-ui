@@ -5,12 +5,12 @@ export type PluginCode = {
 };
 
 export type PluginTime = {
-  format: (date: Date) => string;
-  formatShort: (date: Date) => string;
+  format: (date: Date) => string | null;
+  formatShort: (date: Date) => string | null;
   formatString: string;
-  formatTick: (date: Date, durationMs: number, tickCount: number) => string;
+  formatTick: (date: Date, durationMs: number, tickCount: number) => string | null;
   label: string;
-  parse: (string: string) => Date;
+  parse: (string: string) => Date | null;
   validate: (string: string) => Promise<ValidationResult>;
 };
 

@@ -18,6 +18,7 @@
   import DataGridActions from '../../components/ui/DataGrid/DataGridActions.svelte';
   import { tagsCellRenderer, tagsFilterValueGetter } from '../../components/ui/DataGrid/DataGridTags';
   import SingleActionDataGrid from '../../components/ui/DataGrid/SingleActionDataGrid.svelte';
+  import IconCellRenderer from '../../components/ui/IconCellRenderer.svelte';
   import Panel from '../../components/ui/Panel.svelte';
   import SectionTitle from '../../components/ui/SectionTitle.svelte';
   import TagsInput from '../../components/ui/Tags/TagsInput.svelte';
@@ -49,6 +50,7 @@
   };
   type PlanCellRendererParams = ICellRendererParams<Plan> & CellRendererParams;
 
+  /* eslint-disable sort-keys */
   const baseColumnDefs: DataGridColumnDef[] = [
     {
       field: 'id',
@@ -105,8 +107,22 @@
       sortable: true,
       valueGetter: (params: ValueGetterParams<Plan>) => {
         if (params.data) {
-          return $plugins.time.primary.formatShort(new Date(params.data.start_time));
+          // TODO add icon error here
+          return $plugins.time.primary.formatShort(new Date(params.data.start_time)) ?? 'Invalid Date';
         }
+      },
+      cellRenderer: (params: ICellRendererParams<Plan>) => {
+        if (params.value !== 'Invalid Date') {
+          return params.value;
+        }
+        const div = document.createElement('div');
+
+        new IconCellRenderer({
+          props: { type: 'error' },
+          target: div,
+        });
+
+        return div;
       },
       width: 150,
     },
@@ -120,9 +136,22 @@
         if (params.data) {
           const endTime = convertDoyToYmd(params.data.end_time_doy);
           if (endTime) {
-            return $plugins.time.primary.formatShort(new Date(endTime));
+            return $plugins.time.primary.formatShort(new Date(endTime)) ?? 'Invalid Date';
           }
         }
+      },
+      cellRenderer: (params: ICellRendererParams<Plan>) => {
+        if (params.value !== 'Invalid Date') {
+          return params.value;
+        }
+        const div = document.createElement('div');
+
+        new IconCellRenderer({
+          props: { type: 'error' },
+          target: div,
+        });
+
+        return div;
       },
       width: 140,
     },
@@ -283,8 +312,13 @@
   });
 
   async function createPlan() {
-    let startTime = getDoyTime($plugins.time.primary.parse($startTimeField.value));
-    let endTime = getDoyTime($plugins.time.primary.parse($endTimeField.value));
+    const startTimeDate = $plugins.time.primary.parse($startTimeField.value);
+    const endTimeDate = $plugins.time.primary.parse($endTimeField.value);
+    if (!startTimeDate || !endTimeDate) {
+      return;
+    }
+    let startTime = getDoyTime(startTimeDate);
+    let endTime = getDoyTime(endTimeDate);
     const newPlan = await effects.createPlan(
       endTime,
       $modelIdField.value,
@@ -347,8 +381,15 @@
     if ($startTimeField.value && $startTimeField.valid && $endTimeField.value === '') {
       // Set end time as start time plus a day by default
       const startTimeDate = $plugins.time.primary.parse($startTimeField.value);
-      let newEndTime = $plugins.time.primary.format($plugins.time.getDefaultPlanEndDate(startTimeDate));
-      await endTimeField.validateAndSet(newEndTime);
+      if (startTimeDate) {
+        const defaultDate = $plugins.time.getDefaultPlanEndDate(startTimeDate);
+        if (defaultDate) {
+          let newEndTime = $plugins.time.primary.format(defaultDate);
+          if (typeof newEndTime === 'string') {
+            await endTimeField.validateAndSet(newEndTime);
+          }
+        }
+      }
     }
 
     updateDurationString();
@@ -356,13 +397,17 @@
 
   function updateDurationString() {
     if ($startTimeField.valid && $endTimeField.valid) {
-      let startTimeMs = $plugins.time.primary.parse($startTimeField.value).getTime();
-      let endTimeMs = $plugins.time.primary.parse($endTimeField.value).getTime();
+      let startTimeMs = $plugins.time.primary.parse($startTimeField.value)?.getTime();
+      let endTimeMs = $plugins.time.primary.parse($endTimeField.value)?.getTime();
+      console.log('startTimeMs, endTimeMs :>> ', startTimeMs, endTimeMs);
+      if (typeof startTimeMs === 'number' && typeof endTimeMs === 'number') {
+        durationString = convertUsToDurationString((endTimeMs - startTimeMs) * 1000);
 
-      durationString = convertUsToDurationString((endTimeMs - startTimeMs) * 1000);
-
-      if (!durationString) {
-        durationString = 'None';
+        if (!durationString) {
+          durationString = 'None';
+        }
+      } else {
+        durationString = 'Invalid';
       }
     } else {
       durationString = 'None';

@@ -3,7 +3,7 @@
 <script lang="ts">
   import TableFillIcon from '@nasa-jpl/stellar/icons/table_fill.svg?component';
   import TableFitIcon from '@nasa-jpl/stellar/icons/table_fit.svg?component';
-  import type { ColDef, ColumnResizedEvent, ColumnState } from 'ag-grid-community';
+  import type { ColDef, ColumnResizedEvent, ColumnState, ICellRendererParams } from 'ag-grid-community';
   import { debounce } from 'lodash-es';
   import { selectActivity } from '../../stores/activities';
   import { plugins } from '../../stores/plugins';
@@ -15,6 +15,7 @@
   import { tooltip } from '../../utilities/tooltip';
   import GridMenu from '../menus/GridMenu.svelte';
   import type DataGrid from '../ui/DataGrid/DataGrid.svelte';
+  import IconCellRenderer from '../ui/IconCellRenderer.svelte';
   import Panel from '../ui/Panel.svelte';
   import ActivitySpansTable from './ActivitySpansTable.svelte';
   import ActivityTableMenu from './ActivityTableMenu.svelte';
@@ -90,9 +91,22 @@
       valueGetter: params => {
         if (params && params.data && typeof params.data.startMs === 'number') {
           /* TODO could use short format here to skip ms but do we need short(er) format somewhere else? */
-          return $plugins.time.primary.format(new Date(params.data.startMs));
+          return $plugins.time.primary.format(new Date(params.data.startMs)) ?? 'Invalid Date';
         }
         return '';
+      },
+      cellRenderer: (params: ICellRendererParams<Span>) => {
+        if (params.value !== 'Invalid Date') {
+          return params.value;
+        }
+        const div = document.createElement('div');
+
+        new IconCellRenderer({
+          props: { type: 'error' },
+          target: div,
+        });
+
+        return div;
       },
     },
 
@@ -105,9 +119,22 @@
       sortable: true,
       valueGetter: params => {
         if (params && params.data && typeof params.data.endMs === 'number') {
-          return $plugins.time.primary.format(new Date(params.data.endMs));
+          return $plugins.time.primary.format(new Date(params.data.endMs)) ?? 'Invalid Date';
         }
         return '';
+      },
+      cellRenderer: (params: ICellRendererParams<Span>) => {
+        if (params.value !== 'Invalid Date') {
+          return params.value;
+        }
+        const div = document.createElement('div');
+
+        new IconCellRenderer({
+          props: { type: 'error' },
+          target: div,
+        });
+
+        return div;
       },
     },
     type: {

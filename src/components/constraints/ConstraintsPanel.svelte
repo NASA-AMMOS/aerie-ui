@@ -55,10 +55,10 @@
   let showAll: boolean = true;
   let filterText: string = '';
   let filteredConstraints: ConstraintPlanSpec[] = [];
-  let endTime: string;
+  let endTime: string | null;
   let endTimeField: FieldStore<string>;
   let numOfPrivateConstraints: number = 0;
-  let startTime: string;
+  let startTime: string | null;
   let startTimeField: FieldStore<string>;
   let showFilters: boolean = false;
   let showConstraintsWithNoViolations: boolean = true;
@@ -74,10 +74,10 @@
     }
   }
 
-  $: startTimeField = field<string>(startTime, [required, $plugins.time.primary.validate]);
-  $: endTimeField = field<string>(endTime, [required, $plugins.time.primary.validate]);
-  $: startTimeMs = $plugins.time.primary.parse(startTime).getTime();
-  $: endTimeMs = $plugins.time.primary.parse(endTime).getTime();
+  $: startTimeField = field<string>(startTime ?? 'Invalid Date', [required, $plugins.time.primary.validate]);
+  $: endTimeField = field<string>(endTime ?? 'Invalid Date', [required, $plugins.time.primary.validate]);
+  $: startTimeMs = typeof startTime === 'string' ? $plugins.time.primary.parse(startTime)?.getTime() : null;
+  $: endTimeMs = typeof endTime === 'string' ? $plugins.time.primary.parse(endTime)?.getTime() : null;
   $: if ($allowedConstraintSpecs && $constraintResponseMap && startTimeMs && endTimeMs) {
     constraintToConstraintResponseMap = {};
     $allowedConstraintSpecs.forEach(constraintPlanSpec => {
@@ -93,7 +93,9 @@
               constraintResponse.results.violations?.map(violation => ({
                 ...violation,
                 // Filter violations/windows by time bounds
-                windows: violation.windows.filter(window => window.end >= startTimeMs && window.start <= endTimeMs),
+                windows: violation.windows.filter(
+                  window => window.end >= (startTimeMs ?? 0) && window.start <= (endTimeMs ?? 0),
+                ),
               })) ?? null,
           },
           success: constraintResponse.success,
@@ -168,15 +170,15 @@
 
   async function setTimeBoundsToView() {
     /* TODO use plugin*/
-    await startTimeField.validateAndSet($plugins.time.primary.format(new Date($viewTimeRange.start)));
-    await endTimeField.validateAndSet($plugins.time.primary.format(new Date($viewTimeRange.end)));
+    await startTimeField.validateAndSet($plugins.time.primary.format(new Date($viewTimeRange.start)) ?? 'Invalid Date');
+    await endTimeField.validateAndSet($plugins.time.primary.format(new Date($viewTimeRange.end)) ?? 'Invalid Date');
     onUpdateStartTime();
     onUpdateEndTime();
   }
 
   async function onPlanStartTimeClick() {
     if ($plan) {
-      await startTimeField.validateAndSet($plugins.time.primary.format(new Date($plan.start_time)));
+      await startTimeField.validateAndSet($plugins.time.primary.format(new Date($plan.start_time)) ?? 'Invalid Date');
       onUpdateStartTime();
     }
   }
@@ -186,7 +188,7 @@
       const endTimeYmd = convertDoyToYmd($plan.end_time_doy);
       if (endTimeYmd) {
         endTime = $plugins.time.primary.format(new Date(endTimeYmd));
-        await endTimeField.validateAndSet(endTime);
+        await endTimeField.validateAndSet(endTime ?? 'Invalid Date');
         onUpdateEndTime();
       }
     }

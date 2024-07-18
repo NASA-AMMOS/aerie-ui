@@ -3,7 +3,7 @@
 <script lang="ts">
   import TableFillIcon from '@nasa-jpl/stellar/icons/table_fill.svg?component';
   import TableFitIcon from '@nasa-jpl/stellar/icons/table_fit.svg?component';
-  import type { ColDef, ColumnResizedEvent, ColumnState } from 'ag-grid-community';
+  import type { ColDef, ColumnResizedEvent, ColumnState, ICellRendererParams } from 'ag-grid-community';
   import { debounce } from 'lodash-es';
   import { plugins } from '../../stores/plugins';
   import { simulationDataset, simulationEvents } from '../../stores/simulation';
@@ -16,6 +16,7 @@
   import ActivityTableMenu from '../activity/ActivityTableMenu.svelte';
   import GridMenu from '../menus/GridMenu.svelte';
   import type DataGrid from '../ui/DataGrid/DataGrid.svelte';
+  import IconCellRenderer from '../ui/IconCellRenderer.svelte';
   import Panel from '../ui/Panel.svelte';
   import SimulationEventsTable from './SimulationEventsTable.svelte';
 
@@ -46,11 +47,28 @@
       sortable: true,
       valueGetter: params => {
         if ($simulationDataset && $simulationDataset.simulation_start_time && params.data) {
-          return $plugins.time.primary.format(
-            new Date(getUnixEpochTimeFromInterval($simulationDataset?.simulation_start_time, params.data.start_offset)),
+          return (
+            $plugins.time.primary.format(
+              new Date(
+                getUnixEpochTimeFromInterval($simulationDataset?.simulation_start_time, params.data.start_offset),
+              ),
+            ) ?? 'Invalid Date'
           );
         }
         return '';
+      },
+      cellRenderer: (params: ICellRendererParams<SimulationEvent>) => {
+        if (params.value !== 'Invalid Date') {
+          return params.value;
+        }
+        const div = document.createElement('div');
+
+        new IconCellRenderer({
+          props: { type: 'error' },
+          target: div,
+        });
+
+        return div;
       },
     },
     start_offset: {

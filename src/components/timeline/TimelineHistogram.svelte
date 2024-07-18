@@ -315,7 +315,7 @@
       timelineHovering = true;
       cursorLeft = clamp(x - histRect.left, 0, histRect.width); // Ensure cursor is within range
       const cursorTime = xScaleMax.invert(cursorLeft);
-      cursorTooltip = $plugins.time.primary.format(cursorTime);
+      cursorTooltip = $plugins.time.primary.format(cursorTime) ?? 'Invalid Date';
 
       // Remove milliseconds if DOY-like time
       if (validateTime(cursorTooltip, TimeTypes.ABSOLUTE)) {

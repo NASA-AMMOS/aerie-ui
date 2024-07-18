@@ -144,11 +144,11 @@
 
   $: if (viewTimeRangeStartDate && viewTimeRangeEndDate && tickCount) {
     xTicksView = $plugins.time.ticks.getTicks(viewTimeRangeStartDate, viewTimeRangeEndDate, tickCount).map(date => {
-      const label = $plugins.time.primary.formatTick(date, xScaleViewDuration, tickCount);
+      const label = $plugins.time.primary.formatTick(date, xScaleViewDuration, tickCount) ?? 'Invalid Date';
       const additionalLabels = $plugins.time.additional.map(timeSystem => {
         return timeSystem.formatTick
-          ? timeSystem.formatTick(date, xScaleViewDuration, tickCount)
-          : timeSystem.format(date);
+          ? timeSystem.formatTick(date, xScaleViewDuration, tickCount) ?? 'Invalid Date'
+          : timeSystem.format(date) ?? 'Invalid Date';
       });
       return { additionalLabels, date, label };
     });
@@ -374,8 +374,8 @@
   <div bind:this={timelineHistogramDiv} class="timeline-time-row">
     {#if plan}
       <TimelineTimeDisplay
-        planStartTime={formattedPlanStartTime}
-        planEndTime={formattedPlanEndTime}
+        planStartTime={formattedPlanStartTime ?? 'Invalid Date'}
+        planEndTime={formattedPlanEndTime ?? 'Invalid Date'}
         timeLabel={$plugins.time.primary.label}
         width={timeline?.marginLeft}
       />
