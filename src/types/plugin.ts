@@ -20,7 +20,7 @@ export type Plugins = {
   time: {
     additional: Optional<PluginTime, 'validate' | 'parse' | 'formatString' | 'formatTick' | 'formatShort'>[];
     enableDatePicker: boolean;
-    getDefaultPlanEndDate: (start: Date) => Date;
+    getDefaultPlanEndDate: (start: Date) => Date | null;
     primary: PluginTime;
     ticks: {
       getTicks: (start: Date, stop: Date, count: number) => Date[];
