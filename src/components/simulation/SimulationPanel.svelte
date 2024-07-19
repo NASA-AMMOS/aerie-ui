@@ -36,7 +36,7 @@
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import { getSimulationQueuePosition } from '../../utilities/simulation';
-  import { getDoyTime } from '../../utilities/time';
+  import { formatDate, getDoyTime } from '../../utilities/time';
   import { required, validateStartTime } from '../../utilities/validators';
   import Collapse from '../Collapse.svelte';
   import DatePickerField from '../form/DatePickerField.svelte';
@@ -57,14 +57,14 @@
 
   let simulateButtonTooltip: string = '';
   let reSimulateButtonTooltip: string = '';
-  let endTime: string | null;
+  let endTime: string;
   let endTimeField: FieldStore<string>;
   let formParameters: FormParameter[] = [];
   let hasRunPermission: boolean = false;
   let hasUpdatePermission: boolean = false;
   let isFilteredBySnapshot: boolean = false;
   let numOfUserChanges: number = 0;
-  let startTime: string | null;
+  let startTime: string;
   let startTimeField: FieldStore<string>;
   let modelParametersMap: ParametersMap = {};
   let filteredSimulationDatasets: SimulationDataset[] = [];
@@ -100,25 +100,17 @@
     if ($simulation && $simulation.simulation_start_time) {
       startTimeDate = new Date($simulation.simulation_start_time);
     }
-    startTime = $plugins.time.primary.format(startTimeDate);
+    startTime = formatDate(startTimeDate, $plugins.time.primary.format);
 
     let endTimeDate = new Date($planEndTimeMs);
     if ($simulation && $simulation.simulation_end_time) {
       endTimeDate = new Date($simulation.simulation_end_time);
     }
-    endTime = $plugins.time.primary.format(endTimeDate);
+    endTime = formatDate(endTimeDate, $plugins.time.primary.format);
   }
 
-  $: startTimeField = field<string>(startTime ?? 'Invalid Date', [
-    required,
-    $plugins.time.primary.validate,
-    validateStartTimeField,
-  ]);
-  $: endTimeField = field<string>(endTime ?? 'Invalid Date', [
-    required,
-    $plugins.time.primary.validate,
-    validateEndTimeField,
-  ]);
+  $: startTimeField = field<string>(startTime, [required, $plugins.time.primary.validate, validateStartTimeField]);
+  $: endTimeField = field<string>(endTime, [required, $plugins.time.primary.validate, validateEndTimeField]);
   $: numOfUserChanges = formParameters.reduce((previousHasChanges: number, formParameter) => {
     return /user/.test(formParameter.valueSource) ? previousHasChanges + 1 : previousHasChanges;
   }, 0);
@@ -315,14 +307,14 @@
 
   async function onPlanStartTimeClick() {
     if ($plan) {
-      await startTimeField.validateAndSet($plugins.time.primary.format(new Date($planStartTimeMs)) ?? 'Invalid Date');
+      await startTimeField.validateAndSet(formatDate(new Date($planStartTimeMs), $plugins.time.primary.format));
       updateStartEndTimes({ startString: $startTimeField.value });
     }
   }
 
   async function onPlanEndTimeClick() {
     if ($plan) {
-      await endTimeField.validateAndSet($plugins.time.primary.format(new Date($planEndTimeMs)) ?? 'Invalid Date');
+      await endTimeField.validateAndSet(formatDate(new Date($planEndTimeMs), $plugins.time.primary.format));
       updateStartEndTimes({ endString: $endTimeField.value });
     }
   }

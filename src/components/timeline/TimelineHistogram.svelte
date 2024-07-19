@@ -13,7 +13,12 @@
   import type { SimulationDataset, Span } from '../../types/simulation';
   import type { MouseOver, TimeRange } from '../../types/timeline';
   import { clamp } from '../../utilities/generic';
-  import { getIntervalInMs, getUnixEpochTimeFromInterval, removeDateStringMilliseconds } from '../../utilities/time';
+  import {
+    formatDate,
+    getIntervalInMs,
+    getUnixEpochTimeFromInterval,
+    removeDateStringMilliseconds,
+  } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
 
   export let activityDirectives: ActivityDirective[] = [];
@@ -314,7 +319,7 @@
       timelineHovering = true;
       cursorLeft = clamp(x - histRect.left, 0, histRect.width); // Ensure cursor is within range
       const cursorTime = xScaleMax.invert(cursorLeft);
-      cursorTooltip = $plugins.time.primary.format(cursorTime) ?? 'Invalid Date';
+      cursorTooltip = formatDate(cursorTime, $plugins.time.primary.format);
 
       // Remove milliseconds if DOY-like time
       cursorTooltip = removeDateStringMilliseconds(cursorTooltip);

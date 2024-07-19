@@ -37,7 +37,7 @@
   import effects from '../../utilities/effects';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
-  import { convertDoyToYmd } from '../../utilities/time';
+  import { convertDoyToYmd, formatDate } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import { required } from '../../utilities/validators';
   import CollapsibleListControls from '../CollapsibleListControls.svelte';
@@ -55,27 +55,27 @@
   let showAll: boolean = true;
   let filterText: string = '';
   let filteredConstraints: ConstraintPlanSpec[] = [];
-  let endTime: string | null;
+  let endTime: string;
   let endTimeField: FieldStore<string>;
   let numOfPrivateConstraints: number = 0;
-  let startTime: string | null;
+  let startTime: string;
   let startTimeField: FieldStore<string>;
   let showFilters: boolean = false;
   let showConstraintsWithNoViolations: boolean = true;
   let constraintToConstraintResponseMap: Record<ConstraintDefinition['constraint_id'], ConstraintResponse> = {};
 
   $: if ($plan) {
-    startTime = $plugins.time.primary.format(new Date($plan.start_time));
+    startTime = formatDate(new Date($plan.start_time), $plugins.time.primary.format);
     const endTimeYmd = convertDoyToYmd($plan.end_time_doy);
     if (endTimeYmd) {
-      endTime = $plugins.time.primary.format(new Date(endTimeYmd));
+      endTime = formatDate(new Date(endTimeYmd), $plugins.time.primary.format);
     } else {
       endTime = '';
     }
   }
 
-  $: startTimeField = field<string>(startTime ?? 'Invalid Date', [required, $plugins.time.primary.validate]);
-  $: endTimeField = field<string>(endTime ?? 'Invalid Date', [required, $plugins.time.primary.validate]);
+  $: startTimeField = field<string>(startTime, [required, $plugins.time.primary.validate]);
+  $: endTimeField = field<string>(endTime, [required, $plugins.time.primary.validate]);
   $: startTimeMs = typeof startTime === 'string' ? $plugins.time.primary.parse(startTime)?.getTime() : null;
   $: endTimeMs = typeof endTime === 'string' ? $plugins.time.primary.parse(endTime)?.getTime() : null;
   $: if ($allowedConstraintSpecs && $constraintResponseMap && startTimeMs && endTimeMs) {
@@ -168,15 +168,15 @@
   }
 
   async function setTimeBoundsToView() {
-    await startTimeField.validateAndSet($plugins.time.primary.format(new Date($viewTimeRange.start)) ?? 'Invalid Date');
-    await endTimeField.validateAndSet($plugins.time.primary.format(new Date($viewTimeRange.end)) ?? 'Invalid Date');
+    await startTimeField.validateAndSet(formatDate(new Date($viewTimeRange.start), $plugins.time.primary.format));
+    await endTimeField.validateAndSet(formatDate(new Date($viewTimeRange.end), $plugins.time.primary.format));
     onUpdateStartTime();
     onUpdateEndTime();
   }
 
   async function onPlanStartTimeClick() {
     if ($plan) {
-      await startTimeField.validateAndSet($plugins.time.primary.format(new Date($plan.start_time)) ?? 'Invalid Date');
+      await startTimeField.validateAndSet(formatDate(new Date($plan.start_time), $plugins.time.primary.format));
       onUpdateStartTime();
     }
   }
@@ -185,8 +185,8 @@
     if ($plan) {
       const endTimeYmd = convertDoyToYmd($plan.end_time_doy);
       if (endTimeYmd) {
-        endTime = $plugins.time.primary.format(new Date(endTimeYmd));
-        await endTimeField.validateAndSet(endTime ?? 'Invalid Date');
+        endTime = formatDate(new Date(endTimeYmd), $plugins.time.primary.format);
+        await endTimeField.validateAndSet(endTime);
         onUpdateEndTime();
       }
     }

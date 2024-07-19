@@ -11,6 +11,7 @@
     ValueGetterParams,
   } from 'ag-grid-community';
   import { debounce } from 'lodash-es';
+  import { InvalidDate } from '../../constants/time';
   import { activityDirectivesMap, selectActivity, selectedActivityDirectiveId } from '../../stores/activities';
   import { activityErrorRollupsMap } from '../../stores/errors';
   import { plan, planReadOnly } from '../../stores/plan';
@@ -20,7 +21,7 @@
   import type { User } from '../../types/app';
   import type { AutoSizeColumns, ViewGridSection, ViewTable } from '../../types/view';
   import { filterEmpty } from '../../utilities/generic';
-  import { getUnixEpochTimeFromInterval } from '../../utilities/time';
+  import { formatDate, getUnixEpochTimeFromInterval } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import GridMenu from '../menus/GridMenu.svelte';
   import DataGrid from '../ui/DataGrid/DataGrid.svelte';
@@ -180,12 +181,12 @@
       sortable: true,
       valueGetter: (params: ValueGetterParams<ActivityDirective>) => {
         if ($plan && params && params.data && typeof params.data.start_time_ms === 'number') {
-          return $plugins.time.primary.format(new Date(params.data.start_time_ms)) ?? 'Invalid Date';
+          return formatDate(new Date(params.data.start_time_ms), $plugins.time.primary.format);
         }
         return '';
       },
       cellRenderer: (params: ICellRendererParams<ActivityDirective>) => {
-        if (params.value !== 'Invalid Date') {
+        if (params.value !== InvalidDate) {
           return params.value;
         }
         const div = document.createElement('div');

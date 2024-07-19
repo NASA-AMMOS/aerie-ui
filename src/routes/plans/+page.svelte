@@ -22,6 +22,7 @@
   import Panel from '../../components/ui/Panel.svelte';
   import SectionTitle from '../../components/ui/SectionTitle.svelte';
   import TagsInput from '../../components/ui/Tags/TagsInput.svelte';
+  import { InvalidDate } from '../../constants/time';
   import { SearchParameters } from '../../enums/searchParameters';
   import { field } from '../../stores/form';
   import { models } from '../../stores/model';
@@ -39,7 +40,13 @@
   import { removeQueryParam } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
-  import { convertDoyToYmd, convertUsToDurationString, getDoyTime, getShortISOForDate } from '../../utilities/time';
+  import {
+    convertDoyToYmd,
+    convertUsToDurationString,
+    formatDate,
+    getDoyTime,
+    getShortISOForDate,
+  } from '../../utilities/time';
   import { min, required, unique } from '../../utilities/validators';
   import type { PageData } from './$types';
 
@@ -107,11 +114,11 @@
       sortable: true,
       valueGetter: (params: ValueGetterParams<Plan>) => {
         if (params.data) {
-          return $plugins.time.primary.formatShort(new Date(params.data.start_time)) ?? 'Invalid Date';
+          return formatDate(new Date(params.data.start_time), $plugins.time.primary.formatShort);
         }
       },
       cellRenderer: (params: ICellRendererParams<Plan>) => {
-        if (params.value !== 'Invalid Date') {
+        if (params.value !== InvalidDate) {
           return params.value;
         }
         const div = document.createElement('div');
@@ -135,12 +142,12 @@
         if (params.data) {
           const endTime = convertDoyToYmd(params.data.end_time_doy);
           if (endTime) {
-            return $plugins.time.primary.formatShort(new Date(endTime)) ?? 'Invalid Date';
+            return formatDate(new Date(endTime), $plugins.time.primary.formatShort);
           }
         }
       },
       cellRenderer: (params: ICellRendererParams<Plan>) => {
-        if (params.value !== 'Invalid Date') {
+        if (params.value !== InvalidDate) {
           return params.value;
         }
         const div = document.createElement('div');
@@ -383,8 +390,8 @@
       if (startTimeDate) {
         const defaultDate = $plugins.time.getDefaultPlanEndDate(startTimeDate);
         if (defaultDate) {
-          let newEndTime = $plugins.time.primary.format(defaultDate);
-          if (typeof newEndTime === 'string') {
+          let newEndTime = formatDate(defaultDate, $plugins.time.primary.format);
+          if (newEndTime !== InvalidDate) {
             await endTimeField.validateAndSet(newEndTime);
           }
         }

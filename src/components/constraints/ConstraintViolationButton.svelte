@@ -5,13 +5,17 @@
   import { viewTimeRange } from '../../stores/plan';
   import { plugins } from '../../stores/plugins';
   import type { TimeRange } from '../../types/timeline';
-  import { getDoyTimeComponents, validateTime } from '../../utilities/time';
+  import { formatDate, getDoyTimeComponents, validateTime } from '../../utilities/time';
 
   export let window: TimeRange;
 
   let isDoyPattern = false;
+  let startDateString: string = '';
+  let endDateString: string = '';
 
-  $: isDoyPattern = validateTime($plugins.time.primary.format(new Date(window.start)) ?? '', TimeTypes.ABSOLUTE);
+  $: startDateString = formatDate(new Date(window.start), $plugins.time.primary.format);
+  $: endDateString = formatDate(new Date(window.end), $plugins.time.primary.format);
+  $: isDoyPattern = validateTime(startDateString, TimeTypes.ABSOLUTE);
 
   function zoomToViolation(window: TimeRange): void {
     $viewTimeRange = window;
@@ -32,7 +36,7 @@
       {startYear}-<span class="st-typography-bold">{startDoy}</span> T {startHours}:{startMins}:{startSecs}.{startMsecs}
       {$plugins.time.primary.label}
     {:else}
-      {$plugins.time.primary.format(new Date(window.start)) ?? 'Invalid Date'}
+      {startDateString}
     {/if}
   </div>
   <div class="separator">–</div>
@@ -49,7 +53,7 @@
       {endYear}-<span class="st-typography-bold">{endDoy}</span> T {endHours}:{endMins}:{endSecs}.{endMsecs}
       {$plugins.time.primary.label}
     {:else}
-      {$plugins.time.primary.format(new Date(window.start)) ?? 'Invalid Date'}
+      {endDateString}
     {/if}
   </div>
 </button>

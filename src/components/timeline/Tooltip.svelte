@@ -12,6 +12,7 @@
   import type { ResourceType, Span } from '../../types/simulation';
   import type { LineLayer, LinePoint, MouseOver, Point, Row, XRangePoint } from '../../types/timeline';
   import { addPageFocusListener } from '../../utilities/generic';
+  import { formatDate } from '../../utilities/time';
   import { filterResourcesByLayer } from '../../utilities/timeline';
 
   export let interpolateHoverValue: boolean = false;
@@ -271,9 +272,7 @@
   function textForActivityDirective(activityDirective: ActivityDirective): string {
     const { anchor_id, id, name, start_time_ms, type } = activityDirective;
     const directiveStartTime =
-      typeof start_time_ms === 'number'
-        ? $plugins.time.primary.format(new Date(start_time_ms)) ?? 'Invalid Date'
-        : 'Unknown';
+      typeof start_time_ms === 'number' ? formatDate(new Date(start_time_ms), $plugins.time.primary.format) : 'Unknown';
     return `
       <div class='tooltip-row-container'>
         <div class='st-typography-bold' style='color: var(--st-gray-10); display: flex; gap: 4px;'>${DirectiveIcon} Activity Directive</div>
@@ -349,7 +348,7 @@
       color = (layer as LineLayer).lineColor;
     }
 
-    const pointTime = $plugins.time.primary.format(new Date(x)) ?? 'Invalid Date';
+    const pointTime = formatDate(new Date(x), $plugins.time.primary.format);
 
     return `
       <div class='tooltip-row-container'>
@@ -374,7 +373,7 @@
                     `<div class='tooltip-row'>
                       <span>Time (${f.label}):</span>
                       <span class='tooltip-value-highlight st-typography-medium'>
-                        ${f.format(new Date(x)) ?? 'Invalid Date'}
+                        ${formatDate(new Date(x), f.format)}
                       </span>
                   </div>`,
                 )
@@ -393,8 +392,8 @@
 
   function textForSpan(span: Span): string {
     const { id, duration, startMs, endMs, type } = span;
-    const spanStartTime = $plugins.time.primary.format(new Date(startMs)) ?? 'Invalid Date';
-    const spanEndTime = $plugins.time.primary.format(new Date(endMs)) ?? 'Invalid Date';
+    const spanStartTime = formatDate(new Date(startMs), $plugins.time.primary.format);
+    const spanEndTime = formatDate(new Date(endMs), $plugins.time.primary.format);
     return `
       <div class='tooltip-row-container'>
         <div class='st-typography-bold' style='color: var(--st-gray-10); display: flex; gap: 4px;'>${SpanIcon} Simulated Activity (Span)</div>
@@ -462,7 +461,7 @@
       name = layer.name ? layer.name : point.name;
       color = (layer as LineLayer).lineColor;
     }
-    const pointTime = $plugins.time.primary.format(new Date(x));
+    const pointTime = formatDate(new Date(x), $plugins.time.primary.format);
 
     return `
       <div class='tooltip-row-container'>

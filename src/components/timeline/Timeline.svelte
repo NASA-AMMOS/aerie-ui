@@ -6,6 +6,7 @@
   import { throttle } from 'lodash-es';
   import { afterUpdate, createEventDispatcher, onDestroy, onMount, tick } from 'svelte';
   import { SOURCES, TRIGGERS, dndzone } from 'svelte-dnd-action';
+  import { InvalidDate } from '../../constants/time';
   import { plugins } from '../../stores/plugins';
   import { viewUpdateTimeline } from '../../stores/views';
   import type { ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
@@ -31,6 +32,7 @@
     XAxisTick,
   } from '../../types/timeline';
   import { clamp } from '../../utilities/generic';
+  import { formatDate } from '../../utilities/time';
   import { MAX_CANVAS_SIZE, TimelineInteractionMode, TimelineLockStatus, getXScale } from '../../utilities/timeline';
   import TimelineRow from './Row.svelte';
   import RowHeaderDragHandleWidth from './RowHeaderDragHandleWidth.svelte';
@@ -139,16 +141,16 @@
   $: xScaleMax = getXScale(xDomainMax, drawWidth);
   $: xScaleView = getXScale(xDomainView, drawWidth);
   $: xScaleViewDuration = viewTimeRange.end - viewTimeRange.start;
-  $: formattedPlanStartTime = $plugins.time.primary.format(xDomainMax[0]);
-  $: formattedPlanEndTime = $plugins.time.primary.format(xDomainMax[1]);
+  $: formattedPlanStartTime = formatDate(xDomainMax[0], $plugins.time.primary.format);
+  $: formattedPlanEndTime = formatDate(xDomainMax[1], $plugins.time.primary.format);
 
   $: if (viewTimeRangeStartDate && viewTimeRangeEndDate && tickCount) {
     xTicksView = $plugins.time.ticks.getTicks(viewTimeRangeStartDate, viewTimeRangeEndDate, tickCount).map(date => {
-      const label = $plugins.time.primary.formatTick(date, xScaleViewDuration, tickCount) ?? 'Invalid Date';
+      const label = $plugins.time.primary.formatTick(date, xScaleViewDuration, tickCount) ?? InvalidDate;
       const additionalLabels = $plugins.time.additional.map(timeSystem => {
         return timeSystem.formatTick
-          ? timeSystem.formatTick(date, xScaleViewDuration, tickCount) ?? 'Invalid Date'
-          : timeSystem.format(date) ?? 'Invalid Date';
+          ? timeSystem.formatTick(date, xScaleViewDuration, tickCount) ?? InvalidDate
+          : timeSystem.format(date) ?? InvalidDate;
       });
       return { additionalLabels, date, label };
     });
@@ -374,8 +376,8 @@
   <div bind:this={timelineHistogramDiv} class="timeline-time-row">
     {#if plan}
       <TimelineTimeDisplay
-        planStartTime={formattedPlanStartTime ?? 'Invalid Date'}
-        planEndTime={formattedPlanEndTime ?? 'Invalid Date'}
+        planStartTime={formattedPlanStartTime}
+        planEndTime={formattedPlanEndTime}
         timeLabel={$plugins.time.primary.label}
         width={timeline?.marginLeft}
       />

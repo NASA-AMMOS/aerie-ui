@@ -11,6 +11,7 @@
   import { getSpanRootParent } from '../../utilities/activities';
   import effects from '../../utilities/effects';
   import { getFormParameters } from '../../utilities/parameters';
+  import { formatDate } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import Collapse from '../Collapse.svelte';
   import Input from '../form/Input.svelte';
@@ -36,16 +37,16 @@
   let rootSpan: Span | null;
   let rootSpanHasChildren: boolean;
   let seqId: string | null;
-  let startTime: string | null;
+  let startTime: string;
 
   $: activityType = (activityTypes ?? []).find(({ name: activityTypeName }) => span.type === activityTypeName) ?? null;
   $: rootSpan = getSpanRootParent(spansMap, span.id);
   $: rootSpanHasChildren = (rootSpan && spanUtilityMaps.spanIdToChildIdsMap[rootSpan.id]?.length > 0) ?? false;
 
-  $: startTime = $plugins.time.primary.format(new Date(span.startMs));
+  $: startTime = formatDate(new Date(span.startMs), $plugins.time.primary.format);
 
   $: if (span.duration) {
-    endTime = $plugins.time.primary.format(new Date(span.endMs));
+    endTime = formatDate(new Date(span.endMs), $plugins.time.primary.format);
   } else {
     endTime = null;
   }
@@ -170,7 +171,7 @@
         <label use:tooltip={{ content: 'Start Time', placement: 'top' }} for="startTime">
           Start Time ({$plugins.time.primary.label})
         </label>
-        <input class="st-input w-100" disabled name="startTime" value={startTime ?? 'Invalid Date'} />
+        <input class="st-input w-100" disabled name="startTime" value={startTime} />
       </Input>
 
       <Input layout="inline">

@@ -5,13 +5,14 @@
   import TableFitIcon from '@nasa-jpl/stellar/icons/table_fit.svg?component';
   import type { ColDef, ColumnResizedEvent, ColumnState, ICellRendererParams } from 'ag-grid-community';
   import { debounce } from 'lodash-es';
+  import { InvalidDate } from '../../constants/time';
   import { plugins } from '../../stores/plugins';
   import { simulationDataset, simulationEvents } from '../../stores/simulation';
   import { view, viewUpdateSimulationEventsTable } from '../../stores/views';
   import type { SimulationEvent } from '../../types/simulation';
   import type { AutoSizeColumns, ViewGridSection, ViewTable } from '../../types/view';
   import { filterEmpty } from '../../utilities/generic';
-  import { getUnixEpochTimeFromInterval } from '../../utilities/time';
+  import { formatDate, getUnixEpochTimeFromInterval } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import ActivityTableMenu from '../activity/ActivityTableMenu.svelte';
   import GridMenu from '../menus/GridMenu.svelte';
@@ -47,18 +48,15 @@
       sortable: true,
       valueGetter: params => {
         if ($simulationDataset && $simulationDataset.simulation_start_time && params.data) {
-          return (
-            $plugins.time.primary.format(
-              new Date(
-                getUnixEpochTimeFromInterval($simulationDataset?.simulation_start_time, params.data.start_offset),
-              ),
-            ) ?? 'Invalid Date'
+          return formatDate(
+            new Date(getUnixEpochTimeFromInterval($simulationDataset?.simulation_start_time, params.data.start_offset)),
+            $plugins.time.primary.format,
           );
         }
         return '';
       },
       cellRenderer: (params: ICellRendererParams<SimulationEvent>) => {
-        if (params.value !== 'Invalid Date') {
+        if (params.value !== InvalidDate) {
           return params.value;
         }
         const div = document.createElement('div');

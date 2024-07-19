@@ -5,6 +5,7 @@
   import TableFitIcon from '@nasa-jpl/stellar/icons/table_fit.svg?component';
   import type { ColDef, ColumnResizedEvent, ColumnState, ICellRendererParams } from 'ag-grid-community';
   import { debounce } from 'lodash-es';
+  import { InvalidDate } from '../../constants/time';
   import { selectActivity } from '../../stores/activities';
   import { plugins } from '../../stores/plugins';
   import { selectedSpanId, spans } from '../../stores/simulation';
@@ -12,6 +13,7 @@
   import type { Span } from '../../types/simulation';
   import type { AutoSizeColumns, ViewGridSection, ViewTable } from '../../types/view';
   import { filterEmpty } from '../../utilities/generic';
+  import { formatDate } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import GridMenu from '../menus/GridMenu.svelte';
   import type DataGrid from '../ui/DataGrid/DataGrid.svelte';
@@ -91,12 +93,12 @@
       valueGetter: params => {
         if (params && params.data && typeof params.data.startMs === 'number') {
           /* TODO could use short format here to skip ms but do we need short(er) format somewhere else? */
-          return $plugins.time.primary.format(new Date(params.data.startMs)) ?? 'Invalid Date';
+          return formatDate(new Date(params.data.startMs), $plugins.time.primary.format);
         }
         return '';
       },
       cellRenderer: (params: ICellRendererParams<Span>) => {
-        if (params.value !== 'Invalid Date') {
+        if (params.value !== InvalidDate) {
           return params.value;
         }
         const div = document.createElement('div');
@@ -119,12 +121,12 @@
       sortable: true,
       valueGetter: params => {
         if (params && params.data && typeof params.data.endMs === 'number') {
-          return $plugins.time.primary.format(new Date(params.data.endMs)) ?? 'Invalid Date';
+          return formatDate(new Date(params.data.endMs), $plugins.time.primary.format);
         }
         return '';
       },
       cellRenderer: (params: ICellRendererParams<Span>) => {
-        if (params.value !== 'Invalid Date') {
+        if (params.value !== InvalidDate) {
           return params.value;
         }
         const div = document.createElement('div');

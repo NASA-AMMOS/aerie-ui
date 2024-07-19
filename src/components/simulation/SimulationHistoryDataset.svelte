@@ -3,6 +3,7 @@
 <script lang="ts">
   import CancelIcon from '@nasa-jpl/stellar/icons/prohibited.svg?component';
   import { createEventDispatcher } from 'svelte';
+  import { InvalidDate } from '../../constants/time';
   import { Status } from '../../enums/status';
   import { planReadOnly } from '../../stores/plan';
   import { plugins } from '../../stores/plugins';
@@ -17,7 +18,7 @@
     getSimulationStatus,
     getSimulationTimestamp,
   } from '../../utilities/simulation';
-  import { getUnixEpochTimeFromInterval, removeDateStringMilliseconds } from '../../utilities/time';
+  import { formatDate, getUnixEpochTimeFromInterval, removeDateStringMilliseconds } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import Card from '../ui/Card.svelte';
   import StatusBadge from '../ui/StatusBadge.svelte';
@@ -37,8 +38,8 @@
   let simulationBoundsVizRangeLeft = 0;
   let simulationBoundsVizRangeWidth = 0;
   let simulationExtentVizRangeWidth = 0;
-  let startTimeText: string | null = '';
-  let endTimeText: string | null = '';
+  let startTimeText: string = '';
+  let endTimeText: string = '';
   let progress = 0;
   let extent: string | null = '';
   let status: Status | null = null;
@@ -62,9 +63,9 @@
       if (simulationStartTimeMS === planStartTimeMs) {
         startTimeText = 'Plan Start';
       } else {
-        startTimeText = $plugins.time.primary.format(new Date(simulationDataset.simulation_start_time));
+        startTimeText = formatDate(new Date(simulationDataset.simulation_start_time), $plugins.time.primary.format);
 
-        if (typeof startTimeText === 'string') {
+        if (startTimeText !== InvalidDate) {
           startTimeText = removeDateStringMilliseconds(startTimeText);
         }
       }
@@ -88,10 +89,10 @@
         if (simulationEndTimeMS === planEndTimeMs) {
           endTimeText = 'Plan End';
         } else {
-          endTimeText = $plugins.time.primary.format(new Date(simulationDataset.simulation_end_time));
+          endTimeText = formatDate(new Date(simulationDataset.simulation_end_time), $plugins.time.primary.format);
 
           // Remove milliseconds if DOY-like time
-          if (typeof endTimeText === 'string') {
+          if (endTimeText !== InvalidDate) {
             endTimeText = removeDateStringMilliseconds(endTimeText);
           }
         }

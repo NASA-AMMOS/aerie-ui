@@ -1,7 +1,9 @@
 import { padStart } from 'lodash-es';
 import parseInterval from 'postgres-interval';
+import { InvalidDate } from '../constants/time';
 import { TimeTypes } from '../enums/time';
 import type { ActivityDirectiveId, ActivityDirectivesMap } from '../types/activity';
+import type { PluginTime } from '../types/plugin';
 import type { SpanUtilityMaps, SpansMap } from '../types/simulation';
 import type { DurationTimeComponents, ParsedDoyString, ParsedDurationString, ParsedYmdString } from '../types/time';
 
@@ -899,4 +901,13 @@ export function removeDateStringMilliseconds(dateString: string): string {
     return dateString.split('.')[0];
   }
   return dateString;
+}
+
+/**
+ * Format a Date using a date formatter.
+ * Returns "Invalid Date" if null.
+ * @todo move this to an intermediate layer between plugin and eventual store
+ */
+export function formatDate(date: Date, formatter: PluginTime['format']): string {
+  return formatter(date) ?? InvalidDate;
 }

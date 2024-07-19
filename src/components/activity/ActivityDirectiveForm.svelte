@@ -38,7 +38,7 @@
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import { pluralize } from '../../utilities/text';
-  import { getDoyTime, getIntervalFromDoyRange, getUnixEpochTimeFromInterval } from '../../utilities/time';
+  import { formatDate, getDoyTime, getIntervalFromDoyRange, getUnixEpochTimeFromInterval } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import { required } from '../../utilities/validators';
   import Collapse from '../Collapse.svelte';
@@ -84,7 +84,7 @@
   let numOfUserChanges: number = 0;
   let parameterErrorMap: Record<string, string[]> = {};
   let parametersWithErrorsCount: number = 0;
-  let startTime: string | null;
+  let startTime: string;
   let startTimeField: FieldStore<string>;
 
   $: if (user !== null && $plan !== null) {
@@ -102,12 +102,12 @@
       planStartTimeYmd,
       revision ? revision.start_offset : activityDirective.start_offset,
     );
-    startTime = $plugins.time.primary.format(new Date(startTimeMs));
+    startTime = formatDate(new Date(startTimeMs), $plugins.time.primary.format);
   }
 
-  $: startTimeField = field<string>(startTime ?? 'Invalid Date', [required, $plugins.time.primary.validate]);
+  $: startTimeField = field<string>(startTime, [required, $plugins.time.primary.validate]);
   $: activityNameField = field<string>(activityDirective.name);
-  $: startTimeField.validateAndSet(startTime ?? 'Invalid Date');
+  $: startTimeField.validateAndSet(startTime);
   $: activityNameField.validateAndSet(activityDirective.name);
 
   $: if (activityType && activityDirective.arguments) {

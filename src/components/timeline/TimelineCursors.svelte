@@ -6,7 +6,7 @@
   import { plugins } from '../../stores/plugins';
   import { view } from '../../stores/views';
   import type { Label, MouseOver, Timeline, VerticalGuide } from '../../types/timeline';
-  import { getDoyTime, getUnixEpochTime } from '../../utilities/time';
+  import { formatDate, getDoyTime, getUnixEpochTime } from '../../utilities/time';
   import { createVerticalGuide } from '../../utilities/timeline';
   import TimelineCursor from './TimelineCursor.svelte';
 
@@ -155,7 +155,7 @@
           cursorX = offsetX;
         }
         date = new Date(unixEpochTime);
-        cursorTimeLabel = $plugins.time.primary.format(date) ?? 'Invalid Date';
+        cursorTimeLabel = formatDate(date, $plugins.time.primary.format);
         cursorTimeLabel += ' ' + $plugins.time.primary.label;
       }
       cursorMaxWidth = drawWidth - cursorX;

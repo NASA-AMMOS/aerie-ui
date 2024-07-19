@@ -22,7 +22,7 @@
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import { getPlanForTransfer } from '../../utilities/plan';
-  import { convertDoyToYmd, getShortISOForDate } from '../../utilities/time';
+  import { convertDoyToYmd, formatDate, getShortISOForDate } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import { required, unique } from '../../utilities/validators';
   import Collapse from '../Collapse.svelte';
@@ -57,16 +57,16 @@
     ),
   ]);
   let planExportProgress: number | null = null;
-  let planStartTime: string | null = '';
-  let planEndTime: string | null = '';
+  let planStartTime: string = '';
+  let planEndTime: string = '';
 
   $: permissionError = $planReadOnly ? PlanStatusMessages.READ_ONLY : 'You do not have permission to edit this plan.';
   $: if (plan) {
     hasCreateSnapshotPermission = featurePermissions.planSnapshot.canCreate(user, plan, plan.model) && !$planReadOnly;
-    planStartTime = $plugins.time.primary.format(new Date(plan.start_time));
+    planStartTime = formatDate(new Date(plan.start_time), $plugins.time.primary.format);
     const endTime = convertDoyToYmd(plan.end_time_doy);
     if (endTime) {
-      planEndTime = $plugins.time.primary.format(new Date(endTime));
+      planEndTime = formatDate(new Date(endTime), $plugins.time.primary.format);
     } else {
       planEndTime = '';
     }
@@ -278,13 +278,13 @@
           >
             Start Time ({$plugins.time.primary.label})
           </label>
-          <input class="st-input w-100" disabled name="startTime" value={planStartTime ?? 'Invalid Date'} />
+          <input class="st-input w-100" disabled name="startTime" value={planStartTime} />
         </Input>
         <Input layout="inline">
           <label use:tooltip={{ content: `End Time (${$plugins.time.primary.label})`, placement: 'top' }} for="endTime">
             End Time ({$plugins.time.primary.label})
           </label>
-          <input class="st-input w-100" disabled name="endTime" value={planEndTime ?? 'Invalid Date'} />
+          <input class="st-input w-100" disabled name="endTime" value={planEndTime} />
         </Input>
         <Input layout="inline">
           <label use:tooltip={{ content: 'Owner', placement: 'top' }} for="owner">Owner</label>
