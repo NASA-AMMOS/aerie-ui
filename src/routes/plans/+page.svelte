@@ -405,7 +405,6 @@
     if ($startTimeField.valid && $endTimeField.valid) {
       let startTimeMs = $plugins.time.primary.parse($startTimeField.value)?.getTime();
       let endTimeMs = $plugins.time.primary.parse($endTimeField.value)?.getTime();
-      console.log('startTimeMs, endTimeMs :>> ', startTimeMs, endTimeMs);
       if (typeof startTimeMs === 'number' && typeof endTimeMs === 'number') {
         durationString = convertUsToDurationString((endTimeMs - startTimeMs) * 1000);
 
