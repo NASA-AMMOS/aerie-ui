@@ -365,6 +365,7 @@ export function generateDefaultView(activityTypes: ActivityType[] = [], resource
           columnStates: [],
         },
         timelines,
+        filteredDerivationGroups: []
       },
     },
     id: 0,

@@ -76,6 +76,7 @@
       {/each}
     </div>
     <div style="padding-top:5px">
+      <!--TODO: try importing component library where you can pull in existing 'stellar' button that looks like rest of aerie-->
       <button style="border: 0px; width: 100px; background: rgb(235, 235, 235)" on:click={() => dispatch("dismiss")}>Dismiss</button>
     </div>
     <slot />
