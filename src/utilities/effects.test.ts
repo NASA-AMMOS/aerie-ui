@@ -2,7 +2,12 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as Errors from '../stores/errors';
 import { mockUser } from '../tests/mocks/user/mockUser';
 import type { ExternalEventTypeInsertInput } from '../types/external-event';
-import type { ExternalSourceEventType, ExternalSourceInsertInput, ExternalSourceTypeInsertInput } from '../types/external-source';
+import type {
+  DerivationGroupInsertInput,
+  ExternalSourceEventType,
+  ExternalSourceInsertInput,
+  ExternalSourceTypeInsertInput,
+} from '../types/external-source';
 import type { Model } from '../types/model';
 import type { ArgumentsMap, ParametersMap } from '../types/parameter';
 import type { Plan } from '../types/plan';
@@ -184,6 +189,44 @@ describe('Handle modal and requests in effects', () => {
     });
   });
 
+  describe('createDerivationGroup', () => {
+    it('should correctly handle null responses', async () => {
+      vi.spyOn(Requests, 'reqHasura').mockResolvedValue({
+        createDerivationGroup: null,
+      });
+      vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
+
+      await effects.createDerivationGroup(
+        {
+          name: 'test',
+          source_type_id: 1,
+        } as DerivationGroupInsertInput,
+        user,
+      );
+
+      expect(catchErrorSpy).toHaveBeenCalledWith(
+        'Derivation Group Create Failed',
+        Error('Unable to create derivation group'),
+      );
+    });
+  });
+
+  describe('deleteDerivationGroup', () => {
+    it('should correctly handle null responses', async () => {
+      vi.spyOn(Requests, 'reqHasura').mockResolvedValue({
+        deleteDerivationGroup: null,
+      });
+      vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
+
+      await effects.deleteDerivationGroup(1, user);
+
+      expect(catchErrorSpy).toHaveBeenCalledWith(
+        'Derivation Group Deletion Failed',
+        Error('Unable to delete derivation group'),
+      );
+    });
+  });
+
   describe('createExternalSourceType', () => {
     it('should correctly handle null responses', async () => {
       vi.spyOn(Requests, 'reqHasura').mockResolvedValue({
@@ -338,10 +381,7 @@ describe('Handle modal and requests in effects', () => {
       });
       vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
 
-      await effects.getExternalSourceMetadata(
-        1,
-        user
-      )
+      await effects.getExternalSourceMetadata(1, user);
 
       expect(catchErrorSpy).toHaveBeenCalledWith(
         Error('Unable to get external source metadata for external source id 1 - source may not exist.'),
