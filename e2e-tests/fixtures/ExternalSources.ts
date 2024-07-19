@@ -44,6 +44,7 @@ export class ExternalSources {
     await this.selectSource();
     await this.deleteSourceButton.click();
     await this.deleteSourceButtonConfirmation.click();
+    await this.page.getByText('External Source Deleted').waitFor({ state: 'visible' });
   }
 
   async fillInputFile(externalSourceFilePath: string = this.externalSourceFilePath) {
@@ -66,7 +67,7 @@ export class ExternalSources {
 
   async selectSource() {
     // Always selects the first source with the example's source type in the table
-    if (!this.page.getByRole('gridcell', { name: 'example-dsn-contacts.json' }).isVisible()) {
+    if (!this.page.getByRole('gridcell', { name: 'example-dsn-contacts.json' }).first().isVisible()) {
       await this.selectSourceFilter();
     }
     await this.page.getByRole('gridcell', { name: 'example-dsn-contacts.json' }).first().click();
@@ -99,7 +100,7 @@ export class ExternalSources {
     this.externalEventTableHeaderEventType = page.getByText('Event Type', { exact: true });
     this.externalEventTableHeaderSourceID = page.getByText('Source ID');
     this.externalEventTableHeaderDuration = page.getByText('Duration');
-    this.toggleTimeline = page.getByLabel('Toggle external event timeline');
+    this.toggleTimeline = page.getByRole('radio', { name: 'Timeline' });
     this.viewContainedEventTypes = page.getByRole('button', { name: 'View Contained Event Types' });
     this.viewEventSourceMetadata = page.getByRole('button', { name: 'View Event Source Metadata' });
   }
