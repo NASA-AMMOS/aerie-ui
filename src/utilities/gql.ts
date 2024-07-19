@@ -1071,6 +1071,11 @@ const gql = {
 
   DELETE_PLAN: `#graphql
     mutation DeletePlan($id: Int!) {
+      deleteDerivationGroupForPlan: ${Queries.DELETE_PLAN_DERIVATION_GROUP}(where: { plan_id: { _eq: $id }}) {
+        returning {
+          plan_id
+        }
+      }
       deletePlan: ${Queries.DELETE_PLAN}(id: $id) {
         id
       }
