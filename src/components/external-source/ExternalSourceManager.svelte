@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { base } from '$app/paths';
   import type { ICellRendererParams, RowClassParams, RowStyle, ValueGetterParams } from 'ag-grid-community';
   import Balloon from 'bootstrap-icons/icons/balloon.svg?component';
   import SearchIcon from 'bootstrap-icons/icons/search.svg?component';
@@ -811,11 +812,18 @@
             title="Used in plans"
             tooltipContent="View plans this source is used in"
           >
-            {#each selectedSourceLinkedDerivationGroupsPlans as linkedPlanDerivationGroup}
-              <i>{$plans.find(plan => {
-                return linkedPlanDerivationGroup.plan_id === plan.id;
-              })?.name}</i>
-            {/each}
+            {#if selectedSourceLinkedDerivationGroupsPlans.length > 0}
+              {#each selectedSourceLinkedDerivationGroupsPlans as linkedPlanDerivationGroup}
+                <i>
+                  <a href='{base}/plans/{linkedPlanDerivationGroup.plan_id}'>
+                  {$plans.find(plan => {
+                    return linkedPlanDerivationGroup.plan_id === plan.id;
+                  })?.name}
+                </i>
+              {/each}
+            {:else}
+              <i>Not used in any plans</i>
+            {/if}
           </Collapse>
           <button
             class="st-button danger w-100"
