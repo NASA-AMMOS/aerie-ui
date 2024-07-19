@@ -177,32 +177,42 @@
           }
         : {};
 
-      qualifiedActivityDirectives = await Promise.all(
-        Object.values(activityDirectivesMap).map(async activityDirective => {
-          if (plan) {
-            const effectiveArguments = await effects.getEffectiveActivityArguments(
-              plan?.model_id,
-              activityDirective.type,
-              activityDirective.arguments,
-              user,
-              planExportAbortController?.signal,
-            );
+      qualifiedActivityDirectives = (
+        await Promise.all(
+          Object.values(activityDirectivesMap).map(async activityDirective => {
+            if (plan) {
+              const effectiveArguments = await effects.getEffectiveActivityArguments(
+                plan?.model_id,
+                activityDirective.type,
+                activityDirective.arguments,
+                user,
+                planExportAbortController?.signal,
+              );
+
+              totalProgress++;
+              planExportProgress = (totalProgress / numOfDirectives) * 100;
+
+              return {
+                ...activityDirective,
+                arguments: effectiveArguments?.arguments ?? activityDirective.arguments,
+              };
+            }
 
             totalProgress++;
             planExportProgress = (totalProgress / numOfDirectives) * 100;
 
-            return {
-              ...activityDirective,
-              arguments: effectiveArguments?.arguments ?? activityDirective.arguments,
-            };
-          }
-
-          totalProgress++;
-          planExportProgress = (totalProgress / numOfDirectives) * 100;
-
-          return activityDirective;
-        }),
-      );
+            return activityDirective;
+          }),
+        )
+      ).sort((directiveA, directiveB) => {
+        if (directiveA.id < directiveB.id) {
+          return -1;
+        }
+        if (directiveA.id > directiveB.id) {
+          return 1;
+        }
+        return 0;
+      });
 
       if (planExportAbortController && !planExportAbortController.signal.aborted) {
         const planExport: PlanTransfer = getPlanForTransfer(plan, qualifiedActivityDirectives, simulationArguments);
