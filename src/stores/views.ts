@@ -287,6 +287,24 @@ export function viewUpdateActivitySpansTable(update: Partial<ViewTable>): void {
   });
 }
 
+export function viewUpdateFilteredDerivationGroupIds(update: number[]): void {
+  view.update(currentView => {
+    if (currentView !== null) {
+      return {
+        ...currentView,
+        definition: {
+          ...currentView.definition,
+          plan: {
+            ...currentView.definition.plan,
+            filteredDerivationGroups: update
+          }
+        }
+      };
+    }
+    return currentView;
+  });
+}
+
 export function viewUpdateSimulationEventsTable(update: Partial<ViewTable>): void {
   view.update(currentView => {
     if (currentView !== null) {
