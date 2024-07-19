@@ -495,12 +495,12 @@
       planTags = [...importedPlanTags.existingTags, ...newTags];
 
       // remove the `+00:00` timezone before parsing
-      const startTime = `${convertDoyToYmd(planJSON.start_time.replace(/\+00:00/, ''))}Z`;
+      const startTime = `${convertDoyToYmd(planJSON.start_time.replace(/\+00:00/, ''))}`;
       await startTimeField.validateAndSet(getDoyTime(new Date(startTime), true));
 
       if (isDeprecatedPlanTransfer(planJSON)) {
         await endTimeField.validateAndSet(
-          getDoyTime(new Date(`${convertDoyToYmd(planJSON.end_time.replace(/\+00:00/, ''))}Z`), true),
+          getDoyTime(new Date(`${convertDoyToYmd(planJSON.end_time.replace(/\+00:00/, ''))}`), true),
         );
       } else {
         const { duration } = planJSON;
