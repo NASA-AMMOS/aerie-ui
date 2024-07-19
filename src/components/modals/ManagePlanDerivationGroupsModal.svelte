@@ -40,12 +40,12 @@
 
   selectedPlanDerivationGroupIds.subscribe(e => {
     if (baseColumnDefs.length > 0 && dataGrid) {
-      // no current way to change just a specific cell unless we add something about plan associations to the DG object, 
+      // no current way to change just a specific cell unless we add something about plan associations to the DG object,
       //    which we don't seek to do.
       // this does mean every update to any entry in selectedPlanDerivationGroupIds refreshes the whole column, and flashes it,
       //    though that isn't particularly a problem and does do good to signal association complete. Also a small delay, which
       //    buffers button smashing and repeated updates pretty well!
-      dataGrid.refreshCells() 
+      dataGrid.refreshCells()
     }
   })
 
@@ -115,7 +115,7 @@
       suppressAutoSize: true,
       suppressSizeToFit: true,
       width: 100,
-      enableCellChangeFlash: true,      
+      enableCellChangeFlash: true,
     },
   ];
 
@@ -130,7 +130,7 @@
   let selectedDerivationGroup: DerivationGroup | undefined = undefined;
   let selectedDerivationGroupSources: ExternalSourceWithResolvedNames[] = [];
   $: if(selectedDerivationGroup !== undefined) { modalColumnSize = modalColumnSizeWithDetail; console.log(modalColumnSize); };
-  $: selectedDerivationGroupSources = $externalSourceWithResolvedNames.filter(source => selectedDerivationGroup?.name === source.derivation_group);
+  $: selectedDerivationGroupSources = $externalSourceWithResolvedNames.filter(source => selectedDerivationGroup?.id === source.derivation_group_id);
 
   $: filteredDerivationGroups = $derivationGroups.filter(derivationGroup => {
     const filterTextLowerCase = filterText.toLowerCase();
