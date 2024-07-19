@@ -407,29 +407,29 @@
           //    it won't warn me that it was deleted.
         }
 
-        // Determine if the derivation group this source belonged to is now empty, if so delete it
-        // NOTE: This work could be moved to Hasura in the future, or re-worked as it might be costly.
-        const derivationGroupsInUse = Array.from(new Set($externalSourceWithResolvedNames.filter(s => s.id !== selectedSource.id).map(s => s.derivation_group_id)).values())
-        const unusedDerivationGroupIds = $derivationGroups.filter(dg => !derivationGroupsInUse.includes(dg.id)).map(dg => dg.id)
-        for (const unusedDerivationGroupId of unusedDerivationGroupIds) {
-          await effects.deleteDerivationGroup(unusedDerivationGroupId, user);
-        }
+        // // Determine if the derivation group this source belonged to is now empty, if so delete it
+        // // NOTE: This work could be moved to Hasura in the future, or re-worked as it might be costly.
+        // const derivationGroupsInUse = Array.from(new Set($externalSourceWithResolvedNames.filter(s => s.id !== selectedSource.id).map(s => s.derivation_group_id)).values())
+        // const unusedDerivationGroupIds = $derivationGroups.filter(dg => !derivationGroupsInUse.includes(dg.id)).map(dg => dg.id)
+        // for (const unusedDerivationGroupId of unusedDerivationGroupIds) {
+        //   await effects.deleteDerivationGroup(unusedDerivationGroupId, user);
+        // }
 
-        // Determine if there are no remaining external sources that use the type of the source that was just deleted. If there are none, delete the source type
-        // NOTE: This work could be moved to Hasura in the future, or re-worked as it might be costly.
-        const sourceTypesInUse = Array.from(new Set($externalSourceWithResolvedNames.filter(s => s.id !== selectedSource.id).map(s => s.source_type_id)).values())
-        const unusedSourceTypeIds = $externalSourceTypes.filter(st => !sourceTypesInUse.includes(st.id)).map(st => st.id)
-        for (const unusedSourceTypeId of unusedSourceTypeIds) {
-          await effects.deleteExternalSourceType(unusedSourceTypeId, user);
-        }
+        // // Determine if there are no remaining external sources that use the type of the source that was just deleted. If there are none, delete the source type
+        // // NOTE: This work could be moved to Hasura in the future, or re-worked as it might be costly.
+        // const sourceTypesInUse = Array.from(new Set($externalSourceWithResolvedNames.filter(s => s.id !== selectedSource.id).map(s => s.source_type_id)).values())
+        // const unusedSourceTypeIds = $externalSourceTypes.filter(st => !sourceTypesInUse.includes(st.id)).map(st => st.id)
+        // for (const unusedSourceTypeId of unusedSourceTypeIds) {
+        //   await effects.deleteExternalSourceType(unusedSourceTypeId, user);
+        // }
 
-        // Determine if there are no remaining external events that use the types contained in the now-deleted external source. If there are none, delete the external event type
-        deletedSourceEventTypes.forEach(async (eventType) => {
-          const externalEventsWithThisType = await effects.getExternalEventsByEventType(eventType, user);
-          if (externalEventsWithThisType.length === 0) {
-            await effects.deleteExternalEventType(eventType.id, user);
-          }
-        });
+        // // Determine if there are no remaining external events that use the types contained in the now-deleted external source. If there are none, delete the external event type
+        // deletedSourceEventTypes.forEach(async (eventType) => {
+        //   const externalEventsWithThisType = await effects.getExternalEventsByEventType(eventType, user);
+        //   if (externalEventsWithThisType.length === 0) {
+        //     await effects.deleteExternalEventType(eventType.id, user);
+        //   }
+        // });
       }
     }
   }
