@@ -86,6 +86,7 @@ export type ViewDefinition = {
     iFrames: ViewIFrame[];
     simulationEventsTable: ViewTable;
     timelines: Timeline[];
+    filteredDerivationGroups: number[];
   };
 };
 

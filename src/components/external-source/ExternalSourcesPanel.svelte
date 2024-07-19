@@ -3,6 +3,7 @@
 <script lang="ts">
   import { deletedSourcesSeen, derivationGroupPlanLinkError, derivationGroups, externalSourceTypes, getEventSourceTypeName, planDerivationGroupIdsToFilter, planDerivationGroupLinks, unseenSources } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
+  import { originalView } from '../../stores/views';
   import type { User } from '../../types/app';
   import type { DerivationGroup, ExternalSourceWithDateInfo } from '../../types/external-source';
   import type { ViewGridSection } from '../../types/view';
@@ -20,7 +21,7 @@
   export let gridSection: ViewGridSection;
   export let user: User | null;
 
-  console.log($planDerivationGroupIdsToFilter, JSON.parse($planDerivationGroupIdsToFilter))
+  // $:console.log("DISAPPEARING", $planDerivationGroupLinks, $derivationGroups, mappedDerivationGroups)
 
   // filter which derivation groups are visible
   let filterText: string = '';
@@ -28,7 +29,9 @@
   let filteredDerivationGroups: DerivationGroup[] = [];
   let unseenSourcesParsed: ExternalSourceWithDateInfo[] = [];
   let deletedSourcesParsed: ExternalSourceWithDateInfo[] = [];
+  let planDerivationGroupIdsToFilterParsed: {[plan_id: number]: number[]} = JSON.parse($planDerivationGroupIdsToFilter);
 
+  $: planDerivationGroupIdsToFilterParsed = JSON.parse($planDerivationGroupIdsToFilter);
   $: linkedDerivationGroupIds = $planDerivationGroupLinks.filter(link => link.plan_id === $plan?.id).map(link => link.derivation_group_id);
   $: filteredDerivationGroups = $derivationGroups
     .filter(group => linkedDerivationGroupIds.includes(group.id))
@@ -53,6 +56,12 @@
   })
   $: unseenSourcesParsed = JSON.parse($unseenSources)
   $: deletedSourcesParsed = JSON.parse($deletedSourcesSeen)
+  originalView.subscribe(ov => { // any time a new view is selected, change the enabled list
+    if (ov && $plan) {
+      planDerivationGroupIdsToFilterParsed[$plan.id] = ov?.definition.plan.filteredDerivationGroups
+    }
+    planDerivationGroupIdsToFilter.set(JSON.stringify(planDerivationGroupIdsToFilterParsed));
+  })
 
   function onManageDerivationGroups() {
     effects.managePlanDerivationGroups(user);
