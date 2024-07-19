@@ -24,11 +24,11 @@ import type {
   Time,
   VariableDeclaration,
 } from '@nasa-jpl/seq-json-schema/types';
+import { TOKEN_REPEAT_ARG } from '../../constants/sequencer-grammar-constants';
 import { TimeTypes } from '../../enums/time';
 import { removeEscapedQuotes, unquoteUnescape } from '../codemirror/codemirror-utils';
 import { getBalancedDuration, getDurationTimeComponents, parseDurationString, validateTime } from '../time';
 import { logInfo } from './logger';
-import { TOKEN_REPEAT_ARG } from './sequencer-grammar-constants';
 
 /**
  * Returns a minimal valid Seq JSON object.
@@ -134,13 +134,13 @@ function parseRequest(requestNode: SyntaxNode, text: string, commandDictionary: 
 
   // ground epoch
   return {
+    description,
     ground_epoch,
+    metadata,
     name,
     steps: steps as [Step, ...Step[]],
     time,
     type: 'request',
-    ...{ description },
-    ...{ metadata },
   };
 }
 
@@ -160,12 +160,12 @@ function parseGroundBlockEvent(stepNode: SyntaxNode, text: string): GroundBlock 
 
   return {
     args,
+    description,
+    metadata,
+    models,
     name,
     time,
     type: stepNode.name === 'GroundBlock' ? 'ground_block' : 'ground_event',
-    ...{ description },
-    ...{ models },
-    ...{ metadata },
   };
 }
 
@@ -188,14 +188,14 @@ function parseActivateLoad(stepNode: SyntaxNode, text: string): Activate | Load 
 
   return {
     args,
+    description,
     engine,
     epoch,
+    metadata,
+    models,
     sequence,
     time,
     type: stepNode.name === 'Load' ? 'load' : 'activate',
-    ...{ description },
-    ...{ models },
-    ...{ metadata },
   };
 }
 
@@ -552,12 +552,12 @@ function parseCommand(commandNode: SyntaxNode, text: string, commandDictionary: 
 
   return {
     args,
+    description,
+    metadata,
+    models,
     stem,
     time,
     type: 'command',
-    ...{ description },
-    ...{ models },
-    ...{ metadata },
   };
 }
 
@@ -577,9 +577,9 @@ function parseImmediateCommand(
 
   return {
     args,
+    description,
+    metadata,
     stem,
-    ...(description ? { description } : {}),
-    ...(metadata ? { metadata } : {}),
   };
 }
 
@@ -590,9 +590,9 @@ function parseHardwareCommand(commandNode: SyntaxNode, text: string): HardwareCo
   const metadata: Metadata | undefined = parseMetadata(commandNode, text);
 
   return {
+    description,
+    metadata,
     stem,
-    ...(description ? { description } : {}),
-    ...(metadata ? { metadata } : {}),
   };
 }
 

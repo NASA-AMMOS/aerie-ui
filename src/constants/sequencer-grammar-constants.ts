@@ -1,4 +1,5 @@
 import type { SyntaxNode } from '@lezer/common';
+import { getNearestAncestorNodeOfType } from '../utilities/sequence-editor/tree-utils';
 
 export const TOKEN_ACTIVATE = 'Activate';
 export const TOKEN_GROUND_BLOCK = 'GroundBlock';
@@ -26,4 +27,15 @@ export function getNameNode(stepNode: SyntaxNode | null) {
   }
 
   return null;
+}
+
+export function getAncestorStep(node: SyntaxNode | null) {
+  return getNearestAncestorNodeOfType(
+    node,
+    TOKEN_COMMAND,
+    TOKEN_ACTIVATE,
+    TOKEN_GROUND_BLOCK,
+    TOKEN_GROUND_EVENT,
+    TOKEN_LOAD,
+  );
 }

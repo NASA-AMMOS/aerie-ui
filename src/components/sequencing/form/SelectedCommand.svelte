@@ -13,17 +13,8 @@
   } from '@nasa-jpl/aerie-ampcs';
   import type { EditorView } from 'codemirror';
   import { debounce } from 'lodash-es';
+  import { getAncestorStep, getNameNode, TOKEN_ERROR } from '../../../constants/sequencer-grammar-constants';
   import { getCustomArgDef } from '../../../utilities/sequence-editor/extension-points';
-  import {
-    getNameNode,
-    TOKEN_ACTIVATE,
-    TOKEN_COMMAND,
-    TOKEN_ERROR,
-    TOKEN_GROUND_BLOCK,
-    TOKEN_GROUND_EVENT,
-    TOKEN_LOAD,
-  } from '../../../utilities/sequence-editor/sequencer-grammar-constants';
-  import { getAncestorNode } from '../../../utilities/sequence-editor/tree-utils';
   import Collapse from '../../Collapse.svelte';
   import Panel from '../../ui/Panel.svelte';
   import SectionTitle from '../../ui/SectionTitle.svelte';
@@ -54,14 +45,7 @@
   let missingArgDefArray: FswCommandArgument[] = [];
   let timeTagNode: TimeTagInfo = null;
 
-  $: commandNode = getAncestorNode(
-    node,
-    TOKEN_COMMAND,
-    TOKEN_ACTIVATE,
-    TOKEN_GROUND_BLOCK,
-    TOKEN_GROUND_EVENT,
-    TOKEN_LOAD,
-  );
+  $: commandNode = getAncestorStep(node);
   $: commandNameNode = getNameNode(commandNode);
   $: commandName = commandNameNode && editorSequenceView.state.sliceDoc(commandNameNode.from, commandNameNode.to);
   $: commandDef = getCommandDef(commandDictionary, commandName ?? '');
