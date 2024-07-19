@@ -34,7 +34,7 @@ test.describe.serial('External Sources', () => {
 
   test('External event form should be shown when an event is selected', async () => {
     await externalSources.selectEvent();
-    await expect(page.getByText('External Events Table Timeline')).toBeVisible();
+    await expect(page.getByText('External Events Table Timeline').first()).toBeVisible();
     await expect(externalSources.inputFile).not.toBeVisible();
   });
 
@@ -75,7 +75,7 @@ test.describe.serial('External Sources', () => {
   test('Selected external source should show event types in a collapsible', async () => {
     await externalSources.selectSource();
     await externalSources.viewContainedEventTypes.click();
-    await expect(page.locator('i')).toBeVisible();
+    await expect(page.locator('i').filter({ hasText: 'TestDSNContact' }).first()).toBeVisible();
   });
 
   test('External event table and timeline should be accessible while a source is selected', async () => {
