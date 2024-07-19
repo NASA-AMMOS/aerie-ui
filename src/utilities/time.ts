@@ -655,8 +655,9 @@ export function getDurationTimeComponents(duration: ParsedDurationString): Durat
 
 /**
  * Get a day-of-year timestamp from a given JavaScript Date object.
- * @example getDoyTime(new Date(1577779200000)) -> 2019-365T08:00:00.000
+ * @example getDoyTime(new Date(1577779200000)) -> 2019-365T08:00:00
  * @note inverse of getUnixEpochTime
+ * @note milliseconds will be dropped if all 0s
  */
 export function getDoyTime(date: Date, includeMsecs = true): string {
   const { doy, hours, mins, msecs, secs, year } = getDoyTimeComponents(date);
