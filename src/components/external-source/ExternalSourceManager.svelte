@@ -15,6 +15,7 @@
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalEvent, ExternalEventDB, ExternalEventType, ExternalEventTypeInsertInput } from '../../types/external-event';
   import type { DerivationGroup, DerivationGroupInsertInput, ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceType, ExternalSourceTypeInsertInput, ExternalSourceWithDateInfo, ExternalSourceWithResolvedNames, PlanDerivationGroup } from '../../types/external-source';
+  import { RadioButtonId } from '../../types/radio-buttons';
   import type { TimeRange } from '../../types/timeline';
   import { type MouseDown, type MouseOver } from '../../types/timeline';
   import effects from '../../utilities/effects';
