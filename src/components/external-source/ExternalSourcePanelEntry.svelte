@@ -3,6 +3,7 @@
 <script lang="ts">
   import { externalSourceWithResolvedNames, planDerivationGroupIdsToFilter } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
+  import { originalView, viewUpdateFilteredDerivationGroupIds } from '../../stores/views';
   import type { User } from '../../types/app';
   import type { DerivationGroup, ExternalSourceWithResolvedNames } from '../../types/external-source';
   import effects from '../../utilities/effects';
@@ -15,7 +16,7 @@
   let dgInFilter: boolean = false;
   let relevantSources: ExternalSourceWithResolvedNames[] = [];
   let planDerivationGroupIdsToFilterParsed: {[plan_id: number]: number[]} = JSON.parse($planDerivationGroupIdsToFilter);
-  let enabled = $plan ? !planDerivationGroupIdsToFilterParsed[$plan.id].includes(derivationGroup.id) : true
+  let enabled = ($plan && planDerivationGroupIdsToFilterParsed[$plan.id]) ? !planDerivationGroupIdsToFilterParsed[$plan.id].includes(derivationGroup.id) : true
   
   $: planDerivationGroupIdsToFilterParsed = JSON.parse($planDerivationGroupIdsToFilter);
   $: relevantSources = $externalSourceWithResolvedNames.filter(source => derivationGroup.id === source.derivation_group_id);
@@ -32,7 +33,9 @@
             else {
               planDerivationGroupIdsToFilterParsed[$plan.id] = planDerivationGroupIdsToFilterParsed[$plan.id].filter(id => id !== derivationGroup.id)
             }
+            let update = planDerivationGroupIdsToFilterParsed[$plan.id]
             planDerivationGroupIdsToFilter.set(JSON.stringify(planDerivationGroupIdsToFilterParsed));
+            viewUpdateFilteredDerivationGroupIds(update)
           }
         }
         else {
@@ -43,11 +46,20 @@
             else if (!planDerivationGroupIdsToFilterParsed[$plan.id].includes(derivationGroup.id)){
               planDerivationGroupIdsToFilterParsed[$plan.id] = planDerivationGroupIdsToFilterParsed[$plan.id].concat(derivationGroup.id)
             }
+            let update = planDerivationGroupIdsToFilterParsed[$plan.id]
             planDerivationGroupIdsToFilter.set(JSON.stringify(planDerivationGroupIdsToFilterParsed));
+            viewUpdateFilteredDerivationGroupIds(update)
           }
         }
       }
     }
+
+  originalView.subscribe(ov => { // any time a new view is selected, change the enabled list
+    if (ov) {
+      if (ov?.definition.plan.filteredDerivationGroups.includes(derivationGroup.id)) enabled = false
+      else enabled = true
+    }
+  })
 
   function onChange(_event: Event) {
     if ($plan) dgInFilter = planDerivationGroupIdsToFilterParsed[$plan.id].includes(derivationGroup.id)
@@ -79,7 +91,7 @@
         style:cursor="pointer"
         on:change={onChange}
         on:click|stopPropagation
-        use:tooltip={{ content: 'Enable group', placement: 'top' }}
+        use:tooltip={{ content: 'Show in timeline', placement: 'top' }}
       />
     </span>
 
