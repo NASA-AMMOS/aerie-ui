@@ -45,6 +45,8 @@
   import SingleActionDataGrid from '../ui/DataGrid/SingleActionDataGrid.svelte';
   import DatePicker from '../ui/DatePicker/DatePicker.svelte';
   import Panel from '../ui/Panel.svelte';
+  import RadioButton from '../ui/RadioButtons/RadioButton.svelte';
+  import RadioButtons from '../ui/RadioButtons/RadioButtons.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
 
 
@@ -166,6 +168,7 @@
   let selectedSourceId: number | null = null;
 
   // variables for choosing display format of an external source's external events
+  let tableTimelineButtonSelection: 'timeline' | 'table' = 'table';
   let showExternalEventTimeline: boolean = false;
   let showExternalEventTable: boolean = true;
 
@@ -346,6 +349,23 @@
     }
   });
 
+  function onSelectTableTimeline(event: CustomEvent<{ id: RadioButtonId }>) {
+    const {
+      detail: { id },
+    } = event;
+    tableTimelineButtonSelection = id;
+    if (tableTimelineButtonSelection === 'table') {
+      showExternalEventTable = true;
+      showExternalEventTimeline = false;
+      externalEventsTableFilterString = '';
+      selectedRowId = selectedEvent?.id ?? null;
+    } else {
+      showExternalEventTable = false;
+      showExternalEventTimeline = true;
+      externalEventsTableFilterString = '';
+      mouseDownAfterTable = true;
+    }
+  }
 
   function detectDPRChange() {
     // Adapted from https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio#monitoring_screen_resolution_or_zoom_level_changes
@@ -1010,60 +1030,21 @@
                   </Input>
                 </div>
               </div>
-              <div class="btn-group" style="display:flex;justify-content:flex-end;padding-bottom:5px;">
-                <button
-                  class="st-button primary"
-                  on:click={() => {
-                    showExternalEventTable = true;
-                    showExternalEventTimeline = false;
-                    externalEventsTableFilterString = '';
-                    selectedRowId = selectedEvent?.id ?? null;
-                  }}
-                  use:tooltip={{ content: 'Toggle external event table', placement: 'top' }}
-                >
-                  Table
-                </button>
-                <button
-                  class="st-button secondary"
-                  on:click={() => {
-                    showExternalEventTable = false;
-                    showExternalEventTimeline = true;
-                    externalEventsTableFilterString = '';
-                    mouseDownAfterTable = true;
-                  }}
-                  use:tooltip={{ content: 'Toggle external event timeline', placement: 'top' }}
-                >
-                  Timeline
-                </button>
-              </div>
-            {:else if showExternalEventTimeline}
-              <div class="btn-group" style="display:flex;justify-content:flex-end;padding-bottom:5px;">
-                <button
-                  class="st-button secondary"
-                  on:click={() => {
-                    showExternalEventTable = true;
-                    showExternalEventTimeline = false;
-                    externalEventsTableFilterString = '';
-                    selectedRowId = selectedEvent?.id ?? null;
-                  }}
-                  use:tooltip={{ content: 'Toggle external event table', placement: 'top' }}
-                >
-                  Table
-                </button>
-                <button
-                  class="st-button primary"
-                  on:click={() => {
-                    showExternalEventTable = false;
-                    showExternalEventTimeline = true;
-                    externalEventsTableFilterString = '';
-                    mouseDownAfterTable = true;
-                  }}
-                  use:tooltip={{ content: 'Toggle external event timeline', placement: 'top' }}
-                >
-                  Timeline
-                </button>
-              </div>
             {/if}
+            <div style="width:13%">
+              <RadioButtons selectedButtonId={tableTimelineButtonSelection} on:select-radio-button={onSelectTableTimeline}>
+                <RadioButton id="table">
+                  <div class="association-button">
+                    Table
+                  </div>
+                </RadioButton>
+                <RadioButton id="timeline">
+                  <div class="association-button">
+                    Timeline
+                  </div>
+                </RadioButton>
+              </RadioButtons>
+            </div>
           </slot>
         </svelte:fragment>
         <svelte:fragment slot="body">
