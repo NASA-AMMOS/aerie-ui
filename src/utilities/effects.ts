@@ -553,18 +553,18 @@ const effects = {
     }
   },
 
-  async deleteExternalEventType(externalEventTypeId: number | null, user: User | null): Promise<void> {
-    try {
-      if (externalEventTypeId !== null) {
-        const data = await reqHasura<{ id: number }>(gql.DELETE_EXTERNAL_EVENT_TYPE, { id: externalEventTypeId }, user);
-        if (data.deleteExternalEventType === null) {
-          throw Error('Unable to delete external event type');
-        }
-      }
-    } catch (e) {
-      catchError('External Event Type Deletion Failed', e as Error);
-    }
-  },
+  // async deleteExternalEventType(externalEventTypeId: number | null, user: User | null): Promise<void> {
+  //   try {
+  //     if (externalEventTypeId !== null) {
+  //       const data = await reqHasura<{ id: number }>(gql.DELETE_EXTERNAL_EVENT_TYPE, { id: externalEventTypeId }, user);
+  //       if (data.deleteExternalEventType === null) {
+  //         throw Error('Unable to delete external event type');
+  //       }
+  //     }
+  //   } catch (e) {
+  //     catchError('External Event Type Deletion Failed', e as Error);
+  //   }
+  // },
 
   async deleteExternalSource(
     externalSource: ExternalSourceWithResolvedNames | null,
@@ -602,22 +602,22 @@ const effects = {
     return false;
   },
 
-  async deleteExternalSourceType(externalSourceTypeId: number | undefined, user: User | null): Promise<void> {
-    try {
-      if (externalSourceTypeId !== undefined) {
-        const data = await reqHasura<{ id: number }>(
-          gql.DELETE_EXTERNAL_SOURCE_TYPE,
-          { id: externalSourceTypeId },
-          user,
-        );
-        if (data.deleteExternalSourceType === null) {
-          throw Error('Unable to delete external source type');
-        }
-      }
-    } catch (e) {
-      catchError('External Source Type Deletion Failed', e as Error);
-    }
-  },
+  // async deleteExternalSourceType(externalSourceTypeId: number | undefined, user: User | null): Promise<void> {
+  //   try {
+  //     if (externalSourceTypeId !== undefined) {
+  //       const data = await reqHasura<{ id: number }>(
+  //         gql.DELETE_EXTERNAL_SOURCE_TYPE,
+  //         { id: externalSourceTypeId },
+  //         user,
+  //       );
+  //       if (data.deleteExternalSourceType === null) {
+  //         throw Error('Unable to delete external source type');
+  //       }
+  //     }
+  //   } catch (e) {
+  //     catchError('External Source Type Deletion Failed', e as Error);
+  //   }
+  // },
 
   async deleteDerivationGroup(derivation_group_id: number | null, user: User | null): Promise<void> {
     try {
