@@ -66,7 +66,9 @@ export class ExternalSources {
 
   async selectSource() {
     // Always selects the first source with the example's source type in the table
-    await this.selectSourceFilter();
+    if (!this.page.getByRole('gridcell', { name: 'example-dsn-contacts.json' }).isVisible()) {
+      await this.selectSourceFilter();
+    }
     await this.page.getByRole('gridcell', { name: 'example-dsn-contacts.json' }).first().click();
   }
 
@@ -105,5 +107,6 @@ export class ExternalSources {
   async uploadExternalSource() {
     await this.fillInputFile();
     await this.uploadButton.click();
+    await this.page.getByText('External Source Created').waitFor({ state: 'visible' });
   }
 }
