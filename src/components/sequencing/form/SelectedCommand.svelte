@@ -150,7 +150,8 @@
         // Searchable Dropdown has pop out that is not a descendent
         document.activeElement?.tagName === 'BODY' ||
         document.activeElement?.tagName === 'BUTTON' ||
-        document.activeElement?.tagName === 'INPUT')
+        document.activeElement?.tagName === 'INPUT' ||
+        document.activeElement?.tagName === 'SELECT')
     ) {
       const currentVal = editorSequenceView.state.sliceDoc(token.node.from, token.node.to);
       if (currentVal !== val) {
