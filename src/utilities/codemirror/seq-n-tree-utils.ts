@@ -1,14 +1,12 @@
 import type { SyntaxNode } from '@lezer/common';
-import { getNearestAncestorNodeOfType } from '../utilities/sequence-editor/tree-utils';
-
-export const TOKEN_ACTIVATE = 'Activate';
-export const TOKEN_GROUND_BLOCK = 'GroundBlock';
-export const TOKEN_GROUND_EVENT = 'GroundEvent';
-export const TOKEN_LOAD = 'Load';
-export const TOKEN_COMMAND = 'Command';
-export const TOKEN_REQUEST = 'Request';
-export const TOKEN_REPEAT_ARG = 'RepeatArg';
-export const TOKEN_ERROR = '⚠';
+import {
+  TOKEN_ACTIVATE,
+  TOKEN_COMMAND,
+  TOKEN_GROUND_BLOCK,
+  TOKEN_GROUND_EVENT,
+  TOKEN_LOAD,
+} from '../../constants/seq-n-grammar-constants';
+import { getNearestAncestorNodeOfType } from '../sequence-editor/tree-utils';
 
 export function getNameNode(stepNode: SyntaxNode | null) {
   if (stepNode) {
@@ -30,12 +28,11 @@ export function getNameNode(stepNode: SyntaxNode | null) {
 }
 
 export function getAncestorStep(node: SyntaxNode | null) {
-  return getNearestAncestorNodeOfType(
-    node,
+  return getNearestAncestorNodeOfType(node, [
     TOKEN_COMMAND,
     TOKEN_ACTIVATE,
     TOKEN_GROUND_BLOCK,
     TOKEN_GROUND_EVENT,
     TOKEN_LOAD,
-  );
+  ]);
 }

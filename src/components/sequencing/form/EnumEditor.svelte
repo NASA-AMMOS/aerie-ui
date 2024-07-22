@@ -29,6 +29,8 @@
     value: ev,
   }));
   $: selectedOptionValue = value;
+  // $: console.log(`argDef.enum_name ${argDef.enum_name}`);
+  // $: alert(`argDef.enum_name ${argDef.enum_name}`);
 
   function onSelectReferenceModel(event: CustomEvent<SelectedDropdownOptionValue>) {
     const { detail: enumVal } = event;
@@ -49,6 +51,7 @@
       searchPlaceholder="Filter values"
     />
   {:else}
+    <!-- data-testid={argDef.name} -->
     <select class="st-select w-100" required bind:value>
       {#if !isValueInEnum}
         <option>{value}</option>

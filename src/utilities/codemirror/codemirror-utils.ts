@@ -12,7 +12,7 @@ import type {
   FswCommandArgumentVarString,
 } from '@nasa-jpl/aerie-ampcs';
 import type { EditorView } from 'codemirror';
-import { TOKEN_REPEAT_ARG } from '../../constants/sequencer-grammar-constants';
+import { TOKEN_REPEAT_ARG } from '../../constants/seq-n-grammar-constants';
 import { fswCommandArgDefault } from '../sequence-editor/command-dictionary';
 
 export function isFswCommandArgumentEnum(arg: FswCommandArgument): arg is FswCommandArgumentEnum {

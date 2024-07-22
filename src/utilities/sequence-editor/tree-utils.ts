@@ -46,7 +46,7 @@ export function getFromAndTo(nodes: (SyntaxNode | null)[]): { from: number; to: 
   );
 }
 
-export function getNearestAncestorNodeOfType(node: SyntaxNode | null, ...ancestorTypes: string[]) {
+export function getNearestAncestorNodeOfType(node: SyntaxNode | null, ancestorTypes: string[]) {
   let ancestorNode: SyntaxNode | null = node;
 
   while (ancestorNode && !ancestorTypes.includes(ancestorNode.name)) {

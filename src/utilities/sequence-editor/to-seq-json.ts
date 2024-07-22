@@ -24,7 +24,7 @@ import type {
   Time,
   VariableDeclaration,
 } from '@nasa-jpl/seq-json-schema/types';
-import { TOKEN_REPEAT_ARG } from '../../constants/sequencer-grammar-constants';
+import { TOKEN_REPEAT_ARG } from '../../constants/seq-n-grammar-constants';
 import { TimeTypes } from '../../enums/time';
 import { removeEscapedQuotes, unquoteUnescape } from '../codemirror/codemirror-utils';
 import { getBalancedDuration, getDurationTimeComponents, parseDurationString, validateTime } from '../time';

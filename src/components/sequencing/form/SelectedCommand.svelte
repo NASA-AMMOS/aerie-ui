@@ -13,7 +13,8 @@
   } from '@nasa-jpl/aerie-ampcs';
   import type { EditorView } from 'codemirror';
   import { debounce } from 'lodash-es';
-  import { getAncestorStep, getNameNode, TOKEN_ERROR } from '../../../constants/sequencer-grammar-constants';
+  import { TOKEN_ERROR } from '../../../constants/seq-n-grammar-constants';
+  import { getAncestorStep, getNameNode } from '../../../utilities/codemirror/seq-n-tree-utils';
   import { getCustomArgDef } from '../../../utilities/sequence-editor/extension-points';
   import Collapse from '../../Collapse.svelte';
   import Panel from '../../ui/Panel.svelte';
@@ -178,6 +179,7 @@
     // add spaces to CamelCase names, 'GroundEvent' -> 'Ground Event'
     return s.replace(/([^A-Z])(?=[A-Z])/g, '$1 ');
   }
+
   const nameArgumentDef: FswCommandArgumentVarString = {
     arg_type: 'var_string',
     default_value: null,
@@ -187,15 +189,6 @@
     prefix_bit_length: null,
     valid_regex: null,
   };
-
-  // When the type in the argument value is compatible with the argument definition,
-  // provide a more restrictive editor to keep argument valid. Otherwise fall back on a string editor.
-
-  // TODO
-  // better handling of unclosed strings
-
-  // {'integer_arg', 'float_arg', 'unsigned_arg', 'enum_arg', 'var_string_arg', 'repeat_arg'}
-  // {'unsigned_arg', 'enum_arg', 'var_string_arg', 'float_arg'}
 </script>
 
 <Panel overflowYBody="hidden" padBody={false}>
