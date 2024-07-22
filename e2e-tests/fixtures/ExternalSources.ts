@@ -78,10 +78,9 @@ export class ExternalSources {
   }
 
   async selectSourceFilter() {
-    // Always selects the first source filter possible in the dropdown
+    // Always selects all sources as the filter
     await this.page.getByPlaceholder('Filter by Source Type').click();
-    await this.page.getByRole('button', { name: 'DSN Contact E2E Test' }).click();
-    await this.page.getByText('External Sources DSN Contact').click();
+    await this.page.locator('#source-filters-select-all').click();
   }
 
   async updatePage(page: Page): Promise<void> {
