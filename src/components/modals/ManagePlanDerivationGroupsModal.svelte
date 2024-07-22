@@ -7,10 +7,13 @@
   import { createEventDispatcher } from 'svelte';
   import { derivationGroupPlanLinkError, derivationGroups, externalSourceTypes, externalSourceWithResolvedNames, getEventSourceTypeName, selectedPlanDerivationGroupIds } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
+  import { view } from '../../stores/views';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { DerivationGroup, DerivationGroupMetadata, ExternalSourceWithResolvedNames } from '../../types/external-source';
+  import type { ExternalEventLayer } from '../../types/timeline';
   import effects from '../../utilities/effects';
+  import { isExternalEventLayer } from '../../utilities/timeline';
   import Collapse from '../Collapse.svelte';
   import Input from '../form/Input.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
@@ -35,6 +38,7 @@
     close: void;
   }>();
 
+  let externalEventLayers: ExternalEventLayer[] | undefined;
   let dataGrid: DataGrid<DerivationGroup>;
   let baseColumnDefs: DataGridColumnDef<DerivationGroup>[] = [];
 
@@ -49,7 +53,9 @@
     }
   })
 
-  $: baseColumnDefs = [
+  $: externalEventLayers = $view?.definition.plan.timelines.flatMap(timeline => timeline.rows).flatMap(row => row.layers).filter(layer => isExternalEventLayer(layer));
+
+  baseColumnDefs = [
     {
       field: 'name',
       filter: 'string',
@@ -96,6 +102,17 @@
               if ($derivationGroupPlanLinkError !== null) {
                 console.log($derivationGroupPlanLinkError)
                 console.log("Failed to link derivation group & plan.");
+              } else {
+                // Insert all the external event types from the derivation group to the timeline filter
+                const derivationGroup = $derivationGroups.find(derivationGroup => derivationGroup.id === params?.data?.id);
+                if (derivationGroup !== undefined) {
+                  externalEventLayers?.forEach(externalEventLayer => {
+                    if (externalEventLayer.filter.externalEvent !== undefined) {
+                      externalEventLayer.filter.externalEvent.event_types = externalEventLayer.filter.externalEvent.event_types.concat(derivationGroup.event_types);
+                      externalEventLayer.filter.externalEvent.event_types = externalEventLayer.filter.externalEvent.event_types.filter((val, ind, arr) => arr.indexOf(val) == ind); // uniqueness
+                    }
+                  });
+                }
               }
             } else {
               // delete
