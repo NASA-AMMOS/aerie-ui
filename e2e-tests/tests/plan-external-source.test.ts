@@ -46,7 +46,31 @@ test.beforeAll(async ({ baseURL, browser }) => {
 
 test.afterAll(async () => {
   await externalSources.goto();
-  await externalSources.deleteSource();
+  if (await page.getByRole('gridcell', { name: 'example-dsn-contacts.json' }).first().isVisible()) {
+    await externalSources.deleteSource();
+    await page.getByText('External Source Deleted').waitFor({ state: 'hidden' });
+  }
+
+  if (await page.getByRole('gridcell', { name: 'Derivation_Test_00.json' }).first().isVisible()) {
+    await externalSources.deleteSource('Derivation_Test_00.json');
+    await page.getByText('External Source Deleted').waitFor({ state: 'hidden' });
+  }
+
+  if (await page.getByRole('gridcell', { name: 'Derivation_Test_01.json' }).first().isVisible()) {
+    await externalSources.deleteSource('Derivation_Test_01.json');
+    await page.getByText('External Source Deleted').waitFor({ state: 'hidden' });
+  }
+
+  if (await page.getByRole('gridcell', { name: 'Derivation_Test_02.json' }).first().isVisible()) {
+    await externalSources.deleteSource('Derivation_Test_02.json');
+    await page.getByText('External Source Deleted').waitFor({ state: 'hidden' });
+  }
+
+  if (await page.getByRole('gridcell', { name: 'Derivation_Test_03.json' }).first().isVisible()) {
+    await externalSources.deleteSource('Derivation_Test_03.json');
+    await page.getByText('External Source Deleted').waitFor({ state: 'hidden' });
+  }
+
   await plans.goto();
   await plans.deletePlan();
   await models.goto();
@@ -154,5 +178,70 @@ test.describe.serial('Plan External Sources', () => {
     await page.waitForTimeout(3000); // Arbitrary wait timing, allows the store to load for determining if the checkbox should already be checked (it should be)
     await page.getByRole('row', { name: 'Default DSN Contact E2E Test' }).getByRole('checkbox').click();
     await expect(page.getByText('Derivation Group Disassociated Successfully')).toBeVisible();
+  });
+
+  test('External events are derived from a multi-source derivation group', async () => {
+    await externalSources.goto();
+    // Upload all derivation test files
+    await externalSources.uploadExternalSource(externalSources.derivationTestFile1);
+    await externalSources.deselectSourceButton.click();
+    await page.getByText('External Source Created').waitFor({ state: 'hidden' });
+    await externalSources.uploadExternalSource(externalSources.derivationTestFile2);
+    await externalSources.deselectSourceButton.click();
+    await page.getByText('External Source Created').waitFor({ state: 'hidden' });
+    await externalSources.uploadExternalSource(externalSources.derivationTestFile3);
+    await externalSources.deselectSourceButton.click();
+    await page.getByText('External Source Created').waitFor({ state: 'hidden' });
+    await externalSources.uploadExternalSource(externalSources.derivationTestFile4);
+    await plan.goto();
+    await plan.showPanel(PanelNames.EXTERNAL_SOURCES);
+    await plan.externalSourceManageButton.click();
+    await page.getByRole('row', { name: 'Derivation Test' }).getByRole('checkbox').click();
+    await page.getByText('Derivation Group Linked Successfully').waitFor({ state: 'visible' });
+    await page.getByRole('button', { name: 'Cancel' }).click();
+    await page.getByText('Selected Activity').click();
+    await page.getByRole('menuitem', { name: 'External Events Table' }).click();
+
+    await page
+      .locator('div')
+      .filter({ hasText: /^No sources in this group\. Delete Empty Derivation Group$/ })
+      .locator('p')
+      .waitFor({ state: 'hidden' });
+
+    const dismissCardCount: number = await page.getByRole('button', { name: 'Dismiss' }).count();
+    for (let i = 0; i < dismissCardCount; i++) {
+      await page.getByRole('button', { name: 'Dismiss' }).first().click();
+    }
+
+    // Check on event counts in the panel
+    await page.getByRole('button', { exact: false, name: 'Derivation group Default' }).click();
+    await expect(page.getByRole('button', { name: 'Derivation_Test_00.json 3' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Derivation_Test_01.json 4' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Derivation_Test_02.json 3' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Derivation_Test_03.json 1' })).toBeVisible();
+
+    // Check on specific events in the table
+    await expect(page.getByRole('gridcell', { exact: true, name: '1' })).toBeVisible();
+    await expect(page.getByRole('gridcell', { exact: true, name: '9' })).toBeVisible();
+    await expect(page.getByRole('gridcell', { exact: true, name: '3' })).toBeVisible();
+    await expect(page.getByRole('gridcell', { exact: true, name: '5' })).toBeVisible();
+    await expect(page.getByRole('gridcell', { exact: true, name: '6' })).toBeVisible();
+    await expect(page.getByRole('gridcell', { exact: true, name: '2' })).toBeVisible();
+    await expect(page.getByRole('gridcell', { exact: true, name: '8' })).toBeVisible();
+
+    // Expand all derivation folders on timeline
+    await plan.goto(); // Refreshing is a workaround to newly linked derivation groups not consistently showing on the timeline at first
+    await page.locator('button').filter({ hasText: 'DerivationA' }).click();
+    await page.locator('button').filter({ hasText: 'DerivationB' }).click();
+    await page.locator('button').filter({ hasText: 'DerivationC' }).click();
+
+    // Check derived events on the timeline
+    await expect(page.getByRole('button', { exact: true, name: '1' })).toBeVisible();
+    await expect(page.getByRole('button', { exact: true, name: '3' })).toBeVisible();
+    await expect(page.getByRole('button', { exact: true, name: '2' })).toBeVisible();
+    await expect(page.getByRole('button', { exact: true, name: '8' })).toBeVisible();
+    await expect(page.getByRole('button', { exact: true, name: '9' })).toBeVisible();
+    await expect(page.getByRole('button', { exact: true, name: '5' })).toBeVisible();
+    await expect(page.getByRole('button', { exact: true, name: '6' })).toBeVisible();
   });
 });

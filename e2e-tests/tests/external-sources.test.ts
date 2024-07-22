@@ -28,7 +28,7 @@ test.describe.serial('External Sources', () => {
   });
 
   test('Upload button should be enabled after entering a filepath', async () => {
-    await externalSources.fillInputFile();
+    await externalSources.fillInputFile(externalSources.externalSourceFilePath);
     await expect(externalSources.uploadButton).toBeVisible();
   });
 
