@@ -976,7 +976,7 @@
                     {/if}
                   </div>
                   <div class="list-buttons menu-border-top">
-                    <button class="st-button secondary list-button" on:click={selectFilteredValues}>
+                    <button class="st-button secondary list-button" id="source-filters-select-all" on:click={selectFilteredValues}>
                       Select {filteredValues.length}
                       {#if filteredValues.length === 1}
                         {'external source type'}
