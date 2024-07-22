@@ -4,6 +4,10 @@ export class ExternalSources {
   closeButton: Locator;
   deleteSourceButton: Locator;
   deleteSourceButtonConfirmation: Locator;
+  derivationTestFile1: string = 'e2e-tests/data/external-event-derivation-1.json';
+  derivationTestFile2: string = 'e2e-tests/data/external-event-derivation-2.json';
+  derivationTestFile3: string = 'e2e-tests/data/external-event-derivation-3.json';
+  derivationTestFile4: string = 'e2e-tests/data/external-event-derivation-4.json';
   deselectEventButton: Locator;
   deselectSourceButton: Locator;
   externalEventSelectedForm: Locator;
@@ -39,15 +43,15 @@ export class ExternalSources {
     await this.closeButton.click();
   }
 
-  async deleteSource() {
+  async deleteSource(sourceName: string = 'example-dsn-contacts.json') {
     // Assumes a source has already been uploaded and it is the first row in the table
-    await this.selectSource();
+    await this.selectSource(sourceName);
     await this.deleteSourceButton.click();
     await this.deleteSourceButtonConfirmation.click();
     await this.page.getByText('External Source Deleted').waitFor({ state: 'visible' });
   }
 
-  async fillInputFile(externalSourceFilePath: string = this.externalSourceFilePath) {
+  async fillInputFile(externalSourceFilePath: string) {
     await this.inputFile.focus();
     await this.inputFile.setInputFiles(externalSourceFilePath);
     await this.inputFile.evaluate(e => e.blur());
@@ -65,12 +69,12 @@ export class ExternalSources {
     await this.page.getByRole('gridcell', { name: 'TestDSNContact:79/MMS/MMS3:54' }).click();
   }
 
-  async selectSource() {
+  async selectSource(sourceName: string = 'example-dsn-contacts.json') {
     // Always selects the first source with the example's source type in the table
-    if (!this.page.getByRole('gridcell', { name: 'example-dsn-contacts.json' }).first().isVisible()) {
+    if (!this.page.getByRole('gridcell', { name: sourceName }).first().isVisible()) {
       await this.selectSourceFilter();
     }
-    await this.page.getByRole('gridcell', { name: 'example-dsn-contacts.json' }).first().click();
+    await this.page.getByRole('gridcell', { name: sourceName }).first().click();
   }
 
   async selectSourceFilter() {
@@ -89,7 +93,7 @@ export class ExternalSources {
     this.externalSourceSelectedForm = page.locator('.selected-external-source-details');
     this.alertError = page.locator('.alert-error');
     this.deselectEventButton = page.locator('[name="DeselectEvent"]');
-    this.deselectSourceButton = page.locator('[name="DeselectSource"]');
+    this.deselectSourceButton = page.getByLabel('Deselect Source');
     this.deleteSourceButton = page.getByRole('button', { exact: true, name: 'Delete external source' });
     this.deleteSourceButtonConfirmation = page.getByRole('button', { exact: true, name: 'Delete' });
     this.selectEventTableView = page.locator('[name="SelectEventViewType"]');
@@ -105,8 +109,8 @@ export class ExternalSources {
     this.viewEventSourceMetadata = page.getByRole('button', { name: 'View Event Source Metadata' });
   }
 
-  async uploadExternalSource() {
-    await this.fillInputFile();
+  async uploadExternalSource(inputFilePath: string = this.externalSourceFilePath) {
+    await this.fillInputFile(inputFilePath);
     await this.uploadButton.click();
     await this.page.getByText('External Source Created').waitFor({ state: 'visible' });
   }
