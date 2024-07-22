@@ -827,25 +827,27 @@
               {catchError(error)}
             {/await}
           </Collapse>
-          <Collapse
-            className="used-in-plans-collapse"
-            defaultExpanded={false}
-            title="Used in plans"
-            tooltipContent="View plans this source is used in"
-          >
-            {#if selectedSourceLinkedDerivationGroupsPlans.length > 0}
-              {#each selectedSourceLinkedDerivationGroupsPlans as linkedPlanDerivationGroup}
-                <i>
-                  <a href='{base}/plans/{linkedPlanDerivationGroup.plan_id}'>
-                  {$plans.find(plan => {
-                    return linkedPlanDerivationGroup.plan_id === plan.id;
-                  })?.name}
-                </i>
-              {/each}
-            {:else}
-              <i>Not used in any plans</i>
-            {/if}
-          </Collapse>
+          <div style="padding-bottom:20px">
+            <Collapse
+              className="used-in-plans-collapse"
+              defaultExpanded={false}
+              title="Used in plans"
+              tooltipContent="View plans this source is used in"
+            >
+              {#if selectedSourceLinkedDerivationGroupsPlans.length > 0}
+                {#each selectedSourceLinkedDerivationGroupsPlans as linkedPlanDerivationGroup}
+                  <i>
+                    <a href='{base}/plans/{linkedPlanDerivationGroup.plan_id}'>
+                    {$plans.find(plan => {
+                      return linkedPlanDerivationGroup.plan_id === plan.id;
+                    })?.name}
+                  </i>
+                {/each}
+              {:else}
+                <i>Not used in any plans</i>
+              {/if}
+            </Collapse>
+          </div>
           <button
             class="st-button danger w-100"
             style="margin-bottom:auto;"
