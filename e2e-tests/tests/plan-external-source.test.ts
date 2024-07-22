@@ -46,6 +46,7 @@ test.beforeAll(async ({ baseURL, browser }) => {
 
 test.afterAll(async () => {
   await externalSources.goto();
+  await externalSources.selectSourceFilter();
   if (await page.getByRole('gridcell', { name: 'example-dsn-contacts.json' }).first().isVisible()) {
     await externalSources.deleteSource();
     await page.getByText('External Source Deleted').waitFor({ state: 'hidden' });
