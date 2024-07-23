@@ -107,8 +107,8 @@ export interface Layer {
   filter: {
     // TODO refactor in next PR to a unified filter
     activity?: ActivityLayerFilter;
-    resource?: ResourceLayerFilter;
     externalEvent?: ExternalEventLayerFilter;
+    resource?: ResourceLayerFilter;
   };
   id: number;
   name: string;
@@ -131,17 +131,18 @@ export interface LinePoint extends Point {
 export type MouseDown = {
   activityDirectives?: ActivityDirective[];
   e: MouseEvent;
+  externalEvents?: ExternalEvent[];
   layerId?: number;
   rowId?: number;
   spans?: Span[];
   timelineId?: number;
-  externalEvents?: ExternalEvent[];
 };
 
 export type MouseOver = {
   activityDirectives?: ActivityDirective[];
   constraintResults?: ConstraintResultWithName[];
   e: MouseEvent;
+  externalEvents?: ExternalEvent[];
   gapsByLayer?: Record<number, Point[]>;
   layerId?: number; //TODO not relevant since we sometimes have multiple layers per click
   origin?: MouseOverOrigin; //TODO perhaps remove this
@@ -150,8 +151,6 @@ export type MouseOver = {
   selectedActivityDirectiveId?: number;
   selectedSpanId?: number;
   spans?: Span[];
-  externalEvents?: ExternalEvent[];
-  selectedExternalEventId?: number;
 };
 
 export type RowMouseOverEvent = Omit<
@@ -159,10 +158,10 @@ export type RowMouseOverEvent = Omit<
   'activityDirectivesByLayer' | 'externalEventsByLayer' | 'gapsByLayer' | 'pointsByLayer' | 'spansByLayer'
 > & {
   activityDirectives?: ActivityDirective[];
+  externalEvents?: ExternalEvent[];
   gaps?: Point[];
   points?: Point[];
   spans?: Span[];
-  externalEvents?: ExternalEvent[];
 };
 
 export type MouseOverOrigin = 'row-header' | 'layer-line' | 'layer-activity' | 'layer-x-range' | 'layer-external-event';
@@ -211,27 +210,27 @@ export type ActivityOptions = {
 
 // based on ActivityOptions, but exclusive for drawing ExternalEvents
 export type ExternalEventOptions = {
-  // Height of external event subrows
-  externalEventHeight: number;
-
   // Describes the primary method in which external events are visualized within this row
   displayMode: 'grouped' | 'compact';
+
+  // Height of external event subrows
+  externalEventHeight: number;
 
   // Determines whether to group the External Events by their event type, or their external source
   groupBy: 'event_type' | 'source_id';
 
-  // External event text label behavior
-  labelVisibility: 'on' | 'off' | 'auto';
-
   // Bin size for external event children in grouped mode
   groupedModeBinSize: number;
+
+  // External event text label behavior
+  labelVisibility: 'on' | 'off' | 'auto';
 };
 
 export type Row = {
   activityOptions?: ActivityOptions;
-  externalEventOptions?: ExternalEventOptions;
   autoAdjustHeight: boolean;
   expanded: boolean;
+  externalEventOptions?: ExternalEventOptions;
   height: number;
   horizontalGuides: HorizontalGuide[];
   id: number;

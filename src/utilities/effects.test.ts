@@ -282,16 +282,16 @@ describe('Handle modal and requests in effects', () => {
           type: 'text/plain',
         }),
         {
+          end_time: '',
+          external_events: {
+            data: {},
+          },
+          file_id: 1,
           key: '',
           metadata: {},
           source_type_id: 1,
-          file_id: 1,
           start_time: '',
-          end_time: '',
-          valid_at: '',
-          external_events: {
-            data: {}
-          }
+          valid_at: ''
         } as ExternalSourceInsertInput,
         user,
       );
@@ -312,8 +312,8 @@ describe('Handle modal and requests in effects', () => {
 
       await effects.createExternalSourceEventTypeLink(
         {
-          external_source_id: 1,
           external_event_type_id: 1,
+          external_source_id: 1,
         } as ExternalSourceEventType,
         user,
       );

@@ -53,7 +53,7 @@
   let dataGrid: DataGrid<DerivationGroup>;
   let baseColumnDefs: DataGridColumnDef<DerivationGroup>[] = [];
 
-  selectedPlanDerivationGroupIds.subscribe(e => {
+  selectedPlanDerivationGroupIds.subscribe(() => {
     if (baseColumnDefs.length > 0 && dataGrid) {
       // no current way to change just a specific cell unless we add something about plan associations to the DG object,
       //    which we don't seek to do.
@@ -128,7 +128,7 @@
                         externalEventLayer.filter.externalEvent.event_types.concat(derivationGroup.event_types);
                       externalEventLayer.filter.externalEvent.event_types =
                         externalEventLayer.filter.externalEvent.event_types.filter(
-                          (val, ind, arr) => arr.indexOf(val) == ind,
+                          (val, ind, arr) => arr.indexOf(val) === ind,
                         ); // uniqueness
                     }
                   });
@@ -146,13 +146,13 @@
         });
         return input;
       },
+      enableCellChangeFlash: true,
       filter: 'string',
       headerName: 'Included',
       sortable: true,
       suppressAutoSize: true,
       suppressSizeToFit: true,
       width: 100,
-      enableCellChangeFlash: true,
     },
   ];
 

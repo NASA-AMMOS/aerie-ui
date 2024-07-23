@@ -67,13 +67,18 @@
   originalView.subscribe(ov => {
     // any time a new view is selected, change the enabled list
     if (ov) {
-      if (ov?.definition.plan.filteredDerivationGroups.includes(derivationGroup.id)) enabled = false;
-      else enabled = true;
+      if (ov?.definition.plan.filteredDerivationGroups.includes(derivationGroup.id)) {
+        enabled = false;
+      } else {
+        enabled = true;
+      }
     }
   });
 
   function onChange(_event: Event) {
-    if ($plan) dgInFilter = planDerivationGroupIdsToFilterParsed[$plan.id].includes(derivationGroup.id);
+    if ($plan) {
+      dgInFilter = planDerivationGroupIdsToFilterParsed[$plan.id].includes(derivationGroup.id);
+    }
   }
 
   async function deleteEmptyDerivationGroup() {
