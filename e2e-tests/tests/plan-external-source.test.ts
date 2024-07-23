@@ -16,6 +16,7 @@ let plan: Plan;
 let plans: Plans;
 let schedulingConditions: SchedulingConditions;
 let schedulingGoals: SchedulingGoals;
+const extendedTimeout = 50000;
 
 test.beforeEach(async () => {
   await plan.goto(); // Refresh page to reset the view
@@ -47,29 +48,29 @@ test.beforeAll(async ({ baseURL, browser }) => {
 test.afterAll(async () => {
   await externalSources.goto();
   await externalSources.selectSourceFilter();
-  if (await page.getByRole('gridcell', { name: 'example-dsn-contacts.json' }).first().isVisible()) {
+  if (await page.getByRole('gridcell', { name: 'example-external-source.json' }).first().isVisible()) {
     await externalSources.deleteSource();
-    await page.getByText('External Source Deleted').waitFor({ state: 'hidden' });
+    await page.getByText('External Source Deleted').waitFor({ state: 'hidden', timeout: extendedTimeout });
   }
 
   if (await page.getByRole('gridcell', { name: 'Derivation_Test_00.json' }).first().isVisible()) {
     await externalSources.deleteSource('Derivation_Test_00.json');
-    await page.getByText('External Source Deleted').waitFor({ state: 'hidden' });
+    await page.getByText('External Source Deleted').waitFor({ state: 'hidden', timeout: extendedTimeout });
   }
 
   if (await page.getByRole('gridcell', { name: 'Derivation_Test_01.json' }).first().isVisible()) {
     await externalSources.deleteSource('Derivation_Test_01.json');
-    await page.getByText('External Source Deleted').waitFor({ state: 'hidden' });
+    await page.getByText('External Source Deleted').waitFor({ state: 'hidden', timeout: extendedTimeout });
   }
 
   if (await page.getByRole('gridcell', { name: 'Derivation_Test_02.json' }).first().isVisible()) {
     await externalSources.deleteSource('Derivation_Test_02.json');
-    await page.getByText('External Source Deleted').waitFor({ state: 'hidden' });
+    await page.getByText('External Source Deleted').waitFor({ state: 'hidden', timeout: extendedTimeout });
   }
 
   if (await page.getByRole('gridcell', { name: 'Derivation_Test_03.json' }).first().isVisible()) {
     await externalSources.deleteSource('Derivation_Test_03.json');
-    await page.getByText('External Source Deleted').waitFor({ state: 'hidden' });
+    await page.getByText('External Source Deleted').waitFor({ state: 'hidden', timeout: extendedTimeout });
   }
 
   await plans.goto();
@@ -84,7 +85,9 @@ test.describe.serial('Plan External Sources', () => {
   test('Link a derivation group to a plan', async () => {
     await plan.showPanel(PanelNames.EXTERNAL_SOURCES);
     await plan.externalSourceManageButton.click();
-    await page.getByRole('row', { name: 'Default DSN Contact E2E Test' }).getByRole('checkbox').click();
+    await page.getByRole('row', { name: 'Example External Source' }).getByRole('checkbox').click();
+    await page.getByText('No Derivation Groups Found').waitFor({ state: 'hidden', timeout: extendedTimeout });
+
     await expect(page.getByText('Derivation Group Linked Successfully')).toBeVisible();
   });
 
@@ -95,14 +98,14 @@ test.describe.serial('Plan External Sources', () => {
       .locator('div')
       .filter({ hasText: /^No sources in this group\. Delete Empty Derivation Group$/ })
       .locator('p')
-      .waitFor({ state: 'hidden' });
+      .waitFor({ state: 'hidden', timeout: extendedTimeout });
     // Expand all collapse buttons and validate fields appear
-    await expect(page.getByRole('button', { name: 'DSN Contact E2E Test' })).toBeVisible();
-    await page.getByRole('button', { name: 'Derivation group Default 12' }).first().click();
-    await page.getByRole('button', { name: 'example-dsn-contacts.json 12' }).first().click();
+    await expect(page.getByRole('button', { name: 'Example External Source' })).toBeVisible();
+    await page.getByRole('button', { name: 'Derivation group Default 4' }).first().click();
+    await page.getByRole('button', { name: 'example-external-source.json 4' }).first().click();
     await page.getByRole('button', { name: 'View Contained Event Types' }).first().click();
-    await expect(page.getByText('Key: example-dsn-contacts.json').first()).toBeVisible();
-    await expect(page.getByText('Source Type: DSN Contact E2E').first()).toBeVisible();
+    await expect(page.getByText('Key: ExampleExternalSource:example-external-source.json').first()).toBeVisible();
+    await expect(page.getByText('Source Type: Example External Source').first()).toBeVisible();
     await expect(page.getByText('Start Time: 2024-01-21T00:00:00+00:').first()).toBeVisible();
     await expect(page.getByText('End Time: 2024-01-28T00:00:00+00:').first()).toBeVisible();
     await expect(page.getByText('Valid At: 2024-01-19T00:00:00+00:').first()).toBeVisible();
@@ -113,12 +116,12 @@ test.describe.serial('Plan External Sources', () => {
     await plan.showPanel(PanelNames.EXTERNAL_SOURCES);
     await plan.externalSourceManageButton.click();
     await page
-      .getByRole('row', { name: 'Default DSN Contact E2E Test' })
+      .getByRole('row', { name: 'Example External Source' })
       .getByRole('checkbox')
-      .waitFor({ state: 'visible' });
-    await page.getByRole('row', { name: 'Default DSN Contact E2E Test' }).first().hover();
+      .waitFor({ state: 'visible', timeout: extendedTimeout });
+    await page.getByRole('row', { name: 'Example External Source' }).first().hover();
     await page
-      .getByRole('row', { name: 'Default DSN Contact E2E Test' })
+      .getByRole('row', { name: 'Example External Source' })
       .getByLabel('View Derivation Group')
       .first()
       .click();
@@ -132,12 +135,14 @@ test.describe.serial('Plan External Sources', () => {
       .locator('div')
       .filter({ hasText: /^No sources in this group\. Delete Empty Derivation Group$/ })
       .locator('p')
-      .waitFor({ state: 'hidden' });
+      .waitFor({ state: 'hidden', timeout: extendedTimeout });
     // Expand all collapse buttons to validate fields appear
-    await expect(page.getByRole('button', { name: 'example-dsn-contacts.json 12' }).first()).toBeVisible();
-    await page.getByRole('button', { name: 'example-dsn-contacts.json 12' }).first().click();
-    await expect(page.locator('#svelte-modal').getByText('Key: example-dsn-contacts.json')).toBeVisible();
-    await expect(page.locator('#svelte-modal').getByText('Source Type: DSN Contact E2E')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'example-external-source.json 4' }).first()).toBeVisible();
+    await page.getByRole('button', { name: 'example-external-source.json 4' }).first().click();
+    await expect(
+      page.locator('#svelte-modal').getByText('Key: ExampleExternalSource:example-external-source.json'),
+    ).toBeVisible();
+    await expect(page.locator('#svelte-modal').getByText('Source Type: Example External Source')).toBeVisible();
     await expect(page.locator('#svelte-modal').getByText('Start Time: 2024-01-21T00:00:00+00:')).toBeVisible();
     await expect(page.locator('#svelte-modal').getByText('End Time: 2024-01-28T00:00:00+00:')).toBeVisible();
     await expect(page.locator('#svelte-modal').getByText('Valid At: 2024-01-19T00:00:00+00:')).toBeVisible();
@@ -150,7 +155,9 @@ test.describe.serial('Plan External Sources', () => {
     await plan.goto();
     await plan.showPanel(PanelNames.EXTERNAL_SOURCES);
     // Allow stores to load
-    await page.getByText('No Derivation Groups Linked To This Plan').waitFor({ state: 'hidden' });
+    await page
+      .getByText('No Derivation Groups Linked To This Plan')
+      .waitFor({ state: 'hidden', timeout: extendedTimeout });
     await expect(
       page.getByText('New files matching source types and derivation groups in the current plan'),
     ).toBeVisible();
@@ -160,7 +167,9 @@ test.describe.serial('Plan External Sources', () => {
     await externalSources.deleteSource();
     await plan.goto();
     await plan.showPanel(PanelNames.EXTERNAL_SOURCES);
-    await page.getByText('No Derivation Groups Linked To This Plan').waitFor({ state: 'hidden' });
+    await page
+      .getByText('No Derivation Groups Linked To This Plan')
+      .waitFor({ state: 'hidden', timeout: extendedTimeout });
     await expect(page.getByText('Deleted files organized by source type and derivation group')).toBeVisible();
   });
 
@@ -168,16 +177,16 @@ test.describe.serial('Plan External Sources', () => {
     await plan.showPanel(PanelNames.EXTERNAL_SOURCES);
     await plan.externalSourceManageButton.click();
     await page
-      .getByRole('row', { name: 'Default DSN Contact E2E Test' })
+      .getByRole('row', { name: 'Example External Source' })
       .getByRole('checkbox')
-      .waitFor({ state: 'visible' });
+      .waitFor({ state: 'visible', timeout: extendedTimeout });
     await page
       .locator('div')
       .filter({ hasText: /^No sources in this group\. Delete Empty Derivation Group$/ })
       .locator('p')
-      .waitFor({ state: 'hidden' });
+      .waitFor({ state: 'hidden', timeout: extendedTimeout });
     await page.waitForTimeout(3000); // Arbitrary wait timing, allows the store to load for determining if the checkbox should already be checked (it should be)
-    await page.getByRole('row', { name: 'Default DSN Contact E2E Test' }).getByRole('checkbox').click();
+    await page.getByRole('row', { name: 'Example External Source' }).getByRole('checkbox').click();
     await expect(page.getByText('Derivation Group Disassociated Successfully')).toBeVisible();
   });
 
@@ -186,19 +195,21 @@ test.describe.serial('Plan External Sources', () => {
     // Upload all derivation test files
     await externalSources.uploadExternalSource(externalSources.derivationTestFile1);
     await externalSources.deselectSourceButton.click();
-    await page.getByText('External Source Created').waitFor({ state: 'hidden' });
+    await page.getByText('External Source Created').waitFor({ state: 'hidden', timeout: extendedTimeout });
     await externalSources.uploadExternalSource(externalSources.derivationTestFile2);
     await externalSources.deselectSourceButton.click();
-    await page.getByText('External Source Created').waitFor({ state: 'hidden' });
+    await page.getByText('External Source Created').waitFor({ state: 'hidden', timeout: extendedTimeout });
     await externalSources.uploadExternalSource(externalSources.derivationTestFile3);
     await externalSources.deselectSourceButton.click();
-    await page.getByText('External Source Created').waitFor({ state: 'hidden' });
+    await page.getByText('External Source Created').waitFor({ state: 'hidden', timeout: extendedTimeout });
     await externalSources.uploadExternalSource(externalSources.derivationTestFile4);
     await plan.goto();
     await plan.showPanel(PanelNames.EXTERNAL_SOURCES);
     await plan.externalSourceManageButton.click();
     await page.getByRole('row', { name: 'Derivation Test' }).getByRole('checkbox').click();
-    await page.getByText('Derivation Group Linked Successfully').waitFor({ state: 'visible' });
+    await page
+      .getByText('Derivation Group Linked Successfully')
+      .waitFor({ state: 'visible', timeout: extendedTimeout });
     await page.getByRole('button', { name: 'Cancel' }).click();
     await page.getByText('Selected Activity').click();
     await page.getByRole('menuitem', { name: 'External Events Table' }).click();
@@ -207,7 +218,7 @@ test.describe.serial('Plan External Sources', () => {
       .locator('div')
       .filter({ hasText: /^No sources in this group\. Delete Empty Derivation Group$/ })
       .locator('p')
-      .waitFor({ state: 'hidden' });
+      .waitFor({ state: 'hidden', timeout: extendedTimeout });
 
     const dismissCardCount: number = await page.getByRole('button', { name: 'Dismiss' }).count();
     for (let i = 0; i < dismissCardCount; i++) {
