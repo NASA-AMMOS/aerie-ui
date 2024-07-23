@@ -517,165 +517,6 @@ const effects = {
     }
   },
 
-  async insertDerivationGroupForPlan(derivation_group_id: number, plan: Plan | null, user: User | null): Promise<void> {
-    try {
-      if ((plan && !queryPermissions.CREATE_PLAN_DERIVATION_GROUP(user, plan)) || !plan) {
-        throwPermissionError('add a derivation group to the plan');
-      }
-
-      derivationGroupPlanLinkError.set(null);
-      if (plan !== null) {
-        const data = await reqHasura<PlanDerivationGroup>(
-          gql.CREATE_PLAN_DERIVATION_GROUP,
-          {
-            source: {
-              derivation_group_id: derivation_group_id,
-              plan_id: plan.id,
-            },
-          },
-          user,
-        );
-        const { planExternalSourceLink: sourceAssociation } = data;
-        if (sourceAssociation != null) {
-          // store updates automatically, because its a subscription!
-          showSuccessToast('Derivation Group Linked Successfully');
-        } else {
-          throw Error(`Unable to link Derivation Group with ID "${derivation_group_id}" on plan with ID ${plan.id}`);
-        }
-      } else {
-        throw Error('Plan is not defined.');
-      }
-    } catch (e) {
-      catchError('Derivation Group Linking Failed', e as Error);
-      showFailureToast('Derivation Group Linking Failed');
-      derivationGroupPlanLinkError.set((e as Error).message);
-    }
-  },
-
-  // async deleteExternalEventType(externalEventTypeId: number | null, user: User | null): Promise<void> {
-  //   try {
-  //     if (externalEventTypeId !== null) {
-  //       const data = await reqHasura<{ id: number }>(gql.DELETE_EXTERNAL_EVENT_TYPE, { id: externalEventTypeId }, user);
-  //       if (data.deleteExternalEventType === null) {
-  //         throw Error('Unable to delete external event type');
-  //       }
-  //     }
-  //   } catch (e) {
-  //     catchError('External Event Type Deletion Failed', e as Error);
-  //   }
-  // },
-
-  async deleteExternalSource(
-    externalSource: ExternalSourceWithResolvedNames | null,
-    user: User | null,
-  ): Promise<boolean> {
-    try {
-      if (!queryPermissions.DELETE_EXTERNAL_SOURCE(user)) {
-        throwPermissionError('delete an external source');
-      }
-      if (externalSource !== null) {
-        const { confirm } = await showConfirmModal(
-          'Delete',
-          `Are you sure you want to delete "${externalSource.key}"?`,
-          'Delete External Source',
-        );
-        if (confirm) {
-          const data = await reqHasura<{ id: number }>(
-            gql.DELETE_EXTERNAL_SOURCE,
-            { id: externalSource.id },
-            user,
-          );
-          if (data.deleteExternalSource !== null) {
-            showSuccessToast('External Source Deleted Successfully');
-            return true;
-          } else {
-            throw Error('Unable to delete external source');
-          }
-        }
-      }
-    } catch (e) {
-      catchError('External Source Deletion Failed', e as Error);
-      showFailureToast('External Source Deletion Failed');
-      return false;
-    }
-    return false;
-  },
-
-  // async deleteExternalSourceType(externalSourceTypeId: number | undefined, user: User | null): Promise<void> {
-  //   try {
-  //     if (externalSourceTypeId !== undefined) {
-  //       const data = await reqHasura<{ id: number }>(
-  //         gql.DELETE_EXTERNAL_SOURCE_TYPE,
-  //         { id: externalSourceTypeId },
-  //         user,
-  //       );
-  //       if (data.deleteExternalSourceType === null) {
-  //         throw Error('Unable to delete external source type');
-  //       }
-  //     }
-  //   } catch (e) {
-  //     catchError('External Source Type Deletion Failed', e as Error);
-  //   }
-  // },
-
-  async deleteDerivationGroup(derivation_group_id: number | null, user: User | null): Promise<void> {
-    try {
-      if (derivation_group_id !== null) {
-        const data = await reqHasura<{ id: number }>(gql.DELETE_DERIVATION_GROUP, { id: derivation_group_id }, user);
-        if (data.deleteDerivationGroup === null) {
-          throw Error('Unable to delete derivation group');
-        }
-      }
-    } catch (e) {
-      catchError('Derivation Group Deletion Failed', e as Error);
-    }
-  },
-
-  async deleteDerivationGroupForPlan(derivation_group_id: number, plan: Plan | null, user: User | null): Promise<void> {
-    try {
-      if ((plan && !queryPermissions.DELETE_PLAN_DERIVATION_GROUP(user, plan)) || !plan) {
-        throwPermissionError('delete a derivation group from the plan');
-      }
-
-      // (use the same as above store, as the behavior is employed on the same panel, therefore so would the error)
-      derivationGroupPlanLinkError.set(null);
-      if (plan !== null) {
-        const data = await reqHasura<{
-          returning: {
-            id: number;
-          }[];
-        }>(
-          gql.DELETE_PLAN_DERIVATION_GROUP,
-          {
-            where: {
-              _and: {
-                derivation_group_id: { _eq: derivation_group_id },
-                plan_id: { _eq: plan.id },
-              },
-            },
-          },
-          user,
-        );
-        const sourceDissociation = data.planDerivationGroupLink?.returning[0];
-        if (sourceDissociation) {
-          // source automatically updates!
-          showSuccessToast('Derivation Group Disassociated Successfully');
-        } else {
-          // show the source name instead??? unsure
-          throw Error(
-            `Unable to disassociate Derivation Group with ID "${derivation_group_id}" on plan with ID ${plan.id}`,
-          );
-        }
-      } else {
-        throw Error('Plan is not defined.');
-      }
-    } catch (e) {
-      catchError('Derivation Group De-linking Failed', e as Error);
-      showFailureToast('Derivation Group De-linking Failed');
-      derivationGroupPlanLinkError.set((e as Error).message);
-    }
-  },
-
   async createActivityDirectiveTags(
     tags: ActivityDirectiveTagsInsertInput[],
     user: User | null,
@@ -857,6 +698,31 @@ const effects = {
     return null;
   },
 
+  async createDerivationGroup(
+    derivationGroup: DerivationGroupInsertInput,
+    user: User | null,
+  ): Promise<DerivationGroup | undefined> {
+    try {
+      createDerivationGroupError.set(null);
+      const { createDerivationGroup: created } = await reqHasura(
+        gql.CREATE_DERIVATION_GROUP,
+        { derivationGroup },
+        user,
+      );
+      if (created !== null) {
+        showSuccessToast('Derivation Group Created Successfully');
+        return created as DerivationGroup;
+      } else {
+        throw Error(`Unable to create derivation group`);
+      }
+    } catch (e) {
+      catchError('Derivation Group Create Failed', e as Error);
+      showFailureToast('Derivation Group Create Failed');
+      createDerivationGroupError.set((e as Error).message);
+      return undefined;
+    }
+  },
+
   async createExpansionRule(rule: ExpansionRuleInsertInput, user: User | null): Promise<number | null> {
     try {
       createExpansionRuleError.set(null);
@@ -980,56 +846,6 @@ const effects = {
     }
   },
 
-  async createDerivationGroup(
-    derivationGroup: DerivationGroupInsertInput,
-    user: User | null,
-  ): Promise<DerivationGroup | undefined> {
-    try {
-      createDerivationGroupError.set(null);
-      const { createDerivationGroup: created } = await reqHasura(
-        gql.CREATE_DERIVATION_GROUP,
-        { derivationGroup },
-        user,
-      );
-      if (created !== null) {
-        showSuccessToast('Derivation Group Created Successfully');
-        return created as DerivationGroup;
-      } else {
-        throw Error(`Unable to create derivation group`);
-      }
-    } catch (e) {
-      catchError('Derivation Group Create Failed', e as Error);
-      showFailureToast('Derivation Group Create Failed');
-      createDerivationGroupError.set((e as Error).message);
-      return undefined;
-    }
-  },
-
-  async createExternalSourceType(
-    sourceType: ExternalSourceTypeInsertInput,
-    user: User | null,
-  ): Promise<ExternalSourceType | undefined> {
-    try {
-      createExternalSourceTypeError.set(null);
-      const { createExternalSourceType: created } = await reqHasura(
-        gql.CREATE_EXTERNAL_SOURCE_TYPE,
-        { sourceType },
-        user,
-      );
-      if (created !== null) {
-        showSuccessToast('External Source Type Created Successfully');
-        return created as ExternalSourceType;
-      } else {
-        throw Error(`Unable to create external source type`);
-      }
-    } catch (e) {
-      catchError('External Source Type Create Failed', e as Error);
-      showFailureToast('External Source Type Create Failed');
-      createExternalSourceTypeError.set((e as Error).message);
-      return undefined;
-    }
-  },
-
   async createExternalEventType(eventType: ExternalEventTypeInsertInput, user: User | null) {
     try {
       creatingExternalEventType.set(true);
@@ -1110,6 +926,31 @@ const effects = {
       catchError('External Source Event Type Link Create Failed', e as Error);
       showFailureToast('External Source Event Type Link Create Failed');
       createExternalSourceEventTypeLinkError.set((e as Error).message);
+    }
+  },
+
+  async createExternalSourceType(
+    sourceType: ExternalSourceTypeInsertInput,
+    user: User | null,
+  ): Promise<ExternalSourceType | undefined> {
+    try {
+      createExternalSourceTypeError.set(null);
+      const { createExternalSourceType: created } = await reqHasura(
+        gql.CREATE_EXTERNAL_SOURCE_TYPE,
+        { sourceType },
+        user,
+      );
+      if (created !== null) {
+        showSuccessToast('External Source Type Created Successfully');
+        return created as ExternalSourceType;
+      } else {
+        throw Error(`Unable to create external source type`);
+      }
+    } catch (e) {
+      catchError('External Source Type Create Failed', e as Error);
+      showFailureToast('External Source Type Create Failed');
+      createExternalSourceTypeError.set((e as Error).message);
+      return undefined;
     }
   },
 
@@ -2371,6 +2212,64 @@ const effects = {
     }
   },
 
+  async deleteDerivationGroup(derivation_group_id: number | null, user: User | null): Promise<void> {
+    try {
+      if (derivation_group_id !== null) {
+        const data = await reqHasura<{ id: number }>(gql.DELETE_DERIVATION_GROUP, { id: derivation_group_id }, user);
+        if (data.deleteDerivationGroup === null) {
+          throw Error('Unable to delete derivation group');
+        }
+      }
+    } catch (e) {
+      catchError('Derivation Group Deletion Failed', e as Error);
+    }
+  },
+
+  async deleteDerivationGroupForPlan(derivation_group_id: number, plan: Plan | null, user: User | null): Promise<void> {
+    try {
+      if ((plan && !queryPermissions.DELETE_PLAN_DERIVATION_GROUP(user, plan)) || !plan) {
+        throwPermissionError('delete a derivation group from the plan');
+      }
+
+      // (use the same as above store, as the behavior is employed on the same panel, therefore so would the error)
+      derivationGroupPlanLinkError.set(null);
+      if (plan !== null) {
+        const data = await reqHasura<{
+          returning: {
+            id: number;
+          }[];
+        }>(
+          gql.DELETE_PLAN_DERIVATION_GROUP,
+          {
+            where: {
+              _and: {
+                derivation_group_id: { _eq: derivation_group_id },
+                plan_id: { _eq: plan.id },
+              },
+            },
+          },
+          user,
+        );
+        const sourceDissociation = data.planDerivationGroupLink?.returning[0];
+        if (sourceDissociation) {
+          // source automatically updates!
+          showSuccessToast('Derivation Group Disassociated Successfully');
+        } else {
+          // show the source name instead??? unsure
+          throw Error(
+            `Unable to disassociate Derivation Group with ID "${derivation_group_id}" on plan with ID ${plan.id}`,
+          );
+        }
+      } else {
+        throw Error('Plan is not defined.');
+      }
+    } catch (e) {
+      catchError('Derivation Group De-linking Failed', e as Error);
+      showFailureToast('Derivation Group De-linking Failed');
+      derivationGroupPlanLinkError.set((e as Error).message);
+    }
+  },
+
   async deleteExpansionRule(rule: ExpansionRule, user: User | null): Promise<boolean> {
     try {
       if (!queryPermissions.DELETE_EXPANSION_RULE(user, rule)) {
@@ -2510,6 +2409,38 @@ const effects = {
       showFailureToast('Expansion Set Delete Failed');
       return false;
     }
+  },
+
+  async deleteExternalSource(
+    externalSource: ExternalSourceWithResolvedNames | null,
+    user: User | null,
+  ): Promise<boolean> {
+    try {
+      if (!queryPermissions.DELETE_EXTERNAL_SOURCE(user)) {
+        throwPermissionError('delete an external source');
+      }
+      if (externalSource !== null) {
+        const { confirm } = await showConfirmModal(
+          'Delete',
+          `Are you sure you want to delete "${externalSource.key}"?`,
+          'Delete External Source',
+        );
+        if (confirm) {
+          const data = await reqHasura<{ id: number }>(gql.DELETE_EXTERNAL_SOURCE, { id: externalSource.id }, user);
+          if (data.deleteExternalSource !== null) {
+            showSuccessToast('External Source Deleted Successfully');
+            return true;
+          } else {
+            throw Error('Unable to delete external source');
+          }
+        }
+      }
+    } catch (e) {
+      catchError('External Source Deletion Failed', e as Error);
+      showFailureToast('External Source Deletion Failed');
+      return false;
+    }
+    return false;
   },
 
   async deleteFile(id: number, user: User | null): Promise<boolean> {
@@ -3407,6 +3338,177 @@ const effects = {
     }
   },
 
+  async getExpansionRule(id: number, user: User | null): Promise<ExpansionRule | null> {
+    try {
+      const data = await reqHasura(gql.GET_EXPANSION_RULE, { id }, user);
+      const { expansionRule } = data;
+      return expansionRule;
+    } catch (e) {
+      catchError(e as Error);
+      return null;
+    }
+  },
+
+  async getExpansionRuleTags(user: User | null): Promise<Tag[] | null> {
+    try {
+      const data = await reqHasura(convertToQuery(gql.SUB_EXPANSION_RULE_TAGS), {}, user);
+      const { expansionRuleTags } = data;
+      return expansionRuleTags;
+    } catch (e) {
+      catchError(e as Error);
+      return null;
+    }
+  },
+
+  async getExpansionRuns(user: User | null): Promise<ExpansionRun[]> {
+    try {
+      const data = await reqHasura(gql.GET_EXPANSION_RUNS, {}, user);
+      const { expansionRuns } = data;
+      return expansionRuns;
+    } catch (e) {
+      catchError(e as Error);
+      return [];
+    }
+  },
+
+  async getExpansionSequenceId(
+    simulated_activity_id: number,
+    simulation_dataset_id: number,
+    user: User | null,
+  ): Promise<string | null> {
+    try {
+      const data = await reqHasura<SeqId>(
+        gql.GET_EXPANSION_SEQUENCE_ID,
+        {
+          simulated_activity_id,
+          simulation_dataset_id,
+        },
+        user,
+      );
+      const { expansionSequence } = data;
+
+      if (expansionSequence) {
+        const { seq_id } = expansionSequence;
+        return seq_id;
+      } else {
+        return null;
+      }
+    } catch (e) {
+      catchError(e as Error);
+      return null;
+    }
+  },
+
+  async getExpansionSequenceSeqJson(
+    seqId: string,
+    simulationDatasetId: number,
+    user: User | null,
+  ): Promise<string | null> {
+    try {
+      const data = await reqHasura<GetSeqJsonResponse>(
+        gql.GET_EXPANSION_SEQUENCE_SEQ_JSON,
+        {
+          seqId,
+          simulationDatasetId,
+        },
+        user,
+      );
+      const { getSequenceSeqJson } = data;
+      if (getSequenceSeqJson != null) {
+        const { errors, seqJson, status } = getSequenceSeqJson;
+
+        if (status === 'FAILURE') {
+          const [firstError] = errors;
+          const { message } = firstError;
+          return message;
+        } else {
+          return JSON.stringify(seqJson, null, 2);
+        }
+      } else {
+        throw Error(`Unable to get expansion sequence seq json for seq ID "${seqId}"`);
+      }
+    } catch (e) {
+      catchError(e as Error);
+      return null;
+    }
+  },
+
+  async getExtensions(user: User | null): Promise<Extension[]> {
+    try {
+      const data = await reqHasura<Extension[]>(gql.GET_EXTENSIONS, {}, user);
+      const { extensions = [] } = data;
+      if (extensions != null) {
+        return extensions;
+      } else {
+        throw Error('Unable to retrieve extensions');
+      }
+    } catch (e) {
+      catchError(e as Error);
+      return [];
+    }
+  },
+
+  async getExternalEventTypes(plan_id: number, user: User | null): Promise<ExternalEventType[]> {
+    try {
+      const source_data = await reqHasura<any>(gql.GET_PLAN_EVENT_TYPES, { plan_id }, user);
+      const type_ids: Set<number> = new Set();
+      const types: ExternalEventType[] = [];
+      if (source_data?.plan_derivation_group !== null) {
+        for (const group of source_data['plan_derivation_group']) {
+          for (const source of group['derivation_group']['external_source']) {
+            for (const event of source['external_events']) {
+              const type = event['external_event_type'];
+              if (!type_ids.has(type['id'])) {
+                type_ids.add(type['id']);
+                types.push(type);
+              }
+            }
+          }
+        }
+      } else {
+        throw Error('Unable to gather ell external event types for the source');
+      }
+
+      return types;
+    } catch (e) {
+      catchError(e as Error);
+      return [];
+    }
+  },
+
+  async getExternalEventTypesBySource(
+    source_ids: number[],
+    eventTypes: ExternalEventType[],
+    user: User | null,
+  ): Promise<ExternalEventType[]> {
+    try {
+      if (!source_ids || !source_ids.length) {
+        return [];
+      }
+      const data = await reqHasura<
+        {
+          external_event_type_id: number;
+        }[]
+      >(gql.GET_EXTERNAL_EVENT_TYPE_BY_SOURCE, { source_ids }, user);
+      const { external_event_type_ids } = data;
+      if (external_event_type_ids != null) {
+        return Array.from(
+          new Set(
+            external_event_type_ids
+              .map(eventType => getEventTypeById(eventType.external_event_type_id, eventTypes))
+              .filter(type => type) as ExternalEventType[],
+          ),
+        );
+      } else {
+        throw Error('Unable to retrieve external event types for source');
+      }
+    } catch (e) {
+      catchError(e as Error);
+      showFailureToast('External Event Type Retrieval Failed');
+      return [];
+    }
+  },
+
   async getExternalEvents(source_id: number | undefined, user: User | null): Promise<ExternalEventDB[]> {
     if (!source_id) {
       console.log('SourceId is undefined.');
@@ -3470,67 +3572,6 @@ const effects = {
     }
   },
 
-  async getExternalEventTypesBySource(
-    source_ids: number[],
-    eventTypes: ExternalEventType[],
-    user: User | null,
-  ): Promise<ExternalEventType[]> {
-    try {
-      if (!source_ids || !source_ids.length) {
-        return [];
-      }
-      const data = await reqHasura<
-        {
-          external_event_type_id: number;
-        }[]
-      >(gql.GET_EXTERNAL_EVENT_TYPE_BY_SOURCE, { source_ids }, user);
-      const { external_event_type_ids } = data;
-      if (external_event_type_ids != null) {
-        return Array.from(
-          new Set(
-            external_event_type_ids
-              .map(eventType => getEventTypeById(eventType.external_event_type_id, eventTypes))
-              .filter(type => type) as ExternalEventType[],
-          ),
-        );
-      } else {
-        throw Error('Unable to retrieve external event types for source');
-      }
-    } catch (e) {
-      catchError(e as Error);
-      showFailureToast('External Event Type Retrieval Failed');
-      return [];
-    }
-  },
-
-  async getExternalEventTypes(plan_id: number, user: User | null): Promise<ExternalEventType[]> {
-    try {
-      const source_data = await reqHasura<any>(gql.GET_PLAN_EVENT_TYPES, { plan_id }, user);
-      const type_ids: Set<number> = new Set();
-      const types: ExternalEventType[] = [];
-      if (source_data?.plan_derivation_group !== null) {
-        for (const group of source_data['plan_derivation_group']) {
-          for (const source of group['derivation_group']['external_source']) {
-            for (const event of source['external_events']) {
-              const type = event['external_event_type'];
-              if (!type_ids.has(type['id'])) {
-                type_ids.add(type['id']);
-                types.push(type);
-              }
-            }
-          }
-        }
-      } else {
-        throw Error('Unable to gather ell external event types for the source');
-      }
-
-      return types;
-    } catch (e) {
-      catchError(e as Error);
-      return [];
-    }
-  },
-
   async getExternalSourceByType(sourceTypeId: number | undefined, user: User | null): Promise<ExternalSourceSlim[]> {
     try {
       if (sourceTypeId) {
@@ -3539,15 +3580,15 @@ const effects = {
         const outputSources: ExternalSourceSlim[] = [];
         for (const source of sources) {
           outputSources.push({
+            created_at: source.created_at,
+            derivation_group_id: source.derivation_group_id,
+            end_time: source.end_time,
+            file_id: source.file_id,
             id: source.id,
             key: source.key,
-            file_id: source.file_id,
             source_type_id: source.source_type_id,
-            valid_at: source.valid_at,
             start_time: source.start_time,
-            end_time: source.end_time,
-            derivation_group_id: source.derivation_group_id,
-            created_at: source.created_at,
+            valid_at: source.valid_at,
           });
         }
         return outputSources;
@@ -4672,6 +4713,41 @@ const effects = {
     } catch (e) {
       catchError(e as Error);
       return false;
+    }
+  },
+
+  async insertDerivationGroupForPlan(derivation_group_id: number, plan: Plan | null, user: User | null): Promise<void> {
+    try {
+      if ((plan && !queryPermissions.CREATE_PLAN_DERIVATION_GROUP(user, plan)) || !plan) {
+        throwPermissionError('add a derivation group to the plan');
+      }
+
+      derivationGroupPlanLinkError.set(null);
+      if (plan !== null) {
+        const data = await reqHasura<PlanDerivationGroup>(
+          gql.CREATE_PLAN_DERIVATION_GROUP,
+          {
+            source: {
+              derivation_group_id: derivation_group_id,
+              plan_id: plan.id,
+            },
+          },
+          user,
+        );
+        const { planExternalSourceLink: sourceAssociation } = data;
+        if (sourceAssociation != null) {
+          // store updates automatically, because its a subscription!
+          showSuccessToast('Derivation Group Linked Successfully');
+        } else {
+          throw Error(`Unable to link Derivation Group with ID "${derivation_group_id}" on plan with ID ${plan.id}`);
+        }
+      } else {
+        throw Error('Plan is not defined.');
+      }
+    } catch (e) {
+      catchError('Derivation Group Linking Failed', e as Error);
+      showFailureToast('Derivation Group Linking Failed');
+      derivationGroupPlanLinkError.set((e as Error).message);
     }
   },
 

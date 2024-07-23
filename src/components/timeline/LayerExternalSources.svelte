@@ -21,15 +21,14 @@
   } from '../../types/timeline';
   import { hexToRgba, shadeColor } from '../../utilities/color';
   import { isRightClick } from '../../utilities/generic';
-  import { getDoyTime, getUnixEpochTime } from '../../utilities/time';
   import { TimelineInteractionMode, externalEventInView, searchQuadtreeRect } from '../../utilities/timeline';
 
   type IdToColorMap = Record<number, string>;
-  type IdToColorMaps = { directives: IdToColorMap; spans: IdToColorMap; external_events: IdToColorMap };
+  type IdToColorMaps = { directives: IdToColorMap; external_events: IdToColorMap; spans: IdToColorMap };
 
   export let selectedExternalEventId: ExternalEventId | null = null;
   export let externalEvents: ExternalEvent[] = [];
-  export let idToColorMaps: IdToColorMaps = { directives: {}, spans: {}, external_events: {} };
+  export let idToColorMaps: IdToColorMaps = { directives: {}, external_events: {}, spans: {} };
   export let externalEventRowPadding: number = 4;
   export let externalEventSelectedColor: string = '#a9eaff';
   export let externalEventSelectedTextColor: string = '#0a4c7e';
@@ -46,7 +45,6 @@
   export let mousedown: MouseEvent | undefined;
   export let mousemove: MouseEvent | undefined;
   export let mouseout: MouseEvent | undefined;
-  export let planStartTimeYmd: string;
   export let showDirectives: boolean = true;
   export let timelineInteractionMode: TimelineInteractionMode;
   export let viewTimeRange: TimeRange = { end: 0, start: 0 };
@@ -66,7 +64,6 @@
   let ctx: CanvasRenderingContext2D;
   let maxExternalEventWidth: number;
   let minRectSize: number = 4;
-  let planStartTimeMs: number;
   let quadtreeSpans: Quadtree<QuadtreeRect>;
   let visibleExternalEventsById: Record<ExternalEventId, ExternalEvent> = {};
   let colorCache: Record<string, string> = {};
@@ -83,7 +80,6 @@
   $: canvasHeightDpr = drawHeight * dpr;
   $: canvasWidthDpr = drawWidth * dpr;
   $: rowHeight = externalEventOptions.externalEventHeight + (externalEventOptions.displayMode === 'compact' ? 0 : 0);
-  $: planStartTimeMs = getUnixEpochTime(getDoyTime(new Date(planStartTimeYmd)));
 
   $: if (
     showDirectives !== undefined &&
@@ -111,16 +107,6 @@
     if (canvas) {
       ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
     }
-  }
-
-  function loadSVG(svgString: string) {
-    var svg64 = window.btoa(svgString);
-    var b64Start = 'data:image/svg+xml;base64,';
-    // prepend a "header"
-    var image64 = b64Start + svg64;
-    const image = document.createElement('img');
-    image.src = image64;
-    return image;
   }
 
   function getExternalEventsByOffset(offsetX: number, offsetY: number) {

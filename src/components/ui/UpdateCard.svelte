@@ -37,19 +37,19 @@
 >
   <div
     class="card--row card--title-row"
-    style="display:flex; background: {deleted ? 'rgb(254, 234, 234)' : 'rgb(254, 252, 234)'}"
+    style=" background: {deleted ? 'rgb(254, 234, 234)' : 'rgb(254, 252, 234)'};display:flex"
   >
     <div
       class="card--title t-typography-medium"
-      style="padding-left:5px; align-items: center; display: flex; width: 100%; gap: 5px"
+      style=" align-items: center; display: flex; gap: 5px;padding-left:5px; width: 100%"
     >
       <LightningCharge
         class="filter-search-icon"
         style="color: {deleted ? 'rgba(152, 35, 35, 0.5)' : 'rgba(152, 101, 35, 0.5)'}"
       />
-      {#if sources.length == 1 && !deleted}
+      {#if sources.length === 1 && !deleted}
         1 new file has been uploaded
-      {:else if sources.length == 1 && deleted}
+      {:else if sources.length === 1 && deleted}
         1 file has been deleted
       {:else if deleted}
         {sources.length} files have been deleted
@@ -79,12 +79,12 @@
               {#each mappedSources[sourceType][derivationGroup] as source}
                 <div class="card--source-info">
                   <p
-                    style="flex-shrink: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%"
+                    style="flex-shrink: 1; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap"
                   >
                     {source.key}
                   </p>
                   <p
-                    style="flex-shrink: 0; white-space: nowrap: margin-left: auto; padding-top: 0.1rem; padding-right: 0.25rem; color: gray"
+                    style=" color: gray;flex-shrink: 0; margin-left: auto; padding-right: 0.25rem; padding-top: 0.1rem; white-space: nowrap"
                   >
                     {getTimeAgo(new Date(source.change_date), new Date(), Number.MAX_SAFE_INTEGER)}
                   </p>
@@ -97,7 +97,7 @@
     </div>
     <div style="padding-top:5px">
       <!--TODO: try importing component library where you can pull in existing 'stellar' button that looks like rest of aerie-->
-      <button style="border: 0px; width: 100px; background: rgb(235, 235, 235)" on:click={() => dispatch('dismiss')}
+      <button style=" background: rgb(235, 235, 235);border: 0px; width: 100px" on:click={() => dispatch('dismiss')}
         >Dismiss</button
       >
     </div>
