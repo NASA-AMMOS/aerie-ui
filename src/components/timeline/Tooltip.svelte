@@ -151,7 +151,13 @@
     if (gaps.length) {
       // For now we render a single static "No Value" message for any number of gaps,
       // as long as there aren't other data points to render at the same location
-      if (!points.length && !constraintResults.length && !activityDirectives.length && !spans.length && !externalEvents.length) {
+      if (
+        !points.length &&
+        !constraintResults.length &&
+        !activityDirectives.length &&
+        !spans.length &&
+        !externalEvents.length
+      ) {
         return `
           <div>
             No Value
@@ -273,7 +279,10 @@
       }
     });
 
-    if (points.length && (constraintResults.length || activityDirectives.length || spans.length || externalEvents.length)) {
+    if (
+      points.length &&
+      (constraintResults.length || activityDirectives.length || spans.length || externalEvents.length)
+    ) {
       tooltipText = `${tooltipText}<hr>`;
     }
 

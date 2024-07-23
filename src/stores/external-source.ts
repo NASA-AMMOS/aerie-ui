@@ -1,6 +1,13 @@
-import { browser } from "$app/environment";
+import { browser } from '$app/environment';
 import { derived, writable, type Writable } from 'svelte/store';
-import { type DerivationGroup, type ExternalSourceEventType, type ExternalSourceSlim, type ExternalSourceType, type ExternalSourceWithResolvedNames, type PlanDerivationGroup } from '../types/external-source';
+import {
+  type DerivationGroup,
+  type ExternalSourceEventType,
+  type ExternalSourceSlim,
+  type ExternalSourceType,
+  type ExternalSourceWithResolvedNames,
+  type PlanDerivationGroup,
+} from '../types/external-source';
 import gql from '../utilities/gql';
 import { planId } from './plan';
 import { gqlSubscribable } from './subscribable';
@@ -16,7 +23,6 @@ export const createDerivationGroupError: Writable<string | null> = writable(null
 export const derivationGroupPlanLinkError: Writable<string | null> = writable(null);
 
 export const createExternalSourceEventTypeLinkError: Writable<string | null> = writable(null);
-
 
 /* Persisted. */
 // need extra logic for persistence
@@ -43,9 +49,11 @@ deletedSourcesSeen.subscribe(val => {
 // this store catches all derivation groups associated with the current plans that have been disabled
 //    doesn't check if they're linked or not, simply acts as a list to filter out if they are associated
 //    it is therefore possible to disable a group, dissociate it, reassociate it, and it'll still be disabled
-// assumes shape {[plan_id: number]: number[]}, where the list of numbers is the list of filtered out 
+// assumes shape {[plan_id: number]: number[]}, where the list of numbers is the list of filtered out
 //    derivation groups for the given plan id
-export const planDerivationGroupIdsToFilter = writable((browser && localStorage.getItem('planDerivationGroupIdsToFilter')) || '{}');
+export const planDerivationGroupIdsToFilter = writable(
+  (browser && localStorage.getItem('planDerivationGroupIdsToFilter')) || '{}',
+);
 planDerivationGroupIdsToFilter.subscribe(val => {
   // validate that val is list-like
   if (browser && JSON.parse(val)) {
@@ -53,7 +61,6 @@ planDerivationGroupIdsToFilter.subscribe(val => {
   }
 });
 // export const currentPlanDerivationGroupIdsToFilter: Writable<number[]> = writable([]);
-
 
 /* Subscriptions. */
 export const externalSources = gqlSubscribable<ExternalSourceSlim[]>(gql.SUB_EXTERNAL_SOURCES, {}, [], null);
@@ -65,10 +72,9 @@ export const derivationGroupsRaw = gqlSubscribable<
     source_type_id: number;
     sources: string[];
     event_types: string[];
-    derived_total: number
+    derived_total: number;
   }[]
 >(gql.SUB_DERIVATION_GROUPS, {}, [], null);
-
 
 // use to keep track of associations between plans and goals
 export const planDerivationGroupLinks = gqlSubscribable<PlanDerivationGroup[]>(
@@ -90,17 +96,17 @@ export const externalSourceEventTypes = gqlSubscribable<ExternalSourceEventType[
 // cleans up derivationGroupsRaw
 export const derivationGroups = derived<[typeof derivationGroupsRaw], DerivationGroup[]>(
   [derivationGroupsRaw],
-  ([$derivationGroupsRaw]) => 
+  ([$derivationGroupsRaw]) =>
     $derivationGroupsRaw.map(raw => ({
       id: raw.id,
       name: raw.name,
       source_type_id: raw.source_type_id,
       sources: new Map(
         // comes from view schema that is hardcoded as "{dg_id}, {source_key}, {source_id}""
-        raw.sources.map(s => [s.split(", ")[1], { event_counts: parseInt(s.split(", ")[2]) }])
+        raw.sources.map(s => [s.split(', ')[1], { event_counts: parseInt(s.split(', ')[2]) }]),
       ),
       event_types: raw.event_types,
-      derivedEventTotal: raw.derived_total
+      derivedEventTotal: raw.derived_total,
     })),
 );
 
@@ -110,7 +116,7 @@ export const externalSourceWithResolvedNames = derived<
   ExternalSourceWithResolvedNames[]
 >(
   [externalSources, externalSourceTypes, derivationGroups],
-  ([$externalSources, $externalSourceTypes, $derivationGroups]) => 
+  ([$externalSources, $externalSourceTypes, $derivationGroups]) =>
     $externalSources.map(externalSource => ({
       ...externalSource,
       source_type: getEventSourceTypeName(externalSource.source_type_id, $externalSourceTypes),
@@ -121,7 +127,8 @@ export const externalSourceWithResolvedNames = derived<
 
 export const selectedPlanDerivationGroupIds = derived(
   [planDerivationGroupLinks, planId],
-  ([$planDerivationGroupLinks, $planId]) => $planDerivationGroupLinks.filter(link => link.plan_id === $planId).map(link => link.derivation_group_id)
+  ([$planDerivationGroupLinks, $planId]) =>
+    $planDerivationGroupLinks.filter(link => link.plan_id === $planId).map(link => link.derivation_group_id),
 );
 
 /* Helper Functions. */
@@ -161,7 +168,9 @@ export function getDerivationGroupByNameSourceTypeId(
   sourceTypeId: number,
   derivationGroups: DerivationGroup[],
 ): DerivationGroup | undefined {
-  return derivationGroups.find(derivationGroup => derivationGroup.name === name && derivationGroup.source_type_id === sourceTypeId);
+  return derivationGroups.find(
+    derivationGroup => derivationGroup.name === name && derivationGroup.source_type_id === sourceTypeId,
+  );
 }
 
 export function getDerivationGroupName(id: number, derivationGroups: DerivationGroup[]): string | undefined {
