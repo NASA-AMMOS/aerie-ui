@@ -300,6 +300,7 @@ export function generateDefaultView(
           ],
           columnStates: [],
         },
+        filteredDerivationGroups: [],
         grid: {
           columnSizes: '1fr 3px 3fr 3px 1fr',
           leftComponentBottom: 'SimulationPanel',

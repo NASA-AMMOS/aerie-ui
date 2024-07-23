@@ -843,6 +843,7 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   },
   SUB_CONSTRAINT_DEFINITION: () => true,
   SUB_CONSTRAINT_PLAN_SPECIFICATIONS: () => true,
+  SUB_DERIVATION_GROUPS: () => true,
   SUB_CONSTRAINT_RUNS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.CONSTRAINT_RUN], user);
   },

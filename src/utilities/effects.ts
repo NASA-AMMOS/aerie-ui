@@ -1060,6 +1060,31 @@ const effects = {
     }
   },
 
+  async createExternalSourceType(
+    sourceType: ExternalSourceTypeInsertInput,
+    user: User | null,
+  ): Promise<ExternalSourceType | undefined> {
+    try {
+      createExternalSourceTypeError.set(null);
+      const { createExternalSourceType: created } = await reqHasura(
+        gql.CREATE_EXTERNAL_SOURCE_TYPE,
+        { sourceType },
+        user,
+      );
+      if (created !== null) {
+        showSuccessToast('External Source Type Created Successfully');
+        return created as ExternalSourceType;
+      } else {
+        throw Error(`Unable to create external source type`);
+      }
+    } catch (e) {
+      catchError('External Source Type Create Failed', e as Error);
+      showFailureToast('External Source Type Create Failed');
+      createExternalSourceTypeError.set((e as Error).message);
+      return undefined;
+    }
+  },
+
   async createModel(
     name: string,
     version: string,

@@ -215,6 +215,7 @@ export type Row = {
   autoAdjustHeight: boolean;
   discreteOptions: DiscreteOptions;
   expanded: boolean;
+  externalEventOptions?: ExternalEventOptions;
   height: number;
   horizontalGuides: HorizontalGuide[];
   id: number;
