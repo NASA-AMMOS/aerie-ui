@@ -582,7 +582,7 @@ const effects = {
         if (confirm) {
           const data = await reqHasura<{ id: number }>(
             gql.DELETE_EXTERNAL_SOURCE,
-            { file_id: externalSource.file_id, id: externalSource.id },
+            { id: externalSource.id },
             user,
           );
           if (data.deleteExternalSource !== null) {

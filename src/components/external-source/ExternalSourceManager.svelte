@@ -49,6 +49,9 @@
   import { type MouseDown, type MouseOver } from '../../types/timeline';
   import effects from '../../utilities/effects';
   import { classNames } from '../../utilities/generic';
+  import {
+    showConfirmModal
+  } from '../../utilities/modal';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import { convertDoyToYmd, convertDurationToMs, convertUTCtoMs } from '../../utilities/time';
@@ -418,57 +421,57 @@
 
   async function onDeleteExternalSource(selectedSource: ExternalSourceWithResolvedNames | null | undefined) {
     if (selectedSource !== null && selectedSource !== undefined) {
-      const deletedSourceEventTypes = await effects.getExternalEventTypesBySource(
-        selectedSourceId ? [selectedSourceId] : [],
-        $externalEventTypes,
-        user,
-      );
-      const deletionWasSuccessful = await effects.deleteExternalSource(selectedSource, user);
-      if (deletionWasSuccessful) {
-        // TODO: replace all of this except the stuff about unseen deletions with triggers in database
-        deselectSource();
-
-        // persist to list of unseen deletions, with a deleted_at time
-        let deletedSourcesParsed: ExternalSourceWithDateInfo[] = JSON.parse($deletedSourcesSeen);
-        deletedSourcesSeen.set(
-          JSON.stringify(deletedSourcesParsed.concat({ ...selectedSource, change_date: new Date() })),
+      // selectedSource here does not necessarily align with global selected source, especially if you click delete 
+      //    in a table without making a selection. as such, can't use selectedSourceLinkedDerivationGroupsPlans, must 
+      //    make a new one.
+      let currentlyLinked = $planDerivationGroupLinks.filter(planDerivationGroupLink => {
+                              return planDerivationGroupLink.derivation_group_id === selectedSource?.derivation_group_id;
+                            });
+      if(currentlyLinked.length > 0) {
+        // if the source is in a derivation group currently used by a plan, warn that we cannot delete 
+        let linkedPlans: string[] = currentlyLinked.map(link => `<div style="padding-left:20px"><i>
+                                                                    <a href="${base}/plans/${link.plan_id}">
+                                                                      ${$plans.find(plan => {
+                                                                        return link.plan_id === plan.id;
+                                                                      })?.name}
+                                                                    </a>
+                                                                  </i></div>
+                                                                `)
+        
+        const _ = await showConfirmModal(
+          'Confirm',
+          `This External Source is part of Derivation Group '${selectedSource.derivation_group}', 
+          which is linked with the following plans: ${linkedPlans.join('\n')}`,
+          'External Source Cannot Be Deleted',
+          true,
+          ""
         );
-        // in case it was added and then immediately deleted, though, remove it from both unseenSources and deletedSourcesParsed, to not confuse the user
-        {
-          let seenSourcesParsed: ExternalSourceWithDateInfo[] = JSON.parse($unseenSources);
-          let filtered = seenSourcesParsed.filter(s => s.id !== selectedSource.id);
-          if (filtered.length !== seenSourcesParsed.length) {
-            unseenSources.set(JSON.stringify(filtered));
-            deletedSourcesSeen.set(JSON.stringify(deletedSourcesParsed.filter(s => s.id !== selectedSource.id)));
+      }
+      else {
+        // otherwise, delete!
+        const deletionWasSuccessful = await effects.deleteExternalSource(selectedSource, user);
+        if (deletionWasSuccessful) {
+          // TODO: replace all of this except the stuff about unseen deletions with triggers in database
+          deselectSource();
+
+          // persist to list of unseen deletions, with a deleted_at time
+          let deletedSourcesParsed: ExternalSourceWithDateInfo[] = JSON.parse($deletedSourcesSeen);
+          deletedSourcesSeen.set(
+            JSON.stringify(deletedSourcesParsed.concat({ ...selectedSource, change_date: new Date() })),
+          );
+          // in case it was added and then immediately deleted, though, remove it from both unseenSources and deletedSourcesParsed, to not confuse the user
+          {
+            let seenSourcesParsed: ExternalSourceWithDateInfo[] = JSON.parse($unseenSources);
+            let filtered = seenSourcesParsed.filter(s => s.id !== selectedSource.id);
+            if (filtered.length !== seenSourcesParsed.length) {
+              unseenSources.set(JSON.stringify(filtered));
+              deletedSourcesSeen.set(JSON.stringify(deletedSourcesParsed.filter(s => s.id !== selectedSource.id)));
+            }
+            // NOTE: if I add a source, go to plans, DON'T ACKNOWLEDGE IT, then delete that source, and go back to plans, the warning card is gone as the
+            //    system assumes I never got the first notification and as such the second is unnecessary as I never acknowledged knowing it was added, so
+            //    it won't warn me that it was deleted.
           }
-          // NOTE: if I add a source, go to plans, DON'T ACKNOWLEDGE IT, then delete that source, and go back to plans, the warning card is gone as the
-          //    system assumes I never got the first notification and as such the second is unnecessary as I never acknowledged knowing it was added, so
-          //    it won't warn me that it was deleted.
         }
-
-        // // Determine if the derivation group this source belonged to is now empty, if so delete it
-        // // NOTE: This work could be moved to Hasura in the future, or re-worked as it might be costly.
-        // const derivationGroupsInUse = Array.from(new Set($externalSourceWithResolvedNames.filter(s => s.id !== selectedSource.id).map(s => s.derivation_group_id)).values())
-        // const unusedDerivationGroupIds = $derivationGroups.filter(dg => !derivationGroupsInUse.includes(dg.id)).map(dg => dg.id)
-        // for (const unusedDerivationGroupId of unusedDerivationGroupIds) {
-        //   await effects.deleteDerivationGroup(unusedDerivationGroupId, user);
-        // }
-
-        // // Determine if there are no remaining external sources that use the type of the source that was just deleted. If there are none, delete the source type
-        // // NOTE: This work could be moved to Hasura in the future, or re-worked as it might be costly.
-        // const sourceTypesInUse = Array.from(new Set($externalSourceWithResolvedNames.filter(s => s.id !== selectedSource.id).map(s => s.source_type_id)).values())
-        // const unusedSourceTypeIds = $externalSourceTypes.filter(st => !sourceTypesInUse.includes(st.id)).map(st => st.id)
-        // for (const unusedSourceTypeId of unusedSourceTypeIds) {
-        //   await effects.deleteExternalSourceType(unusedSourceTypeId, user);
-        // }
-
-        // // Determine if there are no remaining external events that use the types contained in the now-deleted external source. If there are none, delete the external event type
-        // deletedSourceEventTypes.forEach(async (eventType) => {
-        //   const externalEventsWithThisType = await effects.getExternalEventsByEventType(eventType, user);
-        //   if (externalEventsWithThisType.length === 0) {
-        //     await effects.deleteExternalEventType(eventType.id, user);
-        //   }
-        // });
       }
     }
   }
