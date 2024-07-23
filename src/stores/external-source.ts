@@ -67,12 +67,12 @@ export const externalSources = gqlSubscribable<ExternalSourceSlim[]>(gql.SUB_EXT
 export const externalSourceTypes = gqlSubscribable<ExternalSourceType[]>(gql.SUB_EXTERNAL_SOURCE_TYPES, {}, [], null);
 export const derivationGroupsRaw = gqlSubscribable<
   {
+    derived_total: number;
+    event_types: string[];
     id: number;
     name: string;
     source_type_id: number;
     sources: string[];
-    event_types: string[];
-    derived_total: number;
   }[]
 >(gql.SUB_DERIVATION_GROUPS, {}, [], null);
 
@@ -98,6 +98,8 @@ export const derivationGroups = derived<[typeof derivationGroupsRaw], Derivation
   [derivationGroupsRaw],
   ([$derivationGroupsRaw]) =>
     $derivationGroupsRaw.map(raw => ({
+      derivedEventTotal: raw.derived_total,
+      event_types: raw.event_types,
       id: raw.id,
       name: raw.name,
       source_type_id: raw.source_type_id,
@@ -105,8 +107,6 @@ export const derivationGroups = derived<[typeof derivationGroupsRaw], Derivation
         // comes from view schema that is hardcoded as "{dg_id}, {source_key}, {source_id}""
         raw.sources.map(s => [s.split(', ')[1], { event_counts: parseInt(s.split(', ')[2]) }]),
       ),
-      event_types: raw.event_types,
-      derivedEventTotal: raw.derived_total,
     })),
 );
 
@@ -119,8 +119,8 @@ export const externalSourceWithResolvedNames = derived<
   ([$externalSources, $externalSourceTypes, $derivationGroups]) =>
     $externalSources.map(externalSource => ({
       ...externalSource,
-      source_type: getEventSourceTypeName(externalSource.source_type_id, $externalSourceTypes),
       derivation_group: getDerivationGroupName(externalSource.derivation_group_id, $derivationGroups),
+      source_type: getEventSourceTypeName(externalSource.source_type_id, $externalSourceTypes),
       total_groups: $derivationGroups.length,
     })),
 );

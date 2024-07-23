@@ -21,11 +21,11 @@ export const ViewDefaultActivityOptions: ActivityOptions = {
 };
 
 export const ViewDefaultExternalEventOptions: ExternalEventOptions = {
-  externalEventHeight: 16,
   displayMode: 'compact',
+  externalEventHeight: 16,
   groupBy: 'event_type',
-  labelVisibility: 'auto',
   groupedModeBinSize: 100,
+  labelVisibility: 'auto',
 };
 
 export const ViewActivityLayerColorPresets: string[] = [

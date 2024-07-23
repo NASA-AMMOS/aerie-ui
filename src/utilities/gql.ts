@@ -407,6 +407,14 @@ const gql = {
     }
   `,
 
+  CREATE_DERIVATION_GROUP: `#graphql
+    mutation CreateDerivationGroup($derivationGroup: derivation_group_insert_input!) {
+      createDerivationGroup: insert_derivation_group_one(object: $derivationGroup) {
+        id
+      }
+    }
+  `,
+
   CREATE_DICTIONARY: `#graphql
     mutation CreateDictionary($dictionary: String!) {
       createDictionary: ${Queries.UPLOAD_DICTIONARY}(dictionary: $dictionary) {
@@ -499,23 +507,6 @@ const gql = {
     }
   `,
 
-  CREATE_DERIVATION_GROUP: `#graphql
-    mutation CreateDerivationGroup($derivationGroup: derivation_group_insert_input!) {
-      createDerivationGroup: insert_derivation_group_one(object: $derivationGroup) {
-        id
-      }
-    }
-  `,
-
-  // TODO: handle owner, created_at, etc.
-  CREATE_PLAN_DERIVATION_GROUP: `#graphql
-    mutation CreatePlanDerivationGroup($source: plan_derivation_group_insert_input!) {
-      planExternalSourceLink: ${Queries.INSERT_PLAN_DERIVATION_GROUP}(object: $source) {
-        id
-      }
-    }
-  `,
-
   CREATE_MODEL: `#graphql
     mutation CreateModel($model: mission_model_insert_input!) {
       createModel: ${Queries.INSERT_MISSION_MODEL}(object: $model) {
@@ -582,7 +573,16 @@ const gql = {
         affected_rows
       }
     }
-`,
+  `,
+
+  // TODO: handle owner, created_at, etc.
+  CREATE_PLAN_DERIVATION_GROUP: `#graphql
+    mutation CreatePlanDerivationGroup($source: plan_derivation_group_insert_input!) {
+      planExternalSourceLink: ${Queries.INSERT_PLAN_DERIVATION_GROUP}(object: $source) {
+        id
+      }
+    }
+  `,
 
   CREATE_PLAN_MERGE_REQUEST: `#graphql
     mutation CreatePlanMergeRequest($source_plan_id: Int!, $target_plan_id: Int!) {
@@ -1005,16 +1005,6 @@ const gql = {
     }
   `,
 
-  DELETE_PLAN_DERIVATION_GROUP: `#graphql
-    mutation DeletePlanExternalSource($where: plan_derivation_group_bool_exp!) {
-      planDerivationGroupLink: ${Queries.DELETE_PLAN_DERIVATION_GROUP}(where: $where) {
-        returning {
-          id
-        }
-      }
-    }
-  `,
-
   DELETE_MODEL: `#graphql
     mutation DeleteModel($id: Int!) {
       deleteModel: ${Queries.DELETE_MISSION_MODEL}(id: $id) {
@@ -1084,6 +1074,16 @@ const gql = {
     mutation DeletePlanCollaborator($collaborator: String!, $planId: Int!) {
       deletePlanCollaborator: ${Queries.DELETE_PLAN_COLLABORATOR}(collaborator: $collaborator, plan_id: $planId) {
         collaborator
+      }
+    }
+  `,
+
+  DELETE_PLAN_DERIVATION_GROUP: `#graphql
+    mutation DeletePlanExternalSource($where: plan_derivation_group_bool_exp!) {
+      planDerivationGroupLink: ${Queries.DELETE_PLAN_DERIVATION_GROUP}(where: $where) {
+        returning {
+          id
+        }
       }
     }
   `,
@@ -1501,51 +1501,24 @@ const gql = {
     }
   `,
 
+  GET_EXTERNAL_SOURCE_BY_TYPE: `#graphql
+    query GetExternalSourceByType($source_type_id: Int!) {
+      ${Queries.EXTERNAL_SOURCES}(where: {source_type_id: { _eq: $source_type_id }}) {
+        id
+        key
+        file_id
+        source_type_id
+        valid_at
+        start_time
+        end_time
+      }
+    }
+  `,
+
   GET_EXTERNAL_SOURCE_METADATA: `#graphql
     query GetExternalEvents($id: Int!) {
       ${Queries.EXTERNAL_SOURCES}(where: {id: {_eq: $id}}) {
         metadata
-      }
-    }
-  `,
-
-  GET_EXTERNAL_SOURCE_BY_TYPE: `#graphql
-      query GetExternalSourceByType($source_type_id: Int!) {
-        ${Queries.EXTERNAL_SOURCES}(where: {source_type_id: { _eq: $source_type_id }}) {
-          id
-          key
-          file_id
-          source_type_id
-          valid_at
-          start_time
-          end_time
-        }
-      }
-    `,
-
-  GET_PLAN_DERIVATION_GROUP: `#graphql
-    query GetPlanExternalSource($plan_id: Int!) {
-      links: ${Queries.PLAN_DERIVATION_GROUP}(where: {plan_id: {_eq: $plan_id}}) {
-        id
-        derivation_group_id
-        plan_id
-      }
-    }
-  `,
-
-  GET_PLAN_EVENT_TYPES: `#graphql
-    query GetPlanEventTypes($plan_id: Int!){
-      plan_derivation_group(where: {plan_id: {_eq: $plan_id}}) {
-        derivation_group {
-          external_source {
-            external_events {
-              external_event_type {
-                id
-                name
-              }
-            }
-          }
-        }
       }
     }
   `,
@@ -1740,6 +1713,33 @@ const gql = {
             color
             id
             name
+          }
+        }
+      }
+    }
+  `,
+
+  GET_PLAN_DERIVATION_GROUP: `#graphql
+    query GetPlanExternalSource($plan_id: Int!) {
+      links: ${Queries.PLAN_DERIVATION_GROUP}(where: {plan_id: {_eq: $plan_id}}) {
+        id
+        derivation_group_id
+        plan_id
+      }
+    }
+  `,
+
+  GET_PLAN_EVENT_TYPES: `#graphql
+    query GetPlanEventTypes($plan_id: Int!){
+      plan_derivation_group(where: {plan_id: {_eq: $plan_id}}) {
+        derivation_group {
+          external_source {
+            external_events {
+              external_event_type {
+                id
+                name
+              }
+            }
           }
         }
       }
@@ -2385,6 +2385,19 @@ const gql = {
     }
   `,
 
+  SUB_DERIVATION_GROUPS: `#graphql
+    subscription SubDerivationGroups {
+      models: ${Queries.DERIVATION_GROUP_COMP}(order_by: {id: asc}) {
+        id
+        name
+        source_type_id
+        sources
+        event_types
+        derived_total
+      }
+    }
+  `,
+
   SUB_CONSTRAINT_RUNS: `#graphql
     subscription SubConstraintRuns($simulationDatasetId: Int!) {
       constraintRuns: ${Queries.CONSTRAINT_RUN}(where: { simulation_dataset_id: { _eq: $simulationDatasetId }}) {
@@ -2463,28 +2476,29 @@ const gql = {
     }
   `,
 
-  SUB_EXTERNAL_SOURCE: `#graphql
-  subscription SubExternalSource($id: Int!) {
-    models: ${Queries.EXTERNAL_SOURCE}(id: $id) {
-      id
-      file_id
-      key
-      source_type_id
-      start_time
-      end_time
-      valid_at
-      created_at
-    }
-  }
-`,
-
   SUB_EXTERNAL_EVENT_TYPES: `#graphql
     subscription SubExternalEventTypes {
       models: ${Queries.EXTERNAL_EVENT_TYPES}(order_by: { id: asc }) {
         id
         name
       }
-    }`,
+    }
+  `,
+
+  SUB_EXTERNAL_SOURCE: `#graphql
+    subscription SubExternalSource($id: Int!) {
+      models: ${Queries.EXTERNAL_SOURCE}(id: $id) {
+        id
+        file_id
+        key
+        source_type_id
+        start_time
+        end_time
+        valid_at
+        created_at
+      }
+    }
+  `,
 
   SUB_EXTERNAL_SOURCES: `#graphql
     subscription SubExternalSources {
@@ -2502,38 +2516,6 @@ const gql = {
     }
   `,
 
-  SUB_EXTERNAL_SOURCE_TYPES: `#graphql
-    subscription SubExternalSourceTypes {
-      models: ${Queries.EXTERNAL_SOURCE_TYPES}(order_by: { id: asc }) {
-        id
-        name
-      }
-    }
-  `,
-
-  SUB_DERIVATION_GROUPS: `#graphql
-    subscription SubDerivationGroups {
-      models: ${Queries.DERIVATION_GROUP_COMP}(order_by: {id: asc}) {
-        id
-        name
-        source_type_id
-        sources
-        event_types
-        derived_total
-      }
-    }
-  `,
-
-  SUB_PLAN_DERIVATION_GROUP: `#graphql
-    subscription SubPlanExternalSource {
-      links: ${Queries.PLAN_DERIVATION_GROUP}(order_by: { plan_id: asc }) {
-        id
-        derivation_group_id
-        plan_id
-      }
-    }
-  `,
-
   SUB_EXTERNAL_SOURCE_EVENT_TYPE: `#graphql
     subscription SubExternalSourceEventType {
       links: ${Queries.EXTERNAL_SOURCE_EVENT_TYPES}(order_by: {external_source_id: asc}) {
@@ -2543,32 +2525,11 @@ const gql = {
     }
   `,
 
-  SUB_PLAN_EXTERNAL_EVENTS: `#graphql
-    subscription SubPlanExternalEvents($source_ids: [Int!]!) {
-      events: ${Queries.EXTERNAL_EVENT}(where: {source_id: {_in: $source_ids}}) {
-        properties
-        event_type_id
+  SUB_EXTERNAL_SOURCE_TYPES: `#graphql
+    subscription SubExternalSourceTypes {
+      models: ${Queries.EXTERNAL_SOURCE_TYPES}(order_by: { id: asc }) {
         id
-        key
-        duration
-        start_time
-        source_id
-      }
-    }
-  `, // deprecated in favor of the next query
-
-  SUB_PLAN_EXTERNAL_EVENTS_DG: `#graphql
-    subscription SubPlanExternalEventsDG($derivation_group_ids: [Int!]!){
-      events: derived_events(where: {derivation_group_id: {_in: $derivation_group_ids}}) {
-        external_event {
-          properties
-          event_type_id
-          id
-          key
-          duration
-          start_time
-          source_id
-        }
+        name
       }
     }
   `,
@@ -2776,6 +2737,46 @@ const gql = {
             name
             type
           }
+        }
+      }
+    }
+  `,
+
+  SUB_PLAN_DERIVATION_GROUP: `#graphql
+    subscription SubPlanExternalSource {
+      links: ${Queries.PLAN_DERIVATION_GROUP}(order_by: { plan_id: asc }) {
+        id
+        derivation_group_id
+        plan_id
+      }
+    }
+  `,
+
+  SUB_PLAN_EXTERNAL_EVENTS: `#graphql
+    subscription SubPlanExternalEvents($source_ids: [Int!]!) {
+      events: ${Queries.EXTERNAL_EVENT}(where: {source_id: {_in: $source_ids}}) {
+        properties
+        event_type_id
+        id
+        key
+        duration
+        start_time
+        source_id
+      }
+    }
+  `, // deprecated in favor of the next query
+
+  SUB_PLAN_EXTERNAL_EVENTS_DG: `#graphql
+    subscription SubPlanExternalEventsDG($derivation_group_ids: [Int!]!){
+      events: derived_events(where: {derivation_group_id: {_in: $derivation_group_ids}}) {
+        external_event {
+          properties
+          event_type_id
+          id
+          key
+          duration
+          start_time
+          source_id
         }
       }
     }

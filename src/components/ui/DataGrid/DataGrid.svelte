@@ -118,7 +118,7 @@
     return parseInt(data[idKey]);
   };
   export let getRowStyle: (params: RowClassParams<RowData>) => RowStyle | undefined = (
-    params: RowClassParams<RowData>,
+    _params: RowClassParams<RowData>,
   ) => undefined;
   export let isRowSelectable: ((node: IRowNode<RowData>) => boolean) | undefined = undefined;
 
