@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import type { Property } from "../../types/property";
+  import type { Property } from '../../types/property';
   import Input from '../form/Input.svelte';
   import Highlight from '../ui/Highlight.svelte';
 
@@ -21,9 +21,9 @@
           <Input>
             <!--because properties are uneditable, schemas are unimportant. This is a large contrast with Parameter's implementation.-->
             <!--What does remain unhandled is handling for units, but that's something we want to handle and enforce only after the JSONSchema is made.-->
-            <input bind:value={formProperty.value} class="st-input w-100" {disabled}/>
+            <input bind:value={formProperty.value} class="st-input w-100" {disabled} />
           </Input>
-      </Input>
+        </Input>
       </div>
     </div>
   </Highlight>

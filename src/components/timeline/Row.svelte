@@ -185,10 +185,14 @@
   let externalEventsFilteredByType: ExternalEvent[] = [];
   let timeFilteredActivityDirectives: ActivityDirective[] = [];
   let timeFilteredSpans: Span[] = [];
-  let idToColorMaps: { directives: Record<number, string>; spans: Record<number, string>; external_events: Record<number, string> } = {
+  let idToColorMaps: {
+    directives: Record<number, string>;
+    spans: Record<number, string>;
+    external_events: Record<number, string>;
+  } = {
     directives: {},
     spans: {},
-    external_events: {}
+    external_events: {},
   };
   let filterActivitiesByTime = false;
   let filterExternalEventsByTime = false;
@@ -328,7 +332,7 @@
   $: hasActivityLayer = activityLayers.length > 0;
   $: hasExternalEventsLayer = externalEventLayers.length > 0;
   $: hasResourceLayer = lineLayers.length + xRangeLayers.length > 0;
-  $: planDerivationGroupIdsToFilterParsed = JSON.parse($planDerivationGroupIdsToFilter)
+  $: planDerivationGroupIdsToFilterParsed = JSON.parse($planDerivationGroupIdsToFilter);
   $: showSpans = activityOptions?.composition === 'both' || activityOptions?.composition === 'spans';
   $: showDirectives = activityOptions?.composition === 'both' || activityOptions?.composition === 'directives';
 
@@ -477,13 +481,13 @@
     externalEventsFilteredByDG = [];
     externalEventsFilteredByType = [];
 
-
-
     // Apply filter for hiding derivation groups
     externalEventsFilteredByDG = externalEvents.filter(ee => {
-      let dg = $externalSources.find(es => es.id === ee.source_id)?.derivation_group_id ?? -1
+      let dg = $externalSources.find(es => es.id === ee.source_id)?.derivation_group_id ?? -1;
       // the statement below says return true (keep) if the plan is not null and if the filter for this plan does not include this derivation group
-      return plan ? (!planDerivationGroupIdsToFilterParsed[plan.id] || !(planDerivationGroupIdsToFilterParsed[plan.id].includes(dg))) : false;
+      return plan
+        ? !planDerivationGroupIdsToFilterParsed[plan.id] || !planDerivationGroupIdsToFilterParsed[plan.id].includes(dg)
+        : false;
     });
     // Filter by external event type
     const externalEventsByType = groupBy(externalEventsFilteredByDG, 'event_type');
@@ -493,14 +497,15 @@
         event_types.forEach(type => {
           const matchingEvents = externalEventsByType[type];
           if (matchingEvents) {
-            matchingEvents.forEach(event => idToColorMaps.external_events[event.id] = layer.externalEventColor)
-            externalEventsFilteredByType = externalEventsFilteredByType.concat(matchingEvents.filter((val, ind, arr) => arr.indexOf(val) == ind)); // uniqueness
+            matchingEvents.forEach(event => (idToColorMaps.external_events[event.id] = layer.externalEventColor));
+            externalEventsFilteredByType = externalEventsFilteredByType.concat(
+              matchingEvents.filter((val, ind, arr) => arr.indexOf(val) == ind),
+            ); // uniqueness
           }
-        })
+        });
       }
     });
   }
-
 
   $: if (
     hasActivityLayer &&
@@ -527,10 +532,7 @@
     }
   }
 
-  $: if (
-    hasExternalEventsLayer &&
-    externalEventOptions
-  ) {
+  $: if (hasExternalEventsLayer && externalEventOptions) {
     if (externalEventOptions.displayMode === 'grouped') {
       /*  Note: here we only pass in a few variables in order to
        *  limit the scope of what is reacted to in order to avoid unnecessary re-rendering.
@@ -541,7 +543,7 @@
         externalEventTreeExpansionMap,
         externalEventOptions.groupBy,
         externalEventOptions.groupedModeBinSize,
-      )
+      );
     } else {
       externalEventTree = [];
     }
@@ -573,12 +575,7 @@
     groupByMethod: ExternalEventOptions['groupBy'] = 'event_type',
     binSize: ExternalEventOptions['groupedModeBinSize'],
   ) {
-    return generateExternalEventTreeUtil(
-      externalEvents,
-      externalEventTreeExpansionMap,
-      groupByMethod,
-      binSize
-    );
+    return generateExternalEventTreeUtil(externalEvents, externalEventTreeExpansionMap, groupByMethod, binSize);
   }
 
   function onActivityTreeNodeChange(e: { detail: ActivityTreeNode }) {
@@ -588,7 +585,10 @@
 
   function onExternalEventTreeNodeChange(e: { detail: ExternalEventTreeNode }) {
     const node = e.detail;
-    dispatch('externalEventTreeExpansionChange', { ...(externalEventTreeExpansionMap || {}), [node.id]: !node.expanded });
+    dispatch('externalEventTreeExpansionChange', {
+      ...(externalEventTreeExpansionMap || {}),
+      [node.id]: !node.expanded,
+    });
   }
 
   function onActivityTimeFilterChange() {

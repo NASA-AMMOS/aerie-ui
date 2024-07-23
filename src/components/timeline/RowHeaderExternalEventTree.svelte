@@ -8,7 +8,13 @@
   import { ViewDefaultExternalEventOptions } from '../../constants/view';
   import { externalSources, getSourceName } from '../../stores/external-source';
   import type { ExternalEvent, ExternalEventId } from '../../types/external-event';
-  import type { ExternalEventOptions, ExternalEventTree, ExternalEventTreeNode, MouseDown, MouseOver } from '../../types/timeline';
+  import type {
+    ExternalEventOptions,
+    ExternalEventTree,
+    ExternalEventTreeNode,
+    MouseDown,
+    MouseOver,
+  } from '../../types/timeline';
   import { classNames } from '../../utilities/generic';
   import { pluralize } from '../../utilities/text';
   import { tooltip } from '../../utilities/tooltip';
@@ -36,7 +42,7 @@
     if (e) {
       dispatch('dblClick', {
         e,
-        selectedExternalEventId: selectedExternalEventId ?? undefined
+        selectedExternalEventId: selectedExternalEventId ?? undefined,
       });
     }
   }
@@ -44,7 +50,7 @@
   function getExternalEventsForNode(node: ExternalEventTreeNode) {
     const externalEvents: ExternalEvent[] = [];
     (node.items || []).forEach(externalEvent => {
-        if(externalEvent.externalEvent) externalEvents.push(externalEvent.externalEvent);
+      if (externalEvent.externalEvent) externalEvents.push(externalEvent.externalEvent);
     });
     return externalEvents;
   }
@@ -68,9 +74,9 @@
       {@const externalEvent = node.items[0].externalEvent}
       <button
         style:height={`${rowHeight}px`}
-        style:white-space='nowrap'
-        style:overflow='hidden'
-        style:text-overflow='ellipsis ellipsis'
+        style:white-space="nowrap"
+        style:overflow="hidden"
+        style:text-overflow="ellipsis ellipsis"
         class="row-header-external-event-group leaf st-button tertiary"
         class:selected={externalEvent?.id === selectedExternalEventId}
         on:dblclick={e => onDblclickLeaf(e)}
@@ -78,7 +84,7 @@
       >
         <div style=" align-items: center;color: var(--st-button-tertiary-color);display: flex; gap: 4px;">
           <div title="External Event" class="icon-group">
-              <CaretRight style="width:13px"/>
+            <CaretRight style="width:13px" />
           </div>
         </div>
         {node.label}
@@ -90,8 +96,7 @@
         headerHeight={rowHeight}
         defaultExpanded={node.expanded}
         className={classNames('row-header-external-event-group', {
-          selected:
-            (externalEvent?.id === selectedExternalEventId),
+          selected: externalEvent?.id === selectedExternalEventId,
         })}
         on:collapse={() => dispatch('external-event-tree-node-change', node)}
       >
@@ -101,12 +106,7 @@
           </div>
         </div>
         <div slot="title" style="align-items: center;display: flex; gap: 8px;">
-          <div 
-            class="label"
-            style:white-space='nowrap'
-            style:overflow='hidden'
-            style:text-overflow='ellipsis ellipsis'
-          >
+          <div class="label" style:white-space="nowrap" style:overflow="hidden" style:text-overflow="ellipsis ellipsis">
             {#if externalEventOptions.groupBy === 'source_id'}
               {getSourceName(Number.parseInt(node.label), $externalSources)}
             {:else}

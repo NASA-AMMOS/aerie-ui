@@ -15,54 +15,65 @@
 
   let dgInFilter: boolean = false;
   let relevantSources: ExternalSourceWithResolvedNames[] = [];
-  let planDerivationGroupIdsToFilterParsed: {[plan_id: number]: number[]} = JSON.parse($planDerivationGroupIdsToFilter);
-  let enabled = ($plan && planDerivationGroupIdsToFilterParsed[$plan.id]) ? !planDerivationGroupIdsToFilterParsed[$plan.id].includes(derivationGroup.id) : true
-  
+  let planDerivationGroupIdsToFilterParsed: { [plan_id: number]: number[] } = JSON.parse(
+    $planDerivationGroupIdsToFilter,
+  );
+  let enabled =
+    $plan && planDerivationGroupIdsToFilterParsed[$plan.id]
+      ? !planDerivationGroupIdsToFilterParsed[$plan.id].includes(derivationGroup.id)
+      : true;
+
   $: planDerivationGroupIdsToFilterParsed = JSON.parse($planDerivationGroupIdsToFilter);
-  $: relevantSources = $externalSourceWithResolvedNames.filter(source => derivationGroup.id === source.derivation_group_id);
+  $: relevantSources = $externalSourceWithResolvedNames.filter(
+    source => derivationGroup.id === source.derivation_group_id,
+  );
   $: {
-      console.log(`[${derivationGroup.id}]: enabled=${enabled}, dgInFilter=${dgInFilter}, $plan=${$plan?.id}; ${planDerivationGroupIdsToFilterParsed[$plan?.id ?? -1000]}`)
-      // ensure the current derivation group in the filter list if it has been disabled
-      // ensure the current derivation group is NOT in the filter list if it has been enabled
-      if ($plan) {
-        if (enabled) {
-          if (dgInFilter) {
-            if (!planDerivationGroupIdsToFilterParsed[$plan.id]) {
-              planDerivationGroupIdsToFilterParsed[$plan.id] = []
-            }
-            else {
-              planDerivationGroupIdsToFilterParsed[$plan.id] = planDerivationGroupIdsToFilterParsed[$plan.id].filter(id => id !== derivationGroup.id)
-            }
-            let update = planDerivationGroupIdsToFilterParsed[$plan.id]
-            planDerivationGroupIdsToFilter.set(JSON.stringify(planDerivationGroupIdsToFilterParsed));
-            viewUpdateFilteredDerivationGroupIds(update)
+    console.log(
+      `[${derivationGroup.id}]: enabled=${enabled}, dgInFilter=${dgInFilter}, $plan=${$plan?.id}; ${planDerivationGroupIdsToFilterParsed[$plan?.id ?? -1000]}`,
+    );
+    // ensure the current derivation group in the filter list if it has been disabled
+    // ensure the current derivation group is NOT in the filter list if it has been enabled
+    if ($plan) {
+      if (enabled) {
+        if (dgInFilter) {
+          if (!planDerivationGroupIdsToFilterParsed[$plan.id]) {
+            planDerivationGroupIdsToFilterParsed[$plan.id] = [];
+          } else {
+            planDerivationGroupIdsToFilterParsed[$plan.id] = planDerivationGroupIdsToFilterParsed[$plan.id].filter(
+              id => id !== derivationGroup.id,
+            );
           }
+          let update = planDerivationGroupIdsToFilterParsed[$plan.id];
+          planDerivationGroupIdsToFilter.set(JSON.stringify(planDerivationGroupIdsToFilterParsed));
+          viewUpdateFilteredDerivationGroupIds(update);
         }
-        else {
-          if (!(dgInFilter)) {
-            if (!planDerivationGroupIdsToFilterParsed[$plan.id]) {
-              planDerivationGroupIdsToFilterParsed[$plan.id] = [derivationGroup.id]
-            }
-            else if (!planDerivationGroupIdsToFilterParsed[$plan.id].includes(derivationGroup.id)){
-              planDerivationGroupIdsToFilterParsed[$plan.id] = planDerivationGroupIdsToFilterParsed[$plan.id].concat(derivationGroup.id)
-            }
-            let update = planDerivationGroupIdsToFilterParsed[$plan.id]
-            planDerivationGroupIdsToFilter.set(JSON.stringify(planDerivationGroupIdsToFilterParsed));
-            viewUpdateFilteredDerivationGroupIds(update)
+      } else {
+        if (!dgInFilter) {
+          if (!planDerivationGroupIdsToFilterParsed[$plan.id]) {
+            planDerivationGroupIdsToFilterParsed[$plan.id] = [derivationGroup.id];
+          } else if (!planDerivationGroupIdsToFilterParsed[$plan.id].includes(derivationGroup.id)) {
+            planDerivationGroupIdsToFilterParsed[$plan.id] = planDerivationGroupIdsToFilterParsed[$plan.id].concat(
+              derivationGroup.id,
+            );
           }
+          let update = planDerivationGroupIdsToFilterParsed[$plan.id];
+          planDerivationGroupIdsToFilter.set(JSON.stringify(planDerivationGroupIdsToFilterParsed));
+          viewUpdateFilteredDerivationGroupIds(update);
         }
       }
     }
+  }
 
-  originalView.subscribe(ov => { // any time a new view is selected, change the enabled list
+  originalView.subscribe(ov => {
+    // any time a new view is selected, change the enabled list
     if (ov) {
-      if (ov?.definition.plan.filteredDerivationGroups.includes(derivationGroup.id)) enabled = false
-      else enabled = true
+      if (ov?.definition.plan.filteredDerivationGroups.includes(derivationGroup.id)) enabled = false;
+      else enabled = true;
     }
-  })
+  });
 
   function onChange(_event: Event) {
-    if ($plan) dgInFilter = planDerivationGroupIdsToFilterParsed[$plan.id].includes(derivationGroup.id)
+    if ($plan) dgInFilter = planDerivationGroupIdsToFilterParsed[$plan.id].includes(derivationGroup.id);
   }
 
   async function deleteEmptyDerivationGroup() {
@@ -148,13 +159,9 @@
     {:else}
       <!--This should be impossible, as the derivation group should have been deleted by this point. Just in case... we offer a delete button here.-->
       <p>No sources in this group.</p>
-      <button
-          name="delete-dg"
-          class="st-button secondary"
-          on:click|stopPropagation={deleteEmptyDerivationGroup}
-        >
-          Delete Empty Derivation Group
-        </button>
+      <button name="delete-dg" class="st-button secondary" on:click|stopPropagation={deleteEmptyDerivationGroup}>
+        Delete Empty Derivation Group
+      </button>
     {/if}
   </Collapse>
 </div>

@@ -1,7 +1,16 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { deletedSourcesSeen, derivationGroupPlanLinkError, derivationGroups, externalSourceTypes, getEventSourceTypeName, planDerivationGroupIdsToFilter, planDerivationGroupLinks, unseenSources } from '../../stores/external-source';
+  import {
+    deletedSourcesSeen,
+    derivationGroupPlanLinkError,
+    derivationGroups,
+    externalSourceTypes,
+    getEventSourceTypeName,
+    planDerivationGroupIdsToFilter,
+    planDerivationGroupLinks,
+    unseenSources,
+  } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import { originalView } from '../../stores/views';
   import type { User } from '../../types/app';
@@ -29,10 +38,14 @@
   let filteredDerivationGroups: DerivationGroup[] = [];
   let unseenSourcesParsed: ExternalSourceWithDateInfo[] = [];
   let deletedSourcesParsed: ExternalSourceWithDateInfo[] = [];
-  let planDerivationGroupIdsToFilterParsed: {[plan_id: number]: number[]} = JSON.parse($planDerivationGroupIdsToFilter);
+  let planDerivationGroupIdsToFilterParsed: { [plan_id: number]: number[] } = JSON.parse(
+    $planDerivationGroupIdsToFilter,
+  );
 
   $: planDerivationGroupIdsToFilterParsed = JSON.parse($planDerivationGroupIdsToFilter);
-  $: linkedDerivationGroupIds = $planDerivationGroupLinks.filter(link => link.plan_id === $plan?.id).map(link => link.derivation_group_id);
+  $: linkedDerivationGroupIds = $planDerivationGroupLinks
+    .filter(link => link.plan_id === $plan?.id)
+    .map(link => link.derivation_group_id);
   $: filteredDerivationGroups = $derivationGroups
     .filter(group => linkedDerivationGroupIds.includes(group.id))
     .filter(group => {
@@ -40,28 +53,29 @@
       const includesName = group.name.toLocaleLowerCase().includes(filterTextLowerCase);
       return includesName;
     });
-  planDerivationGroupLinks.subscribe(_ => mappedDerivationGroups = {}) // clear the map...
-  $: filteredDerivationGroups.forEach(group => { // ...and repopulate it every time the links change. this handles deletion correctly
-    const sourceType = getEventSourceTypeName(group.source_type_id, $externalSourceTypes)
-    if (sourceType) { // undefined is being very frustrating
-      if (mappedDerivationGroups[sourceType] &&
-        !mappedDerivationGroups[sourceType].map(g => g.id).includes(group.id)
-      ) {// use string later for source type
-        mappedDerivationGroups[sourceType]?.push(group)
-      }
-      else {
-        mappedDerivationGroups[sourceType] = [group]
+  planDerivationGroupLinks.subscribe(_ => (mappedDerivationGroups = {})); // clear the map...
+  $: filteredDerivationGroups.forEach(group => {
+    // ...and repopulate it every time the links change. this handles deletion correctly
+    const sourceType = getEventSourceTypeName(group.source_type_id, $externalSourceTypes);
+    if (sourceType) {
+      // undefined is being very frustrating
+      if (mappedDerivationGroups[sourceType] && !mappedDerivationGroups[sourceType].map(g => g.id).includes(group.id)) {
+        // use string later for source type
+        mappedDerivationGroups[sourceType]?.push(group);
+      } else {
+        mappedDerivationGroups[sourceType] = [group];
       }
     }
-  })
-  $: unseenSourcesParsed = JSON.parse($unseenSources)
-  $: deletedSourcesParsed = JSON.parse($deletedSourcesSeen)
-  originalView.subscribe(ov => { // any time a new view is selected, change the enabled list
+  });
+  $: unseenSourcesParsed = JSON.parse($unseenSources);
+  $: deletedSourcesParsed = JSON.parse($deletedSourcesSeen);
+  originalView.subscribe(ov => {
+    // any time a new view is selected, change the enabled list
     if (ov && $plan) {
-      planDerivationGroupIdsToFilterParsed[$plan.id] = ov?.definition.plan.filteredDerivationGroups
+      planDerivationGroupIdsToFilterParsed[$plan.id] = ov?.definition.plan.filteredDerivationGroups;
     }
     planDerivationGroupIdsToFilter.set(JSON.stringify(planDerivationGroupIdsToFilterParsed));
-  })
+  });
 
   function onManageDerivationGroups() {
     effects.managePlanDerivationGroups(user);
@@ -78,7 +92,6 @@
       placeholder="Filter External Sources"
       on:input={event => (filterText = event.detail.value)}
     >
-
       <svelte:fragment slot="right">
         <button
           name="manage-derivation-groups"
@@ -89,7 +102,6 @@
           Manage Derivation Groups
         </button>
       </svelte:fragment>
-
     </CollapsibleListControls>
 
     <AlertError class="m-2" error={$derivationGroupPlanLinkError} />
@@ -98,10 +110,20 @@
       <div style="padding-top: 10px">
         <CardList>
           {#if unseenSourcesParsed.length}
-            <UpdateCard deleted={false} sources={unseenSourcesParsed} on:dismiss={() => unseenSources.set(JSON.stringify([]))}/>
+            <UpdateCard
+              deleted={false}
+              sources={unseenSourcesParsed}
+              on:dismiss={() => unseenSources.set(JSON.stringify([]))}
+            />
           {/if}
           {#if deletedSourcesParsed.length}
-            <UpdateCard deleted={true} sources={deletedSourcesParsed} on:dismiss={() => {deletedSourcesSeen.set(JSON.stringify([]))}}/>
+            <UpdateCard
+              deleted={true}
+              sources={deletedSourcesParsed}
+              on:dismiss={() => {
+                deletedSourcesSeen.set(JSON.stringify([]));
+              }}
+            />
           {/if}
         </CardList>
       </div>
@@ -112,26 +134,24 @@
         <Collapse title={sourceType.toString()} tooltipContent={sourceType.toString()} defaultExpanded={true}>
           {#if mappedDerivationGroups[sourceType]}
             {#each mappedDerivationGroups[sourceType] as group}
-              <ExternalSourcePanelEntry
-                derivationGroup={group}
-                user={user}
-              />
+              <ExternalSourcePanelEntry derivationGroup={group} {user} />
             {/each}
           {/if}
         </Collapse>
       {/each}
     {:else}
       <p>
-        <br>
+        <br />
         No Derivation Groups Linked To This Plan
       </p>
       <p>
-        <br>
+        <br />
         <i>Click "Manage Derivation Groups" to associate Derivation Groups to this plan.</i>
       </p>
     {/if}
   </svelte:fragment>
 </Panel>
+
 <style>
   .st-button {
     white-space: nowrap;

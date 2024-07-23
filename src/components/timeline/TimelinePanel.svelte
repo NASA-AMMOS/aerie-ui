@@ -70,8 +70,7 @@
     } = event;
     if (selectedActivityDirectiveId !== undefined || selectedSpanId !== undefined) {
       viewTogglePanel({ state: true, type: 'right', update: { rightComponentTop: 'ActivityFormPanel' } });
-    }
-    else if (selectedExternalEventId !== undefined) {
+    } else if (selectedExternalEventId !== undefined) {
       viewTogglePanel({ state: true, type: 'right', update: { rightComponentTop: 'ExternalEventFormPanel' } });
     }
   }

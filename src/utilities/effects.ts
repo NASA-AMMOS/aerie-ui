@@ -656,7 +656,7 @@ const effects = {
           },
           user,
         );
-        const sourceDissociation = data.planDerivationGroupLink?.returning[0]
+        const sourceDissociation = data.planDerivationGroupLink?.returning[0];
         if (sourceDissociation) {
           // source automatically updates!
           showSuccessToast('Derivation Group Disassociated Successfully');

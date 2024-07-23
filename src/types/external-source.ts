@@ -101,7 +101,7 @@ export type ExternalSourceEventType = {
 };
 
 // used exclusively in ExternalSourcesPanel and UpdateCard, to help track 'deleted_at' information. If in the future we have a comprehensive history of all sources' metadata ever, we will use this there too
-export type ExternalSourceWithDateInfo = ExternalSourceWithResolvedNames & {change_date: Date};
+export type ExternalSourceWithDateInfo = ExternalSourceWithResolvedNames & { change_date: Date };
 
 // This is used for the GraphQL mutation.
 export type ExternalSourceInsertInput = Pick<
@@ -113,12 +113,6 @@ export type ExternalSourceInsertInput = Pick<
   };
 };
 
-export type ExternalSourceTypeInsertInput = Pick<
-  ExternalSourceType,
-  'name'
->;
+export type ExternalSourceTypeInsertInput = Pick<ExternalSourceType, 'name'>;
 
-export type DerivationGroupInsertInput = Pick<
-  DerivationGroup,
-  'name' | 'source_type_id'
->;
+export type DerivationGroupInsertInput = Pick<DerivationGroup, 'name' | 'source_type_id'>;

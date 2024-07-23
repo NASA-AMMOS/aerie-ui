@@ -146,7 +146,7 @@ function populateTimelineLayers(timelines: Timeline[]) {
       row.layers.push(createTimelineActivityLayer(timelines));
       row.layers.push(createTimelineLineLayer(timelines, row.yAxes));
       row.layers.push(createTimelineXRangeLayer(timelines, row.yAxes));
-      row.layers.push(createTimelineExternalEventLayer(timelines));  // TODO - do we need to include any other args, like row.yAxes?
+      row.layers.push(createTimelineExternalEventLayer(timelines)); // TODO - do we need to include any other args, like row.yAxes?
     });
   });
   return timelines;
@@ -213,9 +213,9 @@ function generateExternalEvent(properties: Partial<ExternalEvent>): ExternalEven
   return {
     duration: '',
     start_time: '',
-    event_type: "test",
+    event_type: 'test',
     id: 1,
-    key: "test",
+    key: 'test',
     properties: {},
     source: undefined,
     source_id: 1,
@@ -439,8 +439,8 @@ test('spanInView', () => {
 
 test('externalEventInView', () => {
   const viewTimeRange: TimeRange = { end: 1716332383895 + 60000, start: 1716332383895 }; // One minute duration
-  expect(externalEventInView(generateExternalEvent({ durationMs: 1, startMs: 0}), viewTimeRange)).toBe(false);
-  expect(externalEventInView(generateExternalEvent({ durationMs: 3, startMs: 1716332383893}), viewTimeRange)).toBe(
+  expect(externalEventInView(generateExternalEvent({ durationMs: 1, startMs: 0 }), viewTimeRange)).toBe(false);
+  expect(externalEventInView(generateExternalEvent({ durationMs: 3, startMs: 1716332383893 }), viewTimeRange)).toBe(
     true,
   );
   expect(externalEventInView(generateExternalEvent({ durationMs: 1, startMs: 1716332383895 }), viewTimeRange)).toBe(
@@ -452,13 +452,12 @@ test('externalEventInView', () => {
   expect(externalEventInView(generateExternalEvent({ durationMs: 1, startMs: 9716332383895 }), viewTimeRange)).toBe(
     false,
   );
-  expect(externalEventInView(generateExternalEvent({ durationMs: 1, startMs: 1716332383895 + 60000 }), viewTimeRange)).toBe(
-    false,
-  );
+  expect(
+    externalEventInView(generateExternalEvent({ durationMs: 1, startMs: 1716332383895 + 60000 }), viewTimeRange),
+  ).toBe(false);
   expect(externalEventInView(generateExternalEvent({ durationMs: 1, startMs: 9716332383895 }), viewTimeRange)).toBe(
     false,
   );
-  
 });
 
 test('isActivityLayer', () => {
@@ -487,7 +486,7 @@ test('isExternalEventLayer', () => {
   expect(isExternalEventLayer(createTimelineLineLayer([], []))).toBe(false);
   expect(isExternalEventLayer(createTimelineXRangeLayer([], []))).toBe(false);
   expect(isExternalEventLayer(createTimelineExternalEventLayer([]))).toBe(true);
-})
+});
 
 test('paginateNodes', () => {
   const testNodes: ActivityTreeNode[] = [];
