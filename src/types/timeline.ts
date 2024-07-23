@@ -148,7 +148,7 @@ export type MouseOver = {
   origin?: MouseOverOrigin; //TODO perhaps remove this
   pointsByLayer?: Record<number, Point[]>;
   row?: Row;
-  selectedActivityDirectiveId?: number;
+  selectedActivityDirectiveId?: number | undefined;
   selectedSpanId?: number;
   spans?: Span[];
 };

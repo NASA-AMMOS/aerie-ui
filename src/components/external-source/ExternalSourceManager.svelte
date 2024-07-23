@@ -49,7 +49,7 @@
   import { type MouseDown, type MouseOver } from '../../types/timeline';
   import effects from '../../utilities/effects';
   import { classNames } from '../../utilities/generic';
-  import { showConfirmModal } from '../../utilities/modal';
+  import { showDeleteExternalSourceModal } from '../../utilities/modal';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import { convertDoyToYmd, convertDurationToMs, convertUTCtoMs } from '../../utilities/time';
@@ -427,26 +427,9 @@
       });
       if (currentlyLinked.length > 0) {
         // if the source is in a derivation group currently used by a plan, warn that we cannot delete
-        let linkedPlans: string[] = currentlyLinked.map(
-          link => `<div style="padding-left:20px"><i>
-                                                                    <a href="${base}/plans/${link.plan_id}">
-                                                                      ${
-                                                                        $plans.find(plan => {
-                                                                          return link.plan_id === plan.id;
-                                                                        })?.name
-                                                                      }
-                                                                    </a>
-                                                                  </i></div>
-                                                                `,
-        );
-
-        await showConfirmModal(
-          'Confirm',
-          `This External Source is part of Derivation Group '${selectedSource.derivation_group}',
-          which is linked with the following plans: ${linkedPlans.join('\n')}`,
-          'External Source Cannot Be Deleted',
-          true,
-          '',
+        await showDeleteExternalSourceModal(
+          currentlyLinked,
+          selectedSource
         );
       } else {
         // otherwise, delete!

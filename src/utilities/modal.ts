@@ -6,6 +6,7 @@ import CreatePlanBranchModal from '../components/modals/CreatePlanBranchModal.sv
 import CreatePlanSnapshotModal from '../components/modals/CreatePlanSnapshotModal.svelte';
 import CreateViewModal from '../components/modals/CreateViewModal.svelte';
 import DeleteActivitiesModal from '../components/modals/DeleteActivitiesModal.svelte';
+import DeleteExternalSourceModal from '../components/modals/DeleteExternalSourceModal.svelte';
 import EditViewModal from '../components/modals/EditViewModal.svelte';
 import ExpansionSequenceModal from '../components/modals/ExpansionSequenceModal.svelte';
 import ManagePlanConstraintsModal from '../components/modals/ManagePlanConstraintsModal.svelte';
@@ -23,6 +24,7 @@ import WorkspaceModal from '../components/modals/WorkspaceModal.svelte';
 import type { ActivityDirectiveDeletionMap, ActivityDirectiveId } from '../types/activity';
 import type { User } from '../types/app';
 import type { ExpansionSequence } from '../types/expansion';
+import type { ExternalSourceWithResolvedNames, PlanDerivationGroup } from '../types/external-source';
 import type { ModalElement, ModalElementValue } from '../types/modal';
 import type {
   Plan,
@@ -135,6 +137,44 @@ export async function showConfirmModal(
           target.resolve = null;
           resolve({ confirm: true });
           confirmModal.$destroy();
+        });
+      }
+    } else {
+      resolve({ confirm: false });
+    }
+  });
+}
+
+/**
+ * Shows a DeleteExternalSourceModal component with the supplied arguments.
+ */
+export async function showDeleteExternalSourceModal(
+  linked: PlanDerivationGroup[],
+  source: ExternalSourceWithResolvedNames
+): Promise<ModalElementValue> {
+  return new Promise(resolve => {
+    if (browser) {
+      const target: ModalElement | null = document.querySelector('#svelte-modal');
+
+      if (target) {
+        const deleteExternalSourceModal = new DeleteExternalSourceModal({
+          props: { linked, source },
+          target,
+        });
+        target.resolve = resolve;
+
+        deleteExternalSourceModal.$on('close', () => {
+          target.replaceChildren();
+          target.resolve = null;
+          resolve({ confirm: false });
+          deleteExternalSourceModal.$destroy();
+        });
+
+        deleteExternalSourceModal.$on('confirm', () => {
+          target.replaceChildren();
+          target.resolve = null;
+          resolve({ confirm: true });
+          deleteExternalSourceModal.$destroy();
         });
       }
     } else {
