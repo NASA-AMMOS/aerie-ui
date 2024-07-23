@@ -33,9 +33,9 @@ export function generateDefaultView(
     filter: { externalEvent: { event_types: externalEventTypes.map(e => e.name) } },
   });
   const externalEventRow = createRow(timelines, {
-    externalEventOptions: { ...ViewDefaultExternalEventOptions, displayMode: 'grouped' },
     autoAdjustHeight: false,
     expanded: true,
+    externalEventOptions: { ...ViewDefaultExternalEventOptions, displayMode: 'grouped' },
     height: 100,
     layers: [externalEventLayer],
     name: 'External Events',
@@ -295,6 +295,7 @@ export function generateDefaultView(
           ],
           columnStates: [],
         },
+        filteredDerivationGroups: [],
         grid: {
           columnSizes: '1fr 3px 3fr 3px 1fr',
           leftComponentBottom: 'SimulationPanel',
@@ -369,7 +370,6 @@ export function generateDefaultView(
           columnStates: [],
         },
         timelines,
-        filteredDerivationGroups: [],
       },
     },
     id: 0,

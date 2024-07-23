@@ -212,15 +212,15 @@ function generateSpan(properties: Partial<Span>): Span {
 function generateExternalEvent(properties: Partial<ExternalEvent>): ExternalEvent {
   return {
     duration: '',
-    start_time: '',
+    durationMs: 0,
     event_type: 'test',
     id: 1,
     key: 'test',
     properties: {},
     source: undefined,
     source_id: 1,
-    durationMs: 0,
     startMs: 0,
+    start_time: '',
     ...properties,
   };
 }

@@ -50,10 +50,10 @@
   const gridComponentsByName: Record<ViewGridComponent, any> = {
     ActivityDirectivesTablePanel,
     ActivityFormPanel,
-    ExternalEventFormPanel,
     ActivitySpansTablePanel,
     ConstraintsPanel,
     ExpansionPanel,
+    ExternalEventFormPanel,
     ExternalEventsTablePanel,
     ExternalSourcesPanel,
     IFramePanel,

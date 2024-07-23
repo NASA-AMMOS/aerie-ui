@@ -16,9 +16,9 @@
 <div>
   {#each sortedFormProperties as formProperty (formProperty.name)}
     <Highlight highlight={highlightKeysMap[formProperty.name]}>
-      {#if typeof formProperty.value == 'string' || typeof formProperty.value == 'number'}
+      {#if typeof formProperty.value === 'string' || typeof formProperty.value === 'number'}
         <PropertyBase {formProperty} {highlightKeysMap} />
-      {:else if typeof formProperty.value == 'object'}
+      {:else if typeof formProperty.value === 'object'}
         <PropertyRec {formProperty} {highlightKeysMap} />
       {/if}
     </Highlight>

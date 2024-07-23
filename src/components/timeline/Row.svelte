@@ -187,12 +187,12 @@
   let timeFilteredSpans: Span[] = [];
   let idToColorMaps: {
     directives: Record<number, string>;
-    spans: Record<number, string>;
     external_events: Record<number, string>;
+    spans: Record<number, string>;
   } = {
     directives: {},
-    spans: {},
     external_events: {},
+    spans: {},
   };
   let filterActivitiesByTime = false;
   let filterExternalEventsByTime = false;
@@ -499,7 +499,7 @@
           if (matchingEvents) {
             matchingEvents.forEach(event => (idToColorMaps.external_events[event.id] = layer.externalEventColor));
             externalEventsFilteredByType = externalEventsFilteredByType.concat(
-              matchingEvents.filter((val, ind, arr) => arr.indexOf(val) == ind),
+              matchingEvents.filter((val, ind, arr) => arr.indexOf(val) === ind),
             ); // uniqueness
           }
         });
@@ -756,8 +756,8 @@
     dispatch('mouseOver', {
       ...detail,
       activityDirectives: mouseOverActivityDirectives,
-      externalEvents: mouseOverExternalEvents,
       constraintResults: mouseOverConstraintResults,
+      externalEvents: mouseOverExternalEvents,
       gapsByLayer: mouseOverGapsByLayer,
       pointsByLayer: mouseOverPointsByLayer,
       spans: mouseOverSpans,
@@ -1006,7 +1006,6 @@
             {mousedown}
             {mousemove}
             {mouseout}
-            {planStartTimeYmd}
             {selectedExternalEventId}
             {timelineInteractionMode}
             {viewTimeRange}

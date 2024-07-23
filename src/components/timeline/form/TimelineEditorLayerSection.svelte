@@ -24,12 +24,12 @@
   export let yAxes: Axis[];
 
   const dispatch = createEventDispatcher<{
-    handleUpdateLayerFilter: { values: string[] };
-    handleUpdateLayerProperty: { name: string; value: string | number | boolean | null };
+    handleDeleteLayerClick: object;
     handleUpdateLayerChartType: { value: string | number | boolean | null };
     handleUpdateLayerColor: { value: string };
     handleUpdateLayerColorScheme: { value: XRangeLayerColorScheme };
-    handleDeleteLayerClick: {};
+    handleUpdateLayerFilter: { values: string[] };
+    handleUpdateLayerProperty: { name: string; value: string | number | boolean | null };
   }>();
 
   let initialColoring: string | undefined = isActivityLayer(layer)

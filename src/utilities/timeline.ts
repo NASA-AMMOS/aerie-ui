@@ -575,9 +575,9 @@ export function createTimelineExternalEventLayer(
   const id = getNextLayerID(timelines);
 
   return {
+    chartType: 'external-event',
     externalEventColor: '#fcdd8f',
     externalEventHeight: 16,
-    chartType: 'external-event',
     filter: {
       externalEvent: {
         event_types: [],

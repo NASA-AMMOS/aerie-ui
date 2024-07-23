@@ -49,9 +49,7 @@
   import { type MouseDown, type MouseOver } from '../../types/timeline';
   import effects from '../../utilities/effects';
   import { classNames } from '../../utilities/generic';
-  import {
-    showConfirmModal
-  } from '../../utilities/modal';
+  import { showConfirmModal } from '../../utilities/modal';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import { convertDoyToYmd, convertDurationToMs, convertUTCtoMs } from '../../utilities/time';
@@ -421,33 +419,36 @@
 
   async function onDeleteExternalSource(selectedSource: ExternalSourceWithResolvedNames | null | undefined) {
     if (selectedSource !== null && selectedSource !== undefined) {
-      // selectedSource here does not necessarily align with global selected source, especially if you click delete 
-      //    in a table without making a selection. as such, can't use selectedSourceLinkedDerivationGroupsPlans, must 
+      // selectedSource here does not necessarily align with global selected source, especially if you click delete
+      //    in a table without making a selection. as such, can't use selectedSourceLinkedDerivationGroupsPlans, must
       //    make a new one.
       let currentlyLinked = $planDerivationGroupLinks.filter(planDerivationGroupLink => {
-                              return planDerivationGroupLink.derivation_group_id === selectedSource?.derivation_group_id;
-                            });
-      if(currentlyLinked.length > 0) {
-        // if the source is in a derivation group currently used by a plan, warn that we cannot delete 
-        let linkedPlans: string[] = currentlyLinked.map(link => `<div style="padding-left:20px"><i>
+        return planDerivationGroupLink.derivation_group_id === selectedSource?.derivation_group_id;
+      });
+      if (currentlyLinked.length > 0) {
+        // if the source is in a derivation group currently used by a plan, warn that we cannot delete
+        let linkedPlans: string[] = currentlyLinked.map(
+          link => `<div style="padding-left:20px"><i>
                                                                     <a href="${base}/plans/${link.plan_id}">
-                                                                      ${$plans.find(plan => {
-                                                                        return link.plan_id === plan.id;
-                                                                      })?.name}
+                                                                      ${
+                                                                        $plans.find(plan => {
+                                                                          return link.plan_id === plan.id;
+                                                                        })?.name
+                                                                      }
                                                                     </a>
                                                                   </i></div>
-                                                                `)
-        
-        const _ = await showConfirmModal(
+                                                                `,
+        );
+
+        await showConfirmModal(
           'Confirm',
-          `This External Source is part of Derivation Group '${selectedSource.derivation_group}', 
+          `This External Source is part of Derivation Group '${selectedSource.derivation_group}',
           which is linked with the following plans: ${linkedPlans.join('\n')}`,
           'External Source Cannot Be Deleted',
           true,
-          ""
+          '',
         );
-      }
-      else {
+      } else {
         // otherwise, delete!
         const deletionWasSuccessful = await effects.deleteExternalSource(selectedSource, user);
         if (deletionWasSuccessful) {
@@ -537,60 +538,62 @@
       //    That way, upon selecting a source, we can see what event types it contains.
       let externalSourceEventTypes: Set<number> = new Set<number>();
       // handle the events, as they need special logic to handle event types
-      for (let externalEvent of parsed?.events) {
-        externalEventTypeInsertInput = {
-          name: externalEvent.event_type,
-        };
+      if (parsed.events) {
+        for (let externalEvent of parsed.events) {
+          externalEventTypeInsertInput = {
+            name: externalEvent.event_type,
+          };
 
-        // ensure the duration is valid
-        try {
-          convertDurationToMs(externalEvent.duration);
-        } catch (e) {
-          // skip this event
-          showFailureToast('Upload failed.');
-          catchError(`Event duration has invalid format...excluding event ${externalEvent.key}\n`, e as Error);
-          return;
-        }
-
-        // if the event is valid...
-        if (
-          externalEvent.event_type !== undefined &&
-          externalEvent.start_time !== undefined &&
-          externalEvent.duration !== undefined
-        ) {
-          let externalEventTypeId: number | undefined = undefined;
-          // create ExternalEventType if it doesn't exist or grab the ID of the previously created entry,
-          if (!localExternalEventTypes.map(e => e.name).includes(externalEvent.event_type)) {
-            externalEventTypeId = await effects.createExternalEventType(externalEventTypeInsertInput, user);
-            if (externalEventTypeId) {
-              localExternalEventTypes.push({
-                id: externalEventTypeId,
-                name: externalEvent.event_type,
-              });
-            }
-          } else {
-            // ...or find the existing ExternalEventType's id,
-            externalEventTypeId = localExternalEventTypes.find(
-              externalEventType => externalEventType.name === externalEvent.event_type,
-            )?.id;
+          // ensure the duration is valid
+          try {
+            convertDurationToMs(externalEvent.duration);
+          } catch (e) {
+            // skip this event
+            showFailureToast('Upload failed.');
+            catchError(`Event duration has invalid format...excluding event ${externalEvent.key}\n`, e as Error);
+            return;
           }
-          if (externalEventTypeId !== undefined) {
-            // ...and then add it to a list. We have this extra split out step as our JSON/DB-compatible hybrids at this point contain both
-            //      event_type and event_type_id, but the database can only accept event_type_id, so this step drops event_type
-            const { event_type, ...db_compatible_fields } = externalEvent;
 
-            // extra, optional step to only take stuff that the database can accept in. Eventually, can be handled by JSON Schema, see comment in external-event.ts
-            const { duration, id, key, properties, start_time } = db_compatible_fields;
+          // if the event is valid...
+          if (
+            externalEvent.event_type !== undefined &&
+            externalEvent.start_time !== undefined &&
+            externalEvent.duration !== undefined
+          ) {
+            let externalEventTypeId: number | undefined = undefined;
+            // create ExternalEventType if it doesn't exist or grab the ID of the previously created entry,
+            if (!localExternalEventTypes.map(e => e.name).includes(externalEvent.event_type)) {
+              externalEventTypeId = await effects.createExternalEventType(externalEventTypeInsertInput, user);
+              if (externalEventTypeId) {
+                localExternalEventTypes.push({
+                  id: externalEventTypeId,
+                  name: externalEvent.event_type,
+                });
+              }
+            } else {
+              // ...or find the existing ExternalEventType's id,
+              externalEventTypeId = localExternalEventTypes.find(
+                externalEventType => externalEventType.name === externalEvent.event_type,
+              )?.id;
+            }
+            if (externalEventTypeId !== undefined) {
+              // ...and then add it to a list. We have this extra split out step as our JSON/DB-compatible hybrids at this point contain both
+              //      event_type and event_type_id, but the database can only accept event_type_id, so this step drops event_type
+              const { event_type, ...db_compatible_fields } = externalEvent;
 
-            externalEventsCreated.push({
-              duration,
-              event_type_id: externalEventTypeId,
-              id,
-              key,
-              properties,
-              start_time,
-            });
-            externalSourceEventTypes.add(externalEventTypeId);
+              // extra, optional step to only take stuff that the database can accept in. Eventually, can be handled by JSON Schema, see comment in external-event.ts
+              const { duration, id, key, properties, start_time } = db_compatible_fields;
+
+              externalEventsCreated.push({
+                duration,
+                event_type_id: externalEventTypeId,
+                id,
+                key,
+                properties,
+                start_time,
+              });
+              externalSourceEventTypes.add(externalEventTypeId);
+            }
           }
         }
       }
@@ -1217,7 +1220,6 @@
                       mouseout={undefined}
                       contextmenu={undefined}
                       dblclick={undefined}
-                      planStartTimeYmd={''}
                     />
                   </div>
                 </div>

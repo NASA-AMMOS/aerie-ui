@@ -131,8 +131,8 @@
   $: externalEvents = externalEventsWithTypeName.map(eWTN => {
     return {
       ...eWTN,
-      startMs: convertUTCtoMs(eWTN.start_time),
       durationMs: convertDurationToMs(eWTN.duration),
+      startMs: convertUTCtoMs(eWTN.start_time),
     };
   });
 

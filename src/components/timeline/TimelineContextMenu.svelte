@@ -225,12 +225,6 @@
     }
   }
 
-  function onCollapseExternalEventTree() {
-    if (row) {
-      dispatch('collapseExternalEventTree', row);
-    }
-  }
-
   function onShowDirectivesAndActivitiesChange(event: Event) {
     const { value } = getTarget(event);
     if (row) {

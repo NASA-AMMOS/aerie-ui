@@ -50,7 +50,7 @@ export const selectedExternalEvent = derived(
   [selectedExternalEventId, externalEventsMap],
   ([$selectedExternalEventId, $externalEventsMap]) => {
     if ($selectedExternalEventId !== null) {
-      let selected = $externalEventsMap[$selectedExternalEventId];
+      const selected = $externalEventsMap[$selectedExternalEventId];
       return selected ? selected : null;
     }
     return null;

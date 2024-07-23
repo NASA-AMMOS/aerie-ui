@@ -5,6 +5,8 @@ import type { BaseDefinition, BaseMetadata } from './metadata';
 
 // This is the type that conforms with the database schema. We don't really use it, as it is pretty heavyweight - instead we derive lighter types from it.
 export type ExternalSourceDB = {
+  created_at: string;
+  derivation_group_id: number;
   end_time: string;
   external_events: ExternalEventDB[];
   file_id: number;
@@ -14,11 +16,6 @@ export type ExternalSourceDB = {
   source_type_id: number;
   start_time: string;
   valid_at: string;
-  derivation_group_id: number;
-  // Things to consider:
-  // associated file?
-  // owner?
-  created_at: string;
 };
 
 // This is the JSON type that the user can upload.
@@ -52,9 +49,8 @@ export type ExternalSourceSlim = Pick<
 
 // For use in ExternalSourceManager tables
 export type ExternalSourceWithResolvedNames = ExternalSourceSlim & {
-  source_type: string | undefined;
   derivation_group: string | undefined;
-
+  source_type: string | undefined;
   // for coloring
   total_groups: number;
 };
@@ -74,12 +70,12 @@ export type ExternalSourceType = {
 };
 
 export type DerivationGroup = {
+  derivedEventTotal: number;
+  event_types: string[];
   id: number;
   name: string;
   source_type_id: number;
   sources: Map<string, { event_counts: number }>;
-  event_types: string[];
-  derivedEventTotal: number;
 };
 
 // Metadata types used for management modal

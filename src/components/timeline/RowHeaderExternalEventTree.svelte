@@ -29,8 +29,8 @@
   $: rowHeight = externalEventOptions.externalEventHeight + 4; // Add externalEventPadding from LayerExternalSources
 
   const dispatch = createEventDispatcher<{
-    'external-event-tree-node-change': ExternalEventTreeNode;
     dblClick: MouseOver;
+    'external-event-tree-node-change': ExternalEventTreeNode;
     mouseDown: MouseDown;
   }>();
 
@@ -42,7 +42,6 @@
     if (e) {
       dispatch('dblClick', {
         e,
-        selectedExternalEventId: selectedExternalEventId ?? undefined,
       });
     }
   }
@@ -50,14 +49,16 @@
   function getExternalEventsForNode(node: ExternalEventTreeNode) {
     const externalEvents: ExternalEvent[] = [];
     (node.items || []).forEach(externalEvent => {
-      if (externalEvent.externalEvent) externalEvents.push(externalEvent.externalEvent);
+      if (externalEvent.externalEvent) {
+        externalEvents.push(externalEvent.externalEvent);
+      }
     });
     return externalEvents;
   }
 
   function getNodeComposition(node: ExternalEventTreeNode) {
     let externalEventCount = 0;
-    (node.items || []).forEach(externalEvent => {
+    (node.items || []).forEach(() => {
       externalEventCount++;
     });
     return externalEventCount;
