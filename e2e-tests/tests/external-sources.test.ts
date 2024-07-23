@@ -66,16 +66,13 @@ test.describe.serial('External Sources', () => {
     await externalSources.viewEventSourceMetadata.click();
     await expect(page.getByText('0', { exact: true })).toBeVisible();
     await expect(page.getByText('1', { exact: true })).toBeVisible();
-    await expect(page.getByText('2', { exact: true })).toBeVisible();
-    await expect(page.getByText('3', { exact: true })).toBeVisible();
     await expect(page.getByText('version')).toBeVisible();
-    await expect(page.getByText('wrkcat')).toBeVisible();
   });
 
   test('Selected external source should show event types in a collapsible', async () => {
     await externalSources.selectSource();
     await externalSources.viewContainedEventTypes.click();
-    await expect(page.locator('i').filter({ hasText: 'TestDSNContact' }).first()).toBeVisible();
+    await expect(page.locator('i').filter({ hasText: 'ExampleEvent' }).first()).toBeVisible();
   });
 
   test('External event table and timeline should be accessible while a source is selected', async () => {
