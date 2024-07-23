@@ -16,7 +16,7 @@ export class ExternalSources {
   externalEventTableHeaderID: Locator;
   externalEventTableHeaderSourceID: Locator;
   externalEventTableRow: Locator;
-  externalSourceFilePath: string = 'e2e-tests/data/example-dsn-contacts.json';
+  externalSourceFilePath: string = 'e2e-tests/data/example-external-source.json';
   externalSourceId: string;
   externalSourceKey: string = 'DSN_CONTACT_CONFIRMED:DSNCONFIRMED_04.json';
   externalSourceSelectedForm: Locator;
@@ -43,7 +43,7 @@ export class ExternalSources {
     await this.closeButton.click();
   }
 
-  async deleteSource(sourceName: string = 'example-dsn-contacts.json') {
+  async deleteSource(sourceName: string = 'example-external-source.json') {
     // Assumes a source has already been uploaded and it is the first row in the table
     await this.selectSource(sourceName);
     await this.deleteSourceButton.click();
@@ -66,10 +66,10 @@ export class ExternalSources {
     // Assumes the selected source was the test source, and selects the specific event from it
     // NOTE: This may not be the case, and should be re-visited when we implement deletion for External Sources!
     await this.selectSource();
-    await this.page.getByRole('gridcell', { name: 'TestDSNContact:79/MMS/MMS3:54' }).click();
+    await this.page.getByRole('gridcell', { name: 'ExampleEvent:1/sc/sc1:1' }).click();
   }
 
-  async selectSource(sourceName: string = 'example-dsn-contacts.json') {
+  async selectSource(sourceName: string = 'example-external-source.json') {
     // Always selects the first source with the example's source type in the table
     if (!this.page.getByRole('gridcell', { name: sourceName }).first().isVisible()) {
       await this.selectSourceFilter();
