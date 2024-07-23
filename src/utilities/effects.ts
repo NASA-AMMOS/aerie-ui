@@ -215,6 +215,7 @@ import {
   showCreatePlanSnapshotModal,
   showCreateViewModal,
   showDeleteActivitiesModal,
+  showDeleteExternalSourceModal,
   showEditViewModal,
   showManagePlanConstraintsModal,
   showManagePlanDerivationGroups,
@@ -2420,10 +2421,9 @@ const effects = {
         throwPermissionError('delete an external source');
       }
       if (externalSource !== null) {
-        const { confirm } = await showConfirmModal(
-          'Delete',
-          `Are you sure you want to delete "${externalSource.key}"?`,
-          'Delete External Source',
+        const { confirm } = await showDeleteExternalSourceModal(
+          [],
+          externalSource
         );
         if (confirm) {
           const data = await reqHasura<{ id: number }>(gql.DELETE_EXTERNAL_SOURCE, { id: externalSource.id }, user);
