@@ -36,15 +36,17 @@
     {title}
   </ModalHeader>
   <ModalContent>
-    <span>{message}</span>
+    <span>{@html message}</span>
     {#if !actionCanBeUndone}
       <i>This action cannot be undone.</i>
     {/if}
   </ModalContent>
   <ModalFooter>
-    <button class="st-button secondary" on:click={() => dispatch('close')}>
-      {cancelText}
-    </button>
+    {#if cancelText.length > 0}
+      <button class="st-button secondary" on:click={() => dispatch('close')}>
+        {cancelText}
+      </button>
+    {/if}
     <button class="st-button" on:click={() => dispatch('confirm')}>
       {confirmText}
     </button>
