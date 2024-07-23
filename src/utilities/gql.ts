@@ -975,7 +975,7 @@ const gql = {
   `,
 
   DELETE_EXTERNAL_SOURCE: `#graphql
-    mutation DeleteExternalSource($file_id: Int!, $id: Int!) {
+    mutation DeleteExternalSource($id: Int!) {
       deleteExternalEvent: ${Queries.DELETE_EXTERNAL_EVENT}(where: { source_id: { _eq: $id }}) {
         returning {
           source_id
@@ -987,9 +987,6 @@ const gql = {
         }
       }
       deleteExternalSource: ${Queries.DELETE_EXTERNAL_SOURCE}(id: $id) {
-        id
-      }
-      deleteUploadedFile: ${Queries.DELETE_UPLOADED_FILE}(id: $file_id) {
         id
       }
     }
