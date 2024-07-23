@@ -93,7 +93,11 @@
       autocomplete="off"
       class="st-input w-100"
       name="filter"
-      placeholder={isActivityLayer(layer) ? 'Search activities' : isExternalEventLayer(layer) ? 'Search external event types' : 'Search resources'}
+      placeholder={isActivityLayer(layer)
+        ? 'Search activities'
+        : isExternalEventLayer(layer)
+          ? 'Search external event types'
+          : 'Search resources'}
     />
     <div class="filter-search-icon" slot="left"><SearchIcon /></div>
   </Input>

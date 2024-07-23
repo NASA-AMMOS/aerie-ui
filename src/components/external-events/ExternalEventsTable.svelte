@@ -14,8 +14,8 @@
   export let user: User | null;
 
   const dispatch = createEventDispatcher<{
-    rowDoubleClicked: void
-    selectionChanged: void
+    rowDoubleClicked: void;
+    selectionChanged: void;
   }>();
 
   const baseColumnDefs: DataGridColumnDef[] = [
@@ -65,18 +65,18 @@
       headerName: 'Duration',
       resizable: true,
       sortable: true,
-    }
+    },
   ];
 
   let columnDefs = baseColumnDefs;
 </script>
-  
+
 <SingleActionDataGrid
   {columnDefs}
   itemDisplayText="External Source"
   {items}
   {user}
-  bind:selectedItemId={selectedItemId}
+  bind:selectedItemId
   on:rowDoubleClicked={() => dispatch('rowDoubleClicked')}
   on:selectionChanged={() => dispatch('selectionChanged')}
 />

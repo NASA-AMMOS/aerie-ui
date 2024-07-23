@@ -21,18 +21,11 @@
   } from '../../types/timeline';
   import { hexToRgba, shadeColor } from '../../utilities/color';
   import { isRightClick } from '../../utilities/generic';
-  import {
-    getDoyTime,
-    getUnixEpochTime
-  } from '../../utilities/time';
-  import {
-    TimelineInteractionMode,
-    externalEventInView,
-    searchQuadtreeRect
-  } from '../../utilities/timeline';
+  import { getDoyTime, getUnixEpochTime } from '../../utilities/time';
+  import { TimelineInteractionMode, externalEventInView, searchQuadtreeRect } from '../../utilities/timeline';
 
   type IdToColorMap = Record<number, string>;
-  type IdToColorMaps = { directives: IdToColorMap; spans: IdToColorMap, external_events: IdToColorMap };
+  type IdToColorMaps = { directives: IdToColorMap; spans: IdToColorMap; external_events: IdToColorMap };
 
   export let selectedExternalEventId: ExternalEventId | null = null;
   export let externalEvents: ExternalEvent[] = [];
@@ -144,7 +137,8 @@
 
   function onMousedown(e: MouseEvent | undefined): void {
     // Do not process events if meta/ctrl is pressed to avoid interaction conflicts with zoom/pan
-    if (e && timelineInteractionMode === TimelineInteractionMode.Interact && e.button !== 1) { // KEEP THESE.
+    if (e && timelineInteractionMode === TimelineInteractionMode.Interact && e.button !== 1) {
+      // KEEP THESE.
       const { offsetX, offsetY } = e;
       const { externalEvents } = getExternalEventsByOffset(offsetX, offsetY);
 
@@ -198,7 +192,7 @@
       dispatch('contextMenu', {
         e,
         origin: 'layer-external-event',
-        selectedExternalEventId: newSelectedExternalEventId ?? undefined
+        selectedExternalEventId: newSelectedExternalEventId ?? undefined,
       });
     }
   }
@@ -207,7 +201,7 @@
     if (e) {
       dispatch('dblClick', {
         e,
-        selectedExternalEventId: selectedExternalEventId ?? undefined
+        selectedExternalEventId: selectedExternalEventId ?? undefined,
       });
     }
   }
@@ -215,7 +209,9 @@
   function getLabelForExternalEvent(externalEvent: ExternalEvent): string {
     // Display an arrow to the left of a event label if the span is sticky
     // The label should be sticky if the start of the event is clipped and the event is still in view
-    const sticky = externalEvent.startMs < viewTimeRange.start && externalEvent.startMs + externalEvent.durationMs >= viewTimeRange.start;
+    const sticky =
+      externalEvent.startMs < viewTimeRange.start &&
+      externalEvent.startMs + externalEvent.durationMs >= viewTimeRange.start;
     return `${sticky ? '← ' : ''}${externalEvent.key}`;
   }
 
@@ -336,7 +332,9 @@
       if (externalEventOptions.labelVisibility !== 'off') {
         labelEndX = Math.max(
           labelEndX,
-          Math.max(minRectSize, startX) + labelPaddingLeft + measureText(getLabelForExternalEvent(externalEvent), textMetricsCache).width,
+          Math.max(minRectSize, startX) +
+            labelPaddingLeft +
+            measureText(getLabelForExternalEvent(externalEvent), textMetricsCache).width,
         );
       }
     }
@@ -375,7 +373,7 @@
 
       // Draw external event like a span
       if (externalEvent && typeof externalEventStartX === 'number') {
-        const externalEventEndX = xScaleView(externalEvent.startMs+externalEvent.durationMs)
+        const externalEventEndX = xScaleView(externalEvent.startMs + externalEvent.durationMs);
         const externalEventRectWidth = Math.max(2, Math.min(externalEventEndX, drawWidth) - externalEventStartX);
         const externalEventColor = idToColorMaps.external_events[externalEvent.id] || externalEventDefaultColor;
         const isSelected = selectedExternalEventId === externalEvent.id;
@@ -421,14 +419,7 @@
     });
   }
 
-  function drawLabel(
-    text: string,
-    x: number,
-    y: number,
-    width: number,
-    color: string,
-    selected = false,
-  ) {
+  function drawLabel(text: string, x: number, y: number, width: number, color: string, selected = false) {
     setLabelContext('black');
     if (selected) {
       ctx.fillStyle = externalEventSelectedTextColor;
@@ -472,8 +463,7 @@
    * Draws external event points to the canvas context.
    * @note Points must be sorted in time ascending order before calling this function.
    */
-  async function draw
-  (): Promise<void> {
+  async function draw(): Promise<void> {
     if (ctx) {
       await tick();
 

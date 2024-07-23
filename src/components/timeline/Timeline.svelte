@@ -132,8 +132,8 @@
     return {
       ...eWTN,
       startMs: convertUTCtoMs(eWTN.start_time),
-      durationMs: convertDurationToMs(eWTN.duration)
-    }
+      durationMs: convertDurationToMs(eWTN.duration),
+    };
   });
 
   $: rows = timeline?.rows || [];

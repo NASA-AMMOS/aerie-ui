@@ -3,7 +3,7 @@
 <script lang="ts">
   import { externalSources, getSourceName } from '../../stores/external-source';
   import type { ExternalEventWithTypeName } from '../../types/external-event';
-  import type { Property } from "../../types/property";
+  import type { Property } from '../../types/property';
   import { classNames } from '../../utilities/generic';
   import Collapse from '../Collapse.svelte';
   import Input from '../form/Input.svelte';
@@ -19,9 +19,9 @@
   $: formProperties = Object.entries(externalEvent.properties).map(e => {
     return {
       name: e[0],
-      value: e[1]
-    }
-  })
+      value: e[1],
+    };
+  });
   let highlightKeysMap: Record<string, boolean> = {};
 </script>
 
@@ -48,7 +48,7 @@
 
         <Highlight highlight={highlightKeysMap.type}>
           <Input layout="inline">
-              Type
+            Type
             <input class="st-input w-100" disabled={!editable} name="event-type" value={externalEvent.event_type} />
           </Input>
         </Highlight>
@@ -56,11 +56,7 @@
         <Highlight highlight={highlightKeysMap.start_offset}>
           <Input layout="inline">
             Start Time (UTC)
-            <DatePicker
-              dateString={externalEvent.start_time}
-              disabled={!editable}
-              name="start-time"
-            />
+            <DatePicker dateString={externalEvent.start_time} disabled={!editable} name="start-time" />
           </Input>
         </Highlight>
 
@@ -81,20 +77,20 @@
         <Highlight highlight={highlightKeysMap.last_modified_by}>
           <Input layout="inline">
             Source File
-            <input class="st-input w-100" disabled={!editable} name="source-id-resolved" value={getSourceName(externalEvent.source_id, $externalSources)} />
+            <input
+              class="st-input w-100"
+              disabled={!editable}
+              name="source-id-resolved"
+              value={getSourceName(externalEvent.source_id, $externalSources)}
+            />
           </Input>
         </Highlight>
       </Collapse>
     </fieldset>
 
     <fieldset>
-      <Collapse
-        title={formProperties.length > 0 ? `Properties` : ''}
-      >
-        <Properties
-          {formProperties}
-          {highlightKeysMap}
-        />
+      <Collapse title={formProperties.length > 0 ? `Properties` : ''}>
+        <Properties {formProperties} {highlightKeysMap} />
         {#if formProperties.length === 0}
           <div class="st-typography-label">No Properties Found</div>
         {/if}

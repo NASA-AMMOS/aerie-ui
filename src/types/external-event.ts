@@ -45,15 +45,15 @@ export type ExternalEvent = Pick<
 export type ExternalEventType = {
   id: number;
   name: string;
-}
+};
 
 // This is used for the GraphQL mutation.
-// this doesn't do any actual filtering. extra keys in surplus of this are NOT checked. 
-// Typescript doesn't really allow us to check these, so ensuring we don't push additional and unnecessary data to the DB should be caught 
+// this doesn't do any actual filtering. extra keys in surplus of this are NOT checked.
+// Typescript doesn't really allow us to check these, so ensuring we don't push additional and unnecessary data to the DB should be caught
 // https://stackoverflow.com/questions/64263271/typescript-validate-excess-keys-on-value-returned-from-function
-export type ExternalEventInsertInput = Pick<ExternalEventDB, 'key' | 'event_type_id' | 'start_time' | 'duration' | 'properties'>;
-
-export type ExternalEventTypeInsertInput = Pick<
-  ExternalEventType,
-  'name'
+export type ExternalEventInsertInput = Pick<
+  ExternalEventDB,
+  'key' | 'event_type_id' | 'start_time' | 'duration' | 'properties'
 >;
+
+export type ExternalEventTypeInsertInput = Pick<ExternalEventType, 'name'>;

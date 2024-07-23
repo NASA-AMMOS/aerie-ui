@@ -8,13 +8,42 @@
   import { onDestroy, onMount } from 'svelte';
   import { catchError } from '../../stores/errors';
   import { externalEventTypes, getEventTypeName } from '../../stores/external-event';
-  import { createDerivationGroupError, createExternalSourceError, createExternalSourceEventTypeLinkError, createExternalSourceTypeError, creatingExternalSource, deletedSourcesSeen, derivationGroups, externalSourceTypes, externalSourceWithResolvedNames, getDerivationGroupByNameSourceTypeId, getEventSourceTypeByName, planDerivationGroupLinks, unseenSources } from '../../stores/external-source';
+  import {
+    createDerivationGroupError,
+    createExternalSourceError,
+    createExternalSourceEventTypeLinkError,
+    createExternalSourceTypeError,
+    creatingExternalSource,
+    deletedSourcesSeen,
+    derivationGroups,
+    externalSourceTypes,
+    externalSourceWithResolvedNames,
+    getDerivationGroupByNameSourceTypeId,
+    getEventSourceTypeByName,
+    planDerivationGroupLinks,
+    unseenSources,
+  } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import { plans } from '../../stores/plans';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
-  import type { ExternalEvent, ExternalEventDB, ExternalEventType, ExternalEventTypeInsertInput } from '../../types/external-event';
-  import type { DerivationGroup, DerivationGroupInsertInput, ExternalSourceInsertInput, ExternalSourceJson, ExternalSourceType, ExternalSourceTypeInsertInput, ExternalSourceWithDateInfo, ExternalSourceWithResolvedNames, PlanDerivationGroup } from '../../types/external-source';
+  import type {
+    ExternalEvent,
+    ExternalEventDB,
+    ExternalEventType,
+    ExternalEventTypeInsertInput,
+  } from '../../types/external-event';
+  import type {
+    DerivationGroup,
+    DerivationGroupInsertInput,
+    ExternalSourceInsertInput,
+    ExternalSourceJson,
+    ExternalSourceType,
+    ExternalSourceTypeInsertInput,
+    ExternalSourceWithDateInfo,
+    ExternalSourceWithResolvedNames,
+    PlanDerivationGroup,
+  } from '../../types/external-source';
   import type { RadioButtonId } from '../../types/radio-buttons';
   import type { TimeRange } from '../../types/timeline';
   import { type MouseDown, type MouseOver } from '../../types/timeline';
@@ -50,9 +79,7 @@
   import RadioButtons from '../ui/RadioButtons/RadioButtons.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
 
-
   export let user: User | null;
-
 
   type CellRendererParams = {
     onDeleteExternalSource: (source: ExternalSourceWithResolvedNames) => void;
@@ -79,7 +106,7 @@
       headerName: 'ID',
       resizable: true,
       sortable: true,
-      width: 70
+      width: 70,
     },
     {
       field: 'key',
@@ -108,7 +135,7 @@
       headerName: 'File ID',
       resizable: true,
       sortable: true,
-      width: 120
+      width: 120,
     },
     {
       field: 'start_time',
@@ -157,7 +184,7 @@
           return new Date(params.data?.valid_at).toISOString().slice(0, 19);
         }
       },
-    }
+    },
   ];
   let columnDefs: DataGridColumnDef[] = baseColumnDefs;
 
@@ -202,7 +229,7 @@
   let input: HTMLInputElement;
   let filterString: string = '';
   let filteredValues: ExternalSourceType[] = [];
-  let selectedFilters: ExternalSourceType[] = [{id: -1, name: "LOADING TYPES..."}];
+  let selectedFilters: ExternalSourceType[] = [{ id: -1, name: 'LOADING TYPES...' }];
   let menuTitle: string = '';
   let filteredExternalSources: ExternalSourceWithResolvedNames[] = [];
 
@@ -228,12 +255,12 @@
 
   let isDerivationGroupFieldDisabled: boolean = true;
 
-  let gridRowSizes: string = "1fr 3px 0fr";
+  let gridRowSizes: string = '1fr 3px 0fr';
 
   // unfortunately very clunky, but it does correctly select all source types on page load as stores populate shortly AFTER the component loads,
   //    so populating selectedFilters with the store values on component load always yields an empty list
   $: if (selectedFilters.length === 1 && selectedFilters[0].id === -1 && $externalSourceTypes.length > 0) {
-    selectedFilters = [...$externalSourceTypes]
+    selectedFilters = [...$externalSourceTypes];
   }
 
   $: if (files) {
@@ -259,8 +286,7 @@
             $endTimeDoyField.value = parsed.source.period.end_time;
             $validAtDoyField.value = parsed.source.valid_at;
             isDerivationGroupFieldDisabled = false;
-          }
-          catch (e) {
+          } catch (e) {
             catchError('External Source has Invalid Format', e as Error);
             showFailureToast('External Source has Invalid Format');
             parsed = undefined;
@@ -273,69 +299,75 @@
   $: selectedSourceId = selectedSource ? selectedSource.id : null;
 
   $: columnDefs = [
-      ...baseColumnDefs,
-      {
-        cellClass: 'action-cell-container',
-        cellRenderer: (params: SourceCellRendererParams) => {
-          const actionsDiv = document.createElement('div');
-          actionsDiv.className = 'actions-cell';
-          new DataGridActions({
-            props: {
-              deleteCallback: params.onDeleteExternalSource,
-              deleteTooltip: {
-                content: 'Delete External Source',
-                placement: 'bottom',
-              },
-              hasDeletePermission: hasDeletePermission,
-              rowData: params.data,
+    ...baseColumnDefs,
+    {
+      cellClass: 'action-cell-container',
+      cellRenderer: (params: SourceCellRendererParams) => {
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'actions-cell';
+        new DataGridActions({
+          props: {
+            deleteCallback: params.onDeleteExternalSource,
+            deleteTooltip: {
+              content: 'Delete External Source',
+              placement: 'bottom',
             },
-            target: actionsDiv,
-          });
+            hasDeletePermission: hasDeletePermission,
+            rowData: params.data,
+          },
+          target: actionsDiv,
+        });
 
-          return actionsDiv;
-        },
-        cellRendererParams: {
-          onDeleteExternalSource,
-        } as CellRendererParams,
-        field: 'actions',
-        headerName: '',
-        resizable: false,
-        sortable: false,
-        suppressAutoSize: true,
-        suppressSizeToFit: true,
-        width: 25,
+        return actionsDiv;
       },
-    ];
+      cellRendererParams: {
+        onDeleteExternalSource,
+      } as CellRendererParams,
+      field: 'actions',
+      headerName: '',
+      resizable: false,
+      sortable: false,
+      suppressAutoSize: true,
+      suppressSizeToFit: true,
+      width: 25,
+    },
+  ];
 
   $: startTime = selectedSource ? new Date(selectedSource.start_time) : new Date();
   $: endTime = selectedSource ? new Date(selectedSource.end_time) : new Date();
-  $: viewTimeRange = { end: endTime.getTime(), start: startTime.getTime() }
+  $: viewTimeRange = { end: endTime.getTime(), start: startTime.getTime() };
   $: xDomainView = [startTime, endTime];
   $: xScaleView = getXScale(xDomainView, 500);
 
   $: filteredExternalSources = $externalSourceWithResolvedNames.filter(externalSource => {
-    return selectedFilters.find(f => f.name === externalSource.source_type) !== undefined
+    return selectedFilters.find(f => f.name === externalSource.source_type) !== undefined;
   });
-  $: filteredValues = $externalSourceTypes.filter(externalSourceType => externalSourceType.name.toLowerCase().includes(filterString))
-  $: filteredTableExternalEvents = selectedEvents
-    .filter(event => {
-      const filterTextLowerCase = externalEventsTableFilterString.toLowerCase();
-      const includesName = externalEventsTableFilterString.length ? event.key.toLocaleLowerCase().includes(filterTextLowerCase) : true;
-      return includesName;
-    });
+  $: filteredValues = $externalSourceTypes.filter(externalSourceType =>
+    externalSourceType.name.toLowerCase().includes(filterString),
+  );
+  $: filteredTableExternalEvents = selectedEvents.filter(event => {
+    const filterTextLowerCase = externalEventsTableFilterString.toLowerCase();
+    const includesName = externalEventsTableFilterString.length
+      ? event.key.toLocaleLowerCase().includes(filterTextLowerCase)
+      : true;
+    return includesName;
+  });
 
-  $: effects.getExternalEvents(selectedSource?.id, user).then(fetched => selectedEvents = fetched.map(eDB => {
-    return {
-      ...eDB,
-      durationMs: convertDurationToMs(eDB.duration),
-      event_type: getEventTypeName(eDB.event_type_id, $externalEventTypes),
-      startMs: convertUTCtoMs(eDB.start_time),
-    }
-  }));
+  $: effects.getExternalEvents(selectedSource?.id, user).then(
+    fetched =>
+      (selectedEvents = fetched.map(eDB => {
+        return {
+          ...eDB,
+          durationMs: convertDurationToMs(eDB.duration),
+          event_type: getEventTypeName(eDB.event_type_id, $externalEventTypes),
+          startMs: convertUTCtoMs(eDB.start_time),
+        };
+      })),
+  );
 
   $: selectedSourceLinkedDerivationGroupsPlans = $planDerivationGroupLinks.filter(planDerivationGroupLink => {
-    return planDerivationGroupLink.derivation_group_id === selectedSource?.derivation_group_id
-  })
+    return planDerivationGroupLink.derivation_group_id === selectedSource?.derivation_group_id;
+  });
 
   $: hasDeletePermission = featurePermissions.externalSource.canDelete(user);
   $: hasCreatePermission = featurePermissions.externalSource.canCreate(user);
@@ -386,21 +418,28 @@
 
   async function onDeleteExternalSource(selectedSource: ExternalSourceWithResolvedNames | null | undefined) {
     if (selectedSource !== null && selectedSource !== undefined) {
-      const deletedSourceEventTypes = await effects.getExternalEventTypesBySource(selectedSourceId ? [selectedSourceId] : [], $externalEventTypes, user);
+      const deletedSourceEventTypes = await effects.getExternalEventTypesBySource(
+        selectedSourceId ? [selectedSourceId] : [],
+        $externalEventTypes,
+        user,
+      );
       const deletionWasSuccessful = await effects.deleteExternalSource(selectedSource, user);
-      if (deletionWasSuccessful) { // TODO: replace all of this except the stuff about unseen deletions with triggers in database
+      if (deletionWasSuccessful) {
+        // TODO: replace all of this except the stuff about unseen deletions with triggers in database
         deselectSource();
 
         // persist to list of unseen deletions, with a deleted_at time
         let deletedSourcesParsed: ExternalSourceWithDateInfo[] = JSON.parse($deletedSourcesSeen);
-        deletedSourcesSeen.set(JSON.stringify(deletedSourcesParsed.concat({...selectedSource, change_date: new Date()})));
+        deletedSourcesSeen.set(
+          JSON.stringify(deletedSourcesParsed.concat({ ...selectedSource, change_date: new Date() })),
+        );
         // in case it was added and then immediately deleted, though, remove it from both unseenSources and deletedSourcesParsed, to not confuse the user
         {
           let seenSourcesParsed: ExternalSourceWithDateInfo[] = JSON.parse($unseenSources);
-          let filtered = seenSourcesParsed.filter(s => s.id !== selectedSource.id)
+          let filtered = seenSourcesParsed.filter(s => s.id !== selectedSource.id);
           if (filtered.length !== seenSourcesParsed.length) {
             unseenSources.set(JSON.stringify(filtered));
-            deletedSourcesSeen.set(JSON.stringify(deletedSourcesParsed.filter(s => s.id !== selectedSource.id)))
+            deletedSourcesSeen.set(JSON.stringify(deletedSourcesParsed.filter(s => s.id !== selectedSource.id)));
           }
           // NOTE: if I add a source, go to plans, DON'T ACKNOWLEDGE IT, then delete that source, and go back to plans, the warning card is gone as the
           //    system assumes I never got the first notification and as such the second is unnecessary as I never acknowledged knowing it was added, so
@@ -437,48 +476,54 @@
   async function onFormSubmit(_e: SubmitEvent) {
     if (parsed && file) {
       // Create an entry for the current source type if it does not already exist. Otherwise, retrieve the id
-      if (!($externalSourceTypes.some(externalSourceType => externalSourceType.name === $sourceTypeField.value))) {
+      if (!$externalSourceTypes.some(externalSourceType => externalSourceType.name === $sourceTypeField.value)) {
         sourceTypeInsert = {
-          name: $sourceTypeField.value
+          name: $sourceTypeField.value,
         };
       }
 
       // Create an entry for the derivation group
       let derivationGroupName = $derivationGroupField.value;
-      if(derivationGroupName.length === 0) {
-        derivationGroupName = "Default"
+      if (derivationGroupName.length === 0) {
+        derivationGroupName = 'Default';
       }
       derivationGroupInsert = {
         name: derivationGroupName,
-        source_type_id: -1 // filled in later
+        source_type_id: -1, // filled in later
       };
 
       // create the source object to upload to AERIE
-      const start_time: string | undefined = convertDoyToYmd($startTimeDoyField.value.replaceAll("Z", ""))?.replace("Z", "+00:00")
-      const end_time: string | undefined = convertDoyToYmd($endTimeDoyField.value.replaceAll("Z", ""))?.replace("Z", "+00:00")
-      const valid_at: string | undefined = convertDoyToYmd($validAtDoyField.value.replaceAll("Z", "")) + "+00:00"
+      const start_time: string | undefined = convertDoyToYmd($startTimeDoyField.value.replaceAll('Z', ''))?.replace(
+        'Z',
+        '+00:00',
+      );
+      const end_time: string | undefined = convertDoyToYmd($endTimeDoyField.value.replaceAll('Z', ''))?.replace(
+        'Z',
+        '+00:00',
+      );
+      const valid_at: string | undefined = convertDoyToYmd($validAtDoyField.value.replaceAll('Z', '')) + '+00:00';
       if (!start_time || !end_time || !valid_at) {
-        showFailureToast("Upload failed.")
-        console.log(`Upload failed - parsing dates in input failed. ${start_time}, ${end_time}, ${valid_at}`)
-        return
+        showFailureToast('Upload failed.');
+        console.log(`Upload failed - parsing dates in input failed. ${start_time}, ${end_time}, ${valid_at}`);
+        return;
       }
       if (new Date(start_time) > new Date(end_time)) {
-        showFailureToast("Upload failed.")
-        console.log(`Upload failed - start time ${start_time} after end time ${end_time}.`)
-        return
+        showFailureToast('Upload failed.');
+        console.log(`Upload failed - start time ${start_time} after end time ${end_time}.`);
+        return;
       }
       sourceInsert = {
         derivation_group_id: -1, // updated in the effect.
         end_time,
         external_events: {
-          data: null  // updated after this map is created
+          data: null, // updated after this map is created
         },
         file_id: -1, // updated in the effect.
         key: $keyField.value,
         metadata: parsed.source.metadata,
-        source_type_id: -1,  // updated in the effect.
+        source_type_id: -1, // updated in the effect.
         start_time,
-        valid_at
+        valid_at,
       };
 
       // the ones uploaded in this run won't show up as quickly in $externalEventTypes, so we keep a local log as well
@@ -491,35 +536,40 @@
       // handle the events, as they need special logic to handle event types
       for (let externalEvent of parsed?.events) {
         externalEventTypeInsertInput = {
-          name: externalEvent.event_type
+          name: externalEvent.event_type,
         };
 
         // ensure the duration is valid
         try {
-          convertDurationToMs(externalEvent.duration)
-        }
-        catch (e) {
+          convertDurationToMs(externalEvent.duration);
+        } catch (e) {
           // skip this event
-          showFailureToast("Upload failed.")
+          showFailureToast('Upload failed.');
           catchError(`Event duration has invalid format...excluding event ${externalEvent.key}\n`, e as Error);
-          return
+          return;
         }
 
         // if the event is valid...
-        if (externalEvent.event_type !== undefined && externalEvent.start_time !== undefined && externalEvent.duration !== undefined) {
+        if (
+          externalEvent.event_type !== undefined &&
+          externalEvent.start_time !== undefined &&
+          externalEvent.duration !== undefined
+        ) {
           let externalEventTypeId: number | undefined = undefined;
           // create ExternalEventType if it doesn't exist or grab the ID of the previously created entry,
-          if (!(localExternalEventTypes.map(e => e.name).includes(externalEvent.event_type))) {
+          if (!localExternalEventTypes.map(e => e.name).includes(externalEvent.event_type)) {
             externalEventTypeId = await effects.createExternalEventType(externalEventTypeInsertInput, user);
             if (externalEventTypeId) {
               localExternalEventTypes.push({
                 id: externalEventTypeId,
-                name: externalEvent.event_type
-              })
+                name: externalEvent.event_type,
+              });
             }
           } else {
             // ...or find the existing ExternalEventType's id,
-            externalEventTypeId = localExternalEventTypes.find(externalEventType => externalEventType.name === externalEvent.event_type)?.id
+            externalEventTypeId = localExternalEventTypes.find(
+              externalEventType => externalEventType.name === externalEvent.event_type,
+            )?.id;
           }
           if (externalEventTypeId !== undefined) {
             // ...and then add it to a list. We have this extra split out step as our JSON/DB-compatible hybrids at this point contain both
@@ -537,7 +587,7 @@
               properties,
               start_time,
             });
-            externalSourceEventTypes.add(externalEventTypeId)
+            externalSourceEventTypes.add(externalEventTypeId);
           }
         }
       }
@@ -548,28 +598,46 @@
       let derivationGroup: DerivationGroup | undefined = undefined;
       let sourceId: number | undefined = undefined;
       if (file !== undefined) {
-        if (!($externalSourceTypes.map(s => s.name).includes($sourceTypeField.value)) && sourceTypeInsert !== undefined) {
+        if (!$externalSourceTypes.map(s => s.name).includes($sourceTypeField.value) && sourceTypeInsert !== undefined) {
           sourceType = await effects.createExternalSourceType(sourceTypeInsert, user);
         } else {
-          sourceType = getEventSourceTypeByName($sourceTypeField.value, $externalSourceTypes)
+          sourceType = getEventSourceTypeByName($sourceTypeField.value, $externalSourceTypes);
         }
 
-        if ($derivationGroups.filter(dGroup => dGroup.name === derivationGroupInsert.name).length === 0
-              && derivationGroupInsert !== undefined) {
-          if(sourceType !== undefined) {derivationGroupInsert.source_type_id = sourceType.id;}
-          else {console.log("Source type for this derivation group was not previously registered correctly. Derivation group may be incorrect.")}
+        if (
+          $derivationGroups.filter(dGroup => dGroup.name === derivationGroupInsert.name).length === 0 &&
+          derivationGroupInsert !== undefined
+        ) {
+          if (sourceType !== undefined) {
+            derivationGroupInsert.source_type_id = sourceType.id;
+          } else {
+            console.log(
+              'Source type for this derivation group was not previously registered correctly. Derivation group may be incorrect.',
+            );
+          }
           derivationGroup = await effects.createDerivationGroup(derivationGroupInsert, user);
         }
         // name present, but under a different source type id
-        else if ($derivationGroups.filter(dGroup => dGroup.source_type_id !== sourceType?.id && dGroup.name === derivationGroupInsert.name).length > 0
-              && $derivationGroups.filter(dGroup => dGroup.source_type_id === sourceType?.id && dGroup.name === derivationGroupInsert.name).length === 0) {
-          if(sourceType !== undefined) {derivationGroupInsert.source_type_id = sourceType.id;}
-          else {console.log("Source type for this derivation group was not previously registered correctly. Derivation group may be incorrect.")}
+        else if (
+          $derivationGroups.filter(
+            dGroup => dGroup.source_type_id !== sourceType?.id && dGroup.name === derivationGroupInsert.name,
+          ).length > 0 &&
+          $derivationGroups.filter(
+            dGroup => dGroup.source_type_id === sourceType?.id && dGroup.name === derivationGroupInsert.name,
+          ).length === 0
+        ) {
+          if (sourceType !== undefined) {
+            derivationGroupInsert.source_type_id = sourceType.id;
+          } else {
+            console.log(
+              'Source type for this derivation group was not previously registered correctly. Derivation group may be incorrect.',
+            );
+          }
           derivationGroup = await effects.createDerivationGroup(derivationGroupInsert, user);
         }
         // name and source type id pair present
         else if (sourceType !== undefined) {
-          derivationGroup = getDerivationGroupByNameSourceTypeId(derivationGroupName, sourceType.id, $derivationGroups)
+          derivationGroup = getDerivationGroupByNameSourceTypeId(derivationGroupName, sourceType.id, $derivationGroups);
         }
 
         if (sourceType !== undefined && derivationGroup !== undefined) {
@@ -586,50 +654,52 @@
       // finally, create the event source -> contained event types entry
       if (sourceId !== undefined) {
         for (let external_event_type_id of externalSourceEventTypes) {
-          await effects.createExternalSourceEventTypeLink({external_event_type_id, external_source_id: sourceId}, user);
+          await effects.createExternalSourceEventTypeLink(
+            { external_event_type_id, external_source_id: sourceId },
+            user,
+          );
         }
       }
 
       // autoselect the new source
       if (sourceId && sourceType) {
         selectedSource = {
-          created_at: new Date().toISOString().replace("Z", "+00:00"), // technically not the exact time it shows up in the database
+          created_at: new Date().toISOString().replace('Z', '+00:00'), // technically not the exact time it shows up in the database
           derivation_group: derivationGroupName,
           id: sourceId,
           ...sourceInsert,
           source_type: sourceType?.name,
 
-          total_groups: $derivationGroups.length // kind of unnecessary here, but necessary in this type for the table and coloring
-        }
+          total_groups: $derivationGroups.length, // kind of unnecessary here, but necessary in this type for the table and coloring
+        };
 
         // persist to list of newly added sources, restating (for uniformity in UpdateCard) the change_date (in the non-deletion case - created_at)
         let seenSourcesParsed: ExternalSourceWithDateInfo[] = JSON.parse($unseenSources);
-        unseenSources.set(JSON.stringify(seenSourcesParsed.concat({...selectedSource, change_date: new Date()})));
+        unseenSources.set(JSON.stringify(seenSourcesParsed.concat({ ...selectedSource, change_date: new Date() })));
       }
 
       // reset the form behind the source
-      parsed = undefined
-      keyField.reset("");
-      sourceTypeField.reset("");
-      startTimeDoyField.reset("");
-      endTimeDoyField.reset("");
-      validAtDoyField.reset("");
-    }
-    else {
-      showFailureToast("Upload failed.")
-      console.log("Upload failed - no file present, or parsing failed.")
+      parsed = undefined;
+      keyField.reset('');
+      sourceTypeField.reset('');
+      startTimeDoyField.reset('');
+      endTimeDoyField.reset('');
+      validAtDoyField.reset('');
+    } else {
+      showFailureToast('Upload failed.');
+      console.log('Upload failed - no file present, or parsing failed.');
     }
   }
 
   async function selectSource(detail: ExternalSourceWithResolvedNames) {
-    selectedSource = detail
-    gridRowSizes = "1fr 3px 1fr"; // Add the bottom panel for external event table/timeline
-    deselectEvent()
+    selectedSource = detail;
+    gridRowSizes = '1fr 3px 1fr'; // Add the bottom panel for external event table/timeline
+    deselectEvent();
   }
 
   function deselectSource() {
-    deselectEvent()
-    gridRowSizes = "1fr 3px 0fr"; // Remove the bottom panel for external event table/timeline
+    deselectEvent();
+    gridRowSizes = '1fr 3px 0fr'; // Remove the bottom panel for external event table/timeline
     selectedSource = null;
   }
 
@@ -646,25 +716,23 @@
       //    of the LayerExternalSources (as opposed to using a store, like the timeline one does, which is
       //    unnecessary as everything we need is in on single component or can be passed down via parameters to
       //    children).
-      selectedEvent = externalEvents?.length ? externalEvents[0] : null
-      selectedRowId = null
-    }
-    else {
-      mouseDownAfterTable = false
+      selectedEvent = externalEvents?.length ? externalEvents[0] : null;
+      selectedRowId = null;
+    } else {
+      mouseDownAfterTable = false;
     }
   }
 
   function onCanvasMouseOver(e: CustomEvent<MouseOver>) {
     // just assign the MouseOver object so that the tooltip can access it
-    mouseOver = e.detail
+    mouseOver = e.detail;
   }
 
   function toggleItem(value: ExternalSourceType) {
     if (!selectedFilters.find(f => f.id === value.id)) {
-      selectedFilters = selectedFilters.concat(value)
-    }
-    else {
-      selectedFilters = selectedFilters.filter(filter => filter.id !== value.id)
+      selectedFilters = selectedFilters.concat(value);
+    } else {
+      selectedFilters = selectedFilters.filter(filter => filter.id !== value.id);
     }
   }
 
@@ -677,15 +745,15 @@
   }
 
   function onSelectionChanged() {
-    selectedEvent = selectedEvents.find(event => event.id === selectedRowId) ?? null
+    selectedEvent = selectedEvents.find(event => event.id === selectedRowId) ?? null;
   }
 
   function getRowStyle(params: RowClassParams<ExternalSourceWithResolvedNames>): RowStyle | undefined {
     // evenly spread out color selection
     if (params.data?.derivation_group_id && params.data?.total_groups) {
-      let spacing = 360/params.data?.total_groups;
-      let myVal = (params.data?.derivation_group_id-1)*spacing; // dg id starts at 1
-      return {'background-color': `hsl(${myVal} 100% 98%)`}
+      let spacing = 360 / params.data?.total_groups;
+      let myVal = (params.data?.derivation_group_id - 1) * spacing; // dg id starts at 1
+      return { 'background-color': `hsl(${myVal} 100% 98%)` };
     }
     return undefined;
   }
@@ -695,10 +763,13 @@
   <Panel borderRight padBody={true}>
     <svelte:fragment slot="header">
       <SectionTitle
-        >{selectedEvent ? `Selected Event` : selectedRowId ? `Selected Event`
-          : selectedSource
-          ? `#${selectedSource.id} – ${selectedSource.source_type}`
-          : 'Upload a Source File'}</SectionTitle
+        >{selectedEvent
+          ? `Selected Event`
+          : selectedRowId
+            ? `Selected Event`
+            : selectedSource
+              ? `#${selectedSource.id} – ${selectedSource.source_type}`
+              : 'Upload a Source File'}</SectionTitle
       >
       {#if selectedEvent || selectedRowId}
         <button
@@ -721,10 +792,7 @@
 
     <svelte:fragment slot="body">
       {#if selectedEvent}
-        <ExternalEventForm
-          externalEvent={selectedEvent}
-          showHeader={true}
-        />
+        <ExternalEventForm externalEvent={selectedEvent} showHeader={true} />
       {:else if selectedSource}
         <div class="external-source-header">
           <div class={classNames('external-source-header-title')}>
@@ -733,10 +801,7 @@
             </div>
           </div>
         </div>
-        <div
-          class="selected-source-forms"
-          style="height: 100%;"
-        >
+        <div class="selected-source-forms" style="height: 100%;">
           <fieldset>
             <Input layout="inline">
               ID
@@ -749,49 +814,38 @@
             </Input>
 
             <Input layout="inline">
-                Source Type
+              Source Type
               <input class="st-input w-100" disabled={true} name="source-type" value={selectedSource.source_type} />
             </Input>
 
             <Input layout="inline">
               Derivation Group
-              <input class="st-input w-100" disabled={true} name="derivation-group" value={selectedSource.derivation_group} />
+              <input
+                class="st-input w-100"
+                disabled={true}
+                name="derivation-group"
+                value={selectedSource.derivation_group}
+              />
             </Input>
 
             <Input layout="inline">
               Start Time (UTC)
-              <DatePicker
-                dateString={selectedSource.start_time}
-                disabled={true}
-                name="start-time"
-              />
+              <DatePicker dateString={selectedSource.start_time} disabled={true} name="start-time" />
             </Input>
 
             <Input layout="inline">
               End Time (UTC)
-              <DatePicker
-                dateString={selectedSource.end_time}
-                disabled={true}
-                name="end-time"
-              />
+              <DatePicker dateString={selectedSource.end_time} disabled={true} name="end-time" />
             </Input>
 
             <Input layout="inline">
               Valid At (UTC)
-              <DatePicker
-                dateString={selectedSource.valid_at}
-                disabled={true}
-                name="valid-at"
-              />
+              <DatePicker dateString={selectedSource.valid_at} disabled={true} name="valid-at" />
             </Input>
 
             <Input layout="inline">
               Created At (UTC)
-              <DatePicker
-                dateString={selectedSource.created_at}
-                disabled={true}
-                name="valid-at"
-              />
+              <DatePicker dateString={selectedSource.created_at} disabled={true} name="valid-at" />
             </Input>
 
             <Collapse
@@ -820,7 +874,9 @@
               <em>loading metadata...</em>
             {:then metadata}
               <Properties
-                formProperties={Object.entries(metadata).map(e => {return {name: e[0], value: e[1]}})}
+                formProperties={Object.entries(metadata).map(e => {
+                  return { name: e[0], value: e[1] };
+                })}
               />
             {:catch error}
               <em>error loading metadata...try refreshing the page.</em>
@@ -837,11 +893,12 @@
               {#if selectedSourceLinkedDerivationGroupsPlans.length > 0}
                 {#each selectedSourceLinkedDerivationGroupsPlans as linkedPlanDerivationGroup}
                   <i>
-                    <a href='{base}/plans/{linkedPlanDerivationGroup.plan_id}'>
-                    {$plans.find(plan => {
-                      return linkedPlanDerivationGroup.plan_id === plan.id;
-                    })?.name}
-                  </i>
+                    <a href="{base}/plans/{linkedPlanDerivationGroup.plan_id}">
+                      {$plans.find(plan => {
+                        return linkedPlanDerivationGroup.plan_id === plan.id;
+                      })?.name}
+                    </a></i
+                  >
                 {/each}
               {:else}
                 <i>Not used in any plans</i>
@@ -855,21 +912,23 @@
               hasPermission: hasDeletePermission,
               permissionError: deletePermissionError,
             }}
-            on:click|stopPropagation={async() => onDeleteExternalSource(selectedSource)}
+            on:click|stopPropagation={async () => onDeleteExternalSource(selectedSource)}
           >
             Delete external source
           </button>
         </div>
       {:else}
-        <form on:submit|preventDefault={onFormSubmit} on:reset={() => {
-          parsed = undefined;
-          $createExternalSourceError = null;
-          $createExternalSourceTypeError = null;
-          $createDerivationGroupError = null;
-          $createExternalSourceEventTypeLinkError = null;
-          isDerivationGroupFieldDisabled = true;
-          }
-        }>
+        <form
+          on:submit|preventDefault={onFormSubmit}
+          on:reset={() => {
+            parsed = undefined;
+            $createExternalSourceError = null;
+            $createExternalSourceTypeError = null;
+            $createDerivationGroupError = null;
+            $createExternalSourceEventTypeLinkError = null;
+            isDerivationGroupFieldDisabled = true;
+          }}
+        >
           <AlertError class="m-2" error={$createExternalSourceError} />
           <AlertError class="m-2" error={$createExternalSourceTypeError} />
           <AlertError class="m-2" error={$createDerivationGroupError} />
@@ -877,14 +936,24 @@
           <div style="display:flex; white-space:nowrap;">
             <fieldset style="width:100%">
               <label for="file">Source File</label>
-              <input class="w-100" name="file" required type="file" bind:files use:permissionHandler={{
-                hasPermission: hasCreatePermission,
-                permissionError: createPermissionError,
-              }}/>
+              <input
+                class="w-100"
+                name="file"
+                required
+                type="file"
+                bind:files
+                use:permissionHandler={{
+                  hasPermission: hasCreatePermission,
+                  permissionError: createPermissionError,
+                }}
+              />
             </fieldset>
 
             <fieldset style="align-self:flex-end;float:right;width:40%;">
-              <button disabled={!parsed} class="st-button w-100" type="submit"
+              <button
+                disabled={!parsed}
+                class="st-button w-100"
+                type="submit"
                 use:permissionHandler={{
                   hasPermission: hasCreatePermission,
                   permissionError: createPermissionError,
@@ -910,20 +979,41 @@
           </Field>
 
           <fieldset>
-            <DatePickerField disabled={true} field={startTimeDoyField} label="Start Time - YYYY-DDDThh:mm:ss" name="start-time" />
+            <DatePickerField
+              disabled={true}
+              field={startTimeDoyField}
+              label="Start Time - YYYY-DDDThh:mm:ss"
+              name="start-time"
+            />
           </fieldset>
 
           <fieldset>
-            <DatePickerField disabled={true} field={endTimeDoyField} label="End Time - YYYY-DDDThh:mm:ss" name="end_time" />
+            <DatePickerField
+              disabled={true}
+              field={endTimeDoyField}
+              label="End Time - YYYY-DDDThh:mm:ss"
+              name="end_time"
+            />
           </fieldset>
 
           <fieldset>
-            <DatePickerField disabled={true} field={validAtDoyField} label="Valid At Time - YYYY-DDDThh:mm:ss" name="valid_at" />
+            <DatePickerField
+              disabled={true}
+              field={validAtDoyField}
+              label="Valid At Time - YYYY-DDDThh:mm:ss"
+              name="valid_at"
+            />
           </fieldset>
 
           <Field field={derivationGroupField}>
             <label for="derivation-group" slot="label">Derivation Group</label>
-            <input autocomplete="off" class="st-input w-100" name="derivation-group" disabled={isDerivationGroupFieldDisabled} placeholder="Default" />
+            <input
+              autocomplete="off"
+              class="st-input w-100"
+              name="derivation-group"
+              disabled={isDerivationGroupFieldDisabled}
+              placeholder="Default"
+            />
           </Field>
         </form>
       {/if}
@@ -955,9 +1045,14 @@
                   name="filter"
                   placeholder={'Filter by Source Type'}
                 />
-                <div class="filter-search-icon" slot='left'><SearchIcon /></div>
+                <div class="filter-search-icon" slot="left"><SearchIcon /></div>
               </Input>
-              <Menu hideAfterClick={false} bind:this={filterMenu} placement="bottom-start" on:hide={() => (filterString = '')}>
+              <Menu
+                hideAfterClick={false}
+                bind:this={filterMenu}
+                placement="bottom-start"
+                on:hide={() => (filterString = '')}
+              >
                 <div class="menu-content">
                   <MenuHeader title={menuTitle} />
                   <div class="body st-typography-body">
@@ -967,7 +1062,8 @@
                           <button
                             class="value st-button tertiary st-typography-body"
                             on:click={() => toggleItem(filteredSourceType)}
-                            class:active={selectedFilters.map(f => f.name).find(f => f === filteredSourceType.name) !== undefined}
+                            class:active={selectedFilters.map(f => f.name).find(f => f === filteredSourceType.name) !==
+                              undefined}
                           >
                             {filteredSourceType.name}
                           </button>
@@ -978,7 +1074,11 @@
                     {/if}
                   </div>
                   <div class="list-buttons menu-border-top">
-                    <button class="st-button secondary list-button" id="source-filters-select-all" on:click={selectFilteredValues}>
+                    <button
+                      class="st-button secondary list-button"
+                      id="source-filters-select-all"
+                      on:click={selectFilteredValues}
+                    >
                       Select {filteredValues.length}
                       {#if filteredValues.length === 1}
                         {'external source type'}
@@ -986,7 +1086,9 @@
                         {'external source types'}
                       {/if}
                     </button>
-                    <button class="st-button secondary list-button" on:click={unselectFilteredValues}>Unselect all</button>
+                    <button class="st-button secondary list-button" on:click={unselectFilteredValues}
+                      >Unselect all</button
+                    >
                   </div>
                 </div>
               </Menu>
@@ -999,7 +1101,7 @@
           <SingleActionDataGrid
             {columnDefs}
             {getRowStyle}
-            hasDeletePermission={hasDeletePermission}
+            {hasDeletePermission}
             itemDisplayText="External Source"
             items={filteredExternalSources}
             {user}
@@ -1008,11 +1110,11 @@
             on:deleteItem={({ detail }) => {
               let selectedSource = filteredExternalSources.find(s => s.id === detail[0]);
               if (selectedSource) {
-                onDeleteExternalSource(selectedSource)
+                onDeleteExternalSource(selectedSource);
               }
             }}
           />
-          {/if}
+        {/if}
       </svelte:fragment>
     </Panel>
 
@@ -1028,23 +1130,28 @@
               <div class="filter" style=" float: left; margin-right: auto;padding-left: 5px; padding-right: 5px;">
                 <div class="timeline-editor-layer-filter" style="position: relative">
                   <Input>
-                    <input bind:value={externalEventsTableFilterString} autocomplete="off" class="st-input w-100" name="filter-ee" placeholder={'Filter external events'}/>
-                    <div class="filter-search-icon" slot='left'><SearchIcon /></div>
+                    <input
+                      bind:value={externalEventsTableFilterString}
+                      autocomplete="off"
+                      class="st-input w-100"
+                      name="filter-ee"
+                      placeholder={'Filter external events'}
+                    />
+                    <div class="filter-search-icon" slot="left"><SearchIcon /></div>
                   </Input>
                 </div>
               </div>
             {/if}
             <div style="width:13%">
-              <RadioButtons selectedButtonId={tableTimelineButtonSelection} on:select-radio-button={onSelectTableTimeline}>
+              <RadioButtons
+                selectedButtonId={tableTimelineButtonSelection}
+                on:select-radio-button={onSelectTableTimeline}
+              >
                 <RadioButton id="table">
-                  <div class="association-button">
-                    Table
-                  </div>
+                  <div class="association-button">Table</div>
                 </RadioButton>
                 <RadioButton id="timeline">
-                  <div class="association-button">
-                    Timeline
-                  </div>
+                  <div class="association-button">Timeline</div>
                 </RadioButton>
               </RadioButtons>
             </div>
@@ -1061,32 +1168,34 @@
                   on:selectionChanged={onSelectionChanged}
                   on:rowDoubleClicked={onSelectionChanged}
                 />
-            </div>
+              </div>
             {:else if showExternalEventTimeline}
               <div style=" height: 100%; padding-left: 5px; padding-right: 5px;">
                 <div style=" background-color:#ebe9e6;height:15px;">
                   <div style="display:inline; float:left;">{startTime}</div>
                   <div style="display:inline; float:right;">{endTime}</div>
                 </div>
-                <div style=" height: 100%; position: relative; width: 100%;"
+                <div
+                  style=" height: 100%; position: relative; width: 100%;"
                   bind:this={canvasContainerRef}
                   bind:clientWidth={canvasContainerWidth}
                   bind:clientHeight={canvasContainerHeight}
                   on:mousedown={e => {
-                    canvasMouseDownEvent = e
+                    canvasMouseDownEvent = e;
                   }}
                   on:mousemove={e => {
-                    canvasMouseOverEvent = e
+                    canvasMouseOverEvent = e;
                   }}
                   role="none"
                 >
-                  <TimelineCursors
-                    marginLeft={0}
-                    drawWidth={canvasContainerWidth}
+                  <TimelineCursors marginLeft={0} drawWidth={canvasContainerWidth} {mouseOver} {xScaleView} />
+                  <Tooltip
+                    bind:this={eventTooltip}
                     {mouseOver}
-                    {xScaleView}
+                    interpolateHoverValue={false}
+                    hidden={false}
+                    resourceTypes={[]}
                   />
-                  <Tooltip bind:this={eventTooltip} {mouseOver} interpolateHoverValue={false} hidden={false} resourceTypes={[]} />
 
                   <div style="display:flex; padding-bottom: 10px;padding-top: 3px">
                     <LayerExternalSources
@@ -1096,7 +1205,7 @@
                       {xScaleView}
                       {dpr}
                       mousedown={canvasMouseDownEvent}
-                      drawHeight={canvasContainerHeight-3-10 ?? 200}
+                      drawHeight={canvasContainerHeight - 3 - 10 ?? 200}
                       drawWidth={canvasContainerWidth ?? 200}
                       timelineInteractionMode={TimelineInteractionMode.Interact}
                       on:mouseDown={onCanvasMouseDown}
@@ -1105,7 +1214,7 @@
                       mouseout={undefined}
                       contextmenu={undefined}
                       dblclick={undefined}
-                      planStartTimeYmd={""}
+                      planStartTimeYmd={''}
                     />
                   </div>
                 </div>

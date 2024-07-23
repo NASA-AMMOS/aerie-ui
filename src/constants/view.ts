@@ -25,8 +25,8 @@ export const ViewDefaultExternalEventOptions: ExternalEventOptions = {
   displayMode: 'compact',
   groupBy: 'event_type',
   labelVisibility: 'auto',
-  groupedModeBinSize: 100
-}
+  groupedModeBinSize: 100,
+};
 
 export const ViewActivityLayerColorPresets: string[] = [
   '#fcdd8f',

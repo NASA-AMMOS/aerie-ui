@@ -9,19 +9,9 @@
   import { derivationGroups, selectedPlanDerivationGroupIds } from '../../../stores/external-source';
   import { activityTypes } from '../../../stores/plan';
   import { externalResourceNames, resourceTypes } from '../../../stores/simulation';
-  import type {
-    Axis,
-    Layer,
-
-    XRangeLayerColorScheme
-  } from '../../../types/timeline';
+  import type { Axis, Layer, XRangeLayerColorScheme } from '../../../types/timeline';
   import { getTarget } from '../../../utilities/generic';
-  import {
-    isActivityLayer,
-    isExternalEventLayer,
-    isLineLayer,
-    isXRangeLayer
-  } from '../../../utilities/timeline';
+  import { isActivityLayer, isExternalEventLayer, isLineLayer, isXRangeLayer } from '../../../utilities/timeline';
   import { tooltip } from '../../../utilities/tooltip';
   import ColorPresetsPicker from '../../form/ColorPresetsPicker.svelte';
   import ColorSchemePicker from '../../form/ColorSchemePicker.svelte';
@@ -35,28 +25,39 @@
 
   const dispatch = createEventDispatcher<{
     handleUpdateLayerFilter: { values: string[] };
-    handleUpdateLayerProperty: { name: string,  value: string | number | boolean | null };
+    handleUpdateLayerProperty: { name: string; value: string | number | boolean | null };
     handleUpdateLayerChartType: { value: string | number | boolean | null };
     handleUpdateLayerColor: { value: string };
     handleUpdateLayerColorScheme: { value: XRangeLayerColorScheme };
     handleDeleteLayerClick: {};
   }>();
 
-  let initialColoring: string | undefined = isActivityLayer(layer) ? layer.activityColor : 
-                                        isExternalEventLayer(layer) ? layer.externalEventColor : 
-                                        isLineLayer(layer) ? layer.lineColor : 
-                                        isXRangeLayer(layer) ? layer.colorScheme : 
-                                        undefined; // getColorForLayer
+  let initialColoring: string | undefined = isActivityLayer(layer)
+    ? layer.activityColor
+    : isExternalEventLayer(layer)
+      ? layer.externalEventColor
+      : isLineLayer(layer)
+        ? layer.lineColor
+        : isXRangeLayer(layer)
+          ? layer.colorScheme
+          : undefined; // getColorForLayer
 
   // make this a "derived" so that it reacts to $derivationGroups and $selectedPlanDerivationGroupIds, whenever either changes (i.e. new dg or associated derivation groups change)
-  let validEventTypes = derived([derivationGroups, selectedPlanDerivationGroupIds], ([$derivationGroups, $selectedPlanDerivationGroupIds]) => {
-    return $derivationGroups.filter(dg => $selectedPlanDerivationGroupIds.includes(dg.source_type_id)).map(dg => dg.event_types).reduce((acc, curr) => acc.concat(curr), []);
-  }) //$derivationGroups.filter(dg => $selectedPlanDerivationGroupIds.includes(dg.source_type_id)).map(dg => dg.event_types).reduce((acc, curr) => acc.concat(curr), []);
+  let validEventTypes = derived(
+    [derivationGroups, selectedPlanDerivationGroupIds],
+    ([$derivationGroups, $selectedPlanDerivationGroupIds]) => {
+      return $derivationGroups
+        .filter(dg => $selectedPlanDerivationGroupIds.includes(dg.source_type_id))
+        .map(dg => dg.event_types)
+        .reduce((acc, curr) => acc.concat(curr), []);
+    },
+  ); //$derivationGroups.filter(dg => $selectedPlanDerivationGroupIds.includes(dg.source_type_id)).map(dg => dg.event_types).reduce((acc, curr) => acc.concat(curr), []);
 
-  let filterOptions: string[] = []
-  let filterValues: string[] = []
+  let filterOptions: string[] = [];
+  let filterValues: string[] = [];
 
-  $: { // getFilterOptionsForLayer
+  $: {
+    // getFilterOptionsForLayer
     if (isActivityLayer(layer)) {
       filterOptions = $activityTypes.map(t => t.name);
     } else if (isExternalEventLayer(layer)) {
@@ -69,7 +70,8 @@
     }
   }
 
-  $: { // getFilterValuesForLayer
+  $: {
+    // getFilterValuesForLayer
     if (isActivityLayer(layer)) {
       const activityLayer = layer;
       const activityTypes = activityLayer.filter?.activity?.types ?? [];
@@ -77,7 +79,8 @@
     } else if (isExternalEventLayer(layer)) {
       // NOTE: if a derivation group is disabled, this doesn't get invoked and does not update. however, on dissociation it does.
       const externalEventLayer = layer;
-      const externalEventTypes = externalEventLayer.filter?.externalEvent?.event_types.filter(et => $validEventTypes.includes(et)) ?? [];
+      const externalEventTypes =
+        externalEventLayer.filter?.externalEvent?.event_types.filter(et => $validEventTypes.includes(et)) ?? [];
       filterValues = [...externalEventTypes];
     } else if (isLineLayer(layer) || isXRangeLayer(layer)) {
       const resourceLayer = layer;
@@ -90,7 +93,6 @@
     const values = filterValues.filter(i => value !== i);
     dispatch('handleUpdateLayerFilter', { values }); // dispatch update layer filter here with newValues
   }
-
 </script>
 
 <div>

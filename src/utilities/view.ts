@@ -18,23 +18,27 @@ import { createRow,
 /**
  * Generates a default generic UI view.
  */
-export function generateDefaultView(activityTypes: ActivityType[] = [], resourceTypes: ResourceType[] = [], externalEventTypes: ExternalEventType[] = []): View {
+export function generateDefaultView(
+  activityTypes: ActivityType[] = [],
+  resourceTypes: ResourceType[] = [],
+  externalEventTypes: ExternalEventType[] = [],
+): View {
   const now = new Date().toISOString();
   const types: string[] = activityTypes.map(({ name }) => name);
 
   const timeline = createTimeline([], { marginLeft: 250, marginRight: 30 });
   const timelines = [timeline];
 
-  const externalEventLayer = createTimelineExternalEventLayer((timelines), {
-    filter: { externalEvent: { event_types: externalEventTypes.map(e => e.name) }} 
+  const externalEventLayer = createTimelineExternalEventLayer(timelines, {
+    filter: { externalEvent: { event_types: externalEventTypes.map(e => e.name) } },
   });
   const externalEventRow = createRow(timelines, {
-    externalEventOptions: { ...ViewDefaultExternalEventOptions, displayMode: 'grouped'},
+    externalEventOptions: { ...ViewDefaultExternalEventOptions, displayMode: 'grouped' },
     autoAdjustHeight: false,
     expanded: true,
     height: 100,
     layers: [externalEventLayer],
-    name: 'External Events'
+    name: 'External Events',
   });
   timeline.rows.push(externalEventRow);
 
@@ -365,7 +369,7 @@ export function generateDefaultView(activityTypes: ActivityType[] = [], resource
           columnStates: [],
         },
         timelines,
-        filteredDerivationGroups: []
+        filteredDerivationGroups: [],
       },
     },
     id: 0,

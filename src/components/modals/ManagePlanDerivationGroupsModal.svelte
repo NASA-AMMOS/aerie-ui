@@ -5,12 +5,23 @@
   import type { ICellRendererParams } from 'ag-grid-community';
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import { createEventDispatcher } from 'svelte';
-  import { derivationGroupPlanLinkError, derivationGroups, externalSourceTypes, externalSourceWithResolvedNames, getEventSourceTypeName, selectedPlanDerivationGroupIds } from '../../stores/external-source';
+  import {
+    derivationGroupPlanLinkError,
+    derivationGroups,
+    externalSourceTypes,
+    externalSourceWithResolvedNames,
+    getEventSourceTypeName,
+    selectedPlanDerivationGroupIds,
+  } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import { view } from '../../stores/views';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
-  import type { DerivationGroup, DerivationGroupMetadata, ExternalSourceWithResolvedNames } from '../../types/external-source';
+  import type {
+    DerivationGroup,
+    DerivationGroupMetadata,
+    ExternalSourceWithResolvedNames,
+  } from '../../types/external-source';
   import type { ExternalEventLayer } from '../../types/timeline';
   import effects from '../../utilities/effects';
   import { isExternalEventLayer } from '../../utilities/timeline';
@@ -49,11 +60,14 @@
       // this does mean every update to any entry in selectedPlanDerivationGroupIds refreshes the whole column, and flashes it,
       //    though that isn't particularly a problem and does do good to signal association complete. Also a small delay, which
       //    buffers button smashing and repeated updates pretty well!
-      dataGrid.refreshCells()
+      dataGrid.refreshCells();
     }
-  })
+  });
 
-  $: externalEventLayers = $view?.definition.plan.timelines.flatMap(timeline => timeline.rows).flatMap(row => row.layers).filter(layer => isExternalEventLayer(layer));
+  $: externalEventLayers = $view?.definition.plan.timelines
+    .flatMap(timeline => timeline.rows)
+    .flatMap(row => row.layers)
+    .filter(layer => isExternalEventLayer(layer));
 
   baseColumnDefs = [
     {
@@ -73,10 +87,10 @@
       sortable: true,
       suppressAutoSize: false,
       suppressSizeToFit: false,
-      valueFormatter: (params) => {
+      valueFormatter: params => {
         const sourceTypeName = getEventSourceTypeName(params?.value, $externalSourceTypes);
-        return sourceTypeName ? sourceTypeName: ""
-      }
+        return sourceTypeName ? sourceTypeName : '';
+      },
     },
     {
       field: 'derivedEventTotal',
@@ -85,31 +99,37 @@
       sortable: true,
       suppressAutoSize: true,
       suppressSizeToFit: true,
-      valueFormatter: (params) => {
-        return params?.value.length
-      }
+      valueFormatter: params => {
+        return params?.value.length;
+      },
     },
     {
       cellRenderer: (params: DerivationGroupCellRendererParams) => {
         var input = document.createElement('input');
         input.type = 'checkbox';
-        input.checked=$selectedPlanDerivationGroupIds.includes(params?.data?.id ?? -1)
-        input.addEventListener('click', (event) => {
+        input.checked = $selectedPlanDerivationGroupIds.includes(params?.data?.id ?? -1);
+        input.addEventListener('click', event => {
           if (event?.target && params.data) {
             if ((event.target as any).checked) {
               // insert
               effects.insertDerivationGroupForPlan(params.data.id, $plan, user);
               if ($derivationGroupPlanLinkError !== null) {
-                console.log($derivationGroupPlanLinkError)
-                console.log("Failed to link derivation group & plan.");
+                console.log($derivationGroupPlanLinkError);
+                console.log('Failed to link derivation group & plan.');
               } else {
                 // Insert all the external event types from the derivation group to the timeline filter
-                const derivationGroup = $derivationGroups.find(derivationGroup => derivationGroup.id === params?.data?.id);
+                const derivationGroup = $derivationGroups.find(
+                  derivationGroup => derivationGroup.id === params?.data?.id,
+                );
                 if (derivationGroup !== undefined) {
                   externalEventLayers?.forEach(externalEventLayer => {
                     if (externalEventLayer.filter.externalEvent !== undefined) {
-                      externalEventLayer.filter.externalEvent.event_types = externalEventLayer.filter.externalEvent.event_types.concat(derivationGroup.event_types);
-                      externalEventLayer.filter.externalEvent.event_types = externalEventLayer.filter.externalEvent.event_types.filter((val, ind, arr) => arr.indexOf(val) == ind); // uniqueness
+                      externalEventLayer.filter.externalEvent.event_types =
+                        externalEventLayer.filter.externalEvent.event_types.concat(derivationGroup.event_types);
+                      externalEventLayer.filter.externalEvent.event_types =
+                        externalEventLayer.filter.externalEvent.event_types.filter(
+                          (val, ind, arr) => arr.indexOf(val) == ind,
+                        ); // uniqueness
                     }
                   });
                 }
@@ -118,8 +138,8 @@
               // delete
               effects.deleteDerivationGroupForPlan(params.data.id, $plan, user);
               if ($derivationGroupPlanLinkError !== null) {
-                console.log($derivationGroupPlanLinkError)
-                console.log("Failed to unlink derivation group & plan.");
+                console.log($derivationGroupPlanLinkError);
+                console.log('Failed to unlink derivation group & plan.');
               }
             }
           }
@@ -136,8 +156,8 @@
     },
   ];
 
-  const modalColumnSizeNoDetail: string = "1fr 3px 0fr";
-  const modalColumnSizeWithDetail: string = "3fr 3px 1fr";
+  const modalColumnSizeNoDetail: string = '1fr 3px 0fr';
+  const modalColumnSizeWithDetail: string = '3fr 3px 1fr';
   let modalColumnSize: string = modalColumnSizeNoDetail;
   let columnDefs = baseColumnDefs;
 
@@ -146,8 +166,13 @@
 
   let selectedDerivationGroup: DerivationGroup | undefined = undefined;
   let selectedDerivationGroupSources: ExternalSourceWithResolvedNames[] = [];
-  $: if(selectedDerivationGroup !== undefined) { modalColumnSize = modalColumnSizeWithDetail; console.log(modalColumnSize); };
-  $: selectedDerivationGroupSources = $externalSourceWithResolvedNames.filter(source => selectedDerivationGroup?.id === source.derivation_group_id);
+  $: if (selectedDerivationGroup !== undefined) {
+    modalColumnSize = modalColumnSizeWithDetail;
+    console.log(modalColumnSize);
+  }
+  $: selectedDerivationGroupSources = $externalSourceWithResolvedNames.filter(
+    source => selectedDerivationGroup?.id === source.derivation_group_id,
+  );
 
   $: filteredDerivationGroups = $derivationGroups.filter(derivationGroup => {
     const filterTextLowerCase = filterText.toLowerCase();
@@ -187,7 +212,7 @@
         suppressAutoSize: true,
         suppressSizeToFit: true,
         width: 40,
-      }
+      },
     ];
   }
 
@@ -205,7 +230,12 @@
         <div class="derivationgroups-modal-filter-container">
           <div class="derivationgroups-modal-title">Derivation Groups</div>
           <Input>
-            <input bind:value={filterText} class="st-input" placeholder="Filter derivation groups" style="width: 100%;" />
+            <input
+              bind:value={filterText}
+              class="st-input"
+              placeholder="Filter derivation groups"
+              style="width: 100%;"
+            />
           </Input>
           <button
             class="st-button secondary ellipsis"
@@ -218,11 +248,7 @@
         <hr />
         <div class="constraiderivationgroups-modal-table-container" style="height:100%">
           {#if filteredDerivationGroups.length}
-            <DataGrid
-              bind:this={dataGrid}
-              {columnDefs}
-              rowData={filteredDerivationGroups}
-            />
+            <DataGrid bind:this={dataGrid} {columnDefs} rowData={filteredDerivationGroups} />
           {:else}
             <div class="p1 st-typography-label">No Derivation Groups Found</div>
           {/if}
@@ -231,7 +257,7 @@
       {#if selectedDerivationGroup !== undefined}
         <CssGridGutter track={1} type="column" />
         <Panel borderRight padBody={false} overflowYBody="scroll">
-          <svelte:fragment slot=header>
+          <svelte:fragment slot="header">
             <SectionTitle>
               <Truck />Sources in '{selectedDerivationGroup.name}'
             </SectionTitle>
