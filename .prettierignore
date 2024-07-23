@@ -6,3 +6,4 @@ src/css/utilities.css
 static/**
 test-results/**
 unit-test-results/**
+e2e-tests/data/**
