@@ -1247,7 +1247,10 @@ export function getSpanSubtrees(
 /**
  * Returns whether or not the node is expanded in the activity/external-event tree
  */
-export function getNodeExpanded(id: string, treeExpansionMap: ActivityTreeExpansionMap | ExternalEventTreeExpansionMap) {
+export function getNodeExpanded(
+  id: string,
+  treeExpansionMap: ActivityTreeExpansionMap | ExternalEventTreeExpansionMap,
+) {
   if (!Object.hasOwn(treeExpansionMap, id)) {
     return false;
   }

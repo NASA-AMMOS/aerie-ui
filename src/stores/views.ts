@@ -296,9 +296,9 @@ export function viewUpdateFilteredDerivationGroupIds(update: number[]): void {
           ...currentView.definition,
           plan: {
             ...currentView.definition.plan,
-            filteredDerivationGroups: update
-          }
-        }
+            filteredDerivationGroups: update,
+          },
+        },
       };
     }
     return currentView;
