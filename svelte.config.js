@@ -1,10 +1,15 @@
 import adapterNode from '@sveltejs/adapter-node';
 import preprocess from 'svelte-preprocess';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
   kit: {
     adapter: adapterNode(),
+    alias: {
+      $lib: 'src/lib', // Alias $lib to src/lib
+    },
     paths: {
       base: '',
     },
@@ -18,7 +23,11 @@ const config = {
     // handle all other warnings normally
     defaultHandler(warning);
   },
-  preprocess: preprocess(),
+  preprocess: [
+    preprocess(),
+  vitePreprocess()
+],
+
 };
 
 export default config;

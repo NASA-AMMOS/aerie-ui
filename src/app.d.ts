@@ -2,6 +2,7 @@
 /* eslint @typescript-eslint/no-unused-vars: 0 */
 import type { ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
 import type { SeqJson } from '@nasa-jpl/seq-json-schema/types';
+import 'tailwindcss/tailwind.css';
 import type { GlobalType } from './types/global-type';
 import type { ArgDelegator } from './utilities/new-sequence-editor/extension-points';
 

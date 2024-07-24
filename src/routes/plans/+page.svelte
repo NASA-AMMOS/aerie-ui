@@ -352,7 +352,7 @@
       </svelte:fragment>
 
       <svelte:fragment slot="body">
-        <form on:submit|preventDefault={createPlan}>
+        <form class="p-2 flex flex-col gap-2" on:submit|preventDefault={createPlan}>
           <AlertError class="m-2" error={$createPlanError} />
 
           <Field field={modelIdField}>

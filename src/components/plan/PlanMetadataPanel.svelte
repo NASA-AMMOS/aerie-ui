@@ -29,13 +29,15 @@
     <GridMenu {gridSection} title="Plan Metadata" />
   </svelte:fragment>
   <svelte:fragment slot="body">
-    <PlanForm
-      plan={$plan}
-      planTags={$planTags}
-      tags={$tags}
-      {user}
-      users={$users}
-      userWriteablePlans={$userWritablePlans}
-    />
+    <div>
+      <PlanForm
+        plan={$plan}
+        planTags={$planTags}
+        tags={$tags}
+        {user}
+        users={$users}
+        userWriteablePlans={$userWritablePlans}
+      />
+    </div>
   </svelte:fragment>
 </Panel>
