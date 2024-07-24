@@ -14,7 +14,7 @@
   import type { EditorView } from 'codemirror';
   import { debounce } from 'lodash-es';
   import { TOKEN_ERROR } from '../../../constants/seq-n-grammar-constants';
-  import { getAncestorStep, getNameNode } from '../../../utilities/codemirror/seq-n-tree-utils';
+  import { getAncestorStepOrRequest, getNameNode } from '../../../utilities/codemirror/seq-n-tree-utils';
   import { getCustomArgDef } from '../../../utilities/sequence-editor/extension-points';
   import Collapse from '../../Collapse.svelte';
   import Panel from '../../ui/Panel.svelte';
@@ -46,7 +46,7 @@
   let missingArgDefArray: FswCommandArgument[] = [];
   let timeTagNode: TimeTagInfo = null;
 
-  $: commandNode = getAncestorStep(node);
+  $: commandNode = getAncestorStepOrRequest(node);
   $: commandNameNode = getNameNode(commandNode);
   $: commandName = commandNameNode && editorSequenceView.state.sliceDoc(commandNameNode.from, commandNameNode.to);
   $: commandDef = getCommandDef(commandDictionary, commandName ?? '');
@@ -193,66 +193,70 @@
 
 <Panel overflowYBody="hidden" padBody={false}>
   <svelte:fragment slot="header">
-    <SectionTitle>{commandNode ? `Selected ${formatTypeName(commandNode.name)}` : ''}</SectionTitle>
+    <SectionTitle>{commandNode ? `Selected ${formatTypeName(commandNode.name)}` : 'No command selected'}</SectionTitle>
   </svelte:fragment>
   <svelte:fragment slot="body">
-    <div id={ID_COMMAND_DETAIL_PANE} class="content"></div>
-    {#if !!commandNode}
-      <div class="header"></div>
-
-      {#if !!commandDef}
-        {#if !!timeTagNode}
-          <fieldset>
-            <label for="timeTag">Time Tag</label>
-            <input class="st-input w-100" disabled name="timeTag" value={timeTagNode.text.trim()} />
-          </fieldset>
-        {/if}
-
+    <div id={ID_COMMAND_DETAIL_PANE} class="content">
+      {#if !!timeTagNode}
         <fieldset>
-          <Collapse headerHeight={24} title={commandDef.stem} padContent={false}>{commandDef.description}</Collapse>
+          <label class="label-row" for="timeTag">Time Tag</label>
+          <input class="st-input w-100" disabled name="timeTag" value={timeTagNode.text.trim()} />
         </fieldset>
+      {/if}
+      {#if !!commandNode}
+        {#if commandNode.name === 'Command'}
+          {#if !!commandDef}
+            <fieldset>
+              <Collapse headerHeight={24} title={commandDef.stem} padContent={false}>{commandDef.description}</Collapse>
+            </fieldset>
 
-        {#each editorArgInfoArray as argInfo}
-          <ArgEditor
-            {argInfo}
-            {commandDictionary}
-            setInEditor={debounce(setInEditor, 250)}
-            addDefaultArgs={(commandNode, missingArgDefArray) =>
-              addDefaultArgs(commandDictionary, editorSequenceView, commandNode, missingArgDefArray)}
-          />
-        {/each}
+            {#each editorArgInfoArray as argInfo}
+              <ArgEditor
+                {argInfo}
+                {commandDictionary}
+                setInEditor={debounce(setInEditor, 250)}
+                addDefaultArgs={(commandNode, missingArgDefArray) =>
+                  addDefaultArgs(commandDictionary, editorSequenceView, commandNode, missingArgDefArray)}
+              />
+            {/each}
 
-        {#if missingArgDefArray.length}
+            {#if missingArgDefArray.length}
+              <fieldset>
+                <AddMissingArgsButton
+                  setInEditor={() => {
+                    if (commandNode) {
+                      addDefaultArgs(commandDictionary, editorSequenceView, commandNode, missingArgDefArray);
+                    }
+                  }}
+                />
+              </fieldset>
+            {/if}
+          {:else}
+            <fieldset>
+              <div class="label-row">{commandName ?? ''}</div>
+            </fieldset>
+            <div class="empty-state st-typography-label">Command type is not present in dictionary</div>
+          {/if}
+        {:else}
           <fieldset>
-            <AddMissingArgsButton
-              setInEditor={() => {
-                if (commandNode) {
-                  addDefaultArgs(commandDictionary, editorSequenceView, commandNode, missingArgDefArray);
-                }
-              }}
-            />
+            <div class="label-row">{`${formatTypeName(commandNode.name)} Name`}</div>
+            <div>
+              <StringEditor
+                argDef={nameArgumentDef}
+                initVal={commandName ?? ''}
+                setInEditor={val => {
+                  if (commandNameNode) {
+                    setInEditor(commandNameNode, val);
+                  }
+                }}
+              />
+            </div>
           </fieldset>
         {/if}
       {:else}
-        <div>Selected {formatTypeName(commandNode.name)}</div>
-        {#if !!timeTagNode}
-          <div>Time Tag: {timeTagNode.text.trim()}</div>
-        {/if}
-        <div>
-          <StringEditor
-            argDef={nameArgumentDef}
-            initVal={commandName ?? ''}
-            setInEditor={val => {
-              if (commandNameNode) {
-                setInEditor(commandNameNode, val);
-              }
-            }}
-          />
-        </div>
+        <div class="empty-state st-typography-label">Select a command to modify its parameters.</div>
       {/if}
-    {:else}
-      <div class="empty-state st-typography-label">Select a command to modify its parameters.</div>
-    {/if}
+    </div>
   </svelte:fragment>
 </Panel>
 
@@ -264,5 +268,9 @@
 
   .empty-state {
     padding: 8px 16px;
+  }
+
+  .label-row {
+    font-weight: var(--st-button-font-weight);
   }
 </style>
