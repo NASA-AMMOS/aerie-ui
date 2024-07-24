@@ -3,101 +3,26 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import type { ICellRendererParams } from 'ag-grid-community';
   import { parcels, userSequences, userSequencesColumns } from '../../stores/sequencing';
-  import type { User, UserId } from '../../types/app';
-  import type { DataGridColumnDef, DataGridRowSelection, RowId } from '../../types/data-grid';
+  import type { User } from '../../types/app';
   import type { Parcel, UserSequence } from '../../types/sequencing';
-  import effects from '../../utilities/effects';
-  import { getTarget } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import Input from '../form/Input.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
-  import DataGridActions from '../ui/DataGrid/DataGridActions.svelte';
-  import SingleActionDataGrid from '../ui/DataGrid/SingleActionDataGrid.svelte';
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
   import SequenceEditor from './SequenceEditor.svelte';
+  import SequenceTable from './SequenceTable.svelte';
 
   export let user: User | null;
 
-  type CellRendererParams = {
-    deleteSequence: (sequence: UserSequence) => void;
-    editSequence: (sequence: UserSequence) => void;
-  };
-  type SequencesCellRendererParams = ICellRendererParams<UserSequence> & CellRendererParams;
-
-  /**
-   * Sort the sequence table with the current users sequences at the top.
-   * @param valueA
-   * @param valueB
-   */
-  function usernameComparator(valueA: UserId, valueB: UserId): number {
-    if (valueA === null && valueB === null) {
-      return 0;
-    }
-    if (valueA === null) {
-      return -1;
-    }
-    if (valueB === null) {
-      return 1;
-    }
-
-    return valueA === user?.id ? 1 : -1;
-  }
-
-  let baseColumnDefs: DataGridColumnDef[] = [];
-  let columnDefs = baseColumnDefs;
   let filterText: string = '';
-  let filteredSequences: UserSequence[] = [];
   let parcel: Parcel | null;
   let selectedSequence: UserSequence | null = null;
-  let selectedSequenceSeqJson: string = '';
 
   $: parcel = $parcels.find(p => p.id === selectedSequence?.parcel_id) ?? null;
-
-  $: baseColumnDefs = [
-    {
-      field: 'id',
-      filter: 'text',
-      headerName: 'ID',
-      resizable: true,
-      sortable: true,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
-      width: 60,
-    },
-    { field: 'name', filter: 'text', headerName: 'Name', resizable: true, sortable: true },
-    {
-      field: 'parcel',
-      filter: 'text',
-      headerName: 'Parcel',
-      resizable: true,
-      sortable: true,
-      valueGetter: ({ data }) => {
-        return $parcels.find(p => data.parcel_id === p.id)?.name;
-      },
-    },
-    {
-      comparator: usernameComparator,
-      field: 'owner',
-      filter: 'string',
-      headerName: 'Owner',
-      sort: 'desc',
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
-      width: 80,
-    },
-  ];
-
-  $: filteredSequences = $userSequences.filter(sequence => {
-    const filterTextLowerCase = filterText.toLowerCase();
-    const includesId = `${sequence.id}`.includes(filterTextLowerCase);
-    const includesName = sequence.name.toLocaleLowerCase().includes(filterTextLowerCase);
-    return includesId || includesName;
-  });
 
   $: if (selectedSequence !== null) {
     const found = $userSequences.findIndex(sequence => sequence.id === selectedSequence?.id);
@@ -107,104 +32,8 @@
     }
   }
 
-  $: columnDefs = [
-    ...baseColumnDefs,
-    {
-      cellClass: 'action-cell-container',
-      cellRenderer: (params: SequencesCellRendererParams) => {
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className = 'actions-cell';
-        new DataGridActions({
-          props: {
-            deleteCallback: params.deleteSequence,
-            deleteTooltip: {
-              content: 'Delete Sequence',
-              placement: 'bottom',
-            },
-            editCallback: params.editSequence,
-            editTooltip: {
-              content: 'Edit Sequence',
-              placement: 'bottom',
-            },
-            hasDeletePermission: params.data ? hasDeletePermission(user, params.data) : false,
-            hasEditPermission: params.data ? hasEditPermission(user, params.data) : false,
-            rowData: params.data,
-          },
-          target: actionsDiv,
-        });
-
-        return actionsDiv;
-      },
-      cellRendererParams: {
-        deleteSequence,
-        editSequence,
-      } as CellRendererParams,
-      field: 'actions',
-      headerName: '',
-      resizable: false,
-      sortable: false,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
-      width: 55,
-    },
-  ];
-
-  async function deleteSequence(sequence: UserSequence) {
-    const success = await effects.deleteUserSequence(sequence, user);
-
-    if (success) {
-      userSequences.filterValueById(sequence.id);
-
-      if (sequence.id === selectedSequence?.id) {
-        selectedSequence = null;
-        selectedSequenceSeqJson = '';
-      }
-    }
-  }
-
-  function deleteSequenceContext(event: CustomEvent<RowId[]>) {
-    const id = event.detail[0] as number;
-    const sequence = $userSequences.find(s => s.id === id);
-    if (sequence) {
-      deleteSequence(sequence);
-    }
-  }
-
-  function editSequence({ id }: Pick<UserSequence, 'id'>) {
-    goto(`${base}/sequencing/edit/${id}`);
-  }
-
-  function editSequenceContext(event: CustomEvent<RowId[]>) {
-    editSequence({ id: event.detail[0] as number });
-  }
-
-  function hasDeletePermission(user: User | null, sequence: UserSequence) {
-    return featurePermissions.sequences.canDelete(user, sequence);
-  }
-
-  function hasEditPermission(user: User | null, sequence: UserSequence) {
-    return featurePermissions.sequences.canUpdate(user, sequence);
-  }
-
-  function onFilterToUsersSequences(event: Event) {
-    const { value: enabled } = getTarget(event);
-
-    if (enabled as boolean) {
-      filteredSequences = $userSequences.filter(sequence => {
-        return sequence.owner === user?.id;
-      });
-    } else {
-      filteredSequences = $userSequences;
-    }
-  }
-
-  async function toggleSequence(event: CustomEvent<DataGridRowSelection<UserSequence>>) {
-    const { detail } = event;
-    const { data: clickedSequence, isSelected } = detail;
-
-    if (isSelected) {
-      selectedSequence = clickedSequence;
-    }
+  function onSequenceSelected(event: CustomEvent<UserSequence>) {
+    selectedSequence = event.detail;
   }
 </script>
 
@@ -232,27 +61,7 @@
     </svelte:fragment>
 
     <svelte:fragment slot="body">
-      <div class="filter-container">
-        <input type="checkbox" on:change={onFilterToUsersSequences} />
-        <span class=" st-typography-body">Filter to my sequences</span>
-      </div>
-
-      {#if filteredSequences.length}
-        <SingleActionDataGrid
-          {columnDefs}
-          hasEdit={true}
-          {hasEditPermission}
-          {hasDeletePermission}
-          itemDisplayText="Sequence"
-          items={filteredSequences}
-          {user}
-          on:deleteItem={deleteSequenceContext}
-          on:editItem={editSequenceContext}
-          on:rowSelected={toggleSequence}
-        />
-      {:else}
-        <div class="p1 st-typography-label">No Sequences Found</div>
-      {/if}
+      <SequenceTable {filterText} {user} on:sequenceSelected={onSequenceSelected} />
     </svelte:fragment>
   </Panel>
 
@@ -263,17 +72,9 @@
     showCommandFormBuilder={false}
     sequenceDefinition={selectedSequence?.definition ?? ''}
     sequenceName={selectedSequence?.name}
-    sequenceOutput={selectedSequenceSeqJson}
+    sequenceOutput={selectedSequence?.seq_json}
     title="Sequence - Definition Editor (Read-only)"
     readOnly={true}
     {user}
   />
 </CssGrid>
-
-<style>
-  .filter-container {
-    align-items: center;
-    display: flex;
-    margin-bottom: 8px;
-  }
-</style>
