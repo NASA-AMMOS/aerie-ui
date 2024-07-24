@@ -220,8 +220,9 @@ function parseStep(child: SyntaxNode, text: string, commandDictionary: CommandDi
     case 'GroundEvent':
       return parseGroundBlockEvent(child, text);
   }
-  // SeqN allows comments that don't map to Seq.JSON
-  // Requests are also here in the tree
+  // Standalone comment nodes (not descriptions of steps), are not supported in the seq.json schema
+  // Until a schema change is coordinated, comments will dropped while writing out seq.json.
+  // Requests are parsed outside this block since they are not allowed to be nested.
   return null;
 }
 
