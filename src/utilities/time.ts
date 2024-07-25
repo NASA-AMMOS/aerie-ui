@@ -428,7 +428,7 @@ export function convertDurationStringToInterval(durationString: string): string 
  * @returns The number of milliseconds since epoch start for this date.
  */
 export function convertUTCtoMs(date: string): number {
-  var d = new Date(date)
+  const d = new Date(date);
   return d.getTime();
 }
 
@@ -445,16 +445,22 @@ export function convertUTCtoMs(date: string): number {
  */
 //
 export function convertDurationToMs(duration: string): number {
-  var aerieDurationRegex = /^([0-9]*):([0-9]{2}):([0-9]{2})(?:\.([0-9]{1,6}))?$/;
-  var matches = duration.match(aerieDurationRegex);
+  const aerieDurationRegex = /^([0-9]*):([0-9]{2}):([0-9]{2})(?:\.([0-9]{1,6}))?$/;
+  const matches = duration.match(aerieDurationRegex);
 
   // "89:44:09.000000" -> [ "89:44:09.000000", "189", "44", "09", "000000" ]
   // "123:44:09"       -> [ "123:44:09",       "123", "44", "09", undefined]
-  if (matches != null && matches.length == 5) {
-    return +matches[1]*1000*60*60 + +matches[2]*1000*60 + +matches[3]*1000 + (matches[4] == undefined ? 0 : +matches[4]); // https://stackoverflow.com/questions/14667713/how-to-convert-a-string-to-number-in-typescript
-  }
-  else {
-    throw Error(`Duration parsing failed for duration ${duration}; doesn't match regex ${aerieDurationRegex}, has matches [${matches}]...`)
+  if (matches != null && matches.length === 5) {
+    return (
+      +matches[1] * 1000 * 60 * 60 +
+      +matches[2] * 1000 * 60 +
+      +matches[3] * 1000 +
+      (matches[4] === undefined ? 0 : +matches[4])
+    ); // https://stackoverflow.com/questions/14667713/how-to-convert-a-string-to-number-in-typescript
+  } else {
+    throw Error(
+      `Duration parsing failed for duration ${duration}; doesn't match regex ${aerieDurationRegex}, has matches [${matches}]...`,
+    );
   }
 }
 
