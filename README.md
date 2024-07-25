@@ -4,8 +4,6 @@
 
 The client application for [Aerie](https://github.com/NASA-AMMOS/aerie).
 
-This fork is related to the SSMO-GSFC one, but is public facing and still retains the link (for pulls/rebasing purposes) to the original, while still integrating our own changes on top of it.
-
 <span style="display:block;text-align:center">![Example](/docs/images/Full_Example.png)</span>
 
 ## Need Help?
