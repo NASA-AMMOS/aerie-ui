@@ -115,7 +115,6 @@ export enum Queries {
   INSERT_CONSTRAINT_MODEL_SPECIFICATIONS = 'insert_constraint_model_specification',
   INSERT_CONSTRAINT_SPECIFICATIONS = 'insert_constraint_specification',
   INSERT_CONSTRAINT_TAGS = 'insert_constraint_tags',
-  INSERT_PLAN_DERIVATION_GROUP = 'insert_plan_derivation_group_one',
   INSERT_EXPANSION_RULE = 'insert_expansion_rule_one',
   INSERT_EXPANSION_RULE_TAGS = 'insert_expansion_rule_tags',
   INSERT_EXTERNAL_SOURCE = 'insert_external_source_one',
@@ -481,14 +480,6 @@ const gql = {
   CREATE_EXTERNAL_SOURCE: `#graphql
     mutation CreateExternalSource($source: external_source_insert_input!) {
       createExternalSource: insert_external_source_one(object: $source) {
-        id
-      }
-    }
-  `,
-
-  CREATE_EXTERNAL_SOURCE_EVENT_TYPE: `#graphql
-    mutation CreateExternalSourceEventType($link: external_source_event_type_insert_input!) {
-      createExternalSourceEventType: insert_external_source_event_type_one(object: $link) {
         id
       }
     }

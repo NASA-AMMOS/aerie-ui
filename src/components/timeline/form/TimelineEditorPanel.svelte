@@ -29,11 +29,10 @@
     ViewLineLayerColorPresets,
   } from '../../../constants/view';
   import { ViewConstants } from '../../../enums/view';
-  import { externalEventTypes, getEventTypeName } from '../../../stores/external-event';
-  import { derivationGroups, planDerivationGroupLinks, selectedPlanDerivationGroupIds } from '../../../stores/external-source';
-  import { activityTypes, maxTimeRange, plan, viewTimeRange } from '../../../stores/plan';
+  import { derivationGroups, selectedPlanDerivationGroupIds } from '../../../stores/external-source';
+  import { maxTimeRange, viewTimeRange } from '../../../stores/plan';
   import { plugins } from '../../../stores/plugins';
-  import { externalResourceNames, resourceTypes, yAxesWithScaleDomainsCache } from '../../../stores/simulation';
+  import { yAxesWithScaleDomainsCache } from '../../../stores/simulation';
   import {
     selectedRowId,
     selectedTimelineId,
@@ -44,7 +43,6 @@
     viewUpdateRow,
     viewUpdateTimeline,
   } from '../../../stores/views';
-  import type { ActivityType } from '../../../types/activity';
   import type { RadioButtonId } from '../../../types/radio-buttons';
   import type {
     ActivityLayer,
@@ -58,7 +56,9 @@
     Row,
     Timeline,
     VerticalGuide,
-    XRangeLayer
+    XRangeLayer,
+
+    XRangeLayerColorScheme
   } from '../../../types/timeline';
   import type { ViewGridSection } from '../../../types/view';
   import effects from '../../../utilities/effects';
@@ -79,8 +79,6 @@
   } from '../../../utilities/timeline';
   import { tooltip } from '../../../utilities/tooltip';
   import ColorPicker from '../../form/ColorPicker.svelte';
-  import ColorPresetsPicker from '../../form/ColorPresetsPicker.svelte';
-  import ColorSchemePicker from '../../form/ColorSchemePicker.svelte';
   import Input from '../../form/Input.svelte';
   import GridMenu from '../../menus/GridMenu.svelte';
   import ParameterUnits from '../../parameters/ParameterUnits.svelte';
@@ -89,9 +87,7 @@
   import Panel from '../../ui/Panel.svelte';
   import RadioButton from '../../ui/RadioButtons/RadioButton.svelte';
   import RadioButtons from '../../ui/RadioButtons/RadioButtons.svelte';
-  import TimelineEditorLayerFilter from './TimelineEditorLayerFilter.svelte';
-  import TimelineEditorLayerSelectedFilters from './TimelineEditorLayerSelectedFilters.svelte';
-  import TimelineEditorLayerSettings from './TimelineEditorLayerSettings.svelte';
+  import TimelineEditorLayerSection from './TimelineEditorLayerSection.svelte';
   import TimelineEditorYAxisSettings from './TimelineEditorYAxisSettings.svelte';
 
   export let gridSection: ViewGridSection;
@@ -202,17 +198,15 @@
     viewUpdateRow('layers', filteredLayers);
   }
 
-  function handleDeleteLayerFilterValue(layer: Layer, value: string) {
-    const newValues = getFilterValuesForLayer(layer).filter(i => value !== i);
-    handleUpdateLayerFilter(newValues, layer);
-  }
-
   function handleActivityOptionRadioChange(event: CustomEvent<{ id: RadioButtonId }>, name: keyof ActivityOptions) {
     const { id } = event.detail;
     viewUpdateRow('activityOptions', { ...activityOptions, [name]: id });
   }
 
-  function handleExternalEventOptionRadioChange(event: CustomEvent<{ id: RadioButtonId }>, name: keyof ExternalEventOptions) {
+  function handleExternalEventOptionRadioChange(
+    event: CustomEvent<{ id: RadioButtonId }>,
+    name: keyof ExternalEventOptions,
+  ) {
     const { id } = event.detail;
     viewUpdateRow('externalEventOptions', { ...externalEventOptions, [name]: id });
   }
@@ -337,8 +331,7 @@
             },
           };
           return newLayer;
-        }
-        else if (isExternalEventLayer(currentLayer)) {
+        } else if (isExternalEventLayer(currentLayer)) {
           const newLayer: Layer = {
             ...currentLayer,
             filter: {
@@ -368,8 +361,7 @@
     viewUpdateRow('layers', newLayers);
   }
 
-  function handleUpdateLayerProperty(event: CustomEvent, layer: Layer) {
-    const { name, value } = event.detail;
+  function handleUpdateLayerProperty(name: string, value: string | number | boolean | null, layer: Layer) {
     const newLayers = layers.map(l => {
       if (layer.id === l.id) {
         return {
@@ -382,16 +374,13 @@
     viewUpdateRow('layers', newLayers);
   }
 
-  function handleUpdateLayerChartType(event: Event, layer: Layer) {
-    const { value } = getTarget(event);
-
+  function handleUpdateLayerChartType(value: string | number | boolean | null, layer: Layer) {
     const newLayers = layers.map(l => {
       if (layer.id === l.id) {
         let newLayer: ActivityLayer | LineLayer | XRangeLayer | ExternalEventLayer | undefined;
         if (value === 'activity') {
           newLayer = { ...createTimelineActivityLayer(timelines), id: l.id };
-        }
-        else if (value === 'external-event') {
+        } else if (value === 'external-event') {
           newLayer = { ...createTimelineExternalEventLayer(timelines), id: l.id };
         } else if (value === 'line' || value === 'x-range') {
           if (value === 'line') {
@@ -420,8 +409,7 @@
     viewUpdateRow('layers', newLayers);
   }
 
-  function handleUpdateLayerColor(event: CustomEvent, layer: Layer) {
-    const { value } = event.detail;
+  function handleUpdateLayerColor(value: string, layer: Layer) {
     const newLayers = layers.map(l => {
       if (layer.id === l.id) {
         if (isActivityLayer(l)) {
@@ -437,8 +425,7 @@
     viewUpdateRow('layers', newLayers);
   }
 
-  function handleUpdateLayerColorScheme(event: CustomEvent, layer: Layer) {
-    const { value } = event.detail;
+  function handleUpdateLayerColorScheme(value: XRangeLayerColorScheme, layer: Layer) {
     const newLayers = layers.map(l => {
       if (layer.id === l.id) {
         (l as XRangeLayer).colorScheme = value;
@@ -486,50 +473,6 @@
     }
     el.style.background = 'var(--st-gray-10)';
     el.classList.add('timeline-element-dragging');
-  }
-
-  function getColorForLayer(layer: Layer) {
-    if (isActivityLayer(layer)) {
-      return layer.activityColor;
-    } else if (isExternalEventLayer(layer)) {
-      return layer.externalEventColor;
-    } else if (isLineLayer(layer)) {
-      return layer.lineColor;
-    } else if (isXRangeLayer(layer)) {
-      return layer.colorScheme;
-    }
-  }
-
-  function getFilterValuesForLayer(layer: Layer) {
-    if (isActivityLayer(layer)) {
-      const activityLayer = layer;
-      const activityTypes = activityLayer.filter?.activity?.types ?? [];
-      return [...activityTypes];
-    } else if (isExternalEventLayer(layer)) {
-      const externalEventLayer = layer;
-      const externalEventTypes = externalEventLayer.filter?.externalEvent?.event_types ?? [];
-      return [...externalEventTypes];
-    } else if (isLineLayer(layer) || isXRangeLayer(layer)) {
-      const resourceLayer = layer;
-      const resourceNames = resourceLayer.filter?.resource?.names ?? [];
-      return [...resourceNames];
-    }
-    return [];
-  }
-
-  function getFilterOptionsForLayer(layer: Layer, activityTypes: ActivityType[], externalResourceNames: string[]) {
-    if (isActivityLayer(layer)) {
-      return activityTypes.map(t => t.name);
-    } else if (isExternalEventLayer(layer)) {
-      return validEventTypes;
-    } else if (isLineLayer(layer) || isXRangeLayer(layer)) {
-      return $resourceTypes
-        .map(t => t.name)
-        .concat(externalResourceNames)
-        .sort();
-    }
-
-    return [];
   }
 
   onMount(() => {
@@ -1161,12 +1104,7 @@
                   </div>
                 </RadioButton>
                 <RadioButton
-                  use={[
-                    [
-                      tooltip,
-                      { content: 'Group according to event type', placement: 'top' },
-                    ],
-                  ]}
+                  use={[[tooltip, { content: 'Group according to event type', placement: 'top' }]]}
                   id="event_type"
                 >
                   <div class="radio-button-icon">
@@ -1185,7 +1123,8 @@
                 name="text"
                 type="number"
                 value={externalEventOptions.groupedModeBinSize}
-                on:input={e => { // TODO: for optimization sake, only run this when submitted!
+                on:input={e=> {
+                  // TODO: for optimization sake, only run this when submitted!
                   const { value } = getTarget(e);
                   if (typeof value === 'number' && !isNaN(value)) {
                     if (value >= 2) {
@@ -1440,6 +1379,16 @@
                     filters={getFilterValuesForLayer(layer)}
                     on:remove={event => handleDeleteLayerFilterValue(layer, event.detail.filter)}
                   />
+                  <TimelineEditorLayerSection
+                    on:handleUpdateLayerFilter={e => handleUpdateLayerFilter(e.detail.values, layer)}
+                    on:handleUpdateLayerProperty={e => handleUpdateLayerProperty(e.detail.name, e.detail.value, layer)}
+                    on:handleUpdateLayerChartType={e => handleUpdateLayerChartType(e.detail.value, layer)}
+                    on:handleUpdateLayerColor={e => handleUpdateLayerColor(e.detail.value, layer)}
+                    on:handleUpdateLayerColorScheme={e => handleUpdateLayerColorScheme(e.detail.value, layer)}
+                    on:handleDeleteLayerClick={() => handleDeleteLayerClick(layer)}
+                    {layer}
+                    {yAxes}
+                  />
                 </div>
               {/each}
             </div>
@@ -1483,7 +1432,6 @@
   .timeline-row .st-button.icon,
   .guide .st-button.icon,
   .timeline-y-axis .st-button.icon,
-  .timeline-layer .st-button.icon,
   :global(.timeline-editor-layer-settings.st-button.icon),
   :global(.timeline-editor-axis-settings.st-button.icon) {
     color: var(--st-gray-50);

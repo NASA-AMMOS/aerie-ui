@@ -98,7 +98,7 @@ import type {
   ExternalSourceWithResolvedNames,
   PlanDerivationGroup,
 } from '../types/external-source';
-import type { Model, ModelInsertInput, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
+import type { Model, ModelInsertInput, ModelLog, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
 import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
 import type {
   Argument,
