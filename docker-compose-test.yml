@@ -165,7 +165,7 @@ services:
       SCHEDULER_DB_PASSWORD: '${SCHEDULER_PASSWORD}'
       SEQUENCING_DB_USER: '${SEQUENCING_USERNAME}'
       SEQUENCING_DB_PASSWORD: '${SEQUENCING_PASSWORD}'
-    image: 'ghcr.io/nasa-ammos/aerie-postgres:develop'
+    image: 'ghcr.io/nasa-ammos/aerie-postgres:dev-2.11.2'
     ports: ['5432:5432']
     restart: always
     volumes:
