@@ -33,7 +33,7 @@ The client application for [Aerie](https://github.com/NASA-AMMOS/aerie).
 
 ## Want to help?
 
-Want to file a bug, contribute some code, or improve documentation? Excellent! Read up on our
+Want to file a bug, suggest a feature, contribute some code, or improve documentation? Excellent! Read up on our
 guidelines for [contributing][contributing]. If you are a developer you can get started quickly by reading the [developer documentation][dev].
 
 [contributing]: ./docs/CONTRIBUTING.md
