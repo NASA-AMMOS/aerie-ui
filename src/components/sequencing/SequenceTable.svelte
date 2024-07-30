@@ -63,7 +63,7 @@
       sort: 'desc',
       suppressAutoSize: true,
       suppressSizeToFit: true,
-      width: 80,
+      width: 100,
     },
   ];
 
@@ -195,8 +195,10 @@
 </script>
 
 <div class="filter-container">
-  <input type="checkbox" on:change={onFilterToUsersSequences} />
-  <span class=" st-typography-body">Filter to my sequences</span>
+  <div>
+    <input type="checkbox" on:change={onFilterToUsersSequences} />
+    <span class=" st-typography-body">Filter to my sequences</span>
+  </div>
 </div>
 
 {#if filteredSequences.length}
@@ -221,5 +223,6 @@
     align-items: center;
     display: flex;
     margin-bottom: 8px;
+    justify-content: space-between;
   }
 </style>
