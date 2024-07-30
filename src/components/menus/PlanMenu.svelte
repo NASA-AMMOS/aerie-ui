@@ -11,9 +11,11 @@
   import type { User } from '../../types/app';
   import type { Plan } from '../../types/plan';
   import effects from '../../utilities/effects';
+  import { downloadJSON } from '../../utilities/generic';
   import { showPlanBranchesModal, showPlanMergeRequestsModal } from '../../utilities/modal';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
+  import { getPlanForTransfer } from '../../utilities/plan';
   import Menu from '../menus/Menu.svelte';
   import MenuItem from '../menus/MenuItem.svelte';
   import MenuDivider from './MenuDivider.svelte';
@@ -51,6 +53,11 @@
 
   function createPlanSnapshot() {
     effects.createPlanSnapshot(plan, user);
+  }
+
+  async function exportPlan() {
+    const planTransfer = await getPlanForTransfer(plan, user);
+    downloadJSON(planTransfer, planTransfer.name);
   }
 
   function viewSnapshotHistory() {
@@ -138,6 +145,10 @@
       <MenuItem on:click={viewSnapshotHistory}>
         <div class="column-name">View Snapshot History</div>
       </MenuItem>
+      <MenuDivider />
+      <div class="export-button-container">
+        <button class="st-button" on:click={exportPlan}>Export as .json</button>
+      </div>
     </Menu>
   </div>
   {#if plan.child_plans.length > 0}
@@ -192,5 +203,12 @@
     color: var(--st-white);
     cursor: pointer;
     user-select: none;
+  }
+
+  .export-button-container {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    padding: var(--aerie-menu-item-padding, 8px);
   }
 </style>

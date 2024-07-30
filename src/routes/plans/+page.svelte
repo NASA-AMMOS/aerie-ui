@@ -5,6 +5,7 @@
   import { base } from '$app/paths';
   import { page } from '$app/stores';
   import PlanIcon from '@nasa-jpl/stellar/icons/plan.svg?component';
+  import UploadIcon from '@nasa-jpl/stellar/icons/upload.svg?component';
   import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
   import { flatten } from 'lodash-es';
   import { onDestroy, onMount } from 'svelte';
@@ -39,10 +40,10 @@
   import type { PlanTagsInsertInput, Tag, TagsChangeEvent } from '../../types/tags';
   import { generateRandomPastelColor } from '../../utilities/color';
   import effects from '../../utilities/effects';
-  import { removeQueryParam } from '../../utilities/generic';
+  import { downloadJSON, removeQueryParam } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
-  import { isDeprecatedPlanTransfer } from '../../utilities/plan';
+  import { getPlanForTransfer, isDeprecatedPlanTransfer } from '../../utilities/plan';
   import {
     convertDoyToYmd,
     convertUsToDurationString,
@@ -58,6 +59,7 @@
 
   type CellRendererParams = {
     deletePlan: (plan: Plan) => void;
+    exportPlan: (plan: Plan) => void;
   };
   type PlanCellRendererParams = ICellRendererParams<Plan> & CellRendererParams;
 
@@ -210,6 +212,7 @@
   let columnDefs: DataGridColumnDef[] = baseColumnDefs;
   let durationString: string = 'None';
   let filterText: string = '';
+  let isPlanImportMode: boolean = false;
   let orderedModels: ModelSlim[] = [];
   let nameInputField: HTMLInputElement;
   let planTags: Tag[] = [];
@@ -225,7 +228,8 @@
     ),
   ]);
   let planUploadFiles: FileList | undefined;
-  let fileInput: HTMLInputElement;
+  let planUploadFilesError: string | null = null;
+  let planUploadFileInput: HTMLInputElement;
   let simTemplateField = field<number | null>(null);
 
   $: startTimeField = field<string>('', [required, $plugins.time.primary.validate]);
@@ -268,6 +272,11 @@
                 content: 'Delete Plan',
                 placement: 'bottom',
               },
+              downloadCallback: params.exportPlan,
+              downloadTooltip: {
+                content: 'Export Plan',
+                placement: 'bottom',
+              },
               hasDeletePermission: params.data && user ? featurePermissions.plan.canDelete(user, params.data) : false,
               rowData: params.data,
             },
@@ -278,6 +287,7 @@
         },
         cellRendererParams: {
           deletePlan,
+          exportPlan,
         } as CellRendererParams,
         field: 'actions',
         headerName: '',
@@ -285,7 +295,7 @@
         sortable: false,
         suppressAutoSize: true,
         suppressSizeToFit: true,
-        width: 25,
+        width: 50,
       },
     ];
   }
@@ -342,7 +352,7 @@
         planUploadFiles,
         user,
       );
-      fileInput.value = '';
+      planUploadFileInput.value = '';
       planUploadFiles = undefined;
       $startTimeField.value = '';
       $endTimeField.value = '';
@@ -382,6 +392,14 @@
     }
   }
 
+  async function exportPlan(plan: PlanSlim): Promise<void> {
+    const planTransfer = await getPlanForTransfer(plan, user);
+
+    if (planTransfer) {
+      downloadJSON(planTransfer, plan.name);
+    }
+  }
+
   async function onTagsInputChange(event: TagsChangeEvent) {
     const {
       detail: { tag, type },
@@ -407,6 +425,17 @@
 
   function showPlan(plan: Pick<Plan, 'id'>) {
     goto(`${base}/plans/${plan.id}`);
+  }
+
+  function hideImportPlan() {
+    isPlanImportMode = false;
+    planUploadFileInput.value = '';
+    planUploadFiles = undefined;
+    planUploadFilesError = null;
+  }
+
+  function showImportPlan() {
+    isPlanImportMode = true;
   }
 
   async function onStartTimeChanged() {
@@ -445,70 +474,75 @@
     }
   }
   async function onReaderLoad(event: ProgressEvent<FileReader>) {
+    planUploadFilesError = null;
     if (event.target !== null && event.target.result !== null) {
-      const planJSON: PlanTransfer | DeprecatedPlanTransfer = JSON.parse(`${event.target.result}`) as
-        | PlanTransfer
-        | DeprecatedPlanTransfer;
-      nameField.validateAndSet(planJSON.name);
-      const importedPlanTags = (planJSON.tags ?? []).reduce(
-        (previousTags: { existingTags: Tag[]; newTags: Pick<Tag, 'color' | 'name'>[] }, importedPlanTag) => {
-          const {
-            tag: { color: importedPlanTagColor, name: importedPlanTagName },
-          } = importedPlanTag;
-          const existingTag = $tags.find(({ name }) => importedPlanTagName === name);
+      try {
+        const planJSON: PlanTransfer | DeprecatedPlanTransfer = JSON.parse(`${event.target.result}`) as
+          | PlanTransfer
+          | DeprecatedPlanTransfer;
+        nameField.validateAndSet(planJSON.name);
+        const importedPlanTags = (planJSON.tags ?? []).reduce(
+          (previousTags: { existingTags: Tag[]; newTags: Pick<Tag, 'color' | 'name'>[] }, importedPlanTag) => {
+            const {
+              tag: { color: importedPlanTagColor, name: importedPlanTagName },
+            } = importedPlanTag;
+            const existingTag = $tags.find(({ name }) => importedPlanTagName === name);
 
-          if (existingTag) {
-            return {
-              ...previousTags,
-              existingTags: [...previousTags.existingTags, existingTag],
-            };
-          } else {
-            return {
-              ...previousTags,
-              newTags: [
-                ...previousTags.newTags,
-                {
-                  color: importedPlanTagColor,
-                  name: importedPlanTagName,
-                },
-              ],
-            };
-          }
-        },
-        {
-          existingTags: [],
-          newTags: [],
-        },
-      );
-
-      const newTags: Tag[] = flatten(
-        await Promise.all(
-          importedPlanTags.newTags.map(async ({ color: tagColor, name: tagName }) => {
-            return (
-              (await effects.createTags([{ color: tagColor ?? generateRandomPastelColor(), name: tagName }], user)) ||
-              []
-            );
-          }),
-        ),
-      );
-
-      planTags = [...importedPlanTags.existingTags, ...newTags];
-
-      // remove the `+00:00` timezone before parsing
-      const startTime = `${convertDoyToYmd(planJSON.start_time.replace(/\+00:00/, ''))}`;
-      await startTimeField.validateAndSet(getDoyTime(new Date(startTime), true));
-
-      if (isDeprecatedPlanTransfer(planJSON)) {
-        await endTimeField.validateAndSet(
-          getDoyTime(new Date(`${convertDoyToYmd(planJSON.end_time.replace(/\+00:00/, ''))}`), true),
+            if (existingTag) {
+              return {
+                ...previousTags,
+                existingTags: [...previousTags.existingTags, existingTag],
+              };
+            } else {
+              return {
+                ...previousTags,
+                newTags: [
+                  ...previousTags.newTags,
+                  {
+                    color: importedPlanTagColor,
+                    name: importedPlanTagName,
+                  },
+                ],
+              };
+            }
+          },
+          {
+            existingTags: [],
+            newTags: [],
+          },
         );
-      } else {
-        const { duration } = planJSON;
 
-        await endTimeField.validateAndSet(getDoyTimeFromInterval(startTime, duration));
+        const newTags: Tag[] = flatten(
+          await Promise.all(
+            importedPlanTags.newTags.map(async ({ color: tagColor, name: tagName }) => {
+              return (
+                (await effects.createTags([{ color: tagColor ?? generateRandomPastelColor(), name: tagName }], user)) ||
+                []
+              );
+            }),
+          ),
+        );
+
+        planTags = [...importedPlanTags.existingTags, ...newTags];
+
+        // remove the `+00:00` timezone before parsing
+        const startTime = `${convertDoyToYmd(planJSON.start_time.replace(/\+00:00/, ''))}`;
+        await startTimeField.validateAndSet(getDoyTime(new Date(startTime), true));
+
+        if (isDeprecatedPlanTransfer(planJSON)) {
+          await endTimeField.validateAndSet(
+            getDoyTime(new Date(`${convertDoyToYmd(planJSON.end_time.replace(/\+00:00/, ''))}`), true),
+          );
+        } else {
+          const { duration } = planJSON;
+
+          await endTimeField.validateAndSet(getDoyTimeFromInterval(startTime, duration));
+        }
+
+        updateDurationString();
+      } catch (e) {
+        planUploadFilesError = (e as Error).message;
       }
-
-      updateDurationString();
     }
   }
 
@@ -533,27 +567,14 @@
     <Panel borderRight padBody={false}>
       <svelte:fragment slot="header">
         <SectionTitle>New Plan</SectionTitle>
+        <button class="st-button secondary import-button" type="button" on:click={showImportPlan}>
+          <UploadIcon /> Import
+        </button>
       </svelte:fragment>
 
       <svelte:fragment slot="body">
         <form on:submit|preventDefault={createPlan}>
           <AlertError class="m-2" error={$createPlanError} />
-
-          <fieldset>
-            <label for="file">Import Plan JSON File</label>
-            <input
-              class="w-100"
-              name="file"
-              type="file"
-              bind:files={planUploadFiles}
-              bind:this={fileInput}
-              use:permissionHandler={{
-                hasPermission: canCreate,
-                permissionError,
-              }}
-              on:change={onPlanFileChange}
-            />
-          </fieldset>
 
           <Field field={modelIdField}>
             <label for="model" slot="label">Models</label>
@@ -682,6 +703,32 @@
             />
           </fieldset>
 
+          {#if isPlanImportMode}
+            <fieldset>
+              <label for="file">Plan File (JSON)</label>
+              <div class="import-input-container">
+                <input
+                  class="w-100"
+                  name="file"
+                  type="file"
+                  bind:files={planUploadFiles}
+                  bind:this={planUploadFileInput}
+                  use:permissionHandler={{
+                    hasPermission: canCreate,
+                    permissionError,
+                  }}
+                  on:change={onPlanFileChange}
+                />
+                {#if planUploadFiles}<button class="st-button secondary" type="button" on:click={hideImportPlan}
+                    >Clear</button
+                  >{/if}
+              </div>
+              {#if planUploadFilesError}
+                <div class="error">{planUploadFilesError}</div>
+              {/if}
+            </fieldset>
+          {/if}
+
           <fieldset>
             <button
               class="st-button w-100"
@@ -693,6 +740,19 @@
               }}
             >
               {$creatingPlan ? 'Creating...' : 'Create'}
+            </button>
+          </fieldset>
+          <fieldset>
+            <button
+              class="st-button secondary w-100"
+              type="button"
+              use:permissionHandler={{
+                hasPermission: canCreate,
+                permissionError,
+              }}
+              on:click={showImportPlan}
+            >
+              Import plan from .json
             </button>
           </fieldset>
         </form>
@@ -732,5 +792,22 @@
 <style>
   .model-status {
     padding: 5px 16px 0;
+  }
+
+  .import-button {
+    column-gap: 4px;
+  }
+
+  .import-input-container {
+    column-gap: 0.5rem;
+    display: grid;
+    grid-template-columns: auto min-content;
+  }
+
+  .error {
+    color: var(--st-red);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 </style>

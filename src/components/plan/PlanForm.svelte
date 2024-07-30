@@ -14,13 +14,11 @@
   import { viewTogglePanel } from '../../stores/views';
   import type { ActivityDirective, ActivityDirectiveId } from '../../types/activity';
   import type { User, UserId } from '../../types/app';
-  import type { ArgumentsMap } from '../../types/parameter';
-  import type { Plan, PlanCollaborator, PlanSlimmer, PlanTransfer } from '../../types/plan';
+  import type { Plan, PlanCollaborator, PlanSlimmer } from '../../types/plan';
   import type { PlanSnapshot as PlanSnapshotType } from '../../types/plan-snapshot';
-  import type { Simulation } from '../../types/simulation';
   import type { PlanTagsInsertInput, Tag, TagsChangeEvent } from '../../types/tags';
   import effects from '../../utilities/effects';
-  import { removeQueryParam, setQueryParam } from '../../utilities/generic';
+  import { downloadJSON, removeQueryParam, setQueryParam } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import { getPlanForTransfer } from '../../utilities/plan';
@@ -161,66 +159,20 @@
       }
 
       planExportAbortController = new AbortController();
-
-      let qualifiedActivityDirectives: ActivityDirective[] = [];
       planExportProgress = 0;
 
-      let totalProgress = 0;
-      const numOfDirectives = Object.values(activityDirectivesMap).length;
-
-      const simulation: Simulation | null = await effects.getPlanLatestSimulation(plan.id, user);
-
-      const simulationArguments: ArgumentsMap = simulation
-        ? {
-            ...simulation.template?.arguments,
-            ...simulation.arguments,
-          }
-        : {};
-
-      qualifiedActivityDirectives = (
-        await Promise.all(
-          Object.values(activityDirectivesMap).map(async activityDirective => {
-            if (plan) {
-              const effectiveArguments = await effects.getEffectiveActivityArguments(
-                plan?.model_id,
-                activityDirective.type,
-                activityDirective.arguments,
-                user,
-                planExportAbortController?.signal,
-              );
-
-              totalProgress++;
-              planExportProgress = (totalProgress / numOfDirectives) * 100;
-
-              return {
-                ...activityDirective,
-                arguments: effectiveArguments?.arguments ?? activityDirective.arguments,
-              };
-            }
-
-            totalProgress++;
-            planExportProgress = (totalProgress / numOfDirectives) * 100;
-
-            return activityDirective;
-          }),
-        )
-      ).sort((directiveA, directiveB) => {
-        if (directiveA.id < directiveB.id) {
-          return -1;
-        }
-        if (directiveA.id > directiveB.id) {
-          return 1;
-        }
-        return 0;
-      });
-
       if (planExportAbortController && !planExportAbortController.signal.aborted) {
-        const planExport: PlanTransfer = getPlanForTransfer(plan, qualifiedActivityDirectives, simulationArguments);
+        const planExport = await getPlanForTransfer(
+          plan,
+          user,
+          (progress: number) => {
+            planExportProgress = progress;
+          },
+          Object.values(activityDirectivesMap),
+          planExportAbortController.signal,
+        );
 
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(new Blob([JSON.stringify(planExport, null, 2)], { type: 'application/json' }));
-        a.download = planExport.name;
-        a.click();
+        downloadJSON(planExport, planExport.name);
       }
       planExportProgress = null;
     }

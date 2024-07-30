@@ -348,3 +348,17 @@ export function addPageFocusListener(onChange: (string: 'out' | 'in') => void): 
     document.removeEventListener('visibilitychange', handleChange);
   };
 }
+
+export function downloadJSON(json: object, filename: string) {
+  downloadBlob(
+    new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' }),
+    /\.json$/.test(filename) ? filename : `${filename}.json`,
+  );
+}
+
+export function downloadBlob(blob: Blob, filename: string) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
