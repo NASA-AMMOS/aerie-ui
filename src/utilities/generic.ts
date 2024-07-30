@@ -1,4 +1,5 @@
 import { browser } from '$app/environment';
+import JSONParser from '@streamparser/json/jsonparser.js';
 import type { SearchParameters } from '../enums/searchParameters';
 
 /**
@@ -349,6 +350,23 @@ export function addPageFocusListener(onChange: (string: 'out' | 'in') => void): 
   };
 }
 
+/**
+ * Utility function for downloading the contents of a Blob to client storage
+ * @param blob
+ * @param filename - file extension should be provided
+ */
+export function downloadBlob(blob: Blob, filename: string) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+
+/**
+ * Utility function for downloading a valid JSON to client storage
+ * @param json
+ * @param filename - file extension doesn't need to be provided
+ */
 export function downloadJSON(json: object, filename: string) {
   downloadBlob(
     new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' }),
@@ -356,9 +374,37 @@ export function downloadJSON(json: object, filename: string) {
   );
 }
 
-export function downloadBlob(blob: Blob, filename: string) {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
+/**
+ * Utility function for parsing a long string into a JSON object
+ * This function is more for very long strings that need to be broken up into chunks in order to
+ * fully parse it into a JSON object without running out of memory
+ * @param jsonString
+ * @returns R
+ */
+export async function parseJSON<R>(jsonString: string): Promise<R> {
+  return new Promise((resolve, reject) => {
+    const jsonParser = new JSONParser({ paths: ['$.*'], stringBufferSize: undefined });
+    let finalJSON: R;
+    jsonParser.onToken = ({ value }) => {
+      if (finalJSON === undefined) {
+        if (value === '[') {
+          finalJSON = [] as R;
+        } else if (value === '{') {
+          finalJSON = {} as R;
+        }
+      }
+    };
+    jsonParser.onValue = ({ parent }) => {
+      finalJSON = parent as R;
+    };
+    jsonParser.onEnd = () => {
+      resolve(finalJSON as R);
+    };
+
+    try {
+      jsonParser.write(jsonString);
+    } catch (e) {
+      reject(e);
+    }
+  });
 }

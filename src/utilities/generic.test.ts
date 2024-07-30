@@ -1,6 +1,14 @@
 import { afterAll, describe, expect, test, vi } from 'vitest';
 import { SearchParameters } from '../enums/searchParameters';
-import { attemptStringConversion, clamp, classNames, filterEmpty, getSearchParameterNumber, isMacOs } from './generic';
+import {
+  attemptStringConversion,
+  clamp,
+  classNames,
+  filterEmpty,
+  getSearchParameterNumber,
+  isMacOs,
+  parseJSON,
+} from './generic';
 
 const mockNavigator = {
   platform: 'MacIntel',
@@ -144,4 +152,23 @@ describe('getSearchParameterNumber', () => {
       null,
     );
   });
+});
+
+describe('parseJSON', () => {
+  test.each([
+    {
+      testCase:
+        '{"activities":[{"anchor_id":201,"anchored_to_start":true,"arguments":{"peelDirection":"fromTip"},"id":199,"metadata":{},"name":"PeelBanana","start_offset":"1 day 04:03:00.645","tags":[{"tag":{"color":"#c1def7","name":"bar"}},{"tag":{"color":"#ff0000","name":"flubber"}}],"type":"PeelBanana"},{"anchor_id":null,"anchored_to_start":true,"arguments":{"growingDuration":3600000000,"quantity":1},"id":200,"metadata":{},"name":"GrowBanana","start_offset":"00:29:51.705","tags":[{"tag":{"color":"#e0c3d4","name":"baz"}}],"type":"GrowBanana"},{"anchor_id":200,"anchored_to_start":true,"arguments":{"quantity":10},"id":201,"metadata":{},"name":"PickBanana","start_offset":"01:07:10.107","tags":[],"type":"PickBanana"},{"anchor_id":null,"anchored_to_start":true,"arguments":{"label":"unlabeled"},"id":202,"metadata":{},"name":"parent","start_offset":"00:00:00","tags":[],"type":"parent"},{"anchor_id":200,"anchored_to_start":false,"arguments":{"quantity":10},"id":203,"metadata":{},"name":"PickBanana","start_offset":"01:16:18.801","tags":[],"type":"PickBanana"},{"anchor_id":null,"anchored_to_start":true,"arguments":{"counter":0},"id":204,"metadata":{},"name":"child","start_offset":"00:00:00","tags":[],"type":"child"}],"duration":"24:00:00","id":61,"model_id":1,"name":"Banana Plan 39","simulation_arguments":{"initialProducer":"Chiquita3","initialPlantCount":203},"start_time":"2024-07-01T00:00:00.000+00:00","tags":[{"tag":{"color":"#ff0000","name":"foo"}},{"tag":{"color":"#c1def7","name":"bar"}}]}',
+    },
+    { testCase: '{"a": 1, "b": "foo", "c": "bar"}' },
+  ])('Should successfully parse strings into JSON objects', async ({ testCase }) => {
+    expect(await parseJSON(testCase)).toBeTypeOf('object');
+  });
+
+  test.each([{ testCase: 'a: 1, "b": "foo", "c": "bar"' }])(
+    'Should throw an error when parsing invalid JSON strings',
+    async ({ testCase }) => {
+      await expect(parseJSON(testCase)).rejects.toThrowError(/Unexpected/);
+    },
+  );
 });

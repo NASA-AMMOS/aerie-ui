@@ -40,7 +40,7 @@
   import type { PlanTagsInsertInput, Tag, TagsChangeEvent } from '../../types/tags';
   import { generateRandomPastelColor } from '../../utilities/color';
   import effects from '../../utilities/effects';
-  import { downloadJSON, removeQueryParam } from '../../utilities/generic';
+  import { downloadJSON, parseJSON, removeQueryParam } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import { getPlanForTransfer, isDeprecatedPlanTransfer } from '../../utilities/plan';
@@ -473,13 +473,18 @@
       durationString = 'None';
     }
   }
+
   async function onReaderLoad(event: ProgressEvent<FileReader>) {
     planUploadFilesError = null;
     if (event.target !== null && event.target.result !== null) {
       try {
-        const planJSON: PlanTransfer | DeprecatedPlanTransfer = JSON.parse(`${event.target.result}`) as
-          | PlanTransfer
-          | DeprecatedPlanTransfer;
+        let planJSON: PlanTransfer | DeprecatedPlanTransfer;
+        try {
+          planJSON = await parseJSON<PlanTransfer | DeprecatedPlanTransfer>(`${event.target.result}`);
+        } catch (e) {
+          throw new Error('Plan file is not valid JSON');
+        }
+
         nameField.validateAndSet(planJSON.name);
         const importedPlanTags = (planJSON.tags ?? []).reduce(
           (previousTags: { existingTags: Tag[]; newTags: Pick<Tag, 'color' | 'name'>[] }, importedPlanTag) => {
