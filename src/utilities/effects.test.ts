@@ -4,9 +4,8 @@ import { mockUser } from '../tests/mocks/user/mockUser';
 import type { ExternalEventTypeInsertInput } from '../types/external-event';
 import type {
   DerivationGroupInsertInput,
-  ExternalSourceEventType,
   ExternalSourceInsertInput,
-  ExternalSourceTypeInsertInput,
+  ExternalSourceTypeInsertInput
 } from '../types/external-source';
 import type { Model } from '../types/model';
 import type { ArgumentsMap, ParametersMap } from '../types/parameter';
@@ -303,28 +302,6 @@ describe('Handle modal and requests in effects', () => {
     });
   });
 
-  describe('createExternalSourceEventTypeLink', () => {
-    it('should correctly handle null responses', async () => {
-      vi.spyOn(Requests, 'reqHasura').mockResolvedValue({
-        createExternalSourceEventTypeLink: null,
-      });
-      vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
-
-      await effects.createExternalSourceEventTypeLink(
-        {
-          external_event_type_id: 1,
-          external_source_id: 1,
-        } as ExternalSourceEventType,
-        user,
-      );
-
-      expect(catchErrorSpy).toHaveBeenCalledWith(
-        'External Source Event Type Link Create Failed',
-        Error('Unable to link external source to component external event type'),
-      );
-    });
-  });
-
   describe('getExternalEvents', () => {
     it('should correctly handle null responses', async () => {
       vi.spyOn(Requests, 'reqHasura').mockResolvedValue({
@@ -349,11 +326,7 @@ describe('Handle modal and requests in effects', () => {
       vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
 
       await effects.getExternalEventTypesBySource(
-        [1],
-        [
-          { id: 1, name: 'ExternalEventTypeA' },
-          { id: 2, name: 'ExternalEventTypeB' },
-        ],
+        1,
         user,
       );
 

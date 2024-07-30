@@ -43,7 +43,6 @@ export enum Queries {
   DELETE_EXTERNAL_EVENT_TYPE = 'delete_external_event_type_by_pk',
   DELETE_EXTERNAL_SOURCE = 'delete_external_source_by_pk',
   DELETE_EXTERNAL_SOURCE_TYPE = 'delete_external_source_type_by_pk',
-  DELETE_EXTERNAL_SOURCE_EVENT_TYPE = 'delete_external_source_event_type',
   DELETE_UPLOADED_FILE = 'delete_uploaded_file_by_pk',
   DELETE_MISSION_MODEL = 'delete_mission_model_by_pk',
   DELETE_PARAMETER_DICTIONARY = 'delete_parameter_dictionary_by_pk',
@@ -976,11 +975,6 @@ const gql = {
           source_id
         }
       }
-      deleteExternalSourceEventType: ${Queries.DELETE_EXTERNAL_SOURCE_EVENT_TYPE}(where: { external_source_id: { _eq: $id }}) {
-        returning {
-          external_source_id
-        }
-      }
       deleteExternalSource: ${Queries.DELETE_EXTERNAL_SOURCE}(id: $id) {
         id
       }
@@ -1489,9 +1483,10 @@ const gql = {
   `,
 
   GET_EXTERNAL_EVENT_TYPE_BY_SOURCE: `#graphql
-    query GetExternalEventTypesBySource($source_ids: [Int!]!) {
-      external_event_type_ids: ${Queries.EXTERNAL_SOURCE_EVENT_TYPES}(where: {external_source_id: {_in: $source_ids} }) {
-        external_event_type_id
+    query GetExternalEventTypesBySource($source_id: Int!) {
+      external_event_type_ids: ${Queries.EXTERNAL_SOURCE_EVENT_TYPES}(where: {external_source_id: {_eq: $source_id}}) {
+        event_types,
+        external_source_id
       }
     }
   `,
@@ -2507,15 +2502,6 @@ const gql = {
         end_time
         valid_at
         created_at
-      }
-    }
-  `,
-
-  SUB_EXTERNAL_SOURCE_EVENT_TYPE: `#graphql
-    subscription SubExternalSourceEventType {
-      links: ${Queries.EXTERNAL_SOURCE_EVENT_TYPES}(order_by: {external_source_id: asc}) {
-        external_source_id,
-        external_event_type_id
       }
     }
   `,

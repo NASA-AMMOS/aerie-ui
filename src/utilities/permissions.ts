@@ -357,9 +357,6 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   CREATE_EXTERNAL_SOURCE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_EXTERNAL_SOURCE], user);
   },
-  CREATE_EXTERNAL_SOURCE_EVENT_TYPE: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission([Queries.EXTERNAL_SOURCE_EVENT_TYPES], user);
-  },
   CREATE_EXTERNAL_SOURCE_TYPE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.EXTERNAL_SOURCE_TYPES], user);
   },
@@ -841,7 +838,6 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   SUB_EXTERNAL_EVENT_TYPES: () => true,
   SUB_EXTERNAL_SOURCE: () => true,
   SUB_EXTERNAL_SOURCES: () => true,
-  SUB_EXTERNAL_SOURCE_EVENT_TYPE: () => true,
   SUB_EXTERNAL_SOURCE_TYPES: () => true,
   SUB_MODEL: () => true,
   SUB_MODELS: () => true,
@@ -1517,5 +1513,6 @@ export {
   isPlanOwner,
   isUserAdmin,
   isUserOwner,
-  queryPermissions,
+  queryPermissions
 };
+
