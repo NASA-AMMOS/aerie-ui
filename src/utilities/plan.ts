@@ -96,6 +96,7 @@ export async function getPlanForTransfer(
     simulation_arguments: qualifiedSimulationArguments,
     start_time: (convertDoyToYmd(plan.start_time_doy) as string).replace('Z', '+00:00'),
     tags: plan.tags.map(({ tag: { color, name } }) => ({ tag: { color, name } })),
+    version: '2',
   };
 }
 
