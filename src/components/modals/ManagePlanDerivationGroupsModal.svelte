@@ -303,6 +303,16 @@
                   </p>
                 </Collapse>
               {/each}
+              <Collapse
+                className="anchor-collapse"
+                defaultExpanded={false}
+                title="Event Types"
+                tooltipContent="View Contained Event Types"
+              >
+                {#each selectedDerivationGroup.event_types as eventType}
+                  <i>{eventType}</i>
+                {/each}
+              </Collapse>
             {:else}
               <p>No sources in this group.</p>
             {/if}
