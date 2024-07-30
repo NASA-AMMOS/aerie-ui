@@ -40,8 +40,6 @@ export type ExternalEvent = Pick<
 
 // no analgoue to PlanExternalSource as such a link doesn't exist for external events
 
-// no analgoue to ExternalSourceEventTypes as external events don't have children with named types
-
 export type ExternalEventType = {
   id: number;
   name: string;

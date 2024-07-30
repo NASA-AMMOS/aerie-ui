@@ -524,9 +524,6 @@
       //    If event types act up during upload, this line is a likely culprit (if you upload twice really fast and $externalEventTypes doesn't update quick enough)
       //    If that's the case, directly use $externalEventTypes concatted with this list each time in the if statement a few lines below
       let localExternalEventTypes: ExternalEventType[] = [...$externalEventTypes];
-      // each source bears different event types. While eventually that's a schema concern, for now we manually add all found event types in a source to their pairing table.
-      //    That way, upon selecting a source, we can see what event types it contains.
-      let externalSourceEventTypes: Set<number> = new Set<number>();
       // handle the events, as they need special logic to handle event types
       if (parsed.events) {
         for (let externalEvent of parsed.events) {
@@ -593,7 +590,6 @@
                 properties,
                 start_time,
               });
-              externalSourceEventTypes.add(externalEventTypeId);
             }
           }
         }
@@ -655,16 +651,6 @@
           }
 
           sourceId = await effects.createExternalSource(file, sourceInsert, user);
-        }
-      }
-
-      // finally, create the event source -> contained event types entry
-      if (sourceId !== undefined) {
-        for (let external_event_type_id of externalSourceEventTypes) {
-          await effects.createExternalSourceEventTypeLink(
-            { external_event_type_id, external_source_id: sourceId },
-            user,
-          );
         }
       }
 
@@ -865,11 +851,11 @@
               title="Event Types"
               tooltipContent="View Contained Event Types"
             >
-              {#await effects.getExternalEventTypesBySource(selectedSourceId ? [selectedSourceId] : [], $externalEventTypes, user)}
+              {#await effects.getExternalEventTypesBySource(selectedSourceId, user)}
                 <i>Loading...</i>
               {:then eventTypes}
                 {#each eventTypes as eventType}
-                  <i>{eventType.name}</i>
+                  <i>{eventType}</i>
                 {/each}
               {/await}
             </Collapse>

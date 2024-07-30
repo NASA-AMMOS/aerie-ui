@@ -2,11 +2,10 @@ import { browser } from '$app/environment';
 import { derived, writable, type Writable } from 'svelte/store';
 import {
   type DerivationGroup,
-  type ExternalSourceEventType,
   type ExternalSourceSlim,
   type ExternalSourceType,
   type ExternalSourceWithResolvedNames,
-  type PlanDerivationGroup,
+  type PlanDerivationGroup
 } from '../types/external-source';
 import gql from '../utilities/gql';
 import { planId } from './plan';
@@ -79,14 +78,6 @@ export const derivationGroupsRaw = gqlSubscribable<
 // use to keep track of associations between plans and goals
 export const planDerivationGroupLinks = gqlSubscribable<PlanDerivationGroup[]>(
   gql.SUB_PLAN_DERIVATION_GROUP,
-  {},
-  [],
-  null,
-);
-
-// use to keep track of associations between sources and their event types
-export const externalSourceEventTypes = gqlSubscribable<ExternalSourceEventType[]>(
-  gql.SUB_EXTERNAL_SOURCE_EVENT_TYPE,
   {},
   [],
   null,
