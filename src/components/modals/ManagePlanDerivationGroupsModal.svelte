@@ -256,7 +256,7 @@
       </div>
       {#if selectedDerivationGroup !== undefined}
         <CssGridGutter track={1} type="column" />
-        <Panel borderRight padBody={false} overflowYBody="scroll">
+        <Panel borderRight padBody={true} overflowYBody="scroll">
           <svelte:fragment slot="header">
             <SectionTitle>
               <Truck />Sources in '{selectedDerivationGroup.name}'
