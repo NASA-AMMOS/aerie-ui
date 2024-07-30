@@ -258,6 +258,14 @@
 
   let gridRowSizes: string = '1fr 3px 0fr';
 
+  // Clear all error stores when a source is selected as they will not be shown
+  $: if (selectedSource !== null) {
+    createExternalSourceError.set(null);
+    createExternalSourceTypeError.set(null);
+    createDerivationGroupError.set(null);
+    createExternalSourceEventTypeLinkError.set(null);
+  }
+
   // unfortunately very clunky, but it does correctly select all source types on page load as stores populate shortly AFTER the component loads,
   //    so populating selectedFilters with the store values on component load always yields an empty list
   $: if (selectedFilters.length === 1 && selectedFilters[0].id === -1 && $externalSourceTypes.length > 0) {
