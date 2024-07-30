@@ -6,15 +6,15 @@
   import { onMount } from 'svelte';
   import DirectiveIcon from '../../assets/timeline-directive.svg?raw';
   import SpanIcon from '../../assets/timeline-span.svg?raw';
-  import { plugins } from '../../stores/plugins';
   import { externalSources, getSourceName } from '../../stores/external-source';
+  import { plugins } from '../../stores/plugins';
   import type { ActivityDirective } from '../../types/activity';
   import type { ConstraintResultWithName } from '../../types/constraint';
   import type { ExternalEvent } from '../../types/external-event';
   import type { ResourceType, Span } from '../../types/simulation';
   import type { LineLayer, LinePoint, MouseOver, Point, Row, XRangePoint } from '../../types/timeline';
   import { addPageFocusListener } from '../../utilities/generic';
-  import { formatDate } from '../../utilities/time';
+  import { formatDate, getDoyTime } from '../../utilities/time';
   import { filterResourcesByLayer } from '../../utilities/timeline';
 
   export let interpolateHoverValue: boolean = false;

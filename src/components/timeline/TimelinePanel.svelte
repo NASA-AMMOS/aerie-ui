@@ -89,7 +89,7 @@
     const { detail } = event;
     const { activityDirectives, spans, externalEvents } = detail;
     if (externalEvents != null && externalEvents.length) {
-      selectExternalEvent(externalEvents[0].span_id);
+      selectExternalEvent(externalEvents[0].id);
       selectActivity(null, null);
     } else if (spans != null && spans.length) {
       selectActivity(null, spans[0].id);
