@@ -34,7 +34,7 @@
     XAxisTick,
   } from '../../types/timeline';
   import { clamp } from '../../utilities/generic';
-  import { convertDurationToMs, convertUTCtoMs, formatDate, getDoyTime } from '../../utilities/time';
+  import { convertDurationToMs, convertUTCtoMs, formatDate } from '../../utilities/time';
   import {
     MAX_CANVAS_SIZE,
     TimelineInteractionMode,

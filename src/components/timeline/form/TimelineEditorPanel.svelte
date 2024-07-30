@@ -29,7 +29,6 @@
     ViewLineLayerColorPresets,
   } from '../../../constants/view';
   import { ViewConstants } from '../../../enums/view';
-  import { derivationGroups, selectedPlanDerivationGroupIds } from '../../../stores/external-source';
   import { maxTimeRange, viewTimeRange } from '../../../stores/plan';
   import { plugins } from '../../../stores/plugins';
   import { yAxesWithScaleDomainsCache } from '../../../stores/simulation';
@@ -122,8 +121,6 @@
   }
   $: activityOptions = selectedRow?.activityOptions || { ...ViewDefaultActivityOptions };
   $: externalEventOptions = selectedRow?.externalEventOptions || { ...ViewDefaultExternalEventOptions };
-
-  $: validEventTypes = $derivationGroups.filter(dg => $selectedPlanDerivationGroupIds.includes(dg.source_type_id)).map(dg => dg.event_types).reduce((acc, curr) => acc.concat(curr), []);
 
   function updateRowEvent(event: Event) {
     const { name, value } = getTarget(event);
