@@ -258,6 +258,9 @@
 
   let gridRowSizes: string = '1fr 3px 0fr';
 
+  // TODO
+  $: console.log(`Current gridRowSizes: ${gridRowSizes}`);
+
   // Clear all error stores when a source is selected as they will not be shown
   $: if (selectedSource !== null) {
     createExternalSourceError.set(null);
@@ -670,6 +673,9 @@
           total_groups: $derivationGroups.length, // kind of unnecessary here, but necessary in this type for the table and coloring
         };
 
+        // Update gridRowSizes to account for the new bottom-pane when the source is selected
+        gridRowSizes = '1fr 3px 1fr';
+
         // persist to list of newly added sources, restating (for uniformity in UpdateCard) the change_date (in the non-deletion case - created_at)
         let seenSourcesParsed: ExternalSourceWithDateInfo[] = JSON.parse($unseenSources);
         unseenSources.set(JSON.stringify(seenSourcesParsed.concat({ ...selectedSource, change_date: new Date() })));
@@ -682,6 +688,7 @@
       startTimeDoyField.reset('');
       endTimeDoyField.reset('');
       validAtDoyField.reset('');
+
     } else {
       showFailureToast('Upload failed.');
       console.log('Upload failed - no file present, or parsing failed.');
