@@ -258,9 +258,6 @@
 
   let gridRowSizes: string = '1fr 3px 0fr';
 
-  // TODO
-  $: console.log(`Current gridRowSizes: ${gridRowSizes}`);
-
   // Clear all error stores when a source is selected as they will not be shown
   $: if (selectedSource !== null) {
     createExternalSourceError.set(null);
@@ -288,21 +285,20 @@
       file = files[0];
       const fileText = file.text();
       fileText.then(async text => {
-        parsed = JSON.parse(await text);
-        if (parsed) {
-          // TODO: replace try/catch with actual JSONSchema logic
-          try {
+        try {
+          parsed = JSON.parse(await text);
+          if (parsed) {
             $keyField.value = parsed.source.key;
             $sourceTypeField.value = parsed.source.source_type;
             $startTimeDoyField.value = parsed.source.period.start_time;
             $endTimeDoyField.value = parsed.source.period.end_time;
             $validAtDoyField.value = parsed.source.valid_at;
             isDerivationGroupFieldDisabled = false;
-          } catch (e) {
+          }
+        } catch (e) {
             catchError('External Source has Invalid Format', e as Error);
             showFailureToast('External Source has Invalid Format');
             parsed = undefined;
-          }
         }
       });
     }
