@@ -91,7 +91,6 @@ import type {
   DerivationGroupInsertInput,
   ExternalSourceEventType,
   ExternalSourceInsertInput,
-  ExternalSourceSlim,
   ExternalSourceType,
   ExternalSourceTypeInsertInput,
   ExternalSourceWithResolvedNames,
@@ -2421,10 +2420,7 @@ const effects = {
         throwPermissionError('delete an external source');
       }
       if (externalSource !== null) {
-        const { confirm } = await showDeleteExternalSourceModal(
-          [],
-          externalSource
-        );
+        const { confirm } = await showDeleteExternalSourceModal([], externalSource);
         if (confirm) {
           const data = await reqHasura<{ id: number }>(gql.DELETE_EXTERNAL_SOURCE, { id: externalSource.id }, user);
           if (data.deleteExternalSource !== null) {
@@ -3537,66 +3533,6 @@ const effects = {
     } catch (e) {
       catchError('Failed to retrieve external events.', e as Error);
       showFailureToast('External Events Retrieval Failed');
-      return [];
-    }
-  },
-
-  async getExternalEventsByEventType(
-    eventType: ExternalEventType | null,
-    user: User | null,
-  ): Promise<ExternalEventDB[]> {
-    try {
-      if (eventType) {
-        const eventTypeId = eventType.id;
-        const data = await reqHasura<any>(gql.GET_EXTERNAL_EVENT_BY_EVENT_TYPE, { event_type_id: eventTypeId }, user);
-        const { external_event: events } = data;
-        const outputEvents: ExternalEventDB[] = [];
-        for (const event of events) {
-          outputEvents.push({
-            duration: event.duration,
-            event_type_id: event.event_type_id,
-            id: event.id,
-            key: event.key,
-            properties: event.properties,
-            source_id: event.source_id,
-            start_time: event.start_time,
-          });
-        }
-        return outputEvents;
-      } else {
-        return [];
-      }
-    } catch (e) {
-      catchError(e as Error);
-      return [];
-    }
-  },
-
-  async getExternalSourceByType(sourceTypeId: number | undefined, user: User | null): Promise<ExternalSourceSlim[]> {
-    try {
-      if (sourceTypeId) {
-        const data = await reqHasura<any>(gql.GET_EXTERNAL_SOURCE_BY_TYPE, { source_type_id: sourceTypeId }, user);
-        const { external_source: sources } = data;
-        const outputSources: ExternalSourceSlim[] = [];
-        for (const source of sources) {
-          outputSources.push({
-            created_at: source.created_at,
-            derivation_group_id: source.derivation_group_id,
-            end_time: source.end_time,
-            file_id: source.file_id,
-            id: source.id,
-            key: source.key,
-            source_type_id: source.source_type_id,
-            start_time: source.start_time,
-            valid_at: source.valid_at,
-          });
-        }
-        return outputSources;
-      } else {
-        return [];
-      }
-    } catch (e) {
-      catchError(e as Error);
       return [];
     }
   },
