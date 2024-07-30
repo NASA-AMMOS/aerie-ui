@@ -548,6 +548,17 @@
             return;
           }
 
+          // check that it is in bounds of start and end of source
+          let parsedStart = Date.parse(convertDoyToYmd(externalEvent.start_time.replace("Z", "")) ?? "");
+          let parsedEnd = parsedStart + convertDurationToMs(externalEvent.duration);
+          let parsedStartWhole = Date.parse(start_time);
+          let parsedEndWhole = Date.parse(end_time);
+          if (!((parsedStart >= parsedStartWhole) && (parsedEnd <= parsedEndWhole))) {
+            showFailureToast(`Upload failed. Event (${externalEvent.key}) not in bounds of source start and end: occurs from [${new Date(parsedStart)},${new Date(parsedEnd)}], not subset of [${new Date(parsedStartWhole)},${new Date(parsedEndWhole)}].\n`);
+            console.log(`Upload failed. Event (${externalEvent.key}) not in bounds of source start and end: occurs from [${new Date(parsedStart)},${new Date(parsedEnd)}], not subset of [${new Date(parsedStartWhole)},${new Date(parsedEndWhole)}].\n`)
+            return;
+          }
+
           // if the event is valid...
           if (
             externalEvent.event_type !== undefined &&
