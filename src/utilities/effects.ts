@@ -3446,6 +3446,7 @@ const effects = {
     }
   },
 
+  // Should be deprecated with the introduction of strict external source schemas, dictating allowable event types for given source types. But for now, this will do.
   async getExternalEventTypesBySource(
     source_id: number | null,
     user: User | null,
@@ -3454,15 +3455,14 @@ const effects = {
       if (!source_id || source_id <= 0) {
         return [];
       }
-      const data = await reqHasura<
-        {
-          event_types: string[];
-          external_source_id: number;
-        }[]
-      >(gql.GET_EXTERNAL_EVENT_TYPE_BY_SOURCE, { source_id }, user);
-      const { external_event_type_ids } = data
-      if (external_event_type_ids != null) {
-        return external_event_type_ids[0].event_types;
+      const data = await reqHasura<any>(gql.GET_EXTERNAL_EVENT_TYPE_BY_SOURCE, { source_id }, user);
+      const { external_source } = data
+      if (external_source != null) {
+        let event_types: string[] = [];
+        for (let external_event of external_source[0].external_events) {
+          event_types.push(external_event.external_event_type.name)
+        }
+        return Array.from(new Set(event_types));
       } else {
         throw Error('Unable to retrieve external event types for source');
       }

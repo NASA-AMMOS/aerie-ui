@@ -90,12 +90,6 @@ export type DerivationGroupMetadataVersionDefinition = Pick<
 export type DerivationGroupMetadata = BaseMetadata<DerivationGroupDefinition>;
 export type DerivationGroupMetadataSlim = Omit<DerivationGroupMetadata, 'models_using' | 'plans_using' | 'versions'>;
 
-export type ExternalSourceEventType = {
-  // to specify what types are contained in each source.
-  external_event_type_id: number;
-  external_source_id: number;
-};
-
 // used exclusively in ExternalSourcesPanel and UpdateCard, to help track 'deleted_at' information. If in the future we have a comprehensive history of all sources' metadata ever, we will use this there too
 export type ExternalSourceWithDateInfo = ExternalSourceWithResolvedNames & { change_date: Date };
 
