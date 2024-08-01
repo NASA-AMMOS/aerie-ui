@@ -16,7 +16,10 @@ export class ExternalSources {
   externalEventTableHeaderID: Locator;
   externalEventTableHeaderSourceID: Locator;
   externalEventTableRow: Locator;
+  externalSourceFileName: string = 'example-external-source.json';
   externalSourceFilePath: string = 'e2e-tests/data/example-external-source.json';
+  externalSourceFilePathMissingField: string = 'e2e-tests/data/example-external-source-missing-field.json';
+  externalSourceFilePathSyntaxError: string = 'e2e-tests/data/example-external-source-syntax-error.json';
   externalSourceId: string;
   externalSourceKey: string = 'DSN_CONTACT_CONFIRMED:DSNCONFIRMED_04.json';
   externalSourceSelectedForm: Locator;
@@ -108,9 +111,11 @@ export class ExternalSources {
     this.viewEventSourceMetadata = page.getByRole('button', { name: 'View Event Source Metadata' });
   }
 
-  async uploadExternalSource(inputFilePath: string = this.externalSourceFilePath) {
+  async uploadExternalSource(inputFilePath: string = this.externalSourceFilePath, waitForSuccess: boolean = true) {
     await this.fillInputFile(inputFilePath);
     await this.uploadButton.click();
-    await this.page.getByText('External Source Created').waitFor({ state: 'visible' });
+    if (waitForSuccess === true) {
+      await this.page.getByText('External Source Created').waitFor({ state: 'visible' });
+    }
   }
 }
