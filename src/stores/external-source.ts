@@ -21,8 +21,6 @@ export const createDerivationGroupError: Writable<string | null> = writable(null
 
 export const derivationGroupPlanLinkError: Writable<string | null> = writable(null);
 
-export const createExternalSourceEventTypeLinkError: Writable<string | null> = writable(null);
-
 /* Persisted. */
 // need extra logic for persistence
 // track which sources have been acknowledged by user as added to AERIE
@@ -128,7 +126,6 @@ export function resetModelStores() {
   createExternalSourceTypeError.set(null);
   createDerivationGroupError.set(null);
   derivationGroupPlanLinkError.set(null);
-  createExternalSourceEventTypeLinkError.set(null);
 }
 
 export function getSourceName(source_id: number | undefined, sources: ExternalSourceSlim[]): string {

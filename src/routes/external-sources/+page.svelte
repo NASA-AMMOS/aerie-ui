@@ -4,7 +4,7 @@
   import { onDestroy } from 'svelte';
   import PageTitle from '../../components/app/PageTitle.svelte';
   import ExternalSourceManager from '../../components/external-source/ExternalSourceManager.svelte';
-  import { createDerivationGroupError, createExternalSourceError, createExternalSourceEventTypeLinkError, createExternalSourceTypeError, derivationGroupPlanLinkError } from '../../stores/external-source';
+  import { createDerivationGroupError, createExternalSourceError, createExternalSourceTypeError, derivationGroupPlanLinkError } from '../../stores/external-source';
   import type { PageData } from './$types';
 
   export let data: PageData;
@@ -15,7 +15,6 @@
     createExternalSourceTypeError.set(null);
     createDerivationGroupError.set(null);
     derivationGroupPlanLinkError.set(null);
-    createExternalSourceEventTypeLinkError.set(null);
   });
 </script>
 
