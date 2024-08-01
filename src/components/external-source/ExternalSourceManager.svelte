@@ -11,7 +11,6 @@
   import {
     createDerivationGroupError,
     createExternalSourceError,
-    createExternalSourceEventTypeLinkError,
     createExternalSourceTypeError,
     creatingExternalSource,
     deletedSourcesSeen,
@@ -263,7 +262,6 @@
     createExternalSourceError.set(null);
     createExternalSourceTypeError.set(null);
     createDerivationGroupError.set(null);
-    createExternalSourceEventTypeLinkError.set(null);
   }
 
   // unfortunately very clunky, but it does correctly select all source types on page load as stores populate shortly AFTER the component loads,
@@ -279,7 +277,6 @@
       createExternalSourceError.set(null);
       createExternalSourceTypeError.set(null);
       createDerivationGroupError.set(null);
-      createExternalSourceEventTypeLinkError.set(null);
       isDerivationGroupFieldDisabled = true;
 
       file = files[0];
@@ -926,14 +923,12 @@
             $createExternalSourceError = null;
             $createExternalSourceTypeError = null;
             $createDerivationGroupError = null;
-            $createExternalSourceEventTypeLinkError = null;
             isDerivationGroupFieldDisabled = true;
           }}
         >
           <AlertError class="m-2" error={$createExternalSourceError} />
           <AlertError class="m-2" error={$createExternalSourceTypeError} />
           <AlertError class="m-2" error={$createDerivationGroupError} />
-          <AlertError class="m-2" error={$createExternalSourceEventTypeLinkError} />
           <div style="display:flex; white-space:nowrap;">
             <fieldset style="width:100%">
               <label for="file">Source File</label>

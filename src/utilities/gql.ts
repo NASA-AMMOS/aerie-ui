@@ -480,14 +480,6 @@ const gql = {
     }
   `,
 
-  CREATE_EXTERNAL_SOURCE_EVENT_TYPE: `#graphql
-    mutation CreateExternalSourceEventType($link: external_source_event_type_insert_input!) {
-      createExternalSourceEventType: insert_external_source_event_type_one(object: $link) {
-        id
-      }
-    }
-  `,
-
   CREATE_EXTERNAL_SOURCE_TYPE: `#graphql
     mutation CreateExternalSourceType($sourceType: external_source_type_insert_input!) {
       createExternalSourceType: insert_external_source_type_one(object: $sourceType) {
@@ -1478,11 +1470,15 @@ const gql = {
     }
   `,
 
+  // Should be deprecated with the introduction of strict external source schemas, dictating allowable event types for given source types. But for now, this will do.
   GET_EXTERNAL_EVENT_TYPE_BY_SOURCE: `#graphql
     query GetExternalEventTypesBySource($source_id: Int!) {
-      external_event_type_ids: ${Queries.EXTERNAL_SOURCE_EVENT_TYPES}(where: {external_source_id: {_eq: $source_id}}) {
-        event_types,
-        external_source_id
+      external_source(where: {id: {_eq: $source_id}}) {
+        external_events {
+          external_event_type {
+            name
+          }
+        }
       }
     }
   `,
