@@ -1111,6 +1111,8 @@
               }
             }}
           />
+        {:else}
+          <p>No external sources matching the selected external source type(s).</p>
         {/if}
       </svelte:fragment>
     </Panel>
