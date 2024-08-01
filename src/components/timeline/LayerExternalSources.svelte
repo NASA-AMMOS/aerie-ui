@@ -29,7 +29,7 @@
   export let selectedExternalEventId: ExternalEventId | null = null;
   export let externalEvents: ExternalEvent[] = [];
   export let idToColorMaps: IdToColorMaps = { directives: {}, external_events: {}, spans: {} };
-  export let externalEventRowPadding: number = 4;
+  export let externalEventRowPadding: number = 8;
   export let externalEventSelectedColor: string = '#a9eaff';
   export let externalEventSelectedTextColor: string = '#0a4c7e';
   export let externalEventDefaultColor = '#cbcbcb';
@@ -292,7 +292,7 @@
         }
       });
 
-      const extraSpace = Math.max(0, drawHeight - externalEventOptions.externalEventHeight - externalEventRowPadding);
+      const extraSpace = Math.max(0, externalEventOptions.externalEventHeight + externalEventRowPadding);
       const rowCount = Object.keys(rows).length;
       Object.entries(rows).forEach(([_, entry], i) => {
         const { items } = entry;
