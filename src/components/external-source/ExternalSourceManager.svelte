@@ -870,11 +870,15 @@
             {#await effects.getExternalSourceMetadata(selectedSource.id, user)}
               <em>loading metadata...</em>
             {:then metadata}
-              <Properties
-                formProperties={Object.entries(metadata).map(e => {
-                  return { name: e[0], value: e[1] };
-                })}
-              />
+              {#if Object.keys(metadata).length}
+                <Properties
+                  formProperties={Object.entries(metadata).map(e => {
+                    return { name: e[0], value: e[1] };
+                  })}
+                />
+              {:else}
+                <em>Source has no metadata.</em>
+              {/if}
             {:catch error}
               <em>error loading metadata...try refreshing the page.</em>
               {catchError(error)}
