@@ -93,3 +93,27 @@ test.describe.serial('External Sources', () => {
     await expect(externalSources.externalSourceSelectedForm).not.toBeVisible();
   });
 });
+
+test.describe.serial('External Source Error Handling', () => {
+  test('Duplicate keys is handled gracefully', async () => {
+    await externalSources.uploadExternalSource(externalSources.externalSourceFilePath);
+    await externalSources.deselectSourceButton.click();
+    await page.waitForTimeout(10000); // Arbitrary wait to make sure the test doesn't out-pace the database
+    await externalSources.uploadExternalSource(externalSources.externalSourceFilePath, false);
+    await expect(page.getByLabel('Uniqueness violation.')).toBeVisible();
+    await expect(page.getByText('External Source Create Failed')).toBeVisible();
+    await expect(page.getByRole('gridcell', { name: externalSources.externalSourceFileName })).toHaveCount(1);
+    await externalSources.deleteSource();
+    await expect(page.getByText('External Source Deleted')).toBeVisible();
+  });
+
+  test("Invalid 'source' field is handled gracefully", async () => {
+    await externalSources.uploadExternalSource(externalSources.externalSourceFilePathMissingField, false);
+    await expect(page.getByText('External Source Type Create Failed')).toBeVisible();
+  });
+
+  test('Syntax error is handled gracefully', async () => {
+    await externalSources.fillInputFile(externalSources.externalSourceFilePathSyntaxError);
+    await expect(page.getByText('External Source has Invalid Format')).toBeVisible();
+  });
+});
