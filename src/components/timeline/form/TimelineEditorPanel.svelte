@@ -76,6 +76,7 @@
     isLineLayer,
     isXRangeLayer,
   } from '../../../utilities/timeline';
+  import { showFailureToast } from '../../../utilities/toast';
   import { tooltip } from '../../../utilities/tooltip';
   import ColorPicker from '../../form/ColorPicker.svelte';
   import Input from '../../form/Input.svelte';
@@ -1125,13 +1126,10 @@
                   const { value } = getTarget(e);
                   if (typeof value === 'number' && !isNaN(value)) {
                     if (value >= 2) {
-                      viewUpdateRow(
-                        'externalEventOptions',
-                        { ...externalEventOptions, groupedModeBinSize: value },
-                        null,
-                        null,
-                        true
-                      );
+                      viewUpdateRow('externalEventOptions', { ...externalEventOptions, groupedModeBinSize: value });
+                    }
+                    else {
+                      showFailureToast(`Size must be >= 2. Retaining former value ${externalEventOptions.groupedModeBinSize}.`)
                     }
                   }
                 }}
