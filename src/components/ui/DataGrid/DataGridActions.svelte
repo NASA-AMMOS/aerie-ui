@@ -8,6 +8,7 @@
   import PenIcon from '@nasa-jpl/stellar/icons/pen.svg?component';
   import TrashIcon from '@nasa-jpl/stellar/icons/trash.svg?component';
   import type { Placement } from 'tippy.js';
+  import ExportIcon from '../../../assets/export.svg?component';
   import type { TRowData } from '../../../types/data-grid';
   import { tooltip } from '../../../utilities/tooltip';
 
@@ -26,6 +27,7 @@
   export let hasDeletePermissionError: string | undefined = undefined;
   export let hasEditPermission: boolean = true;
   export let hasEditPermissionError: string | undefined = undefined;
+  export let useExportIcon: boolean | undefined = undefined;
   export let viewTooltip: Tooltip | undefined = undefined;
 
   export let editCallback: ((data: RowData) => void) | undefined = undefined;
@@ -57,7 +59,11 @@
     }}
     use:tooltip={downloadTooltip}
   >
-    <DownloadIcon />
+    {#if useExportIcon}
+      <ExportIcon />
+    {:else}
+      <DownloadIcon />
+    {/if}
   </button>
 {/if}
 {#if editCallback}

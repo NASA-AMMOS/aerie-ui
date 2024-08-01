@@ -7,8 +7,10 @@
   import PlanIcon from '@nasa-jpl/stellar/icons/plan.svg?component';
   import UploadIcon from '@nasa-jpl/stellar/icons/upload.svg?component';
   import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
+  import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { flatten } from 'lodash-es';
   import { onDestroy, onMount } from 'svelte';
+  import ImportIcon from '../../assets/import.svg?component';
   import Nav from '../../components/app/Nav.svelte';
   import PageTitle from '../../components/app/PageTitle.svelte';
   import DatePickerField from '../../components/form/DatePickerField.svelte';
@@ -46,12 +48,14 @@
   import { getPlanForTransfer, isDeprecatedPlanTransfer } from '../../utilities/plan';
   import {
     convertDoyToYmd,
+    convertDurationStringToUs,
     convertUsToDurationString,
     formatDate,
     getDoyTime,
     getDoyTimeFromInterval,
     getShortISOForDate,
   } from '../../utilities/time';
+  import { tooltip } from '../../utilities/tooltip';
   import { min, required, unique } from '../../utilities/validators';
   import type { PageData } from './$types';
 
@@ -85,32 +89,6 @@
       sortable: true,
       suppressAutoSize: true,
       width: 130,
-    },
-    {
-      field: 'model_name',
-      filter: 'text',
-      headerName: 'Model Name',
-      resizable: true,
-      sortable: true,
-      valueGetter: (params: ValueGetterParams<Plan>) => {
-        if (params.data?.model_id !== undefined) {
-          return data.models.find(model => model.id === params.data?.model_id)?.name;
-        }
-      },
-      width: 150,
-    },
-    {
-      field: 'model_version',
-      filter: 'text',
-      headerName: 'Model Version',
-      resizable: true,
-      sortable: true,
-      valueGetter: (params: ValueGetterParams<Plan>) => {
-        if (params.data?.model_id !== undefined) {
-          return data.models.find(model => model.id === params.data?.model_id)?.version;
-        }
-      },
-      width: 150,
     },
     {
       field: 'start_time',
@@ -210,6 +188,7 @@
 
   let canCreate: boolean = false;
   let columnDefs: DataGridColumnDef[] = baseColumnDefs;
+  let createPlanButtonText: string = 'Create';
   let durationString: string = 'None';
   let filterText: string = '';
   let isPlanImportMode: boolean = false;
@@ -217,6 +196,11 @@
   let nameInputField: HTMLInputElement;
   let planTags: Tag[] = [];
   let selectedModel: ModelSlim | undefined;
+  let selectedPlan: PlanSlim | undefined;
+  let selectedPlanId: number | null = null;
+  let selectedPlanModelName: string | null = null;
+  let selectedPlanStartTime: string | null = null;
+  let selectedPlanEndTime: string | null = null;
   let user: User | null = null;
 
   let modelIdField = field<number>(-1, [min(1, 'Field is required')]);
@@ -243,6 +227,19 @@
         'Plan name already exists',
       ),
     ]);
+
+    selectedPlan = $plans.find(({ id }) => id === selectedPlanId);
+    if (selectedPlan) {
+      const parsedPlanStartTime = $plugins.time.primary.parse(selectedPlan?.start_time_doy);
+      const parsedPlanEndTime = $plugins.time.primary.parse(selectedPlan?.end_time_doy);
+      if (parsedPlanStartTime) {
+        selectedPlanStartTime = formatDate(parsedPlanStartTime, $plugins.time.primary.format);
+      }
+      if (parsedPlanEndTime) {
+        selectedPlanEndTime = formatDate(parsedPlanEndTime, $plugins.time.primary.format);
+      }
+      selectedPlanModelName = $models.find(model => model.id === selectedPlan?.model_id)?.name ?? null;
+    }
   }
   $: models.updateValue(() => data.models);
   // sort in descending ID order
@@ -259,7 +256,34 @@
     user = data.user;
     canCreate = user ? featurePermissions.plan.canCreate(user) : false;
     columnDefs = [
-      ...baseColumnDefs,
+      ...baseColumnDefs.slice(0, 3),
+      {
+        field: 'model_name',
+        filter: 'text',
+        headerName: 'Model Name',
+        resizable: true,
+        sortable: true,
+        valueGetter: (params: ValueGetterParams<Plan>) => {
+          if (params.data?.model_id !== undefined) {
+            return $models.find(model => model.id === params.data?.model_id)?.name;
+          }
+        },
+        width: 150,
+      },
+      {
+        field: 'model_version',
+        filter: 'text',
+        headerName: 'Model Version',
+        resizable: true,
+        sortable: true,
+        valueGetter: (params: ValueGetterParams<Plan>) => {
+          if (params.data?.model_id !== undefined) {
+            return $models.find(model => model.id === params.data?.model_id)?.version;
+          }
+        },
+        width: 150,
+      },
+      ...baseColumnDefs.slice(3),
       {
         cellClass: 'action-cell-container',
         cellRenderer: (params: PlanCellRendererParams) => {
@@ -277,6 +301,7 @@
                 content: 'Export Plan',
                 placement: 'bottom',
               },
+              useExportIcon: true,
               hasDeletePermission: params.data && user ? featurePermissions.plan.canDelete(user, params.data) : false,
               rowData: params.data,
             },
@@ -304,6 +329,11 @@
     $modelIdField.dirtyAndValid &&
     $nameField.dirtyAndValid &&
     $startTimeField.dirtyAndValid;
+  $: if ($creatingPlan) {
+    createPlanButtonText = planUploadFiles ? 'Creating from .json...' : 'Creating...';
+  } else {
+    createPlanButtonText = planUploadFiles ? 'Create from .json' : 'Create';
+  }
   $: filteredPlans = $plans.filter(plan => {
     const filterTextLowerCase = filterText.toLowerCase();
     return (
@@ -392,11 +422,25 @@
     }
   }
 
+  function deselectPlan() {
+    selectPlan(null);
+  }
+
   async function exportPlan(plan: PlanSlim): Promise<void> {
     const planTransfer = await getPlanForTransfer(plan, user);
 
     if (planTransfer) {
       downloadJSON(planTransfer, plan.name);
+    }
+  }
+
+  async function exportSelectedPlan(): Promise<void> {
+    if (selectedPlan) {
+      const planTransfer = await getPlanForTransfer(selectedPlan, user);
+
+      if (planTransfer) {
+        downloadJSON(planTransfer, selectedPlan.name);
+      }
     }
   }
 
@@ -423,8 +467,10 @@
     }
   }
 
-  function showPlan(plan: Pick<Plan, 'id'>) {
-    goto(`${base}/plans/${plan.id}`);
+  function showPlan() {
+    if (selectedPlanId !== null) {
+      goto(`${base}/plans/${selectedPlanId}`);
+    }
   }
 
   function hideImportPlan() {
@@ -554,10 +600,19 @@
   function onPlanFileChange(event: Event) {
     const files = (event.target as HTMLInputElement).files;
     if (files !== null && files.length) {
-      const reader = new FileReader();
-      reader.onload = onReaderLoad;
-      reader.readAsText(files[0]);
+      const file = files[0];
+      if (/\.json$/.test(file.name)) {
+        const reader = new FileReader();
+        reader.onload = onReaderLoad;
+        reader.readAsText(file);
+      } else {
+        planUploadFilesError = 'Plan file is not a .json file';
+      }
     }
+  }
+
+  function selectPlan(planId: number | null) {
+    selectedPlanId = planId;
   }
 </script>
 
@@ -571,196 +626,267 @@
   <CssGrid columns="20% auto">
     <Panel borderRight padBody={false}>
       <svelte:fragment slot="header">
-        <SectionTitle>New Plan</SectionTitle>
-        <button class="st-button secondary import-button" type="button" on:click={showImportPlan}>
-          <UploadIcon /> Import
-        </button>
+        {#if selectedPlan}
+          <SectionTitle>Selected plan</SectionTitle>
+          <div class="selected-plan-buttons">
+            <button class="st-button secondary transfer-button" on:click={exportSelectedPlan}>
+              <ImportIcon /> Export
+            </button>
+            <button
+              class="st-button icon fs-6"
+              on:click={deselectPlan}
+              use:tooltip={{ content: 'Deselect plan', placement: 'top' }}
+            >
+              <XIcon />
+            </button>
+          </div>
+        {:else}
+          <SectionTitle>New Plan</SectionTitle>
+          <button
+            class="st-button secondary transfer-button"
+            type="button"
+            on:click={isPlanImportMode ? hideImportPlan : showImportPlan}
+          >
+            <UploadIcon /> Import
+          </button>
+        {/if}
       </svelte:fragment>
 
       <svelte:fragment slot="body">
-        <form on:submit|preventDefault={createPlan}>
-          <AlertError class="m-2" error={$createPlanError} />
-
-          <Field field={modelIdField}>
-            <label for="model" slot="label">Models</label>
-            <select
-              class="st-select w-100"
-              data-type="number"
-              name="model"
-              use:permissionHandler={{
-                hasPermission: canCreate,
-                permissionError,
-              }}
-            >
-              <option value="-1" />
-              {#each orderedModels as model (model.id)}
-                <option value={model.id}>
-                  {model.name}
-                  (Version: {model.version})
-                </option>
-              {/each}
-            </select>
-          </Field>
-          {#if selectedModel}
-            <div class="model-status">
-              <ModelStatusRollup mode="rollup" model={selectedModel} showCompleteStatus />
-            </div>
-          {/if}
-
-          <Field field={nameField}>
-            <label for="name" slot="label">Name</label>
-            <input
-              bind:this={nameInputField}
-              autocomplete="off"
-              class="st-input w-100"
-              name="name"
-              aria-label="name"
-              use:permissionHandler={{
-                hasPermission: canCreate,
-                permissionError,
-              }}
-            />
-          </Field>
-
+        {#if selectedPlan}
+          <div class="plan-metadata">
+            <fieldset>
+              <Input layout="inline">
+                <label class="plan-metadata-item-label" for="name">Model</label>
+                <input
+                  disabled
+                  class="st-input w-100"
+                  name="name"
+                  use:tooltip={{ content: selectedPlanModelName, placement: 'top' }}
+                  value={selectedPlanModelName}
+                />
+              </Input>
+              <Input layout="inline">
+                <label class="plan-metadata-item-label" for="id">Name</label>
+                <input disabled class="st-input w-100" name="id" value={selectedPlan.name} />
+              </Input>
+              <Input layout="inline">
+                <label class="plan-metadata-item-label" for="start-time">
+                  Start Time - {$plugins.time.primary.formatString}
+                </label>
+                <input disabled class="st-input w-100" name="start-time" value={selectedPlanStartTime} />
+              </Input>
+              <Input layout="inline">
+                <label class="plan-metadata-item-label" for="end-time">
+                  End Time - {$plugins.time.primary.formatString}
+                </label>
+                <input disabled class="st-input w-100" name="end-time" value={selectedPlanEndTime} />
+              </Input>
+              <Input layout="inline">
+                <label class="plan-metadata-item-label" for="duration"> Plan Duration </label>
+                <input
+                  disabled
+                  class="st-input w-100"
+                  name="duration"
+                  value={convertUsToDurationString(convertDurationStringToUs(selectedPlan.duration))}
+                />
+              </Input>
+              <Input layout="inline">
+                <label class="plan-metadata-item-label" for="tags">Tags</label>
+                <TagsInput
+                  use={[
+                    [
+                      permissionHandler,
+                      {
+                        hasPermission: canCreate,
+                        permissionError,
+                      },
+                    ],
+                  ]}
+                  disabled
+                  options={$tags}
+                  selected={selectedPlan.tags.map(({ tag }) => tag)}
+                  on:change={onTagsInputChange}
+                />
+              </Input>
+            </fieldset>
+          </div>
           <fieldset>
-            <DatePickerField
-              layout="stacked"
-              useFallback={!$plugins.time.enableDatePicker}
-              field={startTimeField}
-              label={`Start Time - ${$plugins.time.primary.formatString}`}
-              name="start-time"
-              on:change={onStartTimeChanged}
-              use={[
-                [
-                  permissionHandler,
-                  {
-                    hasPermission: canCreate,
-                    permissionError,
-                  },
-                ],
-              ]}
-            />
+            <button class="st-button w-100" on:click={showPlan}>Open plan</button>
           </fieldset>
-          <fieldset>
-            <DatePickerField
-              useFallback={!$plugins.time.enableDatePicker}
-              field={endTimeField}
-              label={`End Time - ${$plugins.time.primary.formatString}`}
-              name="end-time"
-              on:change={updateDurationString}
-              use={[
-                [
-                  permissionHandler,
-                  {
-                    hasPermission: canCreate,
-                    permissionError,
-                  },
-                ],
-              ]}
-            />
-          </fieldset>
+        {:else}
+          <form on:submit|preventDefault={createPlan}>
+            <AlertError class="m-2" error={$createPlanError} />
 
-          <fieldset>
-            <label for="plan-duration">Plan Duration</label>
-            <input class="st-input w-100" disabled id="plan-duration" name="duration" value={durationString} />
-          </fieldset>
+            {#if isPlanImportMode}
+              <fieldset>
+                <label for="file">Plan File (JSON)</label>
+                <div class="import-input-container">
+                  <input
+                    class="w-100"
+                    name="file"
+                    type="file"
+                    bind:files={planUploadFiles}
+                    bind:this={planUploadFileInput}
+                    use:permissionHandler={{
+                      hasPermission: canCreate,
+                      permissionError,
+                    }}
+                    on:change={onPlanFileChange}
+                  />
+                  {#if planUploadFiles}<button class="st-button secondary" type="button" on:click={hideImportPlan}>
+                      Clear
+                    </button>
+                  {/if}
+                </div>
+                {#if planUploadFilesError}
+                  <div class="error">{planUploadFilesError}</div>
+                {/if}
+              </fieldset>
+            {/if}
 
-          <Field field={simTemplateField}>
-            <label for="simulation-templates" slot="label"> Simulation Templates </label>
-            <select
-              class="st-select w-100"
-              data-type="number"
-              disabled={!$simulationTemplates.length}
-              name="simulation-templates"
-              use:permissionHandler={{
-                hasPermission: canCreate,
-                permissionError,
-              }}
-            >
-              {#if !$simulationTemplates.length}
-                <option value="null">Empty</option>
-              {:else}
-                <option value="null" />
-                {#each $simulationTemplates as template}
-                  <option value={template.id}>
-                    {template.description}
+            <Field field={modelIdField}>
+              <label for="model" slot="label">Models</label>
+              <select
+                class="st-select w-100"
+                data-type="number"
+                name="model"
+                use:permissionHandler={{
+                  hasPermission: canCreate,
+                  permissionError,
+                }}
+              >
+                <option value="-1" />
+                {#each orderedModels as model (model.id)}
+                  <option value={model.id}>
+                    {model.name}
+                    (Version: {model.version})
                   </option>
                 {/each}
-              {/if}
-            </select>
-          </Field>
-
-          <fieldset>
-            <label for="plan-duration">Tags</label>
-            <TagsInput
-              use={[
-                [
-                  permissionHandler,
-                  {
-                    hasPermission: canCreate,
-                    permissionError,
-                  },
-                ],
-              ]}
-              options={$tags}
-              selected={planTags}
-              on:change={onTagsInputChange}
-            />
-          </fieldset>
-
-          {#if isPlanImportMode}
-            <fieldset>
-              <label for="file">Plan File (JSON)</label>
-              <div class="import-input-container">
-                <input
-                  class="w-100"
-                  name="file"
-                  type="file"
-                  bind:files={planUploadFiles}
-                  bind:this={planUploadFileInput}
-                  use:permissionHandler={{
-                    hasPermission: canCreate,
-                    permissionError,
-                  }}
-                  on:change={onPlanFileChange}
-                />
-                {#if planUploadFiles}<button class="st-button secondary" type="button" on:click={hideImportPlan}
-                    >Clear</button
-                  >{/if}
+              </select>
+            </Field>
+            {#if selectedModel}
+              <div class="model-status">
+                <ModelStatusRollup mode="rollup" model={selectedModel} showCompleteStatus />
               </div>
-              {#if planUploadFilesError}
-                <div class="error">{planUploadFilesError}</div>
-              {/if}
-            </fieldset>
-          {/if}
+            {/if}
 
-          <fieldset>
-            <button
-              class="st-button w-100"
-              disabled={!createButtonEnabled}
-              type="submit"
-              use:permissionHandler={{
-                hasPermission: canCreate,
-                permissionError,
-              }}
-            >
-              {$creatingPlan ? 'Creating...' : 'Create'}
-            </button>
-          </fieldset>
-          <fieldset>
-            <button
-              class="st-button secondary w-100"
-              type="button"
-              use:permissionHandler={{
-                hasPermission: canCreate,
-                permissionError,
-              }}
-              on:click={showImportPlan}
-            >
-              Import plan from .json
-            </button>
-          </fieldset>
-        </form>
+            <Field field={nameField}>
+              <label for="name" slot="label">Name</label>
+              <input
+                bind:this={nameInputField}
+                autocomplete="off"
+                class="st-input w-100"
+                name="name"
+                aria-label="name"
+                use:permissionHandler={{
+                  hasPermission: canCreate,
+                  permissionError,
+                }}
+              />
+            </Field>
+
+            <fieldset>
+              <DatePickerField
+                layout="stacked"
+                useFallback={!$plugins.time.enableDatePicker}
+                field={startTimeField}
+                label={`Start Time - ${$plugins.time.primary.formatString}`}
+                name="start-time"
+                on:change={onStartTimeChanged}
+                use={[
+                  [
+                    permissionHandler,
+                    {
+                      hasPermission: canCreate,
+                      permissionError,
+                    },
+                  ],
+                ]}
+              />
+            </fieldset>
+            <fieldset>
+              <DatePickerField
+                useFallback={!$plugins.time.enableDatePicker}
+                field={endTimeField}
+                label={`End Time - ${$plugins.time.primary.formatString}`}
+                name="end-time"
+                on:change={updateDurationString}
+                use={[
+                  [
+                    permissionHandler,
+                    {
+                      hasPermission: canCreate,
+                      permissionError,
+                    },
+                  ],
+                ]}
+              />
+            </fieldset>
+
+            <fieldset>
+              <label for="plan-duration">Plan Duration</label>
+              <input class="st-input w-100" disabled id="plan-duration" name="duration" value={durationString} />
+            </fieldset>
+
+            <Field field={simTemplateField}>
+              <label for="simulation-templates" slot="label"> Simulation Templates </label>
+              <select
+                class="st-select w-100"
+                data-type="number"
+                disabled={!$simulationTemplates.length}
+                name="simulation-templates"
+                use:permissionHandler={{
+                  hasPermission: canCreate,
+                  permissionError,
+                }}
+              >
+                {#if !$simulationTemplates.length}
+                  <option value="null">Empty</option>
+                {:else}
+                  <option value="null" />
+                  {#each $simulationTemplates as template}
+                    <option value={template.id}>
+                      {template.description}
+                    </option>
+                  {/each}
+                {/if}
+              </select>
+            </Field>
+
+            <fieldset>
+              <label for="plan-duration">Tags</label>
+              <TagsInput
+                use={[
+                  [
+                    permissionHandler,
+                    {
+                      hasPermission: canCreate,
+                      permissionError,
+                    },
+                  ],
+                ]}
+                options={$tags}
+                selected={planTags}
+                on:change={onTagsInputChange}
+              />
+            </fieldset>
+
+            <fieldset>
+              <button
+                class="st-button w-100"
+                disabled={!createButtonEnabled}
+                type="submit"
+                use:permissionHandler={{
+                  hasPermission: canCreate,
+                  permissionError,
+                }}
+              >
+                {createPlanButtonText}
+              </button>
+            </fieldset>
+          </form>
+        {/if}
       </svelte:fragment>
     </Panel>
 
@@ -783,8 +909,9 @@
             itemDisplayText="Plan"
             items={filteredPlans}
             {user}
+            selectedItemId={selectedPlanId ?? null}
             on:deleteItem={event => deletePlanContext(event, filteredPlans)}
-            on:rowClicked={({ detail }) => showPlan(detail.data)}
+            on:rowClicked={({ detail }) => selectPlan(detail.data.id)}
           />
         {:else}
           No Plans Found
@@ -799,7 +926,7 @@
     padding: 5px 16px 0;
   }
 
-  .import-button {
+  .transfer-button {
     column-gap: 4px;
   }
 
@@ -813,6 +940,16 @@
     color: var(--st-red);
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .selected-plan-buttons {
+    column-gap: 0.25rem;
+    display: grid;
+    grid-template-columns: repeat(2, min-content);
+  }
+
+  .plan-metadata-item-label {
     white-space: nowrap;
   }
 </style>
