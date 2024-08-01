@@ -149,6 +149,7 @@ export type MouseOver = {
   pointsByLayer?: Record<number, Point[]>;
   row?: Row;
   selectedActivityDirectiveId?: number | undefined;
+  selectedExternalEventId?: number | undefined;
   selectedSpanId?: number;
   spans?: Span[];
 };
