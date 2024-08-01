@@ -172,7 +172,7 @@
 
         // Reconfigure seq JSON editor.
         editorOutputView.dispatch({
-          effects: compartmentSeqJsonLinter.reconfigure(seqJsonLinter(parsedCommandDictionary)),
+          effects: compartmentSeqJsonLinter.reconfigure(seqJsonLinter(parsedCommandDictionary, selectedOutputFormat)),
         });
       });
     }
