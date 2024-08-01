@@ -233,7 +233,7 @@
       {/if}
 
       <fieldset>
-        <label for="commandDictionary">Parcel (required)</label>
+        <label for="parcel">Parcel (required)</label>
         <select
           bind:value={sequenceParcelId}
           class="st-select w-100"

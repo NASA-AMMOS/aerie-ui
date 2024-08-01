@@ -9,10 +9,11 @@
   import type { ViewUpdate } from '@codemirror/view';
   import type { SyntaxNode } from '@lezer/common';
   import type { ChannelDictionary, CommandDictionary, ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
+  import ChevronDownIcon from '@nasa-jpl/stellar/icons/chevron_down.svg?component';
   import CollapseIcon from 'bootstrap-icons/icons/arrow-bar-down.svg?component';
   import ExpandIcon from 'bootstrap-icons/icons/arrow-bar-up.svg?component';
   import ClipboardIcon from 'bootstrap-icons/icons/clipboard.svg?component';
-  import SaveIcon from 'bootstrap-icons/icons/save.svg?component';
+  import DownloadIcon from 'bootstrap-icons/icons/download.svg?component';
   import { EditorView, basicSetup } from 'codemirror';
   import { debounce } from 'lodash-es';
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
@@ -34,7 +35,7 @@
     userSequenceEditorColumnsWithFormBuilder,
   } from '../../stores/sequencing';
   import type { User } from '../../types/app';
-  import type { Parcel } from '../../types/sequencing';
+  import type { IOutputFormat, Parcel } from '../../types/sequencing';
   import { setupLanguageSupport } from '../../utilities/codemirror';
   import effects from '../../utilities/effects';
   import { seqJsonLinter } from '../../utilities/sequence-editor/seq-json-linter';
@@ -44,6 +45,8 @@
   import { sequenceTooltip } from '../../utilities/sequence-editor/sequence-tooltip';
   import { showFailureToast, showSuccessToast } from '../../utilities/toast';
   import { tooltip } from '../../utilities/tooltip';
+  import Menu from '../menus/Menu.svelte';
+  import MenuItem from '../menus/MenuItem.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
   import Panel from '../ui/Panel.svelte';
@@ -78,8 +81,16 @@
   let editorOutputView: EditorView;
   let editorSequenceDiv: HTMLDivElement;
   let editorSequenceView: EditorView;
+  let menu: Menu;
+  let outputFormats: IOutputFormat[];
   let selectedNode: SyntaxNode | null;
+  let selectedOutputFormat: IOutputFormat | undefined;
   let toggleSeqJsonPreview: boolean = false;
+
+  $: {
+    outputFormats = $outputFormat;
+    selectedOutputFormat = outputFormats[0];
+  }
 
   $: {
     loadSequenceAdaptation(parcel?.sequence_adaptation_id);
@@ -240,7 +251,7 @@
     const sequence = viewUpdate.state.doc.toString();
     disableCopyAndExport = sequence === '';
     const tree = syntaxTree(viewUpdate.state);
-    const output = await $outputFormat?.toOutputFormat(tree, sequence, commandDictionary, sequenceName);
+    const output = await selectedOutputFormat?.toOutputFormat?.(tree, sequence, commandDictionary, sequenceName);
 
     if ($sequenceAdaptation?.modifyOutput !== undefined && output !== undefined) {
       $sequenceAdaptation?.modifyOutput(output, parameterDictionaries, channelDictionary);
@@ -283,9 +294,9 @@
   async function copyOutputFormatToClipboard() {
     try {
       await navigator.clipboard.writeText(editorOutputView.state.doc.toString());
-      showSuccessToast(`${$outputFormat?.name} copied to clipboard`);
+      showSuccessToast(`${selectedOutputFormat?.name} copied to clipboard`);
     } catch {
-      showFailureToast(`Error copying ${$outputFormat?.name} to clipboard`);
+      showFailureToast(`Error copying ${selectedOutputFormat?.name} to clipboard`);
     }
   }
 
@@ -317,26 +328,50 @@
             disabled={disableCopyAndExport}><ClipboardIcon /> {$inputFormat?.name}</button
           >
           <button
-            use:tooltip={{ content: `Copy sequence contents as ${$outputFormat?.name} to clipboard`, placement: 'top' }}
-            class="st-button icon-button secondary ellipsis"
-            on:click={copyOutputFormatToClipboard}
-            disabled={disableCopyAndExport}><ClipboardIcon /> {$outputFormat?.name}</button
-          >
-          <button
             use:tooltip={{
               content: `Download sequence contents as ${$inputFormat?.name}`,
               placement: 'top',
             }}
             class="st-button icon-button secondary ellipsis"
             on:click|stopPropagation={downloadInputFormat}
-            disabled={disableCopyAndExport}><SaveIcon /> {$inputFormat?.name}</button
+            disabled={disableCopyAndExport}><DownloadIcon /> {$inputFormat?.name}</button
           >
-          <button
-            use:tooltip={{ content: `Download sequence contents as ${$outputFormat?.name}`, placement: 'top' }}
-            class="st-button icon-button secondary ellipsis"
-            on:click|stopPropagation={downloadOutputFormat}
-            disabled={disableCopyAndExport}><SaveIcon /> {$outputFormat?.name}</button
-          >
+
+          <div class="app-menu" role="none" on:click|stopPropagation={() => menu.toggle()}>
+            <button class="st-button icon-button secondary ellipsis">
+              Output
+
+              <ChevronDownIcon />
+            </button>
+
+            <Menu bind:this={menu}>
+              {#each outputFormats as outputFormatItem}
+                <div
+                  use:tooltip={{
+                    content: `Copy sequence contents as ${outputFormatItem?.name} to clipboard`,
+                    placement: 'top',
+                  }}
+                >
+                  <MenuItem on:click={copyOutputFormatToClipboard} disabled={disableCopyAndExport}>
+                    <ClipboardIcon />
+                    {outputFormatItem?.name}
+                  </MenuItem>
+                </div>
+
+                <div
+                  use:tooltip={{
+                    content: `Download sequence contents as ${outputFormatItem?.name}`,
+                    placement: 'top',
+                  }}
+                >
+                  <MenuItem on:click={downloadOutputFormat} disabled={disableCopyAndExport}>
+                    <DownloadIcon />
+                    {outputFormatItem?.name}
+                  </MenuItem>
+                </div>
+              {/each}
+            </Menu>
+          </div>
         </div>
       </svelte:fragment>
 
@@ -348,9 +383,22 @@
     <CssGridGutter draggable={toggleSeqJsonPreview} track={1} type="row" />
     <Panel>
       <svelte:fragment slot="header">
-        <SectionTitle>{$sequenceAdaptation?.outputFormat.name} (Read-only)</SectionTitle>
+        <SectionTitle>{selectedOutputFormat?.name} (Read-only)</SectionTitle>
 
         <div class="right">
+          {#if outputFormats}
+            <div class="output-format">
+              <label for="outputFormat">Output Format</label>
+              <select bind:value={selectedOutputFormat} class="st-select w-100" name="outputFormat">
+                {#each outputFormats as outputFormatItem}
+                  <option value={outputFormatItem}>
+                    {outputFormatItem.name}
+                  </option>
+                {/each}
+              </select>
+            </div>
+          {/if}
+
           <button
             use:tooltip={{ content: toggleSeqJsonPreview ? `Collapse Editor` : `Expand Editor`, placement: 'top' }}
             class="st-button icon"
@@ -397,6 +445,15 @@
 </CssGrid>
 
 <style>
+  .app-menu {
+    align-items: center;
+    cursor: pointer;
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+    position: relative;
+  }
+
   .no-selected-parcel {
     padding: 8px;
   }
@@ -412,5 +469,14 @@
     column-gap: 5px;
     display: flex;
     margin: 2px;
+  }
+
+  .output-format {
+    align-items: center;
+    display: flex;
+  }
+
+  .output-format label {
+    width: 10rem;
   }
 </style>

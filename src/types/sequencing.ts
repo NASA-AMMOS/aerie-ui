@@ -38,6 +38,22 @@ export type DictionaryType = {
   version: string;
 };
 
+export interface IOutputFormat {
+  linter?: (
+    diagnostics: Diagnostic[],
+    commandDictionary: AmpcsCommandDictionary,
+    view: EditorView,
+    node: SyntaxNode,
+  ) => Diagnostic[];
+  name: string;
+  toOutputFormat?(
+    tree: any,
+    sequence: string,
+    commandDictionary: AmpcsCommandDictionary | null,
+    sequenceName: string,
+  ): Promise<string>;
+}
+
 export interface ISequenceAdaptation {
   argDelegator?: ArgDelegator;
   conditionalKeywords: { else: string; elseIf: string[]; endIf: string; if: string[] };
@@ -50,7 +66,7 @@ export interface ISequenceAdaptation {
       node: SyntaxNode,
     ) => Diagnostic[];
     name: string;
-    toInputFormat(input: string): Promise<string>;
+    toInputFormat?(input: string): Promise<string>;
   };
   loopKeywords: { break: string; continue: string; endWhileLoop: string; whileLoop: string[] };
   modifyOutput?: (
@@ -63,21 +79,7 @@ export interface ISequenceAdaptation {
     parameterDictionaries: AmpcsParameterDictionary[],
     channelDictionary: AmpcsChannelDictionary | null,
   ) => any;
-  outputFormat: {
-    linter?: (
-      diagnostics: Diagnostic[],
-      commandDictionary: AmpcsCommandDictionary,
-      view: EditorView,
-      node: SyntaxNode,
-    ) => Diagnostic[];
-    name: string;
-    toOutputFormat(
-      tree: any,
-      sequence: string,
-      commandDictionary: AmpcsCommandDictionary | null,
-      sequenceName: string,
-    ): Promise<string>;
-  };
+  outputFormat: IOutputFormat[];
 }
 
 export type Parcel = {
