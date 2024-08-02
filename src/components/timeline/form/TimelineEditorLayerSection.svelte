@@ -5,8 +5,7 @@
 
   import TrashIcon from '@nasa-jpl/stellar/icons/trash.svg?component';
   import { createEventDispatcher } from 'svelte';
-  import { derived } from 'svelte/store';
-  import { derivationGroups, selectedPlanDerivationGroupIds } from '../../../stores/external-source';
+  import { selectedPlanDerivationGroupEventTypes } from '../../../stores/external-source';
   import { activityTypes } from '../../../stores/plan';
   import { externalResourceNames, resourceTypes } from '../../../stores/simulation';
   import type { Axis, Layer, XRangeLayerColorScheme } from '../../../types/timeline';
@@ -42,17 +41,6 @@
           ? layer.colorScheme
           : undefined; // getColorForLayer
 
-  // make this a "derived" so that it reacts to $derivationGroups and $selectedPlanDerivationGroupIds, whenever either changes (i.e. new dg or associated derivation groups change)
-  let validEventTypes = derived(
-    [derivationGroups, selectedPlanDerivationGroupIds],
-    ([$derivationGroups, $selectedPlanDerivationGroupIds]) => {
-      return $derivationGroups
-        .filter(dg => $selectedPlanDerivationGroupIds.includes(dg.source_type_id))
-        .map(dg => dg.event_types)
-        .reduce((acc, curr) => acc.concat(curr), []);
-    },
-  ); //$derivationGroups.filter(dg => $selectedPlanDerivationGroupIds.includes(dg.source_type_id)).map(dg => dg.event_types).reduce((acc, curr) => acc.concat(curr), []);
-
   let filterOptions: string[] = [];
   let filterValues: string[] = [];
 
@@ -61,7 +49,7 @@
     if (isActivityLayer(layer)) {
       filterOptions = $activityTypes.map(t => t.name);
     } else if (isExternalEventLayer(layer)) {
-      filterOptions = $validEventTypes;
+      filterOptions = $selectedPlanDerivationGroupEventTypes;
     } else if (isLineLayer(layer) || isXRangeLayer(layer)) {
       filterOptions = $resourceTypes
         .map(t => t.name)
@@ -80,7 +68,7 @@
       // NOTE: if a derivation group is disabled, this doesn't get invoked and does not update. however, on dissociation it does.
       const externalEventLayer = layer;
       const externalEventTypes =
-        externalEventLayer.filter?.externalEvent?.event_types.filter(et => $validEventTypes.includes(et)) ?? [];
+        externalEventLayer.filter?.externalEvent?.event_types.filter(et => $selectedPlanDerivationGroupEventTypes.includes(et)) ?? [];
       filterValues = [...externalEventTypes];
     } else if (isLineLayer(layer) || isXRangeLayer(layer)) {
       const resourceLayer = layer;

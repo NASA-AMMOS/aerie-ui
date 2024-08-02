@@ -120,6 +120,16 @@ export const selectedPlanDerivationGroupIds = derived(
     $planDerivationGroupLinks.filter(link => link.plan_id === $planId).map(link => link.derivation_group_id),
 );
 
+export const selectedPlanDerivationGroupEventTypes = derived(
+  [derivationGroups, selectedPlanDerivationGroupIds],
+  ([$derivationGroups, $selectedPlanDerivationGroupIds]) => {
+    return $derivationGroups
+      .filter(dg => $selectedPlanDerivationGroupIds.includes(dg.id))
+      .map(dg => dg.event_types)
+      .reduce((acc, curr) => acc.concat(curr), []);
+  },
+);
+
 /* Helper Functions. */
 export function resetModelStores() {
   createExternalSourceError.set(null);
@@ -129,7 +139,7 @@ export function resetModelStores() {
 }
 
 export function getSourceName(source_id: number | undefined, sources: ExternalSourceSlim[]): string {
-  return sources.find(s => s.id === source_id)?.key ?? 'None'  
+  return sources.find(s => s.id === source_id)?.key ?? 'None';
 }
 
 export function getEventSourceTypeName(id: number, sourceTypes: ExternalSourceType[]): string | undefined {
