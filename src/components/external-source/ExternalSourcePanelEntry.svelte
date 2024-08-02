@@ -1,6 +1,8 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import EyeSlash from 'bootstrap-icons/icons/eye-slash.svg?component';
+  import Eye from 'bootstrap-icons/icons/eye.svg?component';
   import { externalSourceWithResolvedNames, planDerivationGroupIdsToFilter } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import { originalView, viewUpdateFilteredDerivationGroupIds } from '../../stores/views';
@@ -75,9 +77,10 @@
     }
   });
 
-  function onChange(_event: Event) {
+  function onChange() {
     if ($plan) {
       dgInFilter = planDerivationGroupIdsToFilterParsed[$plan.id].includes(derivationGroup.id);
+      enabled = !enabled;
     }
   }
 
@@ -98,17 +101,28 @@
     defaultExpanded={false}
   >
     <span slot="right">
-      <p style:float="left" style:padding-top="0.1rem" style:padding-right="0.25rem" style:color="gray">
+      <p
+        class="derived-event-text"
+      >
         {derivationGroup.derivedEventTotal} derived events
       </p>
-      <input
-        type="checkbox"
-        bind:checked={enabled}
-        style:cursor="pointer"
-        on:change={onChange}
-        on:click|stopPropagation
-        use:tooltip={{ content: 'Show in timeline', placement: 'top' }}
-      />
+      {#if enabled === true}
+        <button
+          class="st-button icon"
+          on:click|stopPropagation={onChange}
+          use:tooltip={{ content: 'Show in timeline', placement: 'top'}}
+        >
+          <Eye/>
+        </button>
+      {:else}
+      <button
+        class="st-button icon"
+        on:click|stopPropagation={onChange}
+        use:tooltip={{ content: 'Hide in timeline', placement: 'top'}}
+      >
+        <EyeSlash/>
+      </button>
+      {/if}
     </span>
 
     {#if relevantSources.length}
@@ -170,3 +184,15 @@
     {/if}
   </Collapse>
 </div>
+
+<style>
+  .derived-event-text {
+    align-items: center;
+    color: gray;
+    display: flex;
+    float: left;
+    height: 100%;
+    padding-right: 0.25rem;
+
+  }
+</style>
