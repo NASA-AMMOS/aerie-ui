@@ -84,6 +84,18 @@
     }
   }
 
+  export function reset() {
+    activityDirectives = [];
+    externalEvents = [];
+    constraintResults = [];
+    gaps = [];
+    points = [];
+    row = null;
+    spans = [];
+
+    hide();
+  }
+
   export function hide() {
     select('.tooltip').style('opacity', 0).style('z-index', -1).html('');
     visible = false;
