@@ -29,7 +29,7 @@
   export let selectedExternalEventId: ExternalEventId | null = null;
   export let externalEvents: ExternalEvent[] = [];
   export let idToColorMaps: IdToColorMaps = { directives: {}, external_events: {}, spans: {} };
-  export let externalEventRowPadding: number = 8;
+  export let externalEventRowPadding: number = 4;
   export let externalEventSelectedColor: string = '#a9eaff';
   export let externalEventSelectedTextColor: string = '#0a4c7e';
   export let externalEventDefaultColor = '#cbcbcb';
