@@ -5,11 +5,11 @@
   import { base } from '$app/paths';
   import { page } from '$app/stores';
   import PlanIcon from '@nasa-jpl/stellar/icons/plan.svg?component';
-  import UploadIcon from '@nasa-jpl/stellar/icons/upload.svg?component';
   import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { flatten } from 'lodash-es';
   import { onDestroy, onMount } from 'svelte';
+  import ExportIcon from '../../assets/export.svg?component';
   import ImportIcon from '../../assets/import.svg?component';
   import Nav from '../../components/app/Nav.svelte';
   import PageTitle from '../../components/app/PageTitle.svelte';
@@ -630,7 +630,7 @@
           <SectionTitle>Selected plan</SectionTitle>
           <div class="selected-plan-buttons">
             <button class="st-button secondary transfer-button" on:click={exportSelectedPlan}>
-              <ImportIcon /> Export
+              <ExportIcon /> Export
             </button>
             <button
               class="st-button icon fs-6"
@@ -647,7 +647,7 @@
             type="button"
             on:click={isPlanImportMode ? hideImportPlan : showImportPlan}
           >
-            <UploadIcon /> Import
+            <ImportIcon /> Import
           </button>
         {/if}
       </svelte:fragment>
