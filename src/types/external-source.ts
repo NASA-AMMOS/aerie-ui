@@ -83,10 +83,6 @@ export type DerivationGroupDefinition = BaseDefinition & {
   derivation_group_id: number;
   derivation_group_name: string;
 };
-export type DerivationGroupMetadataVersionDefinition = Pick<
-  DerivationGroupDefinition,
-  'author' | 'definition' | 'revision' | 'tags'
->;
 export type DerivationGroupMetadata = BaseMetadata<DerivationGroupDefinition>;
 export type DerivationGroupMetadataSlim = Omit<DerivationGroupMetadata, 'models_using' | 'plans_using' | 'versions'>;
 
