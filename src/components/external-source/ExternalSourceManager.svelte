@@ -18,6 +18,7 @@
     externalSourceWithResolvedNames,
     getDerivationGroupByNameSourceTypeId,
     getEventSourceTypeByName,
+    getExternalSourceMetadataError,
     planDerivationGroupLinks,
     unseenSources,
   } from '../../stores/external-source';
@@ -875,6 +876,8 @@
                     return { name: e[0], value: e[1] };
                   })}
                 />
+              {:else if $getExternalSourceMetadataError}
+                <em>Failed to retrieve External Source metadata.</em>
               {:else}
                 <em>Source has no metadata.</em>
               {/if}

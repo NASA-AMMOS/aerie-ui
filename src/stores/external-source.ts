@@ -21,6 +21,8 @@ export const createDerivationGroupError: Writable<string | null> = writable(null
 
 export const derivationGroupPlanLinkError: Writable<string | null> = writable(null);
 
+export const getExternalSourceMetadataError: Writable<string | null> = writable(null);
+
 /* Persisted. */
 // need extra logic for persistence
 // track which sources have been acknowledged by user as added to AERIE
