@@ -374,15 +374,32 @@ export function downloadJSON(json: object, filename: string) {
   );
 }
 
+async function* streamAsyncIterable(stream: ReadableStream) {
+  const reader = stream.getReader();
+  try {
+    while (true) {
+      // eslint-disable-next-line no-await-in-loop
+      const { done, value } = await reader.read();
+      if (done) {
+        return;
+      }
+      yield value;
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
+
 /**
- * Utility function for parsing a long string into a JSON object
+ * Utility function for parsing a large JSON string into a JSON object
  * This function is more for very long strings that need to be broken up into chunks in order to
  * fully parse it into a JSON object without running out of memory
- * @param jsonString
+ * @param jsonStream
  * @returns R
  */
-export async function parseJSON<R>(jsonString: string): Promise<R> {
-  return new Promise((resolve, reject) => {
+export async function parseJSONStream<R>(jsonStream: ReadableStream): Promise<R> {
+  // eslint-disable-next-line no-async-promise-executor
+  return new Promise(async (resolve, reject) => {
     const jsonParser = new JSONParser({ paths: ['$.*'], stringBufferSize: undefined });
     let finalJSON: R;
     jsonParser.onToken = ({ value }) => {
@@ -402,7 +419,9 @@ export async function parseJSON<R>(jsonString: string): Promise<R> {
     };
 
     try {
-      jsonParser.write(jsonString);
+      for await (const result of streamAsyncIterable(jsonStream)) {
+        jsonParser.write(result);
+      }
     } catch (e) {
       reject(e);
     }

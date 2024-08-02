@@ -42,7 +42,7 @@
   import type { PlanTagsInsertInput, Tag, TagsChangeEvent } from '../../types/tags';
   import { generateRandomPastelColor } from '../../utilities/color';
   import effects from '../../utilities/effects';
-  import { downloadJSON, parseJSON, removeQueryParam } from '../../utilities/generic';
+  import { downloadJSON, parseJSONStream, removeQueryParam } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import { getPlanForTransfer, isDeprecatedPlanTransfer } from '../../utilities/plan';
@@ -524,80 +524,78 @@
     }
   }
 
-  async function onReaderLoad(event: ProgressEvent<FileReader>) {
+  async function parsePlanFileStream(stream: ReadableStream) {
     planUploadFilesError = null;
-    if (event.target !== null && event.target.result !== null) {
+    try {
+      let planJSON: PlanTransfer | DeprecatedPlanTransfer;
       try {
-        let planJSON: PlanTransfer | DeprecatedPlanTransfer;
-        try {
-          planJSON = await parseJSON<PlanTransfer | DeprecatedPlanTransfer>(`${event.target.result}`);
-        } catch (e) {
-          throw new Error('Plan file is not valid JSON');
-        }
-
-        nameField.validateAndSet(planJSON.name);
-        const importedPlanTags = (planJSON.tags ?? []).reduce(
-          (previousTags: { existingTags: Tag[]; newTags: Pick<Tag, 'color' | 'name'>[] }, importedPlanTag) => {
-            const {
-              tag: { color: importedPlanTagColor, name: importedPlanTagName },
-            } = importedPlanTag;
-            const existingTag = $tags.find(({ name }) => importedPlanTagName === name);
-
-            if (existingTag) {
-              return {
-                ...previousTags,
-                existingTags: [...previousTags.existingTags, existingTag],
-              };
-            } else {
-              return {
-                ...previousTags,
-                newTags: [
-                  ...previousTags.newTags,
-                  {
-                    color: importedPlanTagColor,
-                    name: importedPlanTagName,
-                  },
-                ],
-              };
-            }
-          },
-          {
-            existingTags: [],
-            newTags: [],
-          },
-        );
-
-        const newTags: Tag[] = flatten(
-          await Promise.all(
-            importedPlanTags.newTags.map(async ({ color: tagColor, name: tagName }) => {
-              return (
-                (await effects.createTags([{ color: tagColor ?? generateRandomPastelColor(), name: tagName }], user)) ||
-                []
-              );
-            }),
-          ),
-        );
-
-        planTags = [...importedPlanTags.existingTags, ...newTags];
-
-        // remove the `+00:00` timezone before parsing
-        const startTime = `${convertDoyToYmd(planJSON.start_time.replace(/\+00:00/, ''))}`;
-        await startTimeField.validateAndSet(getDoyTime(new Date(startTime), true));
-
-        if (isDeprecatedPlanTransfer(planJSON)) {
-          await endTimeField.validateAndSet(
-            getDoyTime(new Date(`${convertDoyToYmd(planJSON.end_time.replace(/\+00:00/, ''))}`), true),
-          );
-        } else {
-          const { duration } = planJSON;
-
-          await endTimeField.validateAndSet(getDoyTimeFromInterval(startTime, duration));
-        }
-
-        updateDurationString();
+        planJSON = await parseJSONStream<PlanTransfer | DeprecatedPlanTransfer>(stream);
       } catch (e) {
-        planUploadFilesError = (e as Error).message;
+        throw new Error('Plan file is not valid JSON');
       }
+
+      nameField.validateAndSet(planJSON.name);
+      const importedPlanTags = (planJSON.tags ?? []).reduce(
+        (previousTags: { existingTags: Tag[]; newTags: Pick<Tag, 'color' | 'name'>[] }, importedPlanTag) => {
+          const {
+            tag: { color: importedPlanTagColor, name: importedPlanTagName },
+          } = importedPlanTag;
+          const existingTag = $tags.find(({ name }) => importedPlanTagName === name);
+
+          if (existingTag) {
+            return {
+              ...previousTags,
+              existingTags: [...previousTags.existingTags, existingTag],
+            };
+          } else {
+            return {
+              ...previousTags,
+              newTags: [
+                ...previousTags.newTags,
+                {
+                  color: importedPlanTagColor,
+                  name: importedPlanTagName,
+                },
+              ],
+            };
+          }
+        },
+        {
+          existingTags: [],
+          newTags: [],
+        },
+      );
+
+      const newTags: Tag[] = flatten(
+        await Promise.all(
+          importedPlanTags.newTags.map(async ({ color: tagColor, name: tagName }) => {
+            return (
+              (await effects.createTags([{ color: tagColor ?? generateRandomPastelColor(), name: tagName }], user)) ||
+              []
+            );
+          }),
+        ),
+      );
+
+      planTags = [...importedPlanTags.existingTags, ...newTags];
+
+      // remove the `+00:00` timezone before parsing
+      const startTime = `${convertDoyToYmd(planJSON.start_time.replace(/\+00:00/, ''))}`;
+      await startTimeField.validateAndSet(getDoyTime(new Date(startTime), true));
+
+      if (isDeprecatedPlanTransfer(planJSON)) {
+        await endTimeField.validateAndSet(
+          getDoyTime(new Date(`${convertDoyToYmd(planJSON.end_time.replace(/\+00:00/, ''))}`), true),
+        );
+      } else {
+        const { duration } = planJSON;
+
+        await endTimeField.validateAndSet(getDoyTimeFromInterval(startTime, duration));
+      }
+
+      updateDurationString();
+    } catch (e) {
+      planUploadFilesError = (e as Error).message;
     }
   }
 
@@ -606,9 +604,7 @@
     if (files !== null && files.length) {
       const file = files[0];
       if (/\.json$/.test(file.name)) {
-        const reader = new FileReader();
-        reader.onload = onReaderLoad;
-        reader.readAsText(file);
+        parsePlanFileStream(file.stream());
       } else {
         planUploadFilesError = 'Plan file is not a .json file';
       }
@@ -730,6 +726,7 @@
                     class="w-100"
                     name="file"
                     type="file"
+                    accept="application/json"
                     bind:files={planUploadFiles}
                     bind:this={planUploadFileInput}
                     use:permissionHandler={{
