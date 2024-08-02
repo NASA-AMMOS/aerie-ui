@@ -743,9 +743,12 @@
 
   function getRowStyle(params: RowClassParams<ExternalSourceWithResolvedNames>): RowStyle | undefined {
     // evenly spread out color selection
-    if (params.data?.derivation_group_id && params.data?.total_groups) {
+    const derivationGroupIds = $derivationGroups.map(dg => dg.id)
+    if (params.data?.derivation_group_id && derivationGroupIds.includes(params.data?.derivation_group_id) && params.data?.total_groups) {
       let spacing = 360 / params.data?.total_groups;
-      let myVal = (params.data?.derivation_group_id - 1) * spacing; // dg id starts at 1
+      let realIndex = derivationGroupIds.indexOf(params.data?.derivation_group_id); // using this because the dg id doesn't work in our coloring scheme if anything gets deleted, 
+                                                                                    //    i.e. may have 2 total but ids are 4 and 6, breaks the math a bit
+      let myVal = (realIndex) * spacing;
       return { 'background-color': `hsl(${myVal} 100% 98%)` };
     }
     return undefined;
