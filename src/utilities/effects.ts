@@ -32,7 +32,8 @@ import {
   createExternalSourceError,
   createExternalSourceTypeError,
   creatingExternalSource,
-  derivationGroupPlanLinkError
+  derivationGroupPlanLinkError,
+  getExternalSourceMetadataError
 } from '../stores/external-source';
 import { createModelError, creatingModel, models } from '../stores/model';
 import { createPlanError, creatingPlan, planId } from '../stores/plan';
@@ -887,6 +888,7 @@ const effects = {
 
       if (file_id !== null) {
         source.file_id = file_id;
+        console.log(source)
         const { createExternalSource: created } = await reqHasura(gql.CREATE_EXTERNAL_SOURCE, { source }, user);
         if (created) {
           showSuccessToast('External Source Created Successfully');
@@ -3512,12 +3514,13 @@ const effects = {
       return [];
     }
     try {
+      getExternalSourceMetadataError.set(null);
       const data = await reqHasura<any>(gql.GET_EXTERNAL_SOURCE_METADATA, { id }, user);
       const { external_source } = data;
       if (external_source) {
         const { metadata }: Record<string, any> = external_source[0];
         if (metadata === null) {
-          throw Error(`Unable to get external source metadata for external source id ${id}.`);
+          throw Error(`Unable to get external source metadata for external source id ${id}. "metadata" field may not have been included in original source.`);
         }
         return metadata;
       } else {
@@ -3526,6 +3529,7 @@ const effects = {
     } catch (e) {
       catchError(e as Error);
       showFailureToast('External Source Metadata Retrieval Failed');
+      getExternalSourceMetadataError.set((e as Error).message);
       return [];
     }
   },
