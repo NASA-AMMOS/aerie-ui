@@ -48,11 +48,11 @@
   import { getPlanForTransfer, isDeprecatedPlanTransfer } from '../../utilities/plan';
   import {
     convertDoyToYmd,
-    convertDurationStringToUs,
     convertUsToDurationString,
     formatDate,
     getDoyTime,
     getDoyTimeFromInterval,
+    getIntervalInMs,
     getShortISOForDate,
   } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
@@ -230,13 +230,17 @@
 
     selectedPlan = $plans.find(({ id }) => id === selectedPlanId);
     if (selectedPlan) {
-      const parsedPlanStartTime = $plugins.time.primary.parse(selectedPlan?.start_time_doy);
-      const parsedPlanEndTime = $plugins.time.primary.parse(selectedPlan?.end_time_doy);
-      if (parsedPlanStartTime) {
-        selectedPlanStartTime = formatDate(parsedPlanStartTime, $plugins.time.primary.format);
-      }
-      if (parsedPlanEndTime) {
-        selectedPlanEndTime = formatDate(parsedPlanEndTime, $plugins.time.primary.format);
+      try {
+        const parsedPlanStartTime = $plugins.time.primary.parse(selectedPlan?.start_time_doy);
+        const parsedPlanEndTime = $plugins.time.primary.parse(selectedPlan?.end_time_doy);
+        if (parsedPlanStartTime) {
+          selectedPlanStartTime = formatDate(parsedPlanStartTime, $plugins.time.primary.format);
+        }
+        if (parsedPlanEndTime) {
+          selectedPlanEndTime = formatDate(parsedPlanEndTime, $plugins.time.primary.format);
+        }
+      } catch (e) {
+        console.log(e);
       }
       selectedPlanModelName = $models.find(model => model.id === selectedPlan?.model_id)?.name ?? null;
     }
@@ -672,13 +676,13 @@
               </Input>
               <Input layout="inline">
                 <label class="plan-metadata-item-label" for="start-time">
-                  Start Time - {$plugins.time.primary.formatString}
+                  Start Time - {$plugins.time.primary.label}
                 </label>
                 <input disabled class="st-input w-100" name="start-time" value={selectedPlanStartTime} />
               </Input>
               <Input layout="inline">
                 <label class="plan-metadata-item-label" for="end-time">
-                  End Time - {$plugins.time.primary.formatString}
+                  End Time - {$plugins.time.primary.label}
                 </label>
                 <input disabled class="st-input w-100" name="end-time" value={selectedPlanEndTime} />
               </Input>
@@ -688,7 +692,7 @@
                   disabled
                   class="st-input w-100"
                   name="duration"
-                  value={convertUsToDurationString(convertDurationStringToUs(selectedPlan.duration))}
+                  value={convertUsToDurationString(getIntervalInMs(selectedPlan.duration) * 1000)}
                 />
               </Input>
               <Input layout="inline">
