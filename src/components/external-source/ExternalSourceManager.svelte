@@ -397,11 +397,13 @@
       showExternalEventTimeline = false;
       externalEventsTableFilterString = '';
       selectedRowId = selectedEvent?.id ?? null;
+      // eventTooltip.reset();
     } else {
       showExternalEventTable = false;
       showExternalEventTimeline = true;
       externalEventsTableFilterString = '';
       mouseDownAfterTable = true;
+      // eventTooltip.reset();
     }
   }
 
@@ -689,10 +691,12 @@
     selectedSource = detail;
     gridRowSizes = '1fr 3px 1fr'; // Add the bottom panel for external event table/timeline
     deselectEvent();
+    eventTooltip.reset();
   }
 
   function deselectSource() {
     deselectEvent();
+    eventTooltip.reset();
     gridRowSizes = '1fr 3px 0fr'; // Remove the bottom panel for external event table/timeline
     selectedSource = null;
   }
@@ -1118,6 +1122,19 @@
       </svelte:fragment>
     </Panel>
 
+    <!--
+      -- Tooltip only applies to timeline, but to ensure it resets and doesn't unexpectedly show up when the timeline isn't selected, 
+      --      had to be moved here and had to add calls to reset
+      --      in various locations.
+      -->
+    <Tooltip
+      bind:this={eventTooltip}
+      {mouseOver}
+      interpolateHoverValue={false}
+      hidden={!!selectedSource && !showExternalEventTimeline}
+      resourceTypes={[]}
+    />
+
     {#if selectedSource}
       <CssGridGutter track={1} type="row" />
 
@@ -1179,6 +1196,9 @@
                   bind:this={canvasContainerRef}
                   bind:clientWidth={canvasContainerWidth}
                   bind:clientHeight={canvasContainerHeight}
+                  on:mouseleave={() => {
+                    eventTooltip.reset()
+                  }}
                   on:mousedown={e => {
                     canvasMouseDownEvent = e;
                   }}
@@ -1188,13 +1208,6 @@
                   role="none"
                 >
                   <TimelineCursors marginLeft={0} drawWidth={canvasContainerWidth} {mouseOver} {xScaleView} />
-                  <Tooltip
-                    bind:this={eventTooltip}
-                    {mouseOver}
-                    interpolateHoverValue={false}
-                    hidden={false}
-                    resourceTypes={[]}
-                  />
 
                   <div style="display:flex; padding-bottom: 10px;padding-top: 3px">
                     <LayerExternalSources
