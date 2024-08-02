@@ -1,8 +1,8 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import Eye from 'bootstrap-icons/icons/eye-fill.svg?component';
   import EyeSlash from 'bootstrap-icons/icons/eye-slash.svg?component';
-  import Eye from 'bootstrap-icons/icons/eye.svg?component';
   import { externalSourceWithResolvedNames, planDerivationGroupIdsToFilter } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import { originalView, viewUpdateFilteredDerivationGroupIds } from '../../stores/views';
@@ -112,7 +112,7 @@
           on:click|stopPropagation={onChange}
           use:tooltip={{ content: 'Show in timeline', placement: 'top'}}
         >
-          <Eye/>
+          <Eye style="color: rgba(143, 143, 143, 1)"/>
         </button>
       {:else}
       <button
@@ -120,7 +120,7 @@
         on:click|stopPropagation={onChange}
         use:tooltip={{ content: 'Hide in timeline', placement: 'top'}}
       >
-        <EyeSlash/>
+        <EyeSlash style="color: rgba(143, 143, 143, 0.5)"/>
       </button>
       {/if}
     </span>
