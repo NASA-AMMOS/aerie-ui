@@ -93,7 +93,7 @@
 
   let keyField = field<string>('', [required]);
   let sourceTypeField = field<string>('', [required]); // need function to check if in list of allowable types...
-  let derivationGroupField = field<string>('', [required]);
+  let derivationGroupField = field<string>('Default', [required]);
   let startTimeDoyField = field<string>('', [required, timestamp]); // requires validation function
   let endTimeDoyField = field<string>('', [required, timestamp]); // requires validation function
   let validAtDoyField = field<string>('', [required, timestamp]); // requires validation function
@@ -964,6 +964,15 @@
               {/if}
             </fieldset>
           </div>
+          <Field field={derivationGroupField}>
+            <label for="derivation-group" slot="label">Derivation Group</label>
+            <input
+              autocomplete="off"
+              class="st-input w-100"
+              name="derivation-group"
+              disabled={isDerivationGroupFieldDisabled}
+            />
+          </Field>
           <Field field={keyField}>
             <label for="key" slot="label">Key</label>
             <input disabled bind:value={keyInputField} autocomplete="off" class="st-input w-100" name="key" required />
@@ -1000,17 +1009,6 @@
               name="valid_at"
             />
           </fieldset>
-
-          <Field field={derivationGroupField}>
-            <label for="derivation-group" slot="label">Derivation Group</label>
-            <input
-              autocomplete="off"
-              class="st-input w-100"
-              name="derivation-group"
-              disabled={isDerivationGroupFieldDisabled}
-              placeholder="Default"
-            />
-          </Field>
         </form>
       {/if}
     </svelte:fragment>
