@@ -2,7 +2,6 @@
   import { base } from '$app/paths';
   import type { ICellRendererParams, RowClassParams, RowStyle, ValueGetterParams } from 'ag-grid-community';
   import Balloon from 'bootstrap-icons/icons/balloon.svg?component';
-  import SearchIcon from 'bootstrap-icons/icons/search.svg?component';
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { onDestroy, onMount } from 'svelte';
@@ -1039,7 +1038,6 @@
                   name="filter"
                   placeholder={'Filter by Source Type'}
                 />
-                <div class="filter-search-icon" slot="left"><SearchIcon /></div>
               </Input>
               <Menu
                 hideAfterClick={false}
@@ -1133,7 +1131,6 @@
                       name="filter-ee"
                       placeholder={'Filter external events'}
                     />
-                    <div class="filter-search-icon" slot="left"><SearchIcon /></div>
                   </Input>
                 </div>
               </div>
@@ -1244,12 +1241,6 @@
 
   .timeline-editor-layer-filter :global(.input) {
     z-index: 1;
-  }
-
-  .filter-search-icon {
-    align-items: center;
-    color: var(--st-gray-50);
-    display: flex;
   }
 
   .menu-content {
