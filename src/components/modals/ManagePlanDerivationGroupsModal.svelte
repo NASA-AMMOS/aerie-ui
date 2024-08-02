@@ -322,7 +322,7 @@
     </CssGrid>
   </ModalContent>
   <ModalFooter>
-    <button class="st-button secondary" on:click={() => dispatch('close')}> Cancel </button>
+    <button class="st-button secondary" on:click={() => dispatch('close')}> Close </button>
   </ModalFooter>
 </Modal>
 
