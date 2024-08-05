@@ -4,17 +4,16 @@
   import LightningCharge from 'bootstrap-icons/icons/lightning-charge.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { createEventDispatcher } from 'svelte';
-  import type { ExternalSourceWithDateInfo } from '../../types/external-source';
-  import { getTimeAgo } from '../../utilities/time';
+  import type { UserSeenEntry } from '../../types/external-source';
   import Collapse from '../Collapse.svelte';
 
   export let deleted: boolean = false;
-  export let sources: ExternalSourceWithDateInfo[] = [];
+  export let sources: UserSeenEntry[] = [];
 
   const dispatch = createEventDispatcher<{
     dismiss: void;
   }>();
-  let mappedSources: { [sourceType: string]: { [derivationGroup: string]: ExternalSourceWithDateInfo[] } } = {};
+  let mappedSources: { [sourceType: string]: { [derivationGroup: string]: UserSeenEntry[] } } = {};
 
   $: sources.forEach(source => {
     let sourceType = source.source_type;
@@ -83,11 +82,11 @@
                   >
                     {source.key}
                   </p>
-                  <p
+                  <!-- <p
                     style=" color: gray;flex-shrink: 0; margin-left: auto; padding-right: 0.25rem; padding-top: 0.1rem; white-space: nowrap"
                   >
                     {getTimeAgo(new Date(source.change_date), new Date(), Number.MAX_SAFE_INTEGER)}
-                  </p>
+                  </p> -->
                 </div>
               {/each}
             </Collapse>
@@ -97,7 +96,8 @@
     </div>
     <div style="padding-top:5px">
       <!--TODO: try importing component library where you can pull in existing 'stellar' button that looks like rest of aerie-->
-      <button style=" background: rgb(235, 235, 235);border: 0px; width: 100px" on:click={() => dispatch('dismiss')}
+      
+      <button class="st-button secondary hover-fix" style="border: 0px; width: 100px" on:click={() => dispatch('dismiss')}
         >Dismiss</button
       >
     </div>
@@ -146,5 +146,13 @@
     justify-content: space-between;
     overflow: hidden;
     white-space: nowrap;
+  }
+
+  .hover-fix {
+    background-color:rgb(235, 235, 235);
+  }
+
+  .hover-fix:hover {
+    background-color:rgb(225, 225, 225)!important;
   }
 </style>
