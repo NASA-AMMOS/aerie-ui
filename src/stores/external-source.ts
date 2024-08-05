@@ -5,7 +5,8 @@ import {
   type ExternalSourceSlim,
   type ExternalSourceType,
   type ExternalSourceWithResolvedNames,
-  type PlanDerivationGroup
+  type PlanDerivationGroup,
+  type UserSeenEntry
 } from '../types/external-source';
 import gql from '../utilities/gql';
 import { planId } from './plan';
@@ -82,6 +83,39 @@ export const planDerivationGroupLinks = gqlSubscribable<PlanDerivationGroup[]>(
   [],
   null,
 );
+
+export const usersSeenSourcesRaw = gqlSubscribable<{id: number,
+  user: string,
+  derivation_group: string,
+  external_source_name: string,
+  external_source_type: string}[]>(
+  gql.SUB_SEEN_SOURCES,
+  {},
+  [],
+  null
+)
+
+export const usersSeenSources = derived<[typeof usersSeenSourcesRaw], {[key: string]: UserSeenEntry[]}>(
+  [usersSeenSourcesRaw],
+  ([$rawSeen]) => {
+    let res: Record<string, UserSeenEntry[]> = {};
+    for (let entry of $rawSeen) {
+      if (res[entry.user])
+        res[entry.user].push({
+          key: entry.external_source_name,
+          derivation_group: entry.derivation_group,
+          source_type: entry.external_source_type,
+        });
+      else 
+        res[entry.user] = [{
+          key: entry.external_source_name,
+          derivation_group: entry.derivation_group,
+          source_type: entry.external_source_type,
+        }];
+    }
+    return res
+  }
+)
 
 /* Derived. */
 // cleans up derivationGroupsRaw
