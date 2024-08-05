@@ -3,10 +3,12 @@
 <script lang="ts">
   import type { ValueGetterParams } from 'ag-grid-community';
   import { createEventDispatcher } from 'svelte';
+  import { plugins } from '../../stores/plugins';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalEventWithTypeName } from '../../types/external-event';
   import type { ExternalSourceSlim } from '../../types/external-source';
+  import { formatDate } from '../../utilities/time';
   import SingleActionDataGrid from '../ui/DataGrid/SingleActionDataGrid.svelte';
 
   export let selectedItemId: number | null;
@@ -50,12 +52,12 @@
     {
       field: 'start_time',
       filter: 'text',
-      headerName: 'Start Time',
+      headerName: `Start Time (${$plugins.time.primary.label})`,
       resizable: true,
       sortable: true,
       valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
         if (params.data?.start_time) {
-          return new Date(params.data?.start_time).toISOString().slice(0, 19);
+          return formatDate(new Date(params.data?.start_time), $plugins.time.primary.format);
         }
       },
     },

@@ -5,10 +5,12 @@
   import EyeSlash from 'bootstrap-icons/icons/eye-slash.svg?component';
   import { externalSourceWithResolvedNames, planDerivationGroupIdsToFilter } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
+  import { plugins } from '../../stores/plugins';
   import { originalView, viewUpdateFilteredDerivationGroupIds } from '../../stores/views';
   import type { User } from '../../types/app';
   import type { DerivationGroup, ExternalSourceWithResolvedNames } from '../../types/external-source';
   import effects from '../../utilities/effects';
+  import { formatDate } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import Collapse from '../Collapse.svelte';
 
@@ -146,22 +148,22 @@
 
           <p>
             <strong>Start Time:</strong>
-            {source.start_time}
+            {formatDate(new Date(source.start_time), $plugins.time.primary.format)}
           </p>
 
           <p>
             <strong>End Time:</strong>
-            {source.end_time}
+            {formatDate(new Date(source.end_time), $plugins.time.primary.format)}
           </p>
 
           <p>
             <strong>Valid At:</strong>
-            {source.valid_at}
+            {formatDate(new Date(source.valid_at), $plugins.time.primary.format)}
           </p>
 
           <p>
             <strong>Created At:</strong>
-            {source.created_at}
+            {formatDate(new Date(source.created_at), $plugins.time.primary.format)}
           </p>
         </Collapse>
       {/each}

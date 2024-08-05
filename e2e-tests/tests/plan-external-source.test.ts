@@ -146,9 +146,9 @@ test.describe.serial('Plan External Sources', () => {
       .waitFor({ state: 'visible', timeout: extendedTimeout });
     await expect(page.getByText('Key: ExampleExternalSource:example-external-source.json').first()).toBeVisible();
     await expect(page.getByText('Source Type: Example External Source').first()).toBeVisible();
-    await expect(page.getByText('Start Time: 2024-01-21T00:00:00+00:').first()).toBeVisible();
-    await expect(page.getByText('End Time: 2024-01-28T00:00:00+00:').first()).toBeVisible();
-    await expect(page.getByText('Valid At: 2024-01-19T00:00:00+00:').first()).toBeVisible();
+    await expect(page.getByText('Start Time: 2024-021T00:00:00').first()).toBeVisible();
+    await expect(page.getByText('End Time: 2024-028T00:00:00').first()).toBeVisible();
+    await expect(page.getByText('Valid At: 2024-019T00:00:00').first()).toBeVisible();
     await expect(page.getByText('Created At', { exact: false }).first()).toBeVisible();
   });
 
@@ -183,9 +183,9 @@ test.describe.serial('Plan External Sources', () => {
       page.locator('#svelte-modal').getByText('Key: ExampleExternalSource:example-external-source.json'),
     ).toBeVisible();
     await expect(page.locator('#svelte-modal').getByText('Source Type: Example External Source')).toBeVisible();
-    await expect(page.locator('#svelte-modal').getByText('Start Time: 2024-01-21T00:00:00+00:')).toBeVisible();
-    await expect(page.locator('#svelte-modal').getByText('End Time: 2024-01-28T00:00:00+00:')).toBeVisible();
-    await expect(page.locator('#svelte-modal').getByText('Valid At: 2024-01-19T00:00:00+00:')).toBeVisible();
+    await expect(page.locator('#svelte-modal').getByText('Start Time: 2024-021T00:00:00')).toBeVisible();
+    await expect(page.locator('#svelte-modal').getByText('End Time: 2024-028T00:00:00')).toBeVisible();
+    await expect(page.locator('#svelte-modal').getByText('Valid At: 2024-019T00:00:00')).toBeVisible();
     await expect(page.locator('#svelte-modal').getByText('Created At')).toBeVisible();
   });
 

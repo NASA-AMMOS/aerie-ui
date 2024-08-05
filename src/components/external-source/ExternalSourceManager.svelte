@@ -22,6 +22,7 @@
   } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import { plans } from '../../stores/plans';
+  import { plugins } from '../../stores/plugins';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type {
@@ -48,7 +49,7 @@
   import { showDeleteExternalSourceModal } from '../../utilities/modal';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
-  import { convertDoyToYmd, convertDurationToMs, convertUTCtoMs } from '../../utilities/time';
+  import { convertDoyToYmd, convertDurationToMs, convertUTCtoMs, formatDate } from '../../utilities/time';
   import { getXScale, TimelineInteractionMode } from '../../utilities/timeline';
   import { showFailureToast } from '../../utilities/toast';
   import { tooltip } from '../../utilities/tooltip';
@@ -129,48 +130,48 @@
     {
       field: 'start_time',
       filter: 'text',
-      headerName: 'Start Time',
+      headerName: `Start Time (${$plugins.time.primary.label})`,
       resizable: true,
       sortable: true,
       valueGetter: (params: ValueGetterParams<ExternalSourceWithResolvedNames>) => {
         if (params.data?.start_time) {
-          return new Date(params.data?.start_time).toISOString().slice(0, 19);
+          return formatDate(new Date(params.data?.start_time), $plugins.time.primary.format);
         }
       },
     },
     {
       field: 'end_time',
       filter: 'text',
-      headerName: 'End Time',
+      headerName: `End Time (${$plugins.time.primary.label})`,
       resizable: true,
       sortable: true,
       valueGetter: (params: ValueGetterParams<ExternalSourceWithResolvedNames>) => {
         if (params.data?.end_time) {
-          return new Date(params.data?.end_time).toISOString().slice(0, 19);
+          return formatDate(new Date(params.data?.end_time), $plugins.time.primary.format);
         }
       },
     },
     {
       field: 'valid_at',
       filter: 'text',
-      headerName: 'Valid At',
+      headerName: `Valid At (${$plugins.time.primary.label})`,
       resizable: true,
       sortable: true,
       valueGetter: (params: ValueGetterParams<ExternalSourceWithResolvedNames>) => {
         if (params.data?.valid_at) {
-          return new Date(params.data?.valid_at).toISOString().slice(0, 19);
+          return formatDate(new Date(params.data?.valid_at), $plugins.time.primary.format);
         }
       },
     },
     {
       field: 'created_at',
       filter: 'text',
-      headerName: 'Created At',
+      headerName: `Created At (${$plugins.time.primary.label})`,
       resizable: true,
       sortable: true,
       valueGetter: (params: ValueGetterParams<ExternalSourceWithResolvedNames>) => {
         if (params.data?.valid_at) {
-          return new Date(params.data?.valid_at).toISOString().slice(0, 19);
+          return formatDate(new Date(params.data?.created_at), $plugins.time.primary.format);
         }
       },
     },
@@ -813,23 +814,23 @@
             </Input>
 
             <Input layout="inline">
-              Start Time (UTC)
-              <DatePicker dateString={selectedSource.start_time} disabled={true} name="start-time" />
+              {`Start Time (${$plugins.time.primary.label})`}
+              <DatePicker dateString={formatDate(new Date(selectedSource.start_time), $plugins.time.primary.format)} disabled={true} name="start-time" />
             </Input>
 
             <Input layout="inline">
-              End Time (UTC)
-              <DatePicker dateString={selectedSource.end_time} disabled={true} name="end-time" />
+              {`End Time (${$plugins.time.primary.label})`}
+              <DatePicker dateString={formatDate(new Date(selectedSource.end_time), $plugins.time.primary.format)} disabled={true} name="end-time" />
             </Input>
 
             <Input layout="inline">
-              Valid At (UTC)
-              <DatePicker dateString={selectedSource.valid_at} disabled={true} name="valid-at" />
+              {`Valid At (${$plugins.time.primary.label})`}
+              <DatePicker dateString={formatDate(new Date(selectedSource.valid_at), $plugins.time.primary.format)} disabled={true} name="valid-at" />
             </Input>
 
             <Input layout="inline">
-              Created At (UTC)
-              <DatePicker dateString={selectedSource.created_at} disabled={true} name="valid-at" />
+              {`Created At (${$plugins.time.primary.label})`}
+              <DatePicker dateString={formatDate(new Date(selectedSource.created_at), $plugins.time.primary.format)} disabled={true} name="valid-at" />
             </Input>
 
             <Collapse
@@ -979,7 +980,7 @@
             <DatePickerField
               disabled={true}
               field={startTimeDoyField}
-              label="Start Time - YYYY-DDDThh:mm:ss"
+              label={`Start Time (${$plugins.time.primary.label}) - ${$plugins.time.primary.formatString}`}
               name="start-time"
             />
           </fieldset>
@@ -988,7 +989,7 @@
             <DatePickerField
               disabled={true}
               field={endTimeDoyField}
-              label="End Time - YYYY-DDDThh:mm:ss"
+              label={`End Time (${$plugins.time.primary.label}) - ${$plugins.time.primary.formatString}`}
               name="end_time"
             />
           </fieldset>
@@ -997,7 +998,7 @@
             <DatePickerField
               disabled={true}
               field={validAtDoyField}
-              label="Valid At Time - YYYY-DDDThh:mm:ss"
+              label={`Valid At Time (${$plugins.time.primary.label}) - ${$plugins.time.primary.formatString}`}
               name="valid_at"
             />
           </fieldset>
