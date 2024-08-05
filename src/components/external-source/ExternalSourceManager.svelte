@@ -751,7 +751,7 @@
     const derivationGroupIds = $derivationGroups.map(dg => dg.id)
     if (params.data?.derivation_group_id && derivationGroupIds.includes(params.data?.derivation_group_id) && params.data?.total_groups) {
       let spacing = 360 / params.data?.total_groups;
-      let realIndex = derivationGroupIds.indexOf(params.data?.derivation_group_id); // using this because the dg id doesn't work in our coloring scheme if anything gets deleted, 
+      let realIndex = derivationGroupIds.indexOf(params.data?.derivation_group_id); // using this because the dg id doesn't work in our coloring scheme if anything gets deleted,
                                                                                     //    i.e. may have 2 total but ids are 4 and 6, breaks the math a bit
       let myVal = (realIndex) * spacing;
       return { 'background-color': `hsl(${myVal} 100% 98%)` };
@@ -760,7 +760,7 @@
   }
 </script>
 
-<CssGrid columns="1fr 3px 4fr">
+<CssGrid columns="1.2fr 3px 4fr">
   <Panel borderRight padBody={true}>
     <svelte:fragment slot="header">
       <SectionTitle
@@ -802,7 +802,7 @@
             </div>
           </div>
         </div>
-        <div class="selected-source-forms" style="height: 100%;">
+        <div class="selected-source-forms">
           <fieldset>
             <Input layout="inline">
               ID
@@ -938,7 +938,7 @@
           <AlertError class="m-2" error={$createExternalSourceError} />
           <AlertError class="m-2" error={$createExternalSourceTypeError} />
           <AlertError class="m-2" error={$createDerivationGroupError} />
-          <div style="display:flex; white-space:nowrap;">
+          <div id="file-upload-field">
             <fieldset style="width:100%">
               <label for="file">Source File</label>
               <input
@@ -954,7 +954,7 @@
               />
             </fieldset>
 
-            <fieldset style="align-self:flex-end;float:right;width:40%;">
+            <fieldset id="file-upload-fieldset">
               <button
                 disabled={!parsed}
                 class="st-button w-100"
@@ -1031,8 +1031,8 @@
       <svelte:fragment slot="header">
         <slot name="left">
           <SectionTitle><Truck />External Sources</SectionTitle>
-          <div class="filter" style=" float: left; margin-right: auto;padding-left: 5px; padding-right: 5px;">
-            <div class="timeline-editor-layer-filter" style="position: relative">
+          <div class="filter">
+            <div class="timeline-editor-layer-filter">
               <Input>
                 <input
                   bind:this={input}
@@ -1123,7 +1123,7 @@
     </Panel>
 
     <!--
-      -- Tooltip only applies to timeline, but to ensure it resets and doesn't unexpectedly show up when the timeline isn't selected, 
+      -- Tooltip only applies to timeline, but to ensure it resets and doesn't unexpectedly show up when the timeline isn't selected,
       --      had to be moved here and had to add calls to reset
       --      in various locations.
       -->
@@ -1144,8 +1144,8 @@
           <slot name="left">
             <SectionTitle><Balloon />External Events</SectionTitle>
             {#if showExternalEventTable}
-              <div class="filter" style=" float: left; margin-right: auto;padding-left: 5px; padding-right: 5px;">
-                <div class="timeline-editor-layer-filter" style="position: relative">
+              <div class="filter">
+                <div class="timeline-editor-layer-filter">
                   <Input>
                     <input
                       bind:value={externalEventsTableFilterString}
@@ -1176,7 +1176,7 @@
         <svelte:fragment slot="body">
           {#if selectedSource}
             {#if showExternalEventTable}
-              <div style="height: 100%; position: relative; width: 100%">
+              <div id="external-event-table">
                 <ExternalEventsTable
                   items={filteredTableExternalEvents}
                   {user}
@@ -1186,13 +1186,13 @@
                 />
               </div>
             {:else if showExternalEventTimeline}
-              <div style=" height: 100%; padding-left: 5px; padding-right: 5px;">
+              <div id="external-event-timeline">
                 <div style=" background-color:#ebe9e6;height:15px;">
                   <div style="display:inline; float:left;">{startTime}</div>
                   <div style="display:inline; float:right;">{endTime}</div>
                 </div>
                 <div
-                  style=" height: 100%; position: relative; width: 100%;"
+                  id="external-event-timeline-container"
                   bind:this={canvasContainerRef}
                   bind:clientWidth={canvasContainerWidth}
                   bind:clientHeight={canvasContainerHeight}
@@ -1209,7 +1209,7 @@
                 >
                   <TimelineCursors marginLeft={0} drawWidth={canvasContainerWidth} {mouseOver} {xScaleView} />
 
-                  <div style="display:flex; padding-bottom: 10px;padding-top: 3px">
+                  <div id="timeline-layer">
                     <LayerExternalSources
                       selectedExternalEventId={selectedEvent?.id ?? null}
                       externalEvents={selectedEvents}
@@ -1256,6 +1256,7 @@
   }
   .timeline-editor-layer-filter {
     display: flex;
+    position: relative;
   }
 
   .timeline-editor-layer-filter :global(.input) {
@@ -1421,5 +1422,51 @@
   .btn-group {
     align-self: center;
     margin-left: auto;
+  }
+
+  #file-upload-field {
+    display: flex;
+    white-space: nowrap;
+  }
+
+  #file-upload-fieldset {
+    align-self: flex-end;
+    float: right;
+    width: 60%;
+  }
+
+  #timeline-layer {
+    display: flex;
+    padding-bottom: 10px;
+    padding-top: 3px;
+  }
+
+  #external-event-table {
+    height: 100%;
+    position: relative;
+    width: 100%;
+  }
+
+  #external-event-timeline {
+    height: 100%;
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+
+  #external-event-timeline-container {
+    height: 100%;
+    position: relative;
+    width: 100%;
+  }
+
+  .filter {
+    float: left;
+    margin-right: auto;
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+
+  .selected-source-forms {
+    height: 100%;
   }
 </style>
