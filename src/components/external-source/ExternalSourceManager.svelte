@@ -12,15 +12,13 @@
     createExternalSourceError,
     createExternalSourceTypeError,
     creatingExternalSource,
-    deletedSourcesSeen,
     derivationGroups,
     externalSourceTypes,
     externalSourceWithResolvedNames,
     getDerivationGroupByNameSourceTypeId,
     getEventSourceTypeByName,
     getExternalSourceMetadataError,
-    planDerivationGroupLinks,
-    unseenSources,
+    planDerivationGroupLinks
   } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import { plans } from '../../stores/plans';
@@ -39,9 +37,8 @@
     ExternalSourceJson,
     ExternalSourceType,
     ExternalSourceTypeInsertInput,
-    ExternalSourceWithDateInfo,
     ExternalSourceWithResolvedNames,
-    PlanDerivationGroup,
+    PlanDerivationGroup
   } from '../../types/external-source';
   import type { RadioButtonId } from '../../types/radio-buttons';
   import type { TimeRange } from '../../types/timeline';
@@ -436,23 +433,23 @@
           // TODO: replace all of this except the stuff about unseen deletions with triggers in database
           deselectSource();
 
-          // persist to list of unseen deletions, with a deleted_at time
-          let deletedSourcesParsed: ExternalSourceWithDateInfo[] = JSON.parse($deletedSourcesSeen);
-          deletedSourcesSeen.set(
-            JSON.stringify(deletedSourcesParsed.concat({ ...selectedSource, change_date: new Date() })),
-          );
-          // in case it was added and then immediately deleted, though, remove it from both unseenSources and deletedSourcesParsed, to not confuse the user
-          {
-            let seenSourcesParsed: ExternalSourceWithDateInfo[] = JSON.parse($unseenSources);
-            let filtered = seenSourcesParsed.filter(s => s.id !== selectedSource.id);
-            if (filtered.length !== seenSourcesParsed.length) {
-              unseenSources.set(JSON.stringify(filtered));
-              deletedSourcesSeen.set(JSON.stringify(deletedSourcesParsed.filter(s => s.id !== selectedSource.id)));
-            }
-            // NOTE: if I add a source, go to plans, DON'T ACKNOWLEDGE IT, then delete that source, and go back to plans, the warning card is gone as the
-            //    system assumes I never got the first notification and as such the second is unnecessary as I never acknowledged knowing it was added, so
-            //    it won't warn me that it was deleted.
-          }
+          // // persist to list of unseen deletions, with a deleted_at time
+          // let deletedSourcesParsed: ExternalSourceWithDateInfo[] = JSON.parse($deletedSourcesSeen);
+          // deletedSourcesSeen.set(
+          //   JSON.stringify(deletedSourcesParsed.concat({ ...selectedSource, change_date: new Date() })),
+          // );
+          // // in case it was added and then immediately deleted, though, remove it from both unseenSources and deletedSourcesParsed, to not confuse the user
+          // {
+          //   let seenSourcesParsed: ExternalSourceWithDateInfo[] = JSON.parse($unseenSources);
+          //   let filtered = seenSourcesParsed.filter(s => s.id !== selectedSource.id);
+          //   if (filtered.length !== seenSourcesParsed.length) {
+          //     unseenSources.set(JSON.stringify(filtered));
+          //     deletedSourcesSeen.set(JSON.stringify(deletedSourcesParsed.filter(s => s.id !== selectedSource.id)));
+          //   }
+          //   // NOTE: if I add a source, go to plans, DON'T ACKNOWLEDGE IT, then delete that source, and go back to plans, the warning card is gone as the
+          //   //    system assumes I never got the first notification and as such the second is unnecessary as I never acknowledged knowing it was added, so
+          //   //    it won't warn me that it was deleted.
+          // }
         }
       }
     }
@@ -640,7 +637,7 @@
             selectedFilters.push(sourceType);
           }
 
-          sourceId = await effects.createExternalSource(file, sourceInsert, user);
+          sourceId = await effects.createExternalSource(sourceInsert, user);
         }
       }
 
@@ -659,9 +656,9 @@
         // Update gridRowSizes to account for the new bottom-pane when the source is selected
         gridRowSizes = '1fr 3px 1fr';
 
-        // persist to list of newly added sources, restating (for uniformity in UpdateCard) the change_date (in the non-deletion case - created_at)
-        let seenSourcesParsed: ExternalSourceWithDateInfo[] = JSON.parse($unseenSources);
-        unseenSources.set(JSON.stringify(seenSourcesParsed.concat({ ...selectedSource, change_date: new Date() })));
+        // // persist to list of newly added sources, restating (for uniformity in UpdateCard) the change_date (in the non-deletion case - created_at)
+        // let seenSourcesParsed: ExternalSourceWithDateInfo[] = JSON.parse($unseenSources);
+        // unseenSources.set(JSON.stringify(seenSourcesParsed.concat({ ...selectedSource, change_date: new Date() })));
       }
 
       // reset the form behind the source

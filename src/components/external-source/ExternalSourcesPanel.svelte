@@ -2,19 +2,20 @@
 
 <script lang="ts">
   import {
-    deletedSourcesSeen,
     derivationGroupPlanLinkError,
     derivationGroups,
+    externalSources,
     externalSourceTypes,
+    externalSourceWithResolvedNames,
     getEventSourceTypeName,
     planDerivationGroupIdsToFilter,
     planDerivationGroupLinks,
-    unseenSources,
+    usersSeenSources
   } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import { originalView } from '../../stores/views';
   import type { User } from '../../types/app';
-  import type { DerivationGroup, ExternalSourceWithDateInfo } from '../../types/external-source';
+  import type { DerivationGroup, UserSeenEntry } from '../../types/external-source';
   import type { ViewGridSection } from '../../types/view';
   import effects from '../../utilities/effects';
   import { tooltip } from '../../utilities/tooltip';
@@ -30,14 +31,27 @@
   export let gridSection: ViewGridSection;
   export let user: User | null;
 
-  // $:console.log("DISAPPEARING", $planDerivationGroupLinks, $derivationGroups, mappedDerivationGroups)
-
   // filter which derivation groups are visible
   let filterText: string = '';
   let mappedDerivationGroups: { [key: string]: DerivationGroup[] } = {};
   let filteredDerivationGroups: DerivationGroup[] = [];
-  let unseenSourcesParsed: ExternalSourceWithDateInfo[] = [];
-  let deletedSourcesParsed: ExternalSourceWithDateInfo[] = [];
+  // let unseenSourcesParsed: ExternalSourceWithDateInfo[] = [];
+  // let deletedSourcesParsed: ExternalSourceWithDateInfo[] = [];
+  let unseenSources: UserSeenEntry[] = [];
+  let unseenDeletedSources: UserSeenEntry[] = [];
+ 
+  $: {
+    let source_keys = $externalSources.map(s => s.key);
+    if (user && user.id) {
+      let seen_keys: string[] = [];
+      if ($usersSeenSources[user?.id]) {
+        seen_keys = $usersSeenSources[user?.id].map(s => s.key);
+      }
+      unseenSources = $externalSourceWithResolvedNames.filter(s => !seen_keys.includes(s.key)); // in sources but not in seenSources
+      unseenDeletedSources = ($usersSeenSources[user?.id] || []).filter(seen => !source_keys.includes(seen.key)); // in seenSources but not in sources
+    }
+  }
+
   let planDerivationGroupIdsToFilterParsed: { [plan_id: number]: number[] } = JSON.parse(
     $planDerivationGroupIdsToFilter,
   );
@@ -67,8 +81,8 @@
       }
     }
   });
-  $: unseenSourcesParsed = JSON.parse($unseenSources);
-  $: deletedSourcesParsed = JSON.parse($deletedSourcesSeen);
+  // $: unseenSourcesParsed = JSON.parse($unseenSources);
+  // $: deletedSourcesParsed = JSON.parse($deletedSourcesSeen);
   originalView.subscribe(ov => {
     // any time a new view is selected, change the enabled list
     if (ov && $plan) {
@@ -106,22 +120,26 @@
 
     <AlertError class="m-2" error={$derivationGroupPlanLinkError} />
 
-    {#if unseenSourcesParsed.length || deletedSourcesParsed.length}
+    {#if unseenSources.length || unseenDeletedSources.length}
       <div style="padding-top: 10px">
         <CardList>
-          {#if unseenSourcesParsed.length}
+          {#if unseenSources.length}
             <UpdateCard
               deleted={false}
-              sources={unseenSourcesParsed}
-              on:dismiss={() => unseenSources.set(JSON.stringify([]))}
+              sources={unseenSources}
+              on:dismiss={() => {
+                // call effect.
+                effects.createExternalSourceSeenEntry(unseenSources, user);
+              }}
             />
           {/if}
-          {#if deletedSourcesParsed.length}
+          {#if unseenDeletedSources.length}
             <UpdateCard
               deleted={true}
-              sources={deletedSourcesParsed}
+              sources={unseenDeletedSources}
               on:dismiss={() => {
-                deletedSourcesSeen.set(JSON.stringify([]));
+                // call effect.
+                effects.deleteExternalSourceSeenEntry(unseenDeletedSources, user);
               }}
             />
           {/if}

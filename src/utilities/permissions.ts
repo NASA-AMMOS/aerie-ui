@@ -357,6 +357,9 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   CREATE_EXTERNAL_SOURCE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_EXTERNAL_SOURCE], user);
   },
+  CREATE_SEEN_SOURCE_ENTRY: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.INSERT_SEEN_SOURCE_ENTRY], user);
+  },
   CREATE_EXTERNAL_SOURCE_TYPE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.EXTERNAL_SOURCE_TYPES], user);
   },
@@ -535,6 +538,9 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   },
   DELETE_EXTERNAL_SOURCE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.DELETE_EXTERNAL_SOURCE], user);
+  },
+  DELETE_SEEN_SOURCE_ENTRY: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.DELETE_SEEN_SOURCES], user);
   },
   DELETE_EXTERNAL_SOURCE_TYPE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.DELETE_EXTERNAL_SOURCE_TYPE], user);
@@ -879,6 +885,7 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
     return isUserAdmin(user) || getPermission([Queries.SCHEDULING_SPECIFICATION], user);
   },
   SUB_SCHEDULING_REQUESTS: () => true,
+  SUB_SEEN_SOURCES: () => true,
   SUB_SEQUENCE_ADAPTATIONS: () => true,
   SUB_SIMULATION: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.SIMULATIONS], user);

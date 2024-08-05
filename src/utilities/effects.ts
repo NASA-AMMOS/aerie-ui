@@ -33,7 +33,7 @@ import {
   createExternalSourceTypeError,
   creatingExternalSource,
   derivationGroupPlanLinkError,
-  getExternalSourceMetadataError
+  getExternalSourceMetadataError,
 } from '../stores/external-source';
 import { createModelError, creatingModel, models } from '../stores/model';
 import { createPlanError, creatingPlan, planId } from '../stores/plan';
@@ -94,7 +94,8 @@ import type {
   ExternalSourceType,
   ExternalSourceTypeInsertInput,
   ExternalSourceWithResolvedNames,
-  PlanDerivationGroup
+  PlanDerivationGroup,
+  UserSeenEntry
 } from '../types/external-source';
 import type { Model, ModelInsertInput, ModelLog, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
 import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
@@ -873,7 +874,32 @@ const effects = {
     }
   },
 
-  async createExternalSource(file: File | undefined, source: ExternalSourceInsertInput, user: User | null) {
+  async createExternalSourceSeenEntry(sources_seen: UserSeenEntry[], user: User | null) {
+    try {
+      if (!queryPermissions.CREATE_SEEN_SOURCE_ENTRY(user)) {
+        throwPermissionError('mark viewership of an external source');
+      }
+
+      let entries = sources_seen.map(source_seen => {
+        return {
+          user: user?.id,
+          external_source_name: source_seen.key,
+          external_source_type: source_seen.source_type,
+          derivation_group: source_seen.derivation_group
+        }
+      })
+      const { createSeenSourceEntry: created } = await reqHasura(gql.CREATE_SEEN_SOURCE_ENTRY, { entries }, user);
+      if (created) {
+        return created.id;
+      } else {
+        throw Error(`Unable to log external source visibility recognition`);
+      }
+    } catch (e) {
+      catchError('External Source Visibility Recognition Failed', e as Error);
+    }
+  },
+
+  async createExternalSource(source: ExternalSourceInsertInput, user: User | null) {
     try {
       if (!queryPermissions.CREATE_EXTERNAL_SOURCE(user)) {
         throwPermissionError('upload an external source');
@@ -2376,6 +2402,28 @@ const effects = {
       catchError('Expansion Set Delete Failed', e as Error);
       showFailureToast('Expansion Set Delete Failed');
       return false;
+    }
+  },
+
+  async deleteExternalSourceSeenEntry(sources_seen: UserSeenEntry[], user: User | null) {
+    try {
+      if (!queryPermissions.DELETE_SEEN_SOURCE_ENTRY(user)) {
+        throwPermissionError('mark viewership of an external source');
+      }
+
+      for (let entry of sources_seen) {
+        const { deleteSeenSources: deleted } = await reqHasura(gql.DELETE_SEEN_SOURCE_ENTRY, { 
+          user: user?.id, 
+          external_source_name: entry.key, 
+          external_source_type: entry.source_type, 
+          derivation_group: entry.derivation_group 
+        }, user);
+        if(!deleted) {
+          throw Error(`Unable to log external source visibility recognition`);
+        }
+      }
+    } catch (e) {
+      catchError('External Source Visibility Recognition Failed', e as Error);
     }
   },
 
