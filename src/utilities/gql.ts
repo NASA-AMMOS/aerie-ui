@@ -65,6 +65,7 @@ export enum Queries {
   DELETE_SCHEDULING_SPECIFICATION = 'delete_scheduling_specification',
   DELETE_SCHEDULING_SPECIFICATION_CONDITIONS = 'delete_scheduling_specification_conditions',
   DELETE_SCHEDULING_SPECIFICATION_GOALS = 'delete_scheduling_specification_goals',
+  DELETE_SEEN_SOURCES = 'delete_seen_sources',
   DELETE_SEQUENCE = 'delete_sequence_by_pk',
   DELETE_SEQUENCE_ADAPTATION = 'delete_sequence_adaptation_by_pk',
   DELETE_SEQUENCE_TO_SIMULATED_ACTIVITY = 'delete_sequence_to_simulated_activity_by_pk',
@@ -141,6 +142,7 @@ export enum Queries {
   INSERT_SCHEDULING_SPECIFICATION_CONDITIONS = 'insert_scheduling_specification_conditions',
   INSERT_SCHEDULING_SPECIFICATION_GOAL = 'insert_scheduling_specification_goals_one',
   INSERT_SCHEDULING_SPECIFICATION_GOALS = 'insert_scheduling_specification_goals',
+  INSERT_SEEN_SOURCE_ENTRY = 'insert_seen_sources',
   INSERT_SEQUENCE = 'insert_sequence_one',
   INSERT_SEQUENCE_ADAPTATION = 'insert_sequence_adaptation_one',
   INSERT_SEQUENCE_TO_SIMULATED_ACTIVITY = 'insert_sequence_to_simulated_activity_one',
@@ -480,6 +482,20 @@ const gql = {
     mutation CreateExternalSource($source: external_source_insert_input!) {
       createExternalSource: insert_external_source_one(object: $source) {
         id
+      }
+    }
+  `,
+
+  CREATE_SEEN_SOURCE_ENTRY: `#graphql
+    mutation CreateSeenSourceEntry($entries: [seen_sources_insert_input!]!) {
+      createSeenSourceEntry: ${Queries.INSERT_SEEN_SOURCE_ENTRY}(objects: $entries) {
+        returning {
+          id,
+          user,
+          derivation_group,
+          external_source_name,
+          external_source_type  
+        }
       }
     }
   `,
@@ -969,6 +985,24 @@ const gql = {
       }
       deleteExternalSource: ${Queries.DELETE_EXTERNAL_SOURCE}(id: $id) {
         id
+      }
+    }
+  `,
+
+  // Sadly, not a great way to compare fields within a type, even if its a type GraphQL recognizes. As such, many different parameters, called one by one
+  DELETE_SEEN_SOURCE_ENTRY: `#graphql
+    mutation DeleteSeenSourceEntry($user: String!, $derivation_group: String!, $external_source_name: String!, $external_source_type: String!) {
+      deleteSeenSources: ${Queries.DELETE_SEEN_SOURCES}(where: {
+        _and: {
+          user: {_eq: $user}, 
+          derivation_group: {_eq: $derivation_group}, 
+          external_source_name: {_eq: $external_source_name}, 
+          external_source_type: {_eq: $external_source_type}
+        }
+      }){
+        returning {
+          id
+        }
       }
     }
   `,
@@ -2722,6 +2756,18 @@ const gql = {
         id
         derivation_group_id
         plan_id
+      }
+    }
+  `,
+
+  SUB_SEEN_SOURCES: `#graphql
+    subscription SubSeenSources {
+      seen_sources {
+        id,
+        user,
+        derivation_group,
+        external_source_name,
+        external_source_type
       }
     }
   `,
