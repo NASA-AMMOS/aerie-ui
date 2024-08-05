@@ -1,11 +1,17 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { goto } from '$app/navigation';
+  import { base } from '$app/paths';
   import { parcels, userSequences, userSequencesColumns } from '../../stores/sequencing';
   import type { User } from '../../types/app';
   import type { Parcel, UserSequence } from '../../types/sequencing';
+  import { permissionHandler } from '../../utilities/permissionHandler';
+  import { featurePermissions } from '../../utilities/permissions';
+  import Input from '../form/Input.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
+  import SectionTitle from '../ui/SectionTitle.svelte';
   import WorkspaceTable from '../workspace/WorkspaceTable.svelte';
   import SequenceEditor from './SequenceEditor.svelte';
   import SequenceTable from './SequenceTable.svelte';
@@ -33,9 +39,6 @@
 
 <CssGrid bind:columns={$userSequencesColumns}>
   <WorkspaceTable {user}>
-    <SequenceTable {filterText} {user} on:sequenceSelected={onSequenceSelected} />
-  </WorkspaceTable>
-  <!--<Panel>
     <svelte:fragment slot="header">
       <SectionTitle>Sequences</SectionTitle>
 
@@ -58,8 +61,9 @@
     </svelte:fragment>
 
     <svelte:fragment slot="body">
+      <SequenceTable {filterText} {user} on:sequenceSelected={onSequenceSelected} />
     </svelte:fragment>
-  </Panel>-->
+  </WorkspaceTable>
 
   <CssGridGutter track={1} type="column" />
 
