@@ -810,11 +810,6 @@
             </Input>
 
             <Input layout="inline">
-              File ID
-              <input class="st-input w-100" disabled={true} name="file-id" value={selectedSource.file_id} />
-            </Input>
-
-            <Input layout="inline">
               Source Type
               <input class="st-input w-100" disabled={true} name="source-type" value={selectedSource.source_type} />
             </Input>
