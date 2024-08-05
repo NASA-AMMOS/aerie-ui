@@ -9,7 +9,6 @@ export type ExternalSourceDB = {
   derivation_group_id: number;
   end_time: string;
   external_events: ExternalEventDB[];
-  file_id: number;
   id: number;
   key: string;
   metadata: Record<string, any>;
@@ -36,15 +35,7 @@ export type ExternalSourceJson = {
 // For use in retrieval of source information sans bulky items like metadata and event lists (see stores)
 export type ExternalSourceSlim = Pick<
   ExternalSourceDB,
-  | 'id'
-  | 'file_id'
-  | 'key'
-  | 'source_type_id'
-  | 'start_time'
-  | 'end_time'
-  | 'valid_at'
-  | 'derivation_group_id'
-  | 'created_at'
+  'id' | 'key' | 'source_type_id' | 'start_time' | 'end_time' | 'valid_at' | 'derivation_group_id' | 'created_at'
 >;
 
 // For use in ExternalSourceManager tables
@@ -91,7 +82,7 @@ export type ExternalSourceWithDateInfo = ExternalSourceWithResolvedNames & { cha
 // This is used for the GraphQL mutation.
 export type ExternalSourceInsertInput = Pick<
   ExternalSourceDB,
-  'key' | 'metadata' | 'source_type_id' | 'file_id' | 'start_time' | 'end_time' | 'valid_at' | 'derivation_group_id'
+  'key' | 'metadata' | 'source_type_id' | 'start_time' | 'end_time' | 'valid_at' | 'derivation_group_id'
 > & {
   external_events: {
     data: ExternalEventInsertInput[] | null;

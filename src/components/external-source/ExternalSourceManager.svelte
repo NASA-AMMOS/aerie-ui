@@ -130,14 +130,6 @@
       sortable: true,
     },
     {
-      field: 'file_id',
-      filter: 'number',
-      headerName: 'File ID',
-      resizable: true,
-      sortable: true,
-      width: 120,
-    },
-    {
       field: 'start_time',
       filter: 'text',
       headerName: 'Start Time',
@@ -511,7 +503,6 @@
         external_events: {
           data: null, // updated after this map is created
         },
-        file_id: -1, // updated in the effect.
         key: $keyField.value,
         metadata: parsed.source.metadata,
         source_type_id: -1, // updated in the effect.

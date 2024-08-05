@@ -285,7 +285,6 @@ describe('Handle modal and requests in effects', () => {
           external_events: {
             data: {},
           },
-          file_id: 1,
           key: '',
           metadata: {},
           source_type_id: 1,
