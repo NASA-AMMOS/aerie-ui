@@ -82,7 +82,7 @@
         "ActivityDirectivesTablePanel",
         "ActivityFormPanel",
         "ActivitySpansTablePanel",
-        "ActivityTypesPanel",
+        "ActivityAndResourceTypesPanel",
         "ConstraintsPanel",
         "ExpansionPanel",
         "IFramePanel",

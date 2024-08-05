@@ -494,6 +494,31 @@ export function createTimelineActivityLayer(timelines: Timeline[], args: Partial
   };
 }
 
+export function createTimelineResourceLayer(timelines: Timeline[], resourceType: ResourceType) {
+  const { name, schema } = resourceType;
+  const { type: schemaType } = schema;
+
+  const unit = schema.metadata?.unit?.value;
+  const isDiscreteSchema = schemaType === 'boolean' || schemaType === 'string' || schemaType === 'variant';
+  const isNumericSchema =
+    schemaType === 'int' ||
+    schemaType === 'real' ||
+    (schemaType === 'struct' && schema?.items?.rate?.type === 'real' && schema?.items?.initial?.type === 'real');
+
+  const yAxis = createYAxis(timelines, {
+    label: { text: `${name}${unit ? ` (${unit})` : ''}` },
+    tickCount: isNumericSchema ? 5 : 0,
+  });
+
+  const layer = isDiscreteSchema
+    ? createTimelineXRangeLayer(timelines, [yAxis], { filter: { resource: { names: [name] } } })
+    : isNumericSchema
+      ? createTimelineLineLayer(timelines, [yAxis], { filter: { resource: { names: [name] } } })
+      : null;
+
+  return { layer, yAxis };
+}
+
 /**
  * Returns a new line layer. Note that the yAxes should be those from the row the layer will be a member of.
  */

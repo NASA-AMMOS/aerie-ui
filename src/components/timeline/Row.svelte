@@ -163,6 +163,11 @@
     spans: {},
   };
   let filterActivitiesByTime = false;
+  let rowRef: HTMLDivElement;
+
+  $: if ($selectedRow?.id === id && rowRef) {
+    rowRef.scrollIntoView({ block: 'nearest' });
+  }
 
   $: if (plan && simulationDataset !== null && layers && $externalResources && !$resourceTypesLoading) {
     const simulationDatasetId = simulationDataset.dataset_id;
@@ -526,11 +531,15 @@
       if (e.dataTransfer !== null) {
         const unixEpochTime = xScaleView.invert(offsetX).getTime();
         const start_time = getDoyTime(new Date(unixEpochTime));
-        const activityTypeName = e.dataTransfer.getData('activityTypeName');
+        // const activityTypeName = e.dataTransfer.getData('name');
+        const data = e.dataTransfer.getData('text');
+        const json = JSON.parse(data || '');
+        const type = json.type ?? '';
+        const item = json.item ?? '';
 
         // Only allow creating an activity if we have an actual activity in the drag data.
-        if (activityTypeName && plan) {
-          effects.createActivityDirective({}, start_time, activityTypeName, activityTypeName, {}, plan, user);
+        if (type && item && plan) {
+          effects.createActivityDirective({}, start_time, item.name, item.name, {}, plan, user);
         }
       }
     }
@@ -644,6 +653,7 @@
     </RowHeader>
 
     <div
+      bind:this={rowRef}
       class={rowClasses}
       id={`row-${id}`}
       style={`cursor: ${

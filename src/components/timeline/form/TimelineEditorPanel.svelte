@@ -25,9 +25,8 @@
   import { plugins } from '../../../stores/plugins';
   import { externalResourceNames, resourceTypes, yAxesWithScaleDomainsCache } from '../../../stores/simulation';
   import {
-    selectedRow,
+    // selectedRow,
     selectedRowId,
-    selectedTimeline,
     selectedTimelineId,
     view,
     viewSetSelectedRow,
@@ -90,19 +89,21 @@
   let verticalGuides: VerticalGuide[] = [];
   let editorWidth: number;
 
-  $: rows = $selectedTimeline?.rows || [];
+  $: selectedTimeline = $view?.definition.plan.timelines.find(t => t.id === $selectedTimelineId);
+  $: rows = selectedTimeline?.rows || [];
   $: timelines = $view?.definition.plan.timelines || [];
-  $: verticalGuides = $selectedTimeline?.verticalGuides || [];
-  $: horizontalGuides = $selectedRow?.horizontalGuides || [];
-  $: yAxes = $selectedRow?.yAxes || [];
-  $: layers = $selectedRow?.layers || [];
-  $: rowHasActivityLayer = $selectedRow?.layers.find(isActivityLayer) || false;
+  $: verticalGuides = selectedTimeline?.verticalGuides || [];
+  $: selectedRow = rows.find(row => row.id === $selectedRowId);
+  $: horizontalGuides = selectedRow?.horizontalGuides || [];
+  $: yAxes = selectedRow?.yAxes || [];
+  $: layers = selectedRow?.layers || [];
+  $: rowHasActivityLayer = selectedRow?.layers.find(isActivityLayer) || false;
   $: rowHasNonActivityChartLayer =
-    !!$selectedRow?.layers.find(layer => isLineLayer(layer) || isXRangeLayer(layer)) || false;
-  $: if (rowHasActivityLayer && $selectedRow && !$selectedRow.activityOptions) {
+    !!selectedRow?.layers.find(layer => isLineLayer(layer) || isXRangeLayer(layer)) || false;
+  $: if (rowHasActivityLayer && selectedRow && !selectedRow.activityOptions) {
     viewUpdateRow('activityOptions', ViewDefaultActivityOptions);
   }
-  $: activityOptions = $selectedRow?.activityOptions || { ...ViewDefaultActivityOptions };
+  $: activityOptions = selectedRow?.activityOptions || { ...ViewDefaultActivityOptions };
 
   function updateRowEvent(event: Event) {
     const { name, value } = getTarget(event);
@@ -180,7 +181,7 @@
   }
 
   function addTimelineRow() {
-    if (!$selectedTimeline) {
+    if (!selectedTimeline) {
       return;
     }
 
@@ -392,10 +393,10 @@
   }
 
   function handleNewHorizontalGuideClick() {
-    if (!$selectedRow) {
+    if (!selectedRow) {
       return;
     }
-    const yAxesWithScaleDomains = $yAxesWithScaleDomainsCache[$selectedRow.id];
+    const yAxesWithScaleDomains = $yAxesWithScaleDomainsCache[selectedRow.id];
     const newHorizontalGuide = createHorizontalGuide(timelines, yAxesWithScaleDomains);
     viewUpdateRow('horizontalGuides', [...horizontalGuides, newHorizontalGuide]);
   }
@@ -475,7 +476,7 @@
   </svelte:fragment>
 
   <div slot="body" bind:clientWidth={editorWidth} class="timeline-editor" class:compact={editorWidth < 360}>
-    {#if !$selectedRow}
+    {#if !selectedRow}
       <!-- Select Timeline. -->
       <div class="timeline-select-container">
         <select
@@ -497,7 +498,7 @@
       </div>
 
       <!-- Timeline editing -->
-      {#if !$selectedTimeline}
+      {#if !selectedTimeline}
         <fieldset class="editor-section">No timeline selected</fieldset>
       {:else}
         <fieldset class="editor-section">
@@ -511,7 +512,7 @@
                   class="st-input w-100"
                   name="marginLeft"
                   type="number"
-                  value={$selectedTimeline.marginLeft}
+                  value={selectedTimeline.marginLeft}
                   on:input|stopPropagation={updateTimelineMarginLeft}
                 />
               </Input>
@@ -523,7 +524,7 @@
                 class="st-input w-100"
                 name="marginRight"
                 type="number"
-                value={$selectedTimeline.marginRight}
+                value={selectedTimeline.marginRight}
                 on:input|stopPropagation={updateTimelineEvent}
               />
             </Input>
@@ -648,8 +649,8 @@
                         use:tooltip={{ content: 'Duplicate Row', placement: 'top' }}
                         class="st-button icon"
                         on:click={() => {
-                          if ($selectedTimeline) {
-                            effects.duplicateTimelineRow(row, $selectedTimeline, timelines);
+                          if (selectedTimeline) {
+                            effects.duplicateTimelineRow(row, selectedTimeline, timelines);
                           }
                         }}
                       >
@@ -713,7 +714,7 @@
               name="name"
               autocomplete="off"
               type="string"
-              value={$selectedRow.name}
+              value={selectedRow.name}
               on:input|stopPropagation={updateRowEvent}
             />
           </Input>
@@ -724,11 +725,11 @@
               <label for="marginLeft">Row Height</label>
               <input
                 min={ViewConstants.MIN_ROW_HEIGHT}
-                disabled={$selectedRow.autoAdjustHeight}
+                disabled={selectedRow.autoAdjustHeight}
                 class="st-input w-100"
                 name="height"
                 type="number"
-                value={$selectedRow.height}
+                value={selectedRow.height}
                 on:input|stopPropagation={updateRowMinHeight}
               />
             </Input>
@@ -739,7 +740,7 @@
               class="st-select w-100"
               data-type="bool"
               name="autoAdjustHeight"
-              value={$selectedRow.autoAdjustHeight}
+              value={selectedRow.autoAdjustHeight}
               on:change={e => {
                 const { value } = getTarget(e);
                 viewUpdateRow('autoAdjustHeight', value === 'true');

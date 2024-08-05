@@ -34,7 +34,7 @@ export type ViewGridComponent =
   | 'ActivityDirectivesTablePanel'
   | 'ActivityFormPanel'
   | 'ActivitySpansTablePanel'
-  | 'ActivityTypesPanel'
+  | 'ActivityAndResourceTypesPanel'
   | 'ConstraintsPanel'
   | 'ExpansionPanel'
   | 'IFramePanel'

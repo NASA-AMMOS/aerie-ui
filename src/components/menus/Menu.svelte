@@ -151,17 +151,19 @@
     height: 100%;
     left: 0;
     position: absolute;
-    top: 0;
+    top: 4px;
     width: 100%;
   }
 
   .menu-slot {
     background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.16);
     border-radius: 4px;
-    box-shadow:
+    /* box-shadow:
       0 2px 4px -1px #0003,
       0 4px 5px #00000024,
-      0 1px 10px #0000001f;
+      0 1px 10px #0000001f; */
+    box-shadow: 0px 4px 16px 0px rgba(0, 0, 0, 0.08);
     outline: 0;
     overflow: hidden;
     z-index: 1000;

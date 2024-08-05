@@ -8,6 +8,7 @@
   import TimelineLineLayerIcon from '../../assets/timeline-line-layer.svg?component';
   import TimelineXRangeLayerIcon from '../../assets/timeline-x-range-layer.svg?component';
   import { ViewDefaultActivityOptions } from '../../constants/view';
+  import { viewAddFilterToRow } from '../../stores/views';
   import type { ActivityDirectiveId } from '../../types/activity';
   import type { Resource, SpanId } from '../../types/simulation';
   import type {
@@ -19,7 +20,7 @@
     LineLayer,
     MouseOver,
   } from '../../types/timeline';
-  import { filterResourcesByLayer } from '../../utilities/timeline';
+  import { filterResourcesByLayer, isActivityLayer } from '../../utilities/timeline';
   import { tooltip } from '../../utilities/tooltip';
   import RowHeaderActivityTree from './RowHeaderActivityTree.svelte';
   import RowHeaderMenu from './RowHeaderMenu.svelte';
@@ -40,6 +41,8 @@
   export let selectedActivityDirectiveId: ActivityDirectiveId | null = null;
   export let selectedSpanId: SpanId | null = null;
 
+  let isDropTarget: boolean = false;
+  let isDragging: boolean = false;
   let resourceLabels: {
     chartType: ChartType;
     color: string;
@@ -96,7 +99,34 @@
       });
     });
   }
+
+  function onDragEnter() {
+    isDropTarget = true;
+  }
+
+  function onDragLeave() {
+    isDropTarget = false;
+  }
+
+  function onDragOver() {
+    isDropTarget = true;
+  }
+
+  function onDrop(e: DragEvent) {
+    isDropTarget = false;
+
+    if (e.dataTransfer !== null) {
+      const data = e.dataTransfer.getData('text');
+      const { type, item } = JSON.parse(data || '{}');
+      const activityLayers = layers.filter(isActivityLayer);
+      if (type && item) {
+        viewAddFilterToRow([item], type, rowId, activityLayers[0]);
+      }
+    }
+  }
 </script>
+
+<svelte:window on:dragstart={() => (isDragging = true)} on:dragend={() => (isDragging = false)} />
 
 <div
   class="row-header"
@@ -104,109 +134,116 @@
   style:margin-right={`${rowHeaderDragHandleWidthPx}px`}
   style:height={expanded ? `${height}px` : '24px'}
   class:expanded
+  class:drop-target={isDropTarget}
   role="banner"
   on:contextmenu={e => dispatch('contextMenu', { e, origin: 'row-header' })}
+  on:dragenter|preventDefault={onDragEnter}
+  on:dragleave={onDragLeave}
+  on:dragover|preventDefault={onDragOver}
+  on:drop|preventDefault={onDrop}
 >
-  <div class="row-header-left-column">
-    {#if expanded}
-      {#if height > 60}
-        <div
-          class="row-drag-handle-container"
-          on:mousedown={() => dispatch('mouseDownRowMove')}
-          on:mouseup={() => dispatch('mouseUpRowMove')}
-          role="none"
-          style={rowDragMoveDisabled ? 'cursor: grab' : 'cursor: grabbing'}
-        >
-          <GripVerticalIcon />
-        </div>
-      {/if}
-
-      {#if height > 48}
-        <div class="row-menu-container">
-          <RowHeaderMenu on:contextMenu />
-        </div>
-      {/if}
-    {/if}
-
-    <div class="row-header-left-column-row">
-      <div class="row-header-title-button-container">
-        <button class="st-button icon row-header-title-button" on:click={toggleExpansion}>
-          {#if expanded}
-            <CaretDownIcon class="row-header-collapse" />
-          {:else}
-            <CaretRightIcon class="row-header-collapse" />
-          {/if}
-          <div class="row-header-title-container">
-            <div
-              class="row-header-title st-typography-label small-text"
-              on:mousedown={() => dispatch('mouseDownRowMove')}
-              on:mouseup={() => dispatch('mouseUpRowMove')}
-              role="none"
-              style={rowDragMoveDisabled ? 'cursor: grab' : 'cursor: grabbing'}
-            >
-              {title}
-            </div>
+  <div class="row-header-wrapper" class:disable-pointer={isDragging}>
+    <div class="row-header-left-column">
+      {#if expanded}
+        {#if height > 60}
+          <div
+            class="row-drag-handle-container"
+            on:mousedown={() => dispatch('mouseDownRowMove')}
+            on:mouseup={() => dispatch('mouseUpRowMove')}
+            role="none"
+            style={rowDragMoveDisabled ? 'cursor: grab' : 'cursor: grabbing'}
+          >
+            <GripVerticalIcon />
           </div>
-        </button>
-        <slot />
-      </div>
+        {/if}
 
-      {#if activityTree.length}
-        <div class="activity-tree">
-          <RowHeaderActivityTree
-            {activityOptions}
-            {activityTree}
-            {selectedActivityDirectiveId}
-            {selectedSpanId}
-            on:activity-tree-node-change
-            on:mouseDown
-            on:dblClick
-          />
-        </div>
+        {#if height > 48}
+          <div class="row-menu-container">
+            <RowHeaderMenu on:contextMenu />
+          </div>
+        {/if}
       {/if}
 
-      {#if resourceLabels.length > 0}
-        <div class="row-header-y-axis-labels">
-          {#each resourceLabels as label}
-            <div class="row-header-y-axis-label" style:color={label.color}>
-              {#if label.chartType === 'x-range'}
-                <TimelineXRangeLayerIcon />
-              {:else if label.chartType === 'line'}
-                <TimelineLineLayerIcon />
-              {/if}
+      <div class="row-header-left-column-row">
+        <div class="row-header-title-button-container">
+          <button class="st-button icon row-header-title-button" on:click={toggleExpansion}>
+            {#if expanded}
+              <CaretDownIcon class="row-header-collapse" />
+            {:else}
+              <CaretRightIcon class="row-header-collapse" />
+            {/if}
+            <div class="row-header-title-container">
               <div
-                class="st-typography-label small-text text-content"
-                style:color={label.color}
-                use:tooltip={{ content: label.resource.name, interactive: true, placement: 'right' }}
+                class="row-header-title st-typography-label small-text"
+                on:mousedown={() => dispatch('mouseDownRowMove')}
+                on:mouseup={() => dispatch('mouseUpRowMove')}
+                role="none"
+                style={rowDragMoveDisabled ? 'cursor: grab' : 'cursor: grabbing'}
               >
-                <!-- See https://stackoverflow.com/a/27961022 for explanation of &lrm; "left to right mark" -->
-                &lrm;{label.label}
-                {#if label.unit}
-                  ({label.unit})
-                {:else}
-                  &lrm;&nbsp;
-                {/if}
+                {title}
               </div>
             </div>
-          {/each}
+          </button>
+          <slot />
         </div>
-      {/if}
-    </div>
-  </div>
-  {#if expanded}
-    <div class="row-header-right-column" style:width={`${yAxesWidth}px`}>
-      <div class="row-header-y-axes">
-        <RowYAxes
-          drawWidth={yAxesWidth}
-          drawHeight={height}
-          {yAxes}
-          on:updateYAxesWidth={onUpdateYAxesWidth}
-          {layers}
-          {resources}
-        />
+
+        {#if activityTree.length}
+          <div class="activity-tree">
+            <RowHeaderActivityTree
+              {activityOptions}
+              {activityTree}
+              {selectedActivityDirectiveId}
+              {selectedSpanId}
+              on:activity-tree-node-change
+              on:mouseDown
+              on:dblClick
+            />
+          </div>
+        {/if}
+
+        {#if resourceLabels.length > 0}
+          <div class="row-header-y-axis-labels">
+            {#each resourceLabels as label}
+              <div class="row-header-y-axis-label" style:color={label.color}>
+                {#if label.chartType === 'x-range'}
+                  <TimelineXRangeLayerIcon />
+                {:else if label.chartType === 'line'}
+                  <TimelineLineLayerIcon />
+                {/if}
+                <div
+                  class="st-typography-label small-text text-content"
+                  style:color={label.color}
+                  use:tooltip={{ content: label.resource.name, interactive: true, placement: 'right' }}
+                >
+                  <!-- See https://stackoverflow.com/a/27961022 for explanation of &lrm; "left to right mark" -->
+                  &lrm;{label.label}
+                  {#if label.unit}
+                    ({label.unit})
+                  {:else}
+                    &lrm;&nbsp;
+                  {/if}
+                </div>
+              </div>
+            {/each}
+          </div>
+        {/if}
       </div>
     </div>
-  {/if}
+    {#if expanded}
+      <div class="row-header-right-column" style:width={`${yAxesWidth}px`}>
+        <div class="row-header-y-axes">
+          <RowYAxes
+            drawWidth={yAxesWidth}
+            drawHeight={height}
+            {yAxes}
+            on:updateYAxesWidth={onUpdateYAxesWidth}
+            {layers}
+            {resources}
+          />
+        </div>
+      </div>
+    {/if}
+  </div>
 </div>
 
 <style>
@@ -219,6 +256,16 @@
     z-index: 4;
   }
 
+  .row-header-wrapper {
+    display: flex;
+    height: inherit;
+    width: inherit;
+  }
+
+  .disable-pointer,
+  .disable-pointer * {
+    pointer-events: none;
+  }
   .row-header-left-column,
   .row-header-right-column {
     display: flex;
@@ -254,6 +301,18 @@
   .small-text {
     font-size: 10px;
     letter-spacing: 0.1px;
+  }
+
+  .drop-target::after {
+    box-shadow: 0 0 0px 2px inset var(--st-utility-blue);
+    content: ' ';
+    height: 100%;
+    left: 0;
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    width: 100%;
+    z-index: 9;
   }
 
   .row-header-title {

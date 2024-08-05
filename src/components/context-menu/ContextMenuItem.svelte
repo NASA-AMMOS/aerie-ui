@@ -1,8 +1,10 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import { classNames } from '../../utilities/generic';
   import { useActions, type ActionArray } from '../../utilities/useActions';
 
   export let use: ActionArray = [];
+  export let className: string = 'aa';
 
   const dispatch = createEventDispatcher<{
     click: void;
@@ -10,7 +12,7 @@
 </script>
 
 <div
-  class="context-menu-item st-typography-body"
+  class={classNames('context-menu-item st-typography-body', { [className]: !!className })}
   role="none"
   on:mouseenter
   on:mouseleave
