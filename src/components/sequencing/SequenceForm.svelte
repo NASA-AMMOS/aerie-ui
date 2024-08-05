@@ -269,7 +269,7 @@
       </fieldset>
 
       <fieldset>
-        <label for="outputFile">Create Sequence from {$outputFormat?.[0].name}</label>
+        <label for="outputFile">Create Sequence from {$outputFormat?.[0]?.name}</label>
         <input
           bind:files={outputFiles}
           class="w-100"
