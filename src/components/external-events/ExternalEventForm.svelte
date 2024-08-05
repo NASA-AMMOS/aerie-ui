@@ -2,9 +2,11 @@
 
 <script lang="ts">
   import { externalSources, getSourceName } from '../../stores/external-source';
+  import { plugins } from '../../stores/plugins';
   import type { ExternalEventWithTypeName } from '../../types/external-event';
   import type { Property } from '../../types/property';
   import { classNames } from '../../utilities/generic';
+  import { formatDate } from '../../utilities/time';
   import Collapse from '../Collapse.svelte';
   import Input from '../form/Input.svelte';
   import DatePicker from '../ui/DatePicker/DatePicker.svelte';
@@ -56,7 +58,7 @@
         <Highlight highlight={highlightKeysMap.start_offset}>
           <Input layout="inline">
             Start Time (UTC)
-            <DatePicker dateString={externalEvent.start_time} disabled={!editable} name="start-time" />
+            <DatePicker dateString={`${formatDate(new Date(externalEvent.start_time), $plugins.time.primary.format)}`} disabled={!editable} name="start-time" />
           </Input>
         </Highlight>
 
