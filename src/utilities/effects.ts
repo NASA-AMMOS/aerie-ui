@@ -880,22 +880,13 @@ const effects = {
 
       creatingExternalSource.set(true);
       createExternalSourceError.set(null);
-      let file_id: number | null = null;
-      if (file) {
-        file_id = await effects.uploadFile(file, user);
-      }
-
-      if (file_id !== null) {
-        source.file_id = file_id;
-        console.log(source)
-        const { createExternalSource: created } = await reqHasura(gql.CREATE_EXTERNAL_SOURCE, { source }, user);
-        if (created) {
-          showSuccessToast('External Source Created Successfully');
-          creatingExternalSource.set(false);
-          return created.id;
-        } else {
-          throw Error(`Unable to create external source`);
-        }
+      const { createExternalSource: created } = await reqHasura(gql.CREATE_EXTERNAL_SOURCE, { source }, user);
+      if (created) {
+        showSuccessToast('External Source Created Successfully');
+        creatingExternalSource.set(false);
+        return created.id;
+      } else {
+        throw Error(`Unable to create external source`);
       }
     } catch (e) {
       catchError('External Source Create Failed', e as Error);
@@ -3460,9 +3451,9 @@ const effects = {
       const data = await reqHasura<any>(gql.GET_EXTERNAL_EVENT_TYPE_BY_SOURCE, { source_id }, user);
       const { external_source } = data
       if (external_source != null) {
-        let event_types: string[] = [];
-        for (let external_event of external_source[0].external_events) {
-          event_types.push(external_event.external_event_type.name)
+        const event_types: string[] = [];
+        for (const external_event of external_source[0].external_events) {
+          event_types.push(external_event.external_event_type.name);
         }
         return Array.from(new Set(event_types));
       } else {
