@@ -1488,7 +1488,6 @@ const gql = {
       ${Queries.EXTERNAL_SOURCES}(where: {source_type_id: { _eq: $source_type_id }}) {
         id
         key
-        file_id
         source_type_id
         valid_at
         start_time
@@ -2471,7 +2470,6 @@ const gql = {
     subscription SubExternalSource($id: Int!) {
       models: ${Queries.EXTERNAL_SOURCE}(id: $id) {
         id
-        file_id
         key
         source_type_id
         start_time
@@ -2486,7 +2484,6 @@ const gql = {
     subscription SubExternalSources {
       models: ${Queries.EXTERNAL_SOURCES}(order_by: { key: asc }) {
         id
-        file_id
         key
         source_type_id
         derivation_group_id
