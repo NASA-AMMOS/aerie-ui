@@ -1,5 +1,4 @@
 import type { ExternalEventDB, ExternalEventInsertInput, ExternalEventJson } from '../types/external-event';
-import type { BaseDefinition, BaseMetadata } from './metadata';
 
 // no analogue to ExternalEventId as that is only necessary in plan view where information on the selected event is shared across several sibling panels (see stores)
 
@@ -68,13 +67,6 @@ export type DerivationGroup = {
   source_type_id: number;
   sources: Map<string, { event_counts: number }>;
 };
-
-// Metadata types used for management modal
-export type DerivationGroupDefinition = BaseDefinition & {
-  derivation_group_id: number;
-  derivation_group_name: string;
-};
-export type DerivationGroupMetadata = BaseMetadata<DerivationGroupDefinition>;
 
 // used exclusively in ExternalSourcesPanel and UpdateCard, to help track 'deleted_at' information. If in the future we have a comprehensive history of all sources' metadata ever, we will use this there too
 export type ExternalSourceWithDateInfo = ExternalSourceWithResolvedNames & { change_date: Date };
