@@ -5,12 +5,13 @@
   import { base } from '$app/paths';
   import type { ICellRendererParams } from 'ag-grid-community';
   import { createEventDispatcher } from 'svelte';
+  import { SearchParameters } from '../../enums/searchParameters';
   import { parcels, userSequences } from '../../stores/sequencing';
   import type { User, UserId } from '../../types/app';
   import type { DataGridColumnDef, DataGridRowSelection, RowId } from '../../types/data-grid';
   import type { UserSequence } from '../../types/sequencing';
   import effects from '../../utilities/effects';
-  import { getTarget } from '../../utilities/generic';
+  import { getSearchParameterNumber, getTarget } from '../../utilities/generic';
   import { featurePermissions } from '../../utilities/permissions';
   import DataGridActions from '../ui/DataGrid/DataGridActions.svelte';
   import SingleActionDataGrid from '../ui/DataGrid/SingleActionDataGrid.svelte';
@@ -22,6 +23,7 @@
   type SequencesCellRendererParams = ICellRendererParams<UserSequence> & CellRendererParams;
 
   export let filterText: string;
+  export let selectedWorkspaceId: number | null;
   export let user: User | null;
 
   let baseColumnDefs: DataGridColumnDef[] = [];
@@ -113,7 +115,9 @@
     const filterTextLowerCase = filterText.toLowerCase();
     const includesId = `${sequence.id}`.includes(filterTextLowerCase);
     const includesName = sequence.name.toLocaleLowerCase().includes(filterTextLowerCase);
-    return includesId || includesName;
+    const isInWorkspace = selectedWorkspaceId !== null && sequence.workspace_id === selectedWorkspaceId;
+
+    return (includesId || includesName) && isInWorkspace;
   });
 
   async function deleteSequence(sequence: UserSequence) {
@@ -137,7 +141,9 @@
   }
 
   function editSequence({ id }: Pick<UserSequence, 'id'>) {
-    goto(`${base}/sequencing/edit/${id}`);
+    goto(
+      `${base}/sequencing/edit/${id}${'?' + SearchParameters.WORKSPACE_ID + '=' + getSearchParameterNumber(SearchParameters.WORKSPACE_ID) ?? ''}`,
+    );
   }
 
   function editSequenceContext(event: CustomEvent<RowId[]>) {

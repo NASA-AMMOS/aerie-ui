@@ -430,6 +430,9 @@ const queryPermissions = {
   CREATE_VIEW: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_VIEW], user);
   },
+  CREATE_WORKSPACE: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.INSERT_WORKSPACE], user);
+  },
   DELETE_ACTIVITY_DIRECTIVES: (user: User | null, plan: PlanWithOwners): boolean => {
     return (
       isUserAdmin(user) ||
