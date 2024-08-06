@@ -63,11 +63,14 @@
     }
   }
 
+  function onCancelDownload() {
+    downloadAbortController?.abort();
+    downloadAbortController = null;
+    downloadProgress = null;
+  }
+
   function progressCallback(progress: number) {
     downloadProgress = progress;
-    if (downloadProgress === 100) {
-      downloadProgress = null;
-    }
   }
 </script>
 
@@ -85,18 +88,24 @@
   </button>
 {/if}
 {#if downloadCallback}
-  <button class="st-button download icon" on:click|stopPropagation={onDownload} use:tooltip={downloadTooltip}>
-    {#if downloadProgress === null}
+  {#if downloadProgress === null}
+    <button class="st-button download icon" on:click|stopPropagation={onDownload} use:tooltip={downloadTooltip}>
       {#if useExportIcon}
         <ExportIcon />
       {:else}
         <DownloadIcon />
       {/if}
-    {:else}
-      <ProgressRadial progress={downloadProgress} useBackground={false} />
+    </button>
+  {:else}
+    <button
+      class="st-button download icon"
+      on:click|stopPropagation={onCancelDownload}
+      use:tooltip={{ ...downloadTooltip, content: `Cancel ${downloadTooltip?.content}` }}
+    >
+      <ProgressRadial progress={downloadProgress} useBackground={false} size={16} strokeWidth={1} />
       <div class="cancel"><CloseIcon /></div>
-    {/if}
-  </button>
+    </button>
+  {/if}
 {/if}
 {#if editCallback}
   <button
@@ -141,17 +150,22 @@
   }
 
   .download .cancel {
-    display: none;
-  }
-
-  .download:hover .cancel {
     align-items: center;
-    display: flex;
+    cursor: pointer;
+    display: none;
     height: 100%;
     justify-content: center;
     left: 0;
     position: absolute;
     top: 0;
     width: 100%;
+  }
+
+  .download .cancel :global(svg) {
+    width: 10px;
+  }
+
+  .download:hover .cancel {
+    display: flex;
   }
 </style>

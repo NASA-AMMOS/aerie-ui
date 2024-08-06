@@ -5,7 +5,6 @@
   import { base } from '$app/paths';
   import BranchIcon from '@nasa-jpl/stellar/icons/branch.svg?component';
   import ChevronDownIcon from '@nasa-jpl/stellar/icons/chevron_down.svg?component';
-  import CloseIcon from '@nasa-jpl/stellar/icons/close.svg?component';
   import { PlanStatusMessages } from '../../enums/planStatusMessages';
   import { planReadOnly } from '../../stores/plan';
   import { viewTogglePanel } from '../../stores/views';
@@ -172,16 +171,16 @@
         <div class="column-name">View Snapshot History</div>
       </MenuItem>
       <MenuDivider />
-      <div class="export-button-container">
-        <button class="st-button" on:click={planExportProgress === null ? onExportPlan : onCancelExportPlan}>
-          {#if planExportProgress !== null}
-            <ProgressRadial progress={planExportProgress} useBackground={false} />
-            <div class="cancel"><CloseIcon /></div>
-          {:else}
-            Export as .json
-          {/if}
-        </button>
-      </div>
+      <MenuItem on:click={planExportProgress === null ? onExportPlan : onCancelExportPlan}>
+        {#if planExportProgress === null}
+          Export plan as .json
+        {:else}
+          <div class="cancel-plan-export">
+            Cancel plan export
+            <ProgressRadial progress={planExportProgress} useBackground={false} size={16} strokeWidth={1} />
+          </div>
+        {/if}
+      </MenuItem>
     </Menu>
   </div>
   {#if plan.child_plans.length > 0}
@@ -238,10 +237,9 @@
     user-select: none;
   }
 
-  .export-button-container {
+  .cancel-plan-export {
     align-items: center;
+    column-gap: 0.25rem;
     display: flex;
-    justify-content: center;
-    padding: var(--aerie-menu-item-padding, 8px);
   }
 </style>

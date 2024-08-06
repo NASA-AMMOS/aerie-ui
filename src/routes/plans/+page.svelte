@@ -328,7 +328,7 @@
         sortable: false,
         suppressAutoSize: true,
         suppressSizeToFit: true,
-        width: 50,
+        width: 53,
       },
     ];
   }
@@ -651,17 +651,32 @@
         {#if selectedPlan}
           <SectionTitle>Selected plan</SectionTitle>
           <div class="selected-plan-buttons">
-            <button
-              class="st-button secondary transfer-button"
-              on:click={planExportProgress === null ? onExportSelectedPlan : onCancelExportSelectedPlan}
-            >
+            <div class="transfer-button-container">
               {#if planExportProgress !== null}
-                <ProgressRadial progress={planExportProgress} useBackground={false} />
-                <div class="cancel"><CloseIcon /></div>
-              {:else}
-                <ExportIcon /> Export
+                <button
+                  class="cancel-button"
+                  on:click={onCancelExportSelectedPlan}
+                  use:tooltip={{
+                    content: 'Cancel Plan Export',
+                    placement: 'top',
+                  }}
+                >
+                  <ProgressRadial progress={planExportProgress} useBackground={false} size={16} strokeWidth={1} />
+                  <div class="cancel"><CloseIcon /></div>
+                </button>
               {/if}
-            </button>
+              <button
+                class="st-button secondary transfer-button"
+                disabled={planExportProgress !== null}
+                on:click={onExportSelectedPlan}
+                use:tooltip={{
+                  content: 'Export Selected Plan',
+                  placement: 'top',
+                }}
+              >
+                <ExportIcon /> Export{#if planExportProgress !== null}ing...{/if}
+              </button>
+            </div>
             <button
               class="st-button icon fs-6"
               on:click={deselectPlan}
@@ -749,7 +764,10 @@
             <AlertError class="m-2" error={$createPlanError} />
 
             {#if isPlanImportMode}
-              <fieldset>
+              <fieldset class="plan-import-container">
+                <button class="close-import" type="button" on:click={hideImportPlan}>
+                  <CloseIcon />
+                </button>
                 <label for="file">Plan File (JSON)</label>
                 <div class="import-input-container">
                   <input
@@ -765,14 +783,6 @@
                     }}
                     on:change={onPlanFileChange}
                   />
-                  {#if planUploadFiles}<button
-                      class="st-button secondary clear-export"
-                      type="button"
-                      on:click={hideImportPlan}
-                    >
-                      Clear
-                    </button>
-                  {/if}
                 </div>
                 {#if planUploadFilesError}
                   <div class="error">{planUploadFilesError}</div>
@@ -961,18 +971,35 @@
     padding: 5px 16px 0;
   }
 
+  .plan-import-container {
+    background: var(--st-gray-20);
+    border-radius: 5px;
+    margin: 5px;
+    padding: 8px 11px 8px;
+    position: relative;
+  }
+
+  .transfer-button-container {
+    display: grid;
+    grid-template-columns: auto auto;
+    position: relative;
+  }
+
   .transfer-button {
     column-gap: 4px;
     position: relative;
   }
 
-  .transfer-button .cancel {
-    display: none;
+  .cancel-button {
+    background: none;
+    border: 0;
+    position: relative;
   }
 
-  .transfer-button:hover .cancel {
+  .cancel-button .cancel {
     align-items: center;
-    display: flex;
+    cursor: pointer;
+    display: none;
     height: 100%;
     justify-content: center;
     left: 0;
@@ -981,14 +1008,29 @@
     width: 100%;
   }
 
+  .cancel-button .cancel :global(svg) {
+    width: 10px;
+  }
+
+  .cancel-button:hover .cancel {
+    display: flex;
+  }
+
   .import-input-container {
     column-gap: 0.5rem;
     display: grid;
     grid-template-columns: auto min-content;
   }
 
-  .clear-export {
+  .close-import {
+    background: none;
+    border: 0;
+    cursor: pointer;
     height: 1.3rem;
+    padding: 0;
+    position: absolute;
+    right: 3px;
+    top: 3px;
   }
 
   .error {

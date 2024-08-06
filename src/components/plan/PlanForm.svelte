@@ -187,18 +187,27 @@
     <fieldset>
       <Collapse title="Details">
         <svelte:fragment slot="right">
-          <button
-            class="st-button icon export"
-            on:click={planExportProgress === null ? onExportPlan : onCancelExportPlan}
-            use:tooltip={{ content: planExportProgress === null ? 'Export Plan JSON' : 'Cancel Plan Export' }}
-          >
-            {#if planExportProgress !== null}
-              <ProgressRadial progress={planExportProgress} useBackground={false} />
+          {#if planExportProgress !== null}
+            <button
+              class="cancel-button"
+              on:click|stopPropagation={onCancelExportPlan}
+              use:tooltip={{
+                content: 'Cancel Plan Export',
+                placement: 'top',
+              }}
+            >
+              <ProgressRadial progress={planExportProgress} useBackground={false} size={16} strokeWidth={1} />
               <div class="cancel"><CloseIcon /></div>
-            {:else}
+            </button>
+          {:else}
+            <button
+              class="st-button icon export"
+              on:click|stopPropagation={onExportPlan}
+              use:tooltip={{ content: 'Export Plan JSON' }}
+            >
               <ExportIcon />
-            {/if}
-          </button>
+            </button>
+          {/if}
         </svelte:fragment>
         <div class="plan-form-field">
           <Field field={planNameField} on:change={onPlanNameChange}>
@@ -402,20 +411,36 @@
 
   .export {
     border-radius: 50%;
+    height: 28px;
     position: relative;
-  }
-  .export .cancel {
-    display: none;
+    width: 28px;
   }
 
-  .export:hover .cancel {
+  .cancel-button {
+    background: none;
+    border: 0;
+    border-radius: 50%;
+    position: relative;
+    width: 28px;
+  }
+
+  .cancel-button .cancel {
     align-items: center;
-    display: flex;
+    cursor: pointer;
+    display: none;
     height: 100%;
     justify-content: center;
     left: 0;
     position: absolute;
     top: 0;
     width: 100%;
+  }
+
+  .cancel-button .cancel :global(svg) {
+    width: 10px;
+  }
+
+  .cancel-button:hover .cancel {
+    display: flex;
   }
 </style>
