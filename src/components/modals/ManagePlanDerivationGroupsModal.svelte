@@ -20,8 +20,7 @@
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type {
     DerivationGroup,
-    DerivationGroupMetadata,
-    ExternalSourceWithResolvedNames,
+    ExternalSourceWithResolvedNames
   } from '../../types/external-source';
   import type { ExternalEventLayer } from '../../types/timeline';
   import effects from '../../utilities/effects';
@@ -43,9 +42,9 @@
   export let user: User | null;
 
   type CellRendererParams = {
-    viewDerivationGroup: (derivationGroup: DerivationGroupMetadata) => void;
+    viewDerivationGroup: (derivationGroup: DerivationGroup) => void;
   };
-  type DerivationGroupCellRendererParams = ICellRendererParams<DerivationGroupMetadata> & CellRendererParams;
+  type DerivationGroupCellRendererParams = ICellRendererParams<DerivationGroup> & CellRendererParams;
 
   const dispatch = createEventDispatcher<{
     close: void;
@@ -218,9 +217,9 @@
     ];
   }
 
-  function viewDerivationGroup({ id }: Pick<DerivationGroupMetadata, 'id'>) {
-    const derivationGroup = $derivationGroups.find(dg => dg.id === id);
-    selectedDerivationGroup = derivationGroup;
+  function viewDerivationGroup(derivationGroup: DerivationGroup) {
+    const dg = $derivationGroups.find(dg => dg.id === derivationGroup.id);
+    selectedDerivationGroup = dg;
   }
 </script>
 
