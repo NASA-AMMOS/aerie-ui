@@ -64,8 +64,8 @@ test.describe.serial('External Sources', () => {
   test('Selected external source should show metadata in a collapsible', async () => {
     await externalSources.selectSource();
     await externalSources.viewEventSourceMetadata.click();
-    await expect(page.getByText('0', { exact: true })).toBeVisible();
-    await expect(page.getByText('1', { exact: true })).toBeVisible();
+    await expect(page.getByText('sc1')).toBeVisible();
+    await expect(page.getByText('sc2')).toBeVisible();
     await expect(page.getByText('version')).toBeVisible();
   });
 
