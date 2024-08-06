@@ -1005,11 +1005,6 @@ const gql = {
 
   DELETE_EXTERNAL_SOURCE_TYPE: `#graphql
     mutation DeleteExternalSourceType($id: Int!) {
-      deleteDerivationGroup: ${Queries.DELETE_DERIVATION_GROUP}(where: { source_type_id: { _eq: $id } }) { # as insurance...may be redundant
-        returning {
-          id
-        }
-      }
       deleteExternalSourceType: ${Queries.DELETE_EXTERNAL_SOURCE_TYPE}(id: $id) {
         name
       }
