@@ -4,6 +4,7 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import { page } from '$app/stores';
+  import CloseIcon from '@nasa-jpl/stellar/icons/close.svg?component';
   import PlanIcon from '@nasa-jpl/stellar/icons/plan.svg?component';
   import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
@@ -24,6 +25,7 @@
   import SingleActionDataGrid from '../../components/ui/DataGrid/SingleActionDataGrid.svelte';
   import IconCellRenderer from '../../components/ui/IconCellRenderer.svelte';
   import Panel from '../../components/ui/Panel.svelte';
+  import ProgressRadial from '../../components/ui/ProgressRadial.svelte';
   import SectionTitle from '../../components/ui/SectionTitle.svelte';
   import TagsInput from '../../components/ui/Tags/TagsInput.svelte';
   import { InvalidDate } from '../../constants/time';
@@ -63,7 +65,7 @@
 
   type CellRendererParams = {
     deletePlan: (plan: Plan) => void;
-    exportPlan: (plan: Plan) => void;
+    exportPlan: (plan: Plan, progressCallback?: (progress: number) => void, signal?: AbortSignal) => void;
   };
   type PlanCellRendererParams = ICellRendererParams<Plan> & CellRendererParams;
 
@@ -195,6 +197,8 @@
   let orderedModels: ModelSlim[] = [];
   let nameInputField: HTMLInputElement;
   let planTags: Tag[] = [];
+  let planExportAbortController: AbortController | null = null;
+  let planExportProgress: number | null = null;
   let selectedModel: ModelSlim | undefined;
   let selectedPlan: PlanSlim | undefined;
   let selectedPlanId: number | null = null;
@@ -430,22 +434,44 @@
     selectPlan(null);
   }
 
-  async function exportPlan(plan: PlanSlim): Promise<void> {
-    const planTransfer = await getPlanForTransfer(plan, user);
+  async function exportPlan(
+    plan: PlanSlim,
+    progressCallback: (progress: number) => void,
+    signal: AbortSignal,
+  ): Promise<void> {
+    const planTransfer = await getPlanForTransfer(plan, user, progressCallback, undefined, signal);
 
-    if (planTransfer) {
+    if (planTransfer && !signal.aborted) {
       downloadJSON(planTransfer, plan.name);
     }
   }
 
-  async function exportSelectedPlan(): Promise<void> {
+  async function exportSelectedPlan() {
     if (selectedPlan) {
-      const planTransfer = await getPlanForTransfer(selectedPlan, user);
-
-      if (planTransfer) {
-        downloadJSON(planTransfer, selectedPlan.name);
+      if (planExportAbortController) {
+        planExportAbortController.abort();
       }
+
+      planExportProgress = 0;
+      planExportAbortController = new AbortController();
+
+      if (planExportAbortController && !planExportAbortController.signal.aborted) {
+        await exportPlan(
+          selectedPlan,
+          (progress: number) => {
+            planExportProgress = progress;
+          },
+          planExportAbortController.signal,
+        );
+      }
+      planExportProgress = null;
     }
+  }
+
+  function cancelSelectedPlanExport() {
+    planExportAbortController?.abort();
+    planExportAbortController = null;
+    planExportProgress = null;
   }
 
   async function onTagsInputChange(event: TagsChangeEvent) {
@@ -629,8 +655,16 @@
         {#if selectedPlan}
           <SectionTitle>Selected plan</SectionTitle>
           <div class="selected-plan-buttons">
-            <button class="st-button secondary transfer-button" on:click={exportSelectedPlan}>
-              <ExportIcon /> Export
+            <button
+              class="st-button secondary transfer-button"
+              on:click={planExportProgress === null ? exportSelectedPlan : cancelSelectedPlanExport}
+            >
+              {#if planExportProgress !== null}
+                <ProgressRadial progress={planExportProgress} useBackground={false} />
+                <div class="cancel"><CloseIcon /></div>
+              {:else}
+                <ExportIcon /> Export
+              {/if}
             </button>
             <button
               class="st-button icon fs-6"
@@ -929,6 +963,22 @@
 
   .transfer-button {
     column-gap: 4px;
+    position: relative;
+  }
+
+  .transfer-button .cancel {
+    display: none;
+  }
+
+  .transfer-button:hover .cancel {
+    align-items: center;
+    display: flex;
+    height: 100%;
+    justify-content: center;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
   }
 
   .import-input-container {

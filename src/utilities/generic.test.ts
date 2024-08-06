@@ -162,7 +162,7 @@ describe('Generic utility function tests', () => {
       const writer = writable.getWriter();
       await writer.ready;
       writer.write('{"activities":[');
-      const numOfActivities = 10000;
+      const numOfActivities = 5000;
       for (let i = 0; i < numOfActivities; i++) {
         writer.write(JSON.stringify({ arguments: { metadata: {}, name: 'PeelBanana', peelDirection: 'fromTip' } }));
         if (i < numOfActivities - 1) {

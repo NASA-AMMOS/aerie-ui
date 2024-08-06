@@ -2,7 +2,7 @@
 
 <script lang="ts">
   import CloseIcon from '@nasa-jpl/stellar/icons/close.svg?component';
-  import DownloadIcon from '@nasa-jpl/stellar/icons/download.svg?component';
+  import ExportIcon from '../../assets/export.svg?component';
   import { PlanStatusMessages } from '../../enums/planStatusMessages';
   import { SearchParameters } from '../../enums/searchParameters';
   import { field } from '../../stores/form';
@@ -159,7 +159,6 @@
       }
 
       planExportAbortController = new AbortController();
-      planExportProgress = 0;
 
       if (planExportAbortController && !planExportAbortController.signal.aborted) {
         const planExport = await getPlanForTransfer(
@@ -172,7 +171,9 @@
           planExportAbortController.signal,
         );
 
-        downloadJSON(planExport, planExport.name);
+        if (planExport) {
+          downloadJSON(planExport, planExport.name);
+        }
       }
       planExportProgress = null;
     }
@@ -181,6 +182,7 @@
   function cancelPlanExport() {
     planExportAbortController?.abort();
     planExportAbortController = null;
+    planExportProgress = null;
   }
 
   function onPlanExport() {
@@ -206,7 +208,7 @@
               <ProgressRadial progress={planExportProgress} useBackground={false} />
               <div class="cancel"><CloseIcon /></div>
             {:else}
-              <DownloadIcon />
+              <ExportIcon />
             {/if}
           </button>
         </svelte:fragment>

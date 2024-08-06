@@ -3,6 +3,7 @@
 <script lang="ts">
   import { permissionHandler } from '../../../utilities/permissionHandler';
 
+  import CloseIcon from '@nasa-jpl/stellar/icons/close.svg?component';
   import DownloadIcon from '@nasa-jpl/stellar/icons/download.svg?component';
   import ExpandIcon from '@nasa-jpl/stellar/icons/expand.svg?component';
   import PenIcon from '@nasa-jpl/stellar/icons/pen.svg?component';
@@ -11,6 +12,7 @@
   import ExportIcon from '../../../assets/export.svg?component';
   import type { TRowData } from '../../../types/data-grid';
   import { tooltip } from '../../../utilities/tooltip';
+  import ProgressRadial from '../ProgressRadial.svelte';
 
   type RowData = $$Generic<TRowData>;
 
@@ -32,8 +34,41 @@
 
   export let editCallback: ((data: RowData) => void) | undefined = undefined;
   export let deleteCallback: ((data: RowData) => void) | undefined = undefined;
-  export let downloadCallback: ((data: RowData) => void) | undefined = undefined;
+  export let downloadCallback:
+    | ((data: RowData, progressCallback?: (progress: number) => void, signal?: AbortSignal) => void)
+    | undefined = undefined;
   export let viewCallback: ((data: RowData) => void) | undefined = undefined;
+
+  let downloadAbortController: AbortController | null = null;
+  let downloadProgress: number | null = null;
+
+  function onDownload() {
+    if (rowData) {
+      if (downloadProgress === null) {
+        if (downloadAbortController) {
+          downloadAbortController.abort();
+        }
+
+        downloadAbortController = new AbortController();
+        downloadProgress = 0;
+
+        if (downloadAbortController && !downloadAbortController.signal.aborted) {
+          downloadCallback?.(rowData, progressCallback, downloadAbortController.signal);
+        }
+      } else {
+        downloadAbortController?.abort();
+        downloadAbortController = null;
+      }
+      downloadProgress = null;
+    }
+  }
+
+  function progressCallback(progress: number) {
+    downloadProgress = progress;
+    if (downloadProgress === 100) {
+      downloadProgress = null;
+    }
+  }
 </script>
 
 {#if viewCallback}
@@ -50,19 +85,16 @@
   </button>
 {/if}
 {#if downloadCallback}
-  <button
-    class="st-button icon"
-    on:click|stopPropagation={() => {
-      if (rowData) {
-        downloadCallback?.(rowData);
-      }
-    }}
-    use:tooltip={downloadTooltip}
-  >
-    {#if useExportIcon}
-      <ExportIcon />
+  <button class="st-button download icon" on:click|stopPropagation={onDownload} use:tooltip={downloadTooltip}>
+    {#if downloadProgress === null}
+      {#if useExportIcon}
+        <ExportIcon />
+      {:else}
+        <DownloadIcon />
+      {/if}
     {:else}
-      <DownloadIcon />
+      <ProgressRadial progress={downloadProgress} useBackground={false} />
+      <div class="cancel"><CloseIcon /></div>
     {/if}
   </button>
 {/if}
@@ -101,3 +133,25 @@
     <TrashIcon />
   </button>
 {/if}
+
+<style>
+  .download {
+    border-radius: 50%;
+    position: relative;
+  }
+
+  .download .cancel {
+    display: none;
+  }
+
+  .download:hover .cancel {
+    align-items: center;
+    display: flex;
+    height: 100%;
+    justify-content: center;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+  }
+</style>
