@@ -2264,6 +2264,20 @@ const effects = {
     }
   },
 
+  async deleteExternalEventType(event_type_id: number | null, user: User | null): Promise<void> {
+    try {
+      // to do this, all dgs associated should be deleted.
+      if (event_type_id !== null) {
+        const data = await reqHasura<{ id: number }>(gql.DELETE_EXTERNAL_EVENT_TYPE, { id: event_type_id }, user);
+        if (data.deleteDerivationGroup === null) {
+          throw Error('Unable to delete external event type');
+        }
+      }
+    } catch (e) {
+      catchError('External Event Type Deletion Failed', e as Error);
+    }
+  },
+
   async deleteExpansionRule(rule: ExpansionRule, user: User | null): Promise<boolean> {
     try {
       if (!queryPermissions.DELETE_EXPANSION_RULE(user, rule)) {
@@ -2453,6 +2467,20 @@ const effects = {
       return false;
     }
     return false;
+  },
+
+  async deleteExternalSourceType(external_source_type: number | null, user: User | null): Promise<void> {
+    try {
+      // to do this, all dgs associated should be deleted.
+      if (external_source_type !== null) {
+        const data = await reqHasura<{ id: number }>(gql.DELETE_EXTERNAL_SOURCE_TYPE, { id: external_source_type }, user);
+        if (data.deleteDerivationGroup === null) {
+          throw Error('Unable to delete external source type');
+        }
+      }
+    } catch (e) {
+      catchError('External Source Type Deletion Failed', e as Error);
+    }
   },
 
   async deleteFile(id: number, user: User | null): Promise<boolean> {

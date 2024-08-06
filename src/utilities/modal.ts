@@ -7,7 +7,9 @@ import CreatePlanSnapshotModal from '../components/modals/CreatePlanSnapshotModa
 import CreateViewModal from '../components/modals/CreateViewModal.svelte';
 import DeleteActivitiesModal from '../components/modals/DeleteActivitiesModal.svelte';
 import DeleteDerivationGroupModal from '../components/modals/DeleteDerivationGroupModal.svelte';
+import DeleteExternalEventTypeModal from '../components/modals/DeleteExternalEventTypeModal.svelte';
 import DeleteExternalSourceModal from '../components/modals/DeleteExternalSourceModal.svelte';
+import DeleteExternalSourceTypeModal from '../components/modals/DeleteExternalSourceTypeModal.svelte';
 import EditViewModal from '../components/modals/EditViewModal.svelte';
 import ExpansionSequenceModal from '../components/modals/ExpansionSequenceModal.svelte';
 import ManageGroupsAndTypesModal from '../components/modals/ManageGroupsAndTypesModal.svelte';
@@ -26,7 +28,8 @@ import WorkspaceModal from '../components/modals/WorkspaceModal.svelte';
 import type { ActivityDirectiveDeletionMap, ActivityDirectiveId } from '../types/activity';
 import type { User } from '../types/app';
 import type { ExpansionSequence } from '../types/expansion';
-import type { DerivationGroup, ExternalSourceWithResolvedNames, PlanDerivationGroup } from '../types/external-source';
+import type { ExternalEventType } from '../types/external-event';
+import type { DerivationGroup, ExternalSourceType, ExternalSourceWithResolvedNames, PlanDerivationGroup } from '../types/external-source';
 import type { ModalElement, ModalElementValue } from '../types/modal';
 import type {
   Plan,
@@ -38,6 +41,7 @@ import type {
 import type { PlanSnapshot } from '../types/plan-snapshot';
 import type { Tag } from '../types/tags';
 import type { ViewDefinition } from '../types/view';
+import effects from './effects';
 
 /**
  * Listens for clicks on the document body and removes the modal children.
@@ -186,7 +190,8 @@ export async function showDeleteExternalSourceModal(
 }
 
 export async function showDeleteDerivationGroupModal(
-  derivationGroup: DerivationGroup
+  derivationGroup: DerivationGroup,
+  user: User | null
 ): Promise<ModalElementValue> {
   return new Promise(resolve => {
     if (browser) {
@@ -208,7 +213,78 @@ export async function showDeleteDerivationGroupModal(
         deleteDerivationGroupModal.$on('confirm', () => {
           target.resolve = null;
           resolve({ confirm: true });
+          effects.deleteDerivationGroup(derivationGroup.id, user);
           deleteDerivationGroupModal.$destroy();
+        });
+      }
+    } else {
+      resolve({ confirm: false });
+    }
+  });
+}
+
+export async function showDeleteExternalSourceTypeModal(
+  sourceType: ExternalSourceType,
+  associatedDGs: DerivationGroup[],
+  user: User | null,
+): Promise<ModalElementValue> {
+  return new Promise(resolve => {
+    if (browser) {
+      const target: ModalElement | null = document.querySelector('#svelte-modal');
+
+      if (target) {
+        const deleteExternalSourceTypeModal = new DeleteExternalSourceTypeModal({
+          props: { sourceType, associatedDGs },
+          target,
+        });
+        target.resolve = resolve;
+
+        deleteExternalSourceTypeModal.$on('close', () => {
+          target.resolve = null;
+          resolve({ confirm: false });
+          deleteExternalSourceTypeModal.$destroy();
+        });
+
+        deleteExternalSourceTypeModal.$on('confirm', () => {
+          target.resolve = null;
+          resolve({ confirm: true });
+          effects.deleteExternalSourceType(sourceType.id, user);
+          deleteExternalSourceTypeModal.$destroy();
+        });
+      }
+    } else {
+      resolve({ confirm: false });
+    }
+  });
+}
+
+export async function showDeleteExternalEventTypeModal(
+  eventType: ExternalEventType,
+  associatedSources: ExternalSourceWithResolvedNames[],
+  user: User | null
+): Promise<ModalElementValue> {
+  return new Promise(resolve => {
+    if (browser) {
+      const target: ModalElement | null = document.querySelector('#svelte-modal');
+
+      if (target) {
+        const deleteExternalEventTypeModal = new DeleteExternalEventTypeModal({
+          props: { eventType, associatedSources },
+          target,
+        });
+        target.resolve = resolve;
+
+        deleteExternalEventTypeModal.$on('close', () => {
+          target.resolve = null;
+          resolve({ confirm: false });
+          deleteExternalEventTypeModal.$destroy();
+        });
+
+        deleteExternalEventTypeModal.$on('confirm', () => {
+          target.resolve = null;
+          resolve({ confirm: true });
+          effects.deleteExternalEventType(eventType.id, user);
+          deleteExternalEventTypeModal.$destroy();
         });
       }
     } else {
