@@ -216,6 +216,7 @@ import {
   showDeleteActivitiesModal,
   showDeleteExternalSourceModal,
   showEditViewModal,
+  showManageGroupsAndTypes,
   showManagePlanConstraintsModal,
   showManagePlanDerivationGroups,
   showManagePlanSchedulingConditionsModal,
@@ -4812,6 +4813,15 @@ const effects = {
     } catch (e) {
       catchError('Derivation Group Unable To Be Modified In Plan', e as Error);
       showFailureToast('Derivation Group Modification Failed');
+    }
+  },
+
+  async manageGroupsAndTypes(user: User | null): Promise<void> {
+    try {
+      await showManageGroupsAndTypes(user);
+    } catch (e) {
+      catchError('Unable To Be View Derivation Groups and External Types', e as Error);
+      showFailureToast('Derivation Group/External Type Viewing Failed');
     }
   },
 

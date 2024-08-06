@@ -431,26 +431,7 @@
         // otherwise, delete!
         const deletionWasSuccessful = await effects.deleteExternalSource(selectedSource, user);
         if (deletionWasSuccessful) {
-          // TODO: replace all of this except the stuff about unseen deletions with triggers in database
           deselectSource();
-
-          // // persist to list of unseen deletions, with a deleted_at time
-          // let deletedSourcesParsed: ExternalSourceWithDateInfo[] = JSON.parse($deletedSourcesSeen);
-          // deletedSourcesSeen.set(
-          //   JSON.stringify(deletedSourcesParsed.concat({ ...selectedSource, change_date: new Date() })),
-          // );
-          // // in case it was added and then immediately deleted, though, remove it from both unseenSources and deletedSourcesParsed, to not confuse the user
-          // {
-          //   let seenSourcesParsed: ExternalSourceWithDateInfo[] = JSON.parse($unseenSources);
-          //   let filtered = seenSourcesParsed.filter(s => s.id !== selectedSource.id);
-          //   if (filtered.length !== seenSourcesParsed.length) {
-          //     unseenSources.set(JSON.stringify(filtered));
-          //     deletedSourcesSeen.set(JSON.stringify(deletedSourcesParsed.filter(s => s.id !== selectedSource.id)));
-          //   }
-          //   // NOTE: if I add a source, go to plans, DON'T ACKNOWLEDGE IT, then delete that source, and go back to plans, the warning card is gone as the
-          //   //    system assumes I never got the first notification and as such the second is unnecessary as I never acknowledged knowing it was added, so
-          //   //    it won't warn me that it was deleted.
-          // }
         }
       }
     }
@@ -746,6 +727,10 @@
       return { 'background-color': `hsl(${myVal} 100% 98%)` };
     }
     return undefined;
+  }
+
+  function onManageGroupsAndTypes() {
+    effects.manageGroupsAndTypes(user);
   }
 </script>
 
@@ -1080,6 +1065,16 @@
               </Menu>
             </div>
           </div>
+        </slot>
+        <slot name="right">
+          <button
+            name="manage-derivation-groups"
+            class="st-button secondary"
+            on:click|stopPropagation={onManageGroupsAndTypes}
+            use:tooltip={{ content: 'Manage derivation groups, external source types, and external event types.', placement: 'top' }}
+          >
+            Manage Groups and Types
+          </button>
         </slot>
       </svelte:fragment>
       <svelte:fragment slot="body">

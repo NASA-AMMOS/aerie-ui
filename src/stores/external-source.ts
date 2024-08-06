@@ -130,7 +130,7 @@ export const derivationGroups = derived<[typeof derivationGroupsRaw], Derivation
       source_type_id: raw.source_type_id,
       sources: new Map(
         // comes from view schema that is hardcoded as "{dg_id}, {source_key}, {source_id}""
-        raw.sources.map(s => [s.split(', ')[1], { event_counts: parseInt(s.split(', ')[2]) }]),
+        raw.sources.filter(s => s.charAt(0) !== "," && s.length > 4).map(s => [s.split(', ')[1], { event_counts: parseInt(s.split(', ')[2]) }]),
       ),
     })),
 );
