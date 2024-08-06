@@ -292,7 +292,7 @@
         }
       });
 
-      const extraSpace = Math.max(0, externalEventOptions.externalEventHeight + externalEventRowPadding);
+      const extraSpace = Math.max(0, drawHeight - externalEventOptions.externalEventHeight - externalEventRowPadding);
       const rowCount = Object.keys(rows).length;
       Object.entries(rows).forEach(([_, entry], i) => {
         const { items } = entry;
