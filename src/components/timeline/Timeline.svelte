@@ -450,7 +450,7 @@
       on:wheel={handleScroll}
       use:dndzone={{ dragDisabled: rowDragMoveDisabled, items: rows, type: 'rows' }}
     >
-      {#each rows as row (row.id)}
+      {#each rows as row, i (row.id)}
         <div class="timeline-row-wrapper">
           <TimelineRow
             {activityDirectives}
@@ -469,6 +469,7 @@
             {hasUpdateDirectivePermission}
             horizontalGuides={row.horizontalGuides}
             id={row.id}
+            index={i}
             layers={row.layers}
             name={row.name}
             marginLeft={timeline?.marginLeft}

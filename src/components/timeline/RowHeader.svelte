@@ -8,7 +8,6 @@
   import TimelineLineLayerIcon from '../../assets/timeline-line-layer.svg?component';
   import TimelineXRangeLayerIcon from '../../assets/timeline-x-range-layer.svg?component';
   import { ViewDefaultActivityOptions } from '../../constants/view';
-  import { viewAddFilterToRow } from '../../stores/views';
   import type { ActivityDirectiveId } from '../../types/activity';
   import type { Resource, SpanId } from '../../types/simulation';
   import type {
@@ -20,8 +19,9 @@
     LineLayer,
     MouseOver,
   } from '../../types/timeline';
-  import { filterResourcesByLayer, isActivityLayer } from '../../utilities/timeline';
+  import { filterResourcesByLayer } from '../../utilities/timeline';
   import { tooltip } from '../../utilities/tooltip';
+  import DropTarget from './DropTarget.svelte';
   import RowHeaderActivityTree from './RowHeaderActivityTree.svelte';
   import RowHeaderMenu from './RowHeaderMenu.svelte';
   import RowYAxes from './RowYAxes.svelte';
@@ -41,8 +41,6 @@
   export let selectedActivityDirectiveId: ActivityDirectiveId | null = null;
   export let selectedSpanId: SpanId | null = null;
 
-  let isDropTarget: boolean = false;
-  let isDragging: boolean = false;
   let resourceLabels: {
     chartType: ChartType;
     color: string;
@@ -99,34 +97,7 @@
       });
     });
   }
-
-  function onDragEnter() {
-    isDropTarget = true;
-  }
-
-  function onDragLeave() {
-    isDropTarget = false;
-  }
-
-  function onDragOver() {
-    isDropTarget = true;
-  }
-
-  function onDrop(e: DragEvent) {
-    isDropTarget = false;
-
-    if (e.dataTransfer !== null) {
-      const data = e.dataTransfer.getData('text');
-      const { type, item } = JSON.parse(data || '{}');
-      const activityLayers = layers.filter(isActivityLayer);
-      if (type && item) {
-        viewAddFilterToRow([item], type, rowId, activityLayers[0]);
-      }
-    }
-  }
 </script>
-
-<svelte:window on:dragstart={() => (isDragging = true)} on:dragend={() => (isDragging = false)} />
 
 <div
   class="row-header"
@@ -134,15 +105,10 @@
   style:margin-right={`${rowHeaderDragHandleWidthPx}px`}
   style:height={expanded ? `${height}px` : '24px'}
   class:expanded
-  class:drop-target={isDropTarget}
   role="banner"
   on:contextmenu={e => dispatch('contextMenu', { e, origin: 'row-header' })}
-  on:dragenter|preventDefault={onDragEnter}
-  on:dragleave={onDragLeave}
-  on:dragover|preventDefault={onDragOver}
-  on:drop|preventDefault={onDrop}
 >
-  <div class="row-header-wrapper" class:disable-pointer={isDragging}>
+  <DropTarget on:drop>
     <div class="row-header-left-column">
       {#if expanded}
         {#if height > 60}
@@ -243,7 +209,7 @@
         </div>
       </div>
     {/if}
-  </div>
+  </DropTarget>
 </div>
 
 <style>
@@ -256,16 +222,6 @@
     z-index: 4;
   }
 
-  .row-header-wrapper {
-    display: flex;
-    height: inherit;
-    width: inherit;
-  }
-
-  .disable-pointer,
-  .disable-pointer * {
-    pointer-events: none;
-  }
   .row-header-left-column,
   .row-header-right-column {
     display: flex;
@@ -301,18 +257,6 @@
   .small-text {
     font-size: 10px;
     letter-spacing: 0.1px;
-  }
-
-  .drop-target::after {
-    box-shadow: 0 0 0px 2px inset var(--st-utility-blue);
-    content: ' ';
-    height: 100%;
-    left: 0;
-    pointer-events: none;
-    position: absolute;
-    top: 0;
-    width: 100%;
-    z-index: 9;
   }
 
   .row-header-title {

@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { capitalize } from '../utilities/text';
+  import { capitalize, pluralize } from '../utilities/text';
 
   import ChevronDownIcon from '@nasa-jpl/stellar/icons/chevron_down.svg?component';
   import AddToRowIcon from '../assets/add-to-row.svg';
@@ -137,7 +137,7 @@
       <Menu bind:this={menu} hideAfterClick={false} placement="bottom-end">
         <div class="timeline-item-list-filter-options">
           {#if !filterOptions.length}
-            <div>No {filterName}</div>
+            <div>No {filterName}{pluralize(filterName)} found</div>
           {/if}
           {#each filterOptions as option}
             <Input layout="inline" class="timeline-item-list-filter-option">

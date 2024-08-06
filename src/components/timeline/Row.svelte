@@ -16,7 +16,7 @@
     resourceTypes,
     resourceTypesLoading,
   } from '../../stores/simulation';
-  import { selectedRow } from '../../stores/views';
+  import { selectedRow, viewAddFilterToRow } from '../../stores/views';
   import type { ActivityDirective, ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { ConstraintResultWithName } from '../../types/constraint';
@@ -42,6 +42,7 @@
     MouseOver,
     Point,
     RowMouseOverEvent,
+    TimelineItemType,
     TimeRange,
     XAxisTick,
   } from '../../types/timeline';
@@ -64,6 +65,7 @@
   } from '../../utilities/timeline';
   import { tooltip } from '../../utilities/tooltip';
   import ConstraintViolations from './ConstraintViolations.svelte';
+  import DropTarget from './DropTarget.svelte';
   import LayerActivities from './LayerActivities.svelte';
   import LayerGaps from './LayerGaps.svelte';
   import LayerLine from './LayerLine.svelte';
@@ -90,6 +92,7 @@
   export let hasUpdateDirectivePermission: boolean = false;
   export let horizontalGuides: HorizontalGuide[] = [];
   export let id: number;
+  export let index: number;
   export let layers: Layer[] = [];
   export let name: string = '';
   export let marginLeft: number = 50;
@@ -164,6 +167,7 @@
   };
   let filterActivitiesByTime = false;
   let rowRef: HTMLDivElement;
+  let isDragging: boolean = false;
 
   $: if ($selectedRow?.id === id && rowRef) {
     rowRef.scrollIntoView({ block: 'nearest' });
@@ -538,7 +542,7 @@
         const item = json.item ?? '';
 
         // Only allow creating an activity if we have an actual activity in the drag data.
-        if (type && item && plan) {
+        if (type === 'activity' && item && plan) {
           effects.createActivityDirective({}, start_time, item.name, item.name, {}, plan, user);
         }
       }
@@ -607,6 +611,13 @@
     });
     return resources;
   }
+
+  function onItemDrop(rowId?: number, type?: string, item?: TimelineItemType, index?: number) {
+    if (!type || !item) {
+      return;
+    }
+    viewAddFilterToRow([item], type, rowId, activityLayers[0], index);
+  }
 </script>
 
 <div
@@ -622,6 +633,7 @@
       on:activity-tree-node-change={onActivityTreeNodeChange}
       on:mouseDown={onMouseDown}
       on:dblClick
+      on:drop={e => onItemDrop(id, e.detail.type, e.detail.item)}
       {activityTree}
       width={marginLeft}
       height={computedDrawHeight}
@@ -831,6 +843,15 @@
     </div>
   </div>
 
+  <div class="row-bottom-item-drop" style="width: {drawWidth + marginLeft}px" class:dragging={isDragging}>
+    <div class="row-bottom-item-drop-inner">
+      <DropTarget
+        on:drop={e => onItemDrop(undefined, e.detail.type, e.detail.item, index)}
+        on:dragstart={_ => (isDragging = true)}
+        on:dragend={_ => (isDragging = false)}
+      />
+    </div>
+  </div>
   <!-- Drag Handle for Row Height Resizing. -->
   {#if !autoAdjustHeight && expanded}
     <RowDragHandleHeight rowHeight={drawHeight} on:updateRowHeight={onUpdateRowHeightDrag} />
@@ -838,6 +859,31 @@
 </div>
 
 <style>
+  .row-bottom-item-drop {
+    height: 0px;
+    position: relative;
+  }
+
+  .row-bottom-item-drop :global(.dropping::after) {
+    background: var(--st-utility-blue);
+    box-shadow: none;
+    height: 2px;
+  }
+
+  .row-bottom-item-drop-inner {
+    height: inherit;
+    height: 6px;
+    pointer-events: none;
+    position: absolute;
+    transform: translateY(-50%);
+    width: inherit;
+    z-index: 5;
+  }
+
+  .row-bottom-item-drop.dragging .row-bottom-item-drop-inner {
+    pointer-events: auto;
+  }
+
   .layers,
   .overlay,
   svg {

@@ -1,7 +1,15 @@
 import { isEqual } from 'lodash-es';
 import { derived, get, writable, type Writable } from 'svelte/store';
 import type { ResourceType } from '../types/simulation';
-import type { Axis, Layer, Row, Timeline, TimelineItemType } from '../types/timeline';
+import type {
+  ActivityLayerFilter,
+  Axis,
+  Layer,
+  ResourceLayerFilter,
+  Row,
+  Timeline,
+  TimelineItemType,
+} from '../types/timeline';
 import type { View, ViewGrid, ViewSlim, ViewTable, ViewToggleEvent } from '../types/view';
 import { getTarget } from '../utilities/generic';
 import gql from '../utilities/gql';
@@ -554,18 +562,19 @@ export function getUpdatedLayerWithFilters(
   items: TimelineItemType[],
   layer?: Layer,
 ): { layer: Layer; yAxis?: Axis } {
+  const itemNames = items.map(i => i.name);
   if (!layer) {
     // If no row is provided we assume there is no relevant layer
     if (type === 'activity') {
       return {
         layer: createTimelineActivityLayer(timelines, {
-          filter: { activity: { types: items.map(i => i.name) } },
+          filter: { activity: { types: itemNames } },
         }),
       };
     } else {
       const { layer: newLayer, yAxis } = createTimelineResourceLayer(timelines, items[0] as ResourceType);
       if (newLayer && newLayer.filter.resource) {
-        newLayer.filter.resource.names = items.map(i => i.name);
+        newLayer.filter.resource.names = itemNames;
         return {
           layer: newLayer,
           yAxis,
@@ -578,27 +587,26 @@ export function getUpdatedLayerWithFilters(
     }
   } else {
     const prop = type === 'activity' ? 'types' : 'names';
+    const typedType = type as 'activity' | 'resource';
+    const existingFilter = layer.filter[typedType];
+    let existingFilterItems: string[] = [];
+
+    if (existingFilter && (existingFilter as ActivityLayerFilter).types) {
+      existingFilterItems = (existingFilter as ActivityLayerFilter).types;
+    } else if (existingFilter && (existingFilter as ResourceLayerFilter).names) {
+      existingFilterItems = (existingFilter as ResourceLayerFilter).names;
+    }
+
     return {
       layer: {
         ...layer,
         filter: {
           [type]: {
-            [prop]: [...new Set((layer.filter[type][prop] ?? []).concat(items.map(i => i.name)))],
+            [prop]: [...new Set(existingFilterItems.concat(itemNames))],
           },
         },
       },
     };
-    // if (type === 'activity') {
-    // } else {
-    //   return {
-    //     ...layer,
-    //     filter: {
-    //       resource: {
-    //         names: [...new Set((layer.filter.resource?.names ?? []).concat(filterIds))],
-    //       },
-    //     },
-    //   };
-    // }
   }
 }
 
@@ -607,8 +615,8 @@ export function viewAddFilterToRow(
   typeName: string /* 'activity' | 'resource' */,
   rowId?: number,
   layer?: Layer,
+  index?: number, // row index to insert after
 ) {
-  console.log('items, typeName, rowId, layer :>> ', items, typeName, rowId, layer);
   const timelines = get(view)?.definition.plan.timelines || [];
   if (!timelines.length) {
     return;
@@ -621,10 +629,17 @@ export function viewAddFilterToRow(
   if (!row) {
     // If no row is provided we assume there is no relevant layer
     const { layer: newLayer, yAxis } = getUpdatedLayerWithFilters(timelines, typeName, items);
-    newRows = [...newRows, { ...targetRow, layers: [newLayer], yAxes: yAxis ? [yAxis] : [] }];
+    const insertIndex = index ?? newRows.length;
+    const newRow = { ...targetRow, layers: [newLayer], yAxes: yAxis ? [yAxis] : [] };
+    newRows = newRows.toSpliced(insertIndex + 1, 0, newRow);
   } else {
     // Find the layer in the row or create one if needed
-    if (!layer) {
+    if (
+      !layer ||
+      // Case where the target layer type does not match the destination layer chart type
+      (layer.chartType === 'activity' && typeName === 'resource') ||
+      (layer.chartType !== 'activity' && typeName === 'activity')
+    ) {
       // Add to existing row
       const { layer: newLayer, yAxis } = getUpdatedLayerWithFilters(timelines, typeName, items);
       newRows = newRows.map(r => {

@@ -85,6 +85,7 @@ export type ChartType = 'activity' | 'line' | 'x-range';
 export interface Layer {
   chartType: ChartType;
   filter: {
+    // TODO refactor in next PR to a unified filter
     activity?: ActivityLayerFilter;
     resource?: ResourceLayerFilter;
   };
