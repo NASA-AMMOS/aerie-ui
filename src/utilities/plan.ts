@@ -43,7 +43,7 @@ export async function getPlanForTransfer(
 
   progressCallback?.(0);
   const qualifiedActivityDirectiveChunks: ActivityDirectiveDB[][] = [];
-  for (let i = 0; i < chunkedActivities.length - 1; i++) {
+  for (let i = 0; i < chunkedActivities.length; i++) {
     if (!signal?.aborted) {
       const activitiesToQualifyChunk: ActivityDirectiveDB[] = chunkedActivities[i];
       qualifiedActivityDirectiveChunks[i] = await Promise.all(
