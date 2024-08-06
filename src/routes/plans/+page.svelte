@@ -769,7 +769,11 @@
                     }}
                     on:change={onPlanFileChange}
                   />
-                  {#if planUploadFiles}<button class="st-button secondary" type="button" on:click={hideImportPlan}>
+                  {#if planUploadFiles}<button
+                      class="st-button secondary clear-export"
+                      type="button"
+                      on:click={hideImportPlan}
+                    >
                       Clear
                     </button>
                   {/if}
@@ -985,6 +989,10 @@
     column-gap: 0.5rem;
     display: grid;
     grid-template-columns: auto min-content;
+  }
+
+  .clear-export {
+    height: 1.3rem;
   }
 
   .error {
