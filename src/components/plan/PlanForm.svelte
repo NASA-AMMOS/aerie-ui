@@ -18,10 +18,10 @@
   import type { PlanSnapshot as PlanSnapshotType } from '../../types/plan-snapshot';
   import type { PlanTagsInsertInput, Tag, TagsChangeEvent } from '../../types/tags';
   import effects from '../../utilities/effects';
-  import { downloadJSON, removeQueryParam, setQueryParam } from '../../utilities/generic';
+  import { removeQueryParam, setQueryParam } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
-  import { getPlanForTransfer } from '../../utilities/plan';
+  import { exportPlan } from '../../utilities/plan';
   import { convertDoyToYmd, formatDate, getShortISOForDate } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import { required, unique } from '../../utilities/validators';
@@ -152,7 +152,7 @@
     }
   }
 
-  async function exportPlan() {
+  async function onExportPlan() {
     if (plan) {
       if (planExportAbortController) {
         planExportAbortController.abort();
@@ -161,7 +161,7 @@
       planExportAbortController = new AbortController();
 
       if (planExportAbortController && !planExportAbortController.signal.aborted) {
-        const planExport = await getPlanForTransfer(
+        await exportPlan(
           plan,
           user,
           (progress: number) => {
@@ -170,27 +170,15 @@
           Object.values(activityDirectivesMap),
           planExportAbortController.signal,
         );
-
-        if (planExport) {
-          downloadJSON(planExport, planExport.name);
-        }
       }
       planExportProgress = null;
     }
   }
 
-  function cancelPlanExport() {
+  function onCancelExportPlan() {
     planExportAbortController?.abort();
     planExportAbortController = null;
     planExportProgress = null;
-  }
-
-  function onPlanExport() {
-    if (planExportProgress === null) {
-      exportPlan();
-    } else {
-      cancelPlanExport();
-    }
   }
 </script>
 
@@ -201,7 +189,7 @@
         <svelte:fragment slot="right">
           <button
             class="st-button icon export"
-            on:click|stopPropagation={onPlanExport}
+            on:click={planExportProgress === null ? onExportPlan : onCancelExportPlan}
             use:tooltip={{ content: planExportProgress === null ? 'Export Plan JSON' : 'Cancel Plan Export' }}
           >
             {#if planExportProgress !== null}

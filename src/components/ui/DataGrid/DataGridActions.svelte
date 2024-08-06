@@ -42,7 +42,7 @@
   let downloadAbortController: AbortController | null = null;
   let downloadProgress: number | null = null;
 
-  function onDownload() {
+  async function onDownload() {
     if (rowData) {
       if (downloadProgress === null) {
         if (downloadAbortController) {
@@ -53,7 +53,7 @@
         downloadProgress = 0;
 
         if (downloadAbortController && !downloadAbortController.signal.aborted) {
-          downloadCallback?.(rowData, progressCallback, downloadAbortController.signal);
+          await downloadCallback?.(rowData, progressCallback, downloadAbortController.signal);
         }
       } else {
         downloadAbortController?.abort();

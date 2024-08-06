@@ -4,6 +4,7 @@ import type { ArgumentsMap } from '../types/parameter';
 import type { DeprecatedPlanTransfer, Plan, PlanSlim, PlanTransfer } from '../types/plan';
 import type { Simulation } from '../types/simulation';
 import effects from './effects';
+import { downloadJSON } from './generic';
 import { convertDoyToYmd } from './time';
 
 export async function getPlanForTransfer(
@@ -74,7 +75,10 @@ export async function getPlanForTransfer(
       );
     }
   }
-  progressCallback?.(100);
+
+  if (!signal?.aborted) {
+    progressCallback?.(100);
+  }
 
   const qualifiedActivityDirectives = qualifiedActivityDirectiveChunks.flat().sort((directiveA, directiveB) => {
     if (directiveA.id < directiveB.id) {
@@ -119,6 +123,20 @@ export async function getPlanForTransfer(
     tags: plan.tags.map(({ tag: { color, name } }) => ({ tag: { color, name } })),
     version: '2',
   };
+}
+
+export async function exportPlan(
+  plan: Plan | PlanSlim,
+  user: User | null,
+  progressCallback: (progress: number) => void,
+  activities?: ActivityDirective[],
+  signal?: AbortSignal,
+): Promise<void> {
+  const planTransfer = await getPlanForTransfer(plan, user, progressCallback, activities, signal);
+
+  if (planTransfer && !signal?.aborted) {
+    downloadJSON(planTransfer, plan.name);
+  }
 }
 
 export function isDeprecatedPlanTransfer(

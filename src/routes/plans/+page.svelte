@@ -44,10 +44,10 @@
   import type { PlanTagsInsertInput, Tag, TagsChangeEvent } from '../../types/tags';
   import { generateRandomPastelColor } from '../../utilities/color';
   import effects from '../../utilities/effects';
-  import { downloadJSON, parseJSONStream, removeQueryParam } from '../../utilities/generic';
+  import { parseJSONStream, removeQueryParam } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
-  import { getPlanForTransfer, isDeprecatedPlanTransfer } from '../../utilities/plan';
+  import { exportPlan, isDeprecatedPlanTransfer } from '../../utilities/plan';
   import {
     convertDoyToYmd,
     convertUsToDurationString,
@@ -320,7 +320,7 @@
         },
         cellRendererParams: {
           deletePlan,
-          exportPlan,
+          exportPlan: onExportPlan,
         } as CellRendererParams,
         field: 'actions',
         headerName: '',
@@ -434,19 +434,15 @@
     selectPlan(null);
   }
 
-  async function exportPlan(
+  async function onExportPlan(
     plan: PlanSlim,
     progressCallback: (progress: number) => void,
     signal: AbortSignal,
   ): Promise<void> {
-    const planTransfer = await getPlanForTransfer(plan, user, progressCallback, undefined, signal);
-
-    if (planTransfer && !signal.aborted) {
-      downloadJSON(planTransfer, plan.name);
-    }
+    await exportPlan(plan, user, progressCallback, undefined, signal);
   }
 
-  async function exportSelectedPlan() {
+  async function onExportSelectedPlan() {
     if (selectedPlan) {
       if (planExportAbortController) {
         planExportAbortController.abort();
@@ -456,7 +452,7 @@
       planExportAbortController = new AbortController();
 
       if (planExportAbortController && !planExportAbortController.signal.aborted) {
-        await exportPlan(
+        await onExportPlan(
           selectedPlan,
           (progress: number) => {
             planExportProgress = progress;
@@ -468,7 +464,7 @@
     }
   }
 
-  function cancelSelectedPlanExport() {
+  function onCancelExportSelectedPlan() {
     planExportAbortController?.abort();
     planExportAbortController = null;
     planExportProgress = null;
@@ -657,7 +653,7 @@
           <div class="selected-plan-buttons">
             <button
               class="st-button secondary transfer-button"
-              on:click={planExportProgress === null ? exportSelectedPlan : cancelSelectedPlanExport}
+              on:click={planExportProgress === null ? onExportSelectedPlan : onCancelExportSelectedPlan}
             >
               {#if planExportProgress !== null}
                 <ProgressRadial progress={planExportProgress} useBackground={false} />
