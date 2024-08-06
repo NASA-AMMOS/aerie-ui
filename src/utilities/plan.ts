@@ -12,7 +12,7 @@ export async function getPlanForTransfer(
   progressCallback?: (progress: number) => void,
   activities?: ActivityDirective[],
   signal?: AbortSignal,
-): Promise<PlanTransfer> {
+): Promise<PlanTransfer | void> {
   const simulation: Simulation | null = await effects.getPlanLatestSimulation(plan.id, user);
   const qualifiedSimulationArguments: ArgumentsMap = simulation
     ? {
@@ -28,34 +28,55 @@ export async function getPlanForTransfer(
   let totalProgress = 0;
   const numOfDirectives = activitiesToQualify.length;
 
-  const qualifiedActivityDirectives = (
-    await Promise.all(
-      activitiesToQualify.map(async activityDirective => {
-        if (plan) {
-          const effectiveArguments = await effects.getEffectiveActivityArguments(
-            plan?.model_id,
-            activityDirective.type,
-            activityDirective.arguments,
-            user,
-            signal,
-          );
+  const CHUNK_SIZE = 8;
+  const chunkedActivities = activitiesToQualify.reduce(
+    (prevChunks: ActivityDirectiveDB[][], activityToQualify: ActivityDirectiveDB, index) => {
+      const chunkIndex = Math.floor(index / CHUNK_SIZE);
+      if (!prevChunks[chunkIndex]) {
+        prevChunks[chunkIndex] = [];
+      }
+      prevChunks[chunkIndex].push(activityToQualify);
+      return prevChunks;
+    },
+    [],
+  );
+
+  progressCallback?.(0);
+  const qualifiedActivityDirectiveChunks: ActivityDirectiveDB[][] = [];
+  for (let i = 0; i < chunkedActivities.length - 1; i++) {
+    if (!signal?.aborted) {
+      const activitiesToQualifyChunk: ActivityDirectiveDB[] = chunkedActivities[i];
+      qualifiedActivityDirectiveChunks[i] = await Promise.all(
+        activitiesToQualifyChunk.map(async activityDirective => {
+          if (plan) {
+            const effectiveArguments = await effects.getEffectiveActivityArguments(
+              plan?.model_id,
+              activityDirective.type,
+              activityDirective.arguments,
+              user,
+              signal,
+            );
+
+            totalProgress++;
+            progressCallback?.((totalProgress / numOfDirectives) * 100);
+
+            return {
+              ...activityDirective,
+              arguments: effectiveArguments?.arguments ?? activityDirective.arguments,
+            };
+          }
 
           totalProgress++;
           progressCallback?.((totalProgress / numOfDirectives) * 100);
 
-          return {
-            ...activityDirective,
-            arguments: effectiveArguments?.arguments ?? activityDirective.arguments,
-          };
-        }
+          return activityDirective;
+        }),
+      );
+    }
+  }
+  progressCallback?.(100);
 
-        totalProgress++;
-        progressCallback?.((totalProgress / numOfDirectives) * 100);
-
-        return activityDirective;
-      }),
-    )
-  ).sort((directiveA, directiveB) => {
+  const qualifiedActivityDirectives = qualifiedActivityDirectiveChunks.flat().sort((directiveA, directiveB) => {
     if (directiveA.id < directiveB.id) {
       return -1;
     }
