@@ -1,26 +1,28 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { createEventDispatcher } from 'svelte';
+  import { workspaces } from '../../stores/sequencing';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef, DataGridRowSelection } from '../../types/data-grid';
+  import type { Workspace, WorkspaceInsertInput } from '../../types/sequencing';
+  import effects from '../../utilities/effects';
   import Input from '../form/Input.svelte';
   import SingleActionDataGrid from '../ui/DataGrid/SingleActionDataGrid.svelte';
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
 
-  type Workspace = {
-    id: number;
-    items: number[];
-    name: string;
-  };
-
+  export let selectedWorkspaceId: number | null;
   export let user: User | null;
 
   let baseColumnDefs: DataGridColumnDef[];
   let filterText = '';
   let filteredWorkspaces: Workspace[] = [];
   let selectedWorkspace: Workspace | null = null;
-  let workspaces: Workspace[] = [];
+
+  const dispatch = createEventDispatcher<{
+    workspaceSelected: number;
+  }>();
 
   $: baseColumnDefs = [
     {
@@ -28,6 +30,7 @@
       filter: 'text',
       headerName: 'ID',
       resizable: true,
+      sort: 'asc',
       sortable: true,
       suppressAutoSize: true,
       suppressSizeToFit: true,
@@ -40,20 +43,28 @@
       resizable: true,
       sortable: true,
     },
+    {
+      field: 'owner',
+      filter: 'string',
+      headerName: 'Owner',
+      suppressAutoSize: true,
+      suppressSizeToFit: true,
+      width: 100,
+    },
   ];
 
-  $: filteredWorkspaces = workspaces.filter(workspace => {
+  $: filteredWorkspaces = $workspaces.filter(workspace => {
     const filterTextLowerCase = filterText.toLowerCase();
     const includesName = workspace.name.toLocaleLowerCase().includes(filterTextLowerCase);
     return includesName;
   });
 
-  function createNewWorkspace(): void {
-    workspaces = [...workspaces, { id: workspaces.length, items: [], name: `Workspace ${workspaces.length}` }];
-  }
+  async function createNewWorkspace(): Promise<void> {
+    const workspace: WorkspaceInsertInput = {
+      name: `Workspace ${$workspaces.length}`,
+    };
 
-  function resetSelectedWorkspace(): void {
-    selectedWorkspace = null;
+    await effects.createWorkspace(workspace, user);
   }
 
   function workspaceSelected(event: CustomEvent<DataGridRowSelection<Workspace>>) {
@@ -62,57 +73,36 @@
 
     if (isSelected) {
       selectedWorkspace = clickedWorkspace;
+      dispatch('workspaceSelected', selectedWorkspace.id);
     }
   }
 </script>
 
 <Panel>
   <svelte:fragment slot="header">
-    {#if selectedWorkspace === null}
-      <SectionTitle>Sequence Workspaces</SectionTitle>
+    <SectionTitle>Sequence Workspaces</SectionTitle>
 
-      <Input>
-        <input bind:value={filterText} class="st-input" placeholder="Filter workspaces" style="width: 100%;" />
-      </Input>
+    <Input>
+      <input bind:value={filterText} class="st-input" placeholder="Filter workspaces" style="width: 100%;" />
+    </Input>
 
-      <div class="right">
-        <button class="st-button secondary ellipsis" on:click={createNewWorkspace}>Create Workspace</button>
-      </div>
-    {:else}
-      <slot name="header" />
-    {/if}
+    <div class="right">
+      <button class="st-button secondary ellipsis" on:click={createNewWorkspace}>Create Workspace</button>
+    </div>
   </svelte:fragment>
 
   <svelte:fragment slot="body">
-    <div class="breadcrumbs st-typography-header">
-      {#if selectedWorkspace !== null}
-        <span class="link" role="none" on:click={resetSelectedWorkspace}>Workspace</span> / {selectedWorkspace.name}
-      {:else}
-        Workspace
-      {/if}
-    </div>
-
-    {#if selectedWorkspace === null}
+    {#if filteredWorkspaces.length}
       <SingleActionDataGrid
         columnDefs={baseColumnDefs}
         itemDisplayText="Workspaces"
         items={filteredWorkspaces}
+        selectedItemId={selectedWorkspaceId}
         {user}
         on:rowSelected={workspaceSelected}
       ></SingleActionDataGrid>
     {:else}
-      <slot name="body" />
+      <div class="p1 st-typography-label">No Workspaces Found</div>
     {/if}
   </svelte:fragment>
 </Panel>
-
-<style>
-  .breadcrumbs {
-    padding-bottom: 0.5rem;
-  }
-
-  .link {
-    color: var(--st-primary-70);
-    cursor: pointer;
-  }
-</style>

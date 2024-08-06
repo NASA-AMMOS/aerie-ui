@@ -81,9 +81,11 @@ export const userParcelColumns: Writable<string> = writable('2fr 3px 1fr');
 
 export const userSequences = gqlSubscribable<UserSequence[]>(gql.SUB_USER_SEQUENCES, {}, [], null);
 
+export const workspaces = gqlSubscribable<UserSequence[]>(gql.SUB_WORKSPACES, {}, [], null);
+
 /* Writeable. */
 
-export const userSequencesColumns: Writable<string> = writable('1.5fr 3px 1fr');
+export const userSequencesColumns: Writable<string> = writable('.75fr 3px 1.5fr 3px 1fr');
 
 export const userSequenceFormColumns: Writable<string> = writable('1fr 3px 2fr');
 

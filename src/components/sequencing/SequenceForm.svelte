@@ -4,16 +4,19 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import type { ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
+  import { SearchParameters } from '../../enums/searchParameters';
   import { outputFormat } from '../../stores/sequence-adaptation';
   import {
     parameterDictionaries as parameterDictionariesStore,
     parcelToParameterDictionaries,
     parcels,
     userSequenceFormColumns,
+    workspaces,
   } from '../../stores/sequencing';
   import type { User, UserId } from '../../types/app';
   import type { Parcel, UserSequence, UserSequenceInsertInput } from '../../types/sequencing';
   import effects from '../../utilities/effects';
+  import { getSearchParameterNumber } from '../../utilities/generic';
   import { isSaveEvent } from '../../utilities/keyboardEvents';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
@@ -57,10 +60,12 @@
   let saveButtonEnabled: boolean = false;
   let saveButtonText: string = '';
   let savingSequence: boolean = false;
+  let selectedWorkspaceId: number | null;
 
   $: parcel = $parcels.find(p => p.id === sequenceParcelId) ?? null;
   $: saveButtonClass = sequenceModified && saveButtonEnabled ? 'primary' : 'secondary';
-  $: saveButtonEnabled = sequenceParcelId !== null && sequenceDefinition !== '' && sequenceName !== '';
+  $: saveButtonEnabled =
+    sequenceParcelId !== null && sequenceDefinition !== '' && sequenceName !== '' && isValidWorkspaceId();
   $: sequenceModified = sequenceDefinition !== savedSequenceDefinition || sequenceName !== savedSequenceName;
   $: {
     hasPermission =
@@ -71,6 +76,16 @@
     pageTitle = mode === 'edit' ? 'Sequencing' : 'New Sequence';
     pageSubtitle = mode === 'edit' ? savedSequenceName : '';
     saveButtonText = mode === 'edit' && !sequenceModified ? 'Saved' : 'Save';
+  }
+  $: {
+    selectedWorkspaceId = getSearchParameterNumber(SearchParameters.WORKSPACE_ID);
+  }
+
+  /**
+   * Checks if the workspace ID set the search params is valid.
+   */
+  function isValidWorkspaceId(): boolean {
+    return $workspaces.some(workspace => workspace.id === selectedWorkspaceId);
   }
 
   async function onOutputFileUpload(e: Event & { currentTarget: EventTarget & HTMLInputElement }) {
@@ -154,13 +169,14 @@
     if (saveButtonEnabled) {
       savingSequence = true;
 
-      if (sequenceParcelId !== null) {
+      if (sequenceParcelId !== null && selectedWorkspaceId !== null) {
         if (mode === 'create') {
           const newSequence: UserSequenceInsertInput = {
             definition: sequenceDefinition,
             name: sequenceName,
             parcel_id: sequenceParcelId,
             seq_json: sequenceOutput,
+            workspace_id: selectedWorkspaceId,
           };
           const newSequenceId = await effects.createUserSequence(newSequence, user);
 
@@ -197,7 +213,13 @@
       <SectionTitle>{mode === 'create' ? 'New Sequence' : 'Edit Sequence'}</SectionTitle>
 
       <div class="right">
-        <button class="st-button secondary ellipsis" on:click={() => goto(`${base}/sequencing`)}>
+        <button
+          class="st-button secondary ellipsis"
+          on:click={() =>
+            goto(
+              `${base}/sequencing${'?' + SearchParameters.WORKSPACE_ID + '=' + getSearchParameterNumber(SearchParameters.WORKSPACE_ID) ?? ''}`,
+            )}
+        >
           {mode === 'create' ? 'Cancel' : 'Close'}
         </button>
         <button

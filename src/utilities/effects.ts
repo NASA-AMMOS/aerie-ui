@@ -148,6 +148,8 @@ import {
   type SequenceAdaptation,
   type UserSequence,
   type UserSequenceInsertInput,
+  type Workspace,
+  type WorkspaceInsertInput,
 } from '../types/sequencing';
 import type {
   PlanDataset,
@@ -1624,6 +1626,27 @@ const effects = {
     }
 
     return false;
+  },
+
+  async createWorkspace(workspace: WorkspaceInsertInput, user: User | null): Promise<Workspace | null> {
+    try {
+      if (!queryPermissions.CREATE_WORKSPACE(user)) {
+        throwPermissionError('create a workspace');
+      }
+
+      const data = await reqHasura<Workspace>(gql.CREATE_WORKSPACE, { workspace }, user);
+      const { createWorkspace } = data;
+      if (createWorkspace != null) {
+        showSuccessToast('Workspace Created Successfully');
+        return createWorkspace;
+      } else {
+        throw Error(`Unable to create workspace "${workspace.name}"`);
+      }
+    } catch (e) {
+      catchError('Workspace Create Failed', e as Error);
+      showFailureToast('Workspace Create Failed');
+      return null;
+    }
   },
 
   async deleteActivityDirective(id: ActivityDirectiveId, plan: Plan, user: User | null): Promise<boolean> {
