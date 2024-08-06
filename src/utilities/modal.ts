@@ -6,9 +6,11 @@ import CreatePlanBranchModal from '../components/modals/CreatePlanBranchModal.sv
 import CreatePlanSnapshotModal from '../components/modals/CreatePlanSnapshotModal.svelte';
 import CreateViewModal from '../components/modals/CreateViewModal.svelte';
 import DeleteActivitiesModal from '../components/modals/DeleteActivitiesModal.svelte';
+import DeleteDerivationGroupModal from '../components/modals/DeleteDerivationGroupModal.svelte';
 import DeleteExternalSourceModal from '../components/modals/DeleteExternalSourceModal.svelte';
 import EditViewModal from '../components/modals/EditViewModal.svelte';
 import ExpansionSequenceModal from '../components/modals/ExpansionSequenceModal.svelte';
+import ManageGroupsAndTypesModal from '../components/modals/ManageGroupsAndTypesModal.svelte';
 import ManagePlanConstraintsModal from '../components/modals/ManagePlanConstraintsModal.svelte';
 import ManagePlanDerivationGroupsModal from '../components/modals/ManagePlanDerivationGroupsModal.svelte';
 import ManagePlanSchedulingConditionsModal from '../components/modals/ManagePlanSchedulingConditionsModal.svelte';
@@ -24,7 +26,7 @@ import WorkspaceModal from '../components/modals/WorkspaceModal.svelte';
 import type { ActivityDirectiveDeletionMap, ActivityDirectiveId } from '../types/activity';
 import type { User } from '../types/app';
 import type { ExpansionSequence } from '../types/expansion';
-import type { ExternalSourceWithResolvedNames, PlanDerivationGroup } from '../types/external-source';
+import type { DerivationGroup, ExternalSourceWithResolvedNames, PlanDerivationGroup } from '../types/external-source';
 import type { ModalElement, ModalElementValue } from '../types/modal';
 import type {
   Plan,
@@ -183,6 +185,38 @@ export async function showDeleteExternalSourceModal(
   });
 }
 
+export async function showDeleteDerivationGroupModal(
+  derivationGroup: DerivationGroup
+): Promise<ModalElementValue> {
+  return new Promise(resolve => {
+    if (browser) {
+      const target: ModalElement | null = document.querySelector('#svelte-modal');
+
+      if (target) {
+        const deleteDerivationGroupModal = new DeleteDerivationGroupModal({
+          props: { derivationGroup },
+          target,
+        });
+        target.resolve = resolve;
+
+        deleteDerivationGroupModal.$on('close', () => {
+          target.resolve = null;
+          resolve({ confirm: false });
+          deleteDerivationGroupModal.$destroy();
+        });
+
+        deleteDerivationGroupModal.$on('confirm', () => {
+          target.resolve = null;
+          resolve({ confirm: true });
+          deleteDerivationGroupModal.$destroy();
+        });
+      }
+    } else {
+      resolve({ confirm: false });
+    }
+  });
+}
+
 /**
  * Shows an ManagePlanConstraintsModal component with the supplied arguments.
  */
@@ -248,6 +282,41 @@ export async function showManagePlanDerivationGroups(user: User | null): Promise
           target.resolve = null;
           resolve({ confirm: true, value: e.detail });
           managePlanDerivationGroupsModal.$destroy();
+        });
+      }
+    } else {
+      resolve({ confirm: false });
+    }
+  });
+}
+
+/**
+ * Shows an ManagePlanDerivationGroupsModal component with the supplied arguments.
+ */
+export async function showManageGroupsAndTypes(user: User | null): Promise<ModalElementValue> {
+  return new Promise(resolve => {
+    if (browser) {
+      const target: ModalElement | null = document.querySelector('#svelte-modal');
+
+      if (target) {
+        const manageGroupsAndTypesModal = new ManageGroupsAndTypesModal({
+          props: { user },
+          target,
+        });
+        target.resolve = resolve;
+
+        manageGroupsAndTypesModal.$on('close', () => {
+          target.replaceChildren();
+          target.resolve = null;
+          target.removeAttribute('data-dismissible');
+          manageGroupsAndTypesModal.$destroy();
+        });
+        // TODO: Figure out how to incorporate the other two columns (Files in plan bounds, Included)
+        manageGroupsAndTypesModal.$on('add', (e: CustomEvent<{ derivationGroupName: string }[]>) => {
+          target.replaceChildren();
+          target.resolve = null;
+          resolve({ confirm: true, value: e.detail });
+          manageGroupsAndTypesModal.$destroy();
         });
       }
     } else {
