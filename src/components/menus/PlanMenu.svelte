@@ -47,14 +47,17 @@
 
   function createMergePlanBranchRequest() {
     effects.createPlanBranchRequest(plan, 'merge', user);
+    planMenu.hide();
   }
 
   function createPlanBranch() {
     effects.createPlanBranch(plan, user);
+    planMenu.hide();
   }
 
   function createPlanSnapshot() {
     effects.createPlanSnapshot(plan, user);
+    planMenu.hide();
   }
 
   async function onExportPlan() {
@@ -87,6 +90,7 @@
 
   function viewSnapshotHistory() {
     viewTogglePanel({ state: true, type: 'right', update: { rightComponentTop: 'PlanMetadataPanel' } });
+    planMenu.hide();
   }
 
   function showPlanBranches() {
@@ -95,6 +99,7 @@
 
   function showPlanMergeRequests() {
     showPlanMergeRequestsModal(user);
+    planMenu.hide();
   }
 </script>
 
@@ -108,7 +113,7 @@
 
   <div class="plan-menu st-typography-medium" role="none" on:click|stopPropagation={() => planMenu.toggle()}>
     <div class="plan-title">{plan.name}<ChevronDownIcon /></div>
-    <Menu bind:this={planMenu}>
+    <Menu hideAfterClick={false} bind:this={planMenu}>
       <MenuItem
         use={[
           [
