@@ -136,19 +136,17 @@
 
 <Panel>
   <svelte:fragment slot="header">
-    {#if selectedWorkspace === null}
-      <SectionTitle>Sequence Workspaces</SectionTitle>
+    <SectionTitle>Sequence Workspaces</SectionTitle>
 
-      <Input>
-        <input bind:value={filterText} class="st-input" placeholder="Filter workspaces" style="width: 100%;" />
-      </Input>
+    <Input>
+      <input bind:value={filterText} class="st-input" placeholder="Filter workspaces" style="width: 100%;" />
+    </Input>
 
-      <div class="right">
-        <button class="st-button secondary ellipsis" on:click|stopPropagation={createNewWorkspace}>
-          Create Workspace
-        </button>
-      </div>
-    {/if}
+    <div class="right">
+      <button class="st-button secondary ellipsis" on:click|stopPropagation={createNewWorkspace}>
+        Create Workspace
+      </button>
+    </div>
   </svelte:fragment>
 
   <svelte:fragment slot="body">
