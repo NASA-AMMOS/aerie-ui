@@ -972,7 +972,7 @@
   }
 
   .plan-import-container {
-    background: var(--st-gray-20);
+    background: var(--st-gray-15);
     border-radius: 5px;
     margin: 5px;
     padding: 8px 11px 8px;
