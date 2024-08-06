@@ -28,6 +28,7 @@ export class ExternalSources {
   externalSourcesTable: Locator;
   inputFile: Locator;
   nameInput: Locator;
+  panelExternalEventsTable: Locator;
   saveButton: Locator;
   selectEventTableView: Locator;
   tableRowExternalSourceId: Locator;
@@ -109,6 +110,7 @@ export class ExternalSources {
     this.toggleTimeline = page.getByRole('radio', { name: 'Timeline' });
     this.viewContainedEventTypes = page.getByRole('button', { name: 'View Contained Event Types' });
     this.viewEventSourceMetadata = page.getByRole('button', { name: 'View Event Source Metadata' });
+    this.panelExternalEventsTable = page.locator('[data-component-name="ExternalEventsTablePanel"]');
   }
 
   async uploadExternalSource(inputFilePath: string = this.externalSourceFilePath, waitForSuccess: boolean = true) {
