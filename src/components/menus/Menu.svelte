@@ -157,13 +157,9 @@
 
   .menu-slot {
     background: #fff;
-    border: 1px solid rgba(0, 0, 0, 0.16);
-    border-radius: 4px;
-    /* box-shadow:
-      0 2px 4px -1px #0003,
-      0 4px 5px #00000024,
-      0 1px 10px #0000001f; */
-    box-shadow: 0px 4px 16px 0px rgba(0, 0, 0, 0.08);
+    border: var(--st-border-popover);
+    border-radius: var(--st-border-radius-popover);
+    box-shadow: var(--st-shadow-popover);
     outline: 0;
     overflow: hidden;
     z-index: 1000;

@@ -81,6 +81,7 @@
     grid-template-columns: min-content;
     height: 24px;
     line-height: 24px;
+    max-width: 100%;
     overflow: hidden;
     padding: 8px;
     position: relative;
