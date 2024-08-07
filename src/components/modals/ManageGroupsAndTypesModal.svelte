@@ -4,12 +4,14 @@
   import type { ICellRendererParams } from 'ag-grid-community';
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import { createEventDispatcher } from 'svelte';
-  import { externalEventsDB, externalEventTypes } from '../../stores/external-event';
+  import { externalEventTypes } from '../../stores/external-event';
   import {
     derivationGroups,
     externalSourceTypes,
     externalSourceWithResolvedNames,
-    getEventSourceTypeName
+    getEventSourceTypeName,
+
+    getSourceName
   } from '../../stores/external-source';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
@@ -37,12 +39,12 @@
   let mode: string = "dg";
 
   type CellRendererParams = {
-    viewDerivationGroup: (derivationGroup: DerivationGroup) => void;
-    viewExternalSourceType: (sourceType: ExternalSourceType) => void;
-    viewExternalEventType: (eventType: ExternalEventType) => void;
     deleteDerivationGroup: (derivationGroup: DerivationGroup) => Promise<void>;
-    deleteExternalSourceType: (sourceType: ExternalSourceType) => Promise<void>;
     deleteExternalEventType: (eventType: ExternalEventType) => Promise<void>;
+    deleteExternalSourceType: (sourceType: ExternalSourceType) => Promise<void>;
+    viewDerivationGroup: (derivationGroup: DerivationGroup) => void;
+    viewExternalEventType: (eventType: ExternalEventType) => void;
+    viewExternalSourceType: (sourceType: ExternalSourceType) => void;
   };
   type ModalCellRendererParams = ICellRendererParams<DerivationGroup> & CellRendererParams;
 
@@ -174,7 +176,7 @@
       resizable: true,
       sortable: true,
       suppressAutoSize: false,
-      suppressSizeToFit: false
+      suppressSizeToFit: false,
     },
     {
       filter: 'number',
@@ -183,15 +185,20 @@
       suppressAutoSize: true,
       suppressSizeToFit: true,
       valueFormatter: params => {
-        // TODO: split into a method
-        let filteredSourceIds = $externalEventsDB.filter(
-          ee => selectedExternalEventType?.id === ee.external_event.event_type_id
-        ).map(ee => ee.external_event.source_id);
-        selectedExternalEventTypeSources = $externalSourceWithResolvedNames.filter(
-          source => filteredSourceIds.includes(source.id)
-        );
-        return `${selectedExternalEventTypeSources.length}`;
+        const associatedSources = getAssociatedExternalSourcesBySourceType(params.data?.name);
+        return `${associatedSources.length}`
       },
+    },
+    {
+      filter: 'number',
+      headerName: 'Associated Derivation Groups',
+      sortable: true,
+      suppressAutoSize: true,
+      suppressSizeToFit: true,
+      valueFormatter: params => {
+        const associatedDerivationGroups = getAssociatedDerivationGroupsBySourceTypeId(params.data?.id)
+        return `${associatedDerivationGroups.length}`;
+      }
     },
     {
       cellClass: 'action-cell-container',
@@ -270,10 +277,25 @@
       suppressAutoSize: true,
       suppressSizeToFit: true,
       valueFormatter: params => {
-        console.log(params) // TODO: extract into method
-        return `${$externalSourceWithResolvedNames.filter(
-          source => (params?.data?.id || -1) === source.source_type_id,
-        ).length}`;
+        let associatedDerivationGroups = getAssociatedDerivationGroupsByEventType(params.data?.name);
+        const sourceMap = associatedDerivationGroups.flatMap(
+          (dg) => dg.sources.size
+        )
+        const numOfSources = sourceMap.length > 0 ? sourceMap.reduce(
+          (acc, dgSize) => acc + dgSize
+        ) : 0;
+        return `${numOfSources}`;
+      }
+    },
+    {
+      filter: 'number',
+      headerName: 'Associated Derivation Groups',
+      sortable: true,
+      suppressAutoSize: true,
+      suppressSizeToFit: true,
+      valueFormatter: params => {
+        const associatedDerivationGroups = getAssociatedDerivationGroupsByEventType(params.data?.name);
+        return `${associatedDerivationGroups.length}`;
       },
     },
     {
@@ -337,104 +359,152 @@
   ];
 
   const modalColumnSizeNoDetail: string = '1fr 3px 0fr';
-  const modalColumnSizeWithDetail: string = '3fr 3px 1fr';
+  const modalColumnSizeWithDetailDG: string = '3fr 3px 1.3fr';
+  const modalColumnSizeWithDetailEET: string = '2fr 3px 1.2fr';
+  const modalColumnSizeWithDetailEST: string = '2fr 3px 1.2fr';
   let modalColumnSize: string = modalColumnSizeNoDetail;
 
   let selectedDerivationGroup: DerivationGroup | undefined = undefined;
   let selectedDerivationGroupSources: ExternalSourceWithResolvedNames[] = [];
 
   let selectedExternalSourceType: ExternalSourceType | undefined = undefined;
-  let selectedExternalSourceTypeSources: ExternalSourceWithResolvedNames[] = [];
+  let selectedExternalSourceTypeDerivationGroups: DerivationGroup[] = [];
 
   let selectedExternalEventType: ExternalEventType | undefined = undefined;
-  let selectedExternalEventTypeSources: ExternalSourceWithResolvedNames[] = [];
+  let selectedExternalEventTypeDerivationGroups: DerivationGroup[] = [];
 
-  $: if (selectedDerivationGroup !== undefined) {
-    modalColumnSize = modalColumnSizeWithDetail;
-  } else {
-    modalColumnSize = modalColumnSizeNoDetail;
-  }
   $: selectedDerivationGroupSources = $externalSourceWithResolvedNames.filter(
     source => selectedDerivationGroup?.id === source.derivation_group_id,
   );
-  $: selectedExternalSourceTypeSources = $externalSourceWithResolvedNames.filter(
-    source => selectedExternalSourceType?.id === source.source_type_id,
-  );
-  $: {
-    let filteredSourceIds = $externalEventsDB.filter(
-      ee => selectedExternalEventType?.id === ee.external_event.event_type_id
-    ).map(ee => ee.external_event.source_id);
-    selectedExternalEventTypeSources = $externalSourceWithResolvedNames.filter(
-      source => filteredSourceIds.includes(source.id)
-    )
-  }
+
+  $: selectedExternalSourceTypeDerivationGroups = $derivationGroups.filter(
+    dg => {
+      if (selectedExternalSourceType !== undefined) {
+        return dg.source_type_id === selectedExternalSourceType.id;
+      } else {
+        return false;
+      }
+    }
+  )
+
+  $: selectedExternalEventTypeDerivationGroups = $derivationGroups.filter(
+    dg => {
+      if (selectedExternalEventType !== undefined) {
+        return dg.event_types.includes(selectedExternalEventType.name);
+      } else {
+        return false;
+      }
+    }
+  )
 
   async function deleteDerivationGroup(derivationGroup: DerivationGroup) {
-    // makes sure all associated sources are deleted before this. List of sources already contained in DerivationGroup type.
+    // Makes sure all associated sources are deleted before this. List of sources already contained in DerivationGroup type.
     await showDeleteDerivationGroupModal(derivationGroup, user);
   }
 
   async function deleteExternalSourceType(sourceType: ExternalSourceType) {
-    // TODO: extract into method
-    let associated_dgs = $derivationGroups.filter(dg => dg.source_type_id === sourceType.id)
-    
+    let associatedDGs = $derivationGroups.filter(dg => dg.source_type_id === sourceType.id)
+
     // makes sure all associated derivation groups are deleted before this
-    await showDeleteExternalSourceTypeModal(sourceType, associated_dgs, user);
+    await showDeleteExternalSourceTypeModal(sourceType, associatedDGs, user);
   }
 
-  async function deleteExternalEventType(sourceType: ExternalSourceType) {
-    // TODO: extract into method
-    let filteredSourceIds = $externalEventsDB.filter(
-      ee => selectedExternalEventType?.id === ee.external_event.event_type_id
-    ).map(ee => ee.external_event.source_id);
-    let associated_sources = $externalSourceWithResolvedNames.filter(
-      source => filteredSourceIds.includes(source.id)
-    )
+  async function deleteExternalEventType(eventType: ExternalEventType) {
+    const associatedDerivationGroups: DerivationGroup[] = getAssociatedDerivationGroupsByEventType(eventType.name);
+    const associatedExternalSourceNames: string[] = associatedDerivationGroups.flatMap((dg) => Array.from(dg.sources.keys()));
 
-    // makes sure all associated sources (and therefore events, as orphans are not possible) are deleted before this 
+    // makes sure all associated sources (and therefore events, as orphans are not possible) are deleted before this
     // NOTE: does not update in derivation_group_comp after removing a EE type; derivation_group_comp defaults to 0 event types after its last external source removed,
     //        as it has no awareness of external source type or paired events (as the latter don't even exist).
     // TODO: add an association table between external source type and external event type, so that we have visibility here?
-    await showDeleteExternalEventTypeModal(sourceType, associated_sources, user);
+    await showDeleteExternalEventTypeModal(eventType, associatedExternalSourceNames, user);
+  }
+
+  function getAssociatedExternalSourcesBySourceType(sourceType: string | undefined) {
+    if (sourceType === undefined) {
+      return [];
+    }
+    let associatedSources = $externalSourceWithResolvedNames.filter(
+      (source) => source.source_type === sourceType
+    );
+    return associatedSources;
+  }
+
+  function getAssociatedDerivationGroupsBySourceTypeId(sourceTypeId: number | undefined) {
+    if (sourceTypeId === undefined) {
+      return [];
+    }
+
+    let associatedDerivationGroups = $derivationGroups.filter(
+      (dg) => dg.source_type_id === sourceTypeId
+    );
+
+    return associatedDerivationGroups;
+  }
+
+  function getAssociatedDerivationGroupsByEventType(eventType: string | undefined) {
+    if (eventType === undefined) {
+      return [];
+    }
+    const associatedDerivationGroups: DerivationGroup[] = $derivationGroups.filter(
+      (dg) => dg.event_types.includes(eventType)
+    );
+
+    return associatedDerivationGroups;
   }
 
   function viewDerivationGroup(derivationGroup: DerivationGroup) {
     const dg = $derivationGroups.find(dg => dg.id === derivationGroup.id);
-    if (selectedDerivationGroup === undefined) {
+    if (
+      selectedDerivationGroup === undefined
+      || selectedDerivationGroup !== dg
+    ) {
       selectedDerivationGroup = dg;
       selectedExternalSourceType = undefined;
       selectedExternalEventType = undefined;
+      modalColumnSize = modalColumnSizeWithDetailDG;
     }
     else {
       selectedDerivationGroup = undefined;
       selectedExternalSourceType = undefined;
       selectedExternalEventType = undefined;
+      modalColumnSize = modalColumnSizeNoDetail;
     }
   }
 
   function viewExternalSourceType(sourceType: ExternalSourceType) {
-    if (selectedExternalSourceType === undefined) {
+    if (
+      selectedExternalSourceType === undefined
+      || selectedExternalSourceType !== sourceType
+    ) {
       selectedDerivationGroup = undefined;
       selectedExternalSourceType = sourceType;
       selectedExternalEventType = undefined;
+      modalColumnSize = modalColumnSizeWithDetailEST;
     }
     else {
       selectedDerivationGroup = undefined;
       selectedExternalSourceType = undefined;
       selectedExternalEventType = undefined;
+      modalColumnSize = modalColumnSizeNoDetail;
     }
   }
 
   function viewExternalEventType(eventType: ExternalEventType) {
-    if (selectedExternalEventType === undefined) {
+    if (
+      selectedExternalEventType === undefined
+      || selectedExternalEventType !== eventType
+    ) {
       selectedDerivationGroup = undefined;
       selectedExternalSourceType = undefined;
       selectedExternalEventType = eventType;
+      modalColumnSize = modalColumnSizeWithDetailEET;
     }
     else {
       selectedDerivationGroup = undefined;
       selectedExternalSourceType = undefined;
       selectedExternalEventType = undefined;
+      modalColumnSize = modalColumnSizeNoDetail;
     }
   }
 </script>
@@ -443,27 +513,28 @@
   <ModalHeader on:close>
     Manage Derivation Groups and Types
     <div class="derivationgroups-modal-filter-container" style="margin-left: auto; margin-right: 15px">
-      <select 
-        bind:value={mode} 
+      <select
+        bind:value={mode}
         on:change={() => {
           selectedDerivationGroup = undefined;
           selectedExternalSourceType = undefined;
           selectedExternalEventType = undefined;
-        }} 
-        name="mode" 
-        id="mode" 
-        class="st-select" 
+          modalColumnSize = modalColumnSizeNoDetail;
+        }}
+        name="mode"
+        id="mode"
+        class="st-select"
         style="width: 200px"
       >
         <option value="dg">Derivation Groups</option>
         <option value="est">External Source Types</option>
         <option value="eet">External Event Types</option>
-      </select> 
+      </select>
     </div>
   </ModalHeader>
   <ModalContent style=" overflow-y:scroll; padding:0;">
     <CssGrid columns={modalColumnSize} minHeight="100%">
-      <div class="constraiderivationgroups-modal-table-container" style="height:100%; padding-top: 10px">
+      <div class="derivationgroups-modal-table-container">
         {#if mode==="dg"}
           <DataGrid bind:this={dgDataGrid} columnDefs={dgColumnDefs} rowData={$derivationGroups} />
         {:else if mode ==="est"}
@@ -541,128 +612,106 @@
         <Panel borderRight padBody={true} overflowYBody="scroll">
           <svelte:fragment slot="header">
             <SectionTitle>
-              <Truck />Sources of Type '{selectedExternalSourceType.name}'
+              <Truck />Derivation Groups of Type '{selectedExternalSourceType.name}'
             </SectionTitle>
           </svelte:fragment>
           <svelte:fragment slot="body">
-            {#if selectedExternalSourceTypeSources.length > 0}
-              {#each selectedExternalSourceTypeSources as source}
+            {#if selectedExternalSourceTypeDerivationGroups.length > 0}
+              {#each selectedExternalSourceTypeDerivationGroups as dg}
                 <!-- Collapsible details -->
-                <Collapse title={source.key} tooltipContent={source.key} defaultExpanded={false}>
+                <Collapse title={dg.name} tooltipContent={dg.name} defaultExpanded={false}>
                   <span slot="right">
                     <p style:color="gray">
-                      {$externalEventsDB.filter(ee => ee.external_event.source_id === source.id)} events
+                      {dg.derivedEventTotal} events
                     </p>
                   </span>
                   <p>
-                    <strong>Key:</strong>
-                    {source.key}
+                    <strong>Name:</strong>
+                    {dg.name}
                   </p>
 
-                  <p>
-                    <strong>Source Type:</strong>
-                    {source.source_type}
-                  </p>
+                  <Collapse
+                    className="anchor-collapse"
+                    defaultExpanded={false}
+                    title="Event Types"
+                    tooltipContent="View Contained Event Types"
+                  >
+                    {#each dg.event_types as eventType}
+                      <i>{eventType}</i>
+                    {/each}
+                  </Collapse>
 
-                  <p>
-                    <strong>Start Time:</strong>
-                    {source.start_time}
-                  </p>
-
-                  <p>
-                    <strong>End Time:</strong>
-                    {source.end_time}
-                  </p>
-
-                  <p>
-                    <strong>Valid At:</strong>
-                    {source.valid_at}
-                  </p>
-
-                  <p>
-                    <strong>Created At:</strong>
-                    {source.created_at}
-                  </p>
+                  <Collapse
+                    className="anchor-collapse"
+                    defaultExpanded={false}
+                    title="Sources"
+                    tooltipContent="View Contained External Sources"
+                  >
+                    {#each dg.sources as source}
+                      <i>{source[0]}</i>
+                    {/each}
+                  </Collapse>
                 </Collapse>
               {/each}
             {:else}
               <p>No sources associated with this External Source Type.</p>
             {/if}
-    
-            <!--make this a variable?-->
-            {#if $derivationGroups.filter(dg => dg.source_type_id === selectedExternalSourceType?.id).length > 0}
-                <hr/>
-                {#each $derivationGroups.filter(dg => dg.source_type_id === selectedExternalSourceType?.id) as dg}
-                  <Collapse title={dg.name} tooltipContent={dg.name} defaultExpanded={false}>
-                    <span slot="right">
-                      <p style:color="gray">
-                        {dg.derivedEventTotal} derived events
-                      </p>
-                    </span>
-                    <p>
-                      <strong>Name:</strong>
-                      {dg.name}
-                    </p>
-  
-                    <p>
-                      <strong>Sources:</strong>
-                      {Array.from(dg.sources.keys()).join(", ")}
-                    </p>
-                  </Collapse>
-                {/each}
-            {/if}
           </svelte:fragment>
         </Panel>
       {:else if selectedExternalEventType !== undefined}
-        <!--The introduction of schemas should allow this to be greatly simplified, as source types imply event types. 
-              Need to think about the strictness of EE Type and ES Type pairings, and whether the former can exist 
+        <!--The introduction of schemas should allow this to be greatly simplified, as source types imply event types.
+              Need to think about the strictness of EE Type and ES Type pairings, and whether the former can exist
               without an association with the former.-->
         <CssGridGutter track={1} type="column" />
         <Panel borderRight padBody={true} overflowYBody="scroll">
           <svelte:fragment slot="header">
             <SectionTitle>
-              <Truck />Sources containing '{selectedExternalEventType.name}'
+              <Truck />Derivation Groups containing '{selectedExternalEventType.name}'
             </SectionTitle>
           </svelte:fragment>
           <svelte:fragment slot="body">
-            {#if selectedExternalEventTypeSources.length > 0}
-              {#each selectedExternalEventTypeSources as source}
+            {#if selectedExternalEventTypeDerivationGroups.length > 0}
+              {#each selectedExternalEventTypeDerivationGroups as dg}
                 <!-- Collapsible details -->
-                <Collapse title={source.key} tooltipContent={source.key} defaultExpanded={false}>
+                <Collapse title={dg.name} tooltipContent={dg.name} defaultExpanded={false}>
                   <span slot="right">
                     <p style:color="gray">
-                      {$externalEventsDB.filter(ee => ee.external_event.source_id === source.id)} events
+                      {dg.derivedEventTotal} events
                     </p>
                   </span>
                   <p>
-                    <strong>Key:</strong>
-                    {source.key}
+                    <strong>Name:</strong>
+                    {dg.name}
+
                   </p>
 
                   <p>
                     <strong>Source Type:</strong>
-                    {source.source_type}
+                    {getSourceName(dg.source_type_id, $externalSourceWithResolvedNames)}
                   </p>
 
-                  <p>
-                    <strong>Start Time:</strong>
-                    {source.start_time}
-                  </p>
+                  <Collapse
+                    className="anchor-collapse"
+                    defaultExpanded={false}
+                    title="Event Types"
+                    tooltipContent="View Contained Event Types"
+                  >
+                    {#each dg.event_types as eventType}
+                      <i>{eventType}</i>
+                    {/each}
+                  </Collapse>
 
-                  <p>
-                    <strong>End Time:</strong>
-                    {source.end_time}
-                  </p>
+                  <Collapse
+                    className="anchor-collapse"
+                    defaultExpanded={false}
+                    title="Sources"
+                    tooltipContent="View Contained External Sources"
+                  >
+                    {#each dg.sources as source}
+                      <i>{source[0]}</i>
+                    {/each}
+                  </Collapse>
 
-                  <p>
-                    <strong>Valid At:</strong>
-                    {source.valid_at}
-                  </p>
-
-                  <p>
-                    <strong>Created At:</strong>
-                    {source.created_at}
-                  </p>
                 </Collapse>
               {/each}
             {:else}
@@ -687,9 +736,10 @@
     margin: 0.5rem 1rem 0;
   }
 
-  .constraiderivationgroups-modal-table-container {
+  .derivationgroups-modal-table-container {
     height: 100%;
     padding: 0 1rem 0.5rem;
+    padding-top: 10px;
     width: 100%;
   }
 </style>

@@ -3,7 +3,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import type { ExternalEventType } from '../../types/external-event';
-  import type { ExternalSourceWithResolvedNames } from '../../types/external-source';
   import Modal from './Modal.svelte';
   import ModalContent from './ModalContent.svelte';
   import ModalFooter from './ModalFooter.svelte';
@@ -11,7 +10,7 @@
 
   export let height: number = 150;
   export let eventType: ExternalEventType;
-  export let associatedSources: ExternalSourceWithResolvedNames[] = [];
+  export let associatedSources: string[] = []; // ManageGroupsAndTypesModal already retrieves all keys
   export let width: number = 380;
 
   const dispatch = createEventDispatcher<{
@@ -43,16 +42,16 @@
       <span>
         This External Event Type still contains the following sources which must be deleted first:
         <hr style="border: 0px"/>
-        {#each associatedSources as source} 
-          <div style="padding-left:20px">
+        {#each associatedSources as source}
+          <div style="display:block;overflow:hidden;padding-left:20px;text-overflow:ellipsis;">
             <i>
-              {source.key}
+              {source}
             </i>
           </div>
         {/each}
       </span>
     {:else}
-      <span>
+      <span style="display:block;overflow:hidden;text-overflow:ellipsis">
         Are you sure you want to delete "{eventType.name}"?
         <i>What is done cannot be undone.</i>
       </span>
