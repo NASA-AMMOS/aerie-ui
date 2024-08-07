@@ -11,6 +11,7 @@
   export let initialWorkspaceName: string = '';
   export let mode: 'create' | 'edit' = 'create';
   export let width: number = 380;
+  export let workspaceNames: string[];
 
   const dispatch = createEventDispatcher<{
     close: void;
@@ -20,9 +21,12 @@
   let workspaceName: string = initialWorkspaceName;
   let saveButtonDisabled: boolean = true;
   let modalTitle: string;
+  let workspaceNameSet: Set<string>;
 
-  $: saveButtonDisabled = workspaceName === '';
+  $: saveButtonDisabled =
+    workspaceName === '' || !(!workspaceNameSet.has(workspaceName) || workspaceName === initialWorkspaceName);
   $: modalTitle = mode === 'edit' ? 'Edit Workspace' : 'Create Workspace';
+  $: workspaceNameSet = new Set(workspaceNames);
 
   function save() {
     if (!saveButtonDisabled) {
@@ -45,6 +49,8 @@
   <ModalHeader on:close>{modalTitle}</ModalHeader>
 
   <ModalContent>
+    <div class="st-typography-body">Workspace names must be unique.</div>
+
     <fieldset>
       <label for="name">Workspace name</label>
       <input bind:value={workspaceName} autocomplete="off" class="st-input w-100" name="name" required type="text" />

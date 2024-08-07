@@ -1616,13 +1616,13 @@ const effects = {
     return false;
   },
 
-  async createWorkspace(user: User | null): Promise<Workspace | null> {
+  async createWorkspace(workspaceNames: string[], user: User | null): Promise<Workspace | null> {
     try {
       if (!queryPermissions.CREATE_WORKSPACE(user)) {
         throwPermissionError('create a workspace');
       }
 
-      const { confirm, value } = await showWorkspaceModal();
+      const { confirm, value } = await showWorkspaceModal(workspaceNames);
 
       if (confirm && value) {
         const workspace = value;
@@ -2771,13 +2771,13 @@ const effects = {
     return false;
   },
 
-  async editWorkspace(workspace: Workspace, user: User | null): Promise<Workspace | null> {
+  async editWorkspace(workspace: Workspace, workspaceNames: string[], user: User | null): Promise<Workspace | null> {
     try {
       if (!queryPermissions.UPDATE_WORKSPACE(user, workspace)) {
         throwPermissionError('update a workspace');
       }
 
-      const { confirm, value } = await showWorkspaceModal(workspace.name);
+      const { confirm, value } = await showWorkspaceModal(workspaceNames, workspace.name);
 
       if (confirm && value) {
         const updatedName = value;
