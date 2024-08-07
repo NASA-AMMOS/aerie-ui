@@ -41,8 +41,8 @@
   {/if}
   {#each rows as row}
     <ContextSubMenuItem text={row.name} parentMenu={contextMenu}>
-      <ContextMenuItem className="context-menu-button" on:click={() => dispatch('select', { item: layerItem, row })}>
-        New Layer +
+      <ContextMenuItem on:click={() => dispatch('select', { item: layerItem, row })}>
+        <div class="context-menu-button">New Layer +</div>
       </ContextMenuItem>
       {#each row.layers.filter(l => l.chartType === chartType) as layer}
         <ContextMenuItem on:click={() => dispatch('select', { item: layerItem, layer, row })}>
