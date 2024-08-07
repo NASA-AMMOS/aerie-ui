@@ -45,10 +45,10 @@
   }>();
 
   const gridComponentsByName: Record<ViewGridComponent, any> = {
+    ActivityAndResourceTypesPanel,
     ActivityDirectivesTablePanel,
     ActivityFormPanel,
     ActivitySpansTablePanel,
-    ActivityAndResourceTypesPanel,
     ConstraintsPanel,
     ExpansionPanel,
     IFramePanel,
