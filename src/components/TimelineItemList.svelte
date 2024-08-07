@@ -4,9 +4,9 @@
   import { capitalize } from '../utilities/text';
 
   import ChevronDownIcon from '@nasa-jpl/stellar/icons/chevron_down.svg?component';
-  import AddToRowIcon from '../assets/add-to-row.svg';
-  import InsertInstanceIcon from '../assets/insert-instance.svg';
-  import PlusCircledIcon from '../assets/plus-circled.svg';
+  import AddToRowIcon from '../assets/add-to-row.svg?component';
+  import InsertInstanceIcon from '../assets/insert-instance.svg?component';
+  import PlusCircledIcon from '../assets/plus-circled.svg?component';
   import { view, viewAddFilterToRow } from '../stores/views';
   import type { ChartType, Layer, Row, TimelineItemType } from '../types/timeline';
   import { permissionHandler } from '../utilities/permissionHandler';

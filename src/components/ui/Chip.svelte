@@ -72,7 +72,6 @@
     background-color: var(--st-gray-10);
     border: none;
     border: 1px solid rgba(0, 0, 0, 0.24);
-    /* border-radius: 4px; */
     border-radius: 48px;
     color: var(--st-gray-90);
     cursor: pointer;
