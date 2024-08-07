@@ -2536,6 +2536,18 @@ const effects = {
     }
   },
 
+  async deleteTimelineRows(timelineId: number | null) {
+    const { confirm } = await showConfirmModal(
+      'Delete',
+      `Are you sure you want to delete all timeline rows?`,
+      'Delete Rows',
+      true,
+    );
+    if (confirm) {
+      viewUpdateTimeline('rows', [], timelineId);
+    }
+  },
+
   async deleteUserSequence(sequence: UserSequence, user: User | null): Promise<boolean> {
     try {
       if (!queryPermissions.DELETE_USER_SEQUENCE(user, sequence)) {
