@@ -13,6 +13,7 @@ import {
   type ParcelBundle,
   type ParcelToParameterDictionary,
   type UserSequence,
+  type Workspace,
 } from '../types/sequencing';
 import effects from '../utilities/effects';
 import gql from '../utilities/gql';
@@ -81,7 +82,7 @@ export const userParcelColumns: Writable<string> = writable('2fr 3px 1fr');
 
 export const userSequences = gqlSubscribable<UserSequence[]>(gql.SUB_USER_SEQUENCES, {}, [], null);
 
-export const workspaces = gqlSubscribable<UserSequence[]>(gql.SUB_WORKSPACES, {}, [], null);
+export const workspaces = gqlSubscribable<Workspace[]>(gql.SUB_WORKSPACES, {}, [], null);
 
 /* Writeable. */
 

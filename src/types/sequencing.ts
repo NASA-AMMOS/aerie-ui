@@ -143,5 +143,3 @@ export type Workspace = {
   owner: UserId;
   updated_at: string;
 };
-
-export type WorkspaceInsertInput = Omit<Workspace, 'created_at' | 'id' | 'owner' | 'updated_at'>;
