@@ -41,8 +41,8 @@
       <span>
         This Derivation Group still contains the following sources which must be deleted first:
         <hr style="border: 0px"/>
-        {#each derivationGroup.sources as source} 
-          <div style="padding-left:20px">
+        {#each derivationGroup.sources as source}
+          <div style="display:block;overflow:hidden;padding-left:20px;text-overflow:ellipsis;">
             <i>
               {source[0]}
             </i>
@@ -50,7 +50,7 @@
         {/each}
       </span>
     {:else}
-      <span>
+      <span style="display:block;overflow:hidden;text-overflow:ellipsis">
         Are you sure you want to delete "{derivationGroup.name}"?
         <i>What is done cannot be undone.</i>
       </span>
