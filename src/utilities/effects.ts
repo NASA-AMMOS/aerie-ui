@@ -3925,6 +3925,9 @@ const effects = {
       if (!gatewayPermissions.IMPORT_PLAN(user)) {
         throwPermissionError('import a plan');
       }
+
+      creatingPlan.set(true);
+
       const file: File = files[0];
 
       const duration = getIntervalFromDoyRange(startTime, endTime);
@@ -3942,6 +3945,7 @@ const effects = {
 
       const createdPlan = await reqGateway<PlanSlim | null>('/importPlan', 'POST', body, user, true);
 
+      creatingPlan.set(false);
       if (createdPlan != null) {
         return createdPlan;
       }
@@ -3949,6 +3953,7 @@ const effects = {
       return null;
     } catch (e) {
       catchError(e as Error);
+      creatingPlan.set(false);
       return null;
     }
   },
