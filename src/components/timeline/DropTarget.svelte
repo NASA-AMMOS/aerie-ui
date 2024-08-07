@@ -17,12 +17,18 @@
     isDropTarget = true;
   }
 
-  function onDragLeave() {
+  function onDragLeave(e: DragEvent) {
     isDropTarget = false;
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'copy';
+    }
   }
 
-  function onDragOver() {
+  function onDragOver(e: DragEvent) {
     isDropTarget = true;
+    if (e.dataTransfer?.effectAllowed === 'copyLink') {
+      e.dataTransfer.dropEffect = 'link';
+    }
   }
 
   function onDrop(e: DragEvent) {
@@ -31,11 +37,6 @@
     if (e.dataTransfer !== null) {
       const data = e.dataTransfer.getData('text');
       const json = JSON.parse(data || '{}');
-      // const { type, item } =
-      // const activityLayers = layers.filter(isActivityLayer);
-      // if (type && item) {
-      //   viewAddFilterToRow([item], type, rowId, activityLayers[0]);
-      // }
       dispatch('drop', json);
     }
   }

@@ -23,8 +23,6 @@
     value: string;
   };
 
-  // type Item = $$Generic<{ name: string; [key: string]: any }>;
-
   export let createItem: ((name: string) => void) | undefined = undefined;
   export let hasPermission: boolean = true;
   export let permissionError: string = '';
@@ -69,8 +67,12 @@
     dragImage.style.top = '-1000px';
     dragImage.className = 'st-typography-medium';
     document.body.appendChild(dragImage);
-    event.dataTransfer?.setDragImage(dragImage, 0, 0);
-    event.dataTransfer?.setData('text/plain', JSON.stringify({ item, type: typeName }));
+    if (event.dataTransfer) {
+      event.dataTransfer.setDragImage(dragImage, 0, 0);
+      event.dataTransfer.setData('text/plain', JSON.stringify({ item, type: typeName }));
+      event.dataTransfer.dropEffect = typeName === 'activity' ? 'copy' : 'link';
+      event.dataTransfer.effectAllowed = typeName === 'activity' ? 'copyLink' : 'link';
+    }
   }
 
   function addTextFilter() {
@@ -227,9 +229,7 @@
             on:dragstart={e => onDragStart(e.detail, item)}
           >
             {item.name}
-            <span slot="prefix">
-              <slot name="prefix" />
-            </span>
+            <slot prop={item} />
             <span slot="suffix">
               {#if createItem}
                 <button
@@ -303,6 +303,7 @@
   .filters {
     align-items: center;
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     min-height: 28px;
     padding: 4px 12px;
@@ -359,6 +360,7 @@
   .timeline-item-list-filter-option-label {
     align-items: center;
     display: flex;
+    flex: 1;
     user-select: none;
   }
 

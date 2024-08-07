@@ -1,11 +1,25 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  type Item = $$Generic<{ name: string; [key: string]: any }>;
+  import type { ResourceType } from '../types/simulation';
 
-  export let item: Item | undefined = undefined;
+  export let item: ResourceType | undefined = undefined;
 
-  $: console.log('item :>> ', item);
+  let prefix: string = '';
+
+  $: units = item?.schema.metadata?.unit?.value;
+  $: type = item?.schema.type ?? 'Unk';
+  $: if (type) {
+    prefix = `${type}${units ? ` • (${units}` : ''})`;
+  }
 </script>
 
-<div>1</div>
+<i class="resource-list-prefix st-typography-body" style:margin-left={units || type ? '4px' : '0'}>
+  {prefix}
+</i>
+
+<style>
+  .resource-list-prefix {
+    color: var(--st-gray-50);
+  }
+</style>

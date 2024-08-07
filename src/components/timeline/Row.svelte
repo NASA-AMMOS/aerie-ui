@@ -65,11 +65,11 @@
   } from '../../utilities/timeline';
   import { tooltip } from '../../utilities/tooltip';
   import ConstraintViolations from './ConstraintViolations.svelte';
-  import DropTarget from './DropTarget.svelte';
   import LayerActivities from './LayerActivities.svelte';
   import LayerGaps from './LayerGaps.svelte';
   import LayerLine from './LayerLine.svelte';
   import LayerXRange from './LayerXRange.svelte';
+  import RowDividerDropTarget from './RowDividerDropTarget.svelte';
   import RowDragHandleHeight from './RowDragHandleHeight.svelte';
   import RowHeader from './RowHeader.svelte';
   import RowHorizontalGuides from './RowHorizontalGuides.svelte';
@@ -167,7 +167,7 @@
   };
   let filterActivitiesByTime = false;
   let rowRef: HTMLDivElement;
-  let isDragging: boolean = false;
+  // let isDragging: boolean = false;
 
   $: if ($selectedRow?.id === id && rowRef) {
     rowRef.scrollIntoView({ block: 'nearest' });
@@ -501,7 +501,7 @@
   }
 
   function onDragenter(e: DragEvent | undefined): void {
-    if (hasActivityLayer && e && overlaySvgSelection) {
+    if (e && overlaySvgSelection && e.dataTransfer && e.dataTransfer.effectAllowed === 'copyLink') {
       const { offsetX } = e;
       overlaySvgSelection
         .append('line')
@@ -516,26 +516,28 @@
   }
 
   function onDragleave(e: DragEvent | undefined): void {
-    if (hasActivityLayer && e && overlaySvgSelection) {
+    if (e && overlaySvgSelection) {
       overlaySvgSelection.select('.activity-drag-guide').remove();
     }
   }
 
   function onDragover(e: DragEvent | undefined): void {
-    if (hasActivityLayer && e && overlaySvgSelection) {
+    if (e && e.dataTransfer && e.dataTransfer.effectAllowed === 'link') {
+      e.dataTransfer.dropEffect = 'none';
+    }
+    if (e && overlaySvgSelection) {
       const { offsetX } = e;
       overlaySvgSelection.select('.activity-drag-guide').attr('x1', offsetX).attr('x2', offsetX);
     }
   }
 
   function onDrop(e: DragEvent | undefined): void {
-    if (hasActivityLayer && e && overlaySvgSelection && xScaleView !== null) {
+    if (e && overlaySvgSelection && xScaleView !== null) {
       const { offsetX } = e;
       overlaySvgSelection.select('.activity-drag-guide').remove();
       if (e.dataTransfer !== null) {
         const unixEpochTime = xScaleView.invert(offsetX).getTime();
         const start_time = getDoyTime(new Date(unixEpochTime));
-        // const activityTypeName = e.dataTransfer.getData('name');
         const data = e.dataTransfer.getData('text');
         const json = JSON.parse(data || '');
         const type = json.type ?? '';
@@ -612,7 +614,7 @@
     return resources;
   }
 
-  function onItemDrop(rowId?: number, type?: string, item?: TimelineItemType, index?: number) {
+  function onTimelineItemDrop(rowId?: number, type?: string, item?: TimelineItemType, index?: number) {
     if (!type || !item) {
       return;
     }
@@ -626,6 +628,14 @@
   class:expanded
   class:auto-height={autoAdjustHeight}
 >
+  {#if index === 0}
+    <RowDividerDropTarget
+      width={drawWidth + marginLeft}
+      top={4}
+      on:drop={e => onTimelineItemDrop(undefined, e.detail.type, e.detail.item, -1)}
+    />
+  {/if}
+
   <div class="row-content">
     <!-- Row Header. -->
     <RowHeader
@@ -633,7 +643,7 @@
       on:activity-tree-node-change={onActivityTreeNodeChange}
       on:mouseDown={onMouseDown}
       on:dblClick
-      on:drop={e => onItemDrop(id, e.detail.type, e.detail.item)}
+      on:drop={e => onTimelineItemDrop(id, e.detail.type, e.detail.item)}
       {activityTree}
       width={marginLeft}
       height={computedDrawHeight}
@@ -843,15 +853,10 @@
     </div>
   </div>
 
-  <div class="row-bottom-item-drop" style="width: {drawWidth + marginLeft}px" class:dragging={isDragging}>
-    <div class="row-bottom-item-drop-inner">
-      <DropTarget
-        on:drop={e => onItemDrop(undefined, e.detail.type, e.detail.item, index)}
-        on:dragstart={_ => (isDragging = true)}
-        on:dragend={_ => (isDragging = false)}
-      />
-    </div>
-  </div>
+  <RowDividerDropTarget
+    width={drawWidth + marginLeft}
+    on:drop={e => onTimelineItemDrop(undefined, e.detail.type, e.detail.item, index)}
+  />
   <!-- Drag Handle for Row Height Resizing. -->
   {#if !autoAdjustHeight && expanded}
     <RowDragHandleHeight rowHeight={drawHeight} on:updateRowHeight={onUpdateRowHeightDrag} />
@@ -859,31 +864,6 @@
 </div>
 
 <style>
-  .row-bottom-item-drop {
-    height: 0px;
-    position: relative;
-  }
-
-  .row-bottom-item-drop :global(.dropping::after) {
-    background: var(--st-utility-blue);
-    box-shadow: none;
-    height: 2px;
-  }
-
-  .row-bottom-item-drop-inner {
-    height: inherit;
-    height: 6px;
-    pointer-events: none;
-    position: absolute;
-    transform: translateY(-50%);
-    width: inherit;
-    z-index: 5;
-  }
-
-  .row-bottom-item-drop.dragging .row-bottom-item-drop-inner {
-    pointer-events: auto;
-  }
-
   .layers,
   .overlay,
   svg {

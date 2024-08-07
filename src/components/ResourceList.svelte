@@ -2,11 +2,27 @@
 
 <script lang="ts">
   import { resourceTypes } from '../stores/simulation';
+  import ResourceListPrefix from './ResourceListPrefix.svelte';
   import TimelineItemList from './TimelineItemList.svelte';
 
   let resourceDataTypes: string[] = [];
 
   $: resourceDataTypes = [...new Set($resourceTypes.map(t => t.schema.type))];
+
+  // function filterItems(
+  //   items: ResourceType[],
+  //   textFilters: string[],
+  //   selectedFilterOptions: Record<
+  //     string,
+  //     {
+  //       color?: string;
+  //       label: string;
+  //       value: string;
+  //     }
+  //   >,
+  // ) {
+  //   items[0];
+  // }
 </script>
 
 <TimelineItemList
@@ -14,6 +30,7 @@
   chartType="line"
   typeName="resource"
   filterItems={(items, textFilters, selectedFilterOptions) => {
+    /* TODO refactor, export FilterOption and move this to a ts function  */
     return items.filter(({ name, schema }) => {
       let matchesText = true;
       let matchesDataType = true;
@@ -36,7 +53,8 @@
   }}
   filterOptions={resourceDataTypes.map(t => ({ label: t, value: t }))}
   filterName="Data Type"
+  let:prop={item}
 >
-  <!-- TODO figure out slot for resource specific labeling -->
-  <!-- <ResourceListPrefix {item} slot="prefix" /> -->
+  <!-- TODO figure out slot typing here -->
+  <ResourceListPrefix {item} />
 </TimelineItemList>
