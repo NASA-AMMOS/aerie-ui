@@ -400,9 +400,9 @@
       );
       planUploadFileInput.value = '';
       planUploadFiles = undefined;
-      $startTimeField.value = '';
-      $endTimeField.value = '';
-      $nameField.value = '';
+      startTimeField.reset('');
+      endTimeField.reset('');
+      nameField.reset('');
     } else {
       const newPlan: PlanSlim | null = await effects.createPlan(
         endTime,
@@ -423,9 +423,9 @@
           plans.updateValue(storePlans => [...storePlans, newPlan]);
         }
         await effects.createPlanTags(newPlanTags, newPlan, user);
-        $startTimeField.value = '';
-        $endTimeField.value = '';
-        $nameField.value = '';
+        startTimeField.reset('');
+        endTimeField.reset('');
+        nameField.reset('');
       }
     }
   }
