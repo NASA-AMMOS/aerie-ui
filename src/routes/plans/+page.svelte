@@ -676,7 +676,7 @@
                     placement: 'top',
                   }}
                 >
-                  <ProgressRadial progress={planExportProgress} useBackground={false} size={16} strokeWidth={1} />
+                  <ProgressRadial progress={planExportProgress} size={16} strokeWidth={1} />
                   <div class="cancel"><CloseIcon /></div>
                 </button>
               {/if}
@@ -1006,6 +1006,7 @@
   }
 
   .cancel-button {
+    --progress-radial-background: var(--st-gray-20);
     background: none;
     border: 0;
     position: relative;

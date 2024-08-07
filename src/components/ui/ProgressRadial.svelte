@@ -35,7 +35,7 @@
   }
 
   .radial-progress-background {
-    background-color: var(--st-utility-blue);
+    background-color: var(--progress-radial-background, var(--st-utility-blue));
     border-radius: 50%;
   }
 
