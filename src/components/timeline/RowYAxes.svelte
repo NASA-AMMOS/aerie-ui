@@ -101,7 +101,7 @@
         // const labelFontFace = axis.label?.fontFace || 'sans-serif';
         // const labelFontSize = axis.label?.fontSize || 12;
         // const labelText = axis.label.text;
-        const tickCount = axis.tickCount || 1;
+        const tickCount = axis.tickCount ?? 1;
         if (
           tickCount > 0 &&
           axis.scaleDomain &&
