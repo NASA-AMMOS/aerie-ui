@@ -343,7 +343,8 @@
     $endTimeField.dirtyAndValid &&
     $modelIdField.dirtyAndValid &&
     $nameField.dirtyAndValid &&
-    $startTimeField.dirtyAndValid;
+    $startTimeField.dirtyAndValid &&
+    !$creatingPlan;
   $: if ($creatingPlan) {
     createPlanButtonText = planUploadFiles ? 'Creating from .json...' : 'Creating...';
   } else {
