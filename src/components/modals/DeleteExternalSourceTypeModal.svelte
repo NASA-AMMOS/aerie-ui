@@ -42,8 +42,8 @@
       <span>
         The following Derivation Groups paired with this External Source Type still exist and must be deleted first:
         <hr style="border: 0px"/>
-        {#each associatedDGs as dg} 
-          <div style="padding-left:20px">
+        {#each associatedDGs as dg}
+          <div style="display:block;overflow:hidden;padding-left:20px;text-overflow:ellipsis;">
             <i>
               {dg.name}
             </i>
@@ -51,7 +51,7 @@
         {/each}
       </span>
     {:else}
-      <span>
+      <span style="display:block;overflow:hidden;text-overflow:ellipsis">
         Are you sure you want to delete "{sourceType.name}"?
         <i>What is done cannot be undone.</i>
       </span>

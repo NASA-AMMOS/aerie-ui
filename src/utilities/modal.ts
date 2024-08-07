@@ -42,6 +42,7 @@ import type { PlanSnapshot } from '../types/plan-snapshot';
 import type { Tag } from '../types/tags';
 import type { ViewDefinition } from '../types/view';
 import effects from './effects';
+import { showFailureToast, showSuccessToast } from './toast';
 
 /**
  * Listens for clicks on the document body and removes the modal children.
@@ -156,7 +157,7 @@ export async function showConfirmModal(
  */
 export async function showDeleteExternalSourceModal(
   linked: PlanDerivationGroup[],
-  source: ExternalSourceWithResolvedNames
+  source: ExternalSourceWithResolvedNames,
 ): Promise<ModalElementValue> {
   return new Promise(resolve => {
     if (browser) {
@@ -191,7 +192,7 @@ export async function showDeleteExternalSourceModal(
 
 export async function showDeleteDerivationGroupModal(
   derivationGroup: DerivationGroup,
-  user: User | null
+  user: User | null,
 ): Promise<ModalElementValue> {
   return new Promise(resolve => {
     if (browser) {
@@ -213,7 +214,12 @@ export async function showDeleteDerivationGroupModal(
         deleteDerivationGroupModal.$on('confirm', () => {
           target.resolve = null;
           resolve({ confirm: true });
-          effects.deleteDerivationGroup(derivationGroup.id, user);
+          try {
+            effects.deleteDerivationGroup(derivationGroup.id, user);
+            showSuccessToast('Successfully deleted derivation group');
+          } catch (e) {
+            showFailureToast('Failed to delete derivation group');
+          }
           deleteDerivationGroupModal.$destroy();
         });
       }
@@ -248,7 +254,12 @@ export async function showDeleteExternalSourceTypeModal(
         deleteExternalSourceTypeModal.$on('confirm', () => {
           target.resolve = null;
           resolve({ confirm: true });
-          effects.deleteExternalSourceType(sourceType.id, user);
+          try {
+            effects.deleteExternalSourceType(sourceType.id, user);
+            showSuccessToast('Successfully deleted external source type');
+          } catch (e) {
+            showFailureToast('Failed to delete external source type');
+          }
           deleteExternalSourceTypeModal.$destroy();
         });
       }
@@ -260,8 +271,8 @@ export async function showDeleteExternalSourceTypeModal(
 
 export async function showDeleteExternalEventTypeModal(
   eventType: ExternalEventType,
-  associatedSources: ExternalSourceWithResolvedNames[],
-  user: User | null
+  associatedSources: string[],
+  user: User | null,
 ): Promise<ModalElementValue> {
   return new Promise(resolve => {
     if (browser) {
@@ -269,7 +280,7 @@ export async function showDeleteExternalEventTypeModal(
 
       if (target) {
         const deleteExternalEventTypeModal = new DeleteExternalEventTypeModal({
-          props: { eventType, associatedSources },
+          props: { associatedSources, eventType },
           target,
         });
         target.resolve = resolve;
@@ -283,7 +294,12 @@ export async function showDeleteExternalEventTypeModal(
         deleteExternalEventTypeModal.$on('confirm', () => {
           target.resolve = null;
           resolve({ confirm: true });
-          effects.deleteExternalEventType(eventType.id, user);
+          try {
+            effects.deleteExternalEventType(eventType.id, user);
+            showSuccessToast('Successfully deleted external event type');
+          } catch (e) {
+            showFailureToast('Failed to delete external event type');
+          }
           deleteExternalEventTypeModal.$destroy();
         });
       }
