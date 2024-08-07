@@ -66,6 +66,7 @@
   type CellRendererParams = {
     deletePlan: (plan: Plan) => void;
     exportPlan: (plan: Plan, progressCallback?: (progress: number) => void, signal?: AbortSignal) => void;
+    viewPlan: (plan: Plan) => void;
   };
   type PlanCellRendererParams = ICellRendererParams<Plan> & CellRendererParams;
 
@@ -312,6 +313,11 @@
               useExportIcon: true,
               hasDeletePermission: params.data && user ? featurePermissions.plan.canDelete(user, params.data) : false,
               rowData: params.data,
+              viewCallback: data => user && params.viewPlan(data),
+              viewTooltip: {
+                content: 'Open Plan',
+                placement: 'bottom',
+              },
             },
             target: actionsDiv,
           });
@@ -321,6 +327,7 @@
         cellRendererParams: {
           deletePlan,
           exportPlan: onExportPlan,
+          viewPlan,
         } as CellRendererParams,
         field: 'actions',
         headerName: '',
@@ -328,7 +335,7 @@
         sortable: false,
         suppressAutoSize: true,
         suppressSizeToFit: true,
-        width: 53,
+        width: 80,
       },
     ];
   }
@@ -493,9 +500,17 @@
     }
   }
 
-  function showPlan() {
+  function openPlan(planId: number) {
+    goto(`${base}/plans/${planId}`);
+  }
+
+  function viewPlan(plan: Plan) {
+    openPlan(plan.id);
+  }
+
+  function showSelectedPlan() {
     if (selectedPlanId !== null) {
-      goto(`${base}/plans/${selectedPlanId}`);
+      openPlan(selectedPlanId);
     }
   }
 
@@ -757,7 +772,7 @@
             </fieldset>
           </div>
           <fieldset>
-            <button class="st-button w-100" on:click={showPlan}>Open plan</button>
+            <button class="st-button w-100" on:click={showSelectedPlan}>Open plan</button>
           </fieldset>
         {:else}
           <form on:submit|preventDefault={createPlan}>
