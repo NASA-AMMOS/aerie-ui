@@ -1,16 +1,24 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import type { ICellRendererParams } from 'ag-grid-community';
   import { createEventDispatcher } from 'svelte';
   import { workspaces } from '../../stores/sequencing';
   import type { User } from '../../types/app';
-  import type { DataGridColumnDef, DataGridRowSelection } from '../../types/data-grid';
-  import type { Workspace, WorkspaceInsertInput } from '../../types/sequencing';
+  import type { DataGridColumnDef, DataGridRowSelection, RowId } from '../../types/data-grid';
+  import type { Workspace } from '../../types/sequencing';
   import effects from '../../utilities/effects';
+  import { featurePermissions } from '../../utilities/permissions';
   import Input from '../form/Input.svelte';
+  import DataGridActions from '../ui/DataGrid/DataGridActions.svelte';
   import SingleActionDataGrid from '../ui/DataGrid/SingleActionDataGrid.svelte';
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
+
+  type CellRendererParams = {
+    editWorkspace?: (workspace: Workspace) => void;
+  };
+  type WorkspaceCellRendererParams = ICellRendererParams<Workspace> & CellRendererParams;
 
   export let selectedWorkspaceId: number | null;
   export let user: User | null;
@@ -51,6 +59,37 @@
       suppressSizeToFit: true,
       width: 100,
     },
+    {
+      cellClass: 'action-cell-container',
+      cellRenderer: (params: WorkspaceCellRendererParams) => {
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'actions-cell';
+        new DataGridActions({
+          props: {
+            editCallback: params.editWorkspace,
+            editTooltip: {
+              content: 'Edit Workspace',
+              placement: 'bottom',
+            },
+            hasEditPermission: params.data ? hasEditPermission(user, params.data) : false,
+            rowData: params.data,
+          },
+          target: actionsDiv,
+        });
+
+        return actionsDiv;
+      },
+      cellRendererParams: {
+        editWorkspace,
+      } as CellRendererParams,
+      field: 'actions',
+      headerName: '',
+      resizable: false,
+      sortable: false,
+      suppressAutoSize: true,
+      suppressSizeToFit: true,
+      width: 55,
+    },
   ];
 
   $: filteredWorkspaces = $workspaces.filter(workspace => {
@@ -59,12 +98,22 @@
     return includesName;
   });
 
-  async function createNewWorkspace(): Promise<void> {
-    const workspace: WorkspaceInsertInput = {
-      name: `Workspace ${$workspaces.length}`,
-    };
+  async function createNewWorkspace() {
+    await effects.createWorkspace(user);
+  }
 
-    await effects.createWorkspace(workspace, user);
+  async function editWorkspace(workspace: Workspace | undefined) {
+    if (workspace !== undefined) {
+      await effects.editWorkspace(workspace, user);
+    }
+  }
+
+  function editWorkspaceContext(event: CustomEvent<RowId[]>) {
+    editWorkspace($workspaces.find(workspace => workspace.id === (event.detail[0] as number)));
+  }
+
+  function hasEditPermission(user: User | null, workspace: Workspace) {
+    return featurePermissions.workspace.canUpdate(user, workspace);
   }
 
   function workspaceSelected(event: CustomEvent<DataGridRowSelection<Workspace>>) {
@@ -87,7 +136,9 @@
     </Input>
 
     <div class="right">
-      <button class="st-button secondary ellipsis" on:click={createNewWorkspace}>Create Workspace</button>
+      <button class="st-button secondary ellipsis" on:click|stopPropagation={createNewWorkspace}>
+        Create Workspace
+      </button>
     </div>
   </svelte:fragment>
 
@@ -95,10 +146,14 @@
     {#if filteredWorkspaces.length}
       <SingleActionDataGrid
         columnDefs={baseColumnDefs}
+        hasEdit={true}
+        {hasEditPermission}
         itemDisplayText="Workspaces"
         items={filteredWorkspaces}
         selectedItemId={selectedWorkspaceId}
+        hasDeletePermission={false}
         {user}
+        on:editItem={editWorkspaceContext}
         on:rowSelected={workspaceSelected}
       ></SingleActionDataGrid>
     {:else}

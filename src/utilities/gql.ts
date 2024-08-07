@@ -197,6 +197,7 @@ export enum Queries {
   UPDATE_TAGS = 'update_tags_by_pk',
   UPDATE_USER_SEQUENCE = 'update_user_sequence_by_pk',
   UPDATE_VIEW = 'update_view_by_pk',
+  UPDATE_WORKSPACE = 'update_workspace_by_pk',
   UPLOADED_FILES = 'uploaded_file',
   UPLOAD_DICTIONARY = 'uploadDictionary',
   USER_ROLE_PERMISSION = 'user_role_permission',
@@ -3531,6 +3532,20 @@ const gql = {
       ) {
         created_at
         definition
+        id
+        name
+        owner
+        updated_at
+      }
+    }
+  `,
+
+  UPDATE_WORKSPACE: `#graphql
+    mutation UpdateWorkspace($id: Int!, $workspace: workspace_set_input!) {
+      updatedWorkspace: ${Queries.UPDATE_WORKSPACE}(
+        pk_columns: { id: $id }, _set: $workspace
+      ) {
+        created_at
         id
         name
         owner

@@ -149,7 +149,6 @@ import {
   type UserSequence,
   type UserSequenceInsertInput,
   type Workspace,
-  type WorkspaceInsertInput,
 } from '../types/sequencing';
 import type {
   PlanDataset,
@@ -202,6 +201,7 @@ import {
   showPlanBranchRequestModal,
   showRestorePlanSnapshotModal,
   showUploadViewModal,
+  showWorkspaceModal,
 } from './modal';
 import { gatewayPermissions, queryPermissions } from './permissions';
 import { reqExtension, reqGateway, reqHasura } from './requests';
@@ -1628,25 +1628,32 @@ const effects = {
     return false;
   },
 
-  async createWorkspace(workspace: WorkspaceInsertInput, user: User | null): Promise<Workspace | null> {
+  async createWorkspace(user: User | null): Promise<Workspace | null> {
     try {
       if (!queryPermissions.CREATE_WORKSPACE(user)) {
         throwPermissionError('create a workspace');
       }
 
-      const data = await reqHasura<Workspace>(gql.CREATE_WORKSPACE, { workspace }, user);
-      const { createWorkspace } = data;
-      if (createWorkspace != null) {
-        showSuccessToast('Workspace Created Successfully');
-        return createWorkspace;
-      } else {
-        throw Error(`Unable to create workspace "${workspace.name}"`);
+      const { confirm, value } = await showWorkspaceModal();
+
+      if (confirm && value) {
+        const workspace = value;
+        const data = await reqHasura<Workspace>(gql.CREATE_WORKSPACE, { workspace }, user);
+        const { createWorkspace } = data;
+
+        if (createWorkspace != null) {
+          showSuccessToast('Workspace Created Successfully');
+          return createWorkspace;
+        } else {
+          throw Error(`Unable to create workspace "${workspace.name}"`);
+        }
       }
     } catch (e) {
       catchError('Workspace Create Failed', e as Error);
       showFailureToast('Workspace Create Failed');
-      return null;
     }
+
+    return null;
   },
 
   async deleteActivityDirective(id: ActivityDirectiveId, plan: Plan, user: User | null): Promise<boolean> {
@@ -2714,6 +2721,38 @@ const effects = {
     }
 
     return false;
+  },
+
+  async editWorkspace(workspace: Workspace, user: User | null): Promise<Workspace | null> {
+    try {
+      if (!queryPermissions.UPDATE_WORKSPACE(user, workspace)) {
+        throwPermissionError('update a workspace');
+      }
+
+      const { confirm, value } = await showWorkspaceModal(workspace.name);
+
+      if (confirm && value) {
+        const updatedName = value;
+        const data = await reqHasura<Workspace>(
+          gql.UPDATE_WORKSPACE,
+          { id: workspace.id, workspace: updatedName },
+          user,
+        );
+        const { updatedWorkspace } = data;
+
+        if (updatedWorkspace != null) {
+          showSuccessToast('Workspace Updated Successfully');
+          return updatedWorkspace;
+        } else {
+          throw Error(`Unable to update workspace "${workspace.name}"`);
+        }
+      }
+    } catch (e) {
+      catchError('Workspace Update Failed', e as Error);
+      showFailureToast('Workspace Update Failed');
+    }
+
+    return null;
   },
 
   async expand(
