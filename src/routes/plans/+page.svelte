@@ -779,32 +779,30 @@
           <form on:submit|preventDefault={createPlan}>
             <AlertError class="m-2" error={$createPlanError} />
 
-            {#if isPlanImportMode}
-              <fieldset class="plan-import-container">
-                <button class="close-import" type="button" on:click={hideImportPlan}>
-                  <CloseIcon />
-                </button>
-                <label for="file">Plan File (JSON)</label>
-                <div class="import-input-container">
-                  <input
-                    class="w-100"
-                    name="file"
-                    type="file"
-                    accept="application/json"
-                    bind:files={planUploadFiles}
-                    bind:this={planUploadFileInput}
-                    use:permissionHandler={{
-                      hasPermission: canCreate,
-                      permissionError,
-                    }}
-                    on:change={onPlanFileChange}
-                  />
-                </div>
-                {#if planUploadFilesError}
-                  <div class="error">{planUploadFilesError}</div>
-                {/if}
-              </fieldset>
-            {/if}
+            <fieldset class="plan-import-container" hidden={!isPlanImportMode}>
+              <button class="close-import" type="button" on:click={hideImportPlan}>
+                <CloseIcon />
+              </button>
+              <label for="file">Plan File (JSON)</label>
+              <div class="import-input-container">
+                <input
+                  class="w-100"
+                  name="file"
+                  type="file"
+                  accept="application/json"
+                  bind:files={planUploadFiles}
+                  bind:this={planUploadFileInput}
+                  use:permissionHandler={{
+                    hasPermission: canCreate,
+                    permissionError,
+                  }}
+                  on:change={onPlanFileChange}
+                />
+              </div>
+              {#if planUploadFilesError}
+                <div class="error">{planUploadFilesError}</div>
+              {/if}
+            </fieldset>
 
             <Field field={modelIdField}>
               <label for="model" slot="label">Models</label>
@@ -993,6 +991,10 @@
     margin: 5px;
     padding: 8px 11px 8px;
     position: relative;
+  }
+
+  .plan-import-container[hidden] {
+    display: none;
   }
 
   .transfer-button-container {
