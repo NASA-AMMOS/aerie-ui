@@ -9,7 +9,7 @@
   import { parcels, userSequences } from '../../stores/sequencing';
   import type { User, UserId } from '../../types/app';
   import type { DataGridColumnDef, DataGridRowSelection, RowId } from '../../types/data-grid';
-  import type { UserSequence } from '../../types/sequencing';
+  import type { UserSequence, Workspace } from '../../types/sequencing';
   import effects from '../../utilities/effects';
   import { getSearchParameterNumber, getTarget } from '../../utilities/generic';
   import { featurePermissions } from '../../utilities/permissions';
@@ -23,7 +23,7 @@
   type SequencesCellRendererParams = ICellRendererParams<UserSequence> & CellRendererParams;
 
   export let filterText: string;
-  export let selectedWorkspaceId: number | null;
+  export let workspace: Workspace | undefined;
   export let user: User | null;
 
   let baseColumnDefs: DataGridColumnDef[] = [];
@@ -115,7 +115,7 @@
     const filterTextLowerCase = filterText.toLowerCase();
     const includesId = `${sequence.id}`.includes(filterTextLowerCase);
     const includesName = sequence.name.toLocaleLowerCase().includes(filterTextLowerCase);
-    const isInWorkspace = selectedWorkspaceId !== null && sequence.workspace_id === selectedWorkspaceId;
+    const isInWorkspace = workspace !== undefined && sequence.workspace_id === workspace.id;
 
     return (includesId || includesName) && isInWorkspace;
   });
@@ -201,6 +201,12 @@
 </script>
 
 <div class="filter-container">
+  <div>
+    {#if workspace !== undefined}
+      {workspace.name}
+    {/if}
+  </div>
+
   <div>
     <input type="checkbox" on:change={onFilterToUsersSequences} />
     <span class=" st-typography-body">Filter to my sequences</span>
