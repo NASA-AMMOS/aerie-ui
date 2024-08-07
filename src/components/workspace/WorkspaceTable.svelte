@@ -20,7 +20,7 @@
   };
   type WorkspaceCellRendererParams = ICellRendererParams<Workspace> & CellRendererParams;
 
-  export let selectedWorkspaceId: number | null;
+  export let selectedWorkspaceId: number | undefined;
   export let user: User | null;
 
   let baseColumnDefs: DataGridColumnDef[];

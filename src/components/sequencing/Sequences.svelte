@@ -6,9 +6,9 @@
   import { base } from '$app/paths';
   import { onMount } from 'svelte';
   import { SearchParameters } from '../../enums/searchParameters';
-  import { parcels, userSequences, userSequencesColumns } from '../../stores/sequencing';
+  import { parcels, userSequences, userSequencesColumns, workspaces } from '../../stores/sequencing';
   import type { User } from '../../types/app';
-  import type { Parcel, UserSequence } from '../../types/sequencing';
+  import type { Parcel, UserSequence, Workspace } from '../../types/sequencing';
   import { getSearchParameterNumber, setQueryParam } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
@@ -26,10 +26,11 @@
   let filterText: string = '';
   let parcel: Parcel | null;
   let selectedSequence: UserSequence | null = null;
-  let selectedWorkspaceId: number | null = null;
+  let workspace: Workspace | undefined;
+  let workspaceId: number | null = null;
 
   $: parcel = $parcels.find(p => p.id === selectedSequence?.parcel_id) ?? null;
-
+  $: workspace = $workspaces.find(workspace => workspace.id === workspaceId);
   $: if (selectedSequence !== null) {
     const found = $userSequences.findIndex(sequence => sequence.id === selectedSequence?.id);
 
@@ -39,11 +40,7 @@
   }
 
   onMount(() => {
-    const workspaceId = getSearchParameterNumber(SearchParameters.WORKSPACE_ID);
-
-    if (workspaceId !== null) {
-      selectedWorkspaceId = workspaceId;
-    }
+    workspaceId = getSearchParameterNumber(SearchParameters.WORKSPACE_ID);
   });
 
   function onSequenceSelected(event: CustomEvent<UserSequence>) {
@@ -51,16 +48,16 @@
   }
 
   function onWorkspaceSelected(event: CustomEvent<number>) {
-    selectedWorkspaceId = event.detail;
+    workspaceId = event.detail;
 
     if (browser) {
-      setQueryParam(SearchParameters.WORKSPACE_ID, `${selectedWorkspaceId}` ?? null);
+      setQueryParam(SearchParameters.WORKSPACE_ID, `${workspaceId}` ?? null);
     }
   }
 </script>
 
 <CssGrid bind:columns={$userSequencesColumns}>
-  <WorkspaceTable {user} {selectedWorkspaceId} on:workspaceSelected={onWorkspaceSelected} />
+  <WorkspaceTable {user} selectedWorkspaceId={workspace?.id} on:workspaceSelected={onWorkspaceSelected} />
 
   <CssGridGutter track={1} type="column" />
 
@@ -79,7 +76,7 @@
             hasPermission: featurePermissions.sequences.canCreate(user),
             permissionError: 'You do not have permission to create a new sequence',
           }}
-          disabled={selectedWorkspaceId === null}
+          disabled={workspace === undefined}
           on:click={() => {
             goto(
               `${base}/sequencing/new${'?' + SearchParameters.WORKSPACE_ID + '=' + getSearchParameterNumber(SearchParameters.WORKSPACE_ID) ?? ''}`,
@@ -92,7 +89,7 @@
     </svelte:fragment>
 
     <svelte:fragment slot="body">
-      <SequenceTable {filterText} {user} {selectedWorkspaceId} on:sequenceSelected={onSequenceSelected} />
+      <SequenceTable {filterText} {user} {workspace} on:sequenceSelected={onSequenceSelected} />
     </svelte:fragment>
   </Panel>
 
