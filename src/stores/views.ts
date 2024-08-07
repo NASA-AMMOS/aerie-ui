@@ -610,6 +610,23 @@ export function getUpdatedLayerWithFilters(
   }
 }
 
+export function viewAddTimelineRow(timelineId?: number | null, openEditor: boolean = false) {
+  const timelines = get(view)?.definition.plan.timelines || [];
+  const selectedTimelineIdValue = timelineId ?? get(selectedTimelineId);
+  const timeline = timelines.find(t => t.id === selectedTimelineIdValue);
+  if (timeline) {
+    const row = createRow(timelines);
+    viewUpdateTimeline('rows', [...timeline.rows, row], timelineId);
+
+    if (openEditor) {
+      viewSetSelectedRow(row.id);
+
+      // Open the timeline editor panel on the right.
+      viewTogglePanel({ state: true, type: 'right', update: { rightComponentTop: 'TimelineEditorPanel' } });
+    }
+  }
+}
+
 export function viewAddFilterToRow(
   items: TimelineItemType[],
   typeName: string /* 'activity' | 'resource' */,
