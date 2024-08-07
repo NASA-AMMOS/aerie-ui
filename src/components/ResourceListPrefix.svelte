@@ -10,7 +10,7 @@
   $: units = item?.schema.metadata?.unit?.value;
   $: type = item?.schema.type ?? 'Unk';
   $: if (type) {
-    prefix = `${type}${units ? ` • (${units}` : ''})`;
+    prefix = `(${type}${units ? ` • ${units}` : ''})`;
   }
 </script>
 
