@@ -99,12 +99,19 @@
   });
 
   async function createNewWorkspace() {
-    await effects.createWorkspace(user);
+    await effects.createWorkspace(
+      $workspaces.map(workspace => workspace.name),
+      user,
+    );
   }
 
   async function editWorkspace(workspace: Workspace | undefined) {
     if (workspace !== undefined) {
-      await effects.editWorkspace(workspace, user);
+      await effects.editWorkspace(
+        workspace,
+        $workspaces.map(workspace => workspace.name),
+        user,
+      );
     }
   }
 

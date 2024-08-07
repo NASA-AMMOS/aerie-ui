@@ -283,13 +283,19 @@ export async function showMergeReviewEndedModal(
   });
 }
 
-export async function showWorkspaceModal(workspaceName?: string): Promise<ModalElementValue<{ name: string }>> {
+export async function showWorkspaceModal(
+  workspaceNames: string[],
+  workspaceName?: string,
+): Promise<ModalElementValue<{ name: string }>> {
   return new Promise(resolve => {
     if (browser) {
       const target: ModalElement | null = document.querySelector('#svelte-modal');
 
       if (target) {
-        const workspaceModal = new WorkspaceModal({ props: { initialWorkspaceName: workspaceName }, target });
+        const workspaceModal = new WorkspaceModal({
+          props: { initialWorkspaceName: workspaceName, workspaceNames },
+          target,
+        });
         target.resolve = resolve;
 
         workspaceModal.$on('close', () => {
