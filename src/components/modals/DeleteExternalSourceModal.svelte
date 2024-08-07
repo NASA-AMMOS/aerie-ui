@@ -41,9 +41,9 @@
   </ModalHeader>
   <ModalContent>
     {#if linked.length > 0}
-      <span>
+      <span style="display:block;overflow:hidden;text-overflow:ellipsis">
         This External Source is part of Derivation Group '{source.derivation_group}', which is linked with the following plans:
-        {#each linked as link} 
+        {#each linked as link}
           <div style="padding-left:20px">
             <i>
               <a href="{base}/plans/{link.plan_id}">
@@ -54,7 +54,7 @@
         {/each}
       </span>
     {:else}
-      <span>
+      <span style="display:block;overflow:hidden;text-overflow:ellipsis">
         Are you sure you want to delete "{source.key}"?
         <i>What is done cannot be undone.</i>
       </span>
