@@ -18,6 +18,7 @@
     getDerivationGroupByNameSourceTypeId,
     getEventSourceTypeByName,
     getExternalSourceMetadataError,
+    parsingError,
     planDerivationGroupLinks,
   } from '../../stores/external-source';
   import { field } from '../../stores/form';
@@ -84,8 +85,14 @@
   };
   type SourceCellRendererParams = ICellRendererParams<ExternalSourceWithResolvedNames> & CellRendererParams;
 
+  // Permissions
   const deletePermissionError = 'You do not have permission to delete an external source.';
   const createPermissionError = 'You do not have permission to create an external source.';
+
+  // UI Grid Sizes
+  const gridRowSizesNoBottomPanel = '1fr 3px 0fr';
+  const gridRowSizesBottomPanel = '1fr 3px 1fr';
+  const uiColumnSize = '1.2fr 3px 4fr';
 
   let keyInputField: HTMLInputElement; // need this to set a focus on it. not related to the value
 
@@ -210,7 +217,7 @@
   let file: File | undefined;
   let parsed: ExternalSourceJson | undefined;
 
-  // external event type creation variables
+  // External event type creation variables
   let externalEventTypeInsertInput: ExternalEventTypeInsertInput;
   let externalEventsCreated: ExternalEventDB[] = [];
 
@@ -223,14 +230,17 @@
   let menuTitle: string = '';
   let filteredExternalSources: ExternalSourceWithResolvedNames[] = [];
 
+  // External source + derivation group creation variables
   let sourceInsert: ExternalSourceInsertInput;
   let sourceTypeInsert: ExternalSourceTypeInsertInput;
   let derivationGroupInsert: DerivationGroupInsertInput;
   let selectedSourceLinkedDerivationGroupsPlans: PlanDerivationGroup[] = [];
 
+  // Permissions
   let hasDeletePermission: boolean = false;
   let hasCreatePermission: boolean = false;
 
+  // TODO: Should we move this, or shorten it?
   // There was a strange issue where when:
   //   - you select a source,
   //   - select an event in timeline,
@@ -252,21 +262,17 @@
     createExternalSourceError.set(null);
     createExternalSourceTypeError.set(null);
     createDerivationGroupError.set(null);
+    parsingError.set(null);
   }
 
-  // unfortunately very clunky, but it does correctly select all source types on page load as stores populate shortly AFTER the component loads,
-  //    so populating selectedFilters with the store values on component load always yields an empty list
-  $: if (selectedFilters.length === 1 && selectedFilters[0].id === -1 && $externalSourceTypes.length > 0) {
-    selectedFilters = [...$externalSourceTypes];
-  }
-
+  // File parse logic
   $: if (files) {
-    // files repeatedly refreshes, meaning the reaction to file and parsed keeps repeating infinitely. This if statement prevents that.
+    // Safeguard against infinitely executing parse logic
     if (file !== files[0]) {
-      // Reset creation errors when a new file is set
       createExternalSourceError.set(null);
       createExternalSourceTypeError.set(null);
       createDerivationGroupError.set(null);
+      parsingError.set(null);
       isDerivationGroupFieldDisabled = true;
 
       file = files[0];
@@ -291,8 +297,8 @@
     }
   }
 
-  $: selectedSourceId = selectedSource ? selectedSource.id : null;
-
+  // Column definition
+  // Why does this need to be reactive..?
   $: columnDefs = [
     ...baseColumnDefs,
     {
@@ -328,12 +334,14 @@
     },
   ];
 
-  $: startTime = selectedSource ? new Date(selectedSource.start_time) : new Date();
-  $: endTime = selectedSource ? new Date(selectedSource.end_time) : new Date();
-  $: viewTimeRange = { end: endTime.getTime(), start: startTime.getTime() };
-  $: xDomainView = [startTime, endTime];
-  $: xScaleView = getXScale(xDomainView, 500);
-
+  // Selected elements and values
+  // TODO: Clean this up?
+  // unfortunately very clunky, but it does correctly select all source types on page load as stores populate shortly AFTER the component loads,
+  //    so populating selectedFilters with the store values on component load always yields an empty list
+  $: if (selectedFilters.length === 1 && selectedFilters[0].id === -1 && $externalSourceTypes.length > 0) {
+    selectedFilters = [...$externalSourceTypes];
+  }
+  $: selectedSourceId = selectedSource ? selectedSource.id : null;
   $: filteredExternalSources = $externalSourceWithResolvedNames.filter(externalSource => {
     return selectedFilters.find(f => f.name === externalSource.source_type) !== undefined;
   });
@@ -347,7 +355,6 @@
       : true;
     return includesName;
   });
-
   $: effects.getExternalEvents(selectedSource?.id, user).then(
     fetched =>
       (selectedEvents = fetched.map(eDB => {
@@ -359,11 +366,18 @@
         };
       })),
   );
-
   $: selectedSourceLinkedDerivationGroupsPlans = $planDerivationGroupLinks.filter(planDerivationGroupLink => {
     return planDerivationGroupLink.derivation_group_id === selectedSource?.derivation_group_id;
   });
 
+  // Timeline
+  $: startTime = selectedSource ? new Date(selectedSource.start_time) : new Date();
+  $: endTime = selectedSource ? new Date(selectedSource.end_time) : new Date();
+  $: viewTimeRange = { end: endTime.getTime(), start: startTime.getTime() };
+  $: xDomainView = [startTime, endTime];
+  $: xScaleView = getXScale(xDomainView, 500);
+
+  // Permissions
   $: hasDeletePermission = featurePermissions.externalSource.canDelete(user);
   $: hasCreatePermission = featurePermissions.externalSource.canCreate(user);
 
@@ -387,13 +401,11 @@
       showExternalEventTimeline = false;
       externalEventsTableFilterString = '';
       selectedRowId = selectedEvent?.id ?? null;
-      // eventTooltip.reset();
     } else {
       showExternalEventTable = false;
       showExternalEventTimeline = true;
       externalEventsTableFilterString = '';
       mouseDownAfterTable = true;
-      // eventTooltip.reset();
     }
   }
 
@@ -464,13 +476,13 @@
       );
       const valid_at: string | undefined = convertDoyToYmd($validAtDoyField.value.replaceAll('Z', '')) + '+00:00';
       if (!start_time || !end_time || !valid_at) {
-        showFailureToast('Upload failed.');
-        console.log(`Upload failed - parsing dates in input failed. ${start_time}, ${end_time}, ${valid_at}`);
+        showFailureToast('Parsing failed.');
+        parsingError.set(`Parsing failed - parsing dates in input failed. ${start_time}, ${end_time}, ${valid_at}`);
         return;
       }
       if (new Date(start_time) > new Date(end_time)) {
-        showFailureToast('Upload failed.');
-        console.log(`Upload failed - start time ${start_time} after end time ${end_time}.`);
+        showFailureToast('Parsing failed.');
+        parsingError.set(`Parsing failed - start time ${start_time} after end time ${end_time}.`);
         return;
       }
       sourceInsert = {
@@ -486,50 +498,51 @@
         valid_at,
       };
 
-      // the ones uploaded in this run won't show up as quickly in $externalEventTypes, so we keep a local log as well
-      //    If event types act up during upload, this line is a likely culprit (if you upload twice really fast and $externalEventTypes doesn't update quick enough)
-      //    If that's the case, directly use $externalEventTypes concatted with this list each time in the if statement a few lines below
+      // The external event types uploaded in this run won't show up as quickly
+      // in the store ($externalEventTypes), so we keep a local log as well
+      //
+      // If event types act up during upload, this line is a likely culprit (if you upload twice really fast and $externalEventTypes doesn't update quick enough)
+      // If that's the case, directly use $externalEventTypes concatted with this list each time in the if statement a few lines below
       let localExternalEventTypes: ExternalEventType[] = [...$externalEventTypes];
-      // handle the events, as they need special logic to handle event types
+      // Create/set external events and external event types
       if (parsed.events) {
         for (let externalEvent of parsed.events) {
           externalEventTypeInsertInput = {
             name: externalEvent.event_type,
           };
 
-          // ensure the duration is valid
+          // Ensure the duration is valid
           try {
             convertDurationToMs(externalEvent.duration);
           } catch (e) {
-            // skip this event
-            showFailureToast('Upload failed.');
+            // TODO: Should we exclude the WHOLE source?
+            // Skip this event
+            showFailureToast('Parsing failed.');
             catchError(`Event duration has invalid format...excluding event ${externalEvent.key}\n`, e as Error);
             return;
           }
 
-          // check that it is in bounds of start and end of source
+          // Validate external event is in the source's start/stop bounds
           let parsedStart = Date.parse(convertDoyToYmd(externalEvent.start_time.replace('Z', '')) ?? '');
           let parsedEnd = parsedStart + convertDurationToMs(externalEvent.duration);
           let parsedStartWhole = Date.parse(start_time);
           let parsedEndWhole = Date.parse(end_time);
           if (!(parsedStart >= parsedStartWhole && parsedEnd <= parsedEndWhole)) {
-            showFailureToast(
-              `Upload failed. Event (${externalEvent.key}) not in bounds of source start and end: occurs from [${new Date(parsedStart)},${new Date(parsedEnd)}], not subset of [${new Date(parsedStartWhole)},${new Date(parsedEndWhole)}].\n`,
-            );
-            console.log(
+            showFailureToast('Parsing failed.');
+            parsingError.set(
               `Upload failed. Event (${externalEvent.key}) not in bounds of source start and end: occurs from [${new Date(parsedStart)},${new Date(parsedEnd)}], not subset of [${new Date(parsedStartWhole)},${new Date(parsedEndWhole)}].\n`,
             );
             return;
           }
 
-          // if the event is valid...
+          // If the event is valid...
           if (
             externalEvent.event_type !== undefined &&
             externalEvent.start_time !== undefined &&
             externalEvent.duration !== undefined
           ) {
             let externalEventTypeId: number | undefined = undefined;
-            // create ExternalEventType if it doesn't exist or grab the ID of the previously created entry,
+            // Create ExternalEventType if it doesn't exist or grab the ID of the previously created entry,
             if (!localExternalEventTypes.map(e => e.name).includes(externalEvent.event_type)) {
               externalEventTypeId = await effects.createExternalEventType(externalEventTypeInsertInput, user);
               if (externalEventTypeId) {
@@ -567,16 +580,18 @@
       sourceInsert.external_events.data = externalEventsCreated;
       externalEventsCreated = [];
 
+      // Create/set external source type
       let sourceType: ExternalSourceType | undefined = undefined;
       let derivationGroup: DerivationGroup | undefined = undefined;
       let sourceId: number | undefined = undefined;
       if (file !== undefined) {
-        if (!$externalSourceTypes.map(s => s.name).includes($sourceTypeField.value) && sourceTypeInsert !== undefined) {
+        if (sourceTypeInsert !== undefined && !$externalSourceTypes.map(s => s.name).includes($sourceTypeField.value)) {
           sourceType = await effects.createExternalSourceType(sourceTypeInsert, user);
         } else {
           sourceType = getEventSourceTypeByName($sourceTypeField.value, $externalSourceTypes);
         }
 
+        // Case 1) Derivation group doesn't exist, create it
         if (
           $derivationGroups.filter(dGroup => dGroup.name === derivationGroupInsert.name).length === 0 &&
           derivationGroupInsert !== undefined
@@ -584,13 +599,14 @@
           if (sourceType !== undefined) {
             derivationGroupInsert.source_type_id = sourceType.id;
           } else {
+            // TODO: This should really never happen, but should it cause the source to fail completely?
             console.log(
               'Source type for this derivation group was not previously registered correctly. Derivation group may be incorrect.',
             );
           }
           derivationGroup = await effects.createDerivationGroup(derivationGroupInsert, user);
         }
-        // name present, but under a different source type id
+        // Case 2) Name present, but under a different source type ID
         else if (
           $derivationGroups.filter(
             dGroup => dGroup.source_type_id !== sourceType?.id && dGroup.name === derivationGroupInsert.name,
@@ -602,13 +618,14 @@
           if (sourceType !== undefined) {
             derivationGroupInsert.source_type_id = sourceType.id;
           } else {
+            // TODO: This should really never happen, but should it cause the source to fail completely?
             console.log(
               'Source type for this derivation group was not previously registered correctly. Derivation group may be incorrect.',
             );
           }
           derivationGroup = await effects.createDerivationGroup(derivationGroupInsert, user);
         }
-        // name and source type id pair present
+        // Case 3) Name and source type ID pair present
         else if (sourceType !== undefined) {
           derivationGroup = getDerivationGroupByNameSourceTypeId(derivationGroupName, sourceType.id, $derivationGroups);
         }
@@ -619,12 +636,11 @@
           if (selectedFilters.find(filter => filter.name === sourceType?.name) === undefined) {
             selectedFilters.push(sourceType);
           }
-
           sourceId = await effects.createExternalSource(sourceInsert, user);
         }
       }
 
-      // autoselect the new source
+      // Auto-select the new source
       if (sourceId && sourceType) {
         selectedSource = {
           created_at: new Date().toISOString().replace('Z', '+00:00'), // technically not the exact time it shows up in the database
@@ -632,19 +648,17 @@
           id: sourceId,
           ...sourceInsert,
           source_type: sourceType?.name,
-
           total_groups: $derivationGroups.length, // kind of unnecessary here, but necessary in this type for the table and coloring
         };
+        gridRowSizes = gridRowSizesBottomPanel;
 
-        // Update gridRowSizes to account for the new bottom-pane when the source is selected
-        gridRowSizes = '1fr 3px 1fr';
-
-        // // persist to list of newly added sources, restating (for uniformity in UpdateCard) the change_date (in the non-deletion case - created_at)
+        // TODO: can this be deleted?
+        // Persist to list of newly added sources, restating (for uniformity in UpdateCard) the change_date (in the non-deletion case - created_at)
         // let seenSourcesParsed: ExternalSourceWithDateInfo[] = JSON.parse($unseenSources);
         // unseenSources.set(JSON.stringify(seenSourcesParsed.concat({ ...selectedSource, change_date: new Date() })));
       }
 
-      // reset the form behind the source
+      // Reset the form behind the source
       parsed = undefined;
       keyField.reset('');
       sourceTypeField.reset('');
@@ -653,13 +667,12 @@
       validAtDoyField.reset('');
     } else {
       showFailureToast('Upload failed.');
-      console.log('Upload failed - no file present, or parsing failed.');
     }
   }
 
   async function selectSource(detail: ExternalSourceWithResolvedNames) {
     selectedSource = detail;
-    gridRowSizes = '1fr 3px 1fr'; // Add the bottom panel for external event table/timeline
+    gridRowSizes = gridRowSizesBottomPanel;
     deselectEvent();
     eventTooltip.reset();
   }
@@ -667,7 +680,7 @@
   function deselectSource() {
     deselectEvent();
     eventTooltip.reset();
-    gridRowSizes = '1fr 3px 0fr'; // Remove the bottom panel for external event table/timeline
+    gridRowSizes = gridRowSizesNoBottomPanel;
     selectedSource = null;
   }
 
@@ -679,7 +692,6 @@
   function onCanvasMouseDown(e: CustomEvent<MouseDown>) {
     if (!mouseDownAfterTable) {
       const { externalEvents } = e.detail;
-
       // selectedEvent is our source of an ExternalEvent as well as the ExternalEventId used by this instance
       //    of the LayerExternalSources (as opposed to using a store, like the timeline one does, which is
       //    unnecessary as everything we need is in on single component or can be passed down via parameters to
@@ -692,8 +704,7 @@
   }
 
   function onCanvasMouseOver(e: CustomEvent<MouseOver>) {
-    // just assign the MouseOver object so that the tooltip can access it
-    mouseOver = e.detail;
+    mouseOver = e.detail; // Allows tooltip to access object
   }
 
   function toggleItem(value: ExternalSourceType) {
@@ -716,8 +727,9 @@
     selectedEvent = selectedEvents.find(event => event.id === selectedRowId) ?? null;
   }
 
+  // TODO: Determine what we're doing about the coloring scheme
   function getRowStyle(params: RowClassParams<ExternalSourceWithResolvedNames>): RowStyle | undefined {
-    // evenly spread out color selection
+    // Evenly spread out color selection
     const derivationGroupIds = $derivationGroups.map(dg => dg.id);
     if (
       params.data?.derivation_group_id &&
@@ -738,7 +750,7 @@
   }
 </script>
 
-<CssGrid columns="1.2fr 3px 4fr">
+<CssGrid columns={uiColumnSize}>
   <Panel borderRight padBody={true}>
     <svelte:fragment slot="header">
       <SectionTitle
@@ -921,12 +933,14 @@
             $createExternalSourceError = null;
             $createExternalSourceTypeError = null;
             $createDerivationGroupError = null;
+            $parsingError = null;
             isDerivationGroupFieldDisabled = true;
           }}
         >
           <AlertError class="m-2" error={$createExternalSourceError} />
           <AlertError class="m-2" error={$createExternalSourceTypeError} />
           <AlertError class="m-2" error={$createDerivationGroupError} />
+          <AlertError class="m-2" error={$parsingError} />
           <div id="file-upload-field">
             <fieldset style="width:100%">
               <label for="file">Source File</label>

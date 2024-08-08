@@ -32,11 +32,8 @@
     source => derivationGroup.id === source.derivation_group_id,
   );
   $: {
-    console.log(
-      `[${derivationGroup.id}]: enabled=${enabled}, dgInFilter=${dgInFilter}, $plan=${$plan?.id}; ${planDerivationGroupIdsToFilterParsed[$plan?.id ?? -1000]}`,
-    );
-    // ensure the current derivation group in the filter list if it has been disabled
-    // ensure the current derivation group is NOT in the filter list if it has been enabled
+    // Ensure the current derivation group in the filter list if it has been disabled
+    // Ensure the current derivation group is NOT in the filter list if it has been enabled
     if ($plan) {
       if (enabled) {
         if (dgInFilter) {
@@ -69,7 +66,7 @@
   }
 
   originalView.subscribe(ov => {
-    // any time a new view is selected, change the enabled list
+    // Any time a new view is selected, change the enabled list
     if (ov) {
       if (ov?.definition.plan.filteredDerivationGroups.includes(derivationGroup.id)) {
         enabled = false;
@@ -88,10 +85,10 @@
 
   async function deleteEmptyDerivationGroup() {
     if (enabled) {
-      // delete plan derivation group association
+      // Delete plan derivation group association
       await effects.deleteDerivationGroupForPlan(derivationGroup.id, $plan, user);
     }
-    // delete the derivation group itself
+    // Delete the derivation group itself
     await effects.deleteDerivationGroup(derivationGroup.id, user);
   }
 </script>
