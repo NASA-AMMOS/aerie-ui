@@ -41,7 +41,7 @@
     {#if associatedDGs.length > 0}
       <span>
         The following Derivation Groups paired with this External Source Type still exist and must be deleted first:
-        <hr style="border: 0px"/>
+        <hr style="border: 0px" />
         {#each associatedDGs as dg}
           <div style="display:block;overflow:hidden;padding-left:20px;text-overflow:ellipsis;">
             <i>
@@ -59,16 +59,10 @@
   </ModalContent>
   <ModalFooter>
     {#if associatedDGs.length > 0}
-      <button class="st-button" on:click={() => dispatch('close')}>
-        Close
-      </button>
+      <button class="st-button" on:click={() => dispatch('close')}> Close </button>
     {:else}
-      <button class="st-button secondary" on:click={() => dispatch('close')}>
-        Cancel
-      </button>
-      <button class="st-button" on:click={() => dispatch('confirm')}>
-        Delete
-      </button>
+      <button class="st-button secondary" on:click={() => dispatch('close')}> Cancel </button>
+      <button class="st-button" on:click={() => dispatch('confirm')}> Delete </button>
     {/if}
   </ModalFooter>
 </Modal>

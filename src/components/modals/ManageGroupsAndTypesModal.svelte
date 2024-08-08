@@ -10,8 +10,7 @@
     externalSourceTypes,
     externalSourceWithResolvedNames,
     getEventSourceTypeName,
-
-    getSourceName
+    getSourceName,
   } from '../../stores/external-source';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
@@ -19,9 +18,13 @@
   import type {
     DerivationGroup,
     ExternalSourceType,
-    ExternalSourceWithResolvedNames
+    ExternalSourceWithResolvedNames,
   } from '../../types/external-source';
-  import { showDeleteDerivationGroupModal, showDeleteExternalEventTypeModal, showDeleteExternalSourceTypeModal } from '../../utilities/modal';
+  import {
+    showDeleteDerivationGroupModal,
+    showDeleteExternalEventTypeModal,
+    showDeleteExternalSourceTypeModal,
+  } from '../../utilities/modal';
   import { featurePermissions } from '../../utilities/permissions';
   import Collapse from '../Collapse.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
@@ -36,7 +39,7 @@
   import ModalHeader from './ModalHeader.svelte';
 
   export let user: User | null;
-  let mode: string = "dg";
+  let mode: string = 'dg';
 
   type CellRendererParams = {
     deleteDerivationGroup: (derivationGroup: DerivationGroup) => Promise<void>;
@@ -105,7 +108,7 @@
       suppressAutoSize: true,
       suppressSizeToFit: true,
       valueFormatter: params => {
-        return params?.value.size
+        return params?.value.size;
       },
     },
     {
@@ -165,7 +168,7 @@
       suppressAutoSize: true,
       suppressSizeToFit: true,
       width: 40,
-    }
+    },
   ];
 
   estColumnDefs = [
@@ -186,7 +189,7 @@
       suppressSizeToFit: true,
       valueFormatter: params => {
         const associatedSources = getAssociatedExternalSourcesBySourceType(params.data?.name);
-        return `${associatedSources.length}`
+        return `${associatedSources.length}`;
       },
     },
     {
@@ -196,9 +199,9 @@
       suppressAutoSize: true,
       suppressSizeToFit: true,
       valueFormatter: params => {
-        const associatedDerivationGroups = getAssociatedDerivationGroupsBySourceTypeId(params.data?.id)
+        const associatedDerivationGroups = getAssociatedDerivationGroupsBySourceTypeId(params.data?.id);
         return `${associatedDerivationGroups.length}`;
-      }
+      },
     },
     {
       cellClass: 'action-cell-container',
@@ -257,7 +260,7 @@
       suppressAutoSize: true,
       suppressSizeToFit: true,
       width: 40,
-    }
+    },
   ];
 
   eetColumnDefs = [
@@ -278,14 +281,10 @@
       suppressSizeToFit: true,
       valueFormatter: params => {
         let associatedDerivationGroups = getAssociatedDerivationGroupsByEventType(params.data?.name);
-        const sourceMap = associatedDerivationGroups.flatMap(
-          (dg) => dg.sources.size
-        )
-        const numOfSources = sourceMap.length > 0 ? sourceMap.reduce(
-          (acc, dgSize) => acc + dgSize
-        ) : 0;
+        const sourceMap = associatedDerivationGroups.flatMap(dg => dg.sources.size);
+        const numOfSources = sourceMap.length > 0 ? sourceMap.reduce((acc, dgSize) => acc + dgSize) : 0;
         return `${numOfSources}`;
-      }
+      },
     },
     {
       filter: 'number',
@@ -355,7 +354,7 @@
       suppressAutoSize: true,
       suppressSizeToFit: true,
       width: 40,
-    }
+    },
   ];
 
   const modalColumnSizeNoDetail: string = '1fr 3px 0fr';
@@ -377,25 +376,21 @@
     source => selectedDerivationGroup?.id === source.derivation_group_id,
   );
 
-  $: selectedExternalSourceTypeDerivationGroups = $derivationGroups.filter(
-    dg => {
-      if (selectedExternalSourceType !== undefined) {
-        return dg.source_type_id === selectedExternalSourceType.id;
-      } else {
-        return false;
-      }
+  $: selectedExternalSourceTypeDerivationGroups = $derivationGroups.filter(dg => {
+    if (selectedExternalSourceType !== undefined) {
+      return dg.source_type_id === selectedExternalSourceType.id;
+    } else {
+      return false;
     }
-  )
+  });
 
-  $: selectedExternalEventTypeDerivationGroups = $derivationGroups.filter(
-    dg => {
-      if (selectedExternalEventType !== undefined) {
-        return dg.event_types.includes(selectedExternalEventType.name);
-      } else {
-        return false;
-      }
+  $: selectedExternalEventTypeDerivationGroups = $derivationGroups.filter(dg => {
+    if (selectedExternalEventType !== undefined) {
+      return dg.event_types.includes(selectedExternalEventType.name);
+    } else {
+      return false;
     }
-  )
+  });
 
   async function deleteDerivationGroup(derivationGroup: DerivationGroup) {
     // Makes sure all associated sources are deleted before this. List of sources already contained in DerivationGroup type.
@@ -403,7 +398,7 @@
   }
 
   async function deleteExternalSourceType(sourceType: ExternalSourceType) {
-    let associatedDGs = $derivationGroups.filter(dg => dg.source_type_id === sourceType.id)
+    let associatedDGs = $derivationGroups.filter(dg => dg.source_type_id === sourceType.id);
 
     // makes sure all associated derivation groups are deleted before this
     await showDeleteExternalSourceTypeModal(sourceType, associatedDGs, user);
@@ -411,7 +406,9 @@
 
   async function deleteExternalEventType(eventType: ExternalEventType) {
     const associatedDerivationGroups: DerivationGroup[] = getAssociatedDerivationGroupsByEventType(eventType.name);
-    const associatedExternalSourceNames: string[] = associatedDerivationGroups.flatMap((dg) => Array.from(dg.sources.keys()));
+    const associatedExternalSourceNames: string[] = associatedDerivationGroups.flatMap(dg =>
+      Array.from(dg.sources.keys()),
+    );
 
     // makes sure all associated sources (and therefore events, as orphans are not possible) are deleted before this
     // NOTE: does not update in derivation_group_comp after removing a EE type; derivation_group_comp defaults to 0 event types after its last external source removed,
@@ -424,9 +421,7 @@
     if (sourceType === undefined) {
       return [];
     }
-    let associatedSources = $externalSourceWithResolvedNames.filter(
-      (source) => source.source_type === sourceType
-    );
+    let associatedSources = $externalSourceWithResolvedNames.filter(source => source.source_type === sourceType);
     return associatedSources;
   }
 
@@ -435,9 +430,7 @@
       return [];
     }
 
-    let associatedDerivationGroups = $derivationGroups.filter(
-      (dg) => dg.source_type_id === sourceTypeId
-    );
+    let associatedDerivationGroups = $derivationGroups.filter(dg => dg.source_type_id === sourceTypeId);
 
     return associatedDerivationGroups;
   }
@@ -446,8 +439,8 @@
     if (eventType === undefined) {
       return [];
     }
-    const associatedDerivationGroups: DerivationGroup[] = $derivationGroups.filter(
-      (dg) => dg.event_types.includes(eventType)
+    const associatedDerivationGroups: DerivationGroup[] = $derivationGroups.filter(dg =>
+      dg.event_types.includes(eventType),
     );
 
     return associatedDerivationGroups;
@@ -455,16 +448,12 @@
 
   function viewDerivationGroup(derivationGroup: DerivationGroup) {
     const dg = $derivationGroups.find(dg => dg.id === derivationGroup.id);
-    if (
-      selectedDerivationGroup === undefined
-      || selectedDerivationGroup !== dg
-    ) {
+    if (selectedDerivationGroup === undefined || selectedDerivationGroup !== dg) {
       selectedDerivationGroup = dg;
       selectedExternalSourceType = undefined;
       selectedExternalEventType = undefined;
       modalColumnSize = modalColumnSizeWithDetailDG;
-    }
-    else {
+    } else {
       selectedDerivationGroup = undefined;
       selectedExternalSourceType = undefined;
       selectedExternalEventType = undefined;
@@ -473,16 +462,12 @@
   }
 
   function viewExternalSourceType(sourceType: ExternalSourceType) {
-    if (
-      selectedExternalSourceType === undefined
-      || selectedExternalSourceType !== sourceType
-    ) {
+    if (selectedExternalSourceType === undefined || selectedExternalSourceType !== sourceType) {
       selectedDerivationGroup = undefined;
       selectedExternalSourceType = sourceType;
       selectedExternalEventType = undefined;
       modalColumnSize = modalColumnSizeWithDetailEST;
-    }
-    else {
+    } else {
       selectedDerivationGroup = undefined;
       selectedExternalSourceType = undefined;
       selectedExternalEventType = undefined;
@@ -491,16 +476,12 @@
   }
 
   function viewExternalEventType(eventType: ExternalEventType) {
-    if (
-      selectedExternalEventType === undefined
-      || selectedExternalEventType !== eventType
-    ) {
+    if (selectedExternalEventType === undefined || selectedExternalEventType !== eventType) {
       selectedDerivationGroup = undefined;
       selectedExternalSourceType = undefined;
       selectedExternalEventType = eventType;
       modalColumnSize = modalColumnSizeWithDetailEET;
-    }
-    else {
+    } else {
       selectedDerivationGroup = undefined;
       selectedExternalSourceType = undefined;
       selectedExternalEventType = undefined;
@@ -535,9 +516,9 @@
   <ModalContent style=" overflow-y:scroll; padding:0;">
     <CssGrid columns={modalColumnSize} minHeight="100%">
       <div class="derivationgroups-modal-table-container">
-        {#if mode==="dg"}
+        {#if mode === 'dg'}
           <DataGrid bind:this={dgDataGrid} columnDefs={dgColumnDefs} rowData={$derivationGroups} />
-        {:else if mode ==="est"}
+        {:else if mode === 'est'}
           <DataGrid bind:this={estDataGrid} columnDefs={estColumnDefs} rowData={$externalSourceTypes} />
         {:else}
           <DataGrid bind:this={eetDataGrid} columnDefs={eetColumnDefs} rowData={$externalEventTypes} />
@@ -682,7 +663,6 @@
                   <p>
                     <strong>Name:</strong>
                     {dg.name}
-
                   </p>
 
                   <p>
@@ -711,7 +691,6 @@
                       <i>{source[0]}</i>
                     {/each}
                   </Collapse>
-
                 </Collapse>
               {/each}
             {:else}

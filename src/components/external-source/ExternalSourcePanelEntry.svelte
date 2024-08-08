@@ -103,27 +103,25 @@
     defaultExpanded={false}
   >
     <span slot="right">
-      <p
-        class="derived-event-text"
-      >
+      <p class="derived-event-text">
         {derivationGroup.derivedEventTotal} derived events
       </p>
       {#if enabled === true}
         <button
           class="st-button icon"
           on:click|stopPropagation={onChange}
-          use:tooltip={{ content: 'Show in timeline', placement: 'top'}}
+          use:tooltip={{ content: 'Show in timeline', placement: 'top' }}
         >
-          <Eye style="color: rgba(143, 143, 143, 1)"/>
+          <Eye style="color: rgba(143, 143, 143, 1)" />
         </button>
       {:else}
-      <button
-        class="st-button icon"
-        on:click|stopPropagation={onChange}
-        use:tooltip={{ content: 'Hide in timeline', placement: 'top'}}
-      >
-        <EyeSlash style="color: rgba(143, 143, 143, 0.5)"/>
-      </button>
+        <button
+          class="st-button icon"
+          on:click|stopPropagation={onChange}
+          use:tooltip={{ content: 'Hide in timeline', placement: 'top' }}
+        >
+          <EyeSlash style="color: rgba(143, 143, 143, 0.5)" />
+        </button>
       {/if}
     </span>
 
@@ -195,6 +193,5 @@
     float: left;
     height: 100%;
     padding-right: 0.25rem;
-
   }
 </style>

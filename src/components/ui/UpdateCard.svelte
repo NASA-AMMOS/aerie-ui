@@ -96,9 +96,11 @@
     </div>
     <div style="padding-top:5px">
       <!--TODO: try importing component library where you can pull in existing 'stellar' button that looks like rest of aerie-->
-      
-      <button class="st-button secondary hover-fix" style="border: 0px; width: 100px" on:click={() => dispatch('dismiss')}
-        >Dismiss</button
+
+      <button
+        class="st-button secondary hover-fix"
+        style="border: 0px; width: 100px"
+        on:click={() => dispatch('dismiss')}>Dismiss</button
       >
     </div>
     <slot />
@@ -149,10 +151,10 @@
   }
 
   .hover-fix {
-    background-color:rgb(235, 235, 235);
+    background-color: rgb(235, 235, 235);
   }
 
   .hover-fix:hover {
-    background-color:rgb(225, 225, 225)!important;
+    background-color: rgb(225, 225, 225) !important;
   }
 </style>
