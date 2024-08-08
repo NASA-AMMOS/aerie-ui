@@ -234,7 +234,7 @@
   .filter-container {
     align-items: center;
     display: flex;
-    margin-bottom: 8px;
     justify-content: space-between;
+    margin-bottom: 8px;
   }
 </style>

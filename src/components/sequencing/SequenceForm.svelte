@@ -181,7 +181,9 @@
           const newSequenceId = await effects.createUserSequence(newSequence, user);
 
           if (newSequenceId !== null) {
-            goto(`${base}/sequencing/edit/${newSequenceId}`);
+            goto(
+              `${base}/sequencing/edit/${newSequenceId}${'?' + SearchParameters.WORKSPACE_ID + '=' + getSearchParameterNumber(SearchParameters.WORKSPACE_ID) ?? ''}`,
+            );
           }
         } else if (mode === 'edit' && sequenceId !== null) {
           const updatedSequence: Partial<UserSequence> = {

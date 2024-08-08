@@ -32,6 +32,9 @@ test.afterAll(async () => {
 });
 
 test.describe.serial('Sequence', () => {
+  test('Create new workspace', async () => {
+    await sequence.createWorkspace();
+  });
   test('Create new sequence', async () => {
     await sequence.createSequence(parcels.parcelName);
   });
