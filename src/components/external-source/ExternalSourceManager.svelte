@@ -18,7 +18,7 @@
     getDerivationGroupByNameSourceTypeId,
     getEventSourceTypeByName,
     getExternalSourceMetadataError,
-    planDerivationGroupLinks
+    planDerivationGroupLinks,
   } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import { plans } from '../../stores/plans';
@@ -39,7 +39,7 @@
     ExternalSourceType,
     ExternalSourceTypeInsertInput,
     ExternalSourceWithResolvedNames,
-    PlanDerivationGroup
+    PlanDerivationGroup,
   } from '../../types/external-source';
   import type { RadioButtonId } from '../../types/radio-buttons';
   import type { TimeRange } from '../../types/timeline';
@@ -283,9 +283,9 @@
             isDerivationGroupFieldDisabled = false;
           }
         } catch (e) {
-            catchError('External Source has Invalid Format', e as Error);
-            showFailureToast('External Source has Invalid Format');
-            parsed = undefined;
+          catchError('External Source has Invalid Format', e as Error);
+          showFailureToast('External Source has Invalid Format');
+          parsed = undefined;
         }
       });
     }
@@ -423,10 +423,7 @@
       });
       if (currentlyLinked.length > 0) {
         // if the source is in a derivation group currently used by a plan, warn that we cannot delete
-        await showDeleteExternalSourceModal(
-          currentlyLinked,
-          selectedSource
-        );
+        await showDeleteExternalSourceModal(currentlyLinked, selectedSource);
       } else {
         // otherwise, delete!
         const deletionWasSuccessful = await effects.deleteExternalSource(selectedSource, user);
@@ -511,13 +508,17 @@
           }
 
           // check that it is in bounds of start and end of source
-          let parsedStart = Date.parse(convertDoyToYmd(externalEvent.start_time.replace("Z", "")) ?? "");
+          let parsedStart = Date.parse(convertDoyToYmd(externalEvent.start_time.replace('Z', '')) ?? '');
           let parsedEnd = parsedStart + convertDurationToMs(externalEvent.duration);
           let parsedStartWhole = Date.parse(start_time);
           let parsedEndWhole = Date.parse(end_time);
-          if (!((parsedStart >= parsedStartWhole) && (parsedEnd <= parsedEndWhole))) {
-            showFailureToast(`Upload failed. Event (${externalEvent.key}) not in bounds of source start and end: occurs from [${new Date(parsedStart)},${new Date(parsedEnd)}], not subset of [${new Date(parsedStartWhole)},${new Date(parsedEndWhole)}].\n`);
-            console.log(`Upload failed. Event (${externalEvent.key}) not in bounds of source start and end: occurs from [${new Date(parsedStart)},${new Date(parsedEnd)}], not subset of [${new Date(parsedStartWhole)},${new Date(parsedEndWhole)}].\n`)
+          if (!(parsedStart >= parsedStartWhole && parsedEnd <= parsedEndWhole)) {
+            showFailureToast(
+              `Upload failed. Event (${externalEvent.key}) not in bounds of source start and end: occurs from [${new Date(parsedStart)},${new Date(parsedEnd)}], not subset of [${new Date(parsedStartWhole)},${new Date(parsedEndWhole)}].\n`,
+            );
+            console.log(
+              `Upload failed. Event (${externalEvent.key}) not in bounds of source start and end: occurs from [${new Date(parsedStart)},${new Date(parsedEnd)}], not subset of [${new Date(parsedStartWhole)},${new Date(parsedEndWhole)}].\n`,
+            );
             return;
           }
 
@@ -650,7 +651,6 @@
       startTimeDoyField.reset('');
       endTimeDoyField.reset('');
       validAtDoyField.reset('');
-
     } else {
       showFailureToast('Upload failed.');
       console.log('Upload failed - no file present, or parsing failed.');
@@ -718,12 +718,16 @@
 
   function getRowStyle(params: RowClassParams<ExternalSourceWithResolvedNames>): RowStyle | undefined {
     // evenly spread out color selection
-    const derivationGroupIds = $derivationGroups.map(dg => dg.id)
-    if (params.data?.derivation_group_id && derivationGroupIds.includes(params.data?.derivation_group_id) && params.data?.total_groups) {
+    const derivationGroupIds = $derivationGroups.map(dg => dg.id);
+    if (
+      params.data?.derivation_group_id &&
+      derivationGroupIds.includes(params.data?.derivation_group_id) &&
+      params.data?.total_groups
+    ) {
       let spacing = 360 / params.data?.total_groups;
       let realIndex = derivationGroupIds.indexOf(params.data?.derivation_group_id); // using this because the dg id doesn't work in our coloring scheme if anything gets deleted,
-                                                                                    //    i.e. may have 2 total but ids are 4 and 6, breaks the math a bit
-      let myVal = (realIndex) * spacing;
+      //    i.e. may have 2 total but ids are 4 and 6, breaks the math a bit
+      let myVal = realIndex * spacing;
       return { 'background-color': `hsl(${myVal} 100% 98%)` };
     }
     return undefined;
@@ -800,22 +804,38 @@
 
             <Input layout="inline">
               {`Start Time (${$plugins.time.primary.label})`}
-              <DatePicker dateString={formatDate(new Date(selectedSource.start_time), $plugins.time.primary.format)} disabled={true} name="start-time" />
+              <DatePicker
+                dateString={formatDate(new Date(selectedSource.start_time), $plugins.time.primary.format)}
+                disabled={true}
+                name="start-time"
+              />
             </Input>
 
             <Input layout="inline">
               {`End Time (${$plugins.time.primary.label})`}
-              <DatePicker dateString={formatDate(new Date(selectedSource.end_time), $plugins.time.primary.format)} disabled={true} name="end-time" />
+              <DatePicker
+                dateString={formatDate(new Date(selectedSource.end_time), $plugins.time.primary.format)}
+                disabled={true}
+                name="end-time"
+              />
             </Input>
 
             <Input layout="inline">
               {`Valid At (${$plugins.time.primary.label})`}
-              <DatePicker dateString={formatDate(new Date(selectedSource.valid_at), $plugins.time.primary.format)} disabled={true} name="valid-at" />
+              <DatePicker
+                dateString={formatDate(new Date(selectedSource.valid_at), $plugins.time.primary.format)}
+                disabled={true}
+                name="valid-at"
+              />
             </Input>
 
             <Input layout="inline">
               {`Created At (${$plugins.time.primary.label})`}
-              <DatePicker dateString={formatDate(new Date(selectedSource.created_at), $plugins.time.primary.format)} disabled={true} name="valid-at" />
+              <DatePicker
+                dateString={formatDate(new Date(selectedSource.created_at), $plugins.time.primary.format)}
+                disabled={true}
+                name="valid-at"
+              />
             </Input>
 
             <Collapse
@@ -1071,7 +1091,10 @@
             name="manage-derivation-groups"
             class="st-button secondary"
             on:click|stopPropagation={onManageGroupsAndTypes}
-            use:tooltip={{ content: 'Manage derivation groups, external source types, and external event types.', placement: 'top' }}
+            use:tooltip={{
+              content: 'Manage derivation groups, external source types, and external event types.',
+              placement: 'top',
+            }}
           >
             Manage Groups and Types
           </button>
@@ -1176,7 +1199,7 @@
                   bind:clientWidth={canvasContainerWidth}
                   bind:clientHeight={canvasContainerHeight}
                   on:mouseleave={() => {
-                    eventTooltip.reset()
+                    eventTooltip.reset();
                   }}
                   on:mousedown={e => {
                     canvasMouseDownEvent = e;

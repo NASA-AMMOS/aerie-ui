@@ -6,7 +6,7 @@ import {
   type ExternalSourceType,
   type ExternalSourceWithResolvedNames,
   type PlanDerivationGroup,
-  type UserSeenEntry
+  type UserSeenEntry,
 } from '../types/external-source';
 import gql from '../utilities/gql';
 import { planId } from './plan';
@@ -84,38 +84,34 @@ export const planDerivationGroupLinks = gqlSubscribable<PlanDerivationGroup[]>(
   null,
 );
 
-export const usersSeenSourcesRaw = gqlSubscribable<{id: number,
-  user: string,
-  derivation_group: string,
-  external_source_name: string,
-  external_source_type: string}[]>(
-  gql.SUB_SEEN_SOURCES,
-  {},
-  [],
-  null
-)
+export const usersSeenSourcesRaw = gqlSubscribable<
+  { derivation_group: string; external_source_name: string; external_source_type: string; id: number; user: string }[]
+>(gql.SUB_SEEN_SOURCES, {}, [], null);
 
-export const usersSeenSources = derived<[typeof usersSeenSourcesRaw], {[key: string]: UserSeenEntry[]}>(
+export const usersSeenSources = derived<[typeof usersSeenSourcesRaw], { [key: string]: UserSeenEntry[] }>(
   [usersSeenSourcesRaw],
   ([$rawSeen]) => {
-    let res: Record<string, UserSeenEntry[]> = {};
-    for (let entry of $rawSeen) {
-      if (res[entry.user])
+    const res: Record<string, UserSeenEntry[]> = {};
+    for (const entry of $rawSeen) {
+      if (res[entry.user]) {
         res[entry.user].push({
-          key: entry.external_source_name,
           derivation_group: entry.derivation_group,
+          key: entry.external_source_name,
           source_type: entry.external_source_type,
         });
-      else 
-        res[entry.user] = [{
-          key: entry.external_source_name,
-          derivation_group: entry.derivation_group,
-          source_type: entry.external_source_type,
-        }];
+      } else {
+        res[entry.user] = [
+          {
+            derivation_group: entry.derivation_group,
+            key: entry.external_source_name,
+            source_type: entry.external_source_type,
+          },
+        ];
+      }
     }
-    return res
-  }
-)
+    return res;
+  },
+);
 
 /* Derived. */
 // cleans up derivationGroupsRaw
@@ -130,7 +126,9 @@ export const derivationGroups = derived<[typeof derivationGroupsRaw], Derivation
       source_type_id: raw.source_type_id,
       sources: new Map(
         // comes from view schema that is hardcoded as "{dg_id}, {source_key}, {source_id}""
-        raw.sources.filter(s => s.charAt(0) !== "," && s.length > 4).map(s => [s.split(', ')[1], { event_counts: parseInt(s.split(', ')[2]) }]),
+        raw.sources
+          .filter(s => s.charAt(0) !== ',' && s.length > 4)
+          .map(s => [s.split(', ')[1], { event_counts: parseInt(s.split(', ')[2]) }]),
       ),
     })),
 );

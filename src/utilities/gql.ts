@@ -482,20 +482,6 @@ const gql = {
     }
   `,
 
-  CREATE_SEEN_SOURCE_ENTRY: `#graphql
-    mutation CreateSeenSourceEntry($entries: [seen_sources_insert_input!]!) {
-      createSeenSourceEntry: ${Queries.INSERT_SEEN_SOURCE_ENTRY}(objects: $entries) {
-        returning {
-          id,
-          user,
-          derivation_group,
-          external_source_name,
-          external_source_type  
-        }
-      }
-    }
-  `,
-
   CREATE_EXTERNAL_SOURCE_TYPE: `#graphql
     mutation CreateExternalSourceType($sourceType: external_source_type_insert_input!) {
       createExternalSourceType: insert_external_source_type_one(object: $sourceType) {
@@ -709,6 +695,20 @@ const gql = {
     mutation CreateSchedulingSpec($spec: scheduling_specification_insert_input!) {
       createSchedulingSpec: ${Queries.INSERT_SCHEDULING_SPECIFICATION}(object: $spec) {
         id
+      }
+    }
+  `,
+
+  CREATE_SEEN_SOURCE_ENTRY: `#graphql
+    mutation CreateSeenSourceEntry($entries: [seen_sources_insert_input!]!) {
+      createSeenSourceEntry: ${Queries.INSERT_SEEN_SOURCE_ENTRY}(objects: $entries) {
+        returning {
+          id,
+          user,
+          derivation_group,
+          external_source_name,
+          external_source_type
+        }
       }
     }
   `,
@@ -985,24 +985,6 @@ const gql = {
     }
   `,
 
-  // Sadly, not a great way to compare fields within a type, even if its a type GraphQL recognizes. As such, many different parameters, called one by one
-  DELETE_SEEN_SOURCE_ENTRY: `#graphql
-    mutation DeleteSeenSourceEntry($user: String!, $derivation_group: String!, $external_source_name: String!, $external_source_type: String!) {
-      deleteSeenSources: ${Queries.DELETE_SEEN_SOURCES}(where: {
-        _and: {
-          user: {_eq: $user}, 
-          derivation_group: {_eq: $derivation_group}, 
-          external_source_name: {_eq: $external_source_name}, 
-          external_source_type: {_eq: $external_source_type}
-        }
-      }){
-        returning {
-          id
-        }
-      }
-    }
-  `,
-
   DELETE_EXTERNAL_SOURCE_TYPE: `#graphql
     mutation DeleteExternalSourceType($id: Int!) {
       deleteExternalSourceType: ${Queries.DELETE_EXTERNAL_SOURCE_TYPE}(id: $id) {
@@ -1208,6 +1190,24 @@ const gql = {
       }
     }
 `,
+
+  // Sadly, not a great way to compare fields within a type, even if its a type GraphQL recognizes. As such, many different parameters, called one by one
+  DELETE_SEEN_SOURCE_ENTRY: `#graphql
+    mutation DeleteSeenSourceEntry($user: String!, $derivation_group: String!, $external_source_name: String!, $external_source_type: String!) {
+      deleteSeenSources: ${Queries.DELETE_SEEN_SOURCES}(where: {
+        _and: {
+          user: {_eq: $user},
+          derivation_group: {_eq: $derivation_group},
+          external_source_name: {_eq: $external_source_name},
+          external_source_type: {_eq: $external_source_type}
+        }
+      }){
+        returning {
+          id
+        }
+      }
+    }
+  `,
 
   DELETE_SEQUENCE_ADAPTATION: `#graphql
     mutation DeleteSequenceAdaptation($id: Int!) {
@@ -2751,18 +2751,6 @@ const gql = {
     }
   `,
 
-  SUB_SEEN_SOURCES: `#graphql
-    subscription SubSeenSources {
-      seen_sources {
-        id,
-        user,
-        derivation_group,
-        external_source_name,
-        external_source_type
-      }
-    }
-  `,
-
   SUB_PLAN_EXTERNAL_EVENTS: `#graphql
     subscription SubPlanExternalEvents($source_ids: [Int!]!) {
       events: ${Queries.EXTERNAL_EVENT}(where: {source_id: {_in: $source_ids}}) {
@@ -3277,6 +3265,18 @@ const gql = {
         dataset_id
         specification_revision
         canceled
+      }
+    }
+  `,
+
+  SUB_SEEN_SOURCES: `#graphql
+    subscription SubSeenSources {
+      seen_sources {
+        id,
+        user,
+        derivation_group,
+        external_source_name,
+        external_source_type
       }
     }
   `,

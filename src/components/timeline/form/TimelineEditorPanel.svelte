@@ -56,8 +56,7 @@
     Timeline,
     VerticalGuide,
     XRangeLayer,
-
-    XRangeLayerColorScheme
+    XRangeLayerColorScheme,
   } from '../../../types/timeline';
   import type { ViewGridSection } from '../../../types/view';
   import effects from '../../../utilities/effects';
@@ -1121,15 +1120,16 @@
                 name="text"
                 type="number"
                 value={externalEventOptions.groupedModeBinSize}
-                on:input={e=> {
+                on:input={e => {
                   // TODO: for optimization sake, only run this when submitted!
                   const { value } = getTarget(e);
                   if (typeof value === 'number' && !isNaN(value)) {
                     if (value >= 2) {
                       viewUpdateRow('externalEventOptions', { ...externalEventOptions, groupedModeBinSize: value });
-                    }
-                    else {
-                      showFailureToast(`Size must be >= 2. Retaining former value ${externalEventOptions.groupedModeBinSize}.`)
+                    } else {
+                      showFailureToast(
+                        `Size must be >= 2. Retaining former value ${externalEventOptions.groupedModeBinSize}.`,
+                      );
                     }
                   }
                 }}
