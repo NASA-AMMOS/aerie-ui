@@ -35,12 +35,7 @@
   } from '../../types/timeline';
   import { clamp } from '../../utilities/generic';
   import { convertDurationToMs, convertUTCtoMs, formatDate } from '../../utilities/time';
-  import {
-    MAX_CANVAS_SIZE,
-    TimelineInteractionMode,
-    TimelineLockStatus,
-    getXScale,
-  } from '../../utilities/timeline';
+  import { MAX_CANVAS_SIZE, TimelineInteractionMode, TimelineLockStatus, getXScale } from '../../utilities/timeline';
   import TimelineRow from './Row.svelte';
   import RowHeaderDragHandleWidth from './RowHeaderDragHandleWidth.svelte';
   import TimelineContextMenu from './TimelineContextMenu.svelte';

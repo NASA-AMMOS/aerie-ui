@@ -58,7 +58,11 @@
         <Highlight highlight={highlightKeysMap.start_offset}>
           <Input layout="inline">
             Start Time (UTC)
-            <DatePicker dateString={`${formatDate(new Date(externalEvent.start_time), $plugins.time.primary.format)}`} disabled={!editable} name="start-time" />
+            <DatePicker
+              dateString={`${formatDate(new Date(externalEvent.start_time), $plugins.time.primary.format)}`}
+              disabled={!editable}
+              name="start-time"
+            />
           </Input>
         </Highlight>
 

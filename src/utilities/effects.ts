@@ -95,7 +95,7 @@ import type {
   ExternalSourceTypeInsertInput,
   ExternalSourceWithResolvedNames,
   PlanDerivationGroup,
-  UserSeenEntry
+  UserSeenEntry,
 } from '../types/external-source';
 import type { Model, ModelInsertInput, ModelLog, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
 import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
@@ -875,31 +875,6 @@ const effects = {
     }
   },
 
-  async createExternalSourceSeenEntry(sources_seen: UserSeenEntry[], user: User | null) {
-    try {
-      if (!queryPermissions.CREATE_SEEN_SOURCE_ENTRY(user)) {
-        throwPermissionError('mark viewership of an external source');
-      }
-
-      let entries = sources_seen.map(source_seen => {
-        return {
-          user: user?.id,
-          external_source_name: source_seen.key,
-          external_source_type: source_seen.source_type,
-          derivation_group: source_seen.derivation_group
-        }
-      })
-      const { createSeenSourceEntry: created } = await reqHasura(gql.CREATE_SEEN_SOURCE_ENTRY, { entries }, user);
-      if (created) {
-        return created.id;
-      } else {
-        throw Error(`Unable to log external source visibility recognition`);
-      }
-    } catch (e) {
-      catchError('External Source Visibility Recognition Failed', e as Error);
-    }
-  },
-
   async createExternalSource(source: ExternalSourceInsertInput, user: User | null) {
     try {
       if (!queryPermissions.CREATE_EXTERNAL_SOURCE(user)) {
@@ -921,6 +896,31 @@ const effects = {
       showFailureToast('External Source Create Failed');
       createExternalSourceError.set((e as Error).message);
       creatingExternalSource.set(false);
+    }
+  },
+
+  async createExternalSourceSeenEntry(sources_seen: UserSeenEntry[], user: User | null) {
+    try {
+      if (!queryPermissions.CREATE_SEEN_SOURCE_ENTRY(user)) {
+        throwPermissionError('mark viewership of an external source');
+      }
+
+      const entries = sources_seen.map(source_seen => {
+        return {
+          derivation_group: source_seen.derivation_group,
+          external_source_name: source_seen.key,
+          external_source_type: source_seen.source_type,
+          user: user?.id,
+        };
+      });
+      const { createSeenSourceEntry: created } = await reqHasura(gql.CREATE_SEEN_SOURCE_ENTRY, { entries }, user);
+      if (created) {
+        return created.id;
+      } else {
+        throw Error(`Unable to log external source visibility recognition`);
+      }
+    } catch (e) {
+      catchError('External Source Visibility Recognition Failed', e as Error);
     }
   },
 
@@ -2265,20 +2265,6 @@ const effects = {
     }
   },
 
-  async deleteExternalEventType(event_type_id: number | null, user: User | null): Promise<void> {
-    try {
-      // to do this, all dgs associated should be deleted.
-      if (event_type_id !== null) {
-        const data = await reqHasura<{ id: number }>(gql.DELETE_EXTERNAL_EVENT_TYPE, { id: event_type_id }, user);
-        if (data.deleteDerivationGroup === null) {
-          throw Error('Unable to delete external event type');
-        }
-      }
-    } catch (e) {
-      catchError('External Event Type Deletion Failed', e as Error);
-    }
-  },
-
   async deleteExpansionRule(rule: ExpansionRule, user: User | null): Promise<boolean> {
     try {
       if (!queryPermissions.DELETE_EXPANSION_RULE(user, rule)) {
@@ -2420,25 +2406,17 @@ const effects = {
     }
   },
 
-  async deleteExternalSourceSeenEntry(sources_seen: UserSeenEntry[], user: User | null) {
+  async deleteExternalEventType(event_type_id: number | null, user: User | null): Promise<void> {
     try {
-      if (!queryPermissions.DELETE_SEEN_SOURCE_ENTRY(user)) {
-        throwPermissionError('mark viewership of an external source');
-      }
-
-      for (let entry of sources_seen) {
-        const { deleteSeenSources: deleted } = await reqHasura(gql.DELETE_SEEN_SOURCE_ENTRY, { 
-          user: user?.id, 
-          external_source_name: entry.key, 
-          external_source_type: entry.source_type, 
-          derivation_group: entry.derivation_group 
-        }, user);
-        if(!deleted) {
-          throw Error(`Unable to log external source visibility recognition`);
+      // to do this, all dgs associated should be deleted.
+      if (event_type_id !== null) {
+        const data = await reqHasura<{ id: number }>(gql.DELETE_EXTERNAL_EVENT_TYPE, { id: event_type_id }, user);
+        if (data.deleteDerivationGroup === null) {
+          throw Error('Unable to delete external event type');
         }
       }
     } catch (e) {
-      catchError('External Source Visibility Recognition Failed', e as Error);
+      catchError('External Event Type Deletion Failed', e as Error);
     }
   },
 
@@ -2470,11 +2448,41 @@ const effects = {
     return false;
   },
 
+  async deleteExternalSourceSeenEntry(sources_seen: UserSeenEntry[], user: User | null) {
+    try {
+      if (!queryPermissions.DELETE_SEEN_SOURCE_ENTRY(user)) {
+        throwPermissionError('mark viewership of an external source');
+      }
+
+      for (const entry of sources_seen) {
+        const { deleteSeenSources: deleted } = await reqHasura(
+          gql.DELETE_SEEN_SOURCE_ENTRY,
+          {
+            derivation_group: entry.derivation_group,
+            external_source_name: entry.key,
+            external_source_type: entry.source_type,
+            user: user?.id,
+          },
+          user,
+        );
+        if (!deleted) {
+          throw Error(`Unable to log external source visibility recognition`);
+        }
+      }
+    } catch (e) {
+      catchError('External Source Visibility Recognition Failed', e as Error);
+    }
+  },
+
   async deleteExternalSourceType(external_source_type: number | null, user: User | null): Promise<void> {
     try {
       // to do this, all dgs associated should be deleted.
       if (external_source_type !== null) {
-        const data = await reqHasura<{ id: number }>(gql.DELETE_EXTERNAL_SOURCE_TYPE, { id: external_source_type }, user);
+        const data = await reqHasura<{ id: number }>(
+          gql.DELETE_EXTERNAL_SOURCE_TYPE,
+          { id: external_source_type },
+          user,
+        );
         if (data.deleteDerivationGroup === null) {
           throw Error('Unable to delete external source type');
         }
@@ -3518,16 +3526,13 @@ const effects = {
   },
 
   // Should be deprecated with the introduction of strict external source schemas, dictating allowable event types for given source types. But for now, this will do.
-  async getExternalEventTypesBySource(
-    source_id: number | null,
-    user: User | null,
-  ): Promise<string[]> {
+  async getExternalEventTypesBySource(source_id: number | null, user: User | null): Promise<string[]> {
     try {
       if (!source_id || source_id <= 0) {
         return [];
       }
       const data = await reqHasura<any>(gql.GET_EXTERNAL_EVENT_TYPE_BY_SOURCE, { source_id }, user);
-      const { external_source } = data
+      const { external_source } = data;
       if (external_source != null) {
         const event_types: string[] = [];
         for (const external_event of external_source[0].external_events) {
@@ -3588,7 +3593,9 @@ const effects = {
       if (external_source) {
         const { metadata }: Record<string, any> = external_source[0];
         if (metadata === null) {
-          throw Error(`Unable to get external source metadata for external source id ${id}. "metadata" field may not have been included in original source.`);
+          throw Error(
+            `Unable to get external source metadata for external source id ${id}. "metadata" field may not have been included in original source.`,
+          );
         }
         return metadata;
       } else {
@@ -4827,6 +4834,15 @@ const effects = {
     }
   },
 
+  async manageGroupsAndTypes(user: User | null): Promise<void> {
+    try {
+      await showManageGroupsAndTypes(user);
+    } catch (e) {
+      catchError('Unable To Be View Derivation Groups and External Types', e as Error);
+      showFailureToast('Derivation Group/External Type Viewing Failed');
+    }
+  },
+
   async managePlanConstraints(user: User | null): Promise<void> {
     try {
       await showManagePlanConstraintsModal(user);
@@ -4842,15 +4858,6 @@ const effects = {
     } catch (e) {
       catchError('Derivation Group Unable To Be Modified In Plan', e as Error);
       showFailureToast('Derivation Group Modification Failed');
-    }
-  },
-
-  async manageGroupsAndTypes(user: User | null): Promise<void> {
-    try {
-      await showManageGroupsAndTypes(user);
-    } catch (e) {
-      catchError('Unable To Be View Derivation Groups and External Types', e as Error);
-      showFailureToast('Derivation Group/External Type Viewing Failed');
     }
   },
 

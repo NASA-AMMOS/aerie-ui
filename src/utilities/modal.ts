@@ -29,7 +29,12 @@ import type { ActivityDirectiveDeletionMap, ActivityDirectiveId } from '../types
 import type { User } from '../types/app';
 import type { ExpansionSequence } from '../types/expansion';
 import type { ExternalEventType } from '../types/external-event';
-import type { DerivationGroup, ExternalSourceType, ExternalSourceWithResolvedNames, PlanDerivationGroup } from '../types/external-source';
+import type {
+  DerivationGroup,
+  ExternalSourceType,
+  ExternalSourceWithResolvedNames,
+  PlanDerivationGroup,
+} from '../types/external-source';
 import type { ModalElement, ModalElementValue } from '../types/modal';
 import type {
   Plan,
@@ -240,7 +245,7 @@ export async function showDeleteExternalSourceTypeModal(
 
       if (target) {
         const deleteExternalSourceTypeModal = new DeleteExternalSourceTypeModal({
-          props: { sourceType, associatedDGs },
+          props: { associatedDGs, sourceType },
           target,
         });
         target.resolve = resolve;

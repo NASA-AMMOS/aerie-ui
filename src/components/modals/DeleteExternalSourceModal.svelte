@@ -42,7 +42,8 @@
   <ModalContent>
     {#if linked.length > 0}
       <span style="display:block;overflow:hidden;text-overflow:ellipsis">
-        This External Source is part of Derivation Group '{source.derivation_group}', which is linked with the following plans:
+        This External Source is part of Derivation Group '{source.derivation_group}', which is linked with the following
+        plans:
         {#each linked as link}
           <div style="padding-left:20px">
             <i>
@@ -62,16 +63,10 @@
   </ModalContent>
   <ModalFooter>
     {#if linked.length > 0}
-      <button class="st-button" on:click={() => dispatch('close')}>
-        Close
-      </button>
+      <button class="st-button" on:click={() => dispatch('close')}> Close </button>
     {:else}
-      <button class="st-button secondary" on:click={() => dispatch('close')}>
-        Cancel
-      </button>
-      <button class="st-button" on:click={() => dispatch('confirm')}>
-        Delete
-      </button>
+      <button class="st-button secondary" on:click={() => dispatch('close')}> Cancel </button>
+      <button class="st-button" on:click={() => dispatch('confirm')}> Delete </button>
     {/if}
   </ModalFooter>
 </Modal>

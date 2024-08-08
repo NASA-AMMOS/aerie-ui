@@ -5,7 +5,7 @@ import type { ExternalEventTypeInsertInput } from '../types/external-event';
 import type {
   DerivationGroupInsertInput,
   ExternalSourceInsertInput,
-  ExternalSourceTypeInsertInput
+  ExternalSourceTypeInsertInput,
 } from '../types/external-source';
 import type { Model } from '../types/model';
 import type { ArgumentsMap, ParametersMap } from '../types/parameter';
@@ -324,10 +324,7 @@ describe('Handle modal and requests in effects', () => {
       });
       vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
 
-      await effects.getExternalEventTypesBySource(
-        1,
-        user,
-      );
+      await effects.getExternalEventTypesBySource(1, user);
 
       expect(catchErrorSpy).toHaveBeenCalledWith(Error('Unable to retrieve external event types for source'));
     });

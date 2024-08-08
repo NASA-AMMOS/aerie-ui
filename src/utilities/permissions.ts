@@ -357,9 +357,6 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   CREATE_EXTERNAL_SOURCE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_EXTERNAL_SOURCE], user);
   },
-  CREATE_SEEN_SOURCE_ENTRY: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission([Queries.INSERT_SEEN_SOURCE_ENTRY], user);
-  },
   CREATE_EXTERNAL_SOURCE_TYPE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.EXTERNAL_SOURCE_TYPES], user);
   },
@@ -434,6 +431,9 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   },
   CREATE_SCHEDULING_PLAN_SPECIFICATION: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_SCHEDULING_SPECIFICATION], user);
+  },
+  CREATE_SEEN_SOURCE_ENTRY: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.INSERT_SEEN_SOURCE_ENTRY], user);
   },
   CREATE_SEQUENCE_ADAPTATION: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_SEQUENCE_ADAPTATION], user);
@@ -539,9 +539,6 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   DELETE_EXTERNAL_SOURCE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.DELETE_EXTERNAL_SOURCE], user);
   },
-  DELETE_SEEN_SOURCE_ENTRY: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission([Queries.DELETE_SEEN_SOURCES], user);
-  },
   DELETE_EXTERNAL_SOURCE_TYPE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.DELETE_EXTERNAL_SOURCE_TYPE], user);
   },
@@ -618,6 +615,9 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   DELETE_SCHEDULING_GOAL_MODEL_SPECIFICATIONS: () => true,
   DELETE_SCHEDULING_GOAL_PLAN_SPECIFICATIONS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.DELETE_SCHEDULING_SPECIFICATION_GOALS], user);
+  },
+  DELETE_SEEN_SOURCE_ENTRY: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.DELETE_SEEN_SOURCES], user);
   },
   DELETE_SEQUENCE_ADAPTATION: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.DELETE_SEQUENCE_ADAPTATION], user);

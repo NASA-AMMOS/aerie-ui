@@ -18,10 +18,7 @@
   import { view } from '../../stores/views';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
-  import type {
-    DerivationGroup,
-    ExternalSourceWithResolvedNames
-  } from '../../types/external-source';
+  import type { DerivationGroup, ExternalSourceWithResolvedNames } from '../../types/external-source';
   import type { ExternalEventLayer } from '../../types/timeline';
   import effects from '../../utilities/effects';
   import { formatDate } from '../../utilities/time';

@@ -10,7 +10,7 @@
     getEventSourceTypeName,
     planDerivationGroupIdsToFilter,
     planDerivationGroupLinks,
-    usersSeenSources
+    usersSeenSources,
   } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import { originalView } from '../../stores/views';
@@ -39,7 +39,7 @@
   // let deletedSourcesParsed: ExternalSourceWithDateInfo[] = [];
   let unseenSources: UserSeenEntry[] = [];
   let unseenDeletedSources: UserSeenEntry[] = [];
- 
+
   $: {
     let source_keys = $externalSources.map(s => s.key);
     if (user && user.id) {

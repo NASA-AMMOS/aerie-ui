@@ -83,10 +83,10 @@ export type ExternalSourceInsertInput = Pick<
 
 // This is used exclusively to track when users have and haven't seen an entry
 export type UserSeenEntry = {
-  derivation_group: string | undefined, // needs compatibility with ExternalSourceWithResolvedNames
-  key: string,
-  source_type: string | undefined // needs compatibility with ExternalSourceWithResolvedNames
-}
+  derivation_group: string | undefined; // needs compatibility with ExternalSourceWithResolvedNames
+  key: string;
+  source_type: string | undefined; // needs compatibility with ExternalSourceWithResolvedNames
+};
 
 export type ExternalSourceTypeInsertInput = Pick<ExternalSourceType, 'name'>;
 
