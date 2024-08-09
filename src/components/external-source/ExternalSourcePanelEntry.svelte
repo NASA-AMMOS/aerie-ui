@@ -9,6 +9,7 @@
   import { originalView, viewUpdateFilteredDerivationGroupIds } from '../../stores/views';
   import type { User } from '../../types/app';
   import type { DerivationGroup, ExternalSourceWithResolvedNames } from '../../types/external-source';
+  import type { View } from '../../types/view';
   import effects from '../../utilities/effects';
   import { formatDate } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
@@ -22,10 +23,10 @@
   let planDerivationGroupIdsToFilterParsed: { [plan_id: number]: number[] } = JSON.parse(
     $planDerivationGroupIdsToFilter,
   );
-  let enabled =
-    $plan && planDerivationGroupIdsToFilterParsed[$plan.id]
-      ? !planDerivationGroupIdsToFilterParsed[$plan.id].includes(derivationGroup.id)
-      : true;
+  let enabled = ($plan !== null && planDerivationGroupIdsToFilterParsed[$plan.id] !== undefined)
+    ? !(planDerivationGroupIdsToFilterParsed[$plan.id].includes(derivationGroup.id))
+    : true;
+  let currentView: View | null = null;
 
   $: planDerivationGroupIdsToFilterParsed = JSON.parse($planDerivationGroupIdsToFilter);
   $: relevantSources = $externalSourceWithResolvedNames.filter(
@@ -35,6 +36,9 @@
     // Ensure the current derivation group in the filter list if it has been disabled
     // Ensure the current derivation group is NOT in the filter list if it has been enabled
     if ($plan) {
+      enabled = ($plan.id !== null && planDerivationGroupIdsToFilterParsed[$plan.id] !== undefined)
+        ? !(planDerivationGroupIdsToFilterParsed[$plan.id].includes(derivationGroup.id))
+        : true;
       if (enabled) {
         if (dgInFilter) {
           if (!planDerivationGroupIdsToFilterParsed[$plan.id]) {
@@ -68,18 +72,47 @@
   originalView.subscribe(ov => {
     // Any time a new view is selected, change the enabled list
     if (ov) {
-      if (ov?.definition.plan.filteredDerivationGroups.includes(derivationGroup.id)) {
-        enabled = false;
-      } else {
-        enabled = true;
+      if (currentView === null) {
+        currentView = ov;
+      }
+      // Check if the 'new' view is actually the old view, if so don't do anything
+      /**
+       * This is required because this will trigger when associating or de-associating
+       *  a derivation group with a plan - though the actual 'view' will not be
+       *  changed from these actions, which could lead to improperly resetting visibility.
+       **/
+      if (ov !== currentView) {
+        if (ov?.definition.plan.filteredDerivationGroups.includes(derivationGroup.id)) {
+          enabled = false;
+        } else {
+          enabled = true;
+        }
+        currentView = ov;
       }
     }
   });
 
   function onChange() {
     if ($plan) {
-      dgInFilter = planDerivationGroupIdsToFilterParsed[$plan.id].includes(derivationGroup.id);
       enabled = !enabled;
+      dgInFilter = planDerivationGroupIdsToFilterParsed[$plan.id].includes(derivationGroup.id);
+      if (enabled === false) {
+        if (!planDerivationGroupIdsToFilterParsed[$plan.id]) {
+          planDerivationGroupIdsToFilterParsed[$plan.id] = [derivationGroup.id];
+        } else {
+          planDerivationGroupIdsToFilterParsed[$plan.id] = planDerivationGroupIdsToFilterParsed[$plan.id].concat(
+            derivationGroup.id,
+          );
+        }
+      } else {
+        if (!planDerivationGroupIdsToFilterParsed[$plan.id]) {
+          planDerivationGroupIdsToFilterParsed[$plan.id] = [];
+        } else {
+          planDerivationGroupIdsToFilterParsed[$plan.id] = planDerivationGroupIdsToFilterParsed[$plan.id].filter(
+            id => id !== derivationGroup.id,
+          );
+        }
+      }
     }
   }
 
