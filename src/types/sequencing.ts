@@ -39,6 +39,7 @@ export type DictionaryType = {
 };
 
 export interface IOutputFormat {
+  fileExtension: string;
   linter?: (
     diagnostics: Diagnostic[],
     commandDictionary: AmpcsCommandDictionary,

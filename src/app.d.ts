@@ -82,6 +82,7 @@ declare global {
         ) => any;
         outputFormat?: [
           {
+            fileExtension: string;
             linter?: (
               diagnostics: Diagnostic[],
               commandDictionary: CommandDictionary,

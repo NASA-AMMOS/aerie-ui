@@ -54,6 +54,7 @@ export function setSequenceAdaptation(): void {
     modifyOutputParse: globalThis.SequenceAdaptation?.modifyOutputParse ?? undefined,
     outputFormat: globalThis.SequenceAdaptation?.outputFormat ?? [
       {
+        fileExtension: 'json',
         name: 'Seq JSON',
         toOutputFormat: sequenceToSeqJson,
       },

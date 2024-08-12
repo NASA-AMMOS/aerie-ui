@@ -277,17 +277,25 @@
     }
   }
 
-  function downloadOutputFormat() {
+  function downloadOutputFormat(outputFormat: IOutputFormat) {
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([editorOutputView.state.doc.toString()], { type: 'application/json' }));
-    a.download = `${sequenceName}.json`;
+    a.href = URL.createObjectURL(
+      new Blob([editorOutputView.state.doc.toString()], {
+        type: outputFormat?.fileExtension === 'json' ? 'application/json' : 'text/plain',
+      }),
+    );
+    a.download = `${sequenceName}.${outputFormat?.fileExtension}`;
     a.click();
   }
 
   function downloadInputFormat() {
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([editorSequenceView.state.doc.toString()], { type: 'text/plain' }));
-    a.download = `${sequenceName}.txt`;
+    a.href = URL.createObjectURL(
+      new Blob([editorSequenceView.state.doc.toString()], {
+        type: selectedOutputFormat?.fileExtension === 'json' ? 'application/json' : 'text/plain',
+      }),
+    );
+    a.download = `${sequenceName}.${selectedOutputFormat?.fileExtension}`;
     a.click();
   }
 
@@ -364,7 +372,7 @@
                     placement: 'top',
                   }}
                 >
-                  <MenuItem on:click={downloadOutputFormat} disabled={disableCopyAndExport}>
+                  <MenuItem on:click={() => downloadOutputFormat(outputFormatItem)} disabled={disableCopyAndExport}>
                     <DownloadIcon />
                     {outputFormatItem?.name}
                   </MenuItem>
