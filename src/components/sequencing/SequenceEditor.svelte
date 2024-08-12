@@ -228,10 +228,7 @@
 
       if (adaptation) {
         try {
-          // This evaluates the custom sequence adaptation that is optionally provided by the user.
-          Function(adaptation.adaptation)();
-
-          setSequenceAdaptation();
+          setSequenceAdaptation(eval(String(adaptation.adaptation)));
         } catch (e) {
           console.error(e);
           showFailureToast('Invalid sequence adaptation');
@@ -243,8 +240,7 @@
   }
 
   function resetSequenceAdaptation(): void {
-    globalThis.SequenceAdaptation = undefined;
-    setSequenceAdaptation();
+    setSequenceAdaptation(undefined);
   }
 
   async function sequenceUpdateListener(viewUpdate: ViewUpdate) {

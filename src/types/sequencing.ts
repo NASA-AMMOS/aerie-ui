@@ -24,7 +24,7 @@ export type ParameterDictionary = {
 } & DictionaryType;
 
 export type SequenceAdaptation = {
-  adaptation: string;
+  adaptation: ISequenceAdaptation;
   name: string;
   type: DictionaryTypes.ADAPTATION;
 } & DictionaryType;

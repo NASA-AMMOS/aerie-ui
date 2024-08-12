@@ -29,30 +29,30 @@ export function getGlobals(): GlobalType[] {
   return get(sequenceAdaptation)?.globals ?? [];
 }
 
-export function setSequenceAdaptation(): void {
+export function setSequenceAdaptation(newSequenceAdaptation: ISequenceAdaptation | undefined): void {
   sequenceAdaptation.set({
-    argDelegator: globalThis.SequenceAdaptation?.argDelegator ?? undefined,
+    argDelegator: newSequenceAdaptation?.argDelegator ?? undefined,
     conditionalKeywords: {
-      else: globalThis.SequenceAdaptation?.conditionalKeywords?.else ?? 'CMD_ELSE',
-      elseIf: globalThis.SequenceAdaptation?.conditionalKeywords?.elseIf ?? ['CMD_ELSE_IF'],
-      endIf: globalThis.SequenceAdaptation?.conditionalKeywords?.endIf ?? 'CMD_END_IF',
-      if: globalThis.SequenceAdaptation?.conditionalKeywords?.if ?? ['CMD_IF'],
+      else: newSequenceAdaptation?.conditionalKeywords?.else ?? 'CMD_ELSE',
+      elseIf: newSequenceAdaptation?.conditionalKeywords?.elseIf ?? ['CMD_ELSE_IF'],
+      endIf: newSequenceAdaptation?.conditionalKeywords?.endIf ?? 'CMD_END_IF',
+      if: newSequenceAdaptation?.conditionalKeywords?.if ?? ['CMD_IF'],
     },
-    globals: globalThis.SequenceAdaptation?.globals ?? [],
+    globals: newSequenceAdaptation?.globals ?? [],
     inputFormat: {
-      linter: globalThis.SequenceAdaptation?.inputFormat?.linter ?? undefined,
-      name: globalThis.SequenceAdaptation?.inputFormat?.name ?? 'SeqN',
-      toInputFormat: globalThis.SequenceAdaptation?.inputFormat?.toInputFormat ?? seqJsonToSequence,
+      linter: newSequenceAdaptation?.inputFormat?.linter ?? undefined,
+      name: newSequenceAdaptation?.inputFormat?.name ?? 'SeqN',
+      toInputFormat: newSequenceAdaptation?.inputFormat?.toInputFormat ?? seqJsonToSequence,
     },
     loopKeywords: {
-      break: globalThis.SequenceAdaptation?.loopKeywords?.break ?? 'CMD_BREAK',
-      continue: globalThis.SequenceAdaptation?.loopKeywords?.continue ?? 'CMD_CONTINUE',
-      endWhileLoop: globalThis.SequenceAdaptation?.loopKeywords?.endWhileLoop ?? 'CMD_END_WHILE_LOOP',
-      whileLoop: globalThis.SequenceAdaptation?.loopKeywords?.whileLoop ?? ['CMD_WHILE_LOOP', 'CMD_WHILE_LOOP_OR'],
+      break: newSequenceAdaptation?.loopKeywords?.break ?? 'CMD_BREAK',
+      continue: newSequenceAdaptation?.loopKeywords?.continue ?? 'CMD_CONTINUE',
+      endWhileLoop: newSequenceAdaptation?.loopKeywords?.endWhileLoop ?? 'CMD_END_WHILE_LOOP',
+      whileLoop: newSequenceAdaptation?.loopKeywords?.whileLoop ?? ['CMD_WHILE_LOOP', 'CMD_WHILE_LOOP_OR'],
     },
-    modifyOutput: globalThis.SequenceAdaptation?.modifyOutput ?? undefined,
-    modifyOutputParse: globalThis.SequenceAdaptation?.modifyOutputParse ?? undefined,
-    outputFormat: globalThis.SequenceAdaptation?.outputFormat ?? [
+    modifyOutput: newSequenceAdaptation?.modifyOutput ?? undefined,
+    modifyOutputParse: newSequenceAdaptation?.modifyOutputParse ?? undefined,
+    outputFormat: newSequenceAdaptation?.outputFormat ?? [
       {
         fileExtension: 'json',
         name: 'Seq JSON',
