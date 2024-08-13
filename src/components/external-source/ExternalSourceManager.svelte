@@ -1,6 +1,6 @@
 <script lang="ts">
   import { base } from '$app/paths';
-  import type { ICellRendererParams, RowClassParams, RowStyle, ValueGetterParams } from 'ag-grid-community';
+  import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
   import Balloon from 'bootstrap-icons/icons/balloon.svg?component';
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
@@ -106,12 +106,20 @@
   // table variables
   const baseColumnDefs: DataGridColumnDef[] = [
     {
-      field: 'id',
-      filter: 'number',
-      headerName: 'ID',
+      field: 'source_type',
+      filter: 'text',
+      headerName: 'Source Type',
       resizable: true,
+      sort: 'desc',
       sortable: true,
-      width: 70,
+    },
+    {
+      field: 'derivation_group',
+      filter: 'text',
+      headerName: 'Derivation Group',
+      resizable: true,
+      sort: 'desc',
+      sortable: true,
     },
     {
       field: 'key',
@@ -121,18 +129,17 @@
       sortable: true,
     },
     {
-      field: 'source_type',
+      field: 'valid_at',
       filter: 'text',
-      headerName: 'Source Type',
+      headerName: `Valid At (${$plugins.time.primary.label})`,
       resizable: true,
+      sort: 'desc',
       sortable: true,
-    },
-    {
-      field: 'derivation_group',
-      filter: 'text',
-      headerName: 'Derivation Group',
-      resizable: true,
-      sortable: true,
+      valueGetter: (params: ValueGetterParams<ExternalSourceWithResolvedNames>) => {
+        if (params.data?.valid_at) {
+          return formatDate(new Date(params.data?.valid_at), $plugins.time.primary.format);
+        }
+      },
     },
     {
       field: 'start_time',
@@ -155,18 +162,6 @@
       valueGetter: (params: ValueGetterParams<ExternalSourceWithResolvedNames>) => {
         if (params.data?.end_time) {
           return formatDate(new Date(params.data?.end_time), $plugins.time.primary.format);
-        }
-      },
-    },
-    {
-      field: 'valid_at',
-      filter: 'text',
-      headerName: `Valid At (${$plugins.time.primary.label})`,
-      resizable: true,
-      sortable: true,
-      valueGetter: (params: ValueGetterParams<ExternalSourceWithResolvedNames>) => {
-        if (params.data?.valid_at) {
-          return formatDate(new Date(params.data?.valid_at), $plugins.time.primary.format);
         }
       },
     },
@@ -727,24 +722,6 @@
     selectedEvent = selectedEvents.find(event => event.id === selectedRowId) ?? null;
   }
 
-  // TODO: Determine what we're doing about the coloring scheme
-  function getRowStyle(params: RowClassParams<ExternalSourceWithResolvedNames>): RowStyle | undefined {
-    // Evenly spread out color selection
-    const derivationGroupIds = $derivationGroups.map(dg => dg.id);
-    if (
-      params.data?.derivation_group_id &&
-      derivationGroupIds.includes(params.data?.derivation_group_id) &&
-      params.data?.total_groups
-    ) {
-      let spacing = 360 / params.data?.total_groups;
-      let realIndex = derivationGroupIds.indexOf(params.data?.derivation_group_id); // using this because the dg id doesn't work in our coloring scheme if anything gets deleted,
-      //    i.e. may have 2 total but ids are 4 and 6, breaks the math a bit
-      let myVal = realIndex * spacing;
-      return { 'background-color': `hsl(${myVal} 100% 98%)` };
-    }
-    return undefined;
-  }
-
   function onManageGroupsAndTypes() {
     effects.manageGroupsAndTypes(user);
   }
@@ -1118,7 +1095,6 @@
         {#if $externalSourceWithResolvedNames.length}
           <SingleActionDataGrid
             {columnDefs}
-            {getRowStyle}
             {hasDeletePermission}
             itemDisplayText="External Source"
             items={filteredExternalSources}
