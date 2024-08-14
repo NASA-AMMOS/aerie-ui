@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { externalEventWithTypeName, selectExternalEvent, selectedExternalEventId } from '../../stores/external-event';
+  import { externalEventsDB, selectExternalEvent, selectedExternalEventId } from '../../stores/external-event';
   import { viewTogglePanel } from '../../stores/views';
   import type { User } from '../../types/app';
   import type { ViewGridSection } from '../../types/view';
@@ -28,7 +28,7 @@
   <svelte:fragment slot="body">
     <ExternalEventsTable
       bind:selectedItemId={$selectedExternalEventId}
-      items={$externalEventWithTypeName}
+      items={$externalEventsDB.flatMap(ee => ee.external_event)}
       {user}
       on:rowDoubleClicked={onRowDoubleClicked}
       on:selectionChanged={onSelectionChanged}

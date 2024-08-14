@@ -6,13 +6,13 @@
   import { plugins } from '../../stores/plugins';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
-  import type { ExternalEventWithTypeName } from '../../types/external-event';
+  import type { ExternalEventDB } from '../../types/external-event';
   import type { ExternalSourceSlim } from '../../types/external-source';
   import { formatDate } from '../../utilities/time';
   import SingleActionDataGrid from '../ui/DataGrid/SingleActionDataGrid.svelte';
 
   export let selectedItemId: number | null;
-  export let items: ExternalEventWithTypeName[];
+  export let items: ExternalEventDB[];
   export let user: User | null;
 
   const dispatch = createEventDispatcher<{
@@ -36,7 +36,7 @@
       sortable: true,
     },
     {
-      field: 'event_type',
+      field: 'event_type_name',
       filter: 'text',
       headerName: 'Event Type',
       resizable: true,
