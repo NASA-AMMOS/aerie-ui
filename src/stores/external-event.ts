@@ -24,7 +24,10 @@ export const selectedExternalEventId: Writable<ExternalEventId | null> = writabl
 
 /* Derived. */
 // just to prevent repeated lookups
-export const externalEventsMap = derived([externalEventsDB], ([$externalEventsDB]) => keyBy($externalEventsDB, 'id'));
+export const externalEventsMap = derived([externalEventsDB], ([$externalEventsDB]) => {
+  const externalEventsDBFlat = $externalEventsDB.flatMap(ee => ee.external_event);
+  return keyBy(externalEventsDBFlat, 'id');
+});
 
 export const selectedExternalEvent = derived(
   [selectedExternalEventId, externalEventsMap],
