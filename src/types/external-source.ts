@@ -11,7 +11,7 @@ export type ExternalSourceDB = {
   id: number;
   key: string;
   metadata: Record<string, any>;
-  source_type_id: number;
+  source_type_name: string;
   start_time: string;
   valid_at: string;
 };
@@ -34,13 +34,12 @@ export type ExternalSourceJson = {
 // For use in retrieval of source information sans bulky items like metadata and event lists (see stores)
 export type ExternalSourceSlim = Pick<
   ExternalSourceDB,
-  'id' | 'key' | 'source_type_id' | 'start_time' | 'end_time' | 'valid_at' | 'derivation_group_id' | 'created_at'
+  'id' | 'key' | 'source_type_name' | 'start_time' | 'end_time' | 'valid_at' | 'derivation_group_id' | 'created_at'
 >;
 
 // For use in ExternalSourceManager tables
 export type ExternalSourceWithResolvedNames = ExternalSourceSlim & {
   derivation_group: string | undefined;
-  source_type: string | undefined;
   // for coloring
   total_groups: number;
 };
@@ -64,7 +63,7 @@ export type DerivationGroup = {
   event_types: string[];
   id: number;
   name: string;
-  source_type_id: number;
+  source_type_name: string;
   sources: Map<string, { event_counts: number }>;
 };
 
@@ -74,7 +73,7 @@ export type ExternalSourceWithDateInfo = ExternalSourceWithResolvedNames & { cha
 // This is used for the GraphQL mutation.
 export type ExternalSourceInsertInput = Pick<
   ExternalSourceDB,
-  'key' | 'metadata' | 'source_type_id' | 'start_time' | 'end_time' | 'valid_at' | 'derivation_group_id'
+  'key' | 'metadata' | 'source_type_name' | 'start_time' | 'end_time' | 'valid_at' | 'derivation_group_id'
 > & {
   external_events: {
     data: ExternalEventInsertInput[] | null;
@@ -90,4 +89,4 @@ export type UserSeenEntry = {
 
 export type ExternalSourceTypeInsertInput = Pick<ExternalSourceType, 'name'>;
 
-export type DerivationGroupInsertInput = Pick<DerivationGroup, 'name' | 'source_type_id'>;
+export type DerivationGroupInsertInput = Pick<DerivationGroup, 'name' | 'source_type_name'>;

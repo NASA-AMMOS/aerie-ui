@@ -218,7 +218,7 @@ export type ExternalEventOptions = {
   externalEventHeight: number;
 
   // Determines whether to group the External Events by their event type, or their external source
-  groupBy: 'event_type' | 'source_id';
+  groupBy: 'event_type_name' | 'source_id';
 
   // Bin size for external event children in grouped mode
   groupedModeBinSize: number;

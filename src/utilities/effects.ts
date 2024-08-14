@@ -875,7 +875,12 @@ const effects = {
     }
   },
 
-  async createExternalSource(source: ExternalSourceInsertInput, user: User | null) {
+  async createExternalSource(
+    source: ExternalSourceInsertInput,
+    sourceType: ExternalSourceTypeInsertInput,
+    eventTypes: ExternalEventTypeInsertInput[],
+    user: User | null,
+  ) {
     try {
       if (!queryPermissions.CREATE_EXTERNAL_SOURCE(user)) {
         throwPermissionError('upload an external source');
@@ -883,7 +888,15 @@ const effects = {
 
       creatingExternalSource.set(true);
       createExternalSourceError.set(null);
-      const { createExternalSource: created } = await reqHasura(gql.CREATE_EXTERNAL_SOURCE, { source }, user);
+      const { createExternalSource: created } = await reqHasura(
+        gql.CREATE_EXTERNAL_SOURCE,
+        {
+          event_type: eventTypes,
+          source: source,
+          source_type: sourceType,
+        },
+        user,
+      );
       if (created) {
         showSuccessToast('External Source Created Successfully');
         creatingExternalSource.set(false);
@@ -3565,7 +3578,7 @@ const effects = {
       for (const event of events) {
         externalEvents.push({
           duration: event.duration,
-          event_type_id: event.event_type_id,
+          event_type_name: event.event_type_name,
           id: event.id,
           key: event.key,
           properties: event.properties,

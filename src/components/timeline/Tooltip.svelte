@@ -254,7 +254,7 @@
     }
 
     if (overflowingExternalEvents.length) {
-      const groups = groupBy(externalEvents, 'event_type');
+      const groups = groupBy(externalEvents, 'event_type_name');
       tooltipText += `<div class='tooltip-row-container'>
         ${Object.entries(groups)
           .map(([key, members]) => {
@@ -373,7 +373,7 @@
   }
 
   function textForExternalEvent(externalEvent: ExternalEvent): string {
-    const { duration, event_type, id, key, source_id, start_time } = externalEvent;
+    const { duration, event_type_name, id, key, source_id, start_time } = externalEvent;
     return `
       <div class='tooltip-row-container'>
         <div class='st-typography-bold' style='color: var(--st-gray-10); display: flex; gap: 4px;'>${DirectiveIcon} ExternalEvent</div>
@@ -389,7 +389,7 @@
         </div>
         <div class='tooltip-row'>
           <span>Event Type:</span>
-          <span class='tooltip-value-highlight st-typography-medium'>${event_type}</span>
+          <span class='tooltip-value-highlight st-typography-medium'>${event_type_name}</span>
         </div>
         <div class='tooltip-row'>
           <span>Source File:</span>
