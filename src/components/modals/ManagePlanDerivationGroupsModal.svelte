@@ -78,7 +78,7 @@
       suppressSizeToFit: false,
     },
     {
-      field: 'source_type_id',
+      field: 'source_type_name',
       filter: 'string',
       headerName: 'Source type',
       resizable: true,
@@ -277,7 +277,7 @@
 
                   <p>
                     <strong>Source Type:</strong>
-                    {source.source_type}
+                    {source.source_type_name}
                   </p>
 
                   <p>

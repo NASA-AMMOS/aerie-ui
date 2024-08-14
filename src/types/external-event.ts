@@ -5,7 +5,7 @@ export type ExternalEventId = number;
 // This is the type that conforms with the database schema.
 export type ExternalEventDB = {
   duration: string;
-  event_type_id: number;
+  event_type_name: string;
   id: number;
   key: string;
   properties: Record<string, any>;
@@ -26,13 +26,9 @@ export type ExternalEventJson = {
 
 // no analogue to ExternalSourceSlim as we have no subevents or anything of the sort that we may elect to exclude
 
-export type ExternalEventWithTypeName = Omit<ExternalEventDB, 'event_type_id'> & {
-  event_type: string | undefined;
-};
-
 export type ExternalEvent = Pick<
-  ExternalEventWithTypeName,
-  'duration' | 'id' | 'key' | 'properties' | 'source' | 'source_id' | 'start_time' | 'event_type'
+  ExternalEventDB,
+  'duration' | 'id' | 'key' | 'properties' | 'source' | 'source_id' | 'start_time' | 'event_type_name'
 > & {
   durationMs: number;
   startMs: number;
@@ -51,7 +47,7 @@ export type ExternalEventType = {
 // https://stackoverflow.com/questions/64263271/typescript-validate-excess-keys-on-value-returned-from-function
 export type ExternalEventInsertInput = Pick<
   ExternalEventDB,
-  'key' | 'event_type_id' | 'start_time' | 'duration' | 'properties'
+  'key' | 'event_type_name' | 'start_time' | 'duration' | 'properties'
 >;
 
 export type ExternalEventTypeInsertInput = Pick<ExternalEventType, 'name'>;

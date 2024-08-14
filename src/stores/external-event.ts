@@ -1,11 +1,6 @@
 import { keyBy } from 'lodash-es';
 import { derived, writable, type Writable } from 'svelte/store';
-import type {
-  ExternalEventDB,
-  ExternalEventId,
-  ExternalEventType,
-  ExternalEventWithTypeName,
-} from '../types/external-event';
+import type { ExternalEventDB, ExternalEventId, ExternalEventType } from '../types/external-event';
 import gql from '../utilities/gql';
 import { selectedPlanDerivationGroupIds } from './external-source';
 import { gqlSubscribable } from './subscribable';
@@ -28,23 +23,8 @@ export const externalEventTypes = gqlSubscribable<ExternalEventType[]>(gql.SUB_E
 export const selectedExternalEventId: Writable<ExternalEventId | null> = writable(null);
 
 /* Derived. */
-// (helper for the below)
-export const externalEventWithTypeName = derived<
-  [typeof externalEventsDB, typeof externalEventTypes],
-  ExternalEventWithTypeName[]
->([externalEventsDB, externalEventTypes], ([$externalEventsDB, $externalEventTypes]) =>
-  $externalEventsDB.map(externalEvent => {
-    return {
-      ...externalEvent.external_event,
-      event_type: getEventTypeName(externalEvent.external_event.event_type_id, $externalEventTypes),
-    };
-  }),
-);
-
 // just to prevent repeated lookups
-export const externalEventsMap = derived([externalEventWithTypeName], ([$externalEventWithTypeName]) =>
-  keyBy($externalEventWithTypeName, 'id'),
-);
+export const externalEventsMap = derived([externalEventsDB], ([$externalEventsDB]) => keyBy($externalEventsDB, 'id'));
 
 export const selectedExternalEvent = derived(
   [selectedExternalEventId, externalEventsMap],

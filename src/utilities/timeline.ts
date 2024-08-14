@@ -1057,7 +1057,7 @@ export function generateActivityTree(
 export function generateExternalEventTree(
   externalEvents: ExternalEvent[],
   externalEventTreeExpansionMap: ExternalEventTreeExpansionMap,
-  groupByMethod: ExternalEventOptions['groupBy'] = 'event_type',
+  groupByMethod: ExternalEventOptions['groupBy'] = 'event_type_name',
   binSize: ExternalEventOptions['groupedModeBinSize'],
 ): ExternalEventTree {
   const groupedExternalEvents = groupBy(externalEvents, groupByMethod);

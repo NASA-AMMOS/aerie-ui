@@ -23,7 +23,7 @@ export const ViewDefaultActivityOptions: ActivityOptions = {
 export const ViewDefaultExternalEventOptions: ExternalEventOptions = {
   displayMode: 'compact',
   externalEventHeight: 16,
-  groupBy: 'event_type',
+  groupBy: 'event_type_name',
   groupedModeBinSize: 100,
   labelVisibility: 'auto',
 };

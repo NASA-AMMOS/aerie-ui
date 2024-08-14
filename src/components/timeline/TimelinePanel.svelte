@@ -3,7 +3,7 @@
 <script lang="ts">
   import { activityDirectivesMap, selectActivity, selectedActivityDirectiveId } from '../../stores/activities';
   import { visibleConstraintResults } from '../../stores/constraints';
-  import { externalEventWithTypeName, selectExternalEvent, selectedExternalEventId } from '../../stores/external-event';
+  import { externalEventsDB, selectExternalEvent, selectedExternalEventId } from '../../stores/external-event';
   import { maxTimeRange, plan, planReadOnly, viewTimeRange } from '../../stores/plan';
   import {
     resourceTypes,
@@ -201,7 +201,7 @@
       {limitTooltipToLine}
       {showTimelineTooltip}
       activityDirectivesMap={$activityDirectivesMap}
-      externalEventsWithTypeName={$externalEventWithTypeName}
+      externalEventsFromDB={$externalEventsDB.flatMap(ee => ee.external_event)}
       constraintResults={$visibleConstraintResults}
       {hasUpdateDirectivePermission}
       {hasUpdateSimulationPermission}

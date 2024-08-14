@@ -3,7 +3,7 @@
 <script lang="ts">
   import { externalSources, getSourceName } from '../../stores/external-source';
   import { plugins } from '../../stores/plugins';
-  import type { ExternalEventWithTypeName } from '../../types/external-event';
+  import type { ExternalEventDB } from '../../types/external-event';
   import type { Property } from '../../types/property';
   import { classNames } from '../../utilities/generic';
   import { formatDate } from '../../utilities/time';
@@ -13,7 +13,7 @@
   import Highlight from '../ui/Highlight.svelte';
   import Properties from './Properties.svelte';
 
-  export let externalEvent: ExternalEventWithTypeName;
+  export let externalEvent: ExternalEventDB;
   export let showHeader: boolean = true;
 
   let editable: boolean = false;
@@ -51,7 +51,7 @@
         <Highlight highlight={highlightKeysMap.type}>
           <Input layout="inline">
             Type
-            <input class="st-input w-100" disabled={!editable} name="event-type" value={externalEvent.event_type} />
+            <input class="st-input w-100" disabled={!editable} name="event-type" value={externalEvent.event_type_name} />
           </Input>
         </Highlight>
 

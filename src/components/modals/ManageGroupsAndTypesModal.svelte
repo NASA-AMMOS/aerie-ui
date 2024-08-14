@@ -8,9 +8,7 @@
   import {
     derivationGroups,
     externalSourceTypes,
-    externalSourceWithResolvedNames,
-    getEventSourceTypeName,
-    getSourceName,
+    externalSourceWithResolvedNames
   } from '../../stores/external-source';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
@@ -77,17 +75,13 @@
       suppressSizeToFit: false,
     },
     {
-      field: 'source_type_id',
+      field: 'source_type_name',
       filter: 'string',
       headerName: 'Source type',
       resizable: true,
       sortable: true,
       suppressAutoSize: false,
       suppressSizeToFit: false,
-      valueFormatter: params => {
-        const sourceTypeName = getEventSourceTypeName(params?.value, $externalSourceTypes);
-        return sourceTypeName ? sourceTypeName : '';
-      },
     },
     {
       field: 'derivedEventTotal',
@@ -199,7 +193,7 @@
       suppressAutoSize: true,
       suppressSizeToFit: true,
       valueFormatter: params => {
-        const associatedDerivationGroups = getAssociatedDerivationGroupsBySourceTypeId(params.data?.id);
+        const associatedDerivationGroups = getAssociatedDerivationGroupsBySourceTypeName(params.data?.name);
         return `${associatedDerivationGroups.length}`;
       },
     },
@@ -378,7 +372,7 @@
 
   $: selectedExternalSourceTypeDerivationGroups = $derivationGroups.filter(dg => {
     if (selectedExternalSourceType !== undefined) {
-      return dg.source_type_id === selectedExternalSourceType.id;
+      return dg.source_type_name === selectedExternalSourceType.name;
     } else {
       return false;
     }
@@ -398,7 +392,7 @@
   }
 
   async function deleteExternalSourceType(sourceType: ExternalSourceType) {
-    let associatedDGs = $derivationGroups.filter(dg => dg.source_type_id === sourceType.id);
+    let associatedDGs = $derivationGroups.filter(dg => dg.source_type_name === sourceType.name);
 
     // makes sure all associated derivation groups are deleted before this
     await showDeleteExternalSourceTypeModal(sourceType, associatedDGs, user);
@@ -421,16 +415,16 @@
     if (sourceType === undefined) {
       return [];
     }
-    let associatedSources = $externalSourceWithResolvedNames.filter(source => source.source_type === sourceType);
+    let associatedSources = $externalSourceWithResolvedNames.filter(source => source.source_type_name === sourceType);
     return associatedSources;
   }
 
-  function getAssociatedDerivationGroupsBySourceTypeId(sourceTypeId: number | undefined) {
-    if (sourceTypeId === undefined) {
+  function getAssociatedDerivationGroupsBySourceTypeName(sourceTypeName: string | undefined) {
+    if (sourceTypeName === undefined) {
       return [];
     }
 
-    let associatedDerivationGroups = $derivationGroups.filter(dg => dg.source_type_id === sourceTypeId);
+    let associatedDerivationGroups = $derivationGroups.filter(dg => dg.source_type_name === sourceTypeName);
 
     return associatedDerivationGroups;
   }
@@ -549,7 +543,7 @@
 
                   <p>
                     <strong>Source Type:</strong>
-                    {source.source_type}
+                    {source.source_type_name}
                   </p>
 
                   <p>
@@ -667,7 +661,7 @@
 
                   <p>
                     <strong>Source Type:</strong>
-                    {getSourceName(dg.source_type_id, $externalSourceWithResolvedNames)}
+                    {dg.source_type_name}
                   </p>
 
                   <Collapse
