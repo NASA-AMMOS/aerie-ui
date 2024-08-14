@@ -87,31 +87,56 @@ export const constraintVisibilityMap: Readable<Record<ConstraintMetadata['id'], 
 );
 
 export const constraintResponseMap: Readable<Record<ConstraintDefinition['constraint_id'], ConstraintResponse>> =
-  derived([constraintRuns, planStartTimeMs], ([$constraintRuns, $planStartTimeMs]) =>
-    keyBy(
-      $constraintRuns.map(
-        run =>
-          ({
-            constraintId: run.constraint_id,
-            constraintName: '',
-            errors: [],
-            results: {
-              ...run.results,
-              violations:
-                run.results.violations?.map(violation => ({
-                  ...violation,
-                  windows: violation.windows.map(({ end, start }) => ({
-                    end: $planStartTimeMs + end / 1000,
-                    start: $planStartTimeMs + start / 1000,
-                  })),
-                })) ?? null,
-            },
-            success: true,
-            type: 'plan',
-          }) as ConstraintResponse,
-      ),
-      'constraintId',
-    ),
+  derived(
+    [constraintRuns, rawConstraintResponses, planStartTimeMs],
+    ([$constraintRuns, $checkConstraintResponse, $planStartTimeMs]) => {
+      const cachedResponseMap = keyBy(
+        $constraintRuns.map(
+          run =>
+            ({
+              constraintId: run.constraint_id,
+              constraintName: '',
+              errors: [],
+              results: {
+                ...run.results,
+                violations:
+                  run.results.violations?.map(violation => ({
+                    ...violation,
+                    windows: violation.windows.map(({ end, start }) => ({
+                      end: $planStartTimeMs + end / 1000,
+                      start: $planStartTimeMs + start / 1000,
+                    })),
+                  })) ?? null,
+              },
+              success: true,
+              type: 'plan',
+            }) as ConstraintResponse,
+        ),
+        'constraintId',
+      );
+      const checkConstraintResponse = keyBy(
+        $checkConstraintResponse.map(response => ({
+          ...response,
+          results: {
+            ...response.results,
+            violations:
+              response.results.violations?.map(violation => ({
+                ...violation,
+                windows: violation.windows.map(({ end, start }) => ({
+                  end: $planStartTimeMs + end / 1000,
+                  start: $planStartTimeMs + start / 1000,
+                })),
+              })) ?? null,
+          },
+        })),
+        'constraintId',
+      );
+
+      return {
+        ...cachedResponseMap,
+        ...checkConstraintResponse,
+      };
+    },
   );
 
 export const uncheckedConstraintCount: Readable<number> = derived(
