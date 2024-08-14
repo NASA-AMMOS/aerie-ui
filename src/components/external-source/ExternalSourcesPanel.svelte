@@ -5,12 +5,10 @@
     derivationGroupPlanLinkError,
     derivationGroups,
     externalSources,
-    externalSourceTypes,
     externalSourceWithResolvedNames,
-    getEventSourceTypeName,
     planDerivationGroupIdsToFilter,
     planDerivationGroupLinks,
-    usersSeenSources,
+    usersSeenSources
   } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import { originalView } from '../../stores/views';
@@ -70,14 +68,13 @@
   planDerivationGroupLinks.subscribe(_ => (mappedDerivationGroups = {})); // clear the map...
   $: filteredDerivationGroups.forEach(group => {
     // ...and repopulate it every time the links change. this handles deletion correctly
-    const sourceType = getEventSourceTypeName(group.source_type_id, $externalSourceTypes);
-    if (sourceType) {
+    if (group.source_type_name) {
       // undefined is being very frustrating
-      if (mappedDerivationGroups[sourceType] && !mappedDerivationGroups[sourceType].map(g => g.id).includes(group.id)) {
+      if (mappedDerivationGroups[group.source_type_name] && !mappedDerivationGroups[group.source_type_name].map(g => g.id).includes(group.id)) {
         // use string later for source type
-        mappedDerivationGroups[sourceType]?.push(group);
+        mappedDerivationGroups[group.source_type_name]?.push(group);
       } else {
-        mappedDerivationGroups[sourceType] = [group];
+        mappedDerivationGroups[group.source_type_name] = [group];
       }
     }
   });

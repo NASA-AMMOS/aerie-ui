@@ -1102,7 +1102,7 @@
                 </RadioButton>
                 <RadioButton
                   use={[[tooltip, { content: 'Group according to event type', placement: 'top' }]]}
-                  id="event_type"
+                  id="event_type_name"
                 >
                   <div class="radio-button-icon">
                     <Balloon />

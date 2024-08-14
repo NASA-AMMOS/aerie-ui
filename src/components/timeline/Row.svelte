@@ -490,7 +490,7 @@
         : false;
     });
     // Filter by external event type
-    const externalEventsByType = groupBy(externalEventsFilteredByDG, 'event_type');
+    const externalEventsByType = groupBy(externalEventsFilteredByDG, 'event_type_name');
     externalEventLayers.forEach(layer => {
       if (layer.filter && layer.filter.externalEvent !== undefined) {
         const event_types = layer.filter.externalEvent.event_types || [];
@@ -572,7 +572,7 @@
   function generateExternalEventTree(
     externalEvents: ExternalEvent[],
     externalEventTreeExpansionMap: ExternalEventTreeExpansionMap,
-    groupByMethod: ExternalEventOptions['groupBy'] = 'event_type',
+    groupByMethod: ExternalEventOptions['groupBy'] = 'event_type_name',
     binSize: ExternalEventOptions['groupedModeBinSize'],
   ) {
     return generateExternalEventTreeUtil(externalEvents, externalEventTreeExpansionMap, groupByMethod, binSize);

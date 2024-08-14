@@ -117,7 +117,9 @@ export enum Queries {
   INSERT_CONSTRAINT_TAGS = 'insert_constraint_tags',
   INSERT_EXPANSION_RULE = 'insert_expansion_rule_one',
   INSERT_EXPANSION_RULE_TAGS = 'insert_expansion_rule_tags',
+  INSERT_EXTERNAL_EVENT_TYPE = 'insert_external_event_type',
   INSERT_EXTERNAL_SOURCE = 'insert_external_source_one',
+  INSERT_EXTERNAL_SOURCE_TYPE = 'insert_external_source_type_one',
   INSERT_MISSION_MODEL = 'insert_mission_model_one',
   INSERT_PARAMETER_DICTIONARY = 'insert_parameter_dictionary_one',
   INSERT_PARCEL = 'insert_parcel_one',
@@ -475,7 +477,29 @@ const gql = {
   `,
 
   CREATE_EXTERNAL_SOURCE: `#graphql
-    mutation CreateExternalSource($source: external_source_insert_input!) {
+    mutation CreateExternalSource(
+      $event_type: [external_event_type_insert_input!]!
+      $source: external_source_insert_input!,
+      $source_type: external_source_type_insert_input!,
+    ) {
+      upsertExternalEventType: ${Queries.INSERT_EXTERNAL_EVENT_TYPE}(
+        objects: $event_type,
+        on_conflict: {
+          constraint: external_event_type_name_key
+        }
+      ) {
+        returning {
+          name
+        }
+      }
+      upsertExternalSourceType: ${Queries.INSERT_EXTERNAL_SOURCE_TYPE} (
+        object: $source_type,
+        on_conflict: {
+          constraint: external_source_type_name_key
+        }
+      ) {
+        name
+      }
       createExternalSource: insert_external_source_one(object: $source) {
         id
       }
@@ -1466,7 +1490,7 @@ const gql = {
   query GetExternalEvents($source_id: Int!) {
     ${Queries.EXTERNAL_EVENT}(where: {source_id: {_eq: $source_id}}) {
       properties
-      event_type_id
+      event_type_name
       id
       key
       duration
@@ -1477,11 +1501,11 @@ const gql = {
   `,
 
   GET_EXTERNAL_EVENT_BY_EVENT_TYPE: `#graphql
-  query GetExternalEventByEventType($event_type_id: Int!) {
-    ${Queries.EXTERNAL_EVENT}(where: {event_type_id: { _eq: $event_type_id }}) {
+  query GetExternalEventByEventType($event_type_name: String!) {
+    ${Queries.EXTERNAL_EVENT}(where: {event_type_name: { _eq: $event_type_name }}) {
       id
       key
-      event_type_id
+      event_type_name
       source_id
       start_time
       duration
@@ -1513,11 +1537,11 @@ const gql = {
   `,
 
   GET_EXTERNAL_SOURCE_BY_TYPE: `#graphql
-    query GetExternalSourceByType($source_type_id: Int!) {
-      ${Queries.EXTERNAL_SOURCES}(where: {source_type_id: { _eq: $source_type_id }}) {
+    query GetExternalSourceByType($source_type_name: String!) {
+      ${Queries.EXTERNAL_SOURCES}(where: {source_type_name: { _eq: $source_type_name }}) {
         id
         key
-        source_type_id
+        source_type_name
         valid_at
         start_time
         end_time
@@ -2400,7 +2424,7 @@ const gql = {
       models: ${Queries.DERIVATION_GROUP_COMP}(order_by: {id: asc}) {
         id
         name
-        source_type_id
+        source_type_name
         sources
         event_types
         derived_total
@@ -2500,7 +2524,7 @@ const gql = {
       models: ${Queries.EXTERNAL_SOURCE}(id: $id) {
         id
         key
-        source_type_id
+        source_type_name
         start_time
         end_time
         valid_at
@@ -2514,7 +2538,7 @@ const gql = {
       models: ${Queries.EXTERNAL_SOURCES}(order_by: { key: asc }) {
         id
         key
-        source_type_id
+        source_type_name
         derivation_group_id
         start_time
         end_time
@@ -2755,7 +2779,7 @@ const gql = {
     subscription SubPlanExternalEvents($source_ids: [Int!]!) {
       events: ${Queries.EXTERNAL_EVENT}(where: {source_id: {_in: $source_ids}}) {
         properties
-        event_type_id
+        event_type_name
         id
         key
         duration
@@ -2770,7 +2794,7 @@ const gql = {
       events: derived_events(where: {derivation_group_id: {_in: $derivation_group_ids}}) {
         external_event {
           properties
-          event_type_id
+          event_type_name
           id
           key
           duration

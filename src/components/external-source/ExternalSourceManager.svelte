@@ -6,7 +6,6 @@
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { onDestroy, onMount } from 'svelte';
   import { catchError } from '../../stores/errors';
-  import { externalEventTypes, getEventTypeName } from '../../stores/external-event';
   import {
     createDerivationGroupError,
     createExternalSourceError,
@@ -15,11 +14,11 @@
     derivationGroups,
     externalSourceTypes,
     externalSourceWithResolvedNames,
-    getDerivationGroupByNameSourceTypeId,
+    getDerivationGroupByNameSourceTypeName,
     getEventSourceTypeByName,
     getExternalSourceMetadataError,
     parsingError,
-    planDerivationGroupLinks,
+    planDerivationGroupLinks
   } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import { plans } from '../../stores/plans';
@@ -29,8 +28,7 @@
   import type {
     ExternalEvent,
     ExternalEventDB,
-    ExternalEventType,
-    ExternalEventTypeInsertInput,
+    ExternalEventTypeInsertInput
   } from '../../types/external-event';
   import type {
     DerivationGroup,
@@ -338,7 +336,7 @@
   }
   $: selectedSourceId = selectedSource ? selectedSource.id : null;
   $: filteredExternalSources = $externalSourceWithResolvedNames.filter(externalSource => {
-    return selectedFilters.find(f => f.name === externalSource.source_type) !== undefined;
+    return selectedFilters.find(f => f.name === externalSource.source_type_name) !== undefined;
   });
   $: filteredValues = $externalSourceTypes.filter(externalSourceType =>
     externalSourceType.name.toLowerCase().includes(filterString),
@@ -356,7 +354,7 @@
         return {
           ...eDB,
           durationMs: convertDurationToMs(eDB.duration),
-          event_type: getEventTypeName(eDB.event_type_id, $externalEventTypes),
+          event_type: eDB.event_type_name,
           startMs: convertUTCtoMs(eDB.start_time),
         };
       })),
@@ -457,7 +455,7 @@
       }
       derivationGroupInsert = {
         name: derivationGroupName,
-        source_type_id: -1, // filled in later
+        source_type_name: sourceTypeInsert.name
       };
 
       // create the source object to upload to AERIE
@@ -488,7 +486,7 @@
         },
         key: $keyField.value,
         metadata: parsed.source.metadata,
-        source_type_id: -1, // updated in the effect.
+        source_type_name: sourceTypeInsert.name,
         start_time,
         valid_at,
       };
@@ -498,13 +496,14 @@
       //
       // If event types act up during upload, this line is a likely culprit (if you upload twice really fast and $externalEventTypes doesn't update quick enough)
       // If that's the case, directly use $externalEventTypes concatted with this list each time in the if statement a few lines below
-      let localExternalEventTypes: ExternalEventType[] = [...$externalEventTypes];
+      let externalEventTypeInputs: ExternalEventTypeInsertInput[] = [];
       // Create/set external events and external event types
       if (parsed.events) {
         for (let externalEvent of parsed.events) {
           externalEventTypeInsertInput = {
             name: externalEvent.event_type,
           };
+          externalEventTypeInputs.push(externalEventTypeInsertInput);
 
           // Ensure the duration is valid
           try {
@@ -536,39 +535,21 @@
             externalEvent.start_time !== undefined &&
             externalEvent.duration !== undefined
           ) {
-            let externalEventTypeId: number | undefined = undefined;
-            // Create ExternalEventType if it doesn't exist or grab the ID of the previously created entry,
-            if (!localExternalEventTypes.map(e => e.name).includes(externalEvent.event_type)) {
-              externalEventTypeId = await effects.createExternalEventType(externalEventTypeInsertInput, user);
-              if (externalEventTypeId) {
-                localExternalEventTypes.push({
-                  id: externalEventTypeId,
-                  name: externalEvent.event_type,
-                });
-              }
-            } else {
-              // ...or find the existing ExternalEventType's id,
-              externalEventTypeId = localExternalEventTypes.find(
-                externalEventType => externalEventType.name === externalEvent.event_type,
-              )?.id;
-            }
-            if (externalEventTypeId !== undefined) {
-              // ...and then add it to a list. We have this extra split out step as our JSON/DB-compatible hybrids at this point contain both
-              //      event_type and event_type_id, but the database can only accept event_type_id, so this step drops event_type
-              const { event_type, ...db_compatible_fields } = externalEvent;
+            // We have this extra split out step as our JSON/DB-compatible hybrids at this point contain both
+            //      event_type and event_type_id, but the database can only accept event_type_id, so this step drops event_type
+            const { event_type, ...db_compatible_fields } = externalEvent;
 
-              // extra, optional step to only take stuff that the database can accept in. Eventually, can be handled by JSON Schema, see comment in external-event.ts
-              const { duration, id, key, properties, start_time } = db_compatible_fields;
+            // extra, optional step to only take stuff that the database can accept in. Eventually, can be handled by JSON Schema, see comment in external-event.ts
+            const { duration, id, key, properties, start_time } = db_compatible_fields;
 
-              externalEventsCreated.push({
-                duration,
-                event_type_id: externalEventTypeId,
-                id,
-                key,
-                properties,
-                start_time,
-              });
-            }
+            externalEventsCreated.push({
+              duration,
+              event_type_name: externalEvent.event_type,
+              id,
+              key,
+              properties,
+              start_time,
+            });
           }
         }
       }
@@ -592,7 +573,7 @@
           derivationGroupInsert !== undefined
         ) {
           if (sourceType !== undefined) {
-            derivationGroupInsert.source_type_id = sourceType.id;
+            derivationGroupInsert.source_type_name = sourceType.name;
           } else {
             // TODO: This should really never happen, but should it cause the source to fail completely?
             console.log(
@@ -604,14 +585,14 @@
         // Case 2) Name present, but under a different source type ID
         else if (
           $derivationGroups.filter(
-            dGroup => dGroup.source_type_id !== sourceType?.id && dGroup.name === derivationGroupInsert.name,
+            dGroup => dGroup.source_type_name !== sourceType?.name && dGroup.name === derivationGroupInsert.name,
           ).length > 0 &&
           $derivationGroups.filter(
-            dGroup => dGroup.source_type_id === sourceType?.id && dGroup.name === derivationGroupInsert.name,
+            dGroup => dGroup.source_type_name === sourceType?.name && dGroup.name === derivationGroupInsert.name,
           ).length === 0
         ) {
           if (sourceType !== undefined) {
-            derivationGroupInsert.source_type_id = sourceType.id;
+            derivationGroupInsert.source_type_name = sourceType.name;
           } else {
             // TODO: This should really never happen, but should it cause the source to fail completely?
             console.log(
@@ -622,16 +603,16 @@
         }
         // Case 3) Name and source type ID pair present
         else if (sourceType !== undefined) {
-          derivationGroup = getDerivationGroupByNameSourceTypeId(derivationGroupName, sourceType.id, $derivationGroups);
+          derivationGroup = getDerivationGroupByNameSourceTypeName(derivationGroupName, sourceType.name, $derivationGroups);
         }
 
         if (sourceType !== undefined && derivationGroup !== undefined) {
-          sourceInsert.source_type_id = sourceType.id;
+          sourceInsert.source_type_name = sourceType.name;
           sourceInsert.derivation_group_id = derivationGroup.id;
           if (selectedFilters.find(filter => filter.name === sourceType?.name) === undefined) {
             selectedFilters.push(sourceType);
           }
-          sourceId = await effects.createExternalSource(sourceInsert, user);
+          sourceId = await effects.createExternalSource(sourceInsert, sourceTypeInsert, externalEventTypeInputs, user);
         }
       }
 
@@ -642,7 +623,7 @@
           derivation_group: derivationGroupName,
           id: sourceId,
           ...sourceInsert,
-          source_type: sourceType?.name,
+          source_type_name: sourceType?.name,
           total_groups: $derivationGroups.length, // kind of unnecessary here, but necessary in this type for the table and coloring
         };
         gridRowSizes = gridRowSizesBottomPanel;
@@ -736,7 +717,7 @@
           : selectedRowId
             ? `Selected Event`
             : selectedSource
-              ? `#${selectedSource.id} – ${selectedSource.source_type}`
+              ? `#${selectedSource.id} – ${selectedSource.source_type_name}`
               : 'Upload a Source File'}</SectionTitle
       >
       {#if selectedEvent || selectedRowId}
@@ -778,7 +759,7 @@
 
             <Input layout="inline">
               Source Type
-              <input class="st-input w-100" disabled={true} name="source-type" value={selectedSource.source_type} />
+              <input class="st-input w-100" disabled={true} name="source-type" value={selectedSource.source_type_name} />
             </Input>
 
             <Input layout="inline">
