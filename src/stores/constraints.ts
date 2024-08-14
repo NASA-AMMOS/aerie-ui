@@ -22,8 +22,6 @@ export const constraintsViolationStatus: Writable<Status | null> = writable(null
 
 export const constraintVisibilityMapWritable: Writable<Record<ConstraintMetadata['id'], boolean>> = writable({});
 
-// export const checkConstraintsStatus: Writable<Status | null> = writable(null);
-
 export const rawConstraintResponses: Writable<ConstraintResponse[]> = writable([]);
 
 export const constraintsColumns: Writable<string> = writable('1fr 3px 1fr');
@@ -89,22 +87,29 @@ export const constraintVisibilityMap: Readable<Record<ConstraintMetadata['id'], 
 );
 
 export const constraintResponseMap: Readable<Record<ConstraintDefinition['constraint_id'], ConstraintResponse>> =
-  derived([rawConstraintResponses, planStartTimeMs], ([$constraintResponses, $planStartTimeMs]) =>
+  derived([constraintRuns, planStartTimeMs], ([$constraintRuns, $planStartTimeMs]) =>
     keyBy(
-      $constraintResponses.map(response => ({
-        ...response,
-        results: {
-          ...response.results,
-          violations:
-            response.results.violations?.map(violation => ({
-              ...violation,
-              windows: violation.windows.map(({ end, start }) => ({
-                end: $planStartTimeMs + end / 1000,
-                start: $planStartTimeMs + start / 1000,
-              })),
-            })) ?? null,
-        },
-      })),
+      $constraintRuns.map(
+        run =>
+          ({
+            constraintId: run.constraint_id,
+            constraintName: '',
+            errors: [],
+            results: {
+              ...run.results,
+              violations:
+                run.results.violations?.map(violation => ({
+                  ...violation,
+                  windows: violation.windows.map(({ end, start }) => ({
+                    end: $planStartTimeMs + end / 1000,
+                    start: $planStartTimeMs + start / 1000,
+                  })),
+                })) ?? null,
+            },
+            success: true,
+            type: 'plan',
+          }) as ConstraintResponse,
+      ),
       'constraintId',
     ),
   );
@@ -112,12 +117,13 @@ export const constraintResponseMap: Readable<Record<ConstraintDefinition['constr
 export const uncheckedConstraintCount: Readable<number> = derived(
   [allowedConstraintSpecs, constraintResponseMap],
   ([$allowedConstraintSpecs, $constraintResponseMap]) => {
-    return $allowedConstraintSpecs.reduce((count, prev) => {
+    const foo = $allowedConstraintSpecs.reduce((count, prev) => {
       if (!(prev.constraint_id in $constraintResponseMap)) {
         count++;
       }
       return count;
     }, 0);
+    return foo;
   },
 );
 
@@ -158,7 +164,7 @@ export const visibleConstraintResults: Readable<ConstraintResultWithName[]> = de
       .map(constraintRun => constraintRun.results),
 );
 
-export const checkConstraintsStatus: Readable<Status | null> = derived(
+export const cachedConstraintsStatus: Readable<Status | null> = derived(
   [relevantConstraintRuns],
   ([$relevantConstraintRuns]) => {
     return $relevantConstraintRuns.reduce((status: Status, constraintRun: ConstraintRun) => {
@@ -169,24 +175,22 @@ export const checkConstraintsStatus: Readable<Status | null> = derived(
       }
 
       return status;
-    }, Status.Incomplete);
+    }, Status.Unchecked);
   },
 );
 
 export const constraintsStatus: Readable<Status | null> = derived(
-  [checkConstraintsStatus, constraintsViolationStatus, uncheckedConstraintCount],
-  ([$checkConstraintsStatus, $constraintsViolationStatus, $uncheckedConstraintCount]) => {
-    if (!$checkConstraintsStatus) {
+  [cachedConstraintsStatus, constraintsViolationStatus, uncheckedConstraintCount],
+  ([$cachedConstraintsStatus, $constraintsViolationStatus, $uncheckedConstraintCount]) => {
+    if (!$cachedConstraintsStatus) {
       return null;
-    }
-    if ($checkConstraintsStatus !== Status.Complete) {
-      return $checkConstraintsStatus;
-    }
-    if ($uncheckedConstraintCount > 0) {
-      return Status.Unchecked;
+    } else if ($cachedConstraintsStatus !== Status.Complete || $constraintsViolationStatus) {
+      return $constraintsViolationStatus ?? $cachedConstraintsStatus;
+    } else if ($uncheckedConstraintCount > 0) {
+      return Status.PartialSuccess;
     }
 
-    return $constraintsViolationStatus;
+    return $constraintsViolationStatus ?? $cachedConstraintsStatus;
   },
 );
 
@@ -210,11 +214,11 @@ export function resetPlanConstraintStores() {
 }
 
 export function resetConstraintStores(): void {
-  // checkConstraintsStatus.set(null);
+  // cachedConstraintsStatus.set(null);
   rawConstraintResponses.set([]);
 }
 
 export function resetConstraintStoresForSimulation(): void {
-  // checkConstraintsStatus.set(Status.Unchecked);
+  // cachedConstraintsStatus.set(Status.Unchecked);
   rawConstraintResponses.set([]);
 }

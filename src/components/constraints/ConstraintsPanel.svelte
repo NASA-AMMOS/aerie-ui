@@ -12,7 +12,7 @@
   import {
     allowedConstraintPlanSpecMap,
     allowedConstraintSpecs,
-    checkConstraintsStatus,
+    cachedConstraintsStatus,
     constraintPlanSpecs,
     constraintResponseMap,
     constraintVisibilityMap,
@@ -326,7 +326,7 @@
       {:else}
         <div class="pt-1 st-typography-label filter-label-row">
           <div class="filter-label">
-            {#if $checkConstraintsStatus}
+            {#if $cachedConstraintsStatus}
               <FilterIcon />
               {filteredConstraints.length} of {$allowedConstraintSpecs.length} constraints, {filteredViolationCount} of
               {totalViolationCount} violations

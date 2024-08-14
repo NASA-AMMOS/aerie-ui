@@ -11,13 +11,13 @@
   import { hexToRgba } from '../../utilities/color';
   import {
     formatSimulationQueuePosition,
-    getHumanReadableStatus,
     getSimulationExtent,
     getSimulationProgress,
     getSimulationProgressColor,
     getSimulationStatus,
     getSimulationTimestamp,
   } from '../../utilities/simulation';
+  import { getHumanReadableStatus } from '../../utilities/status';
   import { formatDate, getUnixEpochTimeFromInterval, removeDateStringMilliseconds } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import Card from '../ui/Card.svelte';

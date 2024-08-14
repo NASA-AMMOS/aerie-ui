@@ -43,7 +43,6 @@
     selectedActivityDirectiveId,
   } from '../../../stores/activities';
   import {
-    checkConstraintsStatus,
     constraintResponseMap,
     constraintsStatus,
     constraintsViolationStatus,
@@ -120,6 +119,7 @@
   import type { Extension } from '../../../types/extension';
   import type { PlanSnapshot } from '../../../types/plan-snapshot';
   import type { View, ViewSaveEvent, ViewToggleEvent } from '../../../types/view';
+  import { getConstraintStatus } from '../../../utilities/constraint';
   import effects from '../../../utilities/effects';
   import { getSearchParameterNumber, removeQueryParam, setQueryParam } from '../../../utilities/generic';
   import { isSaveEvent } from '../../../utilities/keyboardEvents';
@@ -128,7 +128,6 @@
   import { featurePermissions } from '../../../utilities/permissions';
   import {
     formatSimulationQueuePosition,
-    getHumanReadableStatus,
     getSimulationExtent,
     getSimulationProgress,
     getSimulationProgressColor,
@@ -136,7 +135,7 @@
     getSimulationStatus,
     getSimulationTimestamp,
   } from '../../../utilities/simulation';
-  import { statusColors } from '../../../utilities/status';
+  import { getHumanReadableStatus, statusColors } from '../../../utilities/status';
   import { pluralize } from '../../../utilities/text';
   import { getUnixEpochTime } from '../../../utilities/time';
   import { tooltip } from '../../../utilities/tooltip';
@@ -699,7 +698,7 @@
           buttonText="Check Constraints"
           hasPermission={hasCheckConstraintsPermission}
           disabled={$simulationStatus !== Status.Complete}
-          statusBadgeText={($checkConstraintsStatus === Status.Complete || $checkConstraintsStatus === Status.Failed) &&
+          statusBadgeText={($constraintsStatus === Status.Complete || $constraintsStatus === Status.Failed) &&
           numConstraintsViolated + numConstraintsWithErrors + $uncheckedConstraintCount > 0
             ? `${numConstraintsViolated + numConstraintsWithErrors + $uncheckedConstraintCount}`
             : undefined}
@@ -715,12 +714,12 @@
           <VerticalCollapseIcon />
           <svelte:fragment slot="metadata">
             <div class="st-typography-body constraints-status">
-              {#if $checkConstraintsStatus}
+              {#if $constraintsStatus}
                 <div class="constraints-status-item">
-                  <StatusBadge status={$checkConstraintsStatus} indeterminate showTooltip={false} />
-                  Check constraints: {getHumanReadableStatus($checkConstraintsStatus)}
+                  <StatusBadge status={$constraintsStatus} indeterminate showTooltip={false} />
+                  Check constraints: {getConstraintStatus($constraintsStatus)}
                 </div>
-                {#if $checkConstraintsStatus === Status.Complete || $checkConstraintsStatus === Status.Failed}
+                {#if $constraintsStatus === Status.Complete || $constraintsStatus === Status.Failed || $constraintsStatus === Status.PartialSuccess}
                   <div class="constraints-status-item">
                     <StatusBadge status={$constraintsViolationStatus} showTooltip={false} />
                     {#if numConstraintsViolated > 0}
