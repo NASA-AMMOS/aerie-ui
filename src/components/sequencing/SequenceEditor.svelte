@@ -38,6 +38,7 @@
   import type { IOutputFormat, Parcel } from '../../types/sequencing';
   import { setupLanguageSupport } from '../../utilities/codemirror';
   import effects from '../../utilities/effects';
+  import { downloadBlob, downloadJSON } from '../../utilities/generic';
   import { seqJsonLinter } from '../../utilities/sequence-editor/seq-json-linter';
   import { sequenceAutoIndent } from '../../utilities/sequence-editor/sequence-autoindent';
   import { sequenceCompletion } from '../../utilities/sequence-editor/sequence-completion';
@@ -274,25 +275,17 @@
   }
 
   function downloadOutputFormat(outputFormat: IOutputFormat) {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(
-      new Blob([editorOutputView.state.doc.toString()], {
-        type: outputFormat?.fileExtension === 'json' ? 'application/json' : 'text/plain',
-      }),
-    );
-    a.download = `${sequenceName}.${outputFormat?.fileExtension}`;
-    a.click();
+    const fileExtension = `${sequenceName}.${selectedOutputFormat?.fileExtension}`;
+
+    if (outputFormat?.fileExtension === 'json') {
+      downloadJSON(editorOutputView.state.doc.toJSON(), fileExtension);
+    } else {
+      downloadBlob(new Blob([editorOutputView.state.doc.toString()], { type: 'text/plain' }), fileExtension);
+    }
   }
 
   function downloadInputFormat() {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(
-      new Blob([editorSequenceView.state.doc.toString()], {
-        type: selectedOutputFormat?.fileExtension === 'json' ? 'application/json' : 'text/plain',
-      }),
-    );
-    a.download = `${sequenceName}.${selectedOutputFormat?.fileExtension}`;
-    a.click();
+    downloadBlob(new Blob([editorOutputView.state.doc.toString()], { type: 'text/plain' }), `${sequenceName}.txt`);
   }
 
   async function copyOutputFormatToClipboard() {
