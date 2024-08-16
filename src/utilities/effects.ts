@@ -859,7 +859,7 @@ const effects = {
         );
         if (created) {
           creatingExternalEventType.set(false);
-          return created.id;
+          return created.name;
         } else {
           throw Error('Unable to create external event type');
         }
@@ -2431,11 +2431,11 @@ const effects = {
     }
   },
 
-  async deleteExternalEventType(event_type_id: number | null, user: User | null): Promise<void> {
+  async deleteExternalEventType(event_type_name: string | null, user: User | null): Promise<void> {
     try {
       // to do this, all dgs associated should be deleted.
-      if (event_type_id !== null) {
-        const data = await reqHasura<{ id: number }>(gql.DELETE_EXTERNAL_EVENT_TYPE, { id: event_type_id }, user);
+      if (event_type_name !== null) {
+        const data = await reqHasura<{ id: number }>(gql.DELETE_EXTERNAL_EVENT_TYPE, { name: event_type_name }, user);
         if (data.deleteDerivationGroup === null) {
           throw Error('Unable to delete external event type');
         }
@@ -2473,13 +2473,13 @@ const effects = {
     return false;
   },
 
-  async deleteExternalSourceSeenEntry(sources_seen: UserSeenEntry[], user: User | null) {
+  async deleteExternalSourceSeenEntry(sourcesSeen: UserSeenEntry[], user: User | null) {
     try {
       if (!queryPermissions.DELETE_SEEN_SOURCE_ENTRY(user)) {
         throwPermissionError('mark viewership of an external source');
       }
 
-      for (const entry of sources_seen) {
+      for (const entry of sourcesSeen) {
         const { deleteSeenSources: deleted } = await reqHasura(
           gql.DELETE_SEEN_SOURCE_ENTRY,
           {
@@ -2499,13 +2499,13 @@ const effects = {
     }
   },
 
-  async deleteExternalSourceType(external_source_type: number | null, user: User | null): Promise<void> {
+  async deleteExternalSourceType(externalSourceTypeName: string | null, user: User | null): Promise<void> {
     try {
       // to do this, all dgs associated should be deleted.
-      if (external_source_type !== null) {
+      if (externalSourceTypeName !== null) {
         const data = await reqHasura<{ id: number }>(
           gql.DELETE_EXTERNAL_SOURCE_TYPE,
-          { id: external_source_type },
+          { name: externalSourceTypeName },
           user,
         );
         if (data.deleteDerivationGroup === null) {
@@ -3524,17 +3524,15 @@ const effects = {
 
   async getExternalEventTypes(plan_id: number, user: User | null): Promise<ExternalEventType[]> {
     try {
-      const source_data = await reqHasura<any>(gql.GET_PLAN_EVENT_TYPES, { plan_id }, user);
-      const type_ids: Set<number> = new Set();
+      const sourceData = await reqHasura<any>(gql.GET_PLAN_EVENT_TYPES, { plan_id }, user);
       const types: ExternalEventType[] = [];
-      if (source_data?.plan_derivation_group !== null) {
-        for (const group of source_data['plan_derivation_group']) {
+      if (sourceData?.plan_derivation_group !== null) {
+        for (const group of sourceData['plan_derivation_group']) {
           for (const source of group['derivation_group']['external_source']) {
             for (const event of source['external_events']) {
-              const type = event['external_event_type'];
-              if (!type_ids.has(type['id'])) {
-                type_ids.add(type['id']);
-                types.push(type);
+              // TODO: Don't even think we need 'as ExternalEventType', we can just leave these as strings of the name(s)
+              if (!types.includes(event.external_event_type)) {
+                types.push(event.external_event_type);
               }
             }
           }

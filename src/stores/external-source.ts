@@ -161,33 +161,6 @@ export function resetModelStores() {
   createDerivationGroupError.set(null);
   derivationGroupPlanLinkError.set(null);
 }
-export function getExternalSourceTypeByName(
-  sourceTypeName: string,
-  externalSourceTypes: ExternalSourceType[],
-): ExternalSourceType | undefined {
-  return externalSourceTypes.find(est => est.name === sourceTypeName);
-}
 export function getSourceName(source_id: number | undefined, sources: ExternalSourceSlim[]): string {
   return sources.find(s => s.id === source_id)?.key ?? 'None';
-}
-export function getEventSourceTypeName(id: number, sourceTypes: ExternalSourceType[]): string | undefined {
-  return sourceTypes.find(sourceType => sourceType.id === id)?.name;
-}
-export function getEventSourceTypeId(name: string, sourceTypes: ExternalSourceType[]): number | undefined {
-  return sourceTypes.find(sourceType => sourceType.name === name)?.id;
-}
-export function getEventSourceTypeByName(
-  name: string,
-  sourceTypes: ExternalSourceType[],
-): ExternalSourceType | undefined {
-  return sourceTypes.find(sourceType => sourceType.name === name);
-}
-export function getDerivationGroupByNameSourceTypeName(
-  name: string,
-  sourceTypeName: string,
-  derivationGroups: DerivationGroup[],
-): DerivationGroup | undefined {
-  return derivationGroups.find(
-    derivationGroup => derivationGroup.name === name && derivationGroup.source_type_name === sourceTypeName,
-  );
 }

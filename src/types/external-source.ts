@@ -52,7 +52,6 @@ export type PlanDerivationGroup = {
 };
 
 export type ExternalSourceType = {
-  id: number;
   name: string;
 };
 
