@@ -698,7 +698,9 @@
           buttonText="Check Constraints"
           hasPermission={hasCheckConstraintsPermission}
           disabled={$simulationStatus !== Status.Complete}
-          statusBadgeText={($constraintsStatus === Status.Complete || $constraintsStatus === Status.Failed) &&
+          statusBadgeText={($constraintsStatus === Status.Complete ||
+            $constraintsStatus === Status.Failed ||
+            $constraintsStatus === Status.PartialSuccess) &&
           numConstraintsViolated + numConstraintsWithErrors + $uncheckedConstraintCount > 0
             ? `${numConstraintsViolated + numConstraintsWithErrors + $uncheckedConstraintCount}`
             : undefined}
