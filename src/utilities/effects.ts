@@ -12,11 +12,7 @@ import { DictionaryTypes } from '../enums/dictionaryTypes';
 import { SearchParameters } from '../enums/searchParameters';
 import { Status } from '../enums/status';
 import { activityDirectivesDB, selectedActivityDirectiveId } from '../stores/activities';
-import {
-  constraintsViolationStatus,
-  rawConstraintResponses,
-  resetConstraintStoresForSimulation,
-} from '../stores/constraints';
+import { rawConstraintResponses, resetConstraintStoresForSimulation } from '../stores/constraints';
 import { catchError, catchSchedulingError } from '../stores/errors';
 import {
   createExpansionRuleError,
@@ -380,8 +376,6 @@ const effects = {
 
   async checkConstraints(plan: Plan, user: User | null): Promise<void> {
     try {
-      // checkConstraintsStatus.set(Status.Incomplete);
-      constraintsViolationStatus.set(null);
       if (plan !== null) {
         const { id: planId } = plan;
         const data = await reqHasura<ConstraintResponse[]>(
@@ -402,20 +396,10 @@ const effects = {
           const failedConstraintResponses = data.constraintResponses.filter(
             constraintResponse => !constraintResponse.success,
           );
-
-          const anyViolations = successfulConstraintResults.reduce((bool, prev) => {
-            if (prev.violations && prev.violations.length > 0) {
-              bool = true;
-            }
-            return bool;
-          }, false);
-          constraintsViolationStatus.set(anyViolations ? Status.Failed : Status.Complete);
-
           if (successfulConstraintResults.length === 0 && data.constraintResponses.length > 0) {
             showFailureToast('All Constraints Failed');
           } else if (successfulConstraintResults.length !== data.constraintResponses.length) {
             showFailureToast('Constraints Partially Checked');
-            constraintsViolationStatus.set(Status.Failed);
           } else {
             showSuccessToast('All Constraints Checked');
           }

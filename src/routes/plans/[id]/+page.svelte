@@ -43,9 +43,9 @@
     selectedActivityDirectiveId,
   } from '../../../stores/activities';
   import {
+    cachedConstraintsStatus,
     constraintResponseMap,
     constraintsStatus,
-    constraintsViolationStatus,
     resetConstraintStores,
     resetPlanConstraintStores,
     uncheckedConstraintCount,
@@ -723,7 +723,7 @@
                 </div>
                 {#if $constraintsStatus === Status.Complete || $constraintsStatus === Status.Failed || $constraintsStatus === Status.PartialSuccess}
                   <div class="constraints-status-item">
-                    <StatusBadge status={$constraintsViolationStatus} showTooltip={false} />
+                    <StatusBadge status={$cachedConstraintsStatus} showTooltip={false} />
                     {#if numConstraintsViolated > 0}
                       <div style:color="var(--st-error-red)">
                         {numConstraintsViolated} constraint{pluralize(numConstraintsViolated)}

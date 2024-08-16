@@ -6,19 +6,18 @@ import type {
   ConstraintMetadata,
   ConstraintPlanSpec,
   ConstraintResponse,
+  ConstraintResult,
   ConstraintResultWithName,
   ConstraintRun,
 } from '../types/constraint';
 import gql from '../utilities/gql';
 import { planId, planStartTimeMs } from './plan';
-import { simulationDatasetId } from './simulation';
+import { simulationDatasetLatestId } from './simulation';
 import { gqlSubscribable } from './subscribable';
 
 /* Writeable. */
 
 export const constraintMetadataId: Writable<number> = writable(-1);
-
-export const constraintsViolationStatus: Writable<Status | null> = writable(null);
 
 export const constraintVisibilityMapWritable: Writable<Record<ConstraintMetadata['id'], boolean>> = writable({});
 
@@ -32,7 +31,7 @@ export const constraints = gqlSubscribable<ConstraintMetadata[]>(gql.SUB_CONSTRA
 
 export const constraintRuns = gqlSubscribable<ConstraintRun[]>(
   gql.SUB_CONSTRAINT_RUNS,
-  { simulationDatasetId },
+  { simulationDatasetId: simulationDatasetLatestId },
   [],
   null,
 );
@@ -86,9 +85,41 @@ export const constraintVisibilityMap: Readable<Record<ConstraintMetadata['id'], 
   },
 );
 
+export const relevantRawConstraintResponses: Readable<ConstraintResponse[]> = derived(
+  [rawConstraintResponses, constraintPlanSpecsMap],
+  ([$rawConstraintResponses, $constraintPlanSpecsMap]) => {
+    return $rawConstraintResponses.filter(response => $constraintPlanSpecsMap[response.constraintId] != null);
+  },
+);
+
+export const constraintsViolationStatus: Readable<Status | null> = derived(
+  [relevantRawConstraintResponses],
+  ([$relevantRawConstraintResponses]) => {
+    if ($relevantRawConstraintResponses.length) {
+      const successfulConstraintResults: ConstraintResult[] = $relevantRawConstraintResponses
+        .filter(constraintResponse => constraintResponse.success)
+        .map(constraintResponse => constraintResponse.results);
+
+      const anyViolations = successfulConstraintResults.reduce((bool, prev) => {
+        if (prev.violations && prev.violations.length > 0) {
+          bool = true;
+        }
+        return bool;
+      }, false);
+
+      if (successfulConstraintResults.length !== $relevantRawConstraintResponses.length) {
+        return Status.Failed;
+      }
+
+      return anyViolations ? Status.Failed : Status.Complete;
+    }
+    return null;
+  },
+);
+
 export const constraintResponseMap: Readable<Record<ConstraintDefinition['constraint_id'], ConstraintResponse>> =
   derived(
-    [constraintRuns, rawConstraintResponses, planStartTimeMs],
+    [constraintRuns, relevantRawConstraintResponses, planStartTimeMs],
     ([$constraintRuns, $checkConstraintResponse, $planStartTimeMs]) => {
       const cachedResponseMap = keyBy(
         $constraintRuns.map(
@@ -209,7 +240,7 @@ export const constraintsStatus: Readable<Status | null> = derived(
   ([$cachedConstraintsStatus, $constraintsViolationStatus, $uncheckedConstraintCount]) => {
     if (!$cachedConstraintsStatus) {
       return null;
-    } else if ($cachedConstraintsStatus !== Status.Complete || $constraintsViolationStatus) {
+    } else if ($cachedConstraintsStatus !== Status.Complete) {
       return $constraintsViolationStatus ?? $cachedConstraintsStatus;
     } else if ($uncheckedConstraintCount > 0) {
       return Status.PartialSuccess;
