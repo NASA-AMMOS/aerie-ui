@@ -875,6 +875,7 @@ const effects = {
   },
 
   async createExternalSource(
+    derivationGroup: DerivationGroupInsertInput,
     source: ExternalSourceInsertInput,
     sourceType: ExternalSourceTypeInsertInput,
     eventTypes: ExternalEventTypeInsertInput[],
@@ -887,19 +888,23 @@ const effects = {
 
       creatingExternalSource.set(true);
       createExternalSourceError.set(null);
-      const { createExternalSource: created } = await reqHasura(
+      const createExternalSourceResponse = await reqHasura(
         gql.CREATE_EXTERNAL_SOURCE,
         {
+          derivation_group: derivationGroup,
           event_type: eventTypes,
           source: source,
           source_type: sourceType,
         },
         user,
       );
-      if (created) {
+      if (
+        createExternalSourceResponse.createExternalSource !== undefined &&
+        createExternalSourceResponse.createExternalSource !== null
+      ) {
         showSuccessToast('External Source Created Successfully');
         creatingExternalSource.set(false);
-        return created.id;
+        return createExternalSourceResponse;
       } else {
         throw Error(`Unable to create external source`);
       }
@@ -921,7 +926,7 @@ const effects = {
         return {
           derivation_group: source_seen.derivation_group,
           external_source_name: source_seen.key,
-          external_source_type: source_seen.source_type,
+          external_source_type: source_seen.source_type_name,
           user: user?.id,
         };
       });
@@ -2219,10 +2224,14 @@ const effects = {
     }
   },
 
-  async deleteDerivationGroup(derivation_group_id: number | null, user: User | null): Promise<void> {
+  async deleteDerivationGroup(derivationGroupName: string | null, user: User | null): Promise<void> {
     try {
-      if (derivation_group_id !== null) {
-        const data = await reqHasura<{ id: number }>(gql.DELETE_DERIVATION_GROUP, { id: derivation_group_id }, user);
+      if (derivationGroupName !== null) {
+        const data = await reqHasura<{ name: string }>(
+          gql.DELETE_DERIVATION_GROUP,
+          { name: derivationGroupName },
+          user,
+        );
         if (data.deleteDerivationGroup === null) {
           throw Error('Unable to delete derivation group');
         }
@@ -2232,7 +2241,11 @@ const effects = {
     }
   },
 
-  async deleteDerivationGroupForPlan(derivation_group_id: number, plan: Plan | null, user: User | null): Promise<void> {
+  async deleteDerivationGroupForPlan(
+    derivation_group_name: string,
+    plan: Plan | null,
+    user: User | null,
+  ): Promise<void> {
     try {
       if ((plan && !queryPermissions.DELETE_PLAN_DERIVATION_GROUP(user, plan)) || !plan) {
         throwPermissionError('delete a derivation group from the plan');
@@ -2250,7 +2263,7 @@ const effects = {
           {
             where: {
               _and: {
-                derivation_group_id: { _eq: derivation_group_id },
+                derivation_group_name: { _eq: derivation_group_name },
                 plan_id: { _eq: plan.id },
               },
             },
@@ -2264,7 +2277,7 @@ const effects = {
         } else {
           // show the source name instead??? unsure
           throw Error(
-            `Unable to disassociate Derivation Group with ID "${derivation_group_id}" on plan with ID ${plan.id}`,
+            `Unable to disassociate Derivation Group with name "${derivation_group_name}" on plan with ID ${plan.id}`,
           );
         }
       } else {
@@ -2472,7 +2485,7 @@ const effects = {
           {
             derivation_group: entry.derivation_group,
             external_source_name: entry.key,
-            external_source_type: entry.source_type,
+            external_source_type: entry.source_type_name,
             user: user?.id,
           },
           user,
@@ -3563,7 +3576,6 @@ const effects = {
 
   async getExternalEvents(source_id: number | undefined, user: User | null): Promise<ExternalEventDB[]> {
     if (!source_id) {
-      console.log('SourceId is undefined.');
       return [];
     }
     try {
@@ -4712,7 +4724,7 @@ const effects = {
     }
   },
 
-  async insertDerivationGroupForPlan(derivation_group_id: number, plan: Plan | null, user: User | null): Promise<void> {
+  async insertDerivationGroupForPlan(derivationGroupName: string, plan: Plan | null, user: User | null): Promise<void> {
     try {
       if ((plan && !queryPermissions.CREATE_PLAN_DERIVATION_GROUP(user, plan)) || !plan) {
         throwPermissionError('add a derivation group to the plan');
@@ -4724,7 +4736,7 @@ const effects = {
           gql.CREATE_PLAN_DERIVATION_GROUP,
           {
             source: {
-              derivation_group_id: derivation_group_id,
+              derivation_group_name: derivationGroupName,
               plan_id: plan.id,
             },
           },
@@ -4735,7 +4747,7 @@ const effects = {
           // store updates automatically, because its a subscription!
           showSuccessToast('Derivation Group Linked Successfully');
         } else {
-          throw Error(`Unable to link Derivation Group with ID "${derivation_group_id}" on plan with ID ${plan.id}`);
+          throw Error(`Unable to link Derivation Group with name "${derivationGroupName}" on plan with ID ${plan.id}`);
         }
       } else {
         throw Error('Plan is not defined.');

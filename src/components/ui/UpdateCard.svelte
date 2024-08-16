@@ -16,7 +16,7 @@
   let mappedSources: { [sourceType: string]: { [derivationGroup: string]: UserSeenEntry[] } } = {};
 
   $: sources.forEach(source => {
-    let sourceType = source.source_type;
+    let sourceType = source.source_type_name;
     let derivationGroup = source.derivation_group;
     if (sourceType && derivationGroup) {
       if (mappedSources[sourceType] && mappedSources[sourceType][derivationGroup]) {

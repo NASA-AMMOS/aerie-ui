@@ -220,7 +220,7 @@ export async function showDeleteDerivationGroupModal(
           target.resolve = null;
           resolve({ confirm: true });
           try {
-            effects.deleteDerivationGroup(derivationGroup.id, user);
+            effects.deleteDerivationGroup(derivationGroup.name, user);
             showSuccessToast('Successfully deleted derivation group');
           } catch (e) {
             showFailureToast('Failed to delete derivation group');
