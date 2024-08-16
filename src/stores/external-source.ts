@@ -77,21 +77,27 @@ export const planDerivationGroupLinks = gqlSubscribable<PlanDerivationGroup[]>(
   null,
 );
 export const usersSeenSourcesRaw = gqlSubscribable<
-  { derivation_group: string; external_source_name: string; external_source_type: string; id: number; user: string }[]
+  {
+    derivation_group: string;
+    external_source_name: string;
+    external_source_type: string;
+    id: number;
+    username: string;
+  }[]
 >(gql.SUB_SEEN_SOURCES, {}, [], null);
 export const usersSeenSources = derived<[typeof usersSeenSourcesRaw], { [key: string]: UserSeenEntry[] }>(
   [usersSeenSourcesRaw],
   ([$rawSeen]) => {
     const res: Record<string, UserSeenEntry[]> = {};
     for (const entry of $rawSeen) {
-      if (res[entry.user]) {
-        res[entry.user].push({
+      if (res[entry.username]) {
+        res[entry.username].push({
           derivation_group: entry.derivation_group,
           key: entry.external_source_name,
           source_type_name: entry.external_source_type,
         });
       } else {
-        res[entry.user] = [
+        res[entry.username] = [
           {
             derivation_group: entry.derivation_group,
             key: entry.external_source_name,

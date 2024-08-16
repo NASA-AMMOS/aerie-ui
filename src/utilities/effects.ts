@@ -927,7 +927,7 @@ const effects = {
           derivation_group: source_seen.derivation_group,
           external_source_name: source_seen.key,
           external_source_type: source_seen.source_type_name,
-          user: user?.id,
+          username: user?.id,
         };
       });
       const { createSeenSourceEntry: created } = await reqHasura(gql.CREATE_SEEN_SOURCE_ENTRY, { entries }, user);
@@ -2486,7 +2486,7 @@ const effects = {
             derivation_group: entry.derivation_group,
             external_source_name: entry.key,
             external_source_type: entry.source_type_name,
-            user: user?.id,
+            username: user?.id,
           },
           user,
         );
