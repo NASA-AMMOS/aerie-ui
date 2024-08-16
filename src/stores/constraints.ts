@@ -19,6 +19,8 @@ import { gqlSubscribable } from './subscribable';
 
 export const constraintMetadataId: Writable<number> = writable(-1);
 
+export const rawCheckConstraintsStatus: Writable<Status | null> = writable(null);
+
 export const constraintVisibilityMapWritable: Writable<Record<ConstraintMetadata['id'], boolean>> = writable({});
 
 export const rawConstraintResponses: Writable<ConstraintResponse[]> = writable([]);
@@ -235,10 +237,28 @@ export const cachedConstraintsStatus: Readable<Status | null> = derived(
   },
 );
 
+export const checkConstraintsStatus: Readable<Status | null> = derived(
+  [rawCheckConstraintsStatus, cachedConstraintsStatus],
+  ([$rawCheckConstraintsStatus, $cachedConstraintsStatus]) => {
+    if ($rawCheckConstraintsStatus !== null) {
+      return $rawCheckConstraintsStatus;
+    }
+
+    if ($cachedConstraintsStatus !== null && $cachedConstraintsStatus !== Status.Unchecked) {
+      return Status.Complete;
+    }
+
+    console.log('rawCheckConstraintsStatus :>> ', $rawCheckConstraintsStatus);
+    return Status.Unchecked;
+  },
+);
+
 export const constraintsStatus: Readable<Status | null> = derived(
-  [cachedConstraintsStatus, constraintsViolationStatus, uncheckedConstraintCount],
-  ([$cachedConstraintsStatus, $constraintsViolationStatus, $uncheckedConstraintCount]) => {
-    if (!$cachedConstraintsStatus) {
+  [cachedConstraintsStatus, constraintsViolationStatus, checkConstraintsStatus, uncheckedConstraintCount],
+  ([$cachedConstraintsStatus, $constraintsViolationStatus, $checkConstraintsStatus, $uncheckedConstraintCount]) => {
+    if ($checkConstraintsStatus === Status.Incomplete) {
+      return Status.Incomplete;
+    } else if (!$cachedConstraintsStatus) {
       return null;
     } else if ($cachedConstraintsStatus !== Status.Complete) {
       return $constraintsViolationStatus ?? $cachedConstraintsStatus;

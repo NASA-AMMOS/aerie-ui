@@ -12,7 +12,11 @@ import { DictionaryTypes } from '../enums/dictionaryTypes';
 import { SearchParameters } from '../enums/searchParameters';
 import { Status } from '../enums/status';
 import { activityDirectivesDB, selectedActivityDirectiveId } from '../stores/activities';
-import { rawConstraintResponses, resetConstraintStoresForSimulation } from '../stores/constraints';
+import {
+  rawCheckConstraintsStatus,
+  rawConstraintResponses,
+  resetConstraintStoresForSimulation,
+} from '../stores/constraints';
 import { catchError, catchSchedulingError } from '../stores/errors';
 import {
   createExpansionRuleError,
@@ -376,6 +380,7 @@ const effects = {
 
   async checkConstraints(plan: Plan, user: User | null): Promise<void> {
     try {
+      rawCheckConstraintsStatus.set(Status.Incomplete);
       if (plan !== null) {
         const { id: planId } = plan;
         const data = await reqHasura<ConstraintResponse[]>(
@@ -398,10 +403,13 @@ const effects = {
           );
           if (successfulConstraintResults.length === 0 && data.constraintResponses.length > 0) {
             showFailureToast('All Constraints Failed');
+            rawCheckConstraintsStatus.set(Status.Failed);
           } else if (successfulConstraintResults.length !== data.constraintResponses.length) {
             showFailureToast('Constraints Partially Checked');
+            rawCheckConstraintsStatus.set(Status.Failed);
           } else {
             showSuccessToast('All Constraints Checked');
+            rawCheckConstraintsStatus.set(Status.Complete);
           }
 
           if (failedConstraintResponses.length > 0) {

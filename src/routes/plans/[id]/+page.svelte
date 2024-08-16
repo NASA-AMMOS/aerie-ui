@@ -44,6 +44,7 @@
   } from '../../../stores/activities';
   import {
     cachedConstraintsStatus,
+    checkConstraintsStatus,
     constraintResponseMap,
     constraintsStatus,
     resetConstraintStores,
@@ -718,8 +719,8 @@
             <div class="st-typography-body constraints-status">
               {#if $constraintsStatus}
                 <div class="constraints-status-item">
-                  <StatusBadge status={$constraintsStatus} indeterminate showTooltip={false} />
-                  Check constraints: {getConstraintStatus($constraintsStatus)}
+                  <StatusBadge status={$checkConstraintsStatus} indeterminate showTooltip={false} />
+                  Check constraints: {getConstraintStatus($checkConstraintsStatus)}
                 </div>
                 {#if $constraintsStatus === Status.Complete || $constraintsStatus === Status.Failed || $constraintsStatus === Status.PartialSuccess}
                   <div class="constraints-status-item">
