@@ -150,7 +150,7 @@ describe('Handle modal and requests in effects', () => {
       vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
 
       await effects.insertDerivationGroupForPlan(
-        1,
+        'Default',
         {
           id: 1,
           owner: 'test',
@@ -160,7 +160,7 @@ describe('Handle modal and requests in effects', () => {
 
       expect(catchErrorSpy).toHaveBeenCalledWith(
         'Derivation Group Linking Failed',
-        Error('Unable to link Derivation Group with ID "1" on plan with ID 1'),
+        Error('Unable to link Derivation Group with name "Default" on plan with ID 1'),
       );
     });
   });
@@ -173,7 +173,7 @@ describe('Handle modal and requests in effects', () => {
       vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
 
       await effects.deleteDerivationGroupForPlan(
-        1,
+        'Default',
         {
           id: 1,
           owner: 'test',
@@ -183,7 +183,7 @@ describe('Handle modal and requests in effects', () => {
 
       expect(catchErrorSpy).toHaveBeenCalledWith(
         'Derivation Group De-linking Failed',
-        Error('Unable to disassociate Derivation Group with ID "1" on plan with ID 1'),
+        Error('Unable to disassociate Derivation Group with name "Default" on plan with ID 1'),
       );
     });
   });
@@ -198,7 +198,7 @@ describe('Handle modal and requests in effects', () => {
       await effects.createDerivationGroup(
         {
           name: 'test',
-          source_type_id: 1,
+          source_type_name: 'Example Source',
         } as DerivationGroupInsertInput,
         user,
       );
@@ -217,7 +217,7 @@ describe('Handle modal and requests in effects', () => {
       });
       vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
 
-      await effects.deleteDerivationGroup(1, user);
+      await effects.deleteDerivationGroup('Defualt', user);
 
       expect(catchErrorSpy).toHaveBeenCalledWith(
         'Derivation Group Deletion Failed',
@@ -277,20 +277,30 @@ describe('Handle modal and requests in effects', () => {
       vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
 
       await effects.createExternalSource(
-        new File(['{sample-source-data}'], 'sample-source.json', {
-          type: 'text/plain',
-        }),
         {
+          name: 'Default',
+          source_type_name: 'Example Source',
+        } as DerivationGroupInsertInput,
+        {
+          derivation_group_name: 'Default',
           end_time: '',
           external_events: {
             data: {},
           },
           key: '',
           metadata: {},
-          source_type_id: 1,
+          source_type_name: 'Example Source',
           start_time: '',
           valid_at: ''
         } as ExternalSourceInsertInput,
+        {
+          name: 'Example Source',
+        } as ExternalSourceTypeInsertInput,
+        [
+          {
+            name: 'Example Event',
+          } as ExternalEventTypeInsertInput,
+        ],
         user,
       );
 

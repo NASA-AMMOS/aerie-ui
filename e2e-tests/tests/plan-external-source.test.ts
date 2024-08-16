@@ -19,7 +19,7 @@ let schedulingConditions: SchedulingConditions;
 let schedulingGoals: SchedulingGoals;
 let userA: User;
 let userB: User;
-const extendedTimeout = 50000;
+const extendedTimeout = 1000;
 
 test.beforeEach(async () => {
   await plan.goto(); // Refresh page to reset the view
@@ -57,7 +57,7 @@ test.afterAll(async () => {
   await externalSources.selectSourceFilter();
   await page.waitForTimeout(500); // Arbitrary wait timing, allows external sources table to populate
   if (await page.getByRole('gridcell', { name: 'example-external-source.json' }).first().isVisible()) {
-    await externalSources.deleteSource();
+    await externalSources.deleteSource('example-external-source.json');
     await page.getByText('External Source Deleted').waitFor({ state: 'hidden', timeout: extendedTimeout });
     await page
       .getByRole('gridcell', { name: 'example-external-source.json' })
@@ -115,78 +115,6 @@ test.describe.serial('Plan External Sources', () => {
     await expect(page.getByText('Derivation Group Disassociated Successfully')).toBeVisible();
   });
 
-  test('Linked derivation groups should be expandable in panel', async () => {
-    await plan.showPanel(PanelNames.EXTERNAL_SOURCES);
-    // Link derivation group to plan if it isn't already
-    if ((await page.getByText('No Derivation Groups Linked To This Plan').isVisible()) === true) {
-      await plan.externalSourceManageButton.click();
-      await page.getByText('No Derivation Groups Found').waitFor({ state: 'hidden', timeout: extendedTimeout });
-      await page.getByRole('row', { name: 'Example External Source' }).getByRole('checkbox').click();
-      await expect(page.getByText('Derivation Group Linked Successfully')).toBeVisible();
-    } else {
-      await plan.externalSourceManageButton.click();
-    }
-    // Wait until the sources are loaded
-    await page
-      .locator('div')
-      .filter({ hasText: /^No sources in this group\. Delete Empty Derivation Group$/ })
-      .locator('p')
-      .waitFor({ state: 'hidden', timeout: extendedTimeout });
-    // Expand all collapse buttons and validate fields appear
-    await expect(page.getByRole('gridcell', { name: 'Example External Source' })).toBeVisible();
-    await page.getByLabel('View Derivation Group').click();
-    await page.getByRole('button', { name: 'ExampleExternalSource:example' }).click();
-    await page
-      .locator('#svelte-modal')
-      .getByText('Key: ExampleExternalSource:example-external-source.json')
-      .waitFor({ state: 'visible', timeout: extendedTimeout });
-    await expect(
-      page.locator('#svelte-modal').getByText('Key: ExampleExternalSource:example-external-source.json').first(),
-    ).toBeVisible();
-    await expect(page.locator('#svelte-modal').getByText('Source Type: Example External Source').first()).toBeVisible();
-    await expect(page.locator('#svelte-modal').getByText('Start Time: 2024-021T00:00:00').first()).toBeVisible();
-    await expect(page.locator('#svelte-modal').getByText('End Time: 2024-028T00:00:00').first()).toBeVisible();
-    await expect(page.locator('#svelte-modal').getByText('Valid At: 2024-019T00:00:00').first()).toBeVisible();
-    await expect(page.locator('#svelte-modal').getByText('Created At', { exact: false }).first()).toBeVisible();
-  });
-
-  test('Derivation group can be expanded in modal', async () => {
-    await plan.showPanel(PanelNames.EXTERNAL_SOURCES);
-    await plan.externalSourceManageButton.click();
-    await page
-      .getByRole('row', { name: 'Example External Source' })
-      .getByRole('checkbox')
-      .waitFor({ state: 'visible', timeout: extendedTimeout });
-    await page.getByRole('row', { name: 'Example External Source' }).first().hover();
-    await page
-      .getByRole('row', { name: 'Example External Source' })
-      .getByLabel('View Derivation Group')
-      .first()
-      .click();
-    await expect(
-      page
-        .locator('div')
-        .filter({ hasText: /^Sources in 'Default'$/ })
-        .first(),
-    ).toBeVisible();
-    await page
-      .locator('div')
-      .filter({ hasText: /^No sources in this group\. Delete Empty Derivation Group$/ })
-      .locator('p')
-      .waitFor({ state: 'hidden', timeout: extendedTimeout });
-    // Expand all collapse buttons to validate fields appear
-    await expect(page.getByRole('button', { name: 'example-external-source.json 4' }).first()).toBeVisible();
-    await page.getByRole('button', { name: 'example-external-source.json 4' }).first().click();
-    await expect(
-      page.locator('#svelte-modal').getByText('Key: ExampleExternalSource:example-external-source.json'),
-    ).toBeVisible();
-    await expect(page.locator('#svelte-modal').getByText('Source Type: Example External Source')).toBeVisible();
-    await expect(page.locator('#svelte-modal').getByText('Start Time: 2024-021T00:00:00')).toBeVisible();
-    await expect(page.locator('#svelte-modal').getByText('End Time: 2024-028T00:00:00')).toBeVisible();
-    await expect(page.locator('#svelte-modal').getByText('Valid At: 2024-019T00:00:00')).toBeVisible();
-    await expect(page.locator('#svelte-modal').getByText('Created At')).toBeVisible();
-  });
-
   test('Cards should be shown when a file is added or deleted from a plans linked derivation group', async () => {
     // Upload a test file and link its derivation group to the plan
     await externalSources.goto();
@@ -204,9 +132,6 @@ test.describe.serial('Plan External Sources', () => {
     await page.getByText('External Source Created').waitFor({ state: 'hidden' }); // Wait for toast to go away to stall for processes to finish
     await plan.goto();
     await plan.showPanel(PanelNames.EXTERNAL_SOURCES);
-    await plan.externalSourceManageButton.click();
-    await page.waitForTimeout(10000);
-    await page.getByRole('button', { name: 'Close' }).click();
     // Allow stores to load
     await page
       .getByText('New files matching source types and derivation groups in the current plan')
@@ -229,13 +154,11 @@ test.describe.serial('Plan External Sources', () => {
       await expect(page.getByText('Derivation Group Disassociated Successfully')).toBeVisible();
     }
     await externalSources.goto();
-    await externalSources.deleteSource(externalSources.derivationTestFile1.split('/')[-1]);
-    await externalSources.deleteSource(externalSources.derivationTestFile2.split('/')[-1]);
+    await externalSources.deleteSource('Derivation_Test_00.json');
+    await externalSources.deleteSource('Derivation_Test_01.json');
     await plan.goto();
     await plan.showPanel(PanelNames.EXTERNAL_SOURCES);
     await expect(page.getByText('Deleted files organized by source type and derivation group')).toBeVisible();
-    //await expect(page.locator('p').filter({ hasText: /^Derivation_Test_00\.json$/ })).toBeVisible();
-    //await expect(page.locator('p').filter({ hasText: /^Derivation_Test_01\.json$/ })).toBeVisible();
     await expect(page.getByText('Derivation_Test_01.json').first()).toBeVisible();
   });
 
@@ -275,7 +198,7 @@ test.describe.serial('Plan External Sources', () => {
     }
 
     // Check on event counts in the panel
-    await page.getByRole('button', { exact: false, name: 'Derivation group Default' }).click();
+    await page.getByRole('button', { exact: false, name: 'Derivation group Derivation Test Default' }).click();
     await expect(page.getByRole('button', { name: 'Derivation_Test_00.json' })).toHaveCount(1);
     await expect(page.getByRole('button', { name: 'Derivation_Test_01.json' })).toHaveCount(1);
     await expect(page.getByRole('button', { name: 'Derivation_Test_02.json' })).toHaveCount(1);
@@ -298,6 +221,81 @@ test.describe.serial('Plan External Sources', () => {
       console.log(await row.textContent());
       await expect(row).toContainText(expectedData[index - 1]);
     }
+  });
+
+  test('Linked derivation groups should be expandable in panel', async () => {
+    await plan.showPanel(PanelNames.EXTERNAL_SOURCES);
+    // Link derivation group to plan if it isn't already
+    if ((await page.getByText('No Derivation Groups Linked To This Plan').isVisible()) === true) {
+      await plan.externalSourceManageButton.click();
+      await page.getByText('No Derivation Groups Found').waitFor({ state: 'hidden', timeout: extendedTimeout });
+      await page.getByRole('row', { name: 'Example External Source' }).getByRole('checkbox').click();
+      await expect(page.getByText('Derivation Group Linked Successfully')).toBeVisible();
+    } else {
+      await plan.externalSourceManageButton.click();
+    }
+    // Wait until the sources are loaded
+    await page
+      .locator('div')
+      .filter({ hasText: /^No sources in this group\. Delete Empty Derivation Group$/ })
+      .locator('p')
+      .waitFor({ state: 'hidden', timeout: extendedTimeout });
+    // Expand all collapse buttons and validate fields appear
+    await expect(page.getByRole('gridcell', { exact: true, name: 'Example External Source' })).toBeVisible();
+    await page
+      .getByRole('row', { name: 'Example External Source Default Example External Source' })
+      .getByLabel('View Derivation Group')
+      .click();
+    await page.getByRole('button', { name: 'ExampleExternalSource:example' }).click();
+    await page
+      .locator('#svelte-modal')
+      .getByText('Key: ExampleExternalSource:example-external-source.json')
+      .waitFor({ state: 'visible', timeout: extendedTimeout });
+    await expect(
+      page.locator('#svelte-modal').getByText('Key: ExampleExternalSource:example-external-source.json').first(),
+    ).toBeVisible();
+    await expect(page.locator('#svelte-modal').getByText('Source Type: Example External Source').first()).toBeVisible();
+    await expect(page.locator('#svelte-modal').getByText('Start Time: 2024-021T00:00:00').first()).toBeVisible();
+    await expect(page.locator('#svelte-modal').getByText('End Time: 2024-028T00:00:00').first()).toBeVisible();
+    await expect(page.locator('#svelte-modal').getByText('Valid At: 2024-019T00:00:00').first()).toBeVisible();
+    await expect(page.locator('#svelte-modal').getByText('Created At', { exact: false }).first()).toBeVisible();
+  });
+
+  test('Derivation group can be expanded in modal', async () => {
+    await plan.showPanel(PanelNames.EXTERNAL_SOURCES);
+    await plan.externalSourceManageButton.click();
+    await page
+      .getByRole('row', { name: 'Example External Source' })
+      .getByRole('checkbox')
+      .waitFor({ state: 'visible', timeout: extendedTimeout });
+    await page.getByRole('row', { name: 'Example External Source' }).first().hover();
+    await page
+      .getByRole('row', { name: 'Example External Source' })
+      .getByLabel('View Derivation Group')
+      .first()
+      .click();
+    await expect(
+      page
+        .locator('div')
+        .filter({ hasText: /^Sources in 'Example External Source Default'$/ })
+        .first(),
+    ).toBeVisible();
+    await page
+      .locator('div')
+      .filter({ hasText: /^No sources in this group\. Delete Empty Derivation Group$/ })
+      .locator('p')
+      .waitFor({ state: 'hidden', timeout: extendedTimeout });
+    // Expand all collapse buttons to validate fields appear
+    await expect(page.getByRole('button', { name: 'example-external-source.json 4' }).first()).toBeVisible();
+    await page.getByRole('button', { name: 'example-external-source.json 4' }).first().click();
+    await expect(
+      page.locator('#svelte-modal').getByText('Key: ExampleExternalSource:example-external-source.json'),
+    ).toBeVisible();
+    await expect(page.locator('#svelte-modal').getByText('Source Type: Example External Source')).toBeVisible();
+    await expect(page.locator('#svelte-modal').getByText('Start Time: 2024-021T00:00:00')).toBeVisible();
+    await expect(page.locator('#svelte-modal').getByText('End Time: 2024-028T00:00:00')).toBeVisible();
+    await expect(page.locator('#svelte-modal').getByText('Valid At: 2024-019T00:00:00')).toBeVisible();
+    await expect(page.locator('#svelte-modal').getByText('Created At')).toBeVisible();
   });
 
   test('External source plan view should reset when the user is changed', async ({ baseURL }) => {

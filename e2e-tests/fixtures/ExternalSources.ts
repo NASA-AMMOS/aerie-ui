@@ -47,9 +47,10 @@ export class ExternalSources {
     await this.closeButton.click();
   }
 
-  async deleteSource(sourceName: string = 'example-external-source.json') {
+  async deleteSource(sourceName: string | undefined) {
+    const source: string = sourceName !== undefined ? sourceName : 'example-external-source.json';
     // Assumes a source has already been uploaded and it is the first row in the table
-    await this.selectSource(sourceName);
+    await this.selectSource(source);
     await this.deleteSourceButton.click();
     await this.deleteSourceButtonConfirmation.click();
     await this.page.getByText('External Source Deleted').waitFor({ state: 'visible' });
@@ -85,6 +86,7 @@ export class ExternalSources {
     // Always selects all sources as the filter
     await this.page.getByPlaceholder('Filter by Source Type').click();
     await this.page.locator('#source-filters-select-all').click();
+    await this.page.keyboard.press('Escape'); // Un-focus the filter menu
   }
 
   async updatePage(page: Page): Promise<void> {

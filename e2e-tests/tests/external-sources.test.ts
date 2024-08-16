@@ -103,13 +103,17 @@ test.describe.serial('External Source Error Handling', () => {
     await expect(page.getByLabel('Uniqueness violation.')).toBeVisible();
     await expect(page.getByText('External Source Create Failed')).toBeVisible();
     await expect(page.getByRole('gridcell', { name: externalSources.externalSourceFileName })).toHaveCount(1);
-    await externalSources.deleteSource();
+    await externalSources.deleteSource('example-external-source.json');
     await expect(page.getByText('External Source Deleted')).toBeVisible();
   });
 
   test("Invalid 'source' field is handled gracefully", async () => {
     await externalSources.uploadExternalSource(externalSources.externalSourceFilePathMissingField, false);
-    await expect(page.getByText('External Source Type Create Failed')).toBeVisible();
+    await expect(
+      page.getByText(
+        'Not-NULL violation. null value in column "name" of relation "external_source_type" violates not-null constraint',
+      ),
+    ).toBeVisible();
   });
 
   test('Syntax error is handled gracefully', async () => {
