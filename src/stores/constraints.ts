@@ -248,7 +248,6 @@ export const checkConstraintsStatus: Readable<Status | null> = derived(
       return Status.Complete;
     }
 
-    console.log('rawCheckConstraintsStatus :>> ', $rawCheckConstraintsStatus);
     return Status.Unchecked;
   },
 );
