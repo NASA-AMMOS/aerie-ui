@@ -82,7 +82,7 @@ export type ViewDefinition = {
   plan: {
     activityDirectivesTable: ViewTable;
     activitySpansTable: ViewTable;
-    filteredDerivationGroups: number[];
+    filteredDerivationGroups: string[];
     grid: ViewGrid;
     iFrames: ViewIFrame[];
     simulationEventsTable: ViewTable;
