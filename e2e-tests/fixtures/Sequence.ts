@@ -26,9 +26,12 @@ export class Sequence {
 
   constructor(public page: Page) {}
 
-  async createSequence(parcelName: string): Promise<string> {
+  async createSequence(workspaceName: string, parcelName: string): Promise<string> {
+    await this.filterTable(this.workspaceTable, this.workspaceName);
+    await this.workspaceTableRow.click();
+
     await this.page.locator('button:has-text("New")').click();
-    await this.page.waitForURL('/sequencing/new**');
+    await this.page.waitForURL('/sequencing/new?workspaceId=**');
 
     // select parcel
     this.updatePage(this.page);
@@ -44,6 +47,7 @@ export class Sequence {
     await this.editor.click();
     await this.editor.fill('C FSW_CMD_0');
     await this.page.getByRole('button', { name: 'Save' }).click();
+    await this.page.waitForURL('/sequencing/edit/**?workspaceId=**');
     await this.page.getByRole('button', { name: 'Close' }).click();
 
     this.updatePage(this.page);
@@ -53,7 +57,7 @@ export class Sequence {
     return this.sequenceName;
   }
 
-  async createWorkspace() {
+  async createWorkspace(): Promise<string> {
     await this.page.locator('button:has-text("Create Workspace")').click();
 
     this.updatePage(this.page);
@@ -67,8 +71,10 @@ export class Sequence {
     await expect(this.workspaceModal).not.toBeVisible();
 
     this.updatePage(this.page);
-    await this.filterTable(this.workspaceTable, this.workspaceName);
-    await this.workspaceTableRow.click();
+    await this.workspaceTableRow.waitFor({ state: 'attached' });
+    await this.workspaceTableRow.waitFor({ state: 'visible' });
+
+    return this.workspaceName;
   }
 
   async deleteSequence() {

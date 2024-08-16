@@ -36,7 +36,7 @@ test.describe.serial('Sequence', () => {
     await sequence.createWorkspace();
   });
   test('Create new sequence', async () => {
-    await sequence.createSequence(parcels.parcelName);
+    await sequence.createSequence(sequence.workspaceName, parcels.parcelName);
   });
   test('Open and modify a sequence via form editor', async () => {
     await sequence.modifySequence();
