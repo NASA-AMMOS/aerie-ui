@@ -743,7 +743,7 @@ const gql = {
       createSeenSourceEntry: ${Queries.INSERT_SEEN_SOURCE_ENTRY}(objects: $entries) {
         returning {
           id,
-          user,
+          username,
           derivation_group,
           external_source_name,
           external_source_type
@@ -1232,10 +1232,10 @@ const gql = {
 
   // Sadly, not a great way to compare fields within a type, even if its a type GraphQL recognizes. As such, many different parameters, called one by one
   DELETE_SEEN_SOURCE_ENTRY: `#graphql
-    mutation DeleteSeenSourceEntry($user: String!, $derivation_group: String!, $external_source_name: String!, $external_source_type: String!) {
+    mutation DeleteSeenSourceEntry($username: String!, $derivation_group: String!, $external_source_name: String!, $external_source_type: String!) {
       deleteSeenSources: ${Queries.DELETE_SEEN_SOURCES}(where: {
         _and: {
-          user: {_eq: $user},
+          username: {_eq: $username},
           derivation_group: {_eq: $derivation_group},
           external_source_name: {_eq: $external_source_name},
           external_source_type: {_eq: $external_source_type}
@@ -3311,7 +3311,7 @@ const gql = {
     subscription SubSeenSources {
       seen_sources {
         id,
-        user,
+        username,
         derivation_group,
         external_source_name,
         external_source_type
