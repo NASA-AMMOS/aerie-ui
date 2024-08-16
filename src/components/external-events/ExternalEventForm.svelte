@@ -51,7 +51,12 @@
         <Highlight highlight={highlightKeysMap.type}>
           <Input layout="inline">
             Type
-            <input class="st-input w-100" disabled={!editable} name="event-type" value={externalEvent.event_type_name} />
+            <input
+              class="st-input w-100"
+              disabled={!editable}
+              name="event-type"
+              value={externalEvent.event_type_name}
+            />
           </Input>
         </Highlight>
 

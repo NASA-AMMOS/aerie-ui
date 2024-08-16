@@ -8,10 +8,8 @@
   import {
     derivationGroupPlanLinkError,
     derivationGroups,
-    externalSourceTypes,
     externalSourceWithResolvedNames,
-    getEventSourceTypeName,
-    selectedPlanDerivationGroupIds,
+    selectedPlanDerivationGroupNames,
   } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import { plugins } from '../../stores/plugins';
@@ -51,7 +49,7 @@
   let dataGrid: DataGrid<DerivationGroup>;
   let baseColumnDefs: DataGridColumnDef<DerivationGroup>[] = [];
 
-  selectedPlanDerivationGroupIds.subscribe(() => {
+  selectedPlanDerivationGroupNames.subscribe(() => {
     if (baseColumnDefs.length > 0 && dataGrid) {
       // no current way to change just a specific cell unless we add something about plan associations to the DG object,
       //    which we don't seek to do.
@@ -85,13 +83,9 @@
       sortable: true,
       suppressAutoSize: false,
       suppressSizeToFit: false,
-      valueFormatter: params => {
-        const sourceTypeName = getEventSourceTypeName(params?.value, $externalSourceTypes);
-        return sourceTypeName ? sourceTypeName : '';
-      },
     },
     {
-      field: 'derivedEventTotal',
+      field: 'derived_event_total',
       filter: 'number',
       headerName: 'Derived Events in Derivation Group',
       sortable: true,
@@ -105,19 +99,19 @@
       cellRenderer: (params: DerivationGroupCellRendererParams) => {
         var input = document.createElement('input');
         input.type = 'checkbox';
-        input.checked = $selectedPlanDerivationGroupIds.includes(params?.data?.id ?? -1);
+        input.checked = $selectedPlanDerivationGroupNames.includes(params?.data?.name ?? '');
         input.addEventListener('click', event => {
           if (event?.target && params.data) {
             if ((event.target as any).checked) {
               // insert
-              effects.insertDerivationGroupForPlan(params.data.id, $plan, user);
+              effects.insertDerivationGroupForPlan(params.data.name, $plan, user);
               if ($derivationGroupPlanLinkError !== null) {
                 console.log($derivationGroupPlanLinkError);
                 console.log('Failed to link derivation group & plan.');
               } else {
                 // Insert all the external event types from the derivation group to the timeline filter
                 const derivationGroup = $derivationGroups.find(
-                  derivationGroup => derivationGroup.id === params?.data?.id,
+                  derivationGroup => derivationGroup.name === params?.data?.name,
                 );
                 if (derivationGroup !== undefined) {
                   externalEventLayers?.forEach(externalEventLayer => {
@@ -134,7 +128,7 @@
               }
             } else {
               // delete
-              effects.deleteDerivationGroupForPlan(params.data.id, $plan, user);
+              effects.deleteDerivationGroupForPlan(params.data.name, $plan, user);
               if ($derivationGroupPlanLinkError !== null) {
                 console.log($derivationGroupPlanLinkError);
                 console.log('Failed to unlink derivation group & plan.');
@@ -169,14 +163,13 @@
     console.log(modalColumnSize);
   }
   $: selectedDerivationGroupSources = $externalSourceWithResolvedNames.filter(
-    source => selectedDerivationGroup?.id === source.derivation_group_id,
+    source => selectedDerivationGroup?.name === source.derivation_group_name,
   );
 
   $: filteredDerivationGroups = $derivationGroups.filter(derivationGroup => {
     const filterTextLowerCase = filterText.toLowerCase();
-    const includesId = `${derivationGroup.id}`.includes(filterTextLowerCase);
     const includesName = derivationGroup.name.toLocaleLowerCase().includes(filterTextLowerCase);
-    return includesId || includesName;
+    return includesName;
   });
 
   $: {
@@ -215,8 +208,12 @@
   }
 
   function viewDerivationGroup(derivationGroup: DerivationGroup) {
-    const dg = $derivationGroups.find(dg => dg.id === derivationGroup.id);
+    const dg = $derivationGroups.find(dg => dg.name === derivationGroup.name);
     selectedDerivationGroup = dg;
+  }
+
+  function getRowId(derivationGroup: DerivationGroup): string {
+    return `${derivationGroup.name}:${derivationGroup.source_type_name}`;
   }
 </script>
 
@@ -246,7 +243,7 @@
         <hr />
         <div class="constraiderivationgroups-modal-table-container" style="height:100%">
           {#if filteredDerivationGroups.length}
-            <DataGrid bind:this={dataGrid} {columnDefs} rowData={filteredDerivationGroups} />
+            <DataGrid bind:this={dataGrid} {columnDefs} rowData={filteredDerivationGroups} {getRowId} />
           {:else}
             <div class="p1 st-typography-label">No Derivation Groups Found</div>
           {/if}

@@ -5,7 +5,7 @@ import type { ExternalEventDB, ExternalEventInsertInput, ExternalEventJson } fro
 // This is the type that conforms with the database schema. We don't really use it, as it is pretty heavyweight - instead we derive lighter types from it.
 export type ExternalSourceDB = {
   created_at: string;
-  derivation_group_id: number;
+  derivation_group_name: string;
   end_time: string;
   external_events: ExternalEventDB[];
   id: number;
@@ -34,22 +34,20 @@ export type ExternalSourceJson = {
 // For use in retrieval of source information sans bulky items like metadata and event lists (see stores)
 export type ExternalSourceSlim = Pick<
   ExternalSourceDB,
-  'id' | 'key' | 'source_type_name' | 'start_time' | 'end_time' | 'valid_at' | 'derivation_group_id' | 'created_at'
+  'id' | 'key' | 'source_type_name' | 'start_time' | 'end_time' | 'valid_at' | 'derivation_group_name' | 'created_at'
 >;
 
 // For use in ExternalSourceManager tables
 export type ExternalSourceWithResolvedNames = ExternalSourceSlim & {
   derivation_group: string | undefined;
-  // for coloring
-  total_groups: number;
 };
 
-// no analogue (yet) to ExternalEvent because no special durationMs or startMs to draw on a timeline
+// no analogue (yet) to ExternalEvent because no special duration_ms or start_ms to draw on a timeline
 // TODO: add External Source span to timeline in External Source Manager, so if zooming out on timeline
 //        can see where external source spans relative to overall timeline?
 
 export type PlanDerivationGroup = {
-  derivation_group_id: number;
+  derivation_group_name: string;
   plan_id: number | undefined; // because in plan.ts plan is defined on Plan | null...
 };
 
@@ -59,9 +57,8 @@ export type ExternalSourceType = {
 };
 
 export type DerivationGroup = {
-  derivedEventTotal: number;
+  derived_event_total: number;
   event_types: string[];
-  id: number;
   name: string;
   source_type_name: string;
   sources: Map<string, { event_counts: number }>;
@@ -73,7 +70,7 @@ export type ExternalSourceWithDateInfo = ExternalSourceWithResolvedNames & { cha
 // This is used for the GraphQL mutation.
 export type ExternalSourceInsertInput = Pick<
   ExternalSourceDB,
-  'key' | 'metadata' | 'source_type_name' | 'start_time' | 'end_time' | 'valid_at' | 'derivation_group_id'
+  'key' | 'metadata' | 'source_type_name' | 'start_time' | 'end_time' | 'valid_at' | 'derivation_group_name'
 > & {
   external_events: {
     data: ExternalEventInsertInput[] | null;
@@ -82,9 +79,9 @@ export type ExternalSourceInsertInput = Pick<
 
 // This is used exclusively to track when users have and haven't seen an entry
 export type UserSeenEntry = {
-  derivation_group: string | undefined; // needs compatibility with ExternalSourceWithResolvedNames
+  derivation_group: string | undefined;
   key: string;
-  source_type: string | undefined; // needs compatibility with ExternalSourceWithResolvedNames
+  source_type_name: string | undefined;
 };
 
 export type ExternalSourceTypeInsertInput = Pick<ExternalSourceType, 'name'>;

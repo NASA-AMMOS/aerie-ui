@@ -6,9 +6,9 @@
     derivationGroups,
     externalSources,
     externalSourceWithResolvedNames,
-    planDerivationGroupIdsToFilter,
     planDerivationGroupLinks,
-    usersSeenSources
+    planDerivationGroupNamesToFilter,
+    usersSeenSources,
   } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import { originalView } from '../../stores/views';
@@ -50,16 +50,16 @@
     }
   }
 
-  let planDerivationGroupIdsToFilterParsed: { [plan_id: number]: number[] } = JSON.parse(
-    $planDerivationGroupIdsToFilter,
+  let planDerivationGroupNamesToFilterParsed: { [plan_id: number]: string[] } = JSON.parse(
+    $planDerivationGroupNamesToFilter,
   );
 
-  $: planDerivationGroupIdsToFilterParsed = JSON.parse($planDerivationGroupIdsToFilter);
+  $: planDerivationGroupNamesToFilterParsed = JSON.parse($planDerivationGroupNamesToFilter);
   $: linkedDerivationGroupIds = $planDerivationGroupLinks
     .filter(link => link.plan_id === $plan?.id)
-    .map(link => link.derivation_group_id);
+    .map(link => link.derivation_group_name);
   $: filteredDerivationGroups = $derivationGroups
-    .filter(group => linkedDerivationGroupIds.includes(group.id))
+    .filter(group => linkedDerivationGroupIds.includes(group.name))
     .filter(group => {
       const filterTextLowerCase = filterText.toLowerCase();
       const includesName = group.name.toLocaleLowerCase().includes(filterTextLowerCase);
@@ -70,7 +70,10 @@
     // ...and repopulate it every time the links change. this handles deletion correctly
     if (group.source_type_name) {
       // undefined is being very frustrating
-      if (mappedDerivationGroups[group.source_type_name] && !mappedDerivationGroups[group.source_type_name].map(g => g.id).includes(group.id)) {
+      if (
+        mappedDerivationGroups[group.source_type_name] &&
+        !mappedDerivationGroups[group.source_type_name].map(g => g.name).includes(group.name)
+      ) {
         // use string later for source type
         mappedDerivationGroups[group.source_type_name]?.push(group);
       } else {
@@ -83,9 +86,9 @@
   originalView.subscribe(ov => {
     // any time a new view is selected, change the enabled list
     if (ov && $plan) {
-      planDerivationGroupIdsToFilterParsed[$plan.id] = ov?.definition.plan.filteredDerivationGroups;
+      planDerivationGroupNamesToFilterParsed[$plan.id] = ov?.definition.plan.filteredDerivationGroups;
     }
-    planDerivationGroupIdsToFilter.set(JSON.stringify(planDerivationGroupIdsToFilterParsed));
+    planDerivationGroupNamesToFilter.set(JSON.stringify(planDerivationGroupNamesToFilterParsed));
   });
 
   function onManageDerivationGroups() {

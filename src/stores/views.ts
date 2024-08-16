@@ -287,7 +287,7 @@ export function viewUpdateActivitySpansTable(update: Partial<ViewTable>): void {
   });
 }
 
-export function viewUpdateFilteredDerivationGroupIds(update: number[]): void {
+export function viewUpdateFilteredDerivationGroupIds(update: string[]): void {
   view.update(currentView => {
     if (currentView !== null) {
       return {

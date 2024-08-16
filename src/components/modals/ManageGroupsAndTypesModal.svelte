@@ -5,11 +5,7 @@
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import { createEventDispatcher } from 'svelte';
   import { externalEventTypes } from '../../stores/external-event';
-  import {
-    derivationGroups,
-    externalSourceTypes,
-    externalSourceWithResolvedNames
-  } from '../../stores/external-source';
+  import { derivationGroups, externalSourceTypes, externalSourceWithResolvedNames } from '../../stores/external-source';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalEventType } from '../../types/external-event';
@@ -84,7 +80,7 @@
       suppressSizeToFit: false,
     },
     {
-      field: 'derivedEventTotal',
+      field: 'derived_event_total',
       filter: 'number',
       headerName: 'Derived Events in Derivation Group',
       sortable: true,
@@ -367,7 +363,7 @@
   let selectedExternalEventTypeDerivationGroups: DerivationGroup[] = [];
 
   $: selectedDerivationGroupSources = $externalSourceWithResolvedNames.filter(
-    source => selectedDerivationGroup?.id === source.derivation_group_id,
+    source => selectedDerivationGroup?.name === source.derivation_group_name,
   );
 
   $: selectedExternalSourceTypeDerivationGroups = $derivationGroups.filter(dg => {
@@ -441,7 +437,7 @@
   }
 
   function viewDerivationGroup(derivationGroup: DerivationGroup) {
-    const dg = $derivationGroups.find(dg => dg.id === derivationGroup.id);
+    const dg = $derivationGroups.find(dg => dg.name === derivationGroup.name);
     if (selectedDerivationGroup === undefined || selectedDerivationGroup !== dg) {
       selectedDerivationGroup = dg;
       selectedExternalSourceType = undefined;
@@ -482,6 +478,10 @@
       modalColumnSize = modalColumnSizeNoDetail;
     }
   }
+
+  function getRowId(derivationGroup: DerivationGroup): string {
+    return `${derivationGroup.name}:${derivationGroup.source_type_name}`;
+  }
 </script>
 
 <Modal height={600} width={1000}>
@@ -511,7 +511,7 @@
     <CssGrid columns={modalColumnSize} minHeight="100%">
       <div class="derivationgroups-modal-table-container">
         {#if mode === 'dg'}
-          <DataGrid bind:this={dgDataGrid} columnDefs={dgColumnDefs} rowData={$derivationGroups} />
+          <DataGrid bind:this={dgDataGrid} columnDefs={dgColumnDefs} rowData={$derivationGroups} {getRowId} />
         {:else if mode === 'est'}
           <DataGrid bind:this={estDataGrid} columnDefs={estColumnDefs} rowData={$externalSourceTypes} />
         {:else}
@@ -597,7 +597,7 @@
                 <Collapse title={dg.name} tooltipContent={dg.name} defaultExpanded={false}>
                   <span slot="right">
                     <p style:color="gray">
-                      {dg.derivedEventTotal} events
+                      {dg.derived_event_total} events
                     </p>
                   </span>
                   <p>
@@ -651,7 +651,7 @@
                 <Collapse title={dg.name} tooltipContent={dg.name} defaultExpanded={false}>
                   <span slot="right">
                     <p style:color="gray">
-                      {dg.derivedEventTotal} events
+                      {dg.derived_event_total} events
                     </p>
                   </span>
                   <p>

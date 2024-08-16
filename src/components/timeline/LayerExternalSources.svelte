@@ -196,8 +196,8 @@
     // Display an arrow to the left of a event label if the span is sticky
     // The label should be sticky if the start of the event is clipped and the event is still in view
     const sticky =
-      externalEvent.startMs < viewTimeRange.start &&
-      externalEvent.startMs + externalEvent.durationMs >= viewTimeRange.start;
+      externalEvent.start_ms < viewTimeRange.start &&
+      externalEvent.start_ms + externalEvent.duration_ms >= viewTimeRange.start;
     return `${sticky ? '← ' : ''}${externalEvent.key}`;
   }
 
@@ -252,7 +252,7 @@
         if (externalEventInView(externalEvent, viewTimeRange)) {
           itemsToDraw.push({
             externalEvent: externalEvent,
-            startX: xScaleView(externalEvent.startMs),
+            startX: xScaleView(externalEvent.start_ms),
           });
         }
       });
@@ -313,7 +313,7 @@
     let labelEndX = 0;
     let boxEndX = 0;
     if (externalEvent && xScaleView) {
-      const spanEndX = xScaleView(externalEvent.startMs + externalEvent.durationMs);
+      const spanEndX = xScaleView(externalEvent.start_ms + externalEvent.duration_ms);
       boxEndX = Math.max(boxEndX, spanEndX);
       if (externalEventOptions.labelVisibility !== 'off') {
         labelEndX = Math.max(
@@ -344,7 +344,7 @@
       let newItem;
 
       if (externalEvent && externalEventInView(externalEvent, viewTimeRange)) {
-        newItem = { externalEvent, externalEventStartX: xScaleView(externalEvent.startMs) };
+        newItem = { externalEvent, externalEventStartX: xScaleView(externalEvent.start_ms) };
       }
       if (newItem) {
         itemsToDraw.push(newItem);
@@ -359,7 +359,7 @@
 
       // Draw external event like a span
       if (externalEvent && typeof externalEventStartX === 'number') {
-        const externalEventEndX = xScaleView(externalEvent.startMs + externalEvent.durationMs);
+        const externalEventEndX = xScaleView(externalEvent.start_ms + externalEvent.duration_ms);
         const externalEventRectWidth = Math.max(2, Math.min(externalEventEndX, drawWidth) - externalEventStartX);
         const externalEventColor = idToColorMaps.external_events[externalEvent.id] || externalEventDefaultColor;
         const isSelected = selectedExternalEventId === externalEvent.id;

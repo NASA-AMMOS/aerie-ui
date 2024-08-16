@@ -11,27 +11,19 @@
     createExternalSourceError,
     createExternalSourceTypeError,
     creatingExternalSource,
-    derivationGroups,
     externalSourceTypes,
     externalSourceWithResolvedNames,
-    getDerivationGroupByNameSourceTypeName,
-    getEventSourceTypeByName,
     getExternalSourceMetadataError,
     parsingError,
-    planDerivationGroupLinks
+    planDerivationGroupLinks,
   } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import { plans } from '../../stores/plans';
   import { plugins } from '../../stores/plugins';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
+  import type { ExternalEvent, ExternalEventDB, ExternalEventTypeInsertInput } from '../../types/external-event';
   import type {
-    ExternalEvent,
-    ExternalEventDB,
-    ExternalEventTypeInsertInput
-  } from '../../types/external-event';
-  import type {
-    DerivationGroup,
     DerivationGroupInsertInput,
     ExternalSourceInsertInput,
     ExternalSourceJson,
@@ -96,7 +88,7 @@
 
   let keyField = field<string>('', [required]);
   let sourceTypeField = field<string>('', [required]); // need function to check if in list of allowable types...
-  let derivationGroupField = field<string>('Default', [required]);
+  let derivationGroupField = field<string>('', [required]);
   let startTimeDoyField = field<string>('', [required, timestamp]); // requires validation function
   let endTimeDoyField = field<string>('', [required, timestamp]); // requires validation function
   let validAtDoyField = field<string>('', [required, timestamp]); // requires validation function
@@ -279,6 +271,7 @@
             $startTimeDoyField.value = parsed.source.period.start_time;
             $endTimeDoyField.value = parsed.source.period.end_time;
             $validAtDoyField.value = parsed.source.valid_at;
+            $derivationGroupField.value = `${$sourceTypeField.value} Default`; // Include source type name because derivation group names are unique
             isDerivationGroupFieldDisabled = false;
           }
         } catch (e) {
@@ -353,14 +346,14 @@
       (selectedEvents = fetched.map(eDB => {
         return {
           ...eDB,
-          durationMs: convertDurationToMs(eDB.duration),
+          duration_ms: convertDurationToMs(eDB.duration),
           event_type: eDB.event_type_name,
-          startMs: convertUTCtoMs(eDB.start_time),
+          start_ms: convertUTCtoMs(eDB.start_time),
         };
       })),
   );
   $: selectedSourceLinkedDerivationGroupsPlans = $planDerivationGroupLinks.filter(planDerivationGroupLink => {
-    return planDerivationGroupLink.derivation_group_id === selectedSource?.derivation_group_id;
+    return planDerivationGroupLink.derivation_group_name === selectedSource?.derivation_group_name;
   });
 
   // Timeline
@@ -424,7 +417,7 @@
       //    in a table without making a selection. as such, can't use selectedSourceLinkedDerivationGroupsPlans, must
       //    make a new one.
       let currentlyLinked = $planDerivationGroupLinks.filter(planDerivationGroupLink => {
-        return planDerivationGroupLink.derivation_group_id === selectedSource?.derivation_group_id;
+        return planDerivationGroupLink.derivation_group_name === selectedSource?.derivation_group_name;
       });
       if (currentlyLinked.length > 0) {
         // if the source is in a derivation group currently used by a plan, warn that we cannot delete
@@ -441,24 +434,20 @@
 
   async function onFormSubmit(_e: SubmitEvent) {
     if (parsed && file) {
-      // Create an entry for the current source type if it does not already exist. Otherwise, retrieve the id
-      if (!$externalSourceTypes.some(externalSourceType => externalSourceType.name === $sourceTypeField.value)) {
-        sourceTypeInsert = {
-          name: $sourceTypeField.value,
-        };
-      }
-
-      // Create an entry for the derivation group
-      let derivationGroupName = $derivationGroupField.value;
-      if (derivationGroupName.length === 0) {
-        derivationGroupName = 'Default';
-      }
-      derivationGroupInsert = {
-        name: derivationGroupName,
-        source_type_name: sourceTypeInsert.name
+      // Setup insert inputs for Hasura mutations
+      // External Source Type
+      sourceTypeInsert = {
+        name: $sourceTypeField.value,
       };
 
-      // create the source object to upload to AERIE
+      // Derivation Group
+      derivationGroupInsert = {
+        name:
+          $derivationGroupField.value.length !== 0 ? $derivationGroupField.value : `${sourceTypeInsert.name} Default`,
+        source_type_name: sourceTypeInsert.name,
+      };
+
+      // External Source
       const start_time: string | undefined = convertDoyToYmd($startTimeDoyField.value.replaceAll('Z', ''))?.replace(
         'Z',
         '+00:00',
@@ -479,7 +468,7 @@
         return;
       }
       sourceInsert = {
-        derivation_group_id: -1, // updated in the effect.
+        derivation_group_name: derivationGroupInsert.name,
         end_time,
         external_events: {
           data: null, // updated after this map is created
@@ -491,13 +480,8 @@
         valid_at,
       };
 
-      // The external event types uploaded in this run won't show up as quickly
-      // in the store ($externalEventTypes), so we keep a local log as well
-      //
-      // If event types act up during upload, this line is a likely culprit (if you upload twice really fast and $externalEventTypes doesn't update quick enough)
-      // If that's the case, directly use $externalEventTypes concatted with this list each time in the if statement a few lines below
+      // External Event Types + External Events
       let externalEventTypeInputs: ExternalEventTypeInsertInput[] = [];
-      // Create/set external events and external event types
       if (parsed.events) {
         for (let externalEvent of parsed.events) {
           externalEventTypeInsertInput = {
@@ -509,10 +493,8 @@
           try {
             convertDurationToMs(externalEvent.duration);
           } catch (e) {
-            // TODO: Should we exclude the WHOLE source?
-            // Skip this event
             showFailureToast('Parsing failed.');
-            catchError(`Event duration has invalid format...excluding event ${externalEvent.key}\n`, e as Error);
+            catchError(`Event duration has invalid format... ${externalEvent.key}\n`, e as Error);
             return;
           }
 
@@ -556,94 +538,58 @@
       sourceInsert.external_events.data = externalEventsCreated;
       externalEventsCreated = [];
 
-      // Create/set external source type
-      let sourceType: ExternalSourceType | undefined = undefined;
-      let derivationGroup: DerivationGroup | undefined = undefined;
-      let sourceId: number | undefined = undefined;
+      // Perform Hasura mutation to create external source
+      // let createExternalSourceResponse: {
+      //     createExternalSource: { id: number },
+      //     upsertDerivationGroup: { name: string },
+      //     upsertExternalEventType: { name: string },
+      //     upsertExternalSourceType: { id: number, name: string },
+
+      //   } | undefined = undefined;
+      let createExternalSourceResponse: Record<string, any> | undefined = undefined;
       if (file !== undefined) {
-        if (sourceTypeInsert !== undefined && !$externalSourceTypes.map(s => s.name).includes($sourceTypeField.value)) {
-          sourceType = await effects.createExternalSourceType(sourceTypeInsert, user);
-        } else {
-          sourceType = getEventSourceTypeByName($sourceTypeField.value, $externalSourceTypes);
-        }
-
-        // Case 1) Derivation group doesn't exist, create it
-        if (
-          $derivationGroups.filter(dGroup => dGroup.name === derivationGroupInsert.name).length === 0 &&
-          derivationGroupInsert !== undefined
-        ) {
-          if (sourceType !== undefined) {
-            derivationGroupInsert.source_type_name = sourceType.name;
-          } else {
-            // TODO: This should really never happen, but should it cause the source to fail completely?
-            console.log(
-              'Source type for this derivation group was not previously registered correctly. Derivation group may be incorrect.',
-            );
+        sourceInsert.source_type_name = sourceTypeInsert.name;
+        sourceInsert.derivation_group_name = derivationGroupInsert.name;
+        createExternalSourceResponse = await effects.createExternalSource(
+          derivationGroupInsert,
+          sourceInsert,
+          sourceTypeInsert,
+          externalEventTypeInputs,
+          user,
+        );
+        // Following a successful mutation...
+        if (createExternalSourceResponse !== undefined) {
+          // Manipulate current filter to ensure the newly uploaded external source's type is included
+          if (selectedFilters.find(filter => filter.name === sourceTypeInsert.name) === undefined) {
+            if (
+              createExternalSourceResponse.upsertExternalSourceType?.id !== undefined &&
+              createExternalSourceResponse.upsertExternalSourceType?.name !== undefined
+            ) {
+              selectedFilters.push(createExternalSourceResponse.upsertExternalSourceType as ExternalSourceType);
+            }
           }
-          derivationGroup = await effects.createDerivationGroup(derivationGroupInsert, user);
-        }
-        // Case 2) Name present, but under a different source type ID
-        else if (
-          $derivationGroups.filter(
-            dGroup => dGroup.source_type_name !== sourceType?.name && dGroup.name === derivationGroupInsert.name,
-          ).length > 0 &&
-          $derivationGroups.filter(
-            dGroup => dGroup.source_type_name === sourceType?.name && dGroup.name === derivationGroupInsert.name,
-          ).length === 0
-        ) {
-          if (sourceType !== undefined) {
-            derivationGroupInsert.source_type_name = sourceType.name;
-          } else {
-            // TODO: This should really never happen, but should it cause the source to fail completely?
-            console.log(
-              'Source type for this derivation group was not previously registered correctly. Derivation group may be incorrect.',
-            );
-          }
-          derivationGroup = await effects.createDerivationGroup(derivationGroupInsert, user);
-        }
-        // Case 3) Name and source type ID pair present
-        else if (sourceType !== undefined) {
-          derivationGroup = getDerivationGroupByNameSourceTypeName(derivationGroupName, sourceType.name, $derivationGroups);
-        }
-
-        if (sourceType !== undefined && derivationGroup !== undefined) {
-          sourceInsert.source_type_name = sourceType.name;
-          sourceInsert.derivation_group_id = derivationGroup.id;
-          if (selectedFilters.find(filter => filter.name === sourceType?.name) === undefined) {
-            selectedFilters.push(sourceType);
-          }
-          sourceId = await effects.createExternalSource(sourceInsert, sourceTypeInsert, externalEventTypeInputs, user);
+          // Auto-select the new source
+          selectedSource = {
+            created_at: new Date().toISOString().replace('Z', '+00:00'), // technically not the exact time it shows up in the database
+            derivation_group: derivationGroupInsert.name,
+            id: createExternalSourceResponse.createExternalSource.id,
+            ...sourceInsert,
+            source_type_name: sourceTypeInsert.name,
+          };
+          gridRowSizes = gridRowSizesBottomPanel;
         }
       }
-
-      // Auto-select the new source
-      if (sourceId && sourceType) {
-        selectedSource = {
-          created_at: new Date().toISOString().replace('Z', '+00:00'), // technically not the exact time it shows up in the database
-          derivation_group: derivationGroupName,
-          id: sourceId,
-          ...sourceInsert,
-          source_type_name: sourceType?.name,
-          total_groups: $derivationGroups.length, // kind of unnecessary here, but necessary in this type for the table and coloring
-        };
-        gridRowSizes = gridRowSizesBottomPanel;
-
-        // TODO: can this be deleted?
-        // Persist to list of newly added sources, restating (for uniformity in UpdateCard) the change_date (in the non-deletion case - created_at)
-        // let seenSourcesParsed: ExternalSourceWithDateInfo[] = JSON.parse($unseenSources);
-        // unseenSources.set(JSON.stringify(seenSourcesParsed.concat({ ...selectedSource, change_date: new Date() })));
-      }
-
-      // Reset the form behind the source
-      parsed = undefined;
-      keyField.reset('');
-      sourceTypeField.reset('');
-      startTimeDoyField.reset('');
-      endTimeDoyField.reset('');
-      validAtDoyField.reset('');
     } else {
       showFailureToast('Upload failed.');
     }
+    // Reset the form behind the source
+    parsed = undefined;
+    keyField.reset('');
+    sourceTypeField.reset('');
+    startTimeDoyField.reset('');
+    endTimeDoyField.reset('');
+    validAtDoyField.reset('');
+    derivationGroupField.reset('');
   }
 
   async function selectSource(detail: ExternalSourceWithResolvedNames) {
@@ -759,7 +705,12 @@
 
             <Input layout="inline">
               Source Type
-              <input class="st-input w-100" disabled={true} name="source-type" value={selectedSource.source_type_name} />
+              <input
+                class="st-input w-100"
+                disabled={true}
+                name="source-type"
+                value={selectedSource.source_type_name}
+              />
             </Input>
 
             <Input layout="inline">
