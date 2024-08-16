@@ -28,7 +28,7 @@ export function customFoldInside(node: SyntaxNode, state: EditorState): { from: 
  * @param state The EditorState to get the document from.
  * @returns The range of the `Command` node, or null if the Stem node is missing.
  */
-function foldCommand(commandNode: SyntaxNode, state: EditorState): { from: number; to: number } | null {
+export function foldCommand(commandNode: SyntaxNode, state: EditorState): { from: number; to: number } | null {
   const stemNode = commandNode.getChild('Stem');
   if (stemNode == null) {
     return null;
@@ -44,7 +44,7 @@ function foldCommand(commandNode: SyntaxNode, state: EditorState): { from: numbe
  * @param state The EditorState to get the document from.
  * @returns The range of the `GroundBlock` or `GroundEvent` node, or null if the GroundName node is missing.
  */
-function foldGround(groundNode: SyntaxNode, state: EditorState): { from: number; to: number } | null {
+export function foldGround(groundNode: SyntaxNode, state: EditorState): { from: number; to: number } | null {
   // Get the GroundName node
   const groundNameNode = groundNode.getChild('GroundName');
   // If the GroundName node is missing, return null
@@ -62,7 +62,7 @@ function foldGround(groundNode: SyntaxNode, state: EditorState): { from: number;
  * @param state The EditorState to get the document from.
  * @returns The range of the `Activate` or `Load` node, or null if the `SequenceName` node is missing.
  */
-function foldActivateLoad(activateNode: SyntaxNode, state: EditorState): { from: number; to: number } | null {
+export function foldActivateLoad(activateNode: SyntaxNode, state: EditorState): { from: number; to: number } | null {
   // Get the SequenceName node
   const sequenceNameNode = activateNode.getChild('SequenceName');
   // If the SequenceName node is missing, return null
@@ -127,12 +127,13 @@ function foldSteps(
  * @returns A fold range object with "from" and "to" properties.
  *          Returns null if any of the necessary nodes are not present.
  */
-function foldRequest(requestNode: SyntaxNode, state: EditorState): { from: number; to: number } | null {
+export function foldRequest(requestNode: SyntaxNode, state: EditorState): { from: number; to: number } | null {
   const requestNameNode = requestNode.getChild('RequestName');
+  const argsNodes = requestNode.getChildren('Args');
   const commentNode = requestNode.getChild('LineComment');
 
   // Calculate the start of the fold range after the RequestName node and any LineComment node
-  const from = getFromAndTo([requestNameNode, commentNode]).to + 1;
+  const from = getFromAndTo([requestNameNode, ...argsNodes, commentNode]).to + (commentNode == null ? 1 : 0);
 
   // Calculate the end of the fold range after the Request node
   let endRequest = getFromAndTo([requestNode]).to;
