@@ -126,8 +126,8 @@
   $: externalEvents = externalEventsFromDB.map(ee => {
     return {
       ...ee,
-      durationMs: convertDurationToMs(ee.duration),
-      startMs: convertUTCtoMs(ee.start_time),
+      duration_ms: convertDurationToMs(ee.duration),
+      start_ms: convertUTCtoMs(ee.start_time),
     };
   });
 

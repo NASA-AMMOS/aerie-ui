@@ -948,11 +948,11 @@ export function spanInView(span: Span, viewTimeRange: TimeRange) {
  */
 export function externalEventInView(externalEvent: ExternalEvent, viewTimeRange: TimeRange) {
   const externalEventInBounds =
-    externalEvent.startMs >= viewTimeRange.start && externalEvent.startMs < viewTimeRange.end;
+    externalEvent.start_ms >= viewTimeRange.start && externalEvent.start_ms < viewTimeRange.end;
   return (
     externalEventInBounds ||
-    (externalEvent.startMs < viewTimeRange.start &&
-      externalEvent.startMs + externalEvent.durationMs >= viewTimeRange.start)
+    (externalEvent.start_ms < viewTimeRange.start &&
+      externalEvent.start_ms + externalEvent.duration_ms >= viewTimeRange.start)
   );
 }
 

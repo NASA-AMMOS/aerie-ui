@@ -30,8 +30,8 @@ export type ExternalEvent = Pick<
   ExternalEventDB,
   'duration' | 'id' | 'key' | 'properties' | 'source' | 'source_id' | 'start_time' | 'event_type_name'
 > & {
-  durationMs: number;
-  startMs: number;
+  duration_ms: number;
+  start_ms: number;
 };
 
 // no analgoue to PlanExternalSource as such a link doesn't exist for external events

@@ -212,14 +212,14 @@ function generateSpan(properties: Partial<Span>): Span {
 function generateExternalEvent(properties: Partial<ExternalEvent>): ExternalEvent {
   return {
     duration: '',
-    durationMs: 0,
-    event_type: 'test',
+    duration_ms: 0,
+    event_type_name: 'test',
     id: 1,
     key: 'test',
     properties: {},
     source: undefined,
     source_id: 1,
-    startMs: 0,
+    start_ms: 0,
     start_time: '',
     ...properties,
   };
@@ -439,23 +439,23 @@ test('spanInView', () => {
 
 test('externalEventInView', () => {
   const viewTimeRange: TimeRange = { end: 1716332383895 + 60000, start: 1716332383895 }; // One minute duration
-  expect(externalEventInView(generateExternalEvent({ durationMs: 1, startMs: 0 }), viewTimeRange)).toBe(false);
-  expect(externalEventInView(generateExternalEvent({ durationMs: 3, startMs: 1716332383893 }), viewTimeRange)).toBe(
+  expect(externalEventInView(generateExternalEvent({ duration_ms: 1, start_ms: 0 }), viewTimeRange)).toBe(false);
+  expect(externalEventInView(generateExternalEvent({ duration_ms: 3, start_ms: 1716332383893 }), viewTimeRange)).toBe(
     true,
   );
-  expect(externalEventInView(generateExternalEvent({ durationMs: 1, startMs: 1716332383895 }), viewTimeRange)).toBe(
+  expect(externalEventInView(generateExternalEvent({ duration_ms: 1, start_ms: 1716332383895 }), viewTimeRange)).toBe(
     true,
   );
-  expect(externalEventInView(generateExternalEvent({ durationMs: 1, startMs: 1716332383896 }), viewTimeRange)).toBe(
+  expect(externalEventInView(generateExternalEvent({ duration_ms: 1, start_ms: 1716332383896 }), viewTimeRange)).toBe(
     true,
   );
-  expect(externalEventInView(generateExternalEvent({ durationMs: 1, startMs: 9716332383895 }), viewTimeRange)).toBe(
+  expect(externalEventInView(generateExternalEvent({ duration_ms: 1, start_ms: 9716332383895 }), viewTimeRange)).toBe(
     false,
   );
   expect(
-    externalEventInView(generateExternalEvent({ durationMs: 1, startMs: 1716332383895 + 60000 }), viewTimeRange),
+    externalEventInView(generateExternalEvent({ duration_ms: 1, start_ms: 1716332383895 + 60000 }), viewTimeRange),
   ).toBe(false);
-  expect(externalEventInView(generateExternalEvent({ durationMs: 1, startMs: 9716332383895 }), viewTimeRange)).toBe(
+  expect(externalEventInView(generateExternalEvent({ duration_ms: 1, start_ms: 9716332383895 }), viewTimeRange)).toBe(
     false,
   );
 });

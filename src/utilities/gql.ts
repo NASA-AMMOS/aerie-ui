@@ -107,6 +107,7 @@ export enum Queries {
   INSERT_ACTIVITY_DIRECTIVE_TAGS = 'insert_activity_directive_tags',
   INSERT_ACTIVITY_PRESET = 'insert_activity_presets_one',
   INSERT_CHANNEL_DICTIONARY = 'insert_channel_dictionary_one',
+  INSERT_DERIVATION_GROUP = 'insert_derivation_group_one',
   INSERT_DICTIONARY = 'insert_dictionary_one',
   INSERT_CONSTRAINT_DEFINITION = 'insert_constraint_definition_one',
   INSERT_CONSTRAINT_DEFINITION_TAGS = 'insert_constraint_definition_tags',
@@ -412,7 +413,7 @@ const gql = {
   CREATE_DERIVATION_GROUP: `#graphql
     mutation CreateDerivationGroup($derivationGroup: derivation_group_insert_input!) {
       createDerivationGroup: insert_derivation_group_one(object: $derivationGroup) {
-        id
+        name
       }
     }
   `,
@@ -482,6 +483,7 @@ const gql = {
 
   CREATE_EXTERNAL_SOURCE: `#graphql
     mutation CreateExternalSource(
+      $derivation_group: derivation_group_insert_input!,
       $event_type: [external_event_type_insert_input!]!
       $source: external_source_insert_input!,
       $source_type: external_source_type_insert_input!,
@@ -500,6 +502,15 @@ const gql = {
         object: $source_type,
         on_conflict: {
           constraint: external_source_type_name_key
+        }
+      ) {
+        id
+        name
+      }
+      upsertDerivationGroup: ${Queries.INSERT_DERIVATION_GROUP} (
+        object: $derivation_group,
+        on_conflict: {
+          constraint: derivation_group_name_key
         }
       ) {
         name
@@ -934,15 +945,15 @@ const gql = {
   `,
 
   DELETE_DERIVATION_GROUP: `#graphql
-  mutation DeleteDerivationGroup($id: Int!) {
-    deleteDerivationGroupForPlan: ${Queries.DELETE_PLAN_DERIVATION_GROUP}(where: { derivation_group_id: { _eq: $id }}) {
+  mutation DeleteDerivationGroup($name: String!) {
+    deleteDerivationGroupForPlan: ${Queries.DELETE_PLAN_DERIVATION_GROUP}(where: { derivation_group_name: { _eq: $name }}) {
       returning {
-        id
+        derivation_group_name
       }
     }
-    deleteDerivationGroup: ${Queries.DELETE_DERIVATION_GROUP}(where: { id: { _eq: $id } }) {
+    deleteDerivationGroup: ${Queries.DELETE_DERIVATION_GROUP}(where: { name: { _eq: $name } }) {
       returning {
-        id
+        name
       }
     }
   }
@@ -1761,7 +1772,7 @@ const gql = {
     query GetPlanExternalSource($plan_id: Int!) {
       links: ${Queries.PLAN_DERIVATION_GROUP}(where: {plan_id: {_eq: $plan_id}}) {
         id
-        derivation_group_id
+        derivation_group_name
         plan_id
       }
     }
@@ -2425,8 +2436,7 @@ const gql = {
 
   SUB_DERIVATION_GROUPS: `#graphql
     subscription SubDerivationGroups {
-      models: ${Queries.DERIVATION_GROUP_COMP}(order_by: {id: asc}) {
-        id
+      models: ${Queries.DERIVATION_GROUP_COMP}(order_by: {name: desc}) {
         name
         source_type_name
         sources
@@ -2543,7 +2553,7 @@ const gql = {
         id
         key
         source_type_name
-        derivation_group_id
+        derivation_group_name
         start_time
         end_time
         valid_at
@@ -2773,7 +2783,7 @@ const gql = {
     subscription SubPlanExternalSource {
       links: ${Queries.PLAN_DERIVATION_GROUP}(order_by: { plan_id: asc }) {
         id
-        derivation_group_id
+        derivation_group_name
         plan_id
       }
     }
@@ -2794,8 +2804,8 @@ const gql = {
   `, // deprecated in favor of the next query
 
   SUB_PLAN_EXTERNAL_EVENTS_DG: `#graphql
-    subscription SubPlanExternalEventsDG($derivation_group_ids: [Int!]!){
-      events: derived_events(where: {derivation_group_id: {_in: $derivation_group_ids}}) {
+    subscription SubPlanExternalEventsDG($derivation_group_names: [String!]!){
+      events: derived_events(where: {derivation_group_name: {_in: $derivation_group_names}}) {
         external_event {
           properties
           event_type_name

@@ -10,7 +10,7 @@
   import { ViewDefaultActivityOptions, ViewDefaultExternalEventOptions } from '../../constants/view';
   import { Status } from '../../enums/status';
   import { catchError } from '../../stores/errors';
-  import { externalSources, planDerivationGroupIdsToFilter } from '../../stores/external-source';
+  import { externalSources, planDerivationGroupNamesToFilter } from '../../stores/external-source';
   import {
     externalResources,
     fetchingResourcesExternal,
@@ -332,7 +332,7 @@
   $: hasActivityLayer = activityLayers.length > 0;
   $: hasExternalEventsLayer = externalEventLayers.length > 0;
   $: hasResourceLayer = lineLayers.length + xRangeLayers.length > 0;
-  $: planDerivationGroupIdsToFilterParsed = JSON.parse($planDerivationGroupIdsToFilter);
+  $: planDerivationGroupNamesToFilterParsed = JSON.parse($planDerivationGroupNamesToFilter);
   $: showSpans = activityOptions?.composition === 'both' || activityOptions?.composition === 'spans';
   $: showDirectives = activityOptions?.composition === 'both' || activityOptions?.composition === 'directives';
 
@@ -483,10 +483,11 @@
 
     // Apply filter for hiding derivation groups
     externalEventsFilteredByDG = externalEvents.filter(ee => {
-      let dg = $externalSources.find(es => es.id === ee.source_id)?.derivation_group_id ?? -1;
+      let dg = $externalSources.find(es => es.id === ee.source_id)?.derivation_group_name ?? undefined;
       // the statement below says return true (keep) if the plan is not null and if the filter for this plan does not include this derivation group
       return plan
-        ? !planDerivationGroupIdsToFilterParsed[plan.id] || !planDerivationGroupIdsToFilterParsed[plan.id].includes(dg)
+        ? !planDerivationGroupNamesToFilterParsed[plan.id] ||
+            !planDerivationGroupNamesToFilterParsed[plan.id].includes(dg)
         : false;
     });
     // Filter by external event type

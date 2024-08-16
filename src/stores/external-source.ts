@@ -48,13 +48,13 @@ deletedSourcesSeen.subscribe(val => {
 //          to the plan, it will be hidden once associated.
 // Assumes shape {[plan_id: number]: number[]}, where the list of numbers is the list of filtered out
 //    derivation groups for the given plan ID
-export const planDerivationGroupIdsToFilter = writable(
-  (browser && localStorage.getItem('planDerivationGroupIdsToFilter')) || '{}',
+export const planDerivationGroupNamesToFilter = writable(
+  (browser && localStorage.getItem('planDerivationGroupNamesToFilter')) || '{}',
 );
-planDerivationGroupIdsToFilter.subscribe(val => {
+planDerivationGroupNamesToFilter.subscribe(val => {
   // Validate that val is list-like
   if (browser && JSON.parse(val)) {
-    localStorage.setItem('planDerivationGroupIdsToFilter', val);
+    localStorage.setItem('planDerivationGroupNamesToFilter', val);
   }
 });
 
@@ -65,7 +65,6 @@ export const derivationGroupsRaw = gqlSubscribable<
   {
     derived_total: number;
     event_types: string[];
-    id: number;
     name: string;
     source_type_name: string;
     sources: string[];
@@ -89,14 +88,14 @@ export const usersSeenSources = derived<[typeof usersSeenSourcesRaw], { [key: st
         res[entry.user].push({
           derivation_group: entry.derivation_group,
           key: entry.external_source_name,
-          source_type: entry.external_source_type,
+          source_type_name: entry.external_source_type,
         });
       } else {
         res[entry.user] = [
           {
             derivation_group: entry.derivation_group,
             key: entry.external_source_name,
-            source_type: entry.external_source_type,
+            source_type_name: entry.external_source_type,
           },
         ];
       }
@@ -111,9 +110,8 @@ export const derivationGroups = derived<[typeof derivationGroupsRaw], Derivation
   [derivationGroupsRaw],
   ([$derivationGroupsRaw]) =>
     $derivationGroupsRaw.map(raw => ({
-      derivedEventTotal: raw.derived_total,
+      derived_event_total: raw.derived_total,
       event_types: raw.event_types,
-      id: raw.id,
       name: raw.name,
       source_type_name: raw.source_type_name,
       sources: new Map(
@@ -126,27 +124,25 @@ export const derivationGroups = derived<[typeof derivationGroupsRaw], Derivation
 );
 
 // Creates a store for each externalSource with the added 'source_type' field that maps to the human-readable source type name
-export const externalSourceWithResolvedNames = derived<
-  [typeof externalSources, typeof derivationGroups],
-  ExternalSourceWithResolvedNames[]
->([externalSources, derivationGroups], ([$externalSources, $derivationGroups]) =>
-  $externalSources.map(externalSource => ({
-    ...externalSource,
-    derivation_group: getDerivationGroupName(externalSource.derivation_group_id, $derivationGroups),
-    source_type: externalSource.source_type_name,
-    total_groups: $derivationGroups.length,
-  })),
+export const externalSourceWithResolvedNames = derived<[typeof externalSources], ExternalSourceWithResolvedNames[]>(
+  [externalSources],
+  ([$externalSources]) =>
+    $externalSources.map(externalSource => ({
+      ...externalSource,
+      derivation_group: externalSource.derivation_group_name,
+      source_type: externalSource.source_type_name,
+    })),
 );
-export const selectedPlanDerivationGroupIds = derived(
+export const selectedPlanDerivationGroupNames = derived(
   [planDerivationGroupLinks, planId],
   ([$planDerivationGroupLinks, $planId]) =>
-    $planDerivationGroupLinks.filter(link => link.plan_id === $planId).map(link => link.derivation_group_id),
+    $planDerivationGroupLinks.filter(link => link.plan_id === $planId).map(link => link.derivation_group_name),
 );
 export const selectedPlanDerivationGroupEventTypes = derived(
-  [derivationGroups, selectedPlanDerivationGroupIds],
+  [derivationGroups, selectedPlanDerivationGroupNames],
   ([$derivationGroups, $selectedPlanDerivationGroupIds]) => {
     return $derivationGroups
-      .filter(dg => $selectedPlanDerivationGroupIds.includes(dg.id))
+      .filter(dg => $selectedPlanDerivationGroupIds.includes(dg.name))
       .map(dg => dg.event_types)
       .reduce((acc, curr) => acc.concat(curr), []);
   },
@@ -158,6 +154,12 @@ export function resetModelStores() {
   createExternalSourceTypeError.set(null);
   createDerivationGroupError.set(null);
   derivationGroupPlanLinkError.set(null);
+}
+export function getExternalSourceTypeByName(
+  sourceTypeName: string,
+  externalSourceTypes: ExternalSourceType[],
+): ExternalSourceType | undefined {
+  return externalSourceTypes.find(est => est.name === sourceTypeName);
 }
 export function getSourceName(source_id: number | undefined, sources: ExternalSourceSlim[]): string {
   return sources.find(s => s.id === source_id)?.key ?? 'None';
@@ -182,8 +184,4 @@ export function getDerivationGroupByNameSourceTypeName(
   return derivationGroups.find(
     derivationGroup => derivationGroup.name === name && derivationGroup.source_type_name === sourceTypeName,
   );
-}
-``;
-export function getDerivationGroupName(id: number, derivationGroups: DerivationGroup[]): string | undefined {
-  return derivationGroups.find(derivationGroup => derivationGroup.id === id)?.name;
 }
