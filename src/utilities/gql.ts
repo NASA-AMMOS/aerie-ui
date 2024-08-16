@@ -472,7 +472,7 @@ const gql = {
   CREATE_EXTERNAL_EVENT_TYPE: `#graphql
     mutation CreateExternalEventType($eventType: external_event_type_insert_input!) {
       createExternalEventType: insert_external_event_type_one(object: $eventType) {
-        id
+        name
       }
     }
   `,
@@ -487,7 +487,7 @@ const gql = {
       upsertExternalEventType: ${Queries.INSERT_EXTERNAL_EVENT_TYPE}(
         objects: $event_type,
         on_conflict: {
-          constraint: external_event_type_name_key
+          constraint: external_event_type_pkey
         }
       ) {
         returning {
@@ -497,10 +497,9 @@ const gql = {
       upsertExternalSourceType: ${Queries.INSERT_EXTERNAL_SOURCE_TYPE} (
         object: $source_type,
         on_conflict: {
-          constraint: external_source_type_name_key
+          constraint: external_source_type_pkey
         }
       ) {
-        id
         name
       }
       upsertDerivationGroup: ${Queries.INSERT_DERIVATION_GROUP} (
@@ -520,7 +519,6 @@ const gql = {
   CREATE_EXTERNAL_SOURCE_TYPE: `#graphql
     mutation CreateExternalSourceType($sourceType: external_source_type_insert_input!) {
       createExternalSourceType: insert_external_source_type_one(object: $sourceType) {
-        id
         name
       }
     }
@@ -999,9 +997,8 @@ const gql = {
   `,
 
   DELETE_EXTERNAL_EVENT_TYPE: `#graphql
-    mutation DeleteExternalEventType($id: Int!) {
-      deleteExternalEventType: ${Queries.DELETE_EXTERNAL_EVENT_TYPE}(id: $id) {
-        id
+    mutation DeleteExternalEventType($name: String!) {
+      deleteExternalEventType: ${Queries.DELETE_EXTERNAL_EVENT_TYPE}(name: $name) {
         name
       }
     }
@@ -1021,8 +1018,8 @@ const gql = {
   `,
 
   DELETE_EXTERNAL_SOURCE_TYPE: `#graphql
-    mutation DeleteExternalSourceType($id: Int!) {
-      deleteExternalSourceType: ${Queries.DELETE_EXTERNAL_SOURCE_TYPE}(id: $id) {
+    mutation DeleteExternalSourceType($name: String!) {
+      deleteExternalSourceType: ${Queries.DELETE_EXTERNAL_SOURCE_TYPE}(name: $name) {
         name
       }
     }
@@ -1528,7 +1525,6 @@ const gql = {
   GET_EXTERNAL_EVENT_TYPES: `#graphql
     query GetExternalEventTypes {
       external_event_types: ${Queries.EXTERNAL_EVENT_TYPES} {
-        id
         name
       }
     }
@@ -1781,7 +1777,6 @@ const gql = {
           external_source {
             external_events {
               external_event_type {
-                id
                 name
               }
             }
@@ -2522,8 +2517,7 @@ const gql = {
 
   SUB_EXTERNAL_EVENT_TYPES: `#graphql
     subscription SubExternalEventTypes {
-      models: ${Queries.EXTERNAL_EVENT_TYPES}(order_by: { id: asc }) {
-        id
+      models: ${Queries.EXTERNAL_EVENT_TYPES}(order_by: { name: asc }) {
         name
       }
     }
@@ -2560,8 +2554,7 @@ const gql = {
 
   SUB_EXTERNAL_SOURCE_TYPES: `#graphql
     subscription SubExternalSourceTypes {
-      models: ${Queries.EXTERNAL_SOURCE_TYPES}(order_by: { id: asc }) {
-        id
+      models: ${Queries.EXTERNAL_SOURCE_TYPES}(order_by: { name: asc }) {
         name
       }
     }

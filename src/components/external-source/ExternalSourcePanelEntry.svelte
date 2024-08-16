@@ -134,7 +134,7 @@
     tooltipContent={'Derivation group ' + derivationGroup.name}
     defaultExpanded={false}
   >
-    <span slot="right">
+    <span slot="right" style:display="flex">
       <p class="derived-event-text">
         {derivationGroup.derived_event_total} derived events
       </p>
@@ -162,7 +162,7 @@
         <!-- Collapsible details -->
         <Collapse title={source.key} tooltipContent={source.key} defaultExpanded={false}>
           <span slot="right">
-            <p style:color="gray">
+            <p style:color="gray" style:text-wrap="nowrap">
               {derivationGroup.sources.get(source.key)?.event_counts} events
             </p>
           </span>
@@ -225,5 +225,6 @@
     float: left;
     height: 100%;
     padding-right: 0.25rem;
+    text-wrap: nowrap;
   }
 </style>

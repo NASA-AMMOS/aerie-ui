@@ -211,7 +211,7 @@
   let input: HTMLInputElement;
   let filterString: string = '';
   let filteredValues: ExternalSourceType[] = [];
-  let selectedFilters: ExternalSourceType[] = [{ id: -1, name: 'LOADING TYPES...' }];
+  let selectedFilters: ExternalSourceType[] = [{ name: '' }];
   let menuTitle: string = '';
   let filteredExternalSources: ExternalSourceWithResolvedNames[] = [];
 
@@ -324,7 +324,7 @@
   // TODO: Clean this up?
   // unfortunately very clunky, but it does correctly select all source types on page load as stores populate shortly AFTER the component loads,
   //    so populating selectedFilters with the store values on component load always yields an empty list
-  $: if (selectedFilters.length === 1 && selectedFilters[0].id === -1 && $externalSourceTypes.length > 0) {
+  $: if (selectedFilters.length === 1 && selectedFilters[0].name === '' && $externalSourceTypes.length > 0) {
     selectedFilters = [...$externalSourceTypes];
   }
   $: selectedSourceId = selectedSource ? selectedSource.id : null;
@@ -561,10 +561,7 @@
         if (createExternalSourceResponse !== undefined) {
           // Manipulate current filter to ensure the newly uploaded external source's type is included
           if (selectedFilters.find(filter => filter.name === sourceTypeInsert.name) === undefined) {
-            if (
-              createExternalSourceResponse.upsertExternalSourceType?.id !== undefined &&
-              createExternalSourceResponse.upsertExternalSourceType?.name !== undefined
-            ) {
+            if (createExternalSourceResponse.upsertExternalSourceType?.name !== undefined) {
               selectedFilters.push(createExternalSourceResponse.upsertExternalSourceType as ExternalSourceType);
             }
           }
@@ -630,10 +627,10 @@
   }
 
   function toggleItem(value: ExternalSourceType) {
-    if (!selectedFilters.find(f => f.id === value.id)) {
+    if (!selectedFilters.find(f => f.name === value.name)) {
       selectedFilters = selectedFilters.concat(value);
     } else {
-      selectedFilters = selectedFilters.filter(filter => filter.id !== value.id);
+      selectedFilters = selectedFilters.filter(filter => filter.name !== value.name);
     }
   }
 
