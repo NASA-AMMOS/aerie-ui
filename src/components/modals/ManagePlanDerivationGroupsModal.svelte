@@ -21,6 +21,7 @@
   import effects from '../../utilities/effects';
   import { formatDate } from '../../utilities/time';
   import { isExternalEventLayer } from '../../utilities/timeline';
+  import { showFailureToast } from '../../utilities/toast';
   import Collapse from '../Collapse.svelte';
   import Input from '../form/Input.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
@@ -107,7 +108,7 @@
               effects.insertDerivationGroupForPlan(params.data.name, $plan, user);
               if ($derivationGroupPlanLinkError !== null) {
                 console.log($derivationGroupPlanLinkError);
-                console.log('Failed to link derivation group & plan.');
+                showFailureToast('Failed to link derivation group & plan.');
               } else {
                 // Insert all the external event types from the derivation group to the timeline filter
                 const derivationGroup = $derivationGroups.find(
@@ -131,7 +132,7 @@
               effects.deleteDerivationGroupForPlan(params.data.name, $plan, user);
               if ($derivationGroupPlanLinkError !== null) {
                 console.log($derivationGroupPlanLinkError);
-                console.log('Failed to unlink derivation group & plan.');
+                showFailureToast('Failed to unlink derivation group & plan.');
               }
             }
           }
@@ -160,7 +161,6 @@
   let selectedDerivationGroupSources: ExternalSourceWithResolvedNames[] = [];
   $: if (selectedDerivationGroup !== undefined) {
     modalColumnSize = modalColumnSizeWithDetail;
-    console.log(modalColumnSize);
   }
   $: selectedDerivationGroupSources = $externalSourceWithResolvedNames.filter(
     source => selectedDerivationGroup?.name === source.derivation_group_name,
