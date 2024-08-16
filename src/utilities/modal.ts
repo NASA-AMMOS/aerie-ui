@@ -260,7 +260,7 @@ export async function showDeleteExternalSourceTypeModal(
           target.resolve = null;
           resolve({ confirm: true });
           try {
-            effects.deleteExternalSourceType(sourceType.id, user);
+            effects.deleteExternalSourceType(sourceType.name, user);
             showSuccessToast('Successfully deleted external source type');
           } catch (e) {
             showFailureToast('Failed to delete external source type');
@@ -300,7 +300,7 @@ export async function showDeleteExternalEventTypeModal(
           target.resolve = null;
           resolve({ confirm: true });
           try {
-            effects.deleteExternalEventType(eventType.id, user);
+            effects.deleteExternalEventType(eventType.name, user);
             showSuccessToast('Successfully deleted external event type');
           } catch (e) {
             showFailureToast('Failed to delete external event type');

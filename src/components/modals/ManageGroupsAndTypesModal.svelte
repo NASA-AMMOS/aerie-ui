@@ -479,8 +479,16 @@
     }
   }
 
-  function getRowId(derivationGroup: DerivationGroup): string {
+  function getRowIdDerivationGroup(derivationGroup: DerivationGroup): string {
     return `${derivationGroup.name}:${derivationGroup.source_type_name}`;
+  }
+
+  function getRowIdExternalEventType(externalEventType: ExternalEventType): string {
+    return externalEventType.name;
+  }
+
+  function getRowIdExternalSourceType(externalSourceType: ExternalSourceType): string {
+    return externalSourceType.name;
   }
 </script>
 
@@ -511,11 +519,26 @@
     <CssGrid columns={modalColumnSize} minHeight="100%">
       <div class="derivationgroups-modal-table-container">
         {#if mode === 'dg'}
-          <DataGrid bind:this={dgDataGrid} columnDefs={dgColumnDefs} rowData={$derivationGroups} {getRowId} />
+          <DataGrid
+            bind:this={dgDataGrid}
+            columnDefs={dgColumnDefs}
+            rowData={$derivationGroups}
+            getRowId={getRowIdDerivationGroup}
+          />
         {:else if mode === 'est'}
-          <DataGrid bind:this={estDataGrid} columnDefs={estColumnDefs} rowData={$externalSourceTypes} />
+          <DataGrid
+            bind:this={estDataGrid}
+            columnDefs={estColumnDefs}
+            rowData={$externalSourceTypes}
+            getRowId={getRowIdExternalSourceType}
+          />
         {:else}
-          <DataGrid bind:this={eetDataGrid} columnDefs={eetColumnDefs} rowData={$externalEventTypes} />
+          <DataGrid
+            bind:this={eetDataGrid}
+            columnDefs={eetColumnDefs}
+            rowData={$externalEventTypes}
+            getRowId={getRowIdExternalEventType}
+          />
         {/if}
       </div>
       {#if selectedDerivationGroup !== undefined}
