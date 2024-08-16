@@ -162,7 +162,7 @@
         {user}
         on:editItem={editWorkspaceContext}
         on:rowSelected={workspaceSelected}
-      ></SingleActionDataGrid>
+      />
     {:else}
       <div class="p1 st-typography-label">No Workspaces Found</div>
     {/if}
