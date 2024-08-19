@@ -3570,6 +3570,7 @@ const effects = {
       if (!source_id || source_id <= 0) {
         return [];
       }
+      const data = await reqHasura<any>(gql.GET_EXTERNAL_EVENT_TYPE_BY_SOURCE, { source_id }, user);
       const { external_source } = data;
       if (external_source != null) {
         const event_types: string[] = [];
