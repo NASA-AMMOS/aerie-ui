@@ -2226,6 +2226,10 @@ const effects = {
 
   async deleteDerivationGroup(derivationGroupName: string | null, user: User | null): Promise<void> {
     try {
+      if ((!queryPermissions.DELETE_DERIVATION_GROUP(user))) {
+        throwPermissionError('delete a derivation group');
+      }
+
       if (derivationGroupName !== null) {
         const data = await reqHasura<{ name: string }>(
           gql.DELETE_DERIVATION_GROUP,
@@ -2235,9 +2239,13 @@ const effects = {
         if (data.deleteDerivationGroup === null) {
           throw Error('Unable to delete derivation group');
         }
+        else {
+          showSuccessToast("Derivation Group Deleted Successfully")
+        }
       }
     } catch (e) {
       catchError('Derivation Group Deletion Failed', e as Error);
+      showFailureToast("Derivation Group Deletion Failed")
     }
   },
 
@@ -2501,6 +2509,10 @@ const effects = {
 
   async deleteExternalSourceType(externalSourceTypeName: string | null, user: User | null): Promise<void> {
     try {
+      if ((!queryPermissions.DELETE_EXTERNAL_SOURCE_TYPE(user))) {
+        throwPermissionError('delete a derivation group from the plan');
+      }
+
       // to do this, all dgs associated should be deleted.
       if (externalSourceTypeName !== null) {
         const data = await reqHasura<{ id: number }>(
@@ -2511,9 +2523,13 @@ const effects = {
         if (data.deleteDerivationGroup === null) {
           throw Error('Unable to delete external source type');
         }
+        else {
+          showSuccessToast('External Source Type Deletion Successful');
+        }
       }
     } catch (e) {
       catchError('External Source Type Deletion Failed', e as Error);
+      showFailureToast('External Source Type Deletion Failed');
     }
   },
 
