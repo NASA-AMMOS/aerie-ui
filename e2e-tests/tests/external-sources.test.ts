@@ -64,8 +64,8 @@ test.describe.serial('External Sources', () => {
   test('Selected external source should show metadata in a collapsible', async () => {
     await externalSources.selectSource();
     await externalSources.viewEventSourceMetadata.click();
-    await expect(page.getByText('sc1')).toBeVisible();
-    await expect(page.getByText('sc2')).toBeVisible();
+    await expect(page.getByText('0', { exact: true })).toBeVisible();
+    await expect(page.getByText('1', { exact: true }).first()).toBeVisible();
     await expect(page.getByText('version')).toBeVisible();
   });
 
@@ -86,7 +86,7 @@ test.describe.serial('External Sources', () => {
   });
 
   test('Deleting an external source', async () => {
-    await externalSources.deleteSource();
+    await externalSources.deleteSource(externalSources.externalSourceFileName);
     await expect(page.getByText('External Source Deleted')).toBeVisible();
     await expect(externalSources.inputFile).toBeVisible();
     await expect(externalSources.externalEventSelectedForm).not.toBeVisible();
