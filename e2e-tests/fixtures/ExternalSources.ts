@@ -103,7 +103,7 @@ export class ExternalSources {
     this.deleteSourceButtonConfirmation = page.getByRole('button', { exact: true, name: 'Delete' });
     this.selectEventTableView = page.locator('[name="SelectEventViewType"]');
     this.timelineHeader = page.getByText(
-      'Sat Jan 20 2024 19:00:00 GMT-0500 (Eastern Standard Time) Sat Jan 27 2024 19:00',
+      'Fri Dec 31 2021 19:00:00 GMT-0500 (Eastern Standard Time) Sat Jan 01 2022 19:00',
     );
     this.externalEventTableHeaderID = page.getByText('External Event ID');
     this.externalEventTableHeaderEventType = page.getByText('Event Type', { exact: true });
