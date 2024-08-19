@@ -3530,8 +3530,7 @@ const effects = {
         for (const group of sourceData['plan_derivation_group']) {
           for (const source of group['derivation_group']['external_source']) {
             for (const event of source['external_events']) {
-              // TODO: Don't even think we need 'as ExternalEventType', we can just leave these as strings of the name(s)
-              if (!types.includes(event.external_event_type)) {
+              if (types.flatMap(et => et.name).includes(event.external_event_type.name) === false) {
                 types.push(event.external_event_type);
               }
             }
@@ -3554,7 +3553,6 @@ const effects = {
       if (!source_id || source_id <= 0) {
         return [];
       }
-      const data = await reqHasura<any>(gql.GET_EXTERNAL_EVENT_TYPE_BY_SOURCE, { source_id }, user);
       const { external_source } = data;
       if (external_source != null) {
         const event_types: string[] = [];
