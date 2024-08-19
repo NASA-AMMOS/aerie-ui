@@ -6,12 +6,12 @@ export function customFoldInside(node: SyntaxNode, state: EditorState): { from: 
   switch (node.name) {
     case 'Activate':
     case 'Load':
-      return foldActivateLoad(node, state);
+      return foldSteps(node, 'SequenceName', state);
     case 'Command':
-      return foldCommand(node, state);
+      return foldSteps(node, 'Stem', state);
     case 'GroundBlock':
     case 'GroundEvent':
-      return foldGround(node, state);
+      return foldSteps(node, 'GroundName', state);
     case 'Request':
       return foldRequest(node, state);
     case 'Metadata':
@@ -21,59 +21,6 @@ export function customFoldInside(node: SyntaxNode, state: EditorState): { from: 
   }
   return null;
 }
-
-/**
- * Returns the range of the `Command` node, folding the node on the Stem name.
- * @param commandNode The `Command` node to fold.
- * @param state The EditorState to get the document from.
- * @returns The range of the `Command` node, or null if the Stem node is missing.
- */
-export function foldCommand(commandNode: SyntaxNode, state: EditorState): { from: number; to: number } | null {
-  const stemNode = commandNode.getChild('Stem');
-  if (stemNode == null) {
-    return null;
-  }
-
-  // fold the node on the Stem name
-  return foldSteps(commandNode, stemNode, state);
-}
-
-/**
- * Returns the range of the `GroundBlock` or `GroundEvent` node, folding the node on the GroundName.
- * @param groundNode The `GroundBlock` or `GroundEvent` node to fold.
- * @param state The EditorState to get the document from.
- * @returns The range of the `GroundBlock` or `GroundEvent` node, or null if the GroundName node is missing.
- */
-export function foldGround(groundNode: SyntaxNode, state: EditorState): { from: number; to: number } | null {
-  // Get the GroundName node
-  const groundNameNode = groundNode.getChild('GroundName');
-  // If the GroundName node is missing, return null
-  if (groundNameNode == null) {
-    return null;
-  }
-
-  // Fold the node on the GroundName
-  return foldSteps(groundNode, groundNameNode, state);
-}
-
-/**
- * Returns the range of the `Activate` or `Load` node, folding the node on the `SequenceName`.
- * @param activateNode The `Activate` or `Load` node to fold.
- * @param state The EditorState to get the document from.
- * @returns The range of the `Activate` or `Load` node, or null if the `SequenceName` node is missing.
- */
-export function foldActivateLoad(activateNode: SyntaxNode, state: EditorState): { from: number; to: number } | null {
-  // Get the SequenceName node
-  const sequenceNameNode = activateNode.getChild('SequenceName');
-  // If the SequenceName node is missing, return null
-  if (sequenceNameNode == null) {
-    return null;
-  }
-
-  // Fold the node on the SequenceName
-  return foldSteps(activateNode, sequenceNameNode, state);
-}
-
 /**
  * Returns a fold range object for a Command, Load, or Ground block.
  * The fold range starts after the target node (Stem or SequenceName)
@@ -81,16 +28,22 @@ export function foldActivateLoad(activateNode: SyntaxNode, state: EditorState): 
  * If the text ends with a line break, the end of the fold range will be adjusted to the start of the line break.
  *
  * @param containerNode - The parent node of the target node.
- * @param targetNode - The node to start the fold range after (Stem or SequenceName).
+ * @param nodeName - The node to start the fold range after (Stem or SequenceName).
  * @param state - The EditorState object.
  * @returns A fold range object with "from" and "to" properties.
  *          Returns null if any of the necessary nodes are not present.
  */
-function foldSteps(
+export function foldSteps(
   containerNode: SyntaxNode,
-  targetNode: SyntaxNode,
+  nodeName: 'Stem' | 'SequenceName' | 'GroundName',
   state: EditorState,
 ): { from: number; to: number } | null {
+  const node = containerNode.getChild(nodeName);
+  // If the node is missing, return null
+  if (node == null) {
+    return null;
+  }
+
   // Get all Args nodes, LineComment node, Metadata nodes, and Models nodes.
   const argsNodes = containerNode.getChildren('Args');
   const commentNode = containerNode.getChild('LineComment');
@@ -102,7 +55,7 @@ function foldSteps(
   const engineNode = containerNode.getChild('Engine');
 
   // Calculate the start of the fold range after the target node and any Args, LineComment nodes
-  const from = getFromAndTo([targetNode, ...argsNodes, commentNode]).to;
+  const from = getFromAndTo([node, ...argsNodes, commentNode]).to;
 
   // Calculate the end of the fold range after the Epoch, Engine, Metadata, and Model nodes.
   const groundAttributesEnd = getFromAndTo([epochNode, engineNode, ...metadataNode, ...modelNodes]).to;

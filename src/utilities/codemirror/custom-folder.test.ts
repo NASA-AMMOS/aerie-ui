@@ -1,6 +1,6 @@
 import { EditorState } from '@codemirror/state';
 import { describe, expect, test } from 'vitest';
-import { foldActivateLoad, foldCommand, foldGround, foldRequest } from './custom-folder';
+import { foldRequest, foldSteps } from './custom-folder';
 import { parser } from './sequence.grammar';
 
 const COMMANDS = [
@@ -64,7 +64,7 @@ describe('foldCommand', () => {
         throw new Error('Command node not found');
       } else {
         expect(commandNode).not.toBeNull();
-        expect(foldCommand(commandNode, state)).toStrictEqual({
+        expect(foldSteps(commandNode, 'Stem', state)).toStrictEqual({
           from: doc.indexOf(command) + command.length,
           to: doc.length,
         });
@@ -83,7 +83,7 @@ describe('foldCommand', () => {
         throw new Error('Command node not found');
       } else {
         expect(commandNode).not.toBeNull();
-        expect(foldCommand(commandNode, state)).toStrictEqual({
+        expect(foldSteps(commandNode, 'Stem', state)).toStrictEqual({
           from: doc.indexOf(command) + command.length,
           to: doc.length,
         });
@@ -112,7 +112,7 @@ describe('foldCommand', () => {
         throw new Error('Command node not found');
       } else {
         expect(commandNode).not.toBeNull();
-        expect(foldCommand(commandNode, state)).toStrictEqual({
+        expect(foldSteps(commandNode, 'Stem', state)).toStrictEqual({
           from: doc.indexOf(command) + command.length,
           to: doc.trim().length,
         });
@@ -134,7 +134,7 @@ describe('foldGroundBlockAndEvent', () => {
         throw new Error('node not found');
       } else {
         expect(node).not.toBeNull();
-        expect(foldActivateLoad(node, state)).toStrictEqual({
+        expect(foldSteps(node, 'SequenceName', state)).toStrictEqual({
           from: doc.indexOf(step) + step.length,
           to: doc.length,
         });
@@ -156,7 +156,7 @@ describe('foldGroundBlockAndEvent', () => {
         throw new Error('Node not found');
       } else {
         expect(node).not.toBeNull();
-        expect(foldActivateLoad(node, state)).toStrictEqual({
+        expect(foldSteps(node, 'SequenceName', state)).toStrictEqual({
           from: doc.indexOf(step) + step.length,
           to: doc.length,
         });
@@ -189,7 +189,7 @@ describe('foldGroundBlockAndEvent', () => {
         throw new Error('Node not found');
       } else {
         expect(node).not.toBeNull();
-        expect(foldActivateLoad(node, state)).toStrictEqual({
+        expect(foldSteps(node, 'SequenceName', state)).toStrictEqual({
           from: doc.indexOf(step) + step.length,
           to: doc.trim().length,
         });
@@ -212,7 +212,7 @@ describe('foldGroundBlockAndEvent', () => {
         throw new Error('node not found');
       } else {
         expect(node).not.toBeNull();
-        expect(foldGround(node, state)).toStrictEqual({
+        expect(foldSteps(node, 'GroundName', state)).toStrictEqual({
           from: doc.indexOf(step) + step.length,
           to: doc.length,
         });
@@ -237,7 +237,7 @@ describe('foldGroundBlockAndEvent', () => {
         throw new Error('Node not found');
       } else {
         expect(node).not.toBeNull();
-        expect(foldGround(node, state)).toStrictEqual({
+        expect(foldSteps(node, 'GroundName', state)).toStrictEqual({
           from: doc.indexOf(step) + step.length,
           to: doc.length,
         });
@@ -269,7 +269,7 @@ describe('foldGroundBlockAndEvent', () => {
         throw new Error('Node not found');
       } else {
         expect(node).not.toBeNull();
-        expect(foldGround(node, state)).toStrictEqual({
+        expect(foldSteps(node, 'GroundName', state)).toStrictEqual({
           from: doc.indexOf(step) + step.length,
           to: doc.trim().length,
         });
