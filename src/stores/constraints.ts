@@ -19,10 +19,9 @@ import { gqlSubscribable } from './subscribable';
 
 export const constraintMetadataId: Writable<number> = writable(-1);
 
-export const rawCheckConstraintsStatus: Writable<Status | null> = writable(null);
-
 export const constraintVisibilityMapWritable: Writable<Record<ConstraintMetadata['id'], boolean>> = writable({});
 
+export const rawCheckConstraintsStatus: Writable<Status | null> = writable(null);
 export const rawConstraintResponses: Writable<ConstraintResponse[]> = writable([]);
 
 export const constraintsColumns: Writable<string> = writable('1fr 3px 1fr');
@@ -289,11 +288,11 @@ export function resetPlanConstraintStores() {
 }
 
 export function resetConstraintStores(): void {
-  // cachedConstraintsStatus.set(null);
+  rawCheckConstraintsStatus.set(null);
   rawConstraintResponses.set([]);
 }
 
 export function resetConstraintStoresForSimulation(): void {
-  // cachedConstraintsStatus.set(Status.Unchecked);
+  rawCheckConstraintsStatus.set(Status.Unchecked);
   rawConstraintResponses.set([]);
 }
