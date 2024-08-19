@@ -19,7 +19,7 @@ let schedulingConditions: SchedulingConditions;
 let schedulingGoals: SchedulingGoals;
 let userA: User;
 let userB: User;
-const extendedTimeout = 1000;
+const extendedTimeout = 5000;
 
 test.beforeEach(async () => {
   await plan.goto(); // Refresh page to reset the view
@@ -113,6 +113,85 @@ test.describe.serial('Plan External Sources', () => {
     await expect(page.getByText('Derivation Group Linked Successfully')).toBeVisible();
     await page.getByRole('row', { name: 'Example External Source' }).getByRole('checkbox').click();
     await expect(page.getByText('Derivation Group Disassociated Successfully')).toBeVisible();
+  });
+
+  test('Zero-duration events are properly drawn in the timeline', async () => {
+    await plan.showPanel(PanelNames.EXTERNAL_SOURCES);
+    await plan.externalSourceManageButton.click();
+
+    const checkboxCount: number = await page.getByRole('checkbox').count();
+    for (let index = 1; index < checkboxCount; index++) {
+      if (await page.getByRole('checkbox').first().isChecked()) {
+        await page.getByRole('checkbox').first().check();
+      }
+    }
+    page.getByRole('row', { name: 'Example External Source' }).getByRole('checkbox').click();
+    await expect(page.getByText('Derivation Group Linked Successfully')).toBeVisible();
+    await page.getByRole('button', { name: 'Close' }).click();
+    await page.waitForTimeout(5000);
+
+    const beforePixelData = await page.evaluate(() => {
+      const canvas = document.querySelector('canvas');
+      if (canvas !== null && canvas !== undefined) {
+        const context = canvas.getContext('2d');
+        // Read pixel data from the canvas (example: get image data)
+        if (context !== null && context !== undefined) {
+          const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+          return imageData.data;
+        }
+      }
+      return null;
+    });
+
+    const linkedNonZeroPixels: number[] = [];
+    const disassociatedNonZeroPixels: number[] = [];
+
+    if (beforePixelData !== null) {
+      let index = 0;
+      let currentPixel = beforePixelData[index];
+      while (currentPixel !== undefined) {
+        if (currentPixel !== 0) {
+          linkedNonZeroPixels.push(currentPixel);
+        }
+        index = index + 1;
+        currentPixel = beforePixelData[index];
+      }
+    }
+
+    await plan.showPanel(PanelNames.EXTERNAL_SOURCES);
+    await plan.externalSourceManageButton.click();
+
+    page.getByRole('row', { name: 'Example External Source' }).getByRole('checkbox').click();
+    await expect(page.getByText('Derivation Group Disassociated Successfully')).toBeVisible();
+    await page.getByRole('button', { name: 'Close' }).click();
+    await page.waitForTimeout(5000);
+
+    const afterPixelData = await page.evaluate(() => {
+      const canvas = document.querySelector('canvas');
+      if (canvas !== null && canvas !== undefined) {
+        const context = canvas.getContext('2d');
+        // Read pixel data from the canvas (example: get image data)
+        if (context !== null && context !== undefined) {
+          const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+          return imageData.data;
+        }
+      }
+      return null;
+    });
+
+    if (afterPixelData !== null) {
+      let index = 0;
+      let currentPixel = afterPixelData[index];
+      while (currentPixel !== undefined) {
+        if (currentPixel !== 0) {
+          disassociatedNonZeroPixels.push(currentPixel);
+        }
+        index = index + 1;
+        currentPixel = afterPixelData[index];
+      }
+    }
+
+    expect(linkedNonZeroPixels.length).toBeGreaterThan(disassociatedNonZeroPixels.length);
   });
 
   test('Cards should be shown when a file is added or deleted from a plans linked derivation group', async () => {
@@ -218,7 +297,6 @@ test.describe.serial('Plan External Sources', () => {
     ];
     for (let index = 1; index < expectedData.length; index++) {
       const row = await page.locator('role=row').nth(index + 1);
-      console.log(await row.textContent());
       await expect(row).toContainText(expectedData[index - 1]);
     }
   });
@@ -255,9 +333,9 @@ test.describe.serial('Plan External Sources', () => {
       page.locator('#svelte-modal').getByText('Key: ExampleExternalSource:example-external-source.json').first(),
     ).toBeVisible();
     await expect(page.locator('#svelte-modal').getByText('Source Type: Example External Source').first()).toBeVisible();
-    await expect(page.locator('#svelte-modal').getByText('Start Time: 2024-021T00:00:00').first()).toBeVisible();
-    await expect(page.locator('#svelte-modal').getByText('End Time: 2024-028T00:00:00').first()).toBeVisible();
-    await expect(page.locator('#svelte-modal').getByText('Valid At: 2024-019T00:00:00').first()).toBeVisible();
+    await expect(page.locator('#svelte-modal').getByText('Start Time: 2022-001T00:00:00').first()).toBeVisible();
+    await expect(page.locator('#svelte-modal').getByText('End Time: 2022-002T00:00:00').first()).toBeVisible();
+    await expect(page.locator('#svelte-modal').getByText('Valid At: 2022-001T00:00:00').first()).toBeVisible();
     await expect(page.locator('#svelte-modal').getByText('Created At', { exact: false }).first()).toBeVisible();
   });
 
@@ -286,15 +364,15 @@ test.describe.serial('Plan External Sources', () => {
       .locator('p')
       .waitFor({ state: 'hidden', timeout: extendedTimeout });
     // Expand all collapse buttons to validate fields appear
-    await expect(page.getByRole('button', { name: 'example-external-source.json 4' }).first()).toBeVisible();
-    await page.getByRole('button', { name: 'example-external-source.json 4' }).first().click();
+    await expect(page.getByRole('button', { name: 'example-external-source.json 1' }).first()).toBeVisible();
+    await page.getByRole('button', { name: 'example-external-source.json 1' }).first().click();
     await expect(
       page.locator('#svelte-modal').getByText('Key: ExampleExternalSource:example-external-source.json'),
     ).toBeVisible();
     await expect(page.locator('#svelte-modal').getByText('Source Type: Example External Source')).toBeVisible();
-    await expect(page.locator('#svelte-modal').getByText('Start Time: 2024-021T00:00:00')).toBeVisible();
-    await expect(page.locator('#svelte-modal').getByText('End Time: 2024-028T00:00:00')).toBeVisible();
-    await expect(page.locator('#svelte-modal').getByText('Valid At: 2024-019T00:00:00')).toBeVisible();
+    await expect(page.locator('#svelte-modal').getByText('Start Time: 2022-001T00:00:00')).toBeVisible();
+    await expect(page.locator('#svelte-modal').getByText('End Time: 2022-002T00:00:00')).toBeVisible();
+    await expect(page.locator('#svelte-modal').getByText('Valid At: 2022-001T00:00:00')).toBeVisible();
     await expect(page.locator('#svelte-modal').getByText('Created At')).toBeVisible();
   });
 
