@@ -6,7 +6,6 @@
   import { onMount } from 'svelte';
   import DirectiveIcon from '../../assets/timeline-directive.svg?raw';
   import SpanIcon from '../../assets/timeline-span.svg?raw';
-  import { externalSources, getSourceName } from '../../stores/external-source';
   import { plugins } from '../../stores/plugins';
   import type { ActivityDirective } from '../../types/activity';
   import type { ConstraintResultWithName } from '../../types/constraint';
@@ -373,7 +372,7 @@
   }
 
   function textForExternalEvent(externalEvent: ExternalEvent): string {
-    const { duration, event_type_name, id, key, source_id, start_time } = externalEvent;
+    const { duration, event_type_name, key, source_key, start_time } = externalEvent;
     return `
       <div class='tooltip-row-container'>
         <div class='st-typography-bold' style='color: var(--st-gray-10); display: flex; gap: 4px;'>${DirectiveIcon} ExternalEvent</div>
@@ -384,20 +383,12 @@
           </span>
         </div>
         <div class='tooltip-row'>
-          <span>Id:</span>
-          <span class='tooltip-value-highlight st-typography-medium'>${id}</span>
-        </div>
-        <div class='tooltip-row'>
           <span>Event Type:</span>
           <span class='tooltip-value-highlight st-typography-medium'>${event_type_name}</span>
         </div>
         <div class='tooltip-row'>
           <span>Source File:</span>
-          <span class='tooltip-value-highlight st-typography-medium'>${getSourceName(source_id, $externalSources)}</span>
-        </div>
-        <div class='tooltip-row'>
-          <span>Source Id:</span>
-          <span class='tooltip-value-highlight st-typography-medium'>${source_id}</span>
+          <span class='tooltip-value-highlight st-typography-medium'>${source_key}</span>
         </div>
         <div class='tooltip-row'>
           <span>Start Time (UTC):</span>

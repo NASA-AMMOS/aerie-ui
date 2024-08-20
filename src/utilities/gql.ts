@@ -1499,11 +1499,18 @@ const gql = {
   `,
 
   GET_EXTERNAL_EVENTS: `#graphql
-  query GetExternalEvents($source_id: Int!) {
-    ${Queries.EXTERNAL_EVENT}(where: {source_id: {_eq: $source_id}}) {
+  query GetExternalEvents(
+    $sourceKey: String!,
+    $derivationGroupName: String!
+  ) {
+    ${Queries.EXTERNAL_EVENT}(
+      where: {
+        source_key: {_eq: $sourceKey},
+        derivation_group_name: {_eq: $derivationGroupName}
+      }
+    ) {
       properties
       event_type_name
-      id
       key
       duration
       start_time
@@ -1536,8 +1543,13 @@ const gql = {
 
   // Should be deprecated with the introduction of strict external source schemas, dictating allowable event types for given source types. But for now, this will do.
   GET_EXTERNAL_EVENT_TYPE_BY_SOURCE: `#graphql
-    query GetExternalEventTypesBySource($source_id: Int!) {
-      external_source(where: {id: {_eq: $source_id}}) {
+    query GetExternalEventTypesBySource($derivationGroupName: String!, $sourceKey: String!) {
+      external_source(
+        where: {
+          key: {_eq: $sourceKey},
+          derivation_group_name: {_eq: $derivationGroupName},
+        }
+      ) {
         external_events {
           external_event_type {
             name
@@ -2775,7 +2787,6 @@ const gql = {
   SUB_PLAN_DERIVATION_GROUP: `#graphql
     subscription SubPlanExternalSource {
       links: ${Queries.PLAN_DERIVATION_GROUP}(order_by: { plan_id: asc }) {
-        id
         derivation_group_name
         plan_id
       }
@@ -2783,11 +2794,10 @@ const gql = {
   `,
 
   SUB_PLAN_EXTERNAL_EVENTS: `#graphql
-    subscription SubPlanExternalEvents($source_ids: [Int!]!) {
-      events: ${Queries.EXTERNAL_EVENT}(where: {source_id: {_in: $source_ids}}) {
+    subscription SubPlanExternalEvents($source_keyss: [String!]!) {
+      events: ${Queries.EXTERNAL_EVENT}(where: {source_key: {_in: $source_keys}}) {
         properties
         event_type_name
-        id
         key
         duration
         start_time
@@ -2802,7 +2812,6 @@ const gql = {
         external_event {
           properties
           event_type_name
-          id
           key
           duration
           start_time

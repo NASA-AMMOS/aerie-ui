@@ -933,7 +933,7 @@ const effects = {
       });
       const { createSeenSourceEntry: created } = await reqHasura(gql.CREATE_SEEN_SOURCE_ENTRY, { entries }, user);
       if (created) {
-        return created.id;
+        return created;
       } else {
         throw Error(`Unable to log external source visibility recognition`);
       }
@@ -2264,7 +2264,8 @@ const effects = {
       if (plan !== null) {
         const data = await reqHasura<{
           returning: {
-            id: number;
+            derivation_group_name: string;
+            plan_id: number;
           }[];
         }>(
           gql.DELETE_PLAN_DERIVATION_GROUP,
@@ -2464,7 +2465,11 @@ const effects = {
       if (externalSource !== null) {
         const { confirm } = await showDeleteExternalSourceModal([], externalSource);
         if (confirm) {
-          const data = await reqHasura<{ id: number }>(gql.DELETE_EXTERNAL_SOURCE, { id: externalSource.id }, user);
+          const data = await reqHasura<{ derivation_group_name: string; key: string }>(
+            gql.DELETE_EXTERNAL_SOURCE,
+            { derivation_group_name: externalSource.derivation_group_name, key: externalSource.key },
+            user,
+          );
           if (data.deleteExternalSource !== null) {
             showSuccessToast('External Source Deleted Successfully');
             return true;
@@ -2515,7 +2520,7 @@ const effects = {
 
       // to do this, all dgs associated should be deleted.
       if (externalSourceTypeName !== null) {
-        const data = await reqHasura<{ id: number }>(
+        const data = await reqHasura<{ name: string }>(
           gql.DELETE_EXTERNAL_SOURCE_TYPE,
           { name: externalSourceTypeName },
           user,
@@ -3563,12 +3568,20 @@ const effects = {
   },
 
   // Should be deprecated with the introduction of strict external source schemas, dictating allowable event types for given source types. But for now, this will do.
-  async getExternalEventTypesBySource(source_id: number | null, user: User | null): Promise<string[]> {
+  async getExternalEventTypesBySource(
+    sourceKey: string | null,
+    derivationGroupName: string | null,
+    user: User | null,
+  ): Promise<string[]> {
     try {
-      if (!source_id || source_id <= 0) {
+      if (!sourceKey || !derivationGroupName) {
         return [];
       }
-      const data = await reqHasura<any>(gql.GET_EXTERNAL_EVENT_TYPE_BY_SOURCE, { source_id }, user);
+      const data = await reqHasura<any>(
+        gql.GET_EXTERNAL_EVENT_TYPE_BY_SOURCE,
+        { derivationGroupName, sourceKey },
+        user,
+      );
       const { external_source } = data;
       if (external_source != null) {
         const event_types: string[] = [];
@@ -3586,15 +3599,19 @@ const effects = {
     }
   },
 
-  async getExternalEvents(source_id: number | undefined, user: User | null): Promise<ExternalEventDB[]> {
-    if (!source_id) {
+  async getExternalEvents(
+    sourceKey: string | undefined,
+    derivationGroupName: string | undefined,
+    user: User | null,
+  ): Promise<ExternalEventDB[]> {
+    if (!sourceKey || !derivationGroupName) {
       return [];
     }
     try {
-      const data = await reqHasura<any>(gql.GET_EXTERNAL_EVENTS, { source_id }, user);
+      const data = await reqHasura<any>(gql.GET_EXTERNAL_EVENTS, { derivationGroupName, sourceKey }, user);
       const { external_event: events } = data;
       if (events === null) {
-        throw Error(`Unable to get external events for external source id ${source_id}.`);
+        throw Error(`Unable to get external events for external source id ${sourceKey} - ${derivationGroupName}.`);
       }
 
       const externalEvents: ExternalEventDB[] = [];
@@ -3602,10 +3619,9 @@ const effects = {
         externalEvents.push({
           duration: event.duration,
           event_type_name: event.event_type_name,
-          id: event.id,
           key: event.key,
           properties: event.properties,
-          source_id: event.source_id,
+          source_key: event.source_key,
           start_time: event.start_time,
         });
       }
@@ -3617,25 +3633,34 @@ const effects = {
     }
   },
 
-  async getExternalSourceMetadata(id: number | undefined, user: User | null): Promise<Record<string, any>> {
-    if (!id) {
-      console.log('Source id is undefined.');
+  async getExternalSourceMetadata(
+    sourceKey: string | undefined,
+    derivationGroupName: string | undefined,
+    user: User | null,
+  ): Promise<Record<string, any>> {
+    if (!sourceKey) {
+      console.log('Source key is undefined.');
+      return [];
+    } else if (!derivationGroupName) {
+      console.log('Derivation group name is undefined.');
       return [];
     }
     try {
       getExternalSourceMetadataError.set(null);
-      const data = await reqHasura<any>(gql.GET_EXTERNAL_SOURCE_METADATA, { id }, user);
+      const data = await reqHasura<any>(gql.GET_EXTERNAL_SOURCE_METADATA, { derivationGroupName, sourceKey }, user);
       const { external_source } = data;
       if (external_source) {
         const { metadata }: Record<string, any> = external_source[0];
         if (metadata === null) {
           throw Error(
-            `Unable to get external source metadata for external source id ${id}. "metadata" field may not have been included in original source.`,
+            `Unable to get external source metadata for external source ${sourceKey} - ${derivationGroupName}. "metadata" field may not have been included in original source.`,
           );
         }
         return metadata;
       } else {
-        throw Error(`Unable to get external source metadata for external source id ${id} - source may not exist.`);
+        throw Error(
+          `Unable to get external source metadata for external source ${sourceKey} - ${derivationGroupName} - source may not exist.`,
+        );
       }
     } catch (e) {
       catchError(e as Error);

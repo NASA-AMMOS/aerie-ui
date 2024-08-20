@@ -161,6 +161,3 @@ export function resetModelStores() {
   createDerivationGroupError.set(null);
   derivationGroupPlanLinkError.set(null);
 }
-export function getSourceName(source_id: number | undefined, sources: ExternalSourceSlim[]): string {
-  return sources.find(s => s.id === source_id)?.key ?? 'None';
-}
