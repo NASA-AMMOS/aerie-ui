@@ -1,7 +1,7 @@
 import type { Selection } from 'd3-selection';
 import type { ActivityDirective } from './activity';
 import type { ConstraintResultWithName } from './constraint';
-import type { ExternalEvent, ExternalEventPkey } from './external-event';
+import type { ExternalEvent } from './external-event';
 import type { ResourceType, Span } from './simulation';
 
 export type ActivityTree = ActivityTreeNode[];
@@ -149,7 +149,7 @@ export type MouseOver = {
   pointsByLayer?: Record<number, Point[]>;
   row?: Row;
   selectedActivityDirectiveId?: number | undefined;
-  selectedExternalEventPkey?: ExternalEventPkey | undefined;
+  selectedExternalEventId?: number | undefined;
   selectedSpanId?: number;
   spans?: Span[];
 };
