@@ -41,7 +41,7 @@ export enum Queries {
   DELETE_EXPANSION_SET = 'delete_expansion_set_by_pk',
   DELETE_EXTERNAL_EVENT = 'delete_external_event',
   DELETE_EXTERNAL_EVENT_TYPE = 'delete_external_event_type_by_pk',
-  DELETE_EXTERNAL_SOURCE = 'delete_external_source_by_pk',
+  DELETE_EXTERNAL_SOURCE = 'delete_external_source',
   DELETE_EXTERNAL_SOURCE_TYPE = 'delete_external_source_type_by_pk',
   DELETE_UPLOADED_FILE = 'delete_uploaded_file_by_pk',
   DELETE_MISSION_MODEL = 'delete_mission_model_by_pk',
@@ -1005,14 +1005,30 @@ const gql = {
   `,
 
   DELETE_EXTERNAL_SOURCE: `#graphql
-    mutation DeleteExternalSource($id: Int!) {
-      deleteExternalEvent: ${Queries.DELETE_EXTERNAL_EVENT}(where: { source_id: { _eq: $id }}) {
+    mutation DeleteExternalSource(
+      $derivationGroupName: String!,
+      $sourceKey: String!,
+      $sourceTypeName: String!
+    ) {
+      deleteExternalEvent: ${Queries.DELETE_EXTERNAL_EVENT}(
+        where: {
+          derivation_group_name: { _eq: $derivationGroupName },
+          source_type_name: { _eq: $sourceTypeName },
+          source_key: { _eq: $sourceKey },
+        }
+      ) {
         returning {
-          source_id
+          key
         }
       }
-      deleteExternalSource: ${Queries.DELETE_EXTERNAL_SOURCE}(id: $id) {
-        id
+      deleteExternalSource: ${Queries.DELETE_EXTERNAL_SOURCE}(
+        where: {
+          derivation_group_name: { _eq: $derivationGroupName },
+          key: { _eq: $sourceKey },
+          source_type_name: { _eq: $sourceTypeName },
+        }
+      ) {
+        affected_rows
       }
     }
   `,
