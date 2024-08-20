@@ -372,23 +372,23 @@
   }
 
   function textForExternalEvent(externalEvent: ExternalEvent): string {
-    const { duration, event_type_name, key, source_key, start_time } = externalEvent;
+    const { duration, pkey, start_time } = externalEvent;
     return `
       <div class='tooltip-row-container'>
         <div class='st-typography-bold' style='color: var(--st-gray-10); display: flex; gap: 4px;'>${DirectiveIcon} ExternalEvent</div>
         <div class='tooltip-row'>
           <span>Key:</span>
           <span class='tooltip-value-row'>
-            <span class='tooltip-value-highlight st-typography-medium'>${key}</span>
+            <span class='tooltip-value-highlight st-typography-medium'>${pkey.key}</span>
           </span>
         </div>
         <div class='tooltip-row'>
           <span>Event Type:</span>
-          <span class='tooltip-value-highlight st-typography-medium'>${event_type_name}</span>
+          <span class='tooltip-value-highlight st-typography-medium'>${pkey.event_type_name}</span>
         </div>
         <div class='tooltip-row'>
           <span>Source File:</span>
-          <span class='tooltip-value-highlight st-typography-medium'>${source_key}</span>
+          <span class='tooltip-value-highlight st-typography-medium'>${pkey.source_key}</span>
         </div>
         <div class='tooltip-row'>
           <span>Start Time (UTC):</span>
