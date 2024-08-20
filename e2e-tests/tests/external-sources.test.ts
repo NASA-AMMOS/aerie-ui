@@ -98,12 +98,11 @@ test.describe.serial('External Source Error Handling', () => {
   test('Duplicate keys is handled gracefully', async () => {
     await externalSources.uploadExternalSource(externalSources.externalSourceFilePath);
     await externalSources.deselectSourceButton.click();
-    await page.waitForTimeout(10000); // Arbitrary wait to make sure the test doesn't out-pace the database
     await externalSources.uploadExternalSource(externalSources.externalSourceFilePath, false);
     await expect(page.getByLabel('Uniqueness violation.')).toBeVisible();
     await expect(page.getByText('External Source Create Failed')).toBeVisible();
     await expect(page.getByRole('gridcell', { name: externalSources.externalSourceFileName })).toHaveCount(1);
-    await externalSources.deleteSource('example-external-source.json');
+    await externalSources.deleteSource(externalSources.externalSourceFileName);
     await expect(page.getByText('External Source Deleted')).toBeVisible();
   });
 

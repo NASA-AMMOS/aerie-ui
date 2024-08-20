@@ -8,8 +8,14 @@ export class ExternalSources {
   derivationTestFile2: string = 'e2e-tests/data/external-event-derivation-2.json';
   derivationTestFile3: string = 'e2e-tests/data/external-event-derivation-3.json';
   derivationTestFile4: string = 'e2e-tests/data/external-event-derivation-4.json';
+  derivationTestFileKey1: string = 'Derivation_Test_00.json';
+  derivationTestFileKey2: string = 'Derivation_Test_01.json';
+  derivationTestFileKey3: string = 'Derivation_Test_02.json';
+  derivationTestFileKey4: string = 'Derivation_Test_03.json';
   deselectEventButton: Locator;
   deselectSourceButton: Locator;
+  exampleDerivationSourceType: string = 'Derivation Test';
+  exampleSourceType: string = 'Example External Source';
   externalEventSelectedForm: Locator;
   externalEventTableHeaderDuration: Locator;
   externalEventTableHeaderEventType: Locator;
@@ -21,7 +27,6 @@ export class ExternalSources {
   externalSourceFilePathMissingField: string = 'e2e-tests/data/example-external-source-missing-field.json';
   externalSourceFilePathSyntaxError: string = 'e2e-tests/data/example-external-source-syntax-error.json';
   externalSourceId: string;
-  externalSourceKey: string = 'DSN_CONTACT_CONFIRMED:DSNCONFIRMED_04.json';
   externalSourceSelectedForm: Locator;
   externalSourceTableRow: Locator;
   externalSourceUpload: Locator;
@@ -33,6 +38,7 @@ export class ExternalSources {
   selectEventTableView: Locator;
   tableRowExternalSourceId: Locator;
   timelineHeader: Locator;
+  toastTimeout: number = 5500; // How long to wait for a toast to disappear - they should take 5000ms, 500 extra for buffer
   toggleTimeline: Locator;
   uploadButton: Locator;
   viewContainedEventTypes: Locator;
@@ -47,10 +53,9 @@ export class ExternalSources {
     await this.closeButton.click();
   }
 
-  async deleteSource(sourceName: string | undefined) {
-    const source: string = sourceName !== undefined ? sourceName : 'example-external-source.json';
+  async deleteSource(sourceName: string) {
     // Assumes a source has already been uploaded and it is the first row in the table
-    await this.selectSource(source);
+    await this.selectSource(sourceName);
     await this.deleteSourceButton.click();
     await this.deleteSourceButtonConfirmation.click();
     await this.page.getByText('External Source Deleted').waitFor({ state: 'visible' });
@@ -60,6 +65,20 @@ export class ExternalSources {
     await this.inputFile.focus();
     await this.inputFile.setInputFiles(externalSourceFilePath);
     await this.inputFile.evaluate(e => e.blur());
+  }
+
+  async getCanvasPixelData() {
+    await this.page.evaluate(() => {
+      const canvas = document.querySelector('canvas');
+      if (canvas !== null && canvas !== undefined) {
+        const context = canvas.getContext('2d');
+        if (context !== null && context !== undefined) {
+          const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+          return imageData.data;
+        }
+      }
+    });
+    return null;
   }
 
   async goto() {
