@@ -241,7 +241,7 @@
           </button>
         </div>
         <hr />
-        <div class="constraiderivationgroups-modal-table-container" style="height:100%">
+        <div class="derivationgroups-modal-table-container" style="height:100%">
           {#if filteredDerivationGroups.length}
             <DataGrid bind:this={dataGrid} {columnDefs} rowData={filteredDerivationGroups} {getRowId} />
           {:else}
@@ -348,7 +348,7 @@
     font-weight: bold;
   }
 
-  .constraiderivationgroups-modal-table-container {
+  .derivationgroups-modal-table-container {
     height: 100%;
     padding: 0 1rem 0.5rem;
     width: 100%;
