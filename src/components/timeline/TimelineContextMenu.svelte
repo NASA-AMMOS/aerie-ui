@@ -238,7 +238,7 @@
   }
 </script>
 
-<ContextMenu hideAfterClick={false} on:hide bind:this={contextMenuComponent}>
+<ContextMenu hideAfterClick on:hide bind:this={contextMenuComponent}>
   <!-- TODO should we show the row editing menu items when a directive or span is selected? -->
   {#if mouseOverOrigin !== 'row-header'}
     {#if activityDirective}
