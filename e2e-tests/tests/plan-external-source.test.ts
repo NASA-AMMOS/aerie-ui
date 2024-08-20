@@ -152,8 +152,8 @@ test.describe.serial('Plan External Sources', () => {
     // Disassociate previously linked source so nothing appears on timeline
     page.getByRole('row', { name: externalSources.exampleSourceType }).getByRole('checkbox').click();
     await expect(page.getByText('Derivation Group Disassociated Successfully')).toBeVisible();
-    await page.getByRole('button', { name: 'Close' }).click();
     await page.waitForTimeout(externalSources.toastTimeout);
+    await page.getByRole('button', { name: 'Close' }).click();
 
     const disassociatedNonZeroPixels: number[] = [];
     const afterPixelData = externalSources.getCanvasPixelData();
