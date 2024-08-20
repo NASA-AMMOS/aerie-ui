@@ -1,7 +1,6 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { externalSources, getSourceName } from '../../stores/external-source';
   import { plugins } from '../../stores/plugins';
   import type { ExternalEventDB } from '../../types/external-event';
   import type { Property } from '../../types/property';
@@ -41,12 +40,12 @@
   <div class="external-event-form">
     <fieldset>
       <Collapse title="Definition">
-        <Highlight highlight={highlightKeysMap.id}>
+        <!-- <Highlight highlight={highlightKeysMap.id}>
           <Input layout="inline">
             ID
             <input class="st-input w-100" disabled={!editable} name="id" value={externalEvent.id} />
           </Input>
-        </Highlight>
+        </Highlight> -->
 
         <Highlight highlight={highlightKeysMap.type}>
           <Input layout="inline">
@@ -81,7 +80,7 @@
         <Highlight highlight={highlightKeysMap.last_modified_by}>
           <Input layout="inline">
             Source ID
-            <input class="st-input w-100" disabled={!editable} name="source-id" value={externalEvent.source_id} />
+            <input class="st-input w-100" disabled={!editable} name="source-key" value={externalEvent.source_key} />
           </Input>
         </Highlight>
 
@@ -91,8 +90,8 @@
             <input
               class="st-input w-100"
               disabled={!editable}
-              name="source-id-resolved"
-              value={getSourceName(externalEvent.source_id, $externalSources)}
+              name="source-key-resolved"
+              value={externalEvent.source_key}
             />
           </Input>
         </Highlight>

@@ -20,7 +20,7 @@ export const externalEventsDB = gqlSubscribable<{ external_event: ExternalEventD
 export const externalEventTypes = gqlSubscribable<ExternalEventType[]>(gql.SUB_EXTERNAL_EVENT_TYPES, {}, [], null);
 
 // use to track which event is selected in the plan view, as this information is shared across several sibling panels
-export const selectedExternalEventId: Writable<ExternalEventId | null> = writable(null);
+export const selectedExternalEventKey: Writable<string | null> = writable(null);
 
 /* Derived. */
 // just to prevent repeated lookups
@@ -29,11 +29,12 @@ export const externalEventsMap = derived([externalEventsDB], ([$externalEventsDB
   return keyBy(externalEventsDBFlat, 'id');
 });
 
+// TODO: This is glued together for now
 export const selectedExternalEvent = derived(
-  [selectedExternalEventId, externalEventsMap],
-  ([$selectedExternalEventId, $externalEventsMap]) => {
-    if ($selectedExternalEventId !== null) {
-      const selected = $externalEventsMap[$selectedExternalEventId];
+  [selectedExternalEventKey, externalEventsMap],
+  ([$selectedExternalEventKey, $externalEventsMap]) => {
+    if ($selectedExternalEventKey !== null) {
+      const selected = $externalEventsMap[$selectedExternalEventKey];
       return selected ? selected : null;
     }
     return null;

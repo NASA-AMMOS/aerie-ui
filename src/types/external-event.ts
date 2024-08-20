@@ -6,11 +6,10 @@ export type ExternalEventId = number;
 export type ExternalEventDB = {
   duration: string;
   event_type_name: string;
-  id: number;
   key: string;
   properties: Record<string, any>;
   source?: ExternalSourceDB;
-  source_id?: number;
+  source_key?: string;
   start_time: string;
 };
 
@@ -18,7 +17,6 @@ export type ExternalEventDB = {
 export type ExternalEventJson = {
   duration: string;
   event_type: string;
-  id: number;
   key: string;
   properties: Record<string, any>;
   start_time: string;
@@ -28,7 +26,7 @@ export type ExternalEventJson = {
 
 export type ExternalEvent = Pick<
   ExternalEventDB,
-  'duration' | 'id' | 'key' | 'properties' | 'source' | 'source_id' | 'start_time' | 'event_type_name'
+  'duration' | 'key' | 'properties' | 'source' | 'source_key' | 'start_time' | 'event_type_name'
 > & {
   duration_ms: number;
   start_ms: number;
