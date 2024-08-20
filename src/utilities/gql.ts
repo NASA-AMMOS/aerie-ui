@@ -1502,11 +1502,13 @@ const gql = {
   query GetExternalEvents(
     $sourceKey: String!,
     $derivationGroupName: String!
+    $sourceTypeName: String!
   ) {
     ${Queries.EXTERNAL_EVENT}(
       where: {
         source_key: {_eq: $sourceKey},
         derivation_group_name: {_eq: $derivationGroupName}
+        source_type_name: {_eq: $sourceTypeName}
       }
     ) {
       properties

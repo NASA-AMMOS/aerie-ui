@@ -1,15 +1,19 @@
 import type { ExternalSourceDB } from './external-source';
 
-export type ExternalEventId = number;
+// Represents all fields used as a composite primary key for merlin.external_event
+export type ExternalEventPkey = {
+  key: string,
+  source_key: string,
+  derivation_group_name: string,
+  event_type_name: string
+}
 
 // This is the type that conforms with the database schema.
 export type ExternalEventDB = {
   duration: string;
-  event_type_name: string;
-  key: string;
+  pkey: ExternalEventPkey;
   properties: Record<string, any>;
   source?: ExternalSourceDB;
-  source_key?: string;
   start_time: string;
 };
 
@@ -26,7 +30,7 @@ export type ExternalEventJson = {
 
 export type ExternalEvent = Pick<
   ExternalEventDB,
-  'duration' | 'key' | 'properties' | 'source' | 'source_key' | 'start_time' | 'event_type_name'
+  'pkey' | 'duration' | 'properties' | 'source' | 'start_time'
 > & {
   duration_ms: number;
   start_ms: number;
@@ -44,7 +48,7 @@ export type ExternalEventType = {
 // https://stackoverflow.com/questions/64263271/typescript-validate-excess-keys-on-value-returned-from-function
 export type ExternalEventInsertInput = Pick<
   ExternalEventDB,
-  'key' | 'event_type_name' | 'start_time' | 'duration' | 'properties'
+  'pkey' | 'start_time' | 'duration' | 'properties'
 >;
 
 export type ExternalEventTypeInsertInput = Pick<ExternalEventType, 'name'>;
