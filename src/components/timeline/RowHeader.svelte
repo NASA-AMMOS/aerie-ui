@@ -9,7 +9,7 @@
   import TimelineXRangeLayerIcon from '../../assets/timeline-x-range-layer.svg?component';
   import { ViewDefaultActivityOptions, ViewDefaultExternalEventOptions } from '../../constants/view';
   import type { ActivityDirectiveId } from '../../types/activity';
-  import type { ExternalEventId } from '../../types/external-event';
+  import type { ExternalEventPkey } from '../../types/external-event';
   import type { Resource, SpanId } from '../../types/simulation';
   import type {
     ActivityOptions,
@@ -46,7 +46,7 @@
   export let yAxes: Axis[];
   export let selectedActivityDirectiveId: ActivityDirectiveId | null = null;
   export let selectedSpanId: SpanId | null = null;
-  export let selectedExternalEventId: ExternalEventId | null = null;
+  export let selectedExternalEventPkey: ExternalEventPkey | null = null;
 
   let resourceLabels: {
     chartType: ChartType;
@@ -177,7 +177,7 @@
             <RowHeaderExternalEvent
               {externalEventOptions}
               {externalEventTree}
-              {selectedExternalEventId}
+              {selectedExternalEventPkey}
               on:external-event-tree-node-change
               on:mouseDown
               on:dblClick
