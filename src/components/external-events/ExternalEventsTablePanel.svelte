@@ -28,7 +28,7 @@
   <svelte:fragment slot="body">
     <ExternalEventsTable
       bind:selectedItemId={$selectedExternalEventId}
-      items={$externalEventsDB.flatMap(ee => ee.external_event)}
+      items={$externalEventsDB}
       {user}
       on:rowDoubleClicked={onRowDoubleClicked}
       on:selectionChanged={onSelectionChanged}

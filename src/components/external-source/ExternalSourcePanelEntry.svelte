@@ -3,12 +3,12 @@
 <script lang="ts">
   import Eye from 'bootstrap-icons/icons/eye-fill.svg?component';
   import EyeSlash from 'bootstrap-icons/icons/eye-slash.svg?component';
-  import { externalSourceWithResolvedNames, planDerivationGroupNamesToFilter } from '../../stores/external-source';
+  import { externalSources, planDerivationGroupNamesToFilter } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import { plugins } from '../../stores/plugins';
   import { originalView, viewUpdateFilteredDerivationGroupIds } from '../../stores/views';
   import type { User } from '../../types/app';
-  import type { DerivationGroup, ExternalSourceWithResolvedNames } from '../../types/external-source';
+  import type { DerivationGroup, ExternalSourceSlim } from '../../types/external-source';
   import type { View } from '../../types/view';
   import effects from '../../utilities/effects';
   import { formatDate } from '../../utilities/time';
@@ -19,7 +19,7 @@
   export let user: User | null;
 
   let dgInFilter: boolean = false;
-  let relevantSources: ExternalSourceWithResolvedNames[] = [];
+  let relevantSources: ExternalSourceSlim[] = [];
   let planDerivationGroupNamesToFilterParsed: { [plan_id: number]: string[] } = JSON.parse(
     $planDerivationGroupNamesToFilter,
   );
@@ -30,8 +30,8 @@
   let currentView: View | null = null;
 
   $: planDerivationGroupNamesToFilterParsed = JSON.parse($planDerivationGroupNamesToFilter);
-  $: relevantSources = $externalSourceWithResolvedNames.filter(
-    source => derivationGroup.name === source.derivation_group_name,
+  $: relevantSources = $externalSources.filter(
+    source => derivationGroup.name === source.pkey.derivation_group_name,
   );
   $: {
     // Ensure the current derivation group in the filter list if it has been disabled
@@ -160,20 +160,20 @@
     {#if relevantSources.length}
       {#each relevantSources as source}
         <!-- Collapsible details -->
-        <Collapse title={source.key} tooltipContent={source.key} defaultExpanded={false}>
+        <Collapse title={source.pkey.key} tooltipContent={source.pkey.key} defaultExpanded={false}>
           <span slot="right">
             <p style:color="gray" style:text-wrap="nowrap">
-              {derivationGroup.sources.get(source.key)?.event_counts} events
+              {derivationGroup.sources.get(source.pkey.key)?.event_counts} events
             </p>
           </span>
           <p>
             <strong>Key:</strong>
-            {source.key}
+            {source.pkey.key}
           </p>
 
           <p>
             <strong>Source Type:</strong>
-            {source.source_type_name}
+            {source.pkey.source_type_name}
           </p>
 
           <p>
