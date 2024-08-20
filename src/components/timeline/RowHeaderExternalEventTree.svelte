@@ -6,7 +6,7 @@
   import FolderIcon from '../../assets/folder.svg?component';
   import SelectIcon from '../../assets/select.svg?component';
   import { ViewDefaultExternalEventOptions } from '../../constants/view';
-  import type { ExternalEvent, ExternalEventId } from '../../types/external-event';
+  import type { ExternalEvent, ExternalEventPkey } from '../../types/external-event';
   import type {
     ExternalEventOptions,
     ExternalEventTree,
@@ -21,7 +21,7 @@
 
   export let externalEventOptions: ExternalEventOptions = { ...ViewDefaultExternalEventOptions };
   export let externalEventTree: ExternalEventTree = [];
-  export let selectedExternalEventId: ExternalEventId | null = null;
+  export let selectedExternalEventPkey: ExternalEventPkey | null = null;
 
   let rowHeight = 0;
 
@@ -78,7 +78,7 @@
         style:overflow="hidden"
         style:text-overflow="ellipsis ellipsis"
         class="row-header-external-event-group leaf st-button tertiary"
-        class:selected={externalEvent?.key === selectedExternalEventKey}
+        class:selected={externalEvent?.pkey.key === selectedExternalEventPkey?.key}
         on:dblclick={e => onDblclickLeaf(e)}
         on:click={e => onMouseDownLeaf(e, node)}
       >
@@ -96,7 +96,12 @@
         headerHeight={rowHeight}
         defaultExpanded={node.expanded}
         className={classNames('row-header-external-event-group', {
-          selected: externalEvent?.id === selectedExternalEventId,
+          selected: (
+            externalEvent !== undefined && selectedExternalEventPkey !== null
+            && externalEvent.pkey.key === selectedExternalEventPkey.key
+            && externalEvent.pkey.derivation_group_name === selectedExternalEventPkey.derivation_group_name
+            && externalEvent.pkey.event_type_name === selectedExternalEventPkey.event_type_name
+            && externalEvent.pkey.source_key === selectedExternalEventPkey.source_key)
         })}
         on:collapse={() => dispatch('external-event-tree-node-change', node)}
       >
@@ -137,7 +142,7 @@
             on:external-event-tree-node-change
             on:mouseDown
             on:dblClick
-            {selectedExternalEventId}
+            {selectedExternalEventPkey}
           />
         {/if}
       </Collapse>
