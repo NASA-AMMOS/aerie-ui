@@ -90,11 +90,12 @@ import type {
   DerivationGroup,
   DerivationGroupInsertInput,
   ExternalSourceInsertInput,
+  ExternalSourcePkey,
+  ExternalSourceSlim,
   ExternalSourceType,
   ExternalSourceTypeInsertInput,
-  ExternalSourceWithResolvedNames,
   PlanDerivationGroup,
-  UserSeenEntry,
+  UserSeenEntry
 } from '../types/external-source';
 import type { Model, ModelInsertInput, ModelLog, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
 import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
@@ -2454,7 +2455,7 @@ const effects = {
   },
 
   async deleteExternalSource(
-    externalSource: ExternalSourceWithResolvedNames | null,
+    externalSource: ExternalSourceSlim | null,
     user: User | null,
   ): Promise<boolean> {
     try {
@@ -2466,7 +2467,7 @@ const effects = {
         if (confirm) {
           const data = await reqHasura<{ derivation_group_name: string; key: string }>(
             gql.DELETE_EXTERNAL_SOURCE,
-            { derivation_group_name: externalSource.derivation_group_name, key: externalSource.key },
+            { derivation_group_name: externalSource.pkey.derivation_group_name, key: externalSource.pkey.key },
             user,
           );
           if (data.deleteExternalSource !== null) {
@@ -3568,17 +3569,19 @@ const effects = {
 
   // Should be deprecated with the introduction of strict external source schemas, dictating allowable event types for given source types. But for now, this will do.
   async getExternalEventTypesBySource(
-    sourceKey: string | null,
-    derivationGroupName: string | null,
+    externalSourcePkey: ExternalSourcePkey,
     user: User | null,
   ): Promise<string[]> {
+    if (!externalSourcePkey) {
+      return [];
+    }
     try {
-      if (!sourceKey || !derivationGroupName) {
-        return [];
-      }
+      const sourceKey = externalSourcePkey.key;
+      const derivationGroupName = externalSourcePkey.derivation_group_name;
+      const sourceTypeName = externalSourcePkey.source_type_name
       const data = await reqHasura<any>(
         gql.GET_EXTERNAL_EVENT_TYPE_BY_SOURCE,
-        { derivationGroupName, sourceKey },
+        { derivationGroupName, sourceKey, sourceTypeName },
         user,
       );
       const { external_source } = data;
@@ -3599,15 +3602,17 @@ const effects = {
   },
 
   async getExternalEvents(
-    sourceKey: string | undefined,
-    derivationGroupName: string | undefined,
+    externalSourcePkey: ExternalSourcePkey | null,
     user: User | null,
   ): Promise<ExternalEventDB[]> {
-    if (!sourceKey || !derivationGroupName) {
+    if (!externalSourcePkey) {
       return [];
     }
     try {
-      const data = await reqHasura<any>(gql.GET_EXTERNAL_EVENTS, { derivationGroupName, sourceKey }, user);
+      const sourceKey = externalSourcePkey.key;
+      const derivationGroupName = externalSourcePkey.derivation_group_name
+      const sourceTypeName = externalSourcePkey.source_type_name
+      const data = await reqHasura<any>(gql.GET_EXTERNAL_EVENTS, { sourceKey, derivationGroupName, sourceTypeName}, user);
       const { external_event: events } = data;
       if (events === null) {
         throw Error(`Unable to get external events for external source id ${sourceKey} - ${derivationGroupName}.`);
@@ -3617,11 +3622,9 @@ const effects = {
       for (const event of events) {
         externalEvents.push({
           duration: event.duration,
-          event_type_name: event.event_type_name,
-          key: event.key,
           properties: event.properties,
-          source_key: event.source_key,
-          start_time: event.start_time,
+          pkey: event.pkey,
+          start_time: event.start_time
         });
       }
       return externalEvents;
@@ -3633,20 +3636,19 @@ const effects = {
   },
 
   async getExternalSourceMetadata(
-    sourceKey: string | undefined,
-    derivationGroupName: string | undefined,
+    externalSourcePkey: ExternalSourcePkey | null,
     user: User | null,
   ): Promise<Record<string, any>> {
-    if (!sourceKey) {
+    if (!externalSourcePkey) {
       console.log('Source key is undefined.');
-      return [];
-    } else if (!derivationGroupName) {
-      console.log('Derivation group name is undefined.');
       return [];
     }
     try {
+      const sourceKey = externalSourcePkey.key;
+      const derivationGroupName = externalSourcePkey.derivation_group_name;
+      const sourceTypeName = externalSourcePkey.source_type_name;
       getExternalSourceMetadataError.set(null);
-      const data = await reqHasura<any>(gql.GET_EXTERNAL_SOURCE_METADATA, { derivationGroupName, sourceKey }, user);
+      const data = await reqHasura<any>(gql.GET_EXTERNAL_SOURCE_METADATA, { derivationGroupName, sourceKey, sourceTypeName }, user);
       const { external_source } = data;
       if (external_source) {
         const { metadata }: Record<string, any> = external_source[0];

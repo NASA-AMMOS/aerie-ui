@@ -5,14 +5,14 @@
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import { createEventDispatcher } from 'svelte';
   import { externalEventTypes } from '../../stores/external-event';
-  import { derivationGroups, externalSourceTypes, externalSourceWithResolvedNames } from '../../stores/external-source';
+  import { derivationGroups, externalSources, externalSourceTypes } from '../../stores/external-source';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalEventType } from '../../types/external-event';
   import type {
     DerivationGroup,
-    ExternalSourceType,
-    ExternalSourceWithResolvedNames,
+    ExternalSourceSlim,
+    ExternalSourceType
   } from '../../types/external-source';
   import {
     showDeleteDerivationGroupModal,
@@ -354,7 +354,7 @@
   let modalColumnSize: string = modalColumnSizeNoDetail;
 
   let selectedDerivationGroup: DerivationGroup | undefined = undefined;
-  let selectedDerivationGroupSources: ExternalSourceWithResolvedNames[] = [];
+  let selectedDerivationGroupSources: ExternalSourceSlim[] = [];
 
   let selectedExternalSourceType: ExternalSourceType | undefined = undefined;
   let selectedExternalSourceTypeDerivationGroups: DerivationGroup[] = [];
@@ -362,8 +362,8 @@
   let selectedExternalEventType: ExternalEventType | undefined = undefined;
   let selectedExternalEventTypeDerivationGroups: DerivationGroup[] = [];
 
-  $: selectedDerivationGroupSources = $externalSourceWithResolvedNames.filter(
-    source => selectedDerivationGroup?.name === source.derivation_group_name,
+  $: selectedDerivationGroupSources = $externalSources.filter(
+    source => selectedDerivationGroup?.name === source.pkey.derivation_group_name,
   );
 
   $: selectedExternalSourceTypeDerivationGroups = $derivationGroups.filter(dg => {
@@ -411,7 +411,7 @@
     if (sourceType === undefined) {
       return [];
     }
-    let associatedSources = $externalSourceWithResolvedNames.filter(source => source.source_type_name === sourceType);
+    let associatedSources = $externalSources.filter(source => source.pkey.source_type_name === sourceType);
     return associatedSources;
   }
 
@@ -553,20 +553,20 @@
             {#if selectedDerivationGroupSources.length > 0}
               {#each selectedDerivationGroupSources as source}
                 <!-- Collapsible details -->
-                <Collapse title={source.key} tooltipContent={source.key} defaultExpanded={false}>
+                <Collapse title={source.pkey.key} tooltipContent={source.pkey.key} defaultExpanded={false}>
                   <span slot="right">
                     <p style:color="gray">
-                      {selectedDerivationGroup.sources.get(source.key)?.event_counts} events
+                      {selectedDerivationGroup.sources.get(source.pkey.key)?.event_counts} events
                     </p>
                   </span>
                   <p>
                     <strong>Key:</strong>
-                    {source.key}
+                    {source.pkey.key}
                   </p>
 
                   <p>
                     <strong>Source Type:</strong>
-                    {source.source_type_name}
+                    {source.pkey.source_type_name}
                   </p>
 
                   <p>

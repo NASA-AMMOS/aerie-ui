@@ -2,9 +2,9 @@ import { browser } from '$app/environment';
 import { derived, writable, type Writable } from 'svelte/store';
 import {
   type DerivationGroup,
+  type ExternalSourcePkey,
   type ExternalSourceSlim,
   type ExternalSourceType,
-  type ExternalSourceWithResolvedNames,
   type PlanDerivationGroup,
   type UserSeenEntry,
 } from '../types/external-source';
@@ -128,17 +128,6 @@ export const derivationGroups = derived<[typeof derivationGroupsRaw], Derivation
       ),
     })),
 );
-
-// Creates a store for each externalSource with the added 'source_type' field that maps to the human-readable source type name
-export const externalSourceWithResolvedNames = derived<[typeof externalSources], ExternalSourceWithResolvedNames[]>(
-  [externalSources],
-  ([$externalSources]) =>
-    $externalSources.map(externalSource => ({
-      ...externalSource,
-      derivation_group: externalSource.derivation_group_name,
-      source_type: externalSource.source_type_name,
-    })),
-);
 export const selectedPlanDerivationGroupNames = derived(
   [planDerivationGroupLinks, planId],
   ([$planDerivationGroupLinks, $planId]) =>
@@ -160,4 +149,8 @@ export function resetModelStores() {
   createExternalSourceTypeError.set(null);
   createDerivationGroupError.set(null);
   derivationGroupPlanLinkError.set(null);
+}
+
+export function getRowIdFromExternalSourceId(externalSourceId: ExternalSourcePkey): string {
+  return `${externalSourceId.key}:::${externalSourceId.source_type_name}:::${externalSourceId.derivation_group_name}`;
 }
