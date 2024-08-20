@@ -69,7 +69,7 @@
     scrollIfOffscreen();
   }
 
-  // The time range can potentially become invalid by zooming out too much which will cause the following to fail
+  // The time range can potentially become invalid by zooming in too much which will cause the following to fail
   // A try/catch is used here to prevent the UI from becoming unresponsive if an invalid time range is provided
   $: try {
     if (
