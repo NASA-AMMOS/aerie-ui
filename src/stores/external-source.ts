@@ -59,75 +59,36 @@ planDerivationGroupNamesToFilter.subscribe(val => {
 });
 
 /* Subscriptions. */
-export const externalSources = gqlSubscribable<ExternalSourceSlim[]>(gql.SUB_EXTERNAL_SOURCES, {}, [], null);
+export const externalSources = gqlSubscribable<ExternalSourceSlim[]>(
+  gql.SUB_EXTERNAL_SOURCES,
+  {},
+  [],
+  null,
+  transformExternalSources,
+);
 export const externalSourceTypes = gqlSubscribable<ExternalSourceType[]>(gql.SUB_EXTERNAL_SOURCE_TYPES, {}, [], null);
-export const derivationGroupsRaw = gqlSubscribable<
-  {
-    derived_total: number;
-    event_types: string[];
-    name: string;
-    source_type_name: string;
-    sources: string[];
-  }[]
->(gql.SUB_DERIVATION_GROUPS, {}, [], null);
+export const derivationGroups = gqlSubscribable<DerivationGroup[]>(
+  gql.SUB_DERIVATION_GROUPS,
+  {},
+  [],
+  null,
+  transformDerivationGroups,
+);
 export const planDerivationGroupLinks = gqlSubscribable<PlanDerivationGroup[]>(
   gql.SUB_PLAN_DERIVATION_GROUP,
   {},
   [],
   null,
 );
-export const usersSeenSourcesRaw = gqlSubscribable<
-  {
-    derivation_group: string;
-    external_source_name: string;
-    external_source_type: string;
-    id: number;
-    username: string;
-  }[]
->(gql.SUB_SEEN_SOURCES, {}, [], null);
-export const usersSeenSources = derived<[typeof usersSeenSourcesRaw], { [key: string]: UserSeenEntry[] }>(
-  [usersSeenSourcesRaw],
-  ([$rawSeen]) => {
-    const res: Record<string, UserSeenEntry[]> = {};
-    for (const entry of $rawSeen) {
-      if (res[entry.username]) {
-        res[entry.username].push({
-          derivation_group: entry.derivation_group,
-          key: entry.external_source_name,
-          source_type_name: entry.external_source_type,
-        });
-      } else {
-        res[entry.username] = [
-          {
-            derivation_group: entry.derivation_group,
-            key: entry.external_source_name,
-            source_type_name: entry.external_source_type,
-          },
-        ];
-      }
-    }
-    return res;
-  },
+export const usersSeenSourcesRaw = gqlSubscribable<Record<string, UserSeenEntry[]>>(
+  gql.SUB_SEEN_SOURCES,
+  {},
+  {},
+  null,
+  transformUsersSeenSources,
 );
 
 /* Derived. */
-// 'Cleaned' version of derivationGroupsRaw
-export const derivationGroups = derived<[typeof derivationGroupsRaw], DerivationGroup[]>(
-  [derivationGroupsRaw],
-  ([$derivationGroupsRaw]) =>
-    $derivationGroupsRaw.map(raw => ({
-      derived_event_total: raw.derived_total,
-      event_types: raw.event_types,
-      name: raw.name,
-      source_type_name: raw.source_type_name,
-      sources: new Map(
-        // comes from view schema that is hardcoded as "{dg_id}, {source_key}, {source_id}""
-        raw.sources
-          .filter(s => s.charAt(0) !== ',' && s.length > 4)
-          .map(s => [s.split(', ')[1], { event_counts: parseInt(s.split(', ')[2]) }]),
-      ),
-    })),
-);
 export const selectedPlanDerivationGroupNames = derived(
   [planDerivationGroupLinks, planId],
   ([$planDerivationGroupLinks, $planId]) =>
@@ -153,4 +114,93 @@ export function resetModelStores() {
 
 export function getRowIdFromExternalSourceId(externalSourceId: ExternalSourcePkey): string {
   return `${externalSourceId.key}:::${externalSourceId.source_type_name}:::${externalSourceId.derivation_group_name}`;
+}
+
+function transformExternalSources(
+  externalSources: {
+    created_at: string;
+    end_time: string;
+    derivation_group_name: string;
+    key: string;
+    source_type_name: string;
+    start_time: string;
+    valid_at: string;
+  }[],
+): ExternalSourceSlim[] {
+  const completeExternalSourceSlim: ExternalSourceSlim[] = [];
+  if (externalSources !== null && externalSources !== undefined) {
+    externalSources.forEach(es => {
+      completeExternalSourceSlim.push({
+        created_at: es.created_at,
+        end_time: es.end_time,
+        pkey: {
+          derivation_group_name: es.derivation_group_name,
+          key: es.key,
+          source_type_name: es.source_type_name,
+        },
+        start_time: es.start_time,
+        valid_at: es.valid_at,
+      });
+    });
+  }
+  return completeExternalSourceSlim;
+}
+
+function transformDerivationGroups(
+  derivationGroups: {
+    derived_total: number;
+    event_types: string[];
+    name: string;
+    source_type_name: string;
+    sources: string[];
+  }[],
+): DerivationGroup[] {
+  const completeExternalSourceSlim: DerivationGroup[] = [];
+  if (derivationGroups !== null && derivationGroups !== undefined) {
+    derivationGroups.forEach(dg => {
+      completeExternalSourceSlim.push({
+        derived_event_total: dg.derived_total,
+        event_types: dg.event_types,
+        name: dg.name,
+        source_type_name: dg.source_type_name,
+        sources: new Map(
+          // comes from view schema that is hardcoded as "{dg_id}, {source_key}, {source_id}""
+          dg.sources
+            .filter(s => s.charAt(0) !== ',' && s.length > 4)
+            .map(s => [s.split(', ')[1], { event_counts: parseInt(s.split(', ')[2]) }]),
+        ),
+      });
+    });
+  }
+  return completeExternalSourceSlim;
+}
+
+function transformUsersSeenSources(
+  seenSources: {
+    derivation_group: string;
+    external_source_name: string;
+    external_source_type: string;
+    id: number;
+    username: string;
+  }[],
+): Record<string, UserSeenEntry[]> {
+  const res: Record<string, UserSeenEntry[]> = {};
+  for (const entry of seenSources) {
+    if (res[entry.username]) {
+      res[entry.username].push({
+        derivation_group_name: entry.derivation_group,
+        key: entry.external_source_name,
+        source_type_name: entry.external_source_type,
+      });
+    } else {
+      res[entry.username] = [
+        {
+          derivation_group_name: entry.derivation_group,
+          key: entry.external_source_name,
+          source_type_name: entry.external_source_type,
+        },
+      ];
+    }
+  }
+  return res;
 }

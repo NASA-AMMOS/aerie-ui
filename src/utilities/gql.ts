@@ -511,7 +511,7 @@ const gql = {
         name
       }
       createExternalSource: insert_external_source_one(object: $source) {
-        id
+        key
       }
     }
   `,
@@ -1512,7 +1512,7 @@ const gql = {
       key
       duration
       start_time
-      source_id
+      source_key
     }
   }
   `,
@@ -1541,11 +1541,12 @@ const gql = {
 
   // Should be deprecated with the introduction of strict external source schemas, dictating allowable event types for given source types. But for now, this will do.
   GET_EXTERNAL_EVENT_TYPE_BY_SOURCE: `#graphql
-    query GetExternalEventTypesBySource($derivationGroupName: String!, $sourceKey: String!) {
+    query GetExternalEventTypesBySource($derivationGroupName: String!, $sourceKey: String!, $sourceTypeName: String!) {
       external_source(
         where: {
           key: {_eq: $sourceKey},
           derivation_group_name: {_eq: $derivationGroupName},
+          source_type_name: {_eq: $sourceTypeName},
         }
       ) {
         external_events {
@@ -1560,7 +1561,6 @@ const gql = {
   GET_EXTERNAL_SOURCE_BY_TYPE: `#graphql
     query GetExternalSourceByType($source_type_name: String!) {
       ${Queries.EXTERNAL_SOURCES}(where: {source_type_name: { _eq: $source_type_name }}) {
-        id
         key
         source_type_name
         valid_at
@@ -1571,8 +1571,14 @@ const gql = {
   `,
 
   GET_EXTERNAL_SOURCE_METADATA: `#graphql
-    query GetExternalSourceMetadata($id: Int!) {
-      ${Queries.EXTERNAL_SOURCES}(where: {id: {_eq: $id}}) {
+    query GetExternalSourceMetadata($derivationGroupName: String!, $sourceKey: String!, $sourceTypeName: String!) {
+      ${Queries.EXTERNAL_SOURCES}(
+        where: {
+          derivation_group_name: {_eq: $derivationGroupName},
+          key: {_eq: $sourceKey},
+          source_type_name: {_eq: $sourceTypeName},
+        }
+      ) {
         metadata
       }
     }
@@ -2540,7 +2546,6 @@ const gql = {
   SUB_EXTERNAL_SOURCE: `#graphql
     subscription SubExternalSource($id: Int!) {
       models: ${Queries.EXTERNAL_SOURCE}(id: $id) {
-        id
         key
         source_type_name
         start_time
@@ -2554,10 +2559,9 @@ const gql = {
   SUB_EXTERNAL_SOURCES: `#graphql
     subscription SubExternalSources {
       models: ${Queries.EXTERNAL_SOURCES}(order_by: { key: asc }) {
-        id
-        key
-        source_type_name
-        derivation_group_name
+        key,
+        source_type_name,
+        derivation_group_name,
         start_time
         end_time
         valid_at

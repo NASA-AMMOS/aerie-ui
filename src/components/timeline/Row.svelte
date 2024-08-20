@@ -26,7 +26,7 @@
   } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { ConstraintResultWithName } from '../../types/constraint';
-  import type { ExternalEvent, ExternalEventPkey } from '../../types/external-event';
+  import type { ExternalEvent } from '../../types/external-event';
   import type { Plan } from '../../types/plan';
   import type {
     Resource,
@@ -90,6 +90,7 @@
   import RowHorizontalGuides from './RowHorizontalGuides.svelte';
   import RowXAxisTicks from './RowXAxisTicks.svelte';
   import RowYAxisTicks from './RowYAxisTicks.svelte';
+  import { getRowIdExternalEvent } from '../../utilities/hash';
 
   export let activityDirectives: ActivityDirective[] = [];
   export let externalEvents: ExternalEvent[] = [];
@@ -120,7 +121,7 @@
   export let rowDragMoveDisabled = true;
   export let rowHeaderDragHandleWidthPx: number = 2;
   export let selectedActivityDirectiveId: ActivityDirectiveId | null = null;
-  export let selectedExternalEventPkey: ExternalEventPkey | null = null;
+  export let selectedExternalEventId: number | null = null;
   export let selectedSpanId: SpanId | null = null;
   export let simulationDataset: SimulationDataset | null = null;
   export let spanUtilityMaps: SpanUtilityMaps;
@@ -499,7 +500,7 @@
         event_types.forEach(type => {
           const matchingEvents = externalEventsByType[type];
           if (matchingEvents) {
-            matchingEvents.forEach(event => (idToColorMaps.external_events[event.id] = layer.externalEventColor));
+            matchingEvents.forEach(event => (idToColorMaps.external_events[getRowIdExternalEvent(event.pkey)] = layer.externalEventColor));
             externalEventsFilteredByType = externalEventsFilteredByType.concat(
               matchingEvents.filter((val, ind, arr) => arr.indexOf(val) === ind),
             ); // uniqueness
@@ -849,7 +850,7 @@
       on:contextMenu
       {selectedActivityDirectiveId}
       {selectedSpanId}
-      {selectedExternalEventPkey}
+      {selectedExternalEventId}
     >
       {#if hasActivityLayer && activityOptions?.displayMode === 'grouped'}
         <button
@@ -1008,7 +1009,7 @@
             {mousedown}
             {mousemove}
             {mouseout}
-            {selectedExternalEventPkey}
+            {selectedExternalEventId}
             {timelineInteractionMode}
             {viewTimeRange}
             {xScaleView}

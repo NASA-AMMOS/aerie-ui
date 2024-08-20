@@ -925,7 +925,7 @@ const effects = {
 
       const entries = sources_seen.map(source_seen => {
         return {
-          derivation_group: source_seen.derivation_group,
+          derivation_group: source_seen.derivation_group_name,
           external_source_name: source_seen.key,
           external_source_type: source_seen.source_type_name,
           username: user?.id,
@@ -2496,7 +2496,7 @@ const effects = {
         const { deleteSeenSources: deleted } = await reqHasura(
           gql.DELETE_SEEN_SOURCE_ENTRY,
           {
-            derivation_group: entry.derivation_group,
+            derivation_group: entry.derivation_group_name,
             external_source_name: entry.key,
             external_source_type: entry.source_type_name,
             username: user?.id,
@@ -3612,7 +3612,11 @@ const effects = {
       const sourceKey = externalSourcePkey.key;
       const derivationGroupName = externalSourcePkey.derivation_group_name
       const sourceTypeName = externalSourcePkey.source_type_name
-      const data = await reqHasura<any>(gql.GET_EXTERNAL_EVENTS, { sourceKey, derivationGroupName, sourceTypeName}, user);
+      const data = await reqHasura<any>(
+        gql.GET_EXTERNAL_EVENTS,
+        { derivationGroupName, sourceKey, sourceTypeName },
+        user,
+      );
       const { external_event: events } = data;
       if (events === null) {
         throw Error(`Unable to get external events for external source id ${sourceKey} - ${derivationGroupName}.`);
@@ -3622,9 +3626,15 @@ const effects = {
       for (const event of events) {
         externalEvents.push({
           duration: event.duration,
+          pkey: {
+            derivation_group_name: event.derivation_group_name,
+            event_type_name: event.event_type_name,
+            key: event.key,
+            source_key: event.source_key,
+            source_type_name: event.source_type_name,
+          },
           properties: event.properties,
-          pkey: event.pkey,
-          start_time: event.start_time
+          start_time: event.start_time,
         });
       }
       return externalEvents;
