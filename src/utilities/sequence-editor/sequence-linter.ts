@@ -395,7 +395,7 @@ export function sequenceLinter(
     inputParams.forEach(inputParam => {
       let child = inputParam.firstChild;
       while (child) {
-        if (child.name !== 'Enum') {
+        if (child.name !== 'Enum' && child.name !== 'Object') {
           diagnostics.push({
             from: child.from,
             message: `@INPUT_PARAMS values are required to be Enums`,
