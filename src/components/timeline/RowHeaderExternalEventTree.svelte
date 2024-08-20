@@ -6,7 +6,6 @@
   import FolderIcon from '../../assets/folder.svg?component';
   import SelectIcon from '../../assets/select.svg?component';
   import { ViewDefaultExternalEventOptions } from '../../constants/view';
-  import { externalSources, getSourceName } from '../../stores/external-source';
   import type { ExternalEvent, ExternalEventId } from '../../types/external-event';
   import type {
     ExternalEventOptions,
@@ -79,7 +78,7 @@
         style:overflow="hidden"
         style:text-overflow="ellipsis ellipsis"
         class="row-header-external-event-group leaf st-button tertiary"
-        class:selected={externalEvent?.id === selectedExternalEventId}
+        class:selected={externalEvent?.key === selectedExternalEventKey}
         on:dblclick={e => onDblclickLeaf(e)}
         on:click={e => onMouseDownLeaf(e, node)}
       >
@@ -109,7 +108,7 @@
         <div slot="title" style="align-items: center;display: flex; gap: 8px;">
           <div class="label" style:white-space="nowrap" style:overflow="hidden" style:text-overflow="ellipsis ellipsis">
             {#if externalEventOptions.groupBy === 'source_id'}
-              {getSourceName(Number.parseInt(node.label), $externalSources)}
+              {node.label} <!-- TODO: this probably needs to be updated... -->
             {:else}
               {node.label}
             {/if}
