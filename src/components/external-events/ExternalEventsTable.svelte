@@ -8,7 +8,7 @@
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalEventDB } from '../../types/external-event';
   import type { ExternalSourceSlim } from '../../types/external-source';
-  import { getRowIdExternalSource } from '../../utilities/hash';
+  import { getRowIdExternalEventWhole } from '../../utilities/hash';
   import { formatDate } from '../../utilities/time';
   import SingleActionDataGrid from '../ui/DataGrid/SingleActionDataGrid.svelte';
 
@@ -24,23 +24,15 @@
   const baseColumnDefs: DataGridColumnDef[] = [
     {
       field: 'pkey',
-      filter: 'number',
-      headerName: 'External Event ID',
-      resizable: true,
-      sortable: true,
-      valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
-        if (params.data?.pkey) {
-          const id = params.data.pkey;
-          return getRowIdExternalSource(id);
-        }
-      },
-    },
-    {
-      field: 'key',
       filter: 'text',
       headerName: 'Key',
       resizable: true,
       sortable: true,
+      valueGetter: (params: ValueGetterParams<ExternalEventDB>) => {
+        if (params.data?.pkey) {
+          return params.data.pkey.key;
+        }
+      }
     },
     {
       field: 'event_type_name',
@@ -48,13 +40,23 @@
       headerName: 'Event Type',
       resizable: true,
       sortable: true,
+      valueGetter: (params: ValueGetterParams<ExternalEventDB>) => {
+        if (params.data?.pkey) {
+          return params.data.pkey.event_type_name;
+        }
+      }
     },
     {
-      field: 'source_id',
+      field: 'pkey',
       filter: 'number',
-      headerName: 'Source ID',
+      headerName: 'Source Key',
       resizable: true,
       sortable: true,
+      valueGetter: (params: ValueGetterParams<ExternalEventDB>) => {
+        if (params.data?.pkey) {
+          return params.data.pkey.source_key;
+        }
+      }
     },
     {
       field: 'start_time',
@@ -82,9 +84,10 @@
 
 <SingleActionDataGrid
   {columnDefs}
-  itemDisplayText="External Source"
+  itemDisplayText="External Events"
   {items}
   {user}
+  getRowId={getRowIdExternalEventWhole}
   bind:selectedItemId
   on:rowDoubleClicked={() => dispatch('rowDoubleClicked')}
   on:selectionChanged={() => dispatch('selectionChanged')}

@@ -46,7 +46,7 @@
   export let yAxes: Axis[];
   export let selectedActivityDirectiveId: ActivityDirectiveId | null = null;
   export let selectedSpanId: SpanId | null = null;
-  export let selectedExternalEventPkey: ExternalEventPkey | null = null;
+  export let selectedExternalEventId: number | null = null;
 
   let resourceLabels: {
     chartType: ChartType;
@@ -177,7 +177,7 @@
             <RowHeaderExternalEvent
               {externalEventOptions}
               {externalEventTree}
-              {selectedExternalEventPkey}
+              {selectedExternalEventId}
               on:external-event-tree-node-change
               on:mouseDown
               on:dblClick

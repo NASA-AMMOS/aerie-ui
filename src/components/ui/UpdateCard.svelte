@@ -17,7 +17,7 @@
 
   $: sources.forEach(source => {
     let sourceType = source.source_type_name;
-    let derivationGroup = source.derivation_group;
+    let derivationGroup = source.derivation_group_name;
     if (sourceType && derivationGroup) {
       if (mappedSources[sourceType] && mappedSources[sourceType][derivationGroup]) {
         mappedSources[sourceType][derivationGroup]?.push(source);

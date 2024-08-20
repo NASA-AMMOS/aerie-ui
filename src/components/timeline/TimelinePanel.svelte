@@ -213,7 +213,7 @@
       {timeline}
       timelineInteractionMode={$timelineInteractionMode}
       selectedActivityDirectiveId={$selectedActivityDirectiveId}
-      selectedExternalEventId={$selectedExternalEventId}
+      selectedExternalEventPkey={$selectedExternalEventId}
       selectedSpanId={$selectedSpanId}
       simulation={$simulation}
       simulationDataset={$simulationDataset}

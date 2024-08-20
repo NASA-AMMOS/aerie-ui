@@ -31,7 +31,7 @@
     <div class="external-event-header">
       <div class={classNames('external-event-header-title')}>
         <div class="external-event-header-title-value st-typography-medium">
-          {externalEvent.key}
+          {externalEvent.pkey.key}
         </div>
       </div>
     </div>
@@ -54,7 +54,7 @@
               class="st-input w-100"
               disabled={!editable}
               name="event-type"
-              value={externalEvent.event_type_name}
+              value={externalEvent.pkey.event_type_name}
             />
           </Input>
         </Highlight>
@@ -80,7 +80,7 @@
         <Highlight highlight={highlightKeysMap.last_modified_by}>
           <Input layout="inline">
             Source ID
-            <input class="st-input w-100" disabled={!editable} name="source-key" value={externalEvent.source_key} />
+            <input class="st-input w-100" disabled={!editable} name="source-key" value={externalEvent.pkey.source_key} />
           </Input>
         </Highlight>
 
@@ -91,7 +91,7 @@
               class="st-input w-100"
               disabled={!editable}
               name="source-key-resolved"
-              value={externalEvent.source_key}
+              value={externalEvent.pkey.source_key}
             />
           </Input>
         </Highlight>

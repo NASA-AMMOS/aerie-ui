@@ -18,10 +18,11 @@
   import { pluralize } from '../../utilities/text';
   import { tooltip } from '../../utilities/tooltip';
   import Collapse from '../Collapse.svelte';
+  import { getRowIdExternalEventWhole } from '../../utilities/hash';
 
   export let externalEventOptions: ExternalEventOptions = { ...ViewDefaultExternalEventOptions };
   export let externalEventTree: ExternalEventTree = [];
-  export let selectedExternalEventPkey: ExternalEventPkey | null = null;
+  export let selectedExternalEventId: number | null = null;
 
   let rowHeight = 0;
 
@@ -78,7 +79,7 @@
         style:overflow="hidden"
         style:text-overflow="ellipsis ellipsis"
         class="row-header-external-event-group leaf st-button tertiary"
-        class:selected={externalEvent?.pkey.key === selectedExternalEventPkey?.key}
+        class:selected={externalEvent ? getRowIdExternalEventWhole(externalEvent) === selectedExternalEventId : false}
         on:dblclick={e => onDblclickLeaf(e)}
         on:click={e => onMouseDownLeaf(e, node)}
       >
@@ -97,11 +98,8 @@
         defaultExpanded={node.expanded}
         className={classNames('row-header-external-event-group', {
           selected: (
-            externalEvent !== undefined && selectedExternalEventPkey !== null
-            && externalEvent.pkey.key === selectedExternalEventPkey.key
-            && externalEvent.pkey.derivation_group_name === selectedExternalEventPkey.derivation_group_name
-            && externalEvent.pkey.event_type_name === selectedExternalEventPkey.event_type_name
-            && externalEvent.pkey.source_key === selectedExternalEventPkey.source_key)
+            externalEvent !== undefined && selectedExternalEventId !== null
+            && getRowIdExternalEventWhole(externalEvent) === selectedExternalEventId)
         })}
         on:collapse={() => dispatch('external-event-tree-node-change', node)}
       >
@@ -142,7 +140,7 @@
             on:external-event-tree-node-change
             on:mouseDown
             on:dblClick
-            {selectedExternalEventPkey}
+            {selectedExternalEventId}
           />
         {/if}
       </Collapse>

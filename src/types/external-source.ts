@@ -12,8 +12,8 @@ export type ExternalSourceDB = {
   created_at: string;
   end_time: string;
   external_events: ExternalEventDB[];
-  pkey: ExternalSourcePkey;
   metadata: Record<string, any>;
+  pkey: ExternalSourcePkey;
   start_time: string;
   valid_at: string;
 };
@@ -34,10 +34,7 @@ export type ExternalSourceJson = {
 };
 
 // For use in retrieval of source information sans bulky items like metadata and event lists (see stores)
-export type ExternalSourceSlim = Pick<
-  ExternalSourceDB,
-  'pkey' | 'start_time' | 'end_time' | 'valid_at' | 'created_at'
->;
+export type ExternalSourceSlim = Pick<ExternalSourceDB, 'pkey' | 'start_time' | 'end_time' | 'valid_at' | 'created_at'>;
 
 // no analogue (yet) to ExternalEvent because no special duration_ms or start_ms to draw on a timeline
 // TODO: add External Source span to timeline in External Source Manager, so if zooming out on timeline
@@ -64,21 +61,16 @@ export type DerivationGroup = {
 export type ExternalSourceWithDateInfo = ExternalSourceSlim & { change_date: Date };
 
 // This is used for the GraphQL mutation.
-export type ExternalSourceInsertInput = Pick<
-  ExternalSourceDB,
-  'metadata' | 'start_time' | 'end_time' | 'valid_at'
-> & Pick<
-  ExternalSourcePkey,
-  'key' | 'source_type_name' | 'derivation_group_name'
-> & {
-  external_events: {
-    data: ExternalEventInsertInput[] | null;
+export type ExternalSourceInsertInput = Pick<ExternalSourceDB, 'metadata' | 'start_time' | 'end_time' | 'valid_at'> &
+  Pick<ExternalSourcePkey, 'key' | 'source_type_name' | 'derivation_group_name'> & {
+    external_events: {
+      data: ExternalEventInsertInput[] | null;
+    };
   };
-};
 
 // This is used exclusively to track when users have and haven't seen an entry
 export type UserSeenEntry = {
-  derivation_group: string | undefined;
+  derivation_group_name: string | undefined;
   key: string;
   source_type_name: string | undefined;
 };

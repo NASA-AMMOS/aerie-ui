@@ -22,7 +22,7 @@
   import { plugins } from '../../stores/plugins';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
-  import type { ExternalEvent, ExternalEventDB, ExternalEventTypeInsertInput } from '../../types/external-event';
+  import type { ExternalEvent, ExternalEventInsertInput, ExternalEventTypeInsertInput } from '../../types/external-event';
   import {
     type DerivationGroupInsertInput,
     type ExternalSourceInsertInput,
@@ -97,26 +97,17 @@
   // table variables
   const baseColumnDefs: DataGridColumnDef[] = [
   {
-    field: 'pkey',
-    filter: 'text',
-    headerName: 'ID',
-    resizable: true,
-    sort: 'desc',
-    sortable: true,
-    valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
-      if (params.data?.pkey) {
-        const id = params.data.pkey;
-        return getRowIdExternalSource(id);
-      }
-    },
-  },  
-  {
       field: 'source_type',
       filter: 'text',
       headerName: 'Source Type',
       resizable: true,
       sort: 'desc',
       sortable: true,
+      valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
+        if (params.data?.pkey) {
+          return params.data.pkey.source_type_name
+        }
+      },
     },
     {
       field: 'derivation_group',
@@ -125,6 +116,11 @@
       resizable: true,
       sort: 'desc',
       sortable: true,
+      valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
+        if (params.data?.pkey) {
+          return params.data.pkey.derivation_group_name
+        }
+      },
     },
     {
       field: 'key',
@@ -132,6 +128,11 @@
       headerName: 'Key',
       resizable: true,
       sortable: true,
+      valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
+        if (params.data?.pkey) {
+          return params.data.pkey.key
+        }
+      },
     },
     {
       field: 'valid_at',
@@ -219,7 +220,7 @@
 
   // External event type creation variables
   let externalEventTypeInsertInput: ExternalEventTypeInsertInput;
-  let externalEventsCreated: ExternalEventDB[] = [];
+  let externalEventsCreated: ExternalEventInsertInput[] = [];
 
   // For filtering purposes (modelled after TimelineEditorLayerFilter):
   let filterMenu: Menu;
@@ -542,12 +543,8 @@
 
             externalEventsCreated.push({
               duration,
-              pkey: {
-                key: key,
-                event_type_name: externalEvent.event_type,
-                source_key: sourceTypeInsert.name,
-                derivation_group_name: derivationGroupInsert.name,
-              },
+              event_type_name: externalEvent.event_type,
+              key: key,
               properties,
               start_time,
             });
@@ -593,15 +590,15 @@
           //   source_type_name: sourceTypeInsert.name,
           // };
           selectedSource = {
+            created_at: new Date().toISOString().replace('Z', '+00:00'), // technically not the exact time it shows up in the database
+            end_time: sourceInsert.end_time,
             pkey: {
               derivation_group_name: derivationGroupInsert.name,
               key: sourceInsert.key,
               source_type_name: sourceTypeInsert.name,
             },
             start_time: sourceInsert.start_time,
-            end_time: sourceInsert.end_time,
             valid_at: sourceInsert.valid_at,
-            created_at: new Date().toISOString().replace('Z', '+00:00'), // technically not the exact time it shows up in the database
           }
           gridRowSizes = gridRowSizesBottomPanel;
         }

@@ -6,7 +6,7 @@
   import { createEventDispatcher, onMount, tick } from 'svelte';
   import { ViewDefaultExternalEventOptions } from '../../constants/view';
   import { ViewConstants } from '../../enums/view';
-  import type { ExternalEvent, ExternalEventPkey } from '../../types/external-event';
+  import type { ExternalEvent } from '../../types/external-event';
   import type {
     ExternalEventDrawItem,
     ExternalEventItem,
@@ -21,12 +21,13 @@
   } from '../../types/timeline';
   import { hexToRgba, shadeColor } from '../../utilities/color';
   import { isRightClick } from '../../utilities/generic';
+  import { getRowIdExternalEvent } from '../../utilities/hash';
   import { TimelineInteractionMode, externalEventInView, searchQuadtreeRect } from '../../utilities/timeline';
 
   type IdToColorMap = Record<number, string>;
   type IdToColorMaps = { directives: IdToColorMap; external_events: IdToColorMap; spans: IdToColorMap };
 
-  export let selectedExternalEventPkey: ExternalEventPkey | null = null;
+  export let selectedExternalEventId: number | null = null;
   export let externalEvents: ExternalEvent[] = [];
   export let idToColorMaps: IdToColorMaps = { directives: {}, external_events: {}, spans: {} };
   export let externalEventRowPadding: number = 4;
@@ -65,7 +66,7 @@
   let maxExternalEventWidth: number;
   let minRectSize: number = 4;
   let quadtreeSpans: Quadtree<QuadtreeRect>;
-  let visibleExternalEventsById: Record<ExternalEventId, ExternalEvent> = {};
+  let visibleExternalEventsById: Record<number, ExternalEvent> = {};
   let colorCache: Record<string, string> = {};
 
   // Asset cache
@@ -89,7 +90,7 @@
     drawHeight &&
     drawWidth &&
     dpr &&
-    selectedExternalEventPkey !== undefined &&
+    selectedExternalEventId !== undefined &&
     viewTimeRange &&
     xScaleView &&
     externalEventOptions &&
@@ -164,22 +165,21 @@
     }
     const showContextMenu = !!e && isRightClick(e);
     if (showContextMenu) {
-      // Get _new_ selectedExternalEventPkey in order to ensure that no race condition exists between
-      // the selectedExternalEventPkey stores and the dispatching of this event
+      // Get _new_ selectedExternalEventId in order to ensure that no race condition exists between
+      // the selectedExternalEventId stores and the dispatching of this event
       // since there is no guarantee that the mousedown event triggering updates to those stores will complete
       // before the context menu event dispatch fires
       const { offsetX, offsetY } = e;
       const { externalEvents } = getExternalEventsByOffset(offsetX, offsetY);
 
-      let newSelectedExternalEventPkey = null;
+      let newSelectedExternalEventId: number | null = null;
       if (externalEvents.length > 0) {
-        // TODO: How to properly refactor this?
-        newSelectedExternalEventPkey = externalEvents[0].pkey;
+        newSelectedExternalEventId = getRowIdExternalEvent(externalEvents[0].pkey);
       }
       dispatch('contextMenu', {
         e,
         origin: 'layer-external-event',
-        selectedExternalEventPkey: newSelectedExternalEventPkey ?? undefined,
+        selectedExternalEventId: newSelectedExternalEventId ?? undefined,
       });
     }
   }
@@ -188,7 +188,7 @@
     if (e) {
       dispatch('dblClick', {
         e,
-        selectedExternalEventPkey: selectedExternalEventPkey ?? undefined,
+        selectedExternalEventId: selectedExternalEventId ?? undefined,
       });
     }
   }
@@ -362,8 +362,8 @@
       if (externalEvent && typeof externalEventStartX === 'number') {
         const externalEventEndX = xScaleView(externalEvent.start_ms + externalEvent.duration_ms);
         const externalEventRectWidth = Math.max(2, Math.min(externalEventEndX, drawWidth) - externalEventStartX);
-        const externalEventColor = idToColorMaps.external_events[externalEvent.id] || externalEventDefaultColor;
-        const isSelected = selectedExternalEventPkey === externalEvent.pkey
+        const externalEventColor = idToColorMaps.external_events[getRowIdExternalEvent(externalEvent.pkey)] || externalEventDefaultColor;
+        const isSelected = selectedExternalEventId === getRowIdExternalEvent(externalEvent.pkey);
         if (isSelected) {
           ctx.fillStyle = externalEventSelectedColor;
         } else {
@@ -394,10 +394,10 @@
         }
 
         // Add to quadtree
-        visibleExternalEventsById[externalEvent.id] = externalEvent;
+        visibleExternalEventsById[getRowIdExternalEvent(externalEvent.pkey)] = externalEvent;
         quadtreeSpans.add({
           height: rowHeight,
-          id: externalEvent.id,
+          id: getRowIdExternalEvent(externalEvent.pkey),
           width: Math.max(spanLabelWidth, externalEventRectWidth),
           x: externalEventStartX,
           y,
@@ -411,7 +411,7 @@
     if (selected) {
       ctx.fillStyle = externalEventSelectedTextColor;
     } else {
-      const opacity = selectedExternalEventPkey !== null ? 0.4 : 1;
+      const opacity = selectedExternalEventId !== null ? 0.4 : 1;
       ctx.fillStyle = getRGBAFromHex(shadeColor(color, 2.8), opacity);
     }
     ctx.fillText(text, Math.max(x + labelPaddingLeft, minRectSize), y + rowHeight / 2, width);
