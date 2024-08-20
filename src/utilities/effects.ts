@@ -2226,7 +2226,7 @@ const effects = {
 
   async deleteDerivationGroup(derivationGroupName: string | null, user: User | null): Promise<void> {
     try {
-      if ((!queryPermissions.DELETE_DERIVATION_GROUP(user))) {
+      if (!queryPermissions.DELETE_DERIVATION_GROUP(user)) {
         throwPermissionError('delete a derivation group');
       }
 
@@ -2238,14 +2238,13 @@ const effects = {
         );
         if (data.deleteDerivationGroup === null) {
           throw Error('Unable to delete derivation group');
-        }
-        else {
-          showSuccessToast("Derivation Group Deleted Successfully")
+        } else {
+          showSuccessToast('Derivation Group Deleted Successfully');
         }
       }
     } catch (e) {
       catchError('Derivation Group Deletion Failed', e as Error);
-      showFailureToast("Derivation Group Deletion Failed")
+      showFailureToast('Derivation Group Deletion Failed');
     }
   },
 
@@ -2509,7 +2508,7 @@ const effects = {
 
   async deleteExternalSourceType(externalSourceTypeName: string | null, user: User | null): Promise<void> {
     try {
-      if ((!queryPermissions.DELETE_EXTERNAL_SOURCE_TYPE(user))) {
+      if (!queryPermissions.DELETE_EXTERNAL_SOURCE_TYPE(user)) {
         throwPermissionError('delete a derivation group from the plan');
       }
 
@@ -2522,8 +2521,7 @@ const effects = {
         );
         if (data.deleteDerivationGroup === null) {
           throw Error('Unable to delete external source type');
-        }
-        else {
+        } else {
           showSuccessToast('External Source Type Deletion Successful');
         }
       }
