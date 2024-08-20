@@ -4,13 +4,16 @@
   import { createEventDispatcher } from 'svelte';
   import type { TimelineItemType } from '../../types/timeline';
 
+  export let hint: string = '';
+  export let hintPosition: 'center' | 'bottom' = 'center';
+
   let isDropTarget: boolean = false;
   let isDragging: boolean = false;
 
   const dispatch = createEventDispatcher<{
     dragend: DragEvent;
     dragstart: DragEvent;
-    drop: { item?: TimelineItemType; type?: string };
+    drop: { items?: TimelineItemType[]; type?: string };
   }>();
 
   function onDragEnter() {
@@ -62,7 +65,16 @@
   on:dragover|preventDefault={onDragOver}
   on:drop|preventDefault={onDrop}
 >
-  <div class="content-wrapper" class:disable-pointer={isDragging}><slot /></div>
+  <div class="content-wrapper" class:disable-pointer={isDragging}>
+    <slot />
+    {#if isDropTarget && hint}
+      <div class="hint" style:margin-top={hintPosition === 'bottom' ? '16px' : ''}>
+        <div class="hint-text st-typography-bold">
+          {hint}
+        </div>
+      </div>
+    {/if}
+  </div>
 </div>
 
 <style>
@@ -79,6 +91,7 @@
   }
 
   .dropping::after {
+    background: rgb(47, 128, 237, 0.2);
     box-shadow: 0 0 0px 2px inset var(--st-utility-blue);
     content: ' ';
     height: 100%;
@@ -88,5 +101,25 @@
     top: 0;
     width: 100%;
     z-index: 9;
+  }
+
+  .hint {
+    align-items: center;
+    display: flex;
+    height: 100%;
+    justify-content: center;
+    pointer-events: none;
+    position: absolute;
+    user-select: none;
+    width: 100%;
+    z-index: 10;
+  }
+
+  .hint-text {
+    background: var(--st-utility-blue);
+    border-radius: 4px;
+    color: white;
+    font-size: 10px;
+    padding: 4px 8px;
   }
 </style>

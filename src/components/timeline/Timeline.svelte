@@ -599,7 +599,7 @@
     justify-content: center;
     position: relative;
     width: 100%;
-    z-index: 8;
+    z-index: 4;
   }
 
   .new-row button {

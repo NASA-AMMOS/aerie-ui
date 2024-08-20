@@ -155,7 +155,7 @@
   }
 
   function handleRemoveAllYAxesClick() {
-    viewUpdateRow('yAxes', []);
+    effects.deleteTimelineYAxes();
   }
 
   function handleDeleteYAxisClick(yAxis: Axis) {
@@ -170,7 +170,7 @@
   }
 
   function handleRemoveAllLayersClick() {
-    viewUpdateRow('layers', []);
+    effects.deleteTimelineLayers();
   }
 
   function handleDeleteLayerClick(layer: Layer) {
@@ -412,10 +412,7 @@
   }
 
   function handleRemoveAllHorizontalGuidesClick() {
-    if (!selectedRow) {
-      return;
-    }
-    viewUpdateRow('horizontalGuides', []);
+    effects.deleteTimelineHorizontalGuides();
   }
 
   function handleNewVerticalGuideClick() {
@@ -432,11 +429,7 @@
   }
 
   function handleRemoveAllVerticalGuidesClick() {
-    if (typeof $selectedTimelineId !== 'number') {
-      return;
-    }
-
-    viewUpdateTimeline('verticalGuides', [], $selectedTimelineId);
+    effects.deleteTimelineVerticalGuides($selectedTimelineId);
   }
 
   // This is the JS way to style the dragged element, notice it is being passed into the dnd-zone

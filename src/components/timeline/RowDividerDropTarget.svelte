@@ -3,6 +3,7 @@
 <script lang="ts">
   import DropTarget from './DropTarget.svelte';
 
+  export let hintPosition: 'center' | 'bottom' = 'center';
   export let top: number = 0;
   export let width: number = 50;
 
@@ -11,7 +12,13 @@
 
 <div class="row-divider-drop-target" style=" top: {top}px;width: {width}px;" class:dragging={isDragging}>
   <div class="row-divider-drop-target-inner">
-    <DropTarget on:drop on:dragstart={_ => (isDragging = true)} on:dragend={_ => (isDragging = false)} />
+    <DropTarget
+      hint="Add Filter in New Row"
+      {hintPosition}
+      on:drop
+      on:dragstart={_ => (isDragging = true)}
+      on:dragend={_ => (isDragging = false)}
+    />
   </div>
 </div>
 

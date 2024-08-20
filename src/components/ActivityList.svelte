@@ -1,23 +1,11 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { PlanStatusMessages } from '../enums/planStatusMessages';
-  import { activityTypes, plan, planReadOnly } from '../stores/plan';
-  import type { User } from '../types/app';
+  import { activityTypes } from '../stores/plan';
   import type { Tag } from '../types/tags';
-  import effects from '../utilities/effects';
-  import { featurePermissions } from '../utilities/permissions';
   import TimelineItemList from './TimelineItemList.svelte';
 
-  export let user: User | null;
-
-  let hasPermission: boolean = false;
   let activitySubsystems: Tag[] = [];
-
-  $: permissionError = $planReadOnly ? PlanStatusMessages.READ_ONLY : 'You do not have permission to add an activity.';
-  $: if ($plan !== null) {
-    hasPermission = featurePermissions.activityDirective.canCreate(user, $plan) && !$planReadOnly;
-  }
 
   $: if ($activityTypes) {
     let newActivitySubsystems: Tag[] = [];
@@ -30,22 +18,13 @@
     });
     activitySubsystems = newActivitySubsystems;
   }
-
-  /* TODO why not place the directive in the middle of the view? */
-  function createItem(type: string) {
-    if ($plan !== null) {
-      const { start_time_doy } = $plan;
-      effects.createActivityDirective({}, start_time_doy, type, type, {}, $plan, user);
-    }
-  }
 </script>
 
 <TimelineItemList
-  {hasPermission}
-  {permissionError}
   items={$activityTypes}
   chartType="activity"
   typeName="activity"
+  typeNamePlural="Activities"
   filterItems={(items, textFilters, selectedFilterOptions) => {
     return items.filter(({ name, subsystem_tag }) => {
       let matchesText = true;
@@ -68,5 +47,4 @@
   }}
   filterOptions={activitySubsystems.map(s => ({ color: s.color || '', label: s.name, value: s.id.toString() }))}
   filterName="Subsystem"
-  {createItem}
 />

@@ -12,7 +12,7 @@
   export let chartType: ChartType = 'activity';
 
   const dispatch = createEventDispatcher<{
-    select: { item?: TimelineItemType; layer?: Layer; row: Row };
+    select: { item?: TimelineItemType; layer?: Layer; row?: Row };
   }>();
 
   let contextMenu: ContextMenu;
@@ -20,32 +20,41 @@
 
   export function toggle(e: MouseEvent, item?: TimelineItemType) {
     if (contextMenu.isShown()) {
-      contextMenu.hide();
-      layerItem = undefined;
+      hide();
     } else {
       show(e);
       layerItem = item || undefined;
     }
   }
 
+  export function hide() {
+    contextMenu.hide();
+    layerItem = undefined;
+  }
+
   export function show(e: MouseEvent) {
     const bounds = (e.target as HTMLElement).getBoundingClientRect();
     contextMenu.showDirectly(bounds.x, bounds.y + bounds.height + 4, bounds.x);
   }
+
+  export function onSelect(item: TimelineItemType | undefined, row?: Row, layer?: Layer | undefined) {
+    dispatch('select', { item, layer, row });
+    hide();
+  }
 </script>
 
 <ContextMenu hideAfterClick={false} bind:this={contextMenu}>
-  <ContextMenuHeader>Add to Existing Row</ContextMenuHeader>
+  <ContextMenuHeader>Add Filter to Row</ContextMenuHeader>
   {#if rows.length < 1}
     <div class="st-typography-label empty">No rows found</div>
   {/if}
   {#each rows as row}
-    <ContextSubMenuItem text={row.name} parentMenu={contextMenu}>
-      <ContextMenuItem on:click={() => dispatch('select', { item: layerItem, row })}>
+    <ContextSubMenuItem text={row.name} parentMenu={contextMenu} hideAfterClick={false}>
+      <ContextMenuItem on:click={() => onSelect(layerItem, row)}>
         <div class="context-menu-button">New Layer +</div>
       </ContextMenuItem>
       {#each row.layers.filter(l => l.chartType === chartType) as layer}
-        <ContextMenuItem on:click={() => dispatch('select', { item: layerItem, layer, row })}>
+        <ContextMenuItem on:click={() => onSelect(layerItem, row, layer)}>
           <div class="layer">
             {layer.name || `${layer.chartType} Layer`}
           </div>
@@ -53,6 +62,9 @@
       {/each}
     </ContextSubMenuItem>
   {/each}
+  <ContextMenuItem on:click={() => onSelect(layerItem)}>
+    <div class="context-menu-button">New Row +</div>
+  </ContextMenuItem>
 </ContextMenu>
 
 <style>

@@ -634,12 +634,38 @@ export function viewAddFilterToRow(
   layer?: Layer,
   index?: number, // row index to insert after
 ) {
+  if (typeName === 'resource') {
+    // Add first to a new row
+    const row = viewAddFilterItemsToRow([items[0]], typeName, rowId, layer, index);
+    if (row) {
+      // TODO enforcing an arbitrary limit here to avoid a poor performance scenario
+      // where a user hits "add to / new row" for all resources which would download
+      // the entire simulation dataset which is potentially huge.
+      // Furthermore, one cannot realistically or usefully plot all resources on individual layers
+      // within the same row.
+      items.slice(1, 50).forEach(item => {
+        viewAddFilterItemsToRow([item], typeName, row.id, layer, index);
+      });
+    }
+  } else {
+    viewAddFilterItemsToRow(items, typeName, rowId, layer, index);
+  }
+}
+
+export function viewAddFilterItemsToRow(
+  items: TimelineItemType[],
+  typeName: string /* 'activity' | 'resource' */,
+  rowId?: number,
+  layer?: Layer,
+  index?: number, // row index to insert after
+): Row | undefined {
   const timelines = get(view)?.definition.plan.timelines || [];
   if (!timelines.length) {
     return;
   }
 
   let newRows: Row[] = timelines[0].rows;
+  let returnRow: Row | undefined = undefined;
   const defaultRowName = `${capitalize(typeName)} Row`;
   const row = typeof rowId === 'number' ? newRows.find(r => r.id === rowId) : undefined;
   const targetRow = row || createRow(timelines, { name: items.length === 1 ? items[0].name : defaultRowName });
@@ -647,8 +673,8 @@ export function viewAddFilterToRow(
     // If no row is provided we assume there is no relevant layer
     const { layer: newLayer, yAxis } = getUpdatedLayerWithFilters(timelines, typeName, items);
     const insertIndex = index ?? newRows.length;
-    const newRow = { ...targetRow, layers: [newLayer], yAxes: yAxis ? [yAxis] : [] };
-    newRows = newRows.toSpliced(insertIndex + 1, 0, newRow);
+    returnRow = { ...targetRow, layers: [newLayer], yAxes: yAxis ? [yAxis] : [] };
+    newRows = newRows.toSpliced(insertIndex + 1, 0, returnRow);
   } else {
     // Find the layer in the row or create one if needed
     if (
@@ -661,7 +687,8 @@ export function viewAddFilterToRow(
       const { layer: newLayer, yAxis } = getUpdatedLayerWithFilters(timelines, typeName, items);
       newRows = newRows.map(r => {
         if (r.id === row.id) {
-          return { ...row, layers: [...row.layers, newLayer], yAxes: yAxis ? [...row.yAxes, yAxis] : row.yAxes };
+          returnRow = { ...row, layers: [...row.layers, newLayer], yAxes: yAxis ? [...row.yAxes, yAxis] : row.yAxes };
+          return returnRow;
         } else {
           return r;
         }
@@ -670,6 +697,7 @@ export function viewAddFilterToRow(
       // If a layer is specified, update the layer in the associated row
       newRows = newRows.map(r => {
         if (r.id === row.id) {
+          returnRow = r;
           const newLayers = r.layers.map(l => {
             if (l.id === layer.id) {
               return getUpdatedLayerWithFilters(timelines, typeName, items, layer).layer;
@@ -689,4 +717,6 @@ export function viewAddFilterToRow(
 
   // Open the timeline editor panel on the right.
   viewTogglePanel({ state: true, type: 'right', update: { rightComponentTop: 'TimelineEditorPanel' } });
+
+  return returnRow;
 }

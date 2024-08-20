@@ -8,27 +8,13 @@
   let resourceDataTypes: string[] = [];
 
   $: resourceDataTypes = [...new Set($resourceTypes.map(t => t.schema.type))];
-
-  // function filterItems(
-  //   items: ResourceType[],
-  //   textFilters: string[],
-  //   selectedFilterOptions: Record<
-  //     string,
-  //     {
-  //       color?: string;
-  //       label: string;
-  //       value: string;
-  //     }
-  //   >,
-  // ) {
-  //   items[0];
-  // }
 </script>
 
 <TimelineItemList
   items={$resourceTypes}
   chartType="line"
   typeName="resource"
+  typeNamePlural="Resources"
   filterItems={(items, textFilters, selectedFilterOptions) => {
     /* TODO refactor, export FilterOption and move this to a ts function  */
     return items.filter(({ name, schema }) => {

@@ -1,15 +1,11 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { capitalize } from '../utilities/text';
-
   import ChevronDownIcon from '@nasa-jpl/stellar/icons/chevron_down.svg?component';
-  import AddToRowIcon from '../assets/add-to-row.svg?component';
-  import InsertInstanceIcon from '../assets/insert-instance.svg?component';
+  import GripVerticalIcon from 'bootstrap-icons/icons/grip-vertical.svg?component';
   import PlusCircledIcon from '../assets/plus-circled.svg?component';
   import { view, viewAddFilterToRow } from '../stores/views';
   import type { ChartType, Layer, Row, TimelineItemType } from '../types/timeline';
-  import { permissionHandler } from '../utilities/permissionHandler';
   import { tooltip } from '../utilities/tooltip';
   import Input from './form/Input.svelte';
   import LayerPicker from './LayerPicker.svelte';
@@ -23,11 +19,9 @@
     value: string;
   };
 
-  export let createItem: ((name: string) => void) | undefined = undefined;
-  export let hasPermission: boolean = true;
-  export let permissionError: string = '';
   export let chartType: ChartType = 'activity';
   export let typeName: 'activity' | 'resource' = 'activity';
+  export let typeNamePlural: 'Activities' | 'Resources' = 'Activities';
   export let items: TimelineItemType[] = [];
   export let filterOptions: FilterOption[] = [];
   export let filterName: string = 'Filter';
@@ -52,9 +46,11 @@
     document.getElementById('list-item-drag-image')?.remove();
   }
 
-  function onDragStart(event: DragEvent, item: TimelineItemType): void {
+  function onDragStart(event: DragEvent, items: TimelineItemType[]): void {
     const dragImage = document.createElement('div');
-    const text = document.createTextNode(item.name);
+    const text = document.createTextNode(
+      items.length === 1 ? items[0].name : `${typeNamePlural} (${filteredItems.length})`,
+    );
     dragImage.appendChild(text);
     dragImage.id = 'list-item-drag-image';
     dragImage.style.padding = '8px 20px';
@@ -65,11 +61,12 @@
     dragImage.style.border = '1px solid var(--st-gray-30)';
     dragImage.style.position = 'absolute';
     dragImage.style.top = '-1000px';
+    dragImage.style.whiteSpace = 'nowrap';
     dragImage.className = 'st-typography-medium';
     document.body.appendChild(dragImage);
     if (event.dataTransfer) {
       event.dataTransfer.setDragImage(dragImage, 0, 0);
-      event.dataTransfer.setData('text/plain', JSON.stringify({ item, type: typeName }));
+      event.dataTransfer.setData('text/plain', JSON.stringify({ items, type: typeName }));
       event.dataTransfer.dropEffect = typeName === 'activity' ? 'copy' : 'link';
       event.dataTransfer.effectAllowed = typeName === 'activity' ? 'copyLink' : 'link';
     }
@@ -89,14 +86,9 @@
     }
   }
 
-  function onBulkNewRow() {
+  function onBulkLayerPicked(event: CustomEvent<{ layer?: Layer; row?: Row }>) {
     addTextFilter();
-    viewAddFilterToRow(filteredItems, typeName);
-  }
-
-  function onBulkLayerPicked(event: CustomEvent<{ layer?: Layer; row: Row }>) {
-    addTextFilter();
-    viewAddFilterToRow(filteredItems, typeName, event.detail.row.id, event.detail.layer);
+    viewAddFilterToRow(filteredItems, typeName, event.detail.row?.id, event.detail.layer);
   }
 
   function onBulkAddToRow(e: MouseEvent) {
@@ -105,9 +97,9 @@
     layerPicker.toggle(e);
   }
 
-  function onIndividualLayerPicked(event: CustomEvent<{ item?: TimelineItemType; layer?: Layer; row: Row }>) {
+  function onIndividualLayerPicked(event: CustomEvent<{ item?: TimelineItemType; layer?: Layer; row?: Row }>) {
     if (event.detail.item) {
-      viewAddFilterToRow([event.detail.item], typeName, event.detail.row.id, event.detail.layer);
+      viewAddFilterToRow([event.detail.item], typeName, event.detail.row?.id, event.detail.layer);
     }
   }
 
@@ -170,114 +162,92 @@
     </div>
   </div>
 
-  <div class="filters st-typography-label">
-    {#if textFilters.length === 0 && Object.keys(selectedFilters).length === 0 && !filterText}
-      <i>No filters applied</i>
-    {:else}
-      {#each textFilters as filter, i}
-        <Tag
-          tag={{ id: i, name: filter }}
-          on:click={() => {
-            textFilters = textFilters.filter(f => f !== filter);
-          }}
+  <div class="controls">
+    <div class="controls-header st-typography-medium">
+      <div>{typeNamePlural} ({filteredItems.length})</div>
+      <div>
+        <button class="st-button secondary" on:click={onBulkAddToRow}> Add Filter to Row </button>
+        <LayerPicker
+          bind:this={layerPicker}
+          rows={timelines[0]?.rows || []}
+          {chartType}
+          on:select={onBulkLayerPicked}
         />
-      {/each}
-      {#each Object.values(selectedFilters) as selectedFilter}
-        <!-- TODO maybe pull the tag instead of recreating it? -->
-        <Tag
-          tag={{ color: selectedFilter.color, id: parseInt(selectedFilter.value), name: selectedFilter.label }}
-          on:click={() => {
-            delete selectedFilters[selectedFilter.value];
-            selectedFilters = { ...selectedFilters };
-          }}
-        />
-      {/each}
-    {/if}
-    {#if filterText}
-      <i>Press enter to apply "{filterText}"</i>
-    {/if}
+      </div>
+    </div>
+    <div
+      class="filters st-typography-label"
+      role="none"
+      draggable={true}
+      on:dragend={() => onDragEnd()}
+      on:dragstart={e => onDragStart(e, filteredItems)}
+    >
+      <div class="filters-row">
+        {#if textFilters.length === 0 && Object.keys(selectedFilters).length === 0 && !filterText}
+          <Tag tag={{ id: -1, name: `All ${typeNamePlural}` }} removable={false} />
+        {:else}
+          {#each textFilters as filter, i}
+            <Tag
+              tag={{ id: i, name: filter }}
+              on:click={() => {
+                textFilters = textFilters.filter(f => f !== filter);
+              }}
+            />
+          {/each}
+          {#each Object.values(selectedFilters) as selectedFilter}
+            <!-- TODO maybe pull the tag instead of recreating it? -->
+            <Tag
+              tag={{ color: selectedFilter.color, id: parseInt(selectedFilter.value), name: selectedFilter.label }}
+              on:click={() => {
+                delete selectedFilters[selectedFilter.value];
+                selectedFilters = { ...selectedFilters };
+              }}
+            />
+          {/each}
+        {/if}
+        {#if filterText}
+          <i class="filter-hint">Press enter to apply "{filterText}"</i>
+        {/if}
+      </div>
+      <div class="drag">
+        <GripVerticalIcon />
+      </div>
+    </div>
   </div>
 
-  <div class="list">
-    <div class="list-header st-typography-medium">
-      <div>Types ({filteredItems.length})</div>
-      <div>
-        <button
-          class="st-button secondary"
-          on:click={onBulkAddToRow}
-          use:tooltip={{ content: 'Filter in Existing Row', placement: 'top' }}
+  <div class="list-items">
+    {#if filteredItems.length}
+      {#each filteredItems as item}
+        <ListItem
+          draggable
+          style="cursor: move;"
+          on:dragend={onDragEnd}
+          on:dragstart={e => onDragStart(e.detail, [item])}
         >
-          <PlusCircledIcon /> Add to Row
-        </button>
-        <LayerPicker bind:this={layerPicker} rows={timelines[0].rows || []} {chartType} on:select={onBulkLayerPicked} />
-      </div>
-      <button
-        class="st-button secondary"
-        on:click={onBulkNewRow}
-        use:tooltip={{ content: 'Filter in New Row', placement: 'top' }}
-      >
-        <AddToRowIcon /> New Row
-      </button>
-    </div>
-    <div class="list-items">
-      {#if filteredItems.length}
-        {#each filteredItems as item}
-          <ListItem
-            draggable
-            style="cursor: move;"
-            on:dragend={onDragEnd}
-            on:dragstart={e => onDragStart(e.detail, item)}
-          >
-            {item.name}
-            <slot prop={item} />
-            <span slot="suffix">
-              {#if createItem}
-                <button
-                  aria-label="Create{typeName}-{item.name}"
-                  class="st-button icon"
-                  on:click={() => createItem(item.name)}
-                  use:tooltip={{
-                    content: `Insert ${capitalize(typeName)} Instance`,
-                    disabled: !hasPermission,
-                    placement: 'top',
-                  }}
-                  use:permissionHandler={{
-                    hasPermission: hasPermission ?? true,
-                    permissionError,
-                  }}
-                >
-                  <InsertInstanceIcon />
-                </button>
-              {/if}
-              <button
-                aria-label="Create{typeName}-{item.name}"
-                class="st-button icon"
-                on:click={e => onFilterIndividualItem(e, item)}
-                use:tooltip={{ content: 'Filter in Existing Row', placement: 'top' }}
-              >
-                <PlusCircledIcon />
-              </button>
-              <button
-                aria-label="Create{typeName}-{item.name}"
-                class="st-button icon"
-                on:click={() => viewAddFilterToRow([item], typeName)}
-                use:tooltip={{ content: 'Add to New Row', placement: 'top' }}
-              >
-                <AddToRowIcon />
-              </button>
-            </span>
-          </ListItem>
-        {/each}
-        <LayerPicker
-          bind:this={layerPickerIndividual}
-          rows={timelines[0].rows || []}
-          {chartType}
-          on:select={onIndividualLayerPicked}
-        />
-      {:else}
-        <div class="st-typography-label empty-state">No {typeName} Types Found</div>
-      {/if}
-    </div>
+          {item.name}
+          <slot prop={item} />
+          <span slot="suffix">
+            <button
+              aria-label="Create{typeName}-{item.name}"
+              class="st-button icon"
+              on:click={e => onFilterIndividualItem(e, item)}
+              use:tooltip={{ content: 'Add Filter to Row', placement: 'top' }}
+            >
+              <PlusCircledIcon />
+            </button>
+            <div class="drag">
+              <GripVerticalIcon />
+            </div>
+          </span>
+        </ListItem>
+      {/each}
+      <LayerPicker
+        bind:this={layerPickerIndividual}
+        rows={timelines[0].rows || []}
+        {chartType}
+        on:select={onIndividualLayerPicked}
+      />
+    {/if}
   </div>
 </div>
 
@@ -301,12 +271,25 @@
   }
 
   .filters {
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+    min-height: 28px;
+    padding: 4px 8px;
+  }
+
+  .filter-hint {
+    overflow-wrap: break-word;
+    padding-left: 4px;
+    width: 100%;
+  }
+
+  .filters-row {
     align-items: center;
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    min-height: 28px;
-    padding: 4px 12px;
+    width: calc(100% - 32px);
   }
 
   .menu-button {
@@ -364,26 +347,29 @@
     user-select: none;
   }
 
-  .list {
+  .controls {
+    background: rgba(248, 248, 248, 0.6);
+    border-radius: 4px;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    margin: 4px;
   }
 
-  .list-header {
+  .controls-header {
     align-items: center;
     display: flex;
     gap: 8px;
-    height: 36px;
-    padding: 8px 12px;
+    height: 32px;
+    padding: 4px 12px;
   }
 
-  .list-header > div:first-child {
+  .controls-header > div:first-child {
     flex: 1;
   }
 
-  .list-header .st-button {
+  .controls-header .st-button {
     gap: 4px;
+    height: 20px;
   }
 
   .list-items {
@@ -396,8 +382,11 @@
     overflow: auto;
   }
 
-  .empty-state {
-    padding: 8px 12px;
-    text-transform: capitalize;
+  .drag {
+    align-items: center;
+    cursor: move;
+    display: flex;
+    justify-content: center;
+    width: 24px;
   }
 </style>

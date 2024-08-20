@@ -44,10 +44,12 @@
 <style>
   .list-item {
     align-items: center;
+    border-radius: 4px;
     display: flex;
     height: 32px;
     justify-content: space-between;
-    padding: 4px 12px;
+    margin: 0px 4px;
+    padding: 4px 8px 4px 12px;
   }
 
   .list-item:hover,
