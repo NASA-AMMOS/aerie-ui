@@ -8,7 +8,6 @@ export type ExternalSourceDB = {
   derivation_group_name: string;
   end_time: string;
   external_events: ExternalEventDB[];
-  id: number;
   key: string;
   metadata: Record<string, any>;
   source_type_name: string;
@@ -34,7 +33,7 @@ export type ExternalSourceJson = {
 // For use in retrieval of source information sans bulky items like metadata and event lists (see stores)
 export type ExternalSourceSlim = Pick<
   ExternalSourceDB,
-  'id' | 'key' | 'source_type_name' | 'start_time' | 'end_time' | 'valid_at' | 'derivation_group_name' | 'created_at'
+  'key' | 'source_type_name' | 'start_time' | 'end_time' | 'valid_at' | 'derivation_group_name' | 'created_at'
 >;
 
 // For use in ExternalSourceManager tables
