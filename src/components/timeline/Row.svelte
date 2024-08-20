@@ -26,7 +26,7 @@
   } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { ConstraintResultWithName } from '../../types/constraint';
-  import type { ExternalEvent, ExternalEventId } from '../../types/external-event';
+  import type { ExternalEvent, ExternalEventPkey } from '../../types/external-event';
   import type { Plan } from '../../types/plan';
   import type {
     Resource,
@@ -120,7 +120,7 @@
   export let rowDragMoveDisabled = true;
   export let rowHeaderDragHandleWidthPx: number = 2;
   export let selectedActivityDirectiveId: ActivityDirectiveId | null = null;
-  export let selectedExternalEventId: ExternalEventId | null = null;
+  export let selectedExternalEventPkey: ExternalEventPkey | null = null;
   export let selectedSpanId: SpanId | null = null;
   export let simulationDataset: SimulationDataset | null = null;
   export let spanUtilityMaps: SpanUtilityMaps;
@@ -185,6 +185,7 @@
   let externalEventsFilteredByType: ExternalEvent[] = [];
   let timeFilteredActivityDirectives: ActivityDirective[] = [];
   let timeFilteredSpans: Span[] = [];
+  // TODO: Refactor external_events underneath here to use a ... something? instead of id: number
   let idToColorMaps: {
     directives: Record<number, string>;
     external_events: Record<number, string>;
@@ -483,7 +484,7 @@
 
     // Apply filter for hiding derivation groups
     externalEventsFilteredByDG = externalEvents.filter(ee => {
-      let dg = $externalSources.find(es => es.id === ee.source_id)?.derivation_group_name ?? undefined;
+      let dg = $externalSources.find(es => es.pkey.key === ee.pkey.key && es.pkey.source_type_name === ee.pkey.source_key)?.pkey.derivation_group_name ?? undefined;
       // the statement below says return true (keep) if the plan is not null and if the filter for this plan does not include this derivation group
       return plan
         ? !planDerivationGroupNamesToFilterParsed[plan.id] ||
@@ -848,7 +849,7 @@
       on:contextMenu
       {selectedActivityDirectiveId}
       {selectedSpanId}
-      {selectedExternalEventId}
+      {selectedExternalEventPkey}
     >
       {#if hasActivityLayer && activityOptions?.displayMode === 'grouped'}
         <button
@@ -1007,7 +1008,7 @@
             {mousedown}
             {mousemove}
             {mouseout}
-            {selectedExternalEventId}
+            {selectedExternalEventPkey}
             {timelineInteractionMode}
             {viewTimeRange}
             {xScaleView}
