@@ -4,7 +4,7 @@
   import { base } from '$app/paths';
   import { createEventDispatcher } from 'svelte';
   import { plans } from '../../stores/plans';
-  import type { ExternalSourceWithResolvedNames, PlanDerivationGroup } from '../../types/external-source';
+  import type { ExternalSourceDB, PlanDerivationGroup } from '../../types/external-source';
   import Modal from './Modal.svelte';
   import ModalContent from './ModalContent.svelte';
   import ModalFooter from './ModalFooter.svelte';
@@ -13,7 +13,7 @@
   export let height: number = 150;
   export let linked: PlanDerivationGroup[] = [];
   export let width: number = 380;
-  export let source: ExternalSourceWithResolvedNames;
+  export let source: ExternalSourceDB;
 
   const dispatch = createEventDispatcher<{
     close: void;
@@ -42,7 +42,7 @@
   <ModalContent>
     {#if linked.length > 0}
       <span style="display:block;overflow:hidden;text-overflow:ellipsis">
-        This External Source is part of Derivation Group '{source.derivation_group}', which is linked with the following
+        This External Source is part of Derivation Group '{source.pkey.derivation_group_name}', which is linked with the following
         plans:
         {#each linked as link}
           <div style="padding-left:20px">
@@ -56,7 +56,7 @@
       </span>
     {:else}
       <span style="display:block;overflow:hidden;text-overflow:ellipsis">
-        Are you sure you want to delete "{source.key}"?
+        Are you sure you want to delete "{source.pkey.key}"?
         <i>What is done cannot be undone.</i>
       </span>
     {/if}

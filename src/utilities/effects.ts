@@ -2472,9 +2472,13 @@ const effects = {
       if (externalSource !== null) {
         const { confirm } = await showDeleteExternalSourceModal([], externalSource);
         if (confirm) {
-          const data = await reqHasura<{ derivation_group_name: string; key: string }>(
+          const data = await reqHasura<{ derivationGroupName: string; sourceKey: string; sourceTypeName: string }>(
             gql.DELETE_EXTERNAL_SOURCE,
-            { derivation_group_name: externalSource.pkey.derivation_group_name, key: externalSource.pkey.key },
+            {
+              derivationGroupName: externalSource.pkey.derivation_group_name,
+              sourceKey: externalSource.pkey.key,
+              sourceTypeName: externalSource.pkey.source_type_name,
+            },
             user,
           );
           if (data.deleteExternalSource !== null) {
