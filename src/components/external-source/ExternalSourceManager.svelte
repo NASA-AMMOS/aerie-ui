@@ -96,7 +96,19 @@
 
   // table variables
   const baseColumnDefs: DataGridColumnDef[] = [
-  {
+    {
+      field: 'key',
+      filter: 'text',
+      headerName: 'Key',
+      resizable: true,
+      sortable: true,
+      valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
+        if (params.data?.pkey) {
+          return params.data.pkey.key
+        }
+      },
+    },
+    {
       field: 'source_type',
       filter: 'text',
       headerName: 'Source Type',
@@ -119,18 +131,6 @@
       valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
         if (params.data?.pkey) {
           return params.data.pkey.derivation_group_name
-        }
-      },
-    },
-    {
-      field: 'key',
-      filter: 'text',
-      headerName: 'Key',
-      resizable: true,
-      sortable: true,
-      valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
-        if (params.data?.pkey) {
-          return params.data.pkey.key
         }
       },
     },
@@ -683,14 +683,12 @@
     <svelte:fragment slot="header">
       <SectionTitle
         >{selectedEvent
-          ? `Selected Event`
-          : selectedRowId
-            ? `Selected Event`
-            : selectedSource
-              ? `#${selectedSource.pkey.key} – ${selectedSource.pkey.source_type_name}`
-              : 'Upload a Source File'}</SectionTitle
+          ? `Selected Event (${selectedEvent.pkey.key})`
+          : selectedSource
+            ? `Selected External Source (${selectedSource.pkey.key})`
+            : 'Upload a Source File'}</SectionTitle
       >
-      {#if selectedEvent || selectedRowId}
+      {#if selectedEvent}
         <button
           class="st-button icon fs-6"
           on:click={deselectEvent}

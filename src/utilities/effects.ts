@@ -913,7 +913,13 @@ const effects = {
     } catch (e) {
       catchError('External Source Create Failed', e as Error);
       showFailureToast('External Source Create Failed');
-      createExternalSourceError.set((e as Error).message);
+      console.log("ERROR TEXT IS", e)
+      if ((e as Error).message.includes("external_source_type_matches_derivation_group")) {
+        createExternalSourceError.set("Cannot duplicate derivation groups!");
+      }
+      else {
+        createExternalSourceError.set((e as Error).message);
+      }
       creatingExternalSource.set(false);
     }
   },
