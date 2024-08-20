@@ -11,11 +11,11 @@
     createExternalSourceError,
     createExternalSourceTypeError,
     creatingExternalSource,
+    externalSources,
     externalSourceTypes,
-    externalSourceWithResolvedNames,
     getExternalSourceMetadataError,
     parsingError,
-    planDerivationGroupLinks,
+    planDerivationGroupLinks
   } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import { plans } from '../../stores/plans';
@@ -23,20 +23,21 @@
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalEvent, ExternalEventDB, ExternalEventTypeInsertInput } from '../../types/external-event';
-  import type {
-    DerivationGroupInsertInput,
-    ExternalSourceInsertInput,
-    ExternalSourceJson,
-    ExternalSourceType,
-    ExternalSourceTypeInsertInput,
-    ExternalSourceWithResolvedNames,
-    PlanDerivationGroup,
+  import {
+    type DerivationGroupInsertInput,
+    type ExternalSourceInsertInput,
+    type ExternalSourceJson,
+    type ExternalSourceSlim,
+    type ExternalSourceType,
+    type ExternalSourceTypeInsertInput,
+    type PlanDerivationGroup
   } from '../../types/external-source';
   import type { RadioButtonId } from '../../types/radio-buttons';
   import type { TimeRange } from '../../types/timeline';
   import { type MouseDown, type MouseOver } from '../../types/timeline';
   import effects from '../../utilities/effects';
   import { classNames } from '../../utilities/generic';
+  import { getRowIdExternalEvent, getRowIdExternalSource, getRowIdExternalSourceSlim } from '../../utilities/hash';
   import { showDeleteExternalSourceModal } from '../../utilities/modal';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
@@ -71,9 +72,9 @@
   export let user: User | null;
 
   type CellRendererParams = {
-    onDeleteExternalSource: (source: ExternalSourceWithResolvedNames) => void;
+    onDeleteExternalSource: (source: ExternalSourceSlim) => void;
   };
-  type SourceCellRendererParams = ICellRendererParams<ExternalSourceWithResolvedNames> & CellRendererParams;
+  type SourceCellRendererParams = ICellRendererParams<ExternalSourceSlim> & CellRendererParams;
 
   // Permissions
   const deletePermissionError = 'You do not have permission to delete an external source.';
@@ -95,7 +96,21 @@
 
   // table variables
   const baseColumnDefs: DataGridColumnDef[] = [
-    {
+  {
+    field: 'pkey',
+    filter: 'text',
+    headerName: 'ID',
+    resizable: true,
+    sort: 'desc',
+    sortable: true,
+    valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
+      if (params.data?.pkey) {
+        const id = params.data.pkey;
+        return getRowIdExternalSource(id);
+      }
+    },
+  },  
+  {
       field: 'source_type',
       filter: 'text',
       headerName: 'Source Type',
@@ -125,7 +140,7 @@
       resizable: true,
       sort: 'desc',
       sortable: true,
-      valueGetter: (params: ValueGetterParams<ExternalSourceWithResolvedNames>) => {
+      valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
         if (params.data?.valid_at) {
           return formatDate(new Date(params.data?.valid_at), $plugins.time.primary.format);
         }
@@ -137,7 +152,7 @@
       headerName: `Start Time (${$plugins.time.primary.label})`,
       resizable: true,
       sortable: true,
-      valueGetter: (params: ValueGetterParams<ExternalSourceWithResolvedNames>) => {
+      valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
         if (params.data?.start_time) {
           return formatDate(new Date(params.data?.start_time), $plugins.time.primary.format);
         }
@@ -149,7 +164,7 @@
       headerName: `End Time (${$plugins.time.primary.label})`,
       resizable: true,
       sortable: true,
-      valueGetter: (params: ValueGetterParams<ExternalSourceWithResolvedNames>) => {
+      valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
         if (params.data?.end_time) {
           return formatDate(new Date(params.data?.end_time), $plugins.time.primary.format);
         }
@@ -161,7 +176,7 @@
       headerName: `Created At (${$plugins.time.primary.label})`,
       resizable: true,
       sortable: true,
-      valueGetter: (params: ValueGetterParams<ExternalSourceWithResolvedNames>) => {
+      valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
         if (params.data?.valid_at) {
           return formatDate(new Date(params.data?.created_at), $plugins.time.primary.format);
         }
@@ -174,7 +189,7 @@
   let externalEventsTableFilterString: string = '';
 
   // source detail variables
-  let selectedSource: ExternalSourceWithResolvedNames | null = null;
+  let selectedSource: ExternalSourceSlim | null = null;
   let selectedSourceId: number | null = null;
 
   // variables for choosing display format of an external source's external events
@@ -213,7 +228,7 @@
   let filteredValues: ExternalSourceType[] = [];
   let selectedFilters: ExternalSourceType[] = [{ name: '' }];
   let menuTitle: string = '';
-  let filteredExternalSources: ExternalSourceWithResolvedNames[] = [];
+  let filteredExternalSources: ExternalSourceSlim[] = [];
 
   // External source + derivation group creation variables
   let sourceInsert: ExternalSourceInsertInput;
@@ -249,6 +264,8 @@
     createDerivationGroupError.set(null);
     parsingError.set(null);
   }
+
+  $: selectedSourceId = selectedSource ? getRowIdExternalSource(selectedSource.pkey) : null
 
   // File parse logic
   $: if (files) {
@@ -327,9 +344,8 @@
   $: if (selectedFilters.length === 1 && selectedFilters[0].name === '' && $externalSourceTypes.length > 0) {
     selectedFilters = [...$externalSourceTypes];
   }
-  $: selectedSourceId = selectedSource ? selectedSource.id : null;
-  $: filteredExternalSources = $externalSourceWithResolvedNames.filter(externalSource => {
-    return selectedFilters.find(f => f.name === externalSource.source_type_name) !== undefined;
+  $: filteredExternalSources = $externalSources.filter(externalSource => {
+    return selectedFilters.find(f => f.name === externalSource.pkey.source_type_name) !== undefined;
   });
   $: filteredValues = $externalSourceTypes.filter(externalSourceType =>
     externalSourceType.name.toLowerCase().includes(filterString),
@@ -337,23 +353,23 @@
   $: filteredTableExternalEvents = selectedEvents.filter(event => {
     const filterTextLowerCase = externalEventsTableFilterString.toLowerCase();
     const includesName = externalEventsTableFilterString.length
-      ? event.key.toLocaleLowerCase().includes(filterTextLowerCase)
+      ? event.pkey.key.toLocaleLowerCase().includes(filterTextLowerCase)
       : true;
     return includesName;
   });
-  $: effects.getExternalEvents(selectedSource?.id, user).then(
+  $: effects.getExternalEvents(selectedSource ? selectedSource.pkey : null, user).then(
     fetched =>
       (selectedEvents = fetched.map(eDB => {
         return {
           ...eDB,
           duration_ms: convertDurationToMs(eDB.duration),
-          event_type: eDB.event_type_name,
+          event_type: eDB.pkey.event_type_name,
           start_ms: convertUTCtoMs(eDB.start_time),
         };
       })),
   );
   $: selectedSourceLinkedDerivationGroupsPlans = $planDerivationGroupLinks.filter(planDerivationGroupLink => {
-    return planDerivationGroupLink.derivation_group_name === selectedSource?.derivation_group_name;
+    return planDerivationGroupLink.derivation_group_name === selectedSource?.pkey.derivation_group_name;
   });
 
   // Timeline
@@ -386,7 +402,7 @@
       showExternalEventTable = true;
       showExternalEventTimeline = false;
       externalEventsTableFilterString = '';
-      selectedRowId = selectedEvent?.id ?? null;
+      selectedRowId = selectedEvent ? getRowIdExternalEvent(selectedEvent.pkey) : null;
     } else {
       showExternalEventTable = false;
       showExternalEventTimeline = true;
@@ -411,13 +427,13 @@
     dpr = window.devicePixelRatio;
   }
 
-  async function onDeleteExternalSource(selectedSource: ExternalSourceWithResolvedNames | null | undefined) {
+  async function onDeleteExternalSource(selectedSource: ExternalSourceSlim | null | undefined) {
     if (selectedSource !== null && selectedSource !== undefined) {
       // selectedSource here does not necessarily align with global selected source, especially if you click delete
       //    in a table without making a selection. as such, can't use selectedSourceLinkedDerivationGroupsPlans, must
       //    make a new one.
       let currentlyLinked = $planDerivationGroupLinks.filter(planDerivationGroupLink => {
-        return planDerivationGroupLink.derivation_group_name === selectedSource?.derivation_group_name;
+        return planDerivationGroupLink.derivation_group_name === selectedSource?.pkey.derivation_group_name;
       });
       if (currentlyLinked.length > 0) {
         // if the source is in a derivation group currently used by a plan, warn that we cannot delete
@@ -522,13 +538,16 @@
             const { event_type, ...db_compatible_fields } = externalEvent;
 
             // extra, optional step to only take stuff that the database can accept in. Eventually, can be handled by JSON Schema, see comment in external-event.ts
-            const { duration, id, key, properties, start_time } = db_compatible_fields;
+            const { duration, key, properties, start_time } = db_compatible_fields;
 
             externalEventsCreated.push({
               duration,
-              event_type_name: externalEvent.event_type,
-              id,
-              key,
+              pkey: {
+                key: key,
+                event_type_name: externalEvent.event_type,
+                source_key: sourceTypeInsert.name,
+                derivation_group_name: derivationGroupInsert.name,
+              },
               properties,
               start_time,
             });
@@ -566,13 +585,24 @@
             }
           }
           // Auto-select the new source
+          // selectedSource = {
+          //   created_at: new Date().toISOString().replace('Z', '+00:00'), // technically not the exact time it shows up in the database
+          //   derivation_group: derivationGroupInsert.name,
+          //   id: createExternalSourceResponse.createExternalSource.id,
+          //   ...sourceInsert,
+          //   source_type_name: sourceTypeInsert.name,
+          // };
           selectedSource = {
+            pkey: {
+              derivation_group_name: derivationGroupInsert.name,
+              key: sourceInsert.key,
+              source_type_name: sourceTypeInsert.name,
+            },
+            start_time: sourceInsert.start_time,
+            end_time: sourceInsert.end_time,
+            valid_at: sourceInsert.valid_at,
             created_at: new Date().toISOString().replace('Z', '+00:00'), // technically not the exact time it shows up in the database
-            derivation_group: derivationGroupInsert.name,
-            id: createExternalSourceResponse.createExternalSource.id,
-            ...sourceInsert,
-            source_type_name: sourceTypeInsert.name,
-          };
+          }
           gridRowSizes = gridRowSizesBottomPanel;
         }
       }
@@ -589,7 +619,7 @@
     derivationGroupField.reset('');
   }
 
-  async function selectSource(detail: ExternalSourceWithResolvedNames) {
+  async function selectSource(detail: ExternalSourceSlim) {
     selectedSource = detail;
     gridRowSizes = gridRowSizesBottomPanel;
     deselectEvent();
@@ -643,7 +673,7 @@
   }
 
   function onSelectionChanged() {
-    selectedEvent = selectedEvents.find(event => event.id === selectedRowId) ?? null;
+    selectedEvent = selectedEvents.find(event => getRowIdExternalEvent(event.pkey) === selectedRowId) ?? null;
   }
 
   function onManageGroupsAndTypes() {
@@ -660,7 +690,7 @@
           : selectedRowId
             ? `Selected Event`
             : selectedSource
-              ? `#${selectedSource.id} – ${selectedSource.source_type_name}`
+              ? `#${selectedSource.pkey.key} – ${selectedSource.pkey.source_type_name}`
               : 'Upload a Source File'}</SectionTitle
       >
       {#if selectedEvent || selectedRowId}
@@ -689,16 +719,17 @@
         <div class="external-source-header">
           <div class={classNames('external-source-header-title')}>
             <div class="external-source-header-title-value st-typography-medium">
-              {selectedSource.key}
+              {selectedSource.pkey.key}
             </div>
           </div>
         </div>
         <div class="selected-source-forms">
           <fieldset>
-            <Input layout="inline">
+            <!-- TODO: Just remove this? -->
+            <!-- <Input layout="inline">
               ID
               <input class="st-input w-100" disabled={true} name="id" value={selectedSource.id} />
-            </Input>
+            </Input> -->
 
             <Input layout="inline">
               Source Type
@@ -706,7 +737,7 @@
                 class="st-input w-100"
                 disabled={true}
                 name="source-type"
-                value={selectedSource.source_type_name}
+                value={selectedSource.pkey.source_type_name}
               />
             </Input>
 
@@ -716,7 +747,7 @@
                 class="st-input w-100"
                 disabled={true}
                 name="derivation-group"
-                value={selectedSource.derivation_group}
+                value={selectedSource.pkey.derivation_group_name}
               />
             </Input>
 
@@ -762,7 +793,7 @@
               title="Event Types"
               tooltipContent="View Contained Event Types"
             >
-              {#await effects.getExternalEventTypesBySource(selectedSourceId, user)}
+              {#await effects.getExternalEventTypesBySource(selectedSource.pkey, user)}
                 <i>Loading...</i>
               {:then eventTypes}
                 {#each eventTypes as eventType}
@@ -778,7 +809,7 @@
             title="Metadata"
             tooltipContent="View Event Source Metadata"
           >
-            {#await effects.getExternalSourceMetadata(selectedSource.id, user)}
+            {#await effects.getExternalSourceMetadata(selectedSource.pkey, user)}
               <em>loading metadata...</em>
             {:then metadata}
               {#if Object.keys(metadata).length}
@@ -1021,21 +1052,16 @@
         </slot>
       </svelte:fragment>
       <svelte:fragment slot="body">
-        {#if $externalSourceWithResolvedNames.length}
+        {#if $externalSources.length}
           <SingleActionDataGrid
             {columnDefs}
             {hasDeletePermission}
             itemDisplayText="External Source"
             items={filteredExternalSources}
             {user}
+            getRowId={getRowIdExternalSourceSlim}
             on:rowClicked={({ detail }) => selectSource(detail.data)}
             bind:selectedItemId={selectedSourceId}
-            on:deleteItem={({ detail }) => {
-              let selectedSource = filteredExternalSources.find(s => s.id === detail[0]);
-              if (selectedSource) {
-                onDeleteExternalSource(selectedSource);
-              }
-            }}
           />
         {:else}
           <p>No external sources matching the selected external source type(s).</p>
@@ -1132,7 +1158,7 @@
 
                   <div id="timeline-layer">
                     <LayerExternalSources
-                      selectedExternalEventId={selectedEvent?.id ?? null}
+                      selectedExternalEventId={selectedEvent ? getRowIdExternalEvent(selectedEvent.pkey) : null}
                       externalEvents={selectedEvents}
                       {viewTimeRange}
                       {xScaleView}
@@ -1152,7 +1178,7 @@
                 </div>
               </div>
             {/if}
-          {:else if $externalSourceWithResolvedNames.length}
+          {:else if $externalSources.length}
             <p style="padding-left: 5px">Select a source to view contents.</p>
           {:else}
             <p style="padding-left: 5px">No External Sources present.</p>

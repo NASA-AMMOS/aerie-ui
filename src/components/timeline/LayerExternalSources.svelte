@@ -173,6 +173,7 @@
 
       let newSelectedExternalEventId = null;
       if (externalEvents.length > 0) {
+        // TODO: How to properly refactor this?
         newSelectedExternalEventId = externalEvents[0].id;
       }
       dispatch('contextMenu', {
@@ -198,7 +199,7 @@
     const sticky =
       externalEvent.start_ms < viewTimeRange.start &&
       externalEvent.start_ms + externalEvent.duration_ms >= viewTimeRange.start;
-    return `${sticky ? '← ' : ''}${externalEvent.key}`;
+    return `${sticky ? '← ' : ''}${externalEvent.pkey.key}`;
   }
 
   function drawBottomLine(y: number, width: number) {

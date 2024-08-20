@@ -8,15 +8,15 @@
   import {
     derivationGroupPlanLinkError,
     derivationGroups,
-    externalSourceWithResolvedNames,
-    selectedPlanDerivationGroupNames,
+    externalSources,
+    selectedPlanDerivationGroupNames
   } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import { plugins } from '../../stores/plugins';
   import { view } from '../../stores/views';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
-  import type { DerivationGroup, ExternalSourceWithResolvedNames } from '../../types/external-source';
+  import type { DerivationGroup, ExternalSourceSlim } from '../../types/external-source';
   import type { ExternalEventLayer } from '../../types/timeline';
   import effects from '../../utilities/effects';
   import { formatDate } from '../../utilities/time';
@@ -158,12 +158,12 @@
   let filteredDerivationGroups: DerivationGroup[] = [];
 
   let selectedDerivationGroup: DerivationGroup | undefined = undefined;
-  let selectedDerivationGroupSources: ExternalSourceWithResolvedNames[] = [];
+  let selectedDerivationGroupSources: ExternalSourceSlim[] = [];
   $: if (selectedDerivationGroup !== undefined) {
     modalColumnSize = modalColumnSizeWithDetail;
   }
-  $: selectedDerivationGroupSources = $externalSourceWithResolvedNames.filter(
-    source => selectedDerivationGroup?.name === source.derivation_group_name,
+  $: selectedDerivationGroupSources = $externalSources.filter(
+    source => selectedDerivationGroup?.name === source.pkey.derivation_group_name,
   );
 
   $: filteredDerivationGroups = $derivationGroups.filter(derivationGroup => {
@@ -261,20 +261,20 @@
             {#if selectedDerivationGroupSources.length > 0}
               {#each selectedDerivationGroupSources as source}
                 <!-- Collapsible details -->
-                <Collapse title={source.key} tooltipContent={source.key} defaultExpanded={false}>
+                <Collapse title={source.pkey.key} tooltipContent={source.pkey.key} defaultExpanded={false}>
                   <span slot="right">
                     <p style:color="gray">
-                      {selectedDerivationGroup.sources.get(source.key)?.event_counts} events
+                      {selectedDerivationGroup.sources.get(source.pkey.key)?.event_counts} events
                     </p>
                   </span>
                   <p>
                     <strong>Key:</strong>
-                    {source.key}
+                    {source.pkey.key}
                   </p>
 
                   <p>
                     <strong>Source Type:</strong>
-                    {source.source_type_name}
+                    {source.pkey.source_type_name}
                   </p>
 
                   <p>

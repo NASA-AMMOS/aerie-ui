@@ -8,6 +8,7 @@
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalEventDB } from '../../types/external-event';
   import type { ExternalSourceSlim } from '../../types/external-source';
+  import { getRowIdExternalSource } from '../../utilities/hash';
   import { formatDate } from '../../utilities/time';
   import SingleActionDataGrid from '../ui/DataGrid/SingleActionDataGrid.svelte';
 
@@ -22,11 +23,17 @@
 
   const baseColumnDefs: DataGridColumnDef[] = [
     {
-      field: 'id',
+      field: 'pkey',
       filter: 'number',
       headerName: 'External Event ID',
       resizable: true,
       sortable: true,
+      valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
+        if (params.data?.pkey) {
+          const id = params.data.pkey;
+          return getRowIdExternalSource(id);
+        }
+      },
     },
     {
       field: 'key',

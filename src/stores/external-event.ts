@@ -1,6 +1,5 @@
-import { keyBy } from 'lodash-es';
 import { derived, writable, type Writable } from 'svelte/store';
-import type { ExternalEventDB, ExternalEventId, ExternalEventType } from '../types/external-event';
+import type { ExternalEventDB, ExternalEventPkey, ExternalEventType } from '../types/external-event';
 import gql from '../utilities/gql';
 import { selectedPlanDerivationGroupNames } from './external-source';
 import { gqlSubscribable } from './subscribable';
@@ -20,22 +19,26 @@ export const externalEventsDB = gqlSubscribable<{ external_event: ExternalEventD
 export const externalEventTypes = gqlSubscribable<ExternalEventType[]>(gql.SUB_EXTERNAL_EVENT_TYPES, {}, [], null);
 
 // use to track which event is selected in the plan view, as this information is shared across several sibling panels
-export const selectedExternalEventKey: Writable<string | null> = writable(null);
+export const selectedExternalEventId: Writable<ExternalEventPkey | null> = writable(null);
 
 /* Derived. */
-// just to prevent repeated lookups
-export const externalEventsMap = derived([externalEventsDB], ([$externalEventsDB]) => {
-  const externalEventsDBFlat = $externalEventsDB.flatMap(ee => ee.external_event);
-  return keyBy(externalEventsDBFlat, 'id');
-});
-
-// TODO: This is glued together for now
 export const selectedExternalEvent = derived(
-  [selectedExternalEventKey, externalEventsMap],
-  ([$selectedExternalEventKey, $externalEventsMap]) => {
-    if ($selectedExternalEventKey !== null) {
-      const selected = $externalEventsMap[$selectedExternalEventKey];
-      return selected ? selected : null;
+  [selectedExternalEventId, externalEventsDB],
+  ([$selectedExternalEventId, $externalEventsDB]) => {
+    if ($selectedExternalEventId !== null) {
+      // TODO: Can you just compare the Id type/object? I don't know if its smart enough to know to compare the fields
+      selectedExternalEventId
+      const selected = $externalEventsDB.find(ee => {
+        if (
+          ee.external_event.pkey.derivation_group_name === $selectedExternalEventId.derivation_group_name
+          && ee.external_event.pkey.event_type_name === $selectedExternalEventId.event_type_name
+          && ee.external_event.pkey.key === $selectedExternalEventId.key
+          && ee.external_event.pkey.source_key === $selectedExternalEventId.source_key
+        ) {
+          return ee;
+        }
+      })
+      return selected !== undefined ? selected : null;
     }
     return null;
   },
@@ -47,7 +50,7 @@ export function resetModelStores() {
 }
 
 export function selectExternalEvent(
-  externalEventId: ExternalEventId | null,
+  externalEventId: ExternalEventPkey | null,
   switchToTable = true,
   switchToPanel = false,
 ): void {
