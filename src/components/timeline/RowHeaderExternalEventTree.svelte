@@ -110,11 +110,7 @@
         </div>
         <div slot="title" style="align-items: center;display: flex; gap: 8px;">
           <div class="label" style:white-space="nowrap" style:overflow="hidden" style:text-overflow="ellipsis ellipsis">
-            {#if externalEventOptions.groupBy === 'source_key'}
-              {node.label} <!-- TODO: this probably needs to be updated... -->
-            {:else}
-              {node.label}
-            {/if}
+            {node.label}
           </div>
           <div class="title-metadata">
             <div
