@@ -1060,7 +1060,8 @@ export function generateExternalEventTree(
   groupByMethod: ExternalEventOptions['groupBy'] = 'event_type_name',
   binSize: ExternalEventOptions['groupedModeBinSize'],
 ): ExternalEventTree {
-  const groupedExternalEvents = groupBy(externalEvents, groupByMethod);
+  const groupByMethodFormatted = `pkey.${groupByMethod}`; // Both event_type_name and source_key are within the pkey field
+  const groupedExternalEvents = groupBy(externalEvents, groupByMethodFormatted);
 
   const nodes: ExternalEventTreeNode[] = [];
   if (Object.keys(groupedExternalEvents).length !== 0) {
@@ -1081,10 +1082,10 @@ export function generateExternalEventTree(
             children.push({
               children: [],
               expanded: expanded,
-              id: `${externalEvent.id}`,
+              id: `${externalEvent.pkey.key}`,
               isLeaf: true,
               items: [{ externalEvent }],
-              label: externalEvent.key,
+              label: externalEvent.pkey.key,
             });
           });
         }
