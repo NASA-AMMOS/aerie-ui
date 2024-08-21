@@ -24,7 +24,7 @@ export const getExternalSourceMetadataError: Writable<string | null> = writable(
 /* Persisted.
   The following stores persist their values within the browser's localStorage
 */
-// Track which sources have yet to be acknowledged by user as added to AERIE
+// Tracks which new external sources the user has already acknowledged
 export const seenSources = writable((browser && localStorage.getItem('seenSources')) || '[]');
 seenSources.subscribe(val => {
   // Validate that val is list-like
@@ -33,7 +33,7 @@ seenSources.subscribe(val => {
   }
 });
 
-// Track which sources have been acknowledged by user as deleted from AERIE
+// Tracks which deleted external sources the user has already acknowledged
 export const deletedSourcesSeen = writable((browser && localStorage.getItem('deletedSources')) || '[]');
 deletedSourcesSeen.subscribe(val => {
   // Validate that val is list-like
