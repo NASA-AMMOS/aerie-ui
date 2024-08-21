@@ -1,5 +1,5 @@
 import { derived, writable, type Writable } from 'svelte/store';
-import type { ExternalEvent, ExternalEventType } from '../types/external-event';
+import type { ExternalEventDB, ExternalEventType } from '../types/external-event';
 import gql from '../utilities/gql';
 import { getRowIdExternalEvent } from '../utilities/hash';
 import { selectedPlanDerivationGroupNames } from './external-source';
@@ -11,7 +11,7 @@ export const creatingExternalEventType: Writable<boolean> = writable(false);
 export const createExternalEventTypeError: Writable<string | null> = writable(null);
 
 /* Subscriptions. */
-export const externalEvents = gqlSubscribable<ExternalEvent[]>(
+export const externalEventsDB = gqlSubscribable<ExternalEventDB[]>(
   gql.SUB_PLAN_EXTERNAL_EVENTS_DG,
   { derivation_group_names: selectedPlanDerivationGroupNames },
   [],
@@ -25,10 +25,10 @@ export const selectedExternalEventId: Writable<number | null> = writable(null);
 
 /* Derived. */
 export const selectedExternalEvent = derived(
-  [selectedExternalEventId, externalEvents],
-  ([$selectedExternalEventId, $externalEvents]) => {
+  [selectedExternalEventId, externalEventsDB],
+  ([$selectedExternalEventId, $externalEventsDB]) => {
     // TODO: Can you just compare the Id type/object? I don't know if its smart enough to know to compare the fields
-    const selected = $externalEvents.find(ee => getRowIdExternalEvent(ee.pkey));
+    const selected = $externalEventsDB.find(ee => getRowIdExternalEvent(ee.pkey));
     return selected !== undefined ? selected : null;
   },
 );
@@ -54,27 +54,34 @@ export function selectExternalEvent(externalEventId: number | null, switchToTabl
 
 function transformExternalEvents(
   externalEventsDB: {
-    duration: string;
-    event_type_name: string;
-    key: string;
-    properties: object;
-    start_time: string;
+    external_event: {
+      derivation_group_name: string;
+      duration: string;
+      event_type_name: string;
+      key: string;
+      properties: object;
+      source_key: string;
+      start_time: string;
+    };
   }[],
-): ExternalEvent[] {
-  const completeExternalEventDB: ExternalEvent[] = [];
+): ExternalEventDB[] {
+  const completeExternalEventDB: ExternalEventDB[] = [];
   if (externalEventsDB !== null && externalEventsDB !== undefined) {
-    externalEventsDB.forEach(ee => {
-      completeExternalEventDB.push({
-        duration: ee.duration,
-        pkey: {
-          derivation_group_name: ee.derivation_group_name,
-          event_type_name: ee.event_type_name,
-          key: ee.key,
-        },
-        properties: ee.properties,
-        start_time: ee.start_time,
+    externalEventsDB
+      .flatMap(ee => ee.external_event)
+      .forEach(ee => {
+        completeExternalEventDB.push({
+          duration: ee.duration,
+          pkey: {
+            derivation_group_name: ee.derivation_group_name,
+            event_type_name: ee.event_type_name,
+            key: ee.key,
+            source_key: ee.source_key,
+          },
+          properties: ee.properties,
+          start_time: ee.start_time,
+        });
       });
-    });
   }
   return completeExternalEventDB;
 }

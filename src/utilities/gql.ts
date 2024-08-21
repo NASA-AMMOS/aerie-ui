@@ -2830,6 +2830,7 @@ const gql = {
           duration
           start_time
           derivation_group_name
+          source_key
         }
       }
     }
