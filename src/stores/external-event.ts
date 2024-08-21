@@ -25,10 +25,10 @@ export const selectedExternalEventId: Writable<number | null> = writable(null);
 
 /* Derived. */
 export const selectedExternalEvent = derived(
-  [selectedExternalEventId, externalEventsDB],
-  ([$selectedExternalEventId, $externalEventsDB]) => {
+  [selectedExternalEventId, externalEvents],
+  ([$selectedExternalEventId, $externalEvents]) => {
     // TODO: Can you just compare the Id type/object? I don't know if its smart enough to know to compare the fields
-    const selected = $externalEventsDB.find(ee => getRowIdExternalEvent(ee.pkey));
+    const selected = $externalEvents.find(ee => getRowIdExternalEvent(ee.pkey));
     return selected !== undefined ? selected : null;
   },
 );
