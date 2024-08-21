@@ -740,7 +740,6 @@ const gql = {
     mutation CreateSeenSourceEntry($entries: [seen_sources_insert_input!]!) {
       createSeenSourceEntry: ${Queries.INSERT_SEEN_SOURCE_ENTRY}(objects: $entries) {
         returning {
-          id,
           username,
           derivation_group,
           external_source_name,
@@ -1254,7 +1253,7 @@ const gql = {
         }
       }){
         returning {
-          id
+          external_source_name
         }
       }
     }
@@ -3329,7 +3328,6 @@ const gql = {
   SUB_SEEN_SOURCES: `#graphql
     subscription SubSeenSources {
       seen_sources {
-        id,
         username,
         derivation_group,
         external_source_name,

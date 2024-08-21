@@ -913,28 +913,27 @@ const effects = {
     } catch (e) {
       catchError('External Source Create Failed', e as Error);
       showFailureToast('External Source Create Failed');
-      console.log("ERROR TEXT IS", e)
-      if ((e as Error).message.includes("external_source_type_matches_derivation_group")) {
-        createExternalSourceError.set("Cannot duplicate derivation groups!");
-      }
-      else {
+      console.log('ERROR TEXT IS', e);
+      if ((e as Error).message.includes('external_source_type_matches_derivation_group')) {
+        createExternalSourceError.set('Cannot duplicate derivation groups!');
+      } else {
         createExternalSourceError.set((e as Error).message);
       }
       creatingExternalSource.set(false);
     }
   },
 
-  async createExternalSourceSeenEntry(sources_seen: UserSeenEntry[], user: User | null) {
+  async createExternalSourceSeenEntry(sourcesSeen: UserSeenEntry[], user: User | null) {
     try {
       if (!queryPermissions.CREATE_SEEN_SOURCE_ENTRY(user)) {
         throwPermissionError('mark viewership of an external source');
       }
 
-      const entries = sources_seen.map(source_seen => {
+      const entries = sourcesSeen.map(sourcesSeen => {
         return {
-          derivation_group: source_seen.derivation_group_name,
-          external_source_name: source_seen.key,
-          external_source_type: source_seen.source_type_name,
+          derivation_group: sourcesSeen.derivation_group_name,
+          external_source_name: sourcesSeen.key,
+          external_source_type: sourcesSeen.source_type_name,
           username: user?.id,
         };
       });
@@ -2461,10 +2460,7 @@ const effects = {
     }
   },
 
-  async deleteExternalSource(
-    externalSource: ExternalSourceSlim | null,
-    user: User | null,
-  ): Promise<boolean> {
+  async deleteExternalSource(externalSource: ExternalSourceSlim | null, user: User | null): Promise<boolean> {
     try {
       if (!queryPermissions.DELETE_EXTERNAL_SOURCE(user)) {
         throwPermissionError('delete an external source');
@@ -3579,17 +3575,14 @@ const effects = {
   },
 
   // Should be deprecated with the introduction of strict external source schemas, dictating allowable event types for given source types. But for now, this will do.
-  async getExternalEventTypesBySource(
-    externalSourcePkey: ExternalSourcePkey,
-    user: User | null,
-  ): Promise<string[]> {
+  async getExternalEventTypesBySource(externalSourcePkey: ExternalSourcePkey, user: User | null): Promise<string[]> {
     if (!externalSourcePkey) {
       return [];
     }
     try {
       const sourceKey = externalSourcePkey.key;
       const derivationGroupName = externalSourcePkey.derivation_group_name;
-      const sourceTypeName = externalSourcePkey.source_type_name
+      const sourceTypeName = externalSourcePkey.source_type_name;
       const data = await reqHasura<any>(
         gql.GET_EXTERNAL_EVENT_TYPE_BY_SOURCE,
         { derivationGroupName, sourceKey, sourceTypeName },
@@ -3663,7 +3656,11 @@ const effects = {
       const derivationGroupName = externalSourcePkey.derivation_group_name;
       const sourceTypeName = externalSourcePkey.source_type_name;
       getExternalSourceMetadataError.set(null);
-      const data = await reqHasura<any>(gql.GET_EXTERNAL_SOURCE_METADATA, { derivationGroupName, sourceKey, sourceTypeName }, user);
+      const data = await reqHasura<any>(
+        gql.GET_EXTERNAL_SOURCE_METADATA,
+        { derivationGroupName, sourceKey, sourceTypeName },
+        user,
+      );
       const { external_source } = data;
       if (external_source) {
         const { metadata }: Record<string, any> = external_source[0];

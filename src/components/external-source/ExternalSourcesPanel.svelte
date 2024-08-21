@@ -32,20 +32,20 @@
   let filterText: string = '';
   let mappedDerivationGroups: { [key: string]: DerivationGroup[] } = {};
   let filteredDerivationGroups: DerivationGroup[] = [];
-  // let unseenSourcesParsed: ExternalSourceWithDateInfo[] = [];
-  // let deletedSourcesParsed: ExternalSourceWithDateInfo[] = [];
   let unseenSources: UserSeenEntry[] = [];
   let unseenDeletedSources: UserSeenEntry[] = [];
 
+  // Determine which new and deleted sources are unacknowledged for the user
   $: {
-    let source_keys = $externalSources.map(s => s.pkey.key);
+    let sourceKeys = $externalSources.map(s => s.pkey.key);
+    console.log($seenSources);
     if (user && user.id) {
-      let seen_keys: string[] = [];
+      let seenKeys: string[] = [];
       if ($seenSources[user?.id]) {
-        seen_keys = $seenSources[user?.id].map(s => s.key);
+        seenKeys = $seenSources[user?.id].map(s => s.key);
       }
-      unseenSources = $externalSources.filter(s => !seen_keys.includes(s.pkey.key)).map(s => s.pkey); // in sources but not in seenSources
-      unseenDeletedSources = ($seenSources[user?.id] || []).filter(seen => !source_keys.includes(seen.key)); // in seenSources but not in sources
+      unseenSources = $externalSources.filter(s => !seenKeys.includes(s.pkey.key)).map(s => s.pkey); // in sources but not in seenSources
+      unseenDeletedSources = ($seenSources[user?.id] || []).filter(seen => !sourceKeys.includes(seen.key)); // in seenSources but not in sources
     }
   }
 
