@@ -60,6 +60,7 @@
   import effects from '../../utilities/effects';
   import { classNames } from '../../utilities/generic';
   import { showConfirmActivityCreationModal } from '../../utilities/modal';
+  import { getRowIdExternalEvent } from '../../utilities/hash';
   import { sampleProfiles } from '../../utilities/resources';
   import { getSimulationStatus } from '../../utilities/simulation';
   import { pluralize } from '../../utilities/text';
@@ -90,7 +91,6 @@
   import RowHorizontalGuides from './RowHorizontalGuides.svelte';
   import RowXAxisTicks from './RowXAxisTicks.svelte';
   import RowYAxisTicks from './RowYAxisTicks.svelte';
-  import { getRowIdExternalEvent } from '../../utilities/hash';
 
   export let activityDirectives: ActivityDirective[] = [];
   export let externalEvents: ExternalEvent[] = [];
@@ -485,7 +485,8 @@
 
     // Apply filter for hiding derivation groups
     externalEventsFilteredByDG = externalEvents.filter(ee => {
-      let dg = $externalSources.find(es => es.pkey.key === ee.pkey.key && es.pkey.source_type_name === ee.pkey.source_key)?.pkey.derivation_group_name ?? undefined;
+      console.log(ee);
+      let dg = $externalSources.find(es => es.pkey.key === ee.pkey.key && es.pkey.key === ee.pkey.source_key)?.pkey.derivation_group_name ?? undefined;
       // the statement below says return true (keep) if the plan is not null and if the filter for this plan does not include this derivation group
       return plan
         ? !planDerivationGroupNamesToFilterParsed[plan.id] ||

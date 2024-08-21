@@ -201,7 +201,7 @@
       {limitTooltipToLine}
       {showTimelineTooltip}
       activityDirectivesMap={$activityDirectivesMap}
-      externalEventsFromDB={$externalEventsDB.flatMap(ee => ee.external_event)}
+      externalEventsFromDB={$externalEventsDB}
       constraintResults={$visibleConstraintResults}
       {hasUpdateDirectivePermission}
       {hasUpdateSimulationPermission}
@@ -213,7 +213,7 @@
       {timeline}
       timelineInteractionMode={$timelineInteractionMode}
       selectedActivityDirectiveId={$selectedActivityDirectiveId}
-      selectedExternalEventPkey={$selectedExternalEventId}
+      selectedExternalEventId={$selectedExternalEventId}
       selectedSpanId={$selectedSpanId}
       simulation={$simulation}
       simulationDataset={$simulationDataset}

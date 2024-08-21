@@ -542,11 +542,11 @@
             const { duration, key, properties, start_time } = db_compatible_fields;
 
             externalEventsCreated.push({
-              duration,
+              duration: duration,
               event_type_name: externalEvent.event_type,
               key: key,
-              properties,
-              start_time,
+              properties: properties,
+              start_time: start_time,
             });
           }
         }

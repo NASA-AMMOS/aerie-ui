@@ -7,7 +7,7 @@
     externalSources,
     planDerivationGroupLinks,
     planDerivationGroupNamesToFilter,
-    usersSeenSources,
+    seenSources
   } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import { originalView } from '../../stores/views';
@@ -41,11 +41,11 @@
     let source_keys = $externalSources.map(s => s.pkey.key);
     if (user && user.id) {
       let seen_keys: string[] = [];
-      if ($usersSeenSources[user?.id]) {
-        seen_keys = $usersSeenSources[user?.id].map(s => s.key);
+      if ($seenSources[user?.id]) {
+        seen_keys = $seenSources[user?.id].map(s => s.key);
       }
       unseenSources = $externalSources.filter(s => !seen_keys.includes(s.pkey.key)).map(s => s.pkey); // in sources but not in seenSources
-      unseenDeletedSources = ($usersSeenSources[user?.id] || []).filter(seen => !source_keys.includes(seen.key)); // in seenSources but not in sources
+      unseenDeletedSources = ($seenSources[user?.id] || []).filter(seen => !source_keys.includes(seen.key)); // in seenSources but not in sources
     }
   }
 
