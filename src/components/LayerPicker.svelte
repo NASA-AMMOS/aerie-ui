@@ -58,12 +58,12 @@
         </ContextMenuItem>
       {/each}
       <ContextMenuItem on:click={() => onSelect(layerItem, row)}>
-        <div class="context-menu-button">New Layer +</div>
+        <div class="layer-picker-context-menu-blue">New Layer +</div>
       </ContextMenuItem>
     </ContextSubMenuItem>
   {/each}
   <ContextMenuItem on:click={() => onSelect(layerItem)}>
-    <div class="context-menu-button">New Row +</div>
+    <div class="layer-picker-context-menu-blue">New Row +</div>
   </ContextMenuItem>
 </ContextMenu>
 
@@ -77,8 +77,7 @@
     user-select: none;
   }
 
-  /* TODO clean this up */
-  :global(.context-menu-button) {
+  :global(.layer-picker-context-menu-blue) {
     color: var(--st-utility-blue);
   }
 </style>
