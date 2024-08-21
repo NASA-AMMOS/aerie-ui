@@ -912,7 +912,6 @@ const effects = {
     } catch (e) {
       catchError('External Source Create Failed', e as Error);
       showFailureToast('External Source Create Failed');
-      console.log('ERROR TEXT IS', e);
       if ((e as Error).message.includes('external_source_type_matches_derivation_group')) {
         createExternalSourceError.set('Cannot duplicate derivation groups!');
       } else {
@@ -3647,7 +3646,6 @@ const effects = {
     user: User | null,
   ): Promise<Record<string, any>> {
     if (!externalSourcePkey) {
-      console.log('Source key is undefined.');
       return [];
     }
     try {

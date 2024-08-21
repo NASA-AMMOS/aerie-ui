@@ -107,7 +107,6 @@
               // insert
               effects.insertDerivationGroupForPlan(params.data.name, $plan, user);
               if ($derivationGroupPlanLinkError !== null) {
-                console.log($derivationGroupPlanLinkError);
                 showFailureToast('Failed to link derivation group & plan.');
               } else {
                 // Insert all the external event types from the derivation group to the timeline filter
@@ -131,7 +130,6 @@
               // delete
               effects.deleteDerivationGroupForPlan(params.data.name, $plan, user);
               if ($derivationGroupPlanLinkError !== null) {
-                console.log($derivationGroupPlanLinkError);
                 showFailureToast('Failed to unlink derivation group & plan.');
               }
             }
