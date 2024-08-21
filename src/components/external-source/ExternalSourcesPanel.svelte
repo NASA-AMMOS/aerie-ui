@@ -38,7 +38,6 @@
   // Determine which new and deleted sources are unacknowledged for the user
   $: {
     let sourceKeys = $externalSources.map(s => s.pkey.key);
-    console.log($seenSources);
     if (user && user.id) {
       let seenKeys: string[] = [];
       if ($seenSources[user?.id]) {
