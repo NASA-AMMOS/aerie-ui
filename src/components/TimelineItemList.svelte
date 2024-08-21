@@ -5,7 +5,7 @@
   import GripVerticalIcon from 'bootstrap-icons/icons/grip-vertical.svg?component';
   import PlusCircledIcon from '../assets/plus-circled.svg?component';
   import { view, viewAddFilterToRow } from '../stores/views';
-  import type { ChartType, Layer, Row, TimelineItemType } from '../types/timeline';
+  import type { ChartType, Layer, Row, TimelineItemListFilterOption, TimelineItemType } from '../types/timeline';
   import { tooltip } from '../utilities/tooltip';
   import Input from './form/Input.svelte';
   import LayerPicker from './LayerPicker.svelte';
@@ -13,34 +13,51 @@
   import ListItem from './ui/ListItem.svelte';
   import Tag from './ui/Tags/Tag.svelte';
 
-  type FilterOption = {
-    color?: string;
-    label: string;
-    value: string;
-  };
-
   export let chartType: ChartType = 'activity';
   export let typeName: 'activity' | 'resource' = 'activity';
   export let typeNamePlural: 'Activities' | 'Resources' = 'Activities';
   export let items: TimelineItemType[] = [];
-  export let filterOptions: FilterOption[] = [];
+  export let filterOptions: TimelineItemListFilterOption[] = [];
   export let filterName: string = 'Filter';
-  export let filterItems: (
-    items: TimelineItemType[],
-    textFilters: string[],
-    selectedFilterOptions: Record<string, FilterOption>,
-  ) => TimelineItemType[];
+  export let getFilterValueFromItem: (item: TimelineItemType) => string;
 
   let menu: Menu;
   let filteredItems: TimelineItemType[] = [];
   let textFilters: string[] = [];
-  let selectedFilters: Record<string, FilterOption> = {};
+  let selectedFilters: Record<string, TimelineItemListFilterOption> = {};
   let filterText: string = '';
   let layerPicker: LayerPicker;
   let layerPickerIndividual: LayerPicker;
 
   $: filteredItems = filterItems(items, filterText ? textFilters.concat(filterText) : textFilters, selectedFilters);
   $: timelines = $view?.definition.plan.timelines || [];
+
+  function filterItems(
+    items: TimelineItemType[],
+    textFilters: string[],
+    selectedFilterOptions: Record<string, TimelineItemListFilterOption>,
+  ) {
+    return items.filter(item => {
+      const name = item.name;
+      const itemFilterValue = getFilterValueFromItem(item);
+      let matchesText = true;
+      let matchesFilter = true;
+      for (let i = 0; i < textFilters.length; i++) {
+        const textFilter = textFilters[i];
+        if (!name.toLowerCase().includes(textFilter.toLowerCase())) {
+          matchesText = false;
+        }
+      }
+      if (Object.keys(selectedFilterOptions).length > 0) {
+        if (!itemFilterValue) {
+          matchesFilter = false;
+        } else {
+          matchesFilter = !!selectedFilterOptions[itemFilterValue];
+        }
+      }
+      return matchesText && matchesFilter;
+    });
+  }
 
   function onDragEnd(): void {
     document.getElementById('list-item-drag-image')?.remove();
@@ -227,14 +244,15 @@
           {item.name}
           <slot prop={item} />
           <span slot="suffix">
-            <button
-              aria-label="Create{typeName}-{item.name}"
-              class="st-button icon"
-              on:click={e => onFilterIndividualItem(e, item)}
-              use:tooltip={{ content: 'Add Filter to Row', placement: 'top' }}
-            >
-              <PlusCircledIcon />
-            </button>
+            <div use:tooltip={{ content: 'Add Filter to Row', placement: 'top' }}>
+              <button
+                aria-label="Create{typeName}-{item.name}"
+                class="st-button icon"
+                on:click={e => onFilterIndividualItem(e, item)}
+              >
+                <PlusCircledIcon />
+              </button>
+            </div>
             <div class="drag">
               <GripVerticalIcon />
             </div>

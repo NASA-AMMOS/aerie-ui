@@ -254,3 +254,9 @@ export interface XRangePoint extends Point {
 }
 
 export type TimelineItemType = ResourceType | ActivityType;
+
+export type TimelineItemListFilterOption = {
+  color?: string;
+  label: string;
+  value: string;
+};

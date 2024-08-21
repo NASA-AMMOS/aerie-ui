@@ -2,7 +2,9 @@
 
 <script lang="ts">
   import { activityTypes } from '../stores/plan';
+  import type { ActivityType } from '../types/activity';
   import type { Tag } from '../types/tags';
+  import type { TimelineItemListFilterOption, TimelineItemType } from '../types/timeline';
   import TimelineItemList from './TimelineItemList.svelte';
 
   let activitySubsystems: Tag[] = [];
@@ -18,15 +20,13 @@
     });
     activitySubsystems = newActivitySubsystems;
   }
-</script>
 
-<TimelineItemList
-  items={$activityTypes}
-  chartType="activity"
-  typeName="activity"
-  typeNamePlural="Activities"
-  filterItems={(items, textFilters, selectedFilterOptions) => {
-    return items.filter(({ name, subsystem_tag }) => {
+  function filterItems(
+    items: TimelineItemType[],
+    textFilters: string[],
+    selectedFilterOptions: Record<string, TimelineItemListFilterOption>,
+  ) {
+    return (items as ActivityType[]).filter(({ name, subsystem_tag }) => {
       let matchesText = true;
       let matchesSubsystem = true;
       for (let i = 0; i < textFilters.length; i++) {
@@ -44,7 +44,19 @@
       }
       return matchesText && matchesSubsystem;
     });
-  }}
+  }
+
+  function getFilterValueFromItem(item: TimelineItemType) {
+    return (item as ActivityType).subsystem_tag?.id.toString() ?? '';
+  }
+</script>
+
+<TimelineItemList
+  items={$activityTypes}
+  chartType="activity"
+  typeName="activity"
+  typeNamePlural="Activities"
+  {getFilterValueFromItem}
   filterOptions={activitySubsystems.map(s => ({ color: s.color || '', label: s.name, value: s.id.toString() }))}
   filterName="Subsystem"
 />

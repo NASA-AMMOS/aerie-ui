@@ -688,7 +688,8 @@ export function viewAddFilterItemsToRow(
     const { layer: newLayer, yAxis } = getUpdatedLayerWithFilters(timelines, typeName, items);
     const insertIndex = index ?? newRows.length;
     returnRow = { ...targetRow, layers: [newLayer], yAxes: yAxis ? [yAxis] : [] };
-    newRows = newRows.toSpliced(insertIndex + 1, 0, returnRow);
+    newRows = [...newRows];
+    newRows.splice(insertIndex + 1, 0, returnRow);
   } else {
     // Find the layer in the row or create one if needed
     if (

@@ -3,7 +3,6 @@
 <script lang="ts">
   import DirectiveAndSpanIcon from '../../assets/timeline-directive-and-span.svg?component';
   import TimelineLineLayerIcon from '../../assets/timeline-line-layer.svg?component';
-  import type { User } from '../../types/app';
   import type { ViewGridSection } from '../../types/view';
   import ActivityList from '../ActivityList.svelte';
   import GridMenu from '../menus/GridMenu.svelte';
@@ -14,7 +13,6 @@
   import Tabs from '../ui/Tabs/Tabs.svelte';
 
   export let gridSection: ViewGridSection;
-  export let user: User | null;
 </script>
 
 <Panel padBody={false}>
