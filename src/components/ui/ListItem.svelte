@@ -83,12 +83,4 @@
   .list-item.dragging .suffix {
     display: none;
   }
-
-  .list-item.permission-disabled {
-    opacity: 1;
-  }
-
-  .list-item.permission-disabled {
-    color: var(--st-gray-50);
-  }
 </style>
