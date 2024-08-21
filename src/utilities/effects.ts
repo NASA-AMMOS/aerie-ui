@@ -2507,7 +2507,6 @@ const effects = {
           },
           user,
         );
-        console.log(deleted);
         if (!deleted) {
           throw Error(`Unable to log external source visibility recognition`);
         }
