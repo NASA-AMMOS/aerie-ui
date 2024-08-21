@@ -5,7 +5,7 @@ export type ExternalSourcePkey = {
   derivation_group_name: string;
   key: string;
   source_type_name: string;
-}
+};
 
 // This is the type that conforms with the database schema. We don't really use it, as it is pretty heavyweight - instead we derive lighter types from it.
 export type ExternalSourceDB = {

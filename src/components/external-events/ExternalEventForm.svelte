@@ -80,7 +80,12 @@
         <Highlight highlight={highlightKeysMap.last_modified_by}>
           <Input layout="inline">
             Source ID
-            <input class="st-input w-100" disabled={!editable} name="source-key" value={externalEvent.pkey.source_key} />
+            <input
+              class="st-input w-100"
+              disabled={!editable}
+              name="source-key"
+              value={externalEvent.pkey.source_key}
+            />
           </Input>
         </Highlight>
 

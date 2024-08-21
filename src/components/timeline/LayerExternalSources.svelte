@@ -362,7 +362,8 @@
       if (externalEvent && typeof externalEventStartX === 'number') {
         const externalEventEndX = xScaleView(externalEvent.start_ms + externalEvent.duration_ms);
         const externalEventRectWidth = Math.max(2, Math.min(externalEventEndX, drawWidth) - externalEventStartX);
-        const externalEventColor = idToColorMaps.external_events[getRowIdExternalEvent(externalEvent.pkey)] || externalEventDefaultColor;
+        const externalEventColor =
+          idToColorMaps.external_events[getRowIdExternalEvent(externalEvent.pkey)] || externalEventDefaultColor;
         const isSelected = selectedExternalEventId === getRowIdExternalEvent(externalEvent.pkey);
         if (isSelected) {
           ctx.fillStyle = externalEventSelectedColor;

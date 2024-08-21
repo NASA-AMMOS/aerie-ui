@@ -285,10 +285,7 @@
                         },
                         "groupBy": {
                           "description": "Describes the way external events should be grouped when displayMode is 'grouped'",
-                          "enum": [
-                            "event_type_name",
-                            "source_key"
-                          ]
+                          "enum": ["event_type_name", "source_key"]
                         },
                         "labelVisibility": {
                           "description": "External event text label behavior",
