@@ -7,7 +7,7 @@
     externalSources,
     planDerivationGroupLinks,
     planDerivationGroupNamesToFilter,
-    seenSources,
+    usersSeenSources
   } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import { originalView } from '../../stores/views';
@@ -37,16 +37,29 @@
 
   // Determine which new and deleted sources are unacknowledged for the user
   $: {
-    let sourceKeys = $externalSources.map(s => s.pkey.key);
+    let sourceKeys: UserSeenEntry[] = $externalSources.map(es => {return {key: es.pkey.key, derivation_group_name: es.pkey.derivation_group_name, source_type_name: es.source_type_name}});
+
     if (user && user.id) {
-      let seenKeys: string[] = [];
-      if ($seenSources[user?.id]) {
-        seenKeys = $seenSources[user?.id].map(s => s.key);
+      if ($usersSeenSources[user.id]) {
+        unseenSources = sourceKeys.filter(key => {
+          if (user.id) {
+            return !$usersSeenSources[user.id].find(k => k.key === key.key && k.derivation_group_name === key.derivation_group_name);
+          }
+          return true;
+        })
       }
-      unseenSources = $externalSources.filter(s => !seenKeys.includes(s.pkey.key)).map(s => s.pkey); // in sources but not in seenSources
-      unseenDeletedSources = ($seenSources[user?.id] || []).filter(seen => !sourceKeys.includes(seen.key)); // in seenSources but not in sources
+      else {
+        unseenSources = sourceKeys;
+      }
+    }
+
+    if (user && user.id && $usersSeenSources[user.id]) {
+      unseenDeletedSources = $usersSeenSources[user.id].filter(key => !sourceKeys.find(k => k.key === key.key && k.derivation_group_name === key.derivation_group_name))
+      console.log("unseen", $usersSeenSources[user.id], unseenDeletedSources)
     }
   }
+
+  $: console.log(unseenDeletedSources)
 
   let planDerivationGroupNamesToFilterParsed: { [plan_id: number]: string[] } = JSON.parse(
     $planDerivationGroupNamesToFilter,
