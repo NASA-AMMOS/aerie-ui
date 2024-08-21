@@ -164,10 +164,10 @@ function transformDerivationGroups(
         name: dg.name,
         source_type_name: dg.source_type_name,
         sources: new Map(
-          // comes from view schema that is hardcoded as "{dg_id}, {source_key}, {source_key}""
+          // comes from view schema that is hardcoded as "{source_key}, {derivation_group_name}, {event_count}""
           dg.sources
             .filter(s => s.charAt(0) !== ',' && s.length > 4)
-            .map(s => [s.split(', ')[1], { event_counts: parseInt(s.split(', ')[2]) }]),
+            .map(s => [s.split(', ')[0], { event_counts: parseInt(s.split(', ')[2]) }]),
         ),
       });
     });
