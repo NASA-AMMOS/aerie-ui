@@ -4,7 +4,7 @@
   import { activityTypes } from '../stores/plan';
   import type { ActivityType } from '../types/activity';
   import type { Tag } from '../types/tags';
-  import type { TimelineItemListFilterOption, TimelineItemType } from '../types/timeline';
+  import type { TimelineItemType } from '../types/timeline';
   import TimelineItemList from './TimelineItemList.svelte';
 
   let activitySubsystems: Tag[] = [];
@@ -19,31 +19,6 @@
       }
     });
     activitySubsystems = newActivitySubsystems;
-  }
-
-  function filterItems(
-    items: TimelineItemType[],
-    textFilters: string[],
-    selectedFilterOptions: Record<string, TimelineItemListFilterOption>,
-  ) {
-    return (items as ActivityType[]).filter(({ name, subsystem_tag }) => {
-      let matchesText = true;
-      let matchesSubsystem = true;
-      for (let i = 0; i < textFilters.length; i++) {
-        const textFilter = textFilters[i];
-        if (!name.toLowerCase().includes(textFilter.toLowerCase())) {
-          matchesText = false;
-        }
-      }
-      if (Object.keys(selectedFilterOptions).length > 0) {
-        if (!subsystem_tag) {
-          matchesSubsystem = false;
-        } else {
-          matchesSubsystem = !!selectedFilterOptions[subsystem_tag.id];
-        }
-      }
-      return matchesText && matchesSubsystem;
-    });
   }
 
   function getFilterValueFromItem(item: TimelineItemType) {

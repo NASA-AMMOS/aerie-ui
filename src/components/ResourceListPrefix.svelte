@@ -2,13 +2,14 @@
 
 <script lang="ts">
   import type { ResourceType } from '../types/simulation';
+  import type { TimelineItemType } from '../types/timeline';
 
-  export let item: ResourceType | undefined = undefined;
+  export let item: TimelineItemType | undefined = undefined;
 
   let prefix: string = '';
 
-  $: units = item?.schema.metadata?.unit?.value;
-  $: type = item?.schema.type ?? 'Unk';
+  $: units = (item as ResourceType)?.schema.metadata?.unit?.value;
+  $: type = (item as ResourceType)?.schema.type ?? 'Unk';
   $: if (type) {
     prefix = `(${type}${units ? ` • ${units}` : ''})`;
   }
