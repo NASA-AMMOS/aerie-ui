@@ -97,9 +97,10 @@
         headerHeight={rowHeight}
         defaultExpanded={node.expanded}
         className={classNames('row-header-external-event-group', {
-          selected: (
-            externalEvent !== undefined && selectedExternalEventId !== null
-            && getRowIdExternalEventWhole(externalEvent) === selectedExternalEventId)
+          selected:
+            externalEvent !== undefined &&
+            selectedExternalEventId !== null &&
+            getRowIdExternalEventWhole(externalEvent) === selectedExternalEventId,
         })}
         on:collapse={() => dispatch('external-event-tree-node-change', node)}
       >
