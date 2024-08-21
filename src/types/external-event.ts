@@ -10,10 +10,13 @@ export type ExternalEventPkey = {
 
 // This is the type that conforms with the database schema.
 export type ExternalEventDB = {
+  derivation_group_name: string;
   duration: string;
-  pkey: ExternalEventPkey;
+  event_type_name: string;
+  key: string;
   properties: Record<string, any>;
   source?: ExternalSourceDB;
+  source_key: string;
   start_time: string;
 };
 
@@ -28,8 +31,9 @@ export type ExternalEventJson = {
 
 // no analogue to ExternalSourceSlim as we have no subevents or anything of the sort that we may elect to exclude
 
-export type ExternalEvent = Pick<ExternalEventDB, 'pkey' | 'duration' | 'properties' | 'source' | 'start_time'> & {
+export type ExternalEvent = Pick<ExternalEventDB, 'duration' | 'properties' | 'source' | 'start_time'> & {
   duration_ms: number;
+  pkey: ExternalEventPkey;
   start_ms: number;
 };
 
