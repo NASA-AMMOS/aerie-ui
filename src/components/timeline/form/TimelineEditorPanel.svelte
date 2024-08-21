@@ -20,7 +20,11 @@
   import HierarchyModeFlatIcon from '../../../assets/timeline-hierarchy-mode-flat.svg?component';
   import SpanIcon from '../../../assets/timeline-span.svg?component';
   import ActivityModeWidthIcon from '../../../assets/width.svg?component';
-  import { ViewDefaultActivityOptions } from '../../../constants/view';
+  import {
+    ViewActivityLayerColorPresets,
+    ViewDefaultActivityOptions,
+    ViewLineLayerColorPresets,
+  } from '../../../constants/view';
   import { ViewConstants } from '../../../enums/view';
   import { activityTypes, maxTimeRange, viewTimeRange } from '../../../stores/plan';
   import { plugins } from '../../../stores/plugins';
@@ -1189,36 +1193,14 @@
 
                     {#if isActivityLayer(layer)}
                       <ColorPresetsPicker
-                        presetColors={[
-                          '#FFD1D2',
-                          '#FFCB9E',
-                          '#fcdd8f',
-                          '#CAEBAE',
-                          '#C9E4F5',
-                          '#F8CCFF',
-                          '#ECE0F2',
-                          '#E8D3BE',
-                          '#F5E9DA',
-                          '#EBEBEB',
-                        ]}
+                        presetColors={ViewActivityLayerColorPresets}
                         tooltipText="Layer Color"
                         value={getColorForLayer(layer)}
                         on:input={event => handleUpdateLayerColor(event, layer)}
                       />
                     {:else if isLineLayer(layer)}
                       <ColorPresetsPicker
-                        presetColors={[
-                          '#e31a1c',
-                          '#ff7f0e',
-                          '#fcbd21',
-                          '#75b53b',
-                          '#3C95C9',
-                          '#8d41b0',
-                          '#CAB2D6',
-                          '#a67c52',
-                          '#E8CAA2',
-                          '#7f7f7f',
-                        ]}
+                        presetColors={ViewLineLayerColorPresets}
                         tooltipText="Layer Color"
                         value={getColorForLayer(layer)}
                         on:input={event => handleUpdateLayerColor(event, layer)}

@@ -50,9 +50,6 @@
   {/if}
   {#each rows as row}
     <ContextSubMenuItem text={row.name} parentMenu={contextMenu} hideAfterClick={false}>
-      <ContextMenuItem on:click={() => onSelect(layerItem, row)}>
-        <div class="context-menu-button">New Layer +</div>
-      </ContextMenuItem>
       {#each row.layers.filter(l => l.chartType === chartType) as layer}
         <ContextMenuItem on:click={() => onSelect(layerItem, row, layer)}>
           <div class="layer">
@@ -60,6 +57,9 @@
           </div>
         </ContextMenuItem>
       {/each}
+      <ContextMenuItem on:click={() => onSelect(layerItem, row)}>
+        <div class="context-menu-button">New Layer +</div>
+      </ContextMenuItem>
     </ContextSubMenuItem>
   {/each}
   <ContextMenuItem on:click={() => onSelect(layerItem)}>

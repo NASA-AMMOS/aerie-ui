@@ -19,7 +19,7 @@
     const { key } = event;
     if (key === 'Enter') {
       event.preventDefault();
-      confirm();
+      confirm(true);
     }
   }
 
@@ -33,7 +33,7 @@
 <Modal {height} {width}>
   <ModalHeader on:close>Warning</ModalHeader>
   <ModalContent>
-    <span>This row is not configured to display some of the activities you are trying to add.</span>
+    <span>This row is not configured to display some of the activities you are trying to create.</span>
   </ModalContent>
   <ModalFooter>
     <button class="st-button secondary" on:click={() => dispatch('close')}> Cancel </button>

@@ -21,6 +21,11 @@ import {
   createTimelineActivityLayer,
   createTimelineLineLayer,
   createTimelineResourceLayer,
+  getUniqueColorForActivityLayer,
+  getUniqueColorForLineLayer,
+  getUniqueColorSchemeForXRangeLayer,
+  isLineLayer,
+  isXRangeLayer,
 } from '../utilities/timeline';
 import { createColumnSizes, createRowSizes, parseColumnSizes } from '../utilities/view';
 import { gqlSubscribable } from './subscribable';
@@ -561,20 +566,28 @@ export function getUpdatedLayerWithFilters(
   type: string /* 'activity' | 'resource' */,
   items: TimelineItemType[],
   layer?: Layer,
+  row?: Row,
 ): { layer: Layer; yAxis?: Axis } {
   const itemNames = items.map(i => i.name);
+  // Create a suitable layer if not provided
   if (!layer) {
-    // If no row is provided we assume there is no relevant layer
     if (type === 'activity') {
       return {
         layer: createTimelineActivityLayer(timelines, {
+          activityColor: getUniqueColorForActivityLayer(row),
           filter: { activity: { types: itemNames } },
         }),
       };
     } else {
       const { layer: newLayer, yAxis } = createTimelineResourceLayer(timelines, items[0] as ResourceType);
       if (newLayer && newLayer.filter.resource) {
+        // Add remaining resources if requested (generally avoided since resource layers are usually created on separate layers)
         newLayer.filter.resource.names = itemNames;
+        if (isLineLayer(newLayer)) {
+          newLayer.lineColor = getUniqueColorForLineLayer(row);
+        } else if (isXRangeLayer(newLayer)) {
+          newLayer.colorScheme = getUniqueColorSchemeForXRangeLayer(row);
+        }
         return {
           layer: newLayer,
           yAxis,
@@ -586,6 +599,7 @@ export function getUpdatedLayerWithFilters(
       }
     }
   } else {
+    // Otherwise augment the filter of the specified layer
     const prop = type === 'activity' ? 'types' : 'names';
     const typedType = type as 'activity' | 'resource';
     const existingFilter = layer.filter[typedType];
@@ -684,7 +698,7 @@ export function viewAddFilterItemsToRow(
       (layer.chartType !== 'activity' && typeName === 'activity')
     ) {
       // Add to existing row
-      const { layer: newLayer, yAxis } = getUpdatedLayerWithFilters(timelines, typeName, items);
+      const { layer: newLayer, yAxis } = getUpdatedLayerWithFilters(timelines, typeName, items, undefined, row);
       newRows = newRows.map(r => {
         if (r.id === row.id) {
           returnRow = { ...row, layers: [...row.layers, newLayer], yAxes: yAxis ? [...row.yAxes, yAxis] : row.yAxes };
@@ -700,7 +714,7 @@ export function viewAddFilterItemsToRow(
           returnRow = r;
           const newLayers = r.layers.map(l => {
             if (l.id === layer.id) {
-              return getUpdatedLayerWithFilters(timelines, typeName, items, layer).layer;
+              return getUpdatedLayerWithFilters(timelines, typeName, items, layer, row).layer;
             }
             return l;
           });
