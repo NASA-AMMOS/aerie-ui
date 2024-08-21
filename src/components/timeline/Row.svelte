@@ -507,7 +507,13 @@
   }
 
   function onDragenter(e: DragEvent | undefined): void {
-    if (e && overlaySvgSelection && e.dataTransfer && e.dataTransfer.effectAllowed === 'copyLink') {
+    if (
+      hasUpdateDirectivePermission &&
+      e &&
+      overlaySvgSelection &&
+      e.dataTransfer &&
+      e.dataTransfer.effectAllowed === 'copyLink'
+    ) {
       const g = overlaySvgSelection
         .append('g')
         .attr('y', 0)
@@ -550,7 +556,7 @@
   }
 
   function onDragover(e: DragEvent | undefined): void {
-    if (e && e.dataTransfer && e.dataTransfer.effectAllowed === 'link') {
+    if (e && e.dataTransfer && (e.dataTransfer.effectAllowed === 'link' || !hasUpdateDirectivePermission)) {
       e.dataTransfer.dropEffect = 'none';
     }
     if (e && overlaySvgSelection) {
