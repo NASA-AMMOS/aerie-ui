@@ -1010,8 +1010,7 @@ const gql = {
   DELETE_EXTERNAL_SOURCE: `#graphql
     mutation DeleteExternalSource(
       $derivationGroupName: String!,
-      $sourceKey: String!,
-      $sourceTypeName: String!
+      $sourceKey: String!
     ) {
       deleteExternalEvent: ${Queries.DELETE_EXTERNAL_EVENT}(
         where: {
@@ -1026,8 +1025,7 @@ const gql = {
       deleteExternalSource: ${Queries.DELETE_EXTERNAL_SOURCE}(
         where: {
           derivation_group_name: { _eq: $derivationGroupName },
-          key: { _eq: $sourceKey },
-          source_type_name: { _eq: $sourceTypeName },
+          key: { _eq: $sourceKey }
         }
       ) {
         affected_rows
@@ -1243,13 +1241,12 @@ const gql = {
 
   // Sadly, not a great way to compare fields within a type, even if its a type GraphQL recognizes. As such, many different parameters, called one by one
   DELETE_SEEN_SOURCE_ENTRY: `#graphql
-    mutation DeleteSeenSourceEntry($username: String!, $derivation_group: String!, $external_source_name: String!, $external_source_type: String!) {
+    mutation DeleteSeenSourceEntry($username: String!, $derivation_group: String!, $external_source_name: String!) {
       deleteSeenSources: ${Queries.DELETE_SEEN_SOURCES}(where: {
         _and: {
           username: {_eq: $username},
           derivation_group: {_eq: $derivation_group},
-          external_source_name: {_eq: $external_source_name},
-          external_source_type: {_eq: $external_source_type}
+          external_source_name: {_eq: $external_source_name}
         }
       }){
         returning {
@@ -1556,12 +1553,11 @@ const gql = {
 
   // Should be deprecated with the introduction of strict external source schemas, dictating allowable event types for given source types. But for now, this will do.
   GET_EXTERNAL_EVENT_TYPE_BY_SOURCE: `#graphql
-    query GetExternalEventTypesBySource($derivationGroupName: String!, $sourceKey: String!, $sourceTypeName: String!) {
+    query GetExternalEventTypesBySource($derivationGroupName: String!, $sourceKey: String!) {
       external_source(
         where: {
           key: {_eq: $sourceKey},
-          derivation_group_name: {_eq: $derivationGroupName},
-          source_type_name: {_eq: $sourceTypeName},
+          derivation_group_name: {_eq: $derivationGroupName}
         }
       ) {
         external_events {
@@ -1586,12 +1582,11 @@ const gql = {
   `,
 
   GET_EXTERNAL_SOURCE_METADATA: `#graphql
-    query GetExternalSourceMetadata($derivationGroupName: String!, $sourceKey: String!, $sourceTypeName: String!) {
+    query GetExternalSourceMetadata($derivationGroupName: String!, $sourceKey: String!) {
       ${Queries.EXTERNAL_SOURCES}(
         where: {
           derivation_group_name: {_eq: $derivationGroupName},
-          key: {_eq: $sourceKey},
-          source_type_name: {_eq: $sourceTypeName},
+          key: {_eq: $sourceKey}
         }
       ) {
         metadata

@@ -407,7 +407,7 @@
     if (sourceType === undefined) {
       return [];
     }
-    let associatedSources = $externalSources.filter(source => source.pkey.source_type_name === sourceType);
+    let associatedSources = $externalSources.filter(source => source.source_type_name === sourceType);
     return associatedSources;
   }
 
@@ -562,7 +562,7 @@
 
                   <p>
                     <strong>Source Type:</strong>
-                    {source.pkey.source_type_name}
+                    {source.source_type_name}
                   </p>
 
                   <p>
