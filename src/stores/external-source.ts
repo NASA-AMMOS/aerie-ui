@@ -25,8 +25,8 @@ export const getExternalSourceMetadataError: Writable<string | null> = writable(
   The following stores persist their values within the browser's localStorage
 */
 // Track which sources have yet to be acknowledged by user as added to AERIE
-export const unseenSources = writable((browser && localStorage.getItem('seenSources')) || '[]');
-unseenSources.subscribe(val => {
+export const seenSources = writable((browser && localStorage.getItem('seenSources')) || '[]');
+seenSources.subscribe(val => {
   // Validate that val is list-like
   if (browser && JSON.parse(val)) {
     localStorage.setItem('seenSources', val);
@@ -119,8 +119,8 @@ export function getRowIdFromExternalSourceId(externalSourceId: ExternalSourcePke
 function transformExternalSources(
   externalSources: {
     created_at: string;
-    end_time: string;
     derivation_group_name: string;
+    end_time: string;
     key: string;
     source_type_name: string;
     start_time: string;

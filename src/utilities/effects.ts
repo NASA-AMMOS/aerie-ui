@@ -3620,13 +3620,8 @@ const effects = {
     }
     try {
       const sourceKey = externalSourcePkey.key;
-      const derivationGroupName = externalSourcePkey.derivation_group_name
-      const sourceTypeName = externalSourcePkey.source_type_name
-      const data = await reqHasura<any>(
-        gql.GET_EXTERNAL_EVENTS,
-        { derivationGroupName, sourceKey, sourceTypeName },
-        user,
-      );
+      const derivationGroupName = externalSourcePkey.derivation_group_name;
+      const data = await reqHasura<any>(gql.GET_EXTERNAL_EVENTS, { derivationGroupName, sourceKey }, user);
       const { external_event: events } = data;
       if (events === null) {
         throw Error(`Unable to get external events for external source id ${sourceKey} - ${derivationGroupName}.`);
@@ -3641,7 +3636,6 @@ const effects = {
             event_type_name: event.event_type_name,
             key: event.key,
             source_key: event.source_key,
-            source_type_name: event.source_type_name,
           },
           properties: event.properties,
           start_time: event.start_time,
