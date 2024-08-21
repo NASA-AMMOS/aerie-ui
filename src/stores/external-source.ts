@@ -11,6 +11,7 @@ import {
 import gql from '../utilities/gql';
 import { planId } from './plan';
 import { gqlSubscribable } from './subscribable';
+import { users } from './user';
 
 /* Writeable. */
 export const parsingError: Writable<string | null> = writable(null);
@@ -61,13 +62,45 @@ export const planDerivationGroupLinks = gqlSubscribable<PlanDerivationGroup[]>(
 );
 
 // this tracks each user's view of the sources. if something exists in externalSources that isn't in usersSeenSources, it's treated as unseen, and vice versa for deleted.
-export const usersSeenSources = gqlSubscribable<Record<string, UserSeenEntry[]>>(
+export const usersSeenSourcesRaw = gqlSubscribable<{
+        derivation_group: string;
+        external_source_name: string;
+        external_source_type: string;
+        id: number;
+        username: string;
+      }[]>(
   gql.SUB_SEEN_SOURCES,
   {},
-  {},
+  [],
   null,
-  transformUsersSeenSources,
 );
+export const usersSeenSources = derived(
+  [usersSeenSourcesRaw, users],
+  ([$usersSeenSourcesRaw, $users]) => {
+    const res: Record<string, UserSeenEntry[]> = {};
+    // this is all necessary to allow for dismissal of a deletion of a final source in the external-sources list
+    // if its the final source associated with a user's view, the user entry would typically vanish from $usersSeenSourcesRaw,
+    //    which means it never shows up and we are essentially messing with an empty object, which doesn't allow the UpdateCard
+    //    to update correctly. by force including all users (which can apparently be null), we fix this issue.
+    // this is admittedly substantially more complex, but it is what worked ultimately and since it requires the users store,
+    //    we cannot use a simple transformer
+    if ($users) { 
+      for (const user of $users) {
+        if (user) {
+          res[user] = [];
+        }
+      }
+      for (const entry of $usersSeenSourcesRaw) {
+        res[entry.username].push({
+          derivation_group_name: entry.derivation_group,
+          key: entry.external_source_name,
+          source_type_name: entry.external_source_type,
+        });
+      }
+    }
+    return res;
+  }
+)
 
 /* Derived. */
 export const selectedPlanDerivationGroupNames = derived(
@@ -154,34 +187,4 @@ function transformDerivationGroups(
     });
   }
   return completeExternalSourceSlim;
-}
-
-function transformUsersSeenSources(
-  seenSources: {
-    derivation_group: string;
-    external_source_name: string;
-    external_source_type: string;
-    id: number;
-    username: string;
-  }[],
-): Record<string, UserSeenEntry[]> {
-  const res: Record<string, UserSeenEntry[]> = {};
-  for (const entry of seenSources) {
-    if (res[entry.username]) {
-      res[entry.username].push({
-        derivation_group_name: entry.derivation_group,
-        key: entry.external_source_name,
-        source_type_name: entry.external_source_type,
-      });
-    } else {
-      res[entry.username] = [
-        {
-          derivation_group_name: entry.derivation_group,
-          key: entry.external_source_name,
-          source_type_name: entry.external_source_type,
-        },
-      ];
-    }
-  }
-  return res;
 }
