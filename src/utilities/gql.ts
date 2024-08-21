@@ -1117,7 +1117,7 @@ const gql = {
     mutation DeletePlanExternalSource($where: plan_derivation_group_bool_exp!) {
       planDerivationGroupLink: ${Queries.DELETE_PLAN_DERIVATION_GROUP}(where: $where) {
         returning {
-          id
+          derivation_group_name
         }
       }
     }
@@ -1795,7 +1795,6 @@ const gql = {
   GET_PLAN_DERIVATION_GROUP: `#graphql
     query GetPlanExternalSource($plan_id: Int!) {
       links: ${Queries.PLAN_DERIVATION_GROUP}(where: {plan_id: {_eq: $plan_id}}) {
-        id
         derivation_group_name
         plan_id
       }
