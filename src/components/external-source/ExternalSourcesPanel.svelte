@@ -7,7 +7,7 @@
     externalSources,
     planDerivationGroupLinks,
     planDerivationGroupNamesToFilter,
-    seenSources
+    seenSources,
   } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import { originalView } from '../../stores/views';
