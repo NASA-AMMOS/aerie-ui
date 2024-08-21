@@ -596,7 +596,7 @@ const gql = {
   CREATE_PLAN_DERIVATION_GROUP: `#graphql
     mutation CreatePlanDerivationGroup($source: plan_derivation_group_insert_input!) {
       planExternalSourceLink: ${Queries.INSERT_PLAN_DERIVATION_GROUP}(object: $source) {
-        id
+        derivation_group_name
       }
     }
   `,
@@ -1514,13 +1514,11 @@ const gql = {
   query GetExternalEvents(
     $sourceKey: String!,
     $derivationGroupName: String!
-    $sourceTypeName: String!
   ) {
     ${Queries.EXTERNAL_EVENT}(
       where: {
         source_key: {_eq: $sourceKey},
         derivation_group_name: {_eq: $derivationGroupName}
-        source_type_name: {_eq: $sourceTypeName}
       }
     ) {
       properties
@@ -1539,7 +1537,6 @@ const gql = {
       id
       key
       event_type_name
-      source_id
       start_time
       duration
       properties
@@ -2812,14 +2809,13 @@ const gql = {
   `,
 
   SUB_PLAN_EXTERNAL_EVENTS: `#graphql
-    subscription SubPlanExternalEvents($source_keyss: [String!]!) {
+    subscription SubPlanExternalEvents($source_keys: [String!]!) {
       events: ${Queries.EXTERNAL_EVENT}(where: {source_key: {_in: $source_keys}}) {
         properties
         event_type_name
         key
         duration
         start_time
-        source_id
       }
     }
   `, // deprecated in favor of the next query
@@ -2833,7 +2829,7 @@ const gql = {
           key
           duration
           start_time
-          source_id
+          derivation_group_name
         }
       }
     }
