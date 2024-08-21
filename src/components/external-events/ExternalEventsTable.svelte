@@ -6,14 +6,14 @@
   import { plugins } from '../../stores/plugins';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
-  import type { ExternalEventDB } from '../../types/external-event';
+  import type { ExternalEvent, ExternalEventDB } from '../../types/external-event';
   import type { ExternalSourceSlim } from '../../types/external-source';
   import { getRowIdExternalEventWhole } from '../../utilities/hash';
   import { formatDate } from '../../utilities/time';
   import SingleActionDataGrid from '../ui/DataGrid/SingleActionDataGrid.svelte';
 
   export let selectedItemId: number | null;
-  export let items: ExternalEventDB[];
+  export let items: ExternalEvent[];
   export let user: User | null;
 
   const dispatch = createEventDispatcher<{
