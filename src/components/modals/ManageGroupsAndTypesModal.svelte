@@ -9,11 +9,7 @@
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalEventType } from '../../types/external-event';
-  import type {
-    DerivationGroup,
-    ExternalSourceSlim,
-    ExternalSourceType
-  } from '../../types/external-source';
+  import type { DerivationGroup, ExternalSourceSlim, ExternalSourceType } from '../../types/external-source';
   import {
     showDeleteDerivationGroupModal,
     showDeleteExternalEventTypeModal,

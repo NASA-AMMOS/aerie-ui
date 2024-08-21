@@ -30,9 +30,7 @@
   let currentView: View | null = null;
 
   $: planDerivationGroupNamesToFilterParsed = JSON.parse($planDerivationGroupNamesToFilter);
-  $: relevantSources = $externalSources.filter(
-    source => derivationGroup.name === source.pkey.derivation_group_name,
-  );
+  $: relevantSources = $externalSources.filter(source => derivationGroup.name === source.pkey.derivation_group_name);
   $: {
     // Ensure the current derivation group in the filter list if it has been disabled
     // Ensure the current derivation group is NOT in the filter list if it has been enabled

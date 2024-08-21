@@ -96,7 +96,7 @@ import type {
   ExternalSourceType,
   ExternalSourceTypeInsertInput,
   PlanDerivationGroup,
-  UserSeenEntry
+  UserSeenEntry,
 } from '../types/external-source';
 import type { Model, ModelInsertInput, ModelLog, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
 import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';

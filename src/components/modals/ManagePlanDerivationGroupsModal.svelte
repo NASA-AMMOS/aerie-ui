@@ -9,7 +9,7 @@
     derivationGroupPlanLinkError,
     derivationGroups,
     externalSources,
-    selectedPlanDerivationGroupNames
+    selectedPlanDerivationGroupNames,
   } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import { plugins } from '../../stores/plugins';

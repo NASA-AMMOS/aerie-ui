@@ -485,7 +485,10 @@
 
     // Apply filter for hiding derivation groups
     externalEventsFilteredByDG = externalEvents.filter(ee => {
-      let dg = $externalSources.find(es => (es.pkey.derivation_group_name === ee.pkey.derivation_group_name) && (es.pkey.key === ee.pkey.source_key))?.pkey.derivation_group_name ?? undefined;
+      let dg =
+        $externalSources.find(
+          es => es.pkey.derivation_group_name === ee.pkey.derivation_group_name && es.pkey.key === ee.pkey.source_key,
+        )?.pkey.derivation_group_name ?? undefined;
       // the statement below says return true (keep) if the plan is not null and if the filter for this plan does not include this derivation group
       return plan
         ? !planDerivationGroupNamesToFilterParsed[plan.id] ||
@@ -500,7 +503,9 @@
         event_types.forEach(type => {
           const matchingEvents = externalEventsByType[type];
           if (matchingEvents) {
-            matchingEvents.forEach(event => (idToColorMaps.external_events[getRowIdExternalEvent(event.pkey)] = layer.externalEventColor));
+            matchingEvents.forEach(
+              event => (idToColorMaps.external_events[getRowIdExternalEvent(event.pkey)] = layer.externalEventColor),
+            );
             externalEventsFilteredByType = externalEventsFilteredByType.concat(
               matchingEvents.filter((val, ind, arr) => arr.indexOf(val) === ind),
             ); // uniqueness

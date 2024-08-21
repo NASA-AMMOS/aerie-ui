@@ -9,7 +9,6 @@
   import TimelineXRangeLayerIcon from '../../assets/timeline-x-range-layer.svg?component';
   import { ViewDefaultActivityOptions, ViewDefaultExternalEventOptions } from '../../constants/view';
   import type { ActivityDirectiveId } from '../../types/activity';
-  import type { ExternalEventPkey } from '../../types/external-event';
   import type { Resource, SpanId } from '../../types/simulation';
   import type {
     ActivityOptions,

@@ -42,8 +42,8 @@
   <ModalContent>
     {#if linked.length > 0}
       <span style="display:block;overflow:hidden;text-overflow:ellipsis">
-        This External Source is part of Derivation Group '{source.pkey.derivation_group_name}', which is linked with the following
-        plans:
+        This External Source is part of Derivation Group '{source.pkey.derivation_group_name}', which is linked with the
+        following plans:
         {#each linked as link}
           <div style="padding-left:20px">
             <i>

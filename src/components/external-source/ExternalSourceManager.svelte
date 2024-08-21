@@ -15,14 +15,18 @@
     externalSourceTypes,
     getExternalSourceMetadataError,
     parsingError,
-    planDerivationGroupLinks
+    planDerivationGroupLinks,
   } from '../../stores/external-source';
   import { field } from '../../stores/form';
   import { plans } from '../../stores/plans';
   import { plugins } from '../../stores/plugins';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
-  import type { ExternalEvent, ExternalEventInsertInput, ExternalEventTypeInsertInput } from '../../types/external-event';
+  import type {
+    ExternalEvent,
+    ExternalEventInsertInput,
+    ExternalEventTypeInsertInput,
+  } from '../../types/external-event';
   import {
     type DerivationGroupInsertInput,
     type ExternalSourceInsertInput,
@@ -30,7 +34,7 @@
     type ExternalSourceSlim,
     type ExternalSourceType,
     type ExternalSourceTypeInsertInput,
-    type PlanDerivationGroup
+    type PlanDerivationGroup,
   } from '../../types/external-source';
   import type { RadioButtonId } from '../../types/radio-buttons';
   import type { TimeRange } from '../../types/timeline';
@@ -104,7 +108,7 @@
       sortable: true,
       valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
         if (params.data?.pkey) {
-          return params.data.pkey.key
+          return params.data.pkey.key;
         }
       },
     },
@@ -117,7 +121,7 @@
       sortable: true,
       valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
         if (params.data?.pkey) {
-          return params.data.pkey.source_type_name
+          return params.data.pkey.source_type_name;
         }
       },
     },
@@ -130,7 +134,7 @@
       sortable: true,
       valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
         if (params.data?.pkey) {
-          return params.data.pkey.derivation_group_name
+          return params.data.pkey.derivation_group_name;
         }
       },
     },
@@ -266,7 +270,7 @@
     parsingError.set(null);
   }
 
-  $: selectedSourceId = selectedSource ? getRowIdExternalSource(selectedSource.pkey) : null
+  $: selectedSourceId = selectedSource ? getRowIdExternalSource(selectedSource.pkey) : null;
 
   // File parse logic
   $: if (files) {
@@ -599,7 +603,7 @@
             },
             start_time: sourceInsert.start_time,
             valid_at: sourceInsert.valid_at,
-          }
+          };
           gridRowSizes = gridRowSizesBottomPanel;
         }
       }

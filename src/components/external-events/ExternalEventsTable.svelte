@@ -32,7 +32,7 @@
         if (params.data?.pkey) {
           return params.data.pkey.key;
         }
-      }
+      },
     },
     {
       field: 'event_type_name',
@@ -44,7 +44,7 @@
         if (params.data?.pkey) {
           return params.data.pkey.event_type_name;
         }
-      }
+      },
     },
     {
       field: 'pkey',
@@ -56,7 +56,7 @@
         if (params.data?.pkey) {
           return params.data.pkey.source_key;
         }
-      }
+      },
     },
     {
       field: 'start_time',
