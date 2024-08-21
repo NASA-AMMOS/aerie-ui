@@ -17,7 +17,12 @@
     resourceTypesLoading,
   } from '../../stores/simulation';
   import { selectedRow, viewAddFilterToRow } from '../../stores/views';
-  import type { ActivityDirective, ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
+  import type {
+    ActivityDirective,
+    ActivityDirectiveId,
+    ActivityDirectivesMap,
+    ActivityType,
+  } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { ConstraintResultWithName } from '../../types/constraint';
   import type { Plan } from '../../types/plan';
@@ -48,6 +53,7 @@
   } from '../../types/timeline';
   import effects from '../../utilities/effects';
   import { classNames } from '../../utilities/generic';
+  import { showConfirmActivityCreationModal } from '../../utilities/modal';
   import { sampleProfiles } from '../../utilities/resources';
   import { getSimulationStatus } from '../../utilities/simulation';
   import { pluralize } from '../../utilities/text';
@@ -570,7 +576,7 @@
     }
   }
 
-  function onDrop(e: DragEvent | undefined): void {
+  async function onDrop(e: DragEvent | undefined): Promise<void> {
     if (e && overlaySvgSelection && xScaleView !== null) {
       const { offsetX } = e;
       overlaySvgSelection.selectAll('.activity-drag-guide').remove();
@@ -584,9 +590,34 @@
 
         // Only allow creating an activity if we have an actual activity in the drag data.
         if (type === 'activity' && items && plan) {
-          items.forEach(item => {
-            effects.createActivityDirective({}, start_time, item.name, item.name, {}, plan, user);
+          // Determine if the row will visualize all requested activities
+          let activitiesInRow = new Set();
+          activityLayers.forEach(l => {
+            const layerActivities = l.filter.activity?.types ?? [];
+            activitiesInRow = new Set([...activitiesInRow, ...layerActivities]);
           });
+          const missingActivity = (items as ActivityType[]).find(i => !activitiesInRow.has(i.name));
+
+          const createActivities = () => {
+            items.forEach(item => {
+              effects.createActivityDirective({}, start_time, item.name, item.name, {}, plan, user);
+            });
+          };
+
+          // If the row is not configure to visualize all requested activities
+          // we prompt the user to ask if they would like to continue anyway,
+          // continue and add the filter, or cancel the operation
+          if (missingActivity) {
+            const { confirm, value } = await showConfirmActivityCreationModal();
+            if (confirm) {
+              if (value?.addFilter) {
+                viewAddFilterToRow(items, type, id, activityLayers.length ? activityLayers[0] : undefined, index);
+              }
+              createActivities();
+            }
+          } else {
+            createActivities();
+          }
         }
       }
     }
