@@ -1013,8 +1013,7 @@ const gql = {
       deleteExternalEvent: ${Queries.DELETE_EXTERNAL_EVENT}(
         where: {
           derivation_group_name: { _eq: $derivationGroupName },
-          source_type_name: { _eq: $sourceTypeName },
-          source_key: { _eq: $sourceKey },
+          source_key: { _eq: $sourceKey }
         }
       ) {
         returning {
