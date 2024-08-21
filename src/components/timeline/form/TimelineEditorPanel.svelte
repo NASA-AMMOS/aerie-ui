@@ -1093,7 +1093,7 @@
               >
                 <RadioButton
                   use={[[tooltip, { content: 'Group according to external source', placement: 'top' }]]}
-                  id="source_id"
+                  id="source_key"
                 >
                   <div class="radio-button-icon">
                     <Truck />

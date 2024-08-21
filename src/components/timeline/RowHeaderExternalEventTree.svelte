@@ -6,7 +6,7 @@
   import FolderIcon from '../../assets/folder.svg?component';
   import SelectIcon from '../../assets/select.svg?component';
   import { ViewDefaultExternalEventOptions } from '../../constants/view';
-  import type { ExternalEvent, ExternalEventPkey } from '../../types/external-event';
+  import type { ExternalEvent } from '../../types/external-event';
   import type {
     ExternalEventOptions,
     ExternalEventTree,
@@ -15,10 +15,10 @@
     MouseOver,
   } from '../../types/timeline';
   import { classNames } from '../../utilities/generic';
+  import { getRowIdExternalEventWhole } from '../../utilities/hash';
   import { pluralize } from '../../utilities/text';
   import { tooltip } from '../../utilities/tooltip';
   import Collapse from '../Collapse.svelte';
-  import { getRowIdExternalEventWhole } from '../../utilities/hash';
 
   export let externalEventOptions: ExternalEventOptions = { ...ViewDefaultExternalEventOptions };
   export let externalEventTree: ExternalEventTree = [];
@@ -110,7 +110,7 @@
         </div>
         <div slot="title" style="align-items: center;display: flex; gap: 8px;">
           <div class="label" style:white-space="nowrap" style:overflow="hidden" style:text-overflow="ellipsis ellipsis">
-            {#if externalEventOptions.groupBy === 'source_id'}
+            {#if externalEventOptions.groupBy === 'source_key'}
               {node.label} <!-- TODO: this probably needs to be updated... -->
             {:else}
               {node.label}

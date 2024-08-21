@@ -218,7 +218,7 @@ function generateExternalEvent(properties: Partial<ExternalEvent>): ExternalEven
     key: 'test',
     properties: {},
     source: undefined,
-    source_id: 1,
+    source_key: 'test',
     start_ms: 0,
     start_time: '',
     ...properties,

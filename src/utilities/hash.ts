@@ -1,7 +1,7 @@
 //https://stackoverflow.com/questions/40958727/javascript-generate-unique-number-based-on-string
 // https://github.com/bryc/code/blob/master/jshash/experimental/cyrb53.js
 
-import type { ExternalEvent, ExternalEventPkey } from '../types/external-event';
+import type { ExternalEventDB, ExternalEventPkey } from '../types/external-event';
 import type { ExternalSourcePkey, ExternalSourceSlim } from '../types/external-source';
 
 /*
@@ -44,7 +44,7 @@ export function getRowIdExternalSource(externalSourcePkey: ExternalSourcePkey) {
   );
 }
 
-export function getRowIdExternalEventWhole(externalEvent: ExternalEvent) {
+export function getRowIdExternalEventWhole(externalEvent: ExternalEventDB) {
   // https://stackoverflow.com/questions/40958727/javascript-generate-unique-number-based-on-string
   return cyrb53a(
     externalEvent.pkey.derivation_group_name +
