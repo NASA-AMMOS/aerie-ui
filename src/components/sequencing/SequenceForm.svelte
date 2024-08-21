@@ -1,6 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { browser } from '$app/environment';
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import type { ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
@@ -78,7 +79,9 @@
     saveButtonText = mode === 'edit' && !sequenceModified ? 'Saved' : 'Save';
   }
   $: {
-    selectedWorkspaceId = getSearchParameterNumber(SearchParameters.WORKSPACE_ID);
+    if (browser) {
+      selectedWorkspaceId = getSearchParameterNumber(SearchParameters.WORKSPACE_ID);
+    }
   }
 
   /**
