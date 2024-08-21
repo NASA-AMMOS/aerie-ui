@@ -121,7 +121,7 @@
       sortable: true,
       valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
         if (params.data?.pkey) {
-          return params.data.pkey.source_type_name;
+          return params.data.source_type_name
         }
       },
     },
@@ -350,7 +350,7 @@
     selectedFilters = [...$externalSourceTypes];
   }
   $: filteredExternalSources = $externalSources.filter(externalSource => {
-    return selectedFilters.find(f => f.name === externalSource.pkey.source_type_name) !== undefined;
+    return selectedFilters.find(f => f.name === externalSource.source_type_name) !== undefined;
   });
   $: filteredValues = $externalSourceTypes.filter(externalSourceType =>
     externalSourceType.name.toLowerCase().includes(filterString),
@@ -598,9 +598,9 @@
             end_time: sourceInsert.end_time,
             pkey: {
               derivation_group_name: derivationGroupInsert.name,
-              key: sourceInsert.key,
-              source_type_name: sourceTypeInsert.name,
+              key: sourceInsert.key
             },
+            source_type_name: sourceTypeInsert.name,
             start_time: sourceInsert.start_time,
             valid_at: sourceInsert.valid_at,
           };
@@ -736,7 +736,7 @@
                 class="st-input w-100"
                 disabled={true}
                 name="source-type"
-                value={selectedSource.pkey.source_type_name}
+                value={selectedSource.source_type_name}
               />
             </Input>
 

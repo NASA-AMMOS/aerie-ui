@@ -21,27 +21,6 @@ export const createDerivationGroupError: Writable<string | null> = writable(null
 export const derivationGroupPlanLinkError: Writable<string | null> = writable(null);
 export const getExternalSourceMetadataError: Writable<string | null> = writable(null);
 
-/* Persisted.
-  The following stores persist their values within the browser's localStorage
-*/
-// Tracks which new external sources the user has already acknowledged
-export const seenSources = writable((browser && localStorage.getItem('seenSources')) || '[]');
-seenSources.subscribe(val => {
-  // Validate that val is list-like
-  if (browser && JSON.parse(val)) {
-    localStorage.setItem('seenSources', val);
-  }
-});
-
-// Tracks which deleted external sources the user has already acknowledged
-export const deletedSourcesSeen = writable((browser && localStorage.getItem('deletedSources')) || '[]');
-deletedSourcesSeen.subscribe(val => {
-  // Validate that val is list-like
-  if (browser && JSON.parse(val)) {
-    localStorage.setItem('deletedSources', val);
-  }
-});
-
 // This store catches all derivation groups associated with the current plans that have been hidden from view.
 //  - Note: this does NOT require the derivation group be currently linked to the
 //          plan. If a derivation group is added to this store while NOT associated
@@ -80,7 +59,9 @@ export const planDerivationGroupLinks = gqlSubscribable<PlanDerivationGroup[]>(
   [],
   null,
 );
-export const usersSeenSourcesRaw = gqlSubscribable<Record<string, UserSeenEntry[]>>(
+
+// this tracks each user's view of the sources. if something exists in externalSources that isn't in usersSeenSources, it's treated as unseen, and vice versa for deleted.
+export const usersSeenSources = gqlSubscribable<Record<string, UserSeenEntry[]>>(
   gql.SUB_SEEN_SOURCES,
   {},
   {},
@@ -113,7 +94,7 @@ export function resetModelStores() {
 }
 
 export function getRowIdFromExternalSourceId(externalSourceId: ExternalSourcePkey): string {
-  return `${externalSourceId.key}:::${externalSourceId.source_type_name}:::${externalSourceId.derivation_group_name}`;
+  return `${externalSourceId.key}:::${externalSourceId.derivation_group_name}`;
 }
 
 function transformExternalSources(
@@ -136,8 +117,8 @@ function transformExternalSources(
         pkey: {
           derivation_group_name: es.derivation_group_name,
           key: es.key,
-          source_type_name: es.source_type_name,
         },
+        source_type_name: es.source_type_name,
         start_time: es.start_time,
         valid_at: es.valid_at,
       });

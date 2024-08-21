@@ -2467,12 +2467,11 @@ const effects = {
       if (externalSource !== null) {
         const { confirm } = await showDeleteExternalSourceModal([], externalSource);
         if (confirm) {
-          const data = await reqHasura<{ derivationGroupName: string; sourceKey: string; sourceTypeName: string }>(
+          const data = await reqHasura<{ derivationGroupName: string; sourceKey: string; }>(
             gql.DELETE_EXTERNAL_SOURCE,
             {
               derivationGroupName: externalSource.pkey.derivation_group_name,
               sourceKey: externalSource.pkey.key,
-              sourceTypeName: externalSource.pkey.source_type_name,
             },
             user,
           );
@@ -2504,11 +2503,11 @@ const effects = {
           {
             derivation_group: entry.derivation_group_name,
             external_source_name: entry.key,
-            external_source_type: entry.source_type_name,
             username: user?.id,
           },
           user,
         );
+        console.log(deleted);
         if (!deleted) {
           throw Error(`Unable to log external source visibility recognition`);
         }
@@ -3581,10 +3580,9 @@ const effects = {
     try {
       const sourceKey = externalSourcePkey.key;
       const derivationGroupName = externalSourcePkey.derivation_group_name;
-      const sourceTypeName = externalSourcePkey.source_type_name;
       const data = await reqHasura<any>(
         gql.GET_EXTERNAL_EVENT_TYPE_BY_SOURCE,
-        { derivationGroupName, sourceKey, sourceTypeName },
+        { derivationGroupName, sourceKey },
         user,
       );
       const { external_source } = data;
@@ -3652,11 +3650,10 @@ const effects = {
     try {
       const sourceKey = externalSourcePkey.key;
       const derivationGroupName = externalSourcePkey.derivation_group_name;
-      const sourceTypeName = externalSourcePkey.source_type_name;
       getExternalSourceMetadataError.set(null);
       const data = await reqHasura<any>(
         gql.GET_EXTERNAL_SOURCE_METADATA,
-        { derivationGroupName, sourceKey, sourceTypeName },
+        { derivationGroupName, sourceKey },
         user,
       );
       const { external_source } = data;

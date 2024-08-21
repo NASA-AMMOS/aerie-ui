@@ -32,15 +32,14 @@ export function getRowIdExternalSourceSlim(externalSourceSlim: ExternalSourceSli
   // https://stackoverflow.com/questions/40958727/javascript-generate-unique-number-based-on-string
   return cyrb53a(
     externalSourceSlim.pkey.derivation_group_name +
-      externalSourceSlim.pkey.key +
-      externalSourceSlim.pkey.source_type_name,
+      externalSourceSlim.pkey.key
   );
 }
 
 export function getRowIdExternalSource(externalSourcePkey: ExternalSourcePkey) {
   // https://stackoverflow.com/questions/40958727/javascript-generate-unique-number-based-on-string
   return cyrb53a(
-    externalSourcePkey.derivation_group_name + externalSourcePkey.key + externalSourcePkey.source_type_name,
+    externalSourcePkey.derivation_group_name + externalSourcePkey.key
   );
 }
 
