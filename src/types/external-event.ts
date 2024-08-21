@@ -6,7 +6,6 @@ export type ExternalEventPkey = {
   event_type_name: string;
   key: string;
   source_key: string;
-  source_type_name: string;
 };
 
 // This is the type that conforms with the database schema.
