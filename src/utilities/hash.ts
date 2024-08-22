@@ -30,17 +30,12 @@ export const cyrb53a = function (str: string, seed = 0) {
 
 export function getRowIdExternalSourceSlim(externalSourceSlim: ExternalSourceSlim) {
   // https://stackoverflow.com/questions/40958727/javascript-generate-unique-number-based-on-string
-  return cyrb53a(
-    externalSourceSlim.pkey.derivation_group_name +
-      externalSourceSlim.pkey.key
-  );
+  return cyrb53a(externalSourceSlim.pkey.derivation_group_name + externalSourceSlim.pkey.key);
 }
 
 export function getRowIdExternalSource(externalSourcePkey: ExternalSourcePkey) {
   // https://stackoverflow.com/questions/40958727/javascript-generate-unique-number-based-on-string
-  return cyrb53a(
-    externalSourcePkey.derivation_group_name + externalSourcePkey.key
-  );
+  return cyrb53a(externalSourcePkey.derivation_group_name + externalSourcePkey.key);
 }
 
 export function getRowIdExternalEventWhole(externalEvent: ExternalEventDB) {

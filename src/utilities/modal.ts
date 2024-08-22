@@ -47,7 +47,6 @@ import type { PlanSnapshot } from '../types/plan-snapshot';
 import type { Tag } from '../types/tags';
 import type { ViewDefinition } from '../types/view';
 import effects from './effects';
-import { showFailureToast, showSuccessToast } from './toast';
 
 /**
  * Listens for clicks on the document body and removes the modal children.
@@ -219,12 +218,7 @@ export async function showDeleteDerivationGroupModal(
         deleteDerivationGroupModal.$on('confirm', () => {
           target.resolve = null;
           resolve({ confirm: true });
-          try {
-            effects.deleteDerivationGroup(derivationGroup.name, user);
-            showSuccessToast('Successfully deleted derivation group');
-          } catch (e) {
-            showFailureToast('Failed to delete derivation group');
-          }
+          effects.deleteDerivationGroup(derivationGroup.name, user);
           deleteDerivationGroupModal.$destroy();
         });
       }
@@ -259,12 +253,7 @@ export async function showDeleteExternalSourceTypeModal(
         deleteExternalSourceTypeModal.$on('confirm', () => {
           target.resolve = null;
           resolve({ confirm: true });
-          try {
-            effects.deleteExternalSourceType(sourceType.name, user);
-            showSuccessToast('Successfully deleted external source type');
-          } catch (e) {
-            showFailureToast('Failed to delete external source type');
-          }
+          effects.deleteExternalSourceType(sourceType.name, user);
           deleteExternalSourceTypeModal.$destroy();
         });
       }
@@ -299,12 +288,7 @@ export async function showDeleteExternalEventTypeModal(
         deleteExternalEventTypeModal.$on('confirm', () => {
           target.resolve = null;
           resolve({ confirm: true });
-          try {
-            effects.deleteExternalEventType(eventType.name, user);
-            showSuccessToast('Successfully deleted external event type');
-          } catch (e) {
-            showFailureToast('Failed to delete external event type');
-          }
+          effects.deleteExternalEventType(eventType.name, user);
           deleteExternalEventTypeModal.$destroy();
         });
       }
@@ -373,7 +357,6 @@ export async function showManagePlanDerivationGroups(user: User | null): Promise
           target.removeAttribute('data-dismissible');
           managePlanDerivationGroupsModal.$destroy();
         });
-        // TODO: Figure out how to incorporate the other two columns (Files in plan bounds, Included)
         managePlanDerivationGroupsModal.$on('add', (e: CustomEvent<{ derivationGroupName: string }[]>) => {
           target.replaceChildren();
           target.resolve = null;
@@ -408,7 +391,6 @@ export async function showManageGroupsAndTypes(user: User | null): Promise<Modal
           target.removeAttribute('data-dismissible');
           manageGroupsAndTypesModal.$destroy();
         });
-        // TODO: Figure out how to incorporate the other two columns (Files in plan bounds, Included)
         manageGroupsAndTypesModal.$on('add', (e: CustomEvent<{ derivationGroupName: string }[]>) => {
           target.replaceChildren();
           target.resolve = null;
