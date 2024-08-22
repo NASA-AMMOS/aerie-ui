@@ -8,7 +8,7 @@
   import Menu from '../menus/Menu.svelte';
   import MenuHeader from '../menus/MenuHeader.svelte';
 
-  export let value: string = 'schemeAccent';
+  export let value: string = 'schemeTableau10';
   export let layout: 'compact' | 'dropdown' = 'dropdown';
   export let colors: readonly string[] = [];
 

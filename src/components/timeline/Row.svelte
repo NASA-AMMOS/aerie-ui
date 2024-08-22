@@ -173,7 +173,6 @@
   };
   let filterActivitiesByTime = false;
   let rowRef: HTMLDivElement;
-  // let isDragging: boolean = false;
 
   $: if ($selectedRow?.id === id && rowRef) {
     rowRef.scrollIntoView({ block: 'nearest' });

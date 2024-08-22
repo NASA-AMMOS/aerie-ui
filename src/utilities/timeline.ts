@@ -386,7 +386,7 @@ export function getUniqueColorForActivityLayer(row?: Row): string {
  * Returns the next unused xrange color scheme within the given row
  */
 export function getUniqueColorSchemeForXRangeLayer(row?: Row): XRangeLayerColorScheme {
-  const defaultScheme = Object.keys(ViewXRangeLayerSchemePresets)[0];
+  const defaultScheme: XRangeLayerColorScheme = 'schemeTableau10';
   let colorScheme = defaultScheme as XRangeLayerColorScheme;
   const seenColorSchemes: Record<string, boolean> = {};
   if (row) {

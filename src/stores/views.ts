@@ -1,4 +1,4 @@
-import { isEqual } from 'lodash-es';
+import { capitalize, isEqual } from 'lodash-es';
 import { derived, get, writable, type Writable } from 'svelte/store';
 import type { ResourceType } from '../types/simulation';
 import type {
@@ -13,7 +13,6 @@ import type {
 import type { View, ViewGrid, ViewSlim, ViewTable, ViewToggleEvent } from '../types/view';
 import { getTarget } from '../utilities/generic';
 import gql from '../utilities/gql';
-import { capitalize } from '../utilities/text';
 import {
   TimelineInteractionMode,
   TimelineLockStatus,
