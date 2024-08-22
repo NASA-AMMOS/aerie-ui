@@ -11,4 +11,3 @@ jobs:
     with:
       env: 'canary'
     secrets: inherit
-    
