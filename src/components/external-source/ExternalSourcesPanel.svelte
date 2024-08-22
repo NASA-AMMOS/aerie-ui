@@ -7,7 +7,7 @@
     externalSources,
     planDerivationGroupLinks,
     planDerivationGroupNamesToFilter,
-    usersSeenSources
+    usersSeenSources,
   } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import { originalView } from '../../stores/views';
@@ -37,24 +37,33 @@
 
   // Determine which new and deleted sources are unacknowledged for the user
   $: {
-    let sourceKeys: UserSeenEntry[] = $externalSources.map(es => {return {key: es.pkey.key, derivation_group_name: es.pkey.derivation_group_name, source_type_name: es.source_type_name}});
+    let sourceKeys: UserSeenEntry[] = $externalSources.map(es => {
+      return {
+        derivation_group_name: es.pkey.derivation_group_name,
+        key: es.pkey.key,
+        source_type_name: es.source_type_name,
+      };
+    });
 
     if (user && user.id) {
       if ($usersSeenSources[user.id]) {
         unseenSources = sourceKeys.filter(key => {
           if (user.id) {
-            return !$usersSeenSources[user.id].find(k => k.key === key.key && k.derivation_group_name === key.derivation_group_name);
+            return !$usersSeenSources[user.id].find(
+              k => k.key === key.key && k.derivation_group_name === key.derivation_group_name,
+            );
           }
           return true;
-        })
-      }
-      else {
+        });
+      } else {
         unseenSources = sourceKeys;
       }
     }
 
     if (user && user.id && $usersSeenSources[user.id]) {
-      unseenDeletedSources = $usersSeenSources[user.id].filter(key => !sourceKeys.find(k => k.key === key.key && k.derivation_group_name === key.derivation_group_name))
+      unseenDeletedSources = $usersSeenSources[user.id].filter(
+        key => !sourceKeys.find(k => k.key === key.key && k.derivation_group_name === key.derivation_group_name),
+      );
     } else if (user && user.id && !(user.id in $usersSeenSources)) {
       unseenDeletedSources = [];
     }

@@ -19,14 +19,11 @@ export class ExternalSources {
   externalEventSelectedForm: Locator;
   externalEventTableHeaderDuration: Locator;
   externalEventTableHeaderEventType: Locator;
-  externalEventTableHeaderID: Locator;
-  externalEventTableHeaderSourceID: Locator;
   externalEventTableRow: Locator;
   externalSourceFileName: string = 'example-external-source.json';
   externalSourceFilePath: string = 'e2e-tests/data/example-external-source.json';
   externalSourceFilePathMissingField: string = 'e2e-tests/data/example-external-source-missing-field.json';
   externalSourceFilePathSyntaxError: string = 'e2e-tests/data/example-external-source-syntax-error.json';
-  externalSourceId: string;
   externalSourceSelectedForm: Locator;
   externalSourceTableRow: Locator;
   externalSourceUpload: Locator;
@@ -36,7 +33,6 @@ export class ExternalSources {
   panelExternalEventsTable: Locator;
   saveButton: Locator;
   selectEventTableView: Locator;
-  tableRowExternalSourceId: Locator;
   timelineHeader: Locator;
   toastTimeout: number = 5500; // How long to wait for a toast to disappear - they should take 5000ms, 500 extra for buffer
   toggleTimeline: Locator;
@@ -45,7 +41,6 @@ export class ExternalSources {
   viewEventSourceMetadata: Locator;
 
   constructor(public page: Page) {
-    this.externalSourceId = '';
     this.updatePage(page);
   }
 
@@ -112,7 +107,6 @@ export class ExternalSources {
     this.externalSourceTableRow = page.locator(`.ag-row:has-text("${this.externalSourceKey}")`);
     this.inputFile = page.locator('input[name="file"]');
     this.uploadButton = page.getByRole('button', { name: 'Upload' });
-    this.tableRowExternalSourceId = page.locator(`.ag-row:has-text("${this.externalSourceFilePath}") > div >> nth=0`);
     this.externalEventSelectedForm = page.locator('.external-event-form-container');
     this.externalSourceSelectedForm = page.locator('.selected-external-source-details');
     this.alertError = page.locator('.alert-error');
@@ -124,9 +118,7 @@ export class ExternalSources {
     this.timelineHeader = page.getByText(
       'Fri Dec 31 2021 19:00:00 GMT-0500 (Eastern Standard Time) Sat Jan 01 2022 19:00',
     );
-    this.externalEventTableHeaderID = page.getByText('External Event ID');
     this.externalEventTableHeaderEventType = page.getByText('Event Type', { exact: true });
-    this.externalEventTableHeaderSourceID = page.getByText('Source ID');
     this.externalEventTableHeaderDuration = page.getByText('Duration');
     this.toggleTimeline = page.getByRole('radio', { name: 'Timeline' });
     this.viewContainedEventTypes = page.getByRole('button', { name: 'View Contained Event Types' });

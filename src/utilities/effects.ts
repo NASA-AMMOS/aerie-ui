@@ -1021,7 +1021,6 @@ const effects = {
           createModelError.set(null);
           creatingModel.set(false);
 
-          // TODO: Why is this necessary? Shouldn't this happen automatically because models is subscribed to GQL? That's how it worked out for externalSource.
           models.updateValue((currentModels: ModelSlim[]) => [...currentModels, model]);
           return id;
         } else {
@@ -2452,9 +2451,11 @@ const effects = {
         if (data.deleteDerivationGroup === null) {
           throw Error('Unable to delete external event type');
         }
+        showSuccessToast('External Event Type Deleted Successfully');
       }
     } catch (e) {
       catchError('External Event Type Deletion Failed', e as Error);
+      showFailureToast('External Event Type Deletion Failed');
     }
   },
 
@@ -2466,7 +2467,7 @@ const effects = {
       if (externalSource !== null) {
         const { confirm } = await showDeleteExternalSourceModal([], externalSource);
         if (confirm) {
-          const data = await reqHasura<{ derivationGroupName: string; sourceKey: string; }>(
+          const data = await reqHasura<{ derivationGroupName: string; sourceKey: string }>(
             gql.DELETE_EXTERNAL_SOURCE,
             {
               derivationGroupName: externalSource.pkey.derivation_group_name,
@@ -3649,11 +3650,7 @@ const effects = {
       const sourceKey = externalSourcePkey.key;
       const derivationGroupName = externalSourcePkey.derivation_group_name;
       getExternalSourceMetadataError.set(null);
-      const data = await reqHasura<any>(
-        gql.GET_EXTERNAL_SOURCE_METADATA,
-        { derivationGroupName, sourceKey },
-        user,
-      );
+      const data = await reqHasura<any>(gql.GET_EXTERNAL_SOURCE_METADATA, { derivationGroupName, sourceKey }, user);
       const { external_source } = data;
       if (external_source) {
         const { metadata }: Record<string, any> = external_source[0];

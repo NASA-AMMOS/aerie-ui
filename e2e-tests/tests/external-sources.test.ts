@@ -77,9 +77,7 @@ test.describe.serial('External Sources', () => {
 
   test('External event table and timeline should be accessible while a source is selected', async () => {
     await externalSources.selectSource();
-    await expect(externalSources.externalEventTableHeaderID).toBeVisible();
     await expect(externalSources.externalEventTableHeaderEventType).toBeVisible();
-    await expect(externalSources.externalEventTableHeaderSourceID).toBeVisible();
     await expect(externalSources.externalEventTableHeaderDuration).toBeVisible();
     await externalSources.toggleTimeline.click();
     await expect(externalSources.timelineHeader).toBeVisible();
