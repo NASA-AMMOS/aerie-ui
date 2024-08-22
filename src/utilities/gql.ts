@@ -592,7 +592,6 @@ const gql = {
     }
   `,
 
-  // TODO: handle owner, created_at, etc.
   CREATE_PLAN_DERIVATION_GROUP: `#graphql
     mutation CreatePlanDerivationGroup($source: plan_derivation_group_insert_input!) {
       planExternalSourceLink: ${Queries.INSERT_PLAN_DERIVATION_GROUP}(object: $source) {

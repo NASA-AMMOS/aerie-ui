@@ -186,7 +186,6 @@
   let externalEventsFilteredByType: ExternalEvent[] = [];
   let timeFilteredActivityDirectives: ActivityDirective[] = [];
   let timeFilteredSpans: Span[] = [];
-  // TODO: Refactor external_events underneath here to use a ... something? instead of id: number
   let idToColorMaps: {
     directives: Record<number, string>;
     external_events: Record<number, string>;
