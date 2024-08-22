@@ -4,7 +4,6 @@ on:
   pull_request:
     branches:
       - develop
-      - ssmo-dev
       - dev-[0-9]+.[0-9]+.[0-9]+
     types:
       # defaults + 'edited', to handle changes to flags like ___REQUIRES_AERIE_PR___ in the PR body
@@ -12,7 +11,6 @@ on:
   push:
     branches:
       - develop
-      - ssmo-dev
     tags:
       - v*
   workflow_dispatch:
@@ -51,17 +49,6 @@ jobs:
         with:
           node-version: 'lts/*'
           cache: npm
-      - name: Cache Unit Test Modules
-        id: cache-npm
-        uses: actions/cache@v3
-        env:
-          cache-name: aerie-ui-node-cache
-        with:
-          path: ~/.npm
-          key: ${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-            ${{ env.cache-name }}-
       - name: Install Dependencies (UI)
         run: npm ci
       - name: Build (UI)
