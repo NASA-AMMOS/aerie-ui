@@ -94,7 +94,7 @@ export class Plan {
 
   async addActivity(name: string = 'GrowBanana') {
     const currentNumOfActivitiesWithName = await this.panelActivityDirectivesTable.getByRole('row', { name }).count();
-    const activityListItem = this.page.locator(`.list-item:has-text("${name}")`);
+    const activityListItem = this.page.locator(`.list-item :text-is("${name}")`);
     const activityRow = this.page.locator('.timeline .rows .timeline-row-wrapper:first-of-type .overlay');
     await activityListItem.dragTo(activityRow);
     await this.waitForToast('Activity Directive Created Successfully');
