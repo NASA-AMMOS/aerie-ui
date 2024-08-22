@@ -874,5 +874,3 @@ test('getUniqueColorSchemeForXRangeLayer', () => {
   const existingScheme = (row2.layers[0] as XRangeLayer).colorScheme;
   expect(getUniqueColorSchemeForXRangeLayer(row2)).not.toBe(existingScheme);
 });
-
-/* TODO createTimelineResourceLayer */

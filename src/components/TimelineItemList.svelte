@@ -3,6 +3,7 @@
 <script lang="ts">
   import ChevronDownIcon from '@nasa-jpl/stellar/icons/chevron_down.svg?component';
   import GripVerticalIcon from 'bootstrap-icons/icons/grip-vertical.svg?component';
+  import { capitalize } from 'lodash-es';
   import PlusCircledIcon from '../assets/plus-circled.svg?component';
   import { view, viewAddFilterToRow } from '../stores/views';
   import type { ChartType, Layer, Row, TimelineItemListFilterOption, TimelineItemType } from '../types/timeline';
@@ -246,7 +247,7 @@
           <span slot="suffix">
             <div use:tooltip={{ content: 'Add Filter to Row', placement: 'top' }}>
               <button
-                aria-label="Create{typeName}-{item.name}"
+                aria-label="Add{capitalize(typeName)}-{item.name}"
                 class="st-button icon"
                 on:click={e => onFilterIndividualItem(e, item)}
               >

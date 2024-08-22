@@ -141,14 +141,14 @@ test.describe.serial('Plan', () => {
     await plan.showPanel(PanelNames.ACTIVITY_TYPES);
 
     // Create an activity which will be auto selected
-    await plan.panelActivityTypes.getByRole('button', { name: 'CreateActivity-GrowBanana' }).click();
+    await plan.addActivity('GrowBanana');
 
     // Switch to a new branch and ensure no activity is selected
     await plan.createBranch(baseURL);
     await expect(plan.panelActivityForm.getByText('No Activity Selected')).toBeVisible();
 
     // Re-select the activity
-    await plan.panelActivityTypes.getByRole('button', { name: 'CreateActivity-GrowBanana' }).click();
+    await plan.addActivity('GrowBanana');
 
     const branchPlanUrlRegex = new RegExp(`${baseURL}/plans/(?<planId>\\d+)`);
     const matches = page.url().match(branchPlanUrlRegex);

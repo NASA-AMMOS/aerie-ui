@@ -8,6 +8,7 @@
     hide: void;
   }>();
 
+  export let ariaLabel: string = '';
   export let hideAfterClick: boolean = true;
 
   let xAnchor: number | null = null;

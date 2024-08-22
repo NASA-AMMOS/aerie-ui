@@ -43,29 +43,31 @@
   }
 </script>
 
-<ContextMenu hideAfterClick={false} bind:this={contextMenu}>
-  <ContextMenuHeader>Add Filter to Row</ContextMenuHeader>
-  {#if rows.length < 1}
-    <div class="st-typography-label empty">No rows found</div>
-  {/if}
-  {#each rows as row}
-    <ContextSubMenuItem text={row.name} parentMenu={contextMenu} hideAfterClick={false}>
-      {#each row.layers.filter(l => l.chartType === chartType) as layer}
-        <ContextMenuItem on:click={() => onSelect(layerItem, row, layer)}>
-          <div class="layer">
-            {layer.name || `${layer.chartType} Layer`}
-          </div>
+<div aria-label={`layer-picker-${chartType}-${layerItem?.name}`}>
+  <ContextMenu hideAfterClick={false} bind:this={contextMenu} ariaLabel={`add-${chartType}-${layerItem?.name}`}>
+    <ContextMenuHeader>Add Filter to Row</ContextMenuHeader>
+    {#if rows.length < 1}
+      <div class="st-typography-label empty">No rows found</div>
+    {/if}
+    {#each rows as row}
+      <ContextSubMenuItem text={row.name} parentMenu={contextMenu} hideAfterClick={false}>
+        {#each row.layers.filter(l => l.chartType === chartType) as layer}
+          <ContextMenuItem on:click={() => onSelect(layerItem, row, layer)}>
+            <div class="layer">
+              {layer.name || `${layer.chartType} Layer`}
+            </div>
+          </ContextMenuItem>
+        {/each}
+        <ContextMenuItem on:click={() => onSelect(layerItem, row)}>
+          <div class="layer-picker-context-menu-blue">New Layer +</div>
         </ContextMenuItem>
-      {/each}
-      <ContextMenuItem on:click={() => onSelect(layerItem, row)}>
-        <div class="layer-picker-context-menu-blue">New Layer +</div>
-      </ContextMenuItem>
-    </ContextSubMenuItem>
-  {/each}
-  <ContextMenuItem on:click={() => onSelect(layerItem)}>
-    <div class="layer-picker-context-menu-blue">New Row +</div>
-  </ContextMenuItem>
-</ContextMenu>
+      </ContextSubMenuItem>
+    {/each}
+    <ContextMenuItem on:click={() => onSelect(layerItem)}>
+      <div class="layer-picker-context-menu-blue">New Row +</div>
+    </ContextMenuItem>
+  </ContextMenu>
+</div>
 
 <style>
   .layer {
