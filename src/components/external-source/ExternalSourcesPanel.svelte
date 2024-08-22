@@ -55,6 +55,8 @@
 
     if (user && user.id && $usersSeenSources[user.id]) {
       unseenDeletedSources = $usersSeenSources[user.id].filter(key => !sourceKeys.find(k => k.key === key.key && k.derivation_group_name === key.derivation_group_name))
+    } else if (user && user.id && !(user.id in $usersSeenSources)) {
+      unseenDeletedSources = [];
     }
   }
 
