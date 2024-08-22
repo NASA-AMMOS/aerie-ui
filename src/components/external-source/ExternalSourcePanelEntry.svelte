@@ -171,7 +171,7 @@
 
           <p>
             <strong>Source Type:</strong>
-            {source.pkey.source_type_name}
+            {source.source_type_name}
           </p>
 
           <p>
