@@ -269,7 +269,7 @@ test.describe.serial('Plan External Sources', () => {
     await expect(page.getByRole('button', { name: externalSources.derivationTestFileKey3 })).toHaveCount(1);
     await expect(page.getByRole('button', { name: externalSources.derivationTestFileKey4 })).toHaveCount(1);
 
-    await expect(externalSources.panelExternalEventsTable.getByRole('gridcell')).toHaveCount(42); // Should match exactly for the amount of rows we expect - there are 7 derived events from these sources
+    await expect(externalSources.panelExternalEventsTable.getByRole('gridcell')).toHaveCount(35); // Should match exactly for the amount of rows we expect - there are 7 derived events from these sources and there are 5 columns in the table
 
     // Check on specific events in the table
     const expectedData = [

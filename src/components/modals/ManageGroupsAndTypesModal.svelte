@@ -399,7 +399,6 @@
     // makes sure all associated sources (and therefore events, as orphans are not possible) are deleted before this
     // NOTE: does not update in derivation_group_comp after removing a EE type; derivation_group_comp defaults to 0 event types after its last external source removed,
     //        as it has no awareness of external source type or paired events (as the latter don't even exist).
-    // TODO: add an association table between external source type and external event type, so that we have visibility here?
     await showDeleteExternalEventTypeModal(eventType, associatedExternalSourceNames, user);
   }
 

@@ -291,7 +291,7 @@ describe('Handle modal and requests in effects', () => {
           metadata: {},
           source_type_name: 'Example Source',
           start_time: '',
-          valid_at: ''
+          valid_at: '',
         } as ExternalSourceInsertInput,
         {
           name: 'Example Source',

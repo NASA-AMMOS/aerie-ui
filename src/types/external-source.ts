@@ -34,11 +34,12 @@ export type ExternalSourceJson = {
 };
 
 // For use in retrieval of source information sans bulky items like metadata and event lists (see stores)
-export type ExternalSourceSlim = Pick<ExternalSourceDB, 'pkey' | 'source_type_name' | 'start_time' | 'end_time' | 'valid_at' | 'created_at'>;
+export type ExternalSourceSlim = Pick<
+  ExternalSourceDB,
+  'pkey' | 'source_type_name' | 'start_time' | 'end_time' | 'valid_at' | 'created_at'
+>;
 
 // no analogue (yet) to ExternalEvent because no special duration_ms or start_ms to draw on a timeline
-// TODO: add External Source span to timeline in External Source Manager, so if zooming out on timeline
-//        can see where external source spans relative to overall timeline?
 
 export type PlanDerivationGroup = {
   derivation_group_name: string;
@@ -61,7 +62,10 @@ export type DerivationGroup = {
 export type ExternalSourceWithDateInfo = ExternalSourceSlim & { change_date: Date };
 
 // This is used for the GraphQL mutation.
-export type ExternalSourceInsertInput = Pick<ExternalSourceDB, 'source_type_name' | 'metadata' | 'start_time' | 'end_time' | 'valid_at'> &
+export type ExternalSourceInsertInput = Pick<
+  ExternalSourceDB,
+  'source_type_name' | 'metadata' | 'start_time' | 'end_time' | 'valid_at'
+> &
   Pick<ExternalSourcePkey, 'key' | 'derivation_group_name'> & {
     external_events: {
       data: ExternalEventInsertInput[] | null;

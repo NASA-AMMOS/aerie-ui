@@ -121,7 +121,7 @@
       sortable: true,
       valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
         if (params.data?.pkey) {
-          return params.data.source_type_name
+          return params.data.source_type_name;
         }
       },
     },
@@ -245,7 +245,6 @@
   let hasDeletePermission: boolean = false;
   let hasCreatePermission: boolean = false;
 
-  // TODO: Should we move this, or shorten it?
   // There was a strange issue where when:
   //   - you select a source,
   //   - select an event in timeline,
@@ -343,7 +342,6 @@
   ];
 
   // Selected elements and values
-  // TODO: Clean this up?
   // unfortunately very clunky, but it does correctly select all source types on page load as stores populate shortly AFTER the component loads,
   //    so populating selectedFilters with the store values on component load always yields an empty list
   $: if (selectedFilters.length === 1 && selectedFilters[0].name === '' && $externalSourceTypes.length > 0) {
@@ -598,7 +596,7 @@
             end_time: sourceInsert.end_time,
             pkey: {
               derivation_group_name: derivationGroupInsert.name,
-              key: sourceInsert.key
+              key: sourceInsert.key,
             },
             source_type_name: sourceTypeInsert.name,
             start_time: sourceInsert.start_time,
@@ -724,12 +722,6 @@
         </div>
         <div class="selected-source-forms">
           <fieldset>
-            <!-- TODO: Just remove this? -->
-            <!-- <Input layout="inline">
-              ID
-              <input class="st-input w-100" disabled={true} name="id" value={selectedSource.id} />
-            </Input> -->
-
             <Input layout="inline">
               Source Type
               <input

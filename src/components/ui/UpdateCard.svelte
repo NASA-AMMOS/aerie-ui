@@ -95,8 +95,6 @@
       {/each}
     </div>
     <div style="padding-top:5px">
-      <!--TODO: try importing component library where you can pull in existing 'stellar' button that looks like rest of aerie-->
-
       <button
         class="st-button secondary hover-fix"
         style="border: 0px; width: 100px"
