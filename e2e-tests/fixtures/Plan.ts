@@ -109,7 +109,6 @@ export class Plan {
   //   await activityListItem.hover();
   //   const addButton = await this.page.getByLabel(`AddActivity-${name}`);
   //   await addButton.click();
-  //   // const layerPicker = await this.page.getByLabel(`layer-picker-activity-${name}`);
   //   const contextMenuItem = await this.page.waitForSelector(
   //     '.context-menu .context-menu-item:has-text("Activities by Type")',
   //   );
