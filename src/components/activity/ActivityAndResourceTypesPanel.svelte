@@ -39,7 +39,6 @@
 <style>
   :global(.tab-list.activity-resource-tabs-list) {
     background-color: var(--st-gray-10);
-    /* box-shadow: 0px -1px 0px inset var(--st-gray-90); */
   }
 
   :global(button.activity-resource-tab) {
