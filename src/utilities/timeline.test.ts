@@ -213,12 +213,14 @@ function generateExternalEvent(properties: Partial<ExternalEvent>): ExternalEven
   return {
     duration: '',
     duration_ms: 0,
-    event_type_name: 'test',
-    id: 1,
-    key: 'test',
+    pkey: {
+      derivation_group_name: 'test_derivation_group',
+      event_type_name: 'test_event_type',
+      key: 'test_event',
+      source_key: 'test_source',
+    },
     properties: {},
     source: undefined,
-    source_key: 'test',
     start_ms: 0,
     start_time: '',
     ...properties,

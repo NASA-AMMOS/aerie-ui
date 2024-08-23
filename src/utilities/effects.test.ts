@@ -155,7 +155,7 @@ describe('Handle modal and requests in effects', () => {
           id: 1,
           owner: 'test',
         } as Plan,
-        user,
+        mockUser,
       );
 
       expect(catchErrorSpy).toHaveBeenCalledWith(
@@ -178,7 +178,7 @@ describe('Handle modal and requests in effects', () => {
           id: 1,
           owner: 'test',
         } as Plan,
-        user,
+        mockUser,
       );
 
       expect(catchErrorSpy).toHaveBeenCalledWith(
@@ -200,7 +200,7 @@ describe('Handle modal and requests in effects', () => {
           name: 'test',
           source_type_name: 'Example Source',
         } as DerivationGroupInsertInput,
-        user,
+        mockUser,
       );
 
       expect(catchErrorSpy).toHaveBeenCalledWith(
@@ -217,7 +217,7 @@ describe('Handle modal and requests in effects', () => {
       });
       vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
 
-      await effects.deleteDerivationGroup('Defualt', user);
+      await effects.deleteDerivationGroup('Defualt', mockUser);
 
       expect(catchErrorSpy).toHaveBeenCalledWith(
         'Derivation Group Deletion Failed',
@@ -237,7 +237,7 @@ describe('Handle modal and requests in effects', () => {
         {
           name: 'SourceTypeA',
         } as ExternalSourceTypeInsertInput,
-        user,
+        mockUser,
       );
 
       expect(catchErrorSpy).toHaveBeenCalledWith(
@@ -258,7 +258,7 @@ describe('Handle modal and requests in effects', () => {
         {
           name: 'EventTypeA',
         } as ExternalEventTypeInsertInput,
-        user,
+        mockUser,
       );
 
       expect(catchErrorSpy).toHaveBeenCalledWith(
@@ -301,7 +301,7 @@ describe('Handle modal and requests in effects', () => {
             name: 'Example Event',
           } as ExternalEventTypeInsertInput,
         ],
-        user,
+        mockUser,
       );
 
       expect(catchErrorSpy).toHaveBeenCalledWith(
@@ -318,11 +318,17 @@ describe('Handle modal and requests in effects', () => {
       });
       vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
 
-      await effects.getExternalEvents(1, user);
+      await effects.getExternalEvents(
+        {
+          derivation_group_name: 'test',
+          key: 'test',
+        },
+        mockUser,
+      );
 
       expect(catchErrorSpy).toHaveBeenCalledWith(
         'Failed to retrieve external events.',
-        Error('Unable to get external events for external source id 1.'),
+        Error("Unable to get external events for external source 'test' (derivation group: 'test')."),
       );
     });
   });
@@ -334,7 +340,13 @@ describe('Handle modal and requests in effects', () => {
       });
       vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
 
-      await effects.getExternalEventTypesBySource(1, user);
+      await effects.getExternalEventTypesBySource(
+        {
+          derivation_group_name: 'test',
+          key: 'test',
+        },
+        mockUser,
+      );
 
       expect(catchErrorSpy).toHaveBeenCalledWith(Error('Unable to retrieve external event types for source'));
     });
@@ -347,7 +359,7 @@ describe('Handle modal and requests in effects', () => {
       });
       vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
 
-      await effects.getExternalEventTypes(1, user);
+      await effects.getExternalEventTypes(1, mockUser);
 
       expect(catchErrorSpy).toHaveBeenCalledWith(Error('Unable to gather ell external event types for the source'));
     });
@@ -360,10 +372,18 @@ describe('Handle modal and requests in effects', () => {
       });
       vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
 
-      await effects.getExternalSourceMetadata(1, user);
+      await effects.getExternalSourceMetadata(
+        {
+          derivation_group_name: 'test',
+          key: 'test',
+        },
+        mockUser,
+      );
 
       expect(catchErrorSpy).toHaveBeenCalledWith(
-        Error('Unable to get external source metadata for external source id 1 - source may not exist.'),
+        Error(
+          "Unable to get external source metadata for external source 'test' (derivation group: 'test'). Source may not exist.",
+        ),
       );
     });
   });
