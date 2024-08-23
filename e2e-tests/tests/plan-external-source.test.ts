@@ -64,38 +64,38 @@ test.afterAll(async () => {
       .waitFor({ state: 'hidden', timeout: extendedTimeout });
   }
 
-  if (await page.getByRole('gridcell', { name: externalSources.derivationTestFile1 }).first().isVisible()) {
-    await externalSources.deleteSource(externalSources.derivationTestFile1);
+  if (await page.getByRole('gridcell', { name: externalSources.derivationTestFileKey1 }).first().isVisible()) {
+    await externalSources.deleteSource(externalSources.derivationTestFileKey1);
     await page.getByText('External Source Deleted').waitFor({ state: 'hidden', timeout: extendedTimeout });
     await page
-      .getByRole('gridcell', { name: externalSources.derivationTestFile1 })
+      .getByRole('gridcell', { name: externalSources.derivationTestFileKey1 })
       .first()
       .waitFor({ state: 'hidden', timeout: extendedTimeout });
   }
 
-  if (await page.getByRole('gridcell', { name: externalSources.derivationTestFile2 }).first().isVisible()) {
-    await externalSources.deleteSource(externalSources.derivationTestFile2);
+  if (await page.getByRole('gridcell', { name: externalSources.derivationTestFileKey2 }).first().isVisible()) {
+    await externalSources.deleteSource(externalSources.derivationTestFileKey2);
     await page.getByText('External Source Deleted').waitFor({ state: 'hidden', timeout: extendedTimeout });
     await page
-      .getByRole('gridcell', { name: externalSources.derivationTestFile2 })
+      .getByRole('gridcell', { name: externalSources.derivationTestFileKey2 })
       .first()
       .waitFor({ state: 'hidden', timeout: extendedTimeout });
   }
 
-  if (await page.getByRole('gridcell', { name: externalSources.derivationTestFile3 }).first().isVisible()) {
-    await externalSources.deleteSource(externalSources.derivationTestFile3);
+  if (await page.getByRole('gridcell', { name: externalSources.derivationTestFileKey3 }).first().isVisible()) {
+    await externalSources.deleteSource(externalSources.derivationTestFileKey3);
     await page.getByText('External Source Deleted').waitFor({ state: 'hidden', timeout: extendedTimeout });
     await page
-      .getByRole('gridcell', { name: externalSources.derivationTestFile3 })
+      .getByRole('gridcell', { name: externalSources.derivationTestFileKey3 })
       .first()
       .waitFor({ state: 'hidden', timeout: extendedTimeout });
   }
 
-  if (await page.getByRole('gridcell', { name: externalSources.derivationTestFile4 }).first().isVisible()) {
-    await externalSources.deleteSource(externalSources.derivationTestFile4);
+  if (await page.getByRole('gridcell', { name: externalSources.derivationTestFileKey4 }).first().isVisible()) {
+    await externalSources.deleteSource(externalSources.derivationTestFileKey4);
     await page.getByText('External Source Deleted').waitFor({ state: 'hidden', timeout: extendedTimeout });
     await page
-      .getByRole('gridcell', { name: externalSources.derivationTestFile4 })
+      .getByRole('gridcell', { name: externalSources.derivationTestFileKey4 })
       .first()
       .waitFor({ state: 'hidden', timeout: extendedTimeout });
   }
