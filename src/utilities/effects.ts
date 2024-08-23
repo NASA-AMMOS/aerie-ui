@@ -3615,7 +3615,9 @@ const effects = {
       const data = await reqHasura<any>(gql.GET_EXTERNAL_EVENTS, { derivationGroupName, sourceKey }, user);
       const { external_event: events } = data;
       if (events === null) {
-        throw Error(`Unable to get external events for external source id ${sourceKey} - ${derivationGroupName}.`);
+        throw Error(
+          `Unable to get external events for external source '${sourceKey}' (derivation group: '${derivationGroupName}').`,
+        );
       }
 
       const externalEvents: ExternalEventDB[] = [];
@@ -3657,13 +3659,13 @@ const effects = {
         const { metadata }: Record<string, any> = external_source[0];
         if (metadata === null) {
           throw Error(
-            `Unable to get external source metadata for external source ${sourceKey} - ${derivationGroupName}. "metadata" field may not have been included in original source.`,
+            `Unable to get external source metadata for external source '${sourceKey}' (derivation group: '${derivationGroupName}'). "metadata" field may not have been included in original source.`,
           );
         }
         return metadata;
       } else {
         throw Error(
-          `Unable to get external source metadata for external source ${sourceKey} - ${derivationGroupName} - source may not exist.`,
+          `Unable to get external source metadata for external source '${sourceKey}' (derivation group: '${derivationGroupName}'). Source may not exist.`,
         );
       }
     } catch (e) {

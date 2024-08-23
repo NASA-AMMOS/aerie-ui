@@ -47,10 +47,12 @@
 
     if (user !== null && user.id !== null && $usersSeenSources[user.id] !== undefined) {
       unseenSources = sourceKeys.filter(key => {
-        if (user === null || user.id === null) {return true;}
-        return !($usersSeenSources[user.id].find(
-          k => (k.key === key.key) && (k.derivation_group_name === key.derivation_group_name)
-        ));
+        if (user === null || user.id === null) {
+          return true;
+        }
+        return !$usersSeenSources[user.id].find(
+          k => k.key === key.key && k.derivation_group_name === key.derivation_group_name,
+        );
       });
     } else {
       unseenSources = sourceKeys;
