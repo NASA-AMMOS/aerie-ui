@@ -251,10 +251,12 @@
       const itemsToDraw: ExternalEventDrawItem[] = [];
       externalEvents.forEach(externalEvent => {
         if (externalEventInView(externalEvent, viewTimeRange)) {
-          itemsToDraw.push({
-            externalEvent: externalEvent,
-            startX: xScaleView(externalEvent.start_ms),
-          });
+          if (xScaleView !== null) {
+            itemsToDraw.push({
+              externalEvent: externalEvent,
+              startX: xScaleView(externalEvent.start_ms),
+            });
+          }
         }
       });
 
