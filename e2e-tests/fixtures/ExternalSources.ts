@@ -76,6 +76,17 @@ export class ExternalSources {
     return null;
   }
 
+  async getNonZeroPixelsOnCanvas() {
+    let nonZeroPixels: number[] = [];
+    const pixelData = await this.getCanvasPixelData();
+    if (pixelData !== null) {
+      const pixelArray: number[] = Array.from(pixelData);
+      const pixelSet = new Set<number>(pixelArray);
+      nonZeroPixels = Array.from(pixelSet);
+    }
+    return nonZeroPixels;
+  }
+
   async goto() {
     await this.page.goto('/external-sources', { waitUntil: 'networkidle' });
     await this.page.waitForTimeout(250);
