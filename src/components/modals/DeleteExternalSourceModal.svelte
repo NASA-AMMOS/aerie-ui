@@ -4,7 +4,7 @@
   import { base } from '$app/paths';
   import { createEventDispatcher } from 'svelte';
   import { plans } from '../../stores/plans';
-  import type { ExternalSourceDB, PlanDerivationGroup } from '../../types/external-source';
+  import type { ExternalSourceSlim, PlanDerivationGroup } from '../../types/external-source';
   import Modal from './Modal.svelte';
   import ModalContent from './ModalContent.svelte';
   import ModalFooter from './ModalFooter.svelte';
@@ -13,7 +13,7 @@
   export let height: number = 150;
   export let linked: PlanDerivationGroup[] = [];
   export let width: number = 380;
-  export let source: ExternalSourceDB;
+  export let source: ExternalSourceSlim;
 
   const dispatch = createEventDispatcher<{
     close: void;

@@ -1308,7 +1308,7 @@ export function paginateExternalEventTreeNodes(
   externalEventTreeExpansionMap: ExternalEventTreeExpansionMap,
   binSize: ExternalEventOptions['groupedModeBinSize'],
   depth = 1,
-) {
+): ExternalEventTreeNode[] {
   // If we have less nodes left than our binSize, just return this set of nodes
   if (nodes.length <= binSize) {
     return nodes;

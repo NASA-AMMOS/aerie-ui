@@ -29,6 +29,7 @@
   } from '../../types/external-event';
   import {
     type DerivationGroupInsertInput,
+    type ExternalSourceDB,
     type ExternalSourceInsertInput,
     type ExternalSourceJson,
     type ExternalSourceSlim,
@@ -76,9 +77,9 @@
   export let user: User | null;
 
   type CellRendererParams = {
-    onDeleteExternalSource: (source: ExternalSourceSlim) => void;
+    onDeleteExternalSource: (source: ExternalSourceDB) => void;
   };
-  type SourceCellRendererParams = ICellRendererParams<ExternalSourceSlim> & CellRendererParams;
+  type SourceCellRendererParams = ICellRendererParams<ExternalSourceDB> & CellRendererParams;
 
   // Permissions
   const deletePermissionError = 'You do not have permission to delete an external source.';
