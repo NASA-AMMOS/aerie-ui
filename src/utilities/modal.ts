@@ -31,8 +31,8 @@ import type { ExpansionSequence } from '../types/expansion';
 import type { ExternalEventType } from '../types/external-event';
 import type {
   DerivationGroup,
+  ExternalSourceSlim,
   ExternalSourceType,
-  ExternalSourceWithResolvedNames,
   PlanDerivationGroup,
 } from '../types/external-source';
 import type { ModalElement, ModalElementValue } from '../types/modal';
@@ -161,7 +161,7 @@ export async function showConfirmModal(
  */
 export async function showDeleteExternalSourceModal(
   linked: PlanDerivationGroup[],
-  source: ExternalSourceWithResolvedNames,
+  source: ExternalSourceSlim,
 ): Promise<ModalElementValue> {
   return new Promise(resolve => {
     if (browser) {

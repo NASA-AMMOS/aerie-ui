@@ -17,7 +17,7 @@
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { DerivationGroup, ExternalSourceSlim } from '../../types/external-source';
-  import type { ExternalEventLayer } from '../../types/timeline';
+  import type { Layer } from '../../types/timeline';
   import effects from '../../utilities/effects';
   import { formatDate } from '../../utilities/time';
   import { isExternalEventLayer } from '../../utilities/timeline';
@@ -46,7 +46,7 @@
     close: void;
   }>();
 
-  let externalEventLayers: ExternalEventLayer[] | undefined;
+  let externalEventLayers: Layer[] | undefined;
   let dataGrid: DataGrid<DerivationGroup>;
   let baseColumnDefs: DataGridColumnDef<DerivationGroup>[] = [];
 

@@ -45,19 +45,15 @@
       };
     });
 
-    if (user && user.id) {
-      if ($usersSeenSources[user.id]) {
-        unseenSources = sourceKeys.filter(key => {
-          if (user.id) {
-            return !$usersSeenSources[user.id].find(
-              k => k.key === key.key && k.derivation_group_name === key.derivation_group_name,
-            );
-          }
-          return true;
-        });
-      } else {
-        unseenSources = sourceKeys;
-      }
+    if (user !== null && user.id !== null && $usersSeenSources[user.id] !== undefined) {
+      unseenSources = sourceKeys.filter(key => {
+        if (user === null || user.id === null) {return true;}
+        return !($usersSeenSources[user.id].find(
+          k => (k.key === key.key) && (k.derivation_group_name === key.derivation_group_name)
+        ));
+      });
+    } else {
+      unseenSources = sourceKeys;
     }
 
     if (user && user.id && $usersSeenSources[user.id]) {

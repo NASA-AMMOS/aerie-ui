@@ -87,7 +87,7 @@
       <button
         style:height={`${rowHeight}px`}
         class="row-header-activity-group leaf st-button tertiary"
-        class:selected={directive?.id === selectedActivityDirectiveId || span?.id === selectedSpanId}
+        class:selected={directive?.id === selectedActivityDirectiveId || span?.span_id === selectedSpanId}
         on:dblclick={e => onLeafDblClick(e)}
         on:click={e => onLeafMouseDown(e, node)}
       >
