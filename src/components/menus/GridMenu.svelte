@@ -54,7 +54,7 @@
       <TableWithHeaderIcon />
       Simulated Activities Table
     </MenuItem>
-    <MenuItem on:click={() => onClickMenuItem('ActivityAndResourceTypesPanel')}>
+    <MenuItem on:click={() => onClickMenuItem('TimelineItemsPanel')}>
       <BookIcon />
       Activity & Resource Types
     </MenuItem>

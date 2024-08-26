@@ -272,7 +272,7 @@ export function generateDefaultView(activityTypes: ActivityType[] = [], resource
         grid: {
           columnSizes: '1fr 3px 3fr 3px 1fr',
           leftComponentBottom: 'SimulationPanel',
-          leftComponentTop: 'ActivityAndResourceTypesPanel',
+          leftComponentTop: 'TimelineItemsPanel',
           leftHidden: false,
           leftRowSizes: '1fr',
           leftSplit: false,

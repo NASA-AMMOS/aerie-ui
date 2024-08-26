@@ -508,7 +508,7 @@ export class Plan {
     this.page = page;
     this.panelActivityDirectivesTable = page.locator('[data-component-name="ActivityDirectivesTablePanel"]');
     this.panelActivityForm = page.locator('[data-component-name="ActivityFormPanel"]');
-    this.panelActivityTypes = page.locator('[data-component-name="ActivityAndResourceTypesPanel"]');
+    this.panelActivityTypes = page.locator('[data-component-name="TimelineItemsPanel"]');
     this.panelConstraints = page.locator('[data-component-name="ConstraintsPanel"]');
     this.panelExpansion = page.locator('[data-component-name="ExpansionPanel"]');
     this.panelPlanMetadata = page.locator('[data-component-name="PlanMetadataPanel"]');
