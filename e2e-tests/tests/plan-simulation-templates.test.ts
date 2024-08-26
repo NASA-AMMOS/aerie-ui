@@ -18,6 +18,7 @@ let schedulingGoals: SchedulingGoals;
 test.beforeAll(async ({ baseURL, browser }) => {
   context = await browser.newContext();
   page = await context.newPage();
+  await page.pause();
 
   models = new Models(page);
   plans = new Plans(page, models);
