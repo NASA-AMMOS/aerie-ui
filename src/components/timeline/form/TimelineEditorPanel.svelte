@@ -91,6 +91,7 @@
   let rows: Row[] = [];
   let timelines: Timeline[] = [];
   let verticalGuides: VerticalGuide[] = [];
+  let selectedTimeline: Timeline | undefined;
   let editorWidth: number;
 
   $: selectedTimeline = $view?.definition.plan.timelines.find(t => t.id === $selectedTimelineId);
