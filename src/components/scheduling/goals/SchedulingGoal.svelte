@@ -31,6 +31,8 @@
 
   const dispatch = createEventDispatcher<{
     updateGoalPlanSpec: SchedulingGoalPlanSpecification;
+    duplicateGoalInvocation: SchedulingGoalPlanSpecification;
+    deleteGoalInvocation: SchedulingGoalPlanSpecification;
   }>();
 
   let enabled: boolean;
@@ -52,7 +54,6 @@
 
   $: {
     let revision = null;
-    console.log({ goalPlanSpec });
     if (goalPlanSpec.goal_revision == null) {
       revision = Math.max(...(goalPlanSpec.goal_metadata?.versions?.map(x => x.revision) ?? [0]));
     } else {
@@ -65,9 +66,6 @@
       Object.entries(schema.items).forEach(([name, subschema], i) => {
         result.push({
           errors: null,
-          // file?: File,
-          // index?: number,
-          // key?: string,
           name,
           order: i,
           required: true,
