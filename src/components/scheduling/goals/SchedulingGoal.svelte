@@ -30,9 +30,9 @@
   export let readOnly: boolean = false;
 
   const dispatch = createEventDispatcher<{
-    updateGoalPlanSpec: SchedulingGoalPlanSpecification;
-    duplicateGoalInvocation: SchedulingGoalPlanSpecification;
     deleteGoalInvocation: SchedulingGoalPlanSpecification;
+    duplicateGoalInvocation: SchedulingGoalPlanSpecification;
+    updateGoalPlanSpec: SchedulingGoalPlanSpecification;
   }>();
 
   let enabled: boolean;
