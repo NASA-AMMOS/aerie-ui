@@ -45,7 +45,6 @@
   }>();
 
   const gridComponentsByName: Record<ViewGridComponent, any> = {
-    TimelineItemsPanel,
     ActivityDirectivesTablePanel,
     ActivityFormPanel,
     ActivitySpansTablePanel,
@@ -58,6 +57,7 @@
     SimulationEventsPanel,
     SimulationPanel,
     TimelineEditorPanel,
+    TimelineItemsPanel,
   };
 
   function onChangeColumnSizes(event: CustomEvent<string>) {
