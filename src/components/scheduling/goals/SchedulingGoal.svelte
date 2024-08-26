@@ -18,7 +18,6 @@
   import { tooltip } from '../../../utilities/tooltip';
   import Collapse from '../../Collapse.svelte';
   import ContextMenuItem from '../../context-menu/ContextMenuItem.svelte';
-  import Input from '../../form/Input.svelte';
   import Parameters from '../../parameters/Parameters.svelte';
   import SchedulingGoalAnalysesActivities from './SchedulingGoalAnalysesActivities.svelte';
   import SchedulingGoalAnalysesBadge from './SchedulingGoalAnalysesBadge.svelte';
@@ -59,7 +58,7 @@
     } else {
       revision = goalPlanSpec.goal_revision;
     }
-    version = goalPlanSpec.goal_metadata?.versions.filter(x => x.revision == revision)[0];
+    version = goalPlanSpec.goal_metadata?.versions.filter(x => x.revision === revision)[0];
     let schema = version?.parameter_schema;
     let result = [];
     if (schema && schema.type === 'struct') {

@@ -1005,6 +1005,21 @@ const gql = {
     }
   `,
 
+  DELETE_SCHEDULING_GOAL_INVOCATIONS: `#graphql
+    mutation DeleteSchedulingGoalInvocations($goalInvocationIdsToDelete: [Int!]! = [], $specificationId: Int!) {
+      deleteSchedulingGoalPlanSpecifications: ${Queries.DELETE_SCHEDULING_SPECIFICATION_GOALS}(
+        where: {
+          goal_invocation_id: { _in: $goalInvocationIdsToDelete },
+          _and: {
+            specification_id: { _eq: $specificationId },
+          }
+        }
+      ) {
+        affected_rows
+      }
+    }
+  `,
+
   DELETE_SCHEDULING_GOAL_METADATA: `#graphql
     mutation DeleteSchedulingGoal($id: Int!) {
       deleteSchedulingGoalMetadata: ${Queries.DELETE_SCHEDULING_GOAL_METADATA}(id: $id) {
@@ -3516,21 +3531,6 @@ const gql = {
       }
       deleteSchedulingGoalPlanSpecifications: ${Queries.DELETE_SCHEDULING_SPECIFICATION_GOALS}(
         where: { goal_id: { _in: $goalSpecIdsToDelete } }
-      ) {
-        affected_rows
-      }
-    }
-  `,
-
-  DELETE_SCHEDULING_GOAL_INVOCATIONS: `#graphql
-    mutation DeleteSchedulingGoalInvocations($goalInvocationIdsToDelete: [Int!]! = [], $specificationId: Int!) {
-      deleteSchedulingGoalPlanSpecifications: ${Queries.DELETE_SCHEDULING_SPECIFICATION_GOALS}(
-        where: {
-          goal_invocation_id: { _in: $goalInvocationIdsToDelete },
-          _and: {
-            specification_id: { _eq: $specificationId },
-          }
-        }
       ) {
         affected_rows
       }

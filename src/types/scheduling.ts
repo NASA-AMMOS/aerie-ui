@@ -34,9 +34,9 @@ export type SchedulingConditionMetadataVersionDefinition = Pick<
 >;
 
 export type SchedulingGoalDefinition = BaseDefinition & {
-  parameter_schema?: ValueSchema;
   analyses?: SchedulingGoalAnalysis[];
   goal_id: number;
+  parameter_schema?: ValueSchema;
 };
 export type SchedulingGoalMetadata = BaseMetadata<SchedulingGoalDefinition> & {
   analyses?: SchedulingGoalAnalysis[];
@@ -173,6 +173,7 @@ export type SchedulingConditionPlanSpecification = {
 };
 
 export type SchedulingGoalPlanSpecification = {
+  arguments: any;
   enabled: boolean;
   goal_definition?: Pick<SchedulingGoalDefinition, 'analyses'> | null;
   goal_id: number;
@@ -184,7 +185,6 @@ export type SchedulingGoalPlanSpecification = {
     | null;
   goal_revision: number | null;
   priority: number;
-  arguments: any;
   simulate_after: boolean;
   specification_id: number;
 };

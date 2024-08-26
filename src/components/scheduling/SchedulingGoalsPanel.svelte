@@ -102,7 +102,12 @@
     if ($plan) {
       await effects.updateSchedulingGoalPlanSpecifications(
         $plan,
-        [{ ...goalPlanSpec, specification_id, priority: goalPlanSpec.priority + 1, goal_invocation_id: undefined }], // the goal_invocation_id is generated after insert
+        [{
+          ...goalPlanSpec,
+          goal_invocation_id: undefined,
+          priority: goalPlanSpec.priority + 1,
+          specification_id
+        }], // the goal_invocation_id is generated after insert
         [],
         user,
       );

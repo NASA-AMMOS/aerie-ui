@@ -2473,6 +2473,36 @@ const effects = {
     }
   },
 
+  async deleteSchedulingGoalInvocation(
+    plan: Plan,
+    schedulingSpecificationId: number,
+    goalInvocationIdsToDelete: number[],
+    user: User | null,
+  ) {
+    try {
+      if (!queryPermissions.UPDATE_SCHEDULING_GOAL_PLAN_SPECIFICATIONS(user, plan)) {
+        throwPermissionError('update this scheduling goal plan specification');
+      }
+      const { deleteConstraintPlanSpecifications } = await reqHasura(
+        gql.DELETE_SCHEDULING_GOAL_INVOCATIONS,
+        {
+          goalInvocationIdsToDelete,
+          specificationId: schedulingSpecificationId,
+        },
+        user,
+      );
+
+      if (deleteConstraintPlanSpecifications !== null) {
+        showSuccessToast(`Scheduling Goals Updated Successfully`);
+      } else {
+        throw Error('Unable to update the scheduling goal specifications for the plan');
+      }
+    } catch (e) {
+      catchError('Scheduling Goal Plan Specifications Update Failed', e as Error);
+      showFailureToast('Scheduling Goal Plan Specifications Update Failed');
+    }
+  },
+
   async deleteSequenceAdaptation(id: number, user: User | null): Promise<void> {
     try {
       if (!queryPermissions.DELETE_SEQUENCE_ADAPTATION(user)) {
@@ -5425,35 +5455,6 @@ const effects = {
     }
   },
 
-  async deleteSchedulingGoalInvocation(
-    plan: Plan,
-    schedulingSpecificationId: number,
-    goalInvocationIdsToDelete: number[],
-    user: User | null,
-  ) {
-    try {
-      if (!queryPermissions.UPDATE_SCHEDULING_GOAL_PLAN_SPECIFICATIONS(user, plan)) {
-        throwPermissionError('update this scheduling goal plan specification');
-      }
-      const { deleteConstraintPlanSpecifications, updateSchedulingGoalPlanSpecifications } = await reqHasura(
-        gql.DELETE_SCHEDULING_GOAL_INVOCATIONS,
-        {
-          goalInvocationIdsToDelete,
-          specificationId: schedulingSpecificationId,
-        },
-        user,
-      );
-
-      if (deleteConstraintPlanSpecifications !== null) {
-        showSuccessToast(`Scheduling Goals Updated Successfully`);
-      } else {
-        throw Error('Unable to update the scheduling goal specifications for the plan');
-      }
-    } catch (e) {
-      catchError('Scheduling Goal Plan Specifications Update Failed', e as Error);
-      showFailureToast('Scheduling Goal Plan Specifications Update Failed');
-    }
-  },
 
   async updateSimulation(
     plan: Plan,
