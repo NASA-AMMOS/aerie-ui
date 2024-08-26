@@ -4,6 +4,7 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import { createEventDispatcher } from 'svelte';
+  import type { DefinitionType } from '../../../enums/association';
   import { SearchParameters } from '../../../enums/searchParameters';
   import { schedulingConditions } from '../../../stores/scheduling';
   import type { User, UserId } from '../../../types/app';
@@ -89,10 +90,10 @@
 
   async function onCreateCondition(
     event: CustomEvent<{
-      definition: {
-        code: string;
-        tags: Tag[];
-      };
+      definitionCode: string | null;
+      definitionFile?: File | null;
+      definitionTags: Tag[];
+      definitionType?: DefinitionType;
       description: string;
       name: string;
       public: boolean;
@@ -100,15 +101,15 @@
     }>,
   ) {
     const {
-      detail: { definition, description, name, public: isPublic, tags },
+      detail: { definitionCode, definitionTags, description, name, public: isPublic },
     } = event;
 
     const newConditionId = await effects.createSchedulingCondition(
       name,
       isPublic,
       tags.map(({ id }) => ({ tag_id: id })),
-      definition.code,
-      definition.tags.map(({ id }) => ({ tag_id: id })),
+      definitionCode ?? '',
+      definitionTags.map(({ id }) => ({ tag_id: id })),
       user,
       description,
     );
@@ -124,8 +125,10 @@
 
   async function onCreateNewConditionDefinition(
     event: CustomEvent<{
-      definitionCode: string;
+      definitionCode: string | null;
+      definitionFile?: File | null;
       definitionTags: Tag[];
+      definitionType?: DefinitionType;
     }>,
   ) {
     const {
@@ -134,7 +137,7 @@
     if (initialConditionId !== null) {
       const definition = await effects.createSchedulingConditionDefinition(
         initialConditionId,
-        definitionCode,
+        definitionCode ?? '',
         definitionTags.map(({ id }) => ({ tag_id: id })),
         user,
       );

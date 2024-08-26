@@ -1,6 +1,8 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { DefinitionType } from '../../../enums/association';
+
   import type { RadioButtonId } from '../../../types/radio-buttons';
 
   import type { Dispatcher } from '../../../types/component';
@@ -12,14 +14,16 @@
   interface $$Events extends ComponentEvents<SvelteComponent> {
     close: CustomEvent;
     createDefinition: CustomEvent<{
-      definitionCode: string;
+      definitionCode: string | null;
+      definitionFile?: File | null;
       definitionTags: Tag[];
+      definitionType?: DefinitionType;
     }>;
     createMetadata: CustomEvent<{
-      definition: {
-        code: string;
-        tags: Tag[];
-      };
+      definitionCode: string | null;
+      definitionFile?: File | null;
+      definitionTags: Tag[];
+      definitionType?: DefinitionType;
       description: string;
       name: string;
       public: boolean;
@@ -43,6 +47,7 @@
     }>;
   }
 
+  import CloseIcon from '@nasa-jpl/stellar/icons/close.svg?component';
   import HideIcon from '@nasa-jpl/stellar/icons/visible_hide.svg?component';
   import ShowIcon from '@nasa-jpl/stellar/icons/visible_show.svg?component';
   import { SvelteComponent, createEventDispatcher, type ComponentEvents } from 'svelte';
@@ -66,6 +71,13 @@
 
   type SavedMetadata = Pick<FormMetadata, 'description' | 'name' | 'owner' | 'public' | 'tags'>;
   type SavedDefinition = Pick<FormDefinition, 'definition' | 'tags'>;
+  type DefinitionConfigurations = {
+    [DefinitionType.CODE]: { label: string };
+    [DefinitionType.FILE]: {
+      accept: string;
+      label: string;
+    };
+  };
 
   export let allMetadata: FormMetadata[] = [];
   export let displayName: string = '';
@@ -73,8 +85,11 @@
   export let hasCreateDefinitionCodePermission: boolean = false;
   export let hasWriteMetadataPermission: boolean = false;
   export let hasWriteDefinitionTagsPermission: boolean = false;
+  export let definitionTypeConfigurations: DefinitionConfigurations | undefined = undefined;
   export let initialDefinitionAuthor: UserId | undefined = undefined;
-  export let initialDefinitionCode: string = 'export default ():  => {\n\n}\n';
+  export let initialDefinitionType: DefinitionType = DefinitionType.CODE;
+  export let initialDefinitionCode: string | null = 'export default ():  => {\n\n}\n';
+  export let initialDefinitionFileName: string | null = null;
   export let initialDescription: string = '';
   export let initialId: number | null = null;
   export let initialName: string = '';
@@ -86,6 +101,7 @@
   export let initialReferenceModelId: number | null = null;
   export let permissionError: string = '';
   export let revisions: number[] = [];
+  export let showDefinitionTypeSelector: boolean = false;
   export let tags: Tag[] = [];
   export let tsFiles: TypeScriptFile[] = [];
   export let mode: 'create' | 'edit' = 'create';
@@ -94,9 +110,12 @@
   const dispatch = createEventDispatcher<Dispatcher<$$Events>>();
 
   let defintionAuthor: UserId | null = initialDefinitionAuthor ?? user?.id ?? null;
-  let definitionCode: string = initialDefinitionCode;
+  let definitionCode: string | null = initialDefinitionCode;
   let definitionTags: Tag[] = initialDefinitionTags;
+  let definitionType: DefinitionType = initialDefinitionType;
   let description: string = initialDescription;
+  let files: FileList | undefined;
+  let uploadFileInput: HTMLInputElement;
   let hasUpdateDefinitionPermission = false;
   let metadataId: number | null = initialId;
   let metadataTags: Tag[] = initialMetadataTags;
@@ -115,7 +134,7 @@
   $: definitionTags = initialDefinitionTags;
   $: defintionAuthor = initialDefinitionAuthor ?? user?.id ?? null;
   $: definitionCode = initialDefinitionCode;
-
+  $: definitionType = initialDefinitionType;
   $: isMetadataModified = diffMetadata(
     {
       description: initialDescription,
@@ -132,7 +151,8 @@
       tags: metadataTags.map(tag => ({ tag })),
     },
   );
-  $: isDefinitionModified = diffDefinition({ definition: initialDefinitionCode }, { definition: definitionCode });
+  $: isDefinitionModified =
+    diffDefinition({ definition: initialDefinitionCode }, { definition: definitionCode }) || files !== undefined;
   $: isDefinitionTagsModified = diffTags(initialDefinitionTags || [], definitionTags);
   $: hasUpdateDefinitionPermission = hasWriteDefinitionTagsPermission || isDefinitionModified;
   $: pageTitle = mode === 'edit' ? 's' : 'New ';
@@ -236,6 +256,14 @@
     isPublic = id === 'public';
   }
 
+  function onSelectDefinitionType(event: CustomEvent<{ id: RadioButtonId }>) {
+    const {
+      detail: { id },
+    } = event;
+
+    definitionType = id as DefinitionType;
+  }
+
   function selectRevision(revision: number | string) {
     dispatch('selectRevision', parseInt(`${revision}`));
   }
@@ -253,10 +281,10 @@
   async function create() {
     if (saveButtonEnabled) {
       dispatch('createMetadata', {
-        definition: {
-          code: definitionCode,
-          tags: definitionTags,
-        },
+        definitionCode,
+        definitionFile: files ? files[0] : null,
+        definitionTags,
+        definitionType,
         description,
         name,
         public: isPublic,
@@ -269,7 +297,9 @@
     if (saveButtonEnabled && metadataId !== null) {
       dispatch('createDefinition', {
         definitionCode,
+        definitionFile: files ? files[0] : null,
         definitionTags,
+        definitionType,
       });
     }
   }
@@ -387,6 +417,47 @@
           }}
         />
         <div class="metadata-form-error-message">{nameError}</div>
+      </fieldset>
+
+      {#if showDefinitionTypeSelector && !!definitionTypeConfigurations}
+        <fieldset>
+          <RadioButtons selectedButtonId={definitionType} on:select-radio-button={onSelectDefinitionType}>
+            {@const codeLabel = definitionTypeConfigurations[DefinitionType.CODE].label}
+            <RadioButton id={DefinitionType.CODE}>
+              <div class="definition-type-button">
+                <span>{codeLabel}</span>
+              </div>
+            </RadioButton>
+            {@const fileLabel = definitionTypeConfigurations[DefinitionType.FILE].label}
+            <RadioButton id={DefinitionType.FILE}>
+              <div class="definition-type-button">
+                <span>{fileLabel}</span>
+              </div>
+            </RadioButton>
+          </RadioButtons>
+        </fieldset>
+      {/if}
+
+      <fieldset class="definition-import-container" hidden={definitionType !== DefinitionType.FILE}>
+        <button class="close-import" type="button">
+          <CloseIcon />
+        </button>
+        <label for="file">{definitionTypeConfigurations?.file.label}</label>
+        <div class="import-input-container">
+          {initialDefinitionFileName}
+          <input
+            class="w-100"
+            name="file"
+            type="file"
+            accept={definitionTypeConfigurations?.file.accept ?? 'application/json'}
+            bind:files
+            bind:this={uploadFileInput}
+            use:permissionHandler={{
+              hasPermission: hasWriteMetadataPermission,
+              permissionError,
+            }}
+          />
+        </div>
       </fieldset>
 
       <fieldset>
@@ -533,16 +604,19 @@
   </Panel>
 
   <CssGridGutter track={1} type="column" />
-
-  <DefinitionEditor
-    definition={definitionCode}
-    {referenceModelId}
-    readOnly={!hasCreateDefinitionCodePermission}
-    {tsFiles}
-    title={`${mode === 'create' ? 'New' : 'Edit'} ${displayName} - Definition Editor`}
-    on:didChangeModelContent={onDidChangeModelContent}
-    on:selectReferenceModel={onSelectReferenceModel}
-  />
+  {#if definitionType === DefinitionType.CODE && definitionCode !== null}
+    <DefinitionEditor
+      definition={definitionCode}
+      {referenceModelId}
+      readOnly={!hasCreateDefinitionCodePermission}
+      {tsFiles}
+      title={`${mode === 'create' ? 'New' : 'Edit'} ${displayName} - Definition Editor`}
+      on:didChangeModelContent={onDidChangeModelContent}
+      on:selectReferenceModel={onSelectReferenceModel}
+    />
+  {:else}
+    Preview not available for definitions from a file.
+  {/if}
 </CssGrid>
 
 <style>
@@ -550,6 +624,33 @@
     column-gap: 0.3rem;
     display: grid;
     grid-template-columns: min-content min-content;
+  }
+
+  .definition-type-button {
+    display: block;
+  }
+
+  .definition-import-container {
+    background: var(--st-gray-15);
+    border-radius: 5px;
+    margin: 8px 16px 0px;
+    padding: 8px;
+    position: relative;
+  }
+
+  .definition-import-container[hidden] {
+    display: none;
+  }
+
+  .close-import {
+    background: none;
+    border: 0;
+    cursor: pointer;
+    height: 1.3rem;
+    padding: 0;
+    position: absolute;
+    right: 3px;
+    top: 3px;
   }
 
   .definition-divider {
