@@ -458,13 +458,9 @@ function parseVariables(
 
   return variables.map((variableNode: SyntaxNode) => {
     const variableText = text.slice(variableNode.from, variableNode.to);
-    const variable: {
+    const variable: Omit<VariableDeclaration, 'allowable_ranges' | 'allowable_values'> & {
       allowable_ranges?: string;
       allowable_values?: string;
-      enum_name?: string;
-      name: string;
-      sc_name?: string;
-      type: string;
     } = { name: variableText, type: 'UNKNOWN' };
 
     for (const object of objects) {
