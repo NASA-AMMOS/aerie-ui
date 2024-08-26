@@ -44,7 +44,7 @@
 </script>
 
 <div aria-label={`layer-picker-${chartType}-${layerItem?.name}`}>
-  <ContextMenu hideAfterClick={false} bind:this={contextMenu} ariaLabel={`add-${chartType}-${layerItem?.name}`}>
+  <ContextMenu hideAfterClick={false} bind:this={contextMenu}>
     <ContextMenuHeader>Add Filter to Row</ContextMenuHeader>
     {#if rows.length < 1}
       <div class="st-typography-label empty">No rows found</div>
