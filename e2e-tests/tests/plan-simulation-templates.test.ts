@@ -18,7 +18,6 @@ let schedulingGoals: SchedulingGoals;
 test.beforeAll(async ({ baseURL, browser }) => {
   context = await browser.newContext();
   page = await context.newPage();
-  await page.pause();
 
   models = new Models(page);
   plans = new Plans(page, models);
@@ -35,7 +34,7 @@ test.beforeAll(async ({ baseURL, browser }) => {
 
   await plan.showPanel(PanelNames.SIMULATION, true);
 
-  await plan.addActivity('Child');
+  await plan.addActivity('child');
   await page.getByRole('button', { name: 'Simulate' }).click();
 
   await plan.panelSimulation.locator('.parameter-base-number input[type="number"]').first().fill('199');
