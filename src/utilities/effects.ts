@@ -5390,7 +5390,14 @@ const effects = {
 
       const { updateSchedulingGoalPlanSpecification } = await reqHasura(
         gql.UPDATE_SCHEDULING_GOAL_PLAN_SPECIFICATION,
-        { arguments: schedulingGoalPlanSpecification.arguments, enabled, goal_invocation_id, priority, revision, simulateAfter },
+        {
+          arguments: schedulingGoalPlanSpecification.arguments,
+          enabled,
+          goal_invocation_id,
+          priority,
+          revision,
+          simulateAfter,
+        },
         user,
       );
 
@@ -5454,7 +5461,6 @@ const effects = {
       catchError(e as Error);
     }
   },
-
 
   async updateSimulation(
     plan: Plan,

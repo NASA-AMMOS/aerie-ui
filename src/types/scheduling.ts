@@ -37,7 +37,7 @@ export type SchedulingGoalDefinition = BaseDefinition & {
   analyses?: SchedulingGoalAnalysis[];
   goal_id: number;
   parameter_schema?: ValueSchema;
-  type: "JAR" | "EDSL";
+  type: 'JAR' | 'EDSL';
 };
 export type SchedulingGoalMetadata = BaseMetadata<SchedulingGoalDefinition> & {
   analyses?: SchedulingGoalAnalysis[];
