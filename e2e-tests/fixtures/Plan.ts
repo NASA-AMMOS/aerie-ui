@@ -574,7 +574,7 @@ export class Plan {
 export enum PanelNames {
   ACTIVITY_DIRECTIVES_TABLE = 'Activity Directives Table',
   SIMULATED_ACTIVITIES_TABLE = 'Simulated Activities Table',
-  ACTIVITY_TYPES = 'Activity & Resource Types',
+  ACTIVITY_AND_RESOURCE_TYPES = 'Activity & Resource Types',
   CONSTRAINTS = 'Constraints',
   EXPANSION = 'Expansion',
   EXTERNAL_APPLICATION = 'External Application',

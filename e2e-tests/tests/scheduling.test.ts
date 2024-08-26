@@ -115,7 +115,7 @@ test.describe.serial('Scheduling', () => {
   });
 
   test('Modifying the plan should result in scheduling status marked as out of date', async () => {
-    await plan.showPanel(PanelNames.ACTIVITY_TYPES);
+    await plan.showPanel(PanelNames.ACTIVITY_AND_RESOURCE_TYPES);
     await plan.addActivity('GrowBanana');
     await plan.showPanel(PanelNames.SCHEDULING_GOALS);
     await plan.waitForSchedulingStatus(Status.Modified);

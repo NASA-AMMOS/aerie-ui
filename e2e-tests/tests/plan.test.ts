@@ -138,7 +138,7 @@ test.describe.serial('Plan', () => {
   });
 
   test(`Changing to a new plan should clear the selected activity`, async ({ baseURL }) => {
-    await plan.showPanel(PanelNames.ACTIVITY_TYPES);
+    await plan.showPanel(PanelNames.ACTIVITY_AND_RESOURCE_TYPES);
 
     // Create an activity which will be auto selected
     await plan.addActivity('GrowBanana');
@@ -146,6 +146,10 @@ test.describe.serial('Plan', () => {
     // Switch to a new branch and ensure no activity is selected
     await plan.createBranch(baseURL);
     await expect(plan.panelActivityForm.getByText('No Activity Selected')).toBeVisible();
+
+    // Wait for new activities to swap in
+    await page.waitForTimeout(1000);
+    // TODO would ideally do this without a timeout
 
     // Re-select the activity
     await plan.addActivity('GrowBanana');
