@@ -40,7 +40,7 @@
   let simulateGoal: boolean = false;
   let upButtonHidden: boolean = false;
   let formParameters: FormParameter[] = [];
-  let version: Pick<SchedulingGoalDefinition, 'revision' | 'analyses'> | undefined = undefined;
+  let version: SchedulingGoalDefinition | undefined = undefined;
 
   $: revisions = goal.versions.map(({ revision }) => revision);
   $: {

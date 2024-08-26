@@ -12,7 +12,6 @@ export type BaseDefinition = {
   plans_using: Pick<Plan, 'id'>[];
   revision: number;
   tags: { tag: Tag }[];
-  type: "JAR" | "EDSL";
 };
 
 export type BaseMetadataVersionDefinition = Pick<BaseDefinition, 'author' | 'definition' | 'revision' | 'tags'>;
