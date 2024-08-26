@@ -7,6 +7,7 @@
   export let item: TimelineItemType | undefined = undefined;
 
   let prefix: string = '';
+  let units: string | undefined = undefined;
 
   $: units = (item as ResourceType)?.schema.metadata?.unit?.value;
   $: type = (item as ResourceType)?.schema.type ?? 'Unk';

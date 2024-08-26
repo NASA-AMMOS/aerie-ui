@@ -6,7 +6,14 @@
   import { capitalize } from 'lodash-es';
   import PlusCircledIcon from '../assets/plus-circled.svg?component';
   import { view, viewAddFilterToRow } from '../stores/views';
-  import type { ChartType, Layer, Row, TimelineItemListFilterOption, TimelineItemType } from '../types/timeline';
+  import type {
+    ChartType,
+    Layer,
+    Row,
+    Timeline,
+    TimelineItemListFilterOption,
+    TimelineItemType,
+  } from '../types/timeline';
   import { tooltip } from '../utilities/tooltip';
   import Input from './form/Input.svelte';
   import LayerPicker from './LayerPicker.svelte';
@@ -29,6 +36,7 @@
   let filterText: string = '';
   let layerPicker: LayerPicker;
   let layerPickerIndividual: LayerPicker;
+  let timelines: Timeline[] = [];
 
   $: filteredItems = filterItems(items, filterText ? textFilters.concat(filterText) : textFilters, selectedFilters);
   $: timelines = $view?.definition.plan.timelines || [];
