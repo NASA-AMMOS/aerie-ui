@@ -20,7 +20,7 @@
   import AssociationForm from '../../ui/Association/AssociationForm.svelte';
 
   export let initialGoalDefinitionAuthor: UserId | undefined = undefined;
-  export let initialGoalDefinitionCode: string | null = 'export default (): GlobalSchedulingGoal => {\n\n}\n';
+  export let initialGoalDefinitionCode: string | null = '';
   export let initialGoalDefinitionFilename: string | null = null;
   export let initialGoalDescription: string = '';
   export let initialGoalId: number | null = null;
@@ -235,6 +235,7 @@
 
 <AssociationForm
   allMetadata={$schedulingGoals}
+  defaultDefinitionCode={`export default (): GlobalSchedulingGoal => {\n\n}\n`}
   definitionTypeConfigurations={{
     code: { label: 'EDSL' },
     file: { accept: '.jar', label: 'JAR File' },

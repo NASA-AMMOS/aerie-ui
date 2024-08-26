@@ -85,10 +85,11 @@
   export let hasCreateDefinitionCodePermission: boolean = false;
   export let hasWriteMetadataPermission: boolean = false;
   export let hasWriteDefinitionTagsPermission: boolean = false;
+  export let defaultDefinitionCode: string = 'export default ():  => {\n\n}\n';
   export let definitionTypeConfigurations: DefinitionConfigurations | undefined = undefined;
   export let initialDefinitionAuthor: UserId | undefined = undefined;
   export let initialDefinitionType: DefinitionType = DefinitionType.CODE;
-  export let initialDefinitionCode: string | null = 'export default ():  => {\n\n}\n';
+  export let initialDefinitionCode: string | null = '';
   export let initialDefinitionFileName: string | null = null;
   export let initialDescription: string = '';
   export let initialId: number | null = null;
@@ -262,6 +263,9 @@
     } = event;
 
     definitionType = id as DefinitionType;
+    if (definitionType === DefinitionType.CODE) {
+      definitionCode = initialDefinitionCode;
+    }
   }
 
   function selectRevision(revision: number | string) {
@@ -281,8 +285,8 @@
   async function create() {
     if (saveButtonEnabled) {
       dispatch('createMetadata', {
-        definitionCode,
-        definitionFile: files ? files[0] : null,
+        definitionCode: definitionType === DefinitionType.CODE ? definitionCode : null,
+        definitionFile: definitionType === DefinitionType.FILE && files ? files[0] : null,
         definitionTags,
         definitionType,
         description,
@@ -296,8 +300,8 @@
   async function createNewDefinition() {
     if (saveButtonEnabled && metadataId !== null) {
       dispatch('createDefinition', {
-        definitionCode,
-        definitionFile: files ? files[0] : null,
+        definitionCode: definitionType === DefinitionType.CODE ? definitionCode : null,
+        definitionFile: definitionType === DefinitionType.FILE && files ? files[0] : null,
         definitionTags,
         definitionType,
       });
@@ -604,9 +608,9 @@
   </Panel>
 
   <CssGridGutter track={1} type="column" />
-  {#if definitionType === DefinitionType.CODE && definitionCode !== null}
+  {#if definitionType === DefinitionType.CODE}
     <DefinitionEditor
-      definition={definitionCode}
+      definition={definitionCode ?? defaultDefinitionCode}
       {referenceModelId}
       readOnly={!hasCreateDefinitionCodePermission}
       {tsFiles}

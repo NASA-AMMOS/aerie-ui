@@ -19,7 +19,7 @@
   import AssociationForm from '../../ui/Association/AssociationForm.svelte';
 
   export let initialConditionDefinitionAuthor: UserId | undefined = undefined;
-  export let initialConditionDefinitionCode: string = 'export default (): GlobalSchedulingCondition => {\n\n}\n';
+  export let initialConditionDefinitionCode: string | null = '';
   export let initialConditionDescription: string = '';
   export let initialConditionId: number | null = null;
   export let initialConditionName: string = '';
@@ -227,6 +227,7 @@
 
 <AssociationForm
   allMetadata={$schedulingConditions}
+  defaultDefinitionCode={`export default (): GlobalSchedulingCondition => {\n\n}\n`}
   displayName="Scheduling Condition"
   {hasCreateDefinitionCodePermission}
   {hasWriteDefinitionTagsPermission}

@@ -51,10 +51,13 @@
       ) as SchedulingGoalMetadataVersionDefinition;
       if (goalDefinition != null) {
         goalDefinitionAuthor = goalDefinition?.author;
+        goalDefinitionType = goalDefinition?.type;
         goalDefinitionCode = goalDefinition?.definition;
         goalDefinitionTags = goalDefinition?.tags.map(({ tag }) => tag);
         if (goalDefinition.uploaded_jar_id !== null) {
           goalDefinitionFilename = await effects.getFileName(goalDefinition.uploaded_jar_id, data.user);
+        } else {
+          goalDefinitionFilename = null;
         }
       }
 
