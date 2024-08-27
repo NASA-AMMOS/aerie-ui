@@ -259,8 +259,8 @@
         <CssGridGutter track={1} type="column" />
         <Panel borderRight padBody={true} overflowYBody="scroll">
           <svelte:fragment slot="header">
-            <SectionTitle>
-              <Truck />Sources in '{selectedDerivationGroup.name}'
+            <SectionTitle overflow="hidden">
+              <Truck slot="icon" />Sources in '{selectedDerivationGroup.name}'
             </SectionTitle>
           </svelte:fragment>
           <svelte:fragment slot="body">
