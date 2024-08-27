@@ -222,17 +222,20 @@ export const visibleConstraintResults: Readable<ConstraintResultWithName[]> = de
 );
 
 export const cachedConstraintsStatus: Readable<Status | null> = derived(
-  [relevantConstraintRuns],
-  ([$relevantConstraintRuns]) => {
-    return $relevantConstraintRuns.reduce((status: Status, constraintRun: ConstraintRun) => {
-      if (constraintRun.results.violations?.length) {
-        return Status.Failed;
-      } else if (status !== Status.Failed) {
-        return Status.Complete;
-      }
+  [relevantConstraintRuns, constraintPlanSpecsMap],
+  ([$relevantConstraintRuns, $constraintPlanSpecsMap]) => {
+    return $relevantConstraintRuns.reduce(
+      (status: Status | null, constraintRun: ConstraintRun) => {
+        if (constraintRun.results.violations?.length) {
+          return Status.Failed;
+        } else if (status !== Status.Failed) {
+          return Status.Complete;
+        }
 
-      return status;
-    }, Status.Unchecked);
+        return status;
+      },
+      Object.keys($constraintPlanSpecsMap).length ? Status.Unchecked : null,
+    );
   },
 );
 
