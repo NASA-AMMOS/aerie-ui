@@ -205,6 +205,7 @@ export enum Queries {
   UPDATE_PARCEL = 'update_parcel_by_pk',
   UPDATE_PLAN_SNAPSHOT = 'update_plan_snapshot_by_pk',
   UPDATE_PLAN = 'update_plan_by_pk',
+  UPDATE_PLAN_DERIVATION_GROUP = 'update_plan_derivation_group_by_pk',
   UPDATE_SCHEDULING_CONDITION_METADATA = 'update_scheduling_condition_metadata_by_pk',
   UPDATE_SCHEDULING_GOAL_METADATA = 'update_scheduling_goal_metadata_by_pk',
   UPDATE_SCHEDULING_REQUEST = 'update_scheduling_request',
@@ -2795,6 +2796,7 @@ const gql = {
       links: ${Queries.PLAN_DERIVATION_GROUP}(order_by: { plan_id: asc }) {
         derivation_group_name
         plan_id
+        enabled
       }
     }
   `,
@@ -3704,6 +3706,14 @@ const gql = {
         pk_columns: { id: $plan_id }, _set: $plan
       ) {
         id
+      }
+    }
+  `,
+
+  UPDATE_PLAN_DERIVATION_GROUP: `#graphql
+    mutation UpdatePlanDerivationGroup($pk: plan_derivation_group_pk_columns_input!, $enabled: Boolean!) {
+      planExternalSourceLink: ${Queries.UPDATE_PLAN_DERIVATION_GROUP}(pk_columns: $pk, _set: {enabled: $enabled}) {
+        derivation_group_name
       }
     }
   `,

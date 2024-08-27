@@ -10,7 +10,7 @@
   import { ViewDefaultActivityOptions, ViewDefaultExternalEventOptions } from '../../constants/view';
   import { Status } from '../../enums/status';
   import { catchError } from '../../stores/errors';
-  import { externalSources, planDerivationGroupNamesToFilter } from '../../stores/external-source';
+  import { externalSources, planDerivationGroupLinks } from '../../stores/external-source';
   import {
     externalResources,
     fetchingResourcesExternal,
@@ -333,7 +333,6 @@
   $: hasActivityLayer = activityLayers.length > 0;
   $: hasExternalEventsLayer = externalEventLayers.length > 0;
   $: hasResourceLayer = lineLayers.length + xRangeLayers.length > 0;
-  $: planDerivationGroupNamesToFilterParsed = JSON.parse($planDerivationGroupNamesToFilter);
   $: showSpans = activityOptions?.composition === 'both' || activityOptions?.composition === 'spans';
   $: showDirectives = activityOptions?.composition === 'both' || activityOptions?.composition === 'directives';
 
@@ -482,6 +481,9 @@
     externalEventsFilteredByDG = [];
     externalEventsFilteredByType = [];
 
+    let filteredDerivationGroups = $planDerivationGroupLinks.filter(link => link.plan_id === plan?.id && !link.enabled).map(link => link.derivation_group_name)
+    console.log(filteredDerivationGroups)
+
     // Apply filter for hiding derivation groups
     externalEventsFilteredByDG = externalEvents.filter(ee => {
       let dg =
@@ -489,9 +491,8 @@
           es => es.pkey.derivation_group_name === ee.pkey.derivation_group_name && es.pkey.key === ee.pkey.source_key,
         )?.pkey.derivation_group_name ?? undefined;
       // the statement below says return true (keep) if the plan is not null and if the filter for this plan does not include this derivation group
-      return plan
-        ? !planDerivationGroupNamesToFilterParsed[plan.id] ||
-            !planDerivationGroupNamesToFilterParsed[plan.id].includes(dg)
+      return plan && dg
+        ? !filteredDerivationGroups.includes(dg)
         : false;
     });
     // Filter by external event type

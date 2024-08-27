@@ -44,6 +44,7 @@ export type ExternalSourceSlim = Pick<
 export type PlanDerivationGroup = {
   derivation_group_name: string;
   plan_id: number | undefined; // because in plan.ts plan is defined on Plan | null...
+  enabled: boolean;
 };
 
 export type ExternalSourceType = {
