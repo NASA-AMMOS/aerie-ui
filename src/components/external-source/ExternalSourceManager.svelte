@@ -476,7 +476,10 @@
         'Z',
         '+00:00',
       );
-      const valid_at: string | undefined = convertDoyToYmd($validAtDoyField.value.replaceAll('Z', '')) + '+00:00';
+      const valid_at: string | undefined = convertDoyToYmd($validAtDoyField.value.replaceAll('Z', ''))?.replace(
+        'Z',
+        '+00:00',
+      );
       if (!start_time || !end_time || !valid_at) {
         showFailureToast('Parsing failed.');
         parsingError.set(`Parsing failed - parsing dates in input failed. ${start_time}, ${end_time}, ${valid_at}`);
@@ -584,14 +587,8 @@
               selectedFilters.push(createExternalSourceResponse.upsertExternalSourceType as ExternalSourceType);
             }
           }
+          
           // Auto-select the new source
-          // selectedSource = {
-          //   created_at: new Date().toISOString().replace('Z', '+00:00'), // technically not the exact time it shows up in the database
-          //   derivation_group: derivationGroupInsert.name,
-          //   id: createExternalSourceResponse.createExternalSource.id,
-          //   ...sourceInsert,
-          //   source_type_name: sourceTypeInsert.name,
-          // };
           selectedSource = {
             created_at: new Date().toISOString().replace('Z', '+00:00'), // technically not the exact time it shows up in the database
             end_time: sourceInsert.end_time,
