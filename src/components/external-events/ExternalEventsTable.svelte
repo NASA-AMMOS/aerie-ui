@@ -16,6 +16,8 @@
   export let items: ExternalEventDB[];
   export let user: User | null;
 
+  console.log(items.map(i => i.pkey));
+
   const dispatch = createEventDispatcher<{
     rowDoubleClicked: void;
     selectionChanged: void;
