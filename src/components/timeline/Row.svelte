@@ -333,7 +333,6 @@
   $: hasActivityLayer = activityLayers.length > 0;
   $: hasExternalEventsLayer = externalEventLayers.length > 0;
   $: hasResourceLayer = lineLayers.length + xRangeLayers.length > 0;
-  $: planDerivationGroupNamesToFilterParsed = JSON.parse($planDerivationGroupNamesToFilter);
   $: showSpans = activityOptions?.composition === 'both' || activityOptions?.composition === 'spans';
   $: showDirectives = activityOptions?.composition === 'both' || activityOptions?.composition === 'directives';
 
@@ -490,8 +489,8 @@
         )?.pkey.derivation_group_name ?? undefined;
       // the statement below says return true (keep) if the plan is not null and if the filter for this plan does not include this derivation group
       return plan
-        ? !planDerivationGroupNamesToFilterParsed[plan.id] ||
-            !planDerivationGroupNamesToFilterParsed[plan.id].includes(dg)
+        ? !$planDerivationGroupNamesToFilter[plan.id] ||
+            !$planDerivationGroupNamesToFilter[plan.id].includes(dg ?? "")
         : false;
     });
     // Filter by external event type
