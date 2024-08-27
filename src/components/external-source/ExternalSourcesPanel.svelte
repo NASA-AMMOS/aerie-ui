@@ -6,11 +6,9 @@
     derivationGroups,
     externalSources,
     planDerivationGroupLinks,
-    planDerivationGroupNamesToFilter,
     usersSeenSources,
   } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
-  import { originalView } from '../../stores/views';
   import type { User } from '../../types/app';
   import type { DerivationGroup, UserSeenEntry } from '../../types/external-source';
   import type { ViewGridSection } from '../../types/view';
@@ -67,11 +65,6 @@
     }
   }
 
-  let planDerivationGroupNamesToFilterParsed: { [plan_id: number]: string[] } = JSON.parse(
-    $planDerivationGroupNamesToFilter,
-  );
-
-  $: planDerivationGroupNamesToFilterParsed = JSON.parse($planDerivationGroupNamesToFilter);
   $: linkedDerivationGroupIds = $planDerivationGroupLinks
     .filter(link => link.plan_id === $plan?.id)
     .map(link => link.derivation_group_name);
@@ -97,15 +90,6 @@
         mappedDerivationGroups[group.source_type_name] = [group];
       }
     }
-  });
-  // $: unseenSourcesParsed = JSON.parse($unseenSources);
-  // $: deletedSourcesParsed = JSON.parse($deletedSourcesSeen);
-  originalView.subscribe(ov => {
-    // any time a new view is selected, change the enabled list
-    if (ov && $plan) {
-      planDerivationGroupNamesToFilterParsed[$plan.id] = ov?.definition.plan.filteredDerivationGroups;
-    }
-    planDerivationGroupNamesToFilter.set(JSON.stringify(planDerivationGroupNamesToFilterParsed));
   });
 
   function onManageDerivationGroups() {
