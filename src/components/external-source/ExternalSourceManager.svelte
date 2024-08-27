@@ -682,11 +682,7 @@
   <Panel borderRight padBody={true}>
     <svelte:fragment slot="header">
       <SectionTitle>
-        {selectedEvent
-          ? `Selected Event`
-          : selectedSource
-            ? `Selected External Source`
-            : 'Upload a Source File'}
+        {selectedEvent ? `Selected Event` : selectedSource ? `Selected External Source` : 'Upload a Source File'}
       </SectionTitle>
       {#if selectedEvent}
         <button
@@ -868,7 +864,7 @@
           <AlertError class="m-2" error={$createDerivationGroupError} />
           <AlertError class="m-2" error={$parsingError} />
           <div id="file-upload-field">
-            <fieldset style="width:100%">
+            <fieldset style:flex={1}>
               <label for="file">Source File</label>
               <input
                 class="w-100"
@@ -883,8 +879,12 @@
               />
             </fieldset>
 
-            <!--TODO: fix formatting here!-->
-            <fieldset id="file-upload-fieldset">
+            <fieldset class="file-upload-fieldset">
+              {#if parsed}
+                <div style="padding-top:10px">
+                  <button class="st-button secondary w-100" type="reset">Dismiss</button>
+                </div>
+              {/if}
               <button
                 disabled={!parsed}
                 class="st-button w-100"
@@ -896,11 +896,6 @@
               >
                 {$creatingExternalSource ? 'Uploading...' : 'Upload'}
               </button>
-              {#if parsed}
-                <div style="padding-top:10px">
-                  <button class="st-button w-100" type="reset">Dismiss</button>
-                </div>
-              {/if}
             </fieldset>
           </div>
           <Field field={derivationGroupField}>
@@ -1273,11 +1268,11 @@
   }
 
   .external-source-header-title-value {
-    word-break: break-word;
     overflow: hidden;
     padding: 4px 0px;
     text-overflow: ellipsis;
     white-space: nowrap;
+    word-break: break-word;
     word-break: break-all;
   }
 
@@ -1395,12 +1390,10 @@
     white-space: nowrap;
   }
 
-  #file-upload-fieldset {
-    align-self: flex-end;
-    display: flex;
+  .file-upload-fieldset {
+    align-items: flex-end;
     flex-direction: row;
-    /* float: right; */
-    width: 60%;
+    gap: 4px;
   }
 
   #timeline-layer {
