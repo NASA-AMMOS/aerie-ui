@@ -587,7 +587,7 @@
               selectedFilters.push(createExternalSourceResponse.upsertExternalSourceType as ExternalSourceType);
             }
           }
-          
+
           // Auto-select the new source
           selectedSource = {
             created_at: new Date().toISOString().replace('Z', '+00:00'), // technically not the exact time it shows up in the database
@@ -681,13 +681,13 @@
 <CssGrid columns={uiColumnSize}>
   <Panel borderRight padBody={true}>
     <svelte:fragment slot="header">
-      <SectionTitle
-        >{selectedEvent
-          ? `Selected Event (${selectedEvent.pkey.key})`
+      <SectionTitle>
+        {selectedEvent
+          ? `Selected Event`
           : selectedSource
-            ? `Selected External Source (${selectedSource.pkey.key})`
-            : 'Upload a Source File'}</SectionTitle
-      >
+            ? `Selected External Source`
+            : 'Upload a Source File'}
+      </SectionTitle>
       {#if selectedEvent}
         <button
           class="st-button icon fs-6"
@@ -790,55 +790,55 @@
                 {/each}
               {/await}
             </Collapse>
+            <Collapse
+              className="anchor-collapse"
+              defaultExpanded={false}
+              title="Metadata"
+              tooltipContent="View Event Source Metadata"
+            >
+              {#await effects.getExternalSourceMetadata(selectedSource.pkey, user)}
+                <em>loading metadata...</em>
+              {:then metadata}
+                {#if Object.keys(metadata).length}
+                  <Properties
+                    formProperties={Object.entries(metadata).map(e => {
+                      return { name: e[0], value: e[1] };
+                    })}
+                  />
+                {:else if $getExternalSourceMetadataError}
+                  <em>Failed to retrieve External Source metadata.</em>
+                {:else}
+                  <em>Source has no metadata.</em>
+                {/if}
+              {:catch error}
+                <em>error loading metadata...try refreshing the page.</em>
+                {catchError(error)}
+              {/await}
+            </Collapse>
+            <div style="padding-bottom:20px">
+              <Collapse
+                className="used-in-plans-collapse"
+                defaultExpanded={false}
+                title="Used in Plans"
+                tooltipContent="View plans this source is used in"
+              >
+                {#if selectedSourceLinkedDerivationGroupsPlans.length > 0}
+                  {#each selectedSourceLinkedDerivationGroupsPlans as linkedPlanDerivationGroup}
+                    <i>
+                      <a href="{base}/plans/{linkedPlanDerivationGroup.plan_id}">
+                        {$plans.find(plan => {
+                          return linkedPlanDerivationGroup.plan_id === plan.id;
+                        })?.name}
+                      </a></i
+                    >
+                  {/each}
+                {:else}
+                  <i class="st-typography-body">Not used in any plans</i>
+                {/if}
+              </Collapse>
+            </div>
           </fieldset>
 
-          <Collapse
-            className="anchor-collapse"
-            defaultExpanded={false}
-            title="Metadata"
-            tooltipContent="View Event Source Metadata"
-          >
-            {#await effects.getExternalSourceMetadata(selectedSource.pkey, user)}
-              <em>loading metadata...</em>
-            {:then metadata}
-              {#if Object.keys(metadata).length}
-                <Properties
-                  formProperties={Object.entries(metadata).map(e => {
-                    return { name: e[0], value: e[1] };
-                  })}
-                />
-              {:else if $getExternalSourceMetadataError}
-                <em>Failed to retrieve External Source metadata.</em>
-              {:else}
-                <em>Source has no metadata.</em>
-              {/if}
-            {:catch error}
-              <em>error loading metadata...try refreshing the page.</em>
-              {catchError(error)}
-            {/await}
-          </Collapse>
-          <div style="padding-bottom:20px">
-            <Collapse
-              className="used-in-plans-collapse"
-              defaultExpanded={false}
-              title="Used in plans"
-              tooltipContent="View plans this source is used in"
-            >
-              {#if selectedSourceLinkedDerivationGroupsPlans.length > 0}
-                {#each selectedSourceLinkedDerivationGroupsPlans as linkedPlanDerivationGroup}
-                  <i>
-                    <a href="{base}/plans/{linkedPlanDerivationGroup.plan_id}">
-                      {$plans.find(plan => {
-                        return linkedPlanDerivationGroup.plan_id === plan.id;
-                      })?.name}
-                    </a></i
-                  >
-                {/each}
-              {:else}
-                <i>Not used in any plans</i>
-              {/if}
-            </Collapse>
-          </div>
           <button
             class="st-button danger w-100"
             style="margin-bottom:auto;"
@@ -883,6 +883,7 @@
               />
             </fieldset>
 
+            <!--TODO: fix formatting here!-->
             <fieldset id="file-upload-fieldset">
               <button
                 disabled={!parsed}
@@ -1252,6 +1253,34 @@
   .menu-border-top {
     border-top: 1px solid var(--st-gray-20);
   }
+
+  .external-source-header {
+    align-items: center;
+    background: var(--st-gray-10);
+    border-bottom: 1px solid var(--st-gray-15);
+    display: flex;
+    flex-shrink: 0;
+    font-style: italic;
+    padding: 4px 8px;
+    padding-left: 8px;
+  }
+
+  .external-source-header-title {
+    align-items: flex-start;
+    border-radius: 4px;
+    display: flex;
+    width: 100%;
+  }
+
+  .external-source-header-title-value {
+    word-break: break-word;
+    overflow: hidden;
+    padding: 4px 0px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    word-break: break-all;
+  }
+
   .external-event-form-container {
     display: grid;
     grid-template-rows: min-content auto;
@@ -1362,12 +1391,15 @@
 
   #file-upload-field {
     display: flex;
+    flex-direction: row;
     white-space: nowrap;
   }
 
   #file-upload-fieldset {
     align-self: flex-end;
-    float: right;
+    display: flex;
+    flex-direction: row;
+    /* float: right; */
     width: 60%;
   }
 
