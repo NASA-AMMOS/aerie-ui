@@ -6,7 +6,7 @@
   import { externalSources, planDerivationGroupNamesToFilter } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import { plugins } from '../../stores/plugins';
-  import { originalView, view, viewUpdateFilteredDerivationGroupIds } from '../../stores/views';
+  import { originalView, viewUpdateFilteredDerivationGroupIds } from '../../stores/views';
   import type { User } from '../../types/app';
   import type { DerivationGroup, ExternalSourceSlim } from '../../types/external-source';
   import type { View } from '../../types/view';
@@ -20,69 +20,57 @@
 
   let dgInFilter: boolean = false;
   let relevantSources: ExternalSourceSlim[] = [];
-  let enabled: boolean = true;
-
-  // to check if the group is enabled, first check if our store has any entries, if not, check if the view does, otherwise we are enabled
-  {
-    enabled =
-    $plan !== null && $planDerivationGroupNamesToFilter[$plan.id] !== undefined
-      ? !$planDerivationGroupNamesToFilter[$plan.id].includes(derivationGroup.name)
-      : $originalView !== null && $originalView?.definition.plan.filteredDerivationGroups !== null 
-        ? $originalView?.definition.plan.filteredDerivationGroups.includes(derivationGroup.name)
-        : true; 
-
-    // on change, update the view (may not be saved), and update the store. so on refresh reverts to view, on panel change its ok.
-    // in any case, however, should make sure the view knows of any discrepancies in the case of enabled being true here if its not in the view
-    if ($plan) {
-      viewUpdateFilteredDerivationGroupIds($planDerivationGroupNamesToFilter[$plan.id]);
-    }
-  }
+  let planDerivationGroupNamesToFilterParsed: { [plan_id: number]: string[] } = JSON.parse(
+    $planDerivationGroupNamesToFilter,
+  );
+  let enabled =
+    $plan !== null && planDerivationGroupNamesToFilterParsed[$plan.id] !== undefined
+      ? !planDerivationGroupNamesToFilterParsed[$plan.id].includes(derivationGroup.name)
+      : true;
   let currentView: View | null = null;
 
+  $: planDerivationGroupNamesToFilterParsed = JSON.parse($planDerivationGroupNamesToFilter);
   $: relevantSources = $externalSources.filter(source => derivationGroup.name === source.pkey.derivation_group_name);
-  // $: {
-  //   // Ensure the current derivation group in the filter list if it has been disabled
-  //   // Ensure the current derivation group is NOT in the filter list if it has been enabled
-  //   if ($plan) {
-  //     console.log("reevaluating...")
-  //     enabled =
-  //       $plan.id !== null && planDerivationGroupNamesToFilterParsed[$plan.id] !== undefined
-  //         ? !planDerivationGroupNamesToFilterParsed[$plan.id].includes(derivationGroup.name)
-  //         : true;
-  //     if (enabled) {
-  //       if (dgInFilter) {
-  //         if (!planDerivationGroupNamesToFilterParsed[$plan.id]) {
-  //           planDerivationGroupNamesToFilterParsed[$plan.id] = [];
-  //         } else {
-  //           planDerivationGroupNamesToFilterParsed[$plan.id] = planDerivationGroupNamesToFilterParsed[$plan.id].filter(
-  //             id => id !== derivationGroup.name,
-  //           );
-  //         }
-  //         let update = planDerivationGroupNamesToFilterParsed[$plan.id];
-  //         planDerivationGroupNamesToFilter.set(JSON.stringify(planDerivationGroupNamesToFilterParsed));
-  //         console.log("HERE!", planDerivationGroupNamesToFilterParsed, $planDerivationGroupNamesToFilter);
-  //         viewUpdateFilteredDerivationGroupIds(update);
-  //       }
-  //     } else {
-  //       if (!dgInFilter) {
-  //         if (!planDerivationGroupNamesToFilterParsed[$plan.id]) {
-  //           planDerivationGroupNamesToFilterParsed[$plan.id] = [derivationGroup.name];
-  //         } else if (!planDerivationGroupNamesToFilterParsed[$plan.id].includes(derivationGroup.name)) {
-  //           planDerivationGroupNamesToFilterParsed[$plan.id] = planDerivationGroupNamesToFilterParsed[$plan.id].concat(
-  //             derivationGroup.name,
-  //           );
-  //         }
-  //         let update = planDerivationGroupNamesToFilterParsed[$plan.id];
-  //         planDerivationGroupNamesToFilter.set(JSON.stringify(planDerivationGroupNamesToFilterParsed));
-  //         console.log("HERE! (2)", planDerivationGroupNamesToFilterParsed, $planDerivationGroupNamesToFilter);
-  //         viewUpdateFilteredDerivationGroupIds(update);
-  //       }
-  //     }
-  //   }
-  // }
+  $: {
+    // Ensure the current derivation group in the filter list if it has been disabled
+    // Ensure the current derivation group is NOT in the filter list if it has been enabled
+    if ($plan) {
+      enabled =
+        $plan.id !== null && planDerivationGroupNamesToFilterParsed[$plan.id] !== undefined
+          ? !planDerivationGroupNamesToFilterParsed[$plan.id].includes(derivationGroup.name)
+          : true;
+      if (enabled) {
+        if (dgInFilter) {
+          if (!planDerivationGroupNamesToFilterParsed[$plan.id]) {
+            planDerivationGroupNamesToFilterParsed[$plan.id] = [];
+          } else {
+            planDerivationGroupNamesToFilterParsed[$plan.id] = planDerivationGroupNamesToFilterParsed[$plan.id].filter(
+              id => id !== derivationGroup.name,
+            );
+          }
+          let update = planDerivationGroupNamesToFilterParsed[$plan.id];
+          planDerivationGroupNamesToFilter.set(JSON.stringify(planDerivationGroupNamesToFilterParsed));
+          viewUpdateFilteredDerivationGroupIds(update);
+        }
+      } else {
+        if (!dgInFilter) {
+          if (!planDerivationGroupNamesToFilterParsed[$plan.id]) {
+            planDerivationGroupNamesToFilterParsed[$plan.id] = [derivationGroup.name];
+          } else if (!planDerivationGroupNamesToFilterParsed[$plan.id].includes(derivationGroup.name)) {
+            planDerivationGroupNamesToFilterParsed[$plan.id] = planDerivationGroupNamesToFilterParsed[$plan.id].concat(
+              derivationGroup.name,
+            );
+          }
+          let update = planDerivationGroupNamesToFilterParsed[$plan.id];
+          planDerivationGroupNamesToFilter.set(JSON.stringify(planDerivationGroupNamesToFilterParsed));
+          viewUpdateFilteredDerivationGroupIds(update);
+        }
+      }
+    }
+  }
 
   originalView.subscribe(ov => {
-    // Any time a new view is selected, change the enabled list, and reset the store
+    // Any time a new view is selected, change the enabled list
     if (ov) {
       if (currentView === null) {
         currentView = ov;
@@ -92,9 +80,8 @@
        * This is required because this will trigger when associating or de-associating
        *  a derivation group with a plan - though the actual 'view' will not be
        *  changed from these actions, which could lead to improperly resetting visibility.
-       */
+       **/
       if (ov !== currentView) {
-        console.log("resetting... for view")
         if (ov?.definition.plan.filteredDerivationGroups.includes(derivationGroup.name)) {
           enabled = false;
         } else {
@@ -106,40 +93,26 @@
   });
 
   function onChange() {
-    console.log("HERE!!!")
     if ($plan) {
       enabled = !enabled;
-      dgInFilter = $planDerivationGroupNamesToFilter[$plan.id].includes(derivationGroup.name);
-      if (!enabled) {
-        if (!$planDerivationGroupNamesToFilter[$plan.id]) {
-          planDerivationGroupNamesToFilter.update((pdgntf) => {
-            pdgntf[$plan.id] = [derivationGroup.name];
-            return pdgntf;
-          });
+      dgInFilter = planDerivationGroupNamesToFilterParsed[$plan.id].includes(derivationGroup.name);
+      if (enabled === false) {
+        if (!planDerivationGroupNamesToFilterParsed[$plan.id]) {
+          planDerivationGroupNamesToFilterParsed[$plan.id] = [derivationGroup.name];
         } else {
-          planDerivationGroupNamesToFilter.update((pdgntf) => {
-            pdgntf[$plan.id].push(derivationGroup.name);
-            return pdgntf;
-          });
+          planDerivationGroupNamesToFilterParsed[$plan.id] = planDerivationGroupNamesToFilterParsed[$plan.id].concat(
+            derivationGroup.name,
+          );
+        }
+      } else {
+        if (!planDerivationGroupNamesToFilterParsed[$plan.id]) {
+          planDerivationGroupNamesToFilterParsed[$plan.id] = [];
+        } else {
+          planDerivationGroupNamesToFilterParsed[$plan.id] = planDerivationGroupNamesToFilterParsed[$plan.id].filter(
+            id => id !== derivationGroup.name,
+          );
         }
       }
-      else {
-        if (!$planDerivationGroupNamesToFilter[$plan.id]) {
-          planDerivationGroupNamesToFilter.update((pdgntf) => {
-            pdgntf[$plan.id] = [];
-            return pdgntf;
-          });
-        } else {
-          planDerivationGroupNamesToFilter.update((pdgntf) => {
-            pdgntf[$plan.id] = pdgntf[$plan.id].filter(id => id !== derivationGroup.name);
-            return pdgntf;
-          });
-        }
-      }
-      console.log($planDerivationGroupNamesToFilter[$plan.id]);
-      console.log("view prev", $view?.definition.plan.filteredDerivationGroups);
-      viewUpdateFilteredDerivationGroupIds($planDerivationGroupNamesToFilter[$plan.id]);
-      console.log("view after", $view?.definition.plan.filteredDerivationGroups);
     }
   }
 
