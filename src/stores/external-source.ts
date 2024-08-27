@@ -1,3 +1,4 @@
+import { browser } from '$app/environment';
 import { derived, writable, type Writable } from 'svelte/store';
 import {
   type DerivationGroup,
@@ -21,8 +22,20 @@ export const derivationGroupPlanLinkError: Writable<string | null> = writable(nu
 export const getExternalSourceMetadataError: Writable<string | null> = writable(null);
 
 // This store catches all derivation groups associated with the current plans that have been hidden from view.
-// It is a store because while it is okay to clear it on refresh, it should persist if panels switch as it's global to the entire plan view.
-export const planDerivationGroupNamesToFilter: Writable<{[plan_id: number]: string[]}> = writable({});
+//  - Note: this does NOT require the derivation group be currently linked to the
+//          plan. If a derivation group is added to this store while NOT associated
+//          to the plan, it will be hidden once associated.
+// Assumes shape {[plan_id: number]: number[]}, where the list of numbers is the list of filtered out
+//    derivation groups for the given plan ID
+export const planDerivationGroupNamesToFilter = writable(
+  (browser && localStorage.getItem('planDerivationGroupNamesToFilter')) || '{}',
+);
+planDerivationGroupNamesToFilter.subscribe(val => {
+  // Validate that val is list-like
+  if (browser && JSON.parse(val)) {
+    localStorage.setItem('planDerivationGroupNamesToFilter', val);
+  }
+});
 
 /* Subscriptions. */
 export const externalSources = gqlSubscribable<ExternalSourceSlim[]>(
