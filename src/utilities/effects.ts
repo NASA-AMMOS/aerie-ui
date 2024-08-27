@@ -1414,7 +1414,6 @@ const effects = {
       let jarId: number | null = null;
       let codeDefinition: string | null = null;
 
-      console.log('definitionType :>> ', definitionType, file);
       if (definitionType === SchedulingType.EDSL) {
         codeDefinition = definition;
       } else if (definitionType === SchedulingType.JAR && file !== null) {

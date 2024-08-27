@@ -20,7 +20,7 @@
   import AssociationForm from '../../ui/Association/AssociationForm.svelte';
 
   export let initialGoalDefinitionAuthor: UserId | undefined = undefined;
-  export let initialGoalDefinitionCode: string | null = '';
+  export let initialGoalDefinitionCode: string | null = null;
   export let initialGoalDefinitionFilename: string | null = null;
   export let initialGoalDescription: string = '';
   export let initialGoalId: number | null = null;

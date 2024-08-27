@@ -47,7 +47,6 @@
     }>;
   }
 
-  import CloseIcon from '@nasa-jpl/stellar/icons/close.svg?component';
   import HideIcon from '@nasa-jpl/stellar/icons/visible_hide.svg?component';
   import ShowIcon from '@nasa-jpl/stellar/icons/visible_show.svg?component';
   import { SvelteComponent, createEventDispatcher, type ComponentEvents } from 'svelte';
@@ -115,8 +114,10 @@
   let definitionTags: Tag[] = initialDefinitionTags;
   let definitionType: DefinitionType = initialDefinitionType;
   let description: string = initialDescription;
-  let files: FileList | undefined;
-  let uploadFileInput: HTMLInputElement;
+  let isDefinitionFileHidden: boolean = !!initialDefinitionFileName;
+  let definitionFiles: FileList | undefined;
+  let definitionFileName: string | null = null;
+  let uploadFileInput: HTMLInputElement | undefined;
   let hasUpdateDefinitionPermission = false;
   let metadataId: number | null = initialId;
   let metadataTags: Tag[] = initialMetadataTags;
@@ -136,6 +137,8 @@
   $: defintionAuthor = initialDefinitionAuthor ?? user?.id ?? null;
   $: definitionCode = initialDefinitionCode;
   $: definitionType = initialDefinitionType;
+  $: definitionFileName = initialDefinitionFileName;
+  $: isDefinitionFileHidden = !!definitionFileName;
   $: isMetadataModified = diffMetadata(
     {
       description: initialDescription,
@@ -153,7 +156,8 @@
     },
   );
   $: isDefinitionModified =
-    diffDefinition({ definition: initialDefinitionCode }, { definition: definitionCode }) || files !== undefined;
+    diffDefinition({ definition: initialDefinitionCode }, { definition: definitionCode }) ||
+    definitionFiles !== undefined;
   $: isDefinitionTagsModified = diffTags(initialDefinitionTags || [], definitionTags);
   $: hasUpdateDefinitionPermission = hasWriteDefinitionTagsPermission || isDefinitionModified;
   $: pageTitle = mode === 'edit' ? 's' : 'New ';
@@ -234,6 +238,10 @@
     }
   }
 
+  function onDefinitionFileReset() {
+    isDefinitionFileHidden = false;
+  }
+
   async function onMetadataTagsInputChange(event: TagsChangeEvent) {
     const {
       detail: { tag, type },
@@ -265,6 +273,12 @@
     definitionType = id as DefinitionType;
     if (definitionType === DefinitionType.CODE) {
       definitionCode = initialDefinitionCode;
+    } else {
+      definitionCode = null;
+      if (uploadFileInput) {
+        uploadFileInput.value = '';
+      }
+      definitionFiles = undefined;
     }
   }
 
@@ -286,7 +300,7 @@
     if (saveButtonEnabled) {
       dispatch('createMetadata', {
         definitionCode: definitionType === DefinitionType.CODE ? definitionCode : null,
-        definitionFile: definitionType === DefinitionType.FILE && files ? files[0] : null,
+        definitionFile: definitionType === DefinitionType.FILE && definitionFiles ? definitionFiles[0] : null,
         definitionTags,
         definitionType,
         description,
@@ -294,6 +308,8 @@
         public: isPublic,
         tags: metadataTags,
       });
+
+      resetUploadFiles();
     }
   }
 
@@ -301,10 +317,12 @@
     if (saveButtonEnabled && metadataId !== null) {
       dispatch('createDefinition', {
         definitionCode: definitionType === DefinitionType.CODE ? definitionCode : null,
-        definitionFile: definitionType === DefinitionType.FILE && files ? files[0] : null,
+        definitionFile: definitionType === DefinitionType.FILE && definitionFiles ? definitionFiles[0] : null,
         definitionTags,
         definitionType,
       });
+
+      resetUploadFiles();
     }
   }
 
@@ -312,6 +330,14 @@
     const { detail } = event;
     referenceModelId = detail;
     dispatch('selectReferenceModel', detail);
+  }
+
+  function resetUploadFiles() {
+    if (uploadFileInput) {
+      uploadFileInput.value = '';
+    }
+    definitionFiles = undefined;
+    isDefinitionFileHidden = true;
   }
 
   async function save() {
@@ -367,6 +393,10 @@
     defintionAuthor = initialDefinitionAuthor ?? user?.id ?? null;
     definitionCode = initialDefinitionCode;
     definitionTags = initialDefinitionTags;
+    definitionType = initialDefinitionType;
+    definitionFileName = initialDefinitionFileName;
+    definitionFiles = undefined;
+    isDefinitionFileHidden = !!initialDefinitionFileName;
     description = initialDescription;
     metadataId = initialId;
     metadataTags = initialMetadataTags;
@@ -443,24 +473,27 @@
       {/if}
 
       <fieldset class="definition-import-container" hidden={definitionType !== DefinitionType.FILE}>
-        <button class="close-import" type="button">
-          <CloseIcon />
-        </button>
         <label for="file">{definitionTypeConfigurations?.file.label}</label>
         <div class="import-input-container">
-          {initialDefinitionFileName}
-          <input
-            class="w-100"
-            name="file"
-            type="file"
-            accept={definitionTypeConfigurations?.file.accept ?? 'application/json'}
-            bind:files
-            bind:this={uploadFileInput}
-            use:permissionHandler={{
-              hasPermission: hasWriteMetadataPermission,
-              permissionError,
-            }}
-          />
+          {#if isDefinitionFileHidden}
+            <div class="filename-container">
+              <div class="filename">{definitionFileName}</div>
+              <button class="st-button secondary" on:click={onDefinitionFileReset}>Change File</button>
+            </div>
+          {:else}
+            <input
+              class="w-100"
+              name="file"
+              type="file"
+              accept={definitionTypeConfigurations?.file.accept ?? 'application/json'}
+              bind:files={definitionFiles}
+              bind:this={uploadFileInput}
+              use:permissionHandler={{
+                hasPermission: hasWriteMetadataPermission,
+                permissionError,
+              }}
+            />
+          {/if}
         </div>
       </fieldset>
 
@@ -632,26 +665,21 @@
   }
 
   .definition-import-container {
-    background: var(--st-gray-15);
-    border-radius: 5px;
-    margin: 8px 16px 0px;
-    padding: 8px;
-    position: relative;
+    height: 48px;
   }
 
   .definition-import-container[hidden] {
     display: none;
   }
 
-  .close-import {
-    background: none;
-    border: 0;
-    cursor: pointer;
-    height: 1.3rem;
-    padding: 0;
-    position: absolute;
-    right: 3px;
-    top: 3px;
+  .filename-container {
+    align-items: center;
+    display: grid;
+    grid-template-columns: auto min-content;
+  }
+
+  .filename-container button {
+    white-space: nowrap;
   }
 
   .definition-divider {
