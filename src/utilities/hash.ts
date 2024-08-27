@@ -42,9 +42,9 @@ export function getRowIdExternalEventWhole(externalEvent: ExternalEventDB) {
   // https://stackoverflow.com/questions/40958727/javascript-generate-unique-number-based-on-string
   return cyrb53a(
     externalEvent.pkey.derivation_group_name +
-    externalEvent.pkey.source_key +
-    externalEvent.pkey.event_type_name +
-    externalEvent.pkey.key
+      externalEvent.pkey.source_key +
+      externalEvent.pkey.event_type_name +
+      externalEvent.pkey.key,
   );
 }
 
@@ -52,8 +52,8 @@ export function getRowIdExternalEvent(externalEventPkey: ExternalEventPkey) {
   // https://stackoverflow.com/questions/40958727/javascript-generate-unique-number-based-on-string
   return cyrb53a(
     externalEventPkey.derivation_group_name +
-    externalEventPkey.source_key +
-    externalEventPkey.event_type_name +
-    externalEventPkey.key
+      externalEventPkey.source_key +
+      externalEventPkey.event_type_name +
+      externalEventPkey.key,
   );
 }
