@@ -166,6 +166,7 @@
   let compactNavMode = false;
   let errorConsole: Console;
   let consoleHeightString = '36px';
+  let constraintsStatusText: string | undefined;
   let hasCreateViewPermission: boolean = false;
   let hasUpdateViewPermission: boolean = false;
   let hasExpandPermission: boolean = false;
@@ -399,10 +400,16 @@
   $: numConstraintsViolated = Object.values($constraintResponseMap).filter(
     response => response.results.violations?.length,
   ).length;
-
   $: numConstraintsWithErrors = Object.values($constraintResponseMap).filter(
     response => response.errors?.length,
   ).length;
+  $: constraintsStatusText =
+    ($constraintsStatus === Status.Complete ||
+      $constraintsStatus === Status.Failed ||
+      $constraintsStatus === Status.PartialSuccess) &&
+    numConstraintsViolated + numConstraintsWithErrors + $uncheckedConstraintCount > 0
+      ? `${numConstraintsViolated + numConstraintsWithErrors + $uncheckedConstraintCount}`
+      : undefined;
 
   $: if ($initialPlan && browser) {
     // Asynchronously fetch resource types
@@ -699,12 +706,7 @@
           buttonText="Check Constraints"
           hasPermission={hasCheckConstraintsPermission}
           disabled={$simulationStatus !== Status.Complete}
-          statusBadgeText={($constraintsStatus === Status.Complete ||
-            $constraintsStatus === Status.Failed ||
-            $constraintsStatus === Status.PartialSuccess) &&
-          numConstraintsViolated + numConstraintsWithErrors + $uncheckedConstraintCount > 0
-            ? `${numConstraintsViolated + numConstraintsWithErrors + $uncheckedConstraintCount}`
-            : undefined}
+          statusBadgeText={constraintsStatusText}
           buttonTooltipContent={$simulationStatus !== Status.Complete ? 'Completed simulation required' : ''}
           permissionError={$planReadOnly
             ? PlanStatusMessages.READ_ONLY
