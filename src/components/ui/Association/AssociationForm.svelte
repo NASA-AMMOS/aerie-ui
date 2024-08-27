@@ -608,19 +608,16 @@
   </Panel>
 
   <CssGridGutter track={1} type="column" />
-  {#if definitionType === DefinitionType.CODE}
-    <DefinitionEditor
-      definition={definitionCode ?? defaultDefinitionCode}
-      {referenceModelId}
-      readOnly={!hasCreateDefinitionCodePermission}
-      {tsFiles}
-      title={`${mode === 'create' ? 'New' : 'Edit'} ${displayName} - Definition Editor`}
-      on:didChangeModelContent={onDidChangeModelContent}
-      on:selectReferenceModel={onSelectReferenceModel}
-    />
-  {:else}
-    Preview not available for definitions from a file.
-  {/if}
+  <DefinitionEditor
+    definition={definitionCode ?? defaultDefinitionCode}
+    {definitionType}
+    {referenceModelId}
+    readOnly={!hasCreateDefinitionCodePermission}
+    {tsFiles}
+    title={`${mode === 'create' ? 'New' : 'Edit'} ${displayName} - Definition Editor`}
+    on:didChangeModelContent={onDidChangeModelContent}
+    on:selectReferenceModel={onSelectReferenceModel}
+  />
 </CssGrid>
 
 <style>
