@@ -482,7 +482,6 @@
     externalEventsFilteredByType = [];
 
     let filteredDerivationGroups = $planDerivationGroupLinks.filter(link => link.plan_id === plan?.id && !link.enabled).map(link => link.derivation_group_name)
-    console.log(filteredDerivationGroups)
 
     // Apply filter for hiding derivation groups
     externalEventsFilteredByDG = externalEvents.filter(ee => {
