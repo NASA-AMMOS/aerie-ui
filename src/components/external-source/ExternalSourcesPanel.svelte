@@ -67,6 +67,11 @@
     }
   }
 
+  let planDerivationGroupNamesToFilterParsed: { [plan_id: number]: string[] } = JSON.parse(
+    $planDerivationGroupNamesToFilter,
+  );
+
+  $: planDerivationGroupNamesToFilterParsed = JSON.parse($planDerivationGroupNamesToFilter);
   $: linkedDerivationGroupIds = $planDerivationGroupLinks
     .filter(link => link.plan_id === $plan?.id)
     .map(link => link.derivation_group_name);
@@ -98,9 +103,9 @@
   originalView.subscribe(ov => {
     // any time a new view is selected, change the enabled list
     if (ov && $plan) {
-      $planDerivationGroupNamesToFilter[$plan.id] = ov?.definition.plan.filteredDerivationGroups;
+      planDerivationGroupNamesToFilterParsed[$plan.id] = ov?.definition.plan.filteredDerivationGroups;
     }
-    // planDerivationGroupNamesToFilter.set(JSON.stringify($planDerivationGroupNamesToFilter));
+    planDerivationGroupNamesToFilter.set(JSON.stringify(planDerivationGroupNamesToFilterParsed));
   });
 
   function onManageDerivationGroups() {
