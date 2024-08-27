@@ -2115,6 +2115,9 @@ const gql = {
         constraint_id
         constraint_revision
         results
+        constraint_metadata {
+          name
+        }
       }
     }
   `,

@@ -127,7 +127,7 @@ export const constraintResponseMap: Readable<Record<ConstraintDefinition['constr
           run =>
             ({
               constraintId: run.constraint_id,
-              constraintName: '',
+              constraintName: run.constraint_metadata.name,
               errors: [],
               results: {
                 ...run.results,
@@ -208,17 +208,19 @@ export const relevantConstraintRuns: Readable<ConstraintRun[]> = derived(
 );
 
 export const visibleConstraintResults: Readable<ConstraintResultWithName[]> = derived(
-  [constraintRuns, allowedConstraintPlanSpecMap],
-  ([$constraintRuns, $allowedConstraintPlanSpecMap]) =>
-    $constraintRuns
+  [constraintResponseMap, allowedConstraintPlanSpecMap],
+  ([$constraintResponseMap, $allowedConstraintPlanSpecMap]) => {
+    return Object.values($constraintResponseMap)
       .filter(constraintRun => {
-        return (
-          $allowedConstraintPlanSpecMap[constraintRun.constraint_id] &&
-          $allowedConstraintPlanSpecMap[constraintRun.constraint_id].constraint_revision ===
-            constraintRun.constraint_revision
-        );
+        return $allowedConstraintPlanSpecMap[constraintRun.constraintId];
       })
-      .map(constraintRun => constraintRun.results),
+      .map(constraintRun => {
+        return {
+          ...constraintRun.results,
+          constraintName: constraintRun.constraintName,
+        };
+      });
+  },
 );
 
 export const cachedConstraintsStatus: Readable<Status | null> = derived(

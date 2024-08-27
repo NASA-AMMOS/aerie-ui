@@ -86,6 +86,9 @@ export type ConstraintResponse = {
 
 export type ConstraintRun = {
   constraint_id: number;
+  constraint_metadata: {
+    name: string;
+  };
   constraint_revision: number;
   results: ConstraintResultWithName;
   simulation_data_id: number;
