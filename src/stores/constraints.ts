@@ -173,15 +173,13 @@ export const constraintResponseMap: Readable<Record<ConstraintDefinition['constr
 
 export const uncheckedConstraintCount: Readable<number> = derived(
   [allowedConstraintSpecs, constraintResponseMap],
-  ([$allowedConstraintSpecs, $constraintResponseMap]) => {
-    const foo = $allowedConstraintSpecs.reduce((count, prev) => {
+  ([$allowedConstraintSpecs, $constraintResponseMap]) =>
+    $allowedConstraintSpecs.reduce((count, prev) => {
       if (!(prev.constraint_id in $constraintResponseMap)) {
         count++;
       }
       return count;
-    }, 0);
-    return foo;
-  },
+    }, 0),
 );
 
 export const relevantConstraintRuns: Readable<ConstraintRun[]> = derived(
