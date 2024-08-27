@@ -960,7 +960,7 @@
     <Panel padBody={true}>
       <svelte:fragment slot="header">
         <slot name="left">
-          <SectionTitle><Truck />External Sources</SectionTitle>
+          <SectionTitle><Truck slot="icon" />External Sources</SectionTitle>
           <div class="filter">
             <div class="timeline-editor-layer-filter">
               <Input>
@@ -1079,7 +1079,7 @@
       <Panel padBody={true}>
         <svelte:fragment slot="header">
           <slot name="left">
-            <SectionTitle><Balloon />External Events</SectionTitle>
+            <SectionTitle><Balloon slot="icon" />External Events</SectionTitle>
             {#if showExternalEventTable}
               <div class="filter">
                 <div class="timeline-editor-layer-filter">
