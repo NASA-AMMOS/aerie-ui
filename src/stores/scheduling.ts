@@ -162,10 +162,8 @@ export const allowedSchedulingGoalSpecs: Readable<SchedulingGoalPlanSpecificatio
     $schedulingGoalSpecifications.filter(({ goal_metadata: goalMetadata }) => goalMetadata !== null),
 );
 
-export const allowedSchedulingGoalInvocations = derived(
-  [schedulingGoalInvocations],
-  ([$schedulingGoalInvocations]) =>
-    $schedulingGoalInvocations.filter(({ goal_metadata: goalMetadata }) => goalMetadata !== null),
+export const allowedSchedulingGoalInvocations = derived([schedulingGoalInvocations], ([$schedulingGoalInvocations]) =>
+  $schedulingGoalInvocations.filter(({ goal_metadata: goalMetadata }) => goalMetadata !== null),
 );
 
 export const latestSchedulingGoalAnalyses = derived(
