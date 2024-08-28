@@ -7,9 +7,9 @@
   import { Status } from '../../enums/status';
   import { plan, planReadOnly } from '../../stores/plan';
   import {
+    allowedSchedulingGoalInvocations,
     enableScheduling,
     schedulingAnalysisStatus,
-    schedulingGoalInvocations,
     schedulingGoalSpecifications,
     schedulingGoalsMap,
   } from '../../stores/scheduling';
@@ -40,7 +40,7 @@
   let visibleSchedulingGoalSpecs: SchedulingGoalPlanSpecification[] = [];
 
   // TODO: remove this after db merge as it becomes redundant
-  $: visibleSchedulingGoalSpecs = $schedulingGoalInvocations.filter(({ goal_metadata: goalMetadata }) => {
+  $: visibleSchedulingGoalSpecs = $allowedSchedulingGoalInvocations.filter(({ goal_metadata: goalMetadata }) => {
     if (goalMetadata) {
       const { public: isPublic, owner } = goalMetadata;
       if (!isPublic && !isAdminRole(user?.activeRole)) {
