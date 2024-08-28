@@ -203,8 +203,8 @@ function conditionalAndLoopKeywordsLinter(commandNodes: SyntaxNode[], text: stri
   const loopStack: WhileOpener[] = [];
   const conditionalKeywords = [];
   const loopKeywords = [];
-  const sequenceAdaptationConditionalKeywords = get(sequenceAdaptation)?.conditionalKeywords;
-  const sequenceAdaptationLoopKeywords = get(sequenceAdaptation)?.loopKeywords;
+  const sequenceAdaptationConditionalKeywords = get(sequenceAdaptation).conditionalKeywords;
+  const sequenceAdaptationLoopKeywords = get(sequenceAdaptation).loopKeywords;
 
   conditionalKeywords.push(
     sequenceAdaptationConditionalKeywords?.else,
