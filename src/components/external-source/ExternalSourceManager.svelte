@@ -863,7 +863,7 @@
           <AlertError class="m-2" error={$createExternalSourceTypeError} />
           <AlertError class="m-2" error={$createDerivationGroupError} />
           <AlertError class="m-2" error={$parsingError} />
-          <div id="file-upload-field">
+          <div class="file-upload-field">
             <fieldset style:flex={1}>
               <label for="file">Source File</label>
               <input
@@ -1003,7 +1003,6 @@
                   <div class="list-buttons menu-border-top">
                     <button
                       class="st-button secondary list-button"
-                      id="source-filters-select-all"
                       on:click={selectFilteredValues}
                     >
                       Select {filteredValues.length}
@@ -1384,7 +1383,7 @@
     margin-left: auto;
   }
 
-  #file-upload-field {
+  .file-upload-field {
     display: flex;
     flex-direction: row;
     white-space: nowrap;
