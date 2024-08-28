@@ -156,7 +156,7 @@
   ];
 
   const modalColumnSizeNoDetail: string = '1fr 3px 0fr';
-  const modalColumnSizeWithDetail: string = '3fr 3px 1fr';
+  const modalColumnSizeWithDetail: string = '3fr 3px 1.3fr';
   let modalColumnSize: string = modalColumnSizeNoDetail;
   let columnDefs = baseColumnDefs;
 
