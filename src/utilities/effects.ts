@@ -2476,7 +2476,7 @@ const effects = {
   async deleteSchedulingGoalInvocation(
     plan: Plan,
     schedulingSpecificationId: number,
-    goalInvocationIdsToDelete: number[],
+    goalInvocationIdsToDelete: (number | undefined)[],
     user: User | null,
   ) {
     try {

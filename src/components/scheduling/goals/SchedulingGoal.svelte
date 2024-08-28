@@ -42,7 +42,7 @@
   let simulateGoal: boolean = false;
   let upButtonHidden: boolean = false;
   let formParameters: FormParameter[] = [];
-  let version: SchedulingGoalDefinition | undefined = undefined;
+  let version: Pick<SchedulingGoalDefinition, "type" | "revision" | "analyses" | "parameter_schema"> | undefined = undefined;
 
   $: revisions = goal.versions.map(({ revision }) => revision);
   $: {
@@ -53,7 +53,7 @@
   }
 
   $: {
-    let revision = null;
+    let revision: number | null = null;
     if (goalPlanSpec.goal_revision == null) {
       revision = Math.max(...(goalPlanSpec.goal_metadata?.versions?.map(x => x.revision) ?? [0]));
     } else {
@@ -61,7 +61,7 @@
     }
     version = goalPlanSpec.goal_metadata?.versions.filter(x => x.revision === revision)[0];
     let schema = version?.parameter_schema;
-    let result = [];
+    let result: any[] = [];
     if (schema && schema.type === 'struct') {
       Object.entries(schema.items).forEach(([name, subschema], i) => {
         result.push({
