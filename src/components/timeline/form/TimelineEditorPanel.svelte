@@ -102,6 +102,9 @@
   let selectedTimeline: Timeline | undefined;
   let selectedRow: Row | undefined;
   let verticalGuides: VerticalGuide[] = [];
+  let editorWidth: number;
+  let rowHasActivityLayer: boolean | ActivityLayer = false;
+  let rowHasExternalEventLayer: boolean | ExternalEventLayer = false;
   let yAxes: Axis[] = [];
 
   $: selectedTimeline = $view?.definition.plan.timelines.find(t => t.id === $selectedTimelineId);
@@ -198,6 +201,12 @@
   function handleActivityOptionRadioChange(event: CustomEvent<{ id: RadioButtonId }>, name: keyof ActivityOptions) {
     const { id } = event.detail;
     viewUpdateRow('activityOptions', { ...activityOptions, [name]: id });
+  }
+
+  function handleOptionRadioChange(event: CustomEvent<{ id: RadioButtonId }>, name: keyof (ActivityOptions & ExternalEventOptions)) {
+    const { id } = event.detail;
+    if (rowHasActivityLayer) { viewUpdateRow('activityOptions', { ...activityOptions, [name]: id }); }
+    if (rowHasExternalEventLayer) { viewUpdateRow('externalEventOptions', { ...externalEventOptions, [name]: id }); }
   }
 
   function handleExternalEventOptionRadioChange(
@@ -879,16 +888,43 @@
           {/if}
         </fieldset>
       {/if}
-      {#if rowHasActivityLayer}
+      {#if rowHasActivityLayer || rowHasExternalEventLayer}
         <fieldset class="editor-section">
           <div class="editor-section-header">
-            <div class="st-typography-medium">Activity Options</div>
+            <div class="st-typography-medium">Layer Options</div>
           </div>
+          <form on:submit={event => event.preventDefault()} style="flex: 1">
+            <Input layout="inline" class="editor-input">
+              <label for="text">Height</label>
+              <input
+                min={12}
+                autocomplete="off"
+                class="st-input w-100"
+                name="text"
+                type="number"
+                value={rowHasActivityLayer ? activityOptions.activityHeight : externalEventOptions.externalEventHeight}
+                on:input={event => {
+                  const { value } = getTarget(event);
+                  if (typeof value === 'number' && !isNaN(value)) {
+                    if (value >= 12) {
+                      if (rowHasActivityLayer) {
+                        viewUpdateRow('activityOptions', { ...activityOptions, activityHeight: value });
+                      }
+                      if (rowHasExternalEventLayer) {
+                        viewUpdateRow('externalEventOptions', { ...externalEventOptions,externalEventHeight: value });
+                      }
+                    }
+                  }
+                }}
+              />
+              <ParameterUnits unit="px" slot="right" />
+            </Input>
+          </form>
           <Input layout="inline" class="editor-input">
             <label for="activity-composition">Display</label>
             <RadioButtons
-              selectedButtonId={activityOptions.displayMode}
-              on:select-radio-button={e => handleActivityOptionRadioChange(e, 'displayMode')}
+              selectedButtonId={rowHasActivityLayer ? activityOptions.displayMode : externalEventOptions.displayMode }
+              on:select-radio-button={e => handleOptionRadioChange(e, 'displayMode')}
             >
               <RadioButton
                 use={[[tooltip, { content: 'Group activities by type in collapsible rows', placement: 'top' }]]}
@@ -913,8 +949,8 @@
           <Input layout="inline" class="editor-input">
             <label for="activity-composition">Labels</label>
             <RadioButtons
-              selectedButtonId={activityOptions.labelVisibility}
-              on:select-radio-button={e => handleActivityOptionRadioChange(e, 'labelVisibility')}
+              selectedButtonId={rowHasActivityLayer ? activityOptions.labelVisibility : externalEventOptions.labelVisibility}
+              on:select-radio-button={e => handleOptionRadioChange(e, 'labelVisibility')}
             >
               <RadioButton use={[[tooltip, { content: 'Always show labels', placement: 'top' }]]} id="on">
                 <div class="radio-button-icon">
@@ -939,36 +975,38 @@
               </RadioButton>
             </RadioButtons>
           </Input>
-          <Input layout="inline" class="editor-input">
-            <label for="activity-composition">Show</label>
-            <RadioButtons
-              id="activity-composition"
-              selectedButtonId={activityOptions.composition}
-              on:select-radio-button={e => handleActivityOptionRadioChange(e, 'composition')}
-            >
-              <RadioButton use={[[tooltip, { content: 'Only show directives', placement: 'top' }]]} id="directives">
-                <div class="radio-button-icon">
-                  <DirectiveIcon /><span class="timeline-editor-responsive-label">Directives</span>
-                </div>
-              </RadioButton>
-              <RadioButton use={[[tooltip, { content: 'Only show simulated', placement: 'top' }]]} id="spans">
-                <div class="radio-button-icon">
-                  <SpanIcon />
-                  <span class="timeline-editor-responsive-label">Simulated</span>
-                </div>
-              </RadioButton>
-              <RadioButton
-                use={[[tooltip, { content: 'Show directives and simulated activities', placement: 'top' }]]}
-                id="both"
+          {#if rowHasActivityLayer}
+            <Input layout="inline" class="editor-input">
+              <label for="activity-composition">Show</label>
+              <RadioButtons
+                id="activity-composition"
+                selectedButtonId={activityOptions.composition}
+                on:select-radio-button={e => handleActivityOptionRadioChange(e, 'composition')}
               >
-                <div class="radio-button-icon">
-                  <DirectiveAndSpanIcon />
-                  <span class="timeline-editor-responsive-label">Both</span>
-                </div>
-              </RadioButton>
-            </RadioButtons>
-          </Input>
-          {#if activityOptions.displayMode === 'grouped'}
+                <RadioButton use={[[tooltip, { content: 'Only show directives', placement: 'top' }]]} id="directives">
+                  <div class="radio-button-icon">
+                    <DirectiveIcon /><span class="timeline-editor-responsive-label">Directives</span>
+                  </div>
+                </RadioButton>
+                <RadioButton use={[[tooltip, { content: 'Only show simulated', placement: 'top' }]]} id="spans">
+                  <div class="radio-button-icon">
+                    <SpanIcon />
+                    <span class="timeline-editor-responsive-label">Simulated</span>
+                  </div>
+                </RadioButton>
+                <RadioButton
+                  use={[[tooltip, { content: 'Show directives and simulated activities', placement: 'top' }]]}
+                  id="both"
+                >
+                  <div class="radio-button-icon">
+                    <DirectiveAndSpanIcon />
+                    <span class="timeline-editor-responsive-label">Both</span>
+                  </div>
+                </RadioButton>
+              </RadioButtons>
+            </Input>
+          {/if}
+          {#if rowHasActivityLayer && activityOptions.displayMode === 'grouped'}
             <Input layout="inline" class="editor-input">
               <label for="activity-composition">Hierarchy</label>
               <RadioButtons
@@ -1001,91 +1039,7 @@
               </RadioButtons>
             </Input>
           {/if}
-          <form on:submit={event => event.preventDefault()} style="flex: 1">
-            <Input layout="inline" class="editor-input">
-              <label for="text">Height</label>
-              <input
-                min={12}
-                autocomplete="off"
-                class="st-input w-100"
-                name="text"
-                type="number"
-                value={activityOptions.activityHeight}
-                on:input={event => {
-                  const { value } = getTarget(event);
-                  if (typeof value === 'number' && !isNaN(value)) {
-                    if (value >= 12) {
-                      viewUpdateRow('activityOptions', { ...activityOptions, activityHeight: value });
-                    }
-                  }
-                }}
-              />
-              <ParameterUnits unit="px" slot="right" />
-            </Input>
-          </form>
-        </fieldset>
-      {/if}
-      {#if rowHasExternalEventLayer}
-        <fieldset class="editor-section">
-          <div class="editor-section-header">
-            <div class="st-typography-medium">External Event Options</div>
-          </div>
-          <Input layout="inline" class="editor-input">
-            <label for="activity-composition">Display</label>
-            <RadioButtons
-              selectedButtonId={externalEventOptions.displayMode}
-              on:select-radio-button={e => handleExternalEventOptionRadioChange(e, 'displayMode')}
-            >
-              <RadioButton
-                use={[[tooltip, { content: 'Group external events by type in collapsible rows', placement: 'top' }]]}
-                id="grouped"
-              >
-                <div class="radio-button-icon">
-                  <ActivityModeGroupedIcon />
-                  <span class="timeline-editor-responsive-label">Grouped</span>
-                </div>
-              </RadioButton>
-              <RadioButton
-                use={[[tooltip, { content: 'Pack external events into a single row', placement: 'top' }]]}
-                id="compact"
-              >
-                <div class="radio-button-icon">
-                  <ActivityModeCompactIcon />
-                  <span class="timeline-editor-responsive-label">Compact</span>
-                </div>
-              </RadioButton>
-            </RadioButtons>
-          </Input>
-          <Input layout="inline" class="editor-input">
-            <label for="activity-composition">Labels</label>
-            <RadioButtons
-              selectedButtonId={externalEventOptions.labelVisibility}
-              on:select-radio-button={e => handleExternalEventOptionRadioChange(e, 'labelVisibility')}
-            >
-              <RadioButton use={[[tooltip, { content: 'Always show labels', placement: 'top' }]]} id="on">
-                <div class="radio-button-icon">
-                  <ActivityModeTextIcon />
-                  <span class="timeline-editor-responsive-label">On</span>
-                </div>
-              </RadioButton>
-              <RadioButton use={[[tooltip, { content: 'Never show labels', placement: 'top' }]]} id="off">
-                <div class="radio-button-icon">
-                  <ActivityModeTextNoneIcon />
-                  <span class="timeline-editor-responsive-label">Off</span>
-                </div>
-              </RadioButton>
-              <RadioButton
-                use={[[tooltip, { content: 'Show labels that do not overlap', placement: 'top' }]]}
-                id="auto"
-              >
-                <div class="radio-button-icon">
-                  <ActivityModeWidthIcon />
-                  <span class="timeline-editor-responsive-label">Auto</span>
-                </div>
-              </RadioButton>
-            </RadioButtons>
-          </Input>
-          {#if externalEventOptions.displayMode === 'grouped'}
+          {#if rowHasExternalEventLayer && externalEventOptions.displayMode === 'grouped'}
             <Input layout="inline" class="editor-input">
               <label for="activity-composition">Group By</label>
               <RadioButtons
@@ -1137,28 +1091,6 @@
               />
             </Input>
           {/if}
-          <form on:submit={event => event.preventDefault()} style="flex: 1">
-            <Input layout="inline" class="editor-input">
-              <label for="text">Height</label>
-              <input
-                min={12}
-                autocomplete="off"
-                class="st-input w-100"
-                name="text"
-                type="number"
-                value={externalEventOptions.externalEventHeight}
-                on:input={event => {
-                  const { value } = getTarget(event);
-                  if (typeof value === 'number' && !isNaN(value)) {
-                    if (value >= 12) {
-                      viewUpdateRow('externalEventOptions', { ...externalEventOptions, externalEventHeight: value });
-                    }
-                  }
-                }}
-              />
-              <ParameterUnits unit="px" slot="right" />
-            </Input>
-          </form>
         </fieldset>
       {/if}
       <!-- TODO perhaps separate out each section into a mini editor? -->
