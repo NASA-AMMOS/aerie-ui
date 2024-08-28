@@ -26,7 +26,7 @@
   import effects from '../../utilities/effects';
   import { changedKeys, getTarget } from '../../utilities/generic';
   import gql from '../../utilities/gql';
-  import { showMergeReviewEndedModal } from '../../utilities/modal';
+  import { showMergeReviewEndedModal, showPlanBranchMergeDerivationGroupMessageModal } from '../../utilities/modal';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import { tooltip } from '../../utilities/tooltip';
@@ -79,12 +79,17 @@
   let selectedNonConflictingActivity: PlanMergeNonConflictingActivity | null;
   let unresolvedConflictsCount: number = 0;
   let userInitiatedMergeRequestResolution: boolean = false;
+  let sourcePlanName: string = "";
+  let targetPlanName: string = "";
 
   $: if (initialPlan && initialMergeRequest) {
     const {
       plan_snapshot_supplying_changes: { plan: sourcePlan },
       plan_receiving_changes: targetPlan,
     } = initialMergeRequest;
+
+    sourcePlanName = sourcePlan.name;
+    targetPlanName = targetPlan.name;
 
     const { id: supplyingPlanId } = sourcePlan;
 
@@ -293,19 +298,21 @@
   }
 
   async function onApproveChanges() {
-    if (initialMergeRequest !== null) {
-      const success = await effects.planMergeCommit(
-        initialMergeRequest.id,
-        initialMergeRequest.plan_snapshot_supplying_changes.plan,
-        initialMergeRequest.plan_receiving_changes,
-        user,
-      );
-      if (success) {
-        $planReadOnlyMergeRequest = false;
-        userInitiatedMergeRequestResolution = true;
-        goto(`${base}/plans/${initialPlan.id}`);
+    await showPlanBranchMergeDerivationGroupMessageModal(sourcePlanName, targetPlanName).then(async () => {
+      if (initialMergeRequest !== null) {
+        const success = await effects.planMergeCommit(
+          initialMergeRequest.id,
+          initialMergeRequest.plan_snapshot_supplying_changes.plan,
+          initialMergeRequest.plan_receiving_changes,
+          user,
+        );
+        if (success) {
+          $planReadOnlyMergeRequest = false;
+          userInitiatedMergeRequestResolution = true;
+          goto(`${base}/plans/${initialPlan.id}`);
+        }
       }
-    }
+    });
   }
 
   async function onDenyChanges() {
