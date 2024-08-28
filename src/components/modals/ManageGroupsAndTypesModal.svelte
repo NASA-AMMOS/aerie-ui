@@ -490,7 +490,7 @@
 <Modal height={600} width={1000}>
   <ModalHeader on:close>
     Manage Derivation Groups and Types
-    <div class="derivationgroups-modal-filter-container" style="margin-left: auto; margin-right: 15px">
+    <div class="derivationgroups-modal-filter-container">
       <select
         bind:value={mode}
         on:change={() => {
@@ -719,11 +719,10 @@
 
 <style>
   .derivationgroups-modal-filter-container {
-    align-items: center;
-    column-gap: 0.25rem;
-    display: grid;
-    grid-template-columns: min-content auto min-content;
-    margin: 0.5rem 1rem 0;
+    display: flex;
+    flex: 1;
+    justify-content: flex-end;
+    padding-right: 8px;
   }
 
   .derivationgroups-modal-table-container {
