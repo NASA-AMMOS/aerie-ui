@@ -2801,7 +2801,7 @@ const gql = {
 
   SUB_SCHEDULING_GOAL_INVOCATIONS: `#graphql
     subscription SubSchedulingGoalInvocations($planId: Int!) {
-      scheduling_specification_goals (where: {specification: {plan_id: {_eq: $planId}}}) {
+      ${Queries.SCHEDULING_SPECIFICATION_GOALS} (where: {specification: {plan_id: {_eq: $planId}}}) {
         specification_id
         goal_id
         goal_invocation_id
