@@ -18,8 +18,9 @@ import ManagePlanDerivationGroupsModal from '../components/modals/ManagePlanDeri
 import ManagePlanSchedulingConditionsModal from '../components/modals/ManagePlanSchedulingConditionsModal.svelte';
 import ManagePlanSchedulingGoalsModal from '../components/modals/ManagePlanSchedulingGoalsModal.svelte';
 import MergeReviewEndedModal from '../components/modals/MergeReviewEndedModal.svelte';
-import PlanBranchRequestModal from '../components/modals/PlanBranchRequestModal.svelte';
 import PlanBranchesModal from '../components/modals/PlanBranchesModal.svelte';
+import PlanBranchMergeDerivationGroupMessageModal from '../components/modals/PlanBranchMergeDerivationGroupMessageModal.svelte';
+import PlanBranchRequestModal from '../components/modals/PlanBranchRequestModal.svelte';
 import PlanMergeRequestsModal from '../components/modals/PlanMergeRequestsModal.svelte';
 import RestorePlanSnapshotModal from '../components/modals/RestorePlanSnapshotModal.svelte';
 import SavedViewsModal from '../components/modals/SavedViewsModal.svelte';
@@ -466,6 +467,37 @@ export async function showManagePlanSchedulingGoalsModal(user: User | null): Pro
           target.resolve = null;
           resolve({ confirm: true, value: e.detail });
           managePlanGoalsModal.$destroy();
+        });
+      }
+    } else {
+      resolve({ confirm: false });
+    }
+  });
+}
+
+/**
+ * Shows a modal notifying the user of default derivation group behavior on branch merge.
+ */
+export async function showPlanBranchMergeDerivationGroupMessageModal(sourcePlanName: string, targetPlanName: string): Promise<ModalElementValue> {
+  return new Promise(resolve => {
+    if (browser) {
+      const target: ModalElement | null = document.querySelector('#svelte-modal');
+
+      if (target) {
+        const confirmationModal = new PlanBranchMergeDerivationGroupMessageModal({
+          props: { sourcePlanName, targetPlanName },
+          target,
+        });
+        target.resolve = resolve;
+
+        // Do not allow users to dismiss this modal
+        target.setAttribute('data-dismissible', 'false');
+
+        confirmationModal.$on('confirm', () => {
+          target.replaceChildren();
+          target.resolve = null;
+          resolve({ confirm: true });
+          confirmationModal.$destroy();
         });
       }
     } else {

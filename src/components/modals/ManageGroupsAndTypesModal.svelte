@@ -395,6 +395,8 @@
         }
         else {
           effects.createDerivationGroup({source_type_name: newTypeSourceType, name: newTypeName}, user);
+          newTypeName = "";
+          newTypeSourceType = "";
         }
         break;
       case 'eet':
@@ -403,6 +405,7 @@
         }
         else {
           effects.createExternalEventType({name: newTypeName}, user);
+          newTypeName = "";
         }
         break;
       default: // 'est'
@@ -411,6 +414,7 @@
         }
         else {
           effects.createExternalSourceType({name: newTypeName}, user);
+          newTypeName = "";
         }
         break;
     }
