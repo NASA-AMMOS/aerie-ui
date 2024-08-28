@@ -1024,7 +1024,8 @@
             </Input>
           </form>
         </fieldset>
-      {:else if rowHasExternalEventLayer}
+      {/if}
+      {#if rowHasExternalEventLayer}
         <fieldset class="editor-section">
           <div class="editor-section-header">
             <div class="st-typography-medium">External Event Options</div>
