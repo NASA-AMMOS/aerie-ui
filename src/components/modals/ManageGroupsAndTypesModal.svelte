@@ -384,8 +384,6 @@
     }
   });
 
-  $: console.log($derivationGroups)
-
   async function onCreateType() {
     switch(mode) {
       case 'dg':
