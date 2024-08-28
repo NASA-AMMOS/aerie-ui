@@ -500,7 +500,6 @@
           modalColumnSize = modalColumnSizeNoDetail;
         }}
         name="mode"
-        id="mode"
         class="st-select"
         style="width: 200px"
       >
