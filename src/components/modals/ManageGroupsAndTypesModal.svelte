@@ -10,6 +10,7 @@
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalEventType } from '../../types/external-event';
   import type { DerivationGroup, ExternalSourceSlim, ExternalSourceType } from '../../types/external-source';
+  import effects from '../../utilities/effects';
   import {
     showDeleteDerivationGroupModal,
     showDeleteExternalEventTypeModal,
@@ -17,6 +18,7 @@
   } from '../../utilities/modal';
   import { featurePermissions } from '../../utilities/permissions';
   import Collapse from '../Collapse.svelte';
+  import AlertError from '../ui/AlertError.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
   import DataGrid from '../ui/DataGrid/DataGrid.svelte';
@@ -349,6 +351,10 @@
   const modalColumnSizeWithDetailEST: string = '2fr 3px 1.2fr';
   let modalColumnSize: string = modalColumnSizeNoDetail;
 
+  let newTypeName: string = "";
+  let newTypeSourceType: string = "";
+  let newTypeError: string | null = null;
+
   let selectedDerivationGroup: DerivationGroup | undefined = undefined;
   let selectedDerivationGroupSources: ExternalSourceSlim[] = [];
 
@@ -377,6 +383,40 @@
       return false;
     }
   });
+
+  $: console.log($derivationGroups)
+
+  async function onCreateType() {
+    switch(mode) {
+      case 'dg':
+        if (newTypeName === "") {
+          newTypeError = "Please select a source type."
+        }
+        else if (newTypeSourceType === "") {
+          newTypeError = "Please enter a new type name."
+        }
+        else {
+          effects.createDerivationGroup({source_type_name: newTypeSourceType, name: newTypeName}, user);
+        }
+        break;
+      case 'eet':
+        if (newTypeName === "") {
+          newTypeError = "Please enter a new type name."
+        }
+        else {
+          effects.createExternalEventType({name: newTypeName}, user);
+        }
+        break;
+      default: // 'est'
+        if (newTypeName === "") {
+          newTypeError = "Please enter a new type name."
+        }
+        else {
+          effects.createExternalSourceType({name: newTypeName}, user);
+        }
+        break;
+    }
+  }
 
   async function deleteDerivationGroup(derivationGroup: DerivationGroup) {
     // Makes sure all associated sources are deleted before this. List of sources already contained in DerivationGroup type.
@@ -512,6 +552,39 @@
   <ModalContent style=" overflow-y:scroll; padding:0;">
     <CssGrid columns={modalColumnSize} minHeight="100%">
       <div class="derivationgroups-modal-table-container">
+        <div class="filter">
+          <AlertError class="m-2" style="margin: 1.0rem 0;" error={newTypeError} />
+          <div class="timeline-editor-layer-filter">
+            <input
+              bind:value={newTypeName}
+              on:change={() => newTypeError = null}
+              autocomplete="off"
+              class="st-input w-100"
+              name="filter-ee"
+              placeholder={`New ${mode === 'dg' ? 'Derivation Group' : mode === 'est' ? 'External Source Type' : 'External Event Type'} name`}
+            />
+            {#if mode === 'dg'}
+              <select
+                bind:value={newTypeSourceType}
+                on:change={() => newTypeError = null}
+                name="newTypeSourceType"
+                class="st-select"
+                style="width: 200px"
+              >
+                {#each $externalSourceTypes as sourceType}
+                  <option value={sourceType.name}>{sourceType.name}</option> 
+                {/each}
+              </select>
+            {/if}
+            <button 
+              class="st-button w-10" 
+              type="submit"
+              on:click|preventDefault={onCreateType}
+            >
+              Create
+            </button>
+          </div>
+        </div>
         {#if mode === 'dg'}
           <DataGrid
             bind:this={dgDataGrid}
@@ -730,5 +803,12 @@
     padding: 0 1rem 0.5rem;
     padding-top: 10px;
     width: 100%;
+  }
+
+  .timeline-editor-layer-filter {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    padding-bottom: 10px;
   }
 </style>
