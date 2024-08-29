@@ -9,21 +9,19 @@
   import Collapse from '../Collapse.svelte';
   import Input from '../form/Input.svelte';
   import DatePicker from '../ui/DatePicker/DatePicker.svelte';
-  import Highlight from '../ui/Highlight.svelte';
   import Properties from './Properties.svelte';
 
   export let externalEvent: ExternalEventDB;
   export let showHeader: boolean = true;
 
-  let editable: boolean = false;
   let formProperties: Property[] = [];
+
   $: formProperties = Object.entries(externalEvent.properties).map(e => {
     return {
       name: e[0],
       value: e[1],
     };
   });
-  let highlightKeysMap: Record<string, boolean> = {};
 </script>
 
 <div class="external-event-form-container">
@@ -40,72 +38,56 @@
   <div class="external-event-form">
     <fieldset>
       <Collapse title="Definition">
-        <!-- <Highlight highlight={highlightKeysMap.id}>
-          <Input layout="inline">
-            ID
-            <input class="st-input w-100" disabled={!editable} name="id" value={externalEvent.id} />
-          </Input>
-        </Highlight> -->
 
-        <Highlight highlight={highlightKeysMap.type}>
-          <Input layout="inline">
-            Type
-            <input
-              class="st-input w-100"
-              disabled={!editable}
-              name="event-type"
-              value={externalEvent.pkey.event_type_name}
-            />
-          </Input>
-        </Highlight>
+        <Input layout="inline">
+          Type
+          <input
+            class="st-input w-100"
+            disabled={true}
+            name="event-type"
+            value={externalEvent.pkey.event_type_name}
+          />
+        </Input>
 
-        <Highlight highlight={highlightKeysMap.start_offset}>
-          <Input layout="inline">
-            Start Time (UTC)
-            <DatePicker
-              dateString={`${formatDate(new Date(externalEvent.start_time), $plugins.time.primary.format)}`}
-              disabled={!editable}
-              name="start-time"
-            />
-          </Input>
-        </Highlight>
+        <Input layout="inline">
+          Start Time (UTC)
+          <DatePicker
+            dateString={`${formatDate(new Date(externalEvent.start_time), $plugins.time.primary.format)}`}
+            disabled={true}
+            name="start-time"
+          />
+        </Input>
 
-        <Highlight highlight={highlightKeysMap.start_offset}>
-          <Input layout="inline">
-            Duration
-            <input class="st-input w-100" disabled={!editable} name="duration" value={externalEvent.duration} />
-          </Input>
-        </Highlight>
+        <Input layout="inline">
+          Duration
+          <input class="st-input w-100" disabled={true} name="duration" value={externalEvent.duration} />
+        </Input>
 
-        <Highlight highlight={highlightKeysMap.last_modified_by}>
-          <Input layout="inline">
-            Source ID
-            <input
-              class="st-input w-100"
-              disabled={!editable}
-              name="source-key"
-              value={externalEvent.pkey.source_key}
-            />
-          </Input>
-        </Highlight>
+        <Input layout="inline">
+          Source ID
+          <input
+            class="st-input w-100"
+            disabled={true}
+            name="source-key"
+            value={externalEvent.pkey.source_key}
+          />
+        </Input>
 
-        <Highlight highlight={highlightKeysMap.last_modified_by}>
-          <Input layout="inline">
-            Source File
-            <input
-              class="st-input w-100"
-              disabled={!editable}
-              name="source-key-resolved"
-              value={externalEvent.pkey.source_key}
-            />
-          </Input>
-        </Highlight>
+        <Input layout="inline">
+          Source File
+          <input
+            class="st-input w-100"
+            disabled={true}
+            name="source-key-resolved"
+            value={externalEvent.pkey.source_key}
+          />
+        </Input>
       </Collapse>
     </fieldset>
 
     <fieldset>
       <Collapse title={formProperties.length > 0 ? `Properties` : ''}>
-        <Properties {formProperties} {highlightKeysMap} />
+        <Properties {formProperties} />
         {#if formProperties.length === 0}
           <div class="st-typography-label">No Properties Found</div>
         {/if}
