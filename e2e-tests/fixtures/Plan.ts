@@ -95,7 +95,12 @@ export class Plan {
   async addActivity(name: string = 'GrowBanana') {
     const currentNumOfActivitiesWithName = await this.panelActivityDirectivesTable.getByRole('row', { name }).count();
     const activityListItem = this.page.locator(`.list-item :text-is("${name}")`);
-    const activityRow = this.page.locator('.timeline .rows .timeline-row-wrapper:first-of-type .overlay');
+    const activityRow = this.page
+      .locator('.timeline')
+      .getByRole('listitem')
+      .filter({ hasText: 'Activities by Type' })
+      .first()
+      .locator('.overlay');
     await activityListItem.dragTo(activityRow, { timeout: 5000 });
     await this.waitForToast('Activity Directive Created Successfully');
     await expect(this.panelActivityDirectivesTable.getByRole('row', { name })).toHaveCount(
