@@ -138,7 +138,7 @@ test.describe.serial('Plan', () => {
   });
 
   test(`Changing to a new plan should clear the selected activity`, async ({ baseURL }) => {
-    await plan.showPanel(PanelNames.ACTIVITY_AND_RESOURCE_TYPES);
+    await plan.showPanel(PanelNames.TIMELINE_ITEMS);
 
     // Create an activity which will be auto selected
     await plan.addActivity('GrowBanana');

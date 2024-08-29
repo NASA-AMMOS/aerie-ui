@@ -48,7 +48,7 @@ test.describe.serial('Timeline View Editing', () => {
   const rowName = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
 
   test('Add an activity to the parent plan', async () => {
-    await plan.showPanel(PanelNames.ACTIVITY_AND_RESOURCE_TYPES);
+    await plan.showPanel(PanelNames.TIMELINE_ITEMS);
     await plan.addActivity('PickBanana');
   });
 

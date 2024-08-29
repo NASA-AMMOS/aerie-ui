@@ -29,7 +29,7 @@
   }
 </script>
 
-<div bind:this={div} class="context-sub-menu-item-container">
+<div bind:this={div}>
   <ContextMenuItem on:mouseenter={show} on:mouseleave={hide}>
     <div class="context-sub-menu-item">
       {text}
