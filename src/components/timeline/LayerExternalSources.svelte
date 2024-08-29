@@ -50,6 +50,7 @@
   export let timelineInteractionMode: TimelineInteractionMode;
   export let viewTimeRange: TimeRange = { end: 0, start: 0 };
   export let xScaleView: ScaleTime<number, number> | null = null;
+  export let verticalDrawOffset: number = 0;
 
   const dispatch = createEventDispatcher<{
     contextMenu: MouseOver;
@@ -78,7 +79,8 @@
   $: onMousemove(mousemove);
   $: onMouseout(mouseout);
 
-  $: canvasHeightDpr = drawHeight * dpr;
+  $: correctedCanvasHeight = (drawHeight+verticalDrawOffset) > 20 ? drawHeight+verticalDrawOffset : 20
+  $: canvasHeightDpr = correctedCanvasHeight * dpr;
   $: canvasWidthDpr = drawWidth * dpr;
   $: rowHeight = externalEventOptions.externalEventHeight + (externalEventOptions.displayMode === 'compact' ? 0 : 0);
 
@@ -300,9 +302,12 @@
       Object.entries(rows).forEach(([_, entry], i) => {
         const { items } = entry;
         let yRow = i * (extraSpace / (rowCount - 1)) || 0;
-        // If we can't have at least two rows then draw everything at 0
-        if (externalEventOptions.externalEventHeight * 2 >= drawHeight) {
+        yRow += verticalDrawOffset;
+        if (externalEventOptions.externalEventHeight + 4 >= drawHeight) {
           yRow = 4;
+        }
+        else if (externalEventOptions.externalEventHeight * 2 >= drawHeight) {
+          yRow = 4 + verticalDrawOffset;
         }
         if (externalEventOptions.externalEventHeight) {
           drawRow(yRow, items, idToColorMaps);
@@ -484,7 +489,7 @@
 <canvas
   bind:this={canvas}
   height={canvasHeightDpr}
-  style="height: {drawHeight}px; width: {drawWidth}px;"
+  style="height: {correctedCanvasHeight}px; width: {drawWidth}px;"
   width={canvasWidthDpr}
 />
 
