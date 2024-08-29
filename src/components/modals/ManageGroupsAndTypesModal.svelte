@@ -67,6 +67,7 @@
       sortable: true,
       suppressAutoSize: false,
       suppressSizeToFit: false,
+      width: 360,
     },
     {
       field: 'source_type_name',
@@ -76,6 +77,7 @@
       sortable: true,
       suppressAutoSize: false,
       suppressSizeToFit: false,
+      width: 360,
     },
     {
       field: 'derived_event_total',
@@ -87,6 +89,7 @@
       valueFormatter: params => {
         return params?.value.length;
       },
+      width: 300,
     },
     {
       field: 'sources',
@@ -98,6 +101,7 @@
       valueFormatter: params => {
         return params?.value.size;
       },
+      width: 300,
     },
     {
       cellClass: 'action-cell-container',
@@ -127,7 +131,7 @@
       sortable: false,
       suppressAutoSize: true,
       suppressSizeToFit: true,
-      width: 25,
+      width: 40,
     },
     {
       cellClass: 'action-cell-container',
@@ -168,6 +172,7 @@
       sortable: true,
       suppressAutoSize: false,
       suppressSizeToFit: false,
+      width: 620,
     },
     {
       filter: 'number',
@@ -179,6 +184,7 @@
         const associatedSources = getAssociatedExternalSourcesBySourceType(params.data?.name);
         return `${associatedSources.length}`;
       },
+      width: 350,
     },
     {
       filter: 'number',
@@ -190,6 +196,7 @@
         const associatedDerivationGroups = getAssociatedDerivationGroupsBySourceTypeName(params.data?.name);
         return `${associatedDerivationGroups.length}`;
       },
+      width: 350,
     },
     {
       cellClass: 'action-cell-container',
@@ -219,7 +226,7 @@
       sortable: false,
       suppressAutoSize: true,
       suppressSizeToFit: true,
-      width: 25,
+      width: 40,
     },
     {
       cellClass: 'action-cell-container',
@@ -260,6 +267,7 @@
       sortable: true,
       suppressAutoSize: false,
       suppressSizeToFit: false,
+      width: 620,
     },
     {
       filter: 'number',
@@ -273,6 +281,7 @@
         const numOfSources = sourceMap.length > 0 ? sourceMap.reduce((acc, dgSize) => acc + dgSize) : 0;
         return `${numOfSources}`;
       },
+      width: 350,
     },
     {
       filter: 'number',
@@ -284,6 +293,7 @@
         const associatedDerivationGroups = getAssociatedDerivationGroupsByEventType(params.data?.name);
         return `${associatedDerivationGroups.length}`;
       },
+      width: 350,
     },
     {
       cellClass: 'action-cell-container',
@@ -313,7 +323,7 @@
       sortable: false,
       suppressAutoSize: true,
       suppressSizeToFit: true,
-      width: 25,
+      width: 40,
     },
     {
       cellClass: 'action-cell-container',
@@ -529,7 +539,7 @@
   }
 </script>
 
-<Modal height={600} width={1000}>
+<Modal height={800} width={1400}>
   <ModalHeader on:close>
     Manage Derivation Groups and Types
     <div class="derivationgroups-modal-filter-container">
@@ -551,7 +561,7 @@
       </select>
     </div>
   </ModalHeader>
-  <ModalContent style=" overflow-y:scroll; padding:0;">
+  <ModalContent>
     <CssGrid columns={modalColumnSize} minHeight="100%">
       <div class="derivationgroups-modal-table-container">
         <div class="filter">
@@ -574,12 +584,12 @@
                 style="width: 200px"
               >
                 {#each $externalSourceTypes as sourceType}
-                  <option value={sourceType.name}>{sourceType.name}</option> 
+                  <option value={sourceType.name}>{sourceType.name}</option>
                 {/each}
               </select>
             {/if}
-            <button 
-              class="st-button w-10" 
+            <button
+              class="st-button w-10"
               type="submit"
               on:click|preventDefault={onCreateType}
             >
@@ -612,9 +622,9 @@
       </div>
       {#if selectedDerivationGroup !== undefined}
         <CssGridGutter track={1} type="column" />
-        <Panel borderRight padBody={true} overflowYBody="scroll">
+        <Panel borderRight padBody={true}>
           <svelte:fragment slot="header">
-            <SectionTitle overflow="hidden">
+            <SectionTitle>
               <Truck slot="icon" />Sources in '{selectedDerivationGroup.name}'
             </SectionTitle>
           </svelte:fragment>
@@ -676,7 +686,7 @@
         </Panel>
       {:else if selectedExternalSourceType !== undefined}
         <CssGridGutter track={1} type="column" />
-        <Panel borderRight padBody={true} overflowYBody="scroll">
+        <Panel borderRight padBody={true}>
           <svelte:fragment slot="header">
             <SectionTitle>
               <Truck slot="icon" />Derivation Groups of Type '{selectedExternalSourceType.name}'
@@ -730,7 +740,7 @@
               Need to think about the strictness of EE Type and ES Type pairings, and whether the former can exist
               without an association with the former.-->
         <CssGridGutter track={1} type="column" />
-        <Panel borderRight padBody={true} overflowYBody="scroll">
+        <Panel borderRight padBody={true}>
           <svelte:fragment slot="header">
             <SectionTitle>
               <Truck slot="icon" />Derivation Groups containing '{selectedExternalEventType.name}'
@@ -801,9 +811,9 @@
   }
 
   .derivationgroups-modal-table-container {
+    display: flex;
+    flex-direction: column;
     height: 100%;
-    padding: 0 1rem 0.5rem;
-    padding-top: 10px;
     width: 100%;
   }
 
