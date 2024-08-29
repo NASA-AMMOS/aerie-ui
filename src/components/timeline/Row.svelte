@@ -323,9 +323,9 @@
   $: onDragleave(dragleave);
   $: onDragover(dragover);
   $: onDrop(drop);
-  $: grouped = (activityOptions?.displayMode === 'compact') || (externalEventOptions?.displayMode === 'compact');
-  $: computedDrawHeight = expanded ? drawHeight : 24;
-  $: computedLayerDrawHeight = expanded ? (grouped ? drawHeight/2 : drawHeight): 24;
+  $: compact = (activityOptions?.displayMode === 'compact') || (externalEventOptions?.displayMode === 'compact');
+  $: computedDrawHeight = expanded ? drawHeight : 48;
+  $: computedLayerDrawHeight = expanded ? (compact ? drawHeight/2 : drawHeight): 24;
   $: overlaySvgSelection = select(overlaySvg) as Selection<SVGElement, unknown, any, any>;
   $: rowClasses = classNames('row', { 'row-collapsed': !expanded });
   $: activityOptions = activityOptions || { ...ViewDefaultActivityOptions };
@@ -1094,7 +1094,7 @@
   />
   <!-- Drag Handle for Row Height Resizing. -->
   {#if !autoAdjustHeight && expanded}
-    <RowDragHandleHeight rowHeight={drawHeight} on:updateRowHeight={onUpdateRowHeightDrag} />
+    <RowDragHandleHeight rowHeight={drawHeight} largeRow={hasExternalEventsLayer && hasActivityLayer} on:updateRowHeight={onUpdateRowHeightDrag} />
   {/if}
 </div>
 

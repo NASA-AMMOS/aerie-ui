@@ -5,6 +5,7 @@
   import { ViewConstants } from '../../enums/view';
 
   export let rowHeight: number = 0;
+  export let largeRow: boolean = false; // if the row contains an activity and external event layer
 
   const dispatch = createEventDispatcher<{
     updateRowHeight: {
@@ -17,7 +18,13 @@
 
   function onMouseMove(event: MouseEvent): void {
     const dy = event.clientY - dragElement.getBoundingClientRect().y;
-    const newHeight = Math.max(rowHeight + dy, ViewConstants.MIN_ROW_HEIGHT);
+    let newHeight: number;
+    if (largeRow) { 
+      newHeight = Math.max(rowHeight + dy, ViewConstants.MIN_ROW_HEIGHT*2);
+    }
+    else {
+      newHeight = Math.max(rowHeight + dy, ViewConstants.MIN_ROW_HEIGHT);
+    }
 
     if (newHeight !== previousHeight) {
       dispatch('updateRowHeight', { newHeight });
