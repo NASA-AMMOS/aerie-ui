@@ -220,7 +220,7 @@
 
           // if we find at least one goal invocation with the selected goal_id, we don't want to insert this goal_id into the plan spec
           // i.e. this goal was already selected when we entered the modal, so we don't want to kick off an update, which would cause a duplicate invocation to appear
-          const goalAlreadyExistsInPlanSpec = $allowedSchedulingGoalSpecs.find(e => e.goal_id == goalId) != undefined
+          const goalAlreadyExistsInPlanSpec = $allowedSchedulingGoalSpecs.find(e => e.goal_id === goalId) !== undefined;
 
           if (isSelected && $schedulingPlanSpecification !== null) {
             if (!goalAlreadyExistsInPlanSpec) {
