@@ -117,30 +117,6 @@
             },
             hasDeletePermission: hasDeletePermission,
             rowData: params.data,
-          },
-          target: actionsDiv,
-        });
-
-        return actionsDiv;
-      },
-      cellRendererParams: {
-        deleteDerivationGroup,
-      } as CellRendererParams,
-      headerName: '',
-      resizable: false,
-      sortable: false,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
-      width: 40,
-    },
-    {
-      cellClass: 'action-cell-container',
-      cellRenderer: (params: ModalCellRendererParams) => {
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className = 'actions-cell';
-        new DataGridActions({
-          props: {
-            rowData: params.data,
             viewCallback: params.viewDerivationGroup,
             viewTooltip: {
               content: 'View Derivation Group',
@@ -152,6 +128,7 @@
         return actionsDiv;
       },
       cellRendererParams: {
+        deleteDerivationGroup,
         viewDerivationGroup,
       } as CellRendererParams,
       headerName: '',
@@ -159,8 +136,8 @@
       sortable: false,
       suppressAutoSize: true,
       suppressSizeToFit: true,
-      width: 40,
-    },
+      width: 80,
+    }
   ];
 
   estColumnDefs = [
@@ -212,30 +189,6 @@
             },
             hasDeletePermission: hasDeletePermission,
             rowData: params.data,
-          },
-          target: actionsDiv,
-        });
-
-        return actionsDiv;
-      },
-      cellRendererParams: {
-        deleteExternalSourceType,
-      } as CellRendererParams,
-      headerName: '',
-      resizable: false,
-      sortable: false,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
-      width: 40,
-    },
-    {
-      cellClass: 'action-cell-container',
-      cellRenderer: (params: ModalCellRendererParams) => {
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className = 'actions-cell';
-        new DataGridActions({
-          props: {
-            rowData: params.data,
             viewCallback: params.viewExternalSourceType,
             viewTooltip: {
               content: 'View External Source Type',
@@ -244,9 +197,11 @@
           },
           target: actionsDiv,
         });
+
         return actionsDiv;
       },
       cellRendererParams: {
+        deleteExternalSourceType,
         viewExternalSourceType,
       } as CellRendererParams,
       headerName: '',
@@ -254,8 +209,8 @@
       sortable: false,
       suppressAutoSize: true,
       suppressSizeToFit: true,
-      width: 40,
-    },
+      width: 80,
+    }
   ];
 
   eetColumnDefs = [
@@ -309,30 +264,6 @@
             },
             hasDeletePermission: hasDeletePermission,
             rowData: params.data,
-          },
-          target: actionsDiv,
-        });
-
-        return actionsDiv;
-      },
-      cellRendererParams: {
-        deleteExternalEventType,
-      } as CellRendererParams,
-      headerName: '',
-      resizable: false,
-      sortable: false,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
-      width: 40,
-    },
-    {
-      cellClass: 'action-cell-container',
-      cellRenderer: (params: ModalCellRendererParams) => {
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className = 'actions-cell';
-        new DataGridActions({
-          props: {
-            rowData: params.data,
             viewCallback: params.viewExternalEventType,
             viewTooltip: {
               content: 'View External Event Type',
@@ -341,9 +272,11 @@
           },
           target: actionsDiv,
         });
+
         return actionsDiv;
       },
       cellRendererParams: {
+        deleteExternalEventType,
         viewExternalEventType,
       } as CellRendererParams,
       headerName: '',
@@ -351,8 +284,8 @@
       sortable: false,
       suppressAutoSize: true,
       suppressSizeToFit: true,
-      width: 40,
-    },
+      width: 80,
+    }
   ];
 
   const modalColumnSizeNoDetail: string = '1fr 3px 0fr';
