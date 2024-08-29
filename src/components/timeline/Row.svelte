@@ -95,7 +95,7 @@
   export let activityDirectives: ActivityDirective[] = [];
   export let externalEvents: ExternalEvent[] = [];
   export let activityDirectivesMap: ActivityDirectivesMap = {};
-  export let activityTreeExpansionMap: ActivityTreeExpansionMap | undefined = {};
+  export let activityTreeExpansionMap: ActivityTreeExpansionMap = {};
   export let activityOptions: ActivityOptions | undefined = undefined;
   export let externalEventTreeExpansionMap: ExternalEventTreeExpansionMap = {};
   export let externalEventOptions: ExternalEventOptions | undefined = undefined;
@@ -137,7 +137,7 @@
 
 
   const dispatch = createEventDispatcher<{
-    activityTreeExpansionChange: ActivityTreeExpansionMap;
+    activityTreeExpansionChange: ActivityTreeExpansionMap | null;
     externalEventTreeExpansionChange: ExternalEventTreeExpansionMap | null;
     mouseDown: MouseDown;
     mouseOver: MouseOver;
@@ -198,6 +198,7 @@
   };
   let filterActivitiesByTime = false;
   let filterExternalEventsByTime = false;
+  let unsquashedCachedActivityTreeExpansionMap: ActivityTreeExpansionMap | undefined;
   let unsquashedCachedExternalEventTreeExpansionMap: ExternalEventTreeExpansionMap;
   let filteredExternalSources: Array<string> = [];
   let rowRef: HTMLDivElement;
@@ -523,7 +524,6 @@
     timeFilteredActivityDirectives &&
     timeFilteredSpans &&
     activityOptions &&
-    activityTreeExpansionMap &&
     typeof showSpans === 'boolean' &&
     typeof showDirectives === 'boolean'
   ) {
@@ -603,6 +603,18 @@
     }
     else {
       dispatch('externalEventTreeExpansionChange', unsquashedCachedExternalEventTreeExpansionMap);
+    }
+  }
+
+  function onActivityTreeSquash(e: CustomEvent<boolean>) {
+    // false means we expand
+    // true means we squash
+    if (e.detail) {
+      unsquashedCachedActivityTreeExpansionMap = activityTreeExpansionMap;
+      dispatch('activityTreeExpansionChange', null);
+    }
+    else {
+      dispatch('activityTreeExpansionChange', unsquashedCachedActivityTreeExpansionMap ?? {});
     }
   }
 
@@ -850,6 +862,7 @@
       on:activity-tree-node-change={onActivityTreeNodeChange}
       on:external-event-tree-node-change={onExternalEventTreeNodeChange}
       on:external-event-squash={onExternalEventTreeSquash}
+      on:activity-squash={onActivityTreeSquash}
       on:mouseDown={onMouseDown}
       on:dblClick
       on:drop={e => onTimelineItemsDrop(id, e.detail.type, e.detail.items)}
