@@ -1533,7 +1533,6 @@ const gql = {
   GET_EXTERNAL_EVENT_BY_EVENT_TYPE: `#graphql
   query GetExternalEventByEventType($event_type_name: String!) {
     ${Queries.EXTERNAL_EVENT}(where: {event_type_name: { _eq: $event_type_name }}) {
-      id
       key
       event_type_name
       start_time
