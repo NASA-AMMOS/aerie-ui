@@ -1058,8 +1058,22 @@ export function generateExternalEventTree(
   externalEvents: ExternalEvent[],
   externalEventTreeExpansionMap: ExternalEventTreeExpansionMap,
   groupByMethod: ExternalEventOptions['groupBy'] = 'event_type_name',
-  binSize: ExternalEventOptions['groupedModeBinSize'],
+  binSize: ExternalEventOptions['groupedModeBinSize']
 ): ExternalEventTree {
+
+  // handles the case of a dual EE/activity layer where the EE is fully squashed
+  if (!externalEventTreeExpansionMap) {
+    let bigNode: ExternalEventTreeNode = {
+      children: [],
+      expanded: false,
+      id: 'cluster',
+      isLeaf: true,
+      items: externalEvents.map(externalEvent => {return {externalEvent}}),
+      label: 'cluster'
+    };
+    return [bigNode];
+  }
+
   const groupByMethodFormatted = `pkey.${groupByMethod}`; // Both event_type_name and source_key are within the pkey field
   const groupedExternalEvents = groupBy(externalEvents, groupByMethodFormatted);
 

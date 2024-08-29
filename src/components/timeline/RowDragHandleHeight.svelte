@@ -5,7 +5,7 @@
   import { ViewConstants } from '../../enums/view';
 
   export let rowHeight: number = 0;
-  export let largeRow: boolean = false; // if the row contains an activity and external event layer
+  export let largeRow: boolean = false; // if the row contains an activity and external event layer, in compacted mode
 
   const dispatch = createEventDispatcher<{
     updateRowHeight: {
@@ -19,12 +19,16 @@
   function onMouseMove(event: MouseEvent): void {
     const dy = event.clientY - dragElement.getBoundingClientRect().y;
     let newHeight: number;
+
+    // TODO: fix how this works w.r.t. collapsed, expanded, grouped, and compact rows with/with composite ee/activity layers!
     if (largeRow) { 
       newHeight = Math.max(rowHeight + dy, ViewConstants.MIN_ROW_HEIGHT*2);
     }
     else {
       newHeight = Math.max(rowHeight + dy, ViewConstants.MIN_ROW_HEIGHT);
     }
+    console.log(largeRow, newHeight)
+
 
     if (newHeight !== previousHeight) {
       dispatch('updateRowHeight', { newHeight });

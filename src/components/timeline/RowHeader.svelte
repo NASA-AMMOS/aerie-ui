@@ -19,8 +19,9 @@
     ExternalEventTree,
     Layer,
     LineLayer,
-    MouseOver,
+    MouseOver
   } from '../../types/timeline';
+  import { classNames } from '../../utilities/generic';
   import { filterResourcesByLayer } from '../../utilities/timeline';
   import { tooltip } from '../../utilities/tooltip';
   import DropTarget from './DropTarget.svelte';
@@ -62,6 +63,7 @@
     contextMenu: MouseOver;
     mouseDownRowMove: void;
     mouseUpRowMove: void;
+    'external-event-squash': boolean;
     toggleRowExpansion: {
       expanded: boolean;
       rowId: number;
@@ -160,35 +162,44 @@
           <slot />
         </div>
         {#if activityTree.length && externalEventTree.length}
-        <Collapse
-          title="Activities"
-        >
-          <div class="activity-tree">
-            <RowHeaderActivityTree
-              {activityOptions}
-              {activityTree}
-              {selectedActivityDirectiveId}
-              {selectedSpanId}
-              on:activity-tree-node-change
-              on:mouseDown
-              on:dblClick
-            />
+          <div style="margin-left: 16px;">
+            <Collapse
+              title="Activities"
+              className={classNames('row-header-external-event-group')}
+              headerHeight={activityOptions.activityHeight+4}
+            >
+              <div>
+                <RowHeaderActivityTree
+                  {activityOptions}
+                  {activityTree}
+                  {selectedActivityDirectiveId}
+                  {selectedSpanId}
+                  on:activity-tree-node-change
+                  on:mouseDown
+                  on:dblClick
+                />
+              </div>
+            </Collapse>
+            <Collapse
+              title="External Events"
+              className={classNames('row-header-external-event-group')}
+              headerHeight={externalEventOptions.externalEventHeight+4}
+              on:collapse={(e) => {
+                dispatch('external-event-squash', e.detail)
+              }}
+            >
+              <div>
+                <RowHeaderExternalEvent
+                  {externalEventOptions}
+                  {externalEventTree}
+                  {selectedExternalEventId}
+                  on:external-event-tree-node-change
+                  on:mouseDown
+                  on:dblClick
+                />
+              </div>
+            </Collapse>
           </div>
-        </Collapse>
-        <Collapse
-          title="External Events"
-        >
-          <div class="external-event-tree">
-            <RowHeaderExternalEvent
-              {externalEventOptions}
-              {externalEventTree}
-              {selectedExternalEventId}
-              on:external-event-tree-node-change
-              on:mouseDown
-              on:dblClick
-            />
-          </div>
-        </Collapse>
         {:else if activityTree.length}
           <div class="activity-tree">
             <RowHeaderActivityTree
