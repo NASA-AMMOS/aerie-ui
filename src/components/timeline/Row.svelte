@@ -135,6 +135,8 @@
   export let yAxes: Axis[] = [];
   export let user: User | null;
 
+  $: console.log("ROW HEIGHT", drawHeight)
+
   const dispatch = createEventDispatcher<{
     activityTreeExpansionChange: ActivityTreeExpansionMap;
     externalEventTreeExpansionChange: ExternalEventTreeExpansionMap;
@@ -321,7 +323,9 @@
   $: onDragleave(dragleave);
   $: onDragover(dragover);
   $: onDrop(drop);
+  $: grouped = (activityOptions?.displayMode === 'compact') || (externalEventOptions?.displayMode === 'compact');
   $: computedDrawHeight = expanded ? drawHeight : 24;
+  $: computedLayerDrawHeight = expanded ? (grouped ? drawHeight/2 : drawHeight): 24;
   $: overlaySvgSelection = select(overlaySvg) as Selection<SVGElement, unknown, any, any>;
   $: rowClasses = classNames('row', { 'row-collapsed': !expanded });
   $: activityOptions = activityOptions || { ...ViewDefaultActivityOptions };
@@ -970,7 +974,8 @@
             {blur}
             {contextmenu}
             {dpr}
-            drawHeight={computedDrawHeight}
+            verticalDrawOffset={hasExternalEventsLayer ? 0 : 0}
+            drawHeight={computedLayerDrawHeight}
             {drawWidth}
             {focus}
             {dblclick}
@@ -1007,7 +1012,8 @@
             {showDirectives}
             {contextmenu}
             {dpr}
-            drawHeight={computedDrawHeight}
+            verticalDrawOffset={hasActivityLayer ? computedLayerDrawHeight : 0}
+            drawHeight={computedLayerDrawHeight}
             {drawWidth}
             {dblclick}
             {mousedown}
