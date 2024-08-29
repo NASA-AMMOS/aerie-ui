@@ -87,6 +87,8 @@
   export let xScaleView: ScaleTime<number, number> | null = null;
   export let spans: Span[] = [];
 
+  export let verticalDrawOffset: number = 0;
+
   const dispatch = createEventDispatcher<{
     contextMenu: MouseOver;
     dblClick: MouseOver;
@@ -129,7 +131,8 @@
 
   $: anchorIconWidth = 16;
   $: anchorIconMarginLeft = 4;
-  $: canvasHeightDpr = drawHeight * dpr;
+  $: correctedCanvasHeight = (drawHeight+verticalDrawOffset) > 20 ? drawHeight+verticalDrawOffset : 20
+  $: canvasHeightDpr = correctedCanvasHeight * dpr;
   $: canvasWidthDpr = drawWidth * dpr;
   $: rowHeight = activityOptions.activityHeight + (activityOptions.displayMode === 'compact' ? 0 : 0);
   $: timelineLocked = timelineLockStatus === TimelineLockStatus.Locked;
@@ -500,9 +503,13 @@
       Object.entries(rows).forEach(([_, entry], i) => {
         const { items } = entry;
         let yRow = i * (extraSpace / (rowCount - 1)) || 0;
+        yRow += verticalDrawOffset;
         // If we can't have at least two rows then draw everything at 0
-        if (activityOptions.activityHeight * 2 >= drawHeight) {
+        if (activityOptions.activityHeight + 4 >= drawHeight) {
           yRow = 4;
+        }
+        else if (activityOptions.activityHeight * 2 >= drawHeight) {
+          yRow = 4 + verticalDrawOffset;
         }
         if (activityOptions.activityHeight) {
           drawRow(yRow, items, idToColorMaps);
@@ -790,7 +797,7 @@
 <canvas
   bind:this={canvas}
   height={canvasHeightDpr}
-  style="height: {drawHeight}px; width: {drawWidth}px;"
+  style="height: {correctedCanvasHeight}px; width: {drawWidth}px;"
   width={canvasWidthDpr}
 />
 
