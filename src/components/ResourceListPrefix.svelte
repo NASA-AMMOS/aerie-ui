@@ -8,6 +8,7 @@
 
   let prefix: string = '';
   let units: string | undefined = undefined;
+  let type: string = 'Unk';
 
   $: units = (item as ResourceType)?.schema.metadata?.unit?.value;
   $: type = (item as ResourceType)?.schema.type ?? 'Unk';

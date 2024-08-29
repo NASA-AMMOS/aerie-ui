@@ -87,12 +87,18 @@
 
   export let gridSection: ViewGridSection;
 
+  let activityOptions: ActivityOptions = { ...ViewDefaultActivityOptions };
   let horizontalGuides: HorizontalGuide[] = [];
-  let rows: Row[] = [];
-  let timelines: Timeline[] = [];
-  let verticalGuides: VerticalGuide[] = [];
-  let selectedTimeline: Timeline | undefined;
   let editorWidth: number;
+  let layers: Layer[] = [];
+  let timelines: Timeline[] = [];
+  let rowHasActivityLayer: boolean = false;
+  let rowHasNonActivityChartLayer: boolean = false;
+  let rows: Row[] = [];
+  let selectedTimeline: Timeline | undefined;
+  let selectedRow: Row | undefined;
+  let verticalGuides: VerticalGuide[] = [];
+  let yAxes: Axis[] = [];
 
   $: selectedTimeline = $view?.definition.plan.timelines.find(t => t.id === $selectedTimelineId);
   $: rows = selectedTimeline?.rows || [];
@@ -102,7 +108,7 @@
   $: horizontalGuides = selectedRow?.horizontalGuides || [];
   $: yAxes = selectedRow?.yAxes || [];
   $: layers = selectedRow?.layers || [];
-  $: rowHasActivityLayer = selectedRow?.layers.find(isActivityLayer) || false;
+  $: rowHasActivityLayer = !!selectedRow?.layers.find(isActivityLayer) || false;
   $: rowHasNonActivityChartLayer =
     !!selectedRow?.layers.find(layer => isLineLayer(layer) || isXRangeLayer(layer)) || false;
   $: if (rowHasActivityLayer && selectedRow && !selectedRow.activityOptions) {
