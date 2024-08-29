@@ -135,11 +135,10 @@
   export let yAxes: Axis[] = [];
   export let user: User | null;
 
-  $: console.log("ROW HEIGHT", drawHeight)
 
   const dispatch = createEventDispatcher<{
     activityTreeExpansionChange: ActivityTreeExpansionMap;
-    externalEventTreeExpansionChange: ExternalEventTreeExpansionMap;
+    externalEventTreeExpansionChange: ExternalEventTreeExpansionMap | null;
     mouseDown: MouseDown;
     mouseOver: MouseOver;
     updateRowHeight: {
@@ -199,6 +198,7 @@
   };
   let filterActivitiesByTime = false;
   let filterExternalEventsByTime = false;
+  let unsquashedCachedExternalEventTreeExpansionMap: ExternalEventTreeExpansionMap;
   let filteredExternalSources: Array<string> = [];
   let rowRef: HTMLDivElement;
 
@@ -594,6 +594,18 @@
     dispatch('activityTreeExpansionChange', { ...(activityTreeExpansionMap || {}), [node.id]: !node.expanded });
   }
 
+  function onExternalEventTreeSquash(e: CustomEvent<boolean>) {
+    // false means we expand
+    // true means we squash
+    if (e.detail) {
+      unsquashedCachedExternalEventTreeExpansionMap = externalEventTreeExpansionMap;
+      dispatch('externalEventTreeExpansionChange', null);
+    }
+    else {
+      dispatch('externalEventTreeExpansionChange', unsquashedCachedExternalEventTreeExpansionMap);
+    }
+  }
+
   function onExternalEventTreeNodeChange(e: { detail: ExternalEventTreeNode }) {
     const node = e.detail;
     dispatch('externalEventTreeExpansionChange', {
@@ -837,6 +849,7 @@
       {externalEventOptions}
       on:activity-tree-node-change={onActivityTreeNodeChange}
       on:external-event-tree-node-change={onExternalEventTreeNodeChange}
+      on:external-event-squash={onExternalEventTreeSquash}
       on:mouseDown={onMouseDown}
       on:dblClick
       on:drop={e => onTimelineItemsDrop(id, e.detail.type, e.detail.items)}
@@ -1094,7 +1107,7 @@
   />
   <!-- Drag Handle for Row Height Resizing. -->
   {#if !autoAdjustHeight && expanded}
-    <RowDragHandleHeight rowHeight={drawHeight} largeRow={hasExternalEventsLayer && hasActivityLayer} on:updateRowHeight={onUpdateRowHeightDrag} />
+    <RowDragHandleHeight rowHeight={drawHeight} largeRow={hasExternalEventsLayer && hasActivityLayer && compact} on:updateRowHeight={onUpdateRowHeightDrag} />
   {/if}
 </div>
 
