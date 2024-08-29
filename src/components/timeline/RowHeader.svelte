@@ -64,6 +64,7 @@
     mouseDownRowMove: void;
     mouseUpRowMove: void;
     'external-event-squash': boolean;
+    'activity-squash': boolean;
     toggleRowExpansion: {
       expanded: boolean;
       rowId: number;
@@ -167,6 +168,9 @@
               title="Activities"
               className={classNames('row-header-external-event-group')}
               headerHeight={activityOptions.activityHeight+4}
+              on:collapse={(e) => {
+                dispatch('activity-squash', e.detail)
+              }}
             >
               <div>
                 <RowHeaderActivityTree
@@ -184,9 +188,7 @@
               title="External Events"
               className={classNames('row-header-external-event-group')}
               headerHeight={externalEventOptions.externalEventHeight+4}
-              on:collapse={(e) => {
-                dispatch('external-event-squash', e.detail)
-              }}
+              on:collapse={(e) => dispatch('external-event-squash', e.detail)}
             >
               <div>
                 <RowHeaderExternalEvent

@@ -29,6 +29,7 @@ import type {
   ActivityTree,
   ActivityTreeExpansionMap,
   ActivityTreeNode,
+  ActivityTreeNodeItem,
   Axis,
   ExternalEventLayer,
   ExternalEventOptions,
@@ -974,6 +975,31 @@ export function generateActivityTree(
   showDirectives: boolean,
   viewTimeRange: TimeRange,
 ): ActivityTree {
+  
+  // handles the case of a dual EE/activity layer where the EE is fully squashed
+  if (!activityTreeExpansionMap) {
+    let items: ActivityTreeNodeItem[] = [];
+    directives.forEach(directive => {
+      let childSpan;
+      if (showSpans) {
+        const childSpanId = spanUtilityMaps.directiveIdToSpanIdMap[directive.id];
+        childSpan = spansMap[childSpanId];
+      }
+      items.push({ directive, ...(childSpan ? { span: childSpan } : null) });
+    });
+
+    let bigNode: ActivityTreeNode = {
+      children: [],
+      expanded: false,
+      id: 'cluster',
+      isLeaf: true,
+      items,
+      label: 'cluster',
+      type: 'aggregation'
+    };
+    return [bigNode];
+  }
+
   const groupedSpans = showSpans && hierarchyMode === 'flat' ? groupBy(spans, 'type') : {};
   const groupedDirectives = showDirectives ? groupBy(directives, 'type') : {};
   const nodes: ActivityTreeNode[] = [];
@@ -1000,7 +1026,7 @@ export function generateActivityTree(
             }
           }
           if (expanded) {
-            children.push(
+            children.push( 
               getDirectiveSubtree(
                 directive,
                 id,
