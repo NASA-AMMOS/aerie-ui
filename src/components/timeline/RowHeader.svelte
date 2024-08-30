@@ -188,7 +188,10 @@
               title="External Events"
               className={classNames('row-header-external-event-group')}
               headerHeight={externalEventOptions.externalEventHeight+4}
-              on:collapse={(e) => dispatch('external-event-squash', e.detail)}
+              on:collapse={(e) => {
+                console.log("collapsed", e.detail)
+                dispatch('external-event-squash', e.detail)
+              }}
             >
               <div>
                 <RowHeaderExternalEvent
