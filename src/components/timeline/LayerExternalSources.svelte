@@ -1,4 +1,4 @@
-<svelte:options immutable={true} />
+<!-- <svelte:options immutable={true} />
 
 <script lang="ts">
   import { quadtree as d3Quadtree, type Quadtree } from 'd3-quadtree';
@@ -504,4 +504,4 @@
     position: absolute;
     z-index: -1;
   }
-</style>
+</style> -->
