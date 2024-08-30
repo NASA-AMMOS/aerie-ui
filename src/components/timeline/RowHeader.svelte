@@ -7,34 +7,28 @@
   import { createEventDispatcher } from 'svelte';
   import TimelineLineLayerIcon from '../../assets/timeline-line-layer.svg?component';
   import TimelineXRangeLayerIcon from '../../assets/timeline-x-range-layer.svg?component';
-  import { ViewDefaultActivityOptions, ViewDefaultExternalEventOptions } from '../../constants/view';
+  import { ViewDefaultDiscreteOptions } from '../../constants/view';
   import type { ActivityDirectiveId } from '../../types/activity';
   import type { Resource, SpanId } from '../../types/simulation';
   import type {
-    ActivityOptions,
-    ActivityTree,
     Axis,
     ChartType,
-    ExternalEventOptions,
-    ExternalEventTree,
+    DiscreteOptions,
+    DiscreteTree,
     Layer,
     LineLayer,
     MouseOver
   } from '../../types/timeline';
-  import { classNames } from '../../utilities/generic';
   import { filterResourcesByLayer } from '../../utilities/timeline';
   import { tooltip } from '../../utilities/tooltip';
+  import RowHeaderDiscreteTree from './RowHeaderDiscreteTree.svelte';
   import DropTarget from './DropTarget.svelte';
   import Collapse from '../Collapse.svelte';
-  import RowHeaderActivityTree from './RowHeaderActivityTree.svelte';
-  import RowHeaderExternalEvent from './RowHeaderExternalEventTree.svelte';
   import RowHeaderMenu from './RowHeaderMenu.svelte';
   import RowYAxes from './RowYAxes.svelte';
 
-  export let activityTree: ActivityTree = [];
-  export let activityOptions: ActivityOptions = { ...ViewDefaultActivityOptions };
-  export let externalEventTree: ExternalEventTree = [];
-  export let externalEventOptions: ExternalEventOptions = { ...ViewDefaultExternalEventOptions };
+  export let discreteTree: DiscreteTree = [];
+  export let discreteOptions: DiscreteOptions = {...ViewDefaultDiscreteOptions}
   export let expanded: boolean = true;
   export let height: number = 0;
   export let layers: Layer[];
@@ -162,7 +156,21 @@
           </button>
           <slot />
         </div>
-        {#if activityTree.length && externalEventTree.length}
+        {#if discreteTree.length}
+          <div class="external-event-tree">
+            <RowHeaderDiscreteTree
+              {discreteOptions}
+              {discreteTree}
+              {selectedActivityDirectiveId}
+              {selectedSpanId}
+              {selectedExternalEventId}
+              on:discrete-tree-node-change
+              on:mouseDown
+              on:dblClick
+            />
+          </div>
+        {/if}
+        <!-- {#if activityTree.length && externalEventTree.length}
           <div style="margin-left: 16px;">
             <Collapse
               title="Activities"
@@ -228,7 +236,7 @@
               on:dblClick
             />
           </div>
-        {/if}
+        {/if} -->
         {#if resourceLabels.length > 0}
           <div class="row-header-y-axis-labels">
             {#each resourceLabels as label}
