@@ -80,7 +80,9 @@
   $: onMouseout(mouseout);
 
   $: correctedCanvasHeight = (drawHeight+verticalDrawOffset) > 20 ? drawHeight+verticalDrawOffset : 20
-  $: canvasHeightDpr = correctedCanvasHeight * dpr;
+  // $: correctedCanvasHeight = drawHeight > 20 ? drawHeight : 20
+  $: canvasHeightDpr = correctedCanvasHeight*2;
+  // $: console.log("HEIGHT AND DPR", correctedCanvasHeight, canvasHeightDpr)
   $: canvasWidthDpr = drawWidth * dpr;
   $: rowHeight = externalEventOptions.externalEventHeight + (externalEventOptions.displayMode === 'compact' ? 0 : 0);
 
@@ -230,12 +232,16 @@
   }
 
   function drawGroupedMode() {
+    // must clear the canvas before a redraw! otherwise the old ungrouped version can linger around and we draw over that!
+    canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
     if (xScaleView !== null) {
       const collapsedMode = drawHeight <= ViewConstants.MIN_ROW_HEIGHT;
-      let y = collapsedMode ? 0 : ViewConstants.MIN_ROW_HEIGHT - 1; // pad starting y with the min row height to align with activity tree
+      console.log("EE", drawHeight, verticalDrawOffset)
+      let y = collapsedMode ? 0 : (ViewConstants.MIN_ROW_HEIGHT - 1) + verticalDrawOffset; // pad starting y with the min row height to align with activity tree
       const expectedRowHeight = rowHeight + externalEventRowPadding;
       externalEventTree.forEach(node => {
         const newY = drawGroup(node, y, expectedRowHeight, !collapsedMode);
+        // console.log("JUST DREW", verticalDrawOffset, node.id, newY)
         if (!collapsedMode) {
           y = newY;
         }

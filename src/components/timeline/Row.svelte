@@ -200,6 +200,7 @@
   let filterExternalEventsByTime = false;
   let unsquashedCachedActivityTreeExpansionMap: ActivityTreeExpansionMap | undefined;
   let unsquashedCachedExternalEventTreeExpansionMap: ExternalEventTreeExpansionMap;
+  let layerOffsets = [0, 0];
   let filteredExternalSources: Array<string> = [];
   let rowRef: HTMLDivElement;
 
@@ -325,8 +326,21 @@
   $: onDragover(dragover);
   $: onDrop(drop);
   $: compact = (activityOptions?.displayMode === 'compact') || (externalEventOptions?.displayMode === 'compact');
-  $: computedDrawHeight = expanded ? drawHeight : 48;
-  $: computedLayerDrawHeight = expanded ? (compact ? drawHeight/2 : drawHeight): 24;
+  $: computedDrawHeight = expanded ? drawHeight : (hasActivityLayer && hasExternalEventsLayer) ? 48 : 24;
+  $: computedLayerDrawHeight = expanded ? (compact ? drawHeight/2 : drawHeight/2): 24;
+  // $: {
+  //   // only modify if has both
+  //   if (hasActivityLayer && hasExternalEventsLayer) {
+  //     // compact
+  //     if (compact) {
+  //       layerOffsets = expanded ?
+  //     }
+  //     // non compact
+  //     else {
+
+  //     }
+  //   }
+  // }
   $: overlaySvgSelection = select(overlaySvg) as Selection<SVGElement, unknown, any, any>;
   $: rowClasses = classNames('row', { 'row-collapsed': !expanded });
   $: activityOptions = activityOptions || { ...ViewDefaultActivityOptions };
@@ -598,10 +612,12 @@
     // false means we expand
     // true means we squash
     if (e.detail) {
+      console.log(e.detail, externalEventTreeExpansionMap, unsquashedCachedExternalEventTreeExpansionMap)
       unsquashedCachedExternalEventTreeExpansionMap = externalEventTreeExpansionMap;
       dispatch('externalEventTreeExpansionChange', null);
     }
     else {
+      console.log(e.detail, externalEventTreeExpansionMap, unsquashedCachedExternalEventTreeExpansionMap)
       dispatch('externalEventTreeExpansionChange', unsquashedCachedExternalEventTreeExpansionMap);
     }
   }

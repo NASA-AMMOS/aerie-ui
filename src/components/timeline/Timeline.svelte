@@ -298,6 +298,7 @@
 
   function onCollapseExternalEventTree(event: CustomEvent<Row>) {
     const row = event.detail;
+    console.log("COLLAPSED EVENTS:", row)
     externalEventTreeExpansionMapByRow = { ...externalEventTreeExpansionMapByRow, [row.id]: {} };
   }
 

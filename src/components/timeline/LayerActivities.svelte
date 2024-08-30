@@ -407,9 +407,12 @@
   }
 
   function drawGroupedMode() {
+    // must clear the canvas before a redraw! otherwise the old ungrouped version can linger around and we draw over that!
+    canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
     if (xScaleView !== null) {
       const collapsedMode = drawHeight <= ViewConstants.MIN_ROW_HEIGHT;
       let y = collapsedMode ? 0 : ViewConstants.MIN_ROW_HEIGHT - 1; // pad starting y with the min row height to align with activity tree
+      console.log("A", drawHeight, verticalDrawOffset)
       const expectedRowHeight = rowHeight + activityRowPadding;
       activityTree.forEach(node => {
         const newY = drawGroup(node, y, expectedRowHeight, !collapsedMode);
