@@ -108,7 +108,7 @@
     const {
       detail: { row, composition },
     } = event;
-    viewUpdateRow('activityOptions', { ...row.activityOptions, composition }, timelineId, row.id);
+    viewUpdateRow('discreteOptions', { ...row.discreteOptions, activityOptions: { ...row.discreteOptions.activityOptions, composition } }, timelineId, row.id);
   }
 
   function editRow(row: Row) {
