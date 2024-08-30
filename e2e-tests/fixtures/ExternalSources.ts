@@ -25,7 +25,6 @@ export class ExternalSources {
   externalSourceFilePathMissingField: string = 'e2e-tests/data/example-external-source-missing-field.json';
   externalSourceFilePathSyntaxError: string = 'e2e-tests/data/example-external-source-syntax-error.json';
   externalSourceSelectedForm: Locator;
-  externalSourceTableRow: Locator;
   externalSourceUpload: Locator;
   externalSourcesTable: Locator;
   inputFile: Locator;
@@ -76,17 +75,6 @@ export class ExternalSources {
     return null;
   }
 
-  async getNonZeroPixelsOnCanvas() {
-    let nonZeroPixels: number[] = [];
-    const pixelData = await this.getCanvasPixelData();
-    if (pixelData !== null) {
-      const pixelArray: number[] = Array.from(pixelData);
-      const pixelSet = new Set<number>(pixelArray);
-      nonZeroPixels = Array.from(pixelSet);
-    }
-    return nonZeroPixels;
-  }
-
   async goto() {
     await this.page.goto('/external-sources', { waitUntil: 'networkidle' });
     await this.page.waitForTimeout(250);
@@ -115,7 +103,6 @@ export class ExternalSources {
   }
 
   async updatePage(page: Page): Promise<void> {
-    this.externalSourceTableRow = page.locator(`.ag-row:has-text("${this.externalSourceKey}")`);
     this.inputFile = page.locator('input[name="file"]');
     this.uploadButton = page.getByRole('button', { name: 'Upload' });
     this.externalEventSelectedForm = page.locator('.external-event-form-container');
