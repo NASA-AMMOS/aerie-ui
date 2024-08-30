@@ -24,8 +24,7 @@
   import ActivityModeWidthIcon from '../../../assets/width.svg?component';
   import {
     ViewActivityLayerColorPresets,
-    ViewDefaultActivityOptions,
-    ViewDefaultExternalEventOptions,
+    ViewDefaultDiscreteOptions
     ViewLineLayerColorPresets,
   } from '../../../constants/view';
   import { ViewConstants } from '../../../enums/view';
@@ -47,6 +46,7 @@
     ActivityLayer,
     ActivityOptions,
     Axis,
+    DiscreteOptions,
     ExternalEventLayer,
     ExternalEventOptions,
     HorizontalGuide,
@@ -119,11 +119,10 @@
   $: rowHasExternalEventLayer = $selectedRow?.layers.find(isExternalEventLayer) || false;
   $: rowHasNonActivityChartLayer =
     !!selectedRow?.layers.find(layer => isLineLayer(layer) || isXRangeLayer(layer)) || false;
-  $: if (rowHasActivityLayer && selectedRow && !selectedRow.activityOptions) {
-    viewUpdateRow('activityOptions', ViewDefaultActivityOptions);
+  $: if ((rowHasActivityLayer || rowHasExternalEventLayer) && selectedRow && !selectedRow.discreteOptions) {
+      viewUpdateRow('discreteOptions', ViewDefaultDiscreteOptions);
   }
-  $: activityOptions = selectedRow?.activityOptions || { ...ViewDefaultActivityOptions };
-  $: externalEventOptions = selectedRow?.externalEventOptions || { ...ViewDefaultExternalEventOptions };
+  $: discreteOptions = selectedRow?.discreteOptions || { ...ViewDefaultDiscreteOptions };
 
   function updateRowEvent(event: Event) {
     const { name, value } = getTarget(event);
@@ -198,23 +197,19 @@
     viewUpdateRow('layers', filteredLayers);
   }
 
+  function handleOptionRadioChange(event: CustomEvent<{ id: RadioButtonId }>, name: keyof DiscreteOptions) {
+    const { id } = event.detail;
+    viewUpdateRow('discreteOptions', { ...discreteOptions, [name]: id });
+  }
+
   function handleActivityOptionRadioChange(event: CustomEvent<{ id: RadioButtonId }>, name: keyof ActivityOptions) {
     const { id } = event.detail;
-    viewUpdateRow('activityOptions', { ...activityOptions, [name]: id });
+    viewUpdateRow('discreteOptions', { ...discreteOptions, activityOptions: {...discreteOptions.activityOptions, [name]: id} });
   }
 
-  function handleOptionRadioChange(event: CustomEvent<{ id: RadioButtonId }>, name: keyof (ActivityOptions & ExternalEventOptions)) {
+  function handleExternalEventOptionRadioChange(event: CustomEvent<{ id: RadioButtonId }>, name: keyof ExternalEventOptions) {
     const { id } = event.detail;
-    if (rowHasActivityLayer) { viewUpdateRow('activityOptions', { ...activityOptions, [name]: id }); }
-    if (rowHasExternalEventLayer) { viewUpdateRow('externalEventOptions', { ...externalEventOptions, [name]: id }); }
-  }
-
-  function handleExternalEventOptionRadioChange(
-    event: CustomEvent<{ id: RadioButtonId }>,
-    name: keyof ExternalEventOptions,
-  ) {
-    const { id } = event.detail;
-    viewUpdateRow('externalEventOptions', { ...externalEventOptions, [name]: id });
+    viewUpdateRow('discreteOptions', { ...discreteOptions, externalEventOptions: {...discreteOptions.externalEventOptions, [name]: id} });
   }
 
   function addTimelineRow() {
@@ -902,17 +897,12 @@
                 class="st-input w-100"
                 name="text"
                 type="number"
-                value={rowHasActivityLayer ? activityOptions.activityHeight : externalEventOptions.externalEventHeight}
+                value={discreteOptions.height}
                 on:input={event => {
                   const { value } = getTarget(event);
                   if (typeof value === 'number' && !isNaN(value)) {
                     if (value >= 12) {
-                      if (rowHasActivityLayer) {
-                        viewUpdateRow('activityOptions', { ...activityOptions, activityHeight: value });
-                      }
-                      if (rowHasExternalEventLayer) {
-                        viewUpdateRow('externalEventOptions', { ...externalEventOptions,externalEventHeight: value });
-                      }
+                      viewUpdateRow('discreteOptions', { ...discreteOptions, height: value });
                     }
                   }
                 }}
@@ -923,8 +913,10 @@
           <Input layout="inline" class="editor-input">
             <label for="activity-composition">Display</label>
             <RadioButtons
-              selectedButtonId={rowHasActivityLayer ? activityOptions.displayMode : externalEventOptions.displayMode }
-              on:select-radio-button={e => handleOptionRadioChange(e, 'displayMode')}
+              selectedButtonId={discreteOptions.displayMode}
+              on:select-radio-button={e => {
+                handleOptionRadioChange(e, 'displayMode')
+              }}
             >
               <RadioButton
                 use={[[tooltip, { content: 'Group activities by type in collapsible rows', placement: 'top' }]]}
@@ -949,7 +941,7 @@
           <Input layout="inline" class="editor-input">
             <label for="activity-composition">Labels</label>
             <RadioButtons
-              selectedButtonId={rowHasActivityLayer ? activityOptions.labelVisibility : externalEventOptions.labelVisibility}
+              selectedButtonId={discreteOptions.labelVisibility}
               on:select-radio-button={e => handleOptionRadioChange(e, 'labelVisibility')}
             >
               <RadioButton use={[[tooltip, { content: 'Always show labels', placement: 'top' }]]} id="on">
@@ -980,7 +972,7 @@
               <label for="activity-composition">Show</label>
               <RadioButtons
                 id="activity-composition"
-                selectedButtonId={activityOptions.composition}
+                selectedButtonId={discreteOptions?.activityOptions?.composition}
                 on:select-radio-button={e => handleActivityOptionRadioChange(e, 'composition')}
               >
                 <RadioButton use={[[tooltip, { content: 'Only show directives', placement: 'top' }]]} id="directives">
@@ -1006,11 +998,11 @@
               </RadioButtons>
             </Input>
           {/if}
-          {#if rowHasActivityLayer && activityOptions.displayMode === 'grouped'}
+          {#if rowHasActivityLayer && discreteOptions.displayMode === 'grouped'}
             <Input layout="inline" class="editor-input">
               <label for="activity-composition">Hierarchy</label>
               <RadioButtons
-                selectedButtonId={activityOptions.hierarchyMode}
+                selectedButtonId={discreteOptions?.activityOptions?.hierarchyMode}
                 on:select-radio-button={e => handleActivityOptionRadioChange(e, 'hierarchyMode')}
               >
                 <RadioButton
@@ -1039,11 +1031,11 @@
               </RadioButtons>
             </Input>
           {/if}
-          {#if rowHasExternalEventLayer && externalEventOptions.displayMode === 'grouped'}
+          {#if rowHasExternalEventLayer && discreteOptions.displayMode === 'grouped'}
             <Input layout="inline" class="editor-input">
               <label for="activity-composition">Group By</label>
               <RadioButtons
-                selectedButtonId={externalEventOptions.groupBy}
+                selectedButtonId={discreteOptions?.externalEventOptions?.groupBy}
                 on:select-radio-button={e => handleExternalEventOptionRadioChange(e, 'groupBy')}
               >
                 <RadioButton
@@ -1074,16 +1066,16 @@
                 class="st-input w-100"
                 name="text"
                 type="number"
-                value={externalEventOptions.groupedModeBinSize}
+                value={discreteOptions?.externalEventOptions?.groupedModeBinSize}
                 on:input={e => {
                   // TODO: for optimization sake, only run this when submitted!
                   const { value } = getTarget(e);
                   if (typeof value === 'number' && !isNaN(value)) {
                     if (value >= 2) {
-                      viewUpdateRow('externalEventOptions', { ...externalEventOptions, groupedModeBinSize: value });
+                      viewUpdateRow('discreteOptions', { ...discreteOptions, ['externalEventOptions']: {...discreteOptions.externalEventOptions, groupedModeBinSize: value} });
                     } else {
                       showFailureToast(
-                        `Size must be >= 2. Retaining former value ${externalEventOptions.groupedModeBinSize}.`,
+                        `Size must be >= 2. Retaining former value ${discreteOptions?.externalEventOptions?.groupedModeBinSize}.`,
                       );
                     }
                   }

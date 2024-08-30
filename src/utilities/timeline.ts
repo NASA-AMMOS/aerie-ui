@@ -17,6 +17,7 @@ import { groupBy } from 'lodash-es';
 import {
   ViewActivityLayerColorPresets,
   ViewDefaultActivityOptions,
+  ViewDefaultDiscreteOptions,
   ViewLineLayerColorPresets,
   ViewXRangeLayerSchemePresets,
 } from '../constants/view';
@@ -26,16 +27,13 @@ import type { Resource, ResourceType, ResourceValue, Span, SpanUtilityMaps, Span
 import type {
   ActivityLayer,
   ActivityOptions,
-  ActivityTree,
-  ActivityTreeExpansionMap,
-  ActivityTreeNode,
-  ActivityTreeNodeItem,
   Axis,
+  DiscreteTree,
+  DiscreteTreeExpansionMap,
+  DiscreteTreeNode,
+  DiscreteTreeNodeItem,
   ExternalEventLayer,
   ExternalEventOptions,
-  ExternalEventTree,
-  ExternalEventTreeExpansionMap,
-  ExternalEventTreeNode,
   HorizontalGuide,
   Layer,
   LineLayer,
@@ -498,7 +496,9 @@ export function createRow(timelines: Timeline[], args: Partial<Row> = {}): Row {
   const id = getNextRowID(timelines);
 
   return {
-    activityOptions: { ...ViewDefaultActivityOptions },
+    // TODO: check what this does when a new row is made. Does it auto add 2 layers?
+    //    If so, make it continue the default of only adding activity layer
+    discreteOptions: ViewDefaultDiscreteOptions,
     autoAdjustHeight: false,
     expanded: true,
     height: 160,
@@ -957,52 +957,29 @@ export function externalEventInView(externalEvent: ExternalEvent, viewTimeRange:
   );
 }
 
-/**
- * Returns an `ActivityTree` representing the given directives and spans.
- * An `ActivityTree` is a list of `ActivityTreeNode`s, each node representing
- * a directive, a span, a directive plus its root span, or an aggregation of
- * nodes by type. The expansion of nodes in the tree is tracked by `ActivityTreeExpansionMap`.
- */
-export function generateActivityTree(
+// TODO: merge.
+export function generateDiscreteTreeUtil(
   directives: ActivityDirective[],
   spans: Span[],
-  activityTreeExpansionMap: ActivityTreeExpansionMap,
+  externalEvents: ExternalEvent[],
+  discreteTreeExpansionMap: DiscreteTreeExpansionMap,
   hierarchyMode: ActivityOptions['hierarchyMode'],
+  groupByMethod: ExternalEventOptions['groupBy'] = 'event_type_name',
+  binSize: ExternalEventOptions['groupedModeBinSize'],
   filterActivitiesByTime: boolean,
   spanUtilityMaps: SpanUtilityMaps,
   spansMap: SpansMap,
   showSpans: boolean,
   showDirectives: boolean,
-  viewTimeRange: TimeRange,
-): ActivityTree {
-  
-  // handles the case of a dual EE/activity layer where the EE is fully squashed
-  if (!activityTreeExpansionMap) {
-    let items: ActivityTreeNodeItem[] = [];
-    directives.forEach(directive => {
-      let childSpan;
-      if (showSpans) {
-        const childSpanId = spanUtilityMaps.directiveIdToSpanIdMap[directive.id];
-        childSpan = spansMap[childSpanId];
-      }
-      items.push({ directive, ...(childSpan ? { span: childSpan } : null) });
-    });
-
-    let bigNode: ActivityTreeNode = {
-      children: [],
-      expanded: false,
-      id: 'cluster',
-      isLeaf: true,
-      items,
-      label: 'cluster',
-      type: 'aggregation'
-    };
-    return [bigNode];
-  }
-
+  viewTimeRange: TimeRange
+): DiscreteTree {
   const groupedSpans = showSpans && hierarchyMode === 'flat' ? groupBy(spans, 'type') : {};
   const groupedDirectives = showDirectives ? groupBy(directives, 'type') : {};
-  const nodes: ActivityTreeNode[] = [];
+  const groupByMethodFormatted = `pkey.${groupByMethod}`; // Both event_type_name and source_key are within the pkey field
+  const groupedExternalEvents = groupBy(externalEvents, groupByMethodFormatted);
+
+  // make the activity subtree
+  const activityNodes: DiscreteTreeNode[] = [];
   const allKeys = new Set(Object.keys(groupedSpans).concat(Object.keys(groupedDirectives)));
   Array.from(allKeys)
     .sort()
@@ -1010,10 +987,10 @@ export function generateActivityTree(
       const spanGroup = groupedSpans[type];
       const directiveGroup = groupedDirectives[type];
       const id = type;
-      const expanded = getNodeExpanded(id, activityTreeExpansionMap);
+      const expanded = getNodeExpanded(id, discreteTreeExpansionMap);
       const label = type;
-      const children: ActivityTreeNode['children'] = [];
-      const items: ActivityTreeNode['items'] = [];
+      const children: DiscreteTreeNode['children'] = [];
+      const items: DiscreteTreeNode['items'] = [];
       const seenSpans: Record<string, boolean> = {};
       if (directiveGroup) {
         directiveGroup.forEach(directive => {
@@ -1026,11 +1003,11 @@ export function generateActivityTree(
             }
           }
           if (expanded) {
-            children.push( 
+            children.push(
               getDirectiveSubtree(
                 directive,
                 id,
-                activityTreeExpansionMap,
+                discreteTreeExpansionMap,
                 filterActivitiesByTime,
                 spanUtilityMaps,
                 spansMap,
@@ -1050,7 +1027,7 @@ export function generateActivityTree(
                 ...getSpanSubtrees(
                   span,
                   id,
-                  activityTreeExpansionMap,
+                  discreteTreeExpansionMap,
                   'span',
                   filterActivitiesByTime,
                   spanUtilityMaps,
@@ -1063,47 +1040,20 @@ export function generateActivityTree(
           }
         });
       }
-      nodes.push({
-        children: paginateNodes(children, id, activityTreeExpansionMap),
+      activityNodes.push({
+        children: paginateNodes(children, id, discreteTreeExpansionMap),
         expanded: expanded,
         id,
         isLeaf: false,
         items,
         label,
-        type: 'aggregation',
+        type: 'a',
+        activity_type: 'aggregation',
       });
     });
-  return nodes;
-}
 
-/**
- * Returns an 'ExternalEventTree' representing the given external event type,
- * external source, or external source type. Each node represents an external event.
- */
-export function generateExternalEventTree(
-  externalEvents: ExternalEvent[],
-  externalEventTreeExpansionMap: ExternalEventTreeExpansionMap,
-  groupByMethod: ExternalEventOptions['groupBy'] = 'event_type_name',
-  binSize: ExternalEventOptions['groupedModeBinSize']
-): ExternalEventTree {
-
-  // handles the case of a dual EE/activity layer where the EE is fully squashed
-  if (!externalEventTreeExpansionMap) {
-    let bigNode: ExternalEventTreeNode = {
-      children: [],
-      expanded: false,
-      id: 'cluster',
-      isLeaf: true,
-      items: externalEvents.map(externalEvent => {return {externalEvent}}),
-      label: 'cluster'
-    };
-    return [bigNode];
-  }
-
-  const groupByMethodFormatted = `pkey.${groupByMethod}`; // Both event_type_name and source_key are within the pkey field
-  const groupedExternalEvents = groupBy(externalEvents, groupByMethodFormatted);
-
-  const nodes: ExternalEventTreeNode[] = [];
+  // make the external event subtree
+  const externalEventNodes: DiscreteTreeNode[] = [];
   if (Object.keys(groupedExternalEvents).length !== 0) {
     const allKeys = new Set(Object.keys(groupedExternalEvents));
     // Iterate through all groups - either external event types, external source types, or external sources
@@ -1112,10 +1062,10 @@ export function generateExternalEventTree(
       .forEach(type => {
         const externalEventsGroup = groupedExternalEvents[type];
         const id = type;
-        const expanded = getNodeExpanded(id, externalEventTreeExpansionMap);
+        const expanded = getNodeExpanded(id, discreteTreeExpansionMap);
         const label = type;
-        const children: ExternalEventTreeNode['children'] = [];
-        const items: ExternalEventTreeNode['items'] = [];
+        const children: DiscreteTreeNode['children'] = [];
+        const items: DiscreteTreeNode['items'] = [];
         if (externalEventsGroup) {
           externalEventsGroup.forEach(externalEvent => {
             items.push({ externalEvent });
@@ -1126,21 +1076,259 @@ export function generateExternalEventTree(
               isLeaf: true,
               items: [{ externalEvent }],
               label: externalEvent.pkey.key,
+              type: 'ee',
+              activity_type: 'n/a' // ignored.
             });
           });
         }
-        nodes.push({
-          children: paginateExternalEventTreeNodes(children, id, externalEventTreeExpansionMap, binSize),
+        externalEventNodes.push({
+          children: paginateExternalEventTreeNodes(children, id, discreteTreeExpansionMap, binSize),
           expanded: expanded,
           id,
           isLeaf: false,
           items: items,
           label,
+          type: 'ee',
+          activity_type: 'n/a' // ignored.
         });
       });
   }
-  return nodes;
+
+  // if both are present, cluster them
+  if (activityNodes.length && externalEventNodes.length) {
+    let activityAggNode: DiscreteTreeNode = {
+      children: activityNodes,
+      expanded: getNodeExpanded('!!activity-agg', discreteTreeExpansionMap),
+      id: '!!activity-agg',
+      isLeaf: false,
+      items: flattenItems(activityNodes), // no items to draw at this level, only children
+      label: 'Activities',
+      type: 'a', // should this be like "top" or its own category? RowHeaderDiscreteTree does not seem to require any special treatment
+      activity_type: 'n/a'
+    }
+    let externalEventAggNode: DiscreteTreeNode = {
+      children: externalEventNodes,
+      expanded: getNodeExpanded('!!ex-ev-agg', discreteTreeExpansionMap),
+      id: '!!ex-ev-agg',
+      isLeaf: false,
+      items: flattenItems(externalEventNodes), // no items to draw at this level, only children
+      label: 'External Events',
+      type: 'ee', // should this be like "top" or its own category? RowHeaderDiscreteTree does not seem to require any special treatment
+      activity_type: 'n/a'
+    }
+    return [activityAggNode, externalEventAggNode];
+  }
+  else if (activityNodes.length) {
+    return activityNodes;
+  }
+  else {
+    return externalEventNodes;
+  }
 }
+
+function flattenItems(nodes: DiscreteTreeNode[]): DiscreteTreeNodeItem[] {
+  let items: DiscreteTreeNodeItem[] = [];
+  for (let node of nodes) {
+    items = items.concat(flattenItemsHelper(node));
+  }
+  return items;
+}
+
+function flattenItemsHelper(node: DiscreteTreeNode): DiscreteTreeNodeItem[] {
+  if(!node) return [];
+  let items: DiscreteTreeNodeItem[] = [];
+  if (node.items) {
+    items = items.concat(node.items);
+  }
+  for (let child of node.children) {
+    items = items.concat(flattenItemsHelper(child));
+  }
+  return items;
+}
+/**
+ * Returns an `ActivityTree` representing the given directives and spans.
+ * An `ActivityTree` is a list of `ActivityTreeNode`s, each node representing
+ * a directive, a span, a directive plus its root span, or an aggregation of
+ * nodes by type. The expansion of nodes in the tree is tracked by `ActivityTreeExpansionMap`.
+ */
+// export function generateActivityTree(
+//   directives: ActivityDirective[],
+//   spans: Span[],
+//   activityTreeExpansionMap: ActivityTreeExpansionMap,
+//   hierarchyMode: ActivityOptions['hierarchyMode'],
+//   filterActivitiesByTime: boolean,
+//   spanUtilityMaps: SpanUtilityMaps,
+//   spansMap: SpansMap,
+//   showSpans: boolean,
+//   showDirectives: boolean,
+//   viewTimeRange: TimeRange,
+// ): ActivityTree {
+
+//   // handles the case of a dual EE/activity layer where the EE is fully squashed
+//   if (!activityTreeExpansionMap) {
+//     let items: ActivityTreeNodeItem[] = [];
+//     directives.forEach(directive => {
+//       let childSpan;
+//       if (showSpans) {
+//         const childSpanId = spanUtilityMaps.directiveIdToSpanIdMap[directive.id];
+//         childSpan = spansMap[childSpanId];
+//       }
+//       items.push({ directive, ...(childSpan ? { span: childSpan } : null) });
+//     });
+
+//     let bigNode: ActivityTreeNode = {
+//       children: [],
+//       expanded: false,
+//       id: 'cluster',
+//       isLeaf: true,
+//       items,
+//       label: 'cluster',
+//       type: 'aggregation'
+//     };
+//     return [bigNode];
+//   }
+
+//   const groupedSpans = showSpans && hierarchyMode === 'flat' ? groupBy(spans, 'type') : {};
+//   const groupedDirectives = showDirectives ? groupBy(directives, 'type') : {};
+//   const nodes: ActivityTreeNode[] = [];
+//   const allKeys = new Set(Object.keys(groupedSpans).concat(Object.keys(groupedDirectives)));
+//   Array.from(allKeys)
+//     .sort()
+//     .forEach(type => {
+//       const spanGroup = groupedSpans[type];
+//       const directiveGroup = groupedDirectives[type];
+//       const id = type;
+//       const expanded = getNodeExpanded(id, activityTreeExpansionMap);
+//       const label = type;
+//       const children: ActivityTreeNode['children'] = [];
+//       const items: ActivityTreeNode['items'] = [];
+//       const seenSpans: Record<string, boolean> = {};
+//       if (directiveGroup) {
+//         directiveGroup.forEach(directive => {
+//           let childSpan;
+//           if (showSpans) {
+//             const childSpanId = spanUtilityMaps.directiveIdToSpanIdMap[directive.id];
+//             childSpan = spansMap[childSpanId];
+//             if (childSpan && hierarchyMode === 'flat') {
+//               seenSpans[childSpan.span_id] = true;
+//             }
+//           }
+//           if (expanded) {
+//             children.push(
+//               getDirectiveSubtree(
+//                 directive,
+//                 id,
+//                 activityTreeExpansionMap,
+//                 filterActivitiesByTime,
+//                 spanUtilityMaps,
+//                 spansMap,
+//                 showSpans,
+//                 viewTimeRange,
+//               ),
+//             );
+//           }
+//           items.push({ directive, ...(childSpan ? { span: childSpan } : null) });
+//         });
+//       }
+//       if (spanGroup && hierarchyMode === 'flat') {
+//         spanGroup.forEach(span => {
+//           if (!seenSpans[span.span_id]) {
+//             if (expanded) {
+//               children.push(
+//                 ...getSpanSubtrees(
+//                   span,
+//                   id,
+//                   activityTreeExpansionMap,
+//                   'span',
+//                   filterActivitiesByTime,
+//                   spanUtilityMaps,
+//                   spansMap,
+//                   viewTimeRange,
+//                 ),
+//               );
+//             }
+//             items.push({ span });
+//           }
+//         });
+//       }
+//       nodes.push({
+//         children: paginateNodes(children, id, activityTreeExpansionMap),
+//         expanded: expanded,
+//         id,
+//         isLeaf: false,
+//         items,
+//         label,
+//         type: 'aggregation',
+//       });
+//     });
+//   return nodes;
+// }
+
+/**
+ * Returns an 'ExternalEventTree' representing the given external event type,
+ * external source, or external source type. Each node represents an external event.
+ */
+// export function generateExternalEventTree(
+//   externalEvents: ExternalEvent[],
+//   externalEventTreeExpansionMap: ExternalEventTreeExpansionMap,
+//   groupByMethod: ExternalEventOptions['groupBy'] = 'event_type_name',
+//   binSize: ExternalEventOptions['groupedModeBinSize']
+// ): ExternalEventTree {
+
+//   // handles the case of a dual EE/activity layer where the EE is fully squashed
+//   if (!externalEventTreeExpansionMap) {
+//     let bigNode: ExternalEventTreeNode = {
+//       children: [],
+//       expanded: false,
+//       id: 'cluster',
+//       isLeaf: true,
+//       items: externalEvents.map(externalEvent => {return {externalEvent}}),
+//       label: 'cluster'
+//     };
+//     return [bigNode];
+//   }
+
+//   const groupByMethodFormatted = `pkey.${groupByMethod}`; // Both event_type_name and source_key are within the pkey field
+//   const groupedExternalEvents = groupBy(externalEvents, groupByMethodFormatted);
+
+//   const nodes: ExternalEventTreeNode[] = [];
+//   if (Object.keys(groupedExternalEvents).length !== 0) {
+//     const allKeys = new Set(Object.keys(groupedExternalEvents));
+//     // Iterate through all groups - either external event types, external source types, or external sources
+//     Array.from(allKeys)
+//       .sort()
+//       .forEach(type => {
+//         const externalEventsGroup = groupedExternalEvents[type];
+//         const id = type;
+//         const expanded = getNodeExpanded(id, externalEventTreeExpansionMap);
+//         const label = type;
+//         const children: ExternalEventTreeNode['children'] = [];
+//         const items: ExternalEventTreeNode['items'] = [];
+//         if (externalEventsGroup) {
+//           externalEventsGroup.forEach(externalEvent => {
+//             items.push({ externalEvent });
+//             children.push({
+//               children: [],
+//               expanded: expanded,
+//               id: `${externalEvent.pkey.key}`,
+//               isLeaf: true,
+//               items: [{ externalEvent }],
+//               label: externalEvent.pkey.key,
+//             });
+//           });
+//         }
+//         nodes.push({
+//           children: paginateExternalEventTreeNodes(children, id, externalEventTreeExpansionMap, binSize),
+//           expanded: expanded,
+//           id,
+//           isLeaf: false,
+//           items: items,
+//           label,
+//         });
+//       });
+//   }
+//   return nodes;
+// }
 
 /**
  * Returns the subtree for the given directive
@@ -1148,17 +1336,17 @@ export function generateExternalEventTree(
 export function getDirectiveSubtree(
   directive: ActivityDirective,
   parentId: string,
-  activityTreeExpansionMap: ActivityTreeExpansionMap,
+  discreteTreeExpansionMap: DiscreteTreeExpansionMap,
   filterActivitiesByTime: boolean,
   spanUtilityMaps: SpanUtilityMaps,
   spansMap: SpansMap,
   showSpans: boolean,
   viewTimeRange: TimeRange,
-): ActivityTreeNode {
-  let children: ActivityTreeNode[] = [];
+): DiscreteTreeNode {
+  let children: DiscreteTreeNode[] = [];
   const id = `${parentId}_${directive.id}`;
   let span;
-  const expanded = getNodeExpanded(id, activityTreeExpansionMap);
+  const expanded = getNodeExpanded(id, discreteTreeExpansionMap);
 
   if (showSpans) {
     const rootSpanId = spanUtilityMaps.directiveIdToSpanIdMap[directive.id];
@@ -1171,7 +1359,7 @@ export function getDirectiveSubtree(
         getSpanSubtrees(
           rootSpan,
           id,
-          activityTreeExpansionMap,
+          discreteTreeExpansionMap,
           'aggregation',
           filterActivitiesByTime,
           spanUtilityMaps,
@@ -1179,7 +1367,7 @@ export function getDirectiveSubtree(
           viewTimeRange,
         ),
         id,
-        activityTreeExpansionMap,
+        discreteTreeExpansionMap,
       );
     }
   }
@@ -1191,8 +1379,9 @@ export function getDirectiveSubtree(
     isLeaf: children.length < 1,
     items: [{ directive, span }],
     label: directive.name,
-    type: 'directive',
-  } as ActivityTreeNode;
+    type: 'a',
+    activity_type: 'directive',
+  } as DiscreteTreeNode;
 }
 
 /**
@@ -1201,14 +1390,14 @@ export function getDirectiveSubtree(
 export function getSpanSubtrees(
   span: Span,
   parentId: string,
-  activityTreeExpansionMap: ActivityTreeExpansionMap,
-  type: ActivityTreeNode['type'],
+  activityTreeExpansionMap: DiscreteTreeExpansionMap,
+  type: DiscreteTreeNode['activity_type'],
   filterActivitiesByTime: boolean,
   spanUtilityMaps: SpanUtilityMaps,
   spansMap: SpansMap,
   viewTimeRange: TimeRange,
-): ActivityTreeNode[] {
-  const children: ActivityTreeNode[] = [];
+): DiscreteTreeNode[] {
+  const children: DiscreteTreeNode[] = [];
   const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[span.span_id].map(id => spansMap[id]);
   if (type === 'aggregation') {
     // Group by type
@@ -1223,7 +1412,7 @@ export function getSpanSubtrees(
         const spanGroup = groupedSpanChildren[key];
         const id = `${parentId}_${key}`;
         const expanded = getNodeExpanded(id, activityTreeExpansionMap);
-        let childrenForKey: ActivityTreeNode[] = [];
+        let childrenForKey: DiscreteTreeNode[] = [];
         if (expanded) {
           spanGroup.forEach(spanChild => {
             childrenForKey.push(
@@ -1248,14 +1437,15 @@ export function getSpanSubtrees(
           isLeaf: false,
           items: spanGroup.map(span => ({ span })),
           label: key,
-          type: 'aggregation',
+          type: 'a',
+          activity_type: 'aggregation',
         });
       });
   } else if (type === 'span') {
     const id = `${parentId}_${span.span_id}`;
     const expanded = getNodeExpanded(id, activityTreeExpansionMap);
     const count = spanChildren.length;
-    let childrenForKey: ActivityTreeNode[] = [];
+    let childrenForKey: DiscreteTreeNode[] = [];
     if (expanded) {
       childrenForKey = paginateNodes(
         getSpanSubtrees(
@@ -1279,7 +1469,8 @@ export function getSpanSubtrees(
       isLeaf: count < 1,
       items: [{ span }],
       label: span.type,
-      type: 'span',
+      type: 'a',
+      activity_type: 'span',
     });
   }
   return children;
@@ -1290,7 +1481,7 @@ export function getSpanSubtrees(
  */
 export function getNodeExpanded(
   id: string,
-  treeExpansionMap: ActivityTreeExpansionMap | ExternalEventTreeExpansionMap,
+  treeExpansionMap: DiscreteTreeExpansionMap,
 ) {
   if (!Object.hasOwn(treeExpansionMap, id)) {
     return false;
@@ -1303,16 +1494,16 @@ export function getNodeExpanded(
  * the `binSize` argument.
  */
 export function paginateNodes(
-  nodes: ActivityTreeNode[],
+  nodes: DiscreteTreeNode[],
   parentId: string,
-  activityTreeExpansionMap: ActivityTreeExpansionMap,
+  discreteTreeExpansionMap: DiscreteTreeExpansionMap,
   depth = 1,
   binSize = 100,
-): ActivityTreeNode[] {
+): DiscreteTreeNode[] {
   if (nodes.length <= binSize) {
     return nodes;
   }
-  const newNodes: ActivityTreeNode[] = [];
+  const newNodes: DiscreteTreeNode[] = [];
   nodes.forEach((node, i) => {
     const bin = Math.floor(i / binSize);
     if (!newNodes[bin]) {
@@ -1323,7 +1514,8 @@ export function paginateNodes(
         isLeaf: false,
         items: [],
         label: '',
-        type: 'aggregation',
+        type: 'a',
+        activity_type: 'aggregation',
       };
     }
     newNodes[bin].children.push(node);
@@ -1337,24 +1529,24 @@ export function paginateNodes(
     const label = `[${nodeStart} … ${nodeEnd - 1}]`;
     node.id = `${parentId}_${label}_page`;
     node.label = label;
-    node.expanded = getNodeExpanded(node.id, activityTreeExpansionMap);
+    node.expanded = getNodeExpanded(node.id, discreteTreeExpansionMap);
   });
-  return paginateNodes(newNodes, parentId, activityTreeExpansionMap, depth + 1);
+  return paginateNodes(newNodes, parentId, discreteTreeExpansionMap, depth + 1);
 }
 
 export function paginateExternalEventTreeNodes(
-  nodes: ExternalEventTreeNode[],
+  nodes: DiscreteTreeNode[],
   parentId: string,
-  externalEventTreeExpansionMap: ExternalEventTreeExpansionMap,
+  discreteTreeExpansionMap: DiscreteTreeExpansionMap,
   binSize: ExternalEventOptions['groupedModeBinSize'],
   depth = 1,
-): ExternalEventTreeNode[] {
+): DiscreteTreeNode[] {
   // If we have less nodes left than our binSize, just return this set of nodes
   if (nodes.length <= binSize) {
     return nodes;
   }
   // Create a new tree of nodes to cover all indexes of Math.floor(i / binSize)
-  const newNodes: ExternalEventTreeNode[] = [];
+  const newNodes: DiscreteTreeNode[] = [];
   nodes.forEach((node, i) => {
     const bin = Math.floor(i / binSize);
     // If a node for this bin index doesn't already exist, create it
@@ -1366,6 +1558,8 @@ export function paginateExternalEventTreeNodes(
         isLeaf: false,
         items: [],
         label: '',
+        type: 'ee',
+        activity_type: 'n/a'
       };
     }
     // Push the original node to this bin node's children
@@ -1382,8 +1576,8 @@ export function paginateExternalEventTreeNodes(
     const label = `[${nodeStart} … ${nodeEnd - 1}]`;
     node.id = `${parentId}_${label}_page`;
     node.label = label;
-    node.expanded = getNodeExpanded(node.id, externalEventTreeExpansionMap);
+    node.expanded = getNodeExpanded(node.id, discreteTreeExpansionMap);
   });
   // Recurse throughout each new node created, attempting to further bin the nodes
-  return paginateExternalEventTreeNodes(newNodes, parentId, externalEventTreeExpansionMap, depth + 1);
+  return paginateExternalEventTreeNodes(newNodes, parentId, discreteTreeExpansionMap, depth + 1);
 }

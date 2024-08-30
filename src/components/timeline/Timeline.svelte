@@ -24,8 +24,7 @@
     SpansMap,
   } from '../../types/simulation';
   import type {
-    ActivityTreeExpansionMap,
-    ExternalEventTreeExpansionMap,
+    DiscreteTreeExpansionMap,
     MouseDown,
     MouseOver,
     Row,
@@ -87,8 +86,7 @@
     viewTimeRangeChanged: TimeRange;
   }>();
 
-  let activityTreeExpansionMapByRow: Record<string, ActivityTreeExpansionMap> = {};
-  let externalEventTreeExpansionMapByRow: Record<string, ExternalEventTreeExpansionMap> = {};
+  let discreteTreeExpansionMapByRow: Record<string, DiscreteTreeExpansionMap> = {};
   let timelineZoomTransform: ZoomTransform | null = null;
   let clientWidth: number = 0;
   let contextMenu: MouseOver | null;
@@ -263,6 +261,7 @@
 
   function onToggleRowExpansion(event: CustomEvent<{ expanded: boolean; rowId: number }>) {
     const { rowId, expanded } = event.detail;
+    console.log("HERE")
     dispatch('toggleRowExpansion', { expanded, rowId });
   }
 
@@ -293,13 +292,13 @@
 
   function onCollapseActivityTree(event: CustomEvent<Row>) {
     const row = event.detail;
-    activityTreeExpansionMapByRow = { ...activityTreeExpansionMapByRow, [row.id]: {} };
+    discreteTreeExpansionMapByRow = { ...discreteTreeExpansionMapByRow, [row.id]: {} };
   }
 
   function onCollapseExternalEventTree(event: CustomEvent<Row>) {
     const row = event.detail;
     console.log("COLLAPSED EVENTS:", row)
-    externalEventTreeExpansionMapByRow = { ...externalEventTreeExpansionMapByRow, [row.id]: {} };
+    discreteTreeExpansionMapByRow = { ...discreteTreeExpansionMapByRow, [row.id]: {} };
   }
 
   function onHistogramCursorTimeChanged(event: CustomEvent<Date | null>) {
@@ -474,16 +473,11 @@
             {activityDirectives}
             {activityDirectivesMap}
             {externalEvents}
-            activityTreeExpansionMap={activityTreeExpansionMapByRow[row.id]}
-            on:activityTreeExpansionChange={e => {
-              activityTreeExpansionMapByRow = { ...activityTreeExpansionMapByRow, [row.id]: e.detail };
+            discreteTreeExpansionMap={discreteTreeExpansionMapByRow[row.id]}
+            on:discreteTreeExpansionChange={e => {
+              discreteTreeExpansionMapByRow = { ...discreteTreeExpansionMapByRow, [row.id]: e.detail };
             }}
-            externalEventTreeExpansionMap={externalEventTreeExpansionMapByRow[row.id]}
-            on:externalEventTreeExpansionChange={e => {
-              externalEventTreeExpansionMapByRow = { ...externalEventTreeExpansionMapByRow, [row.id]: e.detail };
-            }}
-            {...row.activityOptions ? { activityOptions: row.activityOptions } : null}
-            {...row.externalEventOptions ? { externalEventOptions: row.externalEventOptions } : null}
+            discreteOptions={row.discreteOptions}
             autoAdjustHeight={row.autoAdjustHeight}
             {constraintResults}
             {dpr}

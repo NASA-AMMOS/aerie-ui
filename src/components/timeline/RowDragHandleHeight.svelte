@@ -27,7 +27,7 @@
     else {
       newHeight = Math.max(rowHeight + dy, ViewConstants.MIN_ROW_HEIGHT);
     }
-    console.log(largeRow, newHeight)
+    // console.log(largeRow, newHeight)
 
 
     if (newHeight !== previousHeight) {

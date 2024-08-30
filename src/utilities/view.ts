@@ -1,5 +1,5 @@
 import Ajv from 'ajv';
-import { ViewDefaultActivityOptions, ViewDefaultExternalEventOptions } from '../constants/view';
+import { ViewDefaultDiscreteOptions } from '../constants/view';
 import jsonSchema from '../schemas/ui-view-schema.json';
 import type { ActivityType } from '../types/activity';
 import type { ExternalEventType } from '../types/external-event';
@@ -35,7 +35,7 @@ export function generateDefaultView(
   const externalEventRow = createRow(timelines, {
     autoAdjustHeight: false,
     expanded: true,
-    externalEventOptions: { ...ViewDefaultExternalEventOptions, displayMode: 'grouped' },
+    discreteOptions: { ...ViewDefaultDiscreteOptions, displayMode: 'grouped' },
     height: 100,
     layers: [externalEventLayer],
     name: 'External Events',
@@ -46,7 +46,7 @@ export function generateDefaultView(
     filter: { activity: { types } },
   });
   const activityRow = createRow(timelines, {
-    activityOptions: { ...ViewDefaultActivityOptions, displayMode: 'grouped' },
+    discreteOptions: { ...ViewDefaultDiscreteOptions, displayMode: 'grouped' },
     autoAdjustHeight: true,
     expanded: true,
     layers: [activityLayer],
@@ -295,7 +295,6 @@ export function generateDefaultView(
           ],
           columnStates: [],
         },
-        filteredDerivationGroups: [],
         grid: {
           columnSizes: '1fr 3px 3fr 3px 1fr',
           leftComponentBottom: 'SimulationPanel',

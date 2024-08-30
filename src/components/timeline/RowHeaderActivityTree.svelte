@@ -1,4 +1,4 @@
-<svelte:options immutable={true} />
+<!-- <svelte:options immutable={true} />
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
@@ -147,7 +147,7 @@
           </div>
           <div class="title-metadata">
             {#if node.type === 'directive'}
-              <!--NOTE: Doesn't appear to run under any setting for directive/span visibility-->
+              NOTE: Doesn't appear to run under any setting for directive/span visibility--
               <div
                 title={`${node.children.length} child type group${pluralize(node.children.length)}`}
                 class="icon-group"
@@ -276,4 +276,4 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-</style>
+</style> -->

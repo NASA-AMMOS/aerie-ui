@@ -1,62 +1,56 @@
-<!-- <svelte:options immutable={true} />
+<svelte:options immutable={true} />
 
 <script lang="ts">
-  import { browser } from '$app/environment';
   import ActivityAnchorIconSVG from '@nasa-jpl/stellar/icons/activity_anchor.svg?raw';
+  
+  import { browser } from '$app/environment';
   import { quadtree as d3Quadtree, type Quadtree } from 'd3-quadtree';
   import { type ScaleTime } from 'd3-scale';
   import { createEventDispatcher, onDestroy, onMount, tick } from 'svelte';
-  import { ViewDefaultActivityOptions } from '../../constants/view';
+  import { ViewDefaultDiscreteOptions } from '../../constants/view';
   import { ViewConstants } from '../../enums/view';
   import type { ActivityDirective, ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
+  import type { ExternalEvent } from '../../types/external-event';
   import type { Plan } from '../../types/plan';
   import type { Span, SpanId, SpansMap, SpanUtilityMaps } from '../../types/simulation';
   import type {
-    ActivityOptions,
-    ActivityTree,
-    ActivityTreeNode,
-    ActivityTreeNodeDrawItem,
-    ActivityTreeNodeItem,
+    DiscreteOptions,
+    DiscreteTree,
+    DiscreteTreeNode,
+    DiscreteTreeNodeDrawItem,
+    DiscreteTreeNodeItem,
     MouseDown,
     MouseOver,
     QuadtreeRect,
     RowMouseOverEvent,
-    TimeRange,
+    TimeRange
   } from '../../types/timeline';
   import { hexToRgba, shadeColor } from '../../utilities/color';
   import effects from '../../utilities/effects';
   import { isRightClick } from '../../utilities/generic';
+  import { getRowIdExternalEvent } from '../../utilities/hash';
   import { isDeleteEvent } from '../../utilities/keyboardEvents';
-  import {
-    getActivityDirectiveStartTimeMs,
-    getDoyTime,
-    getIntervalUnixEpochTime,
-    getUnixEpochTime,
-    getUnixEpochTimeFromInterval,
-  } from '../../utilities/time';
-  import {
-    directiveInView,
-    searchQuadtreeRect,
-    spanInView,
-    TimelineInteractionMode,
-    TimelineLockStatus,
-  } from '../../utilities/timeline';
+  import { getActivityDirectiveStartTimeMs, getDoyTime, getIntervalUnixEpochTime, getUnixEpochTime, getUnixEpochTimeFromInterval } from '../../utilities/time';
+  import { directiveInView, externalEventInView, searchQuadtreeRect, spanInView, TimelineInteractionMode, TimelineLockStatus } from '../../utilities/timeline';
+
 
   type IdToColorMap = Record<number, string>;
-  type IdToColorMaps = { directives: IdToColorMap; spans: IdToColorMap };
+  type IdToColorMaps = { directives: IdToColorMap; external_events: IdToColorMap; spans: IdToColorMap };
 
+  export let selectedExternalEventId: number | null = null;
+  export let externalEvents: ExternalEvent[] = [];
   export let activityDirectives: ActivityDirective[] = [];
-  export let activityTree: ActivityTree = [];
-  export let activityOptions: ActivityOptions = { ...ViewDefaultActivityOptions };
-  export let idToColorMaps: IdToColorMaps = { directives: {}, spans: {} };
-  export let activityDirectivesMap: ActivityDirectivesMap = {};
-  export let activityRowPadding: number = 4;
-  export let activitySelectedColor: string = '#a9eaff';
-  export let activitySelectedTextColor: string = '#0a4c7e';
-  export let activityDefaultColor = '#cbcbcb';
+  export let idToColorMaps: IdToColorMaps = { directives: {}, external_events: {}, spans: {} };
+  export let discreteRowPadding: number = 4;
+  export let discreteSelectedColor: string = '#a9eaff';
+  export let discreteSelectedTextColor: string = '#0a4c7e';
+  export let discreteDefaultColor = '#cbcbcb';
   export let activityUnfinishedSelectedColor: string = '#ff3b19';
   export let activityUnfinishedColor: string = '#fc674d';
+  export let discreteOptions: DiscreteOptions = { ...ViewDefaultDiscreteOptions };
+  export let discreteTree: DiscreteTree = [];
+  export let activityDirectivesMap: ActivityDirectivesMap = {};
   export let blur: FocusEvent | undefined;
   export let contextmenu: MouseEvent | undefined;
   export let dblclick: MouseEvent | undefined;
@@ -66,7 +60,7 @@
   export let hasUpdateDirectivePermission: boolean = false;
   export let focus: FocusEvent | undefined;
   export let labelPaddingLeft: number = 4;
-  export let maxPackedActivityCount: number = 10000;
+  export let maxPackedItemEventCount: number = 10000;
   export let mousedown: MouseEvent | undefined;
   export let mousemove: MouseEvent | undefined;
   export let mouseout: MouseEvent | undefined;
@@ -87,7 +81,7 @@
   export let xScaleView: ScaleTime<number, number> | null = null;
   export let spans: Span[] = [];
 
-  export let verticalDrawOffset: number = 0;
+  $: console.log("LayerDiscrete ", discreteOptions)
 
   const dispatch = createEventDispatcher<{
     contextMenu: MouseOver;
@@ -108,12 +102,15 @@
   let dragActivityDirectiveActive: ActivityDirective | null = null;
   let dragStartX: number | null = null;
   let maxActivityWidth: number;
+  let maxExternalEventWidth: number;
   let minRectSize: number = 4;
   let planStartTimeMs: number;
   let quadtreeActivityDirectives: Quadtree<QuadtreeRect>;
   let quadtreeSpans: Quadtree<QuadtreeRect>;
+  let quadtreeExternalEvents: Quadtree<QuadtreeRect>;
   let visibleActivityDirectivesById: Record<ActivityDirectiveId, ActivityDirective> = {};
   let visibleSpansById: Record<SpanId, Span> = {};
+  let visibleExternalEventsById: Record<number, ExternalEvent> = {};
   let colorCache: Record<string, string> = {};
 
   // Asset cache
@@ -127,35 +124,43 @@
   $: onMousedown(mousedown);
   $: onMousemove(mousemove);
   $: onMouseout(mouseout);
-  $: onMouseup(mouseup);
+  $: onMouseUp(mouseup);
 
   $: anchorIconWidth = 16;
   $: anchorIconMarginLeft = 4;
-  $: correctedCanvasHeight = (drawHeight+verticalDrawOffset) > 20 ? drawHeight+verticalDrawOffset : 20
-  $: canvasHeightDpr = correctedCanvasHeight * dpr;
+  $: canvasHeightDpr = drawHeight * dpr;
   $: canvasWidthDpr = drawWidth * dpr;
-  $: rowHeight = activityOptions.activityHeight + (activityOptions.displayMode === 'compact' ? 0 : 0);
+  $: rowHeight = discreteOptions.height + (discreteOptions.displayMode === 'compact' ? 0 : 0);
   $: timelineLocked = timelineLockStatus === TimelineLockStatus.Locked;
   $: planStartTimeMs = getUnixEpochTime(getDoyTime(new Date(planStartTimeYmd)));
 
-  $: if (
-    activityDirectives &&
-    showDirectives !== undefined &&
-    showSpans !== undefined &&
-    canvasHeightDpr &&
+  // the following are NOT mutually exclusive.
+  $: commonConditions = canvasHeightDpr &&
     canvasWidthDpr &&
     ctx &&
     drawHeight &&
     drawWidth &&
     dpr &&
+    discreteOptions &&
+    viewTimeRange &&
+    xScaleView &&
+    discreteTree
+
+  $: canDrawActivities = activityDirectives &&
+    showDirectives !== undefined &&
+    showSpans !== undefined &&
     selectedActivityDirectiveId !== undefined &&
     selectedSpanId !== undefined &&
     spansMap &&
-    activityOptions &&
-    viewTimeRange &&
-    xScaleView &&
-    spans &&
-    activityTree
+    discreteOptions.activityOptions &&
+    spans;
+
+  $: canDrawExternalEvents = externalEvents && 
+    selectedExternalEventId !== undefined &&
+    discreteOptions.externalEventOptions
+
+  $: if (
+    commonConditions && (canDrawActivities || canDrawExternalEvents)
   ) {
     draw();
   }
@@ -260,12 +265,20 @@
     }
   }
 
-  function getDirectivesAndSpansForOffset(offsetX: number, offsetY: number) {
+  function getItemsForOffset(offsetX: number, offsetY: number) {
+    const externalEvents = searchQuadtreeRect<ExternalEvent>(
+      quadtreeExternalEvents,
+      offsetX,
+      offsetY,
+      discreteOptions.height,
+      maxExternalEventWidth,
+      visibleExternalEventsById,
+    );
     const activityDirectives = searchQuadtreeRect<ActivityDirective>(
       quadtreeActivityDirectives,
       offsetX,
       offsetY,
-      activityOptions.activityHeight,
+      discreteOptions.height,
       maxActivityWidth,
       visibleActivityDirectivesById,
     );
@@ -273,28 +286,27 @@
       quadtreeSpans,
       offsetX,
       offsetY,
-      activityOptions.activityHeight,
+      discreteOptions.height,
       maxActivityWidth,
       visibleSpansById,
     );
-    return { activityDirectives, spans };
+    return { externalEvents, activityDirectives, spans };
   }
 
   function onMousedown(e: MouseEvent | undefined): void {
     // Do not process events if meta/ctrl is pressed to avoid interaction conflicts with zoom/pan
     if (e && timelineInteractionMode === TimelineInteractionMode.Interact && e.button !== 1) {
       const { offsetX, offsetY } = e;
-      const { activityDirectives, spans } = getDirectivesAndSpansForOffset(offsetX, offsetY);
+      const { activityDirectives, spans, externalEvents } = getItemsForOffset(offsetX, offsetY);
 
       /**
        * The setTimeout is needed to prevent a race condition with mousedown events and change events.
-       * Without the setTimeout, mousedown events happen before change events in the activity directive form.
-       * This caused invalid updates to activity parameters.
+       * Without the setTimeout, mousedown events happen before change events in the external event selection form.
        * Make sure you understand the linked issue before changing this code!
        * @see https://github.com/NASA-AMMOS/aerie-ui/issues/590
        */
       setTimeout(() => {
-        dispatch('mouseDown', { activityDirectives, e, spans });
+        dispatch('mouseDown', { activityDirectives, e, spans, externalEvents });
         if (!isRightClick(e)) {
           dragActivityDirectiveStart(activityDirectives, offsetX);
         }
@@ -305,24 +317,27 @@
   function onMousemove(e: MouseEvent | undefined): void {
     if (e) {
       const { offsetX, offsetY } = e;
+      let externalEvents: ExternalEvent[] = [];
       let activityDirectives: ActivityDirective[] = [];
       let spans: Span[] = [];
-      const hits = getDirectivesAndSpansForOffset(offsetX, offsetY);
+      
+      const hits = getItemsForOffset(offsetX, offsetY);
+      externalEvents = hits.externalEvents;
       activityDirectives = hits.activityDirectives;
       spans = hits.spans;
 
-      dispatch('mouseOver', { activityDirectives, e, spans });
+      dispatch('mouseOver', { activityDirectives, e, spans, externalEvents });
       dragActivityDirective(offsetX);
     }
   }
 
   function onMouseout(e: MouseEvent | undefined): void {
     if (e) {
-      dispatch('mouseOver', { activityDirectives: [], e, spans: [] });
+      dispatch('mouseOver', { activityDirectives: [], e, spans: [], externalEvents: [] });
     }
   }
 
-  function onMouseup(e: MouseEvent | undefined): void {
+  function onMouseUp(e: MouseEvent | undefined): void {
     if (e) {
       dragActivityEnd();
     }
@@ -335,25 +350,32 @@
     }
     const showContextMenu = !!e && isRightClick(e);
     if (showContextMenu) {
-      // Get new selected directive or span in order to ensure that no race condition exists between
-      // the selectedActivityDirectiveId and selectedSpanId stores and the dispatching of this event
+      // Get _new_ selectedExternalEventId in order to ensure that no race condition exists between
+      // the selectedExternalEventId stores and the dispatching of this event
       // since there is no guarantee that the mousedown event triggering updates to those stores will complete
       // before the context menu event dispatch fires
       const { offsetX, offsetY } = e;
-      const { activityDirectives, spans } = getDirectivesAndSpansForOffset(offsetX, offsetY);
+      const { externalEvents, activityDirectives, spans } = getItemsForOffset(offsetX, offsetY);
 
       let newSelectedActivityDirectiveId = null;
       let newSelectedSpanId = null;
+      let newSelectedExternalEventId: number | null = null;
+
       if (activityDirectives.length > 0) {
         newSelectedActivityDirectiveId = activityDirectives[0].id;
       } else if (spans.length > 0) {
         newSelectedSpanId = spans[0].span_id;
+      } else if (externalEvents.length > 0) {
+        // TODO: verify that this line does not fail! It shouldn't...
+        newSelectedExternalEventId = getRowIdExternalEvent(externalEvents[0].pkey);
       }
+
       dispatch('contextMenu', {
         e,
-        origin: 'layer-activity',
+        origin: 'layer-discrete',
         selectedActivityDirectiveId: newSelectedActivityDirectiveId ?? undefined,
         selectedSpanId: newSelectedSpanId ?? undefined,
+        selectedExternalEventId: newSelectedExternalEventId ?? undefined,
       });
     }
   }
@@ -364,6 +386,7 @@
         e,
         selectedActivityDirectiveId: selectedActivityDirectiveId ?? undefined,
         selectedSpanId: selectedSpanId ?? undefined,
+        selectedExternalEventId: selectedExternalEventId ?? undefined,
       });
     }
   }
@@ -380,6 +403,15 @@
     return `${sticky ? '← ' : ''}${span.type}${span.duration === null ? ' (Unfinished)' : ''}`;
   }
 
+  function getLabelForExternalEvent(externalEvent: ExternalEvent): string {
+    // Display an arrow to the left of a event label if the span is sticky
+    // The label should be sticky if the start of the event is clipped and the event is still in view
+    const sticky =
+      externalEvent.start_ms < viewTimeRange.start &&
+      externalEvent.start_ms + externalEvent.duration_ms >= viewTimeRange.start;
+    return `${sticky ? '← ' : ''}${externalEvent.pkey.key}`;
+  }
+
   function drawBottomLine(y: number, width: number) {
     ctx.strokeStyle = getComputedStyle(canvas).getPropertyValue('--timeline-divider-color');
     ctx.lineWidth = 1;
@@ -389,15 +421,14 @@
     ctx.stroke();
   }
 
-  function drawGroup(node: ActivityTreeNode, y: number, rowHeight: number, drawLine = true) {
+  function drawGroup(node: DiscreteTreeNode, y: number, rowHeight: number, drawLine = true) {
     let newY = y;
     if (drawLine) {
       drawBottomLine(newY + rowHeight + 0.5, drawWidth);
     }
 
-    drawRow(newY + activityRowPadding, node.items || [], idToColorMaps);
+    drawRow(newY + discreteRowPadding, node.items || [], idToColorMaps);
     newY += rowHeight;
-
     if (node.expanded && node.children.length) {
       node.children.forEach(childNode => {
         newY = drawGroup(childNode, newY, rowHeight, true);
@@ -407,19 +438,22 @@
   }
 
   function drawGroupedMode() {
+    // console.log("DRAWING GROUPED MODE", discreteOptions, discreteTree)
     // must clear the canvas before a redraw! otherwise the old ungrouped version can linger around and we draw over that!
     canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
     if (xScaleView !== null) {
       const collapsedMode = drawHeight <= ViewConstants.MIN_ROW_HEIGHT;
-      let y = collapsedMode ? 0 : ViewConstants.MIN_ROW_HEIGHT - 1; // pad starting y with the min row height to align with activity tree
-      console.log("A", drawHeight, verticalDrawOffset)
-      const expectedRowHeight = rowHeight + activityRowPadding;
-      activityTree.forEach(node => {
+      let y = collapsedMode ? 0 : (ViewConstants.MIN_ROW_HEIGHT - 1); // pad starting y with the min row height to align with activity tree
+      const expectedRowHeight = rowHeight + discreteRowPadding;
+      
+      discreteTree.forEach(node => {
+        // TODO: add a gap between activities and external events if both are present together.
         const newY = drawGroup(node, y, expectedRowHeight, !collapsedMode);
         if (!collapsedMode) {
           y = newY;
         }
       });
+      
       const newRowHeight = y + 36; // add padding to the bottom to account for buttons in the activity tree
       if (!collapsedMode && newRowHeight > 0) {
         /* TODO a change from manual to auto height does not take effect until you trigger a redraw on this row, could pass in whether or not to update row height but that might be odd? */
@@ -429,9 +463,12 @@
   }
 
   function drawCompactMode() {
+    console.log("DRAWING COMPACT MODE")
     if (xScaleView !== null) {
       const seenSpans: Record<number, boolean> = {};
-      const itemsToDraw: ActivityTreeNodeDrawItem[] = [];
+      const itemsToDraw: DiscreteTreeNodeDrawItem[] = [];
+
+      // Aggregate Activity Drawables
       if (showDirectives) {
         activityDirectives.forEach(directive => {
           if (!xScaleView) {
@@ -468,8 +505,21 @@
           }
         });
       }
-      if (itemsToDraw.length > maxPackedActivityCount) {
-        const text = `Activity drawing limit (${maxPackedActivityCount}) exceeded (${itemsToDraw.length})`;
+
+      // Aggregate External Event Drawables
+      externalEvents.forEach(externalEvent => {
+        if (externalEventInView(externalEvent, viewTimeRange)) {
+          if (xScaleView !== null) {
+            itemsToDraw.push({
+              externalEvent: externalEvent,
+              startX: xScaleView(externalEvent.start_ms),
+            });
+          }
+        }
+      });
+
+      if (itemsToDraw.length > maxPackedItemEventCount) {
+        const text = `Discrete Item drawing limit (${maxPackedItemEventCount}) exceeded (${itemsToDraw.length})`;
         const { width } = measureText(text, textMetricsCache);
         setLabelContext('black');
         ctx.fillText(text, drawWidth / 2 - width / 2, drawHeight / 2, width);
@@ -479,7 +529,8 @@
       itemsToDraw.sort((a, b) => {
         return a.startX < b.startX ? -1 : 1;
       });
-      const rows: Record<number, { items: ActivityTreeNodeDrawItem[]; max: number }> = {};
+
+      const rows: Record<number, { items: DiscreteTreeNodeDrawItem[]; max: number }> = {};
       itemsToDraw.forEach(item => {
         const { startX } = item;
         const itemEndX = getItemEndX(item);
@@ -501,33 +552,33 @@
           }
         }
       });
-      const extraSpace = Math.max(0, drawHeight - activityOptions.activityHeight - activityRowPadding);
+
+      const extraSpace = Math.max(0, drawHeight - discreteOptions.height - discreteRowPadding);
       const rowCount = Object.keys(rows).length;
       Object.entries(rows).forEach(([_, entry], i) => {
         const { items } = entry;
         let yRow = i * (extraSpace / (rowCount - 1)) || 0;
-        yRow += verticalDrawOffset;
-        // If we can't have at least two rows then draw everything at 0
-        if (activityOptions.activityHeight + 4 >= drawHeight) {
+        if (discreteOptions.height >= drawHeight) {
           yRow = 4;
         }
-        else if (activityOptions.activityHeight * 2 >= drawHeight) {
-          yRow = 4 + verticalDrawOffset;
-        }
-        if (activityOptions.activityHeight) {
+        // TODO: check this
+        // else if (externalEventOptions.externalEventHeight * 2 >= drawHeight) {
+        //   yRow = 4 + verticalDrawOffset;
+        // }
+        if (discreteOptions.height) {
           drawRow(yRow, items, idToColorMaps);
         }
       });
     }
   }
 
-  function getItemEndX(item: { directive?: ActivityDirective; span?: Span; startX: number }) {
-    const { span, directive, startX } = item;
+  function getItemEndX(item: { directive?: ActivityDirective; span?: Span; externalEvent?: ExternalEvent; startX: number }) {
+    const { span, directive, externalEvent, startX } = item;
     let labelEndX = 0;
     let boxEndX = 0;
     if (directive && showDirectives) {
       boxEndX = 2;
-      if (activityOptions.labelVisibility !== 'off') {
+      if (discreteOptions.labelVisibility !== 'off') {
         const anchored = directive.anchor_id !== null;
         const directiveLabelWidth = measureText(directive.name, textMetricsCache).width + labelPaddingLeft;
         const finalWidth = anchored
@@ -539,31 +590,46 @@
     if (span && showSpans && xScaleView) {
       const spanEndX = xScaleView(span.endMs);
       boxEndX = Math.max(boxEndX, spanEndX);
-      if (activityOptions.labelVisibility !== 'off') {
+      if (discreteOptions.labelVisibility !== 'off') {
         labelEndX = Math.max(
           labelEndX,
           Math.max(minRectSize, startX) + labelPaddingLeft + measureText(getLabelForSpan(span), textMetricsCache).width,
         );
       }
     }
+    if (externalEvent && xScaleView) {
+      const spanEndX = xScaleView(externalEvent.start_ms + externalEvent.duration_ms);
+      boxEndX = Math.max(boxEndX, spanEndX);
+      if (discreteOptions.labelVisibility !== 'off') {
+        labelEndX = Math.max(
+          labelEndX,
+          Math.max(minRectSize, startX) +
+            labelPaddingLeft +
+            measureText(getLabelForExternalEvent(externalEvent), textMetricsCache).width,
+        );
+      }
+    }
     return Math.max(boxEndX, labelEndX);
   }
 
-  function drawRow(y: number, items: ActivityTreeNodeItem[], idToColorMaps: IdToColorMaps) {
+  function drawRow(y: number, items: DiscreteTreeNodeItem[], idToColorMaps: IdToColorMaps) {
     /* TODO this is doing unnecessary work in compact mode - should be able to preprocess grouped mode and skip this first part for compact mode */
-    const drawLabels = activityOptions.labelVisibility === 'on' || activityOptions.labelVisibility === 'auto';
+    const drawLabels = discreteOptions.labelVisibility === 'on' || discreteOptions.labelVisibility === 'auto';
     let itemsToDraw: {
       directive?: ActivityDirective;
       directiveStartX?: number;
       span?: Span;
       spanStartX?: number;
+      externalEvent?: ExternalEvent;
+      externalEventStartX?: number;
     }[] = [];
+
     items.forEach(item => {
       if (!xScaleView) {
         return;
       }
 
-      const { span, directive } = item;
+      const { span, directive, externalEvent } = item;
       let newItem;
 
       if (span && showSpans && spanInView(span, viewTimeRange)) {
@@ -572,30 +638,92 @@
       if (directive && showDirectives && directiveInView(directive, viewTimeRange)) {
         newItem = { ...newItem, directive, directiveStartX: xScaleView(directive.start_time_ms ?? 0) };
       }
+
+      // should never occur at the same time as the above. as such, not written as newItem = {...newItem, ...}
+      if (externalEvent && externalEventInView(externalEvent, viewTimeRange)) {
+        newItem = { externalEvent, externalEventStartX: xScaleView(externalEvent.start_ms) };
+      }
       if (newItem) {
         itemsToDraw.push(newItem);
       }
     });
 
-    itemsToDraw.forEach(({ directive, directiveStartX, span, spanStartX }, i) => {
+    itemsToDraw.forEach(({ directive, directiveStartX, span, spanStartX, externalEvent, externalEventStartX }, i) => {
       if (!xScaleView) {
         return;
       }
       const nextItem = itemsToDraw[i + 1];
+
+      if (externalEvent && (directive || span)) {
+        console.log("External Event and Directive or Span detected in same object!");
+        console.log("Directive:", directive, directiveStartX);
+        console.log("Span:", span, spanStartX);
+        console.log("External Event:", externalEvent, externalEventStartX);
+      }
+
+      // NOTE - the following can probably be refactored because of code repetition. It is not yet.
+      // Draw external event (like a span)
+      if (externalEvent && typeof externalEventStartX === 'number') {
+        const externalEventEndX = xScaleView(externalEvent.start_ms + externalEvent.duration_ms);
+        const externalEventRectWidth = Math.max(2, Math.min(externalEventEndX, drawWidth) - externalEventStartX);
+        const externalEventColor =
+          idToColorMaps.external_events[getRowIdExternalEvent(externalEvent.pkey)] || discreteDefaultColor;
+        const isSelected = selectedExternalEventId === getRowIdExternalEvent(externalEvent.pkey);
+        if (isSelected) {
+          ctx.fillStyle = discreteSelectedColor;
+        } else {
+          const color = getRGBAFromHex(externalEventColor, 0.5);
+          ctx.fillStyle = color;
+        }
+        ctx.fillRect(externalEventStartX, y, externalEventRectWidth, rowHeight);
+
+        // Draw label if the label will fit
+        let spanLabelWidth = 0;
+        if (drawLabels) {
+          const label = getLabelForExternalEvent(externalEvent);
+          spanLabelWidth = measureText(label, textMetricsCache).width + labelPaddingLeft;
+          let shouldDrawLabel = true;
+          if (discreteOptions.labelVisibility === 'auto') {
+            if (nextItem) {
+              const nextX = nextItem.externalEventStartX ?? null;
+              if (typeof nextX === 'number' && externalEventStartX + spanLabelWidth >= nextX) {
+                shouldDrawLabel = false;
+                spanLabelWidth = 0;
+              }
+            }
+          }
+          if (shouldDrawLabel) {
+            const spanColor = discreteDefaultColor;
+            drawLabel(label, externalEventStartX, y, spanLabelWidth, spanColor, isSelected);
+          }
+        }
+
+        // Add to quadtree
+        visibleExternalEventsById[getRowIdExternalEvent(externalEvent.pkey)] = externalEvent;
+
+        // use quadtreeSpans?
+        quadtreeExternalEvents.add({
+          height: rowHeight,
+          id: getRowIdExternalEvent(externalEvent.pkey),
+          width: Math.max(spanLabelWidth, externalEventRectWidth),
+          x: externalEventStartX,
+          y,
+        });
+      }
 
       // Draw span
       if (span && typeof spanStartX === 'number') {
         const unfinished = span.duration === null;
         const spanEndX = xScaleView(span.endMs);
         const spanRectWidth = Math.max(2, Math.min(spanEndX, drawWidth) - spanStartX);
-        const spanColor = idToColorMaps.spans[span.span_id] || activityDefaultColor;
+        const spanColor = idToColorMaps.spans[span.span_id] || discreteDefaultColor;
         const isSelected =
           selectedSpanId === span.span_id || (directive && selectedActivityDirectiveId === directive.id);
         if (isSelected) {
           if (unfinished) {
             ctx.fillStyle = activityUnfinishedSelectedColor;
           } else {
-            ctx.fillStyle = activitySelectedColor;
+            ctx.fillStyle = discreteSelectedColor;
           }
         } else if (unfinished) {
           ctx.fillStyle = shadeColor(activityUnfinishedColor, 1.2);
@@ -611,7 +739,7 @@
           const label = getLabelForSpan(span);
           spanLabelWidth = measureText(label, textMetricsCache).width + labelPaddingLeft;
           let shouldDrawLabel = true;
-          if (activityOptions.labelVisibility === 'auto') {
+          if (discreteOptions.labelVisibility === 'auto') {
             if (nextItem) {
               const nextX = nextItem.spanStartX ?? nextItem.directiveStartX ?? null;
               if (typeof nextX === 'number' && spanStartX + spanLabelWidth >= nextX) {
@@ -620,8 +748,9 @@
               }
             }
           }
+          console.log("S", label, shouldDrawLabel)
           if (shouldDrawLabel) {
-            const spanColor = idToColorMaps.spans[span.span_id] || activityDefaultColor;
+            const spanColor = idToColorMaps.spans[span.span_id] || discreteDefaultColor;
             drawLabel(label, spanStartX, y, spanLabelWidth, spanColor, unfinished, isSelected);
           }
         }
@@ -639,13 +768,13 @@
 
       // Draw directive
       if (directive && typeof directiveStartX === 'number') {
-        const directiveColor = idToColorMaps.directives[directive.id] || activityDefaultColor;
+        const directiveColor = idToColorMaps.directives[directive.id] || discreteDefaultColor;
         const color = hexToRgba(shadeColor(directiveColor || '#FF0000', 1.2), 1);
         const isSelected = selectedActivityDirectiveId === directive.id || (span && selectedSpanId === span.span_id);
         let directiveLabelWidth = 0;
         const anchored = directive.anchor_id !== null;
         if (isSelected) {
-          ctx.fillStyle = shadeColor(activitySelectedColor, 1.3);
+          ctx.fillStyle = shadeColor(discreteSelectedColor, 1.3);
         } else {
           ctx.fillStyle = color;
         }
@@ -656,7 +785,9 @@
           const label = directive.name;
           directiveLabelWidth = measureText(label, textMetricsCache).width + labelPaddingLeft;
           let shouldDrawLabel = true;
-          if (activityOptions.labelVisibility === 'auto') {
+
+          // TODO: fix this!
+          if (discreteOptions.labelVisibility === 'auto') {
             const finalWidth = anchored
               ? anchorIconWidth + anchorIconMarginLeft + directiveLabelWidth
               : directiveLabelWidth;
@@ -667,6 +798,7 @@
               directiveLabelWidth = 0;
             }
           }
+          console.log("D", label, shouldDrawLabel)
           if (shouldDrawLabel) {
             drawLabel(label, directiveStartX, y, directiveLabelWidth, directiveColor, false, isSelected);
 
@@ -695,26 +827,20 @@
     });
   }
 
-  function drawLabel(
-    text: string,
-    x: number,
-    y: number,
-    width: number,
-    color: string,
-    unfinished = false,
-    selected = false,
-  ) {
+  function drawLabel(text: string, x: number, y: number, width: number, color: string, unfinished = false, selected = false) {
     setLabelContext('black');
     if (selected) {
       if (unfinished) {
+        // only if the item in question is an activity.
         ctx.fillStyle = activityUnfinishedSelectedColor;
       } else {
-        ctx.fillStyle = activitySelectedTextColor;
+        ctx.fillStyle = discreteSelectedTextColor;
       }
     } else if (unfinished) {
       ctx.fillStyle = ctx.fillStyle = shadeColor(activityUnfinishedColor, 1.3);
     } else {
-      const opacity = selectedActivityDirectiveId !== null || selectedSpanId !== null ? 0.4 : 1;
+      // if _anything_ selected, decrease opacity
+      const opacity = selectedActivityDirectiveId !== null || selectedSpanId !== null || selectedExternalEventId !== null ? 0.4 : 1;
       ctx.fillStyle = getRGBAFromHex(shadeColor(color, 2.8), opacity);
     }
     ctx.fillText(text, Math.max(x + labelPaddingLeft, minRectSize), y + rowHeight / 2, width);
@@ -758,7 +884,7 @@
   }
 
   /**
-   * Draws activity points to the canvas context.
+   * Draws external event points to the canvas context.
    * @note Points must be sorted in time ascending order before calling this function.
    */
   async function draw(): Promise<void> {
@@ -767,7 +893,7 @@
 
       ctx.resetTransform();
       ctx.scale(dpr, dpr);
-      ctx.clearRect(0, 0, drawWidth, drawHeight);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       quadtreeActivityDirectives = d3Quadtree<QuadtreeRect>()
         .x(p => p.x)
@@ -783,15 +909,23 @@
           [0, 0],
           [drawWidth, drawHeight],
         ]);
+      quadtreeExternalEvents = d3Quadtree<QuadtreeRect>()
+        .x(p => p.x)
+        .y(p => p.y)
+        .extent([
+          [0, 0],
+          [drawWidth, drawHeight],
+        ]);
 
       visibleActivityDirectivesById = {};
       visibleSpansById = {};
-      if (activityOptions.displayMode === 'grouped') {
+      visibleExternalEventsById = {};
+      if (discreteOptions.displayMode === 'grouped') {
         drawGroupedMode();
-      } else if (activityOptions.displayMode === 'compact') {
+      } else if (discreteOptions.displayMode === 'compact') {
         drawCompactMode();
       } else {
-        console.warn('Unsupported LayerActivity displayMode: ', activityOptions.displayMode);
+        console.warn('Unsupported LayerDiscrete displayMode: ', discreteOptions.displayMode);
       }
     }
   }
@@ -800,7 +934,7 @@
 <canvas
   bind:this={canvas}
   height={canvasHeightDpr}
-  style="height: {correctedCanvasHeight}px; width: {drawWidth}px;"
+  style="height: {drawHeight}px; width: {drawWidth}px;"
   width={canvasWidthDpr}
 />
 
@@ -809,4 +943,4 @@
     position: absolute;
     z-index: -1;
   }
-</style> -->
+</style>

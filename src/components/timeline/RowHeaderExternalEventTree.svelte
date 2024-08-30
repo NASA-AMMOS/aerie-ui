@@ -1,4 +1,4 @@
-<svelte:options immutable={true} />
+<!-- <svelte:options immutable={true} />
 
 <script lang="ts">
   import CaretRight from 'bootstrap-icons/icons/caret-right.svg?component';
@@ -296,4 +296,4 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-</style>
+</style> -->

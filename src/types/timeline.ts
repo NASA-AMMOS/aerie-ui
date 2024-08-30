@@ -4,35 +4,27 @@ import type { ConstraintResultWithName } from './constraint';
 import type { ExternalEvent } from './external-event';
 import type { ResourceType, Span } from './simulation';
 
-export type ActivityTree = ActivityTreeNode[];
-export type ExternalEventTree = ExternalEventTreeNode[];
+export type DiscreteTree = DiscreteTreeNode[];
 
-export type ActivityTreeNode = {
-  children: ActivityTreeNode[]; // Child nodes of this directive/span/aggregation
+export type DiscreteTreeNode = {
+  children: DiscreteTreeNode[];
   expanded: boolean;
   id: string;
   isLeaf: boolean;
-  items: ActivityTreeNodeItem[]; // Directives and/or spans to render on the timeline at this level of the tree
+  items: DiscreteTreeNodeItem[];
   label: string;
-  type: 'aggregation' | 'directive' | 'span';
-};
-export type ExternalEventTreeNode = {
-  children: ExternalEventTreeNode[];
-  expanded: boolean;
-  id: string;
-  isLeaf: boolean;
-  items: ExternalEventItem[];
-  label: string;
+  type: 'a' | 'ee'; // TODO: make sure everything adheres to defining this as type and changing what was type to activity_type
+  activity_type: 'n/a' | 'aggregation' | 'directive' | 'span'; // when items are activity related, this applies. TODO: this design is a little awkward.
 };
 
-export type ActivityTreeNodeItem = { directive?: ActivityDirective; span?: Span };
-export type ExternalEventItem = { externalEvent?: ExternalEvent };
+// export type DiscreteTreeNodeItem = { externalEvent?: ExternalEvent } | { directive?: ActivityDirective; span?: Span };
+export type DiscreteTreeNodeItem = { externalEvent?: ExternalEvent, directive?: ActivityDirective; span?: Span };
 
-export type ActivityTreeNodeDrawItem = ActivityTreeNodeItem & { startX: number };
-export type ExternalEventDrawItem = ExternalEventItem & { startX: number };
+export type DiscreteTreeNodeDrawItem = DiscreteTreeNodeItem & { startX: number };
 
-export type ActivityTreeExpansionMap = Record<string, boolean>;
-export type ExternalEventTreeExpansionMap = Record<string, boolean>;
+// export type ActivityTreeExpansionMap = Record<string, boolean>;
+// export type ExternalEventTreeExpansionMap = Record<string, boolean>;
+export type DiscreteTreeExpansionMap = Record<string, boolean>;
 
 export interface ActivityLayer extends Layer {
   activityColor: string;
@@ -165,7 +157,7 @@ export type RowMouseOverEvent = Omit<
   spans?: Span[];
 };
 
-export type MouseOverOrigin = 'row-header' | 'layer-line' | 'layer-activity' | 'layer-x-range' | 'layer-external-event';
+export type MouseOverOrigin = 'row-header' | 'layer-line' | 'layer-discrete' | 'layer-x-range';
 
 export interface Point {
   id: number;
@@ -193,45 +185,43 @@ export type ResourceLayerFilter = {
 };
 
 export type ActivityOptions = {
-  // Height of activity subrows
-  activityHeight: number;
-
-  // Whether or not to display only directives, only spans, or both in the row
-  composition: 'directives' | 'spans' | 'both';
-
-  // Describes the primary method in which activities are visualized within this row
-  displayMode: 'grouped' | 'compact';
-
   // If 'directive' the activities are grouped starting with directive types, if 'flat' activities are grouped by type regardless of hierarchy
   hierarchyMode: 'directive' | 'flat';
 
-  // Activity text label behavior
-  labelVisibility: 'on' | 'off' | 'auto';
+  // Whether or not to display only directives, only spans, or both in the row
+  composition: 'directives' | 'spans' | 'both';
 };
 
-// based on ActivityOptions, but exclusive for drawing ExternalEvents
+// included in Discrete, bearing exclusive properties for drawing ExternalEvents
 export type ExternalEventOptions = {
-  // Describes the primary method in which external events are visualized within this row
-  displayMode: 'grouped' | 'compact';
-
-  // Height of external event subrows
-  externalEventHeight: number;
-
   // Determines whether to group the External Events by their event type, or their external source
   groupBy: 'event_type_name' | 'source_key';
 
   // Bin size for external event children in grouped mode
   groupedModeBinSize: number;
-
-  // External event text label behavior
-  labelVisibility: 'on' | 'off' | 'auto';
 };
 
-export type Row = {
+export type DiscreteOptions = {
+  // Describes the primary method in which external events are visualized within this row
+  displayMode: 'grouped' | 'compact';
+
+  // Height of subrows
+  height: number;
+
+  // Item text label behavior
+  labelVisibility: 'on' | 'off' | 'auto';
+
+  // Activity-Layer-specific Options
   activityOptions?: ActivityOptions;
+
+  // External-Event-Layer-specific Options
+  externalEventOptions?: ExternalEventOptions;
+}
+
+export type Row = {
+  discreteOptions: DiscreteOptions;
   autoAdjustHeight: boolean;
   expanded: boolean;
-  externalEventOptions?: ExternalEventOptions;
   height: number;
   horizontalGuides: HorizontalGuide[];
   id: number;

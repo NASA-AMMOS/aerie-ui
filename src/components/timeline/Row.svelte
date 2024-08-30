@@ -7,7 +7,7 @@
   import { groupBy } from 'lodash-es';
   import { createEventDispatcher } from 'svelte';
   import FilterWithXIcon from '../../assets/filter-with-x.svg?component';
-  import { ViewDefaultActivityOptions, ViewDefaultExternalEventOptions } from '../../constants/view';
+  import { ViewDefaultDiscreteOptions } from '../../constants/view';
   import { Status } from '../../enums/status';
   import { catchError } from '../../stores/errors';
   import { externalSources, planDerivationGroupLinks } from '../../stores/external-source';
@@ -39,14 +39,12 @@
   } from '../../types/simulation';
   import type {
     ActivityOptions,
-    ActivityTree,
-    ActivityTreeExpansionMap,
-    ActivityTreeNode,
     Axis,
+    DiscreteOptions,
+    DiscreteTree,
+    DiscreteTreeExpansionMap,
+    DiscreteTreeNode,
     ExternalEventOptions,
-    ExternalEventTree,
-    ExternalEventTreeExpansionMap,
-    ExternalEventTreeNode,
     HorizontalGuide,
     Layer,
     MouseDown,
@@ -67,21 +65,17 @@
   import { getDoyTime } from '../../utilities/time';
   import {
     TimelineInteractionMode,
-    directiveInView,
-    generateActivityTree as generateActivityTreeUtil,
-    generateExternalEventTree as generateExternalEventTreeUtil,
-    getYAxesWithScaleDomains,
+    directiveInView, generateDiscreteTreeUtil, getYAxesWithScaleDomains,
     isActivityLayer,
     isExternalEventLayer,
     isLineLayer,
     isXRangeLayer,
     spanInView,
-    type TimelineLockStatus,
+    type TimelineLockStatus
   } from '../../utilities/timeline';
   import { tooltip } from '../../utilities/tooltip';
   import ConstraintViolations from './ConstraintViolations.svelte';
-  import LayerActivities from './LayerActivities.svelte';
-  import LayerExternalSources from './LayerExternalSources.svelte';
+  import LayerDiscrete from './LayerDiscrete.svelte';
   import LayerGaps from './LayerGaps.svelte';
   import LayerLine from './LayerLine.svelte';
   import LayerXRange from './LayerXRange.svelte';
@@ -95,10 +89,10 @@
   export let activityDirectives: ActivityDirective[] = [];
   export let externalEvents: ExternalEvent[] = [];
   export let activityDirectivesMap: ActivityDirectivesMap = {};
-  export let activityTreeExpansionMap: ActivityTreeExpansionMap = {};
-  export let activityOptions: ActivityOptions | undefined = undefined;
-  export let externalEventTreeExpansionMap: ExternalEventTreeExpansionMap = {};
-  export let externalEventOptions: ExternalEventOptions | undefined = undefined;
+  // export let activityTreeExpansionMap: ActivityTreeExpansionMap = {};
+  export let discreteOptions: DiscreteOptions | undefined = undefined;
+  export let discreteTreeExpansionMap: DiscreteTreeExpansionMap = {};
+  // export let externalEventTreeExpansionMap: ExternalEventTreeExpansionMap = {};
   export let autoAdjustHeight: boolean = false;
   export let constraintResults: ConstraintResultWithName[] = [];
   export let decimate: boolean = false;
@@ -137,8 +131,9 @@
 
 
   const dispatch = createEventDispatcher<{
-    activityTreeExpansionChange: ActivityTreeExpansionMap | null;
-    externalEventTreeExpansionChange: ExternalEventTreeExpansionMap | null;
+    // activityTreeExpansionChange: ActivityTreeExpansionMap | null;
+    // externalEventTreeExpansionChange: ExternalEventTreeExpansionMap | null;
+    discreteTreeExpansionChange: DiscreteTreeExpansionMap;
     mouseDown: MouseDown;
     mouseOver: MouseOver;
     updateRowHeight: {
@@ -179,8 +174,7 @@
   let loadedResources: Resource[];
   let loadingErrors: string[];
   let anyResourcesLoading: boolean = true;
-  let activityTree: ActivityTree = [];
-  let externalEventTree: ExternalEventTree = [];
+  let discreteTree: DiscreteTree = [];
   let filteredActivityDirectives: ActivityDirective[] = [];
   let filteredSpans: Span[] = [];
   let externalEventsFilteredByDG: ExternalEvent[] = [];
@@ -196,12 +190,12 @@
     external_events: {},
     spans: {},
   };
-  let filterActivitiesByTime = false;
-  let filterExternalEventsByTime = false;
-  let unsquashedCachedActivityTreeExpansionMap: ActivityTreeExpansionMap | undefined;
-  let unsquashedCachedExternalEventTreeExpansionMap: ExternalEventTreeExpansionMap;
-  let layerOffsets = [0, 0];
-  let filteredExternalSources: Array<string> = [];
+  // let filterActivitiesByTime = false;
+  // let filterExternalEventsByTime = false;
+  let filterItemsByTime = false;
+  // let unsquashedCachedActivityTreeExpansionMap: ActivityTreeExpansionMap | undefined;
+  // let unsquashedCachedExternalEventTreeExpansionMap: ExternalEventTreeExpansionMap;
+  // let layerOffsets = [0, 0];
   let rowRef: HTMLDivElement;
 
   $: if ($selectedRow?.id === id && rowRef) {
@@ -325,26 +319,12 @@
   $: onDragleave(dragleave);
   $: onDragover(dragover);
   $: onDrop(drop);
-  $: compact = (activityOptions?.displayMode === 'compact') || (externalEventOptions?.displayMode === 'compact');
-  $: computedDrawHeight = expanded ? drawHeight : (hasActivityLayer && hasExternalEventsLayer) ? 48 : 24;
-  $: computedLayerDrawHeight = expanded ? (compact ? drawHeight/2 : drawHeight/2): 24;
-  // $: {
-  //   // only modify if has both
-  //   if (hasActivityLayer && hasExternalEventsLayer) {
-  //     // compact
-  //     if (compact) {
-  //       layerOffsets = expanded ?
-  //     }
-  //     // non compact
-  //     else {
-
-  //     }
-  //   }
-  // }
+  $: computedDrawHeight = expanded ? drawHeight : 24;
   $: overlaySvgSelection = select(overlaySvg) as Selection<SVGElement, unknown, any, any>;
   $: rowClasses = classNames('row', { 'row-collapsed': !expanded });
-  $: activityOptions = activityOptions || { ...ViewDefaultActivityOptions };
-  $: externalEventOptions = externalEventOptions || { ...ViewDefaultExternalEventOptions };
+  $: discreteOptions = discreteOptions || {...ViewDefaultDiscreteOptions};
+  // $: activityOptions = activityOptions || { ...ViewDefaultActivityOptions };
+  // $: externalEventOptions = externalEventOptions || { ...ViewDefaultExternalEventOptions };
   $: activityLayers = layers.filter(isActivityLayer);
   $: externalEventLayers = layers.filter(isExternalEventLayer);
   $: lineLayers = layers.filter(l => isLineLayer(l) || (isXRangeLayer(l) && l.showAsLinePlot));
@@ -352,14 +332,11 @@
   $: hasActivityLayer = activityLayers.length > 0;
   $: hasExternalEventsLayer = externalEventLayers.length > 0;
   $: hasResourceLayer = lineLayers.length + xRangeLayers.length > 0;
-  $: showSpans = activityOptions?.composition === 'both' || activityOptions?.composition === 'spans';
-  $: showDirectives = activityOptions?.composition === 'both' || activityOptions?.composition === 'directives';
+  $: showSpans = discreteOptions?.activityOptions?.composition === 'both' || discreteOptions?.activityOptions?.composition === 'spans';
+  $: showDirectives = discreteOptions?.activityOptions?.composition === 'both' || discreteOptions?.activityOptions?.composition === 'directives';
 
-  $: if (activityTreeExpansionMap === undefined) {
-    activityTreeExpansionMap = {};
-  }
-  $: if (externalEventTreeExpansionMap === undefined) {
-    externalEventTreeExpansionMap = {};
+  $: if (discreteTreeExpansionMap === undefined) {
+    discreteTreeExpansionMap = {};
   }
 
   // Track resource loading status for this Row
@@ -413,73 +390,111 @@
     overlaySvgSelection.call(zoom.transform, timelineZoomTransform);
   }
 
-  $: if (activityLayers && spansMap && activityDirectives && typeof filterActivitiesByTime === 'boolean') {
-    activityTree = [];
-    idToColorMaps.directives = {};
-    idToColorMaps.spans = {};
+  $: if((activityLayers && spansMap && activityDirectives && typeof filterItemsByTime === 'boolean') || hasExternalEventsLayer) {
+    discreteTree = [];
+    if (activityLayers && spansMap && activityDirectives && typeof filterItemsByTime === 'boolean') {
+      idToColorMaps.directives = {};
+      idToColorMaps.spans = {};
 
-    let spansList = Object.values(spansMap);
-    const directivesByType = groupBy(activityDirectives, 'type');
-    const spansByType = groupBy(spansList, 'type');
-    if (activityLayers.length) {
-      let directives: ActivityDirective[] = [];
-      let spans: Span[] = [];
+      let spansList = Object.values(spansMap);
+      const directivesByType = groupBy(activityDirectives, 'type');
+      const spansByType = groupBy(spansList, 'type');
+      if (activityLayers.length) {
+        let directives: ActivityDirective[] = [];
+        let spans: Span[] = [];
 
-      // track directives and spans that have been seen to avoid double counting
-      // if more than one layer matches a type
-      let seenDirectiveIds: Record<number, boolean> = {};
-      let seenSpanIds: Record<number, boolean> = {};
-      activityLayers.forEach(layer => {
-        if (layer.filter && layer.filter.activity !== undefined) {
-          const types = layer.filter.activity.types || [];
-          types.forEach(type => {
-            const matchingDirectives = directivesByType[type];
-            if (matchingDirectives) {
-              const uniqueDirectives: ActivityDirective[] = [];
-              matchingDirectives.forEach(directive => {
-                if (!seenDirectiveIds[directive.id]) {
-                  idToColorMaps.directives[directive.id] = layer.activityColor;
-                  seenDirectiveIds[directive.id] = true;
-                  uniqueDirectives.push(directive);
-                }
-              });
-              directives = directives.concat(uniqueDirectives);
-            }
-            const matchingSpans = spansByType[type];
-            if (matchingSpans) {
-              const uniqueSpans: Span[] = [];
-              matchingSpans.forEach(span => {
-                if (!seenSpanIds[span.span_id]) {
-                  idToColorMaps.spans[span.span_id] = layer.activityColor;
-                  seenSpanIds[span.span_id] = true;
-                  uniqueSpans.push(span);
-                }
-              });
-              spans = spans.concat(uniqueSpans);
+        // track directives and spans that have been seen to avoid double counting
+        // if more than one layer matches a type
+        let seenDirectiveIds: Record<number, boolean> = {};
+        let seenSpanIds: Record<number, boolean> = {};
+        activityLayers.forEach(layer => {
+          if (layer.filter && layer.filter.activity !== undefined) {
+            const types = layer.filter.activity.types || [];
+            types.forEach(type => {
+              const matchingDirectives = directivesByType[type];
+              if (matchingDirectives) {
+                const uniqueDirectives: ActivityDirective[] = [];
+                matchingDirectives.forEach(directive => {
+                  if (!seenDirectiveIds[directive.id]) {
+                    idToColorMaps.directives[directive.id] = layer.activityColor;
+                    seenDirectiveIds[directive.id] = true;
+                    uniqueDirectives.push(directive);
+                  }
+                });
+                directives = directives.concat(uniqueDirectives);
+              }
+              const matchingSpans = spansByType[type];
+              if (matchingSpans) {
+                const uniqueSpans: Span[] = [];
+                matchingSpans.forEach(span => {
+                  if (!seenSpanIds[span.span_id]) {
+                    idToColorMaps.spans[span.span_id] = layer.activityColor;
+                    seenSpanIds[span.span_id] = true;
+                    uniqueSpans.push(span);
+                  }
+                });
+                spans = spans.concat(uniqueSpans);
+              }
+            });
+          }
+        });
+        directives.sort((a, b) => ((a.start_time_ms ?? 0) < (b.start_time_ms ?? 0) ? -1 : 1));
+        spans.sort((a, b) => (a.startMs < b.startMs ? -1 : 1));
+        if (directives.length || spans.length) {
+          // Populate both sets of directive and span lists in order to more precisely
+          // react to the filterActivitiesByTime variable later and avoid unnecessary activity tree
+          // regeneration upon viewTimeRange change when not in filterActivitiesByTime mode.
+          filteredActivityDirectives = directives;
+          filteredSpans = spans;
+          timeFilteredActivityDirectives = directives;
+          timeFilteredSpans = spans;
+        } else {
+          filteredActivityDirectives = [];
+          filteredSpans = [];
+          timeFilteredActivityDirectives = [];
+          timeFilteredSpans = [];
+        }
+      }
+    }
+    if (hasExternalEventsLayer) {
+      externalEventsFilteredByDG = [];
+      externalEventsFilteredByType = [];
+
+      let filteredDerivationGroups = $planDerivationGroupLinks.filter(link => link.plan_id === plan?.id && !link.enabled).map(link => link.derivation_group_name)
+
+      // Apply filter for hiding derivation groups
+      externalEventsFilteredByDG = externalEvents.filter(ee => {
+        let dg =
+          $externalSources.find(
+            es => es.pkey.derivation_group_name === ee.pkey.derivation_group_name && es.pkey.key === ee.pkey.source_key,
+          )?.pkey.derivation_group_name ?? undefined;
+        // the statement below says return true (keep) if the plan is not null and if the filter for this plan does not include this derivation group
+        return plan && dg
+          ? !filteredDerivationGroups.includes(dg)
+          : false;
+      });
+      // Filter by external event type
+      const externalEventsByType = groupBy(externalEventsFilteredByDG, 'pkey.event_type_name');
+      externalEventLayers.forEach(layer => {
+        if (layer.filter && layer.filter.externalEvent !== undefined) {
+          const event_types = layer.filter.externalEvent.event_types || [];
+          event_types.forEach(type => {
+            const matchingEvents = externalEventsByType[type];
+            if (matchingEvents) {
+              matchingEvents.forEach(
+                event => (idToColorMaps.external_events[getRowIdExternalEvent(event.pkey)] = layer.externalEventColor),
+              );
+              externalEventsFilteredByType = externalEventsFilteredByType.concat(
+                matchingEvents.filter((val, ind, arr) => arr.indexOf(val) === ind),
+              ); // uniqueness
             }
           });
         }
       });
-      directives.sort((a, b) => ((a.start_time_ms ?? 0) < (b.start_time_ms ?? 0) ? -1 : 1));
-      spans.sort((a, b) => (a.startMs < b.startMs ? -1 : 1));
-      if (directives.length || spans.length) {
-        // Populate both sets of directive and span lists in order to more precisely
-        // react to the filterActivitiesByTime variable later and avoid unnecessary activity tree
-        // regeneration upon viewTimeRange change when not in filterActivitiesByTime mode.
-        filteredActivityDirectives = directives;
-        filteredSpans = spans;
-        timeFilteredActivityDirectives = directives;
-        timeFilteredSpans = spans;
-      } else {
-        filteredActivityDirectives = [];
-        filteredSpans = [];
-        timeFilteredActivityDirectives = [];
-        timeFilteredSpans = [];
-      }
     }
   }
 
-  $: if (hasActivityLayer && filterActivitiesByTime && filteredActivityDirectives && filteredSpans && viewTimeRange) {
+  $: if (hasActivityLayer && filterItemsByTime && filteredActivityDirectives && filteredSpans && viewTimeRange) {
     timeFilteredSpans = filteredSpans.filter(span => spanInView(span, viewTimeRange));
     timeFilteredActivityDirectives = filteredActivityDirectives.filter(directive => {
       let inView = directiveInView(directive, viewTimeRange);
@@ -495,159 +510,102 @@
     });
   }
 
-  $: if (hasExternalEventsLayer) {
-    externalEventTree = [];
-    externalEventsFilteredByDG = [];
-    externalEventsFilteredByType = [];
-
-    let filteredDerivationGroups = $planDerivationGroupLinks.filter(link => link.plan_id === plan?.id && !link.enabled).map(link => link.derivation_group_name)
-
-    // Apply filter for hiding derivation groups
-    externalEventsFilteredByDG = externalEvents.filter(ee => {
-      let dg =
-        $externalSources.find(
-          es => es.pkey.derivation_group_name === ee.pkey.derivation_group_name && es.pkey.key === ee.pkey.source_key,
-        )?.pkey.derivation_group_name ?? undefined;
-      // the statement below says return true (keep) if the plan is not null and if the filter for this plan does not include this derivation group
-      return plan && dg
-        ? !filteredDerivationGroups.includes(dg)
-        : false;
-    });
-    // Filter by external event type
-    const externalEventsByType = groupBy(externalEventsFilteredByDG, 'pkey.event_type_name');
-    externalEventLayers.forEach(layer => {
-      if (layer.filter && layer.filter.externalEvent !== undefined) {
-        const event_types = layer.filter.externalEvent.event_types || [];
-        event_types.forEach(type => {
-          const matchingEvents = externalEventsByType[type];
-          if (matchingEvents) {
-            matchingEvents.forEach(
-              event => (idToColorMaps.external_events[getRowIdExternalEvent(event.pkey)] = layer.externalEventColor),
-            );
-            externalEventsFilteredByType = externalEventsFilteredByType.concat(
-              matchingEvents.filter((val, ind, arr) => arr.indexOf(val) === ind),
-            ); // uniqueness
-          }
-        });
-      }
-    });
-  }
-
   $: if (
-    hasActivityLayer &&
+    (hasActivityLayer &&
     timeFilteredActivityDirectives &&
     timeFilteredSpans &&
-    activityOptions &&
+    discreteOptions &&
+    discreteOptions.activityOptions &&
     typeof showSpans === 'boolean' &&
-    typeof showDirectives === 'boolean'
+    typeof showDirectives === 'boolean') ||
+    (hasExternalEventsLayer &&
+    discreteOptions &&
+    discreteOptions.externalEventOptions)
   ) {
-    if (activityOptions.displayMode === 'grouped') {
+    if (discreteOptions.displayMode === 'grouped') {
       /*  Note: here we only pass in a few variables in order to
        *  limit the scope of what is reacted to in order to avoid unnecessary re-rendering.
        *  A wrapper function is used to provide the other props needed to generate the tree.
        */
-      activityTree = generateActivityTree(
+      discreteTree = generateDiscreteTree(
         timeFilteredActivityDirectives,
         timeFilteredSpans,
-        activityTreeExpansionMap,
-        activityOptions.hierarchyMode,
+        externalEvents,
+        discreteTreeExpansionMap,
+        discreteOptions.activityOptions?.hierarchyMode,
+        discreteOptions.externalEventOptions?.groupBy,
+        discreteOptions.externalEventOptions?.groupedModeBinSize
       );
     } else {
-      activityTree = [];
+      discreteTree = [];
     }
   }
 
-  $: if (hasExternalEventsLayer && externalEventOptions) {
-    if (externalEventOptions.displayMode === 'grouped') {
-      /*  Note: here we only pass in a few variables in order to
-       *  limit the scope of what is reacted to in order to avoid unnecessary re-rendering.
-       *  A wrapper function is used to provide the other props needed to generate the tree.
-       */
-      externalEventTree = generateExternalEventTree(
-        externalEventsFilteredByType,
-        externalEventTreeExpansionMap,
-        externalEventOptions.groupBy,
-        externalEventOptions.groupedModeBinSize,
-      );
-    } else {
-      externalEventTree = [];
-    }
-  }
-
-  function generateActivityTree(
+  function generateDiscreteTree(
     directives: ActivityDirective[],
     spans: Span[],
-    activityTreeExpansionMap: ActivityTreeExpansionMap,
+    externalEvents: ExternalEvent[],
+    discreteTreeExpansionMap: DiscreteTreeExpansionMap,
     hierarchyMode: ActivityOptions['hierarchyMode'] = 'flat',
+    groupByMethod: ExternalEventOptions['groupBy'] = 'event_type_name',
+    binSize: ExternalEventOptions['groupedModeBinSize'] = 100
   ) {
-    return generateActivityTreeUtil(
+    return generateDiscreteTreeUtil(
       directives,
       spans,
-      activityTreeExpansionMap,
+      externalEvents,
+      discreteTreeExpansionMap,
       hierarchyMode,
-      filterActivitiesByTime,
+      groupByMethod,
+      binSize,
+      filterItemsByTime,
       spanUtilityMaps,
       spansMap,
       showSpans,
       showDirectives,
-      viewTimeRange,
+      viewTimeRange
     );
   }
 
-  function generateExternalEventTree(
-    externalEvents: ExternalEvent[],
-    externalEventTreeExpansionMap: ExternalEventTreeExpansionMap,
-    groupByMethod: ExternalEventOptions['groupBy'] = 'event_type_name',
-    binSize: ExternalEventOptions['groupedModeBinSize'],
-  ) {
-    return generateExternalEventTreeUtil(externalEvents, externalEventTreeExpansionMap, groupByMethod, binSize);
-  }
-
-  function onActivityTreeNodeChange(e: { detail: ActivityTreeNode }) {
+  function onDiscreteTreeNodeChange(e: { detail: DiscreteTreeNode }) {
+    console.log("INVOKED!")
     const node = e.detail;
-    dispatch('activityTreeExpansionChange', { ...(activityTreeExpansionMap || {}), [node.id]: !node.expanded });
-  }
-
-  function onExternalEventTreeSquash(e: CustomEvent<boolean>) {
-    // false means we expand
-    // true means we squash
-    if (e.detail) {
-      console.log(e.detail, externalEventTreeExpansionMap, unsquashedCachedExternalEventTreeExpansionMap)
-      unsquashedCachedExternalEventTreeExpansionMap = externalEventTreeExpansionMap;
-      dispatch('externalEventTreeExpansionChange', null);
-    }
-    else {
-      console.log(e.detail, externalEventTreeExpansionMap, unsquashedCachedExternalEventTreeExpansionMap)
-      dispatch('externalEventTreeExpansionChange', unsquashedCachedExternalEventTreeExpansionMap);
-    }
-  }
-
-  function onActivityTreeSquash(e: CustomEvent<boolean>) {
-    // false means we expand
-    // true means we squash
-    if (e.detail) {
-      unsquashedCachedActivityTreeExpansionMap = activityTreeExpansionMap;
-      dispatch('activityTreeExpansionChange', null);
-    }
-    else {
-      dispatch('activityTreeExpansionChange', unsquashedCachedActivityTreeExpansionMap ?? {});
-    }
-  }
-
-  function onExternalEventTreeNodeChange(e: { detail: ExternalEventTreeNode }) {
-    const node = e.detail;
-    dispatch('externalEventTreeExpansionChange', {
-      ...(externalEventTreeExpansionMap || {}),
-      [node.id]: !node.expanded,
+    dispatch('discreteTreeExpansionChange', {
+      ...(discreteTreeExpansionMap || {}),
+      [node.id]: !node.expanded
     });
   }
 
-  function onActivityTimeFilterChange() {
-    filterActivitiesByTime = !filterActivitiesByTime;
-  }
+  // *should* be obsolete now.
+  // // TODO: merge.
+  // function onExternalEventTreeSquash(e: CustomEvent<boolean>) {
+  //   // false means we expand
+  //   // true means we squash
+  //   if (e.detail) {
+  //     console.log(e.detail, externalEventTreeExpansionMap, unsquashedCachedExternalEventTreeExpansionMap)
+  //     unsquashedCachedExternalEventTreeExpansionMap = externalEventTreeExpansionMap;
+  //     dispatch('externalEventTreeExpansionChange', null);
+  //   }
+  //   else {
+  //     console.log(e.detail, externalEventTreeExpansionMap, unsquashedCachedExternalEventTreeExpansionMap)
+  //     dispatch('externalEventTreeExpansionChange', unsquashedCachedExternalEventTreeExpansionMap);
+  //   }
+  // }
 
-  function onExternalEventTimeFilterChange() {
-    filterExternalEventsByTime = !filterExternalEventsByTime;
+  // function onActivityTreeSquash(e: CustomEvent<boolean>) {
+  //   // false means we expand
+  //   // true means we squash
+  //   if (e.detail) {
+  //     unsquashedCachedActivityTreeExpansionMap = activityTreeExpansionMap;
+  //     dispatch('activityTreeExpansionChange', null);
+  //   }
+  //   else {
+  //     dispatch('activityTreeExpansionChange', unsquashedCachedActivityTreeExpansionMap ?? {});
+  //   }
+  // }
+
+  function onItemTimeFilterChange() {
+    filterItemsByTime = !filterItemsByTime;
   }
 
   function zoomed(e: D3ZoomEvent<HTMLCanvasElement, any>) {
@@ -873,17 +831,12 @@
   <div class="row-content">
     <!-- Row Header. -->
     <RowHeader
-      {activityOptions}
-      {externalEventOptions}
-      on:activity-tree-node-change={onActivityTreeNodeChange}
-      on:external-event-tree-node-change={onExternalEventTreeNodeChange}
-      on:external-event-squash={onExternalEventTreeSquash}
-      on:activity-squash={onActivityTreeSquash}
+      {discreteOptions}
+      on:discrete-tree-node-change={onDiscreteTreeNodeChange}
       on:mouseDown={onMouseDown}
       on:dblClick
       on:drop={e => onTimelineItemsDrop(id, e.detail.type, e.detail.items)}
-      {activityTree}
-      {externalEventTree}
+      {discreteTree}
       width={marginLeft}
       height={computedDrawHeight}
       {expanded}
@@ -902,16 +855,26 @@
       {selectedSpanId}
       {selectedExternalEventId}
     >
-      {#if hasActivityLayer && activityOptions?.displayMode === 'grouped'}
+    <!--TODO: change make sure this works correctly-->
+      {#if (hasActivityLayer || hasExternalEventsLayer) && discreteOptions?.displayMode === 'grouped'}
         <button
           class="st-button icon row-action"
-          class:row-action-active={filterActivitiesByTime}
+          class:row-action-active={filterItemsByTime}
+          on:click|stopPropagation={onItemTimeFilterChange}
+          use:tooltip={{ content: 'Filter Items by Time Window', placement: 'top' }}
+        >
+          <FilterWithXIcon />
+        </button>
+      <!-- {:else if hasActivityLayer && discreteOptions?.displayMode === 'grouped'}
+        <button
+          class="st-button icon row-external-event"
+          class:row-external-event-active={filterExternalEventsByTime}
           on:click|stopPropagation={onActivityTimeFilterChange}
           use:tooltip={{ content: 'Filter Activities by Time Window', placement: 'top' }}
         >
           <FilterWithXIcon />
         </button>
-      {:else if hasExternalEventsLayer && externalEventOptions?.displayMode === 'grouped'}
+      {:else if hasExternalEventsLayer && discreteOptions?.displayMode === 'grouped'}
         <button
           class="st-button icon row-external-event"
           class:row-external-event-active={filterExternalEventsByTime}
@@ -919,7 +882,7 @@
           use:tooltip={{ content: 'Filter External Events by Time Window', placement: 'top' }}
         >
           <FilterWithXIcon />
-        </button>
+        </button> -->
       {/if}
     </RowHeader>
 
@@ -1002,7 +965,50 @@
             on:contextMenu
           />
         {/each}
-        {#if hasActivityLayer}
+        {#if hasActivityLayer || hasExternalEventsLayer}
+          <LayerDiscrete
+            {discreteOptions}
+            {idToColorMaps}
+            {discreteTree}
+            activityDirectives={filteredActivityDirectives}
+            externalEvents={externalEventsFilteredByType}
+            spans={filteredSpans}
+            {activityDirectivesMap}
+            {hasUpdateDirectivePermission}
+            {showDirectives}
+            {showSpans}
+            {blur}
+            {contextmenu}
+            {dpr}
+            {drawHeight}
+            {drawWidth}
+            {focus}
+            {dblclick}
+            {mousedown}
+            {mousemove}
+            {mouseout}
+            {mouseup}
+            {planEndTimeDoy}
+            {plan}
+            {planStartTimeYmd}
+            {selectedActivityDirectiveId}
+            {selectedSpanId}
+            {spanUtilityMaps}
+            {spansMap}
+            {timelineInteractionMode}
+            {timelineLockStatus}
+            {user}
+            {viewTimeRange}
+            {xScaleView}
+            on:contextMenu
+            on:deleteActivityDirective
+            on:dblClick
+            on:mouseDown={onMouseDown}
+            on:mouseOver={onMouseOver}
+            on:updateRowHeight={onUpdateRowHeightLayer}
+          />
+        {/if}
+        <!-- {#if hasActivityLayer}
           <LayerActivities
             {activityOptions}
             {idToColorMaps}
@@ -1072,7 +1078,7 @@
             on:mouseOver={onMouseOver}
             on:updateRowHeight={onUpdateRowHeightLayer}
           />
-        {/if}
+        {/if} -->
         {#each lineLayers as layer (layer.id)}
           <LayerGaps
             {...layer}
@@ -1136,7 +1142,7 @@
   />
   <!-- Drag Handle for Row Height Resizing. -->
   {#if !autoAdjustHeight && expanded}
-    <RowDragHandleHeight rowHeight={drawHeight} largeRow={hasExternalEventsLayer && hasActivityLayer && compact} on:updateRowHeight={onUpdateRowHeightDrag} />
+    <RowDragHandleHeight rowHeight={drawHeight} on:updateRowHeight={onUpdateRowHeightDrag} />
   {/if}
 </div>
 
