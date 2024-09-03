@@ -69,7 +69,7 @@ export const selectedPlanDerivationGroupEventTypes = derived(
 );
 
 /* Helper Functions. */
-export function resetModelStores() {
+export function resetExternalSourceStores() {
   createExternalSourceError.set(null);
   createExternalSourceTypeError.set(null);
   createDerivationGroupError.set(null);
