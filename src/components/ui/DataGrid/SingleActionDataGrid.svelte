@@ -8,7 +8,7 @@
     editItem: CustomEvent<RowId[]>;
   }
   import { browser } from '$app/environment';
-  import type { ColDef, ColumnState, IRowNode, RedrawRowsParams, RowClassParams, RowStyle } from 'ag-grid-community';
+  import type { ColDef, ColumnState, IRowNode, RedrawRowsParams } from 'ag-grid-community';
   import { createEventDispatcher, onDestroy, type ComponentEvents } from 'svelte';
   import type { User } from '../../../types/app';
   import type { Dispatcher } from '../../../types/component';
@@ -36,9 +36,6 @@
   export let user: User | null;
 
   export let getRowId: (data: RowData) => RowId = (data: RowData): RowId => parseInt(data[idKey]);
-  export let getRowStyle: (params: RowClassParams<RowData>) => RowStyle | undefined = (
-    _params: RowClassParams<RowData>,
-  ) => undefined;
   export let isRowSelectable: ((node: IRowNode<RowData>) => boolean) | undefined = undefined;
   export let redrawRows: ((params?: RedrawRowsParams<RowData> | undefined) => void) | undefined = undefined;
 
@@ -115,7 +112,6 @@
   {columnStates}
   {columnsToForceRefreshOnDataUpdate}
   {getRowId}
-  {getRowStyle}
   {isRowSelectable}
   useCustomContextMenu
   rowData={items}

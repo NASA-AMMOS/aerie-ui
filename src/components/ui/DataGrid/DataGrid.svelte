@@ -49,7 +49,6 @@
     type RowClickedEvent,
     type RowDoubleClickedEvent,
     type RowSelectedEvent,
-    type RowStyle,
     type SelectionChangedEvent,
     type SortChangedEvent,
   } from 'ag-grid-community';
@@ -117,9 +116,6 @@
   export let getRowId: (data: RowData) => RowId = (data: RowData): number => {
     return parseInt(data[idKey]);
   };
-  export let getRowStyle: (params: RowClassParams<RowData>) => RowStyle | undefined = (
-    _params: RowClassParams<RowData>,
-  ) => undefined;
   export let isRowSelectable: ((node: IRowNode<RowData>) => boolean) | undefined = undefined;
 
   type RowIdRef = {
@@ -278,7 +274,6 @@ This has been seen to result in unintended and often glitchy behavior, which oft
       columnDefs,
       doesExternalFilterPass,
       excludeHiddenColumnsFromQuickFilter: false,
-      getRowStyle,
       includeHiddenColumnsInQuickFilter: true,
       ...(shouldAutoGenerateId ? {} : { getRowId: (params: { data: RowData }) => `${getRowId(params.data)}` }),
       isExternalFilterPresent,
@@ -430,14 +425,7 @@ This has been seen to result in unintended and often glitchy behavior, which oft
   });
 </script>
 
-<div
-  bind:this={gridDiv}
-  class="ag-theme-stellar table"
-  class:highlightOnSelection
-  tabindex="-1"
-  on:focus
-  on:blur
-/>
+<div bind:this={gridDiv} class="ag-theme-stellar table" class:highlightOnSelection tabindex="-1" on:focus on:blur />
 
 <ContextMenu bind:this={contextMenu}>
   <slot name="context-menu" />
