@@ -730,9 +730,6 @@
           }
           if (shouldDrawLabel) {
             const spanColor = discreteDefaultColor;
-            if (isSelected) {
-              console.log("fgh")
-            }
             drawLabel(label, externalEventStartX, y, spanLabelWidth, spanColor, false, isSelected);
           }
         }
@@ -867,7 +864,6 @@
   function drawLabel(text: string, x: number, y: number, width: number, color: string, unfinished = false, selected = false) {
     setLabelContext('black');
     if (selected) {
-      console.log("selected")
       if (unfinished) {
         // only if the item in question is an activity.
         ctx.fillStyle = activityUnfinishedSelectedColor;

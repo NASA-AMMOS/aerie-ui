@@ -57,8 +57,6 @@
     contextMenu: MouseOver;
     mouseDownRowMove: void;
     mouseUpRowMove: void;
-    'external-event-squash': boolean;
-    'activity-squash': boolean;
     toggleRowExpansion: {
       expanded: boolean;
       rowId: number;
@@ -157,7 +155,7 @@
           <slot />
         </div>
         {#if discreteTree.length}
-          <div class="external-event-tree">
+          <div class="discrete-tree">
             <RowHeaderDiscreteTree
               {discreteOptions}
               {discreteTree}
@@ -170,73 +168,6 @@
             />
           </div>
         {/if}
-        <!-- {#if activityTree.length && externalEventTree.length}
-          <div style="margin-left: 16px;">
-            <Collapse
-              title="Activities"
-              className={classNames('row-header-external-event-group')}
-              headerHeight={activityOptions.activityHeight+4}
-              on:collapse={(e) => {
-                dispatch('activity-squash', e.detail)
-              }}
-            >
-              <div>
-                <RowHeaderActivityTree
-                  {activityOptions}
-                  {activityTree}
-                  {selectedActivityDirectiveId}
-                  {selectedSpanId}
-                  on:activity-tree-node-change
-                  on:mouseDown
-                  on:dblClick
-                />
-              </div>
-            </Collapse>
-            <Collapse
-              title="External Events"
-              className={classNames('row-header-external-event-group')}
-              headerHeight={externalEventOptions.externalEventHeight+4}
-              on:collapse={(e) => {
-                console.log("collapsed", e.detail)
-                dispatch('external-event-squash', e.detail)
-              }}
-            >
-              <div>
-                <RowHeaderExternalEvent
-                  {externalEventOptions}
-                  {externalEventTree}
-                  {selectedExternalEventId}
-                  on:external-event-tree-node-change
-                  on:mouseDown
-                  on:dblClick
-                />
-              </div>
-            </Collapse>
-          </div>
-        {:else if activityTree.length}
-          <div class="activity-tree">
-            <RowHeaderActivityTree
-              {activityOptions}
-              {activityTree}
-              {selectedActivityDirectiveId}
-              {selectedSpanId}
-              on:activity-tree-node-change
-              on:mouseDown
-              on:dblClick
-            />
-          </div>
-        {:else if externalEventTree.length}
-          <div class="external-event-tree">
-            <RowHeaderExternalEvent
-              {externalEventOptions}
-              {externalEventTree}
-              {selectedExternalEventId}
-              on:external-event-tree-node-change
-              on:mouseDown
-              on:dblClick
-            />
-          </div>
-        {/if} -->
         {#if resourceLabels.length > 0}
           <div class="row-header-y-axis-labels">
             {#each resourceLabels as label}
@@ -436,26 +367,16 @@
     white-space: nowrap;
   }
 
-  .activity-tree {
+  .discrete-tree {
     padding-left: 16px;
   }
 
-  .external-event-tree {
-    padding-left: 16px;
-  }
-
-
-
-
-
-
-
-  :global(.row-header-external-event-group) {
+  :global(.row-header-discrete-group) {
     position: relative;
   }
 
-  :global(.row-header-external-event-group.collapse > .collapse-header),
-  .row-header-external-event-group.leaf {
+  :global(.row-header-discrete-group.collapse > .collapse-header),
+  .row-header-discrete-group.leaf {
     border-bottom: 1px solid var(--st-gray-30);
     border-radius: 0px;
     font-size: 10px;
@@ -464,20 +385,20 @@
     padding-left: 4px !important;
   }
 
-  :global(.row-header-external-event-group.collapse:not(.selected) > .collapse-header:hover),
-  .row-header-external-event-group.leaf:hover:not(.selected) {
+  :global(.row-header-discrete-group.collapse:not(.selected) > .collapse-header:hover),
+  .row-header-discrete-group.leaf:hover:not(.selected) {
     background: var(--st-gray-20) !important;
   }
 
-  :global(.row-header-external-event-group.collapse > .content.pad-content) {
+  :global(.row-header-discrete-group.collapse > .content.pad-content) {
     margin-left: 16px !important;
   }
 
-  :global(.row-header-external-event-group.collapse > .content) {
+  :global(.row-header-discrete-group.collapse > .content) {
     gap: 0px;
   }
 
-  .row-header-external-event-group.leaf {
+  .row-header-discrete-group.leaf {
     gap: 3px;
     height: 32px;
     justify-content: flex-start;
@@ -497,7 +418,7 @@
     gap: 4px;
   }
 
-  :global(.row-header-external-event-group.collapse .collapse-icon svg) {
+  :global(.row-header-discrete-group.collapse .collapse-icon svg) {
     color: var(--st-gray-40);
   }
 
@@ -507,12 +428,12 @@
   }
 
   :global(.collapse.selected > .collapse-header *),
-  .row-header-external-event-group.selected,
-  .row-header-external-event-group.selected :global(svg) {
+  .row-header-discrete-group.selected,
+  .row-header-discrete-group.selected :global(svg) {
     color: var(--st-utility-blue) !important;
   }
 
-  :global(.row-header-external-event-group button.select) {
+  :global(.row-header-discrete-group button.select) {
     background: var(--st-gray-20);
     height: 16px;
     min-width: 16px;
@@ -523,18 +444,18 @@
     width: 16px;
   }
 
-  :global(.row-header-external-event-group button.select:hover) {
+  :global(.row-header-discrete-group button.select:hover) {
     background: var(--st-gray-20) !important;
   }
 
-  :global(.row-header-external-event-group.collapse:has(> .collapse-header:focus-visible) > button.select),
-  :global(.row-header-external-event-group.collapse:has(> button.select:focus-visible) > button.select),
-  :global(.row-header-external-event-group.collapse:has(> .collapse-header:hover) > button.select),
-  :global(.row-header-external-event-group.collapse:has(> button.select:hover) > button.select) {
+  :global(.row-header-discrete-group.collapse:has(> .collapse-header:focus-visible) > button.select),
+  :global(.row-header-discrete-group.collapse:has(> button.select:focus-visible) > button.select),
+  :global(.row-header-discrete-group.collapse:has(> .collapse-header:hover) > button.select),
+  :global(.row-header-discrete-group.collapse:has(> button.select:hover) > button.select) {
     opacity: 1;
   }
 
-  :global(.row-header-external-event-group .label) {
+  :global(.row-header-discrete-group .label) {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
