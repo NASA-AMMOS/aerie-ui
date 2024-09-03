@@ -1,0 +1,229 @@
+
+@skip { space | Comment }
+
+// Subset of dictionary tree from
+// https://github.jpl.nasa.gov/MPS/vml_2_1/blob/ab44f7bd4c5e8556059c4522c918253aaff31448/vml_2_1/vml_cdl/vml_cdl.y
+// intended to demonstrate syntax checking potential for future Cdl+Vml missions like VERITAS
+
+// Implementation notes
+// Token names are capitalized names from Bison
+
+@top Cdl_program {
+  newLine*
+  Header
+  newLine*
+  Global_definitions
+  // newLine*
+}
+
+Header {
+  Project
+  Version
+  Token_field_delimiter
+  Command_delimiter
+  Brackets
+  Maximum_commands_per_message
+  Maximum_bits_per_message
+}
+
+Project {
+  "PROJECT"
+  DELIM
+  String
+  newLine
+}
+
+Version {
+  "VERSION"
+  DELIM
+  String
+  newLine
+}
+
+Token_field_delimiter {
+  Token_field
+  DELIMITER
+  DELIM
+  Delimiter
+  newLine
+}
+
+Token_field {
+  TOKEN
+  | FIELD
+}
+
+Command_delimiter {
+  COMMAND
+  DELIMITER
+  DELIM
+  Delimiter
+  newLine
+}
+
+Delimiter {
+  DELIM
+  | COMMA
+  | PERIOD
+  | FORWARD_SLASH
+  | SEMI_COLON
+}
+
+Brackets {
+  "BRACKETS"
+  DELIM
+  "()" // hard-coded
+  newLine
+}
+
+Maximum_commands_per_message {
+  (
+    "MAXIMUM COMMANDS PER MESSAGE"
+    DELIM
+    Integer
+    newLine
+  )?
+}
+
+Maximum_bits_per_message {
+  (
+    "MAXIMUM BITS PER MESSAGE"
+    DELIM
+    Integer
+    newLine
+  )?
+}
+
+Global_definitions {
+  Global_definition {
+    (
+      Sites_definition
+      | Classification_definition
+      | Externals_definition
+    )
+    newLine
+  }*
+}
+
+Classification_definition {
+  CLASSIFICATIONS
+  DELIM
+  Name { identifier }
+  newLine
+  Classification_definition_clause_1 {
+    Name { identifier }
+    newLine
+  }+
+  END CLASSIFICATIONS
+}
+
+Sites_definition {
+  SITES newLine
+  Sites_definition_clause_1
+  END SITES
+}
+
+Sites_definition_clause_1 {
+  (
+    Name { identifier }
+    EQUAL
+    Integer
+    newLine
+  )+
+}
+
+Bit_bits {
+  BIT
+  | BITS
+}
+
+Externals_definition {
+  EXTERNALS
+  newLine
+  Externals_definition_clause_1_1 {
+    (
+      Conversion_name
+      | Function_name
+      | Error_polynomial_name
+    )
+    newLine
+  }*
+  END EXTERNALS
+}
+
+Conversion_name {
+  "CONVERSION"
+  DELIM
+  Name { identifier }
+}
+
+Function_name {
+  "FUNCTION"
+  DELIM
+  Name { identifier }
+  function_name_clause_1 {
+    OPEN_PAREN
+    Integer
+
+    CLOSE_PAREN
+  }?
+}
+
+Error_polynomial_name {
+  "ERROR POLYNOMIAL"
+  DELIM
+  Name { identifier }
+  Error_polynomial_name_clause_1 {
+    OPEN_PAREN
+    Integer
+    Bit_bits
+    CLOSE_PAREN
+  }
+}
+
+Integer { UINT_CONST }
+
+@tokens {
+
+  newLine { ($[ \t]* "\n")+ $[ \t]* |  (space? @eof) }
+  space { $[ \t]+ }
+  @precedence { newLine, space }
+
+  Comment { "!" ![\n]* }
+  identifier { @asciiLetter (@asciiLetter| @digit | "_" | "-")* }
+
+  BIT { "BIT" }
+  BITS { "BITS" }
+  CLASSIFICATIONS { "CLASSIFICATIONS" }
+  COMMA {","}
+  EXTERNALS {"EXTERNALS"}
+  OPEN_PAREN { "(" }
+  CLOSE_PAREN { ")" }
+  PERIOD {"."}
+  FORWARD_SLASH {"/"}
+  SEMI_COLON {";"}
+  DELIM { ":" }
+  FIELD { "FIELD" } // ?
+  DELIMITER { "DELIMITER" } // ?
+  COMMAND { "COMMAND" }
+  END { "END" }
+
+  EQUAL { "=" }
+  SITES { "SITES" }
+  TOKEN { "TOKEN" }
+
+  @precedence {
+    END,
+    identifier
+  }
+
+  @precedence {
+    BITS,
+    BIT
+  }
+
+  UINT_CONST {
+    @digit+
+  }
+  String { '"' (!["\\] | "\\" _)* '"' }
+}
