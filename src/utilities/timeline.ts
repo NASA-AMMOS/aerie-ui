@@ -1101,7 +1101,8 @@ export function generateDiscreteTreeUtil(
       expanded: getNodeExpanded('!!activity-agg', discreteTreeExpansionMap),
       id: '!!activity-agg',
       isLeaf: false,
-      items: flattenItems(activityNodes), // no items to draw at this level, only children
+      items: flattenItems(activityNodes)
+              .filter((obj, index, self) => index === self.findIndex((o) => o.directive?.id === obj.directive?.id)), 
       label: 'Activities',
       type: 'a', // should this be like "top" or its own category? RowHeaderDiscreteTree does not seem to require any special treatment
       activity_type: 'n/a'
@@ -1111,7 +1112,8 @@ export function generateDiscreteTreeUtil(
       expanded: getNodeExpanded('!!ex-ev-agg', discreteTreeExpansionMap),
       id: '!!ex-ev-agg',
       isLeaf: false,
-      items: flattenItems(externalEventNodes), // no items to draw at this level, only children
+      items: flattenItems(externalEventNodes)
+              .filter((obj, index, self) => index === self.findIndex((o) => o.externalEvent?.pkey === obj.externalEvent?.pkey)),
       label: 'External Events',
       type: 'ee', // should this be like "top" or its own category? RowHeaderDiscreteTree does not seem to require any special treatment
       activity_type: 'n/a'

@@ -98,6 +98,7 @@
         externalEventCount++;
       }
     });
+    console.log("getNodeComposition", node.id, activityDirectiveCount, combinedActivityDirectiveSpanCount, spanCount, externalEventCount)
     return { activityDirectiveCount, combinedActivityDirectiveSpanCount, spanCount, externalEventCount };
   }
 
@@ -234,7 +235,7 @@
           {/if}
         </Collapse>
       {:else}
-        {@const externalEventCount = getNodeComposition(node)}
+        {@const { externalEventCount } = getNodeComposition(node)}
         {@const externalEvent = node.items[0]?.externalEvent}
         <Collapse
           headerHeight={rowHeight}
