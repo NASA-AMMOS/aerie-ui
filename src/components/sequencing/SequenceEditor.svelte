@@ -39,10 +39,9 @@
   import { setupLanguageSupport } from '../../utilities/codemirror';
   import effects from '../../utilities/effects';
   import { downloadBlob, downloadJSON } from '../../utilities/generic';
-  import { seqJsonLinter } from '../../utilities/sequence-editor/seq-json-linter';
+  import { inputLinter, outputLinter } from '../../utilities/sequence-editor/extension-points';
   import { sequenceAutoIndent } from '../../utilities/sequence-editor/sequence-autoindent';
   import { sequenceCompletion } from '../../utilities/sequence-editor/sequence-completion';
-  import { sequenceLinter } from '../../utilities/sequence-editor/sequence-linter';
   import { sequenceTooltip } from '../../utilities/sequence-editor/sequence-tooltip';
   import { showFailureToast, showSuccessToast } from '../../utilities/toast';
   import { tooltip } from '../../utilities/tooltip';
@@ -162,7 +161,7 @@
         });
         editorSequenceView.dispatch({
           effects: compartmentSeqLinter.reconfigure(
-            sequenceLinter(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
+            inputLinter(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
           ),
         });
         editorSequenceView.dispatch({
@@ -173,7 +172,7 @@
 
         // Reconfigure seq JSON editor.
         editorOutputView.dispatch({
-          effects: compartmentSeqJsonLinter.reconfigure(seqJsonLinter(parsedCommandDictionary, selectedOutputFormat)),
+          effects: compartmentSeqJsonLinter.reconfigure(outputLinter(parsedCommandDictionary, selectedOutputFormat)),
         });
       });
     }
@@ -193,7 +192,7 @@
         EditorView.theme({ '.cm-gutter': { 'min-height': `${clientHeightGridRightTop}px` } }),
         lintGutter(),
         compartmentSeqLanguage.of(setupLanguageSupport(sequenceCompletion(null, null, []))),
-        compartmentSeqLinter.of(sequenceLinter()),
+        compartmentSeqLinter.of(inputLinter()),
         compartmentSeqTooltip.of(sequenceTooltip()),
         EditorView.updateListener.of(debounce(sequenceUpdateListener, 250)),
         EditorView.updateListener.of(selectedCommandUpdateListener),
@@ -212,7 +211,7 @@
         EditorView.editable.of(false),
         lintGutter(),
         json(),
-        compartmentSeqJsonLinter.of(seqJsonLinter()),
+        compartmentSeqJsonLinter.of(outputLinter()),
         EditorState.readOnly.of(readOnly),
       ],
       parent: editorOutputDiv,
