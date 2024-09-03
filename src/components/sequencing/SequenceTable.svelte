@@ -236,6 +236,5 @@
     display: flex;
     justify-content: space-between;
     margin-bottom: 8px;
-    justify-content: space-between;
   }
 </style>
