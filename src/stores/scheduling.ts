@@ -1,7 +1,7 @@
 import { keyBy } from 'lodash-es';
 import { derived, writable, type Readable, type Writable } from 'svelte/store';
 import { Status } from '../enums/status';
-import { plan, planId, planRevision } from '../stores/plan';
+import { plan, planRevision } from '../stores/plan';
 import type {
   SchedulingConditionDefinition,
   SchedulingConditionMetadata,

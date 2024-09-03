@@ -1420,32 +1420,34 @@ const effects = {
     }
   },
 
-  // async createSchedulingGoalPlanSpecification(
-  //   spec_goal: SchedulingSpecGoalInsertInput,
-  //   user: User | null,
-  // ): Promise<number | null> {
-  //   try {
-  //     if (!queryPermissions.CREATE_SCHEDULING_GOAL_PLAN_SPECIFICATION(user)) {
-  //       throwPermissionError('create a scheduling spec goal');
-  //     }
+  async createSchedulingGoalPlanSpecification(
+    spec_goal: SchedulingGoalPlanSpecInsertInput,
+    user: User | null,
+  ): Promise<number | null> {
+    try {
+      if (!queryPermissions.CREATE_SCHEDULING_GOAL_PLAN_SPECIFICATION(user)) {
+        throwPermissionError('create a scheduling spec goal');
+      }
 
-  //     const data = await reqHasura<SchedulingGoalPlanSpecification>(
-  //       gql.CREATE_SCHEDULING_GOAL_PLAN_SPECIFICATION,
-  //       { spec_goal },
-  //       user,
-  //     );
-  //     const { createSchedulingSpecGoal } = data;
-  //     if (createSchedulingSpecGoal != null) {
-  //       const { specification_id } = createSchedulingSpecGoal;
-  //       return specification_id;
-  //     } else {
-  //       throw Error('Unable to create a scheduling spec goal');
-  //     }
-  //   } catch (e) {
-  //     catchError(e as Error);
-  //     return null;
-  //   }
-  // },
+      const data = await reqHasura<SchedulingGoalPlanSpecification>(
+        gql.CREATE_SCHEDULING_GOAL_PLAN_SPECIFICATION,
+        { spec_goal },
+        user,
+      );
+      const { createSchedulingSpecGoal } = data;
+      if (createSchedulingSpecGoal != null) {
+        const { specification_id } = createSchedulingSpecGoal;
+        showSuccessToast('New Scheduling Goal Invocation Created Successfully');
+        return specification_id;
+      } else {
+        throw Error('Unable to create a scheduling spec goal invocation');
+      }
+    } catch (e) {
+      catchError(e as Error);
+      showFailureToast('Scheduling Goal Invocation Creation Failed');
+      return null;
+    }
+  },
 
   async createSchedulingPlanSpecification(
     spec: SchedulingPlanSpecificationInsertInput,

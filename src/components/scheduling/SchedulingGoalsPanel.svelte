@@ -100,17 +100,13 @@
     } = event;
 
     if ($plan) {
-      await effects.updateSchedulingGoalPlanSpecifications(
-        $plan,
-        [
-          {
-            ...goalPlanSpec,
-            goal_invocation_id: undefined,
-            priority: goalPlanSpec.priority + 1,
-            specification_id,
-          },
-        ], // the goal_invocation_id is generated after insert
-        [],
+      await effects.createSchedulingGoalPlanSpecification(
+        {
+          ...goalPlanSpec,
+          goal_invocation_id: undefined, // let DB autogenerate
+          priority: goalPlanSpec.priority + 1,
+          specification_id,
+        },
         user,
       );
     }

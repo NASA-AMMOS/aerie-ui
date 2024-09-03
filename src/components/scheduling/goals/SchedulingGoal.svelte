@@ -54,14 +54,9 @@
   }
 
   $: {
-    let revision: number | null = null;
-    if (goalPlanSpec.goal_revision == null) {
-      revision = Math.max(...(goalPlanSpec.goal_metadata?.versions?.map(x => x.revision) ?? [0]));
-    } else {
-      revision = goalPlanSpec.goal_revision;
-    }
-    version = goalPlanSpec.goal_metadata?.versions.filter(x => x.revision === revision)[0];
-    let schema = version?.parameter_schema;
+    version = goalPlanSpec.goal_metadata?.versions[0]; // plan gql query already orders by version and limits 1
+    const schema = version?.parameter_schema;
+
     if (schema && schema.type === 'struct') {
       formParameters = Object.entries(schema.items).map(([name, subschema], i) => ({
           errors: null,
