@@ -81,7 +81,7 @@
   export let xScaleView: ScaleTime<number, number> | null = null;
   export let spans: Span[] = [];
 
-  $: console.log("LayerDiscrete ", discreteOptions)
+  $: console.log("LayerDiscrete", discreteOptions)
 
   const dispatch = createEventDispatcher<{
     contextMenu: MouseOver;
@@ -160,7 +160,7 @@
     discreteOptions.externalEventOptions
 
   $: if (
-    commonConditions && (canDrawActivities || canDrawExternalEvents)
+    commonConditions && (canDrawActivities || canDrawExternalEvents) && xScaleView
   ) {
     draw();
   }
@@ -777,7 +777,6 @@
               }
             }
           }
-          console.log("S", label, shouldDrawLabel)
           if (shouldDrawLabel) {
             const spanColor = idToColorMaps.spans[span.span_id] || discreteDefaultColor;
             drawLabel(label, spanStartX, y, spanLabelWidth, spanColor, unfinished, isSelected);
@@ -822,13 +821,11 @@
               : directiveLabelWidth;
             // TODO could consider both? That said an item could have a span at the start of a plan and a directive at the beginning...
             const nextX = nextItem?.spanStartX || nextItem?.directiveStartX || null;
-            console.log(directiveStartX, finalWidth, nextX)
             if (typeof nextX === 'number' && directiveStartX + finalWidth >= nextX) {
               shouldDrawLabel = false;
               directiveLabelWidth = 0;
             }
           }
-          console.log("D", label, shouldDrawLabel)
           if (shouldDrawLabel) {
             drawLabel(label, directiveStartX, y, directiveLabelWidth, directiveColor, false, isSelected);
 
