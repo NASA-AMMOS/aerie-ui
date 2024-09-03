@@ -92,6 +92,3 @@
   on:rowDoubleClicked={() => dispatch('rowDoubleClicked')}
   on:selectionChanged={() => dispatch('selectionChanged')}
 />
-
-<style>
-</style>

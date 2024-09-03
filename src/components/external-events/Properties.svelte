@@ -24,6 +24,3 @@
     </Highlight>
   {/each}
 </div>
-
-<style>
-</style>
