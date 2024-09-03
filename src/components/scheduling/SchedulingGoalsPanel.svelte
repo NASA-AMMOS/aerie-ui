@@ -121,8 +121,6 @@
       detail: { goal_metadata, specification_id, ...goalPlanSpec },
     } = event;
 
-    console.log({ goalPlanSpec });
-
     if ($plan) {
       await effects.deleteSchedulingGoalInvocation($plan, specification_id, [goalPlanSpec.goal_invocation_id], user);
     }
