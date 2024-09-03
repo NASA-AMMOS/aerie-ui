@@ -968,6 +968,9 @@
             </RadioButtons>
           </Input>
           {#if rowHasActivityLayer}
+            <div class="editor-section-header">
+              <div class="st-typography-label">Activity Options</div>
+            </div>
             <Input layout="inline" class="editor-input">
               <label for="activity-composition">Show</label>
               <RadioButtons
@@ -1032,6 +1035,9 @@
             </Input>
           {/if}
           {#if rowHasExternalEventLayer && discreteOptions.displayMode === 'grouped'}
+            <div class="editor-section-header">
+              <div class="st-typography-label">External Event Options</div>
+            </div>
             <Input layout="inline" class="editor-input">
               <label for="activity-composition">Group By</label>
               <RadioButtons
