@@ -81,7 +81,6 @@
   export let xScaleView: ScaleTime<number, number> | null = null;
   export let spans: Span[] = [];
 
-  $: console.log("LayerDiscrete", discreteOptions)
 
   const dispatch = createEventDispatcher<{
     contextMenu: MouseOver;
@@ -161,6 +160,13 @@
 
   $: if (
     commonConditions && (canDrawActivities || canDrawExternalEvents) && xScaleView
+  ) {
+    draw();
+  }
+
+  // force a redraw as a reaction to a new selection, else a new selection won't update anything. TODO: make this more efficient! Redraw specific items, by matching ids?
+  $: if (selectedExternalEventId || selectedActivityDirectiveId || selectedSpanId ||
+          !selectedExternalEventId || !selectedActivityDirectiveId || !selectedSpanId
   ) {
     draw();
   }
@@ -382,6 +388,7 @@
 
   function onDblclick(e: MouseEvent | undefined): void {
     if (e) {
+      console.log("ld", e, selectedActivityDirectiveId, selectedSpanId, selectedExternalEventId)
       dispatch('dblClick', {
         e,
         selectedActivityDirectiveId: selectedActivityDirectiveId ?? undefined,
@@ -723,7 +730,10 @@
           }
           if (shouldDrawLabel) {
             const spanColor = discreteDefaultColor;
-            drawLabel(label, externalEventStartX, y, spanLabelWidth, spanColor, isSelected);
+            if (isSelected) {
+              console.log("fgh")
+            }
+            drawLabel(label, externalEventStartX, y, spanLabelWidth, spanColor, false, isSelected);
           }
         }
 
@@ -857,6 +867,7 @@
   function drawLabel(text: string, x: number, y: number, width: number, color: string, unfinished = false, selected = false) {
     setLabelContext('black');
     if (selected) {
+      console.log("selected")
       if (unfinished) {
         // only if the item in question is an activity.
         ctx.fillStyle = activityUnfinishedSelectedColor;
