@@ -69,12 +69,6 @@ export const schedulingGoalResponse = gqlSubscribable<SchedulingGoalMetadataResp
   null,
   null,
 );
-export const schedulingGoalInvocations = gqlSubscribable<any[]>(
-  gql.SUB_SCHEDULING_GOAL_INVOCATIONS,
-  { planId },
-  [],
-  null,
-);
 
 export const schedulingPlanSpecification = gqlSubscribable<SchedulingPlanSpecification | null>(
   gql.SUB_SCHEDULING_PLAN_SPECIFICATION,
@@ -160,10 +154,6 @@ export const allowedSchedulingGoalSpecs: Readable<SchedulingGoalPlanSpecificatio
   [schedulingGoalSpecifications],
   ([$schedulingGoalSpecifications]) =>
     $schedulingGoalSpecifications.filter(({ goal_metadata: goalMetadata }) => goalMetadata !== null),
-);
-
-export const allowedSchedulingGoalInvocations = derived([schedulingGoalInvocations], ([$schedulingGoalInvocations]) =>
-  $schedulingGoalInvocations.filter(({ goal_metadata: goalMetadata }) => goalMetadata !== null),
 );
 
 export const latestSchedulingGoalAnalyses = derived(
