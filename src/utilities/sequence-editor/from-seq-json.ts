@@ -115,14 +115,14 @@ function seqJsonVariableToSequence(
   variables: [VariableDeclaration, ...VariableDeclaration[]],
   type: 'INPUT_PARAMS' | 'LOCALS',
 ): string {
-  let sequence = `@${type} `;
+  let sequence = `@${type}`;
 
   if (type === 'INPUT_PARAMS') {
     variables.forEach(variable => {
-      sequence += `${variable.name} `;
+      sequence += ` ${variable.name} `;
 
       if (Object.keys(variable).length > 1) {
-        sequence += '{';
+        sequence += '{ ';
 
         for (const key of Object.keys(variable)) {
           if (key !== 'name') {
@@ -131,7 +131,7 @@ function seqJsonVariableToSequence(
         }
 
         // Remove the trailing space and commma from the last property.
-        sequence = `${sequence.substring(0, sequence.length - 2)} } `;
+        sequence = `${sequence.substring(0, sequence.length - 2)} }`;
       }
     });
   } else {
