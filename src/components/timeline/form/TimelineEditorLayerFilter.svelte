@@ -40,7 +40,6 @@
   $: if (filterString) {
     const filterStringLower = filterString.toLocaleLowerCase();
     filteredValues = options.filter(item => item.toLocaleLowerCase().indexOf(filterStringLower) > -1);
-    // Unique
     filteredValues = filteredValues.filter((val, ind, arr) => arr.indexOf(val) === ind); // uniqueness
   } else {
     filteredValues = options.slice();
