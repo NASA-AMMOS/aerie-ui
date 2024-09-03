@@ -35,8 +35,6 @@
 
   $: rowHeight = discreteOptions.height + 4; // Add externalEventPadding from LayerExternalSources
 
-  // $: console.log("RHDT", discreteTree)
-
   const dispatch = createEventDispatcher<{
     dblClick: MouseOver;
     // TODO: add handles
@@ -98,7 +96,6 @@
         externalEventCount++;
       }
     });
-    console.log("getNodeComposition", node.id, activityDirectiveCount, combinedActivityDirectiveSpanCount, spanCount, externalEventCount)
     return { activityDirectiveCount, combinedActivityDirectiveSpanCount, spanCount, externalEventCount };
   }
 
