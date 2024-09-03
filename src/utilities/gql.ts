@@ -2888,6 +2888,7 @@ const gql = {
                 }
               }
               parameter_schema
+              type
               revision
             }
           }
