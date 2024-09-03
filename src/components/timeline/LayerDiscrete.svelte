@@ -2,7 +2,7 @@
 
 <script lang="ts">
   import ActivityAnchorIconSVG from '@nasa-jpl/stellar/icons/activity_anchor.svg?raw';
-  
+
   import { browser } from '$app/environment';
   import { quadtree as d3Quadtree, type Quadtree } from 'd3-quadtree';
   import { type ScaleTime } from 'd3-scale';
@@ -154,7 +154,7 @@
     discreteOptions.activityOptions &&
     spans;
 
-  $: canDrawExternalEvents = externalEvents && 
+  $: canDrawExternalEvents = externalEvents &&
     selectedExternalEventId !== undefined &&
     discreteOptions.externalEventOptions
 
@@ -326,7 +326,7 @@
       let externalEvents: ExternalEvent[] = [];
       let activityDirectives: ActivityDirective[] = [];
       let spans: Span[] = [];
-      
+
       const hits = getItemsForOffset(offsetX, offsetY);
       externalEvents = hits.externalEvents;
       activityDirectives = hits.activityDirectives;
@@ -452,7 +452,7 @@
       const collapsedMode = drawHeight <= ViewConstants.MIN_ROW_HEIGHT;
       let y = collapsedMode ? 0 : (ViewConstants.MIN_ROW_HEIGHT - 1); // pad starting y with the min row height to align with activity tree
       const expectedRowHeight = rowHeight + discreteRowPadding;
-      
+
       discreteTree.forEach(node => {
         // TODO: add a gap between activities and external events if both are present together.
         const newY = drawGroup(node, y, expectedRowHeight, !collapsedMode);
@@ -460,7 +460,7 @@
           y = newY;
         }
       });
-      
+
       const newRowHeight = y + 36; // add padding to the bottom to account for buttons in the activity tree
       if (!collapsedMode && newRowHeight > 0) {
         /* TODO a change from manual to auto height does not take effect until you trigger a redraw on this row, could pass in whether or not to update row height but that might be odd? */

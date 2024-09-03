@@ -335,7 +335,6 @@
   $: hasResourceLayer = lineLayers.length + xRangeLayers.length > 0;
   $: showSpans = discreteOptions?.activityOptions?.composition === 'both' || discreteOptions?.activityOptions?.composition === 'spans';
   $: showDirectives = discreteOptions?.activityOptions?.composition === 'both' || discreteOptions?.activityOptions?.composition === 'directives';
-
   $: if (discreteTreeExpansionMap === undefined) {
     discreteTreeExpansionMap = {};
   }
@@ -535,7 +534,9 @@
         discreteTreeExpansionMap,
         discreteOptions.activityOptions?.hierarchyMode,
         discreteOptions.externalEventOptions?.groupBy,
-        discreteOptions.externalEventOptions?.groupedModeBinSize
+        discreteOptions.externalEventOptions?.groupedModeBinSize,
+        hasExternalEventsLayer,
+        hasActivityLayer,
       );
     } else {
       discreteTree = [];
@@ -549,7 +550,9 @@
     discreteTreeExpansionMap: DiscreteTreeExpansionMap,
     hierarchyMode: ActivityOptions['hierarchyMode'] = 'flat',
     groupByMethod: ExternalEventOptions['groupBy'] = 'event_type_name',
-    binSize: ExternalEventOptions['groupedModeBinSize'] = 100
+    binSize: ExternalEventOptions['groupedModeBinSize'] = 100,
+    hasExternalEventsLayer: boolean,
+    hasActivityLayer: boolean,
   ) {
     return generateDiscreteTreeUtil(
       directives,
@@ -564,7 +567,9 @@
       spansMap,
       showSpans,
       showDirectives,
-      viewTimeRange
+      viewTimeRange,
+      hasExternalEventsLayer,
+      hasActivityLayer,
     );
   }
 
