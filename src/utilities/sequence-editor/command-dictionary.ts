@@ -134,7 +134,7 @@ export function fswCommandArgDefault(fswCommandArg: FswCommandArgument, enumMap:
       const varStringArg = fswCommandArg as FswCommandArgumentVarString;
       const { default_value } = varStringArg;
 
-      if (default_value !== null) {
+      if (default_value) {
         return default_value;
       } else {
         return '""';
