@@ -19,8 +19,8 @@
   import GridMenu from '../menus/GridMenu.svelte';
   import AlertError from '../ui/AlertError.svelte';
   import CardList from '../ui/CardList.svelte';
+  import ExternalSourceUpdateCard from '../ui/ExternalSourceUpdateCard.svelte';
   import Panel from '../ui/Panel.svelte';
-  import UpdateCard from '../ui/UpdateCard.svelte';
   import ExternalSourcePanelEntry from './ExternalSourcePanelEntry.svelte';
 
   export let gridSection: ViewGridSection;
@@ -125,7 +125,7 @@
       <div style="padding-top: 10px">
         <CardList>
           {#if unseenSources.length}
-            <UpdateCard
+            <ExternalSourceUpdateCard
               deleted={false}
               sources={unseenSources}
               on:dismiss={() => {
@@ -135,7 +135,7 @@
             />
           {/if}
           {#if unseenDeletedSources.length}
-            <UpdateCard
+            <ExternalSourceUpdateCard
               deleted={true}
               sources={unseenDeletedSources}
               on:dismiss={() => {
