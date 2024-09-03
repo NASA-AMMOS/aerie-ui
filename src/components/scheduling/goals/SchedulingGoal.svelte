@@ -59,13 +59,13 @@
 
     if (schema && schema.type === 'struct') {
       formParameters = Object.entries(schema.items).map(([name, subschema], i) => ({
-          errors: null,
-          name,
-          order: i,
-          required: true,
-          schema: subschema,
-          value: (goalPlanSpec && goalPlanSpec.arguments && goalPlanSpec.arguments[name]) || '',
-          valueSource: 'none',
+        errors: null,
+        name,
+        order: i,
+        required: true,
+        schema: subschema,
+        value: (goalPlanSpec && goalPlanSpec.arguments && goalPlanSpec.arguments[name]) || '',
+        valueSource: 'none',
       }));
     } else {
       formParameters = [];
