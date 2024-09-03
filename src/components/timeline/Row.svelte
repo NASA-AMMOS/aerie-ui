@@ -314,6 +314,7 @@
       });
     }
   }
+  $: console.log("ROW", selectedExternalEventId, selectedActivityDirectiveId, selectedSpanId)
 
   $: onDragenter(dragenter);
   $: onDragleave(dragleave);
@@ -993,6 +994,7 @@
             {planStartTimeYmd}
             {selectedActivityDirectiveId}
             {selectedSpanId}
+            {selectedExternalEventId}
             {spanUtilityMaps}
             {spansMap}
             {timelineInteractionMode}
