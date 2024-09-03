@@ -1132,7 +1132,7 @@ export function generateDiscreteTreeUtil(
   }
 }
 
-function flattenItems(nodes: DiscreteTreeNode[]): DiscreteTreeNodeItem[] {
+export function flattenItems(nodes: DiscreteTreeNode[]): DiscreteTreeNodeItem[] {
   let items: DiscreteTreeNodeItem[] = [];
   for (const node of nodes) {
     items = items.concat(flattenItemsHelper(node));

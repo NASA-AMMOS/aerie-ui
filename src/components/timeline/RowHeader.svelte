@@ -105,7 +105,7 @@
   class="row-header"
   style:width={`${width - rowHeaderDragHandleWidthPx}px`}
   style:margin-right={`${rowHeaderDragHandleWidthPx}px`}
-  style:height={expanded ? `${height}px` : '24px'}
+  style:height={`${height}px`}
   class:expanded
   role="banner"
   on:contextmenu={e => dispatch('contextMenu', { e, origin: 'row-header' })}

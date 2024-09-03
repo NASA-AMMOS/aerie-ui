@@ -261,7 +261,6 @@
 
   function onToggleRowExpansion(event: CustomEvent<{ expanded: boolean; rowId: number }>) {
     const { rowId, expanded } = event.detail;
-    console.log("HERE")
     dispatch('toggleRowExpansion', { expanded, rowId });
   }
 
@@ -297,7 +296,6 @@
 
   function onCollapseExternalEventTree(event: CustomEvent<Row>) {
     const row = event.detail;
-    console.log("COLLAPSED EVENTS:", row)
     discreteTreeExpansionMapByRow = { ...discreteTreeExpansionMapByRow, [row.id]: {} };
   }
 

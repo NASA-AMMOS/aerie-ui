@@ -46,6 +46,9 @@
   export let discreteSelectedColor: string = '#a9eaff';
   export let discreteSelectedTextColor: string = '#0a4c7e';
   export let discreteDefaultColor = '#cbcbcb';
+  export let expanded: boolean;
+  export let hasActivityLayer: boolean;
+  export let hasExternalEventsLayer: boolean;
   export let activityUnfinishedSelectedColor: string = '#ff3b19';
   export let activityUnfinishedColor: string = '#fc674d';
   export let discreteOptions: DiscreteOptions = { ...ViewDefaultDiscreteOptions };
@@ -161,6 +164,8 @@
   $: if (
     commonConditions && (canDrawActivities || canDrawExternalEvents) && xScaleView
   ) {
+    // if this print is excluded, contents of row vanish on row height change for some reason and draw is not executed. Including it is necessary?
+    console.debug("Row Height updated: ", drawHeight); 
     draw();
   }
 
@@ -388,7 +393,6 @@
 
   function onDblclick(e: MouseEvent | undefined): void {
     if (e) {
-      console.log("ld", e, selectedActivityDirectiveId, selectedSpanId, selectedExternalEventId)
       dispatch('dblClick', {
         e,
         selectedActivityDirectiveId: selectedActivityDirectiveId ?? undefined,
@@ -445,85 +449,88 @@
   }
 
   function drawGroupedMode() {
-    // console.log("DRAWING GROUPED MODE", discreteOptions, discreteTree)
     // must clear the canvas before a redraw! otherwise the old ungrouped version can linger around and we draw over that!
     canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
     if (xScaleView !== null) {
-      const collapsedMode = drawHeight <= ViewConstants.MIN_ROW_HEIGHT;
-      let y = collapsedMode ? 0 : (ViewConstants.MIN_ROW_HEIGHT - 1); // pad starting y with the min row height to align with activity tree
+      // expanded cannot possibly be false
+      let y = !expanded ? 0 : (ViewConstants.MIN_ROW_HEIGHT - 1); // pad starting y with the min row height to align with activity tree
       const expectedRowHeight = rowHeight + discreteRowPadding;
 
       discreteTree.forEach(node => {
         // TODO: add a gap between activities and external events if both are present together.
-        const newY = drawGroup(node, y, expectedRowHeight, !collapsedMode);
-        if (!collapsedMode) {
+        const newY = drawGroup(node, y, expectedRowHeight, expanded);
+        if (expanded) {
           y = newY;
         }
       });
 
       const newRowHeight = y + 36; // add padding to the bottom to account for buttons in the activity tree
-      if (!collapsedMode && newRowHeight > 0) {
+      if (expanded && newRowHeight > 0) {
         /* TODO a change from manual to auto height does not take effect until you trigger a redraw on this row, could pass in whether or not to update row height but that might be odd? */
         dispatch('updateRowHeight', { newHeight: newRowHeight });
       }
     }
   }
 
+  // TODO: as height reduces, merge items into the same rows, and make labels disappear. This might require significantly reworking this method.
   function drawCompactMode() {
-    console.log("DRAWING COMPACT MODE")
     if (xScaleView !== null) {
       const seenSpans: Record<number, boolean> = {};
       const itemsToDraw: DiscreteTreeNodeDrawItem[] = [];
 
       // Aggregate Activity Drawables
-      if (showDirectives) {
-        activityDirectives.forEach(directive => {
-          if (!xScaleView) {
-            return;
-          }
+      if (hasActivityLayer) {
+        if (showDirectives) {
+          activityDirectives.forEach(directive => {
+            if (!xScaleView) {
+              return;
+            }
 
-          const directiveX = directive.start_time_ms ?? 0;
+            const directiveX = directive.start_time_ms ?? 0;
 
-          let childSpanInView = false;
-          const childSpan = getSpanForActivityDirective(directive);
-          if (childSpan) {
-            seenSpans[childSpan.span_id] = true;
-            childSpanInView = spanInView(childSpan, viewTimeRange);
-          }
-          if (directiveInView(directive, viewTimeRange) || (childSpanInView && showSpans)) {
-            itemsToDraw.push({
-              directive,
-              span: childSpan,
-              startX: xScaleView(directiveX),
-            });
-          }
-        });
-      }
-      if (showSpans) {
-        spans.forEach(span => {
-          if (seenSpans[span.span_id] || !xScaleView) {
-            return;
-          }
-          if (spanInView(span, viewTimeRange)) {
-            itemsToDraw.push({
-              span,
-              startX: xScaleView(span.startMs),
-            });
-          }
-        });
+            let childSpanInView = false;
+            const childSpan = getSpanForActivityDirective(directive);
+            if (childSpan) {
+              seenSpans[childSpan.span_id] = true;
+              childSpanInView = spanInView(childSpan, viewTimeRange);
+            }
+            if (directiveInView(directive, viewTimeRange) || (childSpanInView && showSpans)) {
+              itemsToDraw.push({
+                directive,
+                span: childSpan,
+                startX: xScaleView(directiveX),
+              });
+            }
+          });
+        }
+        if (showSpans) {
+          spans.forEach(span => {
+            if (seenSpans[span.span_id] || !xScaleView) {
+              return;
+            }
+            if (spanInView(span, viewTimeRange)) {
+              itemsToDraw.push({
+                span,
+                startX: xScaleView(span.startMs),
+              });
+            }
+          });
+        }
       }
 
       // Aggregate External Event Drawables
-      externalEvents.forEach(externalEvent => {
-        if (externalEventInView(externalEvent, viewTimeRange)) {
-          if (xScaleView !== null) {
-            itemsToDraw.push({
-              externalEvent: externalEvent,
-              startX: xScaleView(externalEvent.start_ms),
-            });
+      if (hasExternalEventsLayer) {
+        externalEvents.forEach(externalEvent => {
+          if (externalEventInView(externalEvent, viewTimeRange)) {
+            if (xScaleView !== null) {
+              itemsToDraw.push({
+                externalEvent: externalEvent,
+                startX: xScaleView(externalEvent.start_ms),
+              });
+            }
           }
-        }
-      });
+        });
+      }
 
       if (itemsToDraw.length > maxPackedItemEventCount) {
         const text = `Discrete Item drawing limit (${maxPackedItemEventCount}) exceeded (${itemsToDraw.length})`;
@@ -534,7 +541,15 @@
       }
 
       itemsToDraw.sort((a, b) => {
-        return a.startX < b.startX ? -1 : 1;
+        if (a.startX < b.startX) {
+          return -1;
+        }
+        else if (a.startX > b.startX) {
+          return 1;
+        }
+        else {
+          return 0;
+        }
       });
 
       const rows: Record<number, { items: DiscreteTreeNodeDrawItem[]; max: number }> = {};
@@ -576,6 +591,85 @@
           drawRow(yRow, items, idToColorMaps);
         }
       });
+    }
+  }
+
+  function drawCollapsedMode() {
+    // collect items to draw, similar to drawing compact mode
+    const itemsToDraw: DiscreteTreeNodeDrawItem[] = [];
+    const seenSpans: Record<number, boolean> = {};
+
+    // activities
+    if (showDirectives) {
+      activityDirectives.forEach(directive => {
+        if (!xScaleView) {
+          return;
+        }
+
+        const directiveX = directive.start_time_ms ?? 0;
+
+        let childSpanInView = false;
+        const childSpan = getSpanForActivityDirective(directive);
+        if (childSpan) {
+          seenSpans[childSpan.span_id] = true;
+          childSpanInView = spanInView(childSpan, viewTimeRange);
+        }
+        if (directiveInView(directive, viewTimeRange) || (childSpanInView && showSpans)) {
+          itemsToDraw.push({
+            directive,
+            span: childSpan,
+            startX: xScaleView(directiveX),
+          });
+        }
+      });
+    }
+    if (showSpans) {
+      spans.forEach(span => {
+        if (seenSpans[span.span_id] || !xScaleView) {
+          return;
+        }
+        if (spanInView(span, viewTimeRange)) {
+          itemsToDraw.push({
+            span,
+            startX: xScaleView(span.startMs),
+          });
+        }
+      });
+    }
+
+    // Aggregate External Event Drawables
+    externalEvents.forEach(externalEvent => {
+      if (externalEventInView(externalEvent, viewTimeRange)) {
+        if (xScaleView !== null) {
+          itemsToDraw.push({
+            externalEvent: externalEvent,
+            startX: xScaleView(externalEvent.start_ms),
+          });
+        }
+      }
+    });
+
+    // break into 1-2 rows
+    const activityRow: DiscreteTreeNodeDrawItem[] = [];
+    const externalEventRow: DiscreteTreeNodeDrawItem[] = [];
+
+    itemsToDraw.forEach(item => {
+      if (item.directive || item.span) {
+        activityRow.push(item);
+      }
+      else {
+        externalEventRow.push(item);
+      }
+    });
+
+    // draw activity row if present
+    let yRow = 4;
+    if (hasActivityLayer) {
+      drawRow(yRow, activityRow, idToColorMaps);
+      yRow += 24;
+    }
+    if (hasExternalEventsLayer) {
+      drawRow(yRow, externalEventRow, idToColorMaps);
     }
   }
 
@@ -682,7 +776,7 @@
       else {
         return 0;
       }
-    })
+    });
 
     itemsToDraw.forEach(({ directive, directiveStartX, span, spanStartX, externalEvent, externalEventStartX }, i) => {
       if (!xScaleView) {
@@ -954,7 +1048,10 @@
       visibleActivityDirectivesById = {};
       visibleSpansById = {};
       visibleExternalEventsById = {};
-      if (discreteOptions.displayMode === 'grouped') {
+      if (!expanded) {
+        drawCollapsedMode();
+      }
+      else if (discreteOptions.displayMode === 'grouped') {
         drawGroupedMode();
       } else if (discreteOptions.displayMode === 'compact') {
         drawCompactMode();

@@ -314,13 +314,12 @@
       });
     }
   }
-  $: console.log("ROW", selectedExternalEventId, selectedActivityDirectiveId, selectedSpanId)
 
   $: onDragenter(dragenter);
   $: onDragleave(dragleave);
   $: onDragover(dragover);
   $: onDrop(drop);
-  $: computedDrawHeight = expanded ? drawHeight : 24;
+  $: computedDrawHeight = expanded ? drawHeight : (hasActivityLayer && hasExternalEventsLayer ? 48 : 24);
   $: overlaySvgSelection = select(overlaySvg) as Selection<SVGElement, unknown, any, any>;
   $: rowClasses = classNames('row', { 'row-collapsed': !expanded });
   $: discreteOptions = discreteOptions || {...ViewDefaultDiscreteOptions};
@@ -335,6 +334,7 @@
   $: hasResourceLayer = lineLayers.length + xRangeLayers.length > 0;
   $: showSpans = discreteOptions?.activityOptions?.composition === 'both' || discreteOptions?.activityOptions?.composition === 'spans';
   $: showDirectives = discreteOptions?.activityOptions?.composition === 'both' || discreteOptions?.activityOptions?.composition === 'directives';
+
   $: if (discreteTreeExpansionMap === undefined) {
     discreteTreeExpansionMap = {};
   }
@@ -510,6 +510,7 @@
     });
   }
 
+
   $: if (
     (hasActivityLayer &&
     timeFilteredActivityDirectives &&
@@ -518,11 +519,11 @@
     discreteOptions.activityOptions &&
     typeof showSpans === 'boolean' &&
     typeof showDirectives === 'boolean') ||
-    (hasExternalEventsLayer &&
+    (hasExternalEventsLayer && 
     discreteOptions &&
     discreteOptions.externalEventOptions)
   ) {
-    if (discreteOptions.displayMode === 'grouped') {
+    if (discreteOptions.displayMode === 'grouped' && expanded) {
       /*  Note: here we only pass in a few variables in order to
        *  limit the scope of what is reacted to in order to avoid unnecessary re-rendering.
        *  A wrapper function is used to provide the other props needed to generate the tree.
@@ -552,15 +553,15 @@
     groupByMethod: ExternalEventOptions['groupBy'] = 'event_type_name',
     binSize: ExternalEventOptions['groupedModeBinSize'] = 100,
     hasExternalEventsLayer: boolean,
-    hasActivityLayer: boolean,
+    hasActivityLayer: boolean
   ) {
     return generateDiscreteTreeUtil(
       directives,
       spans,
-      externalEvents,
+      externalEvents, 
       discreteTreeExpansionMap,
       hierarchyMode,
-      groupByMethod,
+      groupByMethod, 
       binSize,
       filterItemsByTime,
       spanUtilityMaps,
@@ -569,46 +570,17 @@
       showDirectives,
       viewTimeRange,
       hasExternalEventsLayer,
-      hasActivityLayer,
+      hasActivityLayer
     );
   }
 
   function onDiscreteTreeNodeChange(e: { detail: DiscreteTreeNode }) {
-    console.log("INVOKED!")
     const node = e.detail;
-    dispatch('discreteTreeExpansionChange', {
-      ...(discreteTreeExpansionMap || {}),
-      [node.id]: !node.expanded
+    dispatch('discreteTreeExpansionChange', { 
+      ...(discreteTreeExpansionMap || {}), 
+      [node.id]: !node.expanded 
     });
   }
-
-  // *should* be obsolete now.
-  // // TODO: merge.
-  // function onExternalEventTreeSquash(e: CustomEvent<boolean>) {
-  //   // false means we expand
-  //   // true means we squash
-  //   if (e.detail) {
-  //     console.log(e.detail, externalEventTreeExpansionMap, unsquashedCachedExternalEventTreeExpansionMap)
-  //     unsquashedCachedExternalEventTreeExpansionMap = externalEventTreeExpansionMap;
-  //     dispatch('externalEventTreeExpansionChange', null);
-  //   }
-  //   else {
-  //     console.log(e.detail, externalEventTreeExpansionMap, unsquashedCachedExternalEventTreeExpansionMap)
-  //     dispatch('externalEventTreeExpansionChange', unsquashedCachedExternalEventTreeExpansionMap);
-  //   }
-  // }
-
-  // function onActivityTreeSquash(e: CustomEvent<boolean>) {
-  //   // false means we expand
-  //   // true means we squash
-  //   if (e.detail) {
-  //     unsquashedCachedActivityTreeExpansionMap = activityTreeExpansionMap;
-  //     dispatch('activityTreeExpansionChange', null);
-  //   }
-  //   else {
-  //     dispatch('activityTreeExpansionChange', unsquashedCachedActivityTreeExpansionMap ?? {});
-  //   }
-  // }
 
   function onItemTimeFilterChange() {
     filterItemsByTime = !filterItemsByTime;
@@ -871,24 +843,6 @@
         >
           <FilterWithXIcon />
         </button>
-      <!-- {:else if hasActivityLayer && discreteOptions?.displayMode === 'grouped'}
-        <button
-          class="st-button icon row-external-event"
-          class:row-external-event-active={filterExternalEventsByTime}
-          on:click|stopPropagation={onActivityTimeFilterChange}
-          use:tooltip={{ content: 'Filter Activities by Time Window', placement: 'top' }}
-        >
-          <FilterWithXIcon />
-        </button>
-      {:else if hasExternalEventsLayer && discreteOptions?.displayMode === 'grouped'}
-        <button
-          class="st-button icon row-external-event"
-          class:row-external-event-active={filterExternalEventsByTime}
-          on:click|stopPropagation={onExternalEventTimeFilterChange}
-          use:tooltip={{ content: 'Filter External Events by Time Window', placement: 'top' }}
-        >
-          <FilterWithXIcon />
-        </button> -->
       {/if}
     </RowHeader>
 
@@ -986,10 +940,13 @@
             {blur}
             {contextmenu}
             {dpr}
-            {drawHeight}
+            drawHeight={computedDrawHeight}
             {drawWidth}
-            {focus}
             {dblclick}
+            {expanded}
+            {focus}
+            {hasActivityLayer}
+            {hasExternalEventsLayer}
             {mousedown}
             {mousemove}
             {mouseout}
@@ -1015,77 +972,6 @@
             on:updateRowHeight={onUpdateRowHeightLayer}
           />
         {/if}
-        <!-- {#if hasActivityLayer}
-          <LayerActivities
-            {activityOptions}
-            {idToColorMaps}
-            {activityTree}
-            activityDirectives={filteredActivityDirectives}
-            spans={filteredSpans}
-            {activityDirectivesMap}
-            {hasUpdateDirectivePermission}
-            {showDirectives}
-            {showSpans}
-            {blur}
-            {contextmenu}
-            {dpr}
-            verticalDrawOffset={hasExternalEventsLayer ? 0 : 0}
-            drawHeight={computedLayerDrawHeight}
-            {drawWidth}
-            {focus}
-            {dblclick}
-            {mousedown}
-            {mousemove}
-            {mouseout}
-            {mouseup}
-            {planEndTimeDoy}
-            {plan}
-            {planStartTimeYmd}
-            {selectedActivityDirectiveId}
-            {selectedSpanId}
-            {spanUtilityMaps}
-            {spansMap}
-            {timelineInteractionMode}
-            {timelineLockStatus}
-            {user}
-            {viewTimeRange}
-            {xScaleView}
-            on:contextMenu
-            on:deleteActivityDirective
-            on:dblClick
-            on:mouseDown={onMouseDown}
-            on:mouseOver={onMouseOver}
-            on:updateRowHeight={onUpdateRowHeightLayer}
-          />
-        {/if}
-        {#if hasExternalEventsLayer}
-          <LayerExternalSources
-            {externalEventOptions}
-            externalEvents={externalEventsFilteredByType}
-            {idToColorMaps}
-            {externalEventTree}
-            {showDirectives}
-            {contextmenu}
-            {dpr}
-            verticalDrawOffset={hasActivityLayer ? computedLayerDrawHeight : 0}
-            drawHeight={computedLayerDrawHeight}
-            {drawWidth}
-            {dblclick}
-            {mousedown}
-            {mousemove}
-            {mouseout}
-            {selectedExternalEventId}
-            {timelineInteractionMode}
-            {viewTimeRange}
-            {xScaleView}
-            on:contextMenu
-            on:deleteActivityDirective
-            on:dblClick
-            on:mouseDown={onMouseDown}
-            on:mouseOver={onMouseOver}
-            on:updateRowHeight={onUpdateRowHeightLayer}
-          />
-        {/if} -->
         {#each lineLayers as layer (layer.id)}
           <LayerGaps
             {...layer}
