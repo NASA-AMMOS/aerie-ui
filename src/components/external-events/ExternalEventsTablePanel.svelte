@@ -35,6 +35,3 @@
     />
   </svelte:fragment>
 </Panel>
-
-<style>
-</style>
