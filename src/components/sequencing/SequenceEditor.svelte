@@ -17,7 +17,6 @@
   import { EditorView, basicSetup } from 'codemirror';
   import { debounce } from 'lodash-es';
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
-  import { get } from 'svelte/store';
   import {
     inputFormat,
     outputFormat,
@@ -41,7 +40,6 @@
   import effects from '../../utilities/effects';
   import { downloadBlob, downloadJSON } from '../../utilities/generic';
   import { inputLinter, outputLinter } from '../../utilities/sequence-editor/extension-points';
-  import { sequenceCompletion } from '../../utilities/sequence-editor/sequence-completion';
   import { sequenceTooltip } from '../../utilities/sequence-editor/sequence-tooltip';
   import { showFailureToast, showSuccessToast } from '../../utilities/toast';
   import { tooltip } from '../../utilities/tooltip';
@@ -153,21 +151,24 @@
 
         // Reconfigure sequence editor.
         editorSequenceView.dispatch({
-          effects: compartmentSeqLanguage.reconfigure(
-            setupLanguageSupport(
-              sequenceCompletion(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
+          effects: [
+            compartmentSeqLanguage.reconfigure(
+              setupLanguageSupport(
+                $sequenceAdaptation.autoComplete(
+                  parsedChannelDictionary,
+                  parsedCommandDictionary,
+                  nonNullParsedParameterDictionaries,
+                ),
+              ),
             ),
-          ),
-        });
-        editorSequenceView.dispatch({
-          effects: compartmentSeqLinter.reconfigure(
-            inputLinter(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
-          ),
-        });
-        editorSequenceView.dispatch({
-          effects: compartmentSeqTooltip.reconfigure(
-            sequenceTooltip(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
-          ),
+            indentService.of($sequenceAdaptation.autoIndent()),
+            compartmentSeqLinter.reconfigure(
+              inputLinter(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
+            ),
+            compartmentSeqTooltip.reconfigure(
+              sequenceTooltip(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
+            ),
+          ],
         });
 
         // Reconfigure seq JSON editor.
@@ -191,12 +192,12 @@
         EditorView.lineWrapping,
         EditorView.theme({ '.cm-gutter': { 'min-height': `${clientHeightGridRightTop}px` } }),
         lintGutter(),
-        compartmentSeqLanguage.of(setupLanguageSupport(get(sequenceAdaptation).autoComplete(null, null, []))),
+        compartmentSeqLanguage.of(setupLanguageSupport($sequenceAdaptation.autoComplete(null, null, []))),
         compartmentSeqLinter.of(inputLinter()),
         compartmentSeqTooltip.of(sequenceTooltip()),
         EditorView.updateListener.of(debounce(sequenceUpdateListener, 250)),
         EditorView.updateListener.of(selectedCommandUpdateListener),
-        indentService.of(get(sequenceAdaptation).autoIndent()),
+        indentService.of($sequenceAdaptation.autoIndent()),
         EditorState.readOnly.of(readOnly),
       ],
       parent: editorSequenceDiv,
