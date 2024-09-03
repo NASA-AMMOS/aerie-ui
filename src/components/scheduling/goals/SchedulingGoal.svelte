@@ -62,10 +62,8 @@
     }
     version = goalPlanSpec.goal_metadata?.versions.filter(x => x.revision === revision)[0];
     let schema = version?.parameter_schema;
-    let result: any[] = [];
     if (schema && schema.type === 'struct') {
-      Object.entries(schema.items).forEach(([name, subschema], i) => {
-        result.push({
+      formParameters = Object.entries(schema.items).map(([name, subschema], i) => ({
           errors: null,
           name,
           order: i,
@@ -73,10 +71,10 @@
           schema: subschema,
           value: (goalPlanSpec && goalPlanSpec.arguments && goalPlanSpec.arguments[name]) || '',
           valueSource: 'none',
-        });
-      });
+      }));
+    } else {
+      formParameters = [];
     }
-    formParameters = result;
   }
 
   function focusInput() {
