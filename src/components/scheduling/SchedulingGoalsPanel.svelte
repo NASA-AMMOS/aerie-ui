@@ -96,16 +96,14 @@
 
   async function duplicateGoalInvocation(event: CustomEvent<SchedulingGoalPlanSpecification>) {
     const {
-      detail: { goal_metadata, specification_id, ...goalPlanSpec },
+      detail: { goal_metadata, goal_invocation_id, priority, ...goalPlanSpec },
     } = event;
 
     if ($plan) {
       await effects.createSchedulingGoalPlanSpecification(
         {
           ...goalPlanSpec,
-          goal_invocation_id: undefined, // let DB autogenerate
-          priority: goalPlanSpec.priority + 1,
-          specification_id,
+          priority: priority + 1,
         },
         user,
       );
