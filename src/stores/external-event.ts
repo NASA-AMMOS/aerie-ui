@@ -33,7 +33,7 @@ export const selectedExternalEvent = derived(
 );
 
 /** Helper functions. */
-export function resetModelStores() {
+export function resetExternalEventStores() {
   createExternalEventTypeError.set(null);
 }
 
