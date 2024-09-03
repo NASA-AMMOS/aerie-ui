@@ -648,6 +648,35 @@
       }
     });
 
+    // sort the items (this is crucial to ensuring drawlabel funcitonality works correctly)
+    itemsToDraw.sort((a, b) => {
+      if (a.directiveStartX && b.directiveStartX) {
+        if (a.directiveStartX < b.directiveStartX) {
+          return -1;
+        }
+        else if (a.directiveStartX > b.directiveStartX) {
+          return 1;
+        }
+        else {
+          return 0;
+        }
+      }
+      else if (a.spanStartX && b.spanStartX) {
+        if (a.spanStartX < b.spanStartX) {
+          return -1;
+        }
+        else if (a.spanStartX > b.spanStartX) {
+          return 1;
+        }
+        else {
+          return 0;
+        }
+      }
+      else {
+        return 0;
+      }
+    })
+
     itemsToDraw.forEach(({ directive, directiveStartX, span, spanStartX, externalEvent, externalEventStartX }, i) => {
       if (!xScaleView) {
         return;
@@ -793,6 +822,7 @@
               : directiveLabelWidth;
             // TODO could consider both? That said an item could have a span at the start of a plan and a directive at the beginning...
             const nextX = nextItem?.spanStartX || nextItem?.directiveStartX || null;
+            console.log(directiveStartX, finalWidth, nextX)
             if (typeof nextX === 'number' && directiveStartX + finalWidth >= nextX) {
               shouldDrawLabel = false;
               directiveLabelWidth = 0;
