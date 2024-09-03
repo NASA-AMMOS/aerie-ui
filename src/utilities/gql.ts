@@ -3517,13 +3517,9 @@ const gql = {
   `,
 
   UPDATE_SCHEDULING_GOAL_PLAN_SPECIFICATIONS: `#graphql
-    mutation UpdateSchedulingGoalPlanSpecifications($goalSpecsToUpdate: [scheduling_specification_goals_insert_input!]!, $goalSpecIdsToDelete: [Int!]! = []) {
-      updateSchedulingGoalPlanSpecifications: ${Queries.INSERT_SCHEDULING_SPECIFICATION_GOALS}(
-        objects: $goalSpecsToUpdate,
-        on_conflict: {
-          constraint: scheduling_specification_goals_primary_key,
-          update_columns: [goal_revision, enabled]
-        },
+    mutation UpdateSchedulingGoalPlanSpecifications($goalSpecsToInsert: [scheduling_specification_goals_insert_input!]!, $goalSpecIdsToDelete: [Int!]! = []) {
+      insertSchedulingGoalPlanSpecifications: ${Queries.INSERT_SCHEDULING_SPECIFICATION_GOALS}(
+        objects: $goalSpecsToInsert,
       ) {
         returning {
           goal_revision

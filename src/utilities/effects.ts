@@ -5416,7 +5416,7 @@ const effects = {
 
   async updateSchedulingGoalPlanSpecifications(
     plan: Plan,
-    goalSpecsToUpdate: SchedulingGoalPlanSpecInsertInput[],
+    goalSpecsToInsert: SchedulingGoalPlanSpecInsertInput[],
     goalSpecIdsToDelete: number[],
     user: User | null,
   ) {
@@ -5424,16 +5424,16 @@ const effects = {
       if (!queryPermissions.UPDATE_SCHEDULING_GOAL_PLAN_SPECIFICATIONS(user, plan)) {
         throwPermissionError('update this scheduling goal plan specification');
       }
-      const { deleteConstraintPlanSpecifications, updateSchedulingGoalPlanSpecifications } = await reqHasura(
+      const { deleteConstraintPlanSpecifications, insertSchedulingGoalPlanSpecifications } = await reqHasura(
         gql.UPDATE_SCHEDULING_GOAL_PLAN_SPECIFICATIONS,
         {
           goalSpecIdsToDelete,
-          goalSpecsToUpdate,
+          goalSpecsToInsert,
         },
         user,
       );
 
-      if (updateSchedulingGoalPlanSpecifications !== null || deleteConstraintPlanSpecifications !== null) {
+      if (insertSchedulingGoalPlanSpecifications !== null || deleteConstraintPlanSpecifications !== null) {
         showSuccessToast(`Scheduling Goals Updated Successfully`);
       } else {
         throw Error('Unable to update the scheduling goal specifications for the plan');
