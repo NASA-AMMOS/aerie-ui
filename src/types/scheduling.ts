@@ -99,10 +99,8 @@ export type SchedulingGoalInsertInput = Omit<
 };
 
 export type SchedulingConditionPlanSpecInsertInput = Omit<SchedulingConditionPlanSpecification, 'condition_metadata'>;
-export type SchedulingGoalPlanSpecInsertInput = Omit<SchedulingGoalPlanSpecification, 'goal_metadata'>;
-
-// omit goal_invocation_id since DB will set it when inserting a new invocation
-export type SchedulingGoalPlanSpecInvocationInsertInput = Omit<SchedulingGoalPlanSpecInsertInput, 'goal_invocation_id'>;
+export type SchedulingGoalPlanSpecSetInput = Omit<SchedulingGoalPlanSpecification, 'goal_metadata'>;
+export type SchedulingGoalPlanSpecInsertInput = Omit<SchedulingGoalPlanSpecSetInput, 'goal_invocation_id'>;
 
 export type SchedulingConditionMetadataSetInput = PartialWith<SchedulingConditionMetadata, 'owner'>;
 export type SchedulingGoalMetadataSetInput = PartialWith<SchedulingGoalMetadata, 'owner'>;

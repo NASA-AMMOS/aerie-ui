@@ -128,7 +128,7 @@ import type {
   SchedulingGoalModelSpecificationInsertInput,
   SchedulingGoalModelSpecificationSetInput,
   SchedulingGoalPlanSpecInsertInput,
-  SchedulingGoalPlanSpecInvocationInsertInput,
+  SchedulingGoalPlanSpecSetInput,
   SchedulingGoalPlanSpecification,
   SchedulingPlanSpecification,
   SchedulingPlanSpecificationInsertInput,
@@ -1422,7 +1422,7 @@ const effects = {
   },
 
   async createSchedulingGoalPlanSpecification(
-    spec_goal: SchedulingGoalPlanSpecInvocationInsertInput,
+    spec_goal: SchedulingGoalPlanSpecInsertInput,
     user: User | null,
   ): Promise<number | null> {
     try {
@@ -5376,7 +5376,7 @@ const effects = {
 
   async updateSchedulingGoalPlanSpecification(
     plan: Plan,
-    schedulingGoalPlanSpecification: SchedulingGoalPlanSpecInsertInput,
+    schedulingGoalPlanSpecification: SchedulingGoalPlanSpecSetInput,
     user: User | null,
   ) {
     try {
