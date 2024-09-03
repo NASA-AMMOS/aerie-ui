@@ -41,8 +41,8 @@ export function getCustomArgDef(
 ) {
   let delegate = undefined;
 
-  if (get(sequenceAdaptation)?.argDelegator !== undefined) {
-    delegate = get(sequenceAdaptation)?.argDelegator?.[stem]?.[dictArg.name];
+  if (get(sequenceAdaptation).argDelegator !== undefined) {
+    delegate = get(sequenceAdaptation).argDelegator?.[stem]?.[dictArg.name];
   }
 
   return delegate?.(dictArg, parameterDictionaries, channelDictionary, precedingArgs) ?? dictArg;
@@ -53,7 +53,7 @@ export async function toInputFormat(
   parameterDictionaries: ParameterDictionary[],
   channelDictionary: ChannelDictionary | null,
 ) {
-  const modifyOutputParse = get(sequenceAdaptation)?.modifyOutputParse;
+  const modifyOutputParse = get(sequenceAdaptation).modifyOutputParse;
   let modifiedOutput = null;
 
   if (modifyOutputParse !== undefined) {
@@ -71,7 +71,7 @@ export function inputLinter(
   parameterDictionaries: ParameterDictionary[] = [],
 ): Extension {
   return linter(view => {
-    const inputLinter = get(sequenceAdaptation)?.inputFormat.linter;
+    const inputLinter = get(sequenceAdaptation).inputFormat.linter;
     const tree = syntaxTree(view.state);
     const treeNode = tree.topNode;
     let diagnostics: Diagnostic[];
