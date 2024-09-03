@@ -35,6 +35,3 @@
     {/each}
   </Collapse>
 </div>
-
-<style>
-</style>
