@@ -35,7 +35,7 @@
 
   $: rowHeight = discreteOptions.height + 4; // Add externalEventPadding from LayerExternalSources
 
-  $: console.log("RHDT", discreteTree)
+  // $: console.log("RHDT", discreteTree)
 
   const dispatch = createEventDispatcher<{
     dblClick: MouseOver;
@@ -245,10 +245,7 @@
               selectedExternalEventId !== null &&
               getRowIdExternalEventWhole(externalEvent) === selectedExternalEventId,
           })}
-          on:collapse={() => {
-            console.log("MSDFJDS")
-            dispatch('discrete-tree-node-change', node)
-          }}
+          on:collapse={() => dispatch('discrete-tree-node-change', node)}
         >
           <div slot="left" style="align-items: center;display: flex">
             <div title="External Event" class="icon-group">
