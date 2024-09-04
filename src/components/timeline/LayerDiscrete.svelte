@@ -664,11 +664,11 @@
 
     // draw activity row if present
     let yRow = 4;
-    if (hasActivityLayer) {
+    if (hasActivityLayer && activityRow.length) {
       drawRow(yRow, activityRow, idToColorMaps);
       yRow += 24;
     }
-    if (hasExternalEventsLayer) {
+    if (hasExternalEventsLayer && externalEventRow.length) {
       drawRow(yRow, externalEventRow, idToColorMaps);
     }
   }

@@ -5,6 +5,7 @@
 
   import TrashIcon from '@nasa-jpl/stellar/icons/trash.svg?component';
   import { createEventDispatcher } from 'svelte';
+  import { ViewDiscreteLayerColorPresets, ViewLineLayerColorPresets } from '../../../constants/view';
   import { selectedPlanDerivationGroupEventTypes } from '../../../stores/external-source';
   import { activityTypes } from '../../../stores/plan';
   import { externalResourceNames, resourceTypes } from '../../../stores/simulation';
@@ -20,8 +21,10 @@
   import TimelineEditorLayerSettings from './TimelineEditorLayerSettings.svelte';
 
   export let layer: Layer;
+  export let layerColor: string | undefined; // needs its own prop as updating it in layer doesn't propagate here
   export let yAxes: Axis[];
 
+  
   const dispatch = createEventDispatcher<{
     handleDeleteLayerClick: object;
     handleUpdateLayerChartType: { value: string | number | boolean | null };
@@ -31,18 +34,9 @@
     handleUpdateLayerProperty: { name: string; value: string | number | boolean | null };
   }>();
 
-  let initialColoring: string | undefined = isActivityLayer(layer)
-    ? layer.activityColor
-    : isExternalEventLayer(layer)
-      ? layer.externalEventColor
-      : isLineLayer(layer)
-        ? layer.lineColor
-        : isXRangeLayer(layer)
-          ? layer.colorScheme
-          : undefined; // getColorForLayer
-
   let filterOptions: string[] = [];
   let filterValues: string[] = [];
+
 
   $: {
     // getFilterOptionsForLayer
@@ -79,17 +73,20 @@
     }
   }
 
+
   function handleDeleteLayerFilterValue(value: string) {
     const values = filterValues.filter(i => value !== i);
     dispatch('handleUpdateLayerFilter', { values }); // dispatch update layer filter here with newValues
   }
+
+  
 </script>
 
-<div>
+<div class="timeline-layer timeline-element">
   <CssGrid columns="1fr 0.75fr 24px 24px 24px" gap="8px" class="editor-section-grid">
     <TimelineEditorLayerFilter
       values={filterValues}
-      bind:options={filterOptions}
+      options={filterOptions}
       {layer}
       on:change={event => {
         const { values } = event.detail;
@@ -116,62 +113,29 @@
 
     {#if isActivityLayer(layer)}
       <ColorPresetsPicker
-        presetColors={[
-          '#FFD1D2',
-          '#FFCB9E',
-          '#fcdd8f',
-          '#CAEBAE',
-          '#C9E4F5',
-          '#F8CCFF',
-          '#ECE0F2',
-          '#E8D3BE',
-          '#F5E9DA',
-          '#EBEBEB',
-        ]}
+        presetColors={ViewDiscreteLayerColorPresets}
         tooltipText="Layer Color"
-        value={initialColoring}
+        value={layerColor}
         on:input={event => dispatch('handleUpdateLayerColor', { value: event.detail.value })}
       />
     {:else if isLineLayer(layer)}
       <ColorPresetsPicker
-        presetColors={[
-          '#e31a1c',
-          '#ff7f0e',
-          '#fcbd21',
-          '#75b53b',
-          '#3C95C9',
-          '#8d41b0',
-          '#CAB2D6',
-          '#a67c52',
-          '#E8CAA2',
-          '#7f7f7f',
-        ]}
+        presetColors={ViewLineLayerColorPresets}
         tooltipText="Layer Color"
-        value={initialColoring}
+        value={layerColor}
         on:input={event => dispatch('handleUpdateLayerColor', { value: event.detail.value })}
       />
     {:else if isXRangeLayer(layer)}
       <ColorSchemePicker
         layout="compact"
-        value={initialColoring}
+        value={layerColor}
         on:input={event => dispatch('handleUpdateLayerColorScheme', { value: event.detail.value })}
       />
     {:else if isExternalEventLayer(layer)}
       <ColorPresetsPicker
-        presetColors={[
-          '#FFD1D2',
-          '#FFCB9E',
-          '#fcdd8f',
-          '#CAEBAE',
-          '#C9E4F5',
-          '#F8CCFF',
-          '#ECE0F2',
-          '#E8D3BE',
-          '#F5E9DA',
-          '#EBEBEB',
-        ]}
+        presetColors={ViewDiscreteLayerColorPresets}
         tooltipText="Layer Color"
-        value={initialColoring}
+        value={layerColor}
         on:input={event => dispatch('handleUpdateLayerColor', { value: event.detail.value })}
       />
     {/if}
@@ -220,5 +184,49 @@
   :global(.input.input-inline.editor-input) {
     grid-template-columns: 60px auto;
     padding: 0;
+  }
+
+  :global(.editor-section-grid form) {
+    display: grid;
+  }
+
+  :global(.editor-section-grid) {
+    align-items: center;
+    flex: 1;
+    position: relative;
+    width: 100%;
+  }
+
+  :global(.editor-section-grid-labels > *) {
+    min-width: 40px;
+  }
+
+  .timeline-layer {
+    padding: 4px 16px;
+  }
+
+  .timeline-layer {
+    align-items: flex-end;
+    display: flex;
+  }
+
+  :global(.input.input-stacked.editor-input) {
+    display: grid;
+    min-width: 40px;
+    width: auto;
+  }
+
+  :global(.input.input-stacked.editor-input label) {
+    display: none;
+  }
+
+  :global(.input.input-inline.editor-input) {
+    grid-template-columns: 60px auto;
+    padding: 0;
+  }
+
+  .timeline-layer {
+    align-items: flex-start;
+    flex-direction: column;
   }
 </style>
