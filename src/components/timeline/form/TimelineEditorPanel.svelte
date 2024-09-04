@@ -23,9 +23,7 @@
   import SpanIcon from '../../../assets/timeline-span.svg?component';
   import ActivityModeWidthIcon from '../../../assets/width.svg?component';
   import {
-    ViewActivityLayerColorPresets,
     ViewDefaultDiscreteOptions
-    ViewLineLayerColorPresets,
   } from '../../../constants/view';
   import { ViewConstants } from '../../../enums/view';
   import { maxTimeRange, viewTimeRange } from '../../../stores/plan';
@@ -56,7 +54,8 @@
     Timeline,
     VerticalGuide,
     XRangeLayer,
-    XRangeLayerColorScheme,
+
+    XRangeLayerColorScheme
   } from '../../../types/timeline';
   import type { ViewGridSection } from '../../../types/view';
   import effects from '../../../utilities/effects';
@@ -91,18 +90,15 @@
 
   export let gridSection: ViewGridSection;
 
-  let activityOptions: ActivityOptions = { ...ViewDefaultActivityOptions };
   let horizontalGuides: HorizontalGuide[] = [];
   let editorWidth: number;
   let layers: Layer[] = [];
   let timelines: Timeline[] = [];
-  let rowHasActivityLayer: boolean = false;
   let rowHasNonActivityChartLayer: boolean = false;
   let rows: Row[] = [];
   let selectedTimeline: Timeline | undefined;
   let selectedRow: Row | undefined;
   let verticalGuides: VerticalGuide[] = [];
-  let editorWidth: number;
   let rowHasActivityLayer: boolean | ActivityLayer = false;
   let rowHasExternalEventLayer: boolean | ExternalEventLayer = false;
   let yAxes: Axis[] = [];
@@ -116,7 +112,7 @@
   $: yAxes = selectedRow?.yAxes || [];
   $: layers = selectedRow?.layers || [];
   $: rowHasActivityLayer = !!selectedRow?.layers.find(isActivityLayer) || false;
-  $: rowHasExternalEventLayer = $selectedRow?.layers.find(isExternalEventLayer) || false;
+  $: rowHasExternalEventLayer = selectedRow?.layers.find(isExternalEventLayer) || false;
   $: rowHasNonActivityChartLayer =
     !!selectedRow?.layers.find(layer => isLineLayer(layer) || isXRangeLayer(layer)) || false;
   $: if ((rowHasActivityLayer || rowHasExternalEventLayer) && selectedRow && !selectedRow.discreteOptions) {
@@ -474,6 +470,19 @@
     }
     el.style.background = 'var(--st-gray-10)';
     el.classList.add('timeline-element-dragging');
+  }
+
+  function getColorForLayer(layer: Layer) {
+    if (isActivityLayer(layer)) {
+      layer.activityColor
+      return layer.activityColor;
+    } else if (isExternalEventLayer(layer)) {
+      return layer.externalEventColor;
+    } else if (isLineLayer(layer)) {
+      return layer.lineColor;
+    } else if (isXRangeLayer(layer)) {
+      return layer.colorScheme;
+    }
   }
 
   onMount(() => {
@@ -1219,103 +1228,17 @@
             <!-- TODO bug when dragging something into a different draggable area -->
             <div class="timeline-layers timeline-elements">
               {#each layers as layer (layer.id)}
-                <div class="timeline-layer timeline-element">
-                  <CssGrid columns="1fr 0.75fr 24px 24px 24px" gap="8px" class="editor-section-grid">
-                    <TimelineEditorLayerFilter
-                      values={getFilterValuesForLayer(layer)}
-                      options={getFilterOptionsForLayer(
-                        layer,
-                        $activityTypes,
-                        $externalResourceNames,
-                      )}
-                      {layer}
-                      on:change={event => {
-                        const { values } = event.detail;
-                        handleUpdateLayerFilter(values, layer);
-                      }}
-                    />
-                    <select
-                      class="st-select w-100"
-                      name="chartType"
-                      value={layer.chartType}
-                      on:change={event => handleUpdateLayerChartType(event, layer)}
-                    >
-                      <option value="activity">Activity</option>
-                      <option value="line">Line</option>
-                      <option value="x-range">X-Range</option>
-                      <option value="external-event">External Event</option>
-                    </select>
-                    <TimelineEditorLayerSettings
-                      {layer}
-                      on:input={event => handleUpdateLayerProperty(event, layer)}
-                      on:delete={() => handleDeleteLayerClick(layer)}
-                      {yAxes}
-                    />
-
-                    {#if isActivityLayer(layer)}
-                      <ColorPresetsPicker
-                        presetColors={ViewActivityLayerColorPresets}
-                        tooltipText="Layer Color"
-                        value={getColorForLayer(layer)}
-                        on:input={event => handleUpdateLayerColor(event, layer)}
-                      />
-                    {:else if isLineLayer(layer)}
-                      <ColorPresetsPicker
-                        presetColors={ViewLineLayerColorPresets}
-                        tooltipText="Layer Color"
-                        value={getColorForLayer(layer)}
-                        on:input={event => handleUpdateLayerColor(event, layer)}
-                      />
-                    {:else if isXRangeLayer(layer)}
-                      <ColorSchemePicker
-                        layout="compact"
-                        value={getColorForLayer(layer)}
-                        on:input={event => handleUpdateLayerColorScheme(event, layer)}
-                      />
-                    {:else if isExternalEventLayer(layer)}
-                      <ColorPresetsPicker
-                        presetColors={[
-                          '#FFD1D2',
-                          '#FFCB9E',
-                          '#fcdd8f',
-                          '#CAEBAE',
-                          '#C9E4F5',
-                          '#F8CCFF',
-                          '#ECE0F2',
-                          '#E8D3BE',
-                          '#F5E9DA',
-                          '#EBEBEB',
-                        ]}
-                        tooltipText="Layer Color"
-                        value={getColorForLayer(layer)}
-                        on:input={event => handleUpdateLayerColor(event, layer)}
-                      />
-                    {/if}
-
-                    <button
-                      on:click={() => handleDeleteLayerClick(layer)}
-                      use:tooltip={{ content: 'Delete Layer', placement: 'top' }}
-                      class="st-button icon"
-                    >
-                      <TrashIcon />
-                    </button>
-                  </CssGrid>
-                  <TimelineEditorLayerSelectedFilters
-                    chartType={layer.chartType}
-                    filters={getFilterValuesForLayer(layer)}
-                    on:remove={event => handleDeleteLayerFilterValue(layer, event.detail.filter)}
-                  />
-                  <TimelineEditorLayerSection
-                    on:handleUpdateLayerFilter={e => handleUpdateLayerFilter(e.detail.values, layer)}
-                    on:handleUpdateLayerProperty={e => handleUpdateLayerProperty(e.detail.name, e.detail.value, layer)}
-                    on:handleUpdateLayerChartType={e => handleUpdateLayerChartType(e.detail.value, layer)}
-                    on:handleUpdateLayerColor={e => handleUpdateLayerColor(e.detail.value, layer)}
-                    on:handleUpdateLayerColorScheme={e => handleUpdateLayerColorScheme(e.detail.value, layer)}
-                    on:handleDeleteLayerClick={() => handleDeleteLayerClick(layer)}
-                    {layer}
-                    {yAxes}
-                  />
-                </div>
+                <TimelineEditorLayerSection
+                  on:handleUpdateLayerFilter={e => handleUpdateLayerFilter(e.detail.values, layer)}
+                  on:handleUpdateLayerProperty={e => handleUpdateLayerProperty(e.detail.name, e.detail.value, layer)}
+                  on:handleUpdateLayerChartType={e => handleUpdateLayerChartType(e.detail.value, layer)}
+                  on:handleUpdateLayerColor={e => handleUpdateLayerColor(e.detail.value, layer)}
+                  on:handleUpdateLayerColorScheme={e => handleUpdateLayerColorScheme(e.detail.value, layer)}
+                  on:handleDeleteLayerClick={() => handleDeleteLayerClick(layer)}
+                  {layer}
+                  layerColor={getColorForLayer(layer)}
+                  {yAxes}
+                />
               {/each}
             </div>
           </div>
@@ -1458,7 +1381,6 @@
     flex-direction: column;
   }
 
-  .timeline-layer,
   .timeline-y-axis {
     padding: 4px 16px;
   }
@@ -1470,8 +1392,7 @@
   }
 
   .guide,
-  .timeline-y-axis,
-  .timeline-layer {
+  .timeline-y-axis {
     align-items: flex-end;
     display: flex;
   }
@@ -1502,11 +1423,6 @@
     gap: 8px;
     height: 32px;
     justify-content: flex-start;
-  }
-
-  .timeline-layer {
-    align-items: flex-start;
-    flex-direction: column;
   }
 
   .radio-button-icon {
