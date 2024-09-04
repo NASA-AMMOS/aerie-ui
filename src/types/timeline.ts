@@ -1,5 +1,5 @@
 import type { Selection } from 'd3-selection';
-import type { ActivityDirective } from './activity';
+import type { ActivityDirective, ActivityType } from './activity';
 import type { ConstraintResultWithName } from './constraint';
 import type { ExternalEvent } from './external-event';
 import type { ResourceType, Span } from './simulation';
@@ -287,6 +287,7 @@ export interface XRangePoint extends Point {
   label: Label;
 }
 
+// TODO later: include external events in this new feature?
 export type TimelineItemType = ResourceType | ActivityType;
 
 export type TimelineItemListFilterOption = {

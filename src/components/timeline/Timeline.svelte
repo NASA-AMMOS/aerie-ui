@@ -7,6 +7,7 @@
   import { afterUpdate, createEventDispatcher, onDestroy, onMount, tick } from 'svelte';
   import { SOURCES, TRIGGERS, dndzone } from 'svelte-dnd-action';
   import { InvalidDate } from '../../constants/time';
+  import { planDerivationGroupLinks } from '../../stores/external-source';
   import { plugins } from '../../stores/plugins';
   import { viewAddTimelineRow, viewUpdateTimeline } from '../../stores/views';
   import type { ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
@@ -121,13 +122,14 @@
   });
 
   $: activityDirectives = Object.values(activityDirectivesMap);
+  $: derivationGroups = $planDerivationGroupLinks.filter(link => link.plan_id === plan?.id).map(link => link.derivation_group_name)
   $: externalEvents = externalEventsFromDB.map(ee => {
     return {
       ...ee,
       duration_ms: convertDurationToMs(ee.duration),
       start_ms: convertUTCtoMs(ee.start_time),
     };
-  });
+  }).filter(ee => derivationGroups.includes(ee.pkey.derivation_group_name));
 
   $: rows = timeline?.rows || [];
   $: drawWidth = clientWidth > 0 ? clientWidth - (timeline?.marginLeft ?? 0) - (timeline?.marginRight ?? 0) : 0;

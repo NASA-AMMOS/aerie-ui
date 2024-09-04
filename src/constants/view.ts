@@ -30,7 +30,7 @@ export const ViewDefaultDiscreteOptions: DiscreteOptions = {
   externalEventOptions: ViewDefaultExternalEventOptions
 }
 
-export const ViewActivityLayerColorPresets: string[] = [
+export const ViewDiscreteLayerColorPresets: string[] = [
   '#fcdd8f',
   '#CAEBAE',
   '#C9E4F5',
