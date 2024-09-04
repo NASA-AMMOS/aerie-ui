@@ -51,14 +51,14 @@
     MouseOver,
     Point,
     RowMouseOverEvent,
-    TimelineItemType,
     TimeRange,
+    TimelineItemType,
     XAxisTick,
   } from '../../types/timeline';
   import effects from '../../utilities/effects';
   import { classNames } from '../../utilities/generic';
-  import { showConfirmActivityCreationModal } from '../../utilities/modal';
   import { getRowIdExternalEvent } from '../../utilities/hash';
+  import { showConfirmActivityCreationModal } from '../../utilities/modal';
   import { sampleProfiles } from '../../utilities/resources';
   import { getSimulationStatus } from '../../utilities/simulation';
   import { pluralize } from '../../utilities/text';
@@ -323,17 +323,17 @@
   $: overlaySvgSelection = select(overlaySvg) as Selection<SVGElement, unknown, any, any>;
   $: rowClasses = classNames('row', { 'row-collapsed': !expanded });
   $: discreteOptions = discreteOptions || {...ViewDefaultDiscreteOptions};
-  // $: activityOptions = activityOptions || { ...ViewDefaultActivityOptions };
-  // $: externalEventOptions = externalEventOptions || { ...ViewDefaultExternalEventOptions };
   $: activityLayers = layers.filter(isActivityLayer);
   $: externalEventLayers = layers.filter(isExternalEventLayer);
   $: lineLayers = layers.filter(l => isLineLayer(l) || (isXRangeLayer(l) && l.showAsLinePlot));
   $: xRangeLayers = layers.filter(l => isXRangeLayer(l) && !l.showAsLinePlot);
-  $: hasActivityLayer = activityLayers.length > 0;
-  $: hasExternalEventsLayer = externalEventLayers.length > 0;
-  $: hasResourceLayer = lineLayers.length + xRangeLayers.length > 0;
   $: showSpans = discreteOptions?.activityOptions?.composition === 'both' || discreteOptions?.activityOptions?.composition === 'spans';
   $: showDirectives = discreteOptions?.activityOptions?.composition === 'both' || discreteOptions?.activityOptions?.composition === 'directives';
+
+  // only consider a layer to be present if it is defined AND it actually has types/values selected.
+  $: hasActivityLayer = activityLayers.length > 0  && (activityLayers.map(l => l.filter.activity?.types.length).reduce((p, c) => (p ?? 0)+(c ?? 0), 0) ?? 0) > 0;
+  $: hasExternalEventsLayer = externalEventLayers.length > 0 && (externalEventLayers.map(l => l.filter.externalEvent?.event_types.length).reduce((p, c) => (p ?? 0)+(c ?? 0), 0) ?? 0) > 0;
+  $: hasResourceLayer = lineLayers.length + xRangeLayers.length > 0;
 
   $: if (discreteTreeExpansionMap === undefined) {
     discreteTreeExpansionMap = {};
@@ -531,7 +531,7 @@
       discreteTree = generateDiscreteTree(
         timeFilteredActivityDirectives,
         timeFilteredSpans,
-        externalEvents,
+        externalEventsFilteredByType,
         discreteTreeExpansionMap,
         discreteOptions.activityOptions?.hierarchyMode,
         discreteOptions.externalEventOptions?.groupBy,

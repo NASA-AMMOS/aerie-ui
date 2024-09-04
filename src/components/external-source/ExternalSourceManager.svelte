@@ -47,7 +47,7 @@
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import { convertDoyToYmd, convertDurationToMs, convertUTCtoMs, formatDate } from '../../utilities/time';
-  import { getXScale, TimelineInteractionMode } from '../../utilities/timeline';
+  import { getXScale } from '../../utilities/timeline';
   import { showFailureToast } from '../../utilities/toast';
   import { tooltip } from '../../utilities/tooltip';
   import { required, timestamp } from '../../utilities/validators';
@@ -60,7 +60,6 @@
   import Input from '../form/Input.svelte';
   import Menu from '../menus/Menu.svelte';
   import MenuHeader from '../menus/MenuHeader.svelte';
-  import LayerExternalSources from '../timeline/LayerExternalSources.svelte';
   import TimelineCursors from '../timeline/TimelineCursors.svelte';
   import Tooltip from '../timeline/Tooltip.svelte';
   import AlertError from '../ui/AlertError.svelte';
@@ -1141,7 +1140,7 @@
                   <TimelineCursors marginLeft={0} drawWidth={canvasContainerWidth} {mouseOver} {xScaleView} />
 
                   <div id="timeline-layer">
-                    <LayerExternalSources
+                    <!-- <LayerExternalSources
                       selectedExternalEventId={selectedEvent ? getRowIdExternalEvent(selectedEvent.pkey) : null}
                       externalEvents={selectedEvents}
                       {viewTimeRange}
@@ -1157,7 +1156,8 @@
                       mouseout={undefined}
                       contextmenu={undefined}
                       dblclick={undefined}
-                    />
+                    /> -->
+                    filler.
                   </div>
                 </div>
               </div>

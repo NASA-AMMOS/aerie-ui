@@ -21,9 +21,8 @@
   } from '../../types/timeline';
   import { filterResourcesByLayer } from '../../utilities/timeline';
   import { tooltip } from '../../utilities/tooltip';
-  import RowHeaderDiscreteTree from './RowHeaderDiscreteTree.svelte';
   import DropTarget from './DropTarget.svelte';
-  import Collapse from '../Collapse.svelte';
+  import RowHeaderDiscreteTree from './RowHeaderDiscreteTree.svelte';
   import RowHeaderMenu from './RowHeaderMenu.svelte';
   import RowYAxes from './RowYAxes.svelte';
 
@@ -110,7 +109,7 @@
   role="banner"
   on:contextmenu={e => dispatch('contextMenu', { e, origin: 'row-header' })}
 >
-  <DropTarget on:drop hint="Add Filter">
+  <DropTarget on:drop hint={"Add Filter"}>
     <div class="row-header-left-column">
       {#if expanded}
         {#if height > 60}

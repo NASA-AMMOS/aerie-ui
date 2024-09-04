@@ -1,14 +1,14 @@
 import { keyBy } from 'lodash-es';
 import { expect, test } from 'vitest';
 import {
-  ViewActivityLayerColorPresets,
+  ViewDiscreteLayerColorPresets,
   ViewLineLayerColorPresets,
   ViewXRangeLayerSchemePresets,
 } from '../constants/view';
 import type { ActivityDirective } from '../types/activity';
 import type { ExternalEvent } from '../types/external-event';
 import type { Resource, ResourceType, Span, SpanUtilityMaps, SpansMap } from '../types/simulation';
-import type { ActivityTreeNode, TimeRange, Timeline, XRangeLayer } from '../types/timeline';
+import type { DiscreteTreeNode, TimeRange, Timeline, XRangeLayer } from '../types/timeline';
 import { createSpanUtilityMaps } from './activities';
 import {
   createHorizontalGuide,
@@ -24,7 +24,7 @@ import {
   duplicateRow,
   externalEventInView,
   filterResourcesByLayer,
-  generateActivityTree,
+  generateDiscreteTreeUtil,
   getUniqueColorForActivityLayer,
   getUniqueColorForLineLayer,
   getUniqueColorSchemeForXRangeLayer,
@@ -114,6 +114,10 @@ const testDirectives: ActivityDirective[] = [
     start_time_ms: 0,
     type: 'BiteBanana',
   }),
+];
+
+const testExternalEvents: ExternalEvent[] = [
+  generateExternalEvent({})
 ];
 
 const testSpansMap: SpansMap = keyBy(testSpans, 'span_id');
@@ -491,7 +495,7 @@ test('isExternalEventLayer', () => {
 });
 
 test('paginateNodes', () => {
-  const testNodes: ActivityTreeNode[] = [];
+  const testNodes: DiscreteTreeNode[] = [];
   for (let i = 0; i < 1000; i++) {
     testNodes.push({
       children: [],
@@ -500,7 +504,8 @@ test('paginateNodes', () => {
       isLeaf: false,
       items: [],
       label: 'bar',
-      type: 'aggregation',
+      type: 'a',
+      activity_type: 'aggregation',
     });
   }
   expect(paginateNodes([], 'foo', {})).to.deep.eq([]);
@@ -514,19 +519,22 @@ test('paginateNodes', () => {
 test('generateActivityTree', () => {
   const time = Date.now();
   expect(
-    generateActivityTree([], [], {}, 'flat', false, testSpansUtilityMap, testSpansMap, true, true, {
+    generateDiscreteTreeUtil([], [], [], {}, 'flat', 'event_type_name', 100, false, testSpansUtilityMap, testSpansMap,false, false, {
       end: time + 10000,
       start: time,
-    }),
+    }, false, false)
   ).to.deep.equal([]);
 
   // Directives and spans
   expect(
-    generateActivityTree(
+    generateDiscreteTreeUtil(
       testDirectives,
       testSpans,
+      testExternalEvents,
       { BiteBanana: true, BiteBanana_1: true, Parent: true, Parent_1: true, Parent_1_Child: true },
       'flat',
+      'event_type_name',
+      100,
       false,
       testSpansUtilityMap,
       testSpansMap,
@@ -536,6 +544,8 @@ test('generateActivityTree', () => {
         end: time + 10000,
         start: time,
       },
+      true,
+      true
     ),
   ).to.deep.equal([
     {
@@ -916,10 +926,10 @@ test('generateActivityTree', () => {
 });
 
 test('getUniqueColorForActivityLayer', () => {
-  expect(getUniqueColorForActivityLayer(createRow([]))).toBe(ViewActivityLayerColorPresets[0]);
+  expect(getUniqueColorForActivityLayer(createRow([]))).toBe(ViewDiscreteLayerColorPresets[0]);
   const row2 = createRow([]);
   row2.layers = [createTimelineActivityLayer([])];
-  expect(getUniqueColorForActivityLayer(row2)).toBe(ViewActivityLayerColorPresets[1]);
+  expect(getUniqueColorForActivityLayer(row2)).toBe(ViewDiscreteLayerColorPresets[1]);
 });
 
 test('getUniqueColorForLineLayer', () => {

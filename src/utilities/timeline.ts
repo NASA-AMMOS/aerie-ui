@@ -15,11 +15,10 @@ import {
 } from 'd3-time';
 import { groupBy } from 'lodash-es';
 import {
-  ViewActivityLayerColorPresets,
-  ViewDefaultActivityOptions,
   ViewDefaultDiscreteOptions,
+  ViewDiscreteLayerColorPresets,
   ViewLineLayerColorPresets,
-  ViewXRangeLayerSchemePresets,
+  ViewXRangeLayerSchemePresets
 } from '../constants/view';
 import type { ActivityDirective } from '../types/activity';
 import type { ExternalEvent } from '../types/external-event';
@@ -378,7 +377,7 @@ export function getNextTimelineID(timelines: Timeline[]): number {
  * Returns the next unused activity color within the given row
  */
 export function getUniqueColorForActivityLayer(row?: Row): string {
-  let color = ViewActivityLayerColorPresets[0];
+  let color = ViewDiscreteLayerColorPresets[0];
   const seenColors: Record<string, boolean> = {};
   if (row) {
     row.layers.forEach(layer => {
@@ -386,7 +385,7 @@ export function getUniqueColorForActivityLayer(row?: Row): string {
         seenColors[layer.activityColor] = true;
       }
     });
-    color = ViewActivityLayerColorPresets.find(c => !seenColors[c]) ?? generateRandomPastelColor();
+    color = ViewDiscreteLayerColorPresets.find(c => !seenColors[c]) ?? generateRandomPastelColor();
   }
   return color;
 }
@@ -551,7 +550,7 @@ export function createTimelineActivityLayer(timelines: Timeline[], args: Partial
   const id = getNextLayerID(timelines);
 
   return {
-    activityColor: ViewActivityLayerColorPresets[0],
+    activityColor: ViewDiscreteLayerColorPresets[0],
     activityHeight: 16,
     chartType: 'activity',
     filter: {
