@@ -37,7 +37,6 @@
     type ExternalSourceTypeInsertInput,
     type PlanDerivationGroup,
   } from '../../types/external-source';
-  import type { RadioButtonId } from '../../types/radio-buttons';
   import type { TimeRange } from '../../types/timeline';
   import { type MouseDown, type MouseOver } from '../../types/timeline';
   import effects from '../../utilities/effects';
@@ -60,7 +59,6 @@
   import Input from '../form/Input.svelte';
   import Menu from '../menus/Menu.svelte';
   import MenuHeader from '../menus/MenuHeader.svelte';
-  import TimelineCursors from '../timeline/TimelineCursors.svelte';
   import Tooltip from '../timeline/Tooltip.svelte';
   import AlertError from '../ui/AlertError.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
@@ -69,8 +67,6 @@
   import SingleActionDataGrid from '../ui/DataGrid/SingleActionDataGrid.svelte';
   import DatePicker from '../ui/DatePicker/DatePicker.svelte';
   import Panel from '../ui/Panel.svelte';
-  import RadioButton from '../ui/RadioButtons/RadioButton.svelte';
-  import RadioButtons from '../ui/RadioButtons/RadioButtons.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
 
   export let user: User | null;
@@ -196,11 +192,6 @@
   // source detail variables
   let selectedSource: ExternalSourceSlim | null = null;
   let selectedSourceId: number | null = null;
-
-  // variables for choosing display format of an external source's external events
-  let tableTimelineButtonSelection: RadioButtonId = 'table';
-  let showExternalEventTimeline: boolean = false;
-  let showExternalEventTable: boolean = true;
 
   // timeline variables
   let dpr = 0;
@@ -386,6 +377,7 @@
   $: hasDeletePermission = featurePermissions.externalSource.canDelete(user);
   $: hasCreatePermission = featurePermissions.externalSource.canCreate(user);
 
+
   onMount(() => {
     detectDPRChange();
   });
@@ -396,23 +388,6 @@
     }
   });
 
-  function onSelectTableTimeline(event: CustomEvent<{ id: RadioButtonId }>) {
-    const {
-      detail: { id },
-    } = event;
-    tableTimelineButtonSelection = id;
-    if (tableTimelineButtonSelection === 'table') {
-      showExternalEventTable = true;
-      showExternalEventTimeline = false;
-      externalEventsTableFilterString = '';
-      selectedRowId = selectedEvent ? getRowIdExternalEvent(selectedEvent.pkey) : null;
-    } else {
-      showExternalEventTable = false;
-      showExternalEventTimeline = true;
-      externalEventsTableFilterString = '';
-      mouseDownAfterTable = true;
-    }
-  }
 
   function detectDPRChange() {
     // Adapted from https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio#monitoring_screen_resolution_or_zoom_level_changes
@@ -1052,19 +1027,6 @@
       </svelte:fragment>
     </Panel>
 
-    <!--
-      -- Tooltip only applies to timeline, but to ensure it resets and doesn't unexpectedly show up when the timeline isn't selected,
-      --      had to be moved here and had to add calls to reset
-      --      in various locations.
-      -->
-    <Tooltip
-      bind:this={eventTooltip}
-      {mouseOver}
-      interpolateHoverValue={false}
-      hidden={!!selectedSource && !showExternalEventTimeline}
-      resourceTypes={[]}
-    />
-
     {#if selectedSource}
       <CssGridGutter track={1} type="row" />
 
@@ -1073,95 +1035,32 @@
         <svelte:fragment slot="header">
           <slot name="left">
             <SectionTitle><Balloon slot="icon" />External Events</SectionTitle>
-            {#if showExternalEventTable}
-              <div class="filter">
-                <div class="timeline-editor-layer-filter">
-                  <Input>
-                    <input
-                      bind:value={externalEventsTableFilterString}
-                      autocomplete="off"
-                      class="st-input w-100"
-                      name="filter-ee"
-                      placeholder={'Filter external events'}
-                    />
-                  </Input>
-                </div>
+            <div class="filter">
+              <div class="timeline-editor-layer-filter">
+                <Input>
+                  <input
+                    bind:value={externalEventsTableFilterString}
+                    autocomplete="off"
+                    class="st-input w-100"
+                    name="filter-ee"
+                    placeholder={'Filter external events'}
+                  />
+                </Input>
               </div>
-            {/if}
-            <div style="width:13%">
-              <RadioButtons
-                selectedButtonId={tableTimelineButtonSelection}
-                on:select-radio-button={onSelectTableTimeline}
-              >
-                <RadioButton id="table">
-                  <div class="association-button">Table</div>
-                </RadioButton>
-                <RadioButton id="timeline">
-                  <div class="association-button">Timeline</div>
-                </RadioButton>
-              </RadioButtons>
             </div>
           </slot>
         </svelte:fragment>
         <svelte:fragment slot="body">
           {#if selectedSource}
-            {#if showExternalEventTable}
-              <div id="external-event-table">
-                <ExternalEventsTable
-                  items={filteredTableExternalEvents}
-                  {user}
-                  bind:selectedItemId={selectedRowId}
-                  on:selectionChanged={onSelectionChanged}
-                  on:rowDoubleClicked={onSelectionChanged}
-                />
-              </div>
-            {:else if showExternalEventTimeline}
-              <div id="external-event-timeline">
-                <div style=" background-color:#ebe9e6;height:15px;">
-                  <div style="display:inline; float:left;">{startTime}</div>
-                  <div style="display:inline; float:right;">{endTime}</div>
-                </div>
-                <div
-                  id="external-event-timeline-container"
-                  bind:this={canvasContainerRef}
-                  bind:clientWidth={canvasContainerWidth}
-                  bind:clientHeight={canvasContainerHeight}
-                  on:mouseleave={() => {
-                    eventTooltip.reset();
-                  }}
-                  on:mousedown={e => {
-                    canvasMouseDownEvent = e;
-                  }}
-                  on:mousemove={e => {
-                    canvasMouseOverEvent = e;
-                  }}
-                  role="none"
-                >
-                  <TimelineCursors marginLeft={0} drawWidth={canvasContainerWidth} {mouseOver} {xScaleView} />
-
-                  <div id="timeline-layer">
-                    <!-- <LayerExternalSources
-                      selectedExternalEventId={selectedEvent ? getRowIdExternalEvent(selectedEvent.pkey) : null}
-                      externalEvents={selectedEvents}
-                      {viewTimeRange}
-                      {xScaleView}
-                      {dpr}
-                      mousedown={canvasMouseDownEvent}
-                      drawHeight={canvasContainerHeight - 3 - 10 ?? 200}
-                      drawWidth={canvasContainerWidth ?? 200}
-                      timelineInteractionMode={TimelineInteractionMode.Interact}
-                      on:mouseDown={onCanvasMouseDown}
-                      on:mouseOver={onCanvasMouseOver}
-                      mousemove={canvasMouseOverEvent}
-                      mouseout={undefined}
-                      contextmenu={undefined}
-                      dblclick={undefined}
-                    /> -->
-                    filler.
-                  </div>
-                </div>
-              </div>
-            {/if}
+            <div id="external-event-table">
+              <ExternalEventsTable
+                items={filteredTableExternalEvents}
+                {user}
+                bind:selectedItemId={selectedRowId}
+                on:selectionChanged={onSelectionChanged}
+                on:rowDoubleClicked={onSelectionChanged}
+              />
+            </div>
           {:else if $externalSources.length}
             <p style="padding-left: 5px">Select a source to view contents.</p>
           {:else}
@@ -1395,25 +1294,7 @@
     gap: 4px;
   }
 
-  #timeline-layer {
-    display: flex;
-    padding-bottom: 10px;
-    padding-top: 3px;
-  }
-
   #external-event-table {
-    height: 100%;
-    position: relative;
-    width: 100%;
-  }
-
-  #external-event-timeline {
-    height: 100%;
-    padding-left: 5px;
-    padding-right: 5px;
-  }
-
-  #external-event-timeline-container {
     height: 100%;
     position: relative;
     width: 100%;
