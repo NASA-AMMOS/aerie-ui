@@ -22,7 +22,7 @@
   import { viewTogglePanel } from '../../stores/views';
   import type { User } from '../../types/app';
   import type { FieldStore } from '../../types/form';
-  import type { FormParameter, ParametersMap } from '../../types/parameter';
+  import type { ArgumentsMap, FormParameter, ParametersMap } from '../../types/parameter';
   import type {
     Simulation,
     SimulationDataset,
@@ -55,6 +55,7 @@
 
   const updatePermissionError = 'You do not have permission to update this simulation';
 
+  let defaultSimulationArguments: ArgumentsMap = {};
   let simulateButtonTooltip: string = '';
   let reSimulateButtonTooltip: string = '';
   let endTime: string;
@@ -117,7 +118,7 @@
 
   $: modelParametersMap = $plan?.model?.parameters?.parameters ?? {};
   $: if ($simulation && $plan) {
-    effects.getEffectiveModelArguments($plan.model.id, $simulation.arguments, user).then(response => {
+    effects.getEffectiveModelArguments($plan.model.id, {}, user).then(response => {
       if ($simulation !== null && response !== null) {
         const { arguments: defaultArguments } = response;
         // Displayed simulation arguments are either user input arguments,
@@ -128,6 +129,8 @@
           ...defaultArguments,
           ...($simulation?.template?.arguments ?? {}),
         };
+
+        defaultSimulationArguments = defaultArguments;
         formParameters = getFormParameters(
           modelParametersMap,
           $simulation.arguments,
@@ -474,6 +477,8 @@
           {:else}
             {#each filteredSimulationDatasets as simDataset (simDataset.id)}
               <SimulationHistoryDataset
+                {modelParametersMap}
+                {defaultSimulationArguments}
                 queuePosition={getSimulationQueuePosition(simDataset, $simulationDatasetsAll)}
                 simulationDataset={simDataset}
                 planEndTimeMs={$planEndTimeMs}
