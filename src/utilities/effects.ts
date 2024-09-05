@@ -5755,7 +5755,6 @@ const effects = {
 
       derivationGroupPlanLinkError.set(null);
       if (plan !== null) {
-        console.log(enabled)
         const data = await reqHasura<PlanDerivationGroup>(
           gql.UPDATE_PLAN_DERIVATION_GROUP,
           {
