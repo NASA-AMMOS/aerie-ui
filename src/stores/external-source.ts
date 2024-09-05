@@ -1,11 +1,10 @@
 import { derived, writable, type Writable } from 'svelte/store';
 import {
   type DerivationGroup,
-  type ExternalSourcePkey,
   type ExternalSourceSlim,
   type ExternalSourceType,
   type PlanDerivationGroup,
-  type UserSeenEntry,
+  type UserSeenEntry
 } from '../types/external-source';
 import gql from '../utilities/gql';
 import { planId } from './plan';
@@ -74,10 +73,6 @@ export function resetExternalSourceStores() {
   createExternalSourceTypeError.set(null);
   createDerivationGroupError.set(null);
   derivationGroupPlanLinkError.set(null);
-}
-
-export function getRowIdFromExternalSourceId(externalSourceId: ExternalSourcePkey): string {
-  return `${externalSourceId.key}:::${externalSourceId.derivation_group_name}`;
 }
 
 function transformExternalSources(
