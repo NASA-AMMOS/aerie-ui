@@ -32,9 +32,7 @@ export class ExternalSources {
   panelExternalEventsTable: Locator;
   saveButton: Locator;
   selectEventTableView: Locator;
-  timelineHeader: Locator;
   toastTimeout: number = 5500; // How long to wait for a toast to disappear - they should take 5000ms, 500 extra for buffer
-  toggleTimeline: Locator;
   uploadButton: Locator;
   viewContainedEventTypes: Locator;
   viewEventSourceMetadata: Locator;
@@ -98,7 +96,7 @@ export class ExternalSources {
   async selectSourceFilter() {
     // Always selects all sources as the filter
     await this.page.getByPlaceholder('Filter by Source Type').click();
-    await this.page.locator('#source-filters-select-all').click();
+    await this.page.locator('.source-filters-select-all').click();
     await this.page.keyboard.press('Escape'); // Un-focus the filter menu
   }
 
@@ -113,12 +111,8 @@ export class ExternalSources {
     this.deleteSourceButton = page.getByRole('button', { exact: true, name: 'Delete external source' });
     this.deleteSourceButtonConfirmation = page.getByRole('button', { exact: true, name: 'Delete' });
     this.selectEventTableView = page.locator('[name="SelectEventViewType"]');
-    this.timelineHeader = page.getByText(
-      'Fri Dec 31 2021 19:00:00 GMT-0500 (Eastern Standard Time) Sat Jan 01 2022 19:00',
-    );
     this.externalEventTableHeaderEventType = page.getByText('Event Type', { exact: true });
     this.externalEventTableHeaderDuration = page.getByText('Duration');
-    this.toggleTimeline = page.getByRole('radio', { name: 'Timeline' });
     this.viewContainedEventTypes = page.getByRole('button', { name: 'View Contained Event Types' });
     this.viewEventSourceMetadata = page.getByRole('button', { name: 'View Event Source Metadata' });
     this.panelExternalEventsTable = page.locator('[data-component-name="ExternalEventsTablePanel"]');
