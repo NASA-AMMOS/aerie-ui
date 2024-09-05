@@ -1,8 +1,8 @@
 import type { Selection } from 'd3-selection';
-import type { ActivityDirective, ActivityType } from './activity';
+import type { ActivityDirective, ActivityDirectiveId, ActivityType } from './activity';
 import type { ConstraintResultWithName } from './constraint';
-import type { ExternalEvent } from './external-event';
-import type { ResourceType, Span } from './simulation';
+import type { ExternalEvent, ExternalEventId } from './external-event';
+import type { ResourceType, Span, SpanId } from './simulation';
 
 export type DiscreteTree = DiscreteTreeNode[];
 
@@ -140,9 +140,9 @@ export type MouseOver = {
   origin?: MouseOverOrigin; //TODO perhaps remove this
   pointsByLayer?: Record<number, Point[]>;
   row?: Row;
-  selectedActivityDirectiveId?: number | undefined;
-  selectedExternalEventId?: number | undefined;
-  selectedSpanId?: number;
+  selectedActivityDirectiveId?: ActivityDirectiveId | undefined;
+  selectedExternalEventId?: ExternalEventId | undefined;
+  selectedSpanId?: SpanId;
   spans?: Span[];
 };
 

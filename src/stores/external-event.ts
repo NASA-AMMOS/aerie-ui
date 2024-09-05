@@ -1,7 +1,6 @@
 import { derived, writable, type Writable } from 'svelte/store';
-import type { ExternalEventDB, ExternalEventPkey, ExternalEventType } from '../types/external-event';
+import type { ExternalEventDB, ExternalEventId, ExternalEventPkey, ExternalEventType } from '../types/external-event';
 import gql from '../utilities/gql';
-import { cyrb53a } from '../utilities/hash';
 import { selectedPlanDerivationGroupNames } from './external-source';
 import { gqlSubscribable } from './subscribable';
 import { viewUpdateGrid } from './views';
@@ -21,7 +20,7 @@ export const externalEventsDB = gqlSubscribable<ExternalEventDB[]>(
 export const externalEventTypes = gqlSubscribable<ExternalEventType[]>(gql.SUB_EXTERNAL_EVENT_TYPES, {}, [], null);
 
 // use to track which event is selected in the plan view, as this information is shared across several sibling panels
-export const selectedExternalEventId: Writable<number | null> = writable(null);
+export const selectedExternalEventId: Writable<ExternalEventId | null> = writable(null);
 
 /* Derived. */
 export const selectedExternalEvent = derived(
@@ -37,7 +36,7 @@ export function resetExternalEventStores() {
   createExternalEventTypeError.set(null);
 }
 
-export function selectExternalEvent(externalEventId: number | null, switchToTable = true, switchToPanel = false): void {
+export function selectExternalEvent(externalEventId: ExternalEventId | null, switchToTable = true, switchToPanel = false): void {
   if (externalEventId !== null) {
     selectedExternalEventId.set(externalEventId);
     if (switchToTable) {
@@ -86,21 +85,18 @@ function transformExternalEvents(
 }
 
 // Row/Hash Functions 
-export function getRowIdExternalEventWhole(externalEvent: ExternalEventDB): number {
-  return cyrb53a(
-    externalEvent.pkey.derivation_group_name +
+export function getRowIdExternalEventWhole(externalEvent: ExternalEventDB): ExternalEventId {
+  return externalEvent.pkey.derivation_group_name +
       externalEvent.pkey.source_key +
       externalEvent.pkey.event_type_name +
-      externalEvent.pkey.key,
-  );
+      externalEvent.pkey.key
 }
 
-export function getRowIdExternalEvent(externalEventPkey: ExternalEventPkey): number {
-  return cyrb53a(externalEventPkey.derivation_group_name +
+export function getRowIdExternalEvent(externalEventPkey: ExternalEventPkey): ExternalEventId {
+  return externalEventPkey.derivation_group_name +
       externalEventPkey.source_key +
       externalEventPkey.event_type_name +
       externalEventPkey.key
-  );
 }
 
 export function getRowIdExternalEventType(externalEventType: ExternalEventType): string {

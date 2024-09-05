@@ -12,7 +12,7 @@
   import { getRowIdExternalEvent } from '../../stores/external-event';
   import type { ActivityDirective, ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
-  import type { ExternalEvent } from '../../types/external-event';
+  import type { ExternalEvent, ExternalEventId } from '../../types/external-event';
   import type { Plan } from '../../types/plan';
   import type { Span, SpanId, SpansMap, SpanUtilityMaps } from '../../types/simulation';
   import type {
@@ -35,10 +35,10 @@
   import { directiveInView, externalEventInView, searchQuadtreeRect, spanInView, TimelineInteractionMode, TimelineLockStatus } from '../../utilities/timeline';
 
 
-  type IdToColorMap = Record<number, string>;
+  type Id = ActivityDirectiveId | ExternalEventId | SpanId;
+  type IdToColorMap = Record<Id, string>;
   type IdToColorMaps = { directives: IdToColorMap; external_events: IdToColorMap; spans: IdToColorMap };
 
-  export let selectedExternalEventId: number | null = null;
   export let externalEvents: ExternalEvent[] = [];
   export let activityDirectives: ActivityDirective[] = [];
   export let idToColorMaps: IdToColorMaps = { directives: {}, external_events: {}, spans: {} };
@@ -72,6 +72,7 @@
   export let plan: Plan | null = null;
   export let planStartTimeYmd: string;
   export let selectedActivityDirectiveId: ActivityDirectiveId | null = null;
+  export let selectedExternalEventId: ExternalEventId | null = null;
   export let selectedSpanId: SpanId | null = null;
   export let showDirectives: boolean = true;
   export let showSpans: boolean = true;
@@ -112,7 +113,7 @@
   let quadtreeExternalEvents: Quadtree<QuadtreeRect>;
   let visibleActivityDirectivesById: Record<ActivityDirectiveId, ActivityDirective> = {};
   let visibleSpansById: Record<SpanId, Span> = {};
-  let visibleExternalEventsById: Record<number, ExternalEvent> = {};
+  let visibleExternalEventsById: Record<ExternalEventId, ExternalEvent> = {};
   let colorCache: Record<string, string> = {};
 
   // Asset cache
@@ -366,7 +367,7 @@
 
       let newSelectedActivityDirectiveId = null;
       let newSelectedSpanId = null;
-      let newSelectedExternalEventId: number | null = null;
+      let newSelectedExternalEventId: ExternalEventId | null = null;
 
       if (activityDirectives.length > 0) {
         newSelectedActivityDirectiveId = activityDirectives[0].id;

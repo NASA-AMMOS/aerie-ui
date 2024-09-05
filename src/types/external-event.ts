@@ -8,6 +8,15 @@ export type ExternalEventPkey = {
   source_key: string;
 };
 
+// A condensed format of the above type as a single string, for use in indexing in tables and in the timeline (see LayerDiscrete);
+//    the equivalent of the number id used in selectedActivityDirectiveId (ActivityDirectiveId), but for EEs.
+// We must use a string for ExternalEventId instead of directly using the composite ExternalEventPkey type. This is because there 
+//    are some places, such as LayerDiscrete, where we need to use this ID type in a record (i.e. IdToColorMap). Records admit 
+//    keys of type string | number | symbol, so an ExternalEventPkey would not work. Thus we require a simpler type; a string
+//    is clearly our best candidate. See this string of comments for more detail: 
+//      https://github.com/NASA-AMMOS/aerie-ui/pull/1396#discussion_r1746175203
+export type ExternalEventId = string;
+
 // This is the type that conforms with the database schema.
 export type ExternalEventDB = {
   duration: string;
