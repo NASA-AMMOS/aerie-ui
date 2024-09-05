@@ -7,6 +7,7 @@
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { catchError } from '../../stores/errors';
+  import { getRowIdExternalEvent } from '../../stores/external-event';
   import {
     createDerivationGroupError,
     createExternalSourceError,
@@ -15,6 +16,8 @@
     externalSources,
     externalSourceTypes,
     getExternalSourceMetadataError,
+    getRowIdExternalSource,
+    getRowIdExternalSourceSlim,
     parsingError,
     planDerivationGroupLinks,
   } from '../../stores/external-source';
@@ -26,7 +29,7 @@
   import type {
     ExternalEvent,
     ExternalEventInsertInput,
-    ExternalEventTypeInsertInput,
+    ExternalEventTypeInsertInput
   } from '../../types/external-event';
   import {
     type DerivationGroupInsertInput,
@@ -36,11 +39,10 @@
     type ExternalSourceSlim,
     type ExternalSourceType,
     type ExternalSourceTypeInsertInput,
-    type PlanDerivationGroup,
+    type PlanDerivationGroup
   } from '../../types/external-source';
   import effects from '../../utilities/effects';
   import { classNames } from '../../utilities/generic';
-  import { getRowIdExternalEvent, getRowIdExternalSource, getRowIdExternalSourceSlim } from '../../utilities/hash';
   import { showDeleteExternalSourceModal } from '../../utilities/modal';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
@@ -188,7 +190,7 @@
 
   // source detail variables
   let selectedSource: ExternalSourceSlim | null = null;
-  let selectedSourceId: number | null = null;
+  let selectedSourceId: string | null = null;
 
   // Selected element variables
   let selectedEvent: ExternalEvent | null = null;
