@@ -91,6 +91,7 @@ test.describe.serial('Plan Merge', () => {
     await page.getByRole('button', { name: 'Approve Changes' }).click();
     await page.waitForURL(`${baseURL}/plans/${plans.planId}/merge`);
     await page.waitForTimeout(250);
+    await page.getByRole('button', { name: 'Confirm' }).click(); // Approve derivation group merge
   });
 
   test('Make sure the start time of the activity in the parent plan now equals the start time of the activity in branch', async () => {
