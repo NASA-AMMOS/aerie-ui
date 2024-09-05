@@ -12,8 +12,6 @@
   export let sourcePlanName: string;
   export let targetPlanName: string;
 
-  console.log(sourcePlanName, targetPlanName)
-
   const dispatch = createEventDispatcher<{
     confirm: void;
   }>();

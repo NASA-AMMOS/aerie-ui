@@ -23,8 +23,6 @@
   $: relevantSources = $externalSources.filter(source => derivationGroup.name === source.pkey.derivation_group_name);
 
   function onChange() {
-    // call effect
-    console.log("calling effect")
     effects.updatePlanDerivationGroupEnabled(derivationGroup.name, $plan, !enabled, user);
   }
 
