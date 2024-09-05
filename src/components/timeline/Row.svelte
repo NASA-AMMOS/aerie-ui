@@ -27,7 +27,7 @@
   } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { ConstraintResultWithName } from '../../types/constraint';
-  import type { ExternalEvent } from '../../types/external-event';
+  import type { ExternalEvent, ExternalEventId } from '../../types/external-event';
   import type { Plan } from '../../types/plan';
   import type {
     Resource,
@@ -115,7 +115,7 @@
   export let rowDragMoveDisabled = true;
   export let rowHeaderDragHandleWidthPx: number = 2;
   export let selectedActivityDirectiveId: ActivityDirectiveId | null = null;
-  export let selectedExternalEventId: number | null = null;
+  export let selectedExternalEventId: ExternalEventId | null = null;
   export let selectedSpanId: SpanId | null = null;
   export let simulationDataset: SimulationDataset | null = null;
   export let spanUtilityMaps: SpanUtilityMaps;
@@ -182,9 +182,9 @@
   let timeFilteredActivityDirectives: ActivityDirective[] = [];
   let timeFilteredSpans: Span[] = [];
   let idToColorMaps: {
-    directives: Record<number, string>;
-    external_events: Record<number, string>;
-    spans: Record<number, string>;
+    directives: Record<ActivityDirectiveId, string>;
+    external_events: Record<ExternalEventId, string>;
+    spans: Record<SpanId, string>;
   } = {
     directives: {},
     external_events: {},
