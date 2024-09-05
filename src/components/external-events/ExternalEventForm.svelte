@@ -3,7 +3,7 @@
 <script lang="ts">
   import { plugins } from '../../stores/plugins';
   import type { ExternalEventDB } from '../../types/external-event';
-  import type { Property } from '../../types/property';
+  import type { ExternalEventProperty } from '../../types/property';
   import { classNames } from '../../utilities/generic';
   import { formatDate } from '../../utilities/time';
   import Collapse from '../Collapse.svelte';
@@ -14,7 +14,7 @@
   export let externalEvent: ExternalEventDB;
   export let showHeader: boolean = true;
 
-  let formProperties: Property[] = [];
+  let formProperties: ExternalEventProperty[] = [];
 
   $: formProperties = Object.entries(externalEvent.properties).map(e => {
     return {

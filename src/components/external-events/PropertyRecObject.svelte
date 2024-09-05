@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import type { Property } from '../../types/property';
+  import type { ExternalEventProperty } from '../../types/property';
   import { compare } from '../../utilities/generic';
   import Collapse from '../Collapse.svelte';
   import Highlight from '../ui/Highlight.svelte';
@@ -9,7 +9,7 @@
   import PropertyRec from './PropertyRec.svelte';
 
   export let formPropertyName: string = '';
-  export let formProperties: Property[] = [];
+  export let formProperties: ExternalEventProperty[] = [];
   export let highlightKeysMap: Record<string, boolean> = {};
 
   let expanded = true;

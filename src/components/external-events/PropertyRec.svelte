@@ -1,11 +1,11 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import type { Property } from '../../types/property';
+  import type { ExternalEventProperty } from '../../types/property';
   import { compare } from '../../utilities/generic';
   import PropertyRecObject from './PropertyRecObject.svelte';
 
-  export let formProperty: Property;
+  export let formProperty: ExternalEventProperty;
   export let highlightKeysMap: Record<string, boolean> = {};
 
   $: formProperties =
