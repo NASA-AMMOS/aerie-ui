@@ -162,10 +162,8 @@
     discreteOptions.externalEventOptions
 
   $: if (
-    commonConditions && (canDrawActivities || canDrawExternalEvents) && xScaleView
+    commonConditions && (canDrawActivities || canDrawExternalEvents) && xScaleView && drawHeight
   ) {
-    // if this print is excluded, contents of row vanish on row height change for some reason and draw is not executed. Including it is necessary?
-    console.debug("Row Height updated: ", drawHeight); 
     draw();
   }
 
