@@ -34,7 +34,6 @@ test.describe.serial('External Sources', () => {
 
   test('External event form should be shown when an event is selected', async () => {
     await externalSources.selectEvent();
-    await expect(page.getByText('External Events Table Timeline').first()).toBeVisible();
     await expect(externalSources.inputFile).not.toBeVisible();
   });
 
@@ -75,12 +74,10 @@ test.describe.serial('External Sources', () => {
     await expect(page.locator('i').filter({ hasText: 'ExampleEvent' }).first()).toBeVisible();
   });
 
-  test('External event table and timeline should be accessible while a source is selected', async () => {
+  test('External event table should be accessible while a source is selected', async () => {
     await externalSources.selectSource();
     await expect(externalSources.externalEventTableHeaderEventType).toBeVisible();
     await expect(externalSources.externalEventTableHeaderDuration).toBeVisible();
-    await externalSources.toggleTimeline.click();
-    await expect(externalSources.timelineHeader).toBeVisible();
   });
 
   test('Deleting an external source', async () => {
