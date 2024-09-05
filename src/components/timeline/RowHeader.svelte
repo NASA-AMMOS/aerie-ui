@@ -9,6 +9,7 @@
   import TimelineXRangeLayerIcon from '../../assets/timeline-x-range-layer.svg?component';
   import { ViewDefaultDiscreteOptions } from '../../constants/view';
   import type { ActivityDirectiveId } from '../../types/activity';
+  import type { ExternalEventId } from '../../types/external-event';
   import type { Resource, SpanId } from '../../types/simulation';
   import type {
     Axis,
@@ -40,7 +41,7 @@
   export let yAxes: Axis[];
   export let selectedActivityDirectiveId: ActivityDirectiveId | null = null;
   export let selectedSpanId: SpanId | null = null;
-  export let selectedExternalEventId: number | null = null;
+  export let selectedExternalEventId: ExternalEventId | null = null;
 
   let resourceLabels: {
     chartType: ChartType;

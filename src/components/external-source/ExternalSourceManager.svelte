@@ -28,6 +28,7 @@
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type {
     ExternalEvent,
+    ExternalEventId,
     ExternalEventInsertInput,
     ExternalEventTypeInsertInput
   } from '../../types/external-event';
@@ -194,7 +195,7 @@
 
   // Selected element variables
   let selectedEvent: ExternalEvent | null = null;
-  let selectedRowId: number | null = null;
+  let selectedRowId: ExternalEventId | null = null;
   let selectedEvents: ExternalEvent[] = [];
 
   // We want to parse a file selected for upload.
