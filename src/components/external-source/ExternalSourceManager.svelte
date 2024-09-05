@@ -1,10 +1,11 @@
+<svelte:options immutable={true} />
+
 <script lang="ts">
   import { base } from '$app/paths';
   import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
   import Balloon from 'bootstrap-icons/icons/balloon.svg?component';
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
-  import { onDestroy, onMount } from 'svelte';
   import { catchError } from '../../stores/errors';
   import {
     createDerivationGroupError,
@@ -37,8 +38,6 @@
     type ExternalSourceTypeInsertInput,
     type PlanDerivationGroup,
   } from '../../types/external-source';
-  import type { TimeRange } from '../../types/timeline';
-  import { type MouseDown, type MouseOver } from '../../types/timeline';
   import effects from '../../utilities/effects';
   import { classNames } from '../../utilities/generic';
   import { getRowIdExternalEvent, getRowIdExternalSource, getRowIdExternalSourceSlim } from '../../utilities/hash';
@@ -46,7 +45,6 @@
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import { convertDoyToYmd, convertDurationToMs, convertUTCtoMs, formatDate } from '../../utilities/time';
-  import { getXScale } from '../../utilities/timeline';
   import { showFailureToast } from '../../utilities/toast';
   import { tooltip } from '../../utilities/tooltip';
   import { required, timestamp } from '../../utilities/validators';
@@ -59,7 +57,6 @@
   import Input from '../form/Input.svelte';
   import Menu from '../menus/Menu.svelte';
   import MenuHeader from '../menus/MenuHeader.svelte';
-  import Tooltip from '../timeline/Tooltip.svelte';
   import AlertError from '../ui/AlertError.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
@@ -84,17 +81,6 @@
   const gridRowSizesNoBottomPanel = '1fr 3px 0fr';
   const gridRowSizesBottomPanel = '1fr 3px 1fr';
   const uiColumnSize = '1.2fr 3px 4fr';
-
-  let keyInputField: HTMLInputElement; // need this to set a focus on it. not related to the value
-
-  let keyField = field<string>('', [required]);
-  let sourceTypeField = field<string>('', [required]); // need function to check if in list of allowable types...
-  let derivationGroupField = field<string>('', [required]);
-  let startTimeDoyField = field<string>('', [required, timestamp]); // requires validation function
-  let endTimeDoyField = field<string>('', [required, timestamp]); // requires validation function
-  let validAtDoyField = field<string>('', [required, timestamp]); // requires validation function
-
-  // table variables
   const baseColumnDefs: DataGridColumnDef[] = [
     {
       field: 'key',
@@ -184,6 +170,17 @@
       },
     },
   ];
+
+  let keyInputField: HTMLInputElement; // need this to set a focus on it. not related to the value
+
+  let keyField = field<string>('', [required]);
+  let sourceTypeField = field<string>('', [required]); // need function to check if in list of allowable types...
+  let derivationGroupField = field<string>('', [required]);
+  let startTimeDoyField = field<string>('', [required, timestamp]); // requires validation function
+  let endTimeDoyField = field<string>('', [required, timestamp]); // requires validation function
+  let validAtDoyField = field<string>('', [required, timestamp]); // requires validation function
+
+  // table variables
   let columnDefs: DataGridColumnDef[] = baseColumnDefs;
 
   // for external events table
@@ -193,20 +190,10 @@
   let selectedSource: ExternalSourceSlim | null = null;
   let selectedSourceId: number | null = null;
 
-  // timeline variables
-  let dpr = 0;
-  let viewTimeRange: TimeRange = { end: 0, start: 0 };
+  // Selected element variables
   let selectedEvent: ExternalEvent | null = null;
   let selectedRowId: number | null = null;
   let selectedEvents: ExternalEvent[] = [];
-  let canvasContainerRef: HTMLDivElement;
-  let canvasContainerWidth: number = 0;
-  let canvasContainerHeight: number = 0;
-  let canvasMouseDownEvent: MouseEvent | undefined = undefined;
-  let canvasMouseOverEvent: MouseEvent | undefined = undefined;
-  let removeDPRChangeListener: (() => void) | null = null;
-  let eventTooltip: Tooltip;
-  let mouseOver: MouseOver | null;
 
   // We want to parse a file selected for upload.
   let files: FileList | undefined;
@@ -235,18 +222,6 @@
   // Permissions
   let hasDeletePermission: boolean = false;
   let hasCreatePermission: boolean = false;
-
-  // There was a strange issue where when:
-  //   - you select a source,
-  //   - select an event in timeline,
-  //   - go to table,
-  //   - select a different source,
-  //   - select an event,
-  //   - then go back to timeline.
-  //  The event autodeselected. Some prints led to the discovery that an onMouseDown gets fired, somewhere on the canvas, immediately after selection.
-  //  As this mouseDown only occurs after the table switches back to a timeline, a simple boolean check was added to remedy this, saying to ignore
-  //    the mouseDown occurring right after a switch from a table to a timeline.
-  let mouseDownAfterTable: boolean = false;
 
   let isDerivationGroupFieldDisabled: boolean = true;
 
@@ -366,44 +341,9 @@
     return planDerivationGroupLink.derivation_group_name === selectedSource?.pkey.derivation_group_name;
   });
 
-  // Timeline
-  $: startTime = selectedSource ? new Date(selectedSource.start_time) : new Date();
-  $: endTime = selectedSource ? new Date(selectedSource.end_time) : new Date();
-  $: viewTimeRange = { end: endTime.getTime(), start: startTime.getTime() };
-  $: xDomainView = [startTime, endTime];
-  $: xScaleView = getXScale(xDomainView, 500);
-
   // Permissions
   $: hasDeletePermission = featurePermissions.externalSource.canDelete(user);
   $: hasCreatePermission = featurePermissions.externalSource.canCreate(user);
-
-
-  onMount(() => {
-    detectDPRChange();
-  });
-
-  onDestroy(() => {
-    if (removeDPRChangeListener !== null) {
-      removeDPRChangeListener();
-    }
-  });
-
-
-  function detectDPRChange() {
-    // Adapted from https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio#monitoring_screen_resolution_or_zoom_level_changes
-
-    if (removeDPRChangeListener !== null) {
-      removeDPRChangeListener();
-    }
-
-    // Create new change listener using current DPR
-    const mqString = `(resolution: ${window.devicePixelRatio}dppx)`;
-    const deviceMedia = matchMedia(mqString);
-    deviceMedia.addEventListener('change', detectDPRChange);
-    removeDPRChangeListener = () => deviceMedia.removeEventListener('change', detectDPRChange);
-
-    dpr = window.devicePixelRatio;
-  }
 
   async function onDeleteExternalSource(selectedSource: ExternalSourceSlim | null | undefined) {
     if (selectedSource !== null && selectedSource !== undefined) {
@@ -594,12 +534,10 @@
     selectedSource = detail;
     gridRowSizes = gridRowSizesBottomPanel;
     deselectEvent();
-    eventTooltip.reset();
   }
 
   function deselectSource() {
     deselectEvent();
-    eventTooltip.reset();
     gridRowSizes = gridRowSizesNoBottomPanel;
     selectedSource = null;
   }
@@ -607,24 +545,6 @@
   function deselectEvent() {
     selectedEvent = null;
     selectedRowId = null;
-  }
-
-  function onCanvasMouseDown(e: CustomEvent<MouseDown>) {
-    if (!mouseDownAfterTable) {
-      const { externalEvents } = e.detail;
-      // selectedEvent is our source of an ExternalEvent as well as the ExternalEventId used by this instance
-      //    of the LayerExternalSources (as opposed to using a store, like the timeline one does, which is
-      //    unnecessary as everything we need is in on single component or can be passed down via parameters to
-      //    children).
-      selectedEvent = externalEvents?.length ? externalEvents[0] : null;
-      selectedRowId = null;
-    } else {
-      mouseDownAfterTable = false;
-    }
-  }
-
-  function onCanvasMouseOver(e: CustomEvent<MouseOver>) {
-    mouseOver = e.detail; // Allows tooltip to access object
   }
 
   function toggleItem(value: ExternalSourceType) {
@@ -653,7 +573,7 @@
 </script>
 
 <CssGrid columns={uiColumnSize}>
-  <Panel borderRight padBody={true}>
+  <Panel borderRight padBody={false}>
     <svelte:fragment slot="header">
       <SectionTitle>
         {selectedEvent ? `Selected Event` : selectedSource ? `Selected External Source` : 'Upload a Source File'}
@@ -975,10 +895,7 @@
                     {/if}
                   </div>
                   <div class="list-buttons menu-border-top">
-                    <button
-                      class="st-button secondary list-button"
-                      on:click={selectFilteredValues}
-                    >
+                    <button class="st-button secondary list-button" on:click={selectFilteredValues}>
                       Select {filteredValues.length}
                       {#if filteredValues.length === 1}
                         {'external source type'}
