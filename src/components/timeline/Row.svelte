@@ -10,6 +10,7 @@
   import { ViewDefaultDiscreteOptions } from '../../constants/view';
   import { Status } from '../../enums/status';
   import { catchError } from '../../stores/errors';
+  import { getRowIdExternalEvent } from '../../stores/external-event';
   import { externalSources, planDerivationGroupLinks } from '../../stores/external-source';
   import {
     externalResources,
@@ -57,7 +58,6 @@
   } from '../../types/timeline';
   import effects from '../../utilities/effects';
   import { classNames } from '../../utilities/generic';
-  import { getRowIdExternalEvent } from '../../utilities/hash';
   import { showConfirmActivityCreationModal } from '../../utilities/modal';
   import { sampleProfiles } from '../../utilities/resources';
   import { getSimulationStatus } from '../../utilities/simulation';

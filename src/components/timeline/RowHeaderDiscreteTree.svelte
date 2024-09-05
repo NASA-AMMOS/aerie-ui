@@ -9,6 +9,7 @@
   import DirectiveIcon from '../../assets/timeline-directive.svg?component';
   import SpanIcon from '../../assets/timeline-span.svg?component';
   import { ViewDefaultDiscreteOptions } from '../../constants/view';
+  import { getRowIdExternalEventWhole } from '../../stores/external-event';
   import type { ActivityDirective } from '../../types/activity';
   import type { ExternalEvent } from '../../types/external-event';
   import type { Span } from '../../types/simulation';
@@ -20,7 +21,6 @@
     MouseOver
   } from '../../types/timeline';
   import { classNames } from '../../utilities/generic';
-  import { getRowIdExternalEventWhole } from '../../utilities/hash';
   import { pluralize } from '../../utilities/text';
   import { tooltip } from '../../utilities/tooltip';
   import Collapse from '../Collapse.svelte';
