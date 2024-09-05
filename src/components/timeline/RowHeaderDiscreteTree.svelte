@@ -11,7 +11,7 @@
   import { ViewDefaultDiscreteOptions } from '../../constants/view';
   import { getRowIdExternalEventWhole } from '../../stores/external-event';
   import type { ActivityDirective } from '../../types/activity';
-  import type { ExternalEvent } from '../../types/external-event';
+  import type { ExternalEvent, ExternalEventId } from '../../types/external-event';
   import type { Span } from '../../types/simulation';
   import type {
     DiscreteOptions,
@@ -29,7 +29,7 @@
   export let discreteTree: DiscreteTree = [];
   export let selectedActivityDirectiveId: number | null = null;
   export let selectedSpanId: number | null = null;
-  export let selectedExternalEventId: number | null = null;
+  export let selectedExternalEventId: ExternalEventId | null = null;
 
   let rowHeight = 0;
 
