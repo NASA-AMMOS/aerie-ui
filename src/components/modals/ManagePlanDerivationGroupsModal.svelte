@@ -50,8 +50,7 @@
   let dataGrid: DataGrid<DerivationGroup>;
   let baseColumnDefs: DataGridColumnDef<DerivationGroup>[] = [];
 
-  selectedPlanDerivationGroupNames.subscribe(() => {
-    if (baseColumnDefs.length > 0 && dataGrid) {
+  $: if ($selectedPlanDerivationGroupNames && baseColumnDefs.length > 0 && dataGrid) {
       // no current way to change just a specific cell unless we add something about plan associations to the DG object,
       //    which we don't seek to do.
       // this does mean every update to any entry in selectedPlanDerivationGroupIds refreshes the whole column, and flashes it,
@@ -59,7 +58,6 @@
       //    buffers button smashing and repeated updates pretty well!
       dataGrid.refreshCells();
     }
-  });
 
   $: externalEventLayers = $view?.definition.plan.timelines
     .flatMap(timeline => timeline.rows)
