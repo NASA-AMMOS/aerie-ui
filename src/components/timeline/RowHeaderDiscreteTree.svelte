@@ -50,6 +50,8 @@
     if (e) {
       dispatch('dblClick', {
         e,
+        selectedActivityDirectiveId: selectedActivityDirectiveId ?? undefined,
+        selectedExternalEventId: selectedExternalEventId ?? undefined,
         selectedSpanId: selectedSpanId ?? undefined
       });
     }
@@ -96,7 +98,7 @@
         externalEventCount++;
       }
     });
-    return { activityDirectiveCount, combinedActivityDirectiveSpanCount, spanCount, externalEventCount };
+    return { activityDirectiveCount, combinedActivityDirectiveSpanCount, externalEventCount, spanCount };
   }
 
   function onSelectClick(node: DiscreteTreeNode, e: MouseEvent) {
