@@ -1,9 +1,6 @@
 //https://stackoverflow.com/questions/40958727/javascript-generate-unique-number-based-on-string
 // https://github.com/bryc/code/blob/master/jshash/experimental/cyrb53.js
 
-import type { ExternalEventDB, ExternalEventPkey } from '../types/external-event';
-import type { ExternalSourcePkey, ExternalSourceSlim } from '../types/external-source';
-
 /*
     cyrb53a (c) 2023 bryc (github.com/bryc)
     License: Public domain. Attribution appreciated.
@@ -27,33 +24,3 @@ export const cyrb53a = function (str: string, seed = 0) {
   h2 ^= h1 >>> 16;
   return 2097152 * (h2 >>> 0) + (h1 >>> 11);
 };
-
-export function getRowIdExternalSourceSlim(externalSourceSlim: ExternalSourceSlim) {
-  // https://stackoverflow.com/questions/40958727/javascript-generate-unique-number-based-on-string
-  return cyrb53a(externalSourceSlim.pkey.derivation_group_name + externalSourceSlim.pkey.key);
-}
-
-export function getRowIdExternalSource(externalSourcePkey: ExternalSourcePkey) {
-  // https://stackoverflow.com/questions/40958727/javascript-generate-unique-number-based-on-string
-  return cyrb53a(externalSourcePkey.derivation_group_name + externalSourcePkey.key);
-}
-
-export function getRowIdExternalEventWhole(externalEvent: ExternalEventDB) {
-  // https://stackoverflow.com/questions/40958727/javascript-generate-unique-number-based-on-string
-  return cyrb53a(
-    externalEvent.pkey.derivation_group_name +
-      externalEvent.pkey.source_key +
-      externalEvent.pkey.event_type_name +
-      externalEvent.pkey.key,
-  );
-}
-
-export function getRowIdExternalEvent(externalEventPkey: ExternalEventPkey) {
-  // https://stackoverflow.com/questions/40958727/javascript-generate-unique-number-based-on-string
-  return cyrb53a(
-    externalEventPkey.derivation_group_name +
-      externalEventPkey.source_key +
-      externalEventPkey.event_type_name +
-      externalEventPkey.key,
-  );
-}

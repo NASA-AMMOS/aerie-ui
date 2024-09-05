@@ -9,6 +9,7 @@
   import { createEventDispatcher, onDestroy, onMount, tick } from 'svelte';
   import { ViewDefaultDiscreteOptions } from '../../constants/view';
   import { ViewConstants } from '../../enums/view';
+  import { getRowIdExternalEvent } from '../../stores/external-event';
   import type { ActivityDirective, ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { ExternalEvent } from '../../types/external-event';
@@ -29,7 +30,6 @@
   import { hexToRgba, shadeColor } from '../../utilities/color';
   import effects from '../../utilities/effects';
   import { isRightClick } from '../../utilities/generic';
-  import { getRowIdExternalEvent } from '../../utilities/hash';
   import { isDeleteEvent } from '../../utilities/keyboardEvents';
   import { getActivityDirectiveStartTimeMs, getDoyTime, getIntervalUnixEpochTime, getUnixEpochTime, getUnixEpochTimeFromInterval } from '../../utilities/time';
   import { directiveInView, externalEventInView, searchQuadtreeRect, spanInView, TimelineInteractionMode, TimelineLockStatus } from '../../utilities/timeline';
@@ -373,7 +373,6 @@
       } else if (spans.length > 0) {
         newSelectedSpanId = spans[0].span_id;
       } else if (externalEvents.length > 0) {
-        // TODO: verify that this line does not fail! It shouldn't...
         newSelectedExternalEventId = getRowIdExternalEvent(externalEvents[0].pkey);
       }
 

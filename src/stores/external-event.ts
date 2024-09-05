@@ -1,7 +1,7 @@
 import { derived, writable, type Writable } from 'svelte/store';
-import type { ExternalEventDB, ExternalEventType } from '../types/external-event';
+import type { ExternalEventDB, ExternalEventPkey, ExternalEventType } from '../types/external-event';
 import gql from '../utilities/gql';
-import { getRowIdExternalEvent } from '../utilities/hash';
+import { cyrb53a } from '../utilities/hash';
 import { selectedPlanDerivationGroupNames } from './external-source';
 import { gqlSubscribable } from './subscribable';
 import { viewUpdateGrid } from './views';
@@ -83,4 +83,26 @@ function transformExternalEvents(
       });
   }
   return completeExternalEventDB;
+}
+
+// Row/Hash Functions 
+export function getRowIdExternalEventWhole(externalEvent: ExternalEventDB): number {
+  return cyrb53a(
+    externalEvent.pkey.derivation_group_name +
+      externalEvent.pkey.source_key +
+      externalEvent.pkey.event_type_name +
+      externalEvent.pkey.key,
+  );
+}
+
+export function getRowIdExternalEvent(externalEventPkey: ExternalEventPkey): number {
+  return cyrb53a(externalEventPkey.derivation_group_name +
+      externalEventPkey.source_key +
+      externalEventPkey.event_type_name +
+      externalEventPkey.key
+  );
+}
+
+export function getRowIdExternalEventType(externalEventType: ExternalEventType): string {
+  return externalEventType.name;
 }

@@ -1,6 +1,7 @@
 import { derived, writable, type Writable } from 'svelte/store';
 import {
   type DerivationGroup,
+  type ExternalSourcePkey,
   type ExternalSourceSlim,
   type ExternalSourceType,
   type PlanDerivationGroup,
@@ -162,4 +163,21 @@ function transformUsersSeenSources(
     }
   }
   return res;
+}
+
+// Row/Hash Functions 
+export function getRowIdExternalSourceSlim(externalSourceSlim: ExternalSourceSlim): string {
+  return externalSourceSlim.pkey.derivation_group_name + externalSourceSlim.pkey.key;
+}
+
+export function getRowIdExternalSource(externalSourcePkey: ExternalSourcePkey): string {
+  return externalSourcePkey.derivation_group_name + externalSourcePkey.key
+}
+
+export function getRowIdDerivationGroup(derivationGroup: DerivationGroup): string {
+  return `${derivationGroup.name}:${derivationGroup.source_type_name}`;
+}
+
+export function getRowIdExternalSourceType(externalSourceType: ExternalSourceType): string {
+  return externalSourceType.name;
 }
