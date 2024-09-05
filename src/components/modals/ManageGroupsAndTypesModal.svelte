@@ -4,8 +4,8 @@
   import type { ICellRendererParams } from 'ag-grid-community';
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import { createEventDispatcher } from 'svelte';
-  import { externalEventTypes } from '../../stores/external-event';
-  import { derivationGroups, externalSources, externalSourceTypes } from '../../stores/external-source';
+  import { externalEventTypes, getRowIdExternalEventType } from '../../stores/external-event';
+  import { derivationGroups, externalSources, externalSourceTypes, getRowIdDerivationGroup, getRowIdExternalSourceType } from '../../stores/external-source';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalEventType } from '../../types/external-event';
@@ -337,7 +337,7 @@
           newTypeError = "Please enter a new type name."
         }
         else {
-          effects.createDerivationGroup({source_type_name: newTypeSourceType, name: newTypeName}, user);
+          effects.createDerivationGroup({name: newTypeName, source_type_name: newTypeSourceType}, user);
           newTypeName = "";
           newTypeSourceType = "";
         }
@@ -457,18 +457,6 @@
       selectedExternalEventType = undefined;
       modalColumnSize = modalColumnSizeNoDetail;
     }
-  }
-
-  function getRowIdDerivationGroup(derivationGroup: DerivationGroup): string {
-    return `${derivationGroup.name}:${derivationGroup.source_type_name}`;
-  }
-
-  function getRowIdExternalEventType(externalEventType: ExternalEventType): string {
-    return externalEventType.name;
-  }
-
-  function getRowIdExternalSourceType(externalSourceType: ExternalSourceType): string {
-    return externalSourceType.name;
   }
 </script>
 
