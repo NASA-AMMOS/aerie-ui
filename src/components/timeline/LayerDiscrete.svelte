@@ -782,13 +782,6 @@
       }
       const nextItem = itemsToDraw[i + 1];
 
-      if (externalEvent && (directive || span)) {
-        console.log("External Event and Directive or Span detected in same object!");
-        console.log("Directive:", directive, directiveStartX);
-        console.log("Span:", span, spanStartX);
-        console.log("External Event:", externalEvent, externalEventStartX);
-      }
-
       // NOTE - the following can probably be refactored because of code repetition. It is not yet.
       // Draw external event (like a span)
       if (externalEvent && typeof externalEventStartX === 'number') {
