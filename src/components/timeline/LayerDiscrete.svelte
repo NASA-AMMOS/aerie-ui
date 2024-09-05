@@ -137,17 +137,6 @@
   $: planStartTimeMs = getUnixEpochTime(getDoyTime(new Date(planStartTimeYmd)));
 
   // the following are NOT mutually exclusive.
-  $: commonConditions = canvasHeightDpr &&
-    canvasWidthDpr &&
-    ctx &&
-    drawHeight &&
-    drawWidth &&
-    dpr &&
-    discreteOptions &&
-    viewTimeRange &&
-    xScaleView &&
-    discreteTree
-
   $: canDrawActivities = activityDirectives &&
     showDirectives !== undefined &&
     showSpans !== undefined &&
@@ -161,8 +150,17 @@
     selectedExternalEventId !== undefined &&
     discreteOptions.externalEventOptions
 
-  $: if (
-    commonConditions && (canDrawActivities || canDrawExternalEvents) && xScaleView && drawHeight
+  $: if ((canvasHeightDpr &&
+          canvasWidthDpr &&
+          ctx &&
+          drawHeight &&
+          drawWidth &&
+          dpr &&
+          discreteOptions &&
+          viewTimeRange &&
+          xScaleView &&
+          discreteTree
+        ) && (canDrawActivities || canDrawExternalEvents)
   ) {
     draw();
   }
@@ -299,7 +297,7 @@
       maxActivityWidth,
       visibleSpansById,
     );
-    return { externalEvents, activityDirectives, spans };
+    return { activityDirectives, externalEvents, spans };
   }
 
   function onMousedown(e: MouseEvent | undefined): void {
@@ -315,7 +313,7 @@
        * @see https://github.com/NASA-AMMOS/aerie-ui/issues/590
        */
       setTimeout(() => {
-        dispatch('mouseDown', { activityDirectives, e, spans, externalEvents });
+        dispatch('mouseDown', { activityDirectives, e, externalEvents, spans });
         if (!isRightClick(e)) {
           dragActivityDirectiveStart(activityDirectives, offsetX);
         }
@@ -335,14 +333,14 @@
       activityDirectives = hits.activityDirectives;
       spans = hits.spans;
 
-      dispatch('mouseOver', { activityDirectives, e, spans, externalEvents });
+      dispatch('mouseOver', { activityDirectives, e, externalEvents, spans });
       dragActivityDirective(offsetX);
     }
   }
 
   function onMouseout(e: MouseEvent | undefined): void {
     if (e) {
-      dispatch('mouseOver', { activityDirectives: [], e, spans: [], externalEvents: [] });
+      dispatch('mouseOver', { activityDirectives: [], e, externalEvents: [], spans: [] });
     }
   }
 
@@ -383,8 +381,8 @@
         e,
         origin: 'layer-discrete',
         selectedActivityDirectiveId: newSelectedActivityDirectiveId ?? undefined,
-        selectedSpanId: newSelectedSpanId ?? undefined,
         selectedExternalEventId: newSelectedExternalEventId ?? undefined,
+        selectedSpanId: newSelectedSpanId ?? undefined,
       });
     }
   }
@@ -394,8 +392,8 @@
       dispatch('dblClick', {
         e,
         selectedActivityDirectiveId: selectedActivityDirectiveId ?? undefined,
-        selectedSpanId: selectedSpanId ?? undefined,
         selectedExternalEventId: selectedExternalEventId ?? undefined,
+        selectedSpanId: selectedSpanId ?? undefined,
       });
     }
   }
@@ -671,7 +669,7 @@
     }
   }
 
-  function getItemEndX(item: { directive?: ActivityDirective; span?: Span; externalEvent?: ExternalEvent; startX: number }) {
+  function getItemEndX(item: { directive?: ActivityDirective; externalEvent?: ExternalEvent; span?: Span; startX: number }) {
     const { span, directive, externalEvent, startX } = item;
     let labelEndX = 0;
     let boxEndX = 0;
@@ -717,10 +715,10 @@
     let itemsToDraw: {
       directive?: ActivityDirective;
       directiveStartX?: number;
-      span?: Span;
-      spanStartX?: number;
       externalEvent?: ExternalEvent;
       externalEventStartX?: number;
+      span?: Span;
+      spanStartX?: number;
     }[] = [];
 
     items.forEach(item => {
