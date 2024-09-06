@@ -74,7 +74,6 @@
     isLineLayer,
     isXRangeLayer,
   } from '../../../utilities/timeline';
-  import { showFailureToast } from '../../../utilities/toast';
   import { tooltip } from '../../../utilities/tooltip';
   import ColorPicker from '../../form/ColorPicker.svelte';
   import Input from '../../form/Input.svelte';
@@ -1072,30 +1071,6 @@
                   </div>
                 </RadioButton>
               </RadioButtons>
-            </Input>
-            <Input layout="inline" class="editor-input">
-              <label for="activity-composition">Bin Size</label>
-              <input
-                min={2}
-                autocomplete="off"
-                class="st-input w-100"
-                name="text"
-                type="number"
-                value={discreteOptions?.externalEventOptions?.groupedModeBinSize}
-                on:input={e => {
-                  // TODO: for optimization sake, only run this when submitted!
-                  const { value } = getTarget(e);
-                  if (typeof value === 'number' && !isNaN(value)) {
-                    if (value >= 2) {
-                      viewUpdateRow('discreteOptions', { ...discreteOptions, ['externalEventOptions']: {...discreteOptions.externalEventOptions, groupedModeBinSize: value} });
-                    } else {
-                      showFailureToast(
-                        `Size must be >= 2. Retaining former value ${discreteOptions?.externalEventOptions?.groupedModeBinSize}.`,
-                      );
-                    }
-                  }
-                }}
-              />
             </Input>
           {/if}
         </fieldset>
