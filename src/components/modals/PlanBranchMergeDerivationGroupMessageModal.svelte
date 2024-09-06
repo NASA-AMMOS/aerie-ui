@@ -29,21 +29,15 @@
 <svelte:window on:keydown={onKeydown} />
 
 <Modal {height} {width}>
-  <ModalHeader on:close>
-    Derivation Group Behavior
-  </ModalHeader>
+  <ModalHeader on:close>Derivation Group Behavior</ModalHeader>
   <ModalContent>
     <p>
-      The derivation groups unique to <i>{sourcePlanName}</i> will now be associated with <i>{targetPlanName}</i>.
-      This operation does not affect <i>{sourcePlanName}</i> itself.
+      The derivation groups unique to <i>{sourcePlanName}</i> will now be associated with <i>{targetPlanName}</i>. This
+      operation does not affect <i>{sourcePlanName}</i> itself.
     </p>
   </ModalContent>
   <ModalFooter>
-    <button class="st-button secondary" on:click={() => dispatch('close')}>
-      Cancel
-    </button>
-    <button class="st-button" on:click={() => dispatch('confirm')}> 
-      Confirm 
-    </button>
+    <button class="st-button secondary" on:click={() => dispatch('close')}> Cancel </button>
+    <button class="st-button" on:click={() => dispatch('confirm')}> Confirm </button>
   </ModalFooter>
 </Modal>

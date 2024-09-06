@@ -14,12 +14,12 @@ import type { ActivityOptions, DiscreteOptions, ExternalEventOptions, XRangeLaye
 
 export const ViewDefaultActivityOptions: ActivityOptions = {
   composition: 'both',
-  hierarchyMode: 'flat'
+  hierarchyMode: 'flat',
 };
 
 export const ViewDefaultExternalEventOptions: ExternalEventOptions = {
   groupBy: 'event_type_name',
-  groupedModeBinSize: 100
+  groupedModeBinSize: 100,
 };
 
 export const ViewDefaultDiscreteOptions: DiscreteOptions = {
@@ -27,8 +27,8 @@ export const ViewDefaultDiscreteOptions: DiscreteOptions = {
   displayMode: 'compact',
   externalEventOptions: ViewDefaultExternalEventOptions,
   height: 16,
-  labelVisibility: 'auto'
-}
+  labelVisibility: 'auto',
+};
 
 export const ViewDiscreteLayerColorPresets: string[] = [
   '#fcdd8f',

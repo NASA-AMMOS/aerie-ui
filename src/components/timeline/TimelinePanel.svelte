@@ -3,7 +3,12 @@
 <script lang="ts">
   import { activityDirectivesMap, selectActivity, selectedActivityDirectiveId } from '../../stores/activities';
   import { visibleConstraintResults } from '../../stores/constraints';
-  import { externalEventsDB, getRowIdExternalEvent, selectExternalEvent, selectedExternalEventId } from '../../stores/external-event';
+  import {
+    externalEventsDB,
+    getRowIdExternalEvent,
+    selectExternalEvent,
+    selectedExternalEventId,
+  } from '../../stores/external-event';
   import { maxTimeRange, plan, planReadOnly, viewTimeRange } from '../../stores/plan';
   import {
     resourceTypes,
@@ -107,7 +112,12 @@
     const {
       detail: { row, composition },
     } = event;
-    viewUpdateRow('discreteOptions', { ...row.discreteOptions, activityOptions: { ...row.discreteOptions.activityOptions, composition } }, timelineId, row.id);
+    viewUpdateRow(
+      'discreteOptions',
+      { ...row.discreteOptions, activityOptions: { ...row.discreteOptions.activityOptions, composition } },
+      timelineId,
+      row.id,
+    );
   }
 
   function editRow(row: Row) {

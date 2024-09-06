@@ -116,9 +116,7 @@ const testDirectives: ActivityDirective[] = [
   }),
 ];
 
-const testExternalEvents: ExternalEvent[] = [
-  generateExternalEvent({})
-];
+const testExternalEvents: ExternalEvent[] = [generateExternalEvent({})];
 
 const testSpansMap: SpansMap = keyBy(testSpans, 'span_id');
 const testSpansUtilityMap: SpanUtilityMaps = createSpanUtilityMaps(testSpans);
@@ -505,7 +503,7 @@ test('paginateNodes', () => {
       isLeaf: false,
       items: [],
       label: 'bar',
-      type: 'Activity'
+      type: 'Activity',
     });
   }
   expect(paginateNodes([], 'foo', {})).to.deep.eq([]);
@@ -521,10 +519,26 @@ test('generateDiscreteTree', () => {
 
   // empty
   expect(
-    generateDiscreteTreeUtil([], [], [], {}, 'flat', 'event_type_name', 100, false, testSpansUtilityMap, testSpansMap, false, false, {
-      end: time + 10000,
-      start: time,
-    }, false, false)
+    generateDiscreteTreeUtil(
+      [],
+      [],
+      [],
+      {},
+      'flat',
+      'event_type_name',
+      100,
+      false,
+      testSpansUtilityMap,
+      testSpansMap,
+      false,
+      false,
+      {
+        end: time + 10000,
+        start: time,
+      },
+      false,
+      false,
+    ),
   ).to.deep.equal([]);
 
   // Directives, spans, and external events
@@ -547,17 +561,17 @@ test('generateDiscreteTree', () => {
         start: time,
       },
       true,
-      true
+      true,
     ),
   ).to.deep.equal([
     {
       activity_type: undefined,
       children: [
         {
-          activity_type: "aggregation",
+          activity_type: 'aggregation',
           children: [
             {
-              activity_type: "directive",
+              activity_type: 'directive',
               children: [],
               expanded: true,
               id: 'BiteBanana_1',
@@ -604,7 +618,7 @@ test('generateDiscreteTree', () => {
               type: 'Activity',
             },
             {
-              activity_type: "directive",
+              activity_type: 'directive',
               children: [],
               expanded: false,
               id: 'BiteBanana_2',
@@ -651,10 +665,10 @@ test('generateDiscreteTree', () => {
               type: 'Activity',
             },
           ],
-          "expanded": true,
-          "id": "BiteBanana",
-          "isLeaf": false,
-          "items": [
+          expanded: true,
+          id: 'BiteBanana',
+          isLeaf: false,
+          items: [
             {
               directive: {
                 anchor_id: 0,
@@ -728,16 +742,16 @@ test('generateDiscreteTree', () => {
               },
             },
           ],
-          "label": "BiteBanana",
-          "type": "Activity"
+          label: 'BiteBanana',
+          type: 'Activity',
         },
         {
-          "activity_type": "aggregation",
-          "children": [],
-          "expanded": false,
-          "id": "Child",
-          "isLeaf": false,
-          "items": [
+          activity_type: 'aggregation',
+          children: [],
+          expanded: false,
+          id: 'Child',
+          isLeaf: false,
+          items: [
             {
               span: {
                 attributes: {
@@ -773,148 +787,148 @@ test('generateDiscreteTree', () => {
               },
             },
           ],
-          "label": "Child",
-          "type": "Activity"
+          label: 'Child',
+          type: 'Activity',
         },
         {
-          "activity_type": "aggregation",
-          "children": [
+          activity_type: 'aggregation',
+          children: [
             {
-              "activity_type": "span",
-              "children": [
+              activity_type: 'span',
+              children: [
                 {
-                  "activity_type": "aggregation",
-                  "children": [
+                  activity_type: 'aggregation',
+                  children: [
                     {
-                      "activity_type": "span",
-                      "children": [],
-                      "expanded": false,
-                      "id": "Parent_1_Child_2",
-                      "isLeaf": true,
-                      "items": [
+                      activity_type: 'span',
+                      children: [],
+                      expanded: false,
+                      id: 'Parent_1_Child_2',
+                      isLeaf: true,
+                      items: [
                         {
-                          "span": {
-                            "attributes": {
-                              "arguments": {},
-                              "computedAttributes": {},
+                          span: {
+                            attributes: {
+                              arguments: {},
+                              computedAttributes: {},
                             },
-                            "dataset_id": 1,
-                            "duration": "03:00:00",
-                            "durationMs": 10800000,
-                            "endMs": 1,
-                            "parent_id": 1,
-                            "span_id": 2,
-                            "startMs": 0,
-                            "start_offset": "00:10:00",
-                            "type": "Child",
+                            dataset_id: 1,
+                            duration: '03:00:00',
+                            durationMs: 10800000,
+                            endMs: 1,
+                            parent_id: 1,
+                            span_id: 2,
+                            startMs: 0,
+                            start_offset: '00:10:00',
+                            type: 'Child',
                           },
                         },
                       ],
-                      "label": "Child",
-                      "type": "Activity",
+                      label: 'Child',
+                      type: 'Activity',
                     },
                     {
-                      "activity_type": "span",
-                      "children": [],
-                      "expanded": false,
-                      "id": "Parent_1_Child_3",
-                      "isLeaf": true,
-                      "items": [
+                      activity_type: 'span',
+                      children: [],
+                      expanded: false,
+                      id: 'Parent_1_Child_3',
+                      isLeaf: true,
+                      items: [
                         {
-                          "span": {
-                            "attributes": {
-                              "arguments": {},
-                              "computedAttributes": {},
+                          span: {
+                            attributes: {
+                              arguments: {},
+                              computedAttributes: {},
                             },
-                            "dataset_id": 1,
-                            "duration": "04:00:00",
-                            "durationMs": 14400000,
-                            "endMs": 1,
-                            "parent_id": 1,
-                            "span_id": 3,
-                            "startMs": 0,
-                            "start_offset": "00:05:00",
-                            "type": "Child",
+                            dataset_id: 1,
+                            duration: '04:00:00',
+                            durationMs: 14400000,
+                            endMs: 1,
+                            parent_id: 1,
+                            span_id: 3,
+                            startMs: 0,
+                            start_offset: '00:05:00',
+                            type: 'Child',
                           },
                         },
                       ],
-                      "label": "Child",
-                      "type": "Activity",
+                      label: 'Child',
+                      type: 'Activity',
                     },
                   ],
-                  "expanded": true,
-                  "id": "Parent_1_Child",
-                  "isLeaf": false,
-                  "items": [
+                  expanded: true,
+                  id: 'Parent_1_Child',
+                  isLeaf: false,
+                  items: [
                     {
-                      "span": {
-                        "attributes": {
-                          "arguments": {},
-                          "computedAttributes": {},
+                      span: {
+                        attributes: {
+                          arguments: {},
+                          computedAttributes: {},
                         },
-                        "dataset_id": 1,
-                        "duration": "03:00:00",
-                        "durationMs": 10800000,
-                        "endMs": 1,
-                        "parent_id": 1,
-                        "span_id": 2,
-                        "startMs": 0,
-                        "start_offset": "00:10:00",
-                        "type": "Child",
+                        dataset_id: 1,
+                        duration: '03:00:00',
+                        durationMs: 10800000,
+                        endMs: 1,
+                        parent_id: 1,
+                        span_id: 2,
+                        startMs: 0,
+                        start_offset: '00:10:00',
+                        type: 'Child',
                       },
                     },
                     {
-                      "span": {
-                        "attributes": {
-                          "arguments": {},
-                          "computedAttributes": {},
+                      span: {
+                        attributes: {
+                          arguments: {},
+                          computedAttributes: {},
                         },
-                        "dataset_id": 1,
-                        "duration": "04:00:00",
-                        "durationMs": 14400000,
-                        "endMs": 1,
-                        "parent_id": 1,
-                        "span_id": 3,
-                        "startMs": 0,
-                        "start_offset": "00:05:00",
-                        "type": "Child",
+                        dataset_id: 1,
+                        duration: '04:00:00',
+                        durationMs: 14400000,
+                        endMs: 1,
+                        parent_id: 1,
+                        span_id: 3,
+                        startMs: 0,
+                        start_offset: '00:05:00',
+                        type: 'Child',
                       },
                     },
                   ],
-                  "label": "Child",
-                  "type": "Activity",
+                  label: 'Child',
+                  type: 'Activity',
                 },
               ],
-              "expanded": true,
-              "id": "Parent_1",
-              "isLeaf": false,
-              "items": [
+              expanded: true,
+              id: 'Parent_1',
+              isLeaf: false,
+              items: [
                 {
-                  "span": {
-                    "attributes": {
-                      "arguments": {},
-                      "computedAttributes": {},
+                  span: {
+                    attributes: {
+                      arguments: {},
+                      computedAttributes: {},
                     },
-                    "dataset_id": 1,
-                    "duration": "02:00:00",
-                    "durationMs": 7200000,
-                    "endMs": 1,
-                    "parent_id": null,
-                    "span_id": 1,
-                    "startMs": 0,
-                    "start_offset": "00:00:00",
-                    "type": "Parent",
+                    dataset_id: 1,
+                    duration: '02:00:00',
+                    durationMs: 7200000,
+                    endMs: 1,
+                    parent_id: null,
+                    span_id: 1,
+                    startMs: 0,
+                    start_offset: '00:00:00',
+                    type: 'Parent',
                   },
                 },
               ],
-              "label": "Parent",
-              "type": "Activity",
+              label: 'Parent',
+              type: 'Activity',
             },
           ],
-          "expanded": true,
-          "id": "Parent",
-          "isLeaf": false,
-          "items": [
+          expanded: true,
+          id: 'Parent',
+          isLeaf: false,
+          items: [
             {
               span: {
                 attributes: {
@@ -933,190 +947,190 @@ test('generateDiscreteTree', () => {
               },
             },
           ],
-          "label": "Parent",
-          "type": "Activity"
-        }
-      ],
-      "expanded": false,
-      "id": "!!activity-agg",
-      "isLeaf": false,
-      "items": [
-        {
-          "directive": {
-            "anchor_id": 0,
-            "anchored_to_start": true,
-            "arguments": {},
-            "created_at": "",
-            "created_by": "foo",
-            "id": 1,
-            "last_modified_arguments_at": "",
-            "last_modified_at": "",
-            "metadata": {},
-            "name": "Bar",
-            "plan_id": 1,
-            "source_scheduling_goal_id": null,
-            "start_offset": "00:10:00",
-            "start_time_ms": 0,
-            "tags": [],
-            "type": "BiteBanana",
-          },
-          "span": {
-            "attributes": {
-              "arguments": {},
-              "computedAttributes": {},
-              "directiveId": 1,
-            },
-            "dataset_id": 1,
-            "duration": "04:00:00",
-            "durationMs": 14400000,
-            "endMs": 1,
-            "parent_id": null,
-            "span_id": 4,
-            "startMs": 0,
-            "start_offset": "00:05:00",
-            "type": "BiteBanana",
-          },
-        },
-        {
-          "directive": {
-            "anchor_id": 0,
-            "anchored_to_start": true,
-            "arguments": {},
-            "created_at": "",
-            "created_by": "foo",
-            "id": 2,
-            "last_modified_arguments_at": "",
-            "last_modified_at": "",
-            "metadata": {},
-            "name": "Charlie",
-            "plan_id": 1,
-            "source_scheduling_goal_id": null,
-            "start_offset": "00:10:00",
-            "start_time_ms": 0,
-            "tags": [],
-            "type": "BiteBanana",
-          },
-          "span": {
-            "attributes": {
-              "arguments": {},
-              "computedAttributes": {},
-              "directiveId": 2,
-            },
-            "dataset_id": 1,
-            "duration": "04:00:00",
-            "durationMs": 14400000,
-            "endMs": 1,
-            "parent_id": null,
-            "span_id": 5,
-            "startMs": 0,
-            "start_offset": "00:05:00",
-            "type": "BiteBanana",
-          },
-        },
-        {
-          "span": {
-            "attributes": {
-              "arguments": {},
-              "computedAttributes": {},
-            },
-            "dataset_id": 1,
-            "duration": "03:00:00",
-            "durationMs": 10800000,
-            "endMs": 1,
-            "parent_id": 1,
-            "span_id": 2,
-            "startMs": 0,
-            "start_offset": "00:10:00",
-            "type": "Child",
-          },
+          label: 'Parent',
+          type: 'Activity',
         },
       ],
-      "label": "Activities",
-      "type": "Activity",
+      expanded: false,
+      id: '!!activity-agg',
+      isLeaf: false,
+      items: [
+        {
+          directive: {
+            anchor_id: 0,
+            anchored_to_start: true,
+            arguments: {},
+            created_at: '',
+            created_by: 'foo',
+            id: 1,
+            last_modified_arguments_at: '',
+            last_modified_at: '',
+            metadata: {},
+            name: 'Bar',
+            plan_id: 1,
+            source_scheduling_goal_id: null,
+            start_offset: '00:10:00',
+            start_time_ms: 0,
+            tags: [],
+            type: 'BiteBanana',
+          },
+          span: {
+            attributes: {
+              arguments: {},
+              computedAttributes: {},
+              directiveId: 1,
+            },
+            dataset_id: 1,
+            duration: '04:00:00',
+            durationMs: 14400000,
+            endMs: 1,
+            parent_id: null,
+            span_id: 4,
+            startMs: 0,
+            start_offset: '00:05:00',
+            type: 'BiteBanana',
+          },
+        },
+        {
+          directive: {
+            anchor_id: 0,
+            anchored_to_start: true,
+            arguments: {},
+            created_at: '',
+            created_by: 'foo',
+            id: 2,
+            last_modified_arguments_at: '',
+            last_modified_at: '',
+            metadata: {},
+            name: 'Charlie',
+            plan_id: 1,
+            source_scheduling_goal_id: null,
+            start_offset: '00:10:00',
+            start_time_ms: 0,
+            tags: [],
+            type: 'BiteBanana',
+          },
+          span: {
+            attributes: {
+              arguments: {},
+              computedAttributes: {},
+              directiveId: 2,
+            },
+            dataset_id: 1,
+            duration: '04:00:00',
+            durationMs: 14400000,
+            endMs: 1,
+            parent_id: null,
+            span_id: 5,
+            startMs: 0,
+            start_offset: '00:05:00',
+            type: 'BiteBanana',
+          },
+        },
+        {
+          span: {
+            attributes: {
+              arguments: {},
+              computedAttributes: {},
+            },
+            dataset_id: 1,
+            duration: '03:00:00',
+            durationMs: 10800000,
+            endMs: 1,
+            parent_id: 1,
+            span_id: 2,
+            startMs: 0,
+            start_offset: '00:10:00',
+            type: 'Child',
+          },
+        },
+      ],
+      label: 'Activities',
+      type: 'Activity',
     },
     {
-      "activity_type": undefined,
-      "children": [
+      activity_type: undefined,
+      children: [
         {
-          "activity_type": undefined,
-          "children": [
+          activity_type: undefined,
+          children: [
             {
-              "activity_type": undefined,
-              "children": [],
-              "expanded": false,
-              "id": "test_event",
-              "isLeaf": true,
-              "items": [
+              activity_type: undefined,
+              children: [],
+              expanded: false,
+              id: 'test_event',
+              isLeaf: true,
+              items: [
                 {
-                  "externalEvent": {
-                    "duration": "",
-                    "duration_ms": 0,
-                    "pkey": {
-                      "derivation_group_name": "test_derivation_group",
-                      "event_type_name": "test_event_type",
-                      "key": "test_event",
-                      "source_key": "test_source",
+                  externalEvent: {
+                    duration: '',
+                    duration_ms: 0,
+                    pkey: {
+                      derivation_group_name: 'test_derivation_group',
+                      event_type_name: 'test_event_type',
+                      key: 'test_event',
+                      source_key: 'test_source',
                     },
-                    "properties": {},
-                    "source": undefined,
-                    "start_ms": 0,
-                    "start_time": "",
+                    properties: {},
+                    source: undefined,
+                    start_ms: 0,
+                    start_time: '',
                   },
                 },
               ],
-              "label": "test_event",
-              "type": "ExternalEvent",
+              label: 'test_event',
+              type: 'ExternalEvent',
             },
           ],
-          "expanded": false,
-          "id": "test_event_type",
-          "isLeaf": false,
-          "items": [
+          expanded: false,
+          id: 'test_event_type',
+          isLeaf: false,
+          items: [
             {
-              "externalEvent": {
-                "duration": "",
-                "duration_ms": 0,
-                "pkey": {
-                  "derivation_group_name": "test_derivation_group",
-                  "event_type_name": "test_event_type",
-                  "key": "test_event",
-                  "source_key": "test_source",
+              externalEvent: {
+                duration: '',
+                duration_ms: 0,
+                pkey: {
+                  derivation_group_name: 'test_derivation_group',
+                  event_type_name: 'test_event_type',
+                  key: 'test_event',
+                  source_key: 'test_source',
                 },
-                "properties": {},
-                "source": undefined,
-                "start_ms": 0,
-                "start_time": "",
+                properties: {},
+                source: undefined,
+                start_ms: 0,
+                start_time: '',
               },
             },
           ],
-          "label": "test_event_type",
-          "type": "ExternalEvent",
+          label: 'test_event_type',
+          type: 'ExternalEvent',
         },
       ],
-      "expanded": false,
-      "id": "!!ex-ev-agg",
-      "isLeaf": false,
-      "items": [
+      expanded: false,
+      id: '!!ex-ev-agg',
+      isLeaf: false,
+      items: [
         {
-          "externalEvent": {
-            "duration": "",
-            "duration_ms": 0,
-            "pkey": {
-              "derivation_group_name": "test_derivation_group",
-              "event_type_name": "test_event_type",
-              "key": "test_event",
-              "source_key": "test_source",
+          externalEvent: {
+            duration: '',
+            duration_ms: 0,
+            pkey: {
+              derivation_group_name: 'test_derivation_group',
+              event_type_name: 'test_event_type',
+              key: 'test_event',
+              source_key: 'test_source',
             },
-            "properties": {},
-            "source": undefined,
-            "start_ms": 0,
-            "start_time": "",
+            properties: {},
+            source: undefined,
+            start_ms: 0,
+            start_time: '',
           },
         },
       ],
-      "label": "External Events",
-      "type": "ExternalEvent"
-    }
+      label: 'External Events',
+      type: 'ExternalEvent',
+    },
   ]);
 });
 
