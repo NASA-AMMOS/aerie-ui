@@ -8,12 +8,14 @@
   import PlanWithUpArrow from '@nasa-jpl/stellar/icons/plan_with_up_arrow.svg?component';
   import { keyBy } from 'lodash-es';
   import { activityMetadataDefinitions } from '../../stores/activities';
+  import { planDerivationGroupLinks } from '../../stores/external-source';
   import { activityTypes, planReadOnlyMergeRequest } from '../../stores/plan';
   import { gqlSubscribable } from '../../stores/subscribable';
   import type { ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
   import type {
     Plan,
+    PlanForMerging,
     PlanMergeActivityDirective,
     PlanMergeActivityDirectiveSource,
     PlanMergeActivityDirectiveTarget,
@@ -79,17 +81,14 @@
   let selectedNonConflictingActivity: PlanMergeNonConflictingActivity | null;
   let unresolvedConflictsCount: number = 0;
   let userInitiatedMergeRequestResolution: boolean = false;
-  let sourcePlanName: string = "";
-  let targetPlanName: string = "";
+  let sourcePlan: PlanForMerging;
+  let targetPlan: PlanForMerging;
+
+  $: planHasDerivationGroups = $planDerivationGroupLinks.filter(pdgl => pdgl.plan_id === sourcePlan.id || pdgl.plan_id === targetPlan.id).length;
 
   $: if (initialPlan && initialMergeRequest) {
-    const {
-      plan_snapshot_supplying_changes: { plan: sourcePlan },
-      plan_receiving_changes: targetPlan,
-    } = initialMergeRequest;
-
-    sourcePlanName = sourcePlan.name;
-    targetPlanName = targetPlan.name;
+    sourcePlan = initialMergeRequest.plan_snapshot_supplying_changes.plan;
+    targetPlan = initialMergeRequest.plan_receiving_changes;
 
     const { id: supplyingPlanId } = sourcePlan;
 
@@ -298,7 +297,11 @@
   }
 
   async function onApproveChanges() {
-    await showPlanBranchMergeDerivationGroupMessageModal(sourcePlanName, targetPlanName).then(async () => {
+    // this variable checks if there are any derivation groups associated with either branch. If there are, warn them of merging behavior. Otherwise, do nothing.
+    let dgWarningModal = (planHasDerivationGroups ? showPlanBranchMergeDerivationGroupMessageModal(sourcePlan.name, targetPlan.name) : Promise.resolve());
+
+    // after awaiting either a modal or nothing, proceed.
+    await dgWarningModal.then(async () => {
       if (initialMergeRequest !== null) {
         const success = await effects.planMergeCommit(
           initialMergeRequest.id,

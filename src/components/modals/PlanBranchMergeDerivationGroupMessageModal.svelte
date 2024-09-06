@@ -13,6 +13,7 @@
   export let targetPlanName: string;
 
   const dispatch = createEventDispatcher<{
+    close: void;
     confirm: void;
   }>();
 
@@ -38,6 +39,11 @@
     </p>
   </ModalContent>
   <ModalFooter>
-    <button class="st-button" on:click={() => dispatch('confirm')}> Confirm </button>
+    <button class="st-button secondary" on:click={() => dispatch('close')}>
+      Cancel
+    </button>
+    <button class="st-button" on:click={() => dispatch('confirm')}> 
+      Confirm 
+    </button>
   </ModalFooter>
 </Modal>
