@@ -1,3 +1,4 @@
+import { keyBy } from 'lodash-es';
 import { derived, writable, type Writable } from 'svelte/store';
 import type { ExternalEventDB, ExternalEventId, ExternalEventPkey, ExternalEventType } from '../types/external-event';
 import gql from '../utilities/gql';
@@ -23,11 +24,17 @@ export const externalEventTypes = gqlSubscribable<ExternalEventType[]>(gql.SUB_E
 export const selectedExternalEventId: Writable<ExternalEventId | null> = writable(null);
 
 /* Derived. */
+export const externalEventsMap = derived(externalEventsDB, $externalEventsDB => {
+  return keyBy($externalEventsDB, getRowIdExternalEventWhole);
+});
+
 export const selectedExternalEvent = derived(
-  [selectedExternalEventId, externalEventsDB],
-  ([$selectedExternalEventId, $externalEventsDB]) => {
-    const selected = $externalEventsDB.find(ee => getRowIdExternalEvent(ee.pkey) === $selectedExternalEventId);
-    return selected !== undefined ? selected : null;
+  [selectedExternalEventId, externalEventsMap],
+  ([$selectedExternalEventId, $externalEventsMap]) => {
+    if ($selectedExternalEventId !== null) {
+      return $externalEventsMap[$selectedExternalEventId] || null;
+    }
+    return null;
   },
 );
 
@@ -36,7 +43,11 @@ export function resetExternalEventStores() {
   createExternalEventTypeError.set(null);
 }
 
-export function selectExternalEvent(externalEventId: ExternalEventId | null, switchToTable = true, switchToPanel = false): void {
+export function selectExternalEvent(
+  externalEventId: ExternalEventId | null,
+  switchToTable = true,
+  switchToPanel = false,
+): void {
   if (externalEventId !== null) {
     selectedExternalEventId.set(externalEventId);
     if (switchToTable) {
@@ -84,19 +95,23 @@ function transformExternalEvents(
   return completeExternalEventDB;
 }
 
-// Row/Hash Functions 
+// Row/Hash Functions
 export function getRowIdExternalEventWhole(externalEvent: ExternalEventDB): ExternalEventId {
-  return externalEvent.pkey.derivation_group_name +
-      externalEvent.pkey.source_key +
-      externalEvent.pkey.event_type_name +
-      externalEvent.pkey.key
+  return (
+    externalEvent.pkey.derivation_group_name +
+    externalEvent.pkey.source_key +
+    externalEvent.pkey.event_type_name +
+    externalEvent.pkey.key
+  );
 }
 
 export function getRowIdExternalEvent(externalEventPkey: ExternalEventPkey): ExternalEventId {
-  return externalEventPkey.derivation_group_name +
-      externalEventPkey.source_key +
-      externalEventPkey.event_type_name +
-      externalEventPkey.key
+  return (
+    externalEventPkey.derivation_group_name +
+    externalEventPkey.source_key +
+    externalEventPkey.event_type_name +
+    externalEventPkey.key
+  );
 }
 
 export function getRowIdExternalEventType(externalEventType: ExternalEventType): string {
