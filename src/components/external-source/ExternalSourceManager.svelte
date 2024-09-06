@@ -30,7 +30,7 @@
     ExternalEvent,
     ExternalEventId,
     ExternalEventInsertInput,
-    ExternalEventTypeInsertInput
+    ExternalEventTypeInsertInput,
   } from '../../types/external-event';
   import {
     type DerivationGroupInsertInput,
@@ -40,7 +40,7 @@
     type ExternalSourceSlim,
     type ExternalSourceType,
     type ExternalSourceTypeInsertInput,
-    type PlanDerivationGroup
+    type PlanDerivationGroup,
   } from '../../types/external-source';
   import effects from '../../utilities/effects';
   import { classNames, parseJSONStream } from '../../utilities/generic';
@@ -521,21 +521,15 @@
       }
       keyField.validateAndSet(parsed.source.key);
       sourceTypeField.validateAndSet(parsed.source.source_type);
-      startTimeDoyField.validateAndSet(
-        parsed.source.period.start_time.replaceAll('Z', '')
-      );
-      endTimeDoyField.validateAndSet(
-        parsed.source.period.end_time.replaceAll('Z', '')
-      );
-      validAtDoyField.validateAndSet(
-        parsed.source.valid_at.replaceAll('Z', '')
-      );
+      startTimeDoyField.validateAndSet(parsed.source.period.start_time.replaceAll('Z', ''));
+      endTimeDoyField.validateAndSet(parsed.source.period.end_time.replaceAll('Z', ''));
+      validAtDoyField.validateAndSet(parsed.source.valid_at.replaceAll('Z', ''));
       derivationGroupField.validateAndSet(`${$sourceTypeField.value} Default`); // Include source type name because derivation group names are unique
       isDerivationGroupFieldDisabled = false;
     } catch (e) {
-      catchError("External Source has Invalid Format", e as Error);
+      catchError('External Source has Invalid Format', e as Error);
       showFailureToast('External Source has Invalid Format');
-      parsingError.set("External Source has Invalid Format");
+      parsingError.set('External Source has Invalid Format');
       parsed = undefined;
     }
   }
@@ -905,7 +899,10 @@
                     {/if}
                   </div>
                   <div class="list-buttons menu-border-top">
-                    <button class="st-button secondary list-button source-filters-select-all" on:click={selectFilteredValues}>
+                    <button
+                      class="st-button secondary list-button source-filters-select-all"
+                      on:click={selectFilteredValues}
+                    >
                       Select {filteredValues.length}
                       {#if filteredValues.length === 1}
                         {'external source type'}

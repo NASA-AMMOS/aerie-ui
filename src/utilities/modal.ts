@@ -478,7 +478,10 @@ export async function showManagePlanSchedulingGoalsModal(user: User | null): Pro
 /**
  * Shows a modal notifying the user of default derivation group behavior on branch merge.
  */
-export async function showPlanBranchMergeDerivationGroupMessageModal(sourcePlanName: string, targetPlanName: string): Promise<ModalElementValue> {
+export async function showPlanBranchMergeDerivationGroupMessageModal(
+  sourcePlanName: string,
+  targetPlanName: string,
+): Promise<ModalElementValue> {
   return new Promise(resolve => {
     if (browser) {
       const target: ModalElement | null = document.querySelector('#svelte-modal');

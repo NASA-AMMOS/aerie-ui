@@ -5,9 +5,7 @@
   import PageTitle from '../../components/app/PageTitle.svelte';
   import ExternalSourceManager from '../../components/external-source/ExternalSourceManager.svelte';
   import { resetExternalEventStores } from '../../stores/external-event';
-  import {
-    resetExternalSourceStores,
-  } from '../../stores/external-source';
+  import { resetExternalSourceStores } from '../../stores/external-source';
   import type { PageData } from './$types';
 
   export let data: PageData;
