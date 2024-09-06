@@ -498,14 +498,14 @@ test('paginateNodes', () => {
   const testNodes: DiscreteTreeNode[] = [];
   for (let i = 0; i < 1000; i++) {
     testNodes.push({
+      activity_type: 'aggregation',
       children: [],
       expanded: false,
       id: 'foo',
       isLeaf: false,
       items: [],
       label: 'bar',
-      type: 'a',
-      activity_type: 'aggregation',
+      type: 'Activity'
     });
   }
   expect(paginateNodes([], 'foo', {})).to.deep.eq([]);
