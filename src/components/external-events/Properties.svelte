@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import type { ExternalEventProperty } from '../../types/property';
+  import type { ExternalEventProperty } from '../../types/external-event-property';
   import { compare } from '../../utilities/generic';
   import Highlight from '../ui/Highlight.svelte';
   import PropertyBase from './PropertyBase.svelte';
@@ -16,10 +16,10 @@
 <div>
   {#each sortedFormProperties as formProperty (formProperty.name)}
     <Highlight highlight={highlightKeysMap[formProperty.name]}>
-      {#if typeof formProperty.value === 'string' || typeof formProperty.value === 'number'}
-        <PropertyBase {formProperty} {highlightKeysMap} />
-      {:else if typeof formProperty.value === 'object'}
+      {#if typeof formProperty.value === 'object'}
         <PropertyRec {formProperty} {highlightKeysMap} />
+      {:else}
+        <PropertyBase {formProperty} {highlightKeysMap} />
       {/if}
     </Highlight>
   {/each}

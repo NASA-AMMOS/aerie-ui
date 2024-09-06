@@ -43,7 +43,7 @@
     type PlanDerivationGroup
   } from '../../types/external-source';
   import effects from '../../utilities/effects';
-  import { classNames } from '../../utilities/generic';
+  import { classNames, parseJSONStream } from '../../utilities/generic';
   import { showDeleteExternalSourceModal } from '../../utilities/modal';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
@@ -251,25 +251,11 @@
       isDerivationGroupFieldDisabled = true;
 
       file = files[0];
-      const fileText = file.text();
-      fileText.then(async text => {
-        try {
-          parsed = JSON.parse(await text);
-          if (parsed) {
-            $keyField.value = parsed.source.key;
-            $sourceTypeField.value = parsed.source.source_type;
-            $startTimeDoyField.value = parsed.source.period.start_time;
-            $endTimeDoyField.value = parsed.source.period.end_time;
-            $validAtDoyField.value = parsed.source.valid_at;
-            $derivationGroupField.value = `${$sourceTypeField.value} Default`; // Include source type name because derivation group names are unique
-            isDerivationGroupFieldDisabled = false;
-          }
-        } catch (e) {
-          catchError('External Source has Invalid Format', e as Error);
-          showFailureToast('External Source has Invalid Format');
-          parsed = undefined;
-        }
-      });
+      if (/\.json$/.test(file.name)) {
+        parseExternalSourceFileStream(file.stream());
+      } else {
+        parsingError.set('External Source file is not a .json file');
+      }
     }
   }
 
@@ -531,6 +517,35 @@
     endTimeDoyField.reset('');
     validAtDoyField.reset('');
     derivationGroupField.reset('');
+  }
+
+  async function parseExternalSourceFileStream(stream: ReadableStream) {
+    parsingError.set(null);
+    try {
+      try {
+        parsed = await parseJSONStream<ExternalSourceJson>(stream);
+      } catch (e) {
+        throw new Error('External Source has Invalid Format');
+      }
+      keyField.validateAndSet(parsed.source.key);
+      sourceTypeField.validateAndSet(parsed.source.source_type);
+      startTimeDoyField.validateAndSet(
+        parsed.source.period.start_time.replaceAll('Z', '')
+      );
+      endTimeDoyField.validateAndSet(
+        parsed.source.period.end_time.replaceAll('Z', '')
+      );
+      validAtDoyField.validateAndSet(
+        parsed.source.valid_at.replaceAll('Z', '')
+      );
+      derivationGroupField.validateAndSet(`${$sourceTypeField.value} Default`); // Include source type name because derivation group names are unique
+      isDerivationGroupFieldDisabled = false;
+    } catch (e) {
+      catchError("External Source has Invalid Format", e as Error);
+      showFailureToast('External Source has Invalid Format');
+      parsingError.set("External Source has Invalid Format");
+      parsed = undefined;
+    }
   }
 
   async function selectSource(detail: ExternalSourceSlim) {
