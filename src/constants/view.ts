@@ -23,11 +23,11 @@ export const ViewDefaultExternalEventOptions: ExternalEventOptions = {
 };
 
 export const ViewDefaultDiscreteOptions: DiscreteOptions = {
-  displayMode: 'compact',
-  height: 16,
-  labelVisibility: 'auto',
   activityOptions: ViewDefaultActivityOptions,
-  externalEventOptions: ViewDefaultExternalEventOptions
+  displayMode: 'compact',
+  externalEventOptions: ViewDefaultExternalEventOptions,
+  height: 16,
+  labelVisibility: 'auto'
 }
 
 export const ViewDiscreteLayerColorPresets: string[] = [
