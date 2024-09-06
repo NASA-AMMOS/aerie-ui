@@ -109,7 +109,7 @@
 {#if discreteTree.length}
   {#each discreteTree as node}
     {#if node.isLeaf}
-      {#if node.type === 'a'}
+      {#if node.type === 'Activity'}
         {@const directive = node.items[0].directive}
         {@const span = node.items[0].span}
         <button
@@ -157,7 +157,7 @@
         </button>
       {/if}
     {:else}
-      {#if node.type === 'a'}
+      {#if node.type === 'Activity'}
         {@const { activityDirectiveCount, spanCount, combinedActivityDirectiveSpanCount } = getNodeComposition(node)}
         {@const directive = node.items[0]?.directive}
         {@const span = node.items[0]?.span}
