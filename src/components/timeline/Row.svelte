@@ -330,9 +330,14 @@
   $: showSpans = discreteOptions?.activityOptions?.composition === 'both' || discreteOptions?.activityOptions?.composition === 'spans';
   $: showDirectives = discreteOptions?.activityOptions?.composition === 'both' || discreteOptions?.activityOptions?.composition === 'directives';
 
+  // helper for hasExternalEventsLayer; counts how many external event types are associated with this row (if all layers have 0 event types, we 
+  //    don't want to allocate any canvas space in the row for the layer)
+  $: associatedActivityTypes = activityLayers.map(l => l.filter.activity ? l.filter.activity.types.length : 0).reduce((a, c) => a+c, 0)
+  $: associatedEventTypes = externalEventLayers.map(l => l.filter.externalEvent ? l.filter.externalEvent.event_types.length : 0).reduce((a, c) => a+c, 0)
+
   // only consider a layer to be present if it is defined AND it actually has types/values selected.
-  $: hasActivityLayer = activityLayers.length > 0  && (activityLayers.map(l => l.filter.activity?.types.length).reduce((p, c) => (p ?? 0)+(c ?? 0), 0) ?? 0) > 0;
-  $: hasExternalEventsLayer = externalEventLayers.length > 0 && (externalEventLayers.map(l => l.filter.externalEvent?.event_types.length).reduce((p, c) => (p ?? 0)+(c ?? 0), 0) ?? 0) > 0;
+  $: hasActivityLayer = activityLayers.length > 0  && associatedActivityTypes > 0;
+  $: hasExternalEventsLayer = externalEventLayers.length > 0 && associatedEventTypes > 0;
   $: hasResourceLayer = lineLayers.length + xRangeLayers.length > 0;
 
   $: if (discreteTreeExpansionMap === undefined) {
