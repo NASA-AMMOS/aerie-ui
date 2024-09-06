@@ -1,4 +1,4 @@
 export type ExternalEventProperty = {
   name: string;
-  value: any;
+  value: string | number | object | boolean;
 };

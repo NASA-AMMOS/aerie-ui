@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import type { ExternalEventProperty } from '../../types/property';
+  import type { ExternalEventProperty } from '../../types/external-event-property';
   import { compare } from '../../utilities/generic';
   import Collapse from '../Collapse.svelte';
   import Highlight from '../ui/Highlight.svelte';

@@ -3,7 +3,7 @@
 <script lang="ts">
   import { plugins } from '../../stores/plugins';
   import type { ExternalEventDB } from '../../types/external-event';
-  import type { ExternalEventProperty } from '../../types/property';
+  import type { ExternalEventProperty } from '../../types/external-event-property';
   import { classNames } from '../../utilities/generic';
   import { formatDate } from '../../utilities/time';
   import Collapse from '../Collapse.svelte';
