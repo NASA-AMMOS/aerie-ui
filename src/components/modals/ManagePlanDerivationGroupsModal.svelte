@@ -128,15 +128,6 @@
           input.addEventListener('click', event => changeDerivationGroupAssociation(event, params?.data?.name));
           return input;
         },
-
-        // useful to set to true if two concurrent users at play, because if another user makes a change you see
-        //    the cell highlighted, indicating that someone changed the cell. unfortunately, this flash occurs
-        //    any time this cell is updated, meaning there's a flash when the store loads when this modal is opened,
-        //    as well as a flash whenever a user changes it just in their own browser. As a result, it is more
-        //    confusing than simple. There doesn't appear to be another good way to do it (as onCellValueChanged
-        //    never fires, or else we could've done some diffing method with a local copy to determine if a change
-        //    is or is not foreign; it also doesn't look to be possible in cellRenderer).
-        enableCellChangeFlash: false,
         filter: 'string',
         headerName: 'Included',
         sortable: true,
