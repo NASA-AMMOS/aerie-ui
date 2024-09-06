@@ -463,14 +463,6 @@
       sourceInsert.external_events.data = externalEventsCreated;
       externalEventsCreated = [];
 
-      // Perform Hasura mutation to create external source
-      // let createExternalSourceResponse: {
-      //     createExternalSource: { id: number },
-      //     upsertDerivationGroup: { name: string },
-      //     upsertExternalEventType: { name: string },
-      //     upsertExternalSourceType: { id: number, name: string },
-
-      //   } | undefined = undefined;
       let createExternalSourceResponse: Record<string, any> | undefined = undefined;
       if (file !== undefined) {
         sourceInsert.source_type_name = sourceTypeInsert.name;
