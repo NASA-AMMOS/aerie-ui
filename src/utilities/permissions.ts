@@ -829,10 +829,10 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   },
   SUB_CONSTRAINT_DEFINITION: () => true,
   SUB_CONSTRAINT_PLAN_SPECIFICATIONS: () => true,
-  SUB_DERIVATION_GROUPS: () => true,
   SUB_CONSTRAINT_RUNS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.CONSTRAINT_RUN], user);
   },
+  SUB_DERIVATION_GROUPS: () => true,
   SUB_EXPANSION_RULES: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.EXPANSION_RULES], user);
   },
@@ -978,7 +978,9 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
     return isUserAdmin(user) || (getPermission([Queries.UPDATE_PLAN], user) && isPlanOwner(user, plan));
   },
   UPDATE_PLAN_DERIVATION_GROUP: (user: User | null, plan: PlanWithOwners): boolean => {
-    return isUserAdmin(user) || (getPermission([Queries.UPDATE_PLAN_DERIVATION_GROUP], user) && isPlanOwner(user, plan));
+    return (
+      isUserAdmin(user) || (getPermission([Queries.UPDATE_PLAN_DERIVATION_GROUP], user) && isPlanOwner(user, plan))
+    );
   },
   UPDATE_PLAN_SNAPSHOT: (user: User | null): boolean => {
     return getPermission([Queries.UPDATE_PLAN_SNAPSHOT], user);
@@ -1523,6 +1525,5 @@ export {
   isPlanOwner,
   isUserAdmin,
   isUserOwner,
-  queryPermissions
+  queryPermissions,
 };
-

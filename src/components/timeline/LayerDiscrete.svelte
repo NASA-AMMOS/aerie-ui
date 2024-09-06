@@ -25,15 +25,27 @@
     MouseOver,
     QuadtreeRect,
     RowMouseOverEvent,
-    TimeRange
+    TimeRange,
   } from '../../types/timeline';
   import { hexToRgba, shadeColor } from '../../utilities/color';
   import effects from '../../utilities/effects';
   import { isRightClick } from '../../utilities/generic';
   import { isDeleteEvent } from '../../utilities/keyboardEvents';
-  import { getActivityDirectiveStartTimeMs, getDoyTime, getIntervalUnixEpochTime, getUnixEpochTime, getUnixEpochTimeFromInterval } from '../../utilities/time';
-  import { directiveInView, externalEventInView, searchQuadtreeRect, spanInView, TimelineInteractionMode, TimelineLockStatus } from '../../utilities/timeline';
-
+  import {
+    getActivityDirectiveStartTimeMs,
+    getDoyTime,
+    getIntervalUnixEpochTime,
+    getUnixEpochTime,
+    getUnixEpochTimeFromInterval,
+  } from '../../utilities/time';
+  import {
+    directiveInView,
+    externalEventInView,
+    searchQuadtreeRect,
+    spanInView,
+    TimelineInteractionMode,
+    TimelineLockStatus,
+  } from '../../utilities/timeline';
 
   type Id = ActivityDirectiveId | ExternalEventId | SpanId;
   type IdToColorMap = Record<Id, string>;
@@ -84,7 +96,6 @@
   export let viewTimeRange: TimeRange = { end: 0, start: 0 };
   export let xScaleView: ScaleTime<number, number> | null = null;
   export let spans: Span[] = [];
-
 
   const dispatch = createEventDispatcher<{
     contextMenu: MouseOver;
@@ -138,7 +149,8 @@
   $: planStartTimeMs = getUnixEpochTime(getDoyTime(new Date(planStartTimeYmd)));
 
   // the following are NOT mutually exclusive.
-  $: canDrawActivities = activityDirectives &&
+  $: canDrawActivities =
+    activityDirectives &&
     showDirectives !== undefined &&
     showSpans !== undefined &&
     selectedActivityDirectiveId !== undefined &&
@@ -147,28 +159,33 @@
     discreteOptions.activityOptions &&
     spans;
 
-  $: canDrawExternalEvents = externalEvents &&
-    selectedExternalEventId !== undefined &&
-    discreteOptions.externalEventOptions
+  $: canDrawExternalEvents =
+    externalEvents && selectedExternalEventId !== undefined && discreteOptions.externalEventOptions;
 
-  $: if ((canvasHeightDpr &&
-          canvasWidthDpr &&
-          ctx &&
-          drawHeight &&
-          drawWidth &&
-          dpr &&
-          discreteOptions &&
-          viewTimeRange &&
-          xScaleView &&
-          discreteTree
-        ) && (canDrawActivities || canDrawExternalEvents)
+  $: if (
+    canvasHeightDpr &&
+    canvasWidthDpr &&
+    ctx &&
+    drawHeight &&
+    drawWidth &&
+    dpr &&
+    discreteOptions &&
+    viewTimeRange &&
+    xScaleView &&
+    discreteTree &&
+    (canDrawActivities || canDrawExternalEvents)
   ) {
     draw();
   }
 
   // force a redraw as a reaction to a new selection, else a new selection won't update anything. TODO: make this more efficient! Redraw specific items, by matching ids?
-  $: if (selectedExternalEventId || selectedActivityDirectiveId || selectedSpanId ||
-          !selectedExternalEventId || !selectedActivityDirectiveId || !selectedSpanId
+  $: if (
+    selectedExternalEventId ||
+    selectedActivityDirectiveId ||
+    selectedSpanId ||
+    !selectedExternalEventId ||
+    !selectedActivityDirectiveId ||
+    !selectedSpanId
   ) {
     draw();
   }
@@ -449,7 +466,7 @@
     canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
     if (xScaleView !== null) {
       // expanded cannot possibly be false
-      let y = !expanded ? 0 : (ViewConstants.MIN_ROW_HEIGHT - 1); // pad starting y with the min row height to align with activity tree
+      let y = !expanded ? 0 : ViewConstants.MIN_ROW_HEIGHT - 1; // pad starting y with the min row height to align with activity tree
       const expectedRowHeight = rowHeight + discreteRowPadding;
 
       discreteTree.forEach(node => {
@@ -539,11 +556,9 @@
       itemsToDraw.sort((a, b) => {
         if (a.startX < b.startX) {
           return -1;
-        }
-        else if (a.startX > b.startX) {
+        } else if (a.startX > b.startX) {
           return 1;
-        }
-        else {
+        } else {
           return 0;
         }
       });
@@ -652,8 +667,7 @@
     itemsToDraw.forEach(item => {
       if (item.directive || item.span) {
         activityRow.push(item);
-      }
-      else {
+      } else {
         externalEventRow.push(item);
       }
     });
@@ -669,7 +683,12 @@
     }
   }
 
-  function getItemEndX(item: { directive?: ActivityDirective; externalEvent?: ExternalEvent; span?: Span; startX: number }) {
+  function getItemEndX(item: {
+    directive?: ActivityDirective;
+    externalEvent?: ExternalEvent;
+    span?: Span;
+    startX: number;
+  }) {
     const { span, directive, externalEvent, startX } = item;
     let labelEndX = 0;
     let boxEndX = 0;
@@ -750,26 +769,20 @@
       if (a.directiveStartX && b.directiveStartX) {
         if (a.directiveStartX < b.directiveStartX) {
           return -1;
-        }
-        else if (a.directiveStartX > b.directiveStartX) {
+        } else if (a.directiveStartX > b.directiveStartX) {
           return 1;
-        }
-        else {
+        } else {
           return 0;
         }
-      }
-      else if (a.spanStartX && b.spanStartX) {
+      } else if (a.spanStartX && b.spanStartX) {
         if (a.spanStartX < b.spanStartX) {
           return -1;
-        }
-        else if (a.spanStartX > b.spanStartX) {
+        } else if (a.spanStartX > b.spanStartX) {
           return 1;
-        }
-        else {
+        } else {
           return 0;
         }
-      }
-      else {
+      } else {
         return 0;
       }
     });
@@ -944,7 +957,15 @@
     });
   }
 
-  function drawLabel(text: string, x: number, y: number, width: number, color: string, unfinished = false, selected = false) {
+  function drawLabel(
+    text: string,
+    x: number,
+    y: number,
+    width: number,
+    color: string,
+    unfinished = false,
+    selected = false,
+  ) {
     setLabelContext('black');
     if (selected) {
       if (unfinished) {
@@ -957,7 +978,8 @@
       ctx.fillStyle = ctx.fillStyle = shadeColor(activityUnfinishedColor, 1.3);
     } else {
       // if _anything_ selected, decrease opacity
-      const opacity = selectedActivityDirectiveId !== null || selectedSpanId !== null || selectedExternalEventId !== null ? 0.4 : 1;
+      const opacity =
+        selectedActivityDirectiveId !== null || selectedSpanId !== null || selectedExternalEventId !== null ? 0.4 : 1;
       ctx.fillStyle = getRGBAFromHex(shadeColor(color, 2.8), opacity);
     }
     ctx.fillText(text, Math.max(x + labelPaddingLeft, minRectSize), y + rowHeight / 2, width);
@@ -1039,8 +1061,7 @@
       visibleExternalEventsById = {};
       if (!expanded) {
         drawCollapsedMode();
-      }
-      else if (discreteOptions.displayMode === 'grouped') {
+      } else if (discreteOptions.displayMode === 'grouped') {
         drawGroupedMode();
       } else if (discreteOptions.displayMode === 'compact') {
         drawCompactMode();

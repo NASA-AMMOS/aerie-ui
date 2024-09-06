@@ -5,7 +5,13 @@
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import { createEventDispatcher } from 'svelte';
   import { externalEventTypes, getRowIdExternalEventType } from '../../stores/external-event';
-  import { derivationGroups, externalSources, externalSourceTypes, getRowIdDerivationGroup, getRowIdExternalSourceType } from '../../stores/external-source';
+  import {
+    derivationGroups,
+    externalSources,
+    externalSourceTypes,
+    getRowIdDerivationGroup,
+    getRowIdExternalSourceType,
+  } from '../../stores/external-source';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalEventType } from '../../types/external-event';
@@ -137,7 +143,7 @@
       suppressAutoSize: true,
       suppressSizeToFit: true,
       width: 80,
-    }
+    },
   ];
 
   estColumnDefs = [
@@ -210,7 +216,7 @@
       suppressAutoSize: true,
       suppressSizeToFit: true,
       width: 80,
-    }
+    },
   ];
 
   eetColumnDefs = [
@@ -285,7 +291,7 @@
       suppressAutoSize: true,
       suppressSizeToFit: true,
       width: 80,
-    }
+    },
   ];
 
   const modalColumnSizeNoDetail: string = '1fr 3px 0fr';
@@ -294,8 +300,8 @@
   const modalColumnSizeWithDetailEST: string = '2fr 3px 1.2fr';
   let modalColumnSize: string = modalColumnSizeNoDetail;
 
-  let newTypeName: string = "";
-  let newTypeSourceType: string = "";
+  let newTypeName: string = '';
+  let newTypeSourceType: string = '';
   let newTypeError: string | null = null;
 
   let selectedDerivationGroup: DerivationGroup | undefined = undefined;
@@ -328,36 +334,32 @@
   });
 
   async function onCreateType() {
-    switch(mode) {
+    switch (mode) {
       case 'dg':
-        if (newTypeName === "") {
-          newTypeError = "Please select a source type."
-        }
-        else if (newTypeSourceType === "") {
-          newTypeError = "Please enter a new type name."
-        }
-        else {
-          effects.createDerivationGroup({name: newTypeName, source_type_name: newTypeSourceType}, user);
-          newTypeName = "";
-          newTypeSourceType = "";
+        if (newTypeName === '') {
+          newTypeError = 'Please select a source type.';
+        } else if (newTypeSourceType === '') {
+          newTypeError = 'Please enter a new type name.';
+        } else {
+          effects.createDerivationGroup({ name: newTypeName, source_type_name: newTypeSourceType }, user);
+          newTypeName = '';
+          newTypeSourceType = '';
         }
         break;
       case 'eet':
-        if (newTypeName === "") {
-          newTypeError = "Please enter a new type name."
-        }
-        else {
-          effects.createExternalEventType({name: newTypeName}, user);
-          newTypeName = "";
+        if (newTypeName === '') {
+          newTypeError = 'Please enter a new type name.';
+        } else {
+          effects.createExternalEventType({ name: newTypeName }, user);
+          newTypeName = '';
         }
         break;
       default: // 'est'
-        if (newTypeName === "") {
-          newTypeError = "Please enter a new type name."
-        }
-        else {
-          effects.createExternalSourceType({name: newTypeName}, user);
-          newTypeName = "";
+        if (newTypeName === '') {
+          newTypeError = 'Please enter a new type name.';
+        } else {
+          effects.createExternalSourceType({ name: newTypeName }, user);
+          newTypeName = '';
         }
         break;
     }
@@ -490,7 +492,7 @@
           <div class="timeline-editor-layer-filter">
             <input
               bind:value={newTypeName}
-              on:change={() => newTypeError = null}
+              on:change={() => (newTypeError = null)}
               autocomplete="off"
               class="st-input w-100"
               name="filter-ee"
@@ -499,7 +501,7 @@
             {#if mode === 'dg'}
               <select
                 bind:value={newTypeSourceType}
-                on:change={() => newTypeError = null}
+                on:change={() => (newTypeError = null)}
                 name="newTypeSourceType"
                 class="st-select"
                 style="width: 200px"
@@ -509,13 +511,7 @@
                 {/each}
               </select>
             {/if}
-            <button
-              class="st-button w-10"
-              type="submit"
-              on:click|preventDefault={onCreateType}
-            >
-              Create
-            </button>
+            <button class="st-button w-10" type="submit" on:click|preventDefault={onCreateType}> Create </button>
           </div>
         </div>
         {#if mode === 'dg'}

@@ -13,13 +13,7 @@
   import type { ActivityDirective } from '../../types/activity';
   import type { ExternalEvent, ExternalEventId } from '../../types/external-event';
   import type { Span } from '../../types/simulation';
-  import type {
-    DiscreteOptions,
-    DiscreteTree,
-    DiscreteTreeNode,
-    MouseDown,
-    MouseOver
-  } from '../../types/timeline';
+  import type { DiscreteOptions, DiscreteTree, DiscreteTreeNode, MouseDown, MouseOver } from '../../types/timeline';
   import { classNames } from '../../utilities/generic';
   import { pluralize } from '../../utilities/text';
   import { tooltip } from '../../utilities/tooltip';
@@ -52,7 +46,7 @@
         e,
         selectedActivityDirectiveId: selectedActivityDirectiveId ?? undefined,
         selectedExternalEventId: selectedExternalEventId ?? undefined,
-        selectedSpanId: selectedSpanId ?? undefined
+        selectedSpanId: selectedSpanId ?? undefined,
       });
     }
   }
@@ -93,8 +87,8 @@
         activityDirectiveCount++;
       } else if (span) {
         spanCount++;
-      }
-      else if (externalEvent) { // necessarily mutually exclussive.
+      } else if (externalEvent) {
+        // necessarily mutually exclussive.
         externalEventCount++;
       }
     });
@@ -156,116 +150,60 @@
           {node.label}
         </button>
       {/if}
-    {:else}
-      {#if node.type === 'Activity'}
-        {@const { activityDirectiveCount, spanCount, combinedActivityDirectiveSpanCount } = getNodeComposition(node)}
-        {@const directive = node.items[0]?.directive}
-        {@const span = node.items[0]?.span}
-        <Collapse
-          headerHeight={rowHeight}
-          defaultExpanded={node.expanded}
-          className={classNames('row-header-discrete-group', {
-            selected:
-              node.activity_type !== 'aggregation' &&
-              (directive?.id === selectedActivityDirectiveId || span?.span_id === selectedSpanId),
-          })}
-          on:collapse={() => dispatch('discrete-tree-node-change', node)}
-        >
-          <div slot="left" style="align-items: center;display: flex">
-            {#if node.activity_type === 'aggregation'}
-              <div title="Type Group" class="icon-group">
-                <FolderIcon />
-              </div>
-            {:else if combinedActivityDirectiveSpanCount > 0}
-              <div title="Combined Activity Directive and Simulated Activity" class="icon-group">
-                <DirectiveAndSpanIcon />
-              </div>
-            {:else if activityDirectiveCount > 0}
-              <div title="Activity Directive" class="icon-group">
-                <DirectiveIcon />
-              </div>
-            {:else if spanCount > 0}
-              <div title="Simulated Activity" class="icon-group">
-                <SpanIcon />
-              </div>
-            {/if}
-          </div>
-          <div slot="title" style="align-items: center;display: flex; gap: 8px;">
-            <div class="label">
-              {node.label}
-            </div>
-            <div class="title-metadata">
-              {#if node.activity_type === 'directive'}
-                <!--NOTE: Doesn't appear to run under any setting for directive/span visibility-->
-                <div
-                  title={`${node.children.length} child type group${pluralize(node.children.length)}`}
-                  class="icon-group"
-                >
-                  <FolderIcon />
-                  <span>{node.children.length}</span>
-                </div>
-              {:else}
-                {activityDirectiveCount + spanCount + combinedActivityDirectiveSpanCount}
-              {/if}
-            </div>
-          </div>
-          <svelte:fragment slot="action-row">
-            {#if node.activity_type !== 'aggregation'}
-              <button
-                use:tooltip={{ content: 'Select' }}
-                class="st-button icon select"
-                on:click={onSelectClick.bind(null, node)}
-              >
-                <SelectIcon />
-              </button>
-            {/if}
-          </svelte:fragment>
-          {#if node.expanded}
-            <svelte:self
-              {discreteOptions}
-              discreteTree={node.children}
-              {selectedActivityDirectiveId}
-              {selectedSpanId}
-              {selectedExternalEventId}
-              on:discrete-tree-node-change
-              on:mouseDown
-              on:dblClick
-            />
-          {/if}
-        </Collapse>
-      {:else}
-        {@const { externalEventCount } = getNodeComposition(node)}
-        {@const externalEvent = node.items[0]?.externalEvent}
-        <Collapse
-          headerHeight={rowHeight}
-          defaultExpanded={node.expanded}
-          className={classNames('row-header-discrete-group', {
-            selected:
-              externalEvent !== undefined &&
-              selectedExternalEventId !== null &&
-              getRowIdExternalEventWhole(externalEvent) === selectedExternalEventId,
-          })}
-          on:collapse={() => dispatch('discrete-tree-node-change', node)}
-        >
-          <div slot="left" style="align-items: center;display: flex">
-            <div title="External Event" class="icon-group">
+    {:else if node.type === 'Activity'}
+      {@const { activityDirectiveCount, spanCount, combinedActivityDirectiveSpanCount } = getNodeComposition(node)}
+      {@const directive = node.items[0]?.directive}
+      {@const span = node.items[0]?.span}
+      <Collapse
+        headerHeight={rowHeight}
+        defaultExpanded={node.expanded}
+        className={classNames('row-header-discrete-group', {
+          selected:
+            node.activity_type !== 'aggregation' &&
+            (directive?.id === selectedActivityDirectiveId || span?.span_id === selectedSpanId),
+        })}
+        on:collapse={() => dispatch('discrete-tree-node-change', node)}
+      >
+        <div slot="left" style="align-items: center;display: flex">
+          {#if node.activity_type === 'aggregation'}
+            <div title="Type Group" class="icon-group">
               <FolderIcon />
             </div>
-          </div>
-          <div slot="title" style="align-items: center;display: flex; gap: 8px;">
-            <div class="label" style:white-space="nowrap" style:overflow="hidden" style:text-overflow="ellipsis ellipsis">
-              {node.label}
+          {:else if combinedActivityDirectiveSpanCount > 0}
+            <div title="Combined Activity Directive and Simulated Activity" class="icon-group">
+              <DirectiveAndSpanIcon />
             </div>
-            <div class="title-metadata">
+          {:else if activityDirectiveCount > 0}
+            <div title="Activity Directive" class="icon-group">
+              <DirectiveIcon />
+            </div>
+          {:else if spanCount > 0}
+            <div title="Simulated Activity" class="icon-group">
+              <SpanIcon />
+            </div>
+          {/if}
+        </div>
+        <div slot="title" style="align-items: center;display: flex; gap: 8px;">
+          <div class="label">
+            {node.label}
+          </div>
+          <div class="title-metadata">
+            {#if node.activity_type === 'directive'}
+              <!--NOTE: Doesn't appear to run under any setting for directive/span visibility-->
               <div
                 title={`${node.children.length} child type group${pluralize(node.children.length)}`}
                 class="icon-group"
               >
-                <span>{externalEventCount}</span>
+                <FolderIcon />
+                <span>{node.children.length}</span>
               </div>
-            </div>
+            {:else}
+              {activityDirectiveCount + spanCount + combinedActivityDirectiveSpanCount}
+            {/if}
           </div>
-          <svelte:fragment slot="action-row">
+        </div>
+        <svelte:fragment slot="action-row">
+          {#if node.activity_type !== 'aggregation'}
             <button
               use:tooltip={{ content: 'Select' }}
               class="st-button icon select"
@@ -273,21 +211,75 @@
             >
               <SelectIcon />
             </button>
-          </svelte:fragment>
-          {#if node.expanded}
-            <svelte:self
-              {discreteOptions}
-              discreteTree={node.children}
-              {selectedActivityDirectiveId}
-              {selectedSpanId}
-              {selectedExternalEventId}
-              on:discrete-tree-node-change
-              on:mouseDown
-              on:dblClick
-            />
           {/if}
-        </Collapse>
-      {/if}
+        </svelte:fragment>
+        {#if node.expanded}
+          <svelte:self
+            {discreteOptions}
+            discreteTree={node.children}
+            {selectedActivityDirectiveId}
+            {selectedSpanId}
+            {selectedExternalEventId}
+            on:discrete-tree-node-change
+            on:mouseDown
+            on:dblClick
+          />
+        {/if}
+      </Collapse>
+    {:else}
+      {@const { externalEventCount } = getNodeComposition(node)}
+      {@const externalEvent = node.items[0]?.externalEvent}
+      <Collapse
+        headerHeight={rowHeight}
+        defaultExpanded={node.expanded}
+        className={classNames('row-header-discrete-group', {
+          selected:
+            externalEvent !== undefined &&
+            selectedExternalEventId !== null &&
+            getRowIdExternalEventWhole(externalEvent) === selectedExternalEventId,
+        })}
+        on:collapse={() => dispatch('discrete-tree-node-change', node)}
+      >
+        <div slot="left" style="align-items: center;display: flex">
+          <div title="External Event" class="icon-group">
+            <FolderIcon />
+          </div>
+        </div>
+        <div slot="title" style="align-items: center;display: flex; gap: 8px;">
+          <div class="label" style:white-space="nowrap" style:overflow="hidden" style:text-overflow="ellipsis ellipsis">
+            {node.label}
+          </div>
+          <div class="title-metadata">
+            <div
+              title={`${node.children.length} child type group${pluralize(node.children.length)}`}
+              class="icon-group"
+            >
+              <span>{externalEventCount}</span>
+            </div>
+          </div>
+        </div>
+        <svelte:fragment slot="action-row">
+          <button
+            use:tooltip={{ content: 'Select' }}
+            class="st-button icon select"
+            on:click={onSelectClick.bind(null, node)}
+          >
+            <SelectIcon />
+          </button>
+        </svelte:fragment>
+        {#if node.expanded}
+          <svelte:self
+            {discreteOptions}
+            discreteTree={node.children}
+            {selectedActivityDirectiveId}
+            {selectedSpanId}
+            {selectedExternalEventId}
+            on:discrete-tree-node-change
+            on:mouseDown
+            on:dblClick
+          />
+        {/if}
+      </Collapse>
     {/if}
   {/each}
 {/if}

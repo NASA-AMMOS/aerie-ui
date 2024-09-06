@@ -22,9 +22,7 @@
   import HierarchyModeFlatIcon from '../../../assets/timeline-hierarchy-mode-flat.svg?component';
   import SpanIcon from '../../../assets/timeline-span.svg?component';
   import ActivityModeWidthIcon from '../../../assets/width.svg?component';
-  import {
-    ViewDefaultDiscreteOptions
-  } from '../../../constants/view';
+  import { ViewDefaultDiscreteOptions } from '../../../constants/view';
   import { ViewConstants } from '../../../enums/view';
   import { maxTimeRange, viewTimeRange } from '../../../stores/plan';
   import { plugins } from '../../../stores/plugins';
@@ -54,8 +52,7 @@
     Timeline,
     VerticalGuide,
     XRangeLayer,
-
-    XRangeLayerColorScheme
+    XRangeLayerColorScheme,
   } from '../../../types/timeline';
   import type { ViewGridSection } from '../../../types/view';
   import effects from '../../../utilities/effects';
@@ -115,7 +112,7 @@
   $: rowHasNonActivityChartLayer =
     !!selectedRow?.layers.find(layer => isLineLayer(layer) || isXRangeLayer(layer)) || false;
   $: if ((rowHasActivityLayer || rowHasExternalEventLayer) && selectedRow && !selectedRow.discreteOptions) {
-      viewUpdateRow('discreteOptions', ViewDefaultDiscreteOptions);
+    viewUpdateRow('discreteOptions', ViewDefaultDiscreteOptions);
   }
   $: discreteOptions = selectedRow?.discreteOptions || { ...ViewDefaultDiscreteOptions };
 
@@ -199,12 +196,21 @@
 
   function handleActivityOptionRadioChange(event: CustomEvent<{ id: RadioButtonId }>, name: keyof ActivityOptions) {
     const { id } = event.detail;
-    viewUpdateRow('discreteOptions', { ...discreteOptions, activityOptions: {...discreteOptions.activityOptions, [name]: id} });
+    viewUpdateRow('discreteOptions', {
+      ...discreteOptions,
+      activityOptions: { ...discreteOptions.activityOptions, [name]: id },
+    });
   }
 
-  function handleExternalEventOptionRadioChange(event: CustomEvent<{ id: RadioButtonId }>, name: keyof ExternalEventOptions) {
+  function handleExternalEventOptionRadioChange(
+    event: CustomEvent<{ id: RadioButtonId }>,
+    name: keyof ExternalEventOptions,
+  ) {
     const { id } = event.detail;
-    viewUpdateRow('discreteOptions', { ...discreteOptions, externalEventOptions: {...discreteOptions.externalEventOptions, [name]: id} });
+    viewUpdateRow('discreteOptions', {
+      ...discreteOptions,
+      externalEventOptions: { ...discreteOptions.externalEventOptions, [name]: id },
+    });
   }
 
   function addTimelineRow() {
@@ -473,7 +479,7 @@
 
   function getColorForLayer(layer: Layer) {
     if (isActivityLayer(layer)) {
-      layer.activityColor
+      layer.activityColor;
       return layer.activityColor;
     } else if (isExternalEventLayer(layer)) {
       return layer.externalEventColor;
@@ -923,7 +929,7 @@
             <RadioButtons
               selectedButtonId={discreteOptions.displayMode}
               on:select-radio-button={e => {
-                handleOptionRadioChange(e, 'displayMode')
+                handleOptionRadioChange(e, 'displayMode');
               }}
             >
               <RadioButton

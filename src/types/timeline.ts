@@ -18,7 +18,7 @@ export type DiscreteTreeNode = {
 };
 
 // export type DiscreteTreeNodeItem = { externalEvent?: ExternalEvent } | { directive?: ActivityDirective; span?: Span };
-export type DiscreteTreeNodeItem = { directive?: ActivityDirective; externalEvent?: ExternalEvent, span?: Span };
+export type DiscreteTreeNodeItem = { directive?: ActivityDirective; externalEvent?: ExternalEvent; span?: Span };
 
 export type DiscreteTreeNodeDrawItem = DiscreteTreeNodeItem & { startX: number };
 
@@ -216,7 +216,7 @@ export type DiscreteOptions = {
 
   // Item text label behavior
   labelVisibility: 'on' | 'off' | 'auto';
-}
+};
 
 export type Row = {
   autoAdjustHeight: boolean;

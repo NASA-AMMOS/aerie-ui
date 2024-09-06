@@ -5747,7 +5747,12 @@ const effects = {
     }
   },
 
-  async updatePlanDerivationGroupEnabled(derivationGroupName: string, plan: Plan | null, enabled: boolean, user: User | null): Promise<void> {
+  async updatePlanDerivationGroupEnabled(
+    derivationGroupName: string,
+    plan: Plan | null,
+    enabled: boolean,
+    user: User | null,
+  ): Promise<void> {
     try {
       if ((plan && !queryPermissions.CREATE_PLAN_DERIVATION_GROUP(user, plan)) || !plan) {
         throwPermissionError('add a derivation group to the plan');
@@ -5758,11 +5763,11 @@ const effects = {
         const data = await reqHasura<PlanDerivationGroup>(
           gql.UPDATE_PLAN_DERIVATION_GROUP,
           {
+            enabled: enabled,
             pk: {
               derivation_group_name: derivationGroupName,
               plan_id: plan.id,
             },
-            enabled: enabled
           },
           user,
         );
@@ -5771,7 +5776,9 @@ const effects = {
           // store updates automatically, because its a subscription!
           showSuccessToast('Derivation Group Link Updated Successfully');
         } else {
-          throw Error(`Unable to update Derivation Group Link with name "${derivationGroupName}" on plan with ID ${plan.id}, with status ${enabled}`);
+          throw Error(
+            `Unable to update Derivation Group Link with name "${derivationGroupName}" on plan with ID ${plan.id}, with status ${enabled}`,
+          );
         }
       } else {
         throw Error('Plan is not defined.');

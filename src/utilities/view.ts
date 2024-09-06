@@ -10,7 +10,7 @@ import {
   createTimeline,
   createTimelineActivityLayer,
   createTimelineExternalEventLayer,
-  createTimelineResourceLayer
+  createTimelineResourceLayer,
 } from './timeline';
 
 /**
