@@ -2,7 +2,7 @@
     "source": {
         "key": "ExampleExternalSource:example-external-source.json",
         "source_type": "Example External Source",
-        "valid_at": "2024-01-19T00:00:00Z",
+        "valid_at": "2024-021T00:00:00Z",
         "period": {
             "start_time": "2024-021T00:00:00Z",
             "end_time": "2024-028T00:00:00Z"
