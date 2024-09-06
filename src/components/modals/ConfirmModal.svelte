@@ -42,11 +42,9 @@
     {/if}
   </ModalContent>
   <ModalFooter>
-    {#if cancelText.length > 0}
-      <button class="st-button secondary" on:click={() => dispatch('close')}>
-        {cancelText}
-      </button>
-    {/if}
+    <button class="st-button secondary" on:click={() => dispatch('close')}>
+      {cancelText}
+    </button>
     <button class="st-button" on:click={() => dispatch('confirm')}>
       {confirmText}
     </button>
