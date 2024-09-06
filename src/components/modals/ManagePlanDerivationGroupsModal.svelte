@@ -13,11 +13,11 @@
   } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import { plugins } from '../../stores/plugins';
-  import { view } from '../../stores/views';
+  import { view, viewUpdateRow } from '../../stores/views';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { DerivationGroup, ExternalSourceSlim } from '../../types/external-source';
-  import type { Layer } from '../../types/timeline';
+  import type { Layer, Timeline } from '../../types/timeline';
   import effects from '../../utilities/effects';
   import { formatDate } from '../../utilities/time';
   import { isExternalEventLayer } from '../../utilities/timeline';
@@ -49,6 +49,7 @@
   let externalEventLayers: Layer[] | undefined;
   let dataGrid: DataGrid<DerivationGroup>;
   let columnDefs: DataGridColumnDef<DerivationGroup>[] = [];
+  let timelines: Timeline[] = [];
 
   $: if ($selectedPlanDerivationGroupNames && dataGrid) {
       // no current way to change just a specific cell unless we add something about plan associations to the DG object,
@@ -58,6 +59,8 @@
       //    buffers button smashing and repeated updates pretty well!
       dataGrid.refreshCells();
     }
+
+  $: timelines = $view?.definition.plan.timelines || [];
 
   $: externalEventLayers = $view?.definition.plan.timelines
     .flatMap(timeline => timeline.rows)
@@ -126,14 +129,14 @@
             return input;
           },
 
-          // useful to set to true if two concurrent users at play, because if another user makes a change you see 
-          //    the cell highlighted, indicating that someone changed the cell. unfortunately, this flash occurs 
-          //    any time this cell is updated, meaning there's a flash when the store loads when this modal is opened, 
-          //    as well as a flash whenever a user changes it just in their own browser. As a result, it is more 
-          //    confusing than simple. There doesn't appear to be another good way to do it (as onCellValueChanged 
+          // useful to set to true if two concurrent users at play, because if another user makes a change you see
+          //    the cell highlighted, indicating that someone changed the cell. unfortunately, this flash occurs
+          //    any time this cell is updated, meaning there's a flash when the store loads when this modal is opened,
+          //    as well as a flash whenever a user changes it just in their own browser. As a result, it is more
+          //    confusing than simple. There doesn't appear to be another good way to do it (as onCellValueChanged
           //    never fires, or else we could've done some diffing method with a local copy to determine if a change
           //    is or is not foreign; it also doesn't look to be possible in cellRenderer).
-          enableCellChangeFlash: false, 
+          enableCellChangeFlash: false,
           filter: 'string',
           headerName: 'Included',
           sortable: true,
@@ -182,6 +185,19 @@
     return `${derivationGroup.name}:${derivationGroup.source_type_name}`;
   }
 
+  function handleUpdateLayerNewDerivationGroups(newLayers: Layer[]) {
+    // Derivation Group association is done on a *plan* level which makes this a little tricky. We want to update *all* available External Event Layers with the new layers (post-association), so we must look through all available timelines & their rows to find the layers we're updating
+    timelines.forEach(currentTimeline => {
+      currentTimeline.rows.forEach(currentRow => {
+        const regeneratedLayers = currentRow.layers.map(currentLayer => {
+          const layerHasNewVersion = newLayers.find(nl => nl.id === currentLayer.id);
+          return layerHasNewVersion !== undefined ? layerHasNewVersion : currentLayer;
+        });
+        viewUpdateRow('layers', regeneratedLayers, currentTimeline.id, currentRow.id);
+      });
+    });
+  }
+
   function changeDerivationGroupAssociation(event: MouseEvent, derivationGroupName: string | undefined) {
     if (event?.target && derivationGroupName !== undefined) {
       if ((event.target as any).checked) {
@@ -210,6 +226,7 @@
                 }
               }
             });
+            handleUpdateLayerNewDerivationGroups(externalEventLayers);
           }
         }
       } else {
