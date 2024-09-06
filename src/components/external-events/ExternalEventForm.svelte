@@ -38,15 +38,9 @@
   <div class="external-event-form">
     <fieldset>
       <Collapse title="Definition">
-
         <Input layout="inline">
           Type
-          <input
-            class="st-input w-100"
-            disabled={true}
-            name="event-type"
-            value={externalEvent.pkey.event_type_name}
-          />
+          <input class="st-input w-100" disabled={true} name="event-type" value={externalEvent.pkey.event_type_name} />
         </Input>
 
         <Input layout="inline">
@@ -65,12 +59,7 @@
 
         <Input layout="inline">
           Source ID
-          <input
-            class="st-input w-100"
-            disabled={true}
-            name="source-key"
-            value={externalEvent.pkey.source_key}
-          />
+          <input class="st-input w-100" disabled={true} name="source-key" value={externalEvent.pkey.source_key} />
         </Input>
 
         <Input layout="inline">

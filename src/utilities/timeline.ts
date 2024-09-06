@@ -18,7 +18,7 @@ import {
   ViewDefaultDiscreteOptions,
   ViewDiscreteLayerColorPresets,
   ViewLineLayerColorPresets,
-  ViewXRangeLayerSchemePresets
+  ViewXRangeLayerSchemePresets,
 } from '../constants/view';
 import type { ActivityDirective } from '../types/activity';
 import type { ExternalEvent } from '../types/external-event';
@@ -1050,7 +1050,7 @@ export function generateDiscreteTreeUtil(
           isLeaf: false,
           items,
           label,
-          type: 'Activity'
+          type: 'Activity',
         });
       });
   }
@@ -1081,7 +1081,7 @@ export function generateDiscreteTreeUtil(
                 isLeaf: true,
                 items: [{ externalEvent }],
                 label: externalEvent.pkey.key,
-                type: 'ExternalEvent'
+                type: 'ExternalEvent',
               });
             });
           }
@@ -1093,7 +1093,7 @@ export function generateDiscreteTreeUtil(
             isLeaf: false,
             items: items,
             label,
-            type: 'ExternalEvent'
+            type: 'ExternalEvent',
           });
         });
     }
@@ -1107,10 +1107,11 @@ export function generateDiscreteTreeUtil(
       expanded: getNodeExpanded('!!activity-agg', discreteTreeExpansionMap),
       id: '!!activity-agg',
       isLeaf: false,
-      items: flattenItems(activityNodes)
-              .filter((obj, index, self) => index === self.findIndex((o) => o.directive?.id === obj.directive?.id)),
+      items: flattenItems(activityNodes).filter(
+        (obj, index, self) => index === self.findIndex(o => o.directive?.id === obj.directive?.id),
+      ),
       label: 'Activities',
-      type: 'Activity' // RowHeaderDiscreteTree does not seem to require any special treatment; so no special category for this top node
+      type: 'Activity', // RowHeaderDiscreteTree does not seem to require any special treatment; so no special category for this top node
     };
     const externalEventAggNode: DiscreteTreeNode = {
       activity_type: undefined,
@@ -1118,10 +1119,11 @@ export function generateDiscreteTreeUtil(
       expanded: getNodeExpanded('!!ex-ev-agg', discreteTreeExpansionMap),
       id: '!!ex-ev-agg',
       isLeaf: false,
-      items: flattenItems(externalEventNodes)
-              .filter((obj, index, self) => index === self.findIndex((o) => o.externalEvent?.pkey === obj.externalEvent?.pkey)),
+      items: flattenItems(externalEventNodes).filter(
+        (obj, index, self) => index === self.findIndex(o => o.externalEvent?.pkey === obj.externalEvent?.pkey),
+      ),
       label: 'External Events',
-      type: 'ExternalEvent' // RowHeaderDiscreteTree does not seem to require any special treatment; so no special category for this top node
+      type: 'ExternalEvent', // RowHeaderDiscreteTree does not seem to require any special treatment; so no special category for this top node
     };
     return [activityAggNode, externalEventAggNode];
   } else if (activityNodes.length) {
@@ -1203,7 +1205,7 @@ export function getDirectiveSubtree(
     isLeaf: children.length < 1,
     items: [{ directive, span }],
     label: directive.name,
-    type: 'Activity'
+    type: 'Activity',
   } as DiscreteTreeNode;
 }
 
@@ -1261,7 +1263,7 @@ export function getSpanSubtrees(
           isLeaf: false,
           items: spanGroup.map(span => ({ span })),
           label: key,
-          type: 'Activity'
+          type: 'Activity',
         });
       });
   } else if (type === 'span') {
@@ -1293,7 +1295,7 @@ export function getSpanSubtrees(
       isLeaf: count < 1,
       items: [{ span }],
       label: span.type,
-      type: 'Activity'
+      type: 'Activity',
     });
   }
   return children;
@@ -1302,10 +1304,7 @@ export function getSpanSubtrees(
 /**
  * Returns whether or not the node is expanded in the activity/external-event tree
  */
-export function getNodeExpanded(
-  id: string,
-  treeExpansionMap: DiscreteTreeExpansionMap,
-) {
+export function getNodeExpanded(id: string, treeExpansionMap: DiscreteTreeExpansionMap) {
   if (!Object.hasOwn(treeExpansionMap, id)) {
     return false;
   }
@@ -1338,7 +1337,7 @@ export function paginateNodes(
         isLeaf: false,
         items: [],
         label: '',
-        type: 'Activity'
+        type: 'Activity',
       };
     }
     newNodes[bin].children.push(node);

@@ -18,8 +18,11 @@
 
   let relevantSources: ExternalSourceSlim[] = [];
 
-  $: enabled = ($plan !== null && $planDerivationGroupLinks
-                                    .find(a => a.derivation_group_name === derivationGroup.name && a.plan_id === $plan.id)?.enabled) ?? true
+  $: enabled =
+    ($plan !== null &&
+      $planDerivationGroupLinks.find(a => a.derivation_group_name === derivationGroup.name && a.plan_id === $plan.id)
+        ?.enabled) ??
+    true;
   $: relevantSources = $externalSources.filter(source => derivationGroup.name === source.pkey.derivation_group_name);
 
   function onChange() {

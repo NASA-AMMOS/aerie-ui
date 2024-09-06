@@ -18,7 +18,9 @@
             "start_time": "2024-002T00:00:00Z",
             "duration": "01:00:00",
             "properties": {
-                "rules": [1],
+                "rules": [
+                    1
+                ],
                 "notes": "not subsumed",
                 "should_present": true
             }

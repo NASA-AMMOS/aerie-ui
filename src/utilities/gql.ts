@@ -2453,18 +2453,6 @@ const gql = {
     }
   `,
 
-  SUB_DERIVATION_GROUPS: `#graphql
-    subscription SubDerivationGroups {
-      models: ${Queries.DERIVATION_GROUP_COMP}(order_by: {name: desc}) {
-        name
-        source_type_name
-        sources
-        event_types
-        derived_total
-      }
-    }
-  `,
-
   SUB_CONSTRAINT_RUNS: `#graphql
     subscription SubConstraintRuns($simulationDatasetId: Int!) {
       constraintRuns: ${Queries.CONSTRAINT_RUN}(where: { simulation_dataset_id: { _eq: $simulationDatasetId }}) {
@@ -2474,6 +2462,18 @@ const gql = {
         constraint_metadata {
           name
         }
+      }
+    }
+  `,
+
+  SUB_DERIVATION_GROUPS: `#graphql
+    subscription SubDerivationGroups {
+      models: ${Queries.DERIVATION_GROUP_COMP}(order_by: {name: desc}) {
+        name
+        source_type_name
+        sources
+        event_types
+        derived_total
       }
     }
   `,

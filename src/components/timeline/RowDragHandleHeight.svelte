@@ -21,13 +21,11 @@
     let newHeight: number;
 
     // TODO: fix how this works w.r.t. collapsed, expanded, grouped, and compact rows with/with composite ee/activity layers!
-    if (largeRow) { 
-      newHeight = Math.max(rowHeight + dy, ViewConstants.MIN_ROW_HEIGHT*2);
-    }
-    else {
+    if (largeRow) {
+      newHeight = Math.max(rowHeight + dy, ViewConstants.MIN_ROW_HEIGHT * 2);
+    } else {
       newHeight = Math.max(rowHeight + dy, ViewConstants.MIN_ROW_HEIGHT);
     }
-
 
     if (newHeight !== previousHeight) {
       dispatch('updateRowHeight', { newHeight });

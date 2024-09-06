@@ -65,13 +65,15 @@
   import { getDoyTime } from '../../utilities/time';
   import {
     TimelineInteractionMode,
-    directiveInView, generateDiscreteTreeUtil, getYAxesWithScaleDomains,
+    directiveInView,
+    generateDiscreteTreeUtil,
+    getYAxesWithScaleDomains,
     isActivityLayer,
     isExternalEventLayer,
     isLineLayer,
     isXRangeLayer,
     spanInView,
-    type TimelineLockStatus
+    type TimelineLockStatus,
   } from '../../utilities/timeline';
   import { tooltip } from '../../utilities/tooltip';
   import ConstraintViolations from './ConstraintViolations.svelte';
@@ -128,7 +130,6 @@
   export let xTicksView: XAxisTick[] = [];
   export let yAxes: Axis[] = [];
   export let user: User | null;
-
 
   const dispatch = createEventDispatcher<{
     // activityTreeExpansionChange: ActivityTreeExpansionMap | null;
@@ -319,24 +320,32 @@
   $: onDragleave(dragleave);
   $: onDragover(dragover);
   $: onDrop(drop);
-  $: computedDrawHeight = expanded ? drawHeight : (hasActivityLayer && hasExternalEventsLayer ? 48 : 24);
+  $: computedDrawHeight = expanded ? drawHeight : hasActivityLayer && hasExternalEventsLayer ? 48 : 24;
   $: overlaySvgSelection = select(overlaySvg) as Selection<SVGElement, unknown, any, any>;
   $: rowClasses = classNames('row', { 'row-collapsed': !expanded });
-  $: discreteOptions = discreteOptions || {...ViewDefaultDiscreteOptions};
+  $: discreteOptions = discreteOptions || { ...ViewDefaultDiscreteOptions };
   $: activityLayers = layers.filter(isActivityLayer);
   $: externalEventLayers = layers.filter(isExternalEventLayer);
   $: lineLayers = layers.filter(l => isLineLayer(l) || (isXRangeLayer(l) && l.showAsLinePlot));
   $: xRangeLayers = layers.filter(l => isXRangeLayer(l) && !l.showAsLinePlot);
-  $: showSpans = discreteOptions?.activityOptions?.composition === 'both' || discreteOptions?.activityOptions?.composition === 'spans';
-  $: showDirectives = discreteOptions?.activityOptions?.composition === 'both' || discreteOptions?.activityOptions?.composition === 'directives';
+  $: showSpans =
+    discreteOptions?.activityOptions?.composition === 'both' ||
+    discreteOptions?.activityOptions?.composition === 'spans';
+  $: showDirectives =
+    discreteOptions?.activityOptions?.composition === 'both' ||
+    discreteOptions?.activityOptions?.composition === 'directives';
 
-  // helper for hasExternalEventsLayer; counts how many external event types are associated with this row (if all layers have 0 event types, we 
+  // helper for hasExternalEventsLayer; counts how many external event types are associated with this row (if all layers have 0 event types, we
   //    don't want to allocate any canvas space in the row for the layer)
-  $: associatedActivityTypes = activityLayers.map(l => l.filter.activity ? l.filter.activity.types.length : 0).reduce((a, c) => a+c, 0)
-  $: associatedEventTypes = externalEventLayers.map(l => l.filter.externalEvent ? l.filter.externalEvent.event_types.length : 0).reduce((a, c) => a+c, 0)
+  $: associatedActivityTypes = activityLayers
+    .map(l => (l.filter.activity ? l.filter.activity.types.length : 0))
+    .reduce((a, c) => a + c, 0);
+  $: associatedEventTypes = externalEventLayers
+    .map(l => (l.filter.externalEvent ? l.filter.externalEvent.event_types.length : 0))
+    .reduce((a, c) => a + c, 0);
 
   // only consider a layer to be present if it is defined AND it actually has types/values selected.
-  $: hasActivityLayer = activityLayers.length > 0  && associatedActivityTypes > 0;
+  $: hasActivityLayer = activityLayers.length > 0 && associatedActivityTypes > 0;
   $: hasExternalEventsLayer = externalEventLayers.length > 0 && associatedEventTypes > 0;
   $: hasResourceLayer = lineLayers.length + xRangeLayers.length > 0;
 
@@ -395,7 +404,10 @@
     overlaySvgSelection.call(zoom.transform, timelineZoomTransform);
   }
 
-  $: if((activityLayers && spansMap && activityDirectives && typeof filterItemsByTime === 'boolean') || hasExternalEventsLayer) {
+  $: if (
+    (activityLayers && spansMap && activityDirectives && typeof filterItemsByTime === 'boolean') ||
+    hasExternalEventsLayer
+  ) {
     discreteTree = [];
     if (activityLayers && spansMap && activityDirectives && typeof filterItemsByTime === 'boolean') {
       idToColorMaps.directives = {};
@@ -465,7 +477,9 @@
       externalEventsFilteredByDG = [];
       externalEventsFilteredByType = [];
 
-      let filteredDerivationGroups = $planDerivationGroupLinks.filter(link => link.plan_id === plan?.id && !link.enabled).map(link => link.derivation_group_name)
+      let filteredDerivationGroups = $planDerivationGroupLinks
+        .filter(link => link.plan_id === plan?.id && !link.enabled)
+        .map(link => link.derivation_group_name);
 
       // Apply filter for hiding derivation groups
       externalEventsFilteredByDG = externalEvents.filter(ee => {
@@ -474,9 +488,7 @@
             es => es.pkey.derivation_group_name === ee.pkey.derivation_group_name && es.pkey.key === ee.pkey.source_key,
           )?.pkey.derivation_group_name ?? undefined;
         // the statement below says return true (keep) if the plan is not null and if the filter for this plan does not include this derivation group
-        return plan && dg
-          ? !filteredDerivationGroups.includes(dg)
-          : false;
+        return plan && dg ? !filteredDerivationGroups.includes(dg) : false;
       });
       // Filter by external event type
       const externalEventsByType = groupBy(externalEventsFilteredByDG, 'pkey.event_type_name');
@@ -515,18 +527,15 @@
     });
   }
 
-
   $: if (
     (hasActivityLayer &&
-    timeFilteredActivityDirectives &&
-    timeFilteredSpans &&
-    discreteOptions &&
-    discreteOptions.activityOptions &&
-    typeof showSpans === 'boolean' &&
-    typeof showDirectives === 'boolean') ||
-    (hasExternalEventsLayer && 
-    discreteOptions &&
-    discreteOptions.externalEventOptions)
+      timeFilteredActivityDirectives &&
+      timeFilteredSpans &&
+      discreteOptions &&
+      discreteOptions.activityOptions &&
+      typeof showSpans === 'boolean' &&
+      typeof showDirectives === 'boolean') ||
+    (hasExternalEventsLayer && discreteOptions && discreteOptions.externalEventOptions)
   ) {
     if (discreteOptions.displayMode === 'grouped' && expanded) {
       /*  Note: here we only pass in a few variables in order to
@@ -558,15 +567,15 @@
     groupByMethod: ExternalEventOptions['groupBy'] = 'event_type_name',
     binSize: ExternalEventOptions['groupedModeBinSize'] = 100,
     hasExternalEventsLayer: boolean,
-    hasActivityLayer: boolean
+    hasActivityLayer: boolean,
   ) {
     return generateDiscreteTreeUtil(
       directives,
       spans,
-      externalEvents, 
+      externalEvents,
       discreteTreeExpansionMap,
       hierarchyMode,
-      groupByMethod, 
+      groupByMethod,
       binSize,
       filterItemsByTime,
       spanUtilityMaps,
@@ -575,15 +584,15 @@
       showDirectives,
       viewTimeRange,
       hasExternalEventsLayer,
-      hasActivityLayer
+      hasActivityLayer,
     );
   }
 
   function onDiscreteTreeNodeChange(e: { detail: DiscreteTreeNode }) {
     const node = e.detail;
-    dispatch('discreteTreeExpansionChange', { 
-      ...(discreteTreeExpansionMap || {}), 
-      [node.id]: !node.expanded 
+    dispatch('discreteTreeExpansionChange', {
+      ...(discreteTreeExpansionMap || {}),
+      [node.id]: !node.expanded,
     });
   }
 
@@ -838,7 +847,7 @@
       {selectedSpanId}
       {selectedExternalEventId}
     >
-    <!--TODO: change make sure this works correctly-->
+      <!--TODO: change make sure this works correctly-->
       {#if (hasActivityLayer || hasExternalEventsLayer) && discreteOptions?.displayMode === 'grouped'}
         <button
           class="st-button icon row-action"

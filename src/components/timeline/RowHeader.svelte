@@ -18,7 +18,7 @@
     DiscreteTree,
     Layer,
     LineLayer,
-    MouseOver
+    MouseOver,
   } from '../../types/timeline';
   import { filterResourcesByLayer } from '../../utilities/timeline';
   import { tooltip } from '../../utilities/tooltip';
@@ -28,7 +28,7 @@
   import RowYAxes from './RowYAxes.svelte';
 
   export let discreteTree: DiscreteTree = [];
-  export let discreteOptions: DiscreteOptions = {...ViewDefaultDiscreteOptions}
+  export let discreteOptions: DiscreteOptions = { ...ViewDefaultDiscreteOptions };
   export let expanded: boolean = true;
   export let height: number = 0;
   export let layers: Layer[];
@@ -110,7 +110,7 @@
   role="banner"
   on:contextmenu={e => dispatch('contextMenu', { e, origin: 'row-header' })}
 >
-  <DropTarget on:drop hint={"Add Filter"}>
+  <DropTarget on:drop hint={'Add Filter'}>
     <div class="row-header-left-column">
       {#if expanded}
         {#if height > 60}
@@ -375,8 +375,7 @@
     position: relative;
   }
 
-  :global(.row-header-discrete-group.collapse > .collapse-header),
-  .row-header-discrete-group.leaf {
+  :global(.row-header-discrete-group.collapse > .collapse-header) {
     border-bottom: 1px solid var(--st-gray-30);
     border-radius: 0px;
     font-size: 10px;
@@ -385,8 +384,7 @@
     padding-left: 4px !important;
   }
 
-  :global(.row-header-discrete-group.collapse:not(.selected) > .collapse-header:hover),
-  .row-header-discrete-group.leaf:hover:not(.selected) {
+  :global(.row-header-discrete-group.collapse:not(.selected) > .collapse-header:hover) {
     background: var(--st-gray-20) !important;
   }
 
@@ -398,38 +396,15 @@
     gap: 0px;
   }
 
-  .row-header-discrete-group.leaf {
-    gap: 3px;
-    height: 32px;
-    justify-content: flex-start;
-    outline: none;
-    padding: 8px 0px 8px 0px;
-  }
-
-  .icon-group {
-    display: flex;
-    gap: 4px;
-  }
-
-  .title-metadata {
-    align-items: center;
-    color: var(--st-gray-50);
-    display: flex;
-    gap: 4px;
-  }
-
   :global(.row-header-discrete-group.collapse .collapse-icon svg) {
     color: var(--st-gray-40);
   }
 
-  .selected,
   :global(.collapse.selected > .collapse-header) {
     background-color: #e3effd !important;
   }
 
-  :global(.collapse.selected > .collapse-header *),
-  .row-header-discrete-group.selected,
-  .row-header-discrete-group.selected :global(svg) {
+  :global(.collapse.selected > .collapse-header *) {
     color: var(--st-utility-blue) !important;
   }
 
@@ -473,23 +448,10 @@
     gap: 0px;
   }
 
-  .icon-group {
-    display: flex;
-    gap: 4px;
-  }
-
-  .title-metadata {
-    align-items: center;
-    color: var(--st-gray-50);
-    display: flex;
-    gap: 4px;
-  }
-
   :global(.row-header-activity-group.collapse .collapse-icon svg) {
     color: var(--st-gray-40);
   }
 
-  .selected,
   :global(.collapse.selected > .collapse-header) {
     background-color: #e3effd !important;
   }

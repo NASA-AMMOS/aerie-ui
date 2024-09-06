@@ -5,7 +5,7 @@ import {
   type ExternalSourceSlim,
   type ExternalSourceType,
   type PlanDerivationGroup,
-  type UserSeenEntry
+  type UserSeenEntry,
 } from '../types/external-source';
 import gql from '../utilities/gql';
 import { planId } from './plan';
@@ -165,13 +165,13 @@ function transformUsersSeenSources(
   return res;
 }
 
-// Row/Hash Functions 
+// Row/Hash Functions
 export function getRowIdExternalSourceSlim(externalSourceSlim: ExternalSourceSlim): string {
   return externalSourceSlim.pkey.derivation_group_name + externalSourceSlim.pkey.key;
 }
 
 export function getRowIdExternalSource(externalSourcePkey: ExternalSourcePkey): string {
-  return externalSourcePkey.derivation_group_name + externalSourcePkey.key
+  return externalSourcePkey.derivation_group_name + externalSourcePkey.key;
 }
 
 export function getRowIdDerivationGroup(derivationGroup: DerivationGroup): string {

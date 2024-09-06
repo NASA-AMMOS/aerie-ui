@@ -24,7 +24,6 @@
   export let layerColor: string | undefined; // needs its own prop as updating it in layer doesn't propagate here
   export let yAxes: Axis[];
 
-  
   const dispatch = createEventDispatcher<{
     handleDeleteLayerClick: object;
     handleUpdateLayerChartType: { value: string | number | boolean | null };
@@ -36,7 +35,6 @@
 
   let filterOptions: string[] = [];
   let filterValues: string[] = [];
-
 
   $: {
     // getFilterOptionsForLayer
@@ -73,13 +71,10 @@
     }
   }
 
-
   function handleDeleteLayerFilterValue(value: string) {
     const values = filterValues.filter(i => value !== i);
     dispatch('handleUpdateLayerFilter', { values }); // dispatch update layer filter here with newValues
   }
-
-  
 </script>
 
 <div class="timeline-layer timeline-element">
