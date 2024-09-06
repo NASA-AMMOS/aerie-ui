@@ -213,7 +213,7 @@
           if (derivationGroup !== undefined && externalEventLayers !== undefined) {
             externalEventLayers = externalEventLayers.map(layer => {
               let event_types = (layer.filter.externalEvent?.event_types ?? [])
-                                  .concat(derivationGroup.event_types)
+                                  .concat(derivationGroup.event_types) // add new event types associated with this DG
                                   .filter((val, ind, arr) => arr.indexOf(val) === ind); // guarantee uniqueness
               return {
                 ...layer,
@@ -234,6 +234,29 @@
         effects.deleteDerivationGroupForPlan(derivationGroupName, $plan, user);
         if ($derivationGroupPlanLinkError !== null) {
           showFailureToast('Failed to unlink derivation group & plan.');
+        } else {
+          // Remove all the external event types from the derivation group to the timeline filter
+          const derivationGroup = $derivationGroups.find(
+            derivationGroup => derivationGroup.name === derivationGroupName
+          );
+          if (derivationGroup !== undefined && externalEventLayers !== undefined) {
+            externalEventLayers = externalEventLayers.map(layer => {
+              let event_types = (layer.filter.externalEvent?.event_types ?? [])
+                                  .filter(et => !derivationGroup.event_types.includes(et)) // remove any event types associated with this DG
+                                  .filter((val, ind, arr) => arr.indexOf(val) === ind); // guarantee uniqueness
+              return {
+                ...layer,
+                filter: {
+                  ...layer.filter,
+                  externalEvent: {
+                    ...layer.filter.externalEvent,
+                    event_types: event_types
+                  }
+                }
+              }
+            });
+            handleUpdateLayerNewDerivationGroups(externalEventLayers);
+          }
         }
       }
     }

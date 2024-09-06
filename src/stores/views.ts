@@ -416,6 +416,8 @@ export function viewUpdateRow(
   timelineId = timelineId ?? get<number | null>(selectedTimelineId);
   rowId = rowId ?? get<number | null>(selectedRowId);
 
+  console.log("Hear")
+
   view.update(currentView => {
     if (currentView !== null) {
       return {
