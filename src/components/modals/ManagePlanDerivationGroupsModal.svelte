@@ -9,7 +9,7 @@
     derivationGroupPlanLinkError,
     derivationGroups,
     externalSources,
-    selectedPlanDerivationGroupNames,
+    selectedPlanDerivationGroupNames
   } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import { plugins } from '../../stores/plugins';
@@ -48,9 +48,9 @@
 
   let externalEventLayers: Layer[] | undefined;
   let dataGrid: DataGrid<DerivationGroup>;
-  let baseColumnDefs: DataGridColumnDef<DerivationGroup>[] = [];
+  let columnDefs: DataGridColumnDef<DerivationGroup>[] = [];
 
-  $: if ($selectedPlanDerivationGroupNames && baseColumnDefs.length > 0 && dataGrid) {
+  $: if ($selectedPlanDerivationGroupNames && dataGrid) {
       // no current way to change just a specific cell unless we add something about plan associations to the DG object,
       //    which we don't seek to do.
       // this does mean every update to any entry in selectedPlanDerivationGroupIds refreshes the whole column, and flashes it,
@@ -64,99 +64,9 @@
     .flatMap(row => row.layers)
     .filter(layer => isExternalEventLayer(layer));
 
-  baseColumnDefs = [
-    {
-      field: 'name',
-      filter: 'string',
-      headerName: 'Derivation Group',
-      resizable: true,
-      sortable: true,
-      suppressAutoSize: false,
-      suppressSizeToFit: false,
-    },
-    {
-      field: 'source_type_name',
-      filter: 'string',
-      headerName: 'Source type',
-      resizable: true,
-      sortable: true,
-      suppressAutoSize: false,
-      suppressSizeToFit: false,
-    },
-    {
-      field: 'derived_event_total',
-      filter: 'number',
-      headerName: 'Derived Events in Derivation Group',
-      sortable: true,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
-      valueFormatter: params => {
-        return params?.value.length;
-      },
-    },
-    {
-      cellRenderer: (params: DerivationGroupCellRendererParams) => {
-        var input = document.createElement('input');
-        input.type = 'checkbox';
-        input.checked = $selectedPlanDerivationGroupNames.includes(params?.data?.name ?? '');
-        input.addEventListener('click', event => {
-          if (event?.target && params.data) {
-            if ((event.target as any).checked) {
-              // insert
-              effects.insertDerivationGroupForPlan(params.data.name, $plan, user);
-              if ($derivationGroupPlanLinkError !== null) {
-                showFailureToast('Failed to link derivation group & plan.');
-              } else {
-                // Insert all the external event types from the derivation group to the timeline filter
-                const derivationGroup = $derivationGroups.find(
-                  derivationGroup => derivationGroup.name === params?.data?.name,
-                );
-                if (derivationGroup !== undefined) {
-                  externalEventLayers?.forEach(externalEventLayer => {
-                    if (externalEventLayer.filter.externalEvent !== undefined) {
-                      externalEventLayer.filter.externalEvent.event_types =
-                        externalEventLayer.filter.externalEvent.event_types.concat(derivationGroup.event_types);
-                      externalEventLayer.filter.externalEvent.event_types =
-                        externalEventLayer.filter.externalEvent.event_types.filter(
-                          (val, ind, arr) => arr.indexOf(val) === ind,
-                        ); // uniqueness
-                    }
-                  });
-                }
-              }
-            } else {
-              // delete
-              effects.deleteDerivationGroupForPlan(params.data.name, $plan, user);
-              if ($derivationGroupPlanLinkError !== null) {
-                showFailureToast('Failed to unlink derivation group & plan.');
-              }
-            }
-          }
-        });
-        return input;
-      },
-
-      // useful to set to true if two concurrent users at play, because if another user makes a change you see 
-      //    the cell highlighted, indicating that someone changed the cell. unfortunately, this flash occurs 
-      //    any time this cell is updated, meaning there's a flash when the store loads when this modal is opened, 
-      //    as well as a flash whenever a user changes it just in their own browser. As a result, it is more 
-      //    confusing than simple. There doesn't appear to be another good way to do it (as onCellValueChanged 
-      //    never fires, or else we could've done some diffing method with a local copy to determine if a change
-      //    is or is not foreign; it also doesn't look to be possible in cellRenderer).
-      enableCellChangeFlash: false, 
-      filter: 'string',
-      headerName: 'Included',
-      sortable: true,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
-      width: 100,
-    },
-  ];
-
   const modalColumnSizeNoDetail: string = '1fr 3px 0fr';
   const modalColumnSizeWithDetail: string = '3fr 3px 1.3fr';
   let modalColumnSize: string = modalColumnSizeNoDetail;
-  let columnDefs = baseColumnDefs;
 
   let filterText: string = '';
   let filteredDerivationGroups: DerivationGroup[] = [];
@@ -177,38 +87,90 @@
   });
 
   $: {
-    columnDefs = [
-      ...baseColumnDefs,
-      {
-        cellClass: 'action-cell-container',
-        cellRenderer: (params: DerivationGroupCellRendererParams) => {
-          const actionsDiv = document.createElement('div');
-          actionsDiv.className = 'actions-cell';
-          new DataGridActions({
-            props: {
-              rowData: params.data,
-              viewCallback: params.viewDerivationGroup,
-              viewTooltip: {
-                content: 'View Derivation Group',
-                placement: 'bottom',
-              },
-            },
-            target: actionsDiv,
-          });
-
-          return actionsDiv;
+      columnDefs = [
+        {
+        field: 'name',
+        filter: 'string',
+        headerName: 'Derivation Group',
+        resizable: true,
+        sortable: true,
+        suppressAutoSize: false,
+        suppressSizeToFit: false,
         },
-        cellRendererParams: {
-          viewDerivationGroup,
-        } as CellRendererParams,
-        headerName: '',
-        resizable: false,
-        sortable: false,
-        suppressAutoSize: true,
-        suppressSizeToFit: true,
-        width: 40,
-      },
-    ];
+        {
+          field: 'source_type_name',
+          filter: 'string',
+          headerName: 'Source type',
+          resizable: true,
+          sortable: true,
+          suppressAutoSize: false,
+          suppressSizeToFit: false,
+        },
+        {
+          field: 'derived_event_total',
+          filter: 'number',
+          headerName: 'Derived Events in Derivation Group',
+          sortable: true,
+          suppressAutoSize: true,
+          suppressSizeToFit: true,
+          valueFormatter: params => {
+            return params?.value.length;
+          },
+        },
+        {
+          cellRenderer: (params: DerivationGroupCellRendererParams) => {
+            var input = document.createElement('input');
+            input.type = 'checkbox';
+            input.checked = $selectedPlanDerivationGroupNames.includes(params?.data?.name ?? '');
+            input.addEventListener('click', event => changeDerivationGroupAssociation(event, params?.data?.name));
+            return input;
+          },
+
+          // useful to set to true if two concurrent users at play, because if another user makes a change you see 
+          //    the cell highlighted, indicating that someone changed the cell. unfortunately, this flash occurs 
+          //    any time this cell is updated, meaning there's a flash when the store loads when this modal is opened, 
+          //    as well as a flash whenever a user changes it just in their own browser. As a result, it is more 
+          //    confusing than simple. There doesn't appear to be another good way to do it (as onCellValueChanged 
+          //    never fires, or else we could've done some diffing method with a local copy to determine if a change
+          //    is or is not foreign; it also doesn't look to be possible in cellRenderer).
+          enableCellChangeFlash: false, 
+          filter: 'string',
+          headerName: 'Included',
+          sortable: true,
+          suppressAutoSize: true,
+          suppressSizeToFit: true,
+          width: 100
+        },
+        {
+          cellClass: 'action-cell-container',
+          cellRenderer: (params: DerivationGroupCellRendererParams) => {
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'actions-cell';
+            new DataGridActions({
+              props: {
+                rowData: params.data,
+                viewCallback: params.viewDerivationGroup,
+                viewTooltip: {
+                  content: 'View Derivation Group',
+                  placement: 'bottom',
+                },
+              },
+              target: actionsDiv,
+            });
+
+            return actionsDiv;
+          },
+          cellRendererParams: {
+            viewDerivationGroup,
+          } as CellRendererParams,
+          headerName: '',
+          resizable: false,
+          sortable: false,
+          suppressAutoSize: true,
+          suppressSizeToFit: true,
+          width: 40,
+        },
+      ];
   }
 
   function viewDerivationGroup(derivationGroup: DerivationGroup) {
@@ -218,6 +180,46 @@
 
   function getRowId(derivationGroup: DerivationGroup): string {
     return `${derivationGroup.name}:${derivationGroup.source_type_name}`;
+  }
+
+  function changeDerivationGroupAssociation(event: MouseEvent, derivationGroupName: string | undefined) {
+    if (event?.target && derivationGroupName !== undefined) {
+      if ((event.target as any).checked) {
+        // insert
+        effects.insertDerivationGroupForPlan(derivationGroupName, $plan, user);
+        if ($derivationGroupPlanLinkError !== null) {
+          showFailureToast('Failed to link derivation group & plan.');
+        } else {
+          // Insert all the external event types from the derivation group to the timeline filter
+          const derivationGroup = $derivationGroups.find(
+            derivationGroup => derivationGroup.name === derivationGroupName
+          );
+          if (derivationGroup !== undefined && externalEventLayers !== undefined) {
+            externalEventLayers = externalEventLayers.map(layer => {
+              let event_types = (layer.filter.externalEvent?.event_types ?? [])
+                                  .concat(derivationGroup.event_types)
+                                  .filter((val, ind, arr) => arr.indexOf(val) === ind); // guarantee uniqueness
+              return {
+                ...layer,
+                filter: {
+                  ...layer.filter,
+                  externalEvent: {
+                    ...layer.filter.externalEvent,
+                    event_types: event_types
+                  }
+                }
+              }
+            });
+          }
+        }
+      } else {
+        // delete
+        effects.deleteDerivationGroupForPlan(derivationGroupName, $plan, user);
+        if ($derivationGroupPlanLinkError !== null) {
+          showFailureToast('Failed to unlink derivation group & plan.');
+        }
+      }
+    }
   }
 </script>
 
