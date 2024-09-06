@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import type { ExternalEventProperty } from '../../types/property';
+  import type { ExternalEventProperty } from '../../types/external-event-property';
   import Input from '../form/Input.svelte';
   import Highlight from '../ui/Highlight.svelte';
 
