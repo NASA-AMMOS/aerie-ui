@@ -1,5 +1,7 @@
-import type { EditorState } from '@codemirror/state';
+import { syntaxTree } from '@codemirror/language';
+import { EditorState } from '@codemirror/state';
 import type { SyntaxNode } from '@lezer/common';
+import { TOKEN_COMMAND } from '../../constants/seq-n-grammar-constants';
 import { getFromAndTo } from '../sequence-editor/tree-utils';
 
 export function customFoldInside(node: SyntaxNode, state: EditorState): { from: number; to: number } | null {
@@ -44,6 +46,13 @@ export function foldSteps(
     return null;
   }
 
+  if (nodeName === 'Stem') {
+    const blockFold = blockFolder(containerNode, node, state);
+    if (blockFold) {
+      return blockFold;
+    }
+  }
+
   // Get all Args nodes, LineComment node, Metadata nodes, and Models nodes.
   const argsNodes = containerNode.getChildren('Args');
   const commentNode = containerNode.getChild('LineComment');
@@ -67,6 +76,133 @@ export function foldSteps(
   const to = from + text.lastIndexOf('\n');
 
   return { from, to };
+}
+
+type BlockStackNode = Readonly<{
+  node: SyntaxNode;
+  stem: string;
+}>;
+
+type BlockStack = BlockStackNode[];
+
+type TreeState = {
+  [startPos: number]: {
+    end?: SyntaxNode;
+    start: SyntaxNode;
+  };
+};
+
+const blocksForState = new WeakMap<EditorState, TreeState>();
+
+const blockOpeningStems = new Set([
+  'SEQ_DIR_IF',
+  'SEQ_DIR_IF_OR',
+  'SEQ_DIR_IF_AND',
+  'SEQ_DIR_ELSE',
+  'SEQ_DIR_WAIT_UNTIL',
+  'SEQ_DIR_WAIT_UNTIL_VAR',
+  'SEQ_DIR_WAIT_UNTIL_AND',
+  'SEQ_DIR_WAIT_UNTIL_OR',
+  'SEQ_DIR_WAIT_UNTIL_TIMEOUT',
+  'SEQ_DIR_LOOP',
+]);
+
+const blockClosingStems = new Set([
+  'SEQ_DIR_ELSE', // also opens
+  'SEQ_DIR_WAIT_UNTIL_TIMEOUT', // also opens
+
+  'SEQ_DIR_END_IF',
+  'SEQ_DIR_END_WAIT_UNTIL',
+  'SEQ_DIR_END_LOOP',
+]);
+
+function isBlockCommand(stem: string) {
+  return blockOpeningStems.has(stem) || blockClosingStems.has(stem);
+}
+
+function closesBlock(stem: string, blockStem: string) {
+  switch (stem) {
+    case 'SEQ_DIR_END_IF':
+      return blockStem === 'SEQ_DIR_ELSE' || blockStem.startsWith('SEQ_DIR_IF');
+    case 'SEQ_DIR_ELSE':
+      return blockStem.startsWith('SEQ_DIR_IF');
+    case 'SEQ_DIR_END_WAIT_UNTIL':
+      return blockStem === 'SEQ_DIR_WAIT_UNTIL_TIMEOUT' || blockStem.startsWith('SEQ_DIR_WAIT_UNTIL');
+    case 'SEQ_DIR_WAIT_UNTIL_TIMEOUT':
+      return blockStem.startsWith('SEQ_DIR_WAIT_UNTIL');
+    case 'SEQ_DIR_END_LOOP':
+      return blockStem === 'SEQ_DIR_LOOP';
+  }
+  return false;
+}
+
+function computeBlocks(state: EditorState) {
+  // avoid scanning for each command
+  const blocks = blocksForState.get(state);
+  if (!blocks) {
+    // find all command nodes in sequence
+    const commandNodes: SyntaxNode[] = [];
+    syntaxTree(state).iterate({
+      enter: node => {
+        if (node.name === TOKEN_COMMAND) {
+          const stemNode = node.node.getChild('Stem');
+          if (stemNode) {
+            commandNodes.push(stemNode);
+          }
+        }
+      },
+    });
+
+    const treeState: TreeState = {};
+    const stack: BlockStack = [];
+    commandNodes
+      // filter out ones that don't impact blocks
+      .filter(stemNode => isBlockCommand(state.sliceDoc(stemNode.from, stemNode.to)))
+      .forEach(stemNode => {
+        const stem = state.sliceDoc(stemNode.from, stemNode.to);
+        const topStem = stack.at(-1)?.stem;
+        if (topStem && closesBlock(stem, topStem)) {
+          // close current block
+          const blockInfo: BlockStackNode | undefined = stack.pop();
+          if (blockInfo) {
+            // pair end with existing start to provide info for fold region
+            treeState[blockInfo.node.from].end = stemNode;
+          }
+        }
+
+        if (blockOpeningStems.has(stem)) {
+          // open new block
+          stack.push({
+            node: stemNode,
+            stem,
+          });
+          treeState[stemNode.from] = {
+            start: stemNode,
+          };
+        }
+      });
+    blocksForState.set(state, treeState);
+  }
+  return blocksForState.get(state);
+}
+
+function blockFolder(
+  stepNode: SyntaxNode,
+  stemNode: SyntaxNode,
+  state: EditorState,
+): { from: number; to: number } | null {
+  const localBlock = computeBlocks(state)?.[stemNode.from];
+  if (localBlock?.start.parent && localBlock?.end?.parent) {
+    // display lines that open and close block
+    // command nodes contain trailing new line
+    // shift back one position so fold is at end of previous line
+    return {
+      from: localBlock.start.parent.to - 1,
+      to: localBlock.end.parent.from - 1,
+    };
+  }
+
+  return null;
 }
 
 /**
