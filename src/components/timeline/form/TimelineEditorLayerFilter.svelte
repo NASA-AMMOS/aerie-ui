@@ -37,13 +37,14 @@
     }
   }
 
-  $: if (filterString) {
-    const filterStringLower = filterString.toLocaleLowerCase();
-    filteredValues = options.filter(item => item.toLocaleLowerCase().indexOf(filterStringLower) > -1);
-    filteredValues = filteredValues.filter((val, ind, arr) => arr.indexOf(val) === ind); // uniqueness
-  } else {
-    filteredValues = options.slice();
-    filteredValues = filteredValues.filter((val, ind, arr) => arr.indexOf(val) === ind); // uniqueness
+  $: {
+    if (filterString) {
+      const filterStringLower = filterString.toLocaleLowerCase();
+      filteredValues = options.filter(item => item.toLocaleLowerCase().indexOf(filterStringLower) > -1);
+    } else {
+      filteredValues = options.slice();
+    }
+    filteredValues = filteredValues.filter((val, ind, arr) => arr.indexOf(val) === ind); // for uniqueness
   }
 
   function listToMap(list: string[]): Record<string, boolean> {
