@@ -40,7 +40,7 @@
     dispatch('mouseDown', { e, externalEvents: getExternalEventsForNode(node), ...getDirectivesAndSpansForNode(node) });
   }
 
-  function onDblclickLeaf(e: MouseEvent): void {
+  function onDblClickLeaf(e: MouseEvent): void {
     if (e) {
       dispatch('dblClick', {
         e,
@@ -110,7 +110,7 @@
           style:height={`${rowHeight}px`}
           class="row-header-discrete-group leaf st-button tertiary"
           class:selected={directive?.id === selectedActivityDirectiveId || span?.span_id === selectedSpanId}
-          on:dblclick={e => onDblclickLeaf(e)}
+          on:dblclick={e => onDblClickLeaf(e)}
           on:click={e => onMouseDownLeaf(e, node)}
         >
           <div style=" align-items: center;color: var(--st-button-tertiary-color);display: flex; gap: 4px;">
@@ -139,7 +139,7 @@
           style:text-overflow="ellipsis ellipsis"
           class="row-header-discrete-group leaf st-button tertiary"
           class:selected={externalEvent ? getRowIdExternalEventWhole(externalEvent) === selectedExternalEventId : false}
-          on:dblclick={e => onDblclickLeaf(e)}
+          on:dblclick={e => onDblClickLeaf(e)}
           on:click={e => onMouseDownLeaf(e, node)}
         >
           <div style=" align-items: center;color: var(--st-button-tertiary-color);display: flex; gap: 4px;">
