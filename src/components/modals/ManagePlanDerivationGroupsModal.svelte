@@ -2,7 +2,7 @@
 
 <script lang="ts">
   import { base } from '$app/paths';
-  import type { ICellRendererParams } from 'ag-grid-community';
+  import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import { createEventDispatcher } from 'svelte';
   import {
@@ -54,9 +54,8 @@
   $: if ($selectedPlanDerivationGroupNames && dataGrid) {
     // no current way to change just a specific cell unless we add something about plan associations to the DG object,
     //    which we don't seek to do.
-    // this does mean every update to any entry in selectedPlanDerivationGroupIds refreshes the whole column, and flashes it,
-    //    though that isn't particularly a problem and does do good to signal association complete. Also a small delay, which
-    //    buffers button smashing and repeated updates pretty well!
+    // this does mean every update to any entry in selectedPlanDerivationGroupIds refreshes the whole column. Also a 
+    //    small delay, which buffers button smashing and repeated updates pretty well!
     dataGrid.refreshCells();
   }
 
@@ -121,18 +120,19 @@
         },
       },
       {
-        cellRenderer: (params: DerivationGroupCellRendererParams) => {
-          var input = document.createElement('input');
-          input.type = 'checkbox';
-          input.checked = $selectedPlanDerivationGroupNames.includes(params?.data?.name ?? '');
-          input.addEventListener('click', event => changeDerivationGroupAssociation(event, params?.data?.name));
-          return input;
-        },
-        filter: 'string',
+        cellDataType: 'boolean',
+        editable: true,
         headerName: 'Included',
-        sortable: true,
+        resizable: false,
         suppressAutoSize: true,
         suppressSizeToFit: true,
+        valueGetter: (params: ValueGetterParams<DerivationGroup>) => {
+          const { data } = params;
+          if (data) {
+            return $selectedPlanDerivationGroupNames.includes(data.name);
+          }
+          return false;
+        },
         width: 100,
       },
       {
@@ -189,9 +189,9 @@
     });
   }
 
-  function changeDerivationGroupAssociation(event: MouseEvent, derivationGroupName: string | undefined) {
-    if (event?.target && derivationGroupName !== undefined) {
-      if ((event.target as any).checked) {
+  function changeDerivationGroupAssociation(checked: boolean, derivationGroupName: string | undefined) {
+    if (derivationGroupName !== undefined) {
+      if (checked) {
         // insert
         effects.insertDerivationGroupForPlan(derivationGroupName, $plan, user);
         if ($derivationGroupPlanLinkError !== null) {
@@ -202,7 +202,7 @@
             derivationGroup => derivationGroup.name === derivationGroupName,
           );
           if (derivationGroup !== undefined && externalEventLayers !== undefined) {
-            externalEventLayers = externalEventLayers.map(layer => {
+            const newExternalEventLayers = externalEventLayers.map(layer => {
               let event_types = (layer.filter.externalEvent?.event_types ?? [])
                 .concat(derivationGroup.event_types) // add new event types associated with this DG
                 .filter((val, ind, arr) => arr.indexOf(val) === ind); // guarantee uniqueness
@@ -217,7 +217,7 @@
                 },
               };
             });
-            handleUpdateLayerNewDerivationGroups(externalEventLayers);
+            handleUpdateLayerNewDerivationGroups(newExternalEventLayers);
           }
         }
       } else {
@@ -231,7 +231,7 @@
             derivationGroup => derivationGroup.name === derivationGroupName,
           );
           if (derivationGroup !== undefined && externalEventLayers !== undefined) {
-            externalEventLayers = externalEventLayers.map(layer => {
+            const newExternalEventLayers = externalEventLayers.map(layer => {
               let event_types = (layer.filter.externalEvent?.event_types ?? [])
                 .filter(et => !derivationGroup.event_types.includes(et)) // remove any event types associated with this DG
                 .filter((val, ind, arr) => arr.indexOf(val) === ind); // guarantee uniqueness
@@ -246,7 +246,7 @@
                 },
               };
             });
-            handleUpdateLayerNewDerivationGroups(externalEventLayers);
+            handleUpdateLayerNewDerivationGroups(newExternalEventLayers);
           }
         }
       }
@@ -280,7 +280,16 @@
         <hr />
         <div class="derivationgroups-modal-table-container" style="height:100%">
           {#if filteredDerivationGroups.length}
-            <DataGrid bind:this={dataGrid} {columnDefs} rowData={filteredDerivationGroups} {getRowId} />
+            <DataGrid 
+              bind:this={dataGrid} 
+              {columnDefs} 
+              rowData={filteredDerivationGroups} 
+              {getRowId} 
+              on:cellEditingStopped={(e) => {
+                const { newValue, data } = e.detail;
+                changeDerivationGroupAssociation(newValue, data?.name)
+              }}
+            />
           {:else}
             <div class="p1 st-typography-label">No Derivation Groups Found</div>
           {/if}
