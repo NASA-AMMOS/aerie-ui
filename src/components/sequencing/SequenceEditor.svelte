@@ -161,7 +161,6 @@
                 ),
               ),
             ),
-            indentService.of($sequenceAdaptation.autoIndent()),
             compartmentSeqLinter.reconfigure(
               inputLinter(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
             ),
@@ -278,14 +277,14 @@
     const fileExtension = `${sequenceName}.${selectedOutputFormat?.fileExtension}`;
 
     if (outputFormat?.fileExtension === 'json') {
-      downloadJSON(editorOutputView.state.doc.toJSON(), fileExtension);
+      downloadJSON(JSON.parse(editorOutputView.state.doc.toString()), fileExtension);
     } else {
       downloadBlob(new Blob([editorOutputView.state.doc.toString()], { type: 'text/plain' }), fileExtension);
     }
   }
 
   function downloadInputFormat() {
-    downloadBlob(new Blob([editorOutputView.state.doc.toString()], { type: 'text/plain' }), `${sequenceName}.txt`);
+    downloadBlob(new Blob([editorSequenceView.state.doc.toString()], { type: 'text/plain' }), `${sequenceName}.txt`);
   }
 
   async function copyOutputFormatToClipboard() {
