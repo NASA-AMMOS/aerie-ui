@@ -228,16 +228,33 @@
         if ($derivationGroupPlanLinkError !== null) {
           showFailureToast('Failed to unlink derivation group & plan.');
         } else {
-          // Remove all the external event types from the derivation group to the timeline filter
+          // Remove all the external event types from the derivation group to the timeline filter, if this was the last one bearing that type.
           const derivationGroup = $derivationGroups.find(
             derivationGroup => derivationGroup.name === derivationGroupName,
           );
           if (derivationGroup !== undefined && externalEventLayers !== undefined) {
             const newExternalEventLayers = externalEventLayers.map(layer => {
+              // check that no other associated derivation group includes those event types (filter has [a, b, c, d])
+              // first get the list of event types the derivation group we will dissociate has ([b, c])
+              let to_remove = derivationGroup.event_types;
+
+              // then, get the list of event types all other derivation groups have ([a, c, d])
+              let other_types = $selectedPlanDerivationGroupNames
+                                  .map(value => $derivationGroups.find(dg => dg.name === value && dg.name !== derivationGroup.name))
+                                  .reduce((agg, curr) => {
+                                    agg = agg.concat(curr?.event_types ?? [])
+                                    return agg
+                                  }, [] as string[]);
+              // get the diff - which is event types unique to this derivation group ([b])
+              to_remove = to_remove.filter(type => !other_types.includes(type))
+
+              // update the filter to be what it is minus that diff ([a, b, c, d] - [b] = [a, c, d])
               let event_types = unique(
                 (layer.filter.externalEvent?.event_types ?? [])
-                  .filter(et => !derivationGroup.event_types.includes(et)) // remove any event types associated with this DG
-              )
+                  .filter(et => !to_remove.includes(et)) // remove any event types associated with this DG
+              )          
+
+              // update the filter
               return {
                 ...layer,
                 filter: {
