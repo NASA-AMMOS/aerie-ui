@@ -16,7 +16,7 @@
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalEventType } from '../../types/external-event';
   import type { DerivationGroup, ExternalSourceSlim, ExternalSourceType } from '../../types/external-source';
-  import effects from '../../utilities/effects';
+  import type { RadioButtonId } from '../../types/radio-buttons';
   import {
     showDeleteDerivationGroupModal,
     showDeleteExternalEventTypeModal,
@@ -24,12 +24,13 @@
   } from '../../utilities/modal';
   import { featurePermissions } from '../../utilities/permissions';
   import Collapse from '../Collapse.svelte';
-  import AlertError from '../ui/AlertError.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
   import DataGrid from '../ui/DataGrid/DataGrid.svelte';
   import DataGridActions from '../ui/DataGrid/DataGridActions.svelte';
   import Panel from '../ui/Panel.svelte';
+  import RadioButton from '../ui/RadioButtons/RadioButton.svelte';
+  import RadioButtons from '../ui/RadioButtons/RadioButtons.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
   import Modal from './Modal.svelte';
   import ModalContent from './ModalContent.svelte';
@@ -37,7 +38,6 @@
   import ModalHeader from './ModalHeader.svelte';
 
   export let user: User | null;
-  let mode: string = 'dg';
 
   type CellRendererParams = {
     deleteDerivationGroup: (derivationGroup: DerivationGroup) => Promise<void>;
@@ -300,9 +300,7 @@
   const modalColumnSizeWithDetailEST: string = '2fr 3px 1.2fr';
   let modalColumnSize: string = modalColumnSizeNoDetail;
 
-  let newTypeName: string = '';
-  let newTypeSourceType: string = '';
-  let newTypeError: string | null = null;
+  let filterString: string = '';
 
   let selectedDerivationGroup: DerivationGroup | undefined = undefined;
   let selectedDerivationGroupSources: ExternalSourceSlim[] = [];
@@ -332,38 +330,6 @@
       return false;
     }
   });
-
-  async function onCreateType() {
-    switch (mode) {
-      case 'dg':
-        if (newTypeName === '') {
-          newTypeError = 'Please select a source type.';
-        } else if (newTypeSourceType === '') {
-          newTypeError = 'Please enter a new type name.';
-        } else {
-          effects.createDerivationGroup({ name: newTypeName, source_type_name: newTypeSourceType }, user);
-          newTypeName = '';
-          newTypeSourceType = '';
-        }
-        break;
-      case 'eet':
-        if (newTypeName === '') {
-          newTypeError = 'Please enter a new type name.';
-        } else {
-          effects.createExternalEventType({ name: newTypeName }, user);
-          newTypeName = '';
-        }
-        break;
-      default: // 'est'
-        if (newTypeName === '') {
-          newTypeError = 'Please enter a new type name.';
-        } else {
-          effects.createExternalSourceType({ name: newTypeName }, user);
-          newTypeName = '';
-        }
-        break;
-    }
-  }
 
   async function deleteDerivationGroup(derivationGroup: DerivationGroup) {
     // Makes sure all associated sources are deleted before this. List of sources already contained in DerivationGroup type.
@@ -460,79 +426,70 @@
       modalColumnSize = modalColumnSizeNoDetail;
     }
   }
+
+  let categorySelector: RadioButtonId = 'derivation-group';
 </script>
 
-<Modal height={800} width={1400}>
+<Modal height={700} width={1000}>
   <ModalHeader on:close>
     Manage Derivation Groups and Types
-    <div class="derivationgroups-modal-filter-container">
-      <select
-        bind:value={mode}
-        on:change={() => {
-          selectedDerivationGroup = undefined;
-          selectedExternalSourceType = undefined;
-          selectedExternalEventType = undefined;
-          modalColumnSize = modalColumnSizeNoDetail;
-        }}
-        name="mode"
-        class="st-select"
-        style="width: 200px"
-      >
-        <option value="dg">Derivation Groups</option>
-        <option value="est">External Source Types</option>
-        <option value="eet">External Event Types</option>
-      </select>
-    </div>
   </ModalHeader>
   <ModalContent>
     <CssGrid columns={modalColumnSize} minHeight="100%">
-      <div class="derivationgroups-modal-table-container">
+      <div class="derivation-groups-modal-filter-container">
+        <div>
+          <RadioButtons
+            selectedButtonId={categorySelector}
+            on:select-radio-button={(event) => {
+              const {
+                detail: { id },
+              } = event;
+              categorySelector = id;
+              filterString = "";
+            }}
+          >
+            <RadioButton id="derivation-group">
+              <div class="association-button">Derivation Group</div>
+            </RadioButton>
+            <RadioButton id="external-source-type">
+              <div class="association-button">External Source Type</div>
+            </RadioButton>
+            <RadioButton id="external-event-type">
+              <div class="association-button">External Event Type</div>
+            </RadioButton>
+          </RadioButtons>
+        </div>
+        <hr/>
         <div class="filter">
-          <AlertError class="m-2" style="margin: 1.0rem 0;" error={newTypeError} />
           <div class="timeline-editor-layer-filter">
             <input
-              bind:value={newTypeName}
-              on:change={() => (newTypeError = null)}
+              bind:value={filterString}
               autocomplete="off"
               class="st-input w-100"
               name="filter-ee"
-              placeholder={`New ${mode === 'dg' ? 'Derivation Group' : mode === 'est' ? 'External Source Type' : 'External Event Type'} name`}
+              placeholder={`Filter ${categorySelector === 'derivation-group' ? 'Derivation Groups' : categorySelector === 'external-source-type' ? 'External Source Types' : 'External Event Types'}`}
             />
-            {#if mode === 'dg'}
-              <select
-                bind:value={newTypeSourceType}
-                on:change={() => (newTypeError = null)}
-                name="newTypeSourceType"
-                class="st-select"
-                style="width: 200px"
-              >
-                {#each $externalSourceTypes as sourceType}
-                  <option value={sourceType.name}>{sourceType.name}</option>
-                {/each}
-              </select>
-            {/if}
-            <button class="st-button w-10" type="submit" on:click|preventDefault={onCreateType}> Create </button>
           </div>
         </div>
-        {#if mode === 'dg'}
+        {#if categorySelector === 'derivation-group'}
           <DataGrid
             bind:this={dgDataGrid}
             columnDefs={dgColumnDefs}
-            rowData={$derivationGroups}
+            rowData={$derivationGroups.filter(dg => dg.name.includes(filterString))}
             getRowId={getRowIdDerivationGroup}
           />
-        {:else if mode === 'est'}
+        {:else if categorySelector === 'external-source-type'}
           <DataGrid
             bind:this={estDataGrid}
             columnDefs={estColumnDefs}
-            rowData={$externalSourceTypes}
+            rowData={$externalSourceTypes.filter(est => est.name.includes(filterString))}
             getRowId={getRowIdExternalSourceType}
           />
         {:else}
           <DataGrid
             bind:this={eetDataGrid}
             columnDefs={eetColumnDefs}
-            rowData={$externalEventTypes}
+            rowData={$externalEventTypes.filter(eet => eet.name.includes(filterString))}
             getRowId={getRowIdExternalEventType}
           />
         {/if}
@@ -720,15 +677,11 @@
 </Modal>
 
 <style>
-  .derivationgroups-modal-filter-container {
+  .derivation-groups-modal-filter-container {
     display: flex;
     flex: 1;
     justify-content: flex-end;
     padding-right: 8px;
-  }
-
-  .derivationgroups-modal-table-container {
-    display: flex;
     flex-direction: column;
     height: 100%;
     width: 100%;
@@ -740,4 +693,13 @@
     gap: 8px;
     padding-bottom: 10px;
   }
+
+  hr {
+    display: block;
+    height: 1px;
+    border: 0;
+    border-top: 1px solid rgb(213, 213, 213);
+    margin: 1em 0;
+    padding: 0;
+}
 </style>

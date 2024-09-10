@@ -212,6 +212,7 @@ import { convertToQuery, getSearchParameterNumber, setQueryParam } from './gener
 import gql, { convertToGQLArray } from './gql';
 import {
   showConfirmModal,
+  showCreateGroupsOrTypes,
   showCreatePlanBranchModal,
   showCreatePlanSnapshotModal,
   showCreateViewModal,
@@ -226,7 +227,7 @@ import {
   showPlanBranchRequestModal,
   showRestorePlanSnapshotModal,
   showUploadViewModal,
-  showWorkspaceModal,
+  showWorkspaceModal
 } from './modal';
 import { gatewayPermissions, queryPermissions } from './permissions';
 import { reqExtension, reqGateway, reqHasura } from './requests';
@@ -969,6 +970,15 @@ const effects = {
       showFailureToast('External Source Type Create Failed');
       createExternalSourceTypeError.set((e as Error).message);
       return undefined;
+    }
+  },
+
+  async createGroupsOrTypes(user: User | null): Promise<void> {
+    try {
+      await showCreateGroupsOrTypes(user);
+    } catch (e) {
+      catchError('Unable To Be View Derivation Groups and External Types', e as Error);
+      showFailureToast('Derivation Group/External Type Viewing Failed');
     }
   },
 
