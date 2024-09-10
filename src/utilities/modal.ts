@@ -2,6 +2,7 @@ import { browser } from '$app/environment';
 import AboutModal from '../components/modals/AboutModal.svelte';
 import ConfirmActivityCreationModal from '../components/modals/ConfirmActivityCreationModal.svelte';
 import ConfirmModal from '../components/modals/ConfirmModal.svelte';
+import CreateGroupsOrTypesModal from '../components/modals/CreateGroupsOrTypesModal.svelte';
 import CreatePlanBranchModal from '../components/modals/CreatePlanBranchModal.svelte';
 import CreatePlanSnapshotModal from '../components/modals/CreatePlanSnapshotModal.svelte';
 import CreateViewModal from '../components/modals/CreateViewModal.svelte';
@@ -158,6 +159,40 @@ export async function showConfirmModal(
 }
 
 /**
+ * Shows a ManagePlanDerivationGroupsModal component with the supplied arguments.
+ */
+export async function showCreateGroupsOrTypes(user: User | null): Promise<ModalElementValue> {
+  return new Promise(resolve => {
+    if (browser) {
+      const target: ModalElement | null = document.querySelector('#svelte-modal');
+
+      if (target) {
+        const manageGroupsAndTypesModal = new CreateGroupsOrTypesModal({
+          props: { user },
+          target,
+        });
+        target.resolve = resolve;
+
+        manageGroupsAndTypesModal.$on('close', () => {
+          target.replaceChildren();
+          target.resolve = null;
+          target.removeAttribute('data-dismissible');
+          manageGroupsAndTypesModal.$destroy();
+        });
+        manageGroupsAndTypesModal.$on('add', (e: CustomEvent<{ derivationGroupName: string }[]>) => {
+          target.replaceChildren();
+          target.resolve = null;
+          resolve({ confirm: true, value: e.detail });
+          manageGroupsAndTypesModal.$destroy();
+        });
+      }
+    } else {
+      resolve({ confirm: false });
+    }
+  });
+}
+
+/**
  * Shows a DeleteExternalSourceModal component with the supplied arguments.
  */
 export async function showDeleteExternalSourceModal(
@@ -300,7 +335,7 @@ export async function showDeleteExternalEventTypeModal(
 }
 
 /**
- * Shows an ManagePlanConstraintsModal component with the supplied arguments.
+ * Shows a ManagePlanConstraintsModal component with the supplied arguments.
  */
 export async function showManagePlanConstraintsModal(user: User | null): Promise<ModalElementValue> {
   return new Promise(resolve => {
@@ -338,7 +373,7 @@ export async function showManagePlanConstraintsModal(user: User | null): Promise
 }
 
 /**
- * Shows an ManagePlanDerivationGroupsModal component with the supplied arguments.
+ * Shows a ManagePlanDerivationGroupsModal component with the supplied arguments.
  */
 export async function showManagePlanDerivationGroups(user: User | null): Promise<ModalElementValue> {
   return new Promise(resolve => {
@@ -372,7 +407,7 @@ export async function showManagePlanDerivationGroups(user: User | null): Promise
 }
 
 /**
- * Shows an ManagePlanDerivationGroupsModal component with the supplied arguments.
+ * Shows a ManagePlanDerivationGroupsModal component with the supplied arguments.
  */
 export async function showManageGroupsAndTypes(user: User | null): Promise<ModalElementValue> {
   return new Promise(resolve => {
@@ -406,7 +441,7 @@ export async function showManageGroupsAndTypes(user: User | null): Promise<Modal
 }
 
 /**
- * Shows an ManagePlanSchedulingConditionsModal component with the supplied arguments.
+ * Shows a ManagePlanSchedulingConditionsModal component with the supplied arguments.
  */
 export async function showManagePlanSchedulingConditionsModal(user: User | null): Promise<ModalElementValue> {
   return new Promise(resolve => {
@@ -441,7 +476,7 @@ export async function showManagePlanSchedulingConditionsModal(user: User | null)
 }
 
 /**
- * Shows an ManagePlanSchedulingGoalsModal component with the supplied arguments.
+ * Shows a ManagePlanSchedulingGoalsModal component with the supplied arguments.
  */
 export async function showManagePlanSchedulingGoalsModal(user: User | null): Promise<ModalElementValue> {
   return new Promise(resolve => {
