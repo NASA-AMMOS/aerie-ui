@@ -57,7 +57,7 @@
     XAxisTick,
   } from '../../types/timeline';
   import effects from '../../utilities/effects';
-  import { classNames } from '../../utilities/generic';
+  import { classNames, unique } from '../../utilities/generic';
   import { showConfirmActivityCreationModal } from '../../utilities/modal';
   import { sampleProfiles } from '../../utilities/resources';
   import { getSimulationStatus } from '../../utilities/simulation';
@@ -502,8 +502,8 @@
                 event => (idToColorMaps.external_events[getRowIdExternalEvent(event.pkey)] = layer.externalEventColor),
               );
               externalEventsFilteredByType = externalEventsFilteredByType.concat(
-                matchingEvents.filter((val, ind, arr) => arr.indexOf(val) === ind),
-              ); // uniqueness
+                unique(matchingEvents),
+              );
             }
           });
         }
