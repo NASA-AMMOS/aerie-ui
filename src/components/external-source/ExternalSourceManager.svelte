@@ -7,7 +7,7 @@
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { catchError } from '../../stores/errors';
-  import { getRowIdExternalEvent } from '../../stores/external-event';
+  import { createExternalEventTypeError, getRowIdExternalEvent } from '../../stores/external-event';
   import {
     createDerivationGroupError,
     createExternalSourceError,
@@ -574,6 +574,10 @@
   function onManageGroupsAndTypes() {
     effects.manageGroupsAndTypes(user);
   }
+
+  function onCreateGroupsOrTypes() {
+    effects.createGroupsOrTypes(user);
+  }
 </script>
 
 <CssGrid columns={uiColumnSize}>
@@ -759,6 +763,7 @@
         >
           <AlertError class="m-2" error={$createExternalSourceError} />
           <AlertError class="m-2" error={$createExternalSourceTypeError} />
+          <AlertError class="m-2" error={$createExternalEventTypeError} />
           <AlertError class="m-2" error={$createDerivationGroupError} />
           <AlertError class="m-2" error={$parsingError} />
           <div class="file-upload-field">
@@ -921,11 +926,22 @@
         </slot>
         <slot name="right">
           <button
-            name="manage-derivation-groups"
+            name="create-groups-or-types"
+            class="st-button"
+            on:click|stopPropagation={onCreateGroupsOrTypes}
+            use:tooltip={{
+              content: 'Create derivation groups, external source types, or external event types.',
+              placement: 'top',
+            }}
+          >
+            Create New Groups or Types
+          </button>
+          <button
+            name="manage-groups-or-types"
             class="st-button secondary"
             on:click|stopPropagation={onManageGroupsAndTypes}
             use:tooltip={{
-              content: 'Manage derivation groups, external source types, and external event types.',
+              content: 'Manage and inspect existing derivation groups, external source types, and external event types.',
               placement: 'top',
             }}
           >
