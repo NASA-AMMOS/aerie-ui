@@ -5773,12 +5773,9 @@ const effects = {
           user,
         );
         const { planExternalSourceLink: sourceAssociation } = data;
-        if (sourceAssociation != null) {
-          // store updates automatically, because its a subscription!
-          showSuccessToast('Derivation Group Link Updated Successfully');
-        } else {
+        if (sourceAssociation === null) {
           throw Error(
-            `Unable to update Derivation Group Link with name "${derivationGroupName}" on plan with ID ${plan.id}, with status ${enabled}`,
+            `Unable to hide Derivation Group Link with name "${derivationGroupName}" on plan with ID ${plan.id}, with status ${enabled}`,
           );
         }
       } else {
