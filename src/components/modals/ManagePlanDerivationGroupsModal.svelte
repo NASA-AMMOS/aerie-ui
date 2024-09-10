@@ -19,6 +19,7 @@
   import type { DerivationGroup, ExternalSourceSlim } from '../../types/external-source';
   import type { Layer, Timeline } from '../../types/timeline';
   import effects from '../../utilities/effects';
+  import { unique } from '../../utilities/generic';
   import { formatDate } from '../../utilities/time';
   import { isExternalEventLayer } from '../../utilities/timeline';
   import { showFailureToast } from '../../utilities/toast';
@@ -203,9 +204,10 @@
           );
           if (derivationGroup !== undefined && externalEventLayers !== undefined) {
             const newExternalEventLayers = externalEventLayers.map(layer => {
-              let event_types = (layer.filter.externalEvent?.event_types ?? [])
-                .concat(derivationGroup.event_types) // add new event types associated with this DG
-                .filter((val, ind, arr) => arr.indexOf(val) === ind); // guarantee uniqueness
+              let event_types = unique(
+                (layer.filter.externalEvent?.event_types ?? [])
+                  .concat(derivationGroup.event_types)// add new event types associated with this DG
+                ) 
               return {
                 ...layer,
                 filter: {
@@ -232,9 +234,10 @@
           );
           if (derivationGroup !== undefined && externalEventLayers !== undefined) {
             const newExternalEventLayers = externalEventLayers.map(layer => {
-              let event_types = (layer.filter.externalEvent?.event_types ?? [])
-                .filter(et => !derivationGroup.event_types.includes(et)) // remove any event types associated with this DG
-                .filter((val, ind, arr) => arr.indexOf(val) === ind); // guarantee uniqueness
+              let event_types = unique(
+                (layer.filter.externalEvent?.event_types ?? [])
+                  .filter(et => !derivationGroup.event_types.includes(et)) // remove any event types associated with this DG
+              )
               return {
                 ...layer,
                 filter: {

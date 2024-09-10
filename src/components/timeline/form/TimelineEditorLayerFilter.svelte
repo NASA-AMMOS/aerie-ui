@@ -4,6 +4,7 @@
   import SearchIcon from '@nasa-jpl/stellar/icons/search.svg?component';
   import { createEventDispatcher } from 'svelte';
   import type { Layer } from '../../../types/timeline';
+  import { unique } from '../../../utilities/generic';
   import { isActivityLayer, isExternalEventLayer, isLineLayer, isXRangeLayer } from '../../../utilities/timeline';
   import Input from '../../form/Input.svelte';
   import Menu from '../../menus/Menu.svelte';
@@ -44,7 +45,7 @@
     } else {
       filteredValues = options.slice();
     }
-    filteredValues = filteredValues.filter((val, ind, arr) => arr.indexOf(val) === ind); // for uniqueness
+    filteredValues = unique(filteredValues);
   }
 
   function listToMap(list: string[]): Record<string, boolean> {
