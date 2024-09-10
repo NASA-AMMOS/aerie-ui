@@ -133,7 +133,7 @@
 
   $: onBlur(blur);
   $: onContextmenu(contextmenu);
-  $: onDblclick(dblclick);
+  $: onDblClick(dblclick);
   $: onFocus(focus);
   $: onMousedown(mousedown);
   $: onMousemove(mousemove);
@@ -404,7 +404,7 @@
     }
   }
 
-  function onDblclick(e: MouseEvent | undefined): void {
+  function onDblClick(e: MouseEvent | undefined): void {
     if (e) {
       dispatch('dblClick', {
         e,
