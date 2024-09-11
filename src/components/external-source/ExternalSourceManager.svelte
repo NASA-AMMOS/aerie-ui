@@ -519,12 +519,12 @@
       } catch (e) {
         throw new Error('External Source has Invalid Format');
       }
-      keyField.validateAndSet(parsed.source.key);
-      sourceTypeField.validateAndSet(parsed.source.source_type);
-      startTimeDoyField.validateAndSet(parsed.source.period.start_time.replaceAll('Z', ''));
-      endTimeDoyField.validateAndSet(parsed.source.period.end_time.replaceAll('Z', ''));
-      validAtDoyField.validateAndSet(parsed.source.valid_at.replaceAll('Z', ''));
-      derivationGroupField.validateAndSet(`${$sourceTypeField.value} Default`); // Include source type name because derivation group names are unique
+      $keyField.value = parsed.source.key;
+      $sourceTypeField.value = parsed.source.source_type;
+      $startTimeDoyField.value = parsed.source.period.start_time.replaceAll('Z', '');
+      $endTimeDoyField.value = parsed.source.period.end_time.replaceAll('Z', '');
+      $validAtDoyField.value = parsed.source.valid_at.replaceAll('Z', '');
+      $derivationGroupField.value = `${$sourceTypeField.value} Default`; // Include source type name because derivation group names are unique
       isDerivationGroupFieldDisabled = false;
     } catch (e) {
       catchError('External Source has Invalid Format', e as Error);

@@ -112,6 +112,6 @@ test.describe.serial('External Source Error Handling', () => {
 
   test('Syntax error is handled gracefully', async () => {
     await externalSources.fillInputFile(externalSources.externalSourceFilePathSyntaxError);
-    await expect(page.getByText('External Source has Invalid Format')).toBeVisible();
+    await expect(page.getByLabel('External Source has Invalid Format')).toBeVisible();
   });
 });
