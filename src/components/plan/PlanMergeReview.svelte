@@ -85,7 +85,8 @@
   let targetPlan: PlanForMerging;
 
   $: planHasDerivationGroups = $planDerivationGroupLinks.filter(
-    pdgl => pdgl.plan_id === sourcePlan.id || pdgl.plan_id === targetPlan.id,
+    planDerivationGroupLink =>
+      planDerivationGroupLink.plan_id === sourcePlan.id || planDerivationGroupLink.plan_id === targetPlan.id,
   ).length;
 
   $: if (initialPlan && initialMergeRequest) {
@@ -300,12 +301,12 @@
 
   async function onApproveChanges() {
     // this variable checks if there are any derivation groups associated with either branch. If there are, warn them of merging behavior. Otherwise, do nothing.
-    let dgWarningModal = planHasDerivationGroups
+    let derivationGroupWarningModal = planHasDerivationGroups
       ? showPlanBranchMergeDerivationGroupMessageModal(sourcePlan.name, targetPlan.name)
       : Promise.resolve();
 
     // after awaiting either a modal or nothing, proceed.
-    await dgWarningModal.then(async () => {
+    await derivationGroupWarningModal.then(async () => {
       if (initialMergeRequest !== null) {
         const success = await effects.planMergeCommit(
           initialMergeRequest.id,

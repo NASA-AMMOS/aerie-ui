@@ -110,6 +110,7 @@
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
+  let colorCache: Record<string, string> = {};
   let dragCurrentX: number | null = null;
   let dragOffsetX: number | null = null;
   let dragPreviousX: number | null = null;
@@ -125,7 +126,6 @@
   let visibleActivityDirectivesById: Record<ActivityDirectiveId, ActivityDirective> = {};
   let visibleSpansById: Record<SpanId, Span> = {};
   let visibleExternalEventsById: Record<ExternalEventId, ExternalEvent> = {};
-  let colorCache: Record<string, string> = {};
 
   // Asset cache
   const assets: { anchorIcon: HTMLImageElement | null } = { anchorIcon: null };
@@ -590,16 +590,12 @@
       const rowCount = Object.keys(rows).length;
       Object.entries(rows).forEach(([_, entry], i) => {
         const { items } = entry;
-        let yRow = i * (extraSpace / (rowCount - 1)) || 0;
+        let rowVerticalOffset = i * (extraSpace / (rowCount - 1)) || 0;
         if (discreteOptions.height >= drawHeight) {
-          yRow = 4;
+          rowVerticalOffset = 4;
         }
-        // TODO: check this
-        // else if (externalEventOptions.externalEventHeight * 2 >= drawHeight) {
-        //   yRow = 4 + verticalDrawOffset;
-        // }
         if (discreteOptions.height) {
-          drawRow(yRow, items, idToColorMaps);
+          drawRow(rowVerticalOffset, items, idToColorMaps);
         }
       });
     }
@@ -673,13 +669,13 @@
     });
 
     // draw activity row if present
-    let yRow = 4;
+    let rowVerticalOffset = 4;
     if (hasActivityLayer && activityRow.length) {
-      drawRow(yRow, activityRow, idToColorMaps);
-      yRow += 24;
+      drawRow(rowVerticalOffset, activityRow, idToColorMaps);
+      rowVerticalOffset += 24;
     }
     if (hasExternalEventsLayer && externalEventRow.length) {
-      drawRow(yRow, externalEventRow, idToColorMaps);
+      drawRow(rowVerticalOffset, externalEventRow, idToColorMaps);
     }
   }
 
@@ -917,7 +913,6 @@
           directiveLabelWidth = measureText(label, textMetricsCache).width + labelPaddingLeft;
           let shouldDrawLabel = true;
 
-          // TODO: fix this!
           if (discreteOptions.labelVisibility === 'auto') {
             const finalWidth = anchored
               ? anchorIconWidth + anchorIconMarginLeft + directiveLabelWidth

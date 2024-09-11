@@ -91,10 +91,8 @@
   export let activityDirectives: ActivityDirective[] = [];
   export let externalEvents: ExternalEvent[] = [];
   export let activityDirectivesMap: ActivityDirectivesMap = {};
-  // export let activityTreeExpansionMap: ActivityTreeExpansionMap = {};
   export let discreteOptions: DiscreteOptions | undefined = undefined;
   export let discreteTreeExpansionMap: DiscreteTreeExpansionMap = {};
-  // export let externalEventTreeExpansionMap: ExternalEventTreeExpansionMap = {};
   export let autoAdjustHeight: boolean = false;
   export let constraintResults: ConstraintResultWithName[] = [];
   export let decimate: boolean = false;
@@ -132,8 +130,6 @@
   export let user: User | null;
 
   const dispatch = createEventDispatcher<{
-    // activityTreeExpansionChange: ActivityTreeExpansionMap | null;
-    // externalEventTreeExpansionChange: ExternalEventTreeExpansionMap | null;
     discreteTreeExpansionChange: DiscreteTreeExpansionMap;
     mouseDown: MouseDown;
     mouseOver: MouseOver;
@@ -178,10 +174,9 @@
   let discreteTree: DiscreteTree = [];
   let filteredActivityDirectives: ActivityDirective[] = [];
   let filteredSpans: Span[] = [];
+  let filterItemsByTime = false;
   let externalEventsFilteredByDG: ExternalEvent[] = [];
   let externalEventsFilteredByType: ExternalEvent[] = [];
-  let timeFilteredActivityDirectives: ActivityDirective[] = [];
-  let timeFilteredSpans: Span[] = [];
   let idToColorMaps: {
     directives: Record<ActivityDirectiveId, string>;
     external_events: Record<ExternalEventId, string>;
@@ -191,12 +186,8 @@
     external_events: {},
     spans: {},
   };
-  // let filterActivitiesByTime = false;
-  // let filterExternalEventsByTime = false;
-  let filterItemsByTime = false;
-  // let unsquashedCachedActivityTreeExpansionMap: ActivityTreeExpansionMap | undefined;
-  // let unsquashedCachedExternalEventTreeExpansionMap: ExternalEventTreeExpansionMap;
-  // let layerOffsets = [0, 0];
+  let timeFilteredActivityDirectives: ActivityDirective[] = [];
+  let timeFilteredSpans: Span[] = [];
   let rowRef: HTMLDivElement;
 
   $: if ($selectedRow?.id === id && rowRef) {
@@ -206,9 +197,9 @@
   $: if (plan && simulationDataset !== null && layers && $externalResources && !$resourceTypesLoading) {
     const simulationDatasetId = simulationDataset.dataset_id;
     const resourceNamesSet = new Set<string>();
-    layers.map(l => {
-      if (l.chartType === 'line' || l.chartType === 'x-range') {
-        l.filter.resource?.names.forEach(name => resourceNamesSet.add(name));
+    layers.map(layer => {
+      if (layer.chartType === 'line' || layer.chartType === 'x-range') {
+        layer.filter.resource?.names.forEach(name => resourceNamesSet.add(name));
       }
     });
     const resourceNames = Array.from(resourceNamesSet);
@@ -235,7 +226,7 @@
       const startTimeYmd = simulationDataset?.simulation_start_time ?? plan.start_time;
       resourceNames.forEach(async name => {
         // Check if resource is external
-        const isExternal = !$resourceTypes.find(t => t.name === name);
+        const isExternal = !$resourceTypes.find(type => type.name === name);
         if (isExternal) {
           // Handle external datasets separately as they are globally loaded and subscribed to
           let resource = null;
@@ -326,8 +317,8 @@
   $: discreteOptions = discreteOptions || { ...ViewDefaultDiscreteOptions };
   $: activityLayers = layers.filter(isActivityLayer);
   $: externalEventLayers = layers.filter(isExternalEventLayer);
-  $: lineLayers = layers.filter(l => isLineLayer(l) || (isXRangeLayer(l) && l.showAsLinePlot));
-  $: xRangeLayers = layers.filter(l => isXRangeLayer(l) && !l.showAsLinePlot);
+  $: lineLayers = layers.filter(layer => isLineLayer(layer) || (isXRangeLayer(layer) && layer.showAsLinePlot));
+  $: xRangeLayers = layers.filter(layer => isXRangeLayer(layer) && !layer.showAsLinePlot);
   $: showSpans =
     discreteOptions?.activityOptions?.composition === 'both' ||
     discreteOptions?.activityOptions?.composition === 'spans';
@@ -338,11 +329,11 @@
   // helper for hasExternalEventsLayer; counts how many external event types are associated with this row (if all layers have 0 event types, we
   //    don't want to allocate any canvas space in the row for the layer)
   $: associatedActivityTypes = activityLayers
-    .map(l => (l.filter.activity ? l.filter.activity.types.length : 0))
-    .reduce((a, c) => a + c, 0);
+    .map(layer => (layer.filter.activity ? layer.filter.activity.types.length : 0))
+    .reduce((currentSum, newValue) => currentSum + newValue, 0);
   $: associatedEventTypes = externalEventLayers
-    .map(l => (l.filter.externalEvent ? l.filter.externalEvent.event_types.length : 0))
-    .reduce((a, c) => a + c, 0);
+    .map(layer => (layer.filter.externalEvent ? layer.filter.externalEvent.event_types.length : 0))
+    .reduce((currentSum, newValue) => currentSum + newValue, 0);
 
   // only consider a layer to be present if it is defined AND it actually has types/values selected.
   $: hasActivityLayer = activityLayers.length > 0 && associatedActivityTypes > 0;
@@ -483,12 +474,14 @@
 
       // Apply filter for hiding derivation groups
       externalEventsFilteredByDG = externalEvents.filter(ee => {
-        let dg =
+        let derivationGroup =
           $externalSources.find(
-            es => es.pkey.derivation_group_name === ee.pkey.derivation_group_name && es.pkey.key === ee.pkey.source_key,
+            externalSource =>
+              externalSource.pkey.derivation_group_name === ee.pkey.derivation_group_name &&
+              externalSource.pkey.key === ee.pkey.source_key,
           )?.pkey.derivation_group_name ?? undefined;
         // the statement below says return true (keep) if the plan is not null and if the filter for this plan does not include this derivation group
-        return plan && dg ? !filteredDerivationGroups.includes(dg) : false;
+        return plan && derivationGroup ? !filteredDerivationGroups.includes(derivationGroup) : false;
       });
       // Filter by external event type
       const externalEventsByType = groupBy(externalEventsFilteredByDG, 'pkey.event_type_name');
@@ -698,11 +691,11 @@
         if (type === 'activity' && items && plan) {
           // Determine if the row will visualize all requested activities
           let activitiesInRow = new Set();
-          activityLayers.forEach(l => {
-            const layerActivities = l.filter.activity?.types ?? [];
+          activityLayers.forEach(layer => {
+            const layerActivities = layer.filter.activity?.types ?? [];
             activitiesInRow = new Set([...activitiesInRow, ...layerActivities]);
           });
-          const missingActivity = (items as ActivityType[]).find(i => !activitiesInRow.has(i.name));
+          const missingActivity = (items as ActivityType[]).find(item => !activitiesInRow.has(item.name));
 
           const createActivities = () => {
             items.forEach(item => {
@@ -814,7 +807,7 @@
       width={drawWidth + marginLeft}
       top={4}
       hintPosition="bottom"
-      on:drop={e => onTimelineItemsDrop(undefined, e.detail.type, e.detail.items, -1)}
+      on:drop={event => onTimelineItemsDrop(undefined, event.detail.type, event.detail.items, -1)}
     />
   {/if}
 
@@ -825,7 +818,7 @@
       on:discrete-tree-node-change={onDiscreteTreeNodeChange}
       on:mouseDown={onMouseDown}
       on:dblClick
-      on:drop={e => onTimelineItemsDrop(id, e.detail.type, e.detail.items)}
+      on:drop={event => onTimelineItemsDrop(id, event.detail.type, event.detail.items)}
       {discreteTree}
       width={marginLeft}
       height={computedDrawHeight}
@@ -1025,18 +1018,18 @@
         class="overlay"
         role="none"
         style="width: {drawWidth}px"
-        on:blur={e => (blur = e)}
-        on:contextmenu={e => (contextmenu = e)}
-        on:dragenter|preventDefault={e => (dragenter = e)}
-        on:dragleave={e => (dragleave = e)}
-        on:dragover|preventDefault={e => (dragover = e)}
-        on:drop|preventDefault={e => (drop = e)}
-        on:focus={e => (focus = e)}
-        on:mousedown={e => (mousedown = e)}
-        on:mousemove={e => (mousemove = e)}
-        on:mouseout={e => (mouseout = e)}
-        on:mouseup={e => (mouseup = e)}
-        on:dblclick={e => (dblclick = e)}
+        on:blur={event => (blur = event)}
+        on:contextmenu={event => (contextmenu = event)}
+        on:dragenter|preventDefault={event => (dragenter = event)}
+        on:dragleave={event => (dragleave = event)}
+        on:dragover|preventDefault={event => (dragover = event)}
+        on:drop|preventDefault={event => (drop = event)}
+        on:focus={event => (focus = event)}
+        on:mousedown={event => (mousedown = event)}
+        on:mousemove={event => (mousemove = event)}
+        on:mouseout={event => (mouseout = event)}
+        on:mouseup={event => (mouseup = event)}
+        on:dblclick={event => (dblclick = event)}
       />
     </div>
   </div>

@@ -5,7 +5,7 @@ import {
   type ExternalSourceSlim,
   type ExternalSourceType,
   type PlanDerivationGroup,
-  type UserSeenEntry,
+  type UserSeenEntryWithDate
 } from '../types/external-source';
 import gql from '../utilities/gql';
 import { planId } from './plan';
@@ -44,12 +44,17 @@ export const planDerivationGroupLinks = gqlSubscribable<PlanDerivationGroup[]>(
 );
 
 // this tracks each user's view of the sources. if something exists in externalSources that isn't in usersSeenSources, it's treated as unseen, and vice versa for deleted.
-export const usersSeenSources = gqlSubscribable<Record<string, UserSeenEntry[]>>(
+export const usersSeenSourcesRaw = gqlSubscribable<{
+  derivation_group: string;
+  external_source_name: string;
+  external_source_type: string;
+  id: number;
+  username: string;
+}[]>(
   gql.SUB_SEEN_SOURCES,
   {},
-  {},
-  null,
-  transformUsersSeenSources,
+  [],
+  null
 );
 
 /* Derived. */
@@ -62,10 +67,37 @@ export const selectedPlanDerivationGroupEventTypes = derived(
   [derivationGroups, selectedPlanDerivationGroupNames],
   ([$derivationGroups, $selectedPlanDerivationGroupIds]) => {
     return $derivationGroups
-      .filter(dg => $selectedPlanDerivationGroupIds.includes(dg.name))
-      .map(dg => dg.event_types)
+      .filter(derivationGroup => $selectedPlanDerivationGroupIds.includes(derivationGroup.name))
+      .map(derivationGroup => derivationGroup.event_types)
       .reduce((acc, curr) => acc.concat(curr), []);
   },
+);
+export const usersSeenSources = derived(
+  [usersSeenSourcesRaw, externalSources],
+  ([$usersSeenSourcesRaw, $externalSources]) => {
+    const res: Record<string, UserSeenEntryWithDate[]> = {};
+    for (const entry of $usersSeenSourcesRaw) {
+      const change_date = $externalSources.find(externalSource => externalSource.pkey.derivation_group_name === entry.derivation_group && externalSource.pkey.key === entry.external_source_name)?.created_at ?? ""
+      if (res[entry.username]) {
+        res[entry.username].push({
+          change_date,
+          derivation_group_name: entry.derivation_group,
+          key: entry.external_source_name,
+          source_type_name: entry.external_source_type,
+        });
+      } else {
+        res[entry.username] = [
+          {
+            change_date,
+            derivation_group_name: entry.derivation_group,
+            key: entry.external_source_name,
+            source_type_name: entry.external_source_type,
+          },
+        ];
+      }
+    }
+    return res;
+  }
 );
 
 /* Helper Functions. */
@@ -89,17 +121,17 @@ function transformExternalSources(
 ): ExternalSourceSlim[] {
   const completeExternalSourceSlim: ExternalSourceSlim[] = [];
   if (externalSources !== null && externalSources !== undefined) {
-    externalSources.forEach(es => {
+    externalSources.forEach(externalSource => {
       completeExternalSourceSlim.push({
-        created_at: es.created_at,
-        end_time: es.end_time,
+        created_at: externalSource.created_at,
+        end_time: externalSource.end_time,
         pkey: {
-          derivation_group_name: es.derivation_group_name,
-          key: es.key,
+          derivation_group_name: externalSource.derivation_group_name,
+          key: externalSource.key,
         },
-        source_type_name: es.source_type_name,
-        start_time: es.start_time,
-        valid_at: es.valid_at,
+        source_type_name: externalSource.source_type_name,
+        start_time: externalSource.start_time,
+        valid_at: externalSource.valid_at,
       });
     });
   }
@@ -117,52 +149,22 @@ function transformDerivationGroups(
 ): DerivationGroup[] {
   const completeExternalSourceSlim: DerivationGroup[] = [];
   if (derivationGroups !== null && derivationGroups !== undefined) {
-    derivationGroups.forEach(dg => {
+    derivationGroups.forEach(derivationGroup => {
       completeExternalSourceSlim.push({
-        derived_event_total: dg.derived_total,
-        event_types: dg.event_types,
-        name: dg.name,
-        source_type_name: dg.source_type_name,
+        derived_event_total: derivationGroup.derived_total,
+        event_types: derivationGroup.event_types,
+        name: derivationGroup.name,
+        source_type_name: derivationGroup.source_type_name,
         sources: new Map(
           // comes from view schema that is hardcoded as "{source_key}, {derivation_group_name}, {event_count}""
-          dg.sources
-            .filter(s => s.charAt(0) !== ',' && s.length > 4)
-            .map(s => [s.split(', ')[0], { event_counts: parseInt(s.split(', ')[2]) }]),
+          derivationGroup.sources
+            .filter(source => source.charAt(0) !== ',' && source.length > 4)
+            .map(source => [source.split(', ')[0], { event_counts: parseInt(source.split(', ')[2]) }]),
         ),
       });
     });
   }
   return completeExternalSourceSlim;
-}
-
-function transformUsersSeenSources(
-  seenSources: {
-    derivation_group: string;
-    external_source_name: string;
-    external_source_type: string;
-    id: number;
-    username: string;
-  }[],
-): Record<string, UserSeenEntry[]> {
-  const res: Record<string, UserSeenEntry[]> = {};
-  for (const entry of seenSources) {
-    if (res[entry.username]) {
-      res[entry.username].push({
-        derivation_group_name: entry.derivation_group,
-        key: entry.external_source_name,
-        source_type_name: entry.external_source_type,
-      });
-    } else {
-      res[entry.username] = [
-        {
-          derivation_group_name: entry.derivation_group,
-          key: entry.external_source_name,
-          source_type_name: entry.external_source_type,
-        },
-      ];
-    }
-  }
-  return res;
 }
 
 // Row/Hash Functions

@@ -126,14 +126,14 @@
     .filter(link => link.plan_id === plan?.id)
     .map(link => link.derivation_group_name);
   $: externalEvents = externalEventsFromDB
-    .map(ee => {
+    .map(externalEvent => {
       return {
-        ...ee,
-        duration_ms: convertDurationToMs(ee.duration),
-        start_ms: convertUTCtoMs(ee.start_time),
+        ...externalEvent,
+        duration_ms: convertDurationToMs(externalEvent.duration),
+        start_ms: convertUTCtoMs(externalEvent.start_time),
       };
     })
-    .filter(ee => derivationGroups.includes(ee.pkey.derivation_group_name));
+    .filter(externalEvent => derivationGroups.includes(externalEvent.pkey.derivation_group_name));
 
   $: rows = timeline?.rows || [];
   $: drawWidth = clientWidth > 0 ? clientWidth - (timeline?.marginLeft ?? 0) - (timeline?.marginRight ?? 0) : 0;
@@ -478,8 +478,8 @@
             {activityDirectivesMap}
             {externalEvents}
             discreteTreeExpansionMap={discreteTreeExpansionMapByRow[row.id]}
-            on:discreteTreeExpansionChange={e => {
-              discreteTreeExpansionMapByRow = { ...discreteTreeExpansionMapByRow, [row.id]: e.detail };
+            on:discreteTreeExpansionChange={event => {
+              discreteTreeExpansionMapByRow = { ...discreteTreeExpansionMapByRow, [row.id]: event.detail };
             }}
             discreteOptions={row.discreteOptions}
             autoAdjustHeight={row.autoAdjustHeight}

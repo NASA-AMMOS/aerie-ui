@@ -77,18 +77,18 @@ function transformExternalEvents(
   const completeExternalEventDB: ExternalEventDB[] = [];
   if (externalEventsDB !== null && externalEventsDB !== undefined) {
     externalEventsDB
-      .flatMap(ee => ee.external_event)
-      .forEach(ee => {
+      .flatMap(externalEvent => externalEvent.external_event)
+      .forEach(externalEvent => {
         completeExternalEventDB.push({
-          duration: ee.duration,
+          duration: externalEvent.duration,
           pkey: {
-            derivation_group_name: ee.derivation_group_name,
-            event_type_name: ee.event_type_name,
-            key: ee.key,
-            source_key: ee.source_key,
+            derivation_group_name: externalEvent.derivation_group_name,
+            event_type_name: externalEvent.event_type_name,
+            key: externalEvent.key,
+            source_key: externalEvent.source_key,
           },
-          properties: ee.properties,
-          start_time: ee.start_time,
+          properties: externalEvent.properties,
+          start_time: externalEvent.start_time,
         });
       });
   }
