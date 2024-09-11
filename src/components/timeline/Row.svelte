@@ -501,9 +501,7 @@
               matchingEvents.forEach(
                 event => (idToColorMaps.external_events[getRowIdExternalEvent(event.pkey)] = layer.externalEventColor),
               );
-              externalEventsFilteredByType = externalEventsFilteredByType.concat(
-                unique(matchingEvents),
-              );
+              externalEventsFilteredByType = externalEventsFilteredByType.concat(unique(matchingEvents));
             }
           });
         }
