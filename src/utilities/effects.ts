@@ -860,6 +860,7 @@ const effects = {
           user,
         );
         if (created) {
+          showSuccessToast('External Event Type Created Successfully');
           creatingExternalEventType.set(false);
           return created.name;
         } else {
