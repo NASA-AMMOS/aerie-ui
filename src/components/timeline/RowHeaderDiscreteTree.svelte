@@ -37,7 +37,7 @@
   }>();
 
   function onMouseDownLeaf(e: MouseEvent, node: DiscreteTreeNode) {
-    dispatch('mouseDown', { e, externalEvents: getExternalEventsForNode(node), ...getDirectivesAndSpansForNode(node) });
+    dispatch('mouseDown', { e, ...getDirectivesExternalEventsAndSpansForNode(node) });
   }
 
   function onDblClickLeaf(e: MouseEvent): void {
@@ -51,28 +51,22 @@
     }
   }
 
-  function getDirectivesAndSpansForNode(node: DiscreteTreeNode) {
+  function getDirectivesExternalEventsAndSpansForNode(node: DiscreteTreeNode) {
     const activityDirectives: ActivityDirective[] = [];
     const spans: Span[] = [];
-    (node.items || []).forEach(({ directive, span }) => {
+    const externalEvents: ExternalEvent[] = [];
+    (node.items || []).forEach(({ directive, span, externalEvent }) => {
       if (directive) {
         activityDirectives.push(directive);
       }
       if (span) {
         spans.push(span);
       }
-    });
-    return { activityDirectives, spans };
-  }
-
-  function getExternalEventsForNode(node: DiscreteTreeNode) {
-    const externalEvents: ExternalEvent[] = [];
-    (node.items || []).forEach(externalEvent => {
-      if (externalEvent.externalEvent) {
-        externalEvents.push(externalEvent.externalEvent);
+      if (externalEvent) {
+        externalEvents.push(externalEvent);
       }
     });
-    return externalEvents;
+    return { activityDirectives, externalEvents, spans };
   }
 
   function getNodeComposition(node: DiscreteTreeNode) {
@@ -110,8 +104,8 @@
           style:height={`${rowHeight}px`}
           class="row-header-discrete-group leaf st-button tertiary"
           class:selected={directive?.id === selectedActivityDirectiveId || span?.span_id === selectedSpanId}
-          on:dblclick={e => onDblClickLeaf(e)}
-          on:click={e => onMouseDownLeaf(e, node)}
+          on:dblclick={event => onDblClickLeaf(event)}
+          on:click={event => onMouseDownLeaf(event, node)}
         >
           <div style=" align-items: center;color: var(--st-button-tertiary-color);display: flex; gap: 4px;">
             {#if directive && span}
@@ -139,8 +133,8 @@
           style:text-overflow="ellipsis ellipsis"
           class="row-header-discrete-group leaf st-button tertiary"
           class:selected={externalEvent ? getRowIdExternalEventWhole(externalEvent) === selectedExternalEventId : false}
-          on:dblclick={e => onDblClickLeaf(e)}
-          on:click={e => onMouseDownLeaf(e, node)}
+          on:dblclick={event => onDblClickLeaf(event)}
+          on:click={event => onMouseDownLeaf(event, node)}
         >
           <div style=" align-items: center;color: var(--st-button-tertiary-color);display: flex; gap: 4px;">
             <div title="External Event" class="icon-group">

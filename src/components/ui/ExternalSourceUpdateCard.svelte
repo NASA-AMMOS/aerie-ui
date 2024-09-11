@@ -4,16 +4,17 @@
   import LightningCharge from 'bootstrap-icons/icons/lightning-charge.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { createEventDispatcher } from 'svelte';
-  import type { UserSeenEntry } from '../../types/external-source';
+  import type { UserSeenEntryWithDate } from '../../types/external-source';
+  import { getTimeAgo } from '../../utilities/time';
   import Collapse from '../Collapse.svelte';
 
   export let deleted: boolean = false;
-  export let sources: UserSeenEntry[] = [];
+  export let sources: UserSeenEntryWithDate[] = [];
 
   const dispatch = createEventDispatcher<{
     dismiss: void;
   }>();
-  let mappedSources: { [sourceType: string]: { [derivationGroup: string]: UserSeenEntry[] } } = {};
+  let mappedSources: { [sourceType: string]: { [derivationGroup: string]: UserSeenEntryWithDate[] } } = {};
 
   $: sources.forEach(source => {
     let sourceType = source.source_type_name;
@@ -82,11 +83,11 @@
                   >
                     {source.key}
                   </p>
-                  <!-- <p
+                  <p
                     style=" color: gray;flex-shrink: 0; margin-left: auto; padding-right: 0.25rem; padding-top: 0.1rem; white-space: nowrap"
                   >
                     {getTimeAgo(new Date(source.change_date), new Date(), Number.MAX_SAFE_INTEGER)}
-                  </p> -->
+                  </p>
                 </div>
               {/each}
             </Collapse>
