@@ -6,7 +6,7 @@
   import {
     createDerivationGroupError,
     createExternalSourceTypeError,
-    externalSourceTypes
+    externalSourceTypes,
   } from '../../stores/external-source';
   import type { User } from '../../types/app';
   import type { RadioButtonId } from '../../types/radio-buttons';
@@ -45,7 +45,7 @@
           effects.createDerivationGroup({ name: newTypeName, source_type_name: newTypeSourceType }, user);
           newTypeName = '';
           newTypeSourceType = '';
-          console.log($createDerivationGroupError)
+          console.log($createDerivationGroupError);
         }
         break;
       case 'eet':
@@ -68,17 +68,15 @@
   }
 </script>
 
-<Modal height={categorySelector === "derivation-group" ? 225 : 240} width={600}>
-  <ModalHeader on:close>
-    Create Derivation Groups or Types
-  </ModalHeader>
+<Modal height={categorySelector === 'derivation-group' ? 225 : 240} width={600}>
+  <ModalHeader on:close>Create Derivation Groups or Types</ModalHeader>
   <ModalContent>
     <CssGrid columns={modalColumnSize} minHeight="100%">
       <div class="derivation-groups-modal-filter-container">
         <div style="width:100%">
           <RadioButtons
             selectedButtonId={categorySelector}
-            on:select-radio-button={(event) => {
+            on:select-radio-button={event => {
               const {
                 detail: { id },
               } = event;
@@ -104,16 +102,20 @@
             <AlertError class="m-2" error={$createDerivationGroupError} />
           </p>
           <p style="padding-top:10px">
-            Provide a name and an external source type for the new 
-            {categorySelector === "derivation-group" ? "derivation group" : categorySelector === "external-source-type" ? "external source type" : "external event type"}.
+            Provide a name and an external source type for the new
+            {categorySelector === 'derivation-group'
+              ? 'derivation group'
+              : categorySelector === 'external-source-type'
+                ? 'external source type'
+                : 'external event type'}.
           </p>
           <p>
             <i>
-              {categorySelector === "derivation-group" ? 
-                  "The newly created group will be empty, though you can upload sources into it." : 
-                  categorySelector === "external-source-type" ? 
-                    "The new external source type will not have any sources or groups associated, though that can be changed later by creating a new group or uploading a new source." : 
-                    "The new external event type will not have any events, though that can be changed later by uploading a new source."}
+              {categorySelector === 'derivation-group'
+                ? 'The newly created group will be empty, though you can upload sources into it.'
+                : categorySelector === 'external-source-type'
+                  ? 'The new external source type will not have any sources or groups associated, though that can be changed later by creating a new group or uploading a new source.'
+                  : 'The new external event type will not have any events, though that can be changed later by uploading a new source.'}
             </i>
           </p>
           <div class="timeline-editor-layer-filter">
