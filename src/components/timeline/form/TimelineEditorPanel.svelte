@@ -514,8 +514,8 @@
           data-type="number"
           name="timelines"
           value={$selectedTimelineId}
-          on:change={e => {
-            const { valueAsNumber: id } = getTarget(e);
+          on:change={event => {
+            const { valueAsNumber: id } = getTarget(event);
             viewSetSelectedTimeline(id);
           }}
         >
@@ -744,8 +744,8 @@
           data-type="number"
           name="rows"
           value={$selectedRowId}
-          on:change={e => {
-            const { valueAsNumber: id } = getTarget(e);
+          on:change={event => {
+            const { valueAsNumber: id } = getTarget(event);
             viewSetSelectedRow(id);
           }}
         >
@@ -793,8 +793,8 @@
               data-type="bool"
               name="autoAdjustHeight"
               value={selectedRow.autoAdjustHeight}
-              on:change={e => {
-                const { value } = getTarget(e);
+              on:change={event => {
+                const { value } = getTarget(event);
                 viewUpdateRow('autoAdjustHeight', value === 'true');
               }}
             >
@@ -928,8 +928,8 @@
             <label for="activity-composition">Display</label>
             <RadioButtons
               selectedButtonId={discreteOptions.displayMode}
-              on:select-radio-button={e => {
-                handleOptionRadioChange(e, 'displayMode');
+              on:select-radio-button={event => {
+                handleOptionRadioChange(event, 'displayMode');
               }}
             >
               <RadioButton
@@ -956,7 +956,7 @@
             <label for="activity-composition">Labels</label>
             <RadioButtons
               selectedButtonId={discreteOptions.labelVisibility}
-              on:select-radio-button={e => handleOptionRadioChange(e, 'labelVisibility')}
+              on:select-radio-button={event => handleOptionRadioChange(event, 'labelVisibility')}
             >
               <RadioButton use={[[tooltip, { content: 'Always show labels', placement: 'top' }]]} id="on">
                 <div class="radio-button-icon">
@@ -990,7 +990,7 @@
               <RadioButtons
                 id="activity-composition"
                 selectedButtonId={discreteOptions?.activityOptions?.composition}
-                on:select-radio-button={e => handleActivityOptionRadioChange(e, 'composition')}
+                on:select-radio-button={event => handleActivityOptionRadioChange(event, 'composition')}
               >
                 <RadioButton use={[[tooltip, { content: 'Only show directives', placement: 'top' }]]} id="directives">
                   <div class="radio-button-icon">
@@ -1020,7 +1020,7 @@
               <label for="activity-composition">Hierarchy</label>
               <RadioButtons
                 selectedButtonId={discreteOptions?.activityOptions?.hierarchyMode}
-                on:select-radio-button={e => handleActivityOptionRadioChange(e, 'hierarchyMode')}
+                on:select-radio-button={event => handleActivityOptionRadioChange(event, 'hierarchyMode')}
               >
                 <RadioButton
                   use={[[tooltip, { content: 'Group starting with directives', placement: 'top' }]]}
@@ -1056,7 +1056,7 @@
               <label for="activity-composition">Group By</label>
               <RadioButtons
                 selectedButtonId={discreteOptions?.externalEventOptions?.groupBy}
-                on:select-radio-button={e => handleExternalEventOptionRadioChange(e, 'groupBy')}
+                on:select-radio-button={event => handleExternalEventOptionRadioChange(event, 'groupBy')}
               >
                 <RadioButton
                   use={[[tooltip, { content: 'Group according to external source', placement: 'top' }]]}
@@ -1210,11 +1210,12 @@
             <div class="timeline-layers timeline-elements">
               {#each layers as layer (layer.id)}
                 <TimelineEditorLayerSection
-                  on:handleUpdateLayerFilter={e => handleUpdateLayerFilter(e.detail.values, layer)}
-                  on:handleUpdateLayerProperty={e => handleUpdateLayerProperty(e.detail.name, e.detail.value, layer)}
-                  on:handleUpdateLayerChartType={e => handleUpdateLayerChartType(e.detail.value, layer)}
-                  on:handleUpdateLayerColor={e => handleUpdateLayerColor(e.detail.value, layer)}
-                  on:handleUpdateLayerColorScheme={e => handleUpdateLayerColorScheme(e.detail.value, layer)}
+                  on:handleUpdateLayerFilter={event => handleUpdateLayerFilter(event.detail.values, layer)}
+                  on:handleUpdateLayerProperty={event =>
+                    handleUpdateLayerProperty(event.detail.name, event.detail.value, layer)}
+                  on:handleUpdateLayerChartType={event => handleUpdateLayerChartType(event.detail.value, layer)}
+                  on:handleUpdateLayerColor={event => handleUpdateLayerColor(event.detail.value, layer)}
+                  on:handleUpdateLayerColorScheme={event => handleUpdateLayerColorScheme(event.detail.value, layer)}
                   on:handleDeleteLayerClick={() => handleDeleteLayerClick(layer)}
                   {layer}
                   layerColor={getColorForLayer(layer)}

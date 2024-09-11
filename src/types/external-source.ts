@@ -59,9 +59,6 @@ export type DerivationGroup = {
   sources: Map<string, { event_counts: number }>;
 };
 
-// used exclusively in ExternalSourcesPanel and UpdateCard, to help track 'deleted_at' information. If in the future we have a comprehensive history of all sources' metadata ever, we will use this there too
-export type ExternalSourceWithDateInfo = ExternalSourceSlim & { change_date: Date };
-
 // This is used for the GraphQL mutation.
 export type ExternalSourceInsertInput = Pick<
   ExternalSourceDB,
@@ -73,11 +70,15 @@ export type ExternalSourceInsertInput = Pick<
     };
   };
 
-// This is used exclusively to track when users have and haven't seen an entry
+// This is used exclusively to track when users have and haven't seen an entry. one has a date (for UI purposes), and one doesn't (for database purposes).
 export type UserSeenEntry = {
   derivation_group_name: string;
   key: string;
   source_type_name: string;
+};
+
+export type UserSeenEntryWithDate = UserSeenEntry & {
+  change_date: string;
 };
 
 export type ExternalSourceTypeInsertInput = Pick<ExternalSourceType, 'name'>;

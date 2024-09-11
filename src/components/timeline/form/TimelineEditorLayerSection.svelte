@@ -39,12 +39,12 @@
   $: {
     // getFilterOptionsForLayer
     if (isActivityLayer(layer)) {
-      filterOptions = $activityTypes.map(t => t.name);
+      filterOptions = $activityTypes.map(type => type.name);
     } else if (isExternalEventLayer(layer)) {
       filterOptions = $selectedPlanDerivationGroupEventTypes;
     } else if (isLineLayer(layer) || isXRangeLayer(layer)) {
       filterOptions = $resourceTypes
-        .map(t => t.name)
+        .map(type => type.name)
         .concat($externalResourceNames)
         .sort();
     }
@@ -60,8 +60,8 @@
       // NOTE: if a derivation group is disabled, this doesn't get invoked and does not update. however, on dissociation it does.
       const externalEventLayer = layer;
       const externalEventTypes =
-        externalEventLayer.filter?.externalEvent?.event_types.filter(et =>
-          $selectedPlanDerivationGroupEventTypes.includes(et),
+        externalEventLayer.filter?.externalEvent?.event_types.filter(event_type =>
+          $selectedPlanDerivationGroupEventTypes.includes(event_type),
         ) ?? [];
       filterValues = [...externalEventTypes];
     } else if (isLineLayer(layer) || isXRangeLayer(layer)) {
@@ -72,7 +72,7 @@
   }
 
   function handleDeleteLayerFilterValue(value: string) {
-    const values = filterValues.filter(i => value !== i);
+    const values = filterValues.filter(entry => entry !== value);
     dispatch('handleUpdateLayerFilter', { values }); // dispatch update layer filter here with newValues
   }
 </script>

@@ -10,7 +10,7 @@
   } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import type { User } from '../../types/app';
-  import type { DerivationGroup, UserSeenEntry } from '../../types/external-source';
+  import type { DerivationGroup, UserSeenEntryWithDate } from '../../types/external-source';
   import type { ViewGridSection } from '../../types/view';
   import effects from '../../utilities/effects';
   import { tooltip } from '../../utilities/tooltip';
@@ -30,16 +30,17 @@
   let filterText: string = '';
   let mappedDerivationGroups: { [key: string]: DerivationGroup[] } = {};
   let filteredDerivationGroups: DerivationGroup[] = [];
-  let unseenSources: UserSeenEntry[] = [];
-  let unseenDeletedSources: UserSeenEntry[] = [];
+  let unseenSources: UserSeenEntryWithDate[] = [];
+  let unseenDeletedSources: UserSeenEntryWithDate[] = [];
 
   // Determine which new and deleted sources are unacknowledged for the user
   $: {
-    let sourceKeys: UserSeenEntry[] = $externalSources.map(es => {
+    let sourceKeys: UserSeenEntryWithDate[] = $externalSources.map(externalSource => {
       return {
-        derivation_group_name: es.pkey.derivation_group_name,
-        key: es.pkey.key,
-        source_type_name: es.source_type_name,
+        change_date: externalSource.created_at,
+        derivation_group_name: externalSource.pkey.derivation_group_name,
+        key: externalSource.pkey.key,
+        source_type_name: externalSource.source_type_name,
       };
     });
 
