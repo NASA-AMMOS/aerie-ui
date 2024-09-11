@@ -270,30 +270,50 @@
                       "description": "Expanded state of the timeline row",
                       "type": "boolean"
                     },
-                    "externalEventOptions": {
+                    "discreteOptions": {
                       "additionalProperties": false,
                       "description": "Defines the options used for rendering external events on the timeline",
                       "properties": {
-                        "externalEventHeight": {
-                          "description": "Height of external event rows",
-                          "type": "number",
-                          "minimum": 16
+                        "activityOptions": {
+                          "description": "Options for activity layers in the row",
+                          "properties": {
+                            "composition": {
+                              "description": "Whether or not to display only directives, only spans, or both in the row",
+                              "enum": ["directives", "spans", "both"]
+                            },
+                            "hierarchyMode": {
+                              "description": "If 'directive' the activities are grouped starting with directive types, if 'flat' activities are grouped by type regardless of hierarchy",
+                              "enum": ["directive", "flat"]
+                            }
+                          },
+                          "type": "object"
                         },
                         "displayMode": {
                           "description": "Describes the display mode to use for rendering external events",
                           "enum": ["compact", "grouped"]
                         },
-                        "groupBy": {
-                          "description": "Describes the way external events should be grouped when displayMode is 'grouped'",
-                          "enum": ["event_type_name", "source_key"]
+                        "externalEventOptions": {
+                          "description": "Options for external event layers in the row",
+                          "properties": {
+                            "groupBy": {
+                              "description": "Determines whether to group the external events by their event type, or their external source",
+                              "enum": ["event_type_name", "source_key"]
+                            },
+                            "groupedModeBinSize": {
+                              "description": "Bin size for external event children in grouped mode",
+                              "type": "number"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "height": {
+                          "description": "Height of timeline rows",
+                          "type": "number",
+                          "minimum": 16
                         },
                         "labelVisibility": {
                           "description": "External event text label behavior",
                           "enum": ["on", "off", "auto"]
-                        },
-                        "groupedModeBinSize": {
-                          "description": "Describes the size of each bin in grouped mode",
-                          "minimum": 1
                         }
                       }
                     },
