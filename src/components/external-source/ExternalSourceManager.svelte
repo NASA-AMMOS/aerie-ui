@@ -941,7 +941,8 @@
             class="st-button secondary"
             on:click|stopPropagation={onManageGroupsAndTypes}
             use:tooltip={{
-              content: 'Manage and inspect existing derivation groups, external source types, and external event types.',
+              content:
+                'Manage and inspect existing derivation groups, external source types, and external event types.',
               placement: 'top',
             }}
           >

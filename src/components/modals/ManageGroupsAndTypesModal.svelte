@@ -4,19 +4,11 @@
   import type { ICellRendererParams } from 'ag-grid-community';
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import { createEventDispatcher } from 'svelte';
-  import { externalEventTypes, getRowIdExternalEventType } from '../../stores/external-event';
-  import {
-    derivationGroups,
-    externalSources,
-    externalSourceTypes,
-    getRowIdDerivationGroup,
-    getRowIdExternalSourceType,
-  } from '../../stores/external-source';
+  import { derivationGroups, externalSources } from '../../stores/external-source';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalEventType } from '../../types/external-event';
   import type { DerivationGroup, ExternalSourceSlim, ExternalSourceType } from '../../types/external-source';
-  import type { RadioButtonId } from '../../types/radio-buttons';
   import {
     showDeleteDerivationGroupModal,
     showDeleteExternalEventTypeModal,
@@ -24,14 +16,17 @@
   } from '../../utilities/modal';
   import { featurePermissions } from '../../utilities/permissions';
   import Collapse from '../Collapse.svelte';
+  import ExternalEventTypeManagementTab from '../external-events/ExternalEventTypeManagementTab.svelte';
+  import DerivationGroupManagementTab from '../external-source/DerivationGroupManagementTab.svelte';
+  import ExternalSourceTypeManagementTab from '../external-source/ExternalSourceTypeManagementTab.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
-  import DataGrid from '../ui/DataGrid/DataGrid.svelte';
   import DataGridActions from '../ui/DataGrid/DataGridActions.svelte';
   import Panel from '../ui/Panel.svelte';
-  import RadioButton from '../ui/RadioButtons/RadioButton.svelte';
-  import RadioButtons from '../ui/RadioButtons/RadioButtons.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
+  import Tab from '../ui/Tabs/Tab.svelte';
+  import TabPanel from '../ui/Tabs/TabPanel.svelte';
+  import Tabs from '../ui/Tabs/Tabs.svelte';
   import Modal from './Modal.svelte';
   import ModalContent from './ModalContent.svelte';
   import ModalFooter from './ModalFooter.svelte';
@@ -53,11 +48,8 @@
     close: void;
   }>();
 
-  let dgDataGrid: DataGrid<DerivationGroup>;
   let dgColumnDefs: DataGridColumnDef<DerivationGroup>[] = [];
-  let estDataGrid: DataGrid<ExternalSourceType>;
   let estColumnDefs: DataGridColumnDef<ExternalSourceType>[] = [];
-  let eetDataGrid: DataGrid<ExternalEventType>;
   let eetColumnDefs: DataGridColumnDef<ExternalEventType>[] = [];
 
   let hasDeletePermission: boolean = false;
@@ -71,9 +63,6 @@
       headerName: 'Derivation Group',
       resizable: true,
       sortable: true,
-      suppressAutoSize: false,
-      suppressSizeToFit: false,
-      width: 360,
     },
     {
       field: 'source_type_name',
@@ -81,33 +70,26 @@
       headerName: 'Source type',
       resizable: true,
       sortable: true,
-      suppressAutoSize: false,
-      suppressSizeToFit: false,
-      width: 360,
     },
     {
       field: 'derived_event_total',
       filter: 'number',
       headerName: 'Derived Events in Derivation Group',
       sortable: true,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
       valueFormatter: params => {
         return params?.value.length;
       },
-      width: 300,
+      width: 250,
     },
     {
       field: 'sources',
       filter: 'number',
       headerName: 'Associated External Sources',
       sortable: true,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
       valueFormatter: params => {
         return params?.value.size;
       },
-      width: 300,
+      width: 200,
     },
     {
       cellClass: 'action-cell-container',
@@ -140,8 +122,6 @@
       headerName: '',
       resizable: false,
       sortable: false,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
       width: 80,
     },
   ];
@@ -153,33 +133,24 @@
       headerName: 'External Source Type',
       resizable: true,
       sortable: true,
-      suppressAutoSize: false,
-      suppressSizeToFit: false,
-      width: 620,
     },
     {
       filter: 'number',
       headerName: 'Associated External Sources',
       sortable: true,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
       valueFormatter: params => {
         const associatedSources = getAssociatedExternalSourcesBySourceType(params.data?.name);
         return `${associatedSources.length}`;
       },
-      width: 350,
     },
     {
       filter: 'number',
       headerName: 'Associated Derivation Groups',
       sortable: true,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
       valueFormatter: params => {
         const associatedDerivationGroups = getAssociatedDerivationGroupsBySourceTypeName(params.data?.name);
         return `${associatedDerivationGroups.length}`;
       },
-      width: 350,
     },
     {
       cellClass: 'action-cell-container',
@@ -213,9 +184,7 @@
       headerName: '',
       resizable: false,
       sortable: false,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
-      width: 80,
+      width: 60,
     },
   ];
 
@@ -226,35 +195,26 @@
       headerName: 'External Event Type',
       resizable: true,
       sortable: true,
-      suppressAutoSize: false,
-      suppressSizeToFit: false,
-      width: 620,
     },
     {
       filter: 'number',
       headerName: 'Associated External Sources',
       sortable: true,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
       valueFormatter: params => {
         let associatedDerivationGroups = getAssociatedDerivationGroupsByEventType(params.data?.name);
         const sourceMap = associatedDerivationGroups.flatMap(dg => dg.sources.size);
         const numOfSources = sourceMap.length > 0 ? sourceMap.reduce((acc, dgSize) => acc + dgSize) : 0;
         return `${numOfSources}`;
       },
-      width: 350,
     },
     {
       filter: 'number',
       headerName: 'Associated Derivation Groups',
       sortable: true,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
       valueFormatter: params => {
         const associatedDerivationGroups = getAssociatedDerivationGroupsByEventType(params.data?.name);
         return `${associatedDerivationGroups.length}`;
       },
-      width: 350,
     },
     {
       cellClass: 'action-cell-container',
@@ -288,9 +248,7 @@
       headerName: '',
       resizable: false,
       sortable: false,
-      suppressAutoSize: true,
-      suppressSizeToFit: true,
-      width: 80,
+      width: 60,
     },
   ];
 
@@ -426,73 +384,31 @@
       modalColumnSize = modalColumnSizeNoDetail;
     }
   }
-
-  let categorySelector: RadioButtonId = 'derivation-group';
 </script>
 
 <Modal height={700} width={1000}>
-  <ModalHeader on:close>
-    Manage Derivation Groups and Types
-  </ModalHeader>
+  <ModalHeader on:close>Manage Derivation Groups and Types</ModalHeader>
   <ModalContent>
     <CssGrid columns={modalColumnSize} minHeight="100%">
       <div class="derivation-groups-modal-filter-container">
-        <div>
-          <RadioButtons
-            selectedButtonId={categorySelector}
-            on:select-radio-button={(event) => {
-              const {
-                detail: { id },
-              } = event;
-              categorySelector = id;
-              filterString = "";
-            }}
-          >
-            <RadioButton id="derivation-group">
-              <div class="association-button">Derivation Group</div>
-            </RadioButton>
-            <RadioButton id="external-source-type">
-              <div class="association-button">External Source Type</div>
-            </RadioButton>
-            <RadioButton id="external-event-type">
-              <div class="association-button">External Event Type</div>
-            </RadioButton>
-          </RadioButtons>
+        <div style:height="100%">
+          <Tabs class="management-tabs" tabListClassName="management-tabs-list">
+            <svelte:fragment slot="tab-list">
+              <Tab class="management-tab">Derivation Group</Tab>
+              <Tab class="management-tab">External Source Type</Tab>
+              <Tab class="management-tab">External Event Type</Tab>
+            </svelte:fragment>
+            <TabPanel>
+              <DerivationGroupManagementTab {dgColumnDefs} {filterString} />
+            </TabPanel>
+            <TabPanel>
+              <ExternalSourceTypeManagementTab {estColumnDefs} {filterString} />
+            </TabPanel>
+            <TabPanel>
+              <ExternalEventTypeManagementTab {eetColumnDefs} {filterString} />
+            </TabPanel>
+          </Tabs>
         </div>
-        <hr/>
-        <div class="filter">
-          <div class="timeline-editor-layer-filter">
-            <input
-              bind:value={filterString}
-              autocomplete="off"
-              class="st-input w-100"
-              name="filter-ee"
-              placeholder={`Filter ${categorySelector === 'derivation-group' ? 'Derivation Groups' : categorySelector === 'external-source-type' ? 'External Source Types' : 'External Event Types'}`}
-            />
-          </div>
-        </div>
-        {#if categorySelector === 'derivation-group'}
-          <DataGrid
-            bind:this={dgDataGrid}
-            columnDefs={dgColumnDefs}
-            rowData={$derivationGroups.filter(dg => dg.name.includes(filterString))}
-            getRowId={getRowIdDerivationGroup}
-          />
-        {:else if categorySelector === 'external-source-type'}
-          <DataGrid
-            bind:this={estDataGrid}
-            columnDefs={estColumnDefs}
-            rowData={$externalSourceTypes.filter(est => est.name.includes(filterString))}
-            getRowId={getRowIdExternalSourceType}
-          />
-        {:else}
-          <DataGrid
-            bind:this={eetDataGrid}
-            columnDefs={eetColumnDefs}
-            rowData={$externalEventTypes.filter(eet => eet.name.includes(filterString))}
-            getRowId={getRowIdExternalEventType}
-          />
-        {/if}
       </div>
       {#if selectedDerivationGroup !== undefined}
         <CssGridGutter track={1} type="column" />
@@ -672,34 +588,68 @@
     </CssGrid>
   </ModalContent>
   <ModalFooter>
+    <div class="filter">
+      <input
+        bind:value={filterString}
+        autocomplete="off"
+        class="st-input w-100"
+        name="filter-ee"
+        placeholder={`Filter ...`}
+      />
+    </div>
     <button class="st-button secondary" on:click={() => dispatch('close')}> Close </button>
   </ModalFooter>
 </Modal>
 
 <style>
+  :global(.tab-list.management-tabs-list) {
+    background-color: var(--st-gray-10);
+  }
+
+  :global(button.management-tab) {
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+    width: 33%;
+  }
+
+  :global(button.management-tab:last-of-type) {
+    flex: 1;
+  }
+  :global(button.management-tab:last-of-type.selected) {
+    box-shadow: 1px 0px 0px inset var(--st-gray-20);
+  }
+
+  :global(button.management-tab:first-of-type.selected) {
+    box-shadow: -1px 0px 0px inset var(--st-gray-20);
+  }
+
+  :global(button.management-tab:not(.selected)) {
+    box-shadow: 0px -1px 0px inset var(--st-gray-20);
+  }
+
+  :global(button.management-tab.selected) {
+    background-color: var(--st-gray-20);
+    box-shadow:
+      1px 0px 0px inset var(--st-gray-20),
+      -1px 0px 0px inset var(--st-gray-20);
+  }
+
   .derivation-groups-modal-filter-container {
     display: flex;
     flex: 1;
-    justify-content: flex-end;
-    padding-right: 8px;
     flex-direction: column;
     height: 100%;
+    justify-content: flex-end;
+    padding-right: 8px;
     width: 100%;
   }
 
-  .timeline-editor-layer-filter {
-    display: flex;
+  .filter {
+    align-items: center;
+    display: inline-flex;
     flex-direction: row;
-    gap: 8px;
-    padding-bottom: 10px;
+    justify-self: center;
+    width: 100%;
   }
-
-  hr {
-    display: block;
-    height: 1px;
-    border: 0;
-    border-top: 1px solid rgb(213, 213, 213);
-    margin: 1em 0;
-    padding: 0;
-}
 </style>
