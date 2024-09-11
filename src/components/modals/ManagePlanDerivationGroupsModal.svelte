@@ -206,9 +206,8 @@
           if (derivationGroup !== undefined && externalEventLayers !== undefined) {
             const newExternalEventLayers = externalEventLayers.map(layer => {
               let event_types = unique(
-                (layer.filter.externalEvent?.event_types ?? [])
-                  .concat(derivationGroup.event_types)// add new event types associated with this DG
-                )
+                (layer.filter.externalEvent?.event_types ?? []).concat(derivationGroup.event_types), // add new event types associated with this DG
+              );
               return {
                 ...layer,
                 filter: {
@@ -241,19 +240,18 @@
 
               // then, get the list of event types all other derivation groups have ([a, c, d])
               let other_types = $selectedPlanDerivationGroupNames
-                                  .map(value => $derivationGroups.find(dg => dg.name === value && dg.name !== derivationGroup.name))
-                                  .reduce((agg, curr) => {
-                                    agg = agg.concat(curr?.event_types ?? [])
-                                    return agg
-                                  }, [] as string[]);
+                .map(value => $derivationGroups.find(dg => dg.name === value && dg.name !== derivationGroup.name))
+                .reduce((agg, curr) => {
+                  agg = agg.concat(curr?.event_types ?? []);
+                  return agg;
+                }, [] as string[]);
               // get the diff - which is event types unique to this derivation group ([b])
-              to_remove = to_remove.filter(type => !other_types.includes(type))
+              to_remove = to_remove.filter(type => !other_types.includes(type));
 
               // update the filter to be what it is minus that diff ([a, b, c, d] - [b] = [a, c, d])
               let event_types = unique(
-                (layer.filter.externalEvent?.event_types ?? [])
-                  .filter(et => !to_remove.includes(et)) // remove any event types associated with this DG
-              )
+                (layer.filter.externalEvent?.event_types ?? []).filter(et => !to_remove.includes(et)), // remove any event types associated with this DG
+              );
 
               // update the filter
               return {
@@ -280,21 +278,17 @@
   <ModalContent style=" overflow-y:scroll; padding:0;">
     <CssGrid columns={modalColumnSize} minHeight="100%">
       <div class="derivationgroups-modal-container" style="height:100%">
-        <div class="derivationgroups-modal-filter-container" style:display=flex>
+        <div class="derivationgroups-modal-filter-container" style:display="flex">
           <Input layout="inline">
-            <input
-              bind:value={filterText}
-              class="st-input"
-              placeholder="Filter derivation groups"
-            />
+            <input bind:value={filterText} class="st-input" placeholder="Filter derivation groups" />
           </Input>
           <button
             class="st-button secondary ellipsis"
             name="new-external-source"
             on:click={() => window.open(`${base}/external-sources`)}
-            style:width=100px
-            style:align-items=center
-            style:display=flex
+            style:width="100px"
+            style:align-items="center"
+            style:display="flex"
           >
             Upload
           </button>
@@ -307,9 +301,9 @@
               {columnDefs}
               rowData={filteredDerivationGroups}
               {getRowId}
-              on:cellEditingStopped={(e) => {
+              on:cellEditingStopped={e => {
                 const { newValue, data } = e.detail;
-                changeDerivationGroupAssociation(newValue, data?.name)
+                changeDerivationGroupAssociation(newValue, data?.name);
               }}
             />
           {:else}
