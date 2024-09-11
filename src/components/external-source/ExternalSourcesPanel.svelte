@@ -110,7 +110,7 @@
       <svelte:fragment slot="right">
         <button
           name="manage-derivation-groups"
-          class="st-button secondary"
+          class="st-button active"
           on:click|stopPropagation={onManageDerivationGroups}
           use:tooltip={{ content: 'Select derivation groups to associate with this plan', placement: 'top' }}
         >
