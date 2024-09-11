@@ -982,7 +982,7 @@
             </RadioButtons>
           </Input>
           {#if rowHasActivityLayer}
-            <div class="editor-section-header">
+            <div class="editor-section-header activity-options">
               <div class="st-typography-label">Activity Options</div>
             </div>
             <Input layout="inline" class="editor-input">
@@ -1049,7 +1049,7 @@
             </Input>
           {/if}
           {#if rowHasExternalEventLayer && discreteOptions.displayMode === 'grouped'}
-            <div class="editor-section-header">
+            <div class="editor-section-header external-event-options">
               <div class="st-typography-label">External Event Options</div>
             </div>
             <Input layout="inline" class="editor-input">
@@ -1232,6 +1232,16 @@
 </Panel>
 
 <style>
+  .activity-options {
+    border-top: 1px solid var(--st-gray-20);
+    padding-top: 16px;
+  }
+
+  .external-event-options {
+    border-top: 1px solid var(--st-gray-20);
+    padding-top: 16px;
+  }
+
   .timeline-editor {
     display: flex;
     flex-direction: column;
