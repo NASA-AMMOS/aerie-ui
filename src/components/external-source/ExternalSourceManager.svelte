@@ -927,7 +927,7 @@
         <slot name="right">
           <button
             name="create-groups-or-types"
-            class="st-button"
+            class="st-button secondary"
             on:click|stopPropagation={onCreateGroupsOrTypes}
             use:tooltip={{
               content: 'Create derivation groups, external source types, or external event types.',
@@ -938,7 +938,7 @@
           </button>
           <button
             name="manage-groups-or-types"
-            class="st-button secondary"
+            class="st-button active"
             on:click|stopPropagation={onManageGroupsAndTypes}
             use:tooltip={{
               content:
