@@ -55,7 +55,7 @@
   $: if ($selectedPlanDerivationGroupNames && dataGrid) {
     // no current way to change just a specific cell unless we add something about plan associations to the DG object,
     //    which we don't seek to do.
-    // this does mean every update to any entry in selectedPlanDerivationGroupIds refreshes the whole column. Also a 
+    // this does mean every update to any entry in selectedPlanDerivationGroupIds refreshes the whole column. Also a
     //    small delay, which buffers button smashing and repeated updates pretty well!
     dataGrid.refreshCells();
   }
@@ -119,11 +119,12 @@
         valueFormatter: params => {
           return params?.value.length;
         },
+        width: 250,
       },
       {
         cellDataType: 'boolean',
         editable: true,
-        headerName: 'Included',
+        headerName: 'Included in Plan',
         resizable: false,
         suppressAutoSize: true,
         suppressSizeToFit: true,
@@ -134,7 +135,7 @@
           }
           return false;
         },
-        width: 100,
+        width: 115,
       },
       {
         cellClass: 'action-cell-container',
@@ -207,7 +208,7 @@
               let event_types = unique(
                 (layer.filter.externalEvent?.event_types ?? [])
                   .concat(derivationGroup.event_types)// add new event types associated with this DG
-                ) 
+                )
               return {
                 ...layer,
                 filter: {
@@ -252,7 +253,7 @@
               let event_types = unique(
                 (layer.filter.externalEvent?.event_types ?? [])
                   .filter(et => !to_remove.includes(et)) // remove any event types associated with this DG
-              )          
+              )
 
               // update the filter
               return {
@@ -279,20 +280,21 @@
   <ModalContent style=" overflow-y:scroll; padding:0;">
     <CssGrid columns={modalColumnSize} minHeight="100%">
       <div class="derivationgroups-modal-container" style="height:100%">
-        <div class="derivationgroups-modal-filter-container">
-          <div class="derivationgroups-modal-title">Derivation Groups</div>
-          <Input>
+        <div class="derivationgroups-modal-filter-container" style:display=flex>
+          <Input layout="inline">
             <input
               bind:value={filterText}
               class="st-input"
               placeholder="Filter derivation groups"
-              style="width: 100%;"
             />
           </Input>
           <button
             class="st-button secondary ellipsis"
             name="new-external-source"
             on:click={() => window.open(`${base}/external-sources`)}
+            style:width=100px
+            style:align-items=center
+            style:display=flex
           >
             Upload
           </button>
@@ -300,11 +302,11 @@
         <hr />
         <div class="derivationgroups-modal-table-container" style="height:100%">
           {#if filteredDerivationGroups.length}
-            <DataGrid 
-              bind:this={dataGrid} 
-              {columnDefs} 
-              rowData={filteredDerivationGroups} 
-              {getRowId} 
+            <DataGrid
+              bind:this={dataGrid}
+              {columnDefs}
+              rowData={filteredDerivationGroups}
+              {getRowId}
               on:cellEditingStopped={(e) => {
                 const { newValue, data } = e.detail;
                 changeDerivationGroupAssociation(newValue, data?.name)
@@ -408,10 +410,6 @@
     display: grid;
     grid-template-columns: min-content auto min-content;
     margin: 0.5rem 1rem 0;
-  }
-
-  .derivationgroups-modal-title {
-    font-weight: bold;
   }
 
   .derivationgroups-modal-table-container {
