@@ -6,15 +6,15 @@
   import type { ExternalSourceType } from '../../types/external-source';
   import DataGrid from '../ui/DataGrid/DataGrid.svelte';
 
-  export let estColumnDefs: DataGridColumnDef<ExternalSourceType>[] = [];
+  export let externalSourceTypeColumnDefs: DataGridColumnDef<ExternalSourceType>[] = [];
   export let filterString: string = '';
 
-  let estDataGrid: DataGrid<ExternalSourceType>;
+  let externalSourceTypeDataGrid: DataGrid<ExternalSourceType>;
 </script>
 
 <DataGrid
-  bind:this={estDataGrid}
-  columnDefs={estColumnDefs}
-  rowData={$externalSourceTypes.filter(est => est.name.includes(filterString))}
+  bind:this={externalSourceTypeDataGrid}
+  columnDefs={externalSourceTypeColumnDefs}
+  rowData={$externalSourceTypes.filter(externalSourceType => externalSourceType.name.includes(filterString))}
   getRowId={getRowIdExternalSourceType}
 />

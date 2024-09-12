@@ -6,15 +6,15 @@
   import type { ExternalEventType } from '../../types/external-event';
   import DataGrid from '../ui/DataGrid/DataGrid.svelte';
 
-  export let eetColumnDefs: DataGridColumnDef<ExternalEventType>[] = [];
+  export let externalEventTypeColumnDefs: DataGridColumnDef<ExternalEventType>[] = [];
   export let filterString: string = '';
 
-  let eetDataGrid: DataGrid<ExternalEventType>;
+  let externalEventTypeDataGrid: DataGrid<ExternalEventType>;
 </script>
 
 <DataGrid
-  bind:this={eetDataGrid}
-  columnDefs={eetColumnDefs}
+  bind:this={externalEventTypeDataGrid}
+  columnDefs={externalEventTypeColumnDefs}
   rowData={$externalEventTypes.filter(eet => eet.name.includes(filterString))}
   getRowId={getRowIdExternalEventType}
 />

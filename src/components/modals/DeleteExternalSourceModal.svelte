@@ -41,7 +41,7 @@
   </ModalHeader>
   <ModalContent>
     {#if linked.length > 0}
-      <span style="display:block;overflow:hidden;text-overflow:ellipsis">
+      <span class="modal-content">
         This External Source is part of Derivation Group '{source.pkey.derivation_group_name}', which is linked with the
         following plans:
         {#each linked as link}
@@ -55,7 +55,7 @@
         {/each}
       </span>
     {:else}
-      <span style="display:block;overflow:hidden;text-overflow:ellipsis">
+      <span class="modal-content">
         Are you sure you want to delete "{source.pkey.key}"?
         <i>What is done cannot be undone.</i>
       </span>
@@ -70,3 +70,11 @@
     {/if}
   </ModalFooter>
 </Modal>
+
+<style>
+  .modal-content {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+</style>

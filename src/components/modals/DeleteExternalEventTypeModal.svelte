@@ -43,7 +43,7 @@
         This External Event Type still contains the following sources which must be deleted first:
         <hr style="border: 0px" />
         {#each associatedSources as source}
-          <div style="display:block;overflow:hidden;padding-left:20px;text-overflow:ellipsis;">
+          <div class="modal-content" style:padding-left=20px>
             <i>
               {source}
             </i>
@@ -51,7 +51,7 @@
         {/each}
       </span>
     {:else}
-      <span style="display:block;overflow:hidden;text-overflow:ellipsis">
+      <span class="modal-content">
         Are you sure you want to delete "{eventType.name}"?
         <i>What is done cannot be undone.</i>
       </span>
@@ -66,3 +66,11 @@
     {/if}
   </ModalFooter>
 </Modal>
+
+<style>
+  .modal-content {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+</style>

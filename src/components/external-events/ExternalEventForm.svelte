@@ -8,7 +8,6 @@
   import { formatDate } from '../../utilities/time';
   import Collapse from '../Collapse.svelte';
   import Input from '../form/Input.svelte';
-  import DatePicker from '../ui/DatePicker/DatePicker.svelte';
   import Properties from './Properties.svelte';
 
   export let externalEvent: ExternalEventDB;
@@ -16,10 +15,10 @@
 
   let formProperties: ExternalEventProperty[] = [];
 
-  $: formProperties = Object.entries(externalEvent.properties).map(e => {
+  $: formProperties = Object.entries(externalEvent.properties).map(externalEvent => {
     return {
-      name: e[0],
-      value: e[1],
+      name: externalEvent[0],
+      value: externalEvent[1],
     };
   });
 </script>
@@ -44,12 +43,8 @@
         </Input>
 
         <Input layout="inline">
-          Start Time (UTC)
-          <DatePicker
-            dateString={`${formatDate(new Date(externalEvent.start_time), $plugins.time.primary.format)}`}
-            disabled={true}
-            name="start-time"
-          />
+          {`Start Time (${$plugins.time.primary.label})`}
+          <input class="st-input w-100" disabled={true} name="start-time" value={formatDate(new Date(externalEvent.start_time), $plugins.time.primary.format)} />
         </Input>
 
         <Input layout="inline">
