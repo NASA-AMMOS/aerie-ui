@@ -260,7 +260,6 @@
   }
 
   // Column definition
-  // Why does this need to be reactive..?
   $: columnDefs = [
     ...baseColumnDefs,
     {
@@ -303,7 +302,7 @@
     selectedFilters = [...$externalSourceTypes];
   }
   $: filteredExternalSources = $externalSources.filter(externalSource => {
-    return selectedFilters.find(f => f.name === externalSource.source_type_name) !== undefined;
+    return selectedFilters.find(filter => filter.name === externalSource.source_type_name) !== undefined;
   });
   $: filteredValues = $externalSourceTypes.filter(externalSourceType =>
     externalSourceType.name.toLowerCase().includes(filterString),
@@ -317,12 +316,12 @@
   });
   $: effects.getExternalEvents(selectedSource ? selectedSource.pkey : null, user).then(
     fetched =>
-      (selectedEvents = fetched.map(eDB => {
+      (selectedEvents = fetched.map(externalEventsDB => {
         return {
-          ...eDB,
-          duration_ms: convertDurationToMs(eDB.duration),
-          event_type: eDB.pkey.event_type_name,
-          start_ms: convertUTCtoMs(eDB.start_time),
+          ...externalEventsDB,
+          duration_ms: convertDurationToMs(externalEventsDB.duration),
+          event_type: externalEventsDB.pkey.event_type_name,
+          start_ms: convertUTCtoMs(externalEventsDB.start_time),
         };
       })),
   );
@@ -418,9 +417,9 @@
           // Ensure the duration is valid
           try {
             convertDurationToMs(externalEvent.duration);
-          } catch (e) {
+          } catch (error) {
             showFailureToast('Parsing failed.');
-            catchError(`Event duration has invalid format... ${externalEvent.key}\n`, e as Error);
+            catchError(`Event duration has invalid format... ${externalEvent.key}\n`, error as Error);
             return;
           }
 
@@ -430,7 +429,7 @@
           let parsedStartWhole = Date.parse(start_time);
           let parsedEndWhole = Date.parse(end_time);
           if (!(parsedStart >= parsedStartWhole && parsedEnd <= parsedEndWhole)) {
-            showFailureToast('Parsing failed.');
+            showFailureToast('Invalid External Event Time Bounds');
             parsingError.set(
               `Upload failed. Event (${externalEvent.key}) not in bounds of source start and end: occurs from [${new Date(parsedStart)},${new Date(parsedEnd)}], not subset of [${new Date(parsedStartWhole)},${new Date(parsedEndWhole)}].\n`,
             );
@@ -516,7 +515,7 @@
     try {
       try {
         parsed = await parseJSONStream<ExternalSourceJson>(stream);
-      } catch (e) {
+      } catch (error) {
         throw new Error('External Source has Invalid Format');
       }
       $keyField.value = parsed.source.key;
@@ -526,8 +525,8 @@
       $validAtDoyField.value = parsed.source.valid_at.replaceAll('Z', '');
       $derivationGroupField.value = `${$sourceTypeField.value} Default`; // Include source type name because derivation group names are unique
       isDerivationGroupFieldDisabled = false;
-    } catch (e) {
-      catchError('External Source has Invalid Format', e as Error);
+    } catch (error) {
+      catchError('External Source has Invalid Format', error as Error);
       showFailureToast('External Source has Invalid Format');
       parsingError.set('External Source has Invalid Format');
       parsed = undefined;
@@ -552,7 +551,7 @@
   }
 
   function toggleItem(value: ExternalSourceType) {
-    if (!selectedFilters.find(f => f.name === value.name)) {
+    if (!selectedFilters.find(filter => filter.name === value.name)) {
       selectedFilters = selectedFilters.concat(value);
     } else {
       selectedFilters = selectedFilters.filter(filter => filter.name !== value.name);
@@ -699,8 +698,8 @@
               {:then metadata}
                 {#if Object.keys(metadata).length}
                   <Properties
-                    formProperties={Object.entries(metadata).map(e => {
-                      return { name: e[0], value: e[1] };
+                    formProperties={Object.entries(metadata).map(metadataEntry => {
+                      return { name: metadataEntry[0], value: metadataEntry[1] };
                     })}
                   />
                 {:else if $getExternalSourceMetadataError}
@@ -892,7 +891,7 @@
                           <button
                             class="value st-button tertiary st-typography-body"
                             on:click={() => toggleItem(filteredSourceType)}
-                            class:active={selectedFilters.map(f => f.name).find(f => f === filteredSourceType.name) !==
+                            class:active={selectedFilters.map(filter => filter.name).find(filter => filter === filteredSourceType.name) !==
                               undefined}
                           >
                             {filteredSourceType.name}

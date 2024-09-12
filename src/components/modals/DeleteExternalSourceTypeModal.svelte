@@ -10,7 +10,7 @@
 
   export let height: number = 150;
   export let sourceType: ExternalSourceType;
-  export let associatedDGs: DerivationGroup[] = [];
+  export let associatedDerivationGroups: DerivationGroup[] = [];
   export let width: number = 380;
 
   const dispatch = createEventDispatcher<{
@@ -31,34 +31,34 @@
 
 <Modal {height} {width}>
   <ModalHeader on:close>
-    {#if associatedDGs.length > 0}
+    {#if associatedDerivationGroups.length > 0}
       External Source Type Cannot Be Deleted
     {:else}
       Delete External Source
     {/if}
   </ModalHeader>
   <ModalContent>
-    {#if associatedDGs.length > 0}
+    {#if associatedDerivationGroups.length > 0}
       <span>
         The following Derivation Groups paired with this External Source Type still exist and must be deleted first:
         <hr style="border: 0px" />
-        {#each associatedDGs as dg}
-          <div style="display:block;overflow:hidden;padding-left:20px;text-overflow:ellipsis;">
+        {#each associatedDerivationGroups as derivationGroup}
+          <div class="modal-content" style:padding-left=20px>
             <i>
-              {dg.name}
+              {derivationGroup.name}
             </i>
           </div>
         {/each}
       </span>
     {:else}
-      <span style="display:block;overflow:hidden;text-overflow:ellipsis">
+      <span class="modal-content">
         Are you sure you want to delete "{sourceType.name}"?
         <i>What is done cannot be undone.</i>
       </span>
     {/if}
   </ModalContent>
   <ModalFooter>
-    {#if associatedDGs.length > 0}
+    {#if associatedDerivationGroups.length > 0}
       <button class="st-button" on:click={() => dispatch('close')}> Close </button>
     {:else}
       <button class="st-button secondary" on:click={() => dispatch('close')}> Cancel </button>
@@ -66,3 +66,11 @@
     {/if}
   </ModalFooter>
 </Modal>
+
+<style>
+  .modal-content {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+</style>
