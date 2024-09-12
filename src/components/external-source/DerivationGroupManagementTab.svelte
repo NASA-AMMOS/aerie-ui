@@ -6,15 +6,15 @@
   import type { DerivationGroup } from '../../types/external-source';
   import DataGrid from '../ui/DataGrid/DataGrid.svelte';
 
-  export let dgColumnDefs: DataGridColumnDef<DerivationGroup>[] = [];
+  export let derivationGroupsColumnsDef: DataGridColumnDef<DerivationGroup>[] = [];
   export let filterString: string = '';
 
-  let dgDataGrid: DataGrid<DerivationGroup>;
+  let derivationGroupDataGrid: DataGrid<DerivationGroup>;
 </script>
 
 <DataGrid
-  bind:this={dgDataGrid}
-  columnDefs={dgColumnDefs}
-  rowData={$derivationGroups.filter(dg => dg.name.includes(filterString))}
+  bind:this={derivationGroupDataGrid}
+  columnDefs={derivationGroupsColumnsDef}
+  rowData={$derivationGroups.filter(derivationGroup => derivationGroup.name.includes(filterString))}
   getRowId={getRowIdDerivationGroup}
 />
