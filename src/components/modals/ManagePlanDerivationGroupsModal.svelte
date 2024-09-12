@@ -171,7 +171,9 @@
   }
 
   function viewDerivationGroup(viewedDerivationGroup: DerivationGroup) {
-    const derivationGroup = $derivationGroups.find(derivationGroup => derivationGroup.name === viewedDerivationGroup.name);
+    const derivationGroup = $derivationGroups.find(
+      derivationGroup => derivationGroup.name === viewedDerivationGroup.name,
+    );
     selectedDerivationGroup = derivationGroup;
   }
 
@@ -237,18 +239,27 @@
 
               // then, get the list of event types all other derivation groups have ([a, c, d])
               let otherDerivationGroupEventTypes = $selectedPlanDerivationGroupNames
-                .map(value => $derivationGroups.find(iterDerivationGroup => iterDerivationGroup.name === value && iterDerivationGroup.name !== derivationGroup.name))
+                .map(value =>
+                  $derivationGroups.find(
+                    iterDerivationGroup =>
+                      iterDerivationGroup.name === value && iterDerivationGroup.name !== derivationGroup.name,
+                  ),
+                )
                 .reduce((agg, currentDerivationGroup) => {
                   agg = agg.concat(currentDerivationGroup?.event_types ?? []);
                   return agg;
                 }, [] as string[]);
 
               // get the diff - which is event types unique to this derivation group ([b])
-              eventTypesToRemove = eventTypesToRemove.filter(eventType => !otherDerivationGroupEventTypes.includes(eventType));
+              eventTypesToRemove = eventTypesToRemove.filter(
+                eventType => !otherDerivationGroupEventTypes.includes(eventType),
+              );
 
               // update the filter to be what it is minus that diff ([a, b, c, d] - [b] = [a, c, d])
               let eventTypesToApplyFilter = unique(
-                (layer.filter.externalEvent?.event_types ?? []).filter(eventType => !eventTypesToRemove.includes(eventType)), // remove any event types associated with this DG
+                (layer.filter.externalEvent?.event_types ?? []).filter(
+                  eventType => !eventTypesToRemove.includes(eventType),
+                ), // remove any event types associated with this DG
               );
 
               // update the filter
@@ -299,8 +310,8 @@
               {columnDefs}
               rowData={filteredDerivationGroups}
               {getRowId}
-              on:cellEditingStopped={e => {
-                const { newValue, data } = e.detail;
+              on:cellEditingStopped={event => {
+                const { newValue, data } = event.detail;
                 changeDerivationGroupAssociation(newValue, data?.name);
               }}
             />
