@@ -539,6 +539,9 @@ export async function showPlanBranchMergeDerivationGroupMessageModal(
         });
 
         confirmationModal.$on('close', () => {
+          target.replaceChildren();
+          target.resolve = null;
+          resolve({ confirm: false });
           confirmationModal.$destroy();
         });
       }
