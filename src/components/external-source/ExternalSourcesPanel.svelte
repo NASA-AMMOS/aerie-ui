@@ -45,12 +45,12 @@
     });
 
     if (user !== null && user.id !== null && $usersSeenSources[user.id] !== undefined) {
-      unseenSources = sourceKeys.filter(key => {
+      unseenSources = sourceKeys.filter(externalSource => {
         if (user === null || user.id === null) {
           return true;
         }
         return !$usersSeenSources[user.id].find(
-          k => k.key === key.key && k.derivation_group_name === key.derivation_group_name,
+          userSeenSource => userSeenSource.key === externalSource.key && userSeenSource.derivation_group_name === externalSource.derivation_group_name,
         );
       });
     } else {
@@ -59,7 +59,7 @@
 
     if (user && user.id && $usersSeenSources[user.id]) {
       unseenDeletedSources = $usersSeenSources[user.id].filter(
-        key => !sourceKeys.find(k => k.key === key.key && k.derivation_group_name === key.derivation_group_name),
+        userSeenSource => !sourceKeys.find(externalSource => externalSource.key === userSeenSource.key && externalSource.derivation_group_name === userSeenSource.derivation_group_name),
       );
     } else if (user && user.id && !(user.id in $usersSeenSources)) {
       unseenDeletedSources = [];
@@ -80,10 +80,9 @@
   $: filteredDerivationGroups.forEach(group => {
     // ...and repopulate it every time the links change. this handles deletion correctly
     if (group.source_type_name) {
-      // undefined is being very frustrating
       if (
         mappedDerivationGroups[group.source_type_name] &&
-        !mappedDerivationGroups[group.source_type_name].map(g => g.name).includes(group.name)
+        !mappedDerivationGroups[group.source_type_name].map(mappedDerivationGroup => mappedDerivationGroup.name).includes(group.name)
       ) {
         // use string later for source type
         mappedDerivationGroups[group.source_type_name]?.push(group);
@@ -130,7 +129,6 @@
               deleted={false}
               sources={unseenSources}
               on:dismiss={() => {
-                // call effect.
                 effects.createExternalSourceSeenEntry(unseenSources, user);
               }}
             />
@@ -140,7 +138,6 @@
               deleted={true}
               sources={unseenDeletedSources}
               on:dismiss={() => {
-                // call effect.
                 effects.deleteExternalSourceSeenEntry(unseenDeletedSources, user);
               }}
             />

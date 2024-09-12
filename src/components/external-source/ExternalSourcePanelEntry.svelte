@@ -20,7 +20,7 @@
 
   $: enabled =
     ($plan !== null &&
-      $planDerivationGroupLinks.find(a => a.derivation_group_name === derivationGroup.name && a.plan_id === $plan?.id)
+      $planDerivationGroupLinks.find(linkedDerivationGroup => linkedDerivationGroup.derivation_group_name === derivationGroup.name && linkedDerivationGroup.plan_id === $plan?.id)
         ?.enabled) ??
     true;
   $: relevantSources = $externalSources.filter(source => derivationGroup.name === source.pkey.derivation_group_name);
@@ -119,7 +119,6 @@
         {/each}
       </Collapse>
     {:else}
-      <!--This should be impossible, as the derivation group should have been deleted by this point. Just in case... we offer a delete button here.-->
       <p>No sources in this group.</p>
       <button name="delete-dg" class="st-button secondary" on:click|stopPropagation={deleteEmptyDerivationGroup}>
         Delete Empty Derivation Group

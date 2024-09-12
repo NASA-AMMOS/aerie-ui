@@ -42,7 +42,7 @@
         This Derivation Group still contains the following sources which must be deleted first:
         <hr style="border: 0px" />
         {#each derivationGroup.sources as source}
-          <div style="display:block;overflow:hidden;padding-left:20px;text-overflow:ellipsis;">
+          <div class="modal-content" style:padding-left=20px>
             <i>
               {source[0]}
             </i>
@@ -50,8 +50,9 @@
         {/each}
       </span>
     {:else}
-      <span style="display:block;overflow:hidden;text-overflow:ellipsis">
+      <span class="modal-content">
         Are you sure you want to delete "{derivationGroup.name}"?
+        <br>
         <i>What is done cannot be undone.</i>
       </span>
     {/if}
@@ -65,3 +66,11 @@
     {/if}
   </ModalFooter>
 </Modal>
+
+<style>
+  .modal-content {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+</style>

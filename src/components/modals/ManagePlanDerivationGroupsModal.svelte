@@ -22,7 +22,6 @@
   import { unique } from '../../utilities/generic';
   import { formatDate } from '../../utilities/time';
   import { isExternalEventLayer } from '../../utilities/timeline';
-  import { showFailureToast } from '../../utilities/toast';
   import Collapse from '../Collapse.svelte';
   import Input from '../form/Input.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
@@ -47,10 +46,21 @@
     close: void;
   }>();
 
+  const modalColumnSizeNoDetail: string = '1fr 3px 0fr';
+  const modalColumnSizeWithDetail: string = '3fr 3px 1.3fr';
+
   let externalEventLayers: Layer[] | undefined;
   let dataGrid: DataGrid<DerivationGroup>;
   let columnDefs: DataGridColumnDef<DerivationGroup>[] = [];
   let timelines: Timeline[] = [];
+
+  let modalColumnSize: string = modalColumnSizeNoDetail;
+
+  let filterText: string = '';
+  let filteredDerivationGroups: DerivationGroup[] = [];
+
+  let selectedDerivationGroup: DerivationGroup | undefined = undefined;
+  let selectedDerivationGroupSources: ExternalSourceSlim[] = [];
 
   $: if ($selectedPlanDerivationGroupNames && dataGrid) {
     // no current way to change just a specific cell unless we add something about plan associations to the DG object,
@@ -67,15 +77,6 @@
     .flatMap(row => row.layers)
     .filter(layer => isExternalEventLayer(layer));
 
-  const modalColumnSizeNoDetail: string = '1fr 3px 0fr';
-  const modalColumnSizeWithDetail: string = '3fr 3px 1.3fr';
-  let modalColumnSize: string = modalColumnSizeNoDetail;
-
-  let filterText: string = '';
-  let filteredDerivationGroups: DerivationGroup[] = [];
-
-  let selectedDerivationGroup: DerivationGroup | undefined = undefined;
-  let selectedDerivationGroupSources: ExternalSourceSlim[] = [];
   $: if (selectedDerivationGroup !== undefined) {
     modalColumnSize = modalColumnSizeWithDetail;
   }
@@ -169,9 +170,9 @@
     ];
   }
 
-  function viewDerivationGroup(derivationGroup: DerivationGroup) {
-    const dg = $derivationGroups.find(dg => dg.name === derivationGroup.name);
-    selectedDerivationGroup = dg;
+  function viewDerivationGroup(viewedDerivationGroup: DerivationGroup) {
+    const derivationGroup = $derivationGroups.find(derivationGroup => derivationGroup.name === viewedDerivationGroup.name);
+    selectedDerivationGroup = derivationGroup;
   }
 
   function getRowId(derivationGroup: DerivationGroup): string {
@@ -183,7 +184,7 @@
     timelines.forEach(currentTimeline => {
       currentTimeline.rows.forEach(currentRow => {
         const regeneratedLayers = currentRow.layers.map(currentLayer => {
-          const layerHasNewVersion = newLayers.find(nl => nl.id === currentLayer.id);
+          const layerHasNewVersion = newLayers.find(newLayer => newLayer.id === currentLayer.id);
           return layerHasNewVersion !== undefined ? layerHasNewVersion : currentLayer;
         });
         viewUpdateRow('layers', regeneratedLayers, currentTimeline.id, currentRow.id);
@@ -191,14 +192,12 @@
     });
   }
 
-  function changeDerivationGroupAssociation(checked: boolean, derivationGroupName: string | undefined) {
+  async function changeDerivationGroupAssociation(checked: boolean, derivationGroupName: string | undefined) {
     if (derivationGroupName !== undefined) {
       if (checked) {
         // insert
-        effects.insertDerivationGroupForPlan(derivationGroupName, $plan, user);
+        await effects.insertDerivationGroupForPlan(derivationGroupName, $plan, user);
         if ($derivationGroupPlanLinkError !== null) {
-          showFailureToast('Failed to link derivation group & plan.');
-        } else {
           // Insert all the external event types from the derivation group to the timeline filter
           const derivationGroup = $derivationGroups.find(
             derivationGroup => derivationGroup.name === derivationGroupName,
@@ -224,10 +223,8 @@
         }
       } else {
         // delete
-        effects.deleteDerivationGroupForPlan(derivationGroupName, $plan, user);
+        await effects.deleteDerivationGroupForPlan(derivationGroupName, $plan, user);
         if ($derivationGroupPlanLinkError !== null) {
-          showFailureToast('Failed to unlink derivation group & plan.');
-        } else {
           // Remove all the external event types from the derivation group to the timeline filter, if this was the last one bearing that type.
           const derivationGroup = $derivationGroups.find(
             derivationGroup => derivationGroup.name === derivationGroupName,
@@ -236,21 +233,22 @@
             const newExternalEventLayers = externalEventLayers.map(layer => {
               // check that no other associated derivation group includes those event types (filter has [a, b, c, d])
               // first get the list of event types the derivation group we will dissociate has ([b, c])
-              let to_remove = derivationGroup.event_types;
+              let eventTypesToRemove = derivationGroup.event_types;
 
               // then, get the list of event types all other derivation groups have ([a, c, d])
-              let other_types = $selectedPlanDerivationGroupNames
-                .map(value => $derivationGroups.find(dg => dg.name === value && dg.name !== derivationGroup.name))
-                .reduce((agg, curr) => {
-                  agg = agg.concat(curr?.event_types ?? []);
+              let otherDerivationGroupEventTypes = $selectedPlanDerivationGroupNames
+                .map(value => $derivationGroups.find(iterDerivationGroup => iterDerivationGroup.name === value && iterDerivationGroup.name !== derivationGroup.name))
+                .reduce((agg, currentDerivationGroup) => {
+                  agg = agg.concat(currentDerivationGroup?.event_types ?? []);
                   return agg;
                 }, [] as string[]);
+
               // get the diff - which is event types unique to this derivation group ([b])
-              to_remove = to_remove.filter(type => !other_types.includes(type));
+              eventTypesToRemove = eventTypesToRemove.filter(eventType => !otherDerivationGroupEventTypes.includes(eventType));
 
               // update the filter to be what it is minus that diff ([a, b, c, d] - [b] = [a, c, d])
-              let event_types = unique(
-                (layer.filter.externalEvent?.event_types ?? []).filter(et => !to_remove.includes(et)), // remove any event types associated with this DG
+              let eventTypesToApplyFilter = unique(
+                (layer.filter.externalEvent?.event_types ?? []).filter(eventType => !eventTypesToRemove.includes(eventType)), // remove any event types associated with this DG
               );
 
               // update the filter
@@ -260,7 +258,7 @@
                   ...layer.filter,
                   externalEvent: {
                     ...layer.filter.externalEvent,
-                    event_types: event_types,
+                    event_types: eventTypesToApplyFilter,
                   },
                 },
               };
@@ -277,8 +275,8 @@
   <ModalHeader on:close>Manage Derivation Groups</ModalHeader>
   <ModalContent style=" overflow-y:scroll; padding:0;">
     <CssGrid columns={modalColumnSize} minHeight="100%">
-      <div class="derivationgroups-modal-container" style="height:100%">
-        <div class="derivationgroups-modal-filter-container" style:display="flex">
+      <div class="derivation-groups-modal-container" style="height:100%">
+        <div class="derivation-groups-modal-filter-container" style:display="flex">
           <Input layout="inline">
             <input bind:value={filterText} class="st-input" placeholder="Filter derivation groups" />
           </Input>
@@ -294,7 +292,7 @@
           </button>
         </div>
         <hr />
-        <div class="derivationgroups-modal-table-container" style="height:100%">
+        <div class="derivation-groups-modal-table-container" style="height:100%">
           {#if filteredDerivationGroups.length}
             <DataGrid
               bind:this={dataGrid}
@@ -384,21 +382,21 @@
 </Modal>
 
 <style>
-  .derivationgroups-modal-container {
+  .derivation-groups-modal-container {
     display: grid;
     grid-template-rows: min-content min-content auto;
     height: 100%;
     row-gap: 0.5rem;
   }
 
-  .derivationgroups-modal-container hr {
+  .derivation-groups-modal-container hr {
     border: none;
     border-top: 1px solid #e0e0e0;
     margin: 0 1rem;
     width: auto;
   }
 
-  .derivationgroups-modal-filter-container {
+  .derivation-groups-modal-filter-container {
     align-items: center;
     column-gap: 0.25rem;
     display: grid;
@@ -406,7 +404,7 @@
     margin: 0.5rem 1rem 0;
   }
 
-  .derivationgroups-modal-table-container {
+  .derivation-groups-modal-table-container {
     height: 100%;
     padding: 0 1rem 0.5rem;
     width: 100%;

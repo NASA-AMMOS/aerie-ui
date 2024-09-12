@@ -12,10 +12,10 @@
     formProperty.value === undefined
       ? [{ name: '-', value: '-' }]
       : Object.entries(formProperty.value)
-          .map(e => {
+          .map(currentProperty => {
             return {
-              name: e[0],
-              value: e[1],
+              name: currentProperty[0],
+              value: currentProperty[1],
             };
           })
           .sort((a, b) => compare(a.name, b.name));
