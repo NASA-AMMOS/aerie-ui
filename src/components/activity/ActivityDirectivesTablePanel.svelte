@@ -115,7 +115,7 @@
     last_modified_at: {
       field: 'last_modified_at',
       filter: 'text',
-      headerName: 'Last Modified At (UTC)',
+      headerName: `Last Modified At (${$plugins.time.primary.label})`,
       hide: true,
       resizable: true,
       sortable: true,
@@ -123,7 +123,7 @@
     last_modified_by: {
       field: 'last_modified_by',
       filter: 'text',
-      headerName: 'Last Modified By (UTC)',
+      headerName: `Last Modified By (${$plugins.time.primary.label})`,
       hide: true,
       resizable: true,
       sortable: true,
