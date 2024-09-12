@@ -28,7 +28,7 @@
   import effects from '../../utilities/effects';
   import { changedKeys, getTarget } from '../../utilities/generic';
   import gql from '../../utilities/gql';
-  import { showMergeReviewEndedModal, showPlanBranchMergeDerivationGroupMessageModal } from '../../utilities/modal';
+  import { showMergeReviewEndedModal } from '../../utilities/modal';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
   import { tooltip } from '../../utilities/tooltip';
@@ -300,27 +300,20 @@
   }
 
   async function onApproveChanges() {
-    // this variable checks if there are any derivation groups associated with either branch. If there are, warn them of merging behavior. Otherwise, do nothing.
-    let derivationGroupWarningModal = planHasDerivationGroups
-      ? showPlanBranchMergeDerivationGroupMessageModal(sourcePlan.name, targetPlan.name)
-      : Promise.resolve();
-
-    // after awaiting either a modal or nothing, proceed.
-    await derivationGroupWarningModal.then(async () => {
-      if (initialMergeRequest !== null) {
-        const success = await effects.planMergeCommit(
-          initialMergeRequest.id,
-          initialMergeRequest.plan_snapshot_supplying_changes.plan,
-          initialMergeRequest.plan_receiving_changes,
-          user,
-        );
-        if (success) {
-          $planReadOnlyMergeRequest = false;
-          userInitiatedMergeRequestResolution = true;
-          goto(`${base}/plans/${initialPlan.id}`);
-        }
+    if (initialMergeRequest !== null) {
+      const success = await effects.planMergeCommit(
+        initialMergeRequest.id,
+        initialMergeRequest.plan_snapshot_supplying_changes.plan,
+        initialMergeRequest.plan_receiving_changes,
+        planHasDerivationGroups > 0,
+        user,
+      );
+      if (success) {
+        $planReadOnlyMergeRequest = false;
+        userInitiatedMergeRequestResolution = true;
+        goto(`${base}/plans/${initialPlan.id}`);
       }
-    });
+    }
   }
 
   async function onDenyChanges() {
