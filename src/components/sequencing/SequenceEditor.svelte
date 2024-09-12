@@ -5,8 +5,8 @@
   import { json } from '@codemirror/lang-json';
   import { indentService, syntaxTree } from '@codemirror/language';
   import { lintGutter } from '@codemirror/lint';
-  import { Compartment, EditorState } from '@codemirror/state';
-  import type { ViewUpdate } from '@codemirror/view';
+  import { Compartment, EditorState, Prec } from '@codemirror/state';
+  import { Decoration, ViewPlugin, type DecorationSet, type ViewUpdate } from '@codemirror/view';
   import type { SyntaxNode } from '@lezer/common';
   import type { ChannelDictionary, CommandDictionary, ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
   import ChevronDownIcon from '@nasa-jpl/stellar/icons/chevron_down.svg?component';
@@ -17,6 +17,7 @@
   import { EditorView, basicSetup } from 'codemirror';
   import { debounce } from 'lodash-es';
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
+  import { TOKEN_COMMAND } from '../../constants/seq-n-grammar-constants';
   import {
     inputFormat,
     outputFormat,
@@ -37,6 +38,7 @@
   import type { User } from '../../types/app';
   import type { IOutputFormat, Parcel } from '../../types/sequencing';
   import { setupLanguageSupport } from '../../utilities/codemirror';
+  import { computeBlocks, isBlockCommand } from '../../utilities/codemirror/custom-folder';
   import effects from '../../utilities/effects';
   import { downloadBlob, downloadJSON } from '../../utilities/generic';
   import { seqJsonLinter } from '../../utilities/sequence-editor/seq-json-linter';
@@ -44,6 +46,7 @@
   import { sequenceCompletion } from '../../utilities/sequence-editor/sequence-completion';
   import { sequenceLinter } from '../../utilities/sequence-editor/sequence-linter';
   import { sequenceTooltip } from '../../utilities/sequence-editor/sequence-tooltip';
+  import { getNearestAncestorNodeOfType } from '../../utilities/sequence-editor/tree-utils';
   import { showFailureToast, showSuccessToast } from '../../utilities/toast';
   import { tooltip } from '../../utilities/tooltip';
   import Menu from '../menus/Menu.svelte';
@@ -73,6 +76,7 @@
   let compartmentSeqLanguage: Compartment;
   let compartmentSeqLinter: Compartment;
   let compartmentSeqTooltip: Compartment;
+  // let compartmentSeqBlockHighlighter: Compartment;
   let channelDictionary: ChannelDictionary | null;
   let commandDictionary: CommandDictionary | null;
   let disableCopyAndExport: boolean = true;
@@ -197,6 +201,8 @@
         compartmentSeqTooltip.of(sequenceTooltip()),
         EditorView.updateListener.of(debounce(sequenceUpdateListener, 250)),
         EditorView.updateListener.of(selectedCommandUpdateListener),
+        EditorView.updateListener.of(debounce(highlightBlock, 250)),
+        Prec.highest([blockTheme, blockHighlighter]),
         indentService.of(sequenceAutoIndent()),
         EditorState.readOnly.of(readOnly),
       ],
@@ -273,6 +279,57 @@
       selectedNode = updatedSelectionNode;
     }
   }
+
+  const blockMark = Decoration.mark({ class: 'cm-block-match' });
+
+  const blockTheme = EditorView.baseTheme({
+    '.cm-block-match': {
+      outline: '1px dashed',
+    },
+  });
+
+  function highlightBlock(viewUpdate: ViewUpdate) {
+    const tree = syntaxTree(viewUpdate.state);
+    // Command Node includes trailing newline and white space, move to next command
+    const selectionLine = viewUpdate.state.doc.lineAt(viewUpdate.state.selection.asSingle().main.from);
+    const leadingWhiteSpaceLength = selectionLine.text.length - selectionLine.text.trimStart().length;
+    const updatedSelectionNode = tree.resolveInner(selectionLine.from + leadingWhiteSpaceLength, 1);
+    const stemNode = getNearestAncestorNodeOfType(updatedSelectionNode, [TOKEN_COMMAND])?.getChild('Stem');
+    if (stemNode) {
+      const stem = viewUpdate.state.sliceDoc(stemNode.from, stemNode.to);
+      if (isBlockCommand(stem)) {
+        const blocks = computeBlocks(viewUpdate.state);
+        if (blocks) {
+          const pairs = Object.values(blocks);
+          const matchedNodes = pairs.filter(block => block.end?.from === stemNode.from).map(block => block.start);
+          matchedNodes.push(
+            ...pairs.filter(block => block.start.from === stemNode.from && !!block.end).map(block => block.end!),
+          );
+          return matchedNodes;
+        }
+      }
+    }
+    return [];
+  }
+
+  const blockHighlighter = ViewPlugin.fromClass(
+    class {
+      decorations: DecorationSet;
+      constructor(_view: EditorView) {
+        this.decorations = Decoration.none;
+      }
+      update(update: ViewUpdate) {
+        if (update.selectionSet || update.docChanged || update.viewportChanged) {
+          const blocks = highlightBlock(update);
+          this.decorations = Decoration.set(blocks.map(block => blockMark.range(block.from, block.to)));
+          return this.decorations;
+        }
+      }
+    },
+    {
+      decorations: v => v.decorations,
+    },
+  );
 
   function downloadOutputFormat(outputFormat: IOutputFormat) {
     const fileExtension = `${sequenceName}.${selectedOutputFormat?.fileExtension}`;

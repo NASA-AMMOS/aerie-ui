@@ -92,6 +92,8 @@ type TreeState = {
   };
 };
 
+export type PairedCommands = Required<TreeState[number]>;
+
 const blocksForState = new WeakMap<EditorState, TreeState>();
 
 const blockOpeningStems = new Set([
@@ -116,7 +118,7 @@ const blockClosingStems = new Set([
   'SEQ_DIR_END_LOOP',
 ]);
 
-function isBlockCommand(stem: string) {
+export function isBlockCommand(stem: string) {
   return blockOpeningStems.has(stem) || blockClosingStems.has(stem);
 }
 
@@ -136,7 +138,7 @@ function closesBlock(stem: string, blockStem: string) {
   return false;
 }
 
-function computeBlocks(state: EditorState) {
+export function computeBlocks(state: EditorState) {
   // avoid scanning for each command
   const blocks = blocksForState.get(state);
   if (!blocks) {
