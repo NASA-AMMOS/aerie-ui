@@ -159,7 +159,7 @@ export async function showConfirmModal(
 }
 
 /**
- * Shows a ManagePlanDerivationGroupsModal component with the supplied arguments.
+ * Shows a CreateGroupsOrTypesModal component with the supplied arguments.
  */
 export async function showCreateGroupsOrTypes(user: User | null): Promise<ModalElementValue> {
   return new Promise(resolve => {
@@ -407,7 +407,7 @@ export async function showManagePlanDerivationGroups(user: User | null): Promise
 }
 
 /**
- * Shows a ManagePlanDerivationGroupsModal component with the supplied arguments.
+ * Shows a ManageGroupsAndTypes component with the supplied arguments.
  */
 export async function showManageGroupsAndTypes(user: User | null): Promise<ModalElementValue> {
   return new Promise(resolve => {
