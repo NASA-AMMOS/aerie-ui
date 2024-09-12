@@ -391,7 +391,7 @@
           <span class='tooltip-value-highlight st-typography-medium'>${pkey.source_key}</span>
         </div>
         <div class='tooltip-row'>
-          <span>Start Time (UTC):</span>
+          <span>Start Time (${$plugins.time.primary.label}):</span>
           <span class='tooltip-value-highlight st-typography-medium'>${getDoyTime(new Date(start_time))}</span>
         </div>
         <div class='tooltip-row'>
