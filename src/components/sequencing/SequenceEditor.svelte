@@ -301,10 +301,26 @@
         const blocks = computeBlocks(viewUpdate.state);
         if (blocks) {
           const pairs = Object.values(blocks);
-          const matchedNodes = pairs.filter(block => block.end?.from === stemNode.from).map(block => block.start);
-          matchedNodes.push(
-            ...pairs.filter(block => block.start.from === stemNode.from && !!block.end).map(block => block.end!),
-          );
+          const matchedNodes: SyntaxNode[] = [stemNode];
+
+          // when cursor on end -- select else and if
+          let current: SyntaxNode | undefined = stemNode;
+          while (current) {
+            current = pairs.find(block => block.end?.from === current!.from)?.start;
+            if (current) {
+              matchedNodes.push(current);
+            }
+          }
+
+          // when cursor on if -- select else and end
+          current = stemNode;
+          while (current) {
+            current = pairs.find(block => block.start.from === current!.from)?.end;
+            if (current) {
+              matchedNodes.push(current);
+            }
+          }
+
           return matchedNodes;
         }
       }
@@ -321,7 +337,10 @@
       update(update: ViewUpdate) {
         if (update.selectionSet || update.docChanged || update.viewportChanged) {
           const blocks = highlightBlock(update);
-          this.decorations = Decoration.set(blocks.map(block => blockMark.range(block.from, block.to)));
+          this.decorations = Decoration.set(
+            // codemirror requires marks to be in sorted order
+            blocks.sort((a, b) => a.from - b.from).map(block => blockMark.range(block.from, block.to)),
+          );
           return this.decorations;
         }
       }
