@@ -602,11 +602,8 @@
 
         <Highlight highlight={highlightKeysMap.created_at}>
           <Input layout="inline">
-            <label
-              use:tooltip={{ content: `Creation Time (${$plugins.time.primary.label})`, placement: 'top' }}
-              for="creationTime"
-            >
-              Creation Time {$plugins.time.primary.label}
+            <label use:tooltip={{ content: 'Creation Time (UTC)', placement: 'top' }} for="creationTime">
+              Creation Time (UTC)
             </label>
             <input class="st-input w-100" disabled name="creationTime" value={activityDirective.created_at} />
           </Input>
@@ -614,11 +611,8 @@
 
         <Highlight highlight={highlightKeysMap.last_modified_at}>
           <Input layout="inline">
-            <label
-              use:tooltip={{ content: `Last Modified Time (${$plugins.time.primary.label})`, placement: 'top' }}
-              for="lastModifiedTime"
-            >
-              Last Modified Time {$plugins.time.primary.label}
+            <label use:tooltip={{ content: 'Last Modified Time (UTC)', placement: 'top' }} for="lastModifiedTime">
+              Last Modified Time (UTC)
             </label>
             <input class="st-input w-100" disabled name="lastModifiedTime" value={activityDirective.last_modified_at} />
           </Input>
