@@ -285,7 +285,8 @@ async function changeUserRole(role: UserRole): Promise<void> {
   }
 }
 
-const queryPermissions = {
+type GQLKeys = keyof typeof gql;
+const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => boolean> = {
   APPLY_PRESET_TO_ACTIVITY: (
     user: User | null,
     plan: PlanWithOwners,
@@ -558,6 +559,9 @@ const queryPermissions = {
   DELETE_SCHEDULING_CONDITION_PLAN_SPECIFICATIONS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.DELETE_SCHEDULING_SPECIFICATION_CONDITIONS], user);
   },
+  DELETE_SCHEDULING_GOAL_INVOCATIONS: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.DELETE_SCHEDULING_SPECIFICATION_GOALS], user);
+  },
   DELETE_SCHEDULING_GOAL_METADATA: (
     user: User | null,
     goalMetadata: AssetWithOwner<SchedulingGoalMetadata>,
@@ -812,6 +816,9 @@ const queryPermissions = {
   },
   SUB_SCHEDULING_GOAL: () => true,
   SUB_SCHEDULING_GOALS: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.SCHEDULING_GOAL_METADATAS], user);
+  },
+  SUB_SCHEDULING_GOAL_INVOCATIONS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.SCHEDULING_GOAL_METADATAS], user);
   },
   SUB_SCHEDULING_PLAN_SPECIFICATION: (user: User | null): boolean => {
@@ -1081,13 +1088,6 @@ const gatewayPermissions = {
     );
   },
 };
-
-type ShapeOf<T> = Record<keyof T, any>;
-type AssertKeysEqual<X extends ShapeOf<Y>, Y extends ShapeOf<X>> = never;
-type GQLKeys = Record<keyof typeof gql, any>;
-type QueryKeys = Record<keyof typeof queryPermissions, any>;
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-type Assertion = AssertKeysEqual<GQLKeys, QueryKeys>;
 
 type PlanAssetCreatePermissionCheck = (user: User | null, plan: PlanWithOwners) => boolean;
 

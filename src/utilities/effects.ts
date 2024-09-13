@@ -7,6 +7,7 @@ import {
   type ParameterDictionary as AmpcsParameterDictionary,
 } from '@nasa-jpl/aerie-ampcs';
 import { get } from 'svelte/store';
+import { SchedulingType } from '../constants/scheduling';
 import { DictionaryHeaders } from '../enums/dictionaryHeaders';
 import { DictionaryTypes } from '../enums/dictionaryTypes';
 import { SearchParameters } from '../enums/searchParameters';
@@ -128,6 +129,7 @@ import type {
   SchedulingGoalModelSpecificationInsertInput,
   SchedulingGoalModelSpecificationSetInput,
   SchedulingGoalPlanSpecInsertInput,
+  SchedulingGoalPlanSpecSetInput,
   SchedulingGoalPlanSpecification,
   SchedulingPlanSpecification,
   SchedulingPlanSpecificationInsertInput,
@@ -1337,7 +1339,9 @@ const effects = {
     name: string,
     isPublic: boolean,
     metadataTags: SchedulingTagsInsertInput[],
-    definition: string,
+    definitionType: SchedulingType,
+    definition: string | null,
+    file: File | null,
     definitionTags: SchedulingTagsInsertInput[],
     user: User | null,
     description?: string,
@@ -1345,6 +1349,15 @@ const effects = {
     try {
       if (!queryPermissions.CREATE_SCHEDULING_CONDITION(user)) {
         throwPermissionError('create a scheduling condition');
+      }
+
+      let jarId: number | null = null;
+      let codeDefinition: string | null = null;
+
+      if (definitionType === SchedulingType.EDSL) {
+        codeDefinition = definition;
+      } else if (definitionType === SchedulingType.JAR && file) {
+        jarId = await effects.uploadFile(file, user);
       }
 
       const goalInsertInput: SchedulingGoalInsertInput = {
@@ -1357,10 +1370,12 @@ const effects = {
         versions: {
           data: [
             {
-              definition,
+              definition: codeDefinition,
               tags: {
                 data: definitionTags,
               },
+              type: definitionType,
+              uploaded_jar_id: jarId,
             },
           ],
         },
@@ -1385,7 +1400,9 @@ const effects = {
 
   async createSchedulingGoalDefinition(
     goalId: number,
-    definition: string,
+    definitionType: SchedulingType,
+    definition: string | null,
+    file: File | null,
     definitionTags: SchedulingTagsInsertInput[],
     user: User | null,
   ): Promise<Pick<SchedulingGoalDefinition, 'goal_id' | 'definition' | 'revision'> | null> {
@@ -1394,12 +1411,23 @@ const effects = {
         throwPermissionError('create a scheduling goal definition');
       }
 
+      let jarId: number | null = null;
+      let codeDefinition: string | null = null;
+
+      if (definitionType === SchedulingType.EDSL) {
+        codeDefinition = definition;
+      } else if (definitionType === SchedulingType.JAR && file !== null) {
+        jarId = await effects.uploadFile(file, user);
+      }
+
       const goalDefinitionInsertInput: SchedulingGoalDefinitionInsertInput = {
-        definition,
+        definition: codeDefinition,
         goal_id: goalId,
         tags: {
           data: definitionTags,
         },
+        type: definitionType,
+        uploaded_jar_id: jarId,
       };
       const data = await reqHasura<SchedulingGoalDefinition>(
         gql.CREATE_SCHEDULING_GOAL_DEFINITION,
@@ -1420,32 +1448,34 @@ const effects = {
     }
   },
 
-  // async createSchedulingGoalPlanSpecification(
-  //   spec_goal: SchedulingSpecGoalInsertInput,
-  //   user: User | null,
-  // ): Promise<number | null> {
-  //   try {
-  //     if (!queryPermissions.CREATE_SCHEDULING_GOAL_PLAN_SPECIFICATION(user)) {
-  //       throwPermissionError('create a scheduling spec goal');
-  //     }
+  async createSchedulingGoalPlanSpecification(
+    spec_goal: SchedulingGoalPlanSpecInsertInput,
+    user: User | null,
+  ): Promise<number | null> {
+    try {
+      if (!queryPermissions.CREATE_SCHEDULING_GOAL_PLAN_SPECIFICATION(user)) {
+        throwPermissionError('create a scheduling spec goal');
+      }
 
-  //     const data = await reqHasura<SchedulingGoalPlanSpecification>(
-  //       gql.CREATE_SCHEDULING_GOAL_PLAN_SPECIFICATION,
-  //       { spec_goal },
-  //       user,
-  //     );
-  //     const { createSchedulingSpecGoal } = data;
-  //     if (createSchedulingSpecGoal != null) {
-  //       const { specification_id } = createSchedulingSpecGoal;
-  //       return specification_id;
-  //     } else {
-  //       throw Error('Unable to create a scheduling spec goal');
-  //     }
-  //   } catch (e) {
-  //     catchError(e as Error);
-  //     return null;
-  //   }
-  // },
+      const data = await reqHasura<SchedulingGoalPlanSpecification>(
+        gql.CREATE_SCHEDULING_GOAL_PLAN_SPECIFICATION,
+        { spec_goal },
+        user,
+      );
+      const { createSchedulingSpecGoal } = data;
+      if (createSchedulingSpecGoal != null) {
+        const { specification_id } = createSchedulingSpecGoal;
+        showSuccessToast('New Scheduling Goal Invocation Created Successfully');
+        return specification_id;
+      } else {
+        throw Error('Unable to create a scheduling spec goal invocation');
+      }
+    } catch (e) {
+      catchError(e as Error);
+      showFailureToast('Scheduling Goal Invocation Creation Failed');
+      return null;
+    }
+  },
 
   async createSchedulingPlanSpecification(
     spec: SchedulingPlanSpecificationInsertInput,
@@ -2473,6 +2503,36 @@ const effects = {
     }
   },
 
+  async deleteSchedulingGoalInvocation(
+    plan: Plan,
+    schedulingSpecificationId: number,
+    goalInvocationIdsToDelete: (number | undefined)[],
+    user: User | null,
+  ) {
+    try {
+      if (!queryPermissions.UPDATE_SCHEDULING_GOAL_PLAN_SPECIFICATIONS(user, plan)) {
+        throwPermissionError('update this scheduling goal plan specification');
+      }
+      const { deleteConstraintPlanSpecifications } = await reqHasura(
+        gql.DELETE_SCHEDULING_GOAL_INVOCATIONS,
+        {
+          goalInvocationIdsToDelete,
+          specificationId: schedulingSpecificationId,
+        },
+        user,
+      );
+
+      if (deleteConstraintPlanSpecifications !== null) {
+        showSuccessToast(`Scheduling Goals Updated Successfully`);
+      } else {
+        throw Error('Unable to update the scheduling goal specifications for the plan');
+      }
+    } catch (e) {
+      catchError('Scheduling Goal Plan Specifications Update Failed', e as Error);
+      showFailureToast('Scheduling Goal Plan Specifications Update Failed');
+    }
+  },
+
   async deleteSequenceAdaptation(id: number, user: User | null): Promise<void> {
     try {
       if (!queryPermissions.DELETE_SEQUENCE_ADAPTATION(user)) {
@@ -3139,6 +3199,26 @@ const effects = {
     } catch (e) {
       catchError(e as Error);
       return [];
+    }
+  },
+
+  async getFileName(fileId: number, user: User | null): Promise<string | null> {
+    try {
+      if (!queryPermissions.GET_UPLOADED_FILENAME(user)) {
+        throwPermissionError('get the requested filename');
+      }
+      const data = (await reqHasura<[{ name: string }]>(gql.GET_UPLOADED_FILENAME, { id: fileId }, user))[
+        'uploaded_file'
+      ];
+
+      if (data) {
+        const { name } = data[0];
+        return name.replace(/(?:-[a-zA-Z0-9]+){2}(\.[a-z]+)?$/, '$1');
+      }
+      return null;
+    } catch (e) {
+      catchError(e as Error);
+      return null;
     }
   },
 
@@ -5343,8 +5423,7 @@ const effects = {
 
   async updateSchedulingGoalPlanSpecification(
     plan: Plan,
-    schedulingSpecificationId: number,
-    schedulingGoalPlanSpecification: SchedulingGoalPlanSpecInsertInput,
+    schedulingGoalPlanSpecification: SchedulingGoalPlanSpecSetInput,
     user: User | null,
   ) {
     try {
@@ -5353,7 +5432,7 @@ const effects = {
       }
       const {
         enabled,
-        goal_id: goalId,
+        goal_invocation_id,
         goal_revision: revision,
         priority,
         simulate_after: simulateAfter,
@@ -5361,7 +5440,14 @@ const effects = {
 
       const { updateSchedulingGoalPlanSpecification } = await reqHasura(
         gql.UPDATE_SCHEDULING_GOAL_PLAN_SPECIFICATION,
-        { enabled, id: goalId, priority, revision, simulateAfter, specificationId: schedulingSpecificationId },
+        {
+          arguments: schedulingGoalPlanSpecification.arguments,
+          enabled,
+          goal_invocation_id,
+          priority,
+          revision,
+          simulateAfter,
+        },
         user,
       );
 
@@ -5378,8 +5464,7 @@ const effects = {
 
   async updateSchedulingGoalPlanSpecifications(
     plan: Plan,
-    schedulingSpecificationId: number,
-    goalSpecsToUpdate: SchedulingGoalPlanSpecInsertInput[],
+    goalSpecsToInsert: SchedulingGoalPlanSpecInsertInput[],
     goalSpecIdsToDelete: number[],
     user: User | null,
   ) {
@@ -5387,17 +5472,16 @@ const effects = {
       if (!queryPermissions.UPDATE_SCHEDULING_GOAL_PLAN_SPECIFICATIONS(user, plan)) {
         throwPermissionError('update this scheduling goal plan specification');
       }
-      const { deleteConstraintPlanSpecifications, updateSchedulingGoalPlanSpecifications } = await reqHasura(
+      const { deleteConstraintPlanSpecifications, insertSchedulingGoalPlanSpecifications } = await reqHasura(
         gql.UPDATE_SCHEDULING_GOAL_PLAN_SPECIFICATIONS,
         {
           goalSpecIdsToDelete,
-          goalSpecsToUpdate,
-          specificationId: schedulingSpecificationId,
+          goalSpecsToInsert,
         },
         user,
       );
 
-      if (updateSchedulingGoalPlanSpecifications !== null || deleteConstraintPlanSpecifications !== null) {
+      if (insertSchedulingGoalPlanSpecifications !== null || deleteConstraintPlanSpecifications !== null) {
         showSuccessToast(`Scheduling Goals Updated Successfully`);
       } else {
         throw Error('Unable to update the scheduling goal specifications for the plan');
