@@ -78,135 +78,6 @@ export function foldSteps(
   return { from, to };
 }
 
-type BlockStackNode = Readonly<{
-  node: SyntaxNode;
-  stem: string;
-}>;
-
-type BlockStack = BlockStackNode[];
-
-type TreeState = {
-  [startPos: number]: {
-    end?: SyntaxNode;
-    start: SyntaxNode;
-  };
-};
-
-export type PairedCommands = Required<TreeState[number]>;
-
-const blocksForState = new WeakMap<EditorState, TreeState>();
-
-const blockOpeningStems = new Set([
-  'SEQ_DIR_IF',
-  'SEQ_DIR_IF_OR',
-  'SEQ_DIR_IF_AND',
-  'SEQ_DIR_ELSE',
-  'SEQ_DIR_WAIT_UNTIL',
-  'SEQ_DIR_WAIT_UNTIL_VAR',
-  'SEQ_DIR_WAIT_UNTIL_AND',
-  'SEQ_DIR_WAIT_UNTIL_OR',
-  'SEQ_DIR_WAIT_UNTIL_TIMEOUT',
-  'SEQ_DIR_LOOP',
-]);
-
-const blockClosingStems = new Set([
-  'SEQ_DIR_ELSE', // also opens
-  'SEQ_DIR_WAIT_UNTIL_TIMEOUT', // also opens
-
-  'SEQ_DIR_END_IF',
-  'SEQ_DIR_END_WAIT_UNTIL',
-  'SEQ_DIR_END_LOOP',
-]);
-
-export function isBlockCommand(stem: string) {
-  return blockOpeningStems.has(stem) || blockClosingStems.has(stem);
-}
-
-function closesBlock(stem: string, blockStem: string) {
-  switch (stem) {
-    case 'SEQ_DIR_END_IF':
-      return blockStem === 'SEQ_DIR_ELSE' || blockStem.startsWith('SEQ_DIR_IF');
-    case 'SEQ_DIR_ELSE':
-      return blockStem.startsWith('SEQ_DIR_IF');
-    case 'SEQ_DIR_END_WAIT_UNTIL':
-      return blockStem === 'SEQ_DIR_WAIT_UNTIL_TIMEOUT' || blockStem.startsWith('SEQ_DIR_WAIT_UNTIL');
-    case 'SEQ_DIR_WAIT_UNTIL_TIMEOUT':
-      return blockStem.startsWith('SEQ_DIR_WAIT_UNTIL');
-    case 'SEQ_DIR_END_LOOP':
-      return blockStem === 'SEQ_DIR_LOOP';
-  }
-  return false;
-}
-
-export function computeBlocks(state: EditorState) {
-  // avoid scanning for each command
-  const blocks = blocksForState.get(state);
-  if (!blocks) {
-    // find all command nodes in sequence
-    const commandNodes: SyntaxNode[] = [];
-    syntaxTree(state).iterate({
-      enter: node => {
-        if (node.name === TOKEN_COMMAND) {
-          const stemNode = node.node.getChild('Stem');
-          if (stemNode) {
-            commandNodes.push(stemNode);
-          }
-        }
-      },
-    });
-
-    const treeState: TreeState = {};
-    const stack: BlockStack = [];
-    commandNodes
-      // filter out ones that don't impact blocks
-      .filter(stemNode => isBlockCommand(state.sliceDoc(stemNode.from, stemNode.to)))
-      .forEach(stemNode => {
-        const stem = state.sliceDoc(stemNode.from, stemNode.to);
-        const topStem = stack.at(-1)?.stem;
-        if (topStem && closesBlock(stem, topStem)) {
-          // close current block
-          const blockInfo: BlockStackNode | undefined = stack.pop();
-          if (blockInfo) {
-            // pair end with existing start to provide info for fold region
-            treeState[blockInfo.node.from].end = stemNode;
-          }
-        }
-
-        if (blockOpeningStems.has(stem)) {
-          // open new block
-          stack.push({
-            node: stemNode,
-            stem,
-          });
-          treeState[stemNode.from] = {
-            start: stemNode,
-          };
-        }
-      });
-    blocksForState.set(state, treeState);
-  }
-  return blocksForState.get(state);
-}
-
-function blockFolder(
-  stepNode: SyntaxNode,
-  stemNode: SyntaxNode,
-  state: EditorState,
-): { from: number; to: number } | null {
-  const localBlock = computeBlocks(state)?.[stemNode.from];
-  if (localBlock?.start.parent && localBlock?.end?.parent) {
-    // display lines that open and close block
-    // command nodes contain trailing new line
-    // shift back one position so fold is at end of previous line
-    return {
-      from: localBlock.start.parent.to - 1,
-      to: localBlock.end.parent.from - 1,
-    };
-  }
-
-  return null;
-}
-
 /**
  * Calculate the fold range for a Request node.
  * The fold range starts after the RequestName node and any LineComment node
@@ -266,4 +137,207 @@ function foldMetadataOrModel(
     from: start + prefix.length,
     to: newEnd,
   };
+}
+
+type BlockStackNode = Readonly<{
+  node: SyntaxNode;
+  stem: string;
+}>;
+
+type BlockStack = BlockStackNode[];
+
+export type PairedCommands = {
+  end: SyntaxNode;
+  start: SyntaxNode;
+};
+
+type PartialPairedCommands = Partial<PairedCommands>;
+
+type TreeState = {
+  [startPos: number]: PartialPairedCommands;
+};
+
+export function isPairedCommands(pair: unknown): pair is PairedCommands {
+  const pc = pair as PairedCommands;
+  return !!pc?.start && !!pc?.end;
+}
+
+type BlockType = Readonly<{
+  close: string;
+  open: string[];
+  partition?: string;
+}>;
+
+const SEQ_DIR_END_IF = 'SEQ_DIR_END_IF';
+const SEQ_DIR_IF = 'SEQ_DIR_IF';
+const SEQ_DIR_IF_OR = 'SEQ_DIR_IF_OR';
+const SEQ_DIR_IF_AND = 'SEQ_DIR_IF_AND';
+const SEQ_DIR_ELSE = 'SEQ_DIR_ELSE';
+const SEQ_DIR_END_WAIT_UNTIL = 'SEQ_DIR_END_WAIT_UNTIL';
+const SEQ_DIR_WAIT_UNTIL = 'SEQ_DIR_WAIT_UNTIL';
+const SEQ_DIR_WAIT_UNTIL_VAR = 'SEQ_DIR_WAIT_UNTIL_VAR';
+const SEQ_DIR_WAIT_UNTIL_AND = 'SEQ_DIR_WAIT_UNTIL_AND';
+const SEQ_DIR_WAIT_UNTIL_OR = 'SEQ_DIR_WAIT_UNTIL_OR';
+const SEQ_DIR_WAIT_UNTIL_TIMEOUT = 'SEQ_DIR_WAIT_UNTIL_TIMEOUT';
+const SEQ_DIR_END_LOOP = 'SEQ_DIR_END_LOOP';
+const SEQ_DIR_LOOP = 'SEQ_DIR_LOOP';
+
+const BLOCK_TYPES: readonly BlockType[] = [
+  {
+    close: SEQ_DIR_END_IF,
+    open: [SEQ_DIR_IF, SEQ_DIR_IF_OR, SEQ_DIR_IF_AND],
+    partition: SEQ_DIR_ELSE,
+  },
+  {
+    close: SEQ_DIR_END_WAIT_UNTIL,
+    open: [SEQ_DIR_WAIT_UNTIL, SEQ_DIR_WAIT_UNTIL_VAR, SEQ_DIR_WAIT_UNTIL_AND, SEQ_DIR_WAIT_UNTIL_OR],
+    partition: SEQ_DIR_WAIT_UNTIL_TIMEOUT,
+  },
+  {
+    close: SEQ_DIR_END_LOOP,
+    open: [SEQ_DIR_LOOP],
+  },
+];
+
+const OPEN_SUGGESTION: { [open: string]: string } = Object.fromEntries(
+  BLOCK_TYPES.flatMap(blockType => [
+    [blockType.close, blockType.open.join(', ')],
+    blockType.partition ? [blockType.partition, blockType.open.join(', ')] : [],
+  ]),
+);
+
+const CLOSE_SUGGESTION: { [open: string]: string } = Object.fromEntries(
+  BLOCK_TYPES.flatMap(blockType => [
+    ...blockType.open.map(opener => [opener, blockType.close]),
+    ...(blockType.partition ? [[blockType.partition, blockType.close]] : []),
+  ]),
+);
+
+export function closeSuggestion(stem: string) {
+  return CLOSE_SUGGESTION[stem];
+}
+
+export function openSuggestion(stem: string) {
+  return OPEN_SUGGESTION[stem];
+}
+
+const blockOpeningStems = new Set([
+  SEQ_DIR_IF,
+  SEQ_DIR_IF_OR,
+  SEQ_DIR_IF_AND,
+  SEQ_DIR_ELSE,
+  SEQ_DIR_WAIT_UNTIL,
+  SEQ_DIR_WAIT_UNTIL_VAR,
+  SEQ_DIR_WAIT_UNTIL_AND,
+  SEQ_DIR_WAIT_UNTIL_OR,
+  SEQ_DIR_WAIT_UNTIL_TIMEOUT,
+  SEQ_DIR_LOOP,
+]);
+
+const blockClosingStems = new Set([
+  SEQ_DIR_ELSE, // also opens
+  SEQ_DIR_WAIT_UNTIL_TIMEOUT, // also opens
+
+  SEQ_DIR_END_IF,
+  SEQ_DIR_END_WAIT_UNTIL,
+  SEQ_DIR_END_LOOP,
+]);
+
+export function isBlockCommand(stem: string) {
+  return blockOpeningStems.has(stem) || blockClosingStems.has(stem);
+}
+
+function closesBlock(stem: string, blockStem: string) {
+  // not the same as `closeSuggestion(blockStem) === stem;` as else types are optional
+  switch (stem) {
+    case 'SEQ_DIR_END_IF':
+      return blockStem === 'SEQ_DIR_ELSE' || blockStem.startsWith('SEQ_DIR_IF');
+    case 'SEQ_DIR_ELSE':
+      return blockStem.startsWith('SEQ_DIR_IF');
+    case 'SEQ_DIR_END_WAIT_UNTIL':
+      return blockStem === 'SEQ_DIR_WAIT_UNTIL_TIMEOUT' || blockStem.startsWith('SEQ_DIR_WAIT_UNTIL');
+    case 'SEQ_DIR_WAIT_UNTIL_TIMEOUT':
+      return blockStem.startsWith('SEQ_DIR_WAIT_UNTIL');
+    case 'SEQ_DIR_END_LOOP':
+      return blockStem === 'SEQ_DIR_LOOP';
+  }
+  return false;
+}
+
+const blocksForState = new WeakMap<EditorState, TreeState>();
+
+export function computeBlocks(state: EditorState) {
+  // avoid scanning for each command
+  const blocks = blocksForState.get(state);
+  if (!blocks) {
+    // find all command nodes in sequence
+    const commandNodes: SyntaxNode[] = [];
+    syntaxTree(state).iterate({
+      enter: node => {
+        if (node.name === TOKEN_COMMAND) {
+          const stemNode = node.node.getChild('Stem');
+          if (stemNode) {
+            commandNodes.push(stemNode);
+          }
+        }
+      },
+    });
+
+    const treeState: TreeState = {};
+    const stack: BlockStack = [];
+    commandNodes
+      // filter out ones that don't impact blocks
+      .filter(stemNode => isBlockCommand(state.sliceDoc(stemNode.from, stemNode.to)))
+      .forEach(stemNode => {
+        const stem = state.sliceDoc(stemNode.from, stemNode.to);
+        const topStem = stack.at(-1)?.stem;
+
+        if (topStem && closesBlock(stem, topStem)) {
+          // close current block
+          const blockInfo: BlockStackNode | undefined = stack.pop();
+          if (blockInfo) {
+            // pair end with existing start to provide info for fold region
+            treeState[blockInfo.node.from].end = stemNode;
+          }
+        } else if (blockClosingStems.has(stem)) {
+          // unexpected close
+          treeState[stemNode.from] = {
+            end: stemNode,
+          };
+          return; // don't open a new block for else_if type
+        }
+
+        if (blockOpeningStems.has(stem)) {
+          // open new block
+          stack.push({
+            node: stemNode,
+            stem,
+          });
+          treeState[stemNode.from] = {
+            start: stemNode,
+          };
+        }
+      });
+    blocksForState.set(state, treeState);
+  }
+  return blocksForState.get(state);
+}
+
+function blockFolder(
+  stepNode: SyntaxNode,
+  stemNode: SyntaxNode,
+  state: EditorState,
+): { from: number; to: number } | null {
+  const localBlock = computeBlocks(state)?.[stemNode.from];
+  if (isPairedCommands(localBlock) && localBlock.start.parent && localBlock.end.parent) {
+    // display lines that open and close block
+    // command nodes contain trailing new line
+    // shift back one position so fold is at end of previous line
+    return {
+      from: localBlock.start.parent.to - 1,
+      to: localBlock.end.parent.from - 1,
+    };
+  }
+
+  return null;
 }

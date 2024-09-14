@@ -76,7 +76,6 @@
   let compartmentSeqLanguage: Compartment;
   let compartmentSeqLinter: Compartment;
   let compartmentSeqTooltip: Compartment;
-  // let compartmentSeqBlockHighlighter: Compartment;
   let channelDictionary: ChannelDictionary | null;
   let commandDictionary: CommandDictionary | null;
   let disableCopyAndExport: boolean = true;
@@ -295,37 +294,38 @@
     const leadingWhiteSpaceLength = selectionLine.text.length - selectionLine.text.trimStart().length;
     const updatedSelectionNode = tree.resolveInner(selectionLine.from + leadingWhiteSpaceLength, 1);
     const stemNode = getNearestAncestorNodeOfType(updatedSelectionNode, [TOKEN_COMMAND])?.getChild('Stem');
-    if (stemNode) {
-      const stem = viewUpdate.state.sliceDoc(stemNode.from, stemNode.to);
-      if (isBlockCommand(stem)) {
-        const blocks = computeBlocks(viewUpdate.state);
-        if (blocks) {
-          const pairs = Object.values(blocks);
-          const matchedNodes: SyntaxNode[] = [stemNode];
 
-          // when cursor on end -- select else and if
-          let current: SyntaxNode | undefined = stemNode;
-          while (current) {
-            current = pairs.find(block => block.end?.from === current!.from)?.start;
-            if (current) {
-              matchedNodes.push(current);
-            }
-          }
+    if (!stemNode || !isBlockCommand(viewUpdate.state.sliceDoc(stemNode.from, stemNode.to))) {
+      return [];
+    }
 
-          // when cursor on if -- select else and end
-          current = stemNode;
-          while (current) {
-            current = pairs.find(block => block.start.from === current!.from)?.end;
-            if (current) {
-              matchedNodes.push(current);
-            }
-          }
+    const blocks = computeBlocks(viewUpdate.state);
+    if (!blocks) {
+      return [];
+    }
 
-          return matchedNodes;
-        }
+    const pairs = Object.values(blocks);
+    const matchedNodes: SyntaxNode[] = [stemNode];
+
+    // when cursor on end -- select else and if
+    let current: SyntaxNode | undefined = stemNode;
+    while (current) {
+      current = pairs.find(block => block.end?.from === current!.from)?.start;
+      if (current) {
+        matchedNodes.push(current);
       }
     }
-    return [];
+
+    // when cursor on if -- select else and end
+    current = stemNode;
+    while (current) {
+      current = pairs.find(block => block.start?.from === current!.from)?.end;
+      if (current) {
+        matchedNodes.push(current);
+      }
+    }
+
+    return matchedNodes;
   }
 
   const blockHighlighter = ViewPlugin.fromClass(
