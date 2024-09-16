@@ -118,9 +118,7 @@
 
   $: modelParametersMap = $plan?.model?.parameters?.parameters ?? {};
   $: if ($simulation && $plan) {
-    // Because this displays only readonly simulation arguments, there are no overrides present to specify when
-    // invoking `getEffectiveModelArguments`. Thus an empty object is provided in order to get
-    // only the default argument values.
+    // An empty object is provided in order to get only the default argument values to better distinguish overridden arguments
     effects.getEffectiveModelArguments($plan.model.id, {}, user).then(response => {
       if ($simulation !== null && response !== null) {
         const { arguments: defaultArguments } = response;
