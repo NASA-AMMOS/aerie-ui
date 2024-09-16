@@ -400,10 +400,16 @@
     hasExternalEventsLayer
   ) {
     discreteTree = [];
+    let updatedIdToColorMaps: {
+      directives: Record<ActivityDirectiveId, string>;
+      external_events: Record<ExternalEventId, string>;
+      spans: Record<SpanId, string>;
+    } = {
+      directives: { ...idToColorMaps.directives },
+      external_events: { ...idToColorMaps.external_events },
+      spans: { ...idToColorMaps.spans },
+    };
     if (activityLayers && spansMap && activityDirectives && typeof filterItemsByTime === 'boolean') {
-      idToColorMaps.directives = {};
-      idToColorMaps.spans = {};
-
       let spansList = Object.values(spansMap);
       const directivesByType = groupBy(activityDirectives, 'type');
       const spansByType = groupBy(spansList, 'type');
@@ -424,7 +430,7 @@
                 const uniqueDirectives: ActivityDirective[] = [];
                 matchingDirectives.forEach(directive => {
                   if (!seenDirectiveIds[directive.id]) {
-                    idToColorMaps.directives[directive.id] = layer.activityColor;
+                    updatedIdToColorMaps.directives[directive.id] = layer.activityColor;
                     seenDirectiveIds[directive.id] = true;
                     uniqueDirectives.push(directive);
                   }
@@ -436,7 +442,7 @@
                 const uniqueSpans: Span[] = [];
                 matchingSpans.forEach(span => {
                   if (!seenSpanIds[span.span_id]) {
-                    idToColorMaps.spans[span.span_id] = layer.activityColor;
+                    updatedIdToColorMaps.spans[span.span_id] = layer.activityColor;
                     seenSpanIds[span.span_id] = true;
                     uniqueSpans.push(span);
                   }
@@ -492,7 +498,8 @@
             const matchingEvents = externalEventsByType[type];
             if (matchingEvents) {
               matchingEvents.forEach(
-                event => (idToColorMaps.external_events[getRowIdExternalEvent(event.pkey)] = layer.externalEventColor),
+                event =>
+                  (updatedIdToColorMaps.external_events[getRowIdExternalEvent(event.pkey)] = layer.externalEventColor),
               );
               externalEventsFilteredByType = externalEventsFilteredByType.concat(unique(matchingEvents));
             }
@@ -500,6 +507,9 @@
         }
       });
     }
+
+    // we update idToColorMaps via reassignment instead of by mutation so that Svelte reacts to updates correctly
+    idToColorMaps = updatedIdToColorMaps;
   }
 
   $: if (hasActivityLayer && filterItemsByTime && filteredActivityDirectives && filteredSpans && viewTimeRange) {
