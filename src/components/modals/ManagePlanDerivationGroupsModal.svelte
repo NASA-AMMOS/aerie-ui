@@ -13,15 +13,13 @@
   } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import { plugins } from '../../stores/plugins';
-  import { view, viewUpdateRow } from '../../stores/views';
+  import { viewAddFilterToRow } from '../../stores/views';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
+  import type { ExternalEventType } from '../../types/external-event';
   import type { DerivationGroup, ExternalSourceSlim } from '../../types/external-source';
-  import type { Layer, Timeline } from '../../types/timeline';
   import effects from '../../utilities/effects';
-  import { unique } from '../../utilities/generic';
   import { formatDate } from '../../utilities/time';
-  import { isExternalEventLayer } from '../../utilities/timeline';
   import Collapse from '../Collapse.svelte';
   import Input from '../form/Input.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
@@ -49,10 +47,8 @@
   const modalColumnSizeNoDetail: string = '1fr 3px 0fr';
   const modalColumnSizeWithDetail: string = '3fr 3px 1.3fr';
 
-  let externalEventLayers: Layer[] | undefined;
   let dataGrid: DataGrid<DerivationGroup>;
   let columnDefs: DataGridColumnDef<DerivationGroup>[] = [];
-  let timelines: Timeline[] = [];
 
   let modalColumnSize: string = modalColumnSizeNoDetail;
 
@@ -69,13 +65,6 @@
     //    small delay, which buffers button smashing and repeated updates pretty well!
     dataGrid.refreshCells();
   }
-
-  $: timelines = $view?.definition.plan.timelines || [];
-
-  $: externalEventLayers = $view?.definition.plan.timelines
-    .flatMap(timeline => timeline.rows)
-    .flatMap(row => row.layers)
-    .filter(layer => isExternalEventLayer(layer));
 
   $: if (selectedDerivationGroup !== undefined) {
     modalColumnSize = modalColumnSizeWithDetail;
@@ -181,101 +170,28 @@
     return `${derivationGroup.name}:${derivationGroup.source_type_name}`;
   }
 
-  function handleUpdateLayerNewDerivationGroups(newLayers: Layer[]) {
-    // Derivation Group association is done on a *plan* level which makes this a little tricky. We want to update *all* available External Event Layers with the new layers (post-association), so we must look through all available timelines & their rows to find the layers we're updating
-    timelines.forEach(currentTimeline => {
-      currentTimeline.rows.forEach(currentRow => {
-        const regeneratedLayers = currentRow.layers.map(currentLayer => {
-          const layerHasNewVersion = newLayers.find(newLayer => newLayer.id === currentLayer.id);
-          return layerHasNewVersion !== undefined ? layerHasNewVersion : currentLayer;
-        });
-        viewUpdateRow('layers', regeneratedLayers, currentTimeline.id, currentRow.id);
-      });
-    });
-  }
-
   async function changeDerivationGroupAssociation(checked: boolean, derivationGroupName: string | undefined) {
     if (derivationGroupName !== undefined) {
       if (checked) {
         // insert
         await effects.insertDerivationGroupForPlan(derivationGroupName, $plan, user);
-        if ($derivationGroupPlanLinkError !== null) {
-          // Insert all the external event types from the derivation group to the timeline filter
+        if ($derivationGroupPlanLinkError === null) {
+          // Add filter to timeline
           const derivationGroup = $derivationGroups.find(
-            derivationGroup => derivationGroup.name === derivationGroupName,
+            iterDerivationGroup => iterDerivationGroup.name === derivationGroupName,
           );
-          if (derivationGroup !== undefined && externalEventLayers !== undefined) {
-            const newExternalEventLayers = externalEventLayers.map(layer => {
-              let event_types = unique(
-                (layer.filter.externalEvent?.event_types ?? []).concat(derivationGroup.event_types), // add new event types associated with this DG
-              );
-              return {
-                ...layer,
-                filter: {
-                  ...layer.filter,
-                  externalEvent: {
-                    ...layer.filter.externalEvent,
-                    event_types: event_types,
-                  },
-                },
-              };
-            });
-            handleUpdateLayerNewDerivationGroups(newExternalEventLayers);
+          if (derivationGroup) {
+            const derivationGroupExternalEventTypes: ExternalEventType[] = derivationGroup.event_types.map(
+              eventType => ({ name: eventType }),
+            );
+            viewAddFilterToRow(derivationGroupExternalEventTypes, 'external-event');
           }
         }
       } else {
         // delete
         await effects.deleteDerivationGroupForPlan(derivationGroupName, $plan, user);
         if ($derivationGroupPlanLinkError !== null) {
-          // Remove all the external event types from the derivation group to the timeline filter, if this was the last one bearing that type.
-          const derivationGroup = $derivationGroups.find(
-            derivationGroup => derivationGroup.name === derivationGroupName,
-          );
-          if (derivationGroup !== undefined && externalEventLayers !== undefined) {
-            const newExternalEventLayers = externalEventLayers.map(layer => {
-              // check that no other associated derivation group includes those event types (filter has [a, b, c, d])
-              // first get the list of event types the derivation group we will dissociate has ([b, c])
-              let eventTypesToRemove = derivationGroup.event_types;
-
-              // then, get the list of event types all other derivation groups have ([a, c, d])
-              let otherDerivationGroupEventTypes = $selectedPlanDerivationGroupNames
-                .map(value =>
-                  $derivationGroups.find(
-                    iterDerivationGroup =>
-                      iterDerivationGroup.name === value && iterDerivationGroup.name !== derivationGroup.name,
-                  ),
-                )
-                .reduce((agg, currentDerivationGroup) => {
-                  agg = agg.concat(currentDerivationGroup?.event_types ?? []);
-                  return agg;
-                }, [] as string[]);
-
-              // get the diff - which is event types unique to this derivation group ([b])
-              eventTypesToRemove = eventTypesToRemove.filter(
-                eventType => !otherDerivationGroupEventTypes.includes(eventType),
-              );
-
-              // update the filter to be what it is minus that diff ([a, b, c, d] - [b] = [a, c, d])
-              let eventTypesToApplyFilter = unique(
-                (layer.filter.externalEvent?.event_types ?? []).filter(
-                  eventType => !eventTypesToRemove.includes(eventType),
-                ), // remove any event types associated with this DG
-              );
-
-              // update the filter
-              return {
-                ...layer,
-                filter: {
-                  ...layer.filter,
-                  externalEvent: {
-                    ...layer.filter.externalEvent,
-                    event_types: eventTypesToApplyFilter,
-                  },
-                },
-              };
-            });
-            handleUpdateLayerNewDerivationGroups(newExternalEventLayers);
-          }
+          console.log('Removed');
         }
       }
     }
