@@ -4,6 +4,7 @@ import type { ResourceType } from '../types/simulation';
 import type {
   ActivityLayerFilter,
   Axis,
+  ExternalEventLayerFilter,
   Layer,
   ResourceLayerFilter,
   Row,
@@ -18,6 +19,7 @@ import {
   TimelineLockStatus,
   createRow,
   createTimelineActivityLayer,
+  createTimelineExternalEventLayer,
   createTimelineLineLayer,
   createTimelineResourceLayer,
   getUniqueColorForActivityLayer,
@@ -562,11 +564,12 @@ export function viewUpdateYAxis(prop: string, value: any) {
 
 export function getUpdatedLayerWithFilters(
   timelines: Timeline[],
-  type: string /* 'activity' | 'resource' */,
+  type: string /* 'activity' | 'resource' | 'external-event' */,
   items: TimelineItemType[],
   layer?: Layer,
   row?: Row,
 ): { layer: Layer; yAxis?: Axis } {
+  type = type === 'external-event' ? 'externalEvent' : type; // External Event requires swapping the type to 'externalEvent' for future references related to the layer/filter
   const itemNames = items.map(i => i.name);
   // Create a suitable layer if not provided
   if (!layer) {
@@ -575,6 +578,12 @@ export function getUpdatedLayerWithFilters(
         layer: createTimelineActivityLayer(timelines, {
           activityColor: getUniqueColorForActivityLayer(row),
           filter: { activity: { types: itemNames } },
+        }),
+      };
+    } else if (type === 'externalEvent') {
+      return {
+        layer: createTimelineExternalEventLayer(timelines, {
+          filter: { externalEvent: { event_types: itemNames } },
         }),
       };
     } else {
@@ -599,8 +608,8 @@ export function getUpdatedLayerWithFilters(
     }
   } else {
     // Otherwise augment the filter of the specified layer
-    const prop = type === 'activity' ? 'types' : 'names';
-    const typedType = type as 'activity' | 'resource';
+    const prop = type === 'activity' ? 'types' : type === 'externalEvent' ? 'event_types' : 'names';
+    const typedType = type as 'activity' | 'resource' | 'externalEvent';
     const existingFilter = layer.filter[typedType];
     let existingFilterItems: string[] = [];
 
@@ -608,6 +617,8 @@ export function getUpdatedLayerWithFilters(
       existingFilterItems = (existingFilter as ActivityLayerFilter).types;
     } else if (existingFilter && (existingFilter as ResourceLayerFilter).names) {
       existingFilterItems = (existingFilter as ResourceLayerFilter).names;
+    } else if (existingFilter && (existingFilter as ExternalEventLayerFilter).event_types) {
+      existingFilterItems = (existingFilter as ExternalEventLayerFilter).event_types;
     }
 
     return {
@@ -667,7 +678,7 @@ export function viewAddFilterToRow(
 
 export function viewAddFilterItemsToRow(
   items: TimelineItemType[],
-  typeName: string /* 'activity' | 'resource' */,
+  typeName: string /* 'activity' | 'resource' | 'external-event' */,
   rowId?: number,
   layer?: Layer,
   index?: number, // row index to insert after
@@ -679,8 +690,15 @@ export function viewAddFilterItemsToRow(
 
   let newRows: Row[] = timelines[0].rows;
   let returnRow: Row | undefined = undefined;
-  const defaultRowName = `${capitalize(typeName)} Row`;
-  const row = typeof rowId === 'number' ? newRows.find(r => r.id === rowId) : undefined;
+  const defaultRowName = `${typeName !== 'external-event' ? capitalize(typeName) : 'External Event'} Row`;
+  // If no row was given, but one matches the default name, attempt to use it
+  const row =
+    typeof rowId === 'number'
+      ? newRows.find(r => r.id === rowId)
+      : newRows.find(iterRow => {
+          return iterRow.name === defaultRowName;
+        }) || undefined;
+
   const targetRow = row || createRow(timelines, { name: items.length === 1 ? items[0].name : defaultRowName });
   if (!row) {
     // If no row is provided we assume there is no relevant layer
@@ -691,11 +709,14 @@ export function viewAddFilterItemsToRow(
     newRows.splice(insertIndex + 1, 0, returnRow);
   } else {
     // Find the layer in the row or create one if needed
+    const appropriateLayerInRow: Layer | undefined = row.layers.find(iterLayer => iterLayer.chartType === typeName);
+    layer = layer !== undefined ? layer : appropriateLayerInRow; // Utilize the located layer if one was not given
     if (
       !layer ||
       // Case where the target layer type does not match the destination layer chart type
       (layer.chartType === 'activity' && typeName === 'resource') ||
-      (layer.chartType !== 'activity' && typeName === 'activity')
+      (layer.chartType !== 'activity' && typeName === 'activity') ||
+      (layer.chartType !== 'external-event' && typeName === 'external-event')
     ) {
       // Add to existing row
       const { layer: newLayer, yAxis } = getUpdatedLayerWithFilters(timelines, typeName, items, undefined, row);
