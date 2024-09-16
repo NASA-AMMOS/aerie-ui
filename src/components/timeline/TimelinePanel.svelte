@@ -4,10 +4,10 @@
   import { activityDirectivesMap, selectActivity, selectedActivityDirectiveId } from '../../stores/activities';
   import { visibleConstraintResults } from '../../stores/constraints';
   import {
-    externalEventsDB,
+    externalEvents,
     getRowIdExternalEvent,
     selectExternalEvent,
-    selectedExternalEventId,
+    selectedExternalEventId
   } from '../../stores/external-event';
   import { maxTimeRange, plan, planReadOnly, viewTimeRange } from '../../stores/plan';
   import {
@@ -211,7 +211,7 @@
       {limitTooltipToLine}
       {showTimelineTooltip}
       activityDirectivesMap={$activityDirectivesMap}
-      externalEventsFromDB={$externalEventsDB}
+      externalEvents={$externalEvents}
       constraintResults={$visibleConstraintResults}
       {hasUpdateDirectivePermission}
       {hasUpdateSimulationPermission}

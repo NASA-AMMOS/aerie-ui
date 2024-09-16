@@ -37,7 +37,7 @@ export type ExternalEventJson = {
 
 // no analogue to ExternalSourceSlim as we have no subevents or anything of the sort that we may elect to exclude
 
-export type ExternalEvent = Pick<ExternalEventDB, 'duration' | 'pkey' | 'properties' | 'source' | 'start_time'> & {
+export type ExternalEvent = ExternalEventDB & {
   duration_ms: number;
   start_ms: number;
 };

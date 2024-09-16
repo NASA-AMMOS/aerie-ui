@@ -2,6 +2,7 @@ import { keyBy } from 'lodash-es';
 import { derived, writable, type Writable } from 'svelte/store';
 import type { ExternalEventDB, ExternalEventId, ExternalEventPkey, ExternalEventType } from '../types/external-event';
 import gql from '../utilities/gql';
+import { convertDurationToMs, convertUTCtoMs } from '../utilities/time';
 import { selectedPlanDerivationGroupNames } from './external-source';
 import { gqlSubscribable } from './subscribable';
 import { viewUpdateGrid } from './views';
@@ -37,6 +38,16 @@ export const selectedExternalEvent = derived(
     return null;
   },
 );
+
+export const externalEvents = derived(externalEventsDB, $externalEventsDB => {
+  return $externalEventsDB.map(externalEvent => {
+    return {
+      ...externalEvent,
+      duration_ms: convertDurationToMs(externalEvent.duration),
+      start_ms: convertUTCtoMs(externalEvent.start_time),
+    };
+  });
+});
 
 /** Helper functions. */
 export function resetExternalEventStores() {
