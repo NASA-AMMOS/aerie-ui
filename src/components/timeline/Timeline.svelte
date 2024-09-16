@@ -13,7 +13,7 @@
   import type { ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { ConstraintResultWithName } from '../../types/constraint';
-  import type { ExternalEventDB, ExternalEventId } from '../../types/external-event';
+  import type { ExternalEvent, ExternalEventId } from '../../types/external-event';
   import type { Plan } from '../../types/plan';
   import type {
     ResourceType,
@@ -34,7 +34,7 @@
     XAxisTick,
   } from '../../types/timeline';
   import { clamp } from '../../utilities/generic';
-  import { convertDurationToMs, convertUTCtoMs, formatDate } from '../../utilities/time';
+  import { formatDate } from '../../utilities/time';
   import { MAX_CANVAS_SIZE, TimelineInteractionMode, TimelineLockStatus, getXScale } from '../../utilities/timeline';
   import TimelineRow from './Row.svelte';
   import RowHeaderDragHandleWidth from './RowHeaderDragHandleWidth.svelte';
@@ -47,7 +47,7 @@
   import TimelineXAxis from './XAxis.svelte';
 
   export let activityDirectivesMap: ActivityDirectivesMap = {};
-  export let externalEventsFromDB: ExternalEventDB[] = [];
+  export let externalEvents: ExternalEvent[] = [];
   export let constraintResults: ConstraintResultWithName[] = [];
   export let hasUpdateDirectivePermission: boolean = false;
   export let hasUpdateSimulationPermission: boolean = false;
@@ -125,16 +125,7 @@
   $: derivationGroups = $planDerivationGroupLinks
     .filter(link => link.plan_id === plan?.id)
     .map(link => link.derivation_group_name);
-  $: externalEvents = externalEventsFromDB
-    .map(externalEvent => {
-      return {
-        ...externalEvent,
-        duration_ms: convertDurationToMs(externalEvent.duration),
-        start_ms: convertUTCtoMs(externalEvent.start_time),
-      };
-    })
-    .filter(externalEvent => derivationGroups.includes(externalEvent.pkey.derivation_group_name));
-
+  $: externalEvents = externalEvents.filter(externalEvent => derivationGroups.includes(externalEvent.pkey.derivation_group_name));
   $: rows = timeline?.rows || [];
   $: drawWidth = clientWidth > 0 ? clientWidth - (timeline?.marginLeft ?? 0) - (timeline?.marginRight ?? 0) : 0;
   $: xAxisDrawHeight = 48 + 16 * ($plugins.time.additional.length ? Math.max($plugins.time.additional.length, 1) : 1);
