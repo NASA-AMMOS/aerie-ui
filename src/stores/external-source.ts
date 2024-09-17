@@ -1,7 +1,6 @@
-import { derived, writable, type Writable } from 'svelte/store';
+import { derived, writable, type Readable, type Writable } from 'svelte/store';
 import {
   type DerivationGroup,
-  type ExternalSourcePkey,
   type ExternalSourceSlim,
   type ExternalSourceType,
   type PlanDerivationGroup,
@@ -58,12 +57,12 @@ export const usersSeenSourcesRaw = gqlSubscribable<{
 );
 
 /* Derived. */
-export const selectedPlanDerivationGroupNames = derived(
+export const selectedPlanDerivationGroupNames: Readable<string[]> = derived(
   [planDerivationGroupLinks, planId],
   ([$planDerivationGroupLinks, $planId]) =>
     $planDerivationGroupLinks.filter(link => link.plan_id === $planId).map(link => link.derivation_group_name),
 );
-export const selectedPlanDerivationGroupEventTypes = derived(
+export const selectedPlanDerivationGroupEventTypes: Readable<string[]> = derived(
   [derivationGroups, selectedPlanDerivationGroupNames],
   ([$derivationGroups, $selectedPlanDerivationGroupIds]) => {
     return $derivationGroups
@@ -72,7 +71,7 @@ export const selectedPlanDerivationGroupEventTypes = derived(
       .reduce((acc, curr) => acc.concat(curr), []);
   },
 );
-export const usersSeenSources = derived(
+export const usersSeenSources: Readable<Record<string, UserSeenEntryWithDate[]>> = derived(
   [usersSeenSourcesRaw, externalSources],
   ([$usersSeenSourcesRaw, $externalSources]) => {
     const res: Record<string, UserSeenEntryWithDate[]> = {};
@@ -101,7 +100,7 @@ export const usersSeenSources = derived(
 );
 
 /* Helper Functions. */
-export function resetExternalSourceStores() {
+export function resetExternalSourceStores(): void {
   createExternalSourceError.set(null);
   createExternalSourceTypeError.set(null);
   createDerivationGroupError.set(null);
@@ -117,7 +116,7 @@ function transformExternalSources(
     source_type_name: string;
     start_time: string;
     valid_at: string;
-  }[],
+  }[] | null | undefined,
 ): ExternalSourceSlim[] {
   const completeExternalSourceSlim: ExternalSourceSlim[] = [];
   if (externalSources !== null && externalSources !== undefined) {
@@ -145,7 +144,7 @@ function transformDerivationGroups(
     name: string;
     source_type_name: string;
     sources: string[];
-  }[],
+  }[] | null | undefined,
 ): DerivationGroup[] {
   const completeExternalSourceSlim: DerivationGroup[] = [];
   if (derivationGroups !== null && derivationGroups !== undefined) {
@@ -165,21 +164,4 @@ function transformDerivationGroups(
     });
   }
   return completeExternalSourceSlim;
-}
-
-// Row/Hash Functions
-export function getRowIdExternalSourceSlim(externalSourceSlim: ExternalSourceSlim): string {
-  return externalSourceSlim.pkey.derivation_group_name + externalSourceSlim.pkey.key;
-}
-
-export function getRowIdExternalSource(externalSourcePkey: ExternalSourcePkey): string {
-  return externalSourcePkey.derivation_group_name + externalSourcePkey.key;
-}
-
-export function getRowIdDerivationGroup(derivationGroup: DerivationGroup): string {
-  return `${derivationGroup.name}:${derivationGroup.source_type_name}`;
-}
-
-export function getRowIdExternalSourceType(externalSourceType: ExternalSourceType): string {
-  return externalSourceType.name;
 }

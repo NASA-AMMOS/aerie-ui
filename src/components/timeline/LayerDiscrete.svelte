@@ -9,7 +9,6 @@
   import { createEventDispatcher, onDestroy, onMount, tick } from 'svelte';
   import { ViewDefaultDiscreteOptions } from '../../constants/view';
   import { ViewConstants } from '../../enums/view';
-  import { getRowIdExternalEvent } from '../../stores/external-event';
   import type { ActivityDirective, ActivityDirectiveId, ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { ExternalEvent, ExternalEventId } from '../../types/external-event';
@@ -29,6 +28,7 @@
   } from '../../types/timeline';
   import { hexToRgba, shadeColor } from '../../utilities/color';
   import effects from '../../utilities/effects';
+  import { getRowIdExternalEvent } from '../../utilities/externalEvents';
   import { isRightClick } from '../../utilities/generic';
   import { isDeleteEvent } from '../../utilities/keyboardEvents';
   import {
