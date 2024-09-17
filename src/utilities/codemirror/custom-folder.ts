@@ -287,6 +287,7 @@ export function computeBlocks(state: EditorState) {
 
     const treeState: TreeState = {};
     const stack: BlockStack = [];
+    const docString = state.sliceDoc();
 
     commandNodes
       // filter out ones that don't impact blocks
@@ -300,7 +301,6 @@ export function computeBlocks(state: EditorState) {
           const blockInfo: BlockStackNode | undefined = stack.pop();
           if (blockInfo) {
             // pair end with existing start to provide info for fold region
-            const docString = state.sliceDoc();
             const commandStr = state.toText(docString).lineAt(stemNode.from).text;
             const leadingSpaces = commandStr.length - commandStr.trimStart().length;
             let endPos: undefined | number = undefined;
@@ -321,10 +321,6 @@ export function computeBlocks(state: EditorState) {
 
         if (blockOpeningStems.has(stem)) {
           // open new block
-          stack.push({
-            node: stemNode,
-            stem,
-          });
 
           let startPos: undefined | number = undefined;
           if (stemNode.parent) {
@@ -335,6 +331,11 @@ export function computeBlocks(state: EditorState) {
             start: stemNode,
             startPos,
           };
+
+          stack.push({
+            node: stemNode,
+            stem,
+          });
         }
       });
     blocksForState.set(state, treeState);

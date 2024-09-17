@@ -22,7 +22,7 @@ import { TimeTypes } from '../../enums/time';
 import { getGlobals, sequenceAdaptation } from '../../stores/sequence-adaptation';
 import { CustomErrorCodes } from '../../workers/customCodes';
 import { addDefaultArgs, quoteEscape } from '../codemirror/codemirror-utils';
-import { closeSuggestion, computeBlocks, openSuggestion } from '../codemirror/custom-folder';
+import { closeSuggestion, computeBlocks, openSuggestion, type PairedCommands } from '../codemirror/custom-folder';
 import {
   getBalancedDuration,
   getDoyTime,
@@ -174,8 +174,8 @@ export function sequenceLinter(
   }
 
   function conditionalAndLoopKeywordsLinter(
-    commandNodes: SyntaxNode[],
-    text: string,
+    _commandNodes: SyntaxNode[],
+    _text: string,
     state: EditorState,
   ): Diagnostic[] {
     const diagnostics: Diagnostic[] = [];
@@ -184,16 +184,29 @@ export function sequenceLinter(
 
     if (blocks) {
       const pairs = Object.values(blocks);
-      pairs.forEach(pair => {
-        if (!pair.start && pair.end) {
-          const stem = state.sliceDoc(pair.end.from, pair.end.to);
-          diagnostics.push({
-            from: pair.end.from,
-            message: `${stem} must match a preceding ${openSuggestion(stem)}`,
-            severity: 'error',
-            to: pair.end.to,
-          });
-        } else if (pair.start && !pair.end) {
+      const unmatchedEnd: Pick<PairedCommands, 'end'>[] = pairs.filter(
+        (pair): pair is Pick<PairedCommands, 'end'> => !pair.start && !!pair.end,
+      );
+      unmatchedEnd.forEach(pair => {
+        const stem = state.sliceDoc(pair.end.from, pair.end.to);
+        diagnostics.push({
+          from: pair.end.from,
+          message: `${stem} must match a preceding ${openSuggestion(stem)}`,
+          severity: 'error',
+          to: pair.end.to,
+        });
+      });
+
+      // mismatched open commands cascade due to the implementation via stack and no attempt to interpret intent
+      // to help the user incrementally correct the sequence show only the last error of this type
+      const unclosedOpen: Pick<PairedCommands, 'start'>[] = pairs.filter(
+        (pair): pair is Pick<PairedCommands, 'start'> => !!pair.start && !pair.end,
+      );
+
+      unclosedOpen
+        .sort((a, b) => b.start.from - a.start.from)
+        .slice(0, 1)
+        .forEach(pair => {
           const stem = state.sliceDoc(pair.start.from, pair.start.to);
           const suggestion = closeSuggestion(stem);
           diagnostics.push({
@@ -217,8 +230,7 @@ export function sequenceLinter(
             severity: 'error',
             to: pair.start.to,
           });
-        }
-      });
+        });
     }
 
     return diagnostics;
