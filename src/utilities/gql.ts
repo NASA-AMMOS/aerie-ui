@@ -119,6 +119,7 @@ export enum Queries {
   INSERT_EXPANSION_RULE = 'insert_expansion_rule_one',
   INSERT_EXPANSION_RULE_TAGS = 'insert_expansion_rule_tags',
   INSERT_EXTERNAL_EVENT_TYPE = 'insert_external_event_type',
+  INSERT_EXTERNAL_EVENT_TYPE_ONE = 'insert_external_event_type_one',
   INSERT_EXTERNAL_SOURCE = 'insert_external_source_one',
   INSERT_EXTERNAL_SOURCE_TYPE = 'insert_external_source_type_one',
   INSERT_MISSION_MODEL = 'insert_mission_model_one',
@@ -182,6 +183,7 @@ export enum Queries {
   SCHEDULING_SPECIFICATION = 'scheduling_specification_by_pk',
   SCHEDULING_SPECIFICATION_CONDITIONS = 'scheduling_specification_conditions',
   SCHEDULING_SPECIFICATION_GOALS = 'scheduling_specification_goals',
+  SEEN_SOURCES = 'seen_sources',
   SEQUENCE = 'sequence',
   SEQUENCE_ADAPTATION = 'sequence_adaptation',
   SEQUENCE_TO_SIMULATED_ACTIVITY = 'sequence_to_simulated_activity_by_pk',
@@ -413,7 +415,7 @@ const gql = {
 
   CREATE_DERIVATION_GROUP: `#graphql
     mutation CreateDerivationGroup($derivationGroup: derivation_group_insert_input!) {
-      createDerivationGroup: insert_derivation_group_one(object: $derivationGroup) {
+      createDerivationGroup: ${Queries.INSERT_DERIVATION_GROUP}(object: $derivationGroup) {
         name
       }
     }
@@ -476,7 +478,7 @@ const gql = {
 
   CREATE_EXTERNAL_EVENT_TYPE: `#graphql
     mutation CreateExternalEventType($eventType: external_event_type_insert_input!) {
-      createExternalEventType: insert_external_event_type_one(object: $eventType) {
+      createExternalEventType: ${Queries.INSERT_EXTERNAL_EVENT_TYPE_ONE}(object: $eventType) {
         name
       }
     }
@@ -515,7 +517,7 @@ const gql = {
       ) {
         name
       }
-      createExternalSource: insert_external_source_one(object: $source) {
+      createExternalSource: ${Queries.INSERT_EXTERNAL_SOURCE}(object: $source) {
         key
       }
     }
@@ -523,7 +525,7 @@ const gql = {
 
   CREATE_EXTERNAL_SOURCE_TYPE: `#graphql
     mutation CreateExternalSourceType($sourceType: external_source_type_insert_input!) {
-      createExternalSourceType: insert_external_source_type_one(object: $sourceType) {
+      createExternalSourceType: ${Queries.INSERT_EXTERNAL_SOURCE_TYPE}(object: $sourceType) {
         name
       }
     }
@@ -1553,13 +1555,13 @@ const gql = {
   // Should be deprecated with the introduction of strict external source schemas, dictating allowable event types for given source types. But for now, this will do.
   GET_EXTERNAL_EVENT_TYPE_BY_SOURCE: `#graphql
     query GetExternalEventTypesBySource($derivationGroupName: String!, $sourceKey: String!) {
-      external_source(
+      ${Queries.EXTERNAL_SOURCES} (
         where: {
           key: {_eq: $sourceKey},
           derivation_group_name: {_eq: $derivationGroupName}
         }
       ) {
-        external_events {
+        ${Queries.EXTERNAL_EVENT} {
           external_event_type {
             name
           }
@@ -1800,11 +1802,11 @@ const gql = {
 
   GET_PLAN_EVENT_TYPES: `#graphql
     query GetPlanEventTypes($plan_id: Int!){
-      plan_derivation_group(where: {plan_id: {_eq: $plan_id}}) {
-        derivation_group {
-          external_source {
-            external_events {
-              external_event_type {
+      ${Queries.PLAN_DERIVATION_GROUP}(where: {plan_id: {_eq: $plan_id}}) {
+        ${Queries.DERIVATION_GROUP} {
+          ${Queries.EXTERNAL_SOURCES} {
+            ${Queries.EXTERNAL_EVENT} {
+              ${Queries.EXTERNAL_EVENT_TYPES} {
                 name
               }
             }
@@ -2816,10 +2818,10 @@ const gql = {
     }
   `, // deprecated in favor of the next query
 
-  SUB_PLAN_EXTERNAL_EVENTS_DG: `#graphql
-    subscription SubPlanExternalEventsDG($derivation_group_names: [String!]!){
-      events: derived_events(where: {derivation_group_name: {_in: $derivation_group_names}}) {
-        external_event {
+  SUB_PLAN_EXTERNAL_EVENTS_DERIVATION_GROUP: `#graphql
+    subscription SubPlanExternalEventsDerivationGroup($derivation_group_names: [String!]!){
+      events: ${Queries.DERIVED_EVENTS}(where: {derivation_group_name: {_in: $derivation_group_names}}) {
+        ${Queries.EXTERNAL_EVENT} {
           properties
           event_type_name
           key
@@ -3322,7 +3324,7 @@ const gql = {
 
   SUB_SEEN_SOURCES: `#graphql
     subscription SubSeenSources {
-      seen_sources {
+      ${Queries.SEEN_SOURCES} {
         username,
         derivation_group,
         external_source_name,
@@ -3894,6 +3896,7 @@ const gql = {
       }
     }
   `,
+  
   UPDATE_SCHEDULING_GOAL_MODEL_SPECIFICATIONS: `#graphql
     mutation UpdateSchedulingGoalModelSpecifications($goalSpecsToUpdate: [scheduling_model_specification_goals_insert_input!]!, $goalIdsToDelete: [Int!]! = [], $modelId: Int!) {
       updateSchedulingGoalModelSpecifications: ${Queries.INSERT_SCHEDULING_MODEL_SPECIFICATION_GOALS}(
