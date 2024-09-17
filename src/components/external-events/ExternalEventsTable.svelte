@@ -6,14 +6,14 @@
   import { plugins } from '../../stores/plugins';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
-  import type { ExternalEventDB, ExternalEventId } from '../../types/external-event';
+  import type { ExternalEvent, ExternalEventId } from '../../types/external-event';
   import type { ExternalSourceSlim } from '../../types/external-source';
   import { getRowIdExternalEventWhole } from '../../utilities/externalEvents';
   import { formatDate } from '../../utilities/time';
   import SingleActionDataGrid from '../ui/DataGrid/SingleActionDataGrid.svelte';
 
   export let selectedItemId: ExternalEventId | null;
-  export let items: ExternalEventDB[];
+  export let items: ExternalEvent[];
   export let user: User | null;
 
   const dispatch = createEventDispatcher<{
@@ -28,7 +28,7 @@
       headerName: 'Key',
       resizable: true,
       sortable: true,
-      valueGetter: (params: ValueGetterParams<ExternalEventDB>) => {
+      valueGetter: (params: ValueGetterParams<ExternalEvent>) => {
         if (params.data?.pkey) {
           return params.data.pkey.key;
         }
@@ -40,7 +40,7 @@
       headerName: 'Event Type',
       resizable: true,
       sortable: true,
-      valueGetter: (params: ValueGetterParams<ExternalEventDB>) => {
+      valueGetter: (params: ValueGetterParams<ExternalEvent>) => {
         if (params.data?.pkey) {
           return params.data.pkey.event_type_name;
         }
@@ -52,7 +52,7 @@
       headerName: 'Source Key',
       resizable: true,
       sortable: true,
-      valueGetter: (params: ValueGetterParams<ExternalEventDB>) => {
+      valueGetter: (params: ValueGetterParams<ExternalEvent>) => {
         if (params.data?.pkey) {
           return params.data.pkey.source_key;
         }

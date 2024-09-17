@@ -1,8 +1,8 @@
-import type { ExternalEventDB, ExternalEventId, ExternalEventPkey, ExternalEventType } from "../types/external-event";
+import type { ExternalEvent, ExternalEventId, ExternalEventPkey, ExternalEventType } from "../types/external-event";
 import type { DerivationGroup, ExternalSourcePkey, ExternalSourceSlim, ExternalSourceType } from "../types/external-source";
 
 // External Event Row/Hash Functions
-export function getRowIdExternalEventWhole(externalEvent: ExternalEventDB): ExternalEventId {
+export function getRowIdExternalEventWhole(externalEvent: ExternalEvent): ExternalEventId {
   return (
     externalEvent.pkey.derivation_group_name +
     externalEvent.pkey.source_key +
