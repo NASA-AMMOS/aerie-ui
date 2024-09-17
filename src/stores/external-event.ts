@@ -15,7 +15,7 @@ export const createExternalEventTypeError: Writable<string | null> = writable(nu
 
 /* Subscriptions. */
 export const externalEventsDB = gqlSubscribable<ExternalEventDB[]>(
-  gql.SUB_PLAN_EXTERNAL_EVENTS_DG,
+  gql.SUB_PLAN_EXTERNAL_EVENTS_DERIVATION_GROUP,
   { derivation_group_names: selectedPlanDerivationGroupNames },
   [],
   null,
