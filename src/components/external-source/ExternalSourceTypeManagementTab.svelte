@@ -1,9 +1,10 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { externalSourceTypes, getRowIdExternalSourceType } from '../../stores/external-source';
+  import { externalSourceTypes } from '../../stores/external-source';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalSourceType } from '../../types/external-source';
+  import { getRowIdExternalSourceType } from '../../utilities/externalEvents';
   import DataGrid from '../ui/DataGrid/DataGrid.svelte';
 
   export let externalSourceTypeColumnDefs: DataGridColumnDef<ExternalSourceType>[] = [];

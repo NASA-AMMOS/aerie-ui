@@ -3,12 +3,7 @@
 <script lang="ts">
   import { activityDirectivesMap, selectActivity, selectedActivityDirectiveId } from '../../stores/activities';
   import { visibleConstraintResults } from '../../stores/constraints';
-  import {
-    externalEvents,
-    getRowIdExternalEvent,
-    selectExternalEvent,
-    selectedExternalEventId
-  } from '../../stores/external-event';
+  import { externalEvents, selectExternalEvent, selectedExternalEventId } from '../../stores/external-event';
   import { maxTimeRange, plan, planReadOnly, viewTimeRange } from '../../stores/plan';
   import {
     resourceTypes,
@@ -33,6 +28,7 @@
   import type { User } from '../../types/app';
   import type { ActivityOptions, Axis, MouseDown, Row, Timeline as TimelineType } from '../../types/timeline';
   import effects from '../../utilities/effects';
+  import { getRowIdExternalEvent } from '../../utilities/externalEvents';
   import { featurePermissions } from '../../utilities/permissions';
   import Panel from '../ui/Panel.svelte';
   import PanelHeaderActions from '../ui/PanelHeaderActions.svelte';
