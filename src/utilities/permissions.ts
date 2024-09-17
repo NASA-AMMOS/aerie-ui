@@ -333,7 +333,7 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
     return isUserAdmin(user) || getPermission([Queries.INSERT_CONSTRAINT_MODEL_SPECIFICATION], user);
   },
   CREATE_DERIVATION_GROUP: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission([Queries.DERIVATION_GROUP], user);
+    return isUserAdmin(user) || getPermission([Queries.INSERT_DERIVATION_GROUP], user);
   },
   CREATE_DICTIONARY: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_DICTIONARY], user);
@@ -352,7 +352,7 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
     return isUserAdmin(user) || (getPermission(queries, user) && getRoleModelPermission(queries, user, plans, model));
   },
   CREATE_EXTERNAL_EVENT_TYPE: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission([Queries.EXTERNAL_EVENT_TYPES], user);
+    return isUserAdmin(user) || getPermission([Queries.INSERT_EXTERNAL_EVENT_TYPE_ONE], user);
   },
   CREATE_EXTERNAL_SOURCE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_EXTERNAL_SOURCE], user);
@@ -857,7 +857,7 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   SUB_PLAN_DATASET: () => true,
   SUB_PLAN_DERIVATION_GROUP: () => true,
   SUB_PLAN_EXTERNAL_EVENTS: () => true,
-  SUB_PLAN_EXTERNAL_EVENTS_DG: () => true,
+  SUB_PLAN_EXTERNAL_EVENTS_DERIVATION_GROUP: () => true,
   SUB_PLAN_LOCKED: () => true,
   SUB_PLAN_MERGE_CONFLICTING_ACTIVITIES: () => true,
   SUB_PLAN_MERGE_REQUESTS_INCOMING: () => true,
@@ -1377,7 +1377,7 @@ const featurePermissions: FeaturePermissions = {
   externalSource: {
     canCreate: user => queryPermissions.CREATE_EXTERNAL_SOURCE(user),
     canDelete: user => queryPermissions.DELETE_EXTERNAL_SOURCE(user),
-    canRead: () => queryPermissions.SUB_EXTERNAL_SOURCES(),
+    canRead: user => queryPermissions.SUB_EXTERNAL_SOURCES(user),
     canUpdate: () => false, // no feature to update external sources
   },
   model: {
@@ -1525,5 +1525,6 @@ export {
   isPlanOwner,
   isUserAdmin,
   isUserOwner,
-  queryPermissions,
+  queryPermissions
 };
+
