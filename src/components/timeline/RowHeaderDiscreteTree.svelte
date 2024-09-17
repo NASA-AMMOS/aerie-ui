@@ -9,11 +9,11 @@
   import DirectiveIcon from '../../assets/timeline-directive.svg?component';
   import SpanIcon from '../../assets/timeline-span.svg?component';
   import { ViewDefaultDiscreteOptions } from '../../constants/view';
-  import { getRowIdExternalEventWhole } from '../../stores/external-event';
   import type { ActivityDirective } from '../../types/activity';
   import type { ExternalEvent, ExternalEventId } from '../../types/external-event';
   import type { Span } from '../../types/simulation';
   import type { DiscreteOptions, DiscreteTree, DiscreteTreeNode, MouseDown, MouseOver } from '../../types/timeline';
+  import { getRowIdExternalEventWhole } from '../../utilities/externalEvents';
   import { classNames } from '../../utilities/generic';
   import { pluralize } from '../../utilities/text';
   import { tooltip } from '../../utilities/tooltip';

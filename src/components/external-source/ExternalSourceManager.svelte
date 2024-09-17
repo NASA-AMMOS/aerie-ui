@@ -7,7 +7,7 @@
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { catchError } from '../../stores/errors';
-  import { createExternalEventTypeError, getRowIdExternalEvent } from '../../stores/external-event';
+  import { createExternalEventTypeError } from '../../stores/external-event';
   import {
     createDerivationGroupError,
     createExternalSourceError,
@@ -16,8 +16,6 @@
     externalSources,
     externalSourceTypes,
     getExternalSourceMetadataError,
-    getRowIdExternalSource,
-    getRowIdExternalSourceSlim,
     parsingError,
     planDerivationGroupLinks,
   } from '../../stores/external-source';
@@ -43,6 +41,11 @@
     type PlanDerivationGroup,
   } from '../../types/external-source';
   import effects from '../../utilities/effects';
+  import {
+    getRowIdExternalEvent,
+    getRowIdExternalSource,
+    getRowIdExternalSourceSlim,
+  } from '../../utilities/externalEvents';
   import { classNames, parseJSONStream } from '../../utilities/generic';
   import { showDeleteExternalSourceModal } from '../../utilities/modal';
   import { permissionHandler } from '../../utilities/permissionHandler';
@@ -891,8 +894,9 @@
                           <button
                             class="value st-button tertiary st-typography-body"
                             on:click={() => toggleItem(filteredSourceType)}
-                            class:active={selectedFilters.map(filter => filter.name).find(filter => filter === filteredSourceType.name) !==
-                              undefined}
+                            class:active={selectedFilters
+                              .map(filter => filter.name)
+                              .find(filter => filter === filteredSourceType.name) !== undefined}
                           >
                             {filteredSourceType.name}
                           </button>

@@ -10,7 +10,6 @@
   import { ViewDefaultDiscreteOptions } from '../../constants/view';
   import { Status } from '../../enums/status';
   import { catchError } from '../../stores/errors';
-  import { getRowIdExternalEvent } from '../../stores/external-event';
   import { externalSources, planDerivationGroupLinks } from '../../stores/external-source';
   import {
     externalResources,
@@ -57,6 +56,7 @@
     XAxisTick,
   } from '../../types/timeline';
   import effects from '../../utilities/effects';
+  import { getRowIdExternalEvent } from '../../utilities/externalEvents';
   import { classNames, unique } from '../../utilities/generic';
   import { showConfirmActivityCreationModal } from '../../utilities/modal';
   import { sampleProfiles } from '../../utilities/resources';
@@ -673,7 +673,7 @@
       >;
       const text = overlaySvgSelection.select('.activity-drag-guide text');
       const rectWidth = rect.node()?.getBBox()?.width ?? 0;
-      const rectRight = offsetX + rectWidth ?? 0;
+      const rectRight = offsetX + rectWidth;
       const overlaySvgSelectionWidth = overlaySvg.getBoundingClientRect().width;
       if (rectRight > overlaySvgSelectionWidth) {
         text.attr('dx', -rectWidth + 4);
