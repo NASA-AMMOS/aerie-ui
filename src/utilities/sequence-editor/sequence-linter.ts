@@ -72,6 +72,19 @@ type VariableMap = {
   [name: string]: VariableDeclaration;
 };
 
+function parseNumericArg(argText: string, dictArgType: 'float' | 'integer' | 'numeric' | 'unsigned') {
+  switch (dictArgType) {
+    case 'float':
+    case 'numeric':
+      return parseFloat(argText);
+  }
+  return parseInt(argText);
+}
+
+function isHexValue(argText: string) {
+  return /^0x[\da-f]+$/i.test(argText);
+}
+
 /**
  * Linter function that returns a Code Mirror extension function.
  * Can be optionally called with a command dictionary so it's available during linting.
@@ -1164,13 +1177,14 @@ export function sequenceLinter(
             break;
           }
           const { max, min } = dictArg.range;
-          const nodeTextAsNumber = parseFloat(argText);
-
+          const nodeTextAsNumber = parseNumericArg(argText, dictArgType);
+          const isHex = isHexValue(argText);
           if (nodeTextAsNumber < min || nodeTextAsNumber > max) {
+            const numFormat = (n: number) => (isHex ? `0x${n.toString(16).toUpperCase()}` : n);
             const message =
               max !== min
-                ? `Number out of range. Range is between ${min} and ${max} inclusive.`
-                : `Number out of range. Range is ${min}.`;
+                ? `Number out of range. Range is between ${numFormat(min)} and ${numFormat(max)} inclusive.`
+                : `Number out of range. Range is ${numFormat(min)}.`;
             diagnostics.push({
               actions:
                 max === min
