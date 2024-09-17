@@ -19,9 +19,9 @@
   import GridMenu from '../menus/GridMenu.svelte';
   import AlertError from '../ui/AlertError.svelte';
   import CardList from '../ui/CardList.svelte';
-  import ExternalSourceUpdateCard from '../ui/ExternalSourceUpdateCard.svelte';
   import Panel from '../ui/Panel.svelte';
   import ExternalSourcePanelEntry from './ExternalSourcePanelEntry.svelte';
+  import ExternalSourceUpdateCard from './ExternalSourceUpdateCard.svelte';
 
   export let gridSection: ViewGridSection;
   export let user: User | null;
@@ -50,7 +50,9 @@
           return true;
         }
         return !$usersSeenSources[user.id].find(
-          userSeenSource => userSeenSource.key === externalSource.key && userSeenSource.derivation_group_name === externalSource.derivation_group_name,
+          userSeenSource =>
+            userSeenSource.key === externalSource.key &&
+            userSeenSource.derivation_group_name === externalSource.derivation_group_name,
         );
       });
     } else {
@@ -59,7 +61,12 @@
 
     if (user && user.id && $usersSeenSources[user.id]) {
       unseenDeletedSources = $usersSeenSources[user.id].filter(
-        userSeenSource => !sourceKeys.find(externalSource => externalSource.key === userSeenSource.key && externalSource.derivation_group_name === userSeenSource.derivation_group_name),
+        userSeenSource =>
+          !sourceKeys.find(
+            externalSource =>
+              externalSource.key === userSeenSource.key &&
+              externalSource.derivation_group_name === userSeenSource.derivation_group_name,
+          ),
       );
     } else if (user && user.id && !(user.id in $usersSeenSources)) {
       unseenDeletedSources = [];
@@ -82,7 +89,9 @@
     if (group.source_type_name) {
       if (
         mappedDerivationGroups[group.source_type_name] &&
-        !mappedDerivationGroups[group.source_type_name].map(mappedDerivationGroup => mappedDerivationGroup.name).includes(group.name)
+        !mappedDerivationGroups[group.source_type_name]
+          .map(mappedDerivationGroup => mappedDerivationGroup.name)
+          .includes(group.name)
       ) {
         // use string later for source type
         mappedDerivationGroups[group.source_type_name]?.push(group);
