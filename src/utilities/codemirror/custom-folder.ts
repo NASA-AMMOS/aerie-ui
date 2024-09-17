@@ -47,7 +47,7 @@ export function foldSteps(
   }
 
   if (nodeName === 'Stem') {
-    const blockFold = blockFolder(containerNode, node, state);
+    const blockFold = blockFolder(node, state);
     if (blockFold) {
       return blockFold;
     }
@@ -148,7 +148,9 @@ type BlockStack = BlockStackNode[];
 
 export type PairedCommands = {
   end: SyntaxNode;
+  endPos: number;
   start: SyntaxNode;
+  startPos: number;
 };
 
 type PartialPairedCommands = Partial<PairedCommands>;
@@ -285,6 +287,7 @@ export function computeBlocks(state: EditorState) {
 
     const treeState: TreeState = {};
     const stack: BlockStack = [];
+
     commandNodes
       // filter out ones that don't impact blocks
       .filter(stemNode => isBlockCommand(state.sliceDoc(stemNode.from, stemNode.to)))
@@ -297,7 +300,16 @@ export function computeBlocks(state: EditorState) {
           const blockInfo: BlockStackNode | undefined = stack.pop();
           if (blockInfo) {
             // pair end with existing start to provide info for fold region
-            treeState[blockInfo.node.from].end = stemNode;
+            const docString = state.sliceDoc();
+            const commandStr = state.toText(docString).lineAt(stemNode.from).text;
+            const leadingSpaces = commandStr.length - commandStr.trimStart().length;
+            let endPos: undefined | number = undefined;
+            if (stemNode.parent) {
+              // don't fold up preceding new line and indentation
+              endPos = stemNode.parent.from - leadingSpaces - 1;
+            }
+
+            Object.assign(treeState[blockInfo.node.from], { end: stemNode, endPos });
           }
         } else if (blockClosingStems.has(stem)) {
           // unexpected close
@@ -313,8 +325,15 @@ export function computeBlocks(state: EditorState) {
             node: stemNode,
             stem,
           });
+
+          let startPos: undefined | number = undefined;
+          if (stemNode.parent) {
+            const fullCommand = state.sliceDoc(stemNode.parent.from, stemNode.parent.to);
+            startPos = stemNode.parent.to - (fullCommand.length - fullCommand.trimEnd().length);
+          }
           treeState[stemNode.from] = {
             start: stemNode,
+            startPos,
           };
         }
       });
@@ -323,19 +342,13 @@ export function computeBlocks(state: EditorState) {
   return blocksForState.get(state);
 }
 
-function blockFolder(
-  stepNode: SyntaxNode,
-  stemNode: SyntaxNode,
-  state: EditorState,
-): { from: number; to: number } | null {
+function blockFolder(stemNode: SyntaxNode, state: EditorState): { from: number; to: number } | null {
   const localBlock = computeBlocks(state)?.[stemNode.from];
-  if (isPairedCommands(localBlock) && localBlock.start.parent && localBlock.end.parent) {
+  if (isPairedCommands(localBlock) && localBlock.startPos !== undefined && localBlock.endPos !== undefined) {
     // display lines that open and close block
-    // command nodes contain trailing new line
-    // shift back one position so fold is at end of previous line
     return {
-      from: localBlock.start.parent.to - 1,
-      to: localBlock.end.parent.from - 1,
+      from: localBlock.startPos,
+      to: localBlock.endPos,
     };
   }
 
