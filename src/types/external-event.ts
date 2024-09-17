@@ -19,10 +19,13 @@ export type ExternalEventId = string;
 
 // This is the type that conforms with the database schema.
 export type ExternalEventDB = {
+  derivation_group_name: string;
   duration: string;
-  pkey: ExternalEventPkey;
+  event_type_name: string;
+  key: string;
   properties: Record<string, any>;
   source?: ExternalSourceDB;
+  source_key: string;
   start_time: string;
 };
 
@@ -37,9 +40,14 @@ export type ExternalEventJson = {
 
 // no analogue to ExternalSourceSlim as we have no subevents or anything of the sort that we may elect to exclude
 
-export type ExternalEvent = ExternalEventDB & {
+export type ExternalEvent = {
+  duration: string;
   duration_ms: number;
+  pkey: ExternalEventPkey;
+  properties: Record<string, any>;
+  source?: ExternalSourceDB;
   start_ms: number;
+  start_time: string;
 };
 
 // no analgoue to PlanExternalSource as such a link doesn't exist for external events

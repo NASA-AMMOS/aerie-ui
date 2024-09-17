@@ -2,7 +2,7 @@
 
 <script lang="ts">
   import { plugins } from '../../stores/plugins';
-  import type { ExternalEventDB } from '../../types/external-event';
+  import type { ExternalEvent } from '../../types/external-event';
   import type { ExternalEventProperty } from '../../types/external-event-property';
   import { classNames } from '../../utilities/generic';
   import { formatDate } from '../../utilities/time';
@@ -10,7 +10,7 @@
   import Input from '../form/Input.svelte';
   import Properties from './Properties.svelte';
 
-  export let externalEvent: ExternalEventDB;
+  export let externalEvent: ExternalEvent;
   export let showHeader: boolean = true;
 
   let formProperties: ExternalEventProperty[] = [];
@@ -44,7 +44,12 @@
 
         <Input layout="inline">
           {`Start Time (${$plugins.time.primary.label})`}
-          <input class="st-input w-100" disabled={true} name="start-time" value={formatDate(new Date(externalEvent.start_time), $plugins.time.primary.format)} />
+          <input
+            class="st-input w-100"
+            disabled={true}
+            name="start-time"
+            value={formatDate(new Date(externalEvent.start_time), $plugins.time.primary.format)}
+          />
         </Input>
 
         <Input layout="inline">

@@ -86,7 +86,7 @@ import type {
   SeqId,
 } from '../types/expansion';
 import type { Extension, ExtensionPayload } from '../types/extension';
-import type { ExternalEventDB, ExternalEventType, ExternalEventTypeInsertInput } from '../types/external-event';
+import type { ExternalEvent, ExternalEventType, ExternalEventTypeInsertInput } from '../types/external-event';
 import type {
   DerivationGroup,
   DerivationGroupInsertInput,
@@ -237,6 +237,7 @@ import { convertResponseToMetadata } from './scheduling';
 import { compareEvents } from './simulation';
 import { pluralize } from './text';
 import {
+  convertDurationToMs,
   getDoyTime,
   getDoyTimeFromInterval,
   getIntervalFromDoyRange,
@@ -3617,7 +3618,7 @@ const effects = {
   async getExternalEvents(
     externalSourcePkey: ExternalSourcePkey | null,
     user: User | null,
-  ): Promise<ExternalEventDB[]> {
+  ): Promise<ExternalEvent[]> {
     if (!externalSourcePkey) {
       return [];
     }
@@ -3632,10 +3633,11 @@ const effects = {
         );
       }
 
-      const externalEvents: ExternalEventDB[] = [];
+      const externalEvents: ExternalEvent[] = [];
       for (const event of events) {
         externalEvents.push({
           duration: event.duration,
+          duration_ms: convertDurationToMs(event.duration),
           pkey: {
             derivation_group_name: event.derivation_group_name,
             event_type_name: event.event_type_name,
@@ -3643,6 +3645,7 @@ const effects = {
             source_key: event.source_key,
           },
           properties: event.properties,
+          start_ms: convertDurationToMs(event.start_time),
           start_time: event.start_time,
         });
       }

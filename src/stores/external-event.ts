@@ -19,7 +19,6 @@ export const externalEventsDB = gqlSubscribable<ExternalEventDB[]>(
   { derivation_group_names: selectedPlanDerivationGroupNames },
   [],
   null,
-  transformExternalEvents,
 );
 export const externalEventTypes = gqlSubscribable<ExternalEventType[]>(gql.SUB_EXTERNAL_EVENT_TYPES, {}, [], null);
 
@@ -27,11 +26,29 @@ export const externalEventTypes = gqlSubscribable<ExternalEventType[]>(gql.SUB_E
 export const selectedExternalEventId: Writable<ExternalEventId | null> = writable(null);
 
 /* Derived. */
-export const externalEventsMap: Readable<Dictionary<ExternalEventDB>> = derived(externalEventsDB, $externalEventsDB => {
+export const externalEvents: Readable<ExternalEvent[]> = derived(externalEventsDB, $externalEventsDB => {
+  return $externalEventsDB.map(externalEvent => {
+    return {
+      duration: externalEvent.duration,
+      duration_ms: convertDurationToMs(externalEvent.duration),
+      pkey: {
+        derivation_group_name: externalEvent.derivation_group_name,
+        event_type_name: externalEvent.event_type_name,
+        key: externalEvent.key,
+        source_key: externalEvent.source_key,
+      },
+      properties: externalEvent.properties,
+      start_ms: convertUTCtoMs(externalEvent.start_time),
+      start_time: externalEvent.start_time,
+    };
+  });
+});
+
+export const externalEventsMap: Readable<Dictionary<ExternalEvent>> = derived(externalEvents, $externalEventsDB => {
   return keyBy($externalEventsDB, getRowIdExternalEventWhole);
 });
 
-export const selectedExternalEvent: Readable<ExternalEventDB | null> = derived(
+export const selectedExternalEvent: Readable<ExternalEvent | null> = derived(
   [selectedExternalEventId, externalEventsMap],
   ([$selectedExternalEventId, $externalEventsMap]) => {
     if ($selectedExternalEventId !== null) {
@@ -40,16 +57,6 @@ export const selectedExternalEvent: Readable<ExternalEventDB | null> = derived(
     return null;
   },
 );
-
-export const externalEvents: Readable<ExternalEvent[]> = derived(externalEventsDB, $externalEventsDB => {
-  return $externalEventsDB.map(externalEvent => {
-    return {
-      ...externalEvent,
-      duration_ms: convertDurationToMs(externalEvent.duration),
-      start_ms: convertUTCtoMs(externalEvent.start_time),
-    };
-  });
-});
 
 /** Helper functions. */
 export function resetExternalEventStores(): void {
@@ -72,38 +79,4 @@ export function selectExternalEvent(
   } else {
     selectedExternalEventId.set(null);
   }
-}
-
-function transformExternalEvents(
-  externalEventsDB: {
-    external_event: {
-      derivation_group_name: string;
-      duration: string;
-      event_type_name: string;
-      key: string;
-      properties: object;
-      source_key: string;
-      start_time: string;
-    };
-  }[],
-): ExternalEventDB[] {
-  const completeExternalEventDB: ExternalEventDB[] = [];
-  if (externalEventsDB !== null && externalEventsDB !== undefined) {
-    externalEventsDB
-      .flatMap(externalEvent => externalEvent.external_event)
-      .forEach(externalEvent => {
-        completeExternalEventDB.push({
-          duration: externalEvent.duration,
-          pkey: {
-            derivation_group_name: externalEvent.derivation_group_name,
-            event_type_name: externalEvent.event_type_name,
-            key: externalEvent.key,
-            source_key: externalEvent.source_key,
-          },
-          properties: externalEvent.properties,
-          start_time: externalEvent.start_time,
-        });
-      });
-  }
-  return completeExternalEventDB;
 }
