@@ -1,6 +1,8 @@
+import type { Dictionary } from 'lodash';
 import { keyBy } from 'lodash-es';
-import { derived, writable, type Writable } from 'svelte/store';
-import type { ExternalEventDB, ExternalEventId, ExternalEventPkey, ExternalEventType } from '../types/external-event';
+import { derived, writable, type Readable, type Writable } from 'svelte/store';
+import type { ExternalEvent, ExternalEventDB, ExternalEventId, ExternalEventType } from '../types/external-event';
+import { getRowIdExternalEventWhole } from '../utilities/externalEvents';
 import gql from '../utilities/gql';
 import { convertDurationToMs, convertUTCtoMs } from '../utilities/time';
 import { selectedPlanDerivationGroupNames } from './external-source';
@@ -25,11 +27,11 @@ export const externalEventTypes = gqlSubscribable<ExternalEventType[]>(gql.SUB_E
 export const selectedExternalEventId: Writable<ExternalEventId | null> = writable(null);
 
 /* Derived. */
-export const externalEventsMap = derived(externalEventsDB, $externalEventsDB => {
+export const externalEventsMap: Readable<Dictionary<ExternalEventDB>> = derived(externalEventsDB, $externalEventsDB => {
   return keyBy($externalEventsDB, getRowIdExternalEventWhole);
 });
 
-export const selectedExternalEvent = derived(
+export const selectedExternalEvent: Readable<ExternalEventDB | null> = derived(
   [selectedExternalEventId, externalEventsMap],
   ([$selectedExternalEventId, $externalEventsMap]) => {
     if ($selectedExternalEventId !== null) {
@@ -39,7 +41,7 @@ export const selectedExternalEvent = derived(
   },
 );
 
-export const externalEvents = derived(externalEventsDB, $externalEventsDB => {
+export const externalEvents: Readable<ExternalEvent[]> = derived(externalEventsDB, $externalEventsDB => {
   return $externalEventsDB.map(externalEvent => {
     return {
       ...externalEvent,
@@ -50,7 +52,7 @@ export const externalEvents = derived(externalEventsDB, $externalEventsDB => {
 });
 
 /** Helper functions. */
-export function resetExternalEventStores() {
+export function resetExternalEventStores(): void {
   createExternalEventTypeError.set(null);
 }
 
@@ -104,27 +106,4 @@ function transformExternalEvents(
       });
   }
   return completeExternalEventDB;
-}
-
-// Row/Hash Functions
-export function getRowIdExternalEventWhole(externalEvent: ExternalEventDB): ExternalEventId {
-  return (
-    externalEvent.pkey.derivation_group_name +
-    externalEvent.pkey.source_key +
-    externalEvent.pkey.event_type_name +
-    externalEvent.pkey.key
-  );
-}
-
-export function getRowIdExternalEvent(externalEventPkey: ExternalEventPkey): ExternalEventId {
-  return (
-    externalEventPkey.derivation_group_name +
-    externalEventPkey.source_key +
-    externalEventPkey.event_type_name +
-    externalEventPkey.key
-  );
-}
-
-export function getRowIdExternalEventType(externalEventType: ExternalEventType): string {
-  return externalEventType.name;
 }
