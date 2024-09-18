@@ -1,10 +1,12 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import Balloon from 'bootstrap-icons/icons/balloon.svg?component';
   import DirectiveAndSpanIcon from '../../assets/timeline-directive-and-span.svg?component';
   import TimelineLineLayerIcon from '../../assets/timeline-line-layer.svg?component';
   import type { ViewGridSection } from '../../types/view';
   import ActivityList from '../ActivityList.svelte';
+  import ExternalEventTypeList from '../ExternalEventTypeList.svelte';
   import GridMenu from '../menus/GridMenu.svelte';
   import ResourceList from '../ResourceList.svelte';
   import Panel from '../ui/Panel.svelte';
@@ -25,12 +27,16 @@
       <svelte:fragment slot="tab-list">
         <Tab class="activity-resource-tab"><DirectiveAndSpanIcon /> Activities</Tab>
         <Tab class="activity-resource-tab"><TimelineLineLayerIcon /> Resources</Tab>
+        <Tab class="activity-resource-tab"><Balloon /> External Event</Tab>
       </svelte:fragment>
       <TabPanel>
         <ActivityList />
       </TabPanel>
       <TabPanel>
         <ResourceList />
+      </TabPanel>
+      <TabPanel>
+        <ExternalEventTypeList />
       </TabPanel>
     </Tabs>
   </svelte:fragment>>
