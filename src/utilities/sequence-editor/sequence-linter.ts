@@ -20,7 +20,7 @@ import { TOKEN_COMMAND, TOKEN_ERROR, TOKEN_REPEAT_ARG, TOKEN_REQUEST } from '../
 import { TimeTypes } from '../../enums/time';
 import { getGlobals, sequenceAdaptation } from '../../stores/sequence-adaptation';
 import { CustomErrorCodes } from '../../workers/customCodes';
-import { addDefaultArgs, quoteEscape } from '../codemirror/codemirror-utils';
+import { addDefaultArgs, quoteEscape, parseNumericArg, isHexValue } from '../codemirror/codemirror-utils';
 import {
   getBalancedDuration,
   getDoyTime,
@@ -71,19 +71,6 @@ type IfOpener = WhileOpener & {
 type VariableMap = {
   [name: string]: VariableDeclaration;
 };
-
-function parseNumericArg(argText: string, dictArgType: 'float' | 'integer' | 'numeric' | 'unsigned') {
-  switch (dictArgType) {
-    case 'float':
-    case 'numeric':
-      return parseFloat(argText);
-  }
-  return parseInt(argText);
-}
-
-function isHexValue(argText: string) {
-  return /^0x[\da-f]+$/i.test(argText);
-}
 
 /**
  * Linter function that returns a Code Mirror extension function.
