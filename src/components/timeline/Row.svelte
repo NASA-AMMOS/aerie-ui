@@ -10,7 +10,11 @@
   import { ViewDefaultDiscreteOptions } from '../../constants/view';
   import { Status } from '../../enums/status';
   import { catchError } from '../../stores/errors';
-  import { externalSources, planDerivationGroupLinks } from '../../stores/external-source';
+  import {
+    derivationGroupVisibilityMapWritable,
+    externalSources,
+    planDerivationGroupLinks,
+  } from '../../stores/external-source';
   import {
     externalResources,
     fetchingResourcesExternal,
@@ -475,7 +479,10 @@
       externalEventsFilteredByType = [];
 
       let filteredDerivationGroups = $planDerivationGroupLinks
-        .filter(link => link.plan_id === plan?.id && !link.enabled)
+        .filter(
+          link =>
+            link.plan_id === plan?.id && !($derivationGroupVisibilityMapWritable[link.derivation_group_name] ?? true),
+        )
         .map(link => link.derivation_group_name);
 
       // Apply filter for hiding derivation groups

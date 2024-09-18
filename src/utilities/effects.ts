@@ -5684,46 +5684,6 @@ const effects = {
     }
   },
 
-  async updatePlanDerivationGroupEnabled(
-    derivationGroupName: string,
-    plan: Plan | null,
-    enabled: boolean,
-    user: User | null,
-  ): Promise<void> {
-    try {
-      if ((plan && !queryPermissions.CREATE_PLAN_DERIVATION_GROUP(user, plan)) || !plan) {
-        throwPermissionError('add a derivation group to the plan');
-      }
-
-      derivationGroupPlanLinkError.set(null);
-      if (plan !== null) {
-        const data = await reqHasura<PlanDerivationGroup>(
-          gql.UPDATE_PLAN_DERIVATION_GROUP,
-          {
-            enabled: enabled,
-            pk: {
-              derivation_group_name: derivationGroupName,
-              plan_id: plan.id,
-            },
-          },
-          user,
-        );
-        const { planExternalSourceLink: sourceAssociation } = data;
-        if (sourceAssociation === null) {
-          throw Error(
-            `Unable to hide Derivation Group Link with name "${derivationGroupName}" on plan with ID ${plan.id}, with status ${enabled}`,
-          );
-        }
-      } else {
-        throw Error('Plan is not defined.');
-      }
-    } catch (e) {
-      catchError('Derivation Group Link Update Failed', e as Error);
-      showFailureToast('Derivation Group Link Update Failed');
-      derivationGroupPlanLinkError.set((e as Error).message);
-    }
-  },
-
   async updatePlanSnapshot(id: number, snapshot: Partial<PlanSnapshot>, user: User | null): Promise<void> {
     try {
       if (!queryPermissions.UPDATE_PLAN_SNAPSHOT(user)) {
