@@ -391,7 +391,7 @@ async function* streamAsyncIterable(stream: ReadableStream) {
 }
 
 export function unique(list: any[]) {
-  return list.filter((val, ind, arr) => arr.indexOf(val) === ind);
+  return [...new Set(list)];
 }
 
 /**
