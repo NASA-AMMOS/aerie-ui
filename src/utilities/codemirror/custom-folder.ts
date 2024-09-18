@@ -183,6 +183,10 @@ const SEQ_DIR_WAIT_UNTIL_OR = 'SEQ_DIR_WAIT_UNTIL_OR';
 const SEQ_DIR_WAIT_UNTIL_TIMEOUT = 'SEQ_DIR_WAIT_UNTIL_TIMEOUT';
 const SEQ_DIR_END_LOOP = 'SEQ_DIR_END_LOOP';
 const SEQ_DIR_LOOP = 'SEQ_DIR_LOOP';
+const SEQ_DIR_WHILE_LOOP = 'SEQ_DIR_WHILE_LOOP';
+const SEQ_DIR_WHILE_LOOP_AND = 'SEQ_DIR_WHILE_LOOP_AND';
+const SEQ_DIR_WHILE_LOOP_OR = 'SEQ_DIR_WHILE_LOOP_OR';
+const SEQ_DIR_END_WHILE_LOOP = 'SEQ_DIR_END_WHILE_LOOP';
 
 const BLOCK_TYPES: readonly BlockType[] = [
   {
@@ -198,6 +202,10 @@ const BLOCK_TYPES: readonly BlockType[] = [
   {
     close: SEQ_DIR_END_LOOP,
     open: [SEQ_DIR_LOOP],
+  },
+  {
+    close: SEQ_DIR_END_WHILE_LOOP,
+    open: [SEQ_DIR_WHILE_LOOP, SEQ_DIR_WHILE_LOOP_AND, SEQ_DIR_WHILE_LOOP_OR],
   },
 ];
 
@@ -234,6 +242,9 @@ const blockOpeningStems = new Set([
   SEQ_DIR_WAIT_UNTIL_OR,
   SEQ_DIR_WAIT_UNTIL_TIMEOUT,
   SEQ_DIR_LOOP,
+  SEQ_DIR_WHILE_LOOP,
+  SEQ_DIR_WHILE_LOOP_AND,
+  SEQ_DIR_WHILE_LOOP_OR,
 ]);
 
 const blockClosingStems = new Set([
@@ -243,6 +254,7 @@ const blockClosingStems = new Set([
   SEQ_DIR_END_IF,
   SEQ_DIR_END_WAIT_UNTIL,
   SEQ_DIR_END_LOOP,
+  SEQ_DIR_END_WHILE_LOOP,
 ]);
 
 export function isBlockCommand(stem: string) {
@@ -252,16 +264,18 @@ export function isBlockCommand(stem: string) {
 function closesBlock(stem: string, blockStem: string) {
   // not the same as `closeSuggestion(blockStem) === stem;` as else types are optional
   switch (stem) {
-    case 'SEQ_DIR_END_IF':
-      return blockStem === 'SEQ_DIR_ELSE' || blockStem.startsWith('SEQ_DIR_IF');
-    case 'SEQ_DIR_ELSE':
-      return blockStem.startsWith('SEQ_DIR_IF');
-    case 'SEQ_DIR_END_WAIT_UNTIL':
-      return blockStem === 'SEQ_DIR_WAIT_UNTIL_TIMEOUT' || blockStem.startsWith('SEQ_DIR_WAIT_UNTIL');
-    case 'SEQ_DIR_WAIT_UNTIL_TIMEOUT':
-      return blockStem.startsWith('SEQ_DIR_WAIT_UNTIL');
-    case 'SEQ_DIR_END_LOOP':
-      return blockStem === 'SEQ_DIR_LOOP';
+    case SEQ_DIR_END_IF:
+      return blockStem === SEQ_DIR_ELSE || blockStem.startsWith(SEQ_DIR_IF);
+    case SEQ_DIR_ELSE:
+      return blockStem.startsWith(SEQ_DIR_IF);
+    case SEQ_DIR_END_WAIT_UNTIL:
+      return blockStem === SEQ_DIR_WAIT_UNTIL_TIMEOUT || blockStem.startsWith(SEQ_DIR_WAIT_UNTIL);
+    case SEQ_DIR_WAIT_UNTIL_TIMEOUT:
+      return blockStem.startsWith(SEQ_DIR_WAIT_UNTIL);
+    case SEQ_DIR_END_LOOP:
+      return blockStem === SEQ_DIR_LOOP;
+    case SEQ_DIR_END_WHILE_LOOP:
+      return blockStem.startsWith(SEQ_DIR_WHILE_LOOP);
   }
   return false;
 }
