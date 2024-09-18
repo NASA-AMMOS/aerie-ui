@@ -14,11 +14,12 @@ export const creatingExternalEventType: Writable<boolean> = writable(false);
 export const createExternalEventTypeError: Writable<string | null> = writable(null);
 
 /* Subscriptions. */
-export const externalEventsDB = gqlSubscribable<ExternalEventDB[]>(
+export const externalEvents = gqlSubscribable<ExternalEvent[]>(
   gql.SUB_PLAN_EXTERNAL_EVENTS_DERIVATION_GROUP,
   { derivation_group_names: selectedPlanDerivationGroupNames },
   [],
   null,
+  transformExternalEvents,
 );
 export const externalEventTypes = gqlSubscribable<ExternalEventType[]>(gql.SUB_EXTERNAL_EVENT_TYPES, {}, [], null);
 
@@ -26,26 +27,8 @@ export const externalEventTypes = gqlSubscribable<ExternalEventType[]>(gql.SUB_E
 export const selectedExternalEventId: Writable<ExternalEventId | null> = writable(null);
 
 /* Derived. */
-export const externalEvents: Readable<ExternalEvent[]> = derived(externalEventsDB, $externalEventsDB => {
-  return $externalEventsDB.map(externalEvent => {
-    return {
-      duration: externalEvent.duration,
-      duration_ms: convertDurationToMs(externalEvent.duration),
-      pkey: {
-        derivation_group_name: externalEvent.derivation_group_name,
-        event_type_name: externalEvent.event_type_name,
-        key: externalEvent.key,
-        source_key: externalEvent.source_key,
-      },
-      properties: externalEvent.properties,
-      start_ms: convertUTCtoMs(externalEvent.start_time),
-      start_time: externalEvent.start_time,
-    };
-  });
-});
-
-export const externalEventsMap: Readable<Dictionary<ExternalEvent>> = derived(externalEvents, $externalEventsDB => {
-  return keyBy($externalEventsDB, getRowIdExternalEventWhole);
+export const externalEventsMap: Readable<Dictionary<ExternalEvent>> = derived(externalEvents, $externalEvents => {
+  return keyBy($externalEvents, getRowIdExternalEventWhole);
 });
 
 export const selectedExternalEvent: Readable<ExternalEvent | null> = derived(
@@ -79,4 +62,30 @@ export function selectExternalEvent(
   } else {
     selectedExternalEventId.set(null);
   }
+}
+
+function transformExternalEvents(
+  externalEvents: { external_event: ExternalEventDB }[] | null | undefined,
+): ExternalEvent[] {
+  const completeExternalEvents: ExternalEvent[] = [];
+  if (externalEvents !== null && externalEvents !== undefined) {
+    return externalEvents.map(e => {
+      // stored in this fashion as a byproduct of the GQL subscription query.
+      const externalEvent = e.external_event;
+      return {
+        duration: externalEvent.duration,
+        duration_ms: convertDurationToMs(externalEvent.duration),
+        pkey: {
+          derivation_group_name: externalEvent.derivation_group_name,
+          event_type_name: externalEvent.event_type_name,
+          key: externalEvent.key,
+          source_key: externalEvent.source_key,
+        },
+        properties: externalEvent.properties,
+        start_ms: convertUTCtoMs(externalEvent.start_time),
+        start_time: externalEvent.start_time,
+      };
+    });
+  }
+  return completeExternalEvents;
 }
