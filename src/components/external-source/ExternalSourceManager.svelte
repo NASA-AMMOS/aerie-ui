@@ -35,6 +35,7 @@
     type ExternalSourceDB,
     type ExternalSourceInsertInput,
     type ExternalSourceJson,
+    type ExternalSourcePkey,
     type ExternalSourceSlim,
     type ExternalSourceType,
     type ExternalSourceTypeInsertInput,
@@ -61,13 +62,11 @@
   import DatePickerField from '../form/DatePickerField.svelte';
   import Field from '../form/Field.svelte';
   import Input from '../form/Input.svelte';
-  import Menu from '../menus/Menu.svelte';
-  import MenuHeader from '../menus/MenuHeader.svelte';
   import AlertError from '../ui/AlertError.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
+  import BulkActionDataGrid from '../ui/DataGrid/BulkActionDataGrid.svelte';
   import DataGridActions from '../ui/DataGrid/DataGridActions.svelte';
-  import SingleActionDataGrid from '../ui/DataGrid/SingleActionDataGrid.svelte';
   import DatePicker from '../ui/DatePicker/DatePicker.svelte';
   import Panel from '../ui/Panel.svelte';
   import SectionTitle from '../ui/SectionTitle.svelte';
@@ -75,7 +74,7 @@
   export let user: User | null;
 
   type CellRendererParams = {
-    onDeleteExternalSource: (source: ExternalSourceDB) => void;
+    onDeleteExternalSource: (source: ExternalSourceDB[]) => void;
   };
   type SourceCellRendererParams = ICellRendererParams<ExternalSourceDB> & CellRendererParams;
 
@@ -211,12 +210,8 @@
   let externalEventsCreated: ExternalEventInsertInput[] = [];
 
   // For filtering purposes (modelled after TimelineEditorLayerFilter):
-  let filterMenu: Menu;
-  let input: HTMLInputElement;
-  let filterString: string = '';
-  let filteredValues: ExternalSourceType[] = [];
+  let filterExpression: string = '';
   let selectedFilters: ExternalSourceType[] = [{ name: '' }];
-  let menuTitle: string = '';
   let filteredExternalSources: ExternalSourceSlim[] = [];
 
   // External source + derivation group creation variables
@@ -272,7 +267,7 @@
         actionsDiv.className = 'actions-cell';
         new DataGridActions({
           props: {
-            deleteCallback: params.onDeleteExternalSource,
+            deleteCallback: data => params.onDeleteExternalSource([data]),
             deleteTooltip: {
               content: 'Delete External Source',
               placement: 'bottom',
@@ -307,9 +302,6 @@
   $: filteredExternalSources = $externalSources.filter(externalSource => {
     return selectedFilters.find(filter => filter.name === externalSource.source_type_name) !== undefined;
   });
-  $: filteredValues = $externalSourceTypes.filter(externalSourceType =>
-    externalSourceType.name.toLowerCase().includes(filterString),
-  );
   $: filteredTableExternalEvents = selectedEvents.filter(event => {
     const filterTextLowerCase = externalEventsTableFilterString.toLowerCase();
     const includesName = externalEventsTableFilterString.length
@@ -336,20 +328,43 @@
   $: hasDeletePermission = featurePermissions.externalSource.canDelete(user);
   $: hasCreatePermission = featurePermissions.externalSource.canCreate(user);
 
-  async function onDeleteExternalSource(selectedSource: ExternalSourceSlim | null | undefined) {
-    if (selectedSource !== null && selectedSource !== undefined) {
-      // selectedSource here does not necessarily align with global selected source, especially if you click delete
-      //    in a table without making a selection. as such, can't use selectedSourceLinkedDerivationGroupsPlans, must
-      //    make a new one.
-      let currentlyLinked = $planDerivationGroupLinks.filter(planDerivationGroupLink => {
-        return planDerivationGroupLink.derivation_group_name === selectedSource?.pkey.derivation_group_name;
-      });
+  async function onDeleteExternalSource(selectedSources: ExternalSourceSlim[] | null | undefined) {
+    if (selectedSources !== null && selectedSources !== undefined) {
+      // go through each selected source, and determine which plans (if at all) it is associated with. If none, place in the unassociated list
+      let currentlyLinked: { pkey: ExternalSourcePkey; plan_ids: number[] }[] = [];
+      let unassociatedSources: ExternalSourceSlim[] = [];
+      for (let externalSource of selectedSources) {
+        let plan_ids: number[] = $planDerivationGroupLinks
+          .filter(
+            planDerivationGroupLink =>
+              planDerivationGroupLink.derivation_group_name === externalSource.pkey.derivation_group_name,
+          )
+          .map(planDerivationGroupLink => planDerivationGroupLink.plan_id)
+          .filter(entry => entry !== undefined);
+
+        if (plan_ids.length > 0) {
+          currentlyLinked.push({ pkey: externalSource.pkey, plan_ids });
+        } else {
+          unassociatedSources.push(externalSource);
+        }
+      }
+
+      // there are sources that cannot be deleted
       if (currentlyLinked.length > 0) {
-        // if the source is in a derivation group currently used by a plan, warn that we cannot delete
-        await showDeleteExternalSourceModal(currentlyLinked, selectedSource);
+        // if the source is in a derivation group currently used by a plan, warn that we cannot delete,
+        //    but provide option to delete unassociated sources
+        const { confirm } = await showDeleteExternalSourceModal(currentlyLinked, selectedSources, unassociatedSources);
+
+        // the user will delete unassociated sources
+        if (confirm) {
+          const deletionWasSuccessful = await effects.deleteExternalSource(unassociatedSources, user);
+          if (deletionWasSuccessful) {
+            deselectSource();
+          }
+        }
       } else {
-        // otherwise, delete!
-        const deletionWasSuccessful = await effects.deleteExternalSource(selectedSource, user);
+        // otherwise, delete; no issues w.r.t. association!
+        const deletionWasSuccessful = await effects.deleteExternalSource(selectedSources, user);
         if (deletionWasSuccessful) {
           deselectSource();
         }
@@ -553,22 +568,6 @@
     selectedRowId = null;
   }
 
-  function toggleItem(value: ExternalSourceType) {
-    if (!selectedFilters.find(filter => filter.name === value.name)) {
-      selectedFilters = selectedFilters.concat(value);
-    } else {
-      selectedFilters = selectedFilters.filter(filter => filter.name !== value.name);
-    }
-  }
-
-  function unselectFilteredValues() {
-    selectedFilters = [];
-  }
-
-  function selectFilteredValues() {
-    selectedFilters = [...new Set([...selectedFilters, ...filteredValues])];
-  }
-
   function onSelectionChanged() {
     selectedEvent = selectedEvents.find(event => getRowIdExternalEvent(event.pkey) === selectedRowId) ?? null;
   }
@@ -746,7 +745,11 @@
               hasPermission: hasDeletePermission,
               permissionError: deletePermissionError,
             }}
-            on:click|stopPropagation={async () => onDeleteExternalSource(selectedSource)}
+            on:click|stopPropagation={async () => {
+              if (selectedSource !== null) {
+                onDeleteExternalSource([selectedSource]);
+              }
+            }}
           >
             Delete external source
           </button>
@@ -865,65 +868,12 @@
             <div class="timeline-editor-layer-filter">
               <Input>
                 <input
-                  bind:this={input}
-                  bind:value={filterString}
-                  on:click|stopPropagation={() => {
-                    if (!filterMenu.isShown()) {
-                      filterMenu.show();
-                      input.focus();
-                    }
-                  }}
-                  autocomplete="off"
-                  class="st-input w-100"
-                  name="filter"
-                  placeholder={'Filter by Source Type'}
+                  type="search"
+                  bind:value={filterExpression}
+                  placeholder="Filter External Sources"
+                  class="st-input"
                 />
               </Input>
-              <Menu
-                hideAfterClick={false}
-                bind:this={filterMenu}
-                placement="bottom-start"
-                on:hide={() => (filterString = '')}
-              >
-                <div class="menu-content">
-                  <MenuHeader title={menuTitle} />
-                  <div class="body st-typography-body">
-                    {#if filteredValues.length}
-                      <div class="values">
-                        {#each filteredValues as filteredSourceType}
-                          <button
-                            class="value st-button tertiary st-typography-body"
-                            on:click={() => toggleItem(filteredSourceType)}
-                            class:active={selectedFilters
-                              .map(filter => filter.name)
-                              .find(filter => filter === filteredSourceType.name) !== undefined}
-                          >
-                            {filteredSourceType.name}
-                          </button>
-                        {/each}
-                      </div>
-                    {:else}
-                      <div class="st-typography-label empty-state">No external source types matching filter</div>
-                    {/if}
-                  </div>
-                  <div class="list-buttons menu-border-top">
-                    <button
-                      class="st-button secondary list-button source-filters-select-all"
-                      on:click={selectFilteredValues}
-                    >
-                      Select {filteredValues.length}
-                      {#if filteredValues.length === 1}
-                        {'external source type'}
-                      {:else}
-                        {'external source types'}
-                      {/if}
-                    </button>
-                    <button class="st-button secondary list-button" on:click={unselectFilteredValues}
-                      >Unselect all</button
-                    >
-                  </div>
-                </div>
-              </Menu>
             </div>
           </div>
         </slot>
@@ -955,14 +905,17 @@
       </svelte:fragment>
       <svelte:fragment slot="body">
         {#if $externalSources.length}
-          <SingleActionDataGrid
+          <BulkActionDataGrid
             {columnDefs}
             {hasDeletePermission}
-            itemDisplayText="External Source"
+            singleItemDisplayText="External Source"
+            pluralItemDisplayText="External Source"
+            {filterExpression}
             items={filteredExternalSources}
             {user}
             getRowId={getRowIdExternalSourceSlim}
             on:rowClicked={({ detail }) => selectSource(detail.data)}
+            on:bulkDeleteItems={({ detail }) => onDeleteExternalSource(detail)}
             bind:selectedItemId={selectedSourceId}
           />
         {:else}
@@ -1035,60 +988,6 @@
 
   .timeline-editor-layer-filter :global(.input) {
     z-index: 1;
-  }
-
-  .menu-content {
-    display: grid;
-    grid-template-rows: min-content 1fr min-content;
-    max-height: 360px;
-  }
-
-  .body {
-    cursor: auto;
-    display: grid;
-    gap: 8px;
-    overflow: auto;
-    text-align: left;
-  }
-
-  .values {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .value {
-    border-radius: 0;
-    justify-content: left;
-    padding: 16px 8px;
-  }
-
-  .value:hover {
-    background: var(--st-gray-20);
-  }
-
-  .value.active,
-  .value.active:hover {
-    background: #4fa1ff4f;
-  }
-
-  .body :global(.input-inline) {
-    padding: 0;
-  }
-
-  .list-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 8px;
-    width: 100%;
-  }
-
-  .empty-state {
-    margin: 8px;
-  }
-
-  .menu-border-top {
-    border-top: 1px solid var(--st-gray-20);
   }
 
   .external-source-header {

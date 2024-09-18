@@ -2473,28 +2473,41 @@ const effects = {
     }
   },
 
-  async deleteExternalSource(externalSource: ExternalSourceSlim | null, user: User | null): Promise<boolean> {
+  async deleteExternalSource(externalSources: ExternalSourceSlim[] | null, user: User | null): Promise<boolean> {
     try {
-      if (!queryPermissions.DELETE_EXTERNAL_SOURCE(user)) {
+      if (!queryPermissions.DELETE_EXTERNAL_SOURCES(user)) {
         throwPermissionError('delete an external source');
       }
-      if (externalSource !== null) {
-        const { confirm } = await showDeleteExternalSourceModal([], externalSource);
+      if (externalSources !== null) {
+        const { confirm } = await showDeleteExternalSourceModal([], externalSources, []);
         if (confirm) {
-          const data = await reqHasura<{ derivationGroupName: string; sourceKey: string }>(
-            gql.DELETE_EXTERNAL_SOURCE,
-            {
-              derivationGroupName: externalSource.pkey.derivation_group_name,
-              sourceKey: externalSource.pkey.key,
-            },
-            user,
-          );
-          if (data.deleteExternalSource !== null) {
-            showSuccessToast('External Source Deleted Successfully');
-            return true;
-          } else {
-            throw Error('Unable to delete external source');
+          // cannot easily do composite keys in GraphQL, so we group by derivation group and send a query per group of keys
+          const derivationGroups: {[derivationGroupName: string]: string[]} = {};
+          for (const externalSource of externalSources) {
+            if (derivationGroups[externalSource.pkey.derivation_group_name]) {
+              derivationGroups[externalSource.pkey.derivation_group_name].push(externalSource.pkey.key);
+            }
+            else {
+              derivationGroups[externalSource.pkey.derivation_group_name] = [externalSource.pkey.key];
+            }
           }
+
+          // send each group's query out
+          for (const derivationGroupName of Object.keys(derivationGroups)) {
+            const data = await reqHasura<{ derivationGroupName: string; sourceKeys: string[] }>(
+              gql.DELETE_EXTERNAL_SOURCES,
+              {
+                derivationGroupName: derivationGroupName,
+                sourceKeys: derivationGroups[derivationGroupName]
+              },
+              user,
+            );
+            if (data.deleteExternalSource === null) {
+              throw Error('Unable to delete external source');
+            }
+          }
+          showSuccessToast('External Source Deleted Successfully');
+          return true;
         }
       }
     } catch (e) {
