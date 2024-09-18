@@ -194,7 +194,7 @@ export function isActivityLayer(layer: Layer): layer is ActivityLayer {
 }
 
 export function isExternalEventLayer(layer: Layer): layer is ExternalEventLayer {
-  return layer.chartType === 'external-event';
+  return layer.chartType === 'external event';
 }
 
 export function isXRangeLayer(layer: Layer): layer is XRangeLayer {
@@ -575,7 +575,7 @@ export function createTimelineExternalEventLayer(
   const id = getNextLayerID(timelines);
 
   return {
-    chartType: 'external-event',
+    chartType: 'external event',
     externalEventColor: '#fcdd8f',
     externalEventHeight: 16,
     filter: {
@@ -816,7 +816,7 @@ export function duplicateRow(row: Row, timelines: Timeline[], timelineId: number
     } else if (layer.chartType === 'x-range') {
       const { id, yAxisId, ...layerArgs } = layer;
       newRow.layers.push(createTimelineXRangeLayer(timelinesClone, newRow.yAxes, layerArgs));
-    } else if (layer.chartType === 'external-event') {
+    } else if (layer.chartType === 'external event') {
       const { id, ...layerArgs } = layer;
       newRow.layers.push(createTimelineExternalEventLayer(timelinesClone, layerArgs));
     } else {

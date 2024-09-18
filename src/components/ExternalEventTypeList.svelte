@@ -8,7 +8,12 @@
 
   let externalEventTypes: ExternalEventType[] = [];
 
-  $: $selectedPlanDerivationGroupEventTypes.map(eventType => { eventType });
+  $: externalEventTypes = $selectedPlanDerivationGroupEventTypes.map(
+    eventType => {
+      return { name: eventType }
+    });
+
+  $: console.log(externalEventTypes);
 
   function getFilterValueFromItem(item: TimelineItemType) {
     return item.name;
@@ -17,9 +22,9 @@
 
 <TimelineItemList
   items={externalEventTypes}
-  chartType="external-event"
-  typeName="external event type"
-  typeNamePlural="External Event Types"
+  chartType="external event"
+  typeName="external event"
+  typeNamePlural="External Events"
   filterOptions={$selectedPlanDerivationGroupEventTypes.map(t => ({ label: t, value: t }))}
   filterName="External Event Type"
   {getFilterValueFromItem}
