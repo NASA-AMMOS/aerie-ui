@@ -131,13 +131,7 @@ export function sequenceLinter(
       ...hardwareCommandLinter(treeNode.getChild('HardwareCommands')?.getChildren(TOKEN_COMMAND) || [], docText),
     );
 
-    diagnostics.push(
-      ...conditionalAndLoopKeywordsLinter(
-        treeNode.getChild('Commands')?.getChildren(TOKEN_COMMAND) || [],
-        docText,
-        view.state,
-      ),
-    );
+    diagnostics.push(...conditionalAndLoopKeywordsLinter(view.state));
 
     const inputLinter = get(sequenceAdaptation)?.inputFormat.linter;
 
@@ -173,11 +167,7 @@ export function sequenceLinter(
     return diagnostics;
   }
 
-  function conditionalAndLoopKeywordsLinter(
-    _commandNodes: SyntaxNode[],
-    _text: string,
-    state: EditorState,
-  ): Diagnostic[] {
+  function conditionalAndLoopKeywordsLinter(state: EditorState): Diagnostic[] {
     const diagnostics: Diagnostic[] = [];
 
     const blocks = computeBlocks(state);
@@ -212,7 +202,7 @@ export function sequenceLinter(
           diagnostics.push({
             actions: [
               {
-                apply(view: EditorView, _from: number, _to: number) {
+                apply(view: EditorView) {
                   if (pair.start?.parent) {
                     view.dispatch({
                       changes: {
@@ -449,7 +439,7 @@ export function sequenceLinter(
 
   function insertAction(name: string, insert: string) {
     return {
-      apply(view: EditorView, from: number, _to: number) {
+      apply(view: EditorView, from: number) {
         view.dispatch({ changes: { from, insert } });
       },
       name,
@@ -910,7 +900,7 @@ export function sequenceLinter(
         diagnostics.push({
           actions: [
             {
-              apply(view, _from, _to) {
+              apply(view) {
                 if (commandDictionary) {
                   addDefaultArgs(commandDictionary, view, command, dictArgs.slice(argNode.length));
                 }
