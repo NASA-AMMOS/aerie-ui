@@ -18,6 +18,7 @@ export const createExternalSourceTypeError: Writable<string | null> = writable(n
 export const createDerivationGroupError: Writable<string | null> = writable(null);
 export const derivationGroupPlanLinkError: Writable<string | null> = writable(null);
 export const getExternalSourceMetadataError: Writable<string | null> = writable(null);
+export const derivationGroupVisibilityMapWritable: Writable<Record<DerivationGroup['name'], boolean>> = writable({});
 
 /* Subscriptions. */
 export const externalSources = gqlSubscribable<ExternalSourceSlim[]>(

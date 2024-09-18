@@ -3,7 +3,8 @@
 <script lang="ts">
   import Eye from 'bootstrap-icons/icons/eye-fill.svg?component';
   import EyeSlash from 'bootstrap-icons/icons/eye-slash.svg?component';
-  import { externalSources, planDerivationGroupLinks } from '../../stores/external-source';
+  import { get } from 'svelte/store';
+  import { derivationGroupVisibilityMapWritable, externalSources } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import { plugins } from '../../stores/plugins';
   import type { User } from '../../types/app';
@@ -18,15 +19,14 @@
 
   let relevantSources: ExternalSourceSlim[] = [];
 
-  $: enabled =
-    ($plan !== null &&
-      $planDerivationGroupLinks.find(linkedDerivationGroup => linkedDerivationGroup.derivation_group_name === derivationGroup.name && linkedDerivationGroup.plan_id === $plan?.id)
-        ?.enabled) ??
-    true;
+  $: enabled = $derivationGroupVisibilityMapWritable[derivationGroup.name] ?? true;
   $: relevantSources = $externalSources.filter(source => derivationGroup.name === source.pkey.derivation_group_name);
 
   function onChange() {
-    effects.updatePlanDerivationGroupEnabled(derivationGroup.name, $plan, !enabled, user);
+    derivationGroupVisibilityMapWritable.set({
+      ...get(derivationGroupVisibilityMapWritable),
+      [derivationGroup.name]: !enabled,
+    });
   }
 
   async function deleteEmptyDerivationGroup() {
