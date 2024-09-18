@@ -13,10 +13,8 @@
   } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import { plugins } from '../../stores/plugins';
-  import { viewAddFilterToRow } from '../../stores/views';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
-  import type { ExternalEventType } from '../../types/external-event';
   import type { DerivationGroup, ExternalSourceSlim } from '../../types/external-source';
   import effects from '../../utilities/effects';
   import { formatDate } from '../../utilities/time';
@@ -175,18 +173,6 @@
       if (checked) {
         // insert
         await effects.insertDerivationGroupForPlan(derivationGroupName, $plan, user);
-        if ($derivationGroupPlanLinkError === null) {
-          // Add filter to timeline
-          const derivationGroup = $derivationGroups.find(
-            iterDerivationGroup => iterDerivationGroup.name === derivationGroupName,
-          );
-          if (derivationGroup) {
-            const derivationGroupExternalEventTypes: ExternalEventType[] = derivationGroup.event_types.map(
-              eventType => ({ name: eventType }),
-            );
-            viewAddFilterToRow(derivationGroupExternalEventTypes, 'external-event');
-          }
-        }
       } else {
         // delete
         await effects.deleteDerivationGroupForPlan(derivationGroupName, $plan, user);

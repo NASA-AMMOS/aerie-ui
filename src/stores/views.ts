@@ -564,12 +564,11 @@ export function viewUpdateYAxis(prop: string, value: any) {
 
 export function getUpdatedLayerWithFilters(
   timelines: Timeline[],
-  type: string /* 'activity' | 'resource' | 'external-event' */,
+  type: string /* 'activity' | 'resource' | 'external event' */,
   items: TimelineItemType[],
   layer?: Layer,
   row?: Row,
 ): { layer: Layer; yAxis?: Axis } {
-  type = type === 'external-event' ? 'externalEvent' : type; // External Event requires swapping the type to 'externalEvent' for future references related to the layer/filter
   const itemNames = items.map(i => i.name);
   // Create a suitable layer if not provided
   if (!layer) {
@@ -580,7 +579,7 @@ export function getUpdatedLayerWithFilters(
           filter: { activity: { types: itemNames } },
         }),
       };
-    } else if (type === 'externalEvent') {
+    } else if (type === 'external event') {
       return {
         layer: createTimelineExternalEventLayer(timelines, {
           filter: { externalEvent: { event_types: itemNames } },
@@ -607,6 +606,7 @@ export function getUpdatedLayerWithFilters(
       }
     }
   } else {
+    type = type !== 'external event' ? type : 'externalEvent'; // TODO is there a nicer way to do this ? maybe just always name as 'externalEvent'?
     // Otherwise augment the filter of the specified layer
     const prop = type === 'activity' ? 'types' : type === 'externalEvent' ? 'event_types' : 'names';
     const typedType = type as 'activity' | 'resource' | 'externalEvent';
@@ -653,7 +653,7 @@ export function viewAddTimelineRow(timelineId?: number | null, openEditor: boole
 
 export function viewAddFilterToRow(
   items: TimelineItemType[],
-  typeName: string /* 'activity' | 'resource' */,
+  typeName: string /* 'activity' | 'resource' | 'external event' */,
   rowId?: number,
   layer?: Layer,
   index?: number, // row index to insert after
@@ -678,7 +678,7 @@ export function viewAddFilterToRow(
 
 export function viewAddFilterItemsToRow(
   items: TimelineItemType[],
-  typeName: string /* 'activity' | 'resource' | 'external-event' */,
+  typeName: string /* 'activity' | 'resource' | 'external event' */,
   rowId?: number,
   layer?: Layer,
   index?: number, // row index to insert after
@@ -690,7 +690,7 @@ export function viewAddFilterItemsToRow(
 
   let newRows: Row[] = timelines[0].rows;
   let returnRow: Row | undefined = undefined;
-  const defaultRowName = `${typeName !== 'external-event' ? capitalize(typeName) : 'External Event'} Row`;
+  const defaultRowName = `${capitalize(typeName)} Row`;
   // If no row was given, but one matches the default name, attempt to use it
   const row =
     typeof rowId === 'number'
@@ -716,7 +716,7 @@ export function viewAddFilterItemsToRow(
       // Case where the target layer type does not match the destination layer chart type
       (layer.chartType === 'activity' && typeName === 'resource') ||
       (layer.chartType !== 'activity' && typeName === 'activity') ||
-      (layer.chartType !== 'external-event' && typeName === 'external-event')
+      (layer.chartType !== 'external event' && typeName === 'external event')
     ) {
       // Add to existing row
       const { layer: newLayer, yAxis } = getUpdatedLayerWithFilters(timelines, typeName, items, undefined, row);
