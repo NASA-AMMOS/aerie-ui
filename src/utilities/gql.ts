@@ -2797,7 +2797,6 @@ const gql = {
       links: ${Queries.PLAN_DERIVATION_GROUP}(order_by: { plan_id: asc }) {
         derivation_group_name
         plan_id
-        enabled
       }
     }
   `,
@@ -3707,14 +3706,6 @@ const gql = {
         pk_columns: { id: $plan_id }, _set: $plan
       ) {
         id
-      }
-    }
-  `,
-
-  UPDATE_PLAN_DERIVATION_GROUP: `#graphql
-    mutation UpdatePlanDerivationGroup($pk: plan_derivation_group_pk_columns_input!, $enabled: Boolean!) {
-      planExternalSourceLink: ${Queries.UPDATE_PLAN_DERIVATION_GROUP}(pk_columns: $pk, _set: {enabled: $enabled}) {
-        derivation_group_name
       }
     }
   `,
