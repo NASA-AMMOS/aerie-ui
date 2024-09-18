@@ -46,7 +46,7 @@
     getRowIdExternalSource,
     getRowIdExternalSourceSlim,
   } from '../../utilities/externalEvents';
-  import { classNames, parseJSONStream } from '../../utilities/generic';
+  import { parseJSONStream } from '../../utilities/generic';
   import { showDeleteExternalSourceModal } from '../../utilities/modal';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
@@ -612,7 +612,7 @@
         <ExternalEventForm externalEvent={selectedEvent} showHeader={true} />
       {:else if selectedSource}
         <div class="external-source-header">
-          <div class={classNames('external-source-header-title')}>
+          <div class="external-source-header-title">
             <div class="external-source-header-title-value st-typography-medium">
               {selectedSource.pkey.key}
             </div>
@@ -1116,114 +1116,6 @@
     white-space: nowrap;
     word-break: break-word;
     word-break: break-all;
-  }
-
-  .external-event-form-container {
-    display: grid;
-    grid-template-rows: min-content auto;
-    height: 100%;
-    overflow: hidden;
-  }
-
-  .external-event-form {
-    overflow-y: auto;
-  }
-
-  .external-event-directive-definition {
-    padding: 0.5rem;
-  }
-
-  .external-event-header {
-    align-items: center;
-    background: var(--st-gray-10);
-    border-bottom: 1px solid var(--st-gray-15);
-    display: flex;
-    flex-shrink: 0;
-    font-style: italic;
-    padding: 4px 8px;
-    padding-left: 8px;
-  }
-
-  .external-event-header-icons {
-    align-items: center;
-    display: flex;
-  }
-
-  .external-event-error-rollup {
-    display: inline;
-    font-style: normal;
-  }
-
-  .external-event-header-title-placeholder,
-  .external-event-header-title-value {
-    word-break: break-word;
-  }
-
-  .external-event-header-title-value {
-    overflow: hidden;
-    padding: 4px 0px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    word-break: break-all;
-  }
-
-  .external-event-header-title-placeholder {
-    padding: 4px 8px;
-  }
-
-  .external-event-header-title {
-    align-items: flex-start;
-    border-radius: 4px;
-    display: flex;
-    width: 100%;
-  }
-
-  .external-event-header-title :global(fieldset) {
-    padding: 0;
-    width: 100%;
-  }
-
-  .external-event-header-title-edit-button:hover {
-    background-color: var(--st-white);
-  }
-
-  .external-event-header-title--editing {
-    gap: 8px;
-    padding: 0;
-    width: 100%;
-  }
-
-  .external-event-header-changelog {
-    border: 1px solid transparent;
-    display: flex;
-    width: 24px;
-  }
-
-  .external-event-header-changelog:hover {
-    color: #007bff;
-  }
-
-  .revision-preview-header {
-    align-items: center;
-    background-color: #e6e6ff;
-    border-bottom: 1px solid #c4c6ff;
-    border-top: 1px solid #c4c6ff;
-    display: flex;
-    flex-shrink: 0;
-    justify-content: space-between;
-    padding: 4px 8px;
-    padding-left: 8px;
-  }
-
-  .annotations {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .btn-group {
-    align-self: center;
-    margin-left: auto;
   }
 
   .file-upload-field {
