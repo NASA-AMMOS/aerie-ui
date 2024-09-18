@@ -92,7 +92,7 @@ export type Label = {
   text: string;
 };
 
-export type ChartType = 'activity' | 'line' | 'x-range' | 'external-event';
+export type ChartType = 'activity' | 'line' | 'x-range' | 'external event';
 
 export interface Layer {
   chartType: ChartType;

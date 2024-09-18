@@ -508,7 +508,7 @@
                                 "$comment": "deprecated"
                               },
                               "chartType": {
-                                "const": "external-event",
+                                "const": "external event",
                                 "description": "Layer that visualizes external events"
                               },
                               "filter": {
