@@ -237,6 +237,7 @@ import { compareEvents } from './simulation';
 import { pluralize } from './text';
 import {
   convertDurationToMs,
+  convertUTCtoMs,
   getDoyTime,
   getDoyTimeFromInterval,
   getIntervalFromDoyRange,
@@ -3644,7 +3645,7 @@ const effects = {
             source_key: event.source_key,
           },
           properties: event.properties,
-          start_ms: convertDurationToMs(event.start_time),
+          start_ms: convertUTCtoMs(event.start_time),
           start_time: event.start_time,
         });
       }
