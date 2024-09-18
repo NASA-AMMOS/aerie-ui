@@ -59,7 +59,7 @@
     </MenuItem>
     <MenuItem on:click={() => onClickMenuItem('TimelineItemsPanel')}>
       <BookIcon />
-      Activity & Resource Types
+      Activity, Resource, External Event Types
     </MenuItem>
     <MenuItem on:click={() => onClickMenuItem('ConstraintsPanel')}>
       <VerticalCollapseIcon />

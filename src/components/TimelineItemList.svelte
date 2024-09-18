@@ -22,8 +22,8 @@
   import Tag from './ui/Tags/Tag.svelte';
 
   export let chartType: ChartType = 'activity';
-  export let typeName: 'activity' | 'resource' | 'external event type' = 'activity';
-  export let typeNamePlural: 'Activities' | 'Resources' | 'External Event Types'= 'Activities';
+  export let typeName: 'activity' | 'resource' | 'external event' = 'activity';
+  export let typeNamePlural: 'Activities' | 'Resources' | 'External Events' = 'Activities';
   export let items: TimelineItemType[] = [];
   export let filterOptions: TimelineItemListFilterOption[] = [];
   export let filterName: string = 'Filter';

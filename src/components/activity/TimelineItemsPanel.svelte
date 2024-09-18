@@ -19,15 +19,15 @@
 
 <Panel padBody={false}>
   <svelte:fragment slot="header">
-    <GridMenu {gridSection} title="Activity & Resource Types" />
+    <GridMenu {gridSection} title="Activity, Resource, External Event Types" />
   </svelte:fragment>
 
   <svelte:fragment slot="body">
-    <Tabs class="activity-resource-tabs" tabListClassName="activity-resource-tabs-list">
+    <Tabs class="activity-resource-external-event-tabs" tabListClassName="activity-resource-external-event-tabs-list">
       <svelte:fragment slot="tab-list">
-        <Tab class="activity-resource-tab"><DirectiveAndSpanIcon /> Activities</Tab>
-        <Tab class="activity-resource-tab"><TimelineLineLayerIcon /> Resources</Tab>
-        <Tab class="activity-resource-tab"><Balloon /> External Event</Tab>
+        <Tab class="activity-resource-external-event-tab"><DirectiveAndSpanIcon /> Activities</Tab>
+        <Tab class="activity-resource-external-event-tab"><TimelineLineLayerIcon /> Resources</Tab>
+        <Tab class="activity-resource-external-event-tab"><Balloon /> External Event</Tab>
       </svelte:fragment>
       <TabPanel>
         <ActivityList />
@@ -43,34 +43,34 @@
 </Panel>
 
 <style>
-  :global(.tab-list.activity-resource-tabs-list) {
+  :global(.tab-list.activity-resource-external-event-tabs-list) {
     background-color: var(--st-gray-10);
   }
 
-  :global(button.activity-resource-tab) {
+  :global(button.activity-resource-external-event-tab) {
     align-items: center;
     display: flex;
     gap: 8px;
     text-align: left;
   }
 
-  :global(button.activity-resource-tab:last-of-type) {
+  :global(button.activity-resource-external-event-tab:last-of-type) {
     flex: 1;
   }
 
-  :global(button.activity-resource-tab:last-of-type.selected) {
+  :global(button.activity-resource-external-event-tab:last-of-type.selected) {
     box-shadow: 1px 0px 0px inset var(--st-gray-20);
   }
 
-  :global(button.activity-resource-tab:first-of-type.selected) {
+  :global(button.activity-resource-external-event-tab:first-of-type.selected) {
     box-shadow: -1px 0px 0px inset var(--st-gray-20);
   }
 
-  :global(button.activity-resource-tab:not(.selected)) {
+  :global(button.activity-resource-external-event-tab:not(.selected)) {
     box-shadow: 0px -1px 0px inset var(--st-gray-20);
   }
 
-  :global(button.activity-resource-tab.selected) {
+  :global(button.activity-resource-external-event-tab.selected) {
     background-color: white;
     box-shadow:
       1px 0px 0px inset var(--st-gray-20),
