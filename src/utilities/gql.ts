@@ -1009,15 +1009,15 @@ const gql = {
     }
   `,
 
-  DELETE_EXTERNAL_SOURCE: `#graphql
+  DELETE_EXTERNAL_SOURCES: `#graphql
     mutation DeleteExternalSource(
-      $derivationGroupName: String!,
-      $sourceKey: String!
+      $derivationGroupName: String!, 
+      $sourceKeys: [String!]!
     ) {
-      deleteExternalEvent: ${Queries.DELETE_EXTERNAL_EVENT}(
+      deleteExternalEvent:  ${Queries.DELETE_EXTERNAL_EVENT}(
         where: {
           derivation_group_name: { _eq: $derivationGroupName },
-          source_key: { _eq: $sourceKey }
+          source_key: { _in: $sourceKeys }
         }
       ) {
         returning {
@@ -1027,7 +1027,7 @@ const gql = {
       deleteExternalSource: ${Queries.DELETE_EXTERNAL_SOURCE}(
         where: {
           derivation_group_name: { _eq: $derivationGroupName },
-          key: { _eq: $sourceKey }
+          key: { _in: $sourceKeys }
         }
       ) {
         affected_rows
