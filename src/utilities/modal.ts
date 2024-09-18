@@ -33,9 +33,9 @@ import type { ExpansionSequence } from '../types/expansion';
 import type { ExternalEventType } from '../types/external-event';
 import type {
   DerivationGroup,
+  ExternalSourcePkey,
   ExternalSourceSlim,
-  ExternalSourceType,
-  PlanDerivationGroup,
+  ExternalSourceType
 } from '../types/external-source';
 import type { ModalElement, ModalElementValue } from '../types/modal';
 import type {
@@ -196,16 +196,21 @@ export async function showCreateGroupsOrTypes(user: User | null): Promise<ModalE
  * Shows a DeleteExternalSourceModal component with the supplied arguments.
  */
 export async function showDeleteExternalSourceModal(
-  linked: PlanDerivationGroup[],
-  source: ExternalSourceSlim,
+  linked: { pkey: ExternalSourcePkey; plan_ids: number[] }[],
+  sources: ExternalSourceSlim[],
+  unassociatedSources: ExternalSourceSlim[]
 ): Promise<ModalElementValue> {
   return new Promise(resolve => {
     if (browser) {
       const target: ModalElement | null = document.querySelector('#svelte-modal');
 
       if (target) {
+        // if we don't do this, on clicking "Delete Unassociated Sources", modalBodyClickListener fires and the modal closes, which in this case is undesired
+        //    NOTE: in any case, ideally speaking, that method *should* only fire if anything _outside_ the target is clicked, right?
+        target.setAttribute('data-dismissible', 'false');
+
         const deleteExternalSourceModal = new DeleteExternalSourceModal({
-          props: { linked, source },
+          props: { linked, sources, unassociatedSources },
           target,
         });
         target.resolve = resolve;

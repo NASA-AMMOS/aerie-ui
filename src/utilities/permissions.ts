@@ -536,7 +536,7 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   DELETE_EXTERNAL_EVENT_TYPE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.DELETE_EXTERNAL_EVENT_TYPE], user);
   },
-  DELETE_EXTERNAL_SOURCE: (user: User | null): boolean => {
+  DELETE_EXTERNAL_SOURCES: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.DELETE_EXTERNAL_SOURCE], user);
   },
   DELETE_EXTERNAL_SOURCE_TYPE: (user: User | null): boolean => {
@@ -1376,7 +1376,7 @@ const featurePermissions: FeaturePermissions = {
   },
   externalSource: {
     canCreate: user => queryPermissions.CREATE_EXTERNAL_SOURCE(user),
-    canDelete: user => queryPermissions.DELETE_EXTERNAL_SOURCE(user),
+    canDelete: user => queryPermissions.DELETE_EXTERNAL_SOURCES(user),
     canRead: user => queryPermissions.SUB_EXTERNAL_SOURCES(user),
     canUpdate: () => false, // no feature to update external sources
   },
