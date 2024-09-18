@@ -1561,7 +1561,7 @@ const gql = {
           derivation_group_name: {_eq: $derivationGroupName}
         }
       ) {
-        ${Queries.EXTERNAL_EVENT} {
+        external_events {
           external_event_type {
             name
           }
@@ -1805,8 +1805,8 @@ const gql = {
       ${Queries.PLAN_DERIVATION_GROUP}(where: {plan_id: {_eq: $plan_id}}) {
         ${Queries.DERIVATION_GROUP} {
           ${Queries.EXTERNAL_SOURCES} {
-            ${Queries.EXTERNAL_EVENT} {
-              ${Queries.EXTERNAL_EVENT_TYPES} {
+            external_events {
+              external_event_type {
                 name
               }
             }
