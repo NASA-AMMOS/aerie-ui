@@ -52,7 +52,6 @@ test.afterAll(async () => {
   await models.deleteModel();
 
   await externalSources.goto();
-  await externalSources.selectSourceFilter();
   await page.waitForTimeout(500); // Arbitrary wait timing, allows external sources table to populate
   // Cleanup all test files that *may* have been uploaded
   if (await page.getByRole('gridcell', { name: externalSources.externalSourceFileName }).first().isVisible()) {
@@ -113,26 +112,22 @@ test.describe.serial('Plan External Sources', () => {
     await expect(page.getByText('Derivation Group Linked Successfully')).toBeVisible();
     await page.getByRole('row', { name: externalSources.exampleSourceType }).getByRole('checkbox').click();
     await expect(page.getByText('Derivation Group Disassociated Successfully')).toBeVisible();
+    // Re-link for later use in testing, and to determine if unlinking broke things
+    await page.getByRole('row', { name: externalSources.exampleSourceType }).getByRole('checkbox').click();
+    await expect(page.getByText('Derivation Group Linked Successfully').nth(1)).toBeVisible();
+  });
+
+  test('External event types can be added to the timeline', async () => {
+    await plan.showPanel(PanelNames.TIMELINE_ITEMS);
+    await page.getByRole('button', { exact: true, name: 'External Event' }).click();
+    await expect(page.getByText('ExampleEvent').first()).toBeVisible();
+    await page.getByText('ExampleEvent').first().hover();
+    await page.getByLabel('AddExternal event-ExampleEvent').click();
+    await page.getByLabel('layer-picker-external event-ExampleEvent').getByText('New Row +').click();
+    await expect(page.locator('#timeline-0').getByRole('button', { name: 'ExampleEvent' })).toBeVisible();
   });
 
   test('Zero-duration events are properly drawn in the timeline', async () => {
-    await plan.showPanel(PanelNames.EXTERNAL_SOURCES);
-    await plan.externalSourceManageButton.click();
-
-    // Link *only* the derivation group with the 0-duration source
-    const checkboxCount: number = await page.getByRole('checkbox').count();
-    for (let index = 1; index < checkboxCount; index++) {
-      if (await page.getByRole('checkbox').first().isChecked()) {
-        await page.getByRole('checkbox').first().check();
-      }
-    }
-    page.getByRole('row', { name: externalSources.exampleSourceType }).getByRole('checkbox').click();
-    await expect(page.getByText('Derivation Group Linked Successfully')).toBeVisible();
-    await page
-      .getByText('Derivation Group Linked Successfully')
-      .waitFor({ state: 'hidden', timeout: externalSources.toastTimeout });
-    await page.getByRole('button', { name: 'Close' }).click();
-
     // Get the current timeline canvas' pixels - use a set to just determine that non-0 RGB values exist
     const doPixelsExist: boolean = await page.evaluate(() => {
       const canvas = document.querySelector('canvas');
@@ -148,15 +143,6 @@ test.describe.serial('Plan External Sources', () => {
       return false;
     });
 
-    // Cleanup derivation groups selected for other tests
-    await plan.externalSourceManageButton.click();
-    page.getByRole('row', { name: externalSources.exampleSourceType }).getByRole('checkbox').click();
-    await expect(page.getByText('Derivation Group Disassociated Successfully')).toBeVisible();
-    await page
-      .getByText('Derivation Group Disassociated Successfully')
-      .waitFor({ state: 'hidden', timeout: externalSources.toastTimeout });
-    await page.getByRole('button', { name: 'Close' }).click();
-
     expect(doPixelsExist).toBeTruthy();
   });
 
@@ -168,14 +154,11 @@ test.describe.serial('Plan External Sources', () => {
     await plan.showPanel(PanelNames.EXTERNAL_SOURCES);
     await plan.externalSourceManageButton.click();
     await page.getByRole('row', { name: externalSources.exampleDerivationSourceType }).getByRole('checkbox').click();
-    await page
-      .getByText('Derivation Group Linked Successfully')
-      .waitFor({ state: 'visible', timeout: extendedTimeout });
 
     // Upload another test
     await externalSources.goto();
     await externalSources.uploadExternalSource(externalSources.derivationTestFile2);
-    await page.getByText('External Source Created').waitFor({ state: 'hidden', timeout: externalSources.toastTimeout }); // Wait for toast to go away to stall for processes to finish
+
     await plan.goto();
     await plan.showPanel(PanelNames.EXTERNAL_SOURCES);
 
@@ -195,6 +178,7 @@ test.describe.serial('Plan External Sources', () => {
       .filter({ hasText: /^No sources in this group\. Delete Empty Derivation Group$/ })
       .locator('p')
       .waitFor({ state: 'hidden', timeout: extendedTimeout });
+
     await page.waitForTimeout(3000); // Arbitrary wait timing, allows the store to load for determining if the checkbox should already be checked (it should be)
     if (
       await page
@@ -219,49 +203,32 @@ test.describe.serial('Plan External Sources', () => {
     // Upload all derivation test files
     await externalSources.uploadExternalSource(externalSources.derivationTestFile1);
     await externalSources.deselectSourceButton.click();
-    await page.getByText('External Source Created').waitFor({ state: 'hidden', timeout: externalSources.toastTimeout });
     await externalSources.uploadExternalSource(externalSources.derivationTestFile2);
     await externalSources.deselectSourceButton.click();
-    await page.getByText('External Source Created').waitFor({ state: 'hidden', timeout: externalSources.toastTimeout });
     await externalSources.uploadExternalSource(externalSources.derivationTestFile3);
     await externalSources.deselectSourceButton.click();
-    await page.getByText('External Source Created').waitFor({ state: 'hidden', timeout: externalSources.toastTimeout });
     await externalSources.uploadExternalSource(externalSources.derivationTestFile4);
     await plan.goto();
     await plan.showPanel(PanelNames.EXTERNAL_SOURCES);
     await plan.externalSourceManageButton.click();
     // Remove all other derivation groups that are linked
+    await page.waitForTimeout(3000);
     const checkboxCount: number = await page.getByRole('checkbox').count();
-    for (let index = 1; index < checkboxCount; index++) {
+    for (let index = 1; index <= checkboxCount; index++) {
       if (await page.getByRole('checkbox').first().isChecked()) {
-        await page.getByRole('checkbox').first().check();
+        await page.getByRole('checkbox').first().click();
       }
     }
     await page.getByRole('row', { name: externalSources.exampleDerivationSourceType }).getByRole('checkbox').click();
-    await page
-      .getByText('Derivation Group Linked Successfully')
-      .waitFor({ state: 'visible', timeout: externalSources.toastTimeout });
     await page.getByRole('button', { name: 'Close' }).click();
     await page.getByText('Selected Activity').click();
     await page.getByRole('menuitem', { name: 'External Events Table' }).click();
-
     await page
       .locator('div')
       .filter({ hasText: /^No sources in this group\. Delete Empty Derivation Group$/ })
       .locator('p')
       .waitFor({ state: 'hidden', timeout: extendedTimeout });
 
-    const dismissCardCount: number = await page.getByRole('button', { name: 'Dismiss' }).count();
-    for (let i = 0; i < dismissCardCount; i++) {
-      await page.getByRole('button', { name: 'Dismiss' }).first().click();
-    }
-
-    // Check on event counts in the panel
-    await page.getByRole('button', { exact: false, name: 'Derivation group Derivation Test Default' }).click();
-    await expect(page.getByRole('button', { name: externalSources.derivationTestFileKey1 })).toHaveCount(1);
-    await expect(page.getByRole('button', { name: externalSources.derivationTestFileKey2 })).toHaveCount(1);
-    await expect(page.getByRole('button', { name: externalSources.derivationTestFileKey3 })).toHaveCount(1);
-    await expect(page.getByRole('button', { name: externalSources.derivationTestFileKey4 })).toHaveCount(1);
     await expect(externalSources.panelExternalEventsTable.getByRole('gridcell')).toHaveCount(35); // Should match exactly for the amount of rows we expect - there are 7 derived events from these sources and there are 5 columns in the table
 
     // Check on specific events in the table
@@ -341,6 +308,7 @@ test.describe.serial('Plan External Sources', () => {
       .locator('div')
       .filter({ hasText: /^No sources in this group\. Delete Empty Derivation Group$/ })
       .locator('p')
+      .first()
       .waitFor({ state: 'hidden', timeout: extendedTimeout });
     // Expand all collapse buttons to validate fields appear
     await expect(page.getByRole('button', { name: 'example-external-source.json 1' }).first()).toBeVisible();

@@ -125,7 +125,9 @@
   $: derivationGroups = $planDerivationGroupLinks
     .filter(link => link.plan_id === plan?.id)
     .map(link => link.derivation_group_name);
-  $: externalEvents = externalEvents.filter(externalEvent => derivationGroups.includes(externalEvent.pkey.derivation_group_name));
+  $: externalEvents = externalEvents.filter(externalEvent =>
+    derivationGroups.includes(externalEvent.pkey.derivation_group_name),
+  );
   $: rows = timeline?.rows || [];
   $: drawWidth = clientWidth > 0 ? clientWidth - (timeline?.marginLeft ?? 0) - (timeline?.marginRight ?? 0) : 0;
   $: xAxisDrawHeight = 48 + 16 * ($plugins.time.additional.length ? Math.max($plugins.time.additional.length, 1) : 1);

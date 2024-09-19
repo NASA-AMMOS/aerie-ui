@@ -42,7 +42,7 @@
         This Derivation Group still contains the following sources which must be deleted first:
         <hr style="border: 0px" />
         {#each derivationGroup.sources as source}
-          <div class="modal-content" style:padding-left=20px>
+          <div class="modal-content" style:padding-left="20px">
             <i>
               {source[0]}
             </i>
@@ -52,7 +52,7 @@
     {:else}
       <span class="modal-content">
         Are you sure you want to delete "{derivationGroup.name}"?
-        <br>
+        <br />
         <i>What is done cannot be undone.</i>
       </span>
     {/if}

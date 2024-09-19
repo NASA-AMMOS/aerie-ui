@@ -35,7 +35,7 @@ import type {
   DerivationGroup,
   ExternalSourcePkey,
   ExternalSourceSlim,
-  ExternalSourceType
+  ExternalSourceType,
 } from '../types/external-source';
 import type { ModalElement, ModalElementValue } from '../types/modal';
 import type {
@@ -198,7 +198,7 @@ export async function showCreateGroupsOrTypes(user: User | null): Promise<ModalE
 export async function showDeleteExternalSourceModal(
   linked: { pkey: ExternalSourcePkey; plan_ids: number[] }[],
   sources: ExternalSourceSlim[],
-  unassociatedSources: ExternalSourceSlim[]
+  unassociatedSources: ExternalSourceSlim[],
 ): Promise<ModalElementValue> {
   return new Promise(resolve => {
     if (browser) {
@@ -271,7 +271,7 @@ export async function showDeleteDerivationGroupModal(
 
 export async function showDeleteExternalSourceTypeModal(
   sourceType: ExternalSourceType,
-  associatedDGs: DerivationGroup[],
+  associatedDerivationGroups: DerivationGroup[],
   user: User | null,
 ): Promise<ModalElementValue> {
   return new Promise(resolve => {
@@ -280,7 +280,7 @@ export async function showDeleteExternalSourceTypeModal(
 
       if (target) {
         const deleteExternalSourceTypeModal = new DeleteExternalSourceTypeModal({
-          props: { associatedDGs, sourceType },
+          props: { associatedDerivationGroups, sourceType },
           target,
         });
         target.resolve = resolve;

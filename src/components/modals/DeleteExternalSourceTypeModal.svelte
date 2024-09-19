@@ -43,7 +43,7 @@
         The following Derivation Groups paired with this External Source Type still exist and must be deleted first:
         <hr style="border: 0px" />
         {#each associatedDerivationGroups as derivationGroup}
-          <div class="modal-content" style:padding-left=20px>
+          <div class="modal-content" style:padding-left="20px">
             <i>
               {derivationGroup.name}
             </i>

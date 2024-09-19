@@ -4,7 +4,7 @@ import {
   type ExternalSourceSlim,
   type ExternalSourceType,
   type PlanDerivationGroup,
-  type UserSeenEntryWithDate
+  type UserSeenEntryWithDate,
 } from '../types/external-source';
 import gql from '../utilities/gql';
 import { planId } from './plan';
@@ -44,18 +44,15 @@ export const planDerivationGroupLinks = gqlSubscribable<PlanDerivationGroup[]>(
 );
 
 // this tracks each user's view of the sources. if something exists in externalSources that isn't in usersSeenSources, it's treated as unseen, and vice versa for deleted.
-export const usersSeenSourcesRaw = gqlSubscribable<{
-  derivation_group: string;
-  external_source_name: string;
-  external_source_type: string;
-  id: number;
-  username: string;
-}[]>(
-  gql.SUB_SEEN_SOURCES,
-  {},
-  [],
-  null
-);
+export const usersSeenSourcesRaw = gqlSubscribable<
+  {
+    derivation_group: string;
+    external_source_name: string;
+    external_source_type: string;
+    id: number;
+    username: string;
+  }[]
+>(gql.SUB_SEEN_SOURCES, {}, [], null);
 
 /* Derived. */
 export const selectedPlanDerivationGroupNames: Readable<string[]> = derived(
@@ -77,7 +74,12 @@ export const usersSeenSources: Readable<Record<string, UserSeenEntryWithDate[]>>
   ([$usersSeenSourcesRaw, $externalSources]) => {
     const res: Record<string, UserSeenEntryWithDate[]> = {};
     for (const entry of $usersSeenSourcesRaw) {
-      const change_date = $externalSources.find(externalSource => externalSource.pkey.derivation_group_name === entry.derivation_group && externalSource.pkey.key === entry.external_source_name)?.created_at ?? ""
+      const change_date =
+        $externalSources.find(
+          externalSource =>
+            externalSource.pkey.derivation_group_name === entry.derivation_group &&
+            externalSource.pkey.key === entry.external_source_name,
+        )?.created_at ?? '';
       if (res[entry.username]) {
         res[entry.username].push({
           change_date,
@@ -97,7 +99,7 @@ export const usersSeenSources: Readable<Record<string, UserSeenEntryWithDate[]>>
       }
     }
     return res;
-  }
+  },
 );
 
 /* Helper Functions. */
@@ -109,15 +111,18 @@ export function resetExternalSourceStores(): void {
 }
 
 function transformExternalSources(
-  externalSources: {
-    created_at: string;
-    derivation_group_name: string;
-    end_time: string;
-    key: string;
-    source_type_name: string;
-    start_time: string;
-    valid_at: string;
-  }[] | null | undefined,
+  externalSources:
+    | {
+        created_at: string;
+        derivation_group_name: string;
+        end_time: string;
+        key: string;
+        source_type_name: string;
+        start_time: string;
+        valid_at: string;
+      }[]
+    | null
+    | undefined,
 ): ExternalSourceSlim[] {
   const completeExternalSourceSlim: ExternalSourceSlim[] = [];
   if (externalSources !== null && externalSources !== undefined) {
@@ -139,13 +144,16 @@ function transformExternalSources(
 }
 
 function transformDerivationGroups(
-  derivationGroups: {
-    derived_total: number;
-    event_types: string[];
-    name: string;
-    source_type_name: string;
-    sources: string[];
-  }[] | null | undefined,
+  derivationGroups:
+    | {
+        derived_total: number;
+        event_types: string[];
+        name: string;
+        source_type_name: string;
+        sources: string[];
+      }[]
+    | null
+    | undefined,
 ): DerivationGroup[] {
   const completeExternalSourceSlim: DerivationGroup[] = [];
   if (derivationGroups !== null && derivationGroups !== undefined) {

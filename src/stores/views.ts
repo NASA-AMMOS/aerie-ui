@@ -734,7 +734,7 @@ export function viewAddFilterItemsToRow(
         if (r.id === row.id) {
           returnRow = r;
           const newLayers = r.layers.map(l => {
-            if (l.id === layer.id) {
+            if (layer !== undefined && l.id === layer.id) {
               return getUpdatedLayerWithFilters(timelines, typeName, items, layer, row).layer;
             }
             return l;

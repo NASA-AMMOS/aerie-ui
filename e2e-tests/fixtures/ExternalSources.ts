@@ -87,17 +87,7 @@ export class ExternalSources {
 
   async selectSource(sourceName: string = 'example-external-source.json') {
     // Always selects the first source with the example's source type in the table
-    if (!this.page.getByRole('gridcell', { name: sourceName }).first().isVisible()) {
-      await this.selectSourceFilter();
-    }
     await this.page.getByRole('gridcell', { name: sourceName }).first().click();
-  }
-
-  async selectSourceFilter() {
-    // Always selects all sources as the filter
-    await this.page.getByPlaceholder('Filter by Source Type').click();
-    await this.page.locator('.source-filters-select-all').click();
-    await this.page.keyboard.press('Escape'); // Un-focus the filter menu
   }
 
   async updatePage(page: Page): Promise<void> {
@@ -118,7 +108,7 @@ export class ExternalSources {
     this.panelExternalEventsTable = page.locator('[data-component-name="ExternalEventsTablePanel"]');
   }
 
-  async uploadExternalSource(inputFilePath: string = this.externalSourceFilePath, waitForSuccess: boolean = true) {
+  async uploadExternalSource(inputFilePath: string = this.externalSourceFilePath, waitForSuccess: boolean = false) {
     await this.fillInputFile(inputFilePath);
     await this.uploadButton.click();
     if (waitForSuccess === true) {

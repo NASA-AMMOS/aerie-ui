@@ -43,7 +43,7 @@
         This External Event Type still contains the following sources which must be deleted first:
         <hr style="border: 0px" />
         {#each associatedSources as source}
-          <div class="modal-content" style:padding-left=20px>
+          <div class="modal-content" style:padding-left="20px">
             <i>
               {source}
             </i>
