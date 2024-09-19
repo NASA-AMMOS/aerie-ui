@@ -77,9 +77,7 @@
               <Tab class="creation-tab">External Event Type</Tab>
             </svelte:fragment>
             <TabPanel>
-              <p style="padding-top:10px">
-                Provide a name and an external source type for the new derivation group.
-              </p>
+              <p style="padding-top:10px">Provide a name and an external source type for the new derivation group.</p>
               <p><i>The newly created group will be empty, though you can upload sources into it.</i></p>
               <div class="timeline-editor-layer-filter">
                 <input
@@ -101,12 +99,13 @@
                     <option value={sourceType.name}>{sourceType.name}</option>
                   {/each}
                 </select>
-                <button class="st-button w-10" type="submit" on:click|preventDefault={onCreateDerivationGroup}> Create </button>
-            </TabPanel>
+                <button class="st-button w-10" type="submit" on:click|preventDefault={onCreateDerivationGroup}>
+                  Create
+                </button>
+              </div></TabPanel
+            >
             <TabPanel>
-              <p style="padding-top:10px">
-                Provide a name for the new external source type.
-              </p>
+              <p style="padding-top:10px">Provide a name for the new external source type.</p>
               <p><i>The newly created external source type will be empty, though you can upload sources into it.</i></p>
               <div class="timeline-editor-layer-filter">
                 <input
@@ -117,12 +116,13 @@
                   name="filter-ee"
                   placeholder={'New External Source Type Name'}
                 />
-                <button class="st-button w-10" type="submit" on:click|preventDefault={onCreateExternalSourceType}> Create </button>
-            </TabPanel>
+                <button class="st-button w-10" type="submit" on:click|preventDefault={onCreateExternalSourceType}>
+                  Create
+                </button>
+              </div></TabPanel
+            >
             <TabPanel>
-              <p style="padding-top:10px">
-                Provide a name for the new external event type.
-              </p>
+              <p style="padding-top:10px">Provide a name for the new external event type.</p>
               <p><i>The newly created external event type will be empty, though you can upload events into it.</i></p>
               <div class="timeline-editor-layer-filter">
                 <input
@@ -133,8 +133,11 @@
                   name="filter-ee"
                   placeholder={'New External Event Type Name'}
                 />
-                <button class="st-button w-10" type="submit" on:click|preventDefault={onCreateExternalEventType}> Create </button>
-            </TabPanel>
+                <button class="st-button w-10" type="submit" on:click|preventDefault={onCreateExternalEventType}>
+                  Create
+                </button>
+              </div></TabPanel
+            >
           </Tabs>
         </div>
         <div style="flex-direction: column;">

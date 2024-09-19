@@ -334,16 +334,18 @@
       let currentlyLinked: { pkey: ExternalSourcePkey; plan_ids: number[] }[] = [];
       let unassociatedSources: ExternalSourceSlim[] = [];
       for (let externalSource of selectedSources) {
-        let plan_ids: number[] = $planDerivationGroupLinks
-          .filter(
-            planDerivationGroupLink =>
-              planDerivationGroupLink.derivation_group_name === externalSource.pkey.derivation_group_name,
-          )
-          .map(planDerivationGroupLink => planDerivationGroupLink.plan_id)
-          .filter(entry => entry !== undefined);
-
-        if (plan_ids.length > 0) {
-          currentlyLinked.push({ pkey: externalSource.pkey, plan_ids });
+        const currentExternalSourcePlanLinks: PlanDerivationGroup[] = $planDerivationGroupLinks.filter(
+          planDerivationGroupLink =>
+            planDerivationGroupLink.derivation_group_name === externalSource.pkey.derivation_group_name,
+        );
+        const linkedPlanIds: (number | undefined)[] = currentExternalSourcePlanLinks.map(
+          planDerivationGroupLink => planDerivationGroupLink.plan_id,
+        );
+        const definedPlanIds: number[] = linkedPlanIds.filter(
+          (currentPlanId): currentPlanId is number => currentPlanId !== undefined,
+        );
+        if (definedPlanIds !== undefined && definedPlanIds.length > 0) {
+          currentlyLinked.push({ pkey: externalSource.pkey, plan_ids: definedPlanIds });
         } else {
           unassociatedSources.push(externalSource);
         }

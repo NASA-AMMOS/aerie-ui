@@ -8,10 +8,9 @@
 
   let externalEventTypes: ExternalEventType[] = [];
 
-  $: externalEventTypes = $selectedPlanDerivationGroupEventTypes.map(
-    eventType => {
-      return { name: eventType }
-    });
+  $: externalEventTypes = $selectedPlanDerivationGroupEventTypes.map(eventType => {
+    return { name: eventType };
+  });
 
   $: console.log(externalEventTypes);
 

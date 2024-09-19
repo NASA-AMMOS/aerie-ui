@@ -5,12 +5,7 @@
   import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import { createEventDispatcher } from 'svelte';
-  import {
-    derivationGroupPlanLinkError,
-    derivationGroups,
-    externalSources,
-    selectedPlanDerivationGroupNames,
-  } from '../../stores/external-source';
+  import { derivationGroups, externalSources, selectedPlanDerivationGroupNames } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import { plugins } from '../../stores/plugins';
   import type { User } from '../../types/app';
@@ -171,14 +166,9 @@
   async function changeDerivationGroupAssociation(checked: boolean, derivationGroupName: string | undefined) {
     if (derivationGroupName !== undefined) {
       if (checked) {
-        // insert
         await effects.insertDerivationGroupForPlan(derivationGroupName, $plan, user);
       } else {
-        // delete
         await effects.deleteDerivationGroupForPlan(derivationGroupName, $plan, user);
-        if ($derivationGroupPlanLinkError !== null) {
-          console.log('Removed');
-        }
       }
     }
   }

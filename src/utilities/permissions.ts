@@ -977,11 +977,6 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   UPDATE_PLAN: (user: User | null, plan: PlanWithOwners): boolean => {
     return isUserAdmin(user) || (getPermission([Queries.UPDATE_PLAN], user) && isPlanOwner(user, plan));
   },
-  UPDATE_PLAN_DERIVATION_GROUP: (user: User | null, plan: PlanWithOwners): boolean => {
-    return (
-      isUserAdmin(user) || (getPermission([Queries.UPDATE_PLAN_DERIVATION_GROUP], user) && isPlanOwner(user, plan))
-    );
-  },
   UPDATE_PLAN_SNAPSHOT: (user: User | null): boolean => {
     return getPermission([Queries.UPDATE_PLAN_SNAPSHOT], user);
   },
@@ -1525,6 +1520,5 @@ export {
   isPlanOwner,
   isUserAdmin,
   isUserOwner,
-  queryPermissions
+  queryPermissions,
 };
-
