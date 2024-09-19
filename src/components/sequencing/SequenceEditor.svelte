@@ -117,6 +117,12 @@
         dispatch: transaction => editorSequenceView.update([transaction]),
         state: editorSequenceView.state,
       });
+      // clear selection
+      editorSequenceView.update([
+        editorSequenceView.state.update({
+          selection: { anchor: 0, head: 0 },
+        }),
+      ]);
     }
   }
 

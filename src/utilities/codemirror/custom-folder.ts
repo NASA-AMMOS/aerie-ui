@@ -223,15 +223,15 @@ const CLOSE_SUGGESTION: { [open: string]: string } = Object.fromEntries(
   ]),
 );
 
-export function closeSuggestion(stem: string) {
+export function closeSuggestion(stem: string): string | undefined {
   return CLOSE_SUGGESTION[stem];
 }
 
-export function openSuggestion(stem: string) {
+export function openSuggestion(stem: string): string | undefined {
   return OPEN_SUGGESTION[stem];
 }
 
-const blockOpeningStems = new Set([
+const blockOpeningStems: Set<string> = new Set([
   SEQ_DIR_IF,
   SEQ_DIR_IF_OR,
   SEQ_DIR_IF_AND,
@@ -247,7 +247,7 @@ const blockOpeningStems = new Set([
   SEQ_DIR_WHILE_LOOP_OR,
 ]);
 
-const blockClosingStems = new Set([
+const blockClosingStems: Set<string> = new Set([
   SEQ_DIR_ELSE, // also opens
   SEQ_DIR_WAIT_UNTIL_TIMEOUT, // also opens
 
@@ -257,11 +257,11 @@ const blockClosingStems = new Set([
   SEQ_DIR_END_WHILE_LOOP,
 ]);
 
-export function isBlockCommand(stem: string) {
+export function isBlockCommand(stem: string): boolean {
   return blockOpeningStems.has(stem) || blockClosingStems.has(stem);
 }
 
-function closesBlock(stem: string, blockStem: string) {
+function closesBlock(stem: string, blockStem: string): boolean {
   // not the same as `closeSuggestion(blockStem) === stem;` as else types are optional
   switch (stem) {
     case SEQ_DIR_END_IF:
@@ -282,7 +282,7 @@ function closesBlock(stem: string, blockStem: string) {
 
 const blocksForState = new WeakMap<EditorState, TreeState>();
 
-export function computeBlocks(state: EditorState) {
+export function computeBlocks(state: EditorState): TreeState {
   // avoid scanning for each command
   const blocks = blocksForState.get(state);
   if (!blocks) {
@@ -354,7 +354,7 @@ export function computeBlocks(state: EditorState) {
       });
     blocksForState.set(state, treeState);
   }
-  return blocksForState.get(state);
+  return blocksForState.get(state)!;
 }
 
 function blockFolder(stemNode: SyntaxNode, state: EditorState): { from: number; to: number } | null {
