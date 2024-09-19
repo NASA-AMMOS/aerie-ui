@@ -207,7 +207,6 @@ export enum Queries {
   UPDATE_PARCEL = 'update_parcel_by_pk',
   UPDATE_PLAN_SNAPSHOT = 'update_plan_snapshot_by_pk',
   UPDATE_PLAN = 'update_plan_by_pk',
-  UPDATE_PLAN_DERIVATION_GROUP = 'update_plan_derivation_group_by_pk',
   UPDATE_SCHEDULING_CONDITION_METADATA = 'update_scheduling_condition_metadata_by_pk',
   UPDATE_SCHEDULING_GOAL_METADATA = 'update_scheduling_goal_metadata_by_pk',
   UPDATE_SCHEDULING_REQUEST = 'update_scheduling_request',
@@ -1011,7 +1010,7 @@ const gql = {
 
   DELETE_EXTERNAL_SOURCES: `#graphql
     mutation DeleteExternalSource(
-      $derivationGroupName: String!, 
+      $derivationGroupName: String!,
       $sourceKeys: [String!]!
     ) {
       deleteExternalEvent:  ${Queries.DELETE_EXTERNAL_EVENT}(
@@ -3887,7 +3886,7 @@ const gql = {
       }
     }
   `,
-  
+
   UPDATE_SCHEDULING_GOAL_MODEL_SPECIFICATIONS: `#graphql
     mutation UpdateSchedulingGoalModelSpecifications($goalSpecsToUpdate: [scheduling_model_specification_goals_insert_input!]!, $goalIdsToDelete: [Int!]! = [], $modelId: Int!) {
       updateSchedulingGoalModelSpecifications: ${Queries.INSERT_SCHEDULING_MODEL_SPECIFICATION_GOALS}(
