@@ -337,7 +337,7 @@
   const blockHighlighter = ViewPlugin.fromClass(
     class {
       decorations: DecorationSet;
-      constructor(_view: EditorView) {
+      constructor() {
         this.decorations = Decoration.none;
       }
       update(update: ViewUpdate) {
@@ -352,7 +352,7 @@
       }
     },
     {
-      decorations: v => v.decorations,
+      decorations: spec => spec.decorations,
     },
   );
 
