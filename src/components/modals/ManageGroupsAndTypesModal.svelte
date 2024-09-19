@@ -203,7 +203,8 @@
       valueFormatter: params => {
         let associatedDerivationGroups = getAssociatedDerivationGroupsByEventType(params.data?.name);
         const sourceMap = associatedDerivationGroups.flatMap(derivationGroup => derivationGroup.sources.size);
-        const numOfSources = sourceMap.length > 0 ? sourceMap.reduce((acc, derivationGroupSize) => acc + derivationGroupSize) : 0;
+        const numOfSources =
+          sourceMap.length > 0 ? sourceMap.reduce((acc, derivationGroupSize) => acc + derivationGroupSize) : 0;
         return `${numOfSources}`;
       },
     },
@@ -295,10 +296,12 @@
   }
 
   async function deleteExternalSourceType(sourceType: ExternalSourceType) {
-    let associatedDGs = $derivationGroups.filter(derivationGroup => derivationGroup.source_type_name === sourceType.name);
+    let associatedDerivationGroups = $derivationGroups.filter(
+      derivationGroup => derivationGroup.source_type_name === sourceType.name,
+    );
 
     // makes sure all associated derivation groups are deleted before this
-    await showDeleteExternalSourceTypeModal(sourceType, associatedDGs, user);
+    await showDeleteExternalSourceTypeModal(sourceType, associatedDerivationGroups, user);
   }
 
   async function deleteExternalEventType(eventType: ExternalEventType) {
@@ -326,7 +329,9 @@
       return [];
     }
 
-    let associatedDerivationGroups = $derivationGroups.filter(derivationGroup => derivationGroup.source_type_name === sourceTypeName);
+    let associatedDerivationGroups = $derivationGroups.filter(
+      derivationGroup => derivationGroup.source_type_name === sourceTypeName,
+    );
 
     return associatedDerivationGroups;
   }
@@ -343,7 +348,9 @@
   }
 
   function viewDerivationGroup(viewedDerivationGroup: DerivationGroup) {
-    const derivationGroup = $derivationGroups.find(derivationGroup => derivationGroup.name === viewedDerivationGroup.name);
+    const derivationGroup = $derivationGroups.find(
+      derivationGroup => derivationGroup.name === viewedDerivationGroup.name,
+    );
     if (selectedDerivationGroup === undefined || selectedDerivationGroup !== derivationGroup) {
       selectedDerivationGroup = derivationGroup;
       selectedExternalSourceType = undefined;
@@ -486,7 +493,11 @@
             {#if selectedExternalSourceTypeDerivationGroups.length > 0}
               {#each selectedExternalSourceTypeDerivationGroups as associatedDerivationGroup}
                 <!-- Collapsible details -->
-                <Collapse title={associatedDerivationGroup.name} tooltipContent={associatedDerivationGroup.name} defaultExpanded={false}>
+                <Collapse
+                  title={associatedDerivationGroup.name}
+                  tooltipContent={associatedDerivationGroup.name}
+                  defaultExpanded={false}
+                >
                   <span slot="right">
                     <p style:color="gray">
                       {associatedDerivationGroup.derived_event_total} events
@@ -540,7 +551,11 @@
             {#if selectedExternalEventTypeDerivationGroups.length > 0}
               {#each selectedExternalEventTypeDerivationGroups as associatedDerivationGroup}
                 <!-- Collapsible details -->
-                <Collapse title={associatedDerivationGroup.name} tooltipContent={associatedDerivationGroup.name} defaultExpanded={false}>
+                <Collapse
+                  title={associatedDerivationGroup.name}
+                  tooltipContent={associatedDerivationGroup.name}
+                  defaultExpanded={false}
+                >
                   <span slot="right">
                     <p style:color="gray">
                       {associatedDerivationGroup.derived_event_total} events

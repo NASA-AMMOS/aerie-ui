@@ -2482,12 +2482,11 @@ const effects = {
         const { confirm } = await showDeleteExternalSourceModal([], externalSources, []);
         if (confirm) {
           // cannot easily do composite keys in GraphQL, so we group by derivation group and send a query per group of keys
-          const derivationGroups: {[derivationGroupName: string]: string[]} = {};
+          const derivationGroups: { [derivationGroupName: string]: string[] } = {};
           for (const externalSource of externalSources) {
             if (derivationGroups[externalSource.pkey.derivation_group_name]) {
               derivationGroups[externalSource.pkey.derivation_group_name].push(externalSource.pkey.key);
-            }
-            else {
+            } else {
               derivationGroups[externalSource.pkey.derivation_group_name] = [externalSource.pkey.key];
             }
           }
@@ -2498,7 +2497,7 @@ const effects = {
               gql.DELETE_EXTERNAL_SOURCES,
               {
                 derivationGroupName: derivationGroupName,
-                sourceKeys: derivationGroups[derivationGroupName]
+                sourceKeys: derivationGroups[derivationGroupName],
               },
               user,
             );
@@ -3628,10 +3627,7 @@ const effects = {
     }
   },
 
-  async getExternalEvents(
-    externalSourcePkey: ExternalSourcePkey | null,
-    user: User | null,
-  ): Promise<ExternalEvent[]> {
+  async getExternalEvents(externalSourcePkey: ExternalSourcePkey | null, user: User | null): Promise<ExternalEvent[]> {
     if (!externalSourcePkey) {
       return [];
     }
@@ -4943,12 +4939,10 @@ const effects = {
         } else {
           throw Error('Unable to approve merge request');
         }
-      }
-      else {
+      } else {
         // the user selected "Cancel" on the modal.
         return false;
       }
-    
     } catch (error) {
       catchError('Approve Merge Request Changes Failed', error as Error);
       showFailureToast('Approve Merge Request Changes Failed');
