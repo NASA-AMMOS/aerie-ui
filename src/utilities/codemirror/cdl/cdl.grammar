@@ -1,19 +1,8 @@
-
-@skip { space | Comment }
-
-// Subset of dictionary tree from
-// https://github.jpl.nasa.gov/MPS/vml_2_1/blob/ab44f7bd4c5e8556059c4522c918253aaff31448/vml_2_1/vml_cdl/vml_cdl.y
-// intended to demonstrate syntax checking potential for future Cdl+Vml missions like VERITAS
-
-// Implementation notes
-// Token names are capitalized names from Bison
+@skip { space | comment | newLine }
 
 @top Cdl_program {
-  newLine*
   Header
-  newLine*
-  Global_definitions
-  // newLine*
+  Processing_routines
 }
 
 Header {
@@ -27,17 +16,37 @@ Header {
 }
 
 Project {
-  "PROJECT"
+  PROJECT
   DELIM
   String
-  newLine
 }
 
 Version {
-  "VERSION"
+  VERSION
   DELIM
   String
-  newLine
+}
+
+Maximum_commands_per_message {
+  (
+    MAXIMUM_COMMANDS_PER_MESSAGE // "MAXIMUM COMMANDS PER MESSAGE"
+    DELIM
+    Integer
+  )?
+}
+
+Maximum_bits_per_message {
+  (
+    MAXIMUM_BITS_PER_MESSAGE // "MAXIMUM BITS PER MESSAGE"
+    DELIM
+    Integer
+  )?
+}
+
+Brackets {
+  BRACKETS
+  DELIM
+  "()" // hard-coded
 }
 
 Token_field_delimiter {
@@ -45,7 +54,6 @@ Token_field_delimiter {
   DELIMITER
   DELIM
   Delimiter
-  newLine
 }
 
 Token_field {
@@ -53,12 +61,53 @@ Token_field {
   | FIELD
 }
 
-Command_delimiter {
-  COMMAND
-  DELIMITER
+Processing_routines {
+  Processing_routine*
+}
+
+Processing_routine {
+  Stem_subroutine
+  // | function
+  // | message_subroutine
+  // | command_subroutine
+  // | argument_group_subroutine;
+}
+
+Stem_subroutine {
+  Stem_start
+  // Optional_title
+  (
+    Title
+    // newLine
+  )?
+  // optional_exclusions
+  // optional_interlocks
+  // optional_category_name { vml_utils_debug(traversal_stream,"Finished with Category Names\n"); }
+  // optional_fields_definition { vml_utils_debug(traversal_stream,"Finished FIELDS DEFINITION\n"); }
+  // numeric_lookup_argument
+  // optional_block
+  Stem_end
+}
+
+Title {
+  TITLE
   DELIM
-  Delimiter
-  newLine
+  String
+}
+
+
+Stem_start {
+  STEM
+  DELIM
+  Stem_name
+  // Subroutine_parm_list
+}
+
+Stem_name { SYMBOL_CONST }
+
+Stem_end {
+  END
+  STEM
 }
 
 Delimiter {
@@ -69,161 +118,468 @@ Delimiter {
   | SEMI_COLON
 }
 
-Brackets {
-  "BRACKETS"
+Command_delimiter {
+  COMMAND
+  DELIMITER
   DELIM
-  "()" // hard-coded
-  newLine
+  Delimiter
 }
 
-Maximum_commands_per_message {
-  (
-    "MAXIMUM COMMANDS PER MESSAGE"
-    DELIM
-    Integer
-    newLine
-  )?
+
+Integer {
+  INT_CONST
 }
 
-Maximum_bits_per_message {
-  (
-    "MAXIMUM BITS PER MESSAGE"
-    DELIM
-    Integer
-    newLine
-  )?
-}
 
-Global_definitions {
-  Global_definition {
-    (
-      Sites_definition
-      | Classification_definition
-      | Externals_definition
-    )
-    newLine
-  }*
-}
+END { @specialize<SYMBOL_CONST, "END"> }
+STEM { @specialize<SYMBOL_CONST, "STEM"> }
+TITLE { @specialize<SYMBOL_CONST, "TITLE"> }
+PROJECT { @specialize<SYMBOL_CONST, "PROJECT"> }
+VERSION { @specialize<SYMBOL_CONST, "VERSION"> }
+TOKEN { @specialize<SYMBOL_CONST, "TOKEN"> }
+FIELD { @specialize<SYMBOL_CONST, "FIELD"> }
+DELIMITER { @specialize<SYMBOL_CONST, "DELIMITER"> }
+EXTERNALS { @specialize<SYMBOL_CONST, "EXTERNALS"> }
+COMMAND { @specialize<SYMBOL_CONST, "COMMAND"> }
+BRACKETS { @specialize<SYMBOL_CONST, "BRACKETS"> }
 
-Classification_definition {
-  CLASSIFICATIONS
-  DELIM
-  Name { identifier }
-  newLine
-  Classification_definition_clause_1 {
-    Name { identifier }
-    newLine
-  }+
-  END CLASSIFICATIONS
-}
-
-Sites_definition {
-  SITES newLine
-  Sites_definition_clause_1
-  END SITES
-}
-
-Sites_definition_clause_1 {
-  (
-    Name { identifier }
-    EQUAL
-    Integer
-    newLine
-  )+
-}
-
-Bit_bits {
-  BIT
-  | BITS
-}
-
-Externals_definition {
-  EXTERNALS
-  newLine
-  Externals_definition_clause_1_1 {
-    (
-      Conversion_name
-      | Function_name
-      | Error_polynomial_name
-    )
-    newLine
-  }*
-  END EXTERNALS
-}
-
-Conversion_name {
-  "CONVERSION"
-  DELIM
-  Name { identifier }
-}
-
-Function_name {
-  "FUNCTION"
-  DELIM
-  Name { identifier }
-  function_name_clause_1 {
-    OPEN_PAREN
-    Integer
-
-    CLOSE_PAREN
-  }?
-}
-
-Error_polynomial_name {
-  "ERROR POLYNOMIAL"
-  DELIM
-  Name { identifier }
-  Error_polynomial_name_clause_1 {
-    OPEN_PAREN
-    Integer
-    Bit_bits
-    CLOSE_PAREN
-  }
-}
-
-Integer { UINT_CONST }
 
 @tokens {
-
-  newLine { ($[ \t]* "\n")+ $[ \t]* |  (space? @eof) }
+  comment { "!" ![\n]* }
+  newLine { "\n" }
   space { $[ \t]+ }
   @precedence { newLine, space }
+  @precedence { newLine, comment}
 
-  Comment { "!" ![\n]* }
-  identifier { @asciiLetter (@asciiLetter| @digit | "_" | "-")* }
+  String { '"' (!["\\] | "\\" _)* '"' }
+  Single_quoted_string { "'" ![']* "'"  }
+  INT_CONST { @digit+ }
 
-  BIT { "BIT" }
-  BITS { "BITS" }
-  CLASSIFICATIONS { "CLASSIFICATIONS" }
+  SYMBOL_CONST { @asciiLetter (@asciiLetter| @digit | "_" | "-")* }
+
+  MAXIMUM_COMMANDS_PER_MESSAGE { "MAXIMUM COMMANDS PER MESSAGE" }
+  MAXIMUM_BITS_PER_MESSAGE { "MAXIMUM BITS PER MESSAGE" }
+  @precedence { MAXIMUM_COMMANDS_PER_MESSAGE, MAXIMUM_BITS_PER_MESSAGE, SYMBOL_CONST }
+
+  DELIM { ":" }
   COMMA {","}
-  EXTERNALS {"EXTERNALS"}
   OPEN_PAREN { "(" }
   CLOSE_PAREN { ")" }
   PERIOD {"."}
   FORWARD_SLASH {"/"}
   SEMI_COLON {";"}
-  DELIM { ":" }
-  FIELD { "FIELD" } // ?
-  DELIMITER { "DELIMITER" } // ?
-  COMMAND { "COMMAND" }
-  END { "END" }
-
-  EQUAL { "=" }
-  SITES { "SITES" }
-  TOKEN { "TOKEN" }
-
-  @precedence {
-    END,
-    identifier
-  }
-
-  @precedence {
-    BITS,
-    BIT
-  }
-
-  UINT_CONST {
-    @digit+
-  }
-  String { '"' (!["\\] | "\\" _)* '"' }
 }
+
+
+//   Comment { "!" ![\n]* }
+//   identifier { @asciiLetter (@asciiLetter| @digit | "_" | "-")* }
+
+
+// @skip { space | Comment | newLine }
+
+// // Subset of dictionary tree from
+// // https://github.jpl.nasa.gov/MPS/vml_2_1/blob/ab44f7bd4c5e8556059c4522c918253aaff31448/vml_2_1/vml_cdl/vml_cdl.y
+// // intended to demonstrate syntax checking potential for future Cdl+Vml missions like VERITAS
+
+// // Implementation notes
+// // Token names are capitalized names from Bison
+
+// @top Cdl_program {
+//   // newLine*
+//   Header
+//   // newLine*
+//   Global_definitions
+//   // newLine*
+//   Processing_routines
+// }
+
+// Global_definitions {
+//   Global_definition {
+//     (
+//       Sites_definition
+//       | Classification_definition
+//       | Externals_definition
+//       | Spacecraft_literals_definition
+//       //
+//       //
+//       //
+//       | Literals_definition
+//       | Lookup_argument_definition
+//       | Numeric_argument_definition
+//     )
+//     // newLine
+//   }*
+// }
+
+// Length {
+//   LENGTH
+//   DELIM
+//   Integer
+// }
+
+// Optional_length {
+//   Length?
+// }
+
+// Type {
+//   CONVERSION
+//   DELIM
+//   Conversion
+// }
+
+// Optional_type {
+//   Type
+// }
+
+// Optional_signed {
+//   SIGNED?
+// }
+
+// Classification_definition {
+//   CLASSIFICATIONS
+//   DELIM
+//   Name { identifier }
+//   // newLine
+//   Classification_definition_clause_1 {
+//     Name { identifier }
+//     // newLine
+//   }+
+//   END CLASSIFICATIONS
+// }
+
+// Sites_definition {
+//   SITES // newLine
+//   Sites_definition_clause_1
+//   END SITES
+// }
+
+// Sites_definition_clause_1 {
+//   (
+//     Name { identifier }
+//     EQUAL
+//     Integer
+//     // newLine
+//   )+
+// }
+
+// Spacecraft_literals_definition {
+//   SPACECRAFT
+//   LITERALS // newLine
+//   Optional_type // newLine
+//   Optional_length // newLine
+//   (
+//     Spacecraft_literals_definition_clause_1
+//     // newLine
+//   )*
+//   END
+//   SPACECRAFT
+//   LITERALS
+// }
+
+// Spacecraft_literals_definition_clause_1 {
+//   Integer
+//   EQUAL
+//   Number
+// }
+
+// Literals_definition {
+//   LITERALS // newLine
+//   Optional_type // newLine
+//   Optional_length // newLine
+//   END
+//   LITERALS
+// }
+
+// Bit_bits {
+//   BIT
+//   | BITS
+// }
+
+// Externals_definition {
+//   EXTERNALS
+//   // newLine
+//   Externals_definition_clause_1_1 {
+//     (
+//       Conversion_name
+//       | Function_name
+//       | Error_polynomial_name
+//     )
+//     // newLine
+//   }*
+//   END EXTERNALS
+// }
+
+// Lookup_argument_start {
+//   LOOKUP
+//   ARGUMENT
+//   DELIM
+//   Name { identifier }
+// }
+
+// Lookup_argument_end {
+//   END
+//   LOOKUP
+//   ARGUMENT
+// }
+
+// Lookup_argument_definition {
+//   Lookup_argument_start // newLine
+//   Title // newLine
+//   Type // newLine
+//   Length // newLine
+//   Lookup_argument_definition_clause_1
+//   Lookup_argument_end
+// }
+
+// Lookup_argument_definition_clause_1 {
+//   Optional_default
+//   (
+//     Lookup_argument_definition_clause_1_1
+//     // newLine
+//   )*
+// }
+
+// Lookup_argument_definition_clause_1_1 {
+//   Value
+//   EQUAL
+//   Number
+//   Optional_delim_string
+// }
+
+// Numeric_argument_definition_start {
+//   NUMERIC
+//   ARGUMENT
+//   DELIM
+//   Name
+// }
+
+// Numeric_argument_definition_end {
+//   END
+//   NUMERIC
+//   ARGUMENT
+// }
+
+// Numeric_argument_definition {
+//   Numeric_argument_definition_start // newLine
+//   // Optional_title
+//   (
+//     Title // newLine
+//   )?
+//   // Optional_type
+//   (
+//     Type
+//     //newLine
+//   )?
+//   // Optional_length
+//   (
+//     Length
+//     //newLine
+//   )?
+//   Numeric_argument_definition_clause_1
+//   Numeric_argument_definition_clause_2
+//   Numeric_argument_definition_end
+// }
+
+// Numeric_argument_definition_clause_1 {
+//   (
+//     DEFAULT
+//     DELIM
+//     Number
+//     // Optional_delim_string
+//     // // newLine
+//   )?
+// }
+
+// Numeric_argument_definition_clause_2 {
+//   (
+//     Number
+//     Numeric_argument_definition_clause_2_1
+//     Optional_delim_string
+//     // newLine
+//   )?
+// }
+
+// Numeric_argument_definition_clause_2_1 {
+//   (
+//     TO
+//     Number
+//   )
+// }
+
+// Processing_routines {
+//   Processing_routine*
+// }
+
+// Processing_routine {
+//   Stem_subroutine
+//   // | function
+//   // | message_subroutine
+//   // | command_subroutine
+//   // | argument_group_subroutine;
+// }
+
+// Stem_subroutine {
+//   Stem_start
+//   // Optional_title
+//   (
+//     Title
+//     // newLine
+//   )?
+//   // optional_exclusions
+//   // optional_interlocks
+//   // optional_category_name { vml_utils_debug(traversal_stream,"Finished with Category Names\n"); }
+//   // optional_fields_definition { vml_utils_debug(traversal_stream,"Finished FIELDS DEFINITION\n"); }
+//   // numeric_lookup_argument
+//   // optional_block
+//   Stem_end
+// }
+
+// Stem_start {
+//   STEM
+//   DELIM
+//   Stem_name
+//   // Subroutine_parm_list
+// }
+
+// Stem_name { identifier }
+
+// Stem_end {
+//   END
+//   STEM
+// }
+
+// Optional_delim_string {
+//   (DELIM String)?
+// }
+
+// Conversion_name {
+//   CONVERSION
+//   DELIM
+//   Name
+// }
+
+// Function_name {
+//   "FUNCTION"
+//   DELIM
+//   Name
+//   function_name_clause_1 {
+//     OPEN_PAREN
+//     Integer
+
+//     CLOSE_PAREN
+//   }?
+// }
+
+// Error_polynomial_name {
+//   "ERROR POLYNOMIAL"
+//   DELIM
+//   Name
+//   Error_polynomial_name_clause_1 {
+//     OPEN_PAREN
+//     Integer
+//     Bit_bits
+//     CLOSE_PAREN
+//   }
+// }
+
+// Number {
+//   Integer // need to confirm UNIT syntax
+//   // INT_CONST
+//   | Value
+// }
+
+// Value {
+//   Single_quoted_string
+// }
+
+// Name { identifier }
+
+// Conversion {
+//   HEX
+//   | BINARY
+//   | Optional_signed DECIMAL
+//   | OCTAL
+//   | External_conversion_name
+// }
+
+// External_conversion_name {
+//   identifier
+// }
+
+// Integer { INT_CONST }
+
+// Optional_title {
+//   Title?
+// }
+
+// Title {
+//   TITLE
+//   DELIM
+//   String
+// }
+
+// Optional_default {
+//   DEFAULT?
+// }
+
+// @tokens {
+
+//   newLine { ($[ \t]* Comment? "\n")+ $[ \t]* |  (space? @eof) }
+//   space { $[ \t]+ }
+//   @precedence { newLine, space }
+//   @precedence { newLine, Comment}
+
+
+//   Comment { "!" ![\n]* }
+//   identifier { @asciiLetter (@asciiLetter| @digit | "_" | "-")* }
+
+//   @precedence { HEX, BINARY, SIGNED, OCTAL, DECIMAL, identifier }
+
+//   BIT { "BIT" }
+//   BITS { "BITS" }
+//   CLASSIFICATIONS { "CLASSIFICATIONS" }
+//   CONVERSION {"CONVERSION"}
+
+//   DELIM { ":" }
+//   FIELD { "FIELD" } // ?
+//   DELIMITER { "DELIMITER" } // ?
+//   COMMAND { "COMMAND" }
+//   END { "END" }
+//   SPACECRAFT { "SPACECRAFT" }
+//   LITERALS { "LITERALS" }
+//   LENGTH { "LENGTH" }
+//   HEX { "HEX" }
+//   BINARY { "BINARY" }
+//   SIGNED { "SIGNED" }
+//   DECIMAL { "DECIMAL" }
+//   OCTAL { "OCTAL" }
+//   LOOKUP { "LOOKUP" }
+//   ARGUMENT { "ARGUMENT" }
+//   TITLE { "TITLE" }
+//   DEFAULT { "DEFAULT" }
+//   NUMERIC { "NUMERIC" }
+//   TO { "to" }
+//   STEM { "STEM" }
+
+//   EQUAL { "=" }
+//   SITES { "SITES" }
+//   TOKEN { "TOKEN" }
+
+//   @precedence {
+//     END,
+//     identifier
+//   }
+
+//   @precedence {
+//     BITS,
+//     BIT
+//   }
+
+//   // @precedence {UINT_CONST, INT_CONST}
+//   INT_CONST { @digit+ }
+//   // UINT_CONST {
+//   //   @digit+ "u"
+//   // }
+//   String { '"' (!["\\] | "\\" _)* '"' }
+//   Single_quoted_string { "'" ![']* "'"  }
+// }
