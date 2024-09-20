@@ -1,7 +1,16 @@
+
+// Subset of dictionary tree from
+// https://github.jpl.nasa.gov/MPS/vml_2_1/blob/ab44f7bd4c5e8556059c4522c918253aaff31448/vml_2_1/vml_cdl/vml_cdl.y
+// intended to demonstrate syntax checking potential for future Cdl+Vml missions like VERITAS
+
+// Implementation notes
+// Token names are capitalized names from Bison, lezer excludes lower case names from tree
+
 @skip { space | comment | newLine }
 
 @top Cdl_program {
   Header
+  Global_definitions
   Processing_routines
 }
 
@@ -29,7 +38,7 @@ Version {
 
 Maximum_commands_per_message {
   (
-    MAXIMUM_COMMANDS_PER_MESSAGE // "MAXIMUM COMMANDS PER MESSAGE"
+    MAXIMUM_COMMANDS_PER_MESSAGE
     DELIM
     Integer
   )?
@@ -37,16 +46,70 @@ Maximum_commands_per_message {
 
 Maximum_bits_per_message {
   (
-    MAXIMUM_BITS_PER_MESSAGE // "MAXIMUM BITS PER MESSAGE"
+    MAXIMUM_BITS_PER_MESSAGE
     DELIM
     Integer
   )?
 }
 
+Global_definitions {
+  Global_definition {
+    Sites_definition
+    | Classification_definition
+    | Externals_definition
+    | Spacecraft_literals_definition
+    // //
+    // //
+    // //
+    | Literals_definition
+    | Lookup_argument_definition
+    | Numeric_argument_definition
+  }*
+}
+
+Sites_definition {
+  SITES
+  Sites_definition_clause_1
+  END SITES
+}
+
+Sites_definition_clause_1 {
+  (
+    Name { SYMBOL_CONST }
+    EQUAL
+    Integer
+  )+
+}
+
+Classification_definition {
+  CLASSIFICATIONS
+  DELIM
+  Name { SYMBOL_CONST }
+  Classification_definition_clause_1 {
+    Name { SYMBOL_CONST }
+  }+
+  END CLASSIFICATIONS
+}
+
 Brackets {
   BRACKETS
   DELIM
-  "()" // hard-coded
+  // "()" // hard-coded
+  (OPEN_PAREN CLOSE_PAREN)
+  | (OPEN_BRACE CLOSE_BRACE)
+  | (OPEN_BRACKET CLOSE_BRACKET)
+  | (OPEN_ANGLE_BRACKET CLOSE_ANGLE_BRACKET)
+}
+
+Bracket {
+  OPEN_PAREN
+  | CLOSE_PAREN
+  | OPEN_BRACE
+  | CLOSE_BRACE
+  | OPEN_BRACKET
+  | CLOSE_BRACKET
+  | OPEN_ANGLE_BRACKET
+  | CLOSE_ANGLE_BRACKET
 }
 
 Token_field_delimiter {
@@ -73,13 +136,110 @@ Processing_routine {
   // | argument_group_subroutine;
 }
 
+Length {
+  LENGTH
+  DELIM
+  Integer
+}
+
+Optional_length {
+  Length?
+}
+
+Type {
+  CONVERSION
+  DELIM
+  Conversion
+}
+
+Optional_type {
+  Type
+}
+
+Optional_signed {
+  SIGNED?
+}
+
+Spacecraft_literals_definition {
+  SPACECRAFT
+  LITERALS
+  Optional_type
+  Optional_length
+  Spacecraft_literals_definition_clause_1*
+  END
+  SPACECRAFT
+  LITERALS
+}
+
+Spacecraft_literals_definition_clause_1 {
+  Integer
+  EQUAL
+  Number
+}
+
+Literals_definition {
+  LITERALS
+  Optional_type
+  Optional_length
+  END
+  LITERALS
+}
+
+Bit_bits {
+  BIT
+  | BITS
+}
+
+Externals_definition {
+  EXTERNALS
+  Externals_definition_clause_1_1 {
+    Conversion_name
+    | Function_name
+    | Error_polynomial_name
+  }*
+  END EXTERNALS
+}
+
+Lookup_argument_start {
+  LOOKUP
+  ARGUMENT
+  DELIM
+  Name
+}
+
+Name { SYMBOL_CONST }
+
+Lookup_argument_end {
+  END
+  LOOKUP
+  ARGUMENT
+}
+
+Lookup_argument_definition {
+  Lookup_argument_start
+  Title
+  Type
+  Length
+  Lookup_argument_definition_clause_1
+  Lookup_argument_end
+}
+
+Lookup_argument_definition_clause_1 {
+  Optional_default
+  Lookup_argument_definition_clause_1_1*
+}
+
+Lookup_argument_definition_clause_1_1 {
+  Value
+  EQUAL
+  Number
+  Optional_delim_string
+}
+
 Stem_subroutine {
   Stem_start
   // Optional_title
-  (
-    Title
-    // newLine
-  )?
+  Title?
   // optional_exclusions
   // optional_interlocks
   // optional_category_name { vml_utils_debug(traversal_stream,"Finished with Category Names\n"); }
@@ -95,7 +255,6 @@ Title {
   String
 }
 
-
 Stem_start {
   STEM
   DELIM
@@ -108,6 +267,41 @@ Stem_name { SYMBOL_CONST }
 Stem_end {
   END
   STEM
+}
+
+Error_polynomial_name {
+  ERROR_POLYNOMIAL
+  DELIM
+  Name
+  Error_polynomial_name_clause_1 {
+    OPEN_PAREN
+    Integer
+    Bit_bits
+    CLOSE_PAREN
+  }
+}
+
+Conversion {
+  HEX
+  | BINARY
+  | Optional_signed DECIMAL
+  | OCTAL
+  | External_conversion_name
+}
+
+External_conversion_name {
+  SYMBOL_CONST
+}
+
+Function_name {
+  FUNCTION
+  DELIM
+  Name
+  function_name_clause_1 {
+    OPEN_PAREN
+    Integer
+    CLOSE_PAREN
+  }?
 }
 
 Delimiter {
@@ -125,24 +319,110 @@ Command_delimiter {
   Delimiter
 }
 
+Integer { INT_CONST }
 
-Integer {
-  INT_CONST
+Conversion_name {
+  CONVERSION
+  DELIM
+  Name
 }
 
+Numeric_argument_definition_start {
+  NUMERIC
+  ARGUMENT
+  DELIM
+  Name
+}
 
+Numeric_argument_definition_end {
+  END
+  NUMERIC
+  ARGUMENT
+}
+
+Numeric_argument_definition {
+  Numeric_argument_definition_start
+  // Optional_title
+  Title?
+  // Optional_type
+  Type?
+  // Optional_length
+  Length?
+  Numeric_argument_definition_clause_1
+  Numeric_argument_definition_clause_2
+  Numeric_argument_definition_end
+}
+
+Numeric_argument_definition_clause_1 {
+  (
+    DEFAULT
+    DELIM
+    Number
+    // Optional_delim_string
+  )?
+}
+
+Numeric_argument_definition_clause_2 {
+  (
+    Number
+    Numeric_argument_definition_clause_2_1
+    Optional_delim_string
+  )?
+}
+
+Numeric_argument_definition_clause_2_1 {
+  TO
+  Number
+}
+
+Number {
+  Integer
+  // need to confirm UNIT syntax
+  // INT_CONST
+  | Value
+}
+
+Value { Single_quoted_string }
+
+Optional_default { DEFAULT? }
+
+Optional_delim_string {
+  (DELIM String)?
+}
+
+Optional_title { Title? }
+
+// built in words
+ARGUMENT { @specialize<SYMBOL_CONST, "ARGUMENT"> }
+BINARY { @specialize<SYMBOL_CONST, "BINARY"> }
+BIT { @specialize<SYMBOL_CONST, "BIT"> }
+BITS { @specialize<SYMBOL_CONST, "BITS"> }
+BRACKETS { @specialize<SYMBOL_CONST, "BRACKETS"> }
+CLASSIFICATIONS { @specialize<SYMBOL_CONST, "CLASSIFICATIONS"> }
+COMMAND { @specialize<SYMBOL_CONST, "COMMAND"> }
+CONVERSION { @specialize<SYMBOL_CONST, "CONVERSION"> }
+DECIMAL { @specialize<SYMBOL_CONST, "DEFAULT"> }
+DEFAULT { @specialize<SYMBOL_CONST, "DECIMAL"> }
+DELIMITER { @specialize<SYMBOL_CONST, "DELIMITER"> }
 END { @specialize<SYMBOL_CONST, "END"> }
+EXTERNALS { @specialize<SYMBOL_CONST, "EXTERNALS"> }
+FUNCTION { @specialize<SYMBOL_CONST, "FUNCTION"> }
+HEX { @specialize<SYMBOL_CONST, "HEX"> }
+LENGTH { @specialize<SYMBOL_CONST, "LENGTH"> }
+LITERALS { @specialize<SYMBOL_CONST, "LITERALS"> }
+LOOKUP { @specialize<SYMBOL_CONST, "LOOKUP"> }
+NUMERIC { @specialize<SYMBOL_CONST, "NUMERIC"> }
+OCTAL { @specialize<SYMBOL_CONST, "OCTAL"> }
+PROJECT { @specialize<SYMBOL_CONST, "PROJECT"> }
+FIELD { @specialize<SYMBOL_CONST, "FIELD"> }
+SIGNED { @specialize<SYMBOL_CONST, "SIGNED"> }
+SITES { @specialize<SYMBOL_CONST, "SITES"> }
+SPACECRAFT { @specialize<SYMBOL_CONST, "SPACECRAFT"> }
 STEM { @specialize<SYMBOL_CONST, "STEM"> }
 TITLE { @specialize<SYMBOL_CONST, "TITLE"> }
-PROJECT { @specialize<SYMBOL_CONST, "PROJECT"> }
-VERSION { @specialize<SYMBOL_CONST, "VERSION"> }
+TO { @specialize<SYMBOL_CONST, "TO"> }
 TOKEN { @specialize<SYMBOL_CONST, "TOKEN"> }
-FIELD { @specialize<SYMBOL_CONST, "FIELD"> }
-DELIMITER { @specialize<SYMBOL_CONST, "DELIMITER"> }
-EXTERNALS { @specialize<SYMBOL_CONST, "EXTERNALS"> }
-COMMAND { @specialize<SYMBOL_CONST, "COMMAND"> }
-BRACKETS { @specialize<SYMBOL_CONST, "BRACKETS"> }
-
+VERSION { @specialize<SYMBOL_CONST, "VERSION"> }
 
 @tokens {
   comment { "!" ![\n]* }
@@ -157,254 +437,33 @@ BRACKETS { @specialize<SYMBOL_CONST, "BRACKETS"> }
 
   SYMBOL_CONST { @asciiLetter (@asciiLetter| @digit | "_" | "-")* }
 
+  // multi-word tokens
   MAXIMUM_COMMANDS_PER_MESSAGE { "MAXIMUM COMMANDS PER MESSAGE" }
   MAXIMUM_BITS_PER_MESSAGE { "MAXIMUM BITS PER MESSAGE" }
-  @precedence { MAXIMUM_COMMANDS_PER_MESSAGE, MAXIMUM_BITS_PER_MESSAGE, SYMBOL_CONST }
+  ERROR_POLYNOMIAL { "ERROR POLYNOMIAL" }
+  @precedence {
+    MAXIMUM_COMMANDS_PER_MESSAGE,
+    MAXIMUM_BITS_PER_MESSAGE,
+    ERROR_POLYNOMIAL,
+    SYMBOL_CONST
+  }
 
-  DELIM { ":" }
-  COMMA {","}
-  OPEN_PAREN { "(" }
+  // Special characters
+  CLOSE_ANGLE_BRACKET {">"}
+  CLOSE_BRACE { "}" }
+  CLOSE_BRACKET {"]"}
   CLOSE_PAREN { ")" }
-  PERIOD {"."}
+  COMMA {","}
+  DELIM { ":" }
+  EQUAL { "=" }
   FORWARD_SLASH {"/"}
+  OPEN_ANGLE_BRACKET {"<"}
+  OPEN_BRACE { "{" }
+  OPEN_BRACKET {"["}
+  OPEN_PAREN { "(" }
+  PERIOD {"."}
   SEMI_COLON {";"}
 }
-
-
-//   Comment { "!" ![\n]* }
-//   identifier { @asciiLetter (@asciiLetter| @digit | "_" | "-")* }
-
-
-// @skip { space | Comment | newLine }
-
-// // Subset of dictionary tree from
-// // https://github.jpl.nasa.gov/MPS/vml_2_1/blob/ab44f7bd4c5e8556059c4522c918253aaff31448/vml_2_1/vml_cdl/vml_cdl.y
-// // intended to demonstrate syntax checking potential for future Cdl+Vml missions like VERITAS
-
-// // Implementation notes
-// // Token names are capitalized names from Bison
-
-// @top Cdl_program {
-//   // newLine*
-//   Header
-//   // newLine*
-//   Global_definitions
-//   // newLine*
-//   Processing_routines
-// }
-
-// Global_definitions {
-//   Global_definition {
-//     (
-//       Sites_definition
-//       | Classification_definition
-//       | Externals_definition
-//       | Spacecraft_literals_definition
-//       //
-//       //
-//       //
-//       | Literals_definition
-//       | Lookup_argument_definition
-//       | Numeric_argument_definition
-//     )
-//     // newLine
-//   }*
-// }
-
-// Length {
-//   LENGTH
-//   DELIM
-//   Integer
-// }
-
-// Optional_length {
-//   Length?
-// }
-
-// Type {
-//   CONVERSION
-//   DELIM
-//   Conversion
-// }
-
-// Optional_type {
-//   Type
-// }
-
-// Optional_signed {
-//   SIGNED?
-// }
-
-// Classification_definition {
-//   CLASSIFICATIONS
-//   DELIM
-//   Name { identifier }
-//   // newLine
-//   Classification_definition_clause_1 {
-//     Name { identifier }
-//     // newLine
-//   }+
-//   END CLASSIFICATIONS
-// }
-
-// Sites_definition {
-//   SITES // newLine
-//   Sites_definition_clause_1
-//   END SITES
-// }
-
-// Sites_definition_clause_1 {
-//   (
-//     Name { identifier }
-//     EQUAL
-//     Integer
-//     // newLine
-//   )+
-// }
-
-// Spacecraft_literals_definition {
-//   SPACECRAFT
-//   LITERALS // newLine
-//   Optional_type // newLine
-//   Optional_length // newLine
-//   (
-//     Spacecraft_literals_definition_clause_1
-//     // newLine
-//   )*
-//   END
-//   SPACECRAFT
-//   LITERALS
-// }
-
-// Spacecraft_literals_definition_clause_1 {
-//   Integer
-//   EQUAL
-//   Number
-// }
-
-// Literals_definition {
-//   LITERALS // newLine
-//   Optional_type // newLine
-//   Optional_length // newLine
-//   END
-//   LITERALS
-// }
-
-// Bit_bits {
-//   BIT
-//   | BITS
-// }
-
-// Externals_definition {
-//   EXTERNALS
-//   // newLine
-//   Externals_definition_clause_1_1 {
-//     (
-//       Conversion_name
-//       | Function_name
-//       | Error_polynomial_name
-//     )
-//     // newLine
-//   }*
-//   END EXTERNALS
-// }
-
-// Lookup_argument_start {
-//   LOOKUP
-//   ARGUMENT
-//   DELIM
-//   Name { identifier }
-// }
-
-// Lookup_argument_end {
-//   END
-//   LOOKUP
-//   ARGUMENT
-// }
-
-// Lookup_argument_definition {
-//   Lookup_argument_start // newLine
-//   Title // newLine
-//   Type // newLine
-//   Length // newLine
-//   Lookup_argument_definition_clause_1
-//   Lookup_argument_end
-// }
-
-// Lookup_argument_definition_clause_1 {
-//   Optional_default
-//   (
-//     Lookup_argument_definition_clause_1_1
-//     // newLine
-//   )*
-// }
-
-// Lookup_argument_definition_clause_1_1 {
-//   Value
-//   EQUAL
-//   Number
-//   Optional_delim_string
-// }
-
-// Numeric_argument_definition_start {
-//   NUMERIC
-//   ARGUMENT
-//   DELIM
-//   Name
-// }
-
-// Numeric_argument_definition_end {
-//   END
-//   NUMERIC
-//   ARGUMENT
-// }
-
-// Numeric_argument_definition {
-//   Numeric_argument_definition_start // newLine
-//   // Optional_title
-//   (
-//     Title // newLine
-//   )?
-//   // Optional_type
-//   (
-//     Type
-//     //newLine
-//   )?
-//   // Optional_length
-//   (
-//     Length
-//     //newLine
-//   )?
-//   Numeric_argument_definition_clause_1
-//   Numeric_argument_definition_clause_2
-//   Numeric_argument_definition_end
-// }
-
-// Numeric_argument_definition_clause_1 {
-//   (
-//     DEFAULT
-//     DELIM
-//     Number
-//     // Optional_delim_string
-//     // // newLine
-//   )?
-// }
-
-// Numeric_argument_definition_clause_2 {
-//   (
-//     Number
-//     Numeric_argument_definition_clause_2_1
-//     Optional_delim_string
-//     // newLine
-//   )?
-// }
-
-// Numeric_argument_definition_clause_2_1 {
-//   (
-//     TO
-//     Number
-//   )
-// }
 
 // Processing_routines {
 //   Processing_routine*
@@ -448,79 +507,7 @@ BRACKETS { @specialize<SYMBOL_CONST, "BRACKETS"> }
 //   STEM
 // }
 
-// Optional_delim_string {
-//   (DELIM String)?
-// }
 
-// Conversion_name {
-//   CONVERSION
-//   DELIM
-//   Name
-// }
-
-// Function_name {
-//   "FUNCTION"
-//   DELIM
-//   Name
-//   function_name_clause_1 {
-//     OPEN_PAREN
-//     Integer
-
-//     CLOSE_PAREN
-//   }?
-// }
-
-// Error_polynomial_name {
-//   "ERROR POLYNOMIAL"
-//   DELIM
-//   Name
-//   Error_polynomial_name_clause_1 {
-//     OPEN_PAREN
-//     Integer
-//     Bit_bits
-//     CLOSE_PAREN
-//   }
-// }
-
-// Number {
-//   Integer // need to confirm UNIT syntax
-//   // INT_CONST
-//   | Value
-// }
-
-// Value {
-//   Single_quoted_string
-// }
-
-// Name { identifier }
-
-// Conversion {
-//   HEX
-//   | BINARY
-//   | Optional_signed DECIMAL
-//   | OCTAL
-//   | External_conversion_name
-// }
-
-// External_conversion_name {
-//   identifier
-// }
-
-// Integer { INT_CONST }
-
-// Optional_title {
-//   Title?
-// }
-
-// Title {
-//   TITLE
-//   DELIM
-//   String
-// }
-
-// Optional_default {
-//   DEFAULT?
-// }
 
 // @tokens {
 
@@ -533,10 +520,6 @@ BRACKETS { @specialize<SYMBOL_CONST, "BRACKETS"> }
 //   Comment { "!" ![\n]* }
 //   identifier { @asciiLetter (@asciiLetter| @digit | "_" | "-")* }
 
-//   @precedence { HEX, BINARY, SIGNED, OCTAL, DECIMAL, identifier }
-
-//   BIT { "BIT" }
-//   BITS { "BITS" }
 //   CLASSIFICATIONS { "CLASSIFICATIONS" }
 //   CONVERSION {"CONVERSION"}
 
@@ -548,11 +531,6 @@ BRACKETS { @specialize<SYMBOL_CONST, "BRACKETS"> }
 //   SPACECRAFT { "SPACECRAFT" }
 //   LITERALS { "LITERALS" }
 //   LENGTH { "LENGTH" }
-//   HEX { "HEX" }
-//   BINARY { "BINARY" }
-//   SIGNED { "SIGNED" }
-//   DECIMAL { "DECIMAL" }
-//   OCTAL { "OCTAL" }
 //   LOOKUP { "LOOKUP" }
 //   ARGUMENT { "ARGUMENT" }
 //   TITLE { "TITLE" }
@@ -560,8 +538,6 @@ BRACKETS { @specialize<SYMBOL_CONST, "BRACKETS"> }
 //   NUMERIC { "NUMERIC" }
 //   TO { "to" }
 //   STEM { "STEM" }
-
-//   EQUAL { "=" }
 //   SITES { "SITES" }
 //   TOKEN { "TOKEN" }
 

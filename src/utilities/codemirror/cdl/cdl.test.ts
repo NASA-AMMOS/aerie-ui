@@ -1,8 +1,8 @@
 import type { SyntaxNode } from '@lezer/common';
-import type { FswCommand, Header } from '@nasa-jpl/aerie-ampcs';
+import type { Enum, FswCommand, FswCommandArgument, FswCommandArgumentEnum, Header } from '@nasa-jpl/aerie-ampcs';
 import { readFileSync } from 'fs';
 import { assert, describe, expect, test } from 'vitest';
-import { CdlLanguage, parseHeader, parseStem, TOKEN_ERROR } from './cdl';
+import { CdlLanguage, parseArgument, parseHeader, parseStem, TOKEN_ERROR } from './cdl';
 
 describe('parse cdl dictionary', () => {
   const dictionaryPath = '/Users/joswig/Documents/Aerie/Juno/JNO_6.0.4_REV_M00';
@@ -28,6 +28,8 @@ describe('parse cdl dictionary', () => {
     cursor = parsed.cursor();
     let header: Header | undefined = undefined;
     const stems: FswCommand[] = [];
+    const argumentMap: { [name: string]: FswCommandArgument } = {};
+    const globalEnums: { [name: string]: Enum } = {};
     do {
       const { node } = cursor;
       switch (node.type.name) {
@@ -37,9 +39,21 @@ describe('parse cdl dictionary', () => {
         case 'Processing_routine':
           stems.push(parseStem(contents, node));
           break;
+        case 'Lookup_argument_definition':
+          {
+            const argEnum: [FswCommandArgumentEnum, Enum] | null = parseArgument(contents, node);
+            if (argEnum) {
+              argumentMap[argEnum[0].name] = argEnum[0];
+              globalEnums[argEnum[1].name] = argEnum[1];
+            }
+          }
+          break;
+        // case 'Numeric_argument_definition':
       }
     } while (cursor.next());
     stems.forEach(stem => console.log(stem.stem));
+    console.log(JSON.stringify(argumentMap, null, 2));
+    console.log(JSON.stringify(globalEnums, null, 2));
     console.log(header);
   });
 });
