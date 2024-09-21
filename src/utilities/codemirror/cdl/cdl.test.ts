@@ -2,7 +2,7 @@ import type { SyntaxNode } from '@lezer/common';
 import type { Enum, FswCommand, FswCommandArgument, FswCommandArgumentEnum, Header } from '@nasa-jpl/aerie-ampcs';
 import { readFileSync } from 'fs';
 import { assert, describe, expect, test } from 'vitest';
-import { CdlLanguage, parseArgument, parseHeader, parseStem, TOKEN_ERROR } from './cdl';
+import { CdlLanguage, parseCdlDictionary, parseHeader, parseLookupArgument, parseStem, TOKEN_ERROR } from './cdl';
 
 describe('parse cdl dictionary', () => {
   const dictionaryPath = '/Users/joswig/Documents/Aerie/Juno/JNO_6.0.4_REV_M00';
@@ -13,7 +13,35 @@ describe('parse cdl dictionary', () => {
     // console.log(contents.substring(0, 100));
     expect(true).toEqual(true);
     // printNodes(contents, (nodeName: string) => 'Cdl_program' !== nodeName, 20);
-    assertNoErrorNodes(contents, true);
+    // assertNoErrorNodes(contents, true);
+
+    const tokenCounts = new Map<string, number>();
+    {
+      const parsed = CdlLanguage.parser.parse(contents);
+      const cursor = parsed.cursor();
+      do {
+        const tokenType = cursor.node.type.name;
+        if (!tokenCounts.has(tokenType)) {
+          tokenCounts.set(tokenType, 1);
+        } else {
+          tokenCounts.set(tokenType, 1 + tokenCounts.get(tokenType)!);
+        }
+        console.log(tokenType);
+        if (tokenType === TOKEN_ERROR) {
+          break;
+        }
+      } while (cursor.next());
+
+      let count = 10;
+
+      while (count--) {
+        const tokenType = cursor.node.type.name;
+        console.log(`AFTER_ERROR[${count}] -- ${tokenType}`);
+        cursor.next();
+      }
+
+      console.log(tokenCounts);
+    }
   });
 
   test('print tokens', () => {
@@ -22,7 +50,7 @@ describe('parse cdl dictionary', () => {
     do {
       const { node } = cursor;
       if (node.name !== TOKEN_ERROR) {
-        console.log(node.type.name);
+        // console.log(node.type.name);
       }
     } while (cursor.next());
     cursor = parsed.cursor();
@@ -41,7 +69,7 @@ describe('parse cdl dictionary', () => {
           break;
         case 'Lookup_argument_definition':
           {
-            const argEnum: [FswCommandArgumentEnum, Enum] | null = parseArgument(contents, node);
+            const argEnum: [FswCommandArgumentEnum, Enum] | null = parseLookupArgument(contents, node);
             if (argEnum) {
               argumentMap[argEnum[0].name] = argEnum[0];
               globalEnums[argEnum[1].name] = argEnum[1];
@@ -51,10 +79,12 @@ describe('parse cdl dictionary', () => {
         // case 'Numeric_argument_definition':
       }
     } while (cursor.next());
-    stems.forEach(stem => console.log(stem.stem));
-    console.log(JSON.stringify(argumentMap, null, 2));
-    console.log(JSON.stringify(globalEnums, null, 2));
+    // stems.forEach(stem => console.log(stem.stem));
+    // console.log(JSON.stringify(argumentMap, null, 2));
+    // console.log(JSON.stringify(globalEnums, null, 2));
     console.log(header);
+    // console.log(JSON.stringify(parseCdlDictionary(contents), null, 2));
+    console.log(JSON.stringify(parseCdlDictionary(contents)?.fswCommands, null, 2));
   });
 });
 

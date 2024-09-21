@@ -52,19 +52,19 @@ Maximum_bits_per_message {
   )?
 }
 
-Global_definitions {
-  Global_definition {
-    Sites_definition
-    | Classification_definition
-    | Externals_definition
-    | Spacecraft_literals_definition
-    // //
-    // //
-    // //
-    | Literals_definition
-    | Lookup_argument_definition
-    | Numeric_argument_definition
-  }*
+Global_definitions { Global_definition* }
+
+Global_definition {
+  Sites_definition
+  | Classification_definition
+  | Externals_definition
+  | Spacecraft_literals_definition
+  // //
+  // //
+  // //
+  | Literals_definition
+  | Lookup_argument_definition
+  | Numeric_argument_definition
 }
 
 Sites_definition {
@@ -179,7 +179,8 @@ Spacecraft_literals_definition_clause_1 {
 
 Literals_definition {
   LITERALS
-  Optional_type
+  // Optional_type
+  "CONVERSION : DECIMAL" // FIXME -- Optional type looks correct
   Optional_length
   END
   LITERALS
@@ -284,7 +285,7 @@ Error_polynomial_name {
 Conversion {
   HEX
   | BINARY
-  | Optional_signed DECIMAL
+  | (Optional_signed DECIMAL)
   | OCTAL
   | External_conversion_name
 }
@@ -342,12 +343,12 @@ Numeric_argument_definition_end {
 
 Numeric_argument_definition {
   Numeric_argument_definition_start
-  // Optional_title
-  Title?
-  // Optional_type
-  Type?
-  // Optional_length
-  Length?
+  Optional_title
+  // Title?
+  Optional_type
+  // Type?
+  Optional_length
+  // Length?
   Numeric_argument_definition_clause_1
   Numeric_argument_definition_clause_2
   Numeric_argument_definition_end
@@ -464,92 +465,6 @@ VERSION { @specialize<SYMBOL_CONST, "VERSION"> }
   PERIOD {"."}
   SEMI_COLON {";"}
 }
-
-// Processing_routines {
-//   Processing_routine*
-// }
-
-// Processing_routine {
-//   Stem_subroutine
-//   // | function
-//   // | message_subroutine
-//   // | command_subroutine
-//   // | argument_group_subroutine;
-// }
-
-// Stem_subroutine {
-//   Stem_start
-//   // Optional_title
-//   (
-//     Title
-//     // newLine
-//   )?
-//   // optional_exclusions
-//   // optional_interlocks
-//   // optional_category_name { vml_utils_debug(traversal_stream,"Finished with Category Names\n"); }
-//   // optional_fields_definition { vml_utils_debug(traversal_stream,"Finished FIELDS DEFINITION\n"); }
-//   // numeric_lookup_argument
-//   // optional_block
-//   Stem_end
-// }
-
-// Stem_start {
-//   STEM
-//   DELIM
-//   Stem_name
-//   // Subroutine_parm_list
-// }
-
-// Stem_name { identifier }
-
-// Stem_end {
-//   END
-//   STEM
-// }
-
-
-
-// @tokens {
-
-//   newLine { ($[ \t]* Comment? "\n")+ $[ \t]* |  (space? @eof) }
-//   space { $[ \t]+ }
-//   @precedence { newLine, space }
-//   @precedence { newLine, Comment}
-
-
-//   Comment { "!" ![\n]* }
-//   identifier { @asciiLetter (@asciiLetter| @digit | "_" | "-")* }
-
-//   CLASSIFICATIONS { "CLASSIFICATIONS" }
-//   CONVERSION {"CONVERSION"}
-
-//   DELIM { ":" }
-//   FIELD { "FIELD" } // ?
-//   DELIMITER { "DELIMITER" } // ?
-//   COMMAND { "COMMAND" }
-//   END { "END" }
-//   SPACECRAFT { "SPACECRAFT" }
-//   LITERALS { "LITERALS" }
-//   LENGTH { "LENGTH" }
-//   LOOKUP { "LOOKUP" }
-//   ARGUMENT { "ARGUMENT" }
-//   TITLE { "TITLE" }
-//   DEFAULT { "DEFAULT" }
-//   NUMERIC { "NUMERIC" }
-//   TO { "to" }
-//   STEM { "STEM" }
-//   SITES { "SITES" }
-//   TOKEN { "TOKEN" }
-
-//   @precedence {
-//     END,
-//     identifier
-//   }
-
-//   @precedence {
-//     BITS,
-//     BIT
-//   }
 
 //   // @precedence {UINT_CONST, INT_CONST}
 //   INT_CONST { @digit+ }
