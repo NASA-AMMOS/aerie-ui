@@ -5,13 +5,15 @@ import { assert, describe, expect, test } from 'vitest';
 import { CdlLanguage, parseCdlDictionary, parseHeader, parseLookupArgument, parseStem, TOKEN_ERROR } from './cdl';
 
 describe('parse cdl dictionary', () => {
-  const dictionaryPath = '/Users/joswig/Documents/Aerie/Juno/JNO_6.0.4_REV_M00';
+  // const dictionaryPath = '/Users/joswig/Documents/Aerie/Juno/JNO_6.0.4_REV_M00';
+  const dictionaryPath = '/Users/joswig/Documents/Aerie/Juno/JNO_6.0.4_REV_M00_edited';
   // const dictionaryPath = '/Users/joswig/Documents/Aerie/MRO/MRO_6.1.REV_W26';
   const contents = readFileSync(dictionaryPath, 'utf8');
 
   test('load from file', async () => {
     // console.log(contents.substring(0, 100));
     expect(true).toEqual(true);
+
     // printNodes(contents, (nodeName: string) => 'Cdl_program' !== nodeName, 20);
     // assertNoErrorNodes(contents, true);
 
@@ -27,6 +29,19 @@ describe('parse cdl dictionary', () => {
           tokenCounts.set(tokenType, 1 + tokenCounts.get(tokenType)!);
         }
         console.log(tokenType);
+
+        switch (tokenType) {
+          case 'Conversion':
+          case 'Name':
+          case 'INT_CONST':
+            {
+              const tokenString = contents.slice(cursor.node.from, cursor.node.to);
+              console.log(`${tokenType} -- ${tokenString}`);
+            }
+
+            break;
+        }
+
         if (tokenType === TOKEN_ERROR) {
           break;
         }
@@ -40,11 +55,18 @@ describe('parse cdl dictionary', () => {
         cursor.next();
       }
 
-      console.log(tokenCounts);
+      // console.log(tokenCounts);
+      console.log(tokenCounts.get('NUMERIC'));
+
+      // dying in 2nd numeric argument before Numeric_argument_definition_clause_1
     }
   });
 
   test('print tokens', () => {
+    if (Date.now() > 1) {
+      return;
+    }
+
     const parsed = CdlLanguage.parser.parse(contents);
     let cursor = parsed.cursor();
     do {

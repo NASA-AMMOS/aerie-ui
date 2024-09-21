@@ -153,7 +153,7 @@ Type {
 }
 
 Optional_type {
-  Type
+  Type?
 }
 
 Optional_signed {
@@ -344,11 +344,8 @@ Numeric_argument_definition_end {
 Numeric_argument_definition {
   Numeric_argument_definition_start
   Optional_title
-  // Title?
   Optional_type
-  // Type?
   Optional_length
-  // Length?
   Numeric_argument_definition_clause_1
   Numeric_argument_definition_clause_2
   Numeric_argument_definition_end
@@ -359,8 +356,9 @@ Numeric_argument_definition_clause_1 {
     DEFAULT
     DELIM
     Number
-    // Optional_delim_string
-  )?
+    Optional_delim_string
+  )*
+  // FIXME: Wildcard is '*' in sample sequence, + in grammar
 }
 
 Numeric_argument_definition_clause_2 {
@@ -372,8 +370,10 @@ Numeric_argument_definition_clause_2 {
 }
 
 Numeric_argument_definition_clause_2_1 {
-  TO
-  Number
+  (
+    TO
+    Number
+  )?
 }
 
 Number {
@@ -402,8 +402,8 @@ BRACKETS { @specialize<SYMBOL_CONST, "BRACKETS"> }
 CLASSIFICATIONS { @specialize<SYMBOL_CONST, "CLASSIFICATIONS"> }
 COMMAND { @specialize<SYMBOL_CONST, "COMMAND"> }
 CONVERSION { @specialize<SYMBOL_CONST, "CONVERSION"> }
-DECIMAL { @specialize<SYMBOL_CONST, "DEFAULT"> }
-DEFAULT { @specialize<SYMBOL_CONST, "DECIMAL"> }
+DECIMAL { @specialize<SYMBOL_CONST, "DECIMAL"> }
+DEFAULT { @specialize<SYMBOL_CONST, "DEFAULT"> }
 DELIMITER { @specialize<SYMBOL_CONST, "DELIMITER"> }
 END { @specialize<SYMBOL_CONST, "END"> }
 EXTERNALS { @specialize<SYMBOL_CONST, "EXTERNALS"> }
@@ -421,7 +421,7 @@ SITES { @specialize<SYMBOL_CONST, "SITES"> }
 SPACECRAFT { @specialize<SYMBOL_CONST, "SPACECRAFT"> }
 STEM { @specialize<SYMBOL_CONST, "STEM"> }
 TITLE { @specialize<SYMBOL_CONST, "TITLE"> }
-TO { @specialize<SYMBOL_CONST, "TO"> }
+TO { @specialize<SYMBOL_CONST, "to"> }
 TOKEN { @specialize<SYMBOL_CONST, "TOKEN"> }
 VERSION { @specialize<SYMBOL_CONST, "VERSION"> }
 
