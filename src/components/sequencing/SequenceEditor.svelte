@@ -5,7 +5,7 @@
   import { json } from '@codemirror/lang-json';
   import { indentService, syntaxTree } from '@codemirror/language';
   import { lintGutter } from '@codemirror/lint';
-  import { Compartment, EditorState, StateEffect } from '@codemirror/state';
+  import { Compartment, EditorState } from '@codemirror/state';
   import type { ViewUpdate } from '@codemirror/view';
   import type { SyntaxNode } from '@lezer/common';
   import type { ChannelDictionary, CommandDictionary, ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
@@ -70,6 +70,7 @@
   let compartmentSeqLanguage: Compartment;
   let compartmentSeqLinter: Compartment;
   let compartmentSeqTooltip: Compartment;
+  let compartmentSeqAutocomplete: Compartment;
   let channelDictionary: ChannelDictionary | null;
   let commandDictionary: CommandDictionary | null;
   let disableCopyAndExport: boolean = true;
@@ -147,11 +148,7 @@
         // Reconfigure sequence editor.
         editorSequenceView.dispatch({
           effects: [
-            StateEffect.reconfigure.of([
-              basicSetup,
-              EditorView.lineWrapping,
-              EditorView.theme({ '.cm-gutter': { 'min-height': `${clientHeightGridRightTop}px` } }),
-              lintGutter(),
+            compartmentSeqLanguage.reconfigure(
               setupLanguageSupport(
                 $sequenceAdaptation.autoComplete(
                   parsedChannelDictionary,
@@ -159,13 +156,14 @@
                   nonNullParsedParameterDictionaries,
                 ),
               ),
+            ),
+            compartmentSeqLinter.reconfigure(
               inputLinter(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
+            ),
+            compartmentSeqTooltip.reconfigure(
               sequenceTooltip(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
-              EditorView.updateListener.of(debounce(sequenceUpdateListener, 250)),
-              EditorView.updateListener.of(selectedCommandUpdateListener),
-              indentService.of($sequenceAdaptation.autoIndent()),
-              EditorState.readOnly.of(readOnly),
-            ]),
+            ),
+            compartmentSeqAutocomplete.reconfigure(indentService.of($sequenceAdaptation.autoIndent())),
           ],
         });
 
@@ -182,6 +180,7 @@
     compartmentSeqLanguage = new Compartment();
     compartmentSeqLinter = new Compartment();
     compartmentSeqTooltip = new Compartment();
+    compartmentSeqAutocomplete = new Compartment();
 
     editorSequenceView = new EditorView({
       doc: sequenceDefinition,
@@ -195,7 +194,7 @@
         compartmentSeqTooltip.of(sequenceTooltip()),
         EditorView.updateListener.of(debounce(sequenceUpdateListener, 250)),
         EditorView.updateListener.of(selectedCommandUpdateListener),
-        indentService.of($sequenceAdaptation.autoIndent()),
+        compartmentSeqAutocomplete.of(indentService.of($sequenceAdaptation.autoIndent())),
         EditorState.readOnly.of(readOnly),
       ],
       parent: editorSequenceDiv,
