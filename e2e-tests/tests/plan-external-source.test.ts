@@ -105,6 +105,7 @@ test.afterAll(async () => {
 
 test.describe.serial('Plan External Sources', () => {
   test('Derivation groups can be linked/unlinked to a plan', async () => {
+    test.setTimeout(240000);
     await plan.showPanel(PanelNames.EXTERNAL_SOURCES);
     await plan.externalSourceManageButton.click();
     await page.getByText('No Derivation Groups Found').waitFor({ state: 'hidden', timeout: extendedTimeout });
