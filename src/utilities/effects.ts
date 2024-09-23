@@ -7,8 +7,8 @@ import {
   type ParameterDictionary as AmpcsParameterDictionary,
 } from '@nasa-jpl/aerie-ampcs';
 import { get } from 'svelte/store';
-import { SchedulingType } from '../constants/scheduling';
 import { DictionaryTypes } from '../enums/dictionaryTypes';
+import { SchedulingType } from '../enums/scheduling';
 import { SearchParameters } from '../enums/searchParameters';
 import { Status } from '../enums/status';
 import { activityDirectivesDB, selectedActivityDirectiveId } from '../stores/activities';
