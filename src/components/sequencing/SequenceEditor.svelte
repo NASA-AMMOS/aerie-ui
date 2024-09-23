@@ -96,16 +96,21 @@
 
   $: {
     if (editorSequenceView) {
+      const unparsedCommandDictionary = $commandDictionaries.find(cd => cd.id === parcel?.command_dictionary_id);
       if (sequenceName.endsWith('.vml')) {
-        editorSequenceView.dispatch({
-          effects: compartmentSeqLanguage.reconfigure(setupVmlLanguageSupport()),
-        });
-        editorSequenceView.dispatch({
-          effects: compartmentSeqLinter.reconfigure(vmlLinter()),
-        });
+        if (unparsedCommandDictionary) {
+          getParsedCommandDictionary(unparsedCommandDictionary, user).then(parsedCommandDictionary => {
+            commandDictionary = parsedCommandDictionary;
+            editorSequenceView.dispatch({
+              effects: compartmentSeqLanguage.reconfigure(setupVmlLanguageSupport()),
+            });
+            editorSequenceView.dispatch({
+              effects: compartmentSeqLinter.reconfigure(vmlLinter(commandDictionary)),
+            });
+          });
+        }
       } else {
         const unparsedChannelDictionary = $channelDictionaries.find(cd => cd.id === parcel?.channel_dictionary_id);
-        const unparsedCommandDictionary = $commandDictionaries.find(cd => cd.id === parcel?.command_dictionary_id);
         const unparsedParameterDictionaries = $parameterDictionariesStore.filter(pd => {
           const parameterDictionary = $parcelToParameterDictionaries.find(p => p.parameter_dictionary_id === pd.id);
 

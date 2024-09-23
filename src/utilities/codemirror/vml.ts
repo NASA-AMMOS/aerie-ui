@@ -5,6 +5,7 @@ import type { Extension } from '@codemirror/state';
 import { EditorState } from '@codemirror/state';
 import type { SyntaxNode, Tree } from '@lezer/common';
 import { styleTags, tags as t } from '@lezer/highlight';
+import type { CommandDictionary } from '@nasa-jpl/aerie-ampcs';
 import { parser } from './vml.grammar';
 
 export const TOKEN_ERROR = '⚠';
@@ -81,7 +82,7 @@ export function setupVmlLanguageSupport(autocomplete?: (context: CompletionConte
   }
 }
 
-export function vmlLinter(): Extension {
+export function vmlLinter(_commandDictionary: CommandDictionary | null = null): Extension {
   return linter(view => {
     const diagnostics: Diagnostic[] = [];
     const tree = syntaxTree(view.state);

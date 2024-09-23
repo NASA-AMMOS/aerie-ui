@@ -189,6 +189,7 @@ import type {
 import type { Row, Timeline } from '../types/timeline';
 import type { View, ViewDefinition, ViewInsertInput, ViewSlim, ViewUpdateInput } from '../types/view';
 import { ActivityDeletionAction } from './activities';
+import { parseCdlDictionary, toAmpcsXml } from './codemirror/cdlDictionary';
 import { convertToQuery, getSearchParameterNumber, setQueryParam } from './generic';
 import gql, { convertToGQLArray } from './gql';
 import {
@@ -5355,7 +5356,7 @@ const effects = {
     user: User | null,
     sequenceAdaptationName?: string | undefined,
   ): Promise<CommandDictionary | ChannelDictionary | ParameterDictionary | SequenceAdaptation | null> {
-    const text = await file.text();
+    let text = await file.text();
     const splitLineDictionary = text.split('\n');
 
     let type: DictionaryTypes = DictionaryTypes.COMMAND;
@@ -5380,6 +5381,14 @@ const effects = {
             user,
           );
           return adaptation;
+        } else {
+          // consider moving to adaptation
+          if (splitLineDictionary.find(line => /^PROJECT\s*:\s*"([^"]*)"/.test(line))) {
+            console.log('CDL Dictionary conversion');
+            text = toAmpcsXml(parseCdlDictionary(text));
+            type = DictionaryTypes.COMMAND;
+            console.log(text);
+          }
         }
         break;
       }

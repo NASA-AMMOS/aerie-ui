@@ -150,6 +150,9 @@ export async function parseCommandDictionaryFromFile(
     if (file) {
       try {
         const fileText = await file.text();
+
+        console.log(`fileTest ${fileText}`);
+
         const commandDictionary = parse(fileText);
         return commandDictionary;
       } catch (e) {
