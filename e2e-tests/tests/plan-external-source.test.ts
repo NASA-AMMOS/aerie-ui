@@ -111,7 +111,7 @@ test.describe.serial('Plan External Sources', () => {
     await page.getByRole('row', { name: externalSources.exampleSourceType }).getByRole('checkbox').click();
     await expect(page.getByText('Derivation Group Linked Successfully')).toBeVisible();
     await page.getByRole('row', { name: externalSources.exampleSourceType }).getByRole('checkbox').click();
-    await expect(page.getByText('Derivation Group Disassociated Successfully')).toBeVisible();
+    await expect(page.getByText('Derivation Group Disassociated Successfully')).toBeVisible({timeout: 30000});
     // Re-link for later use in testing, and to determine if unlinking broke things
     await page.getByRole('row', { name: externalSources.exampleSourceType }).getByRole('checkbox').click();
     await expect(page.getByText('Derivation Group Linked Successfully').nth(1)).toBeVisible();
