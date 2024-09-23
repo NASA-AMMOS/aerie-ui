@@ -5,7 +5,7 @@
   import { json } from '@codemirror/lang-json';
   import { indentService, syntaxTree } from '@codemirror/language';
   import { lintGutter } from '@codemirror/lint';
-  import { Compartment, EditorState } from '@codemirror/state';
+  import { Compartment, EditorState, StateEffect } from '@codemirror/state';
   import type { ViewUpdate } from '@codemirror/view';
   import type { SyntaxNode } from '@lezer/common';
   import type { ChannelDictionary, CommandDictionary, ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
@@ -86,11 +86,6 @@
   let toggleSeqJsonPreview: boolean = false;
 
   $: {
-    outputFormats = $outputFormat;
-    selectedOutputFormat = outputFormats[0];
-  }
-
-  $: {
     loadSequenceAdaptation(parcel?.sequence_adaptation_id);
   }
 
@@ -152,7 +147,11 @@
         // Reconfigure sequence editor.
         editorSequenceView.dispatch({
           effects: [
-            compartmentSeqLanguage.reconfigure(
+            StateEffect.reconfigure.of([
+              basicSetup,
+              EditorView.lineWrapping,
+              EditorView.theme({ '.cm-gutter': { 'min-height': `${clientHeightGridRightTop}px` } }),
+              lintGutter(),
               setupLanguageSupport(
                 $sequenceAdaptation.autoComplete(
                   parsedChannelDictionary,
@@ -160,13 +159,13 @@
                   nonNullParsedParameterDictionaries,
                 ),
               ),
-            ),
-            compartmentSeqLinter.reconfigure(
               inputLinter(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
-            ),
-            compartmentSeqTooltip.reconfigure(
               sequenceTooltip(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
-            ),
+              EditorView.updateListener.of(debounce(sequenceUpdateListener, 250)),
+              EditorView.updateListener.of(selectedCommandUpdateListener),
+              indentService.of($sequenceAdaptation.autoIndent()),
+              EditorState.readOnly.of(readOnly),
+            ]),
           ],
         });
 
@@ -237,6 +236,9 @@
     } else {
       resetSequenceAdaptation();
     }
+
+    outputFormats = $outputFormat;
+    selectedOutputFormat = outputFormats[0];
   }
 
   function resetSequenceAdaptation(): void {
