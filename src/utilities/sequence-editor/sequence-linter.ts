@@ -15,7 +15,10 @@ import { closest, distance } from 'fastest-levenshtein';
 
 import type { VariableDeclaration } from '@nasa-jpl/seq-json-schema/types';
 import type { EditorView } from 'codemirror';
+import { get } from 'svelte/store';
+import { TOKEN_COMMAND, TOKEN_ERROR, TOKEN_REPEAT_ARG, TOKEN_REQUEST } from '../../constants/seq-n-grammar-constants';
 import { TimeTypes } from '../../enums/time';
+import { getGlobals, sequenceAdaptation } from '../../stores/sequence-adaptation';
 import { CustomErrorCodes } from '../../workers/customCodes';
 import { addDefaultArgs, quoteEscape } from '../codemirror/codemirror-utils';
 import {
@@ -28,7 +31,6 @@ import {
   validateTime,
 } from '../time';
 import { getCustomArgDef } from './extension-points';
-import { TOKEN_COMMAND, TOKEN_ERROR, TOKEN_REPEAT_ARG } from './sequencer-grammar-constants';
 import { getChildrenNode, getDeepestNode, getFromAndTo } from './tree-utils';
 
 const KNOWN_DIRECTIVES = [
@@ -89,7 +91,7 @@ export function sequenceLinter(
 
     // TODO: Get identify type mapping to use
     const variables: VariableDeclaration[] = [
-      ...(globalThis.GLOBALS?.map(g => ({ name: g.name, type: 'STRING' }) as const) ?? []),
+      ...(getGlobals().map(g => ({ name: g.name, type: 'STRING' }) as const) ?? []),
     ];
 
     // Validate top level metadata
@@ -115,9 +117,11 @@ export function sequenceLinter(
 
     diagnostics.push(...validateCustomDirectives(treeNode, docText));
 
-    diagnostics.push(
-      ...commandLinter(treeNode.getChild('Commands')?.getChildren(TOKEN_COMMAND) || [], docText, variableMap),
-    );
+    const commandsNode = treeNode.getChild('Commands');
+    if (commandsNode) {
+      diagnostics.push(...commandLinter(commandsNode.getChildren(TOKEN_COMMAND), docText, variableMap));
+      diagnostics.push(...validateRequests(commandsNode.getChildren(TOKEN_REQUEST), docText, variableMap));
+    }
 
     diagnostics.push(
       ...immediateCommandLinter(
@@ -135,8 +139,10 @@ export function sequenceLinter(
       ...conditionalAndLoopKeywordsLinter(treeNode.getChild('Commands')?.getChildren(TOKEN_COMMAND) || [], docText),
     );
 
-    if (globalThis.LINT !== undefined && globalThis.LINT(commandDictionary, view, treeNode) !== undefined) {
-      diagnostics = [...diagnostics, ...globalThis.LINT(commandDictionary, view, treeNode)];
+    const inputLinter = get(sequenceAdaptation)?.inputFormat.linter;
+
+    if (inputLinter !== undefined && commandDictionary !== null) {
+      diagnostics = inputLinter(diagnostics, commandDictionary, view, treeNode);
     }
 
     return diagnostics;
@@ -173,18 +179,18 @@ export function sequenceLinter(
     const loopStack: WhileOpener[] = [];
     const conditionalKeywords = [];
     const loopKeywords = [];
-    const conditionalStartingKeywords = globalThis.CONDITIONAL_KEYWORDS?.IF ?? ['CMD_IF'];
-    const conditionalElseKeyword = globalThis.CONDITIONAL_KEYWORDS?.ELSE ?? 'CMD_ELSE';
-    const conditionalElseIfKeywords = globalThis.CONDITIONAL_KEYWORDS?.ELSE_IF ?? ['CMD_ELSE_IF'];
-    const conditionalEndingKeyword = globalThis.CONDITIONAL_KEYWORDS?.END_IF ?? 'CMD_END_IF';
-    const loopStartingKeywords = globalThis.LOOP_KEYWORDS?.WHILE_LOOP ?? ['CMD_WHILE_LOOP', 'CMD_WHILE_LOOP_OR'];
-    const loopEndingKeyword = globalThis.LOOP_KEYWORDS?.END_WHILE_LOOP ?? 'CMD_END_WHILE_LOOP';
+    const sequenceAdaptationConditionalKeywords = get(sequenceAdaptation)?.conditionalKeywords;
+    const sequenceAdaptationLoopKeywords = get(sequenceAdaptation)?.loopKeywords;
 
-    conditionalKeywords.push(conditionalElseKeyword, ...conditionalElseIfKeywords, conditionalEndingKeyword);
+    conditionalKeywords.push(
+      sequenceAdaptationConditionalKeywords?.else,
+      ...(sequenceAdaptationConditionalKeywords?.elseIf ?? []),
+      sequenceAdaptationConditionalKeywords?.endIf,
+    );
     loopKeywords.push(
-      globalThis.LOOP_KEYWORDS?.BREAK ?? 'CMD_BREAK',
-      globalThis.LOOP_KEYWORDS?.CONTINUE ?? 'CMD_CONTINUE',
-      loopEndingKeyword,
+      sequenceAdaptationLoopKeywords?.break,
+      sequenceAdaptationLoopKeywords?.continue,
+      sequenceAdaptationLoopKeywords?.endWhileLoop,
     );
 
     for (const command of commandNodes) {
@@ -192,12 +198,12 @@ export function sequenceLinter(
       if (stem) {
         const word = text.slice(stem.from, stem.to);
 
-        if (conditionalStartingKeywords.includes(word)) {
+        if (sequenceAdaptationConditionalKeywords?.if.includes(word)) {
           conditionalStack.push({
             command,
             from: stem.from,
             hasElse: false,
-            stemToClose: conditionalEndingKeyword,
+            stemToClose: sequenceAdaptationConditionalKeywords.endIf,
             to: stem.to,
             word,
           });
@@ -207,31 +213,31 @@ export function sequenceLinter(
           if (conditionalStack.length === 0) {
             diagnostics.push({
               from: stem.from,
-              message: `${word} doesn't match a preceding ${conditionalStartingKeywords.join(', ')}.`,
+              message: `${word} doesn't match a preceding ${sequenceAdaptationConditionalKeywords?.if.join(', ')}.`,
               severity: 'error',
               to: stem.to,
             });
-          } else if (word === conditionalElseKeyword) {
+          } else if (word === sequenceAdaptationConditionalKeywords?.else) {
             if (!conditionalStack[conditionalStack.length - 1].hasElse) {
               conditionalStack[conditionalStack.length - 1].hasElse = true;
             } else {
               diagnostics.push({
                 from: stem.from,
-                message: `${word} doesn't match a preceding ${conditionalStartingKeywords.join(', ')}.`,
+                message: `${word} doesn't match a preceding ${sequenceAdaptationConditionalKeywords?.if.join(', ')}.`,
                 severity: 'error',
                 to: stem.to,
               });
             }
-          } else if (word === conditionalEndingKeyword) {
+          } else if (word === sequenceAdaptationConditionalKeywords?.endIf) {
             conditionalStack.pop();
           }
         }
 
-        if (loopStartingKeywords.includes(word)) {
+        if (sequenceAdaptationLoopKeywords?.whileLoop.includes(word)) {
           loopStack.push({
             command,
             from: stem.from,
-            stemToClose: loopEndingKeyword,
+            stemToClose: sequenceAdaptationLoopKeywords.endWhileLoop,
             to: stem.to,
             word,
           });
@@ -241,13 +247,13 @@ export function sequenceLinter(
           if (loopStack.length === 0) {
             diagnostics.push({
               from: stem.from,
-              message: `${word} doesn't match a preceding ${loopStartingKeywords.join(', ')}.`,
+              message: `${word} doesn't match a preceding ${sequenceAdaptationLoopKeywords?.whileLoop.join(', ')}.`,
               severity: 'error',
               to: stem.to,
             });
           }
 
-          if (word === loopEndingKeyword) {
+          if (word === sequenceAdaptationLoopKeywords?.endWhileLoop) {
             loopStack.pop();
           }
         }
@@ -277,6 +283,23 @@ export function sequenceLinter(
           to: block.to,
         } as const;
       }),
+    );
+
+    return diagnostics;
+  }
+
+  function validateRequests(requestNodes: SyntaxNode[], text: string, variables: VariableMap): Diagnostic[] {
+    const diagnostics: Diagnostic[] = [];
+
+    for (const request of requestNodes) {
+      // Get the TimeTag node for the current command
+      diagnostics.push(...validateTimeTags(request, text));
+    }
+
+    diagnostics.push(
+      ...requestNodes.flatMap(request =>
+        commandLinter(request.getChild('Steps')?.getChildren(TOKEN_COMMAND) ?? [], text, variables),
+      ),
     );
 
     return diagnostics;
@@ -380,10 +403,12 @@ export function sequenceLinter(
           }) as const,
       ),
     );
+
     inputParams.forEach(inputParam => {
       let child = inputParam.firstChild;
+
       while (child) {
-        if (child.name !== 'Enum') {
+        if (child.name !== 'Enum' && child.name !== 'Object') {
           diagnostics.push({
             from: child.from,
             message: `@INPUT_PARAMS values are required to be Enums`,
@@ -391,15 +416,73 @@ export function sequenceLinter(
             to: child.to,
           });
         } else {
-          variables.push({
+          const variable = {
             name: text.slice(child.from, child.to),
-            // TODO - hook to check mission specific nomenclature
             type: 'STRING',
-          });
+          } as VariableDeclaration;
+
+          variables.push(variable);
+
+          const metadata: SyntaxNode | null = child?.nextSibling;
+
+          if (metadata !== null) {
+            const properties = metadata.getChildren('Property');
+            let allowableRanges: string | undefined = undefined;
+            let isEnum = false;
+            let isString = false;
+            let enumName: string | undefined = undefined;
+
+            properties.forEach(property => {
+              const propertyNameNode = property.getChild('PropertyName');
+              const propertyValueNode = propertyNameNode?.nextSibling;
+
+              if (propertyNameNode !== null && propertyValueNode !== null && propertyValueNode !== undefined) {
+                const propertyName = text.slice(propertyNameNode.from, propertyNameNode.to);
+                const propertyValue = text.slice(propertyValueNode.from, propertyValueNode.to);
+
+                switch (propertyName.toLowerCase()) {
+                  case '"allowable_ranges"':
+                    allowableRanges = propertyValue;
+                    break;
+                  case '"enum_name"':
+                    enumName = propertyValue;
+                    break;
+                  case '"type"':
+                    isEnum = propertyValue === '"ENUM"';
+                    isString = propertyValue === '"STRING"';
+                    break;
+                }
+              }
+            });
+
+            if (isEnum && enumName === undefined) {
+              diagnostics.push({
+                from: child.from,
+                message: '"enum_name" is required for ENUM type.',
+                severity: 'error',
+                to: child.to,
+              });
+            } else if (!isEnum && enumName !== undefined) {
+              diagnostics.push({
+                from: child.from,
+                message: `"enum_name": ${enumName} is not required for non-ENUM type.`,
+                severity: 'error',
+                to: child.to,
+              });
+            } else if (isString && allowableRanges !== undefined) {
+              diagnostics.push({
+                from: child.from,
+                message: `'allowable_ranges' is not required for STRING type.`,
+                severity: 'error',
+                to: child.to,
+              });
+            }
+          }
         }
         child = child.nextSibling;
       }
     });
+
     return {
       diagnostics,
       variables,
@@ -461,130 +544,7 @@ export function sequenceLinter(
     // Iterate over each command node
     for (const command of commandNodes) {
       // Get the TimeTag node for the current command
-      const timeTagNode = command.getChild('TimeTag');
-
-      // If the TimeTag node is missing, create a diagnostic
-      if (!timeTagNode) {
-        diagnostics.push({
-          actions: [
-            insertAction(`Insert 'C' (command complete)`, 'C '),
-            insertAction(`Insert 'R1' (relative 1)`, 'R '),
-          ],
-          from: command.from,
-          message: "Missing 'Time Tag' for command",
-          severity: 'error',
-          to: command.to,
-        });
-      } else {
-        const timeTagAbsoluteNode = timeTagNode.getChild('TimeAbsolute');
-        const timeTagEpochNode = timeTagNode.getChild('TimeEpoch');
-        const timeTagRelativeNode = timeTagNode.getChild('TimeRelative');
-
-        if (timeTagAbsoluteNode) {
-          const absoluteText = text.slice(timeTagAbsoluteNode.from + 1, timeTagAbsoluteNode.to).trim();
-
-          const isValid = validateTime(absoluteText, TimeTypes.ABSOLUTE);
-          if (!isValid) {
-            diagnostics.push({
-              actions: [],
-              from: timeTagAbsoluteNode.from,
-              message: CustomErrorCodes.InvalidAbsoluteTime().message,
-              severity: 'error',
-              to: timeTagAbsoluteNode.to,
-            });
-          } else {
-            if (isTimeMax(absoluteText, TimeTypes.ABSOLUTE)) {
-              diagnostics.push({
-                actions: [],
-                from: timeTagAbsoluteNode.from,
-                message: CustomErrorCodes.MaxAbsoluteTime().message,
-                severity: 'error',
-                to: timeTagAbsoluteNode.to,
-              });
-            } else {
-              if (!isTimeBalanced(absoluteText, TimeTypes.ABSOLUTE)) {
-                diagnostics.push({
-                  actions: [],
-                  from: timeTagAbsoluteNode.from,
-                  message: CustomErrorCodes.UnbalancedTime(getDoyTime(new Date(getUnixEpochTime(absoluteText))))
-                    .message,
-                  severity: 'warning',
-                  to: timeTagAbsoluteNode.to,
-                });
-              }
-            }
-          }
-        } else if (timeTagEpochNode) {
-          const epochText = text.slice(timeTagEpochNode.from + 1, timeTagEpochNode.to).trim();
-          const isValid = validateTime(epochText, TimeTypes.EPOCH) || validateTime(epochText, TimeTypes.EPOCH_SIMPLE);
-          if (!isValid) {
-            diagnostics.push({
-              actions: [],
-              from: timeTagEpochNode.from,
-              message: CustomErrorCodes.InvalidEpochTime().message,
-              severity: 'error',
-              to: timeTagEpochNode.to,
-            });
-          } else {
-            if (validateTime(epochText, TimeTypes.EPOCH)) {
-              if (isTimeMax(epochText, TimeTypes.EPOCH)) {
-                diagnostics.push({
-                  actions: [],
-                  from: timeTagEpochNode.from,
-                  message: CustomErrorCodes.MaxEpochTime(parseDurationString(epochText, 'seconds').isNegative).message,
-                  severity: 'error',
-                  to: timeTagEpochNode.to,
-                });
-              } else {
-                if (!isTimeBalanced(epochText, TimeTypes.EPOCH)) {
-                  diagnostics.push({
-                    actions: [],
-                    from: timeTagEpochNode.from,
-                    message: CustomErrorCodes.UnbalancedTime(getBalancedDuration(epochText)).message,
-                    severity: 'warning',
-                    to: timeTagEpochNode.to,
-                  });
-                }
-              }
-            }
-          }
-        } else if (timeTagRelativeNode) {
-          const relativeText = text.slice(timeTagRelativeNode.from + 1, timeTagRelativeNode.to).trim();
-          const isValid =
-            validateTime(relativeText, TimeTypes.RELATIVE) || validateTime(relativeText, TimeTypes.RELATIVE_SIMPLE);
-          if (!isValid) {
-            diagnostics.push({
-              actions: [],
-              from: timeTagRelativeNode.from,
-              message: CustomErrorCodes.InvalidRelativeTime().message,
-              severity: 'error',
-              to: timeTagRelativeNode.to,
-            });
-          } else {
-            if (validateTime(relativeText, TimeTypes.RELATIVE)) {
-              if (isTimeMax(relativeText, TimeTypes.RELATIVE)) {
-                diagnostics.push({
-                  actions: [],
-                  from: timeTagRelativeNode.from,
-                  message: CustomErrorCodes.MaxRelativeTime().message,
-                  severity: 'error',
-                  to: timeTagRelativeNode.to,
-                });
-              } else {
-                if (!isTimeBalanced(relativeText, TimeTypes.EPOCH)) {
-                  diagnostics.push({
-                    actions: [],
-                    from: timeTagRelativeNode.from,
-                    message: CustomErrorCodes.UnbalancedTime(getBalancedDuration(relativeText)).message,
-                    severity: 'error',
-                    to: timeTagRelativeNode.to,
-                  });
-                }
-              }
-            }
-          }
-        }
-      }
+      diagnostics.push(...validateTimeTags(command, text));
 
       // Validate the command and push the generated diagnostics to the array
       diagnostics.push(...validateCommand(command, text, 'command', variables));
@@ -595,6 +555,142 @@ export function sequenceLinter(
     }
 
     // Return the array of diagnostics
+    return diagnostics;
+  }
+
+  function validateTimeTags(command: SyntaxNode, text: string): Diagnostic[] {
+    const diagnostics: Diagnostic[] = [];
+    const timeTagNode = command.getChild('TimeTag');
+
+    // If the TimeTag node is missing, create a diagnostic
+    if (!timeTagNode) {
+      diagnostics.push({
+        actions: [insertAction(`Insert 'C' (command complete)`, 'C '), insertAction(`Insert 'R1' (relative 1)`, 'R ')],
+        from: command.from,
+        message: "Missing 'Time Tag' for command",
+        severity: 'error',
+        to: command.to,
+      });
+    } else {
+      // Commands can't have a ground epoch time tag
+      if (command.name === TOKEN_COMMAND && timeTagNode.getChild('TimeGroundEpoch')) {
+        diagnostics.push({
+          actions: [],
+          from: timeTagNode.from,
+          message: 'Ground Epoch Time Tags are not allowed for commands',
+          severity: 'error',
+          to: timeTagNode.to,
+        });
+      }
+
+      const timeTagAbsoluteNode = timeTagNode?.getChild('TimeAbsolute');
+      const timeTagEpochNode = timeTagNode?.getChild('TimeEpoch') ?? timeTagNode.getChild('TimeGroundEpoch');
+      const timeTagRelativeNode = timeTagNode?.getChild('TimeRelative');
+
+      if (timeTagAbsoluteNode) {
+        const absoluteText = text.slice(timeTagAbsoluteNode.from + 1, timeTagAbsoluteNode.to).trim();
+
+        const isValid = validateTime(absoluteText, TimeTypes.ABSOLUTE);
+        if (!isValid) {
+          diagnostics.push({
+            actions: [],
+            from: timeTagAbsoluteNode.from,
+            message: CustomErrorCodes.InvalidAbsoluteTime().message,
+            severity: 'error',
+            to: timeTagAbsoluteNode.to,
+          });
+        } else {
+          if (isTimeMax(absoluteText, TimeTypes.ABSOLUTE)) {
+            diagnostics.push({
+              actions: [],
+              from: timeTagAbsoluteNode.from,
+              message: CustomErrorCodes.MaxAbsoluteTime().message,
+              severity: 'error',
+              to: timeTagAbsoluteNode.to,
+            });
+          } else {
+            if (!isTimeBalanced(absoluteText, TimeTypes.ABSOLUTE)) {
+              diagnostics.push({
+                actions: [],
+                from: timeTagAbsoluteNode.from,
+                message: CustomErrorCodes.UnbalancedTime(getDoyTime(new Date(getUnixEpochTime(absoluteText)))).message,
+                severity: 'warning',
+                to: timeTagAbsoluteNode.to,
+              });
+            }
+          }
+        }
+      } else if (timeTagEpochNode) {
+        const epochText = text.slice(timeTagEpochNode.from + 1, timeTagEpochNode.to).trim();
+        const isValid = validateTime(epochText, TimeTypes.EPOCH) || validateTime(epochText, TimeTypes.EPOCH_SIMPLE);
+        if (!isValid) {
+          diagnostics.push({
+            actions: [],
+            from: timeTagEpochNode.from,
+            message: CustomErrorCodes.InvalidEpochTime().message,
+            severity: 'error',
+            to: timeTagEpochNode.to,
+          });
+        } else {
+          if (validateTime(epochText, TimeTypes.EPOCH)) {
+            if (isTimeMax(epochText, TimeTypes.EPOCH)) {
+              diagnostics.push({
+                actions: [],
+                from: timeTagEpochNode.from,
+                message: CustomErrorCodes.MaxEpochTime(parseDurationString(epochText, 'seconds').isNegative).message,
+                severity: 'error',
+                to: timeTagEpochNode.to,
+              });
+            } else {
+              if (!isTimeBalanced(epochText, TimeTypes.EPOCH)) {
+                diagnostics.push({
+                  actions: [],
+                  from: timeTagEpochNode.from,
+                  message: CustomErrorCodes.UnbalancedTime(getBalancedDuration(epochText)).message,
+                  severity: 'warning',
+                  to: timeTagEpochNode.to,
+                });
+              }
+            }
+          }
+        }
+      } else if (timeTagRelativeNode) {
+        const relativeText = text.slice(timeTagRelativeNode.from + 1, timeTagRelativeNode.to).trim();
+        const isValid =
+          validateTime(relativeText, TimeTypes.RELATIVE) || validateTime(relativeText, TimeTypes.RELATIVE_SIMPLE);
+        if (!isValid) {
+          diagnostics.push({
+            actions: [],
+            from: timeTagRelativeNode.from,
+            message: CustomErrorCodes.InvalidRelativeTime().message,
+            severity: 'error',
+            to: timeTagRelativeNode.to,
+          });
+        } else {
+          if (validateTime(relativeText, TimeTypes.RELATIVE)) {
+            if (isTimeMax(relativeText, TimeTypes.RELATIVE)) {
+              diagnostics.push({
+                actions: [],
+                from: timeTagRelativeNode.from,
+                message: CustomErrorCodes.MaxRelativeTime().message,
+                severity: 'error',
+                to: timeTagRelativeNode.to,
+              });
+            } else {
+              if (!isTimeBalanced(relativeText, TimeTypes.EPOCH)) {
+                diagnostics.push({
+                  actions: [],
+                  from: timeTagRelativeNode.from,
+                  message: CustomErrorCodes.UnbalancedTime(getBalancedDuration(relativeText)).message,
+                  severity: 'error',
+                  to: timeTagRelativeNode.to,
+                });
+              }
+            }
+          }
+        }
+      }
+    }
     return diagnostics;
   }
 
@@ -1037,6 +1133,26 @@ export function sequenceLinter(
               break;
             }
           }
+        }
+        break;
+      case 'boolean':
+        if (argType !== 'Boolean') {
+          diagnostics.push({
+            actions: [],
+            from: argNode.from,
+            message: `Incorrect type - expected 'Boolean' but got ${argType}`,
+            severity: 'error',
+            to: argNode.to,
+          });
+        }
+        if (['true', 'false'].includes(argText) === false) {
+          diagnostics.push({
+            actions: [],
+            from: argNode.from,
+            message: `Incorrect value - expected true or false but got ${argText}`,
+            severity: 'error',
+            to: argNode.to,
+          });
         }
         break;
       case 'float':

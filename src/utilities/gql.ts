@@ -16,6 +16,7 @@ export enum Queries {
   CONSTRAINT_DEFINITION = 'constraint_definition_by_pk',
   CONSTRAINT_METADATA = 'constraint_metadata_by_pk',
   CONSTRAINT_METADATAS = 'constraint_metadata',
+  CONSTRAINT_RUN = 'constraint_run',
   CONSTRAINT_SPECIFICATIONS = 'constraint_specification',
   CONSTRAINT_VIOLATIONS = 'constraintViolations',
   CREATE_EXPANSION_SET = 'createExpansionSet',
@@ -40,7 +41,7 @@ export enum Queries {
   DELETE_MISSION_MODEL = 'delete_mission_model_by_pk',
   DELETE_PARAMETER_DICTIONARY = 'delete_parameter_dictionary_by_pk',
   DELETE_PARCEL = 'delete_parcel_by_pk',
-  DELETE_PARCEL_TO_PARAMETER_DICTIONARY = 'delete_parcel_to_parameter_dictionary',
+  DELETE_PARCEL_TO_DICTIONARY_ASSOCIATION = 'delete_parcel_to_parameter_dictionary',
   DELETE_PLAN = 'delete_plan_by_pk',
   DELETE_PLAN_COLLABORATOR = 'delete_plan_collaborators_by_pk',
   DELETE_PLAN_SNAPSHOT = 'delete_plan_snapshot_by_pk',
@@ -129,6 +130,7 @@ export enum Queries {
   INSERT_TAGS = 'insert_tags',
   INSERT_USER_SEQUENCE = 'insert_user_sequence_one',
   INSERT_VIEW = 'insert_view_one',
+  INSERT_WORKSPACE = 'insert_workspace_one',
   MERGE_REQUEST = 'merge_request_by_pk',
   MERGE_REQUESTS = 'merge_request',
   MISSION_MODEL = 'mission_model_by_pk',
@@ -196,6 +198,7 @@ export enum Queries {
   UPDATE_TAGS = 'update_tags_by_pk',
   UPDATE_USER_SEQUENCE = 'update_user_sequence_by_pk',
   UPDATE_VIEW = 'update_view_by_pk',
+  UPDATE_WORKSPACE = 'update_workspace_by_pk',
   UPLOADED_FILES = 'uploaded_file',
   UPLOAD_DICTIONARY = 'uploadDictionary',
   USER_ROLE_PERMISSION = 'user_role_permission',
@@ -205,6 +208,7 @@ export enum Queries {
   VALIDATE_ACTIVITY_ARGUMENTS = 'validateActivityArguments',
   VIEW = 'view_by_pk',
   VIEWS = 'view',
+  WORKSPACES = 'workspace',
   WITHDRAW_MERGE_REQUEST = 'withdraw_merge_request',
 }
 
@@ -707,6 +711,18 @@ const gql = {
     }
   `,
 
+  CREATE_WORKSPACE: `#graphql
+    mutation CreateWorkspace($workspace: workspace_insert_input!) {
+      createWorkspace: ${Queries.INSERT_WORKSPACE}(object: $workspace) {
+        created_at
+        id
+        name
+        owner
+        updated_at
+      }
+    }
+  `,
+
   DELETE_ACTIVITY_DIRECTIVES: `#graphql
     mutation DeleteActivityDirectives($plan_id: Int!, $activity_ids: [Int!]!) {
       deleteActivityDirectives: ${Queries.DELETE_ACTIVITY_DIRECTIVES}(
@@ -898,9 +914,9 @@ const gql = {
     }
   `,
 
-  DELETE_PARCEL_TO_PARAMETER_DICTIONARIES: `#graphql
-    mutation deleteParcelToParameterDictionary($parameterDictionaryIds: [Int!]!, $parcelIds: [Int!]!) {
-        ${Queries.DELETE_PARCEL_TO_PARAMETER_DICTIONARY}(where: { parcel_id: { _in: $parcelIds }, _and: { parameter_dictionary_id: { _in: $parameterDictionaryIds}}} ) {
+  DELETE_PARCEL_TO_DICTIONARY_ASSOCIATION: `#graphql
+    mutation deleteParcelToDictionaryAssociation($parameterDictionaryIds: [Int!]!, $parcelIds: [Int!]!) {
+        ${Queries.DELETE_PARCEL_TO_DICTIONARY_ASSOCIATION}(where: { parcel_id: { _in: $parcelIds }, _and: { parameter_dictionary_id: { _in: $parameterDictionaryIds}}} ) {
           affected_rows
       }
     }
@@ -981,6 +997,21 @@ const gql = {
           condition_id: { _in: $conditionIds },
           _and: {
             plan_id: { _eq: $planId },
+          }
+        }
+      ) {
+        affected_rows
+      }
+    }
+  `,
+
+  DELETE_SCHEDULING_GOAL_INVOCATIONS: `#graphql
+    mutation DeleteSchedulingGoalInvocations($goalInvocationIdsToDelete: [Int!]! = [], $specificationId: Int!) {
+      deleteSchedulingGoalPlanSpecifications: ${Queries.DELETE_SCHEDULING_SPECIFICATION_GOALS}(
+        where: {
+          goal_invocation_id: { _in: $goalInvocationIdsToDelete },
+          _and: {
+            specification_id: { _eq: $specificationId },
           }
         }
       ) {
@@ -1130,7 +1161,7 @@ const gql = {
   `,
 
   GET_EFFECTIVE_ACTIVITY_ARGUMENTS: `#graphql
-    query GetEffectiveActivityArguments($modelId: ID!, $activityTypeName: String!, $arguments: ActivityArguments!) {
+    query GetEffectiveActivityArguments($modelId: Int!, $activityTypeName: String!, $arguments: ActivityArguments!) {
       effectiveActivityArguments: ${Queries.GET_ACTIVITY_EFFECTIVE_ARGUMENTS}(
         missionModelId: $modelId,
         activityTypeName: $activityTypeName,
@@ -1144,7 +1175,7 @@ const gql = {
   `,
 
   GET_EFFECTIVE_MODEL_ARGUMENTS: `#graphql
-    query GetEffectiveModelArguments($modelId: ID!, $arguments: ModelArguments!) {
+    query GetEffectiveModelArguments($modelId: Int!, $arguments: ModelArguments!) {
       effectiveModelArguments: ${Queries.GET_MODEL_EFFECTIVE_ARGUMENTS}(
         missionModelId: $modelId,
         modelArguments: $arguments
@@ -1165,6 +1196,7 @@ const gql = {
       }
       event(where: { dataset_id: { _eq: $datasetId }}) {
         causal_time
+        span_id
         real_time
         topic_index
         transaction_index
@@ -1592,6 +1624,7 @@ const gql = {
         enabled
         goal_id
         priority
+        arguments
         specification_id
       }
     }
@@ -1620,7 +1653,7 @@ const gql = {
         attributes
         dataset_id
         duration
-        id
+        span_id
         parent_id
         start_offset
         type
@@ -1655,7 +1688,7 @@ const gql = {
   `,
 
   GET_TYPESCRIPT_CONSTRAINTS: `#graphql
-    query GetTypeScriptConstraints($model_id: ID!) {
+    query GetTypeScriptConstraints($model_id: Int!) {
       dslTypeScriptResponse: ${Queries.CONSTRAINTS_DSL_TYPESCRIPT}(missionModelId: $model_id) {
         reason
         status
@@ -1698,6 +1731,7 @@ const gql = {
         owner
         parcel_id
         updated_at
+        workspace_id
       }
     }
   `,
@@ -1958,6 +1992,11 @@ const gql = {
         name
         parameters
         required_parameters
+        subsystem_tag {
+          color
+          id
+          name
+        }
       }
     }
   `,
@@ -2103,6 +2142,19 @@ const gql = {
           }
         }
         plan_id
+      }
+    }
+  `,
+
+  SUB_CONSTRAINT_RUNS: `#graphql
+    subscription SubConstraintRuns($simulationDatasetId: Int!) {
+      constraintRuns: ${Queries.CONSTRAINT_RUN}(where: { simulation_dataset_id: { _eq: $simulationDatasetId }}) {
+        constraint_id
+        constraint_revision
+        results
+        constraint_metadata {
+          name
+        }
       }
     }
   `,
@@ -2313,8 +2365,8 @@ const gql = {
   `,
 
   SUB_PARCEL_TO_PARAMETER_DICTIONARIES: `#graphql
-    subscription SubParcelsToParameterDictionaries($parcelId: Int!) {
-      ${Queries.PARCEL_TO_PARAMETER_DICTIONARY}(where: {parcel_id: {_eq: $parcelId }}) {
+    subscription SubParcelsToParameterDictionaries {
+      ${Queries.PARCEL_TO_PARAMETER_DICTIONARY} {
         parameter_dictionary_id
         parcel_id
       }
@@ -2689,10 +2741,13 @@ const gql = {
         versions(order_by: {revision: desc}) {
           author
           definition
+          type
           revision
+          parameter_schema
           tags {
             tag_id
           }
+          uploaded_jar_id
         }
       }
     }
@@ -2736,8 +2791,38 @@ const gql = {
           author
           definition
           revision
+          type
           tags {
             tag_id
+          }
+          uploaded_jar_id
+        }
+      }
+    }
+  `,
+
+  SUB_SCHEDULING_GOAL_INVOCATIONS: `#graphql
+    subscription SubSchedulingGoalInvocations($planId: Int!) {
+      ${Queries.SCHEDULING_SPECIFICATION_GOALS} (where: {specification: {plan_id: {_eq: $planId}}}) {
+        specification_id
+        goal_id
+        goal_invocation_id
+        goal_revision
+        arguments
+        enabled
+        priority
+        simulate_after
+        goal_metadata {
+          name
+          versions(order_by: {revision: desc}) {
+            author
+            definition
+            revision
+            type
+            tags {
+              tag_id
+            }
+            parameter_schema
           }
         }
       }
@@ -2786,6 +2871,7 @@ const gql = {
             }
           }
           goal_id
+          goal_invocation_id
           goal_metadata {
             name
             owner
@@ -2803,12 +2889,15 @@ const gql = {
                   activity_id
                 }
               }
+              parameter_schema
+              type
               revision
             }
           }
           goal_revision
           priority
           simulate_after
+          arguments
           specification_id
         }
       }
@@ -2887,6 +2976,7 @@ const gql = {
     subscription SubSimulationDatasets($planId: Int!) {
       ${Queries.SIMULATIONS}(where: { plan_id: { _eq: $planId } }, order_by: { id: desc }) {
         simulation_datasets(order_by: { id: desc }) {
+          arguments
           canceled
           id
           dataset_id
@@ -2980,6 +3070,7 @@ const gql = {
         owner
         parcel_id
         updated_at
+        workspace_id
       }
     }
   `,
@@ -2987,6 +3078,18 @@ const gql = {
   SUB_VIEWS: `#graphql
     subscription SubViews {
       views: ${Queries.VIEWS} {
+        created_at
+        id
+        name
+        owner
+        updated_at
+      }
+    }
+  `,
+
+  SUB_WORKSPACES: `#graphql
+    subscription SubWorkspaces {
+      ${Queries.WORKSPACES}(order_by: { id: desc }) {
         created_at
         id
         name
@@ -3399,14 +3502,15 @@ const gql = {
   `,
 
   UPDATE_SCHEDULING_GOAL_PLAN_SPECIFICATION: `#graphql
-    mutation UpdateSchedulingGoalPlanSpecification($id: Int!, $revision: Int!, $enabled: Boolean!, $priority: Int!, $simulateAfter: Boolean!, $specificationId: Int!) {
+    mutation UpdateSchedulingGoalPlanSpecification($arguments: jsonb, $goal_invocation_id: Int!, $revision: Int!, $enabled: Boolean!, $priority: Int!, $simulateAfter: Boolean!) {
       updateSchedulingGoalPlanSpecification: ${Queries.UPDATE_SCHEDULING_SPECIFICATION_GOAL}(
-        pk_columns: { goal_id: $id, specification_id: $specificationId },
+        pk_columns: { goal_invocation_id: $goal_invocation_id },
         _set: {
           goal_revision: $revision,
           enabled: $enabled,
           priority: $priority,
           simulate_after: $simulateAfter
+          arguments: $arguments
         }
       ) {
         goal_revision
@@ -3416,13 +3520,9 @@ const gql = {
   `,
 
   UPDATE_SCHEDULING_GOAL_PLAN_SPECIFICATIONS: `#graphql
-    mutation UpdateSchedulingGoalPlanSpecifications($goalSpecsToUpdate: [scheduling_specification_goals_insert_input!]!, $goalSpecIdsToDelete: [Int!]! = [], $specificationId: Int!) {
-      updateSchedulingGoalPlanSpecifications: ${Queries.INSERT_SCHEDULING_SPECIFICATION_GOALS}(
-        objects: $goalSpecsToUpdate,
-        on_conflict: {
-          constraint: scheduling_specification_goals_primary_key,
-          update_columns: [goal_revision, enabled]
-        },
+    mutation UpdateSchedulingGoalPlanSpecifications($goalSpecsToInsert: [scheduling_specification_goals_insert_input!]!, $goalSpecIdsToDelete: [Int!]! = []) {
+      insertSchedulingGoalPlanSpecifications: ${Queries.INSERT_SCHEDULING_SPECIFICATION_GOALS}(
+        objects: $goalSpecsToInsert,
       ) {
         returning {
           goal_revision
@@ -3430,12 +3530,7 @@ const gql = {
         }
       }
       deleteSchedulingGoalPlanSpecifications: ${Queries.DELETE_SCHEDULING_SPECIFICATION_GOALS}(
-        where: {
-          goal_id: { _in: $goalSpecIdsToDelete },
-          _and: {
-            specification_id: { _eq: $specificationId },
-          }
-        }
+        where: { goal_id: { _in: $goalSpecIdsToDelete } }
       ) {
         affected_rows
       }
@@ -3510,8 +3605,22 @@ const gql = {
     }
   `,
 
+  UPDATE_WORKSPACE: `#graphql
+    mutation UpdateWorkspace($id: Int!, $workspace: workspace_set_input!) {
+      updatedWorkspace: ${Queries.UPDATE_WORKSPACE}(
+        pk_columns: { id: $id }, _set: $workspace
+      ) {
+        created_at
+        id
+        name
+        owner
+        updated_at
+      }
+    }
+  `,
+
   VALIDATE_ACTIVITY_ARGUMENTS: `#graphql
-    query ValidateActivityArguments($arguments: ActivityArguments!, $activityTypeName: String!, $modelId: ID!) {
+    query ValidateActivityArguments($arguments: ActivityArguments!, $activityTypeName: String!, $modelId: Int!) {
       ${Queries.VALIDATE_ACTIVITY_ARGUMENTS}(
         activityArguments: $arguments,
         activityTypeName: $activityTypeName,

@@ -1,20 +1,28 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { indentSelection } from '@codemirror/commands';
   import { json } from '@codemirror/lang-json';
-  import { syntaxTree } from '@codemirror/language';
+  import { indentService, syntaxTree } from '@codemirror/language';
   import { lintGutter } from '@codemirror/lint';
   import { Compartment, EditorState } from '@codemirror/state';
   import type { ViewUpdate } from '@codemirror/view';
   import type { SyntaxNode } from '@lezer/common';
   import type { ChannelDictionary, CommandDictionary, ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
+  import ChevronDownIcon from '@nasa-jpl/stellar/icons/chevron_down.svg?component';
   import CollapseIcon from 'bootstrap-icons/icons/arrow-bar-down.svg?component';
   import ExpandIcon from 'bootstrap-icons/icons/arrow-bar-up.svg?component';
   import ClipboardIcon from 'bootstrap-icons/icons/clipboard.svg?component';
-  import SaveIcon from 'bootstrap-icons/icons/save.svg?component';
+  import DownloadIcon from 'bootstrap-icons/icons/download.svg?component';
   import { EditorView, basicSetup } from 'codemirror';
   import { debounce } from 'lodash-es';
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
+  import {
+    inputFormat,
+    outputFormat,
+    sequenceAdaptation,
+    setSequenceAdaptation,
+  } from '../../stores/sequence-adaptation';
   import {
     channelDictionaries,
     commandDictionaries,
@@ -27,17 +35,16 @@
     userSequenceEditorColumnsWithFormBuilder,
   } from '../../stores/sequencing';
   import type { User } from '../../types/app';
-  import type { Parcel } from '../../types/sequencing';
+  import type { IOutputFormat, Parcel } from '../../types/sequencing';
   import { setupLanguageSupport } from '../../utilities/codemirror';
-  import { setupVmlLanguageSupport, vmlLinter } from '../../utilities/codemirror/vml';
   import effects from '../../utilities/effects';
-  import { seqJsonLinter } from '../../utilities/new-sequence-editor/seq-json-linter';
-  import { sequenceCompletion } from '../../utilities/new-sequence-editor/sequence-completion';
-  import { sequenceLinter } from '../../utilities/new-sequence-editor/sequence-linter';
-  import { sequenceTooltip } from '../../utilities/new-sequence-editor/sequence-tooltip';
-  import { sequenceToSeqJson } from '../../utilities/new-sequence-editor/to-seq-json';
+  import { downloadBlob, downloadJSON } from '../../utilities/generic';
+  import { inputLinter, outputLinter } from '../../utilities/sequence-editor/extension-points';
+  import { sequenceTooltip } from '../../utilities/sequence-editor/sequence-tooltip';
   import { showFailureToast, showSuccessToast } from '../../utilities/toast';
   import { tooltip } from '../../utilities/tooltip';
+  import Menu from '../menus/Menu.svelte';
+  import MenuItem from '../menus/MenuItem.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
   import Panel from '../ui/Panel.svelte';
@@ -49,12 +56,12 @@
   export let readOnly: boolean = false;
   export let sequenceName: string = '';
   export let sequenceDefinition: string = '';
-  export let sequenceSeqJson: string = '';
+  export let sequenceOutput: string = '';
   export let title: string = 'Sequence - Definition Editor';
   export let user: User | null;
 
   const dispatch = createEventDispatcher<{
-    sequence: { seqJson: string; sequence: string };
+    sequence: { input: string; output: string };
   }>();
 
   let clientHeightGridRightBottom: number;
@@ -63,27 +70,42 @@
   let compartmentSeqLanguage: Compartment;
   let compartmentSeqLinter: Compartment;
   let compartmentSeqTooltip: Compartment;
+  let compartmentSeqAutocomplete: Compartment;
   let channelDictionary: ChannelDictionary | null;
   let commandDictionary: CommandDictionary | null;
+  let disableCopyAndExport: boolean = true;
   let parameterDictionaries: ParameterDictionary[] = [];
   let commandFormBuilderGrid: string;
-  let editorSeqJsonDiv: HTMLDivElement;
-  let editorSeqJsonView: EditorView;
+  let editorOutputDiv: HTMLDivElement;
+  let editorOutputView: EditorView;
   let editorSequenceDiv: HTMLDivElement;
   let editorSequenceView: EditorView;
+  let menu: Menu;
+  let outputFormats: IOutputFormat[];
   let selectedNode: SyntaxNode | null;
+  let selectedOutputFormat: IOutputFormat | undefined;
   let toggleSeqJsonPreview: boolean = false;
 
   $: {
-    if (parcel?.sequence_adaptation_id) {
-      loadSequenceAdaptation(parcel?.sequence_adaptation_id);
-    }
+    loadSequenceAdaptation(parcel?.sequence_adaptation_id);
   }
 
   $: {
     if (editorSequenceView) {
+      // insert sequence
       editorSequenceView.dispatch({
         changes: { from: 0, insert: sequenceDefinition, to: editorSequenceView.state.doc.length },
+      });
+
+      // apply indentation
+      editorSequenceView.update([
+        editorSequenceView.state.update({
+          selection: { anchor: 0, head: editorSequenceView.state.doc.length },
+        }),
+      ]);
+      indentSelection({
+        dispatch: transaction => editorSequenceView.update([transaction]),
+        state: editorSequenceView.state,
       });
     }
   }
@@ -95,76 +117,61 @@
   }
 
   $: {
-    if (editorSequenceView) {
-      const unparsedCommandDictionary = $commandDictionaries.find(cd => cd.id === parcel?.command_dictionary_id);
-      if (sequenceName.endsWith('.vml')) {
-        if (unparsedCommandDictionary) {
-          getParsedCommandDictionary(unparsedCommandDictionary, user).then(parsedCommandDictionary => {
-            commandDictionary = parsedCommandDictionary;
-            editorSequenceView.dispatch({
-              effects: compartmentSeqLanguage.reconfigure(setupVmlLanguageSupport()),
-            });
-            editorSequenceView.dispatch({
-              effects: compartmentSeqLinter.reconfigure(vmlLinter(commandDictionary)),
-            });
-          });
-        }
-      } else {
-        const unparsedChannelDictionary = $channelDictionaries.find(cd => cd.id === parcel?.channel_dictionary_id);
-        const unparsedParameterDictionaries = $parameterDictionariesStore.filter(pd => {
-          const parameterDictionary = $parcelToParameterDictionaries.find(p => p.parameter_dictionary_id === pd.id);
+    const unparsedChannelDictionary = $channelDictionaries.find(cd => cd.id === parcel?.channel_dictionary_id);
+    const unparsedCommandDictionary = $commandDictionaries.find(cd => cd.id === parcel?.command_dictionary_id);
+    const unparsedParameterDictionaries = $parameterDictionariesStore.filter(pd => {
+      const parameterDictionary = $parcelToParameterDictionaries.find(
+        p => p.parameter_dictionary_id === pd.id && p.parcel_id === parcel?.id,
+      );
 
-          if (parameterDictionary) {
-            return pd;
-          }
-        });
+      if (parameterDictionary) {
+        return pd;
+      }
+    });
 
-        if (unparsedCommandDictionary) {
-          Promise.all([
-            getParsedCommandDictionary(unparsedCommandDictionary, user),
-            unparsedChannelDictionary ? getParsedChannelDictionary(unparsedChannelDictionary, user) : null,
-            ...unparsedParameterDictionaries.map(unparsedParameterDictionary => {
-              return getParsedParameterDictionary(unparsedParameterDictionary, user);
-            }),
-          ]).then(([parsedCommandDictionary, parsedChannelDictionary, ...parsedParameterDictionaries]) => {
-            const nonNullParsedParameterDictionaries = parsedParameterDictionaries.filter(
-              (pd): pd is ParameterDictionary => !!pd,
-            );
+    if (unparsedCommandDictionary) {
+      Promise.all([
+        getParsedCommandDictionary(unparsedCommandDictionary, user),
+        unparsedChannelDictionary ? getParsedChannelDictionary(unparsedChannelDictionary, user) : null,
+        ...unparsedParameterDictionaries.map(unparsedParameterDictionary => {
+          return getParsedParameterDictionary(unparsedParameterDictionary, user);
+        }),
+      ]).then(([parsedCommandDictionary, parsedChannelDictionary, ...parsedParameterDictionaries]) => {
+        const nonNullParsedParameterDictionaries = parsedParameterDictionaries.filter(
+          (pd): pd is ParameterDictionary => !!pd,
+        );
 
-            channelDictionary = parsedChannelDictionary;
-            commandDictionary = parsedCommandDictionary;
-            parameterDictionaries = nonNullParsedParameterDictionaries;
+        channelDictionary = parsedChannelDictionary;
+        commandDictionary = parsedCommandDictionary;
+        parameterDictionaries = nonNullParsedParameterDictionaries;
 
-            // Reconfigure sequence editor.
-            editorSequenceView.dispatch({
-              effects: compartmentSeqLanguage.reconfigure(
-                setupLanguageSupport(
-                  sequenceCompletion(
-                    parsedChannelDictionary,
-                    parsedCommandDictionary,
-                    nonNullParsedParameterDictionaries,
-                  ),
+        // Reconfigure sequence editor.
+        editorSequenceView.dispatch({
+          effects: [
+            compartmentSeqLanguage.reconfigure(
+              setupLanguageSupport(
+                $sequenceAdaptation.autoComplete(
+                  parsedChannelDictionary,
+                  parsedCommandDictionary,
+                  nonNullParsedParameterDictionaries,
                 ),
               ),
-            });
-            editorSequenceView.dispatch({
-              effects: compartmentSeqLinter.reconfigure(
-                sequenceLinter(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
-              ),
-            });
-            editorSequenceView.dispatch({
-              effects: compartmentSeqTooltip.reconfigure(
-                sequenceTooltip(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
-              ),
-            });
+            ),
+            compartmentSeqLinter.reconfigure(
+              inputLinter(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
+            ),
+            compartmentSeqTooltip.reconfigure(
+              sequenceTooltip(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
+            ),
+            compartmentSeqAutocomplete.reconfigure(indentService.of($sequenceAdaptation.autoIndent())),
+          ],
+        });
 
-            // Reconfigure seq JSON editor.
-            editorSeqJsonView.dispatch({
-              effects: compartmentSeqJsonLinter.reconfigure(seqJsonLinter(parsedCommandDictionary)),
-            });
-          });
-        }
-      }
+        // Reconfigure seq JSON editor.
+        editorOutputView.dispatch({
+          effects: compartmentSeqJsonLinter.reconfigure(outputLinter(parsedCommandDictionary, selectedOutputFormat)),
+        });
+      });
     }
   }
 
@@ -173,6 +180,7 @@
     compartmentSeqLanguage = new Compartment();
     compartmentSeqLinter = new Compartment();
     compartmentSeqTooltip = new Compartment();
+    compartmentSeqAutocomplete = new Compartment();
 
     editorSequenceView = new EditorView({
       doc: sequenceDefinition,
@@ -181,18 +189,19 @@
         EditorView.lineWrapping,
         EditorView.theme({ '.cm-gutter': { 'min-height': `${clientHeightGridRightTop}px` } }),
         lintGutter(),
-        compartmentSeqLanguage.of(setupLanguageSupport(sequenceCompletion(null, null, []))),
-        compartmentSeqLinter.of(sequenceLinter()),
+        compartmentSeqLanguage.of(setupLanguageSupport($sequenceAdaptation.autoComplete(null, null, []))),
+        compartmentSeqLinter.of(inputLinter()),
         compartmentSeqTooltip.of(sequenceTooltip()),
         EditorView.updateListener.of(debounce(sequenceUpdateListener, 250)),
         EditorView.updateListener.of(selectedCommandUpdateListener),
+        compartmentSeqAutocomplete.of(indentService.of($sequenceAdaptation.autoIndent())),
         EditorState.readOnly.of(readOnly),
       ],
       parent: editorSequenceDiv,
     });
 
-    editorSeqJsonView = new EditorView({
-      doc: sequenceSeqJson,
+    editorOutputView = new EditorView({
+      doc: sequenceOutput,
       extensions: [
         basicSetup,
         EditorView.lineWrapping,
@@ -200,10 +209,10 @@
         EditorView.editable.of(false),
         lintGutter(),
         json(),
-        compartmentSeqJsonLinter.of(seqJsonLinter()),
+        compartmentSeqJsonLinter.of(outputLinter()),
         EditorState.readOnly.of(readOnly),
       ],
-      parent: editorSeqJsonDiv,
+      parent: editorOutputDiv,
     });
   });
 
@@ -217,8 +226,7 @@
 
       if (adaptation) {
         try {
-          // This evaluates the custom sequence adaptation that is optionally provided by the user.
-          Function(adaptation.adaptation)();
+          setSequenceAdaptation(eval(String(adaptation.adaptation)));
         } catch (e) {
           console.error(e);
           showFailureToast('Invalid sequence adaptation');
@@ -227,33 +235,30 @@
     } else {
       resetSequenceAdaptation();
     }
+
+    outputFormats = $outputFormat;
+    selectedOutputFormat = outputFormats[0];
   }
 
   function resetSequenceAdaptation(): void {
-    globalThis.CONDITIONAL_KEYWORDS = undefined;
-    globalThis.LOOP_KEYWORDS = undefined;
-    globalThis.GLOBALS = undefined;
-    globalThis.ARG_DELEGATOR = undefined;
-    globalThis.LINT = () => undefined;
-    globalThis.TO_SEQ_JSON = () => undefined;
+    setSequenceAdaptation(undefined);
   }
 
-  function sequenceUpdateListener(viewUpdate: ViewUpdate) {
+  async function sequenceUpdateListener(viewUpdate: ViewUpdate) {
     const sequence = viewUpdate.state.doc.toString();
-
+    disableCopyAndExport = sequence === '';
     const tree = syntaxTree(viewUpdate.state);
-    const seqJson = sequenceToSeqJson(
-      tree,
-      sequence,
-      commandDictionary,
-      parameterDictionaries,
-      channelDictionary,
-      sequenceName,
-    );
-    const seqJsonStr = JSON.stringify(seqJson, null, 2);
-    editorSeqJsonView.dispatch({ changes: { from: 0, insert: seqJsonStr, to: editorSeqJsonView.state.doc.length } });
+    const output = await selectedOutputFormat?.toOutputFormat?.(tree, sequence, commandDictionary, sequenceName);
 
-    dispatch('sequence', { seqJson: seqJsonStr, sequence });
+    if ($sequenceAdaptation?.modifyOutput !== undefined && output !== undefined) {
+      $sequenceAdaptation?.modifyOutput(output, parameterDictionaries, channelDictionary);
+    }
+
+    editorOutputView.dispatch({ changes: { from: 0, insert: output, to: editorOutputView.state.doc.length } });
+
+    if (output !== undefined) {
+      dispatch('sequence', { input: sequence, output });
+    }
   }
 
   function selectedCommandUpdateListener(viewUpdate: ViewUpdate) {
@@ -269,35 +274,35 @@
     }
   }
 
-  function downloadSeqJson() {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([editorSeqJsonView.state.doc.toString()], { type: 'application/json' }));
-    a.download = `${sequenceName}.json`;
-    a.click();
-  }
+  function downloadOutputFormat(outputFormat: IOutputFormat) {
+    const fileExtension = `${sequenceName}.${selectedOutputFormat?.fileExtension}`;
 
-  function downloadSeqN() {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([editorSequenceView.state.doc.toString()], { type: 'text/plain' }));
-    a.download = `${sequenceName}.txt`;
-    a.click();
-  }
-
-  async function copySeqJsonToClipboard() {
-    try {
-      await navigator.clipboard.writeText(editorSeqJsonView.state.doc.toString());
-      showSuccessToast('Sequence.json copied to clipboard');
-    } catch {
-      showFailureToast('Error copying sequence.json to clipboard');
+    if (outputFormat?.fileExtension === 'json') {
+      downloadJSON(JSON.parse(editorOutputView.state.doc.toString()), fileExtension);
+    } else {
+      downloadBlob(new Blob([editorOutputView.state.doc.toString()], { type: 'text/plain' }), fileExtension);
     }
   }
 
-  async function copySeqNClipboard() {
+  function downloadInputFormat() {
+    downloadBlob(new Blob([editorSequenceView.state.doc.toString()], { type: 'text/plain' }), `${sequenceName}.txt`);
+  }
+
+  async function copyOutputFormatToClipboard() {
+    try {
+      await navigator.clipboard.writeText(editorOutputView.state.doc.toString());
+      showSuccessToast(`${selectedOutputFormat?.name} copied to clipboard`);
+    } catch {
+      showFailureToast(`Error copying ${selectedOutputFormat?.name} to clipboard`);
+    }
+  }
+
+  async function copyInputFormatToClipboard() {
     try {
       await navigator.clipboard.writeText(editorSequenceView.state.doc.toString());
-      showSuccessToast('SeqN copied to clipboard');
+      showSuccessToast(`${$inputFormat?.name} copied to clipboard`);
     } catch {
-      showFailureToast('Error copying SeqN to clipboard');
+      showFailureToast(`Error copying ${$inputFormat?.name} to clipboard`);
     }
   }
 
@@ -307,32 +312,63 @@
 </script>
 
 <CssGrid bind:columns={commandFormBuilderGrid} minHeight={'0'}>
-  <CssGrid rows={toggleSeqJsonPreview ? '1fr 3px 1fr' : `1.88fr 3px minmax(50px,0.12fr)`} minHeight={'0'}>
+  <CssGrid rows={toggleSeqJsonPreview ? '1fr 3px 1fr' : '1.88fr 3px 80px'} minHeight={'0'}>
     <Panel>
       <svelte:fragment slot="header">
         <SectionTitle>{title}</SectionTitle>
 
         <div class="right">
           <button
-            use:tooltip={{ content: `Copy sequence contents as SeqN to clipboard`, placement: 'top' }}
+            use:tooltip={{ content: `Copy sequence contents as ${$inputFormat?.name} to clipboard`, placement: 'top' }}
             class="st-button icon-button secondary ellipsis"
-            on:click={copySeqNClipboard}><ClipboardIcon /> SeqN</button
+            on:click={copyInputFormatToClipboard}
+            disabled={disableCopyAndExport}><ClipboardIcon /> {$inputFormat?.name}</button
           >
           <button
-            use:tooltip={{ content: `Copy sequence contents as JSON to clipboard`, placement: 'top' }}
+            use:tooltip={{
+              content: `Download sequence contents as ${$inputFormat?.name}`,
+              placement: 'top',
+            }}
             class="st-button icon-button secondary ellipsis"
-            on:click={copySeqJsonToClipboard}><ClipboardIcon /> JSON</button
+            on:click|stopPropagation={downloadInputFormat}
+            disabled={disableCopyAndExport}><DownloadIcon /> {$inputFormat?.name}</button
           >
-          <button
-            use:tooltip={{ content: `Download sequence contents as SeqN`, placement: 'top' }}
-            class="st-button icon-button secondary ellipsis"
-            on:click|stopPropagation={downloadSeqN}><SaveIcon /> SeqN</button
-          >
-          <button
-            use:tooltip={{ content: `Download sequence contents as Seq.json`, placement: 'top' }}
-            class="st-button icon-button secondary ellipsis"
-            on:click|stopPropagation={downloadSeqJson}><SaveIcon /> JSON</button
-          >
+
+          <div class="app-menu" role="none" on:click|stopPropagation={() => menu.toggle()}>
+            <button class="st-button icon-button secondary ellipsis">
+              Output
+
+              <ChevronDownIcon />
+            </button>
+
+            <Menu bind:this={menu}>
+              {#each outputFormats as outputFormatItem}
+                <div
+                  use:tooltip={{
+                    content: `Copy sequence contents as ${outputFormatItem?.name} to clipboard`,
+                    placement: 'top',
+                  }}
+                >
+                  <MenuItem on:click={copyOutputFormatToClipboard} disabled={disableCopyAndExport}>
+                    <ClipboardIcon />
+                    {outputFormatItem?.name}
+                  </MenuItem>
+                </div>
+
+                <div
+                  use:tooltip={{
+                    content: `Download sequence contents as ${outputFormatItem?.name}`,
+                    placement: 'top',
+                  }}
+                >
+                  <MenuItem on:click={() => downloadOutputFormat(outputFormatItem)} disabled={disableCopyAndExport}>
+                    <DownloadIcon />
+                    {outputFormatItem?.name}
+                  </MenuItem>
+                </div>
+              {/each}
+            </Menu>
+          </div>
         </div>
       </svelte:fragment>
 
@@ -342,12 +378,24 @@
     </Panel>
 
     <CssGridGutter draggable={toggleSeqJsonPreview} track={1} type="row" />
-
     <Panel>
       <svelte:fragment slot="header">
-        <SectionTitle>Seq JSON (Read-only)</SectionTitle>
+        <SectionTitle>{selectedOutputFormat?.name} (Read-only)</SectionTitle>
 
         <div class="right">
+          {#if outputFormats}
+            <div class="output-format">
+              <label for="outputFormat">Output Format</label>
+              <select bind:value={selectedOutputFormat} class="st-select w-100" name="outputFormat">
+                {#each outputFormats as outputFormatItem}
+                  <option value={outputFormatItem}>
+                    {outputFormatItem.name}
+                  </option>
+                {/each}
+              </select>
+            </div>
+          {/if}
+
           <button
             use:tooltip={{ content: toggleSeqJsonPreview ? `Collapse Editor` : `Expand Editor`, placement: 'top' }}
             class="st-button icon"
@@ -363,25 +411,50 @@
       </svelte:fragment>
 
       <svelte:fragment slot="body">
-        <div bind:this={editorSeqJsonDiv} />
+        <div bind:this={editorOutputDiv} />
       </svelte:fragment>
     </Panel>
   </CssGrid>
 
   <CssGridGutter track={1} type="column" />
 
-  {#if !!commandDictionary && !!selectedNode && showCommandFormBuilder}
-    <SelectedCommand
-      node={selectedNode}
-      {channelDictionary}
-      {commandDictionary}
-      {editorSequenceView}
-      {parameterDictionaries}
-    />
+  {#if showCommandFormBuilder}
+    {#if !!commandDictionary && !!selectedNode}
+      <SelectedCommand
+        node={selectedNode}
+        {channelDictionary}
+        {commandDictionary}
+        {editorSequenceView}
+        {parameterDictionaries}
+      />
+    {:else}
+      <Panel overflowYBody="hidden" padBody={false}>
+        <svelte:fragment slot="header">
+          <SectionTitle>Selected Command</SectionTitle>
+        </svelte:fragment>
+
+        <svelte:fragment slot="body">
+          <div class="st-typography-body no-selected-parcel">Select a parcel to enable the Selected Command panel.</div>
+        </svelte:fragment>
+      </Panel>
+    {/if}
   {/if}
 </CssGrid>
 
 <style>
+  .app-menu {
+    align-items: center;
+    cursor: pointer;
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+    position: relative;
+  }
+
+  .no-selected-parcel {
+    padding: 8px;
+  }
+
   .right {
     align-items: center;
     display: flex;
@@ -393,5 +466,14 @@
     column-gap: 5px;
     display: flex;
     margin: 2px;
+  }
+
+  .output-format {
+    align-items: center;
+    display: flex;
+  }
+
+  .output-format label {
+    width: 10rem;
   }
 </style>

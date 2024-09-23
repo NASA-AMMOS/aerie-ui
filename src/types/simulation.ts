@@ -75,6 +75,7 @@ export type RawSimulationEvent = {
 export type SimulationEvent = {
   dense_time: string;
   id: number;
+  span_id: number;
   start_offset: string;
   topic: string;
   value: string;
@@ -96,6 +97,7 @@ export type Simulation = {
 };
 
 export type SimulationDataset = {
+  arguments: ArgumentsMap;
   canceled: boolean;
   dataset_id: number;
   extent: { extent: string | null } | null;
@@ -169,8 +171,8 @@ export type SpanDB = {
   duration: string;
   durationMs: number;
   endMs: number;
-  id: SpanId;
   parent_id: number | null;
+  span_id: SpanId;
   startMs: number;
   start_offset: string;
   type: string;

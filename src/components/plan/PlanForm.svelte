@@ -1,35 +1,35 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import CloseIcon from '@nasa-jpl/stellar/icons/close.svg?component';
-  import DownloadIcon from '@nasa-jpl/stellar/icons/download.svg?component';
+  import ExportIcon from '../../assets/export.svg?component';
   import { PlanStatusMessages } from '../../enums/planStatusMessages';
   import { SearchParameters } from '../../enums/searchParameters';
   import { field } from '../../stores/form';
   import { planMetadata, planReadOnly, planReadOnlySnapshot } from '../../stores/plan';
   import { planSnapshotId, planSnapshotsWithSimulations } from '../../stores/planSnapshots';
   import { plans } from '../../stores/plans';
+  import { plugins } from '../../stores/plugins';
   import { simulationDataset, simulationDatasetId } from '../../stores/simulation';
   import { viewTogglePanel } from '../../stores/views';
   import type { ActivityDirective, ActivityDirectiveId } from '../../types/activity';
   import type { User, UserId } from '../../types/app';
-  import type { Plan, PlanCollaborator, PlanSlimmer, PlanTransfer } from '../../types/plan';
+  import type { Plan, PlanCollaborator, PlanSlimmer } from '../../types/plan';
   import type { PlanSnapshot as PlanSnapshotType } from '../../types/plan-snapshot';
   import type { PlanTagsInsertInput, Tag, TagsChangeEvent } from '../../types/tags';
   import effects from '../../utilities/effects';
   import { removeQueryParam, setQueryParam } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
-  import { getPlanForTransfer } from '../../utilities/plan';
-  import { getShortISOForDate } from '../../utilities/time';
+  import { exportPlan } from '../../utilities/plan';
+  import { convertDoyToYmd, formatDate, getShortISOForDate } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import { required, unique } from '../../utilities/validators';
   import Collapse from '../Collapse.svelte';
   import Field from '../form/Field.svelte';
   import Input from '../form/Input.svelte';
+  import CancellableProgressRadial from '../ui/CancellableProgressRadial.svelte';
   import CardList from '../ui/CardList.svelte';
   import FilterToggleButton from '../ui/FilterToggleButton.svelte';
-  import ProgressRadial from '../ui/ProgressRadial.svelte';
   import PlanCollaboratorInput from '../ui/Tags/PlanCollaboratorInput.svelte';
   import TagsInput from '../ui/Tags/TagsInput.svelte';
   import PlanSnapshot from './PlanSnapshot.svelte';
@@ -56,10 +56,19 @@
     ),
   ]);
   let planExportProgress: number | null = null;
+  let planStartTime: string = '';
+  let planEndTime: string = '';
 
   $: permissionError = $planReadOnly ? PlanStatusMessages.READ_ONLY : 'You do not have permission to edit this plan.';
   $: if (plan) {
     hasCreateSnapshotPermission = featurePermissions.planSnapshot.canCreate(user, plan, plan.model) && !$planReadOnly;
+    planStartTime = formatDate(new Date(plan.start_time), $plugins.time.primary.format);
+    const endTime = convertDoyToYmd(plan.end_time_doy);
+    if (endTime) {
+      planEndTime = formatDate(new Date(endTime), $plugins.time.primary.format);
+    } else {
+      planEndTime = '';
+    }
   }
   $: {
     if (plan && user) {
@@ -142,7 +151,7 @@
     }
   }
 
-  async function exportPlan() {
+  async function onExportPlan() {
     if (plan) {
       if (planExportAbortController) {
         planExportAbortController.abort();
@@ -150,62 +159,25 @@
 
       planExportAbortController = new AbortController();
 
-      let qualifiedActivityDirectives: ActivityDirective[] = [];
-      planExportProgress = 0;
-
-      let totalProgress = 0;
-      const numOfDirectives = Object.values(activityDirectivesMap).length;
-
-      qualifiedActivityDirectives = await Promise.all(
-        Object.values(activityDirectivesMap).map(async activityDirective => {
-          if (plan) {
-            const effectiveArguments = await effects.getEffectiveActivityArguments(
-              plan?.model_id,
-              activityDirective.type,
-              activityDirective.arguments,
-              user,
-              planExportAbortController?.signal,
-            );
-
-            totalProgress++;
-            planExportProgress = (totalProgress / numOfDirectives) * 100;
-
-            return {
-              ...activityDirective,
-              arguments: effectiveArguments?.arguments ?? activityDirective.arguments,
-            };
-          }
-
-          totalProgress++;
-          planExportProgress = (totalProgress / numOfDirectives) * 100;
-
-          return activityDirective;
-        }),
-      );
-
       if (planExportAbortController && !planExportAbortController.signal.aborted) {
-        const planExport: PlanTransfer = getPlanForTransfer(plan, qualifiedActivityDirectives);
-
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(new Blob([JSON.stringify(planExport, null, 2)], { type: 'application/json' }));
-        a.download = planExport.name;
-        a.click();
+        await exportPlan(
+          plan,
+          user,
+          (progress: number) => {
+            planExportProgress = progress;
+          },
+          Object.values(activityDirectivesMap),
+          planExportAbortController.signal,
+        );
       }
       planExportProgress = null;
     }
   }
 
-  function cancelPlanExport() {
+  function onCancelExportPlan() {
     planExportAbortController?.abort();
     planExportAbortController = null;
-  }
-
-  function onPlanExport() {
-    if (planExportProgress === null) {
-      exportPlan();
-    } else {
-      cancelPlanExport();
-    }
+    planExportProgress = null;
   }
 </script>
 
@@ -214,18 +186,26 @@
     <fieldset>
       <Collapse title="Details">
         <svelte:fragment slot="right">
-          <button
-            class="st-button icon export"
-            on:click|stopPropagation={onPlanExport}
-            use:tooltip={{ content: planExportProgress === null ? 'Export Plan JSON' : 'Cancel Plan Export' }}
-          >
-            {#if planExportProgress !== null}
-              <ProgressRadial progress={planExportProgress} useBackground={false} />
-              <div class="cancel"><CloseIcon /></div>
-            {:else}
-              <DownloadIcon />
-            {/if}
-          </button>
+          {#if planExportProgress !== null}
+            <button
+              class="st-button icon cancel-button"
+              on:click|stopPropagation={onCancelExportPlan}
+              use:tooltip={{
+                content: 'Cancel Plan Export',
+                placement: 'top',
+              }}
+            >
+              <CancellableProgressRadial progress={planExportProgress} />
+            </button>
+          {:else}
+            <button
+              class="st-button icon export"
+              on:click|stopPropagation={onExportPlan}
+              use:tooltip={{ content: 'Export Plan JSON' }}
+            >
+              <ExportIcon />
+            </button>
+          {/if}
         </svelte:fragment>
         <div class="plan-form-field">
           <Field field={planNameField} on:change={onPlanNameChange}>
@@ -261,13 +241,19 @@
           <input class="st-input w-100" disabled name="modelVersion" value={plan.model.version} />
         </Input>
         <Input layout="inline">
-          <label use:tooltip={{ content: 'Start Time (UTC)', placement: 'top' }} for="startTime">Start Time (UTC)</label
+          <label
+            use:tooltip={{ content: `Start Time (${$plugins.time.primary.label})`, placement: 'top' }}
+            for="startTime"
           >
-          <input class="st-input w-100" disabled name="startTime" value={plan.start_time_doy} />
+            Start Time ({$plugins.time.primary.label})
+          </label>
+          <input class="st-input w-100" disabled name="startTime" value={planStartTime} />
         </Input>
         <Input layout="inline">
-          <label use:tooltip={{ content: 'End Time (UTC)', placement: 'top' }} for="endTime">End Time (UTC)</label>
-          <input class="st-input w-100" disabled name="endTime" value={plan.end_time_doy} />
+          <label use:tooltip={{ content: `End Time (${$plugins.time.primary.label})`, placement: 'top' }} for="endTime">
+            End Time ({$plugins.time.primary.label})
+          </label>
+          <input class="st-input w-100" disabled name="endTime" value={planEndTime} />
         </Input>
         <Input layout="inline">
           <label use:tooltip={{ content: 'Owner', placement: 'top' }} for="owner">Owner</label>
@@ -423,20 +409,14 @@
 
   .export {
     border-radius: 50%;
+    height: 28px;
     position: relative;
-  }
-  .export .cancel {
-    display: none;
+    width: 28px;
   }
 
-  .export:hover .cancel {
-    align-items: center;
-    display: flex;
-    height: 100%;
-    justify-content: center;
-    left: 0;
-    position: absolute;
-    top: 0;
-    width: 100%;
+  .cancel-button {
+    border: 0;
+    border-radius: 50%;
+    width: 28px;
   }
 </style>

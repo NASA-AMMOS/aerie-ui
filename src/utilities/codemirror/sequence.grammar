@@ -13,7 +13,6 @@
 
 // Potential Improvements
 // maintainability - use @specialize on directives
-// expressiveness - add activate, load and ground syntax
 
 @precedence {
   stemStart @cut
@@ -28,7 +27,7 @@ IdDeclaration {
 }
 
 ParameterDeclaration {
-  parameterDirective (whiteSpace Enum)+ newLine
+  parameterDirective whiteSpace ((Enum whiteSpace?) | (Enum whiteSpace? Object whiteSpace?))+ newLine
 }
 
 LocalDeclaration {
@@ -36,8 +35,14 @@ LocalDeclaration {
 }
 
 commandBlock {
-  (Command | commentLine ~maybeComments)+
+  (
+    step |
+    Request |
+    commentLine ~maybeComments
+  )+
 }
+
+step { Command | Activate | GroundBlock | GroundEvent | Load }
 
 commentLine {
   LineComment newLine
@@ -62,7 +67,7 @@ HardwareCommands {
   commandBlock
 }
 
-TimeTag { TimeAbsolute | TimeEpoch | TimeRelative  | TimeComplete }
+TimeTag { TimeAbsolute | (TimeGroundEpoch Name { String } whiteSpace)  | TimeEpoch | TimeRelative  | TimeComplete }
 
 Args {
   (whiteSpace (arg | RepeatArg))* whiteSpace?
@@ -72,7 +77,7 @@ RepeatArg {
   "[" (whiteSpace? arg)* whiteSpace? "]"
 }
 
-arg[@isGroup=Arguments] { Number | String | Enum }
+arg[@isGroup=Arguments] { Number | String | Boolean | Enum }
 
 Command {
   TimeTag?
@@ -82,6 +87,44 @@ Command {
   newLine
   Metadata?
   Models?
+}
+
+Activate { TimeTag activateDirective commonLoadActivate }
+
+Load { TimeTag loadDirective commonLoadActivate }
+
+commonLoadActivate {
+  "(" SequenceName { String } ")"
+  Args
+  LineComment?
+  newLine
+  Engine { engineDirective whiteSpace Number newLine }?
+  Epoch { epochDirective whiteSpace String newLine }?
+  Metadata?
+  Models?
+}
+
+GroundBlock { TimeTag groundBlockDirective commonGround }
+
+GroundEvent { TimeTag groundEventDirective commonGround }
+
+commonGround {
+  "(" GroundName { String } ")"
+  Args
+  LineComment?
+  newLine
+  Metadata?
+  Models?
+}
+
+Request {
+  TimeTag
+  requestStartDirective "(" RequestName { String } ")"
+  whiteSpace? LineComment? newLine
+  // json schema requires step+, catch error in linter for cleaner message
+  Steps { step* }
+  requestEndDirective newLine
+  Metadata?
 }
 
 Metadata {
@@ -134,6 +177,8 @@ Stem { !stemStart identifier }
 
   TimeEpoch { 'E'$[+\-]?(timeSecond | timeDOY | timeHhmmss) whiteSpace}
 
+  TimeGroundEpoch { 'G'$[+\-]?(timeSecond | timeDOY | timeHhmmss) whiteSpace}
+
   TimeComplete { 'C' whiteSpace }
 
   String { '"' (!["\\] | "\\" _)* '"' }
@@ -147,8 +192,8 @@ Stem { !stemStart identifier }
     "0x" (hex | "_")+ "n"?
   }
 
-  TRUE { "true" }
-  FALSE { "false" }
+  TRUE { 'true' }
+  FALSE { 'false' }
   Boolean { TRUE | FALSE }
   Null { "null" }
 
@@ -164,15 +209,24 @@ Stem { !stemStart identifier }
   hardwareDirective { "@HARDWARE" }
   localsDirective { "@LOCALS" }
   parameterDirective { "@INPUT_PARAMS" }
+  activateDirective { "@ACTIVATE" }
+  loadDirective { "@LOAD" }
+  engineDirective { "@ENGINE" }
+  epochDirective { "@EPOCH" }
+  groundBlockDirective { "@GROUND_BLOCK" }
+  groundEventDirective { "@GROUND_EVENT" }
+  requestStartDirective { "@REQUEST_BEGIN" }
+  requestEndDirective { "@REQUEST_END" }
   metadataDirective { "@METADATA" }
   modelDirective { "@MODEL" }
   genericDirective { "@"identifier }
 
   @precedence { newLine, whiteSpace }
 
-  @precedence{ TimeAbsolute, TimeRelative, TimeEpoch, TimeComplete, identifier }
+  @precedence{ TimeAbsolute, TimeRelative, TimeEpoch, TimeComplete, TimeGroundEpoch, Boolean, identifier }
 
   @precedence {
+    LoadAndGoDirective,
     idDirective,
     metadataDirective,
     modelDirective,
@@ -180,7 +234,14 @@ Stem { !stemStart identifier }
     hardwareDirective,
     localsDirective,
     parameterDirective,
-    LoadAndGoDirective,
+    activateDirective,
+    loadDirective,
+    groundBlockDirective,
+    groundEventDirective,
+    requestStartDirective,
+    requestEndDirective,
+    engineDirective,
+    epochDirective,
     genericDirective,
     identifier
   }

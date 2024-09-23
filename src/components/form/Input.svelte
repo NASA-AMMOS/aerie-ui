@@ -93,7 +93,6 @@
       if (right !== null) {
         right.style.right = `${padRight}px`;
 
-        right.style.width = `min(40%, ${right.clientWidth}px)`;
         if (input !== null) {
           input.style.paddingRight = `min(40%, ${padLeft + right.clientWidth + padRight}px)`;
         }
@@ -170,7 +169,10 @@
 
   .input > .left,
   .input > .right {
+    align-items: center;
     cursor: default;
+    display: flex;
+    height: 100%;
     position: absolute;
   }
 
@@ -188,7 +190,9 @@
   }
 
   .input-stacked {
+    align-items: flex-start;
     display: inherit;
+    flex-direction: column;
     gap: 4px;
   }
 </style>

@@ -1,35 +1,38 @@
-import type { ChannelDictionary, ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
 import type {
+  Activate,
   Args,
   BooleanArgument,
+  Command,
   Description,
+  GroundBlock,
+  GroundEvent,
   HexArgument,
+  Load,
   Metadata,
   Model,
   NumberArgument,
-  SeqJson,
+  Request,
   StringArgument,
   SymbolArgument,
   Time,
   VariableDeclaration,
 } from '@nasa-jpl/seq-json-schema/types';
 import { quoteEscape } from '../codemirror/codemirror-utils';
-import { customizeSeqJsonParsing } from './extension-points';
 import { logError } from './logger';
 
 /**
  * Transform a sequence JSON time to it's sequence string form.
  */
-export function seqJsonTimeToSequence(time: Time): string {
+function seqJsonTimeToSequence(time: Time): string {
   switch (time.type) {
     case 'ABSOLUTE':
-      return `A${time?.tag ?? ''}`;
+      return `A${time.tag ?? ''}`;
     case 'COMMAND_COMPLETE':
       return 'C';
     case 'COMMAND_RELATIVE':
-      return `R${time?.tag ?? ''}`;
+      return `R${time.tag ?? ''}`;
     case 'EPOCH_RELATIVE':
-      return `E${time?.tag ?? ''}`;
+      return `E${time.tag ?? ''}`;
     default:
       return '';
   }
@@ -38,20 +41,18 @@ export function seqJsonTimeToSequence(time: Time): string {
 /**
  * Transform a base argument (non-repeat) into a string.
  */
-export function seqJsonBaseArgToSequence(
+function seqJsonBaseArgToSequence(
   arg: StringArgument | NumberArgument | BooleanArgument | SymbolArgument | HexArgument,
 ): string {
   switch (arg.type) {
     case 'string':
       return `${quoteEscape(arg.value)}`;
-    case 'boolean':
-      return arg.value ? 'TRUE' : 'FALSE';
     default:
       return `${arg.value}`;
   }
 }
 
-export function seqJsonArgsToSequence(args: Args): string {
+function seqJsonArgsToSequence(args: Args): string {
   let result = '';
 
   for (const arg of args) {
@@ -82,7 +83,7 @@ export function seqJsonArgsToSequence(args: Args): string {
   return result.trim().length > 0 ? ` ${result.trim()}` : '';
 }
 
-export function seqJsonModelsToSequence(models: Model[]): string {
+function seqJsonModelsToSequence(models: Model[]): string {
   // MODEL directives are one per line, the last new line is to start the next token
   const modelString = models
     .map(model => {
@@ -90,7 +91,7 @@ export function seqJsonModelsToSequence(models: Model[]): string {
       if (typeof model.value === 'string') {
         formattedValue = quoteEscape(model.value);
       } else if (typeof model.value === 'boolean') {
-        formattedValue = model.value.toString().toUpperCase();
+        formattedValue = model.value.toString();
       }
       return `@MODEL ${typeof model.variable === 'string' ? quoteEscape(String(model.variable)) : `"${model.variable}"`} ${formattedValue} ${quoteEscape(model.offset)}`;
     })
@@ -99,7 +100,7 @@ export function seqJsonModelsToSequence(models: Model[]): string {
   return modelString.length > 0 ? `${modelString}\n` : '';
 }
 
-export function seqJsonMetadataToSequence(metadata: Metadata): string {
+function seqJsonMetadataToSequence(metadata: Metadata): string {
   // METADATA directives are one per line, the last new line is to start the next token
   const metaDataString = Object.entries(metadata)
     .map(
@@ -114,7 +115,30 @@ function seqJsonVariableToSequence(
   variables: [VariableDeclaration, ...VariableDeclaration[]],
   type: 'INPUT_PARAMS' | 'LOCALS',
 ): string {
-  return `@${type} ${variables.map(variable => variable.name).join(' ')}\n`;
+  let sequence = `@${type}`;
+
+  if (type === 'INPUT_PARAMS') {
+    variables.forEach(variable => {
+      sequence += ` ${variable.name} `;
+
+      if (Object.keys(variable).length > 1) {
+        sequence += '{ ';
+
+        for (const key of Object.keys(variable)) {
+          if (key !== 'name') {
+            sequence += `"${key}": "${variable[key]}", `;
+          }
+        }
+
+        // Remove the trailing space and commma from the last property.
+        sequence = `${sequence.substring(0, sequence.length - 2)} }`;
+      }
+    });
+  } else {
+    sequence += ` ${variables.map(variable => variable.name).join(' ')}`;
+  }
+
+  return sequence.trim() + '\n';
 }
 
 function seqJsonDescriptionToSequence(description: Description): string {
@@ -124,15 +148,11 @@ function seqJsonDescriptionToSequence(description: Description): string {
 /**
  * Transforms a sequence JSON to a sequence string.
  */
-export function seqJsonToSequence(
-  seqJson: SeqJson | null,
-  parameterDictionaries: ParameterDictionary[],
-  channelDictionary: ChannelDictionary | null,
-): string {
+export async function seqJsonToSequence(input: string | null): Promise<string> {
   const sequence: string[] = [];
 
-  if (seqJson) {
-    customizeSeqJsonParsing(seqJson, parameterDictionaries, channelDictionary);
+  if (input !== null) {
+    const seqJson = JSON.parse(input);
 
     // ID
     sequence.push(`@ID "${seqJson.id}"\n`);
@@ -163,25 +183,26 @@ export function seqJsonToSequence(
       sequence.push(`\n@LOAD_AND_GO`);
     }
 
-    // FSW Commands
+    // command, activate, load, ground block, ground event
     if (seqJson.steps) {
       sequence.push(`\n`);
       for (const step of seqJson.steps) {
-        if (step.type === 'command') {
-          const time = seqJsonTimeToSequence(step.time);
-          const args = seqJsonArgsToSequence(step.args);
-          const metadata = step.metadata ? seqJsonMetadataToSequence(step.metadata) : '';
-          const models = step.models ? seqJsonModelsToSequence(step.models) : '';
-          const description = step.description ? seqJsonDescriptionToSequence(step.description) : '';
-
-          let commandString = `${time} ${step.stem}${args}${description}`;
-          // add a new line if on doesn't exit at the end of the commandString
-          if (!commandString.endsWith('\n')) {
-            commandString += '\n';
+        switch (step.type) {
+          case 'command': {
+            // FSW Commands
+            sequence.push(commandToString(step));
+            break;
           }
-          // Add modeling data if it exists
-          commandString += `${metadata}${models}`;
-          sequence.push(commandString);
+          case 'activate':
+          case 'load': {
+            sequence.push(loadOrActivateToString(step));
+            break;
+          }
+          case 'ground_block':
+          case 'ground_event': {
+            sequence.push(groundToString(step));
+            break;
+          }
         }
       }
     }
@@ -222,34 +243,101 @@ export function seqJsonToSequence(
         sequence.push(hardwareString);
       }
     }
+
+    // requests
+    if (seqJson.requests) {
+      for (const request of seqJson.requests) {
+        sequence.push(`\n`);
+        sequence.push(requestToString(request));
+      }
+    }
   }
 
   return sequence.join('');
 }
 
-/**
- * Return a parsed sequence JSON from a file.
- */
-export async function parseSeqJsonFromFile(files: FileList | null | undefined): Promise<SeqJson | null> {
-  if (files) {
-    const file = files.item(0);
+function commandToString(step: Command) {
+  const time = seqJsonTimeToSequence(step.time);
+  const args = seqJsonArgsToSequence(step.args);
+  const metadata = step.metadata ? seqJsonMetadataToSequence(step.metadata) : '';
+  const models = step.models ? seqJsonModelsToSequence(step.models) : '';
+  const description = step.description ? seqJsonDescriptionToSequence(step.description) : '';
 
-    if (file) {
-      try {
-        const fileText = await file.text();
-        const seqJson = JSON.parse(fileText);
-        return seqJson;
-      } catch (e) {
-        const errorMessage = (e as Error).message;
-        logError(errorMessage);
-        return null;
-      }
-    } else {
-      logError('No file provided');
-      return null;
-    }
-  } else {
-    logError('No file provided');
-    return null;
+  let commandString = `${time} ${step.stem}${args}${description}`;
+  // add a new line if on doesn't exit at the end of the commandString
+  if (!commandString.endsWith('\n')) {
+    commandString += '\n';
   }
+  // Add modeling data if it exists
+  commandString += `${metadata}${models}`;
+  return commandString;
+}
+
+function loadOrActivateToString(step: Activate | Load) {
+  const time = seqJsonTimeToSequence(step.time);
+  const args = step.args ? seqJsonArgsToSequence(step.args) : '';
+  const metadata = step.metadata ? seqJsonMetadataToSequence(step.metadata) : '';
+  const models = step.models ? seqJsonModelsToSequence(step.models) : '';
+  const engine = step.engine !== undefined ? `@ENGINE ${step.engine.toString(10)}\n` : '';
+  const epoch = step.epoch !== undefined ? `@EPOCH ${quoteEscape(step.epoch)}\n` : '';
+  const description = step.description ? seqJsonDescriptionToSequence(step.description) : '';
+  const stepType = `@${step.type === 'activate' ? 'ACTIVATE' : 'LOAD'}(${quoteEscape(step.sequence)})`;
+  let stepString = `${time} ${stepType}${args}${description}`;
+  if (!stepString.endsWith('\n')) {
+    stepString += '\n';
+  }
+  stepString += `${engine}${epoch}${metadata}${models}`;
+  return stepString;
+}
+
+function groundToString(step: GroundBlock | GroundEvent) {
+  const time = seqJsonTimeToSequence(step.time);
+  const args = step.args ? seqJsonArgsToSequence(step.args) : '';
+  const metadata = step.metadata ? seqJsonMetadataToSequence(step.metadata) : '';
+  const models = step.models ? seqJsonModelsToSequence(step.models) : '';
+  const description = step.description ? seqJsonDescriptionToSequence(step.description) : '';
+  const stepType = `@${step.type === 'ground_block' ? 'GROUND_BLOCK' : 'GROUND_EVENT'}(${quoteEscape(step.name)})`;
+  let stepString = `${time} ${stepType}${args}${description}`;
+  if (!stepString.endsWith('\n')) {
+    stepString += '\n';
+  }
+  stepString += `${metadata}${models}`;
+  return stepString;
+}
+
+function requestToString(request: Request) {
+  let time = '';
+  if (request.time) {
+    time = seqJsonTimeToSequence(request.time);
+  } else if (request.ground_epoch) {
+    time = `G${request.ground_epoch.delta ?? ''} ${quoteEscape(request.ground_epoch.name ?? '')}`;
+  }
+  const reqBegin = `@REQUEST_BEGIN(${quoteEscape(request.name)})`;
+  const description = request.description ? seqJsonDescriptionToSequence(request.description) : '';
+  let requestString = `${time} ${reqBegin}${description}`;
+  if (!requestString.endsWith('\n')) {
+    requestString += '\n';
+  }
+  const steps: string[] = [];
+  for (const step of request.steps) {
+    switch (step.type) {
+      case 'command': {
+        steps.push(commandToString(step));
+        break;
+      }
+      case 'activate':
+      case 'load': {
+        steps.push(loadOrActivateToString(step));
+        break;
+      }
+      case 'ground_block':
+      case 'ground_event': {
+        steps.push(groundToString(step));
+        break;
+      }
+    }
+  }
+  const metadata = request.metadata ? seqJsonMetadataToSequence(request.metadata) : '';
+  requestString += `${steps.join('')}@REQUEST_END\n${metadata}`;
+  return requestString;
 }

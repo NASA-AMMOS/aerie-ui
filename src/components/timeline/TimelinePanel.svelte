@@ -39,6 +39,7 @@
   let hasUpdateSimulationPermission: boolean = false;
   let timelineId: number = 0;
   let timeline: TimelineType | undefined;
+  let timelines: TimelineType[] = [];
   let timelineRef: Timeline;
   let decimate = true;
   let interpolateHoverValue = false;
@@ -85,7 +86,7 @@
     const { detail } = event;
     const { activityDirectives, spans } = detail;
     if (spans.length) {
-      selectActivity(null, spans[0].id);
+      selectActivity(null, spans[0].span_id);
     } else if (activityDirectives.length) {
       selectActivity(activityDirectives[0].id, null);
     } else {

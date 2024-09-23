@@ -7,13 +7,18 @@
   import { createEventDispatcher } from 'svelte';
   import { PlanStatusMessages } from '../../../enums/planStatusMessages';
   import { SearchParameters } from '../../../enums/searchParameters';
-  import type { SchedulingGoalMetadata, SchedulingGoalPlanSpecification } from '../../../types/scheduling';
+  import type { FormParameter } from '../../../types/parameter';
+  import type {
+    SchedulingGoalDefinition,
+    SchedulingGoalMetadata,
+    SchedulingGoalPlanSpecification,
+  } from '../../../types/scheduling';
   import { getTarget } from '../../../utilities/generic';
   import { permissionHandler } from '../../../utilities/permissionHandler';
   import { tooltip } from '../../../utilities/tooltip';
   import Collapse from '../../Collapse.svelte';
   import ContextMenuItem from '../../context-menu/ContextMenuItem.svelte';
-  import Input from '../../form/Input.svelte';
+  import Parameters from '../../parameters/Parameters.svelte';
   import SchedulingGoalAnalysesActivities from './SchedulingGoalAnalysesActivities.svelte';
   import SchedulingGoalAnalysesBadge from './SchedulingGoalAnalysesBadge.svelte';
 
@@ -25,6 +30,8 @@
   export let readOnly: boolean = false;
 
   const dispatch = createEventDispatcher<{
+    deleteGoalInvocation: SchedulingGoalPlanSpecification;
+    duplicateGoalInvocation: SchedulingGoalPlanSpecification;
     updateGoalPlanSpec: SchedulingGoalPlanSpecification;
   }>();
 
@@ -34,6 +41,9 @@
   let schedulingGoalInput: HTMLInputElement;
   let simulateGoal: boolean = false;
   let upButtonHidden: boolean = false;
+  let formParameters: FormParameter[] = [];
+  let version: Pick<SchedulingGoalDefinition, 'type' | 'revision' | 'analyses' | 'parameter_schema'> | undefined =
+    undefined;
 
   $: revisions = goal.versions.map(({ revision }) => revision);
   $: {
@@ -41,6 +51,25 @@
     priority = goalPlanSpec.priority;
     upButtonHidden = priority <= 0;
     simulateGoal = goalPlanSpec.simulate_after; // Copied to local var to reflect changed values immediately in the UI
+  }
+
+  $: {
+    version = goalPlanSpec.goal_metadata?.versions[0]; // plan gql query already orders by version and limits 1
+    const schema = version?.parameter_schema;
+
+    if (schema && schema.type === 'struct') {
+      formParameters = Object.entries(schema.items).map(([name, subschema], i) => ({
+        errors: null,
+        name,
+        order: i,
+        required: true,
+        schema: subschema,
+        value: (goalPlanSpec && goalPlanSpec.arguments && goalPlanSpec.arguments[name]) || '',
+        valueSource: 'none',
+      }));
+    } else {
+      formParameters = [];
+    }
   }
 
   function focusInput() {
@@ -88,10 +117,32 @@
     });
   }
 
+  function duplicateGoalInvocation() {
+    dispatch('duplicateGoalInvocation', {
+      ...goalPlanSpec,
+    });
+  }
+
+  function deleteGoalInvocation() {
+    dispatch('deleteGoalInvocation', {
+      ...goalPlanSpec,
+    });
+  }
+
   function updatePriority(priority: number) {
     dispatch('updateGoalPlanSpec', {
       ...goalPlanSpec,
       priority,
+    });
+  }
+
+  function onChangeFormParameters(event: CustomEvent<FormParameter>) {
+    const {
+      detail: { name, value },
+    } = event;
+    dispatch('updateGoalPlanSpec', {
+      ...goalPlanSpec,
+      arguments: { ...goalPlanSpec.arguments, [name]: value },
     });
   }
 </script>
@@ -121,7 +172,7 @@
     <svelte:fragment slot="right">
       <div class="right-content" role="none" on:click|stopPropagation>
         <SchedulingGoalAnalysesBadge analyses={goal.analyses} {enabled} />
-        <Input>
+        <div class="priority-container">
           <input
             bind:this={schedulingGoalInput}
             bind:value={priority}
@@ -157,7 +208,7 @@
               </button>
             </div>
           {/if}
-        </Input>
+        </div>
         <select
           class="st-select"
           value={goalPlanSpec.goal_revision}
@@ -175,6 +226,10 @@
         </select>
       </div>
     </svelte:fragment>
+
+    <Collapse title="Parameters" className="scheduling-goal-analysis-activities" defaultExpanded={true}>
+      <Parameters disabled={false} expanded={true} {formParameters} on:change={onChangeFormParameters} />
+    </Collapse>
 
     <SchedulingGoalAnalysesActivities analyses={goal.analyses} />
 
@@ -223,6 +278,10 @@
           <input bind:checked={simulateGoal} style:cursor="pointer" type="checkbox" /> Simulate After
         </div>
       </ContextMenuItem>
+      {#if version?.type === 'JAR'}
+        <ContextMenuItem on:click={duplicateGoalInvocation}>Duplicate Invocation</ContextMenuItem>
+        <ContextMenuItem on:click={deleteGoalInvocation}>Delete Invocation</ContextMenuItem>
+      {/if}
     </svelte:fragment>
   </Collapse>
 </div>
@@ -288,6 +347,10 @@
   .priority-buttons :global(button):hover {
     background-color: transparent !important;
     color: var(--st-gray-60);
+  }
+
+  .priority-container {
+    display: flex;
   }
 
   .down-button {

@@ -1,3 +1,7 @@
+.sequence-tooltip {
+  max-width: 50rem;
+}
+
 .tooltip {
   background-color: rgba(0, 0, 0, 0.8);
   border-radius: 4px;
@@ -38,6 +42,7 @@
 }
 
 .tooltip-value-row {
+  align-items: center;
   display: flex;
   gap: 4px;
 }

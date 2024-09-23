@@ -10,12 +10,13 @@
   import type { ActivityDirective, ActivityDirectivesMap } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { Plan } from '../../types/plan';
-  import type { Simulation, SimulationDataset, Span, SpanUtilityMaps, SpansMap } from '../../types/simulation';
+  import type { Simulation, SimulationDataset, Span, SpansMap, SpanUtilityMaps } from '../../types/simulation';
   import type {
     ActivityOptions,
     MouseOver,
     MouseOverOrigin,
     Row,
+    Timeline,
     TimeRange,
     VerticalGuide,
   } from '../../types/timeline';
@@ -66,9 +67,11 @@
   let activityDirectiveStartDate: Date | null = null;
   let contextMenuComponent: ContextMenu;
   let span: Span | null;
+  let timelines: Timeline[] = [];
   let hasActivityLayer: boolean = false;
   let mouseOverOrigin: MouseOverOrigin | undefined = undefined;
   let row: Row | undefined = undefined;
+  let offsetX: number | undefined;
 
   // TODO imports here could be better, should we handle the vertical guide creation in Timeline?
   $: timelines = $view?.definition.plan.timelines ?? [];
@@ -106,12 +109,14 @@
   $: activityDirectiveStartDate = activityDirective
     ? new Date(getUnixEpochTimeFromInterval(planStartTimeYmd, activityDirective.start_offset))
     : null;
+  // Explicitly keep track of offsetX because Firefox ends up zeroing it out on the original `contextmenu` MouseEvent
+  $: offsetX = contextMenu?.e.offsetX;
 
   function jumpToActivityDirective() {
     if (span !== null) {
-      const rootSpan = getSpanRootParent(spansMap, span.id);
+      const rootSpan = getSpanRootParent(spansMap, span.span_id);
       if (rootSpan) {
-        const activityDirectiveId = spanUtilityMaps.spanIdToDirectiveIdMap[rootSpan.id];
+        const activityDirectiveId = spanUtilityMaps.spanIdToDirectiveIdMap[rootSpan.span_id];
         dispatch('jumpToActivityDirective', activityDirectiveId);
       }
     }
@@ -163,8 +168,8 @@
   }
 
   function onZoom(duration: number) {
-    if (xScaleView && contextMenu) {
-      const time = activityDirectiveStartDate ? activityDirectiveStartDate : xScaleView.invert(contextMenu.e.offsetX);
+    if (xScaleView && offsetX !== undefined) {
+      const time = activityDirectiveStartDate ? activityDirectiveStartDate : xScaleView.invert(offsetX);
       const newViewTimeRange: TimeRange = {
         end: Math.min(time.getTime() + duration / 2, maxTimeRange.end),
         start: Math.max(time.getTime() - duration / 2, maxTimeRange.start),
@@ -242,8 +247,8 @@
       {#if activityDirectiveSpans && activityDirectiveSpans.length}
         <ContextSubMenuItem text="Jump to Simulated Activities" parentMenu={contextMenuComponent}>
           {#each activityDirectiveSpans as activityDirectiveSpan}
-            <ContextMenuItem on:click={() => dispatch('jumpToSpan', activityDirectiveSpan.id)}>
-              {activityDirectiveSpan.type} ({activityDirectiveSpan.id})
+            <ContextMenuItem on:click={() => dispatch('jumpToSpan', activityDirectiveSpan.span_id)}>
+              {activityDirectiveSpan.type} ({activityDirectiveSpan.span_id})
             </ContextMenuItem>
           {/each}
         </ContextSubMenuItem>
@@ -353,7 +358,7 @@
       </ContextSubMenuItem>
     {:else}
       <ContextMenuItem
-        on:click={() => xScaleView && contextMenu && addVerticalGuide(xScaleView.invert(contextMenu.e.offsetX))}
+        on:click={() => xScaleView && offsetX !== undefined && addVerticalGuide(xScaleView.invert(offsetX))}
       >
         Place Guide
       </ContextMenuItem>
@@ -370,8 +375,7 @@
             },
           ],
         ]}
-        on:click={() =>
-          xScaleView && contextMenu && updateSimulationStartTime(xScaleView.invert(contextMenu.e.offsetX))}
+        on:click={() => xScaleView && offsetX !== undefined && updateSimulationStartTime(xScaleView.invert(offsetX))}
       >
         Set Simulation Start
       </ContextMenuItem>
@@ -387,7 +391,7 @@
             },
           ],
         ]}
-        on:click={() => xScaleView && contextMenu && updateSimulationEndTime(xScaleView.invert(contextMenu.e.offsetX))}
+        on:click={() => xScaleView && offsetX !== undefined && updateSimulationEndTime(xScaleView.invert(offsetX))}
       >
         Set Simulation End
       </ContextMenuItem>

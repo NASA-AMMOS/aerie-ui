@@ -1,12 +1,5 @@
 import { CompletionContext, type CompletionResult } from '@codemirror/autocomplete';
-import {
-  LRLanguage,
-  LanguageSupport,
-  delimitedIndent,
-  foldInside,
-  foldNodeProp,
-  indentNodeProp,
-} from '@codemirror/language';
+import { LRLanguage, LanguageSupport, delimitedIndent, foldNodeProp, indentNodeProp } from '@codemirror/language';
 import { styleTags, tags as t } from '@lezer/highlight';
 import { customFoldInside } from './custom-folder';
 import { parser } from './sequence.grammar';
@@ -21,27 +14,42 @@ export const SeqLanguage = LRLanguage.define({
         Application: delimitedIndent({ align: false, closing: ')' }),
       }),
       foldNodeProp.add({
-        Application: foldInside,
+        Activate: customFoldInside,
         Command: customFoldInside,
+        GroundBlock: customFoldInside,
+        GroundEvent: customFoldInside,
+        Load: customFoldInside,
+        Metadata: customFoldInside,
+        Models: customFoldInside,
+        Request: customFoldInside,
       }),
       styleTags({
+        Activate: t.namespace,
         Boolean: t.bool,
+        Engine: t.namespace,
+        Epoch: t.namespace,
         GenericDirective: t.namespace,
         Global: t.namespace,
+        GroundBlock: t.namespace,
+        GroundEpoch: t.className,
+        GroundEvent: t.namespace,
         HardwareCommands: t.namespace,
         IdDeclaration: t.namespace,
         ImmediateCommands: t.namespace,
         LineComment: t.comment,
+        Load: t.namespace,
         LoadAndGoDirective: t.namespace,
         LocalDeclaration: t.namespace,
         MetaEntry: t.namespace,
         Model: t.namespace,
         ParameterDeclaration: t.namespace,
+        Request: t.namespace,
         Stem: t.keyword,
         String: t.string,
         TimeAbsolute: t.className,
         TimeComplete: t.className,
         TimeEpoch: t.className,
+        TimeGroundEpoch: t.className,
         TimeRelative: t.className,
       }),
     ],

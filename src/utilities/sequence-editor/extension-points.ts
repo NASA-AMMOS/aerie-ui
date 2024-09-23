@@ -1,5 +1,6 @@
 import { type ChannelDictionary, type FswCommandArgument, type ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
-import type { SeqJson } from '@nasa-jpl/seq-json-schema/types';
+import { get } from 'svelte/store';
+import { inputFormat, sequenceAdaptation } from '../../stores/sequence-adaptation';
 
 // TODO: serialization
 // replace parameter names with hex ids
@@ -27,22 +28,28 @@ export function getCustomArgDef(
   parameterDictionaries: ParameterDictionary[],
   channelDictionary: ChannelDictionary | null,
 ) {
-  const delegate = globalThis.ARG_DELEGATOR?.[stem]?.[dictArg.name];
+  let delegate = undefined;
+
+  if (get(sequenceAdaptation)?.argDelegator !== undefined) {
+    delegate = get(sequenceAdaptation)?.argDelegator?.[stem]?.[dictArg.name];
+  }
+
   return delegate?.(dictArg, parameterDictionaries, channelDictionary, precedingArgs) ?? dictArg;
 }
 
-export function customizeSeqJson(
-  seqJson: SeqJson,
+export async function toInputFormat(
+  output: string,
   parameterDictionaries: ParameterDictionary[],
   channelDictionary: ChannelDictionary | null,
 ) {
-  return globalThis.TO_SEQ_JSON?.(seqJson, parameterDictionaries, channelDictionary) ?? seqJson;
-}
+  const modifyOutputParse = get(sequenceAdaptation)?.modifyOutputParse;
+  let modifiedOutput = null;
 
-export function customizeSeqJsonParsing(
-  seqJson: SeqJson,
-  parameterDictionaries: ParameterDictionary[],
-  channelDictionary: ChannelDictionary | null,
-) {
-  return globalThis.FROM_SEQ_JSON?.(seqJson, parameterDictionaries, channelDictionary) ?? seqJson;
+  if (modifyOutputParse !== undefined) {
+    modifiedOutput = await modifyOutputParse(output, parameterDictionaries, channelDictionary);
+  }
+
+  const input = await get(inputFormat)?.toInputFormat?.(modifiedOutput ?? output);
+
+  return input;
 }

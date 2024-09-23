@@ -100,7 +100,7 @@ export const selectedSimulationEventId: Writable<number | null> = writable(null)
 
 /* Derived. */
 
-export const spansMap: Readable<SpansMap> = derived(spans, $spans => keyBy($spans, 'id'));
+export const spansMap: Readable<SpansMap> = derived(spans, $spans => keyBy($spans, 'span_id'));
 
 export const spanUtilityMaps: Readable<SpanUtilityMaps> = derived(spans, $spans => {
   return createSpanUtilityMaps($spans);
@@ -156,6 +156,11 @@ export const selectedSpan = derived([spansMap, selectedSpanId], ([$spansMap, $se
 
   return null;
 });
+
+export const simulationDatasetLatestId = derived(
+  [simulationDatasetLatest],
+  ([$simulationDatasetLatest]) => $simulationDatasetLatest?.dataset_id ?? -1,
+);
 
 /* Helper Functions. */
 

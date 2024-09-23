@@ -12,8 +12,8 @@ import {
   type Parcel,
   type ParcelBundle,
   type ParcelToParameterDictionary,
-  type SequenceAdaptation,
   type UserSequence,
+  type Workspace,
 } from '../types/sequencing';
 import effects from '../utilities/effects';
 import gql from '../utilities/gql';
@@ -26,8 +26,6 @@ export const parsedChannelDictionaries: Writable<Record<string, AmpcsChannelDict
 export const parsedCommandDictionaries: Writable<Record<string, AmpcsCommandDictionary>> = writable({});
 
 export const parsedParameterDictionaries: Writable<Record<string, AmpcsParameterDictionary>> = writable({});
-
-export const parcelId: Writable<number | null> = writable(null);
 
 /* Subscriptions. */
 
@@ -44,20 +42,12 @@ export const parameterDictionaries = gqlSubscribable<ParameterDictionary[]>(
 
 export const parcelToParameterDictionaries = gqlSubscribable<ParcelToParameterDictionary[]>(
   gql.SUB_PARCEL_TO_PARAMETER_DICTIONARIES,
-  { parcelId },
+  {},
   [],
   null,
 );
 
 export const parcels = gqlSubscribable<Parcel[]>(gql.SUB_PARCELS, {}, [], null);
-
-export const parcel: Readable<Parcel | null> = derived([parcels, parcelId], ([$parcels, $parcelId]) => {
-  if (!$parcels || !$parcelId) {
-    return null;
-  }
-
-  return $parcels.filter(parcel => parcel.id === $parcelId)[0];
-});
 
 export const parcelBundles: Readable<ParcelBundle[]> = derived(
   [parcels, parcelToParameterDictionaries, commandDictionaries],
@@ -88,15 +78,15 @@ export const parcelBundles: Readable<ParcelBundle[]> = derived(
   },
 );
 
-export const sequenceAdaptations = gqlSubscribable<SequenceAdaptation[]>(gql.SUB_SEQUENCE_ADAPTATIONS, {}, [], null);
-
 export const userParcelColumns: Writable<string> = writable('2fr 3px 1fr');
 
 export const userSequences = gqlSubscribable<UserSequence[]>(gql.SUB_USER_SEQUENCES, {}, [], null);
 
+export const workspaces = gqlSubscribable<Workspace[]>(gql.SUB_WORKSPACES, {}, [], null);
+
 /* Writeable. */
 
-export const userSequencesColumns: Writable<string> = writable('1.5fr 3px 1fr');
+export const userSequencesColumns: Writable<string> = writable('.75fr 3px 1.5fr 3px 1fr');
 
 export const userSequenceFormColumns: Writable<string> = writable('1fr 3px 2fr');
 

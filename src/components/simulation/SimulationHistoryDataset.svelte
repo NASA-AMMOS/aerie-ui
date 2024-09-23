@@ -3,28 +3,36 @@
 <script lang="ts">
   import CancelIcon from '@nasa-jpl/stellar/icons/prohibited.svg?component';
   import { createEventDispatcher } from 'svelte';
+  import { InvalidDate } from '../../constants/time';
   import { Status } from '../../enums/status';
   import { planReadOnly } from '../../stores/plan';
+  import { plugins } from '../../stores/plugins';
+  import type { ArgumentsMap, FormParameter, ParametersMap } from '../../types/parameter';
   import type { SimulationDataset } from '../../types/simulation';
   import { hexToRgba } from '../../utilities/color';
+  import { getFormParameters } from '../../utilities/parameters';
   import {
     formatSimulationQueuePosition,
-    getHumanReadableStatus,
     getSimulationExtent,
     getSimulationProgress,
     getSimulationProgressColor,
     getSimulationStatus,
     getSimulationTimestamp,
   } from '../../utilities/simulation';
-  import { getDoyTime, getUnixEpochTimeFromInterval } from '../../utilities/time';
+  import { getHumanReadableStatus } from '../../utilities/status';
+  import { formatDate, getUnixEpochTimeFromInterval, removeDateStringMilliseconds } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
+  import Collapse from '../Collapse.svelte';
+  import Parameters from '../parameters/Parameters.svelte';
   import Card from '../ui/Card.svelte';
   import StatusBadge from '../ui/StatusBadge.svelte';
 
-  export let selected: boolean = false;
-  export let simulationDataset: SimulationDataset;
+  export let defaultSimulationArguments: ArgumentsMap = {};
+  export let modelParametersMap: ParametersMap = {};
   export let planStartTimeMs: number;
   export let planEndTimeMs: number;
+  export let selected: boolean = false;
+  export let simulationDataset: SimulationDataset;
   export let queuePosition: number = -1;
 
   const dispatch = createEventDispatcher<{
@@ -33,13 +41,14 @@
   }>();
   const planDuration = planEndTimeMs - planStartTimeMs;
 
+  let endTimeText: string = '';
+  let extent: string | null = '';
+  let formParameters: FormParameter[] = [];
+  let progress = 0;
   let simulationBoundsVizRangeLeft = 0;
   let simulationBoundsVizRangeWidth = 0;
   let simulationExtentVizRangeWidth = 0;
-  let startTimeText = '';
-  let endTimeText = '';
-  let progress = 0;
-  let extent: string | null = '';
+  let startTimeText: string = '';
   let status: Status | null = null;
 
   $: simulationBoundsVizRangeWidthStyle =
@@ -56,17 +65,24 @@
     // Compute time range left and width
     if (simulationDataset.simulation_start_time) {
       const simulationStartTimeMS = new Date(simulationDataset.simulation_start_time).getTime();
-      simulationBoundsVizRangeLeft = ((simulationStartTimeMS - planStartTimeMs) / planDuration) * 100 || 0;
+      simulationBoundsVizRangeLeft = Math.max(0, ((simulationStartTimeMS - planStartTimeMs) / planDuration) * 100 || 0);
 
       if (simulationStartTimeMS === planStartTimeMs) {
         startTimeText = 'Plan Start';
       } else {
-        startTimeText = getDoyTime(new Date(simulationDataset.simulation_start_time)).split('+')[0];
+        startTimeText = formatDate(new Date(simulationDataset.simulation_start_time), $plugins.time.primary.format);
+
+        if (startTimeText !== InvalidDate) {
+          startTimeText = removeDateStringMilliseconds(startTimeText);
+        }
       }
 
       if (simulationDataset.simulation_end_time) {
         const simulationEndTimeMS = new Date(simulationDataset.simulation_end_time).getTime();
-        simulationBoundsVizRangeWidth = ((simulationEndTimeMS - simulationStartTimeMS) / planDuration) * 100 || 0;
+        simulationBoundsVizRangeWidth = Math.min(
+          100,
+          ((simulationEndTimeMS - simulationStartTimeMS) / planDuration) * 100 || 0,
+        );
 
         let simulationExtentMS = 0;
         if ((status === Status.Incomplete || status === Status.Failed || status === Status.Canceled) && extent) {
@@ -80,10 +96,24 @@
         if (simulationEndTimeMS === planEndTimeMs) {
           endTimeText = 'Plan End';
         } else {
-          endTimeText = getDoyTime(new Date(simulationDataset.simulation_end_time)).split('+')[0];
+          endTimeText = formatDate(new Date(simulationDataset.simulation_end_time), $plugins.time.primary.format);
+
+          // Remove milliseconds if DOY-like time
+          if (endTimeText !== InvalidDate) {
+            endTimeText = removeDateStringMilliseconds(endTimeText);
+          }
         }
       }
     }
+
+    // get the complete set of parameters and their defaults
+    formParameters = getFormParameters(
+      modelParametersMap,
+      simulationDataset.arguments,
+      [],
+      {},
+      defaultSimulationArguments,
+    );
   }
 
   function onCancelSimulation(event: MouseEvent) {
@@ -153,13 +183,25 @@
       </div>
       <div>
         {#if extent}
-          <span use:tooltip={{ content: 'Simulation Time', placement: 'top' }} class="simulation-dataset-extent"
-            >{getSimulationTimestamp(simulationDataset)}</span
-          >,
+          <span use:tooltip={{ content: 'Simulation Time', placement: 'top' }} class="simulation-dataset-extent">
+            {getSimulationTimestamp(simulationDataset)}
+          </span>
         {/if}
         {progress.toFixed()}%
       </div>
     </div>
+    <Collapse
+      className="arguments-collapse"
+      defaultExpanded={false}
+      title="Arguments"
+      tooltipContent="Arguments for this simulation"
+    >
+      {#if formParameters.length}
+        <Parameters {formParameters} parameterType="simulation" disabled={true} />
+      {:else}
+        <div class="p-1">No simulation arguments found</div>
+      {/if}
+    </Collapse>
   </div>
 </Card>
 

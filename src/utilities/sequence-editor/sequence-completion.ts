@@ -1,16 +1,19 @@
 import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
 import { syntaxTree } from '@codemirror/language';
 import type { ChannelDictionary, CommandDictionary, ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
+import { getGlobals } from '../../stores/sequence-adaptation';
+import { SeqLanguage } from '../codemirror';
 import { getDoyTime } from '../time';
 import { fswCommandArgDefault } from './command-dictionary';
 import { getCustomArgDef } from './extension-points';
 
 type CursorInfo = {
+  isAfterActivateOrLoad: boolean;
+  isAfterTimeTag: boolean;
   isAtLineComment: boolean;
   isAtSymbolBefore: boolean;
   isBeforeHDWCommands: boolean;
   isBeforeImmedOrHDWCommands: boolean;
-  isTimeTagBefore: boolean;
   position: number;
 };
 
@@ -47,17 +50,23 @@ export function sequenceCompletion(
       const directivesCompletions: Completion[] = [];
 
       const cursor: CursorInfo = {
+        isAfterActivateOrLoad: nodeBefore.parent?.name === 'Activate' || nodeBefore.parent?.name === 'Load',
+        isAfterTimeTag: (() => {
+          const line = context.state.doc.lineAt(context.pos);
+          const node = SeqLanguage.parser.parse(line.text).resolveInner(context.pos - line.from, -1);
+
+          return node.parent?.getChild('TimeGroundEpoch') || node.parent?.getChild('TimeTag') ? true : false;
+        })(),
         isAtLineComment: nodeCurrent.name === 'LineComment' || nodeBefore.name === 'LineComment',
         isAtSymbolBefore: isAtTyped(context.state.doc.toString(), word),
         isBeforeHDWCommands: context.pos < (baseNode.getChild('HardwareCommands')?.from ?? Infinity),
         isBeforeImmedOrHDWCommands:
           context.pos <
           (baseNode.getChild('ImmediateCommands')?.from ?? baseNode.getChild('HardwareCommands')?.from ?? Infinity),
-        isTimeTagBefore: nodeBefore.parent?.getChild('TimeTag') ? true : false,
         position: context.pos,
       };
 
-      if (cursor.isBeforeImmedOrHDWCommands) {
+      if (cursor.isBeforeImmedOrHDWCommands && !cursor.isAtLineComment) {
         directivesCompletions.push(
           {
             apply: `${cursor.isAtSymbolBefore ? '' : '@'}ID ""`,
@@ -103,7 +112,7 @@ export function sequenceCompletion(
           },
         );
 
-        if (!cursor.isTimeTagBefore) {
+        if (!cursor.isAfterTimeTag) {
           //get the first of the year date
           const date = new Date();
           date.setMonth(0);
@@ -141,37 +150,49 @@ export function sequenceCompletion(
               section: 'Time Tags',
               type: 'keyword',
             },
+            {
+              apply: 'G1 "epoch.name" ',
+              info: 'Add a ground epoch to a request',
+              label: 'G (ground epoch)',
+              section: 'Time Tags',
+              type: 'keyword',
+            },
           );
         }
       }
 
       // Directives.
-      directivesCompletions.push(
-        {
-          apply: `${isAtTyped(context.state.doc.toString(), word) ? '' : '@'}METADATA "Key" "Value"`,
-          info: 'Any key-value pairs',
-          label: `@METADATA`,
-          section: 'Directives',
-          type: 'keyword',
-        },
-        {
-          apply: `${isAtTyped(context.state.doc.toString(), word) ? '' : '@'}MODEL "Variable" 0 "Offset"`,
-          info: 'List of Local Variables',
-          label: '@MODEL',
-          section: 'Directives',
-          type: 'keyword',
-        },
-      );
-
-      // If TimeTag has not been entered by the user wait for 2 characters before showing the command completions list
-      // If TimeTag has been entered show the completion list when 1 character has been entered
-      if (word.text.length > (cursor.isTimeTagBefore || cursor.isBeforeImmedOrHDWCommands === false ? 0 : 1)) {
-        fswCommandsCompletions.push(
-          ...generateCommandCompletions(channelDictionary, commandDictionary, cursor, parameterDictionaries),
+      // if cursor is at the LineComment/Description don't show the command completions list
+      if (!cursor.isAtLineComment) {
+        directivesCompletions.push(
+          {
+            apply: `${isAtTyped(context.state.doc.toString(), word) ? '' : '@'}METADATA "Key" "Value"`,
+            info: 'Any key-value pairs',
+            label: `@METADATA`,
+            section: 'Directives',
+            type: 'keyword',
+          },
+          {
+            apply: `${isAtTyped(context.state.doc.toString(), word) ? '' : '@'}MODEL "Variable" 0 "Offset"`,
+            info: 'List of Local Variables',
+            label: '@MODEL',
+            section: 'Directives',
+            type: 'keyword',
+          },
         );
       }
 
-      // TODO: Move to a function like generateCommandCompletions
+      // If TimeTag has not been entered by the user wait for 2 characters before showing the command completions list
+      // If TimeTag has been entered show the completion list when 1 character has been entered
+      if (word.text.length > (cursor.isAfterTimeTag || cursor.isBeforeImmedOrHDWCommands === false ? 0 : 1)) {
+        fswCommandsCompletions.push(
+          ...generateCommandCompletions(channelDictionary, commandDictionary, cursor, parameterDictionaries),
+        );
+
+        //add load, activate, ground_block, and ground_event commands
+        fswCommandsCompletions.push(...generateStepCompletion(cursor));
+      }
+
       hwCommandsCompletions.push(...generateHardwareCompletions(commandDictionary, cursor));
 
       //
@@ -189,7 +210,7 @@ export function sequenceCompletion(
       //   }
       // }
 
-      const globals = globalThis.GLOBALS;
+      const globals = getGlobals();
       const globalCompletions: Completion[] = [];
 
       if (globals) {
@@ -255,7 +276,7 @@ function generateCommandCompletions(
       apply = `${stem} ${argsStr} `;
     }
 
-    if (!cursor.isTimeTagBefore && cursor.isBeforeImmedOrHDWCommands) {
+    if (!cursor.isAfterTimeTag && cursor.isBeforeImmedOrHDWCommands) {
       apply = 'C ' + apply;
     }
 
@@ -293,6 +314,134 @@ function generateHardwareCompletions(commandDictionary: CommandDictionary | null
     });
   }
   return hwCommandsCompletions;
+}
+
+function generateStepCompletion(cursor: CursorInfo): Completion[] {
+  // if cursor is at the LineComment/Description don't show the command completions list
+  if (cursor.isAtLineComment || !cursor.isBeforeHDWCommands || !cursor.isBeforeImmedOrHDWCommands) {
+    return [];
+  }
+
+  const stepCompletion: Completion[] = [];
+
+  stepCompletion.push({
+    apply: (view, _completion, from: number, to: number) => {
+      view.dispatch({
+        changes: {
+          from: Math.max(0, from + (!cursor.isAfterTimeTag || cursor.isAtSymbolBefore ? -1 : 0)),
+          insert: `${!cursor.isAfterTimeTag ? 'C ' : ''}@GROUND_EVENT("ground_event.name")`,
+          to,
+        },
+      });
+    },
+    info: 'ground event command',
+    label: '@GROUND_EVENT',
+    section: 'Ground Commands',
+    type: 'function',
+  });
+
+  stepCompletion.push({
+    apply: (view, _completion, from: number, to: number) => {
+      view.dispatch({
+        changes: {
+          from: Math.max(0, from + (!cursor.isAfterTimeTag || cursor.isAtSymbolBefore ? -1 : 0)),
+          insert: `${!cursor.isAfterTimeTag ? 'C ' : ''}@GROUND_BLOCK("ground_block.name")`,
+          to,
+        },
+      });
+    },
+    info: 'ground block command',
+    label: '@GROUND_BLOCK',
+    section: 'Ground Commands',
+    type: 'function',
+  });
+
+  stepCompletion.push({
+    apply: (view, _completion, from: number, to: number) => {
+      view.dispatch({
+        changes: {
+          from: Math.max(0, from + (!cursor.isAfterTimeTag || cursor.isAtSymbolBefore ? -1 : 0)),
+          insert: `${!cursor.isAfterTimeTag ? 'C ' : ''}@ACTIVATE("activate.name")`,
+          to,
+        },
+      });
+    },
+    info: 'activate command',
+    label: '@ACTIVATE',
+    section: 'Ground Commands',
+    type: 'function',
+  });
+
+  stepCompletion.push({
+    apply: (view, _completion, from: number, to: number) => {
+      view.dispatch({
+        changes: {
+          from: Math.max(0, from + (!cursor.isAfterTimeTag || cursor.isAtSymbolBefore ? -1 : 0)),
+          insert: `${!cursor.isAfterTimeTag ? 'C ' : ''}@LOAD("load.name")`,
+          to,
+        },
+      });
+    },
+    info: 'load command',
+    label: '@LOAD',
+    section: 'Ground Commands',
+    type: 'function',
+  });
+
+  if (cursor.isAfterActivateOrLoad) {
+    console.log('after activate');
+    stepCompletion.push({
+      apply: (view, _completion, from: number, to: number) => {
+        view.dispatch({
+          changes: {
+            from: Math.max(0, from + (cursor.isAtSymbolBefore ? -1 : 0)),
+            insert: `@ENGINE 1`,
+            to,
+          },
+        });
+      },
+      info: 'Specify an engine for the ground command',
+      label: '@ENGINE',
+      section: 'Ground Directives',
+      type: 'function',
+    });
+
+    stepCompletion.push({
+      apply: (view, _completion, from: number, to: number) => {
+        view.dispatch({
+          changes: {
+            from: Math.max(0, from + (cursor.isAtSymbolBefore ? -1 : 0)),
+            insert: `@EPOCH ""`,
+            to,
+          },
+        });
+      },
+      info: 'Specify an epoch for the ground command',
+      label: '@EPOCH',
+      section: 'Ground Directives',
+      type: 'function',
+    });
+  }
+
+  stepCompletion.push({
+    apply: (view, _completion, from: number, to: number) => {
+      view.dispatch({
+        changes: {
+          from: Math.max(0, from + (!cursor.isAfterTimeTag || cursor.isAtSymbolBefore ? -1 : 0)),
+          insert: `${!cursor.isAfterTimeTag ? 'C ' : ''}@REQUEST_BEGIN("request.name")
+  #Commands go here
+@REQUEST_END`,
+          to,
+        },
+      });
+    },
+    info: 'Specify an request block',
+    label: '@REQUEST',
+    section: 'Ground Directives',
+    type: 'function',
+  });
+
+  return stepCompletion;
 }
 
 function isAtTyped(docString: string, word: { from: number; text: string; to: number }): boolean {

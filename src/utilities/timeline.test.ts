@@ -1,8 +1,13 @@
 import { keyBy } from 'lodash-es';
 import { expect, test } from 'vitest';
+import {
+  ViewActivityLayerColorPresets,
+  ViewLineLayerColorPresets,
+  ViewXRangeLayerSchemePresets,
+} from '../constants/view';
 import type { ActivityDirective } from '../types/activity';
 import type { Resource, ResourceType, Span, SpanUtilityMaps, SpansMap } from '../types/simulation';
-import type { ActivityTreeNode, TimeRange, Timeline } from '../types/timeline';
+import type { ActivityTreeNode, TimeRange, Timeline, XRangeLayer } from '../types/timeline';
 import { createSpanUtilityMaps } from './activities';
 import {
   createHorizontalGuide,
@@ -17,6 +22,9 @@ import {
   duplicateRow,
   filterResourcesByLayer,
   generateActivityTree,
+  getUniqueColorForActivityLayer,
+  getUniqueColorForLineLayer,
+  getUniqueColorSchemeForXRangeLayer,
   getYAxisBounds,
   isActivityLayer,
   isLineLayer,
@@ -30,8 +38,8 @@ const testSpans: Span[] = [
     duration: '03:00:00',
     durationMs: 10800000,
     endMs: 1,
-    id: 2,
     parent_id: 1,
+    span_id: 2,
     startMs: 0,
     start_offset: '00:10:00',
     type: 'Child',
@@ -40,8 +48,8 @@ const testSpans: Span[] = [
     duration: '02:00:00',
     durationMs: 7200000,
     endMs: 1,
-    id: 1,
     parent_id: null,
+    span_id: 1,
     startMs: 0,
     start_offset: '00:00:00',
     type: 'Parent',
@@ -50,8 +58,8 @@ const testSpans: Span[] = [
     duration: '04:00:00',
     durationMs: 14400000,
     endMs: 1,
-    id: 3,
     parent_id: 1,
+    span_id: 3,
     startMs: 0,
     start_offset: '00:05:00',
     type: 'Child',
@@ -65,8 +73,8 @@ const testSpans: Span[] = [
     duration: '04:00:00',
     durationMs: 14400000,
     endMs: 1,
-    id: 4,
     parent_id: null,
+    span_id: 4,
     startMs: 0,
     start_offset: '00:05:00',
     type: 'BiteBanana',
@@ -80,8 +88,8 @@ const testSpans: Span[] = [
     duration: '04:00:00',
     durationMs: 14400000,
     endMs: 1,
-    id: 5,
     parent_id: null,
+    span_id: 5,
     startMs: 0,
     start_offset: '00:05:00',
     type: 'BiteBanana',
@@ -104,7 +112,7 @@ const testDirectives: ActivityDirective[] = [
   }),
 ];
 
-const testSpansMap: SpansMap = keyBy(testSpans, 'id');
+const testSpansMap: SpansMap = keyBy(testSpans, 'span_id');
 const testSpansUtilityMap: SpanUtilityMaps = createSpanUtilityMaps(testSpans);
 
 function generateTimelines() {
@@ -187,8 +195,8 @@ function generateSpan(properties: Partial<Span>): Span {
     duration: '',
     durationMs: 1,
     endMs: 1,
-    id: 1,
     parent_id: null,
+    span_id: 1,
     startMs: 0,
     start_offset: '',
     type: 'foo',
@@ -503,8 +511,8 @@ test('generateActivityTree', () => {
                 duration: '04:00:00',
                 durationMs: 14400000,
                 endMs: 1,
-                id: 4,
                 parent_id: null,
+                span_id: 4,
                 startMs: 0,
                 start_offset: '00:05:00',
                 type: 'BiteBanana',
@@ -549,8 +557,8 @@ test('generateActivityTree', () => {
                 duration: '04:00:00',
                 durationMs: 14400000,
                 endMs: 1,
-                id: 5,
                 parent_id: null,
+                span_id: 5,
                 startMs: 0,
                 start_offset: '00:05:00',
                 type: 'BiteBanana',
@@ -594,8 +602,8 @@ test('generateActivityTree', () => {
             duration: '04:00:00',
             durationMs: 14400000,
             endMs: 1,
-            id: 4,
             parent_id: null,
+            span_id: 4,
             startMs: 0,
             start_offset: '00:05:00',
             type: 'BiteBanana',
@@ -630,8 +638,8 @@ test('generateActivityTree', () => {
             duration: '04:00:00',
             durationMs: 14400000,
             endMs: 1,
-            id: 5,
             parent_id: null,
+            span_id: 5,
             startMs: 0,
             start_offset: '00:05:00',
             type: 'BiteBanana',
@@ -657,8 +665,8 @@ test('generateActivityTree', () => {
             duration: '03:00:00',
             durationMs: 10800000,
             endMs: 1,
-            id: 2,
             parent_id: 1,
+            span_id: 2,
             startMs: 0,
             start_offset: '00:10:00',
             type: 'Child',
@@ -674,8 +682,8 @@ test('generateActivityTree', () => {
             duration: '04:00:00',
             durationMs: 14400000,
             endMs: 1,
-            id: 3,
             parent_id: 1,
+            span_id: 3,
             startMs: 0,
             start_offset: '00:05:00',
             type: 'Child',
@@ -707,8 +715,8 @@ test('generateActivityTree', () => {
                         duration: '03:00:00',
                         durationMs: 10800000,
                         endMs: 1,
-                        id: 2,
                         parent_id: 1,
+                        span_id: 2,
                         startMs: 0,
                         start_offset: '00:10:00',
                         type: 'Child',
@@ -734,8 +742,8 @@ test('generateActivityTree', () => {
                         duration: '04:00:00',
                         durationMs: 14400000,
                         endMs: 1,
-                        id: 3,
                         parent_id: 1,
+                        span_id: 3,
                         startMs: 0,
                         start_offset: '00:05:00',
                         type: 'Child',
@@ -760,8 +768,8 @@ test('generateActivityTree', () => {
                     duration: '03:00:00',
                     durationMs: 10800000,
                     endMs: 1,
-                    id: 2,
                     parent_id: 1,
+                    span_id: 2,
                     startMs: 0,
                     start_offset: '00:10:00',
                     type: 'Child',
@@ -777,8 +785,8 @@ test('generateActivityTree', () => {
                     duration: '04:00:00',
                     durationMs: 14400000,
                     endMs: 1,
-                    id: 3,
                     parent_id: 1,
+                    span_id: 3,
                     startMs: 0,
                     start_offset: '00:05:00',
                     type: 'Child',
@@ -803,8 +811,8 @@ test('generateActivityTree', () => {
                 duration: '02:00:00',
                 durationMs: 7200000,
                 endMs: 1,
-                id: 1,
                 parent_id: null,
+                span_id: 1,
                 startMs: 0,
                 start_offset: '00:00:00',
                 type: 'Parent',
@@ -829,8 +837,8 @@ test('generateActivityTree', () => {
             duration: '02:00:00',
             durationMs: 7200000,
             endMs: 1,
-            id: 1,
             parent_id: null,
+            span_id: 1,
             startMs: 0,
             start_offset: '00:00:00',
             type: 'Parent',
@@ -841,4 +849,28 @@ test('generateActivityTree', () => {
       type: 'aggregation',
     },
   ]);
+});
+
+test('getUniqueColorForActivityLayer', () => {
+  expect(getUniqueColorForActivityLayer(createRow([]))).toBe(ViewActivityLayerColorPresets[0]);
+  const row2 = createRow([]);
+  row2.layers = [createTimelineActivityLayer([])];
+  expect(getUniqueColorForActivityLayer(row2)).toBe(ViewActivityLayerColorPresets[1]);
+});
+
+test('getUniqueColorForLineLayer', () => {
+  expect(getUniqueColorForLineLayer(createRow([]))).toBe(ViewLineLayerColorPresets[0]);
+  const row2 = createRow([]);
+  row2.layers = [createTimelineLineLayer([], [])];
+  expect(getUniqueColorForLineLayer(row2)).toBe(ViewLineLayerColorPresets[1]);
+});
+
+test('getUniqueColorSchemeForXRangeLayer', () => {
+  expect(
+    Object.keys(ViewXRangeLayerSchemePresets).indexOf(getUniqueColorSchemeForXRangeLayer(createRow([]))),
+  ).toBeGreaterThan(-1);
+  const row2 = createRow([]);
+  row2.layers = [createTimelineXRangeLayer([], [])];
+  const existingScheme = (row2.layers[0] as XRangeLayer).colorScheme;
+  expect(getUniqueColorSchemeForXRangeLayer(row2)).not.toBe(existingScheme);
 });

@@ -2,6 +2,7 @@ import type { SyntaxNode } from '@lezer/common';
 import type {
   CommandDictionary,
   FswCommandArgument,
+  FswCommandArgumentBoolean,
   FswCommandArgumentEnum,
   FswCommandArgumentFixedString,
   FswCommandArgumentFloat,
@@ -12,8 +13,8 @@ import type {
   FswCommandArgumentVarString,
 } from '@nasa-jpl/aerie-ampcs';
 import type { EditorView } from 'codemirror';
-import { fswCommandArgDefault } from '../new-sequence-editor/command-dictionary';
-import { TOKEN_REPEAT_ARG } from '../new-sequence-editor/sequencer-grammar-constants';
+import { TOKEN_REPEAT_ARG } from '../../constants/seq-n-grammar-constants';
+import { fswCommandArgDefault } from '../sequence-editor/command-dictionary';
 
 export function isFswCommandArgumentEnum(arg: FswCommandArgument): arg is FswCommandArgumentEnum {
   return arg.arg_type === 'enum';
@@ -45,6 +46,10 @@ export function isFswCommandArgumentVarString(arg: FswCommandArgument): arg is F
 
 export function isFswCommandArgumentFixedString(arg: FswCommandArgument): arg is FswCommandArgumentFixedString {
   return arg.arg_type === 'fixed_string';
+}
+
+export function isFswCommandArgumentBoolean(arg: FswCommandArgument): arg is FswCommandArgumentBoolean {
+  return arg.arg_type === 'boolean';
 }
 
 export function isNumberArg(arg: FswCommandArgument): arg is NumberArg {
@@ -126,6 +131,9 @@ export function quoteEscape(s: string) {
   return `"${s.replaceAll('"', '\\"')}"`;
 }
 
+export function removeEscapedQuotes(text: string): string;
+export function removeEscapedQuotes(text: number): number;
+export function removeEscapedQuotes(text: boolean): boolean;
 export function removeEscapedQuotes(text: string | number | boolean): string | number | boolean {
   if (typeof text === 'string') {
     return text.replace(/\\"|"(?!\\")/g, '"').trim();

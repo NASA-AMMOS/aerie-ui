@@ -14,7 +14,12 @@ import {
   type TimeInterval,
 } from 'd3-time';
 import { groupBy } from 'lodash-es';
-import { ViewDefaultActivityOptions } from '../constants/view';
+import {
+  ViewActivityLayerColorPresets,
+  ViewDefaultActivityOptions,
+  ViewLineLayerColorPresets,
+  ViewXRangeLayerSchemePresets,
+} from '../constants/view';
 import type { ActivityDirective } from '../types/activity';
 import type { Resource, ResourceType, ResourceValue, Span, SpanUtilityMaps, SpansMap } from '../types/simulation';
 import type {
@@ -34,8 +39,11 @@ import type {
   Timeline,
   VerticalGuide,
   XRangeLayer,
+  XRangeLayerColorScheme,
 } from '../types/timeline';
+import { generateRandomPastelColor } from './color';
 import { filterEmpty } from './generic';
+import { getDoyTime } from './time';
 
 export enum TimelineLockStatus {
   Locked = 'Locked',
@@ -119,7 +127,7 @@ export function customD3TickInterval(start: Date, stop: Date, count: number): Ti
 }
 
 // Based on https://github.com/d3/d3-time/blob/main/src/ticks.js
-export function customD3Ticks(start: Date, stop: Date, count: number) {
+export function utcTicks(start: Date, stop: Date, count: number) {
   const reverse = stop < start;
   if (reverse) {
     [start, stop] = [stop, start];
@@ -128,6 +136,25 @@ export function customD3Ticks(start: Date, stop: Date, count: number) {
   // Make end date inclusive by creating a new date +1ms from stop date
   const ticks = interval ? interval.range(start, new Date(+stop + 1)) : []; // inclusive stop
   return reverse ? ticks.reverse() : ticks;
+}
+
+export function formatTickUtc(date: Date, viewDurationMs: number, tickCount: number): string {
+  let label = getDoyTime(date);
+  if (viewDurationMs > durationYear * tickCount) {
+    label = label.slice(0, 4);
+  } else if (viewDurationMs > durationMonth * tickCount) {
+    label = label.slice(0, 8);
+  } else if (viewDurationMs > durationWeek) {
+    label = label.slice(0, 8);
+  }
+  return label;
+}
+
+export function formatTickLocalTZ(date: Date, viewDurationMs: number, tickCount: number): string {
+  if (viewDurationMs > durationYear * tickCount) {
+    return date.getFullYear().toString();
+  }
+  return date.toLocaleString();
 }
 
 export const CANVAS_PADDING_X = 0;
@@ -339,6 +366,60 @@ export function getNextTimelineID(timelines: Timeline[]): number {
 }
 
 /**
+ * Returns the next unused activity color within the given row
+ */
+export function getUniqueColorForActivityLayer(row?: Row): string {
+  let color = ViewActivityLayerColorPresets[0];
+  const seenColors: Record<string, boolean> = {};
+  if (row) {
+    row.layers.forEach(layer => {
+      if (isActivityLayer(layer)) {
+        seenColors[layer.activityColor] = true;
+      }
+    });
+    color = ViewActivityLayerColorPresets.find(c => !seenColors[c]) ?? generateRandomPastelColor();
+  }
+  return color;
+}
+
+/**
+ * Returns the next unused xrange color scheme within the given row
+ */
+export function getUniqueColorSchemeForXRangeLayer(row?: Row): XRangeLayerColorScheme {
+  const defaultScheme: XRangeLayerColorScheme = 'schemeTableau10';
+  let colorScheme = defaultScheme as XRangeLayerColorScheme;
+  const seenColorSchemes: Record<string, boolean> = {};
+  if (row) {
+    row.layers.forEach(layer => {
+      if (isXRangeLayer(layer)) {
+        seenColorSchemes[layer.colorScheme] = true;
+      }
+    });
+    colorScheme =
+      (Object.keys(ViewXRangeLayerSchemePresets).find(c => !seenColorSchemes[c]) as XRangeLayerColorScheme) ??
+      defaultScheme;
+  }
+  return colorScheme;
+}
+
+/**
+ * Returns the next unused line color within the given row
+ */
+export function getUniqueColorForLineLayer(row?: Row): string {
+  let color = ViewLineLayerColorPresets[0];
+  const seenColors: Record<string, boolean> = {};
+  if (row) {
+    row.layers.forEach(layer => {
+      if (isLineLayer(layer)) {
+        seenColors[layer.lineColor] = true;
+      }
+    });
+    color = ViewLineLayerColorPresets.find(c => !seenColors[c]) ?? generateRandomPastelColor();
+  }
+  return color;
+}
+
+/**
  * Returns a new vertical guide
  */
 export function createVerticalGuide(
@@ -459,7 +540,7 @@ export function createTimelineActivityLayer(timelines: Timeline[], args: Partial
   const id = getNextLayerID(timelines);
 
   return {
-    activityColor: '#fcdd8f',
+    activityColor: ViewActivityLayerColorPresets[0],
     activityHeight: 16,
     chartType: 'activity',
     filter: {
@@ -472,6 +553,31 @@ export function createTimelineActivityLayer(timelines: Timeline[], args: Partial
     yAxisId: null,
     ...args,
   };
+}
+
+export function createTimelineResourceLayer(timelines: Timeline[], resourceType: ResourceType) {
+  const { name, schema } = resourceType;
+  const { type: schemaType } = schema;
+
+  const unit = schema.metadata?.unit?.value;
+  const isDiscreteSchema = schemaType === 'boolean' || schemaType === 'string' || schemaType === 'variant';
+  const isNumericSchema =
+    schemaType === 'int' ||
+    schemaType === 'real' ||
+    (schemaType === 'struct' && schema?.items?.rate?.type === 'real' && schema?.items?.initial?.type === 'real');
+
+  const yAxis = createYAxis(timelines, {
+    label: { text: `${name}${unit ? ` (${unit})` : ''}` },
+    tickCount: isNumericSchema ? 5 : 0,
+  });
+
+  const layer = isDiscreteSchema
+    ? createTimelineXRangeLayer(timelines, [yAxis], { filter: { resource: { names: [name] } } })
+    : isNumericSchema
+      ? createTimelineLineLayer(timelines, [yAxis], { filter: { resource: { names: [name] } } })
+      : null;
+
+  return { layer, yAxis };
 }
 
 /**
@@ -493,7 +599,7 @@ export function createTimelineLineLayer(
       },
     },
     id,
-    lineColor: '#283593',
+    lineColor: ViewLineLayerColorPresets[0],
     lineWidth: 1,
     name: '',
     pointRadius: 2,
@@ -839,7 +945,7 @@ export function generateActivityTree(
             const childSpanId = spanUtilityMaps.directiveIdToSpanIdMap[directive.id];
             childSpan = spansMap[childSpanId];
             if (childSpan && hierarchyMode === 'flat') {
-              seenSpans[childSpan.id] = true;
+              seenSpans[childSpan.span_id] = true;
             }
           }
           if (expanded) {
@@ -861,7 +967,7 @@ export function generateActivityTree(
       }
       if (spanGroup && hierarchyMode === 'flat') {
         spanGroup.forEach(span => {
-          if (!seenSpans[span.id]) {
+          if (!seenSpans[span.span_id]) {
             if (expanded) {
               children.push(
                 ...getSpanSubtrees(
@@ -960,7 +1066,7 @@ export function getSpanSubtrees(
   viewTimeRange: TimeRange,
 ): ActivityTreeNode[] {
   const children: ActivityTreeNode[] = [];
-  const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[span.id].map(id => spansMap[id]);
+  const spanChildren = spanUtilityMaps.spanIdToChildIdsMap[span.span_id].map(id => spansMap[id]);
   if (type === 'aggregation') {
     // Group by type
     let computedSpans = spanChildren;
@@ -1003,7 +1109,7 @@ export function getSpanSubtrees(
         });
       });
   } else if (type === 'span') {
-    const id = `${parentId}_${span.id}`;
+    const id = `${parentId}_${span.span_id}`;
     const expanded = getNodeExpanded(id, activityTreeExpansionMap);
     const count = spanChildren.length;
     let childrenForKey: ActivityTreeNode[] = [];

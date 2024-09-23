@@ -1,9 +1,9 @@
 /* eslint-disable no-var */
 /* eslint @typescript-eslint/no-unused-vars: 0 */
-import type { ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
-import type { SeqJson } from '@nasa-jpl/seq-json-schema/types';
-import type { GlobalType } from './types/global-type';
-import type { ArgDelegator } from './utilities/new-sequence-editor/extension-points';
+
+import type { Diagnostic } from '@codemirror/lint';
+import type { CommandDictionary } from '@nasa-jpl/aerie-ampcs';
+import type { EditorView } from 'codemirror';
 
 declare global {
   namespace App {
@@ -49,28 +49,57 @@ declare global {
     export default content;
   }
 
-  var CONDITIONAL_KEYWORDS: { ELSE: string; ELSE_IF?: string[]; END_IF: string; IF: string[] } | undefined;
-  var LOOP_KEYWORDS:
+  var SequenceAdaptation:
     | {
-        BREAK: string;
-        CONTINUE: string;
-        END_WHILE_LOOP: string;
-        WHILE_LOOP: string[];
+        argDelegator?: ArgDelegator;
+        conditionalKeywords?: { else?: string; elseIf?: string[]; endIf?: string; if: string[] };
+        globals?: GlobalType[];
+        inputFormat?: {
+          linter?: (
+            diagnostics: Diagnostic[],
+            commandDictionary: CommandDictionary,
+            view: EditorView,
+            node: SyntaxNode,
+          ) => Diagnostic[];
+          name: string;
+          toInputFormat?: (input: string) => Promise<string>;
+        };
+        loopKeywords?: {
+          break: string;
+          continue: string;
+          endWhileLoop: string;
+          whileLoop: string[];
+        };
+        modifyOutput?: (
+          output: SeqJson | any,
+          parameterDictionaries: ParameterDictionary[],
+          channelDictionary: ChannelDictionary | null,
+        ) => any;
+        modifyOutputParse?: (
+          output: SeqJson | any,
+          parameterDictionaries: ParameterDictionary[],
+          channelDictionary: ChannelDictionary | null,
+        ) => any;
+        outputFormat?: [
+          {
+            fileExtension: string;
+            linter?: (
+              diagnostics: Diagnostic[],
+              commandDictionary: CommandDictionary,
+              view: EditorView,
+              node: SyntaxNode,
+            ) => Diagnostic[];
+            name: string;
+            toOutputFormat?: (
+              tree: Tree | any,
+              sequence: string,
+              commandDictionary: CommandDictionary | null,
+              sequenceName: string,
+            ) => Promise<string>;
+          },
+        ];
       }
     | undefined;
-  var GLOBALS: GlobalType[] | undefined;
-  var ARG_DELEGATOR: ArgDelegator | undefined;
-  function LINT(commandDictionary, view, node);
-  function TO_SEQ_JSON(
-    seqJson: SeqJson,
-    parameterDictionaries: ParameterDictionary[],
-    channelDictionary: ChannelDictionary | null,
-  );
-  function FROM_SEQ_JSON(
-    seqJson: SeqJson,
-    parameterDictionaries: ParameterDictionary[],
-    channelDictionary: ChannelDictionary | null,
-  );
 }
 
 export {};

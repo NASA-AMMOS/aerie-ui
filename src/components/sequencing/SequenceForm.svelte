@@ -1,24 +1,28 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { browser } from '$app/environment';
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import type { ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
+  import { SearchParameters } from '../../enums/searchParameters';
+  import { outputFormat } from '../../stores/sequence-adaptation';
   import {
     parameterDictionaries as parameterDictionariesStore,
-    parcel,
-    parcelId,
     parcelToParameterDictionaries,
     parcels,
     userSequenceFormColumns,
+    workspaces,
   } from '../../stores/sequencing';
   import type { User, UserId } from '../../types/app';
-  import type { UserSequence, UserSequenceInsertInput } from '../../types/sequencing';
+  import type { Parcel, UserSequence, UserSequenceInsertInput } from '../../types/sequencing';
   import effects from '../../utilities/effects';
+  import { getSearchParameterNumber } from '../../utilities/generic';
   import { isSaveEvent } from '../../utilities/keyboardEvents';
-  import { parseSeqJsonFromFile, seqJsonToSequence } from '../../utilities/new-sequence-editor/from-seq-json';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
+  import { toInputFormat } from '../../utilities/sequence-editor/extension-points';
+  import { logError } from '../../utilities/sequence-editor/logger';
   import PageTitle from '../app/PageTitle.svelte';
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
@@ -39,10 +43,11 @@
   let hasPermission: boolean = false;
   let pageSubtitle: string = '';
   let pageTitle: string = '';
+  let parcel: Parcel | null;
   let permissionError = 'You do not have permission to edit this sequence.';
   let saveButtonClass: 'primary' | 'secondary' = 'primary';
   let savedSequenceDefinition: string = mode === 'create' ? '' : initialSequenceDefinition;
-  let seqJsonFiles: FileList;
+  let outputFiles: FileList;
   let sequenceCreatedAt: string | null = initialSequenceCreatedAt;
   let sequenceDefinition: string = initialSequenceDefinition;
   let sequenceId: number | null = initialSequenceId;
@@ -51,14 +56,17 @@
   let sequenceOwner: UserId = initialSequenceOwner;
   let sequenceParcelId: number | null = initialSequenceParcelId;
   let savedSequenceName: string = sequenceName;
-  let sequenceSeqJson: string = 'Seq JSON has not been generated yet';
+  let sequenceOutput: string = 'Output has not been generated yet';
   let sequenceUpdatedAt: string | null = initialSequenceUpdatedAt;
   let saveButtonEnabled: boolean = false;
   let saveButtonText: string = '';
   let savingSequence: boolean = false;
+  let selectedWorkspaceId: number | null;
 
+  $: parcel = $parcels.find(p => p.id === sequenceParcelId) ?? null;
   $: saveButtonClass = sequenceModified && saveButtonEnabled ? 'primary' : 'secondary';
-  $: saveButtonEnabled = sequenceParcelId !== null && sequenceDefinition !== '' && sequenceName !== '';
+  $: saveButtonEnabled =
+    sequenceParcelId !== null && sequenceDefinition !== '' && sequenceName !== '' && isValidWorkspaceId();
   $: sequenceModified = sequenceDefinition !== savedSequenceDefinition || sequenceName !== savedSequenceName;
   $: {
     hasPermission =
@@ -71,45 +79,58 @@
     saveButtonText = mode === 'edit' && !sequenceModified ? 'Saved' : 'Save';
   }
   $: {
-    if (sequenceParcelId) {
-      $parcelId = sequenceParcelId;
+    if (browser) {
+      selectedWorkspaceId = getSearchParameterNumber(SearchParameters.WORKSPACE_ID);
     }
   }
 
-  async function onSeqJsonInput(e: Event & { currentTarget: EventTarget & HTMLInputElement }) {
+  /**
+   * Checks if the workspace ID set the search params is valid.
+   */
+  function isValidWorkspaceId(): boolean {
+    return $workspaces.some(workspace => workspace.id === selectedWorkspaceId);
+  }
+
+  async function onOutputFileUpload(e: Event & { currentTarget: EventTarget & HTMLInputElement }) {
     const unparsedParameterDictionaries = $parameterDictionariesStore.filter(pd => {
-      const parameterDictionary = $parcelToParameterDictionaries.find(p => p.parameter_dictionary_id === pd.id);
+      const parameterDictionary = $parcelToParameterDictionaries.find(
+        p => p.parameter_dictionary_id === pd.id && p.parcel_id === parcel?.id,
+      );
 
       if (parameterDictionary) {
         return pd;
       }
     });
 
-    const [seqJson, parsedChannelDictionary, ...parsedParameterDictionaries] = await Promise.all([
-      parseSeqJsonFromFile(e.currentTarget.files),
-      $parcel?.channel_dictionary_id
-        ? effects.getParsedAmpcsChannelDictionary($parcel?.channel_dictionary_id, user)
+    const [output, parsedChannelDictionary, ...parsedParameterDictionaries] = await Promise.all([
+      parseOutputFromFile(e.currentTarget.files),
+      parcel?.channel_dictionary_id
+        ? effects.getParsedAmpcsChannelDictionary(parcel?.channel_dictionary_id, user)
         : null,
       ...unparsedParameterDictionaries.map(unparsedParameterDictionary => {
         return effects.getParsedAmpcsParameterDictionary(unparsedParameterDictionary.id, user);
       }),
     ]);
 
-    const sequence = seqJsonToSequence(
-      seqJson,
-      parsedParameterDictionaries.filter((pd): pd is ParameterDictionary => pd !== null),
-      parsedChannelDictionary,
-    );
+    if (output !== null) {
+      const sequence = await toInputFormat(
+        output,
+        parsedParameterDictionaries.filter((pd): pd is ParameterDictionary => pd !== null),
+        parsedChannelDictionary,
+      );
 
-    initialSequenceDefinition = sequence;
-    sequenceSeqJson = '';
+      if (sequence !== undefined) {
+        initialSequenceDefinition = sequence;
+        sequenceOutput = '';
+      }
+    }
   }
 
-  function onSequenceChange(event: CustomEvent<{ seqJson: string; sequence: string }>) {
+  function onSequenceChange(event: CustomEvent<{ input: string; output: string }>) {
     const { detail } = event;
-    const { seqJson, sequence } = detail;
-    sequenceDefinition = sequence;
-    sequenceSeqJson = seqJson;
+    const { input, output } = detail;
+    sequenceDefinition = input;
+    sequenceOutput = output;
   }
 
   function onDidChangeModelContent(event: CustomEvent<{ value: string }>) {
@@ -125,29 +146,54 @@
     }
   }
 
+  async function parseOutputFromFile(files: FileList | null | undefined): Promise<string | null> {
+    if (files) {
+      const file = files.item(0);
+
+      if (file) {
+        try {
+          return await file.text();
+        } catch (e) {
+          const errorMessage = (e as Error).message;
+          logError(errorMessage);
+          return null;
+        }
+      } else {
+        logError('No file provided');
+        return null;
+      }
+    } else {
+      logError('No file provided');
+      return null;
+    }
+  }
+
   async function saveSequence() {
     if (saveButtonEnabled) {
       savingSequence = true;
 
-      if (sequenceParcelId !== null) {
+      if (sequenceParcelId !== null && selectedWorkspaceId !== null) {
         if (mode === 'create') {
           const newSequence: UserSequenceInsertInput = {
             definition: sequenceDefinition,
             name: sequenceName,
             parcel_id: sequenceParcelId,
-            seq_json: sequenceSeqJson,
+            seq_json: sequenceOutput,
+            workspace_id: selectedWorkspaceId,
           };
           const newSequenceId = await effects.createUserSequence(newSequence, user);
 
           if (newSequenceId !== null) {
-            goto(`${base}/sequencing/edit/${newSequenceId}`);
+            goto(
+              `${base}/sequencing/edit/${newSequenceId}${'?' + SearchParameters.WORKSPACE_ID + '=' + getSearchParameterNumber(SearchParameters.WORKSPACE_ID) ?? ''}`,
+            );
           }
         } else if (mode === 'edit' && sequenceId !== null) {
           const updatedSequence: Partial<UserSequence> = {
             definition: sequenceDefinition,
             name: sequenceName,
             parcel_id: sequenceParcelId,
-            seq_json: sequenceSeqJson,
+            seq_json: sequenceOutput,
           };
           const updated_at = await effects.updateUserSequence(sequenceId, updatedSequence, sequenceOwner, user);
           if (updated_at !== null) {
@@ -172,7 +218,13 @@
       <SectionTitle>{mode === 'create' ? 'New Sequence' : 'Edit Sequence'}</SectionTitle>
 
       <div class="right">
-        <button class="st-button secondary ellipsis" on:click={() => goto(`${base}/sequencing`)}>
+        <button
+          class="st-button secondary ellipsis"
+          on:click={() =>
+            goto(
+              `${base}/sequencing${'?' + SearchParameters.WORKSPACE_ID + '=' + getSearchParameterNumber(SearchParameters.WORKSPACE_ID) ?? ''}`,
+            )}
+        >
           {mode === 'create' ? 'Cancel' : 'Close'}
         </button>
         <button
@@ -208,7 +260,7 @@
       {/if}
 
       <fieldset>
-        <label for="commandDictionary">Parcel (required)</label>
+        <label for="parcel">Parcel (required)</label>
         <select
           bind:value={sequenceParcelId}
           class="st-select w-100"
@@ -244,13 +296,13 @@
       </fieldset>
 
       <fieldset>
-        <label for="seqJsonFile">Create Sequence from Seq JSON (optional)</label>
+        <label for="outputFile">Create Sequence from {$outputFormat?.[0]?.name}</label>
         <input
-          bind:files={seqJsonFiles}
+          bind:files={outputFiles}
           class="w-100"
-          name="seqJsonFile"
+          name="outputFile"
           type="file"
-          on:change={onSeqJsonInput}
+          on:change={onOutputFileUpload}
           use:permissionHandler={{
             hasPermission,
             permissionError,
@@ -263,11 +315,11 @@
   <CssGridGutter track={1} type="column" />
 
   <SequenceEditor
-    parcel={$parcel}
+    {parcel}
     showCommandFormBuilder={true}
     sequenceDefinition={initialSequenceDefinition}
     {sequenceName}
-    {sequenceSeqJson}
+    {sequenceOutput}
     title="{mode === 'create' ? 'New' : 'Edit'} Sequence - Definition Editor"
     {user}
     readOnly={!hasPermission}

@@ -7,14 +7,14 @@ import {
   type ParameterDictionary as AmpcsParameterDictionary,
 } from '@nasa-jpl/aerie-ampcs';
 import { get } from 'svelte/store';
+import { SchedulingType } from '../constants/scheduling';
 import { DictionaryHeaders } from '../enums/dictionaryHeaders';
 import { DictionaryTypes } from '../enums/dictionaryTypes';
 import { SearchParameters } from '../enums/searchParameters';
 import { Status } from '../enums/status';
 import { activityDirectivesDB, selectedActivityDirectiveId } from '../stores/activities';
 import {
-  checkConstraintsStatus,
-  constraintsViolationStatus,
+  rawCheckConstraintsStatus,
   rawConstraintResponses,
   resetConstraintStoresForSimulation,
 } from '../stores/constraints';
@@ -29,15 +29,11 @@ import {
 import { createModelError, creatingModel, models } from '../stores/model';
 import { createPlanError, creatingPlan, planId } from '../stores/plan';
 import { schedulingRequests, selectedSpecId } from '../stores/scheduling';
-import {
-  channelDictionaries,
-  commandDictionaries,
-  parameterDictionaries,
-  sequenceAdaptations,
-} from '../stores/sequencing';
+import { sequenceAdaptations } from '../stores/sequence-adaptation';
+import { channelDictionaries, commandDictionaries, parameterDictionaries } from '../stores/sequencing';
 import { selectedSpanId, simulationDataset, simulationDatasetId } from '../stores/simulation';
 import { createTagError } from '../stores/tags';
-import { applyViewUpdate, view, viewUpdateTimeline } from '../stores/views';
+import { applyViewUpdate, view, viewUpdateRow, viewUpdateTimeline } from '../stores/views';
 import type {
   ActivityDirective,
   ActivityDirectiveDB,
@@ -133,6 +129,7 @@ import type {
   SchedulingGoalModelSpecificationInsertInput,
   SchedulingGoalModelSpecificationSetInput,
   SchedulingGoalPlanSpecInsertInput,
+  SchedulingGoalPlanSpecSetInput,
   SchedulingGoalPlanSpecification,
   SchedulingPlanSpecification,
   SchedulingPlanSpecificationInsertInput,
@@ -152,6 +149,7 @@ import {
   type SequenceAdaptation,
   type UserSequence,
   type UserSequenceInsertInput,
+  type Workspace,
 } from '../types/sequencing';
 import type {
   PlanDataset,
@@ -205,8 +203,9 @@ import {
   showPlanBranchRequestModal,
   showRestorePlanSnapshotModal,
   showUploadViewModal,
+  showWorkspaceModal,
 } from './modal';
-import { queryPermissions } from './permissions';
+import { gatewayPermissions, queryPermissions } from './permissions';
 import { reqExtension, reqGateway, reqHasura } from './requests';
 import { sampleProfiles } from './resources';
 import { convertResponseToMetadata } from './scheduling';
@@ -386,8 +385,7 @@ const effects = {
 
   async checkConstraints(plan: Plan, user: User | null): Promise<void> {
     try {
-      checkConstraintsStatus.set(Status.Incomplete);
-      constraintsViolationStatus.set(null);
+      rawCheckConstraintsStatus.set(Status.Incomplete);
       if (plan !== null) {
         const { id: planId } = plan;
         const data = await reqHasura<ConstraintResponse[]>(
@@ -408,24 +406,15 @@ const effects = {
           const failedConstraintResponses = data.constraintResponses.filter(
             constraintResponse => !constraintResponse.success,
           );
-
-          const anyViolations = successfulConstraintResults.reduce((bool, prev) => {
-            if (prev.violations && prev.violations.length > 0) {
-              bool = true;
-            }
-            return bool;
-          }, false);
-          constraintsViolationStatus.set(anyViolations ? Status.Failed : Status.Complete);
-
           if (successfulConstraintResults.length === 0 && data.constraintResponses.length > 0) {
             showFailureToast('All Constraints Failed');
-            checkConstraintsStatus.set(Status.Failed);
+            rawCheckConstraintsStatus.set(Status.Failed);
           } else if (successfulConstraintResults.length !== data.constraintResponses.length) {
             showFailureToast('Constraints Partially Checked');
-            checkConstraintsStatus.set(successfulConstraintResults.length !== 0 ? Status.Failed : Status.Failed);
+            rawCheckConstraintsStatus.set(Status.Failed);
           } else {
             showSuccessToast('All Constraints Checked');
-            checkConstraintsStatus.set(Status.Complete);
+            rawCheckConstraintsStatus.set(Status.Complete);
           }
 
           if (failedConstraintResponses.length > 0) {
@@ -443,7 +432,6 @@ const effects = {
       }
     } catch (e) {
       catchError('Check Constraints Failed', e as Error);
-      checkConstraintsStatus.set(Status.Failed);
       showFailureToast('Check Constraints Failed');
     }
   },
@@ -1352,7 +1340,9 @@ const effects = {
     name: string,
     isPublic: boolean,
     metadataTags: SchedulingTagsInsertInput[],
-    definition: string,
+    definitionType: SchedulingType,
+    definition: string | null,
+    file: File | null,
     definitionTags: SchedulingTagsInsertInput[],
     user: User | null,
     description?: string,
@@ -1360,6 +1350,15 @@ const effects = {
     try {
       if (!queryPermissions.CREATE_SCHEDULING_CONDITION(user)) {
         throwPermissionError('create a scheduling condition');
+      }
+
+      let jarId: number | null = null;
+      let codeDefinition: string | null = null;
+
+      if (definitionType === SchedulingType.EDSL) {
+        codeDefinition = definition;
+      } else if (definitionType === SchedulingType.JAR && file) {
+        jarId = await effects.uploadFile(file, user);
       }
 
       const goalInsertInput: SchedulingGoalInsertInput = {
@@ -1372,10 +1371,12 @@ const effects = {
         versions: {
           data: [
             {
-              definition,
+              definition: codeDefinition,
               tags: {
                 data: definitionTags,
               },
+              type: definitionType,
+              uploaded_jar_id: jarId,
             },
           ],
         },
@@ -1400,7 +1401,9 @@ const effects = {
 
   async createSchedulingGoalDefinition(
     goalId: number,
-    definition: string,
+    definitionType: SchedulingType,
+    definition: string | null,
+    file: File | null,
     definitionTags: SchedulingTagsInsertInput[],
     user: User | null,
   ): Promise<Pick<SchedulingGoalDefinition, 'goal_id' | 'definition' | 'revision'> | null> {
@@ -1409,12 +1412,23 @@ const effects = {
         throwPermissionError('create a scheduling goal definition');
       }
 
+      let jarId: number | null = null;
+      let codeDefinition: string | null = null;
+
+      if (definitionType === SchedulingType.EDSL) {
+        codeDefinition = definition;
+      } else if (definitionType === SchedulingType.JAR && file !== null) {
+        jarId = await effects.uploadFile(file, user);
+      }
+
       const goalDefinitionInsertInput: SchedulingGoalDefinitionInsertInput = {
-        definition,
+        definition: codeDefinition,
         goal_id: goalId,
         tags: {
           data: definitionTags,
         },
+        type: definitionType,
+        uploaded_jar_id: jarId,
       };
       const data = await reqHasura<SchedulingGoalDefinition>(
         gql.CREATE_SCHEDULING_GOAL_DEFINITION,
@@ -1435,32 +1449,34 @@ const effects = {
     }
   },
 
-  // async createSchedulingGoalPlanSpecification(
-  //   spec_goal: SchedulingSpecGoalInsertInput,
-  //   user: User | null,
-  // ): Promise<number | null> {
-  //   try {
-  //     if (!queryPermissions.CREATE_SCHEDULING_GOAL_PLAN_SPECIFICATION(user)) {
-  //       throwPermissionError('create a scheduling spec goal');
-  //     }
+  async createSchedulingGoalPlanSpecification(
+    spec_goal: SchedulingGoalPlanSpecInsertInput,
+    user: User | null,
+  ): Promise<number | null> {
+    try {
+      if (!queryPermissions.CREATE_SCHEDULING_GOAL_PLAN_SPECIFICATION(user)) {
+        throwPermissionError('create a scheduling spec goal');
+      }
 
-  //     const data = await reqHasura<SchedulingGoalPlanSpecification>(
-  //       gql.CREATE_SCHEDULING_GOAL_PLAN_SPECIFICATION,
-  //       { spec_goal },
-  //       user,
-  //     );
-  //     const { createSchedulingSpecGoal } = data;
-  //     if (createSchedulingSpecGoal != null) {
-  //       const { specification_id } = createSchedulingSpecGoal;
-  //       return specification_id;
-  //     } else {
-  //       throw Error('Unable to create a scheduling spec goal');
-  //     }
-  //   } catch (e) {
-  //     catchError(e as Error);
-  //     return null;
-  //   }
-  // },
+      const data = await reqHasura<SchedulingGoalPlanSpecification>(
+        gql.CREATE_SCHEDULING_GOAL_PLAN_SPECIFICATION,
+        { spec_goal },
+        user,
+      );
+      const { createSchedulingSpecGoal } = data;
+      if (createSchedulingSpecGoal != null) {
+        const { specification_id } = createSchedulingSpecGoal;
+        showSuccessToast('New Scheduling Goal Invocation Created Successfully');
+        return specification_id;
+      } else {
+        throw Error('Unable to create a scheduling spec goal invocation');
+      }
+    } catch (e) {
+      catchError(e as Error);
+      showFailureToast('Scheduling Goal Invocation Creation Failed');
+      return null;
+    }
+  },
 
   async createSchedulingPlanSpecification(
     spec: SchedulingPlanSpecificationInsertInput,
@@ -1629,6 +1645,34 @@ const effects = {
     }
 
     return false;
+  },
+
+  async createWorkspace(workspaceNames: string[], user: User | null): Promise<Workspace | null> {
+    try {
+      if (!queryPermissions.CREATE_WORKSPACE(user)) {
+        throwPermissionError('create a workspace');
+      }
+
+      const { confirm, value } = await showWorkspaceModal(workspaceNames);
+
+      if (confirm && value) {
+        const workspace = value;
+        const data = await reqHasura<Workspace>(gql.CREATE_WORKSPACE, { workspace }, user);
+        const { createWorkspace } = data;
+
+        if (createWorkspace != null) {
+          showSuccessToast('Workspace Created Successfully');
+          return createWorkspace;
+        } else {
+          throw Error(`Unable to create workspace "${workspace.name}"`);
+        }
+      }
+    } catch (e) {
+      catchError('Workspace Create Failed', e as Error);
+      showFailureToast('Workspace Create Failed');
+    }
+
+    return null;
   },
 
   async deleteActivityDirective(id: ActivityDirectiveId, plan: Plan, user: User | null): Promise<boolean> {
@@ -2251,20 +2295,20 @@ const effects = {
     }
   },
 
-  async deleteParcelToParameterDictionaries(
+  async deleteParcelToDictionaryAssociations(
     parcelToParameterDictionariesToDelete: ParcelToParameterDictionary[],
     user: User | null,
   ): Promise<number | null> {
     try {
-      if (!queryPermissions.DELETE_PARCEL_TO_PARAMETER_DICTIONARIES(user)) {
-        throwPermissionError('delete parcel to parameter dictionaries');
+      if (!queryPermissions.DELETE_PARCEL_TO_DICTIONARY_ASSOCIATION(user)) {
+        throwPermissionError('delete parcel to dictionary association');
       }
 
       const parcelIds = parcelToParameterDictionariesToDelete.map(p => p.parcel_id);
       const parameterDictionaryIds = parcelToParameterDictionariesToDelete.map(p => p.parameter_dictionary_id);
 
       const data = await reqHasura<{ affected_rows: number }>(
-        gql.DELETE_PARCEL_TO_PARAMETER_DICTIONARIES,
+        gql.DELETE_PARCEL_TO_DICTIONARY_ASSOCIATION,
         { parameterDictionaryIds, parcelIds },
         user,
       );
@@ -2275,17 +2319,17 @@ const effects = {
         const { affected_rows } = delete_parcel_to_parameter_dictionary;
 
         if (affected_rows !== parameterDictionaryIds.length) {
-          throw Error('Some parcel to parameter dictionaries were not successfully deleted');
+          throw Error('Some parcel to dictionary associations were not successfully deleted');
         }
 
-        showSuccessToast('Parcel to parameter dictionaries updated Successfully');
+        showSuccessToast('Parcel to dictionary association deleted Successfully');
         return affected_rows;
       } else {
-        throw Error('Unable to delete parcel to parameter dictionaries');
+        throw Error('Unable to delete parcel to dictionary associations');
       }
     } catch (e) {
-      catchError('Delete parcel to parameter dictionaries failed', e as Error);
-      showFailureToast('Delete parcel to parameter dictionaries failed');
+      catchError('Delete parcel to dictionary associations failed', e as Error);
+      showFailureToast('Delete parcel to dictionary associations failed');
       return null;
     }
   },
@@ -2460,6 +2504,36 @@ const effects = {
     }
   },
 
+  async deleteSchedulingGoalInvocation(
+    plan: Plan,
+    schedulingSpecificationId: number,
+    goalInvocationIdsToDelete: (number | undefined)[],
+    user: User | null,
+  ) {
+    try {
+      if (!queryPermissions.UPDATE_SCHEDULING_GOAL_PLAN_SPECIFICATIONS(user, plan)) {
+        throwPermissionError('update this scheduling goal plan specification');
+      }
+      const { deleteConstraintPlanSpecifications } = await reqHasura(
+        gql.DELETE_SCHEDULING_GOAL_INVOCATIONS,
+        {
+          goalInvocationIdsToDelete,
+          specificationId: schedulingSpecificationId,
+        },
+        user,
+      );
+
+      if (deleteConstraintPlanSpecifications !== null) {
+        showSuccessToast(`Scheduling Goals Updated Successfully`);
+      } else {
+        throw Error('Unable to update the scheduling goal specifications for the plan');
+      }
+    } catch (e) {
+      catchError('Scheduling Goal Plan Specifications Update Failed', e as Error);
+      showFailureToast('Scheduling Goal Plan Specifications Update Failed');
+    }
+  },
+
   async deleteSequenceAdaptation(id: number, user: User | null): Promise<void> {
     try {
       if (!queryPermissions.DELETE_SEQUENCE_ADAPTATION(user)) {
@@ -2540,6 +2614,30 @@ const effects = {
     }
   },
 
+  async deleteTimelineHorizontalGuides(timelineId?: number | null, rowId?: number | null) {
+    const { confirm } = await showConfirmModal(
+      'Delete',
+      `Are you sure you want to delete all horizontal guides for this row?`,
+      'Delete Rows',
+      true,
+    );
+    if (confirm) {
+      viewUpdateRow('horizontalGuides', [], timelineId, rowId);
+    }
+  },
+
+  async deleteTimelineLayers(timelineId?: number | null, rowId?: number | null) {
+    const { confirm } = await showConfirmModal(
+      'Delete',
+      `Are you sure you want to delete all layers in this row?`,
+      'Delete Rows',
+      true,
+    );
+    if (confirm) {
+      viewUpdateRow('layers', [], timelineId, rowId);
+    }
+  },
+
   async deleteTimelineRow(row: Row, rows: Row[], timelineId: number | null) {
     const { confirm } = await showConfirmModal(
       'Delete',
@@ -2550,6 +2648,42 @@ const effects = {
     if (confirm) {
       const filteredRows = rows.filter(r => r.id !== row.id);
       viewUpdateTimeline('rows', filteredRows, timelineId);
+    }
+  },
+
+  async deleteTimelineRows(timelineId: number | null) {
+    const { confirm } = await showConfirmModal(
+      'Delete',
+      `Are you sure you want to delete all timeline rows?`,
+      'Delete Rows',
+      true,
+    );
+    if (confirm) {
+      viewUpdateTimeline('rows', [], timelineId);
+    }
+  },
+
+  async deleteTimelineVerticalGuides(timelineId: number | null) {
+    const { confirm } = await showConfirmModal(
+      'Delete',
+      `Are you sure you want to delete all vertical guides?`,
+      'Delete Rows',
+      true,
+    );
+    if (confirm) {
+      viewUpdateTimeline('verticalGuides', [], timelineId);
+    }
+  },
+
+  async deleteTimelineYAxes(timelineId?: number | null, rowId?: number | null) {
+    const { confirm } = await showConfirmModal(
+      'Delete',
+      `Are you sure you want to delete all y axes for this row?`,
+      'Delete Rows',
+      true,
+    );
+    if (confirm) {
+      viewUpdateRow('yAxes', [], timelineId, rowId);
     }
   },
 
@@ -2698,6 +2832,38 @@ const effects = {
     return false;
   },
 
+  async editWorkspace(workspace: Workspace, workspaceNames: string[], user: User | null): Promise<Workspace | null> {
+    try {
+      if (!queryPermissions.UPDATE_WORKSPACE(user, workspace)) {
+        throwPermissionError('update a workspace');
+      }
+
+      const { confirm, value } = await showWorkspaceModal(workspaceNames, workspace.name);
+
+      if (confirm && value) {
+        const updatedName = value;
+        const data = await reqHasura<Workspace>(
+          gql.UPDATE_WORKSPACE,
+          { id: workspace.id, workspace: updatedName },
+          user,
+        );
+        const { updatedWorkspace } = data;
+
+        if (updatedWorkspace != null) {
+          showSuccessToast('Workspace Updated Successfully');
+          return updatedWorkspace;
+        } else {
+          throw Error(`Unable to update workspace "${workspace.name}"`);
+        }
+      }
+    } catch (e) {
+      catchError('Workspace Update Failed', e as Error);
+      showFailureToast('Workspace Update Failed');
+    }
+
+    return null;
+  },
+
   async expand(
     expansionSetId: number,
     simulationDatasetId: number,
@@ -2723,6 +2889,23 @@ const effects = {
       catchError('Plan Expansion Failed', e as Error);
       planExpansionStatus.set(Status.Failed);
       showFailureToast('Plan Expansion Failed');
+    }
+  },
+
+  async getActivitiesForPlan(planId: number, user: User | null): Promise<ActivityDirectiveDB[]> {
+    try {
+      const query = convertToQuery(gql.SUB_ACTIVITY_DIRECTIVES);
+      const data = await reqHasura<ActivityDirectiveDB[]>(query, { planId }, user);
+
+      const { activity_directives } = data;
+      if (activity_directives != null) {
+        return activity_directives;
+      } else {
+        throw Error('Unable to retrieve activities for plan');
+      }
+    } catch (e) {
+      catchError(e as Error);
+      return [];
     }
   },
 
@@ -2897,6 +3080,7 @@ const effects = {
         simulationEvents.push({
           dense_time: event.transaction_index + '.0' + event.causal_time,
           id: simulationEvents.length,
+          span_id: event.span_id,
           start_offset: event.real_time,
           topic: topicById[event.topic_index].name,
           value: typeof event.value === 'string' ? event.value : JSON.stringify(event.value),
@@ -3016,6 +3200,26 @@ const effects = {
     } catch (e) {
       catchError(e as Error);
       return [];
+    }
+  },
+
+  async getFileName(fileId: number, user: User | null): Promise<string | null> {
+    try {
+      if (!queryPermissions.GET_UPLOADED_FILENAME(user)) {
+        throwPermissionError('get the requested filename');
+      }
+      const data = (await reqHasura<[{ name: string }]>(gql.GET_UPLOADED_FILENAME, { id: fileId }, user))[
+        'uploaded_file'
+      ];
+
+      if (data) {
+        const { name } = data[0];
+        return name.replace(/(?:-[a-zA-Z0-9]+){2}(\.[a-z]+)?$/, '$1');
+      }
+      return null;
+    } catch (e) {
+      catchError(e as Error);
+      return null;
     }
   },
 
@@ -3170,6 +3374,19 @@ const effects = {
     }
   },
 
+  async getPlanLatestSimulation(planId: number, user: User | null): Promise<Simulation | null> {
+    const query = convertToQuery(gql.SUB_SIMULATION);
+    const data = await reqHasura<Simulation[]>(query, { planId }, user);
+
+    const { simulation } = data;
+
+    if (simulation) {
+      return simulation[0];
+    }
+
+    return null;
+  },
+
   async getPlanMergeConflictingActivities(
     merge_request_id: number,
     user: User | null,
@@ -3311,6 +3528,82 @@ const effects = {
       catchError(e as Error);
       return { models: [], plans: [] };
     }
+  },
+
+  async getQualifiedPlanParts(
+    planId: number,
+    user: User | null,
+    progressCallback: (progress: number) => void,
+    signal?: AbortSignal,
+  ): Promise<{
+    activities: ActivityDirectiveDB[];
+    plan: Plan;
+    simulationArguments: ArgumentsMap;
+  } | null> {
+    try {
+      const plan = await effects.getPlan(planId, user);
+
+      if (plan) {
+        const simulation: Simulation | null = await effects.getPlanLatestSimulation(plan.id, user);
+        const simulationArguments: ArgumentsMap = simulation
+          ? {
+              ...simulation.template?.arguments,
+              ...simulation.arguments,
+            }
+          : {};
+
+        const activities: ActivityDirectiveDB[] = (await effects.getActivitiesForPlan(plan.id, user)) ?? [];
+
+        let totalProgress = 0;
+        const numOfDirectives = activities.length;
+
+        const qualifiedActivityDirectives = (
+          await Promise.all(
+            activities.map(async activityDirective => {
+              if (plan) {
+                const effectiveArguments = await effects.getEffectiveActivityArguments(
+                  plan?.model_id,
+                  activityDirective.type,
+                  activityDirective.arguments,
+                  user,
+                  signal,
+                );
+
+                totalProgress++;
+                progressCallback((totalProgress / numOfDirectives) * 100);
+
+                return {
+                  ...activityDirective,
+                  arguments: effectiveArguments?.arguments ?? activityDirective.arguments,
+                };
+              }
+
+              totalProgress++;
+              progressCallback((totalProgress / numOfDirectives) * 100);
+
+              return activityDirective;
+            }),
+          )
+        ).sort((directiveA, directiveB) => {
+          if (directiveA.id < directiveB.id) {
+            return -1;
+          }
+          if (directiveA.id > directiveB.id) {
+            return 1;
+          }
+          return 0;
+        });
+
+        return {
+          activities: qualifiedActivityDirectives,
+          plan,
+          simulationArguments,
+        };
+      }
+    } catch (e) {
+      catchError(e as Error);
+    }
+    return null;
   },
 
   getResource(
@@ -3805,6 +4098,53 @@ const effects = {
       return generateDefaultView(activityTypes, resourceTypes);
     } catch (e) {
       catchError(e as Error);
+      return null;
+    }
+  },
+
+  async importPlan(
+    name: string,
+    modelId: number,
+    startTime: string,
+    endTime: string,
+    simulationTemplateId: number | null,
+    tagIds: number[],
+    files: FileList,
+    user: User | null,
+  ): Promise<PlanSlim | null> {
+    try {
+      if (!gatewayPermissions.IMPORT_PLAN(user)) {
+        throwPermissionError('import a plan');
+      }
+
+      creatingPlan.set(true);
+
+      const file: File = files[0];
+
+      const duration = getIntervalFromDoyRange(startTime, endTime);
+
+      const body = new FormData();
+      body.append('name', `${name}`);
+      body.append('model_id', `${modelId}`);
+      body.append('start_time', `${startTime}`);
+      body.append('duration', `${duration}`);
+      if (simulationTemplateId !== null) {
+        body.append('simulation_template_id', `${simulationTemplateId}`);
+      }
+      body.append('tags', JSON.stringify(tagIds));
+      body.append('plan_file', file, file.name);
+
+      const createdPlan = await reqGateway<PlanSlim | null>('/importPlan', 'POST', body, user, true);
+
+      creatingPlan.set(false);
+      if (createdPlan != null) {
+        return createdPlan;
+      }
+
+      return null;
+    } catch (e) {
+      catchError(e as Error);
+      creatingPlan.set(false);
       return null;
     }
   },
@@ -5084,8 +5424,7 @@ const effects = {
 
   async updateSchedulingGoalPlanSpecification(
     plan: Plan,
-    schedulingSpecificationId: number,
-    schedulingGoalPlanSpecification: SchedulingGoalPlanSpecInsertInput,
+    schedulingGoalPlanSpecification: SchedulingGoalPlanSpecSetInput,
     user: User | null,
   ) {
     try {
@@ -5094,7 +5433,7 @@ const effects = {
       }
       const {
         enabled,
-        goal_id: goalId,
+        goal_invocation_id,
         goal_revision: revision,
         priority,
         simulate_after: simulateAfter,
@@ -5102,7 +5441,14 @@ const effects = {
 
       const { updateSchedulingGoalPlanSpecification } = await reqHasura(
         gql.UPDATE_SCHEDULING_GOAL_PLAN_SPECIFICATION,
-        { enabled, id: goalId, priority, revision, simulateAfter, specificationId: schedulingSpecificationId },
+        {
+          arguments: schedulingGoalPlanSpecification.arguments,
+          enabled,
+          goal_invocation_id,
+          priority,
+          revision,
+          simulateAfter,
+        },
         user,
       );
 
@@ -5119,8 +5465,7 @@ const effects = {
 
   async updateSchedulingGoalPlanSpecifications(
     plan: Plan,
-    schedulingSpecificationId: number,
-    goalSpecsToUpdate: SchedulingGoalPlanSpecInsertInput[],
+    goalSpecsToInsert: SchedulingGoalPlanSpecInsertInput[],
     goalSpecIdsToDelete: number[],
     user: User | null,
   ) {
@@ -5128,17 +5473,16 @@ const effects = {
       if (!queryPermissions.UPDATE_SCHEDULING_GOAL_PLAN_SPECIFICATIONS(user, plan)) {
         throwPermissionError('update this scheduling goal plan specification');
       }
-      const { deleteConstraintPlanSpecifications, updateSchedulingGoalPlanSpecifications } = await reqHasura(
+      const { deleteConstraintPlanSpecifications, insertSchedulingGoalPlanSpecifications } = await reqHasura(
         gql.UPDATE_SCHEDULING_GOAL_PLAN_SPECIFICATIONS,
         {
           goalSpecIdsToDelete,
-          goalSpecsToUpdate,
-          specificationId: schedulingSpecificationId,
+          goalSpecsToInsert,
         },
         user,
       );
 
-      if (updateSchedulingGoalPlanSpecifications !== null || deleteConstraintPlanSpecifications !== null) {
+      if (insertSchedulingGoalPlanSpecifications !== null || deleteConstraintPlanSpecifications !== null) {
         showSuccessToast(`Scheduling Goals Updated Successfully`);
       } else {
         throw Error('Unable to update the scheduling goal specifications for the plan');
@@ -5327,9 +5671,11 @@ const effects = {
     type: DictionaryTypes,
     user: User | null,
   ): Promise<CommandDictionary | ChannelDictionary | ParameterDictionary | null> {
+    const typeString = type.charAt(0).toUpperCase() + type.slice(1);
+
     try {
       if (!queryPermissions.CREATE_DICTIONARY(user)) {
-        throwPermissionError('upload a command dictionary');
+        throwPermissionError(`upload a ${typeString} dictionary`);
       }
 
       const data = await reqHasura<CommandDictionary | ChannelDictionary | ParameterDictionary>(
@@ -5341,12 +5687,12 @@ const effects = {
       const { createDictionary: newDictionary } = data;
 
       if (newDictionary === null) {
-        throw Error('Unable to upload command dictionary');
+        throw Error(`Unable to upload ${typeString} Dictionary`);
       }
 
       return newDictionary;
     } catch (e) {
-      catchError('Command Dictionary Upload Failed', e as Error);
+      catchError(`${typeString} Dictionary Upload Failed`, e as Error);
       return null;
     }
   },

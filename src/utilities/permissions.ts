@@ -2,7 +2,7 @@ import { base } from '$app/paths';
 import type { ActivityDirective, ActivityPreset } from '../types/activity';
 import type { User, UserRole } from '../types/app';
 import type { ReqAuthResponse } from '../types/auth';
-import type { ConstraintDefinition, ConstraintMetadata } from '../types/constraint';
+import type { ConstraintDefinition, ConstraintMetadata, ConstraintRun } from '../types/constraint';
 import type { ExpansionRule, ExpansionSequence, ExpansionSet } from '../types/expansion';
 import type { Model } from '../types/model';
 import type {
@@ -22,7 +22,7 @@ import type {
   SchedulingGoalDefinition,
   SchedulingGoalMetadata,
 } from '../types/scheduling';
-import type { Parcel, UserSequence } from '../types/sequencing';
+import type { Parcel, UserSequence, Workspace } from '../types/sequencing';
 import type { Simulation, SimulationTemplate } from '../types/simulation';
 import type { Tag } from '../types/tags';
 import type { View, ViewSlim } from '../types/view';
@@ -285,7 +285,8 @@ async function changeUserRole(role: UserRole): Promise<void> {
   }
 }
 
-const queryPermissions = {
+type GQLKeys = keyof typeof gql;
+const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => boolean> = {
   APPLY_PRESET_TO_ACTIVITY: (
     user: User | null,
     plan: PlanWithOwners,
@@ -430,6 +431,9 @@ const queryPermissions = {
   CREATE_VIEW: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_VIEW], user);
   },
+  CREATE_WORKSPACE: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.INSERT_WORKSPACE], user);
+  },
   DELETE_ACTIVITY_DIRECTIVES: (user: User | null, plan: PlanWithOwners): boolean => {
     return (
       isUserAdmin(user) ||
@@ -513,8 +517,8 @@ const queryPermissions = {
   DELETE_PARCEL: (user: User | null, parcel: AssetWithOwner<Parcel>): boolean => {
     return isUserAdmin(user) || (getPermission([Queries.DELETE_PARCEL], user) && isUserOwner(user, parcel));
   },
-  DELETE_PARCEL_TO_PARAMETER_DICTIONARIES: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission([Queries.DELETE_PARCEL_TO_PARAMETER_DICTIONARY], user);
+  DELETE_PARCEL_TO_DICTIONARY_ASSOCIATION: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.DELETE_PARCEL_TO_DICTIONARY_ASSOCIATION], user);
   },
   DELETE_PLAN: (user: User | null, plan: PlanWithOwners): boolean => {
     return (
@@ -554,6 +558,9 @@ const queryPermissions = {
   DELETE_SCHEDULING_CONDITION_MODEL_SPECIFICATIONS: () => true,
   DELETE_SCHEDULING_CONDITION_PLAN_SPECIFICATIONS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.DELETE_SCHEDULING_SPECIFICATION_CONDITIONS], user);
+  },
+  DELETE_SCHEDULING_GOAL_INVOCATIONS: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.DELETE_SCHEDULING_SPECIFICATION_GOALS], user);
   },
   DELETE_SCHEDULING_GOAL_METADATA: (
     user: User | null,
@@ -770,6 +777,9 @@ const queryPermissions = {
   },
   SUB_CONSTRAINT_DEFINITION: () => true,
   SUB_CONSTRAINT_PLAN_SPECIFICATIONS: () => true,
+  SUB_CONSTRAINT_RUNS: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.CONSTRAINT_RUN], user);
+  },
   SUB_EXPANSION_RULES: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.EXPANSION_RULES], user);
   },
@@ -808,6 +818,9 @@ const queryPermissions = {
   SUB_SCHEDULING_GOALS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.SCHEDULING_GOAL_METADATAS], user);
   },
+  SUB_SCHEDULING_GOAL_INVOCATIONS: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.SCHEDULING_GOAL_METADATAS], user);
+  },
   SUB_SCHEDULING_PLAN_SPECIFICATION: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.SCHEDULING_SPECIFICATION], user);
   },
@@ -832,6 +845,9 @@ const queryPermissions = {
   },
   SUB_VIEWS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.VIEWS], user);
+  },
+  SUB_WORKSPACES: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.WORKSPACES], user);
   },
   UPDATE_ACTIVITY_DIRECTIVE: (user: User | null, plan: PlanWithOwners): boolean => {
     return (
@@ -1047,15 +1063,31 @@ const queryPermissions = {
   UPDATE_VIEW: (user: User | null, view: AssetWithOwner<View>): boolean => {
     return isUserAdmin(user) || (getPermission([Queries.UPDATE_VIEW], user) && isUserOwner(user, view));
   },
+  UPDATE_WORKSPACE: (user: User | null, workspace: AssetWithOwner<Workspace>): boolean => {
+    return isUserAdmin(user) || (getPermission([Queries.UPDATE_WORKSPACE], user) && isUserOwner(user, workspace));
+  },
   VALIDATE_ACTIVITY_ARGUMENTS: () => true,
 };
 
-type ShapeOf<T> = Record<keyof T, any>;
-type AssertKeysEqual<X extends ShapeOf<Y>, Y extends ShapeOf<X>> = never;
-type GQLKeys = Record<keyof typeof gql, any>;
-type QueryKeys = Record<keyof typeof queryPermissions, any>;
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-type Assertion = AssertKeysEqual<GQLKeys, QueryKeys>;
+const gatewayPermissions = {
+  IMPORT_PLAN: (user: User | null) => {
+    return (
+      isUserAdmin(user) ||
+      getPermission(
+        [
+          Queries.INSERT_PLAN,
+          Queries.INSERT_PLAN_TAGS,
+          Queries.INSERT_ACTIVITY_DIRECTIVE,
+          Queries.UPDATE_ACTIVITY_DIRECTIVE,
+          Queries.UPDATE_SIMULATIONS,
+          Queries.TAGS,
+          Queries.DELETE_PLAN,
+        ],
+        user,
+      )
+    );
+  },
+};
 
 type PlanAssetCreatePermissionCheck = (user: User | null, plan: PlanWithOwners) => boolean;
 
@@ -1094,6 +1126,10 @@ interface CRUDPermission<T = null> extends BaseCRUDPermission<T> {
   canDelete: UpdatePermissionCheck<T>;
   canRead: ReadPermissionCheck<T>;
   canUpdate: UpdatePermissionCheck<T>;
+}
+
+interface PlanCRUDPermission extends CRUDPermission<PlanWithOwners> {
+  canImport: CreatePermissionCheck;
 }
 
 interface PlanBranchCRUDPermission {
@@ -1150,8 +1186,8 @@ interface PlanSnapshotCRUDPermission extends Omit<PlanAssetCRUDPermission<PlanSn
   canRestore: RolePlanPermissionCheck;
 }
 
-interface ConstraintPlanSpecCRUDPermission extends PlanSpecificationCRUDPermission {
-  canCheck: RolePlanPermissionCheck;
+interface ConstraintRunCRUDPermission extends Omit<CRUDPermission<ConstraintRun>, 'canCreate'> {
+  canCreate: RolePlanPermissionCheck;
 }
 
 interface ExpansionSetsCRUDPermission<T = null> extends Omit<CRUDPermission<T>, 'canCreate'> {
@@ -1174,16 +1210,19 @@ interface AssociationCRUDPermission<M, D> extends CRUDPermission<AssetWithOwner<
 interface FeaturePermissions {
   activityDirective: PlanAssetCRUDPermission<ActivityDirective>;
   activityPresets: PlanActivityPresetsCRUDPermission;
+  channelDictionary: CRUDPermission<void>;
   commandDictionary: CRUDPermission<void>;
+  constraintRuns: ConstraintRunCRUDPermission;
   constraints: AssociationCRUDPermission<ConstraintMetadata, ConstraintDefinition>;
   constraintsModelSpec: ModelSpecificationCRUDPermission;
-  constraintsPlanSpec: ConstraintPlanSpecCRUDPermission;
+  constraintsPlanSpec: PlanSpecificationCRUDPermission;
   expansionRules: CRUDPermission<AssetWithOwner>;
   expansionSequences: ExpansionSequenceCRUDPermission<AssetWithOwner<ExpansionSequence>>;
   expansionSets: ExpansionSetsCRUDPermission<AssetWithOwner<ExpansionSet>>;
   model: CRUDPermission<void>;
+  parameterDictionary: CRUDPermission<void>;
   parcels: CRUDPermission<AssetWithOwner<Parcel>>;
-  plan: CRUDPermission<PlanWithOwners>;
+  plan: PlanCRUDPermission;
   planBranch: PlanBranchCRUDPermission;
   planCollaborators: PlanCollaboratorsCRUDPermission;
   planSnapshot: PlanSnapshotCRUDPermission;
@@ -1193,11 +1232,13 @@ interface FeaturePermissions {
   schedulingGoals: AssociationCRUDPermission<SchedulingGoalMetadata, SchedulingGoalDefinition>;
   schedulingGoalsModelSpec: ModelSpecificationCRUDPermission;
   schedulingGoalsPlanSpec: SchedulingCRUDPermission<AssetWithOwner<SchedulingGoalMetadata>>;
+  sequenceAdaptation: CRUDPermission<void>;
   sequences: CRUDPermission<AssetWithOwner<UserSequence>>;
   simulation: RunnableCRUDPermission<AssetWithOwner<Simulation>>;
   simulationTemplates: PlanSimulationTemplateCRUDPermission;
   tags: CRUDPermission<Tag>;
   view: CRUDPermission<ViewSlim>;
+  workspace: CRUDPermission<AssetWithOwner<Workspace>>;
 }
 
 const featurePermissions: FeaturePermissions = {
@@ -1215,10 +1256,22 @@ const featurePermissions: FeaturePermissions = {
     canUnassign: (user, plan) => queryPermissions.DELETE_PRESET_TO_DIRECTIVE(user, plan),
     canUpdate: (user, _plan, preset) => queryPermissions.UPDATE_ACTIVITY_PRESET(user, preset),
   },
+  channelDictionary: {
+    canCreate: user => queryPermissions.CREATE_DICTIONARY(user),
+    canDelete: user => queryPermissions.DELETE_CHANNEL_DICTIONARY(user),
+    canRead: () => false, // Not implemented
+    canUpdate: () => false, // Not implemented
+  },
   commandDictionary: {
     canCreate: user => queryPermissions.CREATE_DICTIONARY(user),
     canDelete: user => queryPermissions.DELETE_COMMAND_DICTIONARY(user),
     canRead: () => false, // Not implemented
+    canUpdate: () => false, // Not implemented
+  },
+  constraintRuns: {
+    canCreate: (user, plan, model) => queryPermissions.CHECK_CONSTRAINTS(user, plan, model),
+    canDelete: () => false, // Not implemented
+    canRead: user => queryPermissions.SUB_CONSTRAINT_RUNS(user),
     canUpdate: () => false, // Not implemented
   },
   constraints: {
@@ -1232,7 +1285,6 @@ const featurePermissions: FeaturePermissions = {
     canUpdate: user => queryPermissions.UPDATE_CONSTRAINT_MODEL_SPECIFICATIONS(user),
   },
   constraintsPlanSpec: {
-    canCheck: (user, plan, model) => queryPermissions.CHECK_CONSTRAINTS(user, plan, model),
     canRead: user => queryPermissions.SUB_CONSTRAINTS(user),
     canUpdate: (user, plan) => queryPermissions.UPDATE_CONSTRAINT_PLAN_SPECIFICATIONS(user, plan),
   },
@@ -1261,6 +1313,12 @@ const featurePermissions: FeaturePermissions = {
     canRead: user => queryPermissions.GET_PLANS_AND_MODELS(user),
     canUpdate: user => queryPermissions.UPDATE_MODEL(user),
   },
+  parameterDictionary: {
+    canCreate: user => queryPermissions.CREATE_DICTIONARY(user),
+    canDelete: user => queryPermissions.DELETE_PARAMETER_DICTIONARY(user),
+    canRead: () => false, // Not implemented
+    canUpdate: () => false, // Not implemented
+  },
   parcels: {
     canCreate: user => queryPermissions.CREATE_PARCEL(user),
     canDelete: (user, parcel) => queryPermissions.DELETE_PARCEL(user, parcel),
@@ -1270,6 +1328,7 @@ const featurePermissions: FeaturePermissions = {
   plan: {
     canCreate: user => queryPermissions.CREATE_PLAN(user),
     canDelete: (user, plan) => queryPermissions.DELETE_PLAN(user, plan),
+    canImport: user => gatewayPermissions.IMPORT_PLAN(user),
     canRead: user => queryPermissions.GET_PLAN(user),
     canUpdate: (user, plan) => queryPermissions.UPDATE_PLAN(user, plan),
   },
@@ -1333,6 +1392,12 @@ const featurePermissions: FeaturePermissions = {
       queryPermissions.UPDATE_SCHEDULING_SPECIFICATION(user, plan) && queryPermissions.SCHEDULE(user, plan, model),
     canUpdate: (user, plan) => queryPermissions.UPDATE_SCHEDULING_GOAL_PLAN_SPECIFICATION(user, plan),
   },
+  sequenceAdaptation: {
+    canCreate: user => queryPermissions.CREATE_SEQUENCE_ADAPTATION(user),
+    canDelete: user => queryPermissions.DELETE_PARAMETER_DICTIONARY(user),
+    canRead: () => false, // Not implemented
+    canUpdate: () => false, // Not implemented
+  },
   sequences: {
     canCreate: user => queryPermissions.CREATE_USER_SEQUENCE(user),
     canDelete: (user, sequence) => queryPermissions.DELETE_USER_SEQUENCE(user, sequence),
@@ -1365,6 +1430,12 @@ const featurePermissions: FeaturePermissions = {
     canRead: user => queryPermissions.SUB_VIEWS(user),
     canUpdate: (user, view) => queryPermissions.UPDATE_VIEW(user, view),
   },
+  workspace: {
+    canCreate: user => queryPermissions.CREATE_WORKSPACE(user),
+    canDelete: () => false,
+    canRead: user => queryPermissions.SUB_WORKSPACES(user),
+    canUpdate: (user, workspace) => queryPermissions.UPDATE_WORKSPACE(user, workspace),
+  },
 };
 
 function hasNoAuthorization(user: User | null) {
@@ -1374,6 +1445,7 @@ function hasNoAuthorization(user: User | null) {
 export {
   changeUserRole,
   featurePermissions,
+  gatewayPermissions,
   hasNoAuthorization,
   isAdminRole,
   isPlanCollaborator,

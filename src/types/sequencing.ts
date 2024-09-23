@@ -1,5 +1,15 @@
+import type { Diagnostic } from '@codemirror/lint';
+import type { SyntaxNode } from '@lezer/common';
+import type {
+  ChannelDictionary as AmpcsChannelDictionary,
+  CommandDictionary as AmpcsCommandDictionary,
+  ParameterDictionary as AmpcsParameterDictionary,
+} from '@nasa-jpl/aerie-ampcs';
+import type { EditorView } from 'codemirror';
 import type { DictionaryTypes } from '../enums/dictionaryTypes';
+import type { ArgDelegator } from '../utilities/sequence-editor/extension-points';
 import type { UserId } from './app';
+import type { GlobalType } from './global-type';
 
 export type ChannelDictionary = {
   type: DictionaryTypes.CHANNEL;
@@ -14,7 +24,7 @@ export type ParameterDictionary = {
 } & DictionaryType;
 
 export type SequenceAdaptation = {
-  adaptation: string;
+  adaptation: ISequenceAdaptation;
   name: string;
   type: DictionaryTypes.ADAPTATION;
 } & DictionaryType;
@@ -27,6 +37,51 @@ export type DictionaryType = {
   updated_at: string;
   version: string;
 };
+
+export interface IOutputFormat {
+  fileExtension: string;
+  linter?: (
+    diagnostics: Diagnostic[],
+    commandDictionary: AmpcsCommandDictionary,
+    view: EditorView,
+    node: SyntaxNode,
+  ) => Diagnostic[];
+  name: string;
+  toOutputFormat?(
+    tree: any,
+    sequence: string,
+    commandDictionary: AmpcsCommandDictionary | null,
+    sequenceName: string,
+  ): Promise<string>;
+}
+
+export interface ISequenceAdaptation {
+  argDelegator?: ArgDelegator;
+  conditionalKeywords: { else: string; elseIf: string[]; endIf: string; if: string[] };
+  globals?: GlobalType[];
+  inputFormat: {
+    linter?: (
+      diagnostics: Diagnostic[],
+      commandDictionary: AmpcsCommandDictionary,
+      view: EditorView,
+      node: SyntaxNode,
+    ) => Diagnostic[];
+    name: string;
+    toInputFormat?(input: string): Promise<string>;
+  };
+  loopKeywords: { break: string; continue: string; endWhileLoop: string; whileLoop: string[] };
+  modifyOutput?: (
+    output: string,
+    parameterDictionaries: AmpcsParameterDictionary[],
+    channelDictionary: AmpcsChannelDictionary | null,
+  ) => any;
+  modifyOutputParse?: (
+    output: string,
+    parameterDictionaries: AmpcsParameterDictionary[],
+    channelDictionary: AmpcsChannelDictionary | null,
+  ) => any;
+  outputFormat: IOutputFormat[];
+}
 
 export type Parcel = {
   channel_dictionary_id: number | null;
@@ -76,6 +131,15 @@ export type UserSequence = {
   parcel_id: number;
   seq_json: SeqJson;
   updated_at: string;
+  workspace_id: number;
 };
 
 export type UserSequenceInsertInput = Omit<UserSequence, 'created_at' | 'id' | 'owner' | 'updated_at'>;
+
+export type Workspace = {
+  created_at: string;
+  id: number;
+  name: string;
+  owner: UserId;
+  updated_at: string;
+};

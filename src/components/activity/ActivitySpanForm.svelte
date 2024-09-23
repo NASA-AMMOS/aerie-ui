@@ -1,6 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+  import { plugins } from '../../stores/plugins';
   import type { ActivityType } from '../../types/activity';
   import type { User } from '../../types/app';
   import type { ExpansionSequence } from '../../types/expansion';
@@ -10,7 +11,7 @@
   import { getSpanRootParent } from '../../utilities/activities';
   import effects from '../../utilities/effects';
   import { getFormParameters } from '../../utilities/parameters';
-  import { getDoyTimeFromInterval, getUnixEpochTime } from '../../utilities/time';
+  import { formatDate } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import Collapse from '../Collapse.svelte';
   import Input from '../form/Input.svelte';
@@ -20,7 +21,6 @@
   export let activityTypes: ActivityType[] = [];
   export let filteredExpansionSequences: ExpansionSequence[] = [];
   export let modelId: number;
-  export let planStartTimeYmd: string;
   export let simulationDatasetId: number = -1;
   export let span: Span;
   export let spansMap: SpansMap = {};
@@ -28,7 +28,7 @@
   export let user: User | null;
 
   let activityType: ActivityType | null = null;
-  let endTimeDoy: string | null = null;
+  let endTime: string | null = null;
   let formParametersComputedAttributes: FormParameter[] = [];
   let formParameters: FormParameter[] = [];
   let hasComputedAttributes: boolean = false;
@@ -37,18 +37,18 @@
   let rootSpan: Span | null;
   let rootSpanHasChildren: boolean;
   let seqId: string | null;
-  let startTimeDoy: string;
+  let startTime: string;
 
   $: activityType = (activityTypes ?? []).find(({ name: activityTypeName }) => span.type === activityTypeName) ?? null;
-  $: rootSpan = getSpanRootParent(spansMap, span.id);
-  $: rootSpanHasChildren = (rootSpan && spanUtilityMaps.spanIdToChildIdsMap[rootSpan.id]?.length > 0) ?? false;
-  $: startTimeDoy = getDoyTimeFromInterval(planStartTimeYmd, span.start_offset);
+  $: rootSpan = getSpanRootParent(spansMap, span.span_id);
+  $: rootSpanHasChildren = (rootSpan && spanUtilityMaps.spanIdToChildIdsMap[rootSpan.span_id]?.length > 0) ?? false;
+
+  $: startTime = formatDate(new Date(span.startMs), $plugins.time.primary.format);
 
   $: if (span.duration) {
-    const startTimeISO = new Date(getUnixEpochTime(startTimeDoy)).toISOString();
-    endTimeDoy = getDoyTimeFromInterval(startTimeISO, span.duration);
+    endTime = formatDate(new Date(span.endMs), $plugins.time.primary.format);
   } else {
-    endTimeDoy = null;
+    endTime = null;
   }
 
   $: if (activityType && span.attributes.arguments) {
@@ -79,7 +79,7 @@
   }
 
   $: if (simulationDatasetId !== null) {
-    effects.getExpansionSequenceId(span.id, simulationDatasetId, user).then(newSeqId => (seqId = newSeqId));
+    effects.getExpansionSequenceId(span.span_id, simulationDatasetId, user).then(newSeqId => (seqId = newSeqId));
   }
 
   $: setFormParametersComputedAttributes(
@@ -107,9 +107,9 @@
 
   async function updateExpansionSequenceToActivity() {
     if (seqId === null) {
-      await effects.deleteExpansionSequenceToActivity(simulationDatasetId, span.id, user);
+      await effects.deleteExpansionSequenceToActivity(simulationDatasetId, span.span_id, user);
     } else {
-      await effects.insertExpansionSequenceToActivity(simulationDatasetId, span.id, seqId, user);
+      await effects.insertExpansionSequenceToActivity(simulationDatasetId, span.span_id, seqId, user);
     }
   }
 
@@ -137,7 +137,7 @@
     <Collapse title="Definition">
       <Input layout="inline">
         <label use:tooltip={{ content: 'ID', placement: 'top' }} for="id"> ID </label>
-        <input class="st-input w-100" disabled name="id" value={span.id} />
+        <input class="st-input w-100" disabled name="id" value={span.span_id} />
       </Input>
 
       <Input layout="inline">
@@ -168,13 +168,17 @@
       </Input>
 
       <Input layout="inline">
-        <label use:tooltip={{ content: 'Start Time (UTC)', placement: 'top' }} for="startTime">Start Time (UTC)</label>
-        <input class="st-input w-100" disabled name="startTime" value={startTimeDoy} />
+        <label use:tooltip={{ content: 'Start Time', placement: 'top' }} for="startTime">
+          Start Time ({$plugins.time.primary.label})
+        </label>
+        <input class="st-input w-100" disabled name="startTime" value={startTime} />
       </Input>
 
       <Input layout="inline">
-        <label use:tooltip={{ content: 'End Time (UTC)', placement: 'top' }} for="endTime">End Time (UTC)</label>
-        <input class="st-input w-100" disabled name="endTime" value={endTimeDoy ?? 'None'} />
+        <label use:tooltip={{ content: 'End Time', placement: 'top' }} for="endTime">
+          End Time ({$plugins.time.primary.label})
+        </label>
+        <input class="st-input w-100" disabled name="endTime" value={endTime ?? 'None'} />
       </Input>
     </Collapse>
   </fieldset>
@@ -205,8 +209,8 @@
     <Collapse title="Decomposition" defaultExpanded={rootSpanHasChildren}>
       {#if rootSpanHasChildren}
         <ActivityDecomposition
-          rootSpanId={rootSpan?.id}
-          selectedSpanId={span.id}
+          rootSpanId={rootSpan?.span_id}
+          selectedSpanId={span.span_id}
           {spanUtilityMaps}
           {spansMap}
           on:select
