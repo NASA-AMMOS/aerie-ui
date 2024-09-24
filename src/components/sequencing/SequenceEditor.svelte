@@ -255,7 +255,7 @@
     setSequenceAdaptation(undefined);
   }
 
-  async function sequenceUpdateListener(viewUpdate: ViewUpdate) {
+  async function sequenceUpdateListener(viewUpdate: ViewUpdate): Promise<void> {
     const sequence = viewUpdate.state.doc.toString();
     disableCopyAndExport = sequence === '';
     const tree = syntaxTree(viewUpdate.state);
@@ -272,7 +272,7 @@
     }
   }
 
-  function selectedCommandUpdateListener(viewUpdate: ViewUpdate) {
+  function selectedCommandUpdateListener(viewUpdate: ViewUpdate): void {
     // This is broken out into a different listener as debouncing this can cause cursor to move around
     const tree = syntaxTree(viewUpdate.state);
     // Command Node includes trailing newline and white space, move to next command
@@ -293,7 +293,7 @@
     },
   });
 
-  function highlightBlock(viewUpdate: ViewUpdate) {
+  function highlightBlock(viewUpdate: ViewUpdate): SyntaxNode[] {
     const tree = syntaxTree(viewUpdate.state);
     // Command Node includes trailing newline and white space, move to next command
     const selectionLine = viewUpdate.state.doc.lineAt(viewUpdate.state.selection.asSingle().main.from);
@@ -340,23 +340,24 @@
       constructor() {
         this.decorations = Decoration.none;
       }
-      update(update: ViewUpdate) {
-        if (update.selectionSet || update.docChanged || update.viewportChanged) {
-          const blocks = highlightBlock(update);
+      update(viewUpdate: ViewUpdate): DecorationSet | null {
+        if (viewUpdate.selectionSet || viewUpdate.docChanged || viewUpdate.viewportChanged) {
+          const blocks = highlightBlock(viewUpdate);
           this.decorations = Decoration.set(
             // codemirror requires marks to be in sorted order
             blocks.sort((a, b) => a.from - b.from).map(block => blockMark.range(block.from, block.to)),
           );
           return this.decorations;
         }
+        return null;
       }
     },
     {
-      decorations: spec => spec.decorations,
+      decorations: viewPluginSpecification => viewPluginSpecification.decorations,
     },
   );
 
-  function downloadOutputFormat(outputFormat: IOutputFormat) {
+  function downloadOutputFormat(outputFormat: IOutputFormat): void {
     const fileExtension = `${sequenceName}.${selectedOutputFormat?.fileExtension}`;
 
     if (outputFormat?.fileExtension === 'json') {
@@ -366,11 +367,11 @@
     }
   }
 
-  function downloadInputFormat() {
+  function downloadInputFormat(): void {
     downloadBlob(new Blob([editorOutputView.state.doc.toString()], { type: 'text/plain' }), `${sequenceName}.txt`);
   }
 
-  async function copyOutputFormatToClipboard() {
+  async function copyOutputFormatToClipboard(): Promise<void> {
     try {
       await navigator.clipboard.writeText(editorOutputView.state.doc.toString());
       showSuccessToast(`${selectedOutputFormat?.name} copied to clipboard`);
@@ -379,7 +380,7 @@
     }
   }
 
-  async function copyInputFormatToClipboard() {
+  async function copyInputFormatToClipboard(): Promise<void> {
     try {
       await navigator.clipboard.writeText(editorSequenceView.state.doc.toString());
       showSuccessToast(`${$inputFormat?.name} copied to clipboard`);
@@ -388,7 +389,7 @@
     }
   }
 
-  function toggleSeqJsonEditor() {
+  function toggleSeqJsonEditor(): void {
     toggleSeqJsonPreview = !toggleSeqJsonPreview;
   }
 </script>
