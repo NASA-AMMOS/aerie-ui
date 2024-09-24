@@ -14,7 +14,6 @@
     createExternalSourceTypeError,
     creatingExternalSource,
     externalSources,
-    externalSourceTypes,
     getExternalSourceMetadataError,
     parsingError,
     planDerivationGroupLinks,
@@ -37,7 +36,6 @@
     type ExternalSourceJson,
     type ExternalSourcePkey,
     type ExternalSourceSlim,
-    type ExternalSourceType,
     type ExternalSourceTypeInsertInput,
     type PlanDerivationGroup,
   } from '../../types/external-source';
@@ -211,8 +209,6 @@
 
   // For filtering purposes (modelled after TimelineEditorLayerFilter):
   let filterExpression: string = '';
-  let selectedFilters: ExternalSourceType[] = [{ name: '' }];
-  let filteredExternalSources: ExternalSourceSlim[] = [];
 
   // External source + derivation group creation variables
   let sourceInsert: ExternalSourceInsertInput;
@@ -294,21 +290,6 @@
   ];
 
   // Selected elements and values
-  // unfortunately very clunky, but it does correctly select all source types on page load as stores populate shortly AFTER the component loads,
-  //    so populating selectedFilters with the store values on component load always yields an empty list
-  $: if (selectedFilters.length === 1 && selectedFilters[0].name === '' && $externalSourceTypes.length > 0) {
-    selectedFilters = [...$externalSourceTypes];
-  }
-  $: filteredExternalSources = $externalSources.filter(externalSource => {
-    return selectedFilters.find(filter => filter.name === externalSource.source_type_name) !== undefined;
-  });
-  $: filteredTableExternalEvents = selectedEvents.filter(event => {
-    const filterTextLowerCase = externalEventsTableFilterString.toLowerCase();
-    const includesName = externalEventsTableFilterString.length
-      ? event.pkey.key.toLocaleLowerCase().includes(filterTextLowerCase)
-      : true;
-    return includesName;
-  });
   $: effects.getExternalEvents(selectedSource ? selectedSource.pkey : null, user).then(
     fetched =>
       (selectedEvents = fetched.map(externalEventsDB => {
@@ -495,13 +476,6 @@
         );
         // Following a successful mutation...
         if (createExternalSourceResponse !== undefined) {
-          // Manipulate current filter to ensure the newly uploaded external source's type is included
-          if (selectedFilters.find(filter => filter.name === sourceTypeInsert.name) === undefined) {
-            if (createExternalSourceResponse.upsertExternalSourceType?.name !== undefined) {
-              selectedFilters.push(createExternalSourceResponse.upsertExternalSourceType as ExternalSourceType);
-            }
-          }
-
           // Auto-select the new source
           selectedSource = {
             created_at: new Date().toISOString().replace('Z', '+00:00'), // technically not the exact time it shows up in the database
@@ -913,7 +887,7 @@
             singleItemDisplayText="External Source"
             pluralItemDisplayText="External Source"
             {filterExpression}
-            items={filteredExternalSources}
+            items={$externalSources}
             {user}
             getRowId={getRowIdExternalSourceSlim}
             on:rowClicked={({ detail }) => selectSource(detail.data)}
@@ -953,8 +927,9 @@
           {#if selectedSource}
             <div id="external-event-table">
               <ExternalEventsTable
-                items={filteredTableExternalEvents}
+                items={selectedEvents}
                 {user}
+                filterExpression={externalEventsTableFilterString}
                 bind:selectedItemId={selectedRowId}
                 on:selectionChanged={onSelectionChanged}
                 on:rowDoubleClicked={onSelectionChanged}

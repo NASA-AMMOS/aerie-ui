@@ -10,11 +10,12 @@
   import type { ExternalSourceSlim } from '../../types/external-source';
   import { getRowIdExternalEventWhole } from '../../utilities/externalEvents';
   import { formatDate } from '../../utilities/time';
-  import SingleActionDataGrid from '../ui/DataGrid/SingleActionDataGrid.svelte';
+  import BulkActionDataGrid from '../ui/DataGrid/BulkActionDataGrid.svelte';
 
   export let selectedItemId: ExternalEventId | null;
   export let items: ExternalEvent[];
   export let user: User | null;
+  export let filterExpression = '';
 
   const dispatch = createEventDispatcher<{
     rowDoubleClicked: void;
@@ -82,9 +83,12 @@
   let columnDefs = baseColumnDefs;
 </script>
 
-<SingleActionDataGrid
+<BulkActionDataGrid
   {columnDefs}
-  itemDisplayText="External Events"
+  hasDeletePermission={false}
+  singleItemDisplayText="External Events"
+  pluralItemDisplayText="External Events"
+  {filterExpression}
   {items}
   {user}
   getRowId={getRowIdExternalEventWhole}
