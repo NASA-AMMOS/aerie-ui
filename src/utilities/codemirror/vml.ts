@@ -15,9 +15,6 @@ import { parser } from './vml.grammar';
 
 export const TOKEN_ERROR = '⚠';
 
-export const TOKEN_WAIT = 'WAIT';
-export const TOKEN_WAIT_CHANGE = 'WAIT_CHANGE';
-
 const FoldBehavior: {
   [tokenName: string]: (node: SyntaxNode, _state: EditorState) => ReturnType<typeof foldInside>;
 } = {

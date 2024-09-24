@@ -44,6 +44,7 @@
     setupVmlLanguageSupport,
     vmlLinter,
   } from '../../utilities/codemirror/vml';
+  import { vmlTooltip } from '../../utilities/codemirror/vml-tooltip';
   import effects from '../../utilities/effects';
   import { downloadBlob, downloadJSON } from '../../utilities/generic';
   import { inputLinter, outputLinter } from '../../utilities/sequence-editor/extension-points';
@@ -151,6 +152,9 @@
           });
           editorSequenceView.dispatch({
             effects: compartmentSeqLinter.reconfigure(vmlLinter(commandDictionary)),
+          });
+          editorSequenceView.dispatch({
+            effects: compartmentSeqTooltip.reconfigure(vmlTooltip(parsedCommandDictionary)),
           });
         });
       } else {

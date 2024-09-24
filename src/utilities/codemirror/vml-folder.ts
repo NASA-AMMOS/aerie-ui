@@ -28,12 +28,6 @@ export function isPairedCommands(pair: unknown): pair is PairedCommands {
   return !!pc?.start && !!pc?.end;
 }
 
-// type BlockType = Readonly<{
-//   close: string;
-//   open: string[];
-//   partition?: string;
-// }>;
-
 const blocksForState = new WeakMap<EditorState, TreeState>();
 
 const blockOpeningStems: Set<string> = new Set([RULE_IF, RULE_ELSE_IF, RULE_ELSE]);
@@ -64,7 +58,6 @@ export function computeBlocks(state: EditorState): TreeState {
     syntaxTree(state).iterate({
       enter: node => {
         if (node.name === RULE_TIME_TAGGED_STATEMENT) {
-          // const statementCategory = node.node.getChild(RULE_STATEMENT)?.firstChild?.name;
           const statementCategory = node.node.firstChild?.nextSibling?.firstChild?.name;
           if (statementCategory && isBlockCommand(statementCategory)) {
             statementAndCategory.push([node.node, statementCategory]);
@@ -127,19 +120,6 @@ export function computeBlocks(state: EditorState): TreeState {
   return blocksForState.get(state)!;
 }
 
-// function blockFolder(stemNode: SyntaxNode, state: EditorState): { from: number; to: number } | null {
-//   const localBlock = computeBlocks(state)?.[stemNode.from];
-//   if (isPairedCommands(localBlock) && localBlock.startPos !== undefined && localBlock.endPos !== undefined) {
-//     // display lines that open and close block
-//     return {
-//       from: localBlock.startPos,
-//       to: localBlock.endPos,
-//     };
-//   }
-
-//   return null;
-// }
-
 export const vmlBlockFolder = foldService.of((state: EditorState, start, end) => {
   for (let node: SyntaxNode | null = syntaxTree(state).resolveInner(end, -1); node; node = node.parent) {
     if (node.from < start) {
@@ -154,20 +134,6 @@ export const vmlBlockFolder = foldService.of((state: EditorState, start, end) =>
         to: foo.endPos,
       };
     }
-
-    // generates a hard coded fold
-    // if (node.type.name === 'If') {
-    //   console.log(`folding checked ${start} ${node.type.name}`);
-    //   return {
-    //     from: 100,
-    //     to: 150,
-    //   };
-    // }
-
-    // const upto = findSectionEnd(node, heading);
-    // if (upto > end) {
-    //   return { from: end, to: upto };
-    // }
   }
 
   return null;
