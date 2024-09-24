@@ -51,7 +51,7 @@
     Function*
   }
   END_MODULE
-  End_lines
+  ( End_lines | EOF )
 }
 
 End_lines {
@@ -859,4 +859,5 @@ LOGICAL_NOT {
   @precedence { FULL_TIME_CONST, DAY_TIME_CONST, SHORT_TIME_CONST, SPACECRAFT_TIME_CONST, CONCAT, SYMBOL_CONST }
 
   END_OF_LINE { "\n" }
+  EOF { @eof }
 }
