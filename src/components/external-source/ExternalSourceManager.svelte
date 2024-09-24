@@ -712,23 +712,23 @@
                 {/if}
               </Collapse>
             </div>
-          </fieldset>
 
-          <button
-            class="st-button danger w-100"
-            style="margin-bottom:auto;"
-            use:permissionHandler={{
-              hasPermission: hasDeletePermission,
-              permissionError: deletePermissionError,
-            }}
-            on:click|stopPropagation={async () => {
-              if (selectedSource !== null) {
-                onDeleteExternalSource([selectedSource]);
-              }
-            }}
-          >
-            Delete external source
-          </button>
+            <button
+              class="st-button danger w-100"
+              style="margin-bottom:auto;"
+              use:permissionHandler={{
+                hasPermission: hasDeletePermission,
+                permissionError: deletePermissionError,
+              }}
+              on:click|stopPropagation={async () => {
+                if (selectedSource !== null) {
+                  onDeleteExternalSource([selectedSource]);
+                }
+              }}
+            >
+              Delete external source
+            </button>
+          </fieldset>
         </div>
       {:else}
         <form
@@ -765,7 +765,7 @@
 
             <fieldset class="file-upload-fieldset">
               {#if parsed}
-                <div style="padding-top:10px">
+                <div style="padding-top:12px">
                   <button class="st-button secondary w-100" type="reset">Dismiss</button>
                 </div>
               {/if}
