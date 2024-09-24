@@ -942,7 +942,7 @@
                     autocomplete="off"
                     class="st-input w-100"
                     name="filter-ee"
-                    placeholder={'Filter external events'}
+                    placeholder="Filter external events"
                   />
                 </Input>
               </div>

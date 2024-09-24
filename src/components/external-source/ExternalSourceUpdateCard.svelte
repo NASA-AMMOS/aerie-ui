@@ -73,9 +73,9 @@
     </div>
     <div class="card--body st-typography-body">
       {#each Object.keys(mappedSources) as sourceType}
-        <Collapse title={sourceType} tooltipContent={'Source Type'} defaultExpanded={true}>
+        <Collapse title={sourceType} tooltipContent="Source Type" defaultExpanded={true}>
           {#each Object.keys(mappedSources[sourceType]) as derivationGroup}
-            <Collapse title={derivationGroup} tooltipContent={'Derivation Group'} defaultExpanded={true}>
+            <Collapse title={derivationGroup} tooltipContent="Derivation Group" defaultExpanded={true}>
               {#each mappedSources[sourceType][derivationGroup] as source}
                 <div class="card--source-info">
                   <p

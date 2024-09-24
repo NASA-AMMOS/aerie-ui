@@ -86,7 +86,7 @@
                   autocomplete="off"
                   class="st-input w-100"
                   name="filter-ee"
-                  placeholder={'New Derivation Group Name'}
+                  placeholder="New Derivation Group Name"
                 />
                 <select
                   bind:value={newTypeSourceType}
@@ -114,7 +114,7 @@
                   autocomplete="off"
                   class="st-input w-100"
                   name="filter-ee"
-                  placeholder={'New External Source Type Name'}
+                  placeholder="New External Source Type Name"
                 />
                 <button class="st-button w-10" type="submit" on:click|preventDefault={onCreateExternalSourceType}>
                   Create
@@ -131,7 +131,7 @@
                   autocomplete="off"
                   class="st-input w-100"
                   name="filter-ee"
-                  placeholder={'New External Event Type Name'}
+                  placeholder="New External Event Type Name"
                 />
                 <button class="st-button w-10" type="submit" on:click|preventDefault={onCreateExternalEventType}>
                   Create
