@@ -110,7 +110,7 @@
   role="banner"
   on:contextmenu={e => dispatch('contextMenu', { e, origin: 'row-header' })}
 >
-  <DropTarget on:drop hint={'Add Filter'}>
+  <DropTarget on:drop hint="Add Filter">
     <div class="row-header-left-column">
       {#if expanded}
         {#if height > 60}
