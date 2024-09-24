@@ -1,8 +1,7 @@
-// export const T_IF = 'IF';
-// export const T_ELSE_IF = 'ELSE_IF';
-// export const T_ELSE = 'ELSE';
-// export const T_END_IF = 'END_IF';
-export const T_IF = 'If';
-export const T_ELSE_IF = 'Else_if';
-export const T_ELSE = 'Else';
-export const T_END_IF = 'End_if';
+export const RULE_IF = 'If';
+export const RULE_ELSE_IF = 'Else_if';
+export const RULE_ELSE = 'Else';
+export const RULE_END_IF = 'End_if';
+
+export const RULE_STATEMENT = 'Statement';
+export const RULE_TIME_TAGGED_STATEMENT = 'Time_tagged_statement';

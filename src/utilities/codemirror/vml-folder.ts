@@ -1,7 +1,7 @@
 import { foldService, syntaxTree } from '@codemirror/language';
 import type { EditorState } from '@codemirror/state';
 import type { SyntaxNode } from '@lezer/common';
-import { T_ELSE, T_ELSE_IF, T_END_IF, T_IF } from './vml-constants';
+import { RULE_ELSE, RULE_ELSE_IF, RULE_END_IF, RULE_IF, RULE_TIME_TAGGED_STATEMENT } from './vml-constants';
 
 type BlockStackNode = Readonly<{
   node: SyntaxNode;
@@ -36,9 +36,9 @@ export function isPairedCommands(pair: unknown): pair is PairedCommands {
 
 const blocksForState = new WeakMap<EditorState, TreeState>();
 
-const blockOpeningStems: Set<string> = new Set([T_IF, T_ELSE_IF, T_ELSE]);
+const blockOpeningStems: Set<string> = new Set([RULE_IF, RULE_ELSE_IF, RULE_ELSE]);
 
-const blockClosingStems: Set<string> = new Set([T_ELSE, T_ELSE_IF, T_END_IF]);
+const blockClosingStems: Set<string> = new Set([RULE_ELSE, RULE_ELSE_IF, RULE_END_IF]);
 
 export function isBlockCommand(stem: string): boolean {
   return blockOpeningStems.has(stem) || blockClosingStems.has(stem);
@@ -46,11 +46,11 @@ export function isBlockCommand(stem: string): boolean {
 
 function closesBlock(stem: string, blockStem: string) {
   switch (stem) {
-    case T_END_IF:
-      return [T_IF, T_ELSE_IF, T_ELSE].includes(blockStem);
-    case T_ELSE:
-    case T_ELSE_IF:
-      return [T_IF, T_ELSE_IF].includes(blockStem);
+    case RULE_END_IF:
+      return [RULE_IF, RULE_ELSE_IF, RULE_ELSE].includes(blockStem);
+    case RULE_ELSE:
+    case RULE_ELSE_IF:
+      return [RULE_IF, RULE_ELSE_IF].includes(blockStem);
   }
   return false;
 }
@@ -63,14 +63,17 @@ export function computeBlocks(state: EditorState): TreeState {
     const statementAndCategory: [SyntaxNode, string][] = [];
     syntaxTree(state).iterate({
       enter: node => {
-        if (node.name === 'Time_tagged_statement') {
-          const statementCategory = node.node.getChild('Statement')?.firstChild?.name;
+        if (node.name === RULE_TIME_TAGGED_STATEMENT) {
+          // const statementCategory = node.node.getChild(RULE_STATEMENT)?.firstChild?.name;
+          const statementCategory = node.node.firstChild?.nextSibling?.firstChild?.name;
           if (statementCategory && isBlockCommand(statementCategory)) {
             statementAndCategory.push([node.node, statementCategory]);
           }
         }
       },
     });
+
+    // console.log(`statementAndCategory: ${statementAndCategory.length}`);
 
     const treeState: TreeState = {};
     const stack: BlockStack = [];
@@ -118,6 +121,7 @@ export function computeBlocks(state: EditorState): TreeState {
           });
         }
       });
+
     blocksForState.set(state, treeState);
   }
   return blocksForState.get(state)!;

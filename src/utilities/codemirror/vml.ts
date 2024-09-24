@@ -3,10 +3,14 @@ import { LRLanguage, LanguageSupport, foldInside, foldNodeProp, syntaxTree } fro
 import { linter, type Diagnostic } from '@codemirror/lint';
 import type { Extension } from '@codemirror/state';
 import { EditorState } from '@codemirror/state';
+import { Decoration, ViewPlugin, type DecorationSet, type ViewUpdate } from '@codemirror/view';
 import type { SyntaxNode, Tree } from '@lezer/common';
 import { styleTags, tags as t } from '@lezer/highlight';
 import type { CommandDictionary, FswCommand, FswCommandArgument } from '@nasa-jpl/aerie-ampcs';
-import { vmlBlockFolder } from './vml-folder';
+import { EditorView } from 'codemirror';
+import { getNearestAncestorNodeOfType } from '../sequence-editor/tree-utils';
+import { RULE_TIME_TAGGED_STATEMENT } from './vml-constants';
+import { computeBlocks, isBlockCommand, vmlBlockFolder } from './vml-folder';
 import { parser } from './vml.grammar';
 
 export const TOKEN_ERROR = '⚠';
@@ -83,6 +87,85 @@ export function setupVmlLanguageSupport(autocomplete?: (context: CompletionConte
     return new LanguageSupport(VmlLanguage, [vmlBlockFolder]);
   }
 }
+
+const blockMark = Decoration.mark({ class: 'cm-block-match' });
+
+export const blockTheme = EditorView.baseTheme({
+  '.cm-block-match': {
+    outline: '1px dashed',
+  },
+});
+
+export function highlightBlock(viewUpdate: ViewUpdate): SyntaxNode[] {
+  const tree = syntaxTree(viewUpdate.state);
+  const selectionLine = viewUpdate.state.doc.lineAt(viewUpdate.state.selection.asSingle().main.from);
+  const leadingWhiteSpaceLength = selectionLine.text.length - selectionLine.text.trimStart().length;
+  const updatedSelectionNode = tree.resolveInner(selectionLine.from + leadingWhiteSpaceLength, 1);
+  // walk up the tree to Time_tagged_statement, and then back down to the block command e.g. "ELSE"
+  const timeTaggedNode = getNearestAncestorNodeOfType(updatedSelectionNode, [RULE_TIME_TAGGED_STATEMENT]);
+  const statementNode = timeTaggedNode?.firstChild?.nextSibling?.firstChild;
+  if (!statementNode || !isBlockCommand(statementNode.name)) {
+    return [];
+  }
+
+  const stemNode = statementNode.firstChild;
+  if (!stemNode) {
+    return [];
+  }
+
+  const blocks = computeBlocks(viewUpdate.state);
+  if (!blocks) {
+    return [];
+  }
+
+  const pairs = Object.values(blocks);
+  const matchedNodes: SyntaxNode[] = [stemNode];
+
+  // when cursor on end -- select else and if
+  let current: SyntaxNode | undefined = timeTaggedNode;
+  while (current) {
+    current = pairs.find(block => block.end?.from === current!.from)?.start;
+    const pairedStemToken = current?.firstChild?.nextSibling?.firstChild?.firstChild;
+    if (pairedStemToken) {
+      matchedNodes.push(pairedStemToken);
+    }
+  }
+
+  // when cursor on if -- select else and end
+  current = timeTaggedNode;
+  while (current) {
+    current = pairs.find(block => block.start?.from === current!.from)?.end;
+    const pairedStemToken = current?.firstChild?.nextSibling?.firstChild?.firstChild;
+    if (pairedStemToken) {
+      matchedNodes.push(pairedStemToken);
+    }
+  }
+
+  return matchedNodes;
+}
+
+export const blockHighlighter = ViewPlugin.fromClass(
+  class {
+    decorations: DecorationSet;
+    constructor() {
+      this.decorations = Decoration.none;
+    }
+    update(viewUpdate: ViewUpdate): DecorationSet | null {
+      if (viewUpdate.selectionSet || viewUpdate.docChanged || viewUpdate.viewportChanged) {
+        const blocks = highlightBlock(viewUpdate);
+        this.decorations = Decoration.set(
+          // codemirror requires marks to be in sorted order
+          blocks.sort((a, b) => a.from - b.from).map(block => blockMark.range(block.from, block.to)),
+        );
+        return this.decorations;
+      }
+      return null;
+    }
+  },
+  {
+    decorations: viewPluginSpecification => viewPluginSpecification.decorations,
+  },
+);
 
 export function vmlLinter(commandDictionary: CommandDictionary | null = null): Extension {
   return linter(view => {

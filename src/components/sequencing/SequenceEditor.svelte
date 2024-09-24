@@ -5,7 +5,7 @@
   import { json } from '@codemirror/lang-json';
   import { indentService, syntaxTree } from '@codemirror/language';
   import { lintGutter } from '@codemirror/lint';
-  import { Compartment, EditorState } from '@codemirror/state';
+  import { Compartment, EditorState, Prec } from '@codemirror/state';
   import type { ViewUpdate } from '@codemirror/view';
   import type { SyntaxNode } from '@lezer/common';
   import type { ChannelDictionary, CommandDictionary, ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
@@ -37,7 +37,13 @@
   import type { User } from '../../types/app';
   import type { IOutputFormat, Parcel } from '../../types/sequencing';
   import { setupLanguageSupport } from '../../utilities/codemirror';
-  import { setupVmlLanguageSupport, vmlLinter } from '../../utilities/codemirror/vml';
+  import {
+    blockHighlighter,
+    blockTheme,
+    highlightBlock,
+    setupVmlLanguageSupport,
+    vmlLinter,
+  } from '../../utilities/codemirror/vml';
   import effects from '../../utilities/effects';
   import { downloadBlob, downloadJSON } from '../../utilities/generic';
   import { inputLinter, outputLinter } from '../../utilities/sequence-editor/extension-points';
@@ -72,6 +78,7 @@
   let compartmentSeqLinter: Compartment;
   let compartmentSeqTooltip: Compartment;
   let compartmentSeqAutocomplete: Compartment;
+  // let compartmentSeqHighlighter: Compartment;
   let channelDictionary: ChannelDictionary | null;
   let commandDictionary: CommandDictionary | null;
   let disableCopyAndExport: boolean = true;
@@ -108,6 +115,11 @@
         dispatch: transaction => editorSequenceView.update([transaction]),
         state: editorSequenceView.state,
       });
+      editorSequenceView.update([
+        editorSequenceView.state.update({
+          selection: { anchor: 0, head: 0 },
+        }),
+      ]);
     }
   }
 
@@ -194,6 +206,7 @@
     compartmentSeqLinter = new Compartment();
     compartmentSeqTooltip = new Compartment();
     compartmentSeqAutocomplete = new Compartment();
+    // compartmentSeqHighlighter = new Compartment();
 
     editorSequenceView = new EditorView({
       doc: sequenceDefinition,
@@ -207,7 +220,10 @@
         compartmentSeqTooltip.of(sequenceTooltip()),
         EditorView.updateListener.of(debounce(sequenceUpdateListener, 250)),
         EditorView.updateListener.of(selectedCommandUpdateListener),
+        EditorView.updateListener.of(debounce(highlightBlock, 250)),
+        Prec.highest([blockTheme, blockHighlighter]),
         compartmentSeqAutocomplete.of(indentService.of($sequenceAdaptation.autoIndent())),
+        // compartmentSeqHighlighter.of(),
         EditorState.readOnly.of(readOnly),
       ],
       parent: editorSequenceDiv,
