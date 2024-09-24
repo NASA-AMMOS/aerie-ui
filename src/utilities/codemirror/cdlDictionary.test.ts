@@ -1,9 +1,6 @@
 import { parse, type FswCommandArgumentInteger } from '@nasa-jpl/aerie-ampcs';
-import { readFileSync } from 'fs';
 import { describe, expect, test } from 'vitest';
 import { parseCdlDictionary, toAmpcsXml } from './cdlDictionary';
-
-const contents = readFileSync('/Users/joswig/Documents/Aerie/Juno/JNO_6.0.4_REV_M00', 'utf-8');
 
 const cdlString = `!
 ! Example dictionary
@@ -98,10 +95,8 @@ describe('cdl parse tests', async () => {
   });
 
   test('basic', () => {
-    // parseCdlDictionary(contents);
-    const cdlDictionary = parseCdlDictionary(contents);
+    const cdlDictionary = parseCdlDictionary(cdlString);
     const xmlDictionary = toAmpcsXml(cdlDictionary);
     parse(xmlDictionary);
-    // writeFileSync(`/Users/joswig/Downloads/Juno.xml`, xmlDictionary);
   });
 });
