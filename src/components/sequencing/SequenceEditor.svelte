@@ -37,6 +37,7 @@
   import type { User } from '../../types/app';
   import type { IOutputFormat, Parcel } from '../../types/sequencing';
   import { setupLanguageSupport } from '../../utilities/codemirror';
+  import { setupVmlLanguageSupport, vmlLinter } from '../../utilities/codemirror/vml';
   import effects from '../../utilities/effects';
   import { downloadBlob, downloadJSON } from '../../utilities/generic';
   import { inputLinter, outputLinter } from '../../utilities/sequence-editor/extension-points';
@@ -130,48 +131,60 @@
     });
 
     if (unparsedCommandDictionary) {
-      Promise.all([
-        getParsedCommandDictionary(unparsedCommandDictionary, user),
-        unparsedChannelDictionary ? getParsedChannelDictionary(unparsedChannelDictionary, user) : null,
-        ...unparsedParameterDictionaries.map(unparsedParameterDictionary => {
-          return getParsedParameterDictionary(unparsedParameterDictionary, user);
-        }),
-      ]).then(([parsedCommandDictionary, parsedChannelDictionary, ...parsedParameterDictionaries]) => {
-        const nonNullParsedParameterDictionaries = parsedParameterDictionaries.filter(
-          (pd): pd is ParameterDictionary => !!pd,
-        );
+      if (sequenceName.endsWith('.vml')) {
+        getParsedCommandDictionary(unparsedCommandDictionary, user).then(parsedCommandDictionary => {
+          commandDictionary = parsedCommandDictionary;
+          editorSequenceView.dispatch({
+            effects: compartmentSeqLanguage.reconfigure(setupVmlLanguageSupport()),
+          });
+          editorSequenceView.dispatch({
+            effects: compartmentSeqLinter.reconfigure(vmlLinter(commandDictionary)),
+          });
+        });
+      } else {
+        Promise.all([
+          getParsedCommandDictionary(unparsedCommandDictionary, user),
+          unparsedChannelDictionary ? getParsedChannelDictionary(unparsedChannelDictionary, user) : null,
+          ...unparsedParameterDictionaries.map(unparsedParameterDictionary => {
+            return getParsedParameterDictionary(unparsedParameterDictionary, user);
+          }),
+        ]).then(([parsedCommandDictionary, parsedChannelDictionary, ...parsedParameterDictionaries]) => {
+          const nonNullParsedParameterDictionaries = parsedParameterDictionaries.filter(
+            (pd): pd is ParameterDictionary => !!pd,
+          );
 
-        channelDictionary = parsedChannelDictionary;
-        commandDictionary = parsedCommandDictionary;
-        parameterDictionaries = nonNullParsedParameterDictionaries;
+          channelDictionary = parsedChannelDictionary;
+          commandDictionary = parsedCommandDictionary;
+          parameterDictionaries = nonNullParsedParameterDictionaries;
 
-        // Reconfigure sequence editor.
-        editorSequenceView.dispatch({
-          effects: [
-            compartmentSeqLanguage.reconfigure(
-              setupLanguageSupport(
-                $sequenceAdaptation.autoComplete(
-                  parsedChannelDictionary,
-                  parsedCommandDictionary,
-                  nonNullParsedParameterDictionaries,
+          // Reconfigure sequence editor.
+          editorSequenceView.dispatch({
+            effects: [
+              compartmentSeqLanguage.reconfigure(
+                setupLanguageSupport(
+                  $sequenceAdaptation.autoComplete(
+                    parsedChannelDictionary,
+                    parsedCommandDictionary,
+                    nonNullParsedParameterDictionaries,
+                  ),
                 ),
               ),
-            ),
-            compartmentSeqLinter.reconfigure(
-              inputLinter(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
-            ),
-            compartmentSeqTooltip.reconfigure(
-              sequenceTooltip(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
-            ),
-            compartmentSeqAutocomplete.reconfigure(indentService.of($sequenceAdaptation.autoIndent())),
-          ],
-        });
+              compartmentSeqLinter.reconfigure(
+                inputLinter(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
+              ),
+              compartmentSeqTooltip.reconfigure(
+                sequenceTooltip(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
+              ),
+              compartmentSeqAutocomplete.reconfigure(indentService.of($sequenceAdaptation.autoIndent())),
+            ],
+          });
 
-        // Reconfigure seq JSON editor.
-        editorOutputView.dispatch({
-          effects: compartmentSeqJsonLinter.reconfigure(outputLinter(parsedCommandDictionary, selectedOutputFormat)),
+          // Reconfigure seq JSON editor.
+          editorOutputView.dispatch({
+            effects: compartmentSeqJsonLinter.reconfigure(outputLinter(parsedCommandDictionary, selectedOutputFormat)),
+          });
         });
-      });
+      }
     }
   }
 
