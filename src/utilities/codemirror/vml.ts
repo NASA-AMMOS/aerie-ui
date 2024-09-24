@@ -6,6 +6,7 @@ import { EditorState } from '@codemirror/state';
 import type { SyntaxNode, Tree } from '@lezer/common';
 import { styleTags, tags as t } from '@lezer/highlight';
 import type { CommandDictionary, FswCommand, FswCommandArgument } from '@nasa-jpl/aerie-ampcs';
+import { vmlBlockFolder } from './vml-folder';
 import { parser } from './vml.grammar';
 
 export const TOKEN_ERROR = '⚠';
@@ -18,6 +19,7 @@ const FoldBehavior: {
 } = {
   // only called on multi-line rules, may need custom service to handle FOR, WHILE, etc.
   Body: foldInside,
+  If: foldInside,
 };
 
 export const VmlLanguage = LRLanguage.define({
@@ -76,9 +78,9 @@ export const VmlLanguage = LRLanguage.define({
 export function setupVmlLanguageSupport(autocomplete?: (context: CompletionContext) => CompletionResult | null) {
   if (autocomplete) {
     const autocompleteExtension = VmlLanguage.data.of({ autocomplete });
-    return new LanguageSupport(VmlLanguage, [autocompleteExtension]);
+    return new LanguageSupport(VmlLanguage, [vmlBlockFolder, autocompleteExtension]);
   } else {
-    return new LanguageSupport(VmlLanguage);
+    return new LanguageSupport(VmlLanguage, [vmlBlockFolder]);
   }
 }
 
@@ -160,7 +162,7 @@ function validateArguments(
   return diagnostics;
 }
 
-function validateArgument(argDef: FswCommandArgument, argNode: SyntaxNode, _docText: string) {
+function validateArgument(argDef: FswCommandArgument, argNode: SyntaxNode, _docText: string): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
 
   // could also be a variable
