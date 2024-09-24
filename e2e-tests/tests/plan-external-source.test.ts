@@ -105,17 +105,20 @@ test.afterAll(async () => {
 
 test.describe.serial('Plan External Sources', () => {
   test('Derivation groups can be linked/unlinked to a plan', async () => {
-    test.setTimeout(240000);
     await plan.showPanel(PanelNames.EXTERNAL_SOURCES);
     await plan.externalSourceManageButton.click();
     await page.getByText('No Derivation Groups Found').waitFor({ state: 'hidden', timeout: extendedTimeout });
     await page.getByRole('row', { name: externalSources.exampleSourceType }).getByRole('checkbox').click();
     await expect(page.getByText('Derivation Group Linked Successfully')).toBeVisible();
+    await expect(page.getByRole('row', { name: externalSources.exampleSourceType }).getByRole('checkbox').isChecked()).toBeTruthy();
+
     await page.getByRole('row', { name: externalSources.exampleSourceType }).getByRole('checkbox').click();
-    await expect(page.getByText('Derivation Group Disassociated Successfully')).toBeVisible({timeout: 200000});
+    await expect(page.getByText('Derivation Group Disassociated Successfully')).toBeVisible();
+    await expect(page.getByRole('row', { name: externalSources.exampleSourceType }).getByRole('checkbox').isChecked()).toBeFalsy();
     // Re-link for later use in testing, and to determine if unlinking broke things
     await page.getByRole('row', { name: externalSources.exampleSourceType }).getByRole('checkbox').click();
     await expect(page.getByText('Derivation Group Linked Successfully').nth(1)).toBeVisible();
+    await expect(page.getByRole('row', { name: externalSources.exampleSourceType }).getByRole('checkbox').isChecked()).toBeTruthy();
   });
 
   test('External event types can be added to the timeline', async () => {
