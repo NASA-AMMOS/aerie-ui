@@ -1,7 +1,17 @@
 import { foldService, syntaxTree } from '@codemirror/language';
 import type { EditorState } from '@codemirror/state';
 import type { SyntaxNode } from '@lezer/common';
-import { RULE_ELSE, RULE_ELSE_IF, RULE_END_IF, RULE_IF, RULE_TIME_TAGGED_STATEMENT } from './vml-constants';
+import {
+  RULE_ELSE,
+  RULE_ELSE_IF,
+  RULE_END_FOR,
+  RULE_END_IF,
+  RULE_END_WHILE,
+  RULE_FOR,
+  RULE_IF,
+  RULE_TIME_TAGGED_STATEMENT,
+  RULE_WHILE,
+} from './vml-constants';
 
 type BlockStackNode = Readonly<{
   node: SyntaxNode;
@@ -30,9 +40,9 @@ export function isPairedCommands(pair: unknown): pair is PairedCommands {
 
 const blocksForState = new WeakMap<EditorState, TreeState>();
 
-const blockOpeningStems: Set<string> = new Set([RULE_IF, RULE_ELSE_IF, RULE_ELSE]);
+const blockOpeningStems: Set<string> = new Set([RULE_IF, RULE_ELSE_IF, RULE_ELSE, RULE_WHILE, RULE_FOR]);
 
-const blockClosingStems: Set<string> = new Set([RULE_ELSE, RULE_ELSE_IF, RULE_END_IF]);
+const blockClosingStems: Set<string> = new Set([RULE_ELSE, RULE_ELSE_IF, RULE_END_IF, RULE_END_WHILE, RULE_END_FOR]);
 
 export function isBlockCommand(stem: string): boolean {
   return blockOpeningStems.has(stem) || blockClosingStems.has(stem);
@@ -45,6 +55,10 @@ function closesBlock(stem: string, blockStem: string) {
     case RULE_ELSE:
     case RULE_ELSE_IF:
       return [RULE_IF, RULE_ELSE_IF].includes(blockStem);
+    case RULE_END_WHILE:
+      return blockStem === RULE_WHILE;
+    case RULE_END_FOR:
+      return blockStem === RULE_FOR;
   }
   return false;
 }
