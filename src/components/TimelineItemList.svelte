@@ -2,8 +2,10 @@
 
 <script lang="ts">
   import ChevronDownIcon from '@nasa-jpl/stellar/icons/chevron_down.svg?component';
+  import CloseIcon from '@nasa-jpl/stellar/icons/close.svg?component';
   import GripVerticalIcon from 'bootstrap-icons/icons/grip-vertical.svg?component';
   import { capitalize } from 'lodash-es';
+  import { createEventDispatcher } from 'svelte';
   import PlusCircledIcon from '../assets/plus-circled.svg?component';
   import { view, viewAddFilterToRow } from '../stores/views';
   import type {
@@ -14,6 +16,7 @@
     TimelineItemListFilterOption,
     TimelineItemType,
   } from '../types/timeline';
+  import { permissionHandler } from '../utilities/permissionHandler';
   import { tooltip } from '../utilities/tooltip';
   import Input from './form/Input.svelte';
   import LayerPicker from './LayerPicker.svelte';
@@ -27,7 +30,14 @@
   export let items: TimelineItemType[] = [];
   export let filterOptions: TimelineItemListFilterOption[] = [];
   export let filterName: string = 'Filter';
+  export let shouldShowUploadOption: boolean = false;
+  export let hasUploadPermission: boolean = false;
   export let getFilterValueFromItem: (item: TimelineItemType) => string;
+
+  const dispatch = createEventDispatcher<{
+    upload: FileList;
+  }>();
+  const uploadPermissionError: string = `You do not have permission to upload ${typeNamePlural}`;
 
   let menu: Menu;
   let filteredItems: TimelineItemType[] = [];
@@ -37,6 +47,9 @@
   let layerPicker: LayerPicker;
   let layerPickerIndividual: LayerPicker;
   let timelines: Timeline[] = [];
+  let isUploadVisible: boolean = false;
+  let uploadFiles: FileList | undefined;
+  let uploadFileInput: HTMLInputElement;
 
   $: filteredItems = filterItems(items, filterText ? textFilters.concat(filterText) : textFilters, selectedFilters);
   $: timelines = $view?.definition.plan.timelines || [];
@@ -133,6 +146,22 @@
     e.stopPropagation();
     layerPickerIndividual.toggle(e, item);
   }
+
+  function onShowUpload() {
+    isUploadVisible = true;
+  }
+
+  function onHideUpload() {
+    isUploadVisible = false;
+  }
+
+  function onUpload() {
+    if (uploadFiles !== undefined) {
+      dispatch('upload', uploadFiles);
+      uploadFileInput.value = '';
+      uploadFiles = undefined;
+    }
+  }
 </script>
 
 <div class="timeline-item-list">
@@ -187,11 +216,56 @@
       </Menu>
     </div>
   </div>
+  {#if isUploadVisible}
+    <fieldset class="upload-container" hidden={!isUploadVisible}>
+      <button class="close-upload" type="button" on:click={onHideUpload}>
+        <CloseIcon />
+      </button>
+      <label for="file">{typeName.charAt(0).toUpperCase() + typeName.slice(1)} File</label>
+      <div class="upload-input-container">
+        <input
+          class="w-100"
+          name="file"
+          type="file"
+          accept="application/json"
+          bind:files={uploadFiles}
+          bind:this={uploadFileInput}
+          use:permissionHandler={{
+            hasPermission: hasUploadPermission,
+            permissionError: uploadPermissionError,
+          }}
+        />
+        <button
+          class="st-button secondary"
+          on:click={onUpload}
+          disabled={!uploadFiles?.length}
+          use:permissionHandler={{
+            hasPermission: hasUploadPermission,
+            permissionError: uploadPermissionError,
+          }}
+        >
+          Upload
+        </button>
+      </div>
+    </fieldset>
+  {/if}
 
   <div class="controls">
     <div class="controls-header st-typography-medium">
       <div>{typeNamePlural} ({filteredItems.length})</div>
       <div>
+        {#if shouldShowUploadOption}
+          <button
+            class="st-button secondary"
+            on:click={onShowUpload}
+            use:permissionHandler={{
+              hasPermission: hasUploadPermission,
+              permissionError: uploadPermissionError,
+            }}
+          >
+            Upload {typeNamePlural}
+          </button>
+        {/if}
         <button class="st-button secondary" on:click={onBulkAddToRow}> Add Filter to Row </button>
         <LayerPicker
           bind:this={layerPicker}
@@ -295,6 +369,36 @@
 
   .timeline-item-list-filters :global(.st-input) {
     flex: 1;
+  }
+
+  .upload-container {
+    background: var(--st-gray-15);
+    border-radius: 5px;
+    margin: 5px;
+    padding: 8px 11px 8px;
+    position: relative;
+  }
+
+  .upload-container[hidden] {
+    display: none;
+  }
+
+  .upload-input-container {
+    align-items: center;
+    column-gap: 0.5rem;
+    display: grid;
+    grid-template-columns: auto min-content;
+  }
+
+  .close-upload {
+    background: none;
+    border: 0;
+    cursor: pointer;
+    height: 1.3rem;
+    padding: 0;
+    position: absolute;
+    right: 3px;
+    top: 3px;
   }
 
   .filters {

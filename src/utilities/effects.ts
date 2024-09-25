@@ -6405,6 +6405,31 @@ const effects = {
     }
   },
 
+  async uploadExternalDataset(plan: Plan, files: FileList, user: User | null): Promise<PlanDataset | null> {
+    try {
+      if (!gatewayPermissions.ADD_EXTERNAL_DATASET(user, plan)) {
+        throwPermissionError('add external datasets');
+      }
+
+      const file: File = files[0];
+
+      const body = new FormData();
+      body.append('plan_id', `${plan.id}`);
+      body.append('file', file, file.name);
+
+      const uploadedDataset = await reqGateway<PlanDataset | null>('/uploadDataset', 'POST', body, user, true);
+
+      if (uploadedDataset != null) {
+        return uploadedDataset;
+      }
+
+      return null;
+    } catch (e) {
+      catchError(e as Error);
+      return null;
+    }
+  },
+
   async uploadFile(file: File, user: User | null): Promise<number | null> {
     try {
       const body = new FormData();
