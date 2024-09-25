@@ -89,7 +89,7 @@
   function onMouseDown(event: CustomEvent<MouseDown>) {
     const { detail } = event;
     const { activityDirectives, spans, externalEvents } = detail;
-    if (externalEvents != null && externalEvents.length) {
+    if (externalEvents !== undefined && externalEvents.length) {
       selectExternalEvent(getRowIdExternalEvent(externalEvents[0].pkey));
       selectActivity(null, null);
     } else if (spans != null && spans.length) {
