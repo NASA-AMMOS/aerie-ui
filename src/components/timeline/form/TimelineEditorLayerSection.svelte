@@ -1,8 +1,6 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  // added to provide reactivity to filter options
-
   import TrashIcon from '@nasa-jpl/stellar/icons/trash.svg?component';
   import { createEventDispatcher } from 'svelte';
   import { ViewDiscreteLayerColorPresets, ViewLineLayerColorPresets } from '../../../constants/view';
