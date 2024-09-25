@@ -4,7 +4,7 @@
   import Eye from 'bootstrap-icons/icons/eye-fill.svg?component';
   import EyeSlash from 'bootstrap-icons/icons/eye-slash.svg?component';
   import { get } from 'svelte/store';
-  import { derivationGroupVisibilityMapWritable, externalSources } from '../../stores/external-source';
+  import { derivationGroupVisibilityMap, externalSources } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import { plugins } from '../../stores/plugins';
   import type { User } from '../../types/app';
@@ -19,12 +19,12 @@
 
   let relevantSources: ExternalSourceSlim[] = [];
 
-  $: enabled = $derivationGroupVisibilityMapWritable[derivationGroup.name] ?? true;
+  $: enabled = $derivationGroupVisibilityMap[derivationGroup.name] ?? true;
   $: relevantSources = $externalSources.filter(source => derivationGroup.name === source.pkey.derivation_group_name);
 
   function onChange() {
-    derivationGroupVisibilityMapWritable.set({
-      ...get(derivationGroupVisibilityMapWritable),
+    derivationGroupVisibilityMap.set({
+      ...get(derivationGroupVisibilityMap),
       [derivationGroup.name]: !enabled,
     });
   }

@@ -11,7 +11,7 @@
   import { Status } from '../../enums/status';
   import { catchError } from '../../stores/errors';
   import {
-    derivationGroupVisibilityMapWritable,
+    derivationGroupVisibilityMap,
     externalSources,
     planDerivationGroupLinks,
   } from '../../stores/external-source';
@@ -481,7 +481,7 @@
       let filteredDerivationGroups = $planDerivationGroupLinks
         .filter(
           link =>
-            link.plan_id === plan?.id && !($derivationGroupVisibilityMapWritable[link.derivation_group_name] ?? true),
+            link.plan_id === plan?.id && !($derivationGroupVisibilityMap[link.derivation_group_name] ?? true),
         )
         .map(link => link.derivation_group_name);
 
