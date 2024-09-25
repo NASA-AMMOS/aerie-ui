@@ -12,8 +12,6 @@
     return { name: eventType };
   });
 
-  $: console.log(externalEventTypes);
-
   function getFilterValueFromItem(item: TimelineItemType) {
     return item.name;
   }
