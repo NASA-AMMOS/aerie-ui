@@ -398,10 +398,26 @@
           <span>Source File:</span>
           <span class='tooltip-value-highlight st-typography-medium'>${pkey.source_key}</span>
         </div>
-        <div class='tooltip-row'>
-          <span>Start Time (${$plugins.time.primary.label}):</span>
-          <span class='tooltip-value-highlight st-typography-medium'>${getDoyTime(new Date(start_time))}</span>
-        </div>
+        ${
+          showAdditionalTimes
+            ? $plugins.time.additional
+                .map(
+                  f =>
+                    `<div class='tooltip-row'>
+                      <span>Start Time (${f.label}):</span>
+                      <span class='tooltip-value-highlight st-typography-medium'>
+                        ${typeof start_time === 'number' ? f.format(new Date(start_time)) : 'Unknown'}
+                      </span>
+                    </div>`,
+                )
+                .join('')
+            : `<div class='tooltip-row'>
+                <span>Start Time (${$plugins.time.primary.label}):</span>
+                <span class='tooltip-value-highlight st-typography-medium'>${getDoyTime(new Date(start_time))}</span>
+              </div>`
+
+
+        }
         <div class='tooltip-row'>
           <span>Duration:</span>
           <span class='tooltip-value-highlight st-typography-medium'>${duration}</span>
