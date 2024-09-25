@@ -42,8 +42,8 @@
     blockTheme,
     highlightBlock,
     setupVmlLanguageSupport,
-    vmlLinter,
   } from '../../utilities/codemirror/vml';
+  import { vmlLinter } from '../../utilities/codemirror/vml-linter';
   import { vmlTooltip } from '../../utilities/codemirror/vml-tooltip';
   import effects from '../../utilities/effects';
   import { downloadBlob, downloadJSON } from '../../utilities/generic';
