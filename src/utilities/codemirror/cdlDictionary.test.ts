@@ -1,5 +1,4 @@
-import { parse, type FswCommandArgumentInteger, type FswCommandArgumentVarString } from '@nasa-jpl/aerie-ampcs';
-import { readFileSync, writeFileSync } from 'fs';
+import { type FswCommandArgumentInteger, type FswCommandArgumentVarString } from '@nasa-jpl/aerie-ampcs';
 import { describe, expect, test } from 'vitest';
 import { parseCdlDictionary, toAmpcsXml } from './cdlDictionary';
 
@@ -140,21 +139,21 @@ describe('cdl parse tests', async () => {
     }
   });
 
-  test('basic', () => {
-    // const contents = readFileSync('/Users/joswig/Documents/Aerie/Juno/JNO_6.0.4_REV_M00_edited', 'utf-8');
-    const contents = readFileSync('/Users/joswig/Documents/Aerie/MRO/MRO_6.1.REV_W26', 'utf-8');
-    const cdlDictionary = parseCdlDictionary(contents);
+  // test('basic', () => {
+  //   // const contents = readFileSync('/Users/joswig/Documents/Aerie/Juno/JNO_6.0.4_REV_M00_edited', 'utf-8');
+  //   const contents = readFileSync('/Users/joswig/Documents/Aerie/MRO/MRO_6.1.REV_W26', 'utf-8');
+  //   const cdlDictionary = parseCdlDictionary(contents);
 
-    console.log(cdlDictionary.header.spacecraft_ids);
+  //   console.log(cdlDictionary.header.spacecraft_ids);
 
-    const xmlDictionary = toAmpcsXml(cdlDictionary);
-    writeFileSync('/Users/joswig/Downloads/MRO.xml', xmlDictionary);
-    const parsedcdlDictionary = parse(xmlDictionary);
+  //   const xmlDictionary = toAmpcsXml(cdlDictionary);
+  //   writeFileSync('/Users/joswig/Downloads/MRO.xml', xmlDictionary);
+  //   const parsedcdlDictionary = parse(xmlDictionary);
 
-    console.log(JSON.stringify(parsedcdlDictionary.fswCommandMap.FILE_DELETE, null, 2));
+  //   console.log(JSON.stringify(parsedcdlDictionary.fswCommandMap.FILE_DELETE, null, 2));
 
-    // cdlDictionary.fswCommands.forEach(cnd => console.log(`${cnd.description}`));
+  //   // cdlDictionary.fswCommands.forEach(cnd => console.log(`${cnd.description}`));
 
-    // expect(JSON.stringify(cdlDictionary, null, 2)).toEqual(JSON.stringify(parsedcdlDictionary, null, 2));
-  });
+  //   // expect(JSON.stringify(cdlDictionary, null, 2)).toEqual(JSON.stringify(parsedcdlDictionary, null, 2));
+  // });
 });
