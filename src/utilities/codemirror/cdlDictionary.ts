@@ -44,9 +44,10 @@ export function parseCdlDictionary(contents: string, id?: string, path?: string)
   }
 
   SC_LITERALS_LOOP: for (const line of lineIterator) {
-    if (line === 'SPACECRAFT LITERALS') {
+    if (/^\s*SPACECRAFT\s+LITERALS/.test(line)) {
+      console.log('spacecraft literals');
       for (const childLine of lineIterator) {
-        if (childLine === 'END SPACECRAFT LITERALS') {
+        if (/^\s*END\s+SPACECRAFT\s+LITERALS/.test(childLine)) {
           break SC_LITERALS_LOOP;
         }
         const spacecraftIdMatch = childLine.match(/^\s*(\d+)\s*=\s*'[\dA-Fa-f]+'/);

@@ -13,6 +13,11 @@ export function vmlTooltip(commandDictionary: CommandDictionary | null): Extensi
   return hoverTooltip((view: EditorView, pos: number, side: number): Tooltip | null => {
     const { from, to } = getTokenPositionInLine(view, pos);
 
+    // First handle the case where the token is out of bounds.
+    if ((from === pos && side < 0) || (to === pos && side > 0)) {
+      return null;
+    }
+
     const tree = syntaxTree(view.state);
     const cursorNode = tree.cursorAt(from, 1).node;
     const timeTaggedNode = getNearestAncestorNodeOfType(cursorNode, [RULE_TIME_TAGGED_STATEMENT]);
@@ -41,11 +46,7 @@ export function vmlTooltip(commandDictionary: CommandDictionary | null): Extensi
                           callParameterNode.from === thisCallParameterNode.from,
                       );
 
-                    console.log(
-                      `argIndex ${argIndex} ${callParametersNode.getChildren('Call_parameter').length} ${thisCallParameterNode.name} ${command.stem} ${command.arguments.length}`,
-                    );
                     const arg = command.arguments[argIndex];
-
                     if (arg) {
                       return {
                         above: true,
@@ -79,26 +80,6 @@ export function vmlTooltip(commandDictionary: CommandDictionary | null): Extensi
           }
         }
       }
-    }
-
-    // if (cursor.node) {
-    //   const issueNode = getNearestAncestorNodeOfType(cursor.node, ['Issue']);
-    //   if (issueNode) {
-
-    //   }
-    // }
-
-    // First handle the case where the token is out of bounds.
-    if ((from === pos && side < 0) || (to === pos && side > 0)) {
-      return null;
-    }
-
-    if (commandDictionary) {
-      //
-    }
-
-    if (!commandDictionary) {
-      return null;
     }
 
     return null;

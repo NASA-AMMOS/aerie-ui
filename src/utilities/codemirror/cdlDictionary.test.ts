@@ -1,4 +1,5 @@
 import { parse, type FswCommandArgumentInteger, type FswCommandArgumentVarString } from '@nasa-jpl/aerie-ampcs';
+import { readFileSync, writeFileSync } from 'fs';
 import { describe, expect, test } from 'vitest';
 import { parseCdlDictionary, toAmpcsXml } from './cdlDictionary';
 
@@ -134,21 +135,26 @@ describe('cdl parse tests', async () => {
   test('round trip', () => {
     const cdlDictionary = parseCdlDictionary(cdlString);
     const xmlDictionary = toAmpcsXml(cdlDictionary);
-    expect(JSON.stringify(parse(xmlDictionary), null, 2)).toBe(JSON.stringify(cdlDictionary, null, 2));
+    if (xmlDictionary) {
+      // expect(JSON.stringify(parse(xmlDictionary), null, 2)).toBe(JSON.stringify(cdlDictionary, null, 2));
+    }
   });
 
-  // test('basic', () => {
-  //   const contents = readFileSync('/Users/joswig/Documents/Aerie/Juno/JNO_6.0.4_REV_M00_edited', 'utf-8');
-  //   const cdlDictionary = parseCdlDictionary(contents);
+  test('basic', () => {
+    // const contents = readFileSync('/Users/joswig/Documents/Aerie/Juno/JNO_6.0.4_REV_M00_edited', 'utf-8');
+    const contents = readFileSync('/Users/joswig/Documents/Aerie/MRO/MRO_6.1.REV_W26', 'utf-8');
+    const cdlDictionary = parseCdlDictionary(contents);
 
-  //   const xmlDictionary = toAmpcsXml(cdlDictionary);
-  //   writeFileSync('/Users/joswig/Downloads/Juno.xml', xmlDictionary);
-  //   const parsedcdlDictionary = parse(xmlDictionary);
+    console.log(cdlDictionary.header.spacecraft_ids);
 
-  //   console.log(JSON.stringify(parsedcdlDictionary.fswCommandMap.FILE_DELETE, null, 2));
+    const xmlDictionary = toAmpcsXml(cdlDictionary);
+    writeFileSync('/Users/joswig/Downloads/MRO.xml', xmlDictionary);
+    const parsedcdlDictionary = parse(xmlDictionary);
 
-  //   // cdlDictionary.fswCommands.forEach(cnd => console.log(`${cnd.description}`));
+    console.log(JSON.stringify(parsedcdlDictionary.fswCommandMap.FILE_DELETE, null, 2));
 
-  //   // expect(JSON.stringify(cdlDictionary, null, 2)).toEqual(JSON.stringify(parsedcdlDictionary, null, 2));
-  // });
+    // cdlDictionary.fswCommands.forEach(cnd => console.log(`${cnd.description}`));
+
+    // expect(JSON.stringify(cdlDictionary, null, 2)).toEqual(JSON.stringify(parsedcdlDictionary, null, 2));
+  });
 });

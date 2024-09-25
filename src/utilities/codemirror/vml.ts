@@ -9,11 +9,20 @@ import { styleTags, tags as t } from '@lezer/highlight';
 import type { CommandDictionary, FswCommand, FswCommandArgument } from '@nasa-jpl/aerie-ampcs';
 import { EditorView } from 'codemirror';
 import { getNearestAncestorNodeOfType } from '../sequence-editor/tree-utils';
-import { RULE_TIME_TAGGED_STATEMENT } from './vml-constants';
+import { RULE_TIME_TAGGED_STATEMENT, TOKEN_ERROR, TOKEN_STRING_CONST } from './vml-constants';
 import { computeBlocks, isBlockCommand, vmlBlockFolder } from './vml-folder';
 import { parser } from './vml.grammar';
 
-export const TOKEN_ERROR = '⚠';
+// Limit how many grammar problems are annotated
+const MAX_PARSER_ERRORS = 100;
+
+const blockMark = Decoration.mark({ class: 'cm-block-match' });
+
+export const blockTheme = EditorView.baseTheme({
+  '.cm-block-match': {
+    outline: '1px dashed',
+  },
+});
 
 const FoldBehavior: {
   [tokenName: string]: (node: SyntaxNode, _state: EditorState) => ReturnType<typeof foldInside>;
@@ -84,14 +93,6 @@ export function setupVmlLanguageSupport(autocomplete?: (context: CompletionConte
     return new LanguageSupport(VmlLanguage, [vmlBlockFolder]);
   }
 }
-
-const blockMark = Decoration.mark({ class: 'cm-block-match' });
-
-export const blockTheme = EditorView.baseTheme({
-  '.cm-block-match': {
-    outline: '1px dashed',
-  },
-});
 
 export function highlightBlock(viewUpdate: ViewUpdate): SyntaxNode[] {
   const tree = syntaxTree(viewUpdate.state);
@@ -205,7 +206,7 @@ function validateCommands(commandDictionary: CommandDictionary, docText: string,
             to,
           });
         } else {
-          diagnostics.push(...validateArguments(commandDef, node, functionNameNode, docText));
+          diagnostics.push(...validateArguments(commandDictionary, commandDef, node, functionNameNode, docText));
         }
       }
     }
@@ -214,35 +215,55 @@ function validateCommands(commandDictionary: CommandDictionary, docText: string,
 }
 
 function validateArguments(
+  commandDictionary: CommandDictionary,
   commandDef: FswCommand,
   functionNode: SyntaxNode,
   functionNameNode: SyntaxNode,
   docText: string,
-) {
+): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
-  const parametersNode = functionNode.getChild('Call_parameters')?.getChildren('Call_parameter');
-  if (parametersNode) {
-    for (let i = 0; i < commandDef.arguments.length; i++) {
-      const argDef = commandDef.arguments[i];
-      const argNode = parametersNode[i];
-      if (argDef && argNode) {
-        diagnostics.push(...validateArgument(argDef, argNode, docText));
-      } else if (!argNode && argDef) {
-        const functionName = docText.slice(functionNameNode.from, functionNameNode.to);
-        const { from, to } = functionNameNode;
-        diagnostics.push({
+  const parametersNode = functionNode.getChild('Call_parameters')?.getChildren('Call_parameter') ?? [];
+
+  for (let i = 0; i < commandDef.arguments.length; i++) {
+    const argDef: FswCommandArgument | undefined = commandDef.arguments[i];
+    const argNode = parametersNode[i];
+
+    const functionName = docText.slice(functionNameNode.from, functionNameNode.to);
+    if (argDef && argNode) {
+      diagnostics.push(...validateArgument(commandDictionary, argDef, argNode, docText));
+    } else if (!argNode && !!argDef) {
+      const { from, to } = functionNameNode;
+      diagnostics.push({
+        from,
+        message: `${functionName} missing argument ${argDef.name}`,
+        severity: 'error',
+        to,
+      });
+    }
+
+    console.log(`Extras: ${parametersNode.slice(commandDef.arguments.length).length}`);
+
+    diagnostics.push(
+      ...parametersNode.slice(commandDef.arguments.length).map((extraArg: SyntaxNode) => {
+        const { from, to } = extraArg;
+        return {
           from,
-          message: `${functionName} missing argument ${argDef.name}`,
+          message: `${functionName} has extra argument ${docText.slice(from, to)}`,
           severity: 'error',
           to,
-        });
-      }
-    }
+        } as const;
+      }),
+    );
   }
   return diagnostics;
 }
 
-function validateArgument(argDef: FswCommandArgument, argNode: SyntaxNode, _docText: string): Diagnostic[] {
+function validateArgument(
+  commandDictionary: CommandDictionary,
+  argDef: FswCommandArgument,
+  argNode: SyntaxNode,
+  docText: string,
+): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
 
   // could also be a variable
@@ -278,7 +299,7 @@ function validateArgument(argDef: FswCommandArgument, argNode: SyntaxNode, _docT
         }
         break;
       case 'var_string':
-        if ('STRING_CONST' !== constantNode.name) {
+        if (TOKEN_STRING_CONST !== constantNode.name) {
           return [
             {
               from,
@@ -289,10 +310,42 @@ function validateArgument(argDef: FswCommandArgument, argNode: SyntaxNode, _docT
           ];
         }
         break;
+      case 'enum': {
+        if (TOKEN_STRING_CONST !== constantNode.name) {
+          return [
+            {
+              from,
+              message: `Expected type ${constantNode.name} for enum argument`,
+              severity: 'error',
+              to,
+            },
+          ];
+        } else {
+          const enumVal = unquote(docText.slice(constantNode.from, constantNode.to));
+          const enumDef = commandDictionary.enumMap[argDef.enum_name];
+          if (enumDef) {
+            if (!enumDef.values.find(ev => ev.symbol === enumVal)) {
+              return [
+                {
+                  from,
+                  message: `Expected enum value ${enumVal}`,
+                  severity: 'error',
+                  to,
+                },
+              ];
+            }
+          }
+        }
+        break;
+      }
     }
   }
 
   return diagnostics;
+}
+
+function unquote(s: string) {
+  return s.slice(1, s.length - 1);
 }
 
 /**
@@ -301,9 +354,8 @@ function validateArgument(argDef: FswCommandArgument, argNode: SyntaxNode, _docT
  * @param tree
  * @returns
  */
-function validateParserErrors(tree: Tree) {
+function validateParserErrors(tree: Tree): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
-  const MAX_PARSER_ERRORS = 100;
   tree.iterate({
     enter: node => {
       if (node.name === TOKEN_ERROR && diagnostics.length < MAX_PARSER_ERRORS) {
