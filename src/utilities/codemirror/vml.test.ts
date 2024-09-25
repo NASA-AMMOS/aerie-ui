@@ -195,6 +195,31 @@ R00:00:00.1 a := b ^ c ; power
   });
 });
 
+it('file with header', () => {
+  const input = `CCSD3ZF0000100000001NJPL3KS0L015$$MARK$$;
+DATA_SET_ID=VIRTUAL_MACHINE_LANGUAGE;
+MISSION_NAME=AERIE;
+CCSD$$MARKER$$MARK$$NJPL3IF0040300000001;
+$MRO       VIRTUAL MACHINE LANGUAGE FILE
+************************************************************
+*PROJECT    AERIE
+*Input files used:
+*File Type   Last modified             File name
+*SSF        Wed Jun 12 20:18:11 2024  rm461a.ssf
+************************************************************
+$$EOH
+MODULE
+SEQUENCE rm461
+FLAGS AUTOEXECUTE AUTOUNLOAD
+BODY
+S1.14 issue           CMD "enum_arg",0
+END_BODY
+END_MODULE
+$$EOF
+`;
+  assertNoErrorNodes(input, true);
+});
+
 function wrapInModule(s: string) {
   return `
 MODULE

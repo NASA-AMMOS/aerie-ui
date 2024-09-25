@@ -37,6 +37,7 @@
 @skip { space | Comment }
 
 @top Text_file {
+  VML_HEADER?
   optional_end_lines
   MODULE
   End_lines
@@ -51,6 +52,7 @@
     Function*
   }
   END_MODULE
+  ( End_lines VML_EOF )?
   ( End_lines | EOF )
 }
 
@@ -769,6 +771,10 @@ LOGICAL_NOT {
 @tokens {
   space { $[ \t]+ }
   Comment { ";" ![\n]* }
+
+  VML_HEADER { 'CCSD3ZF' ![@]* '$$EOH' }
+  @precedence { VML_HEADER, SYMBOL_CONST }
+  VML_EOF { "$$EOF" }
 
   // check if mix case is allowed
   SYMBOL_CONST { @asciiLetter (@asciiLetter| @digit | "_" | "-")* }

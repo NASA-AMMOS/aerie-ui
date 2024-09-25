@@ -30,6 +30,7 @@ const FoldBehavior: {
   // only called on multi-line rules, may need custom service to handle FOR, WHILE, etc.
   Body: foldInside,
   If: foldInside,
+  VML_HEADER: foldInside,
 };
 
 export const VmlLanguage = LRLanguage.define({
@@ -77,6 +78,8 @@ export const VmlLanguage = LRLanguage.define({
         THEN: t.controlKeyword,
         TIMEOUT: t.keyword,
         UINT_CONST: t.number,
+        VML_EOF: t.docComment,
+        VML_HEADER: t.docComment,
         Variable_name: t.variableName,
         WAIT: t.keyword,
         WHILE: t.controlKeyword,
