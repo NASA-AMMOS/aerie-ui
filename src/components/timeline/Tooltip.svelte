@@ -221,6 +221,11 @@
         tooltipText = `${tooltipText}<hr>`;
       }
     });
+
+    if (externalEventsToDisplay.length && activityDirectivesToDisplay.length) {
+      tooltipText = `${tooltipText}<hr>`;
+    }
+
     externalEventsToDisplay.forEach((externalEvent: ExternalEvent, i: number) => {
       const text = textForExternalEvent(externalEvent);
       tooltipText = `${tooltipText} ${text}`;
@@ -229,7 +234,10 @@
         tooltipText = `${tooltipText}<hr>`;
       }
     });
-    if (spansToDisplay.length && activityDirectivesToDisplay.length) {
+    if (
+      (spansToDisplay.length && activityDirectivesToDisplay.length) ||
+      (spansToDisplay.length && externalEventsToDisplay.length)
+    ) {
       tooltipText = `${tooltipText}<hr>`;
     }
     spansToDisplay.forEach((span: Span, i: number) => {
