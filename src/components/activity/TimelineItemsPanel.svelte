@@ -23,11 +23,11 @@
   </svelte:fragment>
 
   <svelte:fragment slot="body">
-    <Tabs class="activity-resource-external-event-tabs" tabListClassName="activity-resource-external-event-tabs-list">
+    <Tabs class="timeline-items-tabs" tabListClassName="timeline-items-tabs-list">
       <svelte:fragment slot="tab-list">
-        <Tab class="activity-resource-external-event-tab"><DirectiveAndSpanIcon /> Activities</Tab>
-        <Tab class="activity-resource-external-event-tab"><TimelineLineLayerIcon /> Resources</Tab>
-        <Tab class="activity-resource-external-event-tab"><Balloon /> External Event</Tab>
+        <Tab class="timeline-items-tab"><DirectiveAndSpanIcon /> Activities</Tab>
+        <Tab class="timeline-items-tab"><TimelineLineLayerIcon /> Resources</Tab>
+        <Tab class="timeline-items-tab"><Balloon /> Events</Tab>
       </svelte:fragment>
       <TabPanel>
         <ActivityList />
@@ -43,34 +43,34 @@
 </Panel>
 
 <style>
-  :global(.tab-list.activity-resource-external-event-tabs-list) {
+  :global(.tab-list.timeline-items-tabs-list) {
     background-color: var(--st-gray-10);
   }
 
-  :global(button.activity-resource-external-event-tab) {
+  :global(button.timeline-items-tab) {
     align-items: center;
     display: flex;
     gap: 8px;
     text-align: left;
   }
 
-  :global(button.activity-resource-external-event-tab:last-of-type) {
+  :global(button.timeline-items-tab:last-of-type) {
     flex: 1;
   }
 
-  :global(button.activity-resource-external-event-tab:last-of-type.selected) {
+  :global(button.timeline-items-tab:last-of-type.selected) {
     box-shadow: 1px 0px 0px inset var(--st-gray-20);
   }
 
-  :global(button.activity-resource-external-event-tab:first-of-type.selected) {
+  :global(button.timeline-items-tab:first-of-type.selected) {
     box-shadow: -1px 0px 0px inset var(--st-gray-20);
   }
 
-  :global(button.activity-resource-external-event-tab:not(.selected)) {
+  :global(button.timeline-items-tab:not(.selected)) {
     box-shadow: 0px -1px 0px inset var(--st-gray-20);
   }
 
-  :global(button.activity-resource-external-event-tab.selected) {
+  :global(button.timeline-items-tab.selected) {
     background-color: white;
     box-shadow:
       1px 0px 0px inset var(--st-gray-20),
