@@ -2,16 +2,16 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { createExternalEventTypeError } from '../../stores/external-event';
+  import { createExternalEventTypeError, resetExternalEventStores } from '../../stores/external-event';
   import {
     createDerivationGroupError,
     createExternalSourceTypeError,
     externalSourceTypes,
+    resetExternalSourceStores,
   } from '../../stores/external-source';
   import type { User } from '../../types/app';
   import effects from '../../utilities/effects';
   import AlertError from '../ui/AlertError.svelte';
-  import CssGrid from '../ui/CssGrid.svelte';
   import Tab from '../ui/Tabs/Tab.svelte';
   import TabPanel from '../ui/Tabs/TabPanel.svelte';
   import Tabs from '../ui/Tabs/Tabs.svelte';
@@ -25,9 +25,6 @@
   const dispatch = createEventDispatcher<{
     close: void;
   }>();
-
-  const modalColumnSizeNoDetail: string = '1fr 3px 0fr';
-  let modalColumnSize: string = modalColumnSizeNoDetail;
 
   let newTypeName: string = '';
   let newTypeSourceType: string = '';
@@ -62,94 +59,98 @@
       newTypeName = '';
     }
   }
+  function handleChange() {
+    resetExternalSourceStores();
+    resetExternalEventStores();
+    newTypeError = null;
+  }
 </script>
 
 <Modal height={240} width={600}>
   <ModalHeader on:close>Create Derivation Groups or Types</ModalHeader>
   <ModalContent>
-    <CssGrid columns={modalColumnSize} minHeight="100%">
-      <div class="derivation-groups-modal-filter-container">
-        <div style="width:100%">
-          <Tabs class="creation-tabs" tabListClassName="creation-tabs-list">
-            <svelte:fragment slot="tab-list">
-              <Tab class="creation-tab">Derivation Group</Tab>
-              <Tab class="creation-tab">External Source Type</Tab>
-              <Tab class="creation-tab">External Event Type</Tab>
-            </svelte:fragment>
-            <TabPanel>
-              <p style="padding-top:10px">Provide a name and an external source type for the new derivation group.</p>
-              <p><i>The newly created group will be empty, though you can upload sources into it.</i></p>
-              <div class="timeline-editor-layer-filter">
-                <input
-                  bind:value={newTypeName}
-                  on:change={() => (newTypeError = null)}
-                  autocomplete="off"
-                  class="st-input w-100"
-                  name="filter-ee"
-                  placeholder="New Derivation Group Name"
-                />
-                <select
-                  bind:value={newTypeSourceType}
-                  on:change={() => (newTypeError = null)}
-                  name="newTypeSourceType"
-                  class="st-select"
-                  style="width: 200px"
-                >
-                  {#each $externalSourceTypes as sourceType}
-                    <option value={sourceType.name}>{sourceType.name}</option>
-                  {/each}
-                </select>
-                <button class="st-button w-10" type="submit" on:click|preventDefault={onCreateDerivationGroup}>
-                  Create
-                </button>
-              </div></TabPanel
-            >
-            <TabPanel>
-              <p style="padding-top:10px">Provide a name for the new external source type.</p>
-              <p><i>The newly created external source type will be empty, though you can upload sources into it.</i></p>
-              <div class="timeline-editor-layer-filter">
-                <input
-                  bind:value={newTypeName}
-                  on:change={() => (newTypeError = null)}
-                  autocomplete="off"
-                  class="st-input w-100"
-                  name="filter-ee"
-                  placeholder="New External Source Type Name"
-                />
-                <button class="st-button w-10" type="submit" on:click|preventDefault={onCreateExternalSourceType}>
-                  Create
-                </button>
-              </div></TabPanel
-            >
-            <TabPanel>
-              <p style="padding-top:10px">Provide a name for the new external event type.</p>
-              <p><i>The newly created external event type will be empty, though you can upload events into it.</i></p>
-              <div class="timeline-editor-layer-filter">
-                <input
-                  bind:value={newTypeName}
-                  on:change={() => (newTypeError = null)}
-                  autocomplete="off"
-                  class="st-input w-100"
-                  name="filter-ee"
-                  placeholder="New External Event Type Name"
-                />
-                <button class="st-button w-10" type="submit" on:click|preventDefault={onCreateExternalEventType}>
-                  Create
-                </button>
-              </div></TabPanel
-            >
-          </Tabs>
-        </div>
-        <div style="flex-direction: column;">
-          <p>
-            <AlertError class="m-2" style="margin: 1.0rem 0; padding-bottom: 0px" error={newTypeError} />
-            <AlertError class="m-2" error={$createExternalSourceTypeError} />
-            <AlertError class="m-2" error={$createExternalEventTypeError} />
-            <AlertError class="m-2" error={$createDerivationGroupError} />
-          </p>
-        </div>
+    <div class="creation-modal-container">
+      <div class="creation-modal-tabs-container">
+        <Tabs class="creation-tabs" tabListClassName="creation-tabs-list" on:select-tab={handleChange}>
+          <svelte:fragment slot="tab-list">
+            <Tab class="creation-tab">Derivation Group</Tab>
+            <Tab class="creation-tab">External Source Type</Tab>
+            <Tab class="creation-tab">External Event Type</Tab>
+          </svelte:fragment>
+          <TabPanel>
+            <div class="creation-tab-directions">
+              <p class="st-typography-body">Provide a name and an external source type for the new derivation group.</p>
+              <p class="st-typography-label">
+                The newly created group will be empty, though you can upload sources into it.
+              </p>
+            </div>
+            <div class="creation-tab-inputs">
+              <input
+                bind:value={newTypeName}
+                on:change={handleChange}
+                autocomplete="off"
+                class="st-input w-100"
+                placeholder="New Derivation Group Name"
+              />
+              <select bind:value={newTypeSourceType} on:change={handleChange} class="st-select source-type-selection">
+                {#each $externalSourceTypes as sourceType}
+                  <option value={sourceType.name}>{sourceType.name}</option>
+                {/each}
+              </select>
+              <button class="st-button w-10" type="submit" on:click|preventDefault={onCreateDerivationGroup}>
+                Create
+              </button>
+            </div>
+          </TabPanel>
+          <TabPanel>
+            <div class="creation-tab-directions">
+              <p class="st-typography-body">Provide a name for the new external source type.</p>
+              <p class="st-typography-label">
+                The newly created external source type will be empty, though you can upload sources into it.
+              </p>
+            </div>
+            <div class="creation-tab-inputs">
+              <input
+                bind:value={newTypeName}
+                on:change={handleChange}
+                autocomplete="off"
+                class="st-input w-100"
+                placeholder="New External Source Type Name"
+              />
+              <button class="st-button w-10" type="submit" on:click|preventDefault={onCreateExternalSourceType}>
+                Create
+              </button>
+            </div>
+          </TabPanel>
+          <TabPanel>
+            <div class="creation-tab-directions">
+              <p class="st-typography-body">Provide a name for the new external event type.</p>
+              <p class="st-typography-label">
+                The newly created external event type will be empty, though you can upload events into it.
+              </p>
+            </div>
+            <div class="creation-tab-inputs">
+              <input
+                bind:value={newTypeName}
+                on:change={() => (newTypeError = null)}
+                autocomplete="off"
+                class="st-input w-100"
+                placeholder="New External Event Type Name"
+              />
+              <button class="st-button w-10" type="submit" on:click|preventDefault={onCreateExternalEventType}>
+                Create
+              </button>
+            </div>
+          </TabPanel>
+        </Tabs>
       </div>
-    </CssGrid>
+      <div>
+        <AlertError class="m-2" error={newTypeError} />
+        <AlertError class="m-2" error={$createExternalSourceTypeError} />
+        <AlertError class="m-2" error={$createExternalEventTypeError} />
+        <AlertError class="m-2" error={$createDerivationGroupError} />
+      </div>
+    </div>
   </ModalContent>
   <ModalFooter>
     <button class="st-button secondary" on:click={() => dispatch('close')}> Close </button>
@@ -190,21 +191,30 @@
       -1px 0px 0px inset var(--st-gray-20);
   }
 
-  .derivation-groups-modal-filter-container {
+  .creation-modal-container {
+    width: 100%;
+  }
+
+  .creation-modal-tabs-container {
     display: flex;
     flex: 1;
     flex-direction: column;
-    height: 100%;
     justify-content: flex-end;
-    padding-right: 8px;
-    width: 575px;
   }
 
-  .timeline-editor-layer-filter {
+  .creation-tab-directions {
+    padding-top: 12px;
+  }
+
+  .creation-tab-inputs {
     display: flex;
     flex-direction: row;
     gap: 8px;
     padding-bottom: 10px;
     padding-top: 10px;
+  }
+
+  .source-type-selection {
+     width: 200px;
   }
 </style>
