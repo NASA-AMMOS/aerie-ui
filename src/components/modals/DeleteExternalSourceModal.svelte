@@ -11,7 +11,7 @@
   import ModalFooter from './ModalFooter.svelte';
   import ModalHeader from './ModalHeader.svelte';
 
-  export let height: number = 200;
+  export let height: number = 300;
   export let linked: { pkey: ExternalSourcePkey; plan_ids: number[] }[] = [];
   export let width: number = 400;
   export let sources: ExternalSourceSlim[] = [];
@@ -107,7 +107,7 @@
 <style>
   .modal-content {
     display: block;
-    overflow: hidden;
+    overflow: auto;
     text-overflow: ellipsis;
   }
 </style>
