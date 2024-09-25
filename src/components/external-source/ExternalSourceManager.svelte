@@ -7,7 +7,6 @@
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { catchError } from '../../stores/errors';
-  import { createExternalEventTypeError } from '../../stores/external-event';
   import {
     createDerivationGroupError,
     createExternalSourceError,
@@ -753,9 +752,6 @@
           }}
         >
           <AlertError class="m-2" error={$createExternalSourceError} />
-          <AlertError class="m-2" error={$createExternalSourceTypeError} />
-          <AlertError class="m-2" error={$createExternalEventTypeError} />
-          <AlertError class="m-2" error={$createDerivationGroupError} />
           <AlertError class="m-2" error={$parsingError} />
           <div class="file-upload-field">
             <fieldset style:flex={1}>
