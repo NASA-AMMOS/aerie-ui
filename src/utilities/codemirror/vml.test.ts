@@ -1,6 +1,7 @@
 import type { SyntaxNode } from '@lezer/common';
 import { assert, describe, it } from 'vitest';
-import { TOKEN_ERROR, VmlLanguage } from './vml';
+import { VmlLanguage } from './vml';
+import { TOKEN_ERROR } from './vml-constants';
 
 describe('vml tree', () => {
   it('module with variables', () => {
