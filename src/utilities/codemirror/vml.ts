@@ -278,7 +278,7 @@ function validateArgument(argDef: FswCommandArgument, argNode: SyntaxNode, _docT
         }
         break;
       case 'var_string':
-        if ('STRING_CONST' === constantNode.name) {
+        if ('STRING_CONST' !== constantNode.name) {
           return [
             {
               from,

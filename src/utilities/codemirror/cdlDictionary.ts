@@ -174,6 +174,10 @@ export function parseNumericArgument(lines: string[]): FswCommandArgument {
 
   let conversion = '';
   let range: NumericRange | null = null;
+  let bit_length: number | null = null;
+  let default_value_string: string | null = null;
+  let description: string = '';
+  let default_value: number | null = null;
 
   for (const line of lines) {
     if (line.match(END_NUMERIC_ARG)) {
@@ -182,24 +186,54 @@ export function parseNumericArgument(lines: string[]): FswCommandArgument {
       const rangeMatch = line.match(/^\s*'([-\w]+)'\s*to\s*'([-\w]+)/);
       if (rangeMatch) {
         if (conversion.includes('DECIMAL')) {
+          const defaultMatch = line.match(/^\s*DEFAULT\s*:\s*'(-?\d+)'/);
+          if (defaultMatch) {
+            default_value = parseInt(defaultMatch[1], 10);
+          }
           range = {
             max: parseInt(rangeMatch[2], 10),
             min: parseInt(rangeMatch[1], 10),
           };
-          // console.log(`Range ${range}`);
         } else if (conversion === 'HEX') {
+          const defaultMatch = line.match(/^\s*DEFAULT\s*:\s*'([\dA-Fa-f]+)'/);
+          if (defaultMatch) {
+            default_value = parseInt(defaultMatch[1], 16);
+          }
           range = {
             max: parseInt(rangeMatch[2], 16),
             min: parseInt(rangeMatch[1], 16),
           };
         } else if (conversion === 'IEEE64FLOAT') {
+          const defaultMatch = line.match(/^\s*DEFAULT\s*:\s*'(.*)'/);
+          if (defaultMatch) {
+            default_value = parseFloat(defaultMatch[1]);
+          }
           range = {
             max: Number.MAX_VALUE,
             min: Number.MIN_VALUE,
           };
         }
       }
+      if (conversion === 'ASCII_STRING') {
+        // LENGTH : 1024
+        const maxBitMatch = line.match(/^\s*LENGTH\s*:\s*(\d+)/);
+        if (maxBitMatch) {
+          bit_length = parseInt(maxBitMatch[1], 10);
+        }
+
+        //  DEFAULT : ''
+        // doesn't handle escaped quotes
+        const defaultMatch = line.match(/^\s*DEFAULT\s*:\s*'(.*)'/);
+        if (defaultMatch) {
+          default_value_string = defaultMatch[1];
+        }
+      }
     } else {
+      const titleMatch = line.match(/^\s*TITLE\s*:\s*'(.*)'/);
+      if (titleMatch) {
+        description = titleMatch[1].trim();
+      }
+
       const conversionMatch = line.match(CONVERSION);
       if (conversionMatch) {
         conversion = conversionMatch[1].trim();
@@ -210,9 +244,9 @@ export function parseNumericArgument(lines: string[]): FswCommandArgument {
   if (conversion === 'ASCII_STRING') {
     return {
       arg_type: 'var_string',
-      default_value: null,
-      description: '',
-      max_bit_length: null,
+      default_value: default_value_string,
+      description,
+      max_bit_length: bit_length,
       name,
       prefix_bit_length: null,
       valid_regex: null,
@@ -220,9 +254,9 @@ export function parseNumericArgument(lines: string[]): FswCommandArgument {
   } else if (conversion.includes('DECIMAL') || conversion === 'HEX' || conversion === 'MPFTIME') {
     return {
       arg_type: 'integer',
-      bit_length: null,
-      default_value: null,
-      description: '',
+      bit_length,
+      default_value,
+      description,
       name,
       range,
       units: '',
@@ -231,9 +265,9 @@ export function parseNumericArgument(lines: string[]): FswCommandArgument {
 
   return {
     arg_type: 'float',
-    bit_length: null,
-    default_value: null,
-    description: '',
+    bit_length,
+    default_value,
+    description,
     name,
     range,
     units: '',
@@ -353,6 +387,11 @@ export function toAmpcsXml(cdl: CommandDictionary): string {
           return `<enum_arg name="${argDef.name}" bit_length="${argDef.bit_length ?? 8}" enum_name="${argDef.enum_name}">
             <description>${argDef.description || 'placeholder description'}</description>
           </enum_arg>`;
+        }
+        case 'var_string': {
+          return `<var_string_arg name="${argDef.name}" prefix_bit_length="${argDef.prefix_bit_length ?? 8}" max_bit_length="${argDef.max_bit_length ?? 1024}">
+          <description>${argDef.description || 'placeholder description'}</description>
+        </var_string_arg>`;
         }
       }
       return ``;

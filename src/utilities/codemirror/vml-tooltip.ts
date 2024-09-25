@@ -42,7 +42,7 @@ export function vmlTooltip(commandDictionary: CommandDictionary | null): Extensi
                       );
 
                     console.log(
-                      `argIndex ${argIndex} ${callParametersNode.getChildren('Call_parameter').length} ${thisCallParameterNode.name}`,
+                      `argIndex ${argIndex} ${callParametersNode.getChildren('Call_parameter').length} ${thisCallParameterNode.name} ${command.stem} ${command.arguments.length}`,
                     );
                     const arg = command.arguments[argIndex];
 
