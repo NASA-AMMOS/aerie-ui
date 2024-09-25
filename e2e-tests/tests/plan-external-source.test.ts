@@ -109,12 +109,20 @@ test.describe.serial('Plan External Sources', () => {
     await plan.externalSourceManageButton.click();
     await page.getByText('No Derivation Groups Found').waitFor({ state: 'hidden', timeout: extendedTimeout });
     await page.getByRole('row', { name: externalSources.exampleSourceType }).getByRole('checkbox').click();
-    await expect(page.getByText('Derivation Group Linked Successfully')).toBeVisible();
+    await expect(
+      page.getByRole('row', { name: externalSources.exampleSourceType }).getByRole('checkbox'),
+    ).toBeChecked();
+
     await page.getByRole('row', { name: externalSources.exampleSourceType }).getByRole('checkbox').click();
-    await expect(page.getByText('Derivation Group Disassociated Successfully')).toBeVisible();
+    await expect(
+      page.getByRole('row', { name: externalSources.exampleSourceType }).getByRole('checkbox'),
+    ).not.toBeChecked();
+
     // Re-link for later use in testing, and to determine if unlinking broke things
     await page.getByRole('row', { name: externalSources.exampleSourceType }).getByRole('checkbox').click();
-    await expect(page.getByText('Derivation Group Linked Successfully').nth(1)).toBeVisible();
+    await expect(
+      page.getByRole('row', { name: externalSources.exampleSourceType }).getByRole('checkbox'),
+    ).toBeChecked();
   });
 
   test('External event types can be added to the timeline', async () => {
