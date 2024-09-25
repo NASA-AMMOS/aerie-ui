@@ -27,11 +27,10 @@
 
   let rowHeight = 0;
 
-  $: rowHeight = discreteOptions.height + 4; // Add externalEventPadding from LayerExternalSources
+  $: rowHeight = discreteOptions.height + 4; // Add externalEventPadding from LayerDiscrete
 
   const dispatch = createEventDispatcher<{
     dblClick: MouseOver;
-    // TODO: add handles
     'discrete-tree-node-change': DiscreteTreeNode;
     mouseDown: MouseDown;
   }>();
@@ -82,7 +81,7 @@
       } else if (span) {
         spanCount++;
       } else if (externalEvent) {
-        // necessarily mutually exclussive.
+        // necessarily mutually exclusive.
         externalEventCount++;
       }
     });
