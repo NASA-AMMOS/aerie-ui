@@ -36,11 +36,11 @@
   style="--border-color: {deleted ? 'rgba(152, 35, 35, 0.5)' : 'rgba(152, 101, 35, 0.5)'}"
 >
   <div
-    class="card--row card--title-row"
+    class="card-row card-title-row"
     style=" background: {deleted ? 'rgb(254, 234, 234)' : 'rgb(254, 252, 234)'};display:flex"
   >
     <div
-      class="card--title t-typography-medium"
+      class="card-title t-typography-medium"
       style=" align-items: center; display: flex; gap: 5px;padding-left:5px; width: 100%"
     >
       <LightningCharge
@@ -64,28 +64,22 @@
     </slot>
   </div>
   <div style="padding: 4px 14px 12px;">
-    <div class="card--row" style="padding-top: 5px">
+    <div class="card-row" style="padding-top: 5px">
       <span class="st-typography-body">
         {!deleted
           ? 'New files matching source types and derivation groups in the current plan:'
           : 'Deleted files organized by source type and derivation group:'}
       </span>
     </div>
-    <div class="card--body st-typography-body">
+    <div class="card-body st-typography-body">
       {#each Object.keys(mappedSources) as sourceType}
         <Collapse title={sourceType} tooltipContent="Source Type" defaultExpanded={true}>
           {#each Object.keys(mappedSources[sourceType]) as derivationGroup}
             <Collapse title={derivationGroup} tooltipContent="Derivation Group" defaultExpanded={true}>
               {#each mappedSources[sourceType][derivationGroup] as source}
-                <div class="card--source-info">
-                  <p
-                    style="flex-shrink: 1; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap"
-                  >
-                    {source.key}
-                  </p>
-                  <p
-                    style=" color: gray;flex-shrink: 0; margin-left: auto; padding-right: 0.25rem; padding-top: 0.1rem; white-space: nowrap"
-                  >
+                <div class="card-source-info">
+                  <p class="card-source-key">{source.key}</p>
+                  <p class="card-time">
                     {getTimeAgo(new Date(source.change_date), new Date(), Number.MAX_SAFE_INTEGER)}
                   </p>
                 </div>
@@ -115,11 +109,10 @@
     cursor: pointer;
     display: flex;
     flex-direction: column;
-    /* padding: 4px 14px 12px; */
     text-align: left;
   }
 
-  .card--row {
+  .card-row {
     align-items: center;
     display: flex;
     justify-content: space-between;
@@ -127,25 +120,42 @@
     width: 100%;
   }
 
-  .card--title-row {
+  .card-title-row {
     background: var(--title-bg-color, rgb(254, 252, 234));
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
     padding: 4px 0px;
   }
 
-  .card--title {
+  .card-title {
     color: var(--st-gray-80);
     line-height: 24px;
   }
 
-  .card--body {
+  .card-body {
     color: var(--st-gray-70);
     padding: 4px 0px;
   }
 
-  .card--source-info {
+  .card-source-info {
     display: flex;
     justify-content: space-between;
     overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .card-source-key {
+    flex-shrink: 1;
+    max-width: 100%;
+    overflow: auto;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .card-time {
+    color: grey;
+    flex-shrink: 0;
+    margin-left: auto;
     white-space: nowrap;
   }
 
