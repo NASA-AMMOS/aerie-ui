@@ -166,14 +166,18 @@
         </Collapse>
       {/each}
     {:else}
-      <p>
-        <br />
-        No Derivation Groups Linked To This Plan
-      </p>
-      <p>
-        <br />
-        <i>Click "Manage Derivation Groups" to associate Derivation Groups to this plan.</i>
-      </p>
+      <div class="st-typography-body">
+        <p>
+          <br />
+          No Derivation Groups Linked To This Plan
+        </p>
+      </div>
+      <div class="st-typography-body">
+        <p>
+          <br />
+          <i>Click "Manage Derivation Groups" to associate Derivation Groups to this plan.</i>
+        </p>
+      </div>
     {/if}
   </svelte:fragment>
 </Panel>
