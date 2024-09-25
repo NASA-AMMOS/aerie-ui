@@ -1,4 +1,5 @@
 import { parse, type FswCommandArgumentInteger } from '@nasa-jpl/aerie-ampcs';
+import { readFileSync, writeFileSync } from 'fs';
 import { describe, expect, test } from 'vitest';
 import { parseCdlDictionary, toAmpcsXml } from './cdlDictionary';
 
@@ -86,17 +87,15 @@ describe('cdl parse tests', async () => {
     expect(cdlDictionary.fswCommands.length).toEqual(2);
     expect((cdlDictionary.fswCommands[1].arguments[1] as FswCommandArgumentInteger).range?.min).toEqual(-255);
     expect((cdlDictionary.fswCommands[1].arguments[1] as FswCommandArgumentInteger).range?.max).toEqual(255);
-  });
-
-  test('to ampcs', () => {
-    const cdlDictionary = parseCdlDictionary(cdlString);
-    const xmlDictionary = toAmpcsXml(cdlDictionary);
-    console.log(xmlDictionary);
+    console.log(cdlDictionary.fswCommands[1].description);
   });
 
   test('basic', () => {
-    const cdlDictionary = parseCdlDictionary(cdlString);
+    const contents = readFileSync('/Users/joswig/Documents/Aerie/Juno/JNO_6.0.4_REV_M00_edited', 'utf-8');
+    const cdlDictionary = parseCdlDictionary(contents);
     const xmlDictionary = toAmpcsXml(cdlDictionary);
+    writeFileSync('/Users/joswig/Downloads/Juno.xml', xmlDictionary);
     parse(xmlDictionary);
+    cdlDictionary.fswCommands.forEach(cnd => console.log(`${cnd.description}`));
   });
 });

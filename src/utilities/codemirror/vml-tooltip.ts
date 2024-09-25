@@ -3,6 +3,7 @@ import type { Extension } from '@codemirror/state';
 import { hoverTooltip, type Tooltip } from '@codemirror/view';
 import type { CommandDictionary } from '@nasa-jpl/aerie-ampcs';
 import type { EditorView } from 'codemirror';
+import ArgumentTooltip from '../../components/sequencing/ArgumentTooltip.svelte';
 import CommandTooltip from '../../components/sequencing/CommandTooltip.svelte';
 import { getTokenPositionInLine } from '../sequence-editor/sequence-tooltip';
 import { getNearestAncestorNodeOfType } from '../sequence-editor/tree-utils';
@@ -25,6 +26,44 @@ export function vmlTooltip(commandDictionary: CommandDictionary | null): Extensi
               const commandName = view.state.sliceDoc(functionNameNode.from, functionNameNode.to);
               const command = commandDictionary?.fswCommandMap[commandName];
               if (command) {
+                const callParametersNode = getNearestAncestorNodeOfType(cursorNode, ['Call_parameters']);
+                if (callParametersNode) {
+                  const thisCallParameterNode =
+                    cursorNode.name === 'Call_parameter'
+                      ? cursorNode
+                      : getNearestAncestorNodeOfType(cursorNode, ['Call_parameter']);
+                  if (thisCallParameterNode) {
+                    const argIndex = callParametersNode
+                      .getChildren('Call_parameter')
+                      .findIndex(
+                        callParameterNode =>
+                          callParameterNode.to === thisCallParameterNode.to &&
+                          callParameterNode.from === thisCallParameterNode.from,
+                      );
+
+                    console.log(
+                      `argIndex ${argIndex} ${callParametersNode.getChildren('Call_parameter').length} ${thisCallParameterNode.name}`,
+                    );
+                    const arg = command.arguments[argIndex];
+
+                    if (arg) {
+                      return {
+                        above: true,
+                        create() {
+                          const dom = document.createElement('div');
+                          new ArgumentTooltip({
+                            props: { arg, commandDictionary },
+                            target: dom,
+                          });
+                          return { dom };
+                        },
+                        end: to,
+                        pos: from,
+                      };
+                    }
+                  }
+                }
+
                 return {
                   above: true,
                   create() {

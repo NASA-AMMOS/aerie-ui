@@ -5731,7 +5731,8 @@ const effects = {
           // consider moving to adaptation
           if (splitLineDictionary.find(line => /^PROJECT\s*:\s*"([^"]*)"/.test(line))) {
             console.log('CDL Dictionary conversion');
-            text = toAmpcsXml(parseCdlDictionary(text));
+            // eslint-disable-next-line no-control-regex
+            text = toAmpcsXml(parseCdlDictionary(text)).replaceAll(/[^\x00-\x7F]+/g, '');
             type = DictionaryTypes.COMMAND;
             console.log(text);
           }

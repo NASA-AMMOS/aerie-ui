@@ -7,11 +7,14 @@
   export let arg: FswCommandArgument;
   export let commandDictionary: CommandDictionary;
 
+  const MAX_ENUMS_TO_DISPLAY = 20;
+
   let enumSymbolsDisplayStr: string;
 
   $: if (commandDictionary && arg?.arg_type === 'enum') {
     const enumValues = getAllEnumSymbols(commandDictionary.enumMap, arg.enum_name);
-    enumSymbolsDisplayStr = enumValues?.join('  |  ') ?? '';
+    const vals = enumValues ?? [];
+    enumSymbolsDisplayStr = `${vals.slice(0, MAX_ENUMS_TO_DISPLAY).join('  |  ')}${vals.length > MAX_ENUMS_TO_DISPLAY ? '...' + (vals.length - MAX_ENUMS_TO_DISPLAY) + ' more' : ''}`;
   }
 </script>
 

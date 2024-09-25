@@ -299,6 +299,15 @@ export function parseLookupArgument(lines: string[]): [FswCommandArgumentEnum, E
   ];
 }
 
+function escapeHtml(unsafe: string) {
+  return unsafe
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
 export function toAmpcsXml(cdl: CommandDictionary): string {
   const spacecraftIds = cdl.header.spacecraft_ids.map(sc => `<spacecraft_id value="${sc.toString(10)}" />`);
   const enumDefs = cdl.enums.map(enumDef => {
@@ -359,7 +368,7 @@ export function toAmpcsXml(cdl: CommandDictionary): string {
         <module>cmd_svc</module>
         <ops_category>CMD</ops_category>
       </categories>
-      <description>TBD</description>
+      <description>${escapeHtml(cmdDef.description) || ' '}</description>
       <completion>TBD</completion>
       <fsw_specification custom_validation_required="No" command_priority="Nominal"/>
       <restricted_modes>
