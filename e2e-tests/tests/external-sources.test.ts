@@ -24,7 +24,11 @@ test.afterAll(async () => {
 test.describe.serial('External Sources', () => {
   test('Uploading an external source', async () => {
     await externalSources.uploadExternalSource();
-    await expect(page.getByText('External Source Created')).toBeVisible();
+    await expect(
+      externalSources.externalSourcesTable.getByRole('gridcell', {
+        name: 'ExampleExternalSource:example',
+      }),
+    ).toBeVisible();
   });
 
   test('Upload button should be enabled after entering a filepath', async () => {
@@ -93,7 +97,7 @@ test.describe.serial('External Source Error Handling', () => {
   test('Duplicate keys is handled gracefully', async () => {
     await externalSources.uploadExternalSource(externalSources.externalSourceFilePath);
     await externalSources.deselectSourceButton.click();
-    await externalSources.uploadExternalSource(externalSources.externalSourceFilePath, false);
+    await externalSources.uploadExternalSource(externalSources.externalSourceFilePath);
     await expect(page.getByLabel('Uniqueness violation.')).toBeVisible();
     await expect(page.getByText('External Source Create Failed')).toBeVisible();
     await expect(page.getByRole('gridcell', { name: externalSources.externalSourceFileName })).toHaveCount(1);
@@ -102,12 +106,8 @@ test.describe.serial('External Source Error Handling', () => {
   });
 
   test("Invalid 'source' field is handled gracefully", async () => {
-    await externalSources.uploadExternalSource(externalSources.externalSourceFilePathMissingField, false);
-    await expect(
-      page.getByText(
-        'Not-NULL violation. null value in column "name" of relation "external_source_type" violates not-null constraint',
-      ),
-    ).toBeVisible();
+    await externalSources.fillInputFile(externalSources.externalSourceFilePathMissingField);
+    await expect(page.getByLabel('External Source has Invalid')).toBeVisible();
   });
 
   test('Syntax error is handled gracefully', async () => {

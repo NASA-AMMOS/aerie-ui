@@ -512,6 +512,16 @@
       } catch (error) {
         throw new Error('External Source has Invalid Format');
       }
+      // Check for missing fields - if any are not present, throw an error
+      if (
+        parsed.source.key === undefined ||
+        parsed.source.source_type === undefined ||
+        parsed.source.period.start_time === undefined ||
+        parsed.source.period.end_time === undefined ||
+        parsed.source.valid_at === undefined
+      ) {
+        throw new Error('Required field is missing in External Source');
+      }
       $keyField.value = parsed.source.key;
       $sourceTypeField.value = parsed.source.source_type;
       $startTimeDoyField.value = parsed.source.period.start_time.replaceAll('Z', '');
@@ -881,19 +891,21 @@
       </svelte:fragment>
       <svelte:fragment slot="body">
         {#if $externalSources.length}
-          <BulkActionDataGrid
-            {columnDefs}
-            {hasDeletePermission}
-            singleItemDisplayText="External Source"
-            pluralItemDisplayText="External Source"
-            {filterExpression}
-            items={$externalSources}
-            {user}
-            getRowId={getRowIdExternalSourceSlim}
-            on:rowClicked={({ detail }) => selectSource(detail.data)}
-            on:bulkDeleteItems={({ detail }) => onDeleteExternalSource(detail)}
-            bind:selectedItemId={selectedSourceId}
-          />
+          <div id="external-sources-table" style:height=100%>
+            <BulkActionDataGrid
+              {columnDefs}
+              {hasDeletePermission}
+              singleItemDisplayText="External Source"
+              pluralItemDisplayText="External Source"
+              {filterExpression}
+              items={$externalSources}
+              {user}
+              getRowId={getRowIdExternalSourceSlim}
+              on:rowClicked={({ detail }) => selectSource(detail.data)}
+              on:bulkDeleteItems={({ detail }) => onDeleteExternalSource(detail)}
+              bind:selectedItemId={selectedSourceId}
+            />
+          </div>
         {:else}
           <p>No external sources matching the selected external source type(s).</p>
         {/if}

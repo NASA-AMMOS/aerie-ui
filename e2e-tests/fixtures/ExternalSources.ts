@@ -1,4 +1,4 @@
-import { type Locator, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 export class ExternalSources {
   alertError: Locator;
   closeButton: Locator;
@@ -46,11 +46,10 @@ export class ExternalSources {
   }
 
   async deleteSource(sourceName: string) {
-    // Assumes a source has already been uploaded and it is the first row in the table
     await this.selectSource(sourceName);
     await this.deleteSourceButton.click();
     await this.deleteSourceButtonConfirmation.click();
-    await this.page.getByText('External Source Deleted').waitFor({ state: 'visible' });
+    await expect(this.externalSourcesTable.getByText(sourceName)).not.toBeVisible();
   }
 
   async fillInputFile(externalSourceFilePath: string) {
@@ -106,13 +105,12 @@ export class ExternalSources {
     this.viewContainedEventTypes = page.getByRole('button', { name: 'View Contained Event Types' });
     this.viewEventSourceMetadata = page.getByRole('button', { name: 'View Event Source Metadata' });
     this.panelExternalEventsTable = page.locator('[data-component-name="ExternalEventsTablePanel"]');
+    this.externalSourcesTable = page.locator('#external-sources-table');
   }
 
-  async uploadExternalSource(inputFilePath: string = this.externalSourceFilePath, waitForSuccess: boolean = false) {
+  async uploadExternalSource(inputFilePath: string = this.externalSourceFilePath) {
     await this.fillInputFile(inputFilePath);
     await this.uploadButton.click();
-    if (waitForSuccess === true) {
-      await this.page.getByText('External Source Created').waitFor({ state: 'visible' });
-    }
+    await expect(this.externalSourcesTable).toBeVisible();
   }
 }
