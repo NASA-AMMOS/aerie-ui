@@ -12,6 +12,7 @@
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { DerivationGroup, ExternalSourceSlim } from '../../types/external-source';
   import effects from '../../utilities/effects';
+  import { getRowIdDerivationGroup } from '../../utilities/externalEvents';
   import { formatDate } from '../../utilities/time';
   import Collapse from '../Collapse.svelte';
   import Input from '../form/Input.svelte';
@@ -61,7 +62,10 @@
 
   $: if (selectedDerivationGroup !== undefined) {
     modalColumnSize = modalColumnSizeWithDetail;
+  } else {
+    modalColumnSize = modalColumnSizeNoDetail;
   }
+
   $: selectedDerivationGroupSources = $externalSources.filter(
     source => selectedDerivationGroup?.name === source.pkey.derivation_group_name,
   );
@@ -156,11 +160,11 @@
     const derivationGroup = $derivationGroups.find(
       derivationGroup => derivationGroup.name === viewedDerivationGroup.name,
     );
-    selectedDerivationGroup = derivationGroup;
-  }
-
-  function getRowId(derivationGroup: DerivationGroup): string {
-    return `${derivationGroup.name}:${derivationGroup.source_type_name}`;
+    if (derivationGroup === selectedDerivationGroup) {
+      selectedDerivationGroup = undefined;
+    } else {
+      selectedDerivationGroup = derivationGroup;
+    }
   }
 
   async function changeDerivationGroupAssociation(checked: boolean, derivationGroupName: string | undefined) {
@@ -176,39 +180,36 @@
 
 <Modal height={600} width={1000}>
   <ModalHeader on:close>Manage Derivation Groups</ModalHeader>
-  <ModalContent style=" overflow-y:scroll; padding:0;">
+  <ModalContent style="overflow: auto; padding: 0;">
     <CssGrid columns={modalColumnSize} minHeight="100%">
-      <div class="derivation-groups-modal-container" style="height:100%">
-        <div class="derivation-groups-modal-filter-container" style:display="flex">
+      <div class="derivation-groups-modal-container">
+        <div class="derivation-groups-modal-filter-container">
           <Input layout="inline">
             <input bind:value={filterText} class="st-input" placeholder="Filter derivation groups" />
           </Input>
           <button
-            class="st-button secondary ellipsis"
+            class="st-button secondary ellipsis new-external-source-button"
             name="new-external-source"
             on:click={() => window.open(`${base}/external-sources`)}
-            style:width="100px"
-            style:align-items="center"
-            style:display="flex"
           >
             Upload
           </button>
         </div>
         <hr />
-        <div class="derivation-groups-modal-table-container" style="height:100%">
+        <div class="derivation-groups-modal-table-container">
           {#if filteredDerivationGroups.length}
             <DataGrid
               bind:this={dataGrid}
               {columnDefs}
               rowData={filteredDerivationGroups}
-              {getRowId}
+              getRowId={getRowIdDerivationGroup}
               on:cellEditingStopped={event => {
                 const { newValue, data } = event.detail;
                 changeDerivationGroupAssociation(newValue, data?.name);
               }}
             />
           {:else}
-            <div class="p1 st-typography-label">No Derivation Groups Found</div>
+            <div class="st-typography-label">No Derivation Groups Found</div>
           {/if}
         </div>
       </div>
@@ -226,39 +227,39 @@
                 <!-- Collapsible details -->
                 <Collapse title={source.pkey.key} tooltipContent={source.pkey.key} defaultExpanded={false}>
                   <span slot="right">
-                    <p style:color="gray">
+                    <p class="st-typography-body derived-event-count">
                       {selectedDerivationGroup.sources.get(source.pkey.key)?.event_counts} events
                     </p>
                   </span>
-                  <p>
-                    <strong>Key:</strong>
+                  <div class="st-typography-body">
+                    <div class="st-typography-bold">Key:</div>
                     {source.pkey.key}
-                  </p>
+                  </div>
 
-                  <p>
-                    <strong>Source Type:</strong>
+                  <div class="st-typography-body">
+                    <div class="st-typography-bold">Source Type:</div>
                     {source.source_type_name}
-                  </p>
+                  </div>
 
-                  <p>
-                    <strong>Start Time:</strong>
+                  <div class="st-typography-body">
+                    <div class="st-typography-bold">Start Time:</div>
                     {formatDate(new Date(source.start_time), $plugins.time.primary.format)}
-                  </p>
+                  </div>
 
-                  <p>
-                    <strong>End Time:</strong>
+                  <div class="st-typography-body">
+                    <div class="st-typography-bold">End Time:</div>
                     {formatDate(new Date(source.end_time), $plugins.time.primary.format)}
-                  </p>
+                  </div>
 
-                  <p>
-                    <strong>Valid At:</strong>
+                  <div class="st-typography-body">
+                    <div class="st-typography-bold">Valid At:</div>
                     {formatDate(new Date(source.valid_at), $plugins.time.primary.format)}
-                  </p>
+                  </div>
 
-                  <p>
-                    <strong>Created At:</strong>
+                  <div class="st-typography-body">
+                    <div class="st-typography-bold">Created At:</div>
                     {formatDate(new Date(source.created_at), $plugins.time.primary.format)}
-                  </p>
+                  </div>
                 </Collapse>
               {/each}
               <Collapse
@@ -268,11 +269,11 @@
                 tooltipContent="View Contained Event Types"
               >
                 {#each selectedDerivationGroup.event_types as eventType}
-                  <i>{eventType}</i>
+                  <i class="st-typography-body">{eventType}</i>
                 {/each}
               </Collapse>
             {:else}
-              <p>No sources in this group.</p>
+              <p class="st-typography-body">No sources in this group.</p>
             {/if}
           </svelte:fragment>
         </Panel>
@@ -289,6 +290,7 @@
     display: grid;
     grid-template-rows: min-content min-content auto;
     height: 100%;
+    height: 100%;
     row-gap: 0.5rem;
   }
 
@@ -302,7 +304,7 @@
   .derivation-groups-modal-filter-container {
     align-items: center;
     column-gap: 0.25rem;
-    display: grid;
+    display: flex;
     grid-template-columns: min-content auto min-content;
     margin: 0.5rem 1rem 0;
   }
@@ -311,5 +313,15 @@
     height: 100%;
     padding: 0 1rem 0.5rem;
     width: 100%;
+  }
+
+  .derived-event-count {
+    color: var(--st-gray-60);
+  }
+
+  .new-external-source-button {
+    align-items: center;
+    display: flex;
+    width: 100px;
   }
 </style>
