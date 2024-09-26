@@ -45,25 +45,25 @@
     tooltipContent={'Derivation group ' + derivationGroup.name}
     defaultExpanded={false}
   >
-    <span slot="right" style:display="flex">
+    <span slot="right" class="derivation-group-collapse-details">
       <p class="derived-event-text">
         {derivationGroup.derived_event_total} derived events
       </p>
       {#if enabled === true}
         <button
-          class="st-button icon"
+          class="st-button icon eye-button-open"
           on:click|stopPropagation={onChange}
           use:tooltip={{ content: 'Show in timeline', placement: 'top' }}
         >
-          <Eye style="color: rgba(143, 143, 143, 1)" />
+          <Eye />
         </button>
       {:else}
         <button
-          class="st-button icon"
+          class="st-button icon eye-button-closed"
           on:click|stopPropagation={onChange}
           use:tooltip={{ content: 'Hide in timeline', placement: 'top' }}
         >
-          <EyeSlash style="color: rgba(143, 143, 143, 0.5)" />
+          <EyeSlash />
         </button>
       {/if}
     </span>
@@ -73,39 +73,39 @@
         <!-- Collapsible details -->
         <Collapse title={source.pkey.key} tooltipContent={source.pkey.key} defaultExpanded={false}>
           <span slot="right">
-            <p style:color="gray" style:text-wrap="nowrap">
+            <p class="st-typography-body derived-event-count">
               {derivationGroup.sources.get(source.pkey.key)?.event_counts} events
             </p>
           </span>
-          <p>
-            <strong>Key:</strong>
+          <div class="st-typography-body">
+            <div class="st-typography-bold">Key:</div>
             {source.pkey.key}
-          </p>
+          </div>
 
-          <p>
-            <strong>Source Type:</strong>
+          <div class="st-typography-body">
+            <div class="st-typography-bold">Source Type:</div>
             {source.source_type_name}
-          </p>
+          </div>
 
-          <p>
-            <strong>Start Time:</strong>
+          <div class="st-typography-body">
+            <div class="st-typography-bold">Start Time:</div>
             {formatDate(new Date(source.start_time), $plugins.time.primary.format)}
-          </p>
+          </div>
 
-          <p>
-            <strong>End Time:</strong>
+          <div class="st-typography-body">
+            <div class="st-typography-bold">End Time:</div>
             {formatDate(new Date(source.end_time), $plugins.time.primary.format)}
-          </p>
+          </div>
 
-          <p>
-            <strong>Valid At:</strong>
+          <div class="st-typography-body">
+            <div class="st-typography-bold">Valid At:</div>
             {formatDate(new Date(source.valid_at), $plugins.time.primary.format)}
-          </p>
+          </div>
 
-          <p>
-            <strong>Created At:</strong>
+          <div class="st-typography-body">
+            <div class="st-typography-bold">Created At:</div>
             {formatDate(new Date(source.created_at), $plugins.time.primary.format)}
-          </p>
+          </div>
         </Collapse>
       {/each}
       <Collapse
@@ -115,11 +115,11 @@
         tooltipContent="View Contained Event Types"
       >
         {#each derivationGroup.event_types as eventType}
-          <i>{eventType}</i>
+          <i class="st-typography-body">{eventType}</i>
         {/each}
       </Collapse>
     {:else}
-      <p>No sources in this group.</p>
+      <p class="st-typography-body">No sources in this group.</p>
       <button name="delete-dg" class="st-button secondary" on:click|stopPropagation={deleteEmptyDerivationGroup}>
         Delete Empty Derivation Group
       </button>
@@ -130,11 +130,27 @@
 <style>
   .derived-event-text {
     align-items: center;
-    color: gray;
+    color: var(--st-gray-60);
     display: flex;
     float: left;
     height: 100%;
     padding-right: 0.25rem;
     text-wrap: nowrap;
+  }
+
+  .derived-event-count {
+    color: var(--st-gray-60);
+  }
+
+  .derivation-group-collapse-details {
+    display: flex;
+  }
+
+  .eye-button-open {
+    color: var(--st-gray-100);
+  }
+
+  .eye-button-closed {
+    color: var(--st-gray-30);
   }
 </style>
