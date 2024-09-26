@@ -42,7 +42,7 @@
       Delete External Source
     {/if}
   </ModalHeader>
-  <ModalContent>
+  <ModalContent style="overflow: auto;">
     {#if linked.length > 0}
       <span class="modal-content">
         The following External Sources are part of Derivation Groups that are still associated with the following plans:
