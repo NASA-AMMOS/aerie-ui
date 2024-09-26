@@ -41,10 +41,7 @@
   import { computeBlocks, isBlockCommand } from '../../utilities/codemirror/custom-folder';
   import effects from '../../utilities/effects';
   import { downloadBlob, downloadJSON } from '../../utilities/generic';
-  import { seqJsonLinter } from '../../utilities/sequence-editor/seq-json-linter';
-  import { sequenceAutoIndent } from '../../utilities/sequence-editor/sequence-autoindent';
-  import { sequenceCompletion } from '../../utilities/sequence-editor/sequence-completion';
-  import { sequenceLinter } from '../../utilities/sequence-editor/sequence-linter';
+  import { inputLinter, outputLinter } from '../../utilities/sequence-editor/extension-points';
   import { sequenceTooltip } from '../../utilities/sequence-editor/sequence-tooltip';
   import { getNearestAncestorNodeOfType } from '../../utilities/sequence-editor/tree-utils';
   import { showFailureToast, showSuccessToast } from '../../utilities/toast';
@@ -76,6 +73,7 @@
   let compartmentSeqLanguage: Compartment;
   let compartmentSeqLinter: Compartment;
   let compartmentSeqTooltip: Compartment;
+  let compartmentSeqAutocomplete: Compartment;
   let channelDictionary: ChannelDictionary | null;
   let commandDictionary: CommandDictionary | null;
   let disableCopyAndExport: boolean = true;
@@ -90,11 +88,6 @@
   let selectedNode: SyntaxNode | null;
   let selectedOutputFormat: IOutputFormat | undefined;
   let toggleSeqJsonPreview: boolean = false;
-
-  $: {
-    outputFormats = $outputFormat;
-    selectedOutputFormat = outputFormats[0];
-  }
 
   $: {
     loadSequenceAdaptation(parcel?.sequence_adaptation_id);
@@ -163,26 +156,29 @@
 
         // Reconfigure sequence editor.
         editorSequenceView.dispatch({
-          effects: compartmentSeqLanguage.reconfigure(
-            setupLanguageSupport(
-              sequenceCompletion(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
+          effects: [
+            compartmentSeqLanguage.reconfigure(
+              setupLanguageSupport(
+                $sequenceAdaptation.autoComplete(
+                  parsedChannelDictionary,
+                  parsedCommandDictionary,
+                  nonNullParsedParameterDictionaries,
+                ),
+              ),
             ),
-          ),
-        });
-        editorSequenceView.dispatch({
-          effects: compartmentSeqLinter.reconfigure(
-            sequenceLinter(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
-          ),
-        });
-        editorSequenceView.dispatch({
-          effects: compartmentSeqTooltip.reconfigure(
-            sequenceTooltip(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
-          ),
+            compartmentSeqLinter.reconfigure(
+              inputLinter(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
+            ),
+            compartmentSeqTooltip.reconfigure(
+              sequenceTooltip(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
+            ),
+            compartmentSeqAutocomplete.reconfigure(indentService.of($sequenceAdaptation.autoIndent())),
+          ],
         });
 
         // Reconfigure seq JSON editor.
         editorOutputView.dispatch({
-          effects: compartmentSeqJsonLinter.reconfigure(seqJsonLinter(parsedCommandDictionary, selectedOutputFormat)),
+          effects: compartmentSeqJsonLinter.reconfigure(outputLinter(parsedCommandDictionary, selectedOutputFormat)),
         });
       });
     }
@@ -193,6 +189,7 @@
     compartmentSeqLanguage = new Compartment();
     compartmentSeqLinter = new Compartment();
     compartmentSeqTooltip = new Compartment();
+    compartmentSeqAutocomplete = new Compartment();
 
     editorSequenceView = new EditorView({
       doc: sequenceDefinition,
@@ -201,14 +198,14 @@
         EditorView.lineWrapping,
         EditorView.theme({ '.cm-gutter': { 'min-height': `${clientHeightGridRightTop}px` } }),
         lintGutter(),
-        compartmentSeqLanguage.of(setupLanguageSupport(sequenceCompletion(null, null, []))),
-        compartmentSeqLinter.of(sequenceLinter()),
+        compartmentSeqLanguage.of(setupLanguageSupport($sequenceAdaptation.autoComplete(null, null, []))),
+        compartmentSeqLinter.of(inputLinter()),
         compartmentSeqTooltip.of(sequenceTooltip()),
         EditorView.updateListener.of(debounce(sequenceUpdateListener, 250)),
         EditorView.updateListener.of(selectedCommandUpdateListener),
         EditorView.updateListener.of(debounce(highlightBlock, 250)),
         Prec.highest([blockTheme, blockHighlighter]),
-        indentService.of(sequenceAutoIndent()),
+        compartmentSeqAutocomplete.of(indentService.of($sequenceAdaptation.autoIndent())),
         EditorState.readOnly.of(readOnly),
       ],
       parent: editorSequenceDiv,
@@ -223,7 +220,7 @@
         EditorView.editable.of(false),
         lintGutter(),
         json(),
-        compartmentSeqJsonLinter.of(seqJsonLinter()),
+        compartmentSeqJsonLinter.of(outputLinter()),
         EditorState.readOnly.of(readOnly),
       ],
       parent: editorOutputDiv,
@@ -249,6 +246,9 @@
     } else {
       resetSequenceAdaptation();
     }
+
+    outputFormats = $outputFormat;
+    selectedOutputFormat = outputFormats[0];
   }
 
   function resetSequenceAdaptation(): void {
@@ -361,14 +361,14 @@
     const fileExtension = `${sequenceName}.${selectedOutputFormat?.fileExtension}`;
 
     if (outputFormat?.fileExtension === 'json') {
-      downloadJSON(editorOutputView.state.doc.toJSON(), fileExtension);
+      downloadJSON(JSON.parse(editorOutputView.state.doc.toString()), fileExtension);
     } else {
       downloadBlob(new Blob([editorOutputView.state.doc.toString()], { type: 'text/plain' }), fileExtension);
     }
   }
 
   function downloadInputFormat(): void {
-    downloadBlob(new Blob([editorOutputView.state.doc.toString()], { type: 'text/plain' }), `${sequenceName}.txt`);
+    downloadBlob(new Blob([editorSequenceView.state.doc.toString()], { type: 'text/plain' }), `${sequenceName}.txt`);
   }
 
   async function copyOutputFormatToClipboard(): Promise<void> {
