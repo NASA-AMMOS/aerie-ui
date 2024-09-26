@@ -106,6 +106,31 @@ ccode := [ 16 ] '0002' HEX
 END STEM
 
 
+STEM : CAT2_STEM_INLINE_ARG ( ccode : 16, data : 0 )
+
+cmd-type : CAT2
+
+LOOKUP ARGUMENT : arg_inline
+   TITLE : "Used in 1 commands"
+   CONVERSION : HEX
+   LENGTH : 8
+   'AAA' = '0'
+   'BBB' = '1'
+   'CCC' = '2'
+   'DDD' = '3'
+END LOOKUP ARGUMENT
+
+READ ARGUMENT arg_inline
+
+ccode := [ 16 ] '0002' HEX
+
+!@ ATTACHMENT : desc
+!@    "Test Command with inline argument"
+!@ END ATTACHMENT
+
+END STEM
+
+
 `;
 
 describe('cdl parse tests', async () => {
@@ -114,7 +139,7 @@ describe('cdl parse tests', async () => {
     expect(cdlDictionary.header.mission_name).toBe('Unit_test');
     expect(cdlDictionary.header.spacecraft_ids).toEqual([255]);
 
-    expect(cdlDictionary.fswCommands.length).toBe(2);
+    expect(cdlDictionary.fswCommands.length).toBe(3);
 
     expect(cdlDictionary.fswCommands[1].arguments.length).toBe(6);
     const arg1Range = (cdlDictionary.fswCommands[1].arguments[1] as FswCommandArgumentInteger).range;
@@ -128,7 +153,7 @@ describe('cdl parse tests', async () => {
 
     expect(cdlDictionary.fswCommands[1].description).toEqual('Test Command with 3 arguments');
 
-    console.log(JSON.stringify(cdlDictionary.fswCommands[1], null, 2));
+    console.log(JSON.stringify(cdlDictionary, null, 2));
   });
 
   test('round trip', () => {

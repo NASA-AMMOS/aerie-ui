@@ -194,31 +194,51 @@ R00:00:00.1 a := b ^ c ; power
     // grammar shows no commas between arguments
     // assertNoErrorNodes(wrapInModule(`R00:00:00.1 ISSUE_DYNAMIC "FSW_OBJ_INITIAL", "DWN", file_name, ""`), true);
   });
-});
 
-it('file with header', () => {
-  const input = `CCSD3ZF0000100000001NJPL3KS0L015$$MARK$$;
-DATA_SET_ID=VIRTUAL_MACHINE_LANGUAGE;
-MISSION_NAME=AERIE;
-CCSD$$MARKER$$MARK$$NJPL3IF0040300000001;
-$MRO       VIRTUAL MACHINE LANGUAGE FILE
-************************************************************
-*PROJECT    AERIE
-*Input files used:
-*File Type   Last modified             File name
-*SSF        Wed Jun 12 20:18:11 2024  rm461a.ssf
-************************************************************
-$$EOH
-MODULE
-SEQUENCE rm461
+  it('file with header', () => {
+    const input = `CCSD3ZF0000100000001NJPL3KS0L015$$MARK$$;
+  DATA_SET_ID=VIRTUAL_MACHINE_LANGUAGE;
+  MISSION_NAME=AERIE;
+  CCSD$$MARKER$$MARK$$NJPL3IF0040300000001;
+  $MRO       VIRTUAL MACHINE LANGUAGE FILE
+  ************************************************************
+  *PROJECT    AERIE
+  *Input files used:
+  *File Type   Last modified             File name
+  *SSF        Wed Jun 12 20:18:11 2024  rm461a.ssf
+  ************************************************************
+  $$EOH
+  MODULE
+  SEQUENCE rm461
+  FLAGS AUTOEXECUTE AUTOUNLOAD
+  BODY
+  S1.14 issue           CMD "enum_arg",0
+  END_BODY
+  END_MODULE
+  $$EOF
+  `;
+    assertNoErrorNodes(input, true);
+  });
+
+  it('folding', () => {
+    const input = `MODULE
+SEQUENCE unit_test
 FLAGS AUTOEXECUTE AUTOUNLOAD
 BODY
-S1.14 issue           CMD "enum_arg",0
+
+R00:00:00.1 FOR i := 1 TO mode STEP 2 DO
+R00:00:00.1 FOR i := 1 TO mode STEP 2 DO
+R00:00:00.1 FOR i := 1 TO mode STEP 2 DO
+; only a comment
+R00:00:00.1 END_FOR
+R00:00:00.1 END_FOR
+R00:00:00.1 END_FOR
+
 END_BODY
 END_MODULE
-$$EOF
 `;
-  assertNoErrorNodes(input, true);
+    assertNoErrorNodes(input, true);
+  });
 });
 
 function wrapInModule(s: string) {

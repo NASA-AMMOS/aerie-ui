@@ -23,7 +23,7 @@ const FoldBehavior: {
 } = {
   // only called on multi-line rules, may need custom service to handle FOR, WHILE, etc.
   Body: foldInside,
-  If: foldInside,
+  // If: foldInside,
   VML_HEADER: foldInside,
 };
 

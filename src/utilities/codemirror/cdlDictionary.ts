@@ -66,10 +66,9 @@ export function parseCdlDictionary(contents: string, id?: string, path?: string)
   };
 
   const enums: Enum[] = [];
-  const enumMap: { [name: string]: Enum } = {};
+
   const globalArguments: FswCommandArgumentMap = {};
   const fswCommands: FswCommand[] = [];
-
   // parse globals and stems
   // assumes all global arguments are defined prior to stems
   for (const line of lineIterator) {
@@ -82,7 +81,6 @@ export function parseCdlDictionary(contents: string, id?: string, path?: string)
           // empty enums aren't allowed in ampcs dictionary format
           if (lookupEnum.values.length) {
             enums.push(lookupEnum);
-            enumMap[lookupEnum.name] = lookupEnum;
             globalArguments[lookupArg.name] = lookupArg;
           }
           break;
@@ -103,7 +101,9 @@ export function parseCdlDictionary(contents: string, id?: string, path?: string)
       for (const stemLine of lineIterator) {
         numericLines.push(stemLine);
         if (stemLine.match(END_STEM)) {
-          fswCommands.push(parseStem(numericLines, globalArguments));
+          const [cmd, cmdEnums] = parseStem(numericLines, globalArguments);
+          fswCommands.push(cmd);
+          enums.push(...cmdEnums);
           break;
         }
       }
@@ -111,7 +111,7 @@ export function parseCdlDictionary(contents: string, id?: string, path?: string)
   }
 
   return {
-    enumMap,
+    enumMap: Object.fromEntries(enums.map(e => [e.name, e])),
     enums,
     fswCommandMap: Object.fromEntries(fswCommands.map(cmd => [cmd.stem, cmd])),
     fswCommands,
@@ -123,7 +123,7 @@ export function parseCdlDictionary(contents: string, id?: string, path?: string)
   };
 }
 
-export function parseStem(lines: string[], globalArguments: FswCommandArgumentMap): FswCommand {
+export function parseStem(lines: string[], globalArguments: FswCommandArgumentMap): [FswCommand, Enum[]] {
   let stem = '';
   for (const line of lines) {
     const m = line.match(START_STEM);
@@ -140,25 +140,61 @@ export function parseStem(lines: string[], globalArguments: FswCommandArgumentMa
     description = descriptionLineMatch[1];
   }
 
+  // stems may also have arguments defined inline
+  const localArguments: FswCommandArgumentMap = {};
+  const localEnums: Enum[] = [];
+  const lineIterator = lines.values();
+  for (const line of lineIterator) {
+    if (line.match(START_LOOKUP_ARG)) {
+      const lookupLines: string[] = [line];
+      for (const lineOfLookup of lineIterator) {
+        lookupLines.push(lineOfLookup);
+        if (lineOfLookup.match(END_LOOKUP_ARG)) {
+          const [lookupArg, lookupEnum] = parseLookupArgument(lookupLines, stem);
+          // empty enums aren't allowed in ampcs dictionary format
+          if (lookupEnum.values.length) {
+            localEnums.push(lookupEnum);
+            localArguments[lookupArg.name] = lookupArg;
+          }
+          break;
+        }
+      }
+    } else if (line.match(START_NUMERIC_ARG)) {
+      const numericLines: string[] = [line];
+      for (const lineOfNumeric of lineIterator) {
+        numericLines.push(lineOfNumeric);
+        if (lineOfNumeric.match(END_NUMERIC_ARG)) {
+          const numericArgument = parseNumericArgument(numericLines);
+          localArguments[numericArgument.name] = numericArgument;
+          break;
+        }
+      }
+    }
+  }
+
   const fswArguments: FswCommandArgument[] = [];
 
   for (const line of lines) {
     const readArgMatch = line.match(/^\s*READ\s+ARGUMENT\s+(\w+)\s*/);
     if (readArgMatch) {
-      const globalArg = globalArguments[readArgMatch[1]];
-      if (globalArg) {
-        fswArguments.push(globalArg);
+      const argName = readArgMatch[1];
+      const argDef = localArguments[argName] ?? globalArguments[argName];
+      if (argDef) {
+        fswArguments.push(argDef);
       }
     }
   }
 
-  return {
-    argumentMap: Object.fromEntries(fswArguments.map(arg => [arg.name, arg])),
-    arguments: fswArguments,
-    description,
-    stem,
-    type: 'fsw_command',
-  };
+  return [
+    {
+      argumentMap: Object.fromEntries(fswArguments.map(arg => [arg.name, arg])),
+      arguments: fswArguments,
+      description,
+      stem,
+      type: 'fsw_command',
+    },
+    localEnums,
+  ];
 }
 
 export function parseNumericArgument(lines: string[]): FswCommandArgument {
@@ -275,7 +311,7 @@ export function parseNumericArgument(lines: string[]): FswCommandArgument {
   };
 }
 
-export function parseLookupArgument(lines: string[]): [FswCommandArgumentEnum, Enum] {
+export function parseLookupArgument(lines: string[], namespace?: string): [FswCommandArgumentEnum, Enum] {
   const lineIterator = lines.values();
 
   let name = '';
@@ -287,12 +323,20 @@ export function parseLookupArgument(lines: string[]): [FswCommandArgumentEnum, E
   }
 
   let conversion = '';
+  let bit_length: null | number = null;
   const values: EnumValue[] = [];
-
   for (const line of lines) {
     if (line.match(END_LOOKUP_ARG)) {
       break;
-    } else if (conversion) {
+    }
+
+    const lengthMatch = line.match(/^\s*LENGTH\s*:\s*(\d+)/);
+    if (lengthMatch) {
+      bit_length = parseInt(lengthMatch[1], 10);
+      continue;
+    }
+
+    if (conversion) {
       const lookupMatch = line.match(/^\s*'(\w+)'\s*=\s*'(\w+)'/);
       if (lookupMatch) {
         const symbol = lookupMatch[1];
@@ -316,11 +360,11 @@ export function parseLookupArgument(lines: string[]): [FswCommandArgumentEnum, E
     }
   }
 
-  const enum_name = name;
+  const enum_name = namespace ? `__${namespace}_${name}` : name;
   return [
     {
       arg_type: 'enum',
-      bit_length: null,
+      bit_length,
       default_value: null,
       description: '',
       enum_name,

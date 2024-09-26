@@ -86,48 +86,48 @@ export function computeBlocks(state: EditorState): TreeState {
     const stack: BlockStack = [];
     const docString = state.sliceDoc();
 
-    statementAndCategory
-      // filter out ones that don't impact blocks
-      // .filter(stemNode => isBlockCommand(state.sliceDoc(stemNode.from, stemNode.to)))
-      .forEach(([node, category]) => {
-        // const stem = state.sliceDoc(stemNode.from, stemNode.to);
-        const topStem = stack.at(-1)?.stem;
+    statementAndCategory.forEach(([node, category]) => {
+      // const stem = state.sliceDoc(stemNode.from, stemNode.to);
+      const topStem = stack.at(-1)?.stem;
 
-        if (topStem && closesBlock(category, topStem)) {
-          // close current block
-          const blockInfo: BlockStackNode | undefined = stack.pop();
-          if (blockInfo) {
-            // pair end with existing start to provide info for fold region
-            const commandStr = state.toText(docString).lineAt(node.from).text;
-            const leadingSpaces = commandStr.length - commandStr.trimStart().length;
-            const endPos: undefined | number = node.from - leadingSpaces - 1;
-            Object.assign(treeState[blockInfo.node.from], { end: node, endPos });
-
-            // works but wrong line
-            // Object.assign(treeState[blockInfo.node.from], { end: node, endPos: node.from });
-          }
-        } else if (blockClosingStems.has(category)) {
-          // unexpected close
-          treeState[node.from] = {
-            end: node,
-          };
-          return; // don't open a new block for else_if type
+      if (topStem && closesBlock(category, topStem)) {
+        // close current block
+        const blockInfo: BlockStackNode | undefined = stack.pop();
+        if (blockInfo) {
+          // pair end with existing start to provide info for fold region
+          const commandStr = state.toText(docString).lineAt(node.from).text;
+          const leadingSpaces = commandStr.length - commandStr.trimStart().length;
+          const endPos: undefined | number = node.from - leadingSpaces - 1;
+          Object.assign(treeState[blockInfo.node.from], { end: node, endPos });
         }
+      } else if (blockClosingStems.has(category)) {
+        // unexpected close
+        treeState[node.from] = {
+          end: node,
+        };
+        return; // don't open a new block for else_if type
+      }
 
-        if (blockOpeningStems.has(category)) {
-          // open new block
+      if (blockOpeningStems.has(category)) {
+        // open new block
 
-          treeState[node.from] = {
-            start: node,
-            startPos: node.to - 1,
-          };
+        // Time_tagged_statement -> Statement
+        // Statement -> Statement-subtype (If/Else_if/Else....)  notably exclude Endlines
+        // Statement-subtype -> last token
+        const startPos = (node.getChild('Statement')?.firstChild?.lastChild ?? node).to;
+        // const startPos = (node.lastChild?.firstChild?.lastChild ?? node).to;
 
-          stack.push({
-            node: node,
-            stem: category,
-          });
-        }
-      });
+        treeState[node.from] = {
+          start: node,
+          startPos,
+        };
+
+        stack.push({
+          node: node,
+          stem: category,
+        });
+      }
+    });
 
     blocksForState.set(state, treeState);
   }
@@ -135,17 +135,18 @@ export function computeBlocks(state: EditorState): TreeState {
 }
 
 export const vmlBlockFolder = foldService.of((state: EditorState, start, end) => {
+  const blocks = computeBlocks(state);
   for (let node: SyntaxNode | null = syntaxTree(state).resolveInner(end, -1); node; node = node.parent) {
     if (node.from < start) {
       break;
     }
 
-    const blocks = computeBlocks(state);
-    const foo = blocks[node.from];
-    if (foo !== undefined && foo.startPos !== undefined && foo.endPos !== undefined) {
+    // const block = blocks[node.from];
+    const block = blocks[start];
+    if (block?.startPos !== undefined && block?.endPos !== undefined) {
       return {
-        from: foo.startPos,
-        to: foo.endPos,
+        from: block.startPos,
+        to: block.endPos,
       };
     }
   }
