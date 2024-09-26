@@ -398,7 +398,7 @@
   <ModalContent>
     <CssGrid columns={modalColumnSize} minHeight="100%">
       <div class="derivation-groups-modal-filter-container">
-        <div style:height="100%">
+        <div class="derivation-groups-modal-content">
           <Tabs class="management-tabs" tabListClassName="management-tabs-list">
             <svelte:fragment slot="tab-list">
               <Tab class="management-tab">Derivation Group</Tab>
@@ -431,39 +431,39 @@
                 <!-- Collapsible details -->
                 <Collapse title={source.pkey.key} tooltipContent={source.pkey.key} defaultExpanded={false}>
                   <span slot="right">
-                    <p style:color="gray">
+                    <p class="st-typography-body derived-event-count">
                       {selectedDerivationGroup.sources.get(source.pkey.key)?.event_counts} events
                     </p>
                   </span>
-                  <p>
-                    <strong>Key:</strong>
+                  <div class="st-typography-body">
+                    <div class="st-typography-bold">Key:</div>
                     {source.pkey.key}
-                  </p>
+                  </div>
 
-                  <p>
-                    <strong>Source Type:</strong>
+                  <div class="st-typography-body">
+                    <div class="st-typography-bold">Source Type:</div>
                     {source.source_type_name}
-                  </p>
+                  </div>
 
-                  <p>
-                    <strong>Start Time:</strong>
+                  <div class="st-typography-body">
+                    <div class="st-typography-bold">Start Time:</div>
                     {source.start_time}
-                  </p>
+                  </div>
 
-                  <p>
-                    <strong>End Time:</strong>
+                  <div class="st-typography-body">
+                    <div class="st-typography-bold">End Time:</div>
                     {source.end_time}
-                  </p>
+                  </div>
 
-                  <p>
-                    <strong>Valid At:</strong>
+                  <div class="st-typography-body">
+                    <div class="st-typography-bold">Valid At:</div>
                     {source.valid_at}
-                  </p>
+                  </div>
 
-                  <p>
-                    <strong>Created At:</strong>
+                  <div class="st-typography-body">
+                    <div class="st-typography-bold">Created At:</div>
                     {source.created_at}
-                  </p>
+                  </div>
                 </Collapse>
               {/each}
               <Collapse
@@ -473,11 +473,11 @@
                 tooltipContent="View Contained Event Types"
               >
                 {#each selectedDerivationGroup.event_types as eventType}
-                  <i>{eventType}</i>
+                  <i class="st-typography-body">{eventType}</i>
                 {/each}
               </Collapse>
             {:else}
-              <p>No sources in this group.</p>
+              <p class="st-typography-body">No sources in this group.</p>
             {/if}
           </svelte:fragment>
         </Panel>
@@ -499,14 +499,14 @@
                   defaultExpanded={false}
                 >
                   <span slot="right">
-                    <p style:color="gray">
+                    <p class="st-typography-body derived-event-count">
                       {associatedDerivationGroup.derived_event_total} events
                     </p>
                   </span>
-                  <p>
-                    <strong>Name:</strong>
+                  <div>
+                    <div class="st-typography-bold">Name:</div>
                     {associatedDerivationGroup.name}
-                  </p>
+                  </div>
 
                   <Collapse
                     className="anchor-collapse"
@@ -515,7 +515,7 @@
                     tooltipContent="View Contained Event Types"
                   >
                     {#each associatedDerivationGroup.event_types as eventType}
-                      <i>{eventType}</i>
+                      <i class="st-typography-body">{eventType}</i>
                     {/each}
                   </Collapse>
 
@@ -526,13 +526,13 @@
                     tooltipContent="View Contained External Sources"
                   >
                     {#each associatedDerivationGroup.sources as source}
-                      <i>{source[0]}</i>
+                      <i class="st-typography-body">{source[0]}</i>
                     {/each}
                   </Collapse>
                 </Collapse>
               {/each}
             {:else}
-              <p>No sources associated with this External Source Type.</p>
+              <p class="st-typography-body">No sources associated with this External Source Type.</p>
             {/if}
           </svelte:fragment>
         </Panel>
@@ -557,19 +557,19 @@
                   defaultExpanded={false}
                 >
                   <span slot="right">
-                    <p style:color="gray">
+                    <p class="st-typography-body derived-event-count">
                       {associatedDerivationGroup.derived_event_total} events
                     </p>
                   </span>
-                  <p>
-                    <strong>Name:</strong>
+                  <div class="st-typography-body">
+                    <div class="st-typography-bold">Name:</div>
                     {associatedDerivationGroup.name}
-                  </p>
+                  </div>
 
-                  <p>
-                    <strong>Source Type:</strong>
+                  <div class="st-typography-body">
+                    <div class="st-typography-bold">Source Type:</div>
                     {associatedDerivationGroup.source_type_name}
-                  </p>
+                  </div>
 
                   <Collapse
                     className="anchor-collapse"
@@ -578,7 +578,7 @@
                     tooltipContent="View Contained Event Types"
                   >
                     {#each associatedDerivationGroup.event_types as eventType}
-                      <i>{eventType}</i>
+                      <i class="st-typography-body">{eventType}</i>
                     {/each}
                   </Collapse>
 
@@ -589,13 +589,13 @@
                     tooltipContent="View Contained External Sources"
                   >
                     {#each associatedDerivationGroup.sources as source}
-                      <i>{source[0]}</i>
+                      <i class="st-typography-body">{source[0]}</i>
                     {/each}
                   </Collapse>
                 </Collapse>
               {/each}
             {:else}
-              <p>No sources containing this event type.</p>
+              <p class="st-typography-body">No sources containing this event type.</p>
             {/if}
           </svelte:fragment>
         </Panel>
@@ -658,6 +658,14 @@
     justify-content: flex-end;
     padding-right: 8px;
     width: 100%;
+  }
+
+  .derived-event-count {
+    color: var(--st-gray-60);
+  }
+
+  .derivation-groups-modal-content {
+    height: 100%;
   }
 
   .filter {
