@@ -211,7 +211,7 @@ function conditionalAndLoopKeywordsLinter(commandNodes: SyntaxNode[], state: Edi
         diagnostics.push({
           actions: [
             {
-              apply(view: EditorView, _from: number, _to: number) {
+              apply(view: EditorView) {
                 if (pair.start?.parent) {
                   view.dispatch({
                     changes: {
@@ -477,7 +477,7 @@ function validateCustomDirectives(node: SyntaxNode, text: string): Diagnostic[] 
 
 function insertAction(name: string, insert: string) {
   return {
-    apply(view: EditorView, from: number, _to: number) {
+    apply(view: EditorView, from: number) {
       view.dispatch({ changes: { from, insert } });
     },
     name,
@@ -999,7 +999,7 @@ function validateAndLintArguments(
       diagnostics.push({
         actions: [
           {
-            apply(view, _from, _to) {
+            apply(view) {
               if (commandDictionary) {
                 addDefaultArgs(commandDictionary, view, command, dictArgs.slice(argNode.length));
               }
