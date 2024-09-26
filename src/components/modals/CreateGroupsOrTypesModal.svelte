@@ -210,8 +210,7 @@
     display: flex;
     flex-direction: row;
     gap: 8px;
-    padding-bottom: 10px;
-    padding-top: 10px;
+    padding-top: 8px;
   }
 
   .source-type-selection {
