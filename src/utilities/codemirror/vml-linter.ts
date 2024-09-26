@@ -84,38 +84,36 @@ function validateArguments(
 ): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
   const parametersNode = functionNode.getChild('Call_parameters')?.getChildren('Call_parameter') ?? [];
-
+  const functionName = docText.slice(functionNameNode.from, functionNameNode.to);
   for (let i = 0; i < commandDef.arguments.length; i++) {
     const argDef: FswCommandArgument | undefined = commandDef.arguments[i];
     const argNode = parametersNode[i];
 
-    const functionName = docText.slice(functionNameNode.from, functionNameNode.to);
     if (argDef && argNode) {
+      // validate expected argument
       diagnostics.push(...validateArgument(commandDictionary, argDef, argNode, docText));
     } else if (!argNode && !!argDef) {
       const { from, to } = functionNameNode;
       diagnostics.push({
         from,
-        message: `${functionName} missing argument ${argDef.name}`,
+        message: `${functionName} is missing argument ${argDef.name}`,
         severity: 'error',
         to,
       });
     }
-
-    console.log(`Extras: ${parametersNode.slice(commandDef.arguments.length).length}`);
-
-    diagnostics.push(
-      ...parametersNode.slice(commandDef.arguments.length).map((extraArg: SyntaxNode) => {
-        const { from, to } = extraArg;
-        return {
-          from,
-          message: `${functionName} has extra argument ${docText.slice(from, to)}`,
-          severity: 'error',
-          to,
-        } as const;
-      }),
-    );
   }
+  const extraArgs = parametersNode.slice(commandDef.arguments.length);
+  diagnostics.push(
+    ...extraArgs.map((extraArg: SyntaxNode): Diagnostic => {
+      const { from, to } = extraArg;
+      return {
+        from,
+        message: `${functionName} has an extra argument ${docText.slice(from, to)}`,
+        severity: 'error',
+        to,
+      };
+    }),
+  );
   return diagnostics;
 }
 

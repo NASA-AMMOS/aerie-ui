@@ -43,6 +43,7 @@
     highlightBlock,
     setupVmlLanguageSupport,
   } from '../../utilities/codemirror/vml';
+  import { vmlAutoComplete } from '../../utilities/codemirror/vml-adaptation';
   import { vmlLinter } from '../../utilities/codemirror/vml-linter';
   import { vmlTooltip } from '../../utilities/codemirror/vml-tooltip';
   import effects from '../../utilities/effects';
@@ -148,13 +149,15 @@
         getParsedCommandDictionary(unparsedCommandDictionary, user).then(parsedCommandDictionary => {
           commandDictionary = parsedCommandDictionary;
           editorSequenceView.dispatch({
-            effects: compartmentSeqLanguage.reconfigure(setupVmlLanguageSupport()),
+            effects: compartmentSeqLanguage.reconfigure(
+              setupVmlLanguageSupport(vmlAutoComplete(null, commandDictionary)),
+            ),
           });
           editorSequenceView.dispatch({
             effects: compartmentSeqLinter.reconfigure(vmlLinter(commandDictionary)),
           });
           editorSequenceView.dispatch({
-            effects: compartmentSeqTooltip.reconfigure(vmlTooltip(parsedCommandDictionary)),
+            effects: compartmentSeqTooltip.reconfigure(vmlTooltip(commandDictionary)),
           });
         });
       } else {
