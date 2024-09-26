@@ -132,7 +132,7 @@
             <div class="creation-tab-inputs">
               <input
                 bind:value={newTypeName}
-                on:change={() => (newTypeError = null)}
+                on:change={handleChange}
                 autocomplete="off"
                 class="st-input w-100"
                 placeholder="New External Event Type Name"
