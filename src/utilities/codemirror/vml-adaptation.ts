@@ -1,7 +1,7 @@
 import { type CompletionContext, type CompletionResult } from '@codemirror/autocomplete';
 import { syntaxTree } from '@codemirror/language';
 import type { SyntaxNode } from '@lezer/common';
-import type { ChannelDictionary, CommandDictionary } from '@nasa-jpl/aerie-ampcs';
+import type { ChannelDictionary, CommandDictionary, FswCommand, FswCommandArgument } from '@nasa-jpl/aerie-ampcs';
 import type { ISequenceAdaptation } from '../../types/sequencing';
 import { getNearestAncestorNodeOfType } from '../sequence-editor/tree-utils';
 
@@ -27,8 +27,8 @@ export function vmlAutoComplete(
     if (nodeBefore.name === 'Issue') {
       return {
         from: context.pos,
-        options: commandDictionary.fswCommands.map(fswCommand => ({
-          apply: fswCommand.stem,
+        options: commandDictionary.fswCommands.map((fswCommand: FswCommand) => ({
+          apply: getStemAndDefaultArguments(commandDictionary, fswCommand),
           info: fswCommand.description,
           label: fswCommand.stem,
           section: 'Command',
@@ -83,4 +83,32 @@ function getArgumentPosition(argNode: SyntaxNode) {
       ?.getChildren('Call_parameter')
       ?.findIndex(par => par.from === argNode.from && par.to === argNode.to) ?? -1
   );
+}
+
+function getStemAndDefaultArguments(commandDictionary: CommandDictionary, cmd: FswCommand): string {
+  let s = cmd.stem;
+  if (cmd.arguments.length) {
+    s += ` ${cmd.arguments.map(argNode => getDefaultArgumentValue(commandDictionary, argNode)).join(',')}`;
+  }
+
+  return s;
+}
+
+function getDefaultArgumentValue(commandDictionary: CommandDictionary, argDef: FswCommandArgument): string {
+  switch (argDef.arg_type) {
+    case 'boolean':
+      return argDef.default_value ?? 'TRUE';
+    case 'float':
+    case 'numeric':
+    case 'integer':
+    case 'unsigned':
+      // ignores conversion setting
+      return (argDef.default_value ?? argDef.range?.min)?.toString(10) ?? '0';
+    case 'enum':
+      return `"${commandDictionary.enumMap[argDef.enum_name]?.values[0]?.symbol ?? ''}"`;
+    case 'var_string':
+      return '""';
+  }
+
+  return '""';
 }

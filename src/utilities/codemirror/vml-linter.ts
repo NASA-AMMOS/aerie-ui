@@ -142,6 +142,20 @@ function validateArgument(
                 to,
               },
             ];
+          } else if (argDef.range) {
+            // TODO: CDL dictionary provides a conversion, HEX arguments should prefer hexadecimal
+            const base = constantNode.name === 'HEX_CONST' ? 16 : 10;
+            const argValue = parseInt(docText.slice(argNode.from, argNode.to), base);
+            if (argValue < argDef.range.min || argValue > argDef.range.max) {
+              return [
+                {
+                  from,
+                  message: `Value should be between ${argDef.range.min.toString(base)} and ${argDef.range.max.toString(base)}`,
+                  severity: 'error',
+                  to,
+                },
+              ];
+            }
           }
         }
         break;
