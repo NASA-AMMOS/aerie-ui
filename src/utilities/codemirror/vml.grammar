@@ -661,93 +661,93 @@ Spawn {
 }
 
 // VMLmodulelexerconstructs
-ABS { @specialize<SYMBOL_CONST, "ABS"> }
-ABSOLUTE_SEQUENCE { @specialize<SYMBOL_CONST, "ABSOLUTE_SEQUENCE"> }
-ABSOLUTE_TIME { @specialize<SYMBOL_CONST, "ABSOLUTE_TIME"> }
-ACOS { @specialize<SYMBOL_CONST, "ACOS"> }
-ASIN { @specialize<SYMBOL_CONST, "ASIN"> }
-ATAN { @specialize<SYMBOL_CONST, "ATAN"> }
-AUTOEXECUTE { @specialize<SYMBOL_CONST, "AUTOEXECUTE"> }
-AUTOUNLOAD { @specialize<SYMBOL_CONST, "AUTOUNLOAD"> }
-BIT_INVERT { @specialize<SYMBOL_CONST, "BIT_INVERT"> }
-BLOCK { @specialize<SYMBOL_CONST, "BLOCK"> }
-BODY { @specialize<SYMBOL_CONST, "BODY"> }
-BRANCH { @specialize<SYMBOL_CONST, "BRANCH"> }
-BRANCH_FALSE { @specialize<SYMBOL_CONST, "BRANCH_FALSE"> }
-BRANCH_TRUE { @specialize<SYMBOL_CONST, "BRANCH_TRUE"> }
-CALL { @specialize<SYMBOL_CONST, "CALL"> }
-CLEAR { @specialize<SYMBOL_CONST, "CLEAR"> }
-CONCAT { @specialize<SYMBOL_CONST, "CONCAT"> }
-COS { @specialize<SYMBOL_CONST, "COS"> }
-DECLARE { @specialize<SYMBOL_CONST, "DECLARE"> }
-DEFINED_SYMBOL_CONST { @specialize<SYMBOL_CONST, "DEFINED_SYMBOL_CONST"> }
-DELAY_BY { @specialize<SYMBOL_CONST, "DELAY_BY"> }
-DELAY_UNTIL { @specialize<SYMBOL_CONST, "DELAY_UNTIL"> }
-DO { @specialize<SYMBOL_CONST, "DO"> }
-DOUBLE { @specialize<SYMBOL_CONST, "DOUBLE"> }
-DOUBLE_COERCE { @specialize<SYMBOL_CONST, "DOUBLE_COERCE"> }
-DOWN_TO { @specialize<SYMBOL_CONST, "DOWN_TO"> }
-ELSE { @specialize<SYMBOL_CONST, "ELSE"> }
-ELSE_IF { @specialize<SYMBOL_CONST, "ELSE_IF"> }
-END_BODY { @specialize<SYMBOL_CONST, "END_BODY"> }
-END_FOR { @specialize<SYMBOL_CONST, "END_FOR"> }
-END_IF { @specialize<SYMBOL_CONST, "END_IF"> }
-END_MODULE { @specialize<SYMBOL_CONST, "END_MODULE"> }
-END_VARIABLES { @specialize<SYMBOL_CONST, "END_VARIABLES"> }
-END_WHILE { @specialize<SYMBOL_CONST, "END_WHILE"> }
-EXTERNAL { @specialize<SYMBOL_CONST, "EXTERNAL"> }
-EXTERNAL_CALL { @specialize<SYMBOL_CONST, "EXTERNAL_CALL"> }
-FALSE_CONST { @specialize<SYMBOL_CONST, "FALSE_CONST"> }
-FLAGS { @specialize<SYMBOL_CONST, "FLAGS"> }
-FOR { @specialize<SYMBOL_CONST, "FOR"> }
-HALT { @specialize<SYMBOL_CONST, "HALT"> }
-IF { @specialize<SYMBOL_CONST, "IF"> }
-INPUT { @specialize<SYMBOL_CONST, "INPUT"> }
-INPUT_OUTPUT { @specialize<SYMBOL_CONST, "INPUT_OUTPUT"> }
-INT { @specialize<SYMBOL_CONST, "INT"> }
-INT_COERCE { @specialize<SYMBOL_CONST, "INT_COERCE"> }
+ABS { @specialize<SYMBOL_CONST, "ABS"> | @specialize<SYMBOL_CONST, "abs"> }
+ABSOLUTE_SEQUENCE { @specialize<SYMBOL_CONST, "ABSOLUTE_SEQUENCE"> | @specialize<SYMBOL_CONST, "absolute_sequence">}
+ABSOLUTE_TIME { @specialize<SYMBOL_CONST, "ABSOLUTE_TIME"> | @specialize<SYMBOL_CONST, "absolute_time">}
+ACOS { @specialize<SYMBOL_CONST, "ACOS"> | @specialize<SYMBOL_CONST, "acos"> }
+ASIN { @specialize<SYMBOL_CONST, "ASIN"> | @specialize<SYMBOL_CONST, "asin"> }
+ATAN { @specialize<SYMBOL_CONST, "ATAN"> | @specialize<SYMBOL_CONST, "atan"> }
+AUTOEXECUTE { @specialize<SYMBOL_CONST, "AUTOEXECUTE"> | @specialize<SYMBOL_CONST, "autoexecute"> }
+AUTOUNLOAD { @specialize<SYMBOL_CONST, "AUTOUNLOAD"> | @specialize<SYMBOL_CONST, "autounload"> }
+BIT_INVERT { @specialize<SYMBOL_CONST, "BIT_INVERT"> | @specialize<SYMBOL_CONST, "bit_invert">}
+BLOCK { @specialize<SYMBOL_CONST, "BLOCK"> | @specialize<SYMBOL_CONST, "block"> }
+BODY { @specialize<SYMBOL_CONST, "BODY"> | @specialize<SYMBOL_CONST, "body"> }
+BRANCH { @specialize<SYMBOL_CONST, "BRANCH"> | @specialize<SYMBOL_CONST, "branch"> }
+BRANCH_FALSE { @specialize<SYMBOL_CONST, "BRANCH_FALSE"> | @specialize<SYMBOL_CONST, "branch_false">}
+BRANCH_TRUE { @specialize<SYMBOL_CONST, "BRANCH_TRUE"> | @specialize<SYMBOL_CONST, "branch_true"> }
+CALL { @specialize<SYMBOL_CONST, "CALL"> | @specialize<SYMBOL_CONST, "call">}
+CLEAR { @specialize<SYMBOL_CONST, "CLEAR"> | @specialize<SYMBOL_CONST, "clear">}
+CONCAT { @specialize<SYMBOL_CONST, "CONCAT"> | @specialize<SYMBOL_CONST, "concat"> }
+COS { @specialize<SYMBOL_CONST, "COS"> | @specialize<SYMBOL_CONST, "cos"> }
+DECLARE { @specialize<SYMBOL_CONST, "DECLARE"> | @specialize<SYMBOL_CONST, "declare"> }
+DEFINED_SYMBOL_CONST { @specialize<SYMBOL_CONST, "DEFINED_SYMBOL_CONST"> | @specialize<SYMBOL_CONST, "defined_symbol_const"> }
+DELAY_BY { @specialize<SYMBOL_CONST, "DELAY_BY"> | @specialize<SYMBOL_CONST, "delay_by"> }
+DELAY_UNTIL { @specialize<SYMBOL_CONST, "DELAY_UNTIL"> | @specialize<SYMBOL_CONST, "delay_until"> }
+DO { @specialize<SYMBOL_CONST, "DO"> | @specialize<SYMBOL_CONST, "do"> }
+DOUBLE { @specialize<SYMBOL_CONST, "DOUBLE"> | @specialize<SYMBOL_CONST, "double"> }
+DOUBLE_COERCE { @specialize<SYMBOL_CONST, "DOUBLE_COERCE"> | @specialize<SYMBOL_CONST, "double_coerce"> }
+DOWN_TO { @specialize<SYMBOL_CONST, "DOWN_TO"> | @specialize<SYMBOL_CONST, "down_to">}
+ELSE { @specialize<SYMBOL_CONST, "ELSE"> | @specialize<SYMBOL_CONST, "else">}
+ELSE_IF { @specialize<SYMBOL_CONST, "ELSE_IF"> | @specialize<SYMBOL_CONST, "else_if"> }
+END_BODY { @specialize<SYMBOL_CONST, "END_BODY"> | @specialize<SYMBOL_CONST, "end_body">}
+END_FOR { @specialize<SYMBOL_CONST, "END_FOR"> | @specialize<SYMBOL_CONST, "end_for"> }
+END_IF { @specialize<SYMBOL_CONST, "END_IF"> | @specialize<SYMBOL_CONST, "end_if"> }
+END_MODULE { @specialize<SYMBOL_CONST, "END_MODULE"> | @specialize<SYMBOL_CONST, "end_module"> }
+END_VARIABLES { @specialize<SYMBOL_CONST, "END_VARIABLES"> | @specialize<SYMBOL_CONST, "end_variables"> }
+END_WHILE { @specialize<SYMBOL_CONST, "END_WHILE"> | @specialize<SYMBOL_CONST, "end_while"> }
+EXTERNAL { @specialize<SYMBOL_CONST, "EXTERNAL"> | @specialize<SYMBOL_CONST, "external">}
+EXTERNAL_CALL { @specialize<SYMBOL_CONST, "EXTERNAL_CALL"> | @specialize<SYMBOL_CONST, "external_call"> }
+FALSE_CONST { @specialize<SYMBOL_CONST, "FALSE_CONST"> | @specialize<SYMBOL_CONST, "false_const"> }
+FLAGS { @specialize<SYMBOL_CONST, "FLAGS"> | @specialize<SYMBOL_CONST, "flags"> }
+FOR { @specialize<SYMBOL_CONST, "FOR"> | @specialize<SYMBOL_CONST, "for"> }
+HALT { @specialize<SYMBOL_CONST, "HALT"> | @specialize<SYMBOL_CONST, "halt"> }
+IF { @specialize<SYMBOL_CONST, "IF"> | @specialize<SYMBOL_CONST, "if"> }
+INPUT { @specialize<SYMBOL_CONST, "INPUT"> | @specialize<SYMBOL_CONST, "input"> }
+INPUT_OUTPUT { @specialize<SYMBOL_CONST, "INPUT_OUTPUT"> | @specialize<SYMBOL_CONST, "input_output"> }
+INT { @specialize<SYMBOL_CONST, "INT"> | @specialize<SYMBOL_CONST, "int"> }
+INT_COERCE { @specialize<SYMBOL_CONST, "INT_COERCE"> | @specialize<SYMBOL_CONST, "int_coerce"> }
 ISSUE { @specialize<SYMBOL_CONST, "ISSUE"> | @specialize<SYMBOL_CONST, "issue"> }
-ISSUE_DYNAMIC { @specialize<SYMBOL_CONST, "ISSUE_DYNAMIC"> }
-ISSUE_HEX { @specialize<SYMBOL_CONST, "ISSUE_HEX"> }
-LABEL { @specialize<SYMBOL_CONST, "LABEL"> }
-LENGTH { @specialize<SYMBOL_CONST, "LENGTH"> }
-LOGICAL { @specialize<SYMBOL_CONST, "LOGICAL"> }
-LOGICAL_COERCE { @specialize<SYMBOL_CONST, "LOGICAL_COERCE"> }
-MODULE { @specialize<SYMBOL_CONST, "MODULE"> }
-NOOP { @specialize<SYMBOL_CONST, "NOOP"> }
-PAUSE { @specialize<SYMBOL_CONST, "PAUSE"> }
-READ_ONLY { @specialize<SYMBOL_CONST, "READ_ONLY"> }
-REENTRANT { @specialize<SYMBOL_CONST, "REENTRANT"> }
-RELATIVE_SEQUENCE { @specialize<SYMBOL_CONST, "RELATIVE_SEQUENCE"> }
-RELATIVE_TIME { @specialize<SYMBOL_CONST, "RELATIVE_TIME"> }
-RESUME { @specialize<SYMBOL_CONST, "RESUME"> }
-RETURN { @specialize<SYMBOL_CONST, "RETURN"> }
-SEQUENCE { @specialize<SYMBOL_CONST, "SEQUENCE"> }
-SIN { @specialize<SYMBOL_CONST, "SIN"> }
-SPACECRAFT_TIME { @specialize<SYMBOL_CONST, "SPACECRAFT_TIME"> }
+ISSUE_DYNAMIC { @specialize<SYMBOL_CONST, "ISSUE_DYNAMIC"> | @specialize<SYMBOL_CONST, "issue_dynamic">}
+ISSUE_HEX { @specialize<SYMBOL_CONST, "ISSUE_HEX"> | @specialize<SYMBOL_CONST, "issue_hex"> }
+LABEL { @specialize<SYMBOL_CONST, "LABEL"> | @specialize<SYMBOL_CONST, "label"> }
+LENGTH { @specialize<SYMBOL_CONST, "LENGTH"> | @specialize<SYMBOL_CONST, "length"> }
+LOGICAL { @specialize<SYMBOL_CONST, "LOGICAL"> | @specialize<SYMBOL_CONST, "logical"> }
+LOGICAL_COERCE { @specialize<SYMBOL_CONST, "LOGICAL_COERCE"> | @specialize<SYMBOL_CONST, "logical_coerce"> }
+MODULE { @specialize<SYMBOL_CONST, "MODULE"> | @specialize<SYMBOL_CONST, "module"> }
+NOOP { @specialize<SYMBOL_CONST, "NOOP"> | @specialize<SYMBOL_CONST, "noop">}
+PAUSE { @specialize<SYMBOL_CONST, "PAUSE"> | @specialize<SYMBOL_CONST, "pause"> }
+READ_ONLY { @specialize<SYMBOL_CONST, "READ_ONLY"> | @specialize<SYMBOL_CONST, "read_only"> }
+REENTRANT { @specialize<SYMBOL_CONST, "REENTRANT"> | @specialize<SYMBOL_CONST, "reentrant"> }
+RELATIVE_SEQUENCE { @specialize<SYMBOL_CONST, "RELATIVE_SEQUENCE"> | @specialize<SYMBOL_CONST, "relative_sequence"> }
+RELATIVE_TIME { @specialize<SYMBOL_CONST, "RELATIVE_TIME"> | @specialize<SYMBOL_CONST, "relative_time"> }
+RESUME { @specialize<SYMBOL_CONST, "RESUME"> | @specialize<SYMBOL_CONST, "resume"> }
+RETURN { @specialize<SYMBOL_CONST, "RETURN"> | @specialize<SYMBOL_CONST, "return"> }
+SEQUENCE { @specialize<SYMBOL_CONST, "SEQUENCE"> | @specialize<SYMBOL_CONST, "sequence">}
+SIN { @specialize<SYMBOL_CONST, "SIN"> | @specialize<SYMBOL_CONST, "som"> }
+SPACECRAFT_TIME { @specialize<SYMBOL_CONST, "SPACECRAFT_TIME"> | @specialize<SYMBOL_CONST, "spacecraft_time"> }
 SPAWN { @specialize<SYMBOL_CONST, "SPAWN"> | @specialize<SYMBOL_CONST, "spawn"> }
-STEP { @specialize<SYMBOL_CONST, "STEP"> }
-STRING { @specialize<SYMBOL_CONST, "STRING"> }
-STRING_COERCE { @specialize<SYMBOL_CONST, "STRING_COERCE"> }
+STEP { @specialize<SYMBOL_CONST, "STEP"> | @specialize<SYMBOL_CONST, "step">}
+STRING { @specialize<SYMBOL_CONST, "STRING"> | @specialize<SYMBOL_CONST, "string"> }
+STRING_COERCE { @specialize<SYMBOL_CONST, "STRING_COERCE"> | @specialize<SYMBOL_CONST, "string_coerce"> }
 SYNTAX_ERROR { @specialize<SYMBOL_CONST, "."> }
-TAN { @specialize<SYMBOL_CONST, "TAN"> }
-TEST_AND_SET { @specialize<SYMBOL_CONST, "TEST_AND_SET"> }
-THEN { @specialize<SYMBOL_CONST, "THEN"> }
-TIME { @specialize<SYMBOL_CONST, "TIME"> }
-TIME_COERCE { @specialize<SYMBOL_CONST, "TIME_COERCE"> }
-TIMEOUT { @specialize<SYMBOL_CONST, "TIMEOUT"> }
-TLM_ID { @specialize<SYMBOL_CONST, "TLM_ID"> }
-TO { @specialize<SYMBOL_CONST, "TO"> }
-TRUE_CONST { @specialize<SYMBOL_CONST, "TRUE_CONST"> }
-UINT { @specialize<SYMBOL_CONST, "UINT"> }
-UINT_COERCE { @specialize<SYMBOL_CONST, "UINT_COERCE"> }
-UNKNOWN { @specialize<SYMBOL_CONST, "UNKNOWN"> }
-UNKNOWN_COERCE { @specialize<SYMBOL_CONST, "UNKNOWN_COERCE"> }
-VALUES { @specialize<SYMBOL_CONST, "VALUES"> }
-VARIABLES { @specialize<SYMBOL_CONST, "VARIABLES"> }
-WAIT { @specialize<SYMBOL_CONST, "WAIT"> }
-WAIT_CHANGE { @specialize<SYMBOL_CONST, "WAIT_CHANGE"> }
-WHILE { @specialize<SYMBOL_CONST, "WHILE"> }
+TAN { @specialize<SYMBOL_CONST, "TAN"> | @specialize<SYMBOL_CONST, "tan"> }
+TEST_AND_SET { @specialize<SYMBOL_CONST, "TEST_AND_SET"> | @specialize<SYMBOL_CONST, "test_and_set"> }
+THEN { @specialize<SYMBOL_CONST, "THEN"> | @specialize<SYMBOL_CONST, "then"> }
+TIME { @specialize<SYMBOL_CONST, "TIME"> | @specialize<SYMBOL_CONST, "time"> }
+TIME_COERCE { @specialize<SYMBOL_CONST, "TIME_COERCE"> | @specialize<SYMBOL_CONST, "time_coerce"> }
+TIMEOUT { @specialize<SYMBOL_CONST, "TIMEOUT"> | @specialize<SYMBOL_CONST, "timeout"> }
+TLM_ID { @specialize<SYMBOL_CONST, "TLM_ID"> | @specialize<SYMBOL_CONST, "tlm_id"> }
+TO { @specialize<SYMBOL_CONST, "TO"> | @specialize<SYMBOL_CONST, "to"> }
+TRUE_CONST { @specialize<SYMBOL_CONST, "TRUE_CONST"> | @specialize<SYMBOL_CONST, "true_const"> }
+UINT { @specialize<SYMBOL_CONST, "UINT"> | @specialize<SYMBOL_CONST, "uint"> }
+UINT_COERCE { @specialize<SYMBOL_CONST, "UINT_COERCE"> | @specialize<SYMBOL_CONST, "uint_coerce"> }
+UNKNOWN { @specialize<SYMBOL_CONST, "UNKNOWN"> | @specialize<SYMBOL_CONST, "unknown"> }
+UNKNOWN_COERCE { @specialize<SYMBOL_CONST, "UNKNOWN_COERCE"> | @specialize<SYMBOL_CONST, "unknown_coerce"> }
+VALUES { @specialize<SYMBOL_CONST, "VALUES"> | @specialize<SYMBOL_CONST, "values">}
+VARIABLES { @specialize<SYMBOL_CONST, "VARIABLES"> | @specialize<SYMBOL_CONST, "variables"> }
+WAIT { @specialize<SYMBOL_CONST, "WAIT"> | @specialize<SYMBOL_CONST, "wait"> }
+WAIT_CHANGE { @specialize<SYMBOL_CONST, "WAIT_CHANGE"> | @specialize<SYMBOL_CONST, "wait_change"> }
+WHILE { @specialize<SYMBOL_CONST, "WHILE"> | @specialize<SYMBOL_CONST, "while"> }
 
 // grammar shows "&", but example uses "BIT_AND"
 BIT_AND {
@@ -809,7 +809,6 @@ LOGICAL_NOT {
   LOGICAL_OR {"||"}
   LOGICAL_XOR {"@@"}
 
-  // CONCAT { "CONCAT" }
   SPLIT_LEFT { "-|" }
   SPLIT_RIGHT { "|-" }
 

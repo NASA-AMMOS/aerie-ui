@@ -6,7 +6,17 @@ import type { CommandDictionary, FswCommand, FswCommandArgument } from '@nasa-jp
 import type { EditorView } from 'codemirror';
 import { closest } from 'fastest-levenshtein';
 import { VmlLanguage } from './vml';
-import { TOKEN_ERROR, TOKEN_STRING_CONST } from './vml-constants';
+import {
+  TOKEN_DOUBLE_CONST,
+  TOKEN_ERROR,
+  TOKEN_HEX_CONST,
+  TOKEN_INT_CONST,
+  TOKEN_STRING_CONST,
+  TOKEN_UINT_CONST,
+} from './vml-constants';
+
+// Absolute time tags may appear in functions beginning with SEQUENCE or ABSOLUTE_SEQUENCE
+// Functions beginning with BLOCK or RELATIVE_SEQUENCE may have only relative time tags.
 
 // Limit how many grammar problems are annotated
 const MAX_PARSER_ERRORS = 100;
@@ -15,8 +25,6 @@ export function vmlLinter(commandDictionary: CommandDictionary | null = null): E
   return linter(view => {
     const diagnostics: Diagnostic[] = [];
     const tree = syntaxTree(view.state);
-    // const treeNode = tree.topNode;
-    // const docText = view.state.doc.toString();
     diagnostics.push(...validateParserErrors(tree));
     if (!commandDictionary) {
       return diagnostics;
@@ -133,7 +141,7 @@ function validateArgument(
     switch (argDef.arg_type) {
       case 'integer':
         {
-          if (!['INT_CONST', 'UINT_CONST', 'HEX_CONST'].includes(constantNode.name)) {
+          if (![TOKEN_INT_CONST, TOKEN_UINT_CONST, TOKEN_HEX_CONST].includes(constantNode.name)) {
             return [
               {
                 from,
@@ -144,7 +152,7 @@ function validateArgument(
             ];
           } else if (argDef.range) {
             // TODO: CDL dictionary provides a conversion, HEX arguments should prefer hexadecimal
-            const base = constantNode.name === 'HEX_CONST' ? 16 : 10;
+            const base = constantNode.name === TOKEN_HEX_CONST ? 16 : 10;
             const argValue = parseInt(docText.slice(argNode.from, argNode.to), base);
             if (argValue < argDef.range.min || argValue > argDef.range.max) {
               return [
@@ -160,7 +168,7 @@ function validateArgument(
         }
         break;
       case 'float':
-        if (!['INT_CONST', 'DOUBLE_CONST'].includes(constantNode.name)) {
+        if (![TOKEN_INT_CONST, TOKEN_DOUBLE_CONST].includes(constantNode.name)) {
           return [
             {
               from,
@@ -169,6 +177,18 @@ function validateArgument(
               to,
             },
           ];
+        } else if (argDef.range) {
+          const argValue = parseFloat(docText.slice(argNode.from, argNode.to));
+          if (argValue < argDef.range.min || argValue > argDef.range.max) {
+            return [
+              {
+                from,
+                message: `Value should be between ${argDef.range.min.toString()} and ${argDef.range.max.toString()}`,
+                severity: 'error',
+                to,
+              },
+            ];
+          }
         }
         break;
       case 'var_string':

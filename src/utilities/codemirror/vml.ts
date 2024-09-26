@@ -64,6 +64,7 @@ export const VmlLanguage = LRLanguage.define({
         MULTIPLY: t.arithmeticOperator,
         POWER: t.arithmeticOperator,
         RETURN: t.keyword,
+        SEQUENCE: t.macroName,
         SHORT_TIME_CONST: t.className,
         SPACECRAFT_TIME_CONST: t.className,
         STEP: t.controlKeyword,

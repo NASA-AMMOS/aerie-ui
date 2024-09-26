@@ -4,6 +4,7 @@ import type { SyntaxNode } from '@lezer/common';
 import type { ChannelDictionary, CommandDictionary, FswCommand, FswCommandArgument } from '@nasa-jpl/aerie-ampcs';
 import type { ISequenceAdaptation } from '../../types/sequencing';
 import { getNearestAncestorNodeOfType } from '../sequence-editor/tree-utils';
+import { TOKEN_STRING_CONST } from './vml-constants';
 
 export const VmlAdaptation: Partial<ISequenceAdaptation> = {
   // autoComplete: vmlAutoComplete,
@@ -23,7 +24,18 @@ export function vmlAutoComplete(
     const nodeBefore = tree.resolveInner(context.pos, -1);
     const nodeCurrent = tree.resolveInner(context.pos, 0);
     // const baseNode = tree.topNode;
-
+    // console.log(`${nodeBefore.name} --- ${nodeBefore.parent?.name}`);
+    // if (nodeBefore.name === 'Time_tagged_statement' && nodeBefore.parent?.name === 'Time_tagged_statements') {
+    //   return {
+    //     from: context.pos,
+    //     options: statementTypeCompletions().map(statement => ({
+    //       apply: statement,
+    //       label: statement,
+    //       section: 'Command',
+    //       type: 'function',
+    //     })),
+    //   };
+    // }
     if (nodeBefore.name === 'Issue') {
       return {
         from: context.pos,
@@ -35,7 +47,7 @@ export function vmlAutoComplete(
           type: 'function',
         })),
       };
-    } else if (nodeCurrent.name === 'STRING_CONST') {
+    } else if (nodeCurrent.name === TOKEN_STRING_CONST) {
       const containingStatement = getNearestAncestorNodeOfType(nodeCurrent, ['Statement']);
       if (containingStatement) {
         const functionNameNode = containingStatement.firstChild?.getChild('Function_name');
@@ -111,4 +123,18 @@ function getDefaultArgumentValue(commandDictionary: CommandDictionary, argDef: F
   }
 
   return '""';
+}
+
+export function statementTypeCompletions() {
+  return [
+    `WHILE condition DO`,
+    `END_WHILE`,
+    `FOR i := 1 TO mode STEP 2 DO`,
+    `END_FOR`,
+    `IF delay_time > 100.0 THEN`,
+    `ELSE_IF delay_time > 80.0 THEN`,
+    `ELSE`,
+    `END_IF`,
+    `ISSUE`,
+  ];
 }

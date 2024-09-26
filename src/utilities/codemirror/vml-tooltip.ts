@@ -20,6 +20,7 @@ export function vmlTooltip(commandDictionary: CommandDictionary | null): Extensi
 
     const tree = syntaxTree(view.state);
     const cursorNode = tree.cursorAt(from, 1).node;
+
     const timeTaggedNode = getNearestAncestorNodeOfType(cursorNode, [RULE_TIME_TAGGED_STATEMENT]);
     if (timeTaggedNode) {
       const statementSubNode = timeTaggedNode.getChild('Statement')?.firstChild;
