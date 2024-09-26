@@ -188,6 +188,25 @@ const SEQ_DIR_WHILE_LOOP_AND = 'SEQ_DIR_WHILE_LOOP_AND';
 const SEQ_DIR_WHILE_LOOP_OR = 'SEQ_DIR_WHILE_LOOP_OR';
 const SEQ_DIR_END_WHILE_LOOP = 'SEQ_DIR_END_WHILE_LOOP';
 
+// user-friendly versions, move to adaption when hooks are available
+const USER_SEQ_DIR_END_IF = 'USER_SEQ_DIR_END_IF';
+const USER_SEQ_DIR_IF = 'USER_SEQ_DIR_IF';
+const USER_SEQ_DIR_IF_OR = 'USER_SEQ_DIR_IF_OR';
+const USER_SEQ_DIR_IF_AND = 'USER_SEQ_DIR_IF_AND';
+const USER_SEQ_DIR_ELSE = 'USER_SEQ_DIR_ELSE';
+const USER_SEQ_DIR_END_WAIT_UNTIL = 'USER_SEQ_DIR_END_WAIT_UNTIL';
+const USER_SEQ_DIR_WAIT_UNTIL = 'USER_SEQ_DIR_WAIT_UNTIL';
+const USER_SEQ_DIR_WAIT_UNTIL_VAR = 'USER_SEQ_DIR_WAIT_UNTIL_VAR';
+const USER_SEQ_DIR_WAIT_UNTIL_AND = 'USER_SEQ_DIR_WAIT_UNTIL_AND';
+const USER_SEQ_DIR_WAIT_UNTIL_OR = 'USER_SEQ_DIR_WAIT_UNTIL_OR';
+const USER_SEQ_DIR_WAIT_UNTIL_TIMEOUT = 'USER_SEQ_DIR_WAIT_UNTIL_TIMEOUT';
+const USER_SEQ_DIR_END_LOOP = 'USER_SEQ_DIR_END_LOOP';
+const USER_SEQ_DIR_LOOP = 'USER_SEQ_DIR_LOOP';
+const USER_SEQ_DIR_WHILE_LOOP = 'USER_SEQ_DIR_WHILE_LOOP';
+const USER_SEQ_DIR_WHILE_LOOP_AND = 'USER_SEQ_DIR_WHILE_LOOP_AND';
+const USER_SEQ_DIR_WHILE_LOOP_OR = 'USER_SEQ_DIR_WHILE_LOOP_OR';
+const USER_SEQ_DIR_END_WHILE_LOOP = 'USER_SEQ_DIR_END_WHILE_LOOP';
+
 const BLOCK_TYPES: readonly BlockType[] = [
   {
     close: SEQ_DIR_END_IF,
@@ -206,6 +225,29 @@ const BLOCK_TYPES: readonly BlockType[] = [
   {
     close: SEQ_DIR_END_WHILE_LOOP,
     open: [SEQ_DIR_WHILE_LOOP, SEQ_DIR_WHILE_LOOP_AND, SEQ_DIR_WHILE_LOOP_OR],
+  },
+  {
+    close: USER_SEQ_DIR_END_IF,
+    open: [USER_SEQ_DIR_IF, USER_SEQ_DIR_IF_OR, USER_SEQ_DIR_IF_AND],
+    partition: USER_SEQ_DIR_ELSE,
+  },
+  {
+    close: USER_SEQ_DIR_END_WAIT_UNTIL,
+    open: [
+      USER_SEQ_DIR_WAIT_UNTIL,
+      USER_SEQ_DIR_WAIT_UNTIL_VAR,
+      USER_SEQ_DIR_WAIT_UNTIL_AND,
+      USER_SEQ_DIR_WAIT_UNTIL_OR,
+    ],
+    partition: USER_SEQ_DIR_WAIT_UNTIL_TIMEOUT,
+  },
+  {
+    close: USER_SEQ_DIR_END_LOOP,
+    open: [USER_SEQ_DIR_LOOP],
+  },
+  {
+    close: USER_SEQ_DIR_END_WHILE_LOOP,
+    open: [USER_SEQ_DIR_WHILE_LOOP, USER_SEQ_DIR_WHILE_LOOP_AND, USER_SEQ_DIR_WHILE_LOOP_OR],
   },
 ];
 
@@ -245,6 +287,20 @@ const blockOpeningStems: Set<string> = new Set([
   SEQ_DIR_WHILE_LOOP,
   SEQ_DIR_WHILE_LOOP_AND,
   SEQ_DIR_WHILE_LOOP_OR,
+
+  USER_SEQ_DIR_IF,
+  USER_SEQ_DIR_IF_OR,
+  USER_SEQ_DIR_IF_AND,
+  USER_SEQ_DIR_ELSE,
+  USER_SEQ_DIR_WAIT_UNTIL,
+  USER_SEQ_DIR_WAIT_UNTIL_VAR,
+  USER_SEQ_DIR_WAIT_UNTIL_AND,
+  USER_SEQ_DIR_WAIT_UNTIL_OR,
+  USER_SEQ_DIR_WAIT_UNTIL_TIMEOUT,
+  USER_SEQ_DIR_LOOP,
+  USER_SEQ_DIR_WHILE_LOOP,
+  USER_SEQ_DIR_WHILE_LOOP_AND,
+  USER_SEQ_DIR_WHILE_LOOP_OR,
 ]);
 
 const blockClosingStems: Set<string> = new Set([
@@ -255,6 +311,14 @@ const blockClosingStems: Set<string> = new Set([
   SEQ_DIR_END_WAIT_UNTIL,
   SEQ_DIR_END_LOOP,
   SEQ_DIR_END_WHILE_LOOP,
+
+  USER_SEQ_DIR_ELSE, // also opens
+  USER_SEQ_DIR_WAIT_UNTIL_TIMEOUT, // also opens
+
+  USER_SEQ_DIR_END_IF,
+  USER_SEQ_DIR_END_WAIT_UNTIL,
+  USER_SEQ_DIR_END_LOOP,
+  USER_SEQ_DIR_END_WHILE_LOOP,
 ]);
 
 export function isBlockCommand(stem: string): boolean {
@@ -276,6 +340,19 @@ function closesBlock(stem: string, blockStem: string): boolean {
       return blockStem === SEQ_DIR_LOOP;
     case SEQ_DIR_END_WHILE_LOOP:
       return blockStem.startsWith(SEQ_DIR_WHILE_LOOP);
+
+    case USER_SEQ_DIR_END_IF:
+      return blockStem === USER_SEQ_DIR_ELSE || blockStem.startsWith(USER_SEQ_DIR_IF);
+    case USER_SEQ_DIR_ELSE:
+      return blockStem.startsWith(USER_SEQ_DIR_IF);
+    case USER_SEQ_DIR_END_WAIT_UNTIL:
+      return blockStem === USER_SEQ_DIR_WAIT_UNTIL_TIMEOUT || blockStem.startsWith(USER_SEQ_DIR_WAIT_UNTIL);
+    case USER_SEQ_DIR_WAIT_UNTIL_TIMEOUT:
+      return blockStem.startsWith(USER_SEQ_DIR_WAIT_UNTIL);
+    case USER_SEQ_DIR_END_LOOP:
+      return blockStem === USER_SEQ_DIR_LOOP;
+    case USER_SEQ_DIR_END_WHILE_LOOP:
+      return blockStem.startsWith(USER_SEQ_DIR_WHILE_LOOP);
   }
   return false;
 }
