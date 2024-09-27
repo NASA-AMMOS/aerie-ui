@@ -3,12 +3,7 @@
 <script lang="ts">
   import { activityDirectivesMap, selectActivity, selectedActivityDirectiveId } from '../../stores/activities';
   import { visibleConstraintResults } from '../../stores/constraints';
-  import {
-    externalEvents,
-    externalEventsRaw,
-    selectExternalEvent,
-    selectedExternalEventId,
-  } from '../../stores/external-event';
+  import { externalEvents, selectExternalEvent, selectedExternalEventId } from '../../stores/external-event';
   import { maxTimeRange, plan, planReadOnly, viewTimeRange } from '../../stores/plan';
   import {
     resourceTypes,
@@ -41,8 +36,6 @@
   import TimelineViewControls from './TimelineViewControls.svelte';
 
   export let user: User | null;
-
-  $: console.log($externalEventsRaw, $externalEvents);
 
   let hasUpdateDirectivePermission: boolean = false;
   let hasUpdateSimulationPermission: boolean = false;
