@@ -856,7 +856,6 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   SUB_PLANS_USER_WRITABLE: () => true,
   SUB_PLAN_DATASET: () => true,
   SUB_PLAN_DERIVATION_GROUP: () => true,
-  SUB_PLAN_EXTERNAL_EVENTS: () => true,
   SUB_PLAN_EXTERNAL_EVENTS_DERIVATION_GROUP: () => true,
   SUB_PLAN_LOCKED: () => true,
   SUB_PLAN_MERGE_CONFLICTING_ACTIVITIES: () => true,
@@ -1522,3 +1521,4 @@ export {
   isUserOwner,
   queryPermissions,
 };
+
