@@ -2298,10 +2298,8 @@ const effects = {
         );
         const sourceDissociation = data.planDerivationGroupLink?.returning[0];
         if (sourceDissociation) {
-          // source automatically updates!
           showSuccessToast('Derivation Group Disassociated Successfully');
         } else {
-          // show the source name instead??? unsure
           throw Error(
             `Unable to disassociate Derivation Group with name "${derivation_group_name}" on plan with ID ${plan.id}`,
           );
