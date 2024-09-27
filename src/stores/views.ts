@@ -691,13 +691,7 @@ export function viewAddFilterItemsToRow(
   let returnRow: Row | undefined = undefined;
   const defaultRowName = `${capitalize(typeName)} Row`;
   // If no row was given, but one matches the default name, attempt to use it
-  const row =
-    typeof rowId === 'number'
-      ? newRows.find(r => r.id === rowId)
-      : newRows.find(iterRow => {
-          return iterRow.name === defaultRowName;
-        }) || undefined;
-
+  const row = typeof rowId === 'number' ? newRows.find(r => r.id === rowId) : undefined;
   const targetRow = row || createRow(timelines, { name: items.length === 1 ? items[0].name : defaultRowName });
   if (!row) {
     // If no row is provided we assume there is no relevant layer
@@ -708,8 +702,6 @@ export function viewAddFilterItemsToRow(
     newRows.splice(insertIndex + 1, 0, returnRow);
   } else {
     // Find the layer in the row or create one if needed
-    const appropriateLayerInRow: Layer | undefined = row.layers.find(iterLayer => iterLayer.chartType === typeName);
-    layer = layer !== undefined ? layer : appropriateLayerInRow; // Utilize the located layer if one was not given
     if (
       !layer ||
       // Case where the target layer type does not match the destination layer chart type
@@ -733,7 +725,7 @@ export function viewAddFilterItemsToRow(
         if (r.id === row.id) {
           returnRow = r;
           const newLayers = r.layers.map(l => {
-            if (layer !== undefined && l.id === layer.id) {
+            if (l.id === layer.id) {
               return getUpdatedLayerWithFilters(timelines, typeName, items, layer, row).layer;
             }
             return l;
