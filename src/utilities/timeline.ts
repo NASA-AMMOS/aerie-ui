@@ -964,7 +964,6 @@ export function generateDiscreteTreeUtil(
   discreteTreeExpansionMap: DiscreteTreeExpansionMap,
   hierarchyMode: ActivityOptions['hierarchyMode'],
   groupByMethod: ExternalEventOptions['groupBy'] = 'event_type_name',
-  binSize: ExternalEventOptions['groupedModeBinSize'],
   filterActivitiesByTime: boolean,
   spanUtilityMaps: SpanUtilityMaps,
   spansMap: SpansMap,
@@ -1087,7 +1086,7 @@ export function generateDiscreteTreeUtil(
           }
           externalEventNodes.push({
             activity_type: undefined, // ignored.
-            children: paginateExternalEventTreeNodes(children, id, discreteTreeExpansionMap, binSize),
+            children: paginateExternalEventTreeNodes(children, id, discreteTreeExpansionMap),
             expanded: expanded,
             id,
             isLeaf: false,
@@ -1360,7 +1359,7 @@ export function paginateExternalEventTreeNodes(
   nodes: DiscreteTreeNode[],
   parentId: string,
   discreteTreeExpansionMap: DiscreteTreeExpansionMap,
-  binSize: ExternalEventOptions['groupedModeBinSize'],
+  binSize = 100,
   depth = 1,
 ): DiscreteTreeNode[] {
   // If we have less nodes left than our binSize, just return this set of nodes
