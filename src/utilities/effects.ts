@@ -6405,7 +6405,12 @@ const effects = {
     }
   },
 
-  async uploadExternalDataset(plan: Plan, files: FileList, user: User | null): Promise<PlanDataset | null> {
+  async uploadExternalDataset(
+    plan: Plan,
+    files: FileList,
+    user: User | null,
+    simulationDatasetId?: number,
+  ): Promise<number | null> {
     try {
       if (!gatewayPermissions.ADD_EXTERNAL_DATASET(user, plan)) {
         throwPermissionError('add external datasets');
@@ -6415,12 +6420,13 @@ const effects = {
 
       const body = new FormData();
       body.append('plan_id', `${plan.id}`);
-      body.append('file', file, file.name);
+      body.append('simulation_dataset_id', `${simulationDatasetId}`);
+      body.append('external_dataset', file, file.name);
 
-      const uploadedDataset = await reqGateway<PlanDataset | null>('/uploadDataset', 'POST', body, user, true);
+      const uploadedDatasetId = await reqGateway<number | null>('/uploadDataset', 'POST', body, user, true);
 
-      if (uploadedDataset != null) {
-        return uploadedDataset;
+      if (uploadedDatasetId != null) {
+        return uploadedDatasetId;
       }
 
       return null;
