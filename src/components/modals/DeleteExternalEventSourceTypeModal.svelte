@@ -2,15 +2,21 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import type { DerivationGroup } from '../../types/external-source';
+  import type { ExternalEventType } from '../../types/external-event';
+  import type { ExternalSourceType } from '../../types/external-source';
   import Modal from './Modal.svelte';
   import ModalContent from './ModalContent.svelte';
   import ModalFooter from './ModalFooter.svelte';
   import ModalHeader from './ModalHeader.svelte';
 
   export let height: number = 200;
-  export let derivationGroup: DerivationGroup;
   export let width: number = 380;
+  export let itemToDelete: ExternalEventType | ExternalSourceType;
+  export let itemToDeleteTypeName: 'External Event Type' | 'External Source Type';
+  export let associatedItems: string[] = [];
+
+  // Used to display text - event types always are associated to sources in this context, and sources are always associated to derivation groups
+  const associatedItemTypeName: string = itemToDeleteTypeName === 'External Event Type' ? 'External Source' : 'Derivation Group';
 
   const dispatch = createEventDispatcher<{
     close: void;
@@ -30,36 +36,35 @@
 
 <Modal {height} {width}>
   <ModalHeader on:close>
-    {#if derivationGroup.sources.size > 0}
-      Derivation Group Cannot Be Deleted
+    {#if associatedItems.length > 0}
+      {itemToDeleteTypeName} Cannot Be Deleted
     {:else}
-      Delete Derivation Group
+      Delete {itemToDeleteTypeName}
     {/if}
   </ModalHeader>
   <div class="modal-body">
     <ModalContent>
-      {#if derivationGroup.sources.size > 0}
+      {#if associatedItems.length > 0}
         <span class="st-typography-body">
-          This Derivation Group still contains the following sources which must be deleted first:
-          {#each derivationGroup.sources as source}
+          This {itemToDeleteTypeName} still contains the following related {associatedItemTypeName} which must be deleted first:
+          {#each associatedItems as associatedItem}
             <ul class="modal-content-text">
               <li>
-                {source[0]}
+                {associatedItem}
               </li>
-            </ul >
+            </ul>
           {/each}
         </span>
       {:else}
         <span class="st-typography-body modal-content-text">
-          Are you sure you want to delete "{derivationGroup.name}"?
-          <br />
+          Are you sure you want to delete "{itemToDelete.name}"?
           <i>This action cannot be undone.</i>
         </span>
       {/if}
     </ModalContent>
   </div>
   <ModalFooter>
-    {#if derivationGroup.sources.size > 0}
+    {#if associatedItems.length > 0}
       <button class="st-button" on:click={() => dispatch('close')}> Close </button>
     {:else}
       <button class="st-button secondary" on:click={() => dispatch('close')}> Cancel </button>
@@ -73,7 +78,6 @@
     height: 100%;
     overflow: auto;
   }
-
   .modal-content-text {
     display: block;
     overflow: hidden;

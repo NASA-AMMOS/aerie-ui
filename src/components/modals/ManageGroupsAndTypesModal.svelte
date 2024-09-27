@@ -11,8 +11,7 @@
   import type { DerivationGroup, ExternalSourceSlim, ExternalSourceType } from '../../types/external-source';
   import {
     showDeleteDerivationGroupModal,
-    showDeleteExternalEventTypeModal,
-    showDeleteExternalSourceTypeModal,
+    showDeleteExternalEventSourceTypeModal
   } from '../../utilities/modal';
   import { featurePermissions } from '../../utilities/permissions';
   import Collapse from '../Collapse.svelte';
@@ -301,7 +300,12 @@
     );
 
     // makes sure all associated derivation groups are deleted before this
-    await showDeleteExternalSourceTypeModal(sourceType, associatedDerivationGroups, user);
+    await showDeleteExternalEventSourceTypeModal(
+      sourceType,
+      'External Source Type',
+      associatedDerivationGroups.map(derivationGroup => derivationGroup.name),
+      user
+    );
   }
 
   async function deleteExternalEventType(eventType: ExternalEventType) {
@@ -313,7 +317,12 @@
     // makes sure all associated sources (and therefore events, as orphans are not possible) are deleted before this
     // NOTE: does not update in derivation_group_comp after removing a EE type; derivation_group_comp defaults to 0 event types after its last external source removed,
     //        as it has no awareness of external source type or paired events (as the latter don't even exist).
-    await showDeleteExternalEventTypeModal(eventType, associatedExternalSourceNames, user);
+    await showDeleteExternalEventSourceTypeModal(
+      eventType,
+      'External Event Type',
+      associatedExternalSourceNames,
+      user
+    );
   }
 
   function getAssociatedExternalSourcesBySourceType(sourceType: string | undefined) {
