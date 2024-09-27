@@ -266,7 +266,7 @@ test('createTimelineLayers', () => {
   expect(timelines[0].rows[0].layers[2].chartType).toBe('x-range');
   expect(timelines[0].rows[0].layers[2].id).toBe(2);
   expect(timelines[0].rows[0].layers[2].yAxisId).toBe(0);
-  expect(timelines[0].rows[0].layers[3].chartType).toBe('external event');
+  expect(timelines[0].rows[0].layers[3].chartType).toBe('externalEvent');
   expect(timelines[0].rows[0].layers[3].id).toBe(3);
   expect(timelines[0].rows[0].layers[3].yAxisId).toBe(null);
 
@@ -279,7 +279,7 @@ test('createTimelineLayers', () => {
   expect(timelines[1].rows[0].layers[2].chartType).toBe('x-range');
   expect(timelines[1].rows[0].layers[2].id).toBe(10);
   expect(timelines[1].rows[0].layers[2].yAxisId).toBe(2);
-  expect(timelines[1].rows[0].layers[3].chartType).toBe('external event');
+  expect(timelines[1].rows[0].layers[3].chartType).toBe('externalEvent');
   expect(timelines[1].rows[0].layers[3].id).toBe(11);
   expect(timelines[1].rows[0].layers[3].yAxisId).toBe(null);
 });

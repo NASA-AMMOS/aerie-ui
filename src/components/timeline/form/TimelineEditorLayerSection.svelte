@@ -95,7 +95,7 @@
       <option value="activity">Activity</option>
       <option value="line">Line</option>
       <option value="x-range">X-Range</option>
-      <option value="external event">External Event</option>
+      <option value="externalEvent">External Event</option>
     </select>
     <TimelineEditorLayerSettings
       {layer}
