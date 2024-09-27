@@ -17,10 +17,10 @@
   $: if (filters) {
     if (filters.length !== 1) {
       verb =
-        chartType === 'activity' ? 'activities' : chartType === 'external event' ? 'external event types' : 'resources';
+        chartType === 'activity' ? 'activities' : chartType === 'externalEvent' ? 'external event types' : 'resources';
     } else {
       verb =
-        chartType === 'activity' ? 'activity' : chartType === 'external event' ? 'external event type' : 'resource';
+        chartType === 'activity' ? 'activity' : chartType === 'externalEvent' ? 'external event type' : 'resource';
     }
 
     if (showAll) {
@@ -40,7 +40,7 @@
     <div class="filter-items-empty">
       No {chartType === 'activity'
         ? 'activities'
-        : chartType === 'external event'
+        : chartType === 'externalEvent'
           ? 'external event types'
           : 'resources'} selected
     </div>
