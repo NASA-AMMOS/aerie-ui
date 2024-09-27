@@ -17,13 +17,10 @@ export type DiscreteTreeNode = {
   type: 'Activity' | 'ExternalEvent';
 };
 
-// export type DiscreteTreeNodeItem = { externalEvent?: ExternalEvent } | { directive?: ActivityDirective; span?: Span };
 export type DiscreteTreeNodeItem = { directive?: ActivityDirective; externalEvent?: ExternalEvent; span?: Span };
 
 export type DiscreteTreeNodeDrawItem = DiscreteTreeNodeItem & { startX: number };
 
-// export type ActivityTreeExpansionMap = Record<string, boolean>;
-// export type ExternalEventTreeExpansionMap = Record<string, boolean>;
 export type DiscreteTreeExpansionMap = Record<string, boolean>;
 
 export interface ActivityLayer extends Layer {
