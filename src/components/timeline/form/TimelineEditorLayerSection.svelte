@@ -35,7 +35,6 @@
   let filterValues: string[] = [];
 
   $: {
-    // getFilterOptionsForLayer
     if (isActivityLayer(layer)) {
       filterOptions = $activityTypes.map(type => type.name);
     } else if (isExternalEventLayer(layer)) {
