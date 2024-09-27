@@ -382,7 +382,7 @@
         let newLayer: ActivityLayer | LineLayer | XRangeLayer | ExternalEventLayer | undefined;
         if (value === 'activity') {
           newLayer = { ...createTimelineActivityLayer(timelines), id: l.id };
-        } else if (value === 'external event') {
+        } else if (value === 'externalEvent') {
           newLayer = { ...createTimelineExternalEventLayer(timelines), id: l.id };
         } else if (value === 'line' || value === 'x-range') {
           if (value === 'line') {
