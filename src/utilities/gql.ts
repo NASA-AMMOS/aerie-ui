@@ -2800,18 +2800,6 @@ const gql = {
     }
   `,
 
-  SUB_PLAN_EXTERNAL_EVENTS: `#graphql
-    subscription SubPlanExternalEvents($source_keys: [String!]!) {
-      events: ${Queries.EXTERNAL_EVENT}(where: {source_key: {_in: $source_keys}}) {
-        properties
-        event_type_name
-        key
-        duration
-        start_time
-      }
-    }
-  `, // deprecated in favor of the next query
-
   SUB_PLAN_EXTERNAL_EVENTS_DERIVATION_GROUP: `#graphql
     subscription SubPlanExternalEventsDerivationGroup($derivation_group_names: [String!]!){
       events: ${Queries.DERIVED_EVENTS}(where: {derivation_group_name: {_in: $derivation_group_names}}) {
