@@ -329,7 +329,8 @@
 
       /**
        * The setTimeout is needed to prevent a race condition with mousedown events and change events.
-       * Without the setTimeout, mousedown events happen before change events in the external event selection form.
+       * Without the setTimeout, mousedown events happen before change events in the activity directive/external event selection form.
+       * This caused invalid updates to activity parameters.
        * Make sure you understand the linked issue before changing this code!
        * @see https://github.com/NASA-AMMOS/aerie-ui/issues/590
        */
@@ -378,10 +379,10 @@
     }
     const showContextMenu = !!e && isRightClick(e);
     if (showContextMenu) {
-      // Get _new_ selectedExternalEventId in order to ensure that no race condition exists between
-      // the selectedExternalEventId stores and the dispatching of this event
-      // since there is no guarantee that the mousedown event triggering updates to those stores will complete
-      // before the context menu event dispatch fires
+      // Get _new_ selectedExternalEventId/selectedActivityDirectiveId/selectedSpanId in order to ensure that
+      //    no race condition exists between the selectedExternalEventId stores and the dispatching of this
+      //    event since there is no guarantee that the mousedown event triggering updates to those stores will
+      //    complete before the context menu event dispatch fires
       const { offsetX, offsetY } = e;
       const { externalEvents, activityDirectives, spans } = getItemsForOffset(offsetX, offsetY);
 
@@ -468,7 +469,8 @@
     // must clear the canvas before a redraw! otherwise the old ungrouped version can linger around and we draw over that!
     canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
     if (xScaleView !== null) {
-      // expanded cannot possibly be false
+      // expanded cannot possibly be false, as drawing in grouped mode is something that is only possible when the row is not collapsed
+      //    (i.e. expanded); see implementation of draw() below.
       let y = !expanded ? 0 : ViewConstants.MIN_ROW_HEIGHT - 1; // pad starting y with the min row height to align with activity tree
       const expectedRowHeight = rowHeight + discreteRowPadding;
 
@@ -763,7 +765,7 @@
       }
     });
 
-    // sort the items (this is crucial to ensuring drawlabel funcitonality works correctly)
+    // sort the items (this is crucial to ensuring drawlabel functionality works correctly)
     itemsToDraw.sort((a, b) => {
       if (a.directiveStartX && b.directiveStartX) {
         if (a.directiveStartX < b.directiveStartX) {
@@ -831,8 +833,6 @@
 
         // Add to quadtree
         visibleExternalEventsById[getRowIdExternalEvent(externalEvent.pkey)] = externalEvent;
-
-        // use quadtreeSpans?
         quadtreeExternalEvents.add({
           height: rowHeight,
           id: getRowIdExternalEvent(externalEvent.pkey),
@@ -1021,7 +1021,7 @@
   }
 
   /**
-   * Draws external event points to the canvas context.
+   * Draws activity/span/external event points to the canvas context.
    * @note Points must be sorted in time ascending order before calling this function.
    */
   async function draw(): Promise<void> {
