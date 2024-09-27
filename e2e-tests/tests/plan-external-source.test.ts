@@ -127,11 +127,11 @@ test.describe.serial('Plan External Sources', () => {
 
   test('External event types can be added to the timeline', async () => {
     await plan.showPanel(PanelNames.TIMELINE_ITEMS);
-    await page.getByRole('button', { exact: true, name: 'External Event' }).click();
+    await page.getByRole('button', { exact: true, name: 'Events' }).click();
     await expect(page.getByText('ExampleEvent').first()).toBeVisible();
     await page.getByText('ExampleEvent').first().hover();
-    await page.getByLabel('AddExternal event-ExampleEvent').click();
-    await page.getByLabel('layer-picker-external event-ExampleEvent').getByText('New Row +').click();
+    await page.getByLabel('AddExternalevent-ExampleEvent').click();
+    await page.getByLabel('layer-picker-externalEvent-ExampleEvent').getByText('New Row +').click();
     await expect(page.locator('#timeline-0').getByRole('button', { name: 'ExampleEvent' })).toBeVisible();
   });
 
