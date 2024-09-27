@@ -480,8 +480,7 @@
 
       let filteredDerivationGroups = $planDerivationGroupLinks
         .filter(
-          link =>
-            link.plan_id === plan?.id && !($derivationGroupVisibilityMap[link.derivation_group_name] ?? true),
+          link => link.plan_id === plan?.id && !($derivationGroupVisibilityMap[link.derivation_group_name] ?? true),
         )
         .map(link => link.derivation_group_name);
 
@@ -557,7 +556,6 @@
         discreteTreeExpansionMap,
         discreteOptions.activityOptions?.hierarchyMode,
         discreteOptions.externalEventOptions?.groupBy,
-        discreteOptions.externalEventOptions?.groupedModeBinSize,
         hasExternalEventsLayer,
         hasActivityLayer,
       );
@@ -573,7 +571,6 @@
     discreteTreeExpansionMap: DiscreteTreeExpansionMap,
     hierarchyMode: ActivityOptions['hierarchyMode'] = 'flat',
     groupByMethod: ExternalEventOptions['groupBy'] = 'event_type_name',
-    binSize: ExternalEventOptions['groupedModeBinSize'] = 100,
     hasExternalEventsLayer: boolean,
     hasActivityLayer: boolean,
   ) {
@@ -584,7 +581,6 @@
       discreteTreeExpansionMap,
       hierarchyMode,
       groupByMethod,
-      binSize,
       filterItemsByTime,
       spanUtilityMaps,
       spansMap,

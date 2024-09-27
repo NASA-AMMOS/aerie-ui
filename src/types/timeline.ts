@@ -193,9 +193,6 @@ export type ActivityOptions = {
 export type ExternalEventOptions = {
   // Determines whether to group the External Events by their event type, or their external source
   groupBy: 'event_type_name' | 'source_key';
-
-  // Bin size for external event children in grouped mode
-  groupedModeBinSize: number;
 };
 
 export type DiscreteOptions = {
