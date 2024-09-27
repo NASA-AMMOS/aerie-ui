@@ -38,22 +38,21 @@
   </ModalHeader>
   <ModalContent>
     {#if derivationGroup.sources.size > 0}
-      <span>
+      <span class="st-typography-body">
         This Derivation Group still contains the following sources which must be deleted first:
-        <hr style="border: 0px" />
         {#each derivationGroup.sources as source}
-          <div class="modal-content" style:padding-left="20px">
-            <i>
+          <ul class="modal-content">
+            <li>
               {source[0]}
-            </i>
-          </div>
+            </li>
+          </ul >
         {/each}
       </span>
     {:else}
-      <span class="modal-content">
+      <span class="st-typography-body modal-content">
         Are you sure you want to delete "{derivationGroup.name}"?
         <br />
-        <i>What is done cannot be undone.</i>
+        <i>This action cannot be undone.</i>
       </span>
     {/if}
   </ModalContent>
@@ -72,5 +71,9 @@
     display: block;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .modal-content > li {
+    font-style: italic;
   }
 </style>
