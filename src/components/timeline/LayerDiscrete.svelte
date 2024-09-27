@@ -180,12 +180,15 @@
 
   // force a redraw as a reaction to a new selection, else a new selection won't update anything. TODO: make this more efficient! Redraw specific items, by matching ids?
   $: if (
-    selectedExternalEventId ||
-    selectedActivityDirectiveId ||
-    selectedSpanId ||
-    !selectedExternalEventId ||
-    !selectedActivityDirectiveId ||
-    !selectedSpanId
+    selectedExternalEventId !== undefined &&
+    selectedActivityDirectiveId !== undefined &&
+    selectedSpanId !== undefined &&
+    (selectedExternalEventId ||
+      selectedActivityDirectiveId ||
+      selectedSpanId ||
+      !selectedExternalEventId ||
+      !selectedActivityDirectiveId ||
+      !selectedSpanId)
   ) {
     draw();
   }
