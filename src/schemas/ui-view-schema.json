@@ -22,11 +22,15 @@
               "type": "array"
             }
           },
-          "required": ["names"],
+          "required": [
+            "names"
+          ],
           "type": "object"
         }
       },
-      "required": ["resource"],
+      "required": [
+        "resource"
+      ],
       "type": "object"
     },
     "id": {
@@ -46,7 +50,9 @@
           "type": "string"
         }
       },
-      "required": ["text"],
+      "required": [
+        "text"
+      ],
       "type": "object"
     },
     "table": {
@@ -73,7 +79,10 @@
           "type": "array"
         }
       },
-      "required": ["columnDefs", "columnStates"],
+      "required": [
+        "columnDefs",
+        "columnStates"
+      ],
       "type": "object"
     },
     "viewGridComponent": {
@@ -96,7 +105,10 @@
     },
     "yAxisId": {
       "description": "Id of the associated y-axis. Can be null for no association.",
-      "type": ["number", "null"]
+      "type": [
+        "number",
+        "null"
+      ]
     }
   },
   "description": "JSON schema definition used for configuring the Aerie UI",
@@ -205,7 +217,11 @@
                 "type": "string"
               }
             },
-            "required": ["id", "src", "title"],
+            "required": [
+              "id",
+              "src",
+              "title"
+            ],
             "type": "object"
           },
           "type": "array"
@@ -245,22 +261,41 @@
                         },
                         "composition": {
                           "description": "Whether or not to display only directives, only spans, or both in the row",
-                          "enum": ["directives", "spans", "both"]
+                          "enum": [
+                            "directives",
+                            "spans",
+                            "both"
+                          ]
                         },
                         "displayMode": {
                           "description": "Describes the primary method in which activities are visualized within this row",
-                          "enum": ["grouped", "compact"]
+                          "enum": [
+                            "grouped",
+                            "compact"
+                          ]
                         },
                         "hierarchyMode": {
                           "description": "If 'directive' the activities are grouped starting with directive types, if 'flat' activities are grouped by type regardless of hierarchy",
-                          "enum": ["directive", "flat"]
+                          "enum": [
+                            "directive",
+                            "flat"
+                          ]
                         },
                         "labelVisibility": {
                           "description": "Activity text label behavior",
-                          "enum": ["on", "off", "auto"]
+                          "enum": [
+                            "on",
+                            "off",
+                            "auto"
+                          ]
                         }
                       },
-                      "required": ["composition", "displayMode", "hierarchyMode", "labelVisibility"]
+                      "required": [
+                        "composition",
+                        "displayMode",
+                        "hierarchyMode",
+                        "labelVisibility"
+                      ]
                     },
                     "autoAdjustHeight": {
                       "description": "If true the row height is set automatically to fit the row content",
@@ -279,29 +314,38 @@
                           "properties": {
                             "composition": {
                               "description": "Whether or not to display only directives, only spans, or both in the row",
-                              "enum": ["directives", "spans", "both"]
+                              "enum": [
+                                "directives",
+                                "spans",
+                                "both"
+                              ]
                             },
                             "hierarchyMode": {
                               "description": "If 'directive' the activities are grouped starting with directive types, if 'flat' activities are grouped by type regardless of hierarchy",
-                              "enum": ["directive", "flat"]
+                              "enum": [
+                                "directive",
+                                "flat"
+                              ]
                             }
                           },
                           "type": "object"
                         },
                         "displayMode": {
                           "description": "Describes the display mode to use for rendering external events",
-                          "enum": ["compact", "grouped"]
+                          "enum": [
+                            "compact",
+                            "grouped"
+                          ]
                         },
                         "externalEventOptions": {
                           "description": "Options for external event layers in the row",
                           "properties": {
                             "groupBy": {
                               "description": "Determines whether to group the external events by their event type, or their external source",
-                              "enum": ["event_type_name", "source_key"]
-                            },
-                            "groupedModeBinSize": {
-                              "description": "Bin size for external event children in grouped mode",
-                              "type": "number"
+                              "enum": [
+                                "event_type_name",
+                                "source_key"
+                              ]
                             }
                           },
                           "type": "object"
@@ -313,7 +357,11 @@
                         },
                         "labelVisibility": {
                           "description": "External event text label behavior",
-                          "enum": ["on", "off", "auto"]
+                          "enum": [
+                            "on",
+                            "off",
+                            "auto"
+                          ]
                         }
                       }
                     },
@@ -341,7 +389,12 @@
                             "$ref": "#/definitions/id"
                           }
                         },
-                        "required": ["id", "label", "y", "yAxisId"],
+                        "required": [
+                          "id",
+                          "label",
+                          "y",
+                          "yAxisId"
+                        ],
                         "type": "object"
                       },
                       "type": "array"
@@ -383,11 +436,15 @@
                                         "type": "array"
                                       }
                                     },
-                                    "required": ["types"],
+                                    "required": [
+                                      "types"
+                                    ],
                                     "type": "object"
                                   }
                                 },
-                                "required": ["activity"],
+                                "required": [
+                                  "activity"
+                                ],
                                 "type": "object"
                               },
                               "id": {
@@ -401,7 +458,14 @@
                                 "$ref": "#/definitions/yAxisId"
                               }
                             },
-                            "required": ["activityColor", "activityHeight", "chartType", "filter", "id", "yAxisId"],
+                            "required": [
+                              "activityColor",
+                              "activityHeight",
+                              "chartType",
+                              "filter",
+                              "id",
+                              "yAxisId"
+                            ],
                             "type": "object"
                           },
                           {
@@ -492,7 +556,14 @@
                                 "$ref": "#/definitions/yAxisId"
                               }
                             },
-                            "required": ["chartType", "colorScheme", "filter", "id", "opacity", "yAxisId"],
+                            "required": [
+                              "chartType",
+                              "colorScheme",
+                              "filter",
+                              "id",
+                              "opacity",
+                              "yAxisId"
+                            ],
                             "type": "object"
                           },
                           {
@@ -525,11 +596,15 @@
                                         "type": "array"
                                       }
                                     },
-                                    "required": ["event_types"],
+                                    "required": [
+                                      "event_types"
+                                    ],
                                     "type": "object"
                                   }
                                 },
-                                "required": ["externalEvent"],
+                                "required": [
+                                  "externalEvent"
+                                ],
                                 "type": "object"
                               },
                               "id": {
@@ -562,7 +637,11 @@
                           },
                           "domainFitMode": {
                             "description": "Describes the domain fitting behavior for the axis",
-                            "enum": ["fitPlan", "fitTimeWindow", "manual"],
+                            "enum": [
+                              "fitPlan",
+                              "fitTimeWindow",
+                              "manual"
+                            ],
                             "type": "string"
                           },
                           "id": {
@@ -588,7 +667,12 @@
                             "type": "number"
                           }
                         },
-                        "required": ["color", "id", "label", "tickCount"],
+                        "required": [
+                          "color",
+                          "id",
+                          "label",
+                          "tickCount"
+                        ],
                         "type": "object"
                       },
                       "type": "array"
@@ -624,13 +708,23 @@
                       "type": "string"
                     }
                   },
-                  "required": ["id", "label", "timestamp"],
+                  "required": [
+                    "id",
+                    "label",
+                    "timestamp"
+                  ],
                   "type": "object"
                 },
                 "type": "array"
               }
             },
-            "required": ["id", "marginLeft", "marginRight", "rows", "verticalGuides"],
+            "required": [
+              "id",
+              "marginLeft",
+              "marginRight",
+              "rows",
+              "verticalGuides"
+            ],
             "type": "object"
           },
           "type": "array"
@@ -643,11 +737,19 @@
           "type": "array"
         }
       },
-      "required": ["activityDirectivesTable", "activitySpansTable", "grid", "iFrames", "timelines"],
+      "required": [
+        "activityDirectivesTable",
+        "activitySpansTable",
+        "grid",
+        "iFrames",
+        "timelines"
+      ],
       "type": "object"
     }
   },
-  "required": ["plan"],
+  "required": [
+    "plan"
+  ],
   "title": "View",
   "type": "object"
 }
