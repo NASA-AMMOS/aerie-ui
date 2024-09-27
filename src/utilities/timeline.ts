@@ -947,12 +947,12 @@ export function spanInView(span: Span, viewTimeRange: TimeRange) {
  * Returns true if the external event falls within or encompasses the viewTimeRange
  */
 export function externalEventInView(externalEvent: ExternalEvent, viewTimeRange: TimeRange) {
-  const externalEventInBounds =
+  const externalEventStartInBounds =
     externalEvent.start_ms >= viewTimeRange.start && externalEvent.start_ms < viewTimeRange.end;
+  const externalEventEndInBounds = externalEvent.start_ms < viewTimeRange.start &&
+                                    (externalEvent.start_ms + externalEvent.duration_ms) >= viewTimeRange.start;
   return (
-    externalEventInBounds ||
-    (externalEvent.start_ms < viewTimeRange.start &&
-      externalEvent.start_ms + externalEvent.duration_ms >= viewTimeRange.start)
+    externalEventStartInBounds || externalEventEndInBounds
   );
 }
 
