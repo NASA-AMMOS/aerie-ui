@@ -33,20 +33,25 @@
 
 <div
   class="card st-typography-label"
-  style="--border-color: {deleted ? 'rgba(152, 35, 35, 0.5)' : 'rgba(152, 101, 35, 0.5)'}"
+  class:card-border-deleted={deleted}
+  class:card-border-added={!deleted}
 >
   <div
     class="card-row card-title-row"
-    style=" background: {deleted ? 'rgb(254, 234, 234)' : 'rgb(254, 252, 234)'};display:flex"
+    class:card-background-deleted={deleted}
+    class:card-background-added={!deleted}
   >
     <div
-      class="card-title t-typography-medium"
-      style=" align-items: center; display: flex; gap: 5px;padding-left:5px; width: 100%"
+      class="card-title st-typography-medium"
     >
-      <LightningCharge
-        class="filter-search-icon"
-        style="color: {deleted ? 'rgba(152, 35, 35, 0.5)' : 'rgba(152, 101, 35, 0.5)'}"
-      />
+      <div
+        class:card-icon-deleted={deleted}
+        class:card-icon-added={!deleted}
+      >
+        <LightningCharge
+          class="filter-search-icon"
+        />
+      </div>
       {#if sources.length === 1 && !deleted}
         1 new file has been uploaded
       {:else if sources.length === 1 && deleted}
@@ -63,8 +68,9 @@
       </button>
     </slot>
   </div>
-  <div style="padding: 4px 14px 12px;">
-    <div class="card-row" style="padding-top: 5px">
+  <!-- TODO pick-up on removing inline styling, also last opened GH comment is the last double-checked -->
+  <div class="card-source-content">
+    <div class="card-row">
       <span class="st-typography-body">
         {!deleted
           ? 'New files matching source types and derivation groups in the current plan:'
@@ -89,10 +95,9 @@
         </Collapse>
       {/each}
     </div>
-    <div style="padding-top:5px">
+    <div class="card-dismiss">
       <button
         class="st-button secondary hover-fix"
-        style="border: 0px; width: 100px"
         on:click={() => dispatch('dismiss')}>Dismiss</button
       >
     </div>
@@ -112,11 +117,21 @@
     text-align: left;
   }
 
+  .card-dismiss {
+    padding-top: 4px;
+  }
+
+  .card-dismiss > button {
+    border: 0px;
+    width: 100px;
+  }
+
   .card-row {
     align-items: center;
     display: flex;
     justify-content: space-between;
     min-height: 24px;
+    padding-top: 4px;
     width: 100%;
   }
 
@@ -128,13 +143,22 @@
   }
 
   .card-title {
+    align-items: center;
     color: var(--st-gray-80);
+    display: flex;
+    gap: 5px;
     line-height: 24px;
+    padding-left:5px;
+    width: 100%;
   }
 
   .card-body {
     color: var(--st-gray-70);
     padding: 4px 0px;
+  }
+
+  .card-source-content {
+    padding: 4px 12px 12px;
   }
 
   .card-source-info {
@@ -165,5 +189,31 @@
 
   .hover-fix:hover {
     background-color: rgb(225, 225, 225) !important;
+  }
+
+  .card-background-added {
+    background: rgb(254, 252, 234);
+    display: flex;
+  }
+
+  .card-background-deleted {
+    background: rgb(254, 234, 234);
+    display: flex;
+  }
+
+  .card-icon-added {
+    color: rgba(152, 101, 35, 0.5);
+  }
+
+  .card-icon-deleted {
+    color: rgba(152, 35, 35, 0.5);
+  }
+
+  .card-border-added {
+    border-color: rgba(152, 101, 35, 0.5);
+  }
+
+  .card-border-deleted {
+    border-color: rgba(152, 35, 35, 0.5);
   }
 </style>
