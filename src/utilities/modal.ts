@@ -8,9 +8,8 @@ import CreatePlanSnapshotModal from '../components/modals/CreatePlanSnapshotModa
 import CreateViewModal from '../components/modals/CreateViewModal.svelte';
 import DeleteActivitiesModal from '../components/modals/DeleteActivitiesModal.svelte';
 import DeleteDerivationGroupModal from '../components/modals/DeleteDerivationGroupModal.svelte';
-import DeleteExternalEventTypeModal from '../components/modals/DeleteExternalEventTypeModal.svelte';
+import DeleteExternalEventSourceTypeModal from '../components/modals/DeleteExternalEventSourceTypeModal.svelte';
 import DeleteExternalSourceModal from '../components/modals/DeleteExternalSourceModal.svelte';
-import DeleteExternalSourceTypeModal from '../components/modals/DeleteExternalSourceTypeModal.svelte';
 import EditViewModal from '../components/modals/EditViewModal.svelte';
 import ExpansionSequenceModal from '../components/modals/ExpansionSequenceModal.svelte';
 import ManageGroupsAndTypesModal from '../components/modals/ManageGroupsAndTypesModal.svelte';
@@ -269,9 +268,10 @@ export async function showDeleteDerivationGroupModal(
   });
 }
 
-export async function showDeleteExternalSourceTypeModal(
-  sourceType: ExternalSourceType,
-  associatedDerivationGroups: DerivationGroup[],
+export async function showDeleteExternalEventSourceTypeModal(
+  itemToDelete: ExternalEventType | ExternalSourceType,
+  itemToDeleteTypeName: 'External Event Type' | 'External Source Type',
+  associatedItems: string[],
   user: User | null,
 ): Promise<ModalElementValue> {
   return new Promise(resolve => {
@@ -279,58 +279,31 @@ export async function showDeleteExternalSourceTypeModal(
       const target: ModalElement | null = document.querySelector('#svelte-modal');
 
       if (target) {
-        const deleteExternalSourceTypeModal = new DeleteExternalSourceTypeModal({
-          props: { associatedDerivationGroups, sourceType },
+        const deleteExternalEventSourceTypeModal = new DeleteExternalEventSourceTypeModal({
+          props: {
+            associatedItems,
+            itemToDelete,
+            itemToDeleteTypeName,
+          },
           target,
         });
         target.resolve = resolve;
 
-        deleteExternalSourceTypeModal.$on('close', () => {
+        deleteExternalEventSourceTypeModal.$on('close', () => {
           target.resolve = null;
           resolve({ confirm: false });
-          deleteExternalSourceTypeModal.$destroy();
+          deleteExternalEventSourceTypeModal.$destroy();
         });
 
-        deleteExternalSourceTypeModal.$on('confirm', () => {
+        deleteExternalEventSourceTypeModal.$on('confirm', () => {
           target.resolve = null;
           resolve({ confirm: true });
-          effects.deleteExternalSourceType(sourceType.name, user);
-          deleteExternalSourceTypeModal.$destroy();
-        });
-      }
-    } else {
-      resolve({ confirm: false });
-    }
-  });
-}
-
-export async function showDeleteExternalEventTypeModal(
-  eventType: ExternalEventType,
-  associatedSources: string[],
-  user: User | null,
-): Promise<ModalElementValue> {
-  return new Promise(resolve => {
-    if (browser) {
-      const target: ModalElement | null = document.querySelector('#svelte-modal');
-
-      if (target) {
-        const deleteExternalEventTypeModal = new DeleteExternalEventTypeModal({
-          props: { associatedSources, eventType },
-          target,
-        });
-        target.resolve = resolve;
-
-        deleteExternalEventTypeModal.$on('close', () => {
-          target.resolve = null;
-          resolve({ confirm: false });
-          deleteExternalEventTypeModal.$destroy();
-        });
-
-        deleteExternalEventTypeModal.$on('confirm', () => {
-          target.resolve = null;
-          resolve({ confirm: true });
-          effects.deleteExternalEventType(eventType.name, user);
-          deleteExternalEventTypeModal.$destroy();
+          if (itemToDeleteTypeName === 'External Event Type') {
+            effects.deleteExternalEventType(itemToDelete.name, user);
+          } else {
+            effects.deleteExternalSourceType(itemToDelete.name, user);
+          }
+          deleteExternalEventSourceTypeModal.$destroy();
         });
       }
     } else {
