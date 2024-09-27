@@ -70,6 +70,7 @@
   import {
     TimelineInteractionMode,
     directiveInView,
+    externalEventInView,
     generateDiscreteTreeUtil,
     getYAxesWithScaleDomains,
     isActivityLayer,
@@ -179,8 +180,7 @@
   let filteredActivityDirectives: ActivityDirective[] = [];
   let filteredSpans: Span[] = [];
   let filterItemsByTime = false;
-  let externalEventsFilteredByDG: ExternalEvent[] = [];
-  let externalEventsFilteredByType: ExternalEvent[] = [];
+  let filteredExternalEvents: ExternalEvent[] = [];
   let idToColorMaps: {
     directives: Record<ActivityDirectiveId, string>;
     external_events: Record<ExternalEventId, string>;
@@ -192,6 +192,7 @@
   };
   let timeFilteredActivityDirectives: ActivityDirective[] = [];
   let timeFilteredSpans: Span[] = [];
+  let timeFilteredExternalEvents: ExternalEvent[] = [];
   let rowRef: HTMLDivElement;
 
   $: if ($selectedRow?.id === id && rowRef) {
@@ -464,8 +465,8 @@
           // regeneration upon viewTimeRange change when not in filterActivitiesByTime mode.
           filteredActivityDirectives = directives;
           filteredSpans = spans;
-          timeFilteredActivityDirectives = directives;
-          timeFilteredSpans = spans;
+          timeFilteredActivityDirectives = directives; // if not actively filtering by time
+          timeFilteredSpans = spans; // if not actively filtering by time
         } else {
           filteredActivityDirectives = [];
           filteredSpans = [];
@@ -475,8 +476,8 @@
       }
     }
     if (hasExternalEventsLayer) {
-      externalEventsFilteredByDG = [];
-      externalEventsFilteredByType = [];
+      let externalEventsFilteredByDG = [];
+      filteredExternalEvents = [];
 
       let filteredDerivationGroups = $planDerivationGroupLinks
         .filter(
@@ -507,18 +508,25 @@
                 event =>
                   (updatedIdToColorMaps.external_events[getRowIdExternalEvent(event.pkey)] = layer.externalEventColor),
               );
-              externalEventsFilteredByType = externalEventsFilteredByType.concat(unique(matchingEvents));
+              filteredExternalEvents = filteredExternalEvents.concat(unique(matchingEvents));
             }
           });
         }
       });
+
+      timeFilteredExternalEvents = filteredExternalEvents; // if not actively filtering by time
     }
 
     // we update idToColorMaps via reassignment instead of by mutation so that Svelte reacts to updates correctly
     idToColorMaps = updatedIdToColorMaps;
   }
 
-  $: if (hasActivityLayer && filterItemsByTime && filteredActivityDirectives && filteredSpans && viewTimeRange) {
+  $: if (
+    ((hasActivityLayer && filteredActivityDirectives && filteredSpans) ||
+      (hasExternalEventsLayer && filteredExternalEvents)) &&
+    viewTimeRange &&
+    filterItemsByTime
+  ) {
     timeFilteredSpans = filteredSpans.filter(span => spanInView(span, viewTimeRange));
     timeFilteredActivityDirectives = filteredActivityDirectives.filter(directive => {
       let inView = directiveInView(directive, viewTimeRange);
@@ -532,6 +540,7 @@
       }
       return inView;
     });
+    timeFilteredExternalEvents = filteredExternalEvents.filter(event => externalEventInView(event, viewTimeRange));
   }
 
   $: if (
@@ -542,7 +551,7 @@
       discreteOptions.activityOptions &&
       typeof showSpans === 'boolean' &&
       typeof showDirectives === 'boolean') ||
-    (hasExternalEventsLayer && discreteOptions && discreteOptions.externalEventOptions)
+    !!(hasExternalEventsLayer && discreteOptions && discreteOptions.externalEventOptions && timeFilteredExternalEvents)
   ) {
     if (discreteOptions.displayMode === 'grouped' && expanded) {
       /*  Note: here we only pass in a few variables in order to
@@ -552,7 +561,7 @@
       discreteTree = generateDiscreteTree(
         timeFilteredActivityDirectives,
         timeFilteredSpans,
-        externalEventsFilteredByType,
+        timeFilteredExternalEvents,
         discreteTreeExpansionMap,
         discreteOptions.activityOptions?.hierarchyMode,
         discreteOptions.externalEventOptions?.groupBy,
@@ -949,7 +958,7 @@
             {idToColorMaps}
             {discreteTree}
             activityDirectives={filteredActivityDirectives}
-            externalEvents={externalEventsFilteredByType}
+            externalEvents={filteredExternalEvents}
             spans={filteredSpans}
             {activityDirectivesMap}
             {hasUpdateDirectivePermission}
