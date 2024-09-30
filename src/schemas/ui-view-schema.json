@@ -728,13 +728,6 @@
             "type": "object"
           },
           "type": "array"
-        },
-        "filteredDerivationGroups": {
-          "description": "Derivation groups that are currently being filtered out of the view.",
-          "items": {
-            "type": "object"
-          },
-          "type": "array"
         }
       },
       "required": [
