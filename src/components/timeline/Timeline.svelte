@@ -399,6 +399,7 @@
     <div class="timeline-histogram-container">
       <TimelineHistogram
         {activityDirectives}
+        {externalEvents}
         {constraintResults}
         {cursorEnabled}
         drawHeight={timelineHistogramDrawHeight}
