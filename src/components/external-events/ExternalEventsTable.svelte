@@ -2,25 +2,17 @@
 
 <script lang="ts">
   import type { ValueGetterParams } from 'ag-grid-community';
-  import { createEventDispatcher } from 'svelte';
   import { plugins } from '../../stores/plugins';
-  import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalEvent, ExternalEventId } from '../../types/external-event';
   import type { ExternalSourceSlim } from '../../types/external-source';
   import { getRowIdExternalEventWhole } from '../../utilities/externalEvents';
   import { formatDate } from '../../utilities/time';
-  import BulkActionDataGrid from '../ui/DataGrid/BulkActionDataGrid.svelte';
+  import DataGrid from '../ui/DataGrid/DataGrid.svelte';
 
   export let selectedItemId: ExternalEventId | null;
   export let items: ExternalEvent[];
-  export let user: User | null;
   export let filterExpression = '';
-
-  const dispatch = createEventDispatcher<{
-    rowDoubleClicked: void;
-    selectionChanged: void;
-  }>();
 
   const baseColumnDefs: DataGridColumnDef[] = [
     {
@@ -83,16 +75,32 @@
   let columnDefs = baseColumnDefs;
 </script>
 
-<BulkActionDataGrid
+<DataGrid
+  bind:currentSelectedRowId={selectedItemId}
   {columnDefs}
-  hasDeletePermission={false}
-  singleItemDisplayText="External Events"
-  pluralItemDisplayText="External Events"
   {filterExpression}
-  {items}
-  {user}
   getRowId={getRowIdExternalEventWhole}
-  bind:selectedItemId
-  on:rowDoubleClicked={() => dispatch('rowDoubleClicked')}
-  on:selectionChanged={() => dispatch('selectionChanged')}
+  useCustomContextMenu
+  rowData={items}
+  rowSelection="single"
+  on:cellEditingStarted
+  on:cellEditingStopped
+  on:cellValueChanged
+  on:cellMouseOver
+  on:columnMoved
+  on:columnPinned
+  on:columnResized
+  on:columnStateChange
+  on:filterChanged
+  on:rowClicked
+  on:rowDoubleClicked
+  on:rowSelected
+  on:selectionChanged
 />
+
+<style>
+  :global(.context-menu-item.disabled) {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+</style>
