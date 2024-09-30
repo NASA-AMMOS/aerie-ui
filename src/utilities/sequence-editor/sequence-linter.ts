@@ -1178,13 +1178,11 @@ function validateArgument(
         }
         const { max, min } = dictArg.range;
         const nodeTextAsNumber = parseNumericArg(argText, dictArgType);
-        const isHex = isHexValue(argText);
         if (nodeTextAsNumber < min || nodeTextAsNumber > max) {
-          const numFormat = (n: number) => (isHex ? `0x${n.toString(16).toUpperCase()}` : n);
           const message =
             max !== min
-              ? `Number out of range. Range is between ${numFormat(min)} and ${numFormat(max)} inclusive.`
-              : `Number out of range. Range is ${numFormat(min)}.`;
+              ? `Number out of range. Range is between ${numFormat(argText, min)} and ${numFormat(argText, max)} inclusive.`
+              : `Number out of range. Range is ${numFormat(argText, min)}.`;
           diagnostics.push({
             actions:
               max === min
@@ -1347,6 +1345,10 @@ function validateArgument(
       break;
   }
   return diagnostics;
+}
+
+function numFormat(argText: string, num: number): number | string {
+  return isHexValue(argText) ? `0x${num.toString(16).toUpperCase()}` : num;
 }
 
 function validateId(commandNode: SyntaxNode, text: string): Diagnostic[] {
