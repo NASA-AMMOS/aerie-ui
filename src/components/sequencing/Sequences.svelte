@@ -51,7 +51,7 @@
     workspaceId = event.detail;
 
     if (browser) {
-      setQueryParam(SearchParameters.WORKSPACE_ID, `${workspaceId}` ?? null);
+      setQueryParam(SearchParameters.WORKSPACE_ID, `${workspaceId ?? null}`);
     }
   }
 </script>
@@ -78,9 +78,8 @@
           }}
           disabled={workspace === undefined}
           on:click={() => {
-            goto(
-              `${base}/sequencing/new${'?' + SearchParameters.WORKSPACE_ID + '=' + getSearchParameterNumber(SearchParameters.WORKSPACE_ID) ?? ''}`,
-            );
+            const workspaceId = getSearchParameterNumber(SearchParameters.WORKSPACE_ID);
+            goto(`${base}/sequencing/new${workspaceId ? '?' + SearchParameters.WORKSPACE_ID + '=' + workspaceId : ''}`);
           }}
         >
           New Sequence
