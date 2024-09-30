@@ -495,8 +495,6 @@ export function createRow(timelines: Timeline[], args: Partial<Row> = {}): Row {
   const id = getNextRowID(timelines);
 
   return {
-    // TODO: check what this does when a new row is made. Does it auto add 2 layers?
-    //    If so, make it continue the default of only adding activity layer
     autoAdjustHeight: false,
     discreteOptions: ViewDefaultDiscreteOptions,
     expanded: true,
@@ -956,7 +954,6 @@ export function externalEventInView(externalEvent: ExternalEvent, viewTimeRange:
   );
 }
 
-// TODO: merge.
 export function generateDiscreteTreeUtil(
   directives: ActivityDirective[],
   spans: Span[],
@@ -1043,7 +1040,7 @@ export function generateDiscreteTreeUtil(
         }
         activityNodes.push({
           activity_type: 'aggregation',
-          children: paginateNodes(children, id, discreteTreeExpansionMap),
+          children: paginateNodes(children, 'activity', id, discreteTreeExpansionMap),
           expanded: expanded,
           id,
           isLeaf: false,
@@ -1086,7 +1083,7 @@ export function generateDiscreteTreeUtil(
           }
           externalEventNodes.push({
             activity_type: undefined, // ignored.
-            children: paginateExternalEventTreeNodes(children, id, discreteTreeExpansionMap),
+            children: paginateNodes(children, 'externalEvent', id, discreteTreeExpansionMap),
             expanded: expanded,
             id,
             isLeaf: false,
@@ -1190,6 +1187,7 @@ export function getDirectiveSubtree(
           spansMap,
           viewTimeRange,
         ),
+        'activity',
         id,
         discreteTreeExpansionMap,
       );
@@ -1252,7 +1250,7 @@ export function getSpanSubtrees(
               ),
             );
           });
-          childrenForKey = paginateNodes(childrenForKey, id, activityTreeExpansionMap);
+          childrenForKey = paginateNodes(childrenForKey, 'activity', id, activityTreeExpansionMap);
         }
         children.push({
           activity_type: 'aggregation',
@@ -1282,6 +1280,7 @@ export function getSpanSubtrees(
           spansMap,
           viewTimeRange,
         ),
+        'activity',
         id,
         activityTreeExpansionMap,
       );
@@ -1311,15 +1310,17 @@ export function getNodeExpanded(id: string, treeExpansionMap: DiscreteTreeExpans
 }
 
 /**
- * Recursively paginates the given `ActivityTreeNode` list such that no subgrouping exceeds
- * the `binSize` argument.
+ * Recursively paginates the given `DiscreteTreeNode` list such that no subgrouping exceeds
+ * the `binSize` argument. The provided list must contain nodes of a single type (activity or
+ * event); mixing them would produce nonsensical results.
  */
 export function paginateNodes(
   nodes: DiscreteTreeNode[],
+  activityOrEvent: 'activity' | 'externalEvent',
   parentId: string,
   discreteTreeExpansionMap: DiscreteTreeExpansionMap,
   depth = 1,
-  binSize = 100,
+  binSize = 2,
 ): DiscreteTreeNode[] {
   if (nodes.length <= binSize) {
     return nodes;
@@ -1328,7 +1329,7 @@ export function paginateNodes(
   nodes.forEach((node, i) => {
     const bin = Math.floor(i / binSize);
     if (!newNodes[bin]) {
-      newNodes[bin] = {
+      newNodes[bin] = activityOrEvent === 'activity' ? {
         activity_type: 'aggregation',
         children: [],
         expanded: false,
@@ -1337,42 +1338,7 @@ export function paginateNodes(
         items: [],
         label: '',
         type: 'Activity',
-      };
-    }
-    newNodes[bin].children.push(node);
-    if (node.items) {
-      newNodes[bin].items.push(...node.items);
-    }
-  });
-  newNodes.forEach((node, i) => {
-    const nodeStart = i * binSize ** depth;
-    const nodeEnd = Math.min(nodeStart + node.children.length * depth ** binSize, (i + 1) * binSize ** depth);
-    const label = `[${nodeStart} … ${nodeEnd - 1}]`;
-    node.id = `${parentId}_${label}_page`;
-    node.label = label;
-    node.expanded = getNodeExpanded(node.id, discreteTreeExpansionMap);
-  });
-  return paginateNodes(newNodes, parentId, discreteTreeExpansionMap, depth + 1);
-}
-
-export function paginateExternalEventTreeNodes(
-  nodes: DiscreteTreeNode[],
-  parentId: string,
-  discreteTreeExpansionMap: DiscreteTreeExpansionMap,
-  binSize = 100,
-  depth = 1,
-): DiscreteTreeNode[] {
-  // If we have less nodes left than our binSize, just return this set of nodes
-  if (nodes.length <= binSize) {
-    return nodes;
-  }
-  // Create a new tree of nodes to cover all indexes of Math.floor(i / binSize)
-  const newNodes: DiscreteTreeNode[] = [];
-  nodes.forEach((node, i) => {
-    const bin = Math.floor(i / binSize);
-    // If a node for this bin index doesn't already exist, create it
-    if (!newNodes[bin]) {
-      newNodes[bin] = {
+      } : {
         activity_type: undefined,
         children: [],
         expanded: false,
@@ -1383,14 +1349,11 @@ export function paginateExternalEventTreeNodes(
         type: 'ExternalEvent',
       };
     }
-    // Push the original node to this bin node's children
     newNodes[bin].children.push(node);
-    // Bin node now inherits any items the original node has
     if (node.items) {
       newNodes[bin].items.push(...node.items);
     }
   });
-  // Set metadata (id, label, expanded?) for all new nodes
   newNodes.forEach((node, i) => {
     const nodeStart = i * binSize ** depth;
     const nodeEnd = Math.min(nodeStart + node.children.length * depth ** binSize, (i + 1) * binSize ** depth);
@@ -1399,6 +1362,5 @@ export function paginateExternalEventTreeNodes(
     node.label = label;
     node.expanded = getNodeExpanded(node.id, discreteTreeExpansionMap);
   });
-  // Recurse throughout each new node created, attempting to further bin the nodes
-  return paginateExternalEventTreeNodes(newNodes, parentId, discreteTreeExpansionMap, depth + 1);
+  return paginateNodes(newNodes, activityOrEvent, parentId, discreteTreeExpansionMap, depth + 1);
 }
