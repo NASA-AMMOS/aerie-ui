@@ -887,7 +887,7 @@
       </svelte:fragment>
       <svelte:fragment slot="body">
         {#if $externalSources.length}
-          <div id="external-sources-table" style:height=100%>
+          <div id="external-sources-table" style:height="100%">
             <BulkActionDataGrid
               {columnDefs}
               {hasDeletePermission}
@@ -936,7 +936,6 @@
             <div id="external-event-table">
               <ExternalEventsTable
                 items={selectedEvents}
-                {user}
                 filterExpression={externalEventsTableFilterString}
                 bind:selectedItemId={selectedRowId}
                 on:selectionChanged={onSelectionChanged}
