@@ -513,6 +513,7 @@
           });
         }
       });
+      filteredExternalEvents.sort((a, b) => (a.start_ms < b.start_ms ? -1 : 1));
 
       timeFilteredExternalEvents = filteredExternalEvents; // if not actively filtering by time
     }
