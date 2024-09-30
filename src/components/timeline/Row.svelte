@@ -1121,18 +1121,6 @@
     color: var(--st-utility-blue);
   }
 
-  :global(.row-external-event.st-button.icon svg) {
-    color: var(--st-gray-50);
-  }
-
-  :global(.row-external-event.st-button.icon:hover svg) {
-    color: var(--st-gray-70);
-  }
-
-  :global(.row-external-event.row-external-event-active.st-button.icon svg) {
-    color: var(--st-utility-blue);
-  }
-
   .row-root {
     border-bottom: 2px solid var(--st-gray-20);
     display: flex;
