@@ -861,7 +861,6 @@
       {selectedSpanId}
       {selectedExternalEventId}
     >
-      <!--TODO: change make sure this works correctly-->
       {#if (hasActivityLayer || hasExternalEventsLayer) && discreteOptions?.displayMode === 'grouped'}
         <button
           class="st-button icon row-action"
