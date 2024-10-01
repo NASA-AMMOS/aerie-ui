@@ -148,7 +148,7 @@ function populateTimelineLayers(timelines: Timeline[]) {
       row.layers.push(createTimelineActivityLayer(timelines));
       row.layers.push(createTimelineLineLayer(timelines, row.yAxes));
       row.layers.push(createTimelineXRangeLayer(timelines, row.yAxes));
-      row.layers.push(createTimelineExternalEventLayer(timelines)); // TODO - do we need to include any other args, like row.yAxes?
+      row.layers.push(createTimelineExternalEventLayer(timelines));
     });
   });
   return timelines;
