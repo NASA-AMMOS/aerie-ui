@@ -19,7 +19,7 @@
 
 <Panel padBody={false}>
   <svelte:fragment slot="header">
-    <GridMenu {gridSection} title="Activity, Resource, External Event Types" />
+    <GridMenu {gridSection} title="Activity, Resource, Event Types" />
   </svelte:fragment>
 
   <svelte:fragment slot="body">
@@ -45,6 +45,7 @@
 <style>
   :global(.tab-list.timeline-items-tabs-list) {
     background-color: var(--st-gray-10);
+    overflow-x: scroll;
   }
 
   :global(button.timeline-items-tab) {
