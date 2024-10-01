@@ -995,7 +995,7 @@
 
       ctx.resetTransform();
       ctx.scale(dpr, dpr);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, drawWidth, drawHeight);
 
       quadtreeActivityDirectives = d3Quadtree<QuadtreeRect>()
         .x(p => p.x)
