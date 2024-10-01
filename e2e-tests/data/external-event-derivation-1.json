@@ -1,11 +1,11 @@
 {
     "source": {
-        "key": "Derivation_Test_00.json",
+        "key": "external-event-derivation-1.json",
         "source_type": "Derivation Test",
-        "valid_at": "2024-018T00:00:00Z",
+        "valid_at": "2022-018T00:00:00Z",
         "period": {
-            "start_time": "2024-005T00:00:00Z",
-            "end_time": "2024-011T00:00:00Z"
+            "start_time": "2022-005T00:00:00Z",
+            "end_time": "2022-011T00:00:00Z"
         },
         "metadata": {}
     },
@@ -13,7 +13,7 @@
         {
             "key": "2",
             "event_type": "DerivationD",
-            "start_time": "2024-005T23:00:00Z",
+            "start_time": "2022-005T23:00:00Z",
             "duration": "01:10:00",
             "properties": {
                 "rules": [
@@ -27,7 +27,7 @@
         {
             "key": "7",
             "event_type": "DerivationC",
-            "start_time": "2024-009T23:00:00Z",
+            "start_time": "2022-009T23:00:00Z",
             "duration": "02:00:00",
             "properties": {
                 "rules": [
@@ -40,7 +40,7 @@
         {
             "key": "8",
             "event_type": "DerivationB",
-            "start_time": "2024-010T11:00:00Z",
+            "start_time": "2022-010T11:00:00Z",
             "duration": "01:05:00",
             "properties": {
                 "rules": [
