@@ -95,9 +95,9 @@ test.describe.serial('External Sources', () => {
 
 test.describe.serial('External Source Error Handling', () => {
   test('Duplicate keys is handled gracefully', async () => {
-    await externalSources.uploadExternalSource(externalSources.externalSourceFilePath);
+    await externalSources.uploadExternalSource();
     await externalSources.deselectSourceButton.click();
-    await externalSources.uploadExternalSource(externalSources.externalSourceFilePath);
+    await externalSources.uploadExternalSource();
     await expect(page.getByLabel('Uniqueness violation.')).toBeVisible();
     await expect(page.getByText('External Source Create Failed')).toBeVisible();
     await expect(page.getByRole('gridcell', { name: externalSources.externalSourceFileName })).toHaveCount(1);
