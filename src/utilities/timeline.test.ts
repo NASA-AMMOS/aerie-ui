@@ -506,8 +506,8 @@ test('paginateNodes', () => {
       type: 'Activity',
     });
   }
-  expect(paginateNodes([], 'foo', {})).to.deep.eq([]);
-  const paginatedNodes = paginateNodes(testNodes, 'foo', { 'foo_[0 … 99]_page': true });
+  expect(paginateNodes([], 'activity', '', {})).to.deep.eq([]);
+  const paginatedNodes = paginateNodes(testNodes, 'activity', 'foo', { 'foo_[0 … 99]_page': true });
   expect(paginatedNodes).toHaveLength(10);
   expect(paginatedNodes[0].id).toBe('foo_[0 … 99]_page');
   expect(paginatedNodes[0].expanded).toBe(true);
@@ -526,7 +526,6 @@ test('generateDiscreteTree', () => {
       {},
       'flat',
       'event_type_name',
-      100,
       false,
       testSpansUtilityMap,
       testSpansMap,
@@ -550,7 +549,6 @@ test('generateDiscreteTree', () => {
       { BiteBanana: true, BiteBanana_1: true, Parent: true, Parent_1: true, Parent_1_Child: true },
       'flat',
       'event_type_name',
-      100,
       false,
       testSpansUtilityMap,
       testSpansMap,
