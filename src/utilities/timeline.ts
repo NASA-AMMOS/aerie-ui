@@ -1320,7 +1320,7 @@ export function paginateNodes(
   parentId: string,
   discreteTreeExpansionMap: DiscreteTreeExpansionMap,
   depth = 1,
-  binSize = 2,
+  binSize = 100,
 ): DiscreteTreeNode[] {
   if (nodes.length <= binSize) {
     return nodes;
@@ -1329,25 +1329,28 @@ export function paginateNodes(
   nodes.forEach((node, i) => {
     const bin = Math.floor(i / binSize);
     if (!newNodes[bin]) {
-      newNodes[bin] = activityOrEvent === 'activity' ? {
-        activity_type: 'aggregation',
-        children: [],
-        expanded: false,
-        id: '',
-        isLeaf: false,
-        items: [],
-        label: '',
-        type: 'Activity',
-      } : {
-        activity_type: undefined,
-        children: [],
-        expanded: false,
-        id: '',
-        isLeaf: false,
-        items: [],
-        label: '',
-        type: 'ExternalEvent',
-      };
+      newNodes[bin] =
+        activityOrEvent === 'activity'
+          ? {
+              activity_type: 'aggregation',
+              children: [],
+              expanded: false,
+              id: '',
+              isLeaf: false,
+              items: [],
+              label: '',
+              type: 'Activity',
+            }
+          : {
+              activity_type: undefined,
+              children: [],
+              expanded: false,
+              id: '',
+              isLeaf: false,
+              items: [],
+              label: '',
+              type: 'ExternalEvent',
+            };
     }
     newNodes[bin].children.push(node);
     if (node.items) {
