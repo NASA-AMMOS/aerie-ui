@@ -1,0 +1,43 @@
+{
+  "datasetStart": "2024-245T14:00:00",
+  "profileSet": {
+    "/orientation": {
+      "schema": {
+        "items": {
+          "x": {
+            "type": "real"
+          },
+          "y": {
+            "type": "real"
+          },
+          "z": {
+            "type": "real"
+          }
+        },
+        "type": "struct"
+      },
+      "segments": [
+        {
+          "duration": 3600000000,
+          "dynamics": {
+            "x": 0,
+            "y": 0,
+            "z": 1
+          }
+        },
+        {
+          "duration": 3600000000
+        },
+        {
+          "duration": 3600000000,
+          "dynamics": {
+            "x": 1,
+            "y": 1,
+            "z": 0
+          }
+        }
+      ],
+      "type": "discrete"
+    }
+  }
+}
