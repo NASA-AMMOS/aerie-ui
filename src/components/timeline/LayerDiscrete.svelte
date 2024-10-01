@@ -466,8 +466,6 @@
   }
 
   function drawGroupedMode() {
-    // must clear the canvas before a redraw! otherwise the old ungrouped version can linger around and we draw over that!
-    canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
     if (xScaleView !== null) {
       // expanded cannot possibly be false, as drawing in grouped mode is something that is only possible when the row is not collapsed
       //    (i.e. expanded); see implementation of draw() below.
