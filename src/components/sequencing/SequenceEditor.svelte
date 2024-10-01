@@ -39,8 +39,9 @@
   import type { IOutputFormat, Parcel } from '../../types/sequencing';
   import { setupLanguageSupport } from '../../utilities/codemirror';
   import { computeBlocks, isBlockCommand } from '../../utilities/codemirror/custom-folder';
-  import { setupVmlLanguageSupport, vmlFunction } from '../../utilities/codemirror/vml';
+  import { setupVmlLanguageSupport } from '../../utilities/codemirror/vml';
   import { vmlAutoComplete } from '../../utilities/codemirror/vml-adaptation';
+  import { vmlFormat } from '../../utilities/codemirror/vml-formatter';
   import { vmlLinter } from '../../utilities/codemirror/vml-linter';
   import { vmlTooltip } from '../../utilities/codemirror/vml-tooltip';
   import effects from '../../utilities/effects';
@@ -426,7 +427,7 @@
   function formatDocument() {
     // if VML
     // should this work only on selection
-    vmlFunction(editorSequenceView);
+    vmlFormat(editorSequenceView);
   }
 </script>
 
