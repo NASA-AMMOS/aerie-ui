@@ -132,7 +132,6 @@
     align-items: center;
     color: var(--st-gray-60);
     display: flex;
-    float: left;
     height: 100%;
     padding-right: 0.25rem;
     text-wrap: nowrap;
