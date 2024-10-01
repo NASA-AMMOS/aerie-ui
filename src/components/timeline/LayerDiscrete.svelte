@@ -75,7 +75,7 @@
   export let hasUpdateDirectivePermission: boolean = false;
   export let focus: FocusEvent | undefined;
   export let labelPaddingLeft: number = 4;
-  export let maxPackedItemEventCount: number = 10000;
+  export let maxPackedItemCount: number = 10000;
   export let mousedown: MouseEvent | undefined;
   export let mousemove: MouseEvent | undefined;
   export let mouseout: MouseEvent | undefined;
@@ -550,8 +550,8 @@
         });
       }
 
-      if (itemsToDraw.length > maxPackedItemEventCount) {
-        const text = `Discrete Item drawing limit (${maxPackedItemEventCount}) exceeded (${itemsToDraw.length})`;
+      if (itemsToDraw.length > maxPackedItemCount) {
+        const text = `Discrete Item drawing limit (${maxPackedItemCount}) exceeded (${itemsToDraw.length})`;
         const { width } = measureText(text, textMetricsCache);
         setLabelContext('black');
         ctx.fillText(text, drawWidth / 2 - width / 2, drawHeight / 2, width);
