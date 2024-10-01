@@ -214,6 +214,6 @@
   }
 
   .source-type-selection {
-     width: 200px;
+    width: 200px;
   }
 </style>

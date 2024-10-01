@@ -18,7 +18,7 @@ export const ViewDefaultActivityOptions: ActivityOptions = {
 };
 
 export const ViewDefaultExternalEventOptions: ExternalEventOptions = {
-  groupBy: 'event_type_name'
+  groupBy: 'event_type_name',
 };
 
 export const ViewDefaultDiscreteOptions: DiscreteOptions = {

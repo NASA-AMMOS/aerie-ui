@@ -19,8 +19,7 @@
       verb =
         chartType === 'activity' ? 'activities' : chartType === 'externalEvent' ? 'external event types' : 'resources';
     } else {
-      verb =
-        chartType === 'activity' ? 'activity' : chartType === 'externalEvent' ? 'external event type' : 'resource';
+      verb = chartType === 'activity' ? 'activity' : chartType === 'externalEvent' ? 'external event type' : 'resource';
     }
 
     if (showAll) {

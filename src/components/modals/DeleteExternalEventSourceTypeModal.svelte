@@ -16,7 +16,8 @@
   export let associatedItems: string[] = [];
 
   // Used to display text - event types always are associated to sources in this context, and sources are always associated to derivation groups
-  const associatedItemTypeName: string = itemToDeleteTypeName === 'External Event Type' ? 'External Source' : 'Derivation Group';
+  const associatedItemTypeName: string =
+    itemToDeleteTypeName === 'External Event Type' ? 'External Source' : 'Derivation Group';
 
   const dispatch = createEventDispatcher<{
     close: void;
@@ -46,7 +47,8 @@
     <ModalContent>
       {#if associatedItems.length > 0}
         <span class="st-typography-body">
-          This {itemToDeleteTypeName} still contains the following related {associatedItemTypeName} which must be deleted first:
+          This {itemToDeleteTypeName} still contains the following related {associatedItemTypeName} which must be deleted
+          first:
           {#each associatedItems as associatedItem}
             <ul class="modal-content-text">
               <li>
