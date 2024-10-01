@@ -231,12 +231,16 @@ export function vmlFunction(view: EditorView) {
     })
     .filter((lineInfo): lineInfo is LineOfNodes => lineInfo !== null);
 
-  const widths = nodesByColumnn.reduce(
-    (prev, curr) => prev.map((p, i) => (curr[i] === undefined ? p : Math.max(p, curr[i].to - curr[i].from))),
+  const widths: number[] = nodesByColumnn.reduce(
+    (maxWidthsByCol, currentRow) =>
+      maxWidthsByCol.map((maxSoFar, columnIndex) => {
+        const cellToken = currentRow[columnIndex];
+        return cellToken ? Math.max(maxSoFar, cellToken.to - cellToken.from) : maxSoFar;
+      }),
     new Array(4).fill(0),
   );
 
-  const indentation = [0];
+  const indentation: number[] = [0];
   for (const width of widths) {
     indentation.push(width + indentation[indentation.length - 1] + 1);
   }
@@ -252,7 +256,7 @@ export function vmlFunction(view: EditorView) {
 
     const commandLine = docText.lineAt(firstNode.from);
 
-    const filteredArray = line.filter(maybeNode => !!maybeNode);
+    const filteredArray: SyntaxNode[] = line.filter(maybeNode => !!maybeNode);
     const deletions: { from: number; to: number }[] = [];
 
     // remove indentation at start of line
