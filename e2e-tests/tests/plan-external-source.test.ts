@@ -31,6 +31,7 @@ test.beforeAll(async ({ baseURL, browser }) => {
 
   models = new Models(page);
   plans = new Plans(page, models);
+  plans.endTime = '2022-011T00:00:00'; // Extend to cover the whole derivation group example
   constraints = new Constraints(page);
   schedulingConditions = new SchedulingConditions(page);
   schedulingGoals = new SchedulingGoals(page);
@@ -157,7 +158,10 @@ test.describe.serial('Plan External Sources', () => {
   test('Cards should be shown when a file is added or deleted from a plans linked derivation group', async () => {
     // Upload a test file and link its derivation group to the plan
     await externalSources.goto();
-    await externalSources.uploadExternalSource(externalSources.derivationTestFile1);
+    await externalSources.uploadExternalSource(
+      externalSources.derivationTestFile1,
+      externalSources.derivationTestFileKey1,
+    );
     await plan.goto();
     await plan.showPanel(PanelNames.EXTERNAL_SOURCES);
     await plan.externalSourceManageButton.click();
@@ -165,7 +169,10 @@ test.describe.serial('Plan External Sources', () => {
 
     // Upload another test
     await externalSources.goto();
-    await externalSources.uploadExternalSource(externalSources.derivationTestFile2);
+    await externalSources.uploadExternalSource(
+      externalSources.derivationTestFile2,
+      externalSources.derivationTestFileKey2,
+    );
 
     await plan.goto();
     await plan.showPanel(PanelNames.EXTERNAL_SOURCES);
@@ -174,7 +181,7 @@ test.describe.serial('Plan External Sources', () => {
     await page
       .getByText('New files matching source types and derivation groups in the current plan')
       .waitFor({ state: 'visible', timeout: extendedTimeout });
-    await expect(page.locator('p').filter({ hasText: /^Derivation_Test_00\.json$/ })).toBeVisible();
+    await expect(page.locator('p').filter({ hasText: /^external-event-derivation-1\.json$/ })).toBeVisible();
     await page.getByRole('button', { name: 'Dismiss' }).click();
     await plan.externalSourceManageButton.click();
     await page
@@ -209,13 +216,27 @@ test.describe.serial('Plan External Sources', () => {
   test('External events are derived from a multi-source derivation group', async () => {
     await externalSources.goto();
     // Upload all derivation test files
-    await externalSources.uploadExternalSource(externalSources.derivationTestFile1);
+    await externalSources.uploadExternalSource(
+      externalSources.derivationTestFile1,
+      externalSources.derivationTestFileKey1,
+    );
     await externalSources.deselectSourceButton.click();
-    await externalSources.uploadExternalSource(externalSources.derivationTestFile2);
+    await externalSources.uploadExternalSource(
+      externalSources.derivationTestFile2,
+      externalSources.derivationTestFileKey2,
+    );
     await externalSources.deselectSourceButton.click();
-    await externalSources.uploadExternalSource(externalSources.derivationTestFile3);
+    await externalSources.uploadExternalSource(
+      externalSources.derivationTestFile3,
+      externalSources.derivationTestFileKey3,
+    );
     await externalSources.deselectSourceButton.click();
-    await externalSources.uploadExternalSource(externalSources.derivationTestFile4);
+    await externalSources.uploadExternalSource(
+      externalSources.derivationTestFile4,
+      externalSources.derivationTestFileKey4,
+    );
+    await externalSources.deselectSourceButton.click();
+
     await plan.goto();
     await plan.showPanel(PanelNames.EXTERNAL_SOURCES);
     await plan.externalSourceManageButton.click();
@@ -228,6 +249,9 @@ test.describe.serial('Plan External Sources', () => {
       }
     }
     await page.getByRole('row', { name: externalSources.exampleDerivationSourceType }).getByRole('checkbox').click();
+    await expect(
+      page.getByRole('row', { name: externalSources.exampleDerivationSourceType }).getByRole('checkbox'),
+    ).toBeChecked();
     await page.getByRole('button', { name: 'Close' }).click();
     await page.getByText('Selected Activity').click();
     await page.getByRole('menuitem', { name: 'External Events Table' }).click();

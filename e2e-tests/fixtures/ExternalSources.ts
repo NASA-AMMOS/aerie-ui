@@ -8,10 +8,10 @@ export class ExternalSources {
   derivationTestFile2: string = 'e2e-tests/data/external-event-derivation-2.json';
   derivationTestFile3: string = 'e2e-tests/data/external-event-derivation-3.json';
   derivationTestFile4: string = 'e2e-tests/data/external-event-derivation-4.json';
-  derivationTestFileKey1: string = 'Derivation_Test_00.json';
-  derivationTestFileKey2: string = 'Derivation_Test_01.json';
-  derivationTestFileKey3: string = 'Derivation_Test_02.json';
-  derivationTestFileKey4: string = 'Derivation_Test_03.json';
+  derivationTestFileKey1: string = 'external-event-derivation-1.json';
+  derivationTestFileKey2: string = 'external-event-derivation-2.json';
+  derivationTestFileKey3: string = 'external-event-derivation-3.json';
+  derivationTestFileKey4: string = 'external-event-derivation-4.json';
   deselectEventButton: Locator;
   deselectSourceButton: Locator;
   exampleDerivationSourceType: string = 'Derivation Test';
@@ -108,9 +108,13 @@ export class ExternalSources {
     this.externalSourcesTable = page.locator('#external-sources-table');
   }
 
-  async uploadExternalSource(inputFilePath: string = this.externalSourceFilePath) {
+  async uploadExternalSource(
+    inputFilePath: string = this.externalSourceFilePath,
+    inputFileName: string = this.externalSourceFileName,
+  ) {
     await this.fillInputFile(inputFilePath);
     await this.uploadButton.click();
     await expect(this.externalSourcesTable).toBeVisible();
+    await expect(this.externalSourcesTable.getByRole('gridcell', { name: inputFileName })).toBeVisible();
   }
 }
