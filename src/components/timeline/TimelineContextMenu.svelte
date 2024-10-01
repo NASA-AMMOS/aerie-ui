@@ -48,8 +48,7 @@
   export let user: User | null;
 
   const dispatch = createEventDispatcher<{
-    collapseActivityTree: Row;
-    collapseExternalEventTree: Row;
+    collapseDiscreteTree: Row;
     deleteActivityDirective: number;
     deleteRow: Row;
     duplicateRow: Row;
@@ -222,9 +221,9 @@
     }
   }
 
-  function onCollapseActivityTree() {
+  function onCollapseDiscreteTree() {
     if (row) {
-      dispatch('collapseActivityTree', row);
+      dispatch('collapseDiscreteTree', row);
     }
   }
 
@@ -455,7 +454,7 @@
   {#if hasActivityLayer}
     {#if discreteOptions?.displayMode === 'grouped'}
       <ContextMenuSeparator />
-      <ContextMenuItem on:click={onCollapseActivityTree}>Collapse All Hierarchies</ContextMenuItem>
+      <ContextMenuItem on:click={onCollapseDiscreteTree}>Collapse All Hierarchies</ContextMenuItem>
     {/if}
     <ContextMenuSeparator />
     <div role="radiogroup" class="st-radio-group">
