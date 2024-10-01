@@ -9,10 +9,7 @@
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalEventType } from '../../types/external-event';
   import type { DerivationGroup, ExternalSourceSlim, ExternalSourceType } from '../../types/external-source';
-  import {
-    showDeleteDerivationGroupModal,
-    showDeleteExternalEventSourceTypeModal
-  } from '../../utilities/modal';
+  import { showDeleteDerivationGroupModal, showDeleteExternalEventSourceTypeModal } from '../../utilities/modal';
   import { featurePermissions } from '../../utilities/permissions';
   import Collapse from '../Collapse.svelte';
   import ExternalEventTypeManagementTab from '../external-events/ExternalEventTypeManagementTab.svelte';
@@ -304,7 +301,7 @@
       sourceType,
       'External Source Type',
       associatedDerivationGroups.map(derivationGroup => derivationGroup.name),
-      user
+      user,
     );
   }
 
@@ -317,12 +314,7 @@
     // makes sure all associated sources (and therefore events, as orphans are not possible) are deleted before this
     // NOTE: does not update in derivation_group_comp after removing a EE type; derivation_group_comp defaults to 0 event types after its last external source removed,
     //        as it has no awareness of external source type or paired events (as the latter don't even exist).
-    await showDeleteExternalEventSourceTypeModal(
-      eventType,
-      'External Event Type',
-      associatedExternalSourceNames,
-      user
-    );
+    await showDeleteExternalEventSourceTypeModal(eventType, 'External Event Type', associatedExternalSourceNames, user);
   }
 
   function getAssociatedExternalSourcesBySourceType(sourceType: string | undefined) {

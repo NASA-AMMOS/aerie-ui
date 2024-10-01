@@ -19,7 +19,7 @@ export const externalEventsRaw = gqlSubscribable<{ external_event: ExternalEvent
   gql.SUB_PLAN_EXTERNAL_EVENTS_DERIVATION_GROUP,
   { derivation_group_names: selectedPlanDerivationGroupNames },
   [],
-  null
+  null,
 );
 export const externalEventTypes = gqlSubscribable<ExternalEventType[]>(gql.SUB_EXTERNAL_EVENT_TYPES, {}, [], null);
 
@@ -33,8 +33,12 @@ export const externalEvents: Readable<ExternalEvent[]> = derived(
     const completeExternalEvents: ExternalEvent[] = [];
     if ($externalEventsRaw !== null && $externalEventsRaw !== undefined) {
       // get plan bounds in an easily comparable format. The explicit strings are extreme bounds in case of a null plan.
-      const planStartTime = convertUTCtoMs(convertDoyToYmd($plan?.start_time_doy ?? "1970-001T00:00:00Z") ?? "1970-01-01T00:00:00Z");
-      const planEndTime = convertUTCtoMs(convertDoyToYmd($plan?.end_time_doy ?? "2100-001T00:00:00Z") ?? "2100-01-01T00:00:00Z");
+      const planStartTime = convertUTCtoMs(
+        convertDoyToYmd($plan?.start_time_doy ?? '1970-001T00:00:00Z') ?? '1970-01-01T00:00:00Z',
+      );
+      const planEndTime = convertUTCtoMs(
+        convertDoyToYmd($plan?.end_time_doy ?? '2100-001T00:00:00Z') ?? '2100-01-01T00:00:00Z',
+      );
 
       $externalEventsRaw.forEach(e => {
         // stored in this fashion as a byproduct of the GQL subscription query.
@@ -44,8 +48,10 @@ export const externalEvents: Readable<ExternalEvent[]> = derived(
         const externalEventStartTime = convertUTCtoMs(externalEvent.start_time);
         const externalEventEndTime = externalEventStartTime + convertDurationToMs(externalEvent.duration);
 
-        if ((externalEventStartTime >= planStartTime && externalEventStartTime <= planEndTime) ||
-            (externalEventEndTime <= planEndTime && externalEventEndTime >= planStartTime)) {
+        if (
+          (externalEventStartTime >= planStartTime && externalEventStartTime <= planEndTime) ||
+          (externalEventEndTime <= planEndTime && externalEventEndTime >= planStartTime)
+        ) {
           completeExternalEvents.push({
             duration: externalEvent.duration,
             duration_ms: convertDurationToMs(externalEvent.duration),
@@ -63,7 +69,7 @@ export const externalEvents: Readable<ExternalEvent[]> = derived(
       });
     }
     return completeExternalEvents;
-  }
+  },
 );
 
 export const externalEventsMap: Readable<Dictionary<ExternalEvent>> = derived(externalEvents, $externalEvents => {

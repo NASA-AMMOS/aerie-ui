@@ -46,7 +46,7 @@
               <li>
                 {source[0]}
               </li>
-            </ul >
+            </ul>
           {/each}
         </span>
       {:else}

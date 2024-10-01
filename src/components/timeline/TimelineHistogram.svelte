@@ -404,11 +404,11 @@
   >
     {#each aggregateHistogram as binPair, index (index)}
       {#if binPair[0]}
-        <div class="binActivity" style={`height: ${(binPair[0] / activityHistMax) * 100}%;`} />
+        <div class="bin-activity" style={`height: ${(binPair[0] / activityHistMax) * 100}%;`} />
       {:else if binPair[1]}
-        <div class="binEvent" style={`height: ${(binPair[1] / externalEventHistMax) * 100}%;`} />
+        <div class="bin-event" style={`height: ${(binPair[1] / externalEventHistMax) * 100}%;`} />
       {:else}
-        <div class="binActivity" style={`height: ${0}%;`} />
+        <div class="bin-activity" style={`height: ${0}%;`} />
       {/if}
     {/each}
   </div>
@@ -467,18 +467,18 @@
     gap: 1px;
   }
 
-  .histogram.blue .binActivity {
+  .histogram.blue .bin-activity {
     background: rgba(47, 128, 237, 1);
   }
 
-  .binEvent {
+  .bin-event {
+    background: rgb(237, 158, 47);
     flex: 1;
     transition: height 75ms ease-out;
     width: 2px;
-    background: rgb(237, 158, 47);
   }
 
-  .binActivity {
+  .bin-activity {
     flex: 1;
     transition: height 75ms ease-out;
     width: 2px;
