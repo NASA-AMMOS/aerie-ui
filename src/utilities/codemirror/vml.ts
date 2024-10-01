@@ -1,12 +1,21 @@
 import { CompletionContext, type CompletionResult } from '@codemirror/autocomplete';
 import { LRLanguage, LanguageSupport, foldInside, foldNodeProp, syntaxTree } from '@codemirror/language';
-import { EditorState } from '@codemirror/state';
+import { type ChangeSpec } from '@codemirror/state';
 import { Decoration, ViewPlugin, type DecorationSet, type ViewUpdate } from '@codemirror/view';
 import type { SyntaxNode } from '@lezer/common';
 import { styleTags, tags as t } from '@lezer/highlight';
 import { EditorView } from 'codemirror';
 import { getNearestAncestorNodeOfType } from '../sequence-editor/tree-utils';
-import { RULE_TIME_TAGGED_STATEMENT, TOKEN_ERROR } from './vml-constants';
+import {
+  RULE_FUNCTION_NAME,
+  RULE_ISSUE,
+  RULE_SIMPLE_EXPR,
+  RULE_STATEMENT,
+  RULE_TIME_TAGGED_STATEMENT,
+  RULE_VM_MANAGEMENT,
+  TOKEN_ERROR,
+  TOKEN_TIME_CONST,
+} from './vml-constants';
 import { computeBlocks, isBlockCommand, vmlBlockFolder } from './vml-folder';
 import { parser } from './vml.grammar';
 
@@ -19,11 +28,10 @@ export const blockTheme = EditorView.baseTheme({
 });
 
 const FoldBehavior: {
-  [tokenName: string]: (node: SyntaxNode, _state: EditorState) => ReturnType<typeof foldInside>;
+  [tokenName: string]: (node: SyntaxNode) => ReturnType<typeof foldInside>;
 } = {
   // only called on multi-line rules, may need custom service to handle FOR, WHILE, etc.
   Body: foldInside,
-  // If: foldInside,
   VML_HEADER: foldInside,
 };
 
@@ -174,22 +182,16 @@ export function vmlFunction(view: EditorView) {
   const timeTaggedStatements: SyntaxNode[] = [];
   tree.iterate({
     enter: nodeRef => {
-      if (nodeRef.name === 'Time_tagged_statement') {
+      if (nodeRef.name === RULE_TIME_TAGGED_STATEMENT) {
         timeTaggedStatements.push(nodeRef.node);
       }
     },
   });
 
-  // 0 - time
-  // 1 - category
-  // 2 - engine id (only present on 'Vm_management')
-  // 3 - stem or block name
-  // 4 - arguments
-
   const errorFreeTimeTaggedStatements = timeTaggedStatements.filter(node => {
-    switch (node.getChild('Statement')?.firstChild?.name) {
-      case 'Vm_management':
-      case 'Issue': {
+    switch (node.getChild(RULE_STATEMENT)?.firstChild?.name) {
+      case RULE_VM_MANAGEMENT:
+      case RULE_ISSUE: {
         const childCursor = node.toTree().cursor();
         do {
           if (childCursor.node.name === TOKEN_ERROR) {
@@ -202,25 +204,31 @@ export function vmlFunction(view: EditorView) {
     return false;
   });
 
-  const nodesByColumnn: LineOfNodes[] = errorFreeTimeTaggedStatements
+  // 0 - time
+  // 1 - category
+  // 2 - engine id (only present on 'Vm_management')
+  // 3 - stem or block name
+  // 4 - arguments
+
+  const nodesByColumn: LineOfNodes[] = errorFreeTimeTaggedStatements
     .map((statement): LineOfNodes | null => {
-      const timeNode = statement.getChild('TIME_CONST');
-      const statementTypeNode = statement.getChild('Statement')?.firstChild;
+      const timeNode = statement.getChild(TOKEN_TIME_CONST);
+      const statementTypeNode = statement.getChild(RULE_STATEMENT)?.firstChild;
       if (statementTypeNode) {
         switch (statementTypeNode.name) {
-          case 'Vm_management':
+          case RULE_VM_MANAGEMENT:
             {
               const directiveNode = statementTypeNode.firstChild?.firstChild;
-              const engineNode = statementTypeNode.firstChild?.getChild('Simple_expr');
-              const functionNameNode = statementTypeNode.firstChild?.getChild('Function_name');
+              const engineNode = statementTypeNode.firstChild?.getChild(RULE_SIMPLE_EXPR);
+              const functionNameNode = statementTypeNode.firstChild?.getChild(RULE_FUNCTION_NAME);
               if (timeNode && directiveNode && engineNode) {
                 return [timeNode, directiveNode, engineNode, functionNameNode ?? undefined];
               }
             }
             break;
-          case 'Issue': {
+          case RULE_ISSUE: {
             const directiveNode = statementTypeNode.firstChild;
-            const functionNameNode = statementTypeNode.getChild('Function_name');
+            const functionNameNode = statementTypeNode.getChild(RULE_FUNCTION_NAME);
             if (timeNode && directiveNode && functionNameNode) {
               return [timeNode, directiveNode, undefined /* reserved for engine number */, functionNameNode];
             }
@@ -231,7 +239,7 @@ export function vmlFunction(view: EditorView) {
     })
     .filter((lineInfo): lineInfo is LineOfNodes => lineInfo !== null);
 
-  const widths: number[] = nodesByColumnn.reduce(
+  const widths: number[] = nodesByColumn.reduce(
     (maxWidthsByCol, currentRow) =>
       maxWidthsByCol.map((maxSoFar, columnIndex) => {
         const cellToken = currentRow[columnIndex];
@@ -247,7 +255,7 @@ export function vmlFunction(view: EditorView) {
 
   const docText = state.toText(state.sliceDoc());
 
-  const maybeChanges = nodesByColumnn.flatMap((line: LineOfNodes) => {
+  const maybeChanges = nodesByColumn.flatMap((line: LineOfNodes) => {
     const firstNode = line.find(maybeNode => !!maybeNode);
     if (firstNode === undefined) {
       // unexpected case of no nodes on line
@@ -256,8 +264,8 @@ export function vmlFunction(view: EditorView) {
 
     const commandLine = docText.lineAt(firstNode.from);
 
-    const filteredArray: SyntaxNode[] = line.filter(maybeNode => !!maybeNode);
-    const deletions: { from: number; to: number }[] = [];
+    const filteredArray: SyntaxNode[] = line.filter((maybeNode): maybeNode is SyntaxNode => !!maybeNode);
+    const deletions: ChangeSpec[] = [];
 
     // remove indentation at start of line
     if (commandLine.from < firstNode.from) {
@@ -278,6 +286,7 @@ export function vmlFunction(view: EditorView) {
 
     const insertions = line.map((node: SyntaxNode | undefined, i: number) => {
       if (!node) {
+        // no node, fill with engine width plus one space
         return {
           from: commandLine.from + indentation[i],
           insert: ' '.repeat(widths[i] + 1),
@@ -297,7 +306,7 @@ export function vmlFunction(view: EditorView) {
     return [...deletions, ...insertions];
   });
 
-  const changes = maybeChanges.filter(maybeChange => !!maybeChange);
+  const changes = maybeChanges.filter((maybeChange): maybeChange is ChangeSpec => !!maybeChange);
 
   view.update([
     state.update({

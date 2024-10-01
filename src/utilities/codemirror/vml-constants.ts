@@ -13,7 +13,10 @@ export const RULE_END_FOR = 'End_for';
 
 export const RULE_STATEMENT = 'Statement';
 export const RULE_TIME_TAGGED_STATEMENT = 'Time_tagged_statement';
-
+export const RULE_VM_MANAGEMENT = 'Vm_management';
+export const RULE_ISSUE = 'Issue';
+export const RULE_FUNCTION_NAME = 'Function_name';
+export const RULE_SIMPLE_EXPR = 'Simple_expr';
 export const RULE_CALL_PARAMETERS = 'Call_parameters';
 
 export const TOKEN_ERROR = '⚠';
@@ -22,3 +25,4 @@ export const TOKEN_DOUBLE_CONST = 'DOUBLE_CONST';
 export const TOKEN_INT_CONST = 'INT_CONST';
 export const TOKEN_UINT_CONST = 'UINT_CONST';
 export const TOKEN_HEX_CONST = 'HEX_CONST';
+export const TOKEN_TIME_CONST = 'TIME_CONST';
