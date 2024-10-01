@@ -31,26 +31,11 @@
   });
 </script>
 
-<div
-  class="card st-typography-label"
-  class:card-border-deleted={deleted}
-  class:card-border-added={!deleted}
->
-  <div
-    class="card-row card-title-row"
-    class:card-background-deleted={deleted}
-    class:card-background-added={!deleted}
-  >
-    <div
-      class="card-title st-typography-medium"
-    >
-      <div
-        class:card-icon-deleted={deleted}
-        class:card-icon-added={!deleted}
-      >
-        <LightningCharge
-          class="filter-search-icon"
-        />
+<div class="card st-typography-label" class:card-border-deleted={deleted} class:card-border-added={!deleted}>
+  <div class="card-row card-title-row" class:card-background-deleted={deleted} class:card-background-added={!deleted}>
+    <div class="card-title st-typography-medium">
+      <div class:card-icon-deleted={deleted} class:card-icon-added={!deleted}>
+        <LightningCharge class="filter-search-icon" />
       </div>
       {#if sources.length === 1 && !deleted}
         1 new file has been uploaded
@@ -96,10 +81,7 @@
       {/each}
     </div>
     <div class="card-dismiss">
-      <button
-        class="st-button secondary hover-fix"
-        on:click={() => dispatch('dismiss')}>Dismiss</button
-      >
+      <button class="st-button secondary hover-fix" on:click={() => dispatch('dismiss')}>Dismiss</button>
     </div>
     <slot />
   </div>
@@ -148,7 +130,7 @@
     display: flex;
     gap: 5px;
     line-height: 24px;
-    padding-left:5px;
+    padding-left: 5px;
     width: 100%;
   }
 

@@ -947,11 +947,10 @@ export function spanInView(span: Span, viewTimeRange: TimeRange) {
 export function externalEventInView(externalEvent: ExternalEvent, viewTimeRange: TimeRange) {
   const externalEventStartInBounds =
     externalEvent.start_ms >= viewTimeRange.start && externalEvent.start_ms < viewTimeRange.end;
-  const externalEventEndInBounds = externalEvent.start_ms < viewTimeRange.start &&
-                                    (externalEvent.start_ms + externalEvent.duration_ms) >= viewTimeRange.start;
-  return (
-    externalEventStartInBounds || externalEventEndInBounds
-  );
+  const externalEventEndInBounds =
+    externalEvent.start_ms < viewTimeRange.start &&
+    externalEvent.start_ms + externalEvent.duration_ms >= viewTimeRange.start;
+  return externalEventStartInBounds || externalEventEndInBounds;
 }
 
 export function generateDiscreteTreeUtil(
