@@ -38,16 +38,11 @@
   import type { User } from '../../types/app';
   import type { IOutputFormat, Parcel } from '../../types/sequencing';
   import { setupLanguageSupport } from '../../utilities/codemirror';
-  import {
-    blockHighlighter,
-    blockTheme,
-    highlightBlock,
-    setupVmlLanguageSupport,
-  } from '../../utilities/codemirror/vml';
+  import { computeBlocks, isBlockCommand } from '../../utilities/codemirror/custom-folder';
+  import { setupVmlLanguageSupport, vmlFunction } from '../../utilities/codemirror/vml';
   import { vmlAutoComplete } from '../../utilities/codemirror/vml-adaptation';
   import { vmlLinter } from '../../utilities/codemirror/vml-linter';
   import { vmlTooltip } from '../../utilities/codemirror/vml-tooltip';
-  import { computeBlocks, isBlockCommand } from '../../utilities/codemirror/custom-folder';
   import effects from '../../utilities/effects';
   import { downloadBlob, downloadJSON } from '../../utilities/generic';
   import { inputLinter, outputLinter } from '../../utilities/sequence-editor/extension-points';
@@ -421,6 +416,12 @@
   function toggleSeqJsonEditor(): void {
     toggleSeqJsonPreview = !toggleSeqJsonPreview;
   }
+
+  function formatDocument() {
+    // if VML
+    // should this work only on selection
+    vmlFunction(editorSequenceView);
+  }
 </script>
 
 <CssGrid bind:columns={commandFormBuilderGrid} minHeight={'0'}>
@@ -430,6 +431,14 @@
         <SectionTitle>{title}</SectionTitle>
 
         <div class="right">
+          <button
+            use:tooltip={{ content: 'Format sequence whitespace', placement: 'top' }}
+            class="st-button icon-button secondary ellipsis"
+            on:click={formatDocument}
+          >
+            Format
+          </button>
+
           <button
             use:tooltip={{ content: `Copy sequence contents as ${$inputFormat?.name} to clipboard`, placement: 'top' }}
             class="st-button icon-button secondary ellipsis"
