@@ -23,6 +23,6 @@
   typeName="externalEvent"
   typeNamePlural="External Events"
   filterOptions={$selectedPlanDerivationGroupEventTypes.map(t => ({ label: t, value: t }))}
-  filterName="External Event Type"
+  filterName="Event Type"
   {getFilterValueFromItem}
 />
