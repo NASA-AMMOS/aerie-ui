@@ -86,7 +86,7 @@
         }}
       />
       <label class="st-typography-body timeline-item-list-filter-option-label" for="simulation-association">
-        Associate selected simulation
+        Use selected simulation
       </label>
       <input
         bind:checked={useSelectedSimulation}
@@ -138,6 +138,7 @@
   }
 
   .upload-container :global(.upload-rows) {
+    column-gap: 8px;
     display: grid;
     grid-template-columns: max-content auto;
     justify-content: space-between;
