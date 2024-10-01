@@ -288,12 +288,7 @@
     histogramCursorTime = null;
   }
 
-  function onCollapseActivityTree(event: CustomEvent<Row>) {
-    const row = event.detail;
-    discreteTreeExpansionMapByRow = { ...discreteTreeExpansionMapByRow, [row.id]: {} };
-  }
-
-  function onCollapseExternalEventTree(event: CustomEvent<Row>) {
+  function onCollapseDiscreteTree(event: CustomEvent<Row>) {
     const row = event.detail;
     discreteTreeExpansionMapByRow = { ...discreteTreeExpansionMapByRow, [row.id]: {} };
   }
@@ -544,8 +539,7 @@
     {hasUpdateDirectivePermission}
     {hasUpdateSimulationPermission}
     {maxTimeRange}
-    on:collapseActivityTree={onCollapseActivityTree}
-    on:collapseExternalEventTree={onCollapseExternalEventTree}
+    on:collapseDiscreteTree={onCollapseDiscreteTree}
     on:deleteActivityDirective
     on:jumpToActivityDirective
     on:jumpToSpan
