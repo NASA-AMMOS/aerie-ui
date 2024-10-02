@@ -396,18 +396,18 @@
   />
 
   <div
-    class="histogram blue"
+    class="histogram"
     style={`height: ${
       constraintViolationsToRender.length ? histogramHeight * 1.5 : histogramHeight * 2
     }px; border-bottom: ${constraintViolationsToRender.length < 1 ? '1px solid var(--st-gray-20)' : 'none'}`}
   >
     {#each aggregateHistogram as binPair, index (index)}
       {#if binPair[0]}
-        <div class="bin-activity" style={`height: ${(binPair[0] / activityHistMax) * 100}%;`} />
+        <div class="bin-item blue" style={`height: ${(binPair[0] / activityHistMax) * 100}%;`} />
       {:else if binPair[1]}
-        <div class="bin-event" style={`height: ${(binPair[1] / externalEventHistMax) * 100}%;`} />
+        <div class="bin-item orange" style={`height: ${(binPair[1] / externalEventHistMax) * 100}%;`} />
       {:else}
-        <div class="bin-activity" style={`height: ${0}%;`} />
+        <div class="bin-item blue" style={`height: ${0}%;`} />
       {/if}
     {/each}
   </div>
@@ -466,18 +466,15 @@
     gap: 1px;
   }
 
-  .histogram.blue .bin-activity {
+  .histogram > .blue {
     background: rgba(47, 128, 237, 1);
   }
 
-  .bin-event {
-    background: rgb(237, 158, 47);
-    flex: 1;
-    transition: height 75ms ease-out;
-    width: 2px;
+  .histogram > .orange {
+    background: rgba(237, 158, 47);
   }
 
-  .bin-activity {
+  .bin-item {
     flex: 1;
     transition: height 75ms ease-out;
     width: 2px;
