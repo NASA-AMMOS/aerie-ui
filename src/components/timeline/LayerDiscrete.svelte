@@ -182,13 +182,7 @@
   $: if (
     selectedExternalEventId !== undefined &&
     selectedActivityDirectiveId !== undefined &&
-    selectedSpanId !== undefined &&
-    (selectedExternalEventId ||
-      selectedActivityDirectiveId ||
-      selectedSpanId ||
-      !selectedExternalEventId ||
-      !selectedActivityDirectiveId ||
-      !selectedSpanId)
+    selectedSpanId !== undefined
   ) {
     draw();
   }
