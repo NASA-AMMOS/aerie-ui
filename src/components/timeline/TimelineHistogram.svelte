@@ -226,14 +226,13 @@
     externalEventHistValues = Array(numBins).fill(0);
 
     externalEvents.forEach(event => {
-      // Filter out spans that do not fall within the plan bounds at all
+      // Filter out events that do not fall within the plan bounds at all
       if (event.start_ms > windowEndTime || event.start_ms + event.duration_ms < windowStartTime) {
         return;
       }
 
       // Figure out which start bin this is in
       const startBin = Math.min(Math.floor((event.start_ms - windowStartTime) / binSize), numBins - 1);
-      console.log(event.pkey.key, startBin);
       externalEventHistValues[startBin]++;
 
       // Figure out which other bins this value is in
