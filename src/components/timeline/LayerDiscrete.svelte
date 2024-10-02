@@ -144,7 +144,7 @@
   $: anchorIconMarginLeft = 4;
   $: canvasHeightDpr = drawHeight * dpr;
   $: canvasWidthDpr = drawWidth * dpr;
-  $: rowHeight = discreteOptions.height + (discreteOptions.displayMode === 'compact' ? 0 : 0);
+  $: rowHeight = discreteOptions.height;
   $: timelineLocked = timelineLockStatus === TimelineLockStatus.Locked;
   $: planStartTimeMs = getUnixEpochTime(getDoyTime(new Date(planStartTimeYmd)));
 
@@ -643,26 +643,10 @@
       }
     });
 
-    // break into 1-2 rows
-    const activityRow: DiscreteTreeNodeDrawItem[] = [];
-    const externalEventRow: DiscreteTreeNodeDrawItem[] = [];
-
-    itemsToDraw.forEach(item => {
-      if (item.directive || item.span) {
-        activityRow.push(item);
-      } else {
-        externalEventRow.push(item);
-      }
-    });
-
-    // draw activity row if present
+    // draw items if present
     let rowVerticalOffset = 4;
-    if (hasActivityLayer && activityRow.length) {
-      drawRow(rowVerticalOffset, activityRow, idToColorMaps);
-      rowVerticalOffset += 24;
-    }
-    if (hasExternalEventsLayer && externalEventRow.length) {
-      drawRow(rowVerticalOffset, externalEventRow, idToColorMaps);
+    if (itemsToDraw.length) {
+      drawRow(rowVerticalOffset, itemsToDraw, idToColorMaps);
     }
   }
 
