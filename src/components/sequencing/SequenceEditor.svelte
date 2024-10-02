@@ -79,7 +79,6 @@
   let compartmentSeqLinter: Compartment;
   let compartmentSeqTooltip: Compartment;
   let compartmentSeqAutocomplete: Compartment;
-  // let compartmentSeqHighlighter: Compartment;
   let channelDictionary: ChannelDictionary | null;
   let commandDictionary: CommandDictionary | null;
   let disableCopyAndExport: boolean = true;
@@ -194,7 +193,9 @@
               compartmentSeqTooltip.reconfigure(
                 sequenceTooltip(parsedChannelDictionary, parsedCommandDictionary, nonNullParsedParameterDictionaries),
               ),
-              compartmentSeqAutocomplete.reconfigure(indentService.of($sequenceAdaptation.autoIndent())),
+              ...($sequenceAdaptation.autoIndent
+                ? [compartmentSeqAutocomplete.reconfigure(indentService.of($sequenceAdaptation.autoIndent()))]
+                : []),
             ],
           });
 
@@ -213,7 +214,6 @@
     compartmentSeqLinter = new Compartment();
     compartmentSeqTooltip = new Compartment();
     compartmentSeqAutocomplete = new Compartment();
-    // compartmentSeqHighlighter = new Compartment();
 
     editorSequenceView = new EditorView({
       doc: sequenceDefinition,
@@ -229,8 +229,9 @@
         EditorView.updateListener.of(selectedCommandUpdateListener),
         EditorView.updateListener.of(debounce(highlightBlock, 250)),
         Prec.highest([blockTheme, blockHighlighter]),
-        compartmentSeqAutocomplete.of(indentService.of($sequenceAdaptation.autoIndent())),
-        // compartmentSeqHighlighter.of(),
+        ...($sequenceAdaptation.autoIndent
+          ? [compartmentSeqAutocomplete.of(indentService.of($sequenceAdaptation.autoIndent()))]
+          : []),
         EditorState.readOnly.of(readOnly),
       ],
       parent: editorSequenceDiv,
@@ -425,8 +426,6 @@
   }
 
   function formatDocument() {
-    // if VML
-    // should this work only on selection
     vmlFormat(editorSequenceView);
   }
 </script>

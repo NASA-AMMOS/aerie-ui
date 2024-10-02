@@ -3,18 +3,36 @@ import { type ChangeSpec } from '@codemirror/state';
 import type { SyntaxNode } from '@lezer/common';
 import { EditorView } from 'codemirror';
 import {
+  RULE_ASSIGNMENT,
+  RULE_ELSE,
+  RULE_ELSE_IF,
+  RULE_END_FOR,
+  RULE_END_IF,
+  RULE_END_WHILE,
+  RULE_FOR,
   RULE_FUNCTION_NAME,
+  RULE_IF,
   RULE_ISSUE,
   RULE_SIMPLE_EXPR,
   RULE_STATEMENT,
   RULE_TIME_TAGGED_STATEMENT,
   RULE_VM_MANAGEMENT,
+  RULE_WHILE,
   TOKEN_ERROR,
   TOKEN_TIME_CONST,
 } from './vml-constants';
 
 type LineOfNodes = (SyntaxNode | undefined)[];
 
+/*
+  Formats code into columns
+
+  0 - time
+  1 - category
+  2 - engine id (only present on 'Vm_management')
+  3 - stem or block name
+  4 - arguments
+*/
 export function vmlFormat(view: EditorView) {
   const state = view.state;
   const tree = syntaxTree(state);
@@ -31,6 +49,15 @@ export function vmlFormat(view: EditorView) {
 
   const errorFreeTimeTaggedStatements = timeTaggedStatements.filter(node => {
     switch (node.getChild(RULE_STATEMENT)?.firstChild?.name) {
+      case RULE_ASSIGNMENT:
+      case RULE_IF:
+      case RULE_ELSE_IF:
+      case RULE_ELSE:
+      case RULE_END_IF:
+      case RULE_WHILE:
+      case RULE_END_WHILE:
+      case RULE_FOR:
+      case RULE_END_FOR:
       case RULE_VM_MANAGEMENT:
       case RULE_ISSUE: {
         const childCursor = node.toTree().cursor();
@@ -45,18 +72,28 @@ export function vmlFormat(view: EditorView) {
     return false;
   });
 
-  // 0 - time
-  // 1 - category
-  // 2 - engine id (only present on 'Vm_management')
-  // 3 - stem or block name
-  // 4 - arguments
-
   const nodesByColumn: LineOfNodes[] = errorFreeTimeTaggedStatements
     .map((statement): LineOfNodes | null => {
       const timeNode = statement.getChild(TOKEN_TIME_CONST);
       const statementTypeNode = statement.getChild(RULE_STATEMENT)?.firstChild;
+      // account for block level
       if (statementTypeNode) {
         switch (statementTypeNode.name) {
+          case RULE_IF:
+          case RULE_ELSE_IF:
+          case RULE_ELSE:
+          case RULE_END_IF:
+          case RULE_WHILE:
+          case RULE_END_WHILE:
+          case RULE_FOR:
+          case RULE_END_FOR:
+          case RULE_ASSIGNMENT:
+            {
+              if (timeNode) {
+                // return [timeNode, statementTypeNode];
+              }
+            }
+            break;
           case RULE_VM_MANAGEMENT:
             {
               const directiveNode = statementTypeNode.firstChild?.firstChild;
@@ -71,8 +108,10 @@ export function vmlFormat(view: EditorView) {
             const directiveNode = statementTypeNode.firstChild;
             const functionNameNode = statementTypeNode.getChild(RULE_FUNCTION_NAME);
             if (timeNode && directiveNode && functionNameNode) {
+              console.log(directiveNode);
               return [timeNode, directiveNode, undefined /* reserved for engine number */, functionNameNode];
             }
+            break;
           }
         }
       }
@@ -93,6 +132,8 @@ export function vmlFormat(view: EditorView) {
   for (const width of widths) {
     indentation.push(width + indentation[indentation.length - 1] + 1);
   }
+
+  console.log(indentation);
 
   const docText = state.toText(state.sliceDoc());
 
@@ -125,13 +166,19 @@ export function vmlFormat(view: EditorView) {
       })),
     );
 
-    const insertions = line.map((node: SyntaxNode | undefined, i: number) => {
+    const insertions: (ChangeSpec | null)[] = line.map((node: SyntaxNode | undefined, i: number) => {
       if (!node) {
         // no node, fill with engine width plus one space
-        return {
-          from: commandLine.from + indentation[i],
-          insert: ' '.repeat(widths[i] + 1),
-        };
+        const priorNode = line.slice(0, i).findLast(otherNode => !!otherNode);
+        if (priorNode) {
+          console.log(`Padding before token ${i} ${indentation[i]} ${widths[i] + 1}`);
+          return {
+            from: priorNode.to,
+            insert: ' '.repeat(widths[i] + 1),
+          };
+        }
+
+        return null;
       }
 
       const length = node.to - node.from;
@@ -144,6 +191,9 @@ export function vmlFormat(view: EditorView) {
         insert: ' '.repeat(pad),
       };
     });
+
+    // TODO: delete end of line whitespace
+
     return [...deletions, ...insertions];
   });
 

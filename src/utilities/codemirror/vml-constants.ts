@@ -11,6 +11,7 @@ export const RULE_END_WHILE = 'End_while';
 export const RULE_FOR = 'For_statement';
 export const RULE_END_FOR = 'End_for';
 
+export const RULE_ASSIGNMENT = 'Assignment';
 export const RULE_STATEMENT = 'Statement';
 export const RULE_TIME_TAGGED_STATEMENT = 'Time_tagged_statement';
 export const RULE_VM_MANAGEMENT = 'Vm_management';
