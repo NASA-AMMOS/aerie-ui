@@ -316,7 +316,7 @@
   $: onDragleave(dragleave);
   $: onDragover(dragover);
   $: onDrop(drop);
-  $: computedDrawHeight = expanded ? drawHeight : hasActivityLayer && hasExternalEventsLayer ? 48 : 24;
+  $: computedDrawHeight = expanded ? drawHeight : 24;
   $: overlaySvgSelection = select(overlaySvg) as Selection<SVGElement, unknown, any, any>;
   $: rowClasses = classNames('row', { 'row-collapsed': !expanded });
   $: discreteOptions = discreteOptions || { ...ViewDefaultDiscreteOptions };
