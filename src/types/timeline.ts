@@ -29,7 +29,6 @@ export interface ActivityLayer extends Layer {
 }
 export interface ExternalEventLayer extends Layer {
   externalEventColor: string;
-  externalEventHeight: number; // @deprecated TODO how should we deprecate view properties?
 }
 
 export type ActivityLayerFilter = {
