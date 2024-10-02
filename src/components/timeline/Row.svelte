@@ -580,7 +580,7 @@
     externalEvents: ExternalEvent[],
     discreteTreeExpansionMap: DiscreteTreeExpansionMap,
     hierarchyMode: ActivityOptions['hierarchyMode'] = 'flat',
-    groupByMethod: ExternalEventOptions['groupBy'] = 'event_type_name',
+    groupEventsByMethod: ExternalEventOptions['groupBy'] = 'event_type_name',
     hasExternalEventsLayer: boolean,
     hasActivityLayer: boolean,
   ) {
@@ -590,7 +590,7 @@
       externalEvents,
       discreteTreeExpansionMap,
       hierarchyMode,
-      groupByMethod,
+      groupEventsByMethod,
       filterItemsByTime,
       spanUtilityMaps,
       spansMap,
