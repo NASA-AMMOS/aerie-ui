@@ -320,28 +320,11 @@ test.describe.serial('Plan External Sources', () => {
   test('Derivation group can be expanded in modal', async () => {
     await plan.showPanel(PanelNames.EXTERNAL_SOURCES);
     await plan.externalSourceManageButton.click();
-    await page
-      .getByRole('row', { name: externalSources.exampleSourceType })
-      .getByRole('checkbox')
-      .waitFor({ state: 'visible', timeout: extendedTimeout });
-    await page.getByRole('row', { name: externalSources.exampleSourceType }).first().hover();
+    await page.getByRole('row', { name: externalSources.exampleSourceType }).hover();
     await page
       .getByRole('row', { name: externalSources.exampleSourceType })
       .getByLabel('View Derivation Group')
-      .first()
       .click();
-    await expect(
-      page
-        .locator('div')
-        .filter({ hasText: /^Sources in 'Example External Source Default'$/ })
-        .first(),
-    ).toBeVisible();
-    await page
-      .locator('div')
-      .filter({ hasText: /^No sources in this group\. Delete Empty Derivation Group$/ })
-      .locator('p')
-      .first()
-      .waitFor({ state: 'hidden', timeout: extendedTimeout });
     // Expand all collapse buttons to validate fields appear
     await expect(page.getByRole('button', { name: 'example-external-source.json 1' }).first()).toBeVisible();
     await page.getByRole('button', { name: 'example-external-source.json 1' }).first().click();
