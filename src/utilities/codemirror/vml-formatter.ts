@@ -4,6 +4,7 @@ import type { SyntaxNode } from '@lezer/common';
 import { EditorView } from 'codemirror';
 import {
   RULE_ASSIGNMENT,
+  RULE_CALL_PARAMETERS,
   RULE_ELSE,
   RULE_ELSE_IF,
   RULE_END_FOR,
@@ -14,6 +15,7 @@ import {
   RULE_IF,
   RULE_ISSUE,
   RULE_SIMPLE_EXPR,
+  RULE_SPAWN,
   RULE_STATEMENT,
   RULE_TIME_TAGGED_STATEMENT,
   RULE_VM_MANAGEMENT,
@@ -21,6 +23,7 @@ import {
   TOKEN_ERROR,
   TOKEN_TIME_CONST,
 } from './vml-constants';
+import { computeBlocks } from './vml-folder';
 
 type LineOfNodes = (SyntaxNode | undefined)[];
 
@@ -46,6 +49,11 @@ export function vmlFormat(view: EditorView) {
       }
     },
   });
+
+  const blocks = computeBlocks(state);
+  if (blocks) {
+    // console.log(blocks);
+  }
 
   const errorFreeTimeTaggedStatements = timeTaggedStatements.filter(node => {
     switch (node.getChild(RULE_STATEMENT)?.firstChild?.name) {
@@ -90,26 +98,46 @@ export function vmlFormat(view: EditorView) {
           case RULE_ASSIGNMENT:
             {
               if (timeNode) {
-                // return [timeNode, statementTypeNode];
+                return [timeNode, statementTypeNode];
               }
             }
             break;
           case RULE_VM_MANAGEMENT:
             {
-              const directiveNode = statementTypeNode.firstChild?.firstChild;
-              const engineNode = statementTypeNode.firstChild?.getChild(RULE_SIMPLE_EXPR);
-              const functionNameNode = statementTypeNode.firstChild?.getChild(RULE_FUNCTION_NAME);
-              if (timeNode && directiveNode && engineNode) {
-                return [timeNode, directiveNode, engineNode, functionNameNode ?? undefined];
+              const vmManagementType = statementTypeNode.firstChild;
+              if (vmManagementType) {
+                const directiveNode = vmManagementType.firstChild;
+                const engineNode = vmManagementType.getChild(RULE_SIMPLE_EXPR);
+                switch (vmManagementType.name) {
+                  case RULE_SPAWN: {
+                    const functionNameNode = vmManagementType.getChild(RULE_FUNCTION_NAME);
+                    const ruleParametersNode = vmManagementType.getChild(RULE_CALL_PARAMETERS);
+                    if (timeNode && directiveNode && engineNode) {
+                      return [
+                        timeNode,
+                        directiveNode,
+                        engineNode,
+                        functionNameNode ?? undefined,
+                        ruleParametersNode ?? undefined,
+                      ];
+                    }
+                  }
+                }
               }
             }
             break;
           case RULE_ISSUE: {
             const directiveNode = statementTypeNode.firstChild;
             const functionNameNode = statementTypeNode.getChild(RULE_FUNCTION_NAME);
+            const ruleParametersNode = statementTypeNode.getChild(RULE_CALL_PARAMETERS);
             if (timeNode && directiveNode && functionNameNode) {
-              console.log(directiveNode);
-              return [timeNode, directiveNode, undefined /* reserved for engine number */, functionNameNode];
+              return [
+                timeNode,
+                directiveNode,
+                undefined /* reserved for engine number */,
+                functionNameNode,
+                ruleParametersNode ?? undefined,
+              ];
             }
             break;
           }
@@ -123,7 +151,13 @@ export function vmlFormat(view: EditorView) {
     (maxWidthsByCol, currentRow) =>
       maxWidthsByCol.map((maxSoFar, columnIndex) => {
         const cellToken = currentRow[columnIndex];
-        return cellToken ? Math.max(maxSoFar, cellToken.to - cellToken.from) : maxSoFar;
+        if (cellToken) {
+          if (columnIndex === 1 && ![RULE_VM_MANAGEMENT, RULE_ISSUE].includes(cellToken.parent?.name ?? '')) {
+            return maxSoFar;
+          }
+          return Math.max(maxSoFar, cellToken.to - cellToken.from);
+        }
+        return maxSoFar;
       }),
     new Array(4).fill(0),
   );
@@ -132,8 +166,6 @@ export function vmlFormat(view: EditorView) {
   for (const width of widths) {
     indentation.push(width + indentation[indentation.length - 1] + 1);
   }
-
-  console.log(indentation);
 
   const docText = state.toText(state.sliceDoc());
 
@@ -166,31 +198,34 @@ export function vmlFormat(view: EditorView) {
       })),
     );
 
-    const insertions: (ChangeSpec | null)[] = line.map((node: SyntaxNode | undefined, i: number) => {
-      if (!node) {
-        // no node, fill with engine width plus one space
-        const priorNode = line.slice(0, i).findLast(otherNode => !!otherNode);
-        if (priorNode) {
-          console.log(`Padding before token ${i} ${indentation[i]} ${widths[i] + 1}`);
-          return {
-            from: priorNode.to,
-            insert: ' '.repeat(widths[i] + 1),
-          };
+    // don't insert whitespace after last token
+    const lineWithoutLastColumn = line.slice(0, line.length - 1);
+    const insertions: (ChangeSpec | null)[] = lineWithoutLastColumn.map(
+      (node: SyntaxNode | undefined, columnNumber: number) => {
+        if (!node) {
+          // no node, fill with engine width plus one space
+          const priorNode = line.slice(0, columnNumber).findLast(otherNode => !!otherNode);
+          if (priorNode) {
+            return {
+              from: priorNode.to,
+              insert: ' '.repeat(widths[columnNumber] + 1),
+            };
+          }
+
+          return null;
         }
 
-        return null;
-      }
-
-      const length = node.to - node.from;
-      const pad = widths[i] - length;
-      if (!pad) {
-        return null;
-      }
-      return {
-        from: node.to,
-        insert: ' '.repeat(pad),
-      };
-    });
+        const length = node.to - node.from;
+        const pad = widths[columnNumber] - length;
+        if (pad <= 0) {
+          return null;
+        }
+        return {
+          from: node.to,
+          insert: ' '.repeat(pad),
+        };
+      },
+    );
 
     // TODO: delete end of line whitespace
 

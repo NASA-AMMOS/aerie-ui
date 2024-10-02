@@ -15,6 +15,7 @@ export const RULE_ASSIGNMENT = 'Assignment';
 export const RULE_STATEMENT = 'Statement';
 export const RULE_TIME_TAGGED_STATEMENT = 'Time_tagged_statement';
 export const RULE_VM_MANAGEMENT = 'Vm_management';
+export const RULE_SPAWN = 'Spawn';
 export const RULE_ISSUE = 'Issue';
 export const RULE_FUNCTION_NAME = 'Function_name';
 export const RULE_SIMPLE_EXPR = 'Simple_expr';
