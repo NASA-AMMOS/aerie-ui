@@ -575,7 +575,6 @@ export function createTimelineExternalEventLayer(
   return {
     chartType: 'externalEvent',
     externalEventColor: '#fcdd8f',
-    externalEventHeight: 16,
     filter: {
       externalEvent: {
         event_types: [],
