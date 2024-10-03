@@ -12,9 +12,12 @@ export class ExternalSources {
   derivationTestFileKey2: string = 'external-event-derivation-2.json';
   derivationTestFileKey3: string = 'external-event-derivation-3.json';
   derivationTestFileKey4: string = 'external-event-derivation-4.json';
+  derivationTestGroupName: string = 'Derivation Test Default';
+  derivationTestSourceType: string = 'Derivation Test';
   deselectEventButton: Locator;
   deselectSourceButton: Locator;
-  exampleDerivationSourceType: string = 'Derivation Test';
+  exampleDerivationGroup: string = 'Example External Source Default';
+  exampleEventType: string = 'ExampleEvent';
   exampleSourceType: string = 'Example External Source';
   externalEventSelectedForm: Locator;
   externalEventTableHeaderDuration: Locator;
@@ -77,6 +80,14 @@ export class ExternalSources {
     await this.page.waitForTimeout(250);
   }
 
+  async linkDerivationGroup(derivationGroupName: string, sourceTypeName: string) {
+    // Assumes the Manage Derivation Groups modal is already showing
+    await this.page.getByRole('row', { name: derivationGroupName }).getByRole('checkbox').click();
+    await this.page.getByRole('button', { name: 'Update' }).click();
+    await this.page.getByRole('button', { name: 'Close' }).click();
+    await expect(this.page.getByRole('button', { exact: true, name: sourceTypeName })).toBeVisible();
+  }
+
   async selectEvent() {
     // Assumes the selected source was the test source, and selects the specific event from it
     // NOTE: This may not be the case, and should be re-visited when we implement deletion for External Sources!
@@ -87,6 +98,21 @@ export class ExternalSources {
   async selectSource(sourceName: string = 'example-external-source.json') {
     // Always selects the first source with the example's source type in the table
     await this.page.getByRole('gridcell', { name: sourceName }).first().click();
+  }
+
+  async unlinkDerivationGroup(derivationGroupName: string, sourceTypeName: string) {
+    // Assumes the Manage Derivation Groups modal is already showing
+    const derivationGroupIsLinked: boolean = await this.page
+      .getByRole('row', { name: derivationGroupName })
+      .getByRole('checkbox')
+      .isChecked();
+    if (!derivationGroupIsLinked) {
+      return;
+    }
+    await this.page.getByRole('row', { name: derivationGroupName }).getByRole('checkbox').click();
+    await this.page.getByRole('button', { name: 'Update' }).click();
+    await this.page.getByRole('button', { name: 'Close' }).click();
+    await expect(this.page.getByRole('button', { exact: true, name: sourceTypeName })).not.toBeVisible();
   }
 
   async updatePage(page: Page): Promise<void> {
