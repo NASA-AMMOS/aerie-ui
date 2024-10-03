@@ -1,7 +1,14 @@
 import type { SyntaxNode } from '@lezer/common';
-import { assert, describe, it } from 'vitest';
+import { assert, describe, expect, it } from 'vitest';
 import { VmlLanguage } from './vml';
-import { TOKEN_ERROR } from './vml-constants';
+import {
+  RULE_BLOCK,
+  RULE_COMMON_FUNCTION,
+  RULE_FUNCTION,
+  RULE_FUNCTION_NAME,
+  RULE_FUNCTIONS,
+  TOKEN_ERROR,
+} from './vml-constants';
 
 describe('vml tree', () => {
   it('module with variables', () => {
@@ -238,6 +245,34 @@ END_BODY
 END_MODULE
 `;
     assertNoErrorNodes(input, true);
+  });
+
+  it('block library', () => {
+    const input = `MODULE
+BLOCK block1
+    INPUT arg1
+BODY
+END_BODY
+
+BLOCK block2
+    INPUT arg1
+    INPUT arg2
+BODY
+END_BODY
+
+END_MODULE`;
+    assertNoErrorNodes(input, true);
+    const parsed = VmlLanguage.parser.parse(input);
+    const functionNodes = parsed.topNode.getChild(RULE_FUNCTIONS)?.getChildren(RULE_FUNCTION);
+    expect(functionNodes).toBeDefined();
+    expect(functionNodes?.length).toEqual(2);
+    const blockNameNode = functionNodes?.[0]
+      ?.getChild(RULE_BLOCK)
+      ?.getChild(RULE_COMMON_FUNCTION)
+      ?.getChild(RULE_FUNCTION_NAME);
+    expect(blockNameNode).toBeDefined();
+    const block0Name = nodeContents(input, blockNameNode!);
+    expect(block0Name).toEqual('block1');
   });
 });
 

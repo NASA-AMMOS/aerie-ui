@@ -1,5 +1,14 @@
 // The value here must match the rule and token names in vml.grammar
 
+export const RULE_TEXT_FILE = 'Text_file';
+
+export const RULE_FUNCTIONS = 'Functions';
+export const RULE_FUNCTION = 'Function';
+
+export const RULE_COMMON_FUNCTION = 'Common_Function';
+
+export const RULE_BLOCK = 'Block';
+
 export const RULE_IF = 'If';
 export const RULE_ELSE_IF = 'Else_if';
 export const RULE_ELSE = 'Else';
@@ -20,6 +29,7 @@ export const RULE_ISSUE = 'Issue';
 export const RULE_FUNCTION_NAME = 'Function_name';
 export const RULE_SIMPLE_EXPR = 'Simple_expr';
 export const RULE_CALL_PARAMETERS = 'Call_parameters';
+export const RULE_FLOW = 'Flow';
 
 export const TOKEN_ERROR = '⚠';
 export const TOKEN_STRING_CONST = 'STRING_CONST';
