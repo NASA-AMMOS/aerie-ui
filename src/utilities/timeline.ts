@@ -30,7 +30,6 @@ import type {
   DiscreteTree,
   DiscreteTreeExpansionMap,
   DiscreteTreeNode,
-  DiscreteTreeNodeItem,
   ExternalEventLayer,
   ExternalEventOptions,
   HorizontalGuide,
@@ -43,7 +42,7 @@ import type {
   Timeline,
   VerticalGuide,
   XRangeLayer,
-  XRangeLayerColorScheme,
+  XRangeLayerColorScheme
 } from '../types/timeline';
 import { generateRandomPastelColor } from './color';
 import { filterEmpty } from './generic';
@@ -1101,9 +1100,10 @@ export function generateDiscreteTreeUtil(
       expanded: getNodeExpanded('!!activity-agg', discreteTreeExpansionMap),
       id: '!!activity-agg',
       isLeaf: false,
-      items: flattenItems(activityNodes).filter(
-        (obj, index, self) => index === self.findIndex(o => o.directive?.id === obj.directive?.id),
-      ),
+      items: activityNodes
+              .map(node => node.items)
+              .flat()
+              .filter((obj, index, self) => index === self.findIndex(o => o.directive?.id === obj.directive?.id)),
       label: 'Activities',
       type: 'Activity', // RowHeaderDiscreteTree does not seem to require any special treatment; so no special category for this top node
     };
@@ -1113,9 +1113,10 @@ export function generateDiscreteTreeUtil(
       expanded: getNodeExpanded('!!ex-ev-agg', discreteTreeExpansionMap),
       id: '!!ex-ev-agg',
       isLeaf: false,
-      items: flattenItems(externalEventNodes).filter(
-        (obj, index, self) => index === self.findIndex(o => o.externalEvent?.pkey === obj.externalEvent?.pkey),
-      ),
+      items: externalEventNodes
+              .map(node => node.items)
+              .flat()
+              .filter((obj, index, self) => index === self.findIndex(o => o.externalEvent?.pkey === obj.externalEvent?.pkey)),
       label: 'External Events',
       type: 'ExternalEvent', // RowHeaderDiscreteTree does not seem to require any special treatment; so no special category for this top node
     };
@@ -1125,28 +1126,6 @@ export function generateDiscreteTreeUtil(
   } else {
     return externalEventNodes;
   }
-}
-
-export function flattenItems(nodes: DiscreteTreeNode[]): DiscreteTreeNodeItem[] {
-  let items: DiscreteTreeNodeItem[] = [];
-  for (const node of nodes) {
-    items = items.concat(flattenItemsHelper(node));
-  }
-  return items;
-}
-
-function flattenItemsHelper(node: DiscreteTreeNode): DiscreteTreeNodeItem[] {
-  if (!node) {
-    return [];
-  }
-  let items: DiscreteTreeNodeItem[] = [];
-  if (node.items) {
-    items = items.concat(node.items);
-  }
-  for (const child of node.children) {
-    items = items.concat(flattenItemsHelper(child));
-  }
-  return items;
 }
 
 /**
