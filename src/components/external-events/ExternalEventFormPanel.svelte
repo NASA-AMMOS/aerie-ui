@@ -24,6 +24,3 @@
     {/if}
   </svelte:fragment>
 </Panel>
-
-<style>
-</style>

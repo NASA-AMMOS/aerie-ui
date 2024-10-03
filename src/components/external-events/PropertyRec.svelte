@@ -8,6 +8,9 @@
   export let formProperty: ExternalEventProperty;
   export let highlightKeysMap: Record<string, boolean> = {};
 
+  let formProperties: ExternalEventProperty[] = [];
+  let formPropertyName: string;
+
   $: formProperties =
     formProperty.value === undefined
       ? [{ name: '-', value: '-' }]

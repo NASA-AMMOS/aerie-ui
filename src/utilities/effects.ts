@@ -33,6 +33,7 @@ import {
   creatingExternalSource,
   derivationGroupPlanLinkError,
   getExternalSourceMetadataError,
+  parsingError,
 } from '../stores/external-source';
 import { createModelError, creatingModel, models } from '../stores/model';
 import { createPlanError, creatingPlan, planId } from '../stores/plan';
@@ -85,7 +86,13 @@ import type {
   SeqId,
 } from '../types/expansion';
 import type { Extension, ExtensionPayload } from '../types/extension';
-import type { ExternalEvent, ExternalEventType, ExternalEventTypeInsertInput } from '../types/external-event';
+import type {
+  ExternalEvent,
+  ExternalEventInsertInput,
+  ExternalEventJson,
+  ExternalEventType,
+  ExternalEventTypeInsertInput,
+} from '../types/external-event';
 import type {
   DerivationGroup,
   DerivationGroupInsertInput,
@@ -235,6 +242,7 @@ import { convertResponseToMetadata } from './scheduling';
 import { compareEvents } from './simulation';
 import { pluralize } from './text';
 import {
+  convertDoyToYmd,
   convertDurationToMs,
   convertUTCtoMs,
   getDoyTime,
@@ -880,26 +888,122 @@ const effects = {
   },
 
   async createExternalSource(
-    derivationGroup: DerivationGroupInsertInput,
-    source: ExternalSourceInsertInput,
-    sourceType: ExternalSourceTypeInsertInput,
-    eventTypes: ExternalEventTypeInsertInput[],
+    externalSourceTypeName: string,
+    derivationGroupName: string,
+    startTime: string,
+    endTime: string,
+    externalEvents: ExternalEventJson[],
+    externalSourceKey: string,
+    externalSourceMetadata: object,
+    validAt: string,
     user: User | null,
   ) {
     try {
       if (!queryPermissions.CREATE_EXTERNAL_SOURCE(user)) {
         throwPermissionError('upload an external source');
       }
-
       creatingExternalSource.set(true);
       createExternalSourceError.set(null);
-      const createExternalSourceResponse = await reqHasura(
+
+      // Create mutation inputs for Hasura
+      const externalSourceTypeInsert: ExternalSourceTypeInsertInput = {
+        name: externalSourceTypeName,
+      };
+      const derivationGroupInsert: DerivationGroupInsertInput = {
+        name: derivationGroupName !== '' ? derivationGroupName : `${externalSourceTypeName} Default`,
+        source_type_name: externalSourceTypeName,
+      };
+
+      // Convert all times, validate they exist or else throw a failure
+      const startTimeFormatted: string | undefined = convertDoyToYmd(startTime.replaceAll('Z', ''))?.replace(
+        'Z',
+        '+00:00',
+      );
+      const endTimeFormatted: string | undefined = convertDoyToYmd(endTime.replaceAll('Z', ''))?.replace('Z', '+00:00');
+      const validAtFormatted: string | undefined = convertDoyToYmd(validAt.replaceAll('Z', ''))?.replace('Z', '+00:00');
+      if (!startTimeFormatted || !endTimeFormatted || !validAtFormatted) {
+        showFailureToast('Parsing failed.');
+        parsingError.set(`Parsing failed - parsing dates in input failed. ${startTime}, ${endTime}, ${validAt}`);
+        return;
+      }
+
+      // Check that the start and end times are logical
+      if (new Date(startTimeFormatted) > new Date(endTimeFormatted)) {
+        showFailureToast('Parsing failed.');
+        parsingError.set(`Parsing failed - start time ${startTimeFormatted} after end time ${endTimeFormatted}.`);
+        return;
+      }
+
+      // Create external source mutation input for Hasura
+      const externalSourceInsert: ExternalSourceInsertInput = {
+        derivation_group_name: derivationGroupInsert.name,
+        end_time: endTimeFormatted,
+        external_events: {
+          data: null, // updated after this map is created
+        },
+        key: externalSourceKey,
+        metadata: externalSourceMetadata,
+        source_type_name: externalSourceTypeName,
+        start_time: startTimeFormatted,
+        valid_at: validAtFormatted,
+      };
+
+      // Create external events + external event types mutation inputs for Hasura
+      const externalEventTypeInserts: ExternalEventTypeInsertInput[] = [];
+      let externalEventsCreated: ExternalEventInsertInput[] = [];
+      for (const externalEvent of externalEvents) {
+        externalEventTypeInserts.push({
+          name: externalEvent.event_type,
+        } as ExternalEventTypeInsertInput);
+
+        // Ensure the duration is valid
+        try {
+          convertDurationToMs(externalEvent.duration);
+        } catch (error) {
+          showFailureToast('Parsing failed.');
+          catchError(`Event duration has invalid format: ${externalEvent.key}\n`, error as Error);
+          return;
+        }
+
+        // Validate external event is in the external source's start/stop bounds
+        const externalEventStart = Date.parse(convertDoyToYmd(externalEvent.start_time.replace('Z', '')) ?? '');
+        const externalEventEnd = externalEventStart + convertDurationToMs(externalEvent.duration);
+        if (
+          !(externalEventStart >= Date.parse(startTimeFormatted) && externalEventEnd <= Date.parse(endTimeFormatted))
+        ) {
+          showFailureToast('Invalid External Event Time Bounds');
+          parsingError.set(
+            `Upload failed. Event (${externalEvent.key}) not in bounds of source start and end: occurs from [${new Date(externalEventStart)},${new Date(externalEventEnd)}], not subset of [${new Date(startTimeFormatted)},${new Date(endTimeFormatted)}].\n`,
+          );
+          return;
+        }
+
+        // If the event is valid...
+        if (
+          externalEvent.event_type !== undefined &&
+          externalEvent.start_time !== undefined &&
+          externalEvent.duration !== undefined
+        ) {
+          externalEventsCreated.push({
+            duration: externalEvent.duration,
+            event_type_name: externalEvent.event_type,
+            key: externalEvent.key,
+            properties: externalEvent.properties,
+            start_time: externalEvent.start_time,
+          });
+        }
+      }
+
+      externalSourceInsert.external_events.data = externalEventsCreated;
+      externalEventsCreated = [];
+
+      const createExternalSourceResponse: Record<string, object | null> = await reqHasura(
         gql.CREATE_EXTERNAL_SOURCE,
         {
-          derivation_group: derivationGroup,
-          event_type: eventTypes,
-          source: source,
-          source_type: sourceType,
+          derivation_group: derivationGroupInsert,
+          event_type: externalEventTypeInserts,
+          source: externalSourceInsert,
+          source_type: externalSourceTypeInsert,
         },
         user,
       );
@@ -909,7 +1013,7 @@ const effects = {
       ) {
         showSuccessToast('External Source Created Successfully');
         creatingExternalSource.set(false);
-        return createExternalSourceResponse;
+        return createExternalSourceResponse.createExternalSource as ExternalSourceSlim;
       } else {
         throw Error(`Unable to create external source`);
       }
@@ -2467,13 +2571,39 @@ const effects = {
     }
   },
 
-  async deleteExternalSource(externalSources: ExternalSourceSlim[] | null, user: User | null): Promise<boolean> {
+  async deleteExternalSource(
+    externalSources: ExternalSourceSlim[] | null,
+    planDerivationGroupLinks: PlanDerivationGroup[],
+    user: User | null,
+  ): Promise<boolean> {
     try {
       if (!queryPermissions.DELETE_EXTERNAL_SOURCES(user)) {
         throwPermissionError('delete an external source');
       }
       if (externalSources !== null) {
-        const { confirm } = await showDeleteExternalSourceModal([], externalSources, []);
+        // Check if any of the external sources still have associations, in which case they need to be removed from the to-be-deleted array
+        const currentlyLinked: { pkey: ExternalSourcePkey; plan_ids: number[] }[] = [];
+        const unassociatedSources: ExternalSourceSlim[] = [];
+        for (const externalSource of externalSources) {
+          const currentExternalSourcePlanLinks: PlanDerivationGroup[] = planDerivationGroupLinks.filter(
+            planDerivationGroupLink =>
+              planDerivationGroupLink.derivation_group_name === externalSource.pkey.derivation_group_name,
+          );
+          const linkedPlanIds: (number | undefined)[] = currentExternalSourcePlanLinks.map(
+            planDerivationGroupLink => planDerivationGroupLink.plan_id,
+          );
+          const definedPlanIds: number[] = linkedPlanIds.filter(
+            (currentPlanId): currentPlanId is number => currentPlanId !== undefined,
+          );
+          if (definedPlanIds !== undefined && definedPlanIds.length > 0) {
+            currentlyLinked.push({ pkey: externalSource.pkey, plan_ids: definedPlanIds });
+          } else {
+            unassociatedSources.push(externalSource);
+          }
+        }
+
+        // Show confirmation modal prior to running deletion
+        const { confirm } = await showDeleteExternalSourceModal([], unassociatedSources, []);
         if (confirm) {
           // cannot easily do composite keys in GraphQL, so we group by derivation group and send a query per group of keys
           const derivationGroups: { [derivationGroupName: string]: string[] } = {};
