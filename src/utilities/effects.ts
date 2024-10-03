@@ -2297,12 +2297,9 @@ const effects = {
           user,
         );
         const sourceDissociation = data.planDerivationGroupLink?.returning[0];
+        // If the return was null, do nothing - only act on success or non-null
         if (sourceDissociation) {
           showSuccessToast('Derivation Group Disassociated Successfully');
-        } else {
-          throw Error(
-            `Unable to disassociate Derivation Group with name "${derivation_group_name}" on plan with ID ${plan.id}`,
-          );
         }
       } else {
         throw Error('Plan is not defined.');
@@ -4698,11 +4695,9 @@ const effects = {
           user,
         );
         const { planExternalSourceLink: sourceAssociation } = data;
-        if (sourceAssociation != null) {
-          // store updates automatically, because its a subscription!
+        // If the return was null, do nothing - only act on success or non-null
+        if (sourceAssociation !== null) {
           showSuccessToast('Derivation Group Linked Successfully');
-        } else {
-          throw Error(`Unable to link Derivation Group with name "${derivationGroupName}" on plan with ID ${plan.id}`);
         }
       } else {
         throw Error('Plan is not defined.');

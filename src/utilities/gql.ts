@@ -596,7 +596,12 @@ const gql = {
 
   CREATE_PLAN_DERIVATION_GROUP: `#graphql
     mutation CreatePlanDerivationGroup($source: plan_derivation_group_insert_input!) {
-      planExternalSourceLink: ${Queries.INSERT_PLAN_DERIVATION_GROUP}(object: $source) {
+      planExternalSourceLink: ${Queries.INSERT_PLAN_DERIVATION_GROUP}(
+        object: $source,
+        on_conflict: {
+          constraint: plan_derivation_group_pkey
+        }
+      ) {
         derivation_group_name
       }
     }
