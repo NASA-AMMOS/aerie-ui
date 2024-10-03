@@ -8,7 +8,6 @@
   import PlanWithUpArrow from '@nasa-jpl/stellar/icons/plan_with_up_arrow.svg?component';
   import { keyBy } from 'lodash-es';
   import { activityMetadataDefinitions } from '../../stores/activities';
-  import { planDerivationGroupLinks } from '../../stores/external-source';
   import { activityTypes, planReadOnlyMergeRequest } from '../../stores/plan';
   import { gqlSubscribable } from '../../stores/subscribable';
   import type { ActivityDirectivesMap } from '../../types/activity';
@@ -83,11 +82,6 @@
   let userInitiatedMergeRequestResolution: boolean = false;
   let sourcePlan: PlanForMerging;
   let targetPlan: PlanForMerging;
-
-  $: planHasDerivationGroups = $planDerivationGroupLinks.filter(
-    planDerivationGroupLink =>
-      planDerivationGroupLink.plan_id === sourcePlan.id || planDerivationGroupLink.plan_id === targetPlan.id,
-  ).length;
 
   $: if (initialPlan && initialMergeRequest) {
     sourcePlan = initialMergeRequest.plan_snapshot_supplying_changes.plan;
@@ -305,7 +299,6 @@
         initialMergeRequest.id,
         initialMergeRequest.plan_snapshot_supplying_changes.plan,
         initialMergeRequest.plan_receiving_changes,
-        planHasDerivationGroups > 0,
         user,
       );
       if (success) {
