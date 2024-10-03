@@ -55,8 +55,6 @@
   export let activitySelectedColor: string = '#a9eaff';
   export let activitySelectedTextColor: string = '#0a4c7e';
   export let activityDefaultColor = '#cbcbcb';
-  export let activityUnfinishedSelectedColor: string = '#ff3b19';
-  export let activityUnfinishedColor: string = '#fc674d';
   export let blur: FocusEvent | undefined;
   export let contextmenu: MouseEvent | undefined;
   export let dblclick: MouseEvent | undefined;
@@ -373,8 +371,8 @@
   function getLabelForSpan(span: Span): string {
     // Display an arrow to the left of a span label if the span is sticky
     // The label should be sticky if the start of the span is clipped and the span is still in view
-    const sticky = span.startMs < viewTimeRange.start && span.startMs + span.durationMs >= viewTimeRange.start;
-    return `${sticky ? '← ' : ''}${span.type}${span.duration === null ? ' (Unfinished)' : ''}`;
+    const stickyLeft = span.startMs < viewTimeRange.start && ((span.startMs + span.durationMs >= viewTimeRange.start) || span.duration === null);
+    return `${stickyLeft ? '← ' : ''}${span.type}`;
   }
 
   function drawBottomLine(y: number, width: number) {
@@ -576,19 +574,13 @@
       // Draw span
       if (span && typeof spanStartX === 'number') {
         const unfinished = span.duration === null;
-        const spanEndX = xScaleView(span.endMs);
+        const spanEndX = unfinished ? drawWidth : xScaleView(span.endMs);
         const spanRectWidth = Math.max(2, Math.min(spanEndX, drawWidth) - spanStartX);
         const spanColor = idToColorMaps.spans[span.span_id] || activityDefaultColor;
         const isSelected =
           selectedSpanId === span.span_id || (directive && selectedActivityDirectiveId === directive.id);
         if (isSelected) {
-          if (unfinished) {
-            ctx.fillStyle = activityUnfinishedSelectedColor;
-          } else {
-            ctx.fillStyle = activitySelectedColor;
-          }
-        } else if (unfinished) {
-          ctx.fillStyle = shadeColor(activityUnfinishedColor, 1.2);
+          ctx.fillStyle = activitySelectedColor;
         } else {
           const color = getRGBAFromHex(spanColor, 0.5);
           ctx.fillStyle = color;
@@ -612,7 +604,16 @@
           }
           if (shouldDrawLabel) {
             const spanColor = idToColorMaps.spans[span.span_id] || activityDefaultColor;
-            drawLabel(label, spanStartX, y, spanLabelWidth, spanColor, unfinished, isSelected);
+            drawLabel(label, spanStartX, y, spanLabelWidth, spanColor, isSelected);
+          }
+        }
+
+        if (span.startMs < viewTimeRange.end && ((span.startMs + span.durationMs >= viewTimeRange.end) || (span.duration === null))) {
+          const arrowWidth = measureText("→", textMetricsCache).width + labelPaddingLeft;
+
+          if (spanLabelWidth <= (spanRectWidth - arrowWidth)) {
+            ctx.fillStyle = getLabelColor(idToColorMaps.spans[span.span_id] || activityDefaultColor, isSelected ?? false);
+            ctx.fillText("→", Math.max((spanStartX + spanRectWidth - arrowWidth), minRectSize), y + rowHeight / 2, arrowWidth);
           }
         }
 
@@ -658,7 +659,7 @@
             }
           }
           if (shouldDrawLabel) {
-            drawLabel(label, directiveStartX, y, directiveLabelWidth, directiveColor, false, isSelected);
+            drawLabel(label, directiveStartX, y, directiveLabelWidth, directiveColor, isSelected);
 
             // Draw anchor
             if (anchored) {
@@ -691,23 +692,20 @@
     y: number,
     width: number,
     color: string,
-    unfinished = false,
     selected = false,
   ) {
     setLabelContext('black');
+    getLabelColor(color, selected);
+    ctx.fillText(text, Math.max(x + labelPaddingLeft, minRectSize), y + rowHeight / 2, width);
+  }
+
+  function getLabelColor(color: string, selected: boolean): string {
     if (selected) {
-      if (unfinished) {
-        ctx.fillStyle = activityUnfinishedSelectedColor;
-      } else {
-        ctx.fillStyle = activitySelectedTextColor;
-      }
-    } else if (unfinished) {
-      ctx.fillStyle = ctx.fillStyle = shadeColor(activityUnfinishedColor, 1.3);
+      ctx.fillStyle = activitySelectedTextColor;
     } else {
       const opacity = selectedActivityDirectiveId !== null || selectedSpanId !== null ? 0.4 : 1;
       ctx.fillStyle = getRGBAFromHex(shadeColor(color, 2.8), opacity);
     }
-    ctx.fillText(text, Math.max(x + labelPaddingLeft, minRectSize), y + rowHeight / 2, width);
   }
 
   function getRGBAFromHex(color: string, opacity: number = 1) {

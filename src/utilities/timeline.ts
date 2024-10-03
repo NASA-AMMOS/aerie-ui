@@ -902,7 +902,7 @@ export function directiveInView(directive: ActivityDirective, viewTimeRange: Tim
  */
 export function spanInView(span: Span, viewTimeRange: TimeRange) {
   const spanInBounds = span.startMs >= viewTimeRange.start && span.startMs < viewTimeRange.end;
-  return spanInBounds || (span.startMs < viewTimeRange.start && span.startMs + span.durationMs >= viewTimeRange.start);
+  return spanInBounds || (span.startMs < viewTimeRange.start && ((span.startMs + span.durationMs >= viewTimeRange.start) || span.duration === null));
 }
 
 /**

@@ -172,7 +172,7 @@
     spans.forEach(span => {
       const startYmd = simulationDataset?.simulation_start_time ?? planStartTimeYmd;
       const spanX = getUnixEpochTimeFromInterval(startYmd, span.start_offset);
-      const spanDuration = getIntervalInMs(span.duration);
+      const spanDuration = span.duration === null ? (windowEndTime - spanX) : getIntervalInMs(span.duration);
 
       // Filter out spans that do not fall within the plan bounds at all
       if (spanX > windowEndTime || spanX + spanDuration < windowStartTime) {
