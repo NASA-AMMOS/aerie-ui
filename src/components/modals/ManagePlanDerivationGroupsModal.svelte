@@ -2,7 +2,7 @@
 
 <script lang="ts">
   import { base } from '$app/paths';
-  import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
+  import type { CellEditingStoppedEvent, ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
   import Truck from 'bootstrap-icons/icons/truck.svg?component';
   import { createEventDispatcher } from 'svelte';
   import { derivationGroups, externalSources, selectedPlanDerivationGroupNames } from '../../stores/external-source';
@@ -51,6 +51,18 @@
 
   let selectedDerivationGroup: DerivationGroup | undefined = undefined;
   let selectedDerivationGroupSources: ExternalSourceSlim[] = [];
+
+  let selectedDerivationGroups: Record<string, boolean> = {};
+
+  $: selectedDerivationGroups = $selectedPlanDerivationGroupNames.reduce(
+    (prevBooleanMap: Record<string, boolean>, derivationGroupName: string) => {
+      return {
+        ...prevBooleanMap,
+        [derivationGroupName]: true,
+      };
+    },
+    {},
+  );
 
   $: if ($selectedPlanDerivationGroupNames && dataGrid) {
     // no current way to change just a specific cell unless we add something about plan associations to the DG object,
@@ -118,7 +130,7 @@
         valueGetter: (params: ValueGetterParams<DerivationGroup>) => {
           const { data } = params;
           if (data) {
-            return $selectedPlanDerivationGroupNames.includes(data.name);
+            return !!selectedDerivationGroups[data.name];
           }
           return false;
         },
@@ -156,6 +168,10 @@
     ];
   }
 
+  $: if (selectedDerivationGroups) {
+    dataGrid?.redrawRows();
+  }
+
   function viewDerivationGroup(viewedDerivationGroup: DerivationGroup) {
     const derivationGroup = $derivationGroups.find(
       derivationGroup => derivationGroup.name === viewedDerivationGroup.name,
@@ -167,13 +183,29 @@
     }
   }
 
-  async function changeDerivationGroupAssociation(checked: boolean, derivationGroupName: string | undefined) {
-    if (derivationGroupName !== undefined) {
-      if (checked) {
-        await effects.insertDerivationGroupForPlan(derivationGroupName, $plan, user);
-      } else {
-        await effects.deleteDerivationGroupForPlan(derivationGroupName, $plan, user);
-      }
+  function onToggleDerivationGroup(event: CustomEvent<CellEditingStoppedEvent<DerivationGroup, boolean>>) {
+    const {
+      detail: { data, newValue },
+    } = event;
+
+    if (data) {
+      selectedDerivationGroups = {
+        ...selectedDerivationGroups,
+        [data.name]: newValue,
+      };
+    }
+  }
+
+  async function onUpdateDerivationGroups(selectedDerivationGroups: Record<string, boolean>) {
+    if ($plan) {
+      Object.entries(selectedDerivationGroups).forEach(selectedDerivationGroup => {
+        const [derivationGroup, isClicked] = selectedDerivationGroup;
+        if (isClicked) {
+          effects.insertDerivationGroupForPlan(derivationGroup, $plan, user);
+        } else {
+          effects.deleteDerivationGroupForPlan(derivationGroup, $plan, user);
+        }
+      });
     }
   }
 </script>
@@ -203,10 +235,7 @@
               {columnDefs}
               rowData={filteredDerivationGroups}
               getRowId={getRowIdDerivationGroup}
-              on:cellEditingStopped={event => {
-                const { newValue, data } = event.detail;
-                changeDerivationGroupAssociation(newValue, data?.name);
-              }}
+              on:cellEditingStopped={onToggleDerivationGroup}
             />
           {:else}
             <div class="st-typography-label">No Derivation Groups Found</div>
@@ -281,6 +310,9 @@
     </CssGrid>
   </ModalContent>
   <ModalFooter>
+    <button class="st-button primary" on:click={() => onUpdateDerivationGroups(selectedDerivationGroups)}>
+      Update
+    </button>
     <button class="st-button secondary" on:click={() => dispatch('close')}> Close </button>
   </ModalFooter>
 </Modal>
