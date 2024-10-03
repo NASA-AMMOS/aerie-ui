@@ -223,11 +223,10 @@ import {
   showManagePlanDerivationGroups,
   showManagePlanSchedulingConditionsModal,
   showManagePlanSchedulingGoalsModal,
-  showPlanBranchMergeDerivationGroupMessageModal,
   showPlanBranchRequestModal,
   showRestorePlanSnapshotModal,
   showUploadViewModal,
-  showWorkspaceModal,
+  showWorkspaceModal
 } from './modal';
 import { gatewayPermissions, queryPermissions } from './permissions';
 import { reqExtension, reqGateway, reqHasura } from './requests';
@@ -4906,7 +4905,6 @@ const effects = {
     merge_request_id: number,
     sourcePlan: PlanForMerging,
     targetPlan: PlanForMerging,
-    derivationGroupsInvolved: boolean,
     user: User | null,
   ): Promise<boolean> {
     try {
@@ -4914,27 +4912,12 @@ const effects = {
         throwPermissionError('approve this merge request');
       }
 
-      // default to true in case no derivation groups present
-      let derivationGroupDependencyConfirmation: boolean = true;
-
-      // show a modal if derivation groups are involved
-      if (derivationGroupsInvolved) {
-        const { confirm } = await showPlanBranchMergeDerivationGroupMessageModal(sourcePlan.name, targetPlan.name);
-        derivationGroupDependencyConfirmation = confirm;
-      }
-
-      // after awaiting either a modal or nothing, proceed.
-      if (derivationGroupDependencyConfirmation) {
-        const data = await reqHasura<{ merge_request_id: number }>(gql.PLAN_MERGE_COMMIT, { merge_request_id }, user);
-        if (data.commit_merge != null) {
-          showSuccessToast('Approved Merge Request Changes');
-          return true;
-        } else {
-          throw Error('Unable to approve merge request');
-        }
+      const data = await reqHasura<{ merge_request_id: number }>(gql.PLAN_MERGE_COMMIT, { merge_request_id }, user);
+      if (data.commit_merge != null) {
+        showSuccessToast('Approved Merge Request Changes');
+        return true;
       } else {
-        // the user selected "Cancel" on the modal.
-        return false;
+        throw Error('Unable to approve merge request');
       }
     } catch (error) {
       catchError('Approve Merge Request Changes Failed', error as Error);
