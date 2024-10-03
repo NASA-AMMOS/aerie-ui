@@ -24,19 +24,13 @@
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type {
     ExternalEvent,
-    ExternalEventId,
-    ExternalEventInsertInput,
-    ExternalEventTypeInsertInput,
+    ExternalEventId
   } from '../../types/external-event';
   import {
-    type DerivationGroupInsertInput,
     type ExternalSourceDB,
-    type ExternalSourceInsertInput,
     type ExternalSourceJson,
-    type ExternalSourcePkey,
     type ExternalSourceSlim,
-    type ExternalSourceTypeInsertInput,
-    type PlanDerivationGroup,
+    type PlanDerivationGroup
   } from '../../types/external-source';
   import effects from '../../utilities/effects';
   import {
@@ -45,10 +39,9 @@
     getRowIdExternalSourceSlim,
   } from '../../utilities/externalEvents';
   import { parseJSONStream } from '../../utilities/generic';
-  import { showDeleteExternalSourceModal } from '../../utilities/modal';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
-  import { convertDoyToYmd, convertDurationToMs, convertUTCtoMs, formatDate } from '../../utilities/time';
+  import { convertDurationToMs, convertUTCtoMs, formatDate } from '../../utilities/time';
   import { showFailureToast } from '../../utilities/toast';
   import { tooltip } from '../../utilities/tooltip';
   import { required, timestamp } from '../../utilities/validators';
@@ -121,7 +114,85 @@
           return params.data.pkey.derivation_group_name;
         }
       },
-    },
+    }
+  ];
+
+  let keyInputField: HTMLInputElement; // need this to set a focus on it. not related to the value
+
+  let keyField = field<string>('', [required]);
+  let sourceTypeField = field<string>('', [required]); // need function to check if in list of allowable types...
+  let derivationGroupField = field<string>('', [required]);
+  let startTimeDoyField = field<string>('', [required, timestamp]); // requires validation function
+  let endTimeDoyField = field<string>('', [required, timestamp]); // requires validation function
+  let validAtDoyField = field<string>('', [required, timestamp]); // requires validation function
+
+  // table variables
+  let columnDefs: DataGridColumnDef[] = baseColumnDefs;
+
+  // for external events table
+  let externalEventsTableFilterString: string = '';
+
+  // source detail variables
+  let selectedSource: ExternalSourceSlim | null = null;
+  let selectedSourceId: string | null = null;
+
+  // Selected element variables
+  let selectedEvent: ExternalEvent | null = null;
+  let selectedRowId: ExternalEventId | null = null;
+  let selectedEvents: ExternalEvent[] = [];
+
+  // We want to parse a file selected for upload.
+  let files: FileList | undefined;
+  let file: File | undefined;
+  let parsedExternalSource: ExternalSourceJson | undefined;
+
+  // For filtering purposes (modelled after TimelineEditorLayerFilter):
+  let filterExpression: string = '';
+
+  // External source + derivation group creation variables
+  let selectedSourceLinkedDerivationGroupsPlans: PlanDerivationGroup[] = [];
+
+  // Permissions
+  let hasDeletePermission: boolean = false;
+  let hasCreatePermission: boolean = false;
+
+  let isDerivationGroupFieldDisabled: boolean = true;
+
+  let gridRowSizes: string = '1fr 3px 0fr';
+
+  // Clear all error stores when a source is selected as they will not be shown
+  $: if (selectedSource !== null) {
+    createExternalSourceError.set(null);
+    createExternalSourceTypeError.set(null);
+    createDerivationGroupError.set(null);
+    parsingError.set(null);
+  }
+
+  $: selectedSourceId = selectedSource ? getRowIdExternalSource(selectedSource.pkey) : null;
+
+  // File parse logic
+  $: if (files) {
+    // Safeguard against infinitely executing parse logic
+    if (file !== files[0]) {
+      createExternalSourceError.set(null);
+      createExternalSourceTypeError.set(null);
+      createDerivationGroupError.set(null);
+      parsingError.set(null);
+      isDerivationGroupFieldDisabled = true;
+
+      file = files[0];
+      if (/\.json$/.test(file.name)) {
+        parseExternalSourceFileStream(file.stream());
+      } else {
+        parsingError.set('External Source file is not a .json file');
+      }
+    }
+  }
+
+  // Column definition
+  $: columnDefs = [
+    ...baseColumnDefs,
+
     {
       field: 'valid_at',
       filter: 'text',
@@ -171,90 +242,6 @@
         }
       },
     },
-  ];
-
-  let keyInputField: HTMLInputElement; // need this to set a focus on it. not related to the value
-
-  let keyField = field<string>('', [required]);
-  let sourceTypeField = field<string>('', [required]); // need function to check if in list of allowable types...
-  let derivationGroupField = field<string>('', [required]);
-  let startTimeDoyField = field<string>('', [required, timestamp]); // requires validation function
-  let endTimeDoyField = field<string>('', [required, timestamp]); // requires validation function
-  let validAtDoyField = field<string>('', [required, timestamp]); // requires validation function
-
-  // table variables
-  let columnDefs: DataGridColumnDef[] = baseColumnDefs;
-
-  // for external events table
-  let externalEventsTableFilterString: string = '';
-
-  // source detail variables
-  let selectedSource: ExternalSourceSlim | null = null;
-  let selectedSourceId: string | null = null;
-
-  // Selected element variables
-  let selectedEvent: ExternalEvent | null = null;
-  let selectedRowId: ExternalEventId | null = null;
-  let selectedEvents: ExternalEvent[] = [];
-
-  // We want to parse a file selected for upload.
-  let files: FileList | undefined;
-  let file: File | undefined;
-  let parsed: ExternalSourceJson | undefined;
-
-  // External event type creation variables
-  let externalEventTypeInsertInput: ExternalEventTypeInsertInput;
-  let externalEventsCreated: ExternalEventInsertInput[] = [];
-
-  // For filtering purposes (modelled after TimelineEditorLayerFilter):
-  let filterExpression: string = '';
-
-  // External source + derivation group creation variables
-  let sourceInsert: ExternalSourceInsertInput;
-  let sourceTypeInsert: ExternalSourceTypeInsertInput;
-  let derivationGroupInsert: DerivationGroupInsertInput;
-  let selectedSourceLinkedDerivationGroupsPlans: PlanDerivationGroup[] = [];
-
-  // Permissions
-  let hasDeletePermission: boolean = false;
-  let hasCreatePermission: boolean = false;
-
-  let isDerivationGroupFieldDisabled: boolean = true;
-
-  let gridRowSizes: string = '1fr 3px 0fr';
-
-  // Clear all error stores when a source is selected as they will not be shown
-  $: if (selectedSource !== null) {
-    createExternalSourceError.set(null);
-    createExternalSourceTypeError.set(null);
-    createDerivationGroupError.set(null);
-    parsingError.set(null);
-  }
-
-  $: selectedSourceId = selectedSource ? getRowIdExternalSource(selectedSource.pkey) : null;
-
-  // File parse logic
-  $: if (files) {
-    // Safeguard against infinitely executing parse logic
-    if (file !== files[0]) {
-      createExternalSourceError.set(null);
-      createExternalSourceTypeError.set(null);
-      createDerivationGroupError.set(null);
-      parsingError.set(null);
-      isDerivationGroupFieldDisabled = true;
-
-      file = files[0];
-      if (/\.json$/.test(file.name)) {
-        parseExternalSourceFileStream(file.stream());
-      } else {
-        parsingError.set('External Source file is not a .json file');
-      }
-    }
-  }
-
-  // Column definition
-  $: columnDefs = [
-    ...baseColumnDefs,
     {
       cellClass: 'action-cell-container',
       cellRenderer: (params: SourceCellRendererParams) => {
@@ -310,191 +297,37 @@
 
   async function onDeleteExternalSource(selectedSources: ExternalSourceSlim[] | null | undefined) {
     if (selectedSources !== null && selectedSources !== undefined) {
-      // go through each selected source, and determine which plans (if at all) it is associated with. If none, place in the unassociated list
-      let currentlyLinked: { pkey: ExternalSourcePkey; plan_ids: number[] }[] = [];
-      let unassociatedSources: ExternalSourceSlim[] = [];
-      for (let externalSource of selectedSources) {
-        const currentExternalSourcePlanLinks: PlanDerivationGroup[] = $planDerivationGroupLinks.filter(
-          planDerivationGroupLink =>
-            planDerivationGroupLink.derivation_group_name === externalSource.pkey.derivation_group_name,
-        );
-        const linkedPlanIds: (number | undefined)[] = currentExternalSourcePlanLinks.map(
-          planDerivationGroupLink => planDerivationGroupLink.plan_id,
-        );
-        const definedPlanIds: number[] = linkedPlanIds.filter(
-          (currentPlanId): currentPlanId is number => currentPlanId !== undefined,
-        );
-        if (definedPlanIds !== undefined && definedPlanIds.length > 0) {
-          currentlyLinked.push({ pkey: externalSource.pkey, plan_ids: definedPlanIds });
-        } else {
-          unassociatedSources.push(externalSource);
-        }
-      }
-
-      // there are sources that cannot be deleted
-      if (currentlyLinked.length > 0) {
-        // if the source is in a derivation group currently used by a plan, warn that we cannot delete,
-        //    but provide option to delete unassociated sources
-        const { confirm } = await showDeleteExternalSourceModal(currentlyLinked, selectedSources, unassociatedSources);
-
-        // the user will delete unassociated sources
-        if (confirm) {
-          const deletionWasSuccessful = await effects.deleteExternalSource(unassociatedSources, user);
-          if (deletionWasSuccessful) {
-            deselectSource();
-          }
-        }
-      } else {
-        // otherwise, delete; no issues w.r.t. association!
-        const deletionWasSuccessful = await effects.deleteExternalSource(selectedSources, user);
-        if (deletionWasSuccessful) {
-          deselectSource();
-        }
-      }
+      effects.deleteExternalSource(selectedSources, $planDerivationGroupLinks, user);
     }
   }
 
   async function onFormSubmit(_e: SubmitEvent) {
-    if (parsed && file) {
-      // Setup insert inputs for Hasura mutations
-      // External Source Type
-      sourceTypeInsert = {
-        name: $sourceTypeField.value,
-      };
-
-      // Derivation Group
-      derivationGroupInsert = {
-        name:
-          $derivationGroupField.value.length !== 0 ? $derivationGroupField.value : `${sourceTypeInsert.name} Default`,
-        source_type_name: sourceTypeInsert.name,
-      };
-
-      // External Source
-      const start_time: string | undefined = convertDoyToYmd($startTimeDoyField.value.replaceAll('Z', ''))?.replace(
-        'Z',
-        '+00:00',
+    if (parsedExternalSource && file) {
+      const createExternalSourceResponse: ExternalSourceSlim | undefined = await effects.createExternalSource(
+        $sourceTypeField.value,
+        $derivationGroupField.value,
+        $startTimeDoyField.value,
+        $endTimeDoyField.value,
+        parsedExternalSource.events,
+        parsedExternalSource.source.key,
+        parsedExternalSource.source.metadata,
+        $validAtDoyField.value,
+        user,
       );
-      const end_time: string | undefined = convertDoyToYmd($endTimeDoyField.value.replaceAll('Z', ''))?.replace(
-        'Z',
-        '+00:00',
-      );
-      const valid_at: string | undefined = convertDoyToYmd($validAtDoyField.value.replaceAll('Z', ''))?.replace(
-        'Z',
-        '+00:00',
-      );
-      if (!start_time || !end_time || !valid_at) {
-        showFailureToast('Parsing failed.');
-        parsingError.set(`Parsing failed - parsing dates in input failed. ${start_time}, ${end_time}, ${valid_at}`);
-        return;
-      }
-      if (new Date(start_time) > new Date(end_time)) {
-        showFailureToast('Parsing failed.');
-        parsingError.set(`Parsing failed - start time ${start_time} after end time ${end_time}.`);
-        return;
-      }
-      sourceInsert = {
-        derivation_group_name: derivationGroupInsert.name,
-        end_time,
-        external_events: {
-          data: null, // updated after this map is created
-        },
-        key: $keyField.value,
-        metadata: parsed.source.metadata,
-        source_type_name: sourceTypeInsert.name,
-        start_time,
-        valid_at,
-      };
-
-      // External Event Types + External Events
-      let externalEventTypeInputs: ExternalEventTypeInsertInput[] = [];
-      if (parsed.events) {
-        for (let externalEvent of parsed.events) {
-          externalEventTypeInsertInput = {
-            name: externalEvent.event_type,
-          };
-          externalEventTypeInputs.push(externalEventTypeInsertInput);
-
-          // Ensure the duration is valid
-          try {
-            convertDurationToMs(externalEvent.duration);
-          } catch (error) {
-            showFailureToast('Parsing failed.');
-            catchError(`Event duration has invalid format... ${externalEvent.key}\n`, error as Error);
-            return;
-          }
-
-          // Validate external event is in the source's start/stop bounds
-          let parsedStart = Date.parse(convertDoyToYmd(externalEvent.start_time.replace('Z', '')) ?? '');
-          let parsedEnd = parsedStart + convertDurationToMs(externalEvent.duration);
-          let parsedStartWhole = Date.parse(start_time);
-          let parsedEndWhole = Date.parse(end_time);
-          if (!(parsedStart >= parsedStartWhole && parsedEnd <= parsedEndWhole)) {
-            showFailureToast('Invalid External Event Time Bounds');
-            parsingError.set(
-              `Upload failed. Event (${externalEvent.key}) not in bounds of source start and end: occurs from [${new Date(parsedStart)},${new Date(parsedEnd)}], not subset of [${new Date(parsedStartWhole)},${new Date(parsedEndWhole)}].\n`,
-            );
-            return;
-          }
-
-          // If the event is valid...
-          if (
-            externalEvent.event_type !== undefined &&
-            externalEvent.start_time !== undefined &&
-            externalEvent.duration !== undefined
-          ) {
-            // We have this extra split out step as our JSON/DB-compatible hybrids at this point contain both
-            //      event_type and event_type_id, but the database can only accept event_type_id, so this step drops event_type
-            const { event_type, ...db_compatible_fields } = externalEvent;
-
-            // extra, optional step to only take stuff that the database can accept in. Eventually, can be handled by JSON Schema, see comment in external-event.ts
-            const { duration, key, properties, start_time } = db_compatible_fields;
-
-            externalEventsCreated.push({
-              duration: duration,
-              event_type_name: externalEvent.event_type,
-              key: key,
-              properties: properties,
-              start_time: start_time,
-            });
-          }
-        }
-      }
-      sourceInsert.external_events.data = externalEventsCreated;
-      externalEventsCreated = [];
-
-      let createExternalSourceResponse: Record<string, any> | undefined = undefined;
-      if (file !== undefined) {
-        sourceInsert.source_type_name = sourceTypeInsert.name;
-        sourceInsert.derivation_group_name = derivationGroupInsert.name;
-        createExternalSourceResponse = await effects.createExternalSource(
-          derivationGroupInsert,
-          sourceInsert,
-          sourceTypeInsert,
-          externalEventTypeInputs,
-          user,
-        );
-        // Following a successful mutation...
-        if (createExternalSourceResponse !== undefined) {
-          // Auto-select the new source
-          selectedSource = {
-            created_at: new Date().toISOString().replace('Z', '+00:00'), // technically not the exact time it shows up in the database
-            end_time: sourceInsert.end_time,
-            pkey: {
-              derivation_group_name: derivationGroupInsert.name,
-              key: sourceInsert.key,
-            },
-            source_type_name: sourceTypeInsert.name,
-            start_time: sourceInsert.start_time,
-            valid_at: sourceInsert.valid_at,
-          };
-          gridRowSizes = gridRowSizesBottomPanel;
-        }
+      // Following a successful mutation...
+      if (createExternalSourceResponse !== undefined) {
+        // Auto-select the new source
+        selectedSource = {
+          ...createExternalSourceResponse,
+          created_at: new Date().toISOString().replace('Z', '+00:00'), // technically not the exact time it shows up in the database
+        };
+        gridRowSizes = gridRowSizesBottomPanel;
       }
     } else {
       showFailureToast('Upload failed.');
     }
     // Reset the form behind the source
-    parsed = undefined;
+    parsedExternalSource = undefined;
     keyField.reset('');
     sourceTypeField.reset('');
     startTimeDoyField.reset('');
@@ -507,32 +340,32 @@
     parsingError.set(null);
     try {
       try {
-        parsed = await parseJSONStream<ExternalSourceJson>(stream);
+        parsedExternalSource = await parseJSONStream<ExternalSourceJson>(stream);
       } catch (error) {
         throw new Error('External Source has Invalid Format');
       }
       // Check for missing fields - if any are not present, throw an error
       if (
-        parsed.source.key === undefined ||
-        parsed.source.source_type === undefined ||
-        parsed.source.period.start_time === undefined ||
-        parsed.source.period.end_time === undefined ||
-        parsed.source.valid_at === undefined
+        parsedExternalSource.source.key === undefined ||
+        parsedExternalSource.source.source_type === undefined ||
+        parsedExternalSource.source.period.start_time === undefined ||
+        parsedExternalSource.source.period.end_time === undefined ||
+        parsedExternalSource.source.valid_at === undefined
       ) {
         throw new Error('Required field is missing in External Source');
       }
-      $keyField.value = parsed.source.key;
-      $sourceTypeField.value = parsed.source.source_type;
-      $startTimeDoyField.value = parsed.source.period.start_time.replaceAll('Z', '');
-      $endTimeDoyField.value = parsed.source.period.end_time.replaceAll('Z', '');
-      $validAtDoyField.value = parsed.source.valid_at.replaceAll('Z', '');
+      $keyField.value = parsedExternalSource.source.key;
+      $sourceTypeField.value = parsedExternalSource.source.source_type;
+      $startTimeDoyField.value = parsedExternalSource.source.period.start_time.replaceAll('Z', '');
+      $endTimeDoyField.value = parsedExternalSource.source.period.end_time.replaceAll('Z', '');
+      $validAtDoyField.value = parsedExternalSource.source.valid_at.replaceAll('Z', '');
       $derivationGroupField.value = `${$sourceTypeField.value} Default`; // Include source type name because derivation group names are unique
       isDerivationGroupFieldDisabled = false;
     } catch (error) {
       catchError('External Source has Invalid Format', error as Error);
       showFailureToast('External Source has Invalid Format');
       parsingError.set('External Source has Invalid Format');
-      parsed = undefined;
+      parsedExternalSource = undefined;
     }
   }
 
@@ -743,7 +576,7 @@
         <form
           on:submit|preventDefault={onFormSubmit}
           on:reset={() => {
-            parsed = undefined;
+            parsedExternalSource = undefined;
             $createExternalSourceError = null;
             $createExternalSourceTypeError = null;
             $createDerivationGroupError = null;
@@ -770,13 +603,13 @@
             </fieldset>
 
             <fieldset class="file-upload-fieldset">
-              {#if parsed}
+              {#if parsedExternalSource}
                 <div style="padding-top:12px">
                   <button class="st-button secondary w-100" type="reset">Dismiss</button>
                 </div>
               {/if}
               <button
-                disabled={!parsed}
+                disabled={!parsedExternalSource}
                 class="st-button w-100"
                 type="submit"
                 use:permissionHandler={{

@@ -52,6 +52,19 @@
       },
     },
     {
+      field: 'duration',
+      filter: 'text',
+      headerName: 'Duration',
+      resizable: true,
+      sortable: true,
+    },
+  ];
+
+  let columnDefs = baseColumnDefs;
+
+  $: columnDefs = [
+    ...baseColumnDefs,
+    {
       field: 'start_time',
       filter: 'text',
       headerName: `Start Time (${$plugins.time.primary.label})`,
@@ -63,16 +76,7 @@
         }
       },
     },
-    {
-      field: 'duration',
-      filter: 'text',
-      headerName: 'Duration',
-      resizable: true,
-      sortable: true,
-    },
-  ];
-
-  let columnDefs = baseColumnDefs;
+  ]
 </script>
 
 <DataGrid

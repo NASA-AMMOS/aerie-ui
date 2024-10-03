@@ -12,6 +12,7 @@
   export let formProperties: ExternalEventProperty[] = [];
   export let highlightKeysMap: Record<string, boolean> = {};
 
+  let sortedFormProperties: ExternalEventProperty[] = [];
   let expanded = true;
 
   $: sortedFormProperties = formProperties.sort((a, b) => compare(a.name, b.name));
