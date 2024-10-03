@@ -5,9 +5,6 @@ let page: Page;
 let context: BrowserContext;
 let externalSources: ExternalSources;
 
-test.beforeEach(async () => {
-  await externalSources.goto(); // Refresh page to reset the view
-});
 
 test.beforeAll(async ({ browser }) => {
   context = await browser.newContext();
@@ -19,6 +16,10 @@ test.beforeAll(async ({ browser }) => {
 test.afterAll(async () => {
   await page.close();
   await context.close();
+});
+
+test.beforeEach(async () => {
+  await externalSources.goto(); // Refresh page to reset the view
 });
 
 test.describe.serial('External Sources', () => {
