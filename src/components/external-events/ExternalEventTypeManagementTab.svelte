@@ -16,6 +16,7 @@
 <DataGrid
   bind:this={externalEventTypeDataGrid}
   columnDefs={externalEventTypeColumnDefs}
-  rowData={$externalEventTypes.filter(eet => eet.name.includes(filterString))}
+  filterExpression={filterString}
+  rowData={$externalEventTypes}
   getRowId={getRowIdExternalEventType}
 />

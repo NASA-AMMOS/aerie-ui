@@ -5,6 +5,7 @@
   import { plugins } from '../../stores/plugins';
   import type { ExternalEvent } from '../../types/external-event';
   import type { ExternalEventProperty } from '../../types/external-event-property';
+  import type { FieldStore } from '../../types/form';
   import { formatDate } from '../../utilities/time';
   import Collapse from '../Collapse.svelte';
   import DatePickerField from '../form/DatePickerField.svelte';
@@ -14,6 +15,7 @@
   export let externalEvent: ExternalEvent;
   export let showHeader: boolean = true;
 
+  let startTimeField: FieldStore<string>;
   let formProperties: ExternalEventProperty[] = [];
 
   $: startTimeField = field<string>(`${formatDate(new Date(externalEvent.start_time), $plugins.time.primary.format)}`);

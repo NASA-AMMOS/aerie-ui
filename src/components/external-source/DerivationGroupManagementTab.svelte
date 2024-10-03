@@ -16,6 +16,7 @@
 <DataGrid
   bind:this={derivationGroupDataGrid}
   columnDefs={derivationGroupsColumnsDef}
-  rowData={$derivationGroups.filter(derivationGroup => derivationGroup.name.includes(filterString))}
+  filterExpression={filterString}
+  rowData={$derivationGroups}
   getRowId={getRowIdDerivationGroup}
 />
