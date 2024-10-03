@@ -507,7 +507,7 @@ const gql = {
       upsertDerivationGroup: ${Queries.INSERT_DERIVATION_GROUP} (
         object: $derivation_group,
         on_conflict: {
-          constraint: derivation_group_name_key
+          constraint: derivation_group_pkey
         }
       ) {
         name
