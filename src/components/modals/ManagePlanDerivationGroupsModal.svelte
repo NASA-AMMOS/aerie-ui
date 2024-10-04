@@ -255,11 +255,11 @@
               {#each selectedDerivationGroupSources as source}
                 <!-- Collapsible details -->
                 <Collapse title={source.key} tooltipContent={source.key} defaultExpanded={false}>
-                  <span slot="right">
+                  <svelte:fragment slot="right">
                     <p class="st-typography-body derived-event-count">
                       {selectedDerivationGroup.sources.get(source.key)?.event_counts} events
                     </p>
-                  </span>
+                  </svelte:fragment>
                   <div class="st-typography-body">
                     <div class="st-typography-bold">Key:</div>
                     {source.key}
