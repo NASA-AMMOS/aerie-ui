@@ -22,20 +22,17 @@
   import { plugins } from '../../stores/plugins';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
-  import type {
-    ExternalEvent,
-    ExternalEventId
-  } from '../../types/external-event';
+  import type { ExternalEvent, ExternalEventId } from '../../types/external-event';
   import {
     type ExternalSourceJson,
     type ExternalSourceSlim,
-    type PlanDerivationGroup
+    type PlanDerivationGroup,
   } from '../../types/external-source';
   import effects from '../../utilities/effects';
   import {
     getExternalEventRowId,
     getExternalSourceRowId,
-    getExternalSourceSlimRowId
+    getExternalSourceSlimRowId,
   } from '../../utilities/externalEvents';
   import { parseJSONStream } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
@@ -113,7 +110,7 @@
           return params.data.derivation_group_name;
         }
       },
-    }
+    },
   ];
 
   let keyInputField: HTMLInputElement; // need this to set a focus on it. not related to the value
@@ -167,7 +164,9 @@
     parsingError.set(null);
   }
 
-  $: selectedSourceId = selectedSource ? getExternalSourceRowId({derivation_group_name: selectedSource.derivation_group_name, key: selectedSource.key }) : null;
+  $: selectedSourceId = selectedSource
+    ? getExternalSourceRowId({ derivation_group_name: selectedSource.derivation_group_name, key: selectedSource.key })
+    : null;
 
   // File parse logic
   $: if (files) {
@@ -275,21 +274,23 @@
   ];
 
   // Selected elements and values
-  $: effects.getExternalEvents(
-    selectedSource ? selectedSource.key : null,
-    selectedSource ? selectedSource.derivation_group_name : null,
-    user
-  ).then(
-    fetched =>
-      (selectedEvents = fetched.map(externalEventsDB => {
-        return {
-          ...externalEventsDB,
-          duration_ms: getIntervalInMs(externalEventsDB.duration),
-          event_type: externalEventsDB.pkey.event_type_name,
-          start_ms: convertUTCtoMs(externalEventsDB.start_time),
-        };
-      })),
-  );
+  $: effects
+    .getExternalEvents(
+      selectedSource ? selectedSource.key : null,
+      selectedSource ? selectedSource.derivation_group_name : null,
+      user,
+    )
+    .then(
+      fetched =>
+        (selectedEvents = fetched.map(externalEventsDB => {
+          return {
+            ...externalEventsDB,
+            duration_ms: getIntervalInMs(externalEventsDB.duration),
+            event_type: externalEventsDB.pkey.event_type_name,
+            start_ms: convertUTCtoMs(externalEventsDB.start_time),
+          };
+        })),
+    );
   $: selectedSourceLinkedDerivationGroupsPlans = $planDerivationGroupLinks.filter(planDerivationGroupLink => {
     return planDerivationGroupLink.derivation_group_name === selectedSource?.derivation_group_name;
   });
@@ -390,8 +391,11 @@
     selectedRowId = null;
   }
 
-  function onSelectionChanged() {
-    selectedEvent = selectedEvents.find(event => getExternalEventRowId(event.pkey) === selectedRowId) ?? null;
+  function onSelectionChanged(e: CustomEvent) {
+    if (e.detail && e.detail.length > 0) {
+      selectedRowId = getExternalEventRowId(e.detail[0].pkey);
+      selectedEvent = e.detail[0];
+    }
   }
 
   function onManageGroupsAndTypes() {
