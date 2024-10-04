@@ -25,6 +25,7 @@
   </svelte:fragment>
   <svelte:fragment slot="body">
     <ExternalEventsTable
+      selectedItemId={$selectedExternalEventId}
       items={$externalEvents}
       on:rowDoubleClicked={onRowDoubleClicked}
       on:selectionChanged={onSelectionChanged}

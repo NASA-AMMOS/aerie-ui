@@ -2,15 +2,15 @@
 
 <script lang="ts">
   import type { ValueGetterParams } from 'ag-grid-community';
-  import { selectedExternalEventId } from '../../stores/external-event';
   import { plugins } from '../../stores/plugins';
   import type { DataGridColumnDef } from '../../types/data-grid';
-  import type { ExternalEvent } from '../../types/external-event';
+  import type { ExternalEvent, ExternalEventId } from '../../types/external-event';
   import type { ExternalSourceSlim } from '../../types/external-source';
   import { getExternalEventWholeRowId } from '../../utilities/externalEvents';
   import { formatDate } from '../../utilities/time';
   import DataGrid from '../ui/DataGrid/DataGrid.svelte';
 
+  export let selectedItemId: ExternalEventId | null;
   export let items: ExternalEvent[];
   export let filterExpression = '';
 
@@ -80,7 +80,7 @@
 </script>
 
 <DataGrid
-  selectedRowIds={[$selectedExternalEventId ?? '']}
+  selectedRowIds={[selectedItemId ?? '']}
   {columnDefs}
   {filterExpression}
   getRowId={getExternalEventWholeRowId}
