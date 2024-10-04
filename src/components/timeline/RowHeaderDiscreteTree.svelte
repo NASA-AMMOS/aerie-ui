@@ -145,16 +145,10 @@
       {/if}
     {:else if node.type === 'Activity'}
       {@const { activityDirectiveCount, spanCount, combinedActivityDirectiveSpanCount } = getNodeComposition(node)}
-      {@const directive = node.items[0]?.directive}
-      {@const span = node.items[0]?.span}
       <Collapse
         headerHeight={rowHeight}
         defaultExpanded={node.expanded}
-        className={classNames('row-header-discrete-group', {
-          selected:
-            node.activity_type !== 'aggregation' &&
-            (directive?.id === selectedActivityDirectiveId || span?.span_id === selectedSpanId),
-        })}
+        className={classNames('row-header-discrete-group')}
         on:collapse={() => dispatch('discrete-tree-node-change', node)}
       >
         <div slot="left" style="align-items: center;display: flex">
@@ -221,16 +215,10 @@
       </Collapse>
     {:else}
       {@const { externalEventCount } = getNodeComposition(node)}
-      {@const externalEvent = node.items[0]?.externalEvent}
       <Collapse
         headerHeight={rowHeight}
         defaultExpanded={node.expanded}
-        className={classNames('row-header-discrete-group', {
-          selected:
-            externalEvent !== undefined &&
-            selectedExternalEventId !== null &&
-            getExternalEventWholeRowId(externalEvent) === selectedExternalEventId,
-        })}
+        className={classNames('row-header-discrete-group')}
         on:collapse={() => dispatch('discrete-tree-node-change', node)}
       >
         <div slot="left" style="align-items: center;display: flex">
