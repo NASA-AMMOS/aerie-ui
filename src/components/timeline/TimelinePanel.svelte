@@ -28,7 +28,7 @@
   import type { User } from '../../types/app';
   import type { ActivityOptions, Axis, MouseDown, Row, Timeline as TimelineType } from '../../types/timeline';
   import effects from '../../utilities/effects';
-  import { getRowIdExternalEvent } from '../../utilities/externalEvents';
+  import { getExternalEventRowId } from '../../utilities/externalEvents';
   import { featurePermissions } from '../../utilities/permissions';
   import Panel from '../ui/Panel.svelte';
   import PanelHeaderActions from '../ui/PanelHeaderActions.svelte';
@@ -90,7 +90,7 @@
     const { detail } = event;
     const { activityDirectives, spans, externalEvents } = detail;
     if (externalEvents !== undefined && externalEvents.length) {
-      selectExternalEvent(getRowIdExternalEvent(externalEvents[0].pkey));
+      selectExternalEvent(getExternalEventRowId(externalEvents[0].pkey));
       selectActivity(null, null);
     } else if (spans != null && spans.length) {
       selectActivity(null, spans[0].span_id);

@@ -6,7 +6,7 @@
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalEvent, ExternalEventId } from '../../types/external-event';
   import type { ExternalSourceSlim } from '../../types/external-source';
-  import { getRowIdExternalEventWhole } from '../../utilities/externalEvents';
+  import { getExternalEventWholeRowId } from '../../utilities/externalEvents';
   import { formatDate } from '../../utilities/time';
   import DataGrid from '../ui/DataGrid/DataGrid.svelte';
 
@@ -83,7 +83,7 @@
   bind:currentSelectedRowId={selectedItemId}
   {columnDefs}
   {filterExpression}
-  getRowId={getRowIdExternalEventWhole}
+  getRowId={getExternalEventWholeRowId}
   useCustomContextMenu
   rowData={items}
   rowSelection="single"

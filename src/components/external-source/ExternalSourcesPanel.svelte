@@ -38,8 +38,8 @@
     let sourceKeys: UserSeenEntryWithDate[] = $externalSources.map(externalSource => {
       return {
         change_date: externalSource.created_at,
-        derivation_group_name: externalSource.pkey.derivation_group_name,
-        key: externalSource.pkey.key,
+        derivation_group_name: externalSource.derivation_group_name,
+        key: externalSource.key,
         source_type_name: externalSource.source_type_name,
       };
     });

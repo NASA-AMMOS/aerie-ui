@@ -9,10 +9,11 @@ export type ExternalSourcePkey = {
 // This is the type that conforms with the database schema. We don't really use it, as it is pretty heavyweight - instead we derive lighter types from it.
 export type ExternalSourceDB = {
   created_at: string;
+  derivation_group_name: string;
   end_time: string;
   external_events: ExternalEventDB[];
+  key: string;
   metadata: Record<string, any>;
-  pkey: ExternalSourcePkey;
   source_type_name: string;
   start_time: string;
   valid_at: string;
@@ -34,12 +35,10 @@ export type ExternalSourceJson = {
 };
 
 // For use in retrieval of source information sans bulky items like metadata and event lists (see stores)
-export type ExternalSourceSlim = Pick<
-  ExternalSourceDB,
-  'pkey' | 'source_type_name' | 'start_time' | 'end_time' | 'valid_at' | 'created_at'
->;
+export type ExternalSourceSlim = Omit<ExternalSourceDB, 'external_events' | 'metadata'>;
 
-// no analogue (yet) to ExternalEvent because no special duration_ms or start_ms to draw on a timeline
+// Similar to ExternalSourceDB, but uses ExternalSourcePkey to represent the primary key (key, derivation_group_name)
+export type ExternalSource = Omit<ExternalSourceDB, 'key' | 'derivation_group_name'> & { pkey: ExternalSourcePkey };
 
 export type PlanDerivationGroup = {
   derivation_group_name: string;

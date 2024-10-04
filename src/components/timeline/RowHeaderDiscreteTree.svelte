@@ -13,7 +13,7 @@
   import type { ExternalEvent, ExternalEventId } from '../../types/external-event';
   import type { Span } from '../../types/simulation';
   import type { DiscreteOptions, DiscreteTree, DiscreteTreeNode, MouseDown, MouseOver } from '../../types/timeline';
-  import { getRowIdExternalEventWhole } from '../../utilities/externalEvents';
+  import { getExternalEventWholeRowId } from '../../utilities/externalEvents';
   import { classNames } from '../../utilities/generic';
   import { pluralize } from '../../utilities/text';
   import { tooltip } from '../../utilities/tooltip';
@@ -131,7 +131,7 @@
           style:overflow="hidden"
           style:text-overflow="ellipsis ellipsis"
           class="row-header-discrete-group leaf st-button tertiary"
-          class:selected={externalEvent ? getRowIdExternalEventWhole(externalEvent) === selectedExternalEventId : false}
+          class:selected={externalEvent ? getExternalEventWholeRowId(externalEvent) === selectedExternalEventId : false}
           on:dblclick={event => onDblClickLeaf(event)}
           on:click={event => onMouseDownLeaf(event, node)}
         >
@@ -229,7 +229,7 @@
           selected:
             externalEvent !== undefined &&
             selectedExternalEventId !== null &&
-            getRowIdExternalEventWhole(externalEvent) === selectedExternalEventId,
+            getExternalEventWholeRowId(externalEvent) === selectedExternalEventId,
         })}
         on:collapse={() => dispatch('discrete-tree-node-change', node)}
       >

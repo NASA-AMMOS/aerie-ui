@@ -60,7 +60,7 @@
     XAxisTick,
   } from '../../types/timeline';
   import effects from '../../utilities/effects';
-  import { getRowIdExternalEvent } from '../../utilities/externalEvents';
+  import { getExternalEventRowId } from '../../utilities/externalEvents';
   import { classNames, unique } from '../../utilities/generic';
   import { showConfirmActivityCreationModal } from '../../utilities/modal';
   import { sampleProfiles } from '../../utilities/resources';
@@ -490,9 +490,9 @@
         let derivationGroup =
           $externalSources.find(
             externalSource =>
-              externalSource.pkey.derivation_group_name === ee.pkey.derivation_group_name &&
-              externalSource.pkey.key === ee.pkey.source_key,
-          )?.pkey.derivation_group_name ?? undefined;
+              externalSource.derivation_group_name === ee.pkey.derivation_group_name &&
+              externalSource.key === ee.pkey.source_key,
+          )?.derivation_group_name ?? undefined;
         // the statement below says return true (keep) if the plan is not null and if the filter for this plan does not include this derivation group
         return plan && derivationGroup ? !filteredDerivationGroups.includes(derivationGroup) : false;
       });
@@ -506,7 +506,7 @@
             if (matchingEvents) {
               matchingEvents.forEach(
                 event =>
-                  (updatedIdToColorMaps.external_events[getRowIdExternalEvent(event.pkey)] = layer.externalEventColor),
+                  (updatedIdToColorMaps.external_events[getExternalEventRowId(event.pkey)] = layer.externalEventColor),
               );
               filteredExternalEvents = filteredExternalEvents.concat(unique(matchingEvents));
             }

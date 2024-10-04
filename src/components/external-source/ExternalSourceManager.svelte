@@ -27,16 +27,15 @@
     ExternalEventId
   } from '../../types/external-event';
   import {
-    type ExternalSourceDB,
     type ExternalSourceJson,
     type ExternalSourceSlim,
     type PlanDerivationGroup
   } from '../../types/external-source';
   import effects from '../../utilities/effects';
   import {
-    getRowIdExternalEvent,
-    getRowIdExternalSource,
-    getRowIdExternalSourceSlim,
+    getExternalEventRowId,
+    getExternalSourceRowId,
+    getExternalSourceSlimRowId
   } from '../../utilities/externalEvents';
   import { parseJSONStream } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
@@ -64,9 +63,9 @@
   export let user: User | null;
 
   type CellRendererParams = {
-    onDeleteExternalSource: (source: ExternalSourceDB[]) => void;
+    onDeleteExternalSource: (source: ExternalSourceSlim[]) => void;
   };
-  type SourceCellRendererParams = ICellRendererParams<ExternalSourceDB> & CellRendererParams;
+  type SourceCellRendererParams = ICellRendererParams<ExternalSourceSlim> & CellRendererParams;
 
   // Permissions
   const deletePermissionError = 'You do not have permission to delete an external source.';
@@ -84,8 +83,8 @@
       resizable: true,
       sortable: true,
       valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
-        if (params.data?.pkey) {
-          return params.data.pkey.key;
+        if (params.data?.key) {
+          return params.data.key;
         }
       },
     },
@@ -97,7 +96,7 @@
       sort: 'desc',
       sortable: true,
       valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
-        if (params.data?.pkey) {
+        if (params.data?.source_type_name) {
           return params.data.source_type_name;
         }
       },
@@ -110,8 +109,8 @@
       sort: 'desc',
       sortable: true,
       valueGetter: (params: ValueGetterParams<ExternalSourceSlim>) => {
-        if (params.data?.pkey) {
-          return params.data.pkey.derivation_group_name;
+        if (params.data?.derivation_group_name) {
+          return params.data.derivation_group_name;
         }
       },
     }
@@ -168,7 +167,7 @@
     parsingError.set(null);
   }
 
-  $: selectedSourceId = selectedSource ? getRowIdExternalSource(selectedSource.pkey) : null;
+  $: selectedSourceId = selectedSource ? getExternalSourceRowId({derivation_group_name: selectedSource.derivation_group_name, key: selectedSource.key }) : null;
 
   // File parse logic
   $: if (files) {
@@ -276,7 +275,11 @@
   ];
 
   // Selected elements and values
-  $: effects.getExternalEvents(selectedSource ? selectedSource.pkey : null, user).then(
+  $: effects.getExternalEvents(
+    selectedSource ? selectedSource.key : null,
+    selectedSource ? selectedSource.derivation_group_name : null,
+    user
+  ).then(
     fetched =>
       (selectedEvents = fetched.map(externalEventsDB => {
         return {
@@ -288,7 +291,7 @@
       })),
   );
   $: selectedSourceLinkedDerivationGroupsPlans = $planDerivationGroupLinks.filter(planDerivationGroupLink => {
-    return planDerivationGroupLink.derivation_group_name === selectedSource?.pkey.derivation_group_name;
+    return planDerivationGroupLink.derivation_group_name === selectedSource?.derivation_group_name;
   });
 
   // Permissions
@@ -316,6 +319,7 @@
       );
       // Following a successful mutation...
       if (createExternalSourceResponse !== undefined) {
+        console.log(createExternalSourceResponse);
         // Auto-select the new source
         selectedSource = {
           ...createExternalSourceResponse,
@@ -387,7 +391,7 @@
   }
 
   function onSelectionChanged() {
-    selectedEvent = selectedEvents.find(event => getRowIdExternalEvent(event.pkey) === selectedRowId) ?? null;
+    selectedEvent = selectedEvents.find(event => getExternalEventRowId(event.pkey) === selectedRowId) ?? null;
   }
 
   function onManageGroupsAndTypes() {
@@ -431,7 +435,7 @@
         <div class="external-source-header">
           <div class="external-source-header-title">
             <div class="external-source-header-title-value st-typography-medium">
-              {selectedSource.pkey.key}
+              {selectedSource.key}
             </div>
           </div>
         </div>
@@ -453,7 +457,7 @@
                 class="st-input w-100"
                 disabled={true}
                 name="derivation-group"
-                value={selectedSource.pkey.derivation_group_name}
+                value={selectedSource.derivation_group_name}
               />
             </Input>
 
@@ -499,7 +503,7 @@
               title="Event Types"
               tooltipContent="View Contained Event Types"
             >
-              {#await effects.getExternalEventTypesBySource(selectedSource.pkey, user)}
+              {#await effects.getExternalEventTypesBySource(selectedSource.key, selectedSource.derivation_group_name, user)}
                 <i>Loading...</i>
               {:then eventTypes}
                 {#each eventTypes as eventType}
@@ -513,7 +517,7 @@
               title="Metadata"
               tooltipContent="View Event Source Metadata"
             >
-              {#await effects.getExternalSourceMetadata(selectedSource.pkey, user)}
+              {#await effects.getExternalSourceMetadata(selectedSource.key, selectedSource.derivation_group_name, user)}
                 <em>loading metadata...</em>
               {:then metadata}
                 {#if Object.keys(metadata).length}
@@ -729,7 +733,7 @@
               {filterExpression}
               items={$externalSources}
               {user}
-              getRowId={getRowIdExternalSourceSlim}
+              getRowId={getExternalSourceSlimRowId}
               on:rowClicked={({ detail }) => selectSource(detail.data)}
               on:bulkDeleteItems={({ detail }) => onDeleteExternalSource(detail)}
               bind:selectedItemId={selectedSourceId}

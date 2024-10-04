@@ -4,7 +4,7 @@
   import { externalEventTypes } from '../../stores/external-event';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalEventType } from '../../types/external-event';
-  import { getRowIdExternalEventType } from '../../utilities/externalEvents';
+  import { getExternalEventTypeRowId } from '../../utilities/externalEvents';
   import DataGrid from '../ui/DataGrid/DataGrid.svelte';
 
   export let externalEventTypeColumnDefs: DataGridColumnDef<ExternalEventType>[] = [];
@@ -18,5 +18,5 @@
   columnDefs={externalEventTypeColumnDefs}
   filterExpression={filterString}
   rowData={$externalEventTypes}
-  getRowId={getRowIdExternalEventType}
+  getRowId={getExternalEventTypeRowId}
 />

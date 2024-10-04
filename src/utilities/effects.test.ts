@@ -2,11 +2,7 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as Errors from '../stores/errors';
 import { mockUser } from '../tests/mocks/user/mockUser';
 import type { ExternalEventTypeInsertInput } from '../types/external-event';
-import type {
-  DerivationGroupInsertInput,
-  ExternalSourceInsertInput,
-  ExternalSourceTypeInsertInput,
-} from '../types/external-source';
+import type { DerivationGroupInsertInput, ExternalSourceTypeInsertInput } from '../types/external-source';
 import type { Model } from '../types/model';
 import type { ArgumentsMap, ParametersMap } from '../types/parameter';
 import type { Plan } from '../types/plan';
@@ -277,30 +273,14 @@ describe('Handle modal and requests in effects', () => {
       vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
 
       await effects.createExternalSource(
-        {
-          name: 'Default',
-          source_type_name: 'Example Source',
-        } as DerivationGroupInsertInput,
-        {
-          derivation_group_name: 'Default',
-          end_time: '',
-          external_events: {
-            data: {},
-          },
-          key: '',
-          metadata: {},
-          source_type_name: 'Example Source',
-          start_time: '',
-          valid_at: '',
-        } as ExternalSourceInsertInput,
-        {
-          name: 'Example Source',
-        } as ExternalSourceTypeInsertInput,
-        [
-          {
-            name: 'Example Event',
-          } as ExternalEventTypeInsertInput,
-        ],
+        'Example Source',
+        'Example Source Default',
+        '',
+        '',
+        [],
+        'ExampleSource.json',
+        {},
+        '',
         mockUser,
       );
 
@@ -318,13 +298,7 @@ describe('Handle modal and requests in effects', () => {
       });
       vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
 
-      await effects.getExternalEvents(
-        {
-          derivation_group_name: 'test',
-          key: 'test',
-        },
-        mockUser,
-      );
+      await effects.getExternalEvents('test', 'test', mockUser);
 
       expect(catchErrorSpy).toHaveBeenCalledWith(
         'Failed to retrieve external events.',
@@ -340,13 +314,7 @@ describe('Handle modal and requests in effects', () => {
       });
       vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
 
-      await effects.getExternalEventTypesBySource(
-        {
-          derivation_group_name: 'test',
-          key: 'test',
-        },
-        mockUser,
-      );
+      await effects.getExternalEventTypesBySource('test', 'test', mockUser);
 
       expect(catchErrorSpy).toHaveBeenCalledWith(Error('Unable to retrieve external event types for source'));
     });
@@ -372,13 +340,7 @@ describe('Handle modal and requests in effects', () => {
       });
       vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
 
-      await effects.getExternalSourceMetadata(
-        {
-          derivation_group_name: 'test',
-          key: 'test',
-        },
-        mockUser,
-      );
+      await effects.getExternalSourceMetadata('test', 'test', mockUser);
 
       expect(catchErrorSpy).toHaveBeenCalledWith(
         Error(

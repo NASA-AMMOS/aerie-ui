@@ -74,7 +74,7 @@
           However, the following unassociated sources can still be deleted should you choose to do so:
           {#each unassociatedSources as externalSource}
             <div style="padding-left:10px">
-              <b>{externalSource.pkey.key}</b>
+              <b>{externalSource.key}</b>
             </div>
           {/each}
         {/if}
@@ -84,7 +84,7 @@
         Are you sure you want to delete the following?
         <ul>
           {#each sources as externalSource}
-            <li>{externalSource.pkey.key}</li>
+            <li>{externalSource.key}</li>
           {/each}
         </ul>
         <i>What is done cannot be undone.</i>
