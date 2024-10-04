@@ -24,6 +24,7 @@
   let filteredValues: string[] = [];
   let menuTitle: string = '';
   let selectedValuesMap: Record<string, boolean> = {};
+  let searchText: string = '';
 
   $: if (layer) {
     selectedValuesMap = listToMap(values);
@@ -35,6 +36,13 @@
       menuTitle = 'Resource Types';
     } else if (isXRangeLayer(layer)) {
       menuTitle = 'Resource Types';
+    }
+    if (isActivityLayer(layer)) {
+      searchText = 'Search activities';
+    } else if (isExternalEventLayer(layer)) {
+      searchText = 'Search external event types';
+    } else {
+      searchText = 'Search resources';
     }
   }
 
@@ -94,11 +102,7 @@
       autocomplete="off"
       class="st-input w-100"
       name="filter"
-      placeholder={isActivityLayer(layer)
-        ? 'Search activities'
-        : isExternalEventLayer(layer)
-          ? 'Search external event types'
-          : 'Search resources'}
+      placeholder={searchText}
     />
     <div class="filter-search-icon" slot="left"><SearchIcon /></div>
   </Input>
