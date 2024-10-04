@@ -53,7 +53,6 @@
       </button>
     </slot>
   </div>
-  <!-- TODO pick-up on removing inline styling, also last opened GH comment is the last double-checked -->
   <div class="card-source-content">
     <div class="card-row">
       <span class="st-typography-body">
@@ -166,11 +165,11 @@
   }
 
   .hover-fix {
-    background-color: rgb(235, 235, 235);
+    background-color: var(--st-gray-20);
   }
 
   .hover-fix:hover {
-    background-color: rgb(225, 225, 225) !important;
+    background-color: var(--st-gray-30);
   }
 
   .card-background-added {
