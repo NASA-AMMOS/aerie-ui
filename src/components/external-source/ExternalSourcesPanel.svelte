@@ -167,8 +167,7 @@
       {/each}
     {:else}
       <div class="st-typography-body">
-        <p>
-          <br />
+        <p class="no-derivation-groups-linked">
           No Derivation Groups Linked To This Plan
         </p>
       </div>
@@ -183,6 +182,9 @@
 </Panel>
 
 <style>
+  .no-derivation-groups-linked {
+    padding-top: 12px;
+  }
   .st-button {
     white-space: nowrap;
   }

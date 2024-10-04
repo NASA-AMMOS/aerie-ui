@@ -46,27 +46,29 @@
     tooltipContent={'Derivation group ' + derivationGroup.name}
     defaultExpanded={false}
   >
-    <svelte:fragment slot="right" class="derivation-group-collapse-details">
-      <p class="derived-event-text">
-        {derivationGroup.derived_event_total} derived events
-      </p>
-      {#if enabled === true}
-        <button
-          class="st-button icon eye-button-open"
-          on:click|stopPropagation={onChange}
-          use:tooltip={{ content: 'Show in timeline', placement: 'top' }}
-        >
-          <Eye />
-        </button>
-      {:else}
-        <button
-          class="st-button icon eye-button-closed"
-          on:click|stopPropagation={onChange}
-          use:tooltip={{ content: 'Hide in timeline', placement: 'top' }}
-        >
-          <EyeSlash />
-        </button>
-      {/if}
+    <svelte:fragment slot="right">
+      <div class="derivation-group-collapse-details">
+        <p class="derived-event-text">
+          {derivationGroup.derived_event_total} derived events
+        </p>
+        {#if enabled === true}
+          <button
+            class="st-button icon eye-button-open"
+            on:click|stopPropagation={onChange}
+            use:tooltip={{ content: 'Show in timeline', placement: 'top' }}
+          >
+            <Eye />
+          </button>
+        {:else}
+          <button
+            class="st-button icon eye-button-closed"
+            on:click|stopPropagation={onChange}
+            use:tooltip={{ content: 'Hide in timeline', placement: 'top' }}
+          >
+            <EyeSlash />
+          </button>
+        {/if}
+      </div>
     </svelte:fragment>
 
     {#if relevantSources.length}
