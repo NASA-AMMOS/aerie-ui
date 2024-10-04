@@ -10,7 +10,7 @@
       <slot name="icon" />
     </div>
   {/if}
-  <div class="section-title-trunctated">
+  <div class="section-title-truncated">
     <slot />
   </div>
 </div>
@@ -37,7 +37,7 @@
     justify-content: center;
   }
 
-  .section-title-trunctated {
+  .section-title-truncated {
     overflow: hidden;
     text-overflow: ellipsis;
   }
