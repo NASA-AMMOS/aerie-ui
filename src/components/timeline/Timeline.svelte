@@ -110,6 +110,7 @@
   let xAxisDiv: HTMLDivElement;
   let xAxisDrawHeight: number = 64;
   let xTicksView: XAxisTick[] = [];
+  let derivationGroups: string[] = [];
 
   let throttledZoom = throttle(onZoom, 16, {
     leading: true,
