@@ -126,6 +126,7 @@
   let visibleActivityDirectivesById: Record<ActivityDirectiveId, ActivityDirective> = {};
   let visibleSpansById: Record<SpanId, Span> = {};
   let visibleExternalEventsById: Record<ExternalEventId, ExternalEvent> = {};
+  let rowHeight: number;
 
   // Asset cache
   const assets: { anchorIcon: HTMLImageElement | null } = { anchorIcon: null };
