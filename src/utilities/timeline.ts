@@ -1100,7 +1100,7 @@ export function generateDiscreteTreeUtil(
       expanded: getNodeExpanded('!!activity-agg', discreteTreeExpansionMap),
       id: '!!activity-agg',
       isLeaf: false,
-      items: activityNodes
+      items: activityNodes // TODO: optimize
               .map(node => node.items)
               .flat()
               .filter((obj, index, self) => index === self.findIndex(o => o.directive?.id === obj.directive?.id)),
@@ -1113,7 +1113,7 @@ export function generateDiscreteTreeUtil(
       expanded: getNodeExpanded('!!ex-ev-agg', discreteTreeExpansionMap),
       id: '!!ex-ev-agg',
       isLeaf: false,
-      items: externalEventNodes
+      items: externalEventNodes // TODO: optimize
               .map(node => node.items)
               .flat()
               .filter((obj, index, self) => index === self.findIndex(o => o.externalEvent?.pkey === obj.externalEvent?.pkey)),
