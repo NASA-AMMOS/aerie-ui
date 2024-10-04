@@ -514,7 +514,8 @@ const gql = {
       }
       createExternalSource: ${Queries.INSERT_EXTERNAL_SOURCE}(object: $source) {
         end_time,
-        pkey,
+        key,
+        derivation_group_name,
         source_type_name,
         start_time,
         valid_at,

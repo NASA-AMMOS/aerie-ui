@@ -4,7 +4,7 @@
   import { externalSourceTypes } from '../../stores/external-source';
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalSourceType } from '../../types/external-source';
-  import { getRowIdExternalSourceType } from '../../utilities/externalEvents';
+  import { getExternalSourceTypeRowId } from '../../utilities/externalEvents';
   import DataGrid from '../ui/DataGrid/DataGrid.svelte';
 
   export let externalSourceTypeColumnDefs: DataGridColumnDef<ExternalSourceType>[] = [];
@@ -16,6 +16,7 @@
 <DataGrid
   bind:this={externalSourceTypeDataGrid}
   columnDefs={externalSourceTypeColumnDefs}
-  rowData={$externalSourceTypes.filter(externalSourceType => externalSourceType.name.includes(filterString))}
-  getRowId={getRowIdExternalSourceType}
+  filterExpression={filterString}
+  rowData={$externalSourceTypes}
+  getRowId={getExternalSourceTypeRowId}
 />

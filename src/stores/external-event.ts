@@ -2,7 +2,7 @@ import type { Dictionary } from 'lodash';
 import { keyBy } from 'lodash-es';
 import { derived, writable, type Readable, type Writable } from 'svelte/store';
 import type { ExternalEvent, ExternalEventDB, ExternalEventId, ExternalEventType } from '../types/external-event';
-import { getRowIdExternalEventWhole } from '../utilities/externalEvents';
+import { getExternalEventWholeRowId } from '../utilities/externalEvents';
 import gql from '../utilities/gql';
 import { convertDoyToYmd, convertDurationToMs, convertUTCtoMs } from '../utilities/time';
 import { selectedPlanDerivationGroupNames } from './external-source';
@@ -73,7 +73,7 @@ export const externalEvents: Readable<ExternalEvent[]> = derived(
 );
 
 export const externalEventsMap: Readable<Dictionary<ExternalEvent>> = derived(externalEvents, $externalEvents => {
-  return keyBy($externalEvents, getRowIdExternalEventWhole);
+  return keyBy($externalEvents, getExternalEventWholeRowId);
 });
 
 export const selectedExternalEvent: Readable<ExternalEvent | null> = derived(

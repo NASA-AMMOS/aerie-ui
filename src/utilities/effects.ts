@@ -997,7 +997,9 @@ const effects = {
       externalSourceInsert.external_events.data = externalEventsCreated;
       externalEventsCreated = [];
 
-      const createExternalSourceResponse: Record<string, object | null> = await reqHasura(
+      // TODO - I think ExternalSourceDB needs to drop pkey in favor of key/derivation_group_name...
+
+      const { createExternalSource: createExternalSourceResponse } = await reqHasura(
         gql.CREATE_EXTERNAL_SOURCE,
         {
           derivation_group: derivationGroupInsert,
@@ -1007,13 +1009,10 @@ const effects = {
         },
         user,
       );
-      if (
-        createExternalSourceResponse.createExternalSource !== undefined &&
-        createExternalSourceResponse.createExternalSource !== null
-      ) {
+      if (createExternalSourceResponse !== undefined && createExternalSourceResponse !== null) {
         showSuccessToast('External Source Created Successfully');
         creatingExternalSource.set(false);
-        return createExternalSourceResponse.createExternalSource as ExternalSourceSlim;
+        return createExternalSourceResponse as ExternalSourceSlim;
       } else {
         throw Error(`Unable to create external source`);
       }
@@ -2587,7 +2586,7 @@ const effects = {
         for (const externalSource of externalSources) {
           const currentExternalSourcePlanLinks: PlanDerivationGroup[] = planDerivationGroupLinks.filter(
             planDerivationGroupLink =>
-              planDerivationGroupLink.derivation_group_name === externalSource.pkey.derivation_group_name,
+              planDerivationGroupLink.derivation_group_name === externalSource.derivation_group_name,
           );
           const linkedPlanIds: (number | undefined)[] = currentExternalSourcePlanLinks.map(
             planDerivationGroupLink => planDerivationGroupLink.plan_id,
@@ -2596,7 +2595,10 @@ const effects = {
             (currentPlanId): currentPlanId is number => currentPlanId !== undefined,
           );
           if (definedPlanIds !== undefined && definedPlanIds.length > 0) {
-            currentlyLinked.push({ pkey: externalSource.pkey, plan_ids: definedPlanIds });
+            currentlyLinked.push({
+              pkey: { derivation_group_name: externalSource.derivation_group_name, key: externalSource.key },
+              plan_ids: definedPlanIds,
+            });
           } else {
             unassociatedSources.push(externalSource);
           }
@@ -2608,10 +2610,10 @@ const effects = {
           // cannot easily do composite keys in GraphQL, so we group by derivation group and send a query per group of keys
           const derivationGroups: { [derivationGroupName: string]: string[] } = {};
           for (const externalSource of externalSources) {
-            if (derivationGroups[externalSource.pkey.derivation_group_name]) {
-              derivationGroups[externalSource.pkey.derivation_group_name].push(externalSource.pkey.key);
+            if (derivationGroups[externalSource.derivation_group_name]) {
+              derivationGroups[externalSource.derivation_group_name].push(externalSource.key);
             } else {
-              derivationGroups[externalSource.pkey.derivation_group_name] = [externalSource.pkey.key];
+              derivationGroups[externalSource.derivation_group_name] = [externalSource.key];
             }
           }
 
@@ -3722,16 +3724,15 @@ const effects = {
   },
 
   // Should be deprecated with the introduction of strict external source schemas, dictating allowable event types for given source types. But for now, this will do.
-  async getExternalEventTypesBySource(externalSourcePkey: ExternalSourcePkey, user: User | null): Promise<string[]> {
-    if (!externalSourcePkey) {
-      return [];
-    }
+  async getExternalEventTypesBySource(
+    externalSourceKey: string,
+    externalSourceDerivationGroup: string,
+    user: User | null,
+  ): Promise<string[]> {
     try {
-      const sourceKey = externalSourcePkey.key;
-      const derivationGroupName = externalSourcePkey.derivation_group_name;
       const data = await reqHasura<any>(
         gql.GET_EXTERNAL_EVENT_TYPE_BY_SOURCE,
-        { derivationGroupName, sourceKey },
+        { derivationGroupName: externalSourceDerivationGroup, sourceKey: externalSourceKey },
         user,
       );
       const { external_source } = data;
@@ -3751,18 +3752,24 @@ const effects = {
     }
   },
 
-  async getExternalEvents(externalSourcePkey: ExternalSourcePkey | null, user: User | null): Promise<ExternalEvent[]> {
-    if (!externalSourcePkey) {
+  async getExternalEvents(
+    externalSourceKey: string | null,
+    externalSourceDerivationGroup: string | null,
+    user: User | null,
+  ): Promise<ExternalEvent[]> {
+    if (externalSourceKey === null || externalSourceDerivationGroup === null) {
       return [];
     }
     try {
-      const sourceKey = externalSourcePkey.key;
-      const derivationGroupName = externalSourcePkey.derivation_group_name;
-      const data = await reqHasura<any>(gql.GET_EXTERNAL_EVENTS, { derivationGroupName, sourceKey }, user);
+      const data = await reqHasura<any>(
+        gql.GET_EXTERNAL_EVENTS,
+        { derivationGroupName: externalSourceDerivationGroup, sourceKey: externalSourceKey },
+        user,
+      );
       const { external_event: events } = data;
       if (events === null) {
         throw Error(
-          `Unable to get external events for external source '${sourceKey}' (derivation group: '${derivationGroupName}').`,
+          `Unable to get external events for external source '${externalSourceKey}' (derivation group: '${externalSourceDerivationGroup}').`,
         );
       }
 
@@ -3791,29 +3798,29 @@ const effects = {
   },
 
   async getExternalSourceMetadata(
-    externalSourcePkey: ExternalSourcePkey | null,
+    externalSourceKey: string,
+    externalSourceDerivationGroup: string,
     user: User | null,
   ): Promise<Record<string, any>> {
-    if (!externalSourcePkey) {
-      return [];
-    }
     try {
-      const sourceKey = externalSourcePkey.key;
-      const derivationGroupName = externalSourcePkey.derivation_group_name;
       getExternalSourceMetadataError.set(null);
-      const data = await reqHasura<any>(gql.GET_EXTERNAL_SOURCE_METADATA, { derivationGroupName, sourceKey }, user);
+      const data = await reqHasura<any>(
+        gql.GET_EXTERNAL_SOURCE_METADATA,
+        { derivationGroupName: externalSourceDerivationGroup, sourceKey: externalSourceKey },
+        user,
+      );
       const { external_source } = data;
       if (external_source) {
         const { metadata }: Record<string, any> = external_source[0];
         if (metadata === null) {
           throw Error(
-            `Unable to get external source metadata for external source '${sourceKey}' (derivation group: '${derivationGroupName}'). "metadata" field may not have been included in original source.`,
+            `Unable to get external source metadata for external source '${externalSourceKey}' (derivation group: '${externalSourceDerivationGroup}'). "metadata" field may not have been included in original source.`,
           );
         }
         return metadata;
       } else {
         throw Error(
-          `Unable to get external source metadata for external source '${sourceKey}' (derivation group: '${derivationGroupName}'). Source may not exist.`,
+          `Unable to get external source metadata for external source '${externalSourceKey}' (derivation group: '${externalSourceDerivationGroup}'). Source may not exist.`,
         );
       }
     } catch (e) {
