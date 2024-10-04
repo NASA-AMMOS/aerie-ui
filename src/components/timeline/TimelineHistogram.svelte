@@ -45,7 +45,7 @@
 
   let activityHistValues: number[] = [];
   let aggregateHistogram: number[][] = [];
-  let activityHistMax = 0;
+  let aggregateMax = 0;
   let brush: Selection<SVGGElement, unknown, null, undefined>;
   let brushing = false;
   let constraintViolationsToRender: { width: number; x: number }[] = [];
@@ -53,7 +53,6 @@
   let cursorTooltip = '';
   let cursorVisible = false;
   let externalEventHistValues: number[] = [];
-  let externalEventHistMax = 0;
   let gTimeSelectorContainer: SVGGElement;
   let svgSelectorContainer: SVGElement;
   let histogramContainer: Element;
@@ -199,8 +198,6 @@
       }
     });
 
-    activityHistMax = Math.max(...activityHistValues);
-
     // Compute constraint violations histogram
     constraintViolationsToRender = [];
     constraintResults
@@ -245,8 +242,7 @@
       }
     });
 
-    activityHistMax = Math.max(...activityHistValues);
-    externalEventHistMax = Math.max(...externalEventHistValues);
+    aggregateMax = Math.max(...activityHistValues.map((a, i) => a + externalEventHistValues[i]));
     aggregateHistogram = activityHistValues.map((a, i) => {
       return [a, externalEventHistValues[i]];
     });
@@ -402,10 +398,22 @@
     }px; border-bottom: ${constraintViolationsToRender.length < 1 ? '1px solid var(--st-gray-20)' : 'none'}`}
   >
     {#each aggregateHistogram as binPair, index (index)}
-      {#if binPair[0]}
-        <div class="bin-item blue" style={`height: ${(binPair[0] / activityHistMax) * 100}%;`} />
-      {:else if binPair[1]}
-        <div class="bin-item orange" style={`height: ${(binPair[1] / externalEventHistMax) * 100}%;`} />
+      <!-- TODO: MAKE THE MAX AND BINNING GLOBAL INSTEAD OF SPECIFIC TO EVENT AND ACTIVITY-->
+      {@const activityHeight = binPair[0] / aggregateMax}
+      {@const externalEventHeight = binPair[1] / aggregateMax}
+      {#if binPair[0] && !binPair[1]}
+        <div class="bin-item blue" style={`height: ${activityHeight * 100}%;`} />
+      {:else if binPair[1] && !binPair[0]}
+        <div class="bin-item orange" style={`height: ${externalEventHeight * 100}%;`} />
+      {:else if binPair[0] && binPair[1]}
+        <div class="bin-item" style="height: 100%;">
+          <div
+            class="bin-item blue"
+            style={`height: ${(1 - (activityHeight + externalEventHeight)) * 100}%; width: 0%`}
+          />
+          <div style={`height: ${activityHeight * 100}%; background-color: rgba(47, 128, 237, 1);`} />
+          <div style={`height: ${externalEventHeight * 100}%; background-color: rgba(237, 158, 47);`} />
+        </div>
       {:else}
         <div class="bin-item blue" style={`height: ${0}%;`} />
       {/if}
