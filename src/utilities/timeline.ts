@@ -46,6 +46,7 @@ import type {
   XRangeLayerColorScheme
 } from '../types/timeline';
 import { generateRandomPastelColor } from './color';
+import { getExternalEventRowId } from './externalEvents';
 import { filterEmpty } from './generic';
 import { getDoyTime } from './time';
 
@@ -1124,15 +1125,25 @@ export function generateDiscreteTreeUtil(
 }
 
 function getUniqueNodeItems(nodes: DiscreteTreeNode[]) {
-  const uniqueLookup: Set<number> = new Set();
+  const uniqueDirectiveLookup: Set<number> = new Set();
+  const uniqueSpanLookup: Set<number> = new Set();
+  const uniqueExternalEventLookup: Set<string> = new Set();
   return nodes
     .flatMap((node: DiscreteTreeNode) => node.items)
-    .reduce((flattendNodes: DiscreteTreeNodeItem[], nodeItem: DiscreteTreeNodeItem) => {
-      if (nodeItem.directive && !uniqueLookup.has(nodeItem.directive.id)) {
-        uniqueLookup.add(nodeItem.directive.id);
-        flattendNodes.push(nodeItem);
+    .reduce((flattenedNodes: DiscreteTreeNodeItem[], nodeItem: DiscreteTreeNodeItem) => {
+      if (nodeItem.directive && !uniqueDirectiveLookup.has(nodeItem.directive.id)) {
+        uniqueDirectiveLookup.add(nodeItem.directive.id);
+        flattenedNodes.push(nodeItem);
       }
-      return flattendNodes;
+      else if (nodeItem.span && !uniqueSpanLookup.has(nodeItem.span.span_id)) {
+        uniqueSpanLookup.add(nodeItem.span.span_id);
+        flattenedNodes.push(nodeItem);
+      }
+      else if (nodeItem.externalEvent && !uniqueExternalEventLookup.has(getExternalEventRowId(nodeItem.externalEvent.pkey))) {
+        uniqueExternalEventLookup.add(getExternalEventRowId(nodeItem.externalEvent.pkey));
+        flattenedNodes.push(nodeItem);
+      }
+      return flattenedNodes;
     }, []);
 }
 
