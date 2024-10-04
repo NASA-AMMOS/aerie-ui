@@ -7,7 +7,7 @@
   import { getDerivationGroupRowId } from '../../utilities/externalEvents';
   import DataGrid from '../ui/DataGrid/DataGrid.svelte';
 
-  export let derivationGroupsColumnsDef: DataGridColumnDef<DerivationGroup>[] = [];
+  export let derivationGroupColumnsDef: DataGridColumnDef<DerivationGroup>[] = [];
   export let filterString: string = '';
 
   let derivationGroupDataGrid: DataGrid<DerivationGroup>;
@@ -15,7 +15,7 @@
 
 <DataGrid
   bind:this={derivationGroupDataGrid}
-  columnDefs={derivationGroupsColumnsDef}
+  columnDefs={derivationGroupColumnsDef}
   filterExpression={filterString}
   rowData={$derivationGroups}
   getRowId={getDerivationGroupRowId}
