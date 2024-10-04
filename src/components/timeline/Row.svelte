@@ -194,6 +194,10 @@
   let timeFilteredSpans: Span[] = [];
   let timeFilteredExternalEvents: ExternalEvent[] = [];
   let rowRef: HTMLDivElement;
+  let hasActivityLayer: boolean = false;
+  let hasExternalEventsLayer: boolean = false;
+  let hasResourceLayer: boolean = false;
+  let associatedActivityTypes: number;
 
   $: if ($selectedRow?.id === id && rowRef) {
     rowRef.scrollIntoView({ block: 'nearest' });
