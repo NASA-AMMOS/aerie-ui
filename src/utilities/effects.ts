@@ -244,7 +244,6 @@ import { compareEvents } from './simulation';
 import { pluralize } from './text';
 import {
   convertDoyToYmd,
-  convertDurationToMs,
   convertUTCtoMs,
   getDoyTime,
   getDoyTimeFromInterval,
@@ -959,7 +958,7 @@ const effects = {
 
         // Ensure the duration is valid
         try {
-          convertDurationToMs(externalEvent.duration);
+          getIntervalInMs(externalEvent.duration);
         } catch (error) {
           showFailureToast('Parsing failed.');
           catchError(`Event duration has invalid format: ${externalEvent.key}\n`, error as Error);
@@ -968,7 +967,7 @@ const effects = {
 
         // Validate external event is in the external source's start/stop bounds
         const externalEventStart = Date.parse(convertDoyToYmd(externalEvent.start_time.replace('Z', '')) ?? '');
-        const externalEventEnd = externalEventStart + convertDurationToMs(externalEvent.duration);
+        const externalEventEnd = externalEventStart + getIntervalInMs(externalEvent.duration);
         if (
           !(externalEventStart >= Date.parse(startTimeFormatted) && externalEventEnd <= Date.parse(endTimeFormatted))
         ) {
@@ -3778,7 +3777,7 @@ const effects = {
       for (const event of events) {
         externalEvents.push({
           duration: event.duration,
-          duration_ms: convertDurationToMs(event.duration),
+          duration_ms: getIntervalInMs(event.duration),
           pkey: {
             derivation_group_name: event.derivation_group_name,
             event_type_name: event.event_type_name,

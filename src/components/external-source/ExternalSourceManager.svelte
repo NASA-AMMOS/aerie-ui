@@ -40,7 +40,7 @@
   import { parseJSONStream } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
-  import { convertDurationToMs, convertUTCtoMs, formatDate } from '../../utilities/time';
+  import { convertUTCtoMs, formatDate, getIntervalInMs } from '../../utilities/time';
   import { showFailureToast } from '../../utilities/toast';
   import { tooltip } from '../../utilities/tooltip';
   import { required, timestamp } from '../../utilities/validators';
@@ -284,7 +284,7 @@
       (selectedEvents = fetched.map(externalEventsDB => {
         return {
           ...externalEventsDB,
-          duration_ms: convertDurationToMs(externalEventsDB.duration),
+          duration_ms: getIntervalInMs(externalEventsDB.duration),
           event_type: externalEventsDB.pkey.event_type_name,
           start_ms: convertUTCtoMs(externalEventsDB.start_time),
         };
