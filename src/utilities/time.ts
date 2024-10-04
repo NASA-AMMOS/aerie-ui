@@ -433,38 +433,6 @@ export function convertUTCtoMs(date: string): number {
 }
 
 /**
- * Convert durations of format:
- *  - "89:44:09.000000"
- *  - "89:44:09":
- *     + with no decimal point,
- *     + or n <= 6 zeroes if point included.
- * to milliseconds.
- *
- * @param duration the duration as a string
- * @returns the number of milliseconds spanned by that duration.
- */
-//
-export function convertDurationToMs(duration: string): number {
-  const aerieDurationRegex = /^([0-9]*):([0-9]{2}):([0-9]{2})(?:\.([0-9]{1,6}))?$/;
-  const matches = duration.match(aerieDurationRegex);
-
-  // "89:44:09.000000" -> [ "89:44:09.000000", "189", "44", "09", "000000" ]
-  // "123:44:09"       -> [ "123:44:09",       "123", "44", "09", undefined]
-  if (matches != null && matches.length === 5) {
-    return (
-      +matches[1] * 1000 * 60 * 60 +
-      +matches[2] * 1000 * 60 +
-      +matches[3] * 1000 +
-      (matches[4] === undefined ? 0 : +matches[4])
-    ); // https://stackoverflow.com/questions/14667713/how-to-convert-a-string-to-number-in-typescript
-  } else {
-    throw Error(
-      `Duration parsing failed for duration ${duration}; doesn't match regex ${aerieDurationRegex}, has matches [${matches}]...`,
-    );
-  }
-}
-
-/**
  * Get a number value in microseconds given a string duration of the format '2y 318d 6h 16m 19s 200ms 0us'.
  * @example convertDurationStringToUs('2y 318d 6h 16m 19s 200ms 0us') -> 90577779200000
  * @note inverse of convertUsToDurationString

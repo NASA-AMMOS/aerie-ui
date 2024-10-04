@@ -4,7 +4,7 @@ import { derived, writable, type Readable, type Writable } from 'svelte/store';
 import type { ExternalEvent, ExternalEventDB, ExternalEventId, ExternalEventType } from '../types/external-event';
 import { getExternalEventWholeRowId } from '../utilities/externalEvents';
 import gql from '../utilities/gql';
-import { convertDoyToYmd, convertDurationToMs, convertUTCtoMs } from '../utilities/time';
+import { convertDoyToYmd, convertUTCtoMs, getIntervalInMs } from '../utilities/time';
 import { selectedPlanDerivationGroupNames } from './external-source';
 import { plan } from './plan';
 import { gqlSubscribable } from './subscribable';
@@ -46,7 +46,7 @@ export const externalEvents: Readable<ExternalEvent[]> = derived(
 
         // check event is in plan bounds
         const externalEventStartTime = convertUTCtoMs(externalEvent.start_time);
-        const externalEventEndTime = externalEventStartTime + convertDurationToMs(externalEvent.duration);
+        const externalEventEndTime = externalEventStartTime + getIntervalInMs(externalEvent.duration);
 
         if (
           (externalEventStartTime >= planStartTime && externalEventStartTime <= planEndTime) ||
@@ -54,7 +54,7 @@ export const externalEvents: Readable<ExternalEvent[]> = derived(
         ) {
           completeExternalEvents.push({
             duration: externalEvent.duration,
-            duration_ms: convertDurationToMs(externalEvent.duration),
+            duration_ms: getIntervalInMs(externalEvent.duration),
             pkey: {
               derivation_group_name: externalEvent.derivation_group_name,
               event_type_name: externalEvent.event_type_name,
