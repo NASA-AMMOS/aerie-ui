@@ -31,10 +31,12 @@ export const RULE_RESUME = 'Resume';
 export const RULE_ISSUE = 'Issue';
 export const RULE_FUNCTION_NAME = 'Function_name';
 export const RULE_SIMPLE_EXPR = 'Simple_expr';
+export const RULE_CALL_PARAMETER = 'Call_parameter';
 export const RULE_CALL_PARAMETERS = 'Call_parameters';
 export const RULE_FLOW = 'Flow';
 export const RULE_SIMPLE_CALL = 'Simple_call';
 export const RULE_EXTERNAL_CALL = 'External_call';
+export const RULE_CONSTANT = 'Constant';
 
 // Terminals in grammar
 export const TOKEN_ERROR = '⚠';

@@ -5,16 +5,16 @@
   import { getAllEnumSymbols } from '../../utilities/sequence-editor/sequence-linter';
 
   export let arg: FswCommandArgument;
-  export let commandDictionary: CommandDictionary;
+  export let commandDictionary: CommandDictionary | null;
 
   const MAX_ENUMS_TO_DISPLAY = 20;
 
-  let enumSymbolsDisplayStr: string;
+  let enumSymbolsDisplayStr: string = '';
 
   $: if (commandDictionary && arg?.arg_type === 'enum') {
     const enumValues = getAllEnumSymbols(commandDictionary.enumMap, arg.enum_name);
-    const vals = enumValues ?? [];
-    enumSymbolsDisplayStr = `${vals.slice(0, MAX_ENUMS_TO_DISPLAY).join('  |  ')}${vals.length > MAX_ENUMS_TO_DISPLAY ? '...' + (vals.length - MAX_ENUMS_TO_DISPLAY) + ' more' : ''}`;
+    const values = enumValues ?? [];
+    enumSymbolsDisplayStr = `${values.slice(0, MAX_ENUMS_TO_DISPLAY).join('  |  ')}${values.length > MAX_ENUMS_TO_DISPLAY ? '...' + (values.length - MAX_ENUMS_TO_DISPLAY) + ' more' : ''}`;
   }
 </script>
 

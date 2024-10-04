@@ -54,3 +54,25 @@ export function getNearestAncestorNodeOfType(node: SyntaxNode | null, ancestorTy
   }
   return ancestorNode;
 }
+
+/**
+ *
+ * @param node
+ * @param typesOfAncestorsAndSelf - array of node types to check containment [ great-grandparent, grandparent, undefined, selfType ]
+ * @returns if node type and container matches criteria
+ */
+export function checkContainment(node: SyntaxNode, typesOfAncestorsAndSelf: (string | undefined)[]): boolean {
+  if (typesOfAncestorsAndSelf.length === 0) {
+    return true;
+  }
+
+  const comp = typesOfAncestorsAndSelf[typesOfAncestorsAndSelf.length - 1];
+  if (comp === undefined || node.name === comp) {
+    return (
+      !!node.parent &&
+      checkContainment(node.parent, typesOfAncestorsAndSelf.slice(0, typesOfAncestorsAndSelf.length - 1))
+    );
+  }
+
+  return false;
+}
