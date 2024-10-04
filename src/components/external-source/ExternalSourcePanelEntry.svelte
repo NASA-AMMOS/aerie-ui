@@ -18,6 +18,7 @@
   export let user: User | null;
 
   let relevantSources: ExternalSourceSlim[] = [];
+  let enabled: boolean = false;
 
   $: enabled = $derivationGroupVisibilityMap[derivationGroup.name] ?? true;
   $: relevantSources = $externalSources.filter(source => derivationGroup.name === source.derivation_group_name);
