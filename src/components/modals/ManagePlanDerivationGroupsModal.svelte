@@ -12,7 +12,7 @@
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { DerivationGroup, ExternalSourceSlim } from '../../types/external-source';
   import effects from '../../utilities/effects';
-  import { getRowIdDerivationGroup } from '../../utilities/externalEvents';
+  import { getDerivationGroupRowId } from '../../utilities/externalEvents';
   import { formatDate } from '../../utilities/time';
   import Collapse from '../Collapse.svelte';
   import Input from '../form/Input.svelte';
@@ -79,7 +79,7 @@
   }
 
   $: selectedDerivationGroupSources = $externalSources.filter(
-    source => selectedDerivationGroup?.name === source.pkey.derivation_group_name,
+    source => selectedDerivationGroup?.name === source.derivation_group_name,
   );
 
   $: filteredDerivationGroups = $derivationGroups.filter(derivationGroup => {
@@ -234,7 +234,7 @@
               bind:this={dataGrid}
               {columnDefs}
               rowData={filteredDerivationGroups}
-              getRowId={getRowIdDerivationGroup}
+              getRowId={getDerivationGroupRowId}
               on:cellEditingStopped={onToggleDerivationGroup}
             />
           {:else}
@@ -254,15 +254,15 @@
             {#if selectedDerivationGroupSources.length > 0}
               {#each selectedDerivationGroupSources as source}
                 <!-- Collapsible details -->
-                <Collapse title={source.pkey.key} tooltipContent={source.pkey.key} defaultExpanded={false}>
+                <Collapse title={source.key} tooltipContent={source.key} defaultExpanded={false}>
                   <span slot="right">
                     <p class="st-typography-body derived-event-count">
-                      {selectedDerivationGroup.sources.get(source.pkey.key)?.event_counts} events
+                      {selectedDerivationGroup.sources.get(source.key)?.event_counts} events
                     </p>
                   </span>
                   <div class="st-typography-body">
                     <div class="st-typography-bold">Key:</div>
-                    {source.pkey.key}
+                    {source.key}
                   </div>
 
                   <div class="st-typography-body">

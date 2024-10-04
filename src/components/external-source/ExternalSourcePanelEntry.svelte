@@ -20,7 +20,7 @@
   let relevantSources: ExternalSourceSlim[] = [];
 
   $: enabled = $derivationGroupVisibilityMap[derivationGroup.name] ?? true;
-  $: relevantSources = $externalSources.filter(source => derivationGroup.name === source.pkey.derivation_group_name);
+  $: relevantSources = $externalSources.filter(source => derivationGroup.name === source.derivation_group_name);
 
   function onChange() {
     derivationGroupVisibilityMap.set({
@@ -71,15 +71,15 @@
     {#if relevantSources.length}
       {#each relevantSources as source}
         <!-- Collapsible details -->
-        <Collapse title={source.pkey.key} tooltipContent={source.pkey.key} defaultExpanded={false}>
+        <Collapse title={source.key} tooltipContent={source.key} defaultExpanded={false}>
           <span slot="right">
             <p class="st-typography-body derived-event-count">
-              {derivationGroup.sources.get(source.pkey.key)?.event_counts} events
+              {derivationGroup.sources.get(source.key)?.event_counts} events
             </p>
           </span>
           <div class="st-typography-body">
             <div class="st-typography-bold">Key:</div>
-            {source.pkey.key}
+            {source.key}
           </div>
 
           <div class="st-typography-body">

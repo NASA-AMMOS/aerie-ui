@@ -21,13 +21,7 @@ export const getExternalSourceMetadataError: Writable<string | null> = writable(
 export const derivationGroupVisibilityMap: Writable<Record<DerivationGroup['name'], boolean>> = writable({});
 
 /* Subscriptions. */
-export const externalSources = gqlSubscribable<ExternalSourceSlim[]>(
-  gql.SUB_EXTERNAL_SOURCES,
-  {},
-  [],
-  null,
-  transformExternalSources,
-);
+export const externalSources = gqlSubscribable<ExternalSourceSlim[]>(gql.SUB_EXTERNAL_SOURCES, {}, [], null);
 export const externalSourceTypes = gqlSubscribable<ExternalSourceType[]>(gql.SUB_EXTERNAL_SOURCE_TYPES, {}, [], null);
 export const derivationGroups = gqlSubscribable<DerivationGroup[]>(
   gql.SUB_DERIVATION_GROUPS,
@@ -77,8 +71,8 @@ export const usersSeenSources: Readable<Record<string, UserSeenEntryWithDate[]>>
       const change_date =
         $externalSources.find(
           externalSource =>
-            externalSource.pkey.derivation_group_name === entry.derivation_group &&
-            externalSource.pkey.key === entry.external_source_name,
+            externalSource.derivation_group_name === entry.derivation_group &&
+            externalSource.key === entry.external_source_name,
         )?.created_at ?? '';
       if (res[entry.username]) {
         res[entry.username].push({
@@ -108,39 +102,6 @@ export function resetExternalSourceStores(): void {
   createExternalSourceTypeError.set(null);
   createDerivationGroupError.set(null);
   derivationGroupPlanLinkError.set(null);
-}
-
-function transformExternalSources(
-  externalSources:
-    | {
-        created_at: string;
-        derivation_group_name: string;
-        end_time: string;
-        key: string;
-        source_type_name: string;
-        start_time: string;
-        valid_at: string;
-      }[]
-    | null
-    | undefined,
-): ExternalSourceSlim[] {
-  const completeExternalSourceSlim: ExternalSourceSlim[] = [];
-  if (externalSources !== null && externalSources !== undefined) {
-    externalSources.forEach(externalSource => {
-      completeExternalSourceSlim.push({
-        created_at: externalSource.created_at,
-        end_time: externalSource.end_time,
-        pkey: {
-          derivation_group_name: externalSource.derivation_group_name,
-          key: externalSource.key,
-        },
-        source_type_name: externalSource.source_type_name,
-        start_time: externalSource.start_time,
-        valid_at: externalSource.valid_at,
-      });
-    });
-  }
-  return completeExternalSourceSlim;
 }
 
 function transformDerivationGroups(

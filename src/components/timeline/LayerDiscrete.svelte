@@ -28,7 +28,7 @@
   } from '../../types/timeline';
   import { hexToRgba, shadeColor } from '../../utilities/color';
   import effects from '../../utilities/effects';
-  import { getRowIdExternalEvent } from '../../utilities/externalEvents';
+  import { getExternalEventRowId } from '../../utilities/externalEvents';
   import { isRightClick } from '../../utilities/generic';
   import { isDeleteEvent } from '../../utilities/keyboardEvents';
   import {
@@ -389,7 +389,7 @@
       } else if (spans.length > 0) {
         newSelectedSpanId = spans[0].span_id;
       } else if (externalEvents.length > 0) {
-        newSelectedExternalEventId = getRowIdExternalEvent(externalEvents[0].pkey);
+        newSelectedExternalEventId = getExternalEventRowId(externalEvents[0].pkey);
       }
 
       dispatch('contextMenu', {
@@ -743,8 +743,8 @@
         const externalEventEndX = xScaleView(externalEvent.start_ms + externalEvent.duration_ms);
         const externalEventRectWidth = Math.max(2, Math.min(externalEventEndX, drawWidth) - externalEventStartX);
         const externalEventColor =
-          idToColorMaps.external_events[getRowIdExternalEvent(externalEvent.pkey)] || discreteDefaultColor;
-        const isSelected = selectedExternalEventId === getRowIdExternalEvent(externalEvent.pkey);
+          idToColorMaps.external_events[getExternalEventRowId(externalEvent.pkey)] || discreteDefaultColor;
+        const isSelected = selectedExternalEventId === getExternalEventRowId(externalEvent.pkey);
         if (isSelected) {
           ctx.fillStyle = discreteSelectedColor;
         } else {
@@ -775,10 +775,10 @@
         }
 
         // Add to quadtree
-        visibleExternalEventsById[getRowIdExternalEvent(externalEvent.pkey)] = externalEvent;
+        visibleExternalEventsById[getExternalEventRowId(externalEvent.pkey)] = externalEvent;
         quadtreeExternalEvents.add({
           height: rowHeight,
-          id: getRowIdExternalEvent(externalEvent.pkey),
+          id: getExternalEventRowId(externalEvent.pkey),
           width: Math.max(spanLabelWidth, externalEventRectWidth),
           x: externalEventStartX,
           y,
