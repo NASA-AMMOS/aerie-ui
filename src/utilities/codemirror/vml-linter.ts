@@ -15,6 +15,12 @@ import {
   TOKEN_UINT_CONST,
 } from './vml-constants';
 
+/**
+ * Limitations
+ *
+ * * Variables aren't checked, defer to external engine to determine if they exist when referenced
+ */
+
 // Absolute time tags may appear in functions beginning with SEQUENCE or ABSOLUTE_SEQUENCE
 // Functions beginning with BLOCK or RELATIVE_SEQUENCE may have only relative time tags.
 
@@ -253,7 +259,7 @@ function validateArgument(
   return diagnostics;
 }
 
-function unquote(s: string) {
+function unquote(s: string): string {
   return s.slice(1, s.length - 1);
 }
 

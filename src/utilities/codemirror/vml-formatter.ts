@@ -10,11 +10,13 @@ import {
   RULE_END_FOR,
   RULE_END_IF,
   RULE_END_WHILE,
+  RULE_EXTERNAL_CALL,
   RULE_FLOW,
   RULE_FOR,
   RULE_FUNCTION_NAME,
   RULE_IF,
   RULE_ISSUE,
+  RULE_SIMPLE_CALL,
   RULE_SIMPLE_EXPR,
   RULE_SPAWN,
   RULE_STATEMENT,
@@ -31,6 +33,43 @@ type LineOfNodes = (SyntaxNode | undefined)[];
 const INDENT_COLUMN_INDEX: number = 1;
 
 const INDENT_SIZE = 2;
+
+const rulesWithNoCallParameters: Set<string> = new Set([
+  RULE_ASSIGNMENT,
+  RULE_IF,
+  RULE_ELSE_IF,
+  RULE_ELSE,
+  RULE_END_IF,
+  RULE_WHILE,
+  RULE_END_WHILE,
+  RULE_FOR,
+  RULE_END_FOR,
+  RULE_FLOW,
+]);
+
+const rulesSupportingCallParameters: Set<string> = new Set([
+  RULE_VM_MANAGEMENT,
+  RULE_ISSUE,
+  RULE_SIMPLE_CALL,
+  RULE_EXTERNAL_CALL,
+]);
+
+function usesTwoColumnFormat(statementType: string): boolean {
+  return rulesWithNoCallParameters.has(statementType);
+}
+
+function usesTableFormat(statementType: string): boolean {
+  return rulesSupportingCallParameters.has(statementType);
+}
+
+function isTypeWithCallParameters(node: SyntaxNode): boolean {
+  const parentName = node.parent?.name;
+  if (parentName && usesTableFormat(parentName)) {
+    return true;
+  }
+  // Vm_management type has subtypes, so need to walk up
+  return node.parent?.parent?.name === RULE_VM_MANAGEMENT;
+}
 
 /*
   Formats code into columns
@@ -56,28 +95,16 @@ export function vmlFormat(view: EditorView): void {
   });
 
   const errorFreeTimeTaggedStatements = timeTaggedStatements.filter(node => {
-    switch (node.getChild(RULE_STATEMENT)?.firstChild?.name) {
-      case RULE_ASSIGNMENT:
-      case RULE_IF:
-      case RULE_ELSE_IF:
-      case RULE_ELSE:
-      case RULE_END_IF:
-      case RULE_WHILE:
-      case RULE_END_WHILE:
-      case RULE_FOR:
-      case RULE_END_FOR:
-      case RULE_VM_MANAGEMENT:
-      case RULE_FLOW:
-      case RULE_ISSUE: {
-        const childCursor = node.toTree().cursor();
-        do {
-          // formatting algorithm doesn't correct for error tokens, ignore those lines
-          if (childCursor.node.name === TOKEN_ERROR) {
-            return false;
-          }
-        } while (childCursor.next());
-        return true;
-      }
+    const ruleType = node.getChild(RULE_STATEMENT)?.firstChild?.name;
+    if (ruleType && (usesTwoColumnFormat(ruleType) || usesTableFormat(ruleType))) {
+      const childCursor = node.toTree().cursor();
+      do {
+        // formatting algorithm doesn't correct for error tokens, ignore those lines
+        if (childCursor.node.name === TOKEN_ERROR) {
+          return false;
+        }
+      } while (childCursor.next());
+      return true;
     }
     return false;
   });
@@ -95,7 +122,7 @@ export function vmlFormat(view: EditorView): void {
         const cellToken = currentRow[columnIndex];
         if (cellToken) {
           if (columnIndex === INDENT_COLUMN_INDEX) {
-            if (isVmOrIssue(cellToken)) {
+            if (isTypeWithCallParameters(cellToken)) {
               // include col[1] indentation in width calculation
               const indentChange = commandIndentChangeMap.get(currentRow) as { insert?: string };
               const commandIndent = indentChange?.insert?.length ?? 0;
@@ -161,7 +188,7 @@ export function vmlFormat(view: EditorView): void {
         }
 
         let length = node.to - node.from;
-        if (columnNumber === INDENT_COLUMN_INDEX && node && isVmOrIssue(node)) {
+        if (columnNumber === INDENT_COLUMN_INDEX && node && isTypeWithCallParameters(node)) {
           // These values may be indented within column, so include indentation in their length
           const indentChange = commandIndentChangeMap.get(line) as { insert?: string };
           const commandIndent = indentChange?.insert?.length ?? 0;
@@ -225,69 +252,67 @@ function indentCommandColumn(state: EditorState, linesToFormat: LineOfNodes[]): 
 function splitLinesIntoColumns(statement: SyntaxNode): LineOfNodes | null {
   const timeNode = statement.getChild(TOKEN_TIME_CONST);
   const statementTypeNode = statement.getChild(RULE_STATEMENT)?.firstChild;
+  const statementTypeName = statementTypeNode?.name;
+
+  if (!statementTypeNode || !statementTypeName) {
+    return null;
+  }
+
   // account for block level
-  if (statementTypeNode) {
-    switch (statementTypeNode.name) {
-      case RULE_IF:
-      case RULE_ELSE_IF:
-      case RULE_ELSE:
-      case RULE_END_IF:
-      case RULE_WHILE:
-      case RULE_END_WHILE:
-      case RULE_FOR:
-      case RULE_END_FOR:
-      case RULE_ASSIGNMENT:
-      case RULE_FLOW:
-        {
-          if (timeNode) {
-            return [timeNode, statementTypeNode];
-          }
-        }
-        break;
-      case RULE_VM_MANAGEMENT:
-        {
-          const vmManagementType = statementTypeNode.firstChild;
-          if (vmManagementType) {
-            const directiveNode = vmManagementType.firstChild;
-            const engineNode = vmManagementType.getChild(RULE_SIMPLE_EXPR);
-            switch (vmManagementType.name) {
-              case RULE_SPAWN: {
-                const functionNameNode = vmManagementType.getChild(RULE_FUNCTION_NAME);
-                const ruleParametersNode = vmManagementType.getChild(RULE_CALL_PARAMETERS);
-                if (timeNode && directiveNode && engineNode) {
-                  return [
-                    timeNode,
-                    directiveNode,
-                    engineNode,
-                    functionNameNode ?? undefined,
-                    ruleParametersNode ?? undefined,
-                  ];
-                }
+  if (statementTypeName) {
+    if (usesTwoColumnFormat(statementTypeName)) {
+      if (timeNode) {
+        return [timeNode, statementTypeNode];
+      }
+    }
+  }
+
+  switch (statementTypeName) {
+    case RULE_VM_MANAGEMENT:
+      {
+        const vmManagementType = statementTypeNode.firstChild;
+        if (vmManagementType) {
+          const directiveNode = vmManagementType.firstChild;
+          const engineNode = vmManagementType.getChild(RULE_SIMPLE_EXPR);
+          switch (vmManagementType.name) {
+            case RULE_SPAWN: {
+              const functionNameNode = vmManagementType.getChild(RULE_FUNCTION_NAME);
+              const ruleParametersNode = vmManagementType.getChild(RULE_CALL_PARAMETERS);
+              if (timeNode && directiveNode && engineNode) {
+                return [
+                  timeNode,
+                  directiveNode,
+                  engineNode,
+                  functionNameNode ?? undefined,
+                  ruleParametersNode ?? undefined,
+                ];
               }
             }
           }
         }
-        break;
-      case RULE_ISSUE: {
-        const directiveNode = statementTypeNode.firstChild;
-        const functionNameNode = statementTypeNode.getChild(RULE_FUNCTION_NAME);
-        const ruleParametersNode = statementTypeNode.getChild(RULE_CALL_PARAMETERS);
-        if (timeNode && directiveNode && functionNameNode) {
-          return [
-            timeNode,
-            directiveNode,
-            undefined /* reserved for engine number */,
-            functionNameNode,
-            ruleParametersNode ?? undefined,
-          ];
-        }
-        break;
       }
+      break;
+    case RULE_SIMPLE_CALL:
+    case RULE_EXTERNAL_CALL:
+    case RULE_ISSUE: {
+      const directiveNode = statementTypeNode.firstChild;
+      // Issue uses a function_name, calls may use a string literal or variable
+      const functionNameNode = statementTypeNode.getChild(
+        statementTypeName === RULE_ISSUE ? RULE_FUNCTION_NAME : RULE_SIMPLE_EXPR,
+      );
+      const ruleParametersNode = statementTypeNode.getChild(RULE_CALL_PARAMETERS);
+      if (timeNode && directiveNode && functionNameNode) {
+        return [
+          timeNode,
+          directiveNode,
+          undefined /* reserved for engine number */,
+          functionNameNode,
+          ruleParametersNode ?? undefined,
+        ];
+      }
+      break;
     }
   }
-  return null;
-}
 
-function isVmOrIssue(node: SyntaxNode): boolean {
-  return node.parent?.name === RULE_ISSUE || node.parent?.parent?.name === RULE_VM_MANAGEMENT;
+  return null;
 }
