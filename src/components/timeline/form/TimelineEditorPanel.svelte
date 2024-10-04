@@ -7,9 +7,9 @@
   import PlusIcon from '@nasa-jpl/stellar/icons/plus.svg?component';
   import RemoveAllIcon from '@nasa-jpl/stellar/icons/remove_all.svg?component';
   import TrashIcon from '@nasa-jpl/stellar/icons/trash.svg?component';
-  import Balloon from 'bootstrap-icons/icons/balloon.svg?component';
+  import BalloonIcon from 'bootstrap-icons/icons/balloon.svg?component';
   import GripVerticalIcon from 'bootstrap-icons/icons/grip-vertical.svg?component';
-  import Truck from 'bootstrap-icons/icons/truck.svg?component';
+  import TruckIcon from 'bootstrap-icons/icons/truck.svg?component';
   import { onMount } from 'svelte';
   import { dndzone } from 'svelte-dnd-action';
   import ActivityModeTextNoneIcon from '../../../assets/text-none.svg?component';
@@ -1063,7 +1063,7 @@
                   id="source_key"
                 >
                   <div class="radio-button-icon">
-                    <Truck />
+                    <TruckIcon />
                     <span class="timeline-editor-responsive-label">By Source</span>
                   </div>
                 </RadioButton>
@@ -1072,7 +1072,7 @@
                   id="event_type_name"
                 >
                   <div class="radio-button-icon">
-                    <Balloon />
+                    <BalloonIcon />
                     <span class="timeline-editor-responsive-label">By Event Type</span>
                   </div>
                 </RadioButton>

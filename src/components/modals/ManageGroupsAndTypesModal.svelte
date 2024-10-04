@@ -2,7 +2,7 @@
 
 <script lang="ts">
   import type { ICellRendererParams } from 'ag-grid-community';
-  import Truck from 'bootstrap-icons/icons/truck.svg?component';
+  import TruckIcon from 'bootstrap-icons/icons/truck.svg?component';
   import { createEventDispatcher } from 'svelte';
   import { derivationGroups, externalSources } from '../../stores/external-source';
   import type { User } from '../../types/app';
@@ -83,7 +83,7 @@
         return params?.value.size;
       },
       width: 200,
-    }
+    },
   ];
   const externalSourceTypeBaseColumnDefs: DataGridColumnDef<ExternalSourceType>[] = [
     {
@@ -140,14 +140,13 @@
         const associatedDerivationGroups = getAssociatedDerivationGroupsByEventType(params.data?.name);
         return `${associatedDerivationGroups.length}`;
       },
-    }
+    },
   ];
 
   let derivationGroupColumnsDef: DataGridColumnDef<DerivationGroup>[] = derivationGroupBaseColumnDefs;
   let externalSourceTypeColumnDefs: DataGridColumnDef<ExternalSourceType>[] = externalSourceTypeBaseColumnDefs;
   let externalEventTypeColumnDefs: DataGridColumnDef<ExternalEventType>[] = externalEventTypeBaseColumnDefs;
   let hasDeletePermission: boolean = false;
-
 
   let modalColumnSize: string = modalColumnSizeNoDetail;
 
@@ -219,7 +218,7 @@
       sortable: false,
       width: 80,
     },
-  ]
+  ];
 
   $: externalSourceTypeColumnDefs = [
     ...externalSourceTypeBaseColumnDefs,
@@ -257,7 +256,7 @@
       sortable: false,
       width: 60,
     },
-  ]
+  ];
 
   $: externalEventTypeColumnDefs = [
     ...externalEventTypeBaseColumnDefs,
@@ -294,8 +293,8 @@
       resizable: false,
       sortable: false,
       width: 60,
-    }
-  ]
+    },
+  ];
 
   function deleteDerivationGroup(derivationGroup: DerivationGroup) {
     // Makes sure all associated sources are deleted before this. List of sources already contained in DerivationGroup type.
@@ -434,7 +433,7 @@
         <Panel borderRight padBody={true}>
           <svelte:fragment slot="header">
             <SectionTitle>
-              <Truck slot="icon" />Sources in '{selectedDerivationGroup.name}'
+              <TruckIcon slot="icon" />Sources in '{selectedDerivationGroup.name}'
             </SectionTitle>
           </svelte:fragment>
           <svelte:fragment slot="body">
@@ -498,7 +497,7 @@
         <Panel borderRight padBody={true}>
           <svelte:fragment slot="header">
             <SectionTitle>
-              <Truck slot="icon" />Derivation Groups of Type '{selectedExternalSourceType.name}'
+              <TruckIcon slot="icon" />Derivation Groups of Type '{selectedExternalSourceType.name}'
             </SectionTitle>
           </svelte:fragment>
           <svelte:fragment slot="body">
@@ -556,7 +555,7 @@
         <Panel borderRight padBody={true}>
           <svelte:fragment slot="header">
             <SectionTitle>
-              <Truck slot="icon" />Derivation Groups containing '{selectedExternalEventType.name}'
+              <TruckIcon slot="icon" />Derivation Groups containing '{selectedExternalEventType.name}'
             </SectionTitle>
           </svelte:fragment>
           <svelte:fragment slot="body">
