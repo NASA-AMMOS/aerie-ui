@@ -92,7 +92,7 @@ export function setupVmlLanguageSupport(
   }
 }
 
-export function highlightBlock(viewUpdate: ViewUpdate): SyntaxNode[] {
+export function vmlHighlightBlock(viewUpdate: ViewUpdate): SyntaxNode[] {
   const tree = syntaxTree(viewUpdate.state);
   const selectionLine = viewUpdate.state.doc.lineAt(viewUpdate.state.selection.asSingle().main.from);
   const leadingWhiteSpaceLength = selectionLine.text.length - selectionLine.text.trimStart().length;
@@ -140,7 +140,7 @@ export function highlightBlock(viewUpdate: ViewUpdate): SyntaxNode[] {
   return matchedNodes;
 }
 
-export const blockHighlighter = ViewPlugin.fromClass(
+export const vmlBlockHighlighter = ViewPlugin.fromClass(
   class {
     decorations: DecorationSet;
     constructor() {
@@ -148,7 +148,7 @@ export const blockHighlighter = ViewPlugin.fromClass(
     }
     update(viewUpdate: ViewUpdate): DecorationSet | null {
       if (viewUpdate.selectionSet || viewUpdate.docChanged || viewUpdate.viewportChanged) {
-        const blocks = highlightBlock(viewUpdate);
+        const blocks = vmlHighlightBlock(viewUpdate);
         this.decorations = Decoration.set(
           // codemirror requires marks to be in sorted order
           blocks.sort((a, b) => a.from - b.from).map(block => blockMark.range(block.from, block.to)),

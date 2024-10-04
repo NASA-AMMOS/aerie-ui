@@ -6,7 +6,7 @@
   import { indentService, syntaxTree } from '@codemirror/language';
   import { lintGutter } from '@codemirror/lint';
   import { Compartment, EditorState, Prec } from '@codemirror/state';
-  import { Decoration, ViewPlugin, type DecorationSet, type ViewUpdate } from '@codemirror/view';
+  import { type ViewUpdate } from '@codemirror/view';
   import type { SyntaxNode } from '@lezer/common';
   import type { ChannelDictionary, CommandDictionary, ParameterDictionary } from '@nasa-jpl/aerie-ampcs';
   import ChevronDownIcon from '@nasa-jpl/stellar/icons/chevron_down.svg?component';
@@ -17,7 +17,6 @@
   import { EditorView, basicSetup } from 'codemirror';
   import { debounce } from 'lodash-es';
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
-  import { TOKEN_COMMAND } from '../../constants/seq-n-grammar-constants';
   import {
     inputFormat,
     outputFormat,
@@ -37,9 +36,9 @@
   } from '../../stores/sequencing';
   import type { User } from '../../types/app';
   import type { IOutputFormat, Parcel } from '../../types/sequencing';
-  import { setupLanguageSupport } from '../../utilities/codemirror';
-  import { computeBlocks, isBlockCommand } from '../../utilities/codemirror/custom-folder';
-  import { setupVmlLanguageSupport } from '../../utilities/codemirror/vml';
+  import { seqNHighlightBlock, seqqNBlockHighlighter, setupLanguageSupport } from '../../utilities/codemirror';
+  import { blockTheme } from '../../utilities/codemirror/block';
+  import { setupVmlLanguageSupport, vmlBlockHighlighter, vmlHighlightBlock } from '../../utilities/codemirror/vml';
   import { vmlAutoComplete } from '../../utilities/codemirror/vml-adaptation';
   import { vmlFormat } from '../../utilities/codemirror/vml-formatter';
   import { vmlLinter } from '../../utilities/codemirror/vml-linter';
@@ -48,7 +47,6 @@
   import { downloadBlob, downloadJSON } from '../../utilities/generic';
   import { inputLinter, outputLinter } from '../../utilities/sequence-editor/extension-points';
   import { sequenceTooltip } from '../../utilities/sequence-editor/sequence-tooltip';
-  import { getNearestAncestorNodeOfType } from '../../utilities/sequence-editor/tree-utils';
   import { showFailureToast, showSuccessToast } from '../../utilities/toast';
   import { tooltip } from '../../utilities/tooltip';
   import Menu from '../menus/Menu.svelte';
@@ -79,6 +77,7 @@
   let compartmentSeqLinter: Compartment;
   let compartmentSeqTooltip: Compartment;
   let compartmentSeqAutocomplete: Compartment;
+  let compartmentSeqHighlighter: Compartment;
   let channelDictionary: ChannelDictionary | null;
   let commandDictionary: CommandDictionary | null;
   let disableCopyAndExport: boolean = true;
@@ -125,6 +124,26 @@
   }
 
   $: {
+    if (compartmentSeqHighlighter && editorSequenceView) {
+      if (sequenceName && inVmlMode()) {
+        editorSequenceView.dispatch({
+          effects: compartmentSeqHighlighter.reconfigure([
+            EditorView.updateListener.of(debounce(vmlHighlightBlock, 250)),
+            Prec.highest([blockTheme, vmlBlockHighlighter]),
+          ]),
+        });
+      } else {
+        editorSequenceView.dispatch({
+          effects: compartmentSeqHighlighter.reconfigure([
+            EditorView.updateListener.of(debounce(seqNHighlightBlock, 250)),
+            Prec.highest([blockTheme, seqqNBlockHighlighter]),
+          ]),
+        });
+      }
+    }
+  }
+
+  $: {
     commandFormBuilderGrid = showCommandFormBuilder
       ? $userSequenceEditorColumnsWithFormBuilder
       : $userSequenceEditorColumns;
@@ -144,7 +163,7 @@
     });
 
     if (unparsedCommandDictionary) {
-      if (sequenceName.endsWith('.vml')) {
+      if (sequenceName && inVmlMode()) {
         getParsedCommandDictionary(unparsedCommandDictionary, user).then(parsedCommandDictionary => {
           commandDictionary = parsedCommandDictionary;
           editorSequenceView.dispatch({
@@ -214,6 +233,7 @@
     compartmentSeqLinter = new Compartment();
     compartmentSeqTooltip = new Compartment();
     compartmentSeqAutocomplete = new Compartment();
+    compartmentSeqHighlighter = new Compartment();
 
     editorSequenceView = new EditorView({
       doc: sequenceDefinition,
@@ -227,8 +247,10 @@
         compartmentSeqTooltip.of(sequenceTooltip()),
         EditorView.updateListener.of(debounce(sequenceUpdateListener, 250)),
         EditorView.updateListener.of(selectedCommandUpdateListener),
-        EditorView.updateListener.of(debounce(highlightBlock, 250)),
-        Prec.highest([blockTheme, blockHighlighter]),
+        compartmentSeqHighlighter.of([
+          EditorView.updateListener.of(debounce(seqNHighlightBlock, 250)),
+          Prec.highest([blockTheme, seqqNBlockHighlighter]),
+        ]),
         ...($sequenceAdaptation.autoIndent
           ? [compartmentSeqAutocomplete.of(indentService.of($sequenceAdaptation.autoIndent()))]
           : []),
@@ -317,78 +339,6 @@
     }
   }
 
-  const blockMark = Decoration.mark({ class: 'cm-block-match' });
-
-  const blockTheme = EditorView.baseTheme({
-    '.cm-block-match': {
-      outline: '1px dashed',
-    },
-  });
-
-  function highlightBlock(viewUpdate: ViewUpdate): SyntaxNode[] {
-    const tree = syntaxTree(viewUpdate.state);
-    // Command Node includes trailing newline and white space, move to next command
-    const selectionLine = viewUpdate.state.doc.lineAt(viewUpdate.state.selection.asSingle().main.from);
-    const leadingWhiteSpaceLength = selectionLine.text.length - selectionLine.text.trimStart().length;
-    const updatedSelectionNode = tree.resolveInner(selectionLine.from + leadingWhiteSpaceLength, 1);
-    const stemNode = getNearestAncestorNodeOfType(updatedSelectionNode, [TOKEN_COMMAND])?.getChild('Stem');
-
-    if (!stemNode || !isBlockCommand(viewUpdate.state.sliceDoc(stemNode.from, stemNode.to))) {
-      return [];
-    }
-
-    const blocks = computeBlocks(viewUpdate.state);
-    if (!blocks) {
-      return [];
-    }
-
-    const pairs = Object.values(blocks);
-    const matchedNodes: SyntaxNode[] = [stemNode];
-
-    // when cursor on end -- select else and if
-    let current: SyntaxNode | undefined = stemNode;
-    while (current) {
-      current = pairs.find(block => block.end?.from === current!.from)?.start;
-      if (current) {
-        matchedNodes.push(current);
-      }
-    }
-
-    // when cursor on if -- select else and end
-    current = stemNode;
-    while (current) {
-      current = pairs.find(block => block.start?.from === current!.from)?.end;
-      if (current) {
-        matchedNodes.push(current);
-      }
-    }
-
-    return matchedNodes;
-  }
-
-  const blockHighlighter = ViewPlugin.fromClass(
-    class {
-      decorations: DecorationSet;
-      constructor() {
-        this.decorations = Decoration.none;
-      }
-      update(viewUpdate: ViewUpdate): DecorationSet | null {
-        if (viewUpdate.selectionSet || viewUpdate.docChanged || viewUpdate.viewportChanged) {
-          const blocks = highlightBlock(viewUpdate);
-          this.decorations = Decoration.set(
-            // codemirror requires marks to be in sorted order
-            blocks.sort((a, b) => a.from - b.from).map(block => blockMark.range(block.from, block.to)),
-          );
-          return this.decorations;
-        }
-        return null;
-      }
-    },
-    {
-      decorations: viewPluginSpecification => viewPluginSpecification.decorations,
-    },
-  );
-
   function downloadOutputFormat(outputFormat: IOutputFormat): void {
     const fileExtension = `${sequenceName}.${selectedOutputFormat?.fileExtension}`;
 
@@ -427,6 +377,10 @@
 
   function formatDocument() {
     vmlFormat(editorSequenceView);
+  }
+
+  function inVmlMode(): boolean {
+    return sequenceName.endsWith('.vml');
   }
 </script>
 
