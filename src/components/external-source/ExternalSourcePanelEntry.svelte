@@ -46,7 +46,7 @@
     tooltipContent={'Derivation group ' + derivationGroup.name}
     defaultExpanded={false}
   >
-    <span slot="right" class="derivation-group-collapse-details">
+    <svelte:fragment slot="right" class="derivation-group-collapse-details">
       <p class="derived-event-text">
         {derivationGroup.derived_event_total} derived events
       </p>
@@ -67,17 +67,17 @@
           <EyeSlash />
         </button>
       {/if}
-    </span>
+    </svelte:fragment>
 
     {#if relevantSources.length}
       {#each relevantSources as source}
         <!-- Collapsible details -->
         <Collapse title={source.key} tooltipContent={source.key} defaultExpanded={false}>
-          <span slot="right">
+          <svelte:fragment slot="right">
             <p class="st-typography-body derived-event-count">
               {derivationGroup.sources.get(source.key)?.event_counts} events
             </p>
-          </span>
+          </svelte:fragment>
           <div class="st-typography-body">
             <div class="st-typography-bold">Key:</div>
             {source.key}

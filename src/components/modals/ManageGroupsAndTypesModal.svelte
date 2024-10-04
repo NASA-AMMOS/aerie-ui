@@ -297,18 +297,18 @@
     }
   ]
 
-  async function deleteDerivationGroup(derivationGroup: DerivationGroup) {
+  function deleteDerivationGroup(derivationGroup: DerivationGroup) {
     // Makes sure all associated sources are deleted before this. List of sources already contained in DerivationGroup type.
-    await showDeleteDerivationGroupModal(derivationGroup, user);
+    showDeleteDerivationGroupModal(derivationGroup, user);
   }
 
-  async function deleteExternalSourceType(sourceType: ExternalSourceType) {
+  function deleteExternalSourceType(sourceType: ExternalSourceType) {
     let associatedDerivationGroups = $derivationGroups.filter(
       derivationGroup => derivationGroup.source_type_name === sourceType.name,
     );
 
     // makes sure all associated derivation groups are deleted before this
-    await showDeleteExternalEventSourceTypeModal(
+    showDeleteExternalEventSourceTypeModal(
       sourceType,
       'External Source Type',
       associatedDerivationGroups.map(derivationGroup => derivationGroup.name),
@@ -316,7 +316,7 @@
     );
   }
 
-  async function deleteExternalEventType(eventType: ExternalEventType) {
+  function deleteExternalEventType(eventType: ExternalEventType) {
     const associatedDerivationGroups: DerivationGroup[] = getAssociatedDerivationGroupsByEventType(eventType.name);
     const associatedExternalSourceNames: string[] = associatedDerivationGroups.flatMap(derivationGroup =>
       Array.from(derivationGroup.sources.keys()),
@@ -325,7 +325,7 @@
     // makes sure all associated sources (and therefore events, as orphans are not possible) are deleted before this
     // NOTE: does not update in derivation_group_comp after removing a EE type; derivation_group_comp defaults to 0 event types after its last external source removed,
     //        as it has no awareness of external source type or paired events (as the latter don't even exist).
-    await showDeleteExternalEventSourceTypeModal(eventType, 'External Event Type', associatedExternalSourceNames, user);
+    showDeleteExternalEventSourceTypeModal(eventType, 'External Event Type', associatedExternalSourceNames, user);
   }
 
   function getAssociatedExternalSourcesBySourceType(sourceType: string | undefined) {
@@ -442,11 +442,11 @@
               {#each selectedDerivationGroupSources as source}
                 <!-- Collapsible details -->
                 <Collapse title={source.key} tooltipContent={source.key} defaultExpanded={false}>
-                  <span slot="right">
+                  <svelte:fragment slot="right">
                     <p class="st-typography-body derived-event-count">
                       {selectedDerivationGroup.sources.get(source.key)?.event_counts} events
                     </p>
-                  </span>
+                  </svelte:fragment>
                   <div class="st-typography-body">
                     <div class="st-typography-bold">Key:</div>
                     {source.key}
@@ -510,11 +510,11 @@
                   tooltipContent={associatedDerivationGroup.name}
                   defaultExpanded={false}
                 >
-                  <span slot="right">
+                  <svelte:fragment slot="right">
                     <p class="st-typography-body derived-event-count">
                       {associatedDerivationGroup.derived_event_total} events
                     </p>
-                  </span>
+                  </svelte:fragment>
                   <div>
                     <div class="st-typography-bold">Name:</div>
                     {associatedDerivationGroup.name}
@@ -568,11 +568,11 @@
                   tooltipContent={associatedDerivationGroup.name}
                   defaultExpanded={false}
                 >
-                  <span slot="right">
+                  <svelte:fragment slot="right">
                     <p class="st-typography-body derived-event-count">
                       {associatedDerivationGroup.derived_event_total} events
                     </p>
-                  </span>
+                  </svelte:fragment>
                   <div class="st-typography-body">
                     <div class="st-typography-bold">Name:</div>
                     {associatedDerivationGroup.name}
