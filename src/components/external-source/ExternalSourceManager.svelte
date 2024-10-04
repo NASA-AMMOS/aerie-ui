@@ -3,8 +3,8 @@
 <script lang="ts">
   import { base } from '$app/paths';
   import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
-  import Balloon from 'bootstrap-icons/icons/balloon.svg?component';
-  import Truck from 'bootstrap-icons/icons/truck.svg?component';
+  import BalloonIcon from 'bootstrap-icons/icons/balloon.svg?component';
+  import TruckIcon from 'bootstrap-icons/icons/truck.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { catchError } from '../../stores/errors';
   import {
@@ -686,7 +686,7 @@
     <Panel padBody={true}>
       <svelte:fragment slot="header">
         <slot name="left">
-          <SectionTitle><Truck slot="icon" />External Sources</SectionTitle>
+          <SectionTitle><TruckIcon slot="icon" />External Sources</SectionTitle>
           <div class="filter">
             <div class="timeline-editor-layer-filter">
               <Input>
@@ -756,7 +756,7 @@
       <Panel padBody={true}>
         <svelte:fragment slot="header">
           <slot name="left">
-            <SectionTitle><Balloon slot="icon" />External Events</SectionTitle>
+            <SectionTitle><BalloonIcon slot="icon" />External Events</SectionTitle>
             <div class="filter">
               <div class="timeline-editor-layer-filter">
                 <Input>
