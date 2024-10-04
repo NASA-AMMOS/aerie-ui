@@ -40,9 +40,57 @@
 
   const modalColumnSizeNoDetail: string = '1fr 3px 0fr';
   const modalColumnSizeWithDetail: string = '3fr 3px 1.3fr';
+  const derivationGroupBaseColumnDefs: DataGridColumnDef<DerivationGroup>[] = [
+    {
+      field: 'name',
+      filter: 'string',
+      headerName: 'Derivation Group',
+      resizable: true,
+      sortable: true,
+      suppressAutoSize: false,
+      suppressSizeToFit: false,
+    },
+    {
+      field: 'source_type_name',
+      filter: 'string',
+      headerName: 'Source type',
+      resizable: true,
+      sortable: true,
+      suppressAutoSize: false,
+      suppressSizeToFit: false,
+    },
+    {
+      field: 'derived_event_total',
+      filter: 'number',
+      headerName: 'Derived Events in Derivation Group',
+      sortable: true,
+      suppressAutoSize: true,
+      suppressSizeToFit: true,
+      valueFormatter: params => {
+        return params?.value.length;
+      },
+      width: 250,
+    },
+    {
+      cellDataType: 'boolean',
+      editable: true,
+      headerName: 'Included in Plan',
+      resizable: false,
+      suppressAutoSize: true,
+      suppressSizeToFit: true,
+      valueGetter: (params: ValueGetterParams<DerivationGroup>) => {
+        const { data } = params;
+        if (data) {
+          return !!selectedDerivationGroups[data.name];
+        }
+        return false;
+      },
+      width: 115,
+    }
+  ]
 
   let dataGrid: DataGrid<DerivationGroup>;
-  let columnDefs: DataGridColumnDef<DerivationGroup>[] = [];
+  let derivationGroupColumnDefs: DataGridColumnDef<DerivationGroup>[] = derivationGroupBaseColumnDefs;
 
   let modalColumnSize: string = modalColumnSizeNoDetail;
 
@@ -88,85 +136,38 @@
     return includesName;
   });
 
-  $: {
-    columnDefs = [
-      {
-        field: 'name',
-        filter: 'string',
-        headerName: 'Derivation Group',
-        resizable: true,
-        sortable: true,
-        suppressAutoSize: false,
-        suppressSizeToFit: false,
-      },
-      {
-        field: 'source_type_name',
-        filter: 'string',
-        headerName: 'Source type',
-        resizable: true,
-        sortable: true,
-        suppressAutoSize: false,
-        suppressSizeToFit: false,
-      },
-      {
-        field: 'derived_event_total',
-        filter: 'number',
-        headerName: 'Derived Events in Derivation Group',
-        sortable: true,
-        suppressAutoSize: true,
-        suppressSizeToFit: true,
-        valueFormatter: params => {
-          return params?.value.length;
-        },
-        width: 250,
-      },
-      {
-        cellDataType: 'boolean',
-        editable: true,
-        headerName: 'Included in Plan',
-        resizable: false,
-        suppressAutoSize: true,
-        suppressSizeToFit: true,
-        valueGetter: (params: ValueGetterParams<DerivationGroup>) => {
-          const { data } = params;
-          if (data) {
-            return !!selectedDerivationGroups[data.name];
-          }
-          return false;
-        },
-        width: 115,
-      },
-      {
-        cellClass: 'action-cell-container',
-        cellRenderer: (params: DerivationGroupCellRendererParams) => {
-          const actionsDiv = document.createElement('div');
-          actionsDiv.className = 'actions-cell';
-          new DataGridActions({
-            props: {
-              rowData: params.data,
-              viewCallback: params.viewDerivationGroup,
-              viewTooltip: {
-                content: 'View Derivation Group',
-                placement: 'bottom',
-              },
+  $: derivationGroupColumnDefs = [
+    ...derivationGroupBaseColumnDefs,
+    {
+      cellClass: 'action-cell-container',
+      cellRenderer: (params: DerivationGroupCellRendererParams) => {
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'actions-cell';
+        new DataGridActions({
+          props: {
+            rowData: params.data,
+            viewCallback: params.viewDerivationGroup,
+            viewTooltip: {
+              content: 'View Derivation Group',
+              placement: 'bottom',
             },
-            target: actionsDiv,
-          });
+          },
+          target: actionsDiv,
+        });
 
-          return actionsDiv;
-        },
-        cellRendererParams: {
-          viewDerivationGroup,
-        } as CellRendererParams,
-        headerName: '',
-        resizable: false,
-        sortable: false,
-        suppressAutoSize: true,
-        suppressSizeToFit: true,
-        width: 40,
+        return actionsDiv;
       },
-    ];
-  }
+      cellRendererParams: {
+        viewDerivationGroup,
+      } as CellRendererParams,
+      headerName: '',
+      resizable: false,
+      sortable: false,
+      suppressAutoSize: true,
+      suppressSizeToFit: true,
+      width: 40,
+    },
+  ];
 
   $: if (selectedDerivationGroups) {
     dataGrid?.redrawRows();
@@ -196,7 +197,7 @@
     }
   }
 
-  async function onUpdateDerivationGroups(selectedDerivationGroups: Record<string, boolean>) {
+  function onUpdateDerivationGroups(selectedDerivationGroups: Record<string, boolean>) {
     if ($plan) {
       Object.entries(selectedDerivationGroups).forEach(selectedDerivationGroup => {
         const [derivationGroup, isClicked] = selectedDerivationGroup;
@@ -232,7 +233,7 @@
           {#if filteredDerivationGroups.length}
             <DataGrid
               bind:this={dataGrid}
-              {columnDefs}
+              columnDefs={derivationGroupColumnDefs}
               rowData={filteredDerivationGroups}
               getRowId={getDerivationGroupRowId}
               on:cellEditingStopped={onToggleDerivationGroup}
