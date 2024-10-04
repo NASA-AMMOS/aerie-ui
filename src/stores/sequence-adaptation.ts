@@ -12,12 +12,6 @@ const defaultAdaptation: ISequenceAdaptation = {
   argDelegator: undefined,
   autoComplete: sequenceCompletion,
   autoIndent: sequenceAutoIndent,
-  conditionalKeywords: {
-    else: 'CMD_ELSE',
-    elseIf: ['CMD_ELSE_IF'],
-    endIf: 'CMD_END_IF',
-    if: ['CMD_IF'],
-  },
   globals: [],
   inputFormat: {
     linter: undefined,
@@ -69,12 +63,6 @@ export function setSequenceAdaptation(newSequenceAdaptation: Partial<ISequenceAd
     argDelegator: newSequenceAdaptation?.argDelegator ?? defaultAdaptation.argDelegator,
     autoComplete: newSequenceAdaptation?.autoComplete ?? defaultAdaptation.autoComplete,
     autoIndent: newSequenceAdaptation?.autoIndent ?? defaultAdaptation.autoIndent,
-    conditionalKeywords: {
-      else: newSequenceAdaptation?.conditionalKeywords?.else ?? defaultAdaptation.conditionalKeywords.else,
-      elseIf: newSequenceAdaptation?.conditionalKeywords?.elseIf ?? defaultAdaptation.conditionalKeywords.elseIf,
-      endIf: newSequenceAdaptation?.conditionalKeywords?.endIf ?? defaultAdaptation.conditionalKeywords.endIf,
-      if: newSequenceAdaptation?.conditionalKeywords?.if ?? defaultAdaptation.conditionalKeywords.if,
-    },
     globals: newSequenceAdaptation?.globals ?? defaultAdaptation.globals,
     inputFormat: {
       linter: newSequenceAdaptation?.inputFormat?.linter ?? defaultAdaptation.inputFormat.linter,
