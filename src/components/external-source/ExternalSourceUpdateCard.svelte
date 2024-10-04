@@ -1,7 +1,7 @@
 <script lang="ts">
   // NOTE: this does NOT refresh/clear/reset if the database is cleared or restarted! So stuff from the old database just lingers around...to clear it, just press dismiss
 
-  import LightningCharge from 'bootstrap-icons/icons/lightning-charge.svg?component';
+  import LightningChargeIcon from 'bootstrap-icons/icons/lightning-charge.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { createEventDispatcher } from 'svelte';
   import type { UserSeenEntryWithDate } from '../../types/external-source';
@@ -35,7 +35,7 @@
   <div class="card-row card-title-row" class:card-background-deleted={deleted} class:card-background-added={!deleted}>
     <div class="card-title st-typography-medium">
       <div class:card-icon-deleted={deleted} class:card-icon-added={!deleted}>
-        <LightningCharge class="filter-search-icon" />
+        <LightningChargeIcon class="filter-search-icon" />
       </div>
       {#if sources.length === 1 && !deleted}
         1 new file has been uploaded
