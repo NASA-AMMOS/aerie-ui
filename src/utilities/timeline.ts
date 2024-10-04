@@ -30,6 +30,7 @@ import type {
   DiscreteTree,
   DiscreteTreeExpansionMap,
   DiscreteTreeNode,
+  DiscreteTreeNodeItem,
   ExternalEventLayer,
   ExternalEventOptions,
   HorizontalGuide,
@@ -1100,10 +1101,7 @@ export function generateDiscreteTreeUtil(
       expanded: getNodeExpanded('!!activity-agg', discreteTreeExpansionMap),
       id: '!!activity-agg',
       isLeaf: false,
-      items: activityNodes // TODO: optimize
-              .map(node => node.items)
-              .flat()
-              .filter((obj, index, self) => index === self.findIndex(o => o.directive?.id === obj.directive?.id)),
+      items: getUniqueNodeItems(activityNodes),
       label: 'Activities',
       type: 'Activity', // RowHeaderDiscreteTree does not seem to require any special treatment; so no special category for this top node
     };
@@ -1113,10 +1111,7 @@ export function generateDiscreteTreeUtil(
       expanded: getNodeExpanded('!!ex-ev-agg', discreteTreeExpansionMap),
       id: '!!ex-ev-agg',
       isLeaf: false,
-      items: externalEventNodes // TODO: optimize
-              .map(node => node.items)
-              .flat()
-              .filter((obj, index, self) => index === self.findIndex(o => o.externalEvent?.pkey === obj.externalEvent?.pkey)),
+      items: getUniqueNodeItems(externalEventNodes),
       label: 'External Events',
       type: 'ExternalEvent', // RowHeaderDiscreteTree does not seem to require any special treatment; so no special category for this top node
     };
@@ -1126,6 +1121,19 @@ export function generateDiscreteTreeUtil(
   } else {
     return externalEventNodes;
   }
+}
+
+function getUniqueNodeItems(nodes: DiscreteTreeNode[]) {
+  const uniqueLookup: Set<number> = new Set();
+  return nodes
+    .flatMap((node: DiscreteTreeNode) => node.items)
+    .reduce((flattendNodes: DiscreteTreeNodeItem[], nodeItem: DiscreteTreeNodeItem) => {
+      if (nodeItem.directive && !uniqueLookup.has(nodeItem.directive.id)) {
+        uniqueLookup.add(nodeItem.directive.id);
+        flattendNodes.push(nodeItem);
+      }
+      return flattendNodes;
+    }, []);
 }
 
 /**
