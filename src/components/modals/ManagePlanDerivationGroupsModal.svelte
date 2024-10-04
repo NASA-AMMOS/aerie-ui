@@ -3,7 +3,7 @@
 <script lang="ts">
   import { base } from '$app/paths';
   import type { CellEditingStoppedEvent, ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
-  import Truck from 'bootstrap-icons/icons/truck.svg?component';
+  import TruckIcon from 'bootstrap-icons/icons/truck.svg?component';
   import { createEventDispatcher } from 'svelte';
   import { derivationGroups, externalSources, selectedPlanDerivationGroupNames } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
@@ -86,8 +86,8 @@
         return false;
       },
       width: 115,
-    }
-  ]
+    },
+  ];
 
   let dataGrid: DataGrid<DerivationGroup>;
   let derivationGroupColumnDefs: DataGridColumnDef<DerivationGroup>[] = derivationGroupBaseColumnDefs;
@@ -189,7 +189,7 @@
       detail: { data, newValue },
     } = event;
 
-    if (data) {
+    if (data && newValue) {
       selectedDerivationGroups = {
         ...selectedDerivationGroups,
         [data.name]: newValue,
@@ -248,7 +248,7 @@
         <Panel borderRight padBody={true} overflowYBody="scroll">
           <svelte:fragment slot="header">
             <SectionTitle overflow="hidden">
-              <Truck slot="icon" />Sources in '{selectedDerivationGroup.name}'
+              <TruckIcon slot="icon" />Sources in '{selectedDerivationGroup.name}'
             </SectionTitle>
           </svelte:fragment>
           <svelte:fragment slot="body">
