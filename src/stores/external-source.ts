@@ -132,7 +132,7 @@ function transformDerivationGroups(
         name: derivationGroup.name,
         source_type_name: derivationGroup.source_type_name,
         sources: new Map(
-          // comes from view schema that is hardcoded as "{source_key}, {derivation_group_name}, {event_count}""
+          // comes from view schema that is hardcoded as "{source_key}, {derivation_group_name}, {event_count}"
           derivationGroup.sources
             .filter(source => source.charAt(0) !== ',' && source.length > 4)
             .map(source => [source.split(', ')[0], { event_counts: parseInt(source.split(', ')[2]) }]),
