@@ -92,17 +92,6 @@ jobs:
           docker compose -f docker-compose-test.yml up -d --quiet-pull
           docker images
           docker ps -a --no-trunc
-      - name: Cache E2E Test Modules
-        id: cache-npm
-        uses: actions/cache@v3
-        env:
-          cache-name: aerie-ui-node-cache
-        with:
-          path: ~/.npm
-          key: ${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-            ${{ env.cache-name }}-
       - name: Install Dependencies (UI)
         run: npm ci
       - name: Build (UI)
