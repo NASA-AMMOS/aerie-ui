@@ -5,7 +5,6 @@ let page: Page;
 let context: BrowserContext;
 let externalSources: ExternalSources;
 
-
 test.beforeAll(async ({ browser }) => {
   context = await browser.newContext();
   page = await context.newPage();
