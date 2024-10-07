@@ -16,12 +16,14 @@
 
   $: if (filters) {
     if (filters.length !== 1) {
-      verb =
-        chartType === 'activity' ? 'activities' : chartType === 'externalEvent' ? 'external event types' : 'resources';
-    } else {
-      verb = chartType === 'activity' ? 'activity' : chartType === 'externalEvent' ? 'external event type' : 'resource';
+      if (chartType === 'activity') {
+        verb = filters.length !== 1 ? 'activities' : 'activity';
+      } else if (chartType === 'externalEvent') {
+        verb = filters.length !== 1 ? 'external event types' : 'external event type';
+      } else {
+        verb = filters.length !== 1 ? 'resources' : 'resource';
+      }
     }
-
     if (showAll) {
       filtersToRender = filters;
     } else {
