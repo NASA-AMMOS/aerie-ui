@@ -96,6 +96,7 @@ import type {
 import type {
   DerivationGroup,
   DerivationGroupInsertInput,
+  ExternalSourceDB,
   ExternalSourceInsertInput,
   ExternalSourcePkey,
   ExternalSourceSlim,
@@ -233,7 +234,7 @@ import {
   showPlanBranchRequestModal,
   showRestorePlanSnapshotModal,
   showUploadViewModal,
-  showWorkspaceModal
+  showWorkspaceModal,
 } from './modal';
 import { gatewayPermissions, queryPermissions } from './permissions';
 import { reqExtension, reqGateway, reqHasura } from './requests';
@@ -863,7 +864,7 @@ const effects = {
       creatingExternalEventType.set(true);
       createExternalEventTypeError.set(null);
       if (eventType) {
-        const { createExternalEventType: created } = await reqHasura<any>(
+        const { createExternalEventType: created } = await reqHasura<ExternalEventType>(
           gql.CREATE_EXTERNAL_EVENT_TYPE,
           { eventType },
           user,
@@ -3803,7 +3804,7 @@ const effects = {
   ): Promise<Record<string, any>> {
     try {
       getExternalSourceMetadataError.set(null);
-      const data = await reqHasura<any>(
+      const data = await reqHasura<ExternalSourceDB['metadata']>(
         gql.GET_EXTERNAL_SOURCE_METADATA,
         { derivationGroupName: externalSourceDerivationGroup, sourceKey: externalSourceKey },
         user,
