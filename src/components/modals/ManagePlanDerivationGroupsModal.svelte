@@ -186,7 +186,6 @@
   }
 
   function onToggleDerivationGroup(event: CustomEvent<CellEditingStoppedEvent<DerivationGroup, boolean>>) {
-    console.log('HERE TOGGLE!');
     const {
       detail: { data, newValue },
     } = event;
