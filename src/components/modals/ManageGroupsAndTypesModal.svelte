@@ -362,7 +362,7 @@
     const derivationGroup = $derivationGroups.find(
       derivationGroup => derivationGroup.name === viewedDerivationGroup.name,
     );
-    if (selectedDerivationGroup === undefined || selectedDerivationGroup !== derivationGroup) {
+    if ((selectedDerivationGroup === undefined && derivationGroup !== undefined) || selectedDerivationGroup !== derivationGroup) {
       selectedDerivationGroup = derivationGroup;
       selectedExternalSourceType = undefined;
       selectedExternalEventType = undefined;
