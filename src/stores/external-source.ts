@@ -132,10 +132,26 @@ function transformDerivationGroups(
         name: derivationGroup.name,
         source_type_name: derivationGroup.source_type_name,
         sources: new Map(
-          // comes from view schema that is hardcoded as "{source_key}, {derivation_group_name}, {event_count}"
-          derivationGroup.sources
-            .filter(source => source.charAt(0) !== ',' && source.length > 4)
-            .map(source => [source.split(', ')[0], { event_counts: parseInt(source.split(', ')[2]) }]),
+          derivationGroup.sources.reduce(
+            (currentSourcesMap: [string, { event_counts: number }][], source: string) => {
+              // regex to match strings of the form "source_key, derivation_group_name, event_count", and ignore empty entries for empty
+              //    derivation groups, like ", , "
+              const matches = source.match(
+                /(?<source_key>[^,]+)\s*,\s*(?<derivation_group_name>[^,]+)\s*,\s*(?<event_count>[^,]+)\s*/,
+              );
+        
+              if (matches) {
+                const { groups: { event_count, source_key } = {} } = matches;
+        
+                return [
+                  ...currentSourcesMap,
+                  [source_key, { event_counts: parseInt(event_count) }] as [string, { event_counts: number }],
+                ];
+              }
+              return currentSourcesMap;
+            },
+            [],
+          ),
         ),
       });
     });
