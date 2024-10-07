@@ -88,6 +88,7 @@ import type {
 import type { Extension, ExtensionPayload } from '../types/extension';
 import type {
   ExternalEvent,
+  ExternalEventDB,
   ExternalEventInsertInput,
   ExternalEventJson,
   ExternalEventType,
@@ -3698,12 +3699,23 @@ const effects = {
 
   async getExternalEventTypes(plan_id: number, user: User | null): Promise<ExternalEventType[]> {
     try {
-      const sourceData = await reqHasura<any>(gql.GET_PLAN_EVENT_TYPES, { plan_id }, user);
+      const sourceData = await reqHasura<{
+        derivation_group: {
+          external_source: {
+            external_events: {
+              external_event_type: {
+                name: string
+              }
+            }[]
+          }[]
+        }
+      }[]>(gql.GET_PLAN_EVENT_TYPES, { plan_id }, user);
+      console.log(sourceData)
       const types: ExternalEventType[] = [];
       if (sourceData?.plan_derivation_group !== null) {
-        for (const group of sourceData['plan_derivation_group']) {
-          for (const source of group['derivation_group']['external_source']) {
-            for (const event of source['external_events']) {
+        for (const group of sourceData.plan_derivation_group) {
+          for (const source of group.derivation_group.external_source) {
+            for (const event of source.external_events) {
               if (types.flatMap(et => et.name).includes(event.external_event_type.name) === false) {
                 types.push(event.external_event_type);
               }
@@ -3728,7 +3740,13 @@ const effects = {
     user: User | null,
   ): Promise<string[]> {
     try {
-      const data = await reqHasura<any>(
+      const data = await reqHasura<{
+        external_events: {
+          external_event_type: {
+            name: string
+          }
+        }[]
+      }[]>(
         gql.GET_EXTERNAL_EVENT_TYPE_BY_SOURCE,
         { derivationGroupName: externalSourceDerivationGroup, sourceKey: externalSourceKey },
         user,
@@ -3759,7 +3777,7 @@ const effects = {
       return [];
     }
     try {
-      const data = await reqHasura<any>(
+      const data = await reqHasura<ExternalEventDB[]>(
         gql.GET_EXTERNAL_EVENTS,
         { derivationGroupName: externalSourceDerivationGroup, sourceKey: externalSourceKey },
         user,
