@@ -189,24 +189,19 @@
     const {
       detail: { data, newValue },
     } = event;
-    console.log(data, newValue);
 
     if (data && newValue !== null && newValue !== undefined) {
       selectedDerivationGroups = {
         ...selectedDerivationGroups,
         [data.name]: newValue,
       };
-      console.log(selectedDerivationGroups);
     }
   }
 
   function onUpdateDerivationGroups(selectedDerivationGroups: Record<string, boolean>) {
-    console.log('HERE!');
     if ($plan) {
-      console.log(selectedDerivationGroups);
       Object.entries(selectedDerivationGroups).forEach(selectedDerivationGroup => {
         const [derivationGroup, isClicked] = selectedDerivationGroup;
-        console.log(derivationGroup, isClicked);
         if (isClicked) {
           effects.insertDerivationGroupForPlan(derivationGroup, $plan, user);
         } else {
