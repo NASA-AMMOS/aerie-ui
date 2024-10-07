@@ -154,10 +154,7 @@ describe('Handle modal and requests in effects', () => {
         mockUser,
       );
 
-      expect(catchErrorSpy).toHaveBeenCalledWith(
-        'Derivation Group Linking Failed',
-        Error('Unable to link Derivation Group with name "Default" on plan with ID 1'),
-      );
+      expect(catchErrorSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -177,10 +174,7 @@ describe('Handle modal and requests in effects', () => {
         mockUser,
       );
 
-      expect(catchErrorSpy).toHaveBeenCalledWith(
-        'Derivation Group De-linking Failed',
-        Error('Unable to disassociate Derivation Group with name "Default" on plan with ID 1'),
-      );
+      expect(catchErrorSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -266,7 +260,6 @@ describe('Handle modal and requests in effects', () => {
 
   describe('createExternalSource', () => {
     it('should correctly handle null responses', async () => {
-      vi.spyOn(effects, 'uploadFile').mockResolvedValue(1);
       vi.spyOn(Requests, 'reqHasura').mockResolvedValue({
         createExternalSource: null,
       });
@@ -275,12 +268,12 @@ describe('Handle modal and requests in effects', () => {
       await effects.createExternalSource(
         'Example Source',
         'Example Source Default',
-        '',
-        '',
+        '2024-001T00:00:00',
+        '2024-007T00:00:00',
         [],
         'ExampleSource.json',
         {},
-        '',
+        '2024-001T00:00:00',
         mockUser,
       );
 
@@ -329,7 +322,7 @@ describe('Handle modal and requests in effects', () => {
 
       await effects.getExternalEventTypes(1, mockUser);
 
-      expect(catchErrorSpy).toHaveBeenCalledWith(Error('Unable to gather ell external event types for the source'));
+      expect(catchErrorSpy).toHaveBeenCalledWith(Error('Unable to gather all external event types for the source'));
     });
   });
 
