@@ -73,6 +73,7 @@
     },
     {
       cellDataType: 'boolean',
+      colId: 'selected',
       editable: true,
       headerName: 'Included in Plan',
       resizable: false,
@@ -117,7 +118,7 @@
     //    which we don't seek to do.
     // this does mean every update to any entry in selectedPlanDerivationGroupIds refreshes the whole column. Also a
     //    small delay, which buffers button smashing and repeated updates pretty well!
-    dataGrid.refreshCells({ columns: ['Included in Plan'] });
+    dataGrid.refreshCells({ columns: ['selected'] });
   }
 
   $: if (selectedDerivationGroup !== undefined) {
