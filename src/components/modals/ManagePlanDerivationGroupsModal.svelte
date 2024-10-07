@@ -117,7 +117,7 @@
     //    which we don't seek to do.
     // this does mean every update to any entry in selectedPlanDerivationGroupIds refreshes the whole column. Also a
     //    small delay, which buffers button smashing and repeated updates pretty well!
-    dataGrid.refreshCells();
+    dataGrid.refreshCells({ columns: ['Included in Plan'] });
   }
 
   $: if (selectedDerivationGroup !== undefined) {
@@ -185,22 +185,28 @@
   }
 
   function onToggleDerivationGroup(event: CustomEvent<CellEditingStoppedEvent<DerivationGroup, boolean>>) {
+    console.log('HERE TOGGLE!');
     const {
       detail: { data, newValue },
     } = event;
+    console.log(data, newValue);
 
-    if (data && newValue) {
+    if (data && newValue !== null && newValue !== undefined) {
       selectedDerivationGroups = {
         ...selectedDerivationGroups,
         [data.name]: newValue,
       };
+      console.log(selectedDerivationGroups);
     }
   }
 
   function onUpdateDerivationGroups(selectedDerivationGroups: Record<string, boolean>) {
+    console.log('HERE!');
     if ($plan) {
+      console.log(selectedDerivationGroups);
       Object.entries(selectedDerivationGroups).forEach(selectedDerivationGroup => {
         const [derivationGroup, isClicked] = selectedDerivationGroup;
+        console.log(derivationGroup, isClicked);
         if (isClicked) {
           effects.insertDerivationGroupForPlan(derivationGroup, $plan, user);
         } else {
