@@ -2,6 +2,7 @@
 
 <script lang="ts">
   import CloseIcon from '@nasa-jpl/stellar/icons/close.svg?component';
+  import UploadIcon from '@nasa-jpl/stellar/icons/upload.svg?component';
   import { plan } from '../stores/plan';
   import { resourceTypes, simulationDatasetId } from '../stores/simulation';
   import type { User } from '../types/app';
@@ -10,8 +11,10 @@
   import effects from '../utilities/effects';
   import { permissionHandler } from '../utilities/permissionHandler';
   import { featurePermissions } from '../utilities/permissions';
+  import { tooltip } from '../utilities/tooltip';
   import ResourceListPrefix from './ResourceListPrefix.svelte';
   import TimelineItemList from './TimelineItemList.svelte';
+  import Input from './form/Input.svelte';
 
   export let user: User | null;
 
@@ -71,8 +74,8 @@
     <button class="close-upload" type="button" on:click={onHideUpload}>
       <CloseIcon />
     </button>
-    <div class="upload-rows">
-      <label for="file">Resources File</label>
+    <Input layout="stacked">
+      <label for="file">Resource File</label>
       <input
         class="w-100"
         name="file"
@@ -85,6 +88,8 @@
           permissionError: uploadPermissionError,
         }}
       />
+    </Input>
+    <div class="use-simulation">
       <label class="st-typography-body timeline-item-list-filter-option-label" for="simulation-association">
         Use selected simulation
       </label>
@@ -117,8 +122,9 @@
         hasPermission: hasUploadPermission,
         permissionError: uploadPermissionError,
       }}
+      use:tooltip={{ content: 'Upload Resources' }}
     >
-      Upload Resources
+      <UploadIcon />
     </button>
   </div>
   <ResourceListPrefix {item} />
@@ -137,28 +143,24 @@
     display: none;
   }
 
-  .upload-container :global(.upload-rows) {
+  .upload-container {
+    display: grid;
+    row-gap: 8px;
+  }
+
+  .upload-container .use-simulation {
     column-gap: 8px;
     display: grid;
     grid-template-columns: max-content auto;
     justify-content: space-between;
-    row-gap: 8px;
-  }
-
-  .st-button {
-    gap: 4px;
-    height: 20px;
-  }
-
-  .upload-container :global(.simulation-checkbox) {
     justify-self: left;
     margin: 0;
+    width: 100%;
   }
 
   .upload-container :global(.upload-button-container) {
     display: flex;
     flex-flow: row-reverse;
-    margin-top: 8px;
   }
 
   .upload-container :global(.close-upload) {

@@ -146,7 +146,7 @@
       autocomplete="off"
       placeholder="Filter {typeName} types"
     />
-    <div style="position: relative">
+    <div class="filter-buttons">
       <button
         class="st-button secondary menu-button"
         style="position: relative; z-index: 1"
@@ -187,6 +187,7 @@
         </div>
       </Menu>
     </div>
+    <slot name="button" />
   </div>
 
   <div class="controls">
@@ -194,10 +195,7 @@
     <div class="controls-header st-typography-medium">
       <div>{typeNamePlural} ({filteredItems.length})</div>
       <div>
-        <div class="buttons">
-          <slot name="button" />
-          <button class="st-button secondary" on:click={onBulkAddToRow}> Add Filter to Row </button>
-        </div>
+        <button class="st-button secondary" on:click={onBulkAddToRow}> Add Filter to Row </button>
         <LayerPicker
           bind:this={layerPicker}
           rows={timelines[0]?.rows || []}
@@ -399,14 +397,9 @@
     flex: 1;
   }
 
-  .controls-header .buttons {
+  .filter-buttons {
     display: flex;
     gap: 4px;
-  }
-
-  .controls-header .buttons .st-button {
-    gap: 4px;
-    height: 20px;
   }
 
   .list-items {
