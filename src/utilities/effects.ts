@@ -3713,7 +3713,7 @@ const effects = {
           }
         }
       } else {
-        throw Error('Unable to gather ell external event types for the source');
+        throw Error('Unable to gather all external event types for the source');
       }
 
       return types;
