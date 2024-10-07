@@ -43,7 +43,7 @@ import type {
   Timeline,
   VerticalGuide,
   XRangeLayer,
-  XRangeLayerColorScheme
+  XRangeLayerColorScheme,
 } from '../types/timeline';
 import { generateRandomPastelColor } from './color';
 import { getExternalEventRowId } from './externalEvents';
@@ -1134,12 +1134,13 @@ function getUniqueNodeItems(nodes: DiscreteTreeNode[]) {
       if (nodeItem.directive && !uniqueDirectiveLookup.has(nodeItem.directive.id)) {
         uniqueDirectiveLookup.add(nodeItem.directive.id);
         flattenedNodes.push(nodeItem);
-      }
-      else if (nodeItem.span && !uniqueSpanLookup.has(nodeItem.span.span_id)) {
+      } else if (nodeItem.span && !uniqueSpanLookup.has(nodeItem.span.span_id)) {
         uniqueSpanLookup.add(nodeItem.span.span_id);
         flattenedNodes.push(nodeItem);
-      }
-      else if (nodeItem.externalEvent && !uniqueExternalEventLookup.has(getExternalEventRowId(nodeItem.externalEvent.pkey))) {
+      } else if (
+        nodeItem.externalEvent &&
+        !uniqueExternalEventLookup.has(getExternalEventRowId(nodeItem.externalEvent.pkey))
+      ) {
         uniqueExternalEventLookup.add(getExternalEventRowId(nodeItem.externalEvent.pkey));
         flattenedNodes.push(nodeItem);
       }

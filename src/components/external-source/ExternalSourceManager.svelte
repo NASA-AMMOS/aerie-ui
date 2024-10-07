@@ -301,7 +301,11 @@
 
   async function onDeleteExternalSource(selectedSources: ExternalSourceSlim[] | null | undefined) {
     if (selectedSources !== null && selectedSources !== undefined) {
-      const deleteExternalSourceResult = await effects.deleteExternalSource(selectedSources, $planDerivationGroupLinks, user);
+      const deleteExternalSourceResult = await effects.deleteExternalSource(
+        selectedSources,
+        $planDerivationGroupLinks,
+        user,
+      );
       if (deleteExternalSourceResult !== undefined && deleteExternalSourceResult !== null) {
         selectedSources = null;
         selectedSource = null;
