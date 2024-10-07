@@ -19,7 +19,7 @@
   import TimelineEditorLayerSettings from './TimelineEditorLayerSettings.svelte';
 
   export let layer: Layer;
-  export let layerColor: string | undefined; // needs its own prop as updating it in layer doesn't propagate here
+  // export let layerColor: string | undefined; // needs its own prop as updating it in layer doesn't propagate here
   export let yAxes: Axis[];
 
   const dispatch = createEventDispatcher<{
@@ -107,27 +107,27 @@
       <ColorPresetsPicker
         presetColors={ViewDiscreteLayerColorPresets}
         tooltipText="Layer Color"
-        value={layerColor}
+        value={layer.activityColor}
         on:input={event => dispatch('handleUpdateLayerColor', { value: event.detail.value })}
       />
     {:else if isLineLayer(layer)}
       <ColorPresetsPicker
         presetColors={ViewLineLayerColorPresets}
         tooltipText="Layer Color"
-        value={layerColor}
+        value={layer.lineColor}
         on:input={event => dispatch('handleUpdateLayerColor', { value: event.detail.value })}
       />
     {:else if isXRangeLayer(layer)}
       <ColorSchemePicker
         layout="compact"
-        value={layerColor}
+        value={layer.colorScheme}
         on:input={event => dispatch('handleUpdateLayerColorScheme', { value: event.detail.value })}
       />
     {:else if isExternalEventLayer(layer)}
       <ColorPresetsPicker
         presetColors={ViewDiscreteLayerColorPresets}
         tooltipText="Layer Color"
-        value={layerColor}
+        value={layer.externalEventColor}
         on:input={event => dispatch('handleUpdateLayerColor', { value: event.detail.value })}
       />
     {/if}
