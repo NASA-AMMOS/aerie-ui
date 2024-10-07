@@ -404,10 +404,7 @@
     overlaySvgSelection.call(zoom.transform, timelineZoomTransform);
   }
 
-  $: if (
-    (activityLayers && spansMap && activityDirectives && typeof filterItemsByTime === 'boolean') ||
-    hasExternalEventsLayer
-  ) {
+  $: if ((activityLayers && spansMap && activityDirectives) || hasExternalEventsLayer) {
     discreteTree = [];
     let updatedIdToColorMaps: {
       directives: Record<ActivityDirectiveId, string>;
@@ -418,7 +415,7 @@
       external_events: { ...idToColorMaps.external_events },
       spans: { ...idToColorMaps.spans },
     };
-    if (activityLayers && spansMap && activityDirectives && typeof filterItemsByTime === 'boolean') {
+    if (activityLayers && spansMap && activityDirectives) {
       let spansList = Object.values(spansMap);
       const directivesByType = groupBy(activityDirectives, 'type');
       const spansByType = groupBy(spansList, 'type');
