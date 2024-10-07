@@ -1054,7 +1054,7 @@ export function generateDiscreteTreeUtil(
   const externalEventNodes: DiscreteTreeNode[] = [];
   if (hasExternalEventsLayer) {
     if (Object.keys(groupedExternalEvents).length !== 0) {
-      const allKeys = new Set(Object.keys(groupedExternalEvents));
+      const allKeys = Object.keys(groupedExternalEvents);
       // Iterate through all groups - either external event types, external source types, or external sources
       Array.from(allKeys)
         .sort()
