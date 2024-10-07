@@ -167,9 +167,7 @@
       {/each}
     {:else}
       <div class="st-typography-body">
-        <p class="no-derivation-groups-linked">
-          No Derivation Groups Linked To This Plan
-        </p>
+        <p class="no-derivation-groups-linked">No Derivation Groups Linked To This Plan</p>
       </div>
       <div class="st-typography-body">
         <p>

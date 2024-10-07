@@ -26,7 +26,14 @@
   } from '../../stores/views';
   import type { ActivityDirectiveId } from '../../types/activity';
   import type { User } from '../../types/app';
-  import type { ActivityOptions, Axis, MouseDown, MouseOver, Row, Timeline as TimelineType } from '../../types/timeline';
+  import type {
+    ActivityOptions,
+    Axis,
+    MouseDown,
+    MouseOver,
+    Row,
+    Timeline as TimelineType,
+  } from '../../types/timeline';
   import effects from '../../utilities/effects';
   import { getExternalEventRowId } from '../../utilities/externalEvents';
   import { featurePermissions } from '../../utilities/permissions';

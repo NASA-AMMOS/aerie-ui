@@ -164,11 +164,11 @@ describe('Generic utility function tests', () => {
     });
 
     test('Should not make a list of objects unique', () => {
-      const base = [{'a': 1}, {'a': 3}, {'a': 1}];
+      const base = [{ a: 1 }, { a: 3 }, { a: 1 }];
       const uniqued = unique(base);
-      expect(uniqued).toEqual([{'a': 1}, {'a': 3}, {'a': 1}]);
-    })
-  })
+      expect(uniqued).toEqual([{ a: 1 }, { a: 3 }, { a: 1 }]);
+    });
+  });
 
   describe('parseJSONStream', () => {
     test('Should be able to parse a really long JSON string', async () => {
