@@ -17,7 +17,7 @@
 
   function onMouseMove(event: MouseEvent): void {
     const dy = event.clientY - dragElement.getBoundingClientRect().y;
-    let newHeight = Math.max(rowHeight + dy, ViewConstants.MIN_ROW_HEIGHT);
+    const newHeight = Math.max(rowHeight + dy, ViewConstants.MIN_ROW_HEIGHT);
 
     if (newHeight !== previousHeight) {
       dispatch('updateRowHeight', { newHeight });
