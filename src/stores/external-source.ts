@@ -57,16 +57,23 @@ export const selectedPlanDerivationGroupNames: Readable<string[]> = derived(
 export const selectedPlanDerivationGroupEventTypes: Readable<string[]> = derived(
   [derivationGroups, selectedPlanDerivationGroupNames],
   ([$derivationGroups, $selectedPlanDerivationGroupIds]) => {
-    return $derivationGroups
-      .filter(derivationGroup => $selectedPlanDerivationGroupIds.includes(derivationGroup.name))
-      .map(derivationGroup => derivationGroup.event_types)
-      .reduce((acc, curr) => acc.concat(curr), []);
+    const filteredDerivationGroups = $derivationGroups.filter(derivationGroup =>
+      $selectedPlanDerivationGroupIds.includes(derivationGroup.name),
+    );
+    if (filteredDerivationGroups !== undefined) {
+      return filteredDerivationGroups.reduce(
+        (acc: string[], derivationGroup) => acc.concat(derivationGroup.event_types),
+        [],
+      );
+    } else {
+      return [];
+    }
   },
 );
 export const usersSeenSources: Readable<Record<string, UserSeenEntryWithDate[]>> = derived(
   [usersSeenSourcesRaw, externalSources],
   ([$usersSeenSourcesRaw, $externalSources]) => {
-    const res: Record<string, UserSeenEntryWithDate[]> = {};
+    const seenSources: Record<string, UserSeenEntryWithDate[]> = {};
     for (const entry of $usersSeenSourcesRaw) {
       const change_date =
         $externalSources.find(
@@ -74,15 +81,15 @@ export const usersSeenSources: Readable<Record<string, UserSeenEntryWithDate[]>>
             externalSource.derivation_group_name === entry.derivation_group &&
             externalSource.key === entry.external_source_name,
         )?.created_at ?? '';
-      if (res[entry.username]) {
-        res[entry.username].push({
+      if (seenSources[entry.username]) {
+        seenSources[entry.username].push({
           change_date,
           derivation_group_name: entry.derivation_group,
           key: entry.external_source_name,
           source_type_name: entry.external_source_type,
         });
       } else {
-        res[entry.username] = [
+        seenSources[entry.username] = [
           {
             change_date,
             derivation_group_name: entry.derivation_group,
@@ -92,7 +99,7 @@ export const usersSeenSources: Readable<Record<string, UserSeenEntryWithDate[]>>
         ];
       }
     }
-    return res;
+    return seenSources;
   },
 );
 
