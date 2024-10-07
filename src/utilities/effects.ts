@@ -997,8 +997,6 @@ const effects = {
       externalSourceInsert.external_events.data = externalEventsCreated;
       externalEventsCreated = [];
 
-      // TODO - I think ExternalSourceDB needs to drop pkey in favor of key/derivation_group_name...
-
       const { createExternalSource: createExternalSourceResponse } = await reqHasura(
         gql.CREATE_EXTERNAL_SOURCE,
         {
