@@ -1808,8 +1808,8 @@ const gql = {
   GET_PLAN_EVENT_TYPES: `#graphql
     query GetPlanEventTypes($plan_id: Int!){
       ${Queries.PLAN_DERIVATION_GROUP}(where: {plan_id: {_eq: $plan_id}}) {
-        ${Queries.DERIVATION_GROUP} {
-          ${Queries.EXTERNAL_SOURCES} {
+        derivation_group: {
+          external_source: {
             external_events {
               external_event_type {
                 name
@@ -2813,7 +2813,7 @@ const gql = {
   SUB_PLAN_EXTERNAL_EVENTS_DERIVATION_GROUP: `#graphql
     subscription SubPlanExternalEventsDerivationGroup($derivation_group_names: [String!]!){
       events: ${Queries.DERIVED_EVENTS}(where: {derivation_group_name: {_in: $derivation_group_names}}) {
-        ${Queries.EXTERNAL_EVENT} {
+        external_event {
           properties
           event_type_name
           key
