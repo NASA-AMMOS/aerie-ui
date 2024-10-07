@@ -607,7 +607,14 @@ export function getUpdatedLayerWithFilters(
     }
   } else {
     // Otherwise augment the filter of the specified layer
-    const prop = type === 'activity' ? 'types' : type === 'externalEvent' ? 'event_types' : 'names';
+    let prop: string = '';
+    if (type === 'activity') {
+      prop = 'types';
+    } else if (type === 'externalEvent') {
+      prop = 'event_types';
+    } else {
+      prop = 'names';
+    }
     const typedType = type as 'activity' | 'resource' | 'externalEvent';
     const existingFilter = layer.filter[typedType];
     let existingFilterItems: string[] = [];
