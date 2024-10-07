@@ -498,11 +498,6 @@
                               "externalEventColor": {
                                 "$ref": "#/definitions/color"
                               },
-                              "externalEventHeight": {
-                                "description": "Height of each external event",
-                                "type": "number",
-                                "$comment": "deprecated"
-                              },
                               "chartType": {
                                 "const": "externalEvent",
                                 "description": "Layer that visualizes external events"
