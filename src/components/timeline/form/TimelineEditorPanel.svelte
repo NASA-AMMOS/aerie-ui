@@ -415,11 +415,11 @@
     const newLayers = layers.map(l => {
       if (layer.id === l.id) {
         if (isActivityLayer(l)) {
-          (l as ActivityLayer).activityColor = value as string;
+          return { ...l, activityColor: value };
         } else if (isExternalEventLayer(l)) {
-          (l as ExternalEventLayer).externalEventColor = value as string;
+          return { ...l, externalEventColor: value };
         } else if (l.chartType === 'line') {
-          (l as LineLayer).lineColor = value as string;
+          return { ...l, lineColor: value };
         }
       }
       return l;
@@ -475,19 +475,6 @@
     }
     el.style.background = 'var(--st-gray-10)';
     el.classList.add('timeline-element-dragging');
-  }
-
-  function getColorForLayer(layer: Layer) {
-    if (isActivityLayer(layer)) {
-      layer.activityColor;
-      return layer.activityColor;
-    } else if (isExternalEventLayer(layer)) {
-      return layer.externalEventColor;
-    } else if (isLineLayer(layer)) {
-      return layer.lineColor;
-    } else if (isXRangeLayer(layer)) {
-      return layer.colorScheme;
-    }
   }
 
   onMount(() => {
@@ -1218,7 +1205,6 @@
                   on:handleUpdateLayerColorScheme={event => handleUpdateLayerColorScheme(event.detail.value, layer)}
                   on:handleDeleteLayerClick={() => handleDeleteLayerClick(layer)}
                   {layer}
-                  layerColor={getColorForLayer(layer)}
                   {yAxes}
                 />
               {/each}
