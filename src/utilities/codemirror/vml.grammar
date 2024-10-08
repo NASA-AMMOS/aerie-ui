@@ -201,10 +201,8 @@ Parameter {
 }
 
 Optional_default_input_value {
-  (
-    ASSIGNMENT
-    Constant
-  )
+  ASSIGNMENT
+  Constant
 }
 
 Optional_value_list {
@@ -267,7 +265,8 @@ Data_kind {
 
 Constant {
   INT_CONST
-  | (UINT_CONST | HEX_CONST)
+  | UINT_CONST
+  | HEX_CONST
   | DOUBLE_CONST
   | STRING_CONST
   | UNKNOWN_CONST

@@ -1,6 +1,8 @@
 import type { SyntaxNode } from '@lezer/common';
+import type { FswCommandArgumentInteger } from '@nasa-jpl/aerie-ampcs';
 import { assert, describe, expect, it } from 'vitest';
 import { VmlLanguage } from './vml';
+import { vmlBlockLibraryToCommandDictionary } from './vml-block-library';
 import {
   RULE_BLOCK,
   RULE_COMMON_FUNCTION,
@@ -274,6 +276,38 @@ END_MODULE`;
     const block0Name = nodeContents(input, blockNameNode!);
     expect(block0Name).toEqual('block1');
   });
+
+  it('block library parsing', () => {
+    const input = `MODULE
+    BLOCK block1
+        INPUT arg1
+    BODY
+    END_BODY
+
+    BLOCK block2
+        INPUT STRING arg1 ; arg1 if block library includes parameter descriptions as comments
+        INPUT INT arg2 := 32 VALUES 0..127 ; arg2 if block library includes parameter descriptions as comments
+    BODY
+    END_BODY
+
+    END_MODULE`;
+
+    const commandDictionary = vmlBlockLibraryToCommandDictionary(input, 'id', '/test');
+    expect(commandDictionary.fswCommands.length).toBe(2);
+
+    expect(commandDictionary.fswCommands[0].stem).toBe('block1');
+
+    expect(commandDictionary.fswCommands[1].stem).toBe('block2');
+    expect(commandDictionary.fswCommands[1].arguments[0].description).toBe(
+      '[INPUT] arg1 if block library includes parameter descriptions as comments',
+    );
+
+    const cmd2arg2 = commandDictionary.fswCommands[1].arguments[1] as FswCommandArgumentInteger;
+    expect(cmd2arg2.name).toBe('arg2');
+    expect(cmd2arg2.default_value).toBe(32);
+    expect(cmd2arg2.range?.min).toBe(0);
+    expect(cmd2arg2.range?.max).toBe(127);
+  });
 });
 
 function wrapInModule(s: string) {
@@ -287,7 +321,6 @@ END_MODULE
   `;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function assertNoErrorNodes(input: string, printPrefix?: boolean) {
   const cursor = VmlLanguage.parser.parse(input).cursor();
   do {
@@ -306,12 +339,10 @@ function nodeContents(input: string, node: SyntaxNode) {
   return input.substring(node.from, node.to);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function printNode(input: string, node: SyntaxNode) {
   console.log(`${node.type.name}[${node.from}.${node.to}] --> '${nodeContents(input, node)}'`);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function printNodes(input: string, filter?: (name: string) => boolean) {
   const cursor = VmlLanguage.parser.parse(input).cursor();
   do {

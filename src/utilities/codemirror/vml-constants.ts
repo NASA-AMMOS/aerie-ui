@@ -33,12 +33,27 @@ export const RULE_FUNCTION_NAME = 'Function_name';
 export const RULE_SIMPLE_EXPR = 'Simple_expr';
 export const RULE_CALL_PARAMETER = 'Call_parameter';
 export const RULE_CALL_PARAMETERS = 'Call_parameters';
+export const RULE_PARAMETER = 'Parameter';
+export const RULE_PARAMETERS = 'Parameters';
 export const RULE_FLOW = 'Flow';
 export const RULE_SIMPLE_CALL = 'Simple_call';
 export const RULE_EXTERNAL_CALL = 'External_call';
 export const RULE_CONSTANT = 'Constant';
+export const RULE_VARIABLE_NAME = 'Variable_name';
+export const RULE_DATA_KIND = 'Data_kind';
+export const RULE_COMMENT = 'Comment';
+export const RULE_INPUT_OUTPUT_PARAMETER = 'Input_output_parameter';
+export const RULE_OPTIONAL_DEFAULT_INPUT_VALUE = 'Optional_default_input_value';
+export const RULE_OPTIONAL_VALUE_LIST = 'Optional_value_list';
+export const RULE_INPUT_RANGE = 'Input_Range';
+export const RULE_INPUT_VALUE = 'Input_value';
 
 // Terminals in grammar
+export const TOKEN_INT = 'INT';
+export const TOKEN_UINT = 'UINT';
+export const TOKEN_DOUBLE = 'DOUBLE';
+export const TOKEN_STRING = 'STRING';
+
 export const TOKEN_ERROR = '⚠';
 export const TOKEN_STRING_CONST = 'STRING_CONST';
 export const TOKEN_DOUBLE_CONST = 'DOUBLE_CONST';
@@ -46,6 +61,7 @@ export const TOKEN_INT_CONST = 'INT_CONST';
 export const TOKEN_UINT_CONST = 'UINT_CONST';
 export const TOKEN_HEX_CONST = 'HEX_CONST';
 export const TOKEN_TIME_CONST = 'TIME_CONST';
+export const TOKEN_INT_RANGE_CONST = 'INT_RANGE_CONST';
 
 export const TOKEN_EXTERNAL_CALL = 'EXTERNAL_CALL';
 export const TOKEN_CALL = 'CALL';
