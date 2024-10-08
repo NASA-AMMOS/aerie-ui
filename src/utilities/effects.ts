@@ -2604,7 +2604,7 @@ const effects = {
         }
 
         // Show confirmation modal prior to running deletion
-        const { confirm } = await showDeleteExternalSourceModal([], unassociatedSources, []);
+        const { confirm } = await showDeleteExternalSourceModal(currentlyLinked, externalSources, unassociatedSources);
         if (confirm) {
           // cannot easily do composite keys in GraphQL, so we group by derivation group and send a query per group of keys
           const derivationGroups: { [derivationGroupName: string]: string[] } = {};
