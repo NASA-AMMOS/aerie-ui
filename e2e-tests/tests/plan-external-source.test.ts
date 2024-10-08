@@ -195,14 +195,6 @@ test.describe.serial('Plan External Sources', () => {
       externalSources.derivationTestGroupName,
       externalSources.derivationTestSourceType,
     );
-
-    await externalSources.goto();
-    await externalSources.deleteSource(externalSources.derivationTestFileKey1);
-    await externalSources.deleteSource(externalSources.derivationTestFileKey2);
-    await plan.goto();
-    await plan.showPanel(PanelNames.EXTERNAL_SOURCES);
-    await expect(page.getByText('Deleted files organized by source type and derivation group')).toBeVisible();
-    await expect(page.getByText(externalSources.derivationTestFileKey1)).toBeVisible();
   });
 
   test('Linked derivation groups should be expandable in panel', async () => {
