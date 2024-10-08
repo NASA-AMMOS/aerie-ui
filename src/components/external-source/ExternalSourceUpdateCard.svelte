@@ -4,17 +4,17 @@
   import LightningChargeIcon from 'bootstrap-icons/icons/lightning-charge.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { createEventDispatcher } from 'svelte';
-  import type { UserSeenEntryWithDate } from '../../types/external-source';
+  import type { ExternalSourceSlim } from '../../types/external-source';
   import { getTimeAgo } from '../../utilities/time';
   import Collapse from '../Collapse.svelte';
 
   export let deleted: boolean = false;
-  export let sources: UserSeenEntryWithDate[] = [];
+  export let sources: ExternalSourceSlim[] = [];
 
   const dispatch = createEventDispatcher<{
     dismiss: void;
   }>();
-  let mappedSources: { [sourceType: string]: { [derivationGroup: string]: UserSeenEntryWithDate[] } } = {};
+  let mappedSources: { [sourceType: string]: { [derivationGroup: string]: ExternalSourceSlim[] } } = {};
 
   $: sources.forEach(source => {
     let sourceType = source.source_type_name;
@@ -70,7 +70,7 @@
                 <div class="card-source-info">
                   <p class="card-source-key">{source.key}</p>
                   <p class="card-time">
-                    {getTimeAgo(new Date(source.change_date), new Date(), Number.MAX_SAFE_INTEGER)}
+                    {getTimeAgo(new Date(source.created_at), new Date(), Number.MAX_SAFE_INTEGER)}
                   </p>
                 </div>
               {/each}

@@ -10,7 +10,7 @@
   } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import type { User } from '../../types/app';
-  import type { DerivationGroup, UserSeenEntryWithDate } from '../../types/external-source';
+  import type { DerivationGroup, ExternalSourceSlim } from '../../types/external-source';
   import type { ViewGridSection } from '../../types/view';
   import effects from '../../utilities/effects';
   import { tooltip } from '../../utilities/tooltip';
@@ -30,46 +30,25 @@
   let filterText: string = '';
   let mappedDerivationGroups: { [key: string]: DerivationGroup[] } = {};
   let filteredDerivationGroups: DerivationGroup[] = [];
-  let unseenSources: UserSeenEntryWithDate[] = [];
-  let unseenDeletedSources: UserSeenEntryWithDate[] = [];
+  let unseenSources: ExternalSourceSlim[] = [];
+
+  $: console.log('userseensources', $usersSeenSources);
 
   // Determine which new and deleted sources are unacknowledged for the user
   $: {
-    let sourceKeys: UserSeenEntryWithDate[] = $externalSources.map(externalSource => {
-      return {
-        change_date: externalSource.created_at,
-        derivation_group_name: externalSource.derivation_group_name,
-        key: externalSource.key,
-        source_type_name: externalSource.source_type_name,
-      };
-    });
-
-    if (user !== null && user.id !== null && $usersSeenSources[user.id] !== undefined) {
-      unseenSources = sourceKeys.filter(externalSource => {
-        if (user === null || user.id === null) {
-          return true;
+    if ($plan !== null && $plan.id !== null && $usersSeenSources[$plan.id] !== undefined) {
+      const derivationGroupsAssociated = $usersSeenSources[$plan.id];
+      const groups = Object.keys(derivationGroupsAssociated);
+      console.log(derivationGroupsAssociated);
+      unseenSources = $externalSources.filter(externalSource => {
+        if (!groups.includes(externalSource.derivation_group_name)) {
+          return false;
         }
-        return !$usersSeenSources[user.id].find(
-          userSeenSource =>
-            userSeenSource.key === externalSource.key &&
-            userSeenSource.derivation_group_name === externalSource.derivation_group_name,
+        return (
+          new Date(externalSource.created_at) >
+          new Date(derivationGroupsAssociated[externalSource.derivation_group_name])
         );
       });
-    } else {
-      unseenSources = sourceKeys;
-    }
-
-    if (user && user.id && $usersSeenSources[user.id]) {
-      unseenDeletedSources = $usersSeenSources[user.id].filter(
-        userSeenSource =>
-          !sourceKeys.find(
-            externalSource =>
-              externalSource.key === userSeenSource.key &&
-              externalSource.derivation_group_name === userSeenSource.derivation_group_name,
-          ),
-      );
-    } else if (user && user.id && !(user.id in $usersSeenSources)) {
-      unseenDeletedSources = [];
     }
   }
 
@@ -130,7 +109,7 @@
 
     <AlertError class="m-2" error={$derivationGroupPlanLinkError} />
 
-    {#if unseenSources.length || unseenDeletedSources.length}
+    {#if unseenSources.length}
       <div style="padding-top: 10px">
         <CardList>
           {#if unseenSources.length}
@@ -138,16 +117,9 @@
               deleted={false}
               sources={unseenSources}
               on:dismiss={() => {
-                effects.createExternalSourceSeenEntry(unseenSources, user);
-              }}
-            />
-          {/if}
-          {#if unseenDeletedSources.length}
-            <ExternalSourceUpdateCard
-              deleted={true}
-              sources={unseenDeletedSources}
-              on:dismiss={() => {
-                effects.deleteExternalSourceSeenEntry(unseenDeletedSources, user);
+                for (const derivationGroup of filteredDerivationGroups) {
+                  effects.updateSourceSeenEntry($plan?.id, derivationGroup.name, new Date(), user);
+                }
               }}
             />
           {/if}

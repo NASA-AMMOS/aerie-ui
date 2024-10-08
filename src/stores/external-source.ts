@@ -3,8 +3,7 @@ import {
   type DerivationGroup,
   type ExternalSourceSlim,
   type ExternalSourceType,
-  type PlanDerivationGroup,
-  type UserSeenEntryWithDate,
+  type PlanDerivationGroup
 } from '../types/external-source';
 import gql from '../utilities/gql';
 import { planId } from './plan';
@@ -38,15 +37,7 @@ export const planDerivationGroupLinks = gqlSubscribable<PlanDerivationGroup[]>(
 );
 
 // this tracks each user's view of the sources. if something exists in externalSources that isn't in usersSeenSources, it's treated as unseen, and vice versa for deleted.
-export const usersSeenSourcesRaw = gqlSubscribable<
-  {
-    derivation_group: string;
-    external_source_name: string;
-    external_source_type: string;
-    id: number;
-    username: string;
-  }[]
->(gql.SUB_SEEN_SOURCES, {}, [], null);
+export const usersSeenSources = gqlSubscribable<Record<number, {[derivation_group_name: string]: string}>>(gql.SUB_SEEN_SOURCES, {}, [], null, transformUserSeenSources);
 
 /* Derived. */
 export const selectedPlanDerivationGroupNames: Readable<string[]> = derived(
@@ -68,38 +59,6 @@ export const selectedPlanDerivationGroupEventTypes: Readable<string[]> = derived
     } else {
       return [];
     }
-  },
-);
-export const usersSeenSources: Readable<Record<string, UserSeenEntryWithDate[]>> = derived(
-  [usersSeenSourcesRaw, externalSources],
-  ([$usersSeenSourcesRaw, $externalSources]) => {
-    const seenSources: Record<string, UserSeenEntryWithDate[]> = {};
-    for (const entry of $usersSeenSourcesRaw) {
-      const change_date =
-        $externalSources.find(
-          externalSource =>
-            externalSource.derivation_group_name === entry.derivation_group &&
-            externalSource.key === entry.external_source_name,
-        )?.created_at ?? '';
-      if (seenSources[entry.username]) {
-        seenSources[entry.username].push({
-          change_date,
-          derivation_group_name: entry.derivation_group,
-          key: entry.external_source_name,
-          source_type_name: entry.external_source_type,
-        });
-      } else {
-        seenSources[entry.username] = [
-          {
-            change_date,
-            derivation_group_name: entry.derivation_group,
-            key: entry.external_source_name,
-            source_type_name: entry.external_source_type,
-          },
-        ];
-      }
-    }
-    return seenSources;
   },
 );
 
@@ -154,4 +113,24 @@ function transformDerivationGroups(
     });
   }
   return completeExternalSourceSlim;
+}
+
+function transformUserSeenSources(
+  seenEntries: {
+    derivation_group_name: string,
+    last_acknowledged_at: string,
+    plan_id: number
+  }[]
+): Record<number, {[derivation_group_name: string]: string}> {
+  const result: Record<number, {[derivation_group_name: string]: string}> = {};
+  for (const entry of seenEntries) {
+    const {derivation_group_name, last_acknowledged_at} = entry;
+    if (result[entry.plan_id]) {
+      result[entry.plan_id][derivation_group_name] = last_acknowledged_at;
+    }
+    else {
+      result[entry.plan_id] = {[derivation_group_name]: last_acknowledged_at}
+    }
+  }
+  return result;
 }
