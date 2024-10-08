@@ -1,5 +1,5 @@
 import type { UserId } from './app';
-import type { ConstraintModelSpec } from './constraint';
+import type { ConstraintModelSpecification } from './constraint';
 import type { ParametersMap } from './parameter';
 import type { SchedulingConditionModelSpecification, SchedulingGoalModelSpecification } from './scheduling';
 import type { View } from './view';
@@ -34,7 +34,7 @@ export type ModelLog = {
 };
 
 export type ModelSchema = {
-  constraint_specification: ConstraintModelSpec[];
+  constraint_specification: ConstraintModelSpecification[];
   created_at: string;
   description?: string;
   id: number;

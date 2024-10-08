@@ -29,7 +29,7 @@
   import type {
     ConstraintDefinition,
     ConstraintMetadata,
-    ConstraintPlanSpec,
+    ConstraintPlanSpecification,
     ConstraintResponse,
   } from '../../types/constraint';
   import type { FieldStore } from '../../types/form';
@@ -54,7 +54,7 @@
 
   let showAll: boolean = true;
   let filterText: string = '';
-  let filteredConstraints: ConstraintPlanSpec[] = [];
+  let filteredConstraints: ConstraintPlanSpecification[] = [];
   let endTime: string;
   let endTimeField: FieldStore<string>;
   let numOfPrivateConstraints: number = 0;
@@ -119,7 +119,7 @@
   $: filteredViolationCount = getViolationCount(Object.values(filteredConstraintResponses));
 
   function filterConstraints(
-    planSpecs: ConstraintPlanSpec[],
+    planSpecs: ConstraintPlanSpecification[],
     constraintToConstraintResponseMap: Record<ConstraintMetadata['id'], ConstraintResponse>,
     filterText: string,
     showConstraintsWithNoViolations: boolean,
@@ -151,6 +151,29 @@
     }, 0);
   }
 
+  async function onDuplicateConstraintInvocation(event: CustomEvent<ConstraintPlanSpecification>) {
+    const {
+      detail: { constraint_metadata, constraint_invocation_id, ...constraintPlanSpec },
+    } = event;
+    if ($plan) {
+      await effects.createConstraintPlanSpecification(constraintPlanSpec, user);
+    }
+  }
+
+  async function onDeleteConstraintInvocation(event: CustomEvent<ConstraintPlanSpecification>) {
+    const {
+      detail: { constraint_metadata, specification_id, ...constraintPlanSpec },
+    } = event;
+    if ($plan) {
+      await effects.deleteConstraintInvocations(
+        $plan,
+        specification_id,
+        [constraintPlanSpec.constraint_invocation_id],
+        user,
+      );
+    }
+  }
+
   function onManageConstraints() {
     effects.managePlanConstraints(user);
   }
@@ -167,7 +190,7 @@
     }
   }
 
-  async function setTimeBoundsToView() {
+  async function onSetTimeBoundsToView() {
     await startTimeField.validateAndSet(formatDate(new Date($viewTimeRange.start), $plugins.time.primary.format));
     await endTimeField.validateAndSet(formatDate(new Date($viewTimeRange.end), $plugins.time.primary.format));
     onUpdateStartTime();
@@ -192,7 +215,7 @@
     }
   }
 
-  async function onUpdateConstraint(event: CustomEvent<ConstraintPlanSpec>) {
+  async function onUpdateConstraint(event: CustomEvent<ConstraintPlanSpecification>) {
     if ($plan) {
       const {
         detail: { constraint_metadata, ...constraintPlanSpec },
@@ -202,7 +225,7 @@
     }
   }
 
-  function resetFilters() {
+  function onResetFilters() {
     onPlanStartTimeClick();
     onPlanEndTimeClick();
     filterText = '';
@@ -307,8 +330,8 @@
             </DatePickerActionButton>
           </DatePickerField>
         </div>
-        <button class="st-button secondary" on:click={setTimeBoundsToView}> Set from Timeline View Bounds </button>
-        <button class="st-button secondary" on:click={resetFilters}> Reset Filters </button>
+        <button class="st-button secondary" on:click={onSetTimeBoundsToView}> Set from Timeline View Bounds </button>
+        <button class="st-button secondary" on:click={onResetFilters}> Reset Filters </button>
       </fieldset>
     </CollapsibleListControls>
 
@@ -353,7 +376,7 @@
           </button>
         </div>
 
-        {#each filteredConstraints as constraint}
+        {#each filteredConstraints as constraint (constraint.constraint_invocation_id)}
           {#if $constraintsMap[constraint.constraint_id]}
             <ConstraintListItem
               constraint={$constraintsMap[constraint.constraint_id]}
@@ -365,6 +388,8 @@
               totalViolationCount={$constraintResponseMap[constraint.constraint_id]?.results.violations?.length || 0}
               visible={$constraintVisibilityMap[constraint.constraint_id]}
               on:updateConstraintPlanSpec={onUpdateConstraint}
+              on:duplicateConstraintInvocation={onDuplicateConstraintInvocation}
+              on:deleteConstraintInvocation={onDeleteConstraintInvocation}
               on:toggleVisibility={toggleVisibility}
             />
           {/if}
