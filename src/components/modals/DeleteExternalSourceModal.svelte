@@ -87,7 +87,7 @@
             <li>{externalSource.key}</li>
           {/each}
         </ul>
-        <i>What is done cannot be undone.</i>
+        <i>This action cannot be undone.</i>
       </span>
     {/if}
   </ModalContent>
