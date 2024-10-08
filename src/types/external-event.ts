@@ -1,4 +1,5 @@
 import type { ExternalSourceDB } from './external-source';
+import type { ParameterName, ParametersMap } from './parameter';
 
 // Represents all fields used as a composite primary key for merlin.external_event
 export type ExternalEventPkey = {
@@ -23,7 +24,7 @@ export type ExternalEventDB = {
   duration: string;
   event_type_name: string;
   key: string;
-  properties: Record<string, any>;
+  properties: ParametersMap;
   source?: ExternalSourceDB;
   source_key: string;
   start_time: string;
@@ -44,7 +45,7 @@ export type ExternalEvent = {
   duration: string;
   duration_ms: number;
   pkey: ExternalEventPkey;
-  properties: Record<string, any>;
+  properties: ParametersMap;
   source?: ExternalSourceDB;
   start_ms: number;
   start_time: string;
@@ -54,6 +55,8 @@ export type ExternalEvent = {
 
 export type ExternalEventType = {
   name: string;
+  properties: ParametersMap;
+  required_properties: ParameterName[];
 };
 
 // This is used for the GraphQL mutation.
@@ -63,4 +66,4 @@ export type ExternalEventType = {
 export type ExternalEventInsertInput = Pick<ExternalEventDB, 'start_time' | 'duration' | 'properties'> &
   Pick<ExternalEventPkey, 'event_type_name' | 'key'>;
 
-export type ExternalEventTypeInsertInput = Pick<ExternalEventType, 'name'>;
+export type ExternalEventTypeInsertInput = ExternalEventType;

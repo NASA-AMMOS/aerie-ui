@@ -897,6 +897,7 @@ const effects = {
     externalSourceKey: string,
     externalSourceMetadata: object,
     validAt: string,
+    existingExternalEventTypes: string[],
     user: User | null,
   ) {
     try {
@@ -950,13 +951,14 @@ const effects = {
       };
 
       // Create external events + external event types mutation inputs for Hasura
-      const externalEventTypeInserts: ExternalEventTypeInsertInput[] = [];
       let externalEventsCreated: ExternalEventInsertInput[] = [];
       for (const externalEvent of externalEvents) {
-        externalEventTypeInserts.push({
-          name: externalEvent.event_type,
-        } as ExternalEventTypeInsertInput);
-
+        // Ensure the external event type already exists
+        if (!existingExternalEventTypes.includes(externalEvent.event_type)) {
+          throw new Error(
+            `External event type '${externalEvent.event_type}' does not exist, please create it prior to uploading this external source!`,
+          );
+        }
         // Ensure the duration is valid
         try {
           getIntervalInMs(externalEvent.duration);
@@ -1002,7 +1004,6 @@ const effects = {
         gql.CREATE_EXTERNAL_SOURCE,
         {
           derivation_group: derivationGroupInsert,
-          event_type: externalEventTypeInserts,
           source: externalSourceInsert,
           source_type: externalSourceTypeInsert,
         },
@@ -3654,9 +3655,7 @@ const effects = {
           derivation_group: {
             external_source: {
               external_events: {
-                external_event_type: {
-                  name: string;
-                };
+                external_event_type: ExternalEventType;
               }[];
             }[];
           };

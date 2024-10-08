@@ -7,6 +7,7 @@
   import ExternalEventIcon from '../../assets/external-event-box-with-arrow.svg?component';
   import ExternalSourceIcon from '../../assets/external-source-box.svg?component';
   import { catchError } from '../../stores/errors';
+  import { externalEventTypes } from '../../stores/external-event';
   import {
     createDerivationGroupError,
     createExternalSourceError,
@@ -332,6 +333,7 @@
         parsedExternalSource.source.key,
         parsedExternalSource.source.metadata,
         $validAtDoyField.value,
+        $externalEventTypes.map(externalEventType => externalEventType.name),
         user,
       );
       // Following a successful mutation...

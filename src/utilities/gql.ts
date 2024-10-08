@@ -478,6 +478,8 @@ const gql = {
     mutation CreateExternalEventType($eventType: external_event_type_insert_input!) {
       createExternalEventType: ${Queries.INSERT_EXTERNAL_EVENT_TYPE_ONE}(object: $eventType) {
         name
+        properties
+        required_properties
       }
     }
   `,
@@ -485,20 +487,9 @@ const gql = {
   CREATE_EXTERNAL_SOURCE: `#graphql
     mutation CreateExternalSource(
       $derivation_group: derivation_group_insert_input!,
-      $event_type: [external_event_type_insert_input!]!
       $source: external_source_insert_input!,
       $source_type: external_source_type_insert_input!,
     ) {
-      upsertExternalEventType: ${Queries.INSERT_EXTERNAL_EVENT_TYPE}(
-        objects: $event_type,
-        on_conflict: {
-          constraint: external_event_type_pkey
-        }
-      ) {
-        returning {
-          name
-        }
-      }
       upsertExternalSourceType: ${Queries.INSERT_EXTERNAL_SOURCE_TYPE} (
         object: $source_type,
         on_conflict: {
@@ -1516,6 +1507,8 @@ const gql = {
     query GetExternalEventTypes {
       external_event_types: ${Queries.EXTERNAL_EVENT_TYPES} {
         name
+        properties
+        required_properties
       }
     }
   `,
@@ -1532,6 +1525,8 @@ const gql = {
         external_events {
           external_event_type {
             name
+            properties
+            required_properties
           }
         }
       }
@@ -1776,6 +1771,8 @@ const gql = {
             external_events {
               external_event_type {
                 name
+                properties
+                required_properties
               }
             }
           }
@@ -2518,6 +2515,8 @@ const gql = {
     subscription SubExternalEventTypes {
       models: ${Queries.EXTERNAL_EVENT_TYPES}(order_by: { name: asc }) {
         name
+        properties
+        required_properties
       }
     }
   `,

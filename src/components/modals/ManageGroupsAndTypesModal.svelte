@@ -9,6 +9,7 @@
   import type { DataGridColumnDef } from '../../types/data-grid';
   import type { ExternalEventType } from '../../types/external-event';
   import type { DerivationGroup, ExternalSourceSlim, ExternalSourceType } from '../../types/external-source';
+  import type { ParametersMap } from '../../types/parameter';
   import { showDeleteDerivationGroupModal, showDeleteExternalEventSourceTypeModal } from '../../utilities/modal';
   import { featurePermissions } from '../../utilities/permissions';
   import Collapse from '../Collapse.svelte';
@@ -38,7 +39,9 @@
     viewExternalEventType: (eventType: ExternalEventType) => void;
     viewExternalSourceType: (sourceType: ExternalSourceType) => void;
   };
-  type ModalCellRendererParams = ICellRendererParams<DerivationGroup> & CellRendererParams;
+  type derivationGroupModalCellRendererParams = ICellRendererParams<DerivationGroup> & CellRendererParams;
+  type externalEventTypeModalCellRendererParams = ICellRendererParams<ExternalEventType> & CellRendererParams;
+  type externalSourceTypeModalCellRendererParams = ICellRendererParams<ExternalSourceType> & CellRendererParams;
 
   const dispatch = createEventDispatcher<{
     close: void;
@@ -170,6 +173,8 @@
 
   let selectedExternalEventType: ExternalEventType | undefined = undefined;
   let selectedExternalEventTypeDerivationGroups: DerivationGroup[] = [];
+  let selectedExternalEventTypeRequiredProperties: ParametersMap = {};
+  let selectedExternalEventTypeOptionalProperties: ParametersMap = {};
 
   $: hasDeleteExternalSourceTypePermission = featurePermissions.externalSourceType.canDelete(user);
   $: hasDeleteExternalEventTypePermission = featurePermissions.externalEventType.canDelete(user);
@@ -186,6 +191,16 @@
     }
   });
 
+  $: if (selectedExternalEventType !== undefined && selectedExternalEventType.properties !== undefined && selectedExternalEventType?.required_properties !== undefined) {
+    Object.entries(selectedExternalEventType.properties).forEach(property => {
+      if (selectedExternalEventType?.required_properties.includes(property[0])) {
+        selectedExternalEventTypeRequiredProperties[property[0]] = property[1];
+      } else {
+        selectedExternalEventTypeOptionalProperties[property[0]] = property[1];
+      }
+    });
+  }
+
   $: selectedExternalEventTypeDerivationGroups = $derivationGroups.filter(derivationGroup => {
     if (selectedExternalEventType !== undefined) {
       return derivationGroup.event_types.includes(selectedExternalEventType.name);
@@ -198,7 +213,7 @@
     ...derivationGroupBaseColumnDefs,
     {
       cellClass: 'action-cell-container',
-      cellRenderer: (params: ModalCellRendererParams) => {
+      cellRenderer: (params: derivationGroupModalCellRendererParams) => {
         const actionsDiv = document.createElement('div');
         actionsDiv.className = 'actions-cell';
         new DataGridActions({
@@ -235,7 +250,7 @@
     ...externalSourceTypeBaseColumnDefs,
     {
       cellClass: 'action-cell-container',
-      cellRenderer: (params: ModalCellRendererParams) => {
+      cellRenderer: (params: externalSourceTypeModalCellRendererParams) => {
         const actionsDiv = document.createElement('div');
         actionsDiv.className = 'actions-cell';
         new DataGridActions({
@@ -273,7 +288,7 @@
     ...externalEventTypeBaseColumnDefs,
     {
       cellClass: 'action-cell-container',
-      cellRenderer: (params: ModalCellRendererParams) => {
+      cellRenderer: (params: externalEventTypeModalCellRendererParams) => {
         const actionsDiv = document.createElement('div');
         actionsDiv.className = 'actions-cell';
         new DataGridActions({
@@ -409,11 +424,15 @@
       selectedExternalSourceType = undefined;
       selectedExternalEventType = eventType;
       modalColumnSize = modalColumnSizeWithDetailExternalEventType;
+      selectedExternalEventTypeOptionalProperties = {};
+      selectedExternalEventTypeRequiredProperties = {};
     } else {
       selectedDerivationGroup = undefined;
       selectedExternalSourceType = undefined;
       selectedExternalEventType = undefined;
       modalColumnSize = modalColumnSizeNoDetail;
+      selectedExternalEventTypeOptionalProperties = {};
+      selectedExternalEventTypeRequiredProperties = {};
     }
   }
 
@@ -577,7 +596,7 @@
         <Panel borderRight padBody={true}>
           <svelte:fragment slot="header">
             <SectionTitle>
-              <ExternalSourceIcon slot="icon" />Derivation Groups containing '{selectedExternalEventType.name}'
+              <ExternalSourceIcon slot="icon" />{selectedExternalEventType.name} Details
             </SectionTitle>
           </svelte:fragment>
           <svelte:fragment slot="body">
@@ -628,8 +647,40 @@
                 </Collapse>
               {/each}
             {:else}
-              <p class="st-typography-body">No sources containing this event type.</p>
+              <div class="st-typography-body">No sources containing this event type.</div>
             {/if}
+            <Collapse
+              title="Required Properties"
+              tooltipContent="${selectedExternalEventType.name} Required Properties"
+              defaultExpanded={false}
+            >
+              {#if Object.keys(selectedExternalEventTypeRequiredProperties).length > 0}
+                  {#each Object.entries(selectedExternalEventTypeRequiredProperties) as externalEventTypeProperty}
+                    <div class="st-typography-body external-event-type-properties">
+                      <div class="property-name">{externalEventTypeProperty[0]}</div>
+                      <div class="property-type">{externalEventTypeProperty[1].schema}</div>
+                    </div>
+                  {/each}
+              {:else}
+                <div class="st-typography-body">No required properties defined for this event type.</div>
+              {/if}
+            </Collapse>
+            <Collapse
+              title="Optional Properties"
+              tooltipContent="${selectedExternalEventType.name} Optional Properties"
+              defaultExpanded={false}
+            >
+              {#if Object.keys(selectedExternalEventTypeOptionalProperties).length > 0}
+                  {#each Object.entries(selectedExternalEventTypeOptionalProperties) as externalEventTypeProperty}
+                    <div class="st-typography-body external-event-type-properties">
+                      <div class="property-name">{externalEventTypeProperty[0]}</div>
+                      <div class="property-type">{externalEventTypeProperty[1].schema}</div>
+                    </div>
+                  {/each}
+              {:else}
+                <div class="st-typography-body">No optional properties defined for this event type.</div>
+              {/if}
+            </Collapse>
           </svelte:fragment>
         </Panel>
       {/if}
@@ -699,6 +750,26 @@
 
   .derivation-groups-modal-content {
     height: 100%;
+  }
+
+  .external-event-type-properties {
+    display: flex;
+    width: 100%;
+  }
+
+  .property-name {
+    display: flex;
+    font-weight: bold;
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .property-type {
+    color: var(--st-gray-60);
+    display: flex;
+    font-style: italic;
+    justify-content: flex-end;
+    width: 100%;
   }
 
   .filter {
