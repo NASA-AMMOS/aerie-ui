@@ -158,7 +158,7 @@ function isNumericRange(range: any): range is NumericRange {
 function parseRange(parameterNode: SyntaxNode | null, vml: string): null | string[] | number[] | NumericRange {
   const defaultValueNode = parameterNode?.getChild(RULE_OPTIONAL_VALUE_LIST)?.getChildren(RULE_INPUT_VALUE);
   if (defaultValueNode) {
-    const rangeValues = defaultValueNode
+    const rangeValues: (number | string | NumericRange)[] = defaultValueNode
       .map(defValNode => {
         const constantNode = defValNode.getChild(RULE_CONSTANT);
         if (constantNode) {
@@ -178,13 +178,13 @@ function parseRange(parameterNode: SyntaxNode | null, vml: string): null | strin
         }
         return null;
       })
-      .filter((maybeRangeValue): maybeRangeValue is 'number' | 'string' | NumericRange => !!maybeRangeValue);
+      .filter((maybeRangeValue): maybeRangeValue is number | string | NumericRange => !!maybeRangeValue);
 
-    if (
-      rangeValues.every(rangeValue => typeof rangeValue === 'number') ||
-      rangeValues.every(rangeValue => typeof rangeValue === 'string')
-    ) {
-      return rangeValues;
+    // mixed arrays aren't resolved due to undefinied meaning
+    if (rangeValues.every(rangeValue => typeof rangeValue === 'number')) {
+      return rangeValues as number[];
+    } else if (rangeValues.every(rangeValue => typeof rangeValue === 'string')) {
+      return rangeValues as string[];
     } else if (rangeValues.every(isNumericRange)) {
       // ampcs dictionary doesn't support discontinuous ranges for numeric values, create span covering all ranges
       return {
