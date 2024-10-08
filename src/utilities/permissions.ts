@@ -432,9 +432,6 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   CREATE_SCHEDULING_PLAN_SPECIFICATION: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_SCHEDULING_SPECIFICATION], user);
   },
-  CREATE_SEEN_SOURCE_ENTRY: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission([Queries.INSERT_SEEN_SOURCE_ENTRY], user);
-  },
   CREATE_SEQUENCE_ADAPTATION: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_SEQUENCE_ADAPTATION], user);
   },
@@ -615,9 +612,6 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   DELETE_SCHEDULING_GOAL_MODEL_SPECIFICATIONS: () => true,
   DELETE_SCHEDULING_GOAL_PLAN_SPECIFICATIONS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.DELETE_SCHEDULING_SPECIFICATION_GOALS], user);
-  },
-  DELETE_SEEN_SOURCE_ENTRY: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission([Queries.DELETE_SEEN_SOURCES], user);
   },
   DELETE_SEQUENCE_ADAPTATION: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.DELETE_SEQUENCE_ADAPTATION], user);
@@ -1105,6 +1099,9 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
         (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
     );
   },
+  UPDATE_SEEN_SOURCE_ENTRY: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.UPDATE_SEEN_SOURCE_ENTRY], user);
+  },
   UPDATE_SIMULATION: (user: User | null, plan: PlanWithOwners): boolean => {
     return (
       isUserAdmin(user) ||
@@ -1519,5 +1516,6 @@ export {
   isPlanOwner,
   isUserAdmin,
   isUserOwner,
-  queryPermissions,
+  queryPermissions
 };
+

@@ -69,17 +69,9 @@ export type ExternalSourceInsertInput = Pick<
     };
   };
 
-// This is used exclusively to track when users have and haven't seen an entry. one has a date (for UI purposes), and one doesn't (for database purposes).
-export type UserSeenEntry = {
-  derivation_group_name: string;
-  key: string;
-  source_type_name: string;
-};
-
-export type UserSeenEntryWithDate = UserSeenEntry & {
-  change_date: string;
-};
-
 export type ExternalSourceTypeInsertInput = Pick<ExternalSourceType, 'name'>;
 
 export type DerivationGroupInsertInput = Pick<DerivationGroup, 'name' | 'source_type_name'>;
+
+// Used to track whether a newly added source has been acknowledged or not for a given plan
+export type DerivationGroupUpdateAckEntry = {derivation_group: string, last_acknowledged_at: string};

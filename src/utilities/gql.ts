@@ -65,7 +65,6 @@ export enum Queries {
   DELETE_SCHEDULING_SPECIFICATION = 'delete_scheduling_specification',
   DELETE_SCHEDULING_SPECIFICATION_CONDITIONS = 'delete_scheduling_specification_conditions',
   DELETE_SCHEDULING_SPECIFICATION_GOALS = 'delete_scheduling_specification_goals',
-  DELETE_SEEN_SOURCES = 'delete_seen_sources',
   DELETE_SEQUENCE = 'delete_sequence_by_pk',
   DELETE_SEQUENCE_ADAPTATION = 'delete_sequence_adaptation_by_pk',
   DELETE_SEQUENCE_TO_SIMULATED_ACTIVITY = 'delete_sequence_to_simulated_activity_by_pk',
@@ -146,7 +145,7 @@ export enum Queries {
   INSERT_SCHEDULING_SPECIFICATION_CONDITIONS = 'insert_scheduling_specification_conditions',
   INSERT_SCHEDULING_SPECIFICATION_GOAL = 'insert_scheduling_specification_goals_one',
   INSERT_SCHEDULING_SPECIFICATION_GOALS = 'insert_scheduling_specification_goals',
-  INSERT_SEEN_SOURCE_ENTRY = 'insert_seen_sources',
+  UPDATE_SEEN_SOURCE_ENTRY = 'update_seen_sources_by_pk',
   INSERT_SEQUENCE = 'insert_sequence_one',
   INSERT_SEQUENCE_ADAPTATION = 'insert_sequence_adaptation_one',
   INSERT_SEQUENCE_TO_SIMULATED_ACTIVITY = 'insert_sequence_to_simulated_activity_one',
@@ -743,19 +742,6 @@ const gql = {
     }
   `,
 
-  CREATE_SEEN_SOURCE_ENTRY: `#graphql
-    mutation CreateSeenSourceEntry($entries: [seen_sources_insert_input!]!) {
-      createSeenSourceEntry: ${Queries.INSERT_SEEN_SOURCE_ENTRY}(objects: $entries) {
-        returning {
-          username,
-          derivation_group,
-          external_source_name,
-          external_source_type
-        }
-      }
-    }
-  `,
-
   CREATE_SEQUENCE_ADAPTATION: `#graphql
     mutation CreateCustomAdaptation($adaptation: sequence_adaptation_insert_input!) {
       createSequenceAdaptation: ${Queries.INSERT_SEQUENCE_ADAPTATION}(object: $adaptation) {
@@ -1245,23 +1231,6 @@ const gql = {
       }
     }
 `,
-
-  // Sadly, not a great way to compare fields within a type, even if its a type GraphQL recognizes. As such, many different parameters, called one by one
-  DELETE_SEEN_SOURCE_ENTRY: `#graphql
-    mutation DeleteSeenSourceEntry($username: String!, $derivation_group: String!, $external_source_name: String!) {
-      deleteSeenSources: ${Queries.DELETE_SEEN_SOURCES}(where: {
-        _and: {
-          username: {_eq: $username},
-          derivation_group: {_eq: $derivation_group},
-          external_source_name: {_eq: $external_source_name}
-        }
-      }){
-        returning {
-          external_source_name
-        }
-      }
-    }
-  `,
 
   DELETE_SEQUENCE_ADAPTATION: `#graphql
     mutation DeleteSequenceAdaptation($id: Int!) {
@@ -3314,13 +3283,13 @@ const gql = {
     }
   `,
 
+  // TODO: LINK TO EXTERNAL_SOURCE_TYPE IN HASURA/GQL, POSSIBLE WITH A METADATA MANIPULATIOn
   SUB_SEEN_SOURCES: `#graphql
     subscription SubSeenSources {
       ${Queries.SEEN_SOURCES} {
-        username,
-        derivation_group,
-        external_source_name,
-        external_source_type
+        plan_id,
+        derivation_group_name,
+        last_acknowledged_at
       }
     }
   `,
@@ -3949,6 +3918,16 @@ const gql = {
         pk_columns: { id: $id }, _set: $spec
       ) {
         id
+      }
+    }
+  `,
+
+  UPDATE_SEEN_SOURCE_ENTRY: `#graphql
+    mutation UpdateSeenSource($derivation_group_name: String!, $plan_id: Int!, $new_date: timestamptz!) {
+      updateSeenSources: ${Queries.UPDATE_SEEN_SOURCE_ENTRY}(pk_columns: {derivation_group_name: $derivation_group_name, plan_id: $plan_id}, _set: {last_acknowledged_at: $new_date}) {
+        derivation_group_name,
+        plan_id,
+        last_acknowledged_at
       }
     }
   `,

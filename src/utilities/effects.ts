@@ -103,8 +103,7 @@ import type {
   ExternalSourceSlim,
   ExternalSourceType,
   ExternalSourceTypeInsertInput,
-  PlanDerivationGroup,
-  UserSeenEntry,
+  PlanDerivationGroup
 } from '../types/external-source';
 import type { Model, ModelInsertInput, ModelLog, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
 import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
@@ -1024,31 +1023,6 @@ const effects = {
         createExternalSourceError.set((e as Error).message);
       }
       creatingExternalSource.set(false);
-    }
-  },
-
-  async createExternalSourceSeenEntry(sourcesSeen: UserSeenEntry[], user: User | null) {
-    try {
-      if (!queryPermissions.CREATE_SEEN_SOURCE_ENTRY(user)) {
-        throwPermissionError('mark viewership of an external source');
-      }
-
-      const entries = sourcesSeen.map(sourcesSeen => {
-        return {
-          derivation_group: sourcesSeen.derivation_group_name,
-          external_source_name: sourcesSeen.key,
-          external_source_type: sourcesSeen.source_type_name,
-          username: user?.id,
-        };
-      });
-      const { createSeenSourceEntry: created } = await reqHasura(gql.CREATE_SEEN_SOURCE_ENTRY, { entries }, user);
-      if (created) {
-        return created;
-      } else {
-        throw Error(`Unable to log external source visibility recognition`);
-      }
-    } catch (e) {
-      catchError('External Source Visibility Recognition Failed', e as Error);
     }
   },
 
@@ -2605,6 +2579,7 @@ const effects = {
 
         // Show confirmation modal prior to running deletion
         const { confirm } = await showDeleteExternalSourceModal(currentlyLinked, externalSources, unassociatedSources);
+        console.log(confirm);
         if (confirm) {
           // cannot easily do composite keys in GraphQL, so we group by derivation group and send a query per group of keys
           const derivationGroups: { [derivationGroupName: string]: string[] } = {};
@@ -2616,6 +2591,8 @@ const effects = {
             }
           }
 
+          console.log(derivationGroups)
+
           // send each group's query out
           for (const derivationGroupName of Object.keys(derivationGroups)) {
             const data = await reqHasura<{ derivationGroupName: string; sourceKeys: string[] }>(
@@ -2626,6 +2603,7 @@ const effects = {
               },
               user,
             );
+            console.log(data)
             if (data.deleteExternalSource === null) {
               throw Error('Unable to delete external source');
             }
@@ -2640,31 +2618,6 @@ const effects = {
       return false;
     }
     return false;
-  },
-
-  async deleteExternalSourceSeenEntry(sourcesSeen: UserSeenEntry[], user: User | null) {
-    try {
-      if (!queryPermissions.DELETE_SEEN_SOURCE_ENTRY(user)) {
-        throwPermissionError('mark viewership of an external source');
-      }
-
-      for (const entry of sourcesSeen) {
-        const { deleteSeenSources: deleted } = await reqHasura(
-          gql.DELETE_SEEN_SOURCE_ENTRY,
-          {
-            derivation_group: entry.derivation_group_name,
-            external_source_name: entry.key,
-            username: user?.id,
-          },
-          user,
-        );
-        if (!deleted) {
-          throw Error(`Unable to log external source visibility recognition`);
-        }
-      }
-    } catch (e) {
-      catchError('External Source Visibility Recognition Failed', e as Error);
-    }
   },
 
   async deleteExternalSourceType(externalSourceTypeName: string | null, user: User | null): Promise<void> {
@@ -6286,6 +6239,27 @@ const effects = {
     } catch (e) {
       catchError('Simulation Template Update Failed', e as Error);
       showFailureToast('Simulation Template Update Failed');
+    }
+  },
+
+  // TODO: add a trigger as well.
+  async updateSourceSeenEntry(plan_id: number | undefined, derivation_group_name: string, updatedAt=new Date(), user: User | null) {
+    if (plan_id === undefined) {
+      console.log("[updateSourceSeenEntry]: plan_id is null.");
+      return;
+    }
+    try {
+      if (!queryPermissions.UPDATE_SEEN_SOURCE_ENTRY(user)) {
+        throwPermissionError('mark viewership of a updates to a derivation group');
+      }
+      const { updateSeenSources: update } = await reqHasura(gql.UPDATE_SEEN_SOURCE_ENTRY, { derivation_group_name, new_date: updatedAt.toUTCString(), plan_id }, user);
+      if (update) {
+        return update;
+      } else {
+        throw Error(`Unable to log derivation group update recognition`);
+      }
+    } catch (e) {
+      catchError('Derivation Group Update Visibility Recognition Failed', e as Error);
     }
   },
 
