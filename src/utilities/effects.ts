@@ -2608,7 +2608,7 @@ const effects = {
         if (confirm) {
           // cannot easily do composite keys in GraphQL, so we group by derivation group and send a query per group of keys
           const derivationGroups: { [derivationGroupName: string]: string[] } = {};
-          for (const externalSource of externalSources) {
+          for (const externalSource of unassociatedSources) {
             if (derivationGroups[externalSource.derivation_group_name]) {
               derivationGroups[externalSource.derivation_group_name].push(externalSource.key);
             } else {
