@@ -9,6 +9,7 @@ import type {
   AssetWithAuthor,
   AssetWithOwner,
   CreatePermissionCheck,
+  ExternalSourceWithOwner,
   ModelWithOwner,
   PermissionCheck,
   PlanWithOwners,
@@ -358,7 +359,7 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
     return isUserAdmin(user) || getPermission([Queries.INSERT_EXTERNAL_SOURCE], user);
   },
   CREATE_EXTERNAL_SOURCE_TYPE: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission([Queries.EXTERNAL_SOURCE_TYPES], user);
+    return isUserAdmin(user) || getPermission([Queries.INSERT_EXTERNAL_SOURCE_TYPE], user);
   },
   CREATE_MODEL: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_MISSION_MODEL], user);
@@ -533,8 +534,8 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   DELETE_EXTERNAL_EVENT_TYPE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.DELETE_EXTERNAL_EVENT_TYPE], user);
   },
-  DELETE_EXTERNAL_SOURCES: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission([Queries.DELETE_EXTERNAL_SOURCE], user);
+  DELETE_EXTERNAL_SOURCES: (user: User | null, externalSources: ExternalSourceWithOwner[]): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.DELETE_EXTERNAL_SOURCE], user) && isUserOwner(user, externalSources);
   },
   DELETE_EXTERNAL_SOURCE_TYPE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.DELETE_EXTERNAL_SOURCE_TYPE], user);
@@ -1272,10 +1273,15 @@ interface FeaturePermissions {
   constraints: AssociationCRUDPermission<ConstraintMetadata, ConstraintDefinition>;
   constraintsModelSpec: ModelSpecificationCRUDPermission;
   constraintsPlanSpec: PlanSpecificationCRUDPermission;
+  derivationGroup: CRUDPermission<void>;
+  derivationGroupAcknowledgement: CRUDPermission<void>;
+  derivationGroupPlanLink: CRUDPermission<void>;
   expansionRules: CRUDPermission<AssetWithOwner>;
   expansionSequences: ExpansionSequenceCRUDPermission<AssetWithOwner<ExpansionSequence>>;
   expansionSets: ExpansionSetsCRUDPermission<AssetWithOwner<ExpansionSet>>;
+  externalEventType: CRUDPermission<void>;
   externalSource: CRUDPermission<void>;
+  externalSourceType: CRUDPermission<void>;
   model: CRUDPermission<void>;
   parameterDictionary: CRUDPermission<void>;
   parcels: CRUDPermission<AssetWithOwner<Parcel>>;
@@ -1345,6 +1351,24 @@ const featurePermissions: FeaturePermissions = {
     canRead: user => queryPermissions.SUB_CONSTRAINTS(user),
     canUpdate: (user, plan) => queryPermissions.UPDATE_CONSTRAINT_PLAN_SPECIFICATIONS(user, plan),
   },
+  derivationGroup: {
+    canCreate: user => queryPermissions.CREATE_DERIVATION_GROUP(user),
+    canDelete: user => queryPermissions.DELETE_DERIVATION_GROUP(user),
+    canRead: user => queryPermissions.SUB_DERIVATION_GROUPS(user),
+    canUpdate: () => false, // this is not a feature
+  },
+  derivationGroupAcknowledgement: {
+    canCreate: () => false, // uses canUpdate instead
+    canDelete: () => false, // uses canUpdate instead
+    canRead: user => queryPermissions.GET_PLAN_DERIVATION_GROUP(user), // seen sources are derived from plan/derivation groups
+    canUpdate: user => queryPermissions.UPDATE_DERIVATION_GROUP_ACKNOWLEDGED(user),
+  },
+  derivationGroupPlanLink: {
+    canCreate: user => queryPermissions.CREATE_PLAN_DERIVATION_GROUP(user),
+    canDelete: user => queryPermissions.DELETE_PLAN_DERIVATION_GROUP(user),
+    canRead: user => queryPermissions.SUB_PLAN_DERIVATION_GROUP(user),
+    canUpdate: () => false, // this is not a feature TODO should it be, instead of create/delete?
+  },
   expansionRules: {
     canCreate: user => queryPermissions.CREATE_EXPANSION_RULE(user),
     canDelete: (user, expansionRule) => queryPermissions.DELETE_EXPANSION_RULE(user, expansionRule),
@@ -1364,11 +1388,23 @@ const featurePermissions: FeaturePermissions = {
     canRead: user => queryPermissions.SUB_EXPANSION_SETS(user),
     canUpdate: () => false, // no feature to update expansion sets exists
   },
+  externalEventType: {
+    canCreate: user => queryPermissions.CREATE_EXTERNAL_EVENT_TYPE(user),
+    canDelete: user => queryPermissions.DELETE_EXTERNAL_EVENT_TYPE(user),
+    canRead: user => queryPermissions.SUB_EXTERNAL_EVENT_TYPES(user),
+    canUpdate: () => false, // no feature to update external event types
+  },
   externalSource: {
     canCreate: user => queryPermissions.CREATE_EXTERNAL_SOURCE(user),
     canDelete: user => queryPermissions.DELETE_EXTERNAL_SOURCES(user),
     canRead: user => queryPermissions.SUB_EXTERNAL_SOURCES(user),
     canUpdate: () => false, // no feature to update external sources
+  },
+  externalSourceType: {
+    canCreate: user => queryPermissions.CREATE_EXTERNAL_SOURCE_TYPE(user),
+    canDelete: user => queryPermissions.DELETE_EXTERNAL_SOURCE_TYPE(user),
+    canRead: user => queryPermissions.SUB_EXTERNAL_SOURCE_TYPES(user),
+    canUpdate: () => false, // no feature to update external source types
   },
   model: {
     canCreate: user => queryPermissions.CREATE_MODEL(user),

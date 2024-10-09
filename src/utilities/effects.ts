@@ -103,7 +103,7 @@ import type {
   ExternalSourceSlim,
   ExternalSourceType,
   ExternalSourceTypeInsertInput,
-  PlanDerivationGroup
+  PlanDerivationGroup,
 } from '../types/external-source';
 import type { Model, ModelInsertInput, ModelLog, ModelSchema, ModelSetInput, ModelSlim } from '../types/model';
 import type { DslTypeScriptResponse, TypeScriptFile } from '../types/monaco';
@@ -5652,17 +5652,25 @@ const effects = {
       showFailureToast('Constraint Plan Specifications Update Failed');
     }
   },
-  
-  async updateDerivationGroupAcknowledged(plan_id: number | undefined, derivation_group_name: string, updatedAt=new Date(), user: User | null) {
+
+  async updateDerivationGroupAcknowledged(
+    plan_id: number | undefined,
+    derivation_group_name: string,
+    updatedAt = new Date(),
+    user: User | null,
+  ) {
     if (plan_id === undefined) {
-      console.log("[updateDerivationGroupAcknowledged]: plan_id is null.");
       return;
     }
     try {
       if (!queryPermissions.UPDATE_DERIVATION_GROUP_ACKNOWLEDGED(user)) {
         throwPermissionError('mark viewership of a updates to a derivation group');
       }
-      const { updatePlanDerivationGroup: update } = await reqHasura(gql.UPDATE_DERIVATION_GROUP_ACKNOWLEDGED, { derivation_group_name, new_date: updatedAt.toUTCString(), plan_id }, user);
+      const { updatePlanDerivationGroup: update } = await reqHasura(
+        gql.UPDATE_DERIVATION_GROUP_ACKNOWLEDGED,
+        { derivation_group_name, new_date: updatedAt.toUTCString(), plan_id },
+        user,
+      );
       if (update) {
         return update;
       } else {
