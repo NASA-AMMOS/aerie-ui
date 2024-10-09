@@ -61,6 +61,25 @@
       const includesName = group.name.toLocaleLowerCase().includes(filterTextLowerCase);
       return includesName;
     });
+  $: if ($planDerivationGroupLinks) {
+    mappedDerivationGroups = filteredDerivationGroups.reduce(
+      (aggMappedDerivationGroups: { [key: string]: DerivationGroup[] }, group) => {
+        if (
+          aggMappedDerivationGroups[group.source_type_name] &&
+          !mappedDerivationGroups[group.source_type_name]
+            .map(mappedDerivationGroup => mappedDerivationGroup.name)
+            .includes(group.name)
+        ) {
+          // use string later for source type
+          aggMappedDerivationGroups[group.source_type_name]?.push(group);
+        } else {
+          aggMappedDerivationGroups[group.source_type_name] = [group];
+        }
+        return aggMappedDerivationGroups;
+      },
+      {},
+    );
+  }
   planDerivationGroupLinks.subscribe(_ => (mappedDerivationGroups = {})); // clear the map...
   $: filteredDerivationGroups.forEach(group => {
     // ...and repopulate it every time the links change. this handles deletion correctly
