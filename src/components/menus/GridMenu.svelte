@@ -9,12 +9,11 @@
   import PlanIcon from '@nasa-jpl/stellar/icons/plan.svg?component';
   import TableWithHeaderIcon from '@nasa-jpl/stellar/icons/table_with_header.svg?component';
   import VerticalCollapseIcon from '@nasa-jpl/stellar/icons/vertical_collapse_with_center_line.svg?component';
-  import BalloonIcon from 'bootstrap-icons/icons/balloon.svg?component';
   import CodeSquareIcon from 'bootstrap-icons/icons/code-square.svg?component';
-  import Cookie from 'bootstrap-icons/icons/cookie.svg?component';
   import GearWideConnectedIcon from 'bootstrap-icons/icons/gear-wide-connected.svg?component';
-  import TruckIcon from 'bootstrap-icons/icons/truck.svg?component';
   import WindowFullscreenIcon from 'bootstrap-icons/icons/window-fullscreen.svg?component';
+  import ExternalEventIcon from '../../assets/external-event-box-with-arrow.svg?component';
+  import ExternalSourceIcon from '../../assets/external-source-box.svg?component';
   import { viewUpdateGrid } from '../../stores/views';
   import type { ViewGrid, ViewGridComponent, ViewGridSection } from '../../types/view';
   import Menu from './Menu.svelte';
@@ -70,11 +69,11 @@
       Expansion
     </MenuItem>
     <MenuItem on:click={() => onClickMenuItem('ExternalSourcesPanel')}>
-      <TruckIcon />
+      <ExternalSourceIcon />
       External Sources
     </MenuItem>
     <MenuItem on:click={() => onClickMenuItem('ExternalEventsTablePanel')}>
-      <BalloonIcon />
+      <TableWithHeaderIcon />
       External Events Table
     </MenuItem>
     <MenuItem on:click={() => onClickMenuItem('IFramePanel')}>
@@ -98,7 +97,7 @@
       Selected Activity
     </MenuItem>
     <MenuItem on:click={() => onClickMenuItem('ExternalEventFormPanel')}>
-      <Cookie />
+      <ExternalEventIcon />
       Selected External Event
     </MenuItem>
     <MenuItem on:click={() => onClickMenuItem('SimulationPanel')}>

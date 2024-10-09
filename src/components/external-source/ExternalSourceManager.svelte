@@ -3,9 +3,9 @@
 <script lang="ts">
   import { base } from '$app/paths';
   import type { ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
-  import BalloonIcon from 'bootstrap-icons/icons/balloon.svg?component';
-  import TruckIcon from 'bootstrap-icons/icons/truck.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
+  import ExternalEventIcon from '../../assets/external-event-box-with-arrow.svg?component';
+  import ExternalSourceIcon from '../../assets/external-source-box.svg?component';
   import { catchError } from '../../stores/errors';
   import {
     createDerivationGroupError,
@@ -694,7 +694,7 @@
     <Panel padBody={true}>
       <svelte:fragment slot="header">
         <slot name="left">
-          <SectionTitle><TruckIcon slot="icon" />External Sources</SectionTitle>
+          <SectionTitle><ExternalSourceIcon slot="icon" />External Sources</SectionTitle>
           <div class="filter">
             <div class="timeline-editor-layer-filter">
               <Input>
@@ -764,7 +764,7 @@
       <Panel padBody={true}>
         <svelte:fragment slot="header">
           <slot name="left">
-            <SectionTitle><BalloonIcon slot="icon" />External Events</SectionTitle>
+            <SectionTitle><ExternalEventIcon slot="icon" />External Events</SectionTitle>
             <div class="filter">
               <div class="timeline-editor-layer-filter">
                 <Input>

@@ -3,8 +3,8 @@
 <script lang="ts">
   import { base } from '$app/paths';
   import type { CellEditingStoppedEvent, ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
-  import TruckIcon from 'bootstrap-icons/icons/truck.svg?component';
   import { createEventDispatcher } from 'svelte';
+  import ExternalSourceIcon from '../../assets/external-source-box.svg?component';
   import { derivationGroups, externalSources, selectedPlanDerivationGroupNames } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import { plugins } from '../../stores/plugins';
@@ -249,7 +249,7 @@
         <Panel borderRight padBody={true} overflowYBody="scroll">
           <svelte:fragment slot="header">
             <SectionTitle overflow="hidden">
-              <TruckIcon slot="icon" />Sources in '{selectedDerivationGroup.name}'
+              <ExternalSourceIcon slot="icon" />Sources in '{selectedDerivationGroup.name}'
             </SectionTitle>
           </svelte:fragment>
           <svelte:fragment slot="body">
