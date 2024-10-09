@@ -251,7 +251,12 @@ import {
 } from './time';
 import { createRow, duplicateRow } from './timeline';
 import { showFailureToast, showSuccessToast } from './toast';
-import { generateDefaultView, validateViewJSONAgainstSchema } from './view';
+import {
+  applyViewDefinitionMigrations,
+  applyViewMigrations,
+  generateDefaultView,
+  validateViewJSONAgainstSchema,
+} from './view';
 
 function throwPermissionError(attemptedAction: string): never {
   throw Error(`You do not have permission to: ${attemptedAction}.`);
@@ -4643,6 +4648,7 @@ const effects = {
   async getView(
     query: URLSearchParams | null,
     user: User | null,
+    migrate: boolean = true,
     activityTypes: ActivityType[] = [],
     resourceTypes: ResourceType[] = [],
     externalEventTypes: ExternalEventType[] = [],
@@ -4656,8 +4662,21 @@ const effects = {
           const data = await reqHasura<View>(gql.GET_VIEW, { id: viewIdAsNumber }, user);
           const { view } = data;
 
-          if (view !== null) {
+          if (!migrate) {
             return view;
+          }
+          if (view !== null) {
+            const { migratedView, error, anyMigrationsApplied } = await applyViewMigrations(view);
+            if (migratedView && anyMigrationsApplied) {
+              await effects.updateView(migratedView.id, { definition: migratedView.definition }, user);
+            }
+            if (!migratedView) {
+              catchError('Unable to migrate view', error as Error);
+              showFailureToast('Unable to migrate view');
+            }
+            return migratedView;
+          } else {
+            return null;
           }
         } else if (defaultView !== null && defaultView !== undefined) {
           return defaultView;
@@ -4843,10 +4862,11 @@ const effects = {
       });
 
       const viewJSON = JSON.parse(viewFileString);
-      const { errors, valid } = await effects.validateViewJSON(viewJSON);
+      const { migratedViewDefinition } = await applyViewDefinitionMigrations(viewJSON);
+      const { errors, valid } = await effects.validateViewJSON(migratedViewDefinition);
 
       if (valid) {
-        return { definition: viewJSON };
+        return { definition: migratedViewDefinition };
       } else {
         return {
           definition: null,
@@ -6479,7 +6499,7 @@ const effects = {
 
   async validateViewJSON(unValidatedView: unknown): Promise<{ errors?: string[]; valid: boolean }> {
     try {
-      const { errors, valid } = validateViewJSONAgainstSchema(unValidatedView);
+      const { errors, valid } = await validateViewJSONAgainstSchema(unValidatedView);
       return {
         errors:
           errors?.map(error => {
