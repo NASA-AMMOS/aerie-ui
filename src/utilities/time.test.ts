@@ -51,6 +51,9 @@ test('convertUTCtoMs', () => {
   // conversion to DOY is fine if the time zone ("Z") is excluded
   expect(convertUTCtoMs(convertDoyToYmd('2024-001T00:00:00') ?? '')).toEqual(1704067200000);
 
+  // conversion without a timezone in the input
+  expect(convertUTCtoMs('2024-01-01 00:00:00')).toEqual(1704085200000);
+
   // any other string fails
   expect(convertUTCtoMs('not a date')).toEqual(NaN);
 });
