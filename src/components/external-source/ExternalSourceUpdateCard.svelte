@@ -4,17 +4,25 @@
   import LightningChargeIcon from 'bootstrap-icons/icons/lightning-charge.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { createEventDispatcher } from 'svelte';
+  import type { User } from '../../types/app';
   import type { ExternalSourceSlim } from '../../types/external-source';
+  import { permissionHandler } from '../../utilities/permissionHandler';
+  import { featurePermissions } from '../../utilities/permissions';
   import { getTimeAgo } from '../../utilities/time';
   import Collapse from '../Collapse.svelte';
 
   export let deleted: boolean = false;
   export let sources: ExternalSourceSlim[] = [];
+  export let user: User | null;
 
   const dispatch = createEventDispatcher<{
     dismiss: void;
   }>();
+
   let mappedSources: { [sourceType: string]: { [derivationGroup: string]: ExternalSourceSlim[] } } = {};
+  let hasAcknowledgePermission: boolean = false;
+
+  $: hasAcknowledgePermission = featurePermissions.derivationGroupAcknowledgement.canUpdate(user);
 
   $: sources.forEach(source => {
     let sourceType = source.source_type_name;
@@ -80,7 +88,15 @@
       {/each}
     </div>
     <div class="card-dismiss">
-      <button class="st-button secondary hover-fix" on:click={() => dispatch('dismiss')}>Dismiss</button>
+      <button
+        class="st-button secondary hover-fix"
+        on:click={() => dispatch('dismiss')}
+        use:permissionHandler={{
+          hasPermission: hasAcknowledgePermission,
+        }}
+      >
+        Dismiss
+      </button>
     </div>
     <slot />
   </div>

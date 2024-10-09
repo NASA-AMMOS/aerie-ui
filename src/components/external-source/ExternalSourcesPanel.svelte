@@ -139,7 +139,7 @@
       <div style="padding-top: 10px">
         <CardList>
           {#if unseenSources.length}
-            <ExternalSourceUpdateCard deleted={false} sources={unseenSources} on:dismiss={onUpdateDismiss} />
+            <ExternalSourceUpdateCard {user} deleted={false} sources={unseenSources} on:dismiss={onUpdateDismiss} />
           {/if}
         </CardList>
       </div>

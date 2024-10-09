@@ -13,6 +13,8 @@
   import type { DerivationGroup, ExternalSourceSlim } from '../../types/external-source';
   import effects from '../../utilities/effects';
   import { getDerivationGroupRowId } from '../../utilities/externalEvents';
+  import { permissionHandler } from '../../utilities/permissionHandler';
+  import { featurePermissions } from '../../utilities/permissions';
   import { formatDate } from '../../utilities/time';
   import Collapse from '../Collapse.svelte';
   import Input from '../form/Input.svelte';
@@ -102,6 +104,12 @@
   let selectedDerivationGroupSources: ExternalSourceSlim[] = [];
 
   let selectedDerivationGroups: Record<string, boolean> = {};
+
+  let hasUpdateDerivationGroupLinkPermission: boolean = false;
+
+  $: hasUpdateDerivationGroupLinkPermission =
+    featurePermissions.derivationGroupPlanLink.canCreate(user) &&
+    featurePermissions.derivationGroupPlanLink.canDelete(user);
 
   $: selectedDerivationGroups = $selectedPlanDerivationGroupNames.reduce(
     (prevBooleanMap: Record<string, boolean>, derivationGroupName: string) => {
@@ -312,7 +320,13 @@
     </CssGrid>
   </ModalContent>
   <ModalFooter>
-    <button class="st-button primary" on:click={() => onUpdateDerivationGroups(selectedDerivationGroups)}>
+    <button
+      class="st-button primary"
+      on:click={() => onUpdateDerivationGroups(selectedDerivationGroups)}
+      use:permissionHandler={{
+        hasPermission: hasUpdateDerivationGroupLinkPermission,
+      }}
+    >
       Update
     </button>
     <button class="st-button secondary" on:click={() => dispatch('close')}> Close </button>
