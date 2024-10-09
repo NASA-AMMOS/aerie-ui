@@ -1,5 +1,5 @@
 {
-  "$id": "https://github.com/NASA-AMMOS/aerie-ui/blob/develop/src/schemas/ui-view-schema.json",
+  "$id": "https://github.com/NASA-AMMOS/aerie-ui/blob/develop/src/schemas/ui-view-schema-v1.json",
   "$schema": "http://json-schema.org/draft-07/schema",
   "additionalProperties": false,
   "definitions": {
@@ -101,6 +101,7 @@
   },
   "description": "JSON schema definition used for configuring the Aerie UI",
   "properties": {
+    "version": { "type": "number" },
     "plan": {
       "additionalProperties": false,
       "description": "View configuration for a plan",
@@ -631,7 +632,7 @@
       "type": "object"
     }
   },
-  "required": ["plan"],
+  "required": ["plan", "version"],
   "title": "View",
   "type": "object"
 }

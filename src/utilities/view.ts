@@ -1,10 +1,9 @@
 import Ajv from 'ajv';
-import { ViewDefaultDiscreteOptions } from '../constants/view';
-import jsonSchema from '../schemas/ui-view-schema.json';
+import { ViewDefaultDiscreteOptions, viewSchemaVersion } from '../constants/view';
 import type { ActivityType } from '../types/activity';
 import type { ExternalEventType } from '../types/external-event';
 import type { ResourceType } from '../types/simulation';
-import type { View, ViewGridColumns, ViewGridRows } from '../types/view';
+import type { View, ViewDefinition, ViewGridColumns, ViewGridRows } from '../types/view';
 import {
   createRow,
   createTimeline,
@@ -376,6 +375,7 @@ export function generateDefaultView(
         },
         timelines,
       },
+      version: viewSchemaVersion,
     },
     id: 0,
     name: 'Default View',
@@ -463,9 +463,11 @@ export function createRowSizes({ row1 = '1fr', row2 = '1fr' }: ViewGridRows, col
   return '1fr';
 }
 
-export function validateViewJSONAgainstSchema(json: any) {
+export async function validateViewJSONAgainstSchema(json: any) {
   try {
     const ajv = new Ajv();
+    const jsonSchemaPath = `../schemas/ui-view-schema-v${viewSchemaVersion}.json`;
+    const jsonSchema = await import(/* @vite-ignore */ jsonSchemaPath);
     const validate = ajv.compile(jsonSchema);
     const valid = validate(json);
     const errors = valid ? [] : validate.errors;
@@ -481,4 +483,86 @@ export function downloadView(view: View) {
   a.href = URL.createObjectURL(new Blob([JSON.stringify(view.definition, null, 2)], { type: 'application/json' }));
   a.download = view.name;
   a.click();
+}
+
+export async function applyViewMigrations(view: View) {
+  try {
+    const { anyMigrationsApplied, error, migratedViewDefinition } = await applyViewDefinitionMigrations(
+      view.definition,
+    );
+    if (!migratedViewDefinition || error) {
+      return { anyMigrationsApplied: false, error, migratedView: null };
+    }
+    const migratedView: View = { ...view, definition: migratedViewDefinition };
+    return { anyMigrationsApplied, error, migratedView };
+  } catch (error) {
+    return { anyMigrationsApplied: false, error, migratedView: null };
+  }
+}
+
+export async function applyViewDefinitionMigrations(viewDefinition: ViewDefinition) {
+  try {
+    // If the view version does not exist we will consider it to be version 0
+    const version = viewDefinition.version ?? 0;
+    const upMigrations: Record<number, (view: ViewDefinition) => ViewDefinition> = {
+      0: migrateViewDefinitionV0toV1,
+    };
+
+    // Iterate through versions between view version and latest view version
+    // and apply any migrations if found
+    let migratedViewDefinition = viewDefinition;
+    let anyMigrationsApplied = false;
+    for (let i = version; i < viewSchemaVersion; i++) {
+      if (upMigrations[i]) {
+        console.log(`Applying view migration: ${i} -> ${i + 1}`);
+        migratedViewDefinition = upMigrations[i](viewDefinition);
+        anyMigrationsApplied = true;
+      }
+    }
+    return { anyMigrationsApplied, errors: null, migratedViewDefinition };
+  } catch (error) {
+    return { anyMigrationsApplied: false, error, migratedViewDefinition: null };
+  }
+}
+
+function migrateViewDefinitionV0toV1(viewDefinition: ViewDefinition) {
+  return {
+    ...viewDefinition,
+    plan: {
+      ...viewDefinition.plan,
+      timelines: viewDefinition.plan.timelines.map(timeline => {
+        return {
+          ...timeline,
+          rows: timeline.rows.map(row => {
+            const newRow = structuredClone(row);
+            // @ts-expect-error deprecated type def
+            if (row.activityOptions) {
+              newRow.discreteOptions = {
+                ...(newRow.discreteOptions ?? {}),
+                activityOptions: {
+                  // @ts-expect-error deprecated type def
+                  composition: newRow.activityOptions.composition,
+                  // @ts-expect-error deprecated type def
+                  hierarchyMode: newRow.activityOptions.hierarchyMode,
+                },
+                // @ts-expect-error deprecated type def
+                displayMode: newRow.activityOptions.displayMode,
+                externalEventOptions: {
+                  groupBy: 'event_type_name',
+                },
+                // @ts-expect-error deprecated type def
+                height: newRow.activityOptions.activityHeight,
+                // @ts-expect-error deprecated type def
+                labelVisibility: newRow.activityOptions.labelVisibility,
+              };
+              // @ts-expect-error deprecated type def
+              delete newRow.activityOptions;
+            }
+            return newRow;
+          }),
+        };
+      }),
+    },
+    version: 1,
+  };
 }
