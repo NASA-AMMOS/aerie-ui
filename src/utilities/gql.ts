@@ -1005,16 +1005,6 @@ const gql = {
       $derivationGroupName: String!,
       $sourceKeys: [String!]!
     ) {
-      deleteExternalEvent:  ${Queries.DELETE_EXTERNAL_EVENT}(
-        where: {
-          derivation_group_name: { _eq: $derivationGroupName },
-          source_key: { _in: $sourceKeys }
-        }
-      ) {
-        returning {
-          key
-        }
-      }
       deleteExternalSource: ${Queries.DELETE_EXTERNAL_SOURCE}(
         where: {
           derivation_group_name: { _eq: $derivationGroupName },
