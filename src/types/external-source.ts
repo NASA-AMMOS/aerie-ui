@@ -42,7 +42,7 @@ export type ExternalSource = Omit<ExternalSourceDB, 'key' | 'derivation_group_na
 
 export type PlanDerivationGroup = {
   derivation_group_name: string;
-  enabled: boolean;
+  last_acknowledged_at: string;
   plan_id: number | undefined; // because in plan.ts plan is defined on Plan | null...
 };
 

@@ -36,10 +36,28 @@ export const planDerivationGroupLinks = gqlSubscribable<PlanDerivationGroup[]>(
   null,
 );
 
-// this tracks each user's view of the sources. if something exists in externalSources that isn't in derivationGroupsLastUpdated, it's treated as unseen, and vice versa for deleted.
-export const derivationGroupsLastAcknowledged = gqlSubscribable<Record<number, {[derivation_group_name: string]: string}>>(gql.SUB_SEEN_SOURCES, {}, [], null, transformDerivationGroupsLastAcknowledged);
-
 /* Derived. */
+// reorganization of planDerivationGroupLinks so that it is easy to grab entries by plan_id, and access the derivation groups and when their updates were last acknowledged
+export const derivationGroupsLastAcknowledged: Readable<Record<number, {[derivation_group_name: string]: string}>> = derived(
+  planDerivationGroupLinks,
+  ($planDerivationGroupLinks) => {
+    const result: Record<number, {[derivation_group_name: string]: string}> = {};
+    for (const entry of $planDerivationGroupLinks) {
+      const {derivation_group_name, last_acknowledged_at, plan_id} = entry;
+      if (plan_id !== undefined) {
+        if (result[plan_id]) {
+          result[plan_id][derivation_group_name] = last_acknowledged_at;
+        }
+        else {
+          result[plan_id] = {[derivation_group_name]: last_acknowledged_at}
+        }
+      }
+    }
+    return result;
+  }
+    
+);
+
 export const selectedPlanDerivationGroupNames: Readable<string[]> = derived(
   [planDerivationGroupLinks, planId],
   ([$planDerivationGroupLinks, $planId]) =>
@@ -113,24 +131,4 @@ function transformDerivationGroups(
     });
   }
   return completeExternalSourceSlim;
-}
-
-function transformDerivationGroupsLastAcknowledged(
-  seenEntries: {
-    derivation_group_name: string,
-    last_acknowledged_at: string,
-    plan_id: number
-  }[]
-): Record<number, {[derivation_group_name: string]: string}> {
-  const result: Record<number, {[derivation_group_name: string]: string}> = {};
-  for (const entry of seenEntries) {
-    const {derivation_group_name, last_acknowledged_at} = entry;
-    if (result[entry.plan_id]) {
-      result[entry.plan_id][derivation_group_name] = last_acknowledged_at;
-    }
-    else {
-      result[entry.plan_id] = {[derivation_group_name]: last_acknowledged_at}
-    }
-  }
-  return result;
 }

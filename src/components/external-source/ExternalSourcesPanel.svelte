@@ -30,7 +30,6 @@
   let filterText: string = '';
   let mappedDerivationGroups: { [key: string]: DerivationGroup[] } = {};
   let unseenSources: ExternalSourceSlim[] = [];
-  let linkedDerivationGroupIds: string[] = [];
   let filteredDerivationGroups: DerivationGroup[] = [];
 
   // Determine which new and deleted sources are unacknowledged for the user
@@ -51,11 +50,14 @@
     }
   }
 
-  $: linkedDerivationGroupIds = $planDerivationGroupLinks
-    .filter(link => link.plan_id === $plan?.id)
-    .map(link => link.derivation_group_name);
   $: filteredDerivationGroups = $derivationGroups
-    .filter(group => linkedDerivationGroupIds.includes(group.name))
+    .filter(group => {
+      if ($plan && $derivationGroupsLastAcknowledged[$plan.id]) {
+        return Object.keys($derivationGroupsLastAcknowledged[$plan.id]).includes(group.name);
+      } else {
+        return false;
+      }
+    })
     .filter(group => {
       const filterTextLowerCase = filterText.toLowerCase();
       const includesName = group.name.toLocaleLowerCase().includes(filterTextLowerCase);
@@ -104,7 +106,7 @@
 
   function onUpdateDismiss() {
     for (const derivationGroup of filteredDerivationGroups) {
-      effects.updateSourceSeenEntry($plan?.id, derivationGroup.name, new Date(), user);
+      effects.updateDerivationGroupAcknowledged($plan?.id, derivationGroup.name, new Date(), user);
     }
   }
 </script>
