@@ -37,11 +37,7 @@
 <div class="st-typography-medium timeline-editor-layer-selected-filters">
   {#if filters.length === 0}
     <div class="filter-items-empty">
-      No {chartType === 'activity'
-        ? 'activities'
-        : chartType === 'externalEvent'
-          ? 'external event types'
-          : 'resources'} selected
+      No {verb} selected
     </div>
   {:else}
     <Collapse title={`${filters.length} ${verb}`} className="filter-items" titleClassName="filter-items-title">

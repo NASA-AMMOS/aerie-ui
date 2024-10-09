@@ -19,7 +19,6 @@
   import TimelineEditorLayerSettings from './TimelineEditorLayerSettings.svelte';
 
   export let layer: Layer;
-  // export let layerColor: string | undefined; // needs its own prop as updating it in layer doesn't propagate here
   export let yAxes: Axis[];
 
   const dispatch = createEventDispatcher<{
