@@ -406,16 +406,16 @@
       {:else if binPair[1] && !binPair[0]}
         <div class="bin-item orange" style={`height: ${externalEventHeight * 100}%;`} />
       {:else if binPair[0] && binPair[1]}
-        <div class="bin-item" style="height: 100%;">
+        <div class="bin-item container">
           <div
             class="bin-item blue"
             style={`height: ${(1 - (activityHeight + externalEventHeight)) * 100}%; width: 0%`}
           />
-          <div style={`height: ${activityHeight * 100}%; background-color: rgba(47, 128, 237, 1);`} />
-          <div style={`height: ${externalEventHeight * 100}%; background-color: rgba(237, 158, 47);`} />
+          <div class="blue" style={`height: ${activityHeight * 100}%;`} />
+          <div class="orange" style={`height: ${externalEventHeight * 100}%;`} />
         </div>
       {:else}
-        <div class="bin-item blue" style={`height: ${0}%;`} />
+        <div class="bin-item invisible" />
       {/if}
     {/each}
   </div>
@@ -474,11 +474,11 @@
     gap: 1px;
   }
 
-  .histogram > .blue {
+  .blue {
     background: rgba(47, 128, 237, 1);
   }
 
-  .histogram > .orange {
+  .orange {
     background: rgba(237, 158, 47);
   }
 
@@ -486,6 +486,14 @@
     flex: 1;
     transition: height 75ms ease-out;
     width: 2px;
+  }
+
+  .bin-item.container {
+    height: 100%;
+  }
+
+  .bin-item.invisible {
+    height: 0%;
   }
 
   .constraint-violations {
