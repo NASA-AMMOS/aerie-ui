@@ -145,7 +145,6 @@ export enum Queries {
   INSERT_SCHEDULING_SPECIFICATION_CONDITIONS = 'insert_scheduling_specification_conditions',
   INSERT_SCHEDULING_SPECIFICATION_GOAL = 'insert_scheduling_specification_goals_one',
   INSERT_SCHEDULING_SPECIFICATION_GOALS = 'insert_scheduling_specification_goals',
-  UPDATE_SEEN_SOURCE_ENTRY = 'update_seen_sources_by_pk',
   INSERT_SEQUENCE = 'insert_sequence_one',
   INSERT_SEQUENCE_ADAPTATION = 'insert_sequence_adaptation_one',
   INSERT_SEQUENCE_TO_SIMULATED_ACTIVITY = 'insert_sequence_to_simulated_activity_one',
@@ -201,6 +200,7 @@ export enum Queries {
   UPDATE_CONSTRAINT_METADATA = 'update_constraint_metadata_by_pk',
   UPDATE_CONSTRAINT_SPECIFICATION = 'update_constraint_specification_by_pk',
   UPDATE_CONSTRAINT_MODEL_SPECIFICATION = 'update_constraint_model_specification_by_pk',
+  UPDATE_DERIVATION_GROUP_ACKNOWLEDGED = 'update_plan_derivation_group_by_pk',
   UPDATE_EXPANSION_RULE = 'update_expansion_rule_by_pk',
   UPDATE_MISSION_MODEL = 'update_mission_model_by_pk',
   UPDATE_PARCEL = 'update_parcel_by_pk',
@@ -2775,6 +2775,7 @@ const gql = {
       links: ${Queries.PLAN_DERIVATION_GROUP}(order_by: { plan_id: asc }) {
         derivation_group_name
         plan_id
+        last_acknowledged_at
       }
     }
   `,
@@ -3283,17 +3284,6 @@ const gql = {
     }
   `,
 
-  // TODO: LINK TO EXTERNAL_SOURCE_TYPE IN HASURA/GQL, POSSIBLE WITH A METADATA MANIPULATIOn
-  SUB_SEEN_SOURCES: `#graphql
-    subscription SubSeenSources {
-      ${Queries.SEEN_SOURCES} {
-        plan_id,
-        derivation_group_name,
-        last_acknowledged_at
-      }
-    }
-  `,
-
   SUB_SEQUENCE_ADAPTATIONS: `#graphql
     subscription SubSequenceAdaptations {
       ${Queries.SEQUENCE_ADAPTATION}(order_by: { id: desc }) {
@@ -3632,6 +3622,16 @@ const gql = {
     }
   `,
 
+  UPDATE_DERIVATION_GROUP_ACKNOWLEDGED: `#graphql
+    mutation UpdateDerivationGroupAcknowledged($derivation_group_name: String!, $plan_id: Int!, $new_date: timestamptz!) {
+      updatePlanDerivationGroup: ${Queries.UPDATE_DERIVATION_GROUP_ACKNOWLEDGED}(pk_columns: {derivation_group_name: $derivation_group_name, plan_id: $plan_id}, _set: {last_acknowledged_at: $new_date}) {
+        derivation_group_name,
+        plan_id,
+        last_acknowledged_at
+      }
+    }
+  `,
+
   UPDATE_EXPANSION_RULE: `#graphql
     mutation UpdateExpansionRule($id: Int!, $rule: expansion_rule_set_input!) {
       updateExpansionRule: ${Queries.UPDATE_EXPANSION_RULE}(
@@ -3918,16 +3918,6 @@ const gql = {
         pk_columns: { id: $id }, _set: $spec
       ) {
         id
-      }
-    }
-  `,
-
-  UPDATE_SEEN_SOURCE_ENTRY: `#graphql
-    mutation UpdateSeenSource($derivation_group_name: String!, $plan_id: Int!, $new_date: timestamptz!) {
-      updateSeenSources: ${Queries.UPDATE_SEEN_SOURCE_ENTRY}(pk_columns: {derivation_group_name: $derivation_group_name, plan_id: $plan_id}, _set: {last_acknowledged_at: $new_date}) {
-        derivation_group_name,
-        plan_id,
-        last_acknowledged_at
       }
     }
   `,
