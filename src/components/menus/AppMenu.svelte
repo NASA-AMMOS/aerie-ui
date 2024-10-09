@@ -19,8 +19,8 @@
   import JournalCodeIcon from 'bootstrap-icons/icons/journal-code.svg?component';
   import JournalTextIcon from 'bootstrap-icons/icons/journal-text.svg?component';
   import JournalsIcon from 'bootstrap-icons/icons/journals.svg?component';
-  import TruckIcon from 'bootstrap-icons/icons/truck.svg?component';
   import AerieWordmarkDark from '../../assets/aerie-wordmark-dark.svg?component';
+  import ExternalSourceIcon from '../../assets/external-source-box.svg?component';
   import type { User } from '../../types/app';
   import { logout } from '../../utilities/login';
   import { showAboutModal } from '../../utilities/modal';
@@ -77,7 +77,7 @@
       on:click={() => goto(`${base}/external-sources`)}
       on:pointerenter={() => preloadData(`${base}/external-sources`)}
     >
-      <TruckIcon />
+      <ExternalSourceIcon />
       External Sources
     </MenuItem>
     <MenuItem on:click={() => goto(`${base}/tags`)} on:pointerenter={() => preloadData(`${base}/tags`)}>

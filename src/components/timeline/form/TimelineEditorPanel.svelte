@@ -7,11 +7,13 @@
   import PlusIcon from '@nasa-jpl/stellar/icons/plus.svg?component';
   import RemoveAllIcon from '@nasa-jpl/stellar/icons/remove_all.svg?component';
   import TrashIcon from '@nasa-jpl/stellar/icons/trash.svg?component';
-  import BalloonIcon from 'bootstrap-icons/icons/balloon.svg?component';
   import GripVerticalIcon from 'bootstrap-icons/icons/grip-vertical.svg?component';
-  import TruckIcon from 'bootstrap-icons/icons/truck.svg?component';
   import { onMount } from 'svelte';
   import { dndzone } from 'svelte-dnd-action';
+  import {
+    default as ExternalEventIcon,
+    default as ExternalSourceIcon,
+  } from '../../../assets/external-source-box.svg?component';
   import ActivityModeTextNoneIcon from '../../../assets/text-none.svg?component';
   import ActivityModeTextIcon from '../../../assets/text.svg?component';
   import ActivityModeCompactIcon from '../../../assets/timeline-activity-mode-compact.svg?component';
@@ -1050,7 +1052,7 @@
                   id="source_key"
                 >
                   <div class="radio-button-icon">
-                    <TruckIcon />
+                    <ExternalSourceIcon />
                     <span class="timeline-editor-responsive-label">By Source</span>
                   </div>
                 </RadioButton>
@@ -1059,7 +1061,7 @@
                   id="event_type_name"
                 >
                   <div class="radio-button-icon">
-                    <BalloonIcon />
+                    <ExternalEventIcon />
                     <span class="timeline-editor-responsive-label">By Event Type</span>
                   </div>
                 </RadioButton>
