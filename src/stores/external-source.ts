@@ -36,8 +36,8 @@ export const planDerivationGroupLinks = gqlSubscribable<PlanDerivationGroup[]>(
   null,
 );
 
-// this tracks each user's view of the sources. if something exists in externalSources that isn't in usersSeenSources, it's treated as unseen, and vice versa for deleted.
-export const usersSeenSources = gqlSubscribable<Record<number, {[derivation_group_name: string]: string}>>(gql.SUB_SEEN_SOURCES, {}, [], null, transformUserSeenSources);
+// this tracks each user's view of the sources. if something exists in externalSources that isn't in derivationGroupsLastUpdated, it's treated as unseen, and vice versa for deleted.
+export const derivationGroupsLastAcknowledged = gqlSubscribable<Record<number, {[derivation_group_name: string]: string}>>(gql.SUB_SEEN_SOURCES, {}, [], null, transformDerivationGroupsLastAcknowledged);
 
 /* Derived. */
 export const selectedPlanDerivationGroupNames: Readable<string[]> = derived(
@@ -115,7 +115,7 @@ function transformDerivationGroups(
   return completeExternalSourceSlim;
 }
 
-function transformUserSeenSources(
+function transformDerivationGroupsLastAcknowledged(
   seenEntries: {
     derivation_group_name: string,
     last_acknowledged_at: string,
