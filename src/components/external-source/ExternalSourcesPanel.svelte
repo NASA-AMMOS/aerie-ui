@@ -4,9 +4,9 @@
   import {
     derivationGroupPlanLinkError,
     derivationGroups,
+    derivationGroupsLastAcknowledged,
     externalSources,
     planDerivationGroupLinks,
-    usersSeenSources,
   } from '../../stores/external-source';
   import { plan } from '../../stores/plan';
   import type { User } from '../../types/app';
@@ -34,8 +34,8 @@
 
   // Determine which new and deleted sources are unacknowledged for the user
   $: {
-    if ($plan !== null && $plan.id !== null && $usersSeenSources[$plan.id] !== undefined) {
-      const derivationGroupsAssociated = $usersSeenSources[$plan.id];
+    if ($plan !== null && $plan.id !== null && $derivationGroupsLastAcknowledged[$plan.id] !== undefined) {
+      const derivationGroupsAssociated = $derivationGroupsLastAcknowledged[$plan.id];
       const groups = Object.keys(derivationGroupsAssociated);
       unseenSources = $externalSources.filter(externalSource => {
         if (!groups.includes(externalSource.derivation_group_name)) {
