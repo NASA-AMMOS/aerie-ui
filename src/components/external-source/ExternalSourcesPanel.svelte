@@ -32,14 +32,11 @@
   let filteredDerivationGroups: DerivationGroup[] = [];
   let unseenSources: ExternalSourceSlim[] = [];
 
-  $: console.log('userseensources', $usersSeenSources);
-
   // Determine which new and deleted sources are unacknowledged for the user
   $: {
     if ($plan !== null && $plan.id !== null && $usersSeenSources[$plan.id] !== undefined) {
       const derivationGroupsAssociated = $usersSeenSources[$plan.id];
       const groups = Object.keys(derivationGroupsAssociated);
-      console.log(derivationGroupsAssociated);
       unseenSources = $externalSources.filter(externalSource => {
         if (!groups.includes(externalSource.derivation_group_name)) {
           return false;
