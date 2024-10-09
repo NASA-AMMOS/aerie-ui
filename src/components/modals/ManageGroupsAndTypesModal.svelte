@@ -2,8 +2,8 @@
 
 <script lang="ts">
   import type { ICellRendererParams } from 'ag-grid-community';
-  import TruckIcon from 'bootstrap-icons/icons/truck.svg?component';
   import { createEventDispatcher } from 'svelte';
+  import ExternalSourceIcon from '../../assets/external-source-box.svg?component';
   import { derivationGroups, externalSources } from '../../stores/external-source';
   import type { User } from '../../types/app';
   import type { DataGridColumnDef } from '../../types/data-grid';
@@ -436,7 +436,7 @@
         <Panel borderRight padBody={true}>
           <svelte:fragment slot="header">
             <SectionTitle>
-              <TruckIcon slot="icon" />Sources in '{selectedDerivationGroup.name}'
+              <ExternalSourceIcon slot="icon" />Sources in '{selectedDerivationGroup.name}'
             </SectionTitle>
           </svelte:fragment>
           <svelte:fragment slot="body">
@@ -500,7 +500,7 @@
         <Panel borderRight padBody={true}>
           <svelte:fragment slot="header">
             <SectionTitle>
-              <TruckIcon slot="icon" />Derivation Groups of Type '{selectedExternalSourceType.name}'
+              <ExternalSourceIcon slot="icon" />Derivation Groups of Type '{selectedExternalSourceType.name}'
             </SectionTitle>
           </svelte:fragment>
           <svelte:fragment slot="body">
@@ -558,7 +558,7 @@
         <Panel borderRight padBody={true}>
           <svelte:fragment slot="header">
             <SectionTitle>
-              <TruckIcon slot="icon" />Derivation Groups containing '{selectedExternalEventType.name}'
+              <ExternalSourceIcon slot="icon" />Derivation Groups containing '{selectedExternalEventType.name}'
             </SectionTitle>
           </svelte:fragment>
           <svelte:fragment slot="body">
