@@ -2580,7 +2580,6 @@ const effects = {
 
         // Show confirmation modal prior to running deletion
         const { confirm } = await showDeleteExternalSourceModal(currentlyLinked, externalSources, unassociatedSources);
-        console.log(confirm);
         if (confirm) {
           // cannot easily do composite keys in GraphQL, so we group by derivation group and send a query per group of keys
           const derivationGroups: { [derivationGroupName: string]: string[] } = {};
@@ -2592,8 +2591,6 @@ const effects = {
             }
           }
 
-          console.log(derivationGroups)
-
           // send each group's query out
           for (const derivationGroupName of Object.keys(derivationGroups)) {
             const data = await reqHasura<{ derivationGroupName: string; sourceKeys: string[] }>(
@@ -2604,7 +2601,6 @@ const effects = {
               },
               user,
             );
-            console.log(data)
             if (data.deleteExternalSource === null) {
               throw Error('Unable to delete external source');
             }
@@ -3666,7 +3662,6 @@ const effects = {
           };
         }[]
       >(gql.GET_PLAN_EVENT_TYPES, { plan_id }, user);
-      console.log(sourceData);
       const types: ExternalEventType[] = [];
       if (sourceData?.plan_derivation_group !== null) {
         for (const group of sourceData.plan_derivation_group) {
