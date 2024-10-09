@@ -1,4 +1,5 @@
 import type { ExternalEventDB, ExternalEventInsertInput, ExternalEventJson } from '../types/external-event';
+import type { UserId } from './app';
 
 // Represents all fields used as a composite primary key for merlin.external_source
 export type ExternalSourcePkey = {
@@ -14,6 +15,7 @@ export type ExternalSourceDB = {
   external_events: ExternalEventDB[];
   key: string;
   metadata: Record<string, any>;
+  owner: UserId;
   source_type_name: string;
   start_time: string;
   valid_at: string;
@@ -74,4 +76,4 @@ export type ExternalSourceTypeInsertInput = Pick<ExternalSourceType, 'name'>;
 export type DerivationGroupInsertInput = Pick<DerivationGroup, 'name' | 'source_type_name'>;
 
 // Used to track whether a newly added source has been acknowledged or not for a given plan
-export type DerivationGroupUpdateAckEntry = {derivation_group: string, last_acknowledged_at: string};
+export type DerivationGroupUpdateAckEntry = { derivation_group: string; last_acknowledged_at: string };

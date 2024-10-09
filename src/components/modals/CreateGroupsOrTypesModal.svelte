@@ -11,6 +11,8 @@
   } from '../../stores/external-source';
   import type { User } from '../../types/app';
   import effects from '../../utilities/effects';
+  import { permissionHandler } from '../../utilities/permissionHandler';
+  import { featurePermissions } from '../../utilities/permissions';
   import AlertError from '../ui/AlertError.svelte';
   import Tab from '../ui/Tabs/Tab.svelte';
   import TabPanel from '../ui/Tabs/TabPanel.svelte';
@@ -29,6 +31,16 @@
   let newTypeName: string = '';
   let newTypeSourceType: string = '';
   let newTypeError: string | null = null;
+
+  let hasCreateDerivationGroupPermission: boolean = false;
+  let hasCreateExternalSourceTypePermission: boolean = false;
+  let hasCreateExternalEventTypePermission: boolean = false;
+
+  $: hasCreateDerivationGroupPermission = featurePermissions.derivationGroup.canCreate(user);
+
+  $: hasCreateExternalSourceTypePermission = featurePermissions.externalSourceType.canCreate(user);
+
+  $: hasCreateExternalEventTypePermission = featurePermissions.externalEventType.canCreate(user);
 
   function onCreateDerivationGroup() {
     if (newTypeName === '') {
@@ -97,7 +109,14 @@
                   <option value={sourceType.name}>{sourceType.name}</option>
                 {/each}
               </select>
-              <button class="st-button w-10" type="submit" on:click|preventDefault={onCreateDerivationGroup}>
+              <button
+                class="st-button w-10"
+                type="submit"
+                on:click|preventDefault={onCreateDerivationGroup}
+                use:permissionHandler={{
+                  hasPermission: hasCreateDerivationGroupPermission,
+                }}
+              >
                 Create
               </button>
             </div>
@@ -117,7 +136,14 @@
                 class="st-input w-100"
                 placeholder="New External Source Type Name"
               />
-              <button class="st-button w-10" type="submit" on:click|preventDefault={onCreateExternalSourceType}>
+              <button
+                class="st-button w-10"
+                type="submit"
+                on:click|preventDefault={onCreateExternalSourceType}
+                use:permissionHandler={{
+                  hasPermission: hasCreateExternalSourceTypePermission,
+                }}
+              >
                 Create
               </button>
             </div>
@@ -137,7 +163,14 @@
                 class="st-input w-100"
                 placeholder="New External Event Type Name"
               />
-              <button class="st-button w-10" type="submit" on:click|preventDefault={onCreateExternalEventType}>
+              <button
+                class="st-button w-10"
+                type="submit"
+                on:click|preventDefault={onCreateExternalEventType}
+                use:permissionHandler={{
+                  hasPermission: hasCreateExternalEventTypePermission,
+                }}
+              >
                 Create
               </button>
             </div>
