@@ -878,7 +878,6 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
     return isUserAdmin(user) || getPermission([Queries.SCHEDULING_SPECIFICATION], user);
   },
   SUB_SCHEDULING_REQUESTS: () => true,
-  SUB_SEEN_SOURCES: () => true,
   SUB_SEQUENCE_ADAPTATIONS: () => true,
   SUB_SIMULATION: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.SIMULATIONS], user);
@@ -955,6 +954,9 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
       (getPermission([Queries.INSERT_CONSTRAINT_SPECIFICATIONS, Queries.DELETE_CONSTRAINT_SPECIFICATIONS], user) &&
         (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
     );
+  },
+  UPDATE_DERIVATION_GROUP_ACKNOWLEDGED: (user: User | null): boolean => {
+    return isUserAdmin(user) || getPermission([Queries.UPDATE_DERIVATION_GROUP_ACKNOWLEDGED], user);
   },
   UPDATE_EXPANSION_RULE: (user: User | null, expansionRule: AssetWithOwner<ExpansionRule>): boolean => {
     return (
@@ -1098,9 +1100,6 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
       (getPermission([Queries.UPDATE_SCHEDULING_SPECIFICATION], user) &&
         (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
     );
-  },
-  UPDATE_SEEN_SOURCE_ENTRY: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission([Queries.UPDATE_SEEN_SOURCE_ENTRY], user);
   },
   UPDATE_SIMULATION: (user: User | null, plan: PlanWithOwners): boolean => {
     return (

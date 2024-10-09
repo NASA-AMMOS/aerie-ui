@@ -5657,6 +5657,26 @@ const effects = {
       showFailureToast('Constraint Plan Specifications Update Failed');
     }
   },
+  
+  async updateDerivationGroupAcknowledged(plan_id: number | undefined, derivation_group_name: string, updatedAt=new Date(), user: User | null) {
+    if (plan_id === undefined) {
+      console.log("[updateDerivationGroupAcknowledged]: plan_id is null.");
+      return;
+    }
+    try {
+      if (!queryPermissions.UPDATE_DERIVATION_GROUP_ACKNOWLEDGED(user)) {
+        throwPermissionError('mark viewership of a updates to a derivation group');
+      }
+      const { updatePlanDerivationGroup: update } = await reqHasura(gql.UPDATE_DERIVATION_GROUP_ACKNOWLEDGED, { derivation_group_name, new_date: updatedAt.toUTCString(), plan_id }, user);
+      if (update) {
+        return update;
+      } else {
+        throw Error(`Unable to log derivation group update recognition`);
+      }
+    } catch (e) {
+      catchError('Derivation Group Update Visibility Recognition Failed', e as Error);
+    }
+  },
 
   async updateExpansionRule(id: number, rule: ExpansionRuleSetInput, user: User | null): Promise<string | null> {
     try {
@@ -6239,27 +6259,6 @@ const effects = {
     } catch (e) {
       catchError('Simulation Template Update Failed', e as Error);
       showFailureToast('Simulation Template Update Failed');
-    }
-  },
-
-  // TODO: add a trigger as well.
-  async updateSourceSeenEntry(plan_id: number | undefined, derivation_group_name: string, updatedAt=new Date(), user: User | null) {
-    if (plan_id === undefined) {
-      console.log("[updateSourceSeenEntry]: plan_id is null.");
-      return;
-    }
-    try {
-      if (!queryPermissions.UPDATE_SEEN_SOURCE_ENTRY(user)) {
-        throwPermissionError('mark viewership of a updates to a derivation group');
-      }
-      const { updateSeenSources: update } = await reqHasura(gql.UPDATE_SEEN_SOURCE_ENTRY, { derivation_group_name, new_date: updatedAt.toUTCString(), plan_id }, user);
-      if (update) {
-        return update;
-      } else {
-        throw Error(`Unable to log derivation group update recognition`);
-      }
-    } catch (e) {
-      catchError('Derivation Group Update Visibility Recognition Failed', e as Error);
     }
   },
 
