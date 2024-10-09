@@ -29,8 +29,9 @@
   // filter which derivation groups are visible
   let filterText: string = '';
   let mappedDerivationGroups: { [key: string]: DerivationGroup[] } = {};
-  let filteredDerivationGroups: DerivationGroup[] = [];
   let unseenSources: ExternalSourceSlim[] = [];
+  let linkedDerivationGroupIds: string[] = [];
+  let filteredDerivationGroups: DerivationGroup[] = [];
 
   // Determine which new and deleted sources are unacknowledged for the user
   $: {
@@ -81,6 +82,12 @@
   function onManageDerivationGroups() {
     effects.managePlanDerivationGroups(user);
   }
+
+  function onUpdateDismiss() {
+    for (const derivationGroup of filteredDerivationGroups) {
+      effects.updateSourceSeenEntry($plan?.id, derivationGroup.name, new Date(), user);
+    }
+  }
 </script>
 
 <Panel>
@@ -111,15 +118,7 @@
       <div style="padding-top: 10px">
         <CardList>
           {#if unseenSources.length}
-            <ExternalSourceUpdateCard
-              deleted={false}
-              sources={unseenSources}
-              on:dismiss={() => {
-                for (const derivationGroup of filteredDerivationGroups) {
-                  effects.updateSourceSeenEntry($plan?.id, derivationGroup.name, new Date(), user);
-                }
-              }}
-            />
+            <ExternalSourceUpdateCard deleted={false} sources={unseenSources} on:dismiss={onUpdateDismiss} />
           {/if}
         </CardList>
       </div>
