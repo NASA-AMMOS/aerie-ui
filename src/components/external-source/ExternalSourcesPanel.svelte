@@ -68,7 +68,7 @@
       (aggMappedDerivationGroups: { [key: string]: DerivationGroup[] }, group) => {
         if (
           aggMappedDerivationGroups[group.source_type_name] &&
-          !mappedDerivationGroups[group.source_type_name]
+          !aggMappedDerivationGroups[group.source_type_name]
             .map(mappedDerivationGroup => mappedDerivationGroup.name)
             .includes(group.name)
         ) {
