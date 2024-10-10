@@ -484,7 +484,11 @@ export function downloadView(view: View) {
   a.click();
 }
 
-export async function applyViewMigrations(view: View) {
+export async function applyViewMigrations(view: View): Promise<{
+  anyMigrationsApplied: boolean;
+  error: Error | null;
+  migratedView: View | null;
+}> {
   try {
     const { anyMigrationsApplied, error, migratedViewDefinition } = await applyViewDefinitionMigrations(
       view.definition,
@@ -495,11 +499,15 @@ export async function applyViewMigrations(view: View) {
     const migratedView: View = { ...view, definition: migratedViewDefinition };
     return { anyMigrationsApplied, error, migratedView };
   } catch (error) {
-    return { anyMigrationsApplied: false, error, migratedView: null };
+    return { anyMigrationsApplied: false, error: error as Error, migratedView: null };
   }
 }
 
-export async function applyViewDefinitionMigrations(viewDefinition: ViewDefinition) {
+export function applyViewDefinitionMigrations(viewDefinition: ViewDefinition): {
+  anyMigrationsApplied: boolean;
+  error: Error | null;
+  migratedViewDefinition: ViewDefinition | null;
+} {
   try {
     // If the view version does not exist we will consider it to be version 0
     const version = viewDefinition.version ?? 0;
@@ -513,19 +521,18 @@ export async function applyViewDefinitionMigrations(viewDefinition: ViewDefiniti
     let anyMigrationsApplied = false;
     for (let i = version; i < viewSchemaVersion; i++) {
       if (upMigrations[i]) {
-        console.log(`Applying view migration: ${i} -> ${i + 1}`);
         migratedViewDefinition = upMigrations[i](viewDefinition);
         anyMigrationsApplied = true;
       }
     }
 
-    return { anyMigrationsApplied, errors: null, migratedViewDefinition };
+    return { anyMigrationsApplied, error: null, migratedViewDefinition };
   } catch (error) {
-    return { anyMigrationsApplied: false, error, migratedViewDefinition: null };
+    return { anyMigrationsApplied: false, error: error as Error, migratedViewDefinition: null };
   }
 }
 
-function migrateViewDefinitionV0toV1(viewDefinition: ViewDefinition) {
+export function migrateViewDefinitionV0toV1(viewDefinition: ViewDefinition) {
   /*
     Summary of migrations:
     - External events changes to row activity options
