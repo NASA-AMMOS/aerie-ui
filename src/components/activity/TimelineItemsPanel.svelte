@@ -52,7 +52,6 @@
     display: flex;
     gap: 8px;
     text-align: left;
-    overflow-x: scroll;
   }
 
   :global(button.timeline-items-tab:last-of-type) {
