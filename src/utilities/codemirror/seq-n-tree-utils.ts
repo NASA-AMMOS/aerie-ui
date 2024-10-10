@@ -74,7 +74,6 @@ export class SeqNCommandInfoMapper implements CommandInfoMapper {
   }
 
   nodeTypeEnumCompatible(node: SyntaxNode | null): boolean {
-    console.log(`vml ${node?.name}`);
     return node?.name === 'String';
   }
 

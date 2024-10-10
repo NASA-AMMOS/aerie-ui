@@ -4,7 +4,13 @@ import type { SyntaxNode } from '@lezer/common';
 import type { ChannelDictionary, CommandDictionary, FswCommand, FswCommandArgument } from '@nasa-jpl/aerie-ampcs';
 import type { ISequenceAdaptation } from '../../types/sequencing';
 import { getNearestAncestorNodeOfType } from '../sequence-editor/tree-utils';
-import { TOKEN_STRING_CONST } from './vml-constants';
+import {
+  RULE_CALL_PARAMETER,
+  RULE_CALL_PARAMETERS,
+  RULE_FUNCTION_NAME,
+  RULE_STATEMENT,
+  TOKEN_STRING_CONST,
+} from './vml-constants';
 
 export const VmlAdaptation: Partial<ISequenceAdaptation> = {
   // autoComplete: vmlAutoComplete,
@@ -23,19 +29,6 @@ export function vmlAutoComplete(
     const tree = syntaxTree(context.state);
     const nodeBefore = tree.resolveInner(context.pos, -1);
     const nodeCurrent = tree.resolveInner(context.pos, 0);
-    // const baseNode = tree.topNode;
-    // console.log(`${nodeBefore.name} --- ${nodeBefore.parent?.name}`);
-    // if (nodeBefore.name === 'Time_tagged_statement' && nodeBefore.parent?.name === 'Time_tagged_statements') {
-    //   return {
-    //     from: context.pos,
-    //     options: statementTypeCompletions().map(statement => ({
-    //       apply: statement,
-    //       label: statement,
-    //       section: 'Command',
-    //       type: 'function',
-    //     })),
-    //   };
-    // }
     if (nodeBefore.name === 'Issue') {
       return {
         from: context.pos,
@@ -48,9 +41,9 @@ export function vmlAutoComplete(
         })),
       };
     } else if (nodeCurrent.name === TOKEN_STRING_CONST) {
-      const containingStatement = getNearestAncestorNodeOfType(nodeCurrent, ['Statement']);
+      const containingStatement = getNearestAncestorNodeOfType(nodeCurrent, [RULE_STATEMENT]);
       if (containingStatement) {
-        const functionNameNode = containingStatement.firstChild?.getChild('Function_name');
+        const functionNameNode = containingStatement.firstChild?.getChild(RULE_FUNCTION_NAME);
         if (functionNameNode) {
           const stem = context.state.sliceDoc(functionNameNode.from, functionNameNode.to);
           const cmdDef = commandDictionary.fswCommandMap[stem];
@@ -90,9 +83,9 @@ export function vmlAutoComplete(
 
 function getArgumentPosition(argNode: SyntaxNode) {
   return (
-    getNearestAncestorNodeOfType(argNode, ['Statement'])
-      ?.firstChild?.getChild('Call_parameters')
-      ?.getChildren('Call_parameter')
+    getNearestAncestorNodeOfType(argNode, [RULE_STATEMENT])
+      ?.firstChild?.getChild(RULE_CALL_PARAMETERS)
+      ?.getChildren(RULE_CALL_PARAMETER)
       ?.findIndex(par => par.from === argNode.from && par.to === argNode.to) ?? -1
   );
 }
