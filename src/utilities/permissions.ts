@@ -965,8 +965,12 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
         (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
     );
   },
-  UPDATE_DERIVATION_GROUP_ACKNOWLEDGED: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission([Queries.UPDATE_DERIVATION_GROUP_ACKNOWLEDGED], user);
+  UPDATE_DERIVATION_GROUP_ACKNOWLEDGED: (user: User | null, plan: PlanWithOwners): boolean => {
+    return (
+      isUserAdmin(user) ||
+      (getPermission([Queries.UPDATE_DERIVATION_GROUP_ACKNOWLEDGED], user) &&
+        (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
+    );
   },
   UPDATE_EXPANSION_RULE: (user: User | null, expansionRule: AssetWithOwner<ExpansionRule>): boolean => {
     return (
@@ -1283,7 +1287,7 @@ interface FeaturePermissions {
   constraintsModelSpec: ModelSpecificationCRUDPermission;
   constraintsPlanSpec: PlanSpecificationCRUDPermission;
   derivationGroup: CRUDPermission<DerivationGroup>;
-  derivationGroupAcknowledgement: CRUDPermission<void>;
+  derivationGroupAcknowledgement: PlanSpecificationCRUDPermission;
   derivationGroupPlanLink: CRUDPermission<void>;
   expansionRules: CRUDPermission<AssetWithOwner>;
   expansionSequences: ExpansionSequenceCRUDPermission<AssetWithOwner<ExpansionSequence>>;
@@ -1367,10 +1371,8 @@ const featurePermissions: FeaturePermissions = {
     canUpdate: () => false, // this is not a feature
   },
   derivationGroupAcknowledgement: {
-    canCreate: () => false, // uses canUpdate instead
-    canDelete: () => false, // uses canUpdate instead
     canRead: user => queryPermissions.GET_PLAN_DERIVATION_GROUP(user), // seen sources are derived from plan/derivation groups
-    canUpdate: user => queryPermissions.UPDATE_DERIVATION_GROUP_ACKNOWLEDGED(user),
+    canUpdate: (user, plan) => queryPermissions.UPDATE_DERIVATION_GROUP_ACKNOWLEDGED(user, plan),
   },
   derivationGroupPlanLink: {
     canCreate: user => queryPermissions.CREATE_PLAN_DERIVATION_GROUP(user),

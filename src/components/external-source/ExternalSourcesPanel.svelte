@@ -106,7 +106,7 @@
 
   function onUpdateDismiss() {
     for (const derivationGroup of filteredDerivationGroups) {
-      effects.updateDerivationGroupAcknowledged($plan?.id, derivationGroup.name, new Date(), user);
+      effects.updateDerivationGroupAcknowledged($plan ?? undefined, derivationGroup.name, new Date(), user);
     }
   }
 </script>
