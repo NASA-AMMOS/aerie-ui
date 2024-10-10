@@ -62,6 +62,13 @@
       suppressSizeToFit: false,
     },
     {
+      field: 'owner',
+      filter: 'string',
+      headerName: 'Owner',
+      resizable: true,
+      sortable: true,
+    },
+    {
       field: 'derived_event_total',
       filter: 'number',
       headerName: 'Derived Events in Derivation Group',
