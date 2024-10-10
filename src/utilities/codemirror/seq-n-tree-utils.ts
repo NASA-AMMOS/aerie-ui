@@ -8,6 +8,7 @@ import {
   TOKEN_REQUEST,
 } from '../../constants/seq-n-grammar-constants';
 import { getNearestAncestorNodeOfType } from '../sequence-editor/tree-utils';
+import type { CommandInfoMapper } from './command-info-mapper';
 
 export function getNameNode(stepNode: SyntaxNode | null) {
   if (stepNode) {
@@ -37,4 +38,51 @@ export function getAncestorStepOrRequest(node: SyntaxNode | null) {
     TOKEN_LOAD,
     TOKEN_REQUEST,
   ]);
+}
+
+export function* getArgumentsFromContainerGenerator(containerNode: SyntaxNode | null) {
+  let child = containerNode?.firstChild;
+  while (child) {
+    yield child;
+    child = child.nextSibling;
+  }
+}
+
+export class SeqNCommandInfoMapper implements CommandInfoMapper {
+  getArgumentNodeContainer(commandNode: SyntaxNode | null): SyntaxNode | null {
+    return commandNode?.getChild('Args') ?? null;
+  }
+
+  getArgumentsFromContainer(containerNode: SyntaxNode | null): SyntaxNode[] {
+    const children: SyntaxNode[] = [];
+
+    let child = containerNode?.firstChild;
+    while (child) {
+      children.push(child);
+      child = child.nextSibling;
+    }
+
+    return children;
+  }
+
+  getContainingCommand(node: SyntaxNode | null): SyntaxNode | null {
+    return getAncestorStepOrRequest(node);
+  }
+
+  getNameNode(stepNode: SyntaxNode | null): SyntaxNode | null {
+    return getNameNode(stepNode);
+  }
+
+  nodeTypeEnumCompatible(node: SyntaxNode | null): boolean {
+    console.log(`vml ${node?.name}`);
+    return node?.name === 'String';
+  }
+
+  nodeTypeHasArguments(node: SyntaxNode | null): boolean {
+    return node?.name === 'Command';
+  }
+
+  nodeTypeNumberCompatible(node: SyntaxNode | null): boolean {
+    return node?.name === 'Number';
+  }
 }

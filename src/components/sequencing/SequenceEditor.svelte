@@ -38,11 +38,14 @@
   import type { IOutputFormat, Parcel } from '../../types/sequencing';
   import { seqNHighlightBlock, seqqNBlockHighlighter, setupLanguageSupport } from '../../utilities/codemirror';
   import { blockTheme } from '../../utilities/codemirror/block';
+  import type { CommandInfoMapper } from '../../utilities/codemirror/command-info-mapper';
+  import { SeqNCommandInfoMapper } from '../../utilities/codemirror/seq-n-tree-utils';
   import { setupVmlLanguageSupport, vmlBlockHighlighter, vmlHighlightBlock } from '../../utilities/codemirror/vml';
   import { vmlAutoComplete } from '../../utilities/codemirror/vml-adaptation';
   import { vmlFormat } from '../../utilities/codemirror/vml-formatter';
   import { vmlLinter } from '../../utilities/codemirror/vml-linter';
   import { vmlTooltip } from '../../utilities/codemirror/vml-tooltip';
+  import { VmlCommandInfoMapper } from '../../utilities/codemirror/vml-tree-utils';
   import effects from '../../utilities/effects';
   import { downloadBlob, downloadJSON } from '../../utilities/generic';
   import { inputLinter, outputLinter } from '../../utilities/sequence-editor/extension-points';
@@ -90,6 +93,7 @@
   let menu: Menu;
   let outputFormats: IOutputFormat[];
   let selectedNode: SyntaxNode | null;
+  let commandInfoMapper: CommandInfoMapper = new SeqNCommandInfoMapper();
   let selectedOutputFormat: IOutputFormat | undefined;
   let toggleSeqJsonPreview: boolean = false;
 
@@ -326,6 +330,21 @@
     }
   }
 
+  function getLanguageName(language: any): string | null {
+    if (
+      !language ||
+      !('language' in language) ||
+      !language.language ||
+      typeof language.language !== 'object' ||
+      !('name' in language.language) ||
+      typeof language.language.name !== 'string'
+    ) {
+      return null;
+    }
+
+    return language.language.name;
+  }
+
   function selectedCommandUpdateListener(viewUpdate: ViewUpdate): void {
     // This is broken out into a different listener as debouncing this can cause cursor to move around
     const tree = syntaxTree(viewUpdate.state);
@@ -335,6 +354,12 @@
     const updatedSelectionNode = tree.resolveInner(selectionLine.from + leadingWhiteSpaceLength, 1);
     // minimize triggering selected command view
     if (selectedNode !== updatedSelectionNode) {
+      const language = compartmentSeqLanguage.get(viewUpdate.state);
+      if (getLanguageName(language) === 'vml') {
+        commandInfoMapper = new VmlCommandInfoMapper();
+      } else {
+        commandInfoMapper = new SeqNCommandInfoMapper();
+      }
       selectedNode = updatedSelectionNode;
     }
   }
@@ -509,6 +534,7 @@
         node={selectedNode}
         {channelDictionary}
         {commandDictionary}
+        {commandInfoMapper}
         {editorSequenceView}
         {parameterDictionaries}
       />

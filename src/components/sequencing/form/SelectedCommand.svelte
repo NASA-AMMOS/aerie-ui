@@ -14,7 +14,7 @@
   import type { EditorView } from 'codemirror';
   import { debounce } from 'lodash-es';
   import { TOKEN_ERROR } from '../../../constants/seq-n-grammar-constants';
-  import { getAncestorStepOrRequest, getNameNode } from '../../../utilities/codemirror/seq-n-tree-utils';
+  import type { CommandInfoMapper } from '../../../utilities/codemirror/command-info-mapper';
   import { getCustomArgDef } from '../../../utilities/sequence-editor/extension-points';
   import Collapse from '../../Collapse.svelte';
   import Panel from '../../ui/Panel.svelte';
@@ -36,6 +36,7 @@
   export let commandDictionary: CommandDictionary;
   export let parameterDictionaries: ParameterDictionary[];
   export let node: SyntaxNode | null;
+  export let commandInfoMapper: CommandInfoMapper;
 
   const ID_COMMAND_DETAIL_PANE = 'ID_COMMAND_DETAIL_PANE';
 
@@ -46,12 +47,12 @@
   let missingArgDefArray: FswCommandArgument[] = [];
   let timeTagNode: TimeTagInfo = null;
 
-  $: commandNode = getAncestorStepOrRequest(node);
-  $: commandNameNode = getNameNode(commandNode);
+  $: commandNode = commandInfoMapper.getContainingCommand(node);
+  $: commandNameNode = commandInfoMapper.getNameNode(commandNode);
   $: commandName = commandNameNode && editorSequenceView.state.sliceDoc(commandNameNode.from, commandNameNode.to);
   $: commandDef = getCommandDef(commandDictionary, commandName ?? '');
   $: argInfoArray = getArgumentInfo(
-    commandNode?.getChild('Args') ?? null,
+    commandInfoMapper.getArgumentNodeContainer(commandNode),
     commandDef?.arguments,
     undefined,
     parameterDictionaries,
@@ -78,49 +79,45 @@
     parameterDictionaries: ParameterDictionary[],
   ) {
     const argArray: ArgTextDef[] = [];
-    let node = args?.firstChild;
 
     const precedingArgValues: string[] = [];
 
-    // loop through nodes in editor and pair with definitions
-    while (node) {
-      // TODO - Consider early out on grammar error as higher chance of argument mismatch
-      // skip error tokens in grammar and try to give best guess at what argument we're on
-      if (node.name !== TOKEN_ERROR) {
-        let argDef =
-          argumentDefs &&
-          argumentDefs[
-            parentArgDef?.repeat?.arguments.length !== undefined
-              ? argArray.length % parentArgDef?.repeat?.arguments.length
-              : argArray.length
-          ];
-        if (commandDef && argDef) {
-          argDef = getCustomArgDef(
-            commandDef?.stem,
+    if (args) {
+      for (const node of commandInfoMapper.getArgumentsFromContainer(args)) {
+        if (node.name !== TOKEN_ERROR) {
+          let argDef =
+            argumentDefs &&
+            argumentDefs[
+              parentArgDef?.repeat?.arguments.length !== undefined
+                ? argArray.length % parentArgDef?.repeat?.arguments.length
+                : argArray.length
+            ];
+          if (commandDef && argDef) {
+            argDef = getCustomArgDef(
+              commandDef?.stem,
+              argDef,
+              precedingArgValues,
+              parameterDictionaries,
+              channelDictionary,
+            );
+          }
+
+          let children: ArgTextDef[] | undefined = undefined;
+          if (!!argDef && isFswCommandArgumentRepeat(argDef)) {
+            children = getArgumentInfo(node, argDef.repeat?.arguments, argDef, parameterDictionaries);
+          }
+          const argValue = editorSequenceView.state.sliceDoc(node.from, node.to);
+          argArray.push({
             argDef,
-            precedingArgValues,
-            parameterDictionaries,
-            channelDictionary,
-          );
+            children,
+            node,
+            parentArgDef,
+            text: argValue,
+          });
+          precedingArgValues.push(argValue);
         }
-
-        let children: ArgTextDef[] | undefined = undefined;
-        if (!!argDef && isFswCommandArgumentRepeat(argDef)) {
-          children = getArgumentInfo(node, argDef.repeat?.arguments, argDef, parameterDictionaries);
-        }
-        const argValue = editorSequenceView.state.sliceDoc(node.from, node.to);
-        argArray.push({
-          argDef,
-          children,
-          node,
-          parentArgDef,
-          text: argValue,
-        });
-        precedingArgValues.push(argValue);
       }
-      node = node.nextSibling;
     }
-
     // add entries for defined arguments missing from editor
     if (argumentDefs) {
       if (!parentArgDef) {
@@ -138,7 +135,7 @@
     return argArray;
   }
 
-  function getCommandDef(commandDictionary: CommandDictionary | null, stemName: string) {
+  function getCommandDef(commandDictionary: CommandDictionary | null, stemName: string): FswCommand | null {
     return commandDictionary?.fswCommandMap[stemName] ?? null;
   }
 
@@ -204,7 +201,7 @@
         </fieldset>
       {/if}
       {#if !!commandNode}
-        {#if commandNode.name === 'Command'}
+        {#if commandInfoMapper.nodeTypeHasArguments(commandNode)}
           {#if !!commandDef}
             <fieldset>
               <Collapse headerHeight={24} title={commandDef.stem} padContent={false}>{commandDef.description}</Collapse>
@@ -214,6 +211,7 @@
               <ArgEditor
                 {argInfo}
                 {commandDictionary}
+                {commandInfoMapper}
                 setInEditor={debounce(setInEditor, 250)}
                 addDefaultArgs={(commandNode, missingArgDefArray) =>
                   addDefaultArgs(commandDictionary, editorSequenceView, commandNode, missingArgDefArray)}

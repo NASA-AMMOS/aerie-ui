@@ -46,7 +46,9 @@ const FoldBehavior: {
 export const VmlLanguage = LRLanguage.define({
   languageData: {
     commentTokens: { line: ';' },
+    getContainingCommand: () => {},
   },
+  name: 'vml',
   parser: parser.configure({
     props: [
       foldNodeProp.add(FoldBehavior),
