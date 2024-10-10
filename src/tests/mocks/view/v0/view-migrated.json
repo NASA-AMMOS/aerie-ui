@@ -12,7 +12,7 @@
       "middleRowSizes": "2fr 3px 1fr",
       "leftComponentTop": "TimelineItemsPanel",
       "rightComponentTop": "ActivityFormPanel",
-      "leftComponentBottom": "SimulationPanel",
+      "leftComponentBottom": "ConstraintsPanel",
       "rightComponentBottom": "TimelineEditorPanel",
       "middleComponentBottom": "ActivityDirectivesTablePanel"
     },
