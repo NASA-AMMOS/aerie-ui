@@ -2440,6 +2440,7 @@ const gql = {
         sources
         event_types
         derived_total
+        owner
       }
     }
   `,
@@ -2526,6 +2527,7 @@ const gql = {
         end_time
         valid_at
         created_at
+        owner
       }
     }
   `,
@@ -2540,6 +2542,7 @@ const gql = {
         end_time
         valid_at
         created_at
+        owner
       }
     }
   `,

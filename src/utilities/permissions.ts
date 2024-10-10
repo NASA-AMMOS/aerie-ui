@@ -4,11 +4,13 @@ import type { User, UserRole } from '../types/app';
 import type { ReqAuthResponse } from '../types/auth';
 import type { ConstraintDefinition, ConstraintMetadata, ConstraintRun } from '../types/constraint';
 import type { ExpansionRule, ExpansionSequence, ExpansionSet } from '../types/expansion';
+import type { DerivationGroup, ExternalSourceSlim } from '../types/external-source';
 import type { Model } from '../types/model';
 import type {
   AssetWithAuthor,
   AssetWithOwner,
   CreatePermissionCheck,
+  DerivationGroupWithOwner,
   ExternalSourceWithOwner,
   ModelWithOwner,
   PermissionCheck,
@@ -509,8 +511,11 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
         (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
     );
   },
-  DELETE_DERIVATION_GROUP: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission([Queries.DELETE_DERIVATION_GROUP], user);
+  DELETE_DERIVATION_GROUP: (user: User | null, derivationGroup: DerivationGroupWithOwner): boolean => {
+    return (
+      isUserAdmin(user) ||
+      (getPermission([Queries.DELETE_DERIVATION_GROUP], user) && isUserOwner(user, derivationGroup))
+    );
   },
   DELETE_EXPANSION_RULE: (user: User | null, expansionRule: AssetWithOwner<ExpansionRule>): boolean => {
     return (
@@ -535,7 +540,11 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
     return isUserAdmin(user) || getPermission([Queries.DELETE_EXTERNAL_EVENT_TYPE], user);
   },
   DELETE_EXTERNAL_SOURCES: (user: User | null, externalSources: ExternalSourceWithOwner[]): boolean => {
-    return isUserAdmin(user) || getPermission([Queries.DELETE_EXTERNAL_SOURCE], user) && isUserOwner(user, externalSources);
+    return (
+      isUserAdmin(user) ||
+      (getPermission([Queries.DELETE_EXTERNAL_SOURCE], user) &&
+        externalSources.every(externalSource => isUserOwner(user, externalSource) === true))
+    );
   },
   DELETE_EXTERNAL_SOURCE_TYPE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.DELETE_EXTERNAL_SOURCE_TYPE], user);
@@ -1273,14 +1282,14 @@ interface FeaturePermissions {
   constraints: AssociationCRUDPermission<ConstraintMetadata, ConstraintDefinition>;
   constraintsModelSpec: ModelSpecificationCRUDPermission;
   constraintsPlanSpec: PlanSpecificationCRUDPermission;
-  derivationGroup: CRUDPermission<void>;
+  derivationGroup: CRUDPermission<DerivationGroup>;
   derivationGroupAcknowledgement: CRUDPermission<void>;
   derivationGroupPlanLink: CRUDPermission<void>;
   expansionRules: CRUDPermission<AssetWithOwner>;
   expansionSequences: ExpansionSequenceCRUDPermission<AssetWithOwner<ExpansionSequence>>;
   expansionSets: ExpansionSetsCRUDPermission<AssetWithOwner<ExpansionSet>>;
   externalEventType: CRUDPermission<void>;
-  externalSource: CRUDPermission<void>;
+  externalSource: CRUDPermission<ExternalSourceSlim[]>;
   externalSourceType: CRUDPermission<void>;
   model: CRUDPermission<void>;
   parameterDictionary: CRUDPermission<void>;
@@ -1353,7 +1362,7 @@ const featurePermissions: FeaturePermissions = {
   },
   derivationGroup: {
     canCreate: user => queryPermissions.CREATE_DERIVATION_GROUP(user),
-    canDelete: user => queryPermissions.DELETE_DERIVATION_GROUP(user),
+    canDelete: (user, derivationGroup) => queryPermissions.DELETE_DERIVATION_GROUP(user, derivationGroup),
     canRead: user => queryPermissions.SUB_DERIVATION_GROUPS(user),
     canUpdate: () => false, // this is not a feature
   },
@@ -1396,7 +1405,7 @@ const featurePermissions: FeaturePermissions = {
   },
   externalSource: {
     canCreate: user => queryPermissions.CREATE_EXTERNAL_SOURCE(user),
-    canDelete: user => queryPermissions.DELETE_EXTERNAL_SOURCES(user),
+    canDelete: (user, externalSources) => queryPermissions.DELETE_EXTERNAL_SOURCES(user, externalSources),
     canRead: user => queryPermissions.SUB_EXTERNAL_SOURCES(user),
     canUpdate: () => false, // no feature to update external sources
   },

@@ -257,7 +257,7 @@ export async function showDeleteDerivationGroupModal(
         deleteDerivationGroupModal.$on('confirm', () => {
           target.resolve = null;
           resolve({ confirm: true });
-          effects.deleteDerivationGroup(derivationGroup.name, user);
+          effects.deleteDerivationGroup(derivationGroup, user);
           deleteDerivationGroupModal.$destroy();
         });
       }

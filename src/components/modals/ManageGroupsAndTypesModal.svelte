@@ -72,7 +72,7 @@
       valueFormatter: params => {
         return params?.value.length;
       },
-      width: 250,
+      width: 200,
     },
     {
       field: 'sources',
@@ -82,8 +82,16 @@
       valueFormatter: params => {
         return params?.value.size;
       },
-      width: 200,
+      width: 250,
     },
+    {
+      field: 'owner',
+      filter: 'string',
+      headerName: 'Owner',
+      resizable: true,
+      sortable: true,
+      width: 100
+    }
   ];
   const externalSourceTypeBaseColumnDefs: DataGridColumnDef<ExternalSourceType>[] = [
     {
@@ -146,7 +154,9 @@
   let derivationGroupColumnsDef: DataGridColumnDef<DerivationGroup>[] = derivationGroupBaseColumnDefs;
   let externalSourceTypeColumnDefs: DataGridColumnDef<ExternalSourceType>[] = externalSourceTypeBaseColumnDefs;
   let externalEventTypeColumnDefs: DataGridColumnDef<ExternalEventType>[] = externalEventTypeBaseColumnDefs;
-  let hasDeletePermission: boolean = false;
+
+  let hasDeleteExternalSourceTypePermission: boolean = false;
+  let hasDeleteExternalEventTypePermission: boolean = false;
 
   let modalColumnSize: string = modalColumnSizeNoDetail;
 
@@ -161,7 +171,8 @@
   let selectedExternalEventType: ExternalEventType | undefined = undefined;
   let selectedExternalEventTypeDerivationGroups: DerivationGroup[] = [];
 
-  $: hasDeletePermission = featurePermissions.externalSource.canDelete(user);
+  $: hasDeleteExternalSourceTypePermission = featurePermissions.externalSourceType.canDelete(user);
+  $: hasDeleteExternalEventTypePermission = featurePermissions.externalEventType.canDelete(user);
 
   $: selectedDerivationGroupSources = $externalSources.filter(
     source => selectedDerivationGroup?.name === source.derivation_group_name,
@@ -197,7 +208,7 @@
               content: 'Delete Derivation Group',
               placement: 'bottom',
             },
-            hasDeletePermission: hasDeletePermission,
+            hasDeletePermission: hasDeleteDerivationGroupPermissionOnRow(params.data),
             rowData: params.data,
             viewCallback: params.viewDerivationGroup,
             viewTooltip: {
@@ -234,7 +245,7 @@
               content: 'Delete External Source Type',
               placement: 'bottom',
             },
-            hasDeletePermission: hasDeletePermission,
+            hasDeletePermission: hasDeleteExternalSourceTypePermission,
             rowData: params.data,
             viewCallback: params.viewExternalSourceType,
             viewTooltip: {
@@ -272,7 +283,7 @@
               content: 'Delete External Source',
               placement: 'bottom',
             },
-            hasDeletePermission: hasDeletePermission,
+            hasDeletePermission: hasDeleteExternalEventTypePermission,
             rowData: params.data,
             viewCallback: params.viewExternalEventType,
             viewTooltip: {
@@ -403,6 +414,14 @@
       selectedExternalSourceType = undefined;
       selectedExternalEventType = undefined;
       modalColumnSize = modalColumnSizeNoDetail;
+    }
+  }
+
+  function hasDeleteDerivationGroupPermissionOnRow(derivationGroup: DerivationGroup | undefined) {
+    if (derivationGroup === undefined) {
+      return false;
+    } else {
+      return featurePermissions.derivationGroup.canDelete(user, derivationGroup);
     }
   }
 </script>
