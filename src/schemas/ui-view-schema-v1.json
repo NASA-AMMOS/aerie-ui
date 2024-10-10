@@ -330,11 +330,6 @@
                               "activityColor": {
                                 "$ref": "#/definitions/color"
                               },
-                              "activityHeight": {
-                                "description": "Height of each activity",
-                                "type": "number",
-                                "$comment": "deprecated"
-                              },
                               "chartType": {
                                 "const": "activity",
                                 "description": "Layer that visualizes activities"
@@ -371,7 +366,7 @@
                                 "$ref": "#/definitions/yAxisId"
                               }
                             },
-                            "required": ["activityColor", "activityHeight", "chartType", "filter", "id", "yAxisId"],
+                            "required": ["activityColor", "chartType", "filter", "id", "yAxisId"],
                             "type": "object"
                           },
                           {
