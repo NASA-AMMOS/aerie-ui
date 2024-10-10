@@ -415,7 +415,7 @@
           <div class="orange" style={`height: ${externalEventHeight * 100}%;`} />
         </div>
       {:else}
-        <div class="bin-item invisible" />
+        <div class="bin-item gap" />
       {/if}
     {/each}
   </div>
@@ -492,8 +492,8 @@
     height: 100%;
   }
 
-  .bin-item.invisible {
-    height: 0%;
+  .bin-item.gap {
+    visibility: hidden;
   }
 
   .constraint-violations {
