@@ -1,16 +1,10 @@
 import { type CompletionContext, type CompletionResult } from '@codemirror/autocomplete';
 import { syntaxTree } from '@codemirror/language';
-import type { SyntaxNode } from '@lezer/common';
 import type { ChannelDictionary, CommandDictionary, FswCommand, FswCommandArgument } from '@nasa-jpl/aerie-ampcs';
 import type { ISequenceAdaptation } from '../../types/sequencing';
 import { getNearestAncestorNodeOfType } from '../sequence-editor/tree-utils';
-import {
-  RULE_CALL_PARAMETER,
-  RULE_CALL_PARAMETERS,
-  RULE_FUNCTION_NAME,
-  RULE_STATEMENT,
-  TOKEN_STRING_CONST,
-} from './vml-constants';
+import { RULE_FUNCTION_NAME, RULE_ISSUE, RULE_STATEMENT, TOKEN_STRING_CONST } from './vml-constants';
+import { getArgumentPosition } from './vml-tree-utils';
 
 export const VmlAdaptation: Partial<ISequenceAdaptation> = {
   // autoComplete: vmlAutoComplete,
@@ -29,7 +23,7 @@ export function vmlAutoComplete(
     const tree = syntaxTree(context.state);
     const nodeBefore = tree.resolveInner(context.pos, -1);
     const nodeCurrent = tree.resolveInner(context.pos, 0);
-    if (nodeBefore.name === 'Issue') {
+    if (nodeBefore.name === RULE_ISSUE) {
       return {
         from: context.pos,
         options: commandDictionary.fswCommands.map((fswCommand: FswCommand) => ({
@@ -79,15 +73,6 @@ export function vmlAutoComplete(
 
     return null;
   };
-}
-
-function getArgumentPosition(argNode: SyntaxNode) {
-  return (
-    getNearestAncestorNodeOfType(argNode, [RULE_STATEMENT])
-      ?.firstChild?.getChild(RULE_CALL_PARAMETERS)
-      ?.getChildren(RULE_CALL_PARAMETER)
-      ?.findIndex(par => par.from === argNode.from && par.to === argNode.to) ?? -1
-  );
 }
 
 function getStemAndDefaultArguments(commandDictionary: CommandDictionary, cmd: FswCommand): string {

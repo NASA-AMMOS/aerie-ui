@@ -32,6 +32,7 @@ export class VmlCommandInfoMapper implements CommandInfoMapper {
     if (statementSubNode?.name === RULE_ISSUE) {
       return statementSubNode.getChild(RULE_FUNCTION_NAME);
     }
+    // once block library is implemented allow spawn here too
     return null;
   }
 
@@ -46,4 +47,13 @@ export class VmlCommandInfoMapper implements CommandInfoMapper {
   nodeTypeNumberCompatible(node: SyntaxNode | null): boolean {
     return !!node?.getChild(RULE_SIMPLE_EXPR)?.getChild(RULE_CONSTANT)?.getChild(TOKEN_INT_CONST);
   }
+}
+
+export function getArgumentPosition(argNode: SyntaxNode): number {
+  return (
+    getNearestAncestorNodeOfType(argNode, [RULE_STATEMENT])
+      ?.firstChild?.getChild(RULE_CALL_PARAMETERS)
+      ?.getChildren(RULE_CALL_PARAMETER)
+      ?.findIndex(par => par.from === argNode.from && par.to === argNode.to) ?? -1
+  );
 }

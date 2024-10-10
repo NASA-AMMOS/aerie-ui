@@ -5,7 +5,9 @@ import {
   TOKEN_GROUND_BLOCK,
   TOKEN_GROUND_EVENT,
   TOKEN_LOAD,
+  TOKEN_NUMBER,
   TOKEN_REQUEST,
+  TOKEN_STRING,
 } from '../../constants/seq-n-grammar-constants';
 import { getNearestAncestorNodeOfType } from '../sequence-editor/tree-utils';
 import type { CommandInfoMapper } from './command-info-mapper';
@@ -40,14 +42,6 @@ export function getAncestorStepOrRequest(node: SyntaxNode | null) {
   ]);
 }
 
-export function* getArgumentsFromContainerGenerator(containerNode: SyntaxNode | null) {
-  let child = containerNode?.firstChild;
-  while (child) {
-    yield child;
-    child = child.nextSibling;
-  }
-}
-
 export class SeqNCommandInfoMapper implements CommandInfoMapper {
   getArgumentNodeContainer(commandNode: SyntaxNode | null): SyntaxNode | null {
     return commandNode?.getChild('Args') ?? null;
@@ -74,14 +68,14 @@ export class SeqNCommandInfoMapper implements CommandInfoMapper {
   }
 
   nodeTypeEnumCompatible(node: SyntaxNode | null): boolean {
-    return node?.name === 'String';
+    return node?.name === TOKEN_STRING;
   }
 
   nodeTypeHasArguments(node: SyntaxNode | null): boolean {
-    return node?.name === 'Command';
+    return node?.name === TOKEN_COMMAND;
   }
 
   nodeTypeNumberCompatible(node: SyntaxNode | null): boolean {
-    return node?.name === 'Number';
+    return node?.name === TOKEN_NUMBER;
   }
 }
