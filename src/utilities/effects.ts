@@ -5654,21 +5654,21 @@ const effects = {
   },
 
   async updateDerivationGroupAcknowledged(
-    plan_id: number | undefined,
+    plan: Plan | undefined,
     derivation_group_name: string,
     updatedAt = new Date(),
     user: User | null,
   ) {
-    if (plan_id === undefined) {
+    if (plan === undefined) {
       return;
     }
     try {
-      if (!queryPermissions.UPDATE_DERIVATION_GROUP_ACKNOWLEDGED(user)) {
+      if (!queryPermissions.UPDATE_DERIVATION_GROUP_ACKNOWLEDGED(user, plan)) {
         throwPermissionError('mark viewership of a updates to a derivation group');
       }
       const { updatePlanDerivationGroup: update } = await reqHasura(
         gql.UPDATE_DERIVATION_GROUP_ACKNOWLEDGED,
-        { derivation_group_name, new_date: updatedAt.toUTCString(), plan_id },
+        { derivation_group_name, new_date: updatedAt.toUTCString(), plan_id: plan.id },
         user,
       );
       if (update) {
