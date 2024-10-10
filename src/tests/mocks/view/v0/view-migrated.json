@@ -64,8 +64,7 @@
                 },
                 "yAxisId": null,
                 "chartType": "activity",
-                "activityColor": "#fcdd8f",
-                "activityHeight": 16
+                "activityColor": "#fcdd8f"
               }
             ],
             "expanded": true,
