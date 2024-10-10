@@ -39,13 +39,12 @@
         <ExternalEventTypeList />
       </TabPanel>
     </Tabs>
-  </svelte:fragment>>
+  </svelte:fragment>
 </Panel>
 
 <style>
   :global(.tab-list.timeline-items-tabs-list) {
     background-color: var(--st-gray-10);
-    overflow-x: scroll;
   }
 
   :global(button.timeline-items-tab) {
@@ -53,6 +52,7 @@
     display: flex;
     gap: 8px;
     text-align: left;
+    overflow-x: scroll;
   }
 
   :global(button.timeline-items-tab:last-of-type) {
