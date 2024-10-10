@@ -98,10 +98,10 @@ function transformDerivationGroups(
     | null
     | undefined,
 ): DerivationGroup[] {
-  const completeExternalSourceSlim: DerivationGroup[] = [];
+  const completeDerivationGroup: DerivationGroup[] = [];
   if (derivationGroups !== null && derivationGroups !== undefined) {
     derivationGroups.forEach(derivationGroup => {
-      completeExternalSourceSlim.push({
+      completeDerivationGroup.push({
         derived_event_total: derivationGroup.derived_total,
         event_types: derivationGroup.event_types,
         name: derivationGroup.name,
@@ -129,5 +129,5 @@ function transformDerivationGroups(
       });
     });
   }
-  return completeExternalSourceSlim;
+  return completeDerivationGroup;
 }
