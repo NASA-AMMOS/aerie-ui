@@ -2317,16 +2317,16 @@ const effects = {
     }
   },
 
-  async deleteDerivationGroup(derivationGroupName: string | null, user: User | null): Promise<void> {
+  async deleteDerivationGroup(derivationGroup: DerivationGroup | null, user: User | null): Promise<void> {
     try {
-      if (!queryPermissions.DELETE_DERIVATION_GROUP(user)) {
+      if (!queryPermissions.DELETE_DERIVATION_GROUP(user, derivationGroup)) {
         throwPermissionError('delete a derivation group');
       }
 
-      if (derivationGroupName !== null) {
+      if (derivationGroup !== null) {
         const data = await reqHasura<{ name: string }>(
           gql.DELETE_DERIVATION_GROUP,
-          { name: derivationGroupName },
+          { name: derivationGroup.name },
           user,
         );
         if (data.deleteDerivationGroup === null) {
@@ -2549,7 +2549,7 @@ const effects = {
     user: User | null,
   ): Promise<boolean> {
     try {
-      if (!queryPermissions.DELETE_EXTERNAL_SOURCES(user)) {
+      if (!queryPermissions.DELETE_EXTERNAL_SOURCES(user, externalSources)) {
         throwPermissionError('delete an external source');
       }
       if (externalSources !== null) {

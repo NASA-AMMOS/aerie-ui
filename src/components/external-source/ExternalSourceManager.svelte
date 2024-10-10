@@ -26,7 +26,7 @@
   import {
     type ExternalSourceJson,
     type ExternalSourceSlim,
-    type PlanDerivationGroup,
+    type PlanDerivationGroup
   } from '../../types/external-source';
   import effects from '../../utilities/effects';
   import {
@@ -149,7 +149,7 @@
   let selectedSourceLinkedDerivationGroupsPlans: PlanDerivationGroup[] = [];
 
   // Permissions
-  let hasDeletePermission: boolean = false;
+  let hasDeleteExternalSourcePermissionOnSelectedSource: boolean = false;
   let hasCreatePermission: boolean = false;
 
   let isDerivationGroupFieldDisabled: boolean = true;
@@ -162,6 +162,10 @@
     createExternalSourceTypeError.set(null);
     createDerivationGroupError.set(null);
     parsingError.set(null);
+  }
+
+  $: if (selectedSource !== null) {
+    hasDeleteExternalSourcePermissionOnSelectedSource = featurePermissions.externalSource.canDelete(user, [selectedSource]);
   }
 
   $: selectedSourceId = selectedSource
@@ -252,7 +256,7 @@
               content: 'Delete External Source',
               placement: 'bottom',
             },
-            hasDeletePermission: hasDeletePermission,
+            hasDeletePermission: hasDeleteExternalSourcePermissionOnRow(user, params.data),
             rowData: params.data,
           },
           target: actionsDiv,
@@ -296,7 +300,6 @@
   });
 
   // Permissions
-  $: hasDeletePermission = featurePermissions.externalSource.canDelete(user);
   $: hasCreatePermission = featurePermissions.externalSource.canCreate(user);
 
   async function onDeleteExternalSource(selectedSources: ExternalSourceSlim[] | null | undefined) {
@@ -328,7 +331,6 @@
       );
       // Following a successful mutation...
       if (createExternalSourceResponse !== undefined) {
-        console.log(createExternalSourceResponse);
         // Auto-select the new source
         selectedSource = {
           ...createExternalSourceResponse,
@@ -412,6 +414,14 @@
 
   function onCreateGroupsOrTypes() {
     effects.createGroupsOrTypes(user);
+  }
+
+  function hasDeleteExternalSourcePermissionOnRow(user: User | null, externalSource: ExternalSourceSlim | undefined) {
+    if (externalSource === undefined) {
+      return false;
+    } else {
+      return featurePermissions.externalSource.canDelete(user, [externalSource]);
+    }
   }
 </script>
 
@@ -575,7 +585,7 @@
               class="st-button danger w-100"
               style="margin-bottom:auto;"
               use:permissionHandler={{
-                hasPermission: hasDeletePermission,
+                hasPermission: hasDeleteExternalSourcePermissionOnSelectedSource,
                 permissionError: deletePermissionError,
               }}
               on:click|stopPropagation={async () => {
@@ -739,7 +749,7 @@
           <div id="external-sources-table" style:height="100%">
             <BulkActionDataGrid
               {columnDefs}
-              {hasDeletePermission}
+              hasDeletePermission={hasDeleteExternalSourcePermissionOnRow}
               singleItemDisplayText="External Source"
               pluralItemDisplayText="External Source"
               {filterExpression}
