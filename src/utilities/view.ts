@@ -3,7 +3,7 @@ import { ViewDefaultDiscreteOptions, viewSchemaVersion } from '../constants/view
 import type { ActivityType } from '../types/activity';
 import type { ExternalEventType } from '../types/external-event';
 import type { ResourceType } from '../types/simulation';
-import type { View, ViewDefinition, ViewGridColumns, ViewGridRows } from '../types/view';
+import type { View, ViewDefinition, ViewGridColumns, ViewGridComponent, ViewGridRows } from '../types/view';
 import {
   createRow,
   createTimeline,
@@ -519,6 +519,7 @@ export async function applyViewDefinitionMigrations(viewDefinition: ViewDefiniti
         anyMigrationsApplied = true;
       }
     }
+
     return { anyMigrationsApplied, errors: null, migratedViewDefinition };
   } catch (error) {
     return { anyMigrationsApplied: false, error, migratedViewDefinition: null };
@@ -526,10 +527,33 @@ export async function applyViewDefinitionMigrations(viewDefinition: ViewDefiniti
 }
 
 function migrateViewDefinitionV0toV1(viewDefinition: ViewDefinition) {
+  /*
+    Summary of migrations:
+    - External events changes to row activity options
+    - ActivityTypesPanel rename to TimelineItemsPanel
+  */
+
+  const updatedGrid = structuredClone(viewDefinition.plan.grid);
+  const gridKeysToUpdate = [
+    'leftComponentTop',
+    'rightComponentTop',
+    'leftComponentBottom',
+    'rightComponentBottom',
+    'middleComponentBottom',
+  ];
+  Object.entries(updatedGrid).forEach(([key, value]) => {
+    if (gridKeysToUpdate.indexOf(key) > -1 && value === 'ActivityTypesPanel') {
+      // @ts-expect-error cannot resolve types here but this is safe
+      updatedGrid[key] = 'TimelineItemsPanel' as ViewGridComponent;
+    }
+    return value;
+  });
+
   return {
     ...viewDefinition,
     plan: {
       ...viewDefinition.plan,
+      grid: updatedGrid,
       timelines: viewDefinition.plan.timelines.map(timeline => {
         return {
           ...timeline,
