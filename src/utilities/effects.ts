@@ -4674,10 +4674,13 @@ const effects = {
               catchError('Unable to migrate view', error as Error);
               showFailureToast('Unable to migrate view');
             }
-            return migratedView;
+            // TODO how should we deal with un-migratable views when loading from URL, view browser, or uploading?
+            // Should we always fall back to default or not load anything new when not in the url loading case?
+            return generateDefaultView(activityTypes, resourceTypes, externalEventTypes);
           } else {
             return null;
           }
+          // TODO do we need to migrate these defaultViews? Yes?
         } else if (defaultView !== null && defaultView !== undefined) {
           return defaultView;
         }
