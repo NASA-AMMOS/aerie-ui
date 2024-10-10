@@ -538,6 +538,7 @@ export function migrateViewDefinitionV0toV1(viewDefinition: ViewDefinition) {
     - External events changes to row activity options
     - ActivityTypesPanel rename to TimelineItemsPanel
     - ConstraintViolationsPanel rename to ConstraintsPanel
+    - Remove deprecated ActivityLayer.activityHeight
   */
 
   const updatedGrid = structuredClone(viewDefinition.plan.grid);
@@ -593,6 +594,14 @@ export function migrateViewDefinitionV0toV1(viewDefinition: ViewDefinition) {
               // @ts-expect-error deprecated type def
               delete newRow.activityOptions;
             }
+            newRow.layers = newRow.layers.map(layer => {
+              const newLayer = structuredClone(layer);
+              if (newLayer.chartType === 'activity') {
+                // @ts-expect-error deprecated type def
+                delete newLayer.activityHeight;
+              }
+              return newLayer;
+            });
             return newRow;
           }),
         };
