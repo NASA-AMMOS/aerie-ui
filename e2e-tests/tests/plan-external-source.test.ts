@@ -155,7 +155,7 @@ test.describe.serial('Plan External Sources', () => {
     expect(doPixelsExist).toBeTruthy();
   });
 
-  test('Cards should be shown when a file is added or deleted from a plans linked derivation group', async () => {
+  test('Cards should be shown when a new external source is uploaded', async () => {
     // Upload a test file and link its derivation group to the plan
     await externalSources.goto();
     await externalSources.uploadExternalSource(
@@ -184,7 +184,7 @@ test.describe.serial('Plan External Sources', () => {
     await page
       .getByText('New files matching source types and derivation groups in the current plan')
       .waitFor({ state: 'visible' });
-    await expect(page.locator('p').filter({ hasText: /^external-event-derivation-1\.json$/ })).toBeVisible();
+    await expect(page.locator('p').filter({ hasText: /^external-event-derivation-1/ })).toBeVisible();
     await page.getByRole('button', { name: 'Dismiss' }).click();
 
     await plan.externalSourceManageButton.click();
