@@ -51,10 +51,21 @@
   let selectedItemIds: RowId[] = [];
 
   $: if (typeof hasDeletePermission === 'function' && user) {
-    const selectedItem = items.find(item => item.id === selectedItemId) ?? null;
-    if (selectedItem) {
-      if (typeof hasDeletePermission === 'function') {
-        deletePermission = hasDeletePermission(user, selectedItem);
+    if (selectedItemIds.length > 0) {
+      const selectedItems = items.filter(item => {
+        return item.id !== undefined && selectedItemIds.includes(item.id)
+      });
+      if (selectedItems.length !== undefined && selectedItems.length > 0) {
+        if (typeof hasDeletePermission === 'function') {
+          deletePermission = selectedItems.every(selectedItem => hasDeletePermission(user, selectedItem) === true);
+        }
+      }
+    } else {
+      const selectedItem = items.find(item => item.id === selectedItemId) ?? null;
+      if (selectedItem) {
+        if (typeof hasDeletePermission === 'function') {
+          deletePermission = hasDeletePermission(user, selectedItem);
+        }
       }
     }
   }

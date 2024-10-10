@@ -484,6 +484,16 @@
             </Input>
 
             <Input layout="inline">
+              Owner
+              <input
+                class="st-input w-100"
+                disabled={true}
+                name="owner"
+                value={selectedSource.owner}
+              />
+            </Input>
+
+            <Input layout="inline">
               {`Start Time (${$plugins.time.primary.label})`}
               <DatePicker
                 dateString={formatDate(new Date(selectedSource.start_time), $plugins.time.primary.format)}
@@ -753,7 +763,7 @@
               singleItemDisplayText="External Source"
               pluralItemDisplayText="External Source"
               {filterExpression}
-              items={$externalSources}
+              items={$externalSources.map(externalSource => {return {...externalSource, id: getExternalSourceSlimRowId(externalSource) }})}
               {user}
               getRowId={getExternalSourceSlimRowId}
               on:rowClicked={({ detail }) => selectSource(detail.data)}
