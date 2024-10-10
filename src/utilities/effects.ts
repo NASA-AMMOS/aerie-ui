@@ -4643,7 +4643,7 @@ const effects = {
 
   /**
    * Try and get the view from the query parameters, otherwise check if there's a default view set at the
-   * mission model level, otherwise just return a generated default view.
+   * mission model level, otherwise just return a generated default view. Performs view migration if requested.
    */
   async getView(
     query: URLSearchParams | null,
@@ -4658,31 +4658,35 @@ const effects = {
       if (query !== null) {
         const viewIdAsNumber = getSearchParameterNumber(SearchParameters.VIEW_ID, query);
 
+        // Derive view from url or model default
+        let view;
         if (viewIdAsNumber !== null) {
           const data = await reqHasura<View>(gql.GET_VIEW, { id: viewIdAsNumber }, user);
-          const { view } = data;
+          const { view: fetchedView } = data;
+          view = fetchedView;
+        } else if (defaultView !== null && defaultView !== undefined) {
+          view = defaultView;
+        }
 
+        if (view) {
+          // Return view if not asked to migrate the view
           if (!migrate) {
             return view;
           }
-          if (view !== null) {
-            const { migratedView, error, anyMigrationsApplied } = await applyViewMigrations(view);
-            if (migratedView && anyMigrationsApplied) {
-              await effects.updateView(migratedView.id, { definition: migratedView.definition }, user);
-            }
-            if (!migratedView) {
-              catchError('Unable to migrate view', error as Error);
-              showFailureToast('Unable to migrate view');
-            }
-            // TODO how should we deal with un-migratable views when loading from URL, view browser, or uploading?
-            // Should we always fall back to default or not load anything new when not in the url loading case?
-            return generateDefaultView(activityTypes, resourceTypes, externalEventTypes);
-          } else {
-            return null;
+
+          // Otherwise perform any needed migrations
+          const { migratedView, error, anyMigrationsApplied } = await applyViewMigrations(view);
+          if (migratedView && anyMigrationsApplied) {
+            await effects.updateView(migratedView.id, { definition: migratedView.definition }, user);
           }
-          // TODO do we need to migrate these defaultViews? Yes?
-        } else if (defaultView !== null && defaultView !== undefined) {
-          return defaultView;
+
+          // If migration failed catch the error and return default view
+          if (!migratedView) {
+            catchError('Unable to migrate view', error as Error);
+            showFailureToast(`Unable to migrate view: ${view.name}`);
+          } else {
+            return migratedView;
+          }
         }
       }
       return generateDefaultView(activityTypes, resourceTypes, externalEventTypes);
