@@ -4,6 +4,7 @@
   import LightningChargeIcon from 'bootstrap-icons/icons/lightning-charge.svg?component';
   import XIcon from 'bootstrap-icons/icons/x.svg?component';
   import { createEventDispatcher } from 'svelte';
+  import { plan } from '../../stores/plan';
   import type { User } from '../../types/app';
   import type { ExternalSourceSlim } from '../../types/external-source';
   import { permissionHandler } from '../../utilities/permissionHandler';
@@ -22,7 +23,9 @@
   let mappedSources: { [sourceType: string]: { [derivationGroup: string]: ExternalSourceSlim[] } } = {};
   let hasAcknowledgePermission: boolean = false;
 
-  $: hasAcknowledgePermission = featurePermissions.derivationGroupAcknowledgement.canUpdate(user);
+  $: if ($plan !== null) {
+    hasAcknowledgePermission = featurePermissions.derivationGroupAcknowledgement.canUpdate(user, $plan);
+  }
 
   $: sources.forEach(source => {
     let sourceType = source.source_type_name;
