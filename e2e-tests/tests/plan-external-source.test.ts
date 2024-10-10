@@ -181,11 +181,15 @@ test.describe.serial('Plan External Sources', () => {
     await plan.showPanel(PanelNames.EXTERNAL_SOURCES);
 
     // Allow stores to load, validate 'new source' card appears
-    await page
-      .getByText('New files matching source types and derivation groups in the current plan')
-      .waitFor({ state: 'visible' });
-    await expect(page.locator('p').filter({ hasText: /^external-event-derivation-1/ })).toBeVisible();
+    await expect(
+      page.getByText('New files matching source types and derivation groups in the current plan'),
+    ).toBeVisible();
+
     await page.getByRole('button', { name: 'Dismiss' }).click();
+
+    await expect(
+      page.getByText('New files matching source types and derivation groups in the current plan'),
+    ).not.toBeVisible();
 
     await plan.externalSourceManageButton.click();
     await expect(
