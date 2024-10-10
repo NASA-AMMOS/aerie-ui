@@ -56,6 +56,7 @@ export type DerivationGroup = {
   derived_event_total: number;
   event_types: string[];
   name: string;
+  owner: UserId;
   source_type_name: string;
   sources: Map<string, { event_counts: number }>;
 };

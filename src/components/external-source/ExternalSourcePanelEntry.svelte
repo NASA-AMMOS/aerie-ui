@@ -10,6 +10,8 @@
   import type { User } from '../../types/app';
   import type { DerivationGroup, ExternalSourceSlim } from '../../types/external-source';
   import effects from '../../utilities/effects';
+  import { permissionHandler } from '../../utilities/permissionHandler';
+  import { featurePermissions } from '../../utilities/permissions';
   import { formatDate } from '../../utilities/time';
   import { tooltip } from '../../utilities/tooltip';
   import Collapse from '../Collapse.svelte';
@@ -19,7 +21,9 @@
 
   let relevantSources: ExternalSourceSlim[] = [];
   let enabled: boolean = false;
+  let hasDeletePermission: boolean = false;
 
+  $: hasDeletePermission = featurePermissions.derivationGroup.canDelete(user, derivationGroup);
   $: enabled = $derivationGroupVisibilityMap[derivationGroup.name] ?? true;
   $: relevantSources = $externalSources.filter(source => derivationGroup.name === source.derivation_group_name);
 
@@ -36,7 +40,7 @@
       await effects.deleteDerivationGroupForPlan(derivationGroup.name, $plan, user);
     }
     // Delete the derivation group itself
-    await effects.deleteDerivationGroup(derivationGroup.name, user);
+    await effects.deleteDerivationGroup(derivationGroup, user);
   }
 </script>
 
@@ -123,7 +127,14 @@
       </Collapse>
     {:else}
       <p class="st-typography-body">No sources in this group.</p>
-      <button name="delete-dg" class="st-button secondary" on:click|stopPropagation={deleteEmptyDerivationGroup}>
+      <button
+        name="delete-dg"
+        class="st-button secondary"
+        on:click|stopPropagation={deleteEmptyDerivationGroup}
+        use:permissionHandler={{
+          hasPermission: hasDeletePermission,
+        }}
+      >
         Delete Empty Derivation Group
       </button>
     {/if}

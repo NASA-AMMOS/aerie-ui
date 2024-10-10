@@ -1,4 +1,5 @@
 import { derived, writable, type Readable, type Writable } from 'svelte/store';
+import type { UserId } from '../types/app';
 import {
   type DerivationGroup,
   type ExternalSourceSlim,
@@ -90,6 +91,7 @@ function transformDerivationGroups(
         derived_total: number;
         event_types: string[];
         name: string;
+        owner: UserId;
         source_type_name: string;
         sources: string[];
       }[]
@@ -103,6 +105,7 @@ function transformDerivationGroups(
         derived_event_total: derivationGroup.derived_total,
         event_types: derivationGroup.event_types,
         name: derivationGroup.name,
+        owner: derivationGroup.owner,
         source_type_name: derivationGroup.source_type_name,
         sources: new Map(
           derivationGroup.sources.reduce((currentSourcesMap: [string, { event_counts: number }][], source: string) => {
