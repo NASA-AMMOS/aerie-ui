@@ -26,7 +26,7 @@
   import {
     type ExternalSourceJson,
     type ExternalSourceSlim,
-    type PlanDerivationGroup
+    type PlanDerivationGroup,
   } from '../../types/external-source';
   import effects from '../../utilities/effects';
   import {
@@ -52,6 +52,7 @@
   import CssGrid from '../ui/CssGrid.svelte';
   import CssGridGutter from '../ui/CssGridGutter.svelte';
   import BulkActionDataGrid from '../ui/DataGrid/BulkActionDataGrid.svelte';
+  import DataGrid from '../ui/DataGrid/DataGrid.svelte';
   import DataGridActions from '../ui/DataGrid/DataGridActions.svelte';
   import DatePicker from '../ui/DatePicker/DatePicker.svelte';
   import Panel from '../ui/Panel.svelte';
@@ -113,6 +114,8 @@
     },
   ];
 
+  let dataGrid: DataGrid<ExternalSourceSlim> | undefined = undefined;
+
   let keyInputField: HTMLInputElement; // need this to set a focus on it. not related to the value
 
   let keyField = field<string>('', [required]);
@@ -165,7 +168,9 @@
   }
 
   $: if (selectedSource !== null) {
-    hasDeleteExternalSourcePermissionOnSelectedSource = featurePermissions.externalSource.canDelete(user, [selectedSource]);
+    hasDeleteExternalSourcePermissionOnSelectedSource = featurePermissions.externalSource.canDelete(user, [
+      selectedSource,
+    ]);
   }
 
   $: selectedSourceId = selectedSource
@@ -485,12 +490,7 @@
 
             <Input layout="inline">
               Owner
-              <input
-                class="st-input w-100"
-                disabled={true}
-                name="owner"
-                value={selectedSource.owner}
-              />
+              <input class="st-input w-100" disabled={true} name="owner" value={selectedSource.owner} />
             </Input>
 
             <Input layout="inline">
@@ -758,12 +758,15 @@
         {#if $externalSources.length}
           <div id="external-sources-table" style:height="100%">
             <BulkActionDataGrid
+              bind:dataGrid
               {columnDefs}
               hasDeletePermission={hasDeleteExternalSourcePermissionOnRow}
               singleItemDisplayText="External Source"
               pluralItemDisplayText="External Source"
               {filterExpression}
-              items={$externalSources.map(externalSource => {return {...externalSource, id: getExternalSourceSlimRowId(externalSource) }})}
+              items={$externalSources.map(externalSource => {
+                return { ...externalSource, id: getExternalSourceSlimRowId(externalSource) };
+              })}
               {user}
               getRowId={getExternalSourceSlimRowId}
               on:rowClicked={({ detail }) => selectSource(detail.data)}

@@ -1562,6 +1562,5 @@ export {
   isPlanOwner,
   isUserAdmin,
   isUserOwner,
-  queryPermissions
+  queryPermissions,
 };
-
