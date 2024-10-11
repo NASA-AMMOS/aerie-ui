@@ -77,7 +77,7 @@
     </fieldset>
 
     <fieldset>
-      <Collapse title={formProperties.length > 0 ? `Properties` : ''}>
+      <Collapse title='Properties'>
         <Properties {formProperties} />
         {#if formProperties.length === 0}
           <div class="st-typography-label">No Properties Found</div>
