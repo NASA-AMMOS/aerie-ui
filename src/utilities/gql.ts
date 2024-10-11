@@ -1772,7 +1772,7 @@ const gql = {
     query GetPlanEventTypes($plan_id: Int!){
       ${Queries.PLAN_DERIVATION_GROUP}(where: {plan_id: {_eq: $plan_id}}) {
         derivation_group {
-          external_source {
+          external_sources {
             external_events {
               external_event_type {
                 name
