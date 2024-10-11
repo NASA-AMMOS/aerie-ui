@@ -813,10 +813,21 @@
   }
 
   function onTimelineItemsDrop(rowId?: number, type?: string, items?: TimelineItemType[], index?: number) {
-    if (!type || !items) {
+    if (!type || !items || items.length === 0) {
       return;
     }
-    viewAddFilterToRow(items, type, rowId, activityLayers[0], index);
+    let toAdd: Layer;
+    if ('parameters' in items[0]) {
+      // adding an activity
+      toAdd = activityLayers[0];
+    } else if ('schema' in items[0]) {
+      // adding a resource
+      toAdd = activityLayers[0];
+    } else {
+      // adding an external event
+      toAdd = externalEventLayers[0];
+    }
+    viewAddFilterToRow(items, type, rowId, toAdd, index);
   }
 </script>
 
