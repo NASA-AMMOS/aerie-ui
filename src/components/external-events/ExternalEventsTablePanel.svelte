@@ -31,7 +31,7 @@
   <svelte:fragment slot="body">
     <ExternalEventsTable
       selectedItemId={$selectedExternalEventId}
-      filterExpression={filterExpression}
+      {filterExpression}
       items={$externalEvents}
       on:rowDoubleClicked={onRowDoubleClicked}
       on:selectionChanged={onSelectionChanged}
