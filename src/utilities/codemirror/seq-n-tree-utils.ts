@@ -1,5 +1,10 @@
 import type { SyntaxNode } from '@lezer/common';
 import {
+  RULE_ARGS,
+  RULE_GROUND_NAME,
+  RULE_REQUEST_NAME,
+  RULE_SEQUENCE_NAME,
+  RULE_STEM,
   TOKEN_ACTIVATE,
   TOKEN_COMMAND,
   TOKEN_GROUND_BLOCK,
@@ -17,14 +22,14 @@ export function getNameNode(stepNode: SyntaxNode | null) {
     switch (stepNode.name) {
       case TOKEN_ACTIVATE:
       case TOKEN_LOAD:
-        return stepNode.getChild('SequenceName');
+        return stepNode.getChild(RULE_SEQUENCE_NAME);
       case TOKEN_GROUND_BLOCK:
       case TOKEN_GROUND_EVENT:
-        return stepNode.getChild('GroundName');
+        return stepNode.getChild(RULE_GROUND_NAME);
       case TOKEN_COMMAND:
-        return stepNode.getChild('Stem');
+        return stepNode.getChild(RULE_STEM);
       case TOKEN_REQUEST:
-        return stepNode.getChild('RequestName');
+        return stepNode.getChild(RULE_REQUEST_NAME);
     }
   }
 
@@ -44,7 +49,7 @@ export function getAncestorStepOrRequest(node: SyntaxNode | null) {
 
 export class SeqNCommandInfoMapper implements CommandInfoMapper {
   getArgumentNodeContainer(commandNode: SyntaxNode | null): SyntaxNode | null {
-    return commandNode?.getChild('Args') ?? null;
+    return commandNode?.getChild(RULE_ARGS) ?? null;
   }
 
   getArgumentsFromContainer(containerNode: SyntaxNode | null): SyntaxNode[] {

@@ -12,6 +12,14 @@ import {
   TOKEN_ERROR,
 } from './vml-constants';
 
+// In versions of VML prior to 2.1, explicit time tags were required on every statement
+// confirm what version we're using
+
+// https://dataverse.jpl.nasa.gov/dataset.xhtml?persistentId=hdl:2014/45392
+// shows Juno on 2.1, MRO on 2.0
+
+const grammarVmlVersion = '2.0.11'.split('.').map(part => parseInt(part, 10));
+
 describe('vml tree', () => {
   it('module with variables', () => {
     const input = `
@@ -308,7 +316,84 @@ END_MODULE`;
     expect(cmd2arg2.range?.min).toBe(0);
     expect(cmd2arg2.range?.max).toBe(127);
   });
+
+  it('call', () => {
+    const input = `
+MODULE
+ABSOLUTE_SEQUENCE master_4
+FLAGS AUTOEXECUTE AUTOUNLOAD
+BODY
+A2010-020T01:23:14.0 VM_LOAD 5, "d:/seq/observe_day_39.mod"
+R10.0 SPAWN 5 observe_day_39
+A2010-020T07:34:21.0 PAUSE 5
+A2010-020T07:34:22.0 CALL dsn_contact_start "main", 1024
+A2010-020T08:11:15.0 CALL dsn_contact_end
+A2010-020T08:11:16.0 RESUME 5
+
+A2010-050T10:11:00.0 HALT 5 ; stop camera observations
+A2010-050T10:11:00.0 ISSUE VM_UNLOAD 5
+A2010-050T10:11:01.0 ISSUE VM_LOAD 1, "d:/seq/master_5.abs"
+END_BODY
+END_MODULE
+`;
+    if (allowedInVmlVersion('2.1')) {
+      assertNoErrorNodes(input, true);
+    }
+  });
+
+  it('no time tags', () => {
+    const input = `
+MODULE
+BLOCK convert_bit_rate
+INPUT bit_rate
+DECLARE INT bit_rate_index := 0
+BODY
+IF bit_rate < 6 THEN
+bit_rate_index := 0
+ELSE_IF 6 <= bit_rate && bit_rate <= 1024 THEN
+bit_rate_index := 1 + (bit_rate - 1) / 10
+ELSE
+bit_rate_index := 103
+END_IF
+RETURN bit_rate_index
+END_BODY
+BLOCK dsn_contact_start
+INPUT STRING mode VALUES "standby", "half", "full"
+INPUT bit_rate
+DECLARE INT bit_rate_index := 0
+BODY
+bit_rate_index := CALL convert_bit_rate bit_rate
+ISSUE sspa_mode standby
+R0.2 ISSUE set_power_switch sspa, on
+R1.0 ISSUE_DYNAMIC "sspa_mode", mode
+DELAY_BY gv_sspa_on_warmup_time
+R4.0 ISSUE_DYNAMIC "transponder_on", bit_rate_index
+gv_dsn_contact := TRUE
+END_BODY
+BLOCK dsn_contact_end
+BODY
+ISSUE sspa_mode standby
+ISSUE set_power_switch sspa, off
+gv_dsn_contact := FALSE
+END_BODY
+END_MODULE
+`;
+
+    if (allowedInVmlVersion('2.1')) {
+      assertNoErrorNodes(input, true);
+    }
+  });
 });
+
+function allowedInVmlVersion(minVmlVersion: string): boolean {
+  const minVersionArray = minVmlVersion.split('.').map(part => parseInt(part, 10));
+  for (let i = 0; i < Math.max(grammarVmlVersion.length, minVersionArray.length); i++) {
+    if (minVersionArray[i] ?? 0 > grammarVmlVersion[i] ?? 0) {
+      return false;
+    }
+  }
+  return true;
+}
 
 function wrapInModule(s: string) {
   return `

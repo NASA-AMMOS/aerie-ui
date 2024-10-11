@@ -1,7 +1,6 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { indentSelection } from '@codemirror/commands';
   import { json } from '@codemirror/lang-json';
   import { indentService, syntaxTree } from '@codemirror/language';
   import { lintGutter } from '@codemirror/lint';
@@ -49,6 +48,7 @@
   import effects from '../../utilities/effects';
   import { downloadBlob, downloadJSON } from '../../utilities/generic';
   import { inputLinter, outputLinter } from '../../utilities/sequence-editor/extension-points';
+  import { seqNFormat } from '../../utilities/sequence-editor/sequence-autoindent';
   import { sequenceTooltip } from '../../utilities/sequence-editor/sequence-tooltip';
   import { showFailureToast, showSuccessToast } from '../../utilities/toast';
   import { tooltip } from '../../utilities/tooltip';
@@ -107,23 +107,6 @@
       editorSequenceView.dispatch({
         changes: { from: 0, insert: sequenceDefinition, to: editorSequenceView.state.doc.length },
       });
-
-      // apply indentation
-      editorSequenceView.update([
-        editorSequenceView.state.update({
-          selection: { anchor: 0, head: editorSequenceView.state.doc.length },
-        }),
-      ]);
-      indentSelection({
-        dispatch: transaction => editorSequenceView.update([transaction]),
-        state: editorSequenceView.state,
-      });
-      // clear selection
-      editorSequenceView.update([
-        editorSequenceView.state.update({
-          selection: { anchor: 0, head: 0 },
-        }),
-      ]);
     }
   }
 
@@ -401,7 +384,11 @@
   }
 
   function formatDocument() {
-    vmlFormat(editorSequenceView);
+    if (inVmlMode()) {
+      vmlFormat(editorSequenceView);
+    } else {
+      seqNFormat(editorSequenceView);
+    }
   }
 
   function inVmlMode(): boolean {
