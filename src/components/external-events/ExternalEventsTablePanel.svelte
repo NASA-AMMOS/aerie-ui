@@ -10,6 +10,8 @@
 
   export let gridSection: ViewGridSection;
 
+  let filterExpression: string = '';
+
   function onRowDoubleClicked() {
     viewTogglePanel({ state: true, type: 'right', update: { rightComponentTop: 'ExternalEventFormPanel' } });
   }
@@ -22,13 +24,24 @@
 <Panel padBody={false}>
   <svelte:fragment slot="header">
     <GridMenu {gridSection} title="External Events Table" />
+    <div class="table-menu">
+      <input type="search" bind:value={filterExpression} placeholder="Filter External Events" class="st-input" />
+    </div>
   </svelte:fragment>
   <svelte:fragment slot="body">
     <ExternalEventsTable
       selectedItemId={$selectedExternalEventId}
+      filterExpression={filterExpression}
       items={$externalEvents}
       on:rowDoubleClicked={onRowDoubleClicked}
       on:selectionChanged={onSelectionChanged}
     />
   </svelte:fragment>
 </Panel>
+
+<style>
+  .table-menu {
+    column-gap: 1rem;
+    display: flex;
+  }
+</style>
