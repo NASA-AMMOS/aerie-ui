@@ -90,8 +90,8 @@
       headerName: 'Owner',
       resizable: true,
       sortable: true,
-      width: 100
-    }
+      width: 100,
+    },
   ];
   const externalSourceTypeBaseColumnDefs: DataGridColumnDef<ExternalSourceType>[] = [
     {

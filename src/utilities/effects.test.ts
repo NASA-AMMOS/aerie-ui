@@ -207,7 +207,17 @@ describe('Handle modal and requests in effects', () => {
       });
       vi.spyOn(Errors, 'catchError').mockImplementationOnce(catchErrorSpy);
 
-      await effects.deleteDerivationGroup('Defualt', mockUser);
+      await effects.deleteDerivationGroup(
+        {
+          derived_event_total: 0,
+          event_types: [],
+          name: 'Default',
+          owner: 'userA',
+          source_type_name: 'Example',
+          sources: new Map(),
+        },
+        mockUser,
+      );
 
       expect(catchErrorSpy).toHaveBeenCalledWith(
         'Derivation Group Deletion Failed',

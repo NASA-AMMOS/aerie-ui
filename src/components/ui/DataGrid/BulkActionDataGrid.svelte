@@ -53,12 +53,15 @@
   $: if (typeof hasDeletePermission === 'function' && user) {
     if (selectedItemIds.length > 0) {
       const selectedItems = items.filter(item => {
-        return item.id !== undefined && selectedItemIds.includes(item.id)
+        return item.id !== undefined && selectedItemIds.includes(item.id);
       });
       if (selectedItems.length !== undefined && selectedItems.length > 0) {
-        if (typeof hasDeletePermission === 'function') {
-          deletePermission = selectedItems.every(selectedItem => hasDeletePermission(user, selectedItem) === true);
-        }
+        // Check that the user has delete permission on all selected items, or else don't let them delete any
+        deletePermission = selectedItems.every(selectedItem => {
+          if (typeof hasDeletePermission === 'function') {
+            return hasDeletePermission(user, selectedItem) === true;
+          }
+        });
       }
     } else {
       const selectedItem = items.find(item => item.id === selectedItemId) ?? null;
