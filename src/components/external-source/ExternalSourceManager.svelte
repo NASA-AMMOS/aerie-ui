@@ -188,7 +188,7 @@
       isDerivationGroupFieldDisabled = true;
 
       file = files[0];
-      if (/\.json$/.test(file.name)) {
+      if (file !== undefined && /\.json$/.test(file.name)) {
         parseExternalSourceFileStream(file.stream());
       } else {
         parsingError.set('External Source file is not a .json file');
