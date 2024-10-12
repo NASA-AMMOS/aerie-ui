@@ -114,7 +114,7 @@
     {:else if isFswCommandArgumentRepeat(argInfo.argDef) && !!argInfo.children}
       {#each argInfo.children as childArgInfo}
         {#if childArgInfo.node}
-          <svelte:self argInfo={childArgInfo} {commandDictionary} {setInEditor} {addDefaultArgs} />
+          <svelte:self argInfo={childArgInfo} {commandInfoMapper} {commandDictionary} {setInEditor} {addDefaultArgs} />
         {/if}
       {/each}
       {#if argInfo.children.find(childArgInfo => !childArgInfo.node)}
