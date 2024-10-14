@@ -13,7 +13,9 @@
     createExternalSourceError,
     createExternalSourceTypeError,
     creatingExternalSource,
+    derivationGroups,
     externalSources,
+    externalSourceTypes,
     getExternalSourceMetadataError,
     parsingError,
     planDerivationGroupLinks,
@@ -334,6 +336,8 @@
         parsedExternalSource.source.metadata,
         $validAtDoyField.value,
         $externalEventTypes.map(externalEventType => externalEventType.name),
+        $externalSourceTypes.map(externalSourceType => externalSourceType.name),
+        $derivationGroups.map(derivationGroup => derivationGroup.name),
         user,
       );
       // Following a successful mutation...
