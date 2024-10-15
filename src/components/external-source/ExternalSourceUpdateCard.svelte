@@ -96,7 +96,7 @@
         on:click={() => dispatch('dismiss')}
         use:permissionHandler={{
           hasPermission: hasUpdatePermission,
-          permissionError: "You do not have permission to acknowledge this external source."
+          permissionError: 'You do not have permission to acknowledge this external source.',
         }}
       >
         Dismiss
