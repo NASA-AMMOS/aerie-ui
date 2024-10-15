@@ -1,5 +1,4 @@
 import type { User, UserId, UserRole } from './app';
-import type { DerivationGroup, ExternalSource } from './external-source';
 import type { Model } from './model';
 import type { Plan } from './plan';
 
@@ -10,10 +9,6 @@ export type AssetWithOwner<T = any> = Partial<T> & {
 export type AssetWithAuthor<T = any> = Partial<T> & {
   author: UserId;
 };
-
-export type ExternalSourceWithOwner = Pick<ExternalSource, 'pkey' | 'owner'>;
-
-export type DerivationGroupWithOwner = Pick<DerivationGroup, 'name' | 'owner'>;
 
 export type ModelWithOwner = Pick<Model, 'id' | 'owner'>;
 

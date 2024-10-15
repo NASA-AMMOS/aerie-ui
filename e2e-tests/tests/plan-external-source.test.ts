@@ -50,25 +50,11 @@ test.afterAll(async () => {
 
   await externalSources.goto();
   // Cleanup all test files that *may* have been uploaded
-  if (await page.getByRole('gridcell', { name: externalSources.externalSourceFileName }).first().isVisible()) {
-    await externalSources.deleteSource(externalSources.externalSourceFileName);
-  }
-
-  if (await page.getByRole('gridcell', { name: externalSources.derivationTestFileKey1 }).first().isVisible()) {
-    await externalSources.deleteSource(externalSources.derivationTestFileKey1);
-  }
-
-  if (await page.getByRole('gridcell', { name: externalSources.derivationTestFileKey2 }).first().isVisible()) {
-    await externalSources.deleteSource(externalSources.derivationTestFileKey2);
-  }
-
-  if (await page.getByRole('gridcell', { name: externalSources.derivationTestFileKey3 }).first().isVisible()) {
-    await externalSources.deleteSource(externalSources.derivationTestFileKey3);
-  }
-
-  if (await page.getByRole('gridcell', { name: externalSources.derivationTestFileKey4 }).first().isVisible()) {
-    await externalSources.deleteSource(externalSources.derivationTestFileKey4);
-  }
+  await externalSources.deleteSource(externalSources.externalSourceFileName);
+  await externalSources.deleteSource(externalSources.derivationTestFileKey1);
+  await externalSources.deleteSource(externalSources.derivationTestFileKey2);
+  await externalSources.deleteSource(externalSources.derivationTestFileKey3);
+  await externalSources.deleteSource(externalSources.derivationTestFileKey4);
 
   await page.close();
   await context.close();

@@ -37,7 +37,7 @@
   import { parseJSONStream } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
-  import { convertUTCtoMs, formatDate, getIntervalInMs } from '../../utilities/time';
+  import { convertUTCToMs, formatDate, getIntervalInMs } from '../../utilities/time';
   import { showFailureToast } from '../../utilities/toast';
   import { tooltip } from '../../utilities/tooltip';
   import { required, timestamp } from '../../utilities/validators';
@@ -296,7 +296,7 @@
             ...externalEventsDB,
             duration_ms: getIntervalInMs(externalEventsDB.duration),
             event_type: externalEventsDB.pkey.event_type_name,
-            start_ms: convertUTCtoMs(externalEventsDB.start_time),
+            start_ms: convertUTCToMs(externalEventsDB.start_time),
           };
         })),
     );
@@ -530,7 +530,6 @@
             </Input>
 
             <Collapse
-              className="anchor-collapse"
               defaultExpanded={false}
               title="Event Types"
               tooltipContent="View Contained Event Types"
@@ -544,7 +543,6 @@
               {/await}
             </Collapse>
             <Collapse
-              className="anchor-collapse"
               defaultExpanded={false}
               title="Metadata"
               tooltipContent="View Event Source Metadata"
@@ -568,44 +566,43 @@
                 {catchError(error)}
               {/await}
             </Collapse>
-            <div style="padding-bottom:20px">
-              <Collapse
-                className="used-in-plans-collapse"
-                defaultExpanded={false}
-                title="Used in Plans"
-                tooltipContent="View plans this source is used in"
-              >
-                {#if selectedSourceLinkedDerivationGroupsPlans.length > 0}
-                  {#each selectedSourceLinkedDerivationGroupsPlans as linkedPlanDerivationGroup}
-                    <i>
-                      <a href="{base}/plans/{linkedPlanDerivationGroup.plan_id}">
-                        {$plans.find(plan => {
-                          return linkedPlanDerivationGroup.plan_id === plan.id;
-                        })?.name}
-                      </a></i
-                    >
-                  {/each}
-                {:else}
-                  <i class="st-typography-body">Not used in any plans</i>
-                {/if}
-              </Collapse>
-            </div>
-
-            <button
-              class="st-button danger w-100"
-              style="margin-bottom:auto;"
-              use:permissionHandler={{
-                hasPermission: hasDeleteExternalSourcePermissionOnSelectedSource,
-                permissionError: deletePermissionError,
-              }}
-              on:click|stopPropagation={async () => {
-                if (selectedSource !== null) {
-                  onDeleteExternalSource([selectedSource]);
-                }
-              }}
+            <Collapse
+              className="used-in-plans-collapse"
+              defaultExpanded={false}
+              title="Used in Plans"
+              tooltipContent="View plans this source is used in"
             >
-              Delete external source
-            </button>
+              {#if selectedSourceLinkedDerivationGroupsPlans.length > 0}
+                {#each selectedSourceLinkedDerivationGroupsPlans as linkedPlanDerivationGroup}
+                  <i>
+                    <a href="{base}/plans/{linkedPlanDerivationGroup.plan_id}">
+                      {$plans.find(plan => {
+                        return linkedPlanDerivationGroup.plan_id === plan.id;
+                      })?.name}
+                    </a>
+                  </i>
+                {/each}
+              {:else}
+                <i class="st-typography-body">Not used in any plans</i>
+              {/if}
+            </Collapse>
+
+            <div class="selected-source-delete">
+              <button
+                class="st-button danger w-100"
+                use:permissionHandler={{
+                  hasPermission: hasDeleteExternalSourcePermissionOnSelectedSource,
+                  permissionError: deletePermissionError,
+                }}
+                on:click|stopPropagation={async () => {
+                  if (selectedSource !== null) {
+                    onDeleteExternalSource([selectedSource]);
+                  }
+                }}
+              >
+                Delete external source
+              </button>
+            </div>
           </fieldset>
         </div>
       {:else}
@@ -762,7 +759,7 @@
               {columnDefs}
               hasDeletePermission={hasDeleteExternalSourcePermissionOnRow}
               singleItemDisplayText="External Source"
-              pluralItemDisplayText="External Source"
+              pluralItemDisplayText="External Sources"
               {filterExpression}
               items={$externalSources.map(externalSource => {
                 return { ...externalSource, id: getExternalSourceSlimRowId(externalSource) };
@@ -815,9 +812,9 @@
               />
             </div>
           {:else if $externalSources.length}
-            <p style="padding-left: 5px">Select a source to view contents.</p>
+            <p class="selected-source-prompt">Select a source to view contents.</p>
           {:else}
-            <p style="padding-left: 5px">No External Sources present.</p>
+            <p class="selected-source-prompt">No External Sources present.</p>
           {/if}
         </svelte:fragment>
       </Panel>
@@ -900,5 +897,13 @@
 
   .selected-source-forms {
     height: 100%;
+  }
+
+  .selected-source-prompt {
+    padding-left: 4px;
+  }
+
+  .selected-source-delete {
+    padding-top: 12px;
   }
 </style>

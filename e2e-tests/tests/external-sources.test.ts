@@ -37,7 +37,7 @@ test.describe.serial('External Sources', () => {
   });
 
   test('External event form should be shown when an event is selected', async () => {
-    await externalSources.selectEvent();
+    await externalSources.selectEvent('ExampleEvent:1/sc/sc1:1');
     await expect(externalSources.inputFile).not.toBeVisible();
   });
 
@@ -54,7 +54,7 @@ test.describe.serial('External Sources', () => {
   });
 
   test('External event deselection should be shown when a source is selected', async () => {
-    await externalSources.selectEvent();
+    await externalSources.selectEvent('ExampleEvent:1/sc/sc1:1');
     await expect(page.getByLabel('Deselect event')).toBeVisible();
   });
 

@@ -39,6 +39,9 @@ export type ExternalSourceJson = {
 // For use in retrieval of source information sans bulky items like metadata and event lists (see stores)
 export type ExternalSourceSlim = Omit<ExternalSourceDB, 'external_events' | 'metadata'>;
 
+// For use in table-related activities that require an 'id' field
+export type ExternalSourceWithId = ExternalSourceSlim & { id: string };
+
 // Similar to ExternalSourceDB, but uses ExternalSourcePkey to represent the primary key (key, derivation_group_name)
 export type ExternalSource = Omit<ExternalSourceDB, 'key' | 'derivation_group_name'> & { pkey: ExternalSourcePkey };
 

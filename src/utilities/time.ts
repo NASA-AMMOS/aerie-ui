@@ -427,7 +427,7 @@ export function convertDurationStringToInterval(durationString: string): string 
  * @param date The date as a string to convert.
  * @returns The number of milliseconds since epoch start for this date.
  */
-export function convertUTCtoMs(date: string): number {
+export function convertUTCToMs(date: string): number {
   const d = new Date(date);
   return d.getTime();
 }

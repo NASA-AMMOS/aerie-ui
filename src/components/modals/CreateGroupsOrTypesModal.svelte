@@ -115,6 +115,7 @@
                 on:click|preventDefault={onCreateDerivationGroup}
                 use:permissionHandler={{
                   hasPermission: hasCreateDerivationGroupPermission,
+                  permissionError: "You do not have permission to create a derivation group."
                 }}
               >
                 Create
@@ -142,6 +143,7 @@
                 on:click|preventDefault={onCreateExternalSourceType}
                 use:permissionHandler={{
                   hasPermission: hasCreateExternalSourceTypePermission,
+                  permissionError: "You do not have permission to create an external source type."
                 }}
               >
                 Create
@@ -169,6 +171,7 @@
                 on:click|preventDefault={onCreateExternalEventType}
                 use:permissionHandler={{
                   hasPermission: hasCreateExternalEventTypePermission,
+                  permissionError: "You do not have permission to create an external event type."
                 }}
               >
                 Create

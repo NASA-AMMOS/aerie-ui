@@ -4,7 +4,7 @@ import { derived, writable, type Readable, type Writable } from 'svelte/store';
 import type { ExternalEvent, ExternalEventDB, ExternalEventId, ExternalEventType } from '../types/external-event';
 import { getExternalEventWholeRowId } from '../utilities/externalEvents';
 import gql from '../utilities/gql';
-import { convertDoyToYmd, convertUTCtoMs, getIntervalInMs } from '../utilities/time';
+import { convertDoyToYmd, convertUTCToMs, getIntervalInMs } from '../utilities/time';
 import { selectedPlanDerivationGroupNames } from './external-source';
 import { plan } from './plan';
 import { gqlSubscribable } from './subscribable';
@@ -33,10 +33,10 @@ export const externalEvents: Readable<ExternalEvent[]> = derived(
     const completeExternalEvents: ExternalEvent[] = [];
     if ($externalEventsRaw !== null && $externalEventsRaw !== undefined) {
       // get plan bounds in an easily comparable format. The explicit strings are extreme bounds in case of a null plan.
-      const planStartTime = convertUTCtoMs(
+      const planStartTime = convertUTCToMs(
         convertDoyToYmd($plan?.start_time_doy ?? '1970-001T00:00:00Z') ?? '1970-01-01T00:00:00Z',
       );
-      const planEndTime = convertUTCtoMs(
+      const planEndTime = convertUTCToMs(
         convertDoyToYmd($plan?.end_time_doy ?? '2100-001T00:00:00Z') ?? '2100-01-01T00:00:00Z',
       );
 
@@ -45,7 +45,7 @@ export const externalEvents: Readable<ExternalEvent[]> = derived(
         const externalEvent = e.external_event;
 
         // check event is in plan bounds
-        const externalEventStartTime = convertUTCtoMs(externalEvent.start_time);
+        const externalEventStartTime = convertUTCToMs(externalEvent.start_time);
         const externalEventEndTime = externalEventStartTime + getIntervalInMs(externalEvent.duration);
 
         if (
@@ -62,7 +62,7 @@ export const externalEvents: Readable<ExternalEvent[]> = derived(
               source_key: externalEvent.source_key,
             },
             properties: externalEvent.properties,
-            start_ms: convertUTCtoMs(externalEvent.start_time),
+            start_ms: convertUTCToMs(externalEvent.start_time),
             start_time: externalEvent.start_time,
           });
         }
