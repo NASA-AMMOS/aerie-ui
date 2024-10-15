@@ -5656,7 +5656,7 @@ const effects = {
   async updateDerivationGroupAcknowledged(
     plan: Plan | undefined,
     derivation_group_name: string,
-    updatedAt = new Date(),
+    updatedAt: Date,
     user: User | null,
   ) {
     if (plan === undefined) {
