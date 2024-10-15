@@ -49,10 +49,13 @@ export class ExternalSources {
   }
 
   async deleteSource(sourceName: string) {
-    await this.selectSource(sourceName);
-    await this.deleteSourceButton.click();
-    await this.deleteSourceButtonConfirmation.click();
-    await expect(this.externalSourcesTable.getByText(sourceName)).not.toBeVisible();
+    // Only delete a source if its visible in the table
+    if (await this.page.getByRole('gridcell', { name: sourceName }).first().isVisible()) {
+      await this.selectSource(sourceName);
+      await this.deleteSourceButton.click();
+      await this.deleteSourceButtonConfirmation.click();
+      await expect(this.externalSourcesTable.getByText(sourceName)).not.toBeVisible();
+    }
   }
 
   async fillInputFile(externalSourceFilePath: string) {
@@ -88,10 +91,10 @@ export class ExternalSources {
     await expect(this.page.getByRole('button', { exact: true, name: sourceTypeName })).toBeVisible();
   }
 
-  async selectEvent() {
+  async selectEvent(eventName: string, sourceName: string = 'example-external-source.json') {
     // Assumes the selected source was the test source, and selects the specific event from it
     // NOTE: This may not be the case, and should be re-visited when we implement deletion for External Sources!
-    await this.selectSource();
+    await this.selectSource(sourceName);
     await this.page.getByRole('gridcell', { name: 'ExampleEvent:1/sc/sc1:1' }).click();
   }
 

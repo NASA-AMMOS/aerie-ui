@@ -21,10 +21,10 @@
   }>();
 
   let mappedSources: { [sourceType: string]: { [derivationGroup: string]: ExternalSourceSlim[] } } = {};
-  let hasAcknowledgePermission: boolean = false;
+  let hasUpdatePermission: boolean = false;
 
   $: if ($plan !== null) {
-    hasAcknowledgePermission = featurePermissions.derivationGroupAcknowledgement.canUpdate(user, $plan);
+    hasUpdatePermission = featurePermissions.derivationGroupAcknowledgement.canUpdate(user, $plan);
   }
 
   $: sources.forEach(source => {
@@ -95,7 +95,8 @@
         class="st-button secondary hover-fix"
         on:click={() => dispatch('dismiss')}
         use:permissionHandler={{
-          hasPermission: hasAcknowledgePermission,
+          hasPermission: hasUpdatePermission,
+          permissionError: "You do not have permission to acknowledge this external source."
         }}
       >
         Dismiss

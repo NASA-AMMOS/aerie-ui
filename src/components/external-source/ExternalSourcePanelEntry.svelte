@@ -116,7 +116,6 @@
         </Collapse>
       {/each}
       <Collapse
-        className="anchor-collapse"
         defaultExpanded={false}
         title="Event Types"
         tooltipContent="View Contained Event Types"

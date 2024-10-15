@@ -4,8 +4,10 @@ import {
   type DerivationGroup,
   type ExternalSourceSlim,
   type ExternalSourceType,
+  type ExternalSourceWithId,
   type PlanDerivationGroup,
 } from '../types/external-source';
+import { getExternalSourceSlimRowId } from '../utilities/externalEvents';
 import gql from '../utilities/gql';
 import { planId } from './plan';
 import { gqlSubscribable } from './subscribable';
@@ -60,6 +62,7 @@ export const selectedPlanDerivationGroupNames: Readable<string[]> = derived(
   ([$planDerivationGroupLinks, $planId]) =>
     $planDerivationGroupLinks.filter(link => link.plan_id === $planId).map(link => link.derivation_group_name),
 );
+
 export const selectedPlanDerivationGroupEventTypes: Readable<string[]> = derived(
   [derivationGroups, selectedPlanDerivationGroupNames],
   ([$derivationGroups, $selectedPlanDerivationGroupIds]) => {
@@ -74,6 +77,15 @@ export const selectedPlanDerivationGroupEventTypes: Readable<string[]> = derived
     } else {
       return [];
     }
+  },
+);
+
+export const externalSourcesWithIds: Readable<ExternalSourceWithId[]> = derived(
+  [externalSources],
+  ([$externalSources]) => {
+    $externalSources.map(externalSource => {
+      return { ...externalSource, id: getExternalSourceSlimRowId(externalSource) };
+    });
   },
 );
 

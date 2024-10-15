@@ -100,25 +100,7 @@
       headerName: 'External Source Type',
       resizable: true,
       sortable: true,
-    },
-    {
-      filter: 'number',
-      headerName: 'Associated External Sources',
-      sortable: true,
-      valueFormatter: params => {
-        const associatedSources = getAssociatedExternalSourcesBySourceType(params.data?.name);
-        return `${associatedSources.length}`;
-      },
-    },
-    {
-      filter: 'number',
-      headerName: 'Associated Derivation Groups',
-      sortable: true,
-      valueFormatter: params => {
-        const associatedDerivationGroups = getAssociatedDerivationGroupsBySourceTypeName(params.data?.name);
-        return `${associatedDerivationGroups.length}`;
-      },
-    },
+    }
   ];
   const externalEventTypeBaseColumnDefs: DataGridColumnDef<ExternalEventType>[] = [
     {
@@ -127,28 +109,7 @@
       headerName: 'External Event Type',
       resizable: true,
       sortable: true,
-    },
-    {
-      filter: 'number',
-      headerName: 'Associated External Sources',
-      sortable: true,
-      valueFormatter: params => {
-        let associatedDerivationGroups = getAssociatedDerivationGroupsByEventType(params.data?.name);
-        const sourceMap = associatedDerivationGroups.flatMap(derivationGroup => derivationGroup.sources.size);
-        const numOfSources =
-          sourceMap.length > 0 ? sourceMap.reduce((acc, derivationGroupSize) => acc + derivationGroupSize) : 0;
-        return `${numOfSources}`;
-      },
-    },
-    {
-      filter: 'number',
-      headerName: 'Associated Derivation Groups',
-      sortable: true,
-      valueFormatter: params => {
-        const associatedDerivationGroups = getAssociatedDerivationGroupsByEventType(params.data?.name);
-        return `${associatedDerivationGroups.length}`;
-      },
-    },
+    }
   ];
 
   let derivationGroupColumnsDef: DataGridColumnDef<DerivationGroup>[] = derivationGroupBaseColumnDefs;
@@ -234,6 +195,24 @@
   $: externalSourceTypeColumnDefs = [
     ...externalSourceTypeBaseColumnDefs,
     {
+      filter: 'number',
+      headerName: 'Associated External Sources',
+      sortable: true,
+      valueFormatter: params => {
+        const associatedSources = getAssociatedExternalSourcesBySourceType(params.data?.name);
+        return `${associatedSources.length}`;
+      },
+    },
+    {
+      filter: 'number',
+      headerName: 'Associated Derivation Groups',
+      sortable: true,
+      valueFormatter: params => {
+        const associatedDerivationGroups = getAssociatedDerivationGroupsBySourceTypeName(params.data?.name);
+        return `${associatedDerivationGroups.length}`;
+      },
+    },
+    {
       cellClass: 'action-cell-container',
       cellRenderer: (params: ModalCellRendererParams) => {
         const actionsDiv = document.createElement('div');
@@ -271,6 +250,27 @@
 
   $: externalEventTypeColumnDefs = [
     ...externalEventTypeBaseColumnDefs,
+    {
+      filter: 'number',
+      headerName: 'Associated External Sources',
+      sortable: true,
+      valueFormatter: params => {
+        let associatedDerivationGroups = getAssociatedDerivationGroupsByEventType(params.data?.name);
+        const sourceMap = associatedDerivationGroups.flatMap(derivationGroup => derivationGroup.sources.size);
+        const numOfSources =
+          sourceMap.length > 0 ? sourceMap.reduce((acc, derivationGroupSize) => acc + derivationGroupSize) : 0;
+        return `${numOfSources}`;
+      },
+    },
+    {
+      filter: 'number',
+      headerName: 'Associated Derivation Groups',
+      sortable: true,
+      valueFormatter: params => {
+        const associatedDerivationGroups = getAssociatedDerivationGroupsByEventType(params.data?.name);
+        return `${associatedDerivationGroups.length}`;
+      },
+    },
     {
       cellClass: 'action-cell-container',
       cellRenderer: (params: ModalCellRendererParams) => {
@@ -500,7 +500,6 @@
                 </Collapse>
               {/each}
               <Collapse
-                className="anchor-collapse"
                 defaultExpanded={false}
                 title="Event Types"
                 tooltipContent="View Contained Event Types"
@@ -542,7 +541,6 @@
                   </div>
 
                   <Collapse
-                    className="anchor-collapse"
                     defaultExpanded={false}
                     title="Event Types"
                     tooltipContent="View Contained Event Types"
@@ -553,7 +551,6 @@
                   </Collapse>
 
                   <Collapse
-                    className="anchor-collapse"
                     defaultExpanded={false}
                     title="Sources"
                     tooltipContent="View Contained External Sources"
@@ -605,7 +602,6 @@
                   </div>
 
                   <Collapse
-                    className="anchor-collapse"
                     defaultExpanded={false}
                     title="Event Types"
                     tooltipContent="View Contained Event Types"
@@ -616,7 +612,6 @@
                   </Collapse>
 
                   <Collapse
-                    className="anchor-collapse"
                     defaultExpanded={false}
                     title="Sources"
                     tooltipContent="View Contained External Sources"

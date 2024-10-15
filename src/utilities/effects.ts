@@ -244,7 +244,7 @@ import { compareEvents } from './simulation';
 import { pluralize } from './text';
 import {
   convertDoyToYmd,
-  convertUTCtoMs,
+  convertUTCToMs,
   getDoyTime,
   getDoyTimeFromInterval,
   getIntervalFromDoyRange,
@@ -2375,6 +2375,8 @@ const effects = {
         // If the return was null, do nothing - only act on success or non-null
         if (sourceDissociation) {
           showSuccessToast('Derivation Group Disassociated Successfully');
+        } else {
+          showFailureToast('Derivation Group Disassociation Failed');
         }
       } else {
         throw Error('Plan is not defined.');
@@ -3753,7 +3755,7 @@ const effects = {
             source_key: event.source_key,
           },
           properties: event.properties,
-          start_ms: convertUTCtoMs(event.start_time),
+          start_ms: convertUTCToMs(event.start_time),
           start_time: event.start_time,
         });
       }
@@ -4802,6 +4804,8 @@ const effects = {
         // If the return was null, do nothing - only act on success or non-null
         if (sourceAssociation !== null) {
           showSuccessToast('Derivation Group Linked Successfully');
+        } else {
+          showFailureToast('Derivation Group Link Failed');
         }
       } else {
         throw Error('Plan is not defined.');

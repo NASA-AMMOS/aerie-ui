@@ -82,7 +82,6 @@
       {},
     );
   }
-  planDerivationGroupLinks.subscribe(_ => (mappedDerivationGroups = {})); // clear the map...
   $: filteredDerivationGroups.forEach(group => {
     // ...and repopulate it every time the links change. this handles deletion correctly
     if (group.source_type_name) {

@@ -4,14 +4,12 @@ import type { User, UserRole } from '../types/app';
 import type { ReqAuthResponse } from '../types/auth';
 import type { ConstraintDefinition, ConstraintMetadata, ConstraintRun } from '../types/constraint';
 import type { ExpansionRule, ExpansionSequence, ExpansionSet } from '../types/expansion';
-import type { DerivationGroup, ExternalSourceSlim } from '../types/external-source';
+import type { DerivationGroup, ExternalSource, ExternalSourceSlim } from '../types/external-source';
 import type { Model } from '../types/model';
 import type {
   AssetWithAuthor,
   AssetWithOwner,
   CreatePermissionCheck,
-  DerivationGroupWithOwner,
-  ExternalSourceWithOwner,
   ModelWithOwner,
   PermissionCheck,
   PlanWithOwners,
@@ -358,7 +356,18 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
     return isUserAdmin(user) || getPermission([Queries.INSERT_EXTERNAL_EVENT_TYPE_ONE], user);
   },
   CREATE_EXTERNAL_SOURCE: (user: User | null): boolean => {
-    return isUserAdmin(user) || getPermission([Queries.INSERT_EXTERNAL_SOURCE], user);
+    return (
+      isUserAdmin(user) ||
+      getPermission(
+        [
+          Queries.INSERT_EXTERNAL_SOURCE,
+          Queries.INSERT_EXTERNAL_EVENT_TYPE,
+          Queries.INSERT_EXTERNAL_SOURCE_TYPE,
+          Queries.INSERT_DERIVATION_GROUP,
+        ],
+        user,
+      )
+    );
   },
   CREATE_EXTERNAL_SOURCE_TYPE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.INSERT_EXTERNAL_SOURCE_TYPE], user);
@@ -511,10 +520,11 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
         (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
     );
   },
-  DELETE_DERIVATION_GROUP: (user: User | null, derivationGroup: DerivationGroupWithOwner): boolean => {
+  DELETE_DERIVATION_GROUP: (user: User | null, derivationGroup: AssetWithOwner<DerivationGroup>): boolean => {
     return (
       isUserAdmin(user) ||
-      (getPermission([Queries.DELETE_DERIVATION_GROUP], user) && isUserOwner(user, derivationGroup))
+      (getPermission([Queries.DELETE_DERIVATION_GROUP, Queries.DELETE_PLAN_DERIVATION_GROUP], user) &&
+        isUserOwner(user, derivationGroup))
     );
   },
   DELETE_EXPANSION_RULE: (user: User | null, expansionRule: AssetWithOwner<ExpansionRule>): boolean => {
@@ -539,7 +549,7 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   DELETE_EXTERNAL_EVENT_TYPE: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.DELETE_EXTERNAL_EVENT_TYPE], user);
   },
-  DELETE_EXTERNAL_SOURCES: (user: User | null, externalSources: ExternalSourceWithOwner[]): boolean => {
+  DELETE_EXTERNAL_SOURCES: (user: User | null, externalSources: AssetWithOwner<ExternalSource>[]): boolean => {
     return (
       isUserAdmin(user) ||
       (getPermission([Queries.DELETE_EXTERNAL_SOURCE], user) &&
@@ -577,7 +587,7 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   DELETE_PLAN_DERIVATION_GROUP: (user: User | null, plan: PlanWithOwners): boolean => {
     return (
       isUserAdmin(user) ||
-      (getPermission([Queries.DELETE_PLAN_DERIVATION_GROUP], user) &&
+      (getPermission([Queries.DELETE_PLAN_DERIVATION_GROUP, Queries.DELETE_SCHEDULING_SPECIFICATION], user) &&
         (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
     );
   },
@@ -1378,7 +1388,7 @@ const featurePermissions: FeaturePermissions = {
     canCreate: user => queryPermissions.CREATE_PLAN_DERIVATION_GROUP(user),
     canDelete: user => queryPermissions.DELETE_PLAN_DERIVATION_GROUP(user),
     canRead: user => queryPermissions.SUB_PLAN_DERIVATION_GROUP(user),
-    canUpdate: () => false, // this is not a feature TODO should it be, instead of create/delete?
+    canUpdate: () => false, // this is not a feature
   },
   expansionRules: {
     canCreate: user => queryPermissions.CREATE_EXPANSION_RULE(user),
@@ -1564,3 +1574,4 @@ export {
   isUserOwner,
   queryPermissions,
 };
+

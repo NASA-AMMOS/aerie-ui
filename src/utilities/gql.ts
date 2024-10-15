@@ -935,18 +935,18 @@ const gql = {
   `,
 
   DELETE_DERIVATION_GROUP: `#graphql
-  mutation DeleteDerivationGroup($name: String!) {
-    deleteDerivationGroupForPlan: ${Queries.DELETE_PLAN_DERIVATION_GROUP}(where: { derivation_group_name: { _eq: $name }}) {
-      returning {
-        derivation_group_name
+    mutation DeleteDerivationGroup($name: String!) {
+      deleteDerivationGroupForPlan: ${Queries.DELETE_PLAN_DERIVATION_GROUP}(where: { derivation_group_name: { _eq: $name }}) {
+        returning {
+          derivation_group_name
+        }
+      }
+      deleteDerivationGroup: ${Queries.DELETE_DERIVATION_GROUP}(where: { name: { _eq: $name } }) {
+        returning {
+          name
+        }
       }
     }
-    deleteDerivationGroup: ${Queries.DELETE_DERIVATION_GROUP}(where: { name: { _eq: $name } }) {
-      returning {
-        name
-      }
-    }
-  }
   `,
 
   DELETE_EXPANSION_RULE: `#graphql
@@ -1476,36 +1476,36 @@ const gql = {
   `,
 
   GET_EXTERNAL_EVENTS: `#graphql
-  query GetExternalEvents(
-    $sourceKey: String!,
-    $derivationGroupName: String!
-  ) {
-    ${Queries.EXTERNAL_EVENT}(
-      where: {
-        source_key: {_eq: $sourceKey},
-        derivation_group_name: {_eq: $derivationGroupName}
-      }
+    query GetExternalEvents(
+      $sourceKey: String!,
+      $derivationGroupName: String!
     ) {
-      properties
-      event_type_name
-      key
-      duration
-      start_time
-      source_key
+      ${Queries.EXTERNAL_EVENT}(
+        where: {
+          source_key: {_eq: $sourceKey},
+          derivation_group_name: {_eq: $derivationGroupName}
+        }
+      ) {
+        properties
+        event_type_name
+        key
+        duration
+        start_time
+        source_key
+      }
     }
-  }
   `,
 
   GET_EXTERNAL_EVENT_BY_EVENT_TYPE: `#graphql
-  query GetExternalEventByEventType($event_type_name: String!) {
-    ${Queries.EXTERNAL_EVENT}(where: {event_type_name: { _eq: $event_type_name }}) {
-      key
-      event_type_name
-      start_time
-      duration
-      properties
+    query GetExternalEventByEventType($event_type_name: String!) {
+      ${Queries.EXTERNAL_EVENT}(where: {event_type_name: { _eq: $event_type_name }}) {
+        key
+        event_type_name
+        start_time
+        duration
+        properties
+      }
     }
-  }
   `,
 
   GET_EXTERNAL_EVENT_TYPES: `#graphql
