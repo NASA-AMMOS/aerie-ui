@@ -2375,8 +2375,6 @@ const effects = {
         // If the return was null, do nothing - only act on success or non-null
         if (sourceDissociation) {
           showSuccessToast('Derivation Group Disassociated Successfully');
-        } else {
-          showFailureToast('Derivation Group Disassociation Failed');
         }
       } else {
         throw Error('Plan is not defined.');
@@ -3653,7 +3651,7 @@ const effects = {
       const sourceData = await reqHasura<
         {
           derivation_group: {
-            external_source: {
+            external_sources: {
               external_events: {
                 external_event_type: {
                   name: string;
@@ -3666,7 +3664,7 @@ const effects = {
       const types: ExternalEventType[] = [];
       if (sourceData?.plan_derivation_group !== null) {
         for (const group of sourceData.plan_derivation_group) {
-          for (const source of group.derivation_group.external_source) {
+          for (const source of group.derivation_group.external_sources) {
             for (const event of source.external_events) {
               if (types.flatMap(et => et.name).includes(event.external_event_type.name) === false) {
                 types.push(event.external_event_type);
@@ -4804,8 +4802,6 @@ const effects = {
         // If the return was null, do nothing - only act on success or non-null
         if (sourceAssociation !== null) {
           showSuccessToast('Derivation Group Linked Successfully');
-        } else {
-          showFailureToast('Derivation Group Link Failed');
         }
       } else {
         throw Error('Plan is not defined.');

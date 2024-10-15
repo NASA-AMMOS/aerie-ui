@@ -343,8 +343,6 @@
         };
         gridRowSizes = gridRowSizesBottomPanel;
       }
-    } else {
-      showFailureToast('Upload failed.');
     }
     // Reset the form behind the source
     parsedExternalSource = undefined;
@@ -753,9 +751,7 @@
               singleItemDisplayText="External Source"
               pluralItemDisplayText="External Sources"
               {filterExpression}
-              items={$externalSources.map(externalSource => {
-                return { ...externalSource, id: getExternalSourceSlimRowId(externalSource) };
-              })}
+              items={$externalSources}
               {user}
               getRowId={getExternalSourceSlimRowId}
               on:rowClicked={({ detail }) => selectSource(detail.data)}
