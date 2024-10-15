@@ -17,6 +17,7 @@ const END_NUMERIC_ARG = /^\s*END\s+NUMERIC\s+ARGUMENT\s*$/;
 const START_STEM = /^\s*STEM\s*:\s*(\w+)\s*\(.*\)\s*$/;
 const END_STEM = /^\s*END\s*STEM\s*$/;
 const CONVERSION = /^\s*CONVERSION\s*:\s*(\w+(?:\s+\w+)?)/;
+const ARG_TITLE = /^\s*TITLE\s*:\s*"(.*)"/;
 
 export function parseCdlDictionary(contents: string, id?: string, path?: string): CommandDictionary {
   const lines = contents.split('\n').filter(line => line.trim());
@@ -265,7 +266,7 @@ export function parseNumericArgument(lines: string[]): FswCommandArgument {
         }
       }
     } else {
-      const titleMatch = line.match(/^\s*TITLE\s*:\s*'(.*)'/);
+      const titleMatch = line.match(ARG_TITLE);
       if (titleMatch) {
         description = titleMatch[1].trim();
       }
@@ -321,6 +322,7 @@ export function parseLookupArgument(lines: string[], namespace?: string): [FswCo
     }
   }
 
+  let description = '';
   let conversion = '';
   let bit_length: null | number = null;
   const values: EnumValue[] = [];
@@ -332,6 +334,12 @@ export function parseLookupArgument(lines: string[], namespace?: string): [FswCo
     const lengthMatch = line.match(/^\s*LENGTH\s*:\s*(\d+)/);
     if (lengthMatch) {
       bit_length = parseInt(lengthMatch[1], 10);
+      continue;
+    }
+
+    const titleMatch = line.match(ARG_TITLE);
+    if (titleMatch) {
+      description = titleMatch[1].trim();
       continue;
     }
 
@@ -365,7 +373,7 @@ export function parseLookupArgument(lines: string[], namespace?: string): [FswCo
       arg_type: 'enum',
       bit_length,
       default_value: null,
-      description: '',
+      description,
       enum_name,
       name,
       range: values.map(value => value.symbol),

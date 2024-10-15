@@ -1,4 +1,9 @@
-import { type FswCommandArgumentInteger, type FswCommandArgumentVarString } from '@nasa-jpl/aerie-ampcs';
+import {
+  type FswCommandArgumentEnum,
+  type FswCommandArgumentInteger,
+  type FswCommandArgumentVarString,
+} from '@nasa-jpl/aerie-ampcs';
+import { readFileSync } from 'fs';
 import { describe, expect, test } from 'vitest';
 import { parseCdlDictionary, toAmpcsXml } from './cdlDictionary';
 
@@ -153,7 +158,7 @@ describe('cdl parse tests', async () => {
 
     expect(cdlDictionary.fswCommands[1].description).toEqual('Test Command with 3 arguments');
 
-    console.log(JSON.stringify(cdlDictionary, null, 2));
+    // console.log(JSON.stringify(cdlDictionary, null, 2));
   });
 
   test('round trip', () => {
@@ -164,21 +169,27 @@ describe('cdl parse tests', async () => {
     }
   });
 
-  // test('basic', () => {
-  //   // const contents = readFileSync('/Users/joswig/Documents/Aerie/Juno/JNO_6.0.4_REV_M00_edited', 'utf-8');
-  //   const contents = readFileSync('/Users/joswig/Documents/Aerie/MRO/MRO_6.1.REV_W26', 'utf-8');
-  //   const cdlDictionary = parseCdlDictionary(contents);
+  test('load from file', () => {
+    const path = 'src/tests/mocks/sequencing/dictionaries/CDL_1.0.0_REV_M00';
 
-  //   console.log(cdlDictionary.header.spacecraft_ids);
+    const contents = readFileSync(path, 'utf-8');
 
-  //   const xmlDictionary = toAmpcsXml(cdlDictionary);
-  //   writeFileSync('/Users/joswig/Downloads/MRO.xml', xmlDictionary);
-  //   const parsedcdlDictionary = parse(xmlDictionary);
+    const cdlDictionary = parseCdlDictionary(contents);
 
-  //   console.log(JSON.stringify(parsedcdlDictionary.fswCommandMap.FILE_DELETE, null, 2));
+    expect(cdlDictionary.header.mission_name).toBe('Aerie');
+    expect(cdlDictionary.header.spacecraft_ids).toEqual([1]);
 
-  //   // cdlDictionary.fswCommands.forEach(cnd => console.log(`${cnd.description}`));
+    expect(cdlDictionary.fswCommands.length).toBe(2);
 
-  //   // expect(JSON.stringify(cdlDictionary, null, 2)).toEqual(JSON.stringify(parsedcdlDictionary, null, 2));
-  // });
+    const cmd_0 = cdlDictionary.fswCommands[0];
+    expect(cmd_0.arguments.length).toBe(2);
+
+    const cmd_1 = cdlDictionary.fswCommands[1];
+    expect(cmd_1.arguments.length).toBe(2);
+
+    const localEnum = cmd_1.argumentMap.lookup_local_arg_1 as FswCommandArgumentEnum;
+    expect(localEnum.arg_type).toBe('enum');
+    expect(localEnum.range).toEqual(['MODE_A', 'MODE_B', 'MODE_C']);
+    expect(localEnum.description).toBe('Only used by stem CMD_DEBUG');
+  });
 });
