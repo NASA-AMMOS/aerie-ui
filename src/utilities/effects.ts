@@ -4736,7 +4736,7 @@ const effects = {
             await effects.updateView(
               migratedView.id,
               { definition: migratedView.definition },
-              'View Automatically Migrated Successfully',
+              'View Automatically Migrated',
               user,
             );
           }
