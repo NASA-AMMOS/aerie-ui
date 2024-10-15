@@ -32,19 +32,30 @@
   let unseenSources: ExternalSourceSlim[] = [];
   let filteredDerivationGroups: DerivationGroup[] = [];
 
+  $: if ($plan !== null && $plan.id !== null) {
+    console.log($derivationGroupsLastAcknowledged[$plan.id]);
+  }
+
   // Determine which new and deleted sources are unacknowledged for the user
   $: {
     if ($plan !== null && $plan.id !== null && $derivationGroupsLastAcknowledged[$plan.id] !== undefined) {
       // a mapping of derivation groups (that are associated with this plan) to the time their last update was last acknowledged
       const planDerivationGroupLastAcknowledgedAt = $derivationGroupsLastAcknowledged[$plan.id];
-      const groups = Object.keys(planDerivationGroupLastAcknowledgedAt);
+      const groups = Object.keys(planDerivationGroupLastAcknowledgedAt).filter(
+        group => !planDerivationGroupLastAcknowledgedAt[group].acknowledged,
+      );
       unseenSources = $externalSources.filter(externalSource => {
         if (!groups.includes(externalSource.derivation_group_name)) {
           return false;
         }
+        // it was acknowledged recently...so skip
+        if (planDerivationGroupLastAcknowledgedAt[externalSource.derivation_group_name].acknowledged) {
+          return false;
+        }
+        // check dates
         return (
           new Date(externalSource.created_at) >
-          new Date(planDerivationGroupLastAcknowledgedAt[externalSource.derivation_group_name])
+          new Date(planDerivationGroupLastAcknowledgedAt[externalSource.derivation_group_name].last_acknowledged_at)
         );
       });
     }
@@ -105,7 +116,7 @@
 
   function onUpdateDismiss() {
     for (const derivationGroup of filteredDerivationGroups) {
-      effects.updateDerivationGroupAcknowledged($plan ?? undefined, derivationGroup.name, new Date(), user);
+      effects.updateDerivationGroupAcknowledged($plan ?? undefined, derivationGroup.name, user);
     }
   }
 </script>

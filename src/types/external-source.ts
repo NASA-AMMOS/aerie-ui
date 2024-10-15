@@ -43,6 +43,7 @@ export type ExternalSourceSlim = Omit<ExternalSourceDB, 'external_events' | 'met
 export type ExternalSource = Omit<ExternalSourceDB, 'key' | 'derivation_group_name'> & { pkey: ExternalSourcePkey };
 
 export type PlanDerivationGroup = {
+  acknowledged: boolean;
   derivation_group_name: string;
   last_acknowledged_at: string;
   plan_id: number | undefined; // because in plan.ts plan is defined on Plan | null...
