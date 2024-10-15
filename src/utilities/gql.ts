@@ -2768,6 +2768,7 @@ const gql = {
       links: ${Queries.PLAN_DERIVATION_GROUP}(order_by: { plan_id: asc }) {
         derivation_group_name
         plan_id
+        acknowledged
         last_acknowledged_at
       }
     }
@@ -3616,11 +3617,11 @@ const gql = {
   `,
 
   UPDATE_DERIVATION_GROUP_ACKNOWLEDGED: `#graphql
-    mutation UpdateDerivationGroupAcknowledged($derivation_group_name: String!, $plan_id: Int!, $new_date: timestamptz!) {
-      updatePlanDerivationGroup: ${Queries.UPDATE_DERIVATION_GROUP_ACKNOWLEDGED}(pk_columns: {derivation_group_name: $derivation_group_name, plan_id: $plan_id}, _set: {last_acknowledged_at: $new_date}) {
+    mutation UpdateDerivationGroupAcknowledged($derivation_group_name: String!, $plan_id: Int!, $acknowledged: Boolean!) {
+      updatePlanDerivationGroup: ${Queries.UPDATE_DERIVATION_GROUP_ACKNOWLEDGED}(pk_columns: {derivation_group_name: $derivation_group_name, plan_id: $plan_id}, _set: {acknowledged: $acknowledged}) {
         derivation_group_name,
         plan_id,
-        last_acknowledged_at
+        acknowledged
       }
     }
   `,
