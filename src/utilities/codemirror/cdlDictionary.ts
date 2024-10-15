@@ -45,7 +45,6 @@ export function parseCdlDictionary(contents: string, id?: string, path?: string)
 
   SC_LITERALS_LOOP: for (const line of lineIterator) {
     if (/^\s*SPACECRAFT\s+LITERALS/.test(line)) {
-      console.log('spacecraft literals');
       for (const childLine of lineIterator) {
         if (/^\s*END\s+SPACECRAFT\s+LITERALS/.test(childLine)) {
           break SC_LITERALS_LOOP;
