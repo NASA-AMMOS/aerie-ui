@@ -5653,11 +5653,7 @@ const effects = {
     }
   },
 
-  async updateDerivationGroupAcknowledged(
-    plan: Plan | undefined,
-    derivation_group_name: string,
-    user: User | null,
-  ) {
+  async updateDerivationGroupAcknowledged(plan: Plan | undefined, derivation_group_name: string, user: User | null) {
     if (plan === undefined) {
       return;
     }

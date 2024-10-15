@@ -39,21 +39,25 @@ export const planDerivationGroupLinks = gqlSubscribable<PlanDerivationGroup[]>(
 
 /* Derived. */
 // reorganization of planDerivationGroupLinks so that it is easy to grab entries by plan_id, and access the derivation groups and when their updates were last acknowledged
-export const derivationGroupsLastAcknowledged: Readable<Record<number, { [derivation_group_name: string]: {acknowledged: boolean, last_acknowledged_at: string} }>> =
-  derived(planDerivationGroupLinks, $planDerivationGroupLinks => {
-    const result: Record<number, { [derivation_group_name: string]: {acknowledged: boolean, last_acknowledged_at: string} }> = {};
-    for (const entry of $planDerivationGroupLinks) {
-      const { derivation_group_name, acknowledged, last_acknowledged_at, plan_id } = entry;
-      if (plan_id !== undefined) {
-        if (result[plan_id]) {
-          result[plan_id][derivation_group_name] = {acknowledged, last_acknowledged_at};
-        } else {
-          result[plan_id] = { [derivation_group_name]: {acknowledged, last_acknowledged_at} };
-        }
+export const derivationGroupsLastAcknowledged: Readable<
+  Record<number, { [derivation_group_name: string]: { acknowledged: boolean; last_acknowledged_at: string } }>
+> = derived(planDerivationGroupLinks, $planDerivationGroupLinks => {
+  const result: Record<
+    number,
+    { [derivation_group_name: string]: { acknowledged: boolean; last_acknowledged_at: string } }
+  > = {};
+  for (const entry of $planDerivationGroupLinks) {
+    const { derivation_group_name, acknowledged, last_acknowledged_at, plan_id } = entry;
+    if (plan_id !== undefined) {
+      if (result[plan_id]) {
+        result[plan_id][derivation_group_name] = { acknowledged, last_acknowledged_at };
+      } else {
+        result[plan_id] = { [derivation_group_name]: { acknowledged, last_acknowledged_at } };
       }
     }
-    return result;
-  });
+  }
+  return result;
+});
 
 export const selectedPlanDerivationGroupNames: Readable<string[]> = derived(
   [planDerivationGroupLinks, planId],

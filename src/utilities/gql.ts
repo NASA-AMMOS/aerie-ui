@@ -1496,26 +1496,6 @@ const gql = {
     }
   `,
 
-  GET_EXTERNAL_EVENT_BY_EVENT_TYPE: `#graphql
-    query GetExternalEventByEventType($event_type_name: String!) {
-      ${Queries.EXTERNAL_EVENT}(where: {event_type_name: { _eq: $event_type_name }}) {
-        key
-        event_type_name
-        start_time
-        duration
-        properties
-      }
-    }
-  `,
-
-  GET_EXTERNAL_EVENT_TYPES: `#graphql
-    query GetExternalEventTypes {
-      external_event_types: ${Queries.EXTERNAL_EVENT_TYPES} {
-        name
-      }
-    }
-  `,
-
   // Should be deprecated with the introduction of strict external source schemas, dictating allowable event types for given source types. But for now, this will do.
   GET_EXTERNAL_EVENT_TYPE_BY_SOURCE: `#graphql
     query GetExternalEventTypesBySource($derivationGroupName: String!, $sourceKey: String!) {
@@ -1530,18 +1510,6 @@ const gql = {
             name
           }
         }
-      }
-    }
-  `,
-
-  GET_EXTERNAL_SOURCE_BY_TYPE: `#graphql
-    query GetExternalSourceByType($source_type_name: String!) {
-      ${Queries.EXTERNAL_SOURCES}(where: {source_type_name: { _eq: $source_type_name }}) {
-        key
-        source_type_name
-        valid_at
-        start_time
-        end_time
       }
     }
   `,
@@ -1751,15 +1719,6 @@ const gql = {
             name
           }
         }
-      }
-    }
-  `,
-
-  GET_PLAN_DERIVATION_GROUP: `#graphql
-    query GetPlanExternalSource($plan_id: Int!) {
-      links: ${Queries.PLAN_DERIVATION_GROUP}(where: {plan_id: {_eq: $plan_id}}) {
-        derivation_group_name
-        plan_id
       }
     }
   `,
@@ -2434,7 +2393,7 @@ const gql = {
 
   SUB_DERIVATION_GROUPS: `#graphql
     subscription SubDerivationGroups {
-      models: ${Queries.DERIVATION_GROUP_COMP}(order_by: {name: desc}) {
+      derivationGroups: ${Queries.DERIVATION_GROUP_COMP}(order_by: {name: desc}) {
         name
         source_type_name
         sources
