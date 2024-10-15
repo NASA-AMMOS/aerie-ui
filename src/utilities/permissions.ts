@@ -677,10 +677,7 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   GET_EXPANSION_SEQUENCE_SEQ_JSON: () => true,
   GET_EXTENSIONS: () => true,
   GET_EXTERNAL_EVENTS: () => true,
-  GET_EXTERNAL_EVENT_BY_EVENT_TYPE: () => true,
-  GET_EXTERNAL_EVENT_TYPES: () => true,
   GET_EXTERNAL_EVENT_TYPE_BY_SOURCE: () => true,
-  GET_EXTERNAL_SOURCE_BY_TYPE: () => true,
   GET_EXTERNAL_SOURCE_METADATA: () => true,
   GET_MODELS: () => true,
   GET_PARCEL: () => true,
@@ -694,7 +691,6 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
   GET_PLANS_AND_MODELS: (user: User | null): boolean => {
     return isUserAdmin(user) || getPermission([Queries.MISSION_MODELS, Queries.PLANS], user);
   },
-  GET_PLAN_DERIVATION_GROUP: () => true,
   GET_PLAN_EVENT_TYPES: () => true,
   GET_PLAN_MERGE_NON_CONFLICTING_ACTIVITIES: () => true,
   GET_PLAN_SNAPSHOT_ACTIVITY_DIRECTIVES: (user: User | null): boolean => {
@@ -1381,7 +1377,7 @@ const featurePermissions: FeaturePermissions = {
     canUpdate: () => false, // this is not a feature
   },
   derivationGroupAcknowledgement: {
-    canRead: user => queryPermissions.GET_PLAN_DERIVATION_GROUP(user), // seen sources are derived from plan/derivation groups
+    canRead: user => queryPermissions.SUB_PLAN_DERIVATION_GROUP(user), // seen sources are derived from plan/derivation groups
     canUpdate: (user, plan) => queryPermissions.UPDATE_DERIVATION_GROUP_ACKNOWLEDGED(user, plan),
   },
   derivationGroupPlanLink: {
