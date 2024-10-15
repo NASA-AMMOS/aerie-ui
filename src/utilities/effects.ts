@@ -4927,7 +4927,10 @@ const effects = {
       });
 
       const viewJSON = JSON.parse(viewFileString);
-      const { migratedViewDefinition } = await applyViewDefinitionMigrations(viewJSON);
+      const { migratedViewDefinition, error } = await applyViewDefinitionMigrations(viewJSON);
+      if (error) {
+        return { definition: null, errors: [(error.stack || error).toString()] };
+      }
       const { errors, valid } = await effects.validateViewJSON(migratedViewDefinition);
 
       if (valid) {
