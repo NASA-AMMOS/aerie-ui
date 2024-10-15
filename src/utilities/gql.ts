@@ -2723,8 +2723,8 @@ const gql = {
   `,
 
   SUB_PLAN_DERIVATION_GROUP: `#graphql
-    subscription SubPlanExternalSource {
-      links: ${Queries.PLAN_DERIVATION_GROUP}(order_by: { plan_id: asc }) {
+    subscription SubPlanExternalSource($plan_id: Int!) {
+      links: ${Queries.PLAN_DERIVATION_GROUP}(order_by: { plan_id: asc }, where: {plan_id: {_eq: $plan_id}}) {
         derivation_group_name
         plan_id
         acknowledged
