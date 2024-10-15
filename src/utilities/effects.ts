@@ -8,7 +8,6 @@ import {
 } from '@nasa-jpl/aerie-ampcs';
 import { get } from 'svelte/store';
 import { SchedulingType } from '../constants/scheduling';
-import { DictionaryHeaders } from '../enums/dictionaryHeaders';
 import { DictionaryTypes } from '../enums/dictionaryTypes';
 import { SearchParameters } from '../enums/searchParameters';
 import { Status } from '../enums/status';
@@ -5668,31 +5667,34 @@ const effects = {
 
   async uploadDictionary(
     dictionary: string,
-    type: DictionaryTypes,
     user: User | null,
-  ): Promise<CommandDictionary | ChannelDictionary | ParameterDictionary | null> {
-    const typeString = type.charAt(0).toUpperCase() + type.slice(1);
-
+  ): Promise<{ channel?: ChannelDictionary; command?: CommandDictionary; parameter?: ParameterDictionary } | null> {
     try {
       if (!queryPermissions.CREATE_DICTIONARY(user)) {
-        throwPermissionError(`upload a ${typeString} dictionary`);
+        throwPermissionError(`upload a dictionary`);
       }
 
-      const data = await reqHasura<CommandDictionary | ChannelDictionary | ParameterDictionary>(
-        gql.CREATE_DICTIONARY,
-        { dictionary, type },
-        user,
-      );
-
-      const { createDictionary: newDictionary } = data;
-
-      if (newDictionary === null) {
-        throw Error(`Unable to upload ${typeString} Dictionary`);
+      if (dictionary.split('\n').find(line => /^PROJECT\s*:\s*"([^"]*)"/.test(line))) {
+        // convert cdl to ampcs format, consider moving to aerie backend after decision on XTCE
+        // eslint-disable-next-line no-control-regex
+        dictionary = toAmpcsXml(parseCdlDictionary(dictionary)).replaceAll(/[^\x00-\x7F]+/g, '');
       }
 
-      return newDictionary;
+      const data = await reqHasura<{
+        channel?: ChannelDictionary;
+        command?: CommandDictionary;
+        parameter?: ParameterDictionary;
+      }>(gql.CREATE_DICTIONARY, { dictionary }, user);
+
+      const { createDictionary: newDictionaries } = data;
+
+      if (newDictionaries === null) {
+        throw Error(`Unable to upload Dictionary`);
+      }
+
+      return newDictionaries;
     } catch (e) {
-      catchError(`${typeString} Dictionary Upload Failed`, e as Error);
+      catchError(`Dictionary Upload Failed`, e as Error);
       return null;
     }
   },
@@ -5701,49 +5703,34 @@ const effects = {
     file: File,
     user: User | null,
     sequenceAdaptationName?: string | undefined,
-  ): Promise<CommandDictionary | ChannelDictionary | ParameterDictionary | SequenceAdaptation | null> {
-    let text = await file.text();
-    const splitLineDictionary = text.split('\n');
-
-    let type: DictionaryTypes = DictionaryTypes.COMMAND;
-
-    switch (splitLineDictionary[1]) {
-      case `<${DictionaryHeaders.command_dictionary}>`: {
-        type = DictionaryTypes.COMMAND;
-        break;
+  ): Promise<void> {
+    const text = await file.text();
+    if (sequenceAdaptationName) {
+      const seqAdaptation = await this.createCustomAdaptation({ adaptation: text, name: sequenceAdaptationName }, user);
+      if (seqAdaptation === null) {
+        showFailureToast('Unable to upload sequence adaptation');
+        throw Error('Unable to upload sequence adaptation');
       }
-      case `<${DictionaryHeaders.telemetry_dictionary}>`: {
-        type = DictionaryTypes.CHANNEL;
-        break;
+      showSuccessToast('Sequence Adaptation Created Successfully');
+    } else {
+      const uploadedDictionaries = await this.uploadDictionary(text, user);
+      if (uploadedDictionaries === null) {
+        showFailureToast('Failed to upload dictionary file');
+        throw Error('Failed to upload dictionary file');
+      } else if (Object.keys(uploadedDictionaries).length === 0) {
+        showFailureToast('Dictionary Parser return empty data, verify the parser is correctly implemented.');
+        throw Error('Dictionary Parser return empty data, verify the parser is correctly implemented.');
       }
-      case `<${DictionaryHeaders.param_def}>`: {
-        type = DictionaryTypes.PARAMETER;
-        break;
+      if ('channel' in uploadedDictionaries) {
+        showSuccessToast('Channel Dictionary Created Successfully');
       }
-      default: {
-        if (sequenceAdaptationName) {
-          const adaptation = await this.createCustomAdaptation(
-            { adaptation: text, name: sequenceAdaptationName },
-            user,
-          );
-          return adaptation;
-        } else {
-          // consider moving to adaptation
-          if (splitLineDictionary.find(line => /^PROJECT\s*:\s*"([^"]*)"/.test(line))) {
-            console.log('CDL Dictionary conversion');
-            // eslint-disable-next-line no-control-regex
-            text = toAmpcsXml(parseCdlDictionary(text)).replaceAll(/[^\x00-\x7F]+/g, '');
-            type = DictionaryTypes.COMMAND;
-            console.log(text);
-          }
-        }
-        break;
+      if ('command' in uploadedDictionaries) {
+        showSuccessToast('Command Dictionary Created Successfully');
+      }
+      if ('parameter' in uploadedDictionaries) {
+        showSuccessToast('Parameter Dictionary Created Successfully');
       }
     }
-
-    const dictionary = await this.uploadDictionary(text, type, user);
-
-    return dictionary;
   },
 
   async uploadFile(file: File, user: User | null): Promise<number | null> {
