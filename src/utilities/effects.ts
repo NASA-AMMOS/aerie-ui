@@ -4733,7 +4733,12 @@ const effects = {
           // Otherwise perform any needed migrations
           const { migratedView, error, anyMigrationsApplied } = await applyViewMigrations(view);
           if (migratedView && anyMigrationsApplied) {
-            await effects.updateView(migratedView.id, { definition: migratedView.definition }, user);
+            await effects.updateView(
+              migratedView.id,
+              { definition: migratedView.definition },
+              'View Automatically Migrated Successfully',
+              user,
+            );
           }
 
           // If migration failed catch the error and return default view
@@ -6381,7 +6386,7 @@ const effects = {
     }
   },
 
-  async updateView(id: number, view: Partial<View>, user: User | null): Promise<boolean> {
+  async updateView(id: number, view: Partial<View>, message: string | null, user: User | null): Promise<boolean> {
     try {
       if (!queryPermissions.UPDATE_VIEW(user, { owner: view.owner ?? null })) {
         throwPermissionError('update this view');
@@ -6389,7 +6394,7 @@ const effects = {
 
       const data = await reqHasura<Pick<View, 'id'>>(gql.UPDATE_VIEW, { id, view }, user);
       if (data.updatedView) {
-        showSuccessToast('View Updated Successfully');
+        showSuccessToast(message ?? 'View Updated Successfully');
         return true;
       } else {
         throw Error(`Unable to update view with ID: "${id}"`);
