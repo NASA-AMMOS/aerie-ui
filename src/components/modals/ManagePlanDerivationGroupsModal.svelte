@@ -308,11 +308,7 @@
                   </div>
                 </Collapse>
               {/each}
-              <Collapse
-                defaultExpanded={false}
-                title="Event Types"
-                tooltipContent="View Contained Event Types"
-              >
+              <Collapse defaultExpanded={false} title="Event Types" tooltipContent="View Contained Event Types">
                 {#each selectedDerivationGroup.event_types as eventType}
                   <i class="st-typography-body">{eventType}</i>
                 {/each}
@@ -331,7 +327,7 @@
       on:click={() => onUpdateDerivationGroups(selectedDerivationGroups)}
       use:permissionHandler={{
         hasPermission: hasUpdateDerivationGroupLinkPermission,
-        permissionError: "You do not have permission to update this derivation group/plan link."
+        permissionError: 'You do not have permission to update this derivation group/plan link.',
       }}
     >
       Update

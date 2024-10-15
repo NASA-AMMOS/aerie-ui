@@ -529,11 +529,7 @@
               />
             </Input>
 
-            <Collapse
-              defaultExpanded={false}
-              title="Event Types"
-              tooltipContent="View Contained Event Types"
-            >
+            <Collapse defaultExpanded={false} title="Event Types" tooltipContent="View Contained Event Types">
               {#await effects.getExternalEventTypesBySource(selectedSource.key, selectedSource.derivation_group_name, user)}
                 <i>Loading...</i>
               {:then eventTypes}
@@ -542,11 +538,7 @@
                 {/each}
               {/await}
             </Collapse>
-            <Collapse
-              defaultExpanded={false}
-              title="Metadata"
-              tooltipContent="View Event Source Metadata"
-            >
+            <Collapse defaultExpanded={false} title="Metadata" tooltipContent="View Event Source Metadata">
               {#await effects.getExternalSourceMetadata(selectedSource.key, selectedSource.derivation_group_name, user)}
                 <em>loading metadata...</em>
               {:then metadata}

@@ -1574,4 +1574,3 @@ export {
   isUserOwner,
   queryPermissions,
 };
-

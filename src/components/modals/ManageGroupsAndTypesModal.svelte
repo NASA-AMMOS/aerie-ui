@@ -100,7 +100,7 @@
       headerName: 'External Source Type',
       resizable: true,
       sortable: true,
-    }
+    },
   ];
   const externalEventTypeBaseColumnDefs: DataGridColumnDef<ExternalEventType>[] = [
     {
@@ -109,7 +109,7 @@
       headerName: 'External Event Type',
       resizable: true,
       sortable: true,
-    }
+    },
   ];
 
   let derivationGroupColumnsDef: DataGridColumnDef<DerivationGroup>[] = derivationGroupBaseColumnDefs;
@@ -499,11 +499,7 @@
                   </div>
                 </Collapse>
               {/each}
-              <Collapse
-                defaultExpanded={false}
-                title="Event Types"
-                tooltipContent="View Contained Event Types"
-              >
+              <Collapse defaultExpanded={false} title="Event Types" tooltipContent="View Contained Event Types">
                 {#each selectedDerivationGroup.event_types as eventType}
                   <i class="st-typography-body">{eventType}</i>
                 {/each}
@@ -540,21 +536,13 @@
                     {associatedDerivationGroup.name}
                   </div>
 
-                  <Collapse
-                    defaultExpanded={false}
-                    title="Event Types"
-                    tooltipContent="View Contained Event Types"
-                  >
+                  <Collapse defaultExpanded={false} title="Event Types" tooltipContent="View Contained Event Types">
                     {#each associatedDerivationGroup.event_types as eventType}
                       <i class="st-typography-body">{eventType}</i>
                     {/each}
                   </Collapse>
 
-                  <Collapse
-                    defaultExpanded={false}
-                    title="Sources"
-                    tooltipContent="View Contained External Sources"
-                  >
+                  <Collapse defaultExpanded={false} title="Sources" tooltipContent="View Contained External Sources">
                     {#each associatedDerivationGroup.sources as source}
                       <i class="st-typography-body">{source[0]}</i>
                     {/each}
@@ -601,21 +589,13 @@
                     {associatedDerivationGroup.source_type_name}
                   </div>
 
-                  <Collapse
-                    defaultExpanded={false}
-                    title="Event Types"
-                    tooltipContent="View Contained Event Types"
-                  >
+                  <Collapse defaultExpanded={false} title="Event Types" tooltipContent="View Contained Event Types">
                     {#each associatedDerivationGroup.event_types as eventType}
                       <i class="st-typography-body">{eventType}</i>
                     {/each}
                   </Collapse>
 
-                  <Collapse
-                    defaultExpanded={false}
-                    title="Sources"
-                    tooltipContent="View Contained External Sources"
-                  >
+                  <Collapse defaultExpanded={false} title="Sources" tooltipContent="View Contained External Sources">
                     {#each associatedDerivationGroup.sources as source}
                       <i class="st-typography-body">{source[0]}</i>
                     {/each}
