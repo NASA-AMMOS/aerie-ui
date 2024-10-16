@@ -559,7 +559,7 @@
                   Failed to retrieve External Source metadata.
                 </div>
               {:else}
-                <div class="st-typogrpahy-body collapse-important-text">Source has no metadata.</div>
+                <div class="st-typography-body collapse-important-text">Source has no metadata.</div>
               {/if}
             </Collapse>
             <Collapse
@@ -570,7 +570,7 @@
             >
               {#if selectedSourceLinkedDerivationGroupsPlans.length > 0}
                 {#each selectedSourceLinkedDerivationGroupsPlans as linkedPlanDerivationGroup}
-                  <div class="st-typogrpahy-body collapse-important-text">
+                  <div class="st-typography-body collapse-important-text">
                     <a href="{base}/plans/{linkedPlanDerivationGroup.plan_id}">
                       {$plans.find(plan => {
                         return linkedPlanDerivationGroup.plan_id === plan.id;

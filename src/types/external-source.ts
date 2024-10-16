@@ -46,7 +46,7 @@ export type PlanDerivationGroup = {
   acknowledged: boolean;
   derivation_group_name: string;
   last_acknowledged_at: string;
-  plan_id: number | undefined; // because in plan.ts plan is defined on Plan | null...
+  plan_id: number;
 };
 
 export type ExternalSourceType = {
