@@ -37,7 +37,7 @@
   import { parseJSONStream } from '../../utilities/generic';
   import { permissionHandler } from '../../utilities/permissionHandler';
   import { featurePermissions } from '../../utilities/permissions';
-  import { convertUTCToMs, formatDate, getIntervalInMs } from '../../utilities/time';
+  import { formatDate } from '../../utilities/time';
   import { showFailureToast } from '../../utilities/toast';
   import { tooltip } from '../../utilities/tooltip';
   import { required, timestamp } from '../../utilities/validators';
@@ -291,17 +291,24 @@
       selectedSource ? selectedSource.derivation_group_name : null,
       user,
     )
-    .then(
-      fetched =>
-        (selectedEvents = fetched.map(externalEventsDB => {
-          return {
-            ...externalEventsDB,
-            duration_ms: getIntervalInMs(externalEventsDB.duration),
-            event_type: externalEventsDB.pkey.event_type_name,
-            start_ms: convertUTCToMs(externalEventsDB.start_time),
-          };
-        })),
-    );
+    .then(fetched => (selectedEvents = fetched));
+
+  $: effects
+    .getExternalEventTypesBySource(
+      selectedSource ? selectedSource.key : null,
+      selectedSource ? selectedSource.derivation_group_name : null,
+      user,
+    )
+    .then(fetched => (selectedSourceEventTypes = fetched));
+
+  $: effects
+    .getExternalSourceMetadata(
+      selectedSource ? selectedSource.key : null,
+      selectedSource ? selectedSource.derivation_group_name : null,
+      user,
+    )
+    .then(fetched => (selectedSourceMetadata = fetched));
+
   $: selectedSourceLinkedDerivationGroupsPlans = $planDerivationGroupLinks.filter(planDerivationGroupLink => {
     return planDerivationGroupLink.derivation_group_name === selectedSource?.derivation_group_name;
   });
@@ -392,16 +399,12 @@
   async function selectSource(detail: ExternalSourceSlim) {
     selectedSource = detail;
     gridRowSizes = gridRowSizesBottomPanel;
-    selectedSourceEventTypes = await effects.getExternalEventTypesBySource(selectedSource.key, selectedSource.derivation_group_name, user);
-    selectedSourceMetadata = await effects.getExternalSourceMetadata(selectedSource.key, selectedSource.derivation_group_name, user);
     deselectEvent();
   }
 
   function deselectSource() {
     deselectEvent();
     gridRowSizes = gridRowSizesNoBottomPanel;
-    selectedSourceEventTypes = [];
-    selectedSourceMetadata = {};
     selectedSource = null;
   }
 
@@ -541,9 +544,7 @@
                   </div>
                 {/each}
               {:else}
-                <div class="st-typography-body collapse-important-text">
-                  No external event types found.
-                </div>
+                <div class="st-typography-body collapse-important-text">No external event types found.</div>
               {/if}
             </Collapse>
             <Collapse defaultExpanded={false} title="Metadata" tooltipContent="View Event Source Metadata">
@@ -554,7 +555,9 @@
                   })}
                 />
               {:else if $getExternalSourceMetadataError}
-                <div class="st-typography-body collapse-important-text">Failed to retrieve External Source metadata.</div>
+                <div class="st-typography-body collapse-important-text">
+                  Failed to retrieve External Source metadata.
+                </div>
               {:else}
                 <div class="st-typogrpahy-body collapse-important-text">Source has no metadata.</div>
               {/if}
