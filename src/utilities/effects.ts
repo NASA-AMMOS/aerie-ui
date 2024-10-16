@@ -3685,10 +3685,13 @@ const effects = {
 
   // Should be deprecated with the introduction of strict external source schemas, dictating allowable event types for given source types. But for now, this will do.
   async getExternalEventTypesBySource(
-    externalSourceKey: string,
-    externalSourceDerivationGroup: string,
+    externalSourceKey: string | null,
+    externalSourceDerivationGroup: string | null,
     user: User | null,
   ): Promise<string[]> {
+    if (externalSourceKey === null || externalSourceDerivationGroup === null) {
+      return [];
+    }
     try {
       const data = await reqHasura<
         {
@@ -3766,10 +3769,13 @@ const effects = {
   },
 
   async getExternalSourceMetadata(
-    externalSourceKey: string,
-    externalSourceDerivationGroup: string,
+    externalSourceKey: string | null,
+    externalSourceDerivationGroup: string | null,
     user: User | null,
   ): Promise<Record<string, any>> {
+    if (externalSourceKey === null || externalSourceDerivationGroup === null) {
+      return [];
+    }
     try {
       getExternalSourceMetadataError.set(null);
       const data = await reqHasura<ExternalSourceDB['metadata']>(
