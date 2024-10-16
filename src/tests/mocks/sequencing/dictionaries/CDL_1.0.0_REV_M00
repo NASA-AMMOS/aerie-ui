@@ -33,6 +33,14 @@ NUMERIC ARGUMENT : numeric_arg_1
    '00' to 'FF'
 END NUMERIC ARGUMENT
 
+NUMERIC ARGUMENT : numeric_arg_2
+   TITLE : "a numeric arg with a default"
+   CONVERSION : DECIMAL
+   LENGTH : 8
+   DEFAULT : '50'
+   '0' to '100'
+END NUMERIC ARGUMENT
+
 ! in limited examples global arguments preceded stem definitions
 
 
@@ -54,7 +62,7 @@ LOOKUP ARGUMENT : lookup_local_arg_1
    'MODE_C' = '2'
 END LOOKUP ARGUMENT
 
-READ ARGUMENT lookup_arg_1
+READ ARGUMENT numeric_arg_2
 READ ARGUMENT lookup_local_arg_1
 
 !@ ATTACHMENT : desc

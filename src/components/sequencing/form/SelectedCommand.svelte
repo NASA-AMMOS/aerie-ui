@@ -214,7 +214,13 @@
                 {commandInfoMapper}
                 setInEditor={debounce(setInEditor, 250)}
                 addDefaultArgs={(commandNode, missingArgDefArray) =>
-                  addDefaultArgs(commandDictionary, editorSequenceView, commandNode, missingArgDefArray)}
+                  addDefaultArgs(
+                    commandDictionary,
+                    editorSequenceView,
+                    commandNode,
+                    missingArgDefArray,
+                    commandInfoMapper,
+                  )}
               />
             {/each}
 
@@ -223,7 +229,13 @@
                 <AddMissingArgsButton
                   setInEditor={() => {
                     if (commandNode) {
-                      addDefaultArgs(commandDictionary, editorSequenceView, commandNode, missingArgDefArray);
+                      addDefaultArgs(
+                        commandDictionary,
+                        editorSequenceView,
+                        commandNode,
+                        missingArgDefArray,
+                        commandInfoMapper,
+                      );
                     }
                   }}
                 />

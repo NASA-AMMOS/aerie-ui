@@ -10,11 +10,43 @@ import {
   RULE_SIMPLE_EXPR,
   RULE_STATEMENT,
   RULE_TIME_TAGGED_STATEMENT,
+  TOKEN_COMMA,
   TOKEN_INT_CONST,
   TOKEN_STRING_CONST,
 } from './vml-constants';
 
 export class VmlCommandInfoMapper implements CommandInfoMapper {
+  formatArgumentArray(values: string[], commandNode: SyntaxNode | null): string {
+    let prefix = ' ';
+    if (commandNode?.name === RULE_TIME_TAGGED_STATEMENT) {
+      const callParametersNode = commandNode.firstChild?.nextSibling?.firstChild?.getChild(RULE_CALL_PARAMETERS);
+      if (callParametersNode) {
+        let hasTrailingComma = false;
+        let child = callParametersNode.firstChild;
+        while (child) {
+          if (child.name === RULE_CALL_PARAMETER) {
+            hasTrailingComma = false;
+          } else if (child.name === TOKEN_COMMA) {
+            hasTrailingComma = true;
+          }
+          child = child.nextSibling;
+        }
+        const hasParametersSpecified = !!callParametersNode.getChild(RULE_CALL_PARAMETER);
+        if (!hasTrailingComma && hasParametersSpecified) {
+          prefix = ',';
+        }
+      }
+    }
+    return prefix + values.join(',');
+  }
+
+  getArgumentAppendPosition(node: SyntaxNode | null): number | undefined {
+    if (node?.name === RULE_TIME_TAGGED_STATEMENT) {
+      return node.firstChild?.nextSibling?.firstChild?.getChild(RULE_CALL_PARAMETERS)?.to ?? undefined;
+    }
+    return node?.getChild(RULE_CALL_PARAMETERS)?.to ?? undefined;
+  }
+
   getArgumentNodeContainer(commandNode: SyntaxNode | null): SyntaxNode | null {
     return commandNode?.getChild(RULE_STATEMENT)?.firstChild?.getChild(RULE_CALL_PARAMETERS) ?? null;
   }

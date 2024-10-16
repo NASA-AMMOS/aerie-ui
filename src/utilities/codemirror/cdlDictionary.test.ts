@@ -187,6 +187,9 @@ describe('cdl parse tests', async () => {
     const cmd_1 = cdlDictionary.fswCommands[1];
     expect(cmd_1.arguments.length).toBe(2);
 
+    const cmd_1_arg_1 = cmd_1.argumentMap.numeric_arg_2 as FswCommandArgumentInteger;
+    expect(cmd_1_arg_1.arg_type).toBe('integer');
+
     const localEnum = cmd_1.argumentMap.lookup_local_arg_1 as FswCommandArgumentEnum;
     expect(localEnum.arg_type).toBe('enum');
     expect(localEnum.range).toEqual(['MODE_A', 'MODE_B', 'MODE_C']);

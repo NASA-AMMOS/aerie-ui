@@ -1,6 +1,12 @@
 import type { SyntaxNode } from '@lezer/common';
 
 export interface CommandInfoMapper {
+  /** format string of multiple arguments */
+  formatArgumentArray(values: string[], commandNode: SyntaxNode | null): string;
+
+  /** get insert position for missing arguments */
+  getArgumentAppendPosition(node: SyntaxNode | null): number | undefined;
+
   /** gets container of arguments from subtree */
   getArgumentNodeContainer(commandNode: SyntaxNode | null): SyntaxNode | null;
 

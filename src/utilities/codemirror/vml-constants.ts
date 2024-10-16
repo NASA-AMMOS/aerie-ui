@@ -55,6 +55,7 @@ export const TOKEN_DOUBLE = 'DOUBLE';
 export const TOKEN_STRING = 'STRING';
 
 export const TOKEN_ERROR = '⚠';
+export const TOKEN_COMMA = 'COMMA';
 export const TOKEN_STRING_CONST = 'STRING_CONST';
 export const TOKEN_DOUBLE_CONST = 'DOUBLE_CONST';
 export const TOKEN_INT_CONST = 'INT_CONST';

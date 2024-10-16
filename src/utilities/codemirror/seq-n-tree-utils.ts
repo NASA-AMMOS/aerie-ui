@@ -11,6 +11,7 @@ import {
   TOKEN_GROUND_EVENT,
   TOKEN_LOAD,
   TOKEN_NUMBER,
+  TOKEN_REPEAT_ARG,
   TOKEN_REQUEST,
   TOKEN_STRING,
 } from '../../constants/seq-n-grammar-constants';
@@ -48,6 +49,25 @@ export function getAncestorStepOrRequest(node: SyntaxNode | null) {
 }
 
 export class SeqNCommandInfoMapper implements CommandInfoMapper {
+  formatArgumentArray(values: string[]): string {
+    return ' ' + values.join(' ');
+  }
+
+  getArgumentAppendPosition(commandNode: SyntaxNode | null): number | undefined {
+    if (!commandNode) {
+      return undefined;
+    }
+    let insertPosition: undefined | number = undefined;
+    const argsNode = commandNode.getChild('Args');
+    const stemNode = commandNode.getChild('Stem');
+    if (stemNode) {
+      insertPosition = argsNode?.to ?? stemNode.to;
+    } else if (commandNode.name === TOKEN_REPEAT_ARG) {
+      insertPosition = commandNode.to - 1;
+    }
+    return insertPosition;
+  }
+
   getArgumentNodeContainer(commandNode: SyntaxNode | null): SyntaxNode | null {
     return commandNode?.getChild(RULE_ARGS) ?? null;
   }
