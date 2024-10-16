@@ -34,17 +34,11 @@
 
   // Determine which new and deleted sources are unacknowledged for the user
   $: {
-    if ($plan !== null && $plan.id !== null && Object.keys($derivationGroupsAcknowledged).length) {
+    if ($plan !== null && $plan.id !== null) {
       // a mapping of derivation groups (that are associated with this plan) to the time their last update was last acknowledged
-      const groups = Object.keys($derivationGroupsAcknowledged).filter(
-        group => !$derivationGroupsAcknowledged[group].acknowledged,
-      );
+      const groups = Object.keys($derivationGroupsAcknowledged);
       unseenSources = $externalSources.filter(externalSource => {
         if (!groups.includes(externalSource.derivation_group_name)) {
-          return false;
-        }
-        // it was acknowledged recently...so skip
-        if ($derivationGroupsAcknowledged[externalSource.derivation_group_name].acknowledged) {
           return false;
         }
         // check dates
@@ -56,10 +50,13 @@
     }
   }
 
+  $: linkedDerivationGroupNames = $planDerivationGroupLinks.map(
+    planDerivationGroup => planDerivationGroup.derivation_group_name,
+  );
   $: filteredDerivationGroups = $derivationGroups
     .filter(group => {
       if ($plan) {
-        return Object.keys($derivationGroupsAcknowledged).includes(group.name);
+        return linkedDerivationGroupNames.includes(group.name);
       } else {
         return false;
       }
