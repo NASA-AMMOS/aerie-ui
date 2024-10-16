@@ -3,7 +3,7 @@
 <script lang="ts">
   import { activityDirectivesMap, selectActivity, selectedActivityDirectiveId } from '../../stores/activities';
   import { visibleConstraintResults } from '../../stores/constraints';
-  import { externalEvents, selectExternalEvent, selectedExternalEventId } from '../../stores/external-event';
+  import { selectExternalEvent, selectedExternalEventId, selectedExternalEvents } from '../../stores/external-event';
   import { maxTimeRange, plan, planReadOnly, viewTimeRange } from '../../stores/plan';
   import {
     resourceTypes,
@@ -214,7 +214,7 @@
       {limitTooltipToLine}
       {showTimelineTooltip}
       activityDirectivesMap={$activityDirectivesMap}
-      externalEvents={$externalEvents}
+      externalEvents={$selectedExternalEvents}
       constraintResults={$visibleConstraintResults}
       {hasUpdateDirectivePermission}
       {hasUpdateSimulationPermission}

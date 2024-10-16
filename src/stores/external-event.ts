@@ -15,7 +15,7 @@ export const creatingExternalEventType: Writable<boolean> = writable(false);
 export const createExternalEventTypeError: Writable<string | null> = writable(null);
 
 /* Subscriptions. */
-export const externalEventsRaw = gqlSubscribable<{ external_event: ExternalEventDB }[] | null | undefined>(
+export const selectedExternalEventsRaw = gqlSubscribable<{ external_event: ExternalEventDB }[] | null | undefined>(
   gql.SUB_PLAN_EXTERNAL_EVENTS_DERIVATION_GROUP,
   { derivation_group_names: selectedPlanDerivationGroupNames },
   [],
@@ -27,8 +27,8 @@ export const externalEventTypes = gqlSubscribable<ExternalEventType[]>(gql.SUB_E
 export const selectedExternalEventId: Writable<ExternalEventId | null> = writable(null);
 
 /* Derived. */
-export const externalEvents: Readable<ExternalEvent[]> = derived(
-  [externalEventsRaw, plan],
+export const selectedExternalEvents: Readable<ExternalEvent[]> = derived(
+  [selectedExternalEventsRaw, plan],
   ([$externalEventsRaw, $plan]) => {
     const completeExternalEvents: ExternalEvent[] = [];
     if ($externalEventsRaw !== null && $externalEventsRaw !== undefined) {
@@ -72,7 +72,7 @@ export const externalEvents: Readable<ExternalEvent[]> = derived(
   },
 );
 
-export const externalEventsMap: Readable<Dictionary<ExternalEvent>> = derived(externalEvents, $externalEvents => {
+export const externalEventsMap: Readable<Dictionary<ExternalEvent>> = derived(selectedExternalEvents, $externalEvents => {
   return keyBy($externalEvents, getExternalEventWholeRowId);
 });
 

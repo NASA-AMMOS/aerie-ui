@@ -88,12 +88,25 @@ export function resetExternalSourceStores(): void {
 function transformDerivationGroups(
   derivationGroups:
     | {
-        derived_total: number;
-        event_types: string[];
-        name: string;
-        owner: UserId;
-        source_type_name: string;
-        sources: string[];
+        derived_events_aggregate: {
+          aggregate: {
+            count: number
+          }
+        },
+        external_sources: {
+          external_events_aggregate: {
+            aggregate: {
+              count: number
+            },
+            nodes: {
+              event_type_name: string
+            }[]
+          },
+          key: string
+        }[],
+        name: string,
+        owner: UserId,
+        source_type_name: string,
       }[]
     | null
     | undefined,
@@ -102,29 +115,24 @@ function transformDerivationGroups(
   if (derivationGroups !== null && derivationGroups !== undefined) {
     derivationGroups.forEach(derivationGroup => {
       completeDerivationGroup.push({
-        derived_event_total: derivationGroup.derived_total,
-        event_types: derivationGroup.event_types,
+        derived_event_total: derivationGroup.derived_events_aggregate.aggregate.count,
+        event_types: derivationGroup.external_sources.reduce<string[]>((accumulatedEventTypes, currentSource) => {
+          accumulatedEventTypes.push(...currentSource.external_events_aggregate.nodes.map(event => event.event_type_name))
+          return accumulatedEventTypes;
+        }, []),
         name: derivationGroup.name,
         owner: derivationGroup.owner,
         source_type_name: derivationGroup.source_type_name,
         sources: new Map(
-          derivationGroup.sources.reduce((currentSourcesMap: [string, { event_counts: number }][], source: string) => {
-            // regex to match strings of the form "source_key, derivation_group_name, event_count", and ignore empty entries for empty
-            //    derivation groups, like ", , "
-            const matches = source.match(
-              /(?<source_key>[^,]+)\s*,\s*(?<derivation_group_name>[^,]+)\s*,\s*(?<event_count>[^,]+)\s*/,
-            );
+          derivationGroup.external_sources.reduce((accumulatedSources, currentSource) => {
+            const source_key = currentSource.key;
+            const event_counts = currentSource.external_events_aggregate.aggregate.count;
 
-            if (matches) {
-              const { groups: { event_count, source_key } = {} } = matches;
-
-              return [
-                ...currentSourcesMap,
-                [source_key, { event_counts: parseInt(event_count) }] as [string, { event_counts: number }],
-              ];
-            }
-            return currentSourcesMap;
-          }, []),
+            return [
+              ...accumulatedSources,
+              [source_key, { event_counts }] as [string, { event_counts: number }],
+            ];
+          }, <[string, { event_counts: number }][]>[]),
         ),
       });
     });
