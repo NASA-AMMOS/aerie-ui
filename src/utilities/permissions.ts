@@ -23,7 +23,7 @@ import type {
   SchedulingGoalMetadata,
 } from '../types/scheduling';
 import type { Parcel, UserSequence, Workspace } from '../types/sequencing';
-import type { Simulation, SimulationTemplate } from '../types/simulation';
+import type { PlanDataset, Simulation, SimulationTemplate } from '../types/simulation';
 import type { Tag } from '../types/tags';
 import type { View, ViewSlim } from '../types/view';
 import gql, { Queries } from './gql';
@@ -1070,6 +1070,12 @@ const queryPermissions: Record<GQLKeys, (user: User | null, ...args: any[]) => b
 };
 
 const gatewayPermissions = {
+  ADD_EXTERNAL_DATASET: (user: User | null, plan: PlanWithOwners): boolean => {
+    const queries = [getFunctionPermission(Queries.ADD_EXTERNAL_DATASET)];
+    return (
+      isUserAdmin(user) || (getPermission(queries, user) && (isPlanOwner(user, plan) || isPlanCollaborator(user, plan)))
+    );
+  },
   IMPORT_PLAN: (user: User | null) => {
     return (
       isUserAdmin(user) ||
@@ -1219,6 +1225,7 @@ interface FeaturePermissions {
   expansionRules: CRUDPermission<AssetWithOwner>;
   expansionSequences: ExpansionSequenceCRUDPermission<AssetWithOwner<ExpansionSequence>>;
   expansionSets: ExpansionSetsCRUDPermission<AssetWithOwner<ExpansionSet>>;
+  externalResources: PlanAssetCRUDPermission<PlanDataset>;
   model: CRUDPermission<void>;
   parameterDictionary: CRUDPermission<void>;
   parcels: CRUDPermission<AssetWithOwner<Parcel>>;
@@ -1306,6 +1313,12 @@ const featurePermissions: FeaturePermissions = {
     canDelete: (user, expansionSet) => queryPermissions.DELETE_EXPANSION_SET(user, expansionSet),
     canRead: user => queryPermissions.SUB_EXPANSION_SETS(user),
     canUpdate: () => false, // no feature to update expansion sets exists
+  },
+  externalResources: {
+    canCreate: (user, plan) => gatewayPermissions.ADD_EXTERNAL_DATASET(user, plan),
+    canDelete: () => false,
+    canRead: () => true,
+    canUpdate: () => true,
   },
   model: {
     canCreate: user => queryPermissions.CREATE_MODEL(user),

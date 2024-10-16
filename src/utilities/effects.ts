@@ -7,8 +7,8 @@ import {
   type ParameterDictionary as AmpcsParameterDictionary,
 } from '@nasa-jpl/aerie-ampcs';
 import { get } from 'svelte/store';
-import { SchedulingType } from '../constants/scheduling';
 import { DictionaryTypes } from '../enums/dictionaryTypes';
+import { SchedulingType } from '../enums/scheduling';
 import { SearchParameters } from '../enums/searchParameters';
 import { Status } from '../enums/status';
 import { activityDirectivesDB, selectedActivityDirectiveId } from '../stores/activities';
@@ -5723,6 +5723,37 @@ const effects = {
       if ('parameter' in uploadedDictionaries) {
         showSuccessToast('Parameter Dictionary Created Successfully');
       }
+    }
+  },
+
+  async uploadExternalDataset(
+    plan: Plan,
+    files: FileList,
+    user: User | null,
+    simulationDatasetId?: number,
+  ): Promise<number | null> {
+    try {
+      if (!gatewayPermissions.ADD_EXTERNAL_DATASET(user, plan)) {
+        throwPermissionError('add external datasets');
+      }
+
+      const file: File = files[0];
+
+      const body = new FormData();
+      body.append('plan_id', `${plan.id}`);
+      body.append('simulation_dataset_id', `${simulationDatasetId}`);
+      body.append('external_dataset', file, file.name);
+
+      const uploadedDatasetId = await reqGateway<number | null>('/uploadDataset', 'POST', body, user, true);
+
+      if (uploadedDatasetId != null) {
+        return uploadedDatasetId;
+      }
+
+      return null;
+    } catch (e) {
+      catchError(e as Error);
+      return null;
     }
   },
 

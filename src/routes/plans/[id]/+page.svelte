@@ -414,7 +414,9 @@
   $: if ($initialPlan && browser) {
     // Asynchronously fetch resource types
     effects.getResourceTypes($initialPlan.model_id, data.user).then(initialResourceTypes => {
-      $resourceTypes = initialResourceTypes;
+      externalResourceNames;
+
+      $resourceTypes = [...initialResourceTypes, ...$externalResources.map(({ name, schema }) => ({ name, schema }))];
       $resourceTypesLoading = false;
     });
   }
