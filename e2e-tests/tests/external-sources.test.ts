@@ -75,7 +75,7 @@ test.describe.serial('External Sources', () => {
   test('Selected external source should show event types in a collapsible', async () => {
     await externalSources.selectSource();
     await externalSources.viewContainedEventTypes.click();
-    await expect(page.locator('i').filter({ hasText: 'ExampleEvent' }).first()).toBeVisible();
+    await expect(page.locator('div').filter({ hasText: 'ExampleEvent' }).first()).toBeVisible();
   });
 
   test('External event table should be accessible while a source is selected', async () => {
