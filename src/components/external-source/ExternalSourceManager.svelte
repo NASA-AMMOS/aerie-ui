@@ -134,6 +134,8 @@
   // source detail variables
   let selectedSource: ExternalSourceSlim | null = null;
   let selectedSourceId: string | null = null;
+  let selectedSourceEventTypes: string[] = [];
+  let selectedSourceMetadata: Record<string, any> = {};
 
   // Selected element variables
   let selectedEvent: ExternalEvent | null = null;
@@ -390,12 +392,16 @@
   async function selectSource(detail: ExternalSourceSlim) {
     selectedSource = detail;
     gridRowSizes = gridRowSizesBottomPanel;
+    selectedSourceEventTypes = await effects.getExternalEventTypesBySource(selectedSource.key, selectedSource.derivation_group_name, user);
+    selectedSourceMetadata = await effects.getExternalSourceMetadata(selectedSource.key, selectedSource.derivation_group_name, user);
     deselectEvent();
   }
 
   function deselectSource() {
     deselectEvent();
     gridRowSizes = gridRowSizesNoBottomPanel;
+    selectedSourceEventTypes = [];
+    selectedSourceMetadata = {};
     selectedSource = null;
   }
 
@@ -528,33 +534,30 @@
             </Input>
 
             <Collapse defaultExpanded={false} title="Event Types" tooltipContent="View Contained Event Types">
-              {#await effects.getExternalEventTypesBySource(selectedSource.key, selectedSource.derivation_group_name, user)}
-                <i>Loading...</i>
-              {:then eventTypes}
-                {#each eventTypes as eventType}
-                  <i>{eventType}</i>
+              {#if selectedSourceEventTypes.length > 0}
+                {#each selectedSourceEventTypes as eventType}
+                  <div class="st-typography-body collapse-important-text">
+                    {eventType}
+                  </div>
                 {/each}
-              {/await}
+              {:else}
+                <div class="st-typography-body collapse-important-text">
+                  No external event types found.
+                </div>
+              {/if}
             </Collapse>
             <Collapse defaultExpanded={false} title="Metadata" tooltipContent="View Event Source Metadata">
-              {#await effects.getExternalSourceMetadata(selectedSource.key, selectedSource.derivation_group_name, user)}
-                <em>loading metadata...</em>
-              {:then metadata}
-                {#if Object.keys(metadata).length}
-                  <Properties
-                    formProperties={Object.entries(metadata).map(metadataEntry => {
-                      return { name: metadataEntry[0], value: metadataEntry[1] };
-                    })}
-                  />
-                {:else if $getExternalSourceMetadataError}
-                  <em>Failed to retrieve External Source metadata.</em>
-                {:else}
-                  <em>Source has no metadata.</em>
-                {/if}
-              {:catch error}
-                <em>error loading metadata...try refreshing the page.</em>
-                {catchError(error)}
-              {/await}
+              {#if Object.keys(selectedSourceMetadata).length > 0}
+                <Properties
+                  formProperties={Object.entries(selectedSourceMetadata).map(metadataEntry => {
+                    return { name: metadataEntry[0], value: metadataEntry[1] };
+                  })}
+                />
+              {:else if $getExternalSourceMetadataError}
+                <div class="st-typography-body collapse-important-text">Failed to retrieve External Source metadata.</div>
+              {:else}
+                <div class="st-typogrpahy-body collapse-important-text">Source has no metadata.</div>
+              {/if}
             </Collapse>
             <Collapse
               className="used-in-plans-collapse"
@@ -564,16 +567,16 @@
             >
               {#if selectedSourceLinkedDerivationGroupsPlans.length > 0}
                 {#each selectedSourceLinkedDerivationGroupsPlans as linkedPlanDerivationGroup}
-                  <i>
+                  <div class="st-typogrpahy-body collapse-important-text">
                     <a href="{base}/plans/{linkedPlanDerivationGroup.plan_id}">
                       {$plans.find(plan => {
                         return linkedPlanDerivationGroup.plan_id === plan.id;
                       })?.name}
                     </a>
-                  </i>
+                  </div>
                 {/each}
               {:else}
-                <i class="st-typography-body">Not used in any plans</i>
+                <div class="st-typography-body">Not used in any plans</div>
               {/if}
             </Collapse>
 
@@ -893,5 +896,9 @@
 
   .selected-source-delete {
     padding-top: 12px;
+  }
+
+  .collapse-important-text {
+    font-style: italic;
   }
 </style>
