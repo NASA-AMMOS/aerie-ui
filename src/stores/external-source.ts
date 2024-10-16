@@ -40,15 +40,15 @@ export const planDerivationGroupLinks = gqlSubscribable<PlanDerivationGroup[]>(
 );
 
 /* Derived. */
-// reorganization of planDerivationGroupLinks so that it is easy to grab entries by plan_id, and access the derivation groups and when their updates were last acknowledged
+// reorganization of unacknowledged planDerivationGroupLinks so that it is easy to the derivation groups and when their updates were last acknowledged
 export const derivationGroupsAcknowledged: Readable<
-  Record<string, { acknowledged: boolean; last_acknowledged_at: string }>
+  Record<string, { last_acknowledged_at: string }>
 > = derived(planDerivationGroupLinks, $planDerivationGroupLinks => {
-  const result: Record<string, { acknowledged: boolean; last_acknowledged_at: string }> = {};
+  const result: Record<string, { last_acknowledged_at: string }> = {};
   for (const entry of $planDerivationGroupLinks) {
     const { derivation_group_name, acknowledged, last_acknowledged_at, plan_id } = entry;
-    if (plan_id !== undefined) {
-      result[derivation_group_name] = { acknowledged, last_acknowledged_at };
+    if (plan_id !== undefined && !acknowledged) {
+      result[derivation_group_name] = { last_acknowledged_at };
     }
   }
   return result;
