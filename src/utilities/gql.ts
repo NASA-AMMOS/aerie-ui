@@ -2393,13 +2393,26 @@ const gql = {
 
   SUB_DERIVATION_GROUPS: `#graphql
     subscription SubDerivationGroups {
-      derivationGroups: ${Queries.DERIVATION_GROUP_COMP}(order_by: {name: desc}) {
+      derivationGroups: ${Queries.DERIVATION_GROUP} {
         name
-        source_type_name
-        sources
-        event_types
-        derived_total
         owner
+        source_type_name
+        derived_events_aggregate {
+          aggregate {
+            count
+          }
+        }
+        external_sources {
+          key
+          external_events_aggregate {
+            aggregate {
+              count
+            }
+            nodes {
+              event_type_name
+            }
+          }
+        }
       }
     }
   `,

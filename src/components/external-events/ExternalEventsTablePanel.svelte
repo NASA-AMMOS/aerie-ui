@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-  import { externalEvents, selectExternalEvent, selectedExternalEventId } from '../../stores/external-event';
+  import { selectedExternalEventId, selectedExternalEvents, selectExternalEvent } from '../../stores/external-event';
   import { viewTogglePanel } from '../../stores/views';
   import type { ViewGridSection } from '../../types/view';
   import GridMenu from '../menus/GridMenu.svelte';
@@ -32,7 +32,7 @@
     <ExternalEventsTable
       selectedItemId={$selectedExternalEventId}
       {filterExpression}
-      items={$externalEvents}
+      items={$selectedExternalEvents}
       on:rowDoubleClicked={onRowDoubleClicked}
       on:selectionChanged={onSelectionChanged}
     />
