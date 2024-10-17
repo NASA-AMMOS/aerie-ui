@@ -4,7 +4,7 @@
   import TrashIcon from '@nasa-jpl/stellar/icons/trash.svg?component';
   import { createEventDispatcher } from 'svelte';
   import { ViewDiscreteLayerColorPresets, ViewLineLayerColorPresets } from '../../../constants/view';
-  import { selectedPlanDerivationGroupEventTypes } from '../../../stores/external-source';
+  import { externalEventTypes } from '../../../stores/external-event';
   import { activityTypes } from '../../../stores/plan';
   import { externalResourceNames, resourceTypes } from '../../../stores/simulation';
   import type { Axis, Layer, XRangeLayerColorScheme } from '../../../types/timeline';
@@ -37,7 +37,7 @@
     if (isActivityLayer(layer)) {
       filterOptions = $activityTypes.map(type => type.name);
     } else if (isExternalEventLayer(layer)) {
-      filterOptions = $selectedPlanDerivationGroupEventTypes;
+      filterOptions = $externalEventTypes.map(type => type.name);
     } else if (isLineLayer(layer) || isXRangeLayer(layer)) {
       filterOptions = $resourceTypes
         .map(type => type.name)
@@ -56,9 +56,7 @@
       // NOTE: if a derivation group is disabled, this doesn't get invoked and does not update. however, on dissociation it does.
       const externalEventLayer = layer;
       const externalEventTypes =
-        externalEventLayer.filter?.externalEvent?.event_types.filter(event_type =>
-          $selectedPlanDerivationGroupEventTypes.includes(event_type),
-        ) ?? [];
+        externalEventLayer.filter?.externalEvent?.event_types ?? [];
       filterValues = [...externalEventTypes];
     } else if (isLineLayer(layer) || isXRangeLayer(layer)) {
       const resourceLayer = layer;
