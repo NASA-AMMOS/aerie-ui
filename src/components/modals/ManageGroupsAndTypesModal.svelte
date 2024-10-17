@@ -428,8 +428,8 @@
 
 <Modal height={700} width={1000}>
   <ModalHeader on:close>Manage Derivation Groups and Types</ModalHeader>
-  <ModalContent style="overflow: auto;">
-    <CssGrid columns={modalColumnSize} minHeight="100%">
+  <ModalContent style="overflow: hidden;">
+    <CssGrid class="modal-grid" columns={modalColumnSize} minHeight="100%">
       <div class="derivation-groups-modal-filter-container">
         <div class="derivation-groups-modal-content">
           <Tabs class="management-tabs" tabListClassName="management-tabs-list">
@@ -454,7 +454,7 @@
         <CssGridGutter track={1} type="column" />
         <Panel borderRight padBody={true}>
           <svelte:fragment slot="header">
-            <SectionTitle>
+            <SectionTitle overflow="hidden">
               <ExternalSourceIcon slot="icon" />Sources in '{selectedDerivationGroup.name}'
             </SectionTitle>
           </svelte:fragment>
@@ -513,7 +513,7 @@
         <CssGridGutter track={1} type="column" />
         <Panel borderRight padBody={true}>
           <svelte:fragment slot="header">
-            <SectionTitle>
+            <SectionTitle overflow="hidden">
               <ExternalSourceIcon slot="icon" />Derivation Groups of Type '{selectedExternalSourceType.name}'
             </SectionTitle>
           </svelte:fragment>
@@ -561,7 +561,7 @@
         <CssGridGutter track={1} type="column" />
         <Panel borderRight padBody={true}>
           <svelte:fragment slot="header">
-            <SectionTitle>
+            <SectionTitle overflow="hidden">
               <ExternalSourceIcon slot="icon" />Derivation Groups containing '{selectedExternalEventType.name}'
             </SectionTitle>
           </svelte:fragment>
@@ -682,5 +682,9 @@
     flex-direction: row;
     justify-self: center;
     width: 100%;
+  }
+
+  :global(.modal-grid) {
+    height: 100%;
   }
 </style>
