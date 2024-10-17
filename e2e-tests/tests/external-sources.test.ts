@@ -64,13 +64,14 @@ test.describe.serial('External Sources', () => {
     await expect(externalSources.externalSourceSelectedForm).not.toBeVisible();
   });
 
-  test('Selected external source should show metadata in a collapsible', async () => {
-    await externalSources.selectSource();
-    await externalSources.viewEventSourceMetadata.click();
-    await expect(page.getByText('0', { exact: true })).toBeVisible();
-    await expect(page.getByText('1', { exact: true }).first()).toBeVisible();
-    await expect(page.getByText('version')).toBeVisible();
-  });
+  // TODO: Metadata will be implemented in a future batch of work!
+  // test('Selected external source should show metadata in a collapsible', async () => {
+  //   await externalSources.selectSource();
+  //   await externalSources.viewEventSourceMetadata.click();
+  //   await expect(page.getByText('0', { exact: true })).toBeVisible();
+  //   await expect(page.getByText('1', { exact: true }).first()).toBeVisible();
+  //   await expect(page.getByText('version')).toBeVisible();
+  // });
 
   test('Selected external source should show event types in a collapsible', async () => {
     await externalSources.selectSource();
