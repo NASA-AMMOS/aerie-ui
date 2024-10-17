@@ -197,6 +197,7 @@ function validateArgument(
           }
         }
         break;
+      case 'fixed_string':
       case 'var_string':
         if (TOKEN_STRING_CONST !== constantNode.name) {
           return [
