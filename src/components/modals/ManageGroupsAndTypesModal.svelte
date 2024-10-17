@@ -428,7 +428,7 @@
 
 <Modal height={700} width={1000}>
   <ModalHeader on:close>Manage Derivation Groups and Types</ModalHeader>
-  <ModalContent>
+  <ModalContent style="overflow: auto;">
     <CssGrid columns={modalColumnSize} minHeight="100%">
       <div class="derivation-groups-modal-filter-container">
         <div class="derivation-groups-modal-content">
