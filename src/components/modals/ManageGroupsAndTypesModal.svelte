@@ -485,33 +485,33 @@
 </Modal>
 
 <style>
-  :global(.tab-list.management-tabs-list) {
+  .derivation-groups-modal-content :global(.tab-list.management-tabs-list) {
     background-color: var(--st-gray-10);
   }
 
-  :global(button.management-tab) {
+  .derivation-groups-modal-content :global(button.management-tab) {
     align-items: center;
     gap: 8px;
     text-align: center;
     width: 33%;
   }
 
-  :global(button.management-tab:last-of-type) {
+  .derivation-groups-modal-content :global(button.management-tab:last-of-type) {
     flex: 1;
   }
-  :global(button.management-tab:last-of-type.selected) {
+  .derivation-groups-modal-content :global(button.management-tab:last-of-type.selected) {
     box-shadow: 1px 0px 0px inset var(--st-gray-20);
   }
 
-  :global(button.management-tab:first-of-type.selected) {
+  .derivation-groups-modal-content :global(button.management-tab:first-of-type.selected) {
     box-shadow: -1px 0px 0px inset var(--st-gray-20);
   }
 
-  :global(button.management-tab:not(.selected)) {
+  .derivation-groups-modal-content :global(button.management-tab:not(.selected)) {
     box-shadow: 0px -1px 0px inset var(--st-gray-20);
   }
 
-  :global(button.management-tab.selected) {
+  .derivation-groups-modal-content :global(button.management-tab.selected) {
     background-color: var(--st-gray-20);
     box-shadow:
       1px 0px 0px inset var(--st-gray-20),
