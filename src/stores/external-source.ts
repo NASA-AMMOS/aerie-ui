@@ -72,23 +72,20 @@ function transformDerivationGroups(
     | {
         derived_events_aggregate: {
           aggregate: {
-            count: number
-          }
-        },
+            count: number;
+          };
+        };
         external_sources: {
           external_events_aggregate: {
             aggregate: {
-              count: number
-            },
-            nodes: {
-              event_type_name: string
-            }[]
-          },
-          key: string
-        }[],
-        name: string,
-        owner: UserId,
-        source_type_name: string,
+              count: number;
+            };
+          };
+          key: string;
+        }[];
+        name: string;
+        owner: UserId;
+        source_type_name: string;
       }[]
     | null
     | undefined,
@@ -98,23 +95,18 @@ function transformDerivationGroups(
     derivationGroups.forEach(derivationGroup => {
       completeDerivationGroup.push({
         derived_event_total: derivationGroup.derived_events_aggregate.aggregate.count,
-        event_types: derivationGroup.external_sources.reduce<string[]>((accumulatedEventTypes, currentSource) => {
-          accumulatedEventTypes.push(...currentSource.external_events_aggregate.nodes.map(event => event.event_type_name))
-          return accumulatedEventTypes;
-        }, []),
         name: derivationGroup.name,
         owner: derivationGroup.owner,
         source_type_name: derivationGroup.source_type_name,
         sources: new Map(
-          derivationGroup.external_sources.reduce((accumulatedSources, currentSource) => {
-            const source_key = currentSource.key;
-            const event_counts = currentSource.external_events_aggregate.aggregate.count;
-
-            return [
-              ...accumulatedSources,
-              [source_key, { event_counts }] as [string, { event_counts: number }],
-            ];
-          }, <[string, { event_counts: number }][]>[]),
+          derivationGroup.external_sources.reduce(
+            (accumulatedSources, currentSource) => {
+              const source_key = currentSource.key;
+              const event_counts = currentSource.external_events_aggregate.aggregate.count;
+              return [...accumulatedSources, [source_key, { event_counts }] as [string, { event_counts: number }]];
+            },
+            <[string, { event_counts: number }][]>[],
+          ),
         ),
       });
     });

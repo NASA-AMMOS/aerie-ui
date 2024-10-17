@@ -210,7 +210,6 @@ describe('Handle modal and requests in effects', () => {
       await effects.deleteDerivationGroup(
         {
           derived_event_total: 0,
-          event_types: [],
           name: 'Default',
           owner: 'userA',
           source_type_name: 'Example',
