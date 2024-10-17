@@ -115,11 +115,6 @@
           </div>
         </Collapse>
       {/each}
-      <Collapse defaultExpanded={false} title="Event Types" tooltipContent="View Contained Event Types">
-        {#each derivationGroup.event_types as eventType}
-          <i class="st-typography-body">{eventType}</i>
-        {/each}
-      </Collapse>
     {:else}
       <p class="st-typography-body">No sources in this group.</p>
       <button

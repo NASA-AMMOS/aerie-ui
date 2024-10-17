@@ -55,8 +55,7 @@
     } else if (isExternalEventLayer(layer)) {
       // NOTE: if a derivation group is disabled, this doesn't get invoked and does not update. however, on dissociation it does.
       const externalEventLayer = layer;
-      const externalEventTypes =
-        externalEventLayer.filter?.externalEvent?.event_types ?? [];
+      const externalEventTypes = externalEventLayer.filter?.externalEvent?.event_types ?? [];
       filterValues = [...externalEventTypes];
     } else if (isLineLayer(layer) || isXRangeLayer(layer)) {
       const resourceLayer = layer;

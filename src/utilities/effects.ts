@@ -2528,6 +2528,10 @@ const effects = {
 
   async deleteExternalEventType(event_type_name: string | null, user: User | null): Promise<void> {
     try {
+      if (!queryPermissions.DELETE_EXTERNAL_EVENT_TYPE(user)) {
+        throwPermissionError('delete an external event type');
+      }
+
       // to do this, all dgs associated should be deleted.
       if (event_type_name !== null) {
         const data = await reqHasura<{ id: number }>(gql.DELETE_EXTERNAL_EVENT_TYPE, { name: event_type_name }, user);
@@ -2618,7 +2622,7 @@ const effects = {
   async deleteExternalSourceType(externalSourceTypeName: string | null, user: User | null): Promise<void> {
     try {
       if (!queryPermissions.DELETE_EXTERNAL_SOURCE_TYPE(user)) {
-        throwPermissionError('delete a derivation group from the plan');
+        throwPermissionError('delete an external source type');
       }
 
       // to do this, all dgs associated should be deleted.

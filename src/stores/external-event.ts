@@ -71,9 +71,12 @@ export const selectedExternalEvents: Readable<ExternalEvent[]> = derived(
   },
 );
 
-export const externalEventsMap: Readable<Dictionary<ExternalEvent>> = derived(selectedExternalEvents, $externalEvents => {
-  return keyBy($externalEvents, getExternalEventWholeRowId);
-});
+export const externalEventsMap: Readable<Dictionary<ExternalEvent>> = derived(
+  selectedExternalEvents,
+  $externalEvents => {
+    return keyBy($externalEvents, getExternalEventWholeRowId);
+  },
+);
 
 export const selectedExternalEvent: Readable<ExternalEvent | null> = derived(
   [selectedExternalEventId, externalEventsMap],

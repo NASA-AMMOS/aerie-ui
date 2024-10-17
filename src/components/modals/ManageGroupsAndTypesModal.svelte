@@ -46,7 +46,6 @@
 
   const modalColumnSizeNoDetail: string = '1fr 3px 0fr';
   const modalColumnSizeWithDetailDerivationGroup: string = '3fr 3px 1.3fr';
-  const modalColumnSizeWithDetailExternalEventType: string = '2fr 3px 1.2fr';
   const modalColumnSizeWithDetailExternalSourceType: string = '2fr 3px 1.2fr';
 
   const derivationGroupBaseColumnDefs: DataGridColumnDef<DerivationGroup>[] = [
@@ -129,9 +128,6 @@
   let selectedExternalSourceType: ExternalSourceType | undefined = undefined;
   let selectedExternalSourceTypeDerivationGroups: DerivationGroup[] = [];
 
-  let selectedExternalEventType: ExternalEventType | undefined = undefined;
-  let selectedExternalEventTypeDerivationGroups: DerivationGroup[] = [];
-
   $: hasDeleteExternalSourceTypePermission = featurePermissions.externalSourceType.canDelete(user);
   $: hasDeleteExternalEventTypePermission = featurePermissions.externalEventType.canDelete(user);
 
@@ -142,14 +138,6 @@
   $: selectedExternalSourceTypeDerivationGroups = $derivationGroups.filter(derivationGroup => {
     if (selectedExternalSourceType !== undefined) {
       return derivationGroup.source_type_name === selectedExternalSourceType.name;
-    } else {
-      return false;
-    }
-  });
-
-  $: selectedExternalEventTypeDerivationGroups = $derivationGroups.filter(derivationGroup => {
-    if (selectedExternalEventType !== undefined) {
-      return derivationGroup.event_types.includes(selectedExternalEventType.name);
     } else {
       return false;
     }
@@ -251,27 +239,6 @@
   $: externalEventTypeColumnDefs = [
     ...externalEventTypeBaseColumnDefs,
     {
-      filter: 'number',
-      headerName: 'Associated External Sources',
-      sortable: true,
-      valueFormatter: params => {
-        let associatedDerivationGroups = getAssociatedDerivationGroupsByEventType(params.data?.name);
-        const sourceMap = associatedDerivationGroups.flatMap(derivationGroup => derivationGroup.sources.size);
-        const numOfSources =
-          sourceMap.length > 0 ? sourceMap.reduce((acc, derivationGroupSize) => acc + derivationGroupSize) : 0;
-        return `${numOfSources}`;
-      },
-    },
-    {
-      filter: 'number',
-      headerName: 'Associated Derivation Groups',
-      sortable: true,
-      valueFormatter: params => {
-        const associatedDerivationGroups = getAssociatedDerivationGroupsByEventType(params.data?.name);
-        return `${associatedDerivationGroups.length}`;
-      },
-    },
-    {
       cellClass: 'action-cell-container',
       cellRenderer: (params: ModalCellRendererParams) => {
         const actionsDiv = document.createElement('div');
@@ -285,11 +252,6 @@
             },
             hasDeletePermission: hasDeleteExternalEventTypePermission,
             rowData: params.data,
-            viewCallback: params.viewExternalEventType,
-            viewTooltip: {
-              content: 'View External Event Type',
-              placement: 'bottom',
-            },
           },
           target: actionsDiv,
         });
@@ -298,7 +260,6 @@
       },
       cellRendererParams: {
         deleteExternalEventType,
-        viewExternalEventType,
       } as CellRendererParams,
       headerName: '',
       resizable: false,
@@ -313,29 +274,21 @@
   }
 
   function deleteExternalSourceType(sourceType: ExternalSourceType) {
-    let associatedDerivationGroups = $derivationGroups.filter(
-      derivationGroup => derivationGroup.source_type_name === sourceType.name,
-    );
-
     // makes sure all associated derivation groups are deleted before this
     showDeleteExternalEventSourceTypeModal(
       sourceType,
       'External Source Type',
-      associatedDerivationGroups.map(derivationGroup => derivationGroup.name),
+      [], // Currently set to an empty array due to issues with performance when looking up event types being used
       user,
     );
   }
 
   function deleteExternalEventType(eventType: ExternalEventType) {
-    const associatedDerivationGroups: DerivationGroup[] = getAssociatedDerivationGroupsByEventType(eventType.name);
-    const associatedExternalSourceNames: string[] = associatedDerivationGroups.flatMap(derivationGroup =>
-      Array.from(derivationGroup.sources.keys()),
-    );
-
     // makes sure all associated sources (and therefore events, as orphans are not possible) are deleted before this
     // NOTE: does not update in derivation_group_comp after removing a EE type; derivation_group_comp defaults to 0 event types after its last external source removed,
     //        as it has no awareness of external source type or paired events (as the latter don't even exist).
-    showDeleteExternalEventSourceTypeModal(eventType, 'External Event Type', associatedExternalSourceNames, user);
+    // NOTE: The 'associatedItems' argument is currently set to [] as pulling event types with derivation groups had performance issues - currently the user will not be warned that their type still has implementations, but the deletion will not succeed.
+    showDeleteExternalEventSourceTypeModal(eventType, 'External Event Type', [], user);
   }
 
   function getAssociatedExternalSourcesBySourceType(sourceType: string | undefined) {
@@ -358,17 +311,6 @@
     return associatedDerivationGroups;
   }
 
-  function getAssociatedDerivationGroupsByEventType(eventType: string | undefined) {
-    if (eventType === undefined) {
-      return [];
-    }
-    const associatedDerivationGroups: DerivationGroup[] = $derivationGroups.filter(derivationGroup =>
-      derivationGroup.event_types.includes(eventType),
-    );
-
-    return associatedDerivationGroups;
-  }
-
   function viewDerivationGroup(viewedDerivationGroup: DerivationGroup) {
     const derivationGroup = $derivationGroups.find(
       derivationGroup => derivationGroup.name === viewedDerivationGroup.name,
@@ -379,12 +321,10 @@
     ) {
       selectedDerivationGroup = derivationGroup;
       selectedExternalSourceType = undefined;
-      selectedExternalEventType = undefined;
       modalColumnSize = modalColumnSizeWithDetailDerivationGroup;
     } else {
       selectedDerivationGroup = undefined;
       selectedExternalSourceType = undefined;
-      selectedExternalEventType = undefined;
       modalColumnSize = modalColumnSizeNoDetail;
     }
   }
@@ -393,26 +333,10 @@
     if (selectedExternalSourceType === undefined || selectedExternalSourceType !== sourceType) {
       selectedDerivationGroup = undefined;
       selectedExternalSourceType = sourceType;
-      selectedExternalEventType = undefined;
       modalColumnSize = modalColumnSizeWithDetailExternalSourceType;
     } else {
       selectedDerivationGroup = undefined;
       selectedExternalSourceType = undefined;
-      selectedExternalEventType = undefined;
-      modalColumnSize = modalColumnSizeNoDetail;
-    }
-  }
-
-  function viewExternalEventType(eventType: ExternalEventType) {
-    if (selectedExternalEventType === undefined || selectedExternalEventType !== eventType) {
-      selectedDerivationGroup = undefined;
-      selectedExternalSourceType = undefined;
-      selectedExternalEventType = eventType;
-      modalColumnSize = modalColumnSizeWithDetailExternalEventType;
-    } else {
-      selectedDerivationGroup = undefined;
-      selectedExternalSourceType = undefined;
-      selectedExternalEventType = undefined;
       modalColumnSize = modalColumnSizeNoDetail;
     }
   }
@@ -499,11 +423,6 @@
                   </div>
                 </Collapse>
               {/each}
-              <Collapse defaultExpanded={false} title="Event Types" tooltipContent="View Contained Event Types">
-                {#each selectedDerivationGroup.event_types as eventType}
-                  <i class="st-typography-body">{eventType}</i>
-                {/each}
-              </Collapse>
             {:else}
               <p class="st-typography-body">No sources in this group.</p>
             {/if}
@@ -536,12 +455,6 @@
                     {associatedDerivationGroup.name}
                   </div>
 
-                  <Collapse defaultExpanded={false} title="Event Types" tooltipContent="View Contained Event Types">
-                    {#each associatedDerivationGroup.event_types as eventType}
-                      <i class="st-typography-body">{eventType}</i>
-                    {/each}
-                  </Collapse>
-
                   <Collapse defaultExpanded={false} title="Sources" tooltipContent="View Contained External Sources">
                     {#each associatedDerivationGroup.sources as source}
                       <i class="st-typography-body">{source[0]}</i>
@@ -551,59 +464,6 @@
               {/each}
             {:else}
               <p class="st-typography-body">No sources associated with this External Source Type.</p>
-            {/if}
-          </svelte:fragment>
-        </Panel>
-      {:else if selectedExternalEventType !== undefined}
-        <!--The introduction of schemas should allow this to be greatly simplified, as source types imply event types.
-              Need to think about the strictness of EE Type and ES Type pairings, and whether the former can exist
-              without an association with the former.-->
-        <CssGridGutter track={1} type="column" />
-        <Panel borderRight padBody={true}>
-          <svelte:fragment slot="header">
-            <SectionTitle overflow="hidden">
-              <ExternalSourceIcon slot="icon" />Derivation Groups containing '{selectedExternalEventType.name}'
-            </SectionTitle>
-          </svelte:fragment>
-          <svelte:fragment slot="body">
-            {#if selectedExternalEventTypeDerivationGroups.length > 0}
-              {#each selectedExternalEventTypeDerivationGroups as associatedDerivationGroup}
-                <!-- Collapsible details -->
-                <Collapse
-                  title={associatedDerivationGroup.name}
-                  tooltipContent={associatedDerivationGroup.name}
-                  defaultExpanded={false}
-                >
-                  <svelte:fragment slot="right">
-                    <p class="st-typography-body derived-event-count">
-                      {associatedDerivationGroup.derived_event_total} events
-                    </p>
-                  </svelte:fragment>
-                  <div class="st-typography-body">
-                    <div class="st-typography-bold">Name:</div>
-                    {associatedDerivationGroup.name}
-                  </div>
-
-                  <div class="st-typography-body">
-                    <div class="st-typography-bold">Source Type:</div>
-                    {associatedDerivationGroup.source_type_name}
-                  </div>
-
-                  <Collapse defaultExpanded={false} title="Event Types" tooltipContent="View Contained Event Types">
-                    {#each associatedDerivationGroup.event_types as eventType}
-                      <i class="st-typography-body">{eventType}</i>
-                    {/each}
-                  </Collapse>
-
-                  <Collapse defaultExpanded={false} title="Sources" tooltipContent="View Contained External Sources">
-                    {#each associatedDerivationGroup.sources as source}
-                      <i class="st-typography-body">{source[0]}</i>
-                    {/each}
-                  </Collapse>
-                </Collapse>
-              {/each}
-            {:else}
-              <p class="st-typography-body">No sources containing this event type.</p>
             {/if}
           </svelte:fragment>
         </Panel>

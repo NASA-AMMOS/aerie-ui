@@ -2394,9 +2394,6 @@ const gql = {
             aggregate {
               count
             }
-            nodes {
-              event_type_name
-            }
           }
         }
       }
