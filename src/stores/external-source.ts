@@ -60,23 +60,6 @@ export const selectedPlanDerivationGroupNames: Readable<string[]> = derived(
   ([$planDerivationGroupLinks]) => $planDerivationGroupLinks.map(link => link.derivation_group_name),
 );
 
-export const selectedPlanDerivationGroupEventTypes: Readable<string[]> = derived(
-  [derivationGroups, selectedPlanDerivationGroupNames],
-  ([$derivationGroups, $selectedPlanDerivationGroupIds]) => {
-    const filteredDerivationGroups = $derivationGroups.filter(derivationGroup =>
-      $selectedPlanDerivationGroupIds.includes(derivationGroup.name),
-    );
-    if (filteredDerivationGroups !== undefined) {
-      return filteredDerivationGroups.reduce(
-        (acc: string[], derivationGroup) => acc.concat(derivationGroup.event_types),
-        [],
-      );
-    } else {
-      return [];
-    }
-  },
-);
-
 /* Helper Functions. */
 export function resetExternalSourceStores(): void {
   createExternalSourceError.set(null);
