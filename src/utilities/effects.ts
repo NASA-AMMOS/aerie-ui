@@ -924,6 +924,7 @@ const effects = {
       if (!startTimeFormatted || !endTimeFormatted || !validAtFormatted) {
         showFailureToast('Parsing failed.');
         parsingError.set(`Parsing failed - parsing dates in input failed. ${startTime}, ${endTime}, ${validAt}`);
+        creatingExternalSource.set(false);
         return;
       }
 
@@ -931,6 +932,7 @@ const effects = {
       if (new Date(startTimeFormatted) > new Date(endTimeFormatted)) {
         showFailureToast('Parsing failed.');
         parsingError.set(`Parsing failed - start time ${startTimeFormatted} after end time ${endTimeFormatted}.`);
+        creatingExternalSource.set(false);
         return;
       }
 
@@ -962,6 +964,7 @@ const effects = {
         } catch (error) {
           showFailureToast('Parsing failed.');
           catchError(`Event duration has invalid format: ${externalEvent.key}\n`, error as Error);
+          creatingExternalSource.set(false);
           return;
         }
 
@@ -975,6 +978,7 @@ const effects = {
           parsingError.set(
             `Upload failed. Event (${externalEvent.key}) not in bounds of source start and end: occurs from [${new Date(externalEventStart)},${new Date(externalEventEnd)}], not subset of [${new Date(startTimeFormatted)},${new Date(endTimeFormatted)}].\n`,
           );
+          creatingExternalSource.set(false);
           return;
         }
 
